@@ -28,8 +28,10 @@ import { SKILL_SOFT_CAP, SKILL_HARD_CAP, softcapCostMultiplier, milestoneAt } fr
 import { masterSkillsActive, skillCanPassCap, masteryRefusal } from './masterSkills.js';   // SOFTCAP3: the climb past 100 and the lifted 95 lock are Master Skills'
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 import { ONLINE_BONUS_POOL } from './levelEven.js';   // LEVEL-EVEN: online, every level's pool is 5
+import { onlineLevelFor } from './levelClimb.js';   // LEVEL-45: the online level, shared out to 45
 import { refreshOnlineLayer } from './renownLayer.js';   // LEVEL-EVEN: the online health floor read again over the level's new maximum
 import { isOnlinePage } from './online/onlineLane.js';
+import { LEVEL_CAP, atLevelCap, releaseCapLatch } from './levelCap.js';   // LEVEL-45: the level stops at 45
 // ORL1: the ONE question this file asks the vendored mod - whose law
 // levels this character. Everything DFU below is untouched by the
 // answer; the two arms simply do not both run.
@@ -64,6 +66,18 @@ export const SKILL_ADVANCEMENT_MULTIPLIER = Object.freeze([
 export const SKILL_RAISE_CHECK_INTERVAL = 360;   // classic minutes
 export const LEVELUP_BONUS_POOL_MIN = 4;         // FormulaHelper.BonusPool
 export const LEVELUP_BONUS_POOL_MAX = 6;
+
+/** LEVEL-45 (2026-10-27, a player through mob: "-4% exp/level to apply even to people who stuck to lvl 1 - could u level
+ *  skill and not level up?"): THE LEVEL A RAISE IS PRICED AT. A level owed is never taken until the player opens the
+ *  window (LV2), and the 1.04^level above read the level TAKEN - so a character that left every level owed trained at
+ *  level 1's price for good. Online the price reads the level its skills have earned (levelClimb.js), owed or not; offline
+ *  it is DFU's `Level`. */
+export function raisePriceLevel(entity) {
+  const level = entity?.level ?? 1;
+  if (entity?._online !== true || !entity.career || !Array.isArray(entity.skills)) return level;
+  const live = levelUpSkillSum(entity), held = entity.currentLevelUpSkillSum;
+  return Math.max(level, onlineLevelFor(entity.startingLevelUpSkillSum ?? live, held >= live ? held : live));
+}
 
 export function skillUsesForAdvancement(skillValue, skillMult, careerAdvMult, level) {
   const levelMod = Math.pow(1.04, level);
@@ -145,9 +159,10 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
   const virtue = usesVirtueLeveling(entity);
   const virtueSettings = virtue ? levelingSettings() : null;
   const raised = [];
+  const priceLevel = raisePriceLevel(entity);   // LEVEL-45: online, the level its skills earned
   for (let i = 0; i < entity.skillUses.length; i++) {
     const needed = skillUsesForAdvancement(
-      entity.skills[i], SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, entity.level);
+      entity.skills[i], SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, priceLevel);
     const reflexesMod = 0x10000 - ((entity.reflexes - 2) << 13);
     const calcUses = (entity.skillUses[i] * reflexesMod) >> 16;
     // SOFTCAP1: PAST 100 the ladder's cost can exceed the 20000 tally clamp
@@ -156,7 +171,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
     // entity.skillProgress and the point lands when it reaches 1 (one point
     // a pass, as DFU raises one a pass; MOVE-BANK keeps the rest whole).
     const master = masterSkillsActive(entity);
-    if (entity.skills[i] >= SKILL_SOFT_CAP && skillCanPassCap(entity, i)) {   // SOFTCAP4: a MASTERED skill only (2/2/1)
+    if (entity.skills[i] >= SKILL_SOFT_CAP && skillCanPassCap(entity, i)) {   // SOFTCAP4: a MASTERED skill only (3/2/1)
       if (entity.skills[i] >= SKILL_HARD_CAP) continue;
       // MOVE-BANK (FIELD BUGS 2026-10-01 #7): the count past 100 has no 20000 bucket (skills.js tallySkill), so the
       // shift's float twin - the same number to 20000 - and what a pass does not land is KEPT WHOLE for the next one,
@@ -168,7 +183,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
       prog[i] = (prog[i] ?? 0) + uses / cost;
       entity.skillUses[i] = 0;
       if (!(prog[i] >= 1)) continue;
-      const nextCost = softcapUsesForAdvancement(entity.skills[i] + 1, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, entity.level);
+      const nextCost = softcapUsesForAdvancement(entity.skills[i] + 1, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, priceLevel);
       prog[i] = (prog[i] - 1) * cost / nextCost;   // 0 at the hard cap (the next point costs Infinity)
       entity.skills[i] += 1;
       setSkillRecentlyIncreased(entity, i);
@@ -254,7 +269,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
 export function skillAdvanceProgress(entity, i, { now = null } = {}) {
   const wait = skillCheckWait(entity, now);
   const value = entity.skills?.[i] ?? 0;
-  const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, entity.level ?? 1);
+  const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, raisePriceLevel(entity));
   const reflexesMod = 0x10000 - (((entity.reflexes ?? 2) - 2) << 13);
   const tally = entity.skillUses?.[i] ?? 0;
   if (value >= SKILL_SOFT_CAP && skillCanPassCap(entity, i)) {
@@ -276,7 +291,7 @@ export function skillCheckWait(entity, now = null) {
 }
 /** The pass's raise of skill `i` below 100: its uses reach the requirement (the uses as Reflexes scales them). */
 const meetsBelowCap = (entity, i) => ((((entity.skillUses?.[i] ?? 0) * (0x10000 - (((entity.reflexes ?? 2) - 2) << 13))) >> 16)
-  >= skillUsesForAdvancement(entity.skills?.[i] ?? 0, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, entity.level ?? 1));
+  >= skillUsesForAdvancement(entity.skills?.[i] ?? 0, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, raisePriceLevel(entity)));
 /** AUDIT SUGGESTIONS-1019 L3-2: whether DFU's 95 lock stands for skill `i` when the pass reaches it - a primary at 100
  *  already, or a primary before it in the pass at 99 that the pass raises to 100 (its own lock not standing). */
 function lockedBy(entity, i) {
@@ -310,7 +325,11 @@ export const skillsReadyToImprove = (entity) => {
  *  Level++ against). pendingLevel is the port's display convenience
  *  for the U3 banner (DFU's sheet prints Level after the ++). */
 export function checkForLevelUp(entity) {
-  const calculated = calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum);
+  // LEVEL-45 (systems/levelCap.js): no level is owed past the cap, however far the sum climbs - and one latched before it is let go
+  releaseCapLatch(entity);
+  const calculated = entity._online === true   // LEVEL-45: online, the climb shared out to exactly 45 (systems/levelClimb.js)
+    ? onlineLevelFor(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum)
+    : Math.min(LEVEL_CAP, calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum));
   const levelUp = entity.level < calculated;
   if (levelUp) {
     entity.readyToLevelUp = true;
@@ -371,6 +390,13 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
     entity.pendingLevel = null;
     entity.pendingBonusPool = null;   // the book's thirty is fixed, but a level owed UNDER it was pending too
     return true;
+  }
+  // LEVEL-45 (systems/levelCap.js): a level latched before the cap (a save from before it) is no level at the cap
+  if (atLevelCap(entity)) {
+    entity.readyToLevelUp = false;
+    entity.pendingLevel = null;
+    entity.pendingBonusPool = null;
+    return false;
   }
   entity.level += 1;   // L-slice (entity-9): Level++, never a jump to the calculated level
   // DISC10-E L4: onto the RAW maximum - MaxHealth reads the lycanthrope's limiter now, and `+=` through it would bake the urge's ceiling into the level

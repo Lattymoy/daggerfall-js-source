@@ -74,13 +74,15 @@ test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm 
     'src/scenes/exterior.js': { open: 'const weaponRig = createWeaponRig({', lane: 'arrows.fire(', drain: 'drainExteriorFatigue(n)' },
     'src/scenes/world.js': { open: 'const weaponRig = createWeaponRig({', lane: 'arrows.fire(', drain: 'drainExteriorFatigue(n)' },
     'src/scenes/worldModes.js': { open: 'const interiorWeapon = createWeaponRig({', lane: 'interiorArrows.fire(', drain: 'drainInteriorFatigue(n)' },
-    'src/scenes/dungeonContext.js': { open: 'const weaponRig = createWeaponRig({', lane: 'fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true', drain: 'drainFatigue(n)' },
+    // PIN MOVED (AUDIT RPT1026 E1): the dungeon's fatigue door is its own `drainFatigue` handed whole (`drainFatigue,`) - the
+    // line its door's `blocked` took, so the host did not grow
+    'src/scenes/dungeonContext.js': { open: 'const weaponRig = createWeaponRig({', lane: 'fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true', drain: '\n      drainFatigue,\n' },
   };
   for (const [file, h] of Object.entries(hosts)) {
     const src = code(file);
     const bag = rigBag(src, h.open);
     assert.match(bag, /technique: \{/, `${file}: the door`);
-    for (const k of ['motor:', 'fireArrow:', 'drainFatigue:', 'face:']) assert.ok(bag.includes(k), `${file}: ${k}`);
+    for (const k of ['motor:', 'fireArrow:', 'drainFatigue:', 'face:']) assert.ok(bag.includes(k) || (k === 'drainFatigue:' && bag.includes(h.drain)), `${file}: ${k}`);
     assert.ok(bag.includes(h.lane), `${file}: its own lane`);
     assert.ok(bag.includes(h.drain), `${file}: its own fatigue door`);
     assert.match(bag, /o\?\.sky \? \{ world: \[\.\.\.from\] \}/, `${file}: a Volley's shaft from the sky's own point`);
@@ -128,7 +130,7 @@ test('TECH1 THE WORLD HOST\'S OWN: the chip off the MODE\'s rig with its key\'s 
   assert.match(code('src/ui/enhanced/enhancedHud.js'), /const powers = setPowerChips\(vitals\);\s*powers\.push\(\.\.\.techniqueChips\(vitals\)\);/, 'the chip after the set powers\'');
   assert.match(w, /offsetTactics\(r\.offset\);\s*offsetTechniques\(r\.offset\);/);
   assert.equal(TECH_CHIP_COLOUR, '#59c7ff');
-  assert.match(code('src/ui/enhanced/enhancedHud.js'), /const shade = t\.set === 'technique' \? TECH_CHIP_COLOUR : colour;/);
+  assert.match(code('src/ui/enhanced/enhancedHud.js'), /const weapon = t\.set === 'technique' \|\| t\.set === 'martial';[^\n]*\n\s*const shade = weapon \? TECH_CHIP_COLOUR : colour;/);   // PIN MOVED (RPT1026-PROGRESS FLOW-SEEN, test/systems/rpt1026_progress.test.js): a martial path's passive wears the technique's blue too
   assert.doesNotMatch(read('src/ui/enhanced/enhancedHud.js'), /from '(?:\.\.?\/)+(?:[\w-]+\/)*techniques\.js'/, 'the HUD never imports the runtime (it reaches half the game)');
   for (const file of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     assert.match(code(file), /for \(const kind of \['mousedown', 'mouseup'\]\) addEventListener\(kind, \(e\) => \{ if \(e\.button === 3 \|\| e\.button === 4\) e\.preventDefault\(\); \}\);/, file);

@@ -39,10 +39,15 @@ export const DEFAULT_TERRAIN_SCALE = 1.5; // TerrainHelper.defaultTerrainScale -
 export const STREAMING_TERRAIN_SCALE = 1.25;
 /** BAY-LEFT-GROUND (bible/03-World/Landforms.md "BAY-LEFT-GROUND", D5): THE LAW OF A RECORD'S HEIGHT'S FRAME, stamped
  *  beside its scale (`groundFrame`). None (1, every record before it): DFU's frame on the Bay, the shaped ground past
- *  it - the landforms' lift answered 0 off the Bay's 1000 x 500. 2: DFU's frame on every pixel of the world's grid
- *  (scenes/groundFrameHost.js). It says nothing of the Landforms row (AUDIT LANDFORMS C1's law): a build without the
- *  row, or one that never knew the stamp, reads a record as it always read one. */
-export const GROUND_FRAME_LAW = 2;
+ *  it - the landforms' lift answered 0 off the Bay's 1000 x 500. 2 (LIFT_FRAME_LAW): DFU's frame on every pixel of the
+ *  world's grid (scenes/groundFrameHost.js). 3: RELIEF-PEAKS (bible/03-World/Tamriel.md) - DFU's own ground past the Bay
+ *  stands its large map by WOODS.WLD's law of the small (world/tamriel/tamrielGround.js largeOfByte), where it stood a
+ *  swell about 4.5: a record before it is moved by its ground's own move (world/landforms.js groundMovedField). It says
+ *  nothing of the Landforms row (AUDIT LANDFORMS C1's law): a build without the row, or one that never knew the stamp,
+ *  reads a record as it always read one. */
+export const GROUND_FRAME_LAW = 3;
+/** BAY-LEFT-GROUND (D5): the frame's law from which a record past the Bay is DFU's frame (its lift left out). */
+export const LIFT_FRAME_LAW = 2;
 /** What a record carrying an exterior height writes beside it: the scale the ground stood at, and its frame's law. */
 export const RECORD_GROUND_STAMP = Object.freeze({ terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW });
 export const WORLD_MAP_TERRAIN_DIM = 32768; // MapsFile.WorldMapTerrainDim

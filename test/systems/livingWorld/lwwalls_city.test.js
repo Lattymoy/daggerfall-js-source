@@ -141,7 +141,9 @@ test('LW-WALLS the watch lives where a door opens onto the street: a palace wall
 
 test('LW-WALLS the game\'s own walled cities are read here as the streaming host reads them - its location laid out, its navgrid, its doors\' law into the location frame and its buildings (test/lwRealTown.mjs\'s replay, scenes/world.js\'s population block, word for word)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const loc = layoutLocation\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\);/);
+  // PIN MOVED (IC-STUTTER, bible/03-World/Arena-Provinces.md): the town laid out a block a step through the build's breather -
+  // its answer layoutLocation's whole (test/world/ic_stutter.test.js), so the replay's layoutLocation is the host's
+  assert.match(w, /const loc = await stepsBreathing\(layoutLocationSteps\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\), \(\) => breather\.breathe\(\)\);/);
   assert.match(w, /const originMatrix = trs\(\n\s+locLocal\[0\] \+ b\.originX, locLocal\[1\], locLocal\[2\] \+ b\.originZ, 0, 0, 0\);/);
   assert.match(w, /const local = multiply\(originMatrix, placed\.matrix\);/);
   assert.match(w, /const staticDoors = getStaticDoors\(cpu, b\.dfBlock\.index, placed\.recordIndex, local\);/);

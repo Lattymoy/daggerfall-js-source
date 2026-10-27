@@ -192,8 +192,8 @@ test('V3/MT-ii: the two summons - the range gate, the fail line, the PlayerAlly 
   // now and both mounting hosts hand it their own pool door, so the
   // arm is pinned where it lives and each host is pinned to reach it.
   const he = read('src/scenes/hostEnchant.js');
-  assert.ok(he.includes("spawnAlliedFoe: (mobileType) => { standFoe?.(mobileType, { allied: true }); },"),
-    'the shared ctx mounts the allied spawn');
+  assert.ok(he.includes("spawnAlliedFoe: (mobileType) => { Promise.resolve(standFoe?.(mobileType, { allied: true })).then(summonedBody, () => null); },"),
+    'the shared ctx mounts the allied spawn');   // PIN MOVED (RPT1026-PROGRESS): its body carries nothing (foeLootCap.js summonedBody)
   const w = read('src/scenes/world.js');
   assert.ok(/standLooseFoe: _standLooseFoe,/.test(w), 'world.js hands in its own stander');
   const stander = w.slice(w.indexOf('const _standLooseFoe ='), w.indexOf('const _standLooseFoe =') + 2400);

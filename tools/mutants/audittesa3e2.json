@@ -192,11 +192,11 @@
   {
     "name": "E2-4-gate-behind-its-row",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 269;",
-    "new": "export const GUILD_INSTANCE_RELAY_MIN = 268;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 274;",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 273;",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],
-    "note": "the castle offered to the relay before the one that admits a guild"
+    "note": "Re-aimed by content (the merge of main into #1184, 2026-10-27): the gate moved to world270 with its LAW row, past BOW-TOPS's world269 (main's). the castle offered to the relay before the one that admits a guild"
   }
 ]

@@ -166,6 +166,7 @@ import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a 
 import { BOAT_ACTIONS } from './comeSailAwayActions.js';   // HUD-HELM: the helm keys' table, a leaf the HUD's helm panel reads
 import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fight
 import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOAT-OWN: her Animators and particle systems by her range, the far law
+import { deckPressed } from '../../scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d II E2: the deck a ladder set me on
 import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
@@ -1047,6 +1048,7 @@ export function createComeSailAwayRuntime(deps) {
   /** StopSailing past its head: the player set down at the helm, the freeze lifted, OnUpdateSailing(false). */
   function stopSailingTail(currentBoat) {
     state.CurrentBoat = null;
+    currentBoat.way = 0;   // PASSAGE-PACE - AUDIT HORIZONTAL C9: off her helm she makes none, and the leads read none
     state.gale = null;   // SERPENT4: off her helm, no gale is hers
     state.oarThrottle = 0;   // HELM-LADDER: the oars shipped with the helm left
     unparentPlayer();
@@ -1613,6 +1615,7 @@ export function createComeSailAwayRuntime(deps) {
       UpdateBoatNodes(boat);
       if (!IsBeached(boat)) CheckCollision(boat);
     }
+    boat.way = 0;   // PASSAGE-PACE: none of her own unless laid below - warped, or (AUDIT HORIZONTAL C9) beached
     if (!IsBeached(boat)) {
       // QUAYS (the port's own - systems/naval/quays.js; the mod has no quays): her hands warping her in alongside a
       // harbour's quay - her sails struck and no oar pulling - take her way off and lay her this step where the host
@@ -1641,6 +1644,7 @@ export function createComeSailAwayRuntime(deps) {
         if (vDot(val, state.CollisionVector) < 0) val = vProjectOnPlane(val, state.CollisionVector);
       }
       state.velocityCurrent = vAdd(state.MoveVectorCurrent, val);
+      boat.way = vMagnitude(state.velocityCurrent);   // PASSAGE-PACE (the port's own): her way, laid on her for the journey's leads (travelGovernor.js travellerPace)
       const before = t.worldMatrix();
       // Transform.Translate(velocityCurrent * dt) in the boat's own space, then Rotate(up * TurnCurrent * dt)
       const step = vScale(state.velocityCurrent, dt());
@@ -1877,6 +1881,7 @@ export function createComeSailAwayRuntime(deps) {
     deps.helm.setFacing(at.yaw, 0);   // SetHorizontalFacing(child.forward)
     deps.helm.alignToGround?.(3);   // GameObjectHelper.AlignControllerToGround(controller, 3f)
     deps.helm.finishBoarding?.();   // The ladder must not carry incoming fall or air momentum onto the deck.
+    deckPressed(boat);   // AUDIT FB1026d II E2 (the port's own - the mod has no other players' hulls): the deck I stand on now, whatever deck I stood on before (scenes/comeSailAway/peerHulls.js)
   }
   /** TriggerDoor (5542-5572): the door the trigger hangs under, its Animator's Opened turned over. */
   function TriggerDoor(hit) {
@@ -2360,13 +2365,20 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** GameObject.SetActive on a boat's root, with what Unity does to the two loops on it (CSA-G): an AudioSource stops as
    *  its object goes inactive, and one left at AddComponent's playOnAwake (true - SpawnBoat never clears it) plays again
-   *  as the object comes back, at the volume it last had (kept: the fast loop's may be its first, 1). */
+   *  as the object comes back, at the volume it last had.
+   *  RPT1026-WORLD LOOP-AWAKE (a private report: every volume at 10%, a building or a caravan entered by the boats at a
+   *  port and left - and the boats roared over the sliders): A LOOP COMES BACK AS IT WENT. Unity woke BOTH - the fast loop too,
+   *  which a moored boat never plays, at its AddComponent volume of 1: a plain AudioSource's volume, which the bus hands
+   *  over with Sound Volume divided out (audio.js plainSourceGain), so every moored boat in earshot ran her wake's loop at
+   *  full volume whatever the sliders said, for as long as she stood. A departure from the mod's playOnAwake (Port-Ledger
+   *  A, LOOP-AWAKE): each loop plays again only if it played as its object went (`awake`), at the volume it had then; a
+   *  boat never put away this way wakes her slow loop alone, the one every placement starts (PlaySlow). */
   function setBoatActive(boat, on) {
     boat.GameObject.setActive(on);
     for (const src of [boat.AudioSourceSlow, boat.AudioSourceFast]) {
       if (!src) continue;
-      if (on) { if (src.playOnAwake !== false && src.clip != null) audioPlay(src); }
-      else if (src.isPlaying) audioStop(src);
+      if (on) { if (src.playOnAwake !== false && (src.awake ?? src === boat.AudioSourceSlow) && src.clip != null) audioPlay(src); }
+      else { src.awake = src.isPlaying; if (src.isPlaying) audioStop(src); }
     }
   }
 

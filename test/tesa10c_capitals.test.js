@@ -4,7 +4,8 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CAPITALS, CAPITAL_MODELS, CAPITAL_BLOCKS, CAPITAL_BLOCK_INDEX, BLOCK_M, capitalPixel, capitalCarrier, capitalPortBlocks, anchorMetres, capitalDistrict, tileCentre, autoCentre, CAPITAL_CLOSED_BYTE, onCapitalRing } from '../src/world/tamrielCapitals.js';
+import { CAPITALS, CAPITAL_MODELS, CAPITAL_BLOCKS, CAPITAL_BLOCK_INDEX, BLOCK_M, capitalPixel, capitalCarrier, capitalPortBlocks, anchorMetres, capitalDistrict, tileCentre, autoCentre, CAPITAL_CLOSED_BYTE, onCapitalRing, capitalDims, planCell } from '../src/world/tamrielCapitals.js';
+import { capitalApproachCells } from '../src/world/capitalApproaches.js';   // ROAD-FOLLOW
 import {
   MOURNHOLD, ALINOR, FALINESTI, TORVAL, HELSTROM, MOURNHOLD_PLAN, ALINOR_PLAN, FALINESTI_PLAN, TORVAL_PLAN, HELSTROM_PLAN,
 } from '../src/world/capitalPlans.js';
@@ -112,7 +113,10 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   // PIN MOVED (SOLITUDE-RELIEF): a capital on its own ground (`ground`) lays every lake cell its own, on its relief
   const ring = (c) => c.plan.flatMap((row, r) => row.map((x, cx) => x === 'L' && (onCapitalRing(c, cx, r) || !!c.ground))).filter(Boolean).length;
   // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): the Imperial City's blocks a family on the door, none here
-  assert.equal(b.length, 2 + CAPITALS.filter((c) => !c.family).reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes (SOLITUDE-RELIEF: all of a capital\'s on its own ground)');
+  // PIN MOVED (ROAD-FOLLOW, 03-World/Town-Shapes.md ROAD-FOLLOW): and, last, the open cells an approach crosses (the Imperial City's four)
+  const approachOpen = CAPITALS.reduce((n, c) => n + capitalApproachCells(c, capitalDims(c)).filter(([r, cx]) => planCell(c, r, cx) === 'O').length, 0);
+  assert.equal(approachOpen, 4);
+  assert.equal(b.length, 2 + CAPITALS.filter((c) => !c.family).reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0) + approachOpen, 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes (SOLITUDE-RELIEF: all of a capital\'s on its own ground)');
   const tile = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].tile(dx, dz);
   const closed = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].closed(dx, dz);
   assert.deepEqual([tile('alinor', 0, ALINOR.quay.edge - 1), tile('alinor', 0, ALINOR.quay.edge + 1)], [3, 0]);
@@ -200,7 +204,9 @@ test('TESA10c Falinesti: the Great Graht-Oak - its trunk narrowing up its levels
   let roots = 0;
   for (let i = 0; i < m.positions.length; i += 3) if (m.positions[i + 1] < 0 && Math.hypot(m.positions[i], m.positions[i + 2]) > F.rootOut - 3) roots++;
   assert.ok(roots >= F.roots, 'the roots to their reach');
-  for (const y of F.platforms) assert.equal(crosses(m, [trunkRadius(y) + 4, y + 3, 0], [trunkRadius(y) + 4, y - 3, 0]), true, `a platform at ${y}`);
+  // PIN MOVED (CAPITAL-TREES): probed at 4.25 rad - off the landing (the walkway's own deck there), off the boughs that
+  // carry the deck and the one over it, off the houses
+  for (const y of F.platforms) { const a = 4.25, d = trunkRadius(y) + 4; assert.equal(crosses(m, [Math.cos(a) * d, y + 3, Math.sin(a) * d], [Math.cos(a) * d, y - 3, Math.sin(a) * d]), true, `a platform at ${y}`); }
 });
 
 test('TESA10c Torval: the palace\'s dome over its roof and its four minarets; the temple\'s terraces, Masser\'s dome greater than Secunda\'s, its stair north; the walls\' gates open, the quay\'s piers out over the bay', () => {

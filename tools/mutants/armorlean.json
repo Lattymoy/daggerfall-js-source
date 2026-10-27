@@ -1,0 +1,65 @@
+[
+  {
+    "name": "ARMOR-LEAN-never-leans",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const lean = leans && byLines ? armorLean(item) : null;",
+    "new": "  const lean = null;",
+    "tests": [
+      "test/systems/loot/armorlean.test.js"
+    ]
+  },
+  {
+    "name": "ARMOR-LEAN-first-line-even",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "rolls() < (lean?.own ?? 0.5) ? own : draw();",
+    "new": "rolls() < 0.5 ? own : draw();",
+    "tests": [
+      "test/systems/loot/armorlean.test.js"
+    ]
+  },
+  {
+    "name": "ARMOR-LEAN-stat-even",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  ? pickWeighted(free, (p) => lean[id][p] ?? 1, rolls) : pick(free, rolls));",
+    "new": "  ? pick(free, rolls) : pick(free, rolls));",
+    "tests": [
+      "test/systems/loot/armorlean.test.js"
+    ]
+  },
+  {
+    "name": "ARMOR-LEAN-every-record-leans",
+    "file": "src/systems/smithItems.js",
+    "old": "lean: at(MINT_V_ARMOR_LEAN),",
+    "new": "lean: true,",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SALE-full-price",
+    "file": "src/systems/tradeModes.js",
+    "old": "  if (!isDaedricGear(item) || !Number.isFinite(v)) return v;",
+    "new": "  return v;",
+    "tests": [
+      "test/systems/loot/armorlean.test.js"
+    ]
+  },
+  {
+    "name": "DAEDRIC-SALE-gems-halved",
+    "file": "src/systems/tradeModes.js",
+    "old": "  const own = Math.max(0, v - gems);",
+    "new": "  const own = v;",
+    "tests": [
+      "test/systems/loot/armorlean.test.js"
+    ]
+  },
+  {
+    "name": "ARMOR-TYPE-no-row",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "  push('Type', itemArmorTypeLine(item));",
+    "new": "",
+    "tests": [
+      "test/systems/item/armortype_info.test.js"
+    ]
+  }
+]

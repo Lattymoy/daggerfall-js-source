@@ -242,7 +242,8 @@ test('DW3 wiring: the paper doll asks by item.dyeColor and blits an imported tex
   // DFMOD1: the swap is still blitted as it is when it has the classic size (every vendored set); a hi-res mod
   // sprite is box-filtered into the classic record's size, or its xml <rect>, and placed there
   assert.match(doll, /const swap = decodedTextureTopDown\(archive, record, 0, 'Albedo', dye\);\n\s+if \(swap\) \{\n[\s\S]{0,2400}?let pic = \{ width: swap\.width, height: swap\.height, data: swap\.rgba \};[\s\S]{0,1200}?return \{ bmp: \{ width: pic\.width, height: pic\.height, data: null, rgba: pic\.data, scale \}, off: place, mask \};/, 'the import arm first, in the RGBA shape the vendor arm blits - no ChangeDye (RRI1 adds the mask beside it)');
-  assert.match(doll, /loadRecord\(res\.archive, res\.record, deps\.getTexture, itemDyeColor\(it\), S\)/, 'the item\'s own dyeColor, not the remap\'s (an artifact\'s is Unchanged)');
+  // PIN MOVED (APPEARANCES-II, bible/04-Characters/Wardrobe.md section 5): the piece as it is drawn - a look worn over it is asked in the look's metal
+  assert.match(doll, /loadRecord\(res\.archive, res\.record, deps\.getTexture, itemDyeColor\(drawnPiece\(it\)\), S\)/, 'the item\'s own dyeColor, not the remap\'s (an artifact\'s is Unchanged)');
   assert.match(doll, /loadRecord\(t\.playerTextureArchive \+ \(raceByKey\(deps\.race\)\?\.morphologyIndex \?\? HUMAN_MORPHOLOGY\), t\.playerTextureRecord, deps\.getTexture, itemDyeColor\(it\), S\)/, 'the cloak interior too');
   // DISC24-B: the pack's tile and detail ask through its one picture door (linePictureUrl), and the door asks by the dye
   assert.match(rd('src/ui/enhanced/enhancedInventory.js'), /if \(line\.image\) return requestIcon\(line\.image\.archive, line\.image\.record, \{ scale, dye: line\.image\.dye, dyeTarget: line\.image\.dyeTarget, onReady \}\);/);   // DYE-ICON: and the swatch the dye changes

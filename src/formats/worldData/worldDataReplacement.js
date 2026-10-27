@@ -247,6 +247,9 @@ export function registerPortBlockFamily(f) {
   return true;
 }
 const familyIndex = (name) => { for (const f of _blockFamilies) { const i = f.indexOf(name); if (i >= 0) return i; } return -1; };
+/** IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): whether a family's block is made and kept - a read of it
+ *  makes nothing (scenes/capitalPrebuild.js asks before a build). @param {string} name */
+export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.cache.has(name));   // a family's cache holds its own names alone
 const familyName = (index) => { for (const f of _blockFamilies) { const n = f.nameOf(index); if (n) return n; } return null; };
 function familyBlock(name) {
   for (const f of _blockFamilies) {
@@ -265,8 +268,14 @@ const portBlockByIndex = (index) => { for (const [name, b] of _portBlocks) if (b
 function portBlock(name) {
   const b = _portBlocks.get(name);
   if (!b) return familyBlock(name);
-  b.block ??= b.make ? b.make(_blocksFile) : blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);   // AUDIT-TESA A6-2: a block built when first read
-  return b.block;
+  if (b.block) return b.block;
+  if (b.make) return (b.block = b.make(_blocksFile));
+  const json = typeof b.json === 'function' ? b.json() : b.json;
+  const block = blockFromJson(json, b.index);   // AUDIT-TESA A6-2: a block built when first read
+  // ROAD-FOLLOW: a block its maker calls provisional (a city's wall still waiting for its pixel's roads -
+  // world/townWalls.js) is answered and not kept: its next read builds it again
+  if (!json?.Provisional) b.block = block;
+  return block;
 }
 /** ARENA1: an edit the port makes to a location as it is read - `fn(dfLocation, maps, blocksFile)`, after the
  *  location is read (MAPS.BSA's, a mod's file, a pinned town's), with its indices set. Never on readClassicLocation:

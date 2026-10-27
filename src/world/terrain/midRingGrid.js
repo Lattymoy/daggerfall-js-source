@@ -17,6 +17,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { sampleKernel, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from './terrainSampler.js';
+import { nodeGroundAt } from '../landforms.js';   // RELIEF-PEAKS: the far field's vertex on the kernel's own ground at its node
 
 /** The middle ring's radius in map pixels round its base - 14: 11.5 km of the kernel's own ground every way. */
 export const MID_RADIUS = 14;
@@ -75,8 +76,11 @@ export function buildMidRingHeights({ woods, baseX, baseY, radius = MID_RADIUS, 
 
 /** FAR-FIELD (BREATHTAKER 1, KPbICA's spec through the owner, 2026-10-26: "render landscapes and landforms way further
  *  than actual distance to load. To see the mountain from 300km"): THE FAR FIELD past the far ring - the heightmap a cell
- *  of FAR_CELL pixels at a time, out to FAR_RADIUS cells (393 km) round its base cell. A cell's height is the highest of
- *  its samples (a range's silhouette is its peaks', none lost to an average 6.5 km wide); its sea the majority's. */
+ *  of FAR_CELL pixels at a time, out to FAR_RADIUS cells (393 km) round its base cell; its sea the majority's.
+ *  RELIEF-PEAKS: a cell's vertex stands on the ground the kernel stands at its own point - its centre is the node of the
+ *  byte north-west of it (`farFieldCell`'s `ground`, world/landforms.js nodeGroundAt). It stood at the highest of its nine
+ *  samples' bytes, the far ring's law: up to a cell's whole relief over the ground at its vertex, and the large map left
+ *  out - so the far field stood over the far ring at their meeting, and drew land above the horizon the ground has. */
 export const FAR_CELL = 8;
 export const FAR_RADIUS = 60;
 /** How far (cells) the traveller drifts from the far field's base cell before it is built again round them. */
@@ -90,40 +94,41 @@ export const farFieldSide = (radius = FAR_RADIUS) => 2 * radius + 1;
 /** A cell's climate left to the main thread's own reader (farFieldCell's third answer where the worker has none). */
 export const FAR_CLIMATE_ASK = 255;
 
-/** A cell's [highest byte, samples at the sea's floor, its centre's climate] off the heightmap's own reader
- *  (`woods.getHeightMapValue` - the stream's ground past the Bay and the Eltheric Ocean's, as every kernel reads it; the
- *  clamp at the map's edge where the reader has none) at FAR_SAMPLES, and `climateAt` at the centre pixel (FAR_CLIMATE_ASK
- *  where it answers none, or none is handed) - the cell's own, so a worker keeps it by the cell across the rebuilds. */
-export function farFieldCell(woods, cx, cy, cell = FAR_CELL, seaByte = 0, climateAt = null) {
-  let m = 0, n = 0;
-  for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) {
-    const b = woods.getHeightMapValue(cx * cell + u, cy * cell + v);
-    if (b > m) m = b;
-    if (b <= seaByte) n++;
-  }
+/** A cell's [its vertex's byte, samples at the sea's floor, its centre's climate, its vertex's ground] off the heightmap's
+ *  own reader (`woods.getHeightMapValue` - the stream's ground past the Bay and the Eltheric Ocean's, as every kernel reads
+ *  it; the clamp at the map's edge where the reader has none): the sea's count at FAR_SAMPLES, `climateAt` at the centre
+ *  pixel (FAR_CLIMATE_ASK where it answers none, or none is handed), and RELIEF-PEAKS the byte whose node the vertex
+ *  stands on (the cell's centre, a pixel corner: the byte north-west of it) with its ground there in world units
+ *  (world/landforms.js nodeGroundAt - with `relief`, the Landforms row, the lift) - the cell's own, so a worker keeps it by
+ *  the cell across the rebuilds. */
+export function farFieldCell(woods, cx, cy, cell = FAR_CELL, seaByte = 0, climateAt = null, relief = false) {
+  let n = 0;
+  for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) if (woods.getHeightMapValue(cx * cell + u, cy * cell + v) <= seaByte) n++;
+  const nx = cx * cell + cell / 2 - 1, ny = cy * cell + cell / 2 - 1, byteAt = (x, y) => woods.getHeightMapValue(x, y);
   const c = climateAt ? climateAt(Math.floor(cx * cell + cell / 2), Math.floor(cy * cell + cell / 2)) : FAR_CLIMATE_ASK;
-  return [m, n, c];
+  return [byteAt(nx, ny), n, c, nodeGroundAt(byteAt, nx, ny, relief) * STREAMING_TERRAIN_SCALE];
 }
 
 /**
  * The far field's cells round (baseCX, baseCY) - cell (cx, cy) the pixels [cx * cell, cx * cell + cell) both ways - row
- * by row from the north-west (the far ring's own order: rows run south): each cell's highest sample and how many of its
- * samples are the sea's floor (`low`: at or under the byte the ocean clamps; FAR_SAMPLES.length ** 2 a cell), and its
- * centre's climate (`clim`, FAR_CLIMATE_ASK where the reader `climateAt` answers none). `rows` a band [j0, j1) of the
- * field's rows (a worker answers it a band at a time); `cellAt` a cell's answer (farFieldCell, or a worker's kept copy).
- * @param {{ woods: any, baseCX: number, baseCY: number, radius?: number, cell?: number, seaByte?: number, rows?: ?[number, number], climateAt?: ?((x: number, y: number) => number), cellAt?: (cx: number, cy: number) => number[] }} o
- * @returns {{ high: Uint8Array, low: Uint8Array, clim: Uint8Array }}
+ * by row from the north-west (the far ring's own order: rows run south): each cell's vertex's byte (`high`), how many of its
+ * samples are the sea's floor (`low`: at or under the byte the ocean clamps; FAR_SAMPLES.length ** 2 a cell), its centre's
+ * climate (`clim`, FAR_CLIMATE_ASK where the reader `climateAt` answers none) and RELIEF-PEAKS its vertex's ground (`ground`,
+ * world units - farFieldCell's; `relief` the Landforms row). `rows` a band [j0, j1) of the field's rows (a worker answers
+ * it a band at a time); `cellAt` a cell's answer (farFieldCell, or a worker's kept copy).
+ * @param {{ woods: any, baseCX: number, baseCY: number, radius?: number, cell?: number, seaByte?: number, rows?: ?[number, number], climateAt?: ?((x: number, y: number) => number), relief?: boolean, cellAt?: (cx: number, cy: number) => number[] }} o
+ * @returns {{ high: Uint8Array, low: Uint8Array, clim: Uint8Array, ground: Float32Array }}
  */
-export function buildFarFieldBytes({ woods, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, seaByte = 0, rows = null, climateAt = null, cellAt = (cx, cy) => farFieldCell(woods, cx, cy, cell, seaByte, climateAt) }) {
+export function buildFarFieldBytes({ woods, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, seaByte = 0, rows = null, climateAt = null, relief = false, cellAt = (cx, cy) => farFieldCell(woods, cx, cy, cell, seaByte, climateAt, relief) }) {
   const side = farFieldSide(radius), [j0, j1] = rows ?? [0, side];
-  const high = new Uint8Array((j1 - j0) * side), low = new Uint8Array((j1 - j0) * side), clim = new Uint8Array((j1 - j0) * side);
+  const high = new Uint8Array((j1 - j0) * side), low = new Uint8Array((j1 - j0) * side), clim = new Uint8Array((j1 - j0) * side), ground = new Float32Array((j1 - j0) * side);
   for (let j = j0; j < j1; j++) {
     for (let i = 0; i < side; i++) {
-      const [m, n, c] = cellAt(baseCX - radius + i, baseCY - radius + j), o = (j - j0) * side + i;
-      high[o] = m; low[o] = n; clim[o] = c;
+      const [m, n, c, g] = cellAt(baseCX - radius + i, baseCY - radius + j), o = (j - j0) * side + i;
+      high[o] = m; low[o] = n; clim[o] = c; ground[o] = g;
     }
   }
-  return { high, low, clim };
+  return { high, low, clim, ground };
 }
 
 /** The ring's normals off its heights by central differences at its own cell (one-sided at its rim) - the streamed

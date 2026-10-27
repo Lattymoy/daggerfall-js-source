@@ -1,0 +1,473 @@
+[
+  {
+    "name": "RF-the-curve-s-order-unreversed",
+    "file": "src/systems/travel/roadLine.js",
+    "old": "    return fwd ? pts : pts.reverse();",
+    "new": "    return pts;",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-straight-band-a-curve",
+    "file": "src/systems/travel/roadLine.js",
+    "old": "    if (q[0] + q[4] === 2 * MID && q[1] + q[5] === 2 * MID) return null;   // straight through: the lane's own line\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-an-end-s-run-a-curve",
+    "file": "src/systems/travel/roadLine.js",
+    "old": "    if (q[2] !== MID || q[3] !== MID) continue;   // an end's straight run in to the middle\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt-and-braces: roadCurves.js curvesOf draws no curve from one edge point to another whose control is off the middle (every byte 1-255 read), and an end's run ends at the middle - never at the edge point the match below asks - so the turn is matched without it; kept as the reader's statement of which curves are the turns"
+  },
+  {
+    "name": "RF-the-bay-curved",
+    "file": "src/systems/travel/roadLine.js",
+    "old": "  if (!past(p.x, p.y)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-kinds-unread",
+    "file": "src/systems/travel/roadLine.js",
+    "old": "  if (kind !== kinds[i] || (kind !== 'road' && kind !== 'track')) return null;",
+    "new": "  if (kind !== 'road' && kind !== 'track') return null;",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-second-half-dropped",
+    "file": "src/systems/travel/roadLine.js",
+    "old": "line = [...(behind ? behind.slice(1) : []), ...",
+    "new": "line = [...[], ...",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-apex-not-the-end",
+    "file": "src/systems/travel/roadLine.js",
+    "old": "...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)])",
+    "new": "...[nativeOfTile(p.x, p.y, MID, MID)]",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-line-not-copied",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": ", ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}) }));",
+    "new": " }));",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-lane-s-points-unread",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const path = lane?.pts ?? null;",
+    "new": "    const path = null;",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-leg-s-end-square-at-the-middle",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "new": ": leg.line ? spotRect(legMiddle(leg)) : rectOf(",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-rejoin-on-the-chord",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;",
+    "new": "    const near = null;",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-last-leg-s-line-unread",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const road = lane.pts ? (place ? lane.pts : lineUpTo(lane.pts, end)) : [[lane.ax, lane.az], [via.x, via.z]];",
+    "new": "    const road = [[lane.ax, lane.az], [via.x, via.z]];",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-via-dropped",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const onRoad = (l, p) => (l?.line?.length > 1 ? Object.assign(p, { via: l.line.slice(0, -1) }) : p);",
+    "new": "  const onRoad = (l, p) => p;",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-forecast-straight",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    for (const q of [...(n[k].via ?? []), n[k]]) {",
+    "new": "    for (const q of [n[k]]) {",
+    "tests": [
+      "test/systems/travel/road_follow.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-own-run-from-its-first-point",
+    "file": "src/scenes/world.js",
+    "old": "drawOwnRun(at, n[start], j || travelOptions.route?.street ? 0 : travelOptions.state?.autopilot?.seg, leg, pts);",
+    "new": "drawOwnRun(at, n[start], 0, leg, pts);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-ends-legs-everywhere",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const leg = (r) => (r < 0 ? Infinity : r === 0 ? 0 : r + ROAD_END_SLACK);",
+    "new": "  const leg = () => Infinity;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js",
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "RF-an-end-on-the-road-a-leg",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const leg = (r) => (r < 0 ? Infinity : r === 0 ? 0 : r + ROAD_END_SLACK);",
+    "new": "  const leg = (r) => (r < 0 ? Infinity : r + ROAD_END_SLACK);",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-floods-never-meet",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      if (other.seen.has(k)) joined = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-piece-cap-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (a.seen.size >= ROAD_PIECE_CAP && b.seen.size >= ROAD_PIECE_CAP) break;   // both the land's network",
+    "new": "    if (true) break;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-gap-s-crossing-unkept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      for (let k = found; k !== -1; k = g.parent.get(k)) bridges.add(k);\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-crossing-s-steps-refused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "\n  || (ends.bridges.has(beyondKey(ax, ay)) && ends.bridges.has(beyondKey(bx, by)));",
+    "new": ";",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-ladder-unlegged",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const endLeg = ends?.strict && !tried ? endLegOf(from, to, ends) : null;",
+    "new": "  const endLeg = null;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-ladder-s-open-ground-everywhere",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "        if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue;",
+    "new": "        if (kind < 0) continue;",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ]
+  },
+  {
+    "name": "RF-no-cost-law-where-no-road-joins",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-cost-law-unasked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const ends = (roads || tracks) && !opts.costLaw ? yield* roadEndsSteps(",
+    "new": "  const ends = (roads || tracks) && false ? yield* roadEndsSteps(",
+    "tests": [
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-last-crossing-taken",
+    "file": "src/world/townWalls.js",
+    "old": "        const q = firstCrossing(arm.map(",
+    "new": "        const q = firstCrossing(arm.reverse().map(",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-arms-unmerged",
+    "file": "src/world/townWalls.js",
+    "old": "  for (const h of at) { const g = groups.at(-1); if (g && h.a - g.at(-1).a < GATE_ARMS_MERGE) g.push(h); else groups.push([h]); }",
+    "new": "  for (const h of at) groups.push([h]);",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-tracks-unread",
+    "file": "src/world/townWalls.js",
+    "old": "  for (const kind of /** @type {const} */ (['roads', 'tracks'])) {",
+    "new": "  for (const kind of /** @type {const} */ (['roads'])) {",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-frame-unshifted",
+    "file": "src/world/townWalls.js",
+    "old": "[(tx - origin.x) * TILE_M, (ty - origin.y) * TILE_M]",
+    "new": "[tx * TILE_M, ty * TILE_M]",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-gate-begun-at-the-crossing",
+    "file": "src/world/townWalls.js",
+    "old": "lineHit(pts, g, -L / 2)",
+    "new": "lineHit(pts, g, 0)",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-old-spacing",
+    "file": "src/world/townWalls.js",
+    "old": "  const gap = onLine ? 2 * L : L * (run + 2), stops = [];",
+    "new": "  const gap = L * (run + 2), stops = [];",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-paths-unread",
+    "file": "src/world/townWalls.js",
+    "old": "  const roads = paths ? roadGatePoints(pts, getLocationTerrainTileOrigin(dfLocation), paths) : [];",
+    "new": "  const roads = [];",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-bay-curved-for-a-wall",
+    "file": "src/world/townWalls.js",
+    "old": "      return { roads: (net.roads?.[i] ?? 0) | join(px, py), tracks: net.tracks?.[i] ?? 0, curved: false };",
+    "new": "      return { roads: (net.roads?.[i] ?? 0) | join(px, py), tracks: net.tracks?.[i] ?? 0, curved: true };",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-bay-s-join-unread",
+    "file": "src/world/townWalls.js",
+    "old": "      return { roads: (net.roads?.[i] ?? 0) | join(px, py), tracks: net.tracks?.[i] ?? 0, curved: false };",
+    "new": "      return { roads: net.roads?.[i] ?? 0, tracks: net.tracks?.[i] ?? 0, curved: false };",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-regions-unasked",
+    "file": "src/world/townWalls.js",
+    "old": "    if (!landedIn || !landedIn(px, py, px + 1, py + 1)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-waiting-wall-kept",
+    "file": "src/world/townWalls.js",
+    "old": "    if (paths === null) return null;\n    kept.wall =",
+    "new": "    kept.wall =",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-provisional-carrier-kept",
+    "file": "src/world/townWalls.js",
+    "old": "{ json.Provisional = true; json.RmbBlock.Misc3dObjectRecords = [];",
+    "new": "{ json.RmbBlock.Misc3dObjectRecords = [];",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-model-built-off-nothing",
+    "file": "src/world/townWalls.js",
+    "old": "  if (made !== undefined) model();",
+    "new": "  model();",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-pixel-never-told",
+    "file": "src/world/townWalls.js",
+    "old": "if (key) _waiting.set(key, kept); return townWallBlockJson(name, null, [], open);",
+    "new": "return townWallBlockJson(name, null, [], open);",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-provisional-block-kept-by-the-door",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  if (!json?.Provisional) b.block = block;",
+    "new": "  b.block = block;",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-sweep-never-asks-the-wall",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": " || townWallReadyAt(p.px, p.py);",
+    "new": ";",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-a-waiting-town-plans-its-streets",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-walls-handed-no-reader",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "setTownWallPaths(terrainGen ? townWallPathsReader(",
+    "new": "void (terrainGen ? townWallPathsReader(",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-arrival-at-the-slice-s-corner",
+    "file": "src/world/capitalApproaches.js",
+    "old": "mid = (8 * s + 4 - cap.anchor[F.lateral]) * BLOCK_M;",
+    "new": "mid = (8 * s - cap.anchor[F.lateral]) * BLOCK_M;",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-no-skirt",
+    "file": "src/world/capitalApproaches.js",
+    "old": "export const APPROACH_SKIRT = 3 * T;",
+    "new": "export const APPROACH_SKIRT = 0;",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-run-in-short-of-the-gate",
+    "file": "src/world/capitalApproaches.js",
+    "old": "[ug - H, vs - H, ug + H, vg]",
+    "new": "[ug - H, vs - H, ug + H, vs + H]",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-south-side-s-frame",
+    "file": "src/world/capitalApproaches.js",
+    "old": "  S: Object.freeze({ uv: (x, z, e) => [x, e - z],",
+    "new": "  S: Object.freeze({ uv: (x, z, e) => [x, z - e],",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-gate-s-slice-unread",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "dx < 0 ? -D.mx - 1 : sl - D.mx), at.py",
+    "new": "dx < 0 ? -D.mx - 1 : 0), at.py",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-rim-over-the-road",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      tile: (x, z) => (way(x, z) ? APPROACH_TILE : rim(x, z) ? CAPITAL_NO_GROUND : tile(x, z)),",
+    "new": "      tile: (x, z) => (rim(x, z) ? CAPITAL_NO_GROUND : way(x, z) ? APPROACH_TILE : tile(x, z)),",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-a-tree-on-the-road",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      ...(tree ? { tree: (x, z) => (rim(x, z) || way(x, z) ? -1 : tree(x, z)) } : {}),",
+    "new": "      ...(tree ? { tree: (x, z) => (rim(x, z) ? -1 : tree(x, z)) } : {}),",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-shared-open-cell-kept",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "out.push(CAPITALS[k] && onApproachCell(CAPITALS[k], r0 + r, x0 + x) ? capitalApproachName(CAPITALS[k], x0 + x, r0 + r) : TOWN_OUTLINE_BLOCK);",
+    "new": "out.push(TOWN_OUTLINE_BLOCK);",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  },
+  {
+    "name": "RF-the-open-block-unregistered",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      if (planCell(cap, r, cx) !== 'O') continue;\n      const name = capitalApproachName(cap, cx, r);",
+    "new": "      continue;\n      const name = capitalApproachName(cap, cx, r);",
+    "tests": [
+      "test/world/road_gates.test.js"
+    ]
+  }
+]

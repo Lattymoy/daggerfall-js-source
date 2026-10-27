@@ -1,0 +1,253 @@
+[
+  {
+    "name": "COURT-DEEDS-deeds-unoffered",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    ...(deps.regards?.() ? deedsFor(family, me, res) : []).map((k) => ({",
+    "new": "    ...[].map((k) => ({",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "the report: only a day's talk moves anyone"
+  },
+  {
+    "name": "COURT-DEEDS-a-deed-twice-a-day",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "export const DEED_STAMPS = Object.freeze({ compliment: 'compl', gift: 'gift', embrace: 'hug', kiss: 'kiss' });",
+    "new": "export const DEED_STAMPS = Object.freeze({ gift: 'gift', embrace: 'hug', kiss: 'kiss' });",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "a compliment paid over and over in one sitting"
+  },
+  {
+    "name": "COURT-DEEDS-stamps-unsaved",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "        for (const k of Object.values(DEED_STAMPS)) if (/** @type {any} */ (e)[k] != null) /** @type {any} */ (people[id])[k] = /** @type {any} */ (e)[k];",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "a reload hands the day's deeds again"
+  },
+  {
+    "name": "COURT-DEEDS-gift-free",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (kind === 'gift') deductGold(deps.entity, GIFT_GOLD);",
+    "new": "    if (kind === 'gift') void 0;",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "a gift costs nothing (re-aimed by content: AUDIT FB1026d II moved the line)"
+  },
+  {
+    "name": "COURT-DEEDS-kiss-gate-unread",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "  if (kind === 'kiss' && !(courtship && (courtship.betrothed || courtship.affection >= KISS_AT))) return 'court';",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "a stranger kissed"
+  },
+  {
+    "name": "COURT-DEEDS-courtship-unwarmed",
+    "file": "src/scenes/legacyHost.js",
+    "old": "const warm = warmable ? warmCourtship(me, res.id, deedAffection(kind, taste), { deed: kind, day }) : null;",
+    "new": "const warm = null;",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "the deeds raise a regard and never a courtship (re-aimed by content: AUDIT FB1026d II moved the line)"
+  },
+  {
+    "name": "COURT-DEEDS-tally-unsaid",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return `${line} ${deedTally({",
+    "new": "    return line || `${line} ${deedTally({",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "the report's confusion: nothing says what moved"
+  },
+  {
+    "name": "COURT-DEEDS-spouse-kiss-refused",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "  if (spouse?.residentId === res.id) return [...DEEDS];",
+    "new": "  if (spouse?.residentId === res.id) return DEEDS.filter((k) => k !== 'kiss');",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "a spouse never kissed"
+  },
+  {
+    "name": "COURT-DEEDS-day-off-the-courtship",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const warmable = courtship && !courtship.betrothed && !deedDoneOn(courtship, kind, day);",
+    "new": "    const warmable = courtship && !courtship.betrothed;",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B1: a reload hands every deed's affection again, for gold the reload gives back (re-aimed by content: AUDIT FB1026d II B1 - the courtship's stamp gates its warm alone, the day's refusal the save's)"
+  },
+  {
+    "name": "COURT-DEEDS-day-unstamped",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  if (warmed > 0 && deed && Number.isInteger(day)) c.deeds = { ...c.deeds, [deed]: day };",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B1: the deed's day never on the courtship"
+  },
+  {
+    "name": "COURT-DEEDS-day-dropped-at-load",
+    "file": "src/systems/legacy/family.js",
+    "old": "          ...(c.deeds && typeof c.deeds === 'object' ? { deeds: Object.fromEntries(Object.entries(c.deeds).filter(([k, d]) => COURT_DEEDS.includes(k) && Number.isInteger(d))) } : {}),",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B1: the courting loader keeps only the fields it lists - the days dropped at every load"
+  },
+  {
+    "name": "COURT-DEEDS-warm-unsaved",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (warm?.warmed) { touch(family); store(); }   // AUDIT FB1026d B6: a warm of nothing writes nothing",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d E4: the affection a deed adds never reaches the house's record"
+  },
+  {
+    "name": "COURT-DEEDS-nothing-written",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (warm?.warmed) { touch(family); store(); }   // AUDIT FB1026d B6: a warm of nothing writes nothing",
+    "new": "    if (warm) { touch(family); store(); }",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B6: a warm of nothing writes the realm line for nothing"
+  },
+  {
+    "name": "COURT-DEEDS-tone-unheard",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    heard?.();   // AUDIT FB1026d II B2: the tone, heard as the deed lands - a refused one costs nothing\n",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B3: a deed's tone never heard - LW7's law lost on the deed rows (re-aimed by content: AUDIT FB1026d II moved the line)"
+  },
+  {
+    "name": "COURT-DEEDS-tone-uncounted",
+    "file": "src/scenes/legacyHost.js",
+    "old": "gained: after - was,",
+    "new": "gained: after - before,",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B3: the tally leaves out the tone's cost, which lands in the same answer"
+  },
+  {
+    "name": "COURT-DEEDS-tone-not-handed",
+    "file": "src/scenes/townTalk.js",
+    "old": "          if (row.legacy?.hearsTone) return row.legacy.answer(tone, _toneTaste(), _toneHeard);\n",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B3: the talk window never hands a deed its tone"
+  },
+  {
+    "name": "COURT-DEEDS-house-offered",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "  if (!courtable(res) || residentInHouse(family, res.id) || betrothedElsewhere(family, member, res.id)) return [];",
+    "new": "  if (!courtable(res) || betrothedElsewhere(family, member, res.id)) return [];",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B5: a sibling's spouse or a widowed parent offered compliment, gift and hug"
+  },
+  {
+    "name": "COURT-DEEDS-betrothed-offered",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "  if (!courtable(res) || residentInHouse(family, res.id) || betrothedElsewhere(family, member, res.id)) return [];",
+    "new": "  if (!courtable(res) || residentInHouse(family, res.id)) return [];",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B5: one betrothed to another member offered every deed"
+  },
+  {
+    "name": "COURT-DEEDS-living-world-unread",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    ...(deps.regards?.() ? deedsFor(family, me, res) : []).map((k) => ({",
+    "new": "    ...deedsFor(family, me, res).map((k) => ({",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B5: deed rows with no Living World to note them on"
+  },
+  {
+    "name": "COURT-DEEDS-kiss-past-a-marriage",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "  return spouse ? DEEDS.filter((k) => k !== 'kiss') : [...DEEDS];",
+    "new": "  return [...DEEDS];",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d E10: a member wed offers anyone a kiss"
+  },
+  {
+    "name": "COURT-DEEDS-page-deeds-unsaid",
+    "file": "src/ui/familyPages.js",
+    "old": "Paying a compliment and giving a gift (${GIFT_GOLD} gold) raise it faster, each once a day under Tell me about. ",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d E10: the Family page's How it works never names the deeds"
+  },
+  {
+    "name": "COURT-DEEDS-hug-courtship-arm",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "  if (kind === 'embrace' && !courtship && !(regard >= FRIEND_AT)) return 'friend';",
+    "new": "  if (kind === 'embrace' && !(regard >= FRIEND_AT)) return 'friend';",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B5: one courting them refused a hug the day their regard dips"
+  },
+  {
+    "name": "COURT-DEEDS-gift-affection",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "export const DEED_AFFECTION = Object.freeze({ compliment: 3, gift: 6, embrace: 5, kiss: 8 });",
+    "new": "export const DEED_AFFECTION = Object.freeze({ compliment: 3, gift: 60, embrace: 5, kiss: 8 });",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B5: a gift's affection never measured"
+  },
+  {
+    "name": "COURT-DEEDS-ill-compliment-warms",
+    "file": "src/systems/legacy/courtDeeds.js",
+    "old": "  if (kind === 'compliment') return taste < 0 ? 0 : DEED_AFFECTION.compliment + (taste > 0 ? COMPLIMENT_TASTE : 0);",
+    "new": "  if (kind === 'compliment') return DEED_AFFECTION.compliment + (taste > 0 ? COMPLIMENT_TASTE : 0);",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js"
+    ],
+    "note": "AUDIT FB1026d B5: a compliment taken ill warms the courtship"
+  },
+  {
+    "name": "COURT-DEEDS-badge-promises",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "raise it; with Project Legacy, so do the deeds Tell me about offers a townsperson you could court - a compliment, a gift, and a hug once you are friends - each once a day.",
+    "new": "raise it, and so do a compliment, a gift, and a hug once you are friends - each once a day, under Tell me about.",
+    "tests": [
+      "test/systems/legacy/fb1026d_courtdeeds.test.js",
+      "test/systems/legacy/plainui.test.js"
+    ],
+    "note": "AUDIT FB1026d B4: the badge promises deeds to the watch, a traveller and kin (re-aimed by content: AUDIT FB1026d II moved the line)"
+  }
+]

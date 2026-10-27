@@ -52,13 +52,15 @@ FIXED.
   (`hostceiling.test.js`).
 
 NOT CHANGED.
-- The collect (`market.js` collectGood) keeps L1-F2's order: its lost answer still ends the session, with the piece in
-  the record, where the join reads it. The book abandons the session on a collect's repeat (`marketBook.js`
-  collectGood's `apply`), so answering one the same way would send the player to the title all the same - its own change.
+- The collect (`market.js` collectGood) kept L1-F2's order here: its lost answer ended the session, with the piece in the
+  record, where the join read it. Its own change came on 2026-10-26: RPT1026-MARKET COLLECT-LANDED answers a landed
+  collect's repeat with the record's sequence to a tab that sends `landed`, and the book receives that repeat into the
+  pack (private reports 2026-10-26, the lead's Field-Bugs page for the batch).
 - Collecting a trader's takings (marketGoldCollect): a lost answer ends the session too, and the gold is in the record
   at the join.
-- vendorBuy says "Bought" when the buy answered and its collect did not; the piece waits for the next settle (the
-  stall's now, or the Market tab's).
+- vendorBuy said "Bought" when the buy answered and its collect did not, and the piece waited for the next settle that
+  read the road. Since RPT1026-MARKET ARRIVE (2026-10-26) the press says the piece is on its way, and the arrivals'
+  sweep (`net/marketArrivals.js`) collects it shortly, and every arrived piece as the character's session stands.
 
 DEPLOY. The service and the client in either order. An old service ignores `landed`: a lost answer ends the session, as
 before. An old client beside the new service sends no `landed` and is told `seq`, as before.

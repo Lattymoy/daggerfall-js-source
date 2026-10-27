@@ -228,8 +228,8 @@
   {
     "name": "PARTY-LOOT-ARB-a-claim-never-comes-back",
     "file": "src/scenes/roomLootHost.js",
-    "old": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); }",
-    "new": "      if (false) { m.lapsed = true; composeRoomContainer(m.canon); }",
+    "old": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); setMidScreenText(ROOM_LAPSED_TEXT()); }",
+    "new": "      if (false) { m.lapsed = true; composeRoomContainer(m.canon); setMidScreenText(ROOM_LAPSED_TEXT()); }",
     "tests": [
       "test/systems/partyloot.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "PARTY-LOOT-ARB-a-late-verdict-dropped",
     "file": "src/scenes/roomLootHost.js",
-    "old": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); }",
-    "new": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { _roomMine.clear(); composeRoomContainer(m.canon); }",
+    "old": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); setMidScreenText(ROOM_LAPSED_TEXT()); }",
+    "new": "      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { _roomMine.clear(); composeRoomContainer(m.canon); setMidScreenText(ROOM_LAPSED_TEXT()); }",
     "tests": [
       "test/systems/partyloot.test.js"
     ]

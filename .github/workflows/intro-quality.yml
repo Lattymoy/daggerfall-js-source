@@ -12,6 +12,12 @@ on:
       - 'src/systems/gmSynth.js'
       - 'src/assets/intro/**'
       - 'src/assets/branding/**'
+      # INTRO4: the film draws the Imperial City TESA built and the authored continent
+      - 'src/world/imperialCity.js'
+      - 'src/world/capitalImperial.js'
+      - 'src/world/capitalShapes.js'
+      - 'src/world/tamriel/tamrielGeography.js'
+      - 'test/ui/intro4_film.test.js'
       - 'tools/intro*.mjs'
       - 'test/ui/intro.test.js'
       - 'test/systems/intro3_score.test.js'
@@ -29,7 +35,9 @@ jobs:
     # INTRO3b: pinned, not `ubuntu-latest` - that label began handing out Ubuntu 26.04 on 2026-10-23, and Playwright 1.56
     # refuses to install Chromium there ("does not support chromium on ubuntu26.04-x64"); the probes need its browser
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # INTRO4: the film is twice INTRO2's length - the live probe plays it through in real time and the review render
+    # draws it frame by frame on a software GPU
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,7 +52,7 @@ jobs:
       # INTRO3 (2026-10-23, the owner): the intro's own tests, not `npm run check` in series - the whole suite had outgrown
       # this job's 25 minutes and cancelled every run before its probes; verify.yml runs the whole gate on every PR
       - name: The intro's own tests
-        run: node --test test/ui/intro.test.js test/systems/intro3_score.test.js
+        run: node --test test/ui/intro.test.js test/ui/intro4_film.test.js test/systems/intro3_score.test.js
       # INTRO-REVERT (2026-10-25): the theme is the recording again (src/assets/intro/theme.mp3), its landmarks decoded
       - name: Independent decoded music landmarks
         if: ${{ !cancelled() }}

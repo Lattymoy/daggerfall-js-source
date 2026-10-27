@@ -298,6 +298,7 @@ test('SD8d THE HOSTS, by source: the world host makes the blows online beside th
   const M = read('src/scenes/worldModes.js');
   // PIN MOVED (AUDIT SD IV R1): the Hour's light is drawn in drawFoes' late slot, after the last flat - the arm keeps the
   // frame's matrices for it, and draws it itself only when a window skips drawFoes (test/world/superDungeon/sd26_render.test.js)
-  assert.match(M, /if \(isGateArena\(dungeonLoc\)\) host\.drawGateCourt\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*\n\s+if \(dungeonCtx\.sdEndLook\) host\.drawSdRift\?\.\(\{ proj, view, eye: mwv\.eye, end: dungeonCtx \}\);[^\n]*\n(?:\s+\/\/[^\n]*\n)+\s+_sdLate\.on = isSdRealm\(dungeonLoc\); _sdLate\.proj = proj; _sdLate\.view = view; _sdLate\.eye = mwv\.eye;\n\s+if \(_sdLate\.on && dungeonCtx\.uiOverlayActive\) host\.drawSdTelegraph\?\.\(_sdLate\);/);
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  assert.match(M, /if \(isGateArena\(dungeonLoc\)\) host\.drawGateCourt\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*\n\s+if \(dungeonCtx\.sdEndLook\) host\.drawSdRift\?\.\(\{ proj, view, eye: mwv\.eye, end: dungeonCtx \}\);[^\n]*\n(?:\s+\/\/[^\n]*\n)+\s+_sdLate\.on = isSdRealm\(dungeonLoc\); _sdLate\.proj = proj; _sdLate\.view = view; _sdLate\.eye = mwv\.eye;\n\s+if \(_sdLate\.on && windowHoldsDungeon\(dungeonCtx\.uiOverlayActive, aliveUnder\(\)\)\) host\.drawSdTelegraph\?\.\(_sdLate\);/);
   assert.match(M, /lateWorldDraw: \(\) => \{ host\.drawVeiledPeerBodies\?\.\(\); if \(_sdLate\.on\) host\.drawSdTelegraph\?\.\(_sdLate\); \},/);
 });

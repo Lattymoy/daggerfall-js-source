@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-TESA-II-C1-rim-laid-ground",
     "file": "src/world/tamrielCapitals.js",
-    "old": "      tile: (x, z) => (rim(x, z) ? CAPITAL_NO_GROUND : tile(x, z)),",
-    "new": "      tile,",
+    "old": "      tile: (x, z) => (way(x, z) ? APPROACH_TILE : rim(x, z) ? CAPITAL_NO_GROUND : tile(x, z)),",
+    "new": "      tile: (x, z) => (way(x, z) ? APPROACH_TILE : tile(x, z)),",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-TESA-II-C1-rim-wooded",
     "file": "src/world/tamrielCapitals.js",
-    "old": "      ...(tree ? { tree: (x, z) => (rim(x, z) ? -1 : tree(x, z)) } : {}),",
-    "new": "      ...(tree ? { tree } : {}),",
+    "old": "      ...(tree ? { tree: (x, z) => (rim(x, z) || way(x, z) ? -1 : tree(x, z)) } : {}),",
+    "new": "      ...(tree ? { tree: (x, z) => (way(x, z) ? -1 : tree(x, z)) } : {}),",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -223,11 +223,12 @@
   {
     "name": "AUDIT-TESA-II-C4-roots-round",
     "file": "src/world/capitalPlans.js",
-    "old": "rootArc: Object.freeze([2.25, 6.05]),",
-    "new": "rootArc: Object.freeze([0, 2 * Math.PI]),",
+    "old": "rootUnder: 0.8,",
+    "new": "rootUnder: -6,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
-    ]
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the buttresses stand all round the foot now, each held under the walkway climbing over it (rootUnder) - lifted 6 m over it, they stand in the walkway"
   },
   {
     "name": "AUDIT-TESA-II-C4-limbs-low",

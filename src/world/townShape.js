@@ -230,14 +230,26 @@ export function townShape(occ, W, H, seed, o = {}) {
  * @param {{width: number, height: number, grid: Uint8Array}} nav @param {Uint8Array} ground @param {{x: number, y: number}} tilePos
  */
 export function shutOffGround(nav, ground, tilePos) {
-  const D = 128;
   for (let gy = 0; gy < nav.height; gy++) {
-    const ty = tilePos.y + (gy >> 2);
     for (let gx = 0; gx < nav.width; gx++) {
-      const tx = tilePos.x + (gx >> 2);
-      if (!(tx >= 0 && ty >= 0 && tx < D && ty < D && ground[tx + ty * D])) nav.grid[gy * nav.width + gx] = 0;
+      if (!onTownTile(ground, tilePos, gx, gy)) nav.grid[gy * nav.width + gx] = 0;
     }
   }
+}
+/**
+ * TS6, TOWN-BOARDS: IS A CELL OF A TOWN'S GRID ON A TILE OF A PIXEL'S MASK - the walk grid's cell (gx, gy), four a ground
+ * tile, x east and y north from the grid's south-west tile at `tilePos`; `tiles` one of the pixel's masks (index x + y *
+ * 128): its town's ground (world/terrain/terrainTiles.js townGroundMask - the ground TS2 flattens, never the land it eases
+ * back to), or the paths its terrain painted (TS10, roadPainter.js GRASS-PATH1). The one law the walkers are shut by
+ * (shutOffGround) and the town's fabric is planned on (world/urban/townFabricStand.js townFabricFor: its ground and its
+ * painted roads); world/townWalls.js paveOnGrid reads the same tiles the same way. @param {ArrayLike<number>} tiles
+ * @param {{x: number, y: number}} tilePos @param {number} gx @param {number} gy
+ */
+export function onTownTile(tiles, tilePos, gx, gy) {
+  const D = 128;
+  const ty = tilePos.y + (gy >> 2);
+  const tx = tilePos.x + (gx >> 2);
+  return tx >= 0 && ty >= 0 && tx < D && ty < D && !!tiles[tx + ty * D];
 }
 /** TS7: a location as its template was read - a Bay city world/townOutline.js wallBayCity walled, its own ring again and
  *  no outline (the places past the Bay clone their templates' grids, rings and gates and all); any other location itself.

@@ -97,7 +97,10 @@ are tile 46 over any ground, with 47 (dirt) or 55 (grass) as the edge;
 tracks are worn dirt showing through grass only (11/26 centre, 12/27
 edge) and leave dirt and stone alone because a dirt track on dirt is
 invisible. WATER IS NEVER PAVED: a road bit over water is a routing bug
-and the painter refuses to hide it. The centre of any arm wins over the
+and the painter refuses to hide it (history: ROADS 23's port of his painter
+paves it - AUDIT 51 - and his data routes 42 road pixels over the sea, which
+the Overworld's route walks since RPT1026-WORLD CAUSEWAY,
+`systems/travel/travelRoute.js` `pavedStep`). The centre of any arm wins over the
 edge of another, so a junction reads as one surface. A location's rect
 is left alone.
 
@@ -1019,7 +1022,7 @@ TESA14 routed past the Bay on the Bay's dials: the climb read raw off a pixel's 
 +-2 a pixel is texture, not a hill, so a route wandered on noise and walked straight over a ridge as readily as round it.
 Now every route a region builds there pays the land's law (`roadLand.js:"export function landStep(t, cx, cy, nx, ny, len) {"`,
 its dials `roadLand.js:"export const VOYAGER_DIALS = Object.freeze({"`), handed to the builder as its `terrain`
-(`tamrielRoads.js:"const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v));"`):
+(`tamrielRoads.js:"const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v), still);"`):
 
 - **The grade, squared**, on the height averaged over 5 x 5 pixels (a summed-area table, integer sums): a step costs its
   length times 1 + gradeCost (1/16) x (rise a pixel)^2, the same up as down. A byte a pixel is about a 1% grade, so 4%
@@ -1177,7 +1180,8 @@ the clock: it runs on the roads' workers and the cache, off the page's thread as
   (`test/world/tesabiome_biomes.test.js`); their mutant records re-aimed by content.
 - OPEN: (1) the Overworld's walk aims pixel centre to centre, so on a bend past the Bay the walker cuts up to 0.125 of a
   pixel inside the painted curve (`roadCurves.js` curveApex is the point a curve-following leg would aim through - not
-  wired). (2) Switchbacks: the land's law lays a climb across the slope at the pixel's scale; a hairpin inside one pixel's
+  wired). CLOSED by ROAD-FOLLOW (2026-10-27, `06-Systems/Travel-View.md` ROAD-FOLLOW): a leg that turns on a curve walks it
+  and the drawn line runs it (`systems/travel/roadLine.js`). (2) Switchbacks: the land's law lays a climb across the slope at the pixel's scale; a hairpin inside one pixel's
   819 m is not drawn. (3) Rivers: the ground carries no river line past the Bay - a ford is any water run of two pixels or
   less - so a river wider on the trace (the Niben, some 15 pixels) is gone round, never bridged; a river's own line from
   the terrain's law (a byte a pixel, as Basic Roads' river array is the Bay's) would let a road bridge it where it is
@@ -1210,7 +1214,133 @@ a river), priced as dry ground, and the water painted over the road at each. VOY
   this head's land without the fords 33, 23 along) to 26 and 20 (2 and 0 along) - a crossing each, the
   rest of the river kept clear; the road pixels themselves 12,572 and 11,418 (the network the same size).
 - **Not done**: no bridge model stands at a crossing (the road's tiles over the channel are the ford); the Lower Niben
-  (320 to 460 m) is crossed where the routes must, at its price.
+  (320 to 460 m) is crossed where the routes must, at its price. ROAD-LOOK (below) stands a bridge at every crossing
+  wider than Basic Roads' own river and keeps the ford for the rest.
 - Pins `test/world/road/river_fords.test.js` (4, the last with ARENA2); mutants `tools/mutants/river_fords.json` (7, all
   dead). PIN MOVED: TAMRIEL_ROADS_VERSION 4 -> 5 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`),
   VOYAGER1's version and step records re-aimed by content (`tools/mutants/voyager.json`, both dead); R1-3's cite re-aimed at the kernel's line.
+
+## ROAD-LOOK - a road's edge blended into its ground, and a bridge over every river wider than a ford (2026-10-27, a port departure)
+
+KPbICA on the DFO Online Discord, through the owner, 2026-10-27: "1) Texture blending for road tiles and surroundings"
+and "4) No bridges across the big rivers (like this one that starts around IC and goes south)". The owner, the same
+day: "No band aids or half assed work".
+
+### What the player saw, and why
+
+- **The road's edge was the tile grid's line.** Basic Roads paints a road in whole tiles: the paving, record 46, and on a
+  diagonal the flank tiles 47 and 55 (`roadPainter.js:"export const ROAD_TILES = Object.freeze(["`). The terrain program
+  draws one tile a fragment, to its edge, as DFU's TilemapTextureArray shader does. A track has DF's own dirt-to-grass
+  tiles (TRACK_TILES 11/26, 12/27, 10/25, 51/52), which carry their own soft edge. The paving has none: a road's side was a
+  hard straight line, or a staircase on a diagonal or a curve, on the Bay, past it, and in towns.
+- **A road went through a river at the water's level.** The river from the Imperial City south is the Niben. Below Lake
+  Rumare it is the sea's (NIBEN-SEA, `03-World/Tamriel.md`): sailed water 12 to 37 km across. The rivers CYRODIIL-WATERS
+  carves into the land (ten, the Lower Niben's channel among them) were crossed as fords (RIVER-FORDS above): the road's
+  tiles kept over the channel. That is right for Basic Roads' rivers (two tiles of water), wrong for the Corbolo or the
+  Lower Niben's channel, 30 to 460 m across.
+- **Two lakes were crossed dry.** The roads' router reads the pixels' bytes, which carry no carved lake. 13 road steps and
+  16 track steps ran through Lake Arrius and Lake Poppad on a strip the waters' paint went round.
+- **Daggerfall has no bridge over a river outside.** The ARCH3D scan found model 725 (a castle gatehouse's ramp), 62031 (a
+  dungeon's rope bridge, 2.4 m) and the 70500-70700 corridors. Basic Roads stands none: it crosses its rivers at grade.
+
+### The blend (`world/road/roadEdge.js`, its GLSL twin `render/roadEdgeGlsl.js`)
+
+- **The law** (`roadEdge.js:"export function roadEdgeAt(byteAt, x, y) {"`): the road's share at a point is the bilinear of
+  the four cells round the nearest tile corner (1 for the paving, 0 for the rest), moved by a wander of three octaves of
+  value noise (lattices of 32, 128 and 512 cells a pixel, amplitudes 0.12, 0.06 and 0.05 - a bend some 25 m long, a ragged
+  6 m, a broken 1.6 m) and drawn across a smoothstep rim 0.07 wide each way. The other kind's picture is the nearest
+  neighbour cell's of that kind, mirrored about its own square, at the fragment's own gradient - so the colour is
+  continuous across every seam between a road and its ground, and steps no more than the tiles' own at a seam of one kind.
+  Past 0.30 of a tile from an edge a point draws its own tile alone: the road's middle is not smeared.
+- **What takes part**: the paving (46) is the road. Its flank tiles 47 and 55 are the ground's side: their stone where it
+  reaches a tile's corner ran out into the grass as smudges. A record that carries water (the draw's own water table,
+  WATER_DRAW_MASK_TABLE) neither blends nor lends its picture; a record past the tile set's 56 is left alone.
+- **Where**: both terrain programs (`renderer.js:"tex = roadEdge(tex, data, unwrapped, gx, gy, t);"` and the lane's
+  EL_TERRAIN_FS, which decodes the neighbour as its own), right after the fragment's own tile and before the ecotone. The
+  snow and clip variants are built from those programs. So every road the painters paint blends: Basic Roads on the Bay,
+  the curves past it, a town's streets (`world/urban/townFabric.js` reads ROAD_RECORDS from roadEdge.js), the open.
+- **The switch**: the renderer's `roadEdges`, taken as it is made from roadEdgesOn (`roadEdgeGlsl.js`): the enhanced skin;
+  `?roadedges=off` the kill door; the classic skin keeps DFU's tiles to their edges. A new skin reloads the page, so no host
+  sets it (HOST-SPLIT). No Features row, no new string.
+- **The cost**: a fragment whose four cells are of one kind returns after three texel fetches; one on a road's rim takes up
+  to three more texture samples.
+- **The departure** (Port-Ledger A): DFU draws each tile to its edge; the port blends a road's paving into its ground.
+
+### The bridges (`world/road/roadBridges.js`, `world/road/bridgeModels.js`)
+
+- **The crossings** (`roadBridges.js:"export function crossingsOf(px, py, byteAt, law = tamrielWaters()) {"`): where a
+  pixel's own road or track curve - the line the painter paints (`roadCurves.js` curvesOf) - meets a carved river's centre
+  line: the point, the line's heading, the river's width and level there. The pixel that holds the point owns it. Of two
+  crossings of one river whose decks would meet (a junction's curves through one point), the squarer stands, and a track's
+  under a road's deck is the road's.
+- **A bridge or a ford**: a bridge at every crossing wider than `BRIDGE.fordMax` - Basic Roads' own river, two tiles of
+  water and a bank each side, 25.6 m; a ford at or under it, as Basic Roads crosses every river of the Bay. A road's bridge
+  is stone, 12.8 m wide (the road's two tiles), its arches no wider than 26 m between 2.4 m piers, its crown 4.5 m over the
+  water, a 1.1 m parapet. A track's is timber, 4.8 m wide, on trestles 6 m apart, 2.5 m over the water, with two rails.
+  Its length over the water is the width over the sine of the angle the road meets it at (never under 0.35); its ramps
+  come down to the river's level a metre in eight. The river's level is the valley's floor at its banks (CYRODIIL-WATERS'
+  carve lays the land beside a channel at it), so each end meets the road on its own ground.
+- **Under it the river runs** (`roadBridges.js:"export function unpaveBridges(tilemap, paths, px, py, byteAt"`): in the
+  terrain kernel, after the road painter and before the roads' smoothing and the waters' paint
+  (`terrainGen.js:"if (arena && landforms) { unpaveBridges(tilemap, paths, px, py, arenaRoadByte);"`), the road's tiles
+  and shoulders under a deck and over the channel are laid back - the bridges of the pixel and its eight neighbours - so
+  the channel's water is painted there. A ford keeps its road.
+- **The model** (`bridgeModels.js:"export function buildBridgeMesh(b, px, py) {"`): built on the page's thread from the
+  kernel's answer, in the capitals' kit: the port's own bridge stone and timber (`capitalModels.js` capitalArt, painted
+  the same on every client, CAPITAL_ART.bridgeStone as Alinor's bridges wear it), at Daggerfall's texel size
+  (vanillaTexels). Daggerfall has no model to stand there (above). The host stands it with the pixel's statics and
+  makes it solid in the pixel's collider through the late gate (`pixelBuild.js:"standBridges(bridges, px, py, {"`): a body,
+  on foot or mounted, walks the deck from ramp's foot to ramp's foot and is stopped by the parapet or the rails.
+- **The map**: in to the Bay's scale (`near`) the held map draws each bridge as the road's two parapets either side of it
+  over the river's width, off the map's own copy of the rivers
+  (`tamrielInk.js:"export function paintBridges(ctx, view, paperW, paperH, waters, filters = {}) {"`).
+- **The Niben: no bridge.** Below Lake Rumare the Niben is the sea's water, 15.2 km across at its narrowest (18.5 pixels);
+  the nearest roads either side of it on one row are 16.4 km apart. Ships sail it, and no bridge spans 15 km, so no bridge
+  and no ford stand on it: a crossing there is a ferry, the ports' and the planner's lane. CYRODIIL-WATERS' Lower Niben, a
+  channel carved into the land beside it (320 to 460 m), is a river, and is bridged.
+- **The planner** needs nothing new: a bridge stands where a road's bytes already cross, so the network, the Overworld's
+  planner and the map's roads are unchanged by it.
+
+### The lakes (`world/road/roadLand.js`, `world/tamrielRoads.js`)
+
+- The regions' build marks the carved lakes' pixels water before its nodes
+  (`tamrielRoads.js:"const still = lakeRaster(gx, gy, MAP_W, MAP_H, LAKE_MARGIN);"`; `tamrielWaters.js` lakeRaster, a
+  pixel's middle within LAKE_MARGIN, 0.25 of a pixel, of the lake's water - past a curve's widest swing and a road's half
+  width), and the routes' land never takes a lake's water as a ford
+  (`roadLand.js:"if (!wet(x, y) || (still && still[i])) continue;"`). TAMRIEL_ROADS_VERSION 8: the roads past the Bay
+  are laid again once.
+
+### Measured (the freeware, Cyrodiil's six regions (3, 5), (3, 6), (2, 5), (3, 4), (3, 7), (2, 6), the relief on)
+
+- Before: 94 road and 141 track crossings of a carved river by the steps (90 and 136 wider than a ford), all fords; 13
+  road and 16 track steps through a carved lake; the network one piece of 168,771 pixels.
+- After: the drawn curves cross a carved river 220 times (97 road, 123 track): 211 bridges (93 road, 118 track) and 9
+  fords. Every one of the 226 step crossings wider than a ford has a bridge of its river within 1.5 pixels. The bridges
+  stand from 52.5 to 1,310 m (the sea's level 34 m: none on sailed water), 83 to 677 m long from ramp's foot to ramp's
+  foot, the longest over the Lower Niben's channel. By river: White Rose 44, Corbolo 35, Brena 28, Strid 28, Reed 22,
+  Panther 18, Lower Niben 16, Silverfish 13, Larsius 7; the Poppad's outflow forded.
+- No step through a lake; the network one piece of 168,748 pixels. 9 pairs the build could not route that it routed before,
+  in (3, 4) and (3, 5): each to a place rolled inside a carved lake (Lake Arrius at (2461, 449); Lake Poppad at (2426, 626),
+  (2424, 627), (2430, 631)) - reached before by a dry strip across the lake. Open for the countryside's and the waters'
+  owners: a place inside a lake.
+- Pictures (`tools/roadLookProbe.mjs`, headless, the freeware's TEXTURE.302 and the capitals' art): a Bay pixel and a curve
+  pixel with the edges on and off, a stone and a timber bridge over a valley's river, both lanes.
+
+### The hosts, online
+
+- `scenes/world.js`: the renderer blends; the pixel build stands the bridges. `scenes/exterior.js` (the bench, a town of
+  the Bay): the renderer blends; no carved river, no bridge. worldModes and the dungeon context draw no terrain.
+- Online: each client derives the same bridges from the same roads' layer and waters' law. Nothing goes on the wire; the
+  relay and the account service are untouched.
+
+### Pins, mutants, open
+
+- Pins `test/world/road/roadlook.test.js` (13, the last with ARENA2). Mutants `tools/mutants/roadlook.json` (62).
+- PIN MOVED: `test/render/boot2.test.js` the boot's reach 87 -> 89 (roadEdgeGlsl.js and roadEdge.js, importing only what
+  the path holds); `test/systems/ecotone1.test.js` the ecotone's sample now after the road's edge line;
+  TAMRIEL_ROADS_VERSION 7 -> 8 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`,
+  `test/world/road/river_fords.test.js`); VOYAGER1's version record re-aimed by content (`tools/mutants/voyager.json`);
+  VOYAGER1's cite of the land's call re-aimed at its new line.
+- Open: a ferry over the Niben (the ports' lane); the places rolled inside carved lakes; the game past the Bay was not
+  booted headless (J6) - the probe draws the pixels' tiles and the bridges' meshes, not a booted world; a bridge is a
+  pixel's static, so the far ring past the built pixels does not draw it.

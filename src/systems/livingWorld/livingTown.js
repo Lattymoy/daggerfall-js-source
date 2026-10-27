@@ -44,7 +44,8 @@
 //    talks of it for NEWS_DAYS (`deedNews`): one of its own struck down - and, seen, by whom.
 import { POP_RECYCLE_DISTANCE, maxPopulationFor, popAllowChange } from '../town/townPopulation.js';
 import { PERSON_MOVE_SPEED } from '../../characters/mobile/mobilePerson.js';
-import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
+import { townPlaces, townPlacesSteps, exitToward, harbourDock, streetGeometry } from './places.js';
+import { stepsBreathing } from '../../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner
 import { townCensus, quarterCensus, isHome, watchShiftSize } from './census.js';
 import { isCapitalPlaceId } from '../../world/capitalLane.js';   // IC-GRAND: a capital's slice a town of quarters
 import { dayPlan, entryAt, isOutdoor, walkMinutes, DAY_START_MIN, DAY_MIN, GUILD_DAY_OFFSETS } from './dayPlan.js';
@@ -248,6 +249,21 @@ export function townChapters(places, temples = false) {
  *   politeness gate, a pause)
  */
 
+/** IC-GRAND x THE LIVING WORLD: how a town's places are read - a capital's slice a town of quarters (places.js); IC-STUTTER:
+ *  the constructor's and livingTownPlaces' one law. @param {{ town: { mapId: number } }} o */
+export const livingPlacesWay = (o) => ({ quarters: isCapitalPlaceId(o.town.mapId) });
+/**
+ * IC-STUTTER (2026-10-27, the owner: "Traveling in the Imperial City at x60 presents really bad stuttering"; bible/03-World/
+ * Arena-Provinces.md IC-STUTTER): A TOWN'S PLACES MADE A STEP AT A TIME - the constructor's own (townPlaces over the
+ * town's grid, every quarter's again: 0.1-0.4 s of one task on a near slice of the Imperial City) through `breathe` (the
+ * pixel's build's breather), handed to it as `o.places`. The same places.
+ * @param {any} nav @param {{ town: { mapId: number }, doors: readonly any[], buildings: readonly any[] }} o
+ * @param {() => Promise<unknown>} breathe
+ */
+export function livingTownPlaces(nav, o, breathe) {
+  return stepsBreathing(townPlacesSteps(nav, o.doors, o.buildings, livingPlacesWay(o)), breathe);
+}
+
 export class LivingTown {
   /**
    * @param {any} nav - the town's CityNavigation
@@ -255,6 +271,7 @@ export class LivingTown {
    *   town: import('./census.js').LwTown,
    *   buildings: readonly import('./census.js').LwBuilding[],
    *   doors: readonly { key: number, x: number, z: number, nx: number, nz: number }[],
+   *   places?: import('./places.js').Places,
    *   makePerson: (archive: number, guard: boolean) => any,
    *   clock: () => number, rate: () => number, mpm: number,
    *   suppressSpawns?: () => boolean,
@@ -309,7 +326,7 @@ export class LivingTown {
     this.nav = nav;
     this.o = o;
     // IC-GRAND x THE LIVING WORLD: a capital's slice is cut from a city at its pixel's lines - a town of quarters (places.js)
-    this.places = townPlaces(nav, o.doors, o.buildings, { quarters: isCapitalPlaceId(o.town.mapId) });
+    this.places = o.places ?? townPlaces(nav, o.doors, o.buildings, livingPlacesWay(o));   // IC-STUTTER: made beforehand a step at a time (livingTownPlaces), or here
     /** CHAP5b: a hall's chapter's band by its guild's faction, as the host's sheet said it this clock minute - null with no
      *  sheet (dayPlan's bandOf): a plan is made of the bands its stamp names. */
     this._bandOf = o.chapterOf ? (/** @type {number} */ f) => this._chapterRead().bands.get(f) ?? null : null;

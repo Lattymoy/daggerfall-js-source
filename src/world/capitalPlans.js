@@ -48,6 +48,17 @@ export const MOURNHOLD = Object.freeze({
   palace: Object.freeze({ x: 0, z: 0, w: 84, d: 56, h: 18, domeR: 12, sideR: 8, tower: 4.5, towerH: 34 }),
   bazaar: Object.freeze({ x: 1.5 * BLOCK_M, z: BLOCK_M, w: 76, d: 186, cols: 2, rows: 7, stall: 12, deep: 8, poles: 3.2 }),
   wall: Object.freeze({ half: 330, thick: 5, h: 13, gate: 10, gateH: 9, tower: 6.5, towerH: 18, every: 110 }),
+  // CAPITAL-TREES: THE CITY'S OWN TREES in their planters (world/capitalMournhold.js buildMournholdGardens) - the plaza's
+  // rings about its statue (`rings`: [radius, how many, the first's bearing in degrees off the axes]) and its allees by
+  // its four ways out past its ring wall (`allee`: [radius, metres off the way]), its corners (`corners`, on the
+  // diagonals); the Temple Courtyard's rows either side of its pools (`court`: [x off the pool's middle, the rows' z]).
+  // Each tree its `variants`' own, turned and sized by its hash (`scale`); a planter `planter` across, its tree `height`
+  // (its fork and limbs by it - its top sprays stand some 3 m over it).
+  gardens: Object.freeze({
+    rings: Object.freeze([Object.freeze([32, 8, 22.5]), Object.freeze([54, 12, 15])]), allee: Object.freeze([86, 9]), corners: 118,
+    court: Object.freeze({ off: Object.freeze([-14, 14]), z: Object.freeze([-146, -132, -118]) }),
+    variants: 4, scale: Object.freeze([0.9, 1.12]), planter: 2.3, height: Object.freeze([9, 11]),
+  }),
 });
 /** The plaza's own ground: a garden's grass, paved round the statue, along its two axes and at its ring wall's foot. */
 function mournholdTile(dx, dz) {
@@ -56,14 +67,28 @@ function mournholdTile(dx, dz) {
   const r = Math.hypot(x, z);
   return r < P.paved || Math.abs(x) < P.path || Math.abs(z) < P.path || Math.abs(r - P.r) < 3 ? 3 : 2;
 }
-/** The climate's own trees (scenery records - world/tamrielCapitals.js's gardens'), and the plans' hash's salt. */
-const TREES = Object.freeze([12, 15, 16, 18]);
+/** The plans' hash's salt. */
 const SALT = 0x3a6e;
-/** The garden's trees: one tile in five of its grass off its hash, clear of the statue's court. */
-function mournholdTree(dx, dz) {
-  if (mournholdTile(dx, dz) !== 2 || Math.hypot(dx - MOURNHOLD.plaza.x, dz - MOURNHOLD.plaza.z) < MOURNHOLD.plaza.paved + 6) return -1;
-  const h = hash32(SALT, Math.floor(dx), Math.floor(dz), 9);
-  return h % 5 === 0 ? TREES[(h >>> 3) % TREES.length] : -1;
+/**
+ * CAPITAL-TREES: MOURNHOLD'S TREES, each {x, z, yaw, scale, variant} in the anchor's metres (x east, z south) - the city's
+ * own, in their planters (`gardens`), where TESA-LORE had planted the Bay's scenery trees (records 12, 15, 16 and 18 of
+ * the climate's nature archive - a fir and an oak of the Iliac Bay's woods, one tile in five of the plaza's grass): the
+ * plaza's rings about its statue and its allees and corners past its ring wall, and the Temple Courtyard's rows either
+ * side of its pools (UESP's Tribunal: "an enclosed area with paths, water, and trees"). Pure.
+ */
+export function mournholdTreeSites(M = MOURNHOLD) {
+  const G = M.gardens, P = M.plaza, out = [];
+  const put = (x, z) => {
+    const h = hash32(SALT, Math.round(x * 4), Math.round(z * 4), 11);
+    out.push({ x, z, yaw: ((h & 1023) / 1024) * Math.PI * 2, scale: G.scale[0] + (G.scale[1] - G.scale[0]) * (((h >>> 10) & 1023) / 1023), variant: (h >>> 20) % G.variants });
+  };
+  for (const [r, n, first] of G.rings) for (let i = 0; i < n; i++) { const a = ((first + (i * 360) / n) * Math.PI) / 180; put(P.x + Math.cos(a) * r, P.z + Math.sin(a) * r); }
+  const [ar, off] = G.allee;
+  for (const [ax, az] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (const side of [1, -1]) put(P.x + ax * ar + az * side * off, P.z + az * ar + ax * side * off);
+  for (const [sx, sz] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) put(P.x + (sx * G.corners) / Math.SQRT2, P.z + (sz * G.corners) / Math.SQRT2);
+  const C = M.court, half = C.poolW / 2;
+  for (const px of C.pools) for (const o of G.court.off) for (const z of G.court.z) put(px + Math.sign(o) * (half + Math.abs(o) - 2), z);
+  return out;
 }
 function mournholdClosed(dx, dz) {
   const M = MOURNHOLD, P = M.plaza, x = dx - P.x, z = dz - P.z, r = Math.hypot(x, z);
@@ -73,7 +98,7 @@ function mournholdClosed(dx, dz) {
   if (M.court.pools.some((px) => inBox(dx, dz, px, (M.court.poolZ[0] + M.court.poolZ[1]) / 2, M.court.poolW, M.court.poolZ[1] - M.court.poolZ[0]))) return true;
   return inBox(dx, dz, M.palace.x, M.palace.z, M.palace.w, M.palace.d);
 }
-export const MOURNHOLD_BLOCKS = ownBlocks('MH', ['F0', 'F1', 'F2', 'F3', 'R0', 'R1', 'R2', 'R3', 'B0', 'P0', 'P1', 'B1', 'P2', 'P3'], mournholdTile, mournholdClosed, mournholdTree);
+export const MOURNHOLD_BLOCKS = ownBlocks('MH', ['F0', 'F1', 'F2', 'F3', 'R0', 'R1', 'R2', 'R3', 'B0', 'P0', 'P1', 'B1', 'P2', 'P3'], mournholdTile, mournholdClosed);   // CAPITAL-TREES: no tree law - the city's own trees stand on its gardens' model (mournholdTreeSites)
 export const MOURNHOLD_PLAN = plan([
   'G G G G G G G G',
   'G RESI TEMP F0 F1 RESI RESI G',
@@ -153,15 +178,28 @@ export const ALINOR_HARBOUR = districtAt(ALINOR_DISTRICTS, 3, 8);
 // AUDIT TESA II C4: THE WALKWAY CLEAR ALL THE WAY UP - it climbed into the deck of every platform it reached (no way
 // through: a body's headroom to 0.17 m over its last 9 to 14 m), through the buttress roots at its foot and under two
 // limbs: each platform's deck open over its last `platformGap` (radians) before the landing, the huts round from it
-// (`hutFrom`), the roots on the arc the walkway's first rise has cleared (`rootArc`, radians), the limbs from above the
-// highest platform (`limbFrom`) - a body's 2 m over the whole climb (test/world/audittesa2c_capitals.test.js).
+// (`hutFrom`), the roots under the walkway's first rise (CAPITAL-TREES: each held `rootUnder` under it, all round on
+// `rootArc`), the limbs from above the highest platform (`limbFrom`) - a body's 2 m over the whole climb
+// (test/world/audittesa2c_capitals.test.js).
+// CAPITAL-TREES (KPbICA, forwarded by the owner: "The main trees in Falinesti and Mournhold should get some love. They are
+// too draftish for now"): THE OAK A FINISHED LANDMARK (world/capitalFalinesti.js) - its bark fluted (`bark`: `sides`
+// corners a ring, every third a furrow `furrow` in, the rest ridges up to `ridge` out, shares of its radius, the whole
+// turning `twist` radians a metre; its `leader` on over the trunk's last level into the crown, [y, r]); its buttresses
+// all round its foot (`roots` on `rootArc` but clear of the porch by `rootPorch` radians), each up to `rootTop` on the
+// trunk and always `rootUnder` metres under the walkway climbing over it, `rootThick` across at the trunk and at its edge
+// out to `rootOut`; `boughs` living limbs carrying every platform (`boughArc` of its turn - the walkway climbing to it more
+// than 2 m under their wood there), each leaving the trunk `boughDrop` under the deck and reaching `boughOut` past the
+// trunk, rising `boughRise` over the deck to its leaves, and one more over the deck at `boughOver` (radians), leaving the
+// trunk `boughLift` over it - the crown's lower storeys; the crown's `cap` masses over the leader. AUDIT TESA II C4's walkway, platforms, huts and limbs stand as they stood.
 export const FALINESTI = Object.freeze({
   trunk: Object.freeze([[-3, 34], [20, 28], [60, 22], [100, 18], [140, 15], [170, 12]]),
-  roots: 10, rootOut: 64, rootArc: Object.freeze([2.25, 6.05]),
+  bark: Object.freeze({ sides: 33, furrow: 0.07, ridge: 0.028, twist: 0.0022, leader: Object.freeze([Object.freeze([182, 10]), Object.freeze([194, 8]), Object.freeze([206, 6])]) }),
+  roots: 12, rootOut: 64, rootArc: Object.freeze([0.45, 6.1]), rootTop: 26, rootUnder: 0.8, rootThick: Object.freeze([5, 1.2]), rootPorch: 0.34,
   limbs: 9, limbFrom: Object.freeze([137, 160]), limbOut: Object.freeze([95, 140]), limbTop: Object.freeze([152, 186]),
-  crown: Object.freeze({ y: 178, r: 160, blobs: 26 }),
+  boughs: 3, boughArc: Object.freeze([0.45, 3.7]), boughDrop: 10, boughOut: Object.freeze([36, 46]), boughRise: Object.freeze([6, 12]), boughOver: 4.85, boughLift: 7.5,
+  crown: Object.freeze({ y: 178, r: 160, cap: 5 }),
   platforms: Object.freeze([30, 62, 94, 126]), platformW: 12, platformGap: Math.PI / 4,
-  spiral: Object.freeze({ gap: 2.5, w: 4, rail: 1.1, steps: 48 }),
+  spiral: Object.freeze({ gap: 2.5, w: 4, rail: 1.1, steps: 48, post: 4, knee: 6, kneeOver: 9 }),   // CAPITAL-TREES: a rail post every `post` steps, a knee under it every `knee` where the turn stands `kneeOver` over its landing
   huts: 6, hutR: 3, hutH: 5, hutAt: 8.2, hutFrom: Math.PI / 24, forkDeck: 7.5,
   foot: 40, soil: 70,
   porch: Object.freeze({ w: 8, d: 10, h: 9, roof: 3, into: 4, door: Object.freeze([4, 6.5]) }),   // WW7-4: the tree's halls' porch (its depth into the trunk's foot)
@@ -297,3 +335,18 @@ export const HELSTROM_DISTRICTS = cells({
   'Northmarsh': [[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [1, 2], [2, 2], [5, 2], [6, 2], [1, 3], [2, 3], [5, 3], [6, 3]],
   'Southmarsh': [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6]],
 });
+
+// ---------------------------------------------------------------- the gates
+
+/** ROAD-FOLLOW (2026-10-27, the owner: "Also, city gates do not line up with the roads"; Town-Shapes.md ROAD-FOLLOW): each
+ *  plan's gates by the side of its span a road comes in by - the middle of its opening in the wall, the anchor's metres
+ *  (x east, z south), off the same measures the walls are cut at (world/capitalMournhold.js, capitalAlinor.js,
+ *  capitalTorval.js, capitalHelstrom.js): the roads' gate pixel stands off its slice and the capital lays the road on to it
+ *  (world/capitalApproaches.js). Mournhold's in each side's middle; Alinor's and Torval's north gate on its lane, east and
+ *  west in their sides' middles; Helstrom's on the anchor's line. */
+const at = (x, z) => Object.freeze([x, z]);
+export const MOURNHOLD_GATES = Object.freeze({ N: at(0, -MOURNHOLD.wall.half), E: at(MOURNHOLD.wall.half, 0), S: at(0, MOURNHOLD.wall.half), W: at(-MOURNHOLD.wall.half, 0) });
+const landwardGates = (W) => Object.freeze({ N: at(W.northGate, W.north), E: at(W.east, (W.south + W.north) / 2), W: at(W.west, (W.south + W.north) / 2) });
+export const ALINOR_GATES = landwardGates(ALINOR.wall);
+export const TORVAL_GATES = landwardGates(TORVAL.wall);
+export const HELSTROM_GATES = Object.freeze({ N: at(0, HELSTROM.palisade.north), S: at(0, HELSTROM.palisade.south) });

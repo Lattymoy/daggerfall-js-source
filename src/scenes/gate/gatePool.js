@@ -38,6 +38,7 @@ import { gateArt } from '../../world/gate/gateArt.js';
 import { GatePassRenderer, GATE_PASS_PROGRAMS, gateSpinRate } from '../../render/gate/gatePass.js';
 import { compiledPass } from '../../render/glProgram.js';   // SHADER-STALL: the fire built once its programs are done
 import { gateSceneXZ } from '../../systems/gate/gateOmen.js';
+import { setEventGround } from '../../systems/eventGround.js';   // RPT1026-EVENTS GATE-WAY: the gate's foot an event's ground
 import { gateYaw, gatePhase, gateCountdown, countdownText, countdownWords, gateModsOf, gatePortentsOf, gateBossOf, GATE_RISE_MS, GATE_COLLAPSE_MS } from '../../net/gate/gateLaw.js';
 import { marksCardModel } from '../../ui/gate/gateMarksView.js';   // WB9a: tonight's marks, over the screen before the gate is entered
 import { trs } from '../../world/mat4.js';
@@ -179,6 +180,9 @@ export function createGatePool({
   // - the beacon a frame or two later, never a frame frozen on their compile
   const firePass = compiledPass(gl, GATE_PASS_PROGRAMS, () => new GatePassRenderer(gl, profile), (e) => console.warn('[gate] the fire would not build', e?.message ?? e));
   let place = null, g = null;
+  // RPT1026-EVENTS GATE-WAY (systems/eventGround.js): the gate's foot is an event's ground while it stands - gatePlacement's
+  // place, rising to collapsing, a beacon alone among them (its fire is coming): no portal there, no other player's wagon
+  setEventGround('gate', () => (place ? [place.origin] : null));
   let open = 0;
   /** AUDIT WB C6: the vortex's turn, accumulated at the open's rate as it eases (a turn in [0, 1)) */
   let spin = 0;

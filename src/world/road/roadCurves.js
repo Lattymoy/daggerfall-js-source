@@ -23,8 +23,8 @@
 //
 // The curves are the one law of the road's line past the Bay: the painter paints them (paintCurvedPaths, at the kernel's
 // seam: world/terrain/terrainGen.js hands it the pixel and the layer's reader), the verge measures from them
-// (curveDistance, world/road/roadBand.js roadRoom); Travel View's walk still aims pixel middle to middle (curveApex is
-// the point a walk along them would turn at - not wired, bible/03-World/Roads.md VOYAGER). Each pixel's curves are its own
+// (curveDistance, world/road/roadBand.js roadRoom), and the Overworld's walk and drawn line walk them (ROAD-FOLLOW:
+// systems/travel/roadLine.js, a leg that turns ending at its curve's apex - curveApex's point). Each pixel's curves are its own
 // byte's, so a band that spills over an edge or a corner into the next pixel is painted there from its neighbour's byte -
 // seamless, with no corner byte.
 //
@@ -294,7 +294,7 @@ export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteA
 }
 
 /**
- * VOYAGER2 (for VOYAGER2.1's walk, not wired yet): WHERE A WALK ALONG A CURVED ROAD TURNS - the point of a pixel's curve halfway between the bit it comes in
+ * VOYAGER2: WHERE A WALK ALONG A CURVED ROAD TURNS (ROAD-FOLLOW: the point roadLine.js's legs end at, its curve's own middle) - the point of a pixel's curve halfway between the bit it comes in
  * by and the bit it leaves by (tiles, the pixel's frame): the bend's own apex, on the painted road; the centre for a way
  * straight through or a pair the byte draws no curve for (a T's arm).
  * @param {number} bits @param {number} inBit the edge it comes in by @param {number} outBit the edge it leaves by

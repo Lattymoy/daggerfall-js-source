@@ -37,7 +37,8 @@
  {
   "name": "GRASS3-the-grass-placer-goes-back-to-its-own-bilinear-read",
   "file": "src/scenes/world.js",
-  "old": "        const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);",
+  "old": "        const h = walkGroundAt(p.samples, lx, lz);",
+  "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the grass reads the ground's one law, walkGroundAt (stride 1, the ring it stands on), where it read surfaceHeightAt at its pixel's stride.",
   "new": "        const hDim = HEIGHTMAP_DIMENSION; const s2 = p.samples;\n        const fx = lx / 6.4; const fz = lz / 6.4; const x0 = Math.min(hDim - 2, tx); const z0 = Math.min(hDim - 2, tz); const ax = fx - x0; const az = fz - z0;\n        const h = ((s2[x0 * hDim + z0] * (1 - ax) + s2[(x0 + 1) * hDim + z0] * ax) * (1 - az) + (s2[x0 * hDim + z0 + 1] * (1 - ax) + s2[(x0 + 1) * hDim + z0 + 1] * ax) * az) * scale;",
   "tests": ["test/world/terrain/grass3_surface.test.js"]
  }

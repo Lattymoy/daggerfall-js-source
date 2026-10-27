@@ -174,8 +174,8 @@
  {
   "name": "WW7-4-made-unbound",
   "file": "src/formats/worldData/worldDataReplacement.js",
-  "old": "b.block ??= b.make ? b.make(_blocksFile) :",
-  "new": "b.block ??= b.make ? b.make(null) :",
+  "old": "  if (b.make) return (b.block = b.make(_blocksFile));",
+  "new": "  if (b.make) return (b.block = b.make(null));",
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"
   ]
@@ -183,8 +183,8 @@
  {
   "name": "WW7-4-made-each-read",
   "file": "src/formats/worldData/worldDataReplacement.js",
-  "old": "  b.block ??= b.make ? b.make(_blocksFile) :",
-  "new": "  b.block = b.make ? b.make(_blocksFile) :",
+  "old": "  if (b.block) return b.block;",
+  "new": "  if (b.block && !b.make) return b.block;",
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"
   ]
@@ -362,7 +362,7 @@
  },
  {
   "name": "WW7-5-a-child-lost",
-  "file": "server-account/migrations/0180_world_books.sql",
+  "file": "server-account/migrations/0186_world_books.sql",
   "old": "FROM market_reports_keep k WHERE EXISTS (SELECT 1 FROM market_listings l WHERE l.id = k.listing);",
   "new": "FROM market_reports_keep k WHERE 0;",
   "tests": [
@@ -371,7 +371,7 @@
  },
  {
   "name": "WW7-5-a-trigger-dropped",
-  "file": "server-account/migrations/0180_world_books.sql",
+  "file": "server-account/migrations/0186_world_books.sql",
   "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed ",
   "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed_lost ",
   "tests": [
@@ -380,7 +380,7 @@
  },
  {
   "name": "WW7-5-the-bound-the-bay-s",
-  "file": "server-account/migrations/0180_world_books.sql",
+  "file": "server-account/migrations/0186_world_books.sql",
   "old": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 70),\n  recipe",
   "new": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),\n  recipe",
   "tests": [

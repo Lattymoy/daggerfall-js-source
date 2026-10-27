@@ -123,7 +123,8 @@ test('SHIPYARDS THE STOCK: every hull Come Sail Away builds, cheapest first, at 
     assert.equal(s.line, HULL_LINES[hull]);
   }
   assert.deepEqual(SHIPYARD_HULLS.map((h) => shipSpec(h).hands), [0, 0, 4, 5, 8], 'the Rowboat and the Large Boat none; a Small Ship four, a Carrack five, a Large Galley eight');
-  assert.equal(shipSpec(3).ram, undefined, 'BOARD-MAGNET: no ship is sold with a ram - the ram is gone');
+  assert.equal(shipSpec(3).ram, true, 'RAM-RETURN: the galley\'s ram');
+  assert.deepEqual([0, 1, 2, 4].map((h) => shipSpec(h).ram), [false, false, false, false], 'and no other hull\'s');
 });
 
 test('SHIPYARDS THE PRICE: the counter\'s one law at a yard\'s quality and index - calculateCost, then GetTradePrice\'s Buy and Sell with the buyer\'s skills; a ship\'s worth her price and half her refits\' gold, by her hull\'s state down to SALE_FLOOR (mutants: the refits whole, the floor gone)', () => {

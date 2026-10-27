@@ -274,7 +274,10 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNatur
 - **The walkers** (`world/townShape.js` shutOffGround, the terrain job's `townGround` - townGroundMask's): a walk grid cell
   whose tile is none of the town's ground walks no one - a town past the Bay's open cells, a Bay town's square past its
   outline, its tiles the sea took back (TS2); `scenes/pixelBuild.js` shuts it as it builds the grid. Four cells a tile, the
-  grid's rows the stamp's (`setLocationTiles`: a block's tile (tx, 15 - ty)), pinned against both.
+  grid's rows the stamp's (`setLocationTiles`: a block's tile (tx, 15 - ty)), pinned against both. TOWN-BOARDS
+  (2026-10-27, `03-World/Urban-Fabric.md` section 9): the law is one function, `world/townShape.js` onTownTile - the
+  walkers are shut by it and URBANIZER's fabric is planned on it, so no fence of a yard runs down the land past the ground
+  (and the fabric reads the painted paths by it, TS10 below).
 - **The wall** (`world/townWalls.js` townWallCells, townWallCellsOf): a city past the Bay's wall as cells of its town map
   (64 a block, 1.6 m) - a length its stretched 25.6 m by 9.6, a tower 16.8 m square, each turned to its line. Its walkers
   never cross it (shutTownWall - its gates shut, as Daggerfall's gate blocks carve theirs); its town map draws it in
@@ -438,9 +441,106 @@ every way (N, S, E, W, NE, SW): 8 of 373 yards stood on a painted road (Ripwark'
   pixel build wraps the walk shut in URBANIZER U3's (`world/urban/townFabricStand.js` fabricWalkShut), a new function
   that carried no `key`, so the memo read 'shut' whatever the roads and kept the yards placed before them - on the Bay
   and past it. The wrapper's key is now the town's shut's and whether its fabric stands, read when asked.
+- **TOWN-BOARDS 2 - the fabric's yards** (2026-10-27, `03-World/Urban-Fabric.md` section 9): URBANIZER's fabric read
+  Daggerfall's own roads alone, so a painted road over a cell it plans could be a yard's grass, fenced across. It reads the
+  same paths now (`world/urban/townFabric.js` fabricGrid `onRoad`, through `world/townShape.js` onTownTile - the tile law
+  paveOnGrid reads too): a painted cell is a road of the town's, and no yard, fence or woodpile of the fabric stands on it.
+  paveOnGrid and townWalkShut are unchanged.
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from CityNavigation.SetRMBData's weights, which read a block's own
 ground tile alone - a road the terrain painted on a town's ground is its grid's road. Tests `test/world/townpaths.test.js`
 (6, its last on ARENA2; F3's the fabric's key moving with its roads). Mutants `tools/mutants/townpaths.json` (10, all dead). PINS MOVED: `test/world/townfollow.test.js`
 (the walk shut reads the paths and paves them between its ground and its wall); `townfollow.json` TF-the-wall-unwired and
 TF-the-ground-unshut re-aimed by content (dead).
+
+## 13. ROAD-FOLLOW - a walled town's gates where its roads come in; a capital's road on to its gate (BUILT)
+
+The owner, 2026-10-27: *"Also, city gates do not line up with the roads"*; then *"No band aids or half assed work"* -
+every walled town's gates meet its roads, everywhere. The Overworld's half of the record is `06-Systems/Travel-View.md`
+ROAD-FOLLOW.
+
+**Measured first** on the freeware (every walled city's wall made as the game makes it, against the roads the terrain
+PAINTS on its pixel - the terrain job's own path tiles; a gate has its road where a painted road lies in a road's width
+straight out of its front within 48 m; a road runs into the wall where a painted tile lies under a length or a tower and
+the road it is part of reaches no gate within 40 m):
+
+| | walled | gates | gates with a road | lengths and towers a road runs into | towns at fault |
+| --- | --- | --- | --- | --- | --- |
+| the Bay's (TS7) | 410 | 1,640 | 90 | 2,712 of 51,155 | 410 |
+| past the Bay (TS4) | 60 | 240 | 7 | 248 of 7,632 | 60 |
+
+and the capitals' 14 road gates in a wall: each road's paint stopped at the span's edge, 79.6 to 200 m short of its gate
+and up to 160 m to one side of it (Mournhold's four and Helstrom's two 79.6 and 82.4 m short; Alinor's and Torval's north
+gates 80.4 m short and 158 and 160 m aside, their east and west 34 m aside; Solitude's 96 m short and 113.6 m aside; the
+Imperial City's Talos Bridge landing 200 m in).
+
+**Which side was placed without reading the other.** TS4 and TS7 stand a wall's gates at the bearings of its template's
+gate blocks (Daggerfall's WALLAA08-11 in the template's ring, wherever Daggerfall put them), and the terrain paints each
+road's arm in from its pixel's edge on its own compass bearing (Basic Roads' bands to the middle on the Bay; VOYAGER2's
+curves past it) - neither reads the other. A capital's road ends at its gate pixel's arm (`tamrielCapitals.js`
+capitalGates: the side's middle) and its plan's gates are where its streets need them.
+
+**Which side moves, and why.** The gates move to the roads, never the roads to the gates. The roads are everyone's: the
+planner and Travel Options walk them (Travel-View ROAD-FOLLOW), the maps draw them, the Bay's are Basic Roads' bytes and
+painter to the byte (ROADS 23's oracle compares them), and past the Bay they are the land's law built region by region in
+a worker under a key (VOYAGER) - a road bent to a town's gate would leave every one of them. A wall is its town's own: TS4
+and TS7 lay it on its outline and only borrowed its gates' bearings from the template, so moving them moves only the wall
+and what stands at its gates (TS7's dressing, its markers). A capital is its plan: its gates are on its lanes (Alinor's
+north gate off its palace's height, Solitude's between the tavern's block and Castle Dour), so there the CITY lays the
+road on from where it ends to its gate - its own ground, as Daggerfall's walled cities' gate blocks carry their roads
+through their ring.
+
+**What holds now.**
+
+- **The walled towns' gates** (`world/townWalls.js`): its pixel's painted arms (`townWalls.js:"export function armLines(bits, bit, curved) {"`:
+  the Bay's band, past it each curve VOYAGER2 draws from that edge), each walked in from its edge to where it first
+  crosses the wall's line (`townWalls.js:"export function roadGatePoints(pts, origin, paths) {"`); arms crossing nearer
+  than GATE_ARMS_MERGE (two lengths, 51.2 m) along the line one gate at their middle; each gate centred on its crossing
+  (`wallPieces`' `onLine`), two a length of wall apart at the least. The template's bearings only where no arm reaches the
+  wall (a town no road comes to), as before.
+- **A wall waits for its roads.** Its gates need its pixel's painted roads, and they land after the town can first be
+  read - the Bay's network after the boot, the roads past the Bay a region at a time. So the host hands the walls a reader
+  (`townWalls.js:"export function townWallPathsReader({ bay, landedIn = null, byte = arenaRoadByte, join = arenaJoinByte }) {"`,
+  wired in `scenes/tamrielPlacesHost.js`): null while the pixel's roads are not known. While they are not, the wall is
+  not made - its carrier block provisional (open ground, no model, no marker - the world-data door builds it again at
+  its next read: `worldDataReplacement.js:"if (!json?.Provisional) b.block = block;"`), the town's fabric plans no streets
+  (`townFabricStand.js:"if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;"`), and once they land
+  its pixel is built again (`tamrielSweepsHost.js:"|| townWallReadyAt(p.px, p.py);"`, TESA4's stale law).
+- **A capital's approaches** (`world/capitalApproaches.js`): each plan names its road gates (`gateAt`, the middle of each
+  opening, off the measures its wall is cut at - `capitalPlans.js:"const landwardGates = (W) =>"`, Mournhold's,
+  Helstrom's, Solitude's main gate, the Imperial City's Talos Bridge landing); the road's gate pixel stands off the slice
+  the gate stands in (`capitalApproaches.js:"export function capitalGateSlice(cap, D, side) {"`); and the capital lays
+  two tiles of the road's own surface (the painter's record 46) from the arm's end - the middle of the gate pixel's side -
+  straight in to a gate on its line, else in to APPROACH_SKIRT (19.2 m) outside the wall's line, along it, and in to the
+  gate (`capitalApproaches.js:"export function capitalApproaches(cap, D) {"`). Its gardens lay it over their rim too (the
+  rim's no ground elsewhere), no tree on it (`tamrielCapitals.js:"tile: (x, z) => (way(x, z) ? APPROACH_TILE : rim(x, z) ? CAPITAL_NO_GROUND : tile(x, z)),"`);
+  the Imperial City's crosses four cells of the open ground past its lake, each now a block of its own
+  (`capitalApproachName`), the shared open cell everywhere else. Every approach lies on gardens and open ground, under no
+  model. Falinesti has no wall: its four roads end at its span's edge, its forest.
+
+**Measured after**, the same count:
+
+| | walled | gates | gates with a road | lengths and towers a road runs into | towns at fault |
+| --- | --- | --- | --- | --- | --- |
+| the Bay's (TS7) | 410 | 1,513 | 1,512 | 0 | 1 |
+| past the Bay (TS4) | 60 | 94 | 94 | 2 | 1 |
+
+and every capital's 14 road gates met: the road's arm at its gate pixel (all 18 of the capitals' gate pixels carry their
+arm into the span on the freeware), then the capital's approach every metre to the gate. The two left: Peno's one gate
+whose road is a track crossing its wall at a corner, its painted tiles running along the wall rather than out of the
+gate; and Woodhearth's one road, which comes in through its gate and runs on to its pixel's middle within a few metres of
+the wall's own line where it bends back inside - one and two tiles of the road's edge under a length and a tower. Each
+road comes in through a gate and each gate has its road.
+
+- **The four hosts**: none grows - the places host hands the reader in one statement beside the roads host it already
+  makes (`scenes/tamrielPlacesHost.js`), the sweeps host's stale law asks it (`scenes/tamrielSweepsHost.js`), the world
+  host, `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` are untouched. Nothing crosses the
+  wire: a wall and an approach are each client's own build of the same data.
+- **The departure, named**: DFU stands Daggerfall's own walled cities, their gate blocks where the template has them, and
+  Basic Roads paints to the location's rect; TS4 and TS7 (ours) stood their gates by those bearings, and now by the roads;
+  the capitals are ours whole (TESA10 on).
+- Pins `test/world/road_gates.test.js` (11: the arms, the crossings, the gates on the line, a city's wall on its roads, the
+  wall that waits, the door, the reader, the wiring, the capitals' gates, their approaches, their blocks). Mutants
+  `tools/mutants/road_follow.json` (the walls' and the capitals' records among its 52); re-aimed by content:
+  AUDIT-TESA-II-C1-rim-laid-ground, AUDIT-TESA-II-C1-rim-wooded, IS-the-open-cell-unnamed, TESA14-the-gate-on-the-span,
+  TESA5-the-bay-never-stale, AUDIT-TESA-A6-2-eager-door, WW7-4-made-unbound, WW7-4-made-each-read.

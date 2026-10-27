@@ -378,6 +378,12 @@ the six waters, no strait anywhere, the fit to the cell). `test/world/tamriel3.t
 `tools/mutants/tamriel3.json`'s fit-on-count, off-the-picture and coast records re-aimed by content (the coast's now
 the smoothing's, with this file's pins beside it).
 
+INTRO4 (2026-10-26, `10-UI/UI-Arc.md` INTRO4): THE FILM PULLS BACK TO THIS TAMRIEL. The intro's last frame is the authored
+continent of `world/tamriel/tamrielGeography.js` - its rings, ranges, rivers, cities and names, nothing traced off the
+player's picture - rasterised once by `ui/intro/introTamriel.js` (`buildTamrielField`), with INTRO2's authored bay drawn
+in the Bay's hole. The film reads the geography and writes nothing back: the world's continent (TAMRIEL3's trace and
+fit) is untouched.
+
 ## TAMRIEL-RELIEF - the continent's own heights (2026-10-24)
 
 The owner, with a heightmap of the whole continent: *"Heres the entire tamriel height map btw"*, then *"This is the
@@ -864,7 +870,9 @@ very monotonous noise"*. And for Cyrodiil: *"For Cyrodill I would suggest to use
   - **No engine approximation** (AUDIT LANDFORMS III A8's sweep holds the file). The frames' directions are six fixed
     angles with exact cosines.
   - **The large map past the Bay is a swell.** `tamrielGround.js` tamrielLargeMap: LARGE_SWELL, a slow Perlin field
-    about the old mean, never a byte between neighbours, where the lattice hash stepped up to nine.
+    about the old mean, never a byte between neighbours, where the lattice hash stepped up to nine. (SUPERSEDED by
+    RELIEF-PEAKS, below: the large map is WOODS.WLD's own law of the small byte, a third of the land's height - the swell
+    stood the continent 50 to 540 m under the Bay at the same byte.)
   - **After.** The ground's mean against the heightmap per pixel (400 pixels past the Bay, each tree against its own
     byte law): Pearson 0.9989 against HEAD's 0.9990, RMSE 37.8 m against 37.4 m, bias 23.1 m against 23.5 m. Relief
     inside a pixel: median 15.7 m both, 90th percentile 30.5 m against 27.7 m. The macro is kept, and the shapes
@@ -940,7 +948,8 @@ very monotonous noise"*. And for Cyrodiil: *"For Cyrodill I would suggest to use
   - The trace's own inland lakes are holes at sea level, with the land round them standing high. They are the
     picture's water and the kernel's.
   - The far ring (`render/farRing.js` ringHeight) still reads reliefByteHeight with no `beyond`. Past byte 127 the
-    horizon stands the old squashed tops until it passes `byteBeyond(x, y)` (the far view's lane).
+    horizon stands the old squashed tops until it passes `byteBeyond(x, y)` (the far view's lane). (Closed: BREATHTAKER2
+    ON THE HORIZON passed it; RELIEF-PEAKS, below, stands the far views on the kernel's own ground.)
   - The held map draws the trace's water and not yet these rivers (`tamrielWaters()` is there for it).
 
 ### Pins
@@ -1110,3 +1119,137 @@ Recorded:
   half-sides and the old line's own fill (the mask's fill is `audittesa2z.json`'s).
 
 Section A, SMOOTH-LAND (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
+
+## RELIEF-PEAKS - the ranges past the Bay stand as mountains, Red Mountain a cone (2026-10-27)
+
+KPbICA on the game's Discord, 2026-10-27, forwarded by the owner: *"2) No mountains (screenshot 1). Instead we're
+getting strange looking canyons"*, *"2.1) No 'Red Mountain' in Morrowind"*, *"5) Strange projections above the horizon
+line. Probably because of the part of the renderer that draws details further than loading distance"*. The owner: *"No
+band aids or half assed work"*.
+
+- **What the player saw.** Past the Bay the ranges were low domes, and no mountain stood out of the land. Walls and
+  narrow slots cut through the high ground: the "canyons". Vvardenfell had no volcano. On the horizon, land and trees
+  showed where the ground near them has none.
+- **Measured before** (the freeware's trace and WOODS.WLD, landforms on; the probes are local):
+  - **The ranges spanned a third of the Bay's.** Over 10 km about each summit: Skyrim's summit country 442 m, the
+    Jerall 274 m, Red Mountain 376 m. The Bay's Dragontails span 1,449 m and its Wrothgarians 1,032 m.
+  - **Cause 1: the large map past the Bay was a swell.** DFU's kernel stands the ground on two terms, the small
+    heightmap times 8 and the large map times 4 (src/world/terrain/terrainSampler.js:"export function kernelTerms"). On
+    WOODS.WLD a land pixel's large map is about 1.18 times its small byte up to byte 85, and the byte itself by byte 109
+    (12.2 at byte 12, 47.6 at 40, 82.3 at 70, 100.6 at 85; each byte's quartiles within one of its median). BREATHTAKER3
+    read it as small detail and stood a swell about 4.5 past the Bay. So the same byte stood 50 to 540 m lower past the
+    Bay than on it.
+  - **Cause 2: nothing under the relief's grain.** TAMRIEL-RELIEF's heightmap has a cell every 6.3 km. A byte past the
+    Bay stood within 1.3 of its 15-pixel mean, where WOODS.WLD's mountains stand 4.5 to 10 bytes off theirs.
+  - **Cause 3: the canyons were BREATHTAKER3's frames.** Each lattice node took one unit direction. Where the direction
+    turns fast (a summit, a saddle, the slow field's own turn), the oriented families (ridges, foothills, drumlins,
+    gullies) handed one field to another inside one sample: walls of 80 to 116 m at 85 degrees. About Bruma 4.8% of the
+    ground stood over 37 degrees and 2.0% over 50.
+  - **Cause 4: a wall at the Bay's north edge.** The large map handed over from WOODS.WLD's to the swell at the seam,
+    and the Wrothgarians fell some 600 m in half a pixel.
+  - **Cause 5: Red Mountain was the relief's dome**, 40 bytes over 35 km: its top 2,379 m, 530 m over the land 29 km
+    out.
+  - **Cause 6: the far views stood another ground.** The far ring stood a pixel's own byte at the pixel's centre with no
+    large map: 410 to 500 m off the kernel's mean ground in the continent's ranges, and the Bay's Dragontails some 470 m
+    under it. The far field stood a cell at its highest sample's byte by that law: past the Bay up to 105 m over the
+    ground at its place (29 m on the mean), on the Bay 266 m under it on the mean and up to 253 m over it.
+  - **Cause 7 (named here, fixed by HORIZON-TREES): the band's trees.** FAR-TREES (`06-Systems/Travel-View.md`) draws the band, the
+    trees of the ring just past the streamed grid, last in the far pass at the far plane, with no depth among the far
+    layers. A band tree behind a hill of the middle ring is drawn over the hill. From Bay pixel 2046,325, 300 m up, Land
+    View 5: of 3,072 band tree points, 967 stand behind the streamed grid (its depth hides them) and 442 behind the far
+    pass's own ground, drawn anyway (14.4%; 21.0% of those the grid leaves). Those are tree sprites over a hill's
+    skyline - the likeliest "projections above the horizon". The fix: the band's vertex shader marches the sight line
+    from the eye over the middle ring's heights and drops a tree the ground hides. `render/farTrees.js` is
+    FLORA-GROUND's file today (its vertex program and instances are being changed there), so it is left to that slice.
+- **The fixes**, each at its cause. The bytes are not moved, so every reader of them (the roads, the places, the ports,
+  the dry ground, the coasts) stands where it stood:
+  - **The large map's law** (src/world/tamriel/tamrielGround.js:"export const LARGE_LAW", `largeOfByte`,
+    src/world/tamriel/tamrielGround.js:"export function tamrielLargeMap"): WOODS.WLD's own law of the small byte, each
+    cell read where the kernel reads it (the bytes' cubic about the pixel's node, a third of a pixel apart). Past byte
+    109 the kernel's height runs on to DFU's ceiling less the ground noise and a cell at byte 180, so no byte past the
+    Bay's top stands on the clamp as a plateau. None at sea, and none on the Rumare basin's span (RUMARE-WATER). It
+    blends in from the edge's own large map over BLEND_PX, as the bytes do.
+  - **The frames ease** (src/world/tamriel/tamrielLandforms.js:"function structureAt", STRUCTURE_REACH 2, ORIENT_FULL
+    0.5): a node's direction is the land's structure about it (its gradients' doubled angles over two pixels), at its
+    own strength. Under ORIENT_FULL the oriented families ease into the fixed frame, so no family hands one field to
+    another inside a sample.
+  - **The ranges** (`world/tamriel/tamrielRanges.js`, new): laid in the kernel's shaper past the Bay, under the
+    landforms, never in the bytes. DFU's cubic takes twice Catmull-Rom's tangent, and relief laid in the bytes stood as
+    a plaid of pixel-wide bands. A ridged field of four octaves, 11.5 to 1.1 km. Its swing grows from nothing at 1,000 m
+    to 1,250 m from 2,300 m. It is centred on the land where the land has room; toward the ceiling its crests are the
+    land's own height and a rise is held softly under it. There is no relief within two pixels of a carved river or a
+    lake, and the whole of it past seven.
+  - **Red Mountain** (src/world/tamriel/tamrielRanges.js:"export const CONE"): a cone at its relief's own summit
+    (`namedSummit`), 25 km to its foot, its crater's rim at 3,250 m, a crater 1.8 km in radius and 240 m deep, concave
+    flanks with ribs down them. Inside its rim the land is the cone, and the land's own ranges are quiet about it.
+  - **The far views stand on the kernel's own ground**
+    (src/world/landforms.js:"export function nodeGround(byte, fade = 1, beyond = 0, lift = true)", `centreGround`,
+    `nodeGroundAt`). The far ring's vertex is the kernel's mean ground at its pixel's centre
+    (src/render/farRing.js:"export const ringGroundAt"). The far field's is the ground at the node its cell's centre is
+    (src/world/terrain/midRingGrid.js:"export function farFieldCell", worked out on the terrain worker and transferred).
+    The large map and the ranges stand in both. The travel view past the grid reads the ring's ground. `nodeGround`
+    takes the place of reliefByteHeight, which is gone.
+  - **A site's level past the Bay counts the ranges** (`siteLevel`), so a town's pull meets the ground the shaper lays.
+  - **The records** (GROUND_FRAME_LAW 3, src/scenes/groundFrameHost.js:"const groundMovedAt"). DFU's own ground moved
+    past the Bay. A record written there before it (a save, a scene cache, a ship's deck, an anchor, a remains' place)
+    rides that ground's own move: src/world/landforms.js:"export function groundMovedField" over today's reader against
+    the one with the swell (`groundBefore`), over a town's rect as DFU's blend moves it. The old lift it takes off has
+    no ranges in it. BAY-LEFT-GROUND D5's own law is LIFT_FRAME_LAW (2). A body that still lands under its ground is
+    lifted by the collider's floor.
+- **After** (the same probes):
+  - Spans over 10 km: the Throat 1,117 m, the Jerall 1,060 m, the Reach's shoulder 1,008 m, the Velothi 1,007 m, the
+    Wrothgarians past the Bay 794 m (the Bay's Dragontails 1,449 m).
+  - About Bruma: 0.28% over 37 degrees (was 4.8%), 0.01% over 50 (was 2.0%). Median slopes 13 to 16 degrees.
+  - Red Mountain: its top 3,332 m; the land 29 km out 2,365 m on the mean and 2,709 m at its highest; 10 km about it
+    spans 833 m.
+  - The Bay's north edge: no step over 120 m between samples 102 m apart.
+  - The far ring's vertex within 2 m of the kernel's mean ground past the Bay (it was 410 to 500 m off) and within 35 m
+    on the Bay; the far field within 2 m past the Bay and 45 m on it.
+  - The capitals' ground: the Imperial City (27 m) and Solitude (at the sea) as they stood; Mournhold 212 to 313 m,
+    Falinesti 662 to 961 m, Helstrom 184 to 272 m, Alinor 81 to 93 m, Torval 43 to 47 m. Every town past the Bay is a
+    site and stands flat at its level.
+  - The kernel's cost on mountain pixels past the Bay: about 1.3 times the CPU (30 to 38-44 ms a pixel on a loaded
+    machine), on the worker.
+- **Residues, named:**
+  - The far ring's vertices are 819 m apart, so it cannot draw the ranges' ridges (1.1 to 11.5 km). Its skyline stands a
+    few pixels under the ground's on the mean. From 2290,430, 300 m up, at 5 of 180 bearings it stands up to 3.9 pixels
+    over it (1080p, 65 degrees), where before it was under one. The middle ring (102 m) draws the ridges to 11.5 km.
+  - On the Bay the far views read the large map's law, not WOODS.WLD's own cells: 10 to 35 m off.
+  - The ranges' floor (`rangeOn`) is a guard these dials never reach; its mutant is recorded equivalent.
+  - The ground past the Bay moved under GROUND_LAW 2 (`net/wire.js`), which is not yet on main, and its print is
+    recorded again (`test/fixtures/groundPrint.json`). If GROUND_LAW 2 ships before this does, GROUND_LAW must move to 3
+    with it, a relay version: the coordinator's call.
+  - PEAKS2's massif (`world/peaks/massif.js`, built, not wired) was to shape the ranges past the Bay too. RELIEF-PEAKS'
+    ranges stand there now. When PEAKS2 is wired, past the Bay it stands on them or in their place - one of the two
+    (`Peaks.md`).
+  - The band's trees (cause 7) are FLORA-GROUND's.
+
+### Pins
+
+- **`test/world/reliefpeaks.test.js` (14, three gated on ARENA2):** the large map's law, the continent's large map cell
+  by cell (none at sea, nor by a coast), its blend from the edge; the frames (no step over 10 m past the macro's over a
+  cone's summit, where the frames stood 93 m; no pit at the summit); the ranges' parts (the field's mean, the swing, the
+  centre, the ceiling, the bound, the cone's profile); the ranges on the land (none low, centred, held under the ceiling
+  by the soft clip's law, quiet by the rivers, the cone at its summit with its crater and no moat); the far views on the
+  kernel's mean ground and their wiring; the records' frame law, DFU's ground's move (by a town's rect too) and their
+  wiring; with ARENA2, WOODS.WLD's large map against the law, the ranges' spans, Bruma's faces, Red Mountain, the Bay's
+  edge, and the far ring on the freeware's ground.
+- **PIN MOVED (RELIEF-PEAKS):** `test/render/farlandmark.test.js`, `test/render/farsea1.test.js`,
+  `test/render/midring.test.js`, `test/ui/farring.test.js`, `test/systems/landform.test.js`,
+  `test/world/terrain/auditlandforms.test.js`, `test/scenes/tv3_travellers.test.js`,
+  `test/systems/naval/auditcaptsea.test.js` (the far views' law and wiring), `test/world/breathtaker.test.js`,
+  `test/world/tamriel2.test.js`, `test/world/rumarewater.test.js` (the large map), `test/world/peaks1_snowcap.test.js`
+  (the Reach's top on either side of its border), `test/world/terrain/bayleftground_frame.test.js` (the frame's law 3),
+  `test/net/fb1017f_groundgate.test.js` (the print past the Bay, recorded again under GROUND_LAW 2).
+- **Mutants:** `tools/mutants/reliefpeaks.json` (47). Re-aimed by content, each judged again: ACS-G6-ring-grid;
+  AUDIT-LANDFORMS-B2-wild-memo-blind-to-the-sample (named by its shaped sample: groundMovedField keeps a memo of the same
+  shape); AUDIT-LANDFORMS-II-I1-ring-unfaded and -view-unfaded; BAY-LEFT-GROUND-D1-level-the-Bays-key and
+  -world-this-threads-landforms-without; BAY-LEFT-GROUND-D5's five old-laws-step records (the old lift's law LIFT_FRAME_LAW
+  now); BREATHTAKER2's six and BREATHTAKER3's two; LANDFORM-restand-scale-only; FAR-FIELD's five; RW-GROUND-the-large-map's-
+  detail-whole and TDEEP-detail-at-sea (today's large map named by its note: largeMapBefore keeps the same line);
+  TAMRIEL2's two large-map records; TS1-far-ring-on-the-prefab.
+- **Cause 7, closed by its own slice:** HORIZON-TREES (`06-Systems/Travel-View.md`): the band's trees cut at the middle
+  ring's skyline in their vertex program.
+
+Section A, RELIEF-PEAKS (OURS: DFU stops at the Bay's edge; the large map's law is read off DFU's own WOODS.WLD, and
+the ranges and Red Mountain are the port's own).

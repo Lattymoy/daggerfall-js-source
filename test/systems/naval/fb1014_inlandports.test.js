@@ -169,7 +169,7 @@ test('INLAND-PORTS THE HOST: the pixel\'s build and the town\'s places ask portO
   assert.match(W, /const bearing = seaBearing\(lp\.x, lp\.y, openSea\);/);
   assert.match(W, /\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);\n/);
   // BOOT-TDZ: declared above the stream, as seaPixel is - the boot's first build reads it
-  const decl = W.indexOf('\n  const openSea = (x, y) => {'), places = W.indexOf('\n  function townPlacesFor(');
+  const decl = W.indexOf('\n  const openSea = (x, y) => {'), places = W.indexOf('\n  async function townPlacesFor(');   // PIN MOVED (IC-STUTTER): awaited, a step at a time
   assert.ok(decl > W.indexOf('\n  const seaPixel = (x, y) =>') && decl < places, 'beside seaPixel, before the towns\' places');
   // the board: three of Travel Options' harbours - a capital, a village by a lake, a hamlet on the sea's shore
   const ids = [...new Set(PORT_LOCATION_IDS)].slice(0, 3);

@@ -48,6 +48,7 @@ import { isTouchDevice } from '../../ui/touch/touchDevice.js';
 import { SD_LIGHT } from '../../world/superDungeon/sdLook.js';
 import { identity } from '../../world/mat4.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js';
+import { t } from '../../systems/textManager.js';   // RPT1026-EVENTS ORRERY-HANDS: the turners' words in the player's language
 
 /** The hall's words. */
 export const SD_HALL_TEXT = Object.freeze({
@@ -61,7 +62,39 @@ export const SD_HALL_TEXT = Object.freeze({
   concord: 'The Concord! A bridge of light opens.',   // AUDIT SD II (L6 F21): WB13b's - the event and what it opens ("The endings stand as one" commented)
   plaque: (k) => `Ledger Plaque ${['I', 'II', 'III', 'IV', 'V', 'VI'][k]}`,
   hour: (h) => `Its hand stands at the ${sdHourWord(h)} hour.`,
+  /** RPT1026-EVENTS ORRERY-HANDS: a stone's last turner, on its plaque - named whether its body is seen or not. */
+  lastBy: (name) => t('sd.hall.lastBy', 'Last turned by {name}', { name }),
+  get you() { return t('sd.hall.you', 'you'); },
+  /** RPT1026-EVENTS ORRERY-HANDS: the snap, naming the turners it found no help in (the peers its lash seeks - `ls`): at most
+   *  SD_LASH_NAMED, then how many more. */
+  snapLashes: (names, more) => (more > 0 ? t('sd.hall.snapLashesMore', 'The Hour snaps back. No help came from {names} and {more, plural, one {# other} other {# others}}.', { names, more })
+    : t('sd.hall.snapLashes', 'The Hour snaps back. No help came from {names}.', { names })),
 });
+/** RPT1026-EVENTS ORRERY-HANDS: how many of the lashed the snap's line names. */
+export const SD_LASH_NAMED = 5;
+/**
+ * RPT1026-EVENTS ORRERY-HANDS (a private report: concealed players spoiling the Orrery on purpose, and a wish to know who
+ * they were): THE HANDS ON THE STONES NAMED. The realm's
+ * word on a turn carries its turner's peer (`id` - server/src/index.js _sdTurn) and the snap's the peers its lash falls on
+ * (`ls`); a body concealed is drawn by nobody (INVIS-NET), so a hand turning the wrong way could not be told from the
+ * forty round it. The word as kept for the hall (`by` the turner's name, `lsn` the lashed's), each off this screen's roster
+ * (`nameOf` - the room's peers, seen or not), `me` my own peer ("you"). Never which way a turn went for the Concord: the
+ * dial says how many stones stand true and nothing more (section 8). Pure.
+ * @param {any} w @param {(id: string) => (string|null)} nameOf @param {string|null} [me]
+ */
+export function sdHallNamed(w, nameOf, me = null) {
+  if (!w || typeof w !== 'object') return w;
+  const name = (id) => (typeof id !== 'string' || !id ? null : id === me ? SD_HALL_TEXT.you : (nameOf?.(id) ?? null));
+  const by = name(w.id);
+  const lsn = Array.isArray(w.ls) ? w.ls.map(name).filter(Boolean) : null;
+  return { ...w, ...(by ? { by } : {}), ...(lsn ? { lsn } : {}) };
+}
+/** RPT1026-EVENTS ORRERY-HANDS: the snap's line - the lashed named where the word names any, else the snap alone. Pure. */
+export function sdSnapLine(w) {
+  const lsn = Array.isArray(w?.lsn) ? w.lsn : [];
+  if (!lsn.length) return SD_HALL_TEXT.snap;
+  return SD_HALL_TEXT.snapLashes(lsn.slice(0, SD_LASH_NAMED).join(', '), Math.max(0, lsn.length - SD_LASH_NAMED));
+}
 /** AUDIT SD III (V10): the Concord's bridge is LAID - out across the void from the hall's rim over this long; it stood
  *  whole in a frame. One that held before I came stands whole. SD-LOOK S10: its twelve plates flip into place over it,
  *  from the rim out, once the rings have locked. */
@@ -145,6 +178,8 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
   let word = null, heard = false;
   const shown = o ? [...o.start] : [], want = o ? [...o.start] : [];
   const lastTurn = SD_STONES.map(() => -Infinity);
+  /** RPT1026-EVENTS ORRERY-HANDS: each stone's last turner, by name, as the realm's word said it (sdHallNamed's `by`) */
+  const lastBy = SD_STONES.map(() => '');
   let lit = 0, fray = 0, ok = false, rate = SD_HAND_RATE;
   /** AUDIT SD II (L2 F9): where I stand, one scratch (it was a fresh array a frame); the activation boxes, made once at the
    *  stand (they never move - the hover pick asked for 18 KB of them twice a frame); and the fray held full at a snap
@@ -210,6 +245,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     rate = w.x ? SD_SNAP_RATE : SD_HAND_RATE;
     if (!first && w.i != null && o) {
       lastTurn[w.i] = now();
+      lastBy[w.i] = typeof w.by === 'string' ? w.by : '';   // RPT1026-EVENTS ORRERY-HANDS: whose hand it was
       play(SD_HALL_SOUNDS.clunk, dialCentre(w.i), 1, w.a > 0 ? 1 : 0.85);
       for (let j = 0; j < SD_STONES.length; j++) if (j !== w.i && o.gear[w.i][j] !== 0) play(SD_HALL_SOUNDS.clunk, dialCentre(j), 0.4, 1.25);
     }
@@ -338,7 +374,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     hoverName(key) {
       if (!o || typeof key !== 'string') return null;
       const st = /^sdstone:([0-5]):([fb])$/.exec(key);
-      if (st) { const i = Number(st[1]), stone = SD_STONES[i]; return { title: `${stone.name.charAt(0).toUpperCase()}${stone.name.slice(1)} - ${stone.sign}`, subs: [SD_HALL_TEXT.hour(want[i]), ok ? SD_HALL_TEXT.held : st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back] }; }
+      if (st) { const i = Number(st[1]), stone = SD_STONES[i]; return { title: `${stone.name.charAt(0).toUpperCase()}${stone.name.slice(1)} - ${stone.sign}`, subs: [SD_HALL_TEXT.hour(want[i]), ok ? SD_HALL_TEXT.held : st[2] === 'f' ? SD_HALL_TEXT.forward : SD_HALL_TEXT.back, ...(lastBy[i] ? [SD_HALL_TEXT.lastBy(lastBy[i])] : [])] }; }   // RPT1026-EVENTS ORRERY-HANDS: and its last turner
       const pl = /^sdplaque:([0-5])$/.exec(key);
       if (pl) { const k = Number(pl[1]); return { title: SD_HALL_TEXT.plaque(k), subs: [o.riddles[k].text] }; }
       return null;

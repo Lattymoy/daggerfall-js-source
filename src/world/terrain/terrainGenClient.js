@@ -79,6 +79,11 @@ export class TerrainGenClient {
     /** TESA4: the epoch a job posted now is built under, and the one this thread holds the layer of. */
     this.arenaRoadsEpoch = 0;
     this.arenaRoadsLanded = 0;
+    /** FLORA-GROUND: how many times the ground's inputs have moved - the network, the landforms' tables, the sites past
+     *  the Bay, the continent's trace and its relief (each a message the worker drops its kept grounds on). A layer laid
+     *  on the ground off the stream (the far trees' band, the middle ring under it) is laid again when it moves, so a
+     *  tree never stands on a ground the walker's no longer is. */
+    this.groundEpoch = 0;
     const factory = workerFactory
       ?? ((terrainThreadDisabled() || typeof Worker === 'undefined' || !woodsBytes)
         ? null : defaultWorkerFactory);
@@ -147,6 +152,7 @@ export class TerrainGenClient {
     this._roadsStats = onStats;
     this._switches = switches;
     this._roadsSource = 'generated';   // TO1: the port's own network, not Hazelnut's
+    this.groundEpoch++;   // FLORA-GROUND: our roads cut the shaped ground
     if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements, switches });
     else if (!this._worker) this._roadsFallback();
   }
@@ -162,6 +168,7 @@ export class TerrainGenClient {
     setTamrielTrace(trace);
     setTamrielFit(fit);
     dropGroundCache();
+    this.groundEpoch++;   // FLORA-GROUND: the continent's ground, its relief with it
     if (!this._worker) { setWatersInk(lawWatersInk().ink); return; }   // MAP-WATERS: no worker, this thread's own law
     const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;   // TAMRIEL-RELIEF: the heightmap's cells with it
     this._worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }, t ? [t.land.buffer, t.province.buffer, ...(t.relief ? [t.relief.buffer] : [])] : []);
@@ -196,6 +203,7 @@ export class TerrainGenClient {
   setLandformTables({ sites = null, climates = null } = {}) {
     this._sites = sites;
     this._climates = climates;
+    this.groundEpoch++;   // FLORA-GROUND: the sites and the lands the ground is shaped by
     if (!this._worker) return;
     const s = sites ? sites.slice() : null, c = climates ? climates.slice() : null;
     this._worker.postMessage({ t: 'landform-tables', sites: s, climates: c }, [s, c].filter(Boolean).map((a) => a.buffer));
@@ -207,6 +215,7 @@ export class TerrainGenClient {
    *  order). Made again whenever the places past the Bay move (scenes/landformSitesHost.js); null clears it. */
   setLandformBeyond(beyond = null) {
     this._beyond = beyond;
+    this.groundEpoch++;   // FLORA-GROUND: the sites past the Bay
     if (this._worker) this._worker.postMessage({ t: 'landform-beyond', beyond });
   }
 
@@ -246,6 +255,7 @@ export class TerrainGenClient {
     // field added to one of them is silently inert on the path the game
     // actually takes.
     this._roadsSource = net.source ?? 'basic-roads';
+    this.groundEpoch++;   // FLORA-GROUND: his roads cut the shaped ground
     this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water, smooth: net.smooth !== false, source: this._roadsSource };
     this._roadsStats = onStats;
     if (this._worker) {
@@ -364,16 +374,17 @@ export class TerrainGenClient {
   /**
    * FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} (world/terrain/midRingGrid.js
    * buildFarFieldBytes) - on the worker alone, as the middle ring: null with none, and the far ring closes into the sky.
-   * @param {{ baseCX: number, baseCY: number, radius: number, cell: number, seaByte: number }} job
-   * @returns {Promise<?{ high: Uint8Array, low: Uint8Array }>}
+   * RELIEF-PEAKS: `relief` (the Landforms row) and each cell's vertex's ground (`ground`, world units).
+   * @param {{ baseCX: number, baseCY: number, radius: number, cell: number, seaByte: number, relief?: boolean }} job
+   * @returns {Promise<?{ high: Uint8Array, low: Uint8Array, clim: Uint8Array, ground: Float32Array }>}
    */
   farField(job) {
     if (!this._worker) return Promise.resolve(null);
-    const side = farFieldSide(job.radius), high = new Uint8Array(side * side), low = new Uint8Array(side * side), clim = new Uint8Array(side * side);
+    const side = farFieldSide(job.radius), high = new Uint8Array(side * side), low = new Uint8Array(side * side), clim = new Uint8Array(side * side), ground = new Float32Array(side * side);
     return this._bands('farfield', job, side, HORIZON_BAND_ROWS.far, (m, j0, j1) => {
       if (!m?.high) return false;
-      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side);
-      return j1 === side ? { high, low, clim } : true;
+      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side); ground.set(m.ground, j0 * side);
+      return j1 === side ? { high, low, clim, ground } : true;
     });
   }
 
@@ -382,7 +393,7 @@ export class TerrainGenClient {
     if (!resolve) return;
     this._mids.delete(m.id);
     if (m.t === 'midError' || m.t === 'farError' || m.t === 'bandError') console.warn('[terrain] worker horizon failed -', m.message);
-    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
+    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground } : null);
   }
 
   _gridAnswer(m) {

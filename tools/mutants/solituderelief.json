@@ -326,33 +326,6 @@
     ]
   },
   {
-    "name": "SR-STEP-the-city's-unlaid",
-    "file": "src/world/tamrielRoads.js",
-    "old": "    if (g.inside) { const c",
-    "new": "    if (false && g.inside) { const c",
-    "tests": [
-      "test/world/solitude_relief.test.js"
-    ]
-  },
-  {
-    "name": "SR-STEP-never-asked",
-    "file": "src/world/tamrielCapitals.js",
-    "old": "...(cap.relief && t === 0 ? { inside: true } : {})",
-    "new": "...({})",
-    "tests": [
-      "test/world/solitude_relief.test.js"
-    ]
-  },
-  {
-    "name": "SR-STEP-a-gate-far-out",
-    "file": "src/world/tamrielCapitals.js",
-    "old": "...(cap.relief && t === 0 ? { inside: true } : {})",
-    "new": "...(cap.relief ? { inside: true } : {})",
-    "tests": [
-      "test/world/solitude_relief.test.js"
-    ]
-  },
-  {
     "name": "SR-RIM-daggerfall's",
     "file": "src/world/tamrielCapitals.js",
     "old": "    rimTiles: SOLITUDE_EDGE_BAND + 1,",
@@ -366,15 +339,6 @@
     "file": "src/world/tamrielCapitals.js",
     "old": "rim: Object.freeze({ W: sx === 0 ? capitalRimTiles(cap) : 0,",
     "new": "rim: Object.freeze({ W: sx === 0 ? CAPITAL_RIM_TILES : 0,",
-    "tests": [
-      "test/world/solitude_relief.test.js"
-    ]
-  },
-  {
-    "name": "SR-GARDEN-trees-on-the-road",
-    "file": "src/world/tamrielCapitals.js",
-    "old": "(gateRoadAt(dx, dz).d <= SOLITUDE_GATE_ROAD.half + 1 ? SOLITUDE_TILES.stone :",
-    "new": "(false ? SOLITUDE_TILES.stone :",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]

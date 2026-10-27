@@ -212,7 +212,7 @@ export function addVendorTextures(entries) {
     // doll, decoded only when asked (`lazy`) - and its picture stands in for the studio's that will not load, and gives
     // the studio's picture its size and scale (entryColor32): a picture of any size stands as big as the one it covers.
     const prev = _vendor.get(key);
-    const entry = { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null, studio: e.studio === true, under: null, readOnly: e.readOnly === true };   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    const entry = { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null, studio: e.studio === true, under: null, readOnly: e.readOnly === true, cutout: e.cutout === true };   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     if (prev?.studio && !entry.studio) {
       coverWith(prev, entry);
       dropDecoded(key);   // decoded again with what it covers
@@ -227,6 +227,13 @@ export function addVendorTextures(entries) {
   return n;
 }
 export const vendorTextureCount = () => _vendor.size;
+/** CAPITAL-TREES (bible/03-World/Arena-Provinces.md CAPITAL-TREES): A PICTURE REGISTERED AS A FLAT CUT BY ITS ALPHA -
+ *  `addVendorTextures([{ ..., cutout: true }])`, the capitals' trees' leaf sprays (world/capitalShapes.js
+ *  CAPITAL_CUT_RECORDS). The upload door asks it (scenes/dataPipeline.js uploadRecord), so a model wearing the picture
+ *  draws its texels under half alpha as holes (render/renderer.js uploadTexture `{ cutout: true }`, RW1) whoever uploads
+ *  it - a model's build, a place's hold, the remake after an eviction - as the game draws a tree's flat. Frame 0, its
+ *  albedo. @param {number} archive @param {number} record */
+export const vendorCutout = (archive, record) => _vendor.get(textureKey(archive, record, 0, 'Albedo', null))?.cutout === true;
 /** STUDIO1: a studio entry takes `under` as the art it covers, and what the archive is from it. */
 function coverWith(studio, under) {
   if (!under) return;

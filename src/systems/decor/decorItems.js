@@ -42,6 +42,8 @@ import { decorFlatLight } from './decorCatalogue.js';
 import { itemDyeColor, itemDyeTarget } from '../item/itemDye.js';
 import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX, DECOR_ARTIFACT_UNKNOWN, DECOR_OWN_KEPT_BACK } from '../../net/decorLaw.js';
 import { PROVENANCE_RE, MASTERWORK, makerMark, markedName } from '../../net/recipeLaw.js';   // PROF4: a crafted piece's id and mark
+import { TROPHY_TEMPLATE } from '../../net/trophyLaw.js';   // HUNTERS-MARK: a mounted trophy
+import { trophyItemName } from '../hunt/trophies.js';
 
 /** The groups whose items never stand as themselves: weapons and armour are mounted (DECOR2c); a vehicle is no thing
  *  one carries, coin is a counter, and a deed or a quest's own item is not the player's to set down. */
@@ -72,7 +74,8 @@ export function decorDescriptorOf(item) {
   const bits = item.artifactIndexBitfield ?? 0;
   // AUDIT DYE-ICON 7: an artifact with no index recorded is one all the same - it hung as its base item, dyed
   const a = item.artifact ? ((bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;
-  const p = (item.group === 'Paintings' || item.group === 'Books') && Number.isSafeInteger(item.message) ? item.message : null;
+  // HUNTERS-MARK: a trophy's beast rides its message too, so a visitor hangs and names the same beast
+  const p = (item.group === 'Paintings' || item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) && Number.isSafeInteger(item.message) ? item.message : null;
   // PROF4 (bible/06-Systems/Professions-Arc.md 25): a crafted piece's provenance, and its mark where its name carries
   // one - online the service writes the mark from its own row, whatever this sends
   const pv = typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance) ? item.provenance : null;
@@ -99,6 +102,7 @@ export function decorStandOf(item) {
   // piece (systems/item/itemBound.js isPackOnly - the Wallet's row): set down, it leaves the pack (scenes/decor/decorTool.js
   // commitOwn), and a wallet out of the pack leaves what it holds back on the pack's pages
   if (isBagItem(item) || isPackOnly(item)) return null;
+  if (item.templateIndex === TROPHY_TEMPLATE) return null;   // HUNTERS-MARK: a trophy hangs (decorMountOf), never stands
   const flat = decorItemFlat(item);
   const descriptor = flat ? decorDescriptorOf(item) : null;
   if (!flat || !descriptor) return null;
@@ -165,6 +169,7 @@ export function decorItemName(d) {
   }
   const t = templateByIndex(own.t);
   if (!t) return null;
+  if (own.t === TROPHY_TEMPLATE && own.p != null) return trophyItemName(own.p, own.v != null ? own.v - 1 : null);   // HUNTERS-MARK: its beast, and a mark's name
   const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
   // the list's own naming reads a book's title off its message (itemInfo.js resolveItemName)
   const item = { templateIndex: own.t, group, material: own.m ?? 0, variant: own.v ?? 0, isIdentified: true, message: own.p ?? 0 };

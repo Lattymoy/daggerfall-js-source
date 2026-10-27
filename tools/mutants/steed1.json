@@ -63,7 +63,7 @@
     "old": "      if (skipped) breaths.clear();", "new": "      if (false) breaths.clear();",
     "tests": ["test/systems/steed1_horsecare.test.js"] },
   { "name": "STEED1-the-bond-carried-to-the-next", "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'wagonEntry', 'horseBond', 'horseFed']);", "new": "'wagonEntry', 'horseFed']);",
+    "old": "'wagonEntry', 'horseBond', 'horseFed', 'appearance']);", "new": "'wagonEntry', 'horseFed', 'appearance']);",
     "tests": ["test/systems/steed1_horsecare.test.js"] },
   { "name": "STEED1-the-fields-on-any-item", "file": "src/systems/item/itemLaw.js",
     "old": "'horseSeed', 'horseBond', 'horseFed'].some(", "new": "'horseSeed'].some(",
@@ -95,6 +95,6 @@
     "old": "      upkeep.reset();   // AUDIT STEED1: the old character's", "new": "      void 0;   // AUDIT STEED1: the old character's",
     "tests": ["test/systems/steed1_horsecare.test.js"] },
   { "name": "AUDIT-STEED1-fed-traded", "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'horseBond', 'horseFed']", "new": "'horseBond']",
+    "old": "'horseBond', 'horseFed', 'appearance']", "new": "'horseBond', 'appearance']",
     "tests": ["test/systems/steed1_horsecare.test.js"] }
 ]

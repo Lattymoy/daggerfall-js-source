@@ -1,0 +1,103 @@
+[
+  {
+    "name": "AUDIT-RPT1026-C1-hand-over-from-any-giver",
+    "file": "server-account/src/ledger.js",
+    "old": "\n        AND COALESCE(handed_to, owner) = COALESCE(?2, (SELECT u.player FROM item_uids u WHERE u.uid = products.provenance AND u.state = 'escrow'))`),",
+    "new": "`),",
+    "tests": [
+      "test/server/audit_rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the batch's law: any giver hands the craft's record on - the seller that kept a sold piece names its accomplice the record, and the buyer holds the copy"
+  },
+  {
+    "name": "AUDIT-RPT1026-C1-escrow-giver-unread",
+    "file": "server-account/src/ledger.js",
+    "old": "COALESCE(?2, (SELECT u.player FROM item_uids u WHERE u.uid = products.provenance AND u.state = 'escrow'))",
+    "new": "COALESCE(?2, ?1)",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "a collect reads no giver off the escrow row - the record's own listing hands its buyer nothing"
+  },
+  {
+    "name": "AUDIT-RPT1026-C1-trade-second-side-no-giver",
+    "file": "server-account/src/realmTrade.js",
+    "old": "piecesB[0], piecesB[1], { from: t.a_player });",
+    "new": "piecesB[0], piecesB[1]);",
+    "tests": [
+      "test/server/audit_rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the trade's second half receives with no giver named - its record's hand-over is lost (the giver's row is let go before it)"
+  },
+  {
+    "name": "AUDIT-RPT1026-C1-trade-first-side-no-giver",
+    "file": "server-account/src/realmTrade.js",
+    "old": "piecesA[0], piecesA[1], { from: playerId });",
+    "new": "piecesA[0], piecesA[1]);",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js",
+      "test/server/audit_rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the trade's first half receives with no giver named - the report's own trade hands nothing on"
+  },
+  {
+    "name": "AUDIT-RPT1026-C2-every-excuse-ended",
+    "file": "server-account/src/verdict.js",
+    "old": " AND instr(law_excused, '|') > 0",
+    "new": "",
+    "tests": [
+      "test/server/audit_rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the batch's law: a clean checkpoint ends a piece's excuse too - put away and taken back, it holds and strikes again"
+  },
+  {
+    "name": "AUDIT-RPT1026-C3-words",
+    "file": "tools/realmReview.mjs",
+    "old": "  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',\n",
+    "new": "  '          level, attributes and skills; a change, or a clean checkpoint, ends it.',\n",
+    "tests": [
+      "test/server/audit_rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the clear's words as the batch wrote them: a change does not end an excuse, and a piece's is not ended"
+  },
+  {
+    "name": "AUDIT-RPT1026-C4-row-unsaid",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": ", isStolen(item) ? stolenTag() : null]",
+    "new": "]",
+    "tests": [
+      "test/ui/audit_rpt1026_ledgerlaw_trade.test.js"
+    ],
+    "note": "a stolen piece the other player offers reads like any other on its row"
+  },
+  {
+    "name": "AUDIT-RPT1026-C4-strip-unsaid",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "    if (isStolen(selected.item)) info.append(el('p', 'meta ptrade-stolen', stolenLine()));",
+    "new": "",
+    "tests": [
+      "test/ui/audit_rpt1026_ledgerlaw_trade.test.js"
+    ],
+    "note": "a stolen piece picked in the trade says nothing of the counter or the court"
+  },
+  {
+    "name": "AUDIT-RPT1026-C5-cut-unmarked",
+    "file": "server-account/src/judge.js",
+    "old": "(s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s)",
+    "new": "s.slice(0, n)",
+    "tests": [
+      "test/server/audit_rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the values cut silently - a state past the cut is excused whatever stands past it"
+  },
+  {
+    "name": "AUDIT-RPT1026-C5-mark-unread",
+    "file": "server-account/src/verdict.js",
+    "old": "\n  && !(values ?? '').includes(LAW_VALUES_CUT);",
+    "new": ";",
+    "tests": [
+      "test/server/audit_rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "an excuse names a cut state - nine quadrillion passes behind eighty bank accounts"
+  }
+]

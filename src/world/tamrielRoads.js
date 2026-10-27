@@ -29,7 +29,7 @@ import { roadNetworkSteps, drainSteps, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD
 import { VOYAGER_DIALS, landForRoutes, landGrain, riverFords } from './road/roadLand.js';   // VOYAGER1: the land's law; RIVER-FORDS: the channels' crossings
 import { linkGaps } from './road/roadGaps.js';   // ROAD-GAPS: a region's networks joined where they meet
 import { labelLand } from './tamrielLandPieces.js';   // EXACT-PIECES: the land's pieces at the pixel
-import { riverRaster } from './tamriel/tamrielWaters.js';   // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers, the router's question
+import { riverRaster, lakeRaster } from './tamriel/tamrielWaters.js';   // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers, the router's question; ROAD-LOOK: and the carved lakes
 import { inBay } from './tamriel/tamrielFrame.js';
 import { beyondKey } from './arenaRoads.js';
 import { WATER_BYTE } from './roadsProducer.js';
@@ -40,7 +40,7 @@ import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js'
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 
 /** The regions' law's version - its cache's key moves with it. */
-export const TAMRIEL_ROADS_VERSION = 7;   // EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
+export const TAMRIEL_ROADS_VERSION = 8;   // ROAD-LOOK: the carved lakes water no route crosses; EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
 /**
  * AUDIT TESA II R6: THE VERSION OF THE LAWS PAST THE BAY A REGION'S BUILD RUNS that no input of the print carries - the
  * ground's height (world/tamriel/tamrielGround.js: the authored law, the relief's, the seam's blend, the lattice hash; the
@@ -52,6 +52,9 @@ export const TAMRIEL_ROADS_VERSION = 7;   // EXACT-PIECES: a region's land's pie
  * BIOMES_VERSION's, in the print.
  */
 export const GROUND_ROLL_VERSION = 5;   // 1 the laws as AUDIT TESA II found them; 2 its lane G's beach-line floor (BIOMES_VERSION 5); 3 CYRODIIL-SHORES: Cyrodiil's lakes' smooth shores; 4 SMOOTH-LAND: every coast and border the land's smooth law (world/tamriel/tamrielLand.js landLabelAt); 5 RUMARE-WATER: the land let down about the Imperial City at the sea (world/rumareWaters.js rumareBasin)
+/** ROAD-LOOK: how near a carved lake's water (Bay pixels) a pixel's middle is the lake's to the routes - past a curve's widest
+ *  swing off a pixel's middle (world/road/roadCurves.js: a bend's apex 0.125 of a pixel in) and a road's half width. */
+export const LAKE_MARGIN = 0.25;
 /** How far, Bay pixels, a region's grid reaches past its core on every side: past the road builder's reach for a road's
  *  neighbours (ROAD_DIALS.roadReach, 70) and a track's (trackLink, 24), so an edge a region owns has both ends in view. */
 export const REGION_APRON = 100;
@@ -129,7 +132,7 @@ export const REGION_STEP_ROWS = 25;
  * (world/pastBayPlaces.js).
  * @param {{ region: ReturnType<typeof regionOf>, places: Array<{ x: number, y: number, type: number }>,
  *   nodes: Array<{ x: number, y: number, type: number }>, obstacles: Array<{ x: number, y: number }>,
- *   gates: Array<{ x: number, y: number, into: readonly number[], inside?: boolean }>, held?: Array<{ x: number, y: number }>,
+ *   gates: Array<{ x: number, y: number, into: readonly number[] }>, held?: Array<{ x: number, y: number }>,
  *   heightAt: (x: number, y: number) => number, dials?: object, trunks?: number[][][] }} o VOYAGER-CYRODIIL: `trunks` the named roads'
  *   legs (world/road/cyrodiilRoads.js planTrunkLegs), each [a, b] in Bay pixels
  * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, land: ReturnType<typeof labelLand>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
@@ -160,6 +163,10 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
     }
     if (v % REGION_STEP_ROWS === REGION_STEP_ROWS - 1) yield;   // AUDIT TESA II R8: a step
   }
+  // ROAD-LOOK: the carved lakes (world/tamriel/tamrielWaters.js lakeRaster) are water as the trace's, never a ford - before the
+  // nodes, which stand on their own pixels' land whatever the water says
+  const still = lakeRaster(gx, gy, MAP_W, MAP_H, LAKE_MARGIN);
+  for (let i = 0; i < still.length; i++) if (still[i] && !bay[i]) water[i] = 1;
   const taken = new Set(), locations = [], blocked = [];
   // TESA5: a road node takes its pixel before a track node does (a crossing's gate where a village stands); of a grade,
   // the first
@@ -186,7 +193,7 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   // VOYAGER1: the land the routes are costed on (road/roadLand.js landForRoutes - the smoothed height, the shore, the fords,
   // the grain);
   // a ford is water a route may cross, at its price
-  const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v));
+  const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v), still);
   // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers' channels over the grid, each crossing priced as a ford's
   // (road/roadLand.js RIVER_FORD) - a road crosses once, square to the river, where it is narrowest
   land.river = riverFords(riverRaster(gx, gy, MAP_W, MAP_H));
@@ -223,9 +230,6 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
     if (!roads.has(k)) continue;
     roads.set(k, /** @type {number} */ (roads.get(k)) | /** @type {number} */ (BIT_OF.get(`${g.into[0]},${g.into[1]}`)));
     gated++;
-    // SOLITUDE-RELIEF (world/tamrielCapitals.js capitalGates `inside`): and the step back out on the city's own byte, so the
-    // road is painted on through the city's rim to its own ground (world/road/roadPainter.js stops it at the city's rect)
-    if (g.inside) { const c = beyondKey(g.x + g.into[0], g.y + g.into[1]); roads.set(c, (roads.get(c) ?? 0) | /** @type {number} */ (BIT_OF.get(`${-g.into[0]},${-g.into[1]}`))); }
   }
   const standing = places.filter((p) => inCore(region, p.x, p.y) && !inBay(p.x, p.y) && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
   const trunkPath = (/** @type {any} */ (net.stats).trunkPath ?? []).map((v, k) => v + (k % 2 ? gy : gx));   // VOYAGER-CYRODIIL: the named roads' pixels, Bay pixels

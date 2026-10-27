@@ -69,9 +69,9 @@
   },
   {
     "name": "TESA6-no-harbour-book",
-    "file": "src/scenes/world.js",
-    "old": "      if (aloc?.exterior?.exteriorData) town = { id: portIdOfLocation(",
-    "new": "      if (false) town = { id: portIdOfLocation(",
+    "file": "src/scenes/harbourHost.js",
+    "old": "      if (aloc?.exterior?.exteriorData) add({ id: portIdOfLocation(",
+    "new": "      if (false) add({ id: portIdOfLocation(",
     "tests": [
       "test/tesa6_ports.test.js"
     ],

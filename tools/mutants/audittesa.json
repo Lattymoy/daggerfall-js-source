@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-TESA-A6-2-eager-door",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);",
-    "new": "blockFromJson(b.json, b.index);",
+    "old": "  const json = typeof b.json === 'function' ? b.json() : b.json;",
+    "new": "  const json = b.json;",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -274,7 +274,7 @@
   },
   {
     "name": "AUDIT-TESA-A4-F2-harbour-arena-first",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/harbourHost.js",
     "old": "const aloc = aq ? capitalLocationAt(aq.bx, aq.by) || arenaLocationAt(aq.bx, aq.by) : null;",
     "new": "const aloc = aq ? arenaLocationAt(aq.bx, aq.by) : null;",
     "tests": [

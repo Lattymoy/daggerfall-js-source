@@ -28,7 +28,7 @@
 import { parseObj, parseMtl, objMesh, eachDrawn, FOOT_TOP, JUNGLE_SPECIES } from './jungleModels.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../terrain/terrainSampler.js';
 import { WORLD_MAP_TILE_DIM } from '../terrain/terrainTiles.js';
-import { surfaceHeightAt } from '../terrain/terrainSurface.js';
+import { walkGroundAt } from '../terrain/terrainSurface.js';   // FLORA-GROUND: the ground the player walks on - one law
 import { ARMS, roadRoom, PATH_HALF_M } from '../road/roadBand.js';
 import { tablePathsDataPoint } from '../road/pathData.js';   // BAY-LEFT-MAPS: the mod's table's lanes alone - past the Bay a road is a curve
 import { tileDraw } from '../terrain/terrainNature.js';
@@ -243,8 +243,8 @@ const PIXEL = TERRAIN_SIZE, HALF = PIXEL / 2;
 export function lowestDrawn(heightmapData, x, z, r) {
   const hDim = HEIGHTMAP_DIMENSION, cell = PIXEL / (hDim - 1), yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const at = (i, j) => heightmapData[Math.max(0, Math.min(hDim - 1, i)) * hDim + Math.max(0, Math.min(hDim - 1, j))];
-  let lo = surfaceHeightAt(heightmapData, x, z);
-  const ask = (px, pz) => { lo = Math.min(lo, surfaceHeightAt(heightmapData, px, pz)); };
+  let lo = walkGroundAt(heightmapData, x, z);
+  const ask = (px, pz) => { lo = Math.min(lo, walkGroundAt(heightmapData, px, pz)); };
   const i0 = Math.floor((x - r) / cell), i1 = Math.ceil((x + r) / cell), j0 = Math.floor((z - r) / cell), j1 = Math.ceil((z + r) / cell);
   for (let i = Math.max(0, i0); i <= Math.min(hDim - 1, i1); i++) {
     for (let j = Math.max(0, j0); j <= Math.min(hDim - 1, j1); j++) if (Math.hypot(i * cell - x, j * cell - z) <= r) lo = Math.min(lo, heightmapData[i * hDim + j] * yScale);
@@ -280,7 +280,7 @@ export function lowestDrawn(heightmapData, x, z, r) {
 export function highestDrawn(heightmapData, corners) {
   const hDim = HEIGHTMAP_DIMENSION, cell = PIXEL / (hDim - 1), yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   let hi = -Infinity;
-  const ask = (x, z) => { hi = Math.max(hi, surfaceHeightAt(heightmapData, x, z)); };
+  const ask = (x, z) => { hi = Math.max(hi, walkGroundAt(heightmapData, x, z)); };
   const n = corners.length;
   for (let k = 0; k < n; k++) {
     const [x0, z0] = corners[k], [x1, z1] = corners[(k + 1) % n];
@@ -341,7 +341,7 @@ export function standPairs({ px, py, net, heightmapData, tileOk, trailOk }) {
   if (!bits) return [];
   const R = JUNGLE_ROADSIDE, tile = PIXEL / WORLD_MAP_TILE_DIM;
   const ox = px * WORLD_MAP_TILE_DIM, oz = -py * WORLD_MAP_TILE_DIM;
-  const ground = (x, z) => surfaceHeightAt(heightmapData, x, z);
+  const ground = (x, z) => walkGroundAt(heightmapData, x, z);
   const out = [], trunks = [];
   for (const [bit, sx, sz] of ARMS) {
     if (!(bits & bit)) continue;

@@ -22,8 +22,8 @@
   {
     "name": "SCALE4b-harvests-pruned-on-read",
     "file": "server-account/src/professions.js",
-    "old": "  const day = utcDay(nowS);\n  // GATHER-SPEED: the state's eight reads",
-    "new": "  const day = utcDay(nowS);\n  await sweepHarvests(db, nowS);\n  // GATHER-SPEED: the state's eight reads",
+    "old": "  const day = utcDay(nowS);\n  // GATHER-SPEED: the state's reads in ONE round trip",
+    "new": "  const day = utcDay(nowS);\n  await sweepHarvests(db, nowS);\n  // GATHER-SPEED: the state's reads in ONE round trip",
     "tests": [
       "test/server/scale4b.test.js"
     ],

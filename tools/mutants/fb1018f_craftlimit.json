@@ -162,29 +162,31 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-line-first-scaled",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = firstCraftXp(r, own);",
-    "new": "  const more = scaleXp(firstCraftXp(r, own), pay.pct ?? 0);",
+    "old": "  const more = walled ? 0 : firstCraftXp(r, true);",
+    "new": "  const more = walled ? 0 : scaleXp(firstCraftXp(r, true), pay.pct ?? 0);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
     "why": "the first's XP scaled (FIRST-BUDGET: its share), which the service lays on whole",
-    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the line's share, beside the counted wall. PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "CRAFT-LIMIT-SAID-words-line-most-plain",
     "file": "src/ui/craftXpWords.js",
-    "old": "  return capLine(profession, pay, xp + more) || (more",
-    "new": "  return capLine(profession, pay, xp) || (more",
+    "old": "  return capLine(profession, pay, xp + more) || (walled",
+    "new": "  return capLine(profession, pay, xp) || (walled",
     "tests": [
-      "test/net/fb1018f_craftlimit.test.js"
+      "test/net/fb1018f_craftlimit.test.js",
+      "test/net/fb1026b_wovenpays.test.js"
     ],
-    "why": "a room that takes the plain craft but not its first said as whole"
+    "why": "a room that takes the plain craft but not its first said as whole",
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the cloth's branch selector now `walled`; and pinned there: no test held a cloth piece at a room between its own XP and its share, so the record survived (test/net/fb1026b_wovenpays.test.js, \"the loom's line under the crafter's limit\")."
   },
   {
     "name": "CRAFT-LIMIT-SAID-words-dish-cap-dropped",
     "file": "src/ui/craftXpWords.js",
-    "old": "export const dishFirstLine = (r, profession, pay = {}, clean = 0) => capLine(profession, pay, clean + firstCraftXp(r))\n  || ",
-    "new": "export const dishFirstLine = (r, profession, pay = {}, clean = 0) => ",
+    "old": "  : capLine(profession, pay, clean + firstCraftXp(r))\n    || ",
+    "new": "  : ",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -193,8 +195,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-mason-cap-dropped",
     "file": "src/ui/craftXpWords.js",
-    "old": "export const masonWorksFirstLine = (rank, profession, pay = {}) => capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + workFirstXp(MASON_RECIPES[0]))\n  || ",
-    "new": "export const masonWorksFirstLine = (rank, profession, pay = {}) => ",
+    "old": "export const masonWorksFirstLine = (rank, profession, pay = {}, owed = null) => capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])))\n  || ",
+    "new": "export const masonWorksFirstLine = (rank, profession, pay = {}, owed = null) => ",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -255,8 +257,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-pay-no-pct",
     "file": "src/ui/professions/profPages.js",
-    "old": "pct: xpPct(firmamentStats(), trackOf(id)) });",
-    "new": "pct: 0 });",
+    "old": "craftLimitOf(book?.state?.tracks?.values?.() ?? [], id), pct: xpPct(firmamentStats(), trackOf(id)) });",
+    "new": "craftLimitOf(book?.state?.tracks?.values?.() ?? [], id), pct: 0 });",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -265,8 +267,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-pay-discipline-pct",
     "file": "src/ui/professions/profPages.js",
-    "old": "pct: xpPct(firmamentStats(), trackOf(id)) });",
-    "new": "pct: xpPct(firmamentStats(), id) });",
+    "old": "craftLimitOf(book?.state?.tracks?.values?.() ?? [], id), pct: xpPct(firmamentStats(), trackOf(id)) });",
+    "new": "craftLimitOf(book?.state?.tracks?.values?.() ?? [], id), pct: xpPct(firmamentStats(), id) });",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -275,8 +277,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-anvil-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "craftXpLine(r, rank, professionName('smithing'), craftPayOf(book, 'smithing'))",
-    "new": "craftXpLine(r, rank, professionName('smithing'))",
+    "old": "craftXpLine(r, rank, professionName('smithing'), craftPayOf(book, 'smithing'), 0, first(r))",
+    "new": "craftXpLine(r, rank, professionName('smithing'), {}, 0, first(r))",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -285,8 +287,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-bench-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "craftXpLine(r, rank, professionName('carpentry'), craftPayOf(book, 'carpentry'))",
-    "new": "craftXpLine(r, rank, professionName('carpentry'))",
+    "old": "craftXpLine(r, rank, professionName('carpentry'), craftPayOf(book, 'carpentry'), 0, first(r))",
+    "new": "craftXpLine(r, rank, professionName('carpentry'), {}, 0, first(r))",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -295,19 +297,19 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-loom-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "craftXpLine(r, rank, professionName('outfitting'), craftPayOf(book, 'outfitting'), ownSpend(book, r))",
-    "new": "craftXpLine(r, rank, professionName('outfitting'), {}, ownSpend(book, r))",
+    "old": "craftXpLine(r, rank, professionName('outfitting'), craftPayOf(book, 'outfitting'), silverOf(book, r), first(r))",
+    "new": "craftXpLine(r, rank, professionName('outfitting'), {}, silverOf(book, r), first(r))",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
     "why": "the loom promises at the limit",
-    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the loom passes silverOf. PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "CRAFT-LIMIT-SAID-pages-jewel-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "craftXpLine(r, rank, professionName('jewelcrafting'), craftPayOf(book, 'jewelcrafting'))",
-    "new": "craftXpLine(r, rank, professionName('jewelcrafting'))",
+    "old": "craftXpLine(r, rank, professionName('jewelcrafting'), craftPayOf(book, 'jewelcrafting'), 0, recipeFirstOwed(made, r))",
+    "new": "craftXpLine(r, rank, professionName('jewelcrafting'), {}, 0, recipeFirstOwed(made, r))",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -316,8 +318,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-mason-works-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "masonWorksFirstLine(rank, professionName('masonry'), craftPayOf(book, 'masonry'))",
-    "new": "masonWorksFirstLine(rank, professionName('masonry'))",
+    "old": "masonWorksFirstLine(rank, professionName('masonry'), craftPayOf(book, 'masonry'), worksOwed)",
+    "new": "masonWorksFirstLine(rank, professionName('masonry'), {}, worksOwed)",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -326,8 +328,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-mason-carving-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('masonry'), craftPayOf(book, 'masonry'))));",
-    "new": "      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('masonry'))));",
+    "old": "      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('masonry'), craftPayOf(book, 'masonry'), 0, recipeFirstOwed(made, r))));",
+    "new": "      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('masonry'), {}, 0, recipeFirstOwed(made, r))));",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -346,8 +348,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-fire-first-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "dishFirstLine(r, professionName('cooking'), pay, clean)",
-    "new": "dishFirstLine(r, professionName('cooking'))",
+    "old": "dishFirstLine(r, professionName('cooking'), pay, clean, first(r))",
+    "new": "dishFirstLine(r, professionName('cooking'), {}, 0, first(r))",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -418,8 +420,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-tab-xp-limit-unread",
     "file": "src/ui/professions/profPages.js",
-    "old": "xpLine(tr, craftLimitOf(book.state?.tracks?.values?.() ?? [], _sel))",
-    "new": "xpLine(tr)",
+    "old": "  const held = craftLimitOf(book.state?.tracks?.values?.() ?? [], _sel);",
+    "new": "  const held = null;",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -691,8 +693,8 @@
   {
     "name": "L5-words-mason-most-first-only",
     "file": "src/ui/craftXpWords.js",
-    "old": "capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + workFirstXp(MASON_RECIPES[0]))",
-    "new": "capLine(profession, pay, workFirstXp(MASON_RECIPES[0]))",
+    "old": "capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])))",
+    "new": "capLine(profession, pay, (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])))",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -711,8 +713,8 @@
   {
     "name": "L5-words-mason-most-unscaled",
     "file": "src/ui/craftXpWords.js",
-    "old": "scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + workFirstXp(MASON_RECIPES[0])",
-    "new": "masonXp(1, rank, { clean: true }) + workFirstXp(MASON_RECIPES[0])",
+    "old": "scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + (owed && owed.cut",
+    "new": "masonXp(1, rank, { clean: true }) + (owed && owed.cut",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],

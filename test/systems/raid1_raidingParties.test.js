@@ -503,7 +503,7 @@ test('RAID1 the world host by source: the seams answered where GameManager would
   assert.match(w, /\n {2}createRaidHost\(\{/, 'the host constructs it');
   assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true \}\)/);
   assert.match(body, /\}, mobileType, raidSpawnRange\(at\)\),/);   // PIN MOVED (STAFF-EVENT PACKS): the band through raidSpawnRange - a town raid's the mod's own, a staff event pack's its own
-  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true });
+  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // PACK-OPEN: never in a house or building
   assert.match(body, /standDefender: \(threats\) => cityGuards\.standDefender\(\{/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA G7): nor the Eltheric Ocean, whose composed politic is the isles' region's
   assert.match(body, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && politicClaimed\(maps\.getPoliticIndex\(px\.x, px\.y\)\) \? _questRegionIndex\(\) : -1; \}/);

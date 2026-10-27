@@ -61,7 +61,9 @@ test('QUEST-FABRIC THE VIEW IS THE BLOCK\'S BUILDINGS (world/imperialFabricBuild
     view.rmbBlock.subRecords.forEach((sub, i) => {
       const d = FABRIC_DONORS[recs[i].donor];
       assert.equal(sub.interior, made.rmbBlock.subRecords[i].interior, `${at} #${i}: the made block's interior`);
-      assert.equal(sub.interior.blockFlatObjectRecords[0].of, `${d.block}#${d.record}`, `${at} #${i}: its own donor's`);
+      // PIN MOVED (IC-INTERIORS): the interior is the building's own (world/interior/fabricInterior.js) and carries its donor's
+      // quest marker among its own flats, no longer the donor's record whole
+      assert.equal(sub.interior.blockFlatObjectRecords.find((f) => f.textureArchive === 199 && f.textureRecord === 11)?.of, `${d.block}#${d.record}`, `${at} #${i}: its own donor's`);
     });
     assert.equal(view.index, made.index, `${at}: its index`);
   }

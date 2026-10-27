@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 
 import { WoodsFile } from '../../src/formats/woodsFile.js';
 import { generateSamples, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
-import { createLandforms } from '../../src/world/landforms.js';
+import { createLandforms, nodeGroundAt } from '../../src/world/landforms.js';
 import { buildMidRingHeights, midRingNormals, midRingSide, midRingPixel, midRingBandRows, buildFarFieldBytes, farFieldCell, FAR_SAMPLES, FAR_CLIMATE_ASK, MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT } from '../../src/world/terrain/midRingGrid.js';
 import { midRingVertices, midRingOrder, midRingRuns, MidRingMesh, midRingDisabled, MID_SEA_EPS } from '../../src/render/midRing.js';
 import { FarRingRenderer, ringHeight, RING_RADIUS, HORIZON_BUDGET_MS, MID_MORPH_START, MID_MORPH_END } from '../../src/render/farRing.js';
@@ -256,18 +256,22 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
     assert.deepEqual([...a.m.heights], [...whole.subarray(2 * side)], 'the band of pixel rows 1-2: vertex rows 2 to the last');
     globalThis.onmessage({ data: { t: 'midring', id: 10, baseX: 398, baseY: 251, radius: 1e9, sub: 2 } });
     assert.equal(posted.at(-1).m.t, 'midError');
-    // the far field: a band of its rows, each cell its highest sample and its count of the sea's floor
+    // the far field: a band of its rows, each cell its vertex's byte, its count of the sea's floor and (RELIEF-PEAKS) its
+    // vertex's ground
     globalThis.onmessage({ data: { t: 'farfield', id: 11, baseCX: 40, baseCY: 25, radius: 2, cell: 8, seaByte: 3, rows: [0, 5] } });   // a slope: every row its own
     const f = posted.at(-1);
     assert.equal(f.m.t, 'far');
-    assert.deepEqual(f.t, [f.m.high.buffer, f.m.low.buffer, f.m.clim.buffer]);
+    assert.deepEqual(f.t, [f.m.high.buffer, f.m.low.buffer, f.m.clim.buffer, f.m.ground.buffer]);   // PIN MOVED (RELIEF-PEAKS): and the ground
     assert.ok(f.m.clim.every((c) => c === FAR_CLIMATE_ASK), 'no continent installed here: every climate the main thread\'s to read');
     const ref = buildFarFieldBytes({ woods, baseCX: 40, baseCY: 25, radius: 2, cell: 8, seaByte: 3 });
-    assert.deepEqual([[...f.m.high], [...f.m.low]], [[...ref.high], [...ref.low]]);
-    const [m0, n0] = farFieldCell(woods, 38, 23, 8, 3);
-    let m = 0, n = 0;
-    for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) { const byte = woods.getHeightMapValue(38 * 8 + u, 23 * 8 + v); m = Math.max(m, byte); if (byte <= 3) n++; }
-    assert.deepEqual([m0, n0], [m, n], 'a cell: its samples\' highest byte and how many are the sea\'s floor');
+    assert.deepEqual([[...f.m.high], [...f.m.low], [...f.m.ground]], [[...ref.high], [...ref.low], [...ref.ground]]);
+    const [m0, n0, , g0] = farFieldCell(woods, 38, 23, 8, 3);
+    let n = 0;
+    for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) { const byte = woods.getHeightMapValue(38 * 8 + u, 23 * 8 + v); if (byte <= 3) n++; }
+    // PIN MOVED (RELIEF-PEAKS): a cell's vertex stands on the byte whose node is its centre (the byte north-west of it) and
+    // the kernel's ground there (nodeGroundAt) - it stood the highest of its samples' bytes, by the far ring's law
+    const byteAt = (x, y) => woods.getHeightMapValue(x, y);
+    assert.deepEqual([m0, n0, g0], [byteAt(38 * 8 + 3, 23 * 8 + 3), n, nodeGroundAt(byteAt, 38 * 8 + 3, 23 * 8 + 3, false) * STREAMING_TERRAIN_SCALE], 'a cell: its vertex\'s byte, how many samples are the sea\'s floor, its vertex\'s ground');
     assert.equal(ref.high[0], m0, 'the north-west cell first');
     // a cell's climate the reader's at its centre pixel, where one is handed
     const asked = [];
@@ -328,19 +332,19 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
   const p2 = client.midRing(job);
   w.onmessage({ data: { t: 'midError', id: sent.at(-1).id, message: 'x' } });
   assert.equal(await p2, null);
-  // the far field a band of FAR rows at a time, its three answers assembled
+  // the far field a band of FAR rows at a time, its four answers assembled (PIN MOVED, RELIEF-PEAKS: and its ground)
   const pf = client.farField({ baseCX: 0, baseCY: 0, radius: 10, cell: 8, seaByte: 3 }), fside = 21;
   for (let k = 0; k < 4; k++) {
     const at = sent.filter((x) => x.t === 'farfield').at(-1);
     if (!at || at.done) break;
     at.done = true;
     const rows = at.rows[1] - at.rows[0], fill = (b) => new Uint8Array(rows * fside).fill(b + at.rows[0]);
-    w.onmessage({ data: { t: 'far', id: at.id, high: fill(0), low: fill(100), clim: fill(200) } });
+    w.onmessage({ data: { t: 'far', id: at.id, high: fill(0), low: fill(100), clim: fill(200), ground: new Float32Array(rows * fside).fill(1000 + at.rows[0]) } });
     await new Promise((r) => setTimeout(r, 0));
   }
   assert.deepEqual(sent.filter((x) => x.t === 'farfield').map((x) => x.rows), [[0, HORIZON_BAND_ROWS.far], [HORIZON_BAND_ROWS.far, fside]]);
   const ff = await pf;
-  assert.deepEqual([ff.high[0], ff.low[0], ff.clim[0], ff.high[16 * fside], ff.low[16 * fside], ff.clim[16 * fside]], [0, 100, 200, 16, 116, 216]);
+  assert.deepEqual([ff.high[0], ff.low[0], ff.clim[0], ff.ground[0], ff.high[16 * fside], ff.low[16 * fside], ff.clim[16 * fside], ff.ground[16 * fside]], [0, 100, 200, 1000, 16, 116, 216, 1016]);
   const p3 = client.farField({ baseCX: 0, baseCY: 0, radius: 2, cell: 8, seaByte: 3 });
   w.onerror({ message: 'gone' });
   assert.equal(await p3, null, 'the worker died: no far field');
@@ -455,7 +459,9 @@ test('FAR-FIELD the far ring asks the far field of the worker, lays it a frame\'
   // the worker's climates where it read them (the ocean's for the first row), this ring's own reader's where it asks
   const clim = new Uint8Array(n).fill(FAR_CLIMATE_ASK);
   clim.fill(223, 0, farFieldSide());
-  answer({ high: new Uint8Array(n).fill(90), low: new Uint8Array(n), clim });
+  assert.equal(asks[0].relief, false, 'RELIEF-PEAKS: asked under the row (off here)');
+  const ground = Float32Array.from({ length: n }, (_, v) => 500 + v);   // RELIEF-PEAKS: the worker's ground at each vertex
+  answer({ high: new Uint8Array(n).fill(90), low: new Uint8Array(n), clim, ground });
   await new Promise((r) => setTimeout(r, 0));
   let frames = 0;
   while (!ring.horizonStats().field && frames < 2000) { ring.punchHole(200, 150, 5, new Map()); frames++; }
@@ -466,7 +472,7 @@ test('FAR-FIELD the far ring asks the far field of the worker, lays it a frame\'
   assert.ok(FAR_CELLS_A_STEP === 32 && FAR_NORMAL_ROWS === 8 && frames >= steps - 1 && ring.horizonStats().field, `laid over ${frames} frames (${steps} steps)`);
   const pos = log.buffers.map((b) => b[1]).find((d) => d instanceof Float32Array && d.length === n * 3);
   assert.equal(pos[1], Math.fround(ringHeight(0)), 'the worker\'s ocean: the sea');
-  assert.equal(pos[farFieldSide() * 3 + 1], Math.fround(ringHeight(90)), 'asked of this ring\'s reader (no ocean): the land');
+  assert.equal(pos[farFieldSide() * 3 + 1], ground[farFieldSide()], 'asked of this ring\'s reader (no ocean): the land, on the ground the worker answered (PIN MOVED, RELIEF-PEAKS)');
   ring.punchHole(200, 150, 5, new Map());
   log.draws.length = 0; u1.length = 0;
   ring.draw(new Float32Array(16), { origin: [0, 0, 0], lightDir: [0, 1, 0], ambient: [0, 0, 0], sunScale: 1, sunColor: [1, 1, 1], fogColor: [0, 0, 0], fogEnd: 1, fovY: 1, aspect: 1 });

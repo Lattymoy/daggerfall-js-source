@@ -150,27 +150,22 @@ test('SOLITUDE-RELIEF the Gate Road and the slope below the walls: the road runs
   assert.equal(W.southGate, R.SOLITUDE_MAIN_GATE.x, 'the gate where the road\'s law stands it');
 });
 
-test('SOLITUDE-RELIEF the country\'s road reaches the city\'s own ground: its gate steps into the city on the city\'s own byte too, its rim no more than its relief\'s edge band - the road painted through it to the Gate Road\'s paving; a gate past the city\'s neighbour, or a capital on Daggerfall\'s plane, as ever', async () => {
-  const { buildTamrielRegion, regionOf, regionLattice } = await import('../../src/world/tamrielRoads.js');
-  const { beyondKey } = await import('../../src/world/arenaRoads.js');
-  const { DIR } = await import('../../src/world/road/roadNetwork.js');
+test('SOLITUDE-RELIEF the country\'s road reaches the city\'s own ground: its approach (ROAD-FOLLOW, world/capitalApproaches.js) the Gate Road\'s own line - the road\'s surface from where the country\'s road ends at the pixel\'s edge, over its rim, to the main gate\'s passage, no tree on it, never a block of its own; its rim no more than its relief\'s edge band; the paving on the ground the terrain draws', async () => {
   const { LOCATION_TYPES: T } = await import('../../src/formats/mapsFile.js');
-  const { capitalGates, capitalRimTiles, inCapitalRim, CAPITAL_RIM_TILES } = await import('../../src/world/tamrielCapitals.js');
-  const REGION = regionOf(regionLattice({ x0: 0, y0: -1000, w: 1600, h: 600 }), 0, 0);
-  const city = [];
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) city.push({ x: 400 + dx, y: -850 + dy });
-  const nodes = [{ x: 400, y: -848, type: T.TownCity }, { x: 400, y: -760, type: T.TownCity }];
-  const build = (gate) => buildTamrielRegion({ region: REGION, places: [], nodes, obstacles: city, gates: [gate], heightAt: () => 30 });
-  const inside = build({ x: 400, y: -848, into: [0, -1], inside: true }), plain = build({ x: 400, y: -848, into: [0, -1] });
-  assert.ok(inside.roads.get(beyondKey(400, -848)) & DIR.N, 'the gate\'s step north into the city');
-  assert.equal(inside.roads.get(beyondKey(400, -849)), DIR.S, 'and the city\'s own step back south to it - its one byte');
-  assert.equal(plain.roads.get(beyondKey(400, -849)) ?? 0, 0, 'none on a city on the plane');
-  // Solitude's: its gate its neighbour south, the city's own step on - where the gate stands further out, none
-  const k = CAPITALS.indexOf(sol);
-  const near1 = capitalGates(k, { walkable: () => true }), far = capitalGates(k, { walkable: (x, y) => y > capitalGates(k, { walkable: () => true })[0].y });
-  assert.deepEqual(near1.map((g) => [g.side, g.inside]), [['S', true]]);
-  assert.ok(far.length && !far[0].inside, 'a gate a pixel further out: the road ends there');
-  for (const c of CAPITALS) if (c !== sol) assert.ok(capitalGates(CAPITALS.indexOf(c), { walkable: () => true }).every((g) => !g.inside), c.key);
+  const { capitalRimTiles, inCapitalRim, CAPITAL_RIM_TILES, capitalDims, capitalArrival, capitalGates, planCell } = await import('../../src/world/tamrielCapitals.js');
+  const { onCapitalApproach, capitalApproachCells, APPROACH_TILE } = await import('../../src/world/capitalApproaches.js');
+  const k = CAPITALS.indexOf(sol), D = capitalDims(sol), on = onCapitalApproach(sol, D), W = SOLITUDE.wall;
+  // where the road's arm ends (world/tamrielRoads.js: the gate pixel's step north, at its side's middle) its approach begins
+  assert.deepEqual(capitalGates(k, { walkable: () => true }).map((g) => g.side), ['S']);
+  const end = capitalArrival(sol, D, 'S'), [ax, ar] = sol.anchor, start = [end[0] - ax * BLOCK_M, end[1] - ar * BLOCK_M];
+  assert.deepEqual(start, R.gateRoadLine[0].slice(), 'the Gate Road from the arm\'s end');
+  // the approach the Gate Road's line, every metre of it from the edge to the gate's passage, and none past either
+  for (const [x, z] of R.gateRoadLine) assert.equal(on(x, z), z >= W.south - W.thick / 2 - 0.5, `on its line at ${x.toFixed(1)},${z.toFixed(1)}`);
+  assert.ok(!on(start[0], start[1] + 3), 'none past the span\'s edge');
+  assert.ok(!on(W.southGate, W.south - W.thick), 'none past the gate\'s passage - the city\'s own street');
+  assert.ok(!on(W.southGate - 30, W.south + 30) && !on(140, 480), 'none off its line');
+  for (const [r, c] of capitalApproachCells(sol, D)) assert.equal(planCell(sol, r, c), 'G', `the approach over gardens alone (${r},${c})`);
+  assert.equal(APPROACH_TILE, 46, 'the road\'s own surface');
   // its rim its relief's band and a tile: the country's road painted on the land's own tiles there, the city's own past it
   assert.equal(capitalRimTiles(sol), R.SOLITUDE_EDGE_BAND + 1);
   assert.ok(CAPITALS.filter((c) => c !== sol).every((c) => capitalRimTiles(c) === CAPITAL_RIM_TILES));
@@ -288,16 +283,16 @@ test('SOLITUDE-RELIEF its tiles: the sea only where all four corners are the wat
     }
   }));
   assert.ok(shut > 1000, `${shut} cells of the gardens' rock`);
-  // the Gate Road through the gardens: its tiles the stone under its paving, no tree on it
+  // the Gate Road through the gardens: its tiles the road's own surface under its paving (ROAD-FOLLOW's approach), no tree on it
   let road = 0;
   SOLITUDE_PLAN.forEach((row, r) => row.forEach((cell, c) => {
     if (cell !== 'G') return;
     const g = blocks.find((b) => b.name === capitalGardenName(sol, c, r)).json.RmbBlock.FldHeader.GroundData;
     for (let i = 0; i < 256; i++) {
       const [x, z] = tileCentre(i % 16, Math.floor(i / 16)), [dx, dz] = anchorMetres(sol, c, r, x, z);
-      if (inCapitalRim(sol, c * BLOCK_M + x, (r + 1) * BLOCK_M - z) || R.gateRoadAt(dx, dz).d > R.SOLITUDE_GATE_ROAD.half) continue;
+      if (inCapitalRim(sol, c * BLOCK_M + x, (r + 1) * BLOCK_M - z) || R.gateRoadAt(dx, dz).d > R.SOLITUDE_GATE_ROAD.half || dz < SOLITUDE.wall.south - 3) continue;
       road++;
-      assert.equal(g.GroundTiles[i].TileBitfield, T.stone, `the road's tile at ${dx.toFixed(1)},${dz.toFixed(1)}`);
+      assert.equal(g.GroundTiles[i].TileBitfield, 46, `the road's tile at ${dx.toFixed(1)},${dz.toFixed(1)}`);   // ROAD-FOLLOW's approach: the road's surface
       assert.equal(g.GroundScenery[i].TextureRecord, -1, `no tree on the road at ${dx.toFixed(1)},${dz.toFixed(1)}`);
     }
   }));

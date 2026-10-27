@@ -18,7 +18,7 @@ import { inBay, inBay as onBayPixel, tamrielFit } from '../world/tamriel/tamriel
 import { provinceNameBank } from '../world/tamrielPeople.js';
 import { rollSpec } from '../world/tamrielRoads.js';
 import { outlineTownLocation, townOutlineBlockJson } from '../world/townOutline.js';   // TOWN-SHAPES TS3: a town past the Bay laid as its own outline of blocks
-import { standTownWall } from '../world/townWalls.js';   // TOWN-SHAPES TS4: a city past the Bay walled on its outline
+import { standTownWall, setTownWallPaths, townWallPathsReader } from '../world/townWalls.js';   // TOWN-SHAPES TS4: a city past the Bay walled on its outline; ROAD-FOLLOW: its gates where its roads come in
 import { startLairSites } from '../systems/starts/startSite.js';
 import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../world/pastBayRows.js';   // AUDIT TESA II P7: the places past the Bay on the world's registry
 import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // WW7-7: a pixel the roads past the Bay rolled a place on is dry
@@ -179,6 +179,10 @@ export function createTamrielPlaces(host) {
   const tamrielRoadHeld = () => (_arenaTemplates ? arenaPixels()?.stood.filter((p) => arenaTemplateOf(_arenaTemplates, p)).map((p) => ({ x: p.bx, y: p.by })) : null) ?? [];
   const _tamrielRoads = tamrielLand ? createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt: (x, y) => host.woods.getHeightMapValue(x, y), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,
     standing: { pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: () => !!_capitalBase, held: tamrielRoadHeld } }) : null;
+  // ROAD-FOLLOW (world/townWalls.js): a walled city's gates stand where its pixel's painted roads come in - the Bay's network
+  // as this thread holds it, the roads past the Bay once their regions have landed; a wall waits for them. A host that
+  // paints no roads (no terrain generator) hands none: the template's gates, as before
+  setTownWallPaths(terrainGen ? townWallPathsReader({ bay: () => terrainGen.roads(), landedIn: _tamrielRoads ? (x0, y0, x1, y1) => _tamrielRoads.landedIn(x0, y0, x1, y1) : null }) : null);
   /** TESA15 (world/pastBayPlaces.js): a place's name the held map's hover says - the places are the roads' regions'. */
   const tamrielPlaceName = (px, py) => countryRollAt(px, py)?.name ?? lairRollAt(px, py)?.name ?? '';
   /** TESA10 (world/tamrielCapitals.js): THE CAPITAL A PIXEL PAST THE BAY STANDS - its own, laid out by its plan (its

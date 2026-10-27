@@ -56,6 +56,22 @@ read with a decimal), `test/tooling/doctrine.test.js` (the asset's OURS row).
 Mutants re-aimed by content, each to the box at BR5's ratio: `br4.json` 1,
 `br5.json` 6, `auditbr5.json` 4, `support1.json` 1.
 
+LOGO-CENTRE (2026-10-26, Mac: "The main logo is off center"). Every box was
+centred - the film's last frame put it at 480.5 of 960 - but the mark is cut to
+its paint and the dragon's wing and tail fill its left, so the LETTERS stood
+right of centre: at 1280 x 720 the Online scroll sat about 100 px right of the
+Tap to continue box beneath it. The letters at mid-height (the D's bowl, x 265,
+to the O's outline, x 1212, of 1232) centre 10% of the width right of the
+file's, so every surface that centres the mark draws it that 10% back
+(`translateX(-10%)`: the film's `.intro-title .brand-logo`, the door's and the
+masthead's `.brand-logo`, the site's `.wordmark img`) and DFO stands on the
+centre line with the dragon to its left. The launcher sets the mark at its left
+edge, where the box is what lines up, and is not moved. The number is
+`BRAND_LOGO_OPTICAL_SHIFT` (`src/ui/brandMark.js`), measured from the file by
+`test/ui/brand.test.js` (LOGO-CENTRE), so the next logo reddens it rather than
+a layout. Mutants: `logocentre.json` 3, all dead; `br4.json`'s blend mutant
+re-aimed at the rule it moved.
+
 ## BR5 DFO ONLINE (2026-10-11, Mac's call)
 
 Mac: "So next up I want to replace the current daggerfall online logo
@@ -1608,6 +1624,196 @@ the dev server the door asks about 15,900 modules (BOOT1's world.js warm-up amon
 and asks for its recording: 34s measured on a warm server and 51s on a cold one, the recording itself landing at once.
 The `cinematic` check had timed out on every run since 2026-10-25. A built page is a few chunks, so players never
 wait this; only the probes do.
+
+#### INTRO-REVERT II (2026-10-26): the theme's path as INTRO2 left it
+
+The owner: *"Intro music currently isnt working. We need to revert before we started tinkering with this"*. After
+INTRO-REVERT one change to the theme's path was left: THEME-BUFFER (`01-Overview/bugs/Field-Bugs-2026-10-24.md`), which
+asked the theme's own AudioContext for `latencyHint: 'playback'`. It is undone, so `systems/introTheme.js` is INTRO2's file
+byte for byte (`6f501bf5d`, the merge before #906) and `'interactive'` again; `src/assets/intro/theme.mp3` and
+`ui/intro/introCue.js`'s landmarks were already INTRO2's. Measured before the change, in headless Chromium over the built
+page: the recording fetched (200), decoded and played under the film (its RMS at the destination 0.012 to 0.072 over
+the first 14 s) - the silence the owner hears was not reproduced here, so this restores the last state the owner heard
+working rather than a fault found. Pin: `test/ui/intro.test.js` INTRO-REVERT II (the context's hint, the file's sha256).
+THEME-BUFFER's own pin and its mutants BUF1 are retired.
+
+#### INTRO4 (2026-10-26): the White-Gold Tower to Tamriel
+
+The owner: *"Overhaul the main intro sequence to be more in line with the elder scrolls game oblivion and still zoom
+out into the entire map of tamriel. Utilize the imperial city we have built for this. I want this to be as detailed as
+possible"*. Asked where it should land - the Imperial City is TESA's and stands only on the open #1184 - the owner chose
+main, with the city's landmark modules brought over (below).
+
+THE FILM, on INTRO2's recording, cut to its bars. `tools/introAudioCheck.mjs` measures the decoded master's onsets: a
+bar is 1.888 s from the 19 s beat, phrases of eight, and the film cuts on five more downbeats - every one reproduced
+from the MP3 at 0 ms (`ui/intro/introCue.js`):
+
+| Time (s) | Sample | The shot | The narrator (`menu.intro.narration1`-`5`) |
+|---|---|---|---|
+| 0 | - | Pre-dawn over the far shore of Lake Rumare, Talos Bridge beside, the Tower a silhouette with its windows lit; the credits | - |
+| 11.712 | 140544 | The mist breaks; the sun clears the horizon behind the Tower; the camera cranes over the city wall, over Talos's dragon, up the Tower's west face | "Four hundred and five years since Tiber Septim forged the Empire, Tamriel endures." |
+| 19.168 | 230016 | INTRO2b's beat: the crest - over the crown, the gilt spire, the city's wheel below; the flare | - |
+| 19.2-26.7 | - | The orbit north round the crown, opening onto the districts | "From the White-Gold Tower, the Emperor holds nine provinces as one." |
+| 26.709 | 320512 | Bar 4: the dive over the Arena District's Colosseum and out across the walls | "But in the west, a murdered king walks the streets of Daggerfall, and the Iliac Bay drifts toward war." |
+| 34.240 | 410880 | Bar 8: the ascent - the city's wheel, the cloud deck, Cyrodiil, the continent, turning north and down | "Beneath its waters, a power that once broke kingdoms waits for a hand to wake it." |
+| 45.568 | 546816 | Bar 14: the map's words and borders | "Nine provinces. A thousand roads. The story of this age is yours to write." |
+| 49.344 | 592128 | Bar 16: the mark lands (INTRO2c's flight from the depth, unchanged) | - |
+
+The narrator is Oblivion's device - a voice over the Imperial City - in the port's own words of 3E 405 (Uriel Septim VII's
+throne, Lysandus dead at Cryngaine Field, the Numidium waiting in the Bay), five lines in the player's language (`t()`; the
+25 languages drafted in-session, `tools/l10nInSession.mjs`), one at a time, each held at least 4.3 s, never across a cut,
+a credit or the mark. The morning is the film's too: night under the credits (stars, Masser and Secunda), the sun up as
+the mist breaks and low and gold through the flight (`introSunAt`, `introAtmosphereAt`).
+
+DEPARTURE FROM INTRO2, named: the mark landed on the 19 s beat (INTRO2b, Mac: "the logo needs to drop with the beat that
+happens around the 19 second mark"). That beat is the crest now, and the mark lands thirty seconds later on the third
+phrase's downbeat - the film is two and a half times INTRO2's, and Oblivion's opening keeps its title for the end.
+INTRO2's own landscape of the Bay (`introMap.js` `buildIliac`, its ranges and sea floor) is retired with it; the Bay's
+authored shape and the seeded noise stay (below, and `ui/tamrielInk.js`).
+
+THE IMPERIAL CITY IS TESA'S. `world/imperialCity.js`, `world/capitalShapes.js` and `world/capitalImperial.js` are
+#1184's own files byte for byte at its head (`4d8200b01`), at their own paths, so that branch's merge finds them already
+here (they import only `spawnedDungeons.js`, `meshReader.js` and `detStandIns.js`, as main has them), and
+`CAPITAL_ARCHIVE` (38400) comes with them into the pseudo-archive registry as #1184's own line
+(`world/eliteGates/pseudoArchives.js`; EG-G2 holds every `*ARCHIVE*` number to it). What the film
+draws is theirs (`ui/intro/introCity.js`): all thirteen landmarks' own meshes by their own builders (the Tower, the
+palace wall and tombs, the city wall and watch towers, the district walls, the Colosseum, the Temple of the One, Talos,
+the Nine Divines, the Prison, the University, the Waterfront, Talos Bridge), each vertex carrying its picture's record;
+the ground by the city's tile law (`imperialTile`, 8 m a texel over 6 km); its trees by its tree law (`imperialTree`,
+tile by tile). Two things it cannot have, and stands in for: Daggerfall's city blocks (BLOCKS.BSA is the player's and
+the front door runs before the picker) - so on every cell the plan gives one of Daggerfall's blocks the film stands
+houses of that trade's size (a temple and its bell tower, a guild hall, a Mages' tower, a street of houses), 5,073 of
+them; and the capitals' painted pictures (`capitalModels.js` `capitalArt`, which needs half of TESA) - so the film's
+shader paints each record as its material (marble veined, gilt ribbed and mirroring the sky, ashlar coursed, slate, bronze
+with its patina). The woods past the lake are the film's own groves.
+
+THE CONTINENT (`ui/intro/introTamriel.js`) is `world/tamriel/tamrielGeography.js`'s authored Tamriel rasterised once
+(1280 x 800, four texels a picture unit): the provinces' rings by scanline, a signed distance to the coast frayed by
+noise, the ranges' lift (widened for the film's foothills) and each province's land - its open ground, woods and dry
+country by the lore (the Alik'r inland, Skyrim's tundra, Morrowind's ash, Black Marsh's fens, Elsweyr's badlands,
+Valenwood's unbroken wood). Inside the Bay's rectangle, the hole the geography leaves for WOODS.WLD, it is INTRO2's
+authored bay (`seaDistance`, Balfiera and all), eased in from the rectangle's edge. The rivers and the cities are drawn
+by the shader from the geography's own points (a stroke and a dot at any height), the borders inked in gold at the end,
+the Imperial City a gold mark, and the map's words (`INTRO_MAP_LABELS`: the nine provinces, the seas, the Imperial City -
+the geography's names, no word of the film's) placed over it by the front door each frame, hidden from a screen reader as
+the credits are.
+
+THE RENDERER (`ui/intro/introLandscape.js`, `ui/intro/introShaders.js`): the continent first at its own scale, then the
+depth cleared and the city drawn over it (its ground fading at 24-38 km into the continent's own colour); camera-relative
+throughout, so 5,000 km of continent and a metre of parapet keep their precision; a 2048 shadow map from the low sun over
+the city (the Tower's shadow runs kilometres west at the ascent); MSAA; an analytic sky, height fog and the lake's mist;
+the lake mirroring the sky, the Tower and the city wall analytically; birds wheeling about the crown; a cloud deck the
+ascent climbs through; a last pass for the bloom, the sun's rays and the grade. The heavy build runs in the intro's
+worker (`ui/intro/introBuildWorker.js`, `introBuild.js`): the city first (the gate waits for it - the film never opens on
+an empty lake), the continent a second or two later (a one-texel sea stands in until it lands); no Worker, or one that
+fails, builds the same arrays on the page. The passes stand down by height (the houses and trees under 60 km, the shadow
+under 40, the landmarks under 400, the sea above 60 km, the cloud deck between 1.4 and 30 km), the shadow map is drawn
+again only when the sun has moved, a tree under a pixel and a half tall is folded away, and the twelve programs compile
+beside the gate (`render/glProgram.js` `startPrograms`, KHR_parallel_shader_compile) - never a frozen page while the
+driver compiles.
+
+Unchanged: the gate, the credits, the hold and the hand-off to the menu, reduced motion (the last frame held, the words
+over it, the mark appearing on its beat), INTRO2c's mark and recoil, the recording and its session (INTRO-REVERT II).
+
+PINS: `test/ui/intro4_film.test.js` (12: the cut on the recording's samples and bars; the narrator; every frame of the
+flight clear of the Tower, the walls, their towers and the Colosseum by IMPERIAL's own measures; the last frame holding
+every vertex of the land inside the letterbox, north up, at 16:9, 21:9 and 4:3; the morning; the landmarks being TESA's
+meshes vertex for vertex; houses only and always on Daggerfall's cells; the trees the city's law; the ground the tile law;
+the continent's provinces, seas, Balfiera, borders, snow and rivers; the map's words; the build's worker and fallback),
+`test/ui/intro.test.js` (INTRO4's landing on bar 16, the camera's continuity held to its height, the ground grid).
+Mutants: `tools/mutants/intro4.json` (20, all dead). `tools/introAudioCheck.mjs` measures all six landmarks;
+`tools/introProbe.mjs` waits for the longer film and shoots its shots, the narrator's line and the nine names, and
+reads the logo's 0.78 s approach on a frozen page at its own time as well as live (SwiftShader presents no frame inside
+it: one run drew 47.69 s, then 52.09 s - the live read names that gap and the frozen read carries the check);
+`tools/introCapture.mjs` renders the whole film (8 frames a second at 960 x 540); the intro workflow runs the new tests
+and watches the city's and the geography's modules (45 minutes now). AFTER THE MERGE (deploy 1707, BOW-TOPS in
+`05-Combat/Balance-Arc.md` section 18): six of `ui/intro/introShaders.js`'s smoothsteps had their edges reversed, which
+GLSL leaves undefined (SD20c V14). Each falls as `1.0 - smoothstep` with the edges in order, the same curve on a driver
+that honoured the reversal. AUDIT UI 2's reach sweep follows `new Worker(new URL(...))`, so the intro's worker is
+reached by the page that starts it. NOT SEEN: the film on a hardware GPU - every frame
+here was SwiftShader's, which draws one in 3 to 7 s at 1280 x 720 (INTRO2's in about 0.45 s); the probes wait for it
+accordingly (three minutes a wait).
+
+THE SET (the merge of main into #1184, 2026-10-27). INTRO4 brought TESA's city to main as it stood at 4d8200b01, the
+Imperial City at seven pixels a side, and shot the film on it: the camera's path, the fog, the lake and the dive past the
+Colosseum. TESA's IC-GRAND has since made the game's city twenty-five pixels a side (its wall 6,900 m out where it was
+1,950 m) and gave the Colosseum's ground to Daggerfall's arena (`03-World/Arena-Provinces.md` IC-GRAND). The two met at
+the merge: the game's `world/imperialCity.js`, `capitalImperial.js` and `capitalShapes.js` are IC-GRAND's, and the film
+reads its own copy of the city it was shot on, `ui/intro/set/` (the three modules as main had them, their imports'
+paths and an export list the only changes), so every frame of the film stays the one pinned above
+(`ui/intro/introCity.js:"import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from './set/imperialCity.js';"`). PIN MOVED:
+`test/ui/intro4_film.test.js` reads the landmarks off the set. The set's 23 proper names stand on the L10N4 ratchet
+where world/imperialCity.js's did (`test/systems/l10n4_hardcoded.test.js`). STILL OPEN: re-shooting the film on the
+grand city - a new camera path over a city 3.5 times as wide, without the Colosseum - is its own slice; until then the
+film's city is not the one the player walks into.
+
+#### TITLE-DOOR (2026-10-27): the held title is the front door
+
+The owner: *"People really love the start game intro screen. I think instead.of this leading to the online/offline
+options. We use the intro title screen as the landing pad itself with these options"*. The film's last frame - the map
+of Tamriel with its words, the mark at rest - said Tap to continue and led to the menu's home on its own pixel sky.
+Now the menu's home stands ON the held title, and Tap to continue is retired (its node, its rules and its catalog key,
+`menu.intro.tapContinue`, dropped from every language by `tools/l10nInSession.mjs`). DFU's own start is its title and
+then DaggerfallStartWindow (Load, Start, Exit); this door was already the port's own design (FD1, UI-CALM), and this
+record is the design record the native-window rule asks of it.
+
+THE LANDING (`ui/intro/introScreen.js:"const land = (how) => {"`). When the mark comes to rest the film lands: it
+holds its title (the frame at `TITLE_HELD_TIME`, the mark's impact spent), steps under the menu (`#intro.intro-landed`
+at z 11, the menu's host at 12), marks the page (`<html data-intro-title="held">`, `ui/intro/titleHeld.js` - one small
+module so the menu, which a running game mounts too, never imports the film), and mounts the menu over itself. The menu
+is inert while it fades in (650 ms, the retired prompt's own fade), then its first door takes the focus the prompt had.
+The film draws only when something changes its picture - a resize, its map arriving - never every frame while the player
+looks (`ui/intro/introScreen.js:"function requestDraw() {"`). It is let go with the menu: the front door's `release` runs
+before the scene boots, so the world never shares the GPU with it (`ui/intro/introScreen.js:"release?.();"`).
+
+THE MENU ON IT (`ui/enhanced/enhancedMenu.js:"const onTitle = () =>"`). The boot home on a held title draws no sky
+and no masthead - the map is the ground, the film's mark is the wordmark - and its host goes see-through there
+(`#enhanced-menu[data-over-title]`); every section keeps its own opaque ground over the held film, and its way home is
+the title again. The pause face never wears it. The doors stand in a row in the band between the mark and the foot,
+where Tap to continue stood (`ui/enhanced/enhancedStyle.js` TITLE-DOOR): Online and Offline side by side, the offline
+level's four games and the way back in one row. The landed mark rises a little and narrows to make that band (41% of
+the height, at most 37vw, 535px or 64% of the height; on a short screen, a phone and a short phone their own values),
+and the band starts at the mark's foot - its centre plus half its height, .42 of its width for the 1232 x 1034 file
+(`--intro-doors-top`, held to the PNG's own IHDR by the test). On a phone the two questions stand one over the other and
+the games two to a row; on a short screen the offline word and line are left to the rail and the diamonds put away, so
+the five fit one row. DFO Grimoire stands neither its desk nor its book on the title: the doors are its one page held up
+over the map, as its map backdrop holds them (`ui/grimoireDress.js` TITLE-DOOR), the games and the way back one size.
+
+THE SCORE. A title the film carried in keeps the score at its own level while the player looks; the first press on the
+menu takes it down to the menu's (MENU_THEME_GAIN), as the retired tap did. SKIP INTRO AND ESCAPE LAND ON THE TITLE, not
+past it: the title held at once, the score unlocked in the press and started at the menu's level (the old Skip's audio).
+Skipped at the gate, before the map was built, the title stands on the film's own ground and the map fades in under it
+when it is drawn (`introLandscape.js`'s `mapReady`: the programs and the continent, not the city). The player's SKIP
+START VIDEO (UXB1-A) opens on the title too - no gate, no film, nothing asked of the score until the front door's first
+gesture starts it at the menu's level. A score that cannot load lands the title with its message, now at the top under
+the corner marks. `?nointro` (the probes') builds no film and the menu stands on its own sky, as it always has; a film
+that breaks before it lands is let go and the menu opens on its sky the same way.
+
+PINS: `test/ui/titledoor.test.js` (7: the band from the logo file's own size and the film under the menu once landed;
+the home on the title, a section over it and home to it, the pause face and an unheld page without it; Skip start video
+on the title at once; Skip intro and Escape landing on it; the carried title's duck at the first press and its draws
+only on a change; a broken film let go; the front door letting the title go with the menu), on `test/introDom.mjs` (a
+page small enough to hold the film, its frames and timers turned by hand). Moved, as deliberate changes edit their pins:
+`test/systems/uxb1a_startvideo.test.js` (the pref lands on the title), `test/ui/audit_font3.test.js` (the prompt's phone
+size retired), `test/ui/grim1_dress.test.js` (the desk's rule names the title's home it leaves). Mutants:
+`tools/mutants/titledoor.json` (14, all dead). `tools/introProbe.mjs` reads it live: the landing, the held title
+drawing nothing while it waits, the duck at the first press, a section and home again, a game letting the title go, the
+mark and the doors fitting their band at every size for both questions and the offline row, the missing score, Skip at
+the gate with the map fading in, and Skip start video. Its resume check (INTRO2's: the score continues, it does not jump
+by wall time) is read against the wall time since the resume's own press, not a fixed second - a software GPU draws a
+frame in 2 to 9 s, and the frame-polled wait let more than a second of score pass before the read (it failed so on
+INTRO4's run and on this PR's first). `tools/introCapture.mjs` shoots each frame past the landing as the title stands (a
+seek past it draws nothing). NOT SEEN: a hardware GPU (SwiftShader, as INTRO4).
+
+MAIN'S RED, MENDED AT THE MERGE (the owner: "Every single deploy has been red so far"). From CHAT-POST (#1342) on, every
+deploy of main stopped at its tests: the change re-wrote the chat's send (`world.js` chatSend's `{ me, item, items }`,
+onSend's `opts`) and the pack's bag, and left pins and mutant records on the old text. Mended here, none of it the title's:
+the four chat-send pins re-aimed (`chatchan`, `guild1c`, `mod1`, `partytravel`, each marked PIN MOVED); MAC-C's sheet
+door read from its pack's own `createInventoryWindow({`, not a 1600-character window the longer line pushed it out of;
+the suggest list's Worn tag up to the FONT3 floor (`chatPanel.js` `.dfchat-suggest-worn`, 10px to 11px); twelve mutant
+records re-aimed by content (`chat_find`, `chatchan`, `emote1`, `mod1`, `staff-chat-red` - 12 dead); and the hosts'
+ceilings raised to the hosts CHAT-POST left (bootWorld 36,240, createWorldModes 11,027, `hostsplit.json` with them) -
+the pull-request gate the deploy does not run.
 
 ## U65 THE INTRO (2026-08-30) - HISTORICAL REMOVAL
 
@@ -18741,6 +18947,18 @@ the dungeon's arms pass `!f.yielded` (the street's `!f._pupYield` too) and its "
 
 The classic skin has none of it, byte for byte.
 
+**IC-PROPS (2026-10-27, the owner: "Some doors in Imperial city can be entered but dont show the tooltip", then "a world
+wide issue").** The law above broke at two doors. A house with no name of its own had a plaque only where it listed verbs
+(online, for sale): offline and everywhere else the door entered and said nothing - 6,325 of the 8,295 building doors
+with a room over the freeware's blocks and both town packs. DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
+and the mod prints it (.cs:719-728), so the port does now, whatever the verbs
+(`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`), and a nameless building of no
+house type (a ship's deck) says its place. And a door of a NEIGHBOURING location (the Imperial City's next slice, a town
+across a pixel's edge) was named and discovered in the player's own town's book: the host's record now carries the
+door's own town (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`), and the plaque, the press
+and the activation read it - so the plaque names what the press enters. The record: `03-World/Arena-Provinces.md`
+IC-PROPS; pins `test/systems/icprops_doors.test.js`.
+
 ## CHARGEN-REFLEX — the Continue button was covered, not dead (2026-09-22)
 
 Fay on Discord, desktop build 0.1.3612: *"Just downloaded the latest
@@ -19605,6 +19823,13 @@ capture phase, and a loss within `TOUCH_UNLOCK_MS` (500 ms) of one is the finger
 touch near is the player's Escape as before, so a mouse and a keyboard are untouched (and a Firefox touchscreen laptop,
 the layer off, is covered too). Not proven on a device. Pinned in `test/player/fb1009c_touchunlock.test.js` (2);
 `tools/mutants/fb1009c_touchunlock.json` (4, all dead; `esc_lock.json`'s relock record re-aimed by content).
+
+**A FOURTH - A TOUCH SCREEN NEVER ASKS (TOUCH-NO-LOCK, RPT1026-MISC, 2026-10-26).** A private report from a phone:
+Chrome's pointer-lock banner (how to get a cursor back) came up with every menu. "A finger never holds a lock" held for the canvas's click net only: every RELOCK door - a window's close, the
+look gate's close edge, a dial's goodbye - asked for the lock on a phone too, Chrome on Android granted it to the tap
+that closed the window, and its banner said how to give back a cursor the phone does not have. `requestLook`
+(`player/pointerLock.js`), the one door the others go through, returns on a touch device (`isTouchDevice`); the look
+there is the touch layer's drag. Pinned in `test/player/rpt1026_misc_lock.test.js` (1).
 
 ## CARD-FIT - the item card fits its window and says what a glance needs (2026-09-28)
 
@@ -20514,3 +20739,54 @@ At 390x844 (a touch screen) the bar is two lines of 44px buttons, the Boards 46p
 sideways; at 844x390 the bar is one line and the list 216px. Not seen: the live pause face online. Pins:
 `test/ui/enhanced/timers2.test.js` (8: the law, the layout, the window, the bar, the sheet, and the audit's three);
 `test/ui/enhanced/timers1.test.js`'s window pin moved to the groups; `tools/mutants/timers2.json` (28), all dead.
+
+## RPT1026-MISC - the private reports' screens (2026-10-26)
+
+The batch's other screen faults, each read to its root in a private report and pinned by a test that fails without it
+(mutants in `tools/mutants/rpt1026_misc.json`, all dead):
+
+- **TAB-REPEAT** - a held Tab put the dial away. The overlay stack's Tab listener (`ui/enhanced/enhancedOverlays.js`
+  onTab) closed the top overlay on the key's auto-repeat as on a press; a repeat is ignored now, as the listener's own
+  comment said it was. `test/ui/enhanced/rpt1026_misc_tab.test.js` (1).
+- **TOAST-STALL** - HUD lines stuck on screen when several came close together, on a phone for many seconds. The HUD
+  text keeps PopupText's one timer, the FRONT row's; a repeat of the BACK row refreshed it, so a line said
+  again and again held every row up for as long as it repeated. A repeat behind other rows is dropped now - its row is
+  on screen, with its own dwell to come (`ui/hud/hudText.js` add). `test/ui/hud/rpt1026_misc_toasts.test.js` (2).
+- **CONFIRM-SHEET** - Remove data on the Morrowind card seemed to do nothing, and said nothing. Every
+  destructive press on the Settings screen asks first (the Morrowind card's Remove data, a pack's remove, All off, Reset
+  everything, Restore defaults), its question a card in the detail pane - and in the pause menu's Settings, and on a
+  narrow or touch screen, that pane is a sheet below the screen until opened. The ask set the card without opening it.
+  It opens the sheet now, and shuts it again when answered if it opened it (`ui/enhanced/enhancedMenu.js` ask,
+  `answered`). `test/ui/enhanced/rpt1026_misc_confirm.test.js` (1).
+- **TOUCH-FIELD** - on a phone the Bank's amount could not be typed, while the map's name field could. The
+  enhanced port draws a classic window's typed field as words (`ui/enhanced/enhancedPort.js` 'field'); the touch layer's
+  own entry (TI2's "abc") is opened by a press on a live field now, with the number pad for an amount
+  (`ui/touch/touch.js` openTouchEntry; the bank's field marked `numeric` in `enhancedPorts.js`).
+  `test/ui/enhanced/rpt1026_misc_field.test.js` (1). AUDIT RPT1026 L1: the entry was the layer's child, under every DOM
+  window (the layer is one stacking context at z-index 5, the port's host 13), so the amount typed stood hidden behind the
+  Bank until Enter; it is the page's own now, at `TOUCH_ENTRY_Z` (39) over the window that raised it
+  (`test/ui/audit_rpt1026_l.test.js`).
+- **TALK-SIDEWAYS** - on a phone the talk panel ran off the screen and could not be used.
+  Measured in Chromium at 844 x 390 before the fix: the panel 52dvh, 203 pixels, its topic list 12 pixels tall and drawn
+  under the foot; at 740 x 360 the category buttons under it. On a screen 500 pixels high or less the panel stands the
+  height less a margin and keeps its two columns (`ui/enhanced/enhancedStyle.js`, after the talk's phone rule): the list
+  166 pixels at 844 x 390, upright and desktop untouched. `test/ui/enhanced/rpt1026_misc_talk.test.js` (1, the sheet's
+  cascade read at each size). AUDIT RPT1026 L2: and narrower than 720 pixels (640 x 360, 667 x 375, 568 x 320) the phone
+  rule had still stacked the head and the foot, the list 66 pixels at 640 x 360 and 26 at 568 x 320, Work cut off; on a
+  short screen the head and the foot are one row each and the categories shrink to their strip - the list 152, 167 and
+  112 pixels (`test/ui/audit_rpt1026_l.test.js`).
+
+## ARMOR-TYPE - A PIECE OF ARMOUR SAYS ITS FAMILY (2026-10-26, a player: "can we add an info to every item what TYPE of armor it is (chain leather or plate)")
+
+A plate piece's name says its metal ("Iron Cuirass"), never the word "plate", and below Rare the metal is withheld - so
+nothing on the card said whether a piece was leather, chain or plate, the family a class's armour restriction refuses by.
+Now every piece of armour, a shield too, says Leather, Chain or Plate (`systems/item/itemInfo.js` itemArmorTypeLine):
+the enhanced card's **Type** row under **Armour** (`enhancedInventory.js` itemLine, armorType), the quick-loot and trader
+stat rows (itemStatRows), both trade windows' info line, and the questline reward card (`qlJournal.js` pieceStatWords,
+its words in `ql.journal.pieceLeather`, `pieceChain`, `piecePlate`). NO NEW LAW: it reads the class's NativeMaterialValue
+(`rriItems.js` rriNativeMaterialValue) `>> 8`, the equip gate's own read (DaggerfallInventoryWindow.cs:1352), so a
+Roleplay & Realism mail hauberk says Chain and a brigandine or fur jerkin Leather, as the gate treats them. The classic
+popup is DFU's records and does not change (THE NATIVE-WINDOW RULE). Pins: `test/systems/item/armortype_info.test.js` (5:
+every material, the shield and the rest, the gate agreeing, the stat rows' order, the card model and the reward card);
+`tools/mutants/armorlean.json` ARMOR-TYPE-no-row. The same update's loot and sale halves are `06-Systems/Loot-Rarity.md`
+ARMOR-LEAN.

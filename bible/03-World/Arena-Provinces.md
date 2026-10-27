@@ -1269,6 +1269,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     the ring wall open on its four axes; the statue on a stepped plinth - Mehrunes Dagon on its west half (`dagonFigure`:
     legs astride, horned, four arms, his axe raised the statue's top) facing Almalexia on its east (robedFigure, her arm
     raised with Hopesfire gilt). Bronze both, 13 m and 10 m over a 5 m plinth.
+    **Moved by CAPITAL-TREES** (below): the garden's trees are the city's own in their planters (`buildMournholdGardens`,
+    model 910125), and the Temple Courtyard's by its pools; the own blocks' tree law is retired.
   - **The High Fane** in the courtyard's middle (its plinth 72 m, drum 25 m, dome to 61 m with its lantern), its porch
     turned south to the courtyard and the palace; two long pools in marble kerbs either side of the way and four
     braziers along it (closed where they stand, the way between open).
@@ -1310,6 +1312,10 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   - **Hide houses** (`hideHut`: a cone of hide on its poles - the new picture `hide`, tanned panels stitched) six on
     every platform, clear of the walkway's landing, and two on a timber deck at every limb's fork (`limbForks`, 130 to
     175 m up, under the crown). Daggerfall's blocks stay at its foot - the engine's city - the oak's own above them.
+  - **Moved by CAPITAL-TREES** (below): the oak finished on the capitals' trees' kit - its buttresses all round its foot,
+    each held under the walkway climbing over it (`rootUnder`; the arc the first rise had cleared is no longer the law),
+    boughs carrying its platforms, its limbs carrying their decks, its crown in storeys; the walkway's deck run into the
+    bark, its rail and the platforms' faced both ways, the houses' doors to the trunk.
 - **Torval** (`world/capitalPlans.js` TORVAL, `estateBeds`; `world/capitalTorval.js`). UESP: "its ruler's palaces stand
   among gardens of sugarcane laid out in symmetry, where the Mane meditates on a palanquin", the estates kept from
   outsiders, moon sugar being sacred. TESA10c's palace stood bare on its blocks:
@@ -1357,6 +1363,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     diagonal: a quad's second half takes its first's plane wherever that turns
     it within the bound, and a near tie between a triangle's two greatest axes is broken by its face's normal. None is
     split now.
+    **Moved by CAPITAL-TREES** (below): a tree's flats - its leaf sprays and lianas, cut by their alpha - keep their own
+    coordinates (`world/capitalShapes.js` flatTriangles), at the density Daggerfall draws its trees' flats.
 
 ## TESA-BIOME - the land past the Bay, each province its own country (2026-10-24)
 
@@ -1650,7 +1658,8 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   a roof beside a roof at most ROOF_STEP (1.6 m, a jump and a catch at Climbing 0: 1.5 m reach, 0.15 m in the air, the
   jump's 0.51 m rise) higher - the height a walk round its block, half a storey at a time (a tower two storeys over its
   neighbours, a climb of its own); an alley under the running leap's shortest flight (3.2 m under 4.0); a parapet (0.9 m)
-  and a way up's crates (1.2 m steps) under a vault; a ledge along a street front at 2.6 m (a wall run's reach at
+  under a vault; a way up a built stone stair walked from the street to a roof (IC-STAIRS, below - it had been a stack of
+  crates in 1.2 m steps under a vault); a ledge along a street front at 2.6 m (a wall run's reach at
   Climbing 0) and balconies over it; a bridge from a flat roof to a flat roof within a step across a street too wide to
   leap; every pitch a top the hands keep (under 50 degrees); a kerb under a step. The collider is the model's own mesh:
   every face drawn is solid (scenes/pixelBuild.js files every placed model the model door calls solid). FOUND AT THE PIN:
@@ -1987,7 +1996,9 @@ town map's label, the shop's keeper and stock, the Where-is answer, a quest's si
   ground floor and (but a home) its people in; the building's donor its pool's nearest its footprint in size, its key's
   hash the tie (the same on every client). The interior is the donor's record read from the player's own BLOCKS.BSA when
   the block is made - its models, its keeper and residents, its shop's shelves, its quest markers - nothing of it in the
-  repository but the table's block names, record numbers and the entrance's measures.
+  repository but the table's block names, record numbers and the entrance's measures. Since IC-INTERIORS (below) the
+  donor gives its CAST alone (its people, its markers, its lights' pictures); the interior is the building's own, and the
+  entrance's columns are gone with the donor's rooms.
 - **Daggerfall's door** (fabricDoorModel, a model a donor): Daggerfall's own door picture (TEXTURE.374, the temperate set's,
   swapped for the climate as a block's door is) on a leaf in a stone surround (26 triangles, solid), its door face the game's
   building door (DOOR_TYPE.BUILDING - `world/meshReader.js`'s door, three corners and its normal out of the building),
@@ -2041,6 +2052,95 @@ cut one from.
 - Pinned by `test/world/icbld_lights.test.js` (the lamps' records, cap, spacing and ground; the block's flats lit by the
   exterior's own collector where each lamp stands; the masks' glass inside its window and bottom-up; the pipeline's
   arm), seven mutants in `tools/mutants/icbld.json`, all dead.
+
+### IC-INTERIORS - every building's own interior: its footprint, its storeys, its kind, its door, its windows (2026-10-27)
+
+The owner's field report, item 5: *"Interiors in the Imperial city need to match their exterior with varied layouts"*;
+and on all of it *"No band aids or half assed work"*. BLD (above) handed each building a donor's interior whole: a long
+shop a square room, a narrow house a wide one, every house of a size the same three rooms, a five-storey house one
+storey, its door nowhere near the street's, its windows nowhere near the walls'. DFU's reference: a building's interior
+is its subrecord's interior record - its models, flats, people, action doors and spawn points as its RMB's author laid
+them (DaggerfallInterior.AddModels, AddFlats, AddPeople, AddActionDoors, AddSpawnPoints), laid in the frame of the
+building model its door is on; Daggerfall builds those rooms of a kit on a 128-unit grid (floor 1000, ceiling 2000, the
+walls 3004, 3018 with its window, 3002 with the street door, 3000 with a doorway, the post 4000, in nine building sets,
+`piece + 100 * set`), furnishes them with its 41xxx props (a shop's shelves stocked - AddFurnitureAction's
+shopShelvesObjectGroupIndices), joins its storeys by its straight stair (31023) or its ladder (41409, DaggerfallLadder,
+its LadderBottom and LadderTop markers), and scales a record's model by RMBLayout.GetModelScaleVector where it says so.
+
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): every fabric building's interior record is WRITTEN**
+  (`world/interior/fabricInterior.js`), in RMB's own shape - `world/interior/interiorLayout.js` layoutInterior lays it as
+  it lays any - of Daggerfall's own pieces alone (`world/interior/fabricInteriorKit.js`: every number a measure of the
+  freeware's ARCH3D or a count of its 920 RMB blocks; nothing of a model in the repository but its id and its measures):
+  - **its grid its footprint's** (fabricInteriorGrid): the kit's 3.2 m cells - the fabric's own storey - in the door's
+    frame, a cell the building's where its middle stands inside the footprint, its door's cell always, every one reached
+    from it. A long building is a long interior, a big one more rooms; every point of a footprint 2.3 m in from its walls
+    is in a cell; its party walls blind inside as out (`world/imperialFabricModels.js` partyEdges).
+  - **its street door where the building's is**: the door's cell's front the 3002 wall, its door face (the game's
+    building exit) at FABRIC_ENTRANCE - the origin of the frame the subrecord stands the interior in
+    (`world/imperialFabricBuildings.js` subRecordFrame) and the door model's (fabricDoorModel) - facing in, a wall's
+    breadth in from the street door; its Enter marker the cell's middle. With the freeware, every building's exit stands
+    on its street door's line within 5 cm, 0.21 m in.
+  - **its storeys the ones its walls show** - floor(eave / STOREY), the facade's own law, to eight - each 129 units over
+    the last (Daggerfall's pitch), joined by Daggerfall's stair where one stands whose foot and well leave both floors one
+    piece (an outer wall's and off the street first), else its ladder against an outer wall under a hole (the ladder's
+    room carried up whole, its hole floored over a storey up, so the hole's walls are the walls under it; in a building
+    two cells wide the ladders climb turn about, each in the cell the last arrived in), else - a building of one cell - a
+    HATCH: the ladder in a corner quarter, that quarter of the floor over it open, three quarters of Daggerfall's floor
+    and ceiling tiles laid round it (the tile at half its size, its outer edges on the whole tile's). Walls and posts are
+    stretched 130/126 up (GetModelScaleVector's yScale) so no slit shows between storeys where a stair or a hole looks up;
+    a stair's mouths take a lintel the band's height.
+  - **its rooms its kind's and its key's** (fabricInteriorPlan): the front room on the street (the shop floor, the taproom,
+    the living room, the hall, the counting room, the library - of a front too big for one room, the door's own rectangle
+    of it; a shop or a bank a cell wide its floor the building's depth, its counter at the end), the rest cut by the plot's
+    key, the same on every visit and every client, another key other rooms; a doorway and Daggerfall's action door between
+    each room and the one it is reached from; the building set its pool wears (a manor's for a wealthy home, a tavern's,
+    the Mages Guild's own).
+  - **its windows where the walls show them**: an outer side a window wall (3018) but where its edge is a party wall, and
+    one in four of the rest plain (the key's pick), never a window between rooms.
+  - **its furniture its kind's, and walkable**: a shop's counter, its keeper behind it, the shelves Daggerfall's own shops
+    of its trade carry (POOL_SHELVES - stocked, AddFurnitureAction's group); a tavern's bar, tables, seats, hearth and its
+    rooms' beds; a home's beds (a home of one storey its bedroom beside its living room; a home's last storey with no bed
+    yet takes one), its table and hearth; a guild's hall and study; a bank's counter and vault; a library's shelves. A
+    piece stands against a wall (at its middle or in a corner of it) or on a cell's floor, never in a wall, on another, in
+    a door's swing, a stair's mouth or before a ladder - and only where its room stays walkable: a body's middle (the
+    player's capsule, 0.35 m) still reaches every way of the room from every other and keeps four fifths of its floor
+    (roomWalk). Measured over 4,000 buildings with the freeware's casts: every shop its counter, every home its bed, every
+    tavern its bar; no piece through a wall or on another, every person and marker on the floor a body reaches.
+  - **its cast its donor's** (BLD's donor, now giving its cast alone): its people (their pictures, factions, flags and
+    stream positions), its quest, rest and treasure markers, its lights' pictures - each stood on a free spot of the
+    rooms (the keeper behind the counter, a rest marker on the floor nearest a bed).
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): a made interior is made when it is first read**
+  (`world/imperialFabricBuildings.js` fabricBuildingInterior; `world/interior/interiorLayout.js` interiorCast): a walk over
+  a slice's thousands of buildings - the summaries' `hasInterior`, the questor pool, a quest's site search and its sites
+  index - reads the donor's record it names (`cast`) and makes none (0.08 ms a building, the made interior's 3-12 ms
+  never paid there). Its people keep the donor's positions as their names' (`castPos` - `characters/interiorPeople.js`
+  collectInteriorPeople's raw position, StaticNPC's hash), so the questor pool's person is the scene's, and BLD's saves'.
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): a quest's markers in a made building are laid at its mount**
+  (`systems/quest/castMarkers.js`, from `scenes/quest/questBridge.js` mountScene): a site holds a made building's
+  markers as its cast stands them (Place.EnumerateBuildingQuestMarkers over interiorCast - the search makes no room, and a
+  save from before holds them so too); before the building's quest things stand, each of its sites' n-th spawn and item
+  markers is laid on the room's n-th, its selected marker on the one it copied, the old spot kept as the town packs'
+  curation keeps it (`curatedFrom` - a foe a save stood there follows it). DFU's EnumerateBuildingQuestMarkers stores the
+  room's positions at the search.
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): the ladder climbed is the ladder's own** (`player/enterExit.js`
+  climbLadder, `scenes/worldModes.js` handing it the ladder's matrix): the top marker nearest the clicked ladder's head and
+  the bottom nearest its foot. DaggerfallLadder.ClimbLadder takes the two nearest the player - the same pair at every one of
+  Daggerfall's own 1,719 ladders (measured), and none at all in a house that stands a ladder a storey, one over another's
+  landing. The way (below the top: up; else over the bottom: down) is DFU's.
+- Measured with the freeware: every kit piece in all nine sets and every prop of FURNITURE in ARCH3D as the table says
+  (the window walls of sets 2, 3, 5 and 8, all of set 8's walls, the ceilings of 4, 6 and 8 and the posts of 5 and 8 made
+  elsewhere and placed back - KIT_SHIFT); over a ninth of the city, 43,426 buildings, every one its storeys (69,723 stairs,
+  6,447 ladders, 4 hatches); over 400 buildings' every storey, eye-height rays from five spots a cell in 48 directions find
+  no gap (the first face every ray meets faces it), no two pieces' faces drawn in one plane, and every ladder climbed up to
+  its landing and back to its foot.
+- Pinned by `test/world/icinteriors.test.js` (the grid its footprint; the storeys and their ways, every room reached, the
+  slivers' ladders and hatches; the key's layouts; the street door; the windows and party walls; each kind's furniture;
+  the walk, the door swings, the cast on the floor; the cast's names and the walks that make no room; a quest's markers
+  laid at the mount; the ladder's own climb) and, with ARENA2_PATH, `test/world/icinteriors_freeware.test.js` (the kit and
+  the furniture measured, the street door the game's at the building's, Daggerfall's every ladder, made interiors seen
+  through nowhere, every donor's cast); 33 mutants in `tools/mutants/icinteriors.json`. BLD's pins moved with it (PIN
+  MOVED (IC-INTERIORS): `test/world/icbld_buildings.test.js`, `test/systems/quest/questfabric.test.js`; its mutant
+  BLD-door-off-the-entrance and CRYPTSALE-law-unknown-empty re-aimed by content).
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 
@@ -2112,6 +2212,11 @@ map's own pens (rivers as lines scaled by width, lakes by outline), cached like 
   whose points (60%) lay beside a lake's picture pixel (G's `lakeShores`) was dropped, and each lake traced again at
   LAKE_INK_SS (4) samples a picture pixel through G's `lakeShoreAt` - the shore the stream itself stood - contoured and
   smoothed as the coast was. Once a trace, with the rest of the static ink.
+- **The bridges** (ROAD-LOOK, `03-World/Roads.md`): in to the Bay's scale (`near`) the roads' paint marks each bridge the
+  terrain kernel stands - the road's two parapets either side of it, BRIDGE_MARK.gap paper pixels out, over the river's
+  width - off the installed roads' layer and this copy of the rivers (`world/road/roadBridges.js` inkBridgeLaw: the law's
+  own crossings on the copy's lines, no level, never the law's compile on this thread); a filtered kind draws none.
+  Pinned by `test/world/road/roadlook.test.js` (the map's bridges the kernel's, the parapets, the filter, the bands).
 
 Proof: `test/ui/mapwaters.test.js` (6: the store and the packing; a river's runs - the scale, the step, the floor, the
 shared point, the thinning; the paint - the wash under the line at its width, the lake in the coast's hand, the cull, the
@@ -2406,6 +2511,397 @@ wired). `scenes/exterior.js` (the bench) builds no capital, and `scenes/worldMod
 
 **Then**: a probe of the running game from a quick start (`tools/solitudeProbe.mjs`, `REGION`/`LOC`), and the other
 capitals on reliefs of their own if the owner wants them.
+
+## IC-PROPS - the yards where they belong, every door its plaque, the grand city its only layout (2026-10-27)
+
+The owner's field report, 2026-10-27: *"Random placements on the wagon/other vendors all over the Imperial city"* (item 2),
+*"Some doors in Imperial city can be entered but dont show the tooltip"* (item 7), *"Old daggerfall city layout placements
+are in imperial city"* (item 9); then *"the issues I mentioned for the imperial city for stables/doors/etc are a world wide
+issue. They have no logical placements"*, and *"No band aids or half assed work"*. The yards' law is the whole world's
+(`03-World/Merchant-Yards.md` IC-PROPS); this is the Imperial City's part, and the doors'.
+
+**What the player saw, and why.**
+- THE YARDS. Every one of the city's 625 slices is a city of Daggerfall's kind (synthesizeCapitalLocation, a TownCity),
+  and every city stands a Stable, a Wagon Yard and a joinery where its yards' law finds room - so a slice stood its three
+  wherever its own grid left room: 1,381 yards on 486 slices (measured as the host places them, every slice): 603 on
+  Rumare Shore past the lake, 279 about City Isle, 89 on the Palace District's lawns, 96 in the Arboretum's park, the
+  rest through the districts - 111 of them reaching the lake's water, 195 the city's streets and squares, 51 its avenues,
+  radials and ring roads, 44 its paths, 80 the Arboretum's park and 80 Daggerfall's blocks among the city's own.
+- THE DOORS. Two causes, both world-wide. A HOUSE WITH NO NAME of its own showed no plaque where it listed no verbs
+  (offline, or a house no one sells): DFU names every residence "Residence" (PlayerGPS.cs:1306-1309, its own
+  `residence` text) and World Tooltips prints "To" and that name over its door (Modded_HUDTooltipWindow.cs:719-728), but
+  the port's plaque had the name only for a house with verbs - over the freeware's blocks and both town packs, 6,325 of the
+  8,295 building doors with a room are a House1-4 or House6 with no name (and 2 a ship's deck, a Ship with none). And A
+  DOOR OF A NEIGHBOURING LOCATION - the next slice of the Imperial City, a town across a pixel's edge - was read in the
+  player's own town's book and directory: its plaque named whatever building of the player's slice had its key, or
+  nothing, and its press discovered it there - standing in the Market's heart, 24,181 of the 26,943 doors the city
+  builds near (the player's slice and the eight round it, NEAR_RING) were another slice's.
+- THE OLD LAYOUT. 671 cells of the grand plan were Daggerfall's own city blocks (IMPERIAL_MIX: each district's trade
+  along its avenue, round its heart and scattered; IMPERIAL_SIGNATURE: its signature trade on its heart's nearest) -
+  each a Daggerfall town's square of houses with its garden walls, hedges, flats and props dropped among the city's own
+  streets: the Arboretum 50, the University 19, the Arena District 87, the Elven Gardens 106, the Market 99, Talos Plaza
+  92, the Temple District 100, the Waterfront 118. Nothing else read the old layout: the prebuild worker
+  (`world/imperialPrebuild.js`) and the slices' blocks are the plan's, made on demand, no cache kept between sessions.
+
+**As built.**
+- THE CITY NAMES ITS OWN YARDS, AT ITS GATES (`world/imperialYards.js`): the city is one town (WW7-11), and a town's
+  Stable stands at its edge by a road or a gate. One Stable, one Wagon Yard and one joinery outside each district's
+  avenue gate in the city wall, on City Isle's own grass beside the way out (IMPERIAL_YARD_LANE kept clear), clear of
+  the wall's towers, each wholly in one slice, the Stable nearest the gate - eighteen. The ground is the blocks' own, asked
+  as they are built (`imperialBlocks.js:"export const imperialAnchorOf = (r, c, x, z) =>"`): the automap's closed
+  cells, the tile's grass, and each of the isle's trees at its foot - Daggerfall's ground scenery stands at its tile's
+  north-west corner (`rmbFlats.js` collectBlockFlats; DFU's RMB nature flat), and the first reading set it a tile off,
+  so the Elven Gardens' Wagon Yard stood under a tree the host closed and was not stood at all
+  (`imperialYards.js:"const FX = TX * TILE_CELLS, FZ = TZ * TILE_CELLS + TILE_CELLS;"`). Every slice hands the yards'
+  law its share (`merchantYards/townYards.js:"export function townYardsOf(dfLocation) {"`, from `scenes/world.js`
+  townPlacesFor) and the law places none by itself on any slice.
+- EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`):
+  a House1 to House6 with no name of its own is named as DFU discovers it - DFU's own `residence` text, no new string -
+  whatever its verbs; a quest's home, a player's home and a guild's hall keep theirs. A building of no house type with no
+  name (a ship's deck) says the place it stands in (`worldTooltips.js:"    : displayName || locationName;"` - the mod
+  would print "To" and nothing). The Info say reads the same word.
+- A DOOR IS ITS OWN TOWN'S (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`): the host's record
+  for a door carries the town it stands in - its book of buildings, its name, and its building's name in that town
+  (`scenes/townTalk.js:"function buildingNameIn(place, data) {"` - the directory's row where that town is the talk's own,
+  else BuildingNames' law over that town's names). The plaque, the press and the activation discover into that book
+  (`scenes/worldModes.js:"const locId = bd.townBook ?? discoveryLocationId?.() ?? null;   // IC-PROPS: the door's own town's book, the one its press"`),
+  and a nameless building's plaque says its own town, never the player's.
+- THE GRAND CITY THE ONLY LAYOUT (`world/imperialCity.js:"function cellOf(r, c, I = IMPERIAL) {"`): no cell is one of
+  Daggerfall's blocks but the arena's (the grand plan names it); IMPERIAL_MIX, IMPERIAL_SIGNATURE and their trade cells
+  are gone, and the fabric keeps no street round a block of Daggerfall's (CLEAR.classic), its far skyline no ring of
+  their houses (`imperialFabricModels.js` classicMass). What they carried that the grand city means to keep is the
+  fabric's now (`world/imperialFabricBuildings.js` DISTRICT_TRADE): each district's SIGNATURE HALLS, about as many as its
+  blocks stood (`imperialFabricBuildings.js:"if (door.street === 'main') for (const [pool, every] of trade?.halls ?? [])"`)
+  - the Temple District's temples of the Eight, 40 where 33 TEMP blocks stood, each its own god's (the donor's record's
+  faction - TEMPAAA0 to TEMPAAH0, read off the freeware; each god alike whatever the plot's size,
+  `imperialFabricBuildings.js:"if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];"`); the
+  Waterfront's Thieves Guild, 14 houses of the guild's faction where 15 THIE blocks stood (Daggerfall's own: a House2 of
+  faction 42); the University's Mages Guild halls; and the Market's bank and Talos Plaza's general stores among their
+  shops (their BANK and GENR blocks). THE ARCANE UNIVERSITY's halls are a neighbourhood of their own inside its curtain
+  where its 14 MAGE and 5 LIBR blocks stood (`imperialFabric.js:"export function universityGrounds(I = IMPERIAL) {"`):
+  quads round garden courts square to its walls, clear of its curtain, its Arch-Mage's tower and its hall (their doors'
+  forecourts), and of its two walks - from each gate straight across the compound - 858 buildings entered, 37 of them its
+  Mages Guild's halls, 77 libraries. The quest sites index is baked again off the new plan and donors
+  (`tools/bakeFabricSites.mjs`: 63 donors, 52 marked, 73 sets where 50 stood - the temples and the Thieves Guild among
+  them). A block of Daggerfall's carried its people as flats; the fabric's buildings carry their donors' (each interior's
+  keeper and its people in), and the street's are the living town's (IC-GRAND, `world/imperialHomes.js`).
+
+**Measured on the freeware** (ARENA2): the city's yards 1,381 on 486 slices before, 18 after - each on the isle's open
+grass, none on a street, a road, the water, a landmark or the fabric, all eighteen standing on the eight gate slices as
+the host places them. Doors with a room and no plaque, over every block and both packs: 6,327 before (4,620 House2, 1,193
+House4, 451 House3, 59 House1, 2 House6, 2 Ship), none after. The plan's cells of Daggerfall's blocks: 671 before, 0
+after (19,994 of the city's own, the arena's 1, the lake's 10,339, the far shore's 9,666).
+
+**Not DFU**: the city's own yards and its fabric are the port's (Port-Ledger section A, MERCHANT-YARDS and IC-GRAND);
+the door's "Residence" is DFU's own, and the door's own town its DFU law (a building's discovery in its location's
+book) kept where the port's locations meet.
+
+**The four hosts.** `scenes/world.js` WIRED (the yards' ways and a capital's own, the door's town). `scenes/worldModes.js`
+WIRED (the plaque, the press, the activation, the Info say). `scenes/exterior.js` FLAGGED: it stands no yard and its
+doors are its one town's. `scenes/dungeonContext.js` FLAGGED: no town.
+
+**Pins.** `test/world/icprops_yards.test.js` (6: the plan's ways and the front, the garden and the last step, the edge
+land and the port cells, a capital's own sites and the city's slices, the gate yards' law, the gate yards on the ground
+their blocks build), `test/world/icprops_city.test.js` (3: no block of Daggerfall's but the arena's, each district's
+signature in its fabric, the University's halls and walks), `test/systems/icprops_doors.test.js` (3: the "Residence"
+law, a house's and a ship's plaque through the real mode machine, a neighbouring slice's door its own town's).
+PIN MOVED: `test/tesa11_imperial.test.js` (the plan: no block of Daggerfall's but the arena's; a slice's seeds its own,
+held on a plan that lays them), `test/tesa10_capitals.test.js` (a kind missing stands no slice, held the same way),
+`test/world/icbld_buildings.test.js` (a temple's god's faction and the Thieves Guild's; the signature halls among a
+district's trade; each donor's faction against the freeware), `test/world/icgrand_fabric.test.js` (eight districts' styles,
+the University's among them), `test/world/icgrand_living.test.js` (R2-9's hazard - one key a residence in two slices - on
+the fabric's homes), `test/world/icgrand_prebuild.test.js` (the far cells the city's own alone),
+`test/world/audit68_worldjs.test.js` (the door's own town asked of the talk), `test/systems/worldhover.test.js` (the
+door's town's name where the record carries it), `test/server/home1.test.js`, `test/systems/empirebank.test.js`,
+`test/systems/fb0930b_questresidence.test.js` and `test/systems/online/fb1015c_questresidence.test.js` (a house's
+"Residence" by its type). Mutants: `tools/mutants/icprops.json` (25, all dead); re-aimed by content:
+`icbld.json` BLD-guild-of-no-faction (a building's faction its guild's, else its donor's); retired with the code they held (the trade cells and their signatures): `tesa11.json` TESA11-shore-a-house,
+TESA11-no-signature.
+
+## CAPITAL-TREES - the capitals' main trees, finished (2026-10-27)
+
+KPbICA on the game's Discord, forwarded by the owner: *"3) The main trees in Falinesti and Mournhold should get some love.
+They are too draftish for now"*. The owner on the work: *"No band aids or half assed work"*.
+
+**What the player saw.**
+- **Falinesti's Great Graht-Oak** (model 910140) was TESA10c's draft on the capitals' first shapes: a rough column of
+  sixteen sides, ten straight tubes for roots (the seventh through the porch), nine limbs of two straight tubes each, and
+  26 balls of leaves ten sides by six over it - 7,490 faces, 2,636 of them its crown, its faces up to tens of metres
+  across. Seen whole, a lumpy mushroom of flat faces on a plain cone; its limbs stubs; its platforms rings on the bark
+  carried by nothing. The walkway's deck stopped 2.5 m off the trunk's mean surface over bark rough by 2.5 m either way
+  (a gap of up to 5 m at its inner edge, down to the turn below); its rail and the platforms' rails were drawn from
+  outside alone (a culled face from the deck); the hide houses had no doors.
+- **Mournhold** has no landmark tree of its own. The trees in its main square, Plaza Brindisi Dorom (TESA-LORE's
+  garden), were the Bay's scenery: one grass tile in five of the plaza's own blocks stood a scenery record of the
+  climate's nature archive - Deshaan is MountainWoods, so TEXTURE.506's 12, 15, 16 and 18: a fir, an oak and a shrub of
+  the Iliac Bay's woods. Read so: Mournhold's main trees are its garden's. (The other two of the port's own trees in a
+  capital are the great statue's bronze figures over them, in the same draft shapes - no tree - and Helstrom's Hist, the
+  Argonian city's tree, still on TESA10c's shapes: if the tester's Mournhold was Helstrom, the Hist is the slice after
+  this one, on this kit.)
+
+**The cause.** Both trees were built of the capitals' first shapes (`world/capitalShapes.js` rockColumn, limb, blob):
+straight tubes and balls, the pictures laid at 40 texels a metre over them. Nothing of the game's own way with a tree
+was there - no flat - and the plaza borrowed the Bay's.
+
+**The fix.**
+- **The capitals' trees' kit** (`world/capitalTrees.js`): the forests' own graht-oaks' shapes (GRAHT1,
+  `03-World/Graht-Oaks.md` - their Bezier, icosphere and seeded push borrowed, one member, one export) at a capital's
+  measure on the MeshBuilder: a fluted COLUMN of rings, twisting as it rises; a BUTTRESS of living wood from inside its
+  trunk to its foot under the ground, its top falling away, its edge snaking; a LIMB along a cubic Bezier, its rings
+  carried along it without a twist, tapering to a point; a MASS of leaves, an icosphere pushed about by its seed, its
+  underside flattened; its CARDS - leaf sprays standing out of its rim and underside, both faces drawn, crossed by a
+  second card when asked (`crossed`: a spray seen from its side shows that one's face, never a lone card's edge as a
+  bright line across a crown) - and a LIANA, two crossed strips. Every face flat-shaded, both halves of a quad on the quad's own normal (vanillaTexels lays a quad on one
+  plane, AUDIT TESA II C14).
+- **The Great Graht-Oak** (`world/capitalFalinesti.js`, its measures `world/capitalPlans.js` FALINESTI):
+  - its trunk fluted through trunkRadius's own levels (the walkway's law reads the column it climbs) - 33 corners a ring,
+    every third a furrow 7% in and the rest ridges to 2.8% out, turning as it rises (`bark`); its leader on into the cap;
+  - twelve buttresses all round its foot (`roots`, `rootArc`), none on the porch (`rootPorch` either side of north - the
+    two flanking it 20 and 23 m tall), each up the trunk no higher than `rootTop` (26 m) and always `rootUnder` (0.8 m) under the
+    walkway climbing over it (`walkwayOver`), so they rise round the trunk with the walkway, 2.7 m to 26 m, reaching
+    farther the taller (48 to 64 m); a surface root on past each foot;
+  - boughs carrying every platform (`platformBoughs`): three under each deck on `boughArc` (0.45 to 3.7 rad of its turn -
+    the walkway climbing to the platform more than 2 m under their wood there), their wood under the deck's underside out
+    past its rail, then up and out to their leaves 36 to 46 m past the trunk; one over each deck at `boughOver` (4.85
+    rad), leaving the trunk `boughLift` (7.5 m) over it, a body's 2 m and more over the deck all across it; each forking
+    twice - the crown's lower storeys, all round the trunk, outside the rails;
+  - nine great limbs (`crownLimbs`), each climbing to its fork, where it runs level under its deck - the deck on it now
+    (`limbForks`: its top on the limb) - and on to its tip, forking twice on its outer run;
+  - the crown in storeys (`grahtCrown`, 182 masses): each bough's (along its outer run, at its end, at its forks' ends),
+    each limb's (three at its tip, one over its outer run, two at each fork's end), nine between the limbs and the cap
+    over the leader (five, 42 to 50 m across - its highest, 230 m); any mass that would stand among a fork deck's houses
+    lifted clear of them by its own underside's curve; 1,148 sprays, none over a deck, a platform or the walkway
+    (`oakClear`); two lianas hung from each limb's outer half and one from each bough, over the city;
+  - the walkway's deck run into the bark (from 0.97 of trunkRadius - no gap at its inner edge), its underside, its rail
+    both faces on a post every `post` steps, and a knee of living wood under its outer edge every `knee` steps where its
+    turn stands `kneeOver` (9 m) over its landing; the platforms' fascia, their rails both faces on 24 posts; the hide
+    houses lashed at their feet, four poles crossing out of their tops, their doors to the trunk (to the deck's middle at
+    a fork).
+- **Mournhold's gardens** (`world/capitalMournhold.js` buildMournholdGardens, model 910125 on Mournhold's list; the sites
+  `world/capitalPlans.js` mournholdTreeSites over MOURNHOLD.gardens): the city's own trees in their planters, where the
+  Bay's scenery trees stood - Tribunal's Mournhold grows its plants in planters (UESP's Tribunal ingredients: Noble Sedge,
+  Golden Sedge, Timsa-Come-By, Meadow Rye and Nirthfly "found growing in various planters in Mournhold", Plaza Brindisi
+  Dorom's among them), and its Temple Courtyard is "an enclosed area with paths, water, and trees" (UESP). UESP names no
+  species for them; the tree is the port's own, a broadleaf of Deshaan's warm, wet lowlands (TESA-BIOME's "fungal valleys
+  and plantations, warm and wet"): a smooth pale trunk to a fork at about a third of its height, three limbs spreading
+  with a twig off each, a rounded crown of seven masses (each near round - `squash` 0.86) under its crossed sprays
+  (42 asked, about 40 hung), 11 to 15 m to its sprays' tops - under the great statue,
+  which still dominates the garden - in an octagonal planter of the city's ochre stone under a marble coping, its bed the
+  sedges' and the rye's. 44 of them: the plaza's two rings about its statue (8 at 32 m, 12 at 54 m, off its ways), its
+  allees by its four ways out past the ring wall and its four corners; the courtyard's rows either side of its pools.
+  Each turned and sized by its site's hash, of four variants. No spray hangs under 2.8 m (`SPRAY_FLOOR` - over a rider),
+  so the ways under the crowns stay open; the trunks and planters close the automap's cells about them (the capitals'
+  footprint, AUDIT-TESA A6-2). The own blocks' tree law (`mournholdTree`) is retired.
+- **The pictures** (`world/capitalTreeArt.js`, records 40 to 46 of CAPITAL_ARCHIVE): the graht-oak's bark (deep fissures
+  between ridged plates broken by cracks, moss in their mouths), its leaves and its spray, in the jungle's graht-oaks'
+  hues (render/grahtOakArt.js GRAHT_PALETTE) so the Great Graht-Oak is its forest's tree; Mournhold's pale bark with its
+  lenticels and lichen, its brighter leaves and its spray; the planters' bed. The solid five vanilla's 64 x 64 within the
+  freeware's band and tiling (TESA-LORE's pin), at 40 texels a metre on their faces. The sprays are a tree's FLAT: every
+  texel opaque or clear, their outline inside their picture, at the density Daggerfall draws its own trees' flats -
+  measured on the freeware's nature archives at the size a flat is drawn (world/rmbFlats.js scaledBillboardSize, DFU's
+  GetScaledBillboardSize): of TEXTURE.500-511's flats 6 m tall and more, 75 of 76 stand at 8 to 20 texels a metre and 45
+  at 10. The oak's spray is 128 x 128 (its last quarter a liana that tiles down) on cards 9 to 13.5 m (9.5 to 14 texels
+  a metre); Mournhold's 64 x 64 on cards 3.4 to 4.4 m (14.5 to 18.8).
+- **The flats in the game.** A capital's picture registered `{ cutout: true }` (`installCapitals`, CAPITAL_CUT_RECORDS)
+  is cut wherever it is uploaded: the texture door answers it (`systems/textureReplacement.js` vendorCutout) and the
+  upload door asks every picture it puts up (`scenes/dataPipeline.js` uploadRecord), so a model's build, a place's hold
+  and the remake after an eviction all upload it as RW1's cutout (`render/renderer.js` uploadTexture) - its holes holes in
+  every solid pass and the sun's casters. vanillaTexels leaves a flat's faces on their own coordinates (`world/capitalShapes.js`
+  flatTriangles) - the spray whole on its card. And a body passes through the leaves as through Daggerfall's trees'
+  flats: the collider is handed the flats as a sign's hung board is (`world/signSolid.js` sightMarksOf - met by every
+  ray, by no body).
+- **Cost.** The oak 42,568 faces in six sub-meshes - six draws as one model (bark 10,976, leaves 15,760, sprays 4,832,
+  timber 10,070, hide 844, doors 86); it was 7,490 in five. The gardens 43,268 in six (983 a tree). The city wall's
+  178,596 and the district walls' 92,916 stand beside them.
+
+**Kept.** AUDIT TESA II C4's walkway (a body's 2 m over its deck at three lanes across it, from the ground to the fourth
+platform - `test/world/audittesa2c_capitals.test.js`, green), its floor between the turns' ends, the decks walkable, every
+platform's and fork's houses, the porch and its door (WW7-4), the oak's soil and foot closed (TESA10c), the spiral's law.
+NPCs walk the ground as they did: the foot's 40 m stays closed to them; Mournhold's start markers stand clear of every
+tree (4 m and more).
+
+**Seen** (no ARENA2 - the port's own models and pictures): `tools/capitalTreePreview.mjs` draws them as installCapitals
+installs them, without a GPU (the running game past the Bay on SwiftShader is #1184's J6, and this machine had 6 GB free
+under a load of forty). From 470 m the old oak is a mushroom - one lumpy crown of flat faces on a plain brown cone, its
+platforms thin rings; the new one a giant tree: a fluted, fissured trunk spiralled by its walkway and its rising
+buttresses, leafy boughs in storeys about its platforms all round it, nine great limbs into a full crown of masses
+fringed with sprays, lianas hung over the city. On a platform: planked deck, rail and posts, a hide house lashed with its
+poles and its door toward the trunk, a bough's leaves past the rail. Mournhold's plaza: the ring wall round 32 trees in
+their ochre planters about the statue, which stands over them; its courtyard: rows of trees by the pools before the
+High Fane.
+
+**Not DFU.** Daggerfall Unity has no capital past the Bay (TESA10's departure); DFU's models are opaque
+(DaggerfallDefault.shader, INCIDENT 2026-09-04) - a capital tree's spray is a flat laid on a model, cut by its picture's
+own registration (Port-Ledger section A, CAPITAL-TREES).
+
+**The four hosts.** The models and pictures go up through the one data pipeline and the flats' marks through sightMarksOf:
+`scenes/world.js` WIRED (its streamed pixels, `scenes/pixelBuild.js`); `scenes/exterior.js` FLAGGED: the fixed-city
+bench stands the Bay's places alone, never a capital (its collider asks the same sightMarksOf and its pipeline is the same
+door, so a tree's flats would be cut and passed there too); `scenes/worldModes.js` and `scenes/dungeonContext.js`
+FLAGGED: no capital tree stands indoors.
+
+**Pins.** `test/world/capitaltrees.test.js` (13: the pictures, the flats' density and coordinates, the freeware's flats
+with ARENA2, the cutout's registration and door, the oak whole, its buttresses, its boughs, the city kept clear and
+walkable, its limbs and storeys, the flats passed by a body, Mournhold's sites, its sprays crossed, each Mournhold
+tree). PIN MOVED:
+`test/tesalore_capitals.test.js` (the plaza's trees its gardens', no tree law; the pictures' band and the texel density
+past the flats; a fork deck probed for its timber), `test/tesa10c_capitals.test.js` (a platform probed at 4.25 rad, off
+the landing, the boughs and the houses), `test/tesa10_capitals.test.js` (the pictures 64 x 64 past the flats). Mutants:
+`tools/mutants/capitaltrees.json` (26), all dead; re-aimed by content, all dead: `tesa10c.json` TESA10c-roots-short,
+TESA10c-no-platforms, TESA10c-crown-low, `tesalore.json` TESA-LORE-platforms-empty, TESA-LORE-no-fork-decks,
+TESA-LORE-forks-empty, TESA-LORE-no-walkway, TESA-LORE-plaza-treeless (onto the gardens on Mournhold's list),
+`audittesa2c.json` AUDIT-TESA-II-C4-roots-round (onto `rootUnder`).
+
+## IC-STUTTER - the Imperial City at a journey's pace, without the stutter (2026-10-27)
+
+The owner's field report (2026-10-27, item 1): *"Traveling in the Imperial City at x60 presents really bad stuttering"*;
+then, on the fix: *"No band aids or half assed work"*. x60 is IC-PACE's clock (`06-Systems/Travel-View.md` IC-PACE: a
+journey or the keys' travel under the Overworld run sixty times a walk in the city's streets, where they ran five).
+
+WHAT THE PLAYER SAW. At x60 a slice of the city (819.2 m) is crossed every one and a half to three seconds, and every
+crossing builds three to five slices near (IC-GRAND's NEAR_RING) and, at the stream's edge, as many far. Each near
+slice's build ran its city work on the page's thread in units no breath parts, so a frame of a quarter of a second to
+over a second came every crossing - at x5 once in forty seconds, at x60 several a second and a half.
+
+THE CAUSE, unit by unit (`tools/icStutterBench.mjs` over the freeware and the real city, CPU milliseconds of one task on
+this machine - four cores shared at load 30-45, so read them against each other):
+- **The city's pieces made on the page.** The city's worker heard of a slice on the frame the stream queued it
+  (`scenes/capitalPrebuild.js` - the rings round the traveller only), so at x60 the build met its blocks and fabric's
+  models unmade and made them itself: a block 86-226 ms, 1.4-1.8 s a slice; and a far slice's skyline at the stream's edge
+  0.2-0.5 s (IC-GRAND's measure), the ring the worker was told of stopping two pixels out.
+- **The yards' places, in one task** (`scenes/world.js` townPlacesFor): every placed model's box (2,000 on a slice - its
+  fabric's models built inside it when the worker had not made them: 0.6-1 s), the town's ground, and each yard's search
+  of every cell and turn of a 512 by 512 grid: 1.1-1.2 s with the models, 0.2-0.4 s without.
+- **The living town's places, in one task** (`systems/livingWorld/livingTown.js` -> `places.js` townPlaces): the grid read
+  whole a dozen times and again for each quarter (IC-GRAND's town of quarters), its quarters' union read through
+  `Int32Array.from` with a mapping function (0.1-0.5 s alone) and its doors' net counted through a Map a cell: 90-290 ms.
+- **The streets' pieces, in one task** - flooded by the traveller's first frame of pace in a new slice
+  (`scenes/townWalkHost.js` townPace -> `systems/travel/townWalk.js` componentsOf): 75-160 ms; and a journey's way through
+  each slice crossed (townWay -> townWayCells: the flood and up to six searches of the grid): 12-215 ms.
+- **The town laid out in one task** (`world/locationLayout.js` layoutLocation, sixty-four blocks): 16-80 ms; and the
+  walkers' grid, its sixty-four blocks laid in one task (`scenes/pixelBuild.js`).
+
+THE FIX - the same city, the same pace, the same views, nothing hidden behind a pause:
+- **Ahead of the traveller** (`scenes/capitalPrebuild.js:"export function prebuildWanted(x, y, px, py, heading = null) {"`):
+  the sweep keeps the way of the last crossing, and the outer ring's slices one more crossing that way brings within
+  NEAR_RING are wanted near, first of their ring - their pieces made while the traveller is still a pixel off.
+- **Nothing of the city made on the page while a worker stands** (`capitalPrebuild.js:"function firstReady(queue) {"`,
+  wired into the stream's pump - `world.js:"if (building || !state.owes(queue)"`): a pixel of the city is built once every
+  piece of the view it builds now (near within NEAR_RING, else far) is the page's (`worldDataReplacement.js`
+  portBlockFamilyHas, `customModels.js` customModelReady) or held from a worker; the queue's first such pixel goes first,
+  its order else kept, and the pieces the next NEED_AHEAD pixels owe are asked of their workers (`need`) - a hole in the
+  land's before a view built again behind the one standing (IC-SWAP-BEHIND), which stands meanwhile. No worker (node, a
+  factory that throws, one that failed), or none of the city's pixels: every pixel ready, every piece the page's as ever.
+  The gate is a frame's work, so it keeps a look a slice and view (`capitalPrebuild.js:"function lookOf(px, py) {"`):
+  a frame looks at a queued pixel from the first piece its look found owed, and the pixel chosen is looked at whole
+  before it is built (a piece let go since: owed again, asked). With the stream's square of the city queued and owing
+  (81 pixels), a frame of it checks 345 pieces, where a look at each view whole every frame would check 5,931 -
+  0.6-2.5 ms against 31-38 ms, firstReady timed alone on this machine at load 65-70.
+- **A pool and a need lane** (`world/imperialPrebuildClient.js`, `world/imperialPrebuildWorker.js`): prebuildPoolSize
+  workers (the machine's cores less two, PREBUILD_POOL_MAX 3 at most), each slice one worker's (its pieces and its
+  landmarks' footprint in one place - `imperialPrebuild.js` pieceSlice); a piece a build waits on is made before every
+  wanted piece, made again where the page let it go, never dropped by a new wanted list, asked once until it comes back;
+  one a worker could not make is the page's and never waited on. PREBUILD_KEEP 4,096 holds the near ring, the ring past
+  it and the next builds' pieces at once.
+- **Every pass over a slice's grid a step at a time**, each the same work in the same order and the same answer, walked
+  through the build's breather (OW-HITCH's `world/puddleMask.js` stepsBreathing - one runner, `stepsDone` the passes run
+  whole for every other reader): the yards' measures a block a step, their ground and each yard's search
+  YARD_ROWS_A_STEP rows a step (`merchantYardSites.js` ...Steps; townPlacesFor awaits them); the town laid out a block a
+  step (`locationLayout.js` layoutLocationSteps) and the walkers' grid a block a breath; the living town's places
+  PLACES_ROWS_A_STEP rows and PLACES_CELLS_A_STEP flooded cells a step, each quarter's in steps (`places.js`
+  townPlacesSteps), made by the build and handed to the town (`livingTown.js` livingTownPlaces, `o.places`), the
+  quarters' union and the doors' net read through typed arrays; the town walk's pieces flooded PIECES_CELLS_A_STEP cells
+  a step before the pixel stands (`townWalk.js` componentsSteps); and a journey's way searched WAY_CELLS_A_STEP cells a
+  step on a scratch of its own (`townPaths.js` scratchKey - the residents' searches between its steps never begin it
+  again), the host walking WAY_STEPS_AN_ASK steps an ask and answering `pending` till it is found, the journey asking
+  again every frame and walking its leg meanwhile (`travelOptions.js` streetWait).
+
+MEASURED (`tools/icStutterBench.mjs`, the base tree and then this one, the same slices one after the other): seven near
+slices (the Arena District's four along its avenue, a Market, an Elven Gardens and a Temple District slice), each
+slice's city work as its build meets it, cut into frames as the breather cuts them (BUILD_SLICE_MS, 6 ms; a unit never
+parted). BEFORE (the base tree, the city's pieces made on the page as at x60): the page's work 1.5-3.9 s a slice, its
+longest task 452-1,070 ms (the yards' places, in every slice), and 4-19 frames over 33 ms, 1-9 over 50 ms and 1-4 over
+100 ms a slice. AFTER: the page's work 0.6-1.9 s (the city's pieces made on the workers, 1.1-2.1 s there), its longest
+task 20-62 ms (a block taken - its buildings' records laid on the page - or a step under the collector) and once 314 ms;
+0-5 frames over 33 ms, 0-1 over 50 ms and 0-1 over 100 ms a slice. By pass, the longest unit before and after: the
+yards 452-1,070 ms and 9-27 ms; the living town 15-567 ms and 2-21 ms (its places' steps 2-31 ms); the streets' pieces
+4-55 ms and up to 23 ms; a block 46-590 ms and 20-62 ms. Measured with the machine at load 30-45 on four shared cores -
+CPU time, its collector's threads with it: read the two against each other, not as a player's milliseconds.
+
+IN THE GAME: the journey itself is `tools/owHitchProbe.mjs` with `IC=90,6600,270 TURN=20` - the Arena District's avenue
+by the city wall at x60, turned back along it every twenty seconds so the run stays in the city - its A/B the base tree
+by `TREE=`. Its frames are the page's own and so the machine's: the bench above was taken with four cores shared at
+load 30-45, where a browser's frame times are the neighbours' as much as the city's, so the bench's units are the
+fix's measure and the probe the player's check.
+
+Not a DFU member (DFU's fast travel never streams a city; its StreamingWorld lays a location out in coroutine steps,
+which this follows): Port-Ledger section A, IC-STUTTER. THE FOUR HOSTS: `scenes/world.js` wired (it alone streams the
+city, walks journeys through it and builds near and far views); `scenes/exterior.js` (one fixed city, no stream, no
+journey), `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon) build no slice of it - the
+stepped passes keep their whole-run names there.
+
+Pins: `test/world/ic_stutter.test.js` (11: ahead of the traveller; the worker's need lane; the pool; the pump's next
+pixel and its looks; the page's own; the yards, the places, the pieces and the layout a step at a time, each the whole
+pass's answer; a journey's way in steps, the host and the journey; the host's wiring). Mutants:
+`tools/mutants/ic_stutter.json` (47). PINS MOVED: the pump's lifted scope in `test/systems/travel/ow_queueowed.test.js`,
+`ow_lead.test.js`, `ow_loadowed.test.js` and `test/scenes/ow_buildretry.test.js` (a gate with none of the city's: every
+pixel ready); townPlacesFor's lines in `test/world/merchantyards1.test.js`, `test/systems/carpyard1.test.js`,
+`test/world/baywalls.test.js`, `test/systems/shipyards1_found.test.js`, `test/systems/naval/fb1014_inlandports.test.js`
+and `test/world/urban/urban3_stand.test.js`. Mutant records re-aimed by content: `tools/mutants/baywalls.json`
+(TB-the-walk-unshared, TB-the-places-unshut), `carpyard1.json` (CARP-YARD-placed-before-the-port), `ow_queueowed.json`
+(QUEUE-OWED-pump-builds-the-head), `ow_townwalk.json` (OTW-heuristic-unweighted).
+
+## IC-STAIRS - the Imperial City's ways up, built stone stairs (2026-10-27)
+
+The owner's field report, item 4: *"Minecraft looking staircases in Imperial city need to be completely redesigned"*; and
+on all of it *"No band aids or half assed work"*.
+
+**What the player saw, and why.** IC-GRAND gave each block a way up from the street to its roofs, so the rooftops are a
+route: a stack of crates, a shed and a lean-to along a street front, each top STACK_STEP (1.2 m) over the last and at
+most a vault (PARKOUR_VAULT_MAX) - a staircase of boxes a metre high a step, climbed by vaulting, that read as blocks
+stacked on the street. It was a parkour route drawn as cargo, not a stair.
+
+**As built** (`world/imperialFabric.js` blockStair, stairPlan, stairRuns; `world/imperialFabricModels.js` the stair's
+mesh): a WAY UP IS A BUILT STONE STAIR along its block's street front, from the street to a roof of its block.
+- **Its proportions a built stair's** (`imperialFabric.js:"export const STAIR = Object.freeze({"`): a riser of 0.18 m at
+  the most, all of a stair's alike - under half the motor's STEP_OFFSET (`player/motor.js`), so it is walked, not
+  climbed - and a tread of 0.30 m, 2 R + G within Blondel's 0.60-0.66 m; flights of 16 risers at the most, the odd ones
+  first, with a 1.2 m landing between them and a 1.8 m head landing at the top; 1.4 m clear between the wall and its
+  parapet, so a body passes another. Daggerfall's own stairs (ARCH3D) rise 0.2 to 0.425 m a step; these are a built
+  stair's.
+- **Joined to the street and the building**: the first flight and its landing on a solid base down into the street, every
+  landing above on a pier down into it, the head on its end wall; every step runs 0.25 m into the wall behind it; a
+  parapet at a flat roof's PARAPET height over the nosings along every half metre of it before a front of its block (but
+  the head's own); its foot on the street's level with open ground before it.
+- **Its head on its roof**: at its building's roof - the block's lowest a stair reaches, never a tower - on that
+  building's front, in from its corners: a flat roof's parapet opened over the head, or a pitched roof's eave no steeper
+  there than 40 degrees, never a gable's end. The roof stands 3 m deep behind it.
+- **The city's own stone**: every face is the city's two stones (CAPITAL_ART wallStone and bridgeStone - its walls' and
+  its paving's), so a cell's model gains no draw; a riser a step, its base, piers and end wall down into the street, in
+  the cell's triangle budget.
+- **Its ground**: its footprint is shut to the city's walkers (GROUND.stair), 0.9 m past its ends so a door's surround
+  stays clear; the street under its upper flights stays open where they pass high enough for a door and a body under
+  them (GROUND.under). No building's door, lamp or bridge stands on it, no ledge or balcony over it, no canal, court or
+  park under it, and no building, wall, shed, well, statue, fountain or other stair in it; every building along it keeps
+  a door of its own.
+- **The landmarks' flights**: every emperor's tomb climbs from its walk to its portico, and the Temple of the One from
+  its street to its podium before its doors, by a built flight of the same law (`world/capitalImperial.js`).
+- **The sweep** (`tools/icStairsSweep.mjs`, every stair of the whole plan held to every law above): 23,293 stairs in
+  19,323 cells, none failing a law; their flights two to seven (4,814 of two, 10,639 of three, 6,264 of four, 1,416 of
+  five, 138 of six, 22 of seven), their heads 3.2 to 17.6 m up, 1,030,246 risers and 6,677,408 triangles in all (186 s
+  on this machine). The sweep holds a head's roof STAIR.roof (3 m) deep behind it, the law the stair's plan keeps: with
+  that guard dropped the city stood six more stairs and 35 on a roof's sliver; as built, none.
+- **Found at the sweep**: a building
+  across a cell's corner is that cell's ground (its box meeting the cell's, 2 m out - it had been near only by its
+  corners), and a court, a square or the park is its own neighbourhood's (its middle in it) - a polar frame's far ring's
+  blocks, hundreds of metres long, had laid their courts over another's streets.
+
+Pinned by `test/world/icstairs.test.js` (11: the proportions measured off the mesh, every stair reaching its roof, the
+real PlayerMotor walking a way up from the street to its head with no jump, onto the roof and down again on a Collider of
+the cells' own models, the stones and the triangles, the ground shut, the base, piers and end wall, the landmarks'
+flights, the sweep's findings held, every building's door kept); the moved pins in `test/world/icbld_buildings.test.js`
+and `test/world/icgrand_fabric.test.js` (PIN MOVED (IC-STAIRS)). Mutants: `tools/mutants/icstairs.json` (32);
+`icbld.json` re-aimed by content.
 
 ## Pins
 
@@ -2728,13 +3224,13 @@ TAMRIEL1-one-model-a-call and `tools/mutants/tamriel3.json`'s TAMRIEL3-the-ink-n
 one `stale` predicate, the land's version and Arena's).
 
 `test/world/icgrand_fabric.test.js` (7, IC-GRAND): the rooftops laid to the movement's own numbers (the step under the
-reach, the alley under the leap, the parapet and the crates under a vault, the ledge in a wall run's reach, the garden
+reach, the alley under the leap, the parapet under a vault, a way up's riser under a step (IC-STAIRS), the ledge in a wall run's reach, the garden
 wall caught, the kerb stepped, every pitch a top); the height walk (a building beside a building a step at most, a
 tower aside - 577 neighbours in 20 sampled cells); each district its own (seven looks, six frames, fifteen neighbourhoods
 and ten frames a district at the least, one heart); the street hierarchy (an alley and a main street in every district
 but the park, a lesser street, fronts on main streets); the urban fabric (yards, sheds, dead ends, ways up, bridges and
 courts in the sampled cells, the Arboretum's statues, the Elven Gardens' canals, cut stone, brick and half-timbering;
-every way up's last step within a vault of its roof's edge, every bridge over a street too wide to leap with a body's
+every way up's head at its roof's edge (IC-STAIRS), every bridge over a street too wide to leap with a body's
 headroom under it); a building clear of what keeps the fabric off, on its own ground, the avenues kept clear; the walls'
 pictures at vanilla's 64 x 128 and 40 texels a metre. `test/world/icgrand_sewers.test.js` (3): the mains, their falls,
 their culverts to the water and the rings' drops; the covers on their roads at their spacing, none past the wall; the
@@ -2762,7 +3258,9 @@ closing nothing), its parts the model door's and taken by it, its models the fam
 handed over once, the worker told what the page made itself, a new list replacing the last, no worker or a failed one
 the page's own work; the door and the family asking it first and the pixel's build reading a slice's blocks a breath at
 a time; the sweep telling it the slices coming (the player's own first, near then far), letting it go out of reach, wired
-before the city's near and far sweep. `test/world/icgrand_palace.test.js` (6): the palace (its ring round the plaza, a
+before the city's near and far sweep. `test/world/ic_stutter.test.js` (11, IC-STUTTER above): the slices ahead of the
+traveller wanted near; the workers' need lane and pool; the pump's next pixel, its looks and the page's own; the city's
+passes over a slice's grid a step at a time, each the whole pass's answer; a journey's way in steps. `test/world/icgrand_palace.test.js` (6): the palace (its ring round the plaza, a
 walk through each gate meeting no face and through a wing a wall, its pavilions standing out past its wings, the plaza
 and the start markers clear, its pictures), the gardens' ground (the paths, the walks, the fountains' basins and rounds,
 the statues facing their paths, the rows of trees and the lawns' groves), its monuments (each part built of its own),

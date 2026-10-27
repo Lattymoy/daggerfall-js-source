@@ -6,10 +6,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { FarRingRenderer, ringHeight, ringHeightAt, buildFarRingGrid, RING_RADIUS, HORIZON_BUDGET_MS, MID_MORPH_START, MID_MORPH_END } from '../../src/render/farRing.js';
+import { FarRingRenderer, ringHeight, ringHeightAt, ringGroundAt, buildFarRingGrid, RING_RADIUS, HORIZON_BUDGET_MS, MID_MORPH_START, MID_MORPH_END } from '../../src/render/farRing.js';
 import { FarLandmark, landmarkBox, landmarkDistance, landmarkNormals, LANDMARK_GREY } from '../../src/render/farLandmarks.js';
 import { farFieldVertices } from '../../src/render/farField.js';
-import { byteBeyond, reliefByteHeight } from '../../src/world/landforms.js';
+import { byteBeyond, nodeGround } from '../../src/world/landforms.js';
 import { midRingSide, MID_RADIUS } from '../../src/world/terrain/midRingGrid.js';
 import { STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 
@@ -39,13 +39,15 @@ test('BREATHTAKER2 on the horizon: a pixel\'s macro height is G\'s own law past 
   // the law itself
   assert.equal(ringHeightAt(500, 250, 100, true, 1), ringHeight(100, true, 1), 'on the Bay: no share');
   assert.equal(byteBeyond(1200, 250), 1, 'well past the Bay: the whole share');
-  assert.equal(ringHeightAt(1200, 250, 160, true, 1), reliefByteHeight(160, 1, 1) * STREAMING_TERRAIN_SCALE);
+  assert.equal(ringHeightAt(1200, 250, 160, true, 1), nodeGround(160, 1, 1) * STREAMING_TERRAIN_SCALE);   // PIN MOVED (RELIEF-PEAKS): the node's ground - the large map by its law with the byte's term (reliefByteHeight left it out)
   assert.ok(ringHeightAt(1200, 250, 160, true, 1) > ringHeight(160, true, 1) + 100, 'byte 160 stands its lift past the 7-bit top');
   assert.equal(ringHeightAt(1200, 250, 160, false, 1), ringHeight(160), 'the plain law takes no lift');
   // the far ring's grid past the Bay: the vertex at (1100, 250) on a field of byte 160
   const g = buildFarRingGrid({ heightBytes: new Uint8Array(1000 * 500), mapWidth: 1000, mapHeight: 500, climateAt: () => 231, baseX: 1100, baseY: 250, radius: 2, relief: true, byteAt: () => 160, climatePast: () => 231 });
   const mid = (2 * 5 + 2) * 3 + 1;
-  assert.ok(Math.abs(g.positions[mid] - ringHeightAt(1100, 250, 160, true, 1)) < 1e-3, `${g.positions[mid]} against ${ringHeightAt(1100, 250, 160, true, 1)}`);
+  const want = ringGroundAt(1100, 250, () => 160, true);   // PIN MOVED (RELIEF-PEAKS): the vertex the kernel's mean ground at its pixel's centre - the node's law with the ranges there
+  assert.ok(Math.abs(g.positions[mid] - want) < 1e-3, `${g.positions[mid]} against ${want}`);
+  assert.ok(want > ringHeight(160, true, 1) + 100, 'the continent\'s lift on it');
   // the far field's height is asked at its cell's centre pixel
   const asked = [];
   const v = farFieldVertices({ high: new Uint8Array(25).fill(160), low: new Uint8Array(25), baseCX: 140, baseCY: 31, radius: 2, heightOf: (b, x, y) => { asked.push([x, y]); return b; }, tintAt: () => [1, 2, 3], oceanAt: () => false, seaY: 0 });
@@ -56,18 +58,24 @@ test('BREATHTAKER2 on the horizon: a pixel\'s macro height is G\'s own law past 
 test('BREATHTAKER2 the far ring\'s far field stands its cells by G\'s law at their centres under the Landforms row (mutant: the far field\'s law unwired)', async () => {
   const { gl, log } = fakeGl();
   let answer = null;
-  const ring = new FarRingRenderer(gl, { mid: { farField: () => new Promise((r) => { answer = r; }) } });
+  const asks = [];
+  const ring = new FarRingRenderer(gl, { mid: { farField: (job) => { asks.push(job); return new Promise((r) => { answer = r; }); } } });
   ring._now = (() => { let t = 0; return () => (t += 1000); })();
   const inputs = { heightBytes: new Uint8Array(1000 * 500), mapWidth: 1000, mapHeight: 500, climateAt: () => 231, baseX: 1100, baseY: 250, relief: true, byteAt: () => 160, climatePast: () => 231 };
   ring.build(inputs, 1100, 250, 5, new Map());
   const { farFieldSide } = await import('../../src/world/terrain/midRingGrid.js');
   const n = farFieldSide() ** 2;
-  answer({ high: new Uint8Array(n).fill(160), low: new Uint8Array(n), clim: new Uint8Array(n).fill(255) });
+  // PIN MOVED (RELIEF-PEAKS): the law is the worker's now (world/terrain/midRingGrid.js farFieldCell: the kernel's ground at
+  // the vertex's node, test/world/reliefpeaks.test.js) - the ring asks it under the Landforms row and stands each vertex on
+  // the ground answered for it
+  assert.equal(asks[0].relief, true, 'asked under the Landforms row');
+  const ground = Float32Array.from({ length: n }, (_, v) => 1000 + v);
+  answer({ high: new Uint8Array(n).fill(160), low: new Uint8Array(n), clim: new Uint8Array(n).fill(255), ground });
   await new Promise((r) => setTimeout(r, 0));
   for (let k = 0; k < 1000 && !ring.horizonStats().field; k++) ring.punchHole(1100, 250, 5, new Map());
   const pos = log.buffers.map((b) => b[1]).find((d) => d instanceof Float32Array && d.length === n * 3);
-  const f = ring.horizonStats().field, cx = (f.baseCX - 60) * 8 + 4, cy = (f.baseCY - 60) * 8 + 4;
-  assert.equal(pos[1], Math.fround(ringHeightAt(cx, cy, 160, true)), 'the north-west cell at its centre by G\'s law');
+  assert.equal(pos[1], ground[0], 'the north-west cell on its own ground');
+  assert.equal(pos[3 * 77 + 1], ground[77], 'and every cell on its own');
 });
 
 test('FAR-LANDMARK the far ring\'s cells are written farthest first from the traveller\'s pixel, each\'s distance kept, the hole left out (mutant: the order, the distance, the hole)', () => {

@@ -27,7 +27,7 @@ const NAMED = {
   'src/scenes/hostCombat.js': 1,
   'src/scenes/instanceDoor.js': 1,   // INSTANCES (the audit): the door's popup names its dungeon in the player's language
   'src/scenes/quest/questBridge.js': 1,   // QL12: a guild's ladder named by its faction, in the player's language
-  'src/scenes/townTalk.js': 2,
+  'src/scenes/townTalk.js': 4,   // IC-PROPS: a door's building named in its own town - its town's and region's shown names (buildingNameIn)
   'src/scenes/world.js': 6,
   'src/scenes/worldModes.js': 5,   // SUMMON-OFFER: the summoning's no-offer line moved to the law module (daedraSummoning.js noQuestText)
   'src/systems/affiliations.js': 1,
@@ -40,6 +40,7 @@ const NAMED = {
   'src/systems/eventTimers.js': 1,   // WW5: a province lane's Hollow said in its province, by the region list's own name in the player's language
   'src/systems/faction/factionStanding.js': 1,   // PROVINCE-COURTS: the Standing page's rows shown as GetFactionData shows a name
   'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS: a province's court and people by the region's shown name
+  'src/systems/hunt/trophies.js': 1,   // HUNTERS-MARK: a trophy's beast, in the player's language
   'src/systems/item/itemInfo.js': 4,
   'src/systems/loot/loot.js': 1,
   'src/systems/notebook.js': 2,   // L10N5: a header's place drawn again in the language of the load
@@ -54,6 +55,7 @@ const NAMED = {
   'src/systems/topicTree.js': 1,
   'src/systems/worldTick.js': 1,
   'src/ui/bankWindow.js': 1,
+  'src/ui/collections/gatheredPart.js': 1,   // HUNTERS-MARK: a fish's name on the Collections page's Fish part
   'src/ui/gambitTableWords.js': 1,   // KG3: a unit's name at The King's Gambit's table, through DFU's own list (Kings-Gambit.md 14.6)
   'src/ui/native/nativeInventory.js': 1,
   'src/ui/quest/questJournal.js': 2,

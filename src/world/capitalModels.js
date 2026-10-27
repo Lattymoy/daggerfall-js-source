@@ -19,10 +19,11 @@ import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModel
 import { withFabricBuildings } from './imperialFabricBuildings.js';   // BLD: the fabric's buildings entered
 import { imperialPrebuilt } from './imperialPrebuild.js';   // IC-GRAND's perf pass: what its worker made   // IC-GRAND: its blocks and its fabric's models, families
 import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
-import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
+import { capitalTreeArt } from './capitalTreeArt.js';   // CAPITAL-TREES: the capitals' trees' pictures
+import { CAPITAL_ARCHIVE, CAPITAL_ART, isCapitalCut, flatTriangles } from './capitalShapes.js';
 import { buildImperialTower, buildImperialTowerLod, buildImperialPalaceLod, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks, buildSolitudeCliffs, buildSolitudeTerraces } from './capitalSolitude.js';
-import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
+import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall, buildMournholdGardens } from './capitalMournhold.js';
 import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
 import { buildGrahtOak } from './capitalFalinesti.js';
 import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall, buildManeEstate } from './capitalTorval.js';
@@ -226,6 +227,7 @@ export function capitalArt() {
   const swell = noise(0x8401, 4), glint = noise(0x8402, 16);
   out.set(CAPITAL_ART.water, painted(ramp([[14, 40, 52], [30, 72, 88], [56, 108, 122], [104, 156, 166], [168, 204, 208]]), (x, y) => 0.36 + (swell(x, y) - 0.5) * 0.5 + (glint(x, y) > 0.7 ? 0.28 : 0), { seed: 0x8403, grain: 0.07 }));
   imperialArt(out, { painted, ramp, masonry, noise });   // IC-GRAND: the Imperial City's street walls, by the same kit
+  capitalTreeArt(out, { painted, ramp, noise, rng });   // CAPITAL-TREES: the capitals' trees, by the same kit
   return out;
 }
 
@@ -251,10 +253,11 @@ const RANK = Object.freeze([1, 0, 2]);
  * MeshReader's own law (v = -(texel row / height): 46,324 of the 46,856 wall triangles of the freeware's 434 house
  * models), because every picture reaches the GL bottom-up (formats/color32Order.js) - it had fallen, so every capital's
  * masonry stood on its head, its stones lit from below (world/imperialFabricModels.js's walls, BLD, the same finding).
- * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number>, normals?: ArrayLike<number> }} m @param {number} [metres]
+ * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number>, normals?: ArrayLike<number>, uvs?: ArrayLike<number>, subMeshes?: ReadonlyArray<any> }} m @param {number} [metres]
  */
 export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
   const p = m.positions, ix = m.indices, nm = m.normals, uvs = new Float32Array((p.length / 3) * 2);
+  const kept = m.uvs ? flatTriangles(m) : null;   // CAPITAL-TREES: a tree's flats keep their own coordinates - the spray whole on its card
   // TS5: each coordinate from a whole number of pictures nearest the model's middle (the picture repeats - the same look),
   // so a landmark kilometres out keeps its texels in a 32-bit UV
   const o = [0, 1, 2].map((k) => { let lo = Infinity, hi = -Infinity; for (let i = k; i < p.length; i += 3) { lo = Math.min(lo, p[i]); hi = Math.max(hi, p[i]); } return p.length ? Math.floor((lo + hi) / 2 / metres) : 0; });
@@ -263,6 +266,7 @@ export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
   const same = (/** @type {ArrayLike<number>} */ q, /** @type {number} */ i, /** @type {number} */ k) => q[i] === q[k] && q[i + 1] === q[k + 1] && q[i + 2] === q[k + 2];
   let first = null;   // a quad's first half: its triangle, its first corner and the plane it was mapped on
   for (let t = 0; t < ix.length; t += 3) {
+    if (kept?.[t / 3]) { for (let k = 0; k < 3; k++) { const v = ix[t + k]; uvs[v * 2] = m.uvs[v * 2]; uvs[v * 2 + 1] = m.uvs[v * 2 + 1]; } first = null; continue; }
     const [a, b, c] = [ix[t] * 3, ix[t + 1] * 3, ix[t + 2] * 3];
     const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2], vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
     const own = [Math.abs(uy * vz - uz * vy), Math.abs(uz * vx - ux * vz), Math.abs(ux * vy - uy * vx)], len = Math.hypot(own[0], own[1], own[2]);
@@ -417,6 +421,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.mournholdPalace]: () => buildMournholdPalace(),
     [CAPITAL_MODELS.greatBazaar]: () => buildGreatBazaar(),
     [CAPITAL_MODELS.mournholdWall]: () => buildMournholdWall(),
+    [CAPITAL_MODELS.mournholdGardens]: () => buildMournholdGardens(),   // CAPITAL-TREES
     [CAPITAL_MODELS.alinorPalace]: () => buildAlinorPalace(),
     [CAPITAL_MODELS.alinorHarbour]: () => buildAlinorHarbour(),
     [CAPITAL_MODELS.alinorWall]: () => buildAlinorWall(),
@@ -440,7 +445,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   installImperialFamilies();   // IC-GRAND: its blocks, near and far, and its fabric's models
   let made = null;
   const pictureOf = (record) => (made ??= capitalArt()).get(record) ?? null;
-  addTextures(Object.values(CAPITAL_ART).map((record) => ({ archive: CAPITAL_ARCHIVE, record, frame: 0, standIn: true, fileName: `capital-${CAPITAL_ARCHIVE}_${record}`, build: async () => pictureOf(record) })));
+  addTextures(Object.values(CAPITAL_ART).map((record) => ({ archive: CAPITAL_ARCHIVE, record, frame: 0, standIn: true, fileName: `capital-${CAPITAL_ARCHIVE}_${record}`, build: async () => pictureOf(record), cutout: isCapitalCut(record) })));   // CAPITAL-TREES: a tree's flats cut by their alpha (systems/textureReplacement.js vendorCutout)
   return true;
 }
 /** Test seam. */

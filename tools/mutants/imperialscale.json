@@ -165,7 +165,7 @@
   {
     "name": "IS-the-open-cell-unnamed",
     "file": "src/world/tamrielCapitals.js",
-    "old": "      else if (cell === 'O') out.push(TOWN_OUTLINE_BLOCK);   // TS5: open ground - the land's own (world/townOutline.js)\n",
+    "old": "      else if (cell === 'O') out.push(CAPITALS[k] && onApproachCell(CAPITALS[k], r0 + r, x0 + x) ? capitalApproachName(CAPITALS[k], x0 + x, r0 + r) : TOWN_OUTLINE_BLOCK);   // TS5: open ground - the land's own (world/townOutline.js); ROAD-FOLLOW: an approach's own\n",
     "new": "",
     "tests": [
       "test/world/imperialscale.test.js",

@@ -8,6 +8,8 @@
 //   {t: 'want', slices: [{s, near}]} - the slices wanted now, in order; it replaces the last list (what is no longer
 //     wanted is not made), and a piece the page has already made is skipped
 //   {t: 'made', key} - a piece the page made itself ('b:<name>' or 'm:<id>'): never made here
+//   {t: 'need', keys} - IC-STUTTER: pieces a build is waiting on ('b:<name>' or 'm:<id>'), made before the wanted list -
+//     made again even where made before (the page let its copy go), in the order asked; a new list never drops them
 // Messages out:
 //   {t: 'block', name, json} - a block's JSON, its automap's buffer moved
 //   {t: 'model', id, model} - a model (null: none in that cell), its buffers moved
@@ -36,6 +38,9 @@ export const DONE_KEEP = 2400;
 /** @param {(msg: any, transfer?: ArrayBuffer[]) => void} post */
 export function createPrebuildWorkerState(post) {
   let deps = null, queue = /** @type {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>} */ ([]);
+  /** IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): the pieces a build waits on, ahead of the wanted list.
+   *  @type {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>} */
+  let needs = [];
   /** The pieces made here or by the page lately, oldest first - DONE_KEEP of them, so a slice come back to after a walk
    *  across the city is made again (the page's own keep has long let it go). */
   const done = new Set();
@@ -45,14 +50,23 @@ export function createPrebuildWorkerState(post) {
     /** A message from the page. */
     on(msg) {
       if (msg?.t === 'want') { queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w))); }
-      else if (msg?.t === 'made' && msg.key) { mark(msg.key); queue = queue.filter((w) => keyOf(w) !== msg.key); }
+      else if (msg?.t === 'made' && msg.key) { mark(msg.key); queue = queue.filter((w) => keyOf(w) !== msg.key); needs = needs.filter((w) => keyOf(w) !== msg.key); }
+      else if (msg?.t === 'need') {
+        const has = new Set(needs.map(keyOf));
+        for (const w of (msg.keys ?? []).map(workOfKey)) {
+          if (!w || has.has(keyOf(w))) continue;
+          has.add(keyOf(w));
+          done.delete(keyOf(w));   // made before and let go by the page: made again
+          needs.push(w);
+        }
+      }
     },
     /** One piece made and handed back; false when nothing is wanted. */
     step() {
-      const w = queue.shift();
+      const need = needs.shift(), w = need ?? queue.shift();
       if (!w) return false;
       const key = keyOf(w);
-      if (done.has(key)) return true;
+      if (done.has(key)) return true;   // IC-STUTTER: a need's key was let out of `done` as it was asked
       mark(key);
       deps ??= workerDeps();
       try {
@@ -64,8 +78,15 @@ export function createPrebuildWorkerState(post) {
       }
       return true;
     },
-    get owed() { return queue.length; },
+    get owed() { return queue.length + needs.length; },
   };
+}
+/** IC-STUTTER: a piece's work from its key ('b:<name>' a block, 'm:<id>' a model) - null for neither. @param {string} key */
+export function workOfKey(key) {
+  if (typeof key !== 'string') return null;
+  if (key.startsWith('b:') && key.length > 2) return { kind: 'block', name: key.slice(2) };
+  const id = key.startsWith('m:') ? Number(key.slice(2)) : NaN;
+  return Number.isInteger(id) ? { kind: 'model', id } : null;
 }
 
 // the worker itself - absent in node, where the state is driven directly: a piece a task, so a new list is heard between

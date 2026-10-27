@@ -353,11 +353,12 @@
   {
     "name": "OTW-heuristic-unweighted",
     "file": "src/systems/travel/townWalk.js",
-    "old": "export function townWayCells(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT } = {}) {",
-    "new": "export function townWayCells(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = 1 } = {}) {",
+    "old": "export function* townWayCellsSteps(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT, scratchKey = nav } = {}) {",
+    "new": "export function* townWayCellsSteps(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = 1, scratchKey = nav } = {}) {",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (IC-STUTTER): the search a few thousand cells a step, townWayCells its steps run to their end."
   },
   {
     "name": "OTWH-shut-gate-carved",

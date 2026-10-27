@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { WoodsFile } from '../../../src/formats/woodsFile.js';
-import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, GROUND_FRAME_LAW, RECORD_GROUND_STAMP } from '../../../src/world/terrain/terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, GROUND_FRAME_LAW, LIFT_FRAME_LAW, RECORD_GROUND_STAMP } from '../../../src/world/terrain/terrainSampler.js';
 import { createLandforms, landformLift, landformSitesBeyond } from '../../../src/world/landforms.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
 import { groundWoods, dropGroundCache } from '../../../src/world/tamriel/tamrielGround.js';
@@ -55,7 +55,8 @@ test('BAY-LEFT-GROUND D5 the frame\'s law: past the Bay a record is DFU\'s frame
   assert.equal(plain.restandHeight(old, x, 0, 1.5, null), plainBay.restandHeight(old, x, 0, 1.5, null), 'the row off, a record of the prefab\'s scale past the Bay: stood again as on the Bay - no old law\'s step');
   assert.equal(plain.groundFrameHeight(ground + off, x, 0), ground + off);
   assert.deepEqual({ ...RECORD_GROUND_STAMP }, { terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW });
-  assert.equal(GROUND_FRAME_LAW, 2);
+  assert.equal(GROUND_FRAME_LAW, 3);   // PIN MOVED (RELIEF-PEAKS): 3 - DFU's own ground past the Bay moved (its large map's law); D5's own law is LIFT_FRAME_LAW, 2 (test/world/reliefpeaks.test.js)
+  assert.equal(LIFT_FRAME_LAW, 2);
 });
 
 /** The world host's own frame over a stream at (X0, Y0) on the synthetic world's continent, a town past the Bay by its site. */
@@ -124,7 +125,11 @@ test('BAY-LEFT-GROUND D5 a record past the Bay goes out and comes back over the 
   const { host, scene, town } = frameHost(3830, 760);
   const [x, z] = scene(town.px + 1, town.py, 20.5, 64.25);
   const dfu = 250, off = 2.25;
-  const shapedNow = dfu + host.landformLiftAt(x, z), shapedThen = dfu + host.landformLiftAt(x, z, { before: true });
+  // PIN MOVED (RELIEF-PEAKS, GROUND_FRAME_LAW 3): DFU's own ground past the Bay moved since (its large map's law), so a
+  // record written then stood DFU's ground of its day - today's less the move (test/world/reliefpeaks.test.js)
+  const moved = host.groundMovedAt(x, z);
+  assert.ok(Math.abs(moved) > 0.5, `DFU's own ground moved here (${moved.toFixed(2)})`);
+  const shapedNow = dfu + host.landformLiftAt(x, z), shapedThen = dfu - moved + host.landformLiftAt(x, z, { before: true });
   const w = host.groundFrameHeight(shapedNow + off, x, z);
   assert.ok(Math.abs(w - (dfu + off)) < 1e-9, 'into DFU\'s frame');
   assert.ok(Math.abs(host.restandHeight(w, x, z, STREAMING_TERRAIN_SCALE, GROUND_FRAME_LAW) - (shapedNow + off)) < 1e-9, 'and back');
@@ -155,7 +160,7 @@ test('BAY-LEFT-GROUND D5 every record that carries an exterior height stamps its
 test('BAY-LEFT-GROUND D5 the world host: the lift\'s place past the Bay the build\'s own, the old law\'s landforms the Bay\'s table alone, the frame handed both; the four writers stamp the frame\'s law and every reader hands it on (mutants: each seam)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const _liftLocationAt = \(x, y\) => \(onTheBay\(x, y\) \? spawnGroundPlace\.groundLocationAt\(x, y, locationIndex\.get\(`\$\{x\},\$\{y\}`\)\) : _locationToBuild\(x, y\)\);/);
-  assert.match(w, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates \}\) : null\);/, 'the old law\'s landforms: the Bay\'s table alone');
+  assert.match(w, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates, ranges: !before \}\) : null\);/, 'the old law\'s landforms: the Bay\'s table alone');   // PIN MOVED (RELIEF-PEAKS): the old law's landforms without the ranges, which a record written then never stood
   assert.match(w, /createGroundFrame\(\{[^\n]*\n\s+_liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, beyondSites,\n/);
   assert.match(readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8'), /field = landformLiftField\(host\.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere\(\{ before \}\)\);/, 'the lift asks the law it reads by');
   assert.equal((w.match(/\.\.\.RECORD_GROUND_STAMP/g) ?? []).length, 4, 'the scene cache, the deck, the anchor, a remains\' place');

@@ -299,19 +299,22 @@
  {
   "name": "TB-the-walk-unshared",
   "file": "src/scenes/pixelBuild.js",
-  "old": "townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut)",
-  "new": "townPlacesFor(dfLocation, lefaySpot, climate?.people, loc)",
+  "old": "loc, walkShut, () => breather.breathe())",
+  "new": "loc, null, () => breather.breathe())",
   "tests": [
    "test/world/baywalls.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (IC-STUTTER): the build hands the town's places its breather too."
  },
  {
   "name": "TB-the-places-unshut",
   "file": "src/scenes/world.js",
-  "old": "        const g = townGroundOf(yl, measures, shut);",
-  "new": "        const g = townGroundOf(yl, measures);",
+  "old": "        const g = await stepsBreathing(townGroundSteps(yl, measures, shut, townYardsOf(dfLocation)), breathe);",
+  "new": "        const g = await stepsBreathing(townGroundSteps(yl, measures, null, townYardsOf(dfLocation)), breathe);",
+  "note": "Re-aimed by content (IC-PROPS): the call hands the town's yards' law its ways and a capital's own yards too; the mutant still drops the walk shut. Re-aimed by content (IC-STUTTER): a step at a time through the build's breather.",
   "tests": [
    "test/world/baywalls.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (IC-STUTTER): the ground walked a step at a time through the build's breather."
  }
 ]

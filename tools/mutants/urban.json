@@ -164,11 +164,12 @@
  {
   "name": "U3-the-pavement-band-swapped",
   "file": "src/world/urban/townFabric.js",
-  "old": "nearHouse[i] <= FABRIC.pave ? K.pave : K.main;",
-  "new": "nearHouse[i] <= FABRIC.pave ? K.main : K.pave;",
+  "old": "carriageway[i] && nearHouse[i] > FABRIC.pave ? K.main : K.pave;",
+  "new": "carriageway[i] && nearHouse[i] > FABRIC.pave ? K.pave : K.main;",
   "tests": [
    "test/world/urban/urban3_fabric.test.js"
-  ]
+  ],
+  "note": "TOWN-BOARDS: re-aimed by content - the pavement is the carriageway's ring by the eight ways now, the carriageway's cells by a house its pavement; the band swapped is the same mutant on the new line."
  },
  {
   "name": "U3-a-village-given-streets",

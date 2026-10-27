@@ -531,8 +531,8 @@
   {
     "name": "PROF9-svc-hand-unsigned",
     "file": "server-account/src/professions.js",
-    "old": "u, f: hand, v: MINT_VERSION }, key, { subtle, nowS })",
-    "new": "u, v: MINT_VERSION }, key, { subtle, nowS })",
+    "old": "u, f: hand, v: craftMintVersion(mint) }, key, { subtle, nowS })",
+    "new": "u, v: craftMintVersion(mint) }, key, { subtle, nowS })",
     "tests": [
       "test/net/prof9_service.test.js"
     ]

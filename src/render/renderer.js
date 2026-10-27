@@ -11,6 +11,7 @@ import { CLOUD_SHADOW_GLSL, cloudFarOf } from './cloudShadow.js';   // EE5 / VC4
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // SHIP-FADE: the mesh shader's dissolve over the port's one bayer4
 import { pixelFadeShare } from './pixelFade.js';   // MID-RING: a just-built pixel's tint, eased out (a leaf)
 import { LPT_FS_HEAD, LPT_FS_KEEP, LPT_FS_TEXEL } from './lowPolyTreesGlsl.js';   // LPT1: a low-poly tree's fragment half, both lanes' billboard shaders
+import { LPT_IMPOSTOR_LIGHT } from '../world/lowPolyTrees.js';   // FLORA-GROUND: the sky's light a tree's faces take (a leaf: no imports of its own)
 import { FOG_GLSL } from './fogGlsl.js';
 import { WINDFALL_SWAY_GLSL, windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: Windfall's vertex wind - the flora's lean while the mod is on
 import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's share - a foe under Iliac Puddle No More's sea is in the depth texture its top reads   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home, for all seven world programs
@@ -682,13 +683,14 @@ void main() {
     }
     vBBBase = aInst.xyz;
     vUV = aCorner;
-    // its faces' light (AUDIT LPT A2): the far picture's own - from above and the eye's side, LPT_IMPOSTOR_LIGHT turned to
-    // face the eye - crossfaded to the sun's by its share, so at night and at the handover the two are one picture
-    vec2 toEye = uLptCut.xz - aInst.xz;
-    vec2 fe = length(toEye) > 1e-4 ? normalize(toEye) * 0.8 : vec2(0.0, 0.8);
-    float faceEye = clamp(0.72 + 0.28 * dot(wn, vec3(fe.x, 0.6, fe.y)), 0.5, 1.0);
+    // its faces' light (AUDIT LPT A2): the far picture's own - FLORA-GROUND: the sky's, from straight above
+    // (world/lowPolyTrees.js LPT_IMPOSTOR_LIGHT), which no viewer turns: a matte face, as DFU's Lambert billboard batch
+    // lights its flats - crossfaded to the sun's by its share, so at night and at the handover the two are one picture.
+    // It was LPT_IMPOSTOR_LIGHT turned to face the EYE: a face toward the viewer lit whole and one away at half, the
+    // light following the player round every 3D tree, bush and stump - a reflective sheen on the flora by night
+    float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(${LPT_IMPOSTOR_LIGHT.map((v) => v.toFixed(4)).join(', ')})), 0.5, 1.0);
     float faceSun = clamp(0.72 + 0.28 * dot(wn, uLptSun.xyz), 0.5, 1.0);
-    vShade = uMeshColor * mix(faceEye, faceSun, uLptSun.w);
+    vShade = uMeshColor * mix(faceSky, faceSun, uLptSun.w);
     vAlpha = uMeshAlpha;
     vFade = uLptCut.w > 0.0 ? 3.0 - clamp((distance(aInst.xz, uLptCut.xz) - uLptCut.w) / max(uLptBand, 1e-3), 0.0, 1.0) : 3.0;
   }
@@ -1032,6 +1034,7 @@ const mat2 ROT[4] = mat2[4](
   mat2(0.0, 1.0, -1.0, 0.0));
 const vec2 TRANS[4] = vec2[4](
   vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
+${roadEdgeGlsl()}
 void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
   ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(127));
@@ -1061,6 +1064,7 @@ void main() {
   vec2 gx = ROT[t] * dFdx(unwrapped);
   vec2 gy = ROT[t] * dFdy(unwrapped);
   vec3 tex = textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb;
+  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)
   vec4 ew = ecoWeights(vLocalXZ);   // ECOTONE1: the border's shares, once (AUDIT PRECIP GROUND-6: the snow crosses it by the same)
   tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
   float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)
@@ -1567,6 +1571,7 @@ import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorner
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { lightIdsOf, lightList, packLight } from './lightId.js';   // LIGHT-ID: each light's identity, lifted off its list for the shadow pass (and the flash packed through the seam)
+import { roadEdgeGlsl, roadEdgesOn } from './roadEdgeGlsl.js';   // ROAD-LOOK: a road's edge blended into its ground, both terrain programs' one chunk, and its switch
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
 import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
 import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
@@ -2478,6 +2483,7 @@ export class Renderer {
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
     this.tUWaterBed = gl.getUniformLocation(this.terrainProgram, 'uWaterBed');   // WATER-NEXT 2: the bed under the water
     this.tUBedMask = gl.getUniformLocation(this.terrainProgram, 'uBedMask');
+    this.tURoadEdge = gl.getUniformLocation(this.terrainProgram, 'uRoadEdge');   // ROAD-LOOK: the road's edge blended (render/roadEdgeGlsl.js)
     // ECOTONE1 (render/ecotoneGlsl.js): the neighbours' tile sets' samplers, which set each neighbour wears, and the
     // pixel's first world tile - the installed terrain program's own, so what the last draw set them to is forgotten
     this.tEco = {
@@ -7856,6 +7862,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // WATER-NEXT 2: the ground under the enhanced water is a bed - the switch and the corner table, a frame's like the rest
       gl.uniform1f(this.tUWaterBed, this.waterBed ? 1 : 0);
       gl.uniform4uiv(this.tUBedMask, BED_MASK);
+      gl.uniform1f(this.tURoadEdge, this.roadEdges ? 1 : 0);   // ROAD-LOOK: a frame's, as the bed's switch
       this._uploadFog(this._terrainFog);
       gl.uniform3fv(this.tULightDir, this._lightDir);
       gl.uniform3fv(this.tUAmbient, this._c3(this._ambient));
@@ -8020,6 +8027,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** WATER-NEXT 2: whether the ground under the enhanced water is drawn as a bed (render/waterBedGlsl.js) - the hosts
    *  that draw the enhanced water set it; the classic skin never does */
   waterBed = false;
+  /** ROAD-LOOK: whether a road's edge is blended into its ground (render/roadEdgeGlsl.js) - the page's, taken as the renderer
+   *  is made (roadEdgesOn: the enhanced skin, `?roadedges=off` the kill door); off, every tile is its own, as DFU draws it */
+  roadEdges = roadEdgesOn();
   /** WATER-NEXT: the Water quality row's Simple - no copy under the water (the blend looks through it) */
   waterSimple = false;
   /** WATER-NEXT 2: the open sea's rows, reused a frame to the next (drawSeaSurfaces) */

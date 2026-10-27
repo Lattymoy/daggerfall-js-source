@@ -1,0 +1,174 @@
+[
+  {
+    "name": "LOOT-DOOR-the-field-dropped",
+    "file": "src/net/wire.js",
+    "old": "m.ll <= LOOT_HELLO_LAW_WIRE_MAX) hello.ll = m.ll;",
+    "new": "m.ll <= LOOT_HELLO_LAW_WIRE_MAX) void m.ll;",
+    "why": "a hello's loot law is never read: every build is an older one, the current refused",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-range-low",
+    "file": "src/net/wire.js",
+    "old": "Number.isSafeInteger(m.ll) && m.ll >= 1 &&",
+    "new": "Number.isSafeInteger(m.ll) && m.ll >= 0 &&",
+    "why": "an `ll` of 0 is read as a number, not as none",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-range-high",
+    "file": "src/net/wire.js",
+    "old": "m.ll <= LOOT_HELLO_LAW_WIRE_MAX) hello.ll",
+    "new": "m.ll <= LOOT_HELLO_LAW_WIRE_MAX + 1) hello.ll",
+    "why": "a number past the wire's bound is read",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-rooms-the-ground",
+    "file": "src/net/wire.js",
+    "old": "export const lootRoom = (key) => streamsFoes(key);",
+    "new": "export const lootRoom = (key) => groundRoom(key);",
+    "why": "a battle and an owned room or boat, which carry no shared list, turn an older build away",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-rooms-cells-alone",
+    "file": "src/net/wire.js",
+    "old": "export const lootRoom = (key) => streamsFoes(key);",
+    "new": "export const lootRoom = (key) => isCellRoom(key);",
+    "why": "a dungeon's and a building's containers - the seat that loses a piece - left open to an older build",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-number",
+    "file": "src/net/wire.js",
+    "old": "export const LOOT_HELLO_LAW = 1;",
+    "new": "export const LOOT_HELLO_LAW = 2;",
+    "why": "the number names a law this build is not",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-client-unsaid",
+    "file": "src/net/online.js",
+    "old": "if (lootRoom(room)) frame.ll = LOOT_HELLO_LAW;",
+    "new": "if (false) frame.ll = LOOT_HELLO_LAW;",
+    "why": "this build says no loot law, and is turned away as an older one",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-client-session-room",
+    "file": "src/net/online.js",
+    "old": "if (lootRoom(room)) frame.ll = LOOT_HELLO_LAW;",
+    "new": "if (lootRoom(this.room)) frame.ll = LOOT_HELLO_LAW;",
+    "why": "a halo's hello reads the session's room, not the one it goes to",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-floor",
+    "file": "src/net/relayCfg.js",
+    "old": "cellSeed: 260, lootDoor: 273 }",
+    "new": "cellSeed: 260, lootDoor: 272 }",
+    "why": "the client says lootDoor to a relay that closes the hub link on it",
+    "tests": [
+      "test/net/lootdoor.test.js",
+      "test/net/herald/heraldcards.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-var",
+    "file": "src/net/relayCfg.js",
+    "old": "  lootDoor: 'LOOT_DOOR',",
+    "new": "  lootDoor: 'LOOT_GATE',",
+    "why": "the setting stands over another var than the one the record names",
+    "tests": [
+      "test/net/lootdoor.test.js",
+      "test/net/scale5b.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-value-check",
+    "file": "server/src/index.js",
+    "old": "if (k === 'lootDoor') return v === 'on' || v === 'off' ? null :",
+    "new": "if (k === 'lootDoor') return typeof v === 'string' ? null :",
+    "why": "a value the door never reads is kept as the setting",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-room-unread",
+    "file": "server/src/index.js",
+    "old": "if (!lootRoom(key) || m.ll >= LOOT_HELLO_LAW) return false;",
+    "new": "if (m.ll >= LOOT_HELLO_LAW) return false;",
+    "why": "the hub turns an older build away from its friends and its chat",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-law-unread",
+    "file": "server/src/index.js",
+    "old": "if (!lootRoom(key) || m.ll >= LOOT_HELLO_LAW) return false;",
+    "new": "if (!lootRoom(key)) return false;",
+    "why": "the current build asks the hub and is turned away",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-cold-ask-unawaited",
+    "file": "server/src/index.js",
+    "old": "if (!lootRoom(key) || m.ll >= LOOT_HELLO_LAW) return false;\n    if (this._relayCfgAt === -Infinity) await this._relayCfgFresh(now);",
+    "new": "if (!lootRoom(key) || m.ll >= LOOT_HELLO_LAW) return false;\n    if (this._relayCfgAt === -Infinity) void this._relayCfgFresh(now);",
+    "why": "a cold room's first older hello is let in on the Worker's var",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-setting-unread",
+    "file": "server/src/index.js",
+    "old": "this.env, 'lootDoor') === 'on';",
+    "new": "this.env, 'grantDoor') === 'on';",
+    "why": "the door reads another setting",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-reason-the-grants",
+    "file": "server/src/index.js",
+    "old": "CLOSE_POLICY, LOOT_OLD_REASON); return true; }",
+    "new": "CLOSE_POLICY, GRANT_OLD_REASON); return true; }",
+    "why": "the loot door closes with the grant door's reason",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-DOOR-the-door-not-shut",
+    "file": "server/src/index.js",
+    "old": "CLOSE_POLICY, LOOT_OLD_REASON); return true; }",
+    "new": "CLOSE_POLICY, LOOT_OLD_REASON); }",
+    "why": "the refused hello goes on and is written into the room",
+    "tests": [
+      "test/net/lootdoor.test.js"
+    ]
+  }
+]

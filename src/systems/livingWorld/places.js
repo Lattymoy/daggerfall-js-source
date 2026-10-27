@@ -34,6 +34,7 @@
 import { NAV_CELL, HALF_CELL } from '../../world/city/cityNavigation.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { hasShopJob } from './census.js';
+import { stepsDone } from '../../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
 
 /** How far out along a door's normal its cell is looked for (m), and the ring searched about it after (cells). */
 export const DOOR_REACH_M = [0.9, 1.6, 2.4, 3.2, 4.0];
@@ -61,6 +62,13 @@ const BLOCK_CELLS = 64;
 
 /** IC-GRAND: how many of a town's buildings a street component opens onto for it to be a quarter of its own. */
 export const QUARTER_MIN = 3;
+/** IC-STUTTER (2026-10-27, the owner: "Traveling in the Imperial City at x60 presents really bad stuttering"; bible/03-World/
+ *  Arena-Provinces.md IC-STUTTER): the rows of a pass between two steps of townPlacesSteps and streetNetSteps - a town's
+ *  places were one task of its pixel's build, its grid read whole a dozen times (each quarter's again): 0.1-0.4 s on a
+ *  near slice of the Imperial City, several a second at x60. The same passes in the same order, the same places. */
+export const PLACES_ROWS_A_STEP = 64;
+/** IC-STUTTER: the cells a flood of streetNetSteps labels between two steps (a street net is most of a slice's grid). */
+export const PLACES_CELLS_A_STEP = 16384;
 
 /** The buildings before which a town gathers to talk. @type {Set<number>} */
 const SOCIAL_TYPES = new Set([BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUILDING_TYPES.GuildHall, BUILDING_TYPES.Palace]);
@@ -81,7 +89,10 @@ const SOCIAL_TYPES = new Set([BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUIL
  * The grid's walkable components (four-neighbour), and the largest's label.
  * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
  */
-export function streetNet(nav) {
+export const streetNet = (nav) => stepsDone(streetNetSteps(nav));
+/** IC-STUTTER: streetNet a band of rows at a time. @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
+ *  @returns {Generator<void, { label: Int32Array, id: number, size: number }, void>} */
+export function* streetNetSteps(nav) {
   const W = nav.width, H = nav.height;
   const label = new Int32Array(W * H);
   const stack = new Int32Array(W * H);
@@ -90,13 +101,15 @@ export function streetNet(nav) {
   const walk = new Uint8Array(W * H);
   if (grid instanceof Uint8Array && grid.length === W * H) for (let i = 0; i < W * H; i++) walk[i] = grid[i] >> 4 > 0 ? 1 : 0;
   else for (let i = 0; i < W * H; i++) walk[i] = nav.weightAt(i % W, (i / W) | 0) > 0 ? 1 : 0;
-  let next = 0, best = 0, bestSize = 0;
+  let next = 0, best = 0, bestSize = 0, flooded = 0;
   for (let i = 0; i < W * H; i++) {
+    if (i && i % (W * PLACES_ROWS_A_STEP) === 0) yield;
     if (label[i] || !walk[i]) continue;
     const id = ++next;
     let sp = 0, size = 0;
     stack[sp++] = i; label[i] = id;
     while (sp > 0) {
+      if (++flooded % PLACES_CELLS_A_STEP === 0) yield;
       const c = stack[--sp];
       size++;
       const x = c % W, y = (c / W) | 0;
@@ -184,8 +197,13 @@ function doorCell(nav, d, ok) {
 export function doorsNet(nav, doors, streets) {
   const { label } = streets, opens = doorsByNet(nav, doors, streets);
   if (!opens.size) return streets.id;
-  const size = new Map([...opens.keys()].map((id) => [id, 0]));
-  for (let i = 0; i < label.length; i++) { const n = size.get(label[i]); if (n !== undefined) size.set(label[i], n + 1); }
+  // IC-STUTTER: each component's cells counted in a typed array (a map's read and write a cell was 10-40 ms of one task
+  // over a slice of the Imperial City's 262,144)
+  let top = 0;
+  for (let i = 0; i < label.length; i++) if (label[i] > top) top = label[i];
+  const cells = new Int32Array(top + 1);
+  for (let i = 0; i < label.length; i++) cells[label[i]]++;
+  const size = new Map([...opens.keys()].map((id) => [id, cells[id] ?? 0]));
   let best = 0, bestKeys = -1, bestSize = -1;
   for (const [id, keys] of [...opens].sort((a, b) => a[0] - b[0])) {
     const n = /** @type {number} */ (size.get(id));
@@ -314,17 +332,36 @@ export function quartersOf(nav, doors, streets, main) {
  *   `quarters` a town of quarters (above); `streets` and `netId` a quarter's own, given (its places over that net alone)
  * @returns {Places}
  */
-export function townPlaces(nav, doors, buildings, { quarters = false, streets: given = null, netId: forced = null } = {}) {
+export const townPlaces = (nav, doors, buildings, o = {}) => stepsDone(townPlacesSteps(nav, doors, buildings, o));
+/**
+ * IC-STUTTER: townPlaces a pass and a band of rows at a time (the same passes, in the same order, the same places).
+ * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
+ * @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors
+ * @param {readonly { key: number, type: number, factionId?: number }[]} buildings
+ * @param {{ quarters?: boolean, streets?: { label: Int32Array, id: number } | null, netId?: number | null }} [o]
+ * @returns {Generator<void, Places, void>}
+ */
+export function* townPlacesSteps(nav, doors, buildings, { quarters = false, streets: given = null, netId: forced = null } = {}) {
   const W = nav.width, H = nav.height;
   const types = new Map((buildings ?? []).map((b) => [b.key, b.type]));
   const factions = new Map((buildings ?? []).map((b) => [b.key, b.factionId ?? 0]));
   const ordered = [...(doors ?? [])].filter((d) => Number.isFinite(d.x) && Number.isFinite(d.z)).sort((a, b) => a.key - b.key || a.x - b.x || a.z - b.z);
-  const streets = given ?? streetNet(nav);
+  const streets = given ?? (yield* streetNetSteps(nav));
   let net = streets.label;
+  yield;
   const netId = forced ?? doorsNet(nav, ordered, streets);   // FIELD 2026-10-06: the street its doors open onto
+  yield;
   // IC-GRAND: a town of quarters walks every net QUARTER_MIN of its buildings open onto - the union its net
   const quarterIds = quarters && forced == null ? quartersOf(nav, ordered, streets, netId) : null;
-  if (quarterIds) { const one = new Set(quarterIds); net = Int32Array.from(net, (l) => (one.has(l) ? netId : l)); }
+  yield;
+  // IC-STUTTER: a loop, never Int32Array.from's mapped read - 0.1-0.5 s over a slice's 262,144 cells, one task
+  if (quarterIds) {
+    const top = Math.max(...quarterIds), one = new Uint8Array(top + 1), joined = new Int32Array(net.length);
+    for (const id of quarterIds) one[id] = 1;
+    for (let i = 0; i < net.length; i++) { const l = net[i]; joined[i] = l <= top && one[l] ? netId : l; }
+    net = joined;
+  }
+  yield;
   /** @type {Map<number, Spot>} */
   const doorSpots = new Map();
   /** @type {Map<number, { x: number, z: number, nx: number, nz: number }>} */
@@ -354,14 +391,17 @@ export function townPlaces(nav, doors, buildings, { quarters = false, streets: g
   }
   // the square: the most open net cell near the middle (the walkable cells in its window), sampled on a stride.
   // LW-PERF: each window's count off the net's running sums (one pass), not counted cell by cell
+  yield;
   const W1 = W + 1, sums = new Int32Array(W1 * (H + 1));
   for (let y = 0; y < H; y++) {
+    if (y && y % PLACES_ROWS_A_STEP === 0) yield;
     let row = 0;
     for (let x = 0; x < W; x++) { row += net[y * W + x] === netId ? 1 : 0; sums[(y + 1) * W1 + x + 1] = sums[y * W1 + x + 1] + row; }
   }
   const openIn = (x0, y0, x1, y1) => sums[(y1 + 1) * W1 + x1 + 1] - sums[y0 * W1 + x1 + 1] - sums[(y1 + 1) * W1 + x0] + sums[y0 * W1 + x0];
   let square = null, bestOpen = -1, bestD = Infinity;
   const mx = W / 2, my = H / 2, reach = Math.max(W, H) * 0.35;
+  yield;
   for (let y = SQUARE_WINDOW; y < H - SQUARE_WINDOW; y += SQUARE_STRIDE) {
     for (let x = SQUARE_WINDOW; x < W - SQUARE_WINDOW; x += SQUARE_STRIDE) {
       if (net[y * W + x] !== netId) continue;
@@ -412,6 +452,7 @@ export function townPlaces(nav, doors, buildings, { quarters = false, streets: g
     /** @type {{ x: number, y: number, open: number, bx: number, by: number }[]} */
     const best = [];
     for (let by = 0; by * BLOCK_CELLS < H; by++) {
+      yield;
       for (let bx = 0; bx * BLOCK_CELLS < W; bx++) {
         let top = null;
         for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN); y++) {
@@ -441,10 +482,12 @@ export function townPlaces(nav, doors, buildings, { quarters = false, streets: g
   const cellOf = (k, i, j) => (k < 2 ? [j, i] : [i, j]);
   const exits = [];
   for (let k = 0; k < 4; k++) {
+    yield;
     const side = SIDES[k];
     const lines = k < 2 ? H : W, along = k < 2 ? W : H, half = k < 2 ? W / 2 : H / 2;
     let best = null;
     for (let n = 0; n < lines && !best; n++) {
+      if (n && n % PLACES_ROWS_A_STEP === 0) yield;
       const i = k === 0 ? H - 1 - n : k === 1 ? n : k === 2 ? W - 1 - n : n;
       let bestMid = Infinity;
       for (let j = 0; j < along; j++) {
@@ -467,7 +510,9 @@ export function townPlaces(nav, doors, buildings, { quarters = false, streets: g
   /** @type {Array<typeof ordered>} */
   const byQ = quarterIds.map(() => []);
   for (const d of ordered) { const s = doorSpots.get(d.key); if (s && s.cell) byQ[quarterAt(s.cell)].push(d); }
-  return { ...town, quarters: quarterIds.map((id, q) => townPlaces(nav, byQ[q], buildings, { streets, netId: id })), quarterAt };
+  const each = [];
+  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q] }));
+  return { ...town, quarters: each, quarterAt };
 }
 
 /** LW-SPREAD: whether every cell the straight line from cell `a` to cell `b` crosses (their middles, sampled a quarter

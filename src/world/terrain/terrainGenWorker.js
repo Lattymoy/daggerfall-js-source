@@ -186,15 +186,16 @@ function answerMidRing(m) {
   }
 }
 
-/** FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} - each its highest byte and its count of
- *  the sea's floor, off this worker's own reader (world/terrain/midRingGrid.js buildFarFieldBytes) - TRANSFERRED back
- *  under the job's id; a failure answers `farError`, and the far ring closes into the sky as it always did. */
+/** FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} - each its vertex's byte and its count of
+ *  the sea's floor, off this worker's own reader (world/terrain/midRingGrid.js buildFarFieldBytes), RELIEF-PEAKS and its
+ *  vertex's ground (`relief` the Landforms row) - TRANSFERRED back under the job's id; a failure answers `farError`, and the
+ *  far ring closes into the sky as it always did. */
 function answerFarField(m) {
   try {
     if (!woods) throw new Error('terrain worker got a far field before init');
-    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate));
-    const { high, low, clim } = buildFarFieldBytes({ woods, baseCX: m.baseCX, baseCY: m.baseCY, radius: m.radius, cell: m.cell, seaByte: m.seaByte, rows: m.rows ?? null, cellAt });
-    globalThis.postMessage({ t: 'far', id: m.id, high, low, clim }, [high.buffer, low.buffer, clim.buffer]);
+    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte},${m.relief ? 1 : 0}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate, !!m.relief));
+    const { high, low, clim, ground } = buildFarFieldBytes({ woods, baseCX: m.baseCX, baseCY: m.baseCY, radius: m.radius, cell: m.cell, seaByte: m.seaByte, rows: m.rows ?? null, cellAt });
+    globalThis.postMessage({ t: 'far', id: m.id, high, low, clim, ground }, [high.buffer, low.buffer, clim.buffer, ground.buffer]);
   } catch (e) {
     globalThis.postMessage({ t: 'farError', id: m.id, message: e?.message ?? String(e) });
   }

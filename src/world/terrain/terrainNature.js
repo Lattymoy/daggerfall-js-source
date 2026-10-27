@@ -35,6 +35,7 @@ import {
 import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';   // AUDIT LW-DRY: the sample's height, one home (WATER1's float)
 import { ecotoneOwner, ECOTONE_REACH } from '../ecotone.js';   // ECOTONE1: which climate owns a tile at a border
 import { tileDistance } from '../townShape.js';   // TS6: a town's clearing round its own outline
+import { walkGroundAt } from './terrainSurface.js';   // FLORA-GROUND: a plant stands on the ground the player walks on - one law
 
 export const MAX_STEEPNESS = 50;   // FAR-FLORA: and the far views' woods (world/terrain/floraCover.js) - one home
 export const SLOPE_SINK_RATIO = 70;   // BANTHA1: and the jungle's (world/terrain/jungleNature.js)
@@ -115,7 +116,7 @@ export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y, c
   if (sampleHeight((beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2
   const scale = TERRAIN_SIZE / tDim;
   if (clear && !clear(x * scale, y * scale)) return null;   // VERGE1
-  return { x: x * scale, y: at(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };
+  return { x: x * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };   // FLORA-GROUND: the walk law at the tile's corner
 }
 
 /** AUDIT 29 C11: whether (x, z) stands inside a rock piece's footprint (`rocks` a pixel's World of Daggerfall rock boxes,
@@ -303,7 +304,7 @@ function dfuTiles(heightmapData, tilemapData, opts) {
     const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
     const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
     if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2
-    return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };
+    return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };   // FLORA-GROUND: the walk law
   };
 }
 
@@ -401,7 +402,7 @@ function dfuScatter(heightmapData, tilemapData, opts) {
       flats.push({
         record,
         x: x * scale,
-        y: at(x, y) - steepness / SLOPE_SINK_RATIO,
+        y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO,   // FLORA-GROUND: the ground the player walks on, at the corner sample
         z: y * scale,
       });
     }
@@ -641,6 +642,6 @@ function forestTiles(heightmapData, tilemapData, opts) {
     const mx = (x + in0 + (in1 - in0) * tileDraw(wx, wz, 2)) * scale;
     const mz = (y + in0 + (in1 - in0) * tileDraw(wx, wz, 3)) * scale;
     const steepness = Math.atan(Math.sqrt(g2)) * (180 / Math.PI);
-    return { record, x: mx, y: groundAt(heightmapData, mx, mz) - steepness / SLOPE_SINK_RATIO, z: mz, wood };
+    return { record, x: mx, y: walkGroundAt(heightmapData, mx, mz) - steepness / SLOPE_SINK_RATIO, z: mz, wood };   // FLORA-GROUND: on the ground the player walks on
   };
 }

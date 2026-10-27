@@ -295,7 +295,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   assert.match(row, /vendor\/roads-hazelnut\//, 'it names the vendored data');
   assert.match(row, /FALLBACK/, 'and says the port’s own network is what falls back');
   assert.match(row, /ALWAYS ON, IN BOTH LANES/, 'it states which lane ships what');
-  assert.match(row, /Roads\.md:194/, 'and cites Mac’s always-on call');
+  assert.match(row, /Roads\.md:197/, 'and cites Mac’s always-on call');
   assert.match(row, /`systems\/travel\/travel\.js` stays the verbatim port/, 'and what stayed removed');
   // AUDIT 58 R1 (d): the bake's cache version is a DERIVABLE figure like
   // every other in this file - the row states it, roadsCache.js IS it.

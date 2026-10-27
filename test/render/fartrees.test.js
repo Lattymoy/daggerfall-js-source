@@ -14,7 +14,9 @@ import { layoutNature, isTreeRecord, TREE_RECORDS } from '../../src/world/terrai
 import { bandTreesPixel } from '../../src/world/terrain/floraCover.js';
 import { floraSpec } from '../../src/world/terrain/floraCover.js';
 import { bandPixels, treeHash, layerPicture, bandInstanceSteps, FarTreesBand, farTreesDisabled, treesFsFor, TREES_FS, TREES_LANE_FS, TREES_VS,
-  BAND_RING, BAND_FADE, TREE_LAYER, TREE_LAYERS, TREES_UNIT, TREE_STRIDE, UPLOAD_SLICE } from '../../src/render/farTrees.js';
+  BAND_RING, BAND_FADE, TREE_LAYER, TREE_LAYERS, TREES_UNIT, TREE_STRIDE, UPLOAD_SLICE, skylineAt, HORIZON_STEPS, GROUND_UNIT, GROUND_SLACK, BAND_REACH, BAND_SIDE } from '../../src/render/farTrees.js';
+import { groundHeights, MidRingMesh } from '../../src/render/midRing.js';
+import { midRingSide } from '../../src/world/terrain/midRingGrid.js';
 import { FarRingRenderer, HORIZON_BUDGET_MS } from '../../src/render/farRing.js';
 import { EL_LANE } from '../../src/render/enhancedLighting.js';
 import { classicShadowLane } from '../../src/render/classicShadowLane.js';
@@ -273,4 +275,82 @@ test('FAR-TREES in the far ring: the band made with the woods and a worker, its 
   assert.equal(ring._band, null);
   assert.equal(new FarRingRenderer(fakeGl().gl, { mid, flora: null })._band, null, 'no woods: no band');
   assert.equal(new FarRingRenderer(fakeGl().gl, { flora: book })._band, null, 'no worker: no band');
+});
+
+// HORIZON-TREES (2026-10-27; KPbICA through the owner: "Strange projections above the horizon line"; bible/03-World/Tamriel.md
+// RELIEF-PEAKS Cause 7): the band is drawn last in a pass with no depth among its layers, so a band tree behind a nearer
+// hill of the middle ring stood over the hill's skyline. Its sight line is marched over the middle ring's own heights.
+const ridge = (side, cell, x0, z0, at, h) => {   // a flat ground at 100 m and a ridge `h` high along the row z = at
+  const heights = new Float32Array(side * side).fill(100);
+  for (let j = 0; j < side; j++) for (let i = 0; i < side; i++) if (Math.abs(z0 + j * cell - at) < cell / 2) heights[j * side + i] = 100 + h;
+  return { heights, side, cell, x0, z0 };
+};
+
+test('HORIZON-TREES the skyline at a tree: the highest line the nearer ground lifts at its foot, read at HORIZON_STEPS - 1 points between the eye and the foot, bilinearly between the ring\'s vertices; a pixel the stream has built left to the depth, a point past the ring not read; the ground over the line by GROUND_SLACK before it cuts (mutant: the march, the lift, the built skip, the ring\'s edge, the slack)', () => {
+  const g = ridge(41, 100, -2000, -2000, 0, 60);   // a ridge 60 m high across the line, halfway
+  const eye = [0, 120, -1000], foot = [0, 100, 1000];
+  // the line from the eye over the ridge's crest (z 0, 160 m less the slack) to the tree 2 km on: 120 + 2 * (160 - 1.5 - 120)
+  const sky = skylineAt(eye, foot, g);
+  assert.ok(Math.abs(sky - (120 + 2 * (160 - GROUND_SLACK - 120))) < 1e-3, `the ridge lifts the line at the tree: ${sky}`);
+  assert.ok(sky - foot[1] > 12, 'a 12 m tree behind it whole');
+  assert.equal(skylineAt([0, 400, -1000], foot, g) < foot[1], true, 'from 400 m up the ridge hides none of it');
+  assert.equal(skylineAt(eye, foot, ridge(41, 100, -2000, -2000, 0, 0)) < foot[1], true, 'a flat ground hides nothing');
+  assert.ok(skylineAt(eye, foot, g, (x, z) => Math.abs(z) < 200) < foot[1], 'the ridge in a built pixel: the depth\'s, not the march\'s');
+  assert.equal(skylineAt(eye, foot, g, () => true), -1e9, 'every pixel built: nothing read');
+  assert.equal(skylineAt(eye, foot, { ...g, x0: 5000 }), -1e9, 'past the ring: not read');
+  assert.equal(skylineAt(eye, foot, null), -1e9, 'no middle ring: no skyline');
+  assert.ok(skylineAt(eye, foot, ridge(41, 100, -2000, -2000, 0, 10 + GROUND_SLACK)) <= foot[1] + 1e-9, 'a crest on the eye\'s line to the foot by the slack (110 m halfway, 120 to 100) does not cut it');
+  assert.ok(skylineAt(eye, foot, ridge(41, 100, -2000, -2000, 0, 11 + GROUND_SLACK)) > foot[1] + 1, 'a metre over it does');
+  // bilinear between the vertices: a ridge vertex row read half a cell off stands half its height
+  const half = skylineAt([0, 100, -1000], [0, 100, 1000], { ...g, z0: -2050 });
+  assert.ok(half > 100 && half < 100 + 2 * (60 - GROUND_SLACK), 'read between its vertices');
+  assert.ok(skylineAt(eye, foot, ridge(41, 100, -2000, -2000, 0, 11)) < foot[1], 'a crest a metre over the line - under the slack: the drawn triangles against the bilinear - does not cut it');
+  assert.equal(HORIZON_STEPS, 24);
+  assert.equal(GROUND_SLACK, 1.5);
+});
+
+test('HORIZON-TREES the programs: the vertex program marches the same law over the ring\'s heights (GROUND_UNIT, filtered), skips the built slots as FLORA-GROUND\'s test reads them, takes the eye from the view, hands the share of the tree the ground hides, and stands down a tree hidden whole; both fragment programs draw above the skyline alone (mutant: the march\'s steps, the lift, the built skip, the eye, the share, the whole tree, the cut)', () => {
+  assert.ok(TREES_VS.includes(`for (int k = 1; k < ${HORIZON_STEPS}; k++) {`) && TREES_VS.includes(`float t = float(k) / ${HORIZON_STEPS.toFixed(1)};`));
+  assert.ok(TREES_VS.includes(`float h = textureLod(uGround, (g + 0.5) / uGroundAt.w, 0.0).r - ${GROUND_SLACK.toFixed(1)};`));
+  assert.ok(TREES_VS.includes('cut = max(cut, eye.y + (h - eye.y) / t);'));
+  assert.ok(TREES_VS.includes('if (builtAt(p)) continue;') && TREES_VS.includes(`ivec2 s = ivec2(floor((xz - uOrigin.xz) / ${TERRAIN_SIZE.toFixed(1)})) + ${BAND_REACH};`) && TREES_VS.includes(`int k = s.y * ${BAND_SIDE} + s.x;`));
+  assert.ok(TREES_VS.includes('vec3 eye = -(transpose(mat3(uView)) * uView[3].xyz);'));
+  assert.ok(TREES_VS.includes('vCut = (skyline(eye, aPos + uOrigin) - (aPos.y + uOrigin.y)) / max(side, 1.0e-3);'));
+  assert.ok(TREES_VS.includes('if (vCut >= 1.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);'));
+  for (const fs of [TREES_FS, TREES_LANE_FS, treesFsFor(classicShadowLane())]) assert.ok(fs.includes('if (1.0 - gl_PointCoord.y < vCut) discard;'));
+});
+
+test('HORIZON-TREES the band\'s ground: the ring\'s heights a half float a vertex on GROUND_UNIT, uploaded when the ring hands new ones and never again for the same, filtered; its place handed as uGroundAt; none, uGroundAt\'s side 0; let go with the band. The far ring hands its middle ring\'s heights, their corner in the band\'s frame; the ring\'s heights are its vertices\' (mutant: the upload\'s once, the format, the filter, the place, none, the corner, the heights)', () => {
+  const calls = [];
+  const gl = new Proxy({ TEXTURE0: 33984, TEXTURE_2D: 3553, R16F: 33325, RED: 6403, FLOAT: 5126, LINEAR: 9729 }, {
+    get: (t, k) => (k in t ? t[k] : (...a) => { calls.push([k, ...a]); return k === 'createTexture' ? { tex: 1 } : undefined; }),
+  });
+  const band = Object.create(FarTreesBand.prototype);
+  Object.assign(band, { gl, groundTex: null, _groundOf: null });
+  const heights = new Float32Array(9).fill(5), ground = { heights, side: 3, cell: 100, x0: -150, z0: -250 };
+  assert.equal(band._ground(ground), ground);
+  const up = calls.filter((c) => c[0] === 'texImage2D');
+  assert.deepEqual(up.map((c) => c.slice(1, 9)), [[3553, 0, 33325, 3, 3, 0, 6403, 5126]], 'a half float a vertex');
+  assert.equal(up[0][9], heights);
+  assert.deepEqual(calls.filter((c) => c[0] === 'activeTexture')[0], ['activeTexture', 33984 + GROUND_UNIT]);
+  assert.ok(calls.some((c) => c[0] === 'texParameteri' && c[3] === 9729), 'filtered');
+  band._ground(ground);
+  assert.equal(calls.filter((c) => c[0] === 'texImage2D').length, 1, 'the same heights: not again');
+  band._ground({ ...ground, heights: new Float32Array(9) });
+  assert.equal(calls.filter((c) => c[0] === 'texImage2D').length, 2, 'new heights: again');
+  assert.equal(band._ground(null), null);
+  assert.equal(band._ground({ side: 3 }), null, 'no heights: none');
+  // the far ring's hand-off
+  const ring = Object.create(FarRingRenderer.prototype);
+  Object.assign(ring, { baseX: 100, baseY: 200, _mid: { built: true, heights, baseX: 103, baseY: 198, radius: 14, sub: 8 } });
+  const g = ring._bandGround([10, 0, 20]), cell = TERRAIN_SIZE / 8;
+  assert.equal(g.heights, heights);
+  assert.equal(g.side, midRingSide(14, 8));
+  assert.equal(g.cell, cell);
+  assert.ok(Math.abs(g.x0 - (10 + 3 * TERRAIN_SIZE - 14 * 8 * cell)) < 1e-9 && Math.abs(g.z0 - (20 + 2 * TERRAIN_SIZE - 14 * 8 * cell)) < 1e-9, 'its corner: the far ring\'s origin moved by the bases\' pixels (z north), less the ring\'s radius');
+  ring._mid = { built: false, heights, baseX: 103, baseY: 198, radius: 14, sub: 8 };
+  assert.equal(ring._bandGround([0, 0, 0]), null, 'no middle ring: none');
+  assert.deepEqual([...groundHeights(Float32Array.from([1, 2, 3, 4, 5, 6]))], [2, 5], 'a vertex\'s y');
+  assert.ok(FarRingRenderer.prototype._drawBand.toString().includes('ground: this._bandGround(origin),'), 'the far ring hands them to the band\'s draw');
+  assert.ok(MidRingMesh.prototype.build.toString().includes('this.heights = groundHeights(v.positions);'), 'the middle ring keeps the heights it draws');
 });

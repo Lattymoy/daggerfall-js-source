@@ -262,6 +262,19 @@ export function plaqueActionFor(key) {
  *  off), where a door asks in a box of its own. */
 export const plaqueListing = () => !!(_actionIds && _actionIds.length && _sel);
 
+/** RPT1026-WORLD DECOR-VERBS: who needs the verbs folded where no plaque is drawn - a decorator while it browses
+ *  (scenes/decor/decorTool.js; systems/decor/decorLook.js decorPressFrame). Each asker's release is once-only. */
+const _verbAskers = new Set();
+export function wantPlaqueVerbs(asks) {
+  const one = { asks };
+  _verbAskers.add(one);
+  return () => { _verbAskers.delete(one); };
+}
+export function plaqueVerbsWanted() {
+  for (const one of _verbAskers) { try { if (one.asks()) return true; } catch { /* an asker torn down: no verbs of its */ } }
+  return false;
+}
+
 /** PROF-MENU: the act choice key's step over a list of verbs - `n` rows down (negative up), folded on the next frame
  *  as the wheel's nudge is (clamped there; the caller wraps). True when a list of verbs stands to step. */
 export function plaqueStep(n) {

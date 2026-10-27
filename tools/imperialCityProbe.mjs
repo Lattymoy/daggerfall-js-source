@@ -56,6 +56,10 @@ const STATIONS = [
   ['market-roofs', 37.5, 3000, 'roof', Math.PI / 4, -0.12],
   ['temple-roofs', 217.5, 3000, 'roof', 0, -0.12],
   ['wall-tower', 30, 6870, 48, Math.PI * (210 / 180), 0.06],
+  // IC-PROPS: the Market's gate's yards outside the city wall, from the isle looking back at the gate; and the Arcane
+  // University's halls inside its curtain from above
+  ['gate-yards', 30, 7090, 26, Math.PI * (210 / 180), -0.32],
+  ['university-air', 135, 7500, 520, 0, -1.25],
 ];
 const want = process.env.STATIONS ? new Set(process.env.STATIONS.split(',')) : null;
 
