@@ -202,7 +202,7 @@ test('REALM P1.3 by source: the boot joins before any save is read, never a slot
   // AUDIT REALM2 C2: the leave as the page GOES (pagehide), never before the unload guard is answered; C7: the Exit's
   // last checkpoint behind a duel's end and P0.5's gate (test/systems/auditrealm2_client.test.js mounts both)
   // PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): Project Legacy's held death decided first - its tombstone takes the lease, by keepalive
-  assert.match(w, /whenPageGoes\(globalThis, \(\) => \{ legacyHost\?\.pageGone\(\); realmSession\.leave\(\{ keepalive: true \}\); \}, \(\) => \{ realmSession\.rejoin\(\); \}\);/, 'the page going leaves; shown again, it joins again');
+  assert.match(w, /whenPageGoes\(globalThis, \(\) => \{ legacyHost\?\.pageGone\(\); realmSession\.leave\(\{ keepalive: true, save: \(\) => onlineCheckpoint\(\) \}\); \}, \(\) => \{ realmSession\.rejoin\(\); \}\);/, 'the page going leaves - its checkpoint handed to the leave first (CLOSE-SAVE); shown again, it joins again');
   assert.match(w, /setBeforeTitleExit\(async \(\) => \{ if \(!realmSession\.lost\) \{ try \{ duelLeaveNow\(\); \} catch \{ \/\* no duel was built: nothing to end \*\/ \} onlineCheckpoint\(\); await Promise\.race\(\[realmSession\.leave\(\), new Promise\(\(r\) => \{ setTimeout\(r, REALM_EXIT_WAIT_MS\); \}\)\]\); \} \}\);/, 'the last checkpoint and the leave, five seconds at most');
   assert.match(w, /function realmLost\(why\) \{\s*\n\s*setRealmNotice\(globalThis\.sessionStorage, realmRefusalText\(why\)\);\s*\n\s*exitToTitleMenu\(\);/);
   assert.match(w, /if \(realmNew\) realmBirth\(\)/, 'born after chargen');

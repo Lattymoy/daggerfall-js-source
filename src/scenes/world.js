@@ -17921,9 +17921,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   if (realmSession) {
     // the title exit and the page put away are the checkpoint's: registered with its other doors (THE CHECKPOINT'S
     // DOORS, below the duel's). AUDIT REALM2 C2: the lease given up as the page GOES (pagehide, the unload guard answered) - the leave alone, with
-    // keepalive (the browser finishes it; a save that large it cannot, so the periodic checkpoints - ONLINE_CHECKPOINT_MS -
-    // and the one the page asked as it hid bound what a close costs) - and taken again when a page the back-forward cache kept is shown
-    whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });   // REZ-BLOODLINE: a death held for a Resurrect decided first - its tombstone takes the lease, the leave then sends nothing
+    // keepalive (the browser finishes it; a save that large it cannot) - and taken again when a page the back-forward cache kept is shown.
+    // CLOSE-SAVE (FIELD BUGS 2026-10-26): the checkpoint first, handed to the leave, which keeps it on the device before the lease goes - a
+    // close or a reload fires pagehide before visibilitychange, so whenPageHides' checkpoint came after the leave and was refused
+    whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true, save: () => onlineCheckpoint() }); }, () => { realmSession.rejoin(); });   // REZ-BLOODLINE: a death held for a Resurrect decided first - its tombstone takes the lease, the leave then sends nothing
   }
   /** REALM P1.3: A CHARACTER BORN ONLINE - made at the service once chargen is done, its first save the service's
    *  checkpoint at sequence 1, and then the one online boot there is, from the service. Any refusal goes to the door. */

@@ -548,7 +548,7 @@ export function createRealmSession({
   // RESCUE-PACK: every change of the copy is a generation; a packing that finishes after the copy moved on (a landing,
   // a drop, a newer save kept) writes nothing
   let copyGen = 0;
-  const keepNow = () => {
+  const keepNow = (going = false) => {   // CLOSE-SAVE: `going` - the page goes now, visible or not (leave's keepalive)
     if (unkeptTimer) { unkeptTimer(); unkeptTimer = null; }
     if (unkept == null) return;
     const text = unkept, at = current, gen = ++copyGen, how = { lease, missed, player };
@@ -558,7 +558,7 @@ export function createRealmSession({
     };
     if (text.length <= REALM_UNSENT_PACK_OVER) { keepUnsent(storage, id, at, text, how); return; }
     // a long life's save: on a page going away, as it stands if the device takes it - nothing may wait there
-    if (hidden() && keepUnsent(storage, id, at, text, how)) return;
+    if ((going || hidden()) && keepUnsent(storage, id, at, text, how)) return;
     packLater();
   };
   const dropCopy = () => {
@@ -832,11 +832,16 @@ export function createRealmSession({
       return r.ok ? { ok: true, wed: r.data?.wed === true, union: r.data?.union ?? null } : { ok: false, error: r.error };
     },
     /** The session's end: what is waiting is sent first (unless the page is going - `keepalive` sends the leave alone,
-     *  which a browser can finish after the page is gone), then the lease given up. */
-    async leave({ keepalive = false } = {}) {
+     *  which a browser can finish after the page is gone), then the lease given up. CLOSE-SAVE (FIELD BUGS 2026-10-26,
+     *  a worn Ruhn's Warden-Plate gone after the update's reload): `save` - the host's checkpoint - is asked first. A
+     *  close, a reload and a navigation fire pagehide BEFORE visibilitychange (the HTML spec's unload steps; Edge
+     *  measured), so the checkpoint the hidden page asks (world.js whenPageHides) came after this leave and was
+     *  refused: the page kept nothing and sent nothing, and everything since the last landed checkpoint was lost. */
+    async leave({ keepalive = false, save = null } = {}) {
       if (lost) return { ok: false, error: lost };
+      try { save?.(); } catch (e) { console.warn('[realm] the leaving save failed', e); }
       if (!keepalive) { if (running) await running; if (pending) await session.checkpoint(pending.text, pending.summary); }
-      keepNow();   // RESCUE-SAVE: whatever never landed is on the device before the lease goes
+      keepNow(keepalive);   // RESCUE-SAVE: whatever never landed is on the device before the lease goes - as it stands on a page going
       lost = 'left';
       return realmLeave(io, id, lease, { keepalive });
     },

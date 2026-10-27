@@ -29,7 +29,7 @@
   {
     "name": "AUDIT-REALM2-C2-host-never-leaves-or-rejoins",
     "file": "src/scenes/world.js",
-    "old": "    whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });",
+    "old": "    whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true, save: () => onlineCheckpoint() }); }, () => { realmSession.rejoin(); });",
     "new": "",
     "note": "PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): re-aimed by content - an online death is read at the door and written when it is decided (legacyHost.js decideDeath)",
     "tests": [
@@ -304,6 +304,15 @@
     "file": "src/scenes/world.js",
     "old": "if (ohAbyss?.entering) { if (!quiet) townTalk.say('You cannot save now.'); return false; }",
     "new": "if (ohAbyss?.entering) { townTalk.say('You cannot save now.'); return false; }",
+    "tests": [
+      "test/systems/auditrealm2_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOSE-SAVE-host-leaves-without-the-save",
+    "file": "src/scenes/world.js",
+    "old": "realmSession.leave({ keepalive: true, save: () => onlineCheckpoint() });",
+    "new": "realmSession.leave({ keepalive: true });",
     "tests": [
       "test/systems/auditrealm2_client.test.js"
     ]

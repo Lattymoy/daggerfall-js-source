@@ -638,8 +638,8 @@
   {
     "name": "REZ-BLOODLINE-world-the-page-leaves-first",
     "file": "src/scenes/world.js",
-    "old": "    whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }",
-    "new": "    whenPageGoes(globalThis, () => { realmSession.leave({ keepalive: true }); legacyHost?.pageGone(); }",
+    "old": "    whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true, save: () => onlineCheckpoint() }); }",
+    "new": "    whenPageGoes(globalThis, () => { realmSession.leave({ keepalive: true, save: () => onlineCheckpoint() }); legacyHost?.pageGone(); }",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
