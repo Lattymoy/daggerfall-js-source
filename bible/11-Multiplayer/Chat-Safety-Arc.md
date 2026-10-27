@@ -64,7 +64,8 @@ applied by the client, because the relay fans a line to everyone and what one he
   pin had fed a trade frame carrying an account the relay never sent. Every request the block holds back now goes out
   with its sender's account (the Room's `_directedFrame`), a frame that names none (a relay before it) is asked by the
   account the room's roster said for its sender, and one nobody named is heard only while the list blocks nobody
-  (`hears(null)`).
+  (`hears(null)`). A place room's roster and joins name no account (MOD1), so against a relay before the stamp every
+  sender's request is held back while the list blocks anyone (AUDIT RPT1026 A2, 2026-10-27).
 - **The blocked account is never told.** A sender learns nothing from being blocked - the safest answer for the person
   who blocked them.
 - `/block <name>`, `/unblock <name>`, `/blocked`, and **Block** on a line's own menu (a speaker's name pressed in the

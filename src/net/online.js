@@ -275,11 +275,13 @@ export const BLOCKED_KINDS = Object.freeze(['trade', 'card', 'page', 'duel', 'we
 /** RPT1026-SECNET (from a private report, a player on a poor line): A STALLED LINE IS SAID NOTHING IT WOULD
  *  DELIVER IN A BURST. A socket whose ping (the runtime answers every one, asleep or awake) has had no frame back for this
  *  long is stalled: its poses wait, one a HEARTBEAT_MS at most and always the latest, and its foes streams wait
- *  (`_stalled`, `_poseHeld`). A stalled TCP line keeps what it was given and delivers it all at once when it clears, and
- *  the relay's meter reads ~22 s of a moving player's poses (or ~18 s of a host's foes) arriving together as a flood -
- *  DROP_STRIKES_MAX over-rate frames in a row, a policy close, terminal in that room. A socket that has heard nothing
- *  for PING_MS is pinged however busy it is sending, so a stall is known within PING_MS + LINE_STALL_MS - whatever it
- *  buffered by then is under the strike-out (test/net/rpt1026_secnet_net.test.js holds the arithmetic to the laws). */
+ *  (`_stalled`, `_poseHeld`), and its blows (AUDIT RPT1026 A1: a blow spends the relay's pose meter). A stalled TCP
+ *  line keeps what it was given and delivers it all at once when it clears, and the relay's meter reads ~22 s of a
+ *  moving player's poses (or ~18 s of a host's foes, or ~11 s of a fight's poses and blows) arriving together as a
+ *  flood - DROP_STRIKES_MAX over-rate frames in a row, a policy close, terminal in that room. A socket that has heard
+ *  nothing for PING_MS is pinged however busy it is sending, so a stall is known within PING_MS + LINE_STALL_MS -
+ *  whatever it buffered by then is under the strike-out (test/net/rpt1026_secnet_net.test.js and
+ *  audit_rpt1026_secnet.test.js hold the arithmetic to the laws). */
 export const LINE_STALL_MS = PING_MS;
 /** Reconnect backoff bounds, ms. */
 export const BACKOFF_MIN_MS = 1000;
@@ -1440,6 +1442,7 @@ export class OnlineSession {
     if (!this.isHost() || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;   // AUDIT WORLD34 D3: the one out-frame without the room's guard said true where the relay kept nothing
     const s = JSON.stringify(final ? { t: 'world', data, final: true } : { t: 'world', data });   // final: the socket's one farewell inside the relay's floor (AUDIT WORLD B5)
     if (s.length > worldFrameMaxFor(this.room)) return false;   // AUDIT WORLD6a B3: a building's memory has its own, smaller cap
+    if (!this._welcomed.has(this._ws)) return false;   // AUDIT RPT1026 A5: a rehello's replacement keeps `host` before its welcome (sendHit's note) - the memory goes after it (world.js worldPublish: a new welcome says it again)
     try { this._ws.send(s); this.stats.sent++; this.stats.worlds++; return true; } catch { return false; }
   }
 
@@ -1644,6 +1647,10 @@ export class OnlineSession {
     // socket's own status and refuses when none is open. A world room still goes out
     // of the one socket it has.
     if (!cell && (!this._ws || this.status !== 'open')) return false;
+    // AUDIT RPT1026 A5: AND WELCOMED (SD-HELLO). `host` is no flag a hello resets: an AURA-LIVE rehello (an aura, a name)
+    // keeps it while its replacement socket's hello is still being read, and a party member's hello at an instance waits
+    // on the hub - a blow at the host went down the replacement first, "hit before hello", closed for good
+    if (!cell && !this._welcomed.has(this._ws)) return false;
     // WORLD6b-iii(b): in a cell the blow goes through the OWNER's cell - the room its frame was keyed to (`k`), where its
     // socket is; a halo's when that is not my own. The owner must be reported there (the relay routes `to` inside the
     // one room); an owner in no room I hold is not mine to strike
@@ -1662,6 +1669,11 @@ export class OnlineSession {
       if (!via) return false;
       ws = via;
     }
+    // AUDIT RPT1026 A1: AND A STALLED LINE IS HANDED NO BLOWS (LINE_STALL_MS). The relay meters a blow on the POSE bucket
+    // (server/src/index.js, the hit arm's `_meter`), so a fighter's blows rode in the stalled line's burst beside its
+    // poses - HIT_HZ_MAX more a second, and a held fight struck out as a held walk did. Refused, the blow waits in its
+    // queue, which ages it out (net/hitPend.js)
+    if (this._stalled(ws, this._now())) return false;
     const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'hit', data });
@@ -3421,7 +3433,9 @@ export class OnlineSession {
     // block that dropped them would let the blocked strike unanswered
     // RPT1026-SECNET (from a private report): A FRAME THAT NAMES NO ACCOUNT IS NOT HEARD AS NOBODY'S. The relay's trade and page arms stamped none, and a missing account read
     // as not blocked: the account the room's roster said for the sender stands in for it (a relay before the stamp), and
-    // one unknown to both is heard only while nobody is blocked (`hears(null)`, scenes/chatSafetyHost.js)
+    // one unknown to both is heard only while nobody is blocked (`hears(null)`, scenes/chatSafetyHost.js). AUDIT RPT1026
+    // A2: a place room's roster and joins name no account (MOD1), so against a relay before the stamp every sender's
+    // request is held back while the list blocks anyone - the roster's account is a belt for a roster that names one
     if (this.hears && BLOCKED_KINDS.includes(kind) && !this.hears(subOf(m) ?? this.peers.get(m.id)?.sub ?? null)) return;
     const d = valid(m.data);
     if (d && d.to === this.id) this._deliver(kind, () => deliver(m.id, d));
