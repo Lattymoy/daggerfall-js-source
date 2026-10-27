@@ -453,12 +453,12 @@
   {
     "name": "AEOW-T-pits-ether-only",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
     "new": "    if (st.mapY < -2688 && st.mapY >= -7680 && st.mapX >= 64 && st.mapX < 8128) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
     "tests": [
       "test/scenes/oh_host.test.js"
     ],
-    "note": "The pit hold refuses the box alone: a pixel of the continent west of the Bay cut for an abyss."
+    "note": "The pit hold refuses the box alone: a pixel of the continent west of the Bay cut for an abyss. PITS-WORLD re-aimed by content: the hold is the world's grid (oceanHoles.js pitPixelOk) - the mutant's box refused is a pit past the Veil lost, and a pixel off the grid cut."
   },
   {
     "name": "AEOW-T-band-ground-dropped",

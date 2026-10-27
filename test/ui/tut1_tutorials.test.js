@@ -338,7 +338,7 @@ test('AUDIT TUT1: a page waits out the loading screen; a scene\'s page is asked 
   const pop = read('src/ui/tutorialPopup.js');
   assert.match(pop, /held: \(\) => pauseFlowShowing\(\) \|\| loadingHeld\(\),/);
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /\(Number\(dfLocation\?\.mapTableData\?\.mapId\) >>> 0\) >= 0x60000000 \? 'ocean-holes'/, 'the Ocean Hole\'s page is the build\'s');
+  assert.match(dc, /: isAbyssMapId\(dfLocation\?\.mapTableData\?\.mapId\) \? 'ocean-holes'/, 'the Ocean Hole\'s page is the build\'s');   // PIN MOVED (PITS-WORLD, 2026-10-27): the abyss by its own law (world/oceanHoles.js isAbyssMapId), the Bay's and past it - a zone hall's id from 0xf0000000 had opened this page
   assert.doesNotMatch(read('src/scenes/worldModes.js'), /noteFirstUse\('ocean-holes'/, 'and its door asks for none');
   // another player's team is theirs: only my own horse and wagon keys pop a page
   assert.match(read('src/scenes/horseCartPool.js'), /if \(key === KEY_WAGON \|\| key === KEY_FOLLOWING_WAGON\) noteFirstUse\('wagon'\); else if \(key === KEY_HORSE\) noteFirstUse\('horse'\);/);
