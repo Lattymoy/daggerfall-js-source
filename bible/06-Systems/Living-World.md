@@ -295,8 +295,8 @@ the trample (`retire`), the probes.
   (0.09) a day of walking, out and home, weighed by the ground the way crosses (`GROUND_RISK`: a road 0.6, a track 0.9,
   open country 1.4), to `RISK_MAX` (0.55); a party carrying a fated death always meets it. It falls on the way out or
   home at a seeded stretch of the walk, or - a leg its first day does not finish - now and then (`CAMP_SHARE`, 0.3) on
-  that night's camp at eleven. THE FOES are the land's own: the climate's encounter table at the place it falls, day or
-  night, the campers' themed group (`campEncounters.js rollGroupComposition`, the TV7 bands' own roll), at the party's
+  that night's camp at eleven. THE FOES are the land's own: the climate's encounter table at the place it falls (past
+  the Bay its zone's wild, BAY-LEFT-GROUND below), day or night, the campers' themed group (`campEncounters.js rollGroupComposition`, the TV7 bands' own roll), at the party's
   level (its armed's best, two at least), sized to the party (the fated: the party and two more), to `FOES_MAX` (6).
   THE END: a fated encounter's is the lives' - the leader among the fated, the party FELL (the rest turn home); else
   WON at that cost. Any other is the party's strength (`strengthOf`: the armed 4 and 1.5 a level, a merchant 1.5, the
@@ -327,6 +327,35 @@ the trample (`retire`), the probes.
   won, a lost one fled). Read over the dice (`fateHits`, `troubleOf`'s `turnOf`), kept `TURNS_MAX` (200) a kind, saved
   beside the regards (a record with none reads as before). The host's books (the places, the fates, the trips) are
   made again at each turn and each load (`livingTurnsFresh`). The live fight that makes them is LW4b's.
+
+## BAY-LEFT-GROUND - the road's trouble on the land's own wild past the Bay (2026-10-26)
+
+The audit "no system left behind in the Bay" (2026-10-26, `01-Overview/audits/Audit-Left-In-The-Bay.md`), its item 9
+(D2); the owner: *"Every single thing here needs
+to be addressed. No exceptions."* LW4's trouble handed the encounter law no `fauna`, so a caravan past the Bay was beset
+out of Daggerfall's climate tables - Black Marsh's Centaurs, Orcs and Orc Warlords - against TESA-BIOME's recorded
+choice 4 (a province's own beasts, `03-World/Tamriel-Biomes.md`), which every other encounter path follows.
+
+- `trouble.js troubleOf` hands `foesOf` the place the trouble falls (`px`, `py`) beside its climate.
+- The host's `foesOf` left `bootWorld` for its own module (`scenes/livingWorld/troubleFoes.js` troubleFoesOf), the roads'
+  harness's producer too (`test/lwRoads.mjs` wrote the host's lambda out): on the land the campers' group rolled on
+  `faunaAt(px, py)` - the composed maps' `getFaunaBand`, as every other encounter path reads it; inside a dive's dungeon
+  the deep's own table, as LW6 wrote it. On the Bay a pixel is no zone's (`faunaBandAt` answers null) and the roll is the
+  climate's, roll for roll.
+
+Measured (lane D's probe p2, 400 groups of three at each city on the freeware's trace): at Helstrom 322 of the 1,200
+foes were the Bay's Centaurs and Orcs (Centaur 99, Orc Sergeant 83, Orc 70, Orc Warlord 70), none now - the zone's own
+(blackMarshHist's); Whiterun, Torval and Mournhold the same, each its zone's.
+
+THE FOUR HOSTS. `scenes/world.js` WIRED (the living world's trouble world). `scenes/exterior.js` FLAGGED - the fixed city
+streams no living world's roads. `scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED - the trouble is the
+road's, rolled over the trips' world the streaming host composes.
+
+Pins: `test/systems/livingWorld/bayleftground_trouble.test.js` (4: the query's pixel the encounter's own; past the Bay
+the zone's roll and every foe of its tables, the Bay's unchanged over 240 seeds, a dive's the deep's; the host's
+wiring; with ARENA2 Helstrom, Whiterun, Torval and Mournhold on the real trace). PIN MOVED: `lw4_trouble`'s host line,
+`lw6_deep`'s dive line, `tesabiome_fauna`'s wiring. Mutants: `tools/mutants/bayleftground.json`'s D2 (5), all dead;
+`lw6.json`'s LW6-host-deep-from-the-land re-aimed by content onto the module.
 
 ## LW4b - the fight, stood (2026-10-05)
 

@@ -64,7 +64,7 @@ import { appStorage } from '../appStorage.js';   // DA1: localStorage in a brows
 import { normalTribute } from '../../world/lefayMonument.js';   // LEFAY1: the flowers a character laid at Julian LeFay's monument
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from '../characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from '../online/onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
-import { STREAMING_TERRAIN_SCALE } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
+import { STREAMING_TERRAIN_SCALE, GROUND_FRAME_LAW } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on; BAY-LEFT-GROUND: and its frame's law
 import { reviveForPlay } from '../deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from '../lightSource.js';   // DISC7: the light in hand's one door
 import { renownHpOf, onlineMpOf, offlineVitals } from '../renownLayer.js';   // RENOWN1: the online layer never reaches a save (EG15: nor the folds' magicka)
@@ -314,7 +314,9 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // stands on ground drawn at this terrain scale. A save without the stamp was written on the prefab's 1.5, and the
   // world host re-stands its heights on today's ground as it lands them (world.js restandHeight). Additive: SAVE_VERSION
   // does not move, and an older build ignores the field.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE };
+  // BAY-LEFT-GROUND (bible/03-World/Landforms.md, D5): and the law of their frame (`groundFrame`, terrainSampler.js
+  // GROUND_FRAME_LAW) - DFU's frame past the Bay too; a save without it stood the shaped ground there. Additive, as the scale's.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };
   // LIVED1: `classicMinutes` is the CHARACTER's clock - the hosts hand their own (worldTick.ownMinutes): offline the
   // one clock, online theirs, and every marker the envelope holds is on it. Online the WORLD's minute rides beside it,
   // the minute the character left the world at, which is what the arrival's one arm for an absence measures (AUDIT
@@ -1256,7 +1258,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): the quest block on the character's clock - an online save taken
   // before TIME3 kept its countdowns on the world's, and they move onto the character's once, by the distance at the
   // save (quest/questStamps.js questBlockOnOwnClock); a TIME3 save and any offline one are there already.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5; BAY-LEFT-GROUND: null - before the frame's law moved
 }
 
 /** AUDIT LIVED1 F (K3/S4): A SAVE FROM BEFORE LIVED1 CAN HOLD A MARKER AHEAD OF ITS OWN CLOCK. RESTX2's online rest ran

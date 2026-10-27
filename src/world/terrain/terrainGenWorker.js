@@ -34,6 +34,7 @@ let woods = null;
 let roads = null;   // ROADS 3
 let sites = null;   // LANDFORM4: the game's own locations the landforms pull the ground to (landforms.js landformSites)
 let climates = null;   // LANDFORM6: the world's climates, the land each wears (landforms.js landformClimates)
+let beyond = null;   // BAY-LEFT-GROUND: the places past the Bay the landforms pull the ground to (landforms.js landformSitesBeyond)
 let pendingRoads = null;   // ROADS 19: the cache lookup in flight
 /** MID-RING / FAR-FIELD: the horizon's grounds kept a pixel (a cell) at a time across their rebuilds - a ring drifted
  *  three pixels asks some 170 new pixels of its 841, a far field drifted three cells some 1,100 new cells of its 14,641 -
@@ -60,7 +61,7 @@ globalThis.onmessage = (ev) => handle(ev.data ?? {});
 
 function handle(m) {
   try {
-    if (m.t === 'init' || m.t === 'roads' || m.t === 'landform-tables' || m.t === 'tamriel') { keptMid.clear(); keptFar.clear(); }   // MID-RING: what the grounds read moved
+    if (m.t === 'init' || m.t === 'roads' || m.t === 'landform-tables' || m.t === 'landform-beyond' || m.t === 'tamriel') { keptMid.clear(); keptFar.clear(); }   // MID-RING: what the grounds read moved; BAY-LEFT-GROUND: the sites past the Bay too
     if (m.t === 'init') {
       const w = new WoodsFile();
       if (!w.load(m.woodsBytes)) throw new Error('WOODS.WLD failed to load in the terrain worker');
@@ -73,6 +74,8 @@ function handle(m) {
     // LANDFORM4/6: the landforms' tables - the sites and the climates - arrive once, after init and before any job (the
     // client posts them as the world mounts), and ride every job and every promotion from then on; null clears them.
     if (m.t === 'landform-tables') { sites = m.sites ?? null; climates = m.climates ?? null; return; }
+    // BAY-LEFT-GROUND: the sites past the Bay - made again whenever the places past the Bay move; every job after it reads it
+    if (m.t === 'landform-beyond') { beyond = m.beyond ?? null; return; }
     // TAMRIEL3: the picture's own land and the Bay's fit, as the host's modules hold them
     if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); dropGroundCache(); return; }
     // MAP-WATERS: the held map's rivers and lakes - the law this worker compiles for its carve anyway, packed and moved
@@ -139,7 +142,7 @@ function handle(m) {
     // hand-copied field list, so a new kernel input can never be
     // silently dropped at the wire (the audit found the explicit list
     // was the one place a field could rot with every test green).
-    const out = generatePixelTerrain({ ...m, woods, roads, sites, climates });
+    const out = generatePixelTerrain({ ...m, woods, roads, sites, beyond, climates });
     const transfer = [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer];
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
     if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
@@ -167,7 +170,7 @@ function answerArenaRoads(m) {
 function answerMidRing(m) {
   try {
     if (!woods) throw new Error('terrain worker got a middle ring before init');
-    const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;
+    const landforms = m.landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;
     const pixel = (px, py) => keptMid(`${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingPixel(woods, px, py, m.sub, landforms));
     const heights = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, landforms, rows: m.rows ?? null, pixel });
     // MAP-WATERS: and where stream G's rivers and lakes stand in it - sent only when one does
@@ -203,7 +206,7 @@ function answerFarField(m) {
 function answerFloraBand(m) {
   try {
     if (!woods) throw new Error('terrain worker got a band before init');
-    const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;
+    const landforms = m.landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;
     const trees = [];
     for (let k = 0; k + 3 < m.pixels.length; k += 4) {
       const [px, py, archive, climateType] = [m.pixels[k], m.pixels[k + 1], m.pixels[k + 2], m.pixels[k + 3]];
@@ -225,7 +228,7 @@ function answerGrid(m) {
     if (!woods) throw new Error('terrain worker got a grid before init');
     // LANDFORM1-3: the ghost rows are the shaped ground when the job carries the Landforms row, cut along this
     // worker's own network - the one its jobs paint
-    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });
+    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates });
     const transfer = [positions.buffer, normals.buffer];
     if (bed) transfer.push(bed.depths.buffer, bed.sheetDepths.buffer, bed.positions.buffer, bed.normals.buffer, ...(bed.halo ? [bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: and its bed
     globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed }, transfer);

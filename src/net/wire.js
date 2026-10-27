@@ -1144,7 +1144,7 @@ export const nativePoseRoom = (key) => isCellRoom(key) || isBattleRoom(key) || !
  *  hello says this number in a ground room (`gl`), and the relay, while `groundGate` is on (net/relayCfg.js), refuses
  *  a hello there that says less or none (GROUND_OLD_REASON). test/net/fb1017f_groundgate.test.js holds it to a fingerprint of
  *  the ground itself: a change to the ground fails that pin until this moves (and RELAY_VERSION with it). */
-export const GROUND_LAW = 1;
+export const GROUND_LAW = 2;   // 2: BAY-LEFT-GROUND (bible/03-World/Landforms.md) - the ground past the Bay: its towns' sites pull their land to their level (D1), and the print reads it there
 /** The most `gl` a hello may say - a later build's number, read; past it, read as none. */
 export const GROUND_LAW_WIRE_MAX = 65535;
 /** GROUND-GATE: the rooms whose peers stand on each client's own ground - a cell, a building's or a dungeon's place

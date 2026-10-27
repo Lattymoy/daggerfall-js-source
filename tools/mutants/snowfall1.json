@@ -337,7 +337,7 @@
   },
   {
     "name": "SNOWFALL1-world-carved-sea-snows",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/snowGround.js",
     "old": "    bare: (p, lx, lz) => !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null,",
     "new": "    bare: () => false,",
     "tests": [

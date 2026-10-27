@@ -284,7 +284,9 @@ sabre cat it also hunts, its trolls as its giants. Both variants are made; the s
 (`faunaBandAt` - null on the Bay and at sea), and `resolveEncounterTableIndex` reads it before the climate's.
 
 **The hosts.** `scenes/world.js` WIRED - the wild's minute roll (IntermittentEnemySpawn) and a camp's group carry the
-player's or the camp's pixel's band; a roaming band's make carries it too - AUDIT TESA II F6: the world host's bandOk
+player's or the camp's pixel's band; the living world's road trouble rolls a caravan's foes on the band where it falls
+(BAY-LEFT-GROUND, `scenes/livingWorld/troubleFoes.js`: it handed none, and Black Marsh's caravans met Daggerfall's Orcs
+and Centaurs - `06-Systems/Living-World.md`); a roaming band's make carries it too - AUDIT TESA II F6: the world host's bandOk
 admits the land past the Bay once the trace stands, off every place (`systems/tamrielFauna.js` bandGroundPastBay), where
 no band had been born past the Bay at all;
 the online grants' species law (`scenes/grantHost.js` `faunaAt`, `grantDiceRefusal`) reads the grant's zone, and a grant

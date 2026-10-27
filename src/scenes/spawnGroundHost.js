@@ -6,13 +6,14 @@ import { createSpawnGroundPlace } from '../world/spawnGroundPlace.js';
 import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';
 import { getWorldClimateSettings, REGION_NAMES } from '../formats/mapsFile.js';
 import { inEtherLaw } from '../world/ethericSea.js';
+import { inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // BAY-LEFT-GROUND (D5): the lift's Bay
 import { isEliteSpawn, pickTemplate, spawnsDungeon, spawnTemplates, synthesizeDungeonLocation } from '../world/spawnedDungeons.js';
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';
 
 /** @param {any} host */
 export function createSpawnGroundHost(host) {
   const {
-    _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt, etherSea, locationIndex, maps, params, terrainGen, provinceQuestPlaces
+    _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt, etherSea, locationIndex, maps, params, terrainGen, provinceQuestPlaces, _locationToBuild
   } = host;
   /** AUDIT OW4 D4: THE CLONE a pixel's spawn IS - the template its hash picks, dressed as where it stands (region, politic,
    *  climate, elite). Pure in the salt, the pixel and the map files, so the one answer serves spawnedDungeonAt (which stands
@@ -65,6 +66,6 @@ export function createSpawnGroundHost(host) {
    *  (`await worldQuickLoad({ ...bootLoadPick, snap })`) - online the only load - so that load stood a spawn's records on
    *  the wild lift and every later save wrote them on the spawn's: a camp at a spawned dungeon drifted by up to 24 m a
    *  session (the Citadel of Copperton), and a camp is never stood again. */
-  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));
+  const _liftLocationAt = (x, y) => (onTheBay(x, y) ? spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`)) : _locationToBuild(x, y));   // BAY-LEFT-GROUND (D5): past the Bay the build's own place - no spawn stands there (A1's reading), and what stands the build stands - carried here from world.js at AUDIT BAY-LEFT's merge (SPAWN-WORLD moved this law)
   return { _liftLocationAt, _spawnCloneAt, spawnGroundPlace, tvLocationAt, tvSpawnAt, tvSpawnGone };
 }

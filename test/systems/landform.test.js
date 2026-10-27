@@ -26,6 +26,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { makeAnchor } from '../../src/systems/teleportAnchor.js';
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../../src/systems/sceneCache.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { recordFrame } from '../../src/scenes/groundFrameHost.js';   // BAY-LEFT-GROUND (D5): the frame's law, its own export
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;   // a normalized sample in kernel units
@@ -287,15 +288,14 @@ test('LANDFORM1: a point\'s lift is the lift field taken through the location\'s
   assert.ok(Math.abs(landformLift(woods, px, 230, 33, 77) - (at(wild, 33, 77) - at(wildDfu, 33, 77)) * UNIT) < 1e-3, 'in the wild: reliefLift of the kernel\'s own small-heightmap term');
 });
 
-/** world.js's own groundFrameHeight, groundFrameNative and restandHeight, sliced and run against a stub ground and a stub
- *  lift (terrainscale1.test.js's harness, with the landforms' two reads; test/world/terrain/auditlandforms.test.js runs the real lift). */
-function restander({ ground, comp = 0, landform = false, lift = () => 0 }) {
-  const i = WORLD.indexOf('  const groundFrameHeight = (y, x, z) =>');
-  const j = WORLD.indexOf('  // Building doors (P3)', i);
-  assert.ok(i > 0 && j > i && WORLD.slice(i, j).includes('  const restandHeight = (y, x, z, was) => {'));
+/** The world host's groundFrameHeight, groundFrameNative and restandHeight against a stub ground and a stub lift
+ *  (terrainscale1.test.js's harness, with the landforms' two reads; test/world/terrain/auditlandforms.test.js runs the real lift).
+ *  PIN MOVED (BAY-LEFT-GROUND, D5): the law is scenes/groundFrameHost.js recordFrame, run whole - never sliced; the Bay's
+ *  pixel (`bay`), as these pins were written for. */
+function restander({ ground, comp = 0, landform = false, lift = () => 0, bay = true }) {
   const state = { compensation: [0, comp, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
-  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { groundFrameHeight, groundFrameNative, restandHeight };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
+  return recordFrame({ landform, liftAt: lift, heightAt, state, bayAt: () => bay });
 }
 
 test('LANDFORM1: a record\'s height is DFU\'s frame - written with the landforms\' lift at its own spot taken off, stood again with it put back on; with the row off it lands as it came', () => {
@@ -372,11 +372,14 @@ test('LANDFORM1-3: the switch is the Features row on the enhanced skin, the room
 
 test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promotion with it, raises the ring and the beacon by it, and stands every record\'s height again by it', () => {
   assert.match(WORLD, /\n  const landform = landformsOn\(\);\n/, 'once, at the mount - the same job online and off: the room\'s river switch decides online');
-  assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js);
+  // D5: `before`, the old law's ground - the Bay's table alone (test/world/terrain/bayleftground_frame.test.js)
+  assert.match(WORLD, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
   assert.match(WORLD, /\n      landform,   \/\/ LANDFORM1-3: the shaped ground, cut along the kernel's own network\n    \}\);/, 'the pixel job');
   assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion off the thread');   // PIN MOVED (AUDIT WATER-NEXT P1): the bed carved with it
-  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)/, 'and on it');   // PIN MOVED (AUDIT WATER-NEXT P1)
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
+  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)/, 'and on it');   // PIN MOVED (AUDIT WATER-NEXT P1)
   assert.match(WORLD, /_gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\);/, 'the gate\'s beacon stands on the shaped ground');
   assert.match(WORLD, /relief: !!landform,   \/\/ LANDFORM1: the ring stands the massifs/, 'the far ring');
   assert.match(WORLD, /ringHeightAt\(px\.x, px\.y, byte, !!landform, fade\)/, 'the travel view past the built grid');   // PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is; PIN MOVED (BREATHTAKER2 on the horizon): at its pixel, the continent's lift with it
@@ -384,11 +387,14 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   // every read (test/world/terrain/auditlandforms.test.js runs each path, row on and off)
   assert.match(WORLD, /const today = was === STREAMING_TERRAIN_SCALE && !landform;/, 'the quickload');
   assert.match(WORLD, /const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform \? outer : outer\.map/, 'the camps left outside');
-  assert.match(WORLD, /return restandHeight\(y, x, z, was\); \};   \/\/ LANDFORM1: the row's lift put back on\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): each record's frame's law (`groundFrame`) stamped beside its scale and read beside it
+  assert.match(WORLD, /return restandHeight\(y, x, z, was, arrived\.groundFrame\); \};   \/\/ LANDFORM1: the row's lift put back on[^\n]*\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
   const tg = src('src/world/terrain/terrainGen.js');
   // AUDIT LANDFORMS D3 MOVED THIS PIN: the same pass writes DFU's own samples beside, for a location's tiles
-  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads, sites, climates \}\) : null;\n(?:  \/\/[^\n]*\n)*  const classic = landforms && hasLocation \? new Float32Array\(HEIGHTMAP_DIMENSION \* HEIGHTMAP_DIMENSION\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic\);/, 'the kernel cuts along the network the painter paints');
-  assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads, sites, climates \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
+  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads, sites, beyond, climates \}\) : null;[^\n]*\n(?:  \/\/[^\n]*\n)*  const classic = landforms && hasLocation \? new Float32Array\(HEIGHTMAP_DIMENSION \* HEIGHTMAP_DIMENSION\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic\);/, 'the kernel cuts along the network the painter paints');
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
+  assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads, sites, beyond, climates \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
   assert.match(src('src/world/terrain/terrainGenWorker.js'), /if \(m\.t === 'grid' && m\.landform && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/, 'a landforms promotion waits for the network its pixel was cut along');
 });
 

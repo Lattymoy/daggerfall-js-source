@@ -50,6 +50,7 @@ test('SD26 NO MARK IN A HOLLOW (AUDIT SD IV F2): a Mark set in an Abyss Dungeon 
       walkMode: true, playerSpawned: true, player: { pos: [1, 2, 3] }, cam: { pos: [0, 0, 0], yaw: 0, pitch: 0 }, WORLD_CONTEXT: { Exterior: 'Exterior', Dungeon: 'Dungeon' },
       state: { current: { x: 300, y: 200 }, compensation: [0, 0, 0], worldCoords: () => ({ x: 0, z: 0 }) }, playerTravelPixel: () => ({ x: 300, y: 200 }),
       mapPixelToWorldCoords: () => ({ x: 0, z: 0 }), groundFrameHeight: (y) => y, STREAMING_TERRAIN_SCALE: 1,
+      RECORD_GROUND_STAMP: { terrainScale: 1, groundFrame: 2 },   // PIN MOVED (BAY-LEFT-GROUND, D5): the anchor stamps its frame's law beside its scale
       playerEntity: {}, makeAnchor: (a) => { set += 1; return a; },
     };
     // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the door asks the law where the world host says the player stands, and its own madeSay says it

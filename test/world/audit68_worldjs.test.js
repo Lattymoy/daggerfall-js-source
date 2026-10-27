@@ -178,14 +178,14 @@ test('AUDIT 68 S22-ship-disembark-compensation: boarded after a highland recente
   const ship = await import('../../src/systems/ship.js');
   const { StreamingWorldState } = await import('../../src/world/streamingWorld.js');
   const { SHIP_TYPES, shipCoords } = await import('../../src/systems/banking.js');
-  const { STREAMING_TERRAIN_SCALE } = await import('../../src/world/terrain/terrainSampler.js');
+  const { STREAMING_TERRAIN_SCALE, RECORD_GROUND_STAMP } = await import('../../src/world/terrain/terrainSampler.js');   // PIN MOVED (BAY-LEFT-GROUND, D5): the deck's stamp, its scale and its frame's law
   // boardOrDisembark's own decision half, lifted: the transition and the landing it hands the teleport
   const arm = lift(WORLD, '    const here = playerTravelPixel();\n    const t = shipTransition(playerEntity, {', ' : null;\n');
   // PIN MOVED (AUDIT ETHER-OW C2-3, test/systems/audit_etherow.test.js): the board asks the Veil before it is taken - the Bay's
   // dock here, never refused
-  const run = (playerEntity, here, feet, state) => new Function('shipTransition', 'shipMemory', 'shipRestorePos', 'REPOSITION', 'playerEntity', 'playerTravelPixel', 'player', 'cam', 'state', 'STREAMING_TERRAIN_SCALE', 'groundFrameHeight', 'veilRefused',
+  const run = (playerEntity, here, feet, state) => new Function('shipTransition', 'shipMemory', 'shipRestorePos', 'REPOSITION', 'playerEntity', 'playerTravelPixel', 'player', 'cam', 'state', 'STREAMING_TERRAIN_SCALE', 'RECORD_GROUND_STAMP', 'groundFrameHeight', 'veilRefused',
     `${arm}\nreturn { t, localPos, legacy: typeof legacy === 'undefined' ? undefined : legacy };`)(
-    ship.shipTransition, ship.shipMemory, ship.shipRestorePos, ship.REPOSITION, playerEntity, () => here, { pos: feet }, { yaw: 0.5 }, state, STREAMING_TERRAIN_SCALE, (y) => y, () => false);   // AUDIT LANDFORMS C1: the row off - DFU's frame is the ground's own
+    ship.shipTransition, ship.shipMemory, ship.shipRestorePos, ship.REPOSITION, playerEntity, () => here, { pos: feet }, { yaw: 0.5 }, state, STREAMING_TERRAIN_SCALE, RECORD_GROUND_STAMP, (y) => y, () => false);   // AUDIT LANDFORMS C1: the row off - DFU's frame is the ground's own
   const knight = { ownedShip: SHIP_TYPES.Small };
   const dock = { x: 210, y: 205 };
   // session 1: the highlands raised the eye past 500 - the streamer's vertical recenter

@@ -145,6 +145,7 @@ test('AUDIT ETHER-OW C2-3: "Your Ship" is boarded from the Bay alone - past the 
       etherSea: ether, inEther: ES.inEther, townTalk: { say: (t) => said.push(t) }, worldMoveBusy: () => false, enterLinkedBankCabin: async () => false,
       playerTravelPixel: () => pixel, shipTransition, playerEntity: { ownedShip: SHIP_TYPES.Small, boardShipPosition: board },
       shipMemory: (m) => m, player: { pos: [0, 0, 0] }, groundFrameHeight: () => 0, state: { compensation: [0, 0, 0] }, cam: { yaw: 0 }, STREAMING_TERRAIN_SCALE: 1,
+      RECORD_GROUND_STAMP: { terrainScale: 1, groundFrame: 2 },   // PIN MOVED (BAY-LEFT-GROUND, D5): the deck stamps its frame's law beside its scale
     };
     return run(env, `${lift('  const veilRefused = (to = null) => {', '\n  };\n')}
       ${W.slice(at, end)}    return t;\n  }\n  return boardOrDisembark;`);

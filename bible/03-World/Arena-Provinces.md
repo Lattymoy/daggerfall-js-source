@@ -322,8 +322,9 @@ ROADS 1-21, the dials untouched) over Arena's places and draws what it routes on
   each byte and its corners (`terrainGen.js:"const arena = !inBay(px, py);"`), the kernel saying whether Arena's roads
   reached its paint; and the verge, which keeps the wild's flats and the Low Poly crowns off a road
   (`roadVerge.js` roadRoom). What follows the painter follows it: the grass keeps off the tiles it wrote (GRASS-PATH1),
-  the Low Poly crowns off its tiles (LPT-FIT). Not read: the landforms do not cut the land along it (`landforms.js`
-  armsAbout asks the Bay's pixels alone), Snowfall's tracks are Basic Roads' alone, the Bay's travel map draws the Bay.
+  the Low Poly crowns off its tiles (LPT-FIT), and the snow's tracks and berms (`03-World/Snowfall.md` BAY-LEFT-GROUND:
+  each painted tile by the painter's word). Not read: the landforms do not cut the land along it (`landforms.js`
+  armsAbout asks the Bay's pixels alone), the Bay's travel map draws the Bay.
 - **Where it is built.** On the terrain worker, on its own ground, synchronously in its message loop - the jobs' answers
   keep their order. The client asks the roads' cache first (`roadsCache.js`, keyed by the generator's version and dials,
   this layer's own version, the towns, the window, WOODS.WLD's length, the fit and the trace's land): a hit's network
@@ -383,8 +384,9 @@ on past it (766, 863 and 489 of the edges' pixels land on both sides; the west i
 
 On the freeware with Basic Roads: seven crossings - three north (366, 548, 726), three south (169, 394, 639), one east
 (row 300) - every gate on Arena's roads, 19 join pixels on the Bay; 158 roads and 54 tracks routed past the Bay.
-Recorded: the joins are not drawn on the Bay's travel map, not cut by the landforms, not read by Snowfall or by World of
-Daggerfall's road clearance (its camps are the Bay's, and a join is a few pixels at its edge).
+Recorded: the joins are not drawn on the Bay's travel map, not cut by the landforms, not read by World of Daggerfall's
+road clearance (its camps are the Bay's, and a join is a few pixels at its edge). Snowfall reads them on its road bits
+(BAY-LEFT-GROUND, `03-World/Snowfall.md`), so the snow banks the road the ground paints there.
 
 ## TESA6 - the ports (2026-10-12)
 

@@ -14,7 +14,10 @@ import { modSettingsGeneration, modSetting } from '../systems/modSettings.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
 import { registerCommand, gateConsoleCommand } from '../systems/consoleCommands.js';
 import { pageParam } from '../systems/pageQuery.js';
-import { SnowCoverage, BasicRoadsTerrain, roadCorners, snowfallSettings, winterArchiveOf, markAuthoredBlock, locationRect, isVanillaLocation, SNOWFALL_VENDOR, SNOW_MASK_ARCHIVES } from '../systems/snowfall.js';
+import { SnowCoverage, BasicRoadsTerrain, roadCorners, snowfallSettings, winterArchiveOf, markAuthoredBlock, locationRect, isVanillaLocation, SNOWFALL_VENDOR, SNOW_MASK_ARCHIVES, ROAD_KIND } from '../systems/snowfall.js';
+import { arenaRoadByte, arenaJoinByte } from '../world/arenaRoads.js';   // BAY-LEFT-GROUND: TESA's roads - past the Bay, and their crossings' joins on it (TESA5)
+import { curveField, CURVE_DIM, TRACK_HALF } from '../world/road/roadCurves.js';   // BAY-LEFT-GROUND: a track's curve past the Bay (VOYAGER2)
+import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the world's grid, the box's clamp
 import { SnowfallRuntime } from '../systems/snowfallRuntime.js';
 import { SnowfallSurface } from '../render/snowfallSurface.js';
 import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFile.js';
@@ -341,15 +344,49 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
 /** The road network round a map pixel, as BasicRoadsBridge.TryReadNetwork answers it: the pixel's road and track
  *  bits, and its corners from its west and east neighbours'. `net` Basic Roads' own network (world/roadsProducer.js:
  *  `roads`, `tracks`, 1000 x 500 bytes) - the mod asks the Basic Roads MOD, so the port's generated fallback is not
- *  it (the rule World of Daggerfall's LocationLoader keeps, world.js wodPathsPoint). */
-export function snowfallNetwork(net, x, y) {
+ *  it (the rule World of Daggerfall's LocationLoader keeps, world.js wodPathsPoint). BAY-LEFT-GROUND: and a crossing's
+ *  join on its road bits (`joinAt`, world/arenaRoads.js arenaJoinByte - TESA5's road carried out to the Bay's edge,
+ *  straight, which the ground paints there: world/terrain/terrainGen.js), so the snow knows the road the ground draws;
+ *  no join, the Bay's own byte for byte. */
+export function snowfallNetwork(net, x, y, joinAt = arenaJoinByte) {
   if (!net) return null;
   const at = (a, px) => (px >= 0 && px < 1000 && y >= 0 && y < 500 ? a[px + y * 1000] : 0);
   return {
-    roads: at(net.roads, x), paths: at(net.tracks, x),
+    roads: at(net.roads, x) | joinAt(x, y), paths: at(net.tracks, x),
     roadCorners: roadCorners(at(net.roads, x - 1), at(net.roads, x + 1)),
     pathCorners: roadCorners(at(net.tracks, x - 1), at(net.tracks, x + 1)),
   };
+}
+
+/** A tile the curve painter paves (world/road/roadCurves.js pavedTile: Basic Roads' road and its diagonal flanks). */
+const PAVED_RECORDS = Object.freeze([46, 47, 55]);
+/** How far a track's own tile's centre may lie off its curve: a corner within TRACK_HALF wears (paintCurvedPaths), and a
+ *  tile two of whose corners wear has its centre within TRACK_HALF + half a tile's diagonal of it. */
+const TRACK_TILE_REACH = TRACK_HALF + Math.SQRT1_2;
+
+/**
+ * BAY-LEFT-GROUND (the audit "no system left behind in the Bay", D3): THE ROADS PAST THE BAY, FOR THE SNOW - TESA's own
+ * layer (world/arenaRoads.js arenaRoadByte, TESA14's roads at the Bay's own law and scale - the one reader the Travel
+ * Options' paths read past the table too), as BasicRoadsBridge.TryReadNetwork would answer a network of them. Past the
+ * Bay the roads are drawn as CURVES (VOYAGER2), whose tiles no Basic Roads arm predicts, so a tile is classified by the
+ * painter's own word (`painted`, the build's GRASS-PATH1 record of the tiles it wrote): a paved tile a road's, a worn one
+ * within a track's reach of its curve (curveField, the painter's own field) a track's; a road's worn shoulder neither
+ * (the berm lies over it). Null where the pixel's build painted nothing. Departure: the mod reads Basic Roads' network,
+ * which is the Bay's alone; past the Bay the land's own roads stand in its place.
+ * @param {number} x @param {number} y @param {?ArrayLike<number>} painted
+ * @param {(kind: 'roads'|'tracks', x: number, y: number) => number} [byteAt]
+ */
+export function snowfallNetworkBeyond(x, y, painted, byteAt = arenaRoadByte) {
+  if (!painted) return null;
+  const road = byteAt('roads', x, y), track = byteAt('tracks', x, y);
+  const tracks = curveField(x, y, track, (a, b) => byteAt('tracks', a, b));
+  const kindAt = (tx, tz, tile) => {
+    const t = tz * CURVE_DIM + tx;
+    if (!painted[t]) return ROAD_KIND.none;
+    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.road;
+    return tracks && tracks.tiles[t] <= TRACK_TILE_REACH ? ROAD_KIND.path : ROAD_KIND.none;
+  };
+  return { roads: road, paths: track, roadCorners: 0, pathCorners: 0, kindAt };
 }
 
 /** BasicRoadsTerrain.TryCreate's authored scan: every block of `location` marked from its tile origin
@@ -385,12 +422,18 @@ export function settlementsIn(at, minX, minZ, maxX, maxZ) {
   return out;
 }
 
+/** The farthest pixel of the world's grid from the Bay's corner, either way (world/worldWide/worldGrid.js inWorldGrid). */
+const GRID_EDGE = WORLD_PIXEL_SPAN - 1;
+const onGrid = (v) => Math.max(-GRID_EDGE, Math.min(GRID_EDGE, v));
+
 /** SnowContextData.Prepare's box on the map: the map pixels (clamped to the map) a global box in metres touches -
- *  MapsFile.WorldCoordToMapPixel of its corners in world units, its rows running north to south. */
+ *  MapsFile.WorldCoordToMapPixel of its corners in world units, its rows running north to south. BAY-LEFT-GROUND: the
+ *  map is the world's grid (world/worldWide/worldGrid.js), not the Bay's 1000 x 500 - clamped to it, a box past the Bay
+ *  answered nothing but the Bay's corner pixel, and no snow lay deep, kept a track or banked a road anywhere past it. */
 export function snowPixelBox(minX, minZ, maxX, maxZ) {
   const a = worldCoordToMapPixel(Math.trunc(minX * 40), Math.trunc(minZ * 40)), b = worldCoordToMapPixel(Math.trunc(maxX * 40), Math.trunc(maxZ * 40));
   return {
-    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))), x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),
-    y0: Math.max(0, Math.min(499, Math.min(a.y, b.y))), y1: Math.max(0, Math.min(499, Math.max(a.y, b.y))),
+    x0: onGrid(Math.min(a.x, b.x)), x1: onGrid(Math.max(a.x, b.x)),
+    y0: onGrid(Math.min(a.y, b.y)), y1: onGrid(Math.max(a.y, b.y)),
   };
 }
