@@ -30651,9 +30651,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // live index (streaming and the spawns change it: a spawn in it at the first ask stood for good, a later one never
   // did); the index is read afresh for each list, and the list is filtered before its twelve are taken (nearDungeons)
   let _tvDungeonRows = null;
-  const { travelViewDungeons, tvDungeonAt, tvDungeonRowsAt, tvFiledSpawns, tvSpawnFound, tvSpawnKnown } = createTravelViewDungeons({   // HOST-SPLIT: src/scenes/travelViewDungeonsHost.js
+  const { travelViewDungeons, tvDungeonAt, tvDungeonFound, tvDungeonRowsAt, tvFiledSpawns, tvSpawnFound, tvSpawnKnown } = createTravelViewDungeons({   // HOST-SPLIT: src/scenes/travelViewDungeonsHost.js
     _announcedSpawnPixels, _spawnSalt, etherSea, locationIndex, mapDict, params, playerTravelPixel, state,
     tvEtherPlace, tvKnownGen, tvPlaceSummary, tvSpawnAt, tvSpawnGone,
+    provinceQuestPlaces,   // TVD-WORLD: the lairs past the Bay on the Overworld (systems/travel/travelLairs.js)
     get _locIndexGen() { return _locIndexGen; },
     get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; },
     get _tvListsReady() { return _tvListsReady; },
@@ -30677,10 +30678,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  the Overworld for such a keep is travelDungeons.js nearDungeons' own). */
   function travelViewFindList() {
     if (typeof _tvListsReady !== 'undefined' && !_tvListsReady) return [];   // BOOT-TDZ II (typeof: a slice lifted without the flag reads as standing)
-    const at = playerTravelPixel(), dg = tvKnownGen(), n = _locIndexGen;   // AUDIT ETHER-OW C2-2: the finds and the charts
+    const at = playerTravelPixel(), dg = tvKnownGen(), n = `${_locIndexGen}:${tvDungeonRowsAt.gen()}`;   // AUDIT ETHER-OW C2-2: the finds and the charts; TVD-WORLD: and the lairs past the Bay still owed
     if (tvFind.at && tvFind.at.x === at.x && tvFind.at.y === at.y && tvFind.dg === dg && tvFind.n === n) return tvFind.list;
     const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),
-      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {
+      locAt: tvDungeonAt, isFound: tvDungeonFound }).filter((g) => !g.found).map((g) => {   // TVD-WORLD: a lair past the Bay found by its own id
       const r = locationWorldRect(g.loc, g.x, g.y);
       return { key: g.key, row: g.row, loc: g.loc, found: false, spawn: false, x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2 };
     });

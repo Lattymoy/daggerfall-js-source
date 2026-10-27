@@ -54,10 +54,13 @@ test('AUDIT OW5 D1: the find asks every unfound dungeon in reach - a dozen found
     locationWorldRect: (l, x, y) => ({ minX: x * 32768, maxX: x * 32768 + 4096, minZ: y * 32768, maxZ: y * 32768 + 4096 }),
   };
   // ETHER-OW: the lists' rows and their stand (world.js tvDungeonRowsAt, tvDungeonAt), lifted beside it - the sea off here
-  const rowsOf = /\n {2}(const tvDungeonRowsAt = \(at, range = TV_FAR_RANGE\) => \{\n[\s\S]*?\n {2}\};\n {2}const tvDungeonAt = [^\n]*;)\n/.exec(TVD);
+  // PIN MOVED (TVD-WORLD, 2026-10-27): the rows, their stand and the found test run through to tvDungeonFound (the lairs past the
+  // Bay with them - none here: `tvLairs` null), and the find keys on their gen
+  const rowsOf = /\n {2}(const tvDungeonRowsAt = \(at, range = TV_FAR_RANGE\) => \{\n[\s\S]*?\n {2}const tvDungeonFound = [^\n]*;)\n/.exec(TVD);
   assert.ok(rowsOf, 'the rows lifted');
   const host = mount(env, `let tvFind = { at: null, dg: -1, n: -1, list: [] }; const host = { _tvDungeonRows: null };
 const etherSea = false, inEther = () => false, etherPlaceRows = () => [], tvEtherPlace = () => null, TV_FAR_RANGE = 24, tvKnownGen = () => discoveryGeneration();
+const tvLairs = null, onTheBay = () => true, hasDiscoveredLocationId = () => false;
 ${rowsOf[1]}
 ${fnSource('travelViewFindList')}
 return { travelViewFindList };`);

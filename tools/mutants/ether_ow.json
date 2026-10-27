@@ -133,12 +133,12 @@
   {
     "name": "EOW-far-ruins-unread",
     "file": "src/scenes/travelViewDungeonsHost.js",
-    "old": "    return etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;",
-    "new": "    return bay;",
+    "old": "    const rows = etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;",
+    "new": "    const rows = bay;",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
-    "note": "Past the Veil TV6 knows no ruin."
+    "note": "Past the Veil TV6 knows no ruin. TVD-WORLD re-aimed by content: the rows are named before the lairs past the Bay join them."
   },
   {
     "name": "EOW-far-ruins-as-ports",

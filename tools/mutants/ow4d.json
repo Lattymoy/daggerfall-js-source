@@ -152,22 +152,22 @@
   {
     "name": "OW4D4-off-the-map-y",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "for (let y = Math.max(0, at.y - r); y <= Math.min(MAX_MAP_PIXEL_Y - 1, at.y + r); y++) {",
+    "old": "for (let y = Math.max(1 - WORLD_PIXEL_SPAN, at.y - r); y <= Math.min(WORLD_PIXEL_SPAN - 1, at.y + r); y++) {",
     "new": "for (let y = at.y - r; y <= at.y + r; y++) {",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW4 D4: rows off the map are asked (spawnedMapId throws on them)."
+    "note": "AUDIT OW4 D4: rows off the map are asked (spawnedMapId throws on them). TVD-WORLD re-aimed by content: the circle is the world's grid now - rows off it asked."
   },
   {
     "name": "OW4D4-off-the-map-x",
     "file": "src/systems/travel/travelDungeons.js",
-    "old": "for (let x = Math.max(0, at.x - r); x <= Math.min(MAX_MAP_PIXEL_X - 1, at.x + r); x++) {",
+    "old": "for (let x = Math.max(1 - WORLD_PIXEL_SPAN, at.x - r); x <= Math.min(WORLD_PIXEL_SPAN - 1, at.x + r); x++) {",
     "new": "for (let x = at.x - r; x <= at.x + r; x++) {",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW4 D4: columns off the map are asked."
+    "note": "AUDIT OW4 D4: columns off the map are asked. TVD-WORLD re-aimed by content: the circle is the world's grid now - columns off it asked."
   },
   {
     "name": "OW4D4-nothing-stands-kept",
@@ -262,12 +262,12 @@
   {
     "name": "OW4D5-size-again",
     "file": "src/scenes/travelViewDungeonsHost.js",
-    "old": "const grid = Math.max(1, state.terrainDistance ?? 3), n = host._locIndexGen;",
-    "new": "const grid = Math.max(1, state.terrainDistance ?? 3), n = locationIndex.size;",
+    "old": "const grid = Math.max(1, state.terrainDistance ?? 3), n = `${host._locIndexGen}:${tvDungeonRowsAt.gen()}`;",
+    "new": "const grid = Math.max(1, state.terrainDistance ?? 3), n = `${locationIndex.size}:${tvDungeonRowsAt.gen()}`;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW4 D5: the kept list keys on the index's size - a spawn gone and another come in one window is never seen."
+    "note": "AUDIT OW4 D5: the kept list keys on the index's size - a spawn gone and another come in one window is never seen. TVD-WORLD re-aimed by content: the key carries the lairs' gen beside the index's generation."
   },
   {
     "name": "OW4D5-stood-unbumped",
