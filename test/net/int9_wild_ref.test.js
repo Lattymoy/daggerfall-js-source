@@ -840,7 +840,7 @@ test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its hea
   assert.equal(vits(c).length, 0);
 }));
 
-test('SHARED-HEALTH (review): a client before world270 never reports, so its count stays unheard and keeps the zone\'s old mend - whole again unstruck WILD_REF.mendMs; a count a report anchored never mends by itself (mutants: the fallback dropped; the fallback applied to an anchored count)', () => {
+test('SHARED-HEALTH (review): a client before world271 never reports, so its count stays unheard and keeps the zone\'s old mend - whole again unstruck WILD_REF.mendMs; a count a report anchored never mends by itself (mutants: the fallback dropped; the fallback applied to an anchored count)', () => {
   const unheard = zone();
   wildBlow(unheard, 'acct-a', 'acct-b', { d: 20, held: FIST, rid: 'ffffffffff01' }, 10_300);
   const hurt = wildVitals(unheard, 'acct-a', 'acct-b')[1][1];

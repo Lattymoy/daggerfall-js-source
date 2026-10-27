@@ -279,7 +279,7 @@
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
-    "note": "A struck player on a client before world270 would never be whole again."
+    "note": "A struck player on a client before world271 would never be whole again."
   },
   {
     "name": "SHARED-HEALTH-the-mend-on-an-anchored-count",

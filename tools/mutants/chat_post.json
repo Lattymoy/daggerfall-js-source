@@ -1,5 +1,14 @@
 [
   {
+    "name": "CHAT-POST-stack-count-left-off",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  return line.stack ? `${name} x${line.stack}` : name;",
+    "new": "  return name;",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
     "name": "CHAT-POST-magic-left-off",
     "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    ...itemBriefLines(item, d)].filter(Boolean);",
@@ -20,7 +29,7 @@
   {
     "name": "CHAT-POST-cut-mid-word",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), line.name.length + 2)).replace(/[\\s·]+$/, '')}...`;",
+    "old": "  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), label.length + 2)).replace(/[\\s·]+$/, '')}...`;",
     "new": "  return `${cut}...`;",
     "tests": [
       "test/systems/chatpost.test.js"
@@ -38,8 +47,8 @@
   {
     "name": "CHAT-POST-past-chatSend",
     "file": "src/scenes/world.js",
-    "old": "  const postItemInChat = (text) => (canPostItemInChat() ? chatSend(chatLog.active, text) === true : false);",
-    "new": "  const postItemInChat = (text) => (canPostItemInChat() ? socialLink()?.sendChat(text) === true : false);",
+    "old": "  const postItemInChat = (text, item) => (canPostItemInChat() ? chatSend(chatLog.active, text, chatLog.active, { item }) === true : false);",
+    "new": "  const postItemInChat = (text, item) => (canPostItemInChat() ? socialLink()?.sendChat(text, { item }) === true : false);",
     "tests": [
       "test/systems/chatpost.test.js"
     ]
@@ -47,7 +56,7 @@
   {
     "name": "CHAT-POST-world-pack-mute",
     "file": "src/scenes/world.js",
-    "old": "    postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: an item on the chat's open tab\n",
+    "old": "    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: post or link into the field\n",
     "new": "",
     "tests": [
       "test/systems/chatpost.test.js"
@@ -56,7 +65,7 @@
   {
     "name": "CHAT-POST-building-pack-mute",
     "file": "src/scenes/world.js",
-    "old": "    postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too\n",
+    "old": "    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too\n",
     "new": "",
     "tests": [
       "test/systems/chatpost.test.js"
@@ -65,7 +74,80 @@
   {
     "name": "CHAT-POST-dungeon-pack-mute",
     "file": "src/scenes/worldModes.js",
-    "old": "          postItem: (text) => host.postItem?.(text) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host\n",
+    "old": "          postItem: (text, item) => host.postItem?.(text, item) ?? false, linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host\n",
+    "new": "",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-item-dropped-on-parse",
+    "file": "src/net/wire.js",
+    "old": "    const linked = items ? { items, item: items[0] } : {};   // `item` kept so a one-link line still reads on an older client build\n    if (m.ch === undefined) return { t: 'chat', text, ...me, ...linked };\n    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me, ...linked } : { error: 'bad chat' };",
+    "new": "    if (m.ch === undefined) return { t: 'chat', text, ...me };\n    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-link-not-drawn",
+    "file": "src/ui/chatPanel.js",
+    "old": "    const linked = chatItemsOf(line);",
+    "new": "    const linked = [];",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-no-field-link",
+    "file": "src/ui/chatPanel.js",
+    "old": "    linkItem: (item) => {",
+    "new": "    linkItemGone: (item) => {",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+
+  {
+    "name": "CHAT-POST-card-not-packs",
+    "file": "src/ui/chatItemLink.js",
+    "old": "  link.addEventListener('mouseenter', () => showItemHover(item, {}, link, 'shop'));",
+    "new": "  link.addEventListener('mouseenter', () => {});",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-bracket-query-mute",
+    "file": "src/ui/chatItemLink.js",
+    "old": "  const m = before.match(/\\[([^\\]\\[]*)$/);\n  return m ? { start: before.length - m[0].length, query: m[1] } : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-bag-suggest-mute",
+    "file": "src/ui/chatPanel.js",
+    "old": "  input.addEventListener('input', () => refreshSuggest());   // CHAT-POST: `[` / typed letters refresh the bag picker\n",
+    "new": "",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-pending-includes-all",
+    "file": "src/ui/chatItemLink.js",
+    "old": "    const taken = used.get(label) ?? 0;\n    if (taken >= count) continue;\n    kept.push(row);\n    used.set(label, taken + 1);",
+    "new": "    if (count < 1) continue;\n    kept.push(row);",
+    "tests": [
+      "test/systems/chatpost.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-POST-tab-nests-bracket",
+    "file": "src/ui/chatPanel.js",
+    "old": "        if (openLinkQuery(v, caret)) return;\n",
     "new": "",
     "tests": [
       "test/systems/chatpost.test.js"

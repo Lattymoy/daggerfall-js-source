@@ -195,11 +195,10 @@ characters looser, and a commit refused after the peer's had left stranded the p
 ## CHAT-POST: an item posted in chat (3)
 
 Online, the pack's card and its right-click menu have a "Post in chat" button. It says the item on the chat's open
-tab as one line: its name in brackets, its damage or armour, and its magic in the card's own words (TRADE-INFO's
-list). For example: "[Longsword] Damage 2 - 16 · Potent vs Daedra · Feather weight" (a steel one). A line too long for the chat is cut
-at a whole word and ends "...". The relay carries text alone, so the item travels as words, not as a live link. It
-goes through the tab's own door, so the Party tab still needs a party. `06-Systems/Online-Arc.md` CHAT-POST;
-`test/systems/chatpost.test.js` (2), `tools/mutants/chat_post.json` (8).
+tab as a coloured `[Name]` (rarity ink) with the pack's hover card on mouseover; the wire carries the item's record
+beside the words. An older relay drops the record and the line falls back to the brief words
+("[Longsword] Damage 2 - 16 · …"). It goes through the tab's own door, so the Party tab still needs a party.
+`06-Systems/Online-Arc.md` CHAT-POST; `test/systems/chatpost.test.js`, `tools/mutants/chat_post.json`.
 
 ## HOME-STATIONS: crafting stations in a home, a house or a ship (3)
 

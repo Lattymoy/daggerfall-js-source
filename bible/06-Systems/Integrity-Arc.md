@@ -883,7 +883,7 @@ healing too - only mid-PvP.
 - **ONE POOL, STILL REFEREED.** The referee keeps counting in the Royal Tourney's units (300 + 2 x Renown), and the
   count is the player's own health as a share of it (refereeHealthShare.js:"export function takeHealthReport"). A blow
   of 30 on a count of 302 takes a tenth of any player's health, so a fight lasts as long as it did. The client reports
-  its health as a share with the last referee word it applied (the `vit` frame, relay world270); the referee adds back
+  its health as a share with the last referee word it applied (the `vit` frame, relay world271); the referee adds back
   every change the client had not yet seen (its word log), so a lost report, a room changed or a blow in flight costs
   nothing. Each referee word on a count is told to its player, whose mirror sets its health to the same share
   (refereeHealthMirror.js:"export function createRefereeHealthMirror"), keeping what its health did since the report
@@ -901,7 +901,7 @@ healing too - only mid-PvP.
 - **NO FREE REFILL.** The zone's mend (whole again unstruck `WILD_REF.mendMs`) is gone. A count started again - a rise
   after a fall, a return after `WILD_REF.riseMs` away - waits for the player's report, which can lower it and never lift
   it; a bar carried from another room keeps its anchor, its no-heal window and the last report it took (`wildCarry`'s
-  `heard`, `pvpAt`, `rep`). A client before world270 never answers the ask, so its count stays unheard and keeps the
+  `heard`, `pvpAt`, `rep`). A client before world271 never answers the ask, so its count stays unheard and keeps the
   zone's old mend (wildRef.js:"const mendUnheard") - a struck old client is whole again unstruck 30 s, as before; a
   count a report has anchored never mends by itself.
 - **PER MODE.** The zone: a fall at none is a death, as before (forcePlayerDeath). A duel: its fall leaves the loser at
