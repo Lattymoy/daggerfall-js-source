@@ -119,7 +119,7 @@
   {
     "name": "EVENT-TIP-the-raids-never-polled",
     "file": "src/ui/heldMap.js",
-    "old": "    const raids = readRaidMarks(this.deps.raids, this._size);",
+    "old": "    const raids = readRaidMarksIn(this.deps.raids, sheet);",
     "new": "    const raids = [];",
     "tests": [
       "test/ui/eventtip.test.js"

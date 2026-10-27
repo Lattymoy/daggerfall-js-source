@@ -14,6 +14,8 @@ import { REGION_NAMES } from '../formats/mapsFile.js';
 import { spoilsLock } from './spoilsPool.js';
 import { standLooseFoe } from './hostEnchant.js';
 import { travelMapPickerData } from '../ui/travel/travelMapDoor.js';
+import { keptPlaces } from '../net/staffPlaces.js';   // WW6: the world's registry, as the boot keeps it
+import { capitalStreet } from './livingWorld/livingIndex.js';   // WW6: a capital one town (WW7-11)
 
 /** @param {any} host */
 export function createRaidHost(host) {
@@ -58,6 +60,11 @@ export function createRaidHost(host) {
     // RAID3: the relay's arm - does it keep this world's raids, and my word to the town's cell
     relayRaids: () => !!host.online?.raidOk,
     sendRaid: (w, cell) => !!host.online?.sendRaid(w, cell),
+    // WW6 (bible/03-World/World-Wide.md WW6): the towns past the Bay the lanes raid - the world's registry, as the boot keeps
+    // it (net/staffPlaces.js keptPlaces: `gamePlaces(createWorldPlaces())`), TESA's places on it where the land stands; a
+    // capital one town, its centre (WW7-11)
+    places: () => keptPlaces(),
+    street: capitalStreet,
     // RAID4: my receipt for a town I held - to the account service with the character that fought it
     onRaidReceipt: (r, c, held) => { (c?.v ? grantStaffSpoils(host.raidSpoils, spoilsLock, c, playerEntity?.level ?? 1) : host.raidClaims?.add(r, characterIdOf(playerEntity), typeof playerEntity?.name === 'string' ? playerEntity.name : null, playerEntity?.level ?? 1, held === true)); },   // AUDIT WORLD-EVENTS L3-14: and whether the town was held, kept with the receipt for the character that fought; RAID4: to the account service - AUDIT RAID R4: whose answer gives the town's thanks (onSpoils); STAFF-EVENT THE REWARD: an event's receipt (`e1`, its claims name `v`) rolls its spoils here (systems/staffEventSpoils.js)
   });
