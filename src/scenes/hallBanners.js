@@ -62,8 +62,8 @@ export const BANNER_WALL_PAD_M = 0.05;
  * THE TWO ANCHORS beside a hall's door - `frame` its `{ box, door: { a, b } }` in the pixel's frame (a castle's entrance's
  * also its `normal`, CASTLE-GATE). Each is the cloth's top edge's middle (`top`), the wall's direction (`right`) and the
  * face it hangs out along (`out`), pixel-local. Null for a door narrower than a man or none. Pure.
- * RPT1026-WORLD BANNER-WALL (a private report, 2026-10-25: a Wildertown guild hall, "a small box building ... One of
- * these banners is floating in the air"): A CLOTH HANGS ON ITS WALL OR NOT AT ALL. Each cloth stood its jamb's gap beyond
+ * RPT1026-WORLD BANNER-WALL (a private report, 2026-10-25: a small Wildertown guild hall, one of its door cloths
+ * hanging in mid-air): A CLOTH HANGS ON ITS WALL OR NOT AT ALL. Each cloth stood its jamb's gap beyond
  * the door whatever the wall did there, so a door near its wall's end hung the far cloth past the building's corner, in
  * the air - ARCH3D 118's door is the last 1.25 m of its west wall, and its second cloth hung wholly past the house (105 of
  * Wildertown's 364 doors hung a cloth past their building's box, under the town packs). A cloth whose either end, at the wall, falls

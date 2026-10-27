@@ -58,7 +58,7 @@ import { localizedText, localizedTable, formatText, t } from '../textManager.js'
 import { getLocalizedItemName, getLocalizedMagicItemName, getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the names of things, by their own ids
 import { getMagicItemTemplates } from '../loot/loot.js';   // L10N3e: the MAGIC.DEF template a magic item's name came from
 import { makerMark, PROVENANCE_RE } from '../../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
-/** RPT1026-CLIENT (private reports: the keys "keep disappearing", "a new one on next login"): the Weir Keys are the
+/** RPT1026-CLIENT (private reports: Weir Keys that seemed to vanish, and one back again at the next sign-in): the Weir Keys are the
  *  account's balance (Elite-Gates.md section 5), shared by every character on it, and nothing the player saw said so. The
  *  card's second line - EG_TEXT's own lines ride the relay's bundle, so this one is the card's. */
 export const weirKeySharedLine = () => t('eg.key.shared', 'Every character on your account shares the same Weir Keys.');

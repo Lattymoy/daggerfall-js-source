@@ -1871,8 +1871,8 @@ the clamp removes that cap. The collider law therefore belongs to a lane
 that owns `collider.js`, and it is recorded here rather than half-done.
 
 STAND-THROUGH (RPT1026-WORLD, 2026-10-27; a private report, 2026-10-22: in
-dungeons "you can crouch-jump out of the geometry ... you can loot treasure
-piles by jumping up through the floor in a room above you") closes the
+dungeons a crouch and a jump left the level's geometry, and the treasure of
+an upper room was taken through its floor from below) closes the
 1.3-1.45 band's ejection, which was worse than measured above: the head
 sphere resolving from ABOVE the plane is pushed out of the level, not
 merely up. Crouched under a ceiling tilted 10 degrees at 1.35 m with a

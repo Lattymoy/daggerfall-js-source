@@ -1,5 +1,5 @@
-// RPT1026-EVENTS GATE-WAY (two private reports: Portal Stone portals opened before breaches and other events to carry the
-// arriving crowd elsewhere, and a breach's gate walled with a parked wagon while a portal was laid in it as the gate opened,
+// RPT1026-EVENTS GATE-WAY (two private reports: Portal Stone portals opened at the mouth of a breach or another event to carry
+// the arriving crowd elsewhere, and a breach's gate walled with a parked wagon while a portal was laid in it as the gate opened,
 // more than once): AN EVENT'S GATE KEEPS ITS WAY CLEAR. While a gate
 // stands on a screen, no Portal Stone's portal stands within EVENT_GROUND_M of it there - its opener's pick refuses the place,
 // a peer's word of one is not believed, one already open closes and takes nobody - and another player's wagon parked there

@@ -112,8 +112,8 @@ export const PREF_DEFAULTS = Object.freeze({
   // springs, its shake and the hands' dip (combat/technique/techniqueFx.js techniqueMotion); 0 moves nothing on the screen (its
   // burst and its sound stay). GATHER-FEEL II: and a gathering tool's landed blow (systems/gatherBlow.js gatherBlowFeel)
   techniqueMotion: 1,
-  // RPT1026-CLIENT (a private report: "Every spell that lands within about 14 meters of the player shakes the camera, no
-  // matter who cast it"): how much ANOTHER player's spell shakes the view where it lands (scenes/hostMagic.js
+  // RPT1026-CLIENT (a private report: any spell landing some fourteen metres off shook the view, the player's or
+  // anyone's): how much ANOTHER player's spell shakes the view where it lands (scenes/hostMagic.js
   // peerKickShare) - 1 Full, 0.5 Half, 0 Off; my own spells, a foe's and an event's keep their whole kick
   peerSpellShake: 0.5,
   // EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 25.7): THE SPIRE'S ACCESSIBILITY (ui/eliteGates/egAccess.js) - the danger

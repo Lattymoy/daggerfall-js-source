@@ -237,8 +237,8 @@ export function edgeKind(a, b, bit, roads, tracks) {
 }
 
 /**
- * RPT1026-WORLD CAUSEWAY (a private report, 2026-10-26, on Tulune's Grayidge-Westwall road: "Traveling this bridge, the
- * guide veers off away from bridge and you get stuck in water"): A ROAD OVER THE WATER IS THE ROAD'S. Hazelnut's road
+ * RPT1026-WORLD CAUSEWAY (a private report, 2026-10-26, on Tulune's Grayidge-Westwall road: on the bridge the guide
+ * turned off it and left the traveller stuck in the water): A ROAD OVER THE WATER IS THE ROAD'S. Hazelnut's road
  * crosses 42 pixels the step law called the sea (WOODS bytes at the beach line, roadsProducer's WATER_BYTE) - the
  * Grayidge inlet's (72, 131), one at (324, 205) and the forty of a causeway at (515-559, 296-316) - and his painter
  * paves water under a road (roadPainter.js ROAD_TILES, column 0: tile 46, no water corner), so each is a dry strip of

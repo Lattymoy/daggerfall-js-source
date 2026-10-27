@@ -1,6 +1,6 @@
-// RPT1026-MARKET HOLD-SAID (private reports 2026-10-26): "since today i am unable to gather materials. And it only says im
-// frozen from trading but gives no specifics. We might need something that leads us into discord"; "your system treats
-// crafting and gathering skills as 'trading' ... make the error messages and account statuses a bit more clear". A hold
+// RPT1026-MARKET HOLD-SAID (private reports 2026-10-26): gathering stopped overnight under a notice that named only a
+// trade freeze, with no reason and no road to anyone who could help; another found crafting and gathering counted as
+// trading, and asked for clearer messages and a clearer account state. A hold
 // refuses every progression claim (server-account/src/progress.js seatRefusalOf over PROGRESS_ROUTES), so every notice says
 // the three a player meets; staff's says how to reach them; and a `trade-held` refusal anywhere - a harvest's, a craft's -
 // says the standing hold's own notice (its reason, its piece, its end), the session's word through the realm holds' host.

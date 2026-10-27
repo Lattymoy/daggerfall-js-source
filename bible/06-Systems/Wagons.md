@@ -239,7 +239,7 @@ The room is the player's own:
 
 Leaving puts the player on the ground behind the caravan's rear door, grounded
 by the host. RPT1026-WORLD WAGON-OUT (2026-10-26, a private report: a caravan
-summoned by a building, entered and left - "stuck inside a building"): that
+summoned by a building, entered and left, set the player down inside the house): that
 ground is asked as a fast travel's landing is (UNSTUCK-OUT) - a spot a static
 solid holds (a house the caravan backed up to, a palisade, a rock) stands the
 player on the nearest open ground instead, above the sea; with none open, where

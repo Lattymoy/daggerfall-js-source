@@ -1,5 +1,5 @@
-// RPT1026-WORLD CAUSEWAY (a private report, 2026-10-26, Tulune's Grayidge-Westwall road: "Traveling this bridge, the guide
-// veers off away from bridge and you get stuck in water"): A ROAD OVER THE WATER IS THE ROAD'S. Hazelnut's road crosses
+// RPT1026-WORLD CAUSEWAY (a private report, 2026-10-26, Tulune's Grayidge-Westwall road: on the bridge the guide turned
+// off it and left the traveller stuck in the water): A ROAD OVER THE WATER IS THE ROAD'S. Hazelnut's road crosses
 // the inlet between Grayidge (72, 133) and Westwall (72, 130) at (72, 131), a pixel whose WOODS byte is at the beach
 // line - and his painter paves it, a strip of road tiles across the water (world/road/roadPainter.js ROAD_TILES). The
 // Overworld's step law refused every step into the sea, his road's too, so the route left the road at (72, 132) and went

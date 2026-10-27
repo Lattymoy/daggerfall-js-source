@@ -1,6 +1,6 @@
 // RPT1026-MARKET (private reports 2026-10-26) - the account service's half: ARRIVE's road alone (market.js marketRoad) and
 // COLLECT-LANDED (market.js collectGood answering a landed collect's repeat). Private reports: a home trader's buyer whose
-// piece "never arrived anywhere", and legendaries that "disappeared" as they came off the market - their returns collected
+// piece came nowhere, and legendaries that went missing as they came off the market - their returns collected
 // on the service. Record: SCRATCH's section for the batch's Field-Bugs page (the lead's). Through the real Worker over
 // node:sqlite with every migration applied and R2 beside it (test/accountDb.mjs, test/realmSeat.mjs), from the real
 // producers: a trader's piece listed from a seated record's pack, bought, taken back, run out.

@@ -1,5 +1,5 @@
-// RPT1026-CLIENT (private reports, 2026-10-18 to 10-20: "Weir Keys randomly change number in inventory from more than 1
-// back to 1"; FIELD BUGS 2026-10-19f KEY-FACE's one door left open, Elite-Gates.md section 5). The account's balance is
+// RPT1026-CLIENT (private reports, 2026-10-18 to 10-20: a pack's count of Weir Keys fell back to one now and then from
+// more; FIELD BUGS 2026-10-19f KEY-FACE's one door left open, Elite-Gates.md section 5). The account's balance is
 // the count (`players.eg_keys`), and the pack's stack its face. A dungeon elite's find throws a face onto the body
 // (systems/eliteGates/egFind.js egFindThrow), and the throw restacked the pack to the balance less THAT face alone - so a
 // second find before the first body was looted, or a balance answer landing before the take-up, made the pack and the

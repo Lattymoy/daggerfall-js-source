@@ -1,5 +1,5 @@
-// RPT1026-CARDBANK (a private report: "I had 336 gold, I sat down at a red card table. Nobody sat down so I got up ... I
-// have no gold" - and the next buy-in offered the 336 again with the 100 earned since): a gold table's cash-out is paid into
+// RPT1026-CARDBANK (a private report: a player with 336 gold sat at a red card table alone, rose again, and found the
+// purse empty - and the next buy-in offered the 336 again with the 100 earned since): a gold table's cash-out is paid into
 // the bank account of the region it was staked from (Tavern-Cards.md section 23, THE CLAIM), the buy-in's offer reads the
 // purse and that account together - and nothing said where the stake had gone. The book here is the real one
 // (net/card/cardStakes.js) over its door and a realm act as realmGoldAct runs one; the receipt is the relay's own mint.
@@ -44,7 +44,7 @@ test('RPT1026-CARDBANK a stake that comes home says where it went: into the bank
   assert.deepEqual(r.store.get(CARD_STAKES_KEY), []);
   const said = [];
   await r.book.claim((l) => said.push(l));
-  assert.equal(r.purse.gold, 0, 'the purse stays empty - the report\'s "no gold"');
+  assert.equal(r.purse.gold, 0, 'the purse stays empty - the report\'s empty purse');
   assert.equal(r.purse.bank, 336, 'the stake is in the bank account');
   assert.deepEqual(said, ['The card table paid 336 gold into your account at the Bank of the Empire.']);
   assert.equal(said[0], cardBankedText(336));

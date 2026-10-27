@@ -169,7 +169,7 @@ leaves the copy to run out. A late arrival in the cell learns of a portal only w
 
 ### An event's gate keeps its way clear (RPT1026-EVENTS GATE-WAY, 2026-10-26)
 
-Two private reports: players opened portals before breaches and other events to carry the arriving crowd elsewhere, and
+Two private reports: players opened portals at the mouth of a breach or another event to carry the arriving crowd elsewhere, and
 one walled a breach's gate with a parked wagon and laid a portal in it as the gate opened, more than once. A portal takes
 whoever steps in (above), and a crowd running at a
 Dagon's Breach as it opens runs into whatever stands before its fire.

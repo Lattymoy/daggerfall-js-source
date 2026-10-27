@@ -1,5 +1,5 @@
-// RPT1026-WORLD BANNER-WALL (a private report, 2026-10-25: a guild hall bought in Wildertown, "a small box building and
-// guild banners have appeared either side of my front door. One of these banners is floating in the air"): A CLOTH HANGS
+// RPT1026-WORLD BANNER-WALL (a private report, 2026-10-25: a guild hall bought in Wildertown, a small square house
+// whose new door cloths flank its door, one of them hanging in mid-air): A CLOTH HANGS
 // ON ITS WALL OR NOT AT ALL. The house's frame as the pixel build makes it (scenes/pixelBuild.js: the first model's box,
 // its first door's corners and outward normal - hallBanners.js doorCornersOf, doorNormalOf) over the player's own data,
 // Wildertown laid out with the town packs on the door as the game serves it (test/arena1Data.mjs), and the law

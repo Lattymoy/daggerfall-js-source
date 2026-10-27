@@ -1,5 +1,5 @@
-// RPT1026-WORLD STAND-THROUGH (a private report, 2026-10-22: in dungeons, "you can crouch-jump out of the geometry ...
-// the ceiling does not stop you ... you can loot treasure piles by jumping up through the floor in a room above you"):
+// RPT1026-WORLD STAND-THROUGH (a private report, 2026-10-22: in dungeons a crouch and a jump left the level's geometry,
+// a low ceiling held nobody, and the treasure of an upper room was taken through its floor from below):
 // A STAND NEVER PUTS THE HEAD PAST A FACE. DFU's CanStand sweeps to feet + 1.25 (AUDIT 64 F5), and DoStand raises the
 // capsule to 1.8 - so under a ceiling 1.25 to 1.45 m over the feet the standing head sphere's centre stood on the far
 // side of the ceiling's face and the winding-blind collider pushed it out that way, up through the slab. Driven through

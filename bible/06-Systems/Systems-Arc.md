@@ -8136,7 +8136,7 @@ the shared dungeon while its party member killed them freely, and a paralysed pl
 waited the paralysis out in the inventory. Both dungeon hosts returned before
 `drawFoes` under any pausing window, so WINFOE1 had never reached the dungeon: offline
 that is DFU's pause, whole; online the character's own clock runs with the world's
-(LIVED1) and was walked whole on the first frame after the window, while the foes -
+(LIVED1) and was walked whole in one frame once the window shut, while the foes -
 the room's one simulation, stepped by its host (WORLD2) - stood frozen and took the
 party's blows. Online a window now holds no dungeon while the player lives under it
 (`scenes/windowWorld.js` windowHoldsDungeon, read by `worldModes.js`'s dungeon arm and

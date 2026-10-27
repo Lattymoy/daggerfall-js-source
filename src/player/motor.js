@@ -266,9 +266,9 @@ export const CROUCH_EYE_HEIGHT = 0.8;
  *  `(controllerStandingHeight - controllerCrouchHeight) / 2f` = 0.45. */
 export const CROUCH_TO_STAND_DIST = (CAPSULE_HEIGHT - CROUCH_HEIGHT) / 2;
 /**
- * RPT1026-WORLD STAND-THROUGH (a private report, 2026-10-22: "With enough jumping, you can crouch-jump out of the geometry
- * in dungeons ... the ceiling does not stop you ... you can loot treasure piles by jumping up through the floor in a room
- * above you"): A STAND NEVER PUTS THE HEAD PAST A FACE. DFU's CanStand (PlayerHeightChanger.cs:525-531, AUDIT 64 F5,
+ * RPT1026-WORLD STAND-THROUGH (a private report, 2026-10-22: in dungeons a crouch and a jump left the level's geometry,
+ * a low ceiling held nobody, and the treasure of an upper room was taken through its floor
+ * from below): A STAND NEVER PUTS THE HEAD PAST A FACE. DFU's CanStand (PlayerHeightChanger.cs:525-531, AUDIT 64 F5,
  * below) sweeps the camera's rise alone, to feet + 1.25, and DoStand raises the capsule to 1.8 whatever stands over it -
  * so under a ceiling 1.25 to 1.45 m over the feet the standing head sphere's centre (feet + 1.45) stood on the FAR side of
  * the ceiling's face, and the collider, which reads no face's facing, pushed it out that way: up into the slab and onto

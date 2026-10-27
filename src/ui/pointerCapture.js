@@ -1,7 +1,7 @@
 // @ts-check
-// RPT1026-CLIENT (a private report, 2026-10-23: "If you play with a pad and open up the world map, then press A anywhere on
-// it, it will cause the following error message: NotFoundError: Element.setPointerCapture: Invalid pointer id. This will
-// stay on the screen and won't disappear without a reload"). THE CAPTURE THAT CANNOT THROW. A pad's press is a synthetic
+// RPT1026-CLIENT (a private report, 2026-10-23: a pad's A pressed on the open world map threw a NotFoundError from
+// setPointerCapture, an invalid pointer id, and the crash report it raised stayed until the page was reloaded).
+// THE CAPTURE THAT CANNOT THROW. A pad's press is a synthetic
 // pointer (ui/plus/plusPad.js domPointer, ui/enhanced/enhancedDialog.js replayClick: `pointerId: 1`, the mouse's id in
 // Chromium), and a browser holding no pointer of that id - Firefox numbers its mouse 0 - refuses to capture or release
 // it with a NotFoundError, thrown out of the listener to the page: the crash report over a game that ran on. A capture

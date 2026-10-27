@@ -1,5 +1,5 @@
-// RPT1026-WORLD DARK-ROOM (two private reports, 2026-10-24 and 10-26: an inn "has no lights on in it"; Westhead Moor's The
-// Howling Mug "VERY DARK ... literally zero illumination"): A ROOM DAGGERFALL LIGHTS WITH NOTHING IS LIT AS DFU LIGHTS A ROOM
+// RPT1026-WORLD DARK-ROOM (two private reports, 2026-10-24 and 10-26: an inn with not one lamp lit; Westhead Moor's The
+// Howling Mug, black from wall to wall): A ROOM DAGGERFALL LIGHTS WITH NOTHING IS LIT AS DFU LIGHTS A ROOM
 // BY AMBIENT ALONE. The room's lights from the producer the interior host reads (world/interior/interiorLayout.js
 // layoutInterior over the player's BLOCKS.BSA and ARCH3D.BSA, then collectInteriorLights - scenes/interiorContext.js
 // lightsOf); the law (world/interior/interiorLights.js roomAmbient) and both interior hosts' line by source.

@@ -1237,8 +1237,8 @@ the port's own; a peer's; the Warden's heave; the rows; the live master), and
 
 ## VOICE-CAP (2026-10-26): the real voices - at most thirty-two one-shots at once, the quietest let go
 
-A private report from a crowded Dagon's Breach: with that many players about, the sound failed and stayed silent for
-minutes after the event ended.
+A private report from a crowded Dagon's Breach: with that many players about, the sound failed and stayed silent long
+after the event was over.
 
 **What DFU does.** DFU plays through Unity, which sounds at most `m_RealVoiceCount` sources at once (32 in DFU's own
 `ProjectSettings/AudioManager.asset`, with 512 virtual) and makes the rest virtual, the least audible first.

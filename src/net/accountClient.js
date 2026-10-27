@@ -381,8 +381,8 @@ const REFUSAL_WORDS = {
   'no-invite': () => t('account.refusal.noInvite', 'That invitation is no longer open.'),
   'guild-master-leaves': () => t('account.refusal.guildMasterLeaves', 'Hand the guild on to another member before you leave it.'),
   'guild-treasury': () => t('account.refusal.guildTreasury', 'Take the gold out of the treasury first.'),
-  // RPT1026-MARKET ARRIVE (private reports 2026-10-26: a character "unable to be deleted ... a transaction between players
-  // going", a trader's purchase still waiting for it): the goods waiting come to its pack on their own now as it plays
+  // RPT1026-MARKET ARRIVE (private reports 2026-10-26: a character the delete refused while a trade with another player
+  // stood open, a trader's purchase still waiting for it): the goods waiting come to its pack on their own now as it plays
   // (net/marketArrivals.js), and a trader's takings held for it are said too - they hold the delete (realm.js
   // REALM_MARKET_OPEN_SQL's `market_gold`) and the line never named them
   'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, goods on the way or waiting to be collected, or a trader\'s takings. Settle it first. Play it online once and goods waiting for it come to its pack on their own; takings are collected on the Vendor page.'),   // PROF-DELETE   // AUDIT 28 M3: the Marks go to the guildmaster with the guild

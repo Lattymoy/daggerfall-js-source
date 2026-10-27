@@ -212,7 +212,7 @@ function accessStep(db, mapId, buildingKey, id, kind, kept, ids) {
 /** A personal chest's goods and its access move together. A good with no uid is marked here, and is not left behind. */
 async function moveChest(ctx, player, { mapId, buildingKey, character, id, kind, kept, ids, realm, at }) {
   const { db } = ctx;
-  // RPT1026-CHESTGOLD (a private report): never under another's open window. The bin poured back into the owner's save
+  // RPT1026-CHESTGOLD (a private report): never under another's open window. The bin went home to the owner's save
   // while a guest still held it, and what the guest had taken was in both.
   if (heldByOther(await holdRow(db, mapId, buildingKey, id), player, character, ctx.nowS)) return { error: 'decor-busy' };
   const blob = await getRealmBlob(ctx, player.id, character);

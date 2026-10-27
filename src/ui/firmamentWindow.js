@@ -561,7 +561,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     pending = { start: pending.start, keys: pending.keys.filter((k) => !takes.has(k)) };
     refresh();
   }
-  // RPT1026-CLIENT (a private report: "IndexSizeError ... The radius provided (-21.2667) is negative" on every Accept): a
+  // RPT1026-CLIENT (a private report: an IndexSizeError, an arc's radius below nought, on every Accept): a
   // burst was stamped with performance.now() and drawn by the requestAnimationFrame clock, and every callback of one frame
   // is handed that frame's START - so a burst stamped later in the same frame (Accept's answer lands in a microtask after
   // the world's own frame callback, which can run for half a second) had t - t0 < 0, and the ring's radius went negative.

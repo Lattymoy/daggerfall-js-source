@@ -6905,9 +6905,9 @@ here (the arena's ARENA-ORDER is `11-Multiplayer/Arena.md`'s, the bounty boards'
 mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the arena's, two the boards'), all dead.
 
 - **ABANDON-ALWAYS** - a quest that shuts its questor's door is always a row with its Abandon. Six reports: The Lost
-  Artifact shared in a party (the knight paid, every objective crossed out, nothing to abandon, the order's door shut to
-  both), a Knights of the Dragon "you already have one" with an empty journal, a Mages Guild "you can't take more
-  quests" with none listed. DFU's law shuts the door while a quest whose questor is the NPC clicked runs
+  Artifact shared in a party (the knight paid, every objective struck, nothing to abandon, the order's door shut to
+  both), a Knights of the Dragon whose questor counted a quest the journal did not hold, a Mages Guild that refused
+  a new quest with none listed. DFU's law shuts the door while a quest whose questor is the NPC clicked runs
   (IsLastNPCClickedAnActiveQuestor - `machine.js:"lastNPCClickedQuestorOf() {"`). B0B81Y02's knight answers the lich's
   death with `give pc nothing` and `remove log step 0` and the quest runs on under `_2dung_` (RAVEN-CLOSE closes it
   online on the short wait); N0B21Y14 writes its first entry only when its letter is read. A quest with nothing in its
@@ -6920,8 +6920,8 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   the Quests tab of the pause menu." A quest with nothing written and no questor the player met (the main story's
   backbone, a letter's errand) stays off the tab. Port-Ledger A, QUEST-SHELF's row, widened.
 - **QUEST-CROWD** - two quests' Persons never stand in one pick box. Five reports of a questline's contact missing from
-  the tavern its journal named (A Hand of Cards and Raiders at the Gate both at one inn; The Long Haul; Raiders at the
-  Gate; a raid's defender; "if 2 quests are in the same NPC location, one will eat the other"). The intro lines' contacts
+  the tavern its journal named (A Hand of Cards with Raiders at the Gate, both at one inn; The Long Haul; Raiders at the
+  Gate; a raid's defender; two quests that met at one person's place, only one of them left there). The intro lines' contacts
   are `local` Persons in a `local tavern`; DFU's GetAllActiveQuestSites reads only the running quests, so two quests
   parsed before either starts take one building (the lines were started together before QL-OFFERED), and 215 of
   Daggerfall's 345 tavern interiors lay one spawn marker - GameObjectHelper.AddQuestNPC stood both on it, one billboard

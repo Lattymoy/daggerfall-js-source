@@ -229,8 +229,8 @@ port's waters are a merchant's and a navy's), by class (`classFor`: the player's
 navy HUNTER (HUNTER_WEIGHT) once the player's notoriety passes HUNTER_AT. A ship past DESPAWN_BEYOND of every player,
 not fighting, is gone. The seeds are the waters' (`seedBaseOf`: the pixel and the day).
 
-**The rolls' wait is the real clock's (RPT1026-WORLD TRAFFIC-REAL, 2026-10-26; two private reports: pirates "every 20
-seconds or less" on the large map, and "a failed encounter every two seconds").** The host steps the sea on the world's
+**The rolls' wait is the real clock's (RPT1026-WORLD TRAFFIC-REAL, 2026-10-26; two private reports: pirates on the
+large map within seconds of each other, and an encounter failing every couple of seconds).** The host steps the sea on the world's
 clock (AUDIT NAV1: `dt * worldTimeScale()`), and the wait counted those seconds - so under the Overworld's x60 to x100
 (RATE-LAW) a roll came every one to two real seconds, not SEA-EASE's "a minute to two and a half" (below), and a ship left
 DESPAWN_BEYOND astern in a breath freed her berth for the next. Measured on the real host at x60 with a boat at her

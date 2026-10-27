@@ -49,8 +49,8 @@ export const INTERIOR_AMBIENT_ONLY = Object.freeze([0.8, 0.8, 0.8]);
 export const INTERIOR_NIGHT_AMBIENT_ONLY = Object.freeze([0.5, 0.5, 0.5]);
 
 /**
- * RPT1026-WORLD DARK-ROOM (two private reports, 2026-10-24 and 10-26: "This inn has no lights on in it"; Westhead Moor's
- * The Howling Mug, "VERY DARK ... literally zero illumination"): A ROOM DAGGERFALL LIGHTS WITH NOTHING IS LIT AS DFU LIGHTS
+ * RPT1026-WORLD DARK-ROOM (two private reports, 2026-10-24 and 10-26: an inn with not one lamp lit; Westhead Moor's
+ * The Howling Mug, black from wall to wall): A ROOM DAGGERFALL LIGHTS WITH NOTHING IS LIT AS DFU LIGHTS
  * A ROOM BY AMBIENT ALONE. The Howling Mug is MARKAA01.RMB's first room (classic and under Beautiful Cities alike): 27
  * models and no archive-210 flat, so AddLight hangs no lamp in it and DFU draws it at InteriorAmbientLight's 0.18 - and
  * on the Enhanced Lighting lane that is 0.027 in linear under an eye held to 1.2 (INTERIOR-DIM), black. BLOCKS.BSA has

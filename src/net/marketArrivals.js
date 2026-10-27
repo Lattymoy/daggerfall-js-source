@@ -1,8 +1,8 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// RPT1026-MARKET ARRIVE (private reports 2026-10-26: "bought axe from poh trader - it never arrived anywhere, it's gone and
-// so is my gold"; "bought bow from other player house and didnt receive it"; a trader's amulet "no amulet, no gold, and the
-// vendor doesnt have it anymore either"; a character that could not be deleted with a purchase still owed to it) - WHAT
+// RPT1026-MARKET ARRIVE (private reports 2026-10-26: an axe paid for at a trader in a player's home that came nowhere,
+// the gold spent all the same; a bow paid for at another player's house that never came; a trader's amulet that was
+// neither delivered nor refunded nor back on the stall; a character that could not be deleted with a purchase still owed to it) - WHAT
 // THE MARKET SENDS A CHARACTER REACHES ITS PACK ON ITS OWN.
 //
 // A piece bought from a pack (a trader's stall, the Market tab's Goods) or come back to its seller (taken off a trader,

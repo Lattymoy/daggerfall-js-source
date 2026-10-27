@@ -302,7 +302,7 @@ export const MOD_CURATED = Object.freeze({
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
   // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness. RPT1026-CLIENT (a private report:
-  // the one setting that could cap a spell's shake "is missing from the mod's curated settings list"): and the camera
+  // no setting on the mod's tile could hold a spell's shake down): and the camera
   // shake's ceiling, the most one hit or landing spell can shake the view (betterAmbience.weaponKick).
   'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness', 'Camera Shake.maxShake']),
   // ORL1: the mod ships SEVEN knobs and `primarySkillsImpact` is the

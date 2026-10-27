@@ -3347,8 +3347,8 @@ hosts' own gate reads "drawn". It paces every rAF loop, the menus' included; CSS
 are not paced. Measured in Electron 42 under Xvfb (the frame lane's harness): 144/240/300 draw 144/240/300; VSync on,
 nothing is installed and the gate works as before.
 
-**OFF HAS A CEILING WHERE THE WAIT IS LIFTED (RPT1026-CLIENT, 2026-10-26; a private report: "the client renders as fast
-as the hardware allows").** DFU's VSync off with no target frame rate runs free (`Application.targetFrameRate` left at
+**OFF HAS A CEILING WHERE THE WAIT IS LIFTED (RPT1026-CLIENT, 2026-10-26; a private report: with VSync off and the cap
+at Off, nothing held the frames back).** DFU's VSync off with no target frame rate runs free (`Application.targetFrameRate` left at
 -1), and the app followed it: with VSync off and the cap at its default, Off, a frame's garbage was made and collected a
 thousand times a second and more (the report measured about 3,760 collections in ten seconds against 28 capped, and a
 heap peak 77% higher). Where the shell lifted the wait (`installFramePacer`), Off now holds at `LIFTED_OFF_FPS` - the

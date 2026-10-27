@@ -1,6 +1,6 @@
-// RPT1026-CLIENT (a private report, 2026-10-24: "When I put points into Firmament, and click Accept, this error ALWAYS
-// comes up ... IndexSizeError: Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided (-21.2667) is
-// negative", from firmamentWindow's sparks). A star's burst was stamped with performance.now() and drawn by the
+// RPT1026-CLIENT (a private report, 2026-10-24: points spent in the Firmament and Accept pressed, every time an
+// IndexSizeError, an arc's radius below nought, from firmamentWindow's sparks). A star's burst was stamped with
+// performance.now() and drawn by the
 // requestAnimationFrame clock, and every callback of one frame is handed that frame's START: a burst stamped later in the
 // frame (Accept's answer, landing after the world's own frame callback) was younger than nought, and its ring's radius
 // went below it. The window is driven here as the page drives it - its own rAF loop, a canvas that refuses a negative
@@ -20,7 +20,7 @@ function strictContext(log) {
   return new Proxy({}, {
     get: (_, k) => {
       if (k === 'arc') return (x, y, r) => {
-        if (r < 0) { const e = new Error(`Failed to execute 'arc' on 'CanvasRenderingContext2D': The radius provided (${r}) is negative.`); e.name = 'IndexSizeError'; throw e; }
+        if (r < 0) { const e = new Error(`arc: a negative radius (${r})`); e.name = 'IndexSizeError'; throw e; }
         log.push({ x, y, r });
       };
       if (k === 'measureText') return () => ({ width: 1 });
