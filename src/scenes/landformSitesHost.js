@@ -24,7 +24,7 @@
 // scenes/exterior.js is the Bay's fixed scene (LANDFORM4's own table, no ground past the Bay); scenes/worldModes.js (the
 // interiors) and scenes/dungeonContext.js (the dungeons) stand no shaped ground: FLAGGED, nothing to wire.
 // ═══════════════════════════════════════════════════════════════════
-import { landformSitesBeyond } from '../world/landforms.js';
+import { landformSitesBeyond, SITE_REACH_PIXELS } from '../world/landforms.js';
 import { pastBaySites } from '../world/pastBayRows.js';
 import { arenaPixels } from '../world/arenaPlaces.js';
 import { arenaTemplateOf } from '../world/arenaLocations.js';
@@ -33,8 +33,8 @@ import { tamrielFit } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
 import { worldPixelOfKey, worldPixelKey } from '../world/worldWide/worldGrid.js';
 
-/** How far a site moves the ground, in pixels: the 5x5 of sitesAbout (world/landforms.js). */
-export const SITE_REACH_PIXELS = 2;
+/** How far a site moves the ground, in pixels: the 5x5 of sitesAbout (world/landforms.js, its home). */
+export { SITE_REACH_PIXELS };
 
 /**
  * The world keys whose site moved from one table to the next - made, gone, or another rect - in key order.

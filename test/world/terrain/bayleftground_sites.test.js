@@ -13,17 +13,18 @@ import { join } from 'node:path';
 import { WoodsFile } from '../../../src/formats/woodsFile.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { generateSamples, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
-import { createLandforms, landformSites, landformSitesBeyond } from '../../../src/world/landforms.js';
+import { createLandforms, landformSites, landformSitesBeyond, SITE_REACH_PIXELS as SITE_REACH } from '../../../src/world/landforms.js';
 import { generatePixelTerrain, restrideGrid } from '../../../src/world/terrain/terrainGen.js';
 import { TerrainGenClient } from '../../../src/world/terrain/terrainGenClient.js';
-import { groundWoods, dropGroundCache } from '../../../src/world/tamriel/tamrielGround.js';
+import { groundWoods, dropGroundCache, bayEdgeDistance } from '../../../src/world/tamriel/tamrielGround.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, tamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
-import { worldPixelKey } from '../../../src/world/worldWide/worldGrid.js';
+import { worldPixelKey, worldPixelOfKey } from '../../../src/world/worldWide/worldGrid.js';
 import { pastBaySites } from '../../../src/world/pastBayRows.js';
 import { CAPITALS, capitalPin } from '../../../src/world/tamrielCapitals.js';
 import { createLandformSites, sitesMoved, pixelsMovedBy, SITE_REACH_PIXELS } from '../../../src/scenes/landformSitesHost.js';
 import { syntheticWoodsBytes } from '../../landformWorld.mjs';
+import { arenaPlacesOn, capitalsOn, tamrielTraceOn, countrysideOn } from '../../../src/scenes/shared.js';
 import { hostText } from '../../hostText.mjs';
 
 const H = HEIGHTMAP_DIMENSION, M = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
@@ -157,6 +158,46 @@ test('BAY-LEFT-GROUND D1 the places past the Bay as sites (GROUND-AGREE: what ev
   assert.deepEqual([...landformSitesBeyond(rows)], [...landformSitesBeyond(pastBaySites({ pixels, templateOf: (p) => (p.none ? null : tpl), capitals: true }))]);
 });
 
+/** The Bay's own pixels within a site's reach of (px, py) - the 5x5 round it, held to the Bay's 1000 x 500. */
+/** A town's pixel in Morrowind's rolling land on the authored shape (the kernel pins' own). */
+const M6 = [capitalPin({ name: 'Mournhold', province: 'Morrowind' }).px + 6, capitalPin({ name: 'Mournhold', province: 'Morrowind' }).py];
+const bayAbout = (px, py) => {
+  const out = [];
+  for (let y = py - SITE_REACH; y <= py + SITE_REACH; y++) for (let x = px - SITE_REACH; x <= px + SITE_REACH; x++) if (x >= 0 && y >= 0 && x < 1000 && y < 500) out.push([x, y]);
+  return out;
+};
+
+test('BAY-LEFT-GROUND D1 GROUND-AGREE ACROSS THE LAND (the owner\'s call: the sites past the Bay are the places every client stands): two clients, one with the land and its places past the Bay and one without the land - which stands the Bay alone, the land the player\'s own row online too - stand the same Bay ground, at its edge sample for sample; so no place within a site\'s reach of the Bay is a site past it, and one a pixel further pulls only the land past the Bay (mutants: the reach unheld; held short; the table read on the Bay)', () => {
+  const rows = [
+    { px: -1, py: 250, loc: loc(8, 8) },   // in the Bay's seam band: its 5x5 holds the Bay's pixels 0..1
+    { px: -2, py: 100, loc: loc(6, 6) },   // two off: its 5x5 holds the Bay's column 0
+    { px: 1001, py: 400, loc: loc(6, 6) },   // two off the east edge
+    { px: 500, py: -3, loc: loc(8, 8) },   // three off the north edge: its 5x5 is all past the Bay
+    { px: -30, py: 250, loc: loc(4, 4) },   // well past the west edge
+    { px: M6[0], py: M6[1], loc: loc(8, 8) },   // a town in Morrowind's rolling land (the authored shape)
+  ];
+  const t = landformSitesBeyond(rows);
+  assert.deepEqual([...t.keys()].map(worldPixelOfKey), [[500, -3], [-30, 250], M6], 'the sites within a site\'s reach of the Bay left out; the rest the table\'s');
+  assert.equal(SITE_REACH, 2, 'the 5x5 sitesAbout reads');
+  for (const [k] of t) assert.ok(bayEdgeDistance(...worldPixelOfKey(k)) > SITE_REACH);
+  // the two clients: the land's (the continent composed round the Bay, the Bay's table and the table past it) and the
+  // land-less (DFU's own WOODS.WLD, the Bay's table alone) - a Bay town at the west edge between them
+  const raw = new WoodsFile(); assert.equal(raw.load(syntheticWoodsBytes()), true);
+  const land = world();
+  const sites = landformSites([{ px: 1, py: 252, loc: loc(4, 4) }]);
+  const withLand = createLandforms({ woods: land, sites, beyond: t, climates: null }), without = createLandforms({ woods: raw, sites, climates: null });
+  const asked = [...new Set([...bayAbout(-1, 250), ...bayAbout(-2, 100), ...bayAbout(1001, 400), ...bayAbout(500, -3), [500, 2], [0, 0], [999, 499]].map(String))].map((v) => v.split(',').map(Number));
+  assert.ok(asked.length >= 20, `the Bay's pixels asked (${asked.length})`);
+  for (const [x, y] of asked) assert.deepEqual([...generateSamples(land, x, y, H, withLand)], [...generateSamples(raw, x, y, H, without)], `the Bay's (${x}, ${y}): one ground for both clients`);
+  // and the table is live past the Bay: a town's site pulls its neighbour there (a ground only the land's client stands)
+  const bare = createLandforms({ woods: land, sites, climates: null });
+  assert.notDeepEqual([...generateSamples(land, M6[0] + 1, M6[1], H, withLand)], [...generateSamples(land, M6[0] + 1, M6[1], H, bare)], 'past the Bay, beside its site: pulled');
+  // every input the table is made of is the land's own online, whatever a player's doors say (offline alone): the places,
+  // the capitals, the trace (scenes/shared.js) - so every client with the land makes it alike
+  const online = '?online=1&arenaplaces=off&capitals=off&tamrieltrace=off&country=off';
+  assert.deepEqual([arenaPlacesOn(online), capitalsOn(online), tamrielTraceOn(online), countrysideOn(online)], [true, true, true, true], 'online: no door shuts them');
+});
+
 /** A stream's books for the host module: the standing pixels, the ones in flight, the rebuild behind the view. */
 function streamOf(keys, flying = []) {
   const built = new Map(keys.map(([x, y]) => [`${x},${y}`, { px: x, py: y }]));
@@ -210,7 +251,8 @@ test('BAY-LEFT-GROUND D1 the host keeps the table with the places: made as the w
 test('BAY-LEFT-GROUND D1 the world host wires it: the table made beside the places\' templates and handed to both kernels, this thread\'s landforms and a promotion\'s grid reading it, asked on the frame after the places\' own sweeps, the gate\'s kernel kept by its generation (mutants: each seam)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const landformSites = createLandformSites\(\{ terrainGen, landform, arena: _arenaTemplates, capitals: !!_capitalBase, get built\(\) \{ return built; \}, get inFlight\(\) \{ return inFlight; \}, swap \}\);/);
-  assert.match(w, /createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: landformSites\.beyond\(\), climates: _landformClimates \}\)/, 'this thread\'s landforms');
+  // D5: `before` the old law's (the Bay's table alone - test/world/terrain/bayleftground_frame.test.js)
+  assert.match(w, /createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : landformSites\.beyond\(\), climates: _landformClimates \}\)/, 'this thread\'s landforms');
   assert.match(w, /sites: _landformSites, beyond: landformSites\.beyond\(\), climates: _landformClimates, bed: /, 'a promotion\'s grid');
   assert.match(w, /if \(_capitalBase && !building\) sweepCapitalPixels\(\);[^\n]*\n\s+if \(!building\) landformSites\.refresh\(\);/, 'on the frame, after the places\' sweeps');
   assert.match(w, /const key = `\$\{px\},\$\{py\},\$\{landform && terrainGen\.roads\(\) \? 1 : 0\},\$\{landformSites\.generation\(\)\}`;/, 'the gate\'s kernel');
@@ -255,4 +297,54 @@ test('BAY-LEFT-GROUND D1 with ARENA2: on the freeware\'s trace every town past t
   const bay = rows.filter((l) => l.mapTableData.locationType === LOCATION_TYPES.TownCity || l.mapTableData.locationType === LOCATION_TYPES.TownHamlet).filter((_, i) => i % 7 === 0).slice(0, 40)
     .map((lo) => longitudeLatitudeToMapPixel(lo.mapTableData.longitude, lo.mapTableData.latitude));
   for (const p of bay) assert.deepEqual([...generateSamples(woods, p.x, p.y, H, after)], [...generateSamples(woods, p.x, p.y, H, before)], `the Bay's (${p.x}, ${p.y})`);
+});
+
+test('BAY-LEFT-GROUND D1 GROUND-AGREE with ARENA2: on the freeware\'s trace the land\'s client and the land-less one stand the Bay alike - every site past the Bay clear of the Bay\'s reach (the nearest some twenty pixels off), the Bay\'s edge at its corners and beside the sites past the Bay nearest it the same to the bit; a client whose places land after it mounts makes the same table once they do, and builds again what they reach (mutants: the reach unheld; the host\'s stamp)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+  const { DFPalette } = await import('../../../src/formats/dfPalette.js');
+  const { preloadTamrielTrace } = await import('../../../src/ui/tamrielTrace.js');
+  const { MapsFile, longitudeLatitudeToMapPixel } = await import('../../../src/formats/mapsFile.js');
+  const { groundMaps } = await import('../../../src/world/tamriel/tamrielGround.js');
+  const { landformClimates } = await import('../../../src/world/landforms.js');
+  const { arenaTemplates, arenaTemplateOf } = await import('../../../src/world/arenaLocations.js');
+  const { arenaPixels } = await import('../../../src/world/arenaPlaces.js');
+  const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
+  const pal = new DFPalette(); pal.load(bytes('ART_PAL.COL'), 'ART_PAL.COL');
+  const trace = await preloadTamrielTrace({ fetchBytes: async (n) => bytes(n), palette: pal, indexedDBRef: null });
+  setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
+  // the land-less client: DFU's own files, the Bay alone
+  const rawMaps = new MapsFile(); rawMaps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+  const raw = new WoodsFile(); raw.load(bytes('WOODS.WLD'));
+  const rows = [];
+  for (let r = 0; r < rawMaps.regionCount; r++) { if (!rawMaps.getRegion(r)) continue; for (let l = 0; l < rawMaps.baseLocationCount(r); l++) { const lo = rawMaps.getLocation(r, l); if (lo?.exterior?.exteriorData) rows.push(lo); } }
+  const sites = landformSites(rows.map((lo) => { const p = longitudeLatitudeToMapPixel(lo.mapTableData.longitude, lo.mapTableData.latitude); return { px: p.x, py: p.y, loc: lo }; }));
+  // a client whose places land after it mounts: its host made with no trace, a pixel past the Bay standing
+  const posts = [], s = streamOf([]);
+  const tpl = arenaTemplates(rows);
+  const late = createLandformSites({ terrainGen: { setLandformBeyond: (b) => posts.push(b) }, landform: true, arena: tpl, capitals: true, get built() { return s.built; }, get inFlight() { return s.inFlight; }, swap: s.swap });
+  const early = late.beyond();
+  // the land's client: the trace and the composed maps and ground
+  setTamrielTrace(trace);
+  const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+  groundMaps(maps);
+  const w0 = new WoodsFile(); w0.load(bytes('WOODS.WLD'));
+  const woods = groundWoods(w0);
+  const climates = landformClimates((x, y) => maps.getClimateIndex(x, y));
+  assert.deepEqual([...climates], [...landformClimates((x, y) => rawMaps.getClimateIndex(x, y))], 'the Bay\'s climates the same for both');
+  const beyond = landformSitesBeyond(pastBaySites({ pixels: arenaPixels(), templateOf: (p) => arenaTemplateOf(tpl, p), capitals: true }));
+  assert.ok(beyond.size > 200, `the sites past the Bay (${beyond.size})`);
+  const near = [...beyond.keys()].map(worldPixelOfKey).sort((a, b) => bayEdgeDistance(...a) - bayEdgeDistance(...b));
+  assert.ok(bayEdgeDistance(...near[0]) > SITE_REACH, `the nearest site past the Bay ${bayEdgeDistance(...near[0])} pixels off the Bay`);
+  const withLand = createLandforms({ woods, sites, beyond, climates }), without = createLandforms({ woods: raw, sites, climates });
+  const clamp = ([x, y]) => [Math.max(0, Math.min(999, x)), Math.max(0, Math.min(499, y))];
+  const asked = [[0, 0], [999, 0], [0, 499], [999, 499]];
+  for (const q of near.slice(0, 6)) { const [x, y] = clamp(q); asked.push([x, y], clamp([x + Math.sign(500 - x), y + Math.sign(250 - y)])); }
+  for (const [x, y] of asked) assert.deepEqual([...generateSamples(woods, x, y, H, withLand)], [...generateSamples(raw, x, y, H, without)], `the Bay's (${x}, ${y}): one ground for both clients`);
+  // the late client: its places land - the same table as the land's client, and the pixels a moved site reaches built again
+  const [sx, sy] = near.at(-1);
+  s.built.set(`${sx + 1},${sy}`, { px: sx + 1, py: sy });
+  assert.equal(late.refresh(), true, 'the places landed: the table made again');
+  assert.deepEqual([...late.beyond()].sort((a, b) => a[0] - b[0]), [...beyond].sort((a, b) => a[0] - b[0]), 'the same table as a client whose places stood at its mount');
+  assert.notDeepEqual([...(early ?? [])], [...late.beyond()]);
+  assert.equal(posts.at(-1), late.beyond(), 'handed to its kernels');
+  assert.ok(s.rebuilt.includes(`${sx + 1},${sy}`), 'the pixel beside a site that landed: built again');
 });

@@ -835,12 +835,21 @@ export function landformSites(rows) {
 /** BAY-LEFT-GROUND (D1): is a pixel one of the Bay's table's (MAPS.BSA's 1000 x 500)? */
 const onSiteTable = (px, py) => px >= 0 && py >= 0 && px < MAP_W && py < MAP_H;
 
+/** LANDFORM4: how many pixels round its own a site's pull reaches - the 5x5 sitesAbout reads (and what a moved site
+ *  builds again, scenes/landformSitesHost.js). */
+export const SITE_REACH_PIXELS = 2;
+
 /**
  * BAY-LEFT-GROUND (the audit "no system left behind in the Bay", D1): THE SITES PAST THE BAY - the places past the Bay
  * every client stands alike (world/pastBayRows.js pastBaySites), as landformSites reads the Bay's: for each pixel of the
  * world's grid off the Bay's table that stands one, its footprint rect (terrainTiles.js locationFootprintRect), its four
  * bytes SITE_BIAS over their tile values packed in one number (xMin, xMax << 8, yMin << 16, yMax << 24), keyed by its
- * worldPixelKey. A Map, so it crosses to the worker whole. A row on the Bay's table is the table's, never this.
+ * worldPixelKey. A Map, so it crosses to the worker whole. A row on the Bay's table is the table's, never this - NOR ONE
+ * WITHIN A SITE'S REACH OF IT (GROUND-AGREE across the land, the owner's call): the Bay's ground is every client's, the
+ * land's or not - the land past the Bay is the player's own row online too (scenes/shared.js tamrielLandOn), and a client
+ * without it stands the Bay with no table past it, so a site past the Bay that pulled a Bay pixel (sitesAbout's 5x5) would
+ * stand the two on two grounds there. TESA's places stand a picture pixel clear of the Bay (tamrielPlaces.js BAY_MARGIN;
+ * on the freeware's trace the nearest 21 pixels off it), so none is left out today: the law holds whatever trace stands them.
  * @param {Iterable<{px: number, py: number, loc: object}>} rows
  * @returns {Map<number, number>}
  */
@@ -848,7 +857,7 @@ export function landformSitesBeyond(rows) {
   const out = new Map();
   const b = (v) => Math.max(1, Math.min(255, v + SITE_BIAS));
   for (const { px, py, loc } of rows) {
-    if (!loc?.exterior?.exteriorData || !loc.mapTableData || !inWorldGrid(px, py) || onSiteTable(px, py)) continue;
+    if (!loc?.exterior?.exteriorData || !loc.mapTableData || !inWorldGrid(px, py) || bayEdgeDistance(px, py) <= SITE_REACH_PIXELS) continue;   // GROUND-AGREE: never the Bay's table, nor within a site's reach of it
     const r = locationFootprintRect(loc);
     out.set(worldPixelKey(px, py), (b(r.xMin) | (b(r.xMax) << 8) | (b(r.yMin) << 16) | (b(r.yMax) << 24)) >>> 0);
   }
@@ -941,8 +950,8 @@ function sitesAbout(woods, sites, beyond, px, py, span, hDim, ground) {
   if (!sites && !beyond?.size) return out;
   const { reach, per, most } = LANDFORM_DIALS.site;
   const scale = span / WORLD_MAP_TILE_DIM;
-  for (let qy = py - 2; qy <= py + 2; qy++) {
-    for (let qx = px - 2; qx <= px + 2; qx++) {
+  for (let qy = py - SITE_REACH_PIXELS; qy <= py + SITE_REACH_PIXELS; qy++) {
+    for (let qx = px - SITE_REACH_PIXELS; qx <= px + SITE_REACH_PIXELS; qx++) {
       let xa, xb, ya, yb;
       if (onSiteTable(qx, qy)) {
         const i = 4 * (qy * MAP_W + qx);
