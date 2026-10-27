@@ -13,7 +13,8 @@ import { waitingHouses, takeUpLine, newbornButtonLabel } from '../../../src/syst
 const mem = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), get length() { return m.size; }, key: (i) => [...m.keys()][i] }; };
 /** A Bloodline founder fallen with no kin, the Succession waiting - as the death door leaves it (legacyHost.js recordFall). */
 function loneFall({ heir = true } = {}) {
-  const f = foundFamily({ name: 'Lyra Faust', race: 2, gender: 1 }, { model: MODELS.bloodline, at: 1, id: 'fam-h', rng: () => 0.3 });
+  // AUDIT RPT1026 L4: a name of the test's own - the fixture had worn the report's own character's surname, race and sex
+  const f = foundFamily({ name: 'Maren Holloway', race: 5, gender: 1 }, { model: MODELS.bloodline, at: 1, id: 'fam-h', rng: () => 0.3 });
   const fallen = personOf(f, f.currentId);
   fallen.heir = heir;   // B12: the heir answer, rolled at their birth
   recordDeath(f, f.currentId, { at: 700, cause: 'fell' });
@@ -29,7 +30,7 @@ test('RPT1026-MISC HEIR-WAITS: a fall with no living kin whose heir answer allow
   assert.deepEqual(h.heirs, [], 'no living member to carry it');
   assert.equal(h.newborn, true, 'but the fall may raise a child of the fallen');
   assert.equal(h.fallen.id, fallen.id);
-  assert.equal(newbornButtonLabel(fallen), 'Raise a child of Lyra as your heir');
+  assert.equal(newbornButtonLabel(fallen), 'Raise a child of Maren as your heir');
   const refused = loneFall({ heir: false }).f;
   assert.deepEqual(waitingHouses([refused], { settings: RANDOM }), [], 'an answer of no heir, and no kin: no card - the line has no one to go on');
   assert.equal(waitingHouses([refused], { settings: { ...RANDOM, descendants: DESCENDANTS.always } })[0]?.newborn, true, 'the Descendants dial at Always answers for everyone');
@@ -46,7 +47,7 @@ test('RPT1026-MISC HEIR-WAITS: raising the newborn from the card makes the falle
   assert.ok(heir && isAlive(heir), 'a new member of the house');
   assert.deepEqual(heir.parents, [fallen.id], 'the fallen\'s child');
   assert.equal(heir.gen, fallen.gen + 1);
-  assert.equal(heir.born, 700, 'born at the fall\'s own minute, as the Succession bears them');
+  assert.equal(heir.born, 700, 'born at the fall\'s own minute (AUDIT RPT1026 L6: the door\'s choice - the Succession bears its newborn at the choice\'s own minute, a breath after the fall)');
   assert.equal(kept.currentId, heir.id, 'the line\'s current');
   assert.ok(kept.pending, 'the fall is settled when the heir lands, never at the choice (AUDIT LEGACY II B1)');
   const birth = readBirth(tab, heir.id, 60);

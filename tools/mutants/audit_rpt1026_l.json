@@ -1,0 +1,142 @@
+[
+  {
+    "name": "auditl-entry-in-layer",
+    "file": "src/ui/touch/touch.js",
+    "old": "    document.body.appendChild(entry);   // AUDIT RPT1026 L1",
+    "new": "    ui.appendChild(entry);   // AUDIT RPT1026 L1",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L1: the entry is the layer's child again - under the ported window's host"
+  },
+  {
+    "name": "auditl-entry-under-port",
+    "file": "src/ui/touch/touch.js",
+    "old": "export const TOUCH_ENTRY_Z = 39;",
+    "new": "export const TOUCH_ENTRY_Z = 5;",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L1: the entry's z-index under the ported window's host"
+  },
+  {
+    "name": "auditl-entry-left-behind",
+    "file": "src/ui/touch/touch.js",
+    "old": "    dispose() { clearInterval(navTimer); setGyro(false); closeEntry(); ui.remove();",
+    "new": "    dispose() { clearInterval(navTimer); setGyro(false); ui.remove();",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L1: the page's entry outlives the layer that raised it"
+  },
+  {
+    "name": "auditl-talk-head-stacked",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-head { grid-template-columns: 1fr auto auto; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L2: a narrow phone on its side stacks the talk panel's head in two rows again"
+  },
+  {
+    "name": "auditl-talk-goodbye-row-two",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-head .door-goodbye { grid-row: auto; grid-column: auto; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L2: Goodbye kept in the phone rule's own cell"
+  },
+  {
+    "name": "auditl-talk-tone-row-two",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-tone { grid-row: auto; grid-column: auto; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L2: the tones kept on the phone rule's second row"
+  },
+  {
+    "name": "auditl-talk-say-stacked",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-say { grid-template-columns: 1fr auto auto; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L2: the foot's two rows again"
+  },
+  {
+    "name": "auditl-talk-question-row-own",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-say .talk-q { grid-column: auto; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L2: the question kept on a row of its own"
+  },
+  {
+    "name": "auditl-talk-cats-overflow",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-cat { flex: 1 1 auto; min-width: 0; padding: 0 2px; letter-spacing: 0.04em; text-indent: 0.04em; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_rpt1026_l.test.js"
+    ],
+    "note": "AUDIT RPT1026 L2: the categories run past the topics' strip again"
+  },
+  {
+    "name": "auditl-bed-press-unmarked",
+    "file": "src/ui/restDoor.js",
+    "old": "  if (mark) deps.bedPressed = !!ignoreAllocatedBed;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit_rpt1026_l_bed.test.js"
+    ],
+    "note": "AUDIT RPT1026 L3: the window a bed opened never says so"
+  },
+  {
+    "name": "auditl-bed-press-kept",
+    "file": "src/ui/restDoor.js",
+    "old": "  } finally { if (mark) deps.bedPressed = held; }",
+    "new": "  } finally { }",
+    "tests": [
+      "test/scenes/audit_rpt1026_l_bed.test.js"
+    ],
+    "note": "AUDIT RPT1026 L3: the press outlives the open it was for"
+  },
+  {
+    "name": "auditl-bed-press-place-unread",
+    "file": "src/scenes/shared.js",
+    "old": "_place = (_restKindOverride ?? (out.bedPressed ? pressedBedKind : restKind))();",
+    "new": "_place = (_restKindOverride ?? restKind)();",
+    "tests": [
+      "test/scenes/audit_rpt1026_l_bed.test.js"
+    ],
+    "note": "AUDIT RPT1026 L3: the open's place ignores the press - a REST-WARN Yes sleeps the boards"
+  },
+  {
+    "name": "auditl-bed-press-point-unread",
+    "file": "src/scenes/shared.js",
+    "old": "const point = out.bedPressed ? { kind: REST_KIND.Bed, where: null } : (restPoint?.() ?? null);",
+    "new": "const point = (restPoint?.() ?? null);",
+    "tests": [
+      "test/scenes/audit_rpt1026_l_bed.test.js"
+    ],
+    "note": "AUDIT RPT1026 L3: the act's point ignores the press"
+  },
+  {
+    "name": "auditl-bed-press-street-dropped",
+    "file": "src/scenes/world.js",
+    "old": "townTalk.showOverlay(createRestWindow(outdoorRestDeps, bed));",
+    "new": "townTalk.showOverlay(createRestWindow(outdoorRestDeps));",
+    "tests": [
+      "test/scenes/audit_rpt1026_l_bed.test.js"
+    ],
+    "note": "AUDIT RPT1026 L3: the street's ship bed opens its window without its press"
+  }
+]

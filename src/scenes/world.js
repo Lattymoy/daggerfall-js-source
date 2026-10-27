@@ -13423,7 +13423,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (partyRefusal) { townTalk.showOverlay(new ActionTextBox([partyRefusal])); return; }
     // REST-WARN: poisoned or diseased, the rest asks first (systems/rest/restWarning.js) - the window opens on its Yes, once
     // the box has left the slot
-    const restNow = () => { if (modes) markPartyRestSpent(); townTalk.showOverlay(createRestWindow(outdoorRestDeps)); };   // PARTY-REST28: the shared reset every host runs on a granted rest
+    // AUDIT RPT1026 L3: a ship's bed pressed is the press the window opens with (ui/restDoor.js - BedActivation's
+    // `new DaggerfallRestWindow(uiManager, true)`), read now: a REST-WARN box opens the window on its Yes, after the press
+    const bed = _restFromBed, restNow = () => { if (modes) markPartyRestSpent(); townTalk.showOverlay(createRestWindow(outdoorRestDeps, bed)); };   // PARTY-REST28: the shared reset every host runs on a granted rest
     const ail = restAilmentLines(playerEntity);
     if (ail) { let yes = false; townTalk.showOverlay(new DecisionBoxWindow({ rows: ail, onYes: () => { yes = true; } }), () => { if (yes) restNow(); }); return; }
     restNow();

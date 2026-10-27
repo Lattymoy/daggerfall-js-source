@@ -20669,13 +20669,20 @@ The batch's other screen faults, each read to its root in a private report and p
   enhanced port draws a classic window's typed field as words (`ui/enhanced/enhancedPort.js` 'field'); the touch layer's
   own entry (TI2's "abc") is opened by a press on a live field now, with the number pad for an amount
   (`ui/touch/touch.js` openTouchEntry; the bank's field marked `numeric` in `enhancedPorts.js`).
-  `test/ui/enhanced/rpt1026_misc_field.test.js` (1).
+  `test/ui/enhanced/rpt1026_misc_field.test.js` (1). AUDIT RPT1026 L1: the entry was the layer's child, under every DOM
+  window (the layer is one stacking context at z-index 5, the port's host 13), so the amount typed stood hidden behind the
+  Bank until Enter; it is the page's own now, at `TOUCH_ENTRY_Z` (39) over the window that raised it
+  (`test/ui/audit_rpt1026_l.test.js`).
 - **TALK-SIDEWAYS** - on a phone the talk panel ran off the screen and could not be used.
   Measured in Chromium at 844 x 390 before the fix: the panel 52dvh, 203 pixels, its topic list 12 pixels tall and drawn
   under the foot; at 740 x 360 the category buttons under it. On a screen 500 pixels high or less the panel stands the
   height less a margin and keeps its two columns (`ui/enhanced/enhancedStyle.js`, after the talk's phone rule): the list
   166 pixels at 844 x 390, upright and desktop untouched. `test/ui/enhanced/rpt1026_misc_talk.test.js` (1, the sheet's
-  cascade read at each size).
+  cascade read at each size). AUDIT RPT1026 L2: and narrower than 720 pixels (640 x 360, 667 x 375, 568 x 320) the phone
+  rule had still stacked the head and the foot, the list 66 pixels at 640 x 360 and 26 at 568 x 320, Work cut off; on a
+  short screen the head and the foot are one row each and the categories shrink to their strip - the list 152, 167 and
+  112 pixels (`test/ui/audit_rpt1026_l.test.js`).
+
 ## ARMOR-TYPE - A PIECE OF ARMOUR SAYS ITS FAMILY (2026-10-26, a player: "can we add an info to every item what TYPE of armor it is (chain leather or plate)")
 
 A plate piece's name says its metal ("Iron Cuirass"), never the word "plate", and below Rare the metal is withheld - so
