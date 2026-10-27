@@ -47,7 +47,7 @@
   {
     "name": "TB-the-stands-ground-dropped",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  const onGround = ground ? (x, z) => onTownGround(ground, tilePos, x, z) : null;",
+    "old": "  const onGround = ground ? (x, z) => onTownTile(ground, tilePos, x, z) : null;",
     "new": "  const onGround = null;",
     "tests": [
       "test/world/urban/townboards.test.js"
@@ -74,7 +74,7 @@
   {
     "name": "TB-the-grounds-key-blind",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "h = Math.imul(h ^ (onTownGround(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;",
+    "old": "h = Math.imul(h ^ (ground && onTownTile(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;",
     "new": "h = Math.imul(h ^ 1, 0x01000193) >>> 0;",
     "tests": [
       "test/world/urban/townboards.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "TB-the-host-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "breathe: () => breather.breathe(), ground: townGround });",
-    "new": "breathe: () => breather.breathe(), ground: null });",
+    "old": "breathe: () => breather.breathe(), ground: townGround, paths });",
+    "new": "breathe: () => breather.breathe(), ground: null, paths });",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -103,6 +103,150 @@
     "file": "src/world/townShape.js",
     "old": "  const ty = tilePos.y + (gy >> 2);\n  const tx = tilePos.x + (gx >> 2);",
     "new": "  const ty = tilePos.y + (gx >> 2);\n  const tx = tilePos.x + (gy >> 2);",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-join-unmade",
+    "file": "src/world/urban/townFabric.js",
+    "old": "        if (fill === undefined) continue;   // two buildings' or props' corners between them: no ground to join on",
+    "new": "        if (fill === undefined || true) continue;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-join-through-a-building",
+    "file": "src/world/urban/townFabric.js",
+    "old": "        const fill = between.find((i) => kind[i] === K.main) ?? between.find((i) => kind[i] === K.open);",
+    "new": "        const fill = between.find((i) => kind[i] === K.main) ?? between[0];",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-least-unread",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    const { long, meets } = reach(cells, K.main);\n    if (long) continue;\n",
+    "new": "    const { meets } = reach(cells, K.main);\n    if (true) continue;\n",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-least-a-cell-short",
+    "file": "src/world/urban/townFabric.js",
+    "old": "  paveLeast: 4,",
+    "new": "  paveLeast: 3,",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-carriageways-surface-not-taken",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    for (const i of cells) kind[i] = meets ? K.main : K.open;",
+    "new": "    for (const i of cells) kind[i] = K.open;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-a-short-piece-of-none-left-the-streets",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    for (const i of cells) kind[i] = meets ? K.main : K.open;",
+    "new": "    for (const i of cells) kind[i] = K.main;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-roads-unread",
+    "file": "src/world/urban/townFabric.js",
+    "old": "          else if (onRoad && onRoad(i % W, (i - (i % W)) / W)) road[i] = 1;",
+    "new": "          else if (false) road[i] = 1;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-stands-roads-dropped",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  const onRoad = paths ? (x, z) => onTownTile(paths, tilePos, x, z) : null;",
+    "new": "  const onRoad = null;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-key-blind-to-the-roads",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "      h = Math.imul(h ^ (paths && onTownTile(paths, tilePos, x * 4, y * 4) ? 3 : 4), 0x01000193) >>> 0;",
+    "new": "      h = Math.imul(h ^ 4, 0x01000193) >>> 0;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-host-roads-unwired",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "ground: townGround, paths });   // URBANIZER U3",
+    "new": "ground: townGround, paths: null });   // URBANIZER U3",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-carriageway-unreached",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    const carriageway = Uint8Array.from(near.id, (k) => (k >= 0 && reached.has(k) ? 1 : 0));",
+    "new": "    const carriageway = Uint8Array.from(near.id, (k) => (k >= 0 ? 1 : 0));",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-walks-unhanded",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    paveWalks(g, kind, onWalk);",
+    "new": "    paveWalks(g, kind);",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-the-islands-unread",
+    "file": "src/world/urban/townFabric.js",
+    "old": "  if (!walk) return;\n  for (const cells of pieces(g, (i) => kind[i] === K.main).list) {",
+    "new": "  return;\n  for (const cells of pieces(g, (i) => kind[i] === K.main).list) {",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-an-island-walked-taken",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    if (cells.some((i) => walk[i])) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-a-long-island-taken",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    const { long, meets } = reach(cells, K.pave);\n    if (long) continue;\n",
+    "new": "    const { meets } = reach(cells, K.pave);\n",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB2-an-islands-surface-not-taken",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    for (const i of cells) kind[i] = meets ? K.pave : K.open;",
+    "new": "    for (const i of cells) kind[i] = K.open;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]

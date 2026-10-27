@@ -12,15 +12,21 @@
 // its fabric planned through the stand as the pixel build plans it (world/urban/townFabricStand.js townFabricFor, on the
 // town's ground - its outline, world/terrain/terrainTiles.js locationShapeField; the sea's tiles are the terrain job's
 // to take, LAND below):
-//   PAVE - its main streets' pavements: their pieces (four ways), those under four cells, and those that meet another
-//     piece at a corner alone - a pavement of single flags apart, a boardwalk of single boards on the forest floor.
+//   PAVE - its main streets' pavements, as each style lays them: their pieces (four ways - in the planks' styles a
+//     boardwalk, the only thing they lay on a main street; in the stone styles flags over the setts), those shorter than
+//     FABRIC.paveLeast (6.4 m) along their longer side - a lone board, a lone flag - and those that meet another at a
+//     corner alone across the town's open ground (a step); and in the stone styles the setts' islands, a piece of the
+//     carriageway no walk runs down shorter than the same.
 //   OFF - the fabric's pieces on a cell its town's ground does not hold: a fence's or a gate's edge, a dead end's wall, a
 //     woodpile, a pavement's or a carriageway's cell.
 //   LAND - every Mth of them laid on its template's own pixel (the template's Bay pixel, WOODS.WLD) as the terrain kernel
 //     flattens it (world/terrain/terrainGen.js generatePixelTerrain, TS2's outline - its own townGround, the sea's tiles
-//     taken), the fabric planned on that ground, and each of its fence edges, woodpiles and pavements read against the
-//     ground under it: BURIED where the ground stands over LAND_M above its foot (a fence to its top rail - a board on the
-//     ground), HUNG where it falls more than LAND_M under it.
+//     taken) with a road every way through it (TS10's own measure, test/world/townpaths.test.js - the painter's paths the
+//     job's), the fabric planned on that ground and those roads as the pixel build plans it, and each of its fence edges,
+//     woodpiles and pavements read against the ground under it: BURIED where the ground stands over LAND_M above its foot
+//     (a fence to its top rail - a board on the ground), HUNG where it falls more than LAND_M under it.
+//   ROADS - on the same: a fence's edge, a gate's or a woodpile on a cell whose tile the terrain painted a road over (a
+//     yard across the road - its fence crosses it), and the yards' cells there.
 // ON THE BAY - every village and hamlet of every region, its blocks as the world-data door serves them (both town packs
 // on): FABRIC, how many the fabric dresses (world/urban/townFabricStand.js fabricTown - none: the Bay's towns are
 // Daggerfall's); FLAT, every placed model of their blocks that lies on the ground (under FLAT_H high, its foot within
@@ -36,8 +42,8 @@ import { arenaTemplates } from '../src/world/arenaLocations.js';
 import { outlineTownLocation, installTownOutline, townOutlineBlockJson } from '../src/world/townOutline.js';
 import { standTownWall } from '../src/world/townWalls.js';
 import { townFabricFor, _resetTownFabrics, fabricTown, fabricBlockOf } from '../src/world/urban/townFabricStand.js';
-import { FABRIC_KIND as K, labelPieces, fabricGrid } from '../src/world/urban/townFabric.js';
-import { onTownGround, isWallCarrier } from '../src/world/townShape.js';
+import { FABRIC_KIND as K, FABRIC, labelPieces, fabricGrid } from '../src/world/urban/townFabric.js';
+import { onTownTile, isWallCarrier } from '../src/world/townShape.js';
 import { locationShapeField, getLocationTerrainTileOrigin, setLocationTiles } from '../src/world/terrain/terrainTiles.js';
 import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
 import { surfaceHeightAt } from '../src/world/terrain/terrainSurface.js';
@@ -46,6 +52,7 @@ import { WoodsFile } from '../src/formats/woodsFile.js';
 import { LOCATION_TYPES, longitudeLatitudeToMapPixel } from '../src/formats/mapsFile.js';
 import { layoutRmbBlock } from '../src/world/rmbLayout.js';
 import { NAV_CELL } from '../src/world/city/cityNavigation.js';
+import { DIR } from '../src/world/road/roadNetwork.js';
 
 /** LAND: how far the ground may stand over or fall under a piece's foot before it is buried or hung (metres) - a fence's
  *  lower rail is 0.4 m up (ARCH3D 41206), a pavement 0.13 m. */
@@ -105,63 +112,90 @@ export function outlineGround(sw, loc) {
   return shape ? Uint8Array.from(shape, (v) => (v ? 1 : 0)) : null;
 }
 
-/** A clone laid on its template's own pixel as the terrain kernel flattens it: its ground mask and the ground's height
- *  under a point of the fabric over the fabric's own 0 (scenes/pixelBuild.js locLocal: the job's level and 5 cm). */
+/** TS10's road every way (test/world/townpaths.test.js): the pixel's road byte with all eight arms - the painter's arms and
+ *  its ring round the town's outline. */
+export const ROADS_EVERY_WAY = DIR.N | DIR.S | DIR.E | DIR.W | DIR.NE | DIR.SW | DIR.NW | DIR.SE;
+
+/** A clone laid on its template's own pixel as the terrain kernel flattens it, a road every way through it: its ground
+ *  mask, the paths the painter wrote, and the ground's height under a point of the fabric over the fabric's own 0
+ *  (scenes/pixelBuild.js locLocal: the job's level and 5 cm). */
 export function sweepLand(sw, loc) {
   const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
   const tilemap = new Uint8Array(128 * 128), rect = setLocationTiles(loc, sw.maps, sw.blocks, tilemap);
-  const t = generatePixelTerrain({ woods: sw.woodsOf(), px: p.x, py: p.y, tilemap, locationRect: rect, hasLocation: true, climateType: 0 });
+  const roads = new Uint8Array(1000 * 500);
+  if (p.x >= 0 && p.x < 1000 && p.y >= 0 && p.y < 500) roads[p.y * 1000 + p.x] = ROADS_EVERY_WAY;
+  const t = generatePixelTerrain({ woods: sw.woodsOf(), px: p.x, py: p.y, tilemap, locationRect: rect, hasLocation: true, climateType: 0, roads: { roads, tracks: new Uint8Array(1000 * 500), smooth: true } });
   const tile = TERRAIN_SIZE / 128, wh = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, o = getLocationTerrainTileOrigin(loc);
   const base = t.avg * wh + 2.0 * 0.025;
-  return { px: p.x, py: p.y, ground: t.townGround, groundAt: (x, z) => surfaceHeightAt(t.samples, o.x * tile + x, o.y * tile + z) - base };
+  return { px: p.x, py: p.y, ground: t.townGround, paths: t.paths, groundAt: (x, z) => surfaceHeightAt(t.samples, o.x * tile + x, o.y * tile + z) - base };
 }
 
-/** The clone's fabric's plan, planned through the stand on `ground` (null: its whole grid, as before TOWN-BOARDS), and its
- *  blocks' cells as the plan reads them (`g`: built, house). */
-export async function sweepPlan(sw, loc, ground) {
+/** The clone's fabric's plan, planned through the stand on `ground` and `paths` (null: its whole grid, and no roads but its
+ *  blocks' - the fabric before TOWN-BOARDS), and its blocks' cells as the plan reads them (`g`: built, house). */
+export async function sweepPlan(sw, loc, ground, paths = null) {
   _resetTownFabrics();
-  const blocks = sweepBlocks(sw, loc), f = await townFabricFor(loc, blocks, { px: 0, py: 0, ground });
+  const blocks = sweepBlocks(sw, loc), f = await townFabricFor(loc, blocks, { px: 0, py: 0, ground, paths });
   _resetTownFabrics();
   if (!f) return null;
   const ed = loc.exterior.exteriorData, at = new Map(blocks.map((b) => [b.y * ed.width + b.x, b]));
   return { plan: f.plan, g: fabricGrid(ed.width, ed.height, (bx, by) => fabricBlockOf(at.get(by * ed.width + bx))) };
 }
 
-/** PAVE: the pavements' pieces (four ways), their cells, and the pieces under four cells (`small`) - each of those either
- *  meeting another piece at a corner alone across the town's open ground (`stair`: a band's step - the boards apart), or
- *  laid along a house (`house`: a cell of it beside a house's - its front, or round its corner), or cut short by a prop's
- *  clearance (`props`: beside one of the block's misc models' or flats' cells, `built` and no house's), or none (`alone`).
- *  @param {any} plan @param {{ built: Uint8Array, house: Uint8Array }} g its grid */
-export function paveCorners(plan, g) {
-  const { W, H } = plan, n = W * H, pave = Uint8Array.from(plan.kind, (k) => (k === K.pave ? 1 : 0));
-  const { id, sizes } = labelPieces(W, H, pave), corner = new Uint8Array(sizes.length), prop = new Uint8Array(sizes.length), house = new Uint8Array(sizes.length);
+/** PAVE's threshold, in cells: FABRIC.paveLeast (6.4 m - one of Daggerfall's ground tiles), the same for a fabric before it
+ *  had one, so a sweep of either reads the same pieces as short. */
+const LEAST = FABRIC.paveLeast ?? 4;
+/** A piece's extent along its longer side, in cells (its box's). */
+const extentOf = (cells, W) => {
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (const i of cells) { const x = i % W, z = (i - x) / W; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+  return Math.max(x1 - x0, z1 - z0) + 1;
+};
+/** The cells of each piece (four ways) of a mask. */
+const piecesOf = (W, H, mask) => {
+  const { id, sizes } = labelPieces(W, H, mask), list = sizes.map(() => []);
+  for (let i = 0; i < id.length; i++) if (id[i] >= 0) list[id[i]].push(i);
+  return { id, list };
+};
+/** PAVE: the pavements' pieces (four ways - the planks' boardwalks, the stone styles' flags), their cells, those shorter
+ *  than FABRIC.paveLeast along their longer side (`short` - a lone board, a lone flag: each `house` where a cell of it is
+ *  beside a house's, `props` beside one of the block's misc models' or flats' cells, else `alone`), the steps (two pieces
+ *  meeting at a corner alone across the town's open ground), and the stone styles' setts islands (`islands`: a piece of the
+ *  carriageway no walk runs down, shorter than the same). @param {any} plan @param {{ built: Uint8Array, house: Uint8Array }} g */
+export function paveReads(plan, g) {
+  const { W, H } = plan, n = W * H;
+  const pave = piecesOf(W, H, Uint8Array.from(plan.kind, (k) => (k === K.pave ? 1 : 0)));
   const ground = (c) => plan.kind[c] !== K.off && plan.kind[c] !== K.built;   // the town's open ground
+  const out = { pieces: pave.list.length, cells: 0, short: 0, house: 0, props: 0, alone: 0, steps: 0, islands: 0 };
   for (let i = 0; i < n; i++) {
-    if (id[i] < 0) continue;
+    if (pave.id[i] < 0) continue;
+    out.cells++;
     const x = i % W;
-    for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-      const nx = x + dx, j = i + dz * W + dx;
-      // a step of a band: two pieces meeting at a corner across the town's open ground (a pavement turning round a
-      // building's or a prop's corner, or cut by the edge of the town's ground, meets the next one across that corner)
-      if (nx >= 0 && nx < W && j >= 0 && j < n && id[j] >= 0 && id[j] !== id[i] && ground(i + dx) && ground(i + dz * W)) corner[id[i]] = 1;
-    }
-    for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) {
-      if (j < 0 || j >= n) continue;
-      if (g.house[j]) house[id[i]] = 1; else if (g.built[j]) prop[id[i]] = 1;
+    for (const [dx, dz] of [[1, 1], [-1, 1]]) {
+      const j = i + dz * W + dx;
+      if (x + dx >= 0 && x + dx < W && j < n && pave.id[j] >= 0 && pave.id[j] !== pave.id[i] && ground(i + dx) && ground(i + dz * W)) out.steps++;
     }
   }
-  const out = { pieces: sizes.length, cells: pave.reduce((a, b) => a + b, 0), small: 0, stair: 0, house: 0, props: 0, alone: 0 };
-  sizes.forEach((s, k) => {
-    if (s >= 4) return;
-    out.small++;
-    if (corner[k]) out.stair++; else if (house[k]) out.house++; else if (prop[k]) out.props++; else out.alone++;
-  });
+  for (const cells of pave.list) {
+    if (extentOf(cells, W) >= LEAST) continue;
+    out.short++;
+    let house = false, prop = false;
+    for (const i of cells) {
+      const x = i % W;
+      for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) { if (j < 0 || j >= n) continue; if (g.house[j]) house = true; else if (g.built[j]) prop = true; }
+    }
+    if (house) out.house++; else if (prop) out.props++; else out.alone++;
+  }
+  const walk = new Uint8Array(n);
+  for (const p of plan.paths) for (const c of p) walk[c] = 1;
+  for (const cells of piecesOf(W, H, Uint8Array.from(plan.kind, (k) => (k === K.main ? 1 : 0))).list) {
+    if (!cells.some((i) => walk[i]) && extentOf(cells, W) < LEAST) out.islands++;
+  }
   return out;
 }
 
 /** OFF: the fabric's pieces whose cell the town's ground (`ground`, 128 x 128 tiles) does not hold. */
 export function offGround(plan, loc, ground) {
-  const o = getLocationTerrainTileOrigin(loc), W = plan.W, on = (i) => onTownGround(ground, o, i % W, (i - (i % W)) / W);
+  const o = getLocationTerrainTileOrigin(loc), W = plan.W, on = (i) => onTownTile(ground, o, i % W, (i - (i % W)) / W);
   const out = { fences: 0, gates: 0, walls: 0, piles: 0, pave: 0, main: 0 };
   for (const e of plan.fences) if (!on(e.inner)) out.fences++;
   for (const e of plan.gates) if (!on(e.inner)) out.gates++;
@@ -189,6 +223,18 @@ export function onLand(plan, groundAt) {
     const x = i % W, z = (i - x) / W;
     if (groundAt((x + 0.5) * C, (z + 0.5) * C) > 0.13) out.paveBuried++;   // FABRIC_PAVE_Y over the fabric's 0
   }
+  return out;
+}
+
+/** ROADS: the fabric's pieces on a cell whose tile the terrain painted a road over (`paths`, 128 x 128): a fence's edge, a
+ *  gate's, a woodpile, a yard's cell - each a yard across the road. */
+export function onRoads(plan, loc, paths) {
+  const o = getLocationTerrainTileOrigin(loc), W = plan.W, on = (i) => !!paths && onTownTile(paths, o, i % W, (i - (i % W)) / W);
+  const out = { fences: 0, gates: 0, piles: 0, yard: 0 };
+  for (const e of plan.fences) if (on(e.inner)) out.fences++;
+  for (const e of plan.gates) if (on(e.inner)) out.gates++;
+  for (const p of plan.props) if (on(p.cell)) out.piles++;
+  for (let i = 0; i < plan.kind.length; i++) if (plan.kind[i] === K.yard && on(i)) out.yard++;
   return out;
 }
 
@@ -230,21 +276,23 @@ if (isMain(import.meta.url)) {
   console.log = (...a) => { if (!/^\[worlddata\]/.test(String(a[0]))) quiet(...a); };
   const sw = await openSweep(process.env.ARENA2_PATH);
   for (const kind of kinds) {
-    const sum = { towns: 0, pave: { pieces: 0, cells: 0, small: 0, stair: 0, house: 0, props: 0, alone: 0 }, off: { fences: 0, gates: 0, walls: 0, piles: 0, pave: 0, main: 0 }, offTowns: 0, landTowns: 0, land: { fenceBuried: 0, fenceHung: 0, pileBuried: 0, pileHung: 0, paveBuried: 0 }, landHit: [] };
+    const sum = { towns: 0, pave: { pieces: 0, cells: 0, short: 0, house: 0, props: 0, alone: 0, steps: 0, islands: 0 }, roads: { fences: 0, gates: 0, piles: 0, yard: 0 }, roadTowns: 0, off: { fences: 0, gates: 0, walls: 0, piles: 0, pave: 0, main: 0 }, offTowns: 0, landTowns: 0, land: { fenceBuried: 0, fenceHung: 0, pileBuried: 0, pileHung: 0, paveBuried: 0 }, landHit: [] };
     for (let j = 0; j < sw.templates[kind].length; j += every) {
       const loc = sweepClone(sw, kind, j), outline = outlineGround(sw, loc), planned = await sweepPlan(sw, loc, outline);
       if (!planned) continue;
       const { plan } = planned;
       sum.towns++;
-      const pc = paveCorners(plan, planned.g);
+      const pc = paveReads(plan, planned.g);
       for (const k of Object.keys(sum.pave)) sum.pave[k] += pc[k];
       if (outline) { const o = offGround(plan, loc, outline); let any = 0; for (const k of Object.keys(o)) { sum.off[k] += o[k]; any += o[k]; } if (any) sum.offTowns++; }
       if (land && (sum.towns - 1) % land === 0) {
-        const L = sweepLand(sw, loc), lp = await sweepPlan(sw, loc, L.ground), r = onLand(lp.plan, L.groundAt);
+        const L = sweepLand(sw, loc), lp = await sweepPlan(sw, loc, L.ground, L.paths), r = onLand(lp.plan, L.groundAt), rd = onRoads(lp.plan, loc, L.paths);
         sum.landTowns++;
-        let hit = 0;
+        let hit = 0, crossed = 0;
         for (const k of Object.keys(sum.land)) { sum.land[k] += r[k]; hit += r[k]; }
-        if (hit) sum.landHit.push(`${loc.name} #${j} (${L.px},${L.py}) ${JSON.stringify(r)}`);
+        for (const k of Object.keys(sum.roads)) { sum.roads[k] += rd[k]; crossed += rd[k]; }
+        if (crossed) sum.roadTowns++;
+        if (hit || crossed) sum.landHit.push(`${loc.name} #${j} (${L.px},${L.py}) ${JSON.stringify(r)} roads ${JSON.stringify(rd)}`);
       }
     }
     quiet(`PAST THE BAY ${kind}: ${JSON.stringify({ ...sum, landHit: sum.landHit.length })}`);

@@ -88,17 +88,17 @@
   "tests": [
    "test/world/townfollow.test.js"
   ],
-  "note": "TOWN-BOARDS: re-aimed by content - shutOffGround reads the one ground law, world/townShape.js onTownGround (the fabric is planned on it too)."
+  "note": "TOWN-BOARDS: re-aimed by content - shutOffGround reads the one tile law, world/townShape.js onTownTile (the fabric plans on its ground and its painted roads by it too)."
  },
  {
   "name": "TF-the-rows-turned",
   "file": "src/world/townShape.js",
-  "old": "      if (!onTownGround(ground, tilePos, gx, gy)) nav.grid[gy * nav.width + gx] = 0;",
-  "new": "      if (!onTownGround(ground, tilePos, gx, nav.height - 1 - gy)) nav.grid[gy * nav.width + gx] = 0;",
+  "old": "      if (!onTownTile(ground, tilePos, gx, gy)) nav.grid[gy * nav.width + gx] = 0;",
+  "new": "      if (!onTownTile(ground, tilePos, gx, nav.height - 1 - gy)) nav.grid[gy * nav.width + gx] = 0;",
   "tests": [
    "test/world/townfollow.test.js"
   ],
-  "note": "TOWN-BOARDS: re-aimed by content - the rows turned where shutOffGround asks the one ground law (world/townShape.js onTownGround)."
+  "note": "TOWN-BOARDS: re-aimed by content - the rows turned where shutOffGround asks the one tile law (world/townShape.js onTownTile)."
  },
  {
   "name": "TF-the-ground-unhanded",

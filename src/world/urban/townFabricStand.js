@@ -15,8 +15,9 @@
 // its walkers are placed (world/townWalls.js townWalkShut reads shutTownFabric) - and stands the model at the location's
 // origin, merged into the pixel's static batch and solid as its blocks' models are. TOWN-BOARDS: on the town's ground
 // alone - the terrain job's townGround, the outline TS2 flattens to the level the model stands at (world/townShape.js
-// onTownGround, the walkers' law): a yard, a street or a woodpile planned past it stood in the land's slope, its fences
-// buried to their top rail or hung over falling ground at a village's and a hamlet's edges.
+// onTownTile, the walkers' law): a yard, a street or a woodpile planned past it stood in the land's slope, its fences
+// buried to their top rail or hung over falling ground at a village's and a hamlet's edges; and the job's painted paths
+// its roads (TS10, as the walkers and the merchant yards read them) - no yard, fence or woodpile on a painted road.
 // KEPT (EVERY ALLOCATION HAS AN OWNER): the plans and their models, by the town's map id, the TOWN_FABRIC_KEEP most
 // recently built - a town past them has its model taken off the model door (its GPU mesh is the pixel's hold's, freed with
 // the pixel, scenes/dataPipeline.js PLACE-LRU) and is planned again when it is built again, the same plan. A model's id is
@@ -27,7 +28,7 @@ import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { provinceKeyBeyondBay } from '../tamriel/tamrielLand.js';
 import { CAPITALS, BLOCK_M } from '../tamrielCapitals.js';
 import { townWallGatesOf } from '../townWalls.js';
-import { onTownGround } from '../townShape.js';
+import { onTownTile } from '../townShape.js';
 import { getLocationTerrainTileOrigin } from '../terrain/terrainTiles.js';
 import { FABRIC_CELLS, fabricGrid, planSteps } from './townFabric.js';
 import { townFabricModel, townFabricModelSliced, FABRIC_PIECES } from './townFabricModel.js';
@@ -94,13 +95,19 @@ export function fabricBlockOf(b) {
 const _fabrics = new Map();   // map id -> { plan, modelId, style, groundKey }
 let _next = 0;
 
-/** TOWN-BOARDS: the town's ground under its grid as a key (FNV-1a over its tiles on and off it) - a plan is its town's
- *  and its ground's; '' where there is none (a capital: its whole grid its own). @param {?ArrayLike<number>} ground
- *  @param {{x: number, y: number}} tilePos @param {number} tw @param {number} th the grid's tiles a side */
-export function fabricGroundKey(ground, tilePos, tw, th) {
-  if (!ground) return '';
+/** TOWN-BOARDS: the town's ground and its painted roads under its grid as a key (FNV-1a over its tiles, on and off each)
+ *  - a plan is its town's and its ground's; '' where it has neither (a capital: its whole grid its own, before its roads
+ *  land). @param {?ArrayLike<number>} ground @param {?ArrayLike<number>} paths @param {{x: number, y: number}} tilePos
+ *  @param {number} tw @param {number} th the grid's tiles a side */
+export function fabricGroundKey(ground, paths, tilePos, tw, th) {
+  if (!ground && !paths) return '';
   let h = 0x811c9dc5;
-  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) h = Math.imul(h ^ (onTownGround(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;
+  for (let y = 0; y < th; y++) {
+    for (let x = 0; x < tw; x++) {
+      h = Math.imul(h ^ (ground && onTownTile(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;
+      h = Math.imul(h ^ (paths && onTownTile(paths, tilePos, x * 4, y * 4) ? 3 : 4), 0x01000193) >>> 0;
+    }
+  }
   return h.toString(36);
 }
 
@@ -109,18 +116,20 @@ export function fabricGroundKey(ground, tilePos, tw, th) {
  * `breathe`, the build's) on the town's own ground, kept by its map id (planned again when asked on another ground than
  * the one it was planned on); null for a town the fabric does not dress.
  * @param {any} dfLocation @param {Array<any>} blocks layoutLocation's blocks
- * @param {{ px: number, py: number, breathe?: () => any, ground?: ?ArrayLike<number> }} at the town's pixel, the build's
- *   breather, and TOWN-BOARDS: its ground (the terrain job's townGround, 128 x 128 tiles - null, its whole grid)
+ * @param {{ px: number, py: number, breathe?: () => any, ground?: ?ArrayLike<number>, paths?: ?ArrayLike<number> }} at the
+ *   town's pixel, the build's breather, and TOWN-BOARDS: its ground (the terrain job's townGround, 128 x 128 tiles - null,
+ *   its whole grid) and the roads its terrain painted (the job's paths - null, none)
  */
-export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () => null, ground = null }) {
+export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () => null, ground = null, paths = null }) {
   if (!fabricTown(dfLocation)) return null;
   const ed = dfLocation.exterior.exteriorData, tilePos = getLocationTerrainTileOrigin(dfLocation);
-  const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, had = _fabrics.get(mapId), groundKey = fabricGroundKey(ground, tilePos, ed.width * 16, ed.height * 16);
+  const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, had = _fabrics.get(mapId), groundKey = fabricGroundKey(ground, paths, tilePos, ed.width * 16, ed.height * 16);
   if (had && had.groundKey === groundKey) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }
-  if (had) { _fabrics.delete(mapId); unregisterCustomModel(had.modelId); }   // its ground moved under it (the land landed): planned again
+  if (had) { _fabrics.delete(mapId); unregisterCustomModel(had.modelId); }   // its ground moved under it (the land or its roads landed): planned again
   const at = new Map(blocks.map((b) => [b.y * ed.width + b.x, b]));
-  const onGround = ground ? (x, z) => onTownGround(ground, tilePos, x, z) : null;
-  const grid = fabricGrid(ed.width, ed.height, (bx, by) => fabricBlockOf(at.get(by * ed.width + bx)), onGround);
+  const onGround = ground ? (x, z) => onTownTile(ground, tilePos, x, z) : null;
+  const onRoad = paths ? (x, z) => onTownTile(paths, tilePos, x, z) : null;
+  const grid = fabricGrid(ed.width, ed.height, (bx, by) => fabricBlockOf(at.get(by * ed.width + bx)), { onGround, onRoad });
   const { mains, ends, centre } = fabricEnds(dfLocation, grid.W, grid.H);
   const steps = planSteps(grid, { ends, centre, seed: mapId, mains });
   let r = steps.next();

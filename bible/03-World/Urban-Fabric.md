@@ -102,15 +102,19 @@ NAV_CELL), so the plan and the people agree - and ordered:
   records built, Daggerfall's grass (2) and road (46, 47, 55) kept apart, every misc model's and flat's cell and the eight
   round it built. A cell no block lays - a left-out cell (TS3), a wall's carrier (TS4), a capital's own blocks, gardens
   and lakes - is off the town (`isPortCell`), and so is a cell past the town's ground (TOWN-BOARDS, section 9: the
-  outline TS2 flattens, `world/townShape.js` onTownGround - the walkers' own law).
+  outline TS2 flattens, `world/townShape.js` onTownTile - the walkers' own law). A cell the terrain painted a road over
+  (TS10's paths) is a road of the town's, never a yard's grass (TOWN-BOARDS 2).
 - **The main streets**: the ways from the town's ends to its middle (`world/urban/townFabricStand.js` fabricEnds, below),
   each the cheapest walk over the open cells (Dijkstra, four ways) - a cell 1 on Daggerfall's road and FABRIC.offRoad (2)
   more off it, FABRIC.mainCost (4) more for each cell its clearance falls short of FABRIC.mainWant (2.5): the town's own
   lanes, kept off its walls. Its carriageway is every open cell within FABRIC.carriage (2.5 - 8 m between its kerbs) of
-  the walk; its pavements the open cells round the carriageway FABRIC.kerb (1) deep by the eight ways - beside it or
+  the walk that the walk reaches over such cells (TOWN-BOARDS 2: never past a wall or a house's corner into a pocket
+  beyond it); its pavements the open cells round the carriageway FABRIC.kerb (1) deep by the eight ways - beside it or
   across its corner, so they run on unbroken round every step of the walk (TOWN-BOARDS, section 9) - and its carriageway
   wherever a house stands within FABRIC.pave (1): a street as wide as the houses let it be, its pavements along their
-  fronts.
+  fronts. A pavement is a walk (`paveWalks`, TOWN-BOARDS 2): two that meet at a corner alone across the street's ground
+  are joined there, and one shorter than FABRIC.paveLeast (4 cells, 6.4 m) along its longer side is not laid - its cells
+  the street's own surface; a piece of the carriageway no walk runs down and as short is the pavement's round it.
 - **The side streets** are Daggerfall's road; **the alleys** the open ground between houses whose corridor is narrower
   than FABRIC.side (2) at its middle (`maxNear` - the most clearance within FABRIC.reach: a street's margin by a house is
   the street's).
@@ -266,10 +270,10 @@ the carriageway's cells within FABRIC.pave of a house, as before: it runs on unb
 The plan is made on the town's ground: `fabricGrid` takes `onGround`, the stand hands it the terrain job's townGround
 (`townFabricFor`'s `ground`, `scenes/pixelBuild.js`), and a cell past it is off the town as a left-out cell is - its
 yard fenced where the ground ends, on the flattened edge. The law is the walkers' own: `world/townShape.js`
-onTownGround, which shutOffGround now reads too (TS6). A plan is its town's and its ground's (`fabricGroundKey`): asked
+onTownTile, which shutOffGround now reads too (TS6). A plan is its town's and its ground's (`fabricGroundKey`): asked
 on another ground it is planned again and its old model let go (a build that planned it meanwhile is kept for both:
-its model is never pulled from under a build that has it in hand). Nothing is filtered after the fact: every board and fence the fabric lays has a cell of the
-street or a yard of the town's own ground under it.
+its model is never pulled from under a build that has it in hand). Nothing is filtered after the fact: every board and
+fence the fabric lays has a cell of the street or a yard of the town's own ground under it.
 
 **Measured on the freeware** (`tools/townBoardsSweep.mjs --every 1 --land 10`, before on the branch's base and after:
 every template past the Bay cloned under a map id of its own, outlined, its wall stood and its fabric planned through
