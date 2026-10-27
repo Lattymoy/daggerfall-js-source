@@ -39,17 +39,18 @@ async function world() {
   return _world;
 }
 /** The boot's start over the world, as world.js constructs it - its teleport, its word and its readiness recorded. */
-async function boot(search, { ready = true } = {}) {
+async function boot(search, { ready = () => true } = {}) {
   const w = await world();
   const params = new URLSearchParams(search);
   const moves = [], said = [];
+  let asked = 0;
   const start = createBootStart({
     params, locationIndex: w.index, maps: w.maps, worldPlaces: w.worldPlaces,
     regionName: params.get('region') || 'Daggerfall', locationName: params.get('loc') || 'Daggerfall',
-    teleport: async (x, y, local, opts) => { moves.push([x, y, local, opts]); },
-    ready: () => ready, landed: () => Promise.resolve(), say: (line) => said.push(line),
+    teleport: async (x, y, local, opts) => { moves.push([x, y, local, opts, asked]); },
+    ready: () => ready(++asked), landed: () => Promise.resolve(), say: (line) => said.push(line),
   });
-  return { ...start, at: await start.farStart, moves, said };
+  return { ...start, at: await start.farStart, moves: moves.map((m) => m.slice(0, 4)), askedAtMove: moves.map((m) => m[4]), said };
 }
 
 test('BAY-LEFT-B B1: a birth at a seat past the Bay boots - the world stands at the Bay\'s town nearest the seat, and the player is moved to Solitude by its kept map id before the heir is made (mutants: the guard; the move; the id\'s arm; the reposition)', { skip: NO_DATA }, async () => {
@@ -61,6 +62,9 @@ test('BAY-LEFT-B B1: a birth at a seat past the Bay boots - the world stands at 
   const loc = (await world()).places.provinceQuestPlaces.standAt(b.at.x, b.at.y);
   assert.equal(loc?.name, 'Solitude', 'the place standing there');
   assert.equal(loc?.mapTableData?.mapId >>> 0, SOLITUDE.id);
+  // by its id alone: a seat whose names the place no longer answers (its quest name, a renamed place) is still its id's
+  const byId = await boot(`?world=1&legacyborn=4&region=Skyrim&loc=Elsewhere&seat=${SOLITUDE.id}`);
+  assert.deepEqual(byId.at, { x: SOLITUDE.x, y: SOLITUDE.y });
 });
 
 test('BAY-LEFT-B B1: any boot that names a start past the Bay by its names alone reaches it (`?region=Skyrim&loc=Solitude`, no seat id - a seat noted before it knew its id, a dev boot) (mutants: the name\'s arm; the province\'s test)', { skip: NO_DATA }, async () => {
@@ -83,8 +87,10 @@ test('BAY-LEFT-B B1: the Bay\'s starts are as they were - a Bay town stands with
   assert.equal(lost.at, null);
   assert.deepEqual(lost.moves, []);
   assert.deepEqual(lost.said, [STARTS_TEXT.noSite]);
-  const notReady = await boot(`?world=1&legacyborn=4&region=Skyrim&loc=Solitude&seat=${SOLITUDE.id}`, { ready: false });
-  assert.deepEqual(notReady.moves, [], 'never before the boot\'s world stands');
+  // never before the boot's world stands: asked until it does (the third ask here), then moved
+  const late = await boot(`?world=1&legacyborn=4&region=Skyrim&loc=Solitude&seat=${SOLITUDE.id}`, { ready: (n) => n >= 3 });
+  assert.equal(late.moves.length, 1);
+  assert.ok(late.askedAtMove[0] >= 3, `moved once the world stood (asked ${late.askedAtMove[0]} times)`);
 });
 
 test('BAY-LEFT-B B1: farStartOf - a start past the Bay is a kept map id or a province\'s region; farPixelOf reads an id as the registry, the countryside or an isle stands it (mutants: the seat\'s parse; the province test; the country arm\'s check)', () => {
@@ -148,4 +154,5 @@ test('BAY-LEFT-B B1: the world host wires it - the start\'s module with its move
   assert.match(W, /return nearestTown\(maps\.getRegion\(h\.regionIndex\), h\.region, h\.pixel\) \?\? nearestTownAnywhere\(nearestTownOf, REGION_NAMES, h\.pixel\);/);
   const P = rd('src/scenes/tamrielPlacesHost.js');
   assert.match(P, /px: l\.country\.px, py: l\.country\.py, name: l\.name, region: l\.regionIndex, mapId: l\.mapTableData\?\.mapId \}\);/, 'a country town named, as the registry\'s are');
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /_pickedLegacyBirth = \{ personId, region: took\.place\.region, loc: took\.place\.loc, \.\.\.\(Number\.isInteger\(took\.place\.mapId\) \? \{ mapId: took\.place\.mapId \} : \{\}\) \};/, 'the Online page\'s pick carries the seat\'s id');
 });

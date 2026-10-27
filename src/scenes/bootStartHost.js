@@ -51,7 +51,7 @@ export function farStartOf(params, regionName, locationName) {
 export function farPixelOf(far, worldPlaces) {
   if (far.id != null) {
     const listed = worldPlaces?.byMapId?.(far.id) ?? null;
-    if (listed && !inBay(listed.px, listed.py)) return { x: listed.px, y: listed.py };
+    if (listed) return { x: listed.px, y: listed.py };   // a Bay place by its id too, where its names no longer answer
     const country = countryPixelOfId(far.id);
     if (country && (worldPlaces?.at?.(country.x, country.y)?.mapId ?? -1) === far.id) return country;
     const isle = etherPlacePixelOfId(far.id);
