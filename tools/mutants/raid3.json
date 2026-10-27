@@ -474,8 +474,8 @@
   {
     "name": "RAID3-session-cell-not-asked",
     "file": "src/net/online.js",
-    "old": "    if (!(this._mine(cell) ? this.raidOk : halo?.raidOk)) return false;\n    const ws = this._mine(cell) ? (this.status === 'open' ? this._ws : null) : (halo?.status === 'open' ? halo.ws : null);",
-    "new": "    if (!(this._mine(cell) ? this.raidOk : halo?.raidOk)) return false;\n    const ws = this.status === 'open' ? this._ws : null;",
+    "old": "    const ws = this._mine(cell) ? (this.status === 'open' ? this._ws : null) : (halo?.status === 'open' ? halo.ws : null);\n    if (!ws) return false;\n    const gate = raidGate(",
+    "new": "    const ws = this.status === 'open' ? this._ws : null;\n    if (!ws) return false;\n    const gate = raidGate(",
     "tests": [
       "test/net/raid3_raidLedger.test.js",
       "test/net/auditraid.test.js"

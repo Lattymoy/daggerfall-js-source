@@ -289,7 +289,7 @@ import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenD
 // net/raid/raidLaw.js (a town raid's ledger, pure law - it imports nothing) and net/raid/raidReceipt.js (a raid's receipt, the
 // relay's second signature under the gate's one key - it imports identityToken.js and raidLaw.js, both here).
 // bible/03-World/Raiding-Parties.md, "The relay holds the raid (RAID3)".
-import { raidWordFits, raidWordSane, raidSig, raidLedgerId, raidEvictPick, newRaidLedger, foldRaidWord, raidCleansed, raidEarned, raidTop, raidLedgerState, raidLedgerEndMinute, raidDayOfKey, RAID_KEEP_MS, RAID_LEDGERS_MAX, RAID_LEDGERS_BY_MAX, RAID_SAVE_MS, RAID_DAY_MINUTES, RAID_ACCOUNTS_MAX, raidDaySlots, raidOnSlot, raidDayIds, readRaidTowns, raidTownsHash, RAID_TOWNS_SHA_RE } from '../../src/net/raid/raidLaw.js';   // RAID-ROLL: the day's roll
+import { raidWordFits, raidWordSane, raidSig, raidLedgerId, raidEvictPick, newRaidLedger, foldRaidWord, raidCleansed, raidEarned, raidTop, raidLedgerState, raidLedgerEndMinute, raidDayOfKey, RAID_KEEP_MS, RAID_LEDGERS_MAX, RAID_LEDGERS_BY_MAX, RAID_SAVE_MS, RAID_DAY_MINUTES, RAID_ACCOUNTS_MAX, raidDaySlots, raidOnSlot, raidDayIds, readRaidTowns, raidTownsHash, RAID_TOWNS_SHA_RE, raidLaneOfKey } from '../../src/net/raid/raidLaw.js';   // RAID-ROLL: the day's roll; WW6: a word's lane
 import { mintRaidReceipt, readRaidReceipt } from '../../src/net/raid/raidReceipt.js';
 // STAR3 (2026-10-20, the owner: "something coming from the sky and crashing into the ground, where people need to defend
 // the objective in a wave based format with a boss topping off the encounter at the end"): TWO FILES JOIN THE BUNDLE -
@@ -10400,10 +10400,12 @@ export class Room {
     if (!raidWordFits(m, sharedClassicMinutes(now))) return;   // outside its raid's time: nothing read, kept or said
     // RAID-ROLL: a raid the day never rolled is nobody's - its start, target and party against the day's own draws
     // (no game data), and its whole tuple against the day's roll while the hub holds the pinned towns table. Silent:
-    // a world whose towns are not the operator's (a data mod) rolls its own raids, and they are its own
-    const day = raidDayOfKey(m.key);
-    if (!raidOnSlot(m, this._raidSlotsOf(day))) return;
-    const rolled = await this._raidDayIdsOf(day, now);
+    // a world whose towns are not the operator's (a data mod) rolls its own raids, and they are its own. WW6: a raid
+    // past the Bay is its LANE's (net/raid/raidLaw.js raidLaneOfKey - its province's own generator and parties), and the
+    // operator's pinned towns table is the Bay's (MAPS.BSA's rows), so a lane past the Bay is read against its slots alone
+    const day = raidDayOfKey(m.key), lane = raidLaneOfKey(m.key);
+    if (!raidOnSlot(m, this._raidSlotsOf(day, lane))) return;
+    const rolled = lane === 0 ? await this._raidDayIdsOf(day, now) : null;
     if (rolled && !rolled.has(raidLedgerId(m))) return;
     const id = raidLedgerId(m);
     if (this._raidCleaning.has(id)) return;   // its cleanse is being minted: said in a moment, to everyone
@@ -10650,10 +10652,13 @@ export class Room {
     this._riteHelpersOf(f.day).then((h) => { if (h && this._fight === f && !f.said) f.helped = [...h]; }).catch(() => {}).finally(() => { this._riteAsking = false; });
   }
   // ─────────────────────────── RAID-ROLL: THE DAY'S ROLL, THE RELAY'S TOO ───────────────────────────
-  /** A cell's copy of a day's slots (net/raid/raidLaw.js raidDaySlots - the draws no game data decides). */
-  _raidSlotsOf(day) {
-    let s = this._raidSlots.get(day);
-    if (!s) { if (this._raidSlots.size >= 4) this._raidSlots.clear(); s = raidDaySlots(day); this._raidSlots.set(day, s); }
+  /** A cell's copy of a day's slots (net/raid/raidLaw.js raidDaySlots - the draws no game data decides). WW6: a lane's -
+   *  the Bay's lane 0 by its day alone, as it always was; a lane past the Bay its own (a cell stands in one theatre, so a
+   *  few lane-days at most). */
+  _raidSlotsOf(day, lane = 0) {
+    const k = lane === 0 ? day : `${day}:${lane}`;
+    let s = this._raidSlots.get(k);
+    if (!s) { if (this._raidSlots.size >= 4) this._raidSlots.clear(); s = raidDaySlots(day, lane); this._raidSlots.set(k, s); }
     return s;
   }
   /** A cell's copy of a day's whole roll, asked of the hub once a day an instance: the Set of its raids' identities, or
