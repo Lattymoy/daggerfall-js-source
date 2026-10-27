@@ -1,18 +1,11 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md section 3.6) - A YARD THAT MOVED, CARRIED IN, SAID TO
-// EVERY PAGE ONLINE. The relay's half; the law both ends read is src/net/yardWordLaw.js.
-//
-// The account service signs a YARD ORDER for each decor write that moved a yard's cell (identityToken.js mintYardOrder);
-// the acting client carries it here. The hub checks the signature with the key it already holds and nothing else - MOD1's
-// law, as QUEST-HOME's home arm: whoever carried it, the word is the service's. IN THE HUB ALONE, the one room every
-// online player holds a socket to, as the home arm chose it: a town's room is its map pixel's, and a player within reach
-// of a town's edge can stand in the next pixel.
-//
-// THE FAN IS METERED BY THE SECOND, not by the placements: the words verified are owed, the highest version of a cell
-// kept, and said as one frame `{t:'yard', l:[[m, c, v], ...]}` at most each YARD_FAN_MS. Nothing is stored and nothing
-// is said on a welcome: a page that joins asks its cells anyway, and a page that lost its socket catches up by asking.
-// ═══════════════════════════════════════════════════════════════════
+// YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md section 3.6) - A YARD THAT MOVED, SAID TO EVERY PAGE
+// ONLINE. The relay's half; the law both ends read is src/net/yardWordLaw.js. The account service signs a YARD ORDER for
+// each decor write that moved a cell (identityToken.js mintYardOrder) and the acting client carries it; the hub checks
+// the signature with the key it already holds (MOD1's law, as QUEST-HOME's home arm). IN THE HUB ALONE: every online
+// player holds a socket to it, and a player near a town's edge can stand in the next pixel's room.
+// THE FAN IS METERED BY THE SECOND: each cell's highest verified version, said as one frame at most each YARD_FAN_MS.
+// Nothing is stored or said on a welcome: a page that joins, or lost its socket, asks its cells anyway.
 
 import { isSocialRoom } from '../../src/net/wire.js';
 import { verifyOrder } from '../../src/net/identityToken.js';

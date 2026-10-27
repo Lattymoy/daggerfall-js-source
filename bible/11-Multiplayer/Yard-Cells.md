@@ -344,6 +344,7 @@ The three gaps the city shows, each closed in the slice named:
    against #1184's builder and skips only while that module is absent: YC1's pull request runs it on a checkout of
    #1184's branch and records the result (the most building records in any capital's own block), and the test runs on
    main from the day #1184 merges. It fails a capital block past 32 building records.
+
    If a block must hold more, YC1 bounds the cell row by the key's 256 records instead: it splits the kept row of such a
    cell in parts (each part's text under `KEPT_BOARD_MAX_BYTES`) and still serves the cell as one answer. The plan
    does not raise the yard's 60 or cut a block.
@@ -513,8 +514,8 @@ widest, the read, a past-the-Bay map id, the Worker's routes, YARD-SHED's laws, 
 removed with their mutant records, their laws carried into those two or gone with the code: `yard_snap.test.js` (the
 town row), `yard_town.test.js` (the town cap), `yardtown.test.js` (four a frame) and `yardshed.test.js` (the town's
 kept answer and its client). `primary_trips.test.js` holds YARDS-REPLICA and its audit's floor a cell at a time; the
-tests that read a town's yards read them through the cells (`test/yardCellsRead.mjs`). Mutant records:
-`tools/mutants/yard_cells.json` and `yardcellsync.json` (26, all dead), and 18 records of other files re-aimed at the
+tests reading a town's yards read them through the cells (`test/yardCellsRead.mjs`). Mutant records:
+`tools/mutants/yard_cells.json` and `yardcellsync.json` (26, all dead), and 18 other files' records re-aimed at the
 same laws in their new homes (all dead).
 
 **Check 1, in the running game** (2026-10-26, headed Edge on the RTX 5080, #1304 at 84f27b002d, the account service and
@@ -526,6 +527,7 @@ the relay in local workerd - `tools/loadHarness.mjs` standServices; two runs):
   Done in both runs.
 - **The landing: the target is not met.** Section 3.5 aimed for no landing frame longer than YARD-TOWN's measured 33
   ms; these runs show 38-62 ms. The cell route was held until the town had settled, then let go, and every frame after was timed.
+
   Run 1: the longest frame was 54 ms at a 6 ms budget, 38 ms at 3 ms and 46 ms at 10 ms (2, 3 and 7 frames over 33 ms).
   Run 2 (the request asked again from where the player stood): 62 ms at 3 ms (26 frames over 33 ms) and 54 ms at 2 ms
   (7). Every yard (515-526) stood within about one second each time. YARD-TOWN measured 38-63 ms for a city of 4,000 at

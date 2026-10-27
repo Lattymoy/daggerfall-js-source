@@ -1,27 +1,11 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md) - A TOWN'S YARDS, KEPT AND READ ONE BLOCK AT A TIME.
-//
-// It replaces the whole-town row YARD-SNAP kept (migration 0136) and YARD-TOWN bounded at 6,500 pieces (0175). That
-// bound was the size of one D1 row, not a rule of the game; every write rebuilt the whole town, and every caller read
-// the whole town every minute.
-//
-// A CELL is one RMB block of one town (net/yardCellLaw.js yardCellOf). Migration 0183 keeps, for each cell that ever
-// stood a yard piece:
-//   home_yard_cell_ver   its version, moved by the database on every yard row written (triggers), and `built`, the
-//                        version its row was last built at - a partial index on `ver <> built` is how the clock finds
-//                        the stale cells without walking every town;
-//   home_yard_cells      its rows as the read takes them, built at `built`, in `shape` (keptBoard.js), NULL past
-//                        KEPT_BOARD_MAX_BYTES (a cell holds 1,920 pieces at most in Daggerfall's blocks, 415 KB at the
-//                        widest - the bound is never met there).
-//
-// The flow:
-//   a decor write    rebuilds its own cell (settleYardCell), as its route answers;
-//   the clock        rebuilds what a cascade left stale (settleStaleYardCells), off the partial index;
-//   a reader         sends the cells it wants and the versions it holds, and is answered only the cells that moved
-//                    (yardCellsOf), nearest first, within an answer's byte budget;
-//   an isolate       keeps each cell's answer YARDS_KEPT_S, bounded by bytes (yardCellsKept), and reads on a replica.
-// ═══════════════════════════════════════════════════════════════════
+// YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md section 10): A TOWN'S YARDS, KEPT AND READ ONE BLOCK AT A
+// TIME, in place of YARD-SNAP's whole-town row and YARD-TOWN's 6,500-piece bound (one D1 row's size, not a game rule).
+// A CELL is one RMB block of one town (net/yardCellLaw.js yardCellOf). Migration 0183 keeps per cell home_yard_cell_ver
+// (`ver`, moved by triggers on every yard row written, and `built`; a partial index on `ver <> built` finds stale cells)
+// and home_yard_cells (its rows built at `built`, keptBoard.js `shape`, NULL past KEPT_BOARD_MAX_BYTES - never met: a
+// cell holds 1,920 pieces at most, 415 KB). A decor write rebuilds its cell (settleYardCell), the clock the rest
+// (settleStaleYardCells); a reader is answered the moved cells alone (yardCellsOf), kept YARDS_KEPT_S (yardCellsKept).
 import { DB_ROOT, replicaDb, bookmarkOf } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
 import { decorYardPieceOf, decorYardHighOk } from '../../src/net/decorLaw.js';
@@ -123,17 +107,8 @@ export function yardCellRowsOf(/** @type {unknown} */ text) {
   return rows;
 }
 
-/**
- * @typedef {object} YardOfCell
- * @property {number} buildingKey
- * @property {any[]} pieces
- */
-/**
- * @typedef {object} CellAnswer
- * @property {number} cell
- * @property {number} ver      the version the yards were read at (0: a cell no version row names)
- * @property {YardOfCell[]} yards
- */
+/** @typedef {{ buildingKey: number, pieces: any[] }} YardOfCell */
+/** @typedef {{ cell: number, ver: number, yards: YardOfCell[] }} CellAnswer  `ver` the version read (0: a cell no version row names) */
 
 /** A cell's rows as its yards - each home's pieces, oldest first. A piece the yard's law refuses, or one standing past
  *  DECOR_YARD_HIGH from before YARD-HEIGHT (migration 0109), is never served. */
@@ -223,15 +198,13 @@ export const YARD_CELLS_FROM = 'first-unconstrained';
 /** A kept entry's weight past its text - what a write's mark weighs. */
 const ENTRY_BYTES = 64;
 
-/**
- * @typedef {object} KeptCell
+/** @typedef {object} KeptCell
  * @property {number} at          when it was read, seconds
  * @property {number} ver         its version as read
  * @property {YardOfCell[] | null} yards  null: only its version is known (it was read unchanged for its asker)
  * @property {number} bytes       what it weighs in the isolate
  * @property {string | null} mark the bookmark the read ended at
- * @property {boolean} written    this isolate wrote it since: its next read is the primary's, and nothing is believed
- */
+ * @property {boolean} written    this isolate wrote it since: its next read is the primary's, and nothing is believed */
 /** @type {Map<string, KeptCell>} in use order, the least recent first */
 const kept = new Map();
 let keptBytes = 0;

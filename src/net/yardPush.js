@@ -1,19 +1,11 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md sections 3.6 and 3.7) - THE PAGE'S END OF THE YARD PUSH.
-//
-// One place between the page's hub link (net/online.js, which says its welcome, its close and the hub's yard frames
-// here), the account door (net/accountClient.js, which hands each decor answer's YARD ORDER here) and the yards' sync
-// (scenes/yardCellSync.js, which hears the words and reads whether the push is healthy). It sits apart from the hosts so
-// the world's host wires nothing new (HOST-SPLIT).
-//
-//   carry     an order is held YARD_ORDER_KEEP_MS (under its minute) and sent down the hub link one each YARD_SEND_MS,
-//             only to a hub whose welcome said YARD_WELCOME_FIELD - an older relay closes a socket on a frame it does not
-//             know. An order no healthy link took in that time is dropped: the other pages' polls find the cell.
-//   hear      the hub's frames, gated (yardInGate), handed to every ear.
-//   healthy   a hub link welcomed by a relay that hears yard words, open since. `epoch` counts the welcomes, so a
-//             reader can tell a link that broke and came back from one that never broke.
-// ═══════════════════════════════════════════════════════════════════
+// YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md sections 3.6 and 3.7) - THE PAGE'S END OF THE YARD PUSH,
+// between the hub link (net/online.js), the account door (net/accountClient.js, each decor answer's YARD ORDER) and the
+// yards' sync (scenes/yardCellSync.js); apart from the hosts, so the world's host wires nothing new (HOST-SPLIT).
+// carry: an order is held YARD_ORDER_KEEP_MS and sent one each YARD_SEND_MS, only to a hub whose welcome said
+// YARD_WELCOME_FIELD (an older relay closes a socket on a frame it does not know); one not taken is dropped - the other
+// pages' polls find the cell. hear: the hub's frames, gated (yardInGate), handed to every ear. healthy: welcomed by a
+// relay that hears yard words, open since; `epoch` counts the welcomes, so a reader tells a link that broke and came back.
 
 import { yardInGate, validYardFrame, YARD_WELCOME_FIELD, YARD_ORDER_HZ_MAX } from './yardWordLaw.js';
 

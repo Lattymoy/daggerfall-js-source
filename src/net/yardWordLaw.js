@@ -1,13 +1,10 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
 // YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md section 3.6) - THE YARD WORD'S LAW, both ends'.
-//
 // A decor write that moved a yard answers with a signed YARD ORDER (net/identityToken.js mintYardOrder). The acting
 // client carries it to the hub as `{t:'yard', order}`; the hub checks it and fans what it verified, at most one frame
 // each YARD_FAN_MS, as `{t:'yard', l:[[m, c, v], ...]}` - town `m`'s cell `c` stands at version `v` now, the highest
 // version of the second kept for a cell. A page acts on a word only by asking the service for that cell, so a word can
 // make a page ask, never put its yards wrong. Pure: no clock, no DOM, no network.
-// ═══════════════════════════════════════════════════════════════════
 
 import { tokenGate } from './wire.js';
 import { homeMapIdOk, HOME_KEY_MAX } from './homeLaw.js';

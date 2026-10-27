@@ -691,9 +691,8 @@ async function guildOrdersOf(r, s, env, subtle, nowS) {
  *  online: a quest never picks its residence in a house bought after a page's boot read, and one picked there and not yet
  *  reached is chosen again. A service with no key still acts, answering none: the pages read the move at their next
  *  boot (homes.js homeLayouts). */
-/** YARD-CELL YC2 (bible/11-Multiplayer/Yard-Cells.md section 3.6): a decor answer whose write moved its cell (`settled`,
- *  yardCells.js settleYardCell) carries the cell's new version (`yardVer`, for the owner's own page) and a signed YARD
- *  ORDER (`yardOrder`) for the acting client to carry to the hub. Neither when nothing moved, or with no key. */
+/** YARD-CELL YC2 (bible/11-Multiplayer/Yard-Cells.md section 3.6): a decor answer whose write moved its cell (`settled`) carries
+ *  its new version (`yardVer`, for the owner's page) and a signed YARD ORDER (`yardOrder`) for the hub; neither if none moved or no key. */
 async function yardOrderOf(r, settled, mapId, s, env, subtle, nowS) {
   if (!settled) return r;
   const key = await signingKey(env, subtle);
