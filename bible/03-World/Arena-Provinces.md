@@ -416,10 +416,11 @@ CoastalCityList, 58 global city ids (OpenTESArena's ExeData, its address maps `a
   waters' distance past the Bay are WW3's over them - `03-World/World-Wide.md` "Folded into TESA"; the harbour book's town
   is still `arenaPortNear`'s): Come Sail
   Away's port town (`csaIsPortTown`, and with it `navalNearPort`), the naval host's port here (`navalPortHere` -
-  `{ key, name, px, py, region, crown: null }`: no crown's writ past the Bay, the region the pixel's own read), the
+  `{ key, name, px, py, region, crown }`: the nearest Bay crown's office - BAY-LEFT-SEA, `03-World/Captains-Sea.md` - the
+  region the pixel's own read), the
   harbour book's town (`navalHarbourNear` - its harbour sounded as any port's, its quays by QUAYS' law), the nearest
   port's name and way past the Bay (`csaNearestPort`), and the waters' distance to a port (`navalPortPx`). An Arena port
-  trades the one good its key draws (`portTrade`: no crown's table). The harbour office's contract board lists them
+  trades its crown's makes and wants and the good its key draws (`portTrade`, BAY-LEFT-SEA). The harbour office's contract board lists them
   (AUDIT TESA II P7: the board's list is the Bay's and the world's - `worldPorts.withBay`); the travel window's ship
   passage is Travel Options' hand-written list.
 - **Online** (TESA-ONLINE's law, widened): the list moves places, so a room stands Arena's places only from a known
@@ -602,7 +603,7 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
   of the game's rows in map-id order), its own id (CAPITAL_LANE 0x341, after the lairs', the ordinal in the low 20 with
   0x80000), its own index (-41,000,000 and down), the pixel's longitude and latitude, the region and climate the pixel
   answers, no dungeon (WW7-4: the centre's its castle's halls - World-Wide.md WW7-4),
-  no harbour, `capital`, and Arena's slot where Arena's place stands on it. A place the port made:
+  its harbour slice's port byte its port word (BAY-LEFT-SEA, below), `capital`, and Arena's slot where Arena's place stands on it. A place the port made:
   no house is sold in it and no deed read (`isCountryPlaceId`).
 - **The doors** (`world/capitalModels.js` installCapitals, from `scenes/modWorldData.js` beside installArena - behind no
   switch, as the arena's block is): the six port blocks at fixed indices from 900200 (900400 since AUDIT-TESA - past the
@@ -680,8 +681,8 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
 - **Measured** (the freeware, its trace, the fit (38, 57) x15.5, node and a stand-in view): Solitude's port blocks
   resolve; its landmarks draw in the stand-in view as laid. Not yet seen in the game.
 - **Arena's coastal place pinned beside the sea stays a port** (standArenaPixels: A.EXE's list, and the sea among the
-  pinned pixel's eight): Solitude's place is a port on its docks. The capital's own harbour byte stays 0 - its ships
-  are not yet.
+  pinned pixel's eight): Solitude's place is a port on its docks, and so is the capital's own harbour slice, to its own
+  byte (BAY-LEFT-SEA, below).
 - **Then**: TESA10c, the other five.
 - **Moved by TESA-LORE** (below): Castle Dour to just within the main gate, its two gates and the temple on its grounds;
   the Bards College and the Hall of the Dead the Avenues'.
@@ -2117,6 +2118,55 @@ all dead; SMOOTH-LAND retired the four on the lake ink - 15). PIN MOVED: `test/w
 `test/world/terrain/terrainworker.test.js` (the worker's imports: `../tamriel/watersInk.js`). Not seen in a running
 frame here (every browser probe of the world page on this shared machine was killed for memory): pinned by recorded
 strokes. Daggerfall Unity's map has no land past the Bay to draw a river on: Port-Ledger row TESA13.
+
+## BAY-LEFT-SEA - the capitals' harbours (2026-10-27)
+
+**What stood.** A capital's slice wrote `portTownAndUnknown: 0` (synthesizeCapitalLocation; TESA10b: "its ships are not
+yet"). So a harbour the registry calls a port - Solitude's, Alinor's and Torval's own slice and the Imperial City's
+Waterfront - stood no shipyard, crew hall or lighthouse (`scenes/pixelBuild.js` portTown asks the byte through
+`world/portSites.js` portTownOnSea) and its bank sold no ship (DaggerfallBankingWindow.cs:460, DFU's one read of the
+byte) - AUDIT BAY-LEFT item 31, C6. Its Docks row stood: the harbour book reads no byte.
+
+**As built.**
+- ONE LAW, ONE WORD (`world/tamrielCapitals.js` capitalSlicePort): a slice is a port where it is its capital's harbour slice
+  (`capitalHarbourSlice`) and the place of its name pinned on its centre is a port (TESA6's coastal word, `pinPort`) or its
+  harbour meets its canal (`capitalCanalOpen`). The registry's row (`world/pastBayRows.js`) and the slice's own byte
+  (synthesizeCapitalLocation, `pinPort` handed by `scenes/tamrielPlacesHost.js` capitalPinPort - the registry's own read of
+  the centre's place) are that law, so a harbour is a port to its own byte exactly where the board, the lanes and the
+  voyages call it one. A kept slice whose word moved (its canal opened, its place made a port) is cloned again.
+- A CAPITAL'S LANDMARKS BY THEIR FOOTPRINT (`isCapitalLandmark`: every CAPITAL_MODELS model and every Imperial City part).
+  The town's places (`scenes/world.js` townPlacesFor, `world/merchantYards/merchantYardSites.js` yardMeasuresOf) closed
+  each model's box on the town's ground; a ring wall's box is the whole city, so by it the yards and the port's two places
+  found no ground but the rim's strips. A landmark's ground is its blocks' own - the automap its footprint closes
+  (capitalPortBlocks' `footprint`, `world/capitalModels.js` capitalFootprint and imperialSliceFootprint) - so the measure
+  leaves it to them. Every other model is measured by its box, as ever.
+- THE SHIP SALE'S PORT TEST (`scenes/world.js` shipLocation's `portTown`, DISC13-D) reads a place past the Bay's own byte -
+  an Arena place's TESA6 word and a capital's harbour's alike (it read Arena's slot, which the Waterfront never has).
+
+**On the freeware** (every slice of the seven capitals, 625 + 6): four ports to their own byte and no other slice - the
+Waterfront District (2069, 668), Solitude (1569, -430), Alinor (8, 1533), Torval (1922, 1705) - each with the open sea
+bearing on it. Measured as townPlacesFor measures a town: by a landmark's box the Waterfront stood its shipyard and its
+lighthouse, Solitude its lighthouse alone, Alinor and Torval neither. By its footprint all four stand both - the
+Waterfront's on its lake, Alinor's and Torval's on their sea, each one's back within a few cells of its water; Solitude's
+blocks hold no water a navgrid reaches, so its two stand by the sea's bearing at its land's north-west corner, against the
+Sea of Ghosts. Each shipyard carries its crew hall (the crewmaster's table, `world/portSites.js` portPlaceRows), and each
+harbour sounds six berths at its own reach (420 m) on the ground the game builds - its Docks row. So each of the four
+stands its shipyard, crew hall, lighthouse and Docks, and its bank sells a ship.
+
+**Not DFU**: the capitals are the port's own (Port-Ledger section A, TESA10's row and BAY-LEFT-SEA's).
+
+**The four hosts.** `scenes/world.js` WIRED (the yards' measure, the ship sale's port test); `scenes/worldModes.js`
+FLAGGED, unchanged: the bank reads the byte as before; `scenes/exterior.js` and `scenes/dungeonContext.js` FLAGGED: no
+capital stands there.
+
+**Pins.** `test/world/worldWide/bayleftsea_capitals.test.js` (3: the port word, the landmarks and the host, the freeware's
+seven capitals and four harbours). PIN MOVED: `test/tesa10_capitals.test.js` (the host's ask lifts capitalPinPort),
+`test/systems/auditrr2.test.js` (G22's port test by the byte), `test/audit_tesa.test.js` (A4-F2's kept slot and its port
+word; A4-F4's ship by the byte). Mutants: `tools/mutants/bayleftsea.json` BLS-cap-*, BLS-landmark-*, BLS-rows-*,
+BLS-host-pin-*, BLS-host-kept-*, BLS-yards-*, BLS-ship-* (12), all dead; re-aimed by content, all dead: `tesa10.json`
+TESA10-loc-harbour, TESA10-host-stale-slot and TESA10-host-not-deleted, `nibensea.json` ROWS-harbour-unported (onto
+capitalSlicePort), `audittesa2p.json` P7-capital-port-unsaid, `audittesa.json` AUDIT-TESA-A4-F4-travel-options-list,
+`merchantyards1_audit.json` AUDIT-MERCHANT-YARDS-G1-a-registered-model-unread.
 
 ## Pins
 

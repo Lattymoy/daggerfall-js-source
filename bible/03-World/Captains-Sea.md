@@ -484,6 +484,37 @@ ship (the sites' `cache`); hauled aboard (`navalHost.js pickCache`) it pays CACH
 CACHE_GOLD - and the log's `maps`; a pack that cannot carry them is overladen, said, never let go (B9 - a chart fished
 out of a wreck the same). The Captain page lists the charts marked.
 
+## BAY-LEFT-SEA - a harbourmaster at every port past the Bay (2026-10-27)
+
+**What stood.** A port past the Bay (WW3, `world/worldWide/worldPorts.js` beyondPorts) had no crown (`crown: null`), and
+the harbour office (`scenes/harbourOffice.js`) stands for a crown alone. So none of the 29 ports past the Bay on the
+freeware had a HARBOURMASTER tab: no board, no contract, no letter of marque, no Admiralty carrack (AUDIT BAY-LEFT, item
+30, C5). The crowns past the Bay were the owner's recorded call (`03-World/World-Wide.md` WW7-8); the lost board was
+recorded nowhere.
+
+**The owner's call, taken** (*"Every single thing here needs to be addressed. No exceptions."*, 2026-10-26): a harbourmaster
+past the Bay keeps the nearest Bay crown's board.
+
+**As built.** `beyondPorts` and `createWorldPorts` take `crownAt(px, py)`, the host's: `systems/naval/navalShips.js`
+crownOf over the three capitals' pixels (`scenes/world.js` navalCapitals, now declared above the world's ports -
+BOOT-TDZ). It is the law a Bay port's crown is read by, and the crown whose colours its navy already flies in those waters.
+So a port past the Bay keeps that crown's office: the board drawn off its own key (CAPT-BOARD), its contracts paid in the
+crown's standing, the crown's letter of marque and Admiralty carrack, a rank's favours (`perksHere`), and an exchange of
+the crown's makes and wants with its own twist (`systems/naval/tradeGoods.js` portTrade, CAPT-TRADE - it traded its
+twist's one good before). Every client reads the same crown: the three capitals are MAPS.BSA's. The Eltheric freeports stay
+crownless, ETHER-PORTS' recorded design (`03-World/Eltheric-Ocean.md`: their own harbourmaster). A Bay port is unchanged.
+
+**On the freeware** (the 29 ports past the Bay): Wayrest's office at 18 (the Imperial City, Solitude, Torval, Jehanna,
+Rihad, Windhelm, Winterhold, Dawnstar, Necrom, Ebonheart, Vivec, Haven, Woodhearth, Southpoint, Senchal, Lilmoth, Soulrest,
+Archon), Sentinel's at 10 (Alinor, Hegathe, Taneth, Gilane, Dusk, Lillandril, Shimmerene, Sunhold, Firsthold, Skywatch),
+Daggerfall's at Northpoint - each with its board. Before: none.
+
+**Pins.** `test/world/worldWide/bayleftsea_harbour.test.js` (4: the law, the tab, the freeware's 29, the host's order).
+PIN MOVED: `test/world/worldWide/ww3_sea.test.js` (the world host hands its ports `crownAt`), `test/tesa6_ports.test.js`
+(a port past the Bay's line carries its crown). Mutants: `tools/mutants/bayleftsea.json` BLS-port-* (4), all dead;
+`tesa6.json` TESA6-a-crown-past-the-bay turned with the law (one crown for every port), `audittesa2p.json`
+P7-port-region-unsaid re-aimed - both dead.
+
 ## Tests and mutants
 
 `test/systems/naval/captcrew.test.js` (`tools/mutants/captcrew.json`), `test/systems/naval/captlog.test.js` (`tools/mutants/captlog.json`),

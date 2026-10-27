@@ -2,7 +2,7 @@
 // IS THE SEA'S - systems/weather/weatherMap.js climateOfField takes the composed map's Ocean past the Bay's edge, where it
 // had read the nearest Bay edge's climate (the Mountain's: a third of a winter's births at sea snowed). On the freeware's
 // composed maps: a winter's weather at the Sea of Ghosts, the Topal Bay and the Padomaic, the old law beside the new
-// (bible/03-World/Weather-Arc.md BAY-LEFT-SEA).
+// (bible/07-Rendering/Weather-Arc.md BAY-LEFT-SEA).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';

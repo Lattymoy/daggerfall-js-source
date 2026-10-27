@@ -1344,3 +1344,39 @@ case). Valenwood stands the haze under the canopy's 35% dimming.
 **Left as it was.** The lanterns' glow in the air (the lighting lane's in-scatter, `render/renderer.js` `_scatterGain`, and
 the air pass's march) integrates the weather's fog alone, not the jungle's haze. On a clear jungle night a lantern lights
 its haze no more than it lights open air. That would be a slice of its own, in the renderer, if the owner wants it.
+
+## BAY-LEFT-SEA - weather born at sea past the Bay is the sea's (2026-10-27)
+
+**What stood.** A weather system is born where the field puts it, and its climate is the map's there
+(`systems/weather/weatherMap.js` climateOfField). Past the map's edge it read the climate the host's composed map answers
+(AUDIT TESA-BIOME Z8: the continent's zones past the Bay), but never the Ocean: an Ocean answer fell back to the nearest
+pixel of the Bay's edge (WEATHER3g's rule, from when everything past the edge read as sea and carried the sea's weather
+onto the mountains). So a storm born over the Sea of Ghosts, the Topal Bay or the Padomaic took the nearest Bay edge's
+climate - Mountain, along the north - and a winter's births at sea snowed a third of the time (AUDIT BAY-LEFT item 22,
+D4). The player's own roll was right: it reads the pixel's climate itself.
+
+**Now.** Past the edge the composed map's own climate is taken, the Ocean too. A map with nothing past the Bay (the land
+row off, `?tamrielland=off`: MapsFile answers -1 off its PAKs) reads the edge, as ever. With the land row on the composed
+map always has a continent past the edge - the trace's, or the authored rings' before it lands - so the land north and
+east of the edge reads land, and WEATHER3g's case does not come back. Nothing changes on the Bay.
+
+**On the freeware** (the composed maps; a winter's 400 words at each sea pixel, the old law beside the new):
+
+| Sea | snow | fog | sunny | cloudy | overcast |
+|---|---|---|---|---|---|
+| Sea of Ghosts (1900, -620) | 142 -> 62 | 6 -> 93 | 86 -> 54 | 57 -> 78 | 109 -> 113 |
+| Topal Bay (2100, 1900) | 110 -> 46 | 10 -> 83 | 79 -> 108 | 77 -> 67 | 124 -> 96 |
+| Padomaic (3600, 1600) | 189 -> 64 | 10 -> 64 | 40 -> 39 | 79 -> 122 | 82 -> 111 |
+
+**Not DFU**: DFU's weather is the region's climate roll alone; the systems on a field are the port's (WEATHER3, Port-Ledger
+section A).
+
+**The four hosts.** `scenes/world.js` reads the weather map as before - no wiring changed; `scenes/worldModes.js`,
+`scenes/dungeonContext.js` and `scenes/exterior.js` FLAGGED, unchanged: indoors and in the fixed city the weather is the
+same map's.
+
+**Pins.** `test/systems/weather/bayleftsea_seaweather.test.js` (the freeware's three seas, before and after). PIN MOVED:
+`test/systems/weather/weather3a_weathermap.test.js` (the sea off the map its own - 9 of 200 summer births rain at sea
+where the desert edge's never do; a map with -1 off it reads the edge). Mutants: `tools/mutants/bayleftsea.json`
+BLS-weather-land-off-read; `tools/mutants/tesabiome.json` TESA-BIOME-28-weather-clamped re-aimed by content and
+TESA-BIOME-29-weather-sea turned with the law (the mutant now the old law) - all dead.

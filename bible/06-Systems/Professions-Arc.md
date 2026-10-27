@@ -6172,6 +6172,47 @@ own tests: 171, 131 and 133, all passing. No HIGH; one MEDIUM; nine LOW. Every o
   x the band), PROF1's steady window (`test/systems/foraging/prof1_law.test.js`, `HERB_ACT`'s `wet`). Mutants:
   `tools/mutants/auditgather.json` (17 - 16 dead, the insert's guard equivalent as recorded).
 
+## 56. BAY-LEFT-SEA - the market's hubs past the Bay (BUILT 2026-10-27)
+
+**What stood.** The courier's road runs hub to hub (the witnessed road above, `net/marketLaw.js` roadPixels): every market
+request hands the service this client's hubs, `{ [region]: [x, y] }`, and the service reads the witnesses' answer for a
+region, else the asking client's (`hubPixel`). The client's hubs were HUB1's alone (`systems/region/regionHubs.js`
+pickRegionHubs, off MAPS.BSA's rows), so the nine provinces past the Bay (regions 62-70, WW-R) had none. Every buy, fill
+and bid between a province's board and any other region answered `market-no-road` ("The couriers do not know the road
+there yet."), both ways - though the service has taken a hub on the world's grid since WW7-5 (`hubPixelOk`). AUDIT
+BAY-LEFT item 7 (B2 = E1), confirmed by two lanes, the second on the real Worker over sqlite.
+
+**As built** (`systems/region/marketHubs.js`):
+- A PROVINCE'S HUB (`provinceHubOf`), the same on every client: its crown seat's pixel - the capital's centre, the seat of
+  power the seats past the Bay stand (`systems/town/townSeats.js` replaceSeats' `powers`, WW7-3) - else its largest listed
+  city on the world's registry (`world/worldWide/worldPlaces.js`), by HUB1's own claim on a registry row: a city over a town
+  over a village (`regionHubs.js` settlementRank), then the most blocks, then the lower map id. High Rock and Hammerfell
+  past the Bay keep no capital: theirs is the largest of Arena's city-states there. A province with neither standing on this
+  client (its places not landed yet) has no hub of this client's; the witnesses' answer, where one stands, is the road's.
+- THE HUBS A REQUEST CARRIES (`marketHubsOf`): the Bay's, HUB1's byte for byte, then each province's that stands.
+- MADE AGAIN AS THE SEATS OR THE PLACES MOVE (`createMarketHubs`, read as `marketHubs()`): kept while the seats' book's
+  `version` and the registry's `generation()` stand - the trace landing, Arena attached, the capitals standing.
+- The host: the market's pieces and hubs moved out of `bootWorld` verbatim (HOST-SPLIT, `01-Overview/Host-Split.md`
+  BAY-LEFT-SEA) to `scenes/marketPiecesHost.js` and handed the seats and the places; the board hands its tab `marketHubs()`
+  as it opens, and a trader's stall reads them at its buy (`scenes/vendorHost.js`).
+- No account change: the service's hub law already takes a pixel past the Bay.
+
+**On the freeware.** The Bay's 43 hubs are HUB1's, byte for byte. The provinces': High Rock past the Bay (62) (709, -337),
+Hammerfell past the Bay (63) (190, 662), Skyrim (64) Solitude (1569, -430), Morrowind (65) Mournhold (3293, 550), Sumurset
+Isle (66) Alinor (8, 1533), Valenwood (67) Falinesti (1247, 1449), Elsweyr (68) Torval (1922, 1705), Black Marsh (69)
+Helstrom (3355, 1108), Cyrodiil (70) the Imperial City (2069, 658). On the real Worker over node:sqlite a board in Solitude
+fills a Daggerfall order - the courier's fee 123 Marks over a road of 1,506 pixels - and Daggerfall buys a Skyrim listing;
+with HUB1's hubs alone both answer `market-no-road`.
+
+**Not DFU** (DFU has no market): Port-Ledger section A, BAY-LEFT-SEA's row.
+
+**Pins.** `test/world/worldWide/bayleftsea_market.test.js` (4: the province's hub, the hubs a request carries and their
+memo, the host, the freeware and the real Worker). PIN MOVED with the host move: `test/net/audit30_client.test.js`,
+`audit31_client.test.js`, `prof5_client.test.js`, `test/systems/fb1001_market_goods.test.js`,
+`test/systems/online/profsave.test.js` (they read the module beside world.js). Mutants: `tools/mutants/bayleftsea.json`
+BLS-hub-* (16), all dead; the move's re-aimed records (`audit31.json`, `fb1001_market.json`, `prof5.json`, `prof6.json`,
+`profsave.json`) all dead.
+
 ## Appendix A - a day of a gatherer
 
 Ilsa, a Journeyman herbalist and Apprentice miner in Anticlere (a march), sets out at seven (ANY-HOUR: the wilderness keeps no hours now - seven is her habit). The board's Work tab has a

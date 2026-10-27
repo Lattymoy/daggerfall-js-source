@@ -750,4 +750,6 @@ are read inside closures run after it. `bootWorld` 35,799 -> 35,695 logical line
 (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed ten mutant records over the moved
 lines (`audit31.json`, `fb1001_market.json`, `prof5.json`, `prof6.json`, `profsave.json` - all dead, with the ceiling's,
 11 of 11); the pins that cut the members from world.js's text cut them from the module's too (`audit30_client`,
-`audit31_client`, `prof5_client`, `fb1001_market_goods`, `profsave`, PIN MOVED).
+`audit31_client`, `prof5_client`, `fb1001_market_goods`, `profsave`, PIN MOVED). The slice's wiring then went in: the
+seats and the places handed the module (2 entries), the world's ports handed `crownAt` (2), the hideouts' rout handed the
+seats' edicts (1) - `bootWorld` 35,700, the ceiling at it (`03-World/World-Wide.md` BAY-LEFT-SEA).
