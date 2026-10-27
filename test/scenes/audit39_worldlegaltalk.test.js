@@ -382,8 +382,11 @@ test('AUDIT 39 (#110): a directory row carries BLOCK ORIGIN + the subrecord Posi
 
 test('AUDIT 39 (#111): the answer pipeline gets the region and the location reader', () => {
   const deps = literalBody(read('src/scenes/world.js'), 'new AnswerPipeline({');
-  assert.match(deps, /currentRegion: \(\) => maps\.getRegion\(_questRegionIndex\(\)\) \?\? null/);
-  assert.match(deps, /getLocation: \(r, i\) => maps\.getLocation\(r, i\)/,
+  // PIN MOVED (BAY-LEFT-B, bible/06-Systems/Talk-Arc.md): the region is the quest layer's table - a Bay region's the same
+  // MAPS.BSA region (scenes/questWorld.js maps.getRegion's Bay arm), a province's its places past the Bay - and a Bay
+  // location is still MapFileReader's own, never the quest layer's dungeon-sized getLocation; a province's its table's
+  assert.match(deps, /currentRegion: \(\) => questWorld\.maps\.getRegion\(_questRegionIndex\(\)\) \?\? null/);
+  assert.match(deps, /getLocation: \(r, i\) => \(isProvinceRegion\(r\) \? questWorld\.provinceSites\?\.getLocation\(r, i\) \?\? null : maps\.getLocation\(r, i\)\)/,
     'TalkManager reads MapFileReader directly - not the quest layer\'s dungeon-sized adapter');
   assert.doesNotMatch(deps, /currentRegion: \(\) => null/);
 });

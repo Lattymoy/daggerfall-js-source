@@ -1754,4 +1754,5 @@ Pins: `test/systems/quest/bayleftb_quest.test.js` (the keys, the pipeline, the w
 (3: every MAPS.BSA row's key its buildings'; FACTION.TXT's orders; each bit the reader reads back). Mutants:
 `tools/mutants/bayleftb.json` (BAY-LEFT-B-B4-*, BAY-LEFT-B-KEY-*). PIN MOVED: `test/tesa10_capitals.test.js`'s host harness hands the capital's
 clone the key's three leaves (`locationKeyOf`, `CAPITALS`, `fabricSliceSites`) - it ran `capitalCloneOf`'s text over
-names that harness did not hold.
+names that harness did not hold; `test/scenes/audit39_worldlegaltalk.test.js` (#111) reads the pipeline's region over
+the quest layer's maps and its location reader's province arm, a Bay location still MapFileReader's own.
