@@ -4106,7 +4106,19 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const portOnSea = (dfLocation) => portTownOnSea(dfLocation, hasPort, openSea);
   /** WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S PORTS PAST THE BAY (world/worldWide/worldPorts.js) - the places its
    *  providers call ports, of a port town's kind, that the open sea bears on; the Bay's are the game's data, as above. */
-  const worldPorts = createWorldPorts({ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: (x, y) => maps.getRegionIndexAt(x, y) });
+  let _navalCapitals = null;
+  /** The three crowns' capitals' map pixels (navalShips.js crownOf reads the nearest as the waters' crown) - once.
+   *  BAY-LEFT-SEA: declared above the world's ports, whose harbours past the Bay keep the nearest crown's office. */
+  const navalCapitals = () => (_navalCapitals ??= NAVAL_CROWNS.map((c) => {
+    try {
+      const loc = maps.getLocationByName(REGION_NAMES[c.region], c.name);
+      if (!loc?.mapTableData) return null;
+      const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
+      return { region: c.region, x: px.x, y: px.y };
+    } catch { return null; }
+  }).filter(Boolean));
+  const worldPorts = createWorldPorts({ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: (x, y) => maps.getRegionIndexAt(x, y),
+    crownAt: (x, y) => navalCrownOf(x, y, navalCapitals()).name });   // BAY-LEFT-SEA: a port past the Bay keeps the nearest Bay crown's office (its navy's colours)
   const _yardMemo = new Map();   // mapId -> { sig, sites, ports }, the latest few towns
   const _yardBoxes = new Map();   // a registered model's local box, by id
   const palaceIn = (b) => {
@@ -8936,16 +8948,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const floor = surfaceAt(x, z);
     return Number.isFinite(floor) && floor < tvSeaY() - (hull < 0 ? 0.05 : navalDraftOf(hull));
   };
-  let _navalCapitals = null;
-  /** The three crowns' capitals' map pixels (navalShips.js crownOf reads the nearest as the waters' crown) - once. */
-  const navalCapitals = () => (_navalCapitals ??= NAVAL_CROWNS.map((c) => {
-    try {
-      const loc = maps.getLocationByName(REGION_NAMES[c.region], c.name);
-      if (!loc?.mapTableData) return null;
-      const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
-      return { region: c.region, x: px.x, y: px.y };
-    } catch { return null; }
-  }).filter(Boolean));
   /** A port town within a pixel of the player (the merchantmen's and the navies' water, navalDirector.js PORT_WEIGHTS). */
   let _navalPortAt = null;   // { key, near } - the answer for the pixel it was asked at
   const navalNearPort = () => {

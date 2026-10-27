@@ -4,111 +4,179 @@
     "file": "src/systems/region/marketHubs.js",
     "old": "  if (seat?.tier === 'crown' && seat.region === region) return [seat.pixel[0], seat.pixel[1]];",
     "new": "  if (false) return [seat.pixel[0], seat.pixel[1]];",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-palace-as-crown",
     "file": "src/systems/region/marketHubs.js",
     "old": "  if (seat?.tier === 'crown' && seat.region === region) return [seat.pixel[0], seat.pixel[1]];",
     "new": "  if (seat && seat.region === region) return [seat.pixel[0], seat.pixel[1]];",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-only-provinces",
     "file": "src/systems/region/marketHubs.js",
     "old": "  if (!PROVINCE_HUB_REGIONS.includes(region)) return null;",
     "new": "",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-region-unfiltered",
     "file": "src/systems/region/marketHubs.js",
     "old": "    if (p.region !== region) continue;",
     "new": "",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-kind-unranked",
     "file": "src/systems/region/marketHubs.js",
     "old": "    const kind = settlementRank(p.type);",
     "new": "    const kind = settlementRank(p.type) ? 1 : 0;",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-blocks-unread",
     "file": "src/systems/region/marketHubs.js",
     "old": "    const c = [kind, p.blocks, -(p.mapId >>> 0)];",
     "new": "    const c = [kind, 0, -(p.mapId >>> 0)];",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-tie-higher-id",
     "file": "src/systems/region/marketHubs.js",
     "old": "    const c = [kind, p.blocks, -(p.mapId >>> 0)];",
     "new": "    const c = [kind, p.blocks, (p.mapId >>> 0)];",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-provinces-never-added",
     "file": "src/systems/region/marketHubs.js",
     "old": "    if (at) out[r] = at;",
     "new": "    if (false) out[r] = at;",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-memo-never-again",
     "file": "src/systems/region/marketHubs.js",
     "old": "    if (!made || stamp !== at) {",
     "new": "    if (!made) {",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-memo-every-ask",
     "file": "src/systems/region/marketHubs.js",
     "old": "    if (!made || stamp !== at) {",
     "new": "    if (true) {",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-memo-seats-unstamped",
     "file": "src/systems/region/marketHubs.js",
     "old": "    const stamp = `${seats?.version ?? -1}|${places?.generation?.() ?? -1}`;",
     "new": "    const stamp = `${places?.generation?.() ?? -1}`;",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-memo-places-unstamped",
     "file": "src/systems/region/marketHubs.js",
     "old": "    const stamp = `${seats?.version ?? -1}|${places?.generation?.() ?? -1}`;",
     "new": "    const stamp = `${seats?.version ?? -1}`;",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-settlement-rank",
     "file": "src/systems/region/regionHubs.js",
     "old": "export const settlementRank = (type) => KIND_RANK[type] ?? 0;",
     "new": "export const settlementRank = (type) => KIND_RANK[type] ?? 1;",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-host-seats-unhanded",
     "file": "src/scenes/marketPiecesHost.js",
     "old": "  const marketHubs = createMarketHubs({ regionHubs, seats: townSeats, places: worldPlaces });",
     "new": "  const marketHubs = createMarketHubs({ regionHubs });",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-host-board-function",
     "file": "src/scenes/world.js",
     "old": "regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs(), name:",
     "new": "regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs, name:",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
   },
   {
     "name": "BLS-hub-host-stall-old",
     "file": "src/scenes/vendorHost.js",
     "old": "    const hub = marketHubs()[row.region];",
     "new": "    const hub = marketHubs[row.region];",
-    "tests": ["test/world/worldWide/bayleftsea_market.test.js"]
+    "tests": [
+      "test/world/worldWide/bayleftsea_market.test.js"
+    ]
+  },
+  {
+    "name": "BLS-port-crown-never-asked",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
+    "new": "theatre: p.theatre, crown: null,",
+    "tests": [
+      "test/world/worldWide/bayleftsea_harbour.test.js"
+    ]
+  },
+  {
+    "name": "BLS-port-crown-other-pixel",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
+    "new": "theatre: p.theatre, crown: crownAt(p.py, p.px),",
+    "tests": [
+      "test/world/worldWide/bayleftsea_harbour.test.js"
+    ]
+  },
+  {
+    "name": "BLS-port-list-unhanded",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "    list = beyondPorts(places, openSea, crownAt);",
+    "new": "    list = beyondPorts(places, openSea);",
+    "tests": [
+      "test/world/worldWide/bayleftsea_harbour.test.js"
+    ]
+  },
+  {
+    "name": "BLS-port-host-crown-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "    crownAt: (x, y) => navalCrownOf(x, y, navalCapitals()).name });",
+    "new": "    });",
+    "tests": [
+      "test/world/worldWide/ww3_sea.test.js"
+    ]
   }
 ]
