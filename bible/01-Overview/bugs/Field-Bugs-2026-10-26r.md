@@ -2175,13 +2175,13 @@ all back with the owner; a dungeon's by its records' shape, the draw question an
 | 170 | The Hearth Offering cannot be set at the house's door | Set at the home's first door where the build kept it room; the other door is refused in its own words | AS DESIGNED |
 | 171 | Crouch-jumping out of a dungeon's geometry; looting a room above through its floor | A stand under a 1.25-1.45 m ceiling put the head's centre past the face, and the collider pushed it through | STAND-THROUGH |
 | 193 | The ship capped under 5% of her speed after the 10-23 sailing patch | Second pass: #1177's DECK-POSE, SEA-DECK and SEA-DROPS (the patch) reach nothing of her way; every hold the naval host lays on her lets go with its cause (a guard pins it). The one law that holds her under 5% under sail and oars alike is Come Sail Away's cargo rule - and under the Classic helm a hull with no Cargo node weighs against a hold of nothing (the mod's own, kept) | NOT REPRODUCED |
-| 194, 271 | Inns lit by nothing (the Howling Mug in Westhead Moor) | Daggerfall hangs no lamp in 177 of its rooms, and DFU lights them at InteriorAmbientLight's 0.18 | DARK-ROOM |
+| 194, 271 | Inns lit by nothing (the Howling Mug in Westhead Moor) | Daggerfall hangs no lamp in 177 of its rooms, and DFU lights them at InteriorAmbientLight's 0.18 | DARK-ROOM (AUDIT RPT1026 J1) |
 | 200 | Sailing port to port, no other port's quays stand | The host named one town, from the 3x3 about the player, and read every unbuilt pixel of its ring as land: a ship at 24 of the 36 far harbours' first berths never sounded them, and Pencart's waited on Longham | FAR-QUAY |
 | 201 | A yard at its limit resets; nothing can be placed or sold | A town's yards were answered 2,000 pieces at most, in building-key order - YARD-TOWN, after the report's 0.0.363 | ALREADY FIXED (YARD-TOWN) |
 | 205 | A cooking hearth cannot be placed in a home | DECOR-USE (5dfc764b6), after the report's 0.0.366: a placed fire cooks, and a cooking station | ALREADY FIXED (DECOR-USE) |
 | 208 | Every character's first switch starts in Daggerfall, not the family's seat | Traced the switch's place (the family's seat, else the nearest town, else Daggerfall) to the boot; a new character made from the menu founds its own house | NOT REPRODUCED |
 | 244 | Since the decorator's new menu, a caravan's pieces cannot be moved | Since the overhaul a piece is moved by a press on it, the plaque's lit row - and no plaque is drawn on a touch screen or the classic skin with quick loot off, nor named with World Tooltips off: there a press opened its chest or did nothing. The decorator's own Move works in the caravan by both doors at 0.0.392, 0.0.404 and now (a guard) | DECOR-VERBS |
-| 248 | A Wildertown guild hall: one banner floats in the air | A cloth hung past its small house's corner | BANNER-WALL |
+| 248 | A Wildertown guild hall: one banner floats in the air | A cloth hung past its small house's corner | BANNER-WALL (AUDIT RPT1026 J2) |
 | 252 | Pieces cannot be placed in a house: the Confirm button does nothing | A room read unanswered as the draft opened (the service slow) left every Confirm of the visit refused; and a second click while one was on its way sent it twice and paid twice | CONFIRM-REREAD, CONFIRM-ONCE |
 | 259 | All volumes at 10%: in and out of the caravan by a shipwright, deafening ship sounds | A moored boat stood again woke her wake's loop at full | LOOP-AWAKE |
 | 268 | On the Grayidge-Westwall road the Overworld leaves the bridge and walks into the water; on the beach the body sinks | The route law refused the road's step onto the inlet's water pixel, which his painter paves | CAUSEWAY |
@@ -2244,9 +2244,9 @@ no archive-210 flat, so no lamp, and the room stood at 0.18 - 0.027 in linear on
 held to 1.2 (INTERIOR-DIM): black. 177 of BLOCKS.BSA's 6,832 rooms lay no such flat (5 taverns of 290, 30 weaponsmiths
 of 55, 16 banks of 31).
 
-FIXED - a departure for those rooms alone (Port-Ledger A, DARK-ROOM). `roomAmbient(ambient, lamps)`: a room whose lights
-are none (its archive-210 flats, a home's placed lamps among them) takes DFU's own ambient-only level for the hour; a
-room with a lamp keeps InteriorAmbientLight to the bit.
+FIXED - a departure for those rooms alone (Port-Ledger A, DARK-ROOM). `roomAmbient(ambient, lamps)`: a room built with no
+lamp (the archive-210 flats its build hung, `interiorContext.js` roomLamps - AUDIT RPT1026 J1, below) takes DFU's own
+ambient-only level for the hour; a room with a lamp keeps InteriorAmbientLight to the bit.
 
 THE FOUR HOSTS. `worldModes.js`'s building arm and the `?interior` bench (`interior.js`) both light through
 `roomAmbient` over the room's own lights - the one statement each already had, no logical line added
@@ -2256,6 +2256,16 @@ PINS. `test/world/interior/rpt1026_world_darkroom.test.js` (3: MARKAA01 #0 lit a
 unchanged, on the player's data; the law; both hosts by source). PIN MOVED: `windows1_view.test.js`'s indexOf string;
 `time1.json`'s TIME1-the-interior-light-on-the-event-clock re-aimed. Mutants: RPT1026-DARK-ROOM-every-room-classic,
 -no-night, -host-unwired (3).
+
+AUDIT RPT1026 J1 (the batch's audit, lane J). As merged the law read the room's LIVE light list (`interiorCtx.lights`),
+which a home's placed lamp joins (`decorRoom.js` roomLights) and a lamp its owner takes out leaves (`decorBase.js` hide):
+one candle set down in a room Daggerfall left unlit put it back to 0.18, dark but for the candle, and the caravan's
+lantern taken out (WAGONS2-BASE) lit the caravan at 0.8. Both hosts now hand `roomAmbient` the lamps the room was built
+with (`interiorContext.js` roomLamps, frozen at the build), so nothing a player does in a room moves the level it is lit
+at. The record's "a home's placed lamps among them" was the defect. Pinned by `test/scenes/audit_rpt1026_world.test.js`
+(J1: the caravan's own block through the interior build, its lantern taken out; an unlit room with a lamp placed through
+the real decor room; both hosts by source); PIN MOVED: this record's by-source test, `windows1_view.test.js`, and the
+`time1.json` and RPT1026-DARK-ROOM-host-unwired records. Mutants: `tools/mutants/audit_rpt1026_world.json` J1 (3).
 
 ### WAGON-OUT (64) - `src/scenes/caravanRoom.js`, `src/scenes/world.js`
 
@@ -2290,6 +2300,17 @@ PINS. `test/scenes/rpt1026_world_bannerwall.test.js` (2: Wildertown with the pac
 hangs one, every door's cloths on their walls, 259 doors of 364 keeping their pair; the law). The existing banner suites
 (guild1d_client, auditguild1d, audit_chap5, castle_gate, seat_standing_festival) unchanged. Mutants:
 RPT1026-BANNER-WALL-both-hung, -one-end-asked, -pad-a-metre (3).
+
+AUDIT RPT1026 J2 (the batch's audit, lane J). "Every door's cloths on their walls" was the box asked again: the pin's
+`onTheBox` is the law's own test, and its frames took the first model's box where the pixel build unions every model's
+(`pixelBuild.js` homeFrames). Asked of the building's own faces through the real collider, a cloth still hung before no
+wall where a door stands on a vestibule or in a porch, its facade stepped back beside it (ARCH3D 326, 339, 249, 324 and
+more: 19 of Wildertown's 364 doors, 29 of Daggerfall's, 29 of Chesterwark's, 14 of Sentinel's). The frame now carries its
+building's models (`parts`), and a cloth hangs only where a face of them stands behind both its ends, at its lower edge
+and its middle, within BANNER_WALL_BEHIND_M (1.2 m) of the door's plane (`hallBanners.js` wallBehind); a frame with no
+models (a castle's gate, a test's) asks the box alone. Wildertown: 240 doors keep their pair, 124 hang one, none hangs
+none. Pinned by `test/scenes/audit_rpt1026_world.test.js` (J2: Wildertown through the real collider; the law; the build's
+`parts` by source). Mutants: `tools/mutants/audit_rpt1026_world.json` J2 (6).
 
 ### RAIN-EYE (68) - `src/scenes/world.js`
 
@@ -2434,7 +2455,8 @@ line); `disc22c_classic_loot.test.js`'s draw line kept by the order of the state
 ### The sea-brake guard (193, 274) - `test/systems/naval/rpt1026_world_seabrake.test.js`
 
 Not a fix: the coordinator's question - is a brake left on after a fight, or near a cutter? - answered no on the real
-naval host. A pirate's repel haul holds my way only while it hauls (by HAUL_MAX_S), and nothing of it is left after the
+naval host. (AUDIT RPT1026 J3: the cutter's test now asserts the cutter and the pirate are engaged with each other - it
+asked nothing of the fight it is named for; mutant AUDIT-RPT1026-J3-the-cutter-stands-off.) A pirate's repel haul holds my way only while it hauls (by HAUL_MAX_S), and nothing of it is left after the
 fight; a navy cutter alongside fighting a pirate takes nothing (no brake, no haul, no warp; her hurts alone). The
 10-23 patch (#1177: DECK-POSE, SEA-DECK, SEA-DROPS) touches none of her way; SEA-DROPS's own replay pins its answers.
 Recorded on `03-World/Naval-Refit.md` beside BOARD-MAGNET.

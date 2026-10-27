@@ -97,7 +97,7 @@ export async function bootInterior(canvas, renderer, params, status) {
 
   // R8: verbatim interior ambient; verbatim InteriorFogSettings
   // (exponential 0.001, fog color black).
-  renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, ctx.lights)), 0);   // AUDIT 23 (C12): PlayerAmbientLight.cs:75-80; RPT1026-WORLD DARK-ROOM: a room with no lamp of its own
+  renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, ctx.roomLamps)), 0);   // AUDIT 23 (C12): PlayerAmbientLight.cs:75-80; RPT1026-WORLD DARK-ROOM: a room with no lamp of its own (AUDIT RPT1026 J1: the lamps it was built with)
   renderer.setWindowEmission(windowEmissionRGB('disabled'));   // F002: the dev route draws the same Disabled interiors (DaggerfallInterior.cs:473/:517/:1270)
   renderer.setFog('exp', 0.001, 0, 0, new Float32Array([0, 0, 0]));
 

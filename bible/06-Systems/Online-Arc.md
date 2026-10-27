@@ -11499,7 +11499,11 @@ own module (`src/net/hallLaw.js`), never net/guild/guildLaw.js, which is in the 
   building's box along the wall is not hung - a door at its wall's end hangs the one, the small box house's (ARCH3D 118)
   among them; of Wildertown's 364 doors 105 hung one cloth in the air (`hallBanners.js` hallBannerAnchors,
   BANNER_WALL_PAD_M; the festival's tavern doors, a chapter's halls and a seat's palace door hang by the same law).
-  Pinned by `test/scenes/rpt1026_world_bannerwall.test.js`. The cloth is its own foreign pass after the
+  Pinned by `test/scenes/rpt1026_world_bannerwall.test.js`. AUDIT RPT1026 J2: and a face of the building stands behind
+  it - the box let a cloth hang before no wall beside a door on a vestibule or in a porch (19 of Wildertown's doors, 29
+  of Daggerfall's), so the pixel build hands each frame its models (`homeFrames[key].parts`) and a cloth hangs only where
+  one of their faces stands behind both its ends within BANNER_WALL_BEHIND_M of the door's plane (`hallBanners.js`
+  wallBehind; `test/scenes/audit_rpt1026_world.test.js`). The cloth is its own foreign pass after the
   duel walls (the world host's twentieth seam): a strip of quads hung from its top edge, swinging out along its face
   on the weather's wind (the grass's own strength) with a ripple across it, every rate whole over a 120 s clock, the
   swallowtail cut, lit by the frame's ambient and sun and fogged as the ground is; each heraldry painted once.

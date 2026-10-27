@@ -280,7 +280,11 @@ the level DFU's Lit Interiors setting lights a room by):
 (`worldModes.js`, `interior.js`); `scenes/exterior.js` and
 `dungeonContext.js` light no building's room. A departure for those
 rooms alone (Port-Ledger A, DARK-ROOM); pinned by
-`test/world/interior/rpt1026_world_darkroom.test.js`. MAGEAA00:0 pins: 17 lights; the first (record-6 skull torch) at
+`test/world/interior/rpt1026_world_darkroom.test.js`. AUDIT RPT1026 J1:
+the room is asked by the lamps it was BUILT with (`interiorContext.js`
+roomLamps), never its live list - a home's placed lamp, or the
+caravan's lantern taken out, moves nothing of its ambient
+(`test/scenes/audit_rpt1026_world.test.js`). MAGEAA00:0 pins: 17 lights; the first (record-6 skull torch) at
 flat y 12.9 + h 2.35 / 2 + 0.6 = 14.675, cross-checked end to end.
 Console pin gains ", 17 lights"; brightness redistributes (0.18 base +
 range-15 pools) at a near-identical mean to the old flat lighting -
