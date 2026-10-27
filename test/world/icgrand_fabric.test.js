@@ -69,9 +69,9 @@ test('IC-GRAND THE HEIGHT WALK - in every district a building beside a building 
 });
 
 test('IC-GRAND EACH DISTRICT ITS OWN - its frame of streets, its blocks\' sizes, its walls\' and roofs\' pictures; and inside it each neighbourhood its own frame off its own seed - five rings out by half, the heart\'s its landmark\'s (mutants: one frame for all; one neighbourhood a district)', () => {
-  assert.equal(Object.keys(IMPERIAL_STYLES).length, 7);
+  assert.equal(Object.keys(IMPERIAL_STYLES).length, 8);   // PIN MOVED (IC-PROPS): the Arcane University's halls a district's fabric of their own (test/world/icprops_city.test.js)
   const looks = new Set(Object.values(IMPERIAL_STYLES).map((st) => `${st.frame}|${st.walls[0]}|${st.roof}|${st.P}|${st.Q}`));
-  assert.equal(looks.size, 7, 'no two districts alike');
+  assert.equal(looks.size, 8, 'no two districts alike');
   assert.deepEqual(new Set(Object.values(IMPERIAL_STYLES).map((st) => st.frame)), new Set(['grid', 'polar', 'park', 'axial', 'organic', 'docks']));
   assert.deepEqual(HOOD_RINGS, [IMPERIAL.palaceWall.r, ...IMPERIAL.roads.rings.slice(0, 1), 4050, 5150, IMPERIAL.roads.rings[2], IMPERIAL.cityWall.r].map((v, i) => (i === 2 || i === 3 ? v : v)));
   for (const [d, b] of IMPERIAL_SECTORS) {

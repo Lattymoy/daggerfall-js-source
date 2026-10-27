@@ -308,8 +308,9 @@
  {
   "name": "TB-the-places-unshut",
   "file": "src/scenes/world.js",
-  "old": "        const g = townGroundOf(yl, measures, shut);",
-  "new": "        const g = townGroundOf(yl, measures);",
+  "old": "        const g = townGroundOf(yl, measures, shut, townYardsOf(dfLocation));",
+  "new": "        const g = townGroundOf(yl, measures, null, townYardsOf(dfLocation));",
+  "note": "Re-aimed by content (IC-PROPS): the call hands the town's yards' law its ways and a capital's own yards too; the mutant still drops the walk shut.",
   "tests": [
    "test/world/baywalls.test.js"
   ]

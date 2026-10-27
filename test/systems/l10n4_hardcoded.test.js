@@ -823,8 +823,9 @@ const HARDCODED = {
   'src/scenes/worldQuickSave.js': 6,   // TESA's merge (HOST-SPLIT): moved verbatim out of world.js's bootWorld, its six with it
   'src/world/capitalPlans.js': 26,
   'src/world/imperialBlocks.js': 2,   // IC-GRAND: 'City Isle' (a district's proper name, as imperialCity.js's)
-  'src/world/imperialCity.js': 28,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'; IC-GRAND: 'Palace District' and the districts' names its laws read - proper names
-  'src/world/imperialFabric.js': 6,   // IC-GRAND: the districts' names its styles and its neighbourhoods read - proper names; IC-GRAND's courts: the Elven Gardens' orchards keyed by the district's name
+  'src/world/imperialCity.js': 23,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'; IC-GRAND: 'Palace District' and the districts' names its laws read - proper names; IC-PROPS (28 -> 23): the old district-trade tables gone, the trades the yards' and the fabric's own
+  'src/world/imperialFabric.js': 7,   // IC-GRAND: the districts' names its styles and its neighbourhoods read - proper names; IC-GRAND's courts: the Elven Gardens' orchards keyed by the district's name; IC-PROPS: the Arcane University's grounds by its district's name
+  'src/world/imperialYards.js': 1,   // IC-PROPS: the yards' trades stand on City Isle - the district's proper name, as imperialBlocks.js's
   'src/world/imperialPrebuildClient.js': 2,   // IC-GRAND's city worker: its two warnings (no worker, a worker that failed) - console lines through the client's injected logger, as tamrielRoadsClient.js's
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,

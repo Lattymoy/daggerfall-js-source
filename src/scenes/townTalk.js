@@ -61,14 +61,14 @@ import { tooFarAwayText } from '../player/activate.js';
 import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talk/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { REGION_PEOPLE } from '../formats/mapsTables.js';   // WW-R: each region's people, a province's its own
-import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show
+import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames, generateBuildingName } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show; IC-PROPS: a building of another town named by its own
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint, toneTaste } from '../systems/talk/talkTopics.js';
 import { yardDirectoryRows } from '../systems/merchantYards.js';   // YARDS-FOUND: the town's yards in its directory
 import { portDirectoryRows, FOUND_KIND_ORDER, FOUND_TALK_GROUPS, lettersOnMap } from '../systems/portPlaces.js';   // SHIPYARDS-FOUND: and a port town's shipyard, crew hall, lighthouse and docks - the found places' one order
 import { OPENED_SHOP_TYPES, OPENED_SHOP_GROUPS } from '../world/buildingNames.js';   // PROF-FOUND: the shops the port opened, asked after
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
-import { discoverBuilding, townBookId } from '../systems/discovery.js';   // T4: %loc's mark side effect; BAY-LEFT-MAPS (C7 = E2): its town's own book
+import { discoverBuilding, townBookId, townBookOf } from '../systems/discovery.js';   // T4: %loc's mark side effect; BAY-LEFT-MAPS (C7 = E2): its town's own book; IC-PROPS: a door's town's
 import { getNameBankOfRegion, fullName as nameHelperFullName, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
 import { talkMacroSource } from '../systems/talk/talkMacros.js';
 import { bumpSeed } from '../formats/dfRandom.js';
@@ -339,6 +339,24 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       },
     };
   }
+  /** IC-PROPS (bible/03-World/Arena-Provinces.md IC-PROPS): A BUILDING'S NAME IN THE TOWN IT STANDS IN - the directory's row
+   *  where that town is the talk's own (its topics', the player's pixel's), else BuildingNames' law over that town's own
+   *  names (`place` a DFLocation: a neighbouring slice of the Imperial City, a town across a pixel's edge) - so a door's
+   *  plaque and its shop name the door's own building, never the player's town's building under the same key. `data` the
+   *  door's merged record (systems/talk/talkTopics.js buildingDataForDoor). */
+  function buildingNameIn(place, data) {
+    if (!data) return '';
+    const mapId = (place?.mapTableData?.mapId ?? 0) >>> 0;
+    if (!place || !topics || mapId === ((topics.mapId ?? 0) >>> 0)) return directory.find((e) => e.buildingKey === data.buildingKey)?.name ?? '';
+    const opts = nameOpts();
+    if (!opts) return '';
+    const regionName = place.regionName ?? '', shownRegion = Number.isInteger(place.regionIndex) ? getLocalizedRegionName(place.regionIndex, () => regionName) : regionName;
+    return generateBuildingName(data.nameSeed, data.buildingType, { ...opts, locationName: place.name, regionName, shownLocationName: getLocalizedLocationName(mapId, place.name), shownRegionName: shownRegion, factionId: data.factionId });
+  }
+  /** IC-PROPS: A DOOR'S OWN TOWN for its record (scenes/world.js buildingDataForDoor) - its building's name there
+   *  (buildingNameIn), the town's book of buildings its plaque and its press discover into (systems/discovery.js townBookOf),
+   *  and the town's name a nameless building's plaque says. `place` the DFLocation the door stands in. */
+  const doorTownOf = (place, data) => ({ name: buildingNameIn(place, data), townBook: townBookOf(place), townName: place?.name ?? '' });
 
   function rebuildDirectory() {
     directory = [];
@@ -1629,6 +1647,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     },
     get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
+    buildingNameIn,   // IC-PROPS: a door's building named in its own town
+    doorTownOf,   // IC-PROPS: and the door's record's own town
     get locationName() { return shownCityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
     _debug: () => ({
       mode: getInteractionMode(), overlay: !!overlay, people: peopleNow()?.name ?? null,

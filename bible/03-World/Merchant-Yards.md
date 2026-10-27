@@ -338,3 +338,68 @@ Pins: `test/systems/carpyard1.test.js` (8). Mutants: `tools/mutants/carpyard1.js
 `shipyards1` (the found order), `yardsfound1` (the groups). Mutant records re-aimed: `shipyards1.json` (the found order,
 the mark's kind), `wagons4.json` (the mend row), `prof4.json` (the Linen's gate). Not seen in a real town (no ARENA2
 here). The model was checked by a software render of its own geometry and pictures.
+
+## IC-PROPS - each yard where its kind belongs, world-wide (2026-10-27)
+
+The owner, 2026-10-27: *"Random placements on the wagon/other vendors all over the Imperial city"*, then *"the issues I
+mentioned for the imperial city for stables/doors/etc are a world wide issue. They have no logical placements"*, and *"No
+band aids or half assed work"* - a stable at the town's edge by a road or a gate with open ground for its horses, the
+wagons and stalls on squares and street sides; never in a wall, a building, the middle of a road, water or a field. The
+Imperial City's own part (its yards at its gates) is `03-World/Arena-Provinces.md` IC-PROPS.
+
+**What stood.** Every yard stood on the open cell NEAREST THE MIDDLE OF THE TOWN'S GRID that its road law let it - and
+that law knew only Daggerfall's road tiles (46, 47, 55) and the painted paths for a way. So a stable stood in the town's
+heart, in a house's garden (a house's plot of grass, nothing to say it was one), across a street whose ground is bare
+earth, or - past the Bay, where a town's outline leaves open land round it - on that land wherever the middle of the grid
+fell; and a place facing no way at all won over one beside a road a dozen cells further (NO_ROAD_COST, 12 cells).
+
+**What stands** (`merchantYards/merchantYardSites.js:"export function yardLaw(g, loc, nav, ways = null) {"`, read once a
+ground by townGroundOf):
+- NO YARD ON A WAY: the roads and paths as before, and where URBANIZER planned the town its main and side streets,
+  pavements and alleys (`ways.plan` - `world/merchantYards/townYards.js` hands the town's fabric); NOR ON GROUND NOT THE
+  TOWN'S - its own blocks' cells, the open land its outline leaves within EDGE_LAND_CELLS of them (a gate's apron), or a
+  capital's own open paving with SQUARE_MARGIN clear round it (a plaza); a port's gardens and lakes are none of these.
+- NOR IN A HOUSE'S GARDEN while the town has room elsewhere: a piece of open grass a house backs onto, read by URBANIZER's
+  own law (FABRIC.yard's size, FABRIC.yardTouch edges on a house), and the plan's yards. A town with no other room stands
+  its yard there still - the law's last step (YARD_LAW_STEPS) - so no town that stood a yard stands none.
+- ITS GATE ONTO A WAY, always where the town has such a place
+  (`merchantYardSites.js:"const score = d + (street(s[0], s[1], s[2], s[3]) > 0 ? 0 : YARD_FRONT_COST);"` - YARD_FRONT_COST
+  more than any town is across; NO_ROAD_COST's twelve cells stay the port's own places').
+- THE STABLE AT THE TOWN'S EDGE BY ITS ROAD OUT: nearest an exit (exitField - a way within EXIT_REACH of the town's edge,
+  a gate), on the town's own ground or the open land just past it. THE WAGON YARD AND THE JOINERY on a street's or a
+  square's side nearest the middle, and by an exit as the Stable stands only where the town has no room inside. Where the
+  Stable at the edge would take the one room a cramped town has for its Wagon Yard, the Wagon Yard is placed first on the
+  same ground and the order that stands more is kept.
+- A CAPITAL THAT NAMES ITS OWN (`ways.fixed`) stands those and no other - the Imperial City's at its gates
+  (`world/imperialYards.js`).
+- The port's places (`world/portSites.js`) are placed on what the yards leave, by their own law, unchanged.
+
+**Measured on the freeware** (ARENA2, both town packs served; each yard placed as `scenes/world.js` townPlacesFor places
+it, over its pixel's terrain and walk shut, and read by the law's own reading of its ground): 270 towns - the Bay's 130
+(Daggerfall, Wayrest, Sentinel, Gothway Garden, every eighth city and every sixteenth hamlet), 134 past the Bay (every
+twelfth of Arena's city-states and towns, outlined and walled as TS3/TS4 lay them, URBANIZER planned), the six
+one-pixel capitals. Before -> after:
+
+| kind (yards) | on a way | in a house's garden | facing no way | past the town | by an exit (40 m) | in the town's inner half |
+| --- | --- | --- | --- | --- | --- | --- |
+| Stable (270) | 29 -> 0 | 63 -> 1 | 153 -> 51 | 52 -> 90 | 54 -> 181 | 162 -> 17 |
+| Wagon Yard (268) | 14 -> 0 | 53 -> 7 | 172 -> 112 | 65 -> 33 | 73 -> 54 | 110 -> 102 |
+| Joinery (268) | 17 -> 0 | 51 -> 6 | 187 -> 128 | 62 -> 25 | 69 -> 41 | 106 -> 99 |
+
+None on a closed cell (a wall, a building, the water, a field's flats) before or after - the ground's own law, unchanged.
+"Past the town" after is the open land just past it by its gate (within EDGE_LAND_CELLS); before it was anywhere on that
+land. A yard "facing no way" after stands in a town with no fitting place beside a way of its own ground: a Bay town's
+streets are bare earth between its blocks (its roads' tiles only here and there), so its Wagon Yard stands on its open
+ground nearest its middle - its square. The four towns that stood no yard (no room) stand none still; every other town
+stands all three.
+
+**Not DFU**: the yards are the port's own (Ledger A, MERCHANT-YARDS).
+
+**The four hosts.** `scenes/world.js` WIRED (townPlacesFor hands the town's ways and a capital's own yards:
+`world.js:"const g = townGroundOf(yl, measures, shut, townYardsOf(dfLocation));"`). `scenes/exterior.js` - stands no yard
+(FLAGGED above). `scenes/worldModes.js` - reads the sites the world host placed. `scenes/dungeonContext.js` - no town.
+
+**Pins.** `test/world/icprops_yards.test.js` (6). PIN MOVED: `test/world/merchantyards1.test.js` (the front's law - a place
+facing no way always loses; the Stable at the edge; the ground the people walk with the law's own reading over it), 
+`test/world/baywalls.test.js`. Mutants: `tools/mutants/icprops.json` (the yards' IC-PROPS-*), all dead; re-aimed by
+content: `merchantyards1.json`, `baywalls.json`.

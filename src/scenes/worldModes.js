@@ -7542,7 +7542,7 @@ export function createWorldModes(host) {
       // its plaque says that one. A departure from the mod (Ledger A).
       const bd = doorBuilding(entry);
       if (!bd) return _doorText;
-      const locId = discoveryLocationId?.() ?? null;
+      const locId = bd.townBook ?? discoveryLocationId?.() ?? null;   // IC-PROPS: the door's own town's book, the one its press discovers into (a neighbouring slice's door read the player's slice's book and directory)
       if (!locId) return _doorText;
       discoverBuilding(locId, bd, null, questBuildingSource);   // .cs:719
       const db = getDiscoveredBuilding(locId, bd.buildingKey);
@@ -7556,8 +7556,8 @@ export function createWorldModes(host) {
       // stands and lists them (it drew none, and the click fell through to HOME-OFFER's box at every house)
       const houseVerbs = homeDoorVerbs(bd, home);
       _doorText = staticDoorName('building', {
-        displayName: home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : homeDoorName(shownBuildingName(db, bd.name), !!houseVerbs),   // EMPIRE-BANK: a bank's name now; QUEST-RESIDENCE: a quest's home its name
-        locationName: currentLocationName(),
+        displayName: home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : homeDoorName(shownBuildingName(db, bd.name), !!houseVerbs, bd.buildingType),   // IC-PROPS: a nameless house DFU's "Residence"; EMPIRE-BANK: a bank's name now; QUEST-RESIDENCE: a quest's home its name
+        locationName: bd.townName ?? currentLocationName(),   // IC-PROPS: the door's own town
         buildingType: bd.buildingType,
         unlocked: home ? true : resolveBuildingUnlocked(bd),
         quality: bd.quality ?? 0,
@@ -7776,13 +7776,13 @@ export function createWorldModes(host) {
    *  suffixes and all). */
   function activateBuilding(bd, unlocked) {
     if (getInteractionMode() !== 'info') return;
-    const locId = discoveryLocationId?.() ?? null;
+    const locId = bd.townBook ?? discoveryLocationId?.() ?? null;   // IC-PROPS: the building's own town's book
     if (!locId) return;
     discoverBuilding(locId, bd, null, questBuildingSource);
     const db = getDiscoveredBuilding(locId, bd.buildingKey);
     if (!db) return;
     const home = homeOf(bd);   // HOME1: a player's home is named for its owner, as its door is
-    townTalk?.say?.(home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : db.displayName);   // QUEST-RESIDENCE
+    townTalk?.say?.(home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : homeDoorName(db.displayName, false, bd.buildingType));   // QUEST-RESIDENCE; IC-PROPS: a nameless house "Residence", the plaque's word and DFU's (PlayerGPS.cs:1306-1309)
     if (!unlocked && bd.buildingType < BUILDING_TYPES.Temple
       && bd.buildingType !== BUILDING_TYPES.HouseForSale) {
       // WORLD-HOVER: the sentence has ONE home now (buildingLocks.
@@ -7899,7 +7899,7 @@ export function createWorldModes(host) {
     // :523-524 skip them, and the two rolls sit where C# puts them.
     {
       const bd = buildingDataForDoor?.(hit) ?? null;
-      const locId = discoveryLocationId?.() ?? null;
+      const locId = bd?.townBook ?? discoveryLocationId?.() ?? null;   // IC-PROPS: the door's own town's book - the plaque reads the same
       // A door whose building the directory cannot resolve FAILS OPEN
       // (enters unconditionally) - the pre-R1 behavior, kept
       // deliberately: refusing entry on missing data would strand a

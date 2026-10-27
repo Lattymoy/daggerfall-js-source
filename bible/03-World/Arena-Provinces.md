@@ -2256,6 +2256,112 @@ took down), `test/tesa8_lairs.test.js` (its lair id's "no house sold, no deed re
 `tesa7.json` TESA7-modes-deed-sold and -owned, `audittesa.json` AUDIT-TESA-A5-F3, `auditcaptsea.json` ACS-P9-deed and
 -sale, `auditdisc28_quests.json` AD28Q-K1, `icgrand.json` R2-9-deed-every-town).
 
+## IC-PROPS - the yards where they belong, every door its plaque, the grand city its only layout (2026-10-27)
+
+The owner's field report, 2026-10-27: *"Random placements on the wagon/other vendors all over the Imperial city"* (item 2),
+*"Some doors in Imperial city can be entered but dont show the tooltip"* (item 7), *"Old daggerfall city layout placements
+are in imperial city"* (item 9); then *"the issues I mentioned for the imperial city for stables/doors/etc are a world wide
+issue. They have no logical placements"*, and *"No band aids or half assed work"*. The yards' law is the whole world's
+(`03-World/Merchant-Yards.md` IC-PROPS); this is the Imperial City's part, and the doors'.
+
+**What the player saw, and why.**
+- THE YARDS. Every one of the city's 625 slices is a city of Daggerfall's kind (synthesizeCapitalLocation, a TownCity),
+  and every city stands a Stable, a Wagon Yard and a joinery where its yards' law finds room - so a slice stood its three
+  wherever its own grid left room: 1,381 yards on 486 slices (measured as the host places them, every slice): 603 on
+  Rumare Shore past the lake, 279 about City Isle, 89 on the Palace District's lawns, 96 in the Arboretum's park, the
+  rest through the districts - 111 of them reaching the lake's water, 195 the city's streets and squares, 51 its avenues,
+  radials and ring roads, 44 its paths, 80 the Arboretum's park and 80 Daggerfall's blocks among the city's own.
+- THE DOORS. Two causes, both world-wide. A HOUSE WITH NO NAME of its own showed no plaque where it listed no verbs
+  (offline, or a house no one sells): DFU names every residence "Residence" (PlayerGPS.cs:1306-1309, its own
+  `residence` text) and World Tooltips prints "To" and that name over its door (Modded_HUDTooltipWindow.cs:719-728), but
+  the port's plaque had the name only for a house with verbs - over the freeware's blocks and both town packs, 6,325 of the
+  8,295 building doors with a room are a House1-4 or House6 with no name (and 2 a ship's deck, a Ship with none). And A
+  DOOR OF A NEIGHBOURING LOCATION - the next slice of the Imperial City, a town across a pixel's edge - was read in the
+  player's own town's book and directory: its plaque named whatever building of the player's slice had its key, or
+  nothing, and its press discovered it there - standing in the Market's heart, 24,181 of the 26,943 doors the city
+  builds near (the player's slice and the eight round it, NEAR_RING) were another slice's.
+- THE OLD LAYOUT. 671 cells of the grand plan were Daggerfall's own city blocks (IMPERIAL_MIX: each district's trade
+  along its avenue, round its heart and scattered; IMPERIAL_SIGNATURE: its signature trade on its heart's nearest) -
+  each a Daggerfall town's square of houses with its garden walls, hedges, flats and props dropped among the city's own
+  streets: the Arboretum 50, the University 19, the Arena District 87, the Elven Gardens 106, the Market 99, Talos Plaza
+  92, the Temple District 100, the Waterfront 118. Nothing else read the old layout: the prebuild worker
+  (`world/imperialPrebuild.js`) and the slices' blocks are the plan's, made on demand, no cache kept between sessions.
+
+**As built.**
+- THE CITY NAMES ITS OWN YARDS, AT ITS GATES (`world/imperialYards.js`): the city is one town (WW7-11), and a town's
+  Stable stands at its edge by a road or a gate. One Stable, one Wagon Yard and one joinery outside each district's
+  avenue gate in the city wall, on City Isle's own grass beside the way out (IMPERIAL_YARD_LANE kept clear), clear of
+  the wall's towers, each wholly in one slice, the Stable nearest the gate - eighteen. The ground is the blocks' own, asked
+  as they are built (`imperialBlocks.js:"export const imperialAnchorOf = (r, c, x, z) =>"`): the automap's closed
+  cells, the tile's grass, and each of the isle's trees at its foot - Daggerfall's ground scenery stands at its tile's
+  north-west corner (`rmbFlats.js` collectBlockFlats; DFU's RMB nature flat), and the first reading set it a tile off,
+  so the Elven Gardens' Wagon Yard stood under a tree the host closed and was not stood at all
+  (`imperialYards.js:"const FX = TX * TILE_CELLS, FZ = TZ * TILE_CELLS + TILE_CELLS;"`). Every slice hands the yards'
+  law its share (`merchantYards/townYards.js:"export function townYardsOf(dfLocation) {"`, from `scenes/world.js`
+  townPlacesFor) and the law places none by itself on any slice.
+- EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`):
+  a House1 to House6 with no name of its own is named as DFU discovers it - DFU's own `residence` text, no new string -
+  whatever its verbs; a quest's home, a player's home and a guild's hall keep theirs. A building of no house type with no
+  name (a ship's deck) says the place it stands in (`worldTooltips.js:"    : displayName || locationName;"` - the mod
+  would print "To" and nothing). The Info say reads the same word.
+- A DOOR IS ITS OWN TOWN'S (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`): the host's record
+  for a door carries the town it stands in - its book of buildings, its name, and its building's name in that town
+  (`scenes/townTalk.js:"function buildingNameIn(place, data) {"` - the directory's row where that town is the talk's own,
+  else BuildingNames' law over that town's names). The plaque, the press and the activation discover into that book
+  (`scenes/worldModes.js:"const locId = bd.townBook ?? discoveryLocationId?.() ?? null;   // IC-PROPS: the door's own town's book, the one its press"`),
+  and a nameless building's plaque says its own town, never the player's.
+- THE GRAND CITY THE ONLY LAYOUT (`world/imperialCity.js:"function cellOf(r, c, I = IMPERIAL) {"`): no cell is one of
+  Daggerfall's blocks but the arena's (the grand plan names it); IMPERIAL_MIX, IMPERIAL_SIGNATURE and their trade cells
+  are gone, and the fabric keeps no street round a block of Daggerfall's (CLEAR.classic), its far skyline no ring of
+  their houses (`imperialFabricModels.js` classicMass). What they carried that the grand city means to keep is the
+  fabric's now (`world/imperialFabricBuildings.js` DISTRICT_TRADE): each district's SIGNATURE HALLS, about as many as its
+  blocks stood (`imperialFabricBuildings.js:"if (door.street === 'main') for (const [pool, every] of trade?.halls ?? [])"`)
+  - the Temple District's temples of the Eight, 40 where 33 TEMP blocks stood, each its own god's (the donor's record's
+  faction - TEMPAAA0 to TEMPAAH0, read off the freeware; each god alike whatever the plot's size,
+  `imperialFabricBuildings.js:"if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];"`); the
+  Waterfront's Thieves Guild, 14 houses of the guild's faction where 15 THIE blocks stood (Daggerfall's own: a House2 of
+  faction 42); the University's Mages Guild halls; and the Market's bank and Talos Plaza's general stores among their
+  shops (their BANK and GENR blocks). THE ARCANE UNIVERSITY's halls are a neighbourhood of their own inside its curtain
+  where its 14 MAGE and 5 LIBR blocks stood (`imperialFabric.js:"export function universityGrounds(I = IMPERIAL) {"`):
+  quads round garden courts square to its walls, clear of its curtain, its Arch-Mage's tower and its hall (their doors'
+  forecourts), and of its two walks - from each gate straight across the compound - 858 buildings entered, 37 of them its
+  Mages Guild's halls, 77 libraries. The quest sites index is baked again off the new plan and donors
+  (`tools/bakeFabricSites.mjs`: 63 donors, 52 marked, 73 sets where 50 stood - the temples and the Thieves Guild among
+  them). A block of Daggerfall's carried its people as flats; the fabric's buildings carry their donors' (each interior's
+  keeper and its people in), and the street's are the living town's (IC-GRAND, `world/imperialHomes.js`).
+
+**Measured on the freeware** (ARENA2): the city's yards 1,381 on 486 slices before, 18 after - each on the isle's open
+grass, none on a street, a road, the water, a landmark or the fabric, all eighteen standing on the eight gate slices as
+the host places them. Doors with a room and no plaque, over every block and both packs: 6,327 before (4,620 House2, 1,193
+House4, 451 House3, 59 House1, 2 House6, 2 Ship), none after. The plan's cells of Daggerfall's blocks: 671 before, 0
+after (19,994 of the city's own, the arena's 1, the lake's 10,339, the far shore's 9,666).
+
+**Not DFU**: the city's own yards and its fabric are the port's (Port-Ledger section A, MERCHANT-YARDS and IC-GRAND);
+the door's "Residence" is DFU's own, and the door's own town its DFU law (a building's discovery in its location's
+book) kept where the port's locations meet.
+
+**The four hosts.** `scenes/world.js` WIRED (the yards' ways and a capital's own, the door's town). `scenes/worldModes.js`
+WIRED (the plaque, the press, the activation, the Info say). `scenes/exterior.js` FLAGGED: it stands no yard and its
+doors are its one town's. `scenes/dungeonContext.js` FLAGGED: no town.
+
+**Pins.** `test/world/icprops_yards.test.js` (6: the plan's ways and the front, the garden and the last step, the edge
+land and the port cells, a capital's own sites and the city's slices, the gate yards' law, the gate yards on the ground
+their blocks build), `test/world/icprops_city.test.js` (3: no block of Daggerfall's but the arena's, each district's
+signature in its fabric, the University's halls and walks), `test/systems/icprops_doors.test.js` (3: the "Residence"
+law, a house's and a ship's plaque through the real mode machine, a neighbouring slice's door its own town's).
+PIN MOVED: `test/tesa11_imperial.test.js` (the plan: no block of Daggerfall's but the arena's; a slice's seeds its own,
+held on a plan that lays them), `test/tesa10_capitals.test.js` (a kind missing stands no slice, held the same way),
+`test/world/icbld_buildings.test.js` (a temple's god's faction and the Thieves Guild's; the signature halls among a
+district's trade; each donor's faction against the freeware), `test/world/icgrand_fabric.test.js` (eight districts' styles,
+the University's among them), `test/world/icgrand_living.test.js` (R2-9's hazard - one key a residence in two slices - on
+the fabric's homes), `test/world/icgrand_prebuild.test.js` (the far cells the city's own alone),
+`test/world/audit68_worldjs.test.js` (the door's own town asked of the talk), `test/systems/worldhover.test.js` (the
+door's town's name where the record carries it), `test/server/home1.test.js`, `test/systems/empirebank.test.js`,
+`test/systems/fb0930b_questresidence.test.js` and `test/systems/online/fb1015c_questresidence.test.js` (a house's
+"Residence" by its type). Mutants: `tools/mutants/icprops.json` (25, all dead); re-aimed by content:
+`icbld.json` BLD-guild-of-no-faction (a building's faction its guild's, else its donor's); retired with the code they held (the trade cells and their signatures): `tesa11.json` TESA11-shore-a-house,
+TESA11-no-signature.
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer

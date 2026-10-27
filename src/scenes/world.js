@@ -343,6 +343,7 @@ import { createWagonWarden, wardenTownIn, wardenTownOfPixel } from './wagon/wago
 import { createWildEscrowHost } from './wildEscrowHost.js';   // PVP-ESCROW: the two-phase handoff's two sides, out of bootWorld (HOST-SPLIT)
 import { WARDEN_VENDOR } from '../systems/wagon/wagonWarden.js';   // WARDEN1: the stamp's save slot, and the towns a watch keeps
 import { townGroundOf, yardSitesOn, craftYardSitesOn, MONUMENT_KEEP_M, yardMeasuresOf, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them
+import { townYardsOf } from '../world/merchantYards/townYards.js';   // IC-PROPS: what a town tells its yards' law - its fabric's ways, a capital's own yards
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
 import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
@@ -4017,7 +4018,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const sig = `${JSON.stringify(measures)}|${yardTown ? 'yards' : ''}|${port ? 'port' : ''}|${shut?.key ?? (shut ? 'shut' : '')}`;
       let memo = _yardMemo.get(mapId);
       if (!memo || memo.sig !== sig) {
-        const g = townGroundOf(yl, measures, shut);
+        const g = townGroundOf(yl, measures, shut, townYardsOf(dfLocation));   // IC-PROPS: its fabric's ways, a capital's own yards (world/merchantYards/townYards.js)
         const sites = g && yardTown ? yardSitesOn(g) : [];
         let ports = [];
         if (g && port) {
@@ -29172,7 +29173,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         position: [m[12] - p.locOrigin[0], m[13] - p.locOrigin[1], m[14] - p.locOrigin[2]],
       }, { locationIndex: dfLoc.locationIndex ?? 0 });
       if (!d) return null;
-      return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, townBlocks: homeTownBlocks(dfLoc), name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };   // HOME1: the town the DOOR is in keys its home, not the one under the player; HOME-PRICE: and its size prices it
+      return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, townBlocks: homeTownBlocks(dfLoc), ...townTalk.doorTownOf(dfLoc, d) };   // HOME1: the town the DOOR is in keys its home, not the one under the player; HOME-PRICE: and its size prices it; IC-PROPS: and its own name, its book and its town's name - the door's town's, never the player's (a neighbouring slice of the Imperial City)
     },
   });
   wireOwnerClock([exteriorFoes, cityGuards], modes, () => online?.status === 'open' && online.othersHere > 0);   // OWNER-CLOCK (scenes/ownerCatchUp.js): while anyone else is in my room (on the street the 16-pixel cell, wider than the 3 pixels my foes frames are fanned across) the street's foes take my clamped frame in FOE-CATCHUP's steps - my player's pace, never past it - and every step of mine is marked on the clock my foes frames carry; HOST-CLOCK: the watch with them (its brains already ran on the street's clock), the mode machine's frames the catch-up's, and a building's and a dungeon's foes through the same page's catch-up from their own hosts

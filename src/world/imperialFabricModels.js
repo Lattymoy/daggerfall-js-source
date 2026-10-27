@@ -27,7 +27,7 @@ import { fabricCell, fabricMasses, outwardOf, inQuad, STOREY, BAY, LEDGE_Y, PARA
 import { FACADE_PLAIN, FACADE_TEXELS } from './imperialArt.js';
 import { sewerCoversIn, sewerBranchesIn, IMPERIAL_SEWERS } from './imperialSewers.js';
 import { BLOCK_M } from './spawnedDungeons.js';
-import { IMPERIAL_CELLS, imperialSliceRect, imperialClassic, imperialSlicePlan, imperialCellRect, IMPERIAL_SPAN, imperialDistrictAt } from './imperialCity.js';
+import { IMPERIAL_CELLS, imperialSliceRect, imperialCellRect, IMPERIAL_SPAN, imperialDistrictAt } from './imperialCity.js';
 
 const HALF = IMPERIAL_CELLS / 2;
 /** A picture by its name in CAPITAL_ART. */
@@ -320,24 +320,15 @@ function buildMass(mb, m) {
   }
   for (const [p0, p1, R, e] of [[b, c, R1, 1], [d, a, R0, 3]]) gable(mb, wallT, p0, p1, m.h, R, up, outwardOf([a, b, c, d], e));   // BLD: no window cut by a slope
 }
-/** A Daggerfall block's mass far off: a ring of houses round the cell's edge, a street in from it (its blocks' own houses
- *  stand on their edges' streets). */
-function classicMass(r, c) {
-  const [x0, z0, x1, z1] = imperialCellRect(r, c), i = 8, d = 18;
-  const q = (ax, az, bx, bz) => [[ax, az], [bx, az], [bx, bz], [ax, bz]];
-  return [q(x0 + i, z0 + i, x1 - i, z0 + i + d), q(x1 - i - d, z0 + i + d, x1 - i, z1 - i - d), q(x0 + i, z1 - i - d, x1 - i, z1 - i), q(x0 + i, z0 + i + d, x0 + i + d, z1 - i - d)]
-    .map((qq, k) => ({ q: qq, h: 7 + ((r * 7 + c * 3 + k) % 3) * 1.6, gable: true, wall: 'facadeTimber', roofTex: 'roof' }));
-}
 /**
- * A SLICE'S SKYLINE (s, sy * IMPERIAL_SPAN + sx): its fabric's blocks as masses and Daggerfall's blocks' rings - the far
- * view's buildings (world/imperialBlocks.js), no collider (nothing walks there before its slice is built near). The
- * world's frame, the city's middle its origin. Null for a slice with none.
+ * A SLICE'S SKYLINE (s, sy * IMPERIAL_SPAN + sx): its fabric's blocks as masses - the far view's buildings
+ * (world/imperialBlocks.js), no collider (nothing walks there before its slice is built near). IC-PROPS: Daggerfall's
+ * blocks' rings of houses gone with the blocks (world/imperialCity.js cellOf). The world's frame, the city's middle its
+ * origin. Null for a slice with none.
  */
 export function skylineModel(s) {
   const mb = new MeshBuilder();
   for (const m of fabricMasses(imperialSliceRect(s))) buildMass(mb, m);
-  const plan = imperialSlicePlan(s), sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
-  plan.forEach((row, i) => row.forEach((cell, j) => { if (imperialClassic(cell)) for (const m of classicMass(sy * 8 + i, sx * 8 + j)) buildMass(mb, m); }));
   if (!mb.groups.size) return null;
   return mb.build();
 }

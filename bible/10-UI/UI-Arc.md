@@ -18879,6 +18879,18 @@ the dungeon's arms pass `!f.yielded` (the street's `!f._pupYield` too) and its "
 
 The classic skin has none of it, byte for byte.
 
+**IC-PROPS (2026-10-27, the owner: "Some doors in Imperial city can be entered but dont show the tooltip", then "a world
+wide issue").** The law above broke at two doors. A house with no name of its own had a plaque only where it listed verbs
+(online, for sale): offline and everywhere else the door entered and said nothing - 6,325 of the 8,295 building doors
+with a room over the freeware's blocks and both town packs. DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
+and the mod prints it (.cs:719-728), so the port does now, whatever the verbs
+(`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`), and a nameless building of no
+house type (a ship's deck) says its place. And a door of a NEIGHBOURING location (the Imperial City's next slice, a town
+across a pixel's edge) was named and discovered in the player's own town's book: the host's record now carries the
+door's own town (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`), and the plaque, the press
+and the activation read it - so the plaque names what the press enters. The record: `03-World/Arena-Provinces.md`
+IC-PROPS; pins `test/systems/icprops_doors.test.js`.
+
 ## CHARGEN-REFLEX — the Continue button was covered, not dead (2026-09-22)
 
 Fay on Discord, desktop build 0.1.3612: *"Just downloaded the latest

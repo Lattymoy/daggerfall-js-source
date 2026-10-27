@@ -24,6 +24,14 @@
 //     its interior laid in that frame (the landing at its enter marker and its door, player/enterExit.js).
 // The back ranges in the courts (no street reaches them - the walkers' ground is shut there), and a front whose every
 // bay has a way up or a canal before it, keep no door: facades, as before.
+//
+// IC-PROPS (2026-10-27, the owner: "Old daggerfall city layout placements are in imperial city"): the 671 of Daggerfall's
+// city blocks the plan laid among the city's own are gone (world/imperialCity.js cellOf), and what they carried that the
+// grand city means to keep is the fabric's now - each district's signature trade among its shops: the Temple District's
+// temples of the Eight (the `temple` donors, each its own god's - the record's faction), Talos Plaza's and the Market's
+// banks and general stores, the Waterfront's Thieves Guild (a house of the guild's faction, as Daggerfall's THIE blocks
+// keep it), and the Arcane University's Mages Guild halls and libraries inside its curtain (world/imperialFabric.js
+// universityGrounds).
 import { fabricCell, fabricGroundIn, outwardOf, streetKind, centroid, inQuad, GROUND, BAY } from './imperialFabric.js';
 import { IMPERIAL_CELLS, IMPERIAL_SPAN, imperialDistrictAt, imperialCell, imperialCodeCell } from './imperialCity.js';
 import { FABRIC_DONOR_MARKED, FABRIC_SITE_SETS, FABRIC_SLICE_SETS } from './imperialFabricSites.js';
@@ -54,7 +62,7 @@ export const FABRIC_BUILDINGS_PER_CELL = 255;
  * (but a home's) its people in. Its numbers are pinned against the player's own BLOCKS.BSA where one is at hand
  * (test/world/icbld_buildings.test.js).
  */
-export const FABRIC_DONORS = Object.freeze(/** @type {Array<[string, string, number, number, number, number, number, number, number]>} */ ([
+export const FABRIC_DONORS = Object.freeze(/** @type {Array<[string, string, number, number, number, number, number, number, number, number?]>} */ ([
   ['house3', 'RESIAL00.RMB', 0, 19, 2.58, -4.65, -90, 9.5, 9.6],
   ['house3', 'RESIAL09.RMB', 8, 19, -4.65, -0.98, -180, 9.6, 12.7],
   ['house3', 'RESIAM03.RMB', 13, 19, 2.58, -4.65, -90, 9.5, 9.6],
@@ -108,27 +116,46 @@ export const FABRIC_DONORS = Object.freeze(/** @type {Array<[string, string, num
   ['mages', 'MAGEBA03.RMB', 0, 11, 11.05, 0.98, 0, 28.5, 25.3],
   ['fighters', 'FIGHAA00.RMB', 16, 11, -4.65, -2.58, -180, 9.3, 9.3],
   ['fighters', 'FIGHAA01.RMB', 0, 11, -4.65, -2.58, -180, 9.3, 9.3],
-]).map(([pool, block, record, type, dx, dz, out, w, d]) => Object.freeze({ pool, block, record, type, door: Object.freeze([dx, dz]), out, size: Object.freeze([w, d]) })));
+  // IC-PROPS: the temples of the Eight, each block's temple (its record's faction its god's), and the Thieves Guild's
+  // houses (THIE blocks' House2 of the guild's faction) - the trade of Daggerfall's blocks the plan no longer lays
+  ['temple', 'TEMPAAA0.RMB', 0, 14, -2.23, -12.65, -90, 16.8, 18.5, 21],
+  ['temple', 'TEMPAAB0.RMB', 16, 14, -2.23, -12.65, -90, 18.4, 18.7, 22],
+  ['temple', 'TEMPAAC0.RMB', 21, 14, -6.25, -7.38, 180, 16.8, 15.9, 24],
+  ['temple', 'TEMPAAD0.RMB', 22, 14, -2.23, -12.65, -90, 12.8, 20.6, 92],
+  ['temple', 'TEMPAAE0.RMB', 0, 14, -6.25, -7.38, 180, 15.9, 14.9, 29],
+  ['temple', 'TEMPAAF0.RMB', 21, 14, -6.25, -7.38, 180, 16.6, 15.9, 27],
+  ['temple', 'TEMPAAG0.RMB', 20, 14, -6.25, -7.38, 180, 17, 16.3, 33],
+  ['temple', 'TEMPAAH0.RMB', 13, 14, -6.25, -7.38, 180, 16.4, 18.3, 35],
+  ['thieves', 'THIEAL00.RMB', 16, 18, -5.43, -1.45, -90, 17.4, 14.6, 42],
+  ['thieves', 'THIEAM00.RMB', 0, 18, -5.43, -7.85, -90, 23.4, 13.6, 42],
+]).map(([pool, block, record, type, dx, dz, out, w, d, faction = 0]) => Object.freeze({ pool, block, record, type, door: Object.freeze([dx, dz]), out, size: Object.freeze([w, d]), faction })));
 /** Each pool's donors' indices. */
 const POOLS = (() => { const m = new Map(); FABRIC_DONORS.forEach((d, i) => { if (!m.has(d.pool)) m.set(d.pool, []); m.get(d.pool).push(i); }); return m; })();
 
 /** EACH DISTRICT'S TRADE on its streets: the shops its shopfronts keep (by pool), the share of them that are shops, and
- *  the guild that keeps a hall there (its pool), if any - the districts' own lore (the Market's stalls and smiths, the
- *  Arena District's armourers and the Fighters Guild, the Temple District's books and the Mages Guild, Talos Plaza's
- *  bank and jewellers, the Elven Gardens' alchemists, the Waterfront's general stores and pawnshops). */
+ *  the guild that keeps a hall there (its pool), if any - the districts' own lore (the Market's stalls, smiths and bank,
+ *  the Arena District's armourers and the Fighters Guild, the Temple District's books and the Mages Guild, Talos Plaza's
+ *  bank, jewellers and general stores, the Elven Gardens' alchemists, the Waterfront's general stores and pawnshops).
+ *  IC-PROPS: and its SIGNATURE HALLS (`halls`: [pool, one main street front in so many]) - what Daggerfall's blocks of
+ *  its signature (world/imperialCity.js's IMPERIAL_SIGNATURE, till 2026-10-27) stood it, about as many as they stood: the
+ *  Temple District's temples of the Eight (its 33 TEMP blocks, a temple each), the Waterfront's Thieves Guild houses
+ *  (its 15 THIE blocks, a guild house each), the Arcane University's Mages Guild halls (its 14 MAGE blocks, two or three
+ *  each) - the University its own trade besides, its libraries, books and alchemists; Talos Plaza's general stores and
+ *  the Market's bank (their GENR and BANK blocks) among their shops. */
 export const DISTRICT_TRADE = Object.freeze({
-  'Market District': Object.freeze({ shops: ['general', 'clothing', 'gems', 'alchemist', 'pawn', 'bookseller', 'furniture', 'armorer', 'weaponsmith', 'general'], share: 0.7, guild: null }),
+  'Market District': Object.freeze({ shops: ['general', 'clothing', 'gems', 'alchemist', 'pawn', 'bookseller', 'furniture', 'armorer', 'weaponsmith', 'general', 'bank'], share: 0.7, guild: null }),
   'Arena District': Object.freeze({ shops: ['armorer', 'weaponsmith', 'general', 'pawn', 'armorer'], share: 0.5, guild: 'fighters' }),
   'Arboretum': Object.freeze({ shops: ['bookseller', 'alchemist', 'library', 'clothing'], share: 0.4, guild: null }),
-  'Temple District': Object.freeze({ shops: ['alchemist', 'bookseller', 'library', 'general', 'clothing'], share: 0.5, guild: 'mages' }),
-  'Talos Plaza District': Object.freeze({ shops: ['bank', 'gems', 'clothing', 'furniture', 'gems', 'library'], share: 0.5, guild: null }),
+  'Temple District': Object.freeze({ shops: ['alchemist', 'bookseller', 'library', 'general', 'clothing'], share: 0.5, guild: 'mages', halls: [['temple', 340]] }),
+  'Talos Plaza District': Object.freeze({ shops: ['bank', 'gems', 'clothing', 'furniture', 'gems', 'library', 'general'], share: 0.5, guild: null }),
   'Elven Gardens District': Object.freeze({ shops: ['alchemist', 'clothing', 'bookseller', 'gems', 'alchemist'], share: 0.5, guild: 'mages' }),
-  'Waterfront District': Object.freeze({ shops: ['general', 'pawn', 'furniture', 'armorer', 'general'], share: 0.6, guild: 'fighters' }),
+  'Waterfront District': Object.freeze({ shops: ['general', 'pawn', 'furniture', 'armorer', 'general'], share: 0.6, guild: 'fighters', halls: [['thieves', 500]] }),
+  'Arcane University': Object.freeze({ shops: ['library', 'alchemist', 'bookseller', 'library'], share: 0.6, guild: 'mages', halls: [['mages', 10]] }),
 });
 /** Each district's buildings' quality (BuildingData.Quality, 1-20: a shop's stock and prices, its rooms' fittings). */
 export const DISTRICT_QUALITY = Object.freeze({
   'Market District': [8, 15], 'Arena District': [5, 11], 'Arboretum': [12, 18], 'Temple District': [10, 16],
-  'Talos Plaza District': [14, 20], 'Elven Gardens District': [12, 18], 'Waterfront District': [4, 10],
+  'Talos Plaza District': [14, 20], 'Elven Gardens District': [12, 18], 'Waterfront District': [4, 10], 'Arcane University': [14, 20],
 });
 /** A tavern is a corner building on a main or side street, one in FABRIC_TAVERN_EVERY; a guild hall a main street's front, one
  *  in FABRIC_GUILD_EVERY. */
@@ -160,17 +187,25 @@ function doorOf(L, p) {
 function poolOf(p, door, district, area) {
   const trade = DISTRICT_TRADE[district], h = p.key;
   const corner = [0, 1, 2, 3].filter((e) => p.out & (1 << e)).length >= 2;
+  // IC-PROPS: its signature halls first, each a main street's front off its own hash
+  if (door.street === 'main') for (const [pool, every] of trade?.halls ?? []) if (hash32(SALT, h, 14) % every === 0) return pool;
   if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;
   if (corner && (door.street === 'main' || door.street === 'side') && hash32(SALT, h, 4) % FABRIC_TAVERN_EVERY === 0) return 'tavern';
   if (trade && (door.street === 'main' || door.street === 'side') && (p.ground === 'groundShop' || u01(h, 5) < 0.35) && u01(h, 6) < trade.share) return trade.shops[hash32(SALT, h, 7) % trade.shops.length];
   return HOMES.find(([max]) => area < max)[1];
 }
-/** The donor of a pool nearest a building's footprint, its hash breaking the ties (the same on every client). */
+/** The donor of a pool nearest a building's footprint, its hash breaking the ties (the same on every client). IC-PROPS: a
+ *  temple's donor is its god (its record's faction - DFU's temple is its faction's), each of the Eight alike off the
+ *  plot's hash, its hall's size no matter. */
 function donorOf(pool, p, area) {
-  const list = POOLS.get(pool), near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));
+  const list = POOLS.get(pool);
+  if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];
+  const near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));
   const fits = list.filter((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area) <= near + 60);
   return fits[hash32(SALT, p.key, 9) % fits.length];
 }
+/** IC-PROPS: the donor a building of a pool with a plot's `key` and footprint (`area`, m2) takes (donorOf) - for the pins. */
+export const fabricDonorOf = (pool, key, area) => donorOf(pool, { key }, area);
 /** A quad's area (m2). */
 const areaOf = (q) => Math.abs(q.reduce((s, v, i) => { const w = q[(i + 1) & 3]; return s + v[0] * w[1] - w[0] * v[1]; }, 0)) / 2;
 
@@ -205,7 +240,7 @@ function makeBuildings(r, c) {
     const pool = poolOf(p, door, district, area), donor = donorOf(pool, p, area), [qlo, qhi] = DISTRICT_QUALITY[district] ?? [8, 14];
     return Object.freeze({
       key: p.key, plot: p, recordIndex, pool, donor, type: FABRIC_DONORS[donor].type,
-      quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 1)), factionId: GUILD_FACTION[pool] ?? 0,
+      quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 1)), factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction,   // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)
       nameSeed: (hash32(SALT, p.key, 13) % 65535) + 1, door: Object.freeze(door),
     });
   });
@@ -252,9 +287,9 @@ export const isFabricDoorId = (id) => id >= IMPERIAL_DOOR_MODEL && id < IMPERIAL
  *  for its climate as a block's are), how far proud of the wall it stands, and its stone surround (jambs and lintel) -
  *  26 triangles, solid as a block's door is. */
 export const FABRIC_DOOR = Object.freeze({ archive: 374, w: 1.3, h: 2.5, proud: 0.06, jamb: 0.22, lintel: 0.3, depth: 0.16 });
-/** The door picture a pool wears: a home's a plank door (its donor's parity), a shop's the barred one, a tavern's, a
- *  guild's, a bank's or a library's the iron-bound. */
-const doorPicture = (donor) => { const d = FABRIC_DONORS[donor]; return d.pool.startsWith('house') ? donor & 1 : ['tavern', 'mages', 'fighters', 'bank', 'library'].includes(d.pool) ? 3 : 2; };
+/** The door picture a pool wears: a home's a plank door (its donor's parity - IC-PROPS: the Thieves Guild's house's too), a
+ *  shop's the barred one, a tavern's, a guild's, a bank's, a library's or (IC-PROPS) a temple's the iron-bound. */
+const doorPicture = (donor) => { const d = FABRIC_DONORS[donor]; return d.pool.startsWith('house') || d.pool === 'thieves' ? donor & 1 : ['tavern', 'mages', 'fighters', 'bank', 'library', 'temple'].includes(d.pool) ? 3 : 2; };
 /**
  * A DONOR'S DOOR MODEL: in its interior's own frame (DaggerfallInterior lays the interior in the frame of the building
  * model the door is on - scenes/interiorContext.js, the door's `matrix`), so it stands at the origin of its subrecord and

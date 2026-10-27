@@ -59,9 +59,9 @@ test('BLD EVERY STREET-FRONT BUILDING ITS RECORD AND ITS DOOR - each building of
       assert.equal(x.pool, d.pool);
       const [lo, hi] = DISTRICT_QUALITY[district];
       assert.ok(x.quality >= lo && x.quality <= hi, `quality ${x.quality} in ${district}`);
-      assert.equal(x.factionId, x.pool === 'mages' ? GUILD_FACTION_IDS.MagesGuild : x.pool === 'fighters' ? GUILD_FACTION_IDS.FightersGuild : 0);
+      assert.equal(x.factionId, x.pool === 'mages' ? GUILD_FACTION_IDS.MagesGuild : x.pool === 'fighters' ? GUILD_FACTION_IDS.FightersGuild : x.pool === 'thieves' ? GUILD_FACTION_IDS.ThievesGuild : d.faction);   // PIN MOVED (IC-PROPS): the Thieves Guild's house its guild's, a temple its god's (its donor's record's)
       if (d.type === BUILDING_TYPES.GuildHall) assert.equal(DISTRICT_TRADE[district].guild, x.pool, 'a guild keeps house where its district says');
-      if (isNamedBuildingType(x.type) && x.type !== BUILDING_TYPES.Tavern && d.type !== BUILDING_TYPES.GuildHall) { shops++; assert.ok(DISTRICT_TRADE[district].shops.includes(x.pool), `${x.pool} in ${district}`); }
+      if (isNamedBuildingType(x.type) && x.type !== BUILDING_TYPES.Tavern && d.type !== BUILDING_TYPES.GuildHall) { shops++; assert.ok(DISTRICT_TRADE[district].shops.includes(x.pool) || DISTRICT_TRADE[district].halls?.some(([pool]) => pool === x.pool), `${x.pool} in ${district}`); }   // PIN MOVED (IC-PROPS): or its signature halls'
       assert.ok(x.nameSeed >= 1 && x.nameSeed <= 65535);
       // the door: a bay's middle on its edge, the street open a hand and two metres out
       const a = p.q[x.door.edge], b = p.q[(x.door.edge + 1) & 3], len = Math.hypot(b[0] - a[0], b[1] - a[1]), bays = Math.max(1, Math.round(len / BAY));
@@ -157,6 +157,7 @@ test('BLD THE DONORS AS THE FREEWARE HAS THEM, AND EVERY BUILDING ENTERED - each
   for (const d of FABRIC_DONORS) {
     const blk = bf.getBlockByName(d.block), bd = blk.rmbBlock.fldHeader.buildingDataList[d.record];
     assert.equal(bd.buildingType, d.type, `${d.block}#${d.record}`);
+    if (d.faction) assert.equal(bd.factionId, d.faction, `${d.block}#${d.record}: its faction`);   // IC-PROPS: a temple's god, the Thieves Guild's house
     const lay = layoutInterior(blk, blk.index, d.record, getModel), enter = lay.markers.find((m) => m.type === INTERIOR_MARKER.ENTER);
     assert.ok(enter, `${d.block}#${d.record}: an enter marker`);
     const doors = lay.doors.map((x) => ({ p: doorWorldPosition(x), n: doorWorldNormal(x) }));

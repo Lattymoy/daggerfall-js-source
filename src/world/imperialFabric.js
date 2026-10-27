@@ -8,7 +8,8 @@
 // buildings no block of Daggerfall's carries - laid by district from the metres about the city's middle, so a street runs
 // on across the blocks it crosses and a building stands across a block's edge where its street puts it. Its street-front
 // buildings are entered as Daggerfall's are - a record, a door, a Daggerfall interior (world/imperialFabricBuildings.js,
-// BLD) - beside Daggerfall's own blocks along each district's avenue and round its heart (world/imperialCity.js tradeCell).
+// BLD) - IC-PROPS: every district's trade among them, no block of Daggerfall's beside them but the arena's (world/imperialCity.js
+// cellOf), and the Arcane University's halls inside its curtain a neighbourhood of their own (UNIVERSITY_GROUNDS).
 //
 // EACH DISTRICT ITS OWN STREETS (`IMPERIAL_STYLES`), and each its NEIGHBOURHOODS - five rings out from the palace wall and
 // two halves either side of its avenue, the middle ring its heart's alone - each its own frame of streets off its own seed,
@@ -16,7 +17,8 @@
 // and spokes round the arena and round circuses of its own; the Arboretum a park of groves, lawns, paths and ponds with
 // villas at its edges; the Temple District long processional blocks on its avenue's axis, plazas on the axis; Talos Plaza
 // spokes and rings round its dragon and round each neighbourhood's own circus; the Elven Gardens winding lanes on a
-// warped grid with canals and garden courts; the Waterfront warehouses in rows to the quay.
+// warped grid with canals and garden courts; the Waterfront warehouses in rows to the quay; IC-PROPS, the Arcane University
+// a college's quads inside its curtain, garden courts, its two walks in from its gates.
 //
 // A BLOCK OF STREETS (a frame's cell between its street lines) is ringed by buildings on its streets with a court inside,
 // or, too narrow for a court, filled by a row of buildings through it; a building's height a walk round its block, each
@@ -42,7 +44,8 @@
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
 import {
   IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_CELLS, polar, imperialBearing, imperialLand, imperialDistrictAt, imperialGeo, pointSeg,
-  segRect, rectPoint, rectRadii, imperialCell, imperialClassic, districtHeart, imperialRoadsNear, imperialRoadAt,
+  segRect, rectPoint, rectRadii, imperialCell, districtHeart, imperialRoadsNear, imperialRoadAt, universityTowerAt, universityHallAt,
+  universityGates, compoundGateAt,
 } from './imperialCity.js';
 import { PARKOUR_REACH_MIN, PARKOUR_AIR_REACH, PARKOUR_RUNLEAP_DIST_MIN, PARKOUR_SAFE_DROP, PARKOUR_VAULT_MAX } from '../player/parkour.js';
 import { JUMP_SPEED, GRAVITY } from '../player/motor.js';
@@ -89,6 +92,8 @@ export const IMPERIAL_STYLES = Object.freeze({
   'Talos Plaza District': Object.freeze({ frame: 'polar', P: [48, 62], Q: [58, 74], streets: [[9, 4], [ALLEY, 1], [13, 2]], depth: [11, 13], front: [7, 10], k: [6, 8], gable: 0.25, pitch: 30, walls: ['facadeStone', 'facadeStone', 'facadeWhite'], ground: ['groundShop', 'groundArcade'], roof: 'roof', square: 0, court: 'yard' }),
   'Elven Gardens District': Object.freeze({ frame: 'organic', P: [56, 78], Q: [56, 78], streets: [[5, 4], [ALLEY, 3], [8, 1], [10, 1]], depth: [9, 12], front: [6, 11], k: [3, 6], gable: 0.5, pitch: 36, walls: ['facadeWhite', 'facadeStone'], ground: ['groundArcade', 'groundShop'], roof: 'blueSlate', square: 0, court: 'garden' }),
   'Waterfront District': Object.freeze({ frame: 'docks', P: [64, 84], Q: [24, 30], streets: [[10, 4], [ALLEY, 2], [8, 2], [14, 1]], depth: [12, 14], front: [12, 20], k: [3, 5], gable: 0.85, pitch: 26, walls: ['facadeTimber', 'facadeBrick'], ground: ['groundShop', 'groundShop'], roof: 'roof', square: 0, court: 'yard' }),
+  // IC-PROPS: the University's halls - quads round garden courts on broad walks (UNIVERSITY_GROUNDS)
+  'Arcane University': Object.freeze({ frame: 'grid', P: [60, 76], Q: [60, 76], streets: [[10, 3], [ALLEY, 1], [8, 1]], depth: [11, 14], front: [8, 13], k: [5, 9], gable: 0.35, pitch: 34, walls: ['facadeStone', 'facadeWhite'], ground: ['groundArcade', 'groundArcade'], roof: 'blueSlate', square: 5, court: 'garden' }),
 });
 
 // ---------------------------------------------------------------- the neighbourhoods
@@ -113,10 +118,14 @@ function weighted(list, ...k) {
   return list[list.length - 1][0];
 }
 
+/** IC-PROPS: THE UNIVERSITY'S NEIGHBOURHOOD'S index (after the six sectors' and the Waterfront's) - one, its frame square to
+ *  its curtain about the compound's middle. */
+const UNIVERSITY_HOOD = 7;
 /**
  * THE NEIGHBOURHOOD A POINT IS IN (the city's metres), or null - none in Green Emperor Way, on City Isle, in the Prison's
- * grounds or the University's, past the lake. Each its district, its ring and half, its style, and its own frame of
- * streets (`frame`): its kind, its origin, its turn, its blocks' sides and its seed - the heart's its landmark's.
+ * grounds, past the lake. Each its district, its ring and half, its style, and its own frame of streets (`frame`): its
+ * kind, its origin, its turn, its blocks' sides and its seed - the heart's its landmark's. IC-PROPS: the University's
+ * grounds one of their own (UNIVERSITY_HOOD), where Daggerfall's Mages Guild blocks stood till 2026-10-27.
  */
 export function hoodAt(x, z) {
   const d = imperialDistrictAt(x, z);
@@ -124,7 +133,9 @@ export function hoodAt(x, z) {
   if (!style) return null;
   const r = Math.hypot(x, z), b = imperialBearing(x, z);
   let di, ring, half;
-  if (d === 'Waterfront District') {
+  if (d === 'Arcane University') {
+    di = UNIVERSITY_HOOD; ring = 0; half = 0;
+  } else if (d === 'Waterfront District') {
     di = 6; ring = r < DOCK_RINGS[1] ? 0 : 1; half = b < 180 ? 0 : 1;
   } else {
     di = IMPERIAL_SECTORS.findIndex(([n]) => n === d);
@@ -140,7 +151,7 @@ export function hoodAt(x, z) {
 
 /** A neighbourhood's own frame and its own numbers, off its key. */
 function makeHood(key, d, di, ring, half, style) {
-  const I = IMPERIAL, heart = ring === HEART_RING && di < 6;
+  const I = IMPERIAL, heart = ring === HEART_RING && di < 6, uni = di === UNIVERSITY_HOOD;
   const sector = di < 6 ? IMPERIAL_SECTORS[di][1] : 158;
   const mid = di < 6 ? sector + (heart ? 30 : 7.5 + 15 * half) : (half === 0 ? 170 : 190);
   const rings = di < 6 ? HOOD_RINGS : DOCK_RINGS;
@@ -150,12 +161,13 @@ function makeHood(key, d, di, ring, half, style) {
   let kind = style.frame;
   // its middle: the heart's landmark; an axial frame's on its avenue (its line through its middle the avenue), others the
   // neighbourhood's own middle
-  const centre = heart ? districtHeart(d) : kind === 'axial' ? polar(sector + 30, rMid) : polar(mid, rMid);
+  const centre = uni ? polar(I.university.b, I.university.r) : heart ? districtHeart(d) : kind === 'axial' ? polar(sector + 30, rMid) : polar(mid, rMid);
   if (kind === 'polar' && !heart && u01(key, 1) < (d === 'Arena District' ? 0.5 : 0.35)) kind = 'grid';
   if (kind === 'park' && (ring === 0 || ring === 4)) kind = 'grid';   // the Arboretum's villas, by the palace wall and the city wall
   const radial = (mid * Math.PI) / 180;   // the bearing out, as the frame's turn: x east, z south
   const towards = Math.atan2(-Math.cos(radial), Math.sin(radial));
-  const turn = kind === 'axial' ? towards : kind === 'docks' ? towards : towards + [0, 0.26, -0.26, 0.52, 0.79][Math.floor(u01(key, 2) * 5)];
+  // IC-PROPS: the University's square to its curtain (its walls run east-west and north-south)
+  const turn = uni ? 0 : kind === 'axial' ? towards : kind === 'docks' ? towards : towards + [0, 0.26, -0.26, 0.52, 0.79][Math.floor(u01(key, 2) * 5)];
   const scale = span(0.86, 1.14, key, 3);
   const P = [style.P[0] * scale, style.P[1] * scale], Q = [style.Q[0] * scale, style.Q[1] * scale];
   const kShift = Math.floor(u01(key, 4) * 3) - 1;
@@ -227,16 +239,38 @@ function lineRange(h, axis, lo, hi) {
 
 // ---------------------------------------------------------------- what keeps the fabric off
 
-/** The clear widths, metres: past a wall, a road's kerb, a landmark's ground; the street kept round each of Daggerfall's
- *  blocks. */
-export const CLEAR = Object.freeze({ palace: 20, cityWall: 14, districtWall: 10, road: 3, way: 4, gate: 24, classic: 5, temple: 26, statue: 6, divines: 14, pool: 14, market: 4, arena: 8, bridgeHead: 60, quay: 26 });
+/** The clear widths, metres: past a wall, a road's kerb, a landmark's ground. IC-PROPS: the street kept round each of
+ *  Daggerfall's blocks gone with them (world/imperialCity.js cellOf); the University's - past its curtain's inner face
+ *  (`uniWall`, its corner towers within it), round its tower and its hall (`uniTower`, `uniHall`: their doors' forecourts)
+ *  and either side of its two walks (`uniWalk`). */
+export const CLEAR = Object.freeze({ palace: 20, cityWall: 14, districtWall: 10, road: 3, way: 4, gate: 24, temple: 26, statue: 6, divines: 14, pool: 14, market: 4, arena: 8, bridgeHead: 60, quay: 26, uniWall: 26, uniTower: 14, uniHall: 14, uniWalk: 6 });
+/**
+ * IC-PROPS: THE UNIVERSITY'S GROUNDS the fabric stands on - inside its curtain (CLEAR.uniWall in from it, past its corner
+ * towers), off its Arch-Mage's tower and its domed hall (their doors' forecourts), and off its TWO WALKS: from each of its
+ * gates (world/imperialCity.js universityGates, where the ways from the city come) straight in across the compound to its
+ * far wall, CLEAR.uniWalk either side - so each gate opens on a walk and every street of its quads meets one.
+ * `in(x, z)` - a point on its grounds; `kept(x, z)` - a point there the fabric keeps clear.
+ */
+export function universityGrounds(I = IMPERIAL) {
+  const U = I.university, [cx, cz] = polar(U.b, U.r), C = CLEAR, inner = U.half - C.uniWall;
+  const [tx, tz] = universityTowerAt(I), [hx, hz] = universityHallAt(I), hh = U.hall / 2 + C.uniHall;
+  // the walks: a north gate's runs south (x fixed), a west gate's east (z fixed) - and so on round
+  const walks = universityGates(U).map((gate) => { const [gx, gz] = compoundGateAt([cx, cz], U.half, gate); return gate[0] % 2 === 0 ? { x: gx } : { z: gz }; });
+  const inside = (x, z) => Math.abs(x - cx) < inner && Math.abs(z - cz) < inner;
+  return Object.freeze({
+    centre: Object.freeze([cx, cz]), inner,
+    in: inside,
+    kept: (x, z) => Math.hypot(x - tx, z - tz) < U.spireR + C.uniTower || (Math.abs(x - hx) < hh && Math.abs(z - hz) < hh)
+      || walks.some((w) => (w.x !== undefined ? Math.abs(x - w.x) : Math.abs(z - /** @type {number} */ (w.z))) < C.uniWalk),
+  });
+}
 const _clear = new Map();
 /**
  * WHAT KEEPS A CELL'S FABRIC CLEAR - a test of a point (the city's metres) that asks only what stands near the cell
  * (r, c): water, the Palace District, the walls and their feet, the city's roads (its avenues, its radials, its rings -
- * imperialRoadAt), the ways and the bridge's head, the landmarks' grounds, the arena's cell, the Prison's and the
- * University's grounds, the Waterfront's quay, City Isle's green, and Daggerfall's own blocks with a street round each
- * (CLEAR). Made once a cell (an LRU).
+ * imperialRoadAt), the ways and the bridge's head, the landmarks' grounds, the arena's cell, the Prison's grounds, the
+ * Waterfront's quay, City Isle's green (CLEAR) - IC-PROPS: and of the University's grounds its curtain, its tower, its
+ * hall and its walks (universityGrounds). Made once a cell (an LRU).
  */
 function clearTest(r, c) {
   const key = r * IMPERIAL_CELLS + c;
@@ -259,7 +293,10 @@ function makeClearTest(r, c) {
   if (rmin < I.cityWall.r + cw && rmax > I.cityWall.r - cw) tests.push((x, z, rr) => Math.abs(rr - I.cityWall.r) < cw);
   if (rmax > I.isle - 40) tests.push((x, z) => !imperialLand(x, z));
   if (rmax > I.cityWall.r) {
-    tests.push((x, z, rr) => rr >= I.cityWall.r && (imperialDistrictAt(x, z) !== 'Waterfront District' || rr > I.waterfront.r1 - C.quay));
+    // past the city wall: nothing but the Waterfront's and (IC-PROPS) the University's grounds
+    const U = universityGrounds(I), uni = rectPoint(x0, z0, x1, z1, U.centre) < U.inner * Math.SQRT2;
+    tests.push((x, z, rr) => rr >= I.cityWall.r && !(uni && U.in(x, z)) && (imperialDistrictAt(x, z) !== 'Waterfront District' || rr > I.waterfront.r1 - C.quay));
+    if (uni) tests.push((x, z) => U.in(x, z) && U.kept(x, z));
     for (const [a, b] of g.ways) if (segRect(a, b, x0, z0, x1, z1, I.causeway / 2 + C.way) < I.causeway / 2 + C.way) tests.push((x, z) => pointSeg(x, z, a, b) < I.causeway / 2 + C.way);
   }
   if (rmin < I.cityWall.r) {
@@ -275,12 +312,6 @@ function makeClearTest(r, c) {
   for (const p of g.wallGates) if (near(p, C.gate)) tests.push((x, z) => Math.hypot(x - p[0], z - p[1]) < C.gate);
   for (const [p, hw] of [[g.market, I.market.half + C.market], [g.arena, B / 2 + C.arena]]) {
     if (x1 > p[0] - hw && x0 < p[0] + hw && z1 > p[1] - hw && z0 < p[1] + hw) tests.push((x, z) => Math.abs(x - p[0]) < hw && Math.abs(z - p[1]) < hw);
-  }
-  // Daggerfall's blocks round the cell, each with its street
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
-    if (!imperialClassic(imperialCell(r + dr, c + dc))) continue;
-    const ax = (c + dc - HALF) * B - C.classic, az = (r + dr - HALF) * B - C.classic, bx = ax + B + 2 * C.classic, bz = az + B + 2 * C.classic;
-    tests.push((x, z) => x > ax && x < bx && z > az && z < bz);
   }
   return (x, z) => { const rr = Math.hypot(x, z); for (const f of tests) if (f(x, z, rr)) return true; return false; };
 }
