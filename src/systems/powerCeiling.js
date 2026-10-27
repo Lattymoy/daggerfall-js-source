@@ -6,10 +6,10 @@
 // the registry past its own top is the one cut. The runners (entityMods.js, playerEntity.js) and registries import it.
 
 /** THE BLOW POWERS' TOPS: each registry's most onto one blow (per cent), measured from today's records and laws. */
-export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 80, martial: 40 });
+export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 400, martial: 40 });   // WEAPON-GEAR: mastery's top the live skill's x5 (weaponMastery.js), was the climb's +80%
 /** THE GUARDS' TOPS: each registry's most off one hurt (per cent), its guards multiplied. */
 export const GUARD_TOPS = Object.freeze({ loot: 55, sets: 50, firmament: 15, martial: 30, arcane: 20 });
-/** A blow is at most this many times what its powers were handed (x43.18). */
+/** A blow is at most this many times what its powers were handed (x119.95; x43.18 before WEAPON-GEAR). */
 export const BLOW_MOST = Object.values(BLOW_TOPS).reduce((k, p) => k * (1 + p / 100), 1);
 /** A hurt keeps at least this share of what reached the guards (10.71%). Points (Bulwark, a ward, a Shield's pool), a
  *  hit capped by health (Unyielding) and a blow turned aside whole are no share, and stand outside it. */

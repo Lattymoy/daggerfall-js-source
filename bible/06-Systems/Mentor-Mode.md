@@ -47,13 +47,13 @@ their count the same frame.
 
 ## 4. The build at a share
 
-Nothing sleeps on mentoring any more. The power scale is the gear scale (sqrt of the skill line at the fight level over
+No power of the build sleeps on mentoring any more. The power scale is the gear scale (sqrt of the skill line at the fight level over
 the line at the real one, 0.5 to 1), one number the player is told. The Firmament's combat channels act at it, rounded
 to whole points, and its life channels act whole (`firmamentLive.js` firmamentStatsAt; the gathering windows and the sail
 are no fight). Every number an arcane or a martial path's power names acts at it - a percent, a chance, a heal, a
 rider's share - and a window's seconds stay whole (`mentorMode.js` mentorScaled). A school's potency and a weapon's climb
 past 100 read the mentored skill (`spell/spellPower.js` fightingClimb). The foes' edge and veteran still read none while
-mentoring: they size the group's foes.
+mentoring: they size the group's foes. WEAPON-GEAR's gear past 200 (`weaponMastery.js` weaponGearPct) stays off for a mentor, as its own arc decided.
 
 ## 5. What it pays
 

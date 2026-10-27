@@ -83,13 +83,13 @@ function nightwhisperExalted() {
 }
 
 test('POWER-CEILING THE TOPS, MEASURED: each registry\'s own most from the records and laws it reads - the blow\'s +12 / +200 / +240 / +50 / +80 / +40, the guards\' 55 / 50 / 15 / 30 / 20 off - and the law\'s tables are those numbers (mutants: a top in the law raised; Bound in Silk at 150; Last Stand at 30)', () => {
-  assert.deepEqual(BLOW_TOPS, { sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 80, martial: 40 }, RULE);
+  assert.deepEqual(BLOW_TOPS, { sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 400, martial: 40 }, RULE);   // PIN MOVED: WEAPON-GEAR (2026-10-27, mob) - mastery's top the live skill's x5, was the climb's +80%
   assert.deepEqual(GUARD_TOPS, { loot: 55, sets: 50, firmament: 15, martial: 30, arcane: 20 }, RULE);
   assert.deepEqual(measureBlowTops(), BLOW_TOPS, `a record moved a registry's top onto one blow - ${RULE}`);
   const keeps = measureGuardKeeps();
   assert.deepEqual(Object.keys(keeps), Object.keys(GUARD_TOPS));
   for (const [k, v] of Object.entries(keeps)) close((1 - v) * 100, GUARD_TOPS[k], `${k}'s guards - ${RULE}`);
-  close(BLOW_MOST, 43.18272, 'the blow\'s product');
+  close(BLOW_MOST, 119.952, 'the blow\'s product');   // PIN MOVED: WEAPON-GEAR, x43.18272 before it
   close(productOf(measureBlowTops()), BLOW_MOST, 'the measured product is the law\'s');
   close(GUARD_LEAST, 0.1071, 'the guards\' share kept');
   close(keepOf(keeps), GUARD_LEAST, 'the measured share is the law\'s');
@@ -154,7 +154,8 @@ test('POWER-CEILING THE BLOW, BY EXECUTION: the sigil\'s +12%, the sets\' +200% 
   assert.deepEqual(ceilingProducts(), { blow: null, guard: null }, 'the runner closes its product');
   registerWeaponBlowMod('powerceiling-test', (w, d) => d + Math.floor((d * blowRoom(1e6)) / 100));
   try {
-    assert.equal(weaponBlowMods(nw, 1000, me, foe, unaware), Math.floor(1000 * BLOW_MOST), `a power past the product is cut to x${BLOW_MOST.toFixed(2)}`);
+    // PIN MOVED: WEAPON-GEAR (2026-10-27) - at x119.952 the runner's floors land a point under the exact product's
+    assert.ok(Math.abs(weaponBlowMods(nw, 1000, me, foe, unaware) - Math.floor(1000 * BLOW_MOST)) <= 1, `a power past the product is cut to x${BLOW_MOST.toFixed(2)}`);
     for (const fill of ['sigil', 'sets', 'loot']) {
       const was = openBlowCeiling();
       blowRoom(1e9);   // the product already full

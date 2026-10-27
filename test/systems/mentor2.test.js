@@ -228,9 +228,12 @@ test('MENTOR2 B: THE SHARE - mentorScaled is the number at the power scale, whol
 });
 
 test('MENTOR2 B: THE SOURCES - no power sleeps on `_mentor` any more: the paths\' awake gates, the Firmament\'s fight and life, the potency and the weapon\'s climb read the share or the mentored climb; the foes\' edge still reads none while mentoring (mutants: a gate put back; the edge woken)', () => {
-  for (const f of ['src/systems/arcanePaths.js', 'src/systems/martialPaths.js', 'src/systems/firmamentPowers.js', 'src/systems/spell/spellPower.js', 'src/systems/weaponMastery.js']) {
+  for (const f of ['src/systems/arcanePaths.js', 'src/systems/martialPaths.js', 'src/systems/firmamentPowers.js', 'src/systems/spell/spellPower.js']) {
     assert.doesNotMatch(read(f).replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, ''), /_mentor\b/, `${f} gates nothing on mentoring`);
   }
+  // the weapon's climb pays the mentored climb; WEAPON-GEAR's gear past 200 stays off for a mentor, its own arc's law
+  const wm = read('src/systems/weaponMastery.js');
+  assert.doesNotMatch(/export function weaponClimb[\s\S]*?\n\}/.exec(wm)[0], /_mentor\b/, 'the climb gates nothing on mentoring');
   assert.match(read('src/systems/skillSoftcap.js'), /entity\._mentor \|\| !masterSkillsActive\(entity\)\) return 0;[\s\S]*entity\._mentor \|\| !masterSkillsActive\(entity\)\) return 0;/, 'the edge and the veteran: none while mentoring');
   assert.match(read('src/systems/spell/spellPower.js'), /const climbed = fightingClimb\(caster, school\);/);
   assert.match(read('src/systems/weaponMastery.js'), /const c = fightingClimb\(entity, skill\);/);

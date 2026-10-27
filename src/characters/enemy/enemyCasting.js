@@ -167,7 +167,7 @@ export class EnemyCaster {
    */
   update(dt, ai, attack, playerFeet, playerEntity) {
     const ent = this.entity;
-    if (!ent.spells?.length) return null;
+    if (!ent.spells?.length || ai?._pilot?.cast) return null;   // STAFF-PILOT (systems/staffBossPilot.js): a boss a staff member steers casts only after their right click
     const dist = ai._dist;
     const idle = attack.machine.state === 'Idle';
     // AUDIT 26 F010: both cast branches live inside TakeAction, behind
