@@ -34,7 +34,7 @@ const scoped = (state) => new Proxy(state, {
   set: (t, k, v) => { t[k] = v; return true; },
 });
 const mount = (body, state) => new Function('__s', `with (__s) { ${body} }`)(scoped(state));
-const CONSTS = ['SHARED_FOES_MAX', 'q2', 'q3'];
+const CONSTS = ['SHARED_FOES_MAX', 'XF_WHOLE', 'q2', 'q3'];   // XF_WHOLE's declaration names XF_STANDING too
 const consts = () => CONSTS.map(declSrc).join('\n');
 const { SHARED_FOES_MAX } = mount(`${consts()}\nreturn { SHARED_FOES_MAX };`, {});
 const surplusSrc = () => ['FOE_SEQ_MAX_SURPLUS', '_surplus', '_surplusPending', '_hiddenFrom', '_layoutMismatchSaid'].map(declSrc).join('\n') + '\n'

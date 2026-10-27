@@ -397,6 +397,9 @@ export const REST_ASK_BAND_MAX = 64;
 export const REST_ASK_SPOT_SLACK = 0.05;
 /** REST-SYNC: the most shared encounters one frame carries (the standing first) - a rest spawns one; past any honest room. */
 export const SHARED_FOES_MAX = 32;
+/** REST-SYNC's `xf` on a full frame: every shared foe listed (XF_WHOLE), or - RPT1026-ITEMS BODY-CAP - every standing one,
+ *  the cap having shed bodies past SHARED_FOES_MAX (XF_STANDING). An older build reads only XF_WHOLE. */
+export const XF_WHOLE = 1, XF_STANDING = 2;
 /** AUDIT FINAL F7: how long a death's record names the joiner whose blow it was (roomRecord's `v`) - two of the stream's
  *  full frames (net/online.js FOES_FULL_MS, 2000), so the one that heals a dropped delta carries it too. The name is for
  *  the joiner's own kill door, which hears the death once, as it lands; a corpse that named its striker for as long as it
@@ -5134,7 +5137,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed
       if (n) frame.x = shared.slice(0, n);
     }
-    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? 2 : 1;   // RPT1026-ITEMS BODY-CAP: past SHARED_FOES_MAX the bodies are what the cap shed, so the list is whole for the standing alone (2)
+    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;   // RPT1026-ITEMS BODY-CAP: past SHARED_FOES_MAX the bodies are what the cap shed, so the list is whole for the standing alone (2)
     if (full) fitMaxima(frame, [...out.map((r) => [r, foes[r.i]]), ...(frame.x ?? []).map((r) => [r, _sharedById.get(r.i)])]);
     return frame;
   }
@@ -5262,7 +5265,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f._pupMismatch = false;
       applyFoeRecord(f, r);
     }
-    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === 1 || data.xf === 2 ? data.xf : 0);   // REST-SYNC; RPT1026-ITEMS BODY-CAP: 2, whole for the standing
+    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === XF_WHOLE || data.xf === XF_STANDING ? data.xf : 0);   // REST-SYNC; RPT1026-ITEMS BODY-CAP: 2, whole for the standing
     if (listed) for (const [i, f] of [..._surplus]) if (!listed.has(i) && !_surplusPending.has(i)) dropSurplus(i, f);   // DESYNC-ZERO: a host's surplus foe it no longer lists
     return true;
   }

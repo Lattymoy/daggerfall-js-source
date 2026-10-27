@@ -94,7 +94,7 @@ const FNS = ['fitMaxima', 'buildFoeAt', 'applySpawnAlliance', 'applyEliteScaling
   '_spawnEncounter', 'standSharedPuppet', 'applySharedRecords', 'applyFoeRecord', 'setFoeDead', 'dropSharedFoe', 'foesFrame', 'roomRecord',
   'spawnLooseFoe', 'ownFrame', 'standOwnPuppet', 'applyOwnRecord', 'dropOwnPuppet'];
 const DECLS = ['isRoomFoe', 'onlineRoom', 'questPoolOps', 'abyssFoeView', 'ENCOUNTER_PLACE_ATTEMPTS', 'GENDER_BIT', 'q2', 'q3', 'canStandFoe',
-  'SHARED_FOES_MAX', 'KILLED_BY_MS', 'FOES_FRAME_SLACK', 'ownLoose', 'ownQuestTag', 'ownShare', 'questTouched', 'ownPupKey', 'ownHeirIsMe', 'ownHeirElse',
+  'SHARED_FOES_MAX', 'XF_WHOLE', 'KILLED_BY_MS', 'FOES_FRAME_SLACK', 'ownLoose', 'ownQuestTag', 'ownShare', 'questTouched', 'ownPupKey', 'ownHeirIsMe', 'ownHeirElse',
   'foeMaxOf', 'FOE_MAX_PER_FRAME', '_maxLeft'];   // THE MERGE: AUDIT SETS M1's own lane pays a foe's maximum through these
 // AUDIT REST II F1 (RE-AIMED): the rest encounter's spot is one home now - encounterSpot, which _spawnEncounter calls
 // and a joiner's ask reads too - so it joins the optional helpers below
