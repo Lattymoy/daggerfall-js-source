@@ -316,7 +316,7 @@ test('SNOW-THREAD VERIFY ?snowthread=verify: off by default and absent (no verif
   const off = new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => fakeWorker(new SnowBuildKernel()) });
   assert.equal(off._verify, null, 'off: no verifier');
   const w = fakeWorker(new SnowBuildKernel());
-  const client = new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => w, verify: true });
+  const client = new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => w, verify: true, clock: () => 0 });   // a slow runner's wall clock must not trip the hang deadline
   const V = client._verify;
   const B = new SnowfallRuntime({ world, coverage: new SnowCoverage(MASKS), settings: snowfallSettings(), frameBudgetMs: Infinity, builds: client });
   let nextJump = 399, reset = false, shifted = false, sloped = false;
