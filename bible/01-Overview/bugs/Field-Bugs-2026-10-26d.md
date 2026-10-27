@@ -49,7 +49,7 @@ visibilitychange statements over the real session and Worker and fires them in t
 `auditrealm2_client.json` CLOSE-SAVE-host-leaves-without-the-save, `rescuesave.json`
 CLOSE-SAVE-a-going-page-packs-off-the-frame.
 
-VERIFIED IN GAME on the fix (`3fc4a9740d`, headless Edge, the same probe and the same local workerd): the plate worn, no
+VERIFIED IN GAME on the fix (`b33a6a43ac`, the head; the same on its first shape `3fc4a9740d`, headless Edge, the same probe and the same local workerd): the plate worn, no
 checkpoint asked, then the page closed (and, apart, reloaded). The record still stood at the join's sequence without
 the plate - the leaving put cut off - and the next boot played the device's copy: the plate worn in the chest slot, the
 pack 47 as it was, no stranded notice; the boot's first checkpoint gave it to the service (sequence 3, the plate in
