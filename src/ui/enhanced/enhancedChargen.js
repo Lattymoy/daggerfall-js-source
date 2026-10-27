@@ -81,7 +81,9 @@ export const STAGE_RAIL = Object.freeze([
   { id: 'summary', label: 'Review', states: ['summary'] },
 ]);
 
-const stageOf = (state) => STAGE_RAIL.findIndex((s) => s.states.includes(state));
+/** LEVEL-45: the rail this flow walks - online there is no biography (ui/chargen.js `biographyOff`), so no History. */
+const railOf = () => (flow?.biographyOff ? STAGE_RAIL.filter((s) => s.id !== 'biography') : STAGE_RAIL);
+const stageOf = (state) => railOf().findIndex((s) => s.states.includes(state));
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -428,7 +430,7 @@ function classQuestionsStage() {
     pane.append(wrap);
     return pane;
   }
-  if (!flow.qDisplay) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  if (!flow.qDisplay) return pendingStage(railOf()[stageOf(flow.state)]);
   const { lines, aIndex, bIndex, cIndex } = flow.qDisplay;
   const join = (from, to) => lines.slice(from, to).join(' ').trim();
   const wrap = el('div', 'question');
@@ -734,7 +736,7 @@ function customRepPane(c) {
 
 function customClassStage() {
   const c = flow.custom;
-  if (!c) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  if (!c) return pendingStage(railOf()[stageOf(flow.state)]);
   // Every popup is MODAL over the builder, in the flow's own order.
   if (c.box) return customBoxPane(c);
   if (c.pickList || c.sub === 'skillPick' || c.sub === 'help') return customPickerPane(c);
@@ -1042,7 +1044,7 @@ function bioMethodStage() {
 function biographyStage() {
   const pane = el('div', 'stagebody solo');
   const q = flow.biogQuestion();
-  if (!q) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  if (!q) return pendingStage(railOf()[stageOf(flow.state)]);
   const wrap = el('div', 'question');
   const total = flow.biogFor?.(flow.classIndex)?.questions?.length ?? 0;
   wrap.append(el('div', 'qcount', total ? `Question ${flow.biogQuestionIndex + 1} of ${total}` : ''));
@@ -1615,9 +1617,9 @@ function paintInto() {
   brand.append(el('div', 'sub', 'DFO Online'));
   side.append(brand);
 
-  const here = stageOf(flow.state);
+  const here = stageOf(flow.state), stages = railOf();
   const rail = el('nav', 'rail');
-  STAGE_RAIL.forEach((stage, i) => {
+  stages.forEach((stage, i) => {
     const state = i === here ? ' on' : (i < here ? ' done' : ' todo');
     const b = el('button', `railbtn${state}`);
     b.append(el('span', 'rk', stage.label));
@@ -1639,14 +1641,14 @@ function paintInto() {
   // rather than duplicated - one of the two draws at any width.
   const strip = el('div', 'stepstrip');
   const segs = el('div', 'segs');
-  STAGE_RAIL.forEach((_, i) => segs.append(el('i', i <= here ? 'seg on' : 'seg')));
+  stages.forEach((_, i) => segs.append(el('i', i <= here ? 'seg on' : 'seg')));
   strip.append(segs);
   strip.append(el('div', 'steptext',
-    `${Math.max(here, 0) + 1} of ${STAGE_RAIL.length} \u00b7 ${STAGE_RAIL[here]?.label ?? ''}`));
+    `${Math.max(here, 0) + 1} of ${stages.length} \u00b7 ${stages[here]?.label ?? ''}`));
   side.append(strip);
 
   const foot = el('div', 'foot');
-  foot.append(document.createTextNode(`step ${Math.max(here, 0) + 1} of ${STAGE_RAIL.length}`));
+  foot.append(document.createTextNode(`step ${Math.max(here, 0) + 1} of ${stages.length}`));
   side.append(foot);
 
   const pane = el('main', 'pane');
@@ -1669,7 +1671,7 @@ function paintInto() {
   nameOk = null;
   pane.append(flow.biogRepBox?.length
     ? repBoxPane()
-    : (STAGES[flow.state] ?? (() => pendingStage(STAGE_RAIL[here])))());
+    : (STAGES[flow.state] ?? (() => pendingStage(stages[here])))());
 
   // THE ACTION BAR. Back is always here, because AUDIT 17j found the
   // wizard's back arms wrong on every screen it checked and the fix

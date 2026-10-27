@@ -17,6 +17,7 @@ import { raiseSkills, calculatePlayerLevel, SKILL_RAISE_CHECK_INTERVAL } from '.
 import { SKILL_SWAP_GOLD, swapSkill, swapInChoices, swapShortfall } from '../../src/systems/skillSwap.js';
 import { specGuideModel } from '../../src/ui/growth/specGuide.js';
 import { LEVELING_VIRTUE } from '../../src/systems/oblivionLeveling.js';
+import { onlineLevelFor } from '../../src/systems/levelClimb.js';   // LEVEL-45: the online level
 
 const S = SKILLS;
 const PRIMARY = [S.LongBlade, S.Dodging, S.CriticalStrike];
@@ -48,8 +49,11 @@ const sums = (p) => ({ starting: p.startingLevelUpSkillSum, current: p.currentLe
 test('SWAP-CYCLE THE REPORT: every skill outside the class cycled through a primary place and trained to 100 takes the level no further than the class\'s own lists hold - 31, not 223 (mutants: a drop moving the starting sum; a raise lowering the stored sum)', () => {
   const p = made();
   const start = p.startingLevelUpSkillSum;
-  const ceiling = calculatePlayerLevel(start, 600);   // six counted skills at 100: the most the class's sum can be
-  assert.equal(ceiling, 31);
+  // PIN MOVED: LEVEL-45 online (2026-10-27, systems/levelClimb.js) - online the climb is shared out to 45 at the six-skill
+  // top (840), so the class's sum at 100 stands at 29 there where Daggerfall's 15 a level said 31; the law is unchanged
+  const ceiling = onlineLevelFor(start, 600);   // six counted skills at 100: the most the class's sum can be
+  assert.equal(ceiling, 29);
+  assert.equal(calculatePlayerLevel(start, 600), 31, 'Daggerfall\'s 15 a level, offline');
   for (const id of [...PRIMARY, ...MAJOR, ...MINOR]) train(p, id, 100);
   assert.equal(p.level, ceiling, 'every class skill at 100: the ceiling, by training alone');
   let swaps = 0;
@@ -61,7 +65,7 @@ test('SWAP-CYCLE THE REPORT: every skill outside the class cycled through a prim
   }
   assert.equal(swaps, 35 - 12, 'every skill outside the class has had its turn');
   assert.equal(p.level, ceiling, 'the cycle earned no level');
-  assert.equal(calculatePlayerLevel(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum), ceiling);
+  assert.equal(onlineLevelFor(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum), ceiling);   // PIN MOVED: LEVEL-45 online, the shared climb
   assert.equal(p.startingLevelUpSkillSum, start, 'nothing brought in above the sum the level stood on');
   assert.equal(p.currentLevelUpSkillSum, 600);
 });
