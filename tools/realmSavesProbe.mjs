@@ -64,6 +64,11 @@ export const REALM_SAVES_PROBE_EDITS = Object.freeze([
   ] },
 ]);
 
+/** Whether a save text was written inside a dungeon (the dungeon host's composer: its dungeon and the player's feet). */
+export function dungeonSave(text) {
+  try { const save = JSON.parse(text); return save?.dungeon != null && save?.position != null; } catch { return false; }
+}
+
 /** Where two save texts differ once idleKeyOf's clock and look are set aside: up to 40 paths, each with both values cut short. */
 export function saveDiff(aText, bText) {
   if (!aText || !bText) return { missing: !aText ? 'landed' : 'copy' };
@@ -206,8 +211,12 @@ async function main() {
       const id = await character(x);
       const ctxA = await device(x), ctxB = await device(x);
       const a = await boot(ctxA, id, 'A');
-      for (let i = 0; i < 60 && (await recordSeq(x, id)) < 2; i++) await sleep(1000);   // A's first periodic save landed
-      const landedText = (await realmFetch(x.io, id)).text;
+      // A's first periodic save, written inside the classic start's dungeon, landed (the first checkpoint waits for the
+      // world to stand; a save from before the dungeon is never the idle tab's)
+      let landed = null;
+      for (let i = 0; i < 420 && !(landed?.seq >= 2 && dungeonSave(landed.text)); i++) { await sleep(1000); landed = await realmFetch(x.io, id); }
+      const landedText = landed?.text ?? null;
+      console.log(`   (a) A's landed save: seq ${landed?.seq}, inside the dungeon: ${dungeonSave(landedText)}`);
       const b = await boot(ctxB, id, 'B');
       const bReady = Date.now();
       // A is out of the seat once B's hub claims it; A's lease went at B's join

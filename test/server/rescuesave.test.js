@@ -298,7 +298,7 @@ test('RESCUE-SAVE: the world host says it once the world stands - only for a cop
   const strandedSaid = w.indexOf('if (realmBoot?.stranded) townTalk.say(realmStrandedText());');
   assert.ok(strandedSaid > 0 && Math.abs(strandedSaid - said) < 400, 'STRANDED: and a copy set aside, beside it');
   assert.match(realmStrandedText(), /may hold progress/i, 'may: a put whose answer was lost may have landed');
-  assert.ok(w.includes('createOnlineCheckpointClock({ session: realmSession, checkpoint: () => onlineCheckpoint(), lastAt: () => _checkpointAt, say: (text) => townTalk.say(text) })'), 'SAVES-SAID: the host has the realm\'s silence said (online/onlineCheckpointClock.js, realmUnsavedNotice.js)');
+  assert.ok(w.includes('createOnlineCheckpointClock({ session: realmSession, checkpoint: () => onlineCheckpoint(), lastAt: () => _checkpointAt, say: (text) => townTalk.say(text), stands: () => _bootLoaded })'), 'SAVES-SAID: the host has the realm\'s silence said (online/onlineCheckpointClock.js, realmUnsavedNotice.js)');
   assert.ok(Math.abs(said - w.indexOf('if (realmRefused) townTalk.say(REALM_OFFLINE_TEXT);')) < 400, 'beside REALM P1.3\'s own boot word');
   assert.match(REALM_RESTORED_TEXT, /this device kept it/i);
 });

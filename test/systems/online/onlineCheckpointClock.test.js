@@ -37,7 +37,7 @@ function realm(answer = () => 'ok') {
 }
 
 /** The host's checkpoint, as world.js onlineCheckpoint runs it: the gate, then the save handed to the session. */
-function host(r, { open = () => true } = {}) {
+function host(r, { open = () => true, stands = undefined } = {}) {
   let lastAt = -Infinity;
   const said = [];
   const checkpoint = () => {
@@ -46,7 +46,7 @@ function host(r, { open = () => true } = {}) {
     r.session?.checkpoint(JSON.stringify({ at: r.clock.at }));
     return true;
   };
-  const clock = createOnlineCheckpointClock({ session: r.session, checkpoint, lastAt: () => lastAt, say: (text) => said.push(text), now: () => r.clock.at });
+  const clock = createOnlineCheckpointClock({ session: r.session, checkpoint, lastAt: () => lastAt, say: (text) => said.push(text), now: () => r.clock.at, stands });
   return { clock, said };
 }
 
@@ -105,4 +105,41 @@ test('the frame runs the periodic checkpoint when due, then says a realm that ha
   clock.frame(r.clock.at);
   await settle();
   assert.equal(r.puts.length, 2);
+});
+
+test('the first checkpoint waits for the world to stand: a classic start\'s first frame is outdoors, before its dungeon', async () => {
+  const r = realm();
+  let stands = false;
+  const { clock } = host(r, { stands: () => stands });
+  clock.frame(0);
+  clock.frame(ONLINE_CHECKPOINT_MS * 2);
+  await settle();
+  assert.equal(r.puts.length, 0, 'due, but nothing is saved before the world stands');
+  stands = true;
+  clock.frame(ONLINE_CHECKPOINT_MS * 2 + 1);
+  await settle();
+  assert.equal(r.puts.length, 1, 'the first frame that stands checkpoints at once');
+  assert.equal(r.session.seq, 2);
+});
+
+test('a seat lost before the world stands saves nothing then; the first standing frame saves and hears the lease', async () => {
+  const r = realm(() => 'lease');
+  let stands = false;
+  const { clock } = host(r, { stands: () => stands });
+  clock.seatLost();
+  await settle();
+  assert.equal(r.puts.length, 0);
+  stands = true;
+  clock.frame(1);
+  await settle();
+  assert.equal(r.puts.length, 1);
+  assert.deepEqual(r.lost, ['lease'], 'heard on the first standing frame');
+});
+
+test('a start that stands at once (a town, a load) still checkpoints on its first frame - the hold never starves', async () => {
+  const r = realm();
+  const { clock } = host(r, { stands: () => true });
+  clock.frame(0);
+  await settle();
+  assert.equal(r.puts.length, 1);
 });

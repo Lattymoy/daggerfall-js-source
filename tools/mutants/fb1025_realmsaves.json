@@ -132,8 +132,8 @@
   {
     "name": "SAVES-SAID-host-not-wired",
     "file": "src/scenes/world.js",
-    "old": "say: (text) => townTalk.say(text) });\n  /** AUDIT PRE-MERGE 1003 O10",
-    "new": "say: () => {} });\n  /** AUDIT PRE-MERGE 1003 O10",
+    "old": "say: (text) => townTalk.say(text), stands: () => _bootLoaded });\n  /** AUDIT PRE-MERGE 1003 O10",
+    "new": "say: () => {}, stands: () => _bootLoaded });\n  /** AUDIT PRE-MERGE 1003 O10",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

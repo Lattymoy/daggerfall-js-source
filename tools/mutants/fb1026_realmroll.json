@@ -90,12 +90,39 @@
     ]
   },
   {
+    "name": "SEAT-SAVES-first-checkpoint-never-waits",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      if (stands()) checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "new": "      checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-seat-loss-before-the-world-stands",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      if (!stands()) return;   // the first standing frame's checkpoint is due at once, and hears the lease then\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
     "name": "SEAT-SAVES-host-seat-loss-unwired",
     "file": "src/scenes/world.js",
     "old": "    checkpointClock.seatLost();",
     "new": "",
     "tests": [
       "test/net/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-host-hold-unwired",
+    "file": "src/scenes/world.js",
+    "old": ", stands: () => _bootLoaded });\n  /** AUDIT PRE-MERGE 1003 O10",
+    "new": " });\n  /** AUDIT PRE-MERGE 1003 O10",
+    "tests": [
+      "test/server/rescuesave.test.js"
     ]
   },
   {
