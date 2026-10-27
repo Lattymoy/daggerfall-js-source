@@ -16,9 +16,9 @@
 // her place; the lift is world/ketch/ketchModel.js buildKetchAnchorLift's. Pure but for its set (createKetchSky), whose seams
 // the client hands in (scenes/ketch/ketchClient.js).
 //
-// KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): a sky a STATION - `theatre` the station's (ketchLaw.js
-// KT_THEATRES), its voyage that theatre's on the clock, its city the client's (Daggerfall's for the Bay's, as it always was),
-// its collider its own bucket (the Bay's KT_SKY_BUCKET, a station past it `kt:sky:<theatre>`).
+// KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): a sky a STATION - `theatre` the station's lane (ketchLaw.js
+// KT_THEATRES), its voyage that lane's on the clock, its city the client's (Daggerfall's for the Bay's own, as it always
+// was), its collider its own bucket (the Bay's own KT_SKY_BUCKET, every other station's `kt:sky:<lane>`).
 //
 // Not a DFU member: Daggerfall has no airship. Ledger A (KETCH).
 import { ketchVoyageAt, KT_SIGHT_MS } from '../../net/ketch/ketchLaw.js';

@@ -23,16 +23,17 @@
 //     (net/ketch/ketchClaims.js); a share it pays waits in the Ketchmaster's chest while I stand aboard (opened, it spills
 //     across the cabin floor - the Hour's spoils pool), and goes into the pack if I leave without opening it.
 //
-//   KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): A STATION IN EVERY PROVINCE - a sky a station
-//     (net/ketch/ketchLaw.js KT_THEATRES): the Bay's over Daggerfall, as it always was; each province's over its city
-//     (scenes/ketch/ketchStations.js), framed while I stand within reach of it, on a relay that keeps its ships; its
-//     voyage's words said while I stand in its province, its ring on the map, its anchor-lift boarding its own voyage.
+//   KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): A STATION IN EVERY PROVINCE, AT ITS CROWN CAPITAL - a
+//     sky a station (net/ketch/ketchLaw.js KT_THEATRES): High Rock's over Daggerfall, the Bay's as it always was; every
+//     other's over its crown's seat (scenes/ketch/ketchStations.js - Sentinel's on the Bay, each province's past it),
+//     framed while I stand within reach of it, on a relay that keeps its ships; its voyage's words said while I stand in
+//     its province (on the Bay, its crown's regions), its ring on the map, its anchor-lift boarding its own voyage.
 //
 // Not a DFU member. Ledger A (KETCH).
 import { KT_STAGE, KT_TEXT, ketchVoyageAt, ketchVoyageOf, ketchBoards, ketchRoomKey, ketchTheatreOf, KT_THEATRES } from '../../net/ketch/ketchLaw.js';
 import { t } from '../../systems/textManager.js';
 import { KT_WORDS, KT_REFUSE_WORDS, KT_STATION_WORDS, ketchCity, ketchRefusal, ketchSkyPhase, ketchWhenLine } from '../../systems/ketch/ketchWords.js';
-import { ketchStationPixel, ketchStationHere, ketchStationNear, setKetchStationsStanding, KT_STATION_MIDDLE } from './ketchStations.js';
+import { ketchStationPixel, ketchStationHere, ketchStationNear, setKetchStationsStanding, KT_STATION_MIDDLE, KT_BAY_STATION_ROWS } from './ketchStations.js';
 import {
   KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_HOLD, KT_BRIDGE, KT_LINE, KT_MAIN_TOP, KT_ANCHOR_LIFT, KT_STERN_LIFT, KT_VAULT,
   KT_REACH, KT_LINE_LAND, deckToDungeon, dungeonToDeck, deckZoneAt,
@@ -60,7 +61,6 @@ import { KT_DOWN_MS, KT_REZ_PCT } from '../../net/ketch/ketchBrain.js';   // AUD
 import { flashPlayerDamage } from '../../ui/damageFlash.js';
 import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { spawnedLocationCentreLocal } from '../../world/spawnedDungeons.js';
-import { ARENA_REGION, ARENA_LOCATION } from '../../world/arena/arenaCity.js';   // Daggerfall's own row (the arena's city)
 import { registerFootSpeedMod } from '../../player/motor.js';
 import { tooFarAwayText } from '../../player/activate.js';
 import { ketchHudModel, wardenBarModel, drawKetchHud } from '../../ui/ketch/ketchHud.js';
@@ -151,8 +151,9 @@ export function ketchCarryStep(st, t, sendDrop) {
 export const ketchShipUnheard = (V, sinceMs) => !(V?.n >= 0) && sinceMs > KT_DOOR_MS;
 const NONE = Object.freeze([]);
 const BOX = 0.55;
-/** Daggerfall's map pixel (formats/mapsFile.js longitudeLatitudeToMapPixel of its own row - pinned). */
-export const KT_CITY_PX = Object.freeze({ x: 207, y: 213 });
+/** Daggerfall's map pixel (formats/mapsFile.js longitudeLatitudeToMapPixel of its own row - pinned; KETCH-EVERYWHERE: the
+ *  Bay's station's row's, scenes/ketch/ketchStations.js KT_BAY_STATION_ROWS). */
+export const KT_CITY_PX = KT_BAY_STATION_ROWS[0].px;
 /** An activation target about a deck point: a box `h` tall over (x, y, z) - the loot piles' shape (dungeonContext.js). */
 const target = (key, x, y, z, h = 1.2, half = BOX, reach = KT_REACH + 0.4) => { const p = deckToDungeon(x, y, z); return { key, aabb: { min: [p[0] - half, p[1], p[2] - half], max: [p[0] + half, p[1] + h, p[2] + half] }, distance: reach + 2, reach }; };
 
@@ -240,24 +241,32 @@ export function createKetchClient(deps) {
     entity.items?.push?.(shot);
   }
   // DAGGERFALL IN THE SCENE: its own row read once (formats/mapsFile.js), its centre in its pixel (the spawns' law -
-  // world/spawnedDungeons.js spawnedLocationCentreLocal), its pixel where the streaming frame stands it now
-  let cityRow;
+  // world/spawnedDungeons.js spawnedLocationCentreLocal), its pixel where the streaming frame stands it now -
+  // KETCH-EVERYWHERE: and every Bay crown's station's so (Sentinel's - scenes/ketch/ketchStations.js KT_BAY_STATION_ROWS)
+  /** @type {Map<number, { px: { x: number, y: number }, local: number[] } | null>} */ const rows = new Map();
   const _t = [0, 0, 0];
-  const cityRead = () => { if (cityRow === undefined) { try { const loc = deps.maps?.getLocation?.(ARENA_REGION, ARENA_LOCATION) ?? null; const px = loc ? longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude) : null; cityRow = loc && px ? { px, local: spawnedLocationCentreLocal(loc) } : null; } catch { cityRow = null; } } return cityRow; };
+  const rowRead = (/** @type {number} */ th) => {
+    const at = /** @type {Record<number, { region: number, location: number }>} */ (KT_BAY_STATION_ROWS)[th];
+    if (!at) return null;
+    if (!rows.has(th)) { let r = null; try { const loc = deps.maps?.getLocation?.(at.region, at.location) ?? null; const px = loc ? longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude) : null; r = loc && px ? { px, local: spawnedLocationCentreLocal(loc) } : null; } catch { r = null; } rows.set(th, r); }
+    return rows.get(th) ?? null;
+  };
+  const cityRead = () => rowRead(0);
+  // KETCH-EVERYWHERE: A STATION'S CITY IN THE SCENE (east, north) - a Bay crown's its row's centre (above), a province's
+  // its seat's pixel's middle (scenes/ketch/ketchStations.js) - and the scene's vertical shift at its pixel
+  const bayStation = (/** @type {number} */ th) => Object.prototype.hasOwnProperty.call(KT_BAY_STATION_ROWS, th);
+  const stationPx = (/** @type {number} */ th) => (bayStation(th) ? rowRead(th)?.px ?? null : ketchStationPixel(th));
   /** @returns {[number, number]|null} */
-  const city = () => { const c = cityRead(); if (!c || !deps.state?.pixelTranslation) return null; const t = deps.state.pixelTranslation(c.px.x, c.px.y, _t); return [t[0] + c.local[0], t[2] + c.local[1]]; };
-  const frameY = () => { const c = cityRead(); return c && deps.state?.pixelTranslation ? deps.state.pixelTranslation(c.px.x, c.px.y, _t)[1] : 0; };
-  // KETCH-EVERYWHERE: A STATION'S CITY IN THE SCENE - the Bay's Daggerfall's row (above), a province's its city's pixel
-  // (scenes/ketch/ketchStations.js), her middle its pixel's
-  const stationPx = (/** @type {number} */ th) => (th ? ketchStationPixel(th) : cityRead()?.px ?? null);
   const stationCity = (/** @type {number} */ th) => {
-    if (!th) return city();
-    const p = ketchStationPixel(th);
+    const r = bayStation(th) ? rowRead(th) : null, p = stationPx(th);
     if (!p || !deps.state?.pixelTranslation) return null;
     const q = deps.state.pixelTranslation(p.x, p.y, _t);
-    return /** @type {[number, number]} */ ([q[0] + KT_STATION_MIDDLE, q[2] + KT_STATION_MIDDLE]);
+    return r ? [q[0] + r.local[0], q[2] + r.local[1]] : [q[0] + KT_STATION_MIDDLE, q[2] + KT_STATION_MIDDLE];
   };
-  const stationFrameY = (/** @type {number} */ th) => { if (!th) return frameY(); const p = ketchStationPixel(th); return p && deps.state?.pixelTranslation ? deps.state.pixelTranslation(p.x, p.y, _t)[1] : 0; };
+  const stationFrameY = (/** @type {number} */ th) => { const p = stationPx(th); return p && deps.state?.pixelTranslation ? deps.state.pixelTranslation(p.x, p.y, _t)[1] : 0; };
+  /** KETCH-EVERYWHERE: the Bay's region under a map pixel - its politic map's (formats/mapsFile.js getPoliticIndex: a region
+   *  in the +128 band), -1 for none (the sea, an edge): the crown a Bay pixel is under (scenes/ketch/ketchStanding.js). */
+  const bayRegionAt = (/** @type {number} */ x, /** @type {number} */ y) => { try { const p = deps.maps?.getPoliticIndex?.(x, y); return Number.isInteger(p) && p >= 128 ? p - 128 : -1; } catch { return -1; } };
   const art = createKetchSkyArt(deps.renderer);   // her meshes, made once for every station's sky
   /** KETCH-EVERYWHERE: THE STATIONS, a sky each - the Bay's first; each with the voyage's words it has said. */
   const stations = KT_THEATRES.map((th) => ({
@@ -290,8 +299,9 @@ export function createKetchClient(deps) {
   }
   // ── boarding ──
   let boarding = false, boardedAt = -Infinity, wasOnShip = false, falling = null, wake = null;
-  /** KETCH-EVERYWHERE: up to station `th`'s ship (the station I stand at - my province's where it keeps one, else the Bay's). */
-  async function board(th = (() => { const h = herePx(); return (h && ketchStationHere(h.x, h.y)) ?? 0; })()) {
+  /** KETCH-EVERYWHERE: up to station `th`'s ship (its lift's own, which hands it; else my province's where the relay keeps
+   *  its ships, else the Bay's). */
+  async function board(th = (() => { const h = herePx(); return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0; })()) {
     if (boarding || onShip()) return false;
     const o = online(), t = now(), v = ketchVoyageAt(t, th);
     if (!o || o.status !== 'open') { mid(KT_REFUSE_WORDS.offline); return false; }
@@ -491,9 +501,10 @@ export function createKetchClient(deps) {
     frame() {
       const t = now();
       voyageWords(t);
-      // KETCH-EVERYWHERE: and my province's station's, while the relay keeps its ships
-      const on = provincesOn(), h = herePx(), here = on && h ? ketchStationHere(h.x, h.y) : null;
-      setKetchStationsStanding(on);
+      // KETCH-EVERYWHERE: and my province's station's, while the relay keeps its ships (the Timers told so, and how a Bay
+      // pixel's crown is read)
+      const on = provincesOn(), h = herePx(), here = on && h ? ketchStationHere(h.x, h.y, bayRegionAt) : null;
+      setKetchStationsStanding(on, bayRegionAt);
       const mine = here ? stations.find((st) => st.theatre === here) : null;
       if (mine) voyageWords(t, mine);
       const aboard = onShip();

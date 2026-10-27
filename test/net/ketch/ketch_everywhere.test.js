@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  KT_THEATRES, KT_STATION_CITIES, KT_THEATRE_SPAN, KT_THEATRE_STAGGER_MS, KT_EVERY_MS, KT_EPOCH_MS, KT_SIGHT_MS, KT_STATION_MS, KT_LAST_MS,
+  KT_THEATRES, KT_STATION_CITIES, KT_STATION_CROWNS, ketchStationSlot, KT_THEATRE_SPAN, KT_THEATRE_STAGGER_MS, KT_EVERY_MS, KT_EPOCH_MS, KT_SIGHT_MS, KT_STATION_MS, KT_LAST_MS,
   ketchVoyageOf, ketchVoyageAt, ketchBoards, ketchHolds, ketchRoomKey, ketchRoomOf, ketchRoomHolds, ketchTheatreOf, ketchVoyageNumber, ketchStationOk,
 } from '../../../src/net/ketch/ketchLaw.js';
 import { ketchHeraldDue, ketchHeraldPost, ketchHeraldKey, readKetchHeraldState } from '../../../src/net/ketch/ketchHerald.js';
@@ -29,7 +29,7 @@ import { claimKetch } from '../../../server-account/src/ketch.js';
 import { createGuest } from '../../../server-account/src/accounts.js';
 import { eventTimerRows } from '../../../src/systems/eventTimers.js';
 import { setKetchStationsStanding, ketchStationHere } from '../../../src/scenes/ketch/ketchStanding.js';
-import { KT_STATION_REACH_PX, ketchStationPixel } from '../../../src/scenes/ketch/ketchStations.js';
+import { KT_STATION_REACH_PX, ketchStationPixel, ketchStationNear, KT_BAY_STATION_ROWS } from '../../../src/scenes/ketch/ketchStations.js';
 import { KT_SKY, ketchSkyBucket, KT_SKY_BUCKET, ketchSkyPose } from '../../../src/scenes/ketch/ketchSky.js';
 import { KT_STATION_WORDS, KT_WORDS, KT_REFUSE_WORDS, ketchWhenLine } from '../../../src/systems/ketch/ketchWords.js';
 import { KT_CLIENT_TEXT } from '../../../src/scenes/ketch/ketchClient.js';
@@ -38,7 +38,9 @@ import { TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
 import { THEATRE_KEYS, theatreAt } from '../../../src/world/worldWide/worldGrid.js';
 import { CITIES } from '../../../src/world/tamriel/tamrielGeography.js';
 import { CAPITALS } from '../../../src/world/tamrielCapitals.js';
-import { KINGDOMS } from '../../../src/net/kingdomLaw.js';
+import { KINGDOMS, BAY_KINGDOMS, kingdomSeatName } from '../../../src/net/kingdomLaw.js';
+import { regionOfTheatre } from '../../../src/formats/mapsTables.js';
+import { ARENA_REGION, ARENA_LOCATION } from '../../../src/world/arena/arenaCity.js';
 import { pictureToBay, setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
 import { fakeRooms, fakeRoom } from '../../fakeRoom.mjs';
@@ -64,24 +66,33 @@ function oldVoyageAt(now) {
   return { ...v, phase: t < v.at ? 'sighted' : t < v.departAt ? 'docked' : 'departing' };
 }
 
-test('KETCH-EVERYWHERE THE STATIONS: the Bay\'s and the eight provinces\' (1 to 8), Cyrodiil\'s none; each over its city - Daggerfall, then each province\'s crown seat, and where a province\'s crowns are the Bay\'s the lore\'s great city past it (mutants: the open zone a station; a city\'s name)', { timeout: 120_000 }, () => {
-  assert.deepEqual([...KT_THEATRES], [0, 1, 2, 3, 4, 5, 6, 7, 8]);
-  assert.deepEqual([...KT_STATION_CITIES], ['Daggerfall', 'Shornhelm', 'Hegathe', 'Solitude', 'Mournhold', 'Alinor', 'Falinesti', 'Torval', 'Helstrom']);
-  assert.deepEqual([0, 3, 9, 10, -1].map(ketchStationOk), [true, true, false, false, false]);
-  // the crown seats past the Bay are the capitals the port lays (world/tamrielCapitals.js), each its kingdom's seat
+test('KETCH-EVERYWHERE THE STATIONS: one a province, at its crown capital (the owner\'s call) - High Rock\'s over Daggerfall (the Bay\'s own lane), Hammerfell\'s over Sentinel (its crown the Bay\'s), each province\'s past the Bay over its own crown\'s seat; none on High Rock past the Bay\'s lane, none in the open zone (mutants: the open zone a station; a crown\'s station moved; a city not its crown\'s seat)', { timeout: 120_000 }, () => {
+  assert.deepEqual([...KT_THEATRES], [0, 2, 3, 4, 5, 6, 7, 8]);
+  assert.deepEqual({ ...KT_STATION_CROWNS }, { 0: 'daggerfall', 2: 'sentinel', 3: 'skyrim', 4: 'morrowind', 5: 'summerset', 6: 'valenwood', 7: 'elsweyr', 8: 'blackmarsh' });
+  assert.deepEqual(Object.keys(KT_STATION_CROWNS).map(Number), [...KT_THEATRES], 'a lane a crown');
+  assert.deepEqual([...KT_STATION_CITIES], ['Daggerfall', null, 'Sentinel', 'Solitude', 'Mournhold', 'Alinor', 'Falinesti', 'Torval', 'Helstrom']);
+  assert.deepEqual([0, 1, 2, 3, 8, 9, 10, -1].map(ketchStationOk), [true, false, true, true, true, false, false, false]);
+  // every station's city its crown's seat - the crown capital (net/kingdomLaw.js kingdomSeatName)
+  for (const t of KT_THEATRES) assert.equal(KT_STATION_CITIES[t], kingdomSeatName(KT_STATION_CROWNS[t]), `lane ${t}`);
+  // a lane is its province's theatre: Hammerfell's 2, each province past the Bay its own - High Rock's the Bay's own 0
+  assert.deepEqual(KT_THEATRES.map((t) => THEATRE_KEYS[t]), ['IliacBay', 'Hammerfell', 'Skyrim', 'Morrowind', 'Sumurset', 'Valenwood', 'Elsweyr', 'BlackMarsh']);
+  // the crown seats past the Bay are the capitals the port lays (world/tamrielCapitals.js), each its province's own crown's
   for (let t = 3; t <= 8; t++) {
     const cap = CAPITALS.find((c) => c.province === THEATRE_KEYS[t]);
     assert.equal(cap?.name, KT_STATION_CITIES[t], `${THEATRE_KEYS[t]}: its capital`);
-    assert.ok(Object.values(KINGDOMS).some((k) => k.seat === cap.name), `${cap.name}: a crown's seat`);
+    assert.deepEqual([...KINGDOMS[KT_STATION_CROWNS[t]].regions], [regionOfTheatre(t)], `${cap.name}: its province's crown`);
   }
-  // High Rock's and Hammerfell's crowns are the Bay's: the lore's cities past the Bay (Hegathe its capital there)
-  assert.deepEqual([1, 2].map((t) => CITIES.find((c) => c.name === KT_STATION_CITIES[t])?.province), ['HighRock', 'Hammerfell']);
-  assert.equal(CITIES.find((c) => c.name === 'Hegathe').capital, true);
+  // High Rock's and Hammerfell's crowns are the Bay's three (WW7-3): one station a province - High Rock's Daggerfall's (of its
+  // two crowns, Daggerfall and Wayrest), Hammerfell's Sentinel's; Wayrest keeps none; no crown of Cyrodiil's keeps one
+  assert.deepEqual([...BAY_KINGDOMS].map((k) => Object.values(KT_STATION_CROWNS).includes(k)), [true, false, true]);
+  assert.equal(Object.values(KT_STATION_CROWNS).includes('cyrodiil'), false, 'the open zone keeps none');
+  assert.equal(new Set(Object.values(KT_STATION_CROWNS)).size, KT_THEATRES.length, 'one a crown');
 });
 
-test('KETCH-EVERYWHERE THE VOYAGES: the Bay\'s law the one it always was, to the millisecond over every edge; a station\'s voyage k is k plus its theatre\'s span (the gates\' lane span), its times the Bay\'s k\'s a ninth of a round on per station - nine arrivals a round, never two at once; every number names its own theatre; the room\'s key holds every station\'s; the open zone\'s numbers no ship (mutants: the stagger; the span; the open zone held)', { timeout: 120_000 }, () => {
+test('KETCH-EVERYWHERE THE VOYAGES: the Bay\'s law the one it always was, to the millisecond over every edge; a station\'s voyage k is k plus its lane\'s span (the gates\' lane span), its times the Bay\'s k\'s an eighth of a round on per station in the round\'s order - eight arrivals a round, evenly, never two at once; every number names its own lane; the room\'s key holds every station\'s; the open zone\'s and High Rock past the Bay\'s numbers no ship (mutants: the stagger; the span; the open zone held; the slot the lane)', { timeout: 120_000 }, () => {
   assert.equal(KT_THEATRE_SPAN, GATE_LANE_SPAN);
-  assert.equal(KT_THEATRE_STAGGER_MS, 4_000_000, 'an hour, six minutes and forty seconds');
+  assert.equal(KT_THEATRE_STAGGER_MS, 4_500_000, 'an hour and a quarter');
+  assert.deepEqual([...KT_THEATRES, 1, 9, 42].map(ketchStationSlot), [0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0], 'the round\'s order; a lane with no station the Bay\'s place');
   // the Bay's, to the millisecond: every edge of three voyages
   for (let n = 0; n < 3; n++) {
     const v = oldVoyageOf(n);
@@ -92,21 +103,24 @@ test('KETCH-EVERYWHERE THE VOYAGES: the Bay\'s law the one it always was, to the
   // each station's
   const arrivals = [];
   for (const th of KT_THEATRES) {
-    const n = ketchVoyageNumber(5, th), v = ketchVoyageOf(n), b = oldVoyageOf(5), off = th * KT_THEATRE_STAGGER_MS;
+    const n = ketchVoyageNumber(5, th), v = ketchVoyageOf(n), b = oldVoyageOf(5), off = KT_THEATRES.indexOf(th) * KT_THEATRE_STAGGER_MS;
     assert.deepEqual(v, { n, sightAt: b.sightAt + off, at: b.at + off, departAt: b.departAt + off, endAt: b.endAt + off }, `station ${th}`);
     assert.deepEqual([ketchTheatreOf(n), n - th * KT_THEATRE_SPAN], [th, 5]);
     assert.deepEqual(ketchVoyageAt(v.at, th), { ...v, phase: 'docked' });
-    assert.deepEqual(ketchVoyageAt(v.endAt, th).n, n + 1, 'gone: its next, its own theatre\'s');
+    assert.deepEqual(ketchVoyageAt(v.endAt, th).n, n + 1, 'gone: its next, its own lane\'s');
     assert.deepEqual(ketchVoyageAt(v.sightAt - 1, th).phase, 'away');
     assert.equal(ketchRoomOf(ketchRoomKey(n, '0123456789abcdef')).n, n, 'the room\'s eight hex hold it');
     assert.deepEqual([ketchBoards(n, v.at), ketchHolds(n, v.endAt - 1), ketchHolds(n, v.endAt), ketchRoomHolds(ketchRoomKey(n, '0123456789abcdef'), v.at)], [true, true, false, true]);
     arrivals.push(v.at % KT_EVERY_MS);
   }
-  assert.equal(new Set(arrivals).size, 9, 'nine arrivals a round');
+  assert.equal(new Set(arrivals).size, 8, 'eight arrivals a round');
   const sorted = [...arrivals].sort((a, b) => a - b);
-  assert.deepEqual(sorted.slice(1).map((a, i) => a - sorted[i]), Array(8).fill(KT_THEATRE_STAGGER_MS), 'evenly round the ten hours');
+  assert.deepEqual(sorted.slice(1).map((a, i) => a - sorted[i]), Array(7).fill(KT_THEATRE_STAGGER_MS), 'evenly round the ten hours');
+  assert.deepEqual(KT_THEATRES.map((th) => ketchVoyageOf(ketchVoyageNumber(5, th)).at - oldVoyageOf(5).at), [0, 4_500_000, 9_000_000, 13_500_000, 18_000_000, 22_500_000, 27_000_000, 31_500_000], 'Sentinel an hour and a quarter after Daggerfall, Black Marsh last');
   const zone = ketchVoyageNumber(5, 9), zv = ketchVoyageOf(zone);
   assert.deepEqual([ketchBoards(zone, zv.at), ketchHolds(zone, zv.at), ketchRoomHolds(ketchRoomKey(zone, '0123456789abcdef'), zv.at)], [false, false, false], 'the open zone keeps no ship');
+  const hr = ketchVoyageNumber(5, 1), hv = ketchVoyageOf(hr);
+  assert.deepEqual([ketchBoards(hr, hv.at), ketchHolds(hr, hv.at), ketchRoomHolds(ketchRoomKey(hr, '0123456789abcdef'), hv.at)], [false, false, false], 'nor High Rock past the Bay\'s lane - High Rock\'s station is Daggerfall\'s');
   assert.equal(ketchRoomKey(ketchVoyageNumber(0, 42), '0123456789abcdef') !== null, true);
   assert.equal(ketchHolds(ketchVoyageNumber(0, 42) + 3, ketchVoyageOf(ketchVoyageNumber(0, 42) + 3).at), false, 'nor any theatre past the last');
 });
@@ -160,7 +174,7 @@ test('KETCH-EVERYWHERE THE RELAY: Skyrim\'s ship minted while its voyage holds a
   assert.match(onl, /this\.ktTheatresOk = false;/, 'none before a welcome');
   assert.match(onl, /if \(primary\) this\.ktTheatresOk = relaySupportsKetchTheatres\(relayV\);/, 'the session\'s word off its welcome');
   const nSky = ketchVoyageNumber(1, SKYRIM), V = ketchVoyageOf(nSky), nBay = 1;
-  assert.deepEqual(V.at - ketchVoyageOf(nBay).at, SKYRIM * KT_THEATRE_STAGGER_MS, 'Skyrim\'s voyage 1 a third of a round after the Bay\'s');
+  assert.deepEqual(V.at - ketchVoyageOf(nBay).at, 2 * KT_THEATRE_STAGGER_MS, 'Skyrim\'s voyage 1 two stations after the Bay\'s (Sentinel\'s between)');
   const owner = await instanceOwnerOf('acct-alice');
   // THE WINDOW
   const worker = (await import('../../../server/src/index.js')).default;
@@ -173,7 +187,12 @@ test('KETCH-EVERYWHERE THE RELAY: Skyrim\'s ship minted while its voyage holds a
   try {
     assert.equal((await worker.fetch(upgrade(ketchRoomKey(nSky, owner)), env)).status, 200, 'Skyrim\'s ship');
     assert.equal((await worker.fetch(upgrade(ketchRoomKey(ketchVoyageNumber(1, 9), owner)), env)).status, 404, 'the open zone\'s: none');
-    assert.equal(minted, 1);
+    clock = ketchVoyageOf(ketchVoyageNumber(1, 1)).at + 60_000;
+    assert.equal((await worker.fetch(upgrade(ketchRoomKey(ketchVoyageNumber(1, 1), owner)), env)).status, 404, 'High Rock past the Bay\'s lane: none');
+    clock = ketchVoyageOf(ketchVoyageNumber(1, 2)).at + 60_000;
+    assert.equal((await worker.fetch(upgrade(ketchRoomKey(ketchVoyageNumber(1, 2), owner)), env)).status, 200, 'Sentinel\'s ship');
+    assert.equal(minted, 2);
+    clock = V.at + 60_000;
     await quiet(async () => {
       const world = fakeRooms({ now: () => clock });
       const hub = world.room(SOCIAL_ROOM);
@@ -231,31 +250,45 @@ test('KETCH-EVERYWHERE THE ACCOUNT: a station\'s voyage is its own share - Skyri
 
 // ─── the Timers and the page's words ───────────────────────────────────────────────────────────
 
-test('KETCH-EVERYWHERE THE TIMERS AND THE WORDS: in a province that keeps a station, its rows beside the Bay\'s, over its own city - none on the Bay, none while the stations do not stand; every line that names her city names the station\'s (the Bay\'s its own words, as they were); a province\'s ship laid in its province (mutants: the province\'s rows unasked; the standing unread; the words\' city)', { timeout: 120_000 }, () => {
+test('KETCH-EVERYWHERE THE TIMERS AND THE WORDS: in a province whose station is not the Bay\'s own, its rows beside the Bay\'s, over its own city - Hammerfell\'s (Sentinel\'s) in Sentinel\'s crown\'s regions on the Bay and in Hammerfell past it, none in High Rock (Daggerfall\'s every screen\'s), the open zone or the sea, none while the stations do not stand; every line that names her city names the station\'s (the Bay\'s its own words, as they were); a province\'s ship laid in its province (mutants: the province\'s rows unasked; the standing unread; the words\' city; the Bay\'s crown unread; the reader unhanded)', { timeout: 120_000 }, () => {
   setTamrielTrace(null); setTamrielFit(null);
-  const sky = CITIES.find((c) => c.name === 'Solitude'), [sx, sy] = pictureToBay(sky.at[0], sky.at[1]).map(Math.floor);
-  assert.equal(ketchStationHere(sx, sy), SKYRIM);
-  assert.deepEqual([ketchStationHere(207, 213), ketchStationHere(NaN, 0)], [null, null], 'the Bay\'s, nothing');
+  const pxOf = (name) => { const c = CITIES.find((q) => q.name === name); return pictureToBay(c.at[0], c.at[1]).map(Math.floor); };
+  const [sx, sy] = pxOf('Solitude'), [hx, hy] = pxOf('Hegathe'), [rx, ry] = pxOf('Shornhelm'), [cx, cy] = pxOf('Imperial City');
+  assert.deepEqual([theatreAt(sx, sy), theatreAt(hx, hy), theatreAt(rx, ry), theatreAt(cx, cy)], [SKYRIM, 2, 1, 9]);
+  assert.deepEqual([ketchStationHere(sx, sy), ketchStationHere(hx, hy), ketchStationHere(rx, ry), ketchStationHere(cx, cy)], [SKYRIM, 2, null, null], 'past the Bay: its province\'s - High Rock\'s Daggerfall\'s, the open zone none');
+  // on the Bay, the crown the region is under: Sentinel's (20 its own, 0 the Alik'r, 61 an Isle of its crown) Hammerfell's
+  // station; Daggerfall's (17) and Wayrest's (23) High Rock's - Daggerfall's, every screen's own; the Marches (19, 21, 22),
+  // the Free Lands (9, 16) and the sea (-1) no crown's
+  const regionIs = (r) => () => r;
+  assert.deepEqual([20, 0, 61, 17, 23, 19, 21, 22, 9, 16, -1].map((r) => ketchStationHere(397, 343, regionIs(r))), [2, 2, 2, null, null, null, null, null, null, null, null]);
+  assert.deepEqual([ketchStationHere(397, 343), ketchStationHere(207, 213), ketchStationHere(NaN, 0)], [null, null, null], 'no reader: none on the Bay');
   const now = ketchVoyageOf(ketchVoyageNumber(3, SKYRIM)).at + H;
   // her voyage on the round's own clock - asked first: the Timers' gate rows walk the gate's days to it
-  assert.equal(now - H - ketchVoyageOf(3).at, SKYRIM * KT_THEATRE_STAGGER_MS, 'Skyrim\'s voyage 3 a third of a round after the Bay\'s');
+  assert.equal(now - H - ketchVoyageOf(3).at, 2 * KT_THEATRE_STAGGER_MS, 'Skyrim\'s voyage 3 two stations after the Bay\'s');
   const rows = (pixel) => eventTimerRows({ now, pixel }).filter((r) => r.kind === 'ketch').map((r) => [r.id, r.where]);
-  setKetchStationsStanding(false);
+  setKetchStationsStanding(false, regionIs(20));
   assert.deepEqual(rows({ x: sx, y: sy }), rows({ x: 207, y: 213 }), 'not standing: the Bay\'s alone');
-  setKetchStationsStanding(true);
+  assert.deepEqual(rows({ x: 397, y: 343 }), rows({ x: 207, y: 213 }), 'not standing: the Bay\'s alone at Sentinel too');
+  setKetchStationsStanding(true, regionIs(17));
   try {
     const bayRows = rows({ x: 207, y: 213 });
-    assert.ok(bayRows.every(([, w]) => w === 'Over Daggerfall'));
+    assert.ok(bayRows.length > 0 && bayRows.every(([, w]) => w === 'Over Daggerfall'));
     assert.deepEqual(rows({ x: sx, y: sy }), [...bayRows, [`ketch:${ketchVoyageNumber(3, SKYRIM)}`, 'Over Solitude']]);
-  } finally { setKetchStationsStanding(false); }
+    assert.deepEqual(rows({ x: 397, y: 343 }), bayRows, 'Daggerfall\'s crown: the Bay\'s alone');
+    setKetchStationsStanding(true, regionIs(20));
+    assert.equal(ketchVoyageAt(now, 2).n, ketchVoyageNumber(3, 2), 'Sentinel\'s voyage 3, a station before Skyrim\'s');
+    assert.deepEqual(rows({ x: 397, y: 343 }), [...bayRows, [`ketch:${ketchVoyageNumber(3, 2)}`, 'Over Sentinel']], 'Sentinel\'s crown: Sentinel\'s beside');
+    assert.deepEqual(rows({ x: hx, y: hy }), [...bayRows, [`ketch:${ketchVoyageNumber(3, 2)}`, 'Over Sentinel']], 'Hammerfell past the Bay: Sentinel\'s');
+    assert.deepEqual(rows({ x: rx, y: ry }), bayRows, 'High Rock past the Bay: Daggerfall\'s alone');
+  } finally { setKetchStationsStanding(false, null); }
   // the words: the Bay's as they always were, a station's of its city
   assert.deepEqual([KT_STATION_WORDS.sighted(0), KT_STATION_WORDS.arrived(0), KT_STATION_WORDS.lowered(0), KT_STATION_WORDS.away(0), KT_CLIENT_TEXT.awayAt(0)], [KT_WORDS.sighted, KT_WORDS.arrived, KT_WORDS.lowered, KT_REFUSE_WORDS.away, KT_CLIENT_TEXT.away]);
-  assert.deepEqual([KT_STATION_WORDS.sighted(SKYRIM), KT_STATION_WORDS.arrived(4), KT_STATION_WORDS.lowered(5), KT_STATION_WORDS.away(1), KT_CLIENT_TEXT.awayAt(2)], [
+  assert.deepEqual([KT_STATION_WORDS.sighted(SKYRIM), KT_STATION_WORDS.arrived(4), KT_STATION_WORDS.lowered(5), KT_STATION_WORDS.away(2), KT_CLIENT_TEXT.awayAt(7)], [
     'The Sky-Ketch has been sighted east of Solitude.',
     'The Sky-Ketch has arrived over Mournhold. Its anchor-lift is down in the fields east of the city.',
     'The anchor-lift sets you down in the fields outside Alinor.',
-    'The Ketch is not over Shornhelm right now. It comes every ten hours.',
-    'The Ketch has gone. You are back in the fields outside Hegathe.',
+    'The Ketch is not over Sentinel right now. It comes every ten hours.',
+    'The Ketch has gone. You are back in the fields outside Torval.',
   ]);
   const docked = ketchVoyageOf(ketchVoyageNumber(3, 8)).at + 60_000;
   assert.match(ketchWhenLine(docked, 8), /^over Helstrom, /);
@@ -271,7 +304,7 @@ test('KETCH-EVERYWHERE THE TIMERS AND THE WORDS: in a province that keeps a stat
 
 // ─── the freeware: the stations' cities, and the page ─────────────────────────────────────────
 
-test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CITY: on the freeware\'s trace every province\'s city stands in its own province, its anchor-lift\'s pixel (KT_STATION off its middle) its province\'s own dry land with no place on it; and the page frames a province\'s ship where she can be seen, says her words in her province, rings her on the map and boards her own voyage (mutants: the station\'s pixel; the reach; the page\'s province unasked)', { skip: HAVE ? false : 'ARENA2_PATH not set', timeout: 300_000 }, async () => {
+test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CROWN\'S SEAT: on the freeware the Bay\'s two crown stations are Daggerfall\'s and Sentinel\'s own MAPS.BSA rows, and every province\'s seat past the Bay stands in its own province on the trace; each anchor-lift\'s pixel (KT_STATION off the city\'s middle) the pixel east of it, its province\'s own dry land with no place on it; and the page frames a station\'s ship where she can be seen - Skyrim\'s at Solitude, Hammerfell\'s at Sentinel - says her words in her province, rings her on the map and boards her own voyage (mutants: the station\'s pixel; the reach; the page\'s province unasked; Sentinel\'s row)', { skip: HAVE ? false : 'ARENA2_PATH not set', timeout: 300_000 }, async () => {
   const bytes = (f) => new Uint8Array(readFileSync(join(ARENA2, f)));
   const { DFPalette } = await import('../../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../../src/ui/tamrielTrace.js');
@@ -283,6 +316,9 @@ test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CITY: on the freeware\'s t
   const { KT_STATION } = await import('../../../src/world/ketch/ketchModel.js');
   const { KT_LIFT_AT } = await import('../../../src/scenes/ketch/ketchSky.js');
   const { createKetchClient } = await import('../../../src/scenes/ketch/ketchClient.js');
+  const { MapsFile, longitudeLatitudeToMapPixel } = await import('../../../src/formats/mapsFile.js');
+  const { spawnedLocationCentreLocal } = await import('../../../src/world/spawnedDungeons.js');
+  const { kingdomOf } = await import('../../../src/net/kingdomLaw.js');
   const pal = new DFPalette(); pal.load(bytes('ART_PAL.COL'), 'ART_PAL.COL');
   setTamrielTrace(await preloadTamrielTrace({ fetchBytes: async (f) => bytes(f), palette: pal }));
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
@@ -290,9 +326,33 @@ test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CITY: on the freeware\'s t
   try {
     const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
     const ground = groundWoods(woods);
+    const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
     const ap = arenaPixels();
     const lifts = [];
-    for (const th of KT_THEATRES.filter((x) => x)) {
+    // THE BAY'S CROWN STATIONS: each its city's own row (Daggerfall's the arena city's), its pixel pinned, its lift the pixel
+    // east on the Bay's dry land, no place on it, under its own crown
+    assert.deepEqual(Object.keys(KT_BAY_STATION_ROWS).map(Number), [0, 2]);
+    assert.deepEqual([KT_BAY_STATION_ROWS[0].region, KT_BAY_STATION_ROWS[0].location], [ARENA_REGION, ARENA_LOCATION]);
+    const bayPlaces = new Set();
+    for (let r = 0; r < maps.regionCount; r++) {
+      if (!maps.getRegion(r)) continue;
+      for (let l = 0; l < maps.baseLocationCount(r); l++) { const q = maps.getLocation(r, l), p = longitudeLatitudeToMapPixel(q.mapTableData.longitude, q.mapTableData.latitude); bayPlaces.add(`${p.x},${p.y}`); }
+    }
+    for (const th of [0, 2]) {
+      const row = KT_BAY_STATION_ROWS[th], loc = maps.getLocation(row.region, row.location), city = KT_STATION_CITIES[th];
+      assert.equal(loc.name, city, `lane ${th}'s row is ${city}'s`);
+      const p = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
+      assert.deepEqual({ x: p.x, y: p.y }, { ...row.px }, `${city}'s pixel pinned`);
+      assert.deepEqual(ketchStationPixel(th), row.px);
+      assert.equal(kingdomOf(row.region), KT_STATION_CROWNS[th], `${city} its crown's seat`);
+      const [mx, mz] = spawnedLocationCentreLocal(loc);
+      const lx = p.x + Math.floor((mx + KT_LIFT_AT.x) / TERRAIN_SIZE), ly = p.y - Math.floor((mz + KT_LIFT_AT.z) / TERRAIN_SIZE);
+      assert.equal(gateSeaPixel(maps.getClimateIndex(lx, ly), woods.getHeightMapValue(lx, ly)), false, `${city}'s lift on dry land`);
+      assert.equal(bayPlaces.has(`${lx},${ly}`), false, `${city}'s lift on no place`);
+      assert.equal(kingdomOf(maps.getPoliticIndex(lx, ly) - 128), KT_STATION_CROWNS[th], `${city}'s lift under its crown`);
+      lifts.push([city, lx - p.x, ly - p.y]);
+    }
+    for (const th of KT_THEATRES.filter((x) => !(x in KT_BAY_STATION_ROWS))) {
       const p = ketchStationPixel(th);
       const stood = ap.stood.find((q) => q.name === KT_STATION_CITIES[th] && q.province === THEATRE_KEYS[th]);
       assert.deepEqual(p, { x: stood.bx, y: stood.by }, `${KT_STATION_CITIES[th]} stands`);
@@ -304,11 +364,12 @@ test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CITY: on the freeware\'s t
       assert.equal(ap.byPixel.get(`${lx},${ly}`) ?? capitalOnPixel(lx, ly) ?? null, null, `${KT_STATION_CITIES[th]}'s lift on no place`);
       lifts.push([KT_STATION_CITIES[th], lx - p.x, ly - p.y]);
     }
+    assert.equal(lifts.length, KT_THEATRES.length);
     assert.ok(lifts.every(([, dx, dy]) => dx === 1 && dy === 0), 'the lift on the pixel east of the city, as Daggerfall\'s');
     assert.ok(KT_STATION.x > 0);
     // THE PAGE in Skyrim: her sky framed near Solitude, her words, her ring, her own voyage boarded
     const sol = ketchStationPixel(SKYRIM), nSky = ketchVoyageNumber(4, SKYRIM), V = ketchVoyageOf(nSky);
-    assert.equal(V.at - ketchVoyageOf(4).at, SKYRIM * KT_THEATRE_STAGGER_MS, 'her voyage on the round\'s own clock');
+    assert.equal(V.at - ketchVoyageOf(4).at, 2 * KT_THEATRE_STAGGER_MS, 'her voyage on the round\'s own clock');
     const st = { clock: V.at + KT_SKY.lower + 5000, here: { x: sol.x, y: sol.y }, entered: [], said: [], mids: [] };
     const online = { status: 'open', ktOk: true, ktTheatresOk: true, terminal: false, peers: new Map(), sendKetch: () => true };
     const modes = { mode: 'exterior', ktShip: () => null, enterKetch: async (o) => { st.entered.push(o.n); return false; }, ktLeave: () => false, dungeonCtx: null };
@@ -317,7 +378,7 @@ test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CITY: on the freeware\'s t
       online: () => online, modes: () => modes, social: () => null, account: { me: () => 'mem0', claim: async () => ({ ok: true }) },
       entity: { health: 50, maxHealth: 100, level: 10, items: [] }, player: { feetAt: () => [0, 0, 0] }, cam: { pos: [0, 0, 0], yaw: 0 }, now: () => st.clock,
       renderer: { createMesh: (m) => ({ m }), drawMesh: () => {}, destroyMesh() {} }, collider: () => col,
-      maps: { getLocation: () => ({ mapTableData: { longitude: 1000, latitude: 1000 }, exterior: { exteriorData: { width: 8, height: 8, blockNames: ['A'] } } }) },
+      maps,
       state: { current: st.here, pixelTranslation: (x, y, o) => { o[0] = (x - st.here.x) * TERRAIN_SIZE; o[1] = 0; o[2] = -(y - st.here.y) * TERRAIN_SIZE; return o; } },
       heightAt: () => 50, feetOutside: () => null, say: (t) => st.said.push(t), mid: (t) => st.mids.push(t), store: { get: () => null, set: () => {} },
     });
@@ -337,5 +398,25 @@ test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CITY: on the freeware\'s t
     online.ktTheatresOk = false; st.here.x = sol.x; st.here.y = sol.y;
     await quiet(() => kc.frame());
     assert.deepEqual(kc.mapMarks().filter((m) => m.day === nSky), [], 'no ring on an older relay');
+    // THE PAGE AT SENTINEL: Hammerfell's station on the Bay - her sky framed at Sentinel, her words, her ring about Sentinel,
+    // her own voyage boarded, the lift's default the station of Sentinel's crown (the Bay's politic map read)
+    online.ktTheatresOk = true;
+    const sen = KT_BAY_STATION_ROWS[2].px, nSen = ketchVoyageNumber(4, 2), V2 = ketchVoyageOf(nSen);
+    assert.equal(V2.at - ketchVoyageOf(4).at, KT_THEATRE_STAGGER_MS, 'Sentinel\'s a station after Daggerfall\'s');
+    st.clock = V2.at + KT_SKY.lower + 5000; st.here.x = sen.x; st.here.y = sen.y; st.said.length = 0; st.entered.length = 0;
+    await quiet(() => { kc.frame(); kc.frame(); });
+    assert.ok(st.said.includes('The Sky-Ketch has arrived over Sentinel. Its anchor-lift is down in the fields east of the city.'), 'her word said at Sentinel');
+    assert.ok(col.buckets.has(ketchSkyBucket(2)), 'Sentinel\'s ship stands to the collider');
+    assert.deepEqual(kc.mapMarks().filter((m) => m.day === nSen).map((m) => [m.cx, m.cy]), [[sen.x + 0.5, sen.y + 0.5]], 'her ring about Sentinel');
+    assert.ok(ketchStationNear(2, sen.x + KT_STATION_REACH_PX, sen.y) && !ketchStationNear(2, sen.x + KT_STATION_REACH_PX + 1, sen.y), 'framed within the reach');
+    await quiet(() => kc.board());
+    assert.deepEqual(st.entered, [nSen], 'the lift at Sentinel boards Sentinel\'s own voyage');
+    // at Daggerfall the default is the Bay's own; Sentinel's sky taken back
+    st.here.x = 207; st.here.y = 213; st.entered.length = 0;
+    await quiet(() => { kc.frame(); kc.frame(); });
+    assert.equal(col.buckets.has(ketchSkyBucket(2)), false, 'Sentinel\'s collider taken back at Daggerfall');
+    st.clock = ketchVoyageOf(4).at + 60_000;
+    await quiet(() => kc.board());
+    assert.deepEqual(st.entered, [4], 'Daggerfall\'s lift boards the Bay\'s voyage');
   } finally { setArenaStanding(false); setTamrielTrace(null); setTamrielFit(null); dropGroundCache(); }
 });
