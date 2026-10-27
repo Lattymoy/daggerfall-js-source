@@ -10424,6 +10424,36 @@
   "tr": "4a3bca46b548",
   "by": "claude-in-session"
  },
+ "faction.province.court": {
+  "en": "98410ffe452a",
+  "tr": "6d782cbce4cf",
+  "by": "claude-in-session"
+ },
+ "faction.province.people": {
+  "en": "1fe50d111e13",
+  "tr": "cb1dc9a2973b",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.emperor": {
+  "en": "c3e50305720d",
+  "tr": "3d93b1bd2277",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.empress": {
+  "en": "f69a52bb1f2a",
+  "tr": "69facf1a42e4",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.highKing": {
+  "en": "f87c0c714a80",
+  "tr": "5484e854916c",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.highQueen": {
+  "en": "7b51fe50f158",
+  "tr": "323dcab4357d",
+  "by": "claude-in-session"
+ },
  "features.banthaJungle.note": {
   "en": "717babf84b80",
   "tr": "b925c2059915",

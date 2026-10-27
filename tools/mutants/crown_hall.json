@@ -38,8 +38,8 @@
   {
     "name": "CROWN-HALL-ruler-here",
     "file": "src/systems/crownHall.js",
-    "old": "(people ?? []).find((p) => p?.factionID === rulerId)",
-    "new": "(people ?? []).find((p) => p?.factionID != null)",
+    "old": "list.find((p) => p?.factionID === rulerId)",
+    "new": "list.find((p) => p?.factionID != null)",
     "tests": [
       "test/systems/crownhall.test.js"
     ]

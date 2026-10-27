@@ -384,6 +384,7 @@ const HARDCODED = {
   'src/systems/equip.js': 3,
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
+  'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS (bible/03-World/World-Wide.md): Cyrodiil's ruler, Uriel Septim VII - a proper name, Daggerfall's own Emperor (TEXT.RSC), a faction's name and its key
   'src/systems/features.js': 127,
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,

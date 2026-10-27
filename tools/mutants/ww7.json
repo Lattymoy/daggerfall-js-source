@@ -147,7 +147,7 @@
  {
   "name": "WW7-4-the-royals-kept",
   "file": "src/world/capitalCastles.js",
-  "old": "  return !isNpcFlat(f.textureArchive) || CASTLE_FOLK.has(f.factionOrMobileId);",
+  "old": "  return !isNpcFlat(f.textureArchive) || CASTLE_FOLK.has(f.factionOrMobileId) || !!castleSeatOf(f.factionOrMobileId);",
   "new": "  return true;",
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"
