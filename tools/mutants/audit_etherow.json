@@ -142,7 +142,7 @@
   },
   {
     "name": "AEOW-C2-2-key-finds-alone",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/mapPlacesHost.js",
     "old": "  const tvKnownGen = () => `${discoveryGeneration()}:${captainLedger.chartedCount()}`;",
     "new": "  const tvKnownGen = () => discoveryGeneration();",
     "tests": [

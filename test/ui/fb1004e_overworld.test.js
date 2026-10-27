@@ -18,6 +18,7 @@ import { wheelPath, WHEEL_SPOKES } from '../../src/ui/carriageWheel.js';
 import { buildInkMarks, paintCarriageWheel, carriageWheelAt, markReach, placeNames, CARRIAGE_WHEEL_R } from '../../src/ui/ink/inkMap.js';
 import { readTravellerMarks, travellerMarksKey } from '../../src/ui/partyMapMarks.js';
 import { seatTipOf, seatInfoLine } from '../../src/net/townSeatLaw.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the host whole
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -147,7 +148,7 @@ test('OW-KIN / OW-WHO on the travel map: the rows keep their kin and Renown, a k
   // PIN MOVED (TOWN-ECON TE1, test/systems/townecon.test.js): every town's card, a seat's lines after the town's - and still whole
   assert.match(H, /const card = this\.deps\.townTipAt\?\.\(m\.summary\) \?\? \(m\.seat \? seatTipOf\(m\.seat\) : null\);\n\s*const tip = card \? readTip\(card, \{ textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX \}\) : null;/, 'a seat\'s lines whole (SEAT_TIP_TEXT_MAX)');
   assert.match(H, /\.\.\.\(seat \? \[seatInfoLine\(seat, seat\.holder\?\.guild \?\? null\)\] : \[\]\)/);
-  const W = rd('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');   // HOST-SPLIT 2: the host WHOLE - BAY-LEFT-MAPS moved carriageTown to scenes/mapPlacesHost.js
   assert.match(W, /ship: isShipMark\(t\.p\), kin: travellerKin\(\{ friend: !!social\?\.isFriendPeer\(t\.id\), gt: t\.gt \}, myGuildTag\(\)\), lv: t\.lv \?\? null \}\)\),/);
   assert.match(W, /carriageAt: \(summary\) => carriageTown\(summary\?\.mapID \?\? summary\?\.mapId\),/);
   assert.match(W, /on = hasCarriageGate\(locationIndex\.get\(`\$\{id % 1000\},\$\{Math\.floor\(id \/ 1000\)\}`\)\);/);

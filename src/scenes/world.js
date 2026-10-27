@@ -871,7 +871,6 @@ import { dungeonTier, tierPhrase } from '../systems/dungeon/dungeonTier.js';   /
 import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...with its size, never over a place the port made
 import { deriveTownSeats, seatAtMapId } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
-import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
 import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
 import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
@@ -991,7 +990,7 @@ import { createWildFight } from '../net/wild/wildFight.js';
 import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
-import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId, isHallMapId } from '../net/wire.js';
+import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot/loot.js';
 import { stacksWith } from '../systems/inventory.js';
 import { setHudZone } from '../ui/enhanced/enhancedHud.js';
@@ -1062,7 +1061,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, discoveryGeneration, pruneDiscoveryLayouts } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, pruneDiscoveryLayouts } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
 import { scryRows } from '../systems/loot/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
@@ -1223,6 +1222,7 @@ import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
+import { createMapPlaces } from './mapPlacesHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -30027,50 +30027,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // but the seabed lies under the sea, and land over it cuts the veil by its own depth
     return Math.max(g, tvSeaY() + CURTAIN_FOOT_MARGIN_M);
   };
-  /** OW-HUBS (FIELD BUGS 2026-10-04e): a town with a carriage at its gate, by its map id - while Immersive Travel is
-   *  loaded (online it is always). Kept per id until the location index moves (a spawn stood or taken back). */
-  const _carriageOf = new Map();
-  let _carriageGen = -1;
-  const carriageTown = (mapId) => {
-    if (!immersiveTravelLoaded() || !Number.isFinite(mapId) || isHallMapId(mapId)) return false;   // AUDIT WW F1: a zone hall's id is no Bay town's
-    if (_carriageGen !== _locIndexGen) { _carriageOf.clear(); _carriageGen = _locIndexGen; }
-    const id = mapId & 0xfffff;
-    let on = _carriageOf.get(id);
-    if (on === undefined) { on = hasCarriageGate(locationIndex.get(`${id % 1000},${Math.floor(id / 1000)}`)); _carriageOf.set(id, on); }
-    return on;
-  };
-  // ETHER-OW (2026-10-13, the owner: "Also allow the player to zoom out into the overworld like in the Iliac Bay for easy
-  // travel"): THE ISLES' PLACES ON THE OVERWORLD. Past the Veil no place is a row of the Bay's dictionary - an isle's town
-  // or ruin is its own (world/etherPlaces.js), the index's once its pixel has built, else its clone, marked and never
-  // stood (etherPlaceClone). KNOWN as the Eltheric knows a place: its isle on the captain's charts (etherHost.js `sight`
-  // within three pixels, a harbourmaster's chart, a corsair's papers - the chart's own isles), or the place found.
-  const tvEtherPlace = (px, py) => { const isle = etherPlaceIsle(px, py); return isle ? (locationIndex.get(`${px},${py}`) ?? etherPlaceClone(isle)) : null; };
-  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether) || hasDiscoveredLocationId(loc.mapTableData.mapId);
-  /** AUDIT ETHER-OW C2-2: WHAT IS KNOWN, as the Overworld's lists key it - DFU's finds and the captain's charts: an isle
-   *  charted by sight, a harbourmaster's chart or a corsair's papers is a plate at once, never a pixel later. */
-  const tvKnownGen = () => `${discoveryGeneration()}:${captainLedger.chartedCount()}`;
-  const tvPlaceSummary = (px, py) => {
-    // ETHER-OW: past the Veil, an isle's place - known, it is its own summary (HALL-JOURNEY's way), its region the isles'
-    if (etherSea && inEther(px, py)) {
-      const loc = tvEtherPlace(px, py);
-      return loc && tvEtherKnown(loc) ? { pixel: { x: px, y: py }, name: loc.name, mapId: loc.mapTableData.mapId, regionIndex: loc.regionIndex, locationIndex: loc.locationIndex, loc } : null;
-    }
-    // HALL-JOURNEY (2026-10-08, the owner: "when i want to travel there with begin journey nothing happens"): a zone hall
-    // is no row of the map's dictionary (it is spawned, by the day) - it is its own summary, always known, so the
-    // Overworld walks to its door as to any place's
-    const hall = wildHallAt(wildActiveNow(), px, py) ? wildHallStand(px, py) : null;
-    if (hall) return { pixel: { x: px, y: py }, name: hall.name, mapId: spawnedHallMapId(px, py), regionIndex: hall.regionIndex, locationIndex: -1, loc: hall };
-    const loc = locationIndex.get(`${px},${py}`);
-    // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row - the place the world stands there is its own summary,
-    // known once discovered (entering it discovers it), so the Overworld walks to its door as to a Bay place's
-    if (!onTheBay(px, py)) {
-      const id = (loc?.mapTableData?.mapId ?? 0) >>> 0;
-      return loc?.name && id && hasDiscoveredLocationId(id) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id, regionIndex: loc.regionIndex, locationIndex: loc.locationIndex, loc } : null;
-    }
-    const row = loc?.name ? travelLocationSummaryAt(mapDict, px, py) : null;
-    if (!row || !travelCheckDiscovered(row)) return null;   // DFU's own law: an undiscovered place has no name to go to
-    return { pixel: { x: px, y: py }, name: loc.name, mapId: row.mapID, regionIndex: row.regionIndex, locationIndex: row.mapIndex, loc };
-  };
+  const { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary } = createMapPlaces({   // HOST-SPLIT: src/scenes/mapPlacesHost.js
+    captainLedger, etherPlaceClone, etherSea, locationIndex, mapDict, wildActiveNow, wildHallStand,
+    get _locIndexGen() { return _locIndexGen; },
+  });
   const tvPlaceRect = (summary) => {
     const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);
     return { minX: r.minX - TV_PLACE_GROW, maxX: r.maxX + TV_PLACE_GROW, minZ: r.minZ - TV_PLACE_GROW, maxZ: r.maxZ + TV_PLACE_GROW, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2 };

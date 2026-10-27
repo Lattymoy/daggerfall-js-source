@@ -761,7 +761,7 @@ wdun*); the hub reads, calls it and writes.
 A hall is no row of the map files (it is spawned, by the day), so every door that reads a place by its row missed it:
 
 - HALL-JOURNEY (the owner: "when i want to travel there with begin journey nothing happens"): the Overworld's place
-  summary is the hall's own, always known (`tvPlaceSummary`, `world.js:"const tvPlaceSummary"`), so it walks to its
+  summary is the hall's own, always known (`tvPlaceSummary`, `mapPlacesHost.js:"const tvPlaceSummary"`), so it walks to its
   door as to any place's.
 - HALL-ARRIVE (the owner: "when i arrive at the Dungeon it shows this thats wrong" - the journey ran on at the door):
   the journey's arrival rect is read off the hall's spawned location (`world.js:"i arrive at the Dungeon"`).

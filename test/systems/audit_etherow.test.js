@@ -9,6 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';
 
 import { standService, T0 } from '../accountDb.mjs';
 import { watchPixelOk, watchReceiptValid } from '../../src/net/watchReceipt.js';
@@ -24,7 +25,7 @@ import { shipTransition } from '../../src/systems/ship.js';
 import { SHIP_TYPES } from '../../src/systems/banking.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const W = src('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');   // HOST-SPLIT 2: the host WHOLE - BAY-LEFT-MAPS moved the places by summary to scenes/mapPlacesHost.js
 const lift = (head, close = '\n  }\n') => {
   const at = W.indexOf(head);
   assert.ok(at >= 0, `world.js holds ${head.trim()}`);

@@ -63,8 +63,8 @@ test('AUDIT WW F1: A ZONE HALL\'S MAP ID IS NO BAY PIXEL\'S - known by its lane 
   const gps = (mapId) => ({ locationType: LOCATION_TYPES.DungeonKeep, mapId, regionIndex: 70 });
   assert.equal(isPlayerInTownForShips(gps(LARGE_DOCK_MAP_IDS[0])), true);
   assert.equal(isPlayerInTownForShips(gps(hallOver(large))), false, 'a hall is no large dock');
-  // the carriage towns (scenes/world.js carriageTown - the Overworld's wheel)
-  assert.match(src('src/scenes/world.js'), /if \(!immersiveTravelLoaded\(\) \|\| !Number\.isFinite\(mapId\) \|\| isHallMapId\(mapId\)\) return false;/);
+  // the carriage towns (scenes/mapPlacesHost.js carriageTown - the Overworld's wheel; BAY-LEFT-MAPS moved it out of the host)
+  assert.match(hostText('src/scenes/world.js'), /if \(!immersiveTravelLoaded\(\) \|\| !Number\.isFinite\(mapId\) \|\| isHallMapId\(mapId\)\) return false;/);
 });
 
 test('AUDIT WW F4: THE GIANTS\' LOW GROUND IS THE CONTINENT\'S - the halls\' module answers the height the halls\' ground reads, a Bay-only client\'s the same as one that walks the continent; the host hands it to the giants (mutants: the host\'s own woods)', () => {
