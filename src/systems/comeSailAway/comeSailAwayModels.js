@@ -111,9 +111,7 @@ export const soundUrl = (/** @type {string} */ name) => new URL(`../../../vendor
  * come - a whole fetch later). SHIPS-2: and the new carrack's and the new
  * large boat's at `shipUrls` (each null for none), fetched beside them too,
  * each one's answer its own - missing or broken, its hull is the mod's
- * own, said once, and every other ship stands as it would. FIRST-VISIT: a
- * ship built on an earlier launch is read back from `store` (the player's
- * derived store; null for none) instead of built (shipBuildsKept.js).
+ * own, said once, and every other ship stands as it would. FIRST-VISIT: `store` keeps the build (shipBuildsKept.js).
  * @returns {Promise<ReturnType<typeof comeSailAwayModels> | null>}
  */
 export async function loadComeSailAwayModels(fetchFn = globalThis.fetch, urls = CSA_MODEL_URLS, log = console, galleonUrl = GALLEON_MODEL_URL,

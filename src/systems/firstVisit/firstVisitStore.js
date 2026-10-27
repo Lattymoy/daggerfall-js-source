@@ -1,23 +1,11 @@
-// FIRST-VISIT (2026-10-25, bible/07-Rendering/Performance-Priority.md FIRST-VISIT): ANSWERS WORKED OUT ONCE AND KEPT.
-//
-// A warm launch in Daggerfall city still stalled for 0.2-1.5 s at a time on work whose inputs never change between
-// launches: the boot's location walks reading hundreds of world-data blocks, the ship models baked from their prefabs,
-// the Bay fitted to the Tamriel picture. Each such answer is kept in the player's own IndexedDB (dataSource.js
-// DERIVED_STORE, swept with an ARENA2 re-pick) under a key that names everything it was worked out from: its
-// computation's version and a stamp over each input. A different input is a different key, so a stale answer is never
-// read - it is worked out again and kept under its own key.
-//
-// REFRESH ON UPDATE (the owner, 2026-10-26: "make sure any of our changes relating to caching do not prevent anything
-// from refreshing properly ... scoped to only the things that have changed"). A cache's version is no hand-bumped number
-// and not the build's tag: it is the pin of its computation's own source (tools/computationPin.mjs), GENERATED - written
-// into src/firstVisitPins.js at install and at build (scripts/firstVisitPins.mjs) and served live by the dev server
-// (scripts/firstVisitPins.mjs firstVisitPinsPlugin) - and read through firstVisitPin. An update that changes the computation changes
-// the key, and one that does not keeps every player's kept answer. Each key leads with its cache's scope (`fv-<cache>:` and, where a cache
-// keeps several answers, the one it is), and writing an answer sweeps every other key of that scope (`staleKey`), so the
-// store holds one answer a scope, never one an update.
-//
-// The store is injectable (roadsCache.js's law): a Map-backed fake in node, where there is no IndexedDB. A store that
-// cannot open or answer is a miss, never an error.
+// FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT): ANSWERS WORKED OUT ONCE AND KEPT.
+// A warm launch still stalled 0.2-1.5 s on work whose inputs never change between launches. Each such answer is kept in
+// the player's IndexedDB (dataSource.js DERIVED_STORE, swept with an ARENA2 re-pick) under a key that names its inputs:
+// the computation's pin (tools/computationPin.mjs, generated into src/firstVisitPins.js by scripts/firstVisitPins.mjs,
+// read through firstVisitPin) and a stamp over each input. A changed input or computation is a different key, so a stale
+// answer is never read. Each key leads with its scope (`fv-<cache>:`); writing an answer sweeps the scope's other keys
+// (`staleKey`). The store is injectable (roadsCache.js's law): a Map-backed fake in node. A store that cannot open or
+// answer is a miss, never an error.
 
 import { fnv1a } from '../../formats/fnv1a.js';
 // GENERATED (scripts/firstVisitPins.mjs) and gitignored, so read with an await: a checkout that has not generated it (a CI

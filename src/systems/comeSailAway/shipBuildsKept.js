@@ -1,14 +1,10 @@
-// FIRST-VISIT (2026-10-25, bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE PORT SHIPS' BUILDS, KEPT.
-//
-// comeSailAwayModels.js builds each port ship's prefab from its bake (galleonPrefab, carrackPrefab, largeBoatPrefab:
-// 20-100 ms each in node, 350 ms for the three inside one frame of a warm launch) once a process (AUDIT GN2-PF4's
-// cache). The build reads the ship's bake, the mod prefabs it copies from and the place its components take in the
-// table, all shipped with the build; so it is kept in the player's derived store as it was built (a structured clone:
-// its typed arrays come back typed - 1.3-2.3 MB a ship, a few milliseconds to read) under:
-//   - the ship (the key's scope: `fv-ship:<ship>:` - each ship keeps one build, a new one sweeping the last);
-//   - the pin of the builders' own code (firstVisitPin('shipBuilds'), generated - tools/computationPin.mjs: the three
-//     prefabs and all they reach);
-//   - its bake's sha256 and a stamp over the bake's text and the mod prefabs it reads, and its base.
+// FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE PORT SHIPS' BUILDS, KEPT.
+// comeSailAwayModels.js builds each port ship's prefab from its bake (20-100 ms each in node, 350 ms for the three in one
+// frame of a warm launch). The build reads only files shipped with the build, so it is kept in the derived store as built
+// (a structured clone, typed arrays intact, 1.3-2.3 MB a ship). The key holds:
+//   - the scope `fv-ship:<ship>:` (one build a ship, a new one sweeps the last);
+//   - firstVisitPin('shipBuilds'), the pin of the builders' code (tools/computationPin.mjs);
+//   - the bake's sha256, and a stamp over the bake's text, the mod prefabs it reads and its base.
 
 import { textStamp, firstVisitPin } from '../firstVisit/firstVisitStore.js';
 

@@ -1,14 +1,10 @@
-// FIRST-VISIT (2026-10-25, bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE LAND'S PIECES, KEPT.
-//
-// The living world's first way (livingWorld/ways.js) folds the land into pieces (travelRoute.js routeGround `pieces`:
-// which pixels a walk can join, over half a million of them) - 160 ms inside the first frame of a warm launch, every
-// launch, for the same answer. The pieces are a function of the ground (the climate and heightmap bytes and the water
-// line) and the drawn network (the road and track bytes), so they are kept in the player's derived store under:
-//   - the pin of the fold's own code (firstVisitPin('landPieces'), generated - tools/computationPin.mjs: routeGround and
-//     the step law);
-//   - an FNV-1a stamp over every byte the fold reads (2 MB, a few milliseconds - next to the fold, nothing).
-// A different ground or network is a different key: worked out again and kept under its own, sweeping the last
-// (`fv-pieces:` - one network's pieces kept).
+// FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE LAND'S PIECES, KEPT.
+// The living world's first way (livingWorld/ways.js) folds the land into pieces (travelRoute.js routeGround `pieces`),
+// 160 ms in the first frame of every warm launch. The pieces depend on the ground and the drawn network only, so they are
+// kept in the derived store. The key holds:
+//   - firstVisitPin('landPieces'), the pin of the fold's code (tools/computationPin.mjs);
+//   - an FNV-1a stamp over every byte the fold reads (2 MB, a few ms).
+// A different ground or network is a different key and sweeps the last (`fv-pieces:`).
 
 import { fnv1a, derivedValueStore, keepAnswer, firstVisitPin } from '../firstVisit/firstVisitStore.js';
 
@@ -29,8 +25,7 @@ export function landPiecesKey(ground, roads, tracks) {
 
 /**
  * The ground's pieces over this network: the kept ones adopted, or folded now and kept. Answers whether they were kept.
- * Null (nothing to wait for) where there is no store - node, or a browser without IndexedDB - and for a ground that
- * cannot say what it folds.
+ * Null (nothing to wait for) with no store (node, no IndexedDB) or a ground that cannot say what it folds.
  * @param {any} ground - travelRoute.js routeGround's
  * @param {{ roads?: any, tracks?: any }} net
  * @param {{ get(k: string): Promise<any>, set(k: string, v: any): Promise<any> } | null} [store]

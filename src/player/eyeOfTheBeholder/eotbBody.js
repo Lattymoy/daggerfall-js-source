@@ -213,9 +213,7 @@ export function bodyState(s = {}) {
  * EOTB-FLIP: the decode is the DROPPED TORCH's door - `decodePng`, then
  * the one row-order converter - and not a canvas of its own. A decode
  * that fails answers a rejection, as the Image's onerror did.
- * FIRST-VISIT: the fetch and the decode are the shipped pack's decode
- * workers' (vanillaEnhancedPack.js decodeServedPng; this thread's where
- * the page has none) - the rig's first sprites were 200 ms of the boot.
+ * FIRST-VISIT: decodeServedPng (vanillaEnhancedPack.js) fetches and decodes.
  */
 export async function decodeSprite(url) {
   if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng, { picture: decodeServedPng }), { owned: true });   // WORN-ARMOUR: composed from its strip

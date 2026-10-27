@@ -1,16 +1,11 @@
-// FIRST-VISIT (2026-10-25, bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE SHIPS' PAINTED PICTURES, KEPT.
-//
-// The galleon's, the carrack's and the large boat's pictures are painted by the build's own code (galleonArt.js
-// shipStandIns: planks, liveries, glass) and laid in Daggerfall's colours from the player's ART_PAL.COL (dfLook.js) the
-// first time the boats' pool asks for their archive - 130 ms of one frame on a warm launch, every launch. A picture is
-// a function of the build and the palette alone, so it is kept in the player's derived store under:
-//   - the picture's own name (the key's scope: `fv-standin:<name>:` - a picture keeps one answer, a new one sweeping
-//     the last);
-//   - the pin of the painting's own code (firstVisitPin('standIns'), generated - tools/computationPin.mjs: the three
-//     ships' art and the palette's look);
+// FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE SHIPS' PAINTED PICTURES, KEPT.
+// The galleon, carrack and large boat pictures are painted by galleonArt.js shipStandIns in the colours of the player's
+// ART_PAL.COL (dfLook.js): 130 ms of one frame on every warm launch. A picture depends on the build and the palette only,
+// so it is kept in the derived store. The key holds:
+//   - the scope `fv-standin:<name>:` (one answer a picture, a new one sweeps the last);
+//   - firstVisitPin('standIns'), the pin of the painting's code (tools/computationPin.mjs);
 //   - a stamp over the palette's 256 colours.
-// A RENDER OF GAME DATA IS GAME DATA (bible/01-Overview/Port-Doctrine.md): the palette is the player's, so a picture lives
-// in the player's own store only - never written into the repository, never shipped.
+// A RENDER OF GAME DATA IS GAME DATA (Port-Doctrine.md): the picture stays in the player's store, never in the repository.
 
 import { fnv1a, keptAnswer, derivedValueStore, firstVisitPin } from '../../systems/firstVisit/firstVisitStore.js';
 import { dfLookPaletteRgb } from '../dfLook.js';

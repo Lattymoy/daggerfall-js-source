@@ -1,14 +1,10 @@
-// FIRST-VISIT (2026-10-25, bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE BAY'S FIT, KEPT.
-//
-// Where the Bay stands on the picture of Tamriel (tamrielLand.js fitBayToPicture: 25 scales, 49 x 49 offsets) is 0.25 s
-// of a frame just after the world's first, every launch, for the same answer. The fit reads two things: the picture's
-// trace (TMAP00I0 and TAMRIEL2, ui/tamrielTrace.js) and the Bay's land by the one water law (CLIMATE.PAK and WOODS.WLD,
-// as the boot left them). So it is kept in the player's derived store under:
-//   - the pin of the fit's own code (firstVisitPin('bayFit'), generated - tools/computationPin.mjs: fitBayToPicture and
-//     what it reaches);
-//   - a stamp over the trace's land (its every pixel) and over the Bay's land at every pixel the fit can sample - the
-//     inputs themselves, not the files' names, so a boot repair or another archive is another key.
-// The answer is a handful of numbers; one is kept, a new one sweeping the last (`fv-bayfit:`).
+// FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE BAY'S FIT, KEPT.
+// fitBayToPicture (tamrielLand.js: 25 scales, 49 x 49 offsets) takes 0.25 s just after the world's first frame, every
+// launch. It reads the picture's trace (TMAP00I0, TAMRIEL2) and the Bay's land (CLIMATE.PAK, WOODS.WLD), so the answer is
+// kept in the derived store. The key holds:
+//   - firstVisitPin('bayFit'), the pin of the fit's code (tools/computationPin.mjs);
+//   - a stamp over the trace's land and the Bay's land at every pixel the fit can sample (the inputs, not file names).
+// The answer is a few numbers; one is kept, a new one sweeps the last (`fv-bayfit:`).
 
 import { fitBayToPicture } from './tamrielLand.js';
 import { BAY_W, BAY_H } from './tamrielFrame.js';

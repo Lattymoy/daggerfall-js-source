@@ -322,15 +322,11 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
  * world-data door reads it at, save where a layout pin stands (worldDataReplacement.js pinnedHere): a location with one,
  * or one the door cannot place (no integer indices - its blocks read in the last place's context), reads through as it
  * always did. `as` lays fields over every location read (the isles' templates are read as a clone of them is).
- * FIRST-VISIT: the ground tiles are kept across launches too (groundTilesKept.js), under the walk's `as`.
  * Answers `(dfLocation) => rect`; the tilemap is the walk's own scratch, never read.
  * @param {object} mapsFile @param {object} blocksFile @param {object|null} [as]
  * @returns {(dfLocation: object) => {xMin: number, xMax: number, yMin: number, yMax: number}}
  */
-/** FIRST-VISIT: the keeper of the walks' ground tiles across launches - `(walk, index, read) => groundTiles`, read through
- *  until groundTilesKept.js installs its own (from the mod world-data loader, so the terrain worker, the boot's entry and
- *  the account Worker, which reach this module, never reach the store). */
-let keptGroundTiles = (_walk, _index, read) => read();
+let keptGroundTiles = (_walk, _index, read) => read();   // FIRST-VISIT: `(walk, index, read) => groundTiles`, installed by groundTilesKept.js so no worker reaches the store
 export function setGroundTilesKeeper(fn) { keptGroundTiles = typeof fn === 'function' ? fn : (_walk, _index, read) => read(); }
 export function locationRectReader(mapsFile, blocksFile, as = null) {
   /** @type {Map<number, object|null>} block index -> its ground tiles, as getBlock serves them */
@@ -342,9 +338,7 @@ export function locationRectReader(mapsFile, blocksFile, as = null) {
     getBlock: (index) => {
       let b = ground.get(index);
       if (b === undefined) {
-        // FIRST-VISIT: kept across launches (groundTilesKept.js) by the block's NAME - a block a pack adds past the BSA's
-        // count takes its index in the order the index meets it - and not served at all on a hit
-        const groundTiles = keptGroundTiles(walk, blocksFile.getBlockName?.(index) ?? index, () => blocksFile.getBlock(index)?.rmbBlock?.fldHeader?.groundData?.groundTiles);
+        const groundTiles = keptGroundTiles(walk, blocksFile.getBlockName?.(index) ?? index, () => blocksFile.getBlock(index)?.rmbBlock?.fldHeader?.groundData?.groundTiles);   // FIRST-VISIT: kept by block NAME, not index (a pack's added block takes its index in meeting order)
         b = groundTiles ? { rmbBlock: { fldHeader: { groundData: { groundTiles } } } } : blocksFile.getBlock(index);   // a block with none fails SetLocationTiles as it did
         ground.set(index, b);
       }

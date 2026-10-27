@@ -1,15 +1,10 @@
-// FIRST-VISIT (2026-10-25, bible/07-Rendering/Performance-Priority.md FIRST-VISIT): A PORT TOWN'S SITES, KEPT.
-//
-// Placing a port town's shipyard and lighthouse (portSites.js portSitesOn) tries every spot of the town's ground in four
-// turns - 230 ms inside the start town's pixel build on a warm launch, every launch, for the same answer. The answer is
-// a function of what portSitesOn reads and nothing else: the ground's closed and road cells and the sea field. So it is
-// kept in the player's derived store under a stamp over exactly those - the cells' bytes and the field's value at every
-// cell - and a town whose ground or water changed (a mod's layout, a yard moved) is a different key; the record's key is
-// the pin of the placing's own code (firstVisitPin('portSites'), generated - tools/computationPin.mjs), so a change to it starts the record
-// afresh and sweeps the old one.
-//
-// Every town's sites live in one small record, fetched before the world's first pixel builds (prefetchPortSites, from
-// the mod world-data loader), so the build stays synchronous; a town placed anew is written back a moment later.
+// FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT): A PORT TOWN'S SITES, KEPT.
+// portSitesOn (portSites.js) tries every spot of a town's ground for the shipyard and lighthouse: 230 ms in the start
+// town's pixel build, every warm launch. The answer depends on the ground's closed and road cells and the sea field only,
+// so it is kept under a stamp over those, and a changed town is a different key. The record's key is
+// firstVisitPin('portSites') (tools/computationPin.mjs), so a code change starts the record afresh.
+// All towns' sites are one small record, fetched before the first pixel build (prefetchPortSites, from the mod
+// world-data loader) so the build stays synchronous. A town placed anew is written back a moment later.
 
 import { fnv1a, derivedValueStore, keepAnswer, firstVisitPin } from '../systems/firstVisit/firstVisitStore.js';
 import { portSitesOn } from './portSites.js';

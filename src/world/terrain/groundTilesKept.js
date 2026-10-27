@@ -1,25 +1,11 @@
-// FIRST-VISIT (2026-10-25, bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE BOOT WALKS' GROUND TILES, KEPT.
-//
-// The boot reads SetLocationTiles' rect for every Bay town Deep Waters blends and every Eltheric isle template
-// (terrainTiles.js locationRectReader, BOOT-RECTS). The rect reads one thing of a block - its ground tiles - but
-// the block is served whole through the world-data door, and with a town pack on that is a pack file rebuilt for
-// each of some 400 blocks: 1.1 s of a warm launch's 2.7 s boot stall, every launch, for the same answer.
-//
-// So each block's ground tiles are kept in the player's derived store, one record for the walks, keyed on:
-//   - the pin of what computes a block's tiles (firstVisitPin('groundTiles'), generated - tools/computationPin.mjs: the classic reader, the
-//     world-data door, the packs, patches, the arena's block and the carriages' layer, and the mods' shipped world data);
-//   - BLOCKS.BSA's stamp (firstVisitStore.js bytesStamp);
-//   - what the door serves blocks by (worldDataReplacement.js worldDataBlocksServing: the gate, each block file's mod
-//     and pack version, the port's blocks, the layers on).
-// One record: a new one sweeps the last (`fv-ground:`).
-// Inside the record a walk's blocks are kept under the walk's own name (its `as` fields): a block reads alike at every
-// location a walk reads it at (locationRectReader's own law), not necessarily at every walk's.
-// A pinned town is read through by locationRectReader as before and never reaches this; while any block variant is set
-// nothing is read from the record or added to it.
-//
-// The record is fetched once, before the walks (prefetchGroundTiles, from the mod world-data loader that opens the
-// door they read through), so the walks stay synchronous; what they add is written back a moment later. The fetch
-// installs this module as terrainTiles.js's keeper - the walks' module never imports the store.
+// FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT): THE BOOT WALKS' GROUND TILES, KEPT.
+// The boot reads SetLocationTiles' rect for every Bay town and Eltheric isle template (terrainTiles.js
+// locationRectReader, BOOT-RECTS). The rect needs only a block's ground tiles, but the world-data door serves the whole
+// block: some 400 blocks, 1.1 s of a warm launch's 2.7 s boot stall. So the tiles are kept in one derived-store record,
+// keyed on: firstVisitPin('groundTiles') (tools/computationPin.mjs), BLOCKS.BSA's bytesStamp, and
+// worldDataBlocksServing (worldDataReplacement.js: the gate, each block file's mod and pack version, the layers on).
+// A new record sweeps the last (`fv-ground:`). Blocks are kept under the walk's name (its `as` fields). A pinned town
+// or a set block variant bypasses the record. prefetchGroundTiles fetches it once, before the walks, and installs the keeper.
 
 import { bytesStamp, textStamp, derivedValueStore, keepAnswer, firstVisitPin } from '../../systems/firstVisit/firstVisitStore.js';
 import { anyBlockVariant } from '../../systems/worldDataVariants.js';

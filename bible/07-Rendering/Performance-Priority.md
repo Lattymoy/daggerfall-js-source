@@ -2624,13 +2624,17 @@ from refreshing properly ... scoped to only the things that have changed"; and, 
 A cache's version is not the build's tag and not a number anyone bumps: it is the PIN of its own computation
 (`tools/computationPin.mjs`: the named roots and every top-level declaration they reach by name, across imports, as
 tokens - a comment or a line break moves nothing - and any shipped data the computation reads), GENERATED. The pins live
-in `src/firstVisitPins.js`, gitignored: `npm install` / `npm ci` write it (`postinstall`, `scripts/firstVisitPins.mjs`),
+in `src/firstVisitPins.js`, gitignored:
+
+`npm install` / `npm ci` write it (`postinstall`, `scripts/firstVisitPins.mjs`),
 so every checkout and CI job has it before lint, the types or a test; every Vite build writes it at its start and bundles
 the pins it computed then (`firstVisitPinsPlugin`, a `vite.config.js` plugin); and the dev server computes the pins for
 each page load (the store asks under a URL of the load's own), so a dev edit is a new key as a deployed update is. A cache
 reads its pin through `firstVisitStore.js firstVisitPin`, which throws when there is none - never a key on undefined. So
 an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
-keeps it. Each key leads with its scope; writing an answer deletes every other key of its scope
+keeps it.
+
+Each key leads with its scope; writing an answer deletes every other key of its scope
 (`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow
 across updates. A write the store refuses (a full quota) sweeps nothing (`firstVisitStore.js keepAnswer`): the older
 answer is then the only one there is, and stays. The store's writes also reject when the transaction aborts (a
@@ -2650,7 +2654,9 @@ Nothing kept reads the save, the day or the clock, so a save loaded or a day tur
 sweeps the whole derived store (`clearStoredData`), and a changed data file is another stamp. No key names BUILD_TAG:
 every computation's inputs could be named. The pin follows names, not meaning - a code path a root reaches only
 through a value handed in at run time (a registry, a callback) is not followed, which is why the ground tiles' roots
-name the mod loader, the arena, the carriages' layer and the shipped world data beside the door. Held by
+name the mod loader, the arena, the carriages' layer and the shipped world data beside the door.
+
+Held by
 `test/systems/firstVisit/fv_versions.test.js`: every cache that keeps answers asks a pin and every pin is generated; a
 missing pin throws; no pin reads the pins; the pin's moves (the code reached, the data read) and non-moves (a comment, an
 unreached declaration); the same pin across CRLF and LF and either path separator; the dev server's pins for each load; a refused write sweeps nothing. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
@@ -2679,7 +2685,9 @@ and the wagons' art (not kept) and two that are the frame's own and a collection
 these stalls - the world's first frame lands at ~26-35 s, after the boot's own long frames - so from the boot's first
 world-host frame: base 17 frames, 7,168 ms, the longest 2,746 ms; head 17 frames, 4,826 ms, the longest 1,459 ms. The
 first launch fills the store for ~80 ms of main thread beyond the base's (the stamps, ~30 ms; the clones written,
-~40 ms) - the work itself runs as before. Two earlier head pairs: pair 1 found the door's stamp in registration order
+~40 ms) - the work itself runs as before.
+
+Two earlier head pairs: pair 1 found the door's stamp in registration order
 (the packs register as their fetches end, so the walks' tiles missed on the second launch); pair 2, with that fixed,
 missed the land's pieces once (162 ms) - the network the first way is asked on was not the one the last launch kept,
 which a miss pays at the old cost, never with a wrong answer. The final pair hit every record.
@@ -2690,7 +2698,9 @@ between two launches of the same tree; the town itself (the frame left of the HU
 launch that worked every answer out against one that read it back, 0.01%. The one picture that differed by launch is the
 main quest's opening box ("You wake and look around the room", `_BRISIEN`'s `say 1025`): the quest machine does not
 tick while any window stands, so whichever opens first - that box or the welcome tour's first page - comes up first, and
-the other waits. The base showed the box on one launch and not on the next; the head, which boots sooner, showed it on
+the other waits.
+
+The base showed the box on one launch and not on the next; the head, which boots sooner, showed it on
 every launch. It is never lost, only ordered.
 
 Left: quest start (54-97 ms) and the wagons' art (34-60 ms) are under 100 ms; the town's trips keep ~250-280 ms of lives
