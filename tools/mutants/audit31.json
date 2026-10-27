@@ -500,7 +500,7 @@
   },
   {
     "name": "AUDIT31-host-picker-kept",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": " && !pieceKept(it.provenance))\n      .map((item) => ({ item, where: 'pack'",
     "new": ")\n      .map((item) => ({ item, where: 'pack'",
     "tests": [
@@ -510,7 +510,7 @@
   },
   {
     "name": "AUDIT31-host-lists-wagon",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": "playerEntity.furnishings, playerEntity.wagonItems, playerEntity.otherItems].filter(Array.isArray);",
     "new": "playerEntity.furnishings].filter(Array.isArray);",
     "tests": [

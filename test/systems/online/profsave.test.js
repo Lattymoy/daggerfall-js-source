@@ -68,7 +68,7 @@ test('PROF-SAVE the Bank: a Marks sale\'s credit tells `saved` once the gold is 
 });
 
 test('PROF-SAVE the host: every professions act that changes the save asks saveSoon - a withdrawal, a craft\'s pieces and its kept fee, a smelt\'s fee, a market piece minted, listed away, put back and settled away - and the checkpoint is handed in right after it is built (mutants: each call dropped; the checkpoint never handed in)', () => {
-  const w = src('src/scenes/world.js');
+  const w = src('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
   const body = (name) => {
     const at = w.indexOf(`  const ${name} = (`);
     assert.ok(at > 0, `${name} stands`);

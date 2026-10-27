@@ -737,3 +737,17 @@ its branch; merged with the branch head (the merge of main, relay world269), 35,
 (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed eighteen mutant records over the moved lines
 (`portal1.json`, `audittesa2z.json`, `auditcaptsea.json`, `egmade.json`); the pins that cut the members from world.js's
 text cut them from the module's (`portal1_stone.test.js`, `egmade_law.test.js`, PIN MOVED).
+
+## BAY-LEFT-SEA - the market's pieces and hubs out of bootWorld (2026-10-26)
+
+The market's hubs past the Bay (`06-Systems/Professions-Arc.md` BAY-LEFT-SEA: a province's hub, made again as the seats
+and the places move) needed `marketHubs` - one statement in `bootWorld`, built once at boot - changed, and a move of it
+alone grew the host (its handles cost more than its line). It went out with the market's other pieces, the contiguous
+fifteen members from `pieceLists` to `marketHubs`, verbatim, by `tools/hostMove.mjs`, to `scenes/marketPiecesHost.js`
+`createMarketPieces`: four names by value (`marketBook`, `regionHubs`, `saveSoon`, `writBook`), one live (`townTalk`),
+twelve returned; two used above the construction (`marketGoods` by `marketBook`, `heldProvenances` by `profMintCraft`)
+are read inside closures run after it. `bootWorld` 35,799 -> 35,695 logical lines, and the ceiling at it
+(`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed ten mutant records over the moved
+lines (`audit31.json`, `fb1001_market.json`, `prof5.json`, `prof6.json`, `profsave.json` - all dead, with the ceiling's,
+11 of 11); the pins that cut the members from world.js's text cut them from the module's too (`audit30_client`,
+`audit31_client`, `prof5_client`, `fb1001_market_goods`, `profsave`, PIN MOVED).

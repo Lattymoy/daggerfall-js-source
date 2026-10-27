@@ -932,7 +932,7 @@
   },
   {
     "name": "PROF5-host-wear-unminted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": "    if (it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);\n    const home = isCraftedFurniture(it);",
     "new": "    const home = isCraftedFurniture(it);",
     "tests": [
@@ -960,7 +960,7 @@
   },
   {
     "name": "PROF5-host-worn-listed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": "filter((it) => it?.provenance && asMinted(it) && !tradeRefusal(it) && !isLocked(it) && !pieceKept(it.provenance))",
     "new": "filter((it) => it?.provenance && asMinted(it) && !pieceKept(it.provenance))",
     "tests": [
