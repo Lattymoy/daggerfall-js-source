@@ -374,8 +374,8 @@
   {
     "name": "AUDIT-STARTS-W8-online-keeps-start",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'region', 'loc', 'start']);",
-    "new": "'region', 'loc']);",
+    "old": "'region', 'loc', 'seat', 'start']);",
+    "new": "'region', 'loc', 'seat']);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "AUDIT-STARTS-W8-a-birth-keeps-start",
     "file": "src/systems/legacy/places.js",
-    "old": "'legacyborn', 'start']) p.delete(k);",
-    "new": "'legacyborn']) p.delete(k);",
+    "old": "'legacyborn', 'seat', 'start']) p.delete(k);",
+    "new": "'legacyborn', 'seat']) p.delete(k);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

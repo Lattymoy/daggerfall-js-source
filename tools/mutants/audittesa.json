@@ -360,8 +360,8 @@
   {
     "name": "AUDIT-TESA-A5-F3-deed-past-the-bay",
     "file": "src/scenes/world.js",
-    "old": "return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(",
-    "new": "return !isEtherPlaceId(id) && !isArenaPlaceId(id) && isHouseOwned(",
+    "old": "return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },",
+    "new": "return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey); },",
     "tests": [
       "test/audit_tesa.test.js"
     ]

@@ -227,8 +227,8 @@
   {
     "name": "R25b-table-plain-name",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name }));",
-    "new": "      add(provinceRow(p));",
+    "old": "      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) }));",
+    "new": "      add(provinceRow({ ...p, tableKey: tableKeyAt(p.px, p.py) }));",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -380,7 +380,7 @@
   {
     "name": "R25e-country-unasked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
     "new": "",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
@@ -389,8 +389,8 @@
   {
     "name": "R25e-country-bound",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
-    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "R25e-country-region",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
-    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) add(provinceRow(c));",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]

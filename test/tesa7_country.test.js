@@ -244,8 +244,10 @@ test('TESA7 the host: the templates and the count off the game\'s rows before th
   const tp = W.slice(W.indexOf('    window.__tesaPlace = (x, y) => {'), W.indexOf('    window.__arena = () => {'));
   assert.match(tp, /country: loc\?\.country \?\? null, type: loc\?\.mapTableData\?\.locationType \?\? null \};/, 'the probe reads it');
   const M = read('src/scenes/worldModes.js');
-  assert.match(M, /\|\| isCountryPlaceId\(dir\.mapId\)\) return \[\];/, 'no house sold in one');   // PIN MOVED (at the merge of main): one guard with the Veil's and Arena's
-  assert.match(M, /&& !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(/, 'nor a deed read in one');
+  // PIN MOVED (BAY-LEFT-B, bible/03-World/Arena-Provinces.md): a country place sells its houses and reads its deed - its
+  // province's region's, held to its own map id (banking.js deedHeldIn; test/systems/bayleftb_houses.test.js)
+  assert.match(M, /if \(isEtherPlaceId\(dir\.mapId\)\) return \[\];/, 'a house sold in one');
+  assert.match(M, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(/, 'and its deed read there');
 });
 
 /** countryLocationAt as the host has it, over stubs: the real pick, name and clone, a pixel's water, road and ground the test's. */

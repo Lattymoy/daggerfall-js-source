@@ -1436,8 +1436,8 @@
   {
     "name": "ACS-P9-deed",
     "file": "src/scenes/worldModes.js",
-    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(",
-    "new": "const houseOwnedAt = (b, key) => !isArenaPlaceId(",
+    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(",
+    "new": "const houseOwnedAt = (b, key) => isHouseOwned(",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1445,8 +1445,8 @@
   {
     "name": "ACS-P9-sale",
     "file": "src/scenes/worldModes.js",
-    "old": "if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)",
-    "new": "if (false || isArenaPlaceId(dir.mapId)",
+    "old": "if (isEtherPlaceId(dir.mapId)) return [];",
+    "new": "if (false) return [];",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

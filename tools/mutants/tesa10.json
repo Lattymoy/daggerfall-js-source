@@ -455,8 +455,8 @@
   {
     "name": "TESA10-host-no-slot",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,",
-    "new": "    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: null,",
+    "old": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,",
+    "new": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: null,",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

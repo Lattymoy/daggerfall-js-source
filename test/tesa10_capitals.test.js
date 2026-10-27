@@ -39,6 +39,8 @@ import { customModelFor } from '../src/world/customModels.js';
 import { hash32 } from '../src/world/spawnedDungeons.js';
 import { LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { capitalsOn } from '../src/scenes/shared.js';
+import { locationKeyOf } from '../src/world/locationKey.js';   // PIN MOVED (BAY-LEFT-B): the clone carries its own buildings' key
+import { fabricSliceSites } from '../src/world/imperialFabricBuildings.js';   // PIN MOVED (BAY-LEFT-B): and the Imperial City's fabric's
 import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 import { createSwapBehind } from '../src/scenes/swapBehind.js';
 
@@ -304,7 +306,9 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
   const kinds = [...new Set(Array.from({ length: IMPERIAL_SPAN ** 2 }, (_, s) => imperialSlicePlan(s).flat()).flat())].filter(imperialClassic);   // PIN MOVED (IC-GRAND): the plan by its law
   const names = new Map(kinds.map((k) => [k, [`${k}AA00.RMB`]]));
   const base = { ...city(9, ['X']), exterior: { exteriorData: { blockNames: ['X'] }, buildings: [] } };
-  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', 'capitalSlicePort', 'capitalCentrePixel', `
+  // PIN MOVED (BAY-LEFT-B): the clone's MapTable key its own buildings' (world/locationKey.js), the Imperial City's fabric's
+  // with them - the harness hands the clone its three leaves
+  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', 'capitalSlicePort', 'capitalCentrePixel', 'locationKeyOf', 'CAPITALS', 'fabricSliceSites', `
     const _capitalBase = ${open ? 'base' : 'null'}, _capitalNames = names, _arenaTemplates = {}, locationIndex = new Map();
     const arenaPlaceOnPixel = () => (arena.on ? arena.place : null), blocks = { getBlockByName: () => null };
     const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
@@ -315,7 +319,7 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     ${lift('  function capitalCloneOf(at, px, py, slot) {')}   // PIN MOVED (AUDIT RELEASE R2-5f): the clone laid out apart from its standing, as the quest layer reads it
     const arenaPixels = () => null;   // PIN MOVED (BAY-LEFT-SEA): the clone handed its harbour's pin (tamrielPlacesHost.js capitalPinPort) - none pinned here
     ${lift('  function capitalPinPort(k) {')}
-    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena, capitalSlicePort, capitalCentrePixel);
+    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena, capitalSlicePort, capitalCentrePixel, locationKeyOf, CAPITALS, fabricSliceSites);
   const arena = { on: false, place: null };
   const h = make(true, arena);
   const loc = h.capitalLocationAt(2069, 658);

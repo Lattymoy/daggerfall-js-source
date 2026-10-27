@@ -291,8 +291,8 @@ import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Dagg
 import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it; WW2: which picture a theatre's gate scan read
 import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
 import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
-import { arenaTemplates, ARENA_LOAD_WAIT_MS, isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
-import { countryTemplates, countryCounts, isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
+import { arenaTemplates, ARENA_LOAD_WAIT_MS } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
+import { countryTemplates, countryCounts } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
 import { countrysideOn } from './shared.js';   // TESA7: its kill door
 import { capitalsOn } from './shared.js';   // TESA10: the capitals' kill door
 import { capitalBase, cityBlockNames, setCapitalsStanding, isCapitalLandmark } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand; BAY-LEFT-SEA: a landmark measured by its footprint
@@ -315,6 +315,8 @@ import { freePull } from '../systems/travel/freePull.js';   // OW-FREE-STRAIGHT,
 import { createGrantHost } from './grantHost.js';   // GRANT2-GRANT4: the spawn grants - my stands' and my reading of others' (bible/11-Multiplayer/Spawn-Grants.md)
 import { wireOwnerClock } from './ownerCatchUp.js';   // OWNER-CLOCK: my foes' steps on the clock their frames carry, and the street's kept to my frame's pace while anyone else is in my room
 import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
+import { createBootStart } from './bootStartHost.js';   // HOST-SPLIT: the boot's start, moved out of bootWorld
+import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-B: a province's region the quest layer's table (the talk's Regional rows)
 import { createCraftWritHost } from './craftWritHost.js';   // CRAFT-WRITS: the Work tab's crafting writs, handed over from the pack
 import { createSeasonBook } from './seasonBookHost.js';   // SEASON-BOOK: the laurel's boards, asked while its window is open
 import { rollNoticeDoors } from './rollNoticeHost.js';   // SEAT-WORDS / STANDING-WORDS: what the Roll's tracker says
@@ -2606,33 +2608,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get built() { return built; },
   });
 
-  // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
-  // resolve the start by NAME - it reads a map pixel out of settings
-  // (StartCellX/StartCellY, 109/158 = Privateer's Hold) and asks the
-  // world what location is there. ?classic takes that path so the new
-  // game begins where Daggerfall begins; every dev boot keeps the
-  // region/loc names it has always used.
-  //
-  // NEVER TRAPS: a start cell with no location falls back to the named
-  // location rather than throwing the player at a black screen.
-  let startLoc = null;
-  if (params.has('classic')) {
-    const cell = `${getInt('Startup', 'StartCellX')},${getInt('Startup', 'StartCellY')}`;
-    startLoc = locationIndex.get(cell) ?? null;
-    if (!startLoc) console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
-  }
-  // EE13 (Mac: a season test that spawns somewhere random, from the
-  // menu): ?spawn=random picks any TOWN in the index - a place with
-  // ground, roads and people, which is what the outdoors is being tested
-  // with. Seeded from the clock so two presses give two towns; the town
-  // is logged so a good one can be found again by ?region=&loc=.
-  if (!startLoc && params.get('spawn') === 'random') {
-    const towns = [...locationIndex.values()].filter((l) => [0, 1, 2].includes(l.mapTableData?.locationType));   // TownCity, TownHamlet, TownVillage (MapsFile LocationTypes)
-    const pick = towns.length ? towns[Math.floor((Date.now() / 7919) % towns.length)] : null;
-    if (pick) { startLoc = pick; console.info(`[world] random spawn: ${pick.regionName ?? pick.mapTableData?.regionName ?? '?'} / ${pick.name ?? '?'} (${params.get('season') ?? 'the calendar\u2019s season'})`); }
-  }
-  if (!startLoc) startLoc = maps.getLocationByName(regionName, locationName);
-  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
+  // U31 / THE CLASSIC START (and EE13's random spawn, and the named start) - HOST-SPLIT: scenes/bootStartHost.js.
+  // BAY-LEFT-B: a start past the Bay (a family's seat there) stands the world on the Bay, then moves to it once its land
+  // stands (`farStart`, which a birth waits on) - as a save made past the Bay loads
+  const { startLoc, farStart } = createBootStart({ locationIndex, locationName, maps, params, regionName, teleport: _teleportToPixel, worldPlaces,
+    ready: () => playerSpawned && _bootLoaded && !_loading, landed: () => arenaTraced, say: (line) => townTalk.say(line) });
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
   // BOOT-OVERLAP: THE TOWNS THE BOOT WAITS ON AS IT BUILDS THEM - the start's (the first build) and a realm save's own
@@ -6369,7 +6349,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // never renames the player's own house, whose stored name is the purchase's, not a quest's
     // AUDIT-TESA A5-F3: never in a place the port made (an isle's, an Arena place's, the countryside's, a lair, a capital) -
     // each answers a region a Bay town's deed is keyed by, so the same key would own a house there (worldModes houseOwnedAt)
-    ownsHouse: (buildingKey) => { const id = _questLoc()?.mapTableData?.mapId ?? 0; return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone
+    ownsHouse: (buildingKey) => { const id = _questLoc()?.mapTableData?.mapId ?? 0; return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; BAY-LEFT-B: every place past the Bay's in its own town (banking.js deedHeldIn)
   };
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,
@@ -6766,9 +6746,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // (finishChargen over a result the family law builds - legacyHost.bornResult), in the town the boot stood the world
     // in (`?region=&loc=`). AUDIT LEGACY B7: a birth that waits for nobody (a stale address, a birth already made) or
     // whose files would not load goes back to the title menu, SAID - never to a stranger's wizard: the line waits on the
-    // record (its heir chosen, unborn), and the fallen's save asks again.
+    // record (its heir chosen, unborn), and the fallen's save asks again. BAY-LEFT-B: a seat past the Bay is reached
+    // first (`farStart`, scenes/bootStartHost.js), so the heir is made, and first saved, there.
     const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits. ${realmNew ? 'Choose who carries it on from the Online page' : 'Load the fallen\'s save to try again'}.`); releaseUnloadGuard(); exitToTitleMenu(); };   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): online the fallen is a tombstone - the Online page names the waiting house
-    Promise.all([createChargenFlow(fetchBytes), legacyReady]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
+    Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
       spellsByIndex = sbi;
       const r = host?.bornResult({ careers, factionDict });
       if (!r) { legacyBirthFailed('no birth waits for this address'); return; }
@@ -12578,10 +12559,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  does, or null - `name` the canonical one (the discovery's key, and
    *  the callers' gate: DaggerfallInventoryWindow.cs:1828,
    *  ThievesGuild.cs:112), its `mapId`, and `shown`, the name as the
-   *  map item shows it (GetLocalizedLocationName, :1831). */
+   *  map item shows it (GetLocalizedLocationName, :1831).
+   *
+   *  BAY-LEFT-B (B5): the CURRENT region is PlayerGPS.CurrentRegion - the politic map's under the player
+   *  (_questRegionIndex), never the location's under them: a map read in the wilderness, on the road or at sea revealed
+   *  nothing (none stands on the pixel), the map spent. And it is the quest layer's table (scenes/questWorld.js maps): a
+   *  province's region its places past the Bay (scenes/quest/questProvinceSites.js), where MAPS.BSA has none - the map
+   *  item, the Thieves Guild's and the Dark Brotherhood's reveals each did nothing there. */
   const revealLocation = (noteKey) => {
-    const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
-    const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
+    const region = questWorld.maps.getRegion(_questRegionIndex());
     if (!region) return null;
     const rows = region.mapTable.map((row, i) => ({
       mapId: row.mapId, discovered: row.discovered,
@@ -12606,10 +12592,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  region's map table as systems/loot/lootScry.js reads it, and the player's map pixel; null only where the region's table
    *  cannot load (AUDIT LOOT II B7: getRegionIndexAt always answers a region - the coast's 31, out of range the first -
    *  and a guild hall stands in one). The Mages Guild's window asks it through the interior host (scenes/worldModes.js
-   *  openReforge). */
+   *  openReforge). BAY-LEFT-B (B6): the quest layer's table (scenes/questWorld.js maps) - a province's region its places
+   *  past the Bay and its lairs nearest the player (scenes/quest/questProvinceSites.js), where MAPS.BSA has none and the
+   *  scryers refused "nowhere" past the Bay. */
   const scryWhere = () => {
     const at = playerTravelPixel();
-    const region = maps.getRegion(maps.getRegionIndexAt(at.x, at.y));
+    const region = questWorld.maps.getRegion(maps.getRegionIndexAt(at.x, at.y));
     return region ? { rows: scryRows(region), at: { x: at.x, y: at.y } } : null;
   };
 
@@ -18600,9 +18588,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // tavern", the ten knightly orders - answered record 11, the
     // not-found line, and %fcn stayed empty forever. This is the plain
     // reader, not the quest layer's dungeon-sized adapter: TalkManager
-    // reads MapFileReader directly.
-    currentRegion: () => maps.getRegion(_questRegionIndex()) ?? null,
-    getLocation: (r, i) => maps.getLocation(r, i),
+    // reads MapFileReader directly. BAY-LEFT-B (B4): a province's region
+    // is the quest layer's table of the places past the Bay
+    // (scenes/quest/questProvinceSites.js, each row its location's key) -
+    // MAPS.BSA holds none, and every Regional row answered "not found".
+    currentRegion: () => questWorld.maps.getRegion(_questRegionIndex()) ?? null,
+    getLocation: (r, i) => (isProvinceRegion(r) ? questWorld.provinceSites?.getLocation(r, i) ?? null : maps.getLocation(r, i)),
     currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
     getAnyBuilding: (buildingKey) => discoveredBuildings(townBookOf(_questLoc()))   // BAY-LEFT-MAPS (C7 = E2)
@@ -26392,8 +26383,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     town: (h) => (h && h.mode !== 'dungeon' && h.loc && isTownEntry({ locationType: h.locationType }) ? { region: h.region, loc: h.loc, ...(h.mapId != null ? { mapId: h.mapId } : {}) } : null),
     nearestTown: (h) => {
       if (!h) return null;
-      const hit = nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(maps, REGION_NAMES, h.pixel);
-      return hit ? { region: hit.region, loc: hit.loc } : null;
+      // BAY-LEFT-B: the region's own nearest town, else the WORLD's (the registry - its map id the birth's `seat`)
+      return nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(nearestTownOf, REGION_NAMES, h.pixel);
     },
     gold: () => legacyGold(playerEntity),
     say: (line) => townTalk.say(line),

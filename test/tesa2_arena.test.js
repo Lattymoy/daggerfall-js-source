@@ -238,8 +238,10 @@ test('TESA2 the host: offline on the land beyond the Bay it stands the places - 
   assert.ok(w.indexOf('const arenaTraced = ') < w.indexOf(WAIT), 'the trace\'s promise made before the load waits on it');
   assert.match(w, /if \(_arenaTemplates\) for \(const a of arenaPixels\(\)\?\.stood \?\? \[\]\) if \(!locationIndex\.has\(`\$\{a\.bx\},\$\{a\.by\}`\)\) places\.push\(\{ name: a\.name, px: a\.bx, py: a\.by \}\);/);
   const modes = read('src/scenes/worldModes.js');
-  assert.match(modes, /if \(isEtherPlaceId\(dir\.mapId\) \|\| isArenaPlaceId\(dir\.mapId\) \|\| isCountryPlaceId\(dir\.mapId\)\) return \[\];/);   // PIN MOVED (at the merge of main): one guard, the Veil's, Arena's and the country's - createWorldModes under its ceiling
-  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && !isArenaPlaceId\(homeTownOf\(b\)\) && !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(/);   // PIN MOVED (TESA7): nor a country place's
+  // PIN MOVED (BAY-LEFT-B, bible/03-World/Arena-Provinces.md): an Arena town sells its houses - its province's region's,
+  // its deed held to its own map id (banking.js deedHeldIn); the Veil's guard alone stands
+  assert.match(modes, /if \(isEtherPlaceId\(dir\.mapId\)\) return \[\];/);
+  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(/);   // PIN MOVED (TESA7): nor a country place's; PIN MOVED (BAY-LEFT-B): an Arena town's and a country place's read, held to their own town
 });
 
 // ── THE PLAYER'S OWN FILES ─────────────────────────────────────────

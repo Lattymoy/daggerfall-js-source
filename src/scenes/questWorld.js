@@ -319,9 +319,12 @@ export function createQuestWorld(host) {
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
     },
     /** GetLocationCompassDirection (TalkManager.cs:1238-1281) - %di's
-     *  remote arm. Same wave, same alias hole. */
+     *  remote arm. Same wave, same alias hole. BAY-LEFT-B (B3): over the
+     *  quest layer's own maps - a province's region its table of the
+     *  places past the Bay, where the host's MAPS.BSA reader has none and
+     *  every site past the Bay answered "...never mind...". */
     locationCompassDirection: (place) => locationCompassDirection(
-      { playerMapPixel: playerTravelPixel, maps },
+      { playerMapPixel: playerTravelPixel, maps: questWorld.maps },
       place?.siteDetails?.locationName ?? '',
     ),
     /** GetBuildingCompassDirection (TalkManager.cs:1203-1236) - %di's

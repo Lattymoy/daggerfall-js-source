@@ -211,14 +211,12 @@ into, a dungeon to go down - and the held map takes the player there.
   The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
   ways; the recommendation is to refuse that leg too (the same law, its `from` asked as its `to` is - the zone's
   journeys excepted), so the land past the Bay is left as it is reached: walked, sailed, or through a stone.
-- **What an Arena town is not yet**: no house is sold in one (`scenes/worldModes.js`, the isles' rule, AUDIT CAPTAIN'S SEA
-  P9 - every Arena town answers the clamp's region until TESA3, so a deed's key would own the same key in all of them);
-  no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
+- **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.
 - **THE FOUR HOSTS.** `scenes/world.js` stands them. `scenes/worldModes.js` (interiors - an Arena town's buildings are its
   template's, entered the same way) and `scenes/dungeonContext.js` (an Arena dungeon's halls are its template's, built
-  as any clone's) run in the world host's page over the same index; `worldModes.js` keeps the house rule above.
+  as any clone's) run in the world host's page over the same index; `worldModes.js` keeps the market's and the deed's laws (BAY-LEFT-B, below: a house sold in an Arena town, its deed held to its own town).
   `scenes/exterior.js`, the single-town bench, streams no land beyond the Bay: no place stands there.
 
 ## TESA-ONLINE - one Tamriel a room (2026-10-12)
@@ -486,8 +484,7 @@ farms, homes, inns, temples and shrines the Bay stands, as thick on the ground.
   pixels past the Bay would share it). TESA14 retired a third law - none on a pixel an Arena road or track crossed
   (SPAWN-ROADS'): the roads are laid round the places now (`world/tamrielCountry.js` countryStandsAt, the roll's one home). Stood in the index once, and cloned again when what the pixel stands moves (the
   trace landing moves a climate). Arena attached late: the Arena sweep builds the pixel again and Arena's place
-  takes it. No house is sold in a country place and no deed read in one (`scenes/worldModes.js`, the isles' and Arena's
-  rule: every one answers the clamp's region). `/tp` names a stood one; `__tesaPlace` reads its `country` and kind.
+  takes it. A country place sells its houses and reads its deed, held to its own map id (BAY-LEFT-B, below). `/tp` names a stood one; `__tesaPlace` reads its `country` and kind.
 - **What a country place is not yet**: a row of the world's registry (AUDIT TESA II P7: the cities, towns and villages
   and the capitals are, `world/pastBayRows.js`; the countryside's pixel provider is not - a district's walk through its
   roll was 276 ms on the page's thread - so the rise and `/unstuck` read the country towns a session stood, and the
@@ -515,7 +512,7 @@ each is laid out to a plan of its own from Daggerfall's dungeon blocks.
   (LAIR_LANE, 0x340, after the country places' 64) with the cell in its low 19 bits and 0x80000 set - no two lairs share a
   dungeon's identity (`net/nodeLaw.js` DUNGEON_ID_MAX, DFU's MapId & 0xfffff: a profession's veins, PROF2's witnessed
   dungeon), none a Bay place's. Its location index counts down from -LAIR_INDEX_BASE (-40,000,000), past the
-  countryside's. `isCountryPlaceId` answers for it too: no house is sold and no deed read in a keep's grounds.
+  countryside's. `isCountryPlaceId` answers for it too.
 - **The rate is the Bay's** (lairPick): the site's climate's count of each kind over the Bay's land (TESA7's count and
   land, `countryRates` over LAIR_TYPES), times the cell's 64 pixels, at most 1; the kind in proportion; the template off
   the cell's hash in map-id order. On the freeware, lairs a thousand land pixels: MountainWoods 20.2, HauntedWoodlands
@@ -606,7 +603,7 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
   0x80000), its own index (-41,000,000 and down), the pixel's longitude and latitude, the region and climate the pixel
   answers, no dungeon (WW7-4: the centre's its castle's halls - World-Wide.md WW7-4),
   its harbour slice's port byte its port word (BAY-LEFT-SEA, below), `capital`, and Arena's slot where Arena's place stands on it. A place the port made:
-  no house is sold in it and no deed read (`isCountryPlaceId`).
+  its houses sold and its deed held to its own slice (AUDIT RELEASE R2-9, BAY-LEFT-B below).
 - **The doors** (`world/capitalModels.js` installCapitals, from `scenes/modWorldData.js` beside installArena - behind no
   switch, as the arena's block is): the six port blocks at fixed indices from 900200 (900400 since AUDIT-TESA - past the
   Shadow Realm's 900200; 901000 since AUDIT TESA II C13 - 900400 was the Sky-Ketch's, `world/ketch/ketchShip.js`
@@ -781,7 +778,7 @@ lanes, every finding's verdict. What it changed here, by id:
   standing there (AUDIT TESA II P3: the nearest town of the world at any distance - the index's within 48 pixels left a
   death at sea past the Bay where it fell, in the water); the province's people's names in its towns and buildings; a capital's pixel never cloned over; the
   harbour book by map id; the Bay's pixel ids read on the Bay alone; a ship's port past the Bay its Arena place's; no
-  deed read in a place the port made.
+  deed read in a place the port made (since BAY-LEFT-B, below: read, held to its own town).
 - **The roads** (A3-1): a shore town's cell its land. **The switches** (A7-8): `?capitals=off` and `?country=off`
   offline alone - AUDIT TESA II P9: and `?tamrieltrace=off` (`scenes/shared.js` tamrielTraceOn), which A7-8 missed: online
   it took every place past the Bay off one client and stood its capitals and countryside on the authored coasts.
@@ -1197,7 +1194,7 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   contract board and the ship passage.
 - **The capitals, the rest** - Solitude (Skyrim: the arch over the Karth's mouth, the Blue Palace, Castle Dour, the docks),
   then Mournhold, Alinor, Falinesti, Torval and Helstrom, each its own plan and landmarks; the Imperial City's
-  Waterfront docks and its Arena's colosseum (both TESA11's now); houses for sale in a capital (its own region's deed key first).
+  Waterfront docks and its Arena's colosseum (both TESA11's now). Houses for sale in a capital: BAY-LEFT-B, below.
 - **Morrowind of Morrowind's own** (TESA9) - set aside by the owner, 2026-10-12: "Dont worry about morrowind".
 - **The countryside and the lairs, the rest** - their places on the classic travel map (TESA13 inks them on the held
   map, TESA15 from the regions' own roll), a discovery law of their own (TESA13's departure), and quest sites in them.
@@ -2218,6 +2215,46 @@ armorer), `test/systems/travel/to1_travelOptions.test.js` I6 (the I box, the doo
 (dead): `tools/mutants/to1.json` i6-discovery-by-map-id-again. DFU files a location's buildings by the location itself
 (PlayerGPS's MapPixelID); the port's `<region>:<name>` is its own key, and past the Bay the map id after it: Port-Ledger A,
 BAY-LEFT-MAPS.
+
+## BAY-LEFT-B - houses for sale in the towns past the Bay (2026-10-27)
+
+The audit "no system left behind in the Bay" (item 32; the owner: *"Every single thing here needs to be addressed. No
+exceptions."*, 2026-10-26). WHAT STOOD: no house was sold, no deed read and no rank-9 knight's house given in any Arena
+town, country place or capital - the market's gate (`scenes/worldModes.js` currentHousesForSale) and the deed's two
+readers (worldModes houseOwnedAt, world.js's quest-world ownsHouse) refused every place the port made
+(`isArenaPlaceId`, `isCountryPlaceId` - whose lanes take the capitals' too). The recorded reason, "every Arena town
+answers the clamp's region until TESA3, so a deed's key would own the same key in all of them", was stale: the regions
+are the provinces' since WW-R, and AUDIT RELEASE R2-9 had already held a capital's deed to its own slice by map id.
+
+WHAT IT IS NOW. **The deed of every place the port made is held to its own town**
+(`systems/banking.js:"export const deedHeldIn = (slot, mapId = null) =>"` over
+`world/placeIds.js:"export const isMadePlaceId = (id) =>"` - a map id whose low 20 bits stand past the Bay's pixel ids,
+AUDIT TESA II P6's law, which `systems/discovery.js` discoveryKeyOf reads from the same leaf): asked in an Arena town, a
+country place or a capital, a deed stands only if its slot's map id (allocateHouseToPlayer's) is that town's - one
+province is one region over a hundred towns, many of them clones of one Bay town with its keys. A Bay town keeps DFU's
+(region, key) law byte for byte (IsHouseOwned :140-148). So the gates came down: the market sells a town's houses past
+the Bay (the isles' gate alone stands - AUDIT CAPTAIN'S SEA P9, recorded: an isle's towns are no region's slot of their
+own), the deed is read where the building stands (`worldModes.js:"const houseOwnedAt = (b, key) =>"`, world.js's
+ownsHouse) - its door, its cupboards, its bed - the bank sells it in its own town (its directory's, as DFU's bank only
+ever finds its house in its own town's directory), and the Knightly Order's rank-9 house is given there (its list is the
+market's, `systems/knightlyGifts.js` receiveHouseDecision). Online homes key by the town's map id in any region already
+(HOME1, `net/homeLaw.js` homeDeedOf: the region 0..70, the slot's own map id): both ends agree - a knight's house held
+by the account is its own town's on the service as on the page.
+
+THE FOUR HOSTS: `scenes/worldModes.js` (the market, the deed where the building stands, the bank) and `scenes/world.js`
+(the quest world's residence read) wired. `scenes/dungeonContext.js` sells no house. `scenes/exterior.js` (the bench)
+asks `isHouseOwned` with its town's map id (R2-9) - the Bay's alone stand there.
+
+Pins: `test/systems/bayleftb_houses.test.js` (4: a place the port made by its id; a deed in its own town alone, past the
+Bay against the Bay's law; the market's own gate run off worldModes.js's text over the freeware's Whiterun, a country
+hamlet the countryside mints and Solitude - houses for sale, the knight's house given, bought and owned there, the isles'
+shut, Daggerfall's market as ever; the readers name the town and the account's deed agrees). Mutants:
+`tools/mutants/bayleftb.json` (BAY-LEFT-B-H-*). PIN MOVED: `test/tesa2_arena.test.js`, `test/tesa7_country.test.js`,
+`test/audit_tesa.test.js`, `test/systems/naval/auditcaptsea.test.js`, `test/systems/houses.test.js`,
+`test/world/housecontainers.test.js`, `test/systems/quest/auditdisc28_quests.test.js` (each pinned the gates this slice
+took down), `test/tesa8_lairs.test.js` (its lair id's "no house sold, no deed read" words); their mutant records re-aimed by content (`tools/mutants/tesa2.json` TESA2-a-house-for-sale,
+`tesa7.json` TESA7-modes-deed-sold and -owned, `audittesa.json` AUDIT-TESA-A5-F3, `auditcaptsea.json` ACS-P9-deed and
+-sale, `auditdisc28_quests.json` AD28Q-K1, `icgrand.json` R2-9-deed-every-town).
 
 ## Pins
 

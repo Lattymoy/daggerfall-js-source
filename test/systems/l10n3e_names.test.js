@@ -45,7 +45,7 @@ const NAMED = {
   'src/systems/quest/foe.js': 1,
   'src/systems/quest/person.js': 5,
   'src/systems/quest/place.js': 4,
-  'src/systems/quest/questMacros.js': 8,
+  'src/systems/quest/questMacros.js': 9,   // BAY-LEFT-B: %lp past the Bay, its province's name as shown (GetLocalizedRegionName)
   'src/systems/starfall/starCoven.js': 4,   // STAR5: a master's name, in the player's language
   'src/systems/starfall/starfallCovens.js': 1,   // STAR2: a coven's witches by their faction, in the player's language
   'src/systems/talk/talk.js': 1,
