@@ -121,6 +121,7 @@ import { captainWorth, struckGun, statScale } from '../../systems/naval/captainT
 import { createNavalLoads } from './navalLoads.js';   // SHOT-KINDS: the captain's choice of load, at the helm
 import { createAimCamera } from './aimCamera.js';   // THE BROADSIDE CAMERA and AIM-ENDS: the helm's eye while a battery is laid
 import { createNavalHaul } from './navalHaul.js';   // BOARD-MAGNET: the grapples' haul - her berth, her way in, my way off
+import { createNavalRams } from './navalRams.js';   // RAM-RETURN: the rams, my helm's and a galley's - bounded (systems/naval/navalRam.js)
 import { createSeaHulls } from '../../systems/naval/seaClearance.js';   // FERRY-CLEAR: the hulls a journey's hand steers round
 import { createVolleyTally } from './navalTally.js';   // AUDIT NAV1 G17: my volley's tally - CARD-CREW: and her men it took
 import { seaLiveryOf, seaFlagsOf } from '../../systems/naval/seaColours.js';   // SEA-COLOURS: the sea's ships in their own paint and flags
@@ -295,7 +296,7 @@ export const PEER_HULL_FAR_M = 5500;
  * OWN-HULL-RANGE: WHETHER ONE OF MY OWN SEA'S SHIPS KEEPS HER HULL, however far: bodies on her deck, the boarding I am
  * in, a prize not yet settled (`claimPrize` moves her deck by her hull), a fight - hers (`mode` engage or board,
  * afloat) or one that targets her (`fought`, the targets of every ship in one): a shot lands only on a hull
- * (`targets`), so a fight between hull-less ships would never end.
+ * (`targets`) and a galley rams only one (navalRams.js `galleys`), so a fight between hull-less ships would never end.
  * @param {any} e a sea entry @param {{ fought: Set<string>, boardingId?: string|null }} at
  */
 export function hullKept(e, { fought, boardingId = null }) {
@@ -1108,7 +1109,8 @@ export function createNavalHost(deps) {
    * A hurt on a ship I stand: its state, the word, the law's reckoning when the player sank her. AUDIT NAV1 (the guns):
    * a ball from a ship of her own trade - or between two lawful ones - provokes nothing (a stray is not a feud: the
    * audit's pirates turned on their sisters in six fights of sixteen); the rest of the volley that struck her cannot
-   * take her under one hull (STRUCK_GRACE_S), and striking puts her fires out (navalDamage.js). AUDIT NAV1 (B4): who
+   * take her under one hull (STRUCK_GRACE_S) - nor a ram her line (`hurt.floor`, RAM-RETURN) - and striking puts her
+   * fires out (navalDamage.js). AUDIT NAV1 (B4): who
    * set her afire is kept (`fireBy`) - her fires' own changes are theirs (stateChanged). `byPlayer`: the blow is a
    * player's - mine, or (AUDIT NAV1, online #6) a peer's landed here (applyPeerHit).
    */
@@ -1117,7 +1119,7 @@ export function createNavalHost(deps) {
     if (s.lashed) unlashPrize(entry);   // SEA-PEACE: a victor under fire leaves her prize to fight
     const striker = typeof by === 'string' ? sea.get(by)?.ship ?? null : null;
     if (!stray && (!striker || !kindred(striker, s))) provoke(s, by, clock);   // SEA-EASE: a stray on an aid is no feud
-    const floor = entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0;
+    const floor = Math.max(hurt.floor ?? 0, entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0);   // RAM-RETURN: a ram's, her line
     const before = s.damage.state;
     const change = s.damage.apply(hurt, clock, { floor });
     if (hurt.fire && s.damage.fire > 0) { igniteShip(entry); entry.fireBy = by; }
@@ -3987,6 +3989,16 @@ export function createNavalHost(deps) {
     return deal;
   }
 
+  // ── rams (RAM-RETURN: scenes/naval/navalRams.js, the law systems/naval/navalRam.js) ────────────────────────────────
+  const rams = createNavalRams({
+    ships: () => sea.values(), get: (id) => sea.get(id), myBoats, myId, now: () => clock, seaY: () => deps.seaY(), random,
+    boatPose, hullBox, state: myBoatState, boarding: () => boarding, called: (e) => calledName(e),
+    fair: (e) => hostileToMe(e) || !NAVAL_FACTIONS[e.ship.cls.faction]?.lawful,   // AUDIT RAM-RETURN A1: never the first act of fire on a lawful ship
+    strike: (e, hurt, by) => strike(e, hurt, by), sendHit: (d) => deps.sendHit?.(d),
+    charge: (e) => { chargePlayer('fire', e); e.myBlowAt = clock; },   // an act of fire, as a ball's - her sinking mine to answer for
+    hit: (at, dir) => effects.hit(at, dir, true), sound: (k, at, v) => sound(k, at, v), shake: (k) => deps.shake?.(k), mid: (x, sec) => deps.mid?.(x, sec),
+  });
+
   // ── the frame ────────────────────────────────────────────────────────────────────────────────────────────────────
   /**
    * One frame of the sea, the streaming world's exterior only. `paused` holds every clock (the shots, the ships, the
@@ -4031,6 +4043,7 @@ export function createNavalHost(deps) {
     knowStep();   // SPYGLASS: what this frame teaches me of each ship
     siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth
     if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)
+    rams.helm(boat);   // RAM-RETURN: my stem, on the hulls as this frame poses them (AUDIT NAV1: never the last frame's)
     poseMyFires(total);
     feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke
     // the aim, on the hulls as this frame stands them (AUDIT NAV1: it read the last frame's, a ship's way behind)
@@ -4521,6 +4534,7 @@ export function createNavalHost(deps) {
       } else if (out.grapple && out.grapple !== myId() && sea.has(out.grapple) && !s.lashed) lashPrize(e, sea.get(out.grapple));   // SEA-PEACE: alongside the ship that struck to her
     }
     stepPrizes();
+    rams.galleys();   // RAM-RETURN: a galley's ram on the ship she fights
     separateHulls();
     // NAV-R: a raider of mine sunk, struck, taken or boarding, or one that chased me and lost me, is spent for its life
     for (const e of sea.values()) {
@@ -4805,7 +4819,8 @@ export function createNavalHost(deps) {
     }
     const entry = ownByN(hit.n);   // AUDIT NAV1 (online #8): by her number, whatever id she was minted under
     if (!entry) return false;
-    const hurt = { hull: hit.hull, sail: hit.sail, crew: ballMen(hit.crew, random()), fire: hit.fire };   // TOUGHER-SHIPS: the men said are a gun's (shotMen), her toughness reckoned here - an older build's word the same
+    const hurt = { hull: hit.hull, sail: hit.sail, crew: ballMen(hit.crew, random()), fire: hit.fire };   // TOUGHER-SHIPS: the men said are a gun's (shotMen) or a ram's, her toughness reckoned here - an older build's word the same
+    if (hit.ram && !rams.peer(entry, hurt)) return true;   // AUDIT RAM-RETURN A3: a ram, to her line as I stand her - none on a ship struck since
     strike(entry, hurt, from, true, strayOnAlly(entry, hurt, from));   // a player's blow - SEA-EASE: a stray on an aid weighed as mine
     return true;
   }
@@ -5145,6 +5160,7 @@ export function createNavalHost(deps) {
     hailCalls.clear();   // SHIP-WATCH
     flashes.length = 0;
     aiming = false; aim = null; aimHit = null;
+    rams.clear();   // RAM-RETURN: my way's memory
     for (const [b, f] of [...myFires]) douseMine(b, f);
     galleonGuns.clear();   // AUDIT GN2-GN5: every gun deck at rest - the sea's frame steps none while the arc is off
     if (boarding) {

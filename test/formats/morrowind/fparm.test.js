@@ -211,10 +211,15 @@ test('MW-D10: the neck takes 0.75 of the look, and the port pitches the OTHER WA
   // OBJECT ROOT's frame and conjugates it into the node's own; with an
   // axis-aligned neck that is the identity, so armfp.nif TURNS its neck
   // 8 degrees and a port that rotates in the local frame moves the eye
-  // somewhere else.
+  // somewhere else. BOW-AIM (Field-Bugs-2026-10-26c.md): OSG's
+  // `worldOrient * rotate * worldOrient^-1 * localRot` is a ROW-vector
+  // product; in this port's column convention it is localRot * W^T *
+  // rotate * W (mwFirstPerson.js rootSpaceTurn), the letters' copy turned
+  // retail's neck the other way - MW-D20 below works it by hand.
   const src2 = rd('src/formats/morrowind/mwFirstPerson.js');
-  assert.match(src2, /mat33Mul\(mat33Mul\(mat33Mul\(w, rotate\), transpose33\(w\)\), local\.rotation\)/,
-    'worldOrient * rotate * worldOrient^-1 * localRot, in that order');
+  assert.match(src2, /mat33Mul\(mat33Mul\(mat33Mul\(local, transpose33\(w\)\), rotate\), w\)/,
+    'localRot * W^T * rotate * W - OSG\'s row-vector line in this port\'s column convention');
+  assert.match(src2, /const rotation = rootSpaceTurn\(local\.rotation, w, rotate\);/, 'and the neck turns through it');
 
   // AND THE SIGN CONVERSION. Morrowind counts pitch downward; this port
   // counts it upward (world.js SUBTRACTS the mouse's y delta). Passed
@@ -895,9 +900,14 @@ test('MW-D20: the neck conjugates in the OBJECT ROOT frame - the file root\'s ro
   // armneckx's root is Bip01 rotated Rz90 (kept by rule 34). The
   // reference's RotateController conjugates by the orientation relative
   // to mObjectRoot, which sits ABOVE the file root - so W includes that
-  // Rz90 and pitching the neck becomes a rotation about the GRAPH's Y:
-  //   W = Rz90;  W . Rx(-t) . W^T = Ry(-t)
-  //   rows: [c,0,-s],[0,1,0],[s,0,c]  with t = pitch * (0.75+0.25*aim)
+  // Rz90, and the neck's WORLD must turn by Rx(-t) in the graph's frame:
+  //   world' = Rx(-t) . W   with the neck's local the identity, so
+  //   local' = W^T . Rx(-t) . W = Ry(t) (Rz90 takes X to Y; W^T takes it
+  //   back, to -Y)
+  //   rows: [c,0,s],[0,1,0],[-s,0,c]  with t = pitch * (0.75+0.25*aim)
+  // BOW-AIM (Field-Bugs-2026-10-26c.md): this pin had W . Rx(-t) . W^T =
+  // Ry(-t) - OSG's line read in this port's column convention - whose
+  // world is Rx(+t) . W: the look's pitch the other way about the root.
   // Under the retired root-relative frame W was identity and the answer
   // stayed Rx(-t) - a neck that pitches about the wrong axis the moment
   // a retail root carries rotation.
@@ -917,11 +927,16 @@ test('MW-D20: the neck conjugates in the OBJECT ROOT frame - the file root\'s ro
   poseAssembly(assembly, { sampleTrack: st, neckPitch: 0.4, neckAim: 1 });
   const rot = [...assembly.pose.get(skel.byName.get('bip01 neck')).rotation];
   const c = Math.cos(0.4); const s = Math.sin(0.4);
-  const want = [c, 0, -s, 0, 1, 0, s, 0, c];
+  const want = [c, 0, s, 0, 1, 0, -s, 0, c];
   for (let i = 0; i < 9; i++) {
     assert.ok(Math.abs(rot[i] - want[i]) < 1e-5,
-      `element ${i}: ${rot[i]} vs Ry(-0.4)'s ${want[i]}`);
+      `element ${i}: ${rot[i]} vs Ry(0.4)'s ${want[i]}`);
   }
+  // and the world it stands in: the root's turn about the graph's X, laid on the file root's Rz90 (a forward axis that
+  // tips down - toward -Z - for a positive, Morrowind-downward pitch)
+  const world = [...assembly.mats.get(skel.byName.get('bip01 neck')).a];
+  const turned = [0, -1, 0, c, 0, s, -s, 0, c];   // Rx(-0.4) . Rz90, rows (Rz90: [0,-1,0],[1,0,0],[0,0,1])
+  for (let i = 0; i < 9; i++) assert.ok(Math.abs(world[i] - turned[i]) < 1e-5, `world element ${i}: ${world[i]} vs Rx(-0.4).Rz90's ${turned[i]}`);
 });
 
 test('MW-D22: mType reads from byte EIGHT, pinned against a layout the writer cannot share', async () => {

@@ -11049,6 +11049,26 @@
   "tr": "e3a8a155180a",
   "by": "claude-in-session"
  },
+ "features.mwShoulder.left": {
+  "en": "8ae1c34bd37f",
+  "tr": "dd25ddfd76db",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.note": {
+  "en": "1ddfce5b69bc",
+  "tr": "a6fbe903039e",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.right": {
+  "en": "954daa8b0033",
+  "tr": "b3e2d7a3d571",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.title": {
+  "en": "2a1bc9d46a00",
+  "tr": "47015fd0095f",
+  "by": "claude-in-session"
+ },
  "features.navalCombat.aimCamera": {
   "en": "cfc12726e349",
   "tr": "d82dbbf453b8",
@@ -22172,6 +22192,21 @@
  "naval.plaque.unnamed": {
   "en": "636b18003105",
   "tr": "ed2258e64489",
+  "by": "claude-in-session"
+ },
+ "naval.ram.galley": {
+  "en": "c694cf410e22",
+  "tr": "11f4b5fa092a",
+  "by": "claude-in-session"
+ },
+ "naval.ram.mine": {
+  "en": "78dda9b26926",
+  "tr": "6bea4d3f9e87",
+  "by": "claude-in-session"
+ },
+ "naval.ram.taken": {
+  "en": "54db41abdb97",
+  "tr": "e36b20e2bcae",
   "by": "claude-in-session"
  },
  "naval.refit.asks": {
