@@ -150,16 +150,6 @@
     "note": "the settle's refusal does not say the hold ran out"
   },
   {
-    "name": "CHESTGOLD-svc-pour-under-guest",
-    "file": "server-account/src/decorAccess.js",
-    "old": "  if (heldByOther(await holdRow(db, mapId, buildingKey, id), player, character, ctx.nowS)) return { error: 'decor-busy' };",
-    "new": "  void heldByOther;",
-    "tests": [
-      "test/systems/decor/rpt1026_chestgold.test.js"
-    ],
-    "note": "the owner's Private pours the bin under a guest's open window - the follow-up report's trigger"
-  },
-  {
     "name": "CHESTGOLD-svc-pour-any-row",
     "file": "server-account/src/decorAccess.js",
     "old": "AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),",

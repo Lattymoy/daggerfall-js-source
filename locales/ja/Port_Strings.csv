@@ -1163,6 +1163,7 @@ holdings.horse.boons.starving,"飢餓 - 食べるまで駆けません。餌を�
 holdings.wagon.boons.failing,"壊れかけていますが、まだ全速で進みます。"
 holdings.wagon.boons.rickety,"がたついていますが、まだ全速で進みます。"
 holdings.wagon.boons.sound,"頑丈 - そのぶん速く進みます。"
+inventory.store.chestAct,"その前に、チェストを閉じてください。"
 inventory.store.chestAlone,"荷車や袋を開く前に、チェストを閉じてください。"
 items.gold.sharedFull,"ここにはもう金貨が入りません。この入れ物はここにいる全員で共有しており、中の金貨の山ひとつは{max, number}枚までです。"
 items.gold.sharedRoom,"ここにはあと{n, number}枚の金貨しか入りません。この入れ物はここにいる全員で共有しており、中の金貨の山ひとつは{max, number}枚までです。"

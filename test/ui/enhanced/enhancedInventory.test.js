@@ -1575,13 +1575,14 @@ test('INV1: a drag equips through the one act, and never crosses a side', () => 
   // call, arms and all - the lit torch goes out when it leaves the pack
   // (AUDIT 26 F157) and a map is an INTERCEPTION, not a transfer (F156).
   const stow = code.slice(code.indexOf('function stow(item)'), code.indexOf('function take(item)'));
-  assert.match(stow, /if \(plan\.map\) \{ use\(item, deps\.items\?\.\(\) \?\? \[\]\); return; \}/, 'the map reveals rather than landing on the floor');
+  // PIN MOVED (AUDIT RPT1026 B5): but never over a chest that settles its own pieces, where the map moves as a piece
+  assert.match(stow, /if \(plan\.map && !settlesOwnPieces\(deps\)\) \{ use\(item, deps\.items\?\.\(\) \?\? \[\]\); return; \}/, 'the map reveals rather than landing on the floor');
   // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): and whether it is put back into its owner's keeping (`putBack`;
   // STOLEN-GOODS AUDIT S1: the keeping itself, `returnTo`)
   assert.match(stow, /applyTransfer\(item, \{ \.\.\.plan, amount \}, deps\.items\?\.\(\) \?\? \[\], to, \{ entity: deps\.entity, fromLocal: true, returnTo: theftTarget\(deps, sessionState\(\)\) \}\);/,
     'the entity and the provenance ride, or clearLightSourceOnLeave is a no-op and a dropped torch keeps lighting the player');
   const take = code.slice(code.indexOf('function take(item)'), code.indexOf('function take(item)') + 1400);
-  assert.match(take, /if \(plan\.map\) \{ use\(item, remoteTarget\(deps, sessionState\(\)\)\); return; \}/, 'F156: either direction');
+  assert.match(take, /if \(plan\.map && !settlesOwnPieces\(deps\)\) \{ use\(item, remoteTarget\(deps, sessionState\(\)\)\); return; \}/, 'F156: either direction');
 });
 
 // ── AUDIT INV2 (2026-09-15, Mac: "I want it to be perfect") ──────

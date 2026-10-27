@@ -183,7 +183,9 @@ test('RPT1026-CHESTGOLD a chest left open past its hold moves nothing - the gold
   assert.equal(recordOf(t.env, M.id).items.some((it) => it.group === 'Currency'), false, 'no pile of it in the pack');
 });
 
-test('RPT1026-CHESTGOLD the owner cannot set the chest private under a guest\'s open window, and the guest\'s gold lands once', async () => {
+// PIN MOVED (AUDIT RPT1026 B2): the owner's change is never refused by a guest's open window (a guest who kept the hold
+// shut the owner out for good) - the guest's gold is the owner's chest's, poured, and the guest's close moves nothing.
+test('RPT1026-CHESTGOLD the owner sets the chest private under a guest\'s open window: the gold is in the owner\'s chest once, never the guest\'s purse as well', async () => {
   const t = await stand();
   const { aldric, mara, A, M } = await sharedChest(t);
   layBin(t.env, coinRow(700));
@@ -192,15 +194,16 @@ test('RPT1026-CHESTGOLD the owner cannot set the chest private under a guest\'s 
   assert.equal(await g.take(g.chest().find((it) => it.group === 'Currency')), true);
   const owner = recordOf(t.env, A.id).goldPieces;
   const shut = await t.call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, realm: realmAt(t.env, A.id), op: 'set', id: 'p1', kind: 'storage', mode: 'private' }, aldric);
-  assert.equal(shut.body?.error, 'decor-busy', JSON.stringify(shut.body));
-  assert.equal(binGold(t.env), 700, 'nothing poured into the owner\'s save');
+  assert.equal(shut.status, 200, JSON.stringify(shut.body));
+  assert.deepEqual((shut.body.restored ?? []).map((it) => it.stackCount), [700], 'the pile goes home to the owner\'s chest');
+  assert.equal(binGold(t.env), 0);
   await g.close();
-  assert.equal(g.entity.goldPieces, PURSE + 700);
-  assert.equal(recordOf(t.env, M.id).goldPieces, PURSE + 700);
-  const after = await t.call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, realm: realmAt(t.env, A.id), op: 'set', id: 'p1', kind: 'storage', mode: 'private' }, aldric);
-  assert.equal(after.status, 200, JSON.stringify(after.body));
-  assert.equal(after.body.restored, undefined, 'the bin is empty: nothing of the guest\'s gold comes back to the owner');
-  assert.equal(recordOf(t.env, A.id).goldPieces, owner, 'the owner\'s purse never moved');
+  assert.ok(g.said.includes('You cannot use that.'), `the guest's close is refused: ${g.said}`);
+  assert.equal(g.entity.goldPieces, PURSE, 'the guest\'s purse never took it');
+  assert.equal(recordOf(t.env, M.id).goldPieces, PURSE);
+  assert.equal(recordOf(t.env, A.id).goldPieces, owner, 'the owner\'s purse never moved - the gold is a pile in the owner\'s chest');
+  const poured = (recordOf(t.env, A.id).sceneCache?.scenes ?? []).flatMap((s) => s?.decorItems?.p1 ?? []);
+  assert.deepEqual(poured.filter((it) => it.group === 'Currency').map((it) => it.stackCount), [700], 'once');
 });
 
 test('RPT1026-CHESTGOLD a pour reads the bin it empties: a settle landing between the read and the batch refuses it', async () => {

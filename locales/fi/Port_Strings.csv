@@ -1163,6 +1163,7 @@ holdings.horse.boons.starving,"Nääntyvä - ei laukkaa ennen kuin se syö. Ruok
 holdings.wagon.boons.failing,"Hajoamassa, mutta kulkee yhä täyttä vauhtia."
 holdings.wagon.boons.rickety,"Huojuva, mutta kulkee yhä täyttä vauhtia."
 holdings.wagon.boons.sound,"Vankka - siksi se kulkee nopeammin."
+inventory.store.chestAct,"Sulje arkku ennen kuin teet sen."
 inventory.store.chestAlone,"Sulje arkku ennen kuin avaat vankkurisi tai laukkusi."
 items.gold.sharedFull,"Tänne ei mahdu enää kultaa. Kaikki täällä jakavat tämän säiliön, ja yhteen kultakasaan siinä mahtuu enintään {max, number}."
 items.gold.sharedRoom,"Tänne mahtuu enää vain {n, number} kultakolikkoa. Kaikki täällä jakavat tämän säiliön, ja yhteen kultakasaan siinä mahtuu enintään {max, number}."

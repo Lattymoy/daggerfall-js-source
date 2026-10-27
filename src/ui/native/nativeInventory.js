@@ -93,6 +93,7 @@ import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical I
 // this window decide.
 import {
   openState, remoteTarget, planWagonToggle, closeSession, holdChestSave, settlesOwnPieces,   // RPT1026-CHESTGOLD: a store that settles its own pieces
+  chestActRefusal,   // AUDIT RPT1026 B1/B4: and its pack changes by the chest's door alone
   remoteTargetType, REMOTE_TARGET_TYPES,   // AUDIT MERGE-PLUS C3: whether a Remove drops on the ground
   // G5: the drop icon's five laws - the OnPush seed, CanChangeDropIcon,
   // the cycling arithmetic and dropIconIdxs' record lookup.
@@ -901,6 +902,7 @@ export class NativeInventoryWindow {
   }
 
   _use(it, collection, target = null) {
+    { const no = chestActRefusal(this.hooks); if (no) { this._refuse(no); return; } }   // AUDIT RPT1026 B1: never over a chest's copy of the pack
     this._useResult(useItem(it, collection, {
       target, chooseTarget: target == null,   // MEND-AIM: this window can ask which piece a kit mends
       entity: this.hooks.entity,
@@ -1024,7 +1026,7 @@ export class NativeInventoryWindow {
       // runs, the item is consumed, nothing lands in the destination.
       // The use arm IS RecordLocationFromMap here, no-seam pending law
       // included.
-      if (plan.map) { this._use(it, this.hooks.items()); return; }
+      if (plan.map && !settlesOwnPieces(this.hooks)) { this._use(it, this.hooks.items()); return; }   // AUDIT RPT1026 B5: into a chest it is put, not read
       // CM5: the split popup (:1515-1539), BELOW the quest arm the plan
       // already ran and above DoTransferItem. The popup's handler is
       // the same transfer with the typed count.
@@ -1050,6 +1052,7 @@ export class NativeInventoryWindow {
       // U8g: EquipItem live (the unequipped swap-outs stay in the
       // bag and reappear in the lists)
       if (this._refuseForbidden(it)) return;   // S23
+      { const no = chestActRefusal(this.hooks, { wear: true, item: it }); if (no) { this._refuse(no); return; } }   // AUDIT RPT1026 B4: a piece the pack does not hold yet
       if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
       return;
     }
@@ -1133,7 +1136,7 @@ export class NativeInventoryWindow {
         getQuest: this.hooks.getQuest ?? null,
       });
       if (!plan.ok) { this._refuse(plan.refusal); return; }
-      if (plan.map) { this._use(it, remote); return; }   // F156: either direction
+      if (plan.map && !settlesOwnPieces(this.hooks)) { this._use(it, remote); return; }   // F156: either direction; AUDIT RPT1026 B5: off a chest it is taken, not read
       // CM5: the same split gate on this side (:1515-1539); the tail
       // below is DoTransferItem's, run with the typed count.
       const perform = (amount) => this._held('take', it, amount, () => {

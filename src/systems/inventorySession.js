@@ -64,6 +64,19 @@ export const WAGON_REFUSAL = Object.freeze({
  *  on the pack. Refused in both skins' ladders until the chest is shut. */
 export const settlesOwnPieces = (deps = {}) => typeof deps.loot?.commit === 'function';
 export const CHEST_ALONE_REFUSAL = Object.freeze({ reason: 'chestAlone', get text() { return t('inventory.store.chestAlone', 'Shut the chest before you open your wagon or your bag.'); } });
+/** AUDIT RPT1026 B1: AND ITS PACK CHANGES BY THE CHEST'S DOOR ALONE. The window's pack is its copy until the close, and the
+ *  chest's list the window's until the settle, so an act that took a piece out of either - a Use (a potion drunk, a meal
+ *  eaten), a Salvage, the batch's, a Dismantle - took it out of that list alone: the character's pack (or the chest's bin)
+ *  kept it, and what the act gave landed in the copy, onto a stack the character's pack shares (a salvage's shards). Any
+ *  consumable used for free, and shards and stones out of nothing, at every opening of a chest the player shares even
+ *  with nobody. AUDIT RPT1026 B4: and a piece taken this window is not worn from the pack either - the Equip-mode take's
+ *  law, which a Remove and then a Wear walked round: the doll wore a piece the chest still held. Refused in both skins
+ *  until the chest is shut; `wear` asks of one piece, and the character's own may be worn. */
+export const CHEST_ACT_REFUSAL = Object.freeze({ reason: 'chestAct', get text() { return t('inventory.store.chestAct', 'Shut the chest before you do that.'); } });
+export function chestActRefusal(deps = {}, { wear = false, item = null } = {}) {
+  if (!settlesOwnPieces(deps)) return null;
+  return wear && (deps.entity?.items ?? []).includes(item) ? null : CHEST_ACT_REFUSAL;
+}
 
 /** Items.Contains(Transportation, Small_cart) (:1236). The CART IS IN
  *  THE BAG, which is why AUDIT 24 ui matters: dropping it into its own

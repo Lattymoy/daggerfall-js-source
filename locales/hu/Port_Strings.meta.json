@@ -5809,6 +5809,11 @@
   "tr": "9d6f97a0454d",
   "by": "claude-in-session"
  },
+ "inventory.store.chestAct": {
+  "en": "88d2f1cb9aea",
+  "tr": "65a8ed4ad2d1",
+  "by": "claude-in-session"
+ },
  "inventory.store.chestAlone": {
   "en": "ff8f623bd887",
   "tr": "7f7d27151854",
