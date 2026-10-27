@@ -140,7 +140,7 @@
   {
     "name": "DOMAIN2-the-relay-minimum",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 271;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 272;",
     "new": "export const GUILD_INSTANCE_RELAY_MIN = 208;",
     "tests": [
       "test/net/domain2_castles.test.js"

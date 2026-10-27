@@ -1,0 +1,182 @@
+[
+  {
+    "name": "LEVEL-45-cap-one-higher",
+    "file": "src/systems/levelCap.js",
+    "old": "export const LEVEL_CAP = 45;",
+    "new": "export const LEVEL_CAP = 46;",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "the cap moved off the owner's 45"
+  },
+  {
+    "name": "LEVEL-45-sum-unread",
+    "file": "src/systems/advancement.js",
+    "old": "const calculated = Math.min(LEVEL_CAP, calculatePlayerLevel(",
+    "new": "const calculated = Math.min(Infinity, calculatePlayerLevel(",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "Daggerfall's sum levels past 45 again"
+  },
+  {
+    "name": "LEVEL-45-latched-level-applied",
+    "file": "src/systems/advancement.js",
+    "old": "  if (atLevelCap(entity)) {\n    entity.readyToLevelUp = false;",
+    "new": "  if (false) {\n    entity.readyToLevelUp = false;",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "a level latched before the cap is spent at it"
+  },
+  {
+    "name": "LEVEL-45-virtue-bar-unread",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (atLevelCap(entity)) { releaseCapLatch(entity); return false; }",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "the virtue bar levels past 45"
+  },
+  {
+    "name": "LEVEL-45-virtue-commit-unread",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (atLevelCap(entity)) { entity.readyToLevelUp = false; entity.pendingLevel = null; return false; }",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "a virtue level latched before the cap is committed at it"
+  },
+  {
+    "name": "LEVEL-45-box-measures-a-next-level",
+    "file": "src/ui/charsheet.js",
+    "old": "  if (atLevelCap(entity)) return 100;",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "the Level box at 45 reads a fraction of a level that never comes"
+  },
+  {
+    "name": "LEVEL-45-bar-measures-a-next-level",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  if (atLevelCap(e)) return { now: 1, max: 1,",
+    "new": "  if (false) return { now: 1, max: 1,",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "the level-up bar at 45 reads a fraction of a level that never comes"
+  },
+  {
+    "name": "LEVEL-45-load-holds-the-latch",
+    "file": "src/systems/save/save.js",
+    "old": "  releaseCapLatch(entity);   // LEVEL-45 (AUDIT FB1026d C1): a level owed past the cap, saved before it, is no window to open\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C1: a save from before the cap reopens a level-up window that cannot close"
+  },
+  {
+    "name": "LEVEL-45-door-opens-a-dead-window",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  releaseCapLatch(deps.entity);   // LEVEL-45 (AUDIT FB1026d C1): a level latched past the cap opens nothing\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C1: F5 opens the virtue screen with no level to give"
+  },
+  {
+    "name": "LEVEL-45-rollout-door-unguarded",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  releaseCapLatch(entity);   // LEVEL-45 (AUDIT FB1026d C1)\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C1: the Growth tab and the enhanced face build a rollout with no level"
+  },
+  {
+    "name": "LEVEL-45-sum-check-holds-the-latch",
+    "file": "src/systems/advancement.js",
+    "old": "  releaseCapLatch(entity);\n  const calculated",
+    "new": "  const calculated",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C1: the sum's check leaves a latch past the cap standing"
+  },
+  {
+    "name": "LEVEL-45-virtue-check-holds-the-latch",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  if (atLevelCap(entity)) { releaseCapLatch(entity); return false; }",
+    "new": "  if (atLevelCap(entity)) return false;",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C1: the bar's check leaves a latch past the cap standing"
+  },
+  {
+    "name": "LEVEL-45-confirm-never-closes",
+    "file": "src/ui/virtueLevelUp.js",
+    "old": "    if (ok || !this.entity?.readyToLevelUp) this.done = true;",
+    "new": "    if (ok) this.done = true;",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C1: the soft-lock - Ascend, Escape and Tab all confirm, and the window never closes"
+  },
+  {
+    "name": "LEVEL-45-book-let-go",
+    "file": "src/systems/levelCap.js",
+    "old": "  if (!entity?.readyToLevelUp || entity.oghmaLevelUp || !atLevelCap(entity)) return false;",
+    "new": "  if (!entity?.readyToLevelUp || !atLevelCap(entity)) return false;",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "the Oghma Infinium read at the cap, its thirty points lost"
+  },
+  {
+    "name": "LEVEL-45-rollout-unguarded",
+    "file": "src/ui/charsheet.js",
+    "old": "    releaseCapLatch(e);   // LEVEL-45 (AUDIT FB1026d C2): no pool handed out with no level to go with it\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C2: the classic sheet hands out the bonus pool with no level"
+  },
+  {
+    "name": "LEVEL-45-crossing-holds-the-latch",
+    "file": "src/systems/realmCustoms.js",
+    "old": "  releaseCapLatch(snap);   // LEVEL-45: an Oblivion character's latch at 45 or past it owes no level online either\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C2: an Oblivion character at the cap brought online owes a level - a free pool on the classic skin"
+  },
+  {
+    "name": "LEVEL-45-cap-read-as-one-level",
+    "file": "src/systems/levelCap.js",
+    "old": "export const atLevelCap = (entity) => (entity?.level ?? 1) >= LEVEL_CAP;",
+    "new": "export const atLevelCap = (entity) => (entity?.level ?? 1) === LEVEL_CAP;",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d C5: a virtue character at 46 levels on"
+  },
+  {
+    "name": "LEVEL-45-box-cap-text-dropped",
+    "file": "src/ui/charsheet.js",
+    "old": "this.child = new ActionTextBox([atLevelCap(this.entity) ? t(",
+    "new": "this.child = new ActionTextBox([false ? t(",
+    "tests": [
+      "test/systems/fb1026d_levelcap.test.js"
+    ],
+    "note": "AUDIT FB1026d E3: the Level box measures a next level at the cap"
+  }
+]

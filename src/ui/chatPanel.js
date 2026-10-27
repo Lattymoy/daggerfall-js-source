@@ -258,7 +258,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-suggest-icon { width: 28px; height: 28px; flex: none; object-fit: contain; image-rendering: pixelated;
   background: rgba(0, 0, 0, 0.25); border-radius: 2px; }
 .dfchat-suggest-label { flex: none; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dfchat-suggest-worn { flex: none; margin-left: auto; font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+.dfchat-suggest-worn { flex: none; margin-left: auto; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
   color: var(--brass, #c08a3e); }
 /* ...and it is the DESKTOP's: every phone keyboard carries an emoji key of its own, and on a 320px phone this button
    took the field down to 67px (tools/chatChanProbe.mjs). The touch skin keeps the field; the shortcodes work on both. */

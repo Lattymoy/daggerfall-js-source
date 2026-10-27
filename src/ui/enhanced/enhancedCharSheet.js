@@ -188,7 +188,7 @@ export function sheetModel(entity) {
       blocked: masterSkillsBlockReason(e),
       about: MASTER_SKILLS_ABOUT,
       toggle: () => setMasterSkills(e, !masterSkillsActive(e)),
-      // SOFTCAP4: the 2/2/1 masteries - each group's count, the skills that can be mastered right now (with their
+      // SOFTCAP4: the 3/2/1 masteries (MASTER-THREE) - each group's count, the skills that can be mastered right now (with their
       // box's rows: what it does, that it is permanent, the count before and after), and the one door that masters
       slots: Object.keys(MASTERY_GROUP_NAMES).map((g) => ({ group: g, label: MASTERY_GROUP_NAMES[g], ...masterySlots(e, g) })),
       candidates: masteryCandidates(e).map((id) => ({ id, name: SKILL_NAMES[id], rows: masteryChoiceRows(e, id, SKILL_NAMES) })),

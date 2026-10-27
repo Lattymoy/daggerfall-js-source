@@ -8123,7 +8123,8 @@ the wire, the relay and the receiver are as they were. Raising the bound instead
 crafted gift - Mac's call, not taken here. `net/wire.js`'s comment over CAST_LEVEL_MAX still says "A player is level
 30 at most (classic's cap)", which is wrong; the file is the relay's fingerprinted law (SLAM8 hashes its bytes, so a
 comment edit is a relay version and a redeploy), and the sentence is to be corrected with the next relay change -
-the bound is the frame's, and the sender clamps to it.
+the bound is the frame's, and the sender clamps to it. (Corrected with MASTER-THREE's relay change, world271: AUDIT
+FB1026d II C4, `01-Overview/bugs/Field-Bugs-2026-10-26d.md` - the level cap is 45 now, LEVEL-45, and the bound stays 30.)
 
 Pinned in `test/systems/allycast.test.js` PEER-CAST (every level from 1 to a million mints a frame the wire takes, clamped at
 30; the magic host driven with the wire's own door - a level-34 CasterOnly Heal leaves at 30 and the caster is not

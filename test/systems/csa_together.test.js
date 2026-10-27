@@ -400,7 +400,7 @@ test('CSA-K: the host - another\'s boat stands in MY collider beside my boats, a
   // and to ram (test/systems/naval/nav_h_host.test.js pins its body) - and every peer's boat joins them on the street, aboard it or not
   // (FIELD BUGS 2026-10-01b: test/scenes/fb1001b_peerboats.test.js runs it) - and below deck in a ship's cabin, where the street's
   // collider keeps the whole fleet (CABIN-HULL, FIELD BUGS 2026-10-03b: test/systems/comeSailAway/fb1003b_cabinhull.test.js runs it)
-  assert.match(sync, /const peers = \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \|\| modes\?\.sailingCabin \? csa\.peerBoats : \[\];[^\n]*\n\s+for \(const boat of peers\.length \? \[\.\.\.csaColliderBoats\(\), \.\.\.peers\] : csaColliderBoats\(\)\) \{/);
+  assert.match(sync, /const peers = \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \|\| modes\?\.sailingCabin \? csa\.peerBoats : \[\];[^\n]*\n\s+for \(const boat of hullsStood\(peers\.length \? \[\.\.\.csaColliderBoats\(\), \.\.\.peers\] : csaColliderBoats\(\), /);   // PIN MOVED (AUDIT FB1026d D1): less the players' hulls passing through the deck I stand on (comeSailAway/peerHulls.js)
   const upd = cut(WORLD, 'function csaUpdate(dt) {', '\n  }\n');
   assert.match(upd, /csaSyncColliders\(\);\n\s+csaPeersFrame\(dt\);[^\n]*\n\s+if \(_csaMovedPlayer\) cam\.pos = player\.eyeAt\(\);/, 'after the colliders, before the eye');
   const peersFrame = cut(WORLD, 'function csaPeersFrame(dt) {', '\n  }\n');
@@ -411,7 +411,8 @@ test('CSA-K: the host - another\'s boat stands in MY collider beside my boats, a
   assert.match(peersFrame, /ground: deckGround,/);
   assert.match(peersFrame, /carry: deckCarry,/);
   assert.match(WORLD, /const deckMayCarry = \(\) => walkMode && playerSpawned && !_teleporting && !_traveling && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !\(playerEntity\.health <= 0 \|\| modes\?\.deathUp\?\.\(\)\);/);
-  assert.match(WORLD, /const deckGround = \(b\) => \(!player\.grounded \? null : typeof player\.groundKey === 'string' && player\.groundKey\.startsWith\(`csaBoat:\$\{csaBoatId\(b\)\}:`\) \? 'boat' : 'other'\);/, 'its own buckets are the boat\'s ground');
+  // PIN MOVED (AUDIT FB1026d D1): in the air, a hull passing through my deck is no deck to land on
+  assert.match(WORLD, /const deckGround = \(b\) => \(!player\.grounded \? \(hullPassesMyDeck\(b\) \? 'other' : null\) : typeof player\.groundKey === 'string' && player\.groundKey\.startsWith\(`csaBoat:\$\{csaBoatId\(b\)\}:`\) \? 'boat' : 'other'\);/, 'its own buckets are the boat\'s ground');
   // PIN MOVED (AUDIT BODY-MOTION RIG-6): the deck's turn handed to the motor too (carryTurn), so the body's legs ride it
   assert.match(WORLD, /const deckCarry = \(d, yawDeg\) => \{ player\.carryBy\(d\[0\], d\[1\], d\[2\]\); cam\.yaw \+= \(yawDeg \* Math\.PI\) \/ 180; player\.carryTurn\?\.\(\(yawDeg \* Math\.PI\) \/ 180\); _csaMovedPlayer = true; \};/);
   assert.match(peersFrame, /if \(boat \|\| _csaBuckets\.size\) csaSyncColliders\(\);/, 'the boats where they stand now');

@@ -166,6 +166,7 @@ import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a 
 import { BOAT_ACTIONS } from './comeSailAwayActions.js';   // HUD-HELM: the helm keys' table, a leaf the HUD's helm panel reads
 import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fight
 import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOAT-OWN: her Animators and particle systems by her range, the far law
+import { deckPressed } from '../../scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d II E2: the deck a ladder set me on
 import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
@@ -1877,6 +1878,7 @@ export function createComeSailAwayRuntime(deps) {
     deps.helm.setFacing(at.yaw, 0);   // SetHorizontalFacing(child.forward)
     deps.helm.alignToGround?.(3);   // GameObjectHelper.AlignControllerToGround(controller, 3f)
     deps.helm.finishBoarding?.();   // The ladder must not carry incoming fall or air momentum onto the deck.
+    deckPressed(boat);   // AUDIT FB1026d II E2 (the port's own - the mod has no other players' hulls): the deck I stand on now, whatever deck I stood on before (scenes/comeSailAway/peerHulls.js)
   }
   /** TriggerDoor (5542-5572): the door the trigger hangs under, its Animator's Opened turned over. */
   function TriggerDoor(hit) {

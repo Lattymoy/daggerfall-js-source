@@ -189,8 +189,8 @@ test('SPAWN-WORLD the clocks on the wire: a spawn past the Bay\'s row is its cel
   assert.equal(owRowSane([nx, ny, 100]), false, 'a pixel the roll stands none on is junk');
   assert.equal(owRowInCell(row, worldRoom(sx, sy)), true, 'in its own cell, west and north of the Bay\'s corner');
   assert.deepEqual(validOwOut(validOwIn({ k: 'dg', rows: [row] })), { k: 'dg', rows: [row] }, 'the word round-trips');
-  assert.equal(OW_WORLD_RELAY_MIN, 271);
-  assert.deepEqual([relaySupportsOwWorld('world271'), relaySupportsOwWorld('world270'), relaySupportsOwWorld('x')], [true, false, false], 'world270 refuses the word whole - and closes the socket');   // PIN MOVED (the second merge of main into #1184): the gate is world271, past CHAT-POST's world270 (main's), which refuses
+  assert.equal(OW_WORLD_RELAY_MIN, 272);
+  assert.deepEqual([relaySupportsOwWorld('world272'), relaySupportsOwWorld('world271'), relaySupportsOwWorld('x')], [true, false, false], 'world271 refuses the word whole - and closes the socket');   // PIN MOVED (the third merge of main into #1184): the gate is world272, past MASTER-THREE's world271 (main's), which refuses; world271 at the second merge, past CHAT-POST's world270
   const online = rd('src/net/online.js');
   assert.match(online, /k === 'dg' \? validOwIn\(\{ k, rows: payload\.filter\(\(r\) => owRowSane\(r\) && owRowInCell\(r, room\) && \(this\.owWorldOk \|\| bayMapPixel\(r\?\.\[0\], r\?\.\[1\]\)\)\)/, 'a row past the Bay to the relay that reads it alone');
   assert.match(online, /if \(primary\) this\.owWorldOk = relaySupportsOwWorld\(relayV\);/);

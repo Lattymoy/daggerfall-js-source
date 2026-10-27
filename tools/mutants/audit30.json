@@ -166,8 +166,8 @@
   {
     "name": "AUDIT30-L4-the-mark-unsigned",
     "file": "server-account/src/professions.js",
-    "old": "a: marked === 1 && maker !== null, u, f: hand, v: MINT_VERSION }",
-    "new": "a: false, u, f: hand, v: MINT_VERSION }",
+    "old": "a: marked === 1 && maker !== null, u, f: hand, v: craftMintVersion(mint) }",
+    "new": "a: false, u, f: hand, v: craftMintVersion(mint) }",
     "tests": [
       "test/net/audit30_service.test.js"
     ],

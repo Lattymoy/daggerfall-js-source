@@ -155,7 +155,7 @@ export class VirtueLevelUpScreen {
   confirm() {
     if (this.purse !== 0) { this.refused = true; return false; }
     const ok = commitVirtueLevelUp(this.entity, this.deltas, this.purse, this.s, this._rolls);
-    if (ok) this.done = true;
+    if (ok || !this.entity?.readyToLevelUp) this.done = true;   // AUDIT FB1026d C1: a commit refused at the cap let the level go - the window closes
     return ok;
   }
 

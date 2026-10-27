@@ -204,8 +204,8 @@
  {
   "name": "WW6-relay-floor",
   "file": "src/net/wire.js",
-  "old": "export const RAID_WORLD_RELAY_MIN = 271;",
-  "new": "export const RAID_WORLD_RELAY_MIN = 270;",
+  "old": "export const RAID_WORLD_RELAY_MIN = 272;",
+  "new": "export const RAID_WORLD_RELAY_MIN = 271;",
   "tests": [
    "test/world/worldWide/ww6_raids.test.js"
   ]

@@ -38,7 +38,7 @@ export const INSTANCE_EPOCH_HEX = 8;
 export const INSTANCE_TAG_SOURCE = '\\.i[0-9a-f]{16}\\.[0-9a-f]{8}';
 /** DOMAIN2: the relay that admits a guild's own instance - a castle's (instanceAdmission's `guild` arm): an older one
  *  refuses every member but staff, so no page offers a castle's instance until its relay says this. */
-export const GUILD_INSTANCE_RELAY_MIN = 271;   // world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)
+export const GUILD_INSTANCE_RELAY_MIN = 272;   // world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)
 /** Does the relay whose welcome said `v` admit a guild's instance? */
 export const relaySupportsGuildInstances = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= GUILD_INSTANCE_RELAY_MIN; };
 /** DOMAIN2 (AUDIT DOMAINS R2): THE ROOMS A GUILD MAY OWN - the castles', each a crown city's own dungeon whole (its key the

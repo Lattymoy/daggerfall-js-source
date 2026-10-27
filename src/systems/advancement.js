@@ -30,6 +30,7 @@ import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 import { ONLINE_BONUS_POOL } from './levelEven.js';   // LEVEL-EVEN: online, every level's pool is 5
 import { refreshOnlineLayer } from './renownLayer.js';   // LEVEL-EVEN: the online health floor read again over the level's new maximum
 import { isOnlinePage } from './online/onlineLane.js';
+import { LEVEL_CAP, atLevelCap, releaseCapLatch } from './levelCap.js';   // LEVEL-45: the level stops at 45
 // ORL1: the ONE question this file asks the vendored mod - whose law
 // levels this character. Everything DFU below is untouched by the
 // answer; the two arms simply do not both run.
@@ -156,7 +157,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
     // entity.skillProgress and the point lands when it reaches 1 (one point
     // a pass, as DFU raises one a pass; MOVE-BANK keeps the rest whole).
     const master = masterSkillsActive(entity);
-    if (entity.skills[i] >= SKILL_SOFT_CAP && skillCanPassCap(entity, i)) {   // SOFTCAP4: a MASTERED skill only (2/2/1)
+    if (entity.skills[i] >= SKILL_SOFT_CAP && skillCanPassCap(entity, i)) {   // SOFTCAP4: a MASTERED skill only (3/2/1)
       if (entity.skills[i] >= SKILL_HARD_CAP) continue;
       // MOVE-BANK (FIELD BUGS 2026-10-01 #7): the count past 100 has no 20000 bucket (skills.js tallySkill), so the
       // shift's float twin - the same number to 20000 - and what a pass does not land is KEPT WHOLE for the next one,
@@ -310,7 +311,9 @@ export const skillsReadyToImprove = (entity) => {
  *  Level++ against). pendingLevel is the port's display convenience
  *  for the U3 banner (DFU's sheet prints Level after the ++). */
 export function checkForLevelUp(entity) {
-  const calculated = calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum);
+  // LEVEL-45 (systems/levelCap.js): no level is owed past the cap, however far the sum climbs - and one latched before it is let go
+  releaseCapLatch(entity);
+  const calculated = Math.min(LEVEL_CAP, calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum));
   const levelUp = entity.level < calculated;
   if (levelUp) {
     entity.readyToLevelUp = true;
@@ -371,6 +374,13 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
     entity.pendingLevel = null;
     entity.pendingBonusPool = null;   // the book's thirty is fixed, but a level owed UNDER it was pending too
     return true;
+  }
+  // LEVEL-45 (systems/levelCap.js): a level latched before the cap (a save from before it) is no level at the cap
+  if (atLevelCap(entity)) {
+    entity.readyToLevelUp = false;
+    entity.pendingLevel = null;
+    entity.pendingBonusPool = null;
+    return false;
   }
   entity.level += 1;   // L-slice (entity-9): Level++, never a jump to the calculated level
   // DISC10-E L4: onto the RAW maximum - MaxHealth reads the lycanthrope's limiter now, and `+=` through it would bake the urge's ceiling into the level

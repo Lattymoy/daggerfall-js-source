@@ -111,8 +111,8 @@
   {
     "name": "WW5-STAR-the-relay-gate",
     "file": "src/net/wire.js",
-    "old": "export const WW5_RELAY_MIN = 271;",
-    "new": "export const WW5_RELAY_MIN = 270;",
+    "old": "export const WW5_RELAY_MIN = 272;",
+    "new": "export const WW5_RELAY_MIN = 271;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]

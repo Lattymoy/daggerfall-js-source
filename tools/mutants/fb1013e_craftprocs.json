@@ -29,8 +29,8 @@
   {
     "name": "CRAFT-PROCS-the-roll-on-a-stream-of-its-own",
     "file": "src/systems/smithItems.js",
-    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,",
-    "new": "      applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES), lean: at(MINT_V_ARMOR_LEAN), fists: at(MINT_V_JEWEL_KIN) });\n",
+    "new": "      applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits, byLines: at(MINT_V_LINES), lean: at(MINT_V_ARMOR_LEAN), fists: at(MINT_V_JEWEL_KIN) });\n",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ],
@@ -138,7 +138,7 @@
   {
     "name": "CRAFT-PROCS-the-service-stamps-nothing",
     "file": "server-account/src/professions.js",
-    "old": "u, f: hand, v: MINT_VERSION }",
+    "old": "u, f: hand, v: craftMintVersion(mint) }",
     "new": "u, f: hand }",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"

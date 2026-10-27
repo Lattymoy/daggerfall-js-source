@@ -212,12 +212,12 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world271';",
+    "old": "export const RELAY_VERSION = 'world272';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The vocabulary changed under a relay version already named."
+    "note": "MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named."
   },
   {
     "name": "NIRNROOT-SAGE-the-kind",
