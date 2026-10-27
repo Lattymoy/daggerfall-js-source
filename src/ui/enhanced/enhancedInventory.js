@@ -132,7 +132,7 @@ import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeRarityOptions
 import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../../systems/statMods.js';
-import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
+import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemArmorTypeLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../../systems/item/itemInfo.js'; import { isPortalStone } from '../../systems/gate/gateSpoils.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
 import { isStarglass } from '../../systems/starfall/starglass.js';   // AUDIT STAR I2: Starfall Glass's lines on this skin's card
 import { isLockpick } from '../../systems/lockpick/lockpickItem.js';   // AUDIT LOCKPICK B2: the Lockpick's lines on this skin's card
@@ -453,6 +453,7 @@ export function itemLine(item, identity = undefined) {
     // show a row at all is this skin's (systems/item/itemInfo.js).
     damage: itemDamageLine(item),
     armour: itemArmourLine(item),
+    armorType: itemArmorTypeLine(item),   // ARMOR-TYPE: Leather, Chain or Plate (systems/item/itemInfo.js) - null for anything not armour
     // MAC-M2 (Mac: "The Tooltip of weapons should also show if the
     // weapon is 1h or 2h"): the same shape as the two above - the
     // ANSWER is systems/itemInfo's, off the port's one GetItemHands, so
@@ -673,9 +674,11 @@ let salvageSel = null;
  *  one piece's: a pick of another piece reads none of them. */
 let wellOpen = null, wellAsk = null, gemTargets = null, wellPick = null;   // AUDIT GEM: `wellPick` the selection these belong to
 let walletAsked = false;   // WALLET1: the account's silver asked afresh once a mount, as the wallet's sheet first shows
-/** CHAT-POST: what the card says after a post. */
+/** CHAT-POST: what the card says after a post or a link into the field. */
 export const POSTED_TEXT = 'Posted in chat.';
 export const NOT_POSTED_TEXT = 'Could not post that in chat right now.';
+export const LINKED_TEXT = 'Linked in chat.';
+export const NOT_LINKED_TEXT = 'Could not link that in chat right now.';
 /** ENH-NOTICE3: the notice panel's OWNER. A module-level object and not
  *  `_view`, because `_view` is null through the whole of the mount's
  *  first `render()` and again from the moment `unmount` nulls it - and
@@ -3369,22 +3372,30 @@ export function itemBriefLines(item, d = deps, { worn = false } = {}) {
   return lines;
 }
 
+/** CHAT-POST: the bracket label - the name, and ` xN` when the stack is more than one (`[Ruby x260]`). */
+export function itemChatLabel(item, d = deps) {
+  const line = itemLine(item, d?.entity);
+  const name = line.name || '?';
+  return line.stack ? `${name} x${line.stack}` : name;
+}
+
 /** CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat"):
- *  AN ITEM AS ONE CHAT LINE - its name in brackets, the headline stat (damage or armour) and its magic
- *  (CARD-FIT: itemBriefLines), cut at a whole word to the chat's own bound (net/wire.js CHAT_MAX). A chat line is
- *  words: the relay carries text alone, so the item travels as what a player would type to describe it. */
+ *  AN ITEM AS ONE CHAT LINE - its label in brackets (itemChatLabel). The record rides beside the words on the wire
+ *  (net/wire.js validChatItem); a client that hears it draws a coloured [Name] and the pack's hover card. The brief
+ *  stats stay in the text for an older relay that drops the record, cut at a whole word to CHAT_MAX. */
 export function itemChatText(item, d = deps) {
   const line = itemLine(item, d?.entity);
+  const label = itemChatLabel(item, d);
   const parts = [line.damage != null ? `Damage ${line.damage}` : null, line.armour != null ? `Armour ${line.armour}` : null,
     ...itemBriefLines(item, d)].filter(Boolean);
   // TECH1 (AUDIT): a technique's "what a press does" line stays on the card - the post names the line itself, and keeps
   // the room under CHAT_MAX for the piece's other lines (a gem's, a set's) that it would have cut
   const told = techniqueDetail(techniqueLineOf(item));
   const said = told ? parts.filter((p) => p !== told) : parts;
-  const text = `[${line.name}]${said.length ? ` ${said.join(' · ')}` : ''}`;
+  const text = `[${label}]${said.length ? ` ${said.join(' · ')}` : ''}`;
   if (text.length <= CHAT_MAX) return text;
   const cut = text.slice(0, CHAT_MAX - 3);
-  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), line.name.length + 2)).replace(/[\s·]+$/, '')}...`;
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), label.length + 2)).replace(/[\s·]+$/, '')}...`;
 }
 
 /** GEM3 (bible/06-Systems/Gem-Sockets.md section 5): WHO SETS A GEM - the player, as the presses read them (the pack
@@ -3494,6 +3505,7 @@ function infoCard(picked, side, ready = render, { body = false, own = true } = {
   pair('Damage', line.damage);
   pair('Armour', line.armour);
   pair('Worth', letterWorthGold(picked));   // TRADE-LOC II: a letter of credit is its worth - the card every pack, shop and trade hover shows says it
+  pair('Type', line.armorType);   // ARMOR-TYPE: beside the number it sets - right under Armour, as Worth is a letter's alone
   // MAC-M2: under the damage, because it is the same question - how the
   // thing is swung - and above the weight, which is not. Null for
   // everything that is not a weapon, so no book grows an empty row.
@@ -3693,10 +3705,13 @@ function itemActs(picked, side, { qty = true } = {}) {
   const info = el('button', 'act', 'Info');
   info.onclick = () => openInfo(picked);
   acts.append(info);
-  // CHAT-POST: the item on the chat's open tab - online, where the host hands the door (deps.postItem)
+  // CHAT-POST: link into the field (write a line around it) or post as its own line - online, where the host hands the door
   if (deps.canPostItem?.()) {
+    const link = el('button', 'act', 'Link in chat');
+    link.onclick = () => { notice = deps.linkItem?.(picked) ? LINKED_TEXT : NOT_LINKED_TEXT; render(); };
+    acts.append(link);
     const post = el('button', 'act', 'Post in chat');
-    post.onclick = () => { notice = deps.postItem?.(itemChatText(picked)) ? POSTED_TEXT : NOT_POSTED_TEXT; render(); };
+    post.onclick = () => { notice = deps.postItem?.(itemChatText(picked), picked) ? POSTED_TEXT : NOT_POSTED_TEXT; render(); };
     acts.append(post);
   }
   for (const b of acts.querySelectorAll('button')) if (b.classList.contains('act')) pairGuard(b);   // AUDIT MERGE-PLUS C1

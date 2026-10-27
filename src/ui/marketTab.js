@@ -59,6 +59,14 @@
 // (recipeShownName: a Pine Staff is an "Iron Staff" on its row) and is sent as the recipes it names; the currency's switch
 // reads from the first page as every other change does; a page an act emptied steps back to the last that stands; a
 // choice made in a list draws its answer at once; the pages keep the keyboard's focus.
+//
+// PACK-PICK (2026-10-26, feature-feedback "SELLING ITEMS ON THE MARKET IS A PAIN!": "a dropdown with just the name of the
+// item.. no description or icon, you gotta memorize the item names"; the owner: "This needs a comprehensive detailed
+// overhaul"): the List form's kinds are presses (the pack's first for a realm character, its form opening there, and the
+// kind pressed kept for the session); a piece from the pack, a crafted piece and a Masterwork are chosen from pictured
+// tiles, sifted as the pack's own stores are, the refused folded under them with why (ui/packPicker.js); the piece chosen
+// is looked at - its rows and magic (systems/item/itemLook.js) - beside its price; and the Goods view holds the way to
+// sell from the pack.
 import { accountRefusalText } from '../net/accountClient.js';
 import { MARKET_MOVED, MARKET_KEPT_TEXT } from '../net/marketBook.js';   // AUDIT 31 B8
 import {
@@ -69,11 +77,13 @@ import {
 } from '../net/marketLaw.js';
 import { QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
 import { marksText, MARK_WORTH_GOLD } from '../net/marksLaw.js';
-import { pictureNode } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's picture, the host's
+import { pictureNode, frameWake } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's picture, the host's
 import { t, currentLocale } from '../systems/textManager.js';   // BOARD-SIFT: the pages' and the orders' words in the player's language
 import { mintPiece, asMinted } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is
 import { itemLongName } from '../systems/item/itemInfo.js';
 import { typedField } from './workSift.js';   // AUDIT BOARD-SIFT: a search read once its word is whole
+import { packPickerNode, packCardNode, freshPackSift, packTierWord } from './packPicker.js';   // PACK-PICK: a piece chosen from its picture
+import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: and looked at before it is listed
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -84,6 +94,14 @@ const el = (tag, cls = null, text = null) => {
 };
 const button = (cls, text, onPress) => {
   const b = /** @type {HTMLButtonElement} */ (el('button', `act ${cls}`, text));
+  b.setAttribute('type', 'button');
+  b.onclick = (e) => { e?.stopPropagation?.(); return onPress(); };
+  return b;
+};
+/** AUDIT PACK-PICK A5: a press drawn as the views' chips (`notice-tab`) - never the frame's `.act`, whose rules outrank a
+ *  chip's own (the kinds' pressed look never showed). */
+const chipButton = (cls, text, onPress) => {
+  const b = /** @type {HTMLButtonElement} */ (el('button', `notice-tab ${cls}`, text));
   b.setAttribute('type', 'button');
   b.onclick = (e) => { e?.stopPropagation?.(); return onPress(); };
   return b;
@@ -106,8 +124,14 @@ const select = (options, value, onChange, label = null) => {
 const intOf = (s, lo, hi) => { const n = Math.floor(Number(s)); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo; };
 /** The units a picked row offers first, and its courier quotes for (AUDIT 30 U18). */
 const PICK_UNITS = 20;
-/** MARKET-ANY: the pack pieces the List form names, at most, of those that may not go. */
-const GOODS_SAID = 8;
+/** PACK-PICK: the List form's kinds, each one press - [kind, its icon (ui/menu/menuGlyphs.js)]; the pack's first, where it
+ *  is offered (a realm character's, for gold). Their words are `listKindWord`'s. */
+export const LIST_KINDS = Object.freeze([['item', 'own'], ['material', 'ore'], ['piece', 'station'], ['auction', 'gavel']].map((k) => Object.freeze(k)));
+const listKindWord = (k) => (k === 'item' ? t('market.list.kindPack', 'From your pack') : k === 'material' ? t('market.list.kindStores', 'From the Stores')
+  : k === 'piece' ? t('market.list.kindCrafted', 'A crafted piece') : t('market.list.kindAuction', 'An auction (Masterworks)'));
+/** PACK-PICK: the kind the List form was last left on, the market book's for the session - a board opened again opens
+ *  its form there (a seller of the pack's pieces pressed "A piece from your pack" at every board). */
+const KIND_KEPT = new WeakMap();
 /** AUDIT 30 U9: the words that say the view a press was made from has moved - it is read again. */
 /** The words that say the view a press was made from has moved - read again (AUDIT 31 B8: the book's own list, so the
  *  tab and the book never disagree - a bid that leads, a bid standing, a bid overtaken as it was decided). */
@@ -247,7 +271,9 @@ export function createMarketTab(m, ui) {
   const st = {
     view: 'materials', family: /** @type {string|null} */ (null), tier: 0, query: '', picked: /** @type {string|null} */ (null),
     qty: 1, data: /** @type {any} */ (null), error: /** @type {string|null} */ (null), stale: false, loading: false,
-    list: { kind: 'material', material: '', units: 1, price: 1, piece: '', currency: 'marks', good: /** @type {any} */ (null) }, post: { material: '', units: 1, price: 1 },
+    // PACK-PICK: the kind the book kept (null: the form's own default), and each picker's sift
+    list: { kind: /** @type {string|null} */ (KIND_KEPT.get(m.book) ?? null), material: '', units: 1, price: 1, pieces: { piece: '', auction: '' }, currency: 'marks', good: /** @type {any} */ (null),
+      sifts: { item: freshPackSift(), piece: freshPackSift(), auction: freshPackSift() } }, post: { material: '', units: 1, price: 1 },
     currency: 'marks',   // GOLD-MARKET: the currency the Materials, Crafted and History views show
     fills: /** @type {Record<string, number>} */ ({}), weave: /** @type {Record<string, number>} */ ({}),
     bid: /** @type {Record<string, number>} */ ({}),   // PROF5b: the bids typed, by auction
@@ -323,7 +349,8 @@ export function createMarketTab(m, ui) {
    *  answer the minute's cache gave stood behind the old rows until the reader clicked elsewhere. */
   function redraw() {
     const a = /** @type {any} */ (globalThis.document?.activeElement);
-    if (a?.tagName === 'SELECT' && a.classList?.contains?.('market-select') && a.getAttribute?.('data-chosen') !== '1') {
+    // AUDIT PACK-PICK A2: and a pack picker's (ui/packPicker.js), whose lists close under the pointer as the tab's own did
+    if (a?.tagName === 'SELECT' && (a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu')) && a.getAttribute?.('data-chosen') !== '1') {
       a.addEventListener?.('blur', () => { if (ui.alive()) ui.rerender(); }, { once: true });
       return;
     }
@@ -373,6 +400,13 @@ export function createMarketTab(m, ui) {
     st.page = 0; st.sort = null; st.find = ''; st.quality = 0;   // BOARD-SIFT: a view opens on its first page, its own order
     st.data = m.book.cached(view, q()); load(false);
   };   // MARKET-AUDIT U6: the last act's word is its view's
+  /** PACK-PICK: from the Goods to the List form opened on the pack - a press where the way was a view, a list and a choice. */
+  const sellPackButton = () => {
+    const b = chipButton('market-sellpack', t('market.goods.sell', 'Sell from your pack'), () => { st.list.kind = 'item'; KIND_KEPT.set(m.book, 'item'); go('mine'); });
+    b.setAttribute('data-dficon', 'own');
+    b.setAttribute('data-focus', 'list-kind|item');   // AUDIT PACK-PICK B2: the focus carried to the pack's kind it opens on
+    return b;
+  };
   /** BOARD-SIFT: a filter or an order changed - the first page of it read (the picked row let go). */
   const refilter = () => { st.page = 0; st.picked = null; load(false); };
   /** An act through the window's door; its word, then the view read again - a press the market says has moved too. */
@@ -547,7 +581,7 @@ export function createMarketTab(m, ui) {
   const pick = (row) => { st.picked = st.picked === row.id ? null : row.id; st.qty = pickOf(row); ui.rerender(); };
   /** MENU-ORDER: a row's name with its picture before it - a material's (the item the Stores withdraw it as) or a piece's
    *  own, the host's to make (`m.picture`, `m.itemPicture`); none (no data, or not made yet) is the name alone. */
-  const wake = () => ui.rerender();
+  const wake = frameWake(() => ui.rerender());   // AUDIT PACK-PICK A1: once a frame, however many land in it
   const named = (text, pic) => { const n = el('b', null, text); if (pic) { if (n.prepend) n.prepend(pic); else n.append(pic); } return n; };
   const matPic = (key) => pictureNode(m.picture?.(key, wake) ?? null, el, 'market-pic');
   const itemPic = (it) => pictureNode(m.itemPicture?.(it, wake) ?? null, el, 'market-pic');
@@ -758,15 +792,40 @@ export function createMarketTab(m, ui) {
     f.append(el('span', 'notice-label', name), input);
     return f;
   };
+  /** PACK-PICK: THE KINDS, EACH ONE PRESS - a select a press and a choice deep stood in front of every listing, and the
+   *  press is kept for the session (KIND_KEPT). */
+  function kindsNode(kinds) {
+    const row = el('div', 'market-kinds');
+    row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', t('market.list.kinds', 'What to list'));
+    for (const [k, icon] of kinds) {
+      const b = chipButton(`market-kind${st.list.kind === k ? ' on' : ''}`, listKindWord(k), () => {
+        KIND_KEPT.set(m.book, k);
+        if (st.list.kind !== k) { st.list.kind = k; ui.rerender(); }
+      });
+      b.setAttribute('aria-pressed', st.list.kind === k ? 'true' : 'false');
+      b.setAttribute('data-kind', k);
+      b.setAttribute('data-dficon', icon);
+      b.setAttribute('data-focus', `list-kind|${k}`);
+      row.append(b);
+    }
+    return row;
+  }
+  /** PACK-PICK: a pack piece's tile line - its tier and its wear (its stack is its name's, "x12"). */
+  const goodSub = (it) => [packTierWord(it), wearText(wearOf(it))].filter(Boolean).join(' · ') || null;
   function listForm() {
     const box = el('div', 'market-listform');
     box.append(el('h4', null, 'List on the market'));
     const fields = el('div', 'market-fields');
-    // MARKET-ANY: a realm character lists a piece from its pack too - for gold alone
-    if (st.list.kind === 'item' && !(goldOk() && m.goods)) st.list.kind = 'material';
-    const kinds = [['material', 'From the Stores'], ['piece', 'A crafted piece'], ['auction', 'An auction (Masterworks)'],
-      ...(goldOk() && m.goods ? [['item', 'A piece from your pack (gold)']] : [])];
-    fields.append(field('What', select(kinds, st.list.kind, (v) => { st.list.kind = v; ui.rerender(); }, 'What to list'), 'market-field-wide'));
+    /** PACK-PICK: what stands between the kinds and the fields - a picker and the piece it chose */
+    const above = [];
+    // MARKET-ANY: a realm character lists a piece from its pack too - for gold alone. PACK-PICK: and its form opens there
+    // until another kind is pressed
+    // (AUDIT PACK-PICK: a pack that holds nothing that may go opens the Stores' form instead - the pack's said only why not)
+    const packOk = goldOk() && !!m.goods;
+    if (st.list.kind === 'item' && !packOk) st.list.kind = null;
+    if (!st.list.kind) st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';
+    box.append(kindsNode(LIST_KINDS.filter(([k]) => k !== 'item' || packOk)));
     // GOLD-MARKET: a realm character prices a Stores material or a piece in Drakes or gold (an auction stays Drakes')
     const gold = goldOk() && st.list.kind !== 'auction' && (st.list.currency === 'gold' || st.list.kind === 'item');
     if (goldOk() && st.list.kind !== 'auction' && st.list.kind !== 'item') {
@@ -778,6 +837,7 @@ export function createMarketTab(m, ui) {
     const hint = el('p', 'notice-tip');
     const notes = el('div', 'market-formnotes');
     const b = button('primary market-dolist', 'List', () => send());   // BOARD-UI: never `market-list`, the lists' own class - its rule took the press's padding
+    b.setAttribute('data-focus', 'list-do');   // AUDIT PACK-PICK B2: a redraw keeps the focus on it
     const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX;   // AUDIT SEATS-3 D2: the board's own cap, as the service says it
     const full = (m.book.state.counts?.listings ?? 0) >= listingsMax;
     let can = () => false, send = () => {}, worth = () => 0;
@@ -807,19 +867,20 @@ export function createMarketTab(m, ui) {
         `Listed ${st.list.units} ${m.countName(st.list.material, st.list.units)} at ${priceText(st.list.price, cur)} each.`);
       sayCarried();
     } else if (st.list.kind === 'item') {
-      // MARKET-ANY: every piece of the pack that may go, and of the rest why not - a crafted piece as the service says
+      // MARKET-ANY: every piece of the pack that may go, and of the rest why not - a crafted piece as the service says.
+      // PACK-PICK: each a pictured tile, sifted as the pack's stores are; the refused folded under them, each with why; the
+      // one chosen looked at - and none chosen until one is pressed
       const all = (m.goods?.() ?? []).map((g) => ({ ...g, why: g.why ?? craftedWhy(g.item) }));
       const goods = all.filter((g) => !g.why);
-      if (!goods.some((g) => g.item === st.list.good)) st.list.good = goods[0]?.item ?? null;
+      if (!goods.some((g) => g.item === st.list.good)) st.list.good = null;
       const chosen = goods.find((g) => g.item === st.list.good) ?? null;
-      fields.append(goods.length ? field('Piece', select(goods.map((g, i) => [String(i), goodName(g.item)]), String(goods.indexOf(/** @type {any} */ (chosen))), (v) => { st.list.good = goods[Number(v)]?.item ?? null; ui.rerender(); }, 'Piece from your pack'), 'market-field-wide')
-        : el('span', 'notice-tip', 'Nothing in your pack can go on the market.'),
-      field('Price in gold', price));
-      const refused = all.filter((g) => g.why);
-      if (refused.length) {
-        const shown = refused.slice(0, GOODS_SAID).map((g) => `${goodName(g.item)} (${g.why})`).join('; ');
-        notes.append(el('p', 'notice-tip market-refused', `Not for the market: ${shown}${refused.length > GOODS_SAID ? `; and ${plural(refused.length - GOODS_SAID, 'more')}` : ''}.`));
-      }
+      const entries = all.map((g) => ({ item: g.item, name: goodName(g.item), sub: goodSub(g.item), why: g.why }));   // keyed by name (AUDIT PACK-PICK A8)
+      above.push(packPickerNode({ entries, chosen: st.list.good, sift: st.list.sifts.item, pick: (it) => { st.list.good = st.list.good === it ? null : it; ui.rerender(); },
+        picture: m.itemPicture ?? null, wake, label: t('market.list.packLabel', 'The pieces in your pack'), focus: 'list-good',
+        empty: t('market.list.packEmpty', 'Nothing in your pack can go on the market.'), refusedWhat: t('market.list.refused', 'Not for the market'), redraw: () => ui.rerender() }),
+      packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, { picture: m.itemPicture ?? null, wake, look: itemLookRows,
+        none: t('market.list.pickPack', 'Press a piece above to look at it and set its price.') }));
+      fields.append(field('Price in gold', price));
       worth = () => st.list.price;
       can = () => !!chosen;
       send = () => act(() => {
@@ -836,14 +897,25 @@ export function createMarketTab(m, ui) {
       const pieces = all.filter((p) => pieceListedAsCrafted(p.item.provenance));
       const others = all.filter((p) => heldState(p.item.provenance) === 'other' || heldState(p.item.provenance) === 'none').length;
       const elsewhere = all.filter((p) => heldState(p.item.provenance) === 'elsewhere').length;
-      if (!pieces.some((p) => p.item.provenance === st.list.piece)) st.list.piece = pieces[0]?.item.provenance ?? '';
-      const chosen = pieces.find((p) => p.item.provenance === st.list.piece) ?? null;
+      // PACK-PICK: none chosen until one is pressed, as the pack's
+      // AUDIT PACK-PICK B3: each kind its own choice, as its own sift - one shared, a look at the auction let the crafted
+      // choice go and carried a Masterwork chosen there into a sale at a price
+      const pk = auction ? 'auction' : 'piece';
+      if (!pieces.some((p) => p.item.provenance === st.list.pieces[pk])) st.list.pieces[pk] = '';
+      const chosen = pieces.find((p) => p.item.provenance === st.list.pieces[pk]) ?? null;
       // MARKET-AUDIT U2: each its quality (an auction's are all Masterworks) and wear - a Crude, a Fine and a worn piece of one
-      // name were three like options
-      const pieceLabel = (p) => [p.name, auction ? null : QUALITY_NAMES[p.item.quality] ?? null, wearText(wearOf(p.item)), p.where === 'home' ? 'your home' : null].filter(Boolean).join(', ');
-      fields.append(pieces.length ? field('Piece', select(pieces.map((p) => [p.item.provenance, pieceLabel(p)]), st.list.piece, (v) => { st.list.piece = v; ui.rerender(); }, 'Crafted piece'), 'market-field-wide')
-        : el('span', 'notice-tip', auction ? 'You carry no Masterwork to auction.' : 'You carry no crafted piece to sell.'),
-      field(auction ? 'Opening bid (silver)' : `Price in ${unitWord}`, price));
+      // name were three like options. PACK-PICK: on its tile's line, under its picture and name
+      const pieceSub = (p) => [packTierWord(p.item), auction ? null : QUALITY_NAMES[p.item.quality] ?? null, wearText(wearOf(p.item)), p.where === 'home' ? 'your home' : null].filter(Boolean).join(' · ') || null;
+      const entries = pieces.map((p) => ({ key: `piece|${p.item.provenance}`, item: p.item, name: p.name, sub: pieceSub(p), why: null }));
+      above.push(packPickerNode({ entries, chosen: chosen?.item ?? null, sift: st.list.sifts[auction ? 'auction' : 'piece'],
+        pick: (it) => { st.list.pieces[pk] = st.list.pieces[pk] === it.provenance ? '' : it.provenance; ui.rerender(); },
+        // AUDIT PACK-PICK B6: a crafted piece may lie in a home - the search is no pack's
+        words: { find: t('market.sift.find', 'Search by name'), findLabel: t('market.sift.find', 'Search by name'), none: t('pack.pick.noneAny', 'Nothing matches.') },
+        picture: m.itemPicture ?? null, wake, label: auction ? t('market.list.mwLabel', 'Your Masterworks') : t('market.list.craftedLabel', 'Your crafted pieces'), focus: auction ? 'list-mw' : 'list-piece',
+        empty: auction ? t('market.list.mwEmpty', 'You carry no Masterwork to auction.') : t('market.list.craftedEmpty', 'You carry no crafted piece to sell.'), refusedWhat: t('market.list.refused', 'Not for the market'), redraw: () => ui.rerender() }),
+      packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, { picture: m.itemPicture ?? null, wake, look: itemLookRows,
+        none: auction ? t('market.list.pickMw', 'Press a Masterwork above to look at it and set its opening bid.') : t('market.list.pickPack', 'Press a piece above to look at it and set its price.') }));
+      fields.append(field(auction ? 'Opening bid (silver)' : `Price in ${unitWord}`, price));
       const them = (n) => (n === 1 ? 'it' : 'them');
       if (others) notes.append(el('p', 'notice-tip', `${plural(others, 'crafted piece')} you hold ${others === 1 ? 'is' : 'are'} made by another player, and only the maker can sell ${them(others)} as crafted.${goldOk() && m.goods ? ` List ${them(others)} from your pack for gold instead.` : ''}`));
       if (elsewhere) notes.append(el('p', 'notice-tip', `${plural(elsewhere, 'crafted piece')} you hold ${elsewhere === 1 ? 'is' : 'are'} already listed, on the road or in a home.`));
@@ -880,7 +952,7 @@ export function createMarketTab(m, ui) {
     price.oninput = () => { st.list.price = intOf(price.value, 1, MARKET_PRICE_MAX); refresh(); };
     refresh();
     fields.append(b);
-    box.append(fields, notes, hint);
+    box.append(...above, fields, notes, hint);
     return box;
   }
 
@@ -1114,8 +1186,11 @@ export function createMarketTab(m, ui) {
       paged(box, list);
       if (st.view === 'materials') box.append(suppliersNode());   // BOARD-UI: the Weavers' and (PROF12) the Apothecaries' counters, folded
     } else if (st.view === 'goods') {
-      // MARKET-ANY: the pieces listed from packs, in gold - bought off the purse as any gold row
-      box.append(filtersNode(GOODS_FAMILIES));
+      // MARKET-ANY: the pieces listed from packs, in gold - bought off the purse as any gold row. PACK-PICK: and beside the
+      // filters, the way to sell one of your own - My listings' form, opened on the pack
+      const filters = filtersNode(GOODS_FAMILIES);
+      if (goldOk() && m.goods) filters.append(sellPackButton());
+      box.append(filters);
       const rows = byLanded(st.data?.rows ?? []);
       const list = el('div', 'market-rows');
       if (rows.length) list.append(listHead('market-piece', ['Piece', 'Condition', 'Price', 'From']));

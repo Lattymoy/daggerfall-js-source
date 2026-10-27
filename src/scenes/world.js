@@ -7790,7 +7790,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const col = modes?.sailingCabin ? collider : csaModeCollider();   // CABIN-HULL (FIELD BUGS 2026-10-03b, Regi: "i got into my boats interior and then got out and i'm in the void"): below deck the fleet stays afloat OUTSIDE (keepExteriorBoats) - in the street's collider, never the room's. The cabin is built at her own root, so her decks stood in the room as floors and walls (the ladder's box and the helm's rows within reach of a press), and the deck the way out lands on had gone with the room
     const want = new Set();
     const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];   // CABIN-HULL: and every peer's, below deck as on deck; FIELD BUGS 2026-10-01b (Mac: "Players aren't colliding with other players' boats and can't stand on board"): ANOTHER PLAYER'S BOAT STANDS IN MY COLLIDER AS MINE DOES - every one that stands, her hull and her deck's furniture, aboard her or not. CSA-K stood one only while I was aboard it (PR-WAGON1's "Others' wagons don't block", which Mac's word sets aside for boats): her hull was walked and swum through and her deck no floor to step, climb or come up onto (scenes/comeSailAway/comeSailAwayAboard.js: standing on her is aboard her). THE FOUR HOSTS: on the street alone, this host's - a building's frame (worldModes.js) and a dungeon's (dungeonContext.js) stand no one's boat, and the standalone street (exterior.js) has no peers
-    for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {   // NAV-H: and the sea's ships near enough to board
+    for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {   // NAV-H: and the sea's ships near enough to board and to ram (RAM-RETURN)
       if (!boat.GameObject?.activeSelf) continue;
       const id = csaBoatId(boat);
       let i = 0;
@@ -12935,7 +12935,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     ...packDoors,   // UI2: the book, the camp and the spellbook - one bag with the hotbar's Use
-    postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: an item on the chat's open tab
+    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: post or link into the field
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -21446,10 +21446,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // listening on this tab. modes.unstuck() itself refuses outdoors
       // (RF-per-request: interiors and dungeons only - houses, shops,
       // temples, windmills and the like, same as any building door).
-      onSend: (tabId, text) => {
+      onSend: (tabId, text, opts = {}) => {
         // SERVER-POST (AUDIT SERVER-POST: the classic skin's pause window has no envelope, and the notice sent its players to
         // one): `/mail` - the mailbox, on either skin and wherever the player stands (the enhanced pause face with its window
         // open: ui/pauseDoor.js's door, worldModes.js openPauseAt indoors and underground). Local, never sent.
+        // CHAT-POST: `opts.items` - pieces linked into the field, carried on a plain line (not a /command)
         { const at = pauseCommandOf(text); if (at) {   // PRIVATE-REPORT: and `/bug`, the mailbox's private report form; SEASON-BOOK: and `/season`, the laurel's window (the hourglass's clock its own)
           if (!(at === 'season' ? timersSource() : postSource())) { chatLog.push(tabId, { text: pauseCommandRefusal(at), system: true }); return true; }
           if (!modes?.openPauseAt?.(at)) hudCtx.togglePause({ at });
@@ -21682,17 +21683,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           optSet(cmd.tab, true, { say: true });
           return false;
         }
-        if (cmd.kind === 'rp') return chatSend(tabId, cmd.text, tabId);   // CHAT-RP: a line of roleplay, on this tab - its *mark* is the drawing's
+        if (cmd.kind === 'rp') return chatSend(tabId, cmd.text, tabId, opts);   // CHAT-RP: a line of roleplay, on this tab - its *mark* is the drawing's
         if (cmd.kind === 'find') { findTab = tabId; const hub = chatLinks?.get('world'); if (!hub?.sendFind(cmd.q)) note(hub?.welcomed && !hub.findOk ? FIND_RELAY_TEXT : FIND_OFFLINE_TEXT); return 'read'; }   // SCALE5c: everyone online, by name - the hub's answer comes back to this tab. AUDIT SCALE II C-1: a hub online on a relay before the shards answers no search, and is never asked one (it closes the link on it) - said as that, not as offline
-        if (cmd.kind === 'me') return chatSend(tabId, cmd.text, tabId, { me: true });   // EMOTE1: an action, on this tab
-        if (cmd.kind === 'emote') return chatSend('local', cmd.text, tabId, { me: true });   // EMOTE1: a gesture - the body's, so those near see it
+        if (cmd.kind === 'me') return chatSend(tabId, cmd.text, tabId, { ...opts, me: true });   // EMOTE1: an action, on this tab
+        if (cmd.kind === 'emote') return chatSend('local', cmd.text, tabId, { ...opts, me: true });   // EMOTE1: a gesture - the body's, so those near see it
         if (cmd.kind === 'unknown') { note(unknownCommandText(cmd.name)); return false; }
         if (cmd.kind === 'empty') { note(emptyCommandText(cmd.name)); return false; }
         if (cmd.kind === 'host') { note(hostMisuseText(cmd.name)); return false; }
         if (cmd.kind === 'badroll') { note(badRollText(cmd.name)); return false; }
         if (cmd.kind === 'roll') return chatRoll(tabId, cmd.spec);   // DICE1: the relay rolls, on this tab's channel
-        if (cmd.kind === 'channel') return chatSend(cmd.tab, cmd.wrap === 'ooc' ? oocText(cmd.text) : cmd.text, tabId);
-        return chatSend(tabId, cmd.text, tabId);   // false keeps the line in the field (B2)
+        if (cmd.kind === 'channel') return chatSend(cmd.tab, cmd.wrap === 'ooc' ? oocText(cmd.text) : cmd.text, tabId, opts);
+        return chatSend(tabId, cmd.text, tabId, opts);   // false keeps the line in the field (B2)
       },
       // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently
       // online players in alphabetical order"). ROSTER-G (Mac: "Players
@@ -21722,6 +21723,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       rowActions: (peerId) => [...socialRowActions(peerId), ...chatSafety.rosterActions(peerId)],   // ROSTER-STAFF: and a staff member's acts on the player (scenes/chatSafetyHost.js rosterActions)
       lineActions: (line) => chatSafety.lineActions(line),   // SAFE1 + SAFE3: a line's own Report and Block
       voice: chatSafety.voice,   // STAFF-CHAT-RED (mob: "give me a option next to chat to chat as /red or myself at all times"): an Admin's Me or Red beside the field (net/chatVoice.js)
+      bagItems: () => playerEntity.items ?? [],   // CHAT-POST: typing `[` in the field lists the pack by name
       badgeOf: (id) => chatSessionOf(chatLog?.active)?.badgeOf?.(id) ?? null,
       // CHAT-TRADE (Mac: "There must be a better way to handle the new channels instead of a text command"): the + beside
       // the tabs - the channels joined by choice, each with its mark; a click is optSet, /join's own door
@@ -27462,7 +27464,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const market = marketBook && profBook && profBook.state.open !== false && marksBook?.state?.open !== false && Number.isInteger(region) ? {
       book: marketBook, stores: () => profBook.state.stores, region, regionName: REGION_NAMES[region] ?? 'the region',
       regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs, name: (k) => materialLabel(k), countName: materialCountLabel,
-      picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake) => itemPicture(it, { onReady: wake }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture
+      picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake, box) => itemPicture(it, { onReady: wake, box }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture
       board: [town.px, town.py],   // SEAT1d (Seats-Arc 7.2): the board's town - the seat whose bailiwick takes the Tithe
       tithe: () => (seatBook?.open === true ? boardTithePct(seatBook.data?.seats ?? [], region, [town.px, town.py]) : null),   // AUDIT SEATS-3 D3: its rate as the seats' list says it (null: not read)
       pieces: marketPieces, take: marketTake, putBack: marketPutBack, mint: marketMint, pieceName: marketPieceName, drop: marketDrop, goods: () => marketGoods.goods(), good: (it) => marketGoods.good(it), goodName: (rec) => marketGoods.goodName(rec),   // MARKET-ANY: a piece from the pack, for gold
@@ -27973,12 +27975,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** CHAT-CHAN: a typed line said on `tabId` - each tab's own door. False keeps the line in the field (AUDIT CHAT B2):
    *  nothing went. A reason is said as a line on the tab the line was typed on (`from`): the strip speaks for the
    *  active tab alone, and `/p` is typed on another. */
-  /** CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"): an item's line (ui/enhanced/enhancedInventory.js
-   *  itemChatText) said on the chat's open tab - chatSend's own door, so every tab's reasons hold (no party, an older
-   *  relay); none offline. */
+  /** CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"): an item's line and its record
+   *  (itemChatText + the piece) said on the chat's open tab - chatSend's own door, so every tab's reasons hold
+   *  (no party, an older relay); none offline. A hearing client draws a coloured [Name] and the pack's hover card. */
   const canPostItemInChat = () => !!(chatLog?.active && chatPanel);
-  const postItemInChat = (text) => (canPostItemInChat() ? chatSend(chatLog.active, text) === true : false);
-  const chatSend = (tabId, text, from = tabId, { me = false } = {}) => {
+  const postItemInChat = (text, item) => (canPostItemInChat() ? chatSend(chatLog.active, text, chatLog.active, { item }) === true : false);
+  /** CHAT-POST: insert the piece into the chat field as `[Label]` - the player finishes the line and sends. */
+  const linkItemInChat = (item) => (canPostItemInChat() ? chatPanel.linkItem?.(item) === true : false);
+  const chatSend = (tabId, text, from = tabId, { me = false, item = null, items = null } = {}) => {
     const why = (line) => { chatLog.push(from, { text: line, system: true }); return false; };
     if ((tabId === 'party' || tabId === 'region') && chanOld()) return why(CHAN_OLD_RELAY_TEXT);
     if (tabId === 'guild' && guildOld()) return why(GUILD_OLD_RELAY_TEXT);   // GUILD1c
@@ -27987,17 +27991,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // EMOTE1: an action only down a session whose relay carries one - an older one would say the words bare
     const s = tabId === 'local' ? online : tabId === 'party' || tabId === 'guild' ? socialLink() : chatLinks.get(tabId);
     if (me && s?.status === 'open' && !s.emoteOk) return why(EMOTE_OLD_RELAY_TEXT);
-    if (tabId === 'local') return online?.sendChat(text, { me }) ?? false;
+    if (tabId === 'local') return online?.sendChat(text, { me, item, items }) ?? false;
     if (tabId === 'party') {
       if (!social?.party) return why(NO_PARTY_TEXT);
-      return socialLink()?.sendChat(text, { ch: 'party', me }) ?? false;   // the relay fans it to the party's members alone - my own tabs too: the echo is the receipt
+      return socialLink()?.sendChat(text, { ch: 'party', me, item, items }) ?? false;   // the relay fans it to the party's members alone - my own tabs too: the echo is the receipt
     }
     if (tabId === 'guild') {
       // GUILD1c: the relay fans it to the sockets wearing my guild alone - my own tabs too: the echo is the receipt
       if (!myGuildTag()) return why(NO_GUILD_TEXT);
-      return socialLink()?.sendChat(text, { ch: 'guild', me }) ?? false;
+      return socialLink()?.sendChat(text, { ch: 'guild', me, item, items }) ?? false;
     }
-    return chatLinks.get(tabId)?.sendChat(text, { me }) ?? false;
+    return chatLinks.get(tabId)?.sendChat(text, { me, item, items }) ?? false;
   };
   /** DICE1 (Addison Knox: "Chat dice-rolling"): a roll ASKED on `tabId`'s channel - the relay rolls it (net/dice.js) and
    *  says it back to the channel, this player included. The tab's own door, chatSend's: the same session, the same
@@ -29514,7 +29518,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     partyLevels: () => partyMateLevels(),   // PARTY-LOOT: my party's levels, for the level a room container's base is minted at
     roomHost: () => online?.host ?? null,   // PARTY-LOOT: the relay's seat - whose word a room container's state is (the host grants the takes)
     peers: peersNear,
-    postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too
+    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too
     partyNear: () => partyOnMaps(), professionMarks: (feet) => professionMarks(feet),   // DISC23-A: the party's bodies, for the dungeon's and the building's plans (AUDIT pre-merge I-E: those drawn here); NODE-MARKS: the dungeon's veins (and a body the knife may skin) on its compass, at its own feet
     allyMarks: (sp) => allyMarksNear(sp),   // AID1 onto ALLY-CAST: the dungeon's own cast engine gives to the same mates - SPELL-GIFT: and strangers, by the spell
     companionBodies: () => [...crewAshore.bodies(), ...revenantAshore.bodies()],   // COMPANION-KIT: my companions underground, for the dungeon's own cast engine (REVENANT-COMPANION: the sworn too)
