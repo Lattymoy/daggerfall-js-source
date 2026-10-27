@@ -421,7 +421,8 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   assert.match(world, /const places = yardTown \|\| portTown \? townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;/);
   assert.match(world, /const yl = loc && isEnhanced\(\) && windmillsOn\(\) \? loc : layoutLocation\(dfLocation, maps, blocks, \{ enhanced: true, windmills: true \}\);/, 'one layout for every lane (the build\'s own where it is that one)');
   // AUDIT MERCHANT-YARDS G1, G3, G4, G2: the measures the host hands yardMeasuresOf, and the sites kept per town
-  assert.match(world, /custom: \(cid\) => \(hasCustomModel\(cid\) && !customModelNeeds\(cid\)\.length \? customModelFor\(cid\)\?\.positions \?\? null : null\),/, 'a registered model measured by its own geometry');
+  // PIN MOVED (BAY-LEFT-SEA): a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
+  assert.match(world, /custom: \(cid\) => \(hasCustomModel\(cid\) && !customModelNeeds\(cid\)\.length && !isCapitalLandmark\(cid\) \? customModelFor\(cid\)\?\.positions \?\? null : null\),/, 'a registered model measured by its own geometry');
   assert.match(world, /classic: \(cid\) => dfMeshSize\(classicModelIdOf\(cid\)\),/, 'an alias by its classic model');
   assert.match(world, /fieldOf: \(id\) => flatFieldFor\(id\),/, 'a field by the ground it sows');
   assert.match(world, /flatsOf: \(b\) => collectBlockFlats\(b\.dfBlock, 0\),/, 'every flat, the markers too');
