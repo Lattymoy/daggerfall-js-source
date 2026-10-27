@@ -31,6 +31,7 @@ import { localizedText, getLocalizedLocationName, getLocalizedRegionName } from 
 import { RDB_RESOURCE_TYPES } from '../../formats/blocksFile.js';
 import { stampLayout, layoutStampOfMapId, recordStands, recordHeldBack, CLASSIC_LAYOUT } from '../layoutPins.js';   // WD3: a building site keeps its town's layout
 import { curatedMarkerSpot, curateSiteMarkers } from './markerCuration.js';   // FIELD BUGS 2026-10-04d QUEST-MARKERS: the town packs' unreachable markers, on the floor
+import { interiorCast } from '../../world/interior/interiorLayout.js';   // IC-INTERIORS: a made building's markers, its cast's
 import { questReachOn, questReachPixels, nearbyIndices, indicesWithin, mapTablePixel, mapPixelDistance } from './questReach.js';   // NEARBY-QUESTS
 import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { stringHash } from '../../formats/netRuntime.js';   // QUEST-AUDIT II SHARED-SEAT: a shared copy's re-seat, seeded (a leaf)
@@ -1286,11 +1287,12 @@ export class Place extends QuestResource {
 
   /** EnumerateBuildingQuestMarkers (:1486): the building INTERIOR's
    *  flat records, archive 199 records 11/18, positions scaled as
-   *  (x, -y, z) * GlobalScale. */
+   *  (x, -y, z) * GlobalScale. IC-INTERIORS: a made interior's as its cast's record holds them (interiorCast - a search
+   *  over a city's buildings makes none), laid on the building's own markers when it is entered (castMarkers.js). */
   _enumerateBuildingQuestMarkers(blockData, recordIndex) {
     const spawn = [], item = [];
     const recordData = blockData.rmbBlock.subRecords[recordIndex];
-    for (const obj of recordData?.interior?.blockFlatObjectRecords ?? []) {
+    for (const obj of interiorCast(recordData)?.blockFlatObjectRecords ?? []) {
       if (obj.textureArchive !== EDITOR_FLAT_ARCHIVE) continue;
       // FIELD BUGS 2026-10-04d QUEST-MARKERS: a town pack's marker no player can reach stands at its measured floor spot
       const [x, y, z] = curatedMarkerSpot(blockData, recordIndex, obj.textureRecord, obj.xPos, obj.yPos, obj.zPos) ?? [obj.xPos, obj.yPos, obj.zPos];
@@ -1606,7 +1608,7 @@ export function buildingAdmits(summary, buildingType, guildHallFaction) {
 /** AUDIT RELEASE R2-5f: whether a building's interior holds a quest marker (EnumerateBuildingQuestMarkers' records - the
  *  editor flat archive's spawn or item) - ValidateQuestMarkers' answer, no marker made. */
 export function buildingHasQuestMarker(blockData, recordIndex) {
-  for (const obj of blockData?.rmbBlock?.subRecords?.[recordIndex]?.interior?.blockFlatObjectRecords ?? []) {
+  for (const obj of interiorCast(blockData?.rmbBlock?.subRecords?.[recordIndex])?.blockFlatObjectRecords ?? []) {   // IC-INTERIORS: a made room's, its cast's
     if (obj.textureArchive === EDITOR_FLAT_ARCHIVE && (obj.textureRecord === SPAWN_MARKER_RECORD || obj.textureRecord === ITEM_MARKER_RECORD)) return true;
   }
   return false;

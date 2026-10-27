@@ -39,8 +39,9 @@ function sampleCell(x, z, n = 8) {
 }
 const CELLS = [...IMPERIAL_SECTORS.flatMap(([, b]) => [[b + 22.5, 3000], [b + 37.5, 5300]]), [170, 7300]].map(([b, r]) => sampleCell(...polar(b, r))).filter(Boolean);
 const DEPS = { portBlockJson, miscModelAt, startMarkerAt, footprintOf: () => null, anchorMarkers: [], noGround: 255, rim: () => false };
-/** A BLOCKS.BSA stand-in: every block's every record an interior that names where it was read from. */
-const FAKE_BLOCKS = { getBlockByName: (name) => ({ rmbBlock: { subRecords: Array.from({ length: 40 }, (_, k) => ({ interior: { header: { num3dObjectRecords: 1 }, from: `${name}#${k}` } })) } }) };
+/** A BLOCKS.BSA stand-in: every block's every record an interior that names where it was read from - PIN MOVED
+ *  (IC-INTERIORS): on its one person, the cast a fabric building's own interior takes from its donor. */
+const FAKE_BLOCKS = { getBlockByName: (name) => ({ rmbBlock: { subRecords: Array.from({ length: 40 }, (_, k) => ({ interior: { header: { num3dObjectRecords: 1 }, from: `${name}#${k}`, blockPeopleRecords: [{ xPos: 0, yPos: 0, zPos: 0, textureArchive: 182, textureRecord: k % 30, factionID: 0, flags: 0, from: `${name}#${k}` }], blockFlatObjectRecords: [] } })) } }) };
 const ownBlock = (r, c, blocks = FAKE_BLOCKS) => { _resetFabricInteriors(); const name = imperialOwnName(r, c); return withFabricBuildings(imperialBlockJson(name, DEPS), name, blocks); };
 
 test('BLD EVERY STREET-FRONT BUILDING ITS RECORD AND ITS DOOR - each building of a cell with a street front a record (its type its district\'s trade or a residence by its footprint, its quality its district\'s, a guild\'s faction, a name seed of its own) and a door on its widest street at a bay\'s middle with the street open before it; the same on every client, and handed on by its plot\'s key (mutants: a door before a way up; the quality off its district; a guild hall of no guild)', () => {
@@ -114,7 +115,8 @@ test('BLD THE DOOR IS THE GAME\'S DOOR - a cell\'s block carries each building a
       const at = doorWorldPosition(doors[0]), n = doorWorldNormal(doors[0]), [bx, bz] = blockLocal(r, c, x.door.at[0], x.door.at[1]);
       assert.ok(Math.hypot(at[0] - (bx + x.door.n[0] * FABRIC_DOOR.proud), at[2] - (bz - x.door.n[1] * FABRIC_DOOR.proud)) < 0.04, `building ${m.recordIndex}'s door where it stands`);
       assert.ok(Math.hypot(n[0] - x.door.n[0], n[2] + x.door.n[1]) < 0.01, 'facing its street');
-      assert.equal(block.rmbBlock.subRecords[m.recordIndex].interior.from, `${d.block}#${d.record}`, 'its donor\'s interior');
+      // PIN MOVED (IC-INTERIORS): the interior is the building's own (world/interior/fabricInterior.js), its cast its donor's
+      assert.equal(block.rmbBlock.subRecords[m.recordIndex].interior.blockPeopleRecords[0].from, `${d.block}#${d.record}`, 'its donor\'s cast');
     }
     // the town map: the footprint's automap bytes its type's (still shut to the walkers)
     for (const x of recs) {
@@ -149,7 +151,7 @@ test('BLD A FABRIC BLOCK NAMES ITS OWN - a fabric shop keeps its own record and 
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2) ? 'ARENA2_PATH not set or missing - the donors against the freeware skipped' : false;
-test('BLD THE DONORS AS THE FREEWARE HAS THEM, AND EVERY BUILDING ENTERED - each donor of FABRIC_DONORS is its block\'s record of its type, its interior with an enter marker and its entrance door where the table says (its middle within 5 cm, its way out within 1 degree); and a city cell\'s every building, entered with the player\'s own BLOCKS.BSA and ARCH3D, lands just inside its street door (player/enterExit.js interiorLanding)', { skip: skipReal }, () => {
+test('BLD THE DONORS AS THE FREEWARE HAS THEM, AND EVERY BUILDING ENTERED - each donor of FABRIC_DONORS is its block\'s record of its type, its cast in it (a keeper but in a home); and a city cell\'s every building, entered with the player\'s own BLOCKS.BSA and ARCH3D, lands just inside its street door (player/enterExit.js interiorLanding) - PIN MOVED (IC-INTERIORS): the donors\' own entrances (BLD\'s door and way-out columns) are gone with their interiors', { skip: skipReal }, () => {
   const bf = new BlocksFile(); bf.load(new Uint8Array(readFileSync(`${ARENA2}/BLOCKS.BSA`)));
   const af = new Arch3dFile(); af.load(new Uint8Array(readFileSync(`${ARENA2}/ARCH3D.BSA`)));
   const models = new Map();
@@ -158,13 +160,7 @@ test('BLD THE DONORS AS THE FREEWARE HAS THEM, AND EVERY BUILDING ENTERED - each
     const blk = bf.getBlockByName(d.block), bd = blk.rmbBlock.fldHeader.buildingDataList[d.record];
     assert.equal(bd.buildingType, d.type, `${d.block}#${d.record}`);
     if (d.faction) assert.equal(bd.factionId, d.faction, `${d.block}#${d.record}: its faction`);   // IC-PROPS: a temple's god, the Thieves Guild's house
-    const lay = layoutInterior(blk, blk.index, d.record, getModel), enter = lay.markers.find((m) => m.type === INTERIOR_MARKER.ENTER);
-    assert.ok(enter, `${d.block}#${d.record}: an enter marker`);
-    const doors = lay.doors.map((x) => ({ p: doorWorldPosition(x), n: doorWorldNormal(x) }));
-    const door = doors.reduce((a, x) => (Math.hypot(x.p[0] - enter.x, x.p[2] - enter.z) < Math.hypot(a.p[0] - enter.x, a.p[2] - enter.z) ? x : a));
-    assert.ok(Math.hypot(door.p[0] - d.door[0], door.p[2] - d.door[1]) < 0.05, `${d.block}#${d.record}: its entrance`);
-    const out = (Math.atan2(-door.n[2], -door.n[0]) * 180) / Math.PI, diff = ((out - d.out + 540) % 360) - 180;
-    assert.ok(Math.abs(diff) < 1, `${d.block}#${d.record}: its way out ${out} not ${d.out}`);
+    if (!d.pool.startsWith('house')) assert.ok(blk.rmbBlock.subRecords[d.record].interior.blockPeopleRecords.length > 0, `${d.block}#${d.record}: its keeper in`);
   }
   const xf = (M, p) => [M[0] * p[0] + M[4] * p[1] + M[8] * p[2] + M[12], M[1] * p[0] + M[5] * p[1] + M[9] * p[2] + M[13], M[2] * p[0] + M[6] * p[1] + M[10] * p[2] + M[14]];
   const mul = (A, Bm) => { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += A[k * 4 + i] * Bm[j * 4 + k]; o[j * 4 + i] = s; } return o; };

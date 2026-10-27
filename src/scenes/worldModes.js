@@ -8946,7 +8946,7 @@ export function createWorldModes(host) {
       // the geometric half-height. The teleport target re-floors via
       // gravity exactly as FixStanding would.
       const standing = [player.pos[0], player.pos[1] + 1.8 * 0.65, player.pos[2]];
-      const to = climbLadder(standing, interiorCtx.markers, INTERIOR_MARKER);
+      const to = climbLadder(standing, interiorCtx.markers, INTERIOR_MARKER, interiorCtx.ladders?.[Number(key.slice(7))]?.matrix);   // IC-INTERIORS: the ladder climbed's own markers
       if (to) {
         // Teleport just ABOVE the marker and let gravity floor it -
         // FixStanding's re-floor, without tunneling thin boards.
