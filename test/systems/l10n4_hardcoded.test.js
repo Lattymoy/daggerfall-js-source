@@ -677,8 +677,8 @@ const HARDCODED = {
   'src/ui/ink/inkDungeonSolid.js': 6,
   'src/ui/input.js': 2,
   'src/ui/inputMessageBox.js': 1,
-  'src/ui/intro/introLandscape.js': 6,
   'src/ui/intro/introScreen.js': 3,
+  'src/ui/intro/introShaders.js': 2,   // INTRO4: introLandscape.js's 6 moved with its shaders - two GLSL sources the scan reads as words
   'src/ui/inventoryDoor.js': 1,
   'src/ui/joystickControlsWindow.js': 1,
   'src/ui/legacy/legacyModelChoice.js': 26,
@@ -786,6 +786,7 @@ const HARDCODED = {
   'src/world/buildingNames.js': 2,
   'src/world/caravanRoomModel.js': 1,
   'src/world/card/cardRegulars.js': 10,
+  'src/world/imperialCity.js': 23,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'
   'src/world/ships/carrackModel.js': 7,
   'src/world/ships/carrackRig.js': 2,
   'src/world/eliteGates/egHall.js': 1,
@@ -802,7 +803,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 49,   // LOCKPICK: +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
+  'src/world/eliteGates/pseudoArchives.js': 50,   // LOCKPICK: +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (INTRO4 brings TESA's modules to main): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

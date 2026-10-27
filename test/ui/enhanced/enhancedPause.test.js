@@ -760,7 +760,9 @@ test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
   const text = Object.fromEntries(files.map((f) => [f, hostText(f)]));
   const edges = {};
   for (const f of files) {
-    edges[f] = [...new Set([...text[f].matchAll(/(?:from|import\()\s*['"](\.[^'"]+)['"]/g)]
+    // INTRO4: and a worker - `new Worker(new URL('./x.js', import.meta.url))` is how Vite bundles one, so the module
+    // it names is reached by the page that starts it (src/ui/intro/introBuildWorker.js, the first worker under src/ui/)
+    edges[f] = [...new Set([...text[f].matchAll(/(?:from|import\(|new Worker\(new URL\()\s*['"](\.[^'"]+)['"]/g)]
       .map((m) => relative(root, resolve(join(root, dirname(f)), m[1])))
       .filter((p) => text[p] !== undefined))];
   }

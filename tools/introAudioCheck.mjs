@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { TITLE_IMPACT_TIME, CLOUD_REVEAL_TIME } from '../src/ui/intro/introCue.js';
+import { TITLE_IMPACT_TIME, CLOUD_REVEAL_TIME, CREST_TIME, DISTRICTS_TIME, ASCENT_TIME, MAP_TIME } from '../src/ui/intro/introCue.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const track = `${root}src/assets/intro/theme.mp3`;
@@ -30,7 +30,7 @@ function magnitude(samples, start) {
   }
   return real.slice(0, size / 2 + 1).map((r, i) => Math.hypot(r, imag[i]));
 }
-const bytes = execFileSync('ffmpeg', ['-v', 'error', '-i', track, '-t', '32', '-ac', '1', '-ar', String(rate), '-f', 'f32le', 'pipe:1'], { maxBuffer: 8e6 });
+const bytes = execFileSync('ffmpeg', ['-v', 'error', '-i', track, '-t', '54', '-ac', '1', '-ar', String(rate), '-f', 'f32le', 'pipe:1'], { maxBuffer: 8e6 });
 const pcm = new Float32Array(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
 const count = 1 + Math.floor((pcm.length - size) / hop);
 const flux = new Float64Array(count);
@@ -54,19 +54,27 @@ function peakBetween(from, to) {
   }
   return { time: (peak * hop + size / 2) / rate, strength: normalized[peak], analysisSample: peak * hop + size / 2 };
 }
-// INTRO2b: the title lands on the beat Mac hears "around the 19 second mark"
+// INTRO2b: the logo landed on the beat Mac hears "around the 19 second mark"
 // — sample 230016 of the remastered master, a true local maximum and the
 // largest raw onset between the cloud break and the close. The louder answer
 // at 252800 is still ignored, and is still reported so a replacement track
-// cannot silently swap the two.
-const title = peakBetween(19.0, 19.35), titleAnswer = peakBetween(20.85, 21.25), clouds = peakBetween(11.45, 11.95);
+// cannot silently swap the two. INTRO4: that beat is the film's crest now, and
+// the film is cut to four more of the recording's downbeats - bar 4 and bar 8
+// after it, bar 14 (the map's words) and bar 16 (the logo's landing) - each a
+// peak of the same flux inside a window of its bar.
+const crest = peakBetween(19.0, 19.35), crestAnswer = peakBetween(20.85, 21.25), clouds = peakBetween(11.45, 11.95);
+const districts = peakBetween(26.5, 26.9), ascent = peakBetween(34.05, 34.45), map = peakBetween(45.4, 45.75), title = peakBetween(49.15, 49.55);
 const report = {
   sha256: createHash('sha256').update(readFileSync(track)).digest('hex'),
   method: 'Positive spectral flux; Hann 1024; hop 128; mono 12000 Hz; local mean ±0.5 s; peak centre',
-  resolutionMs: hop / rate * 1000, title, titleAnswer, clouds,
-  titleErrorMs: (TITLE_IMPACT_TIME - title.time) * 1000,
+  resolutionMs: hop / rate * 1000, clouds, crest, crestAnswer, districts, ascent, map, title,
   cloudErrorMs: (CLOUD_REVEAL_TIME - clouds.time) * 1000,
+  crestErrorMs: (CREST_TIME - crest.time) * 1000,
+  districtsErrorMs: (DISTRICTS_TIME - districts.time) * 1000,
+  ascentErrorMs: (ASCENT_TIME - ascent.time) * 1000,
+  mapErrorMs: (MAP_TIME - map.time) * 1000,
+  titleErrorMs: (TITLE_IMPACT_TIME - title.time) * 1000,
 };
 console.log(JSON.stringify(report, null, 2));
 if (process.argv[2]) writeFileSync(process.argv[2], JSON.stringify(report, null, 2) + '\n');
-if (Math.abs(report.titleErrorMs) > 1 || Math.abs(report.cloudErrorMs) > 1) process.exitCode = 1;
+if (['cloudErrorMs', 'crestErrorMs', 'districtsErrorMs', 'ascentErrorMs', 'mapErrorMs', 'titleErrorMs'].some((k) => Math.abs(report[k]) > 1)) process.exitCode = 1;

@@ -214,6 +214,17 @@ A description fixed after its release was cut reaches it on its own:
 editing a merged pull request's description has
 `.github/workflows/release-notes.yml` rewrite that release's notes (REL7).
 
+PATCH NOTES ARE WRITTEN IN STE (STE-NOTES, 2026-10-26, the owner: "The law
+for patch notes is now ASD-STE100 Simplified Technical English (STE)"). A
+pull request's `## Patch notes` are written in ASD-STE100 Simplified
+Technical English: STE's approved words in their approved meanings, the
+game's own names as technical names, one topic in a sentence, 25 words at
+most (20 in an instruction), six sentences to a paragraph, no semicolons, no
+-ing verb forms, no contractions, the simple tenses. `scripts/steNotes.mjs`
+holds the rules a machine can read, and the pull request's `ste-notes`
+check runs it each time the description changes; the dictionary is the
+writer's and the reviewer's (`01-Overview/Desktop-App.md` STE-NOTES).
+
 UPDATES ARE NUMBERED, AND NOBODY BUMPS THEM (REL8, 2026-10-09, Mac:
 "Let's officially start numbering updates beginning with 0.0.1"). Every
 merge to main is the player's next update, MAJOR.MINOR.PATCH: the line is
