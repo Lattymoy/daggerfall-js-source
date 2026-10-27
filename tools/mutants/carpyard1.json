@@ -38,11 +38,12 @@
   {
     "name": "CARP-YARD-placed-before-the-port",
     "file": "src/scenes/world.js",
-    "old": "        const sites = g && yardTown ? yardSitesOn(g) : [];",
-    "new": "        const sites = g && yardTown ? [...yardSitesOn(g), ...craftYardSitesOn(g)] : [];",
+    "old": "        const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];",
+    "new": "        const sites = g && yardTown ? [...await stepsBreathing(yardSitesSteps(g), breathe), ...await stepsBreathing(craftYardSitesSteps(g), breathe)] : [];",
     "tests": [
       "test/systems/carpyard1.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (IC-STUTTER): the yards' search walked a step at a time through the build's breather."
   },
   {
     "name": "CARP-YARD-a-face-wound-in",

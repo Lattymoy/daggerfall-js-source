@@ -2256,6 +2256,105 @@ took down), `test/tesa8_lairs.test.js` (its lair id's "no house sold, no deed re
 `tesa7.json` TESA7-modes-deed-sold and -owned, `audittesa.json` AUDIT-TESA-A5-F3, `auditcaptsea.json` ACS-P9-deed and
 -sale, `auditdisc28_quests.json` AD28Q-K1, `icgrand.json` R2-9-deed-every-town).
 
+## IC-STUTTER - the Imperial City at a journey's pace, without the stutter (2026-10-27)
+
+The owner's field report (2026-10-27, item 1): *"Traveling in the Imperial City at x60 presents really bad stuttering"*;
+then, on the fix: *"No band aids or half assed work"*. x60 is IC-PACE's clock (`06-Systems/Travel-View.md` IC-PACE: a
+journey or the keys' travel under the Overworld run sixty times a walk in the city's streets, where they ran five).
+
+WHAT THE PLAYER SAW. At x60 a slice of the city (819.2 m) is crossed every one and a half to three seconds, and every
+crossing builds three to five slices near (IC-GRAND's NEAR_RING) and, at the stream's edge, as many far. Each near
+slice's build ran its city work on the page's thread in units no breath parts, so a frame of a quarter of a second to
+over a second came every crossing - at x5 once in forty seconds, at x60 several a second and a half.
+
+THE CAUSE, unit by unit (`tools/icStutterBench.mjs` over the freeware and the real city, CPU milliseconds of one task on
+this machine - four cores shared at load 30-45, so read them against each other):
+- **The city's pieces made on the page.** The city's worker heard of a slice on the frame the stream queued it
+  (`scenes/capitalPrebuild.js` - the rings round the traveller only), so at x60 the build met its blocks and fabric's
+  models unmade and made them itself: a block 86-226 ms, 1.4-1.8 s a slice; and a far slice's skyline at the stream's edge
+  0.2-0.5 s (IC-GRAND's measure), the ring the worker was told of stopping two pixels out.
+- **The yards' places, in one task** (`scenes/world.js` townPlacesFor): every placed model's box (2,000 on a slice - its
+  fabric's models built inside it when the worker had not made them: 0.6-1 s), the town's ground, and each yard's search
+  of every cell and turn of a 512 by 512 grid: 1.1-1.2 s with the models, 0.2-0.4 s without.
+- **The living town's places, in one task** (`systems/livingWorld/livingTown.js` -> `places.js` townPlaces): the grid read
+  whole a dozen times and again for each quarter (IC-GRAND's town of quarters), its quarters' union read through
+  `Int32Array.from` with a mapping function (0.1-0.5 s alone) and its doors' net counted through a Map a cell: 90-290 ms.
+- **The streets' pieces, in one task** - flooded by the traveller's first frame of pace in a new slice
+  (`scenes/townWalkHost.js` townPace -> `systems/travel/townWalk.js` componentsOf): 75-160 ms; and a journey's way through
+  each slice crossed (townWay -> townWayCells: the flood and up to six searches of the grid): 12-215 ms.
+- **The town laid out in one task** (`world/locationLayout.js` layoutLocation, sixty-four blocks): 16-80 ms; and the
+  walkers' grid, its sixty-four blocks laid in one task (`scenes/pixelBuild.js`).
+
+THE FIX - the same city, the same pace, the same views, nothing hidden behind a pause:
+- **Ahead of the traveller** (`scenes/capitalPrebuild.js:"export function prebuildWanted(x, y, px, py, heading = null) {"`):
+  the sweep keeps the way of the last crossing, and the outer ring's slices one more crossing that way brings within
+  NEAR_RING are wanted near, first of their ring - their pieces made while the traveller is still a pixel off.
+- **Nothing of the city made on the page while a worker stands** (`capitalPrebuild.js:"function firstReady(queue) {"`,
+  wired into the stream's pump - `world.js:"if (building || !state.owes(queue)"`): a pixel of the city is built once every
+  piece of the view it builds now (near within NEAR_RING, else far) is the page's (`worldDataReplacement.js`
+  portBlockFamilyHas, `customModels.js` customModelReady) or held from a worker; the queue's first such pixel goes first,
+  its order else kept, and the pieces the next NEED_AHEAD pixels owe are asked of their workers (`need`) - a hole in the
+  land's before a view built again behind the one standing (IC-SWAP-BEHIND), which stands meanwhile. No worker (node, a
+  factory that throws, one that failed), or none of the city's pixels: every pixel ready, every piece the page's as ever.
+  The gate is a frame's work, so it keeps a look a slice and view (`capitalPrebuild.js:"function lookOf(px, py) {"`):
+  a frame looks at a queued pixel from the first piece its look found owed, and the pixel chosen is looked at whole
+  before it is built (a piece let go since: owed again, asked). With the stream's square of the city queued and owing
+  (81 pixels), a frame of it checks 345 pieces, where a look at each view whole every frame would check 5,931 -
+  0.6-2.5 ms against 31-38 ms, firstReady timed alone on this machine at load 65-70.
+- **A pool and a need lane** (`world/imperialPrebuildClient.js`, `world/imperialPrebuildWorker.js`): prebuildPoolSize
+  workers (the machine's cores less two, PREBUILD_POOL_MAX 3 at most), each slice one worker's (its pieces and its
+  landmarks' footprint in one place - `imperialPrebuild.js` pieceSlice); a piece a build waits on is made before every
+  wanted piece, made again where the page let it go, never dropped by a new wanted list, asked once until it comes back;
+  one a worker could not make is the page's and never waited on. PREBUILD_KEEP 4,096 holds the near ring, the ring past
+  it and the next builds' pieces at once.
+- **Every pass over a slice's grid a step at a time**, each the same work in the same order and the same answer, walked
+  through the build's breather (OW-HITCH's `world/puddleMask.js` stepsBreathing - one runner, `stepsDone` the passes run
+  whole for every other reader): the yards' measures a block a step, their ground and each yard's search
+  YARD_ROWS_A_STEP rows a step (`merchantYardSites.js` ...Steps; townPlacesFor awaits them); the town laid out a block a
+  step (`locationLayout.js` layoutLocationSteps) and the walkers' grid a block a breath; the living town's places
+  PLACES_ROWS_A_STEP rows and PLACES_CELLS_A_STEP flooded cells a step, each quarter's in steps (`places.js`
+  townPlacesSteps), made by the build and handed to the town (`livingTown.js` livingTownPlaces, `o.places`), the
+  quarters' union and the doors' net read through typed arrays; the town walk's pieces flooded PIECES_CELLS_A_STEP cells
+  a step before the pixel stands (`townWalk.js` componentsSteps); and a journey's way searched WAY_CELLS_A_STEP cells a
+  step on a scratch of its own (`townPaths.js` scratchKey - the residents' searches between its steps never begin it
+  again), the host walking WAY_STEPS_AN_ASK steps an ask and answering `pending` till it is found, the journey asking
+  again every frame and walking its leg meanwhile (`travelOptions.js` streetWait).
+
+MEASURED (`tools/icStutterBench.mjs`, the base tree and then this one, the same slices one after the other): seven near
+slices (the Arena District's four along its avenue, a Market, an Elven Gardens and a Temple District slice), each
+slice's city work as its build meets it, cut into frames as the breather cuts them (BUILD_SLICE_MS, 6 ms; a unit never
+parted). BEFORE (the base tree, the city's pieces made on the page as at x60): the page's work 1.5-3.9 s a slice, its
+longest task 452-1,070 ms (the yards' places, in every slice), and 4-19 frames over 33 ms, 1-9 over 50 ms and 1-4 over
+100 ms a slice. AFTER: the page's work 0.6-1.9 s (the city's pieces made on the workers, 1.1-2.1 s there), its longest
+task 20-62 ms (a block taken - its buildings' records laid on the page - or a step under the collector) and once 314 ms;
+0-5 frames over 33 ms, 0-1 over 50 ms and 0-1 over 100 ms a slice. By pass, the longest unit before and after: the
+yards 452-1,070 ms and 9-27 ms; the living town 15-567 ms and 2-21 ms (its places' steps 2-31 ms); the streets' pieces
+4-55 ms and up to 23 ms; a block 46-590 ms and 20-62 ms. Measured with the machine at load 30-45 on four shared cores -
+CPU time, its collector's threads with it: read the two against each other, not as a player's milliseconds.
+
+IN THE GAME: the journey itself is `tools/owHitchProbe.mjs` with `IC=90,6600,270 TURN=20` - the Arena District's avenue
+by the city wall at x60, turned back along it every twenty seconds so the run stays in the city - its A/B the base tree
+by `TREE=`. Its frames are the page's own and so the machine's: the bench above was taken with four cores shared at
+load 30-45, where a browser's frame times are the neighbours' as much as the city's, so the bench's units are the
+fix's measure and the probe the player's check.
+
+Not a DFU member (DFU's fast travel never streams a city; its StreamingWorld lays a location out in coroutine steps,
+which this follows): Port-Ledger section A, IC-STUTTER. THE FOUR HOSTS: `scenes/world.js` wired (it alone streams the
+city, walks journeys through it and builds near and far views); `scenes/exterior.js` (one fixed city, no stream, no
+journey), `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon) build no slice of it - the
+stepped passes keep their whole-run names there.
+
+Pins: `test/world/ic_stutter.test.js` (11: ahead of the traveller; the worker's need lane; the pool; the pump's next
+pixel and its looks; the page's own; the yards, the places, the pieces and the layout a step at a time, each the whole
+pass's answer; a journey's way in steps, the host and the journey; the host's wiring). Mutants:
+`tools/mutants/ic_stutter.json` (47). PINS MOVED: the pump's lifted scope in `test/systems/travel/ow_queueowed.test.js`,
+`ow_lead.test.js`, `ow_loadowed.test.js` and `test/scenes/ow_buildretry.test.js` (a gate with none of the city's: every
+pixel ready); townPlacesFor's lines in `test/world/merchantyards1.test.js`, `test/systems/carpyard1.test.js`,
+`test/world/baywalls.test.js`, `test/systems/shipyards1_found.test.js`, `test/systems/naval/fb1014_inlandports.test.js`
+and `test/world/urban/urban3_stand.test.js`. Mutant records re-aimed by content: `tools/mutants/baywalls.json`
+(TB-the-walk-unshared, TB-the-places-unshut), `carpyard1.json` (CARP-YARD-placed-before-the-port), `ow_queueowed.json`
+(QUEUE-OWED-pump-builds-the-head), `ow_townwalk.json` (OTW-heuristic-unweighted).
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer
@@ -2611,7 +2710,9 @@ closing nothing), its parts the model door's and taken by it, its models the fam
 handed over once, the worker told what the page made itself, a new list replacing the last, no worker or a failed one
 the page's own work; the door and the family asking it first and the pixel's build reading a slice's blocks a breath at
 a time; the sweep telling it the slices coming (the player's own first, near then far), letting it go out of reach, wired
-before the city's near and far sweep. `test/world/icgrand_palace.test.js` (6): the palace (its ring round the plaza, a
+before the city's near and far sweep. `test/world/ic_stutter.test.js` (11, IC-STUTTER above): the slices ahead of the
+traveller wanted near; the workers' need lane and pool; the pump's next pixel, its looks and the page's own; the city's
+passes over a slice's grid a step at a time, each the whole pass's answer; a journey's way in steps. `test/world/icgrand_palace.test.js` (6): the palace (its ring round the plaza, a
 walk through each gate meeting no face and through a wing a wall, its pavilions standing out past its wings, the plaza
 and the start markers clear, its pictures), the gardens' ground (the paths, the walks, the fountains' basins and rounds,
 the statues facing their paths, the rows of trees and the lawns' groves), its monuments (each part built of its own),

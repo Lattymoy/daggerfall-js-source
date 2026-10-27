@@ -341,7 +341,8 @@ import { createWardenShows } from './wagon/wagonWardenShow.js';   // WARDEN1: th
 import { createWagonWarden, wardenTownIn, wardenTownOfPixel } from './wagon/wagonWardenHost.js';   // WARDEN1: the town watch - my wagon's stamp, the cell's words, the offline clock; AUDIT WARDEN1 D3: the town under a point, one pure home
 import { createWildEscrowHost } from './wildEscrowHost.js';   // PVP-ESCROW: the two-phase handoff's two sides, out of bootWorld (HOST-SPLIT)
 import { WARDEN_VENDOR } from '../systems/wagon/wagonWarden.js';   // WARDEN1: the stamp's save slot, and the towns a watch keeps
-import { townGroundOf, yardSitesOn, craftYardSitesOn, MONUMENT_KEEP_M, yardMeasuresOf, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them
+import { townGroundSteps, yardSitesSteps, craftYardSitesSteps, MONUMENT_KEEP_M, yardMeasuresSteps, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them; IC-STUTTER: each pass a step at a time
+import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner - a town's places through the build's breather
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
 import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
@@ -1749,7 +1750,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!again.length) return;
     swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view
   }
-  const { swap, _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels } = createTamrielSweeps({   // HOST-SPLIT: src/scenes/tamrielSweepsHost.js
+  const { swap, _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, capitalPrebuild } = createTamrielSweeps({   // HOST-SPLIT: src/scenes/tamrielSweepsHost.js; IC-STUTTER: the city's workers, for the pump (capitalPrebuild.firstReady)
     destroyPixel, maps,
     get _countryTemplates() { return _countryTemplates; },
     get _lairTemplates() { return _lairTemplates; },
@@ -3993,12 +3994,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  keyed by the town and its kind, with its keepers (systems/portPlaces.js portKeeper - the shipyard's crewmaster beside
    *  its shipmaster), its name and the town's people. One memo a town, keyed by its measures and whether it is a port;
    *  one call a build (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole). TS7: `shut` the town's walk
-   *  shut (world/townWalls.js townWalkShut) - its places on its own ground, never on its wall. */
-  function townPlacesFor(dfLocation, lefaySpot, people, loc = null, shut = null) {
+   *  shut (world/townWalls.js townWalkShut) - its places on its own ground, never on its wall. IC-STUTTER (bible/03-World/
+   *  Arena-Provinces.md IC-STUTTER): every pass a step at a time through `breathe` (the build's breather) - a city's grid is
+   *  512 cells a side, and its measures, ground and yards' search were 0.2-0.4 s of one task of the Imperial City's every
+   *  near slice; the same passes in the same order, the same places. */
+  async function townPlacesFor(dfLocation, lefaySpot, people, loc = null, shut = null, breathe = async () => {}) {
     try {
       const yl = loc && isEnhanced() && windmillsOn() ? loc : layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
       const measures = {
-        ...yardMeasuresOf(yl, {
+        ...await stepsBreathing(yardMeasuresSteps(yl, {
           boxOf: (id, at) => placedModelBox(id, at, {
             custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),   // BAY-LEFT-SEA: a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
             classic: (cid) => dfMeshSize(classicModelIdOf(cid)),
@@ -4008,7 +4012,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           millBox: (at) => { const box = transformedAabb(archAabb('millBody', BODY.positions), at); return [box[0], box[2], box[3], box[5]]; },
           flatsOf: (b) => collectBlockFlats(b.dfBlock, 0),
           closedBlock: (b) => b.blockName === ARENA_BLOCK || palaceIn(b),
-        }),
+        }), breathe),
         keep: lefaySpot ? [[lefaySpot.x, lefaySpot.z, MONUMENT_KEEP_M]] : [],
       };
       const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex);
@@ -4016,15 +4020,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const sig = `${JSON.stringify(measures)}|${yardTown ? 'yards' : ''}|${port ? 'port' : ''}|${shut?.key ?? (shut ? 'shut' : '')}`;
       let memo = _yardMemo.get(mapId);
       if (!memo || memo.sig !== sig) {
-        const g = townGroundOf(yl, measures, shut);
-        const sites = g && yardTown ? yardSitesOn(g) : [];
+        const g = await stepsBreathing(townGroundSteps(yl, measures, shut), breathe);
+        const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];
         let ports = [];
         if (g && port) {
           const lp = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
           const bearing = seaBearing(lp.x, lp.y, openSea);   // AUDIT SHIPYARDS U2: and the town's own water against it is no sea; INLAND-PORTS: nor a lake the map draws
           ports = portSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
         }
-        if (g && yardTown) sites.push(...craftYardSitesOn(g));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
+        if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
         memo = { sig, sites, ports };
         _yardMemo.delete(mapId);
         _yardMemo.set(mapId, memo);
@@ -16467,7 +16471,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
 
   async function pump() {
-    if (building || !state.owes(queue)) return;   // QUEUE-OWED: a pixel the stream let go while it waited is never built
+    if (building || !state.owes(queue) || !capitalPrebuild.firstReady(queue)) return;   // QUEUE-OWED: a pixel the stream let go while it waited is never built; IC-STUTTER (scenes/capitalPrebuild.js): nor one of the Imperial City whose pieces its workers have not made - the next one ready first
     building = true;
     const next = queue.shift();
     _streamSince ??= performance.now();   // PERF-EXT24: a run of streamed builds begins

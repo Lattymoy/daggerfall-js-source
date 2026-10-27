@@ -116,7 +116,7 @@ test('URBANIZER U3 the pixel build\'s wiring by source: the fabric planned as th
   const pb = rd('src/scenes/pixelBuild.js');
   assert.match(pb, /const walkShut = dfLocation \? fabricWalkShut\(townWalkShut\(dfLocation, townGround, paths\), dfLocation\) : null;/);   // PIN MOVED (TS10): and the paths its terrain painted
   const plan = pb.indexOf('const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe() });');
-  assert.ok(plan > 0 && plan < pb.indexOf('const places = yardTown || portTown ? townPlacesFor('), 'before the yards');
+  assert.ok(plan > 0 && plan < pb.indexOf('const places = yardTown || portTown ? await townPlacesFor('), 'before the yards');   // PIN MOVED (IC-STUTTER): awaited
   const stand = pb.slice(pb.indexOf('      if (fabric) {'), pb.indexOf('      // T2 towns: the streaming host\'s wandering population'));
   assert.match(stand, /await remapSubMeshes\(gpuF\.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase\);/);
   assert.match(stand, /const local = trs\(locLocal\[0\], locLocal\[1\], locLocal\[2\], 0, 0, 0\)/);

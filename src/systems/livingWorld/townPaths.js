@@ -21,13 +21,13 @@ const STEP_COST = Float64Array.from({ length: 16 }, (_, w) => (w > 0 ? stepCost(
 
 /** @type {WeakMap<object, { stamp: Int32Array, g: Float32Array, from: Int32Array, closed: Int32Array, heap: Int32Array, f: Float32Array, order: Int32Array, search: number }>} */
 const scratchOf = new WeakMap();
-function scratch(nav) {
+function scratch(nav, key = nav) {
   const n = nav.width * nav.height;
-  let s = scratchOf.get(nav);
+  let s = scratchOf.get(key);
   if (!s || s.stamp.length !== n) {
     s = { stamp: new Int32Array(n), g: new Float32Array(n), from: new Int32Array(n), closed: new Int32Array(n),
       heap: new Int32Array(n), f: new Float32Array(n), order: new Int32Array(n), search: 0 };
-    scratchOf.set(nav, s);
+    scratchOf.set(key, s);
   }
   return s;
 }
@@ -40,11 +40,13 @@ function scratch(nav) {
  * since its last step begins again (the answer the same, only later).
  * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number, grid?: Uint8Array }} nav
  * @param {number[]} a - [gx, gy] @param {number[]} b - [gx, gy]
- * @param {{ maxExpansions?: number, hWeight?: number }} [opts] - OW-TOWN-WALK: `hWeight` the heuristic's weight (1, the
- *   residents' own: the cheapest way; a journey's search weighs it more - systems/travel/townWalk.js TOWN_WAY_H_WEIGHT)
+ * @param {{ maxExpansions?: number, hWeight?: number, scratchKey?: object }} [opts] - OW-TOWN-WALK: `hWeight` the heuristic's weight (1, the
+ *   residents' own: the cheapest way; a journey's search weighs it more - systems/travel/townWalk.js TOWN_WAY_H_WEIGHT);
+ *   IC-STUTTER: `scratchKey` the object its scratch is kept on (the grid's own by default) - a journey's search run over
+ *   several frames keeps one of its own, so the residents' searches between its steps never begin it again
  * @returns {{ step: (n: number) => (number[][]|null|undefined), spent: number }}
  */
-export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS, hWeight = 1 } = {}) {
+export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS, hWeight = 1, scratchKey = nav } = {}) {
   const W = nav.width, H = nav.height;
   const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
   if (!a || !b || !inb(a[0], a[1]) || !inb(b[0], b[1]) || !(nav.weightAt(a[0], a[1]) > 0) || !(nav.weightAt(b[0], b[1]) > 0)) {
@@ -55,7 +57,7 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS,
   // the grid's own bytes when it has them (CityNavigation: the weight in the high nibble), else its reader
   const grid = nav.grid instanceof Uint8Array && nav.grid.length === W * H ? nav.grid : null;
   const bx = b[0], by = b[1];
-  const s = scratch(nav);
+  const s = scratch(nav, scratchKey);
   const { stamp, g, from, closed, heap, f, order } = s;
   let id = 0, size = 0, opened = 0, expansions = 0;
   /** @type {number[][]|null|undefined} */

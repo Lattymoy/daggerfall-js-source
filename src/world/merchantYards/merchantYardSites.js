@@ -22,6 +22,16 @@
 // A town with no room for one stands none of it (said once, in the console), never a yard over a house, a road or a lot.
 //
 // Pure: no renderer, no GL, no clock. Not a DFU member. Ledger A (MERCHANT-YARDS).
+//
+// IC-STUTTER (2026-10-27, the owner: "Traveling in the Imperial City at x60 presents really bad stuttering"; bible/03-World/
+// Arena-Provinces.md IC-STUTTER): EVERY PASS A STEP AT A TIME. A city of eight blocks a side is a grid of 512 by 512 cells,
+// and every near slice of the Imperial City is one: its measures (two thousand placed models' boxes), its ground and its
+// yards' search (four turns over every cell, a yard a pass) ran in one task of the pixel's build, 0.2-0.4 s of the page's
+// thread on each - at x60 several a second. Each pass is a generator (`...Steps`) that yields between blocks and between
+// bands of rows; the host walks it through the build's breather (world/puddleMask.js stepsBreathing - OW-HITCH's), and
+// every function below keeps its name and its answer, run to its end (stepsDone): the same work in the same order, the
+// same sites.
+import { stepsDone } from '../puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
 import { CityNavigation, NAV_CELL, NAV_CELLS_PER_BLOCK } from '../city/cityNavigation.js';
 import { trs, multiply } from '../mat4.js';   // AUDIT MERCHANT-YARDS R2: the blocks' measures, here where they are pinned
 import { staticBuildingBox, staticBuildingWorldAabb } from '../staticBuildings.js';
@@ -81,17 +91,27 @@ export function yardSpans(kind, turn) {
  * THE GRID THE YARDS ARE PLACED ON: `blocked` 1 where a yard may not stand (closed, water, a building's or a prop's
  * clearance, a flat's, a palace's block, the monument's), `road` 1 on a road or a path. Pure.
  * @param {{width: number, height: number, weightAt: (gx: number, gy: number) => number}} nav
- * @param {{buildings?: number[][], props?: number[][], flats?: number[][], closedBlocks?: number[][], keep?: number[][]}} [o]
+ * @param {YardMeasures} [measures]
  *   `buildings`/`props` boxes [x0, z0, x1, z1] in the location frame (metres), `flats` [x, z] feet, `closedBlocks`
  *   [bx, by], `keep` discs [x, z, r] kept clear
+ * @returns {YardGround}
  */
-export function yardGround(nav, { buildings = [], props = [], flats = [], closedBlocks = [], keep = [] } = {}) {
+export const yardGround = (nav, measures = {}) => stepsDone(yardGroundSteps(nav, measures));
+/** @typedef {{buildings?: number[][], props?: number[][], flats?: number[][], closedBlocks?: number[][], keep?: number[][]}} YardMeasures */
+/** @typedef {{width: number, height: number, blocked: Uint8Array, road: Uint8Array}} YardGround */
+/** IC-STUTTER: yardGround a band of rows and a few hundred boxes at a time.
+ *  @param {{width: number, height: number, weightAt: (gx: number, gy: number) => number}} nav @param {YardMeasures} [measures]
+ *  @returns {Generator<void, YardGround, void>} */
+export function* yardGroundSteps(nav, { buildings = [], props = [], flats = [], closedBlocks = [], keep = [] } = {}) {
   const W = nav.width, H = nav.height;
   const blocked = new Uint8Array(W * H), road = new Uint8Array(W * H);
-  for (let gy = 0; gy < H; gy++) for (let gx = 0; gx < W; gx++) {
-    const w = nav.weightAt(gx, gy), i = gy * W + gx;
-    if (!(w > 0)) blocked[i] = 1;
-    else if (w === ROAD_WEIGHT) road[i] = 1;
+  for (let gy = 0; gy < H; gy++) {
+    if (gy && gy % YARD_ROWS_A_STEP === 0) yield;
+    for (let gx = 0; gx < W; gx++) {
+      const w = nav.weightAt(gx, gy), i = gy * W + gx;
+      if (!(w > 0)) blocked[i] = 1;
+      else if (w === ROAD_WEIGHT) road[i] = 1;
+    }
   }
   // a box grown by `pad` closes every cell whose centre is in it
   const closeBox = (b, pad) => {
@@ -112,8 +132,11 @@ export function yardGround(nav, { buildings = [], props = [], flats = [], closed
       if (dx * dx + dz * dz <= reach) blocked[gy * W + gx] = 1;
     }
   };
+  yield;
   for (const b of buildings) closeBox(b, BUILDING_CLEAR_M);
+  yield;
   for (const b of props) closeBox(b, PROP_CLEAR_M);
+  yield;
   for (const f of flats) closeDisc(f[0], f[1], FLAT_CLEAR_M);
   for (const k of keep) closeDisc(k[0], k[1], k[2]);
   for (const [bx, by] of closedBlocks) {
@@ -121,6 +144,9 @@ export function yardGround(nav, { buildings = [], props = [], flats = [], closed
   }
   return { width: W, height: H, blocked, road };
 }
+
+/** IC-STUTTER: the rows of a pass between two steps - a 512-cell city's grid in sixteen. */
+export const YARD_ROWS_A_STEP = 32;
 
 /** The cells a yard's front looks onto, FRONT_ROAD_CELLS deep: [x0, y0, x1, y1). Pure. SHIPYARDS: and a port place's. */
 export function frontStrip(gx, gy, nx, nz, turn) {
@@ -136,7 +162,10 @@ export function frontStrip(gx, gy, nx, nz, turn) {
  * (metres from its origin), `yaw` its turn (degrees), and its cells. Pure.
  * @param {{width: number, height: number, blocked: Uint8Array, road: Uint8Array}} g @param {string} kind
  */
-export function yardSite(g, kind) {
+export const yardSite = (g, kind) => stepsDone(yardSiteSteps(g, kind));
+/** IC-STUTTER: yardSite a band of rows of a turn at a time - the same places weighed in the same order.
+ *  @param {?YardGround} g @param {string} kind */
+export function* yardSiteSteps(g, kind) {
   if (!g || !YARD_FOOT[kind]) return null;
   const { width: W, height: H } = g;
   const closed = summed(W, H, (x, y) => g.blocked[y * W + x]);
@@ -147,6 +176,7 @@ export function yardSite(g, kind) {
   for (let turn = 0; turn < 4; turn++) {
     const [nx, nz] = yardSpans(kind, turn);
     for (let gy = pad; gy + nz + pad <= H; gy++) {
+      if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;
       for (let gx = pad; gx + nx + pad <= W; gx++) {
         const cx = gx + nx / 2, cy = gy + nz / 2;
         // AUDIT MERCHANT-YARDS G2: Math.sqrt of an exact sum (half-cells squared), the same on every engine - Math.hypot
@@ -182,10 +212,12 @@ export function closeSite(g, s) {
 
 /** BOTH YARDS on a ground, in YARD_KIND_ORDER: each placed on what the last left. Answers the sites found (none, one or
  *  both). Pure (it closes `g` as it goes - a ground is placed on once). */
-export function yardSitesOn(g) {
+export const yardSitesOn = (g) => stepsDone(yardSitesSteps(g));
+/** IC-STUTTER: yardSitesOn a step at a time. @param {YardGround} g */
+export function* yardSitesSteps(g) {
   const out = [];
   for (const kind of YARD_KIND_ORDER) {
-    const s = yardSite(g, kind);
+    const s = yield* yardSiteSteps(g, kind);
     if (!s) continue;
     out.push(s);
     closeSite(g, s);
@@ -196,10 +228,12 @@ export function yardSitesOn(g) {
 /** CARP-YARD: THE PROFESSIONS' YARDS on a ground, in CRAFT_YARD_ORDER, each on what the last left - placed by the host
  *  AFTER the two yards and a port town's places (scenes/world.js townPlacesFor), so none of theirs moves. Pure (it closes
  *  `g` as it goes). */
-export function craftYardSitesOn(g) {
+export const craftYardSitesOn = (g) => stepsDone(craftYardSitesSteps(g));
+/** IC-STUTTER: craftYardSitesOn a step at a time. @param {YardGround} g */
+export function* craftYardSitesSteps(g) {
   const out = [];
   for (const kind of CRAFT_YARD_ORDER) {
-    const s = yardSite(g, kind);
+    const s = yield* yardSiteSteps(g, kind);
     if (!s) continue;
     out.push(s);
     closeSite(g, s);
@@ -223,7 +257,10 @@ export function yardSitesOf(loc, measures = {}) {
  * on (yardSitesOf), and the port's two after them (world/portSites.js portSitesOn: on what the yards left). Pure.
  * @param {{width: number, height: number, blocks: any[]}} loc @param {Parameters<typeof yardGround>[1]} [measures]
  */
-export function townGroundOf(loc, measures = {}, shut = null) {
+export const townGroundOf = (loc, measures = {}, shut = null) => stepsDone(townGroundSteps(loc, measures, shut));
+/** IC-STUTTER: townGroundOf a block at a time, then yardGround's steps. @param {{width: number, height: number, blocks: any[]}} loc
+ *  @param {YardMeasures} [measures] @param {?((nav: any) => void)} [shut] @returns {Generator<void, ?YardGround, void>} */
+export function* townGroundSteps(loc, measures = {}, shut = null) {
   if (!loc?.blocks?.length || !(loc.width > 0) || !(loc.height > 0)) return null;
   const nav = new CityNavigation(loc.width, loc.height);
   for (const b of loc.blocks) {
@@ -231,9 +268,10 @@ export function townGroundOf(loc, measures = {}, shut = null) {
     if (!fld?.autoMapData || !fld.groundData?.groundTiles) continue;
     const tiles = fld.groundData.groundTiles;
     nav.setBlockData(b.x, b.y, fld.autoMapData, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater: true });
+    yield;
   }
   shut?.(nav);   // TS7: the town's own ground, off its wall (world/townWalls.js townWalkShut)
-  return yardGround(nav, measures);
+  return yield* yardGroundSteps(nav, measures);
 }
 
 /**
@@ -254,9 +292,14 @@ export function townGroundOf(loc, measures = {}, shut = null) {
  * @param {{boxOf?: (id: number, at: ArrayLike<number>) => (number[]|null), fieldOf?: (id: number) => any, millBox?: (at: ArrayLike<number>) => (number[]|null),
  *   flatsOf?: (block: any) => any[], closedBlock?: (block: any) => boolean}} [measure]
  */
-export function yardMeasuresOf(yl, { boxOf = () => null, fieldOf = () => null, millBox = () => null, flatsOf = () => [], closedBlock = () => false } = {}) {
+export const yardMeasuresOf = (yl, measure = {}) => stepsDone(yardMeasuresSteps(yl, measure));
+/** IC-STUTTER: yardMeasuresOf a block at a time. @param {any} yl
+ *  @param {{boxOf?: (id: number, at: ArrayLike<number>) => (number[]|null), fieldOf?: (id: number) => any, millBox?: (at: ArrayLike<number>) => (number[]|null),
+ *   flatsOf?: (block: any) => any[], closedBlock?: (block: any) => boolean}} [measure] */
+export function* yardMeasuresSteps(yl, { boxOf = () => null, fieldOf = () => null, millBox = () => null, flatsOf = () => [], closedBlock = () => false } = {}) {
   const buildings = [], props = [], flats = [], closedBlocks = [];
   for (const b of yl?.blocks ?? []) {
+    yield;
     const origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (closedBlock(b)) closedBlocks.push([b.x, b.y]);
     for (const m of b.layout?.models ?? []) {
