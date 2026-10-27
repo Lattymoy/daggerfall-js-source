@@ -243,5 +243,75 @@
       "test/player/rpt1026_world_standthrough.test.js"
     ],
     "note": "the line from the head's top: a ceiling the standing head clips under (DFU's stand) refused too"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-band-unwalked",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));",
+    "new": "if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) out.push(Object.freeze([dx, dy]));",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the port looked for a pixel about the player alone: a ship at a far harbour's first berth 2 pixels off its town is near no port"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-dry-unread",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  if (built(x, z)) return true;\n  const c = state.compensation;",
+    "new": "  if (built(x, z)) return true;\n  if (built) return false;\n  const c = state.compensation;",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "a pixel known only where it is built: the ring's far side, never built from the sea, keeps the far harbour waiting"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-every-pixel-dry",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));",
+    "new": "d = true;",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the sea itself read as dry - a harbour sounded off ground that holds water unbuilt"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-one-town-alone",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock);",
+    "new": "stepOne(Array.isArray(near) ? near[0] : near, clock);",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the nearest port alone sounded: Pencart's harbour, its first berth within a pixel of Longham, never"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-far-edge-past-the-ring",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN)",
+    "new": "x0 + (sx * i) / nx, z0 + (sz * k) / nz",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the box's far edges read as the next pixel's - one past the ring, never built from its far shore"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-host-the-three-by-three",
+    "file": "src/scenes/world.js",
+    "old": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER) {",
+    "new": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER.slice(0, 9)) {",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the world host walks the 3 x 3 alone"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-host-no-height-map",
+    "file": "src/scenes/world.js",
+    "old": "harbourOf(t, { state, built: csaPixelAt, woods })",
+    "new": "harbourOf(t, { state, built: csaPixelAt, woods: null })",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the world host hands no height map: nothing is ever dry for certain"
   }
 ]

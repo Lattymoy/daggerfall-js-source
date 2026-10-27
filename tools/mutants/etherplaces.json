@@ -317,7 +317,7 @@
   {
     "name": "PORT-harbour",
     "file": "src/scenes/world.js",
-    "old": "      if (loc?.exterior?.exteriorData) town = { id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH };",
+    "old": "      if (loc?.exterior?.exteriorData) towns.push({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH });",
     "new": "",
     "tests": [
       "test/world/etherplaces.test.js"
