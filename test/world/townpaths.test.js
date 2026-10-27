@@ -68,6 +68,19 @@ test('TS10 a town\'s yards: a painted road across its open ground is no yard\'s 
   assert.notEqual(a, townWalkShut(dfLocation, null).key, 'none, another key');
 });
 
+test('AUDIT BAY-LEFT F3 TS10 through URBANIZER: the pixel\'s one shut (fabricWalkShut over townWalkShut) keeps the town\'s shut\'s key - its painted roads - and says its fabric, so the yards\' memo is made again when the roads land (mutants: the key dropped; the town\'s key unread)', async () => {
+  const { townWalkShut } = await import('../../src/world/townWalls.js');
+  const { fabricWalkShut } = await import('../../src/world/urban/townFabricStand.js');
+  const loc = { mapTableData: { mapId: 1 }, exterior: { exteriorData: { width: 2, height: 2, blockNames: [] } } };
+  const paths = new Uint8Array(128 * 128); paths[5000] = 1;
+  const roadless = townWalkShut(loc, null, null), landed = townWalkShut(loc, null, paths);
+  const a = fabricWalkShut(roadless, loc), b = fabricWalkShut(landed, loc);
+  assert.equal(typeof a.key, 'string');
+  assert.notEqual(a.key, b.key, 'the roads landed: another key');
+  assert.ok(a.key.startsWith(roadless.key) && b.key.startsWith(landed.key), 'the town\'s own shut\'s key in it');
+  assert.equal(fabricWalkShut(landed, loc).key, b.key, 'the same shut, the same key');
+});
+
 test('TS10 the host\'s wiring: the pixel\'s walk shut reads the paths its terrain job painted, and a town\'s places are placed again when they change', () => {
   assert.match(rd('src/scenes/pixelBuild.js'), /const walkShut = dfLocation \? fabricWalkShut\(townWalkShut\(dfLocation, townGround, paths\), dfLocation\) : null;/);   // PIN MOVED (URBANIZER U3): the fabric's shut over the town's
   assert.match(hostText('src/scenes/world.js'), /\|\$\{shut\?\.key \?\? \(shut \? 'shut' : ''\)\}`;/);
