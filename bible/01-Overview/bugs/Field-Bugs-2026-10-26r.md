@@ -10,6 +10,9 @@ The inbox is private - a report is read by the handles `REPORT_READER_HANDLES` n
 repository is public, so this page names no reporter and quotes none of their words (19f's rule); an exploit is described
 only as far as its fix needs. A report's number here (`#n`) is its place in the inbox, oldest first.
 
+AUDIT RPT1026 (`../audits/Audit-Rpt1026.md`, 2026-10-27) read this batch cold in thirteen lanes; what it found is
+fixed in place, and the rows and sections below say what each fix now does (each audit fix names its `AUDIT RPT1026 <id>`).
+
 Every report has one verdict. #245 is the one report read in two lanes - its bank half under RPT1026-CHESTGOLD, its
 trade-hold half under RPT1026-MARKET - and it is counted once, FIXED (HOLD-SAID); every other report has one row.
 A row's verdict is its Done column's first words; an "Answer the player" row's is the first words of its What it was.
