@@ -5,7 +5,7 @@
 import { arenaPixels, arenaPlaceOnPixel, arenaPlaces, arenaPlacesVersion } from '../world/arenaPlaces.js';
 import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId } from '../world/arenaLocations.js';
 import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryLocationIndex } from '../world/tamrielCountry.js';
-import { capitalOnPixel, capitalPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalSliceOrdinal, capitalSpanPixels, capitalsVersion, imperialOutskirts } from '../world/tamrielCapitals.js';
+import { capitalOnPixel, capitalPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalSliceOrdinal, capitalSpanPixels, capitalsVersion, imperialOutskirts, capitalCentrePixel, capitalSlicePort } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getWorldClimateSettings, REGION_NAMES, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -192,7 +192,8 @@ export function createTamrielPlaces(host) {
     const slot = place ? Object.freeze({ province: place.province, provinceIndex: place.provinceIndex, id: place.id, kind: place.kind, port: !!place.port }) : null;
     if (had?.capital) {
       if (at && had.capital.k === at.k && had.capital.s === at.s && (had.arena?.id ?? null) === (slot?.id ?? null) && (had.arena?.provinceIndex ?? null) === (slot?.provinceIndex ?? null)
-        && !!had.arena?.port === !!slot?.port) return had;   // AUDIT-TESA A4-F2: its place made a port, its slot too
+        && !!had.arena?.port === !!slot?.port   // AUDIT-TESA A4-F2: its place made a port, its slot too
+        && (had.exterior?.exteriorData?.portTownAndUnknown !== 0) === capitalSlicePort(at.k, at.s, capitalPinPort(at.k))) return had;   // BAY-LEFT-SEA: and its harbour's port word (its canal opened)
       host._locIndexGen += 1;
       locationIndex.delete(key);
     }
@@ -203,11 +204,18 @@ export function createTamrielPlaces(host) {
     locationIndex.set(key, loc);
     return loc;
   }
+  /** BAY-LEFT-SEA (world/tamrielCapitals.js capitalSlicePort): whether the place of capital `k`'s name pinned on its centre is
+   *  a port - the registry's own read (world/pastBayRows.js: the places the model stands, its centre's), so a capital's
+   *  harbour slice is a port to its own byte exactly where the registry calls it one. */
+  function capitalPinPort(k) {
+    const c = capitalCentrePixel(k);
+    return !!(c && _arenaTemplates && arenaPixels()?.byPixel.get(`${c.px},${c.py}`)?.port);
+  }
   /** A capital's slice laid out by its plan on (px, py) - NOT stood (AUDIT RELEASE R2-5f: the quest layer reads a slice's
    *  buildings by kind before it stands one; capitalLocationAt stands the same clone). */
   function capitalCloneOf(at, px, py, slot) {
     const regionIndex = maps.getRegionIndexAt(px, py);
-    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,
+    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot, pinPort: capitalPinPort(at.k),   // BAY-LEFT-SEA: its harbour's port word
       where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ? getWorldClimateSettings(maps.getClimateIndex(px, py)) : townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) } });
   }
   /** AUDIT RELEASE R2-5f (scenes/quest/questProvinceSites.js sliceIndexAt): the capital slice on (px, py) as the build

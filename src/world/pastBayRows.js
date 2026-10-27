@@ -22,7 +22,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { ARENA_TEMPLATE_KINDS, arenaPlaceId, arenaLocationIndex } from './arenaLocations.js';
-import { CAPITALS, capitalPin, capitalSpan, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, capitalHarbourSlice, capitalCanalOpen } from './tamrielCapitals.js';
+import { CAPITALS, capitalPin, capitalSpan, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, capitalSlicePort } from './tamrielCapitals.js';
 
 /** The registry's name for the places past the Bay. */
 export const PAST_BAY_SOURCE = 'tesa';
@@ -40,14 +40,14 @@ export function pastBayPlaceRows({ pixels, templateOf, capitals }) {
     CAPITALS.forEach((cap, k) => {
       const at = capitalPin({ name: cap.name, province: cap.province });
       if (!at) return;
-      const n = capitalSpan(cap), h = (n - 1) / 2, harbour = capitalHarbourSlice(cap);
+      const n = capitalSpan(cap), h = (n - 1) / 2;
       const pin = pixels?.byPixel.get(`${at.px},${at.py}`) ?? null;   // the place of its name, pinned on its centre
       for (let s = 0; s < n * n; s++) {
         const sx = s % n, sy = (s - sx) / n;
         rows.push({
           mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, s)), name: capitalSliceName(cap, s), px: at.px + sx - h, py: at.py + sy - h,
           type: LOCATION_TYPES.TownCity, w: n > 1 ? 8 : cap.plan[0].length, h: n > 1 ? 8 : cap.plan.length,
-          port: s === harbour && (!!pin?.port || capitalCanalOpen(k)),   // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal)
+          port: capitalSlicePort(k, s, pin?.port),   // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law
           location: capitalLocationIndex(k, capitalSliceOrdinal(cap, s)),   // WW7-5: its location's index (a town past the Bay reports itself)
         });
       }

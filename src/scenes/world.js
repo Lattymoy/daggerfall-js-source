@@ -295,7 +295,7 @@ import { arenaTemplates, ARENA_LOAD_WAIT_MS, isArenaPlaceId } from '../world/are
 import { countryTemplates, countryCounts, isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
 import { countrysideOn } from './shared.js';   // TESA7: its kill door
 import { capitalsOn } from './shared.js';   // TESA10: the capitals' kill door
-import { capitalBase, cityBlockNames, setCapitalsStanding } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand
+import { capitalBase, cityBlockNames, setCapitalsStanding, isCapitalLandmark } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand; BAY-LEFT-SEA: a landmark measured by its footprint
 import { lairTemplates, lairPools } from '../world/tamrielDungeons.js';   // TESA8: the lairs past the Bay
 import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the places past the Bay the roads' regions laid, for the held map
 import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
@@ -881,7 +881,7 @@ import { setSigilOnline, setSigilRenown } from '../systems/sigil/sigil.js';   //
 import { setSetsDueling, setsDueling, drinkWorn, setSetsWearer } from '../systems/sigil/sigilSets.js';   // SET2: the duel's word - sets sleep in one; SET4: the drink, whole; SET5: the wearer a tooltip reads
 import { lootHudChips } from '../systems/loot/lootPowers.js'; import { setSetPowersVoice, setHudChips, heldPlayerBlow, remarkPlayerBlow } from '../systems/sigil/sigilSetPowers.js'; import '../systems/loot/lootDrought.js'; import '../systems/loot/lootCodex.js'; import { createLootLines } from './lootLines.js'; import { createNpcMarks } from './npcMarksHost.js';   // NPC-MARKS: the marks over the street's people who do something; SET3: what the sets DO - every power registered at import; its voice is this host's; SET5: its chips; LOOT4: and lootPowers.js beside it, what a loot piece DOES (the Loot arc), every kind registered at import; LOOT8: lootDrought.js, the drought's finder and take listener, registered at import; LOOT10: lootCodex.js, the codex's take listener, round sweep and record; LOOT11: the lines of light over a find
 import { computeEntityMods, registerEntityFold, EMPTY_MODS } from '../systems/entityMods.js';   // SET3: the sets' stat fold, recomputed the moment they wake or sleep; SEAT1d: the Festive buff's
-import { createSeatEdicts, FESTIVE_FOLD, festiveMods } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it
+import { createSeatEdicts, FESTIVE_FOLD, festiveMods, lairDenOf } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it; BAY-LEFT-SEA: a lair's den
 import { createTownEconHost } from './townEconHost.js';   // TOWN-ECON TE1: every town's economy - its counters' factor, its card; TE2: the players' share
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // SET3: the Wrath's and Eventide's sounds are the cast sounds of their schools
 import { itemLongName } from '../systems/item/itemInfo.js';   // SIGIL1: the weapon's name as its tooltip reads it
@@ -3896,6 +3896,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     inPool: (f) => exteriorFoes.foes.includes(f),
     relations: () => livingRelations,
     say: (text) => townTalk.say(text),
+    routed: (h) => { seatEdicts.denCleared('hideout', h.px, h.py).catch(() => {}); },   // BAY-LEFT-SEA: a hideout routed past the Bay - a Bounty's den
     chest: livingBandChest,
     dropPile: (items, feet) => droppedLoot.seedPile(items, feet, { archive: TREASURE_PILE_ARCHIVE, record: 0 }, null, null, { unsaved: true, owner: 'lw-hideout' }),
     removePile: (pile) => droppedLoot.removePile(pile),
@@ -4141,7 +4142,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const measures = {
         ...yardMeasuresOf(yl, {
           boxOf: (id, at) => placedModelBox(id, at, {
-            custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length ? customModelFor(cid)?.positions ?? null : null),
+            custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),   // BAY-LEFT-SEA: a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
             classic: (cid) => dfMeshSize(classicModelIdOf(cid)),
             cache: _yardBoxes,
           }),
@@ -6675,7 +6676,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // AUDIT-RR2 G22: `travelOptionsEnabled` asks TO's "hasPort" (RoleplayRealism.cs:635-644; TravelOptionsMapWindow.cs:870-873 - the hand-written port list), else the flag - SEAT2b part two: a members' Harbour at a seat among them (travelPorts.js hasPortFor)
     // AUDIT CAPTAIN'S SEA P10: past the Veil an isle's place is a port by its own kind - TO's list knows only the Bay's, and a
     // ruin kept its template's port byte
-    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (loc.ether ? loc.etherKind === 'port' : loc.arena || loc.capital ? !!loc.arena?.port : modSetting('travel-options', 'Enabled') === true ? hasPortFor(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness   // AUDIT CAPTAIN'S SEA P10: an isle's place a port by its kind, whatever Travel Options says   // AUDIT-TESA A4-F4: and a place past the Bay by its Arena place's port (TESA6) - Travel Options' list names none there
+    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (loc.ether ? loc.etherKind === 'port' : loc.arena || loc.capital ? (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0 : modSetting('travel-options', 'Enabled') === true ? hasPortFor(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness   // AUDIT CAPTAIN'S SEA P10: an isle's place a port by its kind, whatever Travel Options says   // AUDIT-TESA A4-F4: and a place past the Bay by its Arena place's port (TESA6) - Travel Options' list names none there; BAY-LEFT-SEA: by its own port byte - an Arena place's TESA6 word, a capital's harbour's (tamrielCapitals.js capitalSlicePort: the Imperial City's Waterfront too)
     // RR2: EnhancedRiding's reads - the look, the ground, the module's settings
     lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => heightAt(x, z),
     enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
@@ -20269,7 +20270,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // in an hour the bound has spent, since nothing earned then counts). Built only online, like the tracker.
     setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === renownHour() ? 0 : renownTracker.pending() }));
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
-    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site).catch(() => {}); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
+    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes.dungeonLocation : null)).catch(() => {}); });   // BAY-LEFT-SEA: a lair's foe struck down past the Bay - its den, a Bounty's (systems/seatEdicts.js lairDenOf)   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
     renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;

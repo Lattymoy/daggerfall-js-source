@@ -34304,6 +34304,11 @@
   "tr": "ca4c08c1dbae",
   "by": "claude-in-session"
  },
+ "seat.bounty.denPaid": {
+  "en": "3e5c03e030d4",
+  "tr": "17a13d40b648",
+  "by": "claude-in-session"
+ },
  "seat.charter.crown": {
   "en": "c18143a45936",
   "tr": "2fa0d6cb3543",
@@ -34317,6 +34322,11 @@
  "seat.charter.town": {
   "en": "11d9b82eca1e",
   "tr": "67557513c8c4",
+  "by": "claude-in-session"
+ },
+ "seat.edict.bountyDens": {
+  "en": "4c80e2e0ce3c",
+  "tr": "b22aee7b5667",
   "by": "claude-in-session"
  },
  "seat.gift.campEmpty": {

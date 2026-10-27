@@ -96,6 +96,15 @@ export const CAPITAL_MODELS = Object.freeze({
   manePalace: 910150, twoMoonsTemple: 910151, torvalQuay: 910152, torvalWall: 910153, maneEstate: 910154,   // TESA-LORE: the estate
   xanmeer: 910160, hist: 910161, helstromWalks: 910162, palisade: 910163,
 });
+/** BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 31 - C6): IS A MODEL ONE OF A CAPITAL'S
+ *  LANDMARKS - a CAPITAL_MODELS model, or an Imperial City part its slices carry (IMPERIAL_PARTS). Its FOOTPRINT is its
+ *  blocks' own: every block it stands over closes its automap where its faces stand (capitalPortBlocks' `footprint`,
+ *  world/capitalModels.js capitalFootprint and imperialSliceFootprint - a wall to the walkers, not ground to cross), so the
+ *  town's yards and its port's places read it there (scenes/world.js townPlacesFor) and never by its box: a ring wall's
+ *  box is the whole city, and closed every yard and the harbour's shipyard off a capital's ground but its rim's strips. */
+const LANDMARK_IDS = new Set([...Object.values(CAPITAL_MODELS), ...IMPERIAL_PARTS.map((p) => p.id)]);
+/** @param {number} id */
+export const isCapitalLandmark = (id) => LANDMARK_IDS.has(id);
 /** RMB geometry: a block's side in its own units and in metres, its ground tiles, its automap cells. */
 export const RMB_UNITS = 4096;
 export { BLOCK_M };   // a block's side, metres (world/spawnedDungeons.js's: the terrain's eighth)
@@ -399,6 +408,13 @@ export function capitalCanalOpen(k) {
   const D = capitalDims(cap);
   return canalAt(at.px + cap.harbour[0] - D.mx, at.py + D.h - D.my);
 }
+/** BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 31 - C6): A CAPITAL SLICE'S PORT WORD - its
+ *  harbour's slice (capitalHarbourSlice) where the place of its name pinned on its centre is a port (`pinPort`, TESA6's
+ *  coastal word) or its harbour meets its canal (capitalCanalOpen): the registry's row (world/pastBayRows.js) and the
+ *  slice's own PortTownAndUnknown byte (synthesizeCapitalLocation), one law - so the harbour the sea's systems call a port
+ *  stands its shipyard, crew hall, lighthouse and Docks and its bank sells a ship (scenes/pixelBuild.js portTown).
+ *  @param {number} k @param {number} s @param {unknown} pinPort */
+export const capitalSlicePort = (k, s, pinPort) => !!CAPITALS[k] && s === capitalHarbourSlice(CAPITALS[k]) && (!!pinPort || capitalCanalOpen(k));
 /** TS5: a capital's centre pixel on the live fit and land, or null. @param {number} k */
 export const capitalCentrePixel = (k) => capitalPixels().pixels[k] ?? null;
 /** TS5: whether a Bay pixel is of the Imperial City's outskirts (world/imperialCity.js IMPERIAL_OUTSKIRTS from its centre
@@ -747,8 +763,10 @@ export function dryKinds(names, blockOf) {
  * (`flattenAt.sea`, world/terrain/terrainGen.js) - its harbour's water the sea's own height, where it stood the city's
  * average, 16 to 59 m over the sea beside it.
  * @param {{ cap: any, k: number, s?: number }} at capitalOnPixel's
+ * BAY-LEFT-SEA: its PortTownAndUnknown byte its port word (capitalSlicePort - `pinPort` whether the place pinned on its
+ * centre is a port).
  * @param {{ base: any, names: Map<string, string[]>, blockOf: (name: string) => any, px: number, py: number,
- *   where?: { regionIndex?: number, regionName?: string, politic?: number, climate?: any }, arena?: any }} ctx
+ *   where?: { regionIndex?: number, regionName?: string, politic?: number, climate?: any }, arena?: any, pinPort?: boolean }} ctx
  */
 export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ctx) {
   // TESA11: a capital over several pixels - the slice's eight-by-eight of the plan, its hash and its gardens the plan's
@@ -782,7 +800,7 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
     exterior: {
       ...base.exterior,
       buildings,
-      exteriorData: { ...base.exterior?.exteriorData, width, height, blockNames, blockIndex: null, blockNumber: null, blockCharacter: null, locationId: mapId, mapId, portTownAndUnknown: 0, buildingCount: buildings.length },
+      exteriorData: { ...base.exterior?.exteriorData, width, height, blockNames, blockIndex: null, blockNumber: null, blockCharacter: null, locationId: mapId, mapId, portTownAndUnknown: capitalSlicePort(k, s, ctx.pinPort) ? 1 : 0, buildingCount: buildings.length },   // BAY-LEFT-SEA: its harbour's port word
       ...(base.exterior?.recordElement ? { recordElement: { ...base.exterior.recordElement, header: { ...base.exterior.recordElement.header, locationId: mapId } } } : {}),
     },
     // TESA11: its slice, and (over several pixels) the centre pixel every slice's ground is flattened to; TS5 x AUDIT TESA

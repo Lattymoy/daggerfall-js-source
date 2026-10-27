@@ -1019,12 +1019,16 @@ export const EDICT_WORDS = Object.freeze({
   conscription: 'The kingdom\'s palace seats held by other guilds pay the crown 2% of their week\'s Tithe, a March\'s 1%. Standing -5 at every seat that pays.',
   'royal-tourney': 'A duel ladder all week at the castle\'s square, every blow refereed; the week\'s champion takes the prize and the title Champion of the kingdom for good.',
 });
-/** An Edict's line in the Seat tab, with its cost at a seat of `tier`. */
-export function edictLine(edict, tier, tide = 'calm') {   // SEASON1 part two: `tide` the coming week's, a Festival's cost
+/** BAY-LEFT-SEA: what the Bounty does at a seat past the Bay (bountyDenPixel) - its bailiwick's dens, no camp's. */
+const bountyDenWords = () => t('seat.edict.bountyDens', 'Outlaws\' hideouts and lairs near the town: the treasury pays {silver} silver a den cleared, from what is set aside.', { silver: BOUNTY_MARKS });
+/** An Edict's line in the Seat tab, with its cost at a seat of `tier`. BAY-LEFT-SEA: `seat` the seat it is proclaimed at -
+ *  a Bounty past the Bay (its region a province's) pays for its dens. */
+export function edictLine(edict, tier, tide = 'calm', seat = null) {   // SEASON1 part two: `tide` the coming week's, a Festival's cost
   const e = EDICTS[edict];
   if (!e) return null;
   const cost = edictCost(edict, tier, tide);
-  return `${e.name}: ${EDICT_WORDS[edict]}${cost ? ` Costs ${cost.toLocaleString('en-US')} silver.` : ''}`;
+  const words = edict === 'bounty' && Number(seat?.region) >= BAY_REGION_COUNT ? bountyDenWords() : EDICT_WORDS[edict];
+  return `${e.name}: ${words}${cost ? ` Costs ${cost.toLocaleString('en-US')} silver.` : ''}`;
 }
 /**
  * THE HOLDER'S OWN LINES on the Seat tab, for its members (SEAT0 7.9) - `h` the standings answer's `holding`
@@ -1076,6 +1080,29 @@ export function bountySitePixel(site) {
   const x = Number(m[1]), y = Number(m[2]);
   return x < 1000 && y < 500 ? [x, y] : null;
 }
+
+/**
+ * BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 20 - B8 = E3; the owner's call taken: "Every
+ * single thing here needs to be addressed. No exceptions."): THE BOUNTY PAST THE BAY. World of Daggerfall's camps are the
+ * Bay's alone, so a province's seat could proclaim a Bounty that never paid. Past the Bay it pays for its bailiwick's own
+ * foes' DENS - an outlaws' hideout (LW12: routed, every one of its band struck down) and a lair (TESA8: a foe of its
+ * struck down in it, as a camp's is) - by the same kind of claim a camp's is: the den's id names its map pixel
+ * (`"px,py:hideout"`, `"px,py:lair"`), paid once a UTC day whoever cleared it, five an account a day, bounded and not
+ * witnessed (seatHolding.js claimBounty) - no new trust. A den's id on the Bay is none (the Bay's Bounty is its camps').
+ */
+export const BOUNTY_DEN_KINDS = Object.freeze(['hideout', 'lair']);
+/** A den's id, or null. @param {string} kind @param {number} px @param {number} py */
+export const bountyDenId = (kind, px, py) => (BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py) ? `${px},${py}:${kind}` : null);
+/** The map pixel a den's id names - past the Bay, on the world's grid, the id canonical - or null. @param {unknown} site */
+export function bountyDenPixel(site) {
+  const m = /^(-?\d{1,4}),(-?\d{1,4}):(hideout|lair)$/.exec(typeof site === 'string' ? site : '');
+  if (!m) return null;
+  const x = Number(m[1]), y = Number(m[2]);
+  if (bountyDenId(m[3], x, y) !== site || Math.abs(x) >= SEAT_PIXEL_SPAN || Math.abs(y) >= SEAT_PIXEL_SPAN) return null;
+  return x >= 0 && y >= 0 && x < 1000 && y < 500 ? null : [x, y];
+}
+/** A Bounty claim's pixel: a World of Daggerfall camp's on the Bay (bountySitePixel), a den's past it. @param {unknown} site */
+export const bountyClaimPixel = (site) => bountySitePixel(site) ?? bountyDenPixel(site);
 
 /** THE LEVY'S SHARE OF ONE HARVEST (SEAT0 7.6): a tenth of `qty`, its fraction kept or not by `roll` (0-1, the
  *  harvest's own) - so a harvest of 3 gives the seat one unit three times in ten, and the tenth holds on average. */
