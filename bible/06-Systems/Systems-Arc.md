@@ -4144,12 +4144,23 @@ summon's body is a puppet's now: the door marks the foe it stood
 hand and worn kit still fight) and the last word every body door asks
 empties whatever the death laid on it (capFoeLoot). Port-Ledger A.
 Pinned by `test/scenes/rpt1026_progress_summon.test.js` (the real Skull
-off MAGIC.DEF, a real street pool on the freeware's MONSTER.BSA). Left,
-for the owner: in a dungeon online the room's other players stand the
-copy as a loose stand's puppet (SUMMON-SYNC), built and rolled on their
-own machine, so its body there still carries their own roll - the own
-lane carries no mark of a summon; and a summon restored from a save is
-stood again with its empty list, its `summoned` mark not saved.
+off MAGIC.DEF, a real street pool on the freeware's MONSTER.BSA). AND
+EVERY OTHER PLAYER'S COPY OF IT (RPT1026-PROGRESS, the same day): in a
+dungeon online the room's other players stand the copy as a loose
+stand's puppet (SUMMON-SYNC), built on their own machine - and that build
+rolled its kind's loot there, its death there its kit, food and card, so
+the farm stood open to a second player. The owner's own frame names its
+summons now (`sm`, beside `lf` - `systems/foeLootCap.js` summonedWord), a
+reader flags the record (summonedRecord) and marks the puppet it stands
+(markSummoned, in `scenes/dungeonContext.js` applyOwnRecord) - bare alive,
+its death's finds emptied by capFoeLoot; the mark rides the entity, so a
+summon handed to its heir streams on as one. Each way at once: my summon
+on a friend's machine, theirs on mine. The street's and a building's
+lane needed nothing: a puppet there carries no loot (exteriorFoes.js
+WORLD6b B14). Pinned through the real lane by
+`test/scenes/rpt1026_progress_peersummon.test.js`. Left, for the owner: a
+summon restored from a save is stood again with its empty list, its
+`summoned` mark not saved.
 
 AND THE ENUM WENT HOME. ENCHANTMENT_TYPES is FallExe's
 (ItemsFile.cs:111-141); it moved to formats/magicDef.js - the file

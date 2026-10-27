@@ -315,7 +315,7 @@ import { createPopulationLane } from '../characters/npcBodies.js'; import { pers
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied, corpseEntityName, mintCorpseMarker, corpseTextureOf } from './corpseMarker.js';
 import { createDungeonCorpsePrefabs } from './corpsePrefabHost.js';   // DEX5 / AUDIT DEX D11: a mod's corpse prefab - the dungeon's reach   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice; L10N3e: a body's name as shown
 import { egFindStruck, egFindKill } from '../systems/eliteGates/egFind.js';   // EG-E3: the dungeon's find - a joiner's kill, asked by the joiner; PARTY-LOOT: a room's body's kill
-import { rollCorpseKit, capFoeLoot } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap
+import { rollCorpseKit, capFoeLoot, summonedWord, summonedRecord, markSummoned } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap; RPT1026-PROGRESS: and a summon's puppet bare on every machine
 import { dropFoeCard } from '../systems/card/cardSources.js';   // AUDIT CARDS-6 A3: a joiner's copy of a body draws for its own card
 import { FOE_LEVEL_MAX, CELL_LOOSE_PUPPETS, sharedClassicMinutes, hitClassField, hitClassOf } from '../net/wire.js';   // TELL8: a blow's class on a hit   // SEARCH1: a room's search stamp, read as the world minute it was searched at   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level; SUMMON-SYNC: an owner's loose stands a reader stands, the cell's allowance
 import { grantKindOf } from '../net/grantLaw.js';   // GRANT4: the own lane's stands on their grants (bible/11-Multiplayer/Spawn-Grants.md section 14)
@@ -5462,7 +5462,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       qf.push(fl ? [i, qt.q, qt.s, fl] : [i, qt.q, qt.s]);
     });
     const gs = grants?.()?.frameGrants(src.map(([f]) => f._grant), whole) ?? [];   // GRANT4: the grants these records name
-    const frame = { n: ++_ownFrameSeq, k: _locationKey, full: whole ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(qf.length ? { qf } : {}), ...(lf.length ? { lf } : {}), ...(cp.length ? { cp, cn } : {}) };
+    const frame = { n: ++_ownFrameSeq, k: _locationKey, full: whole ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(qf.length ? { qf } : {}), ...(lf.length ? { lf } : {}), ...summonedWord(src, out), ...(cp.length ? { cp, cn } : {}) };
     if (full || heirOf) fitMaxima(frame, src.map(([f], k) => [out[k], f]));
     return frame;
   }
@@ -5478,12 +5478,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!o) { o = { n: -1, at: 0, gen: ++_ownGen }; _ownOwners.set(from, o); }
     if (Number.isFinite(data.n)) { if (data.n <= o.n) return false; o.n = data.n; }
     o.at = performance.now();
-    const tags = validQuestTags(data.qf), loose = validLooseSeqs(data.lf), comp = validLooseSeqs(data.cp);   // AUDIT CC-E1: `cp` the owner's companions (the loose numbers' own law)
+    const tags = validQuestTags(data.qf), loose = validLooseSeqs(data.lf), comp = validLooseSeqs(data.cp), summ = validLooseSeqs(data.sm);   // AUDIT CC-E1: `cp` the owner's companions (the loose numbers' own law); RPT1026-PROGRESS: `sm` its summons (foeLootCap.js summonedWord)
     grants?.()?.heard(from, data.gs);   // GRANT4: the grants this frame carries, each checked once
     const compNames = companionNames(data.cp, data.cn);   // AUDIT WK-U3: and their names
     const seen = new Set(), marks = [], named = new Set();
     for (const raw of data.f.slice(0, CELL_FRAME_RECORDS_MAX)) {
-      const r = validFoeRecord(raw);
+      const r = summonedRecord(validFoeRecord(raw), summ);   // RPT1026-PROGRESS: a summon's record says so, to its stand and every update after
       if (!r) continue;
       named.add(r.i);
       const key = ownPupKey(from, r.i);
@@ -5584,7 +5584,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // this copy's own roll - a class foe built at my level rolled more health than the owner's, so the first sight of
     // an untouched foe read as a blow and fired the quest's `injured` before anyone had struck it
     const wasDead = f.dead, h0 = f._pupH;
-    applyFoeRecord(f, r);
+    applyFoeRecord(markSummoned(f, r), r);   // RPT1026-PROGRESS: its owner's summon is a summon here - bare, its death's finds emptied (capFoeLoot)
     if (Number.isFinite(r.h)) f._pupH = r.h;
     if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) { f._qHurt = true; share?.onPuppetHurt?.(f._pupQuest, f._ownFrom); }
     if (f._pupQuest && !wasDead && f.dead) share?.onPuppetDied?.(f._pupQuest, f._ownFrom, f._ownI);   // KEPT-KILL: whose foe, by its number - the kill the owner's pose may say too counts once

@@ -13630,6 +13630,14 @@ as a cell's loose stand is (WORLD6b), on the room's own lane (`scenes/dungeonCon
   everyone's foe - it goes with its summoner, as DFU's does through a door.
 - **The Wabbajack re-stands only what this copy runs** (`replaceFoeInPool`): a joiner's change of the seat's foe, or
   of another's stand, would ride the room beside the runner's foe.
+- **An artifact's summon is bare on every machine** (RPT1026-PROGRESS, 2026-10-26, a private report: the Skull's copies
+  were looted like any foe). The summoner's own body carries nothing (SUMMON-BARE, Port-Ledger A), but a reader's
+  puppet is built on the reader's machine and `buildFoeAt` rolled its kind's loot there, its stream death its kit, food
+  and card - a friend's copy was the farm. The frame names my summons beside my loose stands (`sm`,
+  `systems/foeLootCap.js` summonedWord, by the entity's `summoned` mark); the reader flags the record (`summonedRecord`)
+  and marks its puppet in `applyOwnRecord` (`markSummoned`): bare alive, its death's finds emptied by capFoeLoot. The
+  mark rides the entity, so an heir streams a handed summon on as one. No relay or wire change, by OWN1's law above.
+  Pinned: `test/scenes/rpt1026_progress_peersummon.test.js`, over the real lane, build and stream death.
 
 The ONLINE-DUNGEON-FOES flag is retired (above). Pinned: `test/scenes/summonsync.test.js` (9), mounted over the context's own
 statements (the two handovers over world.js's own). `tools/mutants/summonsync.json` (24 dead). Re-aimed: the flag's pin (`world2`), the candidates pins

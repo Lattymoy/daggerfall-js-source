@@ -265,5 +265,75 @@
       "test/systems/rpt1026_progress.test.js"
     ],
     "note": "the card's words back to the design's shorthand, read as Silver standing in for Gold in a recipe - the report"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-frame-silent",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "...(lf.length ? { lf } : {}), ...summonedWord(src, out), ",
+    "new": "...(lf.length ? { lf } : {}), ",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the owner's frame names no summon: every other player's copy of it rolls its kind's loot"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-reader-deaf",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "summ = validLooseSeqs(data.sm);",
+    "new": "summ = validLooseSeqs(undefined);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the reader drops the frame's word: the copy stands with its own roll"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-record-unflagged",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const r = summonedRecord(validFoeRecord(raw), summ);",
+    "new": "      const r = validFoeRecord(raw);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the word read but never laid on the record: no stand or update hears it"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-puppet-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    applyFoeRecord(markSummoned(f, r), r);",
+    "new": "    applyFoeRecord(f, r);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the record flagged but the puppet never marked: the copy keeps its roll, alive and dead"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-word-every-loose",
+    "file": "src/systems/foeLootCap.js",
+    "old": "if (!qt && f?.entity?.summoned === true && out[k]) sm.push(out[k].i);",
+    "new": "if (!qt && out[k]) sm.push(out[k].i);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "every loose stand named a summon: a Wabbajack's change bare on a friend's machine"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-record-every-one",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  if (r && seqs?.has?.(r.i)) r.sm = 1;",
+    "new": "  if (r) r.sm = 1;",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "every record of the frame flagged a summon"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-mark-unasked",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  if (r?.sm === 1 && f?.entity && f.entity.summoned !== true) summonedBody(f);",
+    "new": "  if (f?.entity && f.entity.summoned !== true) summonedBody(f);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "every puppet marked, the record's word unread"
   }
 ]
