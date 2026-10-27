@@ -17403,3 +17403,49 @@ slice's to widen.
 
 Pinned in `test/systems/decor/decoruse.test.js` (D1, D2, D4, D6, D8); `tools/mutants/decoruse.json` (23, all dead).
 
+## RPT1026-WORLD CONFIRM-REREAD, CONFIRM-ONCE, DECOR-VERBS - the decorator's Confirm and its press (2026-10-27, two private reports)
+
+Two private reports of 2026-10-25: in a home, the decorator's Confirm did nothing; and since the decorator's new menus
+(the overhaul of 2026-10-24), nothing in the caravan could be moved. Both were driven through the real decorator
+(`scenes/decor/decorTool.js`), its bar and panel (`ui/decorPanel.js`) over the decorator rig's DOM, and the real hover
+seam (`ui/worldPlaque.js` worldHoverFrame, `systems/quickLoot.js`) - a click's own path: the decorator's capture leaves
+an unlocked press to the page, the bar's button takes its click, a locked left press in the flight is the plaque's lit
+row (`worldModes.js` tryExit's decor arm). What a click did wrong, each fixed:
+
+- **CONFIRM-REREAD.** A home's draft reads the room's revision once, as it opens (`openDraft`), beside the host's own
+  read of the room. A read the service left unanswered - a stalled request is given up after DECOR_LIST_WAIT_MS (10 s,
+  `net/accountClient.js`) and answered `offline`, the overloaded database of DECOR-BATCH's own record - left the draft
+  with no revision, and every Confirm of the visit said the room could not be read and sent nothing; the standing poll
+  (`hearRoom`) never mended it, as it stands down while the draft has changes, and the first revision it hears it only
+  remembers. Confirm reads the room again now (`rereadRev`), and takes the revision only for the room the draft began
+  from: a room another hand changed since (a hall's other keeper, the owner on another machine) is the service's own
+  stale-revision refusal (`decor-rev`), never written over; a read that fails again says so, and the draft stands to
+  Confirm again or Discard.
+- **CONFIRM-ONCE.** Nothing marks a Confirm on its way (the bar says nothing until the service answers), so a second
+  click sent the same batch again: the service answers a repeated `txn` with the first's receipt, and the client paid
+  the purse again for the same room - one piece paid twice. A Confirm while one is on its way does nothing now
+  (`d.keeping`), and is let go when it ends, kept or refused.
+- **DECOR-VERBS.** Since the overhaul the Decorate button opens the flight, and a placed piece is moved by a press on
+  it: the plaque's lit row, Move first (`systems/decor/decorLook.js` decorPlaque). The plaque is drawn on the enhanced
+  skin alone, never on a touch screen nor on the classic skin with quick loot off (`worldPlaque.js` worldPlaqueOn,
+  classicPlaqueOn), and the interior host's namer answers nothing with World Tooltips off - so there the hover folded no
+  row, and a press on a piece opened its chest or did nothing; the one Move left was the catalogue's In this room tab,
+  where the old menu had kept it. Now a decorator that browses asks for its verbs (`quickLoot.js` wantPlaqueVerbs), and
+  where no plaque is drawn the seam folds its frame with its first verb alone (`decorLook.js` decorPressFrame, the
+  decorator's keys alone - decorVerbKey): a press on a placed piece is Move, on the room's own furniture Take out, on a
+  swing door Remove - what the press does on the plaque - and no wheel steps a list nobody sees (one verb is no choice,
+  `quickLootWheel`). The interior namer's World Tooltips gate lets the decorator's keys through while it browses (the
+  one statement; createWorldModes grows by nothing). Duplicate, Rename, Who may use and Remove stay on the plaque's
+  wheel and the panel's In this room.
+
+Driven and found sound, and pinned as a guard: the decorator's Move in the caravan, a ship's cabin and a house - by the
+plaque's row and by the panel's In this room - stands the piece where the next click sets it down, at 0.0.392 (the
+report's build), 0.0.404 and now. Which skin, quick-loot and World Tooltips setting the report was made under is not in
+it; on the enhanced skin with World Tooltips on the press was always Move.
+
+**Pins.** `test/scenes/decor/rpt1026_world_decor.test.js` (the Confirm after an unanswered read, the room changed since,
+a read failed twice, the second click, the press where no plaque is drawn, the law, the host's gate, the guard). Pins
+moved: `test/ui/enhanced/enhancedInventory.test.js` (the seam's first act admits the verbs' line between the two faces
+and the gate) and `test/systems/disc22c_classic_loot.test.js`'s draw line kept by the order of the try's statements.
+Mutants: `tools/mutants/rpt1026_world.json` CONFIRM-REREAD (3), CONFIRM-ONCE (2), DECOR-VERBS (8), all dead;
+`worldhover.json`'s two gate records re-aimed by content (dead).

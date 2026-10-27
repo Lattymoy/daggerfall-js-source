@@ -313,5 +313,135 @@
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
     "note": "the world host hands no height map: nothing is ever dry for certain"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-the-old-refusal",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "if (usesBatch(r) && !Number.isSafeInteger(d.rev) && !(await rereadRev(r, d))) return false;",
+    "new": "if (usesBatch(r) && !Number.isSafeInteger(d.rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a room read unanswered as the draft opened refuses every Confirm of the visit, as before"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-the-room-taken-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (since.put.length || since.drop.length) { deps.say?.(deps.refusal?.('decor-rev')",
+    "new": "    if (false) { deps.say?.(deps.refusal?.('decor-rev')",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the revision taken whatever the room holds now: another hand's change written over"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-any-revision",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (!res?.ok || !Number.isSafeInteger(rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "new": "    if (!res?.ok) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "an answer with no revision taken: the batch goes at NaN"
+  },
+  {
+    "name": "RPT1026-CONFIRM-ONCE-the-guard-gone",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (d.keeping) return false;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a second click on Confirm sends the batch again and pays again"
+  },
+  {
+    "name": "RPT1026-CONFIRM-ONCE-never-let-go",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      d.keeping = false;\n      if (placing) placing.busy = false;",
+    "new": "      if (placing) placing.busy = false;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a Confirm once sent holds the draft for good: the next one never goes"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-decorator-never-asks",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());",
+    "new": "const verbsOff = wantPlaqueVerbs(() => false);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "where no plaque is drawn the decorator's verbs fold nowhere: a press on a piece never moves it"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-asks-out-of-the-flight",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());",
+    "new": "const verbsOff = wantPlaqueVerbs(() => true);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the decorator asks for its verbs out of the flight too"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-seam-stands-down",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const verbs = !dom && !classic && plaqueVerbsWanted();",
+    "new": "  const verbs = false;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the seam stands down on a page with no plaque, the decorator browsing or not"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-whole-list",
+    "file": "src/ui/worldPlaque.js",
+    "old": "foldQuickLoot(verbs ? decorPressFrame(frame) : frame);",
+    "new": "foldQuickLoot(frame);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the whole list folded where nobody sees it: the wheel steps it unseen"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-any-key",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "export const decorVerbKey = (key) => typeof key === 'string' && DECOR_VERB_KEYS.some((k) => key.startsWith(k));",
+    "new": "export const decorVerbKey = (key) => typeof key === 'string';",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "every key is the decorator's: a player's or a lever's verbs folded and pressed"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-a-key-dropped",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "'chair:', 'bed:', 'door:', 'act:decor:']",
+    "new": "'chair:', 'bed:', 'door:']",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a placed door's key is no longer the decorator's"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-any-frame",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "if (frame?.kind !== 'actions' || !decorVerbKey(frame.key) || !frame.rows?.length || frame.startUnlit) return null;",
+    "new": "if (!frame?.rows?.length) return null;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a chest's goods, a player's unlit list, anything folded"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-gate-closed",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!worldTooltipsOn() && !(decorVerbKey(key) && decorTool.flying() && !decorTool.ghost())) return null;",
+    "new": "if (!worldTooltipsOn()) return null;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "World Tooltips off, the interior host names no decorator's verbs"
   }
 ]

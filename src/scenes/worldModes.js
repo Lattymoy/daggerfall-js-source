@@ -409,7 +409,7 @@ import { loadIcon } from '../ui/textureCanvas.js';
 import { isTouchDevice } from '../ui/touch/touchDevice.js';
 import { holdCursor, cursorKeyClaimed } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decor/decorCatalogue.js';
-import { decorBuiltInPlaque, decorPlaque } from '../systems/decor/decorLook.js';
+import { decorBuiltInPlaque, decorPlaque, decorVerbKey } from '../systems/decor/decorLook.js';
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: Daggerfall's own board, placed in a guild's hall
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
@@ -3473,7 +3473,7 @@ export function createWorldModes(host) {
     (key) => interiorGuards?.hoverName?.(key) ?? null,
     (key) => host.peerHoverName?.(key) ?? null,   // PEER-PLAQUE1: another player, by the outer host's own word - the port's own family, ungated like the corpses above
     (key) => {
-      if (!worldTooltipsOn()) return null;
+      if (!worldTooltipsOn() && !(decorVerbKey(key) && decorTool.flying() && !decorTool.ghost())) return null;   // RPT1026-WORLD DECOR-VERBS: the decorator's verbs are its own, whatever the readout's switch
       const hide = hideInteractTooltip();
       const b = interiorBuilding;
       // .cs:764-767 - a building's door, from INSIDE, names the place
