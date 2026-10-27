@@ -2618,7 +2618,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // a window - the refusal's box is already on this host's stack.
     return createInventoryWindow({
       ...packDoors,   // UI2: the book, the camp and the spellbook - one bag with the hotbar's Use
-      postItem: (text) => opts.postItem?.(text) ?? false, canPostItem: () => opts.canPostItem?.() ?? false,   // CHAT-POST: through the outer host
+      postItem: (text, item) => opts.postItem?.(text, item) ?? false, linkItem: (item) => opts.linkItem?.(item) ?? false, canPostItem: () => opts.canPostItem?.() ?? false,   // CHAT-POST: through the outer host
       usingRightHand: () => weaponRig.playerWeapon.usingRightHand,   // DISC12: the pack's figure holds the hand in USE
       say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
       items: () => (playerEntity.items ??= []),

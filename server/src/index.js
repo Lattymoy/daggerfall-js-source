@@ -4820,7 +4820,7 @@ export class Room {
       // the key is struck out exactly as anyone else would be, and a
       // refusal is never a free way to make the room answer.
       if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }
-      await this._sayLine(ws, a, m.ch, { t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub, ...(m.me === true ? { me: true } : {}) }, now);   // MOD1: the verified account beside the line; EMOTE1: and an action said as one
+      await this._sayLine(ws, a, m.ch, { t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub, ...(m.me === true ? { me: true } : {}), ...(m.items ? { items: m.items } : {}), ...(m.item ? { item: m.item } : {}) }, now);   // MOD1: the verified account beside the line; EMOTE1: and an action said as one; CHAT-POST: and its linked items
       return;
     }
     if (m.t === 'holdem') {

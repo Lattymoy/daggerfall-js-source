@@ -449,6 +449,10 @@ it (rotatecontroller.cpp:41-47) - which sits ABOVE the file root. On
 a rig whose root rotates Rz90, the pitch becomes a rotation about the
 graph's Y, and the pin drives it THROUGH poseAssembly because a
 direct call with the right argument let the call-site mutant survive.
+(BOW-AIM, 2026-10-26: the NECK'S OWN turn is about the graph's Y - Ry(t) -
+and the WORLD's is the root's X, Rx(-t), the look's own pitch; the
+line had been OSG's letters, which in this port's column convention
+turn the world the other way. See BOW-AIM below.)
 
 TOOLING NOTE: pyffi 2.2.3 (the pip release) models NiGeometryData's
 "Num UV Sets" as a lone UByte, one byte short of the uint16 OpenMW
@@ -7393,3 +7397,42 @@ Morrowind.esm, not committed): a Khajiit in iron boots and an Argonian in daedri
 shin over their bare feet, a Khajiit's iron helm is not drawn and its chain coif is. Not covered: the townsfolk
 outfits (MW-FOLK1), which are drawn on the human races alone, and the first person, which draws no foot or head.
 `test/formats/morrowind/mwbeast1_beastboots.test.js` (10), `tools/mutants/beastboots.json` (20, all dead).
+
+## BOW-AIM (2026-10-26): the ranged aim pitch, ported - and RotateController in this port's convention
+
+FIELD BUGS 2026-10-26c (`01-Overview/bugs/Field-Bugs-2026-10-26c.md`; the Discord through the owner, "Bow, while being
+drawn, is pointed upwards too much"). The three [C] rules above - "The ranged aim pitch is TWO RotateControllers", "The
+spine controllers are attached only in VM_Normal", "setPitchFactor" - are ported whole in `src/combat/spineAim.js`:
+`spinePitchFactor` is character.cpp:1868-1895, `applySpineAim` configureControllers (weaponanimation.cpp:175-211), half
+of rot[0] times the factor about -X in the actor root's frame on spine1 and then spine2. The third-person body's pose
+hands it the slot (`poseAssembly`'s `aim`, after the clip and the neck, before BODY-MOTION, which keeps the clip's chest
+while the clip has a bow's arms); the first-person arm takes none, as VM_FirstPerson attaches none. rot[0] is + down,
+the port's look + up: the pose negates it, as `neckPitch` does. A peer's body and a townsperson's stand at pitch 0.
+Not a divergence: the reference's law, where the port had none.
+
+ROOT-TURN. RotateController's line (rule 31: `worldOrient * mRotate * worldOrientInverse * matrix.getRotate()`) is OSG's,
+and OSG multiplies ROW vectors: its matrix and quaternion products are the transposes of this port's, where a world is
+`parent * local` and a point `M v` (`mwNifMesh.js` composeTransform). Written in this port's convention it is
+`local * W^T * R * W` (`mwFirstPerson.js` rootSpaceTurn): the world becomes `R * world`, R in the root's frame. The port
+had the letters, `W * R * W^T * local`, which turns the world by R conjugated by `parent * W` - right where every frame is
+the identity (armfp.nif's, near enough), wrong on retail's turned bones: a "look down" of 0.3 tipped the third-person
+chest BACK about an axis up to 3 degrees off the root's X. The first-person neck (rule 30) turns through the same helper
+now, and MW-D20's pin holds the hand-worked answer (its local Ry(t), its world Rx(-t) * Rz90). Pinned on the vendored
+retail biped, four bones of four frames each (`test/combat/fb1026c_bowaim.test.js`).
+
+## MW-SHOULDER (2026-10-26): the view over the shoulder, the player's option
+
+FIELD BUGS 2026-10-26c again ("add an option to move camera a bit to the side ... because crosshair is located on top
+of character's head"). OpenMW's viewOverShoulder - off by default in the reference (settings.lua:44), named in
+`player/mwCamera.js`'s head as not here until now - is the player's option, Over the Shoulder (`systems/features.js`
+'mw-shoulder-camera': Off by default, Right, Left). The focal point stands at settings.lua:45-46's [30, -10] behind the
+chosen shoulder (the left its mirror, third_person.lua:39-40), and at combatOffset [0, 15] - centred, raised over the
+head - while a weapon or a spell is out or the actor swims (third_person.lua:27, :86-127); it eases verbatim
+(camera.cpp:247-294, at 5 into and out of combat, 1 otherwise) and lands at once when third person begins or the option
+changes; a wall at the shoulder holds it where camera.cpp:177-193's sphere touches. The raised combat offset is what
+keeps a shot on the crosshair: the shot leaves the head along the look (weaponanimation.cpp:111-114), so behind a
+shoulder it would pass 30 units to the side of the crosshair's ray.
+
+DECLARED DIVERGENCE (Port-Ledger A, MW-SHOULDER): with the option on the reference also pulls the camera out as the look
+rises and as the actor speeds up (third_person.lua:80-84, :152-161) - here the distance stays the wheel's alone. No auto
+switch (settings.lua:47, off in the reference) and no key: the side is the player's choice.

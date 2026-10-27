@@ -103,6 +103,7 @@ export function shipCardText(s) {
   else figs.push('no crew (you sail it alone)');
   if (s.guns > 0) figs.push(`${s.guns} ${s.guns === 1 ? 'gun' : 'guns'}${s.barrels ? ' and fire barrels' : ''}`);
   else if (s.barrels) figs.push('fire barrels');
+  if (s.ram) figs.push('a ram');   // RAM-RETURN
   figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);
   return {
     name: s.name, line: s.line, figs: figs.join(' - '),

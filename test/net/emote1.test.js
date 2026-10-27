@@ -216,14 +216,14 @@ test('EMOTE1 the picker is the desktop\'s, and a box the SCREEN narrowed gives i
 
 test('EMOTE1 host by source: the shortcodes expanded before the parse; an action said on this tab and a gesture on Local, both as actions; /emotes read; an action only down a relay that carries it; the action line drawn leaning (mutants: a gesture on the active tab; the action\'s flag dropped at the send)', () => {
   const w = rd('src/scenes/world.js');
-  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
+  const onSend = /onSend: \(tabId, text, opts = \{\}\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
   assert.match(onSend, /const cmd = parseChatLine\(expandShortcodes\(text\)\);/);
   assert.match(onSend, /if \(cmd\.kind === 'emotes'\) \{ for \(const line of EMOTE_LINES\) note\(line\); return 'read'; \}/);
-  assert.match(onSend, /if \(cmd\.kind === 'me'\) return chatSend\(tabId, cmd\.text, tabId, \{ me: true \}\);/);
-  assert.match(onSend, /if \(cmd\.kind === 'emote'\) return chatSend\('local', cmd\.text, tabId, \{ me: true \}\);/);
+  assert.match(onSend, /if \(cmd\.kind === 'me'\) return chatSend\(tabId, cmd\.text, tabId, \{ \.\.\.opts, me: true \}\);/);
+  assert.match(onSend, /if \(cmd\.kind === 'emote'\) return chatSend\('local', cmd\.text, tabId, \{ \.\.\.opts, me: true \}\);/);
   const send = w.slice(w.indexOf('const chatSend = '), w.indexOf('const chatRoll = '));
   assert.match(send, /if \(me && s\?\.status === 'open' && !s\.emoteOk\) return why\(EMOTE_OLD_RELAY_TEXT\);/);
-  assert.match(send, /return chatLinks\.get\(tabId\)\?\.sendChat\(text, \{ me \}\) \?\? false;/);
+  assert.match(send, /return chatLinks\.get\(tabId\)\?\.sendChat\(text, \{ me, item, items \}\) \?\? false;/);
   const panel = rd('src/ui/chatPanel.js');
   assert.match(panel, /\$\{line\.kind === 'me' \? ' me' : ''\}/);
   assert.match(panel, /\.dfchat-line\.me \.dfchat-text \{ font-style: italic;/);

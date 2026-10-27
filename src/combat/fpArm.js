@@ -108,6 +108,7 @@ import { rifleStanceStep } from './gun/rifleStance.js';   // RIFLE-STANCE: a lon
 import { applyGunStance } from './gun/gunHold.js';   // PISTOL-STANCE: the hold by the gun's kind - the rifle's or the pistol's
 import { createHipLantern, HIP_LANTERN_HEIGHT } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed (BODY-MOTION: its rider moved there); HT-WAIST-SIZE: the one height they hang
 import { createBodyMotion, motionWord } from '../characters/bodyMotion/bodyMotion.js';   // BODY-MOTION: the third-person body's gait, carry and blows
+import { spinePitchFactor, spineAimSlot } from './spineAim.js';   // BOW-AIM: the third-person body's ranged aim follows the look
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/morrowind/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
@@ -6483,6 +6484,10 @@ export function createFpArm() {
             mirror: mirrorFor('third', t, dt),   // TWO-HANDS: the second hand - the pair's left arm, a left-hand blow
             hold: rifleHold('third', t),   // RIFLE-STANCE: the long gun in the hands
             motion: motion.slot,   // BODY-MOTION: the gait, the carry and a blow's body over the clip's
+            // BOW-AIM (combat/spineAim.js): a ranged weapon drawn, the spine pitched by the look - rot[0] is + down, cam.pitch + up.
+            // Asked only while the look pitches and the upper body is past WeaponEquipped (the factor's own first test): every
+            // peer's and townsperson's body runs this rig at pitch 0
+            aim: cam?.pitch && upper > UPPER_BODY.WeaponEquipped ? spineAimSlot(-cam.pitch * spinePitchFactor({ upper: UPPER_BODY_NAME[upper], weaponType: stanceOf(), group: weaponGroup, time: actionState ? actionState.time : -1, startTime: keyTime(attackKeys(attackType).windUp.start), minAttackTime: keyTime(attackKeys(attackType).minAttack), completion: clipCompletion(actionState) })) : null,
             skin: !thirdSkinReady(t),   // MWNPC1: the skin in the vertex shader - the pose is the skeleton alone
           });
           uploadThirdMesh(t);
@@ -6841,6 +6846,9 @@ export function createFpArm() {
     /** What the wheel may cross INTO: a body that refused keeps the
      *  player in first person with the reason on the card. */
     canThirdPerson: () => !standIn && !!(thirdBuilt && thirdBuilt.ok),
+    /** MW-SHOULDER (player/mwCamera.js stepShoulder): third_person.lua's two questions of the actor (:89-92) - a weapon
+     *  or a spell out (Actor.getStance), else swimming (Actor.isSwimming, the frame's motion bag) - or null. */
+    shoulderStance: () => (spellReady || !sheathed ? 'combat' : camera?.()?.move?.swimming ? 'swimming' : null),
     /**
      * BEAST-SELF (2026-09-26, Mac: "You dont see your self transform less your in paperdoll style (morrowind models
      * need their vampire/werewolf forms)"): STAND ASIDE. Morrowind's data holds no beast for a Daggerfall lycanthrope,
