@@ -644,7 +644,7 @@ import { boatTriggers, boatMenuRows, boatMenuStart, pressBoatVerb, BOAT_VERB } f
 import { linkBankCabin, readBankCabinLink, bankCabinCandidates } from '../systems/boatCabinOwnership.js';
 import { hasSailingCabin, savedCabinBoat, cabinSceneName, CABIN_REFUSAL } from '../systems/sailingCabin.js';
 import { createSailingCabinAccess } from './sailingCabin.js';
-import { createCaravanAccess, parkedCaravanAt } from './caravanRoom.js';   // WAGONS1: the caravan's room
+import { createCaravanAccess, parkedCaravanAt, caravanStepOut } from './caravanRoom.js';   // WAGONS1: the caravan's room; RPT1026-WORLD WAGON-OUT: its door's landing
 import { createWagonRiders, GO_LEAD_MS } from './wagon/wagonRiders.js';   // WAGONS1: the seats in the back
 import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagon/wagonSeats.js';
 import { createSailingCabinLink } from '../net/sailingCabinLink.js';
@@ -8092,7 +8092,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     paint: (part, i) => { const r = paintDrivenWagon(playerEntity.items ?? [], part, i); if (r.ok) _hccDirty = true; return r; },   // WAGONS2: its inside painted from the decorator
     toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },
     fromNative: (p) => { const [x, z] = state.localFromWorld(p[0], p[2]); return [x, p[1] + state.compensation[1], z]; },
-    ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],   // the door's landing law, on the street's own collider
+    ground: (p) => caravanStepOut(collider, p, tvSeaY),   // the door's landing law, on the street's own collider - RPT1026-WORLD WAGON-OUT: never inside a solid
     enterInterior: (room, visit = null) => modes?.enterCaravanRoom(room, null, visit), say: (line) => townTalk.say(line), log: (e) => console.error('[caravan]', e),   // WAGONS2-VISIT: and another's, a visit
   });
   /** WAGONS2 (FINAL AUDIT): WHERE A SAVE OR AN ANCHOR MADE IN A CARAVAN LANDS WHEN ITS ROOM CANNOT COME BACK (a visit's -
@@ -34788,7 +34788,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // and under the Overworld cam.pos stays on the traveller's head (player/travelCamera.js) while the view stands
     // 150-450 m up and back - so the weather was a small cube round the sprite, seen from outside it. They wrap round
     // the eye the view is drawn from: the air in front of the camera is full of it, as it is when you stand in it.
-    const wxEye = tvf ? mwv.eye : cam.pos;
+    // RPT1026-WORLD RAIN-EYE (a private report, 2026-10-20: "When at sea and a storm is there, if you scroll out the rain is
+    // localized around the ship only"): on the ground too - a camera drawn from behind the head (the third person's, a
+    // helm's scrolled out over her stern, the broadside's aim) stood outside the box round the head, a cube of rain round
+    // the ship; the head's eye and the view's are one in the first person, as they always were.
+    const wxEye = mwv.eye;
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
     // holds off until the deck is in. Classic: the sim's mode, as W1.

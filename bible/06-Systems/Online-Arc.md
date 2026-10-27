@@ -11468,8 +11468,16 @@ own module (`src/net/hallLaw.js`), never net/guild/guildLaw.js, which is in the 
 - **The banners** (`scenes/hallBanners.js`, `render/bannerPass.js`; Seats-Arc 3.4's anchor 2, the hall's first): a
   hall whose guild has chosen its heraldry hangs two banners, one each side of its door - the building's first door
   record measured where the pixel is built (`homeFrames[key].door`, its two corners through the model's matrix), its
-  span the wall's direction and its face the side away from the building's middle; each cloth 0.9 by 2.7 m, its top
-  3.5 m over the door's foot, 0.35 m past the jamb, 0.15 m off the wall. The cloth is its own foreign pass after the
+  span the wall's direction and its face the side away from the building's middle (AUDIT WITCH1 D1: the door record's
+  own outward normal where the build kept it, `homeFrames[key].normal` - the box's middle had turned 34 of Chesterwark's
+  232 houses' faces from the normal's, a door on its box's middle line hanging its cloths inside its own building - a
+  private report of 2026-10-20, a Chesterwark hall's flags seen from under it); each cloth 0.9 by 2.7 m, its top
+  3.5 m over the door's foot, 0.35 m past the jamb, 0.15 m off the wall. RPT1026-WORLD BANNER-WALL (2026-10-26, a private
+  report of a Wildertown hall's banner "floating in the air"): a cloth either of whose ends would reach past its
+  building's box along the wall is not hung - a door at its wall's end hangs the one, the small box house's (ARCH3D 118)
+  among them; of Wildertown's 364 doors 105 hung one cloth in the air (`hallBanners.js` hallBannerAnchors,
+  BANNER_WALL_PAD_M; the festival's tavern doors, a chapter's halls and a seat's palace door hang by the same law).
+  Pinned by `test/scenes/rpt1026_world_bannerwall.test.js`. The cloth is its own foreign pass after the
   duel walls (the world host's twentieth seam): a strip of quads hung from its top edge, swinging out along its face
   on the weather's wind (the grass's own strength) with a ripple across it, every rate whole over a 120 s clock, the
   swallowtail cut, lit by the frame's ambient and sun and fogged as the ground is; each heraldry painted once.

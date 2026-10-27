@@ -54,10 +54,22 @@ export function doorNormalOf(door, matrix) {
   return l > 1e-9 ? v.map((c) => c / l) : null;
 }
 
+/** RPT1026-WORLD BANNER-WALL: how far past its building's box a cloth's end may reach along the wall and still hang on
+ *  it (m) - the box's floats' slack, no more. */
+export const BANNER_WALL_PAD_M = 0.05;
+
 /**
  * THE TWO ANCHORS beside a hall's door - `frame` its `{ box, door: { a, b } }` in the pixel's frame (a castle's entrance's
  * also its `normal`, CASTLE-GATE). Each is the cloth's top edge's middle (`top`), the wall's direction (`right`) and the
  * face it hangs out along (`out`), pixel-local. Null for a door narrower than a man or none. Pure.
+ * RPT1026-WORLD BANNER-WALL (a private report, 2026-10-25: a Wildertown guild hall, "a small box building ... One of
+ * these banners is floating in the air"): A CLOTH HANGS ON ITS WALL OR NOT AT ALL. Each cloth stood its jamb's gap beyond
+ * the door whatever the wall did there, so a door near its wall's end hung the far cloth past the building's corner, in
+ * the air - ARCH3D 118's door is the last 1.25 m of its west wall, and its second cloth hung wholly past the house (105 of
+ * Wildertown's 364 doors hung a cloth past their building's box, under the town packs). A cloth whose either end, at the wall, falls
+ * past the building's box (BANNER_WALL_PAD_M) is not hung - so this answers one anchor, or none, where its door leaves
+ * room for one, or none. The box is the frame's model's own: a turned building's box only grows, and drops no cloth on
+ * a wall.
  */
 export function hallBannerAnchors(frame) {
   const d = frame?.door;
@@ -76,7 +88,8 @@ export function hallBannerAnchors(frame) {
   // port's mirrored projection one of the two orders drew the device mirror-imaged
   rx = 0 - oz; rz = ox + 0;   // (+0: never a signed zero)
   const side = w / 2 + BANNER_SIDE_GAP_M + BANNER_W_M / 2;
-  return [-1, 1].map((s) => ({
+  const onWall = (x, z) => x >= box[0] - BANNER_WALL_PAD_M && x <= box[3] + BANNER_WALL_PAD_M && z >= box[2] - BANNER_WALL_PAD_M && z <= box[5] + BANNER_WALL_PAD_M;
+  return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2)))).map((s) => ({
     top: [cx + rx * side * s + ox * BANNER_OUT_M, foot + BANNER_TOP_M, cz + rz * side * s + oz * BANNER_OUT_M],
     right: [rx, 0, rz], out: [ox, 0, oz],
   }));
