@@ -20,8 +20,8 @@
   {
     "name": "TIDE3-law-sum",
     "file": "src/net/townSeatLaw.js",
-    "old": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o);",
-    "new": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m);",
+    "old": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o + b);",
+    "new": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + b);",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]

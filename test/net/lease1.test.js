@@ -13,7 +13,7 @@ import * as H from '../../src/net/hubShards.js';
 const SPLIT_VARS = { REGION_SHARDS: 'all' };
 const SPLIT = H.regionsSharded(SPLIT_VARS.REGION_SHARDS);
 import { leaseKeyOf, mintLease, readLease, leaseRoom, relaySupportsLease, LEASE_MS, LEASE_LIFE_S, LEASE_FRAME_MIN_MS, LEASE_HELD_MS, LEASE_HAND_MIN_MS, LEASE_OLD_REASON } from '../../src/net/roomLease.js';
-import { parseClient, cellRoomOfWire, chatRegionRoom, chatLangRoom, CHAT_WORLD_ROOM, CHAT_TRADE_ROOM, CHAT_LFG_ROOM, CLOSE_BUSY, CLOSE_POLICY, PIXEL_UNITS, LEASE_WIRE_MAX, GROUND_LAW, GRANT_HELLO_LAW } from '../../src/net/wire.js';
+import { parseClient, cellRoomOfWire, chatRegionRoom, chatLangRoom, CHAT_WORLD_ROOM, CHAT_TRADE_ROOM, CHAT_LFG_ROOM, CLOSE_BUSY, CLOSE_POLICY, PIXEL_UNITS, LEASE_WIRE_MAX, GROUND_LAW, GRANT_HELLO_LAW, LOOT_HELLO_LAW } from '../../src/net/wire.js';
 import { RELAY_CFG_KEYS, RELAY_INTERNAL_CFG, RELAY_CFG_TTL_MS } from '../../src/net/relayCfg.js';
 import { mintOrder, _b64url } from '../../src/net/identityToken.js';
 import { OnlineSession, roomKeyFor } from '../../src/net/online.js';
@@ -331,7 +331,7 @@ test('LEASE1 THE LOAD (mob, 07:57Z: "we need to test if this affected load times
       const key = await leaseKeyOf(secret, { subtle });
       const join = async (R, id, extra, pose = null) => { const ws = R.connect(); clock += 300; await R.hello(ws, id, pose, extra); return ws; };
       const cell = room(CELL);
-      const cur = await join(cell, 'cur-0001', { gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1 }, P0);
+      const cur = await join(cell, 'cur-0001', { gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1, ll: LOOT_HELLO_LAW }, P0);   // PIN MOVED (LOOT-DOOR, AUDIT HORIZONTAL B7): a current build says the loot it reads - a cell is a loot room, and a hello without it asks the hub for the loot door
       for (let s = 0; s < 300; s += 15) {   // five minutes of play: a pose every 15 s, the hub's lease handed on every 30
         clock += 15_000;
         if (s % 30 === 0) await cell.raw(cur, JSON.stringify({ t: 'lease', l: await mintLease({ s: 'acct-cur-0001', at: Math.floor(clock / 1000) }, key, { subtle }) }));

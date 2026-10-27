@@ -56,6 +56,7 @@
 
 import { enchantArmorMod, enchantArmorDisplayMod, enchantSkillMod, enchantWeightAllowanceMult } from './enchantments.js';
 import { addEquipChangeListener } from './equip.js';
+import { openBlowCeiling, closeBlowCeiling } from './powerCeiling.js';   // POWER-CEILING: the blow's powers multiplied, held under one product
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // one home for the seven (audit24's one-home ratchet)
 export { NUMBER_BODY_PARTS };
 /** LOOT14/LOOT15 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md sections 6 and 7): the social groups a standing
@@ -96,14 +97,18 @@ const _blowMods = new Map();
  *  pcaaoWeaponAttackDamage). */
 export function registerWeaponBlowMod(name, fn) { if (typeof fn === 'function') _blowMods.set(name, fn); else _blowMods.delete(name); }
 const NO_BLOW_INFO = Object.freeze({ unaware: false });
-/** The blow's damage through every registered blow modifier, in registration order. */
+/** The blow's damage through every registered blow modifier, in registration order. POWER-CEILING: inside one product
+ *  (powerCeiling.js) - each modifier asks blowRoom for its per cent, so together they stay under BLOW_MOST. */
 export function weaponBlowMods(weapon, damage, attacker, target, info = NO_BLOW_INFO) {
   let d = damage;
+  const was = openBlowCeiling();
   // AUDIT SET L6: a modifier that throws is skipped, as every other seam here skips one - a blow modifier now reaches a
   // second foe's whole damage door and death (SET3's Cleave), and a throw there aborted the swing that carried it
-  for (const fn of _blowMods.values()) {
-    try { const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next; } catch (e) { console.warn('[entityMods] a blow modifier threw', e?.message ?? e); }
-  }
+  try {
+    for (const fn of _blowMods.values()) {
+      try { const next = fn(weapon, d, attacker, target, info ?? NO_BLOW_INFO); if (Number.isFinite(next)) d = next; } catch (e) { console.warn('[entityMods] a blow modifier threw', e?.message ?? e); }
+    }
+  } finally { closeBlowCeiling(was); }
   return d;
 }
 

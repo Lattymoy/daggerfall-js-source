@@ -36,6 +36,7 @@ import { isOnlinePage } from './online/onlineLane.js';
 import { sigilDueling } from './sigil/sigil.js';
 import { SCHOOL_POTENCY_PER_POINT } from './spell/spellPower.js';   // CLIMB-PAST's one number: a point past 100 is 1%
 import { registerWeaponBlowMod } from './entityMods.js';
+import { blowRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product
 import { registerSwingPaceMod } from '../characters/weaponStates.js';
 import { swingFamily } from '../combat/swingLaw.js';   // AUDIT MARTIAL L2 F3: the swing's family, no record built
 import { techniqueFamily } from '../combat/technique/techniqueRoster.js';
@@ -92,7 +93,7 @@ let _carry = new WeakMap();
 /** THE BLOW: my blow at a foe, its skill past 100 - the fraction carried, never past the blow's whole. */
 export function weaponMasteryBlow(weapon, damage, attacker, target, info = null) {
   if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || target.warded || sigilDueling()) return damage;
-  const pct = weaponPastPct(weapon, attacker, target);
+  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery');   // POWER-CEILING
   if (!(pct > 0)) return damage;
   const key = weapon ?? attacker;
   const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);

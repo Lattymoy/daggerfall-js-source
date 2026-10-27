@@ -2499,16 +2499,6 @@
   "tr": "5cc3159c299f",
   "by": "claude-in-session"
  },
- "legacy.houseWaits.newborn": {
-  "en": "28e7f5a06d17",
-  "tr": "f250087e2d40",
-  "by": "claude-in-session"
- },
- "legacy.houseWaits.noNewborn": {
-  "en": "862d8a89f3cf",
-  "tr": "9a48d6861f4a",
-  "by": "claude-in-session"
- },
  "legacy.deed.again": {
   "en": "abeb3f30abb8",
   "tr": "d730f260b3e2",
@@ -2612,6 +2602,16 @@
  "legacy.deed.tallyRegard": {
   "en": "cfb4aecdc4e0",
   "tr": "de96d1efc3a8",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.newborn": {
+  "en": "28e7f5a06d17",
+  "tr": "f250087e2d40",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.noNewborn": {
+  "en": "862d8a89f3cf",
+  "tr": "9a48d6861f4a",
   "by": "claude-in-session"
  },
  "levelup.progress.cap": {
@@ -3275,8 +3275,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.outfitting": {
-  "en": "85dc68e23b5f",
-  "tr": "f014f01ebd60",
+  "en": "b4271774202f",
+  "tr": "f2b03d07da1c",
   "by": "claude-in-session"
  },
  "prof.page.jewel.grade.chipped": {

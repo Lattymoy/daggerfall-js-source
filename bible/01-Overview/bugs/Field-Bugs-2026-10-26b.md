@@ -19,7 +19,9 @@ first-make share only where no unit it spent was bought OR LOOSE (`professions.j
 `loose` and `bought`). A loose unit is what a station's put-in brought that the service never counted (`bagLaw.js`
 LOOSE_ORIGIN): a looted herb, one bought at a shop for gold, a friend's. A weave of loose Root Tendrils makes loose
 Linen (`smeltAtForge`, `smeltOrigin`'s law), and the loom carries its bolts out to the bag (`profBook.js` smelt's
-`carryOut`) - where a withdrawal gives loose units back uncounted. Measured: six uncounted Root Tendrils in the pack, a
+`carryOut`) - where a withdrawal gives loose units back uncounted.
+
+Measured: six uncounted Root Tendrils in the pack, a
 weave of three, the bolts in the bag and none counted; the Straps' box (`profPages.js` ownSpend, which read the Stores'
 bought and loose and the bought carried - none of the pack's uncounted bolts, which the craft's put-in would bring in
 loose) said the 511; the craft's put-in moved one bolt in loose, and the service paid +20, `firstPaid` false. Every
@@ -32,18 +34,22 @@ first-makes become buyable for about 600 gold of shop Root Tendrils" - AUDIT WOV
 keys alone (149 bolts, 298 Root Tendrils at 2 gold); the 79 Wool keys are spun of furs, which no shop sells.
 
 FIXED.
+
 - THE WALL IS SILVER, AND COUNTED. A unit's origin cannot hold the owner's line (AUDIT WOVEN-PAYS A1, A2, B1, B2, B3):
   `bought` is also the loom's own cloth of silver-bought goods (`smeltOrigin`) and a guildmate's cloth out of the guild
   Stores, and `loose` is also a Weavers' bolt set down and picked up again. So the service COUNTS: every bolt of Linen
   and Wool (`recipeLaw.js` JUDGED_CLOTH) a character buys with silver - the Weavers' and the furnisher's counters
   (`professions.js` buyStock) and the Drakes market (`market.js`: a buy, a courier's load as it lands, a buy order
   filled; never a gold buy) - is one on its SILVER COUNT (`prof_silver_cloth`, migration `0177_woven_pays.sql`), and
-  every bolt of it the character's stations use (a craft of any recipe, a temper) takes one off. While the count stands,
+  every bolt of it the character's stations use (a craft of any recipe, a temper) takes one off.
+
+  While the count stands,
   the bolts a craft uses are those, and a piece made wholly of cloth lays no first on (`recipeLaw.js` firstCraftPays's
   `own`; `professions.js` craftAtAnvil's `silverHeld`). Whatever the units' origins: the loom's own cloth of looted,
   shop-bought or market-bought goods pays, and so does a guildmate's; a Weavers' bolt carried, set down, sold to a shop
   and bought back, or traded to the character's own pack still counts. The count starts as every bolt held as bought
   (the Stores and the carried count) - the wall the decision read until now - and goes with the character's delete.
+
 - A PATTERN IS MADE BY THE CRAFT THAT LAID ITS FIRST ON. A craft of silver-bought cloth lays none on and takes nothing:
   the next craft of that pattern that can pay, pays (`patternMade`, `prof_crafts.first_paid`). Without it fogs's every
   pattern already sewn of loose cloth stayed spent, its share never paid; and every cloth pattern sewn of the Weavers'
@@ -51,9 +57,11 @@ FIXED.
   pattern where it was the first and its XP holds the share - the least share is 500 (`FIRST_MAKE_FLOOR`) and no judged
   craft's own XP reaches it at any rank under every star of the Firmament (pinned). Every other recipe's pattern is made
   by any craft of it, as before. The most first-make XP a track can earn is unchanged: each key pays once.
+
 - THE BOX READS THE COUNT. A cloth's Stores count carries its silver count beside it (`professions.js` storeOf, and the
   state read's `silver`), the book keeps it (`profBook.js` silver), and the loom's box says the share and its condition
   where none stands, and the count where one does (`profPages.js` silverOf, `craftXpWords.js` craftXpLine).
+
 - THE ANSWER SAYS WHAT THE DECISION DID: `firstPaid` off `first_paid` (a row from before it read as the decision reads
   it - AUDIT WOVEN-PAYS A4).
 
@@ -120,12 +128,16 @@ SAID, NOT CHANGED.
 - A1b: a modified client's fabricated loose cloth pays (KNOWN, above).
 - The count is a character's (KNOWN, above) - the owner's word asked on counting an account's characters together.
 
-MUTANTS: `tools/mutants/fb1026b_wovenpays.json` (30, one of them an equivalent recorded - the slice's, rewritten with the count). Retired, the law they
+MUTANTS: `tools/mutants/fb1026b_wovenpays.json` (30, one of them an equivalent recorded - the slice's, rewritten with the count).
+
+Retired, the law they
 killed gone: `clothgems.json`'s CLOTHGEMS-svc-loose-pays, CLOTHGEMS-pages-loose-unread (loose walled - their inverse
 WOVEN-PAYS-svc-loose-walled-again), CLOTHGEMS-svc-bought-pays (the origin wall - WOVEN-PAYS-svc-bought-units-read-as-silver),
 CLOTHGEMS-pages-bought-unread and CLOTHGEMS-pages-carried-unread (the box's put-in reading - WOVEN-PAYS-pages-count-unread).
 Re-aimed by content, each its note: `clothgems.json` (5), `audit32.json` (2), `fb1015f_firstcraft.json` (5),
-`fb1018f_craftlimit.json` (3), `gatherspeed.json` (1), `prof3.json` (1), `fb1018d_crafthowto.json` (1). The lists the
+`fb1018f_craftlimit.json` (3), `gatherspeed.json` (1), `prof3.json` (1), `fb1018d_crafthowto.json` (1).
+
+The lists the
 slice touched, judged again (`node tools/mutate.mjs --jobs 4`, eight lists, 366 records): 363 dead, 0 survived, 3
 equivalent as recorded (PROF3's `NO_PACK_FORM` pair, WOVEN-PAYS-svc-old-row-first-unread), 0 stale. The run found two
 survivors, each pinned and judged again dead: WOVEN-PAYS-svc-answer-old-row-read-off-its-piece (A4's answer, its fixture

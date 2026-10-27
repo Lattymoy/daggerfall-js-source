@@ -15,7 +15,7 @@ import { SERVICE_LABEL, SERVICE_DESTINATION, isServiceBox } from '../../src/syst
 import { DECOR_STATIONS, DECOR_STATION_SERVICES, DECOR_STATION_NAMES } from '../../src/net/decorLaw.js';
 import { xpForRank, trackOf } from '../../src/net/professionLaw.js';
 import {
-  STORES_ACT_STATIONS, PROF_STATIONS, focusStoresStation, setProfessionsPages, drawStoresPage, resetProfPages,
+  STORES_ACT_STATIONS, PROF_STATIONS, focusStoresStation, setProfessionsPages, drawStoresPage, resetProfPages, stationDoorAt, stationActLabel,
   ENCHANTING_HOW, ALCHEMY_HOW,
 } from '../../src/ui/professions/profPages.js';
 
@@ -48,7 +48,8 @@ function rig(opts) {
     homeBelongsLine: () => 'This is not your home.', say: (t) => log.said.push(t),
     PROF_STATIONS, forgeOffered: () => opts?.online ?? true, stationColdLine: (k) => `cold ${k}`,
     interiorKeyCtx: { togglePause: (o) => { log.pauses.push({ ...o, slotWas: host.slot }); host.slot = { pause: true }; } },
-    STORES_ACT_STATIONS, focusStoresStation: (k) => log.focus.push(k),
+    STORES_ACT_STATIONS, stationDoorAt: (k) => { log.focus.push(k); return stationDoorAt(k); },   // PIN MOVED (CRAFT-HALL): the door hands its station to stationDoorAt, which lands on the Crafting page
+    stationActLabel,   // PIN MOVED (AUDIT HORIZONTAL A7): the chooser's option is profPages.js's, in the player's language
     townTalk: null, DECOR_STATION_SERVICES, DECOR_STATION_NAMES, SERVICE_LABEL, SERVICE_DESTINATION, isServiceBox, ChoiceWindow,
     openServiceFlow: (dest) => { log.flows.push(dest); if (opts?.makerOpens ?? true) host.slot = { maker: dest }; return null; },
     DECOR_STATION_REFUSED: 'refused', DECOR_STATION_NOT_READY: 'not ready',
@@ -66,7 +67,7 @@ test('STATION-DOOR: an enchanting station pressed online offers Daggerfall\'s it
   const c = host.slot;
   assert.equal(c?.isChoiceWindow, true, 'the chooser stands in the room\'s slot');
   assert.deepEqual(c.lines, ['Enchanting station']);
-  assert.deepEqual(c.options.map((o) => [o.code, o.label]), [['Digit1', '1 - Make Magic Items'], ['Digit2', '2 - Disenchant (Stores page)'], ['Escape', 'Esc - close']]);
+  assert.deepEqual(c.options.map((o) => [o.code, o.label]), [['Digit1', '1 - Make Magic Items'], ['Digit2', '2 - Disenchant (Crafting page)'], ['Escape', 'Esc - close']]);
   // offline (the Stores page is not), the press is the maker's, as it always was
   const off = rig({ online: false });
   off.host.press({ station: 'enchant' });
@@ -82,7 +83,7 @@ test('STATION-DOOR: "2 - Disenchant" empties the slot, hands the page its statio
   assert.equal(c.done, true);
   assert.deepEqual(log.focus, ['enchant']);
   assert.equal(log.pauses.length, 1);
-  assert.equal(log.pauses[0].at, 'stores');
+  assert.equal(log.pauses[0].at, 'crafting');   // PIN MOVED (CRAFT-HALL): the Crafting page, the stations' own
   assert.equal(log.pauses[0].slotWas, null, 'THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD - the pause opens on a free slot');
   assert.deepEqual(host.slot, { pause: true });
   assert.equal(log.flows.length, 0, 'no maker under the page');
@@ -114,9 +115,9 @@ test('STATION-DOOR: the alchemy station offers Daggerfall\'s potion maker and th
   let { host, log } = rig();
   host.press({ station: 'alchemy' });
   assert.deepEqual(host.slot.lines, ['Alchemy station']);
-  assert.deepEqual(host.slot.options.map((o) => o.label), ['1 - Make Potions', '2 - Brew (Stores page)', 'Esc - close']);
+  assert.deepEqual(host.slot.options.map((o) => o.label), ['1 - Make Potions', '2 - Brew (Crafting page)', 'Esc - close']);
   host.slot.input('Digit2');
-  assert.deepEqual([log.focus, log.pauses.map((p) => p.at)], [['alchemy'], ['stores']]);
+  assert.deepEqual([log.focus, log.pauses.map((p) => p.at)], [['alchemy'], ['crafting']]);   // PIN MOVED (CRAFT-HALL)
 
   ({ host, log } = rig());
   host.press({ station: 'spells' });
@@ -124,7 +125,7 @@ test('STATION-DOOR: the alchemy station offers Daggerfall\'s potion maker and th
 
   ({ host, log } = rig());
   host.press({ station: 'forge' });
-  assert.deepEqual([log.flows.length, log.pauses.map((p) => p.at), log.focus], [0, ['stores'], []], 'a forge opens the page, no chooser');
+  assert.deepEqual([log.flows.length, log.pauses.map((p) => p.at), log.focus], [0, ['crafting'], ['forge']], 'a forge opens the page at its station, no chooser');   // PIN MOVED (CRAFT-HALL): every home station's door its own, landed on (a forge's the anvil's - stationDoorAt)
 
   ({ host, log } = rig({ owner: false }));
   host.press({ station: 'enchant' });
@@ -188,7 +189,8 @@ test('STATION-DOOR: the Stores page opened from the station scrolls to its secti
   root.remove();
 });
 
-test('STATION-DOOR: the Professions page says where the act is done - the Stores page', () => {
-  assert.match(ENCHANTING_HOW(0), /^Enchanting improves as you break crafted pieces down into Arcane Essence at an enchanting station, in a Mages Guild hall or your own home, from the Stores page\./);   // VOICE1 (PIN MOVED): the same law in plain words
-  assert.match(ALCHEMY_HOW, /^Brew at an alchemy station \(an Alchemist's, a Mages Guild hall or your own home\) from the Stores page/);   // VOICE1 (PIN MOVED): the same law in plain words; POTION-DOOR (PIN MOVED): a Mages Guild hall a station
+test('STATION-DOOR: the Professions page says where the act is done - the Crafting page', () => {
+  // PIN MOVED (CRAFT-HALL): the stations are worked on the Crafting page; (PLAIN-TEXT): said in fewer words
+  assert.match(ENCHANTING_HOW(0), /^Enchanting rises as you break crafted pieces into Arcane Essence at an enchanting station, on the Crafting page\./);
+  assert.match(ALCHEMY_HOW, /^Brew on the Crafting page at an alchemy station: Alchemists, Mages Guild halls and your home have one\./);   // POTION-DOOR: a Mages Guild hall a station
 });

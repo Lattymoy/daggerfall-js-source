@@ -223,8 +223,9 @@ test('SET4 the rise: said ONCE FOR A SET when its own rank - its lowest piece\'s
   assert.equal(sigilRank(a.sigil), 2);
   assert.deepEqual(r, { lines: [], rose: false }, 'a and b rose to Bright, c is still Faint: the set did not rise');
   r = drinkWorn(e, null, XP[1] - 10);
-  assert.equal(sigilRank(c.sigil), 1);
-  assert.deepEqual(r, { lines: ['Your Dagon\'s Brand brightens: Kindled.'], rose: true }, 'c caught up to Kindled: the set rose with it');
+  // PIN MOVED (SET-CATCHUP, Sigil-Sets.md section 5): a and b stand at Bright, so c drinks three times the XP up to it
+  assert.equal(sigilRank(c.sigil), 2);
+  assert.deepEqual(r, { lines: ['Your Dagon\'s Brand brightens: Bright.'], rose: true }, 'c caught up to Bright: the set rose with it');
   // the weapon in hand, its own set's line said in its place
   fresh(); online(40);
   const w = player();

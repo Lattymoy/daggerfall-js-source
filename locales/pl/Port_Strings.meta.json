@@ -6744,16 +6744,6 @@
   "tr": "36d740ab5876",
   "by": "claude-in-session"
  },
- "legacy.houseWaits.newborn": {
-  "en": "28e7f5a06d17",
-  "tr": "3bcb7217bd80",
-  "by": "claude-in-session"
- },
- "legacy.houseWaits.noNewborn": {
-  "en": "862d8a89f3cf",
-  "tr": "e88564a0c7a8",
-  "by": "claude-in-session"
- },
  "legacy.deed.again": {
   "en": "abeb3f30abb8",
   "tr": "c2898e3b7ae0",
@@ -6857,6 +6847,16 @@
  "legacy.deed.tallyRegard": {
   "en": "cfb4aecdc4e0",
   "tr": "5a4b48bcd31b",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.newborn": {
+  "en": "28e7f5a06d17",
+  "tr": "3bcb7217bd80",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.noNewborn": {
+  "en": "862d8a89f3cf",
+  "tr": "e88564a0c7a8",
   "by": "claude-in-session"
  },
  "levelup.progress.cap": {
@@ -12640,8 +12640,8 @@
   "by": "claude-in-session"
  },
  "pause.profPagesClosed": {
-  "en": "111d98c684bb",
-  "tr": "8f10f2fcb39a",
+  "en": "b65d6206bc4d",
+  "tr": "bff5cd298bdc",
   "by": "claude-in-session"
  },
  "pause.quitConfirm": {
@@ -12837,11 +12837,6 @@
  "prof.page.alchemy.away": {
   "en": "947820be3b3a",
   "tr": "ca28884c8b42",
-  "by": "claude-in-session"
- },
- "prof.page.alchemy.brew": {
-  "en": "b8dc79528235",
-  "tr": "d7de6b6baa9a",
   "by": "claude-in-session"
  },
  "prof.page.alchemy.brewing": {
@@ -13075,28 +13070,28 @@
   "by": "claude-in-session"
  },
  "prof.page.cold.forge": {
-  "en": "e174f2c9c5d7",
-  "tr": "39f9ac8704c1",
+  "en": "ddb33e4c179f",
+  "tr": "4db5a1b9160d",
   "by": "claude-in-session"
  },
  "prof.page.cold.jeweller": {
-  "en": "0fc72a09c6dd",
-  "tr": "8b239619ddbd",
+  "en": "379d07ef95a6",
+  "tr": "73da06af6cf7",
   "by": "claude-in-session"
  },
  "prof.page.cold.loom": {
-  "en": "fcc8264fd094",
-  "tr": "a29cb6c3ad3c",
+  "en": "0230bd08a37e",
+  "tr": "75e2fd57c4ec",
   "by": "claude-in-session"
  },
  "prof.page.cold.mason": {
-  "en": "0a4146118d18",
-  "tr": "54f12728905d",
+  "en": "8da4b014236c",
+  "tr": "61c6efef9b89",
   "by": "claude-in-session"
  },
  "prof.page.cold.workbench": {
-  "en": "f519c7ebaf1e",
-  "tr": "9ef50c425a79",
+  "en": "bce4d0bf58c2",
+  "tr": "1d79279f9dca",
   "by": "claude-in-session"
  },
  "prof.page.craft.atBench": {
@@ -13257,11 +13252,6 @@
  "prof.page.enchant.none": {
   "en": "913a1ddd3a6d",
   "tr": "708a79ee30bb",
-  "by": "claude-in-session"
- },
- "prof.page.enchant.rankPct": {
-  "en": "45ebd08acf93",
-  "tr": "aea784f18711",
   "by": "claude-in-session"
  },
  "prof.page.enchant.shop": {
@@ -13490,13 +13480,13 @@
   "by": "claude-in-session"
  },
  "prof.page.how.alchemy": {
-  "en": "b38418e7f431",
-  "tr": "be4f19c8a5e4",
+  "en": "034ddeaa495e",
+  "tr": "bfbca01f5207",
   "by": "claude-in-session"
  },
  "prof.page.how.enchanting": {
-  "en": "9120a5a416ae",
-  "tr": "34a30ebdb585",
+  "en": "456e2092cb00",
+  "tr": "9d42f90555c6",
   "by": "claude-in-session"
  },
  "prof.page.how.fishing": {
@@ -13530,8 +13520,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.outfitting": {
-  "en": "85dc68e23b5f",
-  "tr": "dfd6af5b528d",
+  "en": "b4271774202f",
+  "tr": "5634ded53fdb",
   "by": "claude-in-session"
  },
  "prof.page.jewel": {
@@ -13647,11 +13637,6 @@
  "prof.page.later.seat2b": {
   "en": "c2ef43f7b853",
   "tr": "e5fe70c0ffb3",
-  "by": "claude-in-session"
- },
- "prof.page.later.trophy": {
-  "en": "f745e6cbe06a",
-  "tr": "ac5ebeec7cb6",
   "by": "claude-in-session"
  },
  "prof.page.later.twoColour": {

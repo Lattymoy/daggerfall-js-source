@@ -83,7 +83,7 @@
   {
     "name": "CROSS-host-passengers",
     "file": "src/scenes/world.js",
-    "old": "csaPassengersOn(csaRuntime?.state?.CurrentBoat) > 0 ? 'passengers' : null);",
+    "old": "csaPassengersOn(csaRuntime?.state?.CurrentBoat, veilParty.kin) > 0 ? 'passengers' : null);",
     "new": "false ? 'passengers' : null);",
     "tests": [
       "test/systems/naval/ethercross.test.js"

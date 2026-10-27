@@ -280,6 +280,10 @@ export const WRIT_INFLUENCE_PER_MARK = 1;
 /** Tribute: 1 per 10 Marks, burnt, at most 20% of the guild's week at the seat. */
 export const TRIBUTE_MARKS_PER_INFLUENCE = 10;
 export const TRIBUTE_SHARE_MAX = 0.2;
+/** HUNTERS-MARK (Bounty-Boards.md 12.6): a bounty board's clear recorded (server-account/src/hunts.js) in the seat's
+ *  region - 25 a clear, at most 250 an account a week (ten clears): an Orc Raid's camps' weight, a modest source. */
+export const HUNT_INFLUENCE = 25;
+export const HUNT_WEEK_CAP = 250;
 /** One account's whole week at one seat, every source together. */
 export const ACCOUNT_SEAT_WEEK_CAP = 2000;
 /** A character new to its guild contributes nothing for this long. */
@@ -304,11 +308,12 @@ export function tributeRoom(others, tributeSoFar = 0) {
  * region, `writ` the own units' value delivered, `homeDays` the days its counting homes stood this week (the guild's
  * HOMES_SEAT_MAX already chosen). CROWN1: `watchBonus` the Watch's share more (a Free Land's FREE_LAND_WATCH_BONUS, 4.3),
  * rounded down, before the account's cap. SEASON1 part two: `raid` an Orc Raid's camps' influence, at most 250 a week;
- * `tide` the week's Tide at the seat (a Plague's Watch, an Incursion's gates).
- * @param {{ watch?: number, gates?: number, renownXp?: number, writ?: number, homeDays?: number, raid?: number }} a
+ * `tide` the week's Tide at the seat (a Plague's Watch, an Incursion's gates). HUNTERS-MARK: `hunt` its bounty clears'
+ * influence, at most HUNT_WEEK_CAP.
+ * @param {{ watch?: number, gates?: number, renownXp?: number, writ?: number, homeDays?: number, raid?: number, hunt?: number }} a
  * @param {number} [watchBonus]
  */
-export function accountSeatInfluence({ watch = 0, gates = 0, renownXp = 0, writ = 0, homeDays = 0, raid = 0 } = {}, watchBonus = 0, tide = 'calm') {
+export function accountSeatInfluence({ watch = 0, gates = 0, renownXp = 0, writ = 0, homeDays = 0, raid = 0, hunt = 0 } = {}, watchBonus = 0, tide = 'calm') {
   // CROWN1: a Free Land's tenth more; SEASON1 part two (9.3): a Plague's half
   // AUDIT-SEATS L10: every count through amountOf - a NaN is none, not a NaN total
   const w = Math.floor(amountOf(watch) * WATCH_INFLUENCE * (1 + amountOf(watchBonus)) * (tide === 'plague' ? TIDE_EFFECTS.plagueWatch : 1) + 1e-9);
@@ -317,7 +322,8 @@ export function accountSeatInfluence({ watch = 0, gates = 0, renownXp = 0, writ 
   const h = amountOf(homeDays) * HOME_INFLUENCE_DAY;
   const m = amountOf(writ) * WRIT_INFLUENCE_PER_MARK;
   const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, amountOf(raid));   // SEASON1 part two (9.3): an Orc Raid's camps, a week's 250
-  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o);
+  const b = Math.min(HUNT_WEEK_CAP, amountOf(hunt));   // HUNTERS-MARK: the boards' clears, a week's 250
+  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o + b);
 }
 
 /**

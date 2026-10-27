@@ -256,8 +256,8 @@
   {
     "name": "SEAT1b-law-account-cap-off",
     "file": "src/net/townSeatLaw.js",
-    "old": "  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o);",
-    "new": "  return w + g + r + h + m + o;",
+    "old": "  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o + b);",
+    "new": "  return w + g + r + h + m + o + b;",
     "tests": [
       "test/net/seat1b_service.test.js",
       "test/net/seat1b_client.test.js"

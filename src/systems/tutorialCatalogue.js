@@ -470,13 +470,13 @@ export const TUTORIALS = Object.freeze([
     // tutorial (doesn't have to be step for step, but something that helps new players know where to look)"): where the
     // stations stand - the shops the interior host's station questions answer (scenes/worldModes.js forgeHere ..
     // enchantHere), a joinery's bench (scenes/world.js workbenchHere), any fire (net/professionLaw.js COOK_FIRE) - and
-    // that a station is worked on the Stores page - by the Professions key, the one door to it on either skin (AUDIT FB1018D
-    // L1-6). Each crafting profession's own page says the rest
+    // that a station is worked on the Crafting page, the Professions key's landing at a station (CRAFT-HALL; the Stores
+    // page, its second press, until then - AUDIT FB1018D L1-6's one door on either skin). Each crafting profession's own page says the rest
     // (ui/professions/profPages.js CRAFT_HOW). Pops with the first gather, after the two pages it follows.
     id: 'crafting', group: 'livelihood',
     get title() { return t('tutorials.crafting.title', 'Crafting'); },
     get trigger() { return t('tutorials.crafting.trigger', 'When you first gather something.'); },
-    get body() { return [t('tutorials.crafting.body', 'Online, craft at a station: stand at one, press {Professions} and open Holdings > Stores. Cook at any fire.')]; },
+    get body() { return [t('tutorials.crafting.body', 'Online, stand at a station and press {Professions}: the Crafting page opens on it. Cook at any fire.')]; },
     get points() {
       return [
         t('tutorials.crafting.shops1', 'Forge: Weaponsmiths, Armorers. Loom: Clothing Stores. Workbench: Furniture Stores, joineries.'),
