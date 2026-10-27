@@ -70,7 +70,7 @@ import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt, terrainSampleHeightAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { bedFields, sheetDepthsOf } from '../world/water/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/water/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
@@ -248,7 +248,7 @@ import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js'; 
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
-import { createSnowfallHost, snowfallNetwork, authoredTiles, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
+import { createSnowfallHost } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
 import { createWindAudio, windSoundOn } from '../systems/wind/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
@@ -631,7 +631,7 @@ import { isEntityWaterWalking, assignModBundle, removeBundleNamed, WATER_WALKING
 import { pointNearPath, UNITS_PER_METRE, CAMP_ROAD_CLEAR_M } from '../world/road/roadClearance.js';   // FOREST1: and which picks are sites, and a site's footprint   // ROADS-CLEAR: WoD sites and pieces, and the camps, off the painted roads
 import { gateClearFor, createGateClearSweep } from '../world/gate/gateClearance.js';   // GATE-CLEAR: WoD's rock off the day's Oblivion Gate
 import { raidMapMarks } from '../ui/eventMapMarks.js';   // EVENT-TIP: the towns under attack, on the held map
-import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
+import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool, ownedLine } from './horseCartPool.js';
 import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
@@ -1223,6 +1223,7 @@ import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
+import { createSnowGround } from './snowGround.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -2883,64 +2884,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // the enhanced outdoors' (scenes/windfallHost.js): ticked on every frame, outdoors and in; its law handed to the flats'
   // call in WIND3's place while the mod is on, its leaves and snow drawn with the opaque world.
   const windfall = createWindfallHost({ gl: renderer.gl, enhanced: !!sky.enhanced });
-  // SNOWFALL1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): SNOWFALL -
-  // the enhanced outdoors' snow (scenes/snowfallHost.js) on the streamed ground as it is DRAWN: each pixel's own
-  // surface at its stride and its TileMap (the cap's, where Deep Waters patched one), the sea it carved bare, the roads
-  // Basic Roads'. Ticked on every frame, outdoors and in; told each pixel published (OnPromoteTerrainData); drawn after
-  // the ground by the ground's own program - its sun, its shadows, its lights and its fog. The adapter reads the
-  // stream's bindings when it is asked, never here (they are declared below).
-  const _snowPixels = new Map();   // px * 1000 + py -> the built entry, this frame (cleared at the frame: a publish lands between frames)
-  const _snowIds = new WeakMap();
-  let _snowNextId = 0;
-  const snowIdOf = (o) => { if (!o) return 0; let id = _snowIds.get(o); if (id === undefined) { id = ++_snowNextId; _snowIds.set(o, id); } return id; };
-  const _snowG = [0, 0];
-  const snowGround = {
-    size: TERRAIN_SIZE,
-    get terrainDistance() { return state.terrainDistance; },
-    pixelAt(x, z) {
-      const c = state.compensation;
-      return snowGround.pixelOn(state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE), state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE));
-    },
-    pixelOn(px, py) {   // StreamingWorld.GetTerrainFromPixel: the built entry standing there, its ground published
-      if (px < 0 || px >= 1000 || py < 0 || py >= 500) return null;
-      const k = px * 1000 + py;
-      let p = _snowPixels.get(k);
-      if (p === undefined) { p = built.get(`${px},${py}`) ?? null; if (p && !(p.samples && p.tilemapBytes)) p = null; _snowPixels.set(k, p); }
-      return p;
-    },
-    pixelsNear(ring) {
-      const cur = state.current, out = [];
-      for (const p of built.values()) if (p.samples && p.tilemapBytes && Math.max(Math.abs(p.px - cur.x), Math.abs(p.py - cur.y)) <= ring) out.push(p);
-      return out.sort(nearestFirstFrom(cur));
-    },
-    translation: (p, out) => state.pixelTranslation(p.px, p.py, out),
-    height(p, lx, lz) {
-      if (p.deepWaters && deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return f; }   // DW-B: the floor is drawn there
-      const stride = p._stride ?? 1, h = surfaceHeightAt(p.samples, lx, lz, stride), d = p._bed?.depths, g = 128 / stride + 1;
-      return d ? h - gridValueAt(d, g, g, tileSide * stride, lx, lz) : h;   // WATER-NEXT 2: and the bed carved under a shore
-    },
-    normal: (p, lx, lz, out) => (p.groundNormals && (p._stride ?? 1) === 1 ? surfaceNormalAt(p.groundNormals, lx, lz, out) : surfaceNormalFromSamples(p.samples, lx, lz, p._stride ?? 1, out)),
-    tileMap: (p) => p._dwBytes ?? p.tilemapBytes,
-    climate: (p) => maps.getClimateIndex(p.px, p.py),
-    mapPixel: (p) => ({ x: p.px, y: p.py }),
-    stamp: (p) => `${p._stride ?? 1}/${snowIdOf(p._dwBytes ?? p.tilemapBytes)}/${snowIdOf(p.deepWaters)}/${snowIdOf(p._bed?.depths)}`,
-    bare: (p, lx, lz) => !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null,   // DW-B: the carved sea has no ground to lie on
-    roads(p) {
-      const raw = terrainGen.roads();
-      const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;
-      if (!net) return null;
-      const loc = p.locationRect ? locationIndex.get(`${p.px},${p.py}`) : null;
-      const authored = loc?.exterior?.exteriorData && (net.roads | net.roadCorners | net.paths | net.pathCorners) !== 0 ? authoredTiles(loc, maps, blocks) : new Uint8Array(16384);
-      return { ...net, authored, rect: p.locationRect ?? { xMin: 0, xMax: 0, yMin: 0, yMax: 0 } };
-    },
-    toGlobal(x, z) {
-      const c = state.compensation;
-      _snowG[0] = state.mapOrigin.x * TERRAIN_SIZE + (x - c[0]);
-      _snowG[1] = (499 - state.mapOrigin.y) * TERRAIN_SIZE + (z - c[2]);
-      return _snowG;
-    },
-    settlements: (minX, minZ, maxX, maxZ) => settlementsIn((x, y) => locationIndex.get(`${x},${y}`) ?? null, minX, minZ, maxX, maxZ),
-  };
+  const { _snowPixels, snowGround } = createSnowGround({   // HOST-SPLIT: src/scenes/snowGround.js
+    blocks, locationIndex, maps, terrainGen,
+    get built() { return built; },
+    get deepWaters() { return deepWaters; },
+    get state() { return state; },
+    get tileSide() { return tileSide; },
+  });
   const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: snowGround });
   /** SNOWFALL1: who walks the snow - the player (the fly camera: the tiers round the eye, no tracks), the street's foes
    *  and its watch (an EnemyMotor's CharacterController), the town's people (a MobilePersonNPC: a citizen) - and the
