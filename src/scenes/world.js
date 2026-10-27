@@ -314,7 +314,8 @@ import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost
 import { freePull } from '../systems/travel/freePull.js';   // OW-FREE-STRAIGHT, moved out (HOST-SPLIT)
 import { createGrantHost } from './grantHost.js';   // GRANT2-GRANT4: the spawn grants - my stands' and my reading of others' (bible/11-Multiplayer/Spawn-Grants.md)
 import { wireOwnerClock } from './ownerCatchUp.js';   // OWNER-CLOCK: my foes' steps on the clock their frames carry, and the street's kept to my frame's pace while anyone else is in my room
-import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
+import { fishKind } from './fishHost.js';
+import { createBootStart } from './bootStartHost.js';   // HOST-SPLIT: the boot's start, moved out of bootWorld   // PROF8: Fishing's casts and schools - a kind in it
 import { createCraftWritHost } from './craftWritHost.js';   // CRAFT-WRITS: the Work tab's crafting writs, handed over from the pack
 import { createSeasonBook } from './seasonBookHost.js';   // SEASON-BOOK: the laurel's boards, asked while its window is open
 import { rollNoticeDoors } from './rollNoticeHost.js';   // SEAT-WORDS / STANDING-WORDS: what the Roll's tracker says
@@ -2767,33 +2768,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  session (the Citadel of Copperton), and a camp is never stood again. */
   const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));
 
-  // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
-  // resolve the start by NAME - it reads a map pixel out of settings
-  // (StartCellX/StartCellY, 109/158 = Privateer's Hold) and asks the
-  // world what location is there. ?classic takes that path so the new
-  // game begins where Daggerfall begins; every dev boot keeps the
-  // region/loc names it has always used.
-  //
-  // NEVER TRAPS: a start cell with no location falls back to the named
-  // location rather than throwing the player at a black screen.
-  let startLoc = null;
-  if (params.has('classic')) {
-    const cell = `${getInt('Startup', 'StartCellX')},${getInt('Startup', 'StartCellY')}`;
-    startLoc = locationIndex.get(cell) ?? null;
-    if (!startLoc) console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
-  }
-  // EE13 (Mac: a season test that spawns somewhere random, from the
-  // menu): ?spawn=random picks any TOWN in the index - a place with
-  // ground, roads and people, which is what the outdoors is being tested
-  // with. Seeded from the clock so two presses give two towns; the town
-  // is logged so a good one can be found again by ?region=&loc=.
-  if (!startLoc && params.get('spawn') === 'random') {
-    const towns = [...locationIndex.values()].filter((l) => [0, 1, 2].includes(l.mapTableData?.locationType));   // TownCity, TownHamlet, TownVillage (MapsFile LocationTypes)
-    const pick = towns.length ? towns[Math.floor((Date.now() / 7919) % towns.length)] : null;
-    if (pick) { startLoc = pick; console.info(`[world] random spawn: ${pick.regionName ?? pick.mapTableData?.regionName ?? '?'} / ${pick.name ?? '?'} (${params.get('season') ?? 'the calendar\u2019s season'})`); }
-  }
-  if (!startLoc) startLoc = maps.getLocationByName(regionName, locationName);
-  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
+  // U31 / THE CLASSIC START (and EE13's random spawn, and the named start) - HOST-SPLIT: scenes/bootStartHost.js
+  const { startLoc } = createBootStart({ locationIndex, locationName, maps, params, regionName });
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
   // BOOT-OVERLAP: THE TOWNS THE BOOT WAITS ON AS IT BUILDS THEM - the start's (the first build) and a realm save's own

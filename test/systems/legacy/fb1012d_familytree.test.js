@@ -29,6 +29,7 @@ import { createLegacyHost, LEGACY_TEXT } from '../../../src/scenes/legacyHost.js
 import { personOf, familyRng, MODELS, LEGACY_MOD, fullNameOf } from '../../../src/systems/legacy/family.js';
 import { loadFamily, readBirth } from '../../../src/systems/legacy/store.js';
 import { isTownEntry } from '../../../src/systems/legacy/places.js';
+import { createBootStart } from '../../../src/scenes/bootStartHost.js';   // BAY-LEFT-B: the boot's start, out of world.js
 import { BOOT_DOOR_KEYS, publishBootParams } from '../../../src/systems/online/onlineLane.js';
 import { testStartsOutdoors } from '../../../src/systems/testRoom.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
@@ -182,17 +183,16 @@ async function frontDoor(choice, legacyBirth = null) {
   await run(params, choice, async () => {}, load, (p) => publishBootParams(p, { history: null, location: null }), (c, r, p) => { booted = new URLSearchParams(p); return 'bootWorld'; }, null, null, null);
   return booted;
 }
-/** world.js's start, run off its own text: the location the boot stands the world at, over a start cell holding
- *  Privateer's Hold and a named place. */
+/** world.js's start, as the host constructs it: the location the boot stands the world at, over a start cell holding
+ *  Privateer's Hold and a named place. PIN MOVED (BAY-LEFT-B): the start is scenes/bootStartHost.js createBootStart now
+ *  (HOST-SPLIT), run whole where this pin ran world.js's text; the host's own names still off world.js's text. */
 function startOf(params) {
-  const from = W.indexOf('  let startLoc = null;\n  if (params.has(\'classic\')) {');
-  const to = W.indexOf('  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);', from);
-  assert.ok(from > 0 && to > from, 'world.js\'s start moved');
   const names = /const regionName = ([^;\n]+);\n\s*const locationName = ([^;\n]+);/.exec(W);
   assert.ok(names, 'world.js\'s start names moved');
+  assert.match(W, /const \{ startLoc[^}]*\} = createBootStart\(\{ locationIndex, locationName, maps, params, regionName/, 'world.js stands its start through the module');
   const HOLD = { name: 'Privateer\'s Hold' };
-  const run = new Function('params', 'getInt', 'locationIndex', 'maps', `const regionName = ${names[1]}; const locationName = ${names[2]}; ${W.slice(from, to)} return startLoc;`);
-  const loc = run(params, (s, k) => (k === 'StartCellX' ? 109 : 158), new Map([['109,158', HOLD]]), { getLocationByName: (r, l) => ({ name: `${l}, ${r}` }) });
+  const named = new Function('params', `return [${names[1]}, ${names[2]}];`)(params);
+  const { startLoc: loc } = createBootStart({ params, locationIndex: new Map([['109,158', HOLD]]), maps: { getLocationByName: (r, l) => ({ name: `${l}, ${r}` }) }, regionName: named[0], locationName: named[1] });
   return loc?.name ?? null;
 }
 
