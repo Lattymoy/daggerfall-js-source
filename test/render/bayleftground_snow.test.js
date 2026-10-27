@@ -128,10 +128,12 @@ async function winterOn({ snowGround }, climate = 230) {
 }
 
 test('BAY-LEFT-GROUND D3 the real Snowfall runtime over the world host\'s real ground stands at Whiterun in winter as on the Bay: the deep snow\'s window built, the middle tier ready, the blanket\'s overlays laid, the walk\'s track kept and the body\'s hollow - where it stood none (mutants: the ground\'s bound; the box\'s clamp; the metres\' clamp)', async () => {
-  const bay = await winterOn(streamAt(500, 250));
+  // the ground stands the pixel first: a winter walked on no ground is a runtime retrying every frame (a pin unread)
+  const at = (x, y) => { const st = streamAt(x, y); assert.ok(st.snowGround.pixelOn(x, y), `(${x}, ${y}): the snow's ground stands it`); return st; };
+  const bay = await winterOn(at(500, 250));
   assert.deepEqual(bay, { meshReady: true, staticReady: true, midReady: true, blanketOverlays: 49, tracks: true, impressions: 1 }, 'the Bay, as before (the audit\'s probe, lane D p7)');
-  assert.deepEqual(await winterOn(streamAt(1891, -202)), bay, 'Whiterun: the same snow');
-  assert.deepEqual(await winterOn(streamAt(-40, 120)), bay, 'and west of the Bay');
+  assert.deepEqual(await winterOn(at(1891, -202)), bay, 'Whiterun: the same snow');
+  assert.deepEqual(await winterOn(at(-40, 120)), bay, 'and west of the Bay');
 });
 
 class FlatWoods {

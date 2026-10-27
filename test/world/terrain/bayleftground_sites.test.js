@@ -32,6 +32,19 @@ const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8
 const loc = (w, h, type = LOCATION_TYPES.TownCity) => ({ exterior: { exteriorData: { width: w, height: h, blockNames: ['X'] } }, mapTableData: { locationType: type } });
 afterEach(() => { setTamrielTrace(null); setTamrielFit(null); dropGroundCache(); });
 
+/** One array of samples the same as another to the bit - a failing pin names the first sample apart: a deepEqual of
+ *  16,641 floats builds its diff the size of the machine, and the memory cgroup kills the file before a pin is read. */
+function sameSamples(a, b, msg) {
+  assert.equal(a.length, b.length, `${msg}: the length`);
+  for (let i = 0; i < a.length; i++) if (!Object.is(a[i], b[i])) assert.fail(`${msg}: sample ${i}, ${a[i]} against ${b[i]}`);
+}
+/** ...and one apart from another somewhere. */
+function apartSamples(a, b, msg) {
+  if (a.length !== b.length) return;
+  for (let i = 0; i < a.length; i++) if (!Object.is(a[i], b[i])) return;
+  assert.fail(`${msg}: the same to the bit`);
+}
+
 /** The synthetic world composed with the continent round it (the authored shape, untraced) - the ground the host stands. */
 const world = () => { const w = new WoodsFile(); assert.equal(w.load(syntheticWoodsBytes()), true); return groundWoods(w); };
 
@@ -83,21 +96,21 @@ test('BAY-LEFT-GROUND D1 the kernel pulls the land past the Bay to a town\'s lev
   const fresh = world(), alone = generateSamples(fresh, ...twin, H, createLandforms({ woods: fresh, beyond: both, climates }));
   const after = world(), lf2 = createLandforms({ woods: after, beyond: both, climates });
   generateSamples(after, px, py, H, lf2);
-  assert.deepEqual([...generateSamples(after, ...twin, H, lf2)], [...alone], 'its own level, not its twin\'s');
+  sameSamples(generateSamples(after, ...twin, H, lf2), alone, 'its own level, not its twin\'s');
   assert.ok(Math.abs(mean(alone, 48, 80) - level) > 1, 'the twins stand at their own levels');
   // its neighbour's land moved toward it; the shared edge one number from both pixels
   const own = generateSamples(woods, px, py, H, withSite), east = generateSamples(woods, px + 1, py, H, withSite), eastBare = generateSamples(woods, px + 1, py, H, without);
-  assert.notDeepEqual([...east], [...eastBare], 'the neighbour pulled');
+  apartSamples(east, eastBare, 'the neighbour pulled');
   const seam = [], seamE = [];   // the samples x-major (s[x * H + y]): its east column, the neighbour's west
   for (let y = 0; y < H; y++) { seam.push(own[(H - 1) * H + y]); seamE.push(east[y]); }
   assert.deepEqual(seamE, seam, 'the east seam: one number from both pixels');
   // a pixel three off is no site's: the same to the bit
-  assert.deepEqual([...generateSamples(woods, px + 3, py, H, withSite)], [...generateSamples(woods, px + 3, py, H, without)], 'beyond its reach, untouched');
+  sameSamples(generateSamples(woods, px + 3, py, H, withSite), generateSamples(woods, px + 3, py, H, without), 'beyond its reach, untouched');
   // the Bay: the same with the table past the Bay as without it, sample for sample
   const bayRows = [{ px: 405, py: 250, loc: loc(6, 6) }];
   const sites = landformSites(bayRows);
   const a = createLandforms({ woods, sites, climates }), b = createLandforms({ woods, sites, beyond, climates });
-  for (const [x, y] of [[405, 250], [406, 250], [405, 252], [998, 40]]) assert.deepEqual([...generateSamples(woods, x, y, H, b)], [...generateSamples(woods, x, y, H, a)], `(${x}, ${y})`);
+  for (const [x, y] of [[405, 250], [406, 250], [405, 252], [998, 40]]) sameSamples(generateSamples(woods, x, y, H, b), generateSamples(woods, x, y, H, a), `(${x}, ${y})`);
 });
 
 test('BAY-LEFT-GROUND D1 every kernel takes the table past the Bay: the job\'s and a promotion\'s grid on the same thread and on the worker, the worker\'s middle ring with it; the client keeps it for its own kernel and posts a copy (mutants: the worker\'s message unread; the client\'s kernel without it)', async () => {
@@ -107,10 +120,10 @@ test('BAY-LEFT-GROUND D1 every kernel takes the table past the Bay: the job\'s a
   const job = { px: px + 1, py, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: true };
   const here = generatePixelTerrain({ woods, beyond, ...job, tilemap: job.tilemap.slice() });
   const bare = generatePixelTerrain({ woods, ...job, tilemap: job.tilemap.slice() });
-  assert.notDeepEqual([...here.samples], [...bare.samples], 'the site next door moved it');
+  apartSamples(here.samples, bare.samples, 'the site next door moved it');
   // a promotion's ghost rows (its neighbours' edges, the kernel's own) are pulled by the site next door too
-  const promote = (o) => [...restrideGrid({ woods, px: px + 1, py, stride: 4, samples: here.samples, landform: true, ...o }).normals];
-  assert.notDeepEqual(promote({ beyond }), promote({}), 'the promotion\'s ghost rows: pulled');
+  const promote = (o) => restrideGrid({ woods, px: px + 1, py, stride: 4, samples: here.samples, landform: true, ...o }).normals;
+  apartSamples(promote({ beyond }), promote({}), 'the promotion\'s ghost rows: pulled');
   const posted = [];
   const prevPost = globalThis.postMessage, prevOn = globalThis.onmessage;
   globalThis.postMessage = (msg) => posted.push(msg);
@@ -119,12 +132,12 @@ test('BAY-LEFT-GROUND D1 every kernel takes the table past the Bay: the job\'s a
     globalThis.onmessage({ data: { t: 'init', woodsBytes: syntheticWoodsBytes(), tamriel: true } });
     globalThis.onmessage({ data: { t: 'landform-beyond', beyond } });
     globalThis.onmessage({ data: { t: 'job', ...job, tilemap: job.tilemap.slice() } });
-    assert.deepEqual([...posted.findLast((m) => m.t === 'done').samples], [...here.samples], 'the worker\'s job: pulled to the site next door');
+    sameSamples(posted.findLast((m) => m.t === 'done').samples, here.samples, 'the worker\'s job: pulled to the site next door');
     globalThis.onmessage({ data: { t: 'grid', id: 9, px: px + 1, py, stride: 4, samples: here.samples, landform: true } });
-    assert.deepEqual([...posted.findLast((m) => m.t === 'grid').normals], [...restrideGrid({ woods, px: px + 1, py, stride: 4, samples: here.samples, landform: true, beyond }).normals], 'a promotion\'s ghost rows too');
+    sameSamples(posted.findLast((m) => m.t === 'grid').normals, restrideGrid({ woods, px: px + 1, py, stride: 4, samples: here.samples, landform: true, beyond }).normals, 'a promotion\'s ghost rows too');
     globalThis.onmessage({ data: { t: 'landform-beyond', beyond: null } });
     globalThis.onmessage({ data: { t: 'job', ...job, tilemap: job.tilemap.slice() } });
-    assert.deepEqual([...posted.findLast((m) => m.t === 'done').samples], [...bare.samples], 'cleared, none');
+    sameSamples(posted.findLast((m) => m.t === 'done').samples, bare.samples, 'cleared, none');
   } finally { globalThis.postMessage = prevPost; globalThis.onmessage = prevOn; }
   // TESA11's flatten: a city over several pixels flattened to its centre's average, kept by the kernel's inputs - the
   // table past the Bay one of them (a centre beside a site, a slice three off it: only the average moves the slice)
@@ -132,7 +145,7 @@ test('BAY-LEFT-GROUND D1 every kernel takes the table past the Bay: the job\'s a
   const flatOn = generatePixelTerrain({ woods, beyond, ...flatJob, tilemap: new Uint8Array(128 * 128) });
   const flatOff = generatePixelTerrain({ woods, ...flatJob, tilemap: new Uint8Array(128 * 128) });
   assert.notEqual(flatOn.avg, flatOff.avg, 'the centre\'s average with the site beside it, and without');
-  assert.deepEqual([...generatePixelTerrain({ woods, beyond, ...flatJob, tilemap: new Uint8Array(128 * 128) }).samples], [...flatOn.samples], 'kept while the table stands');
+  sameSamples(generatePixelTerrain({ woods, beyond, ...flatJob, tilemap: new Uint8Array(128 * 128) }).samples, flatOn.samples, 'kept while the table stands');
   const worker = src('src/world/terrain/terrainGenWorker.js');
   assert.match(worker, /const landforms = m\.landform \? createLandforms\(\{ woods, roads, sites, beyond, climates \}\) : null;\n\s+const pixel = \(px, py\) => keptMid\(/, 'the middle ring');
   assert.match(worker, /m\.t === 'landform-beyond' \|\| m\.t === 'tamriel'\) \{ keptMid\.clear\(\); keptFar\.clear\(\); \}/, 'the horizon\'s books let go when it moves');
@@ -140,7 +153,7 @@ test('BAY-LEFT-GROUND D1 every kernel takes the table past the Bay: the job\'s a
   const c = new TerrainGenClient({ woods });   // no worker: the same-thread kernel
   c.setLandformBeyond(beyond);
   const mine = await c.generate({ ...job, tilemap: job.tilemap.slice() });
-  assert.deepEqual([...mine.samples], [...here.samples], 'the same-thread kernel');
+  sameSamples(mine.samples, here.samples, 'the same-thread kernel');
   const sent = [];
   c._worker = { postMessage: (m) => sent.push(m) };
   c.setLandformBeyond(beyond);
@@ -192,10 +205,10 @@ test('BAY-LEFT-GROUND D1 GROUND-AGREE ACROSS THE LAND (the owner\'s call: the si
   const withLand = createLandforms({ woods: land, sites, beyond: t, climates: null }), without = createLandforms({ woods: raw, sites, climates: null });
   const asked = [...new Set([...bayAbout(-1, 250), ...bayAbout(-2, 100), ...bayAbout(1001, 400), ...bayAbout(500, -3), [500, 2], [0, 0], [999, 499]].map(String))].map((v) => v.split(',').map(Number));
   assert.ok(asked.length >= 20, `the Bay's pixels asked (${asked.length})`);
-  for (const [x, y] of asked) assert.deepEqual([...generateSamples(land, x, y, H, withLand)], [...generateSamples(raw, x, y, H, without)], `the Bay's (${x}, ${y}): one ground for both clients`);
+  for (const [x, y] of asked) sameSamples(generateSamples(land, x, y, H, withLand), generateSamples(raw, x, y, H, without), `the Bay's (${x}, ${y}): one ground for both clients`);
   // and the table is live past the Bay: a town's site pulls its neighbour there (a ground only the land's client stands)
   const bare = createLandforms({ woods: land, sites, climates: null });
-  assert.notDeepEqual([...generateSamples(land, M6[0] + 1, M6[1], H, withLand)], [...generateSamples(land, M6[0] + 1, M6[1], H, bare)], 'past the Bay, beside its site: pulled');
+  apartSamples(generateSamples(land, M6[0] + 1, M6[1], H, withLand), generateSamples(land, M6[0] + 1, M6[1], H, bare), 'past the Bay, beside its site: pulled');
   // every input the table is made of is the land's own online, whatever a player's doors say (offline alone): the places,
   // the capitals, the trace (scenes/shared.js) - so every client with the land makes it alike
   const online = '?online=1&arenaplaces=off&capitals=off&tamrieltrace=off&country=off';
@@ -300,7 +313,7 @@ test('BAY-LEFT-GROUND D1 with ARENA2: on the freeware\'s trace every town past t
   // the Bay's towns, sample for sample
   const bay = rows.filter((l) => l.mapTableData.locationType === LOCATION_TYPES.TownCity || l.mapTableData.locationType === LOCATION_TYPES.TownHamlet).filter((_, i) => i % 7 === 0).slice(0, 40)
     .map((lo) => longitudeLatitudeToMapPixel(lo.mapTableData.longitude, lo.mapTableData.latitude));
-  for (const p of bay) assert.deepEqual([...generateSamples(woods, p.x, p.y, H, after)], [...generateSamples(woods, p.x, p.y, H, before)], `the Bay's (${p.x}, ${p.y})`);
+  for (const p of bay) sameSamples(generateSamples(woods, p.x, p.y, H, after), generateSamples(woods, p.x, p.y, H, before), `the Bay's (${p.x}, ${p.y})`);
 });
 
 test('BAY-LEFT-GROUND D1 GROUND-AGREE with ARENA2: on the freeware\'s trace the land\'s client and the land-less one stand the Bay alike - every site past the Bay clear of the Bay\'s reach (the nearest some twenty pixels off), the Bay\'s edge at its corners and beside the sites past the Bay nearest it the same to the bit; a client whose places land after it mounts makes the same table once they do, and builds again what they reach (mutants: the reach unheld; the host\'s stamp)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
@@ -333,7 +346,7 @@ test('BAY-LEFT-GROUND D1 GROUND-AGREE with ARENA2: on the freeware\'s trace the 
   const w0 = new WoodsFile(); w0.load(bytes('WOODS.WLD'));
   const woods = groundWoods(w0);
   const climates = landformClimates((x, y) => maps.getClimateIndex(x, y));
-  assert.deepEqual([...climates], [...landformClimates((x, y) => rawMaps.getClimateIndex(x, y))], 'the Bay\'s climates the same for both');
+  sameSamples(climates, landformClimates((x, y) => rawMaps.getClimateIndex(x, y)), 'the Bay\'s climates the same for both');
   const beyond = landformSitesBeyond(pastBaySites({ pixels: arenaPixels(), templateOf: (p) => arenaTemplateOf(tpl, p), capitals: true }));
   assert.ok(beyond.size > 200, `the sites past the Bay (${beyond.size})`);
   const near = [...beyond.keys()].map(worldPixelOfKey).sort((a, b) => bayEdgeDistance(...a) - bayEdgeDistance(...b));
@@ -342,7 +355,7 @@ test('BAY-LEFT-GROUND D1 GROUND-AGREE with ARENA2: on the freeware\'s trace the 
   const clamp = ([x, y]) => [Math.max(0, Math.min(999, x)), Math.max(0, Math.min(499, y))];
   const asked = [[0, 0], [999, 0], [0, 499], [999, 499]];
   for (const q of near.slice(0, 6)) { const [x, y] = clamp(q); asked.push([x, y], clamp([x + Math.sign(500 - x), y + Math.sign(250 - y)])); }
-  for (const [x, y] of asked) assert.deepEqual([...generateSamples(woods, x, y, H, withLand)], [...generateSamples(raw, x, y, H, without)], `the Bay's (${x}, ${y}): one ground for both clients`);
+  for (const [x, y] of asked) sameSamples(generateSamples(woods, x, y, H, withLand), generateSamples(raw, x, y, H, without), `the Bay's (${x}, ${y}): one ground for both clients`);
   // the late client: its places land - the same table as the land's client, and the pixels a moved site reaches built again
   const [sx, sy] = near.at(-1);
   s.built.set(`${sx + 1},${sy}`, { px: sx + 1, py: sy });
