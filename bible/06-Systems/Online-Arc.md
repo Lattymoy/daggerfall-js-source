@@ -16515,6 +16515,14 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   generation on (`roomLootHost.js` `restartStaleContainer`) - the newer generation beats the old terms on every client
   - and a client that takes the seat does the same for a stale word it held unread; a body still being rebuilt as the
   memory's species is left to CORPSE-GOLD's second landing. What the earlier visit took from it is back once.
+  RPT1026-ITEMS RE-ENTRY (2026-10-27, a private report from a party: bodies looted, then a death or a walk out, and two
+  or three of them full again on the way back): walked in a real two-player room (`test/scenes/rpt1026_items_reentry.test.js`
+  - the relay's Room keeping the memory and the seat, the looter the host or its level-2 partner, the seat passed
+  while the looter is away, the room emptied), nothing taken is offered twice. The way it was offered is CHAMP-BASE's: a
+  champion body rolled at each builder's level was held unread by the low-level partner, whose memory as the room's
+  host then left the body out, so the looter's next visit rolled it afresh. A memory older than the looter's own
+  takes (inside the host's WORLD_PUBLISH_MS) shows them for a moment; the host refuses the press, and its answer
+  empties the body.
   AUDIT WORLD4 C1 stands: nothing lands under a window this player has open.
 - **THE CLAIMS** (Mac, 2026-10-15: "Host arbitrates"). A take of a shared piece - a base piece or a stored one, by the
   window, the quick door or Physical Items' one-item door - is a CLAIM, and the room's host (WORLD2's, the seat that
