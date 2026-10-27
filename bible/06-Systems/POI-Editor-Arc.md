@@ -149,8 +149,10 @@ the branch, renumbered past LAMP-KEEPER II's and KG6's at the merges).
   `refresh()` asks now - the editor's after a verdict and a put-back - and one asked while an ask is out is asked again
   the moment it answers (AUDIT POI R13); an answer older than one already taken from the network is not taken (S11: a
   stale isolate's had taken a new approval down). Every document is held to the law again (`poiDocProblems`) - one the
-  law refuses is not stood, whatever the wire says. The last feed is KEPT (the Cache API, `browserPoiCache`) and read
-  back at the next start: a game without the network stands the POIs it last saw. The version, the tag and the kept copy
+  law refuses is not stood, whatever the wire says. The last feed is KEPT (`pagePoiCache`: the Cache API,
+  `browserPoiCache`; IndexedDB, `idbPoiCache`, on the desktop app's `dagger://`, where Chromium opens no Cache Storage -
+  POI-KEPT) and read back at the next start: a game without the network stands the POIs it last saw. The version, the
+  tag and the kept copy
   are one service's - another service is asked afresh, and a copy kept is read back under its own service alone (AUDIT
   POI R15). `setOverlay` stands a builder's open drafts over the live set on that screen alone (POI-3).
 - **THE ASSETS**: by their sha256 - memory (64 MiB, the oldest asked let go), the kept copy, then
