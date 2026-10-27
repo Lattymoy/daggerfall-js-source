@@ -205,7 +205,7 @@ test('TESA5 the host: the crossings found on the Bay\'s own network with the lan
   assert.match(host, /const joins = forBay \? arenaJoins\(forBay, joinLand\) : \[\];/);
   assert.match(host, /\.\.\.joins\.map\(\(j\) => \(\{ x: j\.gate\[0\], y: j\.gate\[1\], type: LOCATION_TYPES\.TownCity \}\)\)\];/, 'a gate a road town');
   assert.match(host, /terrainGen\.addArenaRoads\(joinLayer\(joins\), onLanded, \{ reset: true \}\);/, 'the crossings first, the layer reset');
-  assert.match(w, /const arenaRoadsStale = \(p, epoch, layer, reset = true\) => p\.arenaRoadsEpoch < epoch && /, 'a Bay pixel too');
+  assert.match(w, /const arenaRoadsStale = \(p, epoch, layer, reset = true\) => \(p\.arenaRoadsEpoch < epoch && /, 'a Bay pixel too');   // PIN MOVED (ROAD-FOLLOW): the law in brackets, a waiting wall's pixel beside it
   assert.match(read('src/world/terrain/terrainGen.js'), /const join = arena \? 0 : arenaJoinByte\(px, py\);/);
 });
 

@@ -2850,9 +2850,10 @@ from the Bay's edge.
 - **Measured** (the pins' grids): a town past the Bay reached by the road round, not the field across; a plan along a
   road past the Bay priced a road's (where it walked the open ground beside it at three and a half times it); the
   crossing, the Bay's road to its edge and its join past it, walked as one road.
-- **OPEN**: the walk aims pixel middle to pixel middle (OW-ROAD-TRUE's lane), and past the Bay a road is drawn as a curve
-  (`03-World/Roads.md` VOYAGER2), so on a bend the walker cuts up to 0.125 of a pixel inside it; the curve's apex is
-  `roadCurves.js` curveApex, not wired into the lane.
+- **OPEN** (closed by ROAD-FOLLOW, below - the walk and the line on the painted curves): the walk aims pixel middle to
+  pixel middle (OW-ROAD-TRUE's lane), and past the Bay a road is drawn as a curve (`03-World/Roads.md` VOYAGER2), so on
+  a bend the walker cuts up to 0.125 of a pixel inside it; the curve's apex is `roadCurves.js` curveApex, not wired into
+  the lane.
 - Pins `test/systems/travel/voyager21_beyond.test.js` (5); mutants `tools/mutants/voyager.json` (VOYAGER2.1's). PIN
   MOVED: none; TV-BEYOND's road-byte record re-aimed by content (`tools/mutants/fb1009_beyond.json`).
 
@@ -2882,11 +2883,13 @@ their cost:
   installed - VOYAGER2.1's `beyond`) and walking the land (no boat, or one to hand with a goal ashore), searches the roads
   and tracks alone - the Bay's arrays on the table, the layer past it, stepKind's law and TV2's prices (a road 1, a track
   1.6) - with the open ground (3.5) walked only about its two ends: BY_ROAD_REACH (24 pixels), or out past the nearest
-  road or track to an end in the wilds (within BY_ROAD_SEEK, 96). Its cells are kept by pixel (no table's edge), a step
+  road or track to an end in the wilds (within BY_ROAD_SEEK, 96). (ROAD-FOLLOW, below, retired BY_ROAD_REACH: a way by
+  the roads cut a field's corner anywhere within it - each end's own leg and a gap's crossing now.) Its cells are kept by pixel (no table's edge), a step
   away from the ends leaves by a road's or a track's edge (no other neighbour is asked), it leans on its goal by
   BY_ROAD_GREED (1.25: a way at most a quarter dearer than the roads' cheapest), and it gives up after
   BY_ROAD_MAX_EXPANSIONS cells (100,000). **TV2's law kept**: a way by the roads dearer than the straight walk across
-  the field (`ROUTE_COST.open` a step) is asked of the ladder too, and the cheaper kept.
+  the field (`ROUTE_COST.open` a step) is asked of the ladder too, and the cheaper kept. (ROAD-FOLLOW, below, retired
+  it: a way by the roads is kept, the ladder asked only where none joins the two.)
 - **The ladder past the table** (no way by the roads, FREE, a crossing): its box reaches `margin` past an end beyond the
   table (`reachOf` - the Imperial City walks out south of its lake), no rung wider than BEYOND_MARGIN (240 pixels: the
   whole map's rung there allotted a box of millions of cells for a spend that walks a hundred thousand), its whole spend
@@ -3590,3 +3593,110 @@ Pins `test/scenes/bayleft_places.test.js` (8, three on the freeware). Mutants `t
 Re-aimed by content and run, all dead: AOWR-L5-1-mark-at-pixel-middle, AUDIT-TESA-A2-3-summary-undiscovered,
 EOW-settlements-isles, OWQ-press-unread, OWQ-pixel-swapped. A departure from DFU, whose places are MAPS.BSA's: Port-Ledger
 A, BAY-LEFT-MAPS.
+
+## ROAD-FOLLOW - a road journey keeps to the roads, walked on the road as it is painted (2026-10-27, the owner)
+
+The owner's field report, item 6: *"Road travel is not following roads properly in overworld travel"*; then *"No band
+aids or half assed work"* - road travel follows the roads everywhere. Its walled towns' gates are the same record's other
+half (`03-World/Town-Shapes.md` ROAD-FOLLOW).
+
+**Measured first** on the freeware (ARENA2, every region of the roads past the Bay laid as the roads' worker lays them,
+the host's own route ground, the plan's legs as Travel Options walks them; the share of a walk on the painted road is
+its length within a tile of the road the terrain paints - the Bay's straight bands, VOYAGER2's curves past it). Two
+faults, both past the Bay; the Bay's plans were 100% on the road and are unchanged.
+
+- **THE WALK AND THE LINE CUT EVERY BEND.** A road leg walks its lane pixel middle to pixel middle (OW-ROAD-TRUE), and the
+  drawn line joins the same middles - Basic Roads' geometry, a band from the middle to each edge. Past the Bay a bend is
+  painted as one curve (VOYAGER2), 0.125 of a pixel (102 m) inside the middle at 45 degrees and 0.177 (145 m) at a right
+  angle, and the road is two tiles (12.8 m) wide: the party walked the grass inside every bend. 12 to 17% of every road
+  journey's walk past the Bay lay off the painted road (Kvatch to Leyawiin 88.1% on it, the Imperial City to Bruma 84.7%)
+  where the plan's own steps were 97 to 100% road; the real Travel Options walk of a road bending four times stood 16
+  tiles off it at every bend. VOYAGER2.1's OPEN, above.
+- **THE PLAN LEFT THE ROADS NEAR ITS ENDS.** The roads' search (ROAD-BEYOND) walked the open ground anywhere within
+  BY_ROAD_REACH (24 pixels, 20 km) of either end, at 3.5 a step against a road's 1: of 30 journeys between random places
+  past the Bay, 17 left the roads mid-way - 25 stretches across a field, 23 of them where one piece of the roads joined
+  both sides (the roads round them 3.3 to 133.5 times the field's length), every one within 24 pixels of an end. TV2's
+  law did the same on the Bay's ladder (a field's hop taken over a road round it more than three and a half times
+  longer), and past the Bay it asked the ladder whenever the roads were dearer than the straight walk and kept its cut.
+  The 2 stretches left were gaps: Adavi's and Tiberdes' roads (14 and 22 pixels) join no other road. Bemitor to Saurtja
+  (the Bay to Hammerfell's south) walked 413 pixels across country - the roads' search ran out its spend against the
+  Taneth network's gap, and the ladder too.
+
+**What holds now.**
+
+- **The walk on the curves** (`systems/travel/roadLine.js`): a route's pixel past the Bay that it turns in, one road (or
+  one track) in and out, is walked on the curve its byte paints between the two edges it crosses
+  (`roadLine.js:"export function routeCurveAt(pixels, kinds, i, {"`): the leg that ends there ends at the curve's apex,
+  and the next walks the curve's second half before its straight run - each such leg carries its `line`, the painted
+  road's native points (`roadLine.js:"export function roadLineLegs(legs, ix, pixels, kinds, o = {}) {"`, from
+  `travelRoute.js:"return roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes });"`). Travel Options walks a
+  line's points as its lane (`travelOptions.js:"...(leg.line && !leg.ring ? { pts: [[a.x, a.z], ...leg.line] } : {})"`,
+  the autopilot's `path`, OW-ROAD-TRUE's pursuit), aims a leg at its line's end (`legEnd`), rejoins a curve at its
+  nearest point (`travelOptions.js:"const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;"`) and walks a last
+  leg's line to its place or its spot. The drawn line and the forecast run the same points (`routeDrawPoints`' `via`,
+  `drawRouteRuns`, `drawOwnRun`). A pair the byte paints no curve for (a T's stem, a junction's turn sharper than 45
+  degrees), a way straight through, the Bay's pixels and the route's two ends are the middles they were - on the road.
+- **The plan keeps to the roads** (`travelRoute.js:"export function* roadEndsSteps(from, to, {"`). A plan handed the roads
+  walks the open ground only on its ends' own legs and across a gap in them:
+  - **each end's leg**: none about an end on a road or a track (its pixel carries one - it starts or ends on the road), out
+    to ROAD_END_SLACK (2) rings past the nearest road about an end off them (a spot in the field, a dungeon off the road);
+  - **the roads' pieces**: the roads are flooded from both legs at once, ROAD_PIECE_CAP (8,192) pixels a side at most. A
+    side whose flood runs out first, never meeting the other's, holds roads that join none of the other's - **a gap**: the
+    narrowest crossing of the land from them to a road they do not hold (the shortest walk, a diagonal sqrt 2, out to
+    BY_ROAD_SEEK) is the plan's to walk (`bridges`), and the flood goes on from its far side. Measured: the roads past
+    the Bay are 801,136 pixels in 1,820 pieces - the land's network 671,973, the islands' own (Summerset's 58,286,
+    Vvardenfell's 24,016, Auridon's 10,046), Taneth's network (4,399, Taneth, Rihad, Saurtja and Tlarpka) and Necrom's
+    (3,911) joined to no other; 28 places' roads join no other road, their narrowest crossing 2 to 9 pixels (Taneth's 4,
+    Necrom's 2); 11 on islands none within 400.
+  - **the searches** walk those legs and crossings alone: the roads' search past the Bay
+    (`travelRoute.js:"if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue;"`) and the ladder on the Bay
+    (`travelRoute.js:"if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue;"`). A way by the roads
+    is kept however much dearer than the straight walk (`travelRoute.js:"if (byRoad) return byRoad;"`).
+  - **no road joins the two** (an end no road comes within BY_ROAD_SEEK of; an island's roads with no crossing; every box
+    the ladder holds without a way by them): TV2's cost law, the plan's own again with `costLaw`
+    (`travelRoute.js:"if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });"`),
+    then the walk across country as before. FREE mode hands no road and walks the cost law as it did.
+
+**Measured after** (the same sampling, seed 7: 60 tries a set, journeys of 20 to 900 pixels; "no way" a pair the land does
+not join or the spend did not reach):
+
+| set | journeys | open steps | open mid-way | walked line on the painted road |
+| --- | --- | --- | --- | --- |
+| the Bay | 38 / 38 | 0.05% / 0.02% | none / none | 100% / 100% |
+| past the Bay | 48 / 49 | 0.99% / 0.13% | 262 in 27 journeys / 43 in 4, every one a gap's crossing | 83.4% / 98.8% |
+| the Bay to past it | 53 / 57 | 1.17% / 0.20% | 192 in 22 / 115 in 7, every one a gap's crossing | 89.5% / 99.1% |
+
+The 30 journeys of the first count: 17 left the roads mid-way, 2 now; of 25 stretches across a field 23 were within
+one piece of the roads and none is now - the 3 left cross gaps: Adavi's stub to the land's network (5 pixels), and
+Tiberdes' stub by another to it (5 and 4). Bemitor to Saurtja walks 728 pixels, 96.5% of its walk on the painted road
+(3.2%), the gap to Taneth's network crossed in 19 pixels along a lake's north shore. The walk on the curves (the real Travel Options, at a hundred times walking pace and at walking
+pace) keeps within a tile of the road at every bend, where it stood 16 tiles off.
+
+**The spend**: the two floods cost a plan by the roads up to 16,384 pixels, more on a gap's crossing (Bemitor to Saurtja
+56,000); a Bay plan's ladder walks fewer cells, the field off every box's roads (Daggerfall to Wayrest 92,850 cells to
+37,793; Wayrest to Ykalon 193,259 to 57,639); a plan past the Bay more (Kvatch to Leyawiin 49,019 to 63,211; the
+Imperial City to Bruma 5,086 to 20,095) - PLAN-SLICES' cells a frame, the same plan.
+
+- **The four hosts**: none grows. `scenes/world.js`'s two lines that draw the route call `roadLine.js` drawRouteRuns and
+  drawOwnRun in place of their loops (the same logical lines); `scenes/exterior.js`, `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` plan no Overworld route. Nothing crosses the wire.
+- **The departures, named**: DFU has no Overworld planner (Travel Options' follow walks Hazelnut's bytes, which the Bay's
+  plans walk as before). TV2's cost law - *a road worth a detour of three and a half times its length and no more* - is
+  retired where the roads join a journey's two ends: the road round a field is the way (TV2's own pin of a hop across a
+  field moved); it stays the law where no road joins them, and FREE's. ROAD-BEYOND's BY_ROAD_REACH and its *TV2's law
+  kept* are retired the same way (below, PIN MOVED).
+- **What a bridge over a river would change** (ROAD-LOOK, `fix/road-look`): the step law refuses a step onto water before
+  it reads a road (`travelRoute.js:"if (goal === 0 && isWater(bx, by)) return -1;"`), so a road laid over a river wider
+  than VOYAGER1's ford (FORD_SPAN 2, a road's own step onto a water pixel) is no step of the plan's; a bridge that lays
+  road bits across water pixels needs that step taken as the road's, and roadEndsSteps' crossing walk the same.
+- **OPEN**: a turn the painter draws no curve for (VOYAGER2's junction law pairs only turns of 45 degrees or less) is
+  walked through the middle, as the lane walked it - off the paint by up to half the road's width at a sharp junction
+  turn. Woodhearth's road grazes two pieces of its wall (`03-World/Town-Shapes.md` ROAD-FOLLOW).
+- Pins `test/systems/travel/road_follow.test.js` (6), `test/systems/travel/tv2_click_to_move.test.js` (ROAD-FOLLOW route,
+  and the U's hop PIN MOVED), `test/systems/travel/road_beyond.test.js` (PIN MOVED: the dials - BY_ROAD_REACH gone,
+  ROAD_END_SLACK and ROAD_PIECE_CAP; the road round the field kept, not the ladder's cut; the roads' own search crossing a
+  broken road's gap; the roads first only where they join). Mutants `tools/mutants/road_follow.json` (52); re-aimed by
+  content: AOWR-L2-2-line-drawn-straight, AOWR-L2-3-ring-approach-unlaned, OW-ROADSIDE-join-ignored, OW-ROADSIDE-drawn-beside,
+  ORT-lane-from-the-joins-point, ROAD-BEYOND-no-roads-first, ROAD-BEYOND-the-ends-open-ground-everywhere,
+  ROAD-BEYOND-the-seek-unasked, TV2-a-new-autopilot-each-leg, VOYAGER2.1-the-reader-unread; ROAD-BEYOND-the-dearer-road-kept
+  (its law retired) now ROAD-FOLLOW-the-cut-across-the-field-kept.

@@ -550,6 +550,7 @@ import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6
 import { farPlaces, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
 import { nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
 import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
+import { drawRouteRuns, drawOwnRun } from '../systems/travel/roadLine.js';   // ROAD-FOLLOW: the drawn route on the roads' curves past the Bay
 import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
 import { bandWordOf, validBandWord, chaseYields, bandLifeOf, bandNearMe, bandPixelOf, BAND_WORD_MS, BANDS_WIRE_MAX } from '../systems/travel/travelBands.js';   // TV7b: the chase, shared
 import { walkBegin, leaderWalkStep, walkHeard, memberAnswer, memberFollowing, memberStopOf, memberWalkStep, walkAskStands, sameWalkDest, NO_WALK_ANSWER, PARTY_WALK_RADIUS_M } from '../systems/party/partyWalk.js';   // TV8: group travel, the leader drives (AUDIT OW3: the whole law, pure)
@@ -31027,14 +31028,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const j = travelOptions.route?.join, sw = travelOptions.route?.street?.pts.slice(travelOptions.state?.autopilot?.seg ?? 0) ?? [];
     let at = me;
     for (const q of j ? [...sw, j] : sw) { leg(at.x, at.z, q.x, q.z, pts); at = q; }
-    leg(at.x, at.z, n[start][0], n[start][1], pts);   // the traveller's own leg moves with them
+    drawOwnRun(at, n[start], j || travelOptions.route?.street ? 0 : travelOptions.state?.autopilot?.seg, leg, pts);   // the traveller's own leg moves with them (ROAD-FOLLOW: on the road's curves still ahead)
     // PERF-TV: the legs past it are the same every frame - kept while the ground and the leg being walked hold (a long
     // road re-read hundreds of terrain points a frame)
     const gen = tvGroundGenNow(), kept = tvTrip._tail;
     let tail = kept && kept.gen === gen && kept.start === start && kept.n === n ? kept.pts : null;
     if (!tail) {
       tail = [];
-      for (let i = start + 1; i < n.length; i++) leg(n[i - 1][0], n[i - 1][1], n[i][0], n[i][1], tail);
+      drawRouteRuns(n, start, leg, tail);   // ROAD-FOLLOW: each leg along the painted road (systems/travel/roadLine.js)
       tvTrip._tail = { gen, start, n, pts: tail };
     }
     for (const p of tail) pts.push(p);

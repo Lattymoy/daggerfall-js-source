@@ -23,7 +23,7 @@ import { registerCustomModel, unregisterCustomModel } from '../customModels.js';
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { provinceKeyBeyondBay } from '../tamriel/tamrielLand.js';
 import { CAPITALS, BLOCK_M } from '../tamrielCapitals.js';
-import { townWallGatesOf } from '../townWalls.js';
+import { townWallGatesOf, townWallWaits } from '../townWalls.js';   // ROAD-FOLLOW: a wall still waiting for its roads plans no streets yet
 import { FABRIC_CELLS, fabricGrid, planSteps } from './townFabric.js';
 import { townFabricModel, townFabricModelSliced, FABRIC_PIECES } from './townFabricModel.js';
 import { styleOf } from './urbanRecords.js';
@@ -97,6 +97,9 @@ let _next = 0;
  */
 export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () => null }) {
   if (!fabricTown(dfLocation)) return null;
+  // ROAD-FOLLOW (world/townWalls.js): a walled town whose wall still waits for its pixel's roads has no gates to run its
+  // streets to yet - none planned or kept now; its pixel is built again when its roads land, and planned then
+  if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;
   const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, had = _fabrics.get(mapId);
   if (had) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }
   const ed = dfLocation.exterior.exteriorData, at = new Map(blocks.map((b) => [b.y * ed.width + b.x, b]));

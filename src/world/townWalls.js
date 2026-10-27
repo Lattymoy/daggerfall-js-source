@@ -35,6 +35,10 @@ import { registerPortBlock } from '../formats/worldData/worldDataReplacement.js'
 import { registerCustomModel } from './customModels.js';
 import { carriageRecordsOf } from './immersiveTravelGates.js';   // TS7: Immersive Travel's carriages, at the new gates
 import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';   // TS7: a town's walk shut to its ground
+import { curvesOf, curvePolyline, CURVE_STEPS } from './road/roadCurves.js';   // ROAD-FOLLOW: past the Bay a road's arm is its curve
+import { DIR_DELTA } from './road/roadNetwork.js';
+import { arenaRoadByte, arenaJoinByte } from './arenaRoads.js';   // ROAD-FOLLOW: the roads past the Bay, and a crossing's join on the Bay
+import { inBay } from './tamriel/tamrielFrame.js';
 
 /** Daggerfall's wall pieces (ARCH3D): a tower, a length of wall (25.6 m, 9.6 m thick, its inside its local -z), a gate. */
 export const WALL_MODELS = Object.freeze({ tower: 444, wall: 445, gate: 446 });
@@ -157,6 +161,25 @@ function rayHit(pts, c, dir) {
   }
   return best;
 }
+/** ROAD-FOLLOW: the point of a round nearest `q`, moved `shift` metres along it (counter-clockwise), as rayHit answers -
+ *  its edge and the fraction. */
+function lineHit(pts, q, shift = 0) {
+  const n = pts.length, cum = [0];
+  let near = 0, best = Infinity;
+  for (let i = 0; i < n; i++) {
+    const a = pts[i], b = pts[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], ll = dx * dx + dy * dy, len = Math.sqrt(ll);
+    const t = ll ? Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / ll)) : 0;
+    const d = Math.hypot(a[0] + dx * t - q[0], a[1] + dy * t - q[1]);
+    if (d < best) { best = d; near = cum[i] + t * len; }
+    cum.push(cum[i] + len);
+  }
+  const P = cum[n];
+  if (!(P > 0)) return null;
+  const u = (((near + shift) % P) + P) % P;
+  let i = 0;
+  while (i < n - 1 && cum[i + 1] < u) i++;
+  return { t: 0, i, s: (u - cum[i]) / Math.max(1e-9, cum[i + 1] - cum[i]) };
+}
 /** A round re-cut to start at edge `i` fraction `s`: its points from there, the start first. */
 function startAt(pts, i, s) {
   const a = pts[i], b = pts[(i + 1) % pts.length], p = [a[0] + (b[0] - a[0]) * s, a[1] + (b[1] - a[1]) * s];
@@ -176,7 +199,10 @@ function startAt(pts, i, s) {
 export function wallPieces(pts, c, gates, o = {}) {
   const L = o.piece ?? TOWN_WALL.piece, run = o.run ?? TOWN_WALL.run;
   if (pts.length < 3) return [];
-  const hits = (gates.length ? gates : [[c[0], c[1] - 1]]).map((g) => rayHit(pts, c, [g[0] - c[0], g[1] - c[1]])).filter(Boolean);
+  // ROAD-FOLLOW (`o.onLine`): the gates are points ON the line - where the roads cross it - each gate centred on its own
+  // (its length runs from half a length before it), and two gates a length of wall apart at the least
+  const onLine = !!o.onLine;
+  const hits = (gates.length ? gates : [[c[0], c[1] - 1]]).map((g) => (onLine ? lineHit(pts, g, -L / 2) : rayHit(pts, c, [g[0] - c[0], g[1] - c[1]]))).filter(Boolean);
   if (!hits.length) return [];
   hits.sort((a, b) => a.i + a.s - (b.i + b.s));
   const closed = startAt(pts, hits[0].i, hits[0].s);
@@ -202,7 +228,7 @@ export function wallPieces(pts, c, gates, o = {}) {
     }
     return arc;
   };
-  const gap = L * (run + 2), stops = [];
+  const gap = onLine ? 2 * L : L * (run + 2), stops = [];
   for (const h of hits) {
     const e = pts[h.i], f = pts[(h.i + 1) % pts.length], q = [e[0] + (f[0] - e[0]) * h.s, e[1] + (f[1] - e[1]) * h.s];
     // a gate crowding the last slid on along the wall, one crowding the first (round the wall) slid back - none where neither has room
@@ -254,10 +280,15 @@ export function wallPieces(pts, c, gates, o = {}) {
  * them - wall, open and carrier cells none), its line round them (wallLine, smoothed, in the town's metres - x east, z north, from its grid's
  * south-west corner), its gates (the bearing of each of its template's gate pieces, `template`'s grid read with `rmbOf`),
  * its pieces (wallPieces) and its start markers (outside each gate, Daggerfall's offset). Null for a city with no building.
+ * ROAD-FOLLOW: `paths` - its pixel's road and track bytes and whether they are drawn as curves (townWallPathsReader's) -
+ * stands a gate where each road or track the terrain paints in to the town crosses the line (roadGatePoints), and the
+ * template's bearings only where none does; with none handed (a host that paints no roads, the fixed-city bench) the
+ * template's, as before.
  * @param {any} dfLocation the outlined city (outlineTownLocation's) @param {string[]} templateNames its template's grid
  * @param {(name: string) => any} rmbOf a block's RMB half by its name (null where none)
+ * @param {?{ roads: number, tracks: number, curved: boolean }} [paths]
  */
-export function townWall(dfLocation, templateNames, rmbOf) {
+export function townWall(dfLocation, templateNames, rmbOf, paths = null) {
   const ed = dfLocation?.exterior?.exteriorData;
   if (!ed?.blockNames) return null;
   const { width: w, height: h } = ed, T = SHAPE_TILES_PER_BLOCK, PAD = Math.ceil(WALL_ROUND.line + WALL_ROUND.close) + 2;
@@ -285,10 +316,95 @@ export function townWall(dfLocation, templateNames, rmbOf) {
       frames.push({ name, block: [bx * BLOCK_M, by * BLOCK_M], at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-sin, cos] });
     }
   });
-  const pieces = wallPieces(pts, c, gates);
+  const roads = paths ? roadGatePoints(pts, getLocationTerrainTileOrigin(dfLocation), paths) : [];   // ROAD-FOLLOW
+  const pieces = roads.length ? wallPieces(pts, c, roads, { onLine: true }) : wallPieces(pts, c, gates);
   const [outM, alongM] = TOWN_WALL.marker;
   const markers = pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
-  return { line: pts, gates, frames, middle: c, pieces, markers };
+  return { line: pts, gates, frames, middle: c, pieces, markers, roads };
+}
+
+// ---------------------------------------------------------------- ROAD-FOLLOW: the gates where the roads come in
+
+/** ROAD-FOLLOW: two roads that cross a wall's line nearer than this (metres along it) come in through one gate - the
+ *  nearest two gates may stand (wallPieces' `onLine`: a gate's length and a length of wall between). */
+export const GATE_ARMS_MERGE = 2 * TOWN_WALL.piece;
+/** A compass bit's edge point in its pixel's tile frame (x east, y north) - roadCurves.js's own EXIT. */
+const ARM_EXIT = new Map(DIR_DELTA.map(([bit, dx, dy]) => [bit, [64 + 64 * dx, 64 - 64 * dy]]));
+/**
+ * ROAD-FOLLOW: THE LINES A PIXEL'S PAINTED ARM `bit` RUNS IN ON from its edge, in its tile frame (x east, y north, 0 to 128),
+ * each its edge's point first: on the Bay Basic Roads' straight band to the middle (roadPainter.js PaintPath), past the
+ * Bay (`curved`) each curve VOYAGER2 draws from that edge (world/road/roadCurves.js curvesOf: to a bit it pairs with, or
+ * straight in to the middle).
+ * @param {number} bits @param {number} bit @param {boolean} curved @returns {Array<Array<[number, number]>>}
+ */
+export function armLines(bits, bit, curved) {
+  const e = ARM_EXIT.get(bit);
+  if (!e || !(bits & bit)) return [];
+  if (!curved) return [[/** @type {[number, number]} */ ([e[0], e[1]]), [64, 64]]];
+  const out = [];
+  for (const q of curvesOf(bits).curves) {
+    const from = q[0] === e[0] && q[1] === e[1], to = q[4] === e[0] && q[5] === e[1];
+    if (!from && !to) continue;
+    const p = curvePolyline(q), line = [];
+    for (let k = 0; k <= CURVE_STEPS; k++) line.push(/** @type {[number, number]} */ ([p[2 * k], p[2 * k + 1]]));
+    out.push(from ? line : line.reverse());
+  }
+  return out;
+}
+/** Where a line of runs `poly` first crosses a closed round `ring` (both in metres), walked from its first point; null. */
+function firstCrossing(poly, ring) {
+  for (let k = 0; k + 1 < poly.length; k++) {
+    const [ax, ay] = poly[k], [bx, by] = poly[k + 1], dx = bx - ax, dy = by - ay;
+    let best = null;
+    for (let i = 0; i < ring.length; i++) {
+      const [cx, cy] = ring[i], [ex, ey] = ring[(i + 1) % ring.length], fx = ex - cx, fy = ey - cy, den = dx * fy - dy * fx;
+      if (Math.abs(den) < 1e-12) continue;
+      const t = ((cx - ax) * fy - (cy - ay) * fx) / den, u = ((cx - ax) * dy - (cy - ay) * dx) / den;
+      if (t >= 0 && t <= 1 && u >= 0 && u <= 1 && (!best || t < best.t)) best = { t, q: /** @type {[number, number]} */ ([ax + dx * t, ay + dy * t]) };
+    }
+    if (best) return best.q;
+  }
+  return null;
+}
+/**
+ * ROAD-FOLLOW: WHERE THE ROADS COME IN - each road's and each track's arm the terrain paints on the city's pixel
+ * (`paths`: the pixel's bytes, `curved` past the Bay), walked in from its edge to where it first crosses the wall's line
+ * `pts` (the town's metres, its grid's south-west corner at the pixel's tile `origin`): one point on the line an arm, and
+ * arms crossing nearer than GATE_ARMS_MERGE along it one, at their middle. An arm that never reaches the line (it passes
+ * the town by) none.
+ * @param {Array<[number, number]>} pts @param {{ x: number, y: number }} origin
+ * @param {{ roads: number, tracks: number, curved: boolean }} paths @returns {Array<[number, number]>}
+ */
+export function roadGatePoints(pts, origin, paths) {
+  const hits = [];
+  for (const kind of /** @type {const} */ (['roads', 'tracks'])) {
+    const bits = paths[kind] | 0;
+    for (const [bit] of DIR_DELTA) {
+      for (const arm of armLines(bits, bit, !!paths.curved)) {
+        const q = firstCrossing(arm.map(([tx, ty]) => /** @type {[number, number]} */ ([(tx - origin.x) * TILE_M, (ty - origin.y) * TILE_M])), pts);
+        if (q) hits.push(q);
+      }
+    }
+  }
+  if (hits.length < 2) return hits;
+  // in order round the line, and each run of crossings nearer than GATE_ARMS_MERGE to the last one gate at its middle
+  const n = pts.length, cum = [0];
+  for (let i = 0; i < n; i++) cum.push(cum[i] + Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]));
+  const P = cum[n], arcOf = (q) => {
+    let best = Infinity, arc = 0;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], ll = dx * dx + dy * dy;
+      const t = ll ? Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / ll)) : 0;
+      const d = Math.hypot(a[0] + dx * t - q[0], a[1] + dy * t - q[1]);
+      if (d < best) { best = d; arc = cum[i] + t * Math.sqrt(ll); }
+    }
+    return arc;
+  };
+  const at = hits.map((q) => ({ q, a: arcOf(q) })).sort((x, y) => x.a - y.a);
+  const groups = [];
+  for (const h of at) { const g = groups.at(-1); if (g && h.a - g.at(-1).a < GATE_ARMS_MERGE) g.push(h); else groups.push([h]); }
+  if (groups.length > 1 && groups[0][0].a + P - groups.at(-1).at(-1).a < GATE_ARMS_MERGE) groups[0].unshift(...groups.pop());   // round past the line's start
+  return groups.map((g) => /** @type {[number, number]} */ (g.length === 1 ? g[0].q : [g.reduce((s, h) => s + h.q[0], 0) / g.length, g.reduce((s, h) => s + h.q[1], 0) / g.length]));
 }
 
 /**
@@ -492,6 +608,9 @@ export function townWallBlockJson(name, modelId, markers, open, furniture = null
   const json = open();
   json.Name = name;
   json.RmbBlock.FldHeader.Name = name;
+  // ROAD-FOLLOW: a wall still waiting for its pixel's roads (modelId null) stands nothing yet - the carrier open ground, and
+  // provisional: the door builds it again at its next read (formats/worldData/worldDataReplacement.js portBlock)
+  if (modelId == null) { json.Provisional = true; json.RmbBlock.Misc3dObjectRecords = []; json.RmbBlock.MiscFlatObjectRecords = []; return json; }
   json.RmbBlock.Misc3dObjectRecords = [{ ModelId: String(modelId), ModelIdNum: modelId, ObjectType: 0, ...record(0, 0), YPos: -4, XRotation: 0, YRotation: 0, ZRotation: 0 }, ...(furniture?.models ?? [])];
   json.RmbBlock.MiscFlatObjectRecords = [...markers.map(([x, z]) => ({ Position: 0, ...record(x, z), YPos: 0, TextureArchive: 199, TextureRecord: 10, FactionID: 0, Flags: 0 })), ...(furniture?.flats ?? [])];
   return json;
@@ -501,6 +620,61 @@ const _stood = new Set();
 /** TS6: each city's wall as standTownWall stood it this session, by its map id (its cells made when first asked); TS7: a
  *  Bay city's made when first read (`of`). */
 const _walls = new Map();
+
+// ---------------------------------------------------------------- ROAD-FOLLOW: a wall made when its roads are known
+
+/** ROAD-FOLLOW: the reader of a city pixel's painted roads the walls' gates are stood on - `(px, py)` answers the pixel's
+ *  road and track bytes and whether the terrain draws them as curves, or null while they are not known yet (the network
+ *  or its region still to land); none set (the fixed-city bench, a test) - the template's gates, as before. */
+let _paths = null;
+/** @param {?((px: number, py: number) => ?{ roads: number, tracks: number, curved: boolean })} reader */
+export function setTownWallPaths(reader) { _paths = typeof reader === 'function' ? reader : null; }
+/** A location's map pixel (its map row's longitude and latitude - MapsFile's law, a clone's past the Bay too). */
+const townPixel = (dfLocation) => {
+  const t = dfLocation?.mapTableData;
+  return t ? { x: Math.trunc(t.longitude / 128), y: 499 - Math.trunc(t.latitude / 128) } : null;
+};
+/** Its pixel's roads by the reader: undefined with no reader, null while not known. */
+const townPaths = (dfLocation) => {
+  if (!_paths) return undefined;
+  const at = townPixel(dfLocation);
+  return at ? _paths(at.x, at.y) : undefined;
+};
+/**
+ * ROAD-FOLLOW: THE HOST'S READER of a city pixel's roads (setTownWallPaths) - the roads the terrain paints there: on the
+ * Bay the network's bytes (`bay()`: the host's terrainGen.roads(), Basic Roads' or the port's own - null until it lands,
+ * the main thread's copy landing before any pixel painted with it answers) and a crossing's join (TESA5); past the Bay the
+ * layer's (world/arenaRoads.js) once every region that may lay a road on the pixel has landed (`landedIn`, the roads
+ * host's), drawn as curves (VOYAGER2).
+ * @param {{ bay: () => any, landedIn?: ?((x0: number, y0: number, x1: number, y1: number) => boolean), byte?: typeof arenaRoadByte, join?: typeof arenaJoinByte }} o
+ */
+export function townWallPathsReader({ bay, landedIn = null, byte = arenaRoadByte, join = arenaJoinByte }) {
+  return (px, py) => {
+    if (inBay(px, py)) {
+      const net = bay();
+      if (!net) return null;
+      const i = py * 1000 + px;
+      return { roads: (net.roads?.[i] ?? 0) | join(px, py), tracks: net.tracks?.[i] ?? 0, curved: false };
+    }
+    if (!landedIn || !landedIn(px, py, px + 1, py + 1)) return null;
+    return { roads: byte('roads', px, py), tracks: byte('tracks', px, py), curved: true };
+  };
+}
+/** ROAD-FOLLOW: whether a city's wall still waits for its pixel's roads (none made yet, none known). @param {any} dfLocation */
+export function townWallWaits(dfLocation) {
+  const kept = _walls.get((dfLocation?.mapTableData?.mapId ?? -1) >>> 0);
+  return !!kept && kept.wall === undefined && townPaths(dfLocation) === null;
+}
+/** ROAD-FOLLOW: whether pixel (px, py) stood its city's carrier while its wall waited for its roads, and they are known
+ *  now - its pixel is to be built again (scenes/tamrielSweepsHost.js arenaRoadsStale, as a region lands); once. */
+export function townWallReadyAt(px, py) {
+  const kept = _waiting.get(`${px},${py}`);
+  if (!kept || townPaths(kept.dfLocation) === null) return false;
+  _waiting.delete(`${px},${py}`);
+  return true;
+}
+/** The walls whose carrier was laid while they waited, by their pixel. */
+const _waiting = new Map();
 /** A wall's blocks: `servedOf(name)` as this client serves them (its line and its gates) and - TS7 - `classicOf(name)` the
  *  game's own (what stands at its gates); a bare function is `servedOf`. */
 const ioOf = (io) => (typeof io === 'function' ? { servedOf: io, classicOf: null } : { servedOf: io?.servedOf ?? (() => null), classicOf: io?.classicOf ?? null });
@@ -515,16 +689,32 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
   const mapId = (dfLocation?.mapTableData?.mapId ?? 0) >>> 0, name = townWallBlockName(mapId), { servedOf, classicOf } = ioOf(io);
   if (_stood.has(name)) return false;
   _stood.add(name);
-  const kept = { wall: made, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null, of: () => null };
-  kept.of = () => (kept.wall === undefined ? (kept.wall = townWall(dfLocation, templateNames, (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null))) : kept.wall);
-  _walls.set(mapId, kept);   // TS6: its town map's and its walkers'
+  const kept = { wall: made, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null, of: () => null, dfLocation };
   const modelId = townWallModelId(mapId);
   const rmbOf = (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null);
+  // the model registered when the wall is made - never one built off a wall still waiting (its mesh is kept by its id)
+  const model = () => registerCustomModel(modelId, (ctx) => townWallModel(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null), () => true, { needs: Object.values(WALL_MODELS) });
+  // ROAD-FOLLOW: made when first read with its pixel's roads known (its gates where they come in - townWall's `paths`);
+  // while they are not, none made and nothing kept, and its pixel is built again when they land (`_waiting`)
+  kept.of = () => {
+    if (kept.wall !== undefined) return kept.wall;
+    const paths = townPaths(dfLocation);
+    if (paths === null) return null;
+    kept.wall = townWall(dfLocation, templateNames, rmbOf, paths ?? null);
+    model();
+    return kept.wall;
+  };
+  if (made !== undefined) model();
+  _walls.set(mapId, kept);   // TS6: its town map's and its walkers'
+  // ROAD-FOLLOW: a carrier laid while its wall waits is provisional, and its pixel is owed a build once its roads land
+  // (`_waiting`, townWallReadyAt); the carrier laid with its wall pays that debt
+  const at = townPixel(dfLocation), key = at ? `${at.x},${at.y}` : null;
   registerPortBlock(name, () => {
     const wall = kept.of();
+    if (wall === null && kept.wall === undefined) { if (key) _waiting.set(key, kept); return townWallBlockJson(name, null, [], open); }
+    if (key && _waiting.get(key) === kept) _waiting.delete(key);
     return townWallBlockJson(name, modelId, wall?.markers ?? [], open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf)) : null);
   }, townWallBlockIndex(mapId));
-  registerCustomModel(modelId, (ctx) => townWallModel(kept.of()?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null), () => true, { needs: Object.values(WALL_MODELS) });
   return true;
 }
 /**
@@ -538,7 +728,10 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
 export function standTownWall(dfLocation, templateNames, io, open) {
   const mapId = (dfLocation?.mapTableData?.mapId ?? 0) >>> 0;
   if (_stood.has(townWallBlockName(mapId))) return null;
-  const wall = townWall(dfLocation, templateNames, (n) => (isWallCarrier(n) ? null : ioOf(io).servedOf(n)?.rmbBlock ?? null));
+  // ROAD-FOLLOW: its gates where its pixel's roads come in - registered to be made when they are known, if they are not yet
+  const paths = townPaths(dfLocation);
+  if (paths === null) { registerTownWall(dfLocation, templateNames, io, open); return null; }
+  const wall = townWall(dfLocation, templateNames, (n) => (isWallCarrier(n) ? null : ioOf(io).servedOf(n)?.rmbBlock ?? null), paths ?? null);
   if (!wall) return null;
   registerTownWall(dfLocation, templateNames, io, open, wall);
   return wall;

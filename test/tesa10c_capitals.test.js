@@ -4,7 +4,8 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CAPITALS, CAPITAL_MODELS, CAPITAL_BLOCKS, CAPITAL_BLOCK_INDEX, BLOCK_M, capitalPixel, capitalCarrier, capitalPortBlocks, anchorMetres, capitalDistrict, tileCentre, autoCentre, CAPITAL_CLOSED_BYTE, onCapitalRing } from '../src/world/tamrielCapitals.js';
+import { CAPITALS, CAPITAL_MODELS, CAPITAL_BLOCKS, CAPITAL_BLOCK_INDEX, BLOCK_M, capitalPixel, capitalCarrier, capitalPortBlocks, anchorMetres, capitalDistrict, tileCentre, autoCentre, CAPITAL_CLOSED_BYTE, onCapitalRing, capitalDims, planCell } from '../src/world/tamrielCapitals.js';
+import { capitalApproachCells } from '../src/world/capitalApproaches.js';   // ROAD-FOLLOW
 import {
   MOURNHOLD, ALINOR, FALINESTI, TORVAL, HELSTROM, MOURNHOLD_PLAN, ALINOR_PLAN, FALINESTI_PLAN, TORVAL_PLAN, HELSTROM_PLAN,
 } from '../src/world/capitalPlans.js';
@@ -111,7 +112,10 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   assert.deepEqual(b.map((x) => x.index), b.map((_, i) => CAPITAL_BLOCK_INDEX + i));
   const ring = (c) => c.plan.flatMap((row, r) => row.map((x, cx) => x === 'L' && onCapitalRing(c, cx, r))).filter(Boolean).length;
   // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): the Imperial City's blocks a family on the door, none here
-  assert.equal(b.length, 2 + CAPITALS.filter((c) => !c.family).reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes');
+  // PIN MOVED (ROAD-FOLLOW, 03-World/Town-Shapes.md ROAD-FOLLOW): and, last, the open cells an approach crosses (the Imperial City's four)
+  const approachOpen = CAPITALS.reduce((n, c) => n + capitalApproachCells(c, capitalDims(c)).filter(([r, cx]) => planCell(c, r, cx) === 'O').length, 0);
+  assert.equal(approachOpen, 4);
+  assert.equal(b.length, 2 + CAPITALS.filter((c) => !c.family).reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0) + approachOpen, 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes');
   const tile = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].tile(dx, dz);
   const closed = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].closed(dx, dz);
   assert.deepEqual([tile('alinor', 0, ALINOR.quay.edge - 1), tile('alinor', 0, ALINOR.quay.edge + 1)], [3, 0]);

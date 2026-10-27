@@ -16,6 +16,7 @@ import {
   capitalDims, capitalSliceCarriers, capitalSliceMarkers, capitalCentre, tileCentre, synthesizeCapitalLocation, SOLITUDE,
 } from '../../src/world/tamrielCapitals.js';
 import { ALINOR, TORVAL, HELSTROM, FALINESTI, ALINOR_HARBOUR, TORVAL_DOCKS } from '../../src/world/capitalPlans.js';
+import { onCapitalApproach, APPROACH_TILE } from '../../src/world/capitalApproaches.js';   // ROAD-FOLLOW: the approaches over the rim
 import { alinorTowers } from '../../src/world/capitalAlinor.js';
 import { torvalTowers } from '../../src/world/capitalTorval.js';
 import {
@@ -53,9 +54,11 @@ test('AUDIT TESA II C1: a capital leaves Daggerfall\'s rim to the land - its out
   assert.ok(inCapitalRim(ic, 70.3, 900) && !inCapitalRim(ic, 70.5, 900) && inCapitalRim(ic, W - 70.3, 900) && inCapitalRim(ic, 900, 1) && inCapitalRim(ic, 900, W - 1));
   for (const seam of [8 * BLOCK_M, 16 * BLOCK_M]) assert.ok(!inCapitalRim(ic, seam, 900) && !inCapitalRim(ic, 900, seam), `the slices' seam at ${seam} no rim`);
   const blocks = capitalPortBlocks();
-  let laid = 0;
+  let laid = 0, roads = 0;
   for (const cap of CAPITALS) {
     if (cap.family) continue;   // PIN MOVED (IC-GRAND): the Imperial City's blocks a family's, each its rim by the same law (test/world/icgrand_lod.test.js)
+    // PIN MOVED (ROAD-FOLLOW, 03-World/Town-Shapes.md ROAD-FOLLOW): but where its approach's road runs in from its gate pixel, over the rim too
+    const way = onCapitalApproach(cap, capitalDims(cap));
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
       const own = Object.hasOwn(cap.blocks, cell) ? cap.blocks[cell].name : null;
       const name = own ?? (cell === 'G' ? capitalGardenName(cap, cx, r) : cell === 'L' && onCapitalRing(cap, cx, r) ? capitalLakeName(cap, cx, r) : null);
@@ -63,7 +66,9 @@ test('AUDIT TESA II C1: a capital leaves Daggerfall\'s rim to the land - its out
       const b = blocks.find((x) => x.name === name), g = b.json.RmbBlock.FldHeader.GroundData, A = b.json.RmbBlock.FldHeader.AutoMapData;
       g.GroundTiles.forEach((t, i) => {
         const [x, z] = tileCentre(i % 16, Math.floor(i / 16)), rim = inCapitalRim(cap, cx * BLOCK_M + x, (r + 1) * BLOCK_M - z);
-        assert.equal(t.TileBitfield === CAPITAL_NO_GROUND, rim, `${name} tile ${i}`);
+        const road = way(cx * BLOCK_M + x - cap.anchor[0] * BLOCK_M, (r + 1) * BLOCK_M - z - cap.anchor[1] * BLOCK_M);
+        assert.equal(t.TileBitfield === CAPITAL_NO_GROUND, rim && !road, `${name} tile ${i}`);
+        if (road) { assert.equal(t.TileBitfield, APPROACH_TILE, `${name} tile ${i}: the approach's road`); if (rim) roads++; }
         if (rim) { assert.equal(g.GroundScenery[i].TextureRecord, -1, `${name}: no tree in its rim`); laid++; }
       });
       for (let ay = 0; ay < 64; ay += 7) for (let ax = 0; ax < 64; ax += 7) {
@@ -75,6 +80,7 @@ test('AUDIT TESA II C1: a capital leaves Daggerfall\'s rim to the land - its out
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => { if (cell === 'L' && !onCapitalRing(cap, cx, r)) assert.ok(!blocks.some((b) => b.name === capitalLakeName(cap, cx, r)), 'an inner lake the shared one'); }));
   }
   assert.ok(laid > 1000, `the rims laid: ${laid}`);
+  assert.ok(roads >= 13 * 22, `the thirteen approaches over the rim, each eleven tiles deep and two wide at the least, a run along a wall in it too (the Imperial City's its own): ${roads}`);
   // the location's rect: the rim's land blends from where the city's ground ends (terrainTiles.js' capital arm)
   assert.match(read('src/world/terrain/terrainTiles.js'), /if \(dfLocation\.capital\) \{\n\s+const lo = \(v\) => \(v > 0 \? v : v - extraClearance\), hi = \(v\) => \(v < WORLD_MAP_TILE_DIM - 1 \? v \+ 1 : v \+ extraClearance\);/);
 });
