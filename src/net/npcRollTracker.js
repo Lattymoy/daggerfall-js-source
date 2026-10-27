@@ -34,16 +34,6 @@
 // moved on this page (`values0`, the standing as the page first saw it):
 // nothing is ever claimed twice.
 //
-// AND A PAGE THAT NEVER HEARD THE ROLL SAYS SO (FIELD BUGS 2026-10-25, the
-// guild standing reset). Such a page adopts nothing, so its save keeps the
-// adoption it loaded; once the Roll moved past that (a claim whose save never
-// landed), the rule above dropped everything the silent page earned. Until a
-// page first hears the Roll, its save carries `unheard`: where its standing
-// began and one claim id (npcChapterLaw.js rollUnheardOf). The next page whose
-// Roll moved on adopts over that start, and claims what the save holds past
-// it under that id first - a page that loads the same save again sends the
-// same claim, which the service answers as a repeat.
-//
 // CHAP2a: A HALL WRIT'S CREDIT IS ASKED FOR. A hall writ delivered moves
 // the Roll on the service alone (+2 to its guild, professions.js
 // deliverWrit), so the host asks `refresh()`: the next tick claims even
@@ -74,12 +64,6 @@
 // and the entity's standing are arguments.
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * The last adoption as the save keeps it (npcChapterLaw.js rollKeptOf): the Roll's sequence and its twenty-two, and
- * - while the page that wrote it had not heard the Roll - where that page's standing began (rollUnheardOf).
- * @typedef {{ seq?: number, factions?: Record<number, number>, unheard?: { start: Record<number, number>, rid: string } }} RollKept
- */
-
 import {
   ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollMembersOf, rollRep, rollKeptOf,
   rollBookCap, rollSeatsOf, ROLL_SEATS_MS, ROLL_BOOK_RANK_MAX, rollPromoteCeiling, rollPaceWait,   // ROLL-PACE
@@ -91,6 +75,13 @@ import { carryInvitationOnly } from '../systems/guild/guilds.js';   // CURSE-CAR
 import { accountRefusalText } from './accountClient.js';
 import { t } from '../systems/textManager.js';
 
+/**
+ * The last adoption as the save keeps it (npcChapterLaw.js rollKeptOf): the Roll's sequence and its twenty-two, and,
+ * while the page that wrote it has not heard the Roll, `unheard` (rollUnheardOf): the next page adopts over its start
+ * and claims what the save holds past it, so a silent page loses nothing (FIELD BUGS 2026-10-25).
+ * @typedef {{ seq?: number, factions?: Record<number, number>, unheard?: { start: Record<number, number>, rid: string } }} RollKept
+ */
+
 /** The refusals that end the tracker for this page - the Roll shut, the character no longer this tab's, the account
  *  gone, or a shape the service will not take (a build to update). Every other is asked again. */
 export const ROLL_STOPS = Object.freeze(['chapters-closed', 'lease', 'no-realm-character', 'no-data', 'dead', 'auth', 'no-session', 'body', 'roll-seed', 'roll-claim']);
@@ -99,13 +90,9 @@ export const ROLL_STOPS = Object.freeze(['chapters-closed', 'lease', 'no-realm-c
 export const ROLL_STOPPED_TEXT = 'The realm is not hearing your guild standing in this session. What you earn now is kept in your save, and the realm takes it the next time you play this character online.';
 
 /**
- * What the player is told when the Roll stops for this page, or null where nothing is said:
- * - 'chapters-closed': the switch keeps the account out of the Roll, and the save keeps the standing as before CHAP1;
- * - 'lease': the page gave its lease up as it hid (the next lease resumes the Roll), or another device took the
- *   character, and the Online door says that;
- * - 'dead': the character fell for good.
- * A build the service no longer takes says so (AUDIT CHAP3 C9). Every other stop was only a console line, so a session
- * could earn standing for hours that the Roll never heard, and the next device's adoption looked like a reset.
+ * What the player is told when the Roll stops for this page, or null: 'chapters-closed' keeps the standing as before
+ * CHAP1, the Online door says 'lease', and 'dead' needs no word. A build the service no longer takes says so (AUDIT
+ * CHAP3 C9). Other stops were once only a console line, and standing earned for hours looked reset on the next device.
  * @param {string} error the refusal that ended the tracker (ROLL_STOPS)
  * @returns {string | null}
  */

@@ -1,14 +1,10 @@
 // @ts-check
-// WHEN THE ONLINE CHARACTER IS SAVED, OUTSIDE THE EVENTS THAT SAVE AT ONCE (bible/06-Systems/Realm-Arc.md, SEAT-SAVES
-// and SAVES-SAID). The world host builds one and calls it; the checkpoint itself and its gate stay the host's
-// (scenes/world.js onlineCheckpoint).
-//
-// - Every frame of play: the periodic checkpoint when it is due (onlineCheckpoint.js checkpointWhenDue), and then the
-//   word to the player when the realm has held nothing new of theirs for a while (realmUnsavedNotice.js).
-// - When the tab loses the seat: one checkpoint at once. The seat goes when the player opens the character, or another
-//   of the account's characters, somewhere else. If that took this character, its lease is dead, the put is refused
-//   `lease` and the tab goes to the Online door now - not up to a checkpoint period later, playing on with nothing
-//   saved. If it did not, the save lands as any other.
+// When the online character is saved outside the events that save at once (bible/06-Systems/Realm-Arc.md, SEAT-SAVES
+// and SAVES-SAID). The checkpoint and its gate stay the world host's (scenes/world.js onlineCheckpoint).
+// - Every frame: the periodic checkpoint when due (onlineCheckpoint.js checkpointWhenDue), then the word to the player
+//   when the realm has held nothing new for a while (realmUnsavedNotice.js).
+// - When the tab loses the seat: one checkpoint at once. If another device took this character, the put is refused
+//   `lease` and the tab goes to the Online door now, not a checkpoint period later with nothing saved.
 
 import { checkpointWhenDue } from './onlineCheckpoint.js';
 import { watchRealmUnsaved } from './realmUnsavedNotice.js';
@@ -19,9 +15,8 @@ import { watchRealmUnsaved } from './realmUnsavedNotice.js';
 
 /**
  * @param {{ session: CheckpointSession | null, checkpoint: () => unknown, lastAt: () => number, say: (text: string) => void, now?: () => number }} o
- *   `session` the realm session (null for a character saved to its slots), `checkpoint` the host's online checkpoint
- *   (gated by the host), `lastAt` when it last ran (the frame's clock), `say` a line on the HUD, `now` the session's
- *   own clock.
+ *   `session` the realm session (null for a slot save), `checkpoint` the host's gated online checkpoint, `lastAt` when
+ *   it last ran, `say` a HUD line, `now` the session's clock.
  */
 export function createOnlineCheckpointClock({ session, checkpoint, lastAt, say, now = () => Date.now() }) {
   const unsaved = session ? watchRealmUnsaved(session, { say, now }) : null;

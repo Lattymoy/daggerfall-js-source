@@ -237,9 +237,8 @@ export const initialOf = (save) => (String(save?.name ?? '').trim()[0] ?? '?').t
  * @param {Document} doc
  * @param {{name?: string, race?: string, career?: string, level?: number, health?: number,
  *          maxHealth?: number, gold?: number|null, when?: string|null, hour?: string|null,
- *          saveName?: string, house?: string|null}} save  one row of the pane's own save list - every field
- *        optional, because a card can come from an older build (saveSlots.js's
- *        `SaveInfo` typedef says the same about its own, for the same reason)
+ *          saveName?: string, house?: string|null}} save  one row of the pane's own save list - every field optional,
+ *        because a card can come from an older build (saveSlots.js's `SaveInfo` says the same, for the same reason)
  * @param {object} [opts]
  * @param {Array<{label: string, primary?: boolean, disabled?: boolean, onClick?: Function|null}>} [opts.actions]
  * @param {{state?: string, when?: string|null, why?: string|null, actions?: Array<any>}|null} [opts.cloud]

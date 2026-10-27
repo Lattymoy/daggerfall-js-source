@@ -1,19 +1,11 @@
 // @ts-check
-// THE PLAYER IS TOLD WHEN THEIR PROGRESS HAS NOT REACHED THE REALM (FIELD BUGS 2026-10-25, guild standing and quests
-// reset; bible/06-Systems/Realm-Arc.md, SAVES-SAID).
-//
-// A realm character's checkpoint that the service refuses for a while (its own error, the request rate) or never
-// answers (no network) waits on this device: the session keeps the newest save here and sends it again at the next
-// checkpoint (realmSaves.js RESCUE-SAVE). A checkpoint the host never hands over - its gate shut by a duel, or by a walk
-// of the clock still waiting - is kept nowhere. Either way a player could play for hours with nothing reaching the
-// realm, then open the character on another device, which plays the realm's older save, and lose all of it.
-//
-// So the HUD says it once the realm has held nothing of this tab's for a whole checkpoint period, measured from the last
-// save it held (the join, a put that landed, or a periodic save the realm already held but for its clock), again each
-// period while that stands, and once more when a save lands again. The words say whether this device keeps the progress
-// (a put failed) or not (none was sent). A put still out is waited for: the next checkpoint usually lands. The session's
-// own end (another tab or device took the character, it was deleted, the account signed out) is said at the Online
-// door, so a lost session says nothing here.
+// The player is told when their progress has not reached the realm (FIELD BUGS 2026-10-25, guild standing and quests
+// reset; bible/06-Systems/Realm-Arc.md, SAVES-SAID). A checkpoint the service refuses or never answers waits on this
+// device (realmSaves.js RESCUE-SAVE); one the host never hands over (a duel, a clock walk) is kept nowhere. Either way
+// a player could play for hours with nothing in the realm, then lose it all on another device.
+// So the HUD says it after a whole checkpoint period with no save held since the last one (the join, a landed put, or
+// a save held but for its clock), again each period, and once more when a save lands. The words say whether this
+// device keeps the progress. A put still out is waited for. A lost session is said at the Online door, not here.
 
 import { ONLINE_CHECKPOINT_MS } from './onlineCheckpoint.js';
 import { t } from '../textManager.js';

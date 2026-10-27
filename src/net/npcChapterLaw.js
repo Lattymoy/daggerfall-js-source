@@ -267,15 +267,11 @@ export function rollKeptOf(/** @type {unknown} */ rec) {
 }
 
 /**
- * THE STANDING THE ROLL NEVER HEARD, as the save keeps it beside the last adoption: `{ start, rid }` - the standing as
- * the first page that never heard the Roll began, and the claim id that what moved since goes under - normalised, or
- * null for anything else.
- *
- * A page whose Roll never answered (stopped at its first read, or the service away for the whole page) adopts nothing,
- * so its save keeps the adoption it loaded. Once the Roll moved past that adoption (a claim whose save never landed - a
- * crash, a close), the next page could not tell what the save held past it, and dropped it all: everything played while
- * the Roll was silent was lost (the guild standing reset). `start` tells it, and `rid` makes the claim of it one claim
- * however many pages send it: the service answers a second as a repeat.
+ * The standing the Roll never heard, as the save keeps it beside the last adoption: `{ start, rid }`, normalised, or
+ * null. `start` is the standing when the first page that never heard the Roll began. `rid` is the claim id for what
+ * moved since, so many pages that send it make one claim: the service answers a repeat as the first.
+ * Without it, the next page could not tell what the save held past the adoption it loaded, and everything played while
+ * the Roll was silent was lost (the guild standing reset).
  */
 export function rollUnheardOf(/** @type {unknown} */ rec) {
   if (!rec || typeof rec !== 'object') return null;

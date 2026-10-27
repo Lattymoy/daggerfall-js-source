@@ -1,13 +1,9 @@
 // @ts-check
-// A SAVE SET ASIDE ON THIS DEVICE HAS A WAY BACK (bible/06-Systems/Realm-Arc.md, STRANDED).
-//
-// A join sets the device's copy of a realm character aside when a put of it failed and the realm has since moved past
-// it (realmSaves.js `dagger.realm.stranded.<id>`). The realm never plays it over the record: a trade or an act since may
-// have moved goods, and the copy is the device's word alone. Until now nothing read it again, so the progress it held
-// was kept and unreachable. Copy to offline is the one way back that moves nothing in the realm: the copy becomes a new
-// offline character, exactly as Copy to offline makes one from the realm's own save (ui/enhanced/enhancedMenu.js
-// copyToOffline) - a new id, the world's stamps rebased onto the character's clock, and marked as a copy, so it never
-// comes back online.
+// A save set aside on this device has a way back (bible/06-Systems/Realm-Arc.md, STRANDED).
+// A join sets the device's copy aside when a put of it failed and the realm has moved past it (realmSaves.js
+// `dagger.realm.stranded.<id>`). The realm never plays it over the record: goods may have moved since. Copy to offline
+// is the way back that moves nothing in the realm: the copy becomes a new offline character, as Copy to offline makes
+// one from the realm's save (ui/enhanced/enhancedMenu.js copyToOffline), marked as a copy so it never comes back online.
 
 import { readStranded, forgetStranded, unpackUnsent, REALM_STRANDED_PREFIX } from '../realmSaves.js';
 import { offlineCopyOf } from '../offlineCopy.js';
