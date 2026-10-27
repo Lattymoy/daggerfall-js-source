@@ -14,7 +14,7 @@ the method and the old one is named as corrected.*
 **How to read this page.** It is a MEASUREMENT, not a plan. The
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
-closed and their record is `Audit-44.md`. What this page is for is the
+closed and their record is `Audit-44.md`. This page is for the
 three lists at the bottom: the **27 open flags** (27 stand after Wave E,
 the ship landing, ROAD-F, QX1/TP2 and SUMMON-SYNC, twenty-four of them AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four, WARDEN1's, SHIPYARDS', POI-2's, BANTHA1's, CRAFT-WRITS', SOUNDSCAPE's, KETCH-LOOK KL2's, RAID5's two, AUDIT WORLD-EVENTS' and TESA-LANDS', added since, ARENA2's closed by ARENA-FIX, CARDS2's by TAVERN-TABLE and RW1's by GLASS-ALL - list 1 strikes the rest, and
 `node tools/regenOpenFlags.mjs --check` is the arbiter) with the blocker the
@@ -36,7 +36,7 @@ rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
 Wave E and the closures after it worked that list down to **27 sites
 and six rows** (six, and AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four, WARDEN1's, SHIPYARDS', POI-2's, BANTHA1's, CRAFT-WRITS', SOUNDSCAPE's, KETCH-LOOK KL2's, RAID5's two, AUDIT WORLD-EVENTS' and TESA-LANDS' added since, AUDIT 29's struck by CLASSIC-PAGES, ARENA2's by ARENA-FIX, CARDS2's by TAVERN-TABLE) (five, since OT1 struck `:689`),
-which is what lists 1 and 2 now record; the paragraph above is the
+which lists 1 and 2 now record; the paragraph above is the
 measurement as taken, kept because the two lists are read against it.
 
 ---

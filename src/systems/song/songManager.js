@@ -200,11 +200,7 @@ export function dungeonKey(unknown2, regionIndex) {
  *   City and Wilderness share one rule: NIGHT overrides everything, and
  *   by day the weather picks the list. DFU's weather mapping folds Fog
  *   in with Overcast and Thunder in with Rain, and anything unrecognised
- *   falls to Sunny - that default is DFU's, not a guess. ASHFALL1's audit:
- *   the port's ninth word, the ashfall, is an Overcast to every reader DFU
- *   has (world/weather.js weatherFlags, Windfall's), so it plays Overcast's
- *   lists - a sunny tune under the volcano's pall was the default's, never
- *   a choice.
+ *   falls to Sunny - that default is DFU's, not a guess. ASHFALL1: the ashfall, an Overcast to every reader, plays Overcast's.
  *
  * `night` is the port's own isNight (DawnHour 6 / DuskHour 18), which is
  * DaggerfallDateTime.IsDay's rule already ported in world/worldClock.js.

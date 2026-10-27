@@ -1,31 +1,11 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md): THE LANDS' LANDMARKS' HOST - the land's own features past the
-// Bay in the streamed world (the parasols, the spires, the Hist, the reeds, the vines, the groves - world/lands/), a
-// module the trees' host builds and frames (HOST-SPLIT, bible/01-Overview/Host-Split.md: scenes/fishHost.js is the shape;
-// no line of bootWorld's). The graht-oaks' host is its shape (scenes/grahtHost.js - its packing and its fog's reach are
-// that host's own, one home). It owns:
-//   - THE GPU, made when the first landmark is framed (a session that never crosses the Bay allocates nothing) and made on
-//     the stream's own slice clock - a mesh a breath, then a picture a breath (`breathe`, the build's breather) - every
-//     kind's every variant at every LOD in one vertex and one index buffer (render/lowPolyTreesRender.js
-//     LowPolyTreesGpu - Low Poly Trees' own buffers), the pictures (render/landPropArt.js, through the renderer's atlas
-//     door), a RUN a look, variant and LOD (its submeshes' pictures, and their colours: a look's colour over its grey
-//     picture's mean - world/lands/landProps.js LAND_LOOKS) and a caster mesh a kind's variant for the sun's maps;
-//   - THE FRAME (frame): every built pixel's landmarks (`landProps`, world/lands/landProps.js standLandProps - the pixel's
-//     build stands them), a pixel's set passed over whole when its box is past its kinds' farthest, each landmark culled
-//     to the view, to the fog's reach and to its kind's own `far`, at its LOD (landLodOf), packed a run a bucket and handed
-//     to the renderer's fourth tree slot (render/renderer.js setLowPolyTrees, LAND_PROPS_SLOT) - so a landmark is drawn by
-//     the billboard program's mesh mode and lit, fogged and lantern-lit as every 3D tree is, under either lane; the
-//     nearest few that have a body recorded as the sun's casters (renderer.recordShadowMesh - the enhanced lane);
-//   - THE TEARDOWN (destroy): the buffers, the pictures and the casters - EVERY ALLOCATION HAS AN OWNER. The trees' host
-//     holds it for the session; destroy is the test host's.
-// The lands' row is its switch (systems/landsSwitch.js tamrielLandsOn - `?lands=off` its kill door offline): off, no pixel
-// carries a landmark and this host is never made.
-// THE FOUR HOSTS: scenes/world.js WIRED - the streamed world, through the trees' host (scenes/treesHost.js makes this host
-// and frames it) and the pixel's build (scenes/pixelBuild.js stands a pixel's set and files its bodies), no line of its
-// own; scenes/exterior.js (the fixed city), scenes/worldModes.js (interiors), scenes/dungeonContext.js (dungeons) -
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "Their host"): THE LANDMARKS' HOST, a module the trees' host builds and
+// frames (HOST-SPLIT; scenes/grahtHost.js is its shape). The GPU is made at the first landmark framed, a mesh or a picture
+// a breath, in Low Poly Trees' own buffers; the frame culls each built pixel's set to the view, the fog and its kind's
+// `far`, at its LOD, on the renderer's fourth tree slot, the nearest bodied ones the sun's casters. Off the lands' row
+// (systems/landsSwitch.js) it is never made. THE FOUR HOSTS: scenes/world.js WIRED through the trees' host and the
+// pixel's build; scenes/exterior.js, worldModes.js and dungeonContext.js:
 // FLAGGED: none stands the wilderness past the Bay the landmarks stand in.
-// ═══════════════════════════════════════════════════════════════════
 import { LowPolyTreesGpu } from '../render/lowPolyTreesRender.js';
 import { LAND_KINDS, LAND_VARIANTS, LAND_LODS, LAND_SUBS, landPropMesh } from '../world/lands/landPropMesh.js';
 import { LAND_PROP_FLOATS, LAND_KIND_LAW, LAND_LOOKS, LAND_LOOK_NAMES, landLodOf } from '../world/lands/landProps.js';

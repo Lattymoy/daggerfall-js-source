@@ -51,9 +51,7 @@
 // pixel is TERRAIN_SIZE on a side, x east, z north), time is absolute
 // classic minutes (the save's clock offline, the shared clock online).
 // `climateAt(px, py)` answers the map's climate index (the hosts pass
-// MapsFile's); a pixel off the map is the sea. ASHFALL1: and a place past the
-// Bay its zone's ASH where the host's map wears the zone there (`ashOfField`) -
-// the volcano's country a law of its own over its climate's table.
+// MapsFile's); a pixel off the map is the sea. ASHFALL1: past the Bay a zone's ASH too (`ashOfField`).
 
 import { CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from '../gameDate.js';
@@ -395,8 +393,7 @@ const _laws = new Map();   // table -> season -> law, solved once
  * flat solve's day-averaged shares fall short of the table (a summer
  * storm's afternoon peak costs its climate two points of weather). The
  * solve is re-aimed by the shortfall until the day's shares ARE the
- * table's. A climate with no table (an unknown index) births nothing.
- * ASHFALL1: `ash` the place's ash share (targetShares; 0 off the volcano's country), each its own law.
+ * table's. A climate with no table (an unknown index) births nothing. ASHFALL1: `ash` the place's ash share, its own law.
  */
 export function birthLaw(climateIndex, season, ash = 0) {
   const table = tableOf(climateIndex);
@@ -917,8 +914,7 @@ export const EDGE_INTENSITY = 0.2;
  * and a sprinkle was only ever a front's edge. A rain front's heart now falls anywhere from the heaviest front's edge
  * (EDGE_INTENSITY: the weakest is a drizzle from heart to edge) to the downpour. A type with no range falls whole: a
  * snow front, the sandstorm ("never thin", WEATHER2d) and the storm - a storm cell is born in its front (CELL_OF), not
- * on the lattice where a strength is drawn, and a storm never sprinkles (weatherFront.js PRECIP_PEAK). ASHFALL1: an
- * ashfall's heart from a dusting to the volcano's heavy fall.
+ * on the lattice where a strength is drawn, and a storm never sprinkles (weatherFront.js PRECIP_PEAK). ASHFALL1: a dusting to the heavy fall.
  */
 export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]), ashfall: Object.freeze([0.35, 1]) });
 for (const t of Object.keys(STRENGTH)) if (!SYSTEM_TYPES[t] || SYSTEM_TYPES[t].parent) throw new Error(`weatherMap: a strength for ${t}, which is not born on the lattice`);

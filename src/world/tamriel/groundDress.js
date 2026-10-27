@@ -1,35 +1,10 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md; the owner: "Ensuring each region recieves proper landscape details
-// and textures (minus cyrodil and valenwood) and refined detail. Research these regions online to understand and make it
-// the best that it can be") - THE GROUND'S DRESS: a zone's own ground, made from the ground set the game draws.
-//
-// Daggerfall grows its ground from four sets of 56 tiles (TEXTURE.002 the desert's, .102 the mountains', .302 the
-// temperate's, .402 the swamp's - MapsFile.GetWorldClimateSettings' groundArchive), and every zone past the Bay wore one
-// of them: the Ashlands the Wrothgarians' green turf, the Frozen Coast the same, Craglorn and the Abecean Coast one sand.
-// A DRESS is the zone's own materials laid over the set as it is drawn - the classic records, or the texture pack worn
-// over them (Vanilla Enhanced by default, Sands of the Alik'r on the desert's) - so the zone keeps the set's grain, its
-// tiles' shapes and its transitions, and takes its own colours:
-//   - THE CLASSES. A tile is painted of DFU's four grounds - 0 water, 1 dirt, 2 grass, 3 stone (TerrainHelper's tile
-//     bases; world/terrain/terrainTiles.js) - and of the town's paving (record 46, and the roads' edges 47 and 55). Each
-//     class's PROTOTYPE is its solid record in THIS set (its mean colour, and its luminance's mean and spread), so a pack
-//     that repaints the set is read on its own colours. A texel's share of each class present in its record is soft -
-//     its colour's distance to each prototype, a Gaussian over a width the record's own prototypes set - so a transition's
-//     edge stays the edge the set painted.
-//   - THE MATERIALS. A dressed class is a gradient map: the material's RAMP (its colours dark to light, the zone's -
-//     bible/03-World/Tamriel-Lands.md names each one's sources) read where its luminance is the texel's own luminance
-//     carried over - its class's mean at the ramp's middle, every texel as far over or under it, in proportion, as it
-//     stands over or under its class's mean (`contrast` 1: the set's own grain, its own light and dark, never the ramp's
-//     whole span laid over a quiet tile) - with a share of the texel's own colour noise kept (`keep`), so the grain of
-//     the set reads through the new colour. FLECKS - pumice in ash, cotton in the tundra, petals in a meadow -
-//     are cells of a few texels on a hash of the cell, so nothing larger than a fleck repeats with the tile.
-//   - WHAT IS NEVER DRESSED: water (record 0 and every texel of the water class - the puddles and the shores keep the
-//     set's water and its alpha, which carries their mask: world/puddleMask.js) and the paving (the roads stay the town's).
-//     The alpha channel is copied whole.
-// Pure: layers in, layers out (a record a step, `dressLayersSteps`, for the build's breather - scenes/groundSets.js). The
-// layers are the player's own pictures and their dress is made on the player's machine; nothing of either ships
-// (Port-Doctrine: a render of game data is game data).
-// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "The ground"): THE GROUND'S DRESS - a zone's own colours laid over the
+// ground set the game draws (the classic records, or the pack worn over them), keeping the set's grain, its tiles' shapes
+// and its transitions. A texel's class (DFU's four bases and the town's paving) is read off THIS set's solid records,
+// softly where a transition blends them; a dressed class is a gradient map of the zone's ramp at the texel's own light.
+// Water, its alpha and the paving are never dressed. Pure: layers in, layers out, a record a step for the build's
+// breather; the dress is made on the player's machine and nothing of it ships.
 
 /** The classes, in prototype order: DFU's four tile bases and the town's paving. */
 export const DRESS_CLASSES = Object.freeze(['water', 'dirt', 'grass', 'stone', 'paving']);
@@ -38,36 +13,19 @@ export const CLASS_RECORDS = Object.freeze([0, 1, 2, 3, 46]);
 /** Records the town's paving is painted in, and the only classes their texels are of (46 the paving whole, 47 a dirt
  *  edge on it, 55 a grass edge - world/terrain/terrainTiles.js's road records, render/labGrass.js grassRecordsOf's). */
 export const PAVED_RECORDS = Object.freeze({ 46: Object.freeze([4]), 47: Object.freeze([1, 4]), 55: Object.freeze([2, 4]) });
-/**
- * THE DIALS (one place).
- *  - `contrast`: a texel's luminance over its class's mean, raised to this, is its luminance over the ramp's middle's -
- *    1 the set's own relative light and dark (past the ramp's ends its end colour, scaled on, within `reach`);
- *  - `keep`: the share of a texel's own colour noise (its colour less its class's mean, less its luminance's move) kept
- *    over the ramp's colour - the set's mottle through the new material.
- *  - `soft`, `softMin`: a texel's class shares are a Gaussian of its colour's distance to each prototype, its width this
- *    share of the nearest two prototypes' distance (0..1 colour units), never under `softMin`;
- *  - `blur`: then blurred over this share of the record's width (a transition's shape is half a tile; a class's grain a
- *    texel or two) - transitionShares.
- *  - `crisp`: and past the blur a share under this is none and over 1 less it whole (the rest stretched between): a
- *    Gaussian half the prototypes' gap wide gives a texel AT its own class's prototype e^-2 of the next class's weight
- *    (12% once normalised), so a transition's grass was dressed 88/12 with its dirt to its middle where the solid grass
- *    record beside it is grass whole - tile-shaped patches the classic set never had (TESA-LANDS' second audit, lane C:
- *    the Vine Coast's interiors 12 units of colour off their solid record's). The shape's edge stays soft; its inside is
- *    its class's, as the solid record is.
- *  - `present`: a class nearest to fewer than this share of a record's texels is not asked there - a stray texel of
- *    another class's colour inside a grass tile is grass.
- *  - `fleckTexels`: a fleck's cell in texels at a 128-texel record (scaled with the record: one texel on the classic 64).
- *  - `fleckBlend`: how much of a fleck's own colour a fleck takes over the ramp's.
- *  - `albedo`: the ramps are written as the lore's pictures show the land - LIT (the research's colours, sampled off the
- *    games' screenshots, bible/03-World/Tamriel-Lands.md) - and a ground set is an albedo the renderer lights: measured,
- *    the classic grass's luminance is 65 (TEXTURE.302) and 62 (.102) against the sampled grasses' 99, the desert's sand 145
- *    against 196 - two thirds, so a ramp's colour is taken at this share. A texture pack's set is lit as its own: its
- *    land's exposure against the classic set's scales it again (`exposure`, dressLayersSteps' - Vanilla Enhanced's .102 0.92).
- *  - `vivid`: and the screenshots' colours are hazed by their distance and their light, where Daggerfall's sets are painted
- *    in its palette's full colours - a ramp's colours are moved this much further from their own grey (their luminance),
- *    so a dressed ground stands as saturated as the set's own.
- */
-export const DRESS_DIALS = Object.freeze({ contrast: 1, reach: Object.freeze([0.55, 1.6]), keep: 0.22, soft: 0.5, softMin: 0.02, blur: 0.045, crisp: 0.15, present: 0.02, fleckTexels: 1, fleckBlend: 0.8, albedo: 0.7, vivid: 1.25 });
+/** THE DIALS (one place) - why each stands where it does: bible/03-World/Tamriel-Lands.md, "The ground". */
+export const DRESS_DIALS = Object.freeze({
+  contrast: 1,   // a texel's luminance over its class's mean, to this power, is its luminance over the ramp's middle
+  reach: Object.freeze([0.55, 1.6]),   // past the ramp's ends its end colour, scaled on within these
+  keep: 0.22,   // the share of the texel's own colour noise kept over the ramp's - the set's mottle through it
+  soft: 0.5, softMin: 0.02,   // a class share is a Gaussian of colour distance this share of the nearest prototypes' gap wide
+  blur: 0.045,   // then blurred over this share of the record (a transition's shape is half a tile, a grain a texel)
+  crisp: 0.15,   // then under this none, over 1 less it whole: a transition's inside its class's, as the solid record is
+  present: 0.02,   // a class nearest to fewer of a record's texels than this is not asked there
+  fleckTexels: 1, fleckBlend: 0.8,   // a fleck's cell at a 128-texel record, and how much of its own colour it takes
+  albedo: 0.7,   // the ramps are lit screenshot colours and a set an albedo: the classic grass 65 against 99 sampled
+  vivid: 1.25,   // the screenshots' haze undone: a ramp's colours moved this much further from their grey
+});
 
 /** How many rows of a 256-texel record a step dresses (dressRecordSteps): the build's breather gives the frame back
  *  between steps (scenes/groundSets.js), so a step must be a slice of a frame, never a record whole. */
@@ -218,13 +176,10 @@ export function boxBlur(a, w, h, r, tmp) {
 }
 
 /**
- * A TRANSITION'S SHARES: for each class a record may hold, how much of each texel is that class - a Gaussian of the
- * texel's distance to each prototype, its width `soft` of the nearest two prototypes' (never under `softMin`), then
- * BLURRED over `blur` of the record's width: a tile's transition is a shape half a tile across, and a set's grain within a
- * class (the mountains' dirt carries flecks of green, its grass of brown) is as far from its prototype as the next class
- * is, so a texel alone cannot say which side of the shape it stands on - its neighbourhood can. Normalised, then made
- * CRISP (DRESS_DIALS.crisp: a shape's inside its class's whole). A step a band of DRESS_BAND rows, then a step a class's
- * blur (dressRecordSteps walks it).
+ * A TRANSITION'S SHARES: for each class a record may hold, how much of each texel is that class - a Gaussian of its
+ * distance to each prototype, BLURRED (a set's grain within a class is as far from its prototype as the next class is,
+ * so a texel alone cannot say which side of the shape it stands on - its neighbourhood can), normalised, made CRISP.
+ * A step a band of DRESS_BAND rows, then a step a class's blur (dressRecordSteps walks it).
  */
 function* transitionShares(layer, classes, protos) {
   let near = Infinity;

@@ -59,10 +59,8 @@ import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOO
  * @param {?{picks:Array<{flatten:boolean, rect:object}>}} [job.wod] -
  *   WOD2: the World of Daggerfall instances the main thread's
  *   pickLocations placed on this pixel, in order; null with the mod off.
- * @param {?{archive:number, hidden:boolean}} [job.forests] - FOREST1: the
- *   Real forests switch (null off, DFU's scatter): the climate's summer
- *   nature archive, and whether the pixel's location is a place the woods
- *   hide (a dungeon, a shrine) rather than one they draw back from (a town).
+ * @param {?{archive:number, hidden:boolean}} [job.forests] - FOREST1: the Real forests switch (null off, DFU's scatter): the
+ *   climate's summer nature archive, and whether the pixel's location is a place the woods hide (a dungeon, a shrine).
  * @param {boolean} [job.landform] - LANDFORM1-3: the Landforms row (off,
  *   DFU's kernel): the relief, and the paths cut into the land with this
  *   kernel's own network - its rivers where they are painted.
@@ -86,19 +84,13 @@ import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOO
  *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
  *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
  *   too, where its canal stands; `seaEdges` its sides shared with its sea slice.
- * @param {?{blend?: boolean, archive?: number, hidden?: boolean}} [job.lands] - TESA-LANDS (bible/03-World/Tamriel-Lands.md):
- *   the lands past the Bay's switch (null off): a pixel past the Bay lays its zone's own flats (world/tamriel/tamrielLands.js
- *   landsNine, terrainNature.js layoutNature's recipe), `blend` the Blended climates row (its border blends with its
- *   neighbours'), `archive` the pixel's climate's summer nature archive (the border's own where no neighbour's climate
- *   differs), `hidden` whether its location is a place the woods close round.
+ * @param {?{blend?: boolean, archive?: number, hidden?: boolean}} [job.lands] - TESA-LANDS: the lands' row (null off) - a zone's flats past the Bay, `blend` the Blended climates row, `archive` the climate's nature archive, `hidden` a place the woods close round
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array,
- *   roadside: Array<any>, graht: ?Float32Array, landProps: Float32Array}} `roadside` JUNGLE-ROADSIDE's pairs
- *   (world/jungle/jungleRoadside.js standPairs); `graht` GRAHT1's graht-oaks (world/jungle/grahtOaks.js grahtSites,
- *   GRAHT_TREE_FLOATS a tree - empty where none stands); `landProps` TESA-LANDS' landmarks (world/lands/landProps.js
- *   landSites, LAND_PROP_FLOATS each - empty where none stands)
+ *   roadside: Array<any>, graht: ?Float32Array, landProps: Float32Array}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs);
+ *   `graht` GRAHT1's graht-oaks (world/jungle/grahtOaks.js grahtSites, GRAHT_TREE_FLOATS a tree); `landProps` TESA-LANDS' landmarks (landProps.js landSites)
  */
 /** TESA11: the averages a city over several pixels is flattened to, by its centre pixel and whether the ground is shaped -
  *  kept while the kernel's inputs are the same (its woods, its network, its sites, its climates). */

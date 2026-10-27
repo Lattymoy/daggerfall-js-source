@@ -45,12 +45,8 @@ export const WEATHER_TYPES = Object.freeze([
   // weatherField.js) stands it as cells over the desert tables' land on
   // a cloudy or thunder day, on the enhanced lane only.
   'sandstorm',
-  // ASHFALL1 (2026-10-27, the owner: "with the volcanic isles we could do
-  // an ashfall sort of weather with tiny lava flakes"): the port's own
-  // NINTH word, appended as the sandstorm was. Never rolled: the weather
-  // map births it over the volcanic zones past the Bay (world/tamriel/
-  // tamrielBiomes.js `ash` - Red Mountain, the Ashlands, Stonefalls), on
-  // the enhanced lane only.
+  // ASHFALL1 (Weather-Arc.md E): the port's own NINTH word, appended as the sandstorm was; never rolled - the weather
+  // map births it over the volcanic zones past the Bay (tamrielBiomes.js `ash`), on the enhanced lane only.
   'ashfall',
 ]);
 
@@ -168,9 +164,7 @@ export function weatherSunlightScale(weather, isWinter) {
  *  WEATHER2d's sandstorm is the port's own eighth word and DFU's switch
  *  has no case for it, so there is nothing to port: it is answered here,
  *  once, as OVERCAST - the sky in a sandstorm is not clear, and every
- *  reader of these flags should be told so. It is neither rain nor snow.
- *  ASHFALL1's ashfall is the ninth, answered the same: an OVERCAST under
- *  its pall, and neither rain nor snow - what falls is ash.
+ *  reader of these flags should be told so. It is neither rain nor snow. ASHFALL1's ashfall, the ninth, is answered the same.
  */
 export function weatherFlags(weather) {
   return Object.freeze({

@@ -1407,8 +1407,9 @@ its sky's HOURS under the ash - Red Mountain 0.5, the Ashlands 0.3 (TES III's ow
 any. The map's law (`systems/weather/weatherMap.js` targetShares) takes that share out of the clear air and the dry
 words (cloud, the deck, fog, the desert's sand) in proportion, never out of what falls: the climate table's rain, storms
 and snow keep their hours, and the ash is the lore's share, all the dry sky at most. Each [climate, ash] the zones name
-is its own birth law (birthLaw's `ash`, `ASH_COUNTRY`), solved once, its ceilings among the map's. A birthplace reads its
-ash through `systems/weather/weatherField.js` ashAtPixel - the zone's `ash` where the host's map wears that zone there
+is its own birth law (birthLaw's `ash`, `ASH_COUNTRY`), solved once, its ceilings among the map's.
+
+**Its birthplace.** A birthplace reads its ash through `systems/weather/weatherField.js` ashAtPixel - the zone's `ash` where the host's map wears that zone there
 (its climate the zone's ground's). So the Bay, the sea and a map with nothing past the Bay read none, and the field and
 the map read the volcano one way. The second audit: a birthplace asks the zones only where its climate can carry ash
 (`ASH_CLIMATES`, the climates ASH_COUNTRY is laid on - `lawAt`) and never on the Bay (ashAtPixel answers none there

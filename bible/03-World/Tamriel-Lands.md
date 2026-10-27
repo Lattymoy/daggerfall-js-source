@@ -7,8 +7,9 @@ be. Dont break anything".**
 **What it named.** TESA-BIOME (`03-World/Tamriel-Biomes.md`) split every province past the Bay into the zones its lore
 names and laid each on one of Daggerfall's ten climates; TAMRIEL-RELIEF and BREATHTAKER gave each its heights. What a zone
 LOOKED like was still its climate's: the Ashlands wore the Wrothgarians' green turf and their pines, the Frozen Coast the
-same, Craglorn and the Abecean Coast one sand, Summerset's Vine Coast the desert's cacti on the desert's sand. Cyrodiil has
-the Jungle of Bantha (`03-World/Bantha-Jungle.md`) and Valenwood its graht-oaks (`03-World/Graht-Oaks.md`) - the owner's
+same, Craglorn and the Abecean Coast one sand, Summerset's Vine Coast the desert's cacti on the desert's sand.
+
+**What it gives.** Cyrodiil has the Jungle of Bantha (`03-World/Bantha-Jungle.md`) and Valenwood its graht-oaks (`03-World/Graht-Oaks.md`) - the owner's
 "minus" - and Black Marsh's Blackwood is one country with Cyrodiil's across the border (TESA-BIOME's recorded choice). The
 other thirty-three zones of Skyrim, High Rock, Hammerfell, Summerset, Elsweyr, Black Marsh and Morrowind each take here
 their own GROUND (its colours, laid over the set the game draws), their own GROWTH (Daggerfall's own nature flats, any
@@ -37,8 +38,9 @@ the set's grain, its tiles' shapes and its transitions, and takes its own colour
   transition's texels share their classes softly - a Gaussian of their colour's distance to each prototype, its width
   half the nearest two prototypes' distance, then blurred over 4.5% of the record (`transitionShares`): a transition's
   shape is half a tile, a class's grain a texel or two, so a texel alone cannot say which side it stands on and its
-  neighbourhood can. Past the blur a share is made CRISP (`crisp` 0.15: under it none, over 0.85 whole, stretched
-  between - the second audit: every texel of a transition's inside had stood a mix, never its class whole).
+  neighbourhood can.
+- **Crisp.** Past the blur a share is made CRISP (`crisp` 0.15: under it none, over 0.85 whole, stretched between - the
+  second audit: every texel of a transition's inside had stood a mix, never its class whole).
 - **The materials.** A dressed class is a gradient map: its RAMP (four colours dark to light, the zone's) read where the
   texel's luminance falls once carried over - its class's mean at the ramp's middle, every texel as far over or under it,
   in proportion, as it stands over or under its class's mean (`contrast` 1: the set's own light and dark, never the
@@ -65,31 +67,36 @@ the set's grain, its tiles' shapes and its transitions, and takes its own colour
   their `base` too (the second audit: they had stood bare, left over from the desert's sand they were dressed off).
 
 **Its door** (`scenes/groundSets.js`). A pixel's ground set is named by the build (`scenes/pixelBuild.js` - its own and
-its eight neighbours', each its own zone's: `tamrielLands.js` landGroundSet, `lands:<zone>:<archive>`) and the ground
-sets' module reads such a key as its archive read as ever, its drawn layers dressed and every map the grass and the
-water read kept under the key - its grass records (none where the zone grows no blades), its floor's, its puddles' (its
-file's own, marked once - the dress keeps the alpha whole; in a scene after, marked under the file, so every zone's key on
-it finds them), its colours (the dress's, kept by the module beside the renderer's tile arrays, so a scene after reads
-them and never a mod door that knows no zone's key - taken once a set, the second audit: twice off the same layers). A
-set whose pixel went while it was made is asked for again once it stands (`hold.tileArray`): a dropped place's ask leaves
-it loose for the next sweep (`scenes/placeHolds.js`) - it had been swept before it was there to free and landed held by
-no one, 20 MB of the GPU's a set (the second audit). An archive's own key makes what it made.
+its eight neighbours', each its own zone's: `tamrielLands.js` landGroundSet, `lands:<zone>:<archive>`). The ground sets'
+module reads such a key as its archive read as ever, dresses its drawn layers and keeps under the key every map the grass
+and the water read. An archive's own key makes what it made.
+
+- **Its maps.** Its grass records (none where the zone grows no blades) and its floor's. Its puddles are its file's own,
+  marked once (the dress keeps the alpha whole); in a scene after they are marked under the file, so every zone's key on
+  it finds them. Its colours are the dress's, kept by the module beside the renderer's tile arrays, so a scene after reads
+  them and never a mod door that knows no zone's key - taken once a set (the second audit: twice off the same layers).
+- **A set whose pixel went** while it was made is asked for again once it stands (`hold.tileArray`): a dropped place's
+  ask leaves it loose for the next sweep (`scenes/placeHolds.js`). It had been swept before it was there to free and
+  landed held by no one, 20 MB of the GPU's a set (the second audit).
+
 **Its cost, off the page's thread.** A 256-texel set (Vanilla Enhanced) is 0.87 s of a core to dress: a solid record 2 ms,
 a transition 16 (its classes' shares, their blurs, its blend - the texel's transform a table over its luminance, built at
 2,048 steps of a class's ramp and read between them, and every hot loop a plain function's, which the engine optimises as
-it does not a generator's). It runs on its own worker (`world/tamriel/groundDressWorker.js`, the page's side
-`groundDressClient.js` - handed copies, the set as drawn the page's), so the page draws while it dresses; with no worker,
-or one that fails, the same work on the page's thread a band of 32 rows of a 256-texel record a breath
-(`world/puddleMask.js` stepsBreathing - its longest step 11 ms). The second audit's client laws: a worker that dies is let
-go and the next dress makes another, three at the most (`DRESS_WORKER_DEATHS`; one failure had sent the session's every
-dress to the page); a dress unanswered in a minute (`DRESS_ANSWER_MS`) or answered unreadably counts its worker dead and
-the page dresses what it held (a lost answer had held its set, and every pixel wearing it, for the scene); a post that
-throws is the page's to dress. A pixel's own set and its neighbours' are loaded together (`pixelBuild.js`), so a junction
-of zones met first has one set dressed while the page reads and uploads the next - on ONE slice a frame however many
-chains wait (`systems/buildBreather.js` - every waiter waits on the one next frame; the second audit: each chain's
-resume had begun the slice again, four sets four slices in a frame). Once a zone and season; the renderer's tile cache keeps it. (AUDIT: the first cut dressed on the page's thread in
-the stream's slices - 1.2-1.5 s of work a set, two seconds and more of a pixel's wait, three sets one after another at a
-junction.)
+it does not a generator's). Once a zone and season; the renderer's tile cache keeps it.
+
+- **Its worker** (`world/tamriel/groundDressWorker.js`, the page's side `groundDressClient.js` - handed copies, the set as
+  drawn the page's): the page draws while it dresses. With no worker, or one that fails, the same work runs on the page's
+  thread, a band of 32 rows of a 256-texel record a breath (`world/puddleMask.js` stepsBreathing - its longest step 11 ms).
+- **The client's laws** (the second audit). A worker that dies is let go and the next dress makes another, three at the
+  most (`DRESS_WORKER_DEATHS`; one failure had sent the session's every dress to the page). A dress unanswered in a minute
+  (`DRESS_ANSWER_MS`) or answered unreadably counts its worker dead, and the page dresses what it held (a lost answer had
+  held its set, and every pixel wearing it, for the scene). A post that throws is the page's to dress.
+- **A junction.** A pixel's own set and its neighbours' are loaded together (`pixelBuild.js`), so a junction of zones met
+  first has one set dressed while the page reads and uploads the next - on ONE slice a frame however many chains wait
+  (`systems/buildBreather.js`: every waiter waits on the one next frame; the second audit: each chain's resume had begun
+  the slice again, four sets four slices in a frame).
+- **AUDIT:** the first cut dressed on the page's thread in the stream's slices - 1.2-1.5 s of work a set, two seconds and
+  more of a pixel's wait, three sets one after another at a junction.
 
 ## The growth: a zone's recipe (`world/terrain/terrainNature.js` layoutLands)
 
@@ -106,7 +113,8 @@ own dice), with the zone's numbers in FOREST1's stead:
   record, weight] of Daggerfall's own nature flats - the Mountains' pines in the Pinewoods, the swamp's black basalt
   stacks and the desert's dry trama in the Ashlands, the rainforest's twisted and vine-hung trees and its palms in the
   Tenmar - and every flat carries its archive (ECOTONE1's own seam: the build reads each flat's own, its season and its
-  Low Poly tree its own). A dead tree is one of `DEAD_TREES` - the desert's snags (503:11, 503:12), its gnarled thorn
+  Low Poly tree its own).
+- **Its dead trees** are `DEAD_TREES` - the desert's snags (503:11, 503:12), its gnarled thorn
   (503:28), the woodlands' great dead oak (504:30) - bare in the classic picture and in Low Poly Trees' mesh alike; never
   the classic sets' grey dead tree (504:24, 510:24), which the mod stands as 504:25's PINE (AUDIT: seen in the game - the
   Ashlands stood forty pines a pixel; `vendor/low-poly-trees/Trees/trees.json`, their prefabs on the pine's mesh).
@@ -141,6 +149,7 @@ submeshes (body, crown, detail) at three LODs:
 noise and mip chain, one home) - a stalk's fibres, a cap's blotches and spots, its gills, a rock's strata and cracks, a
 lichened top, furrowed bark, a smooth rind with its lenticels, a crown's clumps, a leaf spray, hung moss: GREY, so one
 picture serves every look (a look's colour laid over the picture's mean); the reeds and the grapes in their own colours.
+
 **The looks** (`landProps.js` LAND_LOOKS): a kind's variants, its scale and its colours, by name - `ascadian` (a pale stalk,
 an olive-brown cap), `deshaan` (dragon-scale violet caps, gills aglow), `glowstalk` (a tree-sized glowing orange pod),
 `telvanni` (the grown purple pods), `xylaria`; the spires' `frost` (a snow-white top), `lichen`, `reachstone`, `granite`,
@@ -151,40 +160,50 @@ an olive-brown cap), `deshaan` (dragon-scale violet caps, gills aglow), `glowsta
 layoutLandProps): a site a cell of the kind's own size on the WORLD's lattice (the Hist 16 tiles, a spire 8, a parasol
 4, a grove's tree 2, a reed clump 1 - each a power of two dividing a pixel), somewhere in the cell's middle, its chance
 the zone's `rate` times its woods' share there (`woods`), its plains' (`plains`), one (`any`) or the water's edge
-(`wet` - a tile touching water); a `patch` gathers its sites in blocks of 16 tiles (the aspen stands across the Pinewoods). The vines
-are fields, not sites: a vineyard a block of 8 x 8 tiles drawn whole, two rows a tile along the world's x, at scale 1 so
-each row meets the next. Every draw a hash of the site's world tile - the same landmark on every client, the worker and
-the main thread. A site's zone is its tile's owner's (the ecotone's, as the flats'), so a border between two zones is
-one seam. Its FOOT - its mesh's widest to a man's chest (`landPropMesh.js` LAND_CHEST: a crag's lumps, a grove of three's
-outer stalks, the Hist's roots; the second audit: one stalk's or one lump's had stood for it, a crag's 5.2 m of its 9.2,
-and its other lumps stood on roads and water) - stands wholly on land: no water, no paving, no road or track, no place's
-rect or clearing, nothing past its kind's steepest (a spire 40 degrees, the vines 6), over the beach (the reeds alone go
-to the water's edge, never into open water); at the lowest ground about its middle (as it stood), sunk a little; the
-larger kinds stand first and the smaller keep off them. A vineyard's row is its whole length: off every foot along it,
-at the lowest of its middle and its two ends (the second audit: a rigid 6.4 m stood at its middle's ground on a 14°
-slope had floated its downhill end). The PIXEL'S BUILD keeps its flats off the feet of the landmarks it
-STANDS and off their vineyards' tiles (`landProps.js` landFeetOff, a grid of the feet - a flat asks the nine cells about
-it): a landmark the gate's clearing or a rock drops leaves its ground's own flats (AUDIT: the kernel had cleared them
-under every landmark, and a dropped one left a bare ring). A pixel lays its landmarks in a few milliseconds of the kernel
-(its kinds' measures made once a worker, only the kinds its owners name walked).
+(`wet` - a tile touching water); a `patch` gathers its sites in blocks of 16 tiles (the aspen stands across the Pinewoods).
+
+- **The vines** are fields, not sites: a vineyard a block of 8 x 8 tiles drawn whole, two rows a tile along the world's x,
+  at scale 1 so each row meets the next.
+- **One seam.** Every draw is a hash of the site's world tile - the same landmark on every client, the worker and the
+  main thread. A site's zone is its tile's owner's (the ecotone's, as the flats'), so a border between two zones is one
+  seam.
+- **Its FOOT** - its mesh's widest to a man's chest (`landPropMesh.js` LAND_CHEST: a crag's lumps, a grove of three's
+  outer stalks, the Hist's roots) - stands wholly on land: no water, no paving, no road or track, no place's rect or
+  clearing, nothing past its kind's steepest (a spire 40 degrees, the vines 6), over the beach (the reeds alone go to the
+  water's edge, never into open water). It stands at the lowest ground about its middle (as it stood), sunk a little; the
+  larger kinds stand first and the smaller keep off them. The second audit: one stalk's or one lump's had stood for it,
+  a crag's 5.2 m of its 9.2, and its other lumps stood on roads and water.
+- **A vineyard's row** is its whole length: off every foot along it, at the lowest of its middle and its two ends (the
+  second audit: a rigid 6.4 m stood at its middle's ground on a 14° slope had floated its downhill end).
+- **The flats keep off them.** The PIXEL'S BUILD keeps its flats off the feet of the landmarks it STANDS and off their
+  vineyards' tiles (`landProps.js` landFeetOff, a grid of the feet - a flat asks the nine cells about it): a landmark the
+  gate's clearing or a rock drops leaves its ground's own flats (AUDIT: the kernel had cleared them under every landmark,
+  and a dropped one left a bare ring).
+- **Its cost.** A pixel lays its landmarks in a few milliseconds of the kernel (its kinds' measures made once a worker,
+  only the kinds its owners name walked).
 
 **Their bodies** (`landPropBodies`, PROP-BODIES' shape): each solid part one, read off its mesh to a man's chest and turned
 by the landmark's yaw as its mesh is - a parasol's stalk (a grove of three's three), a spire's column (a crag's three
 lumps), the xylaria's cluster, a Hist's trunk (3.7 to 4.3 m), a grove tree's trunk - the player walks round them, on foot
 or mounted, and through the reeds and between the vines' rows (the second audit: the player had walked metres into a
 crag's rock, through two of a grove's three stalks and a metre into a Hist).
+
 **Their host** (`scenes/landPropsHost.js` - HOST-SPLIT: the trees' host makes it with the row and frames it, the pixel's
-build stands a pixel's set off the gate's clearing and the rocks and files its bodies; no line of bootWorld's): the GPU
-made when the first landmark is framed, on the stream's slice clock (a mesh a breath, a picture a breath - every kind's
-every variant at every LOD in Low Poly Trees' own buffers), a run a look's variant and LOD; the frame culls a pixel's
-set whole past its kinds' farthest (its scratch sized by what is in reach - the second audit: every built pixel's every
-landmark had sized it, 30 MB for a grid of the Fens' reeds), then each landmark to the view, the fog's reach and its kind's own `far` (reeds 260 m,
-vines 420, a grove 1.2 km, a parasol 1.5, a spire 2.2, a Hist 2.6), at its LOD, on the renderer's fourth tree slot - so
-it is lit, fogged, hazed and lantern-lit as every 3D tree under either lane - and the nearest 16 bodied ones cast into
-the sun's maps. FLORA-GROUND (#1184's, met at the merge): the kernel stands the landmarks, and the zones' flats, on the
-walk floor (`terrainSurface.js` walkGroundAt - every plant's one law), and the seat draws them on the ground their pixel
-draws at every ring and over its bed (`scenes/floraSeat.js` seatFlora and warmFlora give the set each root's `lift`, as
-the graht-oaks'; the host draws and casts each at it) - their place, their bodies and their feet the walk floor's. **The four hosts:** `scenes/world.js` WIRED through the trees' host and the pixel's build;
+build stands a pixel's set off the gate's clearing and the rocks and files its bodies; no line of bootWorld's):
+
+- **Its GPU** is made when the first landmark is framed, on the stream's slice clock (a mesh a breath, a picture a breath:
+  every kind's every variant at every LOD in Low Poly Trees' own buffers), a run a look's variant and LOD.
+- **The frame** culls a pixel's set whole past its kinds' farthest (its scratch sized by what is in reach - the second
+  audit: every built pixel's every landmark had sized it, 30 MB for a grid of the Fens' reeds), then each landmark to the
+  view, the fog's reach and its kind's own `far` (reeds 260 m, vines 420, a grove 1.2 km, a parasol 1.5, a spire 2.2, a
+  Hist 2.6), at its LOD, on the renderer's fourth tree slot - so it is lit, fogged, hazed and lantern-lit as every 3D tree
+  under either lane - and the nearest 16 bodied ones cast into the sun's maps.
+- **FLORA-GROUND** (#1184's, met at the merge): the kernel stands the landmarks, and the zones' flats, on the walk floor
+  (`terrainSurface.js` walkGroundAt - every plant's one law), and the seat draws them on the ground their pixel draws at
+  every ring and over its bed (`scenes/floraSeat.js` seatFlora and warmFlora give the set each root's `lift`, as the
+  graht-oaks'; the host draws and casts each at it) - their place, their bodies and their feet the walk floor's.
+
+**The four hosts:** `scenes/world.js` WIRED through the trees' host and the pixel's build;
 `scenes/exterior.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js` FLAGGED - none stands the wilderness past the Bay.
 
 ## The far views (`render/farFlora.js`, `world/terrain/floraCover.js`, `render/farTrees.js`)
@@ -208,7 +227,8 @@ the far field ask it at each vertex's pixel.
   world field, the same at a sample two pixels share).
 - **The band past the streamed grid** (FAR-TREES) asks the worker with the row: a pixel past the Bay lays its zone's
   recipe, and a tree of an archive not the pixel's answers `archive x 256 + record` (`bandTreeCode`), each read in its own
-  archive's art. Its atlas's 48 layers are LENT: a Tree's picture is read where a wanted pixel's tree is of it, and a full
+  archive's art.
+- **The band's atlas.** Its 48 layers are LENT: a Tree's picture is read where a wanted pixel's tree is of it, and a full
   atlas lends the layer of a picture no wanted pixel, no drawn set and no set being laid is of (`farTrees.js` _layerFor),
   the picture it turned away asked again when the drawn set moves (AUDIT: the Bay's eight archives hold 60 Trees, and a
   journey outgrew the atlas - a province's band trees left out for the session). The second audit: a picture that lands
@@ -289,47 +309,52 @@ landmarks (procedural meshes of the port's own) - none of it DFU's. On the Bay n
 
 ## Verification
 
-`test/world/tesalands_ground.test.js` (11): the dress compiled (water and paving never, monotone ramps, vivid), a record
-dressed (its grain kept in order, its mean at its ramp's middle at the albedo, its alpha, water and paving the set's own,
-a transition each side its own class, its inside crisp), stepped in bands (dressLayers' layers, the running-sum blur
-against the box), the exposure and the ramp's reading, the table (every owed zone once, ramps dark to light, picks a
-summer nature archive's, one entry a kind, frozen, the grass lands bladed; the dead trees and the broadleaf lands against
-the mod's meshes), a pixel's ground set (a snowless winter its summer's), the dress off the page's thread (the worker's
-answer, the client's copies and its fallback, the ground sets across two scenes, the ash's grass records none), the
-client's worker kept (made again to three deaths, a post that throws, the watch, an unreadable answer), a set whose
-pixel went freed and the file's puddles marked once, and the doors. `test/world/tesalands_flora.test.js` (10): the
-recipes in the kernel (their picks and archives, the woods' share, the same every run, off the climate's), the border
-between two zones (flats and landmarks), the flats off the feet of the landmarks STOOD (a dropped one's ground its own;
-the feet's grid against every foot), a zone's woods afar (monotone, its mean the zone's woods, its Trees' share), the
-field's own quantiles (120,000 tiles of the continent: every tabled share and every zone's woods its own), a Tree among
-the cover counted and coloured afar, the middle ring's own field, the band's codes and art, the far views' book (the
-zone's woods, its Trees' art by weight, its dressed ground a record a task; the Bay and the row off the climate's), the
-doors. `test/world/tesalands_props.test.js` (9): the meshes, the pictures, the looks and the laws, where a landmark
-stands (its inset, its rate, its woods and plains, never a road, water, a steep face or the beach, the lowest ground,
-the reeds' edge, the vines' rows whole and off the feet, vineyards, a patch's stands, the larger first), the flats off the
-feet and the bodies, the rock the body (every face to a man's chest inside a body, turned by the yaw), the host (its
-scratch by what is in reach), the landmarks on the ground their pixel draws (the seat's lift at each ring, made ahead,
-drawn and cast at it; the kernel on the walk floor), the wiring and the four hosts. `test/systems/buildslice.test.js`: one slice a frame
-however many chains wait. `test/render/fartrees.test.js`: the atlas's lent layers, a set past the atlas laid once, a
-picture landed mid-lay held. Pins moved with it (PIN MOVED, TESA-LANDS): `test/world/graht1_oaks.test.js` (the trees'
-host frames the landmarks beside the graht-oaks), `test/world/terrain/terrain.test.js` (the lands' beach test the fifth
-through the one home), `test/render/precip4_snowground.test.js` and `test/formats/incident_texture.test.js` (the pixel's
-set is its zone's dress), `test/scenes/fb1024_groundagree.test.js` (the lands' clearing the third),
-`test/world/gate/gateclear.test.js` and `test/systems/disc20.test.js` (the publish entry's window, grown by the landmarks'
-set), `test/systems/features.test.js`, `ft18_features.test.js` and `ft8_combatvisuals.test.js` (the row and the counts),
-`test/render/midring.test.js` (the middle ring asks the forest field's own value with the row),
-`test/scenes/fb1004d_placelru.test.js` (the pixel's own set held by the pixel, loaded with its neighbours'),
-`test/systems/surv7_feed.test.js` and `test/systems/tesabiome_feltair.test.js` (the climate the body feels past the Bay,
-a zone's air), and `test/systems/l10n4_hardcoded.test.js` (the table's lore lines are data, not the player's
-words; the dress client's five warnings and reasons, console lines); and with the audit `test/render/fartrees.test.js`
-(a picture read where a wanted pixel's tree is of it, not an archive's every Tree - and a test of its own for the atlas's
-lent layers), `test/render/precip4_snowground.test.js` and `test/systems/ecotone1.test.js` (a pixel's own set and its
-neighbours' loaded together, each with its twin); with the second audit `test/render/owhitch.test.js` (a build asks again
-for its set once it stands), and at the merge with #1184's FLORA-GROUND `test/world/terrain/floraground_rings.test.js`
-(the build seats and warms the landmarks with the plants) and `test/world/graht1_oaks.test.js` (ROAD-LOOK's `bridges`
-beside the graht-oaks in the build's terrain answer - red on #1184's head too). `tools/mutants/tesalands.json` (123, all dead); re-aimed by content:
-`farflora.json`, `fartrees.json`, `ecotone1.json`, `precip1.json`, `forest1.json` (one law for both forest fields),
-`midring.json`, and with the second audit `perfextc.json` (the breather's one wake).
+- `test/world/tesalands_ground.test.js` (11): the dress compiled (water and paving never, monotone ramps, vivid), a
+  record dressed (its grain kept in order, its mean at its ramp's middle at the albedo, its alpha, water and paving the
+  set's own, a transition each side its own class, its inside crisp), stepped in bands (dressLayers' layers, the
+  running-sum blur against the box), the exposure and the ramp's reading, the table (every owed zone once, ramps dark to
+  light, picks a summer nature archive's, one entry a kind, frozen, the grass lands bladed; the dead trees and the
+  broadleaf lands against the mod's meshes), a pixel's ground set (a snowless winter its summer's), and the doors.
+- `test/world/tesalands_ground.test.js`, off the page's thread: the worker's answer, the client's copies and its
+  fallback, the ground sets across two scenes, the ash's grass records none; the client's worker kept (made again to
+  three deaths, a post that throws, the watch, an unreadable answer); a set whose pixel went freed and the file's
+  puddles marked once.
+- `test/world/tesalands_flora.test.js` (10): the recipes in the kernel (their picks and archives, the woods' share, the
+  same every run, off the climate's), the border between two zones (flats and landmarks), the flats off the feet of the
+  landmarks STOOD (a dropped one's ground its own; the feet's grid against every foot), a zone's woods afar (monotone,
+  its mean the zone's woods, its Trees' share), the field's own quantiles (120,000 tiles of the continent: every tabled
+  share and every zone's woods its own), a Tree among the cover counted and coloured afar, the middle ring's own field,
+  the band's codes and art, the far views' book (the zone's woods, its Trees' art by weight, its dressed ground a record
+  a task; the Bay and the row off the climate's), the doors.
+- `test/world/tesalands_props.test.js` (9): the meshes, the pictures, the looks and the laws, where a landmark stands
+  (its inset, its rate, its woods and plains, never a road, water, a steep face or the beach, the lowest ground, the
+  reeds' edge, the vines' rows whole and off the feet, vineyards, a patch's stands, the larger first), the flats off the
+  feet and the bodies, the rock the body (every face to a man's chest inside a body, turned by the yaw), the host (its
+  scratch by what is in reach), the landmarks on the ground their pixel draws (the seat's lift at each ring, made ahead,
+  drawn and cast at it; the kernel on the walk floor), the wiring and the four hosts.
+- `test/systems/buildslice.test.js`: one slice a frame however many chains wait. `test/render/fartrees.test.js`: the
+  atlas's lent layers, a set past the atlas laid once, a picture landed mid-lay held.
+- **Pins moved with it** (PIN MOVED, TESA-LANDS): `test/world/graht1_oaks.test.js` (the trees' host frames the
+  landmarks beside the graht-oaks), `test/world/terrain/terrain.test.js` (the lands' beach test the fifth through the one
+  home), `test/render/precip4_snowground.test.js` and `test/formats/incident_texture.test.js` (the pixel's set is its
+  zone's dress), `test/scenes/fb1024_groundagree.test.js` (the lands' clearing the third),
+  `test/world/gate/gateclear.test.js` and `test/systems/disc20.test.js` (the publish entry's window, grown by the
+  landmarks' set), `test/systems/features.test.js`, `ft18_features.test.js` and `ft8_combatvisuals.test.js` (the row and
+  the counts), `test/render/midring.test.js` (the middle ring asks the forest field's own value with the row).
+- **More pins:** `test/scenes/fb1004d_placelru.test.js` (the pixel's own set held by the pixel, loaded with its
+  neighbours'), `test/systems/surv7_feed.test.js` and `test/systems/tesabiome_feltair.test.js` (the climate the body
+  feels past the Bay, a zone's air), and `test/systems/l10n4_hardcoded.test.js` (the table's lore lines are data, not
+  the player's words; the dress client's five warnings and reasons, console lines).
+- **With the audit:** `test/render/fartrees.test.js` (a picture read where a wanted pixel's tree is of it, not an
+  archive's every Tree - and a test of its own for the atlas's lent layers), `test/render/precip4_snowground.test.js`
+  and `test/systems/ecotone1.test.js` (a pixel's own set and its neighbours' loaded together, each with its twin).
+- **With the second audit** `test/render/owhitch.test.js` (a build asks again for its set once it stands), and at the
+  merge with #1184's FLORA-GROUND `test/world/terrain/floraground_rings.test.js` (the build seats and warms the
+  landmarks with the plants) and `test/world/graht1_oaks.test.js` (ROAD-LOOK's `bridges` beside the graht-oaks in the
+  build's terrain answer - red on #1184's head too).
+- **Mutants:** `tools/mutants/tesalands.json` (123, all dead); re-aimed by content: `farflora.json`, `fartrees.json`,
+  `ecotone1.json`, `precip1.json`, `forest1.json` (one law for both forest fields), `midring.json`, and with the second
+  audit `perfextc.json` (the breather's one wake).
 
 **The second audit (2026-10-27, five lanes)** fixed, each pinned and its mutants dead: the transitions crisp; one slice a
 frame however many sets load; the dress's worker made again, watched, its unreadable answer and a failed post the page's;

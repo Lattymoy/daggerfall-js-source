@@ -1,17 +1,8 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md): THE LANDS' LANDMARKS' PICTURES, PAINTED - the port's own, every
-// texel a function of its seed (no file, nobody's picture, nothing of the player's data), at the game's own scale: a
-// handful of shades a picture, nearest-sampled, so a parasol or a spire stands beside Daggerfall's flats and the
-// graht-oaks (render/grahtOakArt.js - its noise and its mip chain, one home) in one look.
-//
-// Most pictures are GREY - a material's grain alone (a stalk's fibres, a rock's strata, a crown's clumps) - and a look
-// gives it its colour (world/lands/landProps.js LAND_LOOKS: the sub's colour over the picture's own mean, so a cherry's
-// crown and a maple's are one picture, pink and crimson); a picture whose colours are its own (a reed bed's green blades
-// and brown heads, a vine's leaves and its grapes) is painted in them and its look's colour is white. Every picture tiles
-// (its noise wraps at its own size); a card's picture is cut by its alpha (255 picture, 0 none). PURE: RGBA bytes
-// top-down; the host (scenes/landPropsHost.js) uploads them through the renderer's atlas door with grahtOakArt's chain.
-// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "The pictures"): THE LANDMARKS' PICTURES, painted - the port's own, every
+// texel a function of its seed, at the game's own scale (a handful of shades, nearest-sampled; grahtOakArt.js's noise and
+// mip chain). Most are GREY grain a look tints (landProps.js LAND_LOOKS: its colour over the picture's mean); the reeds
+// and the vines' are in their own colours. Every picture tiles; a card is cut by its alpha. Pure: RGBA bytes top-down.
 import { vnoise } from './grahtOakArt.js';
 
 /** The pictures' sizes (texels, powers of two) and whether each is grey (its look colours it) or its own colours. */

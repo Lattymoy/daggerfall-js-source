@@ -13,8 +13,7 @@
 // The flats' shares of the wind's lean (WIND3) and Windfall's law (WINDFALL1), by prototype, are the frame's maps
 // (lptSway, lptWindfall): the pixel's build writes them as it stands a batch, the frame's near trees read them.
 // GRAHT1: and the graht-oaks' frame beside them (the jungle host's `graht`, scenes/grahtHost.js - its own slot), every
-// built pixel's, near and far. TESA-LANDS: and the lands' landmarks past the Bay (scenes/landPropsHost.js, `landProps` -
-// built here while the lands' row stands, its own slot), every built pixel's.
+// built pixel's, near and far. TESA-LANDS: and the landmarks past the Bay (scenes/landPropsHost.js, `landProps`, its own slot).
 // ═══════════════════════════════════════════════════════════════════
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';
 import { buildTreeSet } from '../world/lowPolyTrees.js';
@@ -47,8 +46,6 @@ export function createTreesHost({ renderer, getTexture, seasons = null, seasonsA
     breathe,   // the stream's own slice clock (PERF7) - a tree's atlases are painted inside the build that first stands it
   }) : null;
   const jungleDoor = jungle?.door ?? null;
-  // TESA-LANDS: the landmarks' host, while the lands' row stands (read once, as the world loads - its row's law); its GPU
-  // is made by the first frame that holds a landmark
   const landProps = landsOn ? createLandPropsHost({ renderer, breathe }) : null;
   const lptSway = new Map();   // a prototype's share of the wind's lean, as its far pictures' batch takes it
   const lptWindfall = new Map();   // WINDFALL1: ...and its share under Windfall's law

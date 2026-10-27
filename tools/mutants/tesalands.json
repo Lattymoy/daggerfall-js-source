@@ -687,7 +687,7 @@
   {
     "name": "TL-means-the-door",
     "file": "src/scenes/groundSets.js",
-    "old": "    if (!groundDrawnMeans.has(groundArchive) && DRESSED_MEANS.has(groundArchive)) groundDrawnMeans.set(groundArchive, DRESSED_MEANS.get(groundArchive));\n",
+    "old": "if (!groundDrawnMeans.has(groundArchive) && DRESSED_MEANS.has(groundArchive)) groundDrawnMeans.set(groundArchive, DRESSED_MEANS.get(groundArchive));",
     "new": "",
     "tests": [
       "test/world/tesalands_ground.test.js"
@@ -696,7 +696,7 @@
   {
     "name": "TL-puddles-again",
     "file": "src/scenes/groundSets.js",
-    "old": "    if (!groundPuddles.has(groundArchive) && groundPuddles.has(fileOf(groundArchive))) groundPuddles.set(groundArchive, groundPuddles.get(fileOf(groundArchive)));\n",
+    "old": "if (!groundPuddles.has(groundArchive) && groundPuddles.has(fileOf(groundArchive))) groundPuddles.set(groundArchive, groundPuddles.get(fileOf(groundArchive)));",
     "new": "",
     "tests": [
       "test/world/tesalands_ground.test.js"

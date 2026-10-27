@@ -19,9 +19,7 @@
 //     light under them the canopy's (world/jungle/jungleCanopy.js); Reaper's March, where the forest gives way to the
 //     plains, keeps its sky;
 //   - its AIR, where the lore's air is not its ground's climate's (Morrowind's grey volcanic ground under a warm sky): the
-//     climate the air law reads there (tamrielGround.js groundAirClimateIndex, systems/weather/airGround.js);
-//   - its ASH (ASHFALL1): the share of its sky's hours the ashfall stands over it - the weather map's births there
-//     (systems/weather/weatherMap.js ashOfField), the volcano's country alone;
+//     climate the air law reads there (tamrielGround.js groundAirClimateIndex, systems/weather/airGround.js); its ASH (ASHFALL1) the share of its hours under the ashfall;
 //   - its FAUNA: systems/tamrielFauna.js, by the biome's key.
 // WHERE A ZONE IS: its province's land (tamrielLand.js provinceKeyBeyondBay - the player's own trace once it lands, the
 // authored rings before it or with `?tamrieltrace=off`), the zone whose SEEDS stand nearest the point moved first by two
@@ -182,12 +180,8 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
   // volcano fifteen units south-west of its authored spine, and the hearts drawn about the spine left it ringed by the
   // Bitter Coast's swamp and Stonefalls, the Ashlands ten units off where the Grazelands lie (TES III: the Ashlands north
   // and west of the mountain, the Grazelands north-east, the Bitter Coast south-west)
-  // ASHFALL1 (the owner: "with the volcanic isles we could do an ashfall sort of weather with tiny lava flakes"): `ash`, the
-  // share of a zone's hours under the ashfall - the Ashlands TES III's own (its region's weather: Ash 30%, beside Clear 10,
-  // Cloudy 25, Foggy 10, Overcast 25; Molag Amur's the only other ash), the volcano's own the most (TES III's main quest
-  // stands a Blight storm on Red Mountain every hour; the port's 3E 405 is before the Blight's worst, so the ash, at
-  // half), Stonefalls the least (ESO's loading screen: "the ashfall from the volcanoes of the Velothi Mountains and
-  // from great Ash Mountain itself is Stonefalls' bane and benefit, fertilizing the soil")
+  // ASHFALL1 (Weather-Arc.md E): `ash`, a zone's share of hours under the ashfall - the Ashlands TES III's 30%, Red Mountain
+  // half (3E 405 is before the Blight's worst), Stonefalls the least (ESO's loading screen names its ashfall)
   { key: 'morrowindAshlands', province: 'Morrowind', name: 'the Ashlands', climate: C.Mountain, air: C.Desert2, ash: 0.3,
     seeds: ['Ald\'ruhn'], hearts: { range: RED_MOUNTAIN, at: [[0, -9], [-9, -1]] },
     lore: 'Ald\'ruhn\'s grey country about Red Mountain - ash, pumice and basalt under the ash storms' },

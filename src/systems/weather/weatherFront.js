@@ -157,8 +157,7 @@ export const FALL_FOG_FLOOR = 0.25;
  * look - exp fog (0.003, snow 0.005), the sun at 0.45, the grass dimmed to 0.6 - and every rain wore it whole, a
  * sprinkle too. Under the band the fog thins to FALL_FOG_FLOOR of its density and the sun and the grass come up to
  * `light`'s (never darker than the row). Any other word - a fog bank, a sandstorm, a clear sky with the last of a
- * shower draining - is handed back as it came. The host blends the answer on the front (blendTerms) as before.
- * ASHFALL1: an ashfall is a fall like the rain's - its edge a dusting under an overcast's light, its haze thin there.
+ * shower draining - is handed back as it came (ASHFALL1: an ashfall is a fall). The host blends it on the front (blendTerms).
  * @param {{sun: number, dim?: number, fog: any}} terms - the weather's row
  * @param {number} intensity - the front's, the share of the profile on screen
  * @param {string} weather - the sim's word
@@ -166,7 +165,7 @@ export const FALL_FOG_FLOOR = 0.25;
  */
 export function fallTerms(terms, intensity, weather, light) {
   const mode = precipitationForWeather(weather);
-  if (mode !== 'rain' && mode !== 'storm' && mode !== 'snow' && mode !== 'ash') return terms;
+  if (mode !== 'rain' && mode !== 'storm' && mode !== 'snow' && mode !== 'ash') return terms;   // ASHFALL1: an ashfall's edge a dusting under an overcast's light, its haze thin there
   const k = smoothstep(FALL_LOOK[0], FALL_LOOK[1], intensity);
   if (k >= 1) return terms;
   const dim = terms.dim ?? 1;

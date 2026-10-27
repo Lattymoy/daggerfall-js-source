@@ -100,8 +100,7 @@ export function unpackFlora(v) {
  * table) a Tree's chance by the field and the ground's share (terrainNature.js forestTiles); else DFU's scatter - the
  * ground's chance, the WOODS byte's elevation scale (`byte`), the desert's quarter, and the share of its 31 records that
  * are Trees. Pure.
- * @param {number} wood @param {number} dirt @param {number} grass @param {number} stone
- * @param {{ forests: boolean, desert: boolean, treeShare: number, coverShare?: number, lands?: any }} spec @param {number} [byte]
+ * @param {number} wood @param {number} dirt @param {number} grass @param {number} stone @param {{ forests: boolean, desert: boolean, treeShare: number, coverShare?: number, lands?: any }} spec @param {number} [byte]
  */
 export function treesPerTile(wood, dirt, grass, stone, spec, byte = 128) {
   if (!spec || !(spec.treeShare > 0 || spec.coverShare > 0)) return 0;
@@ -139,31 +138,18 @@ const COS_STEEP = Math.cos(FLORA.steep * Math.PI / 180);
  *  land (FLORA.woodShare; TESA-LANDS a zone's own, its `woods`) on grass, read through the same law. Pure. */
 export const expectedTrees = (spec, byte) => (spec?.lands && (spec.treeShare > 0 || spec.coverShare > 0) ? landsTrees(spec.lands, spec.lands.woods, 0, 1, 0) : treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte));
 
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (bible/03-World/Tamriel-Lands.md): A ZONE'S WOODS AFAR. Past the Bay a zone lays its own flats (its recipe -
-// world/tamriel/tamrielLands.js LANDS' `flora`, terrainNature.js landsTiles): its woods' edge on the forest field at its
-// own quantile, its Trees' chance by its rate and its ground's shares. The far views read the same law: a sample's packed
-// wood is FOREST1's (forestAt - the climates' 45%), so a zone's is its EXPECTATION GIVEN it (landsFloraSpec's woodOf):
-// the field's own distribution (FOREST_QUANTILES) read at 4,096 quantiles, each one's FOREST1 wood and the zone's, the
-// zone's averaged in the bins of FOREST1's - exact where FOREST1's edge is crossed, and where it is not (the field under
-// or over FOREST1's edge) the zone's mean over that side. The Pinewoods' 80% stands where FOREST1's plain does; the
-// Ashlands' 2% is a tenth of FOREST1's woods.
-// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "The far views"): A ZONE'S WOODS AFAR. A sample's packed wood is FOREST1's,
+// so a zone's is its EXPECTATION GIVEN it (woodOf): the field's distribution (FOREST_QUANTILES) read at 4,096 quantiles,
+// the zone's wood averaged in bins of FOREST1's.
 
 /** The bins of FOREST1's wood the expectation is kept in (and its two ends: under FOREST1's edge, over it). */
 export const LANDS_WOOD_BINS = 32;
 const _landsSpecs = new WeakMap();
 /**
- * A ZONE'S FLORA as the far views read it (floraSpec's shape, its `lands` the zone's law): `woods` its share of the land in
- * woods, `woodOf(w)` its woods' share expected at FOREST1's wood `w`, `ground` (DFU's tile record to its share of a Tree's
- * chance) its recipe's; `treeShare` the share of its `trees` (by weight) that are Trees (TREE_RECORDS - the far views'
- * canopy, the band's and the 3D trees' kind: a stump, a log or a snag the recipe stands among them is a flat), 0 where it
- * grows none, and `treeRate` its recipe's rate by that share - so a zone's far canopy is the Trees its pixels stand and
- * no more (AUDIT: a recipe's stumps and mossy rocks had read as canopy, thinning where the band took over); `coverShare`
- * and `coverRate` the same of its `cover` (the second audit, lane D: a Tree among a zone's cover stands at the cover's
- * chance - the Velothi Foothills' 506:14, a third of its near Trees - and the far views had counted none of it). Pure,
- * made once a recipe.
- * @param {any} recipe world/tamriel/tamrielLands.js LANDS' `flora`
+ * A ZONE'S FLORA as the far views read it (floraSpec's shape): `woods`, `woodOf(w)` its woods' share expected at FOREST1's
+ * wood `w`, `ground` its recipe's; `treeShare` and `coverShare` the share of its `trees` and its `cover` (by weight) that
+ * are Trees (TREE_RECORDS: a stump or a snag is a flat), `treeRate` and `coverRate` its rates by them - its far canopy
+ * the Trees its pixels stand and no more. Pure, made once a recipe. @param {any} recipe LANDS' `flora`
  */
 export function landsFloraSpec(recipe) {
   let s = _landsSpecs.get(recipe);
@@ -255,9 +241,7 @@ function landsTrees(L, wz, dirt, grass, stone) {
  * built pixel stands (its own dice, a tile at a time), so where the stream builds the pixel its trees land where the
  * band's stood. What it leaves out is a built pixel's own: a location's clearing and flattening, the roads' paint, a World
  * of Daggerfall site, a neighbour's climate at a border, the jungle's own layout. Answers `[x, y, z, record]` a tree, in
- * the pixel's own frame (x east, z north from its south-west corner; y the ground's height, world units). TESA-LANDS:
- * with `lands` (the row) a pixel past the Bay whose zone lays its own flats lays them (its recipe - landsNine), and a tree
- * of an archive of its own answers its archive with its record, `archive * 256 + record` (bandTreeCode).
+ * the pixel's own frame (x east, z north from its south-west corner; y the ground's height, world units). TESA-LANDS: with `lands` a zone's recipe lays them, a tree of another archive `archive * 256 + record` (bandTreeCode).
  * @param {{ woods: any, px: number, py: number, archive: number, climateType: number, forests: boolean, landforms?: any, lands?: boolean }} o
  */
 export function bandTreesPixel({ woods, px, py, archive, climateType, forests, landforms = null, lands = false }) {

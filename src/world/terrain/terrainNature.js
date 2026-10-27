@@ -202,15 +202,12 @@ export function makeTerrainKey(mapPixelX, mapPixelY) {
  *   desert, or an archive with no Tree table), DFU's scatter below, byte for byte.
  * @param {?Float32Array} [opts.beach] AUDIT LANDFORMS II H2: the samples the beach line is asked of - DFU's own blend in a
  *   location's pixel with the Landforms row on (the terrain job's `classic`); null, the heights' own
- * @param {?{nine: ReadonlyArray<any>, blend?: boolean, archive?: number, pois?: Array<any>, paths?: ?Uint8Array, climateType?: number}} [opts.lands]
- *   TESA-LANDS: past the Bay, the 3x3 of zones' lands (world/tamriel/tamrielLands.js landsNine) - the pixel's own recipe
- *   lays its flats (layoutLands), its border its neighbours' with `blend`; `archive` the climate's summer nature archive.
+ * @param {?{nine: ReadonlyArray<any>, blend?: boolean, archive?: number, pois?: Array<any>, paths?: ?Uint8Array, climateType?: number}} [opts.lands] TESA-LANDS: the 3x3 of zones' lands (landsNine) - the pixel's recipe lays its flats (layoutLands)
  * @param {?{nature:ArrayLike<number>, type:ArrayLike<number>}} [opts.ecotone] ECOTONE1: the 3x3 of pixels' climates
  *   about this one - each one's summer nature archive and ClimateBaseType, indexed (dz + 1) * 3 + (dx + 1), dx east and
  *   dz north (the pixel's own at 4). Absent, or every neighbour this pixel's own, the layout is the pixel's alone.
- * @returns {Array<{record:number,x:number,y:number,z:number,archive?:number}>} base
- *   positions in pixel-local world units; a flat a neighbour's climate stood at a border carries that climate's
- *   summer nature archive (`archive`), every other is the pixel's own.
+ * @returns {Array<{record:number,x:number,y:number,z:number,archive?:number}>} base positions in pixel-local world units; a
+ *   flat a neighbour's climate (or zone) stood at a border carries its summer nature archive (`archive`).
  */
 export function layoutNature(heightmapData, tilemapData, opts) {
   const recipe = opts.lands?.nine?.[4]?.flora ?? null;   // TESA-LANDS: the zone's own recipe past the Bay
@@ -690,20 +687,10 @@ function forestTiles(heightmapData, tilemapData, opts) {
   };
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md): A ZONE'S OWN FLATS - the recipe of world/tamriel/tamrielLands.js
-// LANDS' `flora`, laid by FOREST1's law (DFU's tests on the tile, the woods' field, the places' pull, each tile's own
-// dice) with the zone's numbers in FOREST1's stead:
-//   - ITS WOODS' SHARE OF THE LAND (`woods`): the field's edge at its (1 - woods) quantile (tamrielLands.js
-//     forestQuantile, FOREST.edge's own width), so the Pinewoods are 80% woods and the Ashlands' two in a hundred;
-//   - ITS FLATS, ANY CLIMATE'S: a wood's tile stands one of `trees`, a plain's one of `cover`, each an [archive, record,
-//     weight] - the Mountains' pines in the Pinewoods, the swamp's black basalt stacks and the desert's dry trama in the
-//     Ashlands - and every flat carries its archive (ECOTONE1's own seam: the build reads each flat's own, its season
-//     its own, its Low Poly tree its own);
-//   - ITS RATES (`treeRate`, `coverRate`) on FOREST1's chances, and its ground's (`ground`, by DFU's tile record) where
-//     it names one.
-// A recipe is compiled once (LANDS is frozen) and read by the tile.
-// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "The growth"): A ZONE'S OWN FLATS - LANDS' `flora` laid by FOREST1's law
+// (DFU's tests on the tile, the woods' field, the places' pull, each tile's own dice) with the zone's numbers: its woods'
+// edge at the field's (1 - woods) quantile, a wood's tile one of its `trees` and a plain's one of its `cover` (any
+// climate's, each flat carrying its archive - ECOTONE1's seam), its rates and its ground's shares. Compiled once a recipe.
 
 /** A pool of [archive, record, weight] picks compiled: its archives, records and cumulative weights (0..1). */
 function compilePool(picks) {

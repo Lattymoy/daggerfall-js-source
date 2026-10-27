@@ -1,42 +1,17 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md; the owner: "Ensuring each region recieves proper landscape
-// details and textures (minus cyrodil and valenwood) and refined detail. Research these regions online to understand and
-// make it the best that it can be. Dont break anything") - THE LANDS PAST THE BAY: each zone its own ground, its own
-// growth and its own landmarks of the land.
-//
-// TESA-BIOME split every province past the Bay into the zones its lore names (world/tamriel/tamrielBiomes.js) and laid each
-// on one of Daggerfall's ten climates; TAMRIEL-RELIEF and BREATHTAKER3 gave each its heights and its landforms. What a zone
-// LOOKED like was still its climate's: the Ashlands wore the Wrothgarians' green turf and pines, the Frozen Coast the same,
-// Craglorn and the Abecean Coast one sand, Summerset's Vine Coast the desert's cacti. Cyrodiil has the Bantha jungle and
-// Valenwood its graht-oaks (the owner's two calls, unchanged here). This table gives the other seven provinces' thirty-three
-// zones their own land, read off the lore (the page's Sources - UESP's Lore, Morrowind, Skyrim and Online pages, the Pocket
-// Guide), each zone:
-//   - GROUND: its dress (world/tamriel/groundDress.js) - its dirt, grass and stone as the lore's materials, laid over the
-//     climate's ground set as it is drawn (scenes/groundSets.js), so the set's grain and its tiles' shapes stand;
-//   - BLADES: whether the enhanced grass grows on it (render/labGrass.js - none on ash, snowfield or dune);
-//   - FLORA: what stands on it - Daggerfall's own nature flats, any climate's (an [archive, record, weight] a flat - the
-//     Mountains' pines and the swamp's black basalt stacks in the Ashlands, the desert's acacia on Elsweyr's plains), in
-//     woods and plains of the zone's own share of the land (world/terrain/terrainNature.js layoutLands);
-//   - PROPS: the land's own landmarks no flat stands - the emperor parasols, the Hist, the reed beds, the rock spires,
-//     Summerset's vineyards and groves (world/lands/landProps.js).
-// Zones the table does not name (Cyrodiil's six, Valenwood's four, and Black Marsh's Blackwood - one country with
-// Cyrodiil's across the border, TESA-BIOME's recorded choice) keep their land as it stood.
-// PURE AND WORKER-SAFE (world/ and formats/ alone - TAMRIEL2-WORKER): the terrain worker reads the flora and the props, the
-// main thread the ground.
-// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md): THE LANDS PAST THE BAY - the seven provinces' thirty-three zones (not
+// Cyrodiil's, Valenwood's or Blackwood's) each their own land, read off the lore: GROUND its dress (groundDress.js),
+// BLADES whether the enhanced grass grows, FLORA Daggerfall's own nature flats of any climate in its own share of woods
+// (terrainNature.js layoutLands), PROPS its landmarks (world/lands/landProps.js). A zone the table does not name keeps
+// its climate's land. Pure and worker-safe (world/ and formats/ alone): the terrain worker reads the flora and the props.
 import { tamrielBiomeAt, BIOME_BY_KEY } from './tamrielBiomes.js';
 import { climateNeighbourIn } from './tamrielGround.js';
 
 /**
- * THE FOREST FIELD'S QUANTILES (world/terrain/terrainNature.js forestCover - its value at a world tile), every 1% from 0
- * to 1, measured over 400,000 world tiles of the continent's frame (tools/landsMeasure.mjs): the field's value under
- * which that share of the land falls. A zone's `woods` (its share of the land in woods) sets its woods' edge at the
- * field's (1 - woods) quantile - FOREST1's own 45% is the field's 0.51, its edge's centre. TESA-LANDS' second audit
- * (lane D): measured every 5% it had been read in a straight line from the 95th (0.638) to the field's highest (0.824),
- * where the field's tail is far tighter - the Ashlands' and the Alik'r's two hundredths of woods stood five
- * ten-thousandths, the High Peaks' three four, and the far views (the zone's number) stood half again the trees the
- * ground did; test/world/tesalands_flora.test.js holds the table to the field.
+ * THE FOREST FIELD'S QUANTILES (terrainNature.js forestCover), every 1%, measured over 400,000 world tiles of the
+ * continent's frame (tools/landsMeasure.mjs): a zone's `woods` sets its woods' edge at the field's (1 - woods) quantile.
+ * Every 5% read straight through the tail had stood the Ashlands' 2% at 0.05% (the second audit);
+ * test/world/tesalands_flora.test.js holds the table to the field.
  */
 export const FOREST_QUANTILES = Object.freeze([0.1599, 0.3096, 0.3296, 0.3422, 0.3525, 0.3609, 0.3682, 0.3748, 0.3805, 0.3859,
   0.3907, 0.3954, 0.3996, 0.4039, 0.4077, 0.4114, 0.4149, 0.4184, 0.4217, 0.4249,
@@ -157,13 +132,10 @@ function deepFreeze(v) {
 }
 
 /**
- * THE LANDS, by zone key (tamrielBiomes.js BIOMES'). Each: `ground` its dress (groundDress.js: `{ dirt, grass, stone }`
- * - the CLASS of the climate's set, whatever it looks like there: the desert's two sands, the swamp's dark moss, brown mud
- * and green moss), `blades` whether the enhanced grass grows, `flora` its recipe (`woods` its share of the land in woods,
- * `trees` and `cover` the flats a wood's and a plain's tile stand, `treeRate` and `coverRate` on FOREST1's own chances),
- * `props` its landmarks (`kind` - one entry a kind, `looks`, `rate` a cell's chance, `where` the woods, the plains, `any`
- * or `wet` - the water's edge - and `patch` a block's chance, its sites gathered in stands), `lore` the
- * land in a line (the page's sources).
+ * THE LANDS, by zone key (tamrielBiomes.js BIOMES'). Each: `ground` its dress (`{ dirt, grass, stone }` - the CLASS of the
+ * climate's set, whatever it looks like there; `base` another summer set to dress), `blades`, `flora` (`woods`, `trees`
+ * and `cover` [archive, record, weight] picks, `treeRate`, `coverRate`), `props` (one entry a kind: `looks`, `rate`,
+ * `where` - woods, plains, any or wet - and `patch`), `lore` the land in a line.
  */
 export const LANDS = deepFreeze({
   // ══ SKYRIM ══════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -511,12 +483,9 @@ export function landsNine(px, py) {
  *  string, so it never meets an archive's number. */
 export const groundSetKey = (zone, archive) => `lands:${zone}:${archive}`;
 /**
- * A PIXEL'S GROUND SET: its zone's dress of `archive` - of the zone's `base` set in its stead where it names one (a zone
- * whose climate's set is the wrong cloth for its land: Summerset's Vine Coast is grass, not the Subtropical's desert
- * sand) - where `archive` is a SUMMER set (TEXTURE.002, .102, .302, .402: the winter's snow is the snow's, never dressed;
- * a winter `snowless` names - the page's door, world/climateSwaps.js winterSetSnowless: this module stays the terrain
- * worker's, world/ alone - is its summer's)
- * and its zone dresses the ground; else `archive` itself. Bay-coordinate pixel (x, y).
+ * A PIXEL'S GROUND SET: its zone's dress of `archive` (of its `base` in its stead) where `archive` is a SUMMER set
+ * (TEXTURE.002, .102, .302, .402 - the winter's snow is the snow's) or a winter `snowless` names (the page's door,
+ * climateSwaps.js winterSetSnowless - this module stays world/'s alone); else `archive` itself. Bay pixel (x, y).
  * @param {number} x @param {number} y @param {number|string} archive @param {(archive: number) => boolean} [snowless]
  */
 export function landGroundSet(x, y, archive, snowless = () => false) {

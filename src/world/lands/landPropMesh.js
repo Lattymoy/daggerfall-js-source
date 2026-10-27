@@ -1,31 +1,9 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md): THE LANDS' LANDMARKS, MADE - the land's own features past the
-// Bay that no flat of Daggerfall's stands, procedural low-poly meshes of the port's own (no art of anyone's, nothing of the
-// player's data), every vertex a function of its kind's and variant's seed:
-//   - THE PARASOL (`parasol`): Morrowind's giant fungi - the emperor parasol, "large mushroom-like plants not unlike trees"
-//     of the Ascadian Isles (UESP, Morrowind:Ascadian Isles), a tall stalk under a broad flat cap with its gills under it
-//     (0), a grove of three from one foot (1), the Telvanni's grown pod on its stalk and Deshaan's glowstalk (2), and the
-//     Ashlands' xylaria - "fungus spikes that grow almost exclusively" there (UESP, Lore:Flora_G) - a cluster of dark-tipped
-//     spikes (3);
-//   - THE SPIRE (`spire`): stone standing out of the land - a pillar or obelisk (0: the Ashlands' "clusters of stone
-//     obelisks", Morrowind:Ashlands), a hoodoo under its caprock (1: the Alik'r's and Anequina's sandstone), a broad crag
-//     (2), a standing stone or menhir (3: the Reach's, the Bitter Coast's), a termite mound (4: the High Savannah's);
-//   - THE HIST (`hist`): Black Marsh's "giant spore trees growing in the innermost swamps" (UESP, Lore:Hist) - a gnarled
-//     bulging trunk on its root flares, a spreading crown, moss hung from its limbs;
-//   - THE REEDS (`reeds`): a clump of reed blades with their heads (0), sugarcane (1), a low rush (2) - the Shadowfen's
-//     "endless field of reeds that reached up to his chin" (The Argonian Account), Elsweyr's cane;
-//   - THE VINES (`vines`): a vineyard row's length, its posts, its trellised foliage hung with grapes - Summerset's
-//     "rows of vineyards" (UESP, Lore:Alinor (city));
-//   - THE GROVE (`grove`): a broadleaf tree of the groves - round (0: cherry), tall (1: ginkgo, the Rift's aspen), spreading
-//     (2: maple) - its colour its look's (render/landPropArt.js's pictures are grey, the look's tint their hue).
-// Flat-shaded (a face one normal: the low-poly look), each face wound so cross(b - a, c - a) points out of it (the
-// renderer's frontFace(CW) through its mirrored projection - the graht-oaks' own law, world/jungle/grahtOakMesh.js), in
-// three submeshes: the BODY (stalk, rock, bark, posts), the CROWN (cap, caprock or the rock's top, leaves, foliage) and the
-// DETAIL (gills, the moss, cards cut by their picture's alpha). Three LODs, each a coarser make of the same skeleton.
-// Pure: (kind, variant, lod) in, typed arrays out; the host (scenes/landPropsHost.js) packs them into Low Poly Trees' own
-// buffers and the billboard program's mesh mode draws them, lit, fogged and hazed as every 3D tree.
-// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "The landmarks"): THE LANDMARKS, MADE - procedural low-poly meshes of the
+// port's own, every vertex a function of its kind's and variant's seed: the parasol (Morrowind's giant fungi), the spire
+// (a pillar, a hoodoo, a crag, a standing stone, a termite mound), the Hist, the reeds, a vineyard's row, a grove's tree.
+// Flat-shaded, each face wound out (the graht-oaks' law, world/jungle/grahtOakMesh.js), in three submeshes (body, crown,
+// detail) at three LODs. Pure: (kind, variant, lod) in, typed arrays out; scenes/landPropsHost.js draws them.
 import { grahtRng, icosphere, bezier, blobJitter } from '../jungle/grahtOakMesh.js';
 
 /** The kinds, in their index order (the sites' float), and each one's variants. */

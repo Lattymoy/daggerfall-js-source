@@ -1,34 +1,9 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md): THE LANDS' LANDMARKS' LAW - where the land's own features past
-// the Bay stand (world/tamriel/tamrielLands.js LANDS' `props`), and what each one is. PURE and the terrain worker's (its
-// import graph is world/ alone): the kernel lays them beside the pixel's flats (world/terrain/terrainNature.js
-// layoutLandProps), the flats keep off their feet, and the pixel's build hands them to their host
-// (scenes/landPropsHost.js), which draws them, and files their bodies for the player's clamp.
-//
-//   - WHAT. A zone names its landmarks: a KIND (world/lands/landPropMesh.js - the parasol, the spire, the Hist, the reeds,
-//     the vines, the grove) and its LOOKS (LAND_LOOKS: which of the kind's variants, at what scale, in what colours - the
-//     Ascadian Isles' emperor parasol, Deshaan's violet caps and glowing gills, the Rift's white-barked golden aspen, the
-//     Ashlands' black basalt), its RATE (a site's chance), WHERE it stands (in the zone's woods, on its plains, anywhere,
-//     or at the water's edge - `wet`) and, for some, a PATCH (its sites gathered in blocks: the aspens' stands).
-//   - WHERE. A site a cell of the kind's own size (LAND_KIND_LAW.cell, tiles - a power of two dividing a pixel's 128, so
-//     a cell never straddles a pixel) on the WORLD's lattice, somewhere in the cell's middle (its inset), its chance its
-//     rate times its woods' or plains' share there - the zone's own woods (terrainNature.js recipeWood, the field the
-//     zone's flats are laid by). The vines are fields, not sites: a vineyard a block of 8 x 8 tiles drawn whole, two
-//     rows a tile, every row along the world's x. Every draw a hash of the site's world tile (terrainNature.js tileDraw):
-//     the same landmark on every client, the worker and the main thread.
-//   - WHOSE. A site's tile's own zone's (the 3x3's ecotone owner, ECOTONE1's border law - its neighbour's landmarks
-//     stand on the tiles its neighbour's flats do), so a border between two zones is one seam, never a gap or a double.
-//   - WHAT IT NEVER STANDS ON. Its FOOT (its stalk's, its column's or its trunk's - the Hist its roots') wholly on land
-//     (no water, no paving, no road or track, no place's rect or clearing, nothing past the kind's steepest), above the
-//     beach (the reeds alone go down to the water's edge, never into open water). It stands at the lowest ground under its
-//     foot, sunk a little (never floating: the uphill side goes into the slope). The larger kinds stand first and the
-//     smaller keep off them; the pixel's flats keep off every foot.
-//   - ITS BODIES (landPropBodies): each solid part a body (the second audit: a crag's every lump, a grove of three's every
-//     stalk) - the player walks round a parasol, a spire, a Hist or a grove's tree; through the reeds and between the
-//     vines' rows.
-//   - ITS LOD (landLodOf): by the distance over its scale, the kind's own reaches; past its kind's `far` none is drawn.
-// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "The landmarks"): THE LANDMARKS' LAW - where the land's own features past
+// the Bay stand and what each is. A zone names its kinds and looks (LAND_LOOKS), each a rate, a where (woods, plains, any,
+// the water's edge) and maybe a patch; a site is a cell of its kind's size on the WORLD's lattice, every draw a hash of its
+// world tile, so every client and the worker lay the same. Its foot stands wholly on land a landmark may, at the lowest
+// ground about it; the larger stand first. Pure and the terrain worker's (world/ alone).
 import { LAND_KINDS, LAND_VARIANTS, VINE_SPAN, landPropMesh } from './landPropMesh.js';
 
 /** A landmark's floats, in a set: x, y, z (pixel-local m), yaw (radians), scale, kind (LAND_KINDS' index), variant, look
@@ -144,17 +119,11 @@ for (const r of LAND_FOOT_RECORDS) FOOT_OK[r] = 1;
 for (const r of WATER_RECORDS) WET[r] = 1;
 
 /**
- * A PIXEL'S LANDMARKS - LAND_PROP_FLOATS each (pixel-local), on the lattice of its world tiles from (ox, oz). `owners(ti)`
- * the zone's props for a tile (its ecotone owner's - LANDS' `props`, or null); `wood(x, y)` the owner's woods' share at a
- * tile (0..1); `tile(ti)` its record; `clear(ti)` a tile no landmark stands on (a road, a track, a place); `steep(ti)` its
- * slope (degrees); `beach(ti)` a tile under the beach line; `ground(mx, mz)` the ground's height (m); `draw(wx, wz, salt)`
- * the world tile's dice. `tiles` a pixel's side in tiles, `tileM` a tile in metres; `named` the kinds any owner names (a
- * kind none does stands nowhere, and its cells are not walked - AUDIT: a pixel of spires alone rolled the reeds' and the
- * vines' 32,768 cells; every kind walked where it is not handed).
- * @param {{ ox: number, oz: number, tiles: number, tileM: number, owners: (ti: number) => any[]|null,
- *   wood: (x: number, y: number, ti: number) => number, tile: (ti: number) => number, clear: (ti: number) => boolean,
- *   steep: (ti: number) => number, beach: (ti: number) => boolean, ground: (x: number, z: number) => number,
- *   draw: (wx: number, wz: number, salt: number) => number, named?: ReadonlySet<string> | null }} a
+ * A PIXEL'S LANDMARKS - LAND_PROP_FLOATS each, pixel-local, on its world tiles from (ox, oz): each tile's owner's props,
+ * woods, record, clearing, slope and beach asked; `named` the kinds any owner names (the rest are not walked).
+ * @param {{ ox: number, oz: number, tiles: number, tileM: number, owners: (ti: number) => any[]|null, wood: (x: number, y: number, ti: number) => number,
+ *   tile: (ti: number) => number, clear: (ti: number) => boolean, steep: (ti: number) => number, beach: (ti: number) => boolean,
+ *   ground: (x: number, z: number) => number, draw: (wx: number, wz: number, salt: number) => number, named?: ReadonlySet<string> | null }} a
  * @returns {Float32Array}
  */
 export function landSites({ ox, oz, tiles, tileM, owners, wood, tile, clear, steep, beach, ground, draw, named = null }) {

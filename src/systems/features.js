@@ -990,7 +990,7 @@ export const FEATURES = Object.freeze([
     group: 'world',
     get title() { return t('features.tamrielLands.title', 'Lands of Tamriel'); },
     get note() { return t('features.tamrielLands.note', 'Each region past the Bay gets its own ground, plants and landmarks: Morrowind\'s ash and giant '
-      + 'mushrooms, the Hist, reed beds, rock spires, Summerset\'s groves and vineyards. Off keeps each climate\'s original look.'); },
+      + 'mushrooms, Black Marsh\'s Hist, Summerset\'s vineyards. Off keeps each climate\'s original look.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielLands', initial: true, online: true }),

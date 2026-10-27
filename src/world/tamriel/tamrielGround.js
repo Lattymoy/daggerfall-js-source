@@ -298,11 +298,9 @@ export function groundAirClimateIndex(bayClimateIndex) {
 
 /**
  * THE AIR A BODY FEELS (TESA-LANDS' audit, the owner: "Definitely fix any bugs you encounter"): a pixel's climate as the
- * survival law reads it (systems/survival/temperature.js CLIMATE_TEMP, the Climates & Calories table) - past the Bay a
- * zone's `air` where it names one, the air law's own (groundAirClimateIndex), else `climate` (the hosts' map's answer
- * there: the Bay's, a zone's ground, the Eltheric Ocean's). It read the ground's: the Ashlands' Mountains (-40) under the Dak'fron's
- * air (Desert2, +50) - -45 and Freezing at noon in Frostfall, a character frozen to death in a summer's walk - and every
- * one of Morrowind's nine zones that names its warm air felt the ground's cold.
+ * survival law reads it (systems/survival/temperature.js CLIMATE_TEMP) - past the Bay a zone's `air` where it names one
+ * (groundAirClimateIndex's law), else `climate` (the hosts' map's answer). It read the ground's: the Ashlands' Mountains
+ * (-40) under the Dak'fron's Desert2 air (+50) froze a character to death on a summer's walk.
  * @param {number} x @param {number} y @param {number} climate
  */
 export function feltClimateIndex(x, y, climate) {

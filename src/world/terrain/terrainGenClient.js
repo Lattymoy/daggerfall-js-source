@@ -314,7 +314,6 @@ export class TerrainGenClient {
    * buildMidRingHeights), ON THE WORKER ALONE - a ring is some 100 ms of kernel, and with no worker (node, a test,
    * `?terrainthread=off`, a dead one) there is no middle ring: null, and the far ring stands as it always did. Never on
    * this thread, never a reject.
-   * TESA-LANDS: `lands` the row - and the forest field's own value at each sample (`cover`, floraCover.js midRingCoverPixel).
    * @param {{ baseX: number, baseY: number, radius: number, sub: number, landform?: boolean, flora?: boolean, lands?: boolean }} job
    * @returns {Promise<?{ heights: Float32Array, wet?: ?Uint8Array, flora?: ?Uint32Array, cover?: ?Uint8Array }>}
    */

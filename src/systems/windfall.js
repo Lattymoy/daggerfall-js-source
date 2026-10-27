@@ -29,8 +29,7 @@
 // outdoors' own wind's (systems/wind/windDrive.js `dir` - the wisps', the rain's, the clouds'), Windfall's slow wander and
 // its gusts' swing turned about it; the mod's daily heading (HashUnit x 360 + WindDirectionDegrees) stands only where
 // the host hands no wind (a test, a frame with none). The port's eighth weather, the sandstorm (WEATHER2d, a gale's
-// wind - WIND1's VIOLENCE 0.95), is a storm here as Thunder is; DFU has no such word. Its ninth, the ashfall (ASHFALL1:
-// an overcast's breeze, VIOLENCE 0.3), is an Overcast.
+// wind - WIND1's VIOLENCE 0.95), is a storm here as Thunder is; DFU has no such word. ASHFALL1's ashfall is an Overcast.
 
 import { modSetting } from './modSettings.js';
 import { NetRandom } from '../formats/netRuntime.js';

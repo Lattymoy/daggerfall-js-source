@@ -1,33 +1,10 @@
 // @ts-check
-// ASHFALL1 (2026-10-27, the owner: "I think with the volcanic isles we could do an ashfall sort of weather with tiny lava
-// flakes") - THE DRY FALLS: what falls that the rain program never draws (world/weather.js isDryFall). WEATHER2d's sand,
-// the wisps' program in the sand's look (render/windWisps.js SAND_LOOK), and the ASH:
-//
-//   - THE ASH: grey flakes of the volcano's ash drifting down at about a metre a second - slower than the lab's snow
-//     (1.6) and as light, so the wind carries them as far - tumbling as they go, in a box that follows the eye and
-//     WRAPS (the lab's law: `p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5`, so moving reveals other flakes and
-//     never drags the ones in view). Soft round flakes, dull and unlit, as the lab's snow is.
-//   - THE EMBERS: among them a few tiny flakes still glowing from the vents - the owner's "tiny lava flakes". Each is
-//     kindled, white-hot for a breath, then reddens and goes out over its own life, flickering as it cools; they fall
-//     slower than the cold ash (still hot, still light) and are ADDED to the frame (blend one, one), so they glow
-//     against the pall and in the night.
-//
-// Both take the front's intensity (systems/weather/weatherFront.js: a dusting at an ashfall's edge, the heavy fall at
-// its heart) as the share of their counts, and the ONE wind (systems/wind/windDrive.js) as their drift - its rate for
-// the tumble and its integrated travel, a distance already gone and never wind x time (PROTO-19). A flake is a quad
-// faced to the screen and held at a least size there (DS1's pixel snow's clamp), its light thinned by what the clamp
-// added - so a far flake never vanishes between pixels and a near one is never a smear.
-//
-// THE CLOCK (AUDIT-VC7 G6, the wisps' law): every rate the shaders run is a whole number of cycles over
-// DRY_CLOCK_PERIOD - the tumble, an ember's life and its flicker - and every flake's fall a whole number of boxes over
-// it, so the clock handed in wraps (wispClock) and no flake moves at the wrap; the travel wraps at the box times the
-// gust's denominator (AUDIT 68 S17-wisp-wrap-gust), every flake's gust a whole number of its steps.
-//
-// The ash's program is started at boot with the sand built beside it, and built the first time the ash falls
-// (render/glProgram.js compiledPass - SHADER-STALL: its compile runs while the world loads, and only the first ashfall
-// ever waits on it); a fault in it is the ash's alone, warned once and never drawn, the sand and the frame untouched.
-// Drawn where the sand was: after the opaque world, depth-tested, no depth write, unfogged (the box hugs the eye
-// inside any fog's near field), and the hosts mark a foreign pass after it.
+// ASHFALL1 (bible/07-Rendering/Weather-Arc.md E): THE DRY FALLS the rain program never draws (world/weather.js
+// isDryFall) - WEATHER2d's sand (the wisps in SAND_LOOK) and the ash: grey flakes tumbling down a box that follows the
+// eye and wraps, and a few embers kindled white-hot, reddening out and ADDED to the frame so they glow. Both take the
+// front's intensity as their count's share and the ONE wind's travel as their drift; every rate is whole cycles and every
+// fall whole boxes over DRY_CLOCK_PERIOD, so the wrapped clock moves no flake. The ash's program compiles at boot and is
+// built at the first ashfall (compiledPass); a fault in it is the ash's alone.
 
 import { WindWispsRenderer, SAND_LOOK, wispClock, WISP_CLOCK_PERIOD, WISP_GUST_DIV } from './windWisps.js';
 import { buildProgram, compiledPass } from './glProgram.js';

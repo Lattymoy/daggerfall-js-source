@@ -13,13 +13,7 @@
 // bare, as before), and `version` moves when it lands so the far views are built again with it.
 //
 // THE QUALITY KNOB: the woods stand with Land View FLORA_MIN_LAND_VIEW and up (the Graphics preset's Medium, High and
-// Ultra); Low's 3 keeps the far views' cost and look of before. `?farflora=off` stands them down.
-//
-// TESA-LANDS (bible/03-World/Tamriel-Lands.md): PAST THE BAY A ZONE'S OWN. With the lands' row (`lands`), a far vertex in
-// a zone that lays its own flats reads its own woods (world/terrain/floraCover.js landsFloraSpec - its recipe's share and
-// rate), its own Trees' art (landTreeArt - its recipe's trees, by their weights) and its own ground (landGroundArt - the
-// drawn tiles in the zone's dress, world/tamriel/groundDress.js, at the pack's exposure as the near ground is dressed): the
-// Ashlands' horizon grey ash under a few dead trees, the Pinewoods' dark under its pines - never the climate's it was laid on.
+// Ultra); Low's 3 keeps the far views' cost and look of before. `?farflora=off` stands them down. TESA-LANDS: a zone's own.
 // ═══════════════════════════════════════════════════════════════════
 
 import { TREE_RECORDS } from '../world/terrain/terrainNature.js';
@@ -188,9 +182,7 @@ export function pipelinePictures() {
  * THE BOOK: a climate's flora as the far views build it - `floraOf(climate)`: `{ spec, art, ground }` (world/terrain/
  * floraCover.js floraSpec on its summer nature archive, treeArt's answer for that archive and groundArt's for its ground
  * archive - each null until it is read, the read asked then, once). `version` counts the archives read, so a far view
- * built before one landed is built again. TESA-LANDS: with `lands` (the row), `floraOf(climate, x, y)` at a map pixel
- * past the Bay whose zone names its own flora or ground answers the zone's (landsFloraSpec, landTreeArt, landGroundArt),
- * kept by the zone.
+ * built before one landed is built again. TESA-LANDS: with `lands`, `floraOf(climate, x, y)` past the Bay answers its zone's.
  * @param {{ read?: () => ?ReturnType<typeof pipelineRead>, forests?: () => boolean, lands?: boolean }} [o]
  */
 export function createFloraArt({ read = pipelineRead, forests = () => true, lands = false } = {}) {

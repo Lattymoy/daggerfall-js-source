@@ -103,11 +103,15 @@ ecotone** blends across their border (`scenes/world.js` climates3x3 reads a neig
 is not its ground's (`tamrielGround.js` groundAirClimateIndex, the air law's map - `systems/weather/airGround.js`):
 Morrowind's grey volcanic ground reads Mountain and its air the warm south's, because Morrowind's climate is "mild,
 though often hot" and "mostly free from snow and ice" (UESP, Lore:Morrowind - its summary, not a book's). Its snow is
-the Velothi's. **The air a body feels** is the same (`tamrielGround.js` feltClimateIndex - the climate the world and the
+the Velothi's.
+
+**The air a body feels** is the same (`tamrielGround.js` feltClimateIndex - the climate the world and the
 exterior hosts hand the survival law, `systems/survival/temperature.js`): a zone's `air` where it names one, the hosts'
 map elsewhere. (TESA-LANDS' audit, 2026-10-27, the owner: "Definitely fix any bugs you encounter" - the survival law had
 read the ground's: the Ashlands the Mountains' -40, -45 and Freezing at noon in Frostfall, and a character photographing
-it froze to death; with its air the Dak'fron's, +45. `test/systems/tesabiome_feltair.test.js`.) **The ash** (ASHFALL1,
+it froze to death; with its air the Dak'fron's, +45. `test/systems/tesabiome_feltair.test.js`.)
+
+**The ash** (ASHFALL1,
 2026-10-27, the owner: "with the volcanic isles we could do an ashfall sort of weather with tiny lava flakes") is a
 zone's `ash`: the share of its sky's hours under the ashfall, the volcano's own weather - Red Mountain 0.5, the Ashlands
 0.3 (TES III's Ashlands region: Ash 30% of its weather), Stonefalls 0.15, the least - the port's share (ESO's loading
