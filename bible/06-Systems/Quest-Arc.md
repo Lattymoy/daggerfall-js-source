@@ -6709,6 +6709,34 @@ quest was set aside, and it rode the save.
   bare bridge) and `tools/mutants/questshelffaces.json` (2, both dead). UI3's `the-escorts-top-for-their-bottom` record
   (`tools/mutants/ui3.json`) was re-aimed by content to the new loop, and still dies.
 
+## FACE-ORPHAN - a face whose quest is gone is never drawn, and not saved (RPT1026-MISC, 2026-10-26)
+
+A private report: *"3 fake party member faces on my screen ... I've turned in and abandoned quests to no avail."* The
+column loses a face by DropFace or by the quest-end sweep, and QUEST-SHELF-FACES hides one whose quest is set aside. A
+face whose quest left the machine WITHOUT ending - a quest a load could not restore (`machine.js` restoreSaveData skips
+it, "expected after removing a mod with custom quest actions", and the faces are restored all the same) - had neither,
+and stood for good: no quest of it was left to turn in, abandon or end.
+
+- `setEscortQuestGone` is handed `(uid) => !machine.getQuest(uid)` by the bridge (`scenes/quest/questBridge.js`, beside
+  `setEscortQuestAway`); `shownColumn` leaves such a face out and `getEscortFacesSaveData` drops it from the save, so
+  the next load is clean. No host grows.
+- A DEPARTURE (Port-Ledger A, FACE-ORPHAN): DFU's faces outlive a quest that never ends.
+- Pinned by `test/systems/quest/rpt1026_misc_faces.test.js` (1); `escortfaces.test.js`'s QUEST-SHELF-FACES test resets
+  the new seam the real bridge sets (pin moved); `tools/mutants/rpt1026_misc.json` (3).
+
+## RUMOR-ORPHAN - a quest's progress rumor goes with the quest (RPT1026-MISC, 2026-10-26)
+
+A private report: asked for news in a town, a resident said a quest's own words with their macros raw (`_sister_`,
+`%g3`). The tombstone files a quest's RumorsPostSuccess / RumorsPostFailure as its progress rumor (Quest.cs:637-640),
+and `machine.js` removeQuest, a week of the quest's clock later, left it in the mill: the next telling asks for a quest
+the machine no longer holds, and the expansion's null-parent bail hands the words over unexpanded. DFU has the same
+orphan until its next load, whose RestoreConversationData sweep (TalkManager.cs:2522-2533; the port's
+`removeOrphanedQuestRumors`) takes it - and a session online is days of a character's clock.
+
+- removeQuest calls the machine's `removeProgressRumors` dep with the quest's uid (`machine.js:"this.deps.removeProgressRumors?.(quest.uid);"`).
+- A DEPARTURE in WHEN only (Port-Ledger A, RUMOR-ORPHAN): the rumor goes with its quest, not at the next load.
+- Pinned by `test/systems/quest/rpt1026_misc_rumor.test.js` (1); `tools/mutants/rpt1026_misc.json` (1).
+
 ## NO-ASKS-AGAIN - a No that leads nowhere asks again, on the next click (2026-10-13, FIELD BUGS 2026-10-13e)
 
 The batch's record: `01-Overview/bugs/Field-Bugs-2026-10-13e.md`, report 6.

@@ -2454,6 +2454,16 @@
   "tr": "5cc3159c299f",
   "by": "claude-in-session"
  },
+ "legacy.houseWaits.newborn": {
+  "en": "28e7f5a06d17",
+  "tr": "f250087e2d40",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.noNewborn": {
+  "en": "862d8a89f3cf",
+  "tr": "9a48d6861f4a",
+  "by": "claude-in-session"
+ },
  "lootBanner.honour.aura": {
   "en": "87c2003333d4",
   "tr": "82d65ae979da",

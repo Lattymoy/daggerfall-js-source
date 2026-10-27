@@ -3017,6 +3017,8 @@ lang.offer.machine,"Denne oversættelse er maskinoversat og bliver stadig gennem
 lang.offer.no,"Nej, behold engelsk"
 lang.offer.yes,"Ja"
 legacy.court.cooled,"{name} stivner. ""Sådan spørger man mig ikke. En anden dag."""
+legacy.houseWaits.newborn,"Opdrag et barn af {name} som din arving"
+legacy.houseWaits.noNewborn,"Der kan ikke opdrages en arving til det hus."
 legacy.rez.refused,"Riget lader dig ikke rejse dig. Din død står ved magt."
 legacy.rez.unheard,"Riget hørte ikke det kald, der ville vække dig. Et andet kan endnu nå dig."
 level.renown.risen,"Du er steget til Ry {level}!"

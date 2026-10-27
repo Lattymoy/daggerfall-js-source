@@ -3017,6 +3017,8 @@ lang.offer.machine,"Это машинный перевод, он ещё пров
 lang.offer.no,"Нет, оставить английский"
 lang.offer.yes,"Да"
 legacy.court.cooled,"{name} напрягается. «Так меня не спрашивают. В другой день»."
+legacy.houseWaits.newborn,"Вырастить ребёнка персонажа {name} своим наследником"
+legacy.houseWaits.noNewborn,"Для этого рода нельзя вырастить наследника."
 legacy.rez.refused,"Мир не позволит тебе подняться. Твоя смерть остаётся в силе."
 legacy.rez.unheard,"Мир не услышал зова, что поднял бы тебя. Другой ещё может до тебя дойти."
 level.renown.risen,"Вы достигли Известности {level}!"
