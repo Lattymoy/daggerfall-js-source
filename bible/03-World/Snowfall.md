@@ -103,7 +103,8 @@ the rasterizers, `fa48dcc6...` the statics, `e4c9678b...` Basic Roads,
   again and the nearer tiers over it rebuild.
 - **BASIC ROADS' OWN ROADS.** BasicRoadsBridge reads the Basic Roads MOD, so
   the classification reads Hazelnut's network or none (the rule World of
-  Daggerfall's loader keeps): the port's generated fallback is not his mod. A
+  Daggerfall's loader keeps): the port's generated fallback is not his mod.
+  Past the Bay the land's own roads, by the painter's word (BAY-LEFT-GROUND, below). A
   tier's context reads the roads of the map pixels its own box touches
   (SnowContextData.Prepare's scan; AUDIT ENVIRONS S1 - not the player's).
   The authored ground is the location's blocks' (BlocksFile.CheckName's
@@ -217,6 +218,55 @@ tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
 - **A BODY ON FIRST SIGHT.** HandleEnemyDeath and the scan are one law here:
   a body is registered the frame its marker first lies, whatever the player's
   side of a door.
+
+## BAY-LEFT-GROUND - the snow past the Bay (2026-10-26)
+
+The audit "no system left behind in the Bay" (2026-10-26), its item 10 (D3); the owner: *"Every single thing here
+needs to be addressed. No exceptions."* Skyrim's winter laid the snow cover and the peaks' caps (the ground's own) but
+none of the mod's: no deep snow to wade, no footprint or track, no corpse's hollow and no berm anywhere past the Bay.
+Four Bay-shaped laws held it there, each moved, the Bay's own answer unchanged:
+
+- **THE GROUND.** The world host's snow ground (`scenes/snowGround.js` createSnowGround - SNOWFALL1's adapter, moved out
+  of `bootWorld` verbatim first by `tools/hostMove.mjs`) stood no pixel off the Bay's 1000 x 500 (`pixelOn`'s bound),
+  and keyed one by `px * 1000 + py` - one key for two pixels past the Bay. Every pixel of the world's grid now
+  (`inWorldGrid`), by its `worldPixelKey`.
+- **PREPARE'S BOX.** SnowContextData.Prepare's map pixels (`scenes/snowfallHost.js` snowPixelBox) were clamped to
+  0..999 x 0..499, so a box past the Bay answered the Bay's corner pixel alone. Clamped to the world's grid now: at
+  Solitude, Torval or west of the Bay the box is their own pixels; the Bay's 400 boxes the pins read are DFU's own.
+- **ITS METRES.** Prepare's global box (`systems/snowfallRuntime.js` SnowContext.prepare) was clamped to DFU's map, the
+  Bay's 0..819,200 x 0..409,600 m; now to the world's (SNOW_WORLD_METRES, the grid's pixels either way of the Bay's
+  corner at 819.2 m a pixel). On the Bay away from its edge, the same box.
+- **ITS ROADS.** BasicRoadsBridge reads the Basic Roads mod's 1000 x 500 bytes, the Bay's alone. Past the Bay the land's
+  own roads stand in their place (`world/arenaRoads.js` arenaRoadByte, TESA14's roads at the Bay's own law and scale -
+  the reader Travel Options' paths read past the table too), and they are drawn as CURVES (VOYAGER2,
+  `world/road/roadCurves.js`) whose tiles no Basic Roads arm predicts - so a tile is classified by the painter's own
+  word (`snowfallNetworkBeyond`, over the build's GRASS-PATH1 record of the tiles it wrote, through BasicRoadsTerrain's
+  new `kindAt`): a paved tile (Basic Roads' road and its diagonal flanks, records 46, 47 and 55 - TS9's ring halves
+  among them since AUDIT BAY-LEFT F2) a road's, a worn one within a track's reach of its curve (curveField, the
+  painter's own field; TRACK_HALF and half a tile's diagonal) a track's, a road's worn shoulder neither (the berm lies
+  over it), an authored tile none as on the Bay. On the Bay it is Basic Roads' own bytes, with a crossing's join (TESA5:
+  the road past the Bay carried straight to the Bay's edge, which the ground paints there - `world/terrain/terrainGen.js`)
+  on its road bits, so the snow knows the road the ground draws; where no join stands, the Bay's own byte for byte.
+
+MEASURED. The real runtime over the world host's own snow ground, at Whiterun and west of the Bay, stands what it
+stands on the Bay - the local window, the middle tier, the blanket's 49 overlays, a track the player leaves and a
+corpse's hollow - where before none of them stood anywhere past the Bay; with ARENA2, on Whiterun's own kernel ground.
+Lane D's probe (the audit's p4), a 400 m box round the player: at Solitude (1569, -430) it was the Bay's north-east
+corner pixel, (999, 0), at Torval (1922, 1705) its south-east, (999, 499); now each is its own pixel, and Daggerfall's
+(207, 213) the same as it was.
+
+THE FOUR HOSTS. `scenes/world.js` WIRED (its snow ground, `scenes/snowGround.js`). `scenes/exterior.js` FLAGGED - the
+Bay's fixed city stands one Bay pixel far from the Bay's edge, and the shared box and metres answer it as before.
+`scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED, as SNOWFALL1's: no snow lies inside.
+
+DEPARTURE (Port-Ledger A, BAY-LEFT-GROUND): past the Bay the snow's roads are the land's own, classified by the
+painter's word, where the mod reads Basic Roads' network; on the Bay the crossings' joins ride Basic Roads' road bits.
+
+Pins: `test/render/bayleftground_snow.test.js` (7: the box at Solitude, Torval and west of the Bay, the Bay's DFU's own;
+Prepare's box unclamped; the ground's world key, an alias pair; the real runtime over the real ground past the Bay equal
+to the Bay's; the curves' classes and the host's handing of them; the join; with ARENA2 Whiterun's own kernel ground).
+PIN MOVED: `test/render/snowfall1_runtime.test.js`'s roads line. Mutants: `tools/mutants/bayleftground.json`'s D3 (14),
+all dead; `snowfall1.json`'s carved-sea record retargeted by the move.
 
 ## Pins
 

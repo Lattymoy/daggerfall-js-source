@@ -722,6 +722,25 @@ handed the player's hall and pixel through the module's `place` handle, and both
 (36,387 -> 36,383); the ceiling comes down by them (36,389 -> 36,385). Pinned by `wildrejoin.test.js` THE BODY RECORD,
 three more records in `tools/mutants/wildrejoin.json`.
 
+## BAY-LEFT-GROUND's moves - the trouble's foes, the snow's ground and a record's frame out of bootWorld (2026-10-26)
+
+The audit "no system left behind in the Bay" (WP9, the ground: `03-World/Landforms.md` and `03-World/Snowfall.md`
+BAY-LEFT-GROUND, `06-Systems/Living-World.md` BAY-LEFT-GROUND) changed three blocks of `bootWorld`, each moved out first,
+verbatim, and changed in its module:
+
+- the living world's trouble's `foesOf` to `scenes/livingWorld/troubleFoes.js` troubleFoesOf (9 logical lines out) -
+  the roads' harness's producer too;
+- SNOWFALL1's adapter, the snow's ground, to `scenes/snowGround.js` createSnowGround (68 out; one edit before the move:
+  the stamp's id counter a holder, as the tool moves no group-declared `let`; `snowfall1.json`'s carved-sea record
+  retargeted by the tool);
+- LANDFORM1's lift and its two books, `groundFrameHeight`, `groundFrameNative`, `restandHeight` and `scaleOf` to
+  `scenes/groundFrameHost.js` createGroundFrame (39 out; the tool retargeted 27 mutant records and one bible anchor).
+
+The landforms' sites past the Bay are a module the host wires (`scenes/landformSitesHost.js`, 14 in), and D5's record
+stamp and old law are read through the moved frame (this thread's landforms asked `before`, a remains' place read whole -
+5 out net). `bootWorld` 35,799 -> 35,692 logical lines, its ceiling with it (`test/scenes/hostceiling.test.js`);
+`hostsplit.json`'s ceiling record re-aimed onto the new row.
+
 ## PORTAL-BAY - the Portal Stone's door, pick and step out of bootWorld (2026-10-26)
 
 The stone's teleport past the Bay (`06-Systems/Portal-Stone.md` PORTAL-BAY) needed its gate asked at the pick and at the

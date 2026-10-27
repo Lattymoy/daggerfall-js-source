@@ -21,8 +21,7 @@
 // with the table, for the main thread's own readers of the shaped ground (a record's lift field, the gate's beacon).
 //
 // THE FOUR HOSTS RULE (bible/Home.md): world.js wires it - the streamed world is the one ground past the Bay.
-// scenes/exterior.js is the Bay's fixed scene (LANDFORM4's own table, no ground past the Bay); scenes/worldModes.js (the
-// interiors) and scenes/dungeonContext.js (the dungeons) stand no shaped ground: FLAGGED, nothing to wire.
+// scenes/exterior.js (the Bay's fixed scene), scenes/worldModes.js (interiors), scenes/dungeonContext.js (dungeons) - FLAGGED: LANDFORM4's own table or no shaped ground at all, so nothing to wire
 // ═══════════════════════════════════════════════════════════════════
 import { landformSitesBeyond, SITE_REACH_PIXELS } from '../world/landforms.js';
 import { pastBaySites } from '../world/pastBayRows.js';
