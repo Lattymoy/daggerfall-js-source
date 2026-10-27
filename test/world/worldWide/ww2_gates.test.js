@@ -183,9 +183,13 @@ test('WW2 the hub\'s records a lane: the Bay\'s keys the ones they always were, 
 
 test('WW2 the wire: a gate\'s pixel the Bay\'s map on the Bay\'s lane, as it always was, and a pixel of the world on a lane past it - the site word, the rite\'s word in and out; the lanes ride a relay that keeps them (mutants: the Bay\'s last column, the world\'s pixel refused, the lanes\' relay)', () => {
   const lane1 = gateNumber(900, 1);
+  // PIN MOVED (WW-GATES-EVERYWHERE): lane 1 stands now, so the lane that does not stand is Cyrodiil's (9) - its world
+  // pixel a lane's pixel, and no word heard on it
+  const lane9 = gateNumber(900, 9);
   for (const [d, px, py, ok] of [[900, 0, 0, true], [900, 999, 499, true], [900, 1000, 0, false], [900, -1, 5, false], [900, 5, 500, false],
     [lane1, -1200, 300, true], [lane1, 1800, -700, true], [lane1, WORLD_PIXEL_BOUND, 0, false], [lane1, 0.5, 0, false],
-    [lane1, 500, 200, false], [lane1, 999, 499, false], [lane1, 1000, 499, true], [lane1, 999, -1, true]]) {   // AUDIT WW F6: a lane past the Bay never on its map
+    [lane1, 500, 200, false], [lane1, 999, 499, false], [lane1, 1000, 499, true], [lane1, 999, -1, true],
+    [lane9, 2400, 900, true], [lane9, 500, 200, false]]) {   // AUDIT WW F6: a lane past the Bay never on its map
     assert.equal(gateLanePixelOk(gateLaneOf(d), px, py), ok, `${d} ${px},${py}`);
     const heard = ok && gateLaneOpen(gateLaneOf(d));   // AUDIT WW F2: a lane that does not stand takes no word at all
     assert.equal(gatePixelOk(d, px, py), heard, `${d} ${px},${py}`);
@@ -209,6 +213,8 @@ test('WW2 the wire: a gate\'s pixel the Bay\'s map on the Bay\'s lane, as it alw
   assert.equal(GATE_LANES_RELAY_MIN, WORLD_WIDE_RELAY_MIN);
   assert.equal(relaySupportsGateLanes(RELAY_VERSION), true, 'this relay keeps them');
   assert.equal(relaySupportsGateLanes(`world${WORLD_WIDE_RELAY_MIN - 1}`), false, 'the relay before the world-wide one keeps no lane');
+  // WW-GATES-EVERYWHERE: and no relay before it at all (WW2-the-lanes-relay lived on world259, between WW2's own and this)
+  for (let v = 200; v < WORLD_WIDE_RELAY_MIN; v++) assert.equal(relaySupportsGateLanes(`world${v}`), false, `world${v} keeps no lane`);
   assert.equal(relaySupportsGateLanes(`world${WORLD_WIDE_RELAY_MIN}`), true);
   assert.equal(relaySupportsGateLanes(null), false);
 });
@@ -353,7 +359,7 @@ test('WW2 a theatre past the Bay: its gate\'s ground the law\'s - its own theatr
   for (let d = 900; d < 960; d++) {
     const n = gateNumber(d, skyrim), s = findTheatreGateSite(n, scan);
     assert.ok(s);
-    assert.deepEqual([s.day, s.region, s.theatre], [n, null, skyrim]);
+    assert.deepEqual([s.day, s.region, s.town.region, s.theatre], [n, 64, 64, skyrim]);   // PIN MOVED (WW-GATES-EVERYWHERE): its province's region (WW-R's 64, Skyrim's) - the court is laid in it, the seats' word names it; null before
     assert.ok(areas.includes(s.area));
     assert.ok([...(scan.byArea.get(s.area) ?? [])].includes(worldPixelKey(s.px, s.py)));
     assert.equal(s.place, `${s.town.name}, ${areaName(s.area)}`);
@@ -447,7 +453,9 @@ test('WW2 the wiring: the world host stands the lanes off the registry (its gate
   assert.match(world, /const gateOmen = params\.has\('online'\) \? createGateLanes\(\{/);
   assert.match(world, /scans: theatreGates, lanesOk: \(\) => !!online\?\.gateLanesOk && !!socialLink\(\)\?\.gateLanesOk, here: \(\) => playerTravelPixel\(\)/);
   assert.match(world, /for \(const \{ lane, c \} of gateOmen\?\.currents\(\) \?\? \[\]\) if \(lane && c\.site\) socialLink\(\)\?\.sendGateSite\?\.\(c\.site\.day, c\.site\.px, c\.site\.py, c\.site\.place\)/);
-  assert.match(world, /gateLaneOf\(c\.d\) === 0 \? findGateSite\(c\.d, _gateScan\) : null/);
+  // PIN MOVED (WW-GATES-EVERYWHERE A2b): a lane past the Bay's kill names its province's region (scenes/gate/gateSeat.js) - the
+  // Bay's lane's its scan's, as before
+  assert.match(world, /try \{ region = c \? gateSeatRegion\(c\.d, _gateScan\) : null; \} catch \{ region = null; \}/);
   const online = src('src/net/online.js');
   assert.match(online, /this\.gateLanesOk = relaySupportsGateLanes\(relayV\)/);
   assert.match(online, /if \(gateLaneWire\(day\) !== 0 && !this\.gateLanesOk\) return false;/);
@@ -460,5 +468,6 @@ test('WW2 the wiring: the world host stands the lanes off the registry (its gate
   assert.match(relay, /const k = gateReceiptKey\(sub, gateLaneOf\(day\)\);/);
   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): a province's gate its own province's seats' (net/townSeatLaw.js gateRegionOk), no other's
   assert.match(src('server-account/src/accounts.js'), /c\.x !== 'rite' && gateRegionOk\(c\.d, region\) \? region : null/);
-  assert.match(src('server-account/src/seatInfluence.js'), /if \(!gateRegionOk\(day, region\)\) return \{ counted: false, why: 'beyond-the-bay' \};/);
+  // PIN MOVED (WW-GATES-EVERYWHERE): the refusal named for what it is - a region not the gate's lane's ('beyond-the-bay' before)
+  assert.match(src('server-account/src/seatInfluence.js'), /if \(!gateRegionOk\(day, region\)\) return \{ counted: false, why: 'not-its-region' \};/);
 });

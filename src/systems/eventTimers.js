@@ -28,6 +28,8 @@ import { sdPhase, SD_COLLAPSE_MS } from '../net/superDungeon/sdLaw.js';   // SD2
 import { egTimes } from '../net/eliteGates/egLaw.js';   // EG-F: an Elite Breach's clock - the company's own row
 import { arenaSeasonOf, arenaSeasonEndsS } from '../net/arena/arenaLaw.js';   // EG-ZM: the Spire's boards keep the arena's season
 import { ketchVoyageAt } from '../net/ketch/ketchLaw.js';   // KETCH: the Sky-Ketch's voyage - the clock's alone
+import { ketchStationHere, ketchStationsStanding } from '../scenes/ketch/ketchStanding.js';   // KETCH-EVERYWHERE: the station of the province I stand in
+import { ketchCity } from './ketch/ketchWords.js';
 import { t } from './textManager.js';
 
 const DAY_MS = 86_400_000;
@@ -67,8 +69,8 @@ export const gateEventId = (n) => (Number.isSafeInteger(n) && n >= 0 ? `gate:${n
 /** KETCH (bible/11-Multiplayer/Sky-Ketch.md section 2): THE SKY-KETCH'S ROW - one a voyage, the host handing nothing: she is
  *  sighted, arrives, keeps station and weighs anchor at the same instants for everyone, over the same fields. Its words
  *  through the text core as the row is laid (L10N4). */
-function ketchRows(now, coming, live) {
-  const kv = ketchVoyageAt(now), kWhere = t('ketch.timers.where', 'Over Daggerfall');
+function ketchRows(now, coming, live, theatre = 0) {
+  const kv = ketchVoyageAt(now, theatre), kWhere = theatre ? t('ketch.timers.whereAt', 'Over {city}', { city: ketchCity(theatre) }) : t('ketch.timers.where', 'Over Daggerfall');
   if (kv.phase === 'away') coming(`ketch:${kv.n}`, 'ketch', t('ketch.timers.sighted', 'The Sky-Ketch is sighted'), kv.sightAt, kWhere, t('ketch.timers.sightedSub', 'It stays east of the city for seven hours'));
   else if (kv.phase === 'sighted') coming(`ketch:${kv.n}`, 'ketch', t('ketch.timers.arrives', 'The Sky-Ketch arrives'), kv.at, kWhere, t('ketch.timers.arrivesSub', 'Its anchor-lift comes down when this runs out'));
   else if (kv.phase === 'docked') live(`ketch:${kv.n}`, 'ketch', t('ketch.timers.station', 'The Sky-Ketch keeps station'), kv.departAt, kWhere, t('ketch.timers.stationSub', 'Its anchor-lift is down in the fields east of the city until this runs out'));
@@ -77,6 +79,7 @@ function ketchRows(now, coming, live) {
 
 /**
  * @param {{ now: number,
+ *           pixel?: { x: number, y: number } | null,
  *           gate?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
  *           gates?: Array<{ lane: number, place?: string|null }> | null,
  *           serpent?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
@@ -160,6 +163,10 @@ export function eventTimerRows(src) {
 
   // ── THE SKY-KETCH (net/ketch/ketchLaw.js: a voyage every real Saturday, the clock's alone) ── KETCH: ketchRows
   ketchRows(now, coming, live);
+  // KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): and the station of the province I stand in, while this
+  // screen stands the stations past the Bay - its rows the same words over its own city (eight more would bury the Bay's)
+  const kHere = ketchStationsStanding() && src?.pixel ? ketchStationHere(src.pixel.x, src.pixel.y) : null;
+  if (kHere) ketchRows(now, coming, live, kHere);
 
   // ── AN ELITE BREACH (net/eliteGates/egLaw.js egTimes: the call's opening, the open window, THE COUNT) ── EG-F (bible/11-Multiplayer/
   // Elite-Gates.md section 2, the Timers row): the company's alone (the host hands it only the call it holds) - a new kind

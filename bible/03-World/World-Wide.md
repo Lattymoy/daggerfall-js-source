@@ -62,6 +62,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 |---|---|---|
 | WW1 | The world's grid (the key, the theatres, the areas) and its places (the registry, the Bay's provider); the living world's towns and dungeons off it, grouped by area | BUILT (below) |
 | WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
+| WW-GATES-EVERYWHERE | The gates of the eight provinces standing (the lanes WW2 built, opened); a province's kill its own province's seats'; the provinces' scans in the page's idle moments - and a Sky-Ketch station in every province at its crown capital (KETCH-EVERYWHERE, `11-Multiplayer/Sky-Ketch.md` section 22) | BUILT (below, after WW2) |
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
@@ -230,8 +231,9 @@ town's 72 pixels - and asks the registry for the places about each: land (the on
 its eight neighbours, a fast-travel town two to four pixels off naming it (the nearest, the first listed on a tie), no
 spawned dungeon, grouped by AREA (a province's district). Over the Bay's own places it finds the Bay scan's every list
 pixel for pixel - pinned on a synthetic map and on ARENA2 (43 regions, 53,381 pixels, a hundred sites, no difference).
-`findTheatreGateSite` answers `findGateSite`'s shape: `region` null past the Bay, `area`, `theatre`, its place
-"Town, Province". The Bay's lane keeps its own scan (its shape is the clearing's, Starfall's and the Abyss dungeon's).
+`findTheatreGateSite` answers `findGateSite`'s shape: `region` (a Bay region's on the Bay, its province's past it -
+WW-GATES-EVERYWHERE, below), `area`, `theatre`, its place "Town, Province". The Bay's lane keeps its own scan (its
+shape is the clearing's, Starfall's and the Abyss dungeon's).
 
 The ground past the Bay is the composed continent's (`tamrielClimateAt`, `groundWoods`) whatever the land switch says,
 so every client finds the same site; the towns are the registry's listed places of a town's type (TESA's providers).
@@ -260,37 +262,38 @@ A theatre's scan is made once a registry generation and once a picture (`tamriel
   Bay's under its own key, as always), and an account's receipt a lane (`gateReceiptKey(sub, lane)` - a hello reads
   every lane's in one ask). The herald beats every lane against its own state, and posts a lane past the Bay's omen
   only once accounts agree where it stands. The wire carries a lane past the Bay's pixel as a world pixel
-  (`gatePixelOk`: the site word, the rite's word in and out); `GATE_LANES_RELAY_MIN` 254.
-- The account service: a gate past the Bay is its own gate_kills row (its number) and credits no seat
-  (`server-account/src/accounts.js` - no region stored; `seatInfluence.js` creditGate `'beyond-the-bay'`).
+  (`gatePixelOk`: the site word, the rite's word in and out); `GATE_LANES_RELAY_MIN` 254 then, the world-wide relay's one
+  number since AUDIT TESA II Z2 (`WORLD_WIDE_RELAY_MIN`, 269).
+- The account service: a gate past the Bay is its own gate_kills row (its number). Its kill counts at its own
+  province's seats (WW7-3: `net/townSeatLaw.js` gateRegionOk; the client names that province since WW-GATES-EVERYWHERE,
+  below).
 
 DEPLOY ORDER: the relay first (world254), then the account service (acct180), then the site. A client on an older
 relay stands the Bay's lane alone.
 
-### The lanes that stand - and opening one (AUDIT WW F2, 2026-10-24)
+### The lanes that stand (AUDIT WW F2, 2026-10-24; WW-GATES-EVERYWHERE, 2026-10-26)
 
 The relay holds no picture of the world: it cannot tell a lane whose theatre has ground for a gate from one that has
 none. A lane the clock alone opened was a court no honest client could find - its receipts any two accounts' for the
-asking, nine more a day. So the lanes that stand are named in the law both ends read, `net/wire.js` `GATE_LANES_OPEN`
-(re-exported by `gateLaw.js`): **the Bay's lane alone today**. The hub admits a gate (`gateHolds`, `gateAdmits`), keeps
-a site, a rite's word (`gatePixelOk`) and a spent receipt (`gateNumberOk`) on those lanes alone, and walks only them
-(the receipts a hello reads, the falls, the rite, the herald); the client stands only them (`gateLanes.js` `open`).
-
-**Opening a lane** is the change that registers a province's places (TESA's - `world/worldWide/worldPlaces.js`): it
-adds the province's theatre to `GATE_LANES_OPEN`, a relay deploy like any other (the relay first, then the site).
-**Cyrodiil's lane (9) never opens** - the open zone stands no gate (`systems/gate/theatreGateSite.js`), and
-`auditww`'s pin holds it out.
+asking. So the lanes that stand are named in the law both ends read, `net/wire.js` `GATE_LANES_OPEN` (re-exported by
+`gateLaw.js`): **the Bay's and the eight provinces' past it, 0 to 8** (WW-GATES-EVERYWHERE, below - TESA's places stand
+in every province, and the freeware's scan finds a gate's ground in all eight). The hub admits a gate (`gateHolds`,
+`gateAdmits`), keeps a site, a rite's word (`gatePixelOk`) and a spent receipt (`gateNumberOk`) on those lanes alone, and
+walks only them (the receipts a hello reads, the falls, the rite, the herald); the client stands only them
+(`gateLanes.js` `open`). **Cyrodiil's lane (9) never opens** - the open zone stands no gate
+(`systems/gate/theatreGateSite.js`), and `auditww`'s pin holds it out.
 
 ### What stays the Bay's (recorded)
 
-- **The seats.** A seat is a Bay region's (decision 5); a gate past the Bay credits none.
 - **The clearing** (`world/gate/gateClearance.js`) is World of Daggerfall's rock kept off the gate - the mod's rock
-  stands on the Bay alone, so the clearing reads the Bay's lane alone.
+  stands on the Bay alone (its sites are the Bay's 62 regions' packs; a pixel past the Bay names none of them), so the
+  clearing reads the Bay's lane alone and a gate past the Bay is owed none.
 - **Starfall's covens and the Abyss dungeon** read the Bay's scan until WW5.
 
 ### THE FOUR HOSTS (Home.md)
 
-`scenes/world.js` wired (the lanes, the theatres' scans, each lane's site to the hub, a seat's gate the Bay's lane's).
+`scenes/world.js` wired (the lanes, the theatres' scans, each lane's site to the hub; a gate's kill's region its lane's
+since WW-GATES-EVERYWHERE).
 `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` hold no gate omen of their own - the gate's
 stone, pool and breach read the world host's `standing`, unchanged in shape.
 
@@ -318,6 +321,97 @@ read nothing, so the mark's mutant lived). Mutant records re-aimed by content in
 `tech1.json` and `wb14g.json`; `ww1.json`'s name bank record to `areaNameBank.js` - all dead.
 
 Section A, WW2 (OURS: DFU has no Oblivion Gate - the gate, its lanes and its scan past the Bay are the port's own).
+
+## WW-GATES-EVERYWHERE - an Oblivion Gate in every province (BUILT, 2026-10-26)
+
+The owner, after the audit "no system left behind in the Bay" (`Audit-Left-In-The-Bay`, item 24 - A2, A2b, A2c - and
+item 34 - A4): *"Every single thing here needs to be addressed. No exceptions."* (2026-10-26). **The owner's calls, taken:**
+- The gate lanes 1 to 8 open; Cyrodiil's lane (9) never, for it is the open PvP zone.
+- Site-bound world events (gates, covens, Hollows, the Sky-Ketch, raids) stand nowhere in the open zone. For this
+  package: no gate on lane 9, and no Sky-Ketch station there.
+- One Sky-Ketch station per province, at its crown capital (`11-Multiplayer/Sky-Ketch.md` section 22, KETCH-EVERYWHERE).
+
+**What stood.** WW2 built the gates of every theatre - a lane a theatre, the omen, ring, plaque, timers and board rows,
+the hub's records and the receipts a lane - and AUDIT WW F2 held the lanes past the Bay shut in the law both ends read
+(`GATE_LANES_OPEN` the Bay's alone) until a province's places registered. WW7-1 registered TESA's places in every
+province, and nothing opened them: only the Bay's gate ever stood. The records said two things (WW2's "opening a lane",
+the fold's P7 "the gates stay the Bay's lane alone"). Beside it, a province's gate's kill named no region (the world
+host's `gateSeatWord` named one for the Bay's lane alone), so WW7-3's law that a province's gate is its own seats'
+(`net/townSeatLaw.js` gateRegionOk) was never asked; and the eight provinces' scans ran at once on the page's thread,
+the first `lanes()` of each registry generation.
+
+**What it is now.**
+
+- **THE LANES THAT STAND** (above): 0 to 8, Cyrodiil's never. The relay's every lane loop and law reads the constant, so
+  it runs the eight as WW2 built them. Folded into world270, undeployed: main's relay is world268, and world269 and
+  world270 are this release's alone, so `GATE_LANES_RELAY_MIN` (`WORLD_WIDE_RELAY_MIN`, 269) needs no split - a client
+  stands a province's lane only on a relay of 269 or later, and the first of those that deploys is world270, which keeps
+  them. A client on an older relay stands the Bay's lane alone (`gateLanesOk`), as before.
+- **THE SITE'S REGION** (`systems/gate/theatreGateSite.js` findTheatreGateSite): a site past the Bay - and its town -
+  names its province's region (WW-R's 62 to 69, `regionOfTheatre`), where it named none; the world host lays the court
+  in it (`world.js:"gateArenaSite: (g) => {"`, the site's own region - the made court took no region before).
+- **A2b, THE SEAT** (`scenes/gate/gateSeat.js`): a kill's region is the Bay's lane's by its scan, as before, and a lane
+  past the Bay's its province's off its number alone (`gateSeatRegion`) - no scan asked, and the kept claim waits on no
+  Bay scan (`gateClaimWaits`). The host's two lines call it in place (`world.js:"const gateSeatWord = (r) => {"`,
+  `world.js:"const gateClaimReady = (r) => {"`). The account service already took it (WW7-3); its refusal of a region
+  not the gate's lane's is named for what it is, `'not-its-region'` (`seatInfluence.js` creditGate - `'beyond-the-bay'`
+  said a gate past the Bay was no seat's, as it was before WW7-3), folded into acct196.
+- **A2c, THE SCANS IN THE PAGE'S IDLE MOMENTS** (`systems/gate/theatreGateSite.js` theatreGateScanner,
+  `scenes/gate/gateLanes.js` createTheatreGateScans): a theatre's scan walks its towns' rings once, then THEATRE_SCAN_STEP
+  (4) ring pixels between asks of `more` - the scan made at once, list for list; each pixel's place asked of the registry
+  once a scan (the walk asked 149,247 times of 28,201 pixels, each through the countryside's and the lairs' rolls). The
+  host's scans warm in the page's idle moments the Bay scan's own way (`pageIdle`: the idle callback, a timer's 4 ms
+  slice on a page without one, none in a probe), a lane at a time; `theatres()` answers the lanes whose scans are whole,
+  so a province's lane stands once its scan is done, and a site is drawn off no scan not yet whole. **Measured** on the
+  freeware with the host's registry (the Bay's rows, TESA's places, the countryside's and the lairs' rolls), the lanes
+  forced open on the tree before (e77eadc58f) to measure what opening them alone would have cost. The first session's
+  numbers, on a quiet machine: before, **1,741 ms** in one task (2,167 to 3,399 ms cold); after, 217 slices of 8 ms
+  idle moments, **the longest 42 ms**. Measured again at the finish, on a machine loaded about eight times over (load 30
+  on four cores, so every number inflated): before, **5,429 ms in one task** cold and 364 ms warm (the new scan made at
+  once, with no idle moments: 5,215 and 373); after, 292 to 316 idle moments, the longest **217 to 410 ms** cold (about ten over 50 ms) and **33 to 37 ms** warm (none over 50
+  ms). The long slices are single cold asks of the countryside's roll (a provider's first ask of a district, up to 94 ms
+  in one `places.at` on the trace). No slicing of the scan can cut one ask: the ask is the countryside's own cost, and
+  the old single task paid every one of them at once.
+- **What stays the Bay's** (recorded above): the clearing - World of Daggerfall's rock stands on the Bay's regions alone,
+  so no gate past the Bay is owed one; Starfall's covens and the Abyss dungeon read the Bay's scan (WW5).
+
+**Proved on the freeware** (`test/world/worldWide/ww_gates_everywhere.test.js`, ARENA2): over the host's registry the
+host's scans find ground in all eight provinces and none in the open zone; each lane's gate stands at a site in its own
+theatre at its province's region, three days each, its omen said on its own card, its ring on the map, standing for the
+player beside it; the warm in idle moments finds the same sites. Through the real relay: Skyrim's court minted at its
+opening and never the open zone's; its fighter admitted, the Warden down, the receipt naming the gate's number; the
+night's fall kept on Skyrim's lane and handed at a hello; two accounts agreeing where it stands and its omen posted with
+its place. Through the real account service: three agreeing claims of a Skyrim gate, its region Skyrim's, 300 influence
+for the guild pledged at Solitude; the same gate named in a Bay region or another province's refused, its row keeping no
+region.
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wired, in place (`gateSeatWord`, `gateClaimReady` and the claim's call - a line each, no line added;
+`bootWorld`'s ceiling unchanged). `scenes/exterior.js` FLAGGED - the Bay's fixed scene stands no gate past the Bay.
+`scenes/worldModes.js` FLAGGED - its `enterGateArena` lays the court from the host's `gateArenaSite`, unchanged in
+shape (its region now the province's). `scenes/dungeonContext.js` FLAGGED - the court's dungeon is the location the
+mode machine hands it.
+
+### Pins and mutants
+
+`test/world/worldWide/ww_gates_everywhere.test.js` (7: the lanes; A2b the client's region and the service's count; the
+relay; the court; A2c the slices; ARENA2 a gate in every province). Mutants `tools/mutants/ww_gates_everywhere.json`
+(16, all dead).
+
+PINS MOVED: `test/scenes/audittesa2p_hosts.test.js` P7 (the lane that stays shut is Cyrodiil's, its theatre the one
+never scanned); `test/world/worldWide/ww2_gates.test.js` (a site past the Bay its province's region; the host's region
+its lane's; the refusal's word; the wire's lane that does not stand is Cyrodiil's now - with lane 1 open,
+AUDITWW-F2-the-words-unbounded had lived; and every relay before the world-wide one keeps no lane - WW2-the-lanes-relay
+had lived on world259 since the fold); the claim's call `gateClaimReady(r)` in `wb5b_gate_claim.test.js`,
+`auditonline2.test.js`, `chap2b_receipts.test.js`, `audit_chap3.test.js`; `silverways_client.test.js` (the region its
+own word); `seat1b_client.test.js` THE HOSTS BY SOURCE (the gate claim's region off `gateSeatRegion`'s answer). Mutant records re-aimed by content: `ww2.json` (the neighbours' test, the spawned dungeon, the water, the
+region past the Bay, the seats' lane), `audittesa2p.json` P7, `auditww.json` F2 (the lanes open now the open zone's too),
+`silverways.json` (the character unsent). Run at the finish: `ww_gates_everywhere.json` (16), `ww2.json` whole (32: 31
+dead, the rings' inner bound equivalent as recorded), `auditww.json` whole (21), P7 and the silverways record - all dead
+once the two pins above were added.
+
+Ledger A, WW-GATES-EVERYWHERE (OURS - DFU has no Oblivion Gate).
 
 ## WW3 - the sea, whole (BUILT, 2026-10-24)
 
@@ -721,10 +815,10 @@ The owner: "Can we fold in CCR-542". The arc merged into TESA's branch whole, ea
   the Bay's theatre (`livingIndex.js` livingRoams, the ways' planner reading the Bay's ground and roads - lifted by WW7-7); the
   lanes past the Bay have their own reach (`worldLanes.js` BEYOND_LANE_MAX_PX 400, BEYOND_LANE_PATH_PX 800 - the Bay's
   LANE_MAX_PX of 30 gave one lane among the 28 ports) and walk the picture's open sea (`beyondLaneWay`: 19 ways of 21 lanes
-  in 87 ms on the freeware's data, where an A* over the Bay's pixels cost 15 s); the gates stay the Bay's lane alone
-  (`net/wire.js` GATE_LANES_OPEN), and a theatre whose lane is shut is never scanned (`scenes/gate/gateLanes.js`
-  createTheatreGateScans `open`: the eight provinces' scans had cost 453 ms of the page's thread a generation, every one
-  for a lane no gate stands on). NOT REGISTERED: the countryside's and the lairs' pixel providers - the registry's
+  in 87 ms on the freeware's data, where an A* over the Bay's pixels cost 15 s); a theatre whose gate lane is shut is
+  never scanned (`scenes/gate/gateLanes.js` createTheatreGateScans `open` - Cyrodiil's since WW-GATES-EVERYWHERE opened
+  the eight provinces' lanes, their scans made in the page's idle moments: they had cost 453 ms of the page's thread in
+  one task a generation). NOT REGISTERED: the countryside's and the lairs' pixel providers - the registry's
   `inArea` and `near` walk a district's 9,216 pixels through a provider, and the roll's dry plateau made one district
   276 ms on the page's thread; the zone's halls ask the rolls themselves (`zoneHallsHost.js` standsToo). The four hosts:
   `scenes/world.js` wires every seam of AUDIT TESA II's lane P (the live list and the rolls through the places host,

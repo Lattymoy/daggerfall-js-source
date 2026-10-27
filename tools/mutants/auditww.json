@@ -47,7 +47,7 @@
   {
     "name": "AUDITWW-F2-every-lane-open",
     "file": "src/net/wire.js",
-    "old": "export const GATE_LANES_OPEN = Object.freeze([0]);",
+    "old": "export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);",
     "new": "export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"

@@ -342,7 +342,9 @@ test('SEAT1b THE HOSTS BY SOURCE: the relay ticks in its pose arm and nowhere el
   assert.match(w, /seat: seatAt \? \{ seat: seatAt, book: seatBook, nameOf: \(k\) => seatAtMapId\(townSeats, k\)\?\.name \?\? null, port: coastalAt\(town\.px, town\.py, seaPixel, csaIsPortTown\(town\.px, town\.py\)\), countName: materialCountLabel \} : null,/);   // SEAT2b: and whether DFU names the town a port, the works' material words
   assert.match(w, /const seatAt = seatHere\(town\.mapId\);/);
   // PIN MOVED (SILVER-WAYS): the claiming character rides every claim (its guild's deed asks it), the region where the scan found it
-  assert.match(w, /const character = characterIdOf\(playerEntity\);\n[^\n]*\n\s*return site \? \{ region: site\.region, character \} : character \? \{ character \} : null;/);
+  // PIN MOVED (WW-GATES-EVERYWHERE, A2b): the region the kill's lane's - the Bay's lane's off its scan, a province's lane's its
+  // own province's (scenes/gate/gateSeat.js gateSeatRegion), named where there is one
+  assert.match(w, /const character = characterIdOf\(playerEntity\);\n[^\n]*\n\s*return region != null \? \{ region, character \} : character \? \{ character \} : null;/);
   assert.match(w, /region: \(\) => \{ const px = playerTravelPixel\(\); const r = maps\.getRegionIndexAt\(px\.x, px\.y\); return Number\.isSafeInteger\(r\) \? r : null; \},/);
   const nw = rd('src/ui/noticeWindow.js');
   assert.match(nw, /\.\.\.\(seatShown\(\) \? \[\['seat', 'Seat'\]\] : \[\]\)\];/);

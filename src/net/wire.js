@@ -5121,10 +5121,12 @@ export const gateLaneWire = (d) => Math.floor(d / GATE_LANE_SPAN_WIRE);
  *  a client stands: scenes/gate/gateLanes.js). A lane past the Bay stands only where its theatre holds ground for a gate
  *  - places registered past the Bay (systems/gate/theatreGateSite.js) - and the relay holds no picture of any (its
  *  ground is the clients'): a lane the clock alone opened was a court no honest client could find, its receipts any two
- *  accounts' for the asking. So the lanes are named here, the law both ends read: the Bay's always; a province's from
- *  the change that registers its places (bible/03-World/World-Wide.md WW2, "Opening a lane"); Cyrodiil's (9) never -
- *  the open zone stands no gate (theatreGateSite.js). */
-export const GATE_LANES_OPEN = Object.freeze([0]);
+ *  accounts' for the asking. So the lanes are named here, the law both ends read. WW-GATES-EVERYWHERE (2026-10-26, the
+ *  owner: "Every single thing here needs to be addressed. No exceptions."; bible/03-World/World-Wide.md): the Bay's and
+ *  every province's past it, 1 to 8 - TESA's places stand in each (WW7-1), and the freeware's scan finds a gate's ground
+ *  in all eight (test/world/worldWide/ww_gates_everywhere.test.js); Cyrodiil's (9) never - the open zone stands no gate
+ *  (theatreGateSite.js). */
+export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);
 /** AUDIT WW F2: does lane `lane` stand. */
 export const gateLaneOpen = (lane) => GATE_LANES_OPEN.includes(lane);
 /** AUDIT WW F3: a gate's number as a client may name one - a safe integer on a lane that stands (the hub keeps its
@@ -6986,6 +6988,12 @@ export function validEgOpenTell(v) {
 /** The relay that keeps ships (RELAY_VERSION world255 - world253 on its branch). */
 export const KT_RELAY_MIN = 255;
 export const relaySupportsKetch = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= KT_RELAY_MIN; };
+/** KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): the first relay that keeps a ship of a station past the
+ *  Bay (its voyage's number naming its theatre - ketchLaw.js ketchTheatreOf); an older one mints no room for its voyage (its
+ *  clock reads that number as a voyage a hundred thousand years on), so a client boards none of them there and stands only
+ *  the Bay's. The world-wide relay's one number (WORLD_WIDE_RELAY_MIN - shipped in it). */
+export const KT_THEATRES_RELAY_MIN = WORLD_WIDE_RELAY_MIN;
+export const relaySupportsKetchTheatres = relaySupportsWorldWide;
 /** What a member may say: its `in` to the bridge's fight, a blow (`hit`), a cell taken, set, let go or knocked from its
  *  hands, and its body's word (`vt`). */
 export const KT_IN_KINDS = Object.freeze(['in', 'hit', 'pick', 'bank', 'drop', 'hurt', 'vt', 'spent', 'rz']);   // AUDIT WORLD-EVENTS L1-4: `rz` my Resurrect at a crewmate lying down   // AUDIT KETCH L1-2: `spent`, a voyage's share given - to the hub alone
@@ -7115,7 +7123,10 @@ export const KT_VOYAGE_KEY = 'ktvoyage';
  *  `{ n, spent: true, e }` once its account says that voyage's share is given (`kt` `spent`, on the hub's socket) - for
  *  the receipt's life, handed at its account's next hello (the Hour's SD9a, rung for rung). */
 export const KT_RC_PREFIX = 'ktrc:';
-export const ketchReceiptKey = (sub) => `${KT_RC_PREFIX}${sub}`;
+/** KETCH-EVERYWHERE: one a STATION (net/ketch/ketchLaw.js ketchTheatreOf - the gate's receipt-a-lane, gateReceiptKey): the
+ *  Bay's station's key the one it always was, and a station past the Bay keeps its own - two voyages of one round are two
+ *  receipts, and one sailed over another province never stands over the other's. */
+export const ketchReceiptKey = (sub, theatre = 0) => (theatre ? `${KT_RC_PREFIX}${sub}.${theatre}` : `${KT_RC_PREFIX}${sub}`);
 /** The hub's internal door a ship's room tells its fall's receipts at, and how long it waits to tell again. */
 export const KT_INTERNAL_RC = '/internal/ketch/rc';
 export const KT_TELL_RETRY_MS = 30_000;

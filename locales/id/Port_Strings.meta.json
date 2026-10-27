@@ -14389,6 +14389,11 @@
   "tr": "8775e0f9abb0",
   "by": "claude-in-session"
  },
+ "ketch.arrivedAt": {
+  "en": "5a91649260fe",
+  "tr": "10fbaf0de9b6",
+  "by": "claude-in-session"
+ },
  "ketch.bar.endsIn": {
   "en": "71cc8d614899",
   "tr": "a246b248daa3",
@@ -14507,6 +14512,11 @@
  "ketch.client.away": {
   "en": "66a9751a1766",
   "tr": "d34945615698",
+  "by": "claude-in-session"
+ },
+ "ketch.client.awayAt": {
+  "en": "5e7c51653190",
+  "tr": "7ddc010afcfe",
   "by": "claude-in-session"
  },
  "ketch.client.cell": {
@@ -14794,6 +14804,11 @@
   "tr": "79cbb19af1ec",
   "by": "claude-in-session"
  },
+ "ketch.left.dockedAt": {
+  "en": "814a7ac81159",
+  "tr": "f1ed7e796fe8",
+  "by": "claude-in-session"
+ },
  "ketch.left.sighted": {
   "en": "3ac248d06a71",
   "tr": "501053693d00",
@@ -14969,6 +14984,11 @@
   "tr": "7f4264508255",
   "by": "claude-in-session"
  },
+ "ketch.loweredAt": {
+  "en": "7c0ab0c5e3c4",
+  "tr": "f3888f70af11",
+  "by": "claude-in-session"
+ },
  "ketch.name": {
   "en": "1ef6cf3bd938",
   "tr": "c4e39aa1dc7f",
@@ -15029,6 +15049,11 @@
   "tr": "a90a2f52e536",
   "by": "claude-in-session"
  },
+ "ketch.refuse.awayAt": {
+  "en": "250974de0d78",
+  "tr": "bcc47cc92439",
+  "by": "claude-in-session"
+ },
  "ketch.refuse.busy": {
   "en": "7dda41422090",
   "tr": "383bda57f345",
@@ -15062,6 +15087,11 @@
  "ketch.sighted": {
   "en": "eef2aa8bfa5a",
   "tr": "9f2242e20044",
+  "by": "claude-in-session"
+ },
+ "ketch.sightedAt": {
+  "en": "fc1ab67eff41",
+  "tr": "e4bed176f442",
   "by": "claude-in-session"
  },
  "ketch.sky.departing": {
@@ -15182,6 +15212,11 @@
  "ketch.timers.where": {
   "en": "1a31ab704829",
   "tr": "a821fe718a05",
+  "by": "claude-in-session"
+ },
+ "ketch.timers.whereAt": {
+  "en": "39a08fa1c893",
+  "tr": "ebf3289d42b9",
   "by": "claude-in-session"
  },
  "ketch.when.days": {
