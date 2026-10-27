@@ -161,7 +161,12 @@ reaches the walker and the plants through the samples they share. A change
 to its law is made in walkGroundAt, and every reader moves with it.
 `groundAt` stays the bilinear read for what is not walked on or planted (a
 vein's foot, a fishing spot, a rock piece's footprint, the jungle's beach
-altitude).
+altitude). The jungle's altitude is a species pick, not a plant's ground:
+`jungleNature.js` weighs its lowland species against its upland ones over
+25 to 120 m above the beach, and the tree it picks stands on the walk law
+(placeAt). The two reads part by at most a quad's twist (46 cm on the real
+data), under 0.5% of that band's weight; moving it would turn trees of one
+species into another for no ground they stand on.
 
 After it, on the same 176 pixels, no flat stands more than 5 cm over the
 walk floor. With ARENA2, `test/world/terrain/floraground_real.test.js` builds
@@ -177,30 +182,105 @@ pixel the stream has built the frame it is built, and are laid again when
 the ground's inputs move. A 3D tree's faces are matte
 (`07-Rendering/Low-Poly-Trees.md` FLORA-GROUND).
 
-NOT FIXED here, measured: the far grid's stride-4 ground (pixels three or
-more out, `world.js` LOD_STRIDE) is a coarser cut of the same samples, and
-the tall flats there (only trees draw past the second ring) stand on the
-walk law: on the same 176 pixels 12% of the flats stand more than 25 cm
-over the stride-4 surface and 0.1% more than 1 m, the worst 6.1 m, all of
-them 1.6 km or further from the player. That is the ground's level of detail, not the
-flora's law. Moving the plants onto it would be a per-ring offset; the fix
-belongs to the far grid.
+FLORA-GROUND, THE RINGS (the coordinator, 2026-10-27: "Fix it at the root
+in the terrain's level of detail, so the coarse surface the player sees and
+the ground the plants stand on agree at every ring").
+
+What was left. EV4 draws a pixel three or more out (`world.js` strideFor,
+LOD_STRIDE 4) as a 33 x 33 grid of every fourth sample: one quad over
+sixteen of the near grid's. The plants stood on the walk law, so the far
+ring drew them off its own ground. Measured on the same 176 pixels against
+the far ring's own mesh (its vertices, its triangles, its bed carved as the
+build carves it): of 735,396 plants, the ground of 138,259 (18.8%) stood
+more than 25 cm over it and of 124,471 (16.9%) more than 25 cm under it,
+1,611 and 268 more than a metre, the worst 6.6 m over. (By the first
+count's measure - a plant's foot, its sink and all - 12.2% stood more than
+25 cm over, the worst 5.9 m on the placement as committed; the first count
+read 6.1 m.) The five real cells built at stride 4: 4,340
+over and 4,295 under by 25 cm of 23,334, 245 and 434 by a metre, the worst
+8.2 m, past the Bay.
+
+Why not the far ring's vertices. No coarse vertex can carry the relief
+under a 25.6 m quad. With each coarse vertex the highest fine sample within
+a stride of it (the far mesh never under the walk floor), 92% of the
+plants were buried a metre or more, the worst 37.6 m, and every ridge drew
+fat. Any vertex between that and the sample leaves metres one way or the
+other. So the far ring keeps its vertices (EV4's look and its cost), and
+the plants are drawn on what it draws.
+
+The fix - the ground a pixel draws is one law. `terrainSurface.js`
+ringGroundAt is the ground a built pixel draws at its ring class:
+surfaceHeightAt at its stride, less the bed its water carved
+(`_bed.depths`). These are the very vertices and triangles its surface
+uploads. At stride 1 with no bed it is walkGroundAt; the player stands only
+in the near ring. The snow lies on it (`snowGround.js`). `scenes/floraSeat.js`
+seatFlora draws every plant of the ground on it:
+- each forest group's batch - the woods, DFU's scatter, a border's, the
+  jungle and its roadside pairs, a town's nature flats on its ground - moved
+  by what the ring's ground stands over or under the walk ground at the
+  plant's root, its slope's sink kept;
+- the graht-oaks, framed by the same lift (`grahtHost.js`).
+A plant's place stays the walk floor's: its cover, its body, Logging's
+tree, the near 3D trees and its outline read it there. A felled tree's
+sink is drawn through the same law (`treeHost.js` sinkFelled through
+`floraSeat.js` drawnCentre). A flat not stood on the ground keeps its
+picture where it stands: a town's tree on a hill's mound, a World of
+Daggerfall site's flats at the author's height. The build marks the
+plants of the ground as it logs them (`pixelBuild.js`). The seat runs
+wherever the drawn ground changes: the build (before it publishes and its
+felled trees are sunk), `world.js` restrideTerrain and dwRecarve (Deep
+Waters' TileMap), and a re-skin. Each
+group keeps its lifts with the ring they were made for, so a pixel
+crossing back and forth reads its ground once; a promotion to the near
+ring reads none.
+
+After it. On the same 176 pixels no plant is drawn more than 0.12 mm off
+the far ring's mesh: 0 over or under by 5 cm, 25 cm or 1 m. The five real
+cells: 0.067 mm at worst. No plant of the real cells stands on a carved
+quad at stride 1 or 4, so the bed's part is pinned on made ground.
+
+Cost. A pixel's first seat at the far ring reads the ground twice a plant;
+after that a class change only re-uploads each forest batch's corners, as
+a felled tree's sink does. On the Bay's densest woods (500,340: 8,524
+plants in 20 groups), timed beside the same pixel's grids on the same
+loaded runner: the first seat about one and a half times the near grid's
+own restride (STREAM1's 3.12 ms), each later class change under a tenth of
+it, and the far grid's restride itself a twenty-fifth. Most pixels are
+built far, so the first seat is paid in the build's own breath; a pixel
+built about the player (a load, a landing) makes its far ring's lifts
+ahead in its build (`floraSeat.js` warmFlora), so the crossing that first
+sends it out reads no ground.
+
+What it leaves. World of Daggerfall's shrub and rock models in a far
+pixel stand where the walk law put them: they are meshes in the pixel's
+merge, not flora flats. A herb patch's or a vein's picture is short enough
+that past the second ring it is not drawn (`flatDistance.js`
+FAR_FLAT_RING). Past the streamed rings (the middle ring, FAR-FIELD, the
+horizon) the trees are the band's and the middle ring's, on their own
+grids (`06-Systems/Travel-View.md`).
 
 Pins: `test/world/terrain/floraground.test.js` (7: the law against the
 drawn mesh itself, the host's walk floor lifted off world.js, every
 placer on a saddle field, the build's readers, the lift field, the band's
-slots and bits, the band's book and the middle ring's ground) and
-`test/world/terrain/floraground_real.test.js` (1: the five real cells).
+slots and bits, the band's book and the middle ring's ground),
+`test/world/terrain/floraground_rings.test.js` (6: ringGroundAt against
+the drawn mesh at both strides with and without a bed; the seat at stride
+4, again, at stride 1 and over a bed and its re-carve; a felled tree at
+both rings; the graht-oaks framed at their lift; the hosts' seats and the
+build's marks; a near build's far lifts made ahead) and `test/world/terrain/floraground_real.test.js` (2: the
+five real cells on the walk floor, and built at stride 4 with their beds,
+drawn on the far ring's mesh).
 Moved, each marked PIN MOVED (FLORA-GROUND):
 `test/world/terrain/auditlandforms.test.js` (H3; B2's read between
 samples; G1/G2's lifted publish), `test/world/terrain/grass3_surface.test.js`,
 `test/world/jungleroadside.test.js` (the pairs' fallback),
 `test/player/fb0930_respawnground.test.js`,
 `test/player/fb0930b_respawnheld.test.js` and `test/player/enterexit.test.js`
-(its message). Mutants: `tools/mutants/floraground.json` (32, all dead);
-re-aimed by content, each noted: `forest1.json`, `ecotone1.json`,
-`wodbush.json`, `natureground.json`, `jungleroadside.json`, `grass3.json`,
-`auditlandforms.json`, `midring.json` (all dead).
+(its message). Mutants: `tools/mutants/floraground.json` (58, the rings'
+26 among them, all dead); re-aimed by content, each noted: `forest1.json`,
+`ecotone1.json`, `wodbush.json`, `natureground.json`, `jungleroadside.json`,
+`grass3.json`, `auditlandforms.json`, `midring.json`, and `prof4.json`'s
+shallow sink, now in drawnCentre (all dead).
 
 ## Milestone 7 - locations on terrain (SHIPPED)
 

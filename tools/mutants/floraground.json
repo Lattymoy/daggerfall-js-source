@@ -293,5 +293,240 @@
     "tests": [
       "test/world/terrain/floraground.test.js"
     ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-ring-at-the-near-stride",
+    "file": "src/world/terrain/terrainSurface.js",
+    "old": "  const h = surfaceHeightAt(heightmapData, lx, lz, stride);\n  if (!carve) return h;",
+    "new": "  const h = surfaceHeightAt(heightmapData, lx, lz, 1);\n  if (!carve) return h;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-ring-blind-to-its-bed",
+    "file": "src/world/terrain/terrainSurface.js",
+    "old": "  if (!carve) return h;\n  const g = (HEIGHTMAP_DIMENSION - 1) / stride + 1;",
+    "new": "  if (carve || !carve) return h;\n  const g = (HEIGHTMAP_DIMENSION - 1) / stride + 1;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-bed-read-at-the-near-cell",
+    "file": "src/world/terrain/terrainSurface.js",
+    "old": "(TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)) * stride, lx, lz);",
+    "new": "(TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)), lx, lz);",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-snow-off-the-bed",
+    "file": "src/scenes/snowGround.js",
+    "old": "return ringGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);",
+    "new": "return ringGroundAt(p.samples, lx, lz, p._stride ?? 1, null);",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-mark-unread",
+    "file": "src/scenes/floraSeat.js",
+    "old": "    if (!ON_GROUND.has(c)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-lift-reversed",
+    "file": "src/scenes/floraSeat.js",
+    "old": "const liftAt = (samples, x, z, stride, carve) => ringGroundAt(samples, x, z, stride, carve) - walkGroundAt(samples, x, z);",
+    "new": "const liftAt = (samples, x, z, stride, carve) => walkGroundAt(samples, x, z) - ringGroundAt(samples, x, z, stride, carve);",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-near-rings-bed-ignored",
+    "file": "src/scenes/floraSeat.js",
+    "old": "export function ringLifts(samples, centers, stride, carve) {\n  if (stride === 1 && !carve) return null;",
+    "new": "export function ringLifts(samples, centers, stride, carve) {\n  if (stride === 1) return null;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-seat-that-never-moves",
+    "file": "src/scenes/floraSeat.js",
+    "old": "    if (lift === (g.lift ?? null)) continue;",
+    "new": "    if (lift || !lift) continue;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-box-left-behind",
+    "file": "src/scenes/floraSeat.js",
+    "old": "    g.batch._box = flatBatchAabb(drawn, g.size);",
+    "new": "    g.batch._box = flatBatchAabb(g.centers, g.size);",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-pixels-box-ungrown",
+    "file": "src/scenes/floraSeat.js",
+    "old": "    if (p._box) for (let k = 0; k < 3; k++)",
+    "new": "    if (!p._box) for (let k = 0; k < 3; k++)",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-lift-kept-across-a-re-carve",
+    "file": "src/scenes/floraSeat.js",
+    "old": "  if (kept && kept.stride === stride && kept.carve === carve) return kept.lift;",
+    "new": "  if (kept && kept.stride === stride) return kept.lift;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-sink-off-the-ring",
+    "file": "src/scenes/floraSeat.js",
+    "old": "  const dy = (g.lift ? g.lift[i] : 0) - (felled ? g.size.h + 1 : 0);",
+    "new": "  const dy = 0 - (felled ? g.size.h + 1 : 0);",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-felled-tree-stood-up-by-the-restride",
+    "file": "src/scenes/floraSeat.js",
+    "old": "drawnCentre(g, c, i, FELLED.has(c))",
+    "new": "drawnCentre(g, c, i, false)",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-sink-by-the-old-law",
+    "file": "src/scenes/treeHost.js",
+    "old": "      return drawnCentre(g, c, i, felled);",
+    "new": "      return felled ? [c[0], c[1] - g.size.h - 1, c[2]] : c;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ],
+    "note": "Logging's sink as it was before the rings: the felled tree under the walk floor, the rest on it, whatever ring the pixel draws."
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-graht-set-unlifted",
+    "file": "src/scenes/floraSeat.js",
+    "old": "  if (set) set.lift = liftsFor(",
+    "new": "  if (set) set.lift = null && liftsFor(",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-graht-frame-blind-to-its-lift",
+    "file": "src/scenes/grahtHost.js",
+    "old": "const y0 = lift ? tr[i + 1] + lift[i / GRAHT_TREE_FLOATS] : tr[i + 1];",
+    "new": "const y0 = tr[i + 1];",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-restride-unseated",
+    "file": "src/scenes/world.js",
+    "old": "    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants drawn on the ground it draws at the new ring class (scenes/floraSeat.js)\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-re-carve-unseated",
+    "file": "src/scenes/world.js",
+    "old": "    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants on the ground as carved now (scenes/floraSeat.js)\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-build-unseated",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, renderer);",
+    "new": "    void seatFlora;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-re-skin-unseated",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: the new pictures drawn on the ground the pixel draws (scenes/floraSeat.js)\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-wild-unmarked",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      if (skin?.wild != null) standsOnGround(c);",
+    "new": "      if (skin?.wild == null) standsOnGround(c);",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-jungle-unmarked",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      g.centers.forEach(standsOnGround);",
+    "new": "      g.centers.forEach(() => {});",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-a-mounds-tree-marked",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "seatNatureFlat(hillSeat, flat.x, flat.z, hillY) === hillY",
+    "new": "seatNatureFlat(hillSeat, flat.x, flat.z, hillY) >= hillY",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-lifts-not-made-ahead",
+    "file": "src/scenes/floraSeat.js",
+    "old": "export function warmFlora(p, stride) {\n  if (stride === 1) return;",
+    "new": "export function warmFlora(p, stride) {\n  return;",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-builds-warm-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, lodStride); }\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
+  },
+  {
+    "name": "FLORA-GROUND-RINGS-the-far-class-not-handed",
+    "file": "src/scenes/world.js",
+    "old": "    lodStride: lodOn ? LOD_STRIDE : 1,",
+    "new": "    lodStride: 1,",
+    "tests": [
+      "test/world/terrain/floraground_rings.test.js"
+    ]
   }
 ]

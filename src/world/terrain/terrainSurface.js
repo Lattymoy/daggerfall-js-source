@@ -170,6 +170,33 @@ export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {
 export const walkGroundAt = (heightmapData, lx, lz) => surfaceHeightAt(heightmapData, lx, lz, 1);
 
 /**
+ * FLORA-GROUND, THE RINGS (the coordinator, 2026-10-27: "the coarse surface the player sees and the ground the plants
+ * stand on agree at every ring"): THE GROUND A BUILT PIXEL DRAWS, at its ring class - the very vertices and triangles its
+ * terrain surface uploads: surfaceHeightAt at the pixel's stride (the near grid's 129 x 129 at 1, the far ring's 33 x 33
+ * at 4 - buildTerrainGrid decimates the samples, buildTerrainIndices cuts each quad on the same diagonal), less the bed
+ * WATER-NEXT 2 carved under its water (`carve` the bed's depths at that stride - waterBed.js bedFields' carve, a pixel's
+ * `_bed.depths` - which carveBed takes off those vertices). Every plant is DRAWN on it (scenes/floraSeat.js seatFlora:
+ * each placed on walkGroundAt, then drawn by what this stands over or under that) and the snow lies on it
+ * (scenes/snowGround.js height). At stride 1 with no bed it is walkGroundAt, the walker's floor - the player stands only
+ * in the near ring. The far ring cannot carry the near ring's relief (a 25.6 m quad over sixteen of 6.4 m): on the real
+ * data the walk ground under 18.8% of the Bay's plants stood more than 25 cm over it and under 16.9% more than 25 cm
+ * below it, the worst 6.6 m, until they were drawn on it; no coarse vertex can hold them all (each the highest fine
+ * sample about it buried 92% of them a metre or more - bible/03-World/World-Arc.md FLORA-GROUND, THE RINGS).
+ * @param {Float32Array} heightmapData sample(x, z) = data[x*hDim+z], normalized
+ * @param {number} lx pixel-local x, 0..TERRAIN_SIZE
+ * @param {number} lz pixel-local z, 0..TERRAIN_SIZE
+ * @param {number} [stride] the pixel's ring class (`_stride`)
+ * @param {?ArrayLike<number>} [carve] the bed's depths at that stride, x fastest, or null where none was carved
+ * @returns {number} world height
+ */
+export function ringGroundAt(heightmapData, lx, lz, stride = 1, carve = null) {
+  const h = surfaceHeightAt(heightmapData, lx, lz, stride);
+  if (!carve) return h;
+  const g = (HEIGHTMAP_DIMENSION - 1) / stride + 1;
+  return h - gridValueAt(carve, g, g, (TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)) * stride, lx, lz);
+}
+
+/**
  * GRASS-LIT2 (2026-10-02): THE GROUND'S NORMAL WHERE A BLADE STANDS - the
  * drawn surface's own, as the terrain's fragment stage receives it: the
  * stride-1 grid's vertex normals (buildTerrainGrid's central differences,

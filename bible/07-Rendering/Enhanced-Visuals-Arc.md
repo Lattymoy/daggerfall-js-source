@@ -311,6 +311,14 @@ the way down. distantland.test.js pins all of it; the moving picture
 (the far haze at distance 4, the vanished seam lattice at grazing
 sun) is owed to a data-bearing session.
 
+FLORA-GROUND, THE RINGS (2026-10-27): the far ring's plants. "Models,
+flats ... all stay" now means their PLACES stay. Each plant of the ground
+is drawn on the ground the far ring draws (`terrainSurface.js`
+ringGroundAt, `scenes/floraSeat.js` seatFlora) and back on the walk floor
+when its pixel is promoted. The stride-4 cut had parted from the walk
+floor by more than 25 cm under 18.8% of the Bay's plants, 6.6 m at worst.
+The record is `03-World/World-Arc.md` FLORA-GROUND, THE RINGS.
+
 EV5 (2026-08-31): MOONLIGHT AND THE NIGHT. The enhanced sky computed
 both moons' directions, phases and visibilities every frame since ES1
 and the world's light consumed none of it - now it does. The pure

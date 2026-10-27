@@ -279,6 +279,7 @@ import { createGatherHost } from './gatherHost.js'; // PROF1/PROF2: the gatherin
 import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kind in it
 import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlintPass } from '../render/nodeGlint.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-GLINT: glinting on their own pictures
 import { treeKind } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it
+import { seatFlora } from './floraSeat.js';   // FLORA-GROUND, THE RINGS: a pixel's plants drawn on the ground it draws, at every ring
 import { createTreesHost } from './treesHost.js';   // LPT1 / BANTHA1 (HOST-SPLIT): the near 3D trees - Low Poly Trees' door and the jungle's, and their frame
 import { createJungleHost } from './jungleHost.js';   // BANTHA1: Bantha's jungle - its field, its trees' door, its haze
 import { canopyLight, canopyKey, canopyMoon } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY: the light under a closed canopy
@@ -4960,6 +4961,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     p.terrain = renderer.createTerrainSurface(bed?.positions ?? grid.positions, bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     p._bed = { sheet: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheetDepths: bed?.sheetDepths ?? null, halo };   // the grid kept: a cap lifted carves it back
+    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants on the ground as carved now (scenes/floraSeat.js)
   }
   /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (the water's sheet, and its normals for a
    *  re-carve) and the depths; the carved ground is uploaded and let go. null where no vertex is under water. */
@@ -5454,6 +5456,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight,
+    lodStride: lodOn ? LOD_STRIDE : 1,   // FLORA-GROUND, THE RINGS: the far ring's class, its plants' lifts made ahead in a near pixel's build
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
@@ -5562,7 +5565,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   // EV4: a built pixel crosses between the full-res core and the far
   // ring without rebuilding anything but its terrain SURFACE - the
-  // models, flats, collider, doors and population all stay. The grid
+  // models, flats, collider, doors and population all stay (FLORA-GROUND,
+  // THE RINGS: its plants' pictures drawn on the new surface, their
+  // places where they stood - scenes/floraSeat.js seatFlora). The grid
   // re-builds from the pixel's own cached samples (blended, so a
   // location's flattening survives the round trip); the culling box is
   // already deep enough for either class (the skirt drop at build).
@@ -5640,6 +5645,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const waterIndices = waterOn ? buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride) : null;   // DW-F: the cap's TileMap, where it patched one
     p.water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, p.terrain)) : null;
     p._stride = stride;
+    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants drawn on the ground it draws at the new ring class (scenes/floraSeat.js)
     p.groundNormals = labGrass && stride === 1 ? grid.normals : null;   // GRASS-LIT2: the grass's slope, at the ring class it stands on; AUDIT B1: only with grass
     if (p._dwBytes) dwClipTerrain(p);   // DW-C: the clip, at the new ring class
     // PERF-EXT21: a promotion is the other way a pixel joins the grass

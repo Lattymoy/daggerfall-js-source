@@ -6,7 +6,7 @@ import { authoredTiles, settlementsIn, snowfallNetwork, snowfallNetworkBeyond } 
 import { worldPixelKey, inWorldGrid } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: a pixel's one key over the world
 import { inBay } from '../world/tamriel/tamrielFrame.js';
 import { carvedFloorLocalY } from './deepWater/deepWatersHost.js';
-import { gridValueAt, surfaceHeightAt, surfaceNormalAt, surfaceNormalFromSamples } from '../world/terrain/terrainSurface.js';
+import { ringGroundAt, surfaceNormalAt, surfaceNormalFromSamples } from '../world/terrain/terrainSurface.js';
 import { nearestFirstFrom } from '../world/streamingWorld.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 
@@ -53,8 +53,7 @@ export function createSnowGround(host) {
     translation: (p, out) => host.state.pixelTranslation(p.px, p.py, out),
     height(p, lx, lz) {
       if (p.deepWaters && host.deepWaters) { const f = host.deepWaters.floorLocalY(p, lx, lz); if (f != null) return f; }   // DW-B: the floor is drawn there
-      const stride = p._stride ?? 1, h = surfaceHeightAt(p.samples, lx, lz, stride), d = p._bed?.depths, g = 128 / stride + 1;
-      return d ? h - gridValueAt(d, g, g, host.tileSide * stride, lx, lz) : h;   // WATER-NEXT 2: and the bed carved under a shore
+      return ringGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);   // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js ringGroundAt)
     },
     normal: (p, lx, lz, out) => (p.groundNormals && (p._stride ?? 1) === 1 ? surfaceNormalAt(p.groundNormals, lx, lz, out) : surfaceNormalFromSamples(p.samples, lx, lz, p._stride ?? 1, out)),
     tileMap: (p) => p._dwBytes ?? p.tilemapBytes,

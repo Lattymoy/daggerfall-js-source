@@ -269,10 +269,11 @@ export function createGrahtHost({ renderer, hides = null, breathe = async () => 
         const set = p.grahtOaks, t = p._t;
         if (!set || !t) continue;
         sets++;
-        const tr = set.trees;
+        const tr = set.trees, lift = set.lift;   // FLORA-GROUND, THE RINGS: each tree's rise to the ground its pixel draws (scenes/floraSeat.js seatFlora)
         for (let i = 0; i < tr.length; i += GRAHT_TREE_FLOATS) {
           const v = tr[i + 5] | 0, s = tr[i + 4], m = GRAHT_MEASURES[v];
-          const x = tr[i] + t[0], y = tr[i + 1] + t[1], z = tr[i + 2] + t[2];
+          const y0 = lift ? tr[i + 1] + lift[i / GRAHT_TREE_FLOATS] : tr[i + 1];   // its root as drawn - its place (its bodies, its cover) the walk ground's
+          const x = tr[i] + t[0], y = y0 + t[1], z = tr[i + 2] + t[2];
           const R = m.crownR * s, H = m.height * s;
           const dx = x - ex, dz = z - ez, dh = Math.hypot(dx, dz);
           // a caster whether or not it is drawn - behind the eye it still shades what is before it - by its distance from
@@ -287,7 +288,7 @@ export function createGrahtHost({ renderer, hides = null, breathe = async () => 
             if (!inside) continue;
           }
           if (hides) {
-            _box[0] = tr[i] - R; _box[1] = tr[i + 1]; _box[2] = tr[i + 2] - R; _box[3] = tr[i] + R; _box[4] = tr[i + 1] + H; _box[5] = tr[i + 2] + R;
+            _box[0] = tr[i] - R; _box[1] = y0; _box[2] = tr[i + 2] - R; _box[3] = tr[i] + R; _box[4] = y0 + H; _box[5] = tr[i + 2] + R;
             _t[0] = t[0]; _t[1] = t[1]; _t[2] = t[2];
             if (hides(_box, _t)) continue;   // the jungle's haze hides it whole (its own bound - jungleHaze.js hazeHides)
           }
