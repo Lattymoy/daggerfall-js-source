@@ -297,7 +297,9 @@ test('PROF5 wiring: the host builds the market book online, its answers told to 
   // GUILD1e: the board's window built by the host's one builder (showNoticeWindow), which adds the book and the character
   assert.match(w, /gate: \(\) => noticeGateCard\(\), sd: \(\) => noticeSdCard\(\), answer: \(note\) => answerNote\(note\), work, market,\n/);   // PIN MOVED (SD2c): a found Super dungeon's note beside the gate's
   assert.match(w, /book: noticeBook, character: \(\) => characterIdOf\(playerEntity\),/);
-  assert.match(w, /if \(heldProvenances\(\)\.has\(piece\.provenance\)\) return;\n\s*const it = mintPiece\(piece, piece\.provenance\);\n\s*if \(!it\) return;\n\s*if \(it\.maxCondition > 0\) it\.currentCondition = wearCondition\(it\.maxCondition, piece\.wear\);/);
+  // PIN MOVED (MARKET-LOOK): the mint at its wear is smithItems.js mintMarketPiece - the board's look reads it too
+  assert.match(w, /if \(heldProvenances\(\)\.has\(piece\.provenance\)\) return;\n\s*const it = mintMarketPiece\(piece\);[^\n]*\n\s*if \(!it\) return;/);
+  assert.match(readFileSync(new URL('../../src/systems/smithItems.js', import.meta.url), 'utf8'), /const it = mintPiece\(piece, piece\.provenance\);\n\s*if \(it && it\.maxCondition > 0\) it\.currentCondition = wearCondition\(it\.maxCondition, piece\.wear\);/);
   assert.match(w, /\.filter\(\(it\) => it\?\.provenance && asMinted\(it\) && !tradeRefusal\(it\) && !isLocked\(it\) && !pieceKept\(it\.provenance\)\)/);   // AUDIT 30 C2
   assert.match(w, /const r = await profBook\.stock\(material, qty\);\n\s*toldBalance\(r\?\.data\?\.balance\);/);   // AUDIT 32 B3: the Bank's book and the market's
   assert.match(src('src/ui/professions/profPages.js'), /if \(\(book\.pendingWithdrawals \|\| book\.pendingCrafts \|\| book\.pendingDeposits\) && p\.settle/);   // BAG1 (PIN MOVED): a kept deposit settles too

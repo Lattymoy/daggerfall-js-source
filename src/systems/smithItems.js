@@ -100,6 +100,7 @@ import { unitWeightInKg, ARROW_TEMPLATE } from './inventory.js';   // MEND-AIM: 
 import { seededRng } from './wind/wind.js';
 import { createForagingItem } from './foraging/foragingInstall.js';
 import { mintDish, isDish } from './cookItems.js';   // PROF9: the fire's dishes
+import { wearCondition } from '../net/marketLaw.js';   // MARKET-LOOK: a market piece at its wear
 
 /** DFU's metal names by material (itemInfo.js MATERIAL_NAMES' first ten) - a kit's word and its dye. */
 const METALS = Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']);
@@ -254,6 +255,20 @@ export function mintPiece({ recipe, quality, seed, maker = null, marked = false,
   item.provenance = provenance;
   if (mark) item.maker = mark;
   return item;
+}
+
+/**
+ * MARKET-LOOK (2026-10-27, the owner: "on the market/notice board do offered items there show stats? enchantments etc?"):
+ * A MARKET PIECE AS IT WILL BE HELD - minted from the service's record (server-account/src/market.js pieceOf) at its wear
+ * (net/marketLaw.js wearCondition). The ONE mint of a market piece: the host's collect (scenes/world.js marketMint) and
+ * the board's look (ui/marketTab.js) both read it, so the look is what arrives. Null for a record this client cannot mint.
+ * @param {any} piece
+ */
+export function mintMarketPiece(piece) {
+  if (!piece?.provenance) return null;
+  const it = mintPiece(piece, piece.provenance);
+  if (it && it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);
+  return it;
 }
 
 /**

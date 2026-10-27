@@ -335,7 +335,7 @@ import { createIliacClaims } from '../net/iliac/iliacClaims.js';   // CARDS10: t
 import { createGambitClaims } from '../net/gambit/gambitClaims.js';   // KG6: and The King's Gambit's rated games'
 import { seasonCounted, seasonKept, seasonGuest, seasonFoeGuest } from '../ui/gambitTableWords.js';   // KG6: what the season's claims say
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
-import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
+import { wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF6: a commission's piece unworn
 import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
 
 import { unseenText } from '../net/boardLaw.js';   // NOTICE1: the count over a board
@@ -612,7 +612,7 @@ import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peer/
 import { createHorseCartRuntime } from '../systems/horse/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setForagingHost } from '../systems/foraging/foragingInstall.js';   // FORAGE1: Foraging's reaches into the world, answered by this host
 import { registerContainerLootHandler } from '../systems/containerLoot.js';   // THE MERGE: CSA-H's shelf subscriber, by its mod's name, on PlayerActivate.OnLootSpawned's one home
-import { mintPieces, mintPiece, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture, asMinted, pieceOfRecipe } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
+import { mintPieces, mintPiece, mintMarketPiece, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture, asMinted, pieceOfRecipe } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
 import { heatBand, planeBand, stitchBand, chiselBand, recipeById } from '../net/recipeLaw.js';   // PROF3: the heat's attribute band; PROF4: the plane's, and a recipe's station; PROF7: the stitch's; PROF11: the chisel's
 import { COOK_KEPT_TEXT } from '../systems/smithItems.js';   // PROF9: the fire's word, a dish whose answer did not come
 import { JEWEL_KEPT_TEXT } from '../systems/smithItems.js';   // PROF10: the jeweller's bench's word, a piece whose answer did not come
@@ -2284,14 +2284,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const pieceLists = () => [playerEntity.items, playerEntity.furnishings, playerEntity.wagonItems, playerEntity.otherItems].filter(Array.isArray);
   const heldProvenances = () => new Set(pieceLists().flat().map((it) => it?.provenance).filter(Boolean));
   /** PROF5: A PIECE FROM THE MARKET (bought here, collected off the road, or come back from a listing): minted from its
-   *  record as the anvil mints it, at its wear (marketLaw wearCondition), into the pack - or, furniture, the home's
+   *  record as the anvil mints it, at its wear (smithItems.js mintMarketPiece), into the pack - or, furniture, the home's
    *  things - once by its provenance id. */
   const marketMint = (piece) => {
     if (!piece?.provenance) return;
     if (heldProvenances().has(piece.provenance)) return;
-    const it = mintPiece(piece, piece.provenance);
+    const it = mintMarketPiece(piece);   // MARKET-LOOK: the mint the board's look shows
     if (!it) return;
-    if (it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);
     const home = isCraftedFurniture(it);
     if (home) (playerEntity.furnishings ??= []).push(it); else addItem((playerEntity.items ??= []), it, 'back');
     townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\'s things' : 'in your pack'}.`);

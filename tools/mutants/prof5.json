@@ -932,9 +932,10 @@
   },
   {
     "name": "PROF5-host-wear-unminted",
-    "file": "src/scenes/world.js",
-    "old": "    if (it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);\n    const home = isCraftedFurniture(it);",
-    "new": "    const home = isCraftedFurniture(it);",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (it && it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);\n  return it;",
+    "new": "  return it;",
+    "note": "MARKET-LOOK: the host's mint at its wear moved to smithItems.js mintMarketPiece",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
