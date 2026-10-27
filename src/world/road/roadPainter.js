@@ -26,7 +26,7 @@
 
 import { DIR } from './roadNetwork.js';
 import { RING } from '../townShape.js';   // TS9: a town's ring's codes (terrain/terrainTiles.js townRoadRing)
-import { paintCurvedPaths } from './roadCurves.js';   // VOYAGER2: the roads past the Bay, drawn as curves
+import { paintCurvedPaths, RING_HALF } from './roadCurves.js';   // VOYAGER2: the roads past the Bay, drawn as curves; TS9: a ring's half tile, its home there
 
 export const TILE = Object.freeze({
   water: 0, dirt: 1, grass: 2, stone: 3,
@@ -77,10 +77,6 @@ export const RIVER_TILES = Object.freeze([
   [0, 0, 0, 0], [0, 6, 21, 31], [0, 0, 0, 0], [0, 5, 20, 30], [0, 7, 22, 32], [0, 5, 20, 30],
 ]);
 const CARD_INN = 0, CARD_OUT = 1, DIAG_INN = 2, DIAG_OUT = 3, DIAG_GAP = 4, ICORNER = 5;
-/** TS9: a ring's half tile by its code (terrainTiles.js RING) - [rotate, flip] that turn the diagonal's edge so its road
- *  lies toward that corner, as the mod's own flanks turn it (a NE-SW road's flank at x = y + 1, its road north and west:
- *  flip; at x + 1 = y, south and east: neither; a NW-SE road's, north and east: rotate; south and west: both). */
-const RING_HALF = Object.freeze({ [RING.NW]: [false, true], [RING.NE]: [true, false], [RING.SE]: [false, false], [RING.SW]: [true, true] });
 
 const DIM = 128;
 const MID_LO = 63, MID_HI = 64;

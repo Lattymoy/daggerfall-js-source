@@ -137,8 +137,15 @@ export function shutTownFabric(nav, dfLocation) {
 }
 
 /** A town's walk shut (world/townWalls.js townWalkShut's) with its fabric's after it - the pixel build's one shut.
- *  @param {(nav: any) => void} shut @param {any} dfLocation */
-export const fabricWalkShut = (shut, dfLocation) => (nav) => { shut(nav); shutTownFabric(nav, dfLocation); };
+ *  AUDIT BAY-LEFT F3: its `key` the town's shut's (TS10: the roads its terrain painted) and whether its fabric stands, read
+ *  when asked - a fabric is planned as its town builds - so the yards' memo (scenes/world.js townPlacesFor) is made again
+ *  when either moves; the wrapper had none, and the memo read 'shut' whatever the roads, keeping the yards placed before
+ *  they landed. @param {((nav: any) => void) & { key?: string }} shut @param {any} dfLocation */
+export const fabricWalkShut = (shut, dfLocation) => {
+  const both = (nav) => { shut(nav); shutTownFabric(nav, dfLocation); };
+  Object.defineProperty(both, 'key', { get: () => `${shut.key ?? 'shut'}|${townFabricOf(dfLocation) ? 'fabric' : ''}` });
+  return both;
+};
 
 /** Test seam. */
 export function _resetTownFabrics() {
