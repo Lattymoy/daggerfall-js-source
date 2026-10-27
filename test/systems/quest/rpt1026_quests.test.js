@@ -27,7 +27,7 @@ import { setPref } from '../../../src/systems/uiPrefs.js';
 import { TRACKER_PREF, _resetQuestTrackerForTests } from '../../../src/ui/quest/questTracker.js';
 import { readFileSync } from 'node:fs';
 import { SITE_TYPES } from '../../../src/systems/quest/place.js';
-import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, crowdOf, besideSpot, BESIDE_REACH, MARKER_FLOOR_REACH } from '../../../src/systems/quest/sceneMount.js';
+import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, crowdOf, besideSpot, QUEST_BESIDE_REACH, MARKER_FLOOR_REACH } from '../../../src/systems/quest/sceneMount.js';
 import { _resetWorldDataReplacement, installWorldDataReplacement } from '../../../src/formats/worldData/worldDataReplacement.js';
 import { _resetLayoutPins } from '../../../src/systems/layoutPins.js';
 import { Collider } from '../../../src/player/collider.js';
@@ -37,6 +37,11 @@ import { rmbBlock, town, worldOf, mark, SPAWN } from '../../fb1004dTowns.mjs';
 import { mapPixelToWorldCoord, mapPixelToLongitudeLatitude } from '../../../src/formats/mapsFile.js';
 import { wildMaskOf, wildInside, WILD_REGION } from '../../../src/systems/wild/wildZone.js';
 import { linkSiteOf } from '../../../src/systems/quest/machine.js';
+import { createArenaOnline, CLIMB_WAIT_MS } from '../../../src/scenes/arena/arenaOnline.js';
+import { ARENA_TEXT } from '../../../src/systems/arena/arenaText.js';
+import { arenaBoutRoom } from '../../../src/net/arena/arenaLaw.js';
+import { mintArenaReceipt } from '../../../src/net/arena/arenaReceipt.js';
+import { standService } from '../../accountDb.mjs';
 
 void Node_;
 // NO LIVE TIMER RUNS HERE (GUIDE2's law): the tab's intervals are recorded, never run
@@ -276,7 +281,7 @@ test('QUEST-CROWD: besideSpot - the first of eight spots a box and a tenth out t
   assert.ok(besideSpot(at, walled, lift, w, someone)[0] < 0.5, 'a spot this side of the wall');
   // nowhere clear (everyone round the spot): null - DFU's own spot stands
   const ring = [];
-  for (let i = 0; i < 8; i++) for (const k of BESIDE_REACH) ring.push({ stood: true, active: true, x: Math.cos(i * Math.PI / 4) * k, y: 0, z: Math.sin(i * Math.PI / 4) * k, width: 1 });
+  for (let i = 0; i < 8; i++) for (const k of QUEST_BESIDE_REACH) ring.push({ stood: true, active: true, x: Math.cos(i * Math.PI / 4) * k, y: 0, z: Math.sin(i * Math.PI / 4) * k, width: 1 });
   assert.equal(besideSpot(at, open, lift, w, ring), null);
   // no floor under the spot itself: nothing to stand beside
   assert.equal(besideSpot([20, 0, 20], open, lift, w, someone), null);
@@ -444,4 +449,70 @@ test('QUEST-ZONE: a save whose remote dungeon the zone seals has it drawn again 
   assert.ok(sd.selectedMarker.targetResources.some((s) => s.name === 'vamp'), 'the foe carried to the new site');
   assert.ok(on.m.siteLinks.filter((l) => l.questUID === on.q.uid).every((l) => l.mapId === sd.mapId), 'the link follows');
   assert.deepEqual(found, ['dungeon130'], 'its reveal made again');
+});
+
+// ── ARENA-ORDER ────────────────────────────────────────────────────────────────────────────────────────────────────
+// (two private reports: the arena questline's second bout, and "subsequent arena fights", on a floor with no opponent).
+// The client's own arena half (createArenaOnline) over the real account service, the receipt the relay's own shape.
+
+/** The account service's answer as net/accountClient.js call shapes it: the body on a 200, its `error` word otherwise. */
+const asClient = (r) => (r.status === 200 ? { ok: true, data: r.body } : { ok: false, error: r.body?.error ?? 'server', status: r.status });
+const turns = async (n = 40) => { for (let i = 0; i < n; i++) await new Promise((r) => setTimeout(r, 0)); };
+
+test('ARENA-ORDER: a ladder win the service has not counted yet holds the next Fight at the Herald - past CLIMB_WAIT_MS no floor is entered for the step just fought (the empty floor, "not your next ladder bout"); the refusal carries the receipt again, and the climb it moves is the next Fight\'s (mutants: the guard dropped; the refusal carrying nothing)', async () => {
+  const S = await standService();
+  const who = await S.registered('Ladderfighter');
+  let t = 1_000_000, reach = false;
+  const said = [], entered = [], attempts = [], asked = [], paid = [], sent = [];
+  const session = { status: 'open', arenaOk: true, room: 'world:1,1', sendArena: (w) => { sent.push(w); return true; } };
+  const A = createArenaOnline({
+    now: () => t, session: () => session, say: (l) => said.push(l), guest: () => false, makeHall: () => ({ status: 'open', join() {}, leave() {}, sendArena: () => true }),
+    bouts: { ask: (o) => asked.push(o), relayWord: () => true, dismiss() {}, holds: () => false, relay: () => null },
+    account: {
+      board: async () => asClient(await S.call('/v1/arena/board', {}, who.secret)),
+      // the service out of reach until `reach` (a claim the way it fails online: net/accountClient.js's `offline`)
+      claim: async (receipt) => (reach ? asClient(await S.call('/v1/arena/claim', { receipt }, who.secret)) : { ok: false, error: 'offline' }),
+      attempt: async (tier, bout, room) => { const r = asClient(await S.call('/v1/arena/attempt', { tier, bout, room }, who.secret)); attempts.push([tier, bout, r.ok ? 'ticket' : r.error]); return r; },
+      me: () => who.id,
+    },
+    enterFloor: async (k, o) => { entered.push(o); return true; }, level: () => 4, maxHealth: () => 60,
+  });
+  A.model();
+  await turns();
+  // the first bout: its floor, its ticket, and the relay's verdict - the purse held (relayVerdict's `owe`), the receipt
+  // signed as the relay signs it (its attempt's ticket, its room) and handed down the bout's room
+  assert.equal(A.fightLadder().ok, true);
+  await turns();
+  assert.deepEqual(attempts, [[0, 0, 'ticket']]);
+  const o = entered[0], room = arenaBoutRoom(o);
+  session.room = room;
+  A.tick();
+  const tk = sent.find((w) => w.k === 'in')?.z;
+  assert.match(String(tk), /^[0-9a-f]{16}$/, 'the `in` carries the attempt\'s ticket');
+  asked.at(-1).relay.owe(150, (g) => paid.push(g));
+  A.word({ k: 'rc', r: await mintArenaReceipt({ a: 'l', j: o, s: who.id, q: 0, u: 0, r: 1, h: 'fall', z: tk }, S.gatePriv, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) }) }, room);
+  await turns();
+  assert.equal(A.claims.ladderKept(), true, 'the win kept, the service not reached');
+  // out through the gates: the bout let go
+  session.room = 'world:1,1';
+  A.tick(); t += 5_001; A.tick();
+  assert.equal(A.fightLadder().text, ARENA_TEXT.online.climbWait, 'within CLIMB_WAIT_MS the held purse holds the climb, as before');
+  // past the wait: never the floor for the step just fought
+  t += CLIMB_WAIT_MS;
+  const r = A.fightLadder();
+  await turns();
+  assert.deepEqual(r, { ok: false, text: ARENA_TEXT.online.stillRecording }, 'refused at the Herald, in the words askTicket says');
+  assert.equal(entered.length, 1, 'no floor entered for a stale step');
+  assert.deepEqual(attempts, [[0, 0, 'ticket']], 'and no attempt asked');
+  // the service reached: the refusal's own flush carries the win, the purse is paid, and the next Fight is the next step
+  reach = true;
+  assert.equal(A.fightLadder().ok, false, 'the receipt still kept at the press');
+  await turns();
+  assert.equal(A.claims.ladderKept(), false, 'the refusal carried it');
+  assert.deepEqual(paid, [150], 'the win kept, its purse paid');
+  assert.equal(A.fightLadder().ok, true);
+  await turns();
+  assert.deepEqual(attempts, [[0, 0, 'ticket'], [0, 1, 'ticket']], 'the next Fight asks the climb the service moved - never `order`');
+  assert.equal(entered.length, 2);
+  assert.ok(!said.some((l) => /not your next ladder bout/i.test(l)), 'never "not your next ladder bout"');
 });

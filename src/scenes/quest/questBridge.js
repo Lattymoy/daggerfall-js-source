@@ -735,7 +735,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         }
         const les = q.getLogMessages();
         if (!les?.length) {
-          // QL2: a stamped quest with no journal entry yet, whose objectives the machine has opened - the pause tab's
+          // QL2: a stamped quest with no journal entry yet, whose objectives the machine has opened - the pause tab's row.
           // RPT1026-QUESTS ABANDON-ALWAYS (private reports: The Lost Artifact's knight paid, "all objectives crossed out",
           // "Cannot even abandon this quest" - "we're basically locked out of the guild"; a Mages Guild's "I can't take more
           // quests, but I don't have quests to do"): and DFU's own quest that holds its questor's door with nothing in its

@@ -6730,7 +6730,8 @@ of it one of noAsksAgain.js:"export const CLICK_TRIGGERS", and the task named by
 (noAsksAgain.js:"export function askAgain"): its task cleared as a `clear` clears it, the prompt alone made incomplete,
 the No variable cleared. The next click asks again, a Yes then runs as a first Yes does, and a No that does something
 else stays DFU's - a No whose every action is a `clear` of its asking task alone is the author's own ask-again, and asks
-again too (QUEST-AUDIT III; C0C00Y10's healer, below). Two doors: Quest.update each tick (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a prompt")
+again too (QUEST-AUDIT III; C0C00Y10's healer, below), and so does one whose every action hands back the item its click
+toted (RPT1026-QUESTS NO-GIVES-BACK, below). Two doors: Quest.update each tick (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a prompt")
 and the end of Quest.restoreSaveData (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a save"), so a save
 taken after such a No loads asking again, as do a party member's copy and a reclaimed quest.
 
@@ -6739,7 +6740,8 @@ _foe_` - a robber's or a guard's "hand it over" (A0C00Y14, A0C00Y15, K0C00Y03, O
 O0B10Y00, R0C10Y00, R0C10Y01, R0C10Y02, R0C10Y18, R0C11Y19). There the No is the refusal and the courier's road goes
 on, and the trigger is Foe.injuredTrigger, a latch that holds until the foe is stood again: re-armed, the demand would
 come back the next tick, every tick, until a Yes gave the goods away. In the shipped corpus the law re-arms The Lost
-Child and, since QUEST-AUDIT III, C0C00Y10's healer (below).
+Child and, since QUEST-AUDIT III, C0C00Y10's healer (below); since RPT1026-QUESTS, the four Nos that hand an item
+back (NO-GIVES-BACK, below).
 
 C0C00Y10 (the healer's `prompt 1014 yes _S.11_ no _no_` under `clicked npc _healer_ say 1013`) answers a No with `_no_
 task: clear _S.10_` - the author's own ask-again - which Prompt.cs's `allowRearm = false` defeats in DFU: the healer said
@@ -6850,7 +6852,8 @@ sentence, which says the service is unbuilt.
   and the potion and item makers mounted their window and answered null, which pushed the sentence onto the popup they
   had just replaced - they hand the window back now, as the book and the repair list do. The host: three logical lines
   fewer.
-- **THE BOX STANDS ON THE SCREEN** (AUDIT FB1019f F1). The line is one row, and the flow's box laid its rows as they came:
+- **THE BOX STANDS ON THE SCREEN** (AUDIT FB1019f F1). The line was one row (two since RPT1026-QUESTS ABANDON-ALWAYS, below:
+  the way out under it), and the flow's box laid its rows as they came:
   on the classic skin, in the interior's shop font (FONT0003), the line naming a guild's quest ran past both edges of
   the 320-px panel for 177 of the 178 guild quests' titles. ServiceFlowWindow wraps a long row now, as the guild popup's
   own box does (SS5's fitBoxRows - AUDIT GUILD-WORDS II F-2): `guildServiceWindows.js:"this._box = layoutMessageBox(font, fitBoxRows(font, t.rows), buttons);"`.
@@ -6865,6 +6868,59 @@ every whole language's `{quest}`; what still reaches the sentence; the classic b
 FONT0003 for every guild quest's title, the service records unchanged (ARENA2, the suite's usual skip). PIN MOVED:
 `test/systems/quest/covenwindow.test.js` (the coven's close carries its reason and its quest).
 `tools/mutants/questor_said.json` (16), all dead.
+
+## RPT1026-QUESTS - the private report inbox's quest reports (2026-10-26)
+
+The 2026-10-26 batch of the private report inbox, its quest reports read to their roots. Four changes to the quest law
+here (the arena's ARENA-ORDER is `11-Multiplayer/Arena.md`'s); each pinned by `test/systems/quest/rpt1026_quests.test.js`
+(10 - nine here, one the arena's) and mutation-checked by `tools/mutants/rpt1026_quests.json` (25 - 23 here, two the
+arena's), all dead.
+
+- **ABANDON-ALWAYS** - a quest that shuts its questor's door is always a row with its Abandon. Six reports: The Lost
+  Artifact shared in a party (the knight paid, every objective crossed out, nothing to abandon, the order's door shut to
+  both), a Knights of the Dragon "you already have one" with an empty journal, a Mages Guild "you can't take more
+  quests" with none listed. DFU's law shuts the door while a quest whose questor is the NPC clicked runs
+  (IsLastNPCClickedAnActiveQuestor - `machine.js:"lastNPCClickedQuestorOf() {"`). B0B81Y02's knight answers the lich's
+  death with `give pc nothing` and `remove log step 0` and the quest runs on under `_2dung_` (RAVEN-CLOSE closes it
+  online on the short wait); N0B21Y14 writes its first entry only when its letter is read. A quest with nothing in its
+  journal was no row: the bridge's walk listed only a stamped quest with objectives, and AUDIT QUESTLINES UI-8 drew no
+  Abandon on one. Now `machine.js:"export const holdsQuestorDoor = (quest) =>"` names the quests that hold the door (a
+  Person its questor by the click), each is a row whether or not it has written anything
+  (`questBridge.js:"if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;"`), an Abandoned row once set aside
+  (so its Reclaim stands), its detail says "Nothing is written in your journal for this quest yet." where it has no
+  objectives, and the questor's close (QUESTOR-SAID) adds the way out: "If you cannot finish it, you can abandon it from
+  the Quests tab of the pause menu." A quest with nothing written and no questor the player met (the main story's
+  backbone, a letter's errand) stays off the tab. Port-Ledger A, QUEST-SHELF's row, widened.
+- **QUEST-CROWD** - two quests' Persons never stand in one pick box. Five reports of a questline's contact missing from
+  the tavern its journal named (A Hand of Cards and Raiders at the Gate both at one inn; The Long Haul; Raiders at the
+  Gate; a raid's defender; "if 2 quests are in the same NPC location, one will eat the other"). The intro lines' contacts
+  are `local` Persons in a `local tavern`; DFU's GetAllActiveQuestSites reads only the running quests, so two quests
+  parsed before either starts take one building (the lines were started together before QL-OFFERED), and 215 of
+  Daggerfall's 345 tavern interiors lay one spawn marker - GameObjectHelper.AddQuestNPC stood both on it, one billboard
+  over the other. FB1020c CROWD-CLEAR moved a Person off a resident; another quest Person already stood in the room now
+  crowds as a resident does (`sceneMount.js:"export function crowdOf(people, stands = null, self = null) {"`), and with
+  no spawn marker clear the Person stands beside its own, on the same floor and in plain line - never through a wall,
+  onto a table or past a ledge (`sceneMount.js:"export function besideSpot(at, collider, lift, w, crowd) {"`). Its layout
+  data (its name, its click) stays the drawn marker's. Port-Ledger A, QUEST-MARKERS' row, widened.
+- **NO-GIVES-BACK** - a No that hands the letter back asks again. The report: Lord K'avar's letter given to the Queen of
+  Sentinel, No pressed, and she never spoke of it again. M0B11Y18 asks under `toting _I.03_ and _ruler_ clicked` and its
+  No (`_S.20_`) is a `get item _I.03_` - not inert, not a clear, so NO-ASKS-AGAIN left it DFU's: the prompt spent, the
+  click a set task's. Now a No whose every action hands back the item its asking click toted
+  (`noAsksAgain.js:"export function givesBackNo(quest, task, prompt) {"`) asks again once that item is back in the pack.
+  The corpus has four: M0B11Y18 `_S.20_`, 80C0XY00 `_school_`, $CUREWER `_S.15_`, N0B00Y09 `_nononono_`
+  (`test/systems/quest/fb1013e_noasks.test.js`'s census, PIN MOVED to six). Port-Ledger A, NO-ASKS-AGAIN's row, widened.
+- **QUEST-ZONE** - online a quest's remote dungeon is never one the open zone seals. The report: a vampire's lair in the
+  middle of the open zone, its door sealed ("The way in is sealed. Only the halls marked on the map are open today."). Of
+  the real MAPS.BSA's dungeons 205 stand inside the Wrothgarian cut, and their doors open only on the day their hall is
+  marked (`world.js` wildDungeonGate), so a quest drawn into one could not be done. Online the draw skips every dungeon
+  inside the cut (`place.js:"_zoneSeal(world) {"`, passed to KVAR-HOLD's own collector), and the load's re-seat draws a
+  saved site there again by KVAR-HOLD's law; offline the zone is no law and DFU's draw stands. Port-Ledger A, KVAR-HOLD's
+  row, widened.
+
+THE FOUR HOSTS: none grows. ABANDON-ALWAYS is the bridge's walk and the pause window's (both hosts read them); QUEST-CROWD
+rides the one logical line of `worldModes.js` standQuestFlatIn that CROWD-CLEAR already wrote (its interior adapter serves
+world.js and exterior.js; dungeonContext.js stands its quest people on Daggerfall's RDB markers, unaffected);
+NO-GIVES-BACK and QUEST-ZONE are the quest system's own.
 
 ## QUEST-AUDIT III - the quest system read whole, and STORY-AGAIN (2026-10-23)
 

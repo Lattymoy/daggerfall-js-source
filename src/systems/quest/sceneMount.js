@@ -378,7 +378,7 @@ export function buildingStandSpot(own, spots, collider, lift, w = null, people =
 }
 
 /** QUEST-CROWD: how far beside a crowded spot a Person may stand - in pick boxes (its billboard's width), nearest first. */
-export const BESIDE_REACH = Object.freeze([1.1, 1.6]);
+export const QUEST_BESIDE_REACH = Object.freeze([1.1, 1.6]);
 /** QUEST-CROWD: how far a spot beside may stand above or below the floor under the spot it leaves, metres. */
 export const BESIDE_FLOOR_M = 0.3;
 
@@ -387,7 +387,7 @@ export const BESIDE_FLOOR_M = 0.3;
  * hold a single quest spawn marker (15 of those inside a resident's pick box), and the questlines' first steps (QLIT01,
  * QLIW01, QLIR02...) each stand their Person in a `local tavern` - two quests drawn before either ran took the one tavern,
  * and with no other spawn marker CROWD-CLEAR left the second on the first, inside it: "neither NPC can be found". Such a
- * Person stands at the first of eight spots about its own (`at`), BESIDE_REACH pick boxes out, that stands on the same
+ * Person stands at the first of eight spots about its own (`at`), QUEST_BESIDE_REACH pick boxes out, that stands on the same
  * floor (rayed down from `lift` over it, within BESIDE_FLOOR_M of the floor under `at`), in plain line from `at` (nothing
  * between them a metre up - never through a wall) and clear of everyone (crowdingPerson over `crowd`); else null, and
  * DFU's own spot stands.
@@ -397,7 +397,7 @@ export function besideSpot(at, collider, lift, w, crowd) {
   const base = down(at);
   if (!Number.isFinite(base)) return null;
   const floor = at[1] + lift - base;
-  for (const k of BESIDE_REACH) {
+  for (const k of QUEST_BESIDE_REACH) {
     const d = k * w;
     for (let i = 0; i < 8; i++) {
       const a = (i * Math.PI) / 4, dir = [Math.cos(a), 0, Math.sin(a)];
