@@ -47,8 +47,8 @@
   {
     "name": "BAL9b-potency-offline-too",
     "file": "src/systems/spell/spellPower.js",
-    "old": "  if (!online || !caster?.isPlayer || caster._mentor) return 1;",
-    "new": "  if (!caster?.isPlayer || caster._mentor) return 1;",
+    "old": "  if (!online || !caster?.isPlayer) return 1;",
+    "new": "  if (!caster?.isPlayer) return 1;",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -83,17 +83,17 @@
   {
     "name": "BAL9b-the-worn-line-strikes",
     "file": "src/systems/spell/spellPower.js",
-    "old": "  const climbed = climbedSkill(caster, school);",
-    "new": "  const climbed = climbedSkill(caster, school) + (caster._mods?.skills?.[school] ?? 0);",
+    "old": "  const climbed = fightingClimb(caster, school);",
+    "new": "  const climbed = fightingClimb(caster, school) + (caster._mods?.skills?.[school] ?? 0);",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
   },
   {
-    "name": "BAL9b-while-mentoring",
+    "name": "BAL9b-MENTOR2-the-real-climb-while-mentoring",
     "file": "src/systems/spell/spellPower.js",
-    "old": "if (!online || !caster?.isPlayer || caster._mentor) return 1;",
-    "new": "if (!online || !caster?.isPlayer) return 1;",
+    "old": "export const fightingClimb = (entity, id) => effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));",
+    "new": "export const fightingClimb = (entity, id) => effectiveSkill(masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id));",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]

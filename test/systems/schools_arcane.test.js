@@ -12,6 +12,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as AP from '../../src/systems/arcanePaths.js';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import * as POW from '../../src/systems/arcanePowers.js';
 import { signatureSpell, signatureOffers } from '../../src/systems/signatureSpells.js';
 import { createCharacter } from '../../src/systems/chargen.js';
@@ -172,14 +173,14 @@ test('SCHOOLS1 THE CHOICE: two mastered schools open their path, three open thre
   assert.equal(AP.pathChoiceRows(mage([ALT, RES, MYS]), 'necromancer', { others: false }).length, 7);
 });
 
-test('SCHOOLS1 AWAKE AND ASLEEP: a path acts for my own entity with Master Skills in force and both schools mastered - never a peer\'s stand-in, never while mentoring, never offline with the switch off, never with a school unmastered, never in a refereed fight (mutants: a peer\'s wakes; mentoring wakes; the duel wakes)', () => {
+test('SCHOOLS1 AWAKE AND ASLEEP: a path acts for my own entity with Master Skills in force and both schools mastered - never a peer\'s stand-in, never offline with the switch off, never with a school unmastered, never in a refereed fight; MENTOR2: while mentoring too, at the mentor\'s share (it had slept) (mutants: a peer\'s wakes; mentoring sleeps; the duel wakes)', () => {
   reset();
   const p = pathMage('necromancer');
   assert.equal(AP.pathAwake(p)?.id, 'necromancer');
   assert.equal(POW.awakePathId(p), 'necromancer');
   assert.equal(AP.pathAwake({ ...p, peer: true }), null, 'a peer\'s stand-in');
   assert.equal(AP.pathAwake({ ...p, isPlayer: false }), null);
-  assert.equal(AP.pathAwake({ ...p, _mentor: { level: 5 } }), null, 'mentoring');
+  assert.equal(AP.pathAwake({ ...p, _mentor: mentorProfile(p, [5]) })?.id, 'necromancer', 'MENTOR2: mentoring, awake');
   assert.equal(AP.pathAwake({ ...p, masteredSkills: [RES] }), null, 'a school not mastered (a forged save)');
   const offline = { ...p, _online: false, masterSkills: false };
   assert.equal(AP.pathAwake(offline), null, 'offline, the switch off');
@@ -269,7 +270,7 @@ test('SCHOOLS2 THE SCHOOLS PAST 100: online, each school\'s climb past 100 is 1%
   assert.equal(healed(r200, true), 70, 'x1.4');
   assert.equal(healed(r200, false), 50, 'offline');
   assert.equal(healed(mage([RES], 100), true), 50, 'at 100');
-  assert.equal(healed({ ...r200, _mentor: { level: 4 } }, true), 50, 'mentoring');
+  assert.equal(healed({ ...r200, _mentor: mentorProfile(r200, [4]) }, true), 50, 'mentoring a level-4 group: the mentored Restoration stops under 100 (MENTOR2 fightingClimb)');
   assert.equal(healed(r200, true, { ...r200, activeEffects: [] }), 50, 'on another');
   // Regenerate: fixed at the cast, every round
   const regen = SELF(eff(18, 255, { durationBase: 3, magnitudeBaseLow: 10, magnitudeBaseHigh: 10 }));
@@ -552,10 +553,12 @@ test('SCHOOLS4 THE PASSIVES, each through its own seam: Spellsteel, Unseen Strik
   assert.equal(pow(lb, foeEnt({ careerIndex: 15 })), 1.2, 'undead');
   assert.equal(pow(lb, foeEnt({ careerIndex: 25 })), 1.2, 'daedra');
   assert.equal(pow(lb, foeEnt({ careerIndex: 1 })), 1, 'a humanoid');
-  // never at a player, never asleep
+  // never at a player; MENTOR2: at the mentor's share while mentoring (it had slept)
   assert.equal(pow(sc, { ...foeEnt(), isPlayer: true }), 1, 'a duel\'s stand-in');
-  sc._mentor = { level: 3 };
-  assert.equal(pow(sc), 1, 'mentoring');
+  sc._mentor = mentorProfile(sc, [3]);
+  assert.ok(sc._mentor.powerScale < 1);
+  assert.equal(pow(sc), 1 + (AP.PATH_NUMBERS.unseenStrike.pct * sc._mentor.powerScale) / 100, 'mentoring: Unseen Strike at the mentor\'s share');
+  sc._mentor = null;
   // Sunder
   assert.equal(spellPierce(pathMage('spellbreaker', 100), foeEnt()), 10);
   assert.equal(spellPierce(pathMage('necromancer', 100), foeEnt()), 0);
