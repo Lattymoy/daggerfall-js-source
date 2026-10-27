@@ -34,7 +34,7 @@ import { RMB_SIDE } from '../../world/locationLayout.js';
 import { directionHintString } from './talk.js';   // wave 27: one compass law
 import { staticNpcData, isChildNPCData } from '../../characters/staticNpc.js';   // QP1: the one SetLayoutData law
 import { collectInteriorPeople } from '../../characters/interiorPeople.js';   // QP1: the one people mapper
-import { hasInteriorModels } from '../../world/interior/interiorLayout.js';   // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale
+import { hasInteriorModels, interiorCast } from '../../world/interior/interiorLayout.js';   // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale; IC-INTERIORS: a made room's cast
 import { buildingSummaries } from '../../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
 import { localizedTable } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
@@ -356,7 +356,9 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
       if (!data) continue;
       const buildingKey = makeBuildingKey(b.x ?? 0, b.y ?? 0, i);
       const sub = b.dfBlock.rmbBlock.subRecords?.[i];
-      const npcs = (sub?.interior?.blockPeopleRecords ? collectInteriorPeople(sub) : []).map((p) => {
+      // IC-INTERIORS: a made interior's people as its cast's record holds them (their names the same - interiorCast)
+      const cast = interiorCast(sub);
+      const npcs = (cast?.blockPeopleRecords ? collectInteriorPeople({ interior: cast }) : []).map((p) => {
         const d = staticNpcData(p, {
           mapId, locationIndex, buildingKey, getFaction, raceOfCurrentRegion,
         });

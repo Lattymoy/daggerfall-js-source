@@ -200,11 +200,12 @@
   {
     "name": "BLD-door-off-the-entrance",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "const P = (s, y, e) => [d.door[0] + t[0] * s + o[0] * e, y, d.door[1] + t[1] * s + o[1] * e];",
-    "new": "const P = (s, y, e) => [t[0] * s + o[0] * e, y, t[1] * s + o[1] * e];",
+    "old": "const P = (s, y, e) => [E.door[0] + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
+    "new": "const P = (s, y, e) => [E.door[0] + 0.5 + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
     "tests": [
       "test/world/icbld_buildings.test.js"
-    ]
+    ],
+    "note": "re-aimed (IC-INTERIORS): the entrance is FABRIC_ENTRANCE, the frame's origin (dropping it is no change) - the door model stood half a metre off it"
   },
   {
     "name": "BLD-no-building-door",

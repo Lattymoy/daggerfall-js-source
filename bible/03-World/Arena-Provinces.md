@@ -1983,7 +1983,9 @@ town map's label, the shop's keeper and stock, the Where-is answer, a quest's si
   ground floor and (but a home) its people in; the building's donor its pool's nearest its footprint in size, its key's
   hash the tie (the same on every client). The interior is the donor's record read from the player's own BLOCKS.BSA when
   the block is made - its models, its keeper and residents, its shop's shelves, its quest markers - nothing of it in the
-  repository but the table's block names, record numbers and the entrance's measures.
+  repository but the table's block names, record numbers and the entrance's measures. Since IC-INTERIORS (below) the
+  donor gives its CAST alone (its people, its markers, its lights' pictures); the interior is the building's own, and the
+  entrance's columns are gone with the donor's rooms.
 - **Daggerfall's door** (fabricDoorModel, a model a donor): Daggerfall's own door picture (TEXTURE.374, the temperate set's,
   swapped for the climate as a block's door is) on a leaf in a stone surround (26 triangles, solid), its door face the game's
   building door (DOOR_TYPE.BUILDING - `world/meshReader.js`'s door, three corners and its normal out of the building),
@@ -2037,6 +2039,95 @@ cut one from.
 - Pinned by `test/world/icbld_lights.test.js` (the lamps' records, cap, spacing and ground; the block's flats lit by the
   exterior's own collector where each lamp stands; the masks' glass inside its window and bottom-up; the pipeline's
   arm), seven mutants in `tools/mutants/icbld.json`, all dead.
+
+### IC-INTERIORS - every building's own interior: its footprint, its storeys, its kind, its door, its windows (2026-10-27)
+
+The owner's field report, item 5: *"Interiors in the Imperial city need to match their exterior with varied layouts"*;
+and on all of it *"No band aids or half assed work"*. BLD (above) handed each building a donor's interior whole: a long
+shop a square room, a narrow house a wide one, every house of a size the same three rooms, a five-storey house one
+storey, its door nowhere near the street's, its windows nowhere near the walls'. DFU's reference: a building's interior
+is its subrecord's interior record - its models, flats, people, action doors and spawn points as its RMB's author laid
+them (DaggerfallInterior.AddModels, AddFlats, AddPeople, AddActionDoors, AddSpawnPoints), laid in the frame of the
+building model its door is on; Daggerfall builds those rooms of a kit on a 128-unit grid (floor 1000, ceiling 2000, the
+walls 3004, 3018 with its window, 3002 with the street door, 3000 with a doorway, the post 4000, in nine building sets,
+`piece + 100 * set`), furnishes them with its 41xxx props (a shop's shelves stocked - AddFurnitureAction's
+shopShelvesObjectGroupIndices), joins its storeys by its straight stair (31023) or its ladder (41409, DaggerfallLadder,
+its LadderBottom and LadderTop markers), and scales a record's model by RMBLayout.GetModelScaleVector where it says so.
+
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): every fabric building's interior record is WRITTEN**
+  (`world/interior/fabricInterior.js`), in RMB's own shape - `world/interior/interiorLayout.js` layoutInterior lays it as
+  it lays any - of Daggerfall's own pieces alone (`world/interior/fabricInteriorKit.js`: every number a measure of the
+  freeware's ARCH3D or a count of its 920 RMB blocks; nothing of a model in the repository but its id and its measures):
+  - **its grid its footprint's** (fabricInteriorGrid): the kit's 3.2 m cells - the fabric's own storey - in the door's
+    frame, a cell the building's where its middle stands inside the footprint, its door's cell always, every one reached
+    from it. A long building is a long interior, a big one more rooms; every point of a footprint 2.3 m in from its walls
+    is in a cell; its party walls blind inside as out (`world/imperialFabricModels.js` partyEdges).
+  - **its street door where the building's is**: the door's cell's front the 3002 wall, its door face (the game's
+    building exit) at FABRIC_ENTRANCE - the origin of the frame the subrecord stands the interior in
+    (`world/imperialFabricBuildings.js` subRecordFrame) and the door model's (fabricDoorModel) - facing in, a wall's
+    breadth in from the street door; its Enter marker the cell's middle. With the freeware, every building's exit stands
+    on its street door's line within 5 cm, 0.21 m in.
+  - **its storeys the ones its walls show** - floor(eave / STOREY), the facade's own law, to eight - each 129 units over
+    the last (Daggerfall's pitch), joined by Daggerfall's stair where one stands whose foot and well leave both floors one
+    piece (an outer wall's and off the street first), else its ladder against an outer wall under a hole (the ladder's
+    room carried up whole, its hole floored over a storey up, so the hole's walls are the walls under it; in a building
+    two cells wide the ladders climb turn about, each in the cell the last arrived in), else - a building of one cell - a
+    HATCH: the ladder in a corner quarter, that quarter of the floor over it open, three quarters of Daggerfall's floor
+    and ceiling tiles laid round it (the tile at half its size, its outer edges on the whole tile's). Walls and posts are
+    stretched 130/126 up (GetModelScaleVector's yScale) so no slit shows between storeys where a stair or a hole looks up;
+    a stair's mouths take a lintel the band's height.
+  - **its rooms its kind's and its key's** (fabricInteriorPlan): the front room on the street (the shop floor, the taproom,
+    the living room, the hall, the counting room, the library - of a front too big for one room, the door's own rectangle
+    of it; a shop or a bank a cell wide its floor the building's depth, its counter at the end), the rest cut by the plot's
+    key, the same on every visit and every client, another key other rooms; a doorway and Daggerfall's action door between
+    each room and the one it is reached from; the building set its pool wears (a manor's for a wealthy home, a tavern's,
+    the Mages Guild's own).
+  - **its windows where the walls show them**: an outer side a window wall (3018) but where its edge is a party wall, and
+    one in four of the rest plain (the key's pick), never a window between rooms.
+  - **its furniture its kind's, and walkable**: a shop's counter, its keeper behind it, the shelves Daggerfall's own shops
+    of its trade carry (POOL_SHELVES - stocked, AddFurnitureAction's group); a tavern's bar, tables, seats, hearth and its
+    rooms' beds; a home's beds (a home of one storey its bedroom beside its living room; a home's last storey with no bed
+    yet takes one), its table and hearth; a guild's hall and study; a bank's counter and vault; a library's shelves. A
+    piece stands against a wall (at its middle or in a corner of it) or on a cell's floor, never in a wall, on another, in
+    a door's swing, a stair's mouth or before a ladder - and only where its room stays walkable: a body's middle (the
+    player's capsule, 0.35 m) still reaches every way of the room from every other and keeps four fifths of its floor
+    (roomWalk). Measured over 4,000 buildings with the freeware's casts: every shop its counter, every home its bed, every
+    tavern its bar; no piece through a wall or on another, every person and marker on the floor a body reaches.
+  - **its cast its donor's** (BLD's donor, now giving its cast alone): its people (their pictures, factions, flags and
+    stream positions), its quest, rest and treasure markers, its lights' pictures - each stood on a free spot of the
+    rooms (the keeper behind the counter, a rest marker on the floor nearest a bed).
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): a made interior is made when it is first read**
+  (`world/imperialFabricBuildings.js` fabricBuildingInterior; `world/interior/interiorLayout.js` interiorCast): a walk over
+  a slice's thousands of buildings - the summaries' `hasInterior`, the questor pool, a quest's site search and its sites
+  index - reads the donor's record it names (`cast`) and makes none (0.08 ms a building, the made interior's 3-12 ms
+  never paid there). Its people keep the donor's positions as their names' (`castPos` - `characters/interiorPeople.js`
+  collectInteriorPeople's raw position, StaticNPC's hash), so the questor pool's person is the scene's, and BLD's saves'.
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): a quest's markers in a made building are laid at its mount**
+  (`systems/quest/castMarkers.js`, from `scenes/quest/questBridge.js` mountScene): a site holds a made building's
+  markers as its cast stands them (Place.EnumerateBuildingQuestMarkers over interiorCast - the search makes no room, and a
+  save from before holds them so too); before the building's quest things stand, each of its sites' n-th spawn and item
+  markers is laid on the room's n-th, its selected marker on the one it copied, the old spot kept as the town packs'
+  curation keeps it (`curatedFrom` - a foe a save stood there follows it). DFU's EnumerateBuildingQuestMarkers stores the
+  room's positions at the search.
+- **DEPARTURE (named; Port-Ledger section A, IC-INTERIORS): the ladder climbed is the ladder's own** (`player/enterExit.js`
+  climbLadder, `scenes/worldModes.js` handing it the ladder's matrix): the top marker nearest the clicked ladder's head and
+  the bottom nearest its foot. DaggerfallLadder.ClimbLadder takes the two nearest the player - the same pair at every one of
+  Daggerfall's own 1,719 ladders (measured), and none at all in a house that stands a ladder a storey, one over another's
+  landing. The way (below the top: up; else over the bottom: down) is DFU's.
+- Measured with the freeware: every kit piece in all nine sets and every prop of FURNITURE in ARCH3D as the table says
+  (the window walls of sets 2, 3, 5 and 8, all of set 8's walls, the ceilings of 4, 6 and 8 and the posts of 5 and 8 made
+  elsewhere and placed back - KIT_SHIFT); over a ninth of the city, 43,426 buildings, every one its storeys (69,723 stairs,
+  6,447 ladders, 4 hatches); over 400 buildings' every storey, eye-height rays from five spots a cell in 48 directions find
+  no gap (the first face every ray meets faces it), no two pieces' faces drawn in one plane, and every ladder climbed up to
+  its landing and back to its foot.
+- Pinned by `test/world/icinteriors.test.js` (the grid its footprint; the storeys and their ways, every room reached, the
+  slivers' ladders and hatches; the key's layouts; the street door; the windows and party walls; each kind's furniture;
+  the walk, the door swings, the cast on the floor; the cast's names and the walks that make no room; a quest's markers
+  laid at the mount; the ladder's own climb) and, with ARENA2_PATH, `test/world/icinteriors_freeware.test.js` (the kit and
+  the furniture measured, the street door the game's at the building's, Daggerfall's every ladder, made interiors seen
+  through nowhere, every donor's cast); 33 mutants in `tools/mutants/icinteriors.json`. BLD's pins moved with it (PIN
+  MOVED (IC-INTERIORS): `test/world/icbld_buildings.test.js`, `test/systems/quest/questfabric.test.js`; its mutant
+  BLD-door-off-the-entrance and CRYPTSALE-law-unknown-empty re-aimed by content).
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 

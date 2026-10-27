@@ -1,0 +1,299 @@
+[
+  {
+    "name": "IC-INTERIORS-cell-kept-off-its-middle",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "if (inQuad(quad, cellX(i), cellZ(j))) inside.add(ck(i, j));",
+    "new": "if (inQuad(quad, cellX(i) - KIT_CELL / 2, cellZ(j))) inside.add(ck(i, j));",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-door-cell-the-wrong-way-along-the-front",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "export const FABRIC_DOOR_CELL_X = -KIT_MEASURE.exitDoorMid;",
+    "new": "export const FABRIC_DOOR_CELL_X = KIT_MEASURE.exitDoorMid;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-street-door-measured-the-wrong-end-of-its-wall",
+    "file": "src/world/interior/fabricInteriorKit.js",
+    "old": "exitDoorMid: -25,",
+    "new": "exitDoorMid: 25,",
+    "tests": [
+      "test/world/icinteriors_freeware.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-plan-unseeded-by-its-key",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "const rng = seededRng(hash32(SALT, key >>> 0, 1));",
+    "new": "const rng = seededRng(hash32(SALT, 0, 1));",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-furniture-unseeded-by-its-key",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "const rng = seededRng(hash32(SALT, plan.key, 2));",
+    "new": "const rng = seededRng(hash32(SALT, 0, 2));",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-a-storey-short",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "const want = Math.max(1, Math.min(FABRIC_INTERIOR_STOREYS, Math.floor(storeys)));",
+    "new": "const want = Math.max(1, Math.min(FABRIC_INTERIOR_STOREYS, Math.floor(storeys) - 1));",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-the-street-door-on-another-side",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "plan[0].exit = [0, 0, 0];",
+    "new": "plan[0].exit = [0, 0, 1];",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-ladder-never-where-a-climber-arrives",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "if (!inside(c) || (k === 0 && c[0] === 0 && c[1] === 0) || (down?.kind === 'hatch' && isArrival(c)) || !joined(floorOf(L))) continue;",
+    "new": "if (!inside(c) || (k === 0 && c[0] === 0 && c[1] === 0) || isArrival(c) || !joined(floorOf(L))) continue;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-no-hatch",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "if (hatches.length) up = { kind: 'hatch', ...pick(hatches, rng) };",
+    "new": "if (hatches.length < 0) up = { kind: 'hatch', ...pick(hatches, rng) };",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-a-ladder's-room-not-carried-up",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "carry = held ? new Set([...held, ...(withHole ? [[down.i, down.j]] : [])].map(([i, j]) => ck(i, j))) : null;",
+    "new": "carry = null;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-a-home-of-one-storey-sleeps-nowhere",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "const roles = kind === 'house' && single ? HOME_ONE_STOREY : ROLES[kind][Math.min(k, 1)]",
+    "new": "const roles = kind === 'house' && !single ? HOME_ONE_STOREY : ROLES[kind][Math.min(k, 1)]",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-party-wall-windowed",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "if (o === undefined) return plan.blind.has(`${i},${j},${s}`) || hash32(",
+    "new": "if (o === undefined) return hash32(",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-no-window-at-all",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "hash32(SALT, plan.key, st.k, i + 64, j + 64, s) % 4 === 0 ? 'wall' : 'window';",
+    "new": "hash32(SALT, plan.key, st.k, i + 64, j + 64, s) % 1 === 0 ? 'wall' : 'window';",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-hatch's-floor-whole",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "if (hatched) for (const q of quartersBut(hatchIn.q)) objs.push(quarterPiece(KIT_PIECE.floor, set, FLOOR_MODEL_TYPE, x, y0, z, q));",
+    "new": "if (hatched) objs.push(kitPiece(KIT_PIECE.floor, set, FLOOR_MODEL_TYPE, x, y0, z, 0));",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-hatch-landing-over-the-hatch",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "return [[-h.q[0], -h.q[1]], [-h.q[0], h.q[1]], [h.q[0], -h.q[1]]].find(",
+    "new": "return [[h.q[0], h.q[1]], [-h.q[0], h.q[1]], [h.q[0], -h.q[1]]].find(",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-walk-unchecked",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "return anchors.every(reached) && needs.every(reached);",
+    "new": "return true;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-door-swing-unkept",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "kind === 'door' ? KIT_INSET + SWING : KIT_CELL / 2 + 20",
+    "new": "kind === 'door' ? KIT_INSET : KIT_CELL / 2 + 20",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-keeper-away-from-the-counter",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "keeper ??= { k: st.k, x: kx, z: kz };",
+    "new": "keeper ??= { k: st.k, x: kx, z: kz + 60 };",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-shop-shelves-another-trade's",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "const shelves = POOL_SHELVES[plan.pool] ?? POOL_SHELVES.house2;",
+    "new": "const shelves = POOL_SHELVES.house2;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-rest-marker-anywhere",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "const where = b.rest ? { k: b.k, x: b.rest[0], z: b.rest[1] } : takeSpot((s) => (s.k === b.k ? 0 : 1e6) + Math.hypot(s.x - b.x, s.z - b.z));",
+    "new": "const where = takeSpot((s) => -s.room * 10 - s.k + 0 * b.k);",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-person-named-where-the-room-stands-them",
+    "file": "src/world/interior/fabricInterior.js",
+    "old": "zPos: Math.round(where.z), castPos: [p.xPos, p.yPos, p.zPos] });",
+    "new": "zPos: Math.round(where.z), castPos: null });",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-people-named-off-their-room-spot",
+    "file": "src/characters/interiorPeople.js",
+    "old": "rawX: obj.castPos?.[0] ?? obj.xPos, rawY: obj.castPos?.[1] ?? obj.yPos, rawZ: obj.castPos?.[2] ?? obj.zPos,",
+    "new": "rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-questor-pool-makes-every-room",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "const cast = interiorCast(sub);",
+    "new": "const cast = sub?.interior;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-models-law-makes-every-room",
+    "file": "src/world/interior/interiorLayout.js",
+    "old": "export const hasInteriorModels = (sub) => sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;",
+    "new": "export const hasInteriorModels = (sub) => sub?.interior?.header?.num3dObjectRecords !== 0;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-site-search-makes-every-room",
+    "file": "src/systems/quest/place.js",
+    "old": "for (const obj of interiorCast(recordData)?.blockFlatObjectRecords ?? []) {",
+    "new": "for (const obj of recordData?.interior?.blockFlatObjectRecords ?? []) {",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-marker-index-makes-every-room",
+    "file": "src/systems/quest/place.js",
+    "old": "for (const obj of interiorCast(blockData?.rmbBlock?.subRecords?.[recordIndex])?.blockFlatObjectRecords ?? []) {",
+    "new": "for (const obj of blockData?.rmbBlock?.subRecords?.[recordIndex]?.interior?.blockFlatObjectRecords ?? []) {",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-markers-laid-in-reverse",
+    "file": "src/systems/quest/castMarkers.js",
+    "old": "held.forEach((m, n) => { if (m?.flatPosition) move(m, laid[n]); });",
+    "new": "held.forEach((m, n) => { if (m?.flatPosition) move(m, laid[laid.length - 1 - n]); });",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-selected-marker-left-behind",
+    "file": "src/systems/quest/castMarkers.js",
+    "old": "if (selTo) move(sel, selTo);",
+    "new": "if (selTo && !sel) move(sel, selTo);",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-markers-laid-at-every-mount",
+    "file": "src/systems/quest/castMarkers.js",
+    "old": "    if (same(m.flatPosition, p)) return;\n",
+    "new": "",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-climb-by-the-player's-nearest",
+    "file": "src/player/enterExit.js",
+    "old": "const head = ladder ? [ladder[12], ladder[13] + LADDER_HALF, ladder[14]] : playerPos;",
+    "new": "const head = playerPos;",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-climb-head-and-foot-swapped",
+    "file": "src/player/enterExit.js",
+    "old": "const top = closestOf(markerTypes.LADDER_TOP, head);",
+    "new": "const top = closestOf(markerTypes.LADDER_TOP, foot);",
+    "tests": [
+      "test/world/icinteriors.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-a-set's-window-wall-unshifted",
+    "file": "src/world/interior/fabricInteriorKit.js",
+    "old": "3218: [58, 64, 0],",
+    "new": "3218: [0, 0, 0],",
+    "tests": [
+      "test/world/icinteriors_freeware.test.js"
+    ]
+  },
+  {
+    "name": "IC-INTERIORS-a-set's-ceiling-unshifted",
+    "file": "src/world/interior/fabricInteriorKit.js",
+    "old": "2400: [0, 128, -1],",
+    "new": "2400: [0, 0, -1],",
+    "tests": [
+      "test/world/icinteriors_freeware.test.js"
+    ]
+  }
+]

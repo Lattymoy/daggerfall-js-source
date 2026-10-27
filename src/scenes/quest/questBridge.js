@@ -81,6 +81,7 @@ import { getBool } from '../../systems/settings/settings.js';
 import { noteOfferPending, clearPendingOffer } from '../../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI's GivePc.OnOfferPending subscription; QUEST-AUDIT III OFFER-STALE: a load lets the last game's go
 import { getTitle } from '../../systems/guild/guilds.js';
 import { addQuestResourceObjects } from '../../systems/quest/sceneMount.js';
+import { layMadeBuildingMarkers } from '../../systems/quest/castMarkers.js';   // IC-INTERIORS: a made building's quest markers, laid on its rooms at its mount
 import { SITE_TYPES } from '../../systems/quest/place.js';   // QUEST-HOME: a building's mount marks its sites reached
 import { QuestLens } from '../../ui/quest/questLens.js';   // GUIDE1: the modern faces' one read-only picture of this machine
 import { questHerald, heraldOn } from '../../ui/quest/questHerald.js';   // GUIDE3: the news the lens sees, told
@@ -970,6 +971,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // QUEST-HOME (Mac, 2026-10-15: "Close both"): the player stands in this building - every quest's site here is
       // reached, and never chosen again should it become a player's home (QuestMachine.noteSiteReached)
       if (siteType === SITE_TYPES.Building) machine.noteSiteReached(adapter.currentMapId?.() ?? 0, buildingKey);
+      // IC-INTERIORS (systems/quest/castMarkers.js): a made building's sites hold its markers as its cast stands them - laid
+      // on its own rooms' before anything stands
+      if (siteType === SITE_TYPES.Building) layMadeBuildingMarkers(machine, ctx.world, adapter.currentMapId?.() ?? 0, buildingKey);
       addQuestResourceObjects(machine, adapter, siteType, buildingKey);
     },
 
