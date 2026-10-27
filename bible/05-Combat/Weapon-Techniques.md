@@ -242,8 +242,11 @@ swing's own gate is asked again (sheathed, a spell readied, paralyzed, a weapon 
 Shadowstep turns the view on the foe from where the body lands behind it (the door's `face(point, from)`), and its blow
 is that foe's alone, all round within its reach (`blow.target`). A paralysis freezes a swing's or a shot's clock with the
 machine, so a long one never lets the hit it waits on leak as a plain shot. A window over the street (the outdoor
-doors' `blocked`, the host's `gamePaused`) holds the key, sets an aim aside unloosed and stops the clock; a building's and
-a dungeon's rigs are not stepped under one at all.
+doors' `blocked`, the host's `gamePaused`) holds the key, sets an aim aside unloosed and stops the clock; a building's
+rig is not stepped under one at all. A dungeon's was not either until RPT1026-FIGHTS WINDOW-ONLINE: online its frame
+runs under a living player's window, rig and all, so its door holds the key by its own windows' pause (AUDIT RPT1026
+E1, `dungeonContext.js:"blocked: dungeonPaused,"`) - before it, the side button fired a technique from under the
+pack.
 
 **The aim** (`aimFor`): every look it casts meets the world through `rayHit` - the nearer of the collider's meshes and
 the terrain, marched along the look in quarter metres and halved down to the crossing (outdoors the ground is the
@@ -450,7 +453,7 @@ show.
 ## THE FOUR HOSTS
 
 Every host hands its rig the technique's **door** - `{ motor(), fireArrow(from, dir, { sky, weapon, technique,
-speedScale }), drainFatigue(n), face(point, from) }` (and, on the street, `blocked()` - its window's hold), and THE
+speedScale }), drainFatigue(n), face(point, from) }` (and, on the street and underground, `blocked()` - its window's hold), and THE
 FEEL's three ends, `fx(recipe, at, o)` (its cast engine's `techniqueFx`), `shake(k)` (`betterAmbience.weaponKick`; the
 dungeon's `opts.shakeCamera`, its outer host's) and `sound(clip, volume, pitch)` (its `audio.playOneShot`) - and draws
 the marks in its ground pass:
