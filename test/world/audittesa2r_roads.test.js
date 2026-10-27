@@ -28,6 +28,7 @@ import { groundWoods, tamrielHeightByte, dropGroundCache } from '../../src/world
 import { RELIEF_SCALE } from '../../src/world/tamriel/tamrielRelief.js';
 import { createCountryGround, COUNTRY_TYPES } from '../../src/world/tamrielCountry.js';
 import { lairPools, LAIR_TYPES } from '../../src/world/tamrielDungeons.js';
+import { ghostfenceFrame } from '../../src/world/tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G3: the fence's law in the print
 import { memoryIdb } from '../memoryIdb.mjs';
 
 const T = LOCATION_TYPES;
@@ -248,6 +249,10 @@ function lawsFingerprint() {
     const g = groundWoods(w), dry = createCountryGround(g);
     for (let y = 0; y < 500; y += 7) for (const x of [-20, -9, -3, -1, 1000, 1002, 1008, 1019]) mix(g.getHeightMapValue(x, y));
     for (let k = 0; k < 120; k++) mix(dry(2520 + (k % 12) * 85, -400 + Math.floor(k / 12) * 105) ? 1 : 0);   // the land's every height, its coasts and its peaks
+    // AUDIT RED-MOUNTAIN G3: the Ghostfence's line and its gate - what the roads keep off and the rolls refuse
+    const fence = ghostfenceFrame();
+    mix(fence ? fence.band.size : 0);
+    for (const set of fence ? [fence.band, fence.open] : []) for (const k of [...set].sort()) for (const v of k.split(',')) mix(Number(v));
   }
   const countryTemplates = new Map(COUNTRY_TYPES.map((t, k) => [t, t === T.HomeFarms ? [] : Array.from({ length: 1 + (k % 3) }, (_, i) => row(100 * t + i, t))]));
   const full = [blk('N1.RDB', true), blk('N2.RDB'), blk('B1.RDB')];
@@ -262,7 +267,7 @@ function lawsFingerprint() {
 /** The fingerprint each GROUND_ROLL_VERSION was recorded under. A law above moving what a pixel stands or how high it is
  *  fails the pin: move GROUND_ROLL_VERSION (world/tamrielRoads.js) - every client's cached roads are then laid again -
  *  and record the new fingerprint here under it. */
-const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5', 2: '14pewtj', 3: '14pewtj', 4: 'ad9cue', 5: 'ad9cue', 6: 'ad9cue' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d); 2: its lane G's beach-line floor; 3: CYRODIIL-SHORES - the fixture has no Cyrodiil lake, so its print stands, but the freeware's Cyrodiil does: every cached region laid again; 4: SMOOTH-LAND - every coast and border past the Bay the land's smooth law's; 5: RUMARE-WATER - the land let down about the Imperial City at the sea (world/rumareWaters.js rumareBasin, its mouth's pixels the sea's): the fixture has no canal, so its print stands, but the freeware's city does; 6: GHOSTFENCE - the fixture's ground lies off the fence (test/world/ghostfence.test.js pins its rolls)
+const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5', 2: '14pewtj', 3: '14pewtj', 4: 'ad9cue', 5: 'ad9cue', 6: '1s1uba5' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d); 2: its lane G's beach-line floor; 3: CYRODIIL-SHORES - the fixture has no Cyrodiil lake, so its print stands, but the freeware's Cyrodiil does: every cached region laid again; 4: SMOOTH-LAND - every coast and border past the Bay the land's smooth law's; 5: RUMARE-WATER - the land let down about the Imperial City at the sea (world/rumareWaters.js rumareBasin, its mouth's pixels the sea's): the fixture has no canal, so its print stands, but the freeware's city does; 6: GHOSTFENCE - its line and gate in the print (AUDIT RED-MOUNTAIN G3: the print was blind to them; 1-5 were recorded before the fence's sets were mixed in)
 
 test('AUDIT TESA II R6 the laws past the Bay a region\'s build runs and no input carries - the ground\'s height, the seam, the plateau, the rolls - answer as they did when GROUND_ROLL_VERSION was recorded: a law moved and the version not, this fails (mutant: the shore\'s floor, the relief\'s ease, the roll\'s water law, the plateau)', () => {
   const now = lawsFingerprint();

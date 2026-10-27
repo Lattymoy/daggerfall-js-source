@@ -158,7 +158,8 @@ export function namedSummit(province, name, pts) {
     const v = cells[y * w + x];
     if (v <= best) continue;
     const px = (x + 0.5) / s, py = (y + 0.5) / s;
-    if (!pts.some(([qx, qy]) => Math.hypot(px - qx, py - qy) <= NAMED_SEEK) || provinceKeyAt(px, py) !== province) continue;
+    // AUDIT RED-MOUNTAIN L6: squared - the volcano's centre is this summit, a ground source (one float in every engine, A8)
+    if (!pts.some(([qx, qy]) => (px - qx) * (px - qx) + (py - qy) * (py - qy) <= NAMED_SEEK * NAMED_SEEK) || provinceKeyAt(px, py) !== province) continue;
     best = v; at = [px, py];
   }
   _summits.set(key, at);

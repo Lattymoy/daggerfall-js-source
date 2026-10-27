@@ -36,10 +36,11 @@ export const sampleToPixel = (gx, gy) => [Math.floor(gx / 128), Math.floor(BAY_H
 
 /** THE FENCE'S FRAME: the centre and the pylons (world samples), each one's unit tangent (counter-clockwise), Ghostgate's
  *  pylon, the Bay pixels the fence crosses (`band`, closed and 4-connected) and those a road may take (`open`), each
- *  pixel's pylons, Ghostgate's pixel and the band's box.
+ *  pixel's pylons and the runs with a piece of the solid or a curtain point in it (`runsBy`), Ghostgate's pixel and the
+ *  band's box.
  * @typedef {{ cx: number, cy: number, n: number, pts: Float64Array, tan: Float64Array, gate: number, band: ReadonlySet<string>,
- *   open: ReadonlySet<string>, byPixel: ReadonlyMap<string, number[]>, gatePixel: string, x0: number, x1: number, y0: number,
- *   y1: number }} GhostfenceFrame */
+ *   open: ReadonlySet<string>, byPixel: ReadonlyMap<string, number[]>, runsBy: ReadonlyMap<string, number[]>, gatePixel: string,
+ *   x0: number, x1: number, y0: number, y1: number }} GhostfenceFrame */
 /** @type {GhostfenceFrame|null} */
 let _frame = null;
 let _rm = /** @type {any} */ (undefined);
@@ -78,7 +79,15 @@ export function ghostfenceFrame() {
   const [gx, gy] = sampleToPixel(pts[2 * gate], pts[2 * gate + 1]);
   const open = new Set();
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (band.has(keyOf(gx + dx, gy + dy))) open.add(keyOf(gx + dx, gy + dy));
-  return (_frame = { cx: rm.cx, cy: rm.cy, n, pts, tan, gate, band, open, byPixel, gatePixel: keyOf(gx, gy), x0, x1, y0, y1 });
+  // AUDIT RED-MOUNTAIN N1: each pixel's runs - those with a piece of the solid (by its middle) or a curtain point in it
+  const runsBy = new Map(), part = { n, pts, tan, gate };
+  const add = (gx2, gy2, i) => { const [qx, qy] = sampleToPixel(gx2, gy2), k = keyOf(qx, qy), l = runsBy.get(k) ?? runsBy.set(k, []).get(k); if (l[l.length - 1] !== i) l.push(i); };
+  for (let i = 0; i < n; i++) {
+    const cuts = ghostfenceRunCuts(part, i);
+    for (let c = 0; c + 3 < cuts.length; c += 2) add((cuts[c] + cuts[c + 2]) / 2, (cuts[c + 1] + cuts[c + 3]) / 2, i);
+    for (let k = 0; k <= CURTAIN_STEPS; k++) { const [x, y] = ghostfenceCurtainPoint(part, i, k); add(x, y, i); }
+  }
+  return (_frame = { cx: rm.cx, cy: rm.cy, n, pts, tan, gate, band, open, byPixel, runsBy, gatePixel: keyOf(gx, gy), x0, x1, y0, y1 });
 }
 
 /** WHETHER THE COUNTRYSIDE KEEPS OFF Bay pixel (px, py): its centre within the fence, or within `keep` past it - so no
@@ -98,6 +107,12 @@ export function insideGhostfence(px, py) {
 export function onGhostfence(px, py) {
   const f = ghostfenceFrame();
   return !!f && px >= f.x0 && px <= f.x1 && py >= f.y0 && py <= f.y1 && f.band.has(keyOf(px, py));
+}
+
+/** Whether a body on open ground may not step into Bay pixel (px, py) - the fence's line but at Ghostgate (AUDIT
+ *  RED-MOUNTAIN G2: the Overworld's route planner walked straight across it). */
+export function ghostfenceShuts(px, py) {
+  return onGhostfence(px, py) && !(/** @type {GhostfenceFrame} */ (_frame)).open.has(keyOf(px, py));
 }
 
 /** The pixels a road may not take (the band less Ghostgate's): every one of them, Bay pixels. */
@@ -124,4 +139,34 @@ export function ghostfencePanel(f, i) {
   const j = (i + 1) % f.n, h = GHOSTGATE_HALF / SAMPLE_M;
   const end = (k, side) => (k === f.gate ? [f.pts[2 * k] + side * f.tan[2 * k] * h, f.pts[2 * k + 1] + side * f.tan[2 * k + 1] * h] : [f.pts[2 * k], f.pts[2 * k + 1]]);
   return [end(i, 1), end(j, -1)];
+}
+
+/** The curtain's points a run, end to end less one (the glow's feet between two pylons, render/ghostfenceGlow.js - each
+ *  noted on its own pixel's ground by the pixel build). */
+export const CURTAIN_STEPS = 8;
+/** Run i's curtain point k (0..CURTAIN_STEPS) in world samples, from its first end to its last. */
+export function ghostfenceCurtainPoint(f, i, k) {
+  const [[ax, ay], [bx, by]] = ghostfencePanel(f, i), t = k / CURTAIN_STEPS;
+  return [ax + (bx - ax) * t, ay + (by - ay) * t];
+}
+
+/** THE SOLID'S PIECES of run i (AUDIT RED-MOUNTAIN N1: one flat quad a run left gullies open under it): its cut points in
+ *  world samples (x, y pairs, end to end) - at every crossing of a pixel's edge, and between them steps of a sample (6.4 m)
+ *  at most - so each piece lies in one pixel, and its ground is that pixel's own. */
+export function ghostfenceRunCuts(f, i) {
+  const [[ax, ay], [bx, by]] = ghostfencePanel(f, i), dx = bx - ax, dy = by - ay;
+  const ts = [0, 1];
+  for (const [a, d] of [[ax, dx], [ay, dy]]) {
+    if (d === 0) continue;
+    const lo = a < a + d ? a : a + d, hi = a < a + d ? a + d : a;
+    for (let k = Math.ceil(lo / 128); k * 128 <= hi; k++) { const t = (k * 128 - a) / d; if (t > 0 && t < 1) ts.push(t); }
+  }
+  ts.sort((p, q) => p - q);
+  const len = Math.sqrt(dx * dx + dy * dy), out = [];
+  for (let c = 0; c + 1 < ts.length; c++) {
+    const t0 = ts[c], t1 = ts[c + 1], m = Math.max(1, Math.ceil((t1 - t0) * len - 1e-9));
+    for (let q = 0; q < m; q++) { const t = t0 + ((t1 - t0) * q) / m; out.push(ax + dx * t, ay + dy * t); }
+  }
+  out.push(bx, by);
+  return Float64Array.from(out);
 }

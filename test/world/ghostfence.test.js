@@ -224,15 +224,16 @@ test('GHOSTFENCE the models: the pylon (plinth, banded shaft, collar, four horns
   assert.ok(CURTAIN.from < 0 && CURTAIN.to < PYLON.collar.to);
 });
 
-test('GHOSTFENCE the build: a pixel the fence crosses stands each pylon on the lowest ground under its plinth, Ghostgate in its own, in the batch on their own pictures and solid through the gate with the pixel\'s floating frame; the curtain between each pylon and the next solid from under the ground to the collars; their feet noted for the glow; a pixel off the fence stands nothing (mutants: the seat, the solid, the curtain, the feet)', async () => {
-  const { standGhostfence, footMatrix, CURTAIN_SOLID_TOP } = await import('../../src/scenes/ghostfenceBuild.js');
+test('GHOSTFENCE the build: a pixel the fence crosses stands each pylon on the ground at its centre, a footing down to the lowest under its plinth where it stands over it, Ghostgate on the lowest under its own, in the batch on their own pictures and solid through the gate with the pixel\'s floating frame; each piece of the curtain\'s solid whose middle is in it from under its lowest ground to the collars over its highest, one solid a run; its feet and curtain points noted for the glow; a pixel off the fence stands nothing (AUDIT RED-MOUNTAIN N1/N4 - PIN MOVED: a run was one flat quad on its two feet, and a pylon seated on its lowest ground) (mutants: the seat, the footing, the solid, the pieces, the feet)', async () => {
+  const { standGhostfence, footMatrix, CURTAIN_SOLID_TOP, groundAlong } = await import('../../src/scenes/ghostfenceBuild.js');
   const { fenceFeet } = await import('../../src/render/ghostfenceGlow.js');
+  const { ghostfenceRunCuts, ghostfenceCurtainPoint, CURTAIN_STEPS } = await import('../../src/world/tamriel/ghostfence.js');
+  const { pylonFooting } = await import('../../src/world/tamriel/ghostfenceModel.js');
+  const { surfaceHeightAt } = await import('../../src/world/terrain/terrainSurface.js');
   const f = ghostfenceFrame();
   const W = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, hDim = 129;
-  // a plane rising to the north-east: 0.02 a metre east, 0.03 north, from 0.4 of the world's height
-  const samples = new Float32Array(hDim * hDim);
-  for (let x = 0; x < hDim; x++) for (let z = 0; z < hDim; z++) samples[x * hDim + z] = 0.4 + (0.02 * x * SAMPLE_M + 0.03 * z * SAMPLE_M) / W;
-  const run = (px, py) => {
+  const plane = (ex, nz) => { const a = new Float32Array(hDim * hDim); for (let x = 0; x < hDim; x++) for (let z = 0; z < hDim; z++) a[x * hDim + z] = 0.4 + (ex * x * SAMPLE_M + nz * z * SAMPLE_M) / W; return a; };
+  const run = (px, py, samples) => {
     const uploads = [], statics = [], boxes = [], solids = [];
     const translation = { tag: 'frame' };
     const n = standGhostfence({ px, py, pkey: `${px},${py}`, key: `k${px},${py}`, samples,
@@ -241,47 +242,86 @@ test('GHOSTFENCE the build: a pixel the fence crosses stands each pylon on the l
     return { n, uploads, statics, boxes, solids, translation };
   };
   const [k0] = [...f.byPixel.keys()].filter((k) => k !== f.gatePixel), [px, py] = k0.split(',').map(Number);
-  const here = ghostfencePylonsIn(px, py), r = run(px, py);
+  const here = ghostfencePylonsIn(px, py), runs = f.runsBy.get(k0), gentle = plane(0.02, 0.03), r = run(px, py, gentle);
   assert.equal(r.n, here.length);
   assert.deepEqual(r.uploads, [['t', GHOSTFENCE_ARCHIVE, GF_RECORD.stone], ['t', GHOSTFENCE_ARCHIVE, GF_RECORD.orb], ['e', GHOSTFENCE_ARCHIVE, GF_RECORD.orb, true]]);
-  assert.equal(r.statics.length, here.length);
+  assert.equal(r.statics.length, here.length, 'on gentle ground no footing');
   assert.ok(r.statics.every((s) => s.own && s.cpu === pylonModel()), 'own pictures, no climate\'s');
   assert.equal(r.boxes.length, here.length);
-  assert.equal(r.solids.length, here.length + 1, 'each pylon and the curtain');
+  const curtains = r.solids.slice(here.length);
   assert.ok(r.solids.every((s) => s.k === `k${px},${py}` && s.o.translation === r.translation), 'the build\'s key, the pixel\'s floating frame');
   here.forEach((_, j) => assert.equal(r.solids[j].pos, pylonSolid().positions, 'a pylon\'s solid its plinth and shaft'));
-  const ox = px * 128, oy = (MAP_HEIGHT - py) * 128;
+  const ox = px * 128, oy = (MAP_HEIGHT - py) * 128, ground = (x, z) => 0.4 * W + 0.02 * x + 0.03 * z;
   here.forEach((i, j) => {
     const x = (f.pts[2 * i] - ox) * SAMPLE_M, z = (f.pts[2 * i + 1] - oy) * SAMPLE_M, m = r.statics[j].m;
     assert.ok(x >= 0 && x <= TERRAIN_SIZE && z >= 0 && z <= TERRAIN_SIZE, 'its foot in the pixel');
-    // the plane's lowest under the plinth: its south-west corner of the turned footprint
-    const ex = (Math.abs(f.tan[2 * i]) + Math.abs(f.tan[2 * i + 1])) * PYLON.plinth[0];
-    const low = 0.4 * W + 0.02 * Math.max(0, x - ex) + 0.03 * Math.max(0, z - ex);
-    assert.ok(m[13] >= low - 1e-3 && m[13] - low < 0.2, `pylon ${i} seated at ${m[13].toFixed(2)}, the lowest ${low.toFixed(2)} (the footprint's inset, lowestGroundUnder's)`);
-    assert.ok(m[13] < 0.4 * W + 0.02 * x + 0.03 * z - 0.05, 'under the ground at its centre');
+    assert.ok(Math.abs(m[13] - ground(x, z)) < 1e-3, `pylon ${i} on the ground at its centre`);
     assert.deepEqual(Array.from(m), Array.from(footMatrix(m[12], m[13], m[14], f.tan[2 * i], f.tan[2 * i + 1])));
     assert.ok(Math.abs(m[12] - x) < 1e-3 && Math.abs(m[14] - z) < 1e-3);
   });
-  // the turn is a rotation, not a mirror (the merge would turn every face over)
   const m = r.statics[0].m, det = m[0] * (m[5] * m[10] - m[6] * m[9]) - m[4] * (m[1] * m[10] - m[2] * m[9]) + m[8] * (m[1] * m[6] - m[2] * m[5]);
-  assert.ok(Math.abs(det - 1) < 1e-6);
-  const curtain = r.solids[r.solids.length - 1];
-  assert.equal(curtain.idx.length, here.length * 6);
-  for (let q = 0; q < here.length; q++) {
-    const y = (c) => curtain.pos[(4 * q + c) * 3 + 1];
-    assert.ok(Math.abs(y(0) - (r.statics[q].m[13] + CURTAIN.from)) < 1e-3 && Math.abs(y(3) - (r.statics[q].m[13] + CURTAIN_SOLID_TOP)) < 1e-3, 'from under its foot to the collars');
-    assert.ok(y(2) - y(1) === CURTAIN_SOLID_TOP - CURTAIN.from || Math.abs(y(2) - y(1) - (CURTAIN_SOLID_TOP - CURTAIN.from)) < 1e-3);
+  assert.ok(Math.abs(det - 1) < 1e-6, 'the turn is a rotation, not a mirror (the merge would turn every face over)');
+  // the curtain: one solid a run with a piece here; each piece 6.4 m at most, in this pixel, under its lowest and over its highest
+  const { ghostfenceRunCuts: cutsOf } = await import('../../src/world/tamriel/ghostfence.js');
+  const withPiece = runs.filter((i) => { const c = cutsOf(f, i); for (let k = 0; k + 3 < c.length; k += 2) if (sampleToPixel((c[k] + c[k + 2]) / 2, (c[k + 1] + c[k + 3]) / 2).join() === k0) return true; return false; });
+  assert.ok(withPiece.length >= here.length && withPiece.length <= runs.length);
+  assert.equal(curtains.length, withPiece.length, 'a solid a run with a piece here (a run may touch the pixel by a curtain point alone)');
+  for (const c of curtains) {
+    assert.equal(c.idx.length, (c.pos.length / 12) * 6);
+    for (let q = 0; q < c.pos.length / 12; q++) {
+      const P = (k) => [c.pos[12 * q + 3 * k], c.pos[12 * q + 3 * k + 1], c.pos[12 * q + 3 * k + 2]];
+      const [a, b, bt, at] = [P(0), P(1), P(2), P(3)];
+      assert.ok(Math.hypot(b[0] - a[0], b[2] - a[2]) <= SAMPLE_M + 1e-6, 'a piece a sample at most');
+      for (const e of [a, b]) assert.ok(e[0] >= -1e-3 && e[0] <= TERRAIN_SIZE + 1e-3 && e[2] >= -1e-3 && e[2] <= TERRAIN_SIZE + 1e-3, `in the pixel: ${e}`);   // float32's rounding at 819 m
+      const lo = Math.min(ground(a[0], a[2]), ground(b[0], b[2])), hi = Math.max(ground(a[0], a[2]), ground(b[0], b[2]));
+      assert.ok(Math.abs(a[1] - (lo + CURTAIN.from)) < 1e-2 && Math.abs(b[1] - a[1]) < 1e-6, 'under its lowest ground');
+      assert.ok(Math.abs(at[1] - (hi + CURTAIN_SOLID_TOP)) < 1e-2 && Math.abs(bt[1] - at[1]) < 1e-6, 'to the collars over its highest');
+    }
   }
-  const feet = fenceFeet().map.get(`${px},${py}`);
+  // every piece of every run built by one pixel alone: the pieces' middles, each in one band pixel's runs
+  let pieces = 0;
+  for (let i = 0; i < f.n; i++) {
+    const cuts = ghostfenceRunCuts(f, i);
+    for (let c = 0; c + 3 < cuts.length; c += 2) {
+      const [mx, my] = sampleToPixel((cuts[c] + cuts[c + 2]) / 2, (cuts[c + 1] + cuts[c + 3]) / 2);
+      assert.ok(f.runsBy.get(`${mx},${my}`)?.includes(i), `run ${i}'s piece ${c / 2} with its pixel`);
+      pieces++;
+    }
+    const [a0, a1] = [cuts[0], cuts[1]], [b0, b1] = [cuts[cuts.length - 2], cuts[cuts.length - 1]], [[pa0, pa1], [pb0, pb1]] = ghostfencePanel(f, i);
+    assert.deepEqual([a0, a1, b0, b1], [pa0, pa1, pb0, pb1], 'end to end');
+  }
+  assert.ok(pieces >= f.n * 8, `${pieces} pieces`);
+  // the feet and the curtain points noted, on the pixel's ground, for this frame
+  const feet = fenceFeet().map.get(k0);
+  assert.equal(feet.frame, f);
   assert.deepEqual(feet.idx, here);
   assert.deepEqual(Array.from(feet.seats), r.statics.map((s) => Math.fround(s.m[13])));
+  assert.ok(feet.points.length > 0);
+  feet.points.forEach((p, j) => {
+    const [gx, gy] = ghostfenceCurtainPoint(f, Math.floor(p / (CURTAIN_STEPS + 1)), p % (CURTAIN_STEPS + 1));
+    assert.equal(sampleToPixel(gx, gy).join(), k0);
+    assert.ok(Math.abs(feet.heights[j] - ground((gx - ox) * SAMPLE_M, (gy - oy) * SAMPLE_M)) < 1e-2);
+  });
+  // steep ground: a footing down to the lowest under the plinth, solid too
+  const steep = run(px, py, plane(0.6, 0.4));
+  assert.equal(steep.statics.length, 2 * here.length, 'a pylon and its footing');
+  const foot = steep.statics[1].cpu, ys = foot.positions.filter((_, k) => k % 3 === 1);
+  const [x1, z1] = [(f.pts[2 * here[0]] - ox) * SAMPLE_M, (f.pts[2 * here[0] + 1] - oy) * SAMPLE_M];
+  const low = (await import('../../src/world/terrain/terrainSurface.js')).lowestGroundUnder(plane(0.6, 0.4), [x1 - 3.4, 0, z1 - 3.4, x1 + 3.4, 0, z1 + 3.4]);
+  assert.ok(Math.min(...ys) <= low - steep.statics[0].m[13] - PYLON.sink + 0.5, 'down to under the lowest');
+  assert.equal(steep.solids.length, 2 * here.length + withPiece.length, 'its solid as well');
+  assert.equal(typeof pylonFooting(2).solid.positions.length, 'number');
+  // the ground along a piece: exact on the drawn triangles (a ridge between two samples read at the sample)
+  const ridge = new Float32Array(gentle); ridge[10 * hDim + 10] += 50 / W;
+  const [, top] = groundAlong(ridge, 9.5 * SAMPLE_M, 10 * SAMPLE_M, 10.5 * SAMPLE_M, 10 * SAMPLE_M);
+  assert.ok(Math.abs(top - surfaceHeightAt(ridge, 10 * SAMPLE_M, 10 * SAMPLE_M)) < 1e-6, 'the ridge\'s top inside the piece');
   // Ghostgate's pixel stands the gate in its pylon's place
-  const [gx, gy] = f.gatePixel.split(',').map(Number), gr = run(gx, gy), gi = ghostfencePylonsIn(gx, gy).indexOf(f.gate);
+  const [gx, gy] = f.gatePixel.split(',').map(Number), gr = run(gx, gy, gentle), gi = ghostfencePylonsIn(gx, gy).indexOf(f.gate);
   assert.ok(gi >= 0);
   assert.equal(gr.statics[gi].cpu, ghostgateModel());
   assert.equal(gr.solids[gi].pos, ghostgateSolid().positions);
   // off the fence: nothing, not even its pictures
-  const off = run(px + 200, py);
+  const off = run(px + 200, py, gentle);
   assert.deepEqual([off.n, off.uploads.length, off.statics.length, off.solids.length], [0, 0, 0, 0]);
   // wired into the pixel build past the Bay, before the bucket settles
   const pb = read('src/scenes/pixelBuild.js');
@@ -289,7 +329,7 @@ test('GHOSTFENCE the build: a pixel the fence crosses stands each pylon on the l
   assert.ok(at > 0 && at < pb.indexOf('collider.settle(key);'));
 });
 
-test('GHOSTFENCE the glow: its feet on the ground each layer draws - a built pixel\'s own, the middle ring\'s kernel (eased as it eases), the far ring\'s centres; its curtain a quad a run and a halo an orb (Ghostgate\'s two); the shaders\' foot, ease and hiding run on their own sources; drawn by the far ring after the fire, its door (mutants: a layer\'s order, the ease, the halo\'s least size, the hiding margin)', async () => {
+test('GHOSTFENCE the glow: its feet on the ground each layer draws - a built pixel\'s own, the middle ring\'s kernel (eased as it eases), the far ring\'s centres; its curtain a quad a step of each run on its curtain points\' ground and a halo an orb (Ghostgate\'s two), read on each ring\'s own triangles, a note for another frame never read (AUDIT RED-MOUNTAIN N1/N5/N6 - PIN MOVED); the shaders\' foot, ease and hiding run on their own sources; drawn by the far ring after the fire, its door (mutants: a layer\'s order, the ease, the halo\'s least size, the hiding margin)', async () => {
   const { fenceGround, glowMeshes, noteFenceFeet, fenceFeet, FENCE_CURTAIN_VS, FENCE_CURTAIN_FS, FENCE_HALO_VS, FENCE_HALO_FS, GLOW, fenceGlowDisabled } = await import('../../src/render/ghostfenceGlow.js');
   const { glslFunctions } = await import('../glsl.mjs');
   const f = ghostfenceFrame(), [cpx, cpy] = sampleToPixel(f.cx, f.cy);
@@ -300,12 +340,15 @@ test('GHOSTFENCE the glow: its feet on the ground each layer draws - a built pix
   const midR = 14, sub = 8, mside = (2 * midR + 1) * sub + 1, mid = { heights: new Float32Array(mside * mside), baseX: cpx, baseY: cpy - 10, radius: midR, sub };
   for (let gz = 0; gz < mside; gz++) for (let gx = 0; gx < mside; gx++) mid.heights[gz * mside + gx] = 500 + gz;   // a row's height its row: north higher
   const [k0] = [...f.byPixel.keys()], feetIdx = f.byPixel.get(k0);
-  noteFenceFeet(k0, feetIdx, Float32Array.from(feetIdx.map((_, j) => 7000 + j)));
+  const { CURTAIN_STEPS, ghostfenceCurtainPoint } = await import('../../src/world/tamriel/ghostfence.js');
+  const per = CURTAIN_STEPS + 1, pointsIn = [];
+  for (let p = 0; p < f.n * per; p++) if (sampleToPixel(...ghostfenceCurtainPoint(f, Math.floor(p / per), p % per)).join() === k0) pointsIn.push(p);
+  noteFenceFeet(k0, { frame: f, idx: feetIdx, seats: Float32Array.from(feetIdx.map((_, j) => 7000 + j)), points: pointsIn, heights: Float32Array.from(pointsIn.map((_, j) => 6000 + j)) });
   const built = new Set([k0]);
-  const g = fenceGround(f, { feet: fenceFeet(), built, mid, ring });
+  const all = fenceGround(f, { feet: fenceFeet(), built, mid, ring }), g = all.pylons;
   for (let i = 0; i < f.n; i++) {
     const bx = f.pts[2 * i] / 128, by = MAP_HEIGHT + 1 - f.pts[2 * i + 1] / 128;
-    assert.ok(Math.abs(g.coarse[i] - (1000 + 2 * (bx - 0.5 - cpx + ringR))) < 1e-2, 'the far ring bilinear between its centres');
+    assert.ok(Math.abs(g.coarse[i] - (1000 + 2 * (bx - 0.5 - cpx + ringR))) < 1e-2, 'the far ring between its centres');
     const k = `${Math.floor(bx)},${Math.floor(by)}`;
     if (k === k0) assert.deepEqual([g.fine[i], g.kind[i]], [7000 + feetIdx.indexOf(i), 0], 'a built pixel\'s own foot');
     else if (Math.abs(bx - (cpx + 0.5)) < midR - 0.5 && Math.abs(by - (cpy - 10 + 0.5)) < midR - 0.5) {
@@ -314,11 +357,32 @@ test('GHOSTFENCE the glow: its feet on the ground each layer draws - a built pix
     }
     else if (Math.abs(bx - (cpx + 0.5)) > midR + 1.5 || Math.abs(by - (cpy - 10 + 0.5)) > midR + 1.5) assert.deepEqual([g.fine[i], g.kind[i]], [g.coarse[i], 0], 'past it, the far ring\'s');
   }
+  pointsIn.forEach((p, j) => assert.deepEqual([all.points.fine[p], all.points.kind[p]], [6000 + j, 0], 'a built pixel\'s own curtain point'));
+  assert.equal(all.points.fine.length, f.n * per);
   const unbuilt = fenceGround(f, { feet: fenceFeet(), built: new Set(), mid: null, ring });
-  assert.ok(feetIdx.every((i) => unbuilt.fine[i] === unbuilt.coarse[i]), 'a foot noted but not built is the far ring\'s');
+  assert.ok(feetIdx.every((i) => unbuilt.pylons.fine[i] === unbuilt.pylons.coarse[i]), 'a foot noted but not built is the far ring\'s');
+  // AUDIT RED-MOUNTAIN N6: a note made for another frame (another fit, another trace) is never read
+  noteFenceFeet(k0, { frame: {}, idx: feetIdx, seats: Float32Array.from(feetIdx.map(() => 9999)), points: pointsIn, heights: Float32Array.from(pointsIn.map(() => 9999)) });
+  const stale = fenceGround(f, { feet: fenceFeet(), built, mid: null, ring });
+  assert.ok(feetIdx.every((i) => stale.pylons.fine[i] === stale.pylons.coarse[i]), 'another frame\'s note: the far ring\'s');
+  // AUDIT RED-MOUNTAIN N5: read on the triangles each ring draws (the diagonal from a cell's first corner to its last), and
+  // a foot on no ring dropped (kind 2) - not stood at 0
+  const { cellHeight } = await import('../../src/render/ghostfenceGlow.js');
+  assert.equal(cellHeight(0, 0, 0, 100, 0.5, 0.5), 50); assert.equal(cellHeight(0, 0, 0, 100, 0.75, 0.25), 25); assert.equal(cellHeight(0, 0, 0, 100, 0.25, 0.75), 25);
+  assert.equal(cellHeight(0, 100, 0, 0, 0.75, 0.25), 50, 'the corner off the diagonal: its own triangle');
+  const peak = new Float32Array(side * side); peak[(ringR + 1) * side + ringR + 1] = 800;
+  const tri = fenceGround(f, { ring: { ...ring, ground: peak } });
+  for (let i = 0; i < f.n; i++) {
+    const fi = f.pts[2 * i] / 128 - 0.5 - cpx + ringR, fj = MAP_HEIGHT + 1 - f.pts[2 * i + 1] / 128 - 0.5 - cpy + ringR, ii = Math.floor(fi), jj = Math.floor(fj);
+    const h = (a, b) => peak[b * side + a];
+    assert.ok(Math.abs(tri.pylons.coarse[i] - cellHeight(h(ii, jj), h(ii + 1, jj), h(ii, jj + 1), h(ii + 1, jj + 1), fi - ii, fj - jj)) < 1e-3);
+  }
+  const small = fenceGround(f, { ring: { baseX: cpx, baseY: cpy, radius: 1, side: 3, positions: new Float32Array(27), ground: new Float32Array(9) } });
+  assert.ok(small.pylons.kind.every((k) => k === 2) && small.points.kind.every((k) => k === 2), 'past every ring: dropped');
+  for (const vsrc of [FENCE_CURTAIN_VS, FENCE_HALO_VS]) assert.match(vsrc, /if \(aFoot\.z > 1\.5\) \{ gl_Position = vec4\(0\.0, 0\.0, 2\.0, 1\.0\); return; \}/);
   // the meshes
   const m = glowMeshes(f);
-  assert.equal(m.curtainOf.length, f.n * 6);
+  assert.equal(m.curtainOf.length, f.n * CURTAIN_STEPS * 6, 'the curtain a quad a step of each run (AUDIT RED-MOUNTAIN N1)');
   assert.equal(m.haloOf.length, (f.n + 1) * 6, 'a halo a pylon, two for Ghostgate');
   assert.deepEqual([m.px, m.py], [cpx, cpy]);
   // the shaders: the foot eased as the middle ring eases; the halo never under its least size; the far draw hidden by the cone
@@ -329,26 +393,32 @@ test('GHOSTFENCE the glow: its feet on the ground each layer draws - a built pix
   assert.equal(Number(vs.footOf([500, 900, 0], [200, 3500])), 500, 'a built foot never eased');
   vs.globals.uMorph = [1000, 3000, 0];
   assert.equal(Number(vs.footOf([500, 900, 1], [200, 3500])), 500, 'no middle ring: no ease');
-  const { fireProfile, FIRE } = await import('../../src/render/redMountainFire.js');
+  const { fireProfile, FIRE, fireUniforms } = await import('../../src/render/redMountainFire.js');
   const prof = fireProfile();
-  const fs = glslFunctions(FENCE_CURTAIN_FS, { uCone: [0, 0, 0, 1], uProf: Array.from(prof), uEye: [0, 0, 0], uHaze: [0, 1, 0, 0], uFogColor: [0, 0, 0], uTime: 0, uLight: 0, vWorld: [0, 0, 0], vSide: [0, 0] });
+  const fs = glslFunctions(FENCE_CURTAIN_FS, { ...fireUniforms(), uCone: [0, 0, 0, 1], uTime: 0, uLight: 0, vWorld: [0, 0, 0], vSide: [0, 0] });
   fs.globals.uEye = [40000, 2500, 0];
   const near = [G.radius, coneProfile(G.radius - RED_MOUNTAIN_DIALS.rim) + 20, 0];
   assert.equal(fs.hidden(near, GLOW.margin), false, 'the fence\'s near side, seen');
   assert.equal(fs.hidden([-near[0], near[1], 0], GLOW.margin), true, 'its far side behind the cone');
-  // its own ground under the profile within the margin (the land falling from the plateau), still seen
-  assert.equal(fs.hidden([near[0], near[1] - GLOW.margin + 30, 0], GLOW.margin), false);
+  // its own ground under the profile as far as the land falls from the plateau at the fence (160 m: the crowned
+  // profile's worst at 15 km on the freeware), still seen - and hidden by a margin short of it (AUDIT RED-MOUNTAIN R4: the
+  // point was built from the margin it tested)
+  const low = [near[0], Number(fs.coneAt([near[0], near[2]])) - 160, 0];
+  assert.equal(fs.hidden(low, GLOW.margin), false);
+  assert.equal(fs.hidden(low, 100), true, 'control: a margin short of the land\'s fall');
   assert.ok(GLOW.margin > FIRE.margin.lava);
   glslFunctions(FENCE_HALO_VS, {}); glslFunctions(FENCE_HALO_FS, {});   // both read as GLSL
   assert.match(FENCE_HALO_VS, /float r = max\(3\.20000, distance\(c, uEye\) \* uPx \* 2\.50000\);/);
-  // the far ring's wiring: after the fire, the fire's cone and profile, the layers, the middle ring's ground kept as it lands
+  // the far ring's wiring: after the fire, the cone (none past the far plane without it), the layers, the middle ring's
+  // ground kept as it lands, its door (AUDIT RED-MOUNTAIN F5/F9 - PIN MOVED: the cone apart from the fire, compiledPass)
   const fr = read('src/render/farRing.js');
-  assert.ok(fr.indexOf('const fence = eye && worldProj ? this._fenceNow() : null;') > fr.indexOf('fire.draw({'), 'after the fire');
-  assert.match(fr, /cone: fire\?\.coneIn\(origin, this\.baseX, this\.baseY\) \?\? null, profile: fire\?\.profile \?\? null,/);
+  assert.ok(fr.indexOf('fence?.draw(pass);') > fr.indexOf('fire?.draw(pass);'), 'after the fire');
+  assert.match(fr, /cone: cone \? coneIn\(cone\.at, origin, this\.baseX, this\.baseY\) : null,/);
   assert.match(fr, /ground: \{ feet: fenceFeet\(\), built: this\._builtNow, mid: mid\?\.built \? this\._midGround : null, ring: this\._ringY \},/);
   assert.match(fr, /this\._midGround = \{ heights: answer\.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB \};/);
-  assert.match(fr, /morph: \{ from: focus && focus\[3\] > 0\.5 \? focus : eye, start: MID_MORPH_START, end: MID_MORPH_END \} \}\);/);
-  assert.match(fr, /if \(whole && this\._fence\) \{ this\._fence\.dispose\(\); this\._fence = null; \}/);
+  assert.match(fr, /morph: \{ from: focus && focus\[3\] > 0\.5 \? focus : eye, start: MID_MORPH_START, end: MID_MORPH_END \} \};/);
+  assert.match(fr, /compiledPass\(gl, GLOW_PROGRAMS, \(\) => new GhostfenceGlow\(gl\),/);
+  assert.match(fr, /if \(whole\) \{ this\._fence\?\.dispose\(\); this\._fence = null; this\._fenceDoor = null; \}/);
   assert.equal(fenceGlowDisabled('?fenceglow=off'), true);
   assert.equal(fenceGlowDisabled('?fenceglow=on'), false);
   assert.equal(fenceGlowDisabled(''), false);

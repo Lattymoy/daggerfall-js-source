@@ -24,6 +24,7 @@ import { inBay } from './tamriel/tamrielFrame.js';   // SPAWN-WORLD: the Bay's p
 import { worldLaneMapId, SPAWN_WORLD_LANE } from './worldWide/worldLanes.js';   // SPAWN-WORLD: a spawn's id past the Bay
 import { inWorldGrid } from './worldWide/worldGrid.js';   // SPAWN-WORLD: a ledger row's pixel the world's
 import { arenaPathsAt } from './arenaRoads.js';   // SPAWN-WORLD: the roads past the Bay - TESA's layer (TESA4, TESA14)
+import { onGhostfence } from './tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G1: no ruin on the Ghostfence's line
 
 /** The chance a pixel holds a NORMAL spawned dungeon. */
 export const SPAWN_CHANCE = 0.30;
@@ -174,13 +175,14 @@ export function spawnGroundDry(woods, px, py, kernelOf = sampleKernel) {
 }
 
 /** Would a ruin on (px, py) stand on dry ground? Kept per pixel: the height map does not change under a session, and
- *  the build and the Overworld's far found spawns both ask. WILD-DRY: answered by spawnGroundDry. */
+ *  the build and the Overworld's far found spawns both ask. WILD-DRY: answered by spawnGroundDry. AUDIT RED-MOUNTAIN G1:
+ *  never on the Ghostfence's line - the lairs keep off it (tamrielDungeons.js), and 42 spawns stood on it. */
 export function createSpawnGround(woods) {
   const dry = new Map();
   return (px, py) => {
     const key = `${px},${py}`;   // WW-C2: a world map pixel's (a hall past the Bay's) - `y * 1000 + x` met another pixel past x 999
     let d = dry.get(key);
-    if (d === undefined) dry.set(key, d = spawnGroundDry(woods, px, py));
+    if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && spawnGroundDry(woods, px, py));
     return d;
   };
 }

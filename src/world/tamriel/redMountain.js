@@ -149,6 +149,9 @@ export function redMountainReaches(x0, y0, x1, y1) {
 /** THE CROWN: the rim's height wanders round the crater, and the flank under it with it - a share of the lift by the
  *  direction (ux, uy) from the centre, read on a circle in the noise's plane (no angle asked). */
 const crownOf = (ux, uy) => 1 + D.lobes.amp * (2 * perlinNoise(ux * D.lobes.radius + 17.31, uy * D.lobes.radius + 5.77) - 1);
+/** The crown on the direction (ux, uy) from the centre - the share of the lift the cone stands at there (the far draws'
+ *  hiding: render/redMountainFire.js fireCrown). */
+export const redMountainCrown = crownOf;
 /** The smooth cone at `r` metres from the centre on the direction (ux, uy), metres over the land - crowned, no crater. */
 const coneAt = (r, ux, uy) => coneProfile(r > D.rim ? r - D.rim : 0) * crownOf(ux, uy);
 /** A foyada's own depth under the smooth cone, metres, `along` metres down its line of `len`: the crater's at the

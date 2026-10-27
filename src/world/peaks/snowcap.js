@@ -150,6 +150,20 @@ export function mergeCapLine(pack, line) {
 }
 const _cap = [0, 0, 0];
 
+/** RED-MOUNTAIN: THE ASH THE PACK NEVER LIES ON (AUDIT RED-MOUNTAIN L1: the cone lay white in winter - its fire cancels
+ *  only its own height, and the plateau under it freezes) - the share of the four pixels about map corner (cx, cy) in Red
+ *  Mountain's zone (tamrielBiomes.js morrowindRedMountain), whose heat keeps the ground bare under any fall. Pure. */
+export function ashShareAt(cx, cy) {
+  let n = 0;
+  for (const [x, y] of [[cx - 1, cy - 1], [cx, cy - 1], [cx - 1, cy], [cx, cy]]) if (bayEdgeDistance(x, y) > SEAM_PX && tamrielBiomeAt(x, y)?.key === 'morrowindRedMountain') n++;
+  return n / 4;
+}
+/** A snowline [h10, h50, h90] lifted toward `bare` (a line no ground reaches) by `share`, in place. */
+export function bareLine(line, share, bare) {
+  if (share > 0) for (let k = 0; k < 3; k++) line[k] += share * (bare - line[k]);
+  return line;
+}
+
 /** A far view's colour under its snow: `rgb` (0-255, written in place at `o`) toward SNOWCAP.rgb by `share`. */
 export function whiten(colors, o, share) {
   if (!(share > 0)) return;

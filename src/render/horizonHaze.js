@@ -70,8 +70,16 @@ export const SEA_HAZE_BAND = 1.0;
 
 /** RED-MOUNTAIN (03-World/Red-Mountain.md): THE HAZE LIES UNDER THE SUMMITS. Ground over `from` metres (the land's old
  *  ceiling - Red Mountain's cone alone stands over it) is seen through thinner air: the far ring's haze hold eased down
- *  by `keep` of itself by `to`, so the summit stands clear on the horizon. The rim still closes it into the sky. */
-export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7 });
+ *  by `keep` of itself by `to`, so the summit stands clear on the horizon. The rim still closes it into the sky. AUDIT
+ *  RED-MOUNTAIN F6: the thinner air comes in over `ease` metres past the streamed grid's edge, never at it - beside the
+ *  grid the summit is hazed as the streamed ground is, so no seam stands on the cone where the grid ends. */
+export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7, ease: 8000 });
+/** summitHoldAt(hold, alt, d, from): the ring's haze hold at `alt` metres over the ring's origin, `d` from the eye, the
+ *  streamed grid's edge `from` metres out (SUMMIT_HAZE). The far ring's, the volcano's fire's and the fence glow's. */
+export const SUMMIT_HOLD_GLSL = `
+float summitHoldAt(float hold, float alt, float d, float from) {
+  return hold * (1.0 - ${SUMMIT_HAZE.keep.toFixed(4)} * smoothstep(${SUMMIT_HAZE.from.toFixed(1)}, ${SUMMIT_HAZE.to.toFixed(1)}, alt) * smoothstep(from, from + ${SUMMIT_HAZE.ease.toFixed(1)}, d));
+}`;
 
 /** FAR-SEA1: what both lanes' far-ring fragment shaders read for the ring's sea and the horizon's haze - the vertex
  *  shader's sea weight, its world point and the sea's body (render/farRing.js VS: the camera climate's water texel
@@ -89,10 +97,12 @@ uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
 uniform float uSeaF0;
 uniform float uSeaLook;   // 1 with a sky to reflect (and the Enhanced water on), 0 without (the sea lit as ground, as before)
+uniform float uSummitFrom;   // RED-MOUNTAIN: the streamed grid's edge, metres out - the summits' thinner air eased in past it
 ${SEA_LOOK_GLSL}
 ${HORIZON_HAZE_GLSL}
+${SUMMIT_HOLD_GLSL}
 // RED-MOUNTAIN: the haze lies under the summits - the ring's hold eased down over ground standing over SUMMIT_HAZE.from
-float summitHold(float hold) { return hold * (1.0 - ${SUMMIT_HAZE.keep.toFixed(4)} * smoothstep(${SUMMIT_HAZE.from.toFixed(1)}, ${SUMMIT_HAZE.to.toFixed(1)}, vWorld.y - uOrigin.y)); }
+float summitHold(float hold, float d) { return summitHoldAt(hold, vWorld.y - uOrigin.y, d, uSummitFrom); }
 vec3 ringSea(vec3 ambient, vec3 sunColor, vec3 moonColor, float sunScale) {
   vec3 V = normalize(uEye - vWorld);   // the normal is up: the facing and the reflected ray's height are V.y
   vec3 lit = vSeaBody * seaLight(ambient, sunColor, sunScale * max(uLightDir.y, 0.0), moonColor, uMoonScale * max(uMoonDir.y, 0.0));

@@ -152,6 +152,17 @@ export const pylonSolid = (() => {
   };
 })();
 
+/** A PYLON'S FOOTING (AUDIT RED-MOUNTAIN N4: seated on its lowest ground, a pylon on a steep slope was buried uphill to
+ *  24 m): the plinth's foot carried down `depth` metres under its sunk foot, to the lowest ground under it - its model
+ *  and its solid, one box each. */
+export function pylonFooting(depth) {
+  const P = PYLON, w = P.plinth[0], y1 = -P.sink + 0.25, y0 = -P.sink - depth;
+  const m = builder(), s = builder();
+  m.box(GF_RECORD.stone, -w, w, y0, y1, -w, w);
+  s.box(0, -w, w, y0, y1, -w, w);
+  return { model: m.done(), solid: s.done() };
+}
+
 /** GHOSTGATE'S MODEL (GHOSTGATE): its two towers, their cornices and stepped tops, the lintel, and an orb on each. */
 export const ghostgateModel = (() => {
   let m = null;

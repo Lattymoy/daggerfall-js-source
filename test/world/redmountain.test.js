@@ -179,8 +179,12 @@ test('RED-MOUNTAIN in the kernel: a pixel on the cone built through the landform
   const rimPx = px + Math.round(D.rim / 819.2 + 1);
   assert.ok(at(k(rimPx, py), 64, 64) > floor, 'the flank over the crater floor');
   const out = Math.ceil(RED_MOUNTAIN_REACH / 819.2) + 3;
-  const plain = createLandforms({ woods: g, hills: true });
-  assert.equal(sampleKernel(g, px + out, py, 129, true, plain)(64, 64), k(px + out, py)(64, 64));
+  // AUDIT RED-MOUNTAIN R4: the kernel against itself (a second landforms of the same law) asked nothing - past the reach
+  // the law adds nothing to the land, to the bit
+  for (const [x, y] of [[0, 0], [64, 64], [128, 7]]) {
+    const gx = (px + out) * 128 + x, gy = (MAP_HEIGHT - py) * 128 + y, ground = redMountainGround(byteBase((bx, by) => g.getHeightMapValue(bx, by)), g);
+    assert.equal(redMountainLand(gx, gy, 0.31, 0.02, ground), 0.31 + 0.02, `past the reach at ${x},${y}`);
+  }
   assert.ok(at(k(px + out, py), 64, 64) * UNIT < 3000, 'the land past the reach its own');
   // a site on the flank: the kernel's land there pulls to a level of the land WITH the volcano (siteLevel)
   const sitePx = [px - 12, py];
@@ -258,13 +262,13 @@ test('RED-MOUNTAIN its fire and its horizon: the cap line rides the cone (a zone
   assert.match(read('src/render/farRing.js'), /heightOf: \(byte, x, y, v\) => answer\.ground\[v\] \+ \(inputs\.relief \? redMountainNodeLift\(x, y\) \* STREAMING_TERRAIN_SCALE : 0\),/, 'the far field stands the cone at its vertex');
   // the air's mean ground: the smooth cone over the land
   const g = groundWoods(new StubWoods());
-  const withCone = meanGroundField(g, cx + 3, cy, true), without = meanGroundField(g, cx + 60, cy, true);
+  const withCone = meanGroundField(g, cx + 3, cy, true);
   assert.ok(withCone(64, 64) - meanGroundField(g, cx + 3, cy, false)(64, 64) > 2000, 'the mean ground stands the cone');
-  assert.ok(Math.abs(without(64, 64) - meanGroundField(g, cx + 60, cy, true)(64, 64)) < 1e-9);
+  // AUDIT RED-MOUNTAIN R4: a check of the field against itself removed - it asked nothing
 });
 
 test('RED-MOUNTAIN its fire: the profile the far draw hides behind the cone\'s own (the crater floor at the centre, the rim\'s lift, falling past it); the lake on the crater\'s floor and each river on its foyada\'s floor, down its lava\'s run; the shader hides the lake from an eye outside the crater under its rim and shows it from over it, hides a river on the far flank and shows one on the near; the far ring draws it last of its pass and lets it go (mutants: the profile\'s crater, the lake\'s level, a river\'s level, the hiding\'s margin, the draw unwired)', async () => {
-  const { fireProfile, fireMesh, profileR, FIRE, LAVA_FS, PLUME_FS, FIRE_PROGRAMS } = await import('../../src/render/redMountainFire.js');
+  const { fireProfile, fireMesh, profileR, FIRE, LAVA_FS, PLUME_FS, FIRE_PROGRAMS, fireUniforms } = await import('../../src/render/redMountainFire.js');
   const { glslFunctions } = await import('../glsl.mjs');
   const prof = fireProfile(), n = FIRE.profile;
   assert.equal(prof[0], Math.fround(D.lift - D.depth), 'the crater floor at the centre');
@@ -301,7 +305,7 @@ test('RED-MOUNTAIN its fire: the profile the far draw hides behind the cone\'s o
   assert.ok(Math.abs(Math.hypot(first[0] - lx, first[2] - lz) - first[8]) < 1e-2, 'the strip its half-width off its line');
   assert.equal(first[1], Math.fround(ground.chan[0][0] * UNITM + FIRE.riverOver));
   // the shader's hiding: the cone at (0, 0), the land at 0
-  const fns = glslFunctions(LAVA_FS, { uCone: [0, 0, 0, 1], uProf: Array.from(prof), uEye: [0, 0, 0], uHaze: [0, 1, 0, 0], uFogColor: [0, 0, 0], uTime: 0, vWorld: [0, 0, 0], vInfo: [0, 0, 0, 0], vLocal: [0, 0] });
+  const fns = glslFunctions(LAVA_FS, { ...fireUniforms(), uCone: [0, 0, 0, 1], uTime: 0, vWorld: [0, 0, 0], vInfo: [0, 0, 0, 0], vLocal: [0, 0] });
   const hide = (eye, p, margin = FIRE.margin.lava) => { fns.globals.uEye = eye; return fns.hidden(p, margin); };
   const lakeAt = [300, D.lift - D.depth + FIRE.lakeOver, 200];
   assert.equal(hide([40000, 2500, 0], lakeAt), true, 'from the plateau: under the rim');
@@ -326,12 +330,12 @@ test('RED-MOUNTAIN its fire: the profile the far draw hides behind the cone\'s o
   // the haze lies under the summits: the ring's hold eased down over the old ceiling, both lanes'
   const { RING_SEA_GLSL, SUMMIT_HAZE } = await import('../../src/render/horizonHaze.js');
   const sea = glslFunctions(RING_SEA_GLSL, { vWorld: [0, 0, 0], uOrigin: [0, -1500, 0], vSea: 0, vSeaBody: [0, 0, 0], uEye: [0, 0, 0], uSkyZenith: [0, 0, 0], uSkyHorizon: [0, 0, 0], uSeaF0: 0, uSeaLook: 0, uLightDir: [0, 1, 0], uMoonDir: [0, 1, 0], uMoonScale: 0 });
-  const holdAt = (alt) => { sea.globals.vWorld = [0, alt - 1500, 0]; return sea.summitHold(0.85); };
+  const holdAt = (alt) => { sea.globals.vWorld = [0, alt - 1500, 0]; return sea.summitHold(0.85, 1e9); };   // far past the grid's edge (uSummitFrom 0)
   assert.equal(holdAt(SUMMIT_HAZE.from - 1), 0.85, 'the land under the old ceiling as it was');
   assert.ok(Math.abs(holdAt(SUMMIT_HAZE.to + 1) - 0.85 * (1 - SUMMIT_HAZE.keep)) < 1e-9, 'the summit through thinner air');
   assert.ok(SUMMIT_HAZE.from > 3644 + 42.5, 'over every other ground in the world (LANDFORM_CEILING)');
-  assert.deepEqual({ ...SUMMIT_HAZE }, { from: 3700, to: 6500, keep: 0.7 }, 'the summit three-tenths of the hold (Red-Mountain.md)');
-  for (const text of [read('src/render/farRing.js'), read('src/render/enhancedLighting.js')]) assert.match(text, /uRimStart, uRimEnd, summitHold\(uHazeHold\)\)/);
+  assert.deepEqual({ ...SUMMIT_HAZE }, { from: 3700, to: 6500, keep: 0.7, ease: 8000 }, 'the summit three-tenths of the hold (Red-Mountain.md), eased in past the grid (AUDIT RED-MOUNTAIN F6)');
+  for (const text of [read('src/render/farRing.js'), read('src/render/enhancedLighting.js')]) assert.match(text, /uRimStart, uRimEnd, summitHold\(uHazeHold, vDist\)\)/);   // AUDIT RED-MOUNTAIN F6 (PIN MOVED): and by the eye's distance
   // the plume: its billows world-space noise in 0..1, the same about its foot wherever the world stands it; its column's
   // radius within its lump of its swell, at its foot and its top, leaning downwind
   const { PLUME_VS } = await import('../../src/render/redMountainFire.js');
@@ -372,13 +376,16 @@ test('RED-MOUNTAIN its fire: the profile the far draw hides behind the cone\'s o
   // both programs carry the one hiding law
   for (const fs of [LAVA_FS, PLUME_FS]) assert.match(fs, /bool hidden\(vec3 p, float margin\)/);
   assert.equal(FIRE_PROGRAMS.length, 2);
-  // the far ring: the fire drawn last of its pass, made lazily on the landforms' lift, let go with the ring
+  // the far ring: the fire drawn after the band, on the cone the landforms' lift stands, through its door (AUDIT
+  // RED-MOUNTAIN F5 - PIN MOVED: compiledPass, the cone apart from the fire), let go with the ring
   const ring = read('src/render/farRing.js');
-  assert.match(ring, /const fire = eye && worldProj \? this\._fireNow\(\) : null;/);
-  assert.match(ring, /if \(!inputs\?\.relief \|\| this\._fireOff\) return null;/);
+  assert.match(ring, /const cone = eye && worldProj \? this\._coneNow\(\) : null, fire = cone \? this\._fireNow\(cone\) : null,/);
+  assert.match(ring, /if \(!inputs\?\.relief\) return null;\n\s+const frame = redMountainFrame\(\);/);
+  assert.match(ring, /if \(this\._fireOff\) return null;/);
   assert.match(ring, /const ground = redMountainGround\(byteBase\(ringReaders\(inputs\)\.byteAt\), inputs\);/);
-  assert.match(ring, /if \(whole && this\._fire\) \{ this\._fire\.dispose\(\); this\._fire = null; \}/);
-  assert.ok(ring.indexOf('fire.draw({') > ring.indexOf('this._drawBand(view, origin') && ring.indexOf('fire.draw({') < ring.lastIndexOf('gl.depthRange(0, 1);'), 'after the band, before the pass\'s state is put back');
+  assert.match(ring, /compiledPass\(gl, FIRE_PROGRAMS, \(\) => new RedMountainFire\(gl\),/);
+  assert.match(ring, /if \(whole\) \{ this\._fire\?\.dispose\(\); this\._fire = null; this\._fireDoor = null; \}/);
+  assert.ok(ring.indexOf('fire?.draw(pass);') > ring.indexOf('this._drawBand(view, origin') && ring.indexOf('fire?.draw(pass);') < ring.lastIndexOf('gl.depthRange(0, 1);'), 'after the band, before the pass\'s state is put back');
   const { fireDisabled } = await import('../../src/render/farRing.js');
   assert.equal(fireDisabled('?world&redfire=off'), true);
   assert.equal(fireDisabled('?world'), false);
