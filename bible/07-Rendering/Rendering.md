@@ -1462,7 +1462,10 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   lit as the flats are and hazed as the far ring is, in one draw at the
   end of the far ring's pass; laid a pixel a step and uploaded a slice a
   step at each pixel crossed; its rim dithered out as the canopy comes
-  in; `?fartrees=off` (`06-Systems/Travel-View.md` FAR-TREES).
+  in; `?fartrees=off` (`06-Systems/Travel-View.md` FAR-TREES). HORIZON-TREES:
+  each tree's sight line marched over the middle ring's heights in its vertex
+  program, the sprite drawn above the nearer ground's skyline alone
+  (`06-Systems/Travel-View.md` HORIZON-TREES).
 - `frustum.js` - EV3 FRUSTUM CULLING, the pure half: Gribb/Hartmann
   planes off the combined proj*view (the handedness mirror rides inside),
   the conservative p-vertex outside test with an offset form for the

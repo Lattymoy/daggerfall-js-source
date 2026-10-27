@@ -80,7 +80,7 @@ import { RING_CLOUD_GLSL, cloudFarOf } from './cloudShadow.js';   // OW-HORIZON:
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring, both lanes' one text (render/hazeGlsl.js)
 import { WATER_F0, WATER_TINT } from './waterSurface.js';   // FAR-SEA1: the water's own Fresnel; AUDIT FAR-SEA1 L1: and its tint
 import { MidRingMesh, midRingVertexSteps, midRingDisabled, plantCanopy, layGround } from './midRing.js';   // MID-RING: the kernel's own ground between the grid and this ring
-import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_CLIMATE_ASK } from '../world/terrain/midRingGrid.js';
+import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_CLIMATE_ASK, midRingSide } from '../world/terrain/midRingGrid.js';
 import { FarFieldMesh, farFieldVertexSteps, farFieldDisabled, cellOffsets, FAR_RIM_START, FAR_RIM_END, FAR_LENS_FAR } from './farField.js';   // FAR-FIELD: the land past this ring
 import { FarLandmark, landmarkDistance } from './farLandmarks.js';   // FAR-LANDMARK: a city's silhouette in this pass's painter's order
 import { SCALED_OCEAN_ELEVATION as OCEAN_Y, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
@@ -889,7 +889,21 @@ export class FarRingRenderer {
       moonScale: f.moonScale, moonColor: dec(f.moonColor ?? FLAT_WHITE, m), fogColor: f.fogColor, fogStart: f.fogStart, fogEnd: f.fogEnd,
       rimStart: f.farField ? FAR_RIM_START : RING_RIM_START, rimEnd: f.farField ? FAR_RIM_END : RING_RIM_END, hold: RING_HAZE_HOLD,
       haze: f.haze ?? NO_HAZE, hazeEye: f.hazeEye, cloudFar: farSun, cloudRect: f.deck?.map ? f.deck.rect : NO_RECT, cloudUnit: RING_CLOUD_UNIT, exposure: f.exposure,
+      ground: this._bandGround(origin),   // HORIZON-TREES: the middle ring's heights, the band's trees cut at its skyline
     });
+  }
+
+  /** HORIZON-TREES: the middle ring's heights as the band reads them - its vertex (0, 0) in the scene (this ring's origin
+   *  moved by the bases' pixels, the ring's corner radius * sub cells south-west of its base's), its cell and side; none
+   *  while no middle ring stands. */
+  _bandGround(origin) {
+    const mid = this._mid;
+    if (!mid?.built || !mid.heights) return null;
+    const cell = TERRAIN_SIZE / mid.sub, back = mid.radius * mid.sub * cell;
+    return {
+      heights: mid.heights, side: midRingSide(mid.radius, mid.sub), cell,
+      x0: origin[0] + (mid.baseX - this.baseX) * TERRAIN_SIZE - back, z0: origin[2] - (mid.baseY - this.baseY) * TERRAIN_SIZE - back,
+    };
   }
 
   /** MID-RING / FAR-FIELD: which of the horizon's layers stand (the probes' read): the far ring's base, the middle ring's

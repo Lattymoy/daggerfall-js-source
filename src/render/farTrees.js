@@ -21,6 +21,14 @@
 // and half the moon, half the sun under the clouds' shadow), hazed as the far ring is. A tree under a pixel is drawn by its
 // share of one (a hash against its area), so a far wood keeps its coverage, never a blot of one-pixel points.
 //
+// THE SKYLINE (HORIZON-TREES, 2026-10-27; KPbICA through the owner: "Strange projections above the horizon line"; bible/
+// 03-World/Tamriel.md RELIEF-PEAKS Cause 7). The far pass has no depth among its layers - the painter's order puts its
+// hills in front of one another, and the band is drawn last - so a band tree behind a nearer hill of the middle ring stood
+// over that hill's skyline. The middle ring's own heights (render/midRing.js, the drawn ground) ride to the band as a
+// texture (GROUND_UNIT), and each tree's sight line from the eye is marched over them (HORIZON_STEPS samples, the pixels
+// the stream has built left to the depth test their own ground already passes): the highest line the ground lifts at the
+// tree is its cut, and the sprite is drawn above it alone - a tree under it whole not drawn at all.
+//
 // THE COST. Its trees are the near law's own count (some 3,900 a pixel on the synthetic world): Land View 5's band ring of
 // 48 pixels some 190,000 points, 16 bytes each (3 MB); one draw. On the worker some 40 ms a pixel, kept by the pixel; on
 // this thread the instances are interleaved a pixel a step (the far ring's HORIZON_BUDGET_MS) into a second buffer, which
@@ -38,6 +46,37 @@ import { EL_GLSL } from './enhancedLighting.js';
 import { BAYER_MEAN } from './orderedDither.js';
 import { classicLook } from './classicShadowLane.js';
 import { pipelinePictures } from './farFlora.js';
+
+/** HORIZON-TREES: the samples of a tree's sight line read over the middle ring's ground (the eye's end and the tree's not). */
+export const HORIZON_STEPS = 24;
+/** HORIZON-TREES: the middle ring's heights' texture unit, bound only through the band's draw. */
+export const GROUND_UNIT = 14;
+/** HORIZON-TREES: metres the ground must stand over a sight line to cut it - the drawn triangles against the heights'
+ *  bilinear, and the half float's step at the summits' heights. */
+export const GROUND_SLACK = 1.5;
+
+/**
+ * HORIZON-TREES: THE SKYLINE AT A TREE - the band's vertex program's law (VS skyline), in JS for the pins and the probes:
+ * the highest the eye's line over the middle ring's ground (`ground` as FarTreesBand.draw takes it) lifts at the tree's
+ * foot `foot` ([x, y, z] in the scene), read at HORIZON_STEPS - 1 points between the eye and the foot, a point where
+ * `built(x, z)` (a pixel the stream has built: its ground in the depth) or past the ring not read; -1e9 where none lifts
+ * it. The heights read bilinearly between the ring's vertices, as the filtered texture reads them. Pure.
+ */
+export function skylineAt(eye, foot, ground, built = () => false) {
+  let cut = -1e9;
+  if (!ground?.heights) return cut;
+  const { heights, side, cell, x0, z0 } = ground, dx = foot[0] - eye[0], dz = foot[2] - eye[2];
+  for (let k = 1; k < HORIZON_STEPS; k++) {
+    const t = k / HORIZON_STEPS, x = eye[0] + dx * t, z = eye[2] + dz * t;
+    if (built(x, z)) continue;
+    const gx = (x - x0) / cell, gz = (z - z0) / cell;
+    if (gx < 0 || gz < 0 || gx > side - 1 || gz > side - 1) continue;
+    const ix = Math.min(side - 2, Math.floor(gx)), iz = Math.min(side - 2, Math.floor(gz)), wx = gx - ix, wz = gz - iz, v = iz * side + ix;
+    const h = (heights[v] * (1 - wx) + heights[v + 1] * wx) * (1 - wz) + (heights[v + side] * (1 - wx) + heights[v + side + 1] * wx) * wz;
+    cut = Math.max(cut, eye[1] + (h - GROUND_SLACK - eye[1]) / t);
+  }
+  return cut;
+}
 
 /** The band's reach past the streamed grid's radius (map pixels, Chebyshev from the traveller's pixel). */
 export const BAND_RING = 1;
@@ -187,9 +226,33 @@ uniform float uSides[${TREE_LAYERS}];   // a layer's square side, world units (i
 uniform vec4 uBand;       // x, y: the rim's dither (metres, Chebyshev from uBandFrom); z: the viewport's height (px); w: the lens's y scale
 uniform vec3 uBandFrom;   // the traveller's pixel's centre
 uniform vec4 uHazeFrom;   // the far ring's: the point its haze is measured from (w 1), else the eye
+uniform highp sampler2D uGround;   // HORIZON-TREES: the middle ring's heights, a texel a vertex (row the vertex's south-north)
+uniform vec4 uGroundAt;   // HORIZON-TREES: x, y its vertex (0, 0) in the scene (x, z); z 1 / its cell (metres); w its side (vertices), 0 none
 out vec3 vWorld;
 out float vDist;
 flat out float vLayer;
+flat out float vCut;   // HORIZON-TREES: the share of the tree's height from its foot the nearer ground hides
+bool builtAt(vec2 xz) {   // FLORA-GROUND's slot test at a scene point: a pixel the stream has built (its ground in the depth)
+  ivec2 s = ivec2(floor((xz - uOrigin.xz) / ${TERRAIN_SIZE.toFixed(1)})) + ${BAND_REACH};
+  if (s.x < 0 || s.y < 0 || s.x >= ${BAND_SIDE} || s.y >= ${BAND_SIDE}) return false;
+  int k = s.y * ${BAND_SIDE} + s.x;
+  return ((uBuilt[k >> 5] >> (k & 31)) & 1) != 0;
+}
+float skyline(vec3 eye, vec3 foot) {   // HORIZON-TREES: the highest the ground between lifts the eye's line at the tree
+  float cut = -1.0e9;
+  if (uGroundAt.w < 0.5) return cut;
+  vec2 d = foot.xz - eye.xz;
+  for (int k = 1; k < ${HORIZON_STEPS}; k++) {
+    float t = float(k) / ${HORIZON_STEPS.toFixed(1)};
+    vec2 p = eye.xz + d * t;
+    if (builtAt(p)) continue;
+    vec2 g = (p - uGroundAt.xy) * uGroundAt.z;
+    if (g.x < 0.0 || g.y < 0.0 || g.x > uGroundAt.w - 1.0 || g.y > uGroundAt.w - 1.0) continue;
+    float h = textureLod(uGround, (g + 0.5) / uGroundAt.w, 0.0).r - ${GROUND_SLACK.toFixed(1)};
+    cut = max(cut, eye.y + (h - eye.y) / t);
+  }
+  return cut;
+}
 void main() {
   float side = uSides[int(aMeta.x)];
   vec3 world = aPos + uOrigin + vec3(0.0, 0.5 * side, 0.0);
@@ -204,6 +267,9 @@ void main() {
   if ((aMeta.y + 0.5) / 256.0 > keep) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // not drawn: outside the clip volume
   int slot = aSlot.x < ${BAND_NO_SLOT - 0.5} ? int(aSlot.y) * ${BAND_SIDE} + int(aSlot.x) : -1;
   if (slot >= 0 && ((uBuilt[slot >> 5] >> (slot & 31)) & 1) != 0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // FLORA-GROUND: its pixel the stream's now
+  vec3 eye = -(transpose(mat3(uView)) * uView[3].xyz);   // the view's own eye, in the scene
+  vCut = (skyline(eye, aPos + uOrigin) - (aPos.y + uOrigin.y)) / max(side, 1.0e-3);
+  if (vCut >= 1.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // HORIZON-TREES: behind the hill whole
   gl_PointSize = clamp(px, 1.0, 64.0);
 }`;
 
@@ -214,6 +280,7 @@ precision highp float;
 in vec3 vWorld;
 in float vDist;
 flat in float vLayer;
+flat in float vCut;
 uniform highp sampler2DArray uTrees;
 uniform vec3 uAmbient;
 uniform float uSunScale;
@@ -238,6 +305,7 @@ const TREE_LIGHT = 'floraLight(uAmbient, uSunColor, ringSun(), uMoonColor, uMoon
 const FS = `${FS_HEAD}
 out vec4 outColor;
 void main() {
+  if (1.0 - gl_PointCoord.y < vCut) discard;   // HORIZON-TREES: under the nearer ground's skyline (a point's coordinate runs down)
   vec4 tex = texture(uTrees, vec3(gl_PointCoord, vLayer));
   if (tex.a < 0.5) discard;   // the flats' own cutout
   vec3 lit = tex.rgb * (${TREE_LIGHT});
@@ -250,6 +318,7 @@ export const TREES_LANE_FS = `${FS_HEAD}
 ${EL_GLSL}
 out vec4 outColor;
 void main() {
+  if (1.0 - gl_PointCoord.y < vCut) discard;   // HORIZON-TREES
   vec4 tex = texture(uTrees, vec3(gl_PointCoord, vLayer));
   if (tex.a < 0.5) discard;
   vec3 lit = elDecode(tex.rgb) * (${TREE_LIGHT});
@@ -279,7 +348,7 @@ export class FarTreesBand {
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uSides', 'uBand', 'uBandFrom', 'uHazeFrom', 'uTrees', 'uAmbient', 'uSunScale', 'uSunColor',
       'uMoonScale', 'uMoonColor', 'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uCloudShadowMap', 'uCloudShadowRect',
-      'uCloudShadowFar', 'uCloudFar', 'uJungleHaze', 'uHazeEye', 'uELExposure', 'uAdapt', 'uBuilt']) this.u[name] = gl.getUniformLocation(this.program, name);
+      'uCloudShadowFar', 'uCloudFar', 'uJungleHaze', 'uHazeEye', 'uELExposure', 'uAdapt', 'uBuilt', 'uGround', 'uGroundAt']) this.u[name] = gl.getUniformLocation(this.program, name);
     this.builtBits = new Int32Array(BAND_BUILT_WORDS);   // FLORA-GROUND: the drawn base's built slots
     this._builtKey = '';
     this._groundEpoch = source?.groundEpoch ?? 0;   // FLORA-GROUND: the ground the kept trees were laid on
@@ -289,6 +358,8 @@ export class FarTreesBand {
     this.arts = new Map();     // archive -> 'asking' | 'ready' | 'none'
     this.version = 0;          // the arts read: an assembly before one landed is laid again
     this.tex = null;
+    this.groundTex = null;     // HORIZON-TREES: the middle ring's heights, as the ring last handed them
+    this._groundOf = null;     // ...and which heights those are
     this.drawn = null;         // { buffer, vao, count, baseX, baseY }
     this._laying = null;       // { buffer, vao, ... } being filled
     this._asking = false;
@@ -469,7 +540,9 @@ export class FarTreesBand {
   /**
    * Drawn inside the far ring's pass (its depth state: at the far plane, tested, never written): `s` the pass's - the lens,
    * the view, the band's origin in the scene (`origin`: base pixel's south-west corner), the frame's light (decoded for the
-   * lane as the far ring's is), its haze and its clouds' map; `radius` the grid's, for the rim's dither.
+   * lane as the far ring's is), its haze and its clouds' map; `radius` the grid's, for the rim's dither; `ground` the
+   * middle ring's heights (HORIZON-TREES: `{ heights, side, cell, x0, z0 }`, vertex (0, 0) at scene (x0, z0), rows south
+   * to north; none, no skyline).
    */
   draw(s) {
     if (!this.drawn?.count || !this.tex) return;
@@ -506,9 +579,38 @@ export class FarTreesBand {
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform1i(u.uTrees, TREES_UNIT);
+    const g = this._ground(s.ground);   // HORIZON-TREES: the nearer ground's skyline
+    gl.activeTexture(gl.TEXTURE0 + GROUND_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, g ? this.groundTex : null);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(u.uGround, GROUND_UNIT);
+    gl.uniform4f(u.uGroundAt, g ? g.x0 : 0, g ? g.z0 : 0, g ? 1 / g.cell : 0, g ? g.side : 0);
     gl.bindVertexArray(this.drawn.vao);
     gl.drawArrays(gl.POINTS, 0, this.drawn.count);
     gl.bindVertexArray(null);
+  }
+
+  /** HORIZON-TREES: the middle ring's heights on GROUND_UNIT's texture - uploaded when the ring hands new ones (a half
+   *  float a vertex, filtered: the drawn triangles' ground read bilinearly). The heights handed, or null. */
+  _ground(ground) {
+    if (!ground?.heights) return null;
+    if (this._groundOf !== ground.heights) {
+      const gl = this.gl;
+      this.groundTex ??= gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0 + GROUND_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this.groundTex);
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, ground.side, ground.side, 0, gl.RED, gl.FLOAT, ground.heights);
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      gl.activeTexture(gl.TEXTURE0);
+      this._groundOf = ground.heights;
+    }
+    return ground;
   }
 
   /** Every GL object it made (EVERY ALLOCATION HAS AN OWNER); an answer still out let go. */
@@ -519,6 +621,9 @@ export class FarTreesBand {
     this.drawn = null;
     if (this.tex) gl.deleteTexture(this.tex);
     this.tex = null;
+    if (this.groundTex) gl.deleteTexture(this.groundTex);   // HORIZON-TREES
+    this.groundTex = null;
+    this._groundOf = null;
     if (this.program) gl.deleteProgram(this.program);
     this.program = null;
     this.kept.clear();

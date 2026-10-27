@@ -3533,6 +3533,42 @@ MID-RING-ask-every-frame and MID-RING-drift-late re-aimed by content (the ask's 
 four hosts: `scenes/world.js` draws the
 far ring and its band; `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw none.
 
+## HORIZON-TREES - the band's trees cut at the nearer ground's skyline (2026-10-27, KPbICA through the owner)
+
+KPbICA on the DFO Online Discord, forwarded by the owner (2026-10-27): "Strange projections above the horizon line"; the
+owner, the same day: "No band aids or half assed work". RELIEF-PEAKS named the cause and left it to this file's slice
+(`03-World/Tamriel.md` RELIEF-PEAKS, Cause 7).
+
+- **What the player saw.** Tree sprites standing over a hill's skyline at the edge of the streamed world - from the
+  Overworld most of all. The far pass (`render/farRing.js` draw) is depth-tested against the streamed world and writes no
+  depth (PERF2, FAR-SEA1 P1: every fragment at the far plane by `depthRange(1, 1)`), so its own layers stand in front of
+  one another by the painter's order alone: the far field, the far ring, the middle ring, and the band (FAR-TREES) last.
+  A band tree behind a nearer hill of the middle ring was drawn over that hill whole.
+- **Measured** (`tools/horizonTreesProbe.mjs`, the freeware, Bay pixel 2046,325, the eye 300 m up, Land View 5): of the
+  band ring's 185,688 trees, 45,068 (24.3%) stood wholly behind the middle ring's ground and 16,110 (8.7%) behind it in
+  part (a 12 m tree) - every one drawn whole over the hill before.
+- **The fix** (`render/farTrees.js:"float skyline(vec3 eye, vec3 foot) {"`): the middle ring keeps the heights it draws
+  (`render/midRing.js` groundHeights, `MidRingMesh.build`), and the far ring hands them to the band's draw with their corner
+  in the band's frame (`farRing.js:"_bandGround(origin) {"`). The band uploads them once a ring as a half float a vertex,
+  filtered, on GROUND_UNIT (`farTrees.js:"_ground(ground) {"`). Its vertex program takes the eye from the view and reads
+  the ground at HORIZON_STEPS - 1 points between the eye and each tree's foot - a point in a pixel the stream has built
+  left to the depth test its ground already passes (FLORA-GROUND's slot bits), a point past the ring not read - and the
+  highest line the ground lifts at the tree, less GROUND_SLACK (1.5 m: the drawn triangles against the heights'
+  bilinear, the half float's step), is the tree's cut: a tree under it whole is not drawn, and both fragment programs draw
+  a sprite above it alone. The JS twin (`farTrees.js:"export function skylineAt(eye, foot, ground, built = () => false) {"`)
+  is the law the pins and the probe read; the vertex program was run against it in WebGL2 by transform feedback (64 trees
+  over a synthetic ridge with two built pixels: every whole-hidden verdict the same, the cut within 0.004 of a tree's
+  height). The frames checked on the freeware: the ring's height under each band tree's foot is the tree's own ground
+  within 1.6 m at the median, 8.3 m at the 95th centile.
+- **The cost.** 23 filtered texel reads a tree in the vertex program (Land View 5's band some 190,000 trees: about 4.4
+  million reads a frame); one upload of 50,625 half floats each time the middle ring is built again (every
+  MID_REBUILD_DRIFT pixels). Nothing on the main thread a frame but four uniforms.
+- **The departure** (Port-Ledger A, with FAR-TREES): DFU stands no trees past its streamed terrain, so it has no band to
+  cut. THE FOUR HOSTS: the far ring is `scenes/world.js`'s alone (the Overworld and the streamed world); `exterior.js`,
+  `worldModes.js` and `dungeonContext.js` draw no far pass.
+- Pins `test/render/fartrees.test.js` (3: the skyline law; the programs; the band's ground and the far ring's hand-off).
+  Mutants `tools/mutants/horizontrees.json` (22, all dead).
+
 ## TVD-WORLD - the Overworld's dungeons past the Bay (2026-10-27, the audit NO SYSTEM LEFT BEHIND IN THE BAY)
 
 The audit's item 29 (C4); the owner: "Every single thing here needs to be addressed. No exceptions." (2026-10-26). TV6
