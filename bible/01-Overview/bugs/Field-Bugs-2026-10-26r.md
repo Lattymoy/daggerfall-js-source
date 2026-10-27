@@ -10,17 +10,23 @@ The inbox is private - a report is read by the handles `REPORT_READER_HANDLES` n
 repository is public, so this page names no reporter and quotes none of their words (19f's rule); an exploit is described
 only as far as its fix needs. A report's number here (`#n`) is its place in the inbox, oldest first.
 
-Every report has one verdict:
+Every report has one verdict. #245 is the one report read in two lanes - its bank half under RPT1026-CHESTGOLD, its
+trade-hold half under RPT1026-MARKET - and it is counted once, FIXED (HOLD-SAID); every other report has one row.
+A row's verdict is its Done column's first words; an "Answer the player" row's is the first words of its What it was.
 
 | Verdict | Reports | What it means |
 |---|---|---|
-| FIXED | 99 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
-| ALREADY FIXED | 68 | Closed by a record newer than the build it was sent from (the update a report carries is its build - REL8) |
-| AS DESIGNED | 48 | The game's rule or DFU's, named; what to tell the player is in its row |
-| NOT REPRODUCED | 27 | Traced end to end on the real producers, and nothing there makes it; what was run is in its row |
+| FIXED | 103 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
+| ALREADY FIXED | 67 | Closed by a record newer than the build it was sent from (the update a report carries is its build - REL8) |
+| AS DESIGNED | 47 | The game's rule or DFU's, named; what to tell the player is in its row |
+| NOT REPRODUCED | 26 | Traced end to end on the real producers, and nothing there makes it; what was run is in its row |
 | NEEDS DATA | 37 | The cause is in one player's own record or machine; what to read is in its row |
-| STAFF | 11 | A staff action or a moderation call, not code (the last section) |
+| STAFF | 10 | A staff action or a moderation call, not code (the last section) |
 | WITHDRAWN | 3 | Taken back by its own reporter |
+
+AUDIT RPT1026 M1: the counts were taken before RPT1026-WORLD's second pass made FAR-QUAY (#200), CONFIRM-REREAD and
+CONFIRM-ONCE (#252) and DECOR-VERBS (#244) fixes, and before #261 and #23 were given their sections' verdicts (NEEDS
+DATA both); they are the rows' now, held by `test/bible/audit_rpt1026_m.test.js`.
 
 The pins are `test/**/rpt1026_*.test.js`, the mutants `tools/mutants/rpt1026_*.json` (all dead, a few recorded
 equivalent). Pins of other records that a fix moved say PIN MOVED beside the line they read now.
@@ -623,7 +629,7 @@ by the Goods view, its bar; the trader's board rows, its look and the Vendor pag
 ### ALREADY FIXED: SIDE-ONCE (8, 13) - and the service's law, the owner's
 
 Both reports are of build 0.0.235 (2026-10-18). SIDE-ONCE (`01-Overview/bugs/Field-Bugs-2026-10-19f.md`, the owner: "One
-copy per setting"; on main with #1124) took User Takes Damage's and Item Deteriorates' `AllowMultipleSecondaryInstances`
+copy per setting"; on main with #1054, merged 2026-10-20 13:06 UTC) took User Takes Damage's and Item Deteriorates' `AllowMultipleSecondaryInstances`
 away (`enchantmentCatalogue.js:"  UserTakesDamage: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once"`), so a setting is
 picked once, and the primary list leaves out an effect with no setting left - Health Leech with all three taken (checked
 on main: `primaryPickerList` drops it with three, keeps it with two; User Takes Damage offers "sunlight" alone after "holy
@@ -680,12 +686,12 @@ the look's two halves, the page).
 | 130 | An axe bought from a home trader never arrived, and the gold was gone | The same: the piece waits as an uncollected delivery | RPT1026-MARKET ARRIVE |
 | 174 | A bow bought at a player's house never came, though other things bought at the same time did | The same, for one of several presses in a row: the collect that did not land was this one's | RPT1026-MARKET ARRIVE |
 | 231 | An amulet bought from a home trader for 5,000: a crash, and back in the game the piece, its price and the stall's copy were all gone | The same: the sale landed, and the piece waits as an uncollected delivery | RPT1026-MARKET ARRIVE |
-| 74 | A character cannot be deleted online: "a trade between players is still going", after a home trader's purchase on a bad connection took the gold and never gave the piece | The delete refuses a character with market business open (`realm.js` REALM_MARKET_OPEN_SQL), and an uncollected delivery is such business. A later home-trader purchase of this character is still waiting for it on the service. The refusal named no way out. The katana of the report (10-20) is not among the character's waiting deliveries: a staff check (notes) | RPT1026-MARKET ARRIVE |
+| 74 | A character cannot be deleted online, refused for market business still open, after a home trader's purchase on a bad connection took the gold and never gave the piece | The delete refuses a character with market business open (`realm.js` REALM_MARKET_OPEN_SQL), and an uncollected delivery is such business. A later home-trader purchase of this character is still waiting for it on the service. The refusal named no way out. The katana of the report (10-20) is not among the character's waiting deliveries: a staff check (notes) | RPT1026-MARKET ARRIVE |
 | 249 | Legendary pieces disappeared while being taken off the auction house | Their returns were collected on the service seven minutes before the report, so the pieces went into the character's record. A collect whose answer was lost ended the session ("crashed to the menu") with the piece in the record and none in the pack until a join - the gap VENDOR-LOST left open for a collect | RPT1026-MARKET COLLECT-LANDED |
 | 246 | Mid-purchase of a legendary at a trader, the game black-screened to the login, and on reconnecting the piece was gone | After VENDOR-LOST a buy's lost answer is answered, and a collect's was not: the session ended mid-collect, and the player has no waiting delivery, so the collect landed and the piece went into the record | RPT1026-MARKET COLLECT-LANDED |
 | 92 | Mid-purchase of a legendary amulet, the game dropped to the login, and the piece was neither on the stall nor in the pack (10-20, before VENDOR-LOST) | Traced: every path either leaves an uncollected delivery, which this player does not have, or puts the piece into the record. Before VENDOR-LOST a buy's lost answer ended the session with the sale landed and the piece a delivery, so a later Market tab visit may have collected it since. Which one happened is in the service's rows (notes) | NEEDS DATA |
 | 291 | Gathering stopped working; the only message says trading is frozen, with no specifics, and nothing points to Discord | A hold refuses every progression claim, a harvest and every craft among them (`progress.js` seatRefusalOf), and every notice said "trading". Staff's notice said only "The realm's staff have frozen this character's trading." The toast on a refused harvest said "The notice shown when it froze says why", a line said once, in chat | RPT1026-MARKET HOLD-SAID |
-| 245 | (Its trade-hold half) A "trade-held (staff)" status: the reason is said to be shown somewhere but cannot be found, and crafting and gathering are blocked as if they were "trading" | The same words | RPT1026-MARKET HOLD-SAID |
+| 245 | (Its trade-hold half) A staff trade hold: the reason is said to be shown somewhere but cannot be found, and crafting and gathering are blocked as trading is | The same words | RPT1026-MARKET HOLD-SAID |
 | 242 | New resources (Arcane Essence, Cured Leather) in the Stores are not offered for sale on the market, nor when moving them to the guild Stores (written in Russian) | The service's walls: a silver listing, a writ and the guild Stores take only gathered and silver-bought units, and no market takes a station's loose ones. Cured Leather cured from looted or traded hides is loose, and Essence of a piece made of such goods is loose too (FB1020h ESSENCE-LOOSE), or gold's if the piece was bought with gold. The List form and the guild Stores offered only what may go and said nothing about the rest | AS DESIGNED (now said: RPT1026-MARKET STORES-SAID) |
 | 181 | The sale preview (the yellow figure at the bottom left) reads about 30,000, but the sale pays about 600; does Mercantile do anything? | The enhanced counter's footer showed the staged lot's raw cost, while the keeper's offer and the gold paid are getTradePrice's: online, a sale pays at most half of the least the counter asks, moved by the seller's Mercantile and Personality (MERC-SLOPE) | ALREADY FIXED: SELL-SHOWN (`72b3b41d9`, 2026-10-25) |
 
@@ -705,8 +711,8 @@ answer lost - the press ignored the failure and still said "Bought X for N gold"
 A buyer at a home's trader who never opened the Market tab never got the piece. In the live database, 154 item
 deliveries were uncollected for 102 players, 123 of them past a day: 68 bought and 55 come back. Each of the five
 reporters' pieces is among them (the triage). Nor could the character be deleted: an uncollected delivery is market
-business that holds the delete (`realm.js` REALM_MARKET_OPEN_SQL, `realm-market-open`). That is #74's "a trade between
-players is still going".
+business that holds the delete (`realm.js` REALM_MARKET_OPEN_SQL, `realm-market-open`). That is the refusal #74
+met.
 
 FIXED. The game reads the road itself and collects what arrived. It does not depend on the player knowing where to look.
 - THE ROAD ALONE (`market.js` marketRoad, `/v1/market/road`): the account's own market is settled (listings and orders
@@ -874,7 +880,7 @@ Mutants: 5 of the 40.
 WHAT DFU DOES. DaggerfallTradeWindow's cost label shows the staged items' cost, and the trade popup offers
 FormulaHelper.CalculateTradePrice of it.
 
-WHAT IT WAS. The report's "bottom left yellow text" is the enhanced counter's footer, whose first figure is yellow
+WHAT IT WAS. The figure the report names is the enhanced counter's footer, whose first figure is yellow
 (`enhancedStyle.js` `.trade-fig:first-child b`). It showed the lot's raw cost. Online, a sale pays at most half the least
 the counter asks, scaled by the seller's own haggle (`shopStock.js` calculateTradePrice: MERC-CAP, MERC-RISE,
 MERC-SLOPE), so the gap was several times. SELL-SHOWN (`72b3b41d9`, 2026-10-25, a day before this batch) made the footer
@@ -946,7 +952,7 @@ Mutants `tools/mutants/rpt1026_fights.json` RETIRED-BLOW-* (10, all dead).
 ### RPT1026-FIGHTS (106) - AS DESIGNED, the pages made to agree
 
 WHAT THE PORT DOES. `11-Multiplayer/Super-Dungeons.md` section 10: a fighter away from the arena `ABSENT_RETIRE_MS` has
-its share out, with no exception for the fallen. Under SD-ONELIFE a death takes the page out of the realm at once
+its share out, the fallen not excepted. Under SD-ONELIFE a fallen page leaves the realm the moment it falls
 (`world.js`'s death branch, `online.leave()`), so every death is such an absence and its share goes 30 s on, at the
 fraction. A party member's raise inside `SD_REZ_MS` brings the fallen back, and its share with it when the beat sees it.
 The Elite Breach's lords keep a fallen member's share (Field-Bugs-2026-10-19e LORD-SHARES, the owner's call there).
@@ -971,7 +977,7 @@ shape it would take.
 - 34 (0.0.244): Field-Bugs-2026-10-19f DUEL-BAR, the owner's call. The duel's vitality is shown on the player's own bar
   (`net/duel/duelBar.js` duelVitality).
 
-All three are on main since `6f841c054` (the oldest commit in this clone that holds them).
+All three came with FIELD BUGS 2026-10-19f (#1054, merged 2026-10-20 13:06 UTC), after all three builds.
 
 ### (119) - AS DESIGNED: the Enemy Expansion's golems save against Magic
 
@@ -1151,7 +1157,7 @@ Read on main's `d5a4c9c6a`, with the freeware's data. The pins are named under e
 | 267 | Blademaster's passive seems not to work and shows nothing | It works (pinned through the real formula); it said nothing | FLOW-SEEN |
 | 251 | The Nine's amulet's death save seemed never to fire | NOT REPRODUCED: Divine Grace saves through the one damage door (`loot5_powers` pins it); the places it cannot act are listed below | Answer the player |
 | 288 | The Goldsmith's Silver-for-Gold choice seemed to do nothing | It works (a Goldsmith's Silver piece holds Gold's points and worth); its card's words promised Silver standing in for Gold in a recipe | GOLDSMITH-SAID |
-| 261 | Equipping the sixth Ruhn piece lowers armour and damage | NEEDS DATA: the damage half is the set's law (a set stands at its lowest piece's stage); the armour half is not reachable in the code as read | Staff: see below |
+| 261 | Equipping the sixth Ruhn piece lowers armour and damage | NEEDS DATA: the damage half is the set's law (a set stands at its lowest piece's stage); the armour half is not reachable in the code as read | NEEDS DATA (below) |
 | 66 | A jewel with Cast When Used on the hotbar is put on or taken off instead of cast | Real: UI2 wore every piece a body slot takes | JEWEL-USED |
 | 59 | Training can be bought again and again by resting or waiting between sessions | AS DESIGNED (DFU's DaggerfallGuildServiceTraining): once every 12 game hours on the character's own clock, each session three hours, gold and fatigue | Answer the player |
 | 61 | Fast travel seems to skip the wait between skill raises | AS DESIGNED: skills rise at a rest's end and at a fast travel's arrival (DFU's PerformFastTravel calls RaiseSkills), once the 6-game-hour gate is open | Answer the player |
@@ -1566,7 +1572,8 @@ frame (FOES_FULL_MS, two seconds): a body gone moments after its foe fell, on ev
 
 FIXED. A full frame the count cap cut says `xf` 2: whole for the standing alone
 (`dungeonContext.js:"frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;"`). A joiner reads 2
-(`applySharedRecords(..., data.xf === 1 || data.xf === 2 ? data.xf : 0)`) and keeps a body the frame does not name,
+(`applySharedRecords(..., data.xf === XF_WHOLE || data.xf === XF_STANDING ? data.xf : 0)`, its own test `full ===
+XF_STANDING` - AUDIT RPT1026 M5: it was the literal 2) and keeps a body the frame does not name,
 while a standing puppet the host no longer has still goes. An older build, which reads 1 alone, takes nothing down
 from such a frame. Three expressions changed, no statement added: the host does not grow.
 
@@ -1658,7 +1665,7 @@ older build's reading (that is the older build's own `=== 1`); its words say so 
 | 43 | The Lost Artifact: the lich dropped no letter, the quest not archived, and the order says "the service isn't available yet" | The door shut by the running quest, with no row to abandon (the words were QUESTOR-SAID's, fixed 2026-10-19f). The letter's drop: the script gives it on the lich's own death in its own dungeon, never a Public room's - not reproduced | RPT1026-QUESTS ABANDON-ALWAYS |
 | 145 | Knights of the Dragon: "you already have one" after a quest was turned in, and nothing in the log to abandon | The same quest's shape | RPT1026-QUESTS ABANDON-ALWAYS |
 | 183 | The Mages Guild says no more quests can be taken, and none are listed | N0B21Y14 writes its first journal entry only when its letter is read; until then it holds the questor's door with no row | RPT1026-QUESTS ABANDON-ALWAYS |
-| 203 | Two quests' NPCs at one place: one "eats" the other, and abandoning one does not bring the other back | The intro questlines' contacts are `local` Persons in a `local tavern`. Two quests parsed before either starts take one building (DFU's GetAllActiveQuestSites reads only running quests), and most taverns lay one spawn marker: both Persons stood on it, one billboard over the other | RPT1026-QUESTS QUEST-CROWD |
+| 203 | Two quests' NPCs at one place: one hides the other, and abandoning one does not bring the other back | The intro questlines' contacts are `local` Persons in a `local tavern`. Two quests parsed before either starts take one building (DFU's GetAllActiveQuestSites reads only running quests), and most taverns lay one spawn marker: both Persons stood on it, one billboard over the other | RPT1026-QUESTS QUEST-CROWD |
 | 84 | A Hand of Cards and Raiders at the Gate both sent to one tavern; neither contact found | The same, measured on the real data: Rhaneraza's "The Pig and Mug" lays one spawn marker | RPT1026-QUESTS QUEST-CROWD |
 | 128 | The Long Haul: the contact missing from the named inn | The same | RPT1026-QUESTS QUEST-CROWD |
 | 151 | The town raid's questline: the contact missing from the named tavern | The same | RPT1026-QUESTS QUEST-CROWD |
@@ -2429,8 +2436,6 @@ Recorded on `03-World/Naval-Refit.md` beside BOARD-MAGNET.
   Responsive), and whether the screen said she was heavily laden.
 - **#208**: the account's family (its seat) and how the characters were made; a character made from the menu founds its
   own house.
-- **#244**: the reporter's skin, quick-loot and World Tooltips settings - on the enhanced skin with World Tooltips on the
-  press was always Move (DECOR-VERBS covers the rest).
 - **#274**: whether she was at her helm when she froze (a boarding's fight puts the player on her deck; she is taken back
   to the wheel after it), whether another hull lay against hers, and her hull and load.
 
@@ -2451,7 +2456,7 @@ Recorded on `03-World/Naval-Refit.md` beside BOARD-MAGNET.
 | 147 | Health dropped to 61 after an update and never rose again, no debuffs | The same trace | NEEDS DATA |
 | 155 | Health points lost during a level-up | Traced: a level-up adds DFU's roll to the stored maximum and moves no current health (`advancement.js` applyLevelUp, `oblivionLeveling.js`; AUDIT LEVEL-EVEN L2-1 took out the one way an online level-up did, LEVEL-EVEN's own first cut, which the reporter's 0.0.241 predates). Read with the same reporter's #160, the loss is a gain of DFU's floor, +1 | NOT REPRODUCED |
 | 160 | Maximum health does not change through level-ups, stuck at its level-one value | DFU's own law on that build: CalculateHitPointsPerLevelUp adds at least 1, and a low Endurance takes a small class's roll to that floor. LEVEL-EVEN floors the online maximum at the class's average roll with the Endurance held now | ALREADY FIXED: LEVEL-EVEN (`Field-Bugs-2026-10-19b.md`) |
-| 188 | "Stats down again" | With #186 (the same reporter, minutes before): stats, maximum magicka and the Firmament's regeneration all down at once is the online layers asleep - the seat out (another tab, window or device) or the tree unread | NEEDS DATA |
+| 188 | The stats low again, with nothing more said | With #186 (the same reporter, minutes before): stats, maximum magicka and the Firmament's regeneration all down at once is the online layers asleep - the seat out (another tab, window or device) or the tree unread | NEEDS DATA |
 | 146 | Spell points stopped regenerating while travelling the Overworld, came back briefly, then not for two game days | No natural magicka regeneration exists (DFU's: only rest); what regenerates is the Firmament's Font of Magnus and Clarity, Soul Siphon and the wellspring. The rounds run on the Overworld's clock as anywhere (`worldTick.js` runMagicRoundsFor's hooks). The stars' one bug was the unread tree | ALREADY FIXED: FIRM-RETRY + FIRM-STATUS |
 | 186 | Spell points do not regenerate, and about 150 of them are gone | The maximum's online terms (Renown's, the Firmament's) and the stars' regeneration leave together when the stars sleep or the tree was never read | ALREADY FIXED: FIRM-RETRY + FIRM-STATUS |
 | 96 | Every spell landing within 14 m shakes the camera whoever cast it, and no setting turns it down (Dagon's Breach's constant tremor) | `hostMagic.js` landFx kicked Better Ambience's camera for every landing, a peer's drawn missile among them; Screen Shake On Damage is DFU's recoil, the player's own injuries; the shake's ceiling was off the mod's tile | RPT1026-CLIENT PEER-SHAKE |
@@ -2464,7 +2469,7 @@ Recorded on `03-World/Naval-Refit.md` beside BOARD-MAGNET.
 | 82 | FPS lower in general since an update | Sent minutes after #81 by the same reporter from the same build (0.0.281), and tied to it in its own words; sent before OW-HITCH, whose hitches were the Overworld's. If the drop is #81's, OW-HITCH took it out; no scene or numbers to measure what stays (AUDIT RPT1026 K4: this row had read "no build named") | NEEDS DATA |
 | 129 | Stutter from three "Cast When Held: Tongues" items (Pacify checks?) | Traced: a held item's work is once a game minute (the magic round's payload, its reroll every six hours), not once a frame; the pacification roll is an edge, one roll a foe at first sight (`hostCombat.js` tryLanguagePacification) | NOT REPRODUCED |
 | 184 | FPS drops, nothing changed (under the "No freeze at the first aura, smoother fast travel" notes) | No scene or numbers | NEEDS DATA |
-| 260 | Lag spike and CPU use inside the Flying Scorpion in Magor | A tavern; no profile | NEEDS DATA |
+| 260 | Lag spike and CPU use in a Magor tavern, the Flying Scorpion | A tavern; no profile | NEEDS DATA |
 | 164 | On Linux the temp folder grows by gigabytes over long travel | Nothing the app writes goes to the temp folder during play (the one `os.tmpdir()` write is Windows' registry probe, `arena2Detect.cjs`); the game's files, the GPU cache (capped, GPU-CACHE) and the updater live under userData and the cache folder. Which folder grew, and with what, is the player's machine's | NEEDS DATA |
 
 ### RPT1026-CLIENT SPARKS (206) - `src/ui/firmamentWindow.js`
@@ -2600,7 +2605,7 @@ is the shake a hurt player takes.
 
 WHAT THE PORT DID. Every landing missile kicked Better Ambience's camera (`betterAmbience.weaponKick`), 3 for a bolt
 and 4.5 for a blast, falling off over 14 m - mine, a foe's, the sun baby's fire, and another player's drawn missile
-(SPELLFX1's `visual`, its caster named), which lands through the same impact. FIELD BUGS 2026-10-06b had recorded it as
+(SPELLFX1's `visual`, its caster named), whose landing runs the same impact code. FIELD BUGS 2026-10-06b had recorded it as
 "a call about the feel, ... open, for Mac". In a crowd that casts the shakes overlapped into a tremor. Screen Shake On
 Damage never covered it, and the one dial that could cap it (`Camera Shake.maxShake`) was off the mod's curated tile.
 
@@ -2671,8 +2676,7 @@ THE BUG, ALREADY FIXED. FIRM-RETRY (`98930c243`, 2026-10-25, in THE FOLD #1280):
 the first Renown; a read the service never answered left a classic-HUD character with no stars - no stats, no
 regeneration, no kill heal - until a Renown rise or the Growth tab. The book now reads again by itself. FIRM-STATUS
 (the same commit) puts the reason the stars sleep in the Firmament window's side panel. #243 is FIRM-RETRY's case, sent an hour
-before it was written from a report of the same failure; #2, #97, #146 and #186 have its shape (the stars wholly or on and off, the reporter's "started
-working again briefly"). What a player sees now: the side panel's line - "Your accepted stars are active", or why not.
+before it was written from a report of the same failure; #2, #97, #146 and #186 have its shape (the stars wholly off, or off and back for a while). What a player sees now: the side panel's line - "Your accepted stars are active", or why not.
 
 #134, NOT REPRODUCED. `firmamentPowers.js` attributeGain lays a small star's share of the permanent value on top of a
 maxed attribute, FIRM-MAX lifting its ceiling (`test/systems/firm1_powers.test.js` FIRM-MAX: 100 Speed, the Steed's +2
@@ -2698,7 +2702,7 @@ online level-up did, after their build). Their build is four days behind the rep
 
 #52, #147, #188, NEEDS DATA. A 100-point fall to a level-one body (#52), a maximum that stays low (#147), and stats
 down with the spell points (#188 with #186) are the online layer off - the seat out, or the Renown not heard - or a
-lycanthrope's urge (#52: "no illness" - a curse is no disease). Which, is in the character: staff, read its realm record
+lycanthrope's urge (#52 names no disease - a curse is none). Which, is in the character: staff, read its realm record
 (level, career's HitPointsPerLevel, `maxHealth` stored against LEVEL-EVEN's floor for its level, Renown, lycanthropy) and
 ask whether "Online in another tab or device. This one is offline." showed.
 
@@ -2789,7 +2793,7 @@ dead). Branch `worktree-agent-aa6f4b58488dcd75f`.
 | 258 | The nudity filter covers taverns, not the pictures in players' homes | Needs the house's pieces | needs data |
 | 76 | Died instantly while fast travelling on permadeath, no popup | Needs the death's cause (`dead_why`) | needs data / staff |
 | 108 | Repeated deaths around signing in on an Enduring line, each costing years | Needs each death's cause; the years are each rise's toll in the line's record, which no tool gives back | needs data / staff |
-| 23 | Lost the last character on a death without permadeath | Needs the character's record | staff |
+| 23 | Lost the last character on a death without permadeath | Needs the character's record | needs data / staff |
 
 ### TAB-REPEAT (204) - `src/ui/enhanced/enhancedOverlays.js`
 
