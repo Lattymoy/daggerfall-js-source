@@ -101,13 +101,14 @@
   },
   {
     "name": "ROWS-harbour-unported",
-    "file": "src/world/pastBayRows.js",
-    "old": "          port: s === harbour && (!!pin?.port || capitalCanalOpen(k)),",
-    "new": "          port: s === harbour && !!pin?.port,",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const capitalSlicePort = (k, s, pinPort) => !!CAPITALS[k] && s === capitalHarbourSlice(CAPITALS[k]) && (!!pinPort || capitalCanalOpen(k));",
+    "new": "export const capitalSlicePort = (k, s, pinPort) => !!CAPITALS[k] && s === capitalHarbourSlice(CAPITALS[k]) && !!pinPort;",
     "tests": [
       "test/world/nibensea.test.js",
       "test/world/audittesa2p_world.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the harbour slice's port word moved from the registry's rows (pastBayRows.js) to tamrielCapitals.js capitalSlicePort, the rows' and the slice's byte's one law - the canal unread there."
   },
   {
     "name": "PORT-name-the-slice",

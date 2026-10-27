@@ -298,11 +298,12 @@
   {
     "name": "P7-capital-port-unsaid",
     "file": "src/world/pastBayRows.js",
-    "old": "port: s === harbour && (!!pin?.port || capitalCanalOpen(k)),",
+    "old": "port: capitalSlicePort(k, s, pin?.port),",
     "new": "port: false,",
     "tests": [
       "test/world/audittesa2p_world.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): a capital's harbour slice's port word is tamrielCapitals.js capitalSlicePort's now."
   },
   {
     "name": "P7-no-clone-stands",
@@ -432,11 +433,12 @@
   {
     "name": "P7-port-region-unsaid",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: null,",
-    "new": "region: -1, area: p.area, theatre: p.theatre, crown: null,",
+    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
+    "new": "region: -1, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the line carries the port's crown now."
   },
   {
     "name": "P8-dry-unread",

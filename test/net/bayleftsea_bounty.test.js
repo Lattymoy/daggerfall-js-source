@@ -13,6 +13,7 @@ import {
 } from '../../src/net/townSeatLaw.js';
 import { createSeatEdicts, lairDenOf, bountyPaidText, bountyDenPaidText, ORC_CAMP_TEXT, BOUNTY_DEN_ASK_GAP_MS } from '../../src/systems/seatEdicts.js';
 import { synthesizeLairLocation } from '../../src/world/tamrielDungeons.js';
+import { synthesizeCountryLocation } from '../../src/world/tamrielCountry.js';
 import { createHideouts } from '../../src/scenes/hideouts.js';
 import { createRelations } from '../../src/systems/livingWorld/relations.js';
 import { NATIVE_PER_M } from '../../src/systems/livingWorld/trips.js';
@@ -27,6 +28,7 @@ test('BAY-LEFT-SEA A DEN\'S ID: an outlaws\' hideout or a lair past the Bay name
   for (const bad of ['410,150:lair', '0,0:hideout', '999,499:lair', '01569,-430:lair', '1569,-0430:lair', '-0,600:lair', '9000,1:lair', '1569,-430:camp', '1569,-430', 'x']) assert.equal(bountyDenPixel(bad), null, bad);
   assert.equal(bountyDenPixel('-1,250:lair')?.[0], -1, 'west of the Bay\'s edge');
   assert.equal(bountyDenPixel('1000,0:hideout')?.[0], 1000, 'east of it');
+  assert.deepEqual(bountyDenPixel('5,500:lair'), [5, 500], 'south of it');
   assert.deepEqual([bountyClaimPixel('410,150:91'), bountyClaimPixel('410,150:hold'), bountyClaimPixel('1569,-430:lair'), bountyClaimPixel('410,150:lair')], [[410, 150], [410, 150], [1569, -430], null]);
   assert.equal(bountySitePixel('1569,-430:lair'), null, 'a camp\'s law - the Orc Raids\' (seatInfluence.js) - never takes a den');
 });
@@ -74,7 +76,10 @@ test('BAY-LEFT-SEA THE CLIENT: a den cleared past the Bay in a Bounty seat\'s ba
   assert.ok(!said.includes(ORC_CAMP_TEXT));
   // a lair's dungeon as TESA8 stands it names its den; any other place none
   const lair = synthesizeLairLocation({ name: 'T', mapTableData: { mapId: 1 }, exterior: { exteriorData: {} }, dungeon: { header: { blockCount: 1 }, recordElement: { header: {} } } }, { c: 77, px: 1580, py: -420, name: 'The Barrow of Ulf', type: 7, blocks: [] });
-  assert.deepEqual([lairDenOf(lair), lairDenOf({ name: 'Daggerfall', mapTableData: {} }), lairDenOf(null)], ['1580,-420:lair', null, null]);
+  // a countryside place past the Bay (TESA7) carries its pixel too, and is no den
+  const farm = synthesizeCountryLocation({ name: 'T', mapTableData: { mapId: 2 }, exterior: { exteriorData: {} } }, { px: 1580, py: -420, type: 5, name: 'A Farm' });
+  assert.deepEqual([farm.country.px, farm.country.py], [1580, -420]);
+  assert.deepEqual([lairDenOf(lair), lairDenOf(farm), lairDenOf({ name: 'Daggerfall', mapTableData: {} }), lairDenOf(null)], ['1580,-420:lair', null, null, null]);
   // a hideout routed tells its host, by its hideout
   const h = { key: 'O64.0', x: 0, z: 0, px: 1600, py: -380, region: 64 };
   const band = { key: 'O64.0~1', gen: 1, heir: 0, name: 'the Black Hand', people: [0, 1].map((i) => ({ id: `O64.0~1.${i}`, name: `Out ${i}`, cls: 138, level: 5, sex: 'male' })) };

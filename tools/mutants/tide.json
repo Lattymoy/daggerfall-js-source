@@ -294,11 +294,12 @@
   {
     "name": "TIDE-line-cost",
     "file": "src/net/townSeatLaw.js",
-    "old": "  const cost = edictCost(edict, tier, tide);\n  return `${e.name}",
-    "new": "  const cost = edictCost(edict, tier);\n  return `${e.name}",
+    "old": "  const cost = edictCost(edict, tier, tide);\n  const words =",
+    "new": "  const cost = edictCost(edict, tier);\n  const words =",
     "tests": [
       "test/net/tide_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): a Bounty past the Bay's words are read between the cost and the line."
   },
   {
     "name": "TIDE-inf-tide",
@@ -398,10 +399,11 @@
   {
     "name": "TIDE-tab-edict",
     "file": "src/ui/seatTab.js",
-    "old": "edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm');",
-    "new": "edictLine(chosen, seat.tier);",
+    "old": "edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat);",
+    "new": "edictLine(chosen, seat.tier, undefined, seat);",
     "tests": [
       "test/ui/tide_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the tab hands the seat too (a Bounty past the Bay worded for its dens); the mutant still drops the coming week's Tide."
   }
 ]

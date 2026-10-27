@@ -51,7 +51,7 @@ test('BAY-LEFT-SEA A CAPITAL\'S LANDMARKS ARE MEASURED BY THEIR FOOTPRINT: every
 });
 
 const realSkip = HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)';
-test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbours and no other slice of the seven capitals are ports to their own byte; each bears the open sea and stands its shipyard and its lighthouse at the water, measured as the host measures a town - where by a landmark\'s box Solitude stood its lighthouse alone and Alinor and Torval neither', { skip: realSkip }, async () => {
+test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbours and no other slice of the seven capitals are ports to their own byte; each bears the open sea and stands its shipyard and its lighthouse at the water, measured as the host measures a town, and its crew hall and its Docks (six berths at its own reach) - where by a landmark\'s box Solitude stood its lighthouse alone and Alinor and Torval neither', { skip: realSkip }, async () => {
   globalThis.atob ??= (s) => Buffer.from(s, 'base64').toString('binary');
   const bytes = (n) => new Uint8Array(readFileSync(join(/** @type {string} */ (ARENA2), n)));
   const { DFPalette } = await import('../../../src/formats/dfPalette.js');
@@ -123,8 +123,11 @@ test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbou
       const g = ys.townGroundOf(yl, measures, null);
       if (isYardTown(loc)) ys.yardSitesOn(g);
       const bearing = ps.seaBearing(lp.x, lp.y, openSea), townSea = ps.townSeaOf(yl, bearing), field = ps.seaField(g.width, g.height, townSea, bearing);
-      return ps.portSitesOn(g, field).map((t) => [t.kind, t.gx, t.gy, field.kind === 'water' ? field.at(...ps.backMiddle(t.gx, t.gy, t.nx, t.nz, t.turn)) : null]);
+      const sites = ps.portSitesOn(g, field);
+      sitesOf.set(loc, sites);
+      return sites.map((t) => [t.kind, t.gx, t.gy, field.kind === 'water' ? field.at(...ps.backMiddle(t.gx, t.gy, t.nx, t.nz, t.turn)) : null]);
     };
+    const sitesOf = new Map();
     const at = Object.fromEntries(ported.map(([n, x, y]) => [n, clone(x, y)]));
     assert.deepEqual(Object.fromEntries(Object.entries(at).map(([n, loc]) => [n, portsOf(loc, false).map((p) => p[0])])), {
       'Waterfront District': ['shipyard', 'lighthouse'], Solitude: ['lighthouse'], Alinor: [], Torval: [],
@@ -138,5 +141,43 @@ test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbou
       Alinor: [['shipyard', 62, 93, 2], ['lighthouse', 105, 93, 2]],
       Torval: [['shipyard', 67, 93, 2], ['lighthouse', 110, 93, 2]],
     });
+    // the town's directory rows as the host hands its talk (world.js portPlacesOf, world/portSites.js portPlaceRows): the
+    // shipyard, its crew hall at the crewmaster's table, the lighthouse, and the Docks - the harbour book's first berth
+    // (systems/naval/harbourBook.js, which reads no byte), sounded at its own reach on the ground the game builds past the
+    // Bay (each pixel's tiles as the terrain job lays them, a capital's at its own flatten; the tiles' water, Deep Waters
+    // off - world.js navalIsWater's arm)
+    const { SHIPYARD } = await import('../../../src/world/shipyardModel.js');
+    const { generatePixelTerrain } = await import('../../../src/world/terrain/terrainGen.js');
+    const { setLocationTiles } = await import('../../../src/world/terrain/terrainTiles.js');
+    const { TERRAIN_SIZE } = await import('../../../src/world/terrain/terrainSampler.js');
+    const { locationWorldRect } = await import('../../../src/world/streamingWorld.js');
+    const { GLOBAL_SCALE } = await import('../../../src/world/meshReader.js');
+    const { findHarbour, HARBOUR_REACH } = await import('../../../src/systems/naval/shipLife.js');
+    const tiles = new Map();
+    const tilesAt = (px, py) => {
+      const key = `${px},${py}`;
+      if (!tiles.has(key)) {
+        const tm = new Uint8Array(16384), on = tc.capitalOnPixel(px, py), loc = on ? clone(px, py) : null;
+        const rect = loc ? setLocationTiles(loc, maps, blocks, tm) : null;
+        tiles.set(key, generatePixelTerrain({ woods, px, py, tilemap: tm, locationRect: rect, hasLocation: !!loc, climateType: 0, flattenAt: loc?.capital?.flattenAt ?? null }).tilemapBytes);
+      }
+      return tiles.get(key);
+    };
+    const isWater = (x, z) => {
+      const px = Math.floor(x / TERRAIN_SIZE), py = 499 - Math.floor(z / TERRAIN_SIZE);
+      const tx = Math.min(127, Math.max(0, Math.trunc(((x - px * TERRAIN_SIZE) / TERRAIN_SIZE) * 128)));
+      const tz = Math.min(127, Math.max(0, Math.trunc(((z - (499 - py) * TERRAIN_SIZE) / TERRAIN_SIZE) * 128)));
+      return (tilesAt(px, py)[tz * 128 + tx] >> 2) === 0;
+    };
+    assert.equal(HARBOUR_REACH, 420);
+    assert.deepEqual(Object.fromEntries(ported.map(([n, x, y]) => {
+      const r = locationWorldRect(at[n], x, y);
+      const berths = findHarbour({ rect: { minX: r.minX * GLOBAL_SCALE, maxX: r.maxX * GLOBAL_SCALE, minZ: r.minZ * GLOBAL_SCALE, maxZ: r.maxZ * GLOBAL_SCALE }, isWater })?.berths ?? [];
+      const rows = ps.portPlaceRows(sitesOf.get(at[n]), SHIPYARD.points.crewmaster, berths[0]?.pos ?? null, n);
+      return [n, [berths.length, rows.map((p) => p.kind)]];
+    })), {
+      'Waterfront District': [6, ['shipyard', 'crewhall', 'lighthouse', 'docks']], Solitude: [6, ['shipyard', 'crewhall', 'lighthouse', 'docks']],
+      Alinor: [6, ['shipyard', 'crewhall', 'lighthouse', 'docks']], Torval: [6, ['shipyard', 'crewhall', 'lighthouse', 'docks']],
+    }, 'each harbour its four places: the shipyard, its crew hall, the lighthouse and the Docks, six berths at its own reach');
   } finally { setTamrielTrace(null); setTamrielFit(null); }
 });

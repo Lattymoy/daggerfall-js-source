@@ -49,12 +49,14 @@
   {
     "name": "TESA6-a-crown-past-the-bay",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: null,",
+    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
     "new": "theatre: p.theatre, crown: 'Wayrest',",
     "tests": [
       "test/tesa6_ports.test.js",
-      "test/world/worldWide/ww3_sea.test.js"
-    ]
+      "test/world/worldWide/ww3_sea.test.js",
+      "test/world/worldWide/bayleftsea_harbour.test.js"
+    ],
+    "note": "PIN MOVED (BAY-LEFT-SEA, the owner's call taken: a harbourmaster past the Bay keeps the nearest Bay crown's board): the law turned - a port past the Bay keeps the nearest Bay crown's office, read at its own pixel; the mutant one crown for every port (bayleftsea_harbour's Alinor Sentinel's, Northpoint Daggerfall's)."
   },
   {
     "name": "TESA6-the-naval-host-blind",
