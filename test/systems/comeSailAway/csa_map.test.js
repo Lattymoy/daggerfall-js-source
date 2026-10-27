@@ -16,6 +16,7 @@ import {
 import { REGION_PANEL_OFFSET } from '../../../src/ui/travel/travelMapWindow.js';
 import { isEntityWaterWalking, assignModBundle, removeBundleNamed, WATER_WALKING_SILENT_KIND, hasActiveEffect, tickActiveEffects } from '../../../src/systems/effects.js';
 import { liveBundles } from '../../../src/systems/mysticism.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the host whole
 
 const DIR = new URL('../../../vendor/come-sail-away/Models/', import.meta.url);
 const json = (p) => JSON.parse(readFileSync(new URL(p, DIR), 'utf8'));
@@ -393,7 +394,7 @@ test('CSA-I: WaterWalkingSilent on the port\'s effect list - its own kind (no st
 // ── the host's seams ─────────────────────────────────────────────────────────────────────────────────────────────
 
 test('CSA-I: the host\'s seams - the map\'s window (a native window: every key, its key-ups, OnGUI\'s draw), rotated with the host\'s edges; the mouse bottom up; the two pictures off the player\'s files; the draw\'s shadow then text; the debug values beside the widget; IsWaterWalking read one way everywhere', () => {
-  const w = src('scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, BAY-LEFT-MAPS): the map's pictures and its draw list are scenes/csaMapHost.js's - the host read whole
   assert.match(w, /topWindowIsMessageBox: \(\) => \(modes\?\.topWindow\?\.\(\) \?\? null\) instanceof ActionTextBox,/);
   assert.match(w, /map: \{ open: \(\) => csaMapOpen\(\), close: \(\) => csaMapClose\(\) \},/);
   assert.match(w, /isChoiceWindow: true,\s*get done\(\) \{ return _csaMapWindow !== win; \},\s*input\(code, e\) \{ if \(!e\?\.repeat\) _csaMapKeys\.down\.add\(code\); _csaMapKeys\.held\.add\(code\); \},\s*keyup\(code\) \{ if \(_csaMapKeys\.held\.delete\(code\)\) _csaMapKeys\.up\.add\(code\); \},/);   // AUDIT PRE-MERGE 0928 U1: the release its own press made (test/systems/audit0928_input.test.js)
@@ -406,7 +407,7 @@ test('CSA-I: the host\'s seams - the map\'s window (a native window: every key, 
   assert.match(w, /_csaMouse = \[\(e\.clientX - r\.left\) \* \(canvas\.width \/ r\.width\), canvas\.height - \(e\.clientY - r\.top\) \* \(canvas\.height \/ r\.height\)\];/);
   assert.match(w, /img\.load\(await fetchBytes\(TRAVEL_MAP_IMG\), TRAVEL_MAP_IMG\);/);
   assert.match(w, /renderer\.uploadTexture\('img', 'csa-map', csaToScreenOrder\(travelMapPicture\(img\.getDFBitmap\(0, 0\), \(i\) => pal\.get\(i\)\)\)\)/);
-  assert.match(w, /getTexture\(CSA_LINE_TEXTURE\.archive\)\.then\(\(t\) => \{\s*_csaLineTex = renderer\.uploadTexture\('img', 'csa-line', t\.getColor32\(t\.getDFBitmap\(CSA_LINE_TEXTURE\.record, CSA_LINE_TEXTURE\.frame\), 0\)\);/);
+  assert.match(w, /getTexture\(CSA_LINE_TEXTURE\.archive\)\.then\(\(t\) => \{\s*_csaPics\.line = renderer\.uploadTexture\('img', 'csa-line', t\.getColor32\(t\.getDFBitmap\(CSA_LINE_TEXTURE\.record, CSA_LINE_TEXTURE\.frame\), 0\)\);/);
   assert.match(w, /drawText\(renderer, font, d\.text, d\.x \+ d\.shadowPos\[0\], d\.y \+ d\.shadowPos\[1\], d\.scale, rgba\(d\.shadow\)\);\s*drawText\(renderer, font, d\.text, d\.x, d\.y, d\.scale, rgba\(d\.color\)\);/);
   assert.match(w, /const values = csaRuntime\.debugValues\(\{ paused: gamePaused\(\) \}\);[^\n]*\n\s*if \(values\) csaDrawList\(values\);/);
   assert.match(w, /assignModBundle\(playerEntity, \{ name: spec\.name, kind: WATER_WALKING_SILENT_KIND, rounds, bundleType: spec\.bundleType \}\);/);
@@ -419,3 +420,4 @@ test('CSA-I: the host\'s seams - the map\'s window (a native window: every key, 
   assert.match(dc, /waterWalking: isEntityWaterWalking\(playerEntity\) \} : null;/);
   assert.doesNotMatch(src('scenes/shared.js') + dc, /hasActiveEffect\((entity|playerEntity), 'waterWalking'\)/, 'no reader of the one kind alone');
 });
+

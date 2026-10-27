@@ -678,7 +678,6 @@ import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagon/wagonSeats.js';
 import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
-import { travelMapPicture, TRAVEL_MAP_IMG, LINE_TEXTURE as CSA_LINE_TEXTURE } from '../systems/comeSailAway/comeSailAwayMap.js';   // CSA-I: the position reading's picture and lines
 import { createComeSailAwayRuntime, cargoModWords, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
 import { windWidgetFrameUrl as csaWindWidgetFrameUrl, waveDerivedUrl as csaWaveDerivedUrl, wavePaintUrl as csaWavePaintUrl, soundUrl as csaSoundUrl } from '../systems/comeSailAway/comeSailAwayModels.js';   // CSA-E: the wind widget's pictures; CSA-F: the waves' recipes and paints
 import { WAVE_FRAME_COUNT as CSA_WAVE_FRAME_COUNT, waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAway/comeSailAwayWaves.js';   // CSA-F
@@ -1132,7 +1131,7 @@ import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // WM2d: th
 import { beginLoading, syncLoading, setLoadingPlace, setLoadingAside, loadingPlaceOf, bootLine, BOOT_HOLD_MAX_MS } from '../ui/loadingScreen.js';   // LOAD1: the loading screen - the boot's, and every world move's
 import { syncInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load: the ring over the hotbar, and this screen aside
 import { setShotPlace, deliverOwedShots } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken; SHOT1: and it is read at this host's frame foot
-import { drawEnhancedTextLayer, hideEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
+import { hideEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { drawEnhancedStatusLine } from '../ui/enhanced/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
 import { rrRidingOn, rrRidingSetting, BED_MODELS, bedSleepingOn } from '../systems/roleplayRealism/rrRealism.js';   // RR2: EnhancedRiding's switches; CSA-G: the boat's bed is RR1's BedActivation
@@ -1223,6 +1222,7 @@ import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
 import { createMapPlaces } from './mapPlacesHost.js';   // HOST-SPLIT
+import { createCsaMap } from './csaMapHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -8250,52 +8250,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     hideEnhancedTextLayer(CSA_MAP_TEXT_LAYER);   // AUDIT FONT3 F1: here, not in dispose alone - the interior and dungeon slots close a window without disposing it
     modes?.closeWindow?.(w);
   }
-  /** OnGUI's two pictures, built at the map's first draw: record 3 rebuilt from the player's TRAV0I00.IMG (the
-   *  port never carries it) and lineTexture, TEXTURE.000's solid record 112. */
-  let _csaMapTex = null, _csaMapTexLoad = null, _csaLineTex = null, _csaLineTexLoad = null;
-  function csaMapPictures() {
-    _csaMapTexLoad ??= (async () => {
-      const img = new ImgFile();
-      img.load(await fetchBytes(TRAVEL_MAP_IMG), TRAVEL_MAP_IMG);
-      const pal = new DFPalette();
-      pal.load(await fetchBytes(img.paletteName), img.paletteName);
-      _csaMapTex = renderer.uploadTexture('img', 'csa-map', csaToScreenOrder(travelMapPicture(img.getDFBitmap(0, 0), (i) => pal.get(i))));
-    })().catch((e) => console.warn('[come-sail-away] the position reading\'s map did not build', e));
-    _csaLineTexLoad ??= getTexture(CSA_LINE_TEXTURE.archive).then((t) => {
-      _csaLineTex = renderer.uploadTexture('img', 'csa-line', t.getColor32(t.getDFBitmap(CSA_LINE_TEXTURE.record, CSA_LINE_TEXTURE.frame), 0));
-    }).catch((e) => console.warn('[come-sail-away] the position reading\'s line texture did not load', e));
-    return { map: _csaMapTex, line: _csaLineTex };
-  }
-  /** A draw list the runtime answers (OnGUI's): each quad its picture stretched and tinted, each text
-   *  DaggerfallFont.DrawText's two passes - the shadow, then the text. */
-  function csaDrawList(draws, layerId = null) {
-    const pics = draws.some((d) => d.kind === 'quad') ? csaMapPictures() : null;
-    const font = townTalk.font;
-    const rgba = (c) => [c.r, c.g, c.b, c.a];
-    // FONT3: under the enhanced skin a list that names a layer says its words in the pixel face (ui/enhanced/enhancedTextLayer.js)
-    // - the pictures stay on the canvas. The debug values name none and keep the bitmap face, as F8's lines do.
-    const words = layerId && isEnhanced() && typeof document !== 'undefined' ? [] : null;
-    for (const d of draws) {
-      if (d.kind === 'quad') {
-        const tex = d.tex === 'map' ? pics?.map : pics?.line;
-        if (tex) renderer.drawScreenQuad(tex, d.rect, undefined, rgba(d.color));
-      } else if (words) {
-        words.push({ text: d.text, x: d.x, y: d.y, cell: (font?.fnt?.fixedHeight ?? 7) * d.scale, color: rgba(d.color), shadow: rgba(d.shadow), shadowPos: d.shadowPos });
-      } else if (font) {
-        drawText(renderer, font, d.text, d.x + d.shadowPos[0], d.y + d.shadowPos[1], d.scale, rgba(d.shadow));
-        drawText(renderer, font, d.text, d.x, d.y, d.scale, rgba(d.color));
-      }
-    }
-    if (words) drawEnhancedTextLayer(layerId, words, canvas);
-  }
-  /** OnGUI's map, while the reading has it up - drawn by its window, the slot's last. */
-  function csaDrawMap() {
-    if (!csaRuntime) return;
-    csaCall(() => {
-      const draws = csaRuntime.mapOverlay({ screenRect: { x: 0, y: 0, width: canvas.width, height: canvas.height }, screen: [canvas.width, canvas.height], unscaledTime: performance.now() / 1000 });
-      if (draws) csaDrawList(draws, CSA_MAP_TEXT_LAYER);
-    });
-  }
+  const { _csaPics, csaDrawList, csaDrawMap } = createCsaMap({   // HOST-SPLIT: src/scenes/csaMapHost.js
+    CSA_MAP_TEXT_LAYER, canvas, getTexture, renderer, townTalk,
+    get csaCall() { return csaCall; },
+    get csaRuntime() { return csaRuntime; },
+  });
   /** CSA-K: the others' words standing them on this boat of mine (the pack's refusal; OWS2: and a landfall's pack). */
   const csaPassengersOn = (boat) => { const i = csaRuntime?.AllBoats.filter((b) => b.GameObject?.activeSelf).indexOf(boat) ?? -1; return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i); };
   /** SerializeItems / DeserializeItems: the save's own item copy (save.js) - AUDIT WK-D11: ONE codec, the cargo's and
@@ -18161,7 +18120,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     /** CSA-I probe: the position reading's state, and the water walk as the effect list stands. */
     window.__csaMapState = () => (csaRuntime ? { showing: csaRuntime.state.mapShowing, reading: csaRuntime.state.mapShowingPosition, running: csaRuntime.state.showingBoatPosition != null,
       mode: csaRuntime.state.mapMarkerMode, markers: csaRuntime.state.mapMarkers.map((m) => ({ position: m.position, label: m.label })), window: !!_csaMapWindow, mouse: _csaMouse.map((v) => +v.toFixed(1)),
-      pictures: { map: !!_csaMapTex, line: !!_csaLineTex } } : null);
+      pictures: { map: !!_csaPics.map, line: !!_csaPics.line } } : null);
     window.__csaWaterWalk = () => ({ walking: isEntityWaterWalking(playerEntity), flag: !!player.waterWalking, bundles: liveBundles(playerEntity).map((b) => ({ name: b.name, icon: b.showIcon })) });
     window.__csaOverlay = () => { const o = townTalk?.overlay; return o ? { name: o.constructor?.name ?? null, keys: Object.keys(o).slice(0, 12), done: !!townTalk.overlayDone, active: !!townTalk.overlayActive } : null; };   // the street's window slot, what holds it
     window.__csaOarWatch = (i = 0) => {
