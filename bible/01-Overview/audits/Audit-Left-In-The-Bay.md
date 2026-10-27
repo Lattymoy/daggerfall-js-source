@@ -141,8 +141,17 @@ FIXED, each with its pins and its mutants (all dead, or `equivalent` with its re
 - The held map's Hollows and Ketch stations are lists read over BAY-LEFT-MAPS' sheet.
 - BAY-LEFT-GROUND's sites stand between the isles' templates and the classic rows' letting go (`etherplaces.test.js`,
   PIN MOVED).
+- BAY-LEFT-B moved the boot's start out of `bootWorld` by hand (`scenes/bootStartHost.js`) and handed it closures under
+  names of its own (`teleport`, `ready`, `landed`, `say`); HOST-SPLIT's seam reads a moved module's names as the host's
+  own bindings (`test/tooling/hostseam.test.js`). The host hands its own: `_teleportToPixel`, its readiness one function
+  (`_worldReady`, which the homes' sweep and START2's move ask too - three copies of one closure), and `arenaTraced` and
+  `townTalk`, declared below the construction, as getters.
+- BAY-LEFT-SEA's Bounty kill read `modes.dungeonLocation` above the mode machine's declaration, unguarded on the object
+  (`test/scenes/audit24_wave37.test.js`) - `modes?.dungeonLocation`, its pins and mutants moved.
+- AUDIT LOOT F3's pin read the market's pieces in `world.js`; BAY-LEFT-SEA moved them to `scenes/marketPiecesHost.js` -
+  the pin moved.
 - `bootWorld` measured at each merge, its ceiling at its measure (`test/scenes/hostceiling.test.js`): 35,799 at the
-  packages' base, 35,368 merged.
+  packages' base, 35,368 merged, 35,367 with the boot's start's doors.
 - The relay's law re-hashed once, world270 in place (`test/net/relayversion.test.js`), and the version notes written on
   `RELAY_VERSION` and `ACCOUNT_VERSION` (acct196): deploy the relay first, then the account service, then the site.
 
@@ -441,12 +450,20 @@ the freeware's data (`tools/fetch-data.sh`, `ARENA2_PATH`) when the branch was p
   townring 11 of 11 dead, townpaths 10 of 10, rumarewater 47 dead and its 2 `equivalent` as recorded, 0 survived (two
   rumarewater records judged in place: `audittesa2c_capitals.test.js` passes in no workspace).
 
+The nine packages merged (`4781031fbc`), the whole gate with the freeware's data: lint, types and the build clean;
+36,179 tests, 36,123 pass, 49 skipped, 7 fail. Three were the merge's (the start's seam, the Bounty kill's guard, F3's pin,
+under "The packages at their merge") - fixed, their tests and the bible's gates run again, and the 28 mutant records they
+touched judged again, all dead. The other four fail on main as they do here, ARENA2 halves only (below).
+
 ## Found on the way, not this audit's
 
 - `test/world/fb1009_yardfoot.test.js`'s ARENA2 half ("a point 2 m inside every door is still the house") fails 2,842 to 0
   on main, the tamriel branch and this PR alike; it passes at b50b68abdd and fails at db5f441691 ("decor: fix placement
   near roof overhangs", `scenes/homeYards.js`). CI runs no ARENA2 half, so nothing saw it.
 - `fb1002_audit`'s ARENA2 step-back case (N0000033) fails on the PR's head before the packages too.
+- IT1's and WD1's ARENA2 halves ("every gate patch rebuilds the author's file, sha256 for sha256";
+  `test/formats/worldData/it1_worlddata.test.js`, `wd1_worlddata.test.js`) fail on main (`56eb3cb15a`) and on the PR's
+  head before the packages alike: a vendored patch over the freeware's file no longer rebuilds the author's.
 - The Eltheric isles' port towns stand in a levelling wall (median 54.9 m, p90 69.7 m over 60 ports): they are not
   landform sites. This audit's "past the Bay" is Tamriel; their sites would move the ground again (GROUND_LAW 3).
 - A zone hall's map ids (top bits 0xf) overlap the Abyss Dungeons' salt lanes 0xf00-0xfff (WW-C2), named in

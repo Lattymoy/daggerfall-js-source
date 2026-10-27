@@ -98,7 +98,9 @@ test('BAY-LEFT-SEA THE CLIENT: a den cleared past the Bay in a Bounty seat\'s ba
   await tick(2);
   assert.deepEqual(routed, ['O64.0']);
   const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.ok(w.includes("seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes.dungeonLocation : null)).catch(() => {}); });"));
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): the mode machine's read guarded on the object, as every one above its
+  // declaration is (test/scenes/audit24_wave37.test.js)
+  assert.ok(w.includes("seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });"));
   assert.ok(w.includes('    routed: seatEdicts.hideoutRouted,   // BAY-LEFT-SEA'));
 });
 

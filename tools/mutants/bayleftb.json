@@ -51,7 +51,7 @@
   {
     "name": "BAY-LEFT-B-B1-ready-wait",
     "file": "src/scenes/bootStartHost.js",
-    "old": "    for (let i = 0; !host.ready() && i < START_READY_TRIES; i++) await wait(START_READY_MS);\n    const landed = host.ready() && await",
+    "old": "    for (let i = 0; !_worldReady() && i < START_READY_TRIES; i++) await wait(START_READY_MS);\n    const landed = _worldReady() && await",
     "new": "    const landed = await",
     "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
   },
@@ -63,16 +63,23 @@
     "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
   },
   {
+    "name": "BAY-LEFT-B-B1-ready-three",
+    "file": "src/scenes/world.js",
+    "old": "const _worldReady = () => playerSpawned && _bootLoaded && !_loading;",
+    "new": "const _worldReady = () => playerSpawned;",
+    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+  },
+  {
     "name": "BAY-LEFT-B-B1-reposition",
     "file": "src/scenes/bootStartHost.js",
-    "old": "await teleport(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });",
-    "new": "await teleport(at.x, at.y, null, {});",
+    "old": "await _teleportToPixel(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });",
+    "new": "await _teleportToPixel(at.x, at.y, null, {});",
     "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
   },
   {
     "name": "BAY-LEFT-B-B1-said",
     "file": "src/scenes/bootStartHost.js",
-    "old": "      host.say?.(STARTS_TEXT.noSite);\n",
+    "old": "      host.townTalk?.say(STARTS_TEXT.noSite);\n",
     "new": "",
     "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
   },

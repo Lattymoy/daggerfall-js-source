@@ -298,7 +298,8 @@ test('KNIGHT-HOUSE the hosts, by source: the door never prices the knight\'s own
   const boot = bootHost.slice(bootHost.indexOf('async function holdDeeds() {'), bootHost.indexOf('async function sweepGone() {'));
   assert.match(boot, /if \(!await standing\(\)\) \{ deedsAsked = false; return null; \}/, 'never the boot\'s stand-in character');
   assert.match(bootHost, /async function standing\(\) \{\n\s*for \(let i = 0; !\(loaded\(\) && stands\(\)\) && i < STAND_LOOKS; i\+\+\) await wait\(STAND_LOOK_MS\);\n\s*return loaded\(\);/);
-  assert.match(w, /loaded: \(\) => playerSpawned && _bootLoaded && !_loading, stands: \(\) => !!modes,/);
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): the readiness one function of world.js's, the start's and START2's too
+  assert.match(w, /const _worldReady = \(\) => playerSpawned && _bootLoaded && !_loading;\n\s*const homesBoot = createHomesBoot\(\{\n[^\n]*\n\s*loaded: _worldReady, stands: \(\) => !!modes,/);
   assert.match(boot, /const held = await holdRealmDeeds\(onlineHomes, \{ houses: player\(\)\.houses \}\);/);
   assert.match(w, /async function holdGrantedDeed\(\{ region, mapId, buildingKey \}\) \{\n\s*if \(!onlineHomes \|\| !checkpointLanded\(await onlineCheckpointLanded\(\)\)\) return \{ ok: false, error: 'offline' \};[^\n]*\n\s*return onlineHomes\.holdDeed\(\{ region, mapId, buildingKey, layout: homeClaimLayout\(mapId\) \}\);/);
   assert.match(w, /holdRealmDeed: onlineHomes \? \(d\) => holdGrantedDeed\(d\) : null,/);

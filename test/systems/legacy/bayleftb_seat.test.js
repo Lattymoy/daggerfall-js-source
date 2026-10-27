@@ -47,8 +47,8 @@ async function boot(search, { ready = () => true } = {}) {
   const start = createBootStart({
     params, locationIndex: w.index, maps: w.maps, worldPlaces: w.worldPlaces,
     regionName: params.get('region') || 'Daggerfall', locationName: params.get('loc') || 'Daggerfall',
-    teleport: async (x, y, local, opts) => { moves.push([x, y, local, opts, asked]); },
-    ready: () => ready(++asked), landed: () => Promise.resolve(), say: (line) => said.push(line),
+    _teleportToPixel: async (x, y, local, opts) => { moves.push([x, y, local, opts, asked]); },
+    _worldReady: () => ready(++asked), arenaTraced: Promise.resolve(), townTalk: { say: (line) => said.push(line) },
   });
   return { ...start, at: await start.farStart, moves: moves.map((m) => m.slice(0, 4)), askedAtMove: moves.map((m) => m[4]), said };
 }
@@ -163,7 +163,11 @@ test('BAY-LEFT-B B1: the birth\'s address carries the seat\'s map id (`seat`) wh
 
 test('BAY-LEFT-B B1: the world host wires it - the start\'s module with its move\'s doors, the birth waiting on the move, and the seatless birth\'s nearest town the world\'s (mutants: the birth\'s wait; the nearest\'s law)', () => {
   const W = rd('src/scenes/world.js');
-  assert.match(W, /const \{ startLoc, farStart \} = createBootStart\(\{ locationIndex, locationName, maps, params, regionName, teleport: _teleportToPixel, worldPlaces,\n\s+ready: \(\) => playerSpawned && _bootLoaded && !_loading, landed: \(\) => arenaTraced, say: \(line\) => townTalk\.say\(line\) \}\);/);
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): world.js hands over its own bindings - the settled ones by value, its
+  // readiness among them (`_worldReady`, the homes' sweep's and START2's too), the two declared below as getters
+  // (test/tooling/hostseam.test.js)
+  assert.match(W, /const \{ startLoc, farStart \} = createBootStart\(\{ locationIndex, locationName, maps, params, regionName, _teleportToPixel, worldPlaces, _worldReady,\n\s+get arenaTraced\(\) \{ return arenaTraced; \}, get townTalk\(\) \{ return townTalk; \} \}\);/);
+  assert.match(W, /const _worldReady = \(\) => playerSpawned && _bootLoaded && !_loading;/);
   assert.match(W, /Promise\.all\(\[createChargenFlow\(fetchBytes\), legacyReady, farStart\]\)\.then\(/);
   assert.match(W, /return nearestTown\(maps\.getRegion\(h\.regionIndex\), h\.region, h\.pixel\) \?\? nearestTownAnywhere\(nearestTownOf, REGION_NAMES, h\.pixel\);/);
   const P = rd('src/scenes/tamrielPlacesHost.js');

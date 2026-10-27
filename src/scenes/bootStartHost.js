@@ -1,7 +1,8 @@
 // HOST-SPLIT: moved verbatim out of src/scenes/world.js's bootWorld (bible/01-Overview/Host-Split.md) - by hand, as
 // tools/hostMove.mjs refuses this group (its `let startLoc` is written by the statements after it, which declare no name
 // to group them by). The host constructs it where the code stood. What it reads of the host's scope comes through
-// `host`: the settled names by value at construction, every live one (`ready`, `landed`, `say`) asked at its use.
+// `host`: the settled names by value at construction (`_worldReady` the host's own readiness, asked at each look), every
+// live one (`arenaTraced`, `townTalk`, declared below the construction) asked at its use.
 //
 // BAY-LEFT-B (2026-10-27, the audit "no system left behind in the Bay" B1; bible/06-Systems/Legacy-Arc.md BAY-LEFT-B):
 // A START PAST THE BAY. The named start (`?region=&loc=`) read MAPS.BSA alone, so a Project Legacy birth whose family seat
@@ -74,7 +75,7 @@ const wait = (/** @type {number} */ ms) => new Promise((r) => { setTimeout(r, ms
 
 /** @param {any} host */
 export function createBootStart(host) {
-  const { locationIndex, locationName, maps, params, regionName, teleport, worldPlaces } = host;
+  const { locationIndex, locationName, maps, params, regionName, _teleportToPixel, worldPlaces, _worldReady } = host;
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
   // resolve the start by NAME - it reads a map pixel out of settings
   // (StartCellX/StartCellY, 109/158 = Privateer's Hold) and asks the
@@ -109,16 +110,16 @@ export function createBootStart(host) {
   /** The move to a start past the Bay, once the boot's world stands and the land past the Bay has its trace - as a save
    *  past the Bay loads (world.js: the load's wait on arenaTraced, then its teleport). Answers the pixel reached, or null. */
   async function reach(/** @type {{ id: ?number, region: string, loc: string }} */ to) {
-    for (let i = 0; !host.ready() && i < START_READY_TRIES; i++) await wait(START_READY_MS);
-    const landed = host.ready() && await Promise.race([Promise.resolve(host.landed()).then(() => true, () => true), wait(ARENA_LOAD_WAIT_MS).then(() => false)]);
+    for (let i = 0; !_worldReady() && i < START_READY_TRIES; i++) await wait(START_READY_MS);
+    const landed = _worldReady() && await Promise.race([Promise.resolve(host.arenaTraced).then(() => true, () => true), wait(ARENA_LOAD_WAIT_MS).then(() => false)]);
     const at = landed ? farPixelOf(to, worldPlaces) : null;
     if (!at) {
       console.warn(`[world] no way to ${to.region}/${to.loc} past the Bay (seat ${to.id ?? '-'}): the world stands at ${startLoc.name}`);
-      host.say?.(STARTS_TEXT.noSite);
+      host.townTalk?.say(STARTS_TEXT.noSite);
       return null;
     }
     try {
-      await teleport(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });
+      await _teleportToPixel(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });
     } catch (e) {
       console.warn(`[world] the move to ${to.region}/${to.loc} failed`, e);
       return null;

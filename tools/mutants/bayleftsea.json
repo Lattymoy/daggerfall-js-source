@@ -588,7 +588,7 @@
   {
     "name": "BLS-host-lair-unwired",
     "file": "src/scenes/world.js",
-    "old": "seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes.dungeonLocation : null)).catch(() => {}); });",
+    "old": "seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
     "new": "seatEdicts.campCleared(foe?.site).catch(() => {}); });",
     "tests": [
       "test/net/bayleftsea_bounty.test.js",
@@ -598,7 +598,7 @@
   {
     "name": "BLS-host-lair-in-any-mode",
     "file": "src/scenes/world.js",
-    "old": "seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes.dungeonLocation : null)).catch(() => {}); });",
+    "old": "seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
     "new": "seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.dungeonLocation)).catch(() => {}); });",
     "tests": [
       "test/net/bayleftsea_bounty.test.js",

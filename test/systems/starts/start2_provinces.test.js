@@ -756,7 +756,7 @@ test('START2 on the freeware: the start page\'s classic face fits the native scr
 
 test('START2 the world host wires the start host (scenes/startsHost.js) and grows no logic of its own: the page through the chargen door, the answer into its OnStartGame, the quests and the welcome once the character stands where their story begins, a birth online after it, the quest layer\'s start seam, and the writ at the passage; the fixed city\'s bench hands the commission (mutants: each line)', () => {
   const W = rd('src/scenes/world.js');
-  assert.match(W, /const starts = createStartsHost\(\{ params, pastBay: !!_lairTemplates, quests: \(\) => questWorld,\n\s+teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: \(\) => questBridge\?\.machine, ready: \(\) => playerSpawned && _bootLoaded && !_loading \}\);/);
+  assert.match(W, /const starts = createStartsHost\(\{ params, pastBay: !!_lairTemplates, quests: \(\) => questWorld,\n\s+teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: \(\) => questBridge\?\.machine, ready: _worldReady \}\);/);   // PIN MOVED (AUDIT BAY-LEFT, its packages merged): world.js's one readiness, the homes' sweep's and the start's too
   assert.match(W, /starts\.begin\(\(start\) => \{ questBridge\.initAtGameStart\(start\); startTutorialTour\(\); \}, startKey\);/);
   assert.match(W, /if \(!questBridge\) \{ _questStartPending = startKey \?\? true; return; \}/, 'the answer kept while the bridge is still to come');
   assert.match(W, /if \(_questStartPending\) questInitAtGameStart\(_questStartPending\);/, 'and handed on when it comes');

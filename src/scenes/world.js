@@ -1989,9 +1989,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deeds the realm gave, held once a boot; ACCOUNT-HOMES: the homes this save
   // keeps things in that the account holds no more, swept once a boot (scenes/homesBootHost.js) - built here, beside
   // them, above the boot's first landing
+  // The boot's world stands: the player spawned, the boot's load done, no load under way - asked by the homes' sweep, the
+  // start past the Bay (scenes/bootStartHost.js) and START2's move; called only once the world runs (`_loading` is far below)
+  const _worldReady = () => playerSpawned && _bootLoaded && !_loading;
   const homesBoot = createHomesBoot({
     homesApi, onlineHomes, realm: realmSession, giveOwn: arenaGiveOwn, player: () => playerEntity,
-    loaded: () => playerSpawned && _bootLoaded && !_loading, stands: () => !!modes,   // `modes` is declared far below: read only once the world stands
+    loaded: _worldReady, stands: () => !!modes,   // `modes` is declared far below: read only once the world stands
     say: (line) => townTalk.say(line),
   });
   let playerSpawned = false, _bootLoaded = false;   // HOTFIX 1003: here, above the boot's first landing - moveArenaHomesOnline reads it when the homes' towns land, which can be before the boot walk reached its old line (a TDZ ReferenceError live)
@@ -2611,8 +2614,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // U31 / THE CLASSIC START (and EE13's random spawn, and the named start) - HOST-SPLIT: scenes/bootStartHost.js.
   // BAY-LEFT-B: a start past the Bay (a family's seat there) stands the world on the Bay, then moves to it once its land
   // stands (`farStart`, which a birth waits on) - as a save made past the Bay loads
-  const { startLoc, farStart } = createBootStart({ locationIndex, locationName, maps, params, regionName, teleport: _teleportToPixel, worldPlaces,
-    ready: () => playerSpawned && _bootLoaded && !_loading, landed: () => arenaTraced, say: (line) => townTalk.say(line) });
+  const { startLoc, farStart } = createBootStart({ locationIndex, locationName, maps, params, regionName, _teleportToPixel, worldPlaces, _worldReady,
+    get arenaTraced() { return arenaTraced; }, get townTalk() { return townTalk; } });
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
   // BOOT-OVERLAP: THE TOWNS THE BOOT WAITS ON AS IT BUILDS THEM - the start's (the first build) and a realm save's own
@@ -6611,7 +6614,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // START2 (scenes/startsHost.js): WHERE THE STORY BEGINS - the page's answer (`startKey`, ui/startChoice.js), a
   // province's start dungeon past the Bay the character is moved into first, and its quest
   const starts = createStartsHost({ params, pastBay: !!_lairTemplates, quests: () => questWorld,
-    teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: () => questBridge?.machine, ready: () => playerSpawned && _bootLoaded && !_loading });
+    teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: () => questBridge?.machine, ready: _worldReady });
   const questInitAtGameStart = (startKey = null) => {
     if (_questStarted) return;
     if (!questBridge) { _questStartPending = startKey ?? true; return; }   // START2: the page's answer kept while the bridge is still to come
@@ -19977,7 +19980,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // in an hour the bound has spent, since nothing earned then counts). Built only online, like the tracker.
     setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === renownHour() ? 0 : renownTracker.pending() }));
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
-    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes.dungeonLocation : null)).catch(() => {}); });   // BAY-LEFT-SEA: a lair's foe struck down past the Bay - its den, a Bounty's (systems/seatEdicts.js lairDenOf)   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
+    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });   // BAY-LEFT-SEA: a lair's foe struck down past the Bay - its den, a Bounty's (systems/seatEdicts.js lairDenOf)   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
     renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;
