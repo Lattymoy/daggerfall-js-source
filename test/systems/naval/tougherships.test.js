@@ -159,11 +159,12 @@ test('SALVAGE a sunk ship\'s wreckage: her stores SALVAGE_SHARE of her hull in a
   for (const c of SHIP_CLASSES) {
     const s = salvageOf(c);
     assert.equal(s.stores, Math.max(1, Math.round((c.hullHp * SALVAGE_SHARE) / STORE_POINTS)), c.id);
-    assert.equal(s.barrels, SALVAGE_BARRELS, `${c.id}: every class carries guns`);
+    assert.equal(s.barrels, c.hull === HULL.Rowboat ? 0 : SALVAGE_BARRELS, `${c.id}: every class but a skiff carries guns`);   // PIN MOVED (FISH-BOATS): a Fishing Skiff is a rowboat - no gun, no powder
   }
   // PIN MOVED (ETHER-LEGENDS, bible/03-World/Eltheric-Ocean.md): the Eltheric Ocean's six legends after the nine - their hulls
   // the heaviest at sea, their wreckage the richest
-  assert.deepEqual(SHIP_CLASSES.map((c) => salvageOf(c).stores), [2, 4, 4, 6, 1, 3, 5, 4, 5, 8, 13, 10, 8, 18, 20], 'a sloop 2, a brig or a cutter 4, a flagship 6');
+  // PIN MOVED (FISH-BOATS): and the two fishing boats after the legends, a store's work each
+  assert.deepEqual(SHIP_CLASSES.map((c) => salvageOf(c).stores), [2, 4, 4, 6, 1, 3, 5, 4, 5, 8, 13, 10, 8, 18, 20, 1, 1], 'a sloop 2, a brig or a cutter 4, a flagship 6');
   assert.deepEqual(salvageOf(null), { stores: 0, barrels: 0 });
   assert.equal(isSalvage(SALVAGE_LOT), true);
   assert.equal(LOT_KEYS.includes(SALVAGE_LOT), false, 'a lot past an older build\'s LOT_KEYS would fail its door, and the word with it');

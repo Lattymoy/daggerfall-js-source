@@ -123,8 +123,8 @@
  {
   "name": "AUDIT-WE-L6-9-the-puppet-leader-plain",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "    if (f.entity.eliteFoe && r.rl === 1) promoteRaidLeader(f.entity, { own: false, name: raidLeaderNameOf(f.mobileType) });",
-  "new": "    if (false) promoteRaidLeader(f.entity, { own: false, name: raidLeaderNameOf(f.mobileType) });",
+  "old": "    if (f.entity.eliteFoe && r.rl === 1) promoteRaidLeader(f.entity, { own: false, name: (f._pupRaid ? null : huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))?.title) ?? raidLeaderNameOf(f.mobileType) });",
+  "new": "    if (false) promoteRaidLeader(f.entity, { own: false, name: (f._pupRaid ? null : huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))?.title) ?? raidLeaderNameOf(f.mobileType) });",
   "tests": [
    "test/scenes/auditwe_wire.test.js"
   ]

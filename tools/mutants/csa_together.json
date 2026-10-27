@@ -338,8 +338,8 @@
   {
     "name": "CSAK-aboard-count-any-boat",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "for (const r of riders.values()) if (r.owner === owner && r.slot === slot) n++; return n; };",
-    "new": "for (const r of riders.values()) if (r.owner === owner) n++; return n; };",
+    "old": "for (const [id, r] of riders) if (r.owner === owner && r.slot === slot && !skip?.(id)) n++; return n; };",
+    "new": "for (const [id, r] of riders) if (r.owner === owner && !skip?.(id)) n++; return n; };",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -537,7 +537,7 @@
   {
     "name": "CSAK-host-pack-guard",
     "file": "src/scenes/world.js",
-    "old": "return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i); };",
+    "old": "return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i, skip); };",
     "new": "return 0; };",
     "tests": [
       "test/systems/csa_together.test.js"

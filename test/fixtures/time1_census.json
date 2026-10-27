@@ -2,6 +2,12 @@
  "_": "TIME1 (bible/06-Systems/Online-Time-Arc.md section 8): every line in src/ that reads a shared clock, the clock it means and why. test/scenes/time1_census.test.js holds src/ to it both ways.",
  "rows": [
   {
+   "file": "src/net/crewSignLaw.js",
+   "has": "export const crewDayAt = (/** @type {number} */ nowMs) => Math.floor(sharedClassicMinutes(nowMs) / 1440);",
+   "clock": "event",
+   "why": "the crew hall's day (CREW-SIGNED) - a recruit signed online is held until it turns, the same day for every player and the service"
+  },
+  {
    "file": "src/net/gate/gateLaw.js",
    "has": "export const gameDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
    "clock": "event",
@@ -24,6 +30,24 @@
    "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
    "clock": "event",
    "why": "the serpent's sighting, rising, storm and sounding as relay ms"
+  },
+  {
+   "file": "src/net/huntLaw.js",
+   "has": "export const huntGameDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / MINUTES_PER_DAY);",
+   "clock": "event",
+   "why": "HUNTERS-MARK: the day a bounty board posts on online - the window a reported clear is judged in (Bounty-Boards.md 12.1)"
+  },
+  {
+   "file": "src/scenes/exteriorFoes.js",
+   "has": "huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))",
+   "clock": "event",
+   "why": "a hunter's named mark on a mate's screen (HUNTERS-MARK-II) - the week its name and traits are off, the same week for every player"
+  },
+  {
+   "file": "src/scenes/huntersMark.js",
+   "has": "const wallNow = () => deps.wallNow?.() ?? wallMsForClassicMinutes(deps.now());",
+   "clock": "event",
+   "why": "HUNTERS-MARK: the event clock's instant as wall ms - a named mark's week and a report's window (Bounty-Boards.md 12.4)"
   },
   {
    "file": "src/systems/starfall/starfallNight.js",

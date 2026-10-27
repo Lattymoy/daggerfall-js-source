@@ -39,6 +39,7 @@ import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
 import { registerEntityFold, newMods, EMPTY_MODS } from './entityMods.js';
 import { registerPlayerDamageMod, registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
+import { guardRoom } from './powerCeiling.js';   // POWER-CEILING: the guards' one share
 import { registerPlayerKillListener } from './playerKills.js';
 import { registerMagicRoundHook } from './worldTick.js';
 import { registerAbsorptionChance } from './absorption.js';
@@ -175,7 +176,7 @@ export function pathEvade(entity) {
  *  L1 M2: a raw share left health fractional - 183.2 after three 7-point blows - as Hold the Line's carry does not). */
 export function pathDamageMod(entity, dmg) {
   if (awakePathId(entity) !== 'warden' || !pendingPlayerBlow() || !(_now() < _s.guardUntil)) return dmg;
-  const owed = (dmg * N.livingAegis.lighter) / 100 + _s.guardOwed;
+  const owed = (dmg * guardRoom(N.livingAegis.lighter, 'arcane')) / 100 + _s.guardOwed;   // POWER-CEILING: its room under the guards' one share
   const cut = Math.floor(owed + 1e-9);
   _s.guardOwed = owed - cut;
   return Math.max(0, dmg - cut);

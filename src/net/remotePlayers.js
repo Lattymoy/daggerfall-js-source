@@ -28,6 +28,7 @@ import { drawText, measureText } from '../ui/text.js';
 import { titleBadge, glyphMarks, gradientAt } from '../ui/playerBadge.js';   // ACC3: what a title and a glyph LOOK like - one home, both faces (the DOM layer reads the same module)
 import { projectToScreen } from '../player/tapRay.js'; import { multiply } from '../world/mat4.js';   // one home (audit24 onehome): the touch layer's own projection
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS, LOOK_GLOW_SLOTS, lookGlowOk } from './wire.js';   // the look's vocabulary: the wire's own; WEAPON-GLOW1: and a weapon's glow
+import { appearanceOf, validWireAppearance } from './appearanceLaw.js';   // APPEARANCES: a worn piece's look, said and read
 import { meshGlow, glowWord } from '../systems/weaponGlow.js';   // WEAPON-GLOW1: a held weapon's glow, said on the look
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
 import { guildTagText } from './guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name in the bitmap face too
@@ -412,6 +413,8 @@ export function composeLook(entity, { eotbSet = ownEotbSet(), layered = ownLayer
     // alone: a foe's kit is said on its record (characters/foeBodies.js encodeWorn), which carries no glow, so a foe's
     // weapon glowing on the host's screen alone would be one fight seen two ways
     if (it.group === 'Weapons' && entity?.isPlayer === true && LOOK_GLOW_SLOTS.includes(o.equipSlot)) { const g = glowWord(meshGlow(it, { on: true })); if (g) o.glow = g; }   // AUDIT WEAPON-GLOW NET-4: a weapon in a hand
+    const worn = appearanceOf(it);   // APPEARANCES: the look worn over it - `ap`, OMITTED when none, so a piece in its own keeps the bytes it had
+    if (worn) o.ap = [worn.t, worn.m, worn.v];
     items.push(o);
   }
   // 2026-09-17: `class` rides the look alongside race/gender/face so a peer without a Morrowind body can be drawn
@@ -434,7 +437,7 @@ export function composeLook(entity, { eotbSet = ownEotbSet(), layered = ownLayer
  *  never mutated (`_peer`, `_refresh`), so its identity is exactly the key's lifetime: a WeakMap holds the string for
  *  as long as the look lives and no longer. A null look has no identity and is one constant (SLAM14 B6). */
 const _keyOf = new WeakMap();
-const _computeLookKey = (look) => `${look?.race ?? 'Breton'}|${look?.gender ?? 'male'}|${look?.faceIndex ?? 0}|${JSON.stringify((look?.items ?? []).map((it) => LOOK_ITEM_FIELDS.map((k) => it[k] ?? null)))}`;
+const _computeLookKey = (look) => `${look?.race ?? 'Breton'}|${look?.gender ?? 'male'}|${look?.faceIndex ?? 0}|${JSON.stringify((look?.items ?? []).map((it) => { const row = LOOK_ITEM_FIELDS.map((k) => it[k] ?? null); return Array.isArray(it.ap) ? [...row, it.ap] : row; }))}`;   // APPEARANCES: and a worn look, so a peer re-dressed is drawn again - a look without one keeps its key
 const NULL_LOOK_KEY = _computeLookKey(null);   // SLAM14 (AUDIT SLAM FINAL B6): a look-less peer's key has no object to hang on - computed once, here
 export const lookKey = (look) => {
   if (!look || typeof look !== 'object') return NULL_LOOK_KEY;
@@ -463,6 +466,8 @@ export function peerStubEntity(look) {
     const item = { templateIndex, group: it.group, equipSlot: slot };
     for (const k of ['material', 'dye', 'variant']) { const v = uint(it[k], 4095); if (v != null) item[k] = v; }
     if (lookGlowOk({ ...item, glow: it.glow })) item.glow = it.glow;   // WEAPON-GLOW1: the word, as validLookItem keeps it - one law, net/wire.js
+    const ap = validWireAppearance(item, it.ap);   // APPEARANCES: the look worn over it, as the item's own field - every renderer draws the stand-in through net/appearanceLaw.js drawnPiece
+    if (ap) item.appearance = { t: ap[0], m: ap[1], v: ap[2] };
     entity.items.push(item);
     if (!entity.equip.slots[slot]) entity.equip.slots[slot] = item;
   }

@@ -296,7 +296,7 @@ import { createSeasonBook } from './seasonBookHost.js';   // SEASON-BOOK: the la
 import { rollNoticeDoors } from './rollNoticeHost.js';   // SEAT-WORDS / STANDING-WORDS: what the Roll's tracker says
 import { utcDayOfMs } from '../net/nodeLaw.js';   // PROF8: a haul's UTC day
 import { registerPlayerKillListener } from '../systems/playerKills.js';   // PROF7: the player's own kill stamps a body
-import { setProfessionsPages, forgeOffered, focusStoresStation, stationColdLine, disenchantableOf, BAG_PAGE_WORDS } from '../ui/professions/profPages.js';   // PROF1: the Professions and Stores pages on the character sheet's rail; CARP-YARD: the joinery's bench opens it
+import { setProfessionsPages, forgeOffered, stationDoorAt, stationColdLine, disenchantableOf, BAG_PAGE_WORDS } from '../ui/professions/profPages.js';   // PROF1: the Professions and Stores pages on the character sheet's rail; CARP-YARD: the joinery's bench opens it
 import { materialPicture, itemPicture } from '../ui/menu/menuPicture.js';   // MENU-ORDER: a material's and a piece's picture for the menus' rows
 import { createSaddleHost } from './saddleHost.js';   // STEED-UI: the saddle panel - the horse and the wagon on screen (Enhanced Plus)
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable and the Fleet pages on the pause menu's Holdings tab
@@ -514,7 +514,7 @@ import { travelPathMode, travelPathUsesRoads, pickTakesPlace, pickNearPlaceMiddl
 import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
 import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
 import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
-import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
+import { createLoadGovernor, unbuiltAround, unbuiltCount, travellerPace } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
 import { playerOnPathAt, pathsDataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it
@@ -668,6 +668,7 @@ import { createDeckPlanDoor } from './deckPlanDoor.js';   // DECK-PROPS: the pla
 import { createHarbourOffice } from './harbourOffice.js';
 import { createEtherHost } from './etherHost.js';   // ETHER-SEA: the Eltheric Ocean's waters, charts, strands and legends
 import { createCrossingGate, crossingWayAt, crossingTarget, crossingRows, crossingWords, createCrossLand, CROSS_DAYS, CROSS_CHECK_S, CROSS_REFUSED, CROSS_STALE, CROSS_FAILED } from '../systems/naval/etherCrossing.js';   // ETHER-CROSSING: the voyage across
+import { createVeilParty } from './naval/veilParty.js';   // VEIL-PARTY: a party crosses the Veil together
 import { mulberry32 } from '../combat/blood/bloodArt.js';   // CAPT-BOARD: a site's point off its seed
 import { CHART_TEMPLATE } from '../systems/naval/treasureCharts.js';   // CAPT-CHARTS: a treasure chart read   // CAPT-BOARD: the harbourmaster's board, the contracts, the letters
 import { mintDeed } from '../systems/comeSailAway/comeSailAwayItems.js';   // CAPT-BOARD: the Admiralty's carrack's deed, the shelf's own mint   // CAPT-LOG: the captain's ledger - the log, the crowns' regard, the ranks, the letter of marque
@@ -724,6 +725,8 @@ import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } 
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
 import { monthNames } from '../systems/gameDate.js';   // L10N3e: the month's name in the player's language, read when asked
 import { createBountyHost } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
+import { trophyDoor } from '../systems/hunt/trophies.js';   // HUNTERS-MARK: a Trophy Hunter's trophy into the pack
+import { huntOnline } from './huntersMark.js';   // HUNTERS-MARK: the hunt's ledger, the bounty host's
 import { createWorldPartyPing } from './partyPingHost.js';   // PARTY-PING: a look's point for the party, and the floor route while one follows
 import { pingSubject, pingCrowd } from '../systems/party/partyPingCaption.js';   // PARTY-PING: the name under a look, a person and another player among them
 import { PING_TRAVEL_M } from '../systems/party/partyPing.js';   // PARTY-PING: how far the travel view's look reaches
@@ -8357,7 +8360,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     });
   }
   /** CSA-K: the others' words standing them on this boat of mine (the pack's refusal; OWS2: and a landfall's pack). */
-  const csaPassengersOn = (boat) => { const i = csaRuntime?.AllBoats.filter((b) => b.GameObject?.activeSelf).indexOf(boat) ?? -1; return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i); };
+  const csaPassengersOn = (boat, skip = null) => { const i = csaRuntime?.AllBoats.filter((b) => b.GameObject?.activeSelf).indexOf(boat) ?? -1; return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i, skip); };   // VEIL-PARTY: `skip` the riders the crossing leaves out (her captain's party)
   /** SerializeItems / DeserializeItems: the save's own item copy (save.js) - AUDIT WK-D11: ONE codec, the cargo's and
    *  the companions' packs both (two identical literals stood in step only while nobody touched one). */
   const packedItemsCodec = Object.freeze({ serialize: (items) => (items ?? []).map((it) => ({ ...it })), deserialize: (records) => (records ?? []).map((it) => setItemFields({ ...it })) });
@@ -9754,6 +9757,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     cabinHolds: (uid) => modes?.cabinHolds?.(uid) ?? 0,
     cabinSold: (uid, region) => modes?.cabinSold?.(uid, region),
     passengersAboard: (boat) => csaPassengersOn(boat),
+    online: () => _onlineWorldSession() && characterIdOf(playerEntity),   // CREW-SIGNED: in the shared world a hire asks the service first - AUDIT HORIZONTAL C8: as this character
   }) : null;
   /** SHIPYARDS: THE SHIPMASTER'S WINDOW (ui/shipyardWindow.js, through ui/naval/navalPlunderDoor.js) over the street, on `page`
    *  for the shipyard pressed (scenes/portHost.js); a summons that wants the water clicked runs once the window is down
@@ -9795,6 +9799,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  stowPlunder) - ahead of Come Sail Away's own transition, while my boats still stand. Never on a load: the loaded
    *  save's hold is the one that stands. */
   const navalStow = () => { if (!_loading) naval?.stowPlunder?.(); };
+  // VEIL-PARTY (scenes/naval/veilParty.js): a party member aboard a ship whose captain crosses the Veil follows her by the
+  // party's own journey, and her party never holds her crossing back
+  const veilParty = createVeilParty({ social: () => social, aboard: () => csaAboard.aboard, here: playerTravelPixel,
+    ready: () => walkMode && playerEntity.health > 0 && _mode() === 'exterior' && !worldMoveBusy() && !_partyArrivalPending,
+    travel: (pick, opts, computed) => partyTravelJourney(pick, opts, computed), say: (l) => townTalk.say(l) });
   // ETHER-CROSSING (systems/naval/etherCrossing.js; bible/03-World/Eltheric-Ocean.md): THE CROSSING - asked at a helm in the
   // crossing waters (out) and in the Veil (home), once each time the ship comes into them, and sailed: the helm let go,
   // the jump to the landfall, the ship at whose helm the captain stood brought round where she floats there (her crew and
@@ -9811,7 +9820,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0);
   };
   /** Why the crossing may not be sailed now - CROSS_REFUSED's key (an enemy near, another player aboard) - or null. */
-  const crossRefusal = () => (navalHostileNear() ? 'hostile' : csaPassengersOn(csaRuntime?.state?.CurrentBoat) > 0 ? 'passengers' : null);
+  const crossRefusal = () => (navalHostileNear() ? 'hostile' : csaPassengersOn(csaRuntime?.state?.CurrentBoat, veilParty.kin) > 0 ? 'passengers' : null);   // VEIL-PARTY: her party aboard crosses with her
   let _crossBox = null, _crossSaid = null;   // the question up; the waters a refusal was said in
   /** AUDIT CAPTAIN'S SEA X2: the question taken back unanswered - a load, a jump, a door (navalTransition). */
   function withdrawCrossing() {
@@ -9919,7 +9928,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       _officeTickT = 2; harbourOffice.tick(); captainSay();   // CAPT-BOARD: a term run out
       if (etherSea && _mode() === 'exterior') { const p = playerTravelPixel(); if (inEther(p.x, p.y)) { etherHost.sight(p.x, p.y); captainSay(); } }   // ETHER-SEA: the isles in sight charted, the depth kept
     }
-    if (!gamePaused() && !_loading) etherCrossStep(dt);   // ETHER-CROSSING: the helm's waters asked
+    if (!gamePaused() && !_loading) { etherCrossStep(dt); veilParty.step(dt); }   // ETHER-CROSSING: the helm's waters asked - VEIL-PARTY: and her party's passage with her, its window in the frames stepped (AUDIT HORIZONTAL C5)
     passage.frame(dt, gamePaused() || _loading);   // PASSAGE: a booked ship's voyage sailed on, and over when I step off her - whatever the sea fight's switch
     const on = navalOn();
     if (on !== _navalWasOn) { _navalWasOn = on; naval.setEnabled(on); if (!on) { navalFlames.clear(); closeNavalPlunder(); closeNavalYard(); drawNavalHud(null); drawNavalTags([]); } }
@@ -11608,7 +11617,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       gatherHost = createGatherHost({
         book: profBook, hud, kinds: [herbKind({ book: profBook }), mineKind({ book: profBook, lodes: motherlodeBook, marks: marksBook }),   // PROF2b: and the Motherlodes
           treeKind({ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord }),   // PROF4: Logging's trees
-          huntKind({ book: profBook, bodies: () => huntBodies(), openLoot: openHuntLoot }),   // PROF7: Hunting's bodies
+          huntKind({ book: profBook, bodies: () => huntBodies(), openLoot: openHuntLoot, trophy: trophyDoor(saveSoon) }),   // PROF7: Hunting's bodies; HUNTERS-MARK: a Trophy Hunter's trophy
           // PROF8: Fishing's casts - the net in its water, the pixel and its ground the player stands in, the game clock's
           // hour and a storm for the wait, a trophy into the pack (the species' own Deep Waters item)
           fishKind({ book: profBook, host: {
@@ -11701,7 +11710,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // PROF3 (bible/06-Systems/Professions-Arc.md 24): THE ANVIL beside it - a craft through the book, its pieces into
         // the pack (kept until minted), the smith's fee a craft on the service's answer, as a smelt's; the smith's stock;
         // the heat's band, Smithing's attribute pair
-        craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false }) => {
+        craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false, ...more }) => {   // MASTER-ART: `more` the page's other asks (a Master's work's lines), handed on
           // PROF4: the station is the recipe's - the anvil for Smithing's, the workbench for Carpentry's; PROF7: the loom
           // for Outfitting's
           const st = craftStation(recipeById(recipe)?.profession);
@@ -11713,7 +11722,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           // SEAT2b part two (Seats-Arc 7.5): the town the station stands in, where my guild holds it and its crafting halls
           // step this craft (fortLaw.js hallStepsFor) - the service asks the Charter again (professions.js seatStepsFor)
           const { seat } = myHall(recipeById(recipe)?.profession);
-          const r = await profBook.craft(recipe, { clean, heartwood, dye, cracked, fee: f.fee > 0 ? f.fee : 0, name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat }, profMintCraft);   // PROF10: a Lapidary's cracked gem
+          const r = await profBook.craft(recipe, { clean, heartwood, dye, cracked, fee: f.fee > 0 ? f.fee : 0, name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat, ...more }, profMintCraft);   // PROF10: a Lapidary's cracked gem
           // CRAFT1 (bible/06-Systems/Professions-Arc.md 41): the chain's works the craft ran first - said, made or refused
           // AUDIT CRAFT1 F3: a kept craft says it too; F4: and a refused one where the chain stopped
           const chain = [refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof)), r?.ok ? '' : chainStopText(r?.stopped, r?.material, materialLabel)].filter(Boolean).join(' ');
@@ -25589,14 +25598,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     mend: () => mendAtYard(),   // WAGONS4: the Wagon Yard's wright
     bench: () => openYardBench(),   // CARP-YARD: the joinery's workbench
   });
-  /** CARP-YARD (bible/03-World/Merchant-Yards.md CARP-YARD): THE JOINERY'S WORKBENCH PRESSED - the Stores page, landed on
-   *  the workbench's section, as a home's workbench opens it (worldModes useDecorStation: the page's own gate,
-   *  forgeOffered); where the page is not (offline, the switch shut) the bench says so, as a home's does. Answers true
-   *  (the press handled). */
+  /** CARP-YARD (bible/03-World/Merchant-Yards.md CARP-YARD): THE JOINERY'S WORKBENCH PRESSED - the Crafting page (CRAFT-HALL;
+   *  the Stores page until then), landed on the workbench's section, as a home's workbench opens it (worldModes
+   *  useDecorStation: the page's own gate, forgeOffered); where the page is not (offline, the switch shut) the bench says
+   *  so, as a home's does. Answers true (the press handled). */
   function openYardBench() {
     if (!forgeOffered()) { townTalk.say(stationColdLine('workbench')); return true; }   // L10N4: the bench's cold line, read in the player's language
-    focusStoresStation('workbench');
-    hudCtx.togglePause({ at: 'stores' });
+    hudCtx.togglePause({ at: stationDoorAt('workbench') });
     return true;
   }
   /** WAGONS4 (bible/06-Systems/Wagon-Upkeep.md): THE WAGON YARD'S MEND - the wagon driven made whole for the wright's
@@ -27023,7 +27031,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** PARTY-TRAVEL: the journey itself - the travel popup's own order (ui/travel/travelPopUp.js tick): the screen smashed to
    *  black, then fastTravelTo, whose arrival fades it back; a journey that did not go clears it. */
   const partyTravelJourney = (pick, opts, computed) => {
-    if (pick?.besideAt && (wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null))) return Promise.resolve(false);   // AUDIT CAPTAIN'S SEA P6: nor to a leader across the Veil (a party is never carried across together)   // PVPDUNGEONS: no teleport to the leader into, out of or inside the zone (a party's own journey on the zone's roads is fastTravelTo's, under wildTravelGate)
+    if (pick?.besideAt && (wildTeleportRefused(pick.pixel ?? null) || (!pick.veil && veilRefused(pick.pixel ?? null)))) return Promise.resolve(false);   // AUDIT CAPTAIN'S SEA P6: nor to a leader across the Veil - VEIL-PARTY: but a member following her captain's crossing (veilParty.js `veil`)   // PVPDUNGEONS: no teleport to the leader into, out of or inside the zone (a party's own journey on the zone's roads is fastTravelTo's, under wildTravelGate)
     hudFade.smashHUDToBlack();
     return fastTravelTo(pick, opts, computed).then((went) => { if (!went) hudFade.clearFade(); return !!went; },
       (e) => { console.error('[party-travel] the journey failed:', e); hudFade.clearFade(); return false; });
@@ -27119,6 +27127,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       mates: (social.others() ?? []).filter((m) => !!m.p).map((m) => ({ acct: m.acct, name: m.name, p: m.p, online: m.online !== false })),   // AUDIT 28 B3: a mate gone offline stands nothing
     } : null),
     posePixel: () => playerTravelPixel(),   // AUDIT 28 B8: the pixel my pose says (composePartyPose's)
+    // HUNTERS-MARK (Bounty-Boards.md 12): the hunt's ledger, online alone - its book and the named marks are the bounty host's
+    hunt: huntOnline(params.has('online'), saveSoon),
   });
   // LEGACY1-LEGACY3 (2026-10-05, bible/06-Systems/Legacy-Arc.md, Mac: "this is actually my DFU mod that I want to
   // integrate"): PROJECT LEGACY in the world - scenes/legacyHost.js. Every read it makes of the world is here; it
@@ -32104,7 +32114,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  THREAT_WARN_S of real time. */
   function journeyThreatCap(up, keys = false) {
     const yaw = _travelDrive ? (_travelDrive.yaw * Math.PI) / 180 : keys ? _tvWalkYaw : null;
-    const r = threatCap({ threats: journeyThreats(up), heading: yaw == null ? null : { x: Math.sin(yaw), z: Math.cos(yaw) }, speedMps: player?.speed ?? 0 });
+    const r = threatCap({ threats: journeyThreats(up), heading: yaw == null ? null : { x: Math.sin(yaw), z: Math.cos(yaw) }, speedMps: travellerPace(player, csaBoatUnderMe()) });   // PASSAGE-PACE: the boat's way at her helm
     // PVPNEAR (the owner: \"near a stranger 300m 10x, 200m 5x speed\", then STRANGER-PACE): the nearest stranger's own pace, whatever the foe dial says
     let sr = 0;
     for (const g of _wildStrangers) {
@@ -32215,7 +32225,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     const unbuilt = uc.n;
     const want = journey ? travelAsked : walk;   // AUDIT TV A2: what the mod asked - its ground's rate under its own cap (RATE-LAW); TV-WASD: or the keys' travel
-    const load = travelGovernor.step(dt, { unbuilt, requested: want, owed: uc.owed, feet: unbuilt ? state.worldCoords(player.feetAt()) : null, speedMps: player?.speed ?? 0 });   // OW-LEAD: held by how near the nearest owed pixel is, at the traveller's own pace
+    const load = travelGovernor.step(dt, { unbuilt, requested: want, owed: uc.owed, feet: unbuilt ? state.worldCoords(player.feetAt()) : null, speedMps: travellerPace(player, csaBoatUnderMe()) });   // OW-LEAD: held by how near the nearest owed pixel is, at the traveller's own pace - PASSAGE-PACE: a boat's at her helm
     const foeCap = foes.strangerRate ? Math.min(foeRate(foes, want), foes.strangerRate) : foeRate(foes, want);   // ENEMY-PACE: the enemies' cap, never under the near-enemy pace (RATE-LAW: fixed)
     const town = tvInTown() ? TOWN_PACE_MAX : Infinity;   // OW-TOWN-WALK: in a town, a town's pace - a journey's own streets ask it already, the keys' travel is held to it
     const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower

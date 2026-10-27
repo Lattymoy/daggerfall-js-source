@@ -71,9 +71,14 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and the BUILDING DOOR'S RING (`interiorLoadMark.js`: a ring over the hotbar while a building's door loads, the full loading screen stepped aside so the street stays visible - `10-UI/Loading-Screens.md`);
 - and RPT1026-CLIENT's DOOR (`pointerCapture.js`: every pointer capture and release in the game's own windows, a refusal answered - a pad's synthetic press holds no pointer Firefox knows, and its capture threw out of the world map's listener; `10-UI/Held-Map-Arc.md` PAD-CAPTURE);
 - and LOCKPICK's TWO (`lockpickDoor.js` and `lockpickWindow.js`: the lock's window - its pin tumblers in cross-section, the pick, the Auto attempt and Leave - `06-Systems/Lockpicking.md` section 4);
+- and CRAFT-HALL's ONE (`professions/craftHall.js`: what a crafter reads at work - a track's bar, its first-time bonuses spent and owed, what raises it figure by figure from the laws - `06-Systems/Professions-Arc.md` section 56);
 - and PACK-PICK's PICKER (`packPicker.js`: the pack's pieces as pictured tiles in their tiers' frames, sifted as the pack's own stores are, what may not go folded with why, and the piece chosen looked at - the Market's List form and a trader's stall choose a piece to sell from it; `06-Systems/Professions-Arc.md` 10.14);
+- and MASTER-ART's ONE (`professions/masterBox.js`: a Master's work in a craft box - three line pickers, the catalysts held and asked, the day's bound, the result card - `06-Systems/Professions-Arc.md` section 57);
+- and APPEARANCES' THREE (`wardrobe/wardrobeDoor.js` and `wardrobe/wardrobeWindow.js`: the Wardrobe at a Clothing Store, an Armorer or a Weaponsmith - a worn piece given a collected look of its kind for gold; `collections/appearancesPart.js`: Collections' Appearances part - `04-Characters/Wardrobe.md`);
+- and HUNTERS-MARK's TWO (`bounty/huntRank.js`: the hunter's rank on the board's header and the Standing page; `collections/gatheredPart.js`: the Collections page's Trophies, Fish and Annals - `06-Systems/Bounty-Boards.md` section 12);
+- and APPEARANCES-II's ONE (`wardrobe/wardrobePreview.js`: the character wearing a look tried in the Wardrobe, before Wear is paid - the doll, or the Morrowind body on Enhanced Plus - `04-Characters/Wardrobe.md` section 4);
 - and TITLE-DOOR's MARK (`intro/titleHeld.js`: the page's word that the film's title stands under the menu - the film writes it when it lands, the menu reads it and draws its home over the film; `10-UI/UI-Arc.md` TITLE-DOOR);
-431 modules
+439 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

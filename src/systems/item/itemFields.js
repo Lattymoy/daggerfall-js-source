@@ -35,6 +35,7 @@
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import { validAffix, RARITY_ORDER, SOCKET_VALUES, REFORGES_MAX } from '../loot/lootRarity.js';   // REFORGE-REPLACE: the count's bound
 import { validSigil } from '../sigil/sigil.js';   // SIGIL1
+import { validAppearanceField } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
 
 /** The longest string a field carries; the wire's own bound (loot.js LOOT_STR_MAX reads it). */
 export const ITEM_STR_MAX = 128;
@@ -220,6 +221,9 @@ export const ITEM_FIELDS = Object.freeze({
   // owner's clock its food runs out (absent, never seen fed - it comes fed)
   horseBond: int({ min: 1, max: 1000 }),
   horseFed: int({ min: 1 }),
+  // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a worn piece is drawn in (net/appearanceLaw.js) - `{ t, m, v }`, a
+  // look there is, or absent. The WEARER's mark (net/realm/realmTradeLaw.js RECEIVER_MARKS): stripped off the wire
+  appearance: rec(validAppearanceField),
 });
 
 /** The declared names, and those of one kind. */

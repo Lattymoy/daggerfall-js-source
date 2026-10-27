@@ -112,8 +112,9 @@ test('DECOR-USE the room: its placed fires are hearths by their flame - a pictur
 test('DECOR-USE the host: the interior\'s camps hear the room\'s placed fires beside its own, and a placed piece\'s own use is pressed before a station\'s craft - after a trader, whose press is anyone\'s (mutants: the host\'s fires unhanded; the use unwired)', () => {
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /const interiorCamps = createCamps\(\{\n\s+entity: playerEntity,\n\s+hearths: \(\) => \[\.\.\.interiorHearths, \.\.\.interiorDecor\.hearths\(\)\],/);
-  assert.match(wm, /if \(piece\?\.station === VENDOR_STATION\) \{ openHomeVendor\(piece, id\); return; \}[^\n]*\n\s+if \(useDecorPiece\(piece, interiorCamps, getInteractionMode, restFromInteriorBed, \(\) => forgeOffered\(\) && \(focusStoresStation\('fire'\), interiorKeyCtx\.togglePause\(\{ at: 'stores' \}\), true\)\)\) return;[^\n]*\n\s+if \(piece\?\.station\) \{ useDecorStation\(piece\); return; \}/);
-  // AUDIT DECOR-USE D2: and The Fire is a station's head the press lands on
+  assert.match(wm, /if \(piece\?\.station === VENDOR_STATION\) \{ openHomeVendor\(piece, id\); return; \}[^\n]*\n\s+if \(useDecorPiece\(piece, interiorCamps, getInteractionMode, restFromInteriorBed, \(\) => forgeOffered\(\) && \(interiorKeyCtx\.togglePause\(\{ at: stationDoorAt\('fire'\) \}\), true\)\)\) return;[^\n]*\n\s+if \(piece\?\.station\) \{ useDecorStation\(piece\); return; \}/);
+  // AUDIT DECOR-USE D2: and The Fire is a station's head the press lands on - PIN MOVED (CRAFT-HALL): the press lands on
+  // the Crafting page at the fire (profPages.js stationDoorAt), where it landed on the Stores page
   assert.match(src('src/ui/professions/profPages.js'), /detail\.append\(stationHead\(divider, t\('prof\.page\.fire', 'The Fire'\), 'fire'\)\);/);
   assert.match(src('src/scenes/camps.js'), /\n\s+usable,[^\n]*\n\s+\};\n\}/, 'the camps say whether their fires answer');
 });

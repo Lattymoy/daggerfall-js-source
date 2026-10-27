@@ -2,8 +2,8 @@
   {
     "name": "NAMES-on-the-captains-stream",
     "file": "src/systems/naval/navalShips.js",
-    "old": "  const name = shipNameOf(shipClass.faction, mulberry32(((seed >>> 0) ^ SHIP_NAME_SALT) >>> 0), crown);",
-    "new": "  const name = shipNameOf(shipClass.faction, rng, crown);",
+    "old": "  const named = mulberry32(((seed >>> 0) ^ SHIP_NAME_SALT) >>> 0);",
+    "new": "  const named = rng;",
     "tests": [
       "test/systems/naval/shipnames.test.js",
       "test/systems/naval/nav_c_ships.test.js"

@@ -1123,6 +1123,38 @@ export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/ref
    no press of its own gives that column to its name */
 .reforge-shell .broker-offer:not(.codex-row):not(.codex-set):not(.codex-gilded):not(.scry-row):not(:has(> button)) { grid-template-columns: 48px minmax(0, 1fr) max-content; }
 .reforge-shell .broker-name { white-space: normal; line-height: 1.25; }`;
+/** APPEARANCES (bible/04-Characters/Wardrobe.md): THE WARDROBE'S WINDOW (ui/wardrobe/wardrobeWindow.js) - the Broker's shape,
+ *  so his sheet lays it; these are its own rules: a worn piece's row with no price, and the card's looks, a line each.
+ *  Geometry and the words' colours alone - the kit dresses the rest. APPEARANCES-II: the preview at the card's head (the
+ *  figure beside its name, a doll's pixels kept square) and a look's picture and name as one press that tries it on. */
+export const WARDROBE_CSS = `/* ── APPEARANCES: THE WARDROBE ── */
+.wardrobe-shell .broker-offer.wardrobe-piece { grid-template-columns: 48px minmax(0, 1fr); }
+.wardrobe-shell .broker-offer.wardrobe-piece .broker-set { white-space: normal; }
+.wardrobe-shell .wardrobe-count { margin: 0 0 8px; font-size: 12px; color: #b9ab93; }
+.wardrobe-shell .wardrobe-looks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.wardrobe-shell .wardrobe-look { display: grid; grid-template-columns: minmax(0, 1fr) max-content minmax(96px, max-content); align-items: center; gap: 8px; padding: 4px 6px; }
+.wardrobe-shell .wardrobe-try { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; margin: 0; padding: 2px;
+  appearance: none; background: transparent; border: 1px solid transparent; box-shadow: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.wardrobe-shell .wardrobe-try[aria-pressed="true"] { border-color: rgba(243,207,134,0.55); background: linear-gradient(90deg, rgba(243,207,134,0.12), transparent 85%); }
+.wardrobe-shell .wardrobe-try:focus-visible { outline: 2px solid #f3cf86; outline-offset: 2px; }
+.wardrobe-shell .wardrobe-name { min-width: 0; font-size: 13px; color: #e6dccb; overflow-wrap: anywhere; }
+.wardrobe-shell .wardrobe-look.on .wardrobe-name, .wardrobe-shell .wardrobe-look.own .wardrobe-name { color: #f3cf86; }
+.wardrobe-shell .wardrobe-press { width: auto; }
+.wardrobe-shell .wardrobe-preview { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; padding: 8px; border: 1px solid rgba(243,207,134,0.25); background: rgba(0,0,0,0.35); }
+.wardrobe-shell .wardrobe-figure { flex: 0 0 auto; width: auto; height: 220px; max-width: 50%; object-fit: contain; }
+.wardrobe-shell .wardrobe-figure.doll { image-rendering: pixelated; }
+.wardrobe-shell .wardrobe-figure.busy { width: 120px; }
+.wardrobe-shell .wardrobe-preview-said { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wardrobe-shell .wardrobe-preview-head { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #b9ab93; }
+.wardrobe-shell .wardrobe-preview-name { font-size: 14px; color: #f3cf86; overflow-wrap: anywhere; }
+@media (pointer: coarse) { .wardrobe-shell .wardrobe-press, .wardrobe-shell .wardrobe-piece, .wardrobe-shell .wardrobe-try { min-height: 40px; } }
+@media (max-width: 720px) {
+  .wardrobe-shell .wardrobe-look { grid-template-columns: minmax(0, 1fr) minmax(96px, max-content); }
+  .wardrobe-shell .wardrobe-try { grid-template-columns: 44px minmax(0, 1fr); }
+  .wardrobe-shell .wardrobe-look .broker-price { grid-column: 1; grid-row: 2; padding-left: 54px; }
+  .wardrobe-shell .wardrobe-look .wardrobe-press { grid-column: 2; grid-row: 1 / span 2; }
+  .wardrobe-shell .wardrobe-figure { height: 160px; }
+}`;
 /** BOUNTY1 (2026-09-28): THE BOUNTY BOARD'S WINDOW and the payday notice (ui/bounty/bountyWindow.js) - the Broker's kind: a
  *  stone window over the world, the town's notices in a list, the one pressed read whole beside it (under it on a
  *  phone). The kit dresses the window, the card, the rows, the header and the presses (ui/enhanced/enhancedFrame.js); this is
@@ -1182,6 +1214,15 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 .bounty-noticebody .bounty-story { font-size: 14px; }
 .bounty-rewardbox { display: flex; flex-direction: column; gap: 3px; align-self: stretch; }
 .bounty-rewarditem { font-size: 15px; text-shadow: 1px 1px 0 #050608; }
+/* HUNTERS-MARK: the hunter's rank under the title and its bar to the next rung; the week's named mark in the list */
+.bounty-rank { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 6px 0 0; font-size: 12px; color: #d8ccb6; }
+.bounty-rank b { font-weight: normal; letter-spacing: 0.08em; text-transform: uppercase; color: #f3cf86; }
+.bounty-rankbar { flex: 1 1 100px; max-width: 200px; height: 6px; border: 1px solid rgba(243,207,134,0.45); background: rgba(0,0,0,0.35); }
+.bounty-rankbar i { display: block; height: 100%; background: #c08a3e; }
+.bounty-ranknext, .bounty-rankwait { color: #b9ab93; }
+.bounty-post.bounty-mark { border-color: rgba(213,183,135,0.5); background: linear-gradient(90deg, rgba(135,30,45,0.24), transparent 90%); }
+.bounty-post.bounty-mark .bounty-post-title { color: #f0d9a8; }
+.bounty-marktraits { margin: 0 0 8px; font-size: 12px; color: #e59a8e; }
 @media (max-width: 720px) {
   .bounty-shell { padding: 8px; }
   .bounty-body { flex-direction: column; padding: 10px 12px 12px; }
@@ -1722,6 +1763,51 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .prof-works > .prof-smelt.prof-locked { border-color: rgba(192,138,62,0.1); }
 .prof-recipes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 6px; margin: 4px 0 10px; }
 .prof-recipes > .prof-recipe { margin: 0; grid-template-columns: minmax(0, 1fr); align-content: center; min-height: 46px; }
+/* CRAFT-HALL (2026-10-26): a track's header - its name and rank, its bar, its XP and its first-time bonuses - over every
+   station worked and in the Crafting page's strip (a button there, opening it on the Professions page); a station's
+   shows (All, Can make now, First-time bonus); a card's or a row's first-time bonus, owed (lit) or made (quiet); the
+   owed list; Craft x N */
+.prof-track { display: flex; flex-direction: column; gap: 3px; margin: 2px 0 8px; padding: 6px 8px; text-align: left; font: inherit; font-size: 12px;
+  color: var(--bone, #e9e4d9); background: rgba(10,8,6,0.5); border: 1px solid rgba(192,138,62,0.25); }
+button.prof-track { width: 100%; cursor: pointer; }
+button.prof-track:hover, button.prof-track:focus-visible { border-color: var(--brass, #c08a3e); outline: none; }
+.prof-track-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.prof-track-top b { color: #efe0b8; font-weight: normal; letter-spacing: 0.06em; }
+.prof-track .px-meter { height: 6px; }
+.prof-track-xp { font-size: 11px; color: #b9ab93; font-variant-numeric: tabular-nums; }
+.prof-track-firsts, .prof-firsts { font-size: 11px; color: #e8b872; }
+.prof-firsts { margin: 4px 0; font-size: 12px; }
+.prof-trackstrip { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin: 4px 0 8px; }
+.prof-trackstrip > .prof-track { margin: 0; }
+.prof-shows { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 6px; }
+.prof-show { font: inherit; font-size: 12px; padding: 4px 9px; color: #b9ab93; background: rgba(10,8,6,0.55); border: 1px solid rgba(192,138,62,0.25); cursor: pointer; }
+.prof-show.on { color: #f3cf86; border-color: var(--brass, #c08a3e); }
+.prof-first { font-size: 11px; color: #f3cf86; }
+.prof-first::before { content: '★ '; }
+.prof-first.made { color: #8f8574; }
+.prof-first.made::before { content: '✓ '; }
+.prof-raise { align-items: baseline; }
+.prof-raise .k { font-size: 13px; letter-spacing: 0.02em; text-transform: none; color: #d9cfbd; }   /* an act's sentence reads as one, not a label */
+.prof-raise .v { font-size: 14px; text-align: right; white-space: normal; color: #f3cf86; }
+.prof-owed { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 6px; font-size: 12px; color: #d9cfbd; }
+.prof-owed-row::before { content: '★ '; color: #f3cf86; }
+.prof-times { display: flex; align-items: center; gap: 6px; }
+.prof-doors { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+@media (pointer: coarse) { .prof-show, button.prof-track { min-height: 40px; } }
+/* MASTER-ART: a Master's work in a craft box - its three line pickers and its press 40px for a finger and a key, the
+   catalysts as inputs, the last work's card in the Legendary orange (lootRarity.js RARITIES.legendary.colour) */
+.prof-master { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid rgba(224,122,46,0.45); }
+.prof-master-head { color: #e07a2e; font-weight: normal; letter-spacing: 0.06em; }
+.prof-master-lines { display: flex; flex-direction: column; gap: 6px; }
+.prof-master-line { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 8px; color: #d9cfbd; }
+.prof-master-pick { min-height: 40px; min-width: 0; padding: 4px 8px; font: inherit; font-size: 13px; color: var(--bone, #e9e4d9);
+  background: rgba(10,8,6,0.75); border: 1px solid rgba(192,138,62,0.35); }
+.prof-master-pick:focus-visible, .prof-master-go:focus-visible { outline: 2px solid #e07a2e; outline-offset: 1px; }
+.prof-master-go { min-height: 40px; align-self: flex-start; }
+.prof-master-card { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px; border: 1px solid #e07a2e; background: rgba(224,122,46,0.1); }
+.prof-master-name { color: #e07a2e; font-weight: normal; }
+.prof-master-tier { font-size: 11px; color: #e8b872; letter-spacing: 0.08em; text-transform: uppercase; }
+.prof-master-got { flex: 1 1 100%; margin: 0; padding-left: 16px; color: #efe0b8; }
 /* Existing readable text roles follow the active theme rather than one hard-coded Stone palette. */
 .px-qdetail.prof-detail .px-note { color: var(--bone); }
 .prof-matbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 4px; font-size: 12px; color: #d9cfbd; }
@@ -2255,6 +2341,7 @@ ${TECH_BLOCK_CSS}
 @media (pointer: coarse) { .setline { min-height: 40px; } .setstrip { max-height: 216px; } }   /* AUDIT SET U14: a line a thumb presses, as every other press on a touch screen */
 ${BROKER_CSS}
 ${REFORGE_CSS}
+${WARDROBE_CSS}
 ${BOUNTY_CSS}
 ${LOCK_CSS}
 ${NOTICE_CSS}
