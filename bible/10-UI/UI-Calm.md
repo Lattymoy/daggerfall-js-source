@@ -27,7 +27,9 @@ panels full of text constantly pull me out of that world."
 ### 1. The front door asks which world first (`ui/enhanced/enhancedMenu.js` drawDoors)
 
 - The enhanced front door's first screen is two doors, **ONLINE** first, then **OFFLINE**, each with a line saying what
-  lies behind it; **Settings** and **Overhauls** (`HOME_LINKS`) are plaques in the foot's box (see 7).
+  lies behind it; **Settings** and **Overhauls** (`HOME_LINKS`) are plaques in the foot's box (see 7). TITLE-DOOR
+  (2026-10-27, `UI-Arc.md`): both levels stand on the film's held title, in a row under the mark, where the home's own
+  sky stood.
 - **Offline** opens the offline doors - Continue, New Game, Load Game, the Test Room (`HOME_OFFLINE`) - and a way
   **Back**. A pane one of them opened backs out to them (Escape, the wordmark); Escape on them backs out to the two
   questions. Every visit opens on the two questions. Settings and Overhauls back out to the level they were opened

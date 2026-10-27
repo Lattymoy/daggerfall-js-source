@@ -1348,3 +1348,18 @@ A place keeps its own answer. The record: `01-Overview/bugs/Field-Bugs-2026-10-1
 A pan redrew every place. The kept ink is keyed by the view, so each step of a drag painted the coast and, inside that, walked every mark onto the paper again. The place marks are a layer of their own now (`inkMap.js:"export function syncMarksLayer(prev, spec) {"`): the glyphs, a hub's circle, a seat's ring, a port's anchor, a carriage town's wheel, and the marked place's ring. A pan that stays inside what that layer baked — half a paper past each edge, and never a bitmap over 8192 device pixels on a side or 16777216 device pixels in area — is one blit (`inkMap.js:"export function blitMarksLayer(ctx, layer, view) {"`), and only while that blit still covers the whole view. A zoom, a band change, or a pan that walks off the bake paints the marks again: a glyph is a paper-pixel size, so the layer is not scaled. The coast, the roads and the breathing rings are as they were. With no 2D context on the layer the sheet inks the marks where it always did.
 
 Pins: `test/ui/mappan.test.js`.
+
+## PAD-CAPTURE - a pad's press on the map never throws (RPT1026-CLIENT, 2026-10-26)
+
+A private report: a pad's A pressed anywhere on the open world map threw a NotFoundError out of
+Element.setPointerCapture (an invalid pointer id), and the crash report stood until a reload. The pad's press is a
+synthetic pointer (`plusPad.js` domPointer, `enhancedDialog.js` replayClick: `pointerId: 1`, the mouse's id in
+Chromium). Firefox numbers its mouse 0 and holds no pointer 1, so the stage's capture on the press threw out of its
+listener to the page - each of the four arms of the stage's `pointerdown` (the turn, a pinch's second finger, a
+control's press, the pan). A capture is a drag's comfort, never its law: refused, the press still lands where it was
+pressed. Every capture and release in the game's own windows now goes through one door that answers a refusal
+(`ui/pointerCapture.js` capturePointer, releasePointer - the map's four, and the Firmament's sky, the charts, the sky
+window, the work board, the pack's figure, the deck plan, the family tree, the chat's grip and the POI editor's), and
+the four that already caught their own on their line stand. Pins: `test/ui/rpt1026_client_capture.test.js` (3: the
+press through the pad's own dispatch on a stage that refuses as Firefox does; the door; a sweep of `src/` for a capture
+outside it).

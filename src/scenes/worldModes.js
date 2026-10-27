@@ -88,7 +88,7 @@ import { createCamps } from './camps.js';   // HEARTH1: not to STAND a camp indo
 import { CAMP_TEXT } from '../systems/survival/camp.js';   // AUDIT REST II H4: the carried-out word, said on the HUD outside
 import { collectHearths } from '../systems/survival/hearth.js';   // AUDIT HEARTH1 F4: the law's own collection, rather than a fourth hand-written copy of its test
 import { lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog, interiorLightColor, interiorGrade } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it; EL4: the dark; AUDIT-EL F6: the fog with it; INTERIOR-DIM: a room's lamps and its grade
-import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interior/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR, roomAmbient } from '../world/interior/interiorLights.js';   // RPT1026-WORLD DARK-ROOM: roomAmbient
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes, worldSpanRealWords, tickInFlight } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's; AUDIT CARDS-6 B4: a round of damage over time stands nobody up from the cards
 import { exhaustionOutcome, exhaustedInWaterText } from '../systems/rest/rest.js';   // AUDIT 23 (C5)
@@ -303,7 +303,7 @@ import { reviveForPlay } from '../systems/deathRespawn.js';   // PH1: the in-pla
 import { reducedRepairCost } from '../systems/guild/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
 import {
   updateRepairTimes, repairJobsAt, repairRefusal, repairStatusLabel,
-  isBeingRepaired, isRepairFinished, collectRepaired, calculateItemRepairTime, leaveForRepair,
+  isBeingRepaired, isRepairFinished, collectRepaired, calculateItemRepairTime, leaveForRepair, repairWhole,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, cannotBeRepairedText, TRANSPORT_CANNOT_BE_REPAIRED_TEXT,
   interruptRepairText,
 } from '../systems/repairService.js';
@@ -410,7 +410,7 @@ import { loadIcon } from '../ui/textureCanvas.js';
 import { isTouchDevice } from '../ui/touch/touchDevice.js';
 import { holdCursor, cursorKeyClaimed } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decor/decorCatalogue.js';
-import { decorBuiltInPlaque, decorPlaque } from '../systems/decor/decorLook.js';
+import { decorBuiltInPlaque, decorPlaque, decorVerbKey } from '../systems/decor/decorLook.js';
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: Daggerfall's own board, placed in a guild's hall
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
@@ -437,7 +437,7 @@ import { stampLayout, layoutStampAt, layoutLocationKeyOfMapId, layoutsMatch } fr
 // the tavern rents through, and FightersGuild.CanRest.
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guild/guildServices.js';
-import { interiorRestPlace, restDecision, getPreventedRestMessage } from '../systems/rest/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it   // ROAD-B B5: GetPreventedRestMessage
+import { interiorRestPlace, restDecision, getPreventedRestMessage, interiorRestSpot } from '../systems/rest/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it   // ROAD-B B5: GetPreventedRestMessage   // RPT1026-MISC BED-PRESS-INDOOR: where a building's rest lies
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
 import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
@@ -490,6 +490,7 @@ import '../ui/tutorialPopup.js';   // TUT1: the popup's handler, registered by t
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a tinted copy of a light is that light (the dungeon's flame tint, the abyss's candle)
 import { createQuestClickFirst, clickHeardByQuest } from './quest/questClickFirst.js';   // QUEST-WORDS-FIRST: a quest's words and reward before the NPC's door
 import { ownerFoes } from './ownerCatchUp.js';   // HOST-CLOCK: a building's two pools through the page's one catch-up (OWNER-CLOCK's parity)
+import { windowHoldsDungeon } from './windowWorld.js';   // RPT1026-FIGHTS (WINDOW-ONLINE): online a window holds no dungeon while I live under it
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
 const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
@@ -1385,7 +1386,7 @@ export function createWorldModes(host) {
     // CARDS6: a cash-out is gold - kept and claimed wherever the player is now, and the room told it is held
     if (typeof f?.cashout === 'string') {
       const j = host.cardStakes?.receive(f.cashout);
-      if (j) { host.cardOnline?.send({ op: 'ack', table: f.table, j }); host.cardStakes.claim(); }
+      if (j) { host.cardOnline?.send({ op: 'ack', table: f.table, j }); host.cardStakes.claim(say); }
       return;
     }
     if (mode !== 'interior' || !interiorCtx || !Number.isInteger(f?.table)) return;
@@ -1420,7 +1421,7 @@ export function createWorldModes(host) {
   }
   /** The watched tables' turn of the frame: their events onto their cloths; a table emptied, or of another room, let go. */
   function cardWatchFrame() {
-    if (interiorCtx && cardLookedCtx !== interiorCtx && host.cardOnline?.ok?.()) { cardLookedCtx = interiorCtx; cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && (interiorCtx.tables?.length || inTavern())) cardLooksDue.push(0); host.cardStakes?.recover().then(() => host.cardStakes.claim()).catch(() => {}); cardElsewhereSay(); }   // CARDS6: a lost stake's answer asked again, the kept receipts claimed; section 24: gold owed elsewhere said; AUDIT TAVERN-TABLE M2: a tavern whose table found no floor still looks once - the relay hands what it owes here on a look, table or none
+    if (interiorCtx && cardLookedCtx !== interiorCtx && host.cardOnline?.ok?.()) { cardLookedCtx = interiorCtx; cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && (interiorCtx.tables?.length || inTavern())) cardLooksDue.push(0); host.cardStakes?.recover().then(() => host.cardStakes.claim(say)).catch(() => {}); cardElsewhereSay(); }   // CARDS6: a lost stake's answer asked again, the kept receipts claimed; section 24: gold owed elsewhere said; AUDIT TAVERN-TABLE M2: a tavern whose table found no floor still looks once - the relay hands what it owes here on a look, table or none
     // CARDS6: a stake of this room the relay never sat - voided back, a word at a time as the gate lets go
     const room = host.cardStakes && host.cardOnline?.ok?.() ? host.cardOnline.room?.() : null;
     if (room) for (const v of host.cardStakes.voidable(room)) { if (!host.cardOnline.send({ op: 'void', table: v.table, stake: v.order })) break; host.cardStakes.voiding(v.id); }
@@ -2894,7 +2895,7 @@ export function createWorldModes(host) {
       // the floor asked as each law below asks it: the person's ray from its centre, the item's from just over it
       if (fallback) {
         [x, y, z] = buildingStandSpot([x, y, z], fallback(ctx), ctx.collider, isItem ? 0.2 : size.h / 2 + 0.2,
-          isItem ? null : size.w, ctx.people);   // FB1020c CROWD-CLEAR: and a Person never in a standing person's pick box (sceneMount.js)
+          isItem ? null : size.w, ctx.people, list, stand);   // FB1020c CROWD-CLEAR: and a Person never in a standing person's pick box (sceneMount.js); RPT1026-QUESTS QUEST-CROWD: nor in another quest Person's stood here
         stand.x = x; stand.z = z;
       }
       // AUDIT 26 F068: an ITEM and an NPC are stood by DIFFERENT laws.
@@ -3477,7 +3478,7 @@ export function createWorldModes(host) {
     (key) => interiorGuards?.hoverName?.(key) ?? null,
     (key) => host.peerHoverName?.(key) ?? null,   // PEER-PLAQUE1: another player, by the outer host's own word - the port's own family, ungated like the corpses above
     (key) => {
-      if (!worldTooltipsOn()) return null;
+      if (!worldTooltipsOn() && !(decorVerbKey(key) && decorTool.flying() && !decorTool.ghost())) return null;   // RPT1026-WORLD DECOR-VERBS: the decorator's verbs are its own, whatever the readout's switch
       const hide = hideInteractTooltip();
       const b = interiorBuilding;
       // .cs:764-767 - a building's door, from INSIDE, names the place
@@ -4014,7 +4015,7 @@ export function createWorldModes(host) {
       //     named that divergence and the keyed flow carried the queue
       //     law alone. It carries it here now.
       if (getBool('Controls', 'InstantRepairs')) {
-        for (const it of staged) it.currentCondition = it.maxCondition;
+        for (const it of staged) repairWhole(it);   // RPT1026-LEDGERLAW: a paid repair, its found piece's spent mends kept spent
       } else {
         for (const it of staged) {
           if (isBeingRepaired(it)) continue;   // already booked; UpdateRepairTimes only stretches it
@@ -6978,7 +6979,7 @@ export function createWorldModes(host) {
     deductGold(playerEntity, price);
     tallySkill(playerEntity, SKILLS.Mercantile, 1);   // OnTrade's tally (:1088)
     if (getBool('Controls', 'InstantRepairs')) {
-      it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)
+      repairWhole(it);   // the InstantRepairs branch (:1062-1065) - RPT1026-LEDGERLAW: through the paid repair's one door
     } else {
       const now = Math.floor(ownMinutes());
       // DFU's commit pass runs over remoteItemsFiltered - EVERY job at
@@ -10906,7 +10907,7 @@ export function createWorldModes(host) {
       if (isGateArena(dungeonLoc)) for (const d of dungeonCtx.dynamicDraws) if (d.shard) shardMatrix(d.shard, _deadS, d.object.matrix);   // WB6b: the floor's shards, bobbing and turning where the sky's clock has them (before the frame's draws, which the shadows record)
       // WB9b: and each walkway's stones rising as it is laid - the fight's crossings on the relay's clock (host.gateFloor)
       if (isGateArena(dungeonLoc)) { const _floor = host.gateFloor?.() ?? null; for (const d of dungeonCtx.dynamicDraws) if (d.slab) slabMatrix(d.slab, _floor?.xa ?? NO_XA, _floor?.now ?? 0, d.object.matrix); }
-      if (isSdRealm(dungeonLoc) && !dungeonCtx.uiOverlayActive) dungeonCtx.sdPose?.(dt, player.pos);   // AUDIT SD II (L2 F10): the Hour's hall and arena posed BEFORE the frame's draws, as the Steps are before the motor - posed in drawFoes, after the world pass, its hands and bodies were drawn a frame late (the Remnant behind its own telegraph); no window up, as drawFoes was
+      if (isSdRealm(dungeonLoc) && !windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) dungeonCtx.sdPose?.(dt, player.pos);   // AUDIT SD II (L2 F10): the Hour's hall and arena posed BEFORE the frame's draws, as the Steps are before the motor - posed in drawFoes, after the world pass, its hands and bodies were drawn a frame late (the Remnant behind its own telegraph); no window up, as drawFoes was
       // AUDIT 26 F183: castle blocks and the one special area take
       // 0.58 where a plain dungeon takes 0.12 (PlayerAmbientLight.cs
       // :82-90) - Castle Daggerfall, Wayrest and Sentinel's non-hostile
@@ -11011,7 +11012,7 @@ export function createWorldModes(host) {
       renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), player.pos));   // TACT4: a foe's wind-up on the ground
       renderer.drawFoeTelegraphs?.(techniqueMarksNow());   // TECH1: and the player's own marks, after the foes' (bible/05-Combat/Weapon-Techniques.md)
       if (isGateArena(dungeonLoc)) host.drawGateBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10: the court's creatures in their bodies (their batches ride extraBillboards)
-      if (dungeonCtx.uiOverlayActive) dungeonCtx.drawWindowBodies?.(canvas, { proj, view, eye: cam.pos });   // AUDIT MW-NPC C6, FB1015 LOOT-BODY: under a window drawFoes' last bodies, frozen
+      if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) dungeonCtx.drawWindowBodies?.(canvas, { proj, view, eye: cam.pos });   // AUDIT MW-NPC C6, FB1015 LOOT-BODY: under a window drawFoes' last bodies, frozen
       dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1a: the dungeon's own marks, on this host's pass   // BLOOD1b: and its chunks, on this host's own basis
       dungeonCtx.drawPeople?.(canvas, proj, view, mwv.eye, dt, offerDungeonQuestStands);   // MWNPC8b: the people in their bodies - before the level's billboards draw; MWNPC8c: and the quest's
       renderer.drawBillboards([...dungeonCtx.billboardBatches, ...dungeonCtx.campBatches(), ...dungeonCtx.torchBatches(), ...(host.extraBillboards?.() ?? [])], camRight, UP_Y);   // ONLINE1: the peers on the dungeon's own pass; HT1 the dropped torches; SURV3 the campfires
@@ -11025,7 +11026,7 @@ export function createWorldModes(host) {
       // them covered the light in front of it: drawFoes' late slot draws them (lateWorldDraw); a window up skips drawFoes,
       // so they are drawn here then, under it
       _sdLate.on = isSdRealm(dungeonLoc); _sdLate.proj = proj; _sdLate.view = view; _sdLate.eye = mwv.eye;
-      if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);
+      if (_sdLate.on && windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) host.drawSdTelegraph?.(_sdLate);
       if (isEgHall(dungeonLoc)) host.drawEgFight?.({ proj, view, eye: mwv.eye });   // EG-PLAY: a hall's telegraphs, vents and rifts - after the flats, the court's way
       if (isKetchShip(dungeonLoc)) host.drawKtFight?.({ proj, view, eye: mwv.eye });   // KETCH: the ship's telegraphs and the hold's spoils' lines - after the flats, the court's way; KETCH-LOOK KL3: its halos, and the renderer's own fog (her look's record, mode 'exp' with no range or eye, fogged none of them)
       // AUDIT 17e F1: this MUST return true like every other exit of
@@ -11047,8 +11048,11 @@ export function createWorldModes(host) {
       // under the enhanced skin: they stay painted until told otherwise
       // (AUDIT 64 F37's law). A refusal spoken as a window opened stood
       // over that window until it closed.
-      if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); host.drawCompanionBars?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)   // AUDIT-WH H4: and the plaque comes down on this line too - this return is ABOVE drawFoes, where the hover lives, so it hung frozen over every dungeon window showing a container's PRE-TAKE contents
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching, player.feetAt(), climbRigInput(player, cam.yaw), aimView);   // DISC13-A: the render feet, the candle's   // CLIMB6: the climb's snapshot   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      // RPT1026-FIGHTS (WINDOW-ONLINE, scenes/windowWorld.js): the window HOLDS this frame offline alone (DFU's PauseGame) -
+      // online the world it stands in runs on under it (WINFOE1's law, underground at last): the frame below steps the
+      // foes, ticks the rounds and draws, the window last over it; the motor, the input and the breath stay held
+      if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); host.drawCompanionBars?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)   // AUDIT-WH H4: and the plaque comes down on this line too - this return is ABOVE drawFoes, where the hover lives, so it hung frozen over every dungeon window showing a container's PRE-TAKE contents
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, !dungeonCtx.uiOverlayActive && anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching, player.feetAt(), climbRigInput(player, cam.yaw), aimView);   // DISC13-A: the render feet, the candle's   // CLIMB6: the climb's snapshot   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       // WATER-D1: the water plane is drawn INSIDE drawFoes now, before the
       // weapon overlay - a draw here landed after the lane's resolve and
       // showed through every wall (dungeonContext.js's note at the draw).
@@ -11062,7 +11066,7 @@ export function createWorldModes(host) {
       // (which is raised BY the draw) would never have appeared. The
       // other three hosts draw their slot unconditionally already;
       // this is the one that branched.
-      if (dungeonCtx.unpausedOverlay) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); }
+      if (dungeonCtx.unpausedOverlay || dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); }   // RPT1026-FIGHTS (WINDOW-ONLINE): and a pausing one the frame ran under, online
       return true;
     }
 
@@ -11078,7 +11082,7 @@ export function createWorldModes(host) {
     if (pendingInteriorExit) { pendingInteriorExit = false; exitInteriorNow(); return true; } else if (standFromVoid(interiorCtx.voidRescue, player)) { cam.pos = [...player.eye]; say(INTERIOR_VOID_TEXT); }   // FIELD BUGS 2026-10-04d VOID-ENTRY: THE FAILSAFE (enterExit.js standFromVoid) - a body below everything the building stands on fell for good, in the black ("Complete darkness and possibly stuck"); it stands again where the door landed it, and is told
     // AUDIT 23 (C12: cross-6 = wts-3) - PlayerAmbientLight.cs:75-80: a
     // night interior takes the darker purple-tinted ambient.
-    renderer.setLighting(new Float32Array(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);   // TIME1: the sky's night
+    renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.roomLamps)), 0);   // TIME1: the sky's night; RPT1026-WORLD DARK-ROOM: a room with no lamp of its own lit as DFU's Lit Interiors lights it (interiorLights.js roomAmbient) - AUDIT RPT1026 J1: by the lamps it was built with
     // AUDIT EV F-R1: no moonlight and no stale exterior indirect
     // through the walls - see the dungeon arm's note above.
     renderer.setMoonlight(null);
@@ -12380,10 +12384,10 @@ export function createWorldModes(host) {
     say,
     onLevelUp: onInteriorLevelUp,   // AUDIT 68 S23-levelup-closure-dup: the walk and the rest level up through ONE arm
     day: () => false, inside: () => true,   // a building interior, always
-    restKind: () => { const p = interiorRestPlaceHere(); return p.houseOwned || p.isShip || !!p.room ? 'bed' : interiorCamps.fireNear(player.pos) ? 'camp' : 'rough'; },
+    restKind: () => interiorRestSpot(interiorRestPlaceHere(), { pressedBed: _restFromBed, fireNear: interiorCamps.fireNear(player.pos) }).kind,   // RPT1026-MISC BED-PRESS-INDOOR: a bed pressed is a bed's rest, as the street's and the dungeon's hosts price it
     // REST1: online every building is a rest point and CanRest decides it (the rented room, the house, the ship, the hall),
     // as the window always has; a hearth in reach names the fire
-    restPoint: () => { const p = interiorRestPlaceHere(); return { kind: p.houseOwned || p.isShip || !!p.room ? 'bed' : interiorCamps.fireNear(player.pos) ? 'camp' : 'rough', where: !(p.houseOwned || p.isShip || p.room) && interiorCamps.fireNear(player.pos) ? 'fire' : null }; },   // SURV4: a rented room, your house or your ship is a bed; a guild hall's boards are rough - AUDIT SURV-TIERS: and its hearth a camp's rest, as a brazier is outdoors (HEARTH1 warmed the room and forgot the sleep)
+    restPoint: () => interiorRestSpot(interiorRestPlaceHere(), { pressedBed: _restFromBed, fireNear: interiorCamps.fireNear(player.pos) }),   // SURV4: a rented room, your house or your ship is a bed; a guild hall's boards are rough - AUDIT SURV-TIERS: and its hearth a camp's rest, as a brazier is outdoors (HEARTH1 warmed the room and forgot the sleep); RPT1026-MISC BED-PRESS-INDOOR: and a bed pressed, a bed (restSession.js interiorRestSpot)
   });
 
   /** ESC-BOOK (2026-09-27): THIS HOST'S PAUSE BAG, one arm for both doors that mount the pause window in a building -

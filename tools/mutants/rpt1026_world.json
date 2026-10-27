@@ -1,0 +1,447 @@
+[
+  {
+    "name": "RPT1026-LOOP-AWAKE-unity-wakes-both",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "(src.awake ?? src === boat.AudioSourceSlow)",
+    "new": "true",
+    "tests": [
+      "test/systems/comeSailAway/rpt1026_world_loops.test.js",
+      "test/systems/comeSailAway/csa_time_audio.test.js"
+    ],
+    "note": "Unity's playOnAwake as it was: both loops wake, the fast one at its first volume - heard at full past a 10% slider"
+  },
+  {
+    "name": "RPT1026-LOOP-AWAKE-never-noted",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "else { src.awake = src.isPlaying; if (src.isPlaying) audioStop(src); }",
+    "new": "else if (src.isPlaying) audioStop(src);",
+    "tests": [
+      "test/systems/comeSailAway/rpt1026_world_loops.test.js",
+      "test/systems/comeSailAway/csa_time_audio.test.js"
+    ],
+    "note": "nothing notes what played as the boat went: her wake's loop under way never comes back"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-no-clock-handed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": " real: realClock,   // RPT1026-WORLD TRAFFIC-REAL",
+    "new": "   // RPT1026-WORLD TRAFFIC-REAL",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "the host hands the director no real clock: the rolls' wait counts the sea's seconds - a ship every second or two at x60"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-the-seas-seconds",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "const spent = trafficSeconds(dt, ctx.real, lastReal);",
+    "new": "const spent = Math.max(0, dt);",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "the director spends the step's sea seconds whatever clock it is handed"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-reset-remembers",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "reset() { wait = FIRST_ROLL_S; lastReal = null; },",
+    "new": "reset() { wait = FIRST_ROLL_S; },",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "a reset keeps the last reading: the time ashore is spent from the first wait at the next step"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-first-read-spends",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : 0;",
+    "new": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : Math.max(0, Number(dt) || 0);",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "the first reading spends the step's sea seconds"
+  },
+  {
+    "name": "RPT1026-DARK-ROOM-every-room-classic",
+    "file": "src/world/interior/interiorLights.js",
+    "old": "  if ((lamps?.length ?? 0) > 0) return ambient;\n  return ambient === INTERIOR_NIGHT_AMBIENT ? INTERIOR_NIGHT_AMBIENT_ONLY : INTERIOR_AMBIENT_ONLY;",
+    "new": "  return ambient;",
+    "tests": [
+      "test/world/interior/rpt1026_world_darkroom.test.js"
+    ],
+    "note": "every room at InteriorAmbientLight's 0.18 - the lampless inn black"
+  },
+  {
+    "name": "RPT1026-DARK-ROOM-no-night",
+    "file": "src/world/interior/interiorLights.js",
+    "old": "  return ambient === INTERIOR_NIGHT_AMBIENT ? INTERIOR_NIGHT_AMBIENT_ONLY : INTERIOR_AMBIENT_ONLY;",
+    "new": "  return INTERIOR_AMBIENT_ONLY;",
+    "tests": [
+      "test/world/interior/rpt1026_world_darkroom.test.js"
+    ],
+    "note": "a lampless room at the day's ambient-only level by night too"
+  },
+  {
+    "name": "RPT1026-DARK-ROOM-host-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.roomLamps)), 0);",
+    "new": "renderer.setLighting(new Float32Array(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);",
+    "tests": [
+      "test/world/interior/rpt1026_world_darkroom.test.js",
+      "test/render/windows1_view.test.js"
+    ],
+    "note": "the world's building lit at the clock's ambient alone, as before"
+  },
+  {
+    "name": "RPT1026-WAGON-OUT-landing-unasked",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "  return heldInSolid(collider, at) ? openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at : at;",
+    "new": "  return at;",
+    "tests": [
+      "test/scenes/rpt1026_world_wagonout.test.js"
+    ],
+    "note": "the door's landing never asked what stands there: the body stood in the house"
+  },
+  {
+    "name": "RPT1026-WAGON-OUT-the-sea-is-ground",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "{ dry: seaY ? (floor) => floor >= seaY() : null }",
+    "new": "{ dry: null }",
+    "tests": [
+      "test/scenes/rpt1026_world_wagonout.test.js"
+    ],
+    "note": "the nearest open ground may be the seabed"
+  },
+  {
+    "name": "RPT1026-WAGON-OUT-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "ground: (p) => caravanStepOut(collider, p, tvSeaY),",
+    "new": "ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],",
+    "tests": [
+      "test/scenes/rpt1026_world_wagonout.test.js"
+    ],
+    "note": "the world host's door keeps the old landing"
+  },
+  {
+    "name": "RPT1026-BANNER-WALL-both-hung",
+    "file": "src/scenes/hallBanners.js",
+    "old": "return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2))) && walled(s)).map((s) => ({",
+    "new": "return [-1, 1].map((s) => ({",
+    "tests": [
+      "test/scenes/rpt1026_world_bannerwall.test.js"
+    ],
+    "note": "both cloths hung whatever the wall does - one in the air past the small house's corner"
+  },
+  {
+    "name": "RPT1026-BANNER-WALL-one-end-asked",
+    "file": "src/scenes/hallBanners.js",
+    "old": "[-1, 1].every((e) => onWall(",
+    "new": "[1].every((e) => onWall(",
+    "tests": [
+      "test/scenes/rpt1026_world_bannerwall.test.js"
+    ],
+    "note": "only one end of the cloth asked"
+  },
+  {
+    "name": "RPT1026-BANNER-WALL-pad-a-metre",
+    "file": "src/scenes/hallBanners.js",
+    "old": "export const BANNER_WALL_PAD_M = 0.05;",
+    "new": "export const BANNER_WALL_PAD_M = 1;",
+    "tests": [
+      "test/scenes/rpt1026_world_bannerwall.test.js"
+    ],
+    "note": "a metre of air allowed past the corner"
+  },
+  {
+    "name": "RPT1026-RAIN-EYE-the-head-on-the-ground",
+    "file": "src/scenes/world.js",
+    "old": "    const wxEye = mwv.eye;",
+    "new": "    const wxEye = tvf ? mwv.eye : cam.pos;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ],
+    "note": "OW-WEATHER's eye as it was: off the Overworld the falling weather wraps the head - a cube of rain round the ship seen from the helm's scrolled-out camera"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-the-sea-under-the-road",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
+    "new": "  if (goal === 0 && isWater(bx, by)) return -1;",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "every step into the sea refused, his road's too: Grayidge's route leaves the road at the causeway's foot and crosses the inlet"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-the-corner-refused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
+    "new": "isWater(bx, ay) && isWater(ax, by)) return -1;",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "his diagonal between two water pixels refused: the coast road in the sea is left at its first bend"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-the-boat-launches",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "(n !== goal && !pavedStep(cx, cy, nx, ny, STEP_BIT[d], width, height, roads))",
+    "new": "n !== goal",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "with a boat to hand the causeway is a launch and a landfall, never his road"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-a-track-paved",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "!pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n  // AUDIT DEEP T2-5",
+    "new": "!pavedStep(ax, ay, bx, by, bit, width, height, tracks)) return -1;\n  // AUDIT DEEP T2-5",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "a track's ford walked as a causeway into the sea, and his road's causeway refused"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-one-end-asked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  return edgeKindAt(ay * width + ax, by * width + bx, bit, roads, null) === 0;",
+    "new": "  return !!(roads[ay * width + ax] & bit);",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "a step paved where only the near end carries his road's edge"
+  },
+  {
+    "name": "RPT1026-STAND-THROUGH-the-heads-line-unasked",
+    "file": "src/player/motor.js",
+    "old": " && standHeadClear(this.collider, this.pos, this.height)) {   // RPT1026-WORLD STAND-THROUGH",
+    "new": ") {   // RPT1026-WORLD STAND-THROUGH",
+    "tests": [
+      "test/player/rpt1026_world_standthrough.test.js",
+      "test/player/audit64_motor.test.js"
+    ],
+    "note": "DFU's CanStand alone: under a ceiling 1.25-1.45 m up the stand puts the head's centre past the face, and the body goes up through it"
+  },
+  {
+    "name": "RPT1026-STAND-THROUGH-the-cameras-rise",
+    "file": "src/player/motor.js",
+    "old": "  const rise = CAPSULE_HEIGHT - height;",
+    "new": "  const rise = (CAPSULE_HEIGHT - height) / 2;",
+    "tests": [
+      "test/player/rpt1026_world_standthrough.test.js"
+    ],
+    "note": "the line asked only as far as the camera's rise: a ceiling between it and the standing head's centre is let through"
+  },
+  {
+    "name": "RPT1026-STAND-THROUGH-from-the-heads-top",
+    "file": "src/player/motor.js",
+    "old": "feet[1] + height - CAPSULE_RADIUS, feet[2]], [0, 1, 0], rise)",
+    "new": "feet[1] + height, feet[2]], [0, 1, 0], rise)",
+    "tests": [
+      "test/player/rpt1026_world_standthrough.test.js"
+    ],
+    "note": "the line from the head's top: a ceiling the standing head clips under (DFU's stand) refused too"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-band-unwalked",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));",
+    "new": "if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) out.push(Object.freeze([dx, dy]));",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the port looked for a pixel about the player alone: a ship at a far harbour's first berth 2 pixels off its town is near no port"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-dry-unread",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  if (built(x, z)) return true;\n  const c = state.compensation;",
+    "new": "  if (built(x, z)) return true;\n  if (built) return false;\n  const c = state.compensation;",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "a pixel known only where it is built: the ring's far side, never built from the sea, keeps the far harbour waiting"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-every-pixel-dry",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));",
+    "new": "d = true;",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the sea itself read as dry - a harbour sounded off ground that holds water unbuilt"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-one-town-alone",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock);",
+    "new": "stepOne(Array.isArray(near) ? near[0] : near, clock);",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the nearest port alone sounded: Pencart's harbour, its first berth within a pixel of Longham, never"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-far-edge-past-the-ring",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN)",
+    "new": "x0 + (sx * i) / nx, z0 + (sz * k) / nz",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the box's far edges read as the next pixel's - one past the ring, never built from its far shore"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-host-the-three-by-three",
+    "file": "src/scenes/world.js",
+    "old": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER) {",
+    "new": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER.slice(0, 9)) {",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the world host walks the 3 x 3 alone"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-host-no-height-map",
+    "file": "src/scenes/world.js",
+    "old": "harbourOf(t, { state, built: csaPixelAt, woods })",
+    "new": "harbourOf(t, { state, built: csaPixelAt, woods: null })",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the world host hands no height map: nothing is ever dry for certain"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-the-old-refusal",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "if (usesBatch(r) && !Number.isSafeInteger(d.rev) && !(await rereadRev(r, d))) return false;",
+    "new": "if (usesBatch(r) && !Number.isSafeInteger(d.rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a room read unanswered as the draft opened refuses every Confirm of the visit, as before"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-the-room-taken-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (since.put.length || since.drop.length) { deps.say?.(deps.refusal?.('decor-rev')",
+    "new": "    if (false) { deps.say?.(deps.refusal?.('decor-rev')",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the revision taken whatever the room holds now: another hand's change written over"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-any-revision",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (!res?.ok || !Number.isSafeInteger(rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "new": "    if (!res?.ok) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "an answer with no revision taken: the batch goes at NaN"
+  },
+  {
+    "name": "RPT1026-CONFIRM-ONCE-the-guard-gone",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (d.keeping) return false;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a second click on Confirm sends the batch again and pays again"
+  },
+  {
+    "name": "RPT1026-CONFIRM-ONCE-never-let-go",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      d.keeping = false;\n      if (placing) placing.busy = false;",
+    "new": "      if (placing) placing.busy = false;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a Confirm once sent holds the draft for good: the next one never goes"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-decorator-never-asks",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());",
+    "new": "const verbsOff = wantPlaqueVerbs(() => false);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "where no plaque is drawn the decorator's verbs fold nowhere: a press on a piece never moves it"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-asks-out-of-the-flight",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());",
+    "new": "const verbsOff = wantPlaqueVerbs(() => true);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the decorator asks for its verbs out of the flight too"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-seam-stands-down",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const verbs = !dom && !classic && plaqueVerbsWanted();",
+    "new": "  const verbs = false;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the seam stands down on a page with no plaque, the decorator browsing or not"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-whole-list",
+    "file": "src/ui/worldPlaque.js",
+    "old": "foldQuickLoot(verbs ? decorPressFrame(frame) : frame);",
+    "new": "foldQuickLoot(frame);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the whole list folded where nobody sees it: the wheel steps it unseen"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-any-key",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "export const decorVerbKey = (key) => typeof key === 'string' && DECOR_VERB_KEYS.some((k) => key.startsWith(k));",
+    "new": "export const decorVerbKey = (key) => typeof key === 'string';",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "every key is the decorator's: a player's or a lever's verbs folded and pressed"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-a-key-dropped",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "'chair:', 'bed:', 'door:', 'act:decor:']",
+    "new": "'chair:', 'bed:', 'door:']",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a placed door's key is no longer the decorator's"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-any-frame",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "if (frame?.kind !== 'actions' || !decorVerbKey(frame.key) || !frame.rows?.length || frame.startUnlit) return null;",
+    "new": "if (!frame?.rows?.length) return null;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a chest's goods, a player's unlit list, anything folded"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-gate-closed",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!worldTooltipsOn() && !(decorVerbKey(key) && decorTool.flying() && !decorTool.ghost())) return null;",
+    "new": "if (!worldTooltipsOn()) return null;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "World Tooltips off, the interior host names no decorator's verbs"
+  }
+]

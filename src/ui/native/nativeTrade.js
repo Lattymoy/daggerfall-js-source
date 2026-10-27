@@ -70,6 +70,7 @@ import { firstName } from '../../systems/talk/talkSession.js';   // MACRO-4: %pc
 import { firstHotkey } from '../../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // AUDIT MERGE-PLUS C3: the player's lock holds at this counter too
 import { isBound, boundText } from '../../systems/item/itemBound.js';   // SS4: and so does a binding
+import { holdOut } from '../../systems/item/heldOut.js';   // RPT1026-ITEMS HELD-OUT: the staged lot rides every save while the counter stands
 import { itemLongName } from '../../systems/item/itemInfo.js';   // AUDIT MERGE-PLUS C3: the refusal names the piece
 
 /** A8: the mode action button's Hotkey is chosen by the WINDOW MODE
@@ -290,6 +291,9 @@ export class NativeTradeWindow {
     // builds (:340). Its text is ResolveItemLongName (:464), which is
     // the only thing on this screen that names what is in a slot.
     this._tip = makeSlotToolTip();
+    // RPT1026-ITEMS HELD-OUT (systems/item/heldOut.js): what this counter stages out of the pack - an Identify's lot, a
+    // sale's - is in every save written while it stands; a Buy's basket (the shop's) is `basket`, never `staged`
+    this._releaseHeld = holdOut(hooks.entity, () => this.staged);
   }
 
   /** DaggerfallBaseWindow's defaultToolTip rest clock. */
@@ -774,6 +778,7 @@ export class NativeTradeWindow {
   _close() {
     this._clear();
     this.done = true;
+    this._releaseHeld?.();   // RPT1026-ITEMS HELD-OUT: the lot is back in the pack
   }
 
   /** AUDIT SS: a host's teardown (a death, a building left, a load - worldModes.js `dispose?.()` over its windows) is

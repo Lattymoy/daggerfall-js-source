@@ -16,7 +16,8 @@
 // the first letter (SoundVolume -> soundVolume); the ones that do not
 // are listed explicitly.
 import { SETTINGS_INFO } from '../../systems/settings/settingsText.js';
-import { localizedTable } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedTable, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; RPT1026-CLIENT: and the port's own tip
+import { LIFTED_OFF_FPS } from '../../systems/frameCap.js';   // RPT1026-CLIENT: the cap's Off where the wait is lifted
 
 export const LABELS = Object.freeze({
   "Audio/AlternateMusic": "Alternate Music",
@@ -24,7 +25,7 @@ export const LABELS = Object.freeze({
   "ChildGuard/PlayerNudity": "Show Nudity",
   "Controls/AllowMagicRepairs": "Repair Magic Items",
   "Controls/BowDrawback": "Draw And Release Bows",
-  "Controls/CameraRecoilStrength": "Screen Shake On Damage",
+  "Controls/CameraRecoilStrength": "Screen Shake When Hurt",   // RPT1026-CLIENT: "On Damage" read as any damage near you - it is your own injuries alone
   "Controls/EnableController": "Game Controller",
   "Controls/Handedness": "Weapon Hand",
   "Controls/HeadBobbing": "Head Bobbing",
@@ -263,11 +264,19 @@ const PAGE_TIPS = localizedTable({
   'Video/RetroRenderingMode': ['retroModeTip', 'Renders world at lower resolutions'],
 });
 
+/** RPT1026-CLIENT: the port's own words where DFU wrote none AND the row does what DFU's does not - the Frame Rate Cap's
+ *  Off, which in the desktop app with the wait lifted holds at LIFTED_OFF_FPS (systems/frameCap.js), never DFU's running
+ *  free. */
+const portTip = (/** @type {string} */ key) => (key === 'Video/TargetFrameRate'
+  ? t('menu.settings.tip.frameCap', 'The most frames a second the game draws. Off lets your screen set the pace. In the desktop app with Wait For Screen Refresh off, Off still holds the game at {max} frames a second.', { max: LIFTED_OFF_FPS })
+  : '');
+
 /** The explanation, in DFU's own words where DFU wrote one. Empty
  *  string when it did not - the screen then shows the status line
- *  alone rather than inventing a sentence. */
+ *  alone rather than inventing a sentence (RPT1026-CLIENT: but for a
+ *  row whose behaviour is the port's own, portTip). */
 export function helpOf(key) {
-  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';
+  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? portTip(key);
 }
 
 /** MENU: what a NOT-AVAILABLE row prints where its control would be.

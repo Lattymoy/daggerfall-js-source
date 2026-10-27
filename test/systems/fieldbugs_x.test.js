@@ -25,7 +25,9 @@ const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 test('X1 MENU-EXIT1: the enhanced menu\'s repaint answers nothing once the screen is destroyed - the confirm card\'s yes runs the action FIRST and repaints after (mutant: the guard removed, which is the crash on every exit through the confirm)', () => {
   const src = rd('src/ui/enhanced/enhancedMenu.js');
   assert.match(src, /function render\(\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(!app\) return;\s*repaintKeepingScroll\(app, \(\) => renderInto\(\)(?:, \{[^}]*\})?\);(?:[ \t]*\/\/[^\n]*)?\s*\}/, 'render() guards on the screen before it paints');
-  assert.match(src, /onClick: \(\) => \{ const f = confirming\.onYes; confirming = null; f\(\); render\(\); \}/, 'and the confirm card still runs the action before the repaint - the order DFU\'s yes-button has, which is why the guard is where it is');
+  // PIN MOVED (RPT1026-MISC CONFIRM-SHEET): the card is let go through `answered()` (it also shuts the sheet the ask
+  // raised) where it was `confirming = null` - the action still runs before the repaint
+  assert.match(src, /onClick: \(\) => \{ const f = confirming\.onYes; answered\(\); f\(\); render\(\); \}/, 'and the confirm card still runs the action before the repaint - the order DFU\'s yes-button has, which is why the guard is where it is');
   assert.match(src, /host\.innerHTML = '';\s*app = null;/, 'destroy() nulls the screen the guard reads');
 });
 

@@ -23,6 +23,7 @@ import { clearLightSourceOnLeave } from './item/itemTransfer.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
 import { isBound, boundTradeText } from './item/itemBound.js';   // SS1: a bound piece never leaves for another player
 import { BOAT_TEMPLATES } from '../net/realm/realmTradeLaw.js';   // AUDIT REALM2 T1: nor a boat's deed or parts - what they stand for stays in the giver's save
+import { marketArrivedText, marketBackText } from '../net/marketArrivals.js';   // RPT1026-MARKET ARRIVE: what came, said
 
 /** BAG1: the Materials Bag stays with its owner - a list of its own rides with it (systems/materialsBag.js), which no
  *  trade moves; every General Store sells another. */
@@ -221,13 +222,16 @@ export function createMarketGoods(entity, { kept = () => false, say = () => {} }
       return it ? itemLongName(it) : 'a piece';
     },
     /** A piece collected - the record the service put into this character's record - into the pack as a trade's piece
-     *  comes (tradePack unwire: the wire's clamp, and a bound piece refused; give). False: this game will not hold it. */
-    receive(/** @type {any} */ rec) {
+     *  comes (tradePack unwire: the wire's clamp, and a bound piece refused; give). False: this game will not hold it.
+     *  RPT1026-MARKET ARRIVE: `why` - a settle's collect, the road's word on the piece ('bought', 'returned'): said as a
+     *  purchase arrived or a piece come back, since the player pressed nothing just then (net/marketArrivals.js). */
+    receive(/** @type {any} */ rec, /** @type {string | null} */ why = null) {
       const pack = createTradePack(entity);
       const items = rec ? pack.unwire([rec]) : null;
       if (!items?.length) return false;
       pack.give(items, 0);
-      say(`${itemLongName(items[0])} is in your pack.`);
+      const name = itemLongName(items[0]);
+      say(why === 'bought' ? marketArrivedText(name) : why === 'returned' ? marketBackText(name) : `${name} is in your pack.`);
       return true;
     },
   };

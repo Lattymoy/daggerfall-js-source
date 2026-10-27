@@ -376,7 +376,7 @@ import { sdFirst, sdRise, sdFind, sdEnter, sdFell, sdGone, sdDue, pickSdRegion, 
 import { sdHeraldDue, sdHeraldPost, readSdHeraldState } from '../../src/net/superDungeon/sdHerald.js';
 import { ketchHeraldDue, ketchHeraldPost, ketchHeraldRole, readKetchHeraldState } from '../../src/net/ketch/ketchHerald.js';   // KETCH: the Sky-Ketch's Discord cards - the clock's alone
 import { sdMarksOf } from '../../src/net/superDungeon/sdMarks.js';   // SD18a: a Hollow's marks by its slot - the Remnant's profile and the Orrery's fray
-import { orreryOf, orreryJudge, orreryLit, orreryFresh, orreryRightsFresh, orreryTurnerOf, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK } from '../../src/net/superDungeon/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
+import { orreryOf, orreryJudge, orreryLit, orreryFresh, orreryRightsFresh, orreryRightsSnapped, orreryTurnerOf, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK } from '../../src/net/superDungeon/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
 import { applyEchoHit, applyHeartHit, arenaOf, inArena, SD_ARENA_SLACK, SD_LOST_MS, SD_POSE_FRESH_MS } from '../../src/net/superDungeon/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
 import { mintSdReceipt, readSdReceipt, SD_RECEIPT_TTL_S } from '../../src/net/superDungeon/sdReceipt.js';   // SD9a: the Hour's receipt - minted at the Remnant's fall, kept by the hub
 // EG-PLAY (2026-10-11, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY): THE BREACH JOINS THE
@@ -2653,6 +2653,11 @@ export class Room {
   _meterDuel(ws, a, now) { return this._spend(ws, now, duelGate, 'duelBucket', 'duelDrops', 'too many duel frames') ? a : null; }
   /** LEGACY7 part three: the wed frames' own bucket (WED_HZ_MAX), the same strikes as a duel's. */
   _meterWed(ws, a, now) { return this._spend(ws, now, wedGate, 'wedBucket', 'wedDrops', 'too many wed frames') ? a : null; }
+  /** RPT1026-SECNET (from a private report): A REQUEST ROUTED TO ONE PLAYER, as it goes out - the sender's id AND its
+   *  verified account (`sub`, off the identity token), so the reader's block list (net/online.js _directedIn,
+   *  Chat-Safety-Arc section 2) can hold it back. Four arms carried the account already; the two written before the block
+   *  list existed carried the id alone, and what they carried reached the very player who had blocked its sender. */
+  _directedFrame(t, a, data) { return JSON.stringify({ t, id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data }); }
   /** AUDIT ALLY-CAST B2 + INSPECT1 + JOURNAL1: THE FUNNEL ONTO ONE DESTINATION, PER SENDER - a bounded list of sender
    *  buckets among the destination's meters (`cin`), the stalest sender's slot evicted for a newcomer. One bucket for
    *  every sender together let five strangers at their own rate starve a mate's heals, and this relay cannot tell a mate
@@ -4118,7 +4123,8 @@ export class Room {
     if (m.t === 'trade') {
       // TRADE1: ONE DIRECTED FRAME, THE `hit` FRAME'S OWN ROUTING - from a hello'd socket in a PLACE room (a channel or the
       // hub is no place to stand and trade), on the trade bucket, to the socket `to` names in this room and to it alone,
-      // the sender's id stamped on it. The relay reads none of the items (wire.js validTradeData checked the SHAPE;
+      // the sender's id and its verified account stamped on it (RPT1026-SECNET: `_directedFrame`). The relay reads none of
+      // the items (wire.js validTradeData checked the SHAPE;
       // the receiver projects every record through validLootItem before it reads a field). A peer that is gone is not
       // junk - a leave races a frame - and the sender's own session times out on it.
       const now = Date.now();
@@ -4134,7 +4140,7 @@ export class Room {
       const funnel = tokenGate(tm.tinbucket ?? null, now, TRADE_ROOM_HZ_MAX);
       tm.tinbucket = funnel.bucket;
       if (!funnel.pass) return;
-      const out = JSON.stringify({ t: 'trade', id: a.id, data: m.data });
+      const out = this._directedFrame('trade', a, m.data);   // RPT1026-SECNET: and the sender's account, for the reader's block list
       // AUDIT DROPS B3: the byte budget is the SENDER's, not the room's - a room-wide bucket let two sockets at
       // TRADE_HZ_MAX x TRADE_FRAME_MAX spend the whole room and drop an honest commit that had already cost its
       // sender their goods (LOOT-DUP: sent means gone). Per sender, a flood only starves the flooder.
@@ -4291,7 +4297,8 @@ export class Room {
     if (m.t === 'page') {
       // JOURNAL1: ONE DIRECTED FRAME, the card arm's own routing - a page of the sender's journal held out to the socket
       // `to` names, from a hello'd socket in a PLACE room (a page is shown to someone standing there; a channel or the
-      // hub is nowhere to stand) on the page bucket, the sender's id stamped on it. A MUTED player's page goes nowhere,
+      // hub is nowhere to stand) on the page bucket, the sender's id and its verified account stamped on it (RPT1026-SECNET:
+      // `_directedFrame`). A MUTED player's page goes nowhere,
       // and they are told why and until when, as their line is (MOD1) - after the gate, so a muted player hammering
       // Share is struck out exactly as anyone would be. The relay reads nothing of the page but its law (wire.js
       // validPageData cleaned its words and refused it past its bound); the reader draws it as the sender's own word.
@@ -4307,7 +4314,7 @@ export class Room {
       const [tws] = target;
       // the funnel onto the destination, per sender - the cast's and the card's ONE (_senderFunnel says why)
       if (!this._senderFunnel(tws, a.id, now)) return;
-      this._send(tws, JSON.stringify({ t: 'page', id: a.id, data: m.data }));
+      this._send(tws, this._directedFrame('page', a, m.data));   // RPT1026-SECNET: and the writer's account, for the reader's block list
       return;
     }
     if (m.t === 'park') {
@@ -8993,8 +9000,9 @@ export class Room {
    * the fray, the dial and the Concord, with the turn and its turner (`x` when the Hour snapped back, and AUDIT SD II -
    * L7 H2 - `ls` the peers its lash falls on). Anything else is nothing: no word, no strike. Once the Concord holds, a
    * turn is nothing. AUDIT SD II (L7 H2): and THE STONES' RIGHTS (net/superDungeon/sdBrain.js orreryMayTurn) - a turner that has
-   * lengthened the road SD_TURN_LONG_MAX times this thread waits while others turn, told so (`w`, to its socket alone, at
-   * most every SD_PZ_WAIT_SAY_MS).
+   * lengthened the road SD_TURN_LONG_MAX times in this Hollow (RPT1026-EVENTS ORRERY-HANDS: this thread, before) waits while
+   * others turn, told so (`w`, to its socket alone, at most every SD_PZ_WAIT_SAY_MS) - AUDIT RPT1026 I1: and a hand held out
+   * behind held hands alone begins its count again at the snap (orreryJudge marks it, orreryRightsSnapped frees it).
    */
   async _sdTurn(ws, a, m, now) {
     if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;
@@ -9019,7 +9027,7 @@ export class Room {
     }
     meter.pzq = m.q;
     const lash = res.x ? { x: 1, ls: orreryLashed(R, SD_FIGHTERS_MAX) } : {};
-    if (res.x) this._sdRights = { s, R: orreryRightsFresh() };   // the snap begins a fresh thread
+    if (res.x) this._sdRights = { s, R: orreryRightsSnapped(R) };   // the snap begins a fresh thread - RPT1026-EVENTS ORRERY-HANDS: for the lash alone; a hand's lengthening is counted for the Hollow
     hall.st = res.st; hall.f = res.f; hall.ok = res.ok; hall.last[m.i] = now;
     await this.state.storage.put(SD_ORRERY_KEY, hall);
     const word = this._sdHallWord(hall, { i: m.i, a: m.a, id: a.id, q: m.q, ...lash });
@@ -9835,8 +9843,9 @@ export class Room {
     if (w.k === 'vt') { bodySaid(p, w.v / 1000, now, line.body, { enforce: line.enforce }); return; }
     if (w.k === 'in' && !(w.bv >= KT_BRAIN_MIN)) { this._send(ws, JSON.stringify({ t: 'kt', k: 'no', m: 2 })); return; }
     if (w.k === 'in' && Number.isSafeInteger(a.cl) && a.cl >= 1) w.lv = a.cl;   // THE LEVEL IS THE TOKEN'S (the Hour's AUDIT SD II L7 M2)
-    // the struck nothing strike nothing: a member the count has fallen (enforced) speaks as the dead
-    const pose = a.pose ? this._ktPoseOf(a.pose) : null;
+    // the struck nothing strike nothing: a member the count has fallen (enforced) speaks as the dead. RPT1026-FIGHTS
+    // (RETIRED-BLOW): and a pose older than KT_POSE_FRESH_MS speaks for no body, as in the census (_ktBodies) - the Hour's law
+    const pose = a.pose && now - (a.pAt ?? a.since ?? 0) <= KT_POSE_FRESH_MS ? this._ktPoseOf(a.pose) : null;
     if (pose && bodyOut(p, line.enforce)) pose.dead = true;
     const out = voyageWord(V, a.sub, w, pose, now, rand01);
     for (const r of out) if (r.k === 'rez' && V.players[r.s]) { bodyLife(V.players[r.s], now, line.body); V.players[r.s].rzAt = now; }   // AUDIT WORLD-EVENTS L1-4: the raised, a new life on the count (AUDIT KETCH II L1-5: and its dying pose before it forgotten)
@@ -10076,9 +10085,10 @@ export class Room {
     if (this._sdFight !== f) return;
     now = Date.now();
     if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;
-    // INT12: a blow from one the count has fallen lands nothing once `enforce` holds
-    const line = this._bodyLine();
-    const pose = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._arenaPoseOf(a.pose) : null;
+    // INT12: a blow from one the count has fallen lands nothing once `enforce` holds. RPT1026-FIGHTS (RETIRED-BLOW): nor one
+    // from a pose older than SD_POSE_FRESH_MS - the census's own law (_sdFightBodies): a page that stopped posing is absent
+    // there, its share retired ABSENT_RETIRE_MS on, and a blow judged from its last pose landed whole on the others' share
+    const pose = a.pose && !a.pose.dd && now - (a.pAt ?? a.since ?? 0) <= SD_POSE_FRESH_MS && !bodyOut(f.players[a.sub], this._bodyLine().enforce) ? this._arenaPoseOf(a.pose) : null;
     if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));
     else if (m.k === 'xhit') this._sdFightFan(applyHeartHit(f, a.sub, m.c, m.d, m.r, pose, now, m.q));
     else {

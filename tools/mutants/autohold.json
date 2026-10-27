@@ -121,8 +121,8 @@
   {
     "name": "AUTOHOLD-the-timed-unwritten",
     "file": "server-account/src/verdict.js",
-    "old": "    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null);",
-    "new": "    null, s.law_holds ?? 0, s.law_at ?? null);",
+    "old": "    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
+    "new": "    null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AUTOHOLD-the-clear-keeps-the-timed",
     "file": "server-account/src/review.js",
-    "old": "held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL, law_excused = law_sig",
-    "new": "held = NULL, held_at = NULL, strikes = 0, review = NULL, law_excused = law_sig",
+    "old": "held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL,\n",
+    "new": "held = NULL, held_at = NULL, strikes = 0, review = NULL,\n",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -490,7 +490,7 @@
   {
     "name": "AUTOHOLD-AUDIT-the-review-promised",
     "file": "src/net/accountClient.js",
-    "old": "'This character\\'s trading is frozen. The notice shown when it froze says why, and until when.'",
+    "old": "'This character\\'s trading, gathering and crafting are frozen. The notice shown when it froze says why, and until when.'",
     "new": "'The realm is reviewing this character, and its trading is frozen until the review ends.'",
     "tests": [
       "test/server/autohold.test.js"

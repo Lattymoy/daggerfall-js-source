@@ -83,7 +83,7 @@
   {
     "name": "SURV4-the-kind-is-read-every-hour",
     "file": "src/scenes/shared.js",
-    "old": "        _place = (_restKindOverride ?? restKind)();",
+    "old": "        _place = (_restKindOverride ?? (out.bedPressed ? pressedBedKind : restKind))();",
     "new": "        _place = REST_KIND.Rough;",
     "tests": [
       "test/systems/surv4_rest.test.js"

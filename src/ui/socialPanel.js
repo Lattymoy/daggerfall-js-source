@@ -79,6 +79,7 @@ import { playerEntity } from '../characters/playerEntity.js';   // GUILD-UX: the
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT SUGGESTIONS-1019 L4-4: the card is the enhanced skin's
 import { itemLongName } from '../systems/item/itemInfo.js';   // AUDIT SUGGESTIONS-1019 L4-6: a row named as the pack names the piece
 import { LOOSE_ORIGIN } from '../net/bagLaw.js';   // AUDIT SUGGESTIONS-1019 L4-1: the loose units the service's room counts
+import { walledText } from './storesWalled.js';   // RPT1026-MARKET STORES-SAID: what the guild Stores may not take, said
 /** GUILD-UX: the vault row's card - the pack's own (enhancedInventory.js showItemHover), compared against what I wear. */
 // AUDIT SUGGESTIONS-1019 L4-4: on the enhanced skin alone - the card's sheet is the enhanced dress's (enhancedPlusStyle.js),
 // and on the classic skin it fell, unstyled, below the screen
@@ -1349,6 +1350,10 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       form.append(el('div', 'dfsocial-label', 'Take out'), pick('A material of the guild Stores', takeable.map((r) => [r.material, `${ps.name(r.material, 2)} (${outMost(r.material).toLocaleString('en-US')})`]), d.storeOut, (k) => { d.storeOut = k; }));
     }
     guildField(form, t('social.stores.units', 'Units (leave empty for all)'), d.storeUnits ?? '', String(STORES_MAX).length, (x) => { d.storeUnits = x; });
+    // RPT1026-MARKET STORES-SAID: what your Stores hold that the guild's may not take (bought with gold, or from your pack),
+    // and why - Put in offered the rest and said nothing of it
+    const walled = walledText(stores, 'guild', (k) => ps.name(k, 2));
+    if (walled) form.append(el('p', 'dfsocial-note', walled));
     out.push(form);
     const acts = el('div', 'dfsocial-acts');
     if (mine.length) {

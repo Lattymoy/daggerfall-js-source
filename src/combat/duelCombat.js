@@ -30,6 +30,7 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { armorValuesOf } from '../systems/equip.js';   // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s
 import { clawMetalDamage, CLAW_METAL_MAX } from './clawMetal.js';   // AUDIT CLAWS A1: the beast's claws' metal rides the sheet
+import { breakNormalPowerConcealment } from '../systems/concealment.js';   // RPT1026-FIGHTS (STRIKE-UNVEILS): the striker's own concealment, on its blow that lands
 import { DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SKILL_MAX, DUEL_RACE_MAX, DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, CARD_VITAL_MAX, CAST_EFFECTS_MAX, DUEL_SWINGS } from '../net/wire.js';
 
 /** The four skills a blow reads, in the order the wire carries them (`sk`): the weapon's own (Archery for a bow, the
@@ -143,10 +144,13 @@ export const DUEL_STAND_IN = Object.freeze({
 });
 /** AUDIT C&C H5: THE STAND-IN, the one construction every host's roll and count takes - DUEL_STAND_IN stood up by the one
  *  stub, unarmoured (equip.js armorValuesOf, DFU's 100 on every part: with no table the stock core read 0, an armour
- *  past any armour, and a blow landed 3 in 100), and fresh each call (a spell's count writes on it). */
-export function duelStandIn() {
+ *  past any armour, and a blow landed 3 in 100), and fresh each call (a spell's count writes on it). RPT1026-FIGHTS
+ *  (STRIKE-UNVEILS): `striker` the entity whose blow it takes (`struckBy` - the host's player), unveiled when the blow lands
+ *  (resolveDuelStrike); none for a spell's count, whose caster its damage arms already unveil. */
+export function duelStandIn(striker = null) {
   const { stub } = duelStub(DUEL_STAND_IN);
   armorValuesOf(stub);
+  if (striker) stub.struckBy = striker;
   return stub;
 }
 
@@ -156,6 +160,15 @@ export function duelStandIn() {
  * to the striker's machine) - with the striker's swing mods (a bow's shaft is the release's StrikeDown - playerWeapon.js
  * playerAttackOptions) and a backstab's chance when `backFacing` (no host's: no referee backstabs a player - BAL8).
  * `{ hit, dmg }`; nothing is taken from anyone here - the number is the referee's to clip.
+ *
+ * RPT1026-FIGHTS (STRIKE-UNVEILS; a private report: a Chameleon stayed up after its wearer attacked a player): the
+ * striking ENTITY - the stand-in's `struckBy` (duelStandIn(striker), the host's player) -
+ * loses its normal-power concealment when the blow lands damage, as the formula's tail takes it off the attacker
+ * (formulas.js calculateAttackDamage, EntityEffectManager.BreakNormalPowerConcealmentEffects). Here the formula's attacker
+ * is the stub, so the tail took it off a copy, and a Chameleon, an Invisibility or a Shadow stood through every blow on a
+ * player. The TRUE ones stand, as DFU's do. A spell's harm is counted with the striker as its caster
+ * (combat/siegeCombat.js siegeSpellNumbers), whose damage arms already break it (systems/effects.js
+ * handleAttackFromSource).
  */
 export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing = false } = {}) {
   const { stub, weapon } = duelStub(d.a, d.w ?? null);
@@ -171,6 +184,7 @@ export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing =
     weaponAnimTime: d.at ?? 0, rolls, say: null, onInflictPoison: null,
   });
   const n = Math.max(0, int(dmg));
+  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub
   return { hit: n > 0, dmg: n };
 }
 

@@ -340,7 +340,7 @@ test('CSA-G: the boats\' DFU clips - raising and lowering the sails play 380 and
   assert.deepEqual(door[0][2], [...trigger.position]);
 });
 
-test('CSA-G: a boat\'s two loops as Unity keeps them - both stop as its object goes inactive; as it comes back, AddComponent\'s playOnAwake plays both again from their starts, each at the volume it last had (the fast loop\'s never faded: its first, 1 - kept)', () => {
+test('CSA-G: a boat\'s two loops - both stop as its object goes inactive; as it comes back, the one that played plays again from its start (PIN MOVED, RPT1026-WORLD LOOP-AWAKE: Unity\'s playOnAwake woke both, the fast loop at its first volume, 1 - test/systems/comeSailAway/rpt1026_world_loops.test.js)', () => {
   const s = scene();
   const boat = s.place(1);
   const slow = boat.AudioSourceSlow, fast = boat.AudioSourceFast;
@@ -353,9 +353,8 @@ test('CSA-G: a boat\'s two loops as Unity keeps them - both stop as its object g
   s.world.inside = false;
   s.rt.UpdateBoatVisibility();
   assert.equal(boat.GameObject.activeSelf, true);
-  assert.deepEqual([slow.isPlaying, fast.isPlaying], [true, true], 'both, as their object comes back');
+  assert.deepEqual([slow.isPlaying, fast.isPlaying], [true, false], 'the slow loop, as it went; the fast one never played');
   assert.equal(slow.plays, plays + 1, 'a Play: from the clip\'s start');
-  assert.equal(fast.volume, 1, 'the fast loop at its AudioSource\'s first volume');
 });
 
 test('CSA-G: UpdateAudioSource - on a change of the mod\'s Audio volume every loop still heard takes SoundVolume x the new one and a loop faded to nothing stays there; no change, no update; SOUND-LIVE: a change of the game\'s SoundVolume runs it too (mutant: the mod\'s section alone watched)', () => {

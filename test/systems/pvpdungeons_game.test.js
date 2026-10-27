@@ -83,7 +83,8 @@ test('REST-WARN: poisoned, diseased or both, the rest asks first and says which;
 });
 
 test('REST-WARN in THE FOUR HOSTS: the street\'s, a building\'s, a dungeon\'s and the fixed city\'s rest each ask before the window - its Yes the one way to it, nothing ailing the window at once', () => {
-  const asks = /const restNow = \(\) => [\s\S]{0,300}?createRestWindow\([^\n]*\n(?:[^\n]*\n){0,2}?\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{[^\n]*new DecisionBoxWindow\(\{ rows: ail,[^\n]*return; \}\s*\n\s*restNow\(\);/;
+  // PIN MOVED (AUDIT RPT1026 L3): world.js's restNow is declared beside the bed's press it carries (`const bed = ..., restNow`)
+  const asks = /(?:const|, ) ?restNow = \(\) => [\s\S]{0,300}?createRestWindow\([^\n]*\n(?:[^\n]*\n){0,2}?\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{[^\n]*new DecisionBoxWindow\(\{ rows: ail,[^\n]*return; \}\s*\n\s*restNow\(\);/;
   for (const host of ['world.js', 'worldModes.js', 'dungeonContext.js', 'exterior.js']) {
     const src = readFileSync(new URL(`../../src/scenes/${host}`, import.meta.url), 'utf8');
     assert.match(src, asks, `${host}: the rest asks first (exterior.js - the fixed city - was the host left out)`);

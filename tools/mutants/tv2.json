@@ -52,7 +52,7 @@
   {
     "name": "TV2-route-swims",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (goal === 0 && isWater(bx, by)) return -1;\n",
+    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n",
     "new": "",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
@@ -342,7 +342,7 @@
   {
     "name": "AUDIT-DEEP-T2-5-swim-the-corner",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by)) return -1;\n",
+    "old": "  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n",
     "new": "",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"

@@ -141,7 +141,10 @@ the player kicks their camera, 13.5 for a blast (`landFx`'s `shake`, 3 for a bol
 14 m in `landFx` itself, and a kick under 0.15 dropped before `betterAmbience.weaponKick`; AUDIT 637 D15b) - the
 player's own, and with no test of whose it is, a peer's drawn missile and every fireball of the sun baby's wrath. In a
 crowd that casts, the screen shakes with everyone's spells. Whether another's spell should move my camera is a call
-about the feel, not a fault in the code: open, for Mac.
+about the feel, not a fault in the code: open, for Mac. (Answered 2026-10-26 by RPT1026-CLIENT, from a private report
+of Dagon's Breach's shaking without a pause: another player's drawn missile kicks at the share the player chooses - Settings >
+Accessibility > Motion, *Shake from other players' spells*, Half by default - and the sun baby's fire, mine and a foe's
+keep their whole kick; `hostMagic.js` peerKickShare.)
 
 **So the spell effects are not what made players desync**: they say nothing on the wire, and what they cost a frame is
 milliseconds. What they share with the desync is the look - a frame that runs long anywhere stands that player on every

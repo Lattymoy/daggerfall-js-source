@@ -393,5 +393,5 @@ test('SET5 the surfaces\' wiring: the pack\'s card and the Info box append the s
   assert.match(hud, /const powers = setPowerChips\(vitals\);/);
   assert.doesNotMatch(hud, /from '(?:\.\.?\/)+(?:[\w-]+\/)*sigilSetPowers\.js'/, 'the HUD never imports the powers (a cycle through the round\'s ticker)');
   const w = strip(read('src/scenes/world.js'));
-  assert.match(w, /setSetsWearer\(\(\) => playerEntity\);\s*setHudSetChips\(\(e\) => \[\.\.\.setHudChips\(e\), \.\.\.lootHudChips\(e\)\]\);/);   // LOOT5: the Legendary powers' chips beside the sets'
+  assert.match(w, /setSetsWearer\(\(\) => playerEntity\);\s*setHudSetChips\(\(e\) => \[\.\.\.setHudChips\(e\), \.\.\.lootHudChips\(e\), \.\.\.martialHudChips\(e\)\]\);/);   // LOOT5: the Legendary powers' chips beside the sets'; PIN MOVED (RPT1026-PROGRESS): and a martial path's passive
 });
