@@ -112,7 +112,8 @@ test('SPELL-HAND THE FOUR HOSTS RULE: every cast press is a cast\'s own - Activa
   assert.match(src('src/scenes/world.js'), /magic\.firePending\(\[\.\.\.cam\.pos\], _mfwd, gamePaused\(\)\);/);
   assert.match(src('src/scenes/exterior.js'), /magic\.firePending\(\[\.\.\.cam\.pos\], _mfwd, gamePaused\(\)\);/);
   assert.match(src('src/scenes/worldModes.js'), /magic\.firePending\(\[\.\.\.cam\.pos\], eyeDir\(\), overlayHeld\);/);
-  assert.match(src('src/scenes/dungeonContext.js'), /magic\.firePending\(eye, \[-aimed\[2\], -aimed\[6\], -aimed\[10\]\], !!opts\.breathHeld\?\.\(\)\);/);
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): online the dungeon's frame runs under its own window, so it hands that pause word too
+  assert.match(src('src/scenes/dungeonContext.js'), /magic\.firePending\(eye, \[-aimed\[2\], -aimed\[6\], -aimed\[10\]\], !!opts\.breathHeld\?\.\(\) \|\| dungeonPaused\(\)\);/);
 });
 
 // ---- THE CLASSIC LANE, THROUGH THE REAL RIG -------------------------------------------------------------------------

@@ -246,7 +246,12 @@ as lead and are recorded as such; each is one line to change if Mac calls otherw
   happens around the player at small scale"): the rain's, the snow's and the sand's boxes and the wind's wisps
   wrap round the eye they are handed, and round the head they were a little cube of weather about the sprite
   seen from 330 m outside it - they wrap round the view's own eye now (world.js `wxEye`), so the air in front
-  of the camera is full of it, as it is when you stand in it.
+  of the camera is full of it, as it is when you stand in it. RPT1026-WORLD RAIN-EYE (2026-10-20, a private
+  report: at sea in a storm, the camera scrolled out, the rain fell in a small box round the ship alone): on the
+  ground too - `wxEye` is the view's eye (`mwv.eye`) in every frame, where OW-WEATHER had kept the head's off the
+  Overworld, and a camera drawn from behind the head (the third person's, a helm's scrolled out over her
+  stern, the broadside's aim) stood outside the box round the head. Pinned by
+  `test/net/peer/fb1001_overworld.test.js` (OW-WEATHER's pin, moved).
 
 **The way in, and every way out.** In: the map's button, KeyO on the sheet, or the
 `TravelView` key if bound. The gate (world.js `travelViewAllowed`): the enhanced lane, a
@@ -327,7 +332,14 @@ change), and a plate's click is the same journey as a click on the town. No Trav
 **By the roads** (`systems/travel/travelRoute.js`). A* over the 1000x500 grid on Hazelnut's bytes -
 the very bytes Travel Options' follow key walks - with a step ON the road only where both
 ends carry the edge; a road 1, a track 1.6, the open 3.5 (x sqrt 2 diagonally); the sea
-refused (roadsProducer's WATER_BYTE); a straight run on one kind of ground folded into one
+refused (roadsProducer's WATER_BYTE) - but under his road (RPT1026-WORLD CAUSEWAY, 2026-10-26, a
+private report: on the bridge the guide turned off it and left the traveller stuck in the water, on the
+Grayidge-Westwall road): his road crosses 42 pixels whose byte is the sea's, and his painter
+paves each a strip of road tiles with the water either side (`world/road/roadPainter.js`
+ROAD_TILES), so a step ON his road is taken into the sea and through its corners (`pavedStep`);
+it had been refused, and the route left the road at the inlet's foot for the open pixel beside,
+across the water. A track's is not - his painter lays water over a track (a ford). Pinned by
+`test/systems/travel/rpt1026_world_causeway.test.js`. A straight run on one kind of ground folded into one
 leg. It walks roads; `world/road/roadNetwork.js route()` lays them - two laws, one compass.
 
 **The journeys are Travel Options'.** Two of the port's own (Ledger A, "THE TRAVEL VIEW'S

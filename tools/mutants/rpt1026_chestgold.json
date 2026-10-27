@@ -1,0 +1,352 @@
+[
+  {
+    "name": "CHESTGOLD-click-pays-purse",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {",
+    "new": "if (toPlayer && isGoldPieces(item)) {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the gold arm spends a chest's pile into the purse at the click again - the report's dupe: a refused settle leaves it in the chest too"
+  },
+  {
+    "name": "CHESTGOLD-chest-unmarked",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "  Object.defineProperty(goods, 'pileCoins', { value: true });",
+    "new": "  void goods;",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the shared chest's list carries no mark, so its coin is paid at the click"
+  },
+  {
+    "name": "CHESTGOLD-settle-pays-nothing",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "          if (coin > 0) d.pay?.(coin);",
+    "new": "          void coin;",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the settle lands and the purse never takes the coins - lost"
+  },
+  {
+    "name": "CHESTGOLD-purse-unsaid",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "...(cutting.length ? { cut: cutting } : {}), purse: coin, realm }),",
+    "new": "...(cutting.length ? { cut: cutting } : {}), realm }),",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the window does not tell the service the coins, which then pays the record nothing"
+  },
+  {
+    "name": "CHESTGOLD-cut-coins-uncounted",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "        + cuts.reduce((n, cut) => n + (coins(cut.give) ? cut.give.stackCount ?? 1 : 0), 0);",
+    "new": "        + 0;",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a handful cut off a pile is not counted - the service refuses the close"
+  },
+  {
+    "name": "CHESTGOLD-put-back-parks-on-pack",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    if (dir === 'put' && draft.includes(item) && !real.includes(item)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a piece taken out and put back is parked on the character's pack - in the pack and in the bin after the close"
+  },
+  {
+    "name": "CHESTGOLD-cut-put-back-loses-count",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "        if (source) { absorbStack(source, item); goods.splice(goods.indexOf(item), 1); }",
+    "new": "        if (source) { goods.splice(goods.indexOf(item), 1); }",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a part put back is not joined to the stack it was cut from"
+  },
+  {
+    "name": "CHESTGOLD-part-of-put-is-a-cut",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "      if (put.has(item.uid)) { if (!real.includes(landed)) real.push(landed); } else cutOf(item, landed);",
+    "new": "      cutOf(item, landed);",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "part of a piece put in this window, taken back, is cut from the bin it is not in yet - the close refused and the part lost"
+  },
+  {
+    "name": "CHESTGOLD-lost-hold-moves-on",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    if (lost) { chestShut(d, lost); return false; }",
+    "new": "    void lost;",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "told its hold is gone, the window keeps moving goods its close will not settle"
+  },
+  {
+    "name": "CHESTGOLD-lost-never-heard",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "r?.error === 'decor-shut')) lost = r.error;",
+    "new": "r?.error === 'decor-shut')) void r;",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the keep's refusal is dropped"
+  },
+  {
+    "name": "CHESTGOLD-hold-never-kept",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    if (lost || Date.now() - heldAt < DECOR_HOLD_KEEP_MS) return;",
+    "new": "    return;",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the window never asks the service to keep its hold - the 180 s shortcut as it was"
+  },
+  {
+    "name": "CHESTGOLD-coin-take-back-spends-park",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "      put.delete(uid);\n    } else { take.add(uid); takenOf.set(uid, item); }",
+    "new": "      put.delete(uid);\n      if (coins(item)) { const real = d.items?.() ?? []; const atPile = real.indexOf(item); if (atPile >= 0) real.splice(atPile, 1); }\n    } else { take.add(uid); takenOf.set(uid, item); }",
+    "tests": [
+      "test/systems/decor/decorchest.test.js"
+    ],
+    "note": "a pile put in and taken back spends the park on the pack, as when the take paid the purse - the pile lost"
+  },
+  {
+    "name": "CHESTGOLD-svc-lapsed-kept",
+    "file": "server-account/src/decorAccess.js",
+    "old": "    .bind(nowS + HOLD_S, mapId, buildingKey, id, player.id, character, nowS).run();",
+    "new": "    .bind(nowS + HOLD_S, mapId, buildingKey, id, player.id, character, -1).run();",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a hold run out is taken back by keeping it - a window whose chest another may have opened since"
+  },
+  {
+    "name": "CHESTGOLD-svc-lapse-unsaid",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  return row && row.player === player.id && row.char_id === character ? 'decor-lapsed' : 'decor-busy';",
+    "new": "  return 'decor-busy';",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a hold run out says someone else is using the chest"
+  },
+  {
+    "name": "CHESTGOLD-svc-settle-lapse-unsaid",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS))) return { error: await holdLost(db, player, character, mapId, buildingKey, id) };",
+    "new": "  if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS))) return { error: 'decor-busy' };",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the settle's refusal does not say the hold ran out"
+  },
+  {
+    "name": "CHESTGOLD-svc-pour-any-row",
+    "file": "server-account/src/decorAccess.js",
+    "old": "AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),",
+    "new": "AND uid = ?').bind(mapId, buildingKey, id, row.uid),",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a row cut since the read is poured as it was read - the handful in the guest's purse and the owner's chest"
+  },
+  {
+    "name": "CHESTGOLD-svc-pour-gone-row",
+    "file": "server-account/src/decorAccess.js",
+    "old": "AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),\n        mustChange(db),",
+    "new": "AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a row taken since the read is poured all the same"
+  },
+  {
+    "name": "CHESTGOLD-svc-pour-new-row",
+    "file": "server-account/src/decorAccess.js",
+    "old": "      db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT 0, 1 WHERE EXISTS (SELECT 1 FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ?)').bind(mapId, buildingKey, id),",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a piece put in since the read stays in the bin of a chest set private, hidden behind it"
+  },
+  {
+    "name": "CHESTGOLD-svc-purse-unchecked",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (purse !== undefined && (!Number.isSafeInteger(purse) || purse < 0)) { await release.run(); return { error: 'bad-item' }; }",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a purse that is no count is read as one"
+  },
+  {
+    "name": "CHESTGOLD-svc-count-unmatched",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (purse !== undefined && coin !== purse) { await release.run(); return { error: 'no-item' }; }",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the service pays its count whatever the window saw, and the window pays its own"
+  },
+  {
+    "name": "CHESTGOLD-svc-cut-coins-uncounted",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  for (const part of portions) if (isCoin(part.give)) coin += part.give.stackCount;",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a handful cut off a pile is not paid into the record"
+  },
+  {
+    "name": "CHESTGOLD-svc-record-unpaid",
+    "file": "server-account/src/decorAccess.js",
+    "old": "    if (purse !== undefined && coin > 0 && !creditSave(live, coin)) return 'no-data';",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the record is never paid the coins the bin let go - its next checkpoint the client's word alone"
+  },
+  {
+    "name": "CHESTGOLD-svc-older-paid-twice",
+    "file": "server-account/src/decorAccess.js",
+    "old": "    if (purse !== undefined && coin > 0 && !creditSave(live, coin)) return 'no-data';",
+    "new": "    if (coin > 0 && !creditSave(live, coin)) return 'no-data';",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a window from before, whose click paid its purse, is paid again by the service"
+  },
+  {
+    "name": "CHESTGOLD-words-lapsed",
+    "file": "src/net/accountClient.js",
+    "old": "  'decor-lapsed': () => t('account.refusal.decorLapsed', 'The chest was left open too long, so nothing in it moved. Open it again.'),   // RPT1026-CHESTGOLD",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the lapse is said as the service's trouble"
+  },
+  {
+    "name": "CARDBANK-claim-silent",
+    "file": "src/net/card/cardStakes.js",
+    "old": "{ wallet(k.reg).bank(g); say?.(cardBankedText(g)); }",
+    "new": "{ wallet(k.reg).bank(g); }",
+    "tests": [
+      "test/net/card/rpt1026_chestgold_cards.test.js"
+    ],
+    "note": "the stake comes home into the bank and nothing says so - the report's empty purse"
+  },
+  {
+    "name": "CARDBANK-heard-claim-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "host.cardStakes.claim(say); }",
+    "new": "host.cardStakes.claim(); }",
+    "tests": [
+      "test/net/card/rpt1026_chestgold_cards.test.js"
+    ],
+    "note": "a cash-out heard is claimed without its words"
+  },
+  {
+    "name": "CARDBANK-visit-claim-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "host.cardStakes.claim(say)).catch",
+    "new": "host.cardStakes.claim()).catch",
+    "tests": [
+      "test/net/card/rpt1026_chestgold_cards.test.js"
+    ],
+    "note": "the receipts kept across a reload are claimed without their words"
+  },
+  {
+    "name": "CLASSIC-put-unheld",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "const perform = (amount) => this._held('put', it, amount, () => {",
+    "new": "const perform = (amount) => ((go) => go())(() => {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic window's put runs itself again - the close settles nothing, and the piece put in stays in the pack"
+  },
+  {
+    "name": "CLASSIC-take-unheld",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "const perform = (amount) => this._held('take', it, amount, () => {",
+    "new": "const perform = (amount) => ((go) => go())(() => {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic window's take runs itself again - the close settles nothing, and the take is undone"
+  },
+  {
+    "name": "CLASSIC-held-never",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "    if (typeof commit !== 'function' || this.usingWagon || this.chooseOne) { go(); return; }",
+    "new": "    { go(); return; }",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "no move of the classic window goes through the chest's door"
+  },
+  {
+    "name": "CLASSIC-worn-from-chest",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "if (plan.equip && this.hooks.entity && !settlesOwnPieces(this.hooks)) {",
+    "new": "if (plan.equip && this.hooks.entity) {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "an Equip-mode take off the chest wears a piece the pack does not hold yet"
+  },
+  {
+    "name": "CLASSIC-gold-into-chest",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "    if (settlesOwnPieces(this.hooks) && !this.usingWagon) return;",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic gold field opens over the chest: the purse paid for a pile the service never names"
+  },
+  {
+    "name": "LADDER-wagon-over-chest",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (!state.usingWagon && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the wagon opens in a chest window: a piece moved to it is in the wagon and the pack at once"
+  },
+  {
+    "name": "LADDER-bag-over-chest",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (!state.usingBag && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the Materials Bag opens in a chest window: a piece stowed there is in the bag and the pack at once"
+  },
+  {
+    "name": "SPEC-floor-open",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    dropRefusal: () => t('decor.grants.noDrop', 'Shut the chest before you drop that.'),",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a shift-drop from the chest window lays a piece on the floor that the pack keeps as well"
+  }
+]

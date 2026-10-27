@@ -725,7 +725,8 @@ test('AUDIT NAME1 F1 (in a dungeon any open window FROZE the name layer): a cove
 
   // and the host arm that had the early return really does call the pass before it takes it
   const wm = rd('src/scenes/worldModes.js');
-  const arm = /if \(dungeonCtx\.uiOverlayActive\) \{[^\n]*\}/.exec(wm)[0];
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  const arm = /if \(windowHoldsDungeon\(dungeonCtx\.uiOverlayActive, aliveUnder\(\)\)\) \{[^\n]*\}/.exec(wm)[0];
   assert.match(arm, /host\.drawPeerNames\?\.\(\{ proj, view, eye: mwv\.eye \}\)/, 'the dungeon overlay arm draws the names');
   assert.ok(arm.indexOf('drawPeerNames') < arm.indexOf('return true'), '...before it returns, not after');
   assert.ok(arm.indexOf('drawPeerNames') < arm.indexOf('drawOverlay'), '...and under the overlay, not over it');

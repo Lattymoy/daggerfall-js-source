@@ -239,6 +239,20 @@ port's waters are a merchant's and a navy's), by class (`classFor`: the player's
 navy HUNTER (HUNTER_WEIGHT) once the player's notoriety passes HUNTER_AT. A ship past DESPAWN_BEYOND of every player,
 not fighting, is gone. The seeds are the waters' (`seedBaseOf`: the pixel and the day).
 
+**The rolls' wait is the real clock's (RPT1026-WORLD TRAFFIC-REAL, 2026-10-26; two private reports: pirates on the
+large map within seconds of each other, and an encounter failing every couple of seconds).** The host steps the sea on the world's
+clock (AUDIT NAV1: `dt * worldTimeScale()`), and the wait counted those seconds - so under the Overworld's x60 to x100
+(RATE-LAW) a roll came every one to two real seconds, not SEA-EASE's "a minute to two and a half" (below), and a ship left
+DESPAWN_BEYOND astern in a breath freed her berth for the next. Measured on the real host at x60 with a boat at her
+helm and "Many": five ships in twenty real seconds, the first in under one, each 760 to 940 m off - a few seconds of a
+journey from a pirate's lookout (ENGAGE_RANGE, 750 m) and her ring (HOSTILE_NEAR_M, 700 m). Each pirate a journey came
+near slowed it (OW6), stopped it inside her ring (NAV-H: Travel Options' enemies stop and its avoid roll - a failed roll
+the journey down, a won one fifteen seconds' grace) and held it at x1 there (TIME-DILATION). The host hands the director its real clock (`navalHost.js` the director's `real`), and the wait spends
+that clock's seconds (`navalDirector.js` trafficSeconds): a roll every SPAWN_EVERY of play at any time scale, the first
+FIRST_ROLL_S after the water is reached (a reset forgets the last reading - the time ashore is no wait spent). At x1 the
+two clocks are one and the traffic is as it was; the ships at sea, their sailing and their fights keep the world's time
+as before. Pinned by `test/systems/naval/rpt1026_world_traffic.test.js` (3); `tools/mutants/rpt1026_world.json`.
+
 ## Boarding, plunder and the quests (NAV-D)
 
 **Boarding** (`navalBoarding.js`): grapples thrown (GRAPPLE_S of haul, the two hulls BERTH_GAP apart), then the

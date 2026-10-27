@@ -212,8 +212,17 @@ Items have no unique ids: "the port's items have no UID" (`save.js`), and "the p
   checks, which answer an edited copy and a scripted checkpoint alike - and INT2 built them (2026-10-09,
   `06-Systems/Integrity-Arc.md`): every checkpoint is judged, and what it carries past the law or the budget holds the
   character's trade.
-- **Crashes.** A crash loses at most two minutes of play, and never a hand-over, because every hand-over is settled on
-  the service first.
+- **Crashes.** A crash loses at most five minutes of play (two until CHECKPOINT-5), and never a hand-over, because every
+  hand-over is settled on the service first.
+- **What a counter holds is still the player's (RPT1026-ITEMS HELD-OUT, 2026-10-26; three private reports: gear gone
+  after an Identify at the Mages Guild, Legendaries identified there missing once the client restarted for a new version).** A trade counter
+  stages the player's own pieces out of the pack until it closes (DaggerfallTradeWindow.TransferItem; D7), and DFU never
+  saves under it - the port checkpoints under it (the five minutes, a page hidden, a title exit). The save read the pack
+  alone, so a checkpoint while an Identify's lot or a sale's stood on the counter wrote the character without it, and a
+  session that ended before the next one came back to that record. Each counter holds its staged lot out while it stands
+  (`systems/item/heldOut.js` holdOut, from `ui/enhanced/enhancedTrade.js` and `ui/native/nativeTrade.js`), and the save
+  writes it at the pack's end (`systems/save/save.js` snapshotPlayer, heldOutOf); a Buy's basket is the shop's and is
+  never held. Pinned by `test/systems/rpt1026_items.test.js` (the judge's own ledgerPieces over the saves).
 - **What the service has not taken, the device keeps (RESCUE-SAVE).** The newest save handed to the session is written
   to the device with the `seq` it follows - once its put goes unanswered past a grace, at once on a hidden page, or when
   a put is refused or unanswered - and dropped once a put lands with nothing newer behind it. A join whose record still

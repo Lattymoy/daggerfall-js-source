@@ -894,6 +894,31 @@ export async function marketRead(ctx, player, env, { character, region, view, fa
   };
 }
 
+/**
+ * RPT1026-MARKET ARRIVE (private reports 2026-10-26: an axe paid for at a trader in a player's home that came nowhere,
+ * the gold spent all the same): THE ROAD ALONE - `{ character }`: the account's own market settled (settle: its listings and orders
+ * past their time closed and their goods sent back as deliveries, the couriers' loads into the Stores) and what is on its
+ * way to the account read, nothing else - no view's rows, no couriers' hubs, no medians. A piece bought or come back is a
+ * delivery that only a collect puts into the pack (collectGood, marketCollect), and the one reader of the road was the
+ * Market tab's: a trader's buyer, a piece taken back off a trader, a listing that ran out, waited on the service for good
+ * unless its player opened that tab - 154 such pieces stood uncollected for 102 players, 123 of them past a day. The game
+ * reads this as the character's session stands (net/marketArrivals.js) and collects what has arrived. Two round trips:
+ * the settle's reads (one batch, its writes only when there is work) and the road's with the balance (one batch).
+ */
+export async function marketRoad(ctx, player, env, { character } = {}) {
+  const { db, nowS } = ctx;
+  const refused = asks(player, { character, needRid: false });
+  if (refused) return refused;
+  const closed = shut(player, env);
+  if (closed) return closed;
+  const me = player.id;
+  const touched = await settle(ctx, player);
+  const [loads, pieces, goods, [bal] = []] = await readAll(db, [...roadReads(db, me), db.prepare('SELECT balance FROM marks WHERE account = ?').bind(me)]);
+  // AUDIT 30 U1's law: the Stores the settle moved answered, this character's, so the pages read them
+  const stores = await Promise.all([...touched].map((t) => t.split('|')).filter(([c]) => c === character).map(([c, m]) => storeOf(db, me, c, m)));
+  return { ok: true, road: roadFrom([loads, pieces, goods], nowS), balance: bal ? Number(bal.balance) : 0, stores };
+}
+
 // ─── INT19: A CRAFTED PIECE OUT OF ITS SELLER'S RECORD ───────────────
 
 /** INT19: the record a crafted piece was taken out of, kept while the market holds it (piece_escrow) - one statement,
@@ -923,11 +948,14 @@ const NO_ESCROW = (p) => `NOT EXISTS (SELECT 1 FROM piece_escrow WHERE provenanc
 /** INT19: A CRAFTED PIECE HANDED ON - sold, won: its record no longer the market's to give back (piece_escrow), and the
  *  ledger's escrow row let go (ledger.js: a piece the service hands out is no row) - the buyer's piece is the craft's
  *  record's, minted at the pack as ever, and the first record to show it writes it down again; a copy claiming it is
- *  settled by the craft's record, as every crafted piece's claim is (ledgerStep). `p` the provenance's SQL - null unless
- *  the sale was decided - over `binds`. */
+ *  settled by the craft's record, as every crafted piece's claim is (ledgerStep) - its owner's again (RPT1026-LEDGERLAW:
+ *  `handed_to` cleared). `p` the provenance's SQL - null unless the sale was decided - over `binds`. */
 const pieceSoldSteps = (db, p, binds) => [
   db.prepare(`DELETE FROM item_uids WHERE uid = (${p}) AND state = 'escrow' AND EXISTS (SELECT 1 FROM piece_escrow WHERE provenance = item_uids.uid)`).bind(...binds),
   db.prepare(`DELETE FROM piece_escrow WHERE provenance = (${p})`).bind(...binds),
+  // RPT1026-LEDGERLAW: the sale moved its owner, so the craft's record is the owner's again - whoever the service last
+  // handed it to (ledger.js CRAFT_RECORD_SQL) sold it, and a seller that kept it is the copier
+  db.prepare(`UPDATE products SET handed_to = NULL WHERE provenance = (${p}) AND handed_to IS NOT NULL`).bind(...binds),
 ];
 
 // ─── A LISTING (10.2) ────────────────────────────────────────────────
@@ -1716,9 +1744,9 @@ export async function marketUnorder(ctx, player, env, { order: id, rid } = {}) {
 
 /** COLLECT: `{ character, delivery, rid }` - a piece whose courier has arrived, or whose listing expired or was
  *  removed, answered to this character's pack once; asked again with the same id, answered again. */
-export async function marketCollect(ctx, player, env, { character, delivery: id, rid, realm = null } = {}) {
+export async function marketCollect(ctx, player, env, { character, delivery: id, rid, realm = null, landed = false } = {}) {
   // MARKET-ANY: a piece from a pack goes into the collecting character's realm record - its own door, the record first
-  if (realm != null) return collectGood(ctx, player, env, { character, delivery: id, rid, realm });
+  if (realm != null) return collectGood(ctx, player, env, { character, delivery: id, rid, realm, landed: landed === true });
   const { db, nowS } = ctx;
   const refused = asks(player, { character, rid });
   if (refused) return refused;
@@ -1752,18 +1780,27 @@ export async function marketCollect(ctx, player, env, { character, delivery: id,
  * where it stands, asked before any other word) in the collect's own batch, the delivery marked collected and GUARDED
  * (mustChange: a delivery another collect took first rolls the record back). Answers the piece's record and the record's
  * new sequence (`realm.seq`); asked again with the same id, the delivery again.
+ * RPT1026-MARKET COLLECT-LANDED (private reports 2026-10-26: legendaries went missing as they came off the market, their
+ * returns collected seven minutes before the report), VENDOR-LOST's departure from AUDIT REALM L1-F2 for a collect too: a
+ * collect's tab needs its answer (the piece is the answer), so "one on" ended its session (realmGoldAct's `needsAnswer`)
+ * with the piece in the record and none in the pack. A record one on from where the tab asked, under its lease, with a
+ * delivery this id collected, is that collect, landed: answered as the repeat with the record's sequence (`oneOn`), and
+ * the tab takes the piece into the pack it never reached. Only to a tab that says it reads it so (`landed`) - an older
+ * tab abandons its session on any repeat, so the record holds the piece at its join as it always did.
  */
-async function collectGood(ctx, player, env, { character, delivery: id, rid, realm }) {
+async function collectGood(ctx, player, env, { character, delivery: id, rid, realm, landed = false }) {
   const { db, bucket, nowS } = ctx;
   const refused = asks(player, { character, rid });
   if (refused) return refused;
   const me = player.id;
   const side = await realmActFirst(db, me, character, realm);
-  if (side.error) return side;
-  if (!side.at) return { error: 'market-gold-realm' };
+  const oneOn = landed && side.error === 'seq' && side.seq === Number(realm?.seq) + 1 ? side.seq : null;
+  if (side.error && !oneOn) return side;
+  if (!oneOn && !side.at) return { error: 'market-gold-realm' };
   const answer = (d, extra = {}) => ({ ok: true, ...extra, delivery: { id: d.id, why: d.why }, item: goodOf(d.item) });
   const prior = await db.prepare('SELECT * FROM market_deliveries WHERE player = ?1 AND rid = ?2').bind(me, rid).first();
-  if (prior) return answer(prior, { repeat: true });
+  if (prior) return answer(prior, { repeat: true, ...(oneOn ? { realm: { seq: oneOn } } : {}) });
+  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no collect of this id: a move this tab never made
   const closed = shut(player, env);
   if (closed) return closed;
   if (!idOk(id)) return { error: 'bad-delivery' };
@@ -1786,6 +1823,11 @@ async function collectGood(ctx, player, env, { character, delivery: id, rid, rea
   } catch {
     await dropIfUnnamed(db, bucket, me, side.at.id, prep.key);   // AUDIT REALM2 S3
     const moved = await recordMovedOf(db, me, side.at);
+    // RPT1026-MARKET COLLECT-LANDED: the first asking's batch landed while this one ran (its answer given up on, and asked
+    // again) - that collect, as VENDOR-LOST answers a buy's
+    const first = landed && moved?.error === 'seq' && moved.seq === side.at.seq + 1
+      ? await db.prepare('SELECT * FROM market_deliveries WHERE player = ?1 AND rid = ?2').bind(me, rid).first() : null;
+    if (first) return answer(first, { repeat: true, realm: { seq: moved.seq } });
     if (moved) return moved;
     return { error: 'market-gone' };   // another collect took it first
   }

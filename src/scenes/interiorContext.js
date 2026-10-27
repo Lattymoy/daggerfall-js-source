@@ -959,6 +959,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     rotors,      // WM4b: the machinery's moving parts; the host turns and draws them
     parentPt,   // Q4-v: the quest mount parents marker positions through the same transform
     lights,
+    roomLamps: Object.freeze(lights.slice()),   // AUDIT RPT1026 J1: the lamps the room was built with - DARK-ROOM's law reads these (world/interior/interiorLights.js roomAmbient), never the live list a placed lamp joins and a lamp taken out leaves
     iilFireplaces,   // IIL1
     texRemap,
     floorMaterials,   // IF1: the combined mesh's material names, for Immersive Footsteps' floor walk

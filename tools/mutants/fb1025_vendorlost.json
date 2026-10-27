@@ -29,8 +29,8 @@
   {
     "name": "VENDORLOST-the-repeat-without-the-record-s-sequence",
     "file": "server-account/src/market.js",
-    "old": "if (prior) return answer(prior, { repeat: true, ...(oneOn ? { realm: { seq: oneOn } } : {}) });",
-    "new": "if (prior) return answer(prior, { repeat: true });",
+    "old": "  if (prior) return answer(prior, { repeat: true, ...(oneOn ? { realm: { seq: oneOn } } : {}) });\n  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no sale of this id",
+    "new": "  if (prior) return answer(prior, { repeat: true });\n  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no sale of this id",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "VENDORLOST-the-batch-s-catch-answering-seq",
     "file": "server-account/src/market.js",
-    "old": "    if (first) return answer(first, { repeat: true, realm: { seq: moved.seq } });\n",
-    "new": "",
+    "old": "      ? await db.prepare('SELECT * FROM market_sales WHERE buyer = ?1 AND rid = ?2').bind(me, rid).first() : null;\n    if (first) return answer(first, { repeat: true, realm: { seq: moved.seq } });\n",
+    "new": "      ? await db.prepare('SELECT * FROM market_sales WHERE buyer = ?1 AND rid = ?2').bind(me, rid).first() : null;\n",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -140,7 +140,7 @@
   {
     "name": "VENDORLOST-the-host-handing-no-settle",
     "file": "src/scenes/vendorHost.js",
-    "old": "        settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop),   // VENDOR-LOST: a kept buy's piece collected as the stall opens\n",
+    "old": "        settle: () => arrivals.sweep(),   // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected\n",
     "new": "",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"

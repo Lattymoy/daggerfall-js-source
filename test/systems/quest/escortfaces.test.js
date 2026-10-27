@@ -13,7 +13,7 @@ import {
   createFaceDetailsPerson, createFaceDetailsFoe, resolveFaceImage, layoutEscortFaces,
   initEscortFaces, addEscortFace, dropEscortFace, clearEscortFaces, escortQuestEnded,
   getEscortFacesSaveData, restoreEscortFacesSaveData, _escortFaces,
-  drawEscortFaces, escortFacesBottom, setEscortQuestAway, escortStartY,
+  drawEscortFaces, escortFacesBottom, setEscortQuestAway, setEscortQuestGone, escortStartY,
   ESCORT_MAX_FACES, CHILDREN_FACTION_ID,
 } from '../../../src/ui/hud/hudEscortFaces.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
@@ -206,6 +206,7 @@ test('QUEST-SHELF-FACES: a quest set aside (Abandon) draws no escort face and th
   assert.deepEqual(drawn(), [], 'every quest away, no column');
   assert.equal(escortFacesBottom(), 0);
   setEscortQuestAway(null);
+  setEscortQuestGone(null);   // RPT1026-MISC FACE-ORPHAN: the bridge wires the gone half too - let go with the away half
   clearEscortFaces();
 });
 

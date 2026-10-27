@@ -436,6 +436,23 @@ export function interiorRestPlace({
 }
 
 
+/**
+ * RPT1026-MISC BED-PRESS-INDOOR (a private report: a rest in a Fighters Guild hall woke to the rough night's line though
+ * the hall has beds, a bed clicked or not): WHERE A BUILDING'S REST LIES, AND WHAT IT IS - the interior host's restKind and restPoint, one
+ * law. A rented room, the player's house (an online home's bed among them - interiorRestPlace's `homeBed`) or a ship is a
+ * bed; so is a BED PRESSED (CSA-J's bed's click, Roleplay Realism's BedActivation), as the street's and the dungeon's
+ * hosts already price it (world.js, dungeonContext.js `_restFromBed`) - the interior host alone asked only the place, so
+ * a member resting in a guild hall slept the hall's boards rough whatever they pressed. A hearth in reach is a camp's
+ * rest (SURV4: AUDIT SURV-TIERS), and the bare floor of a hall the Rest key rests in is rough, as SURV4 chose. `place` is
+ * interiorRestPlace's bag; answers `{ kind, where }` - the rest point's own shape (REST1).
+ * @param {{ houseOwned?: boolean, isShip?: boolean, room?: any } | null} place
+ * @param {{ pressedBed?: boolean, fireNear?: boolean }} [o]
+ */
+export function interiorRestSpot(place, { pressedBed = false, fireNear = false } = {}) {
+  if (pressedBed || place?.houseOwned || place?.isShip || place?.room) return { kind: 'bed', where: null };
+  return fireNear ? { kind: 'camp', where: 'fire' } : { kind: 'rough', where: null };
+}
+
 export class RestSession {
   /** ROAD-B B5: `isTopWindow` is DaggerfallRestWindow's own
    *  `uiManager.TopWindow != this` (TickRest :364/:399), handed down by

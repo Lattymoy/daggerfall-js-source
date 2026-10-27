@@ -51,6 +51,9 @@ The host's tail of `activateDecor` hands its window to it, at the same count of 
   keeps its own chest contents in its own save (`onlineHomes.js` `homesGoneFrom`'s note). A second character finds the
   chests empty. That is the design; making storage account-wide is the owner's call.
 - Goods already poured into a building's scene by a lost answer before this fix are not moved back.
-- The 180-second hold on a shared chest is never refreshed (`decorAccess.js` `HOLD_S`'s note): a long sort closes with
-  "Someone else is using this chest" and moves nothing. Nothing is lost.
+- ~~The 180-second hold on a shared chest is never refreshed (`decorAccess.js` `HOLD_S`'s note): a long sort closes with
+  "Someone else is using this chest" and moves nothing. Nothing is lost.~~ Something was gained: a gold pile taken in that
+  sort was the purse's at the click, so the refused close left it in the chest too - a dupe (two private reports,
+  2026-10-26). RPT1026-CHESTGOLD: the window keeps its hold while it is used, a hold run out says so ('decor-lapsed'),
+  and the gold reaches the purse only when the settle lands.
 - `ACCOUNT_VERSION` is not moved. The client does not depend on the service's change.

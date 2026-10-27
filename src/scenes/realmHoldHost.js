@@ -14,6 +14,7 @@ import { possessedItemLists } from '../systems/item/possessedItems.js';
 import { setCarriedFilter } from '../systems/peerWord.js';   // AUDIT AUTO-HOLD: a peer's word never hands the reader a piece it carries
 import { withoutCarried } from '../world/interior/interiorShared.js';
 import { t } from '../systems/textManager.js';   // L10N4: the notice in the player's language
+import { setTradeHeldSaid } from '../net/realm/realmTradeLaw.js';   // RPT1026-MARKET HOLD-SAID: the standing hold, said by every refusal of it
 
 /** How many locked pieces one notice names; the rest are counted. */
 const NAMED_MAX = 3;
@@ -71,6 +72,9 @@ export function wireRealmHolds(session, { say, entity }) {
   setRealmLocked(session?.lockedKeys ?? []);
   setStowedKeys(session ? stowedReader(session) : () => null);
   setCarriedFilter(session ? (list) => withoutCarried(list, carriedPieces(entity)) : null);
+  // RPT1026-MARKET HOLD-SAID: a `trade-held` refusal anywhere (a harvest, a craft, a sale) says this hold's own notice -
+  // its reason, its piece, its end - as the session last heard it
+  setTradeHeldSaid(session ? () => tradeHeldNotice(null, session.tradeHeld, session.tradeHeldWhy) : null);
   if (!session) return;
   session.onTradeHeld = (/** @type {string | null} */ prev, /** @type {string | null} */ now, /** @type {any} */ why) => { const text = tradeHeldNotice(prev, now, why); if (text) say(text); };
   session.onLockedKeys = (/** @type {string[]} */ keys) => setRealmLocked(keys);

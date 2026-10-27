@@ -237,16 +237,35 @@ export function edgeKind(a, b, bit, roads, tracks) {
 }
 
 /**
+ * RPT1026-WORLD CAUSEWAY (a private report, 2026-10-26, on Tulune's Grayidge-Westwall road: on the bridge the guide
+ * turned off it and left the traveller stuck in the water): A ROAD OVER THE WATER IS THE ROAD'S. Hazelnut's road
+ * crosses 42 pixels the step law called the sea (WOODS bytes at the beach line, roadsProducer's WATER_BYTE) - the
+ * Grayidge inlet's (72, 131), one at (324, 205) and the forty of a causeway at (515-559, 296-316) - and his painter
+ * paves water under a road (roadPainter.js ROAD_TILES, column 0: tile 46, no water corner), so each is a dry strip of
+ * road tiles with the water either side (the inlet's: 256 tiles, two wide, its ground at or over the ocean's
+ * elevation). The step law refused them, so a route along the road left it at the causeway's foot and went round by
+ * the open pixel beside - from Grayidge's road in (72, 132) to (73, 131) across the inlet's east arm, into the water
+ * the causeway stands in. A step ON his road (both ends carrying the edge) is taken onto a water pixel and through a
+ * corner of it. A track is not: his track table paints water over it (TRACK_TILES column 0 - a ford). Travel Options'
+ * follow key walks his bytes whatever the ground under them.
+ */
+function pavedStep(ax, ay, bx, by, bit, width, height, roads) {
+  if (!roads || ax < 0 || ay < 0 || bx < 0 || by < 0 || ax >= width || ay >= height || bx >= width || by >= height) return false;
+  return edgeKindAt(ay * width + ax, by * width + bx, bit, roads, null) === 0;
+}
+
+/**
  * AUDIT OW4 J3: THE STEP LAW, ONE HOME - the search walks it, routeGround's pieces fold it: the kind of ground (0 a road,
  * 1 a track, 2 open) a step from (ax, ay) to its neighbour (bx, by) through edge `bit` walks on, or -1 where it is
  * refused. `goal`: 0 an ordinary step; 1 onto the goal (the sea not asked - the traveller may ask for the shore); 2 onto
  * an exempt goal (a place: nor the peaks' law). `leaving`: the step starts in the start's own peaks (AUDIT OW4 J1).
  */
 function stepKind(ax, ay, bx, by, bit, width, height, roads, tracks, isWater, openBlocked, goal, leaving) {
-  if (goal === 0 && isWater(bx, by)) return -1;
+  // RPT1026-WORLD CAUSEWAY: his road's own step is ground - asked only where the sea would refuse it (pavedStep)
+  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;
   // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own
   // ROADS 6, whose stricter half would refuse a coast road's own diagonal)
-  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by)) return -1;
+  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;
   // TV-BEYOND: past the table there is no road's byte - the open ground (a column off the west edge read the row above's)
   const off = ax < 0 || ay < 0 || bx < 0 || by < 0 || ax >= width || ay >= height || bx >= width || by >= height;
   const kind = off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);
@@ -422,7 +441,7 @@ function search(from, to, { roads, tracks, isWater, width, height, bounds, margi
           if (sea.voyage && Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue;   // PASSAGE: ashore at the port she sails for
           nl = sea.again ? ASHORE : LEFT; kindIx = 5; step = diag * ROUTE_COST.open + SEA_COST.shore;
         }
-      } else if (wet && (seaGoal || n !== goal)) {   // a place's own pixel on the water is walked into (the harbour town), a spot on it sailed to
+      } else if (wet && ((seaGoal && n === goal) || (n !== goal && !pavedStep(cx, cy, nx, ny, STEP_BIT[d], width, height, roads)))) {   // a place's own pixel on the water is walked into (the harbour town), a spot on it sailed to; RPT1026-WORLD CAUSEWAY: his road's step onto it walked
         if (layer !== ASHORE) continue;   // no boat to hand: the sea refused
         nl = AFLOAT; kindIx = 4; step = diag * SEA_COST.sea + SEA_COST.shore;   // the launch
       } else {

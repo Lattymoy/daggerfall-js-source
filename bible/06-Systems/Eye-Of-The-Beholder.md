@@ -1096,6 +1096,18 @@ of every view of every sheet against its group's median found no other (the next
 and a standing pose). Pins: `test/net/skin2_class_skins.test.js` ACRO-SHORT (the exact 110 pixels, the sweep, her idle
 wheel through `spriteFor`); mutants `tools/mutants/skin2.json` +5. `01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
+**SPELL-SHORT (RPT1026-MISC, 2026-10-26, a private report: the Fighter Mage (female) skin shrank in third person while
+casting, and no other skin the reporter tried did).** The same fault in the mod's OWN art. Set 10's
+spell sheets (archive 112374, records 45-59: the readied spell, its walk and its cast) draw the woman 77-81 pixels from
+hood to boot, where every other sheet of hers draws her 107-112 (the idle 110), and the mod's XML gives each of those
+records scale 1.0 - so in Daggerfall Unity with the mod, as here, she shrank by a quarter as a spell came up. Measured
+over the sixteen sets, every other set's spell sheets stand as tall as its idle or taller (a raised arm). The records
+carry the scale they were drawn at now, 80/110 (`eotbSprite.js` `EOTB_RECORD_SCALE`, `eotbRecordScale`), read by the
+same `spriteOffset` ACRO-SHORT's class scale is, so the body, its placement and the peers see it; the mod's XML offset is
+kept and divided by the scale with the figure it centres. A DEPARTURE from the mod's XML (Port-Ledger A, SPELL-SHORT).
+Pins: `test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js` (1: the vendored PNGs measured, every spell record and
+cast frame within 6% of her idle, every other set and record unscaled); mutants `tools/mutants/rpt1026_misc.json` (3).
+
 ## SPRITE-FLICKER (2026-10-07): the view that went back
 
 Mac: "I notice with eye of the beholder sprite movement, it's very finicky when moving and then switching to run at

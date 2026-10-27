@@ -287,7 +287,7 @@ test('RR2 riding seams: CanRun through the host reads, the axes clamped, the loo
 
 test('RR2 the trample and the charge on the hosts: the contacts each frame, the walker retired, the watchman minted where they stood, the installs', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(rrRidingOn\(\) && player\.riding && player\.isRunning\) rrRidingContacts\(\);/, 'TrampleCivilians && IsRiding && IsRunning, after the rig\'s frame');
+  assert.match(w, /if \(rrRidingOn\(\) && player\.riding && player\.isRunning && !rideOnTheRoad\(\)\) rrRidingContacts\(\);/, 'TrampleCivilians && IsRiding && IsRunning, after the rig\'s frame - PIN MOVED (RPT1026-MISC JOURNEY-TRAMPLE): never under a journey');
   // AUDIT-RR F15: the contacts live in systems/roleplayRealism/rrRidingHost.js now and BOTH outdoor hosts stand one on their own reads
   const rh = rd('src/systems/roleplayRealism/rrRidingHost.js');
   assert.match(rh, /latch\.pickpocketAttempted = true;/, 'PickpocketByPlayerAttempted, the latch (AUDIT-RR2 G24: the pickpocket\'s own)');

@@ -175,8 +175,9 @@ export async function tradeRealm({ db, bucket, rand, nowS }, playerId, body) {
     WHERE id = ?6 AND player = ?7 AND lease = ?8 AND seq = ?9`;
   // INT4: the ledger follows both: what left each record, then what came into each - a piece passing between them lands
   // where it went
-  const movesA = ledgerMoves(db, { player: t.a_player, char: t.a_char, seq: t.a_seq + 1, nowS }, piecesA[0], piecesA[1]);
-  const movesB = ledgerMoves(db, { player: playerId, char: id, seq: seq + 1, nowS }, piecesB[0], piecesB[1]);
+  // AUDIT RPT1026 C1: each side's pieces handed on by the other's account - the craft's record moves from the account it names alone
+  const movesA = ledgerMoves(db, { player: t.a_player, char: t.a_char, seq: t.a_seq + 1, nowS }, piecesA[0], piecesA[1], { from: playerId });
+  const movesB = ledgerMoves(db, { player: playerId, char: id, seq: seq + 1, nowS }, piecesB[0], piecesB[1], { from: t.a_player });
   try {
     await db.batch([
       db.prepare(move(other)).bind(t.a_seq + 1, bytesA, keyA, nowS, movedA, t.a_char, t.a_player, t.a_lease, t.a_seq),

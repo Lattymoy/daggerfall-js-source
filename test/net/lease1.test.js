@@ -807,6 +807,8 @@ test('LEASE1 THE GAME: a hello to a lease room says `ls` 1 and to the hub none; 
   now += LEASE_HAND_MIN_MS;
   cabin.tick(page.s, at, pixel, now);
   assert.equal(lanes.length, 1, 'the same lane');
-  assert.deepEqual(sent(lane).slice(-2).map((f) => f.l ?? f.t), ['page.mac2', 'pose'], 'and the page\'s newer lease, ahead of the next tick\'s pose');
+  // PIN MOVED (RPT1026-SECNET, LINE-STALL): a lane that has heard nothing for PING_MS is asked (its ping, which carries no
+  // lease ahead of it), so the ping is read past
+  assert.deepEqual(sent(lane).filter((f) => f.t !== 'ping').slice(-2).map((f) => f.l ?? f.t), ['page.mac2', 'pose'], 'and the page\'s newer lease, ahead of the next tick\'s pose');
   cabin.close();
 });

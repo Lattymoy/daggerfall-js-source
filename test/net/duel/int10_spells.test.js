@@ -58,7 +58,7 @@ test('INT10 EVERY PATH A REFEREE\'S: the caster sends a number counted on its ow
   assert.ok(w.includes("const n = duelMgr.blow('spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });"), 'the duel\'s');
   assert.ok(w.includes("const n = wildFight.blow(peerId, 'spell', { p: campToWire(player.feetAt()), d: siegeCastClamp(harm, false) });"), 'the zone\'s');
   assert.ok(w.includes('return harm > 0 && siegeSession.cast(peerId, siegeCastClamp(harm, false));'), 'a siege\'s');
-  assert.ok(rd('src/scenes/dungeonContext.js').includes("castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut ? (id, sp) => opts.wildSpellOut(id, sp) : null),"), 'the zone\'s dungeons, the zone\'s own send');
+  assert.ok(rd('src/scenes/dungeonContext.js').includes("castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),"), 'the zone\'s dungeons, the zone\'s own send');   // PIN MOVED (RPT1026-FIGHTS HALL-SPELLS): asked at the cast
   assert.equal(/duelSpellFromWire|spell: duelSpellOf|level: Math\.max\(1, Math\.min\(30/.test(w), false, 'no spell goes out whole for a target to apply');
   assert.ok(w.includes('const spell = allyCastSpell(d?.spell, { stranger: !mate });'), 'a peer\'s cast at me: its beneficial families alone');
 });
