@@ -105,6 +105,10 @@ test('HOME-STRANDED the building\'s scene keeps what a piece of the save\'s own 
   b.decorItems.p9 = [{ uid: '2222222222222222', name: 'Elsewhere' }];
   await walkIn(player, PRIVATE);
   assert.deepEqual(Object.keys(player.sceneCache.scenes.get(BUILDING).decorItems).sort(), ['own1', 'p9']);
+
+  const house = { sceneCache: restoreSceneCache(createSceneCache(), { permanentScenes: [], scenes: [{ sceneName: BUILDING, decor: [{ id: 'own1' }], decorItems: { own1: [{ uid: '1111111111111111' }] } }] }), items: [] };
+  await bootSweep(house);
+  assert.equal(house.sceneCache.permanent.has(BUILDING), false, 'a piece standing in the building holds its own goods: nothing stranded, nothing kept');
 });
 
 test('HOME-STRANDED a share takes the chest\'s goods out of every cached scene, and a pour the poured ones, so a checkpoint writes no ghost back', () => {
