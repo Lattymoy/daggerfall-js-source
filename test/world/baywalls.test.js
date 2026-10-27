@@ -178,7 +178,7 @@ test('TS7 the ground under a carrier never read for the terrain (its wall made w
   assert.equal(shut, 1);
   assert.ok(g.blocked.every((v) => v === 1), 'nothing left to place on');
   assert.match(rd('src/scenes/pixelBuild.js'), /townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut\)/);
-  assert.match(rd('src/scenes/world.js'), /const g = townGroundOf\(yl, measures, shut\);/);
+  assert.match(rd('src/scenes/world.js'), /const g = townGroundOf\(yl, measures, shut, townYardsOf\(dfLocation\)\);/);   // PIN MOVED (IC-PROPS): and what the town tells its yards' law - its fabric's ways, a capital's own yards
   assert.equal(typeof registerTownWall, 'function');
 });
 

@@ -57,6 +57,11 @@ export const FABRIC = Object.freeze({
   pileClear: 2,      // a woodpile's cell this far from every house at the least (never before a door)
   pileGate: 3,       // and this far from its yard's gates
 });
+/** A port block's name - a cell no fabric is laid on (a left-out cell, a wall's carrier, a capital's own blocks, gardens and
+ *  lakes: world/townOutline.js TOWN_OUTLINE_BLOCK, world/townWalls.js townWallBlockName, world/tamrielCapitals.js). IC-PROPS:
+ *  here, the leaf, so the yards' law (world/merchantYards/merchantYardSites.js) reads the one test (townFabricStand.js
+ *  re-exports it). */
+export const isPortCell = (name) => /^TES[AGLW]/i.test(String(name ?? ''));
 /** A cell's place in the plan. */
 export const FABRIC_KIND = Object.freeze({ off: 0, built: 1, main: 2, pave: 3, side: 4, alley: 5, yard: 6, open: 7 });
 /** The town map's bytes that are a building's (a building type's plus one - DFLocation.BuildingTypes 0 to 22; 24 is

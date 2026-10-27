@@ -61,7 +61,7 @@ import { tooFarAwayText } from '../player/activate.js';
 import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talk/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { REGION_PEOPLE } from '../formats/mapsTables.js';   // WW-R: each region's people, a province's its own
-import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show
+import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames, generateBuildingName } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show; IC-PROPS: a building of another town named by its own
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint, toneTaste } from '../systems/talk/talkTopics.js';
 import { yardDirectoryRows } from '../systems/merchantYards.js';   // YARDS-FOUND: the town's yards in its directory
@@ -338,6 +338,20 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         return v?.[0] ? v[0].replace(/\.$/, '') : null;   // L10N3d: generateBuildingName's own localized "palace" (FormulaHelper.cs:3069)
       },
     };
+  }
+  /** IC-PROPS (bible/03-World/Arena-Provinces.md IC-PROPS): A BUILDING'S NAME IN THE TOWN IT STANDS IN - the directory's row
+   *  where that town is the talk's own (its topics', the player's pixel's), else BuildingNames' law over that town's own
+   *  names (`place` a DFLocation: a neighbouring slice of the Imperial City, a town across a pixel's edge) - so a door's
+   *  plaque and its shop name the door's own building, never the player's town's building under the same key. `data` the
+   *  door's merged record (systems/talk/talkTopics.js buildingDataForDoor). */
+  function buildingNameIn(place, data) {
+    if (!data) return '';
+    const mapId = (place?.mapTableData?.mapId ?? 0) >>> 0;
+    if (!place || !topics || mapId === ((topics.mapId ?? 0) >>> 0)) return directory.find((e) => e.buildingKey === data.buildingKey)?.name ?? '';
+    const opts = nameOpts();
+    if (!opts) return '';
+    const regionName = place.regionName ?? '', shownRegion = Number.isInteger(place.regionIndex) ? getLocalizedRegionName(place.regionIndex, () => regionName) : regionName;
+    return generateBuildingName(data.nameSeed, data.buildingType, { ...opts, locationName: place.name, regionName, shownLocationName: getLocalizedLocationName(mapId, place.name), shownRegionName: shownRegion, factionId: data.factionId });
   }
 
   function rebuildDirectory() {
@@ -1627,6 +1641,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     },
     get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
+    buildingNameIn,   // IC-PROPS: a door's building named in its own town
     get locationName() { return shownCityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
     _debug: () => ({
       mode: getInteractionMode(), overlay: !!overlay, people: peopleNow()?.name ?? null,

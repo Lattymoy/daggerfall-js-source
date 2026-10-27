@@ -156,11 +156,14 @@ test('AUDIT 68 S22-door-repeated-block-identity: the second instance of a shared
   const arenaTarget = lift(WORLD, '  function arenaDoorTarget(e) {', '\n  }');
   // PIN MOVED (IC-GRAND, test/world/icgrand_arena.test.js): the stair asks standsArena (Daggerfall's, or a grid laying its block)
   const { homeTownBlocks } = await import('../../src/systems/online/onlineHomes.js');   // HOME-PRICE: the door's building carries its town's size
-  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk', 'isUndercroftDoor', 'DOOR_TYPE', 'standsArena', 'undercroftLocation', '_undercrofts', 'homeTownBlocks',
+  // PIN MOVED (IC-PROPS): the door's building named in its own town (townTalk.buildingNameIn) and its own town's book
+  // (systems/discovery.js townBookOf) - the press's and the plaque's one source
+  const { townBookOf } = await import('../../src/systems/discovery.js');
+  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk', 'isUndercroftDoor', 'DOOR_TYPE', 'standsArena', 'undercroftLocation', '_undercrofts', 'homeTownBlocks', 'townBookOf',
     `${shifted}\n${arenaTarget}\nreturn ({\n${targets}\n${resolve}\n});`)(
     buildingDoors, { pixelTranslation: () => [500, 0, -300] }, new Map([['4,4', dfLoc]]),
-    new Map([['4,4', { locBlocks: loc.blocks, locOrigin }]]), () => {}, talk.buildingDataForDoor, { directory: [] },
-    () => false, { DUNGEON_ENTRANCE: 2 }, () => false, () => null, new WeakMap(), homeTownBlocks);
+    new Map([['4,4', { locBlocks: loc.blocks, locOrigin }]]), () => {}, talk.buildingDataForDoor, { directory: [], buildingNameIn: () => '' },
+    () => false, { DUNGEON_ENTRANCE: 2 }, () => false, () => null, new WeakMap(), homeTownBlocks, townBookOf);
   const [first, second] = host.doorTargets();
   assert.notEqual(second.door.matrix[12], at(RMB_SIDE + 10)[12], 'a door hit is world-frame');
   assert.equal(host.buildingDataForDoor(first).buildingKey, talk.makeBuildingKey(0, 0, 0));
@@ -168,6 +171,7 @@ test('AUDIT 68 S22-door-repeated-block-identity: the second instance of a shared
   assert.equal(b.buildingKey, talk.makeBuildingKey(1, 0, 0), 'the second copy\'s door is the second copy\'s building');
   assert.equal(b.nameSeed, 22, 'and its shop is the second pool draw, not the first\'s');
   assert.equal(b.townBlocks, 2, 'HOME-PRICE: and its town\'s size, 2 x 1 blocks, off the door\'s own location');
+  assert.deepEqual([b.townBook, b.townName], [townBookOf(dfLoc), 'Twinford'], 'IC-PROPS: and its own town\'s book and name');
   // the static-building arm (buildingUnderRay's pixel-local hit) agrees
   assert.equal(host.buildingDataForDoor({ dfBlock: B, recordIndex: 0, pixelKey: '4,4', door: { matrix: at(RMB_SIDE + 10) }, pixelLocal: true }).buildingKey, talk.makeBuildingKey(1, 0, 0));
 });

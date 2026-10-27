@@ -24,7 +24,7 @@ import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { provinceKeyBeyondBay } from '../tamriel/tamrielLand.js';
 import { CAPITALS, BLOCK_M } from '../tamrielCapitals.js';
 import { townWallGatesOf } from '../townWalls.js';
-import { FABRIC_CELLS, fabricGrid, planSteps } from './townFabric.js';
+import { FABRIC_CELLS, fabricGrid, planSteps, isPortCell } from './townFabric.js';
 import { townFabricModel, townFabricModelSliced, FABRIC_PIECES } from './townFabricModel.js';
 import { styleOf } from './urbanRecords.js';
 
@@ -35,9 +35,9 @@ export const TOWN_FABRIC_MODEL_BASE = 5000000;
 export const TOWN_FABRIC_KEEP = 24;
 /** How far in from a city's gate its main street starts, metres. */
 export const GATE_IN_M = 12;
-/** A port block's name - a cell no fabric is laid on (a left-out cell, a wall's carrier, a capital's own blocks, gardens and
- *  lakes: world/townOutline.js TOWN_OUTLINE_BLOCK, world/townWalls.js townWallBlockName, world/tamrielCapitals.js). */
-export const isPortCell = (name) => /^TES[AGLW]/i.test(String(name ?? ''));
+/** A port block's name - a cell no fabric is laid on (world/urban/townFabric.js isPortCell; IC-PROPS: it lives there now,
+ *  where the yards' law reads it too - world/merchantYards/merchantYardSites.js). */
+export { isPortCell };
 
 /** Is a location a town the fabric dresses (the header's WHICH). */
 export function fabricTown(dfLocation) {
