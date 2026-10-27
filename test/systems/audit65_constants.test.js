@@ -42,7 +42,7 @@ import { FNT_ASCII_START } from '../../src/formats/fntFile.js';
 import { ArrowFlight } from '../../src/combat/arrowFlight.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import {
-  BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS, EXPLOSION_RADIUS, MISSILE_COLLIDER_RADIUS,
+  BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS, EXPLOSION_RADIUS, MISSILE_COLLIDER_RADIUS, ARROW_FLIGHT_SPEED,
   missileHitsCapsule, sphereOverlapsCapsule,
 } from '../../src/systems/spellcast.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../../src/player/motor.js';
@@ -228,14 +228,16 @@ test('AUDIT 65 CV-2: a blast meets the PLAYER at 4.0 + 0.35, two-sided, through 
 
 test('AUDIT 65 CV-2: an enemy shaft meets the player at 0.45 + 0.35, two-sided, through the real ArrowFlight', () => {
   const open = () => new ArrowFlight({ getGpuMesh: () => null, collider: { raycast: () => Infinity, heightAt: () => -100 } });
-  // MISSILE_SPEED * 0.05 = 1.25 per step, so a shaft loosed at z = -1.25
-  // stands exactly on the player's z after one update and its lateral
-  // offset from the capsule axis is read at face value.
+  // A step of 1.25, so a shaft loosed at z = -1.25 stands exactly on the
+  // player's z after one update and its lateral offset from the capsule
+  // axis is read at face value. PIN MOVED (BAL-ARCHERY, Balance-Arc.md
+  // section 18): the step was MISSILE_SPEED * 0.05; a shaft flies at
+  // ARROW_FLIGHT_SPEED now, so the step's time is read off that.
   const shaft = (lateral) => {
     const hits = [];
     const f = open();
     f.fire([lateral, 0.9, -1.25], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
-    f.update(0.05, { playerFeet: [0, 0, 0], playerHeight: CAPSULE_HEIGHT, onPlayerHit: (m) => hits.push(m) });
+    f.update(1.25 / ARROW_FLIGHT_SPEED, { playerFeet: [0, 0, 0], playerHeight: CAPSULE_HEIGHT, onPlayerHit: (m) => hits.push(m) });
     return hits.length;
   };
   assert.equal(MISSILE_COLLIDER_RADIUS + PLAYER_BODY_RADIUS, 0.8, "DFU's SphereCast rim at the player (:339)");

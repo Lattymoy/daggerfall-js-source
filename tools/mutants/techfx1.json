@@ -222,7 +222,7 @@
   {
     "name": "TECHFX1-the-landings-at-the-loose",
     "file": "src/combat/techniques.js",
-    "old": "return { t: q.at + d / MISSILE_SPEED, at: at(q.from, q.dir, d) };",
+    "old": "return { t: q.at + d / ARROW_FLIGHT_SPEED, at: at(q.from, q.dir, d) };",
     "new": "return { t: q.at, at: at(q.from, q.dir, d) };",
     "tests": [
       "test/systems/techfx1.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "TECHFX1-AUDIT-a-landing-aliased",
     "file": "src/combat/techniques.js",
-    "old": "return { t: q.at + d / MISSILE_SPEED, at: at(q.from, q.dir, d) };",
-    "new": "return { t: q.at + d / MISSILE_SPEED, at: q.to };",
+    "old": "return { t: q.at + d / ARROW_FLIGHT_SPEED, at: at(q.from, q.dir, d) };",
+    "new": "return { t: q.at + d / ARROW_FLIGHT_SPEED, at: q.to };",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -692,8 +692,8 @@
   {
     "name": "TECHFX1-AUDIT-a-literal-speed",
     "file": "src/combat/techniques.js",
-    "old": "h / MISSILE_SPEED + 0.2",
-    "new": "h / 25 + 0.2",
+    "old": "h / ARROW_FLIGHT_SPEED + 0.2",
+    "new": "h / 33.75 + 0.2",
     "tests": [
       "test/systems/techfx1_audit.test.js"
     ]

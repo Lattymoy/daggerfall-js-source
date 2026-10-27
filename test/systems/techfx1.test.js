@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setPref, _resetForTests, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { setUiSkin } from '../../src/systems/uiSkin.js';
 import { SOUND } from '../../src/systems/soundClips.js';
-import { MISSILE_SPEED } from '../../src/systems/spellcast.js';
+import { ARROW_FLIGHT_SPEED } from '../../src/systems/spellcast.js';
 import * as LR from '../../src/systems/loot/lootRarity.js';
 import * as T from '../../src/combat/techniques.js';
 import * as FX from '../../src/combat/technique/techniqueFx.js';
@@ -388,7 +388,7 @@ test('TECHFX1 THE SHOTS\' MOMENTS: a bow\'s release kicks its springs; a Piercin
     const mine = shafts.find((x) => Math.hypot(x.at[0] - p[0], x.at[2] - p[2]) < 0.05);
     assert.ok(mine, `a puff where the arrow from ${f.from.map((x) => x.toFixed(2))} meets the slope (${p.map((x) => x.toFixed(2))})`);
     assert.ok(Math.abs(mine.at[1] - p[1]) < 0.05 && Math.abs(mine.o.ground - mine.at[1]) < 1e-9, `on the ground under it: ${mine.at[1]} against ${p[1]}`);
-    const due = f.t + s / MISSILE_SPEED;
+    const due = f.t + s / ARROW_FLIGHT_SPEED;   // PIN MOVED (BAL-ARCHERY, Balance-Arc.md section 18): a volley's shafts fly at the arrow's speed
     assert.ok(mine.t >= f.t && Math.abs(mine.t - due) <= 1 / 60 + 1e-6, `when it lands: ${mine.t.toFixed(3)}, due ${due.toFixed(3)}`);
   }
   for (let i = 1; i < shafts.length; i++) assert.ok(shafts[i].t >= shafts[i - 1].t, 'in order');
