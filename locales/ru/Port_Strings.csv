@@ -6034,6 +6034,7 @@ quest.mark.many,"{n, plural, one {# задание} few {# задания} many 
 quest.mark.more,"ещё {n}"
 quest.offer.questorBusy,"Вы ещё не закончили работу, которую вам здесь дали: {quest}."
 quest.offer.questorBusyAbandon,"Если вы не можете его завершить, вы можете отказаться от него на вкладке «Задания» в меню паузы."
+quest.offer.questorBusyAbandonClassic,"Если вы не можете его завершить, вы можете от него отказаться: в меню паузы нажмите «Controls», затем Esc, и выберите его в разделе «Задания»."
 quest.offer.questorBusyUnnamed,"Вы ещё не закончили работу, которую вам здесь дали."
 quest.outcome.filed,"Итог: {text}"
 quest.possessedChild.shamTrail,"Предмет (_item_) доставлен, но никакой даэдра из ребёнка не вышел. Ребёнок (_child_) лишь поблагодарил меня и убежал с предметом. Что-то здесь не так. Опекун (_guardian_) живёт в таверне _tavern_, и там кто-нибудь, возможно, знает больше."

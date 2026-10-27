@@ -62,6 +62,7 @@
 // billboard indices ride along for the questor flat-pick (Q4-iii).
 
 import { QuestMachine, TICKS_PER_SECOND, holdsQuestorDoor } from '../../systems/quest/machine.js';   // RPT1026-QUESTS ABANDON-ALWAYS: a quest holding its questor's door is a journal row
+import { isEnhanced } from '../../systems/uiSkin.js';   // AUDIT RPT1026 H2: the questor's close names the way to Abandon on the skin worn
 import { clockCounts } from '../../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
 import { repairActiveQuests, relayOnlineDungeons, relayMovedLayouts, relayBuiltDungeon } from '../../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
 import { t, getLocalizedFactionName, textRevision } from '../../systems/textManager.js';   // QUEST-RESET: the restart's words in the player's language (L10N4); QL12: a guild's name in it, its quests' titles kept while the text stands
@@ -315,8 +316,12 @@ export function questorBusyRows(quest) {
   return [{ text: name ? t('quest.offer.questorBusy', 'You have not finished the work you were given here: {quest}.', { quest: name })
     : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true },
   // RPT1026-QUESTS ABANDON-ALWAYS: and the way out - every quest that shuts this door is a row of the pause menu's Quests
-  // tab now, with its Abandon (the questor offers work again the moment it is set aside: machine.js shelveQuest)
-  { text: t('quest.offer.questorBusyAbandon', 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.'), center: true }];
+  // tab now, with its Abandon (the questor offers work again the moment it is set aside: machine.js shelveQuest).
+  // AUDIT RPT1026 H2: the way on the skin worn - the classic pause (DFU's OPTN00I0) has no tabs, and its Controls opens the
+  // port's whole menu, whose face (Escape) holds the Quests tab (AUDIT QUESTLINES UI-6's own way, ui/questlines/qlJournal.js
+  // offerWaitingWords)
+  { text: isEnhanced() ? t('quest.offer.questorBusyAbandon', 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.')
+    : t('quest.offer.questorBusyAbandonClassic', 'If you cannot finish it, you can abandon it: in the pause menu, press Controls, then Escape, and choose it under Quests.'), center: true }];
 }
 /** QUEST-RESET: why a quest could not be restarted, in words (machine.js restartRefusal) - the player's language (L10N4). */
 export function restartRefusalText(reason) {

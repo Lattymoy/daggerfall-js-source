@@ -1693,7 +1693,7 @@ older build's reading (that is the older build's own `=== 1`); its words say so 
 | 250 | Azimuthal Vectors: on the dead end the Guildmagister never pays for the trouble and the player is sent back | The same: the dead end pays once its catalogue page has been read (`_I.03_ used do _S.16_`), and nothing said so | RPT1026-QUESTS CATALOG-READ |
 | 161 | Hidden quests show no text, no Track and no Abandon | Driven through the pause window: a hidden quest under Show hidden draws its entries, Track, Abandon and Unhide | NOT REPRODUCED |
 | 262 | Directions to a quest's house said to be marked on the map show nothing | Asked through the real TopicTree and AnswerPipeline on the freeware's Daggerfall (classic and both town packs), both ways a player asks - the person, and the house itself in Where Is's General list: the residence, undiscovered before, is discovered under the quest's name and its plate stands on the town map (18 of 18 draws, 12 asking the person and 6 the house). The host files it under the key the town map reads (`region index:location name`, both sides). STAR-PLATE and STREETS-TAB (FIELD BUGS 2026-10-20c) shipped before this build; a building already found is not marked again (DFU's) | NOT REPRODUCED |
-| 212 | Prince Lhotun only makes a noise after his letter | His letter comes at a standing over 25 (S0000988), but S0000001 starts only when the main story's director says (S0000999 `_S.40_`: Lhotun available, a standing of at least 0, level 5 done); until then his click is his own. Likely a character below level 5 | NEEDS DATA (the character's level and its S0000999 / S0000001 state) |
+| 212 | Prince Lhotun only makes a noise after his letter | His letter is the main story's director's own (S0000999 `_S.45_: when _S.14_ and _S.15_` - a standing of at least 0, level 5 done), and S0000001 starts on `_S.40_: when _S.00_ and _S.14_ and _S.15_`: a player holding the letter has both. What stands between them is `_S.00_`, `when Prince_Lhotun is available` - his own click while no running quest holds a Person of his faction (WhenNpcIsAvailable; a quest set aside holds none); until then his click is his own. AUDIT RPT1026 H3: this row said "likely a character below level 5", which the letter itself rules out | NEEDS DATA (the character's running quests that hold a Person of Prince Lhotun's faction, 382, and its S0000999 and S0000001 state after a click on him) |
 | 230 | Disconnected just after accepting Morgiah's step to the King of Worms; the quest is gone and Morgiah will not talk | The accept fell between the realm's checkpoints | NEEDS STAFF (read the character's S0000004 state; restore, or STORY-AGAIN once it has ended) |
 
 ### RPT1026-QUESTS ABANDON-ALWAYS (111, 112, 113, 43, 145, 183) - `src/systems/quest/machine.js`, `src/scenes/quest/questBridge.js`, `src/ui/enhanced/enhancedMenu.js`
@@ -1721,7 +1721,10 @@ backbone, a letter's errand) stays off the tab. Port-Ledger A, QUEST-SHELF's row
 
 THE FOUR HOSTS. None grows: the bridge's walk and the pause window are read by every host.
 
-THE WORDS. `quest.offer.questorBusyAbandon`, `pause.journal.unwritten`, drafted in the thirteen whole languages.
+THE WORDS. `quest.offer.questorBusyAbandon`, `pause.journal.unwritten`, drafted in the thirteen whole languages. AUDIT
+RPT1026 H2: on the classic skin the close named "the Quests tab of the pause menu", which DFU's classic pause window
+lacks (AUDIT QUESTLINES UI-6's own defect); there it says UI-6's way - Controls, then Escape, then Quests
+(`quest.offer.questorBusyAbandonClassic`, drafted in the thirteen).
 
 PINS. `test/systems/quest/rpt1026_quests.test.js` (3 of 10: the paid-and-unwritten quest through the real bridge and the
 pause window's Quests tab - its row, its note, Abandon twice, the hall's door open, the Abandoned row, the Reclaim; what
@@ -1773,6 +1776,17 @@ Port-Ledger A, NO-ASKS-AGAIN's row, widened.
 
 PINS. `test/systems/quest/rpt1026_quests.test.js` (1 of 10: the Queen's own lines through the real parser, machine and
 click, No twice and a Yes). PIN MOVED: `test/systems/quest/fb1013e_noasks.test.js` (the census law list, six). Mutants: 2.
+
+AUDIT RPT1026 H1 (the audit's lane H, read cold): NARROWED. Three of the four Nos are answers the questlines' sheets read
+as the player's choice - N0B00Y09's `_nononono_` is its "Keep it for the Guild" and its `refused` ending (the Mages Guild
++3, the Dark Brotherhood -3), $CUREWER's `_S.15_` its `spared` ending, 80C0XY00's `_school_` its kept secret. Forgotten a
+tick after the No, N0B00Y09 settled `loyal` (+2, nothing to the Brotherhood) under a journal that still named the choice,
+and $CUREWER's refusal ended `failed` - with the questlines on, as they are by default and always online. A stamped
+quest's No that its sheet reads (a choice's `sets`, a task an objective or an outcome binds:
+`noAsksAgain.js:"export function sheetReadTasks(quest) {"`) is DFU's again, asked once. The reported queen's
+(M0B11Y18's sheet reads nothing of `_S.20_`) still asks again, and while the questlines are off all four do. Pinned by
+`test/systems/quest/audit_rpt1026_quests.test.js` (the stamped and unstamped census, N0B00Y09 and $CUREWER through the
+real bridge and layer; red at the batch head); `tools/mutants/audit_rpt1026_quests.json`.
 
 ### RPT1026-QUESTS QUEST-ZONE (67) - `src/systems/quest/place.js`
 
@@ -1865,7 +1879,14 @@ climb the service moved. Not a DFU member. `11-Multiplayer/Arena.md` RPT1026-QUE
 PINS. `test/systems/quest/rpt1026_quests.test.js` (1 of 10: the real account service over node:sqlite, the receipt signed
 with the relay's key, the claim out of reach then reached). Mutants: 2.
 
-Mutants in all: `tools/mutants/rpt1026_quests.json` (29, all dead). Re-aimed by content where these fixes moved the text
+Mutants in all: `tools/mutants/rpt1026_quests.json` (29, all dead; AUDIT RPT1026 H5 re-aimed its close-row record to the
+row chosen by skin). AUDIT RPT1026 H5: givesBackNo, written between clearingNo and asksOnAClick, took the text
+`questaudit3_life.json`'s QA3L-NO-ASKS-clearer-named-twice was aimed by, so at the batch head that record mutated
+givesBackNo and survived while clearingNo's named-once rule was checked by nothing; re-aimed by content onto clearingNo's
+return, dead. AUDIT RPT1026 H4: four of the batch's laws survived a one-character mutation of its own pins - the "Nothing is written"
+note drawn on a stamped row that has objectives, givesBackNo's toted item and its named-once rule, and besideSpot's second
+ring; each is pinned now (`test/systems/quest/audit_rpt1026_quests.test.js`, The Lost Artifact itself paid with its
+journal taken back, stamped and not, through the real bridge and the Quests tab). Re-aimed by content where these fixes moved the text
 they read, and judged again with their lists (59, all dead): `fb1020c_crowdclear.json` (the-people-unread, items-moved,
 always-moved, floor-unasked), `kvarhold.json` (a-named-site-drawn-again, any-dungeon-drawn-again, the-local-scope-left),
 `questor_said.json` (the-row-off-centre), `questreset1.json` (QRESET-questor-rung).

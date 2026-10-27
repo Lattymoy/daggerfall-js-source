@@ -6759,7 +6759,7 @@ of it one of noAsksAgain.js:"export const CLICK_TRIGGERS", and the task named by
 the No variable cleared. The next click asks again, a Yes then runs as a first Yes does, and a No that does something
 else stays DFU's - a No whose every action is a `clear` of its asking task alone is the author's own ask-again, and asks
 again too (QUEST-AUDIT III; C0C00Y10's healer, below), and so does one whose every action hands back the item its click
-toted (RPT1026-QUESTS NO-GIVES-BACK, below). Two doors: Quest.update each tick (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a prompt")
+toted (RPT1026-QUESTS NO-GIVES-BACK, below) - unless a stamped quest's questlines sheet reads it (AUDIT RPT1026 H1). Two doors: Quest.update each tick (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a prompt")
 and the end of Quest.restoreSaveData (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a save"), so a save
 taken after such a No loads asking again, as do a party member's copy and a reclaimed quest.
 
@@ -6769,7 +6769,7 @@ O0B10Y00, R0C10Y00, R0C10Y01, R0C10Y02, R0C10Y18, R0C11Y19). There the No is the
 on, and the trigger is Foe.injuredTrigger, a latch that holds until the foe is stood again: re-armed, the demand would
 come back the next tick, every tick, until a Yes gave the goods away. In the shipped corpus the law re-arms The Lost
 Child and, since QUEST-AUDIT III, C0C00Y10's healer (below); since RPT1026-QUESTS, the four Nos that hand an item
-back (NO-GIVES-BACK, below).
+back (NO-GIVES-BACK, below) - of them, with the questlines on, the queen's alone (AUDIT RPT1026 H1).
 
 C0C00Y10 (the healer's `prompt 1014 yes _S.11_ no _no_` under `clicked npc _healer_ say 1013`) answers a No with `_no_
 task: clear _S.10_` - the author's own ask-again - which Prompt.cs's `allowRearm = false` defeats in DFU: the healer said
@@ -6917,7 +6917,8 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   (`questBridge.js:"if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;"`), an Abandoned row once set aside
   (so its Reclaim stands), its detail says "Nothing is written in your journal for this quest yet." where it has no
   objectives, and the questor's close (QUESTOR-SAID) adds the way out: "If you cannot finish it, you can abandon it from
-  the Quests tab of the pause menu." A quest with nothing written and no questor the player met (the main story's
+  the Quests tab of the pause menu." (AUDIT RPT1026 H2: on the classic skin, whose pause window has no tabs, the way
+  AUDIT QUESTLINES UI-6 names - Controls, then Escape, then Quests.) A quest with nothing written and no questor the player met (the main story's
   backbone, a letter's errand) stays off the tab. Port-Ledger A, QUEST-SHELF's row, widened.
 - **QUEST-CROWD** - two quests' Persons never stand in one pick box. Five reports of a questline's contact missing from
   the tavern its journal named (A Hand of Cards with Raiders at the Gate, both at one inn; The Long Haul; Raiders at the
@@ -6937,6 +6938,11 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   (`noAsksAgain.js:"export function givesBackNo(quest, task, prompt) {"`) asks again once that item is back in the pack.
   The corpus has four: M0B11Y18 `_S.20_`, 80C0XY00 `_school_`, $CUREWER `_S.15_`, N0B00Y09 `_nononono_`
   (`test/systems/quest/fb1013e_noasks.test.js`'s census, PIN MOVED to six). Port-Ledger A, NO-ASKS-AGAIN's row, widened.
+  AUDIT RPT1026 H1, NARROWED: three of the four are answers the questlines' sheets read as the player's choice
+  (N0B00Y09's "Keep it for the Guild" and its `refused` ending, $CUREWER's `spared`, 80C0XY00's kept secret); forgotten,
+  N0B00Y09 ended `loyal` and lost the standing its refusal moves, and $CUREWER's refusal ended as a failure. A stamped
+  quest's No that its sheet reads (`noAsksAgain.js:"export function sheetReadTasks(quest) {"`) is DFU's, asked once; the
+  queen's still asks again, and with the questlines off all four do (`test/systems/quest/audit_rpt1026_quests.test.js`).
 - **QUEST-ZONE** - online a quest's remote dungeon is never one the open zone seals. The report: a vampire's lair in the
   middle of the open zone, its door sealed ("The way in is sealed. Only the halls marked on the map are open today."). Of
   the real MAPS.BSA's dungeons 205 stand inside the Wrothgarian cut, and their doors open only on the day their hall is
