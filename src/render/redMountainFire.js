@@ -44,6 +44,22 @@ const SAMPLE_M = TERRAIN_SIZE / 128;
 const f1 = (v) => Number(v).toFixed(5);
 const v3 = (a) => `vec3(${a.map(f1).join(', ')})`;
 
+/** THE CONE'S COLOUR ON THE HORIZON (0-255): its lower flanks dark ash, its summit cone red-brown rock - laid over the
+ *  far views' tint (the overworld's, which reads the relief's high bytes as a snowfield) by how far the cone lifts the
+ *  land there (metres): the ash whole by `ash`, the rock coming in from `rock[0]` to `rock[1]` at `rockShare`. */
+export const ASH_TINT = Object.freeze({ ash: Object.freeze([58, 52, 49]), rock: Object.freeze([96, 58, 44]), full: 600, rockFrom: 2200, rockTo: 3800, rockShare: 0.7 });
+/** A far view's tint `rgb` (0-255) under the cone's `lift` (metres over the land there). Pure. */
+export function ashTint(rgb, lift) {
+  if (!(lift > 0)) return rgb;
+  const A = ASH_TINT, s = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const k = s(0, A.full, lift), r = s(A.rockFrom, A.rockTo, lift) * A.rockShare, out = [0, 0, 0];
+  for (let c = 0; c < 3; c++) {
+    const ash = rgb[c] + (A.ash[c] - rgb[c]) * k;
+    out[c] = Math.round(ash + (A.rock[c] - ash) * r);
+  }
+  return out;
+}
+
 /** Sample i of the profile's distance from the centre (metres): the reach by the square of its share, so the samples
  *  crowd the crater and the summit cone, where the profile turns. */
 export const profileR = (i) => ((i / (FIRE.profile - 1)) ** 2) * RED_MOUNTAIN_REACH;

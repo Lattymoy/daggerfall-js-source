@@ -85,6 +85,11 @@ rim and the travel view stand the smooth cone at a pixel's centre. The far field
 cell (`half` FAR_CELL / 2), as its byte is its highest. The middle ring runs the kernel itself. So the summit stands on
 the horizon to the far field's rim (361 km).
 
+**Its colour.** The far views paint a pixel by the overworld's tint, which reads a byte over 104 as a snowfield, so
+the relief's swell stood white on the horizon. The cone's own colour is laid over it by how far the cone lifts the land
+(`render/redMountainFire.js` ashTint, `farRing.js` ringTintAt at the ring's, the middle ring's and the far field's tint):
+dark ash on its flanks, red-brown rock up its summit cone.
+
 **The haze lies under the summits** (`render/horizonHaze.js` SUMMIT_HAZE, `summitHold` in both lanes' far ring). The
 far ring held every distant hill at 85% of the fog's colour, and the cone 60 km off was a faint shape in a tan band
 (seen in the game). Ground over 3,700 m - the land's old ceiling, so the cone alone - eases that hold down to 30% of

@@ -352,6 +352,24 @@ test('RED-MOUNTAIN its fire: the profile the far draw hides behind the cone\'s o
   const top = pv.axisAt(1).map(Number);
   assert.deepEqual([top[0] - 100, top[1] - 2000, top[2] + 300].map((v) => Math.round(v)), [FIRE.plume.lean[0], FIRE.plume.height, FIRE.plume.lean[1]], 'its top over the foot, downwind (east, north)');
   glslFunctions(PLUME_FS, {});   // its fragment stage reads as GLSL
+  // the cone's colour on the horizon: the land's tint where it lifts nothing, its ash on its flanks, red-brown rock up its
+  // summit cone - at all three of the far views' tints (the ring, the middle ring, the far field)
+  const { ashTint, ASH_TINT } = await import('../../src/render/redMountainFire.js');
+  const { redMountainLiftAt } = await import('../../src/world/tamriel/redMountain.js');
+  const snow = [232, 236, 240];
+  assert.equal(ashTint(snow, 0), snow);
+  assert.deepEqual(ashTint(snow, ASH_TINT.full + 1), [...ASH_TINT.ash], 'the flank its ash');
+  const crown = ashTint(snow, ASH_TINT.rockTo + 1);
+  assert.deepEqual(crown, ASH_TINT.ash.map((v, c) => Math.round(v + (ASH_TINT.rock[c] - v) * ASH_TINT.rockShare)), 'the summit its rock');
+  assert.ok(crown[0] > crown[2] + 30, 'red over blue at the summit');
+  const ringSrc = read('src/render/farRing.js');
+  assert.match(ringSrc, /const tint = ringTintAt\(overworldTint\(climate, byte\), px, py, relief\);/);
+  assert.match(ringSrc, /tintAt: \(x, y, byte, v\) => ringTintAt\(overworldTint\(climAt\(x, y, v\), byte\), x, y, !!inputs\.relief\),/);
+  assert.match(ringSrc, /const tintAt = \(x, y\) => ringTintAt\(overworldTint\(climateOf\(x, y\), byteAt\(x, y\)\), x, y, !!inputs\.relief\);/);
+  const { ringTintAt } = await import('../../src/render/farRing.js');
+  const cpx = Math.floor(redMountainFrame().bx), cpy = Math.floor(redMountainFrame().by);
+  assert.deepEqual(ringTintAt(snow, cpx + 3, cpy, true), ashTint(snow, redMountainLiftAt(cpx + 3, cpy) * UNIT));
+  assert.equal(ringTintAt(snow, cpx + 3, cpy, false), snow, 'none without the landforms\' lift');
   // both programs carry the one hiding law
   for (const fs of [LAVA_FS, PLUME_FS]) assert.match(fs, /bool hidden\(vec3 p, float margin\)/);
   assert.equal(FIRE_PROGRAMS.length, 2);

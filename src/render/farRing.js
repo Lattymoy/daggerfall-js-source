@@ -74,7 +74,7 @@ import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '.
 import { overworldTint, isWaterPixel, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';   // FAR-SEA1: and the overworld's own water rule, for the ring's sea
 import { reliefByteHeight, cliffFadeAt, CLIFF_REACH, byteBeyond, byteBase } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay
 import { redMountainLiftAt, redMountainFrame, redMountainGround } from '../world/tamriel/redMountain.js';   // RED-MOUNTAIN: the volcano on the horizon, its lava's levels
-import { RedMountainFire } from './redMountainFire.js';   // RED-MOUNTAIN: its fire, drawn in this pass
+import { RedMountainFire, ashTint } from './redMountainFire.js';   // RED-MOUNTAIN: its fire, drawn in this pass; its ash on the horizon
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { RING_SEA_GLSL, FLORA_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
@@ -124,6 +124,9 @@ export const ringHeight = (byte, relief = false, fade = 1, beyond = 0) =>
  *  continent's share at its byte node (world/landforms.js byteBeyond: 0 on the Bay and its seam, past it the lift that
  *  goes on over the 7-bit top, CONTINENT_LIFT) - so the far ring, the middle ring's eased rim and the far field stand
  *  Skyrim's and the Jerall's peaks at the streamed ground's height, never a copy of the law. */
+/** RED-MOUNTAIN: a far view's tint at pixel (x, y) with the cone's ash and rock laid over it (render/redMountainFire.js
+ *  ashTint), with the landforms' lift alone - where the cone stands. */
+export const ringTintAt = (tint, x, y, relief) => (relief ? ashTint(tint, redMountainLiftAt(x, y) * STREAMING_TERRAIN_SCALE) : tint);
 export const ringHeightAt = (x, y, byte, relief = false, fade = 1, half = 0) =>
   ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0) + (relief ? redMountainLiftAt(x, y, half) * STREAMING_TERRAIN_SCALE : 0);   // RED-MOUNTAIN: its cone (a far field cell's highest, `half` its half-width)
 /** FAR-SEA1: the ring's sea level - a vertex standing here over a water pixel is the sea (after ringHeight: a const). */
@@ -199,7 +202,7 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
       normals[o + 1] = ny / l;
       normals[o + 2] = nz / l;
       const climate = climateOf(px, py);
-      const tint = overworldTint(climate, byte);
+      const tint = ringTintAt(overworldTint(climate, byte), px, py, relief);   // RED-MOUNTAIN: its ash
       colors[o] = tint[0]; colors[o + 1] = tint[1]; colors[o + 2] = tint[2];
       if (ground) ground[o / 3] = positions[o + 1];
       if (isWaterPixel(climate, byte) && Math.abs(positions[o + 1] - RING_SEA_Y) < 1e-3) sea[o / 3] = 255;
@@ -756,7 +759,7 @@ export class FarRingRenderer {
       const it = farFieldVertexSteps({
         high: answer.high, low: answer.low, baseCX, baseCY,
         heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief, 1, FAR_CELL / 2),   // BREATHTAKER2: the continent's lift at the cell's centre; RED-MOUNTAIN: the cone's highest in the cell
-        tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
+        tintAt: (x, y, byte, v) => ringTintAt(overworldTint(climAt(x, y, v), byte), x, y, !!inputs.relief),   // RED-MOUNTAIN: its ash
         oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
         snowAt: inputs.relief ? (x, y, v) => capLineOfPixel(x, y, () => climAt(x, y, v)) : null,   // PEAKS1: a range white 300 km off
@@ -781,7 +784,7 @@ export class FarRingRenderer {
       if (gen !== this._midGen) return;   // a newer ask, or the renderer disposed
       if (!answer?.heights || !this.gl) { this._midAsk = null; return; }   // the ask stands until its ground is laid
       const { byteAt, climateOf } = ringReaders(inputs);
-      const tintAt = (x, y) => overworldTint(climateOf(x, y), byteAt(x, y));
+      const tintAt = (x, y) => ringTintAt(overworldTint(climateOf(x, y), byteAt(x, y)), x, y, !!inputs.relief);   // RED-MOUNTAIN: its ash
       const g = this._ringY;   // a pixel centre's height on this ring - world-fixed, whichever base the grid was built round
       const ringAt = (x, y) => {
         const i = x - g.baseX + g.radius, j = y - g.baseY + g.radius;

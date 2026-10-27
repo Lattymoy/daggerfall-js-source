@@ -316,5 +316,23 @@
     "tests": [
       "test/world/redmountain.test.js"
     ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-snowfield-on-the-cone",
+    "file": "src/render/farRing.js",
+    "old": "export const ringTintAt = (tint, x, y, relief) => (relief ? ashTint(tint, redMountainLiftAt(x, y) * STREAMING_TERRAIN_SCALE) : tint);",
+    "new": "export const ringTintAt = (tint) => tint;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-rock-at-the-summit",
+    "file": "src/render/redMountainFire.js",
+    "old": "    out[c] = Math.round(ash + (A.rock[c] - ash) * r);",
+    "new": "    out[c] = Math.round(ash);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
   }
 ]
