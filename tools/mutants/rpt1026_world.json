@@ -243,5 +243,205 @@
       "test/player/rpt1026_world_standthrough.test.js"
     ],
     "note": "the line from the head's top: a ceiling the standing head clips under (DFU's stand) refused too"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-band-unwalked",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));",
+    "new": "if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) out.push(Object.freeze([dx, dy]));",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the port looked for a pixel about the player alone: a ship at a far harbour's first berth 2 pixels off its town is near no port"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-dry-unread",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  if (built(x, z)) return true;\n  const c = state.compensation;",
+    "new": "  if (built(x, z)) return true;\n  if (built) return false;\n  const c = state.compensation;",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "a pixel known only where it is built: the ring's far side, never built from the sea, keeps the far harbour waiting"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-every-pixel-dry",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));",
+    "new": "d = true;",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the sea itself read as dry - a harbour sounded off ground that holds water unbuilt"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-one-town-alone",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock);",
+    "new": "stepOne(Array.isArray(near) ? near[0] : near, clock);",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the nearest port alone sounded: Pencart's harbour, its first berth within a pixel of Longham, never"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-the-far-edge-past-the-ring",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN)",
+    "new": "x0 + (sx * i) / nx, z0 + (sz * k) / nz",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the box's far edges read as the next pixel's - one past the ring, never built from its far shore"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-host-the-three-by-three",
+    "file": "src/scenes/world.js",
+    "old": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER) {",
+    "new": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER.slice(0, 9)) {",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the world host walks the 3 x 3 alone"
+  },
+  {
+    "name": "RPT1026-FAR-QUAY-host-no-height-map",
+    "file": "src/scenes/world.js",
+    "old": "harbourOf(t, { state, built: csaPixelAt, woods })",
+    "new": "harbourOf(t, { state, built: csaPixelAt, woods: null })",
+    "tests": [
+      "test/systems/naval/rpt1026_world_farquay.test.js"
+    ],
+    "note": "the world host hands no height map: nothing is ever dry for certain"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-the-old-refusal",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "if (usesBatch(r) && !Number.isSafeInteger(d.rev) && !(await rereadRev(r, d))) return false;",
+    "new": "if (usesBatch(r) && !Number.isSafeInteger(d.rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a room read unanswered as the draft opened refuses every Confirm of the visit, as before"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-the-room-taken-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (since.put.length || since.drop.length) { deps.say?.(deps.refusal?.('decor-rev')",
+    "new": "    if (false) { deps.say?.(deps.refusal?.('decor-rev')",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the revision taken whatever the room holds now: another hand's change written over"
+  },
+  {
+    "name": "RPT1026-CONFIRM-REREAD-any-revision",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (!res?.ok || !Number.isSafeInteger(rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "new": "    if (!res?.ok) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "an answer with no revision taken: the batch goes at NaN"
+  },
+  {
+    "name": "RPT1026-CONFIRM-ONCE-the-guard-gone",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (d.keeping) return false;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a second click on Confirm sends the batch again and pays again"
+  },
+  {
+    "name": "RPT1026-CONFIRM-ONCE-never-let-go",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      d.keeping = false;\n      if (placing) placing.busy = false;",
+    "new": "      if (placing) placing.busy = false;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a Confirm once sent holds the draft for good: the next one never goes"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-decorator-never-asks",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());",
+    "new": "const verbsOff = wantPlaqueVerbs(() => false);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "where no plaque is drawn the decorator's verbs fold nowhere: a press on a piece never moves it"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-asks-out-of-the-flight",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());",
+    "new": "const verbsOff = wantPlaqueVerbs(() => true);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the decorator asks for its verbs out of the flight too"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-seam-stands-down",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const verbs = !dom && !classic && plaqueVerbsWanted();",
+    "new": "  const verbs = false;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the seam stands down on a page with no plaque, the decorator browsing or not"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-whole-list",
+    "file": "src/ui/worldPlaque.js",
+    "old": "foldQuickLoot(verbs ? decorPressFrame(frame) : frame);",
+    "new": "foldQuickLoot(frame);",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "the whole list folded where nobody sees it: the wheel steps it unseen"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-any-key",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "export const decorVerbKey = (key) => typeof key === 'string' && DECOR_VERB_KEYS.some((k) => key.startsWith(k));",
+    "new": "export const decorVerbKey = (key) => typeof key === 'string';",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "every key is the decorator's: a player's or a lever's verbs folded and pressed"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-a-key-dropped",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "'chair:', 'bed:', 'door:', 'act:decor:']",
+    "new": "'chair:', 'bed:', 'door:']",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a placed door's key is no longer the decorator's"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-any-frame",
+    "file": "src/systems/decor/decorLook.js",
+    "old": "if (frame?.kind !== 'actions' || !decorVerbKey(frame.key) || !frame.rows?.length || frame.startUnlit) return null;",
+    "new": "if (!frame?.rows?.length) return null;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "a chest's goods, a player's unlit list, anything folded"
+  },
+  {
+    "name": "RPT1026-DECOR-VERBS-the-gate-closed",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!worldTooltipsOn() && !(decorVerbKey(key) && decorTool.flying() && !decorTool.ghost())) return null;",
+    "new": "if (!worldTooltipsOn()) return null;",
+    "tests": [
+      "test/scenes/decor/rpt1026_world_decor.test.js"
+    ],
+    "note": "World Tooltips off, the interior host names no decorator's verbs"
   }
 ]

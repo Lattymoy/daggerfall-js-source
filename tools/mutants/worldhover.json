@@ -122,7 +122,7 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!dom && !classic) { hideWorldPlaque(); return null; }   // (the hide",
+    "old": "  if (!dom && !classic && !verbs) { hideWorldPlaque(); return null; }   // (the hide",
     "new": "  if (false) { hideWorldPlaque(); return null; }   // (the hide",
     "tests": [
       "test/systems/worldhover.test.js",
@@ -886,8 +886,8 @@
   {
     "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!dom && !classic) { hideWorldPlaque(); return null; }   // (the hide",
-    "new": "  if (!dom && !classic) { return null; }   // (the hide",
+    "old": "  if (!dom && !classic && !verbs) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (!dom && !classic && !verbs) { return null; }   // (the hide",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

@@ -319,8 +319,7 @@ import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/m
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
 import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
 import { SHIPYARD as SHIPYARD_LAYOUT } from '../world/shipyardModel.js';   // SHIPYARDS: the crew hall's table, for the talk directory's row
-import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
-import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
+import { createHarbourBook, HARBOUR_TOWN_ORDER, harbourOf } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's; RPT1026-WORLD FAR-QUAY: every port near, out to the ring, its ground known
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/professions/profItems.js';   // PROF1: a Stores material as DFU's own item
 import { oreMapTip } from '../ui/oreMapTip.js';   // ORE-MAP: the held map's word on a pixel's ore
 import { heldOf as bagHeldOf, heldKeysOf as bagHeldKeysOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands; UNCOUNTED: every material they hold
@@ -9206,42 +9205,30 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     return null;
   };
-  /** SHIP-LIFE (systems/naval/shipLife.js): the port town within a pixel of the player - its location's key and its
+  /** SHIP-LIFE (systems/naval/shipLife.js): the port town near the player (RPT1026-WORLD FAR-QUAY: within SEA_RING, the
+   *  nearest pixels first - systems/naval/harbourBook.js HARBOUR_TOWN_ORDER) - its location's key and its
    *  footprint in the scene NOW (the native rect, locationWorldRect, through the floating origin's localFromWorld), which
    *  the naval host finds its harbour off - or null where no port stands near. The town asked once a pixel. */
-  let _navalHarbourAt = null;   // { key, town: { id, loc, x, y } | null }
+  let _navalHarbourAt = null;   // { key, towns: [{ id, loc, x, y }] }
   const navalHarbourNear = () => {
     const p = playerTravelPixel();
     const key = `${p.x},${p.y}`;
     if (_navalHarbourAt?.key !== key) {
-      let town = null;
+      const towns = [];   // RPT1026-WORLD FAR-QUAY: every port town near - a far harbour's town and a neighbour port's both
       const isle = etherSea && inEther(p.x, p.y) ? etherPortNear(p.x, p.y) : null;   // ETHER-PORTS: an isle's town, its harbour sounded as any port's
       const loc = isle ? etherPlaceAt(isle.px, isle.py) : null;
-      if (loc?.exterior?.exteriorData) town = { id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH };   // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town
-      for (let dy = -1; dy <= 1 && !town && !isle; dy++) for (let dx = -1; dx <= 1 && !town; dx++) {
+      if (loc?.exterior?.exteriorData) towns.push({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH });   // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town
+      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER) {   // RPT1026-WORLD FAR-QUAY: out to SEA_RING, the 3 x 3 first in its own order
         if (!csaIsPortTown(p.x + dx, p.y + dy)) continue;
         const summary = travelLocationSummaryAt(mapDict, p.x + dx, p.y + dy);
         const loc = summary ? maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex) : null;
-        if (loc?.exterior?.exteriorData) town = { id: summary.id, loc, x: p.x + dx, y: p.y + dy, name: maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null };
+        if (loc?.exterior?.exteriorData) towns.push({ id: summary.id, loc, x: p.x + dx, y: p.y + dy, name: maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null });
       }
-      _navalHarbourAt = { key, town };
+      _navalHarbourAt = { key, towns };
     }
-    const t = _navalHarbourAt.town;
-    if (!t) return null;
-    const r = locationWorldRect(t.loc, t.x, t.y);
-    const [ax, az] = state.localFromWorld(r.minX, r.minZ), [bx, bz] = state.localFromWorld(r.maxX, r.maxZ);
-    const rect = { minX: Math.min(ax, bx), maxX: Math.max(ax, bx), minZ: Math.min(az, bz), maxZ: Math.max(az, bz) };
-    // AUDIT HOLDINGS O1: whether every pixel the harbour's scan reads (the rect grown HARBOUR_REACH) is built - a pixel
-    // not built reads as land, so a harbour sounded early found its shore at the streamed world's edge and two players
-    // arriving by different roads found different berths and stood different quays; asked only before it is sounded
-    const reach = t.reach ?? HARBOUR_REACH;   // AUDIT CAPTAIN'S SEA H1: an isle port's sounding reaches its shore
-    const ready = (r = reach) => {   // FB1020c HARBOUR-REACH: or the port law's ring's (systems/naval/harbourBook.js portRingReach)
-      const x0 = rect.minX - r, z0 = rect.minZ - r, sx = rect.maxX - rect.minX + 2 * r, sz = rect.maxZ - rect.minZ + 2 * r;
-      const nx = Math.ceil(sx / 400), nz = Math.ceil(sz / 400);   // under 400 m apart, both edges read: no pixel (819.2 m) between two
-      for (let i = 0; i <= nx; i++) for (let k = 0; k <= nz; k++) if (!csaPixelAt(x0 + (sx * i) / nx, z0 + (sz * k) / nz)) return false;
-      return true;
-    };
-    return { key: `port:${t.id}`, name: t.name, rect, ready, reach };   // SHIP-TAGS: her name, the words a ship bound there is read by
+    // each town's footprint in the scene now and its readiness at any reach (AUDIT HOLDINGS O1, FB1020c HARBOUR-REACH,
+    // RPT1026-WORLD FAR-QUAY: moved whole to systems/naval/harbourBook.js harbourOf)
+    return _navalHarbourAt.towns.map((t) => harbourOf(t, { state, built: csaPixelAt, woods }));
   };
   // HARBOUR-BOOK (systems/naval/harbourBook.js; bible/03-World/Holdings.md section 7): THE HARBOURS NEAR THE PLAYER -
   // this host's, sounded off the port near the player every exterior frame whatever runs on the water, moved with the

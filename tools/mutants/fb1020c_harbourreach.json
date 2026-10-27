@@ -73,9 +73,9 @@
   },
   {
     "name": "HARBOUR-REACH-the-world-ready-at-its-own-reach",
-    "file": "src/scenes/world.js",
-    "old": "    const ready = (r = reach) => {",
-    "new": "    const ready = (_r) => { const r = reach;",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  const ready = (r = reach) => {",
+    "new": "  const ready = (_r) => { const r = reach;",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js",
       "test/systems/naval/auditholdings.test.js"

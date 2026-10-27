@@ -1184,7 +1184,9 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // brace and the gate would have to contain `{` or `;`.
   // DISC22-C: the skin is asked through BOTH faces - the DOM plaque's gate, then the classic panel's - and a page
   // with neither takes the plaque down, still before the ray and the list
-  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  const dom = worldPlaqueOn\(\);\n  const classic = !dom && classicPlaqueOn\(\);\n  if \(!dom && !classic\) \{ hideWorldPlaque\(\); return null; \}/,
+  // PIN MOVED (RPT1026-WORLD DECOR-VERBS): and a decorator that browses where neither face is drawn has its verbs folded
+  // (src/ui/worldPlaque.js `verbs`) - a page with none of the three still takes the plaque down before the ray
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  const dom = worldPlaqueOn\(\);\n  const classic = !dom && classicPlaqueOn\(\);\n(?:\s*\/\/[^\n]*\n)*  const verbs = !dom && !classic && plaqueVerbsWanted\(\);\n  if \(!dom && !classic && !verbs\) \{ hideWorldPlaque\(\); return null; \}/,
     'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
   const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
   assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),
