@@ -1016,7 +1016,7 @@ test('PARTY-TRAVEL host by source: world.js wires the session - the map door\'s 
   assert.equal(w.split('partyTravel?.sent(_partyPose)').length, 2, 'no unconditional hand-over left beside it');
   assert.match(w, /partyTravel\?\.tick\(\);[^\n]*\n\s*partyRestFollowTick\(\);[^\n]*\n\s*partyFrame\(performance\.now\(\)\);/, 'every frame, before the pose is composed - PARTY-REST1\'s mirror still right beside the send');
   assert.match(w, /const trip = \/\^\\\/\(leader\|travel\)\$\/i\.exec\(text\.trim\(\)\);\n\s*if \(trip\) \{ const line = partyTravel \? partyTravel\.command\(trip\[1\]\.toLowerCase\(\)\) : NO_PARTY_TEXT;/);
-  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
+  const onSend = /onSend: \(tabId, text, opts = \{\}\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   assert.ok(onSend.indexOf("/^\\/ready$/i") < onSend.indexOf('(leader|travel)') && onSend.indexOf('(leader|travel)') < onSend.indexOf('parseChatLine('), 'the host\'s own commands, then the parser');
   const fare = w.slice(w.indexOf('function partyTripFare(to, opts) {'), w.indexOf('function partyTravelRefusal() {'));
   assert.match(fare, /new TravelPopUpWindow\(\{ x: to\.x, y: to\.y \}, \{\s*\.\.\.travelFareDeps\(\),/, 'the popup, over the maps\' own bag');

@@ -1,7 +1,7 @@
 // Frame-accurate DIRECTOR'S PREVIEW, not a claim about hardware playback.
 // Each PNG is the real intro DOM/WebGL renderer evaluated at frame / fps.
 // Source music begins at exactly zero; NO corrective offset or remux loop.
-// Live synchronization and the tap/volume handoff are verified by introProbe.
+// Live synchronization and the landing and its volume duck (TITLE-DOOR) are verified by introProbe.
 // Run: node tools/introCapture.mjs [output-directory]
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
@@ -12,7 +12,7 @@ import { TITLE_IMPACT_TIME, TITLE_READY_TIME } from '../src/ui/intro/introCue.js
 
 const out = process.argv[2] ?? 'test-harness/intro';
 const frames = `${out}/frames`;
-// INTRO4: the film runs to bar 16 and its prompt (~53 s), twice INTRO2's, and a software renderer draws each of its
+// INTRO4: the film runs to bar 16 and its landing (~53 s), twice INTRO2's, and a software renderer draws each of its
 // frames in seconds - at 8 frames a second and 960 x 540, so the whole film is drawn inside the job
 const fps = 8, duration = Math.ceil(TITLE_READY_TIME + 2);
 mkdirSync(frames, { recursive: true });
@@ -31,8 +31,12 @@ try {
   await page.waitForFunction(() => window.__intro?.state.phase === 'playing' && window.__intro.state.landscapeReady, null, { timeout: 120000 });
   for (let i = 0; i < duration * fps; i++) {
     const t = i / fps;
-    const n = await page.evaluate(t => window.__intro.seek(t), t);
-    await page.waitForFunction(({ n, t }) => window.__intro.state.frames > n && window.__intro.state.time === t, { n, t });
+    // TITLE-DOOR (2026-10-27): the film lands at the mark's rest and then holds its own frame - a seek past it draws
+    // nothing - so every later frame is the landed title as it stands, the menu over it
+    if (await page.evaluate(() => window.__intro.state.phase !== 'landed')) {
+      const n = await page.evaluate(t => window.__intro.seek(t), t);
+      await page.waitForFunction(({ n, t }) => window.__intro.state.frames > n && window.__intro.state.time === t, { n, t });
+    }
     await page.screenshot({ path: `${frames}/${String(i).padStart(5, '0')}.png` });
     if (i % fps === 0) console.log(`preview ${i / fps}/${duration}s`);
   }
@@ -43,5 +47,5 @@ try {
   assert.deepEqual(media.streams.map(stream => stream.codec_type).sort(), ['audio', 'video']);
   assert.ok(media.streams.every(stream => Number(stream.start_time) === 0), 'picture and source score start together');
   assert.ok(Math.abs(Number(media.format.duration) - duration) < 1 / fps, 'the preview has the authored duration');
-  writeFileSync(`${out}/preview-method.json`, JSON.stringify({ type: 'deterministic-rendered-preview', fps, duration, audioOffset: 0, titleImpactTime: TITLE_IMPACT_TIME, firstLandedFrame: Math.ceil(TITLE_IMPACT_TIME * fps), handoff: 'Real tap/fade/continued audio verified separately in browser-report.json', hardwareClaim: 'None: see live-timing.json for live browser measurements' }, null, 2));
+  writeFileSync(`${out}/preview-method.json`, JSON.stringify({ type: 'deterministic-rendered-preview', fps, duration, audioOffset: 0, titleImpactTime: TITLE_IMPACT_TIME, firstLandedFrame: Math.ceil(TITLE_IMPACT_TIME * fps), handoff: 'The landing (the menu over the held title) and the duck at the first press verified separately in browser-report.json', hardwareClaim: 'None: see live-timing.json for live browser measurements' }, null, 2));
 } finally { await browser.close(); await server.close(); rmSync(frames, { recursive: true, force: true }); }

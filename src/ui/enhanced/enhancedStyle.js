@@ -2436,6 +2436,49 @@ ${badgeCss()}
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
 
+/* ── TITLE-DOOR (2026-10-27, the owner: "we use the intro title screen as the landing pad itself") ──
+   The boot door's face on the film's held title (enhancedMenu.js onTitle, ui/intro/introScreen.js land): the host is
+   see-through there - the film stands under it at 11 - and the home has no ground of its own. The doors stand in a row in
+   the band between the mark and the foot, where Tap to continue stood: the band starts at the film's --intro-doors-top
+   (the landed mark's foot), and the stage ends at the measured foot (--px-foot-h). Either skin's door, so this sheet's,
+   not a dress's; every rule outweighs the door's own column (Plus's MENU_CSS, UI-CALM's two questions) on purpose. */
+#enhanced-menu[data-over-title] { background: transparent !important; }
+.px-home.px-title { background: transparent; }
+#enhanced-menu .px-home.px-title > .px-stage:not(.px-acctstage) { justify-content: center; padding-top: calc(var(--intro-doors-top, 62dvh) + 6px); }
+.px-home.px-title .px-menu { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: stretch;
+  width: min(1120px, 100%); gap: 10px 14px; }
+.px-home.px-title .px-menu .doorbtn { flex: 0 1 auto; min-height: 50px; padding: 4px 18px; gap: 12px;
+  font-size: 20px; letter-spacing: 0.14em; text-indent: 0.14em; }
+.px-home.px-title .px-menu .doorbtn .px-c { font-size: 14px; }
+.px-home.px-title .px-menu[data-level="top"] { width: min(780px, 100%); gap: 10px 18px; }
+.px-home.px-title .px-menu[data-level="top"] .doorbtn { flex: 1 1 300px; min-height: 76px; padding-top: 8px; padding-bottom: 8px; font-size: 28px; }
+.px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
+.px-home.px-title .px-menu[data-level="offline"] .px-pagenote { flex: 0 0 100%; margin: 0; }
+/* the offline level's word and line stand bare on the map, among its own names - a glow of the night under them (Plus's
+   alone: DFO Grimoire writes them on its page) */
+:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
+:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu[data-level="offline"] .px-pagenote { text-shadow: 1px 1px 0 #000, 0 0 6px #000, 0 0 14px #000; }
+.px-home.px-title .px-menu .doorbtn.door-back { margin-top: 0; min-height: 50px; font-size: 15px; }
+/* a phone: the two questions one over the other, the games two to a row and the way back under them */
+@media (max-width: 600px) {
+  .px-home.px-title .px-menu[data-level="top"] { flex-direction: column; width: min(420px, 100%); gap: 8px; }
+  .px-home.px-title .px-menu[data-level="top"] .doorbtn { flex: 0 0 auto; min-height: 68px; font-size: 24px; }
+  .px-home.px-title .px-menu:not([data-level="top"]) { gap: 8px; }
+  .px-home.px-title .px-menu:not([data-level="top"]) .doorbtn { flex: 1 1 calc(50% - 4px); min-height: 46px; padding: 2px 10px;
+    font-size: 16px; letter-spacing: 0.08em; text-indent: 0.08em; }
+  .px-home.px-title .px-menu .doorbtn.door-back { flex-basis: 100%; }
+}
+/* a short screen: the same row, a size down - the games and the way back on one row, their diamonds put away, and the
+   offline word and line left to the rail (Offline's door said them a press ago) */
+@media (max-height: 560px) {
+  .px-home.px-title .px-menu[data-level="top"] .doorbtn { min-height: 58px; padding-top: 4px; padding-bottom: 4px; font-size: 22px; }
+  .px-home.px-title .px-menu .doorbtn { min-height: 44px; padding: 2px 14px; font-size: 16px; letter-spacing: 0.1em; text-indent: 0.1em; }
+  .px-home.px-title .px-menu:not([data-level="top"]) .doorbtn .px-c { display: none; }
+  .px-home.px-title .px-menu .door-sub { font-size: 12px; }
+  .px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
+  .px-home.px-title .px-menu[data-level="offline"] .px-pagenote { display: none; }
+}
+
 /* ── ACC1f: THE PROFILE MARK AND THE ACCOUNT WINDOW ─────────────────
    Mac: the online details live "as a popup on main menu startup and a
    new profile icon". The mark takes the door's TOP-RIGHT corner - the

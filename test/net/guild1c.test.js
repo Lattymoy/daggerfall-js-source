@@ -626,7 +626,7 @@ test('GUILD1c the host: the hub\'s guild lines land on the Guild tab by the rela
   assert.match(w, /const guildGone = \(\) => \{ guildBook\?\.refresh\(\); \};/);
   assert.match(w, /link\.onGuildGone = guildGone;/);
   assert.match(w, /online\.onGuildGone = guildGone;/);
-  assert.match(w, /if \(tabId === 'guild'\) \{\n[^\n]*\n      if \(!myGuildTag\(\)\) return why\(NO_GUILD_TEXT\);\n      return socialLink\(\)\?\.sendChat\(text, \{ ch: 'guild', me \}\) \?\? false;/);
+  assert.match(w, /if \(tabId === 'guild'\) \{\n[^\n]*\n      if \(!myGuildTag\(\)\) return why\(NO_GUILD_TEXT\);\n      return socialLink\(\)\?\.sendChat\(text, \{ ch: 'guild', me, item, items \}\) \?\? false;/);   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   assert.match(w, /if \(tabId === 'guild'\) \{ s\?\.sendGuildWho\?\.\(\); return guildRosterSource\(s, myGuildTag\(\)\); \}/);   // PIN MOVED, SCALE5c: the Guild tab asks the hub who of the guild is online on every shard
   assert.match(w, /if \(tabId === 'guild' && guildOld\(\)\) return GUILD_OLD_RELAY_TEXT;/);
   assert.match(w, /return s\?\.sendRoll\(spec, tabId === 'party' \|\| tabId === 'guild' \? \{ ch: tabId \} : \{\}\) \?\? false;/);
