@@ -34,6 +34,7 @@
 // the same tiles on every client.
 // ═══════════════════════════════════════════════════════════════════
 import { DIR_DELTA } from './roadNetwork.js';
+import { RING } from '../townShape.js';   // TS9: a town's ring's codes (terrain/terrainTiles.js townRoadRing)
 
 /** A pixel's tiles a side. */
 export const CURVE_DIM = 128;
@@ -211,6 +212,11 @@ function stampSegment(f, ax, ay, bx, by, grow) {
 /** Basic Roads' diagonal flank (roadPainter.js ROAD_TILES' diagonal outer), by the ground: half paving, half the
  *  ground's edge. */
 const FLANK = Object.freeze([47, 47, 55, 55]);
+/** TS9: a ring's half tile by its code (terrainTiles.js RING) - [rotate, flip] that turn the diagonal's edge so its road
+ *  lies toward that corner, as the mod's own flanks turn it (a NE-SW road's flank at x = y + 1, its road north and west:
+ *  flip; at x + 1 = y, south and east: neither; a NW-SE road's, north and east: rotate; south and west: both). Its home is
+ *  here, beside the flank it turns: Basic Roads' painter (roadPainter.js) and this one both lay it. */
+export const RING_HALF = Object.freeze({ [RING.NW]: [false, true], [RING.NE]: [true, false], [RING.SE]: [false, false], [RING.SW]: [true, true] });
 /** A paved tile's byte by its lie and its distance off the line, Basic Roads' rotations and flips (roadPainter.js
  *  paintPath: an east-west run's tiles rotated, its north row flipped; a north-south run's east column flipped; a
  *  diagonal's tile on the line its inner, rotated on the north-west run, the two either side its flanks). */
@@ -268,13 +274,17 @@ export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteA
     }
   }
   // Basic Roads' "paint roads around locations": a road's pixel paves its location rect's padding (TOWN-SHAPES: its ring)
+  // - AUDIT BAY-LEFT F2: and TS9's half tiles at its angled edges, as Basic Roads' painter lays them on the Bay
+  // (roadPainter.js paintPath): the diagonal's own edge by the ground, turned by RING_HALF, never over the sea nor over a
+  // tile a road's curve paved here
   if (road && rect) {
     for (let y = 0; y < D; y++) {
       for (let x = 0; x < D; x++) {
-        const t = y * D + x;
-        if (tilemap[t] !== 0 || !(rect.ring ? rect.ring[t] === 1 : x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax)) continue;
-        if (tileData[x + y * tdDim] === WATER) continue;   // AUDIT TESA III E1-1: never the sea a shore town keeps
-        tilemap[t] = ROAD_TILE;
+        const t = y * D + x, code = rect.ring ? rect.ring[t] : 0, half = code ? RING_HALF[code] : null;
+        if (tilemap[t] !== 0 || !(rect.ring ? code === RING.road || half : x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax)) continue;
+        const ground = tileData[x + y * tdDim];
+        if (ground === WATER) continue;   // AUDIT TESA III E1-1: never the sea a shore town keeps
+        tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] + (half[0] ? 64 : 0) + (half[1] ? 128 : 0) : ROAD_TILE;
         paved++;
         if (paths) paths[t] = 1;
       }

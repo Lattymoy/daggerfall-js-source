@@ -55,6 +55,44 @@ export function rumareSeaAt(bx, by) {
 /** Is a Bay pixel's middle the city's sea - the sea's ways at the map's scale (the lanes, the voyages, the ports' shore). */
 export const rumareSeaPixel = (px, py) => rumareSeaAt(px + 0.5, py + 0.5);
 
+/** AUDIT BAY-LEFT F1: is a slice all the city's land by the plan's law alone - its square wholly inside City Isle's shore,
+ *  or wholly past the lake's far shore clear of the Waterfront's mouth (world/imperialCity.js imperialLand: land at
+ *  r <= isle and at r >= lake but the mouth) - a metre's margin either side, so a slice at a shore is asked vertex by
+ *  vertex (rumareSeaGrid). False off the span or with no canal. */
+export function rumareSliceAllLand(px, py) {
+  const c = rumareCity();
+  if (!c || Math.abs(px - c.cx) > R || Math.abs(py - c.cy) > R) return false;
+  const x0 = (px - c.cx - 0.5) * PIXEL_M, x1 = x0 + PIXEL_M, z0 = (py - c.cy - 0.5) * PIXEL_M, z1 = z0 + PIXEL_M;
+  const near = Math.hypot(x0 > 0 ? x0 : x1 < 0 ? x1 : 0, z0 > 0 ? z0 : z1 < 0 ? z1 : 0);
+  const far = Math.hypot(Math.max(Math.abs(x0), Math.abs(x1)), Math.max(Math.abs(z0), Math.abs(z1)));
+  if (far < IMPERIAL.isle - 1) return true;
+  const mouth = z1 > 0 && x0 < IMPERIAL.mouth && x1 > -IMPERIAL.mouth;
+  return near > IMPERIAL.lake + 1 && !mouth;
+}
+
+/** The samples' side (world/terrain/terrainSampler.js HEIGHTMAP_DIMENSION, pinned equal) - a pixel's vertices 0..128. */
+const H = 129;
+/**
+ * AUDIT BAY-LEFT F1: THE CITY'S SEA AT EVERY VERTEX OF A SLICE - 1 where rumareSeaAt says the sea, 0 else, x * 129 + y
+ * (y north), the vertex (x, y) at the Bay point (px + x / 128, py + 1 - y / 128) as world/terrain/capitalSea.js
+ * capitalSeaGround reads it (the same arithmetic, so the same answer to the bit) - with the city found once, not once a
+ * vertex. Null off the span or with no canal.
+ */
+export function rumareSeaGrid(px, py) {
+  const c = rumareCity();
+  if (!c || Math.abs(px - c.cx) > R || Math.abs(py - c.cy) > R) return null;
+  const out = new Uint8Array(H * H);
+  for (let x = 0; x < H; x++) {
+    const X = (px + x / (H - 1) - c.cx - 0.5) * PIXEL_M;
+    if (Math.abs(X) > HALF_M) continue;
+    for (let y = 0; y < H; y++) {
+      const Z = (py + 1 - y / (H - 1) - c.cy - 0.5) * PIXEL_M;
+      if (Math.abs(Z) <= HALF_M && !imperialLand(X, Z)) out[x * H + y] = 1;
+    }
+  }
+  return out;
+}
+
 /** smoothstep over 0..1. */
 const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
