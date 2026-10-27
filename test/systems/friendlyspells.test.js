@@ -151,7 +151,7 @@ test('FRIENDLY-SPELLS by source: ONE player-to-player spell system - no `aid` fr
   assert.match(world, /const allyMarksNear = \(sp = null\) => \{\n\s*if \(!online\?\.castOk\) return null;\n\s*const strangers = !!sp && strangerCastable\(sp\);[^\n]*\n\s*if \(!social\?\.party && !strangers\) return null;[\s\S]{0,800}?giftablePeers\(near\)\.filter\(\(p\) => online\.reachesPeer\?\.\(p\.id\) && \(mateOf\(p\.id\) \|\| strangers\)\)/, 'party mates (SPELL-GIFT: and strangers, for the stranger\'s list), only through a relay that routes the cast frame');
   assert.match(world, /allyMarks: \(sp\) => allyMarksNear\(sp\),[^\n]*\n\s*peerBodies: \(\) => peersNear\(\),/);
   assert.match(rd('src/scenes/dungeonContext.js'), /allyMarks: opts\.allyMarks \? \(sp\) => opts\.allyMarks\(sp\) : null,[^\n]*\n\s*peerBodies: opts\.peers \? \(\) => opts\.peers\(\) : null,/, 'the dungeon\'s engine takes both');
-  assert.match(rd('src/scenes/hostMagic.js'), /function giveToAlly\(mark, sp, \{ quiet = false \} = \{\}\) \{\n\s*let sent = false;\n\s*try \{ sent = !!castAtAlly\?\.\(mark\.id, allyCastFrame\(sp, effectiveLevel\(playerEntity\), mark\.id\)\); \}/, 'every gift leaves through ALLY-CAST\'s door');
+  assert.match(rd('src/scenes/hostMagic.js'), /function giveToAlly\(mark, sp, \{ quiet = false \} = \{\}\) \{\n\s*let sent = false;\n\s*try \{ sent = !!castAtAlly\?\.\(mark\.id, allyCastFrame\(sp, castingLevel\(playerEntity\), mark\.id\)\); \}/, 'every gift leaves through ALLY-CAST\'s door');
 });
 
 // ─── SPELLFX1 / SPELLFX2: A PEER'S CAST, DRAWN AND HEARD ───────────────────────────────────────────────────────

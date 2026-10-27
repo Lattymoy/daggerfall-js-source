@@ -5664,6 +5664,16 @@
   "tr": "fc53b5917524",
   "by": "claude-in-session"
  },
+ "firmament.side.where": {
+  "en": "78767f723191",
+  "tr": "6fac185ec21c",
+  "by": "claude-in-session"
+ },
+ "firmament.status.mentoring": {
+  "en": "623667af1925",
+  "tr": "71b0218b2372",
+  "by": "claude-in-session"
+ },
  "forecast.eta.hours": {
   "en": "3bd939c85cea",
   "tr": "7d32d84bbf7b",
@@ -5797,6 +5807,11 @@
  "forecast.word.thunder": {
   "en": "320002f33702",
   "tr": "079d9746cf18",
+  "by": "claude-in-session"
+ },
+ "growth.spec.why.chosenMentor": {
+  "en": "54129619c117",
+  "tr": "61fd3b1c5104",
   "by": "claude-in-session"
  },
  "holdings.horse.boons.hungry": {
@@ -6927,6 +6942,46 @@
  "lw.econ.thriving.b": {
   "en": "2d8ffddfef34",
   "tr": "e06460ed713e",
+  "by": "claude-in-session"
+ },
+ "mentor.ended": {
+  "en": "f1e2a03439db",
+  "tr": "fa72f9eb0008",
+  "by": "claude-in-session"
+ },
+ "mentor.levelShort": {
+  "en": "eadbef99ca42",
+  "tr": "6d58f65c4cd4",
+  "by": "claude-in-session"
+ },
+ "mentor.status.off": {
+  "en": "fadc74fd6acd",
+  "tr": "02ac1a725037",
+  "by": "claude-in-session"
+ },
+ "mentor.status.on": {
+  "en": "9392c61967d3",
+  "tr": "f5fcaa070e16",
+  "by": "claude-in-session"
+ },
+ "mentor.status.pupil": {
+  "en": "fbdfccbc8568",
+  "tr": "fc38e0fbc1b9",
+  "by": "claude-in-session"
+ },
+ "mentor.tile.mentor": {
+  "en": "a197cb2d60ed",
+  "tr": "1d049a6b4c17",
+  "by": "claude-in-session"
+ },
+ "mentor.tile.pupil": {
+  "en": "619532ac17ff",
+  "tr": "0aa117c18982",
+  "by": "claude-in-session"
+ },
+ "mentor.tip.meta": {
+  "en": "8f8364feecd7",
+  "tr": "ff1c356e4fe1",
   "by": "claude-in-session"
  },
  "menu.about.build": {
