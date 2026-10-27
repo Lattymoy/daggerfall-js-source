@@ -448,10 +448,14 @@ function crashOverlay(msg) {
 // way off it (FIELD BUGS 2026-10-02c KEY-BOOT: "no dismiss"). Its body stays click-through (PL3); one button after the
 // text takes clicks and takes the report down, so a probe's first line is still the error's.
 function crashDismiss(el) {
+  // AUDIT RPT1026 K2: never on a report that is the game's way back - a lost graphics context's (below): nothing draws
+  // again on that page, and dismissed, its click-to-reload went with it and left a dead picture saying nothing
+  if (el._kept) return;
   const b = document.createElement('button');
   b.textContent = 'Dismiss';
   b.style.cssText = 'display:block;margin-top:6px;padding:2px 10px;font:12px monospace;pointer-events:auto;cursor:pointer';
   b.onclick = (e) => { e?.stopPropagation?.(); el.remove(); };   // never the lost context's tap-to-reload beneath it
+  el._dismiss = b;
   el.appendChild(b);
 }
 
@@ -483,4 +487,5 @@ document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
   // by onclick - a second loss must not stack a second listener.
   el.style.pointerEvents = 'auto';
   el.onclick = () => location.reload();
+  el._kept = true; el._dismiss?.remove?.();   // AUDIT RPT1026 K2: the way back is never dismissed (crashDismiss), nor given a Dismiss by a later throw
 });
