@@ -203,7 +203,7 @@ export const concealmentFlags = (en) => ({
 /** INVIS-NET (2026-09-27): THE SAME THREE, ON THE WIRE - the pose's `cv` (net/wire.js validPose): 1 invisible, 2
  *  blending, 4 a shade; 0 (omitted) for none. The sender packs its own entity's; a reader unpacks a peer's for the
  *  foes' senses (a peer candidate's concealment() closure) and for the draw. */
-export const concealBits = (en) => (isInvisible(en) ? 1 : 0) | (isBlending(en) ? 2 : 0) | (isAShade(en) ? 4 : 0);
+export const concealBits = (en) => (en?.staffPilot ? 7 : 0) | (isInvisible(en) ? 1 : 0) | (isBlending(en) ? 2 : 0) | (isAShade(en) ? 4 : 0);   // STAFF-PILOT (systems/staffBossPilot.js): a staff member steering its event's boss says all three - its body no one's (a departure from DFU)
 export const concealFlagsOfBits = (bits) => ({ invisible: !!(bits & 1), blending: !!(bits & 2), shade: !!(bits & 4) });
 
 /**

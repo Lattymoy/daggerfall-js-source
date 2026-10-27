@@ -3,6 +3,7 @@
 // AUDIT FB1026d (C1, C2, C4, C5, E3): a level latched before the cap is let go at it - the load, the crossing online,
 // both checks, the sheet's door and its rollout - and the windows are driven, not just the law.
 // Mutants: tools/mutants/fb1026d_levelcap.json.
+import { ROLLED_START_AVERAGE, onlineLevelFor } from '../../src/systems/levelClimb.js';   // LEVEL-45 online: the conversion at the crossing
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -168,8 +169,18 @@ test('LEVEL-45 THE CLASSIC SHEET HANDS OUT NO POOL AT THE CAP, AND A LEVEL OWED 
   const snap = JSON.parse(JSON.stringify(snapshotPlayer(latchedVirtue())));
   assert.equal(crossLeveling(snap), true);
   assert.equal(snap.readyToLevelUp, false, 'no level owed online');
-  const anchored = calculatePlayerLevel(snap.startingLevelUpSkillSum, snap.currentLevelUpSkillSum);
-  assert.equal(anchored, 50, `anchored at the level it has (${anchored}), never the one past it`);
+  // PIN MOVED: LEVEL-45 online (2026-10-27, mob: "everyone is converting"; systems/levelClimb.js) - the switch's anchor at
+  // the level it has (50, never the one past it) is no roll's start, so the conversion that follows it at the same door
+  // gives the average roll's and the level its skills earn, never above the cap.
+  assert.equal(snap.startingLevelUpSkillSum, ROLLED_START_AVERAGE);
+  assert.equal(snap.level, Math.min(50, onlineLevelFor(ROLLED_START_AVERAGE, snap.currentLevelUpSkillSum)));
+  assert.ok(snap.level <= 45);
+  // and one at the cap whose skills earn it - the conversion leaves its level where it is, so the switch's release is
+  // what lets its latch go
+  const atCap = JSON.parse(JSON.stringify(snapshotPlayer(latchedVirtue(45))));
+  atCap.currentLevelUpSkillSum = 2000;
+  assert.equal(crossLeveling(atCap), true);
+  assert.deepEqual([atCap.level, atCap.readyToLevelUp], [45, false], 'at the cap, kept, and owing nothing');
 });
 
 test('LEVEL-45 PAST THE CAP (AUDIT FB1026d C5): a character kept above 45 owes no level on either lane, and its Level box says the cap as the cap (mutants: the cap read as one level; the box\'s cap text dropped)', () => {

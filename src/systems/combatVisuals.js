@@ -166,7 +166,7 @@ export function foePhase(foe) {
 export function peerDraw(bits, on, t, id) {
   const b = bits & 7;
   if (!b) return PLAIN;
-  if (!on) return HIDDEN;
+  if (!on || b === 7) return HIDDEN;   // STAFF-PILOT (systems/staffBossPilot.js PILOT_CONCEAL): all three at once - a staff member inside its event's boss, drawn nowhere
   return { kind: 'conceal', visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }) };
 }
 
