@@ -954,8 +954,8 @@
   {
     "name": "PROF10-door-cracked-unposted",
     "file": "src/net/accountClient.js",
-    "old": ", ...(cracked === true ? { cracked: true } : {}) }),",
-    "new": " }),",
+    "old": ", ...(cracked === true ? { cracked: true } : {}), mint: MINT_VERSION }),",
+    "new": ", mint: MINT_VERSION }),",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

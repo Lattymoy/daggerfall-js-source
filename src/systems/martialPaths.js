@@ -27,7 +27,7 @@
 // ask, and the account service's judge reads no mastery - a finding would add a version and stop nothing.
 //
 // An arcane path and a martial path are two choices (the owner: "Yes, one of each") - neither reads the other, and the
-// masteries they need come from the one 2 / 2 / 1 (masterSkills.js MASTERY_SLOTS).
+// masteries they need come from the one 3 / 2 / 1 (masterSkills.js MASTERY_SLOTS).
 //
 // Everything a player reads is `t()`, read when it is read.
 

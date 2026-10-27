@@ -14,6 +14,7 @@
 
 import { readBankCabinLink } from '../../net/boatIdentity.js';
 import { clampLegalReputations } from '../court.js';   // AUDIT 23 (C4)
+import { releaseCapLatch } from '../levelCap.js';   // AUDIT FB1026d C1: a level a save owes past the cap let go at the load
 import { defineLiveMaxMagicka, defineLiveMaxHealth } from '../chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too; DISC10-E L4: and MaxHealth's
 import { rebuildEquipState, isEquipped, unequipSlot } from '../equip.js';   // AUDIT 17e C1   // AUDIT 63 F28: RemoveItem takes an EQUIPPED item off the doll on its way out
 import { templateByIndex } from '../item/itemTemplates.js';   // AUDIT 63r F28: `shortName` is SetItem's template read, not an optional override
@@ -361,7 +362,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.masterSkillsAsked = !!entity.masterSkillsAsked;   // SOFTCAP3: the one-time offline offer, made
   snap.masterSkillsInfoSeen = !!entity.masterSkillsInfoSeen;   // SOFTCAP3: the one-time online explanation, shown
   snap.lefayTribute = normalTribute(entity.lefayTribute);   // LEFAY1: the flowers laid at Julian LeFay's monument - how many, and the newest where they lay
-  snap.masteredSkills = Array.isArray(entity.masteredSkills) ? [...entity.masteredSkills] : [];   // SOFTCAP4: the permanent 2/2/1 masteries
+  snap.masteredSkills = Array.isArray(entity.masteredSkills) ? [...entity.masteredSkills] : [];   // SOFTCAP4: the permanent 3/2/1 masteries (MASTER-THREE)
   snap.masteryPrompted = Array.isArray(entity.masteryPrompted) ? [...entity.masteryPrompted] : [];   // SOFTCAP4: the skills already asked about
   snap.arcanePath = isPathId(entity.arcanePath) ? entity.arcanePath : null;   // SCHOOLS1: the specialisation (systems/arcanePaths.js; given up only by systems/specReset.js)
   snap.pathPrompted = entity.pathPrompted === true;   // SCHOOLS1: the one ask, made
@@ -812,6 +813,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   defineLiveMaxHealth(entity);   // DISC10-E L4: the same law for MaxHealth - the setter below writes the RAW value
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
   resetBlowEffects(entity);   // AUDIT TELL L2: the last game's landings - a bleed, a knockdown, a push queued - are nobody's in this one
+  entity.oghmaLevelUp = false;   // AUDIT FB1026d II C2: the Oghma Infinium's latch is never saved - a load ends it, as a fresh entity's; restored in place, the last game's turned this game's next level into the book's thirty points, the book back in the pack
+  releaseCapLatch(entity);   // LEVEL-45 (AUDIT FB1026d C1): a level owed past the cap, saved before it, is no window to open
   // CHARID1: A LEGACY SAVE IS ADOPTED HERE. An envelope written before
   // the id existed carries none; its character gets one now, and every
   // card of that name that has none is stamped with it - so the next

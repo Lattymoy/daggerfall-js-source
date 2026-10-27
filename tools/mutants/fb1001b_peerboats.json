@@ -2,8 +2,8 @@
   {
     "name": "PEER-HULL-the-peers-boats-never-stood",
     "file": "src/scenes/world.js",
-    "old": "for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {",
-    "new": "for (const boat of csaColliderBoats()) {",
+    "old": "for (const boat of hullsStood(peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats(),",
+    "new": "for (const boat of hullsStood(csaColliderBoats(),",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ]
