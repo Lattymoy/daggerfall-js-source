@@ -7388,7 +7388,7 @@ disappear as their foes die): a frame carries at most SHARED_FOES_MAX (32) encou
 body stays the room's while its corpse lies - so a room past 32 (a party that rests often in one dungeon) cut its
 newest bodies off the full frame, which still said `xf` 1, and every joiner took each new body down at the next full
 frame. A full frame the count cap cut now says `xf` 2 - whole for the standing alone - and a joiner keeps a body it
-does not name (`dungeonContext.js:"frame.xf = shared.length < _sharedById.size ? 2 : 1;"`, applySharedRecords'
+does not name (`dungeonContext.js:"frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;"`, applySharedRecords'
 `full === 2`); a standing puppet the host no longer has still goes, and a joiner of an older build, which reads 1
 alone, takes nothing down from such a frame (`test/net/rpt1026_items_bodycap.test.js`).
 
