@@ -525,5 +525,15 @@
   "tests": [
    "test/world/worldWide/ww6_raids.test.js"
   ]
+ },
+ {
+  "name": "WW6-client-runout-said",
+  "file": "src/systems/raidingParties.js",
+  "old": "if (!r.cleansed && r.announced && home >= 0 && raidHome(r) === home)",
+  "new": "if (!r.cleansed && home >= 0 && raidHome(r) === home)",
+  "tests": [
+   "test/world/worldWide/ww6_raids.test.js"
+  ],
+  "note": "WW6's finish (2026-10-27): the lanes' roll keeps no run-out check of its own - the expiry pass that follows it in the frame takes a run-out raid rolled again out unsaid (it was never announced); this pins the unsaid, RAID1-fix2-withdrawn-untold's mutation through WW6's own test."
  }
 ]

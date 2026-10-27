@@ -275,9 +275,9 @@ function rig(places) {
 }
 beforeEach(() => { _resetRaidingParties(); _resetModSettings(); setSharedClock(null); });
 
-test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'s list was (the Bay\'s raids untouched), each kept by its key and tuple through a roll again, gone when the registry\'s places go, never one run out rolled back in; saved with its area and restored (mutants: the lanes never synced; a held raid replaced by its roll; a lane\'s raids kept with no places; the area unsaved)', () => {
+test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'s list was (the Bay\'s raids untouched), each kept by its key and tuple through a roll again, gone when the registry\'s places go, never one run out rolled back in, nor said; saved with its area and restored (mutants: the lanes never synced; a held raid replaced by its roll; a lane\'s raids kept with no places; a run-out raid rolled again withdrawn aloud; the area unsaved)', () => {
   const places = skyrim();
-  const { at } = rig(places);
+  const { at, log } = rig(places);
   restoreRaidSaveData({ lastSelectedDay: D, raids: [bayRaid()] });
   const was = structuredClone(raidState().raids);
   raidFrame(0);
@@ -298,9 +298,15 @@ test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'
   at.now = Math.max(...lane.map((r) => r.endMinute)) + 1;
   raidFrame(0);
   assert.equal(raidState().raids.filter((r) => r.regionIndex === 64).length, 0, 'every one ran out');
+  // ...and unsaid, though I stand in its district as the roll names it again (WW6's finish: it was never announced, so its
+  // withdrawal is no line - the expiry pass's fix 2)
+  at.region = 64; at.pixel = { x: lane[0].px, y: lane[0].py };
+  const said = log.said.length;
   places.register('other2', []);
   raidFrame(0);
   assert.equal(raidState().raids.filter((r) => r.regionIndex === 64).length, 0, 'and none rolled back in');
+  assert.deepEqual(log.said.slice(said), [], 'nor a word said of one');
+  at.region = 3; at.pixel = { x: 200, y: 100 };
   // saved with its area; the registry gone, the lane's raids go
   _resetRaidingParties(); rig(places);
   restoreRaidSaveData({ lastSelectedDay: D, raids: [bayRaid()] });
