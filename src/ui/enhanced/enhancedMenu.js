@@ -358,6 +358,7 @@ function focusDoor(id) {
   globalThis.requestAnimationFrame?.(() => (app?.querySelector?.(`.px-menu .door-${id}`) ?? app?.querySelector?.('.px-menu .doorbtn'))?.focus?.());
 }
 let unlistenKeys = null;
+let windowOwner = null;   // COVERED-KEYS: the stack window this page draws - the Growth tab's embedded Ascension gates its keys on it
 // ACC1f (Mac: "The online details itself will live as a popup on main
 // menu startup and a new profile icon"): whether the account window is
 // open, and whether startup has already offered it once.
@@ -4756,7 +4757,7 @@ function pauseWindow() {
 // Ascension and the skies drawn in the pane (ui/growth/growthStage.js), Master Skills a press away on the Stats tab.
 function pauseGrowth(body) {
   drawGrowthTab(body, {
-    el, divider: pxDivider, skillMeter, askCard, entity: playerEntity, render, hooks, captain: holdingsProvider()?.captain ?? null,
+    el, divider: pxDivider, skillMeter, askCard, entity: playerEntity, render, hooks, captain: holdingsProvider()?.captain ?? null, owner: windowOwner,
     openMaster: () => { releaseGrowthTab(); pauseTab = 'stats'; statsSec = 'master'; _masterNote = null; render(); },
   });
 }
@@ -6283,6 +6284,7 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
+  windowOwner = owner;   // before the first render: the Growth tab hands it to the Ascension it draws
   questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   // PROFILE2: and the profile window is a visit's too - the pause screen mounts this module again, and a window left
   // open on the door (or on the last pause) must not be standing over the next one before the player asks for it
@@ -6435,6 +6437,7 @@ export function mountEnhancedMenu(host, {
       footObs?.disconnect?.(); footObs = null;
       acctPaint = null; acctOff?.(); acctOff = null;
       unlistenKeys = null;
+      windowOwner = null;
       lockHandler = null;
       resizeHandler = null;
       host.innerHTML = '';

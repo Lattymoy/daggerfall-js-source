@@ -231,3 +231,25 @@ test('COVERED-KEYS: the Ascension does not confirm on an Enter meant for a box o
     uncovered: () => { assert.equal(keydown('Enter').defaultPrevented, true, 'the Ascension no longer answers its own Enter'); },
   });
 });
+
+test('COVERED-KEYS: the Ascension drawn in the pause window\'s Growth tab does not confirm on an Enter meant for a box over the pause window', async () => {
+  // The tab's Level page draws the Ascension as a stage the player opens full screen (growthStage.js); its keys are the
+  // face's own listener, gated on the pause window it is drawn in (growthTab.js passes the menu's owner).
+  const win = openPauseFlow(() => {}, { at: 'level' });
+  const stack = makeWindowStack();
+  try {
+    await mounted(globalThis.document.body.children.at(-1));
+    const open = globalThis.document.body.children.at(-1).querySelectorAll('button').find((b) => b.className === 'act primary');
+    assert.ok(open, 'the Level page offers the Ascension');
+    open.onclick();
+    const fullBox = () => globalThis.document.body.children.find((c) => c.className === 'gr-fullbox');
+    for (let waited = 0; !(fullBox()?.querySelectorAll('.px-win, button').length > 1) && waited < 5000; waited += 5) await new Promise((r) => setTimeout(r, 5));
+    stack.pushWindow(win);
+    assert.equal(keydown('Enter').defaultPrevented, true, 'uncovered, the Ascension in the tab answers its Enter');
+    stack.pushWindow(new ActionTextBox(['A line.']));
+    assert.equal(keydown('Enter').defaultPrevented, false, 'the embedded Ascension took the Enter meant for the box');
+    assert.equal(win.done, false);
+  } finally {
+    win.dispose?.();
+  }
+});

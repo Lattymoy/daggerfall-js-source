@@ -232,5 +232,23 @@
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]
+  },
+  {
+    "name": "CK-the-growth-tab-hands-the-ascension-no-window",
+    "file": "src/ui/growth/growthTab.js",
+    "old": "embed: true, owner: ctx.owner, onExit",
+    "new": "embed: true, onExit",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-menu-keeps-no-window-for-its-tabs",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  windowOwner = owner;   // before the first render",
+    "new": "  windowOwner = null;   // before the first render",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
   }
 ]

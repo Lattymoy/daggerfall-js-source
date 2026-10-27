@@ -131,7 +131,7 @@ function meterRow(label, now, max, fill) {
  * spent here or wherever a level-up opens next. The OK still commits, and `onExit` follows it.
  *
  * @param {HTMLElement} hostEl
- * @param {{screen: any, entity?: any, onExit?: () => void, embed?: boolean}} d
+ * @param {{screen: any, entity?: any, onExit?: () => void, embed?: boolean, owner?: any}} d
  */
 export function mountEnhancedLevelUp(hostEl, d = {}) {
   injectEnhancedStyle();
@@ -590,7 +590,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
    *  (LV1's audit). One listener, owned by the teardown below. */
   const onResize = () => { if (!dead) drawPixelGround(ground, vw(), vh(), 0); };
   if (still) globalThis.addEventListener?.('resize', onResize);
-  const unlistenKeys = listenWindowKeys(d.owner, onKey);   // COVERED-KEYS: d.owner, the Ascension's window (ui/charSheetDoor.js; none in the Growth tab)
+  const unlistenKeys = listenWindowKeys(d.owner, onKey);   // COVERED-KEYS: d.owner, the Ascension's window (ui/charSheetDoor.js; in the Growth tab the pause window's, through growthTab.js)
   if (!embed) unregister = registerOverlay(closeArm);   // GROWTH3: in the tab the pause window is the overlay
   // GROWTH3: in the tab the stage moves under it - the sky redrawn to its size
   let watch = null;
