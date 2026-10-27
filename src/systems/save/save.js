@@ -1177,7 +1177,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   repairLostCurses(entity, { now: Math.floor(snap.classicMinutes ?? 0) });
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
-  restoreDiscovery(snap.discovery);
+  // BAY-LEFT-MAPS (C7 = E2): with the deeds restored above - a house past the Bay keeps its residence in its own town's book
+  restoreDiscovery(snap.discovery, { houses: entity.houses });
   // RR3b: WorldDataVariants.RestoreWorldVariationData (SaveLoadManager.cs:1465-1466); a save without the field restores nothing, as the C#'s null does
   clearWorldDataVariants();
   restoreWorldVariationData(snap.worldVariation ?? null);

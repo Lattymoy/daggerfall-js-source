@@ -864,7 +864,7 @@
   {
     "name": "i6-discovery-by-map-id-again",
     "file": "src/scenes/world.js",
-    "old": "        return loc?.name ? discoveredBuildings(`${summary.regionIndex}:${loc.name}`) : [];",
+    "old": "        return loc?.name ? discoveredBuildings(townBookOf(loc)) : [];   // BAY-LEFT-MAPS (C7 = E2): the one key-maker",
     "new": "        return discoveredBuildings(summary.mapID ?? -1);",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"

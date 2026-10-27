@@ -1061,7 +1061,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, pruneDiscoveryLayouts } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, pruneDiscoveryLayouts, townBookOf, townBookId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
 import { scryRows } from '../systems/loot/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
@@ -6616,7 +6616,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  returns early when none is loaded, so a quest that tombstones
    *  while the player is elsewhere is a no-op in DFU too. */
   const undiscoverBuildingHere = (buildingKey, buildingName) => undiscoverBuilding(
-    `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null);
+    townBookOf(_questLoc()), buildingKey, true, buildingName ?? null);   // BAY-LEFT-MAPS (C7 = E2): its town's book by the one key-maker
   /** QUEST-HOME (Mac, 2026-10-15: "Close both"): every quest site not yet reached whose building a player's home is now,
    *  chosen again in its own town (QuestMachine.reseatHomedSites) - asked whenever the online homes learn of one (the
    *  boot's read, the hub's word, a town's answer) and after a load's layouts stand. Before the quest machine stands it
@@ -6631,7 +6631,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  quest's name (the tombstone's own undiscover, Quest.cs:655: residences only, the name matched), and where it did, the
    *  new building is discovered under the quest's name in its town (a record the player's map had, moved). */
   function questSiteMovedHere(place, was) {
-    const town = `${was?.regionIndex ?? -1}:${was?.locationName ?? ''}`;
+    const town = townBookId(was?.regionIndex ?? -1, was?.locationName ?? '', was?.mapId);   // BAY-LEFT-MAPS (C7 = E2): the site's own town's book
     const had = getDiscoveredBuilding(town, was?.buildingKey);
     const marked = !!had && had.displayName === was.buildingName;
     undiscoverBuilding(town, was?.buildingKey, true, was?.buildingName ?? null);
@@ -15239,7 +15239,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     const summaries = buildingSummaries(city.exterior.buildings, list, { locationIndex: city.locationIndex, locationName: city.name, regionName: city.regionName });
     const took = blocks.getBlockByName(ed.arenaTook);
-    const locId = `${city.regionIndex}:${city.name}`;
+    const locId = townBookOf(city);   // BAY-LEFT-MAPS (C7 = E2): the one key-maker (Daggerfall's, the Bay's own key)
     return {
       city, summaries, mapId: city.mapTableData.mapId, locId,
       oldTypeOf: (key) => took?.rmbBlock?.fldHeader?.buildingDataList?.[key & 0xff]?.buildingType ?? null,
@@ -16666,11 +16666,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // by every writer (this host's own discoveryLocationId, exterior.js,
       // townTalk's reveal) - it was read here by NUMERIC map id, so the I
       // key answered "no knowledge" for every place in the game, a city
-      // whose every shop the player had entered included.
+      // whose every shop the player had entered included. BAY-LEFT-MAPS
+      // (C7 = E2): every writer and reader takes ONE key-maker now
+      // (systems/discovery.js townBookId - the Bay's key byte for byte,
+      // a place past the Bay its map id after it).
       discoveredBuildings: (summary) => {
         if (!summary) return [];
         const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);
-        return loc?.name ? discoveredBuildings(`${summary.regionIndex}:${loc.name}`) : [];
+        return loc?.name ? discoveredBuildings(townBookOf(loc)) : [];   // BAY-LEFT-MAPS (C7 = E2): the one key-maker
       },
       // :432-433 - DFU reads `exteriorAutomapBuildingType<Type>` out of
       // its own text table; the port has the enum and no such table, so
@@ -16714,7 +16717,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!dfLoc || !b?.locBlocks) return;
     // The location this edge fired for, resolved NOW - the wait below
     // is a microtask and the player must not be re-read after it.
-    const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    const locationId = townBookOf(dfLoc);   // BAY-LEFT-MAPS (C7 = E2): its own town's book
     const buildings = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
       { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 });
     // AUDIT 63 F9 (review round): THE NAME IS A FILE READ, so the
@@ -18940,10 +18943,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     getLocation: (r, i) => maps.getLocation(r, i),
     currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
-    getAnyBuilding: (buildingKey) => discoveredBuildings(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`)
+    getAnyBuilding: (buildingKey) => discoveredBuildings(townBookOf(_questLoc()))   // BAY-LEFT-MAPS (C7 = E2)
       .find((b) => b.buildingKey === buildingKey) ?? null,
     discoverBuilding: (buildingKey) => discoverBuilding(
-      `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+      townBookOf(_questLoc()),   // BAY-LEFT-MAPS (C7 = E2)
       (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey },
       null, questBuildingSource),   // AUDIT 63 F49: the quest name-override arm (PlayerGPS.cs:945-959)
     // S44: the real member (PersistentFactionData.cs:675-689). This hook
@@ -26680,7 +26683,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if ((slot.buildingKey | 0) > 0) return (slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';
     allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
       // the building named "<heir>'s residence" in its own town's discovery (`<regionIndex>:<name>`, discoveryLocationId's key)
-      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(`${region}:${row.location}`, { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },
+      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(townBookId(region, row.location, row.mapId), { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },   // BAY-LEFT-MAPS (C7 = E2): its own town's book, past the Bay by its map id
       addPermanentScene: () => {},   // the graft below makes the scene permanent, with what it held
       addNote: (text) => questBridge?.notebook?.addNote?.(text),
       playerName: playerEntity.name ?? '', regionName: REGION_NAMES[region] ?? '',
@@ -29261,7 +29264,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // R1: the discovery store's location key - the SAME string the
     // quest bridge's discoverBuilding uses, so the exterior lockpick
     // anti-grind record and the talk reveals share one namespace.
-    discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+    discoveryLocationId: () => townBookOf(_questLoc()),   // BAY-LEFT-MAPS (C7 = E2): the one key-maker (systems/discovery.js townBookId) - past the Bay a town's own book
     questBuildingSource,   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override pair (PlayerGPS.cs:945-959)
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
@@ -33962,7 +33965,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (rrEnabled()) {
           const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
           const armRec = arm ? (topicTree.listBuildings ?? []).find((b) => b.buildingKey === arm.buildingKey) : null;
-          if (arm && armRec) discoverBuilding(`${_musicLoc.regionIndex}:${_musicLoc.name}`, armRec, arm.name);   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
+          if (arm && armRec) discoverBuilding(townBookOf(_musicLoc), armRec, arm.name);   // BAY-LEFT-MAPS (C7 = E2): the one key-maker   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
         }
         // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
         // .PlayerGPS_OnEnterLocationRect primes the holiday text

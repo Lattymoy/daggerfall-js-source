@@ -693,5 +693,164 @@
       "test/ui/bayleft_find.test.js"
     ],
     "note": "the teleport card names no province past the Bay"
+  },
+  {
+    "name": "BLM-C7-the-id-never-read",
+    "file": "src/systems/discovery.js",
+    "old": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;",
+    "new": "  return book;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "every place of a name in a province one book (907 places on 296)"
+  },
+  {
+    "name": "BLM-C7-the-id-read-on-the-bay",
+    "file": "src/systems/discovery.js",
+    "old": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;",
+    "new": "  return `${book}#${id >>> 0}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "every Bay save's books unread"
+  },
+  {
+    "name": "BLM-C7-a-whole-id-masked",
+    "file": "src/systems/discovery.js",
+    "old": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;",
+    "new": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id & 0xfffff}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-no-location-a-book",
+    "file": "src/systems/discovery.js",
+    "old": "export const townBookOf = (loc) => townBookId(loc?.regionIndex ?? -1, loc?.name ?? '', loc?.mapTableData?.mapId ?? 0);",
+    "new": "export const townBookOf = (loc) => townBookId(loc?.regionIndex ?? 0, loc?.name ?? '', loc?.mapTableData?.mapId ?? 0);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-old-books-kept",
+    "file": "src/systems/discovery.js",
+    "old": "    const old = pastBayBookOfOld(locId);",
+    "new": "    const old = null;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "a save from before keeps its shared books past the Bay, unread for good"
+  },
+  {
+    "name": "BLM-C7-a-bay-book-let-go",
+    "file": "src/systems/discovery.js",
+    "old": "  return m && isProvinceRegion(Number(m[1])) ? { region: Number(m[1]), name: m[2] } : null;",
+    "new": "  return m ? { region: Number(m[1]), name: m[2] } : null;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "every Bay book of a save let go on load"
+  },
+  {
+    "name": "BLM-C7-a-new-book-let-go",
+    "file": "src/systems/discovery.js",
+    "old": "  const m = /^(\\d+):([^#]*)$/.exec(locId);",
+    "new": "  const m = /^(\\d+):(.*)$/.exec(locId);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-deed's-record-lost",
+    "file": "src/systems/discovery.js",
+    "old": "  const deeds = (Array.isArray(houses) ? houses : []).filter(",
+    "new": "  const deeds = [].filter(",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "a house past the Bay loses its residence's plate on a load"
+  },
+  {
+    "name": "BLM-C7-the-deed-carried-by-another-name",
+    "file": "src/systems/discovery.js",
+    "old": "      const rec = h.location === old.name ? recs.get(h.buildingKey | 0) : null;",
+    "new": "      const rec = recs.get(h.buildingKey | 0);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-a-carried-one-over-its-own",
+    "file": "src/systems/discovery.js",
+    "old": "      if (!_discovered.get(to).has(rec.buildingKey)) _discovered.get(to).set(rec.buildingKey, rec);",
+    "new": "      _discovered.get(to).set(rec.buildingKey, rec);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-a-carried-one-dropped-by-its-book",
+    "file": "src/systems/discovery.js",
+    "old": "    if (!old) { const had = _discovered.get(locId); if (had) for (const [k, r] of recs) had.set(k, r); else _discovered.set(locId, recs); continue; }",
+    "new": "    if (!old) { _discovered.set(locId, recs); continue; }",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-save-hands-no-deeds",
+    "file": "src/systems/save/save.js",
+    "old": "  restoreDiscovery(snap.discovery, { houses: entity.houses });",
+    "new": "  restoreDiscovery(snap.discovery);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-door's-key-back",
+    "file": "src/scenes/world.js",
+    "old": "    discoveryLocationId: () => townBookOf(_questLoc()),",
+    "new": "    discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "a door's plaque, a lock's bar and a deed past the Bay in every town of the name"
+  },
+  {
+    "name": "BLM-C7-the-town-map's-key-back",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    const locId = townBookOf(dfLoc);",
+    "new": "    const locId = `${dfLoc.regionIndex}:${dfLoc.name}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-talk's-reveal-back",
+    "file": "src/scenes/townTalk.js",
+    "old": "discoverBuilding(townBookId(regionNow(), cityName(), topics?.mapId), building, null, questBuildingSource);",
+    "new": "discoverBuilding(`${regionNow()}:${cityName()}`, building, null, questBuildingSource);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-guild-halls'-key-back",
+    "file": "src/scenes/world.js",
+    "old": "    const locationId = townBookOf(dfLoc);",
+    "new": "    const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-moved-site's-key-back",
+    "file": "src/scenes/world.js",
+    "old": "    const town = townBookId(was?.regionIndex ?? -1, was?.locationName ?? '', was?.mapId);",
+    "new": "    const town = `${was?.regionIndex ?? -1}:${was?.locationName ?? ''}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
   }
 ]

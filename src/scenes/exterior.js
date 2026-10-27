@@ -308,7 +308,7 @@ import { WORLD_PER_PX } from '../ui/ink/inkTown.js';   // EM4: the town plan's o
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';   // ROAD-C c2/S10: the plate rename's input box
-import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation, undiscoverBuilding } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing
+import { discoveredBuildings, setDiscoveredBuildingCustomName, discoverLocation, undiscoverBuilding, townBookId } from '../systems/discovery.js';   // A2: the nameplates' gate; c2/S10: the plate rename; QX1: RevealLocation's filing; BAY-LEFT-MAPS (C7 = E2): the one key-maker (the Bay's own key here)
 import { activeMemberships } from '../systems/guild/guilds.js';   // F117
 import { revealGuildHallsOnMap, revealingMemberships } from '../systems/guild/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap; AUDIT CHAP2 D4: either book's
 import { avoidDeath, avoidDeathText } from '../systems/guild/guildServices.js';   // F117: Stendarr
@@ -3425,7 +3425,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // A2: the exterior automap (Actions.AutoMap outdoors,
     // DaggerfallUI.cs:633-650); this host always stands on a location.
     toggleAutomap: () => {
-      const locId = `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`;
+      const locId = townBookId(dfLocation.regionIndex, dfLocation.name ?? locationName, dfLocation.mapTableData?.mapId);
       // ROAD-C c2/S10: the real mesh-99900 arrow (rasterised once by
       // ui/meshStamp.js) and the Position-bearing subrecord walk the
       // plate anchors now come off.
@@ -4219,7 +4219,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // in the fixed city must take its residences back off the map here
     // exactly as it does in the streaming world.
     undiscoverBuilding: (buildingKey, buildingName) => undiscoverBuilding(
-      `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`, buildingKey, true, buildingName ?? null),
+      townBookId(dfLocation.regionIndex, dfLocation.name ?? locationName, dfLocation.mapTableData?.mapId), buildingKey, true, buildingName ?? null),
     classicSeconds: () => playerTicker.ownMinutes * 60,   // TIME3 (Online-Time-Arc.md 6.3): the quest's clock is the CHARACTER's own - its countdowns, intervals and tombstones; a rest spends it (the one clock offline)
     skySeconds: () => skyMinutes() * 60,   // TIME3: a quest's hour, date and season are the sky's
     worldSeconds: () => playerTicker.classicMinutes * 60,   // TIME3: the event clock - the journal's dates are stamped on it
@@ -4511,7 +4511,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // DiscoverBuilding silently no-op in the ?exterior host (locId
     // null skips both) - the same `region:location` string the world
     // host and townTalk's reveal use.
-    discoveryLocationId: () => `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
+    discoveryLocationId: () => townBookId(dfLocation.regionIndex, dfLocation.name ?? locationName, dfLocation.mapTableData?.mapId),
     // QX1: THE BRIDGE RIDES INTO THE MODE MACHINE. This is what makes
     // the machine mount OVER THIS CITY rather than beside it: worldModes
     // runs `questBridge.mountScene(adapter, SITE_TYPES.Building,
@@ -5068,7 +5068,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // static-NPC door does (worldModes.js's ensureFactions arm).
   Promise.resolve(townTalk.ensureFactions?.()).then(() => {
     revealGuildHallsOnMap(revealingMemberships(playerEntity),   // AUDIT CHAP2 D4: either book's
-      `${dfLocation.regionIndex}:${dfLocation.name ?? locationName}`,
+      townBookId(dfLocation.regionIndex, dfLocation.name ?? locationName, dfLocation.mapTableData?.mapId),
       buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks,
         { locationName: dfLocation.name ?? locationName, regionName: maps.getRegionName(dfLocation.regionIndex), locationIndex: dfLocation.locationIndex ?? 0 }),
       { factionName: (id) => { const n = townTalk.factionDict?.get(id)?.name; return n == null ? '' : getLocalizedFactionName(id, n); } });   // L10N3e: GetGuildName's GetFactionData, a translation's name for the id (ThievesGuild.cs:246, DarkBrotherhood.cs:255, PersistentFactionData.cs:176)
