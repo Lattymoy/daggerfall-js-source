@@ -37,7 +37,7 @@
   },
   {
     "name": "TS9-notch-turned",
-    "file": "src/world/road/roadPainter.js",
+    "file": "src/world/road/roadCurves.js",
     "old": "[RING.NW]: [false, true]",
     "new": "[RING.NW]: [false, false]",
     "tests": [
@@ -67,6 +67,33 @@
     "file": "src/world/road/roadPainter.js",
     "old": "  if (half && !has && ctx.ground !== TILE.water) return",
     "new": "  if (half && ctx.ground !== TILE.water) return",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "F2-the-halves-unlaid-past-the-Bay",
+    "file": "src/world/road/roadCurves.js",
+    "old": "!(rect.ring ? code === RING.road || half :",
+    "new": "!(rect.ring ? code === RING.road :",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "F2-a-half-turned-past-the-Bay",
+    "file": "src/world/road/roadCurves.js",
+    "old": "(half[0] ? 64 : 0) + (half[1] ? 128 : 0)",
+    "new": "(half[1] ? 64 : 0) + (half[0] ? 128 : 0)",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "F2-the-flank-by-another-ground",
+    "file": "src/world/road/roadCurves.js",
+    "old": "tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] +",
+    "new": "tilemap[t] = half ? FLANK[2] +",
     "tests": [
       "test/world/terrain/townring.test.js"
     ]

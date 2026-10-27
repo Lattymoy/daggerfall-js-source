@@ -397,9 +397,21 @@ walled past the Bay on the same pixel), two faults:
   against the mod's own flanks), never over the sea (its tile kept) nor over a road an arm laid there; GRASS-PATH1's mask
   takes it as a path.
 
+**AUDIT BAY-LEFT F2 - the half tiles past the Bay** (2026-10-27, `01-Overview/audits/Audit-Left-In-The-Bay.md`). A pixel
+past the Bay takes VOYAGER2's curved painter (`world/road/roadCurves.js` paintCurvedPaths), whose ring pass paved the
+ring's whole tiles alone, and the straight pass after it is handed no road: on three pixels past the Bay 2 of 72 half
+tiles were laid, 72 of 72 on the Bay. The ring pass now lays them as `roadPainter.js` paintPath does - the diagonal's own
+edge by the ground, turned by RING_HALF, never over the sea - and RING_HALF's home is `roadCurves.js`, both painters
+reading it. After: 72 of 72 past the Bay.
+
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): the mod paves its rect's padding square and whole; the outline's
-ring (TS2) is blended where it runs at an angle. Tests `test/world/terrain/townring.test.js` (3, its last on ARENA2: both
-towns' rings painted whole, their angled edges blended). Mutants `tools/mutants/townring.json` (8, all dead). PINS MOVED:
+ring (TS2) is blended where it runs at an angle. Tests `test/world/terrain/townring.test.js` (4, its last on ARENA2: both
+towns' rings painted whole, their angled edges blended, and a third built on a pixel truly past the Bay with the roads
+layer's road, its half tiles every one its code's; F2's synthetic case the curved painter's ring tiles the Bay painter's
+bytes for every code - grass, dirt, the sea). Mutants `tools/mutants/townring.json` (11, all dead). PIN MOVED (F2): the
+ARENA2 case's "past the Bay" city had stood on Gothway Garden's own Bay pixel, so the curved painter never ran;
+TS9-notch-turned's file is `roadCurves.js` now and `audittesa3e1.json`'s E1-1-the-curved-ring-paves-the-sea re-aimed by
+content (dead). PINS MOVED:
 `test/world/terrain/townshapes.test.js` (the ring's whole tiles by their code); `townshapes.json` TS-the-square-ring and
 `fastsuite_roads.json` FAST-road-rect-dropped re-aimed by content (dead).
 
@@ -422,9 +434,13 @@ every way (N, S, E, W, NE, SW): 8 of 373 yards stood on a painted road (Ripwark'
   names the paths it read, so a town's places (`scenes/world.js` townPlacesFor's memo) are placed again when its pixel is
   built again once the roads land (ROADS 25's rebuild), never kept from the roadless build.
 - Measured again: 0 of the 373 on a painted road, every one of them still placed.
+- **AUDIT BAY-LEFT F3 - the key through the fabric** (2026-10-27, `01-Overview/audits/Audit-Left-In-The-Bay.md`): the
+  pixel build wraps the walk shut in URBANIZER U3's (`world/urban/townFabricStand.js` fabricWalkShut), a new function
+  that carried no `key`, so the memo read 'shut' whatever the roads and kept the yards placed before them - on the Bay
+  and past it. The wrapper's key is now the town's shut's and whether its fabric stands, read when asked.
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from CityNavigation.SetRMBData's weights, which read a block's own
 ground tile alone - a road the terrain painted on a town's ground is its grid's road. Tests `test/world/townpaths.test.js`
-(5, its last on ARENA2). Mutants `tools/mutants/townpaths.json` (8, all dead). PINS MOVED: `test/world/townfollow.test.js`
+(6, its last on ARENA2; F3's the fabric's key moving with its roads). Mutants `tools/mutants/townpaths.json` (10, all dead). PINS MOVED: `test/world/townfollow.test.js`
 (the walk shut reads the paths and paves them between its ground and its wall); `townfollow.json` TF-the-wall-unwired and
 TF-the-ground-unshut re-aimed by content (dead).

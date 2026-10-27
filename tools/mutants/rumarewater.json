@@ -276,7 +276,7 @@
   {
     "name": "RW-BAKE-the-span's-class-the-bound's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "c = rumareSlice(px, py) ? PIXEL_MIXED : classifyPixel(this.woods, px, py);",
+    "old": "c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py);",
     "new": "c = classifyPixel(this.woods, px, py);",
     "tests": [
       "test/world/rumarewater.test.js"
@@ -285,8 +285,8 @@
   {
     "name": "RW-BAKE-the-fine-water-the-plain-sampler's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "    super({ woods, global: null, frame, fineAt: (px, py) => fineMaskBits(rumareWaterSampler(woods, px, py)) });",
-    "new": "    super({ woods, global: null, frame });",
+    "old": "fineAt: (px, py) => (rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null))) });",
+    "new": "fineAt: (px, py) => fineMaskBits(pixelWaterSampler(woods, px, py, null)) });",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "RW-BAKE-the-coarse-water-the-plain-sampler's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "      (x, y) => coarseCandidateBits(rumareWaterSampler(this.woods, x0 + x, y0 + y)), seed);",
-    "new": "      (x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)), seed);",
+    "old": "(x, y) => (rumareSlice(x0 + x, y0 + y) ? this._cityBits(x0 + x, y0 + y, 'coarse') : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null))), seed);",
+    "new": "(x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)), seed);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -379,6 +379,73 @@
     "file": "src/world/terrain/terrainGen.js",
     "old": "    if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);",
     "new": "    if (natural && false) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-span-all-mixed",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  return wet === 0 ? { cls: PIXEL_LAND, grid: null } : wet === sea.length ? { cls: PIXEL_SEA, grid: null } : { cls: PIXEL_MIXED, grid: sea };",
+    "new": "  return { cls: PIXEL_MIXED, grid: sea };",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-all-land-test-turned",
+    "file": "src/world/rumareWaters.js",
+    "old": "  if (far < IMPERIAL.isle - 1) return true;",
+    "new": "  if (far < IMPERIAL.isle - 1) return false;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-all-land-test-unread",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  if (!rimOf(rect) && rumareSliceAllLand(px, py)) return { cls: PIXEL_LAND, grid: null };",
+    "new": "  if (false) return { cls: PIXEL_LAND, grid: null };",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ],
+    "equivalent": true,
+    "why": "the fast test is a shortcut to the answer the law's grid gives (the pin holds rumareSliceAllLand to the grid on every case it names); without it the class is the same, only made the long way"
+  },
+  {
+    "name": "RW-F1-a-vertex-turned",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  const water = (x, y) => (plain && outer(x, y) ? plain.water(x, y) : sea[x * H + y] === 1);",
+    "new": "  const water = (x, y) => (plain && outer(x, y) ? plain.water(x, y) : sea[y * H + x] === 1);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-outer-edge-the-law's",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  const water = (x, y) => (plain && outer(x, y) ? plain.water(x, y) : sea[x * H + y] === 1);",
+    "new": "  const water = (x, y) => sea[x * H + y] === 1;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ],
+    "equivalent": true,
+    "why": "the span's outer edge is the land's own (capitalSeaGround), and every land past the span's edge is land but the canal's water at the mouth, where the law is the sea too - so the law and the land agree on every outer vertex of every world a canal stands in; the plain sampler there keeps the bake the kernel's answer to the bit (the pin compares the two on every kind of slice)"
+  },
+  {
+    "name": "RW-F1-the-bits-made-again",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "      if (!m[kind]) {\n        const sampler = rumareWaterSampler(",
+    "new": "      if (true) {\n        const sampler = rumareWaterSampler(",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-compounds-turned",
+    "file": "src/world/imperialCity.js",
+    "old": "c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]",
+    "new": "c = [polar(I.university.b, I.university.r), polar(I.prison.b, I.prison.r)]",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
