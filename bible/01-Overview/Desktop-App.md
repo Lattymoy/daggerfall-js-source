@@ -1183,21 +1183,26 @@ frame rate did not separate the backends in the app: 118 against 120 is not Vulk
 120 has no in-app counterpart. The first Vulkan run's 89 fps (the page thread 94% busy) did not come again, and its
 cause was not found. Runs, logs and screenshots: `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/`.
 
-The forced failure (`DAGGER_GRAPHICS_BACKEND=metal`): the page drew on `ANGLE (Microsoft, Microsoft Basic Render Driver
-(0x0000008C) Direct3D11 vs_5_0 ps_5_0, D3D11)`. The shell logged `[shell] GPU-BACKEND: metal failed (software renderer:
-...) on an unknown GPU - relaunching on the default`. The record was written with `gpu: null`, and the notice was
-answered with Enter. The relaunched app drew on `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 ...)`
-and keyed the record `10de:2c02@32.0.16.1088`. The first cut keyed SwANGLE's device (`ffff:ffff@...`), and the
-relaunch then cleared the record as "another GPU". That would have tried the failed backend on every other start.
+The guard in the app (2026-10-27, head `0765a2564a`, the same machine and shell, one launch each, fresh userData; the
+notice answered with Enter; `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/webgl2-check/`):
+
+| Launch | What the guard saw | Result |
+|---|---|---|
+| Pref on Vulkan | the page's WebGL2 context on `ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA GeForce RTX 5080 (0x00002C02)), NVIDIA)` | logged `vulkan up`; no record |
+| `DAGGER_GRAPHICS_BACKEND=d3d9` | the page got no WebGL2 context (check 2; Chromium's renderer names Direct3D9, so check 1 passes) | recorded, relaunched; the relaunch drew on D3D11 and keyed the record `10de:2c02@32.0.16.1088` |
+| `DAGGER_GRAPHICS_BACKEND=metal` | the page's renderer is a software one: `ANGLE (Microsoft, Microsoft Basic Render Driver (0x0000008C) Direct3D11 vs_5_0 ps_5_0, D3D11)` | recorded, relaunched; the relaunch drew on D3D11 and keyed the record |
+
+Each failed launch wrote its record with `gpu: null`: the page's report arrives before Chromium's GPU info is read, so
+the relaunch keys it. Each relaunch drew on `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 ...)`. An
+earlier cut keyed SwANGLE's device (`ffff:ffff@...`), and the relaunch then cleared the record as "another GPU". That
+would have tried the failed backend on every other start.
 
 Not verified: the built app over `dagger://` (the shell code is the same; the page is not), the GPU process's own loss
-(it cannot be forced from the shell), a real driver update, and any GPU but this one NVIDIA card. Every run used
-`--play`, so the guard checked on the game window's load, never the launcher's. A later start held by a keyed record on
-the same driver was driven only as the relaunch itself; the unit test holds the rest. A third
-failure shape was seen: `use-angle=d3d9` gave the page no WebGL2 context at all. Its renderer string and feature status
-were read in the app (CDP `SystemInfo.getInfo`); the guard's check for it was not driven there, and a unit test holds
-it. The settings row was seen in the app (before/after screenshots, base `284f59cefa`). Pins:
-`test/tooling/gpubackend.test.js`, and the row in `test/systems/org2_options.test.js`.
+(it cannot be forced from the shell), the page's 60 s silence (a unit test holds it), a real driver update, and any GPU
+but this one NVIDIA card. Every run used `--play`, never the launcher first. A later start held by a keyed record on the
+same driver was driven only as the relaunch itself; the unit test holds the rest. The settings row was seen in the app
+(before/after screenshots, base `284f59cefa`). Pins: `test/tooling/gpubackend.test.js`, and the row in
+`test/systems/org2_options.test.js`.
 
 ## What deliberately did NOT move
 
