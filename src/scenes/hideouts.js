@@ -153,8 +153,10 @@ export function* bandChest(band, t, deps) {
  *   chest: (band: any, t: number) => Iterator<void, { items: any[], robbed: any[] }>, dropPile: (items: any[], feet: number[]) => any,
  *   removePile: (pile: any) => void, engaged?: (rec: any) => boolean, now?: () => number, renderer?: any, meshes?: any,
  *   getTexture?: (archive: number) => any, uploadRecordFrame?: (archive: number, record: number, frame: number) => void,
+ *   routed?: (h: any) => void,
  * }} deps - `chest` the band's chest worked a step a `next()` (`bandChest`); `engaged(rec)` whether one of its people
- *   draws on this player (AUDIT LW-II-2 C14); `now` real ms (the chest's slice)
+ *   draws on this player (AUDIT LW-II-2 C14); `now` real ms (the chest's slice); BAY-LEFT-SEA: `routed(h)` its hideout
+ *   routed (a Bounty's den past the Bay - systems/seatEdicts.js hideoutRouted)
  */
 export function createHideouts(deps) {
   /** The hideout stood, or null. */
