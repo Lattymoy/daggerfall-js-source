@@ -20,7 +20,8 @@ import { LOCATION_TYPES, getWorldClimateSettings } from '../../src/formats/mapsF
 import * as ES from '../../src/world/ethericSea.js';
 import { etherPlaceIsle, etherPlaceRows, etherTemplateOf, synthesizeEtherLocation, etherPlaceId, ETHER_REGION, ETHER_REGION_NAME } from '../../src/world/etherPlaces.js';
 import { createCaptainLedger } from '../../src/systems/naval/captainLedger.js';
-import { farPlaces, settlementPixels, TV_FAR_RANGE } from '../../src/systems/travel/travelFarPlaces.js';
+import { farPlaces, settlementPixels, TV_FAR_RANGE, TV_FAR_TYPES } from '../../src/systems/travel/travelFarPlaces.js';
+import { inBay } from '../../src/world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS: the lifted near query's own
 import { shipTransition } from '../../src/systems/ship.js';
 import { SHIP_TYPES } from '../../src/systems/banking.js';
 
@@ -109,14 +110,18 @@ test('AUDIT ETHER-OW C2-2: an isle charted while the captain stands on one pixel
     wildHallAt: () => false, wildActiveNow: () => null, wildHallStand: () => null, spawnedHallMapId: () => 0, maps: { getClimateIndex: () => 223 },
     travelLocationSummaryAt: () => null, mapDict: new Map(), travelCheckDiscovered: () => false,
     playerTravelPixel: () => at, state: { terrainDistance: 6 }, tvPlaceRect: (s) => ({ cx: s.pixel.x, cz: s.pixel.y }), farPlaces, settlementPixels, etherPlaceRows, TV_FAR_RANGE,
+    provinceQuestPlaces: null, pendingSummary: () => null, onTheBay: inBay, MAX_MAP_PIXEL_X: 1000, MAX_MAP_PIXEL_Y: 500, worldPlaces: null, pastBayPlacesIn: () => [], TV_FAR_TYPES, isCapitalPlaceId: () => false,   // PIN MOVED (BAY-LEFT-MAPS): `named`; TV5's near query (scenes/mapPlacesHost.js)
   };
   const v = run(env, `let tvPlates = { at: null, dg: -1, list: [] }, tvFar = { at: null, near: -1, list: [] }, _tvSettlements = null;
     ${lift('  function etherPlaceClone(isle) {')}
     ${liftLine('  const tvEtherPlace = ')}
     ${liftLine('  const tvEtherKnown = ')}
     ${liftLine('  const tvKnownGen = ')}
-    ${lift('  const tvPlaceSummary = (px, py) => {', '\n  };\n')}
+    ${lift('  const tvPlaceSummary = (px, py, named = false) => {', '\n  };\n')}
     ${lift('  function travelViewPlaces() {')}
+    ${liftLine('  let _baySettlements = ')}
+    ${liftLine('  const _pastBayTowns = ')}
+    ${lift('  function tvFarSettlements(at, range = TV_FAR_RANGE) {')}
     ${lift('  function travelViewFarPlaces() {')}
     return { travelViewPlaces, travelViewFarPlaces };`);
   assert.deepEqual([v.travelViewPlaces(), v.travelViewFarPlaces()], [[], []], 'nothing charted: no plates');

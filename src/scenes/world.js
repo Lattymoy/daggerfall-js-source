@@ -201,7 +201,7 @@ import {
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, travelMapPickerData, canFindPlace, placePixelMemo } from '../ui/travel/travelMapDoor.js';
-import { checkLocationDiscovered as travelCheckDiscovered, getPixelColorIndex as travelPixelColorIndex } from '../ui/travel/travelMapWindow.js';
+import { getPixelColorIndex as travelPixelColorIndex } from '../ui/travel/travelMapWindow.js';
 import { travelMapFilters, travelMapMarkedMapId } from '../systems/travel/travelMapState.js';   // AUDIT-TO1 F2: the junction map honours the map's four filters; AUDIT-MAP: and reads the mark from the store
 import { shortcutBinding, sequenceString } from '../systems/dialogShortcuts.js';   // AUDIT-TO1 H2: TravelExit is a dialog SHORTCUT, as DFU reads it   // TO1: the junction map draws by the same two laws the page does
 // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
@@ -548,7 +548,7 @@ import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAl
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
 import { playerOnPathAt, pathsDataPoint, dataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it; BAY-LEFT-MAPS: the junction map's bytes, past the Bay its roads'
 import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW) - TIME-DILATION: x1 inside a hostile ship's hold
-import { farPlaces, settlementPixels, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
+import { farPlaces, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
 import { dungeonRows, spawnedPixels, filedSpawns, nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
 import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
 import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
@@ -16113,10 +16113,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const net = terrainGen.roads();
         return net?.source === 'basic-roads' ? dataPoint(net, type, x, y) : 0;   // BAY-LEFT-MAPS: the mod's table, and past it the roads past the Bay (it read `y * 1000 + x` - another row past the Bay's edge)
       },
-      locationAt: (x, y) => {
-        const summary = onTheBay(x, y) ? travelLocationSummaryAt(mapDict, x, y) : null;   // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row
-        return summary ? { locationType: summary.locationType, mapId: summary.mapID ?? summary.mapId, discovered: travelCheckDiscovered(summary) } : null;
-      },
+      locationAt: (x, y) => junctionPlaceAt(x, y),   // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row - BAY-LEFT-MAPS: the place found there (scenes/mapPlacesHost.js)
       locationColorOf: (t) => {
         // AUDIT-TO1 F2: through the map's LIVE filter set - the mod's
         // DrawMapSection calls GetPixelColorIndex on the persistent window
@@ -30027,12 +30024,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // but the seabed lies under the sea, and land over it cuts the veil by its own depth
     return Math.max(g, tvSeaY() + CURTAIN_FOOT_MARGIN_M);
   };
-  const { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary } = createMapPlaces({   // HOST-SPLIT: src/scenes/mapPlacesHost.js
+  const { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt } = createMapPlaces({   // HOST-SPLIT: src/scenes/mapPlacesHost.js
     captainLedger, etherPlaceClone, etherSea, locationIndex, mapDict, wildActiveNow, wildHallStand,
+    provinceQuestPlaces, worldPlaces,   // BAY-LEFT-MAPS: a place past the Bay stood where it was found; TV5's near query
     get _locIndexGen() { return _locIndexGen; },
   });
   const tvPlaceRect = (summary) => {
-    const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);
+    const r = summary.lightRect?.() ?? locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);   // BAY-LEFT-MAPS: a place past the Bay not standing yet - its row's grid (scenes/mapPlacesHost.js pendingSummary)
     return { minX: r.minX - TV_PLACE_GROW, maxX: r.maxX + TV_PLACE_GROW, minZ: r.minZ - TV_PLACE_GROW, maxZ: r.maxZ + TV_PLACE_GROW, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2 };
   };
   // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
@@ -30646,8 +30644,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (key.startsWith('wp:')) { travelViewWaypointWalk(key.slice(3)); return; }   // WAYPOINTS: a flag - a walk to it
     if (key === 'dest') { const summary = tvTripLive() ? tvTrip.plan?.summary : null; if (summary && travelViewCanGo()) travelViewRouteTo(summary); return; }
     if (key.startsWith('spawn:')) { travelViewSpawnWalk(key); return; }   // AUDIT OW3 D1: a spawn's plate - a walk to its door
-    const qp = /^quest:(\d+),(\d+)$/.exec(key);   // OW-QUEST: a quest's diamond - its place, by the roads, wherever on the map it lies
-    const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2])) } : tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
+    const qp = /^quest:(-?\d+),(-?\d+)$/.exec(key);   // OW-QUEST: a quest's diamond - its place, by the roads, wherever on the map it lies (BAY-LEFT-MAPS: west and north of the Bay's corner too, the place the quest names)
+    const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2]), true) } : tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
     if (plate?.summary && travelViewCanGo()) travelViewRouteTo(plate.summary);
   }
   /** The known places whose pixels lie in the view's reach (the grid's own radius), rebuilt when the traveller's pixel
@@ -30672,15 +30670,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // TV5 (2026-09-28, Mac: "Edge markers"; systems/travel/travelFarPlaces.js): THE FAR PLACES - the discovered settlements past
   // the grid, nearest first, rebuilt when the traveller's pixel (or the grid's reach) changes; each a plate held at the
   // screen's edge, its distance under its name, a click a journey there by the roads.
-  let _tvSettlements = null;   // the world's settlements, gathered once, the first time the view asks
   function travelViewFarPlaces() {
     const at = playerTravelPixel();
     const near = Math.max(1, state.terrainDistance ?? 3);
     const dg = tvKnownGen();   // AUDIT DEEP2 B-3: and a far one found (a quest, a map) stands at the edge at once (AUDIT ETHER-OW C2-2: or charted)
     if (tvFar.at && tvFar.at.x === at.x && tvFar.at.y === at.y && tvFar.near === near && tvFar.dg === dg) return tvFar.list;
-    // ETHER-OW: the map's settlements (gathered once - never an isle's, which the index holds only once built), and past the
-    // Veil the port isles within the edge's range
-    const settlements = (_tvSettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether));
+    // ETHER-OW: the map's settlements (never an isle's, which the index holds only once built), and past the Veil the port
+    // isles within the edge's range. BAY-LEFT-MAPS: the Bay's gathered once, and past the Bay a near query - the registry's
+    // towns and the countryside's the roads laid (scenes/mapPlacesHost.js tvFarSettlements; it was one snapshot of the index)
+    const settlements = tvFarSettlements(at);
     const list = farPlaces({ at, near, settlements: etherSea && inEther(at.x, at.y) ? [...settlements, ...etherPlaceRows(at, TV_FAR_RANGE, 'port')] : settlements, summaryOf: tvPlaceSummary })
       .map((f) => { const rect = tvPlaceRect(f.summary); return { key: f.key, summary: f.summary, x: rect.cx, z: rect.cz }; });
     tvFar = { at, near, dg, list };

@@ -19,7 +19,8 @@ import { TRAVEL_VIEW_BUTTON } from '../../../src/scenes/travelView.js';
 import { TRAVEL_VIEW_BUTTON as HELD_MAP_BUTTON } from '../../../src/ui/heldMap.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
 import { unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
-import { farPlaces, settlementPixels, TV_FAR_RANGE } from '../../../src/systems/travel/travelFarPlaces.js';
+import { farPlaces, settlementPixels, TV_FAR_RANGE, TV_FAR_TYPES } from '../../../src/systems/travel/travelFarPlaces.js';
+import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS: the lifted near query's own
 import { nearDungeons, dungeonRows, spawnedPixels } from '../../../src/systems/travel/travelDungeons.js';
 import { dungeonModelSet } from '../../../src/systems/travel/travelDungeonModels.js';
 import { bandsNear, validBandWord, BAND_LIFE_MS } from '../../../src/systems/travel/travelBands.js';
@@ -138,12 +139,13 @@ function placesHost({ charted = [], found = [] } = {}) {
     etherTemplateOf, _etherTemplates: { towns: [TOWN], havens: [TOWN], ruins: [RUIN] }, synthesizeEtherLocation, ETHER_REGION, REGION_NAMES, ETHER_REGION_NAME, getWorldClimateSettings,
     wildHallAt: () => false, wildActiveNow: () => null, wildHallStand: () => null, spawnedHallMapId: () => 0, maps,
     travelLocationSummaryAt: () => null, mapDict: new Map(), travelCheckDiscovered: () => false,
+    provinceQuestPlaces: null, pendingSummary: () => null, onTheBay: inBay,   // BAY-LEFT-MAPS: the arm past the Bay's reads (none here: the isles' arm answers first)
   };
   const body = `${lift('  function etherPlaceClone(isle) {')}
     ${liftLine('  const tvEtherPlace = ')}
     ${liftLine('  const tvEtherKnown = ')}
-    ${lift('  const tvPlaceSummary = (px, py) => {', '\n  };\n')}
-    return { tvPlaceSummary, tvEtherPlace };`;
+    ${lift('  const tvPlaceSummary = (px, py, named = false) => {', '\n  };\n')}
+    return { tvPlaceSummary, tvEtherPlace };`;   // PIN MOVED (BAY-LEFT-MAPS): `named`, a quest's place - the isles' arm unmoved
   return { ...run(env, body), env, ledger, discovered };
 }
 const RUIN_ISLE = ES.islesNear(H.px, H.py, 40).find((i) => i.kind === 'ruin');
@@ -189,12 +191,16 @@ test('ETHER-OW, the far places and the dungeons: a charted port past the grid is
   const env = {
     ...h.env, tvPlaceSummary: h.tvPlaceSummary, tvEtherPlace: h.tvEtherPlace, playerTravelPixel: () => at, state: { terrainDistance: 3 }, discoveryGeneration: () => 0,
     farPlaces, settlementPixels, etherPlaceRows, TV_FAR_RANGE, tvPlaceRect: (s) => ({ cx: s.pixel.x, cz: s.pixel.y }),
+    onTheBay: inBay, MAX_MAP_PIXEL_X: 1000, MAX_MAP_PIXEL_Y: 500, worldPlaces: null, pastBayPlacesIn: () => [], TV_FAR_TYPES, isCapitalPlaceId: () => false,   // PIN MOVED (BAY-LEFT-MAPS): TV5's settlements the module's near query (scenes/mapPlacesHost.js tvFarSettlements)
     nearDungeons, dungeonRows, spawnedPixels, tvFiledSpawns: () => [], tvSpawnKnown: () => false, tvSpawnFound: () => false, tvSpawnGone: () => false,
     locationWorldRect: (l, x, y) => ({ minX: x, maxX: x + 1, minZ: y, maxZ: y + 1 }),
   };
   const body = `let tvFar = { at: null, near: -1, list: [] }, _tvSettlements = null, tvDng = { at: null, dg: -1, list: [] }, _tvDungeonRows = null, _locIndexGen = 0;
     const _tvListsReady = true;
     ${liftLine('  const tvKnownGen = ')}
+    ${liftLine('  let _baySettlements = ')}
+    ${liftLine('  const _pastBayTowns = ')}
+    ${lift('  function tvFarSettlements(at, range = TV_FAR_RANGE) {')}
     ${lift('  function travelViewFarPlaces() {')}
     ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', '\n  };\n')}
     ${liftLine('  const tvDungeonAt = ')}
@@ -210,7 +216,7 @@ test('ETHER-OW, the far places and the dungeons: a charted port past the grid is
   assert.equal(h.env.locationIndex.size, 0, 'neither stood');
   // the Bay's settlements are gathered once from the index - never an isle's place the index happened to hold
   const index = new Map([['10,20', { name: 'Ripwych', mapTableData: { locationType: LOCATION_TYPES.TownHamlet } }], [`${H.px},${H.py}`, { name: H.name, ether: H.key, mapTableData: { locationType: LOCATION_TYPES.TownHamlet } }]]);
-  const gathered = run({ settlementPixels, locationIndex: index }, `return ${/_tvSettlements \?\?= (settlementPixels\(locationIndex\)\.filter\(\(t\) => !t\.loc\.ether\))/.exec(W)[1]};`);
+  const gathered = run({ settlementPixels, locationIndex: index, onTheBay: inBay }, `return ${/_baySettlements \?\?= (settlementPixels\(locationIndex\)\.filter\(\(t\) => !t\.loc\.ether && onTheBay\(t\.x, t\.y\)\))/.exec(W)[1]};`);   // PIN MOVED (BAY-LEFT-MAPS): the Bay's alone (past it the near query)
   assert.deepEqual(gathered.map((s) => s.loc.name), ['Ripwych']);
 });
 
