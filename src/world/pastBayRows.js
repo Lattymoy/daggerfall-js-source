@@ -22,7 +22,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { ARENA_TEMPLATE_KINDS, arenaPlaceId, arenaLocationIndex } from './arenaLocations.js';
-import { CAPITALS, capitalPin, capitalSpan, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, capitalHarbourSlice, capitalCanalOpen } from './tamrielCapitals.js';
+import { CAPITALS, capitalPin, capitalSpan, capitalDims, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, capitalHarbourSlice, capitalCanalOpen } from './tamrielCapitals.js';
 
 /** The registry's name for the places past the Bay. */
 export const PAST_BAY_SOURCE = 'tesa';
@@ -61,4 +61,41 @@ export function pastBayPlaceRows({ pixels, templateOf, capitals }) {
     rows.push({ mapId: arenaPlaceId(p), name: p.name, px: p.bx, py: p.by, type: ARENA_TEMPLATE_KINDS[p.kind].type, w: ed?.width ?? 1, h: ed?.height ?? 1, port: !!p.port, location: arenaLocationIndex(p) });   // WW7-5: its location's index
   }
   return rows;
+}
+
+/**
+ * BAY-LEFT-GROUND (the audit "no system left behind in the Bay", D1; bible/03-World/Landforms.md "BAY-LEFT-GROUND"): THE
+ * PLACES PAST THE BAY AS THE LANDFORMS' SITES (world/landforms.js landformSitesBeyond), as landformSites reads the Bay's
+ * own rows - `{ px, py, loc }`, `loc` what a site's footprint reads (terrainTiles.js locationFootprintRect: its block
+ * grid and its type), the template a place clones (the game's own rows as MAPS.BSA holds them: a town pack's grid is never
+ * a site's - AUDIT LANDFORMS III B1's law). GROUND-AGREE: every client standing the land stands these alike - TESA12's
+ * places are the port's own, made on the trace from Daggerfall's own files (no Arena: TESA10d's two sets are history),
+ * and the doors that take them off (`?arenaplaces`, `?capitals`, `?tamrieltrace`) are offline alone.
+ *   - every place of the model that stands on its pixel with a template (pastBayPlaceRows' second half);
+ *   - a capital LEVELLED AS A TOWN IS - one pixel, inland, its canal shut (Mournhold, Falinesti, Helstrom: no
+ *     `flattenAt`, its ground its own pixel's mean, a Bay city's law). A capital over several pixels (every slice
+ *     flattened to its centre's ground, TESA11/IC-GRAND) or at the sea (its sea's floor, AUDIT TESA II C2, RUMARE-WATER's
+ *     basin) keeps its own law: a site pulls toward its own pixel's level, which is not the level it stands at.
+ * Not here: the countryside and the lairs (TESA7/TESA8) - a pixel's roll, no list, and a block or two in the middle of
+ * their pixel, which DFU's own blend levels inside it.
+ * @param {{ pixels: ?{ stood: any[], byPixel: Map<string, any> }, templateOf: (place: any) => any, capitals: boolean }} o
+ * @returns {Array<{ px: number, py: number, loc: any }>}
+ */
+export function pastBaySites({ pixels, templateOf, capitals }) {
+  const out = [];
+  if (capitals) {
+    CAPITALS.forEach((cap, k) => {
+      const D = capitalDims(cap);
+      if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;   // its own ground's law
+      const at = capitalPin({ name: cap.name, province: cap.province });
+      if (!at) return;
+      out.push({ px: at.px, py: at.py, loc: { mapTableData: { locationType: LOCATION_TYPES.TownCity }, exterior: { exteriorData: { width: cap.plan[0].length, height: cap.plan.length, blockNames: [''] } } } });
+    });
+  }
+  for (const p of pixels?.stood ?? []) {
+    if (p.pinned && capitals) continue;   // it stands as its capital (above)
+    const template = templateOf(p);
+    if (template) out.push({ px: p.bx, py: p.by, loc: template });
+  }
+  return out;
 }

@@ -649,7 +649,8 @@ test('AUDIT LANDFORMS D9: the gate\'s beacon kernel is made again once the netwo
   const state = new StreamingWorldState();
   state.init(300, 250);
   const heightCell = TERRAIN_SIZE / (H - 1), worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
-  const gateGroundAt = new Function('woods', 'landform', 'terrainGen', 'sampleKernel', 'HEIGHTMAP_DIMENSION', 'landformsHere', 'state', 'TERRAIN_SIZE', 'heightCell', 'worldHeight', `${body}\nreturn gateGroundAt;`)(woods, true, { roads: () => net }, sampleKernel, H, () => createLandforms({ woods, roads: net }), state, TERRAIN_SIZE, heightCell, worldHeight);
+  // PIN MOVED (BAY-LEFT-GROUND, D1): the kernel kept by the sites past the Bay's generation too - a stub's, one
+  const gateGroundAt = new Function('woods', 'landform', 'terrainGen', 'sampleKernel', 'HEIGHTMAP_DIMENSION', 'landformsHere', 'state', 'TERRAIN_SIZE', 'heightCell', 'worldHeight', 'landformSites', `${body}\nreturn gateGroundAt;`)(woods, true, { roads: () => net }, sampleKernel, H, () => createLandforms({ woods, roads: net }), state, TERRAIN_SIZE, heightCell, worldHeight, { generation: () => 1 });
   const t = state.pixelTranslation(300, 250);
   const x = t[0] + 64 * heightCell, z = t[2] + 30 * heightCell;
   const before = gateGroundAt(300, 250, x, z);
