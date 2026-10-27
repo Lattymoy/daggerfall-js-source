@@ -1,23 +1,11 @@
-// SNOW-THREAD (2026-10-26): THE SNOW'S BUILDS, OFF THE MAIN THREAD - the main thread's half. The runtime
-// (systems/snowfallRuntime.js) posts a build where it would begin one (`postMid` at _midBegin, `postLocal` at
-// _beginRecenter) and takes the finished arrays the first frame they are in (`take`, its _midAwait and _localAwait);
-// snowBuildKernel.js runs the build on snowBuildWorker.js's thread.
-//
-// The shape is terrainGenClient.js's (EV7):
-//  - `new Worker(new URL(...))` stays in exactly that spelling (Vite bundles the worker entry from it);
-//  - the factory is injectable, so node never evaluates `new Worker` and a test drives the kernel in-process;
-//  - THE FALLBACK IS THE OLD PATH: no Worker, a factory that throws, a worker that dies, a ground with no data to copy
-//    (`t.snapshot`: scenes/exterior.js's), or `?snowthread=off` - the runtime builds on this thread, as it always did.
-//
-// WHAT CROSSES, AND HOW OFTEN:
-//  - the three surface masks and the settings once (the settings again when they change);
-//  - a pixel's ground once a version of it - its snapshot (snowGroundLaw.js snowGroundSnapshot) is keyed by the arrays it
-//    was taken from, so a ground rebuilt is a new key - COPIED: the entry keeps reading its own; a Basic Roads tile once;
-//  - a job: the frame, the pixels it may read (their keys and origins now), the context prepared on this thread, and
-//    for a window the worker does not hold, that window (the recentre copies from it);
-//  - an answer: the build's arrays, TRANSFERRED; the arrays they replace go back the same way to be written into again.
-// A job a newer one of its kind replaced is never taken: its answer's arrays go straight back.
-// `?snowthread=verify` (snowBuildVerify.js) builds every job again here from the live ground and compares the answers.
+// SNOW-THREAD (2026-10-26): the snow's builds off the main thread - the main thread's half. The runtime
+// (systems/snowfallRuntime.js) posts a build where it would begin one and takes the finished arrays the first frame they
+// are in; snowBuildKernel.js runs the build on snowBuildWorker.js's thread. The shape is terrainGenClient.js's (EV7).
+// The fallback is the old path: no Worker, a factory that throws, a worker that dies, a ground with no snapshot, or
+// `?snowthread=off` - the runtime builds on this thread. Crossing: masks and settings once; a pixel's ground (snowGroundLaw.js
+// snowGroundSnapshot, keyed by its source arrays) copied once a version; a job's frame, keys and context; an answer's
+// arrays transferred, and handed back to be written into again. A job a newer one replaced is never taken.
+// `?snowthread=verify` (snowBuildVerify.js) builds every job again here from the live ground and compares.
 
 import { MID } from '../snowfallRuntime.js';
 import { snowGroundSources, snowPixelX, snowPixelY } from './snowGroundLaw.js';

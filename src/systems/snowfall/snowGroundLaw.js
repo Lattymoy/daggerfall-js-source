@@ -1,16 +1,8 @@
-// SNOW-THREAD (2026-10-26): THE GROUND THE SNOW STANDS ON, ONE LAW FOR TWO THREADS. world.js's snow adapter (its
-// SnowGround, scenes/snowfallHost.js) answered the drawn ground's height, normal and bareness with closures over a
-// built pixel entry `p`, and put a scene point on its map pixel and in global metres through the streaming world's
-// origin. The snow's build worker (snowBuildWorker.js) reads the very same ground off a snapshot of that entry, so the
-// laws live here, over the entry's own fields, and both threads call them:
-//
-//   p.samples, p._stride        - the drawn surface (terrainSurface.js surfaceHeightAt) at its ring's stride
-//   p.groundNormals             - the stride-1 grid's normals, while the grass keeps them (else from the samples)
-//   p._bed.depths               - WATER-NEXT 2: the bed carved under a shore, off the drawn ground
-//   p.deepWaters (holes, floor) - DW-B: the carved sea - its floor where it is drawn, and no snow on it
-//
-// `floors` is the host's Deep Waters switch (the mod on at the world's mount): off, a carved entry's ground is read as
-// the terrain's own, as world.js always read it.
+// SNOW-THREAD (2026-10-26): the ground the snow stands on, one law for two threads. The snow adapter (scenes/snowfallHost.js)
+// answered the drawn ground's height, normal and bareness with closures over a built pixel entry `p`; the build worker
+// reads the same ground off a snapshot of it, so the laws live here over the entry's fields: p.samples and p._stride (the
+// drawn surface, terrainSurface.js), p.groundNormals, p._bed.depths (WATER-NEXT 2) and p.deepWaters (DW-B: the carved
+// sea's floor, no snow on it). `floors` is the host's Deep Waters switch: off, a carved entry reads as the terrain's own.
 
 import { surfaceHeightAt, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt } from '../../world/terrain/terrainSurface.js';
 import { TERRAIN_SIZE } from '../../world/terrain/terrainSampler.js';

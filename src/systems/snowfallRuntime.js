@@ -260,9 +260,8 @@ export class SnowfallRuntime {
    * @param {any} [o.settings] - systems/snowfall.js snowfallSettings()
    * @param {number} [o.frameBudgetMs] - SNOW_FRAME_BUDGET_MS (Infinity: the mod's sample budgets alone)
    * @param {() => number} [o.clock] - milliseconds, for the budget
-   * @param {any} [o.builds] - SNOW-THREAD: systems/snowfall/snowBuildClient.js SnowBuildClient (none: every build on this thread)
    */
-  constructor({ world, coverage, settings = snowfallSettings(), frameBudgetMs = SNOW_FRAME_BUDGET_MS, clock = clockMs, builds = null }) {
+  constructor({ world, coverage, settings = snowfallSettings(), frameBudgetMs = SNOW_FRAME_BUDGET_MS, clock = clockMs, builds = null }) {   // builds: SNOW-THREAD, snowfall/snowBuildClient.js SnowBuildClient (none: every build on this thread)
     this.world = world;
     this.builds = builds;
     this.frameBudgetMs = frameBudgetMs;

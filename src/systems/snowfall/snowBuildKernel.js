@@ -1,22 +1,11 @@
-// SNOW-THREAD (2026-10-26, the performance pass: the snow's simulation and draw were 6% of the main thread's busy time
-// standing in Daggerfall in winter and 17% on the move, the middle ring's rebuild 8% of it alone): THE SNOW'S BUILDS,
-// ON THE BUILD WORKER. The two progressive builds that sample the ground - the local window's recentre and the middle
-// ring's rebuild (systems/snowfallRuntime.js) - run here, whole, over a copy of the ground they read; the main thread
-// keeps the rest of the runtime (the tracks, the masks, the snowpack, the save, the blanket, the commit's tracks half)
-// and takes the finished arrays (snowBuildClient.js).
-//
-// ONE CODE PATH. The build is the runtime's own: a SnowfallRuntime whose commits are the build's halves alone
-// (_midFinish, _localFinish), driven with no frame budget until it stands, over a SnowWorld made of snapshots:
-//   - a pixel's ground is snowGroundLaw.js's laws over the entry's own arrays, copied once a version of them;
-//   - the map pixel under a point and the global metres are the streaming world's frame at the job's post;
-//   - a pixel's origin is the one the main thread read at the post;
-//   - the context (roads, settlements, locations) is the one the main thread prepared at the build's begin.
-// So a build here is the bytes the same build makes on the main thread (test/systems/snowthread.test.js).
-//
-// THE COPIES THE BUILDS MAKE FROM THE LAST ONE. The ring's (AUDIT ENVIRONS P3) are the worker's own last ring - a copy
-// is the sample it stands for, so whichever ring it copies from, the bytes are the same. The window's recentre copies
-// the window the main thread holds, so it is handed that window - unless the window is the worker's own last one
-// (`mirror`: the job whose window the main thread committed, the last it posted).
+// SNOW-THREAD (2026-10-26): the snow's builds on the build worker. The two progressive builds that sample the ground -
+// the local window's recentre and the middle ring's rebuild (systems/snowfallRuntime.js) - run here, whole, over a copy
+// of the ground they read; the main thread keeps the rest and takes the finished arrays (snowBuildClient.js).
+// One code path: a SnowfallRuntime whose commits are the build's halves alone, driven with no frame budget over a
+// SnowWorld made of snapshots - snowGroundLaw.js's laws over copied arrays, the streaming frame and the origins at the
+// post, and the context the main thread prepared. The bytes equal the main thread's (test/systems/snowthread.test.js).
+// The ring copies from the worker's own last ring (AUDIT ENVIRONS P3); the window's recentre copies the window the main
+// thread holds, so it is handed that window unless it is the worker's last one (`mirror`).
 
 import { SnowfallRuntime } from '../snowfallRuntime.js';
 import { SnowCoverage, BasicRoadsTerrain } from '../snowfall.js';

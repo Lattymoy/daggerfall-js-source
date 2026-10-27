@@ -5,10 +5,8 @@
 // (snow_status). A host hands it the ground it stands (`ground`, below) and calls `frame` once a frame, outdoors and in;
 // it draws the snow with the opaque world, after the ground (`draw`), and carries it across the floating origin.
 //
-// THE FOUR HOSTS RULE (bible/Home.md): world.js and exterior.js build it; worldModes.js (the interiors) and
-// dungeonContext.js (the dungeons) do not - indoors and underground the host's own frame calls `frame` with
-// `inside: true`, which is all the mod does there (DynamicSnowController.Update: the surfaces hidden, the snowpack and
-// the refill still kept by the clock).
+// THE FOUR HOSTS RULE (bible/Home.md): world.js and exterior.js build it; indoors (worldModes.js) and underground
+// (dungeonContext.js) the host's own frame calls `frame` with `inside: true` (surfaces hidden, snowpack and refill kept).
 
 import { modSettingsGeneration, modSetting } from '../systems/modSettings.js';
 import { registerModSaveData } from '../systems/modSaveData.js';

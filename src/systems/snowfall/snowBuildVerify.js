@@ -1,20 +1,10 @@
 // SNOW-THREAD VERIFY (2026-10-26): `?snowthread=verify`, a debug cross-check that the build worker never builds from a
-// stale copy of the ground. The client (snowBuildClient.js) keeps one copy of a pixel's ground on the worker for as long
-// as the arrays it was taken from are the same arrays. A ground rewritten in place, a road tile or a mask changed under
-// a copy, would build from old bytes without any error. This mode rebuilds every job on the main thread from what is live
-// at the post and compares the worker's answer with it, byte for byte.
-//
-// How:
-//  - A shadow SnowBuildKernel runs on this thread. It is handed every message the worker is, in the same order, so its
-//    runtime state (the ring it copies from, the window it holds, the settings, the floating origin) is the worker's.
-//  - It is never handed the client's copies. Each job gets fresh copies of the live ground and roads of the pixels the
-//    job names, under keys of its own, dropped after the job.
-//  - Its answer is kept by job; the worker's answer, when it lands, is compared array for array.
-//  - A mismatch is counted and logged with the events that came before it, and with the pixels whose held copy differs
-//    from the live ground now.
-//
-// Off (the default), the client holds no verifier and pays one null check a post and an answer. On, every job is built
-// twice on the main thread's time: it is for driving the game to look for mismatches, never for play.
+// stale copy of the ground. A ground rewritten in place under a held copy would build from old bytes without an error.
+// A shadow SnowBuildKernel here is handed every message the worker is, in order, but never the client's copies: each job
+// gets fresh copies of the live ground and roads, dropped after the job. The worker's answer is compared with it array
+// for array. A mismatch is counted and logged with the events before it and the pixels whose held copy differs now.
+// Off (the default), the client pays one null check a post and an answer. On, every job is built twice on the main
+// thread: for driving the game to look for mismatches, never for play.
 
 import { SnowBuildKernel } from './snowBuildKernel.js';
 
