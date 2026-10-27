@@ -496,8 +496,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-gate-kernel-key-blind-to-network",
     "file": "src/scenes/world.js",
-    "old": "const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0},${landformSites.generation()}`;",
-    "new": "const key = `${px},${py},${landformSites.generation()}`;",
+    "old": "const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0},${beyondSites.generation()}`;",
+    "new": "const key = `${px},${py},${beyondSites.generation()}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -552,8 +552,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-memo-blind-to-rect",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : landformSites.generation()}`;",
-    "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0},${before ? 'before' : landformSites.generation()}`;",
+    "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
+    "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -1016,8 +1016,8 @@
   {
     "name": "AUDIT-LANDFORMS-B2-field-blind-to-the-network",
     "file": "src/scenes/groundFrameHost.js",
-    "old": ": '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : landformSites.generation()}`;",
-    "new": ": '-'},${before ? 'before' : landformSites.generation()}`;",
+    "old": ": '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
+    "new": ": '-'},${before ? 'before' : beyondSites.generation()}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"

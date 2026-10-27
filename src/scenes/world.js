@@ -1681,7 +1681,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js); D5: `before` the landforms under a
    *  record's frame's OLD law - the Bay's table alone, the ground past the Bay before its sites: what a record written past
    *  the Bay before GROUND_FRAME_LAW stood on (scenes/groundFrameHost.js). */
-  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : landformSites.beyond(), climates: _landformClimates }) : null);
+  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates }) : null);
   // VERGE1: CLEAR ROADSIDES (world/road/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -1916,7 +1916,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // BAY-LEFT-GROUND (D1, bible/03-World/Landforms.md "BAY-LEFT-GROUND"): THE LANDFORMS' SITES PAST THE BAY - the places
   // past the Bay every client stands alike as a second table by the world's key, handed to both kernels now and made
   // again on the frame as the places move (scenes/landformSitesHost.js)
-  const landformSites = createLandformSites({ terrainGen, landform, arena: _arenaTemplates, capitals: !!_capitalBase, get built() { return built; }, get inFlight() { return inFlight; }, swap });
+  const beyondSites = createLandformSites({ terrainGen, landform, arena: _arenaTemplates, capitals: !!_capitalBase, get built() { return built; }, get inFlight() { return inFlight; }, swap });
   _classicRows = null;   // read, let go
   // HUB1: every region's main city, one answer on every client (systems/region/regionHubs.js) - read online alone
   const regionHubs = pickRegionHubs(_hubRows, { regionNameOf: (r) => maps.getRegionName(r) });
@@ -5445,7 +5445,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
   const { groundFrameHeight, groundFrameNative, restandHeight, scaleOf } = createGroundFrame({   // HOST-SPLIT: src/scenes/groundFrameHost.js
-    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, landformSites,
+    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, beyondSites,
     get state() { return state; },
     get woods() { return woods; },
   });
@@ -5814,7 +5814,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
   }
 
-  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C
     renderer.destroyMesh(p.terrain);
@@ -23933,7 +23933,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _gateKernel = null, _gateKernelAt = '';
   const gateGroundAt = (px, py, x, z) => {
     if (!woods) return -Infinity;
-    const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0},${landformSites.generation()}`;   // LANDFORM1-3: and kept again once the network lands - the pixel is cut along it; BAY-LEFT-GROUND: and the sites past the Bay are made again
+    const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0},${beyondSites.generation()}`;   // LANDFORM1-3: and kept again once the network lands - the pixel is cut along it; BAY-LEFT-GROUND: and the sites past the Bay are made again
     if (key !== _gateKernelAt) { _gateKernelAt = key; _gateKernel = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere()); }
     const t = state.pixelTranslation(px, py);
     const lx = x - t[0], lz = z - t[2];
@@ -33085,7 +33085,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_tamrielRoads) _tamrielRoads.frame(state.current);   // TESA14: the roads past the Bay, as the places that stand move
     if (_arenaTemplates && !building) sweepArenaPixels();   // TESA2: Arena's places landed or changed - their pixels, the same way
     if (_capitalBase && !building) sweepCapitalPixels();   // TESA10: the fit or the land moved - the capitals' pixels, the same way
-    if (!building) landformSites.refresh();   // BAY-LEFT-GROUND (D1): the places past the Bay moved - their sites, and the pixels they reach built again
+    if (!building) beyondSites.refresh();   // BAY-LEFT-GROUND (D1): the places past the Bay moved - their sites, and the pixels they reach built again
     if (_arenaRoadsStale.size && !building) sweepArenaRoads();   // TESA4: and their roads
     if (seasonsActive) seasons.tick();   // SIB1: RefreshSeasonAfterLoad's second half, the frame after a load
     refreshHomeLooks();   // HOME-LOOK: a look landed or changed repaints the home where it stands

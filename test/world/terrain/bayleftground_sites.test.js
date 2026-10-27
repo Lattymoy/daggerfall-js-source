@@ -267,13 +267,13 @@ test('BAY-LEFT-GROUND D1 the host keeps the table with the places: made as the w
 
 test('BAY-LEFT-GROUND D1 the world host wires it: the table made beside the places\' templates and handed to both kernels, this thread\'s landforms and a promotion\'s grid reading it, asked on the frame after the places\' own sweeps, the gate\'s kernel kept by its generation (mutants: each seam)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const landformSites = createLandformSites\(\{ terrainGen, landform, arena: _arenaTemplates, capitals: !!_capitalBase, get built\(\) \{ return built; \}, get inFlight\(\) \{ return inFlight; \}, swap \}\);/);
+  assert.match(w, /const beyondSites = createLandformSites\(\{ terrainGen, landform, arena: _arenaTemplates, capitals: !!_capitalBase, get built\(\) \{ return built; \}, get inFlight\(\) \{ return inFlight; \}, swap \}\);/);
   // D5: `before` the old law's (the Bay's table alone - test/world/terrain/bayleftground_frame.test.js)
-  assert.match(w, /createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : landformSites\.beyond\(\), climates: _landformClimates \}\)/, 'this thread\'s landforms');
-  assert.match(w, /sites: _landformSites, beyond: landformSites\.beyond\(\), climates: _landformClimates, bed: /, 'a promotion\'s grid');
-  assert.match(w, /if \(_capitalBase && !building\) sweepCapitalPixels\(\);[^\n]*\n\s+if \(!building\) landformSites\.refresh\(\);/, 'on the frame, after the places\' sweeps');
-  assert.match(w, /const key = `\$\{px\},\$\{py\},\$\{landform && terrainGen\.roads\(\) \? 1 : 0\},\$\{landformSites\.generation\(\)\}`;/, 'the gate\'s kernel');
-  assert.ok(w.indexOf('const landformSites = createLandformSites(') > w.indexOf('const _arenaTemplates = '), 'after the templates it reads');
+  assert.match(w, /createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates \}\)/, 'this thread\'s landforms');
+  assert.match(w, /sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: /, 'a promotion\'s grid');
+  assert.match(w, /if \(_capitalBase && !building\) sweepCapitalPixels\(\);[^\n]*\n\s+if \(!building\) beyondSites\.refresh\(\);/, 'on the frame, after the places\' sweeps');
+  assert.match(w, /const key = `\$\{px\},\$\{py\},\$\{landform && terrainGen\.roads\(\) \? 1 : 0\},\$\{beyondSites\.generation\(\)\}`;/, 'the gate\'s kernel');
+  assert.ok(w.indexOf('const beyondSites = createLandformSites(') > w.indexOf('const _arenaTemplates = '), 'after the templates it reads');
 });
 
 const ARENA2 = process.env.ARENA2_PATH;

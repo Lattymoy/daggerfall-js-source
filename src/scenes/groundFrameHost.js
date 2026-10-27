@@ -94,7 +94,7 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt }) {
 /** @param {any} host */
 export function createGroundFrame(host) {
   const {
-    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, landformSites, maps, terrainGen
+    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, beyondSites, maps, terrainGen
   } = host;
   /** LANDFORM1: how far the landforms move DFU's ground at a scene point, in world units (world/landforms.js
    *  landformLift - the kernel's own shaped ground less DFU's over the network this thread holds, the cuts with the
@@ -132,7 +132,7 @@ export function createGroundFrame(host) {
     }
     // AUDIT LANDFORMS B2: the field follows the cuts, so it is the network's too - made again once the network lands;
     // BAY-LEFT-GROUND: and the sites past the Bay (made again as their places land), or the old law's own ground
-    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : landformSites.generation()}`;
+    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;
     let field = _liftFields.get(key);
     if (field) _liftFields.delete(key);   // asked again: the last to be let go
     else {

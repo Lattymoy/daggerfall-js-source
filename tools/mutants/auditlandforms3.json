@@ -251,8 +251,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-B4-restride-off-the-climates",
     "file": "src/scenes/world.js",
-    "old": "roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates, bed: waterOn",
-    "new": "roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), bed: waterOn",
+    "old": "roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn",
+    "new": "roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), bed: waterOn",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
