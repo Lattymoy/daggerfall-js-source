@@ -2768,8 +2768,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  session (the Citadel of Copperton), and a camp is never stood again. */
   const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));
 
-  // U31 / THE CLASSIC START (and EE13's random spawn, and the named start) - HOST-SPLIT: scenes/bootStartHost.js
-  const { startLoc } = createBootStart({ locationIndex, locationName, maps, params, regionName });
+  // U31 / THE CLASSIC START (and EE13's random spawn, and the named start) - HOST-SPLIT: scenes/bootStartHost.js.
+  // BAY-LEFT-B: a start past the Bay (a family's seat there) stands the world on the Bay, then moves to it once its land
+  // stands (`farStart`, which a birth waits on) - as a save made past the Bay loads
+  const { startLoc, farStart } = createBootStart({ locationIndex, locationName, maps, params, regionName, teleport: _teleportToPixel, worldPlaces,
+    ready: () => playerSpawned && _bootLoaded && !_loading, landed: () => arenaTraced, say: (line) => townTalk.say(line) });
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
   // BOOT-OVERLAP: THE TOWNS THE BOOT WAITS ON AS IT BUILDS THEM - the start's (the first build) and a realm save's own
@@ -7029,9 +7032,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // (finishChargen over a result the family law builds - legacyHost.bornResult), in the town the boot stood the world
     // in (`?region=&loc=`). AUDIT LEGACY B7: a birth that waits for nobody (a stale address, a birth already made) or
     // whose files would not load goes back to the title menu, SAID - never to a stranger's wizard: the line waits on the
-    // record (its heir chosen, unborn), and the fallen's save asks again.
+    // record (its heir chosen, unborn), and the fallen's save asks again. BAY-LEFT-B: a seat past the Bay is reached
+    // first (`farStart`, scenes/bootStartHost.js), so the heir is made, and first saved, there.
     const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits. ${realmNew ? 'Choose who carries it on from the Online page' : 'Load the fallen\'s save to try again'}.`); releaseUnloadGuard(); exitToTitleMenu(); };   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): online the fallen is a tombstone - the Online page names the waiting house
-    Promise.all([createChargenFlow(fetchBytes), legacyReady]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
+    Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
       spellsByIndex = sbi;
       const r = host?.bornResult({ careers, factionDict });
       if (!r) { legacyBirthFailed('no birth waits for this address'); return; }
@@ -26736,8 +26740,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     town: (h) => (h && h.mode !== 'dungeon' && h.loc && isTownEntry({ locationType: h.locationType }) ? { region: h.region, loc: h.loc, ...(h.mapId != null ? { mapId: h.mapId } : {}) } : null),
     nearestTown: (h) => {
       if (!h) return null;
-      const hit = nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(maps, REGION_NAMES, h.pixel);
-      return hit ? { region: hit.region, loc: hit.loc } : null;
+      // BAY-LEFT-B: the region's own nearest town, else the WORLD's (the registry - its map id the birth's `seat`)
+      return nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(nearestTownOf, REGION_NAMES, h.pixel);
     },
     gold: () => legacyGold(playerEntity),
     say: (line) => townTalk.say(line),

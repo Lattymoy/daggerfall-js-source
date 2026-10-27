@@ -77,5 +77,5 @@ export function takeUpLine({ storage, tab, familyId, personId, now = Date.now() 
   if (!leaveBirth(tab, { familyId: family.id, personId: heir.id, region: place.region, loc: place.loc, estate: 0 }, now)) {
     return { ok: false, why: 'The new heir could not be saved in this window. Try again.' };
   }
-  return { ok: true, family, place: { region: place.region, loc: place.loc } };
+  return { ok: true, family, place: { region: place.region, loc: place.loc, ...(Number.isInteger(place.mapId) ? { mapId: place.mapId } : {}) } };   // BAY-LEFT-B: and its map id - a seat past the Bay is booted by it (places.js birthSearch's `seat`)
 }

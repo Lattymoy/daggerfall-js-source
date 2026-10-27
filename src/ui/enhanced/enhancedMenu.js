@@ -1407,7 +1407,7 @@ function carryOn(familyId, personId) {
   if (!took.ok) { realmWords = [took.why]; realmBusy = false; render(); return; }
   Promise.resolve(realmLine?.push(took.family)).then(() => realmLine?.flush()).then((ok) => {
     if (!ok) { realmWords = [realmRefusalText(realmLine?.refusalOf(familyId) ?? realmLine?.error ?? 'server')]; realmBusy = false; render(); return; }
-    _pickedLegacyBirth = { personId, region: took.place.region, loc: took.place.loc };
+    _pickedLegacyBirth = { personId, region: took.place.region, loc: took.place.loc, ...(Number.isInteger(took.place.mapId) ? { mapId: took.place.mapId } : {}) };   // BAY-LEFT-B: and the seat's map id
     realmBusy = false;
     onAction('online-new');
   }).catch(() => { realmWords = [realmRefusalText('server')]; realmBusy = false; render(); });

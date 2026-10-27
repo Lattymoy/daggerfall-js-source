@@ -300,11 +300,13 @@ export function createTamrielPlaces(host) {
    *  and the places past the Bay) and the countryside's towns and temples this session stood (the index's: no list of them
    *  exists), the nearest safe place (systems/deathRespawn.js nearestSafePlace) `accept` takes; or null. The one law the
    *  rise past the Bay, the open zone's rise and /unstuck ask - each had read MAPS.BSA's rows alone, a Bay town a
-   *  continent away, or the index's towns within 48 pixels and else where the player fell (at sea, in the water). */
+   *  continent away, or the index's towns within 48 pixels and else where the player fell (at sea, in the water).
+   *  BAY-LEFT-B: and Project Legacy's birth in a house with no seat (systems/legacy/places.js nearestTownAnywhere) - so a
+   *  countryside town carries its name, its region and its map id, as the registry's places do. */
   const nearestTownOf = (/** @type {{ x: number, y: number }} */ px, /** @type {((hit: any) => boolean)|null} */ accept = null) => nearestSafePlace([worldPlaces?.all() ?? [], countryTowns()], px, accept);
   const countryTowns = () => {
     const out = [];
-    for (const l of locationIndex.values()) if (l?.country && !l.country.dungeon) out.push({ type: l.mapTableData?.locationType, dungeonType: l.mapTableData?.dungeonType, px: l.country.px, py: l.country.py });
+    for (const l of locationIndex.values()) if (l?.country && !l.country.dungeon) out.push({ type: l.mapTableData?.locationType, dungeonType: l.mapTableData?.dungeonType, px: l.country.px, py: l.country.py, name: l.name, region: l.regionIndex, mapId: l.mapTableData?.mapId });
     return out;
   };
   /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): THE LAIRS A QUEST PAST THE BAY MAY BE SENT TO - the nearest

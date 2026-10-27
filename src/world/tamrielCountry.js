@@ -59,6 +59,14 @@ export function countryOrdinal(px, py) {
 }
 /** An ordinal's map id. */
 export const countryPlaceId = (n) => (((COUNTRY_LANE + (n >>> 19)) << 20) | 0x80000 | (n & 0x7ffff)) >>> 0;
+/** BAY-LEFT-B: a country place's map id read back to its pixel (countryPlaceId's and countryOrdinal's inverse) - a seat
+ *  in the countryside is no list's row (scenes/bootStartHost.js stands a birth there by its id); null for any other id. */
+export function countryPixelOfId(id) {
+  const v = Number(id) >>> 0, lane = (v >>> 20) & 0xfff;
+  if (lane < COUNTRY_LANE || lane >= COUNTRY_LANE + COUNTRY_LANES || (v & 0x80000) === 0) return null;
+  const n = ((lane - COUNTRY_LANE) << 19) | (v & 0x7ffff);
+  return { x: (n & ((1 << COUNTRY_GRID.wBits) - 1)) - COUNTRY_GRID.x0, y: (n >>> COUNTRY_GRID.wBits) - COUNTRY_GRID.y0 };
+}
 /** TESA8 (world/tamrielDungeons.js): the lairs' one lane, after the country places' - a dungeon an 8 x 8 cell of the
  *  grid at most, so its cell's index (19 bits) with 0x80000 set is its low 20: no two of them share a dungeon's identity
  *  (net/nodeLaw.js DUNGEON_ID_MAX, DFU's MapId & 0xfffff), and none a Bay place's. */
