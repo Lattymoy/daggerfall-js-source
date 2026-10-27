@@ -17,7 +17,7 @@ import { fakeSocketClass } from '../fakeSocket.mjs';
 import { OnlineSession, POSE_HZ, LINE_STALL_MS } from '../../src/net/online.js';
 import { PIXEL_UNITS, PING_MS, POSE_HZ_MAX, HIT_HZ_MAX, DROP_STRIKES_MAX, RELAY_VERSION } from '../../src/net/wire.js';
 import { createChatSafetyHost } from '../../src/scenes/chatSafetyHost.js';
-import { instanceOwnerOf, instanceRoomOf } from '../../src/net/instanceRoom.js';
+import { instanceOwnerOf, instanceRoomOf, INSTANCE_INTERNAL_KIN } from '../../src/net/instanceRoom.js';
 import { SESSION_KEY, SERVICE_KEY } from '../../src/net/accountClient.js';
 
 const quiet = (fn) => { const info = console.info, warn = console.warn; console.info = () => {}; console.warn = () => {}; try { return fn(); } finally { console.info = info; console.warn = warn; } };
@@ -37,7 +37,8 @@ const POSE = { x: 56 * PIXEL_UNITS, y: 0, z: 200 * PIXEL_UNITS, yaw: 0, pitch: 0
  *  (server/src/index.js setWebSocketAutoResponse). */
 async function bridged(r, key, id) {
   const { FakeWS, sockets } = fakeSocketClass();
-  const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: `secret-of-${id}`, WebSocketImpl: FakeWS, now: () => Date.now(), mintToken: () => r.token(id) });
+  const tok = await r.token(id);   // minted before: no real-time race (TOKEN_WAIT_MS) is run
+  const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: `secret-of-${id}`, WebSocketImpl: FakeWS, now: () => Date.now(), mintToken: () => tok });
   quiet(() => s.join(key, POSE));
   const ws = sockets[0];
   const server = r.connect();
@@ -159,49 +160,70 @@ test('AUDIT RPT1026 A2 A PLACE ROOM NAMES NO ACCOUNT IN ITS ROSTER: through the 
   } finally { Date.now = realNow; }
 });
 
-/** A party member's session at the owner's instance through the real Room, the hub's word on the party answered at
- *  once until `hold()`, then held until `go()` (its yes gone stale past INSTANCE_KIN_KEEP_MS). With `lead`, the owner
- *  stands in the room first and holds its seat. Every socket the session opens is bridged to a socket of the room. */
+/** A party member's session at the owner's instance through the real Room, the hub's word on the party (its
+ *  INSTANCE_INTERNAL_KIN ask) answered at once until `hold()`, then held until `go()` (its yes gone stale past
+ *  INSTANCE_KIN_KEEP_MS). With `lead`, the owner stands in the room first and holds its seat. Every socket the session
+ *  opens is bridged to a socket of the room.
+ *  DETERMINISTIC, NOT TIMED (the coordinator's 12 parallel runs failed 4): only the KIN ask is counted and held - the
+ *  hub hears other asks of the room, LEASE1's look at the relay's settings among them, off a frame of the member's own
+ *  (`_leaseDoorOn`, never awaited by it), and that one counted for the hello's let the wait end before the replacement
+ *  was even promoted; every other ask is answered at once with no settings. The session's tokens are minted before, so
+ *  no real-time race (TOKEN_WAIT_MS) is run; and every frame the room is handed is kept, so the pin waits on the room's
+ *  own work (`settle`, `frames`) before it moves the clock, never on the machine's time. */
 async function memberAtInstance(clockRef, { lead = false } = {}) {
-  let held = null, asked = 0;
-  const ROOMS = { idFromName: (n) => n, get: () => ({ fetch: async () => { asked++; if (held) await held.p; return new Response(JSON.stringify({ kin: true })); } }) };
+  let held = null, kin = 0;
+  const answer = (o) => new Response(JSON.stringify(o));
+  const ROOMS = { idFromName: (n) => n, get: () => ({ fetch: async (req) => {
+    if (new URL(req.url).pathname !== INSTANCE_INTERNAL_KIN) return answer({});
+    kin++;
+    if (held) await held.p;
+    return answer({ kin: true });
+  } }) };
   const key = instanceRoomOf('dungeon:m187853213', { owner: await instanceOwnerOf('acct-lead-0001'), epoch: '89abcdef' });
   const r = fakeRoom(key, { ROOMS });
   await r.signer();
   const owner = lead ? r.connect() : null;
   if (owner) await r.hello(owner, 'lead-0001', POSE, { tokenSub: 'acct-lead-0001' });
+  const tokens = [await r.token('mate-0002'), await r.token('mate-0002')];   // the join's and the rehello's
   const { FakeWS, sockets } = fakeSocketClass();
-  const s = new OnlineSession({ url: 'wss://relay.test', name: 'mate-0002', id: 'mate-0002', secret: 'secret-of-mate-0002', WebSocketImpl: FakeWS, now: () => clockRef.t, mintToken: () => r.token('mate-0002') });
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'mate-0002', id: 'mate-0002', secret: 'secret-of-mate-0002', WebSocketImpl: FakeWS, now: () => clockRef.t, mintToken: () => tokens.shift() ?? r.token('mate-0002') });
   const servers = [];
   const bridge = (ws) => {
     const server = r.connect();
-    ws.send = (str) => { if (str === '{"t":"ping"}') { ws.receive('{"t":"pong"}'); return; } void r.raw(server, str); };
+    server.frames = [];
+    ws.send = (str) => { if (str === '{"t":"ping"}') { ws.receive('{"t":"pong"}'); return; } server.frames.push({ hello: str.startsWith('{"t":"hello"'), done: r.raw(server, str) }); };
     server.send = (str) => ws.receive(str);
     const shut = server.close.bind(server);
     server.close = (code, reason) => { shut(code, reason); ws.drop(code, reason); };
     servers.push(server);
     return server;
   };
+  /** Every frame the room was handed, read through. */
+  const settle = async () => { for (let n = -1; n !== servers.reduce((t, x) => t + x.frames.length, 0);) { n = servers.reduce((t, x) => t + x.frames.length, 0); await Promise.all(servers.flatMap((x) => x.frames.map((f) => f.done))); } };
   quiet(() => s.join(key, POSE));
   bridge(sockets[0]);
   quiet(() => sockets[0].open());
   await until(() => s.welcomed, 'the welcome');
+  await settle();
   return {
-    r, s, owner, sockets, servers, bridge,
-    asked: () => asked,
+    r, s, owner, sockets, servers, bridge, settle,
+    kin: () => kin,
     hold: () => { held = {}; held.p = new Promise((res) => { held.go = res; }); },
     go: () => held?.go(),
+    /** Every frame but its hello the room was handed down `server`, read through - the held hello is not waited on. */
+    frames: (server) => Promise.all(server.frames.filter((f) => !f.hello).map((f) => f.done)),
   };
 }
 
-/** The member's AURA-LIVE rehello with the hub held: the replacement opened, bridged and its hello waiting. */
+/** The member's AURA-LIVE rehello with the hub held: the replacement opened, bridged and its hello waiting on the hub. */
 async function rehelloHeld(m) {
+  await m.settle();   // nothing of the member's earlier frames still being read
   m.hold();
-  const before = m.asked();
+  const before = m.kin();
   assert.equal(quiet(() => m.s.rehello()), true);
   m.bridge(m.sockets[1]);
   quiet(() => m.sockets[1].open());
-  await until(() => m.asked() > before, 'the rehello is held on the hub');
+  await until(() => m.kin() > before, 'the rehello is held on the hub');
   assert.equal(m.s._ws, m.sockets[1], 'the replacement stands for the room');
   assert.equal(m.s.welcomed, false, 'its welcome owed');
 }
@@ -216,11 +238,13 @@ test('AUDIT RPT1026 A5 A REHELLO\'S BLOW AND MEMORY WAIT FOR ITS WELCOME: at an 
       const m = await memberAtInstance(clock, { lead: true });
       assert.equal(m.s.host, 'lead-0001');
       assert.equal(quiet(() => m.s.sendHit({ i: 0, d: 3 })), true, 'welcomed: the blow goes');
+      await m.settle();
       for (let i = 0; i < 20; i++) { clock.t += 1000; await m.r.pose(m.owner, { ...POSE, x: POSE.x + i }); }   // the yes goes stale; the owner keeps its seat
       await rehelloHeld(m);
       assert.equal(m.s.host, 'lead-0001', 'its host kept');
       assert.equal(quiet(() => m.s.sendHit({ i: 0, d: 3 })), false, 'the blow waits in its queue');
-      await new Promise((res) => setTimeout(res, 10));
+      await m.frames(m.servers[1]);   // whatever went down the replacement, read by the room while its hello waits
+      assert.equal(m.servers[1].closed, null, 'nothing went down it to be refused');
       m.go();
       await until(() => m.s.welcomed, 'the replacement\'s welcome');
       assert.equal(m.servers[1].closed, null, 'the socket stands');
@@ -232,11 +256,13 @@ test('AUDIT RPT1026 A5 A REHELLO\'S BLOW AND MEMORY WAIT FOR ITS WELCOME: at an 
       const m = await memberAtInstance(clock);
       assert.equal(m.s.isHost(), true);
       assert.equal(m.s.sendWorld({ v: 1 }), true, 'welcomed: the memory goes');
+      await m.settle();
       clock.t += 20_000;
       await rehelloHeld(m);
       assert.equal(m.s.isHost(), true, 'its seat kept');
       assert.equal(m.s.sendWorld({ v: 2 }), false, 'the memory waits');
-      await new Promise((res) => setTimeout(res, 10));
+      await m.frames(m.servers[1]);
+      assert.equal(m.servers[1].closed, null, 'nothing went down it to be refused');
       m.go();
       await until(() => m.s.welcomed, 'the replacement\'s welcome');
       assert.equal(m.servers[1].closed, null, 'the socket stands');
