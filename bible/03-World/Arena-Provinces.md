@@ -211,8 +211,7 @@ into, a dungeon to go down - and the held map takes the player there.
   The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
   ways; the recommendation is to refuse that leg too (the same law, its `from` asked as its `to` is - the zone's
   journeys excepted), so the land past the Bay is left as it is reached: walked, sailed, or through a stone.
-- **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its shore's word
-  (TESA6: 1 for a coastal place - it was 0 here). `/tp` names Arena's
+- **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.
 - **THE FOUR HOSTS.** `scenes/world.js` stands them. `scenes/worldModes.js` (interiors - an Arena town's buildings are its
