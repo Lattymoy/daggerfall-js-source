@@ -15,7 +15,7 @@ import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { computationPin, computationReach, FIRST_VISIT_COMPUTATIONS, firstVisitPins } from '../../../tools/computationPin.mjs';
 import { pinsSource, firstVisitPinsPlugin, PINS_PATH } from '../../../scripts/firstVisitPins.mjs';
-import { staleKey, keptAnswer, firstVisitPin } from '../../../src/systems/firstVisit/firstVisitStore.js';
+import { staleKey, keptAnswer, keepAnswer, firstVisitPin } from '../../../src/systems/firstVisit/firstVisitStore.js';
 import { prefetchGroundTiles, groundTilesKey, keptGroundTiles, _flushGroundTiles, _resetGroundTiles, GROUND_TILES_SCOPE } from '../../../src/world/terrain/groundTilesKept.js';
 import { prefetchPortSites, keptPortSitesOn, _flushPortSites, _resetPortSites, portSitesKey, PORT_SITES_SCOPE } from '../../../src/world/portSitesKept.js';
 import { seaField } from '../../../src/world/portSites.js';
@@ -151,6 +151,14 @@ test('FIRST-VISIT REFRESH: staleKey - a key of the scope that is not the one wri
   assert.equal(staleKey('fv-bayfit:aaaa', 'fv-ground:', 'fv-ground:bbbb:1'), false);
   assert.equal(staleKey('mw-arm-records:v3:x', 'fv-ground:', 'fv-ground:bbbb:1'), false);
   assert.equal(staleKey('fv-standin:galleon-38131_10:a', standInScope('galleon-38131_1'), 'fv-standin:galleon-38131_1:b'), false, 'a picture\'s scope ends at its name');
+});
+
+test('FIRST-VISIT REFRESH: a refused write sweeps nothing - the older answer stays (mutant: the sweep run whatever the write answered)', async () => {
+  const store = storeOf();
+  store.m.set(`${BAY_FIT_SCOPE}old`, { k: 'old' });
+  store.set = async () => null;   // the player's store, its write refused (a full quota)
+  assert.equal(await keepAnswer(store, `${BAY_FIT_SCOPE}new`, { k: 'new' }, BAY_FIT_SCOPE), false);
+  assert.deepEqual(keysOf(store, BAY_FIT_SCOPE), [`${BAY_FIT_SCOPE}old`]);
 });
 
 test('FIRST-VISIT REFRESH: the walks\' ground tiles - a record under a new key sweeps the last, so the store holds one (mutant: no sweep)', async () => {

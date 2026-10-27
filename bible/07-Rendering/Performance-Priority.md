@@ -2632,7 +2632,8 @@ reads its pin through `firstVisitStore.js firstVisitPin`, which throws when ther
 an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
 keeps it. Each key leads with its scope; writing an answer deletes every other key of its scope
 (`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow
-across updates.
+across updates. A write the store refuses (a full quota) sweeps nothing (`firstVisitStore.js keepAnswer`): the older
+answer is then the only one there is, and stays.
 
 | cache | module | key inputs | refreshed by | swept by |
 |---|---|---|---|---|
@@ -2650,7 +2651,7 @@ through a value handed in at run time (a registry, a callback) is not followed, 
 name the mod loader, the arena, the carriages' layer and the shipped world data beside the door. Held by
 `test/systems/firstVisit/fv_versions.test.js`: every cache that keeps answers asks a pin and every pin is generated; a
 missing pin throws; no pin reads the pins; the pin's moves (the code reached, the data read) and non-moves (a comment, an
-unreached declaration); the same pin across CRLF and LF and either path separator; the dev server's pins for each load. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
+unreached declaration); the same pin across CRLF and LF and either path separator; the dev server's pins for each load; a refused write sweeps nothing. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
 (`vanillaEnhancedPack.js decodeServedPng`), the worn armour's strips through `layeredArmor.js decodeLayered`'s `picture`.
 A departure from the proposal: it named the block rebuild itself (pack and block); what the walks read of a block is its
 ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose structured clone reads back at ~0.7x the rebuild's cost
@@ -2698,7 +2699,7 @@ Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`bas
 Pins: `test/world/terrain/fv_groundtiles.test.js` (5), `test/systems/travel/fv_landpieces.test.js` (3),
 `test/world/fv_portsites.test.js` (2), `test/systems/comeSailAway/fv_shipbuilds.test.js` (2),
 `test/world/ships/fv_standins.test.js` (2), `test/world/fv_bayfit.test.js` (2),
-`test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2), `test/systems/firstVisit/fv_versions.test.js` (9).
+`test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2), `test/systems/firstVisit/fv_versions.test.js` (10).
 
 ## For the owner
 

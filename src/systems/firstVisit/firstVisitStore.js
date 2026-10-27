@@ -71,10 +71,15 @@ export function derivedValueStore() {
 /** Whether a stored key is a stale answer of the cache scope `scope` once `keep` is written: of the scope, and not it. */
 export const staleKey = (key, scope, keep) => typeof key === 'string' && key.startsWith(scope) && key !== keep;
 
-/** Write an answer and sweep its scope's older keys. A store without a sweep (a test's) only writes. */
+/** Write an answer and sweep its scope's older keys. A store without a sweep (a test's) only writes. Answers whether
+ *  the write landed. */
 export async function keepAnswer(store, key, value, scope) {
-  await store.set(key, value);
+  // the player's store answers null for a refused write (a full quota) - the older answer is then the only one there is
+  // and stays, to serve the launch it still fits
+  const written = await store.set(key, value);
+  if (!written) return false;
   await store.sweep?.(scope, key);
+  return true;
 }
 
 /**
