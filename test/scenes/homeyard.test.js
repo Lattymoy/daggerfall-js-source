@@ -248,7 +248,7 @@ test('HOME-YARD the world host by source: each building\'s own place and footpri
   assert.match(w, /if \(modes\?\.decorFlying\?\.\(\) \|\| yards\?\.flying\(\)\) return;/);
   assert.match(w, /if \(yards\?\.flying\(\)\) \{ swipeHeld = false; return; \}/);
   const y = src('src/scenes/homeYards.js');
-  assert.match(y, /place: \(a\) => deps\.api\.place\(\{ \.\.\.a, yard: true \}\),/);
+  assert.match(y, /place: async \(a\) => wrote\(a, await deps\.api\.place\(\{ \.\.\.a, yard: true \}\)\),/);   // PIN MOVED (YARD-CELL YC2): the answer's version handed to the sync
   assert.match(src('src/world/rmbLayout.js'), /recordAt: \[subRecordMatrix\[12\], subRecordMatrix\[13\], subRecordMatrix\[14\]\],/);
   assert.match(src('src/net/accountClient.js'), /yardCells: \(mapId, cells\) => waited\('\/v1\/homes\/yards\/cells', \{ mapId, cells \}\),/);   // PIN MOVED (YARD-CELL): a town's yards asked by cell
 });
