@@ -8141,7 +8141,9 @@ the room's one simulation, stepped by its host (WORLD2) - stood frozen and took 
 party's blows. Online a window now holds no dungeon while the player lives under it
 (`scenes/windowWorld.js` windowHoldsDungeon, read by `worldModes.js`'s dungeon arm and
 `world.js`'s tactics clock): the frame runs and the window is drawn last over it; the
-motor, the input, the collision triggers, the breath and a pending cast stay held.
+motor, the input, the collision triggers, the breath and a pending cast stay held - and
+the weapon technique's key, by its door's `blocked` as on the street (AUDIT RPT1026 E1:
+the dungeon's door had none, and the key fired a technique from under the pack).
 Offline the dungeon pauses as before, and the death screen holds it in both. THE FOUR
 HOSTS: `scenes/worldModes.js` (the world-hosted dungeon) WIRED; `scenes/world.js` WIRED
 (the tactics clock); `scenes/dungeonContext.js` WIRED (the breath and the pending cast

@@ -4291,7 +4291,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       motor: () => opts.technique?.motor?.() ?? null,
       face: (p, from) => opts.technique?.face?.(p, from),   // AUDIT TECH1: from where the body lands
       fireArrow: (from, dir, o) => fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true, null, null, o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), { technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}), ...(o?.summoned ? { summoned: true } : {}) }),   // STUCK-ARROWS: a conjured round's shaft is never given back
-      drainFatigue: (n) => drainFatigue(n),
+      drainFatigue,
+      // AUDIT RPT1026 E1: A WINDOW HOLDS THE KEY UNDERGROUND TOO (AUDIT TECH1's law - the street's door is `blocked: () =>
+      // gamePaused()`). This door had none because this rig never stepped under a window of this context's: drawFoes did not
+      // run. Since RPT1026-FIGHTS WINDOW-ONLINE it runs under one online (scenes/windowWorld.js), and the technique key -
+      // Mouse3, which reaches the held keys under any window - fired a weapon's technique from under the inventory or the map
+      blocked: dungeonPaused,
       fx: (recipe, at, o) => magic.techniqueFx?.(recipe, at, o),   // TECH-FX: a technique's burst, in this dungeon's cast engine's impact pass
       shake: (k) => opts.shakeCamera?.(k),   // TECH-FX: the outer host's shaker, as a stagger's and an execution's kick
       sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own

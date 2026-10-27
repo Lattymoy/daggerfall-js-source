@@ -947,7 +947,10 @@ PINS: `test/net/superDungeon/rpt1026_fights.test.js` (6: the report's numbers th
 the Heart; the gate's Warden; the Tonal Warden and a fork; the relay, through `fakeRooms`, dropping a stale pose's
 blow; the Ketch relay's pose law). Moved: `sd8b_fight.test.js` and `sd11b_relay.test.js` each pose again before a
 blow struck more than 25 s after their last pose (PIN MOVED: a heartbeat, as every live page sends one).
-Mutants `tools/mutants/rpt1026_fights.json` RETIRED-BLOW-* (10, all dead).
+Mutants `tools/mutants/rpt1026_fights.json` RETIRED-BLOW-* (10, all dead). AUDIT RPT1026 E3: the Ketch relay's pose law
+had been pinned by its source text alone; it is driven at the real Room now
+(`test/net/ketch/audit_rpt1026_fights_ketch.test.js`: a crewmate gone quiet past `KT_POSE_FRESH_MS` lands nothing on a
+risen construct, and lands again once it poses; `tools/mutants/audit_rpt1026_fights.json` AUDIT-RPT1026-E3-*, 2, dead).
 
 ### RPT1026-FIGHTS (106) - AS DESIGNED, the pages made to agree
 
@@ -1050,6 +1053,14 @@ the foes act, the rounds tick - and the window is drawn last over it. The motor,
 the window's cover as a street frame's do. The death screen holds the dungeon in both modes. Offline the dungeon pauses
 as DFU's does. Departure: Port-Ledger section A, ONLINE A WINDOW HOLDS NO DUNGEON.
 
+AUDIT RPT1026 E1: AND THE TECHNIQUE KEY. The frame that now runs under a window online steps the dungeon's weapon rig, and
+the rig steps the technique key. AUDIT TECH1 holds that key under a window by its door's `blocked` - the street's is
+`gamePaused()` - and the dungeon's door had none, its rig never having stepped under one of its windows: the key (Mouse3,
+which reaches the held keys under any window) fired a weapon's technique from under the inventory or the map. The door
+holds it by the context's own pause now (`dungeonContext.js:"blocked: dungeonPaused,"`; the host's length unchanged -
+its `drainFatigue` entry is the function itself). Pinned by `test/scenes/audit_rpt1026_fights.test.js` (the door as the host
+writes it, on the real rig); `tools/mutants/audit_rpt1026_fights.json` AUDIT-RPT1026-E1-* (2, dead).
+
 THE FOUR HOSTS. `scenes/worldModes.js` (the world-hosted dungeon) WIRED; `scenes/world.js` WIRED (the tactics clock);
 `scenes/dungeonContext.js` WIRED (the breath and a pending cast held under its own window); `scenes/dungeon.js` and
 `scenes/exterior.js` FLAGGED: offline hosts with no shared clock, DFU's pause stands. Recorded in `Systems-Arc.md`.
@@ -1077,12 +1088,15 @@ whether the foes swung at all, and whether it outlasted a relog.
 WHAT THE PORT DOES. INT10 (`06-Systems/Integrity-Arc.md`): a spell between players is counted on the neutral stand-in
 with the caster's sheet (`siegeCombat.js` siegeSpellNumbers), and the referee clips the number. The target's own
 Spell Absorption, Reflection, Resistance and elemental resistances are not read (AUDIT C&C H5): a defender-declared
-ward is a number the defender's own client would hand the referee. Willpower's save does apply, which matches what the
-reporter saw.
+ward is a number the defender's own client would hand the referee. Nor is the save the defender's: it is rolled on the
+stand-in's own sheet - every attribute at the middle of the wire's clamp, no race (`duelCombat.js` DUEL_STAND_IN) - so
+the defender's Willpower is not read either. [AUDIT RPT1026 E2: this said the defender's Willpower save applied, as the
+report supposed - the code reads none of the defender's sheet.]
 
 WHAT TO TELL THE PLAYER. Absorb, Reflect and Resist work against monsters; between players the server judges a spell
-on a neutral target, so they do not apply in PvP. Changing that is the owner's decision - it needs the wards on the
-referee's own record, not the defender's word.
+on a neutral target, so they do not apply in PvP - and neither does the target's Willpower: every spell between players
+saves as it would against an average target. Changing that is the owner's decision - it needs the wards (and the sheet)
+on the referee's own record, not the defender's word.
 
 ### RPT1026-FIGHTS HALL-SPELLS (275, 292) - `src/scenes/dungeonContext.js`
 
@@ -1100,6 +1114,13 @@ FIXED. Both are asked at the cast: the arena's rival while a bout between player
 
 THE FOUR HOSTS. `dungeonContext.js` is the dungeon of `worldModes.js` (WIRED, the zone's halls) and of `dungeon.js`
 (offline, no zone: both doors answer none). The street's seam (`world.js`) was already asked at the cast.
+
+WHAT IS LEFT (AUDIT RPT1026 E4). A bow. Underground no arrow is aimed at a player (`11-Multiplayer/Wild-Zone.md` section
+22, Known limits): the dungeon's missile lane meets the arena's rival and the relay's bodies, never the zone's fair
+players (`world.js` wildArrowTargets is the street's alone). An archer in the halls still cannot hurt a fighter who can
+hurt them, until both are back on the surface - 275's own shape, for a bow. HALL-SPELLS closes the caster's half, the
+one these reports describe (292 is of magic). WHAT TO TELL THE PLAYER: in the PvP zone's dungeons a spell or a swing reaches
+another player; an arrow does not yet.
 
 PINS: `test/scenes/rpt1026_fights_halls.test.js` (2: the context's own seam text run with the real cast engine - an
 area spell meets the zone's marks underground and goes out by the zone's door; on the sand the rival is the one mark
@@ -1133,7 +1154,8 @@ on a landed blow and not on a miss, the true Chameleon standing; the four calls 
 dead); `auditcc_pvp.json`'s four roll records re-aimed.
 
 Mutants in all: `tools/mutants/rpt1026_fights.json`, 31 records, 31 dead. The 15 records re-aimed in other lists and
-the 7 other records whose lines this change touched were run again: 22 dead.
+the 7 other records whose lines this change touched were run again: 22 dead. The audit's (AUDIT RPT1026, lane E):
+`tools/mutants/audit_rpt1026_fights.json`, 4 records, 4 dead.
 
 ## Spells, skills and progression (RPT1026-PROGRESS)
 
