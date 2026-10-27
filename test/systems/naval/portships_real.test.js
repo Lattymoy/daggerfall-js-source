@@ -27,8 +27,8 @@ test('PORT-SHIPS (ARENA2): EVERY PORT PAST THE BAY - the 29 harbours sounded as 
     Solitude: ['walls', 'arch+walls', 'walls', 'arch+walls', 'walls', 'walls'],
     Alinor: ['walls', 'walls', 'walls', 'walls', 'walls', 'walls'],
     Torval: ['pier', 'pier'],
-    Windhelm: ['land', 'land'], Winterhold: ['land'], Shimmerene: ['land'], Skywatch: ['land'],
-  }, 'sounded off the water alone');
+    Sunhold: ['land'], Woodhearth: ['land', 'land'],
+  }, 'sounded off the water alone');   // PIN MOVED (RELIEF-PEAKS, at its merge into #1184): the land past the Bay stands on the kernel's own large map, so the shores' ground moved - Windhelm's, Winterhold's, Shimmerene's and Skywatch's banks under the sea now, Sunhold's and Woodhearth's over it
   assert.deepEqual(now.filter((r) => r.wrong.length).map((r) => [r.name, r.wrong]), [], 'every berth stands');
   assert.deepEqual(now.map((r) => [r.name, r.berths.length]), before.map((r) => [r.name, 6]), 'every port its six berths');
   assert.ok(now.every((r) => r.keep), 'every port past the Bay keeps its town (a capital, or a city walled on its outline)');

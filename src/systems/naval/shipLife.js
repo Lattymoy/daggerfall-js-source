@@ -293,45 +293,65 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
     }
   }
   cands.sort((a, b) => a.d - b.d || a.pos[0] - b.pos[0] || a.pos[1] - b.pos[1]);
-  const berths = [], boxes = [];
-  for (const c of cands) {
-    if (berths.length >= max) break;
-    if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;
-    const along = Math.atan2(c.normal[0], c.normal[1]) + Math.PI / 2;
-    // she lies along the shore, whichever way her approach astern of her is open water
-    for (const yaw of [wrap(along), wrap(along + Math.PI)]) {
-      if (!footprintClear(c.pos, yaw, hull, isWater)) continue;
-      if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue;   // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town
-      const back = length * APPROACH_LENGTHS;
-      const approach = [c.pos[0] - Math.sin(yaw) * back + c.normal[0] * APPROACH_OUT, c.pos[1] - Math.cos(yaw) * back + c.normal[1] * APPROACH_OUT];
-      if (!footprintClear(approach, yaw, hull, isWater)) continue;
-      if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue;   // PORT-SHIPS: and her approach's hull
-      // QUAY-CROSSING: her quay never laid across another berth's - round a point of land two berths BERTH_SPACING
-      // apart turned to each other stood their quays' ends one over the other
-      const box = quayBox(c.pos, yaw, c.normal, hull);
-      if (boxes.some((o) => boxesMeet(o, box))) continue;
-      boxes.push(box);
-      berths.push({ pos: c.pos, yaw, normal: c.normal, approach });
-      break;
+  /** The berths off `from`, nearest the town first. */
+  const pick = (from) => {
+    const berths = [], boxes = [];
+    for (const c of from) {
+      if (berths.length >= max) break;
+      if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;
+      const along = Math.atan2(c.normal[0], c.normal[1]) + Math.PI / 2;
+      // she lies along the shore, whichever way her approach astern of her is open water
+      for (const yaw of [wrap(along), wrap(along + Math.PI)]) {
+        if (!footprintClear(c.pos, yaw, hull, isWater)) continue;
+        if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue;   // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town
+        const back = length * APPROACH_LENGTHS;
+        const approach = [c.pos[0] - Math.sin(yaw) * back + c.normal[0] * APPROACH_OUT, c.pos[1] - Math.cos(yaw) * back + c.normal[1] * APPROACH_OUT];
+        if (!footprintClear(approach, yaw, hull, isWater)) continue;
+        if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue;   // PORT-SHIPS: and her approach's hull
+        // QUAY-CROSSING: her quay never laid across another berth's - round a point of land two berths BERTH_SPACING
+        // apart turned to each other stood their quays' ends one over the other
+        const box = quayBox(c.pos, yaw, c.normal, hull);
+        if (boxes.some((o) => boxesMeet(o, box))) continue;
+        boxes.push(box);
+        berths.push({ pos: c.pos, yaw, normal: c.normal, approach });
+        break;
+      }
     }
-  }
+    return berths;
+  };
+  /** Open water all round, out from (px, pz) along (mx, mz) within MOUTH_REACH - the first such point, or null; `wet`,
+   *  only while the line stays on the water (a berth's own way out, never across the land behind her inlet). */
+  const openOut = (px, pz, mx, mz, wet = false) => {
+    for (let d = 0; d <= MOUTH_REACH; d += SHORE_STEP) {
+      const p = [px + mx * d, pz + mz * d];
+      if (!water(p[0], p[1])) { if (wet) return null; continue; }
+      let open = true;
+      for (let k = 0; k < 12 && open; k++) { const a = (k / 12) * TAU; open = water(p[0] + Math.sin(a) * MOUTH_CLEAR, p[1] + Math.cos(a) * MOUTH_CLEAR); }
+      if (open) return p;
+    }
+    return null;
+  };
+  /** The mouth: out along the berths' mean normal to open water all round. AUDIT SHIP-LIFE A5: shores facing apart (a
+   *  town on an isthmus, a peninsula's tip) cancel that mean out - then the nearest berth's own normal, from her own
+   *  place; and a berth that cannot reach the mouth through the water is no berth of this harbour. */
+  const mouthOf = (berths) => {
+    let mx = 0, mz = 0, px = 0, pz = 0;
+    for (const b of berths) { mx += b.normal[0]; mz += b.normal[1]; px += b.pos[0]; pz += b.pos[1]; }
+    let m = Math.hypot(mx, mz);
+    if (m < berths.length * MOUTH_AGREE) { [mx, mz] = berths[0].normal; [px, pz] = berths[0].pos; m = 1; }
+    else { px /= berths.length; pz /= berths.length; }
+    return openOut(px, pz, mx / m, mz / m);
+  };
+  let berths = pick(cands);
   if (!berths.length) return null;
-  // the mouth: out along the berths' mean normal to open water all round. AUDIT SHIP-LIFE A5: shores facing apart (a
-  // town on an isthmus, a peninsula's tip) cancel that mean out - then the nearest berth's own normal, from her own
-  // place; and a berth that cannot reach the mouth through the water is no berth of this harbour
-  let mx = 0, mz = 0, px = 0, pz = 0;
-  for (const b of berths) { mx += b.normal[0]; mz += b.normal[1]; px += b.pos[0]; pz += b.pos[1]; }
-  let m = Math.hypot(mx, mz);
-  if (m < berths.length * MOUTH_AGREE) { [mx, mz] = berths[0].normal; [px, pz] = berths[0].pos; m = 1; }
-  else { px /= berths.length; pz /= berths.length; }
-  mx /= m; mz /= m;
-  let mouth = null;
-  for (let d = 0; d <= MOUTH_REACH && !mouth; d += SHORE_STEP) {
-    const p = [px + mx * d, pz + mz * d];
-    if (!water(p[0], p[1])) continue;
-    let open = true;
-    for (let k = 0; k < 12 && open; k++) { const a = (k / 12) * TAU; open = water(p[0] + Math.sin(a) * MOUTH_CLEAR, p[1] + Math.cos(a) * MOUTH_CLEAR); }
-    if (open) mouth = p;
+  let mouth = mouthOf(berths);
+  // SHIP AUDIT (2026-10-27, Lillandril on the freeware since RELIEF-PEAKS): the berths nearest the town lay in an inlet
+  // along its side with no way out, the open sea past its other side, and the whole harbour was none - taken again from
+  // the shores whose own way out meets open water
+  if (!mouth) {
+    berths = pick(cands.filter((c) => openOut(c.pos[0], c.pos[1], c.normal[0], c.normal[1], true)));
+    if (!berths.length) return null;
+    mouth = mouthOf(berths);
   }
   if (!mouth) return null;
   const grid = createWaterGrid({ isWater, hull });

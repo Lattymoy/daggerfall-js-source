@@ -172,5 +172,5 @@ test('BAY-LEFT-B B1: the world host wires it - the start\'s module with its move
   assert.match(W, /return nearestTown\(maps\.getRegion\(h\.regionIndex\), h\.region, h\.pixel\) \?\? nearestTownAnywhere\(nearestTownOf, REGION_NAMES, h\.pixel\);/);
   const P = rd('src/scenes/tamrielPlacesHost.js');
   assert.match(P, /px: l\.country\.px, py: l\.country\.py, name: l\.name, region: l\.regionIndex, mapId: l\.mapTableData\?\.mapId \}\);/, 'a country town named, as the registry\'s are');
-  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /_pickedLegacyBirth = \{ personId, region: took\.place\.region, loc: took\.place\.loc, \.\.\.\(Number\.isInteger\(took\.place\.mapId\) \? \{ mapId: took\.place\.mapId \} : \{\}\) \};/, 'the Online page\'s pick carries the seat\'s id');
+  assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /_pickedLegacyBirth = \{ personId: took\.heirId, region: took\.place\.region, loc: took\.place\.loc, \.\.\.\(Number\.isInteger\(took\.place\.mapId\) \? \{ mapId: took\.place\.mapId \} : \{\}\) \};/, 'the Online page\'s pick carries the seat\'s id');   // PIN MOVED (the fourth merge of main into #1184): main's RPT1026-MISC HEIR-WAITS names the heir the take minted
 });
