@@ -36,6 +36,9 @@ import { FESTIVALS } from '../../../src/net/festivalLaw.js';
 import * as TM from '../../../src/systems/textManager.js';
 import { codeOnly } from '../../codeOnly.mjs';
 import { HAVE, ww5World } from './ww5World.mjs';
+import { OnlineSession } from '../../../src/net/online.js';
+import { worldRoom, PIXEL_UNITS, SD_LANE_SPAN } from '../../../src/net/wire.js';
+import { fakeSocketClass } from '../../fakeSocket.mjs';
 
 const src = (p) => codeOnly(readFileSync(new URL('../../../' + p, import.meta.url), 'utf8'));
 const FESTIVAL = FESTIVALS[0];
@@ -133,7 +136,10 @@ test('WW5 THE WIRE AND THE RELAY: the star word on its lane\'s pixel - the Bay\'
   assert.ok(relaySupportsWw5(RELAY_VERSION) && relaySupportsWw5('world270') && !relaySupportsWw5('world269') && !relaySupportsWw5('acct270') && !relaySupportsWw5(undefined));
   const on = src('src/net/online.js');
   assert.match(on, /if \(primary\) \{ this\.starOk = relaySupportsStar\(relayV\); this\.ww5Ok = relaySupportsWw5\(relayV\); \}/);
-  assert.match(on, /if \(w\.k >= STAR_PER_NIGHT_WIRE && !this\.ww5Ok\) return false;/, 'a province\'s star word never to a relay that refuses it as junk');
+  assert.match(on, /if \(w\.k >= STAR_PER_NIGHT_WIRE && !\(this\._mine\(cell\) \? this\.ww5Ok : this\._haloFor\(cell\)\?\.ww5Ok\)\) return false;/, 'a province\'s star word never to a relay that refuses it as junk - the socket\'s own relay\'s word');
+  // WW5's finish: each socket's word goes with it across a crossing (AUDIT WB12d C6) - the cell stepped down keeps its own
+  assert.match(on, /sdOk: this\.sdOk, ww5Ok: this\.ww5Ok, foeInventoryOk:/);
+  assert.match(on, /this\.egOk = !!h\.egOk; this\.ww5Ok = !!h\.ww5Ok;/);
   const base = { sf: [N, 13], s: 'acct_1234', c: 1, l: 5, i: 100, e: 160 };
   assert.ok(starReceiptValid(base), 'a province\'s star\'s receipt - the relay mints it, the account service reads it (both bundle the law)');
   assert.ok(!starReceiptValid({ ...base, sf: [N, 27] }));
@@ -143,6 +149,33 @@ test('WW5 THE WIRE AND THE RELAY: the star word on its lane\'s pixel - the Bay\'
   const acct = src('server-account/src/stars.js');
   assert.match(acct, /export const starKeyOf = \(n, k\) => `\$\{n\}\.\$\{k\}`;/);
   assert.match(acct, /export const starDayOf = \(n, k\) => Math\.floor\(starTimes\(n, k\)\.fallAt \/ DAY_MS\);/);
+});
+
+test('WW5 A HALO SAYS FOR ITSELF: a province\'s star word and a province\'s find go down a halo only when the halo\'s own relay keeps them (WW5_RELAY_MIN - a halo on an older object, a deploy under way, refuses the word as a bad frame); the primary\'s word is the primary\'s (AUDIT RAID R8b\'s law, WW5\'s finish; mutants: the halo sent on the primary\'s word, for a star and for a find; the halo never told)', () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  const s = new OnlineSession({ url: 'wss://relay.test', name: 'a', id: 'aaaa-0001', secret: 'secret-of-aaaa-0001', WebSocketImpl: FakeWS, now: () => 1000 });
+  const log = console.info; console.info = () => {};
+  try {
+    const [px, py] = PAST_PX, other = worldRoom(px + 16, py);
+    s.join(worldRoom(px, py), { x: px * PIXEL_UNITS + 16384, y: 0, z: (499 - py) * PIXEL_UNITS + 16384, yaw: 0, pitch: 0 });
+    sockets[0].open();
+    sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: 'aaaa-0001', world: null, v: RELAY_VERSION });
+    s.setHalo([other]);
+    const halo = sockets[1];
+    halo.open();
+    halo.receive({ t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: `world${WW5_RELAY_MIN - 1}` });
+    assert.equal(s.ww5Ok, true, 'my own cell\'s relay keeps them');
+    const star = { n: N, k: starOfLane(3, 1), px: px + 16, py, lv: 12, s: 1, o: 0, kw: 0, kn: 0, wc: 0, hb: 0, mf: 0 };
+    const find = { s: 3 * SD_LANE_SPAN + 1, px: px + 16, py };
+    const said = (ws, t) => ws.sent.filter((x) => JSON.parse(x).t === t).length;
+    assert.deepEqual([s.sendStar(star, other), s.sendSdFound(find, other)], [false, false], 'the halo\'s relay refuses a province\'s word');
+    assert.deepEqual([said(halo, 'star'), said(halo, 'sd')], [0, 0]);
+    halo.receive({ t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION });
+    const before = [said(sockets[0], 'star'), said(sockets[0], 'sd')];
+    assert.deepEqual([s.sendStar(star, other), s.sendSdFound(find, other)], [true, true], 'its own relay keeps them');
+    assert.deepEqual([said(halo, 'star'), said(halo, 'sd')], [1, 1], 'down the halo\'s own socket');
+    assert.deepEqual([said(sockets[0], 'star'), said(sockets[0], 'sd')], before, 'never the primary\'s');
+  } finally { console.info = log; }
 });
 
 test('WW5 THE PROVINCES\' COVENS: the port\'s own, one a province theatre (Cyrodiil none), each its province\'s WW-R region, no FACTION.TXT faction nor MAPS.BSA place, no id a Bay coven\'s; its witches, its member and its leader its own words; a theatre\'s night its own covens\' bag - the Bay\'s the thirteen\'s, night for night as before; a province\'s leader comes for the star where a Bay coven\'s Coven Mother does (mutants: a coven\'s region; a faction id; the Bay\'s bag by the lane; a province night the Bay\'s coven; the leader lost)', () => {

@@ -551,7 +551,7 @@
   {
     "name": "WW5-SD-the-older-relays-find",
     "file": "src/net/online.js",
-    "old": "    if (sdLaneWire(w.s) > 0 && !this.ww5Ok) return false;   // WW5: a province's Hollow, never to a relay that keeps none\n",
+    "old": "    if (sdLaneWire(w.s) > 0 && !(this._mine(cell) ? this.ww5Ok : halo?.ww5Ok)) return false;   // WW5: a province's Hollow, never to a relay that keeps none - the socket's own relay's word (a halo says for itself)\n",
     "new": "",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"

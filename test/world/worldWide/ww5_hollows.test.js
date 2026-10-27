@@ -375,7 +375,7 @@ test('WW5 THE TIMERS, THE BOARD AND THE MAP: a province\'s Hollow in the same ro
   for (const re of [/const rec = sdHost\.record\(s\), now/, /riftLook\(sdHost\.record\(s\), s,/, /rec = sdHost\?\.record\?\.\(slot\) \?\? null;/, /const h = sdHost\?\.hollow\(s\);/, /if \(sdHost\?\.hollow\(loc\.sdRealm\)\?\.key !== back\.key\) return true;/]) assert.match(w, re);
   const on = src('src/net/online.js');
   assert.match(on, /else if \(r && r\.k !== 'ev' && r\.k !== SD_LANE_KIND\) \{/, 'a province\'s record is the hub\'s word, never a realm\'s fight');
-  assert.match(on, /if \(sdLaneWire\(w\.s\) > 0 && !this\.ww5Ok\) return false;/, 'a province\'s find never to an older relay');
+  assert.match(on, /if \(sdLaneWire\(w\.s\) > 0 && !\(this\._mine\(cell\) \? this\.ww5Ok : halo\?\.ww5Ok\)\) return false;/, 'a province\'s find never to an older relay - the socket\'s own relay\'s word (ww5_stars: a halo says for itself)');
 });
 
 test('WW5 ON THE FREEWARE\'S WORLD: every province\'s Hollow stands - three slots of each lane, by its crowd and by its great cities, each in its own theatre by a city of its own (the registry\'s, TESA\'s places), on dry ground, under the world lane\'s id; the Bay\'s Hollows by their own rows as they always were', { skip: HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)', timeout: 600_000 }, async () => {

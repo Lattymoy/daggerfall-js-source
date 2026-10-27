@@ -232,12 +232,12 @@
   {
     "name": "SD3-the-step-down-forgets-it",
     "file": "src/net/online.js",
-    "old": "serpentOk: this.serpentOk, sdOk: this.sdOk, foeInventoryOk",
-    "new": "serpentOk: this.serpentOk, foeInventoryOk",
+    "old": "serpentOk: this.serpentOk, sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk",
+    "new": "serpentOk: this.serpentOk, ww5Ok: this.ww5Ok, foeInventoryOk",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "The socket stepped down keeps its own relay's word."
+    "note": "The socket stepped down keeps its own relay's word. WW5 (2026-10-27): re-aimed by content - the step-down keeps the halo's WW5 word beside it (a halo says for itself)."
   },
   {
     "name": "SD3-any-room",

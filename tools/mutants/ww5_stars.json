@@ -120,7 +120,7 @@
   {
     "name": "WW5-STAR-the-send-gate",
     "file": "src/net/online.js",
-    "old": "    if (w.k >= STAR_PER_NIGHT_WIRE && !this.ww5Ok) return false;   // WW5: a province's star, never to a relay that refuses it as junk\n",
+    "old": "    if (w.k >= STAR_PER_NIGHT_WIRE && !(this._mine(cell) ? this.ww5Ok : this._haloFor(cell)?.ww5Ok)) return false;   // WW5: a province's star, never to a relay that refuses it as junk - the socket's own relay's word (a halo says for itself)\n",
     "new": "",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
@@ -329,6 +329,51 @@
     "file": "src/scenes/gate/gateLanes.js",
     "old": "  return (_kept = {\n",
     "new": "  return ({\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-halo-on-the-primarys-word",
+    "file": "src/net/online.js",
+    "old": "if (w.k >= STAR_PER_NIGHT_WIRE && !(this._mine(cell) ? this.ww5Ok : this._haloFor(cell)?.ww5Ok)) return false;",
+    "new": "if (w.k >= STAR_PER_NIGHT_WIRE && !this.ww5Ok) return false;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-halo-on-the-primarys-word",
+    "file": "src/net/online.js",
+    "old": "if (sdLaneWire(w.s) > 0 && !(this._mine(cell) ? this.ww5Ok : halo?.ww5Ok)) return false;",
+    "new": "if (sdLaneWire(w.s) > 0 && !this.ww5Ok) return false;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-the-halo-never-told",
+    "file": "src/net/online.js",
+    "old": "if (h) { h.starOk = relaySupportsStar(relayV); h.ww5Ok = relaySupportsWw5(relayV); } }",
+    "new": "if (h) { h.starOk = relaySupportsStar(relayV); } }",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-the-crossing-keeps-the-old-word",
+    "file": "src/net/online.js",
+    "old": "this.egOk = !!h.egOk; this.ww5Ok = !!h.ww5Ok;",
+    "new": "this.egOk = !!h.egOk;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-the-crossing-forgets-the-stepped-down",
+    "file": "src/net/online.js",
+    "old": "sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk:",
+    "new": "sdOk: this.sdOk, foeInventoryOk:",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
