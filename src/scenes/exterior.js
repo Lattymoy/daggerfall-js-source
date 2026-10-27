@@ -348,6 +348,7 @@ import { raceDisplayName } from '../systems/talk/talkSession.js';   // MACRO-ONE
 import { localizedText, getLocalizedLocationName, getLocalizedRegionName, getLocalizedFactionName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the place names shown
 import { startTutorialTour } from '../ui/tutorialPopup.js';   // TUT1: the welcome tour - and the popups' handler, registered by this host (the four hosts' rule)
 import { HAND_START_QUEST } from '../systems/starts/starts.js';   // START2: a character born in the bench's town
+import { feltClimateIndex } from '../world/tamriel/tamrielGround.js';   // TESA-LANDS' audit: the body's air past the Bay a zone's own
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -1382,7 +1383,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const hour = (((wm % 1440) + 1440) % 1440) / 60;
     const sheltered = m === 'exterior' && !!playerEntity.isResting && !!camps.tentNear(feet);   // AUDIT C&C I2: a rest at a tent sleeps under its roof
     return {
-      climateIndex: locClimateIndex,
+      climateIndex: feltClimateIndex(_locPixel.x, _locPixel.y, locClimateIndex),   // TESA-LANDS' audit: past the Bay a zone's air
       month: dateFromClassicMinutes(wm).month, hour, weather, falling: fallingWeather(weather),   // WET-FALL: the skin reads what the street's frame saw fall
       insideBuilding: m === 'interior', insideDungeon: m === 'dungeon',
       inSunlight: m === 'exterior' && sunlit({ hour, weather, sheltered }),   // AUDIT C&C: the sun's one law, the replay's too

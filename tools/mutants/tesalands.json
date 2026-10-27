@@ -811,5 +811,32 @@
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]
+  },
+  {
+    "name": "TL-felt-the-ground",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  return (inBay(x, y) ? null : tamrielBiomeAt(x, y)?.air) ?? climate;",
+    "new": "  return climate;",
+    "tests": [
+      "test/systems/tesabiome_feltair.test.js"
+    ]
+  },
+  {
+    "name": "TL-felt-world-host",
+    "file": "src/scenes/world.js",
+    "old": "climateIndex: feltClimateIndex(playerTravelPixel().x, playerTravelPixel().y, maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y)),",
+    "new": "climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),",
+    "tests": [
+      "test/systems/surv7_feed.test.js"
+    ]
+  },
+  {
+    "name": "TL-felt-exterior-host",
+    "file": "src/scenes/exterior.js",
+    "old": "climateIndex: feltClimateIndex(_locPixel.x, _locPixel.y, locClimateIndex),",
+    "new": "climateIndex: locClimateIndex,",
+    "tests": [
+      "test/systems/surv7_feed.test.js"
+    ]
   }
 ]

@@ -212,13 +212,27 @@ export function groundClimateIndex(bayClimateIndex) {
 
 /** TESA-BIOME: THE AIR'S CLIMATE with the continent round it - the Bay's own on the Bay, past it a zone's `air` where the
  *  lore's air is not its ground's (Morrowind's grey volcanic ground, its warm air), else its ground's climate. The air
- *  law's map reads it (systems/weather/airGround.js); the ground, the textures and the tables never do. */
+ *  law's map reads it (systems/weather/airGround.js), and the body's felt air (feltClimateIndex); the ground, the
+ *  textures and the encounters' tables never do. */
 export function groundAirClimateIndex(bayClimateIndex) {
   return (x, y) => {
     if (inBay(x, y)) return bayClimateIndex(x, y);
     const zone = tamrielBiomeAt(x, y);   // AUDIT TESA-BIOME Z7: the zone read once
     return zone ? zone.air ?? zone.climate : tamrielClimateAt(x, y);
   };
+}
+
+/**
+ * THE AIR A BODY FEELS (TESA-LANDS' audit, the owner: "Definitely fix any bugs you encounter"): a pixel's climate as the
+ * survival law reads it (systems/survival/temperature.js CLIMATE_TEMP, the Climates & Calories table) - past the Bay a
+ * zone's `air` where it names one, the air law's own (groundAirClimateIndex), else `climate` (the hosts' map's answer
+ * there: the Bay's, a zone's ground, the Eltheric Ocean's). It read the ground's: the Ashlands' Mountains (-40) under the Dak'fron's
+ * air (Desert2, +50) - -45 and Freezing at noon in Frostfall, a character frozen to death in a summer's walk - and every
+ * one of Morrowind's nine zones that names its warm air felt the ground's cold.
+ * @param {number} x @param {number} y @param {number} climate
+ */
+export function feltClimateIndex(x, y, climate) {
+  return (inBay(x, y) ? null : tamrielBiomeAt(x, y)?.air) ?? climate;
 }
 
 /** WW-R (bible/03-World/World-Wide.md WW-R): THE POLITIC MAP PAST THE BAY - a province's land its region's politic
