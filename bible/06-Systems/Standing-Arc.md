@@ -194,10 +194,13 @@ its court (DaggerfallCourtWindow) takes nothing:
   patronTakes, AUDIT S6; acct146) - a player may, the mark riding. RPT1026-LEDGERLAW (2026-10-26, a private report:
   a stolen piece another player sold looked like any other): and its rows say so - the market's Goods row
   (`ui/marketTab.js` goodRow, "Stolen") and its Buy bar (the card's line, `stolenLine`), a hired trader's rows on the
-  board and the stall (`ui/vendor/vendorTab.js`) and its look (`scenes/vendorHost.js` vendorItemStats), and the Vendor
-  page's search (`ui/vendor/vendorPage.js`): the buyer takes the court's risk and a counter that destroys it, and no
-  row named the theft. A piece listed is never unmarked (the listing keeps the record whole, `market.js` listGood);
-  `stolenGoods.js` stolenTag. `test/ui/rpt1026_ledgerlaw_stolen.test.js`.
+  board and the stall (`ui/vendor/vendorTab.js`) and its look (`systems/item/itemLook.js` itemLookRows, the host's
+  vendorItemStats), the Vendor page's search (`ui/vendor/vendorPage.js`), and (AUDIT RPT1026 C4, 2026-10-27) the window
+  two players trade in - the other player's offered row and its strip (`ui/enhanced/enhancedPlayerTrade.js`): the buyer
+  takes the court's risk and a counter that destroys it, and no row named the theft. A piece listed is never unmarked
+  (the listing keeps the record whole, `market.js` listGood); `stolenGoods.js` stolenTag. A modified client that strips
+  the mark sells its piece clean: the mark is the client's word, as the theft is. `test/ui/rpt1026_ledgerlaw_stolen.test.js`,
+  `test/ui/audit_rpt1026_ledgerlaw_trade.test.js`.
 - **The court.** Every guilty exit - a sentence served, a fine paid, banishment, the failed defence's verdict, and so
   the watch's "come quietly" - takes every stolen piece the prisoner carries: the pack's, worn or held (taken off its
   slot first; a lit torch goes out), and the Materials Bag's - a stolen bag's honest goods put in the pack, never left in
