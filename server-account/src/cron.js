@@ -49,6 +49,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { seaSweeps } from './seaBounty.js';   // AUDIT SEA VENTURES B5
+import { crewSweep } from './crewSigns.js';   // CREW-SIGNED
 import { closeAuctions, pruneMarketHistory, SETTLE_MAX, reckonPatrons, marketOpenFor, markPatronsShut } from './market.js';
 import { closeGuildWrits } from './writs.js';
 import { closeContracts } from './contracts.js';
@@ -249,6 +250,8 @@ export const HOUR_JOBS = Object.freeze([
     for (const [sql, cutoff] of seaSweeps(ctx.nowS)) n += await rounds(() => deleted(ctx.db, sql, cutoff), SWEEP_ROWS, ctx.budget);
     return n;
   }],
+  // CREW-SIGNED (crewSigns.js): a hall's signed recruits, past their day's keeping
+  ['crew-signs', (ctx) => rounds(() => deleted(ctx.db, ...crewSweep(ctx.nowS)), SWEEP_ROWS)],
   // LW15 (bible/06-Systems/Living-World-II.md): the towns' patrons at their traders, the towns waiting (a read reckons its
   // own). AUDIT LW-II P8: while the market is open to everyone (market.js marketOpenFor, no account's - every switch
   // `on`); shut, its every route answers 'market-closed', and the clock paid patrons' gold anyway. AUDIT LW-II-2 S3: and

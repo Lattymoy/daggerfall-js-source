@@ -150,11 +150,15 @@ test('CRAFT-FIRST-SHOWN the stations say it, read off the real book: the loom\'s
   const box = (title) => {
     const b = station(title).querySelector('.prof-craft');
     assert.ok(b, `${title}: a box`);
-    return [b.children[0].textContent, [...b.querySelectorAll('p')].map((p) => p.textContent)];
+    // PIN MOVED (MASTER-ART): the craft's own lines - a Master's work section, its own at Master, aside
+    const master = new Set(b.querySelector('.prof-master')?.querySelectorAll('p') ?? []);
+    return [b.children[0].textContent, [...b.querySelectorAll('p')].filter((p) => !master.has(p)).map((p) => p.textContent)];
   };
   // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): the first's XP its track's share - Smithing's 500, Outfitting's 511,
   // Building's 1,823 (each the least that brings its track to Master in Smithing's crafts)
-  const FIRST = (xp, prof, more = 500) => `${xp} ${prof} experience, and ${more.toLocaleString('en')} more the first time you make this piece at this grade.`;
+  // PIN MOVED (CRAFT-HALL): the real Worker says what the character has made (profState's `made`), so a station says
+  // the bonus is still to earn, not the rule (craftXpLine's `owed`)
+  const FIRST = (xp, prof, more = 500) => `${xp} ${prof} experience, plus a ${more.toLocaleString('en')} first-time bonus.`;
   // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): with no bought cloth held the loom says the made cloth's 500 (ownSpend)
   // PIN MOVED (WOVEN-PAYS, FIELD BUGS 2026-10-26b): the wall named silver
   const SHOP = (xp) => `${xp} Outfitting experience, and 511 more the first time you make this piece at this grade from cloth not bought with silver.`;
@@ -201,7 +205,7 @@ test('CRAFT-FIRST-SHOWN the stations say it, read off the real book: the loom\'s
     assert.deepEqual([box('The Mason\'s Bench')[0], box('The Mason\'s Bench')[1].at(-1)], ['Stone Column - a Sculptor\'s', TOP]);
     // THE FIRE: a dish's first, beside the pans' XP
     press('The Fire', 'Hunter\'s Stew');
-    assert.equal(box('The Fire')[1].at(-1), 'The first time you cook this dish: 3,155 more Provisioning experience.');   // PIN MOVED (FIRST-BUDGET): Provisioning's share
+    assert.equal(box('The Fire')[1].at(-1), 'First time cooking this: 3,155 more Provisioning experience.');   // PIN MOVED (FIRST-BUDGET): Provisioning's share; PIN MOVED (CRAFT-HALL): still to earn
     // THE ALCHEMY STATION: a potion wholly of the Apothecaries' goods says why it pays no first (AUDIT 32 S1's law, brewFirstPays)
     press('The Alchemy Station', 'Water Breathing');
     assert.match(box('The Alchemy Station')[1].join('|'), /60 Provisioning experience\. It is made only from the Apothecaries' goods, so it earns no first-time bonus\./);
@@ -213,7 +217,7 @@ test('CRAFT-FIRST-SHOWN the stations say it, read off the real book: the loom\'s
     draw();
     press('The Workbench', 'Staff');
     assert.deepEqual([box('The Workbench')[0], box('The Workbench')[1].at(-1)], ['Pine Staff - rank 0', FIRST(5, 'Building', 1823)]);
-    assert.ok(station('The Mason\'s Bench').querySelectorAll('p').some((p) => p.textContent === 'Your first cut and your first mix each earn 1,823 more Building experience.'));   // PIN MOVED (FIRST-BUDGET): Building's share, each work   // PIN MOVED (VOICE2): experience in a sentence (Voice.md rule 3)
+    assert.ok(station('The Mason\'s Bench').querySelectorAll('p').some((p) => p.textContent === 'First-time bonus, 1,823 Building experience each: first cut still to earn, first mix still to earn.'));   // PIN MOVED (CRAFT-HALL): each work's own   // PIN MOVED (FIRST-BUDGET): Building's share, each work   // PIN MOVED (VOICE2): experience in a sentence (Voice.md rule 3)
   } finally {
     setProfessionsPages(null);
     root?.remove?.();

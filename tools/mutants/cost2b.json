@@ -652,8 +652,9 @@
   {
     "name": "COST2B-setting-floor",
     "file": "src/net/relayCfg.js",
-    "old": "cellSeed: 260 });",
-    "new": "cellSeed: 259 });",
+    "old": "cellSeed: 260, lootDoor: 273 });",
+    "new": "cellSeed: 259, lootDoor: 273 });",
+    "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands after cellSeed's on the line.",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]

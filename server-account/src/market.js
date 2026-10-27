@@ -89,7 +89,7 @@ import {
   marketPageOf, marketSortOf, marketQualityOf, recipesNamed, marketRecipesOf,   // BOARD-SIFT: a page, its order, a search's recipes
 } from '../../src/net/marketLaw.js';
 import { MASTERWORK, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
-import { mintVersionOf } from '../../src/net/productRecord.js';   // CRAFT-PROCS: a piece's mint version, its record's
+import { mintVersionOf, masterLinesOf } from '../../src/net/productRecord.js';   // CRAFT-PROCS: a piece's mint version, its record's; MASTER-ART: a Master's lines
 import { takeTradeGoods, giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';   // MARKET-ANY: a piece out of one record and into another, as a trade moves it
 import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // INT19: a crafted piece out of its seller's record, and back as it
 import { vendorOf, VENDOR_STATION, VENDOR_LISTING_S, VENDOR_STOCK_SHOWN, VENDOR_STOCK_MAX, VENDOR_BOARD_SHOWN } from '../../src/net/vendorLaw.js';   // HOME-VENDOR: a home's trader
@@ -199,6 +199,7 @@ const pieceOf = (p, wear) => (p ? {
   ...(p.dye == null ? {} : { dye: Number(p.dye) }),   // PROF7: a garment is the colour it was sewn in
   ...(p.hand == null ? {} : { hand: Number(p.hand) }),   // PROF9: a dish keeps its cook's hand (0069)
   ...mintVersionView(p.record),   // CRAFT-PROCS: a piece made before mints as it was
+  ...(masterLinesOf(p.record) ? { lines: masterLinesOf(p.record) } : {}),   // MASTER-ART: a Master's work mints its chosen lines
 } : null);
 /** AUDIT PROF-541 R2-S4: an auction's piece's recipe - its products row's, or, the piece disenchanted since (the row
  *  deleted), its disenchant's (prof_disenchants.provenance is UNIQUE: one look-up). `a` the auction, `p` its row. */

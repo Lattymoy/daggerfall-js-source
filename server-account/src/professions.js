@@ -61,10 +61,12 @@ import {
   workSpecOk,   // PROF12: a Transmuter's transmutation asks its choice
   workEmbers,   // DAEDRIC-SMELT: the Deadlands Embers a work spends out of the account's purse
   SCHOOL_HAULS_DAY,   // AUDIT GATHER F3: the school's fish bounded as the day's forty bound them
+  WORK_RECIPES,   // CRAFT-HALL: the works whose first pays, read with the state
 } from '../../src/net/professionLaw.js';
 import {
   recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, rollsQuality, craftXp, craftCount,
   makerMark, counterMade, firstCraftKin, recipeInputs, takesHeartwood, carriesMark, dyeOk,   // CLOTH-GEMS: S1 judged by the units
+  RECIPES,   // CRAFT-HALL: the judged patterns, read by the state's `made`
   JUDGED_CLOTH,   // WOVEN-PAYS: the cloth S1 counts when it is bought with silver
   firstCraftXp, workFirstXp, FIRST_MAKE_FLOOR,   // FIRST-BUDGET: its track's first-make share (Professions-Arc 52); WOVEN-PAYS: an old row's paid first
   masonXp,   // PROF11: the mason's bench's XP
@@ -95,6 +97,7 @@ import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls st
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
 import { SURVEYOR } from '../../src/net/professionLaw.js';   // MINE-PERKS: Mining 100's Surveyor (the Stonebreaker's id)
+import { trophyHunted } from '../../src/net/professionLaw.js';   // HUNTERS-MARK: a Trophy Hunter's clean pelt of a tier 5+ body
 import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk, looseOrder, LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
 import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf, chaptersSwitchOf, meritWeekOf, chapterFocusesOf, crackdownMerit, doctrineWritCount } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
 import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guild/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
@@ -185,7 +188,7 @@ export const silverClothIn = (db, select, binds) => db.prepare(`INSERT INTO prof
 /** WOVEN-PAYS: A STATION'S USE OF A CLOTH TAKES ITS BOLTS OFF THE SILVER COUNT - `qtySql` units of `materialSql` where `guard`
  *  holds (the act's own row; ?1 the player, ?2 the character, `binds` from ?3), a row at nought deleted. A craft's and a
  *  temper's, whatever the recipe: a bolt used is a bolt used. */
-const silverClothOut = (db, { player, character, materialSql, qtySql, guard, binds }) => [
+export const silverClothOut = (db, { player, character, materialSql, qtySql, guard, binds }) => [
   db.prepare(`UPDATE prof_silver_cloth SET qty = qty - MIN(qty, ${qtySql}) WHERE player = ?1 AND char_id = ?2 AND material = ${materialSql} AND ${guard}`).bind(player, character, ...binds),
   db.prepare('DELETE FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty = 0').bind(player, character),
 ];
@@ -285,16 +288,39 @@ export async function sweepHarvests(db, nowS, limit = 500) {
 }
 
 /**
+ * CRAFT-HALL: what the character has made, read the way the first-make decisions read it - crafted recipes, works that
+ * pay a first (the mason's cut and mix) and brewed potions. One statement on the tables' existing indexes, in the
+ * state's batch, so the client can show which first-time bonuses are spent.
+ */
+const FIRST_WORKS_SQL = WORK_RECIPES.filter((w) => workFirstXp(w) > 0).map((w) => `'${w.id}'`).join(', ') || "''";
+// WOVEN-PAYS: a judged pattern (counterMade) is made only by the craft that laid its first on - a row from before
+// `first_paid` where it was the first and its XP holds the share. craftAtAnvil's `patternMade` and the state's `made` read it
+const PAID_FIRST_SQL = `(first_paid = 1 OR (first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))`;
+const JUDGED_SQL = RECIPES.filter(counterMade).map((r) => `'${r.id}'`).join(', ') || "''";
+const madeStatement = (db, player, character) => db.prepare(`SELECT 'craft' AS kind, recipe AS key FROM prof_crafts WHERE player = ?1 AND char_id = ?2
+    AND (recipe NOT IN (${JUDGED_SQL}) OR ${PAID_FIRST_SQL}) GROUP BY recipe
+  UNION ALL SELECT 'work', recipe FROM prof_smelts WHERE player = ?1 AND char_id = ?2 AND recipe IN (${FIRST_WORKS_SQL}) GROUP BY recipe
+  UNION ALL SELECT 'brew', potion FROM prof_brews WHERE player = ?1 AND char_id = ?2 GROUP BY potion`).bind(player, character);
+/** CRAFT-HALL: madeStatement's rows as `{ crafts, works, brews }`. */
+const madeFrom = (/** @type {any[]} */ results) => {
+  const out = { crafts: /** @type {string[]} */ ([]), works: /** @type {string[]} */ ([]), brews: /** @type {string[]} */ ([]) };
+  for (const r of results) (r.kind === 'craft' ? out.crafts : r.kind === 'work' ? out.works : out.brews).push(String(r.key));
+  return out;
+};
+
+/**
  * A CHARACTER'S PROFESSIONS, as the Professions and Stores tabs and the nodes read them: every track, today's harvests
- * and the nodes taken, the Stores, today's writs filled (the Court's and the halls', CHAP2a), and the bounds.
+ * and the nodes taken, the Stores, today's writs filled (the Court's and the halls', CHAP2a), the bounds, and (CRAFT-HALL)
+ * what it has made.
  */
 export async function profState({ db, nowS }, player, env, { character } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
   if (refused) return refused;
   const day = utcDay(nowS);
-  // GATHER-SPEED: the state's eight reads in ONE round trip - the tracks, the Stores, the day's nodes, the carried count,
-  // the day's harvests, the Court's writs and the hides and hauls - where they were eight trips in a row
-  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows] = await readAll(db, [
+  // GATHER-SPEED: the state's reads in ONE round trip - the tracks, the Stores, the day's nodes, the carried count,
+  // the day's harvests, the Court's writs and the hides and hauls - where they were eight trips in a row (WOVEN-PAYS adds
+  // the cloth's silver counts, CRAFT-HALL `made`; MASTER-ART today's Master's work)
+  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await readAll(db, [
     db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character),
     db.prepare('SELECT material, origin, qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND qty > 0 ORDER BY material').bind(player.id, character),
     db.prepare('SELECT node, kind FROM node_harvests WHERE player = ?1 AND char_id = ?2 AND day = ?3').bind(player.id, character, day),
@@ -306,6 +332,8 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
     haulsStatement(db, player.id, day),
     // WOVEN-PAYS: the silver counts of its cloth (the loom's first-time line reads them)
     db.prepare('SELECT material, qty FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty > 0').bind(player.id, character),
+    madeStatement(db, player.id, character),   // CRAFT-HALL
+    db.prepare('SELECT 1 FROM prof_masters WHERE player = ?1 AND char_id = ?2 AND day = ?3').bind(player.id, character, day),   // MASTER-ART: one a day
   ]);
   const byProf = new Map(rows.map((r) => [r.profession, r]));
   const held = new Map();
@@ -332,6 +360,8 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
     hauls: Number(hauls[0]?.n ?? 0),   // PROF8: the account's hauls today (PROF0 6)
     caps: { stores: STORES_MAX, withdraw: WITHDRAW_MAX, highHides: HIGH_HIDES_PER_DAY },   // CAP-OFF: no day's harvests, hides or hauls
     silver: Object.fromEntries(silverRows.map((r) => [r.material, Number(r.qty)])),   // WOVEN-PAYS: the cloth's silver counts standing
+    made: madeFrom(made),   // CRAFT-HALL
+    master: { made: master.length > 0 },   // MASTER-ART (Professions-Arc 57): whether today's Master's work is made
   };
 }
 
@@ -643,6 +673,9 @@ export async function harvestNode(ctx, player, env, body = {}) {
     gem = finds.part;
     extra = finds.meat;
     extraQty = finds.meatQty || 1;
+    // HUNTERS-MARK (Professions-Arc 58): a Trophy Hunter's clean pelt of a tier 5+ body mounts its beast - written on the
+    // row the rare hides' day decides, so it is bounded by their three
+    trophy = trophyHunted({ spec100: specs[100], tier, clean }) ? 1 : 0;
   } else if (n.kind === 'tree') {
     // PROF4: THE WOOD-AXE - a tree's logs; Resin one in four, Heartwood a Clean Cut's find on confirmed ground (PROF0 25)
     const found = tree({ x: n.x, y: n.y, day, slot: n.slot, climate, confirmed });
@@ -1303,8 +1336,8 @@ async function emberPurse(db, id) {
 
 // ─── A CRAFT AT THE ANVIL (PROF0 9, 24) ──────────────────────────────
 
-/** A provenance id: 16 hex digits from the service's CSPRNG (PROF0 9.1). */
-function provenanceId(rand) {
+/** A provenance id: 16 hex digits from the service's CSPRNG (PROF0 9.1). MASTER-ART: a Master's work's too (masterWork.js). */
+export function provenanceId(rand) {
   const b = new Uint8Array(8);
   rand(b);
   return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
@@ -1453,7 +1486,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   // first and its XP holds the share (FIRST_MAKE_FLOOR: no share is under it, and no judged craft's own XP reaches it -
   // tiers 1-2, pinned). Every other recipe's pattern is made by any craft of it, as before (FACT, pinned: no pattern at a
   // tier holds both)
-  const patternMade = counterMade(r) ? `${madeBefore} AND (first_paid = 1 OR (first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))` : madeBefore;
+  const patternMade = counterMade(r) ? `${madeBefore} AND ${PAID_FIRST_SQL}` : madeBefore;
   const decided = 'EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND rid = ?5 AND n = ?6)';
   // AUDIT PROF-541 B7: A PIECE MADE OF BOUGHT GOODS IS BOUGHT - 'marks' (GOLD-MARKET's Drakes, products.bought_with) where
   // any input held a bought unit as the pieces are minted, BEFORE the spends (bought first - the smelt's rule, professionLaw

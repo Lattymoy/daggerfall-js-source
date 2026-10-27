@@ -347,6 +347,30 @@ asked (she comes out in crossing waters, and is not asked out again at once). Co
 is carried across (`_etherCrossing`, as a party's arrival holds it). A voyage that cannot be made brings ship and
 captain back where they set out, at her helm, the way out as it was (CROSS_FAILED - X9: her helm was let go).
 
+**HER PARTY CROSSES WITH HER** (VEIL-PARTY, 2026-10-27, the SEA-OPEN slice). A player aboard held the crossing back,
+so a party crossed one ship at a time. Now a member of the captain's party aboard never holds it back
+(`comeSailAwayAboard.js` passengersOn's `skip`, `world.js` crossRefusal); a stranger aboard still does ("Only your
+party can cross the Veil with you."). A member aboard her follows her crossing (`scenes/naval/veilParty.js`): within
+VEIL_FOLLOW_MS (60 s) of their last frame aboard, the captain's party pose standing across the Veil is the word. The
+member takes the party's own journey to the captain's pixel, landing beside the captain on her deck, with no fare and
+CROSS_DAYS on their own clock; that journey alone passes the Veil's refusal (`pick.veil`).
+
+AUDIT HORIZONTAL C1: a member who had left her - a journey of their own, a temple after a death - was pulled across
+when she crossed within the minute. A follow is now held to where her deck last carried them: within VEIL_STAY_PX (1)
+map pixel of it, and on no other's deck. C5: the minute was the wall clock's, and the world steps nothing while a
+window is open, so a member who shut one after she crossed was left in open water. It counts the frames stepped now
+(`step(dt)`). The audit's suspected landing: a follow sent back because she sailed on from the pixel it aimed at
+follows her to the pixel she stands in now, within the window, and the pixel that failed is not asked again.
+
+Named, not closed: a member aboard on an older build does not follow, and her party no longer holds her crossing back.
+AUDIT HORIZONTAL C7: the refusal's second sentence said she waits until no one else is aboard; it says "until only your
+party is aboard" now (`ether.cross.passengers`).
+
+Nothing new rides the wire. A journey that finds no landing sends the member back and says so. Pins: `test/systems/naval/veilparty.test.js`.
+Mutants: `tools/mutants/seaopen.json` (VEIL-, all dead). PINS MOVED: `ethercross.test.js`, `auditcaptsea.test.js`
+X2 and P6, `csa_together.test.js` (the count's `skip`). THE FOUR HOSTS: `world.js` builds it and steps it beside the
+crossing; `worldModes.js`, `dungeonContext.js` and `exterior.js` sail no crossing.
+
 ## ETHER-CHART - the chart of the Eltheric Ocean
 
 Past the Veil the travel map's door (`toggleTravelMap`) opens the captain's chart (`ui/etherChartWindow.js`, the naval
@@ -1298,8 +1322,8 @@ the Veil", "Legends ended"; its trades count 'ether' and 'legend' ships.
   stood on a floor carved against the Bay's clamped corner, and could neither swim nor float back) held the carve off
   the box; ETHER-DEEP (above) carves it by its own frame, and a host told nothing of the sea still holds it
   (test/world/ethersea_dwhold.test.js). Ocean Holes' pits stay the Bay's.
-- **Online**, the crossing is each player's own; a party is not carried across together, and a player aboard another's
-  ship holds the crossing back.
+- **Online**, the crossing is each ship's: a party aboard crosses with her (VEIL-PARTY, above); a party on two ships
+  crosses as two.
 - **The Overworld's enemies, seeded on the sea** (ETHER-OW): the bands roam the isles and Warm Ashes' raiders sail the
   open sea past the Veil as on the Bay's map - the Bay's own law on a ground the mods never knew.
 

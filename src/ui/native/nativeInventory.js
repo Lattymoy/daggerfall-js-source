@@ -65,6 +65,7 @@ import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // A
 import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS3: a bound piece stays the player's on this skin too; WALLET1: and a pack-only one in the pack
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
 import { walletContents, walletLines, refreshWalletSilver } from '../../systems/walletItem.js';   // WALLET1: the wallet's box
+import { lookLine } from '../../systems/appearances.js';   // APPEARANCES-II: the Info box says the look a piece wears
 import { BINDER_CARD_LINES } from '../../systems/iliac/iliacItems.js';   // CARDS8 (AUDIT CARDS-5 C5): the binder's box
 import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { YesNoBoxWindow } from '../yesNoBox.js';   // SS5: the dismantle's question, DFU's own Yes/No box
@@ -742,7 +743,11 @@ export class NativeInventoryWindow {
       this.infoItem = it;
       return;
     }
-    this.boxes = [{ rows: infoRows }];
+    // APPEARANCES-II (bible/04-Characters/Wardrobe.md section 5): a look worn over the piece is the record's last line, in
+    // its alignment - the pack's picture is the piece's own, so the box says what the body shows. A box of its own would
+    // wait behind a click; the Enhanced Plus pack says it too (enhancedInventory.js itemInfoBoxes)
+    const look = lookLine(it);
+    this.boxes = [{ rows: look ? [...infoRows, { text: look, center: infoRows.at(-1)?.center ?? true }] : infoRows }];
     // MACRO-3: 1016 is "Item powers:" over %mpw, and %mpw is a LIST - one
     // line per power (DaggerfallUnityItemMCP.MagicPowers), so the token's
     // row becomes that many rows, each keeping the record row's alignment.

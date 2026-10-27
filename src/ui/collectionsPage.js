@@ -34,19 +34,23 @@ import { cardsPartShown, drawCardsPart, resetCardsPart, disarmCardsPart, deckCar
 import { collectionOf } from '../systems/iliac/iliacItems.js';   // COLLECTIONS-II: the Cards tile's count
 import { t } from '../systems/textManager.js';
 import { wardrobeCount, wordPair } from './collections/wardrobeCatalogue.js';   // COLLECTIONS-II: the wardrobe's parts
+import { GATHERED_PARTS, isGatheredPart, gatheredCount, drawGatheredPart } from './collections/gatheredPart.js';   // HUNTERS-MARK: the Trophies, the Fish, the Annals
 import { drawWardrobePart, wardrobeAccount, wardrobeOfFlow, resetWardrobePart, rereadWardrobeAccount, WARDROBE_PART_CSS, WARDROBE_THEME_CSS } from './collections/wardrobePart.js';
+import { drawAppearancesPart, resetAppearancesPart, appearancesCount, LOOKS_PART_CSS } from './collections/appearancesPart.js';   // APPEARANCES: the character's looks (bible/04-Characters/Wardrobe.md)
 
 export const COLLECTION_PAGE_SECTIONS = Object.freeze([Object.freeze(['collections', 'Collections'])]);
 export const COLLECTION_PAGE_STYLE_ID = 'collections-page-css';
 /** The page's parts, in the switch's order - COLLECTIONS-II: the account's wardrobe, a kind a part, then the character's
- *  codex and cards. Each `[id, its name]`, the name read when drawn. */
+ *  looks (APPEARANCES), codex and cards. Each `[id, its name]`, the name read when drawn. */
 export const COLLECTION_PARTS = Object.freeze([
   wordPair('titles', () => t('coll.part.titles', 'Titles')),
   wordPair('auras', () => t('coll.part.auras', 'Auras')),
   wordPair('icons', () => t('coll.part.icons', 'Icons')),
   wordPair('glyphs', () => t('coll.part.glyphs', 'Glyphs')),
+  wordPair('appearances', () => t('coll.part.appearances', 'Appearances')),   // APPEARANCES: the character's looks, first of its own parts
   wordPair('codex', () => t('coll.part.codex', 'Codex')),
   wordPair('cards', () => t('coll.part.cards', 'Cards')),
+  ...GATHERED_PARTS,   // HUNTERS-MARK (Collections.md section 10): what a character gathers, then the account's pages
 ]);
 /** COLLECTIONS-II: the wardrobe's parts and the kind each lists (ui/collections/wardrobeCatalogue.js WARDROBE_KINDS). */
 export const WARDROBE_PARTS = Object.freeze({ titles: 'title', auras: 'aura', icons: 'icon', glyphs: 'glyph' });
@@ -63,7 +67,7 @@ let _part = 'titles';
 let _picked = null;   // the codex row opened whole
 /** The page forgotten (a load, a new character): back to its first part. COLLECTIONS-II: and the wardrobe's rows, its
  *  filter and its account read. */
-export function resetCollectionsPage() { _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); }
+export function resetCollectionsPage() { _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }
 /** AUDIT CARDS-5 D5: leaving the page (another rail page, another tab) disarms what was armed on it. (AUDIT COLLECTIONS-II,
  *  lane 2: the account's read is the menu visit's, kept across leaving - resetCollectionsPage lets it go.) */
 export function disarmCollectionsPage() { disarmCardsPart(); }
@@ -95,7 +99,7 @@ function ensureStyle(doc) {
   if (!doc?.getElementById || doc.getElementById(COLLECTION_PAGE_STYLE_ID)) return;
   const st = doc.createElement('style');
   st.id = COLLECTION_PAGE_STYLE_ID;
-  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}`;   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's
+  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;   // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's
   doc.head?.appendChild(st);
 }
 
@@ -115,7 +119,9 @@ export function drawCollectionsPage(detail, rerender, kit) {
   const kind = WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (_part)];
   const goTo = (/** @type {string} */ k) => { const id = partOfKind(k); if (id) { _part = id; disarmCardsPart(); } };
   if (kind) drawWardrobePart(detail, rerender, { ...kit, goTo }, kind, flow);
+  else if (_part === 'appearances') drawAppearancesPart(detail, rerender, kit);   // APPEARANCES
   else if (_part === 'codex') drawCodexPart(detail, rerender, kit);
+  else if (isGatheredPart(_part)) drawGatheredPart(detail, kit, _part, wardrobeOfFlow(flow));   // HUNTERS-MARK
   else drawCardsPart(detail, rerender, kit);
 }
 
@@ -125,6 +131,8 @@ export function drawCollectionsPage(detail, rerender, kit) {
 export function partCount(/** @type {string} */ id, /** @type {any} */ wardrobe, /** @type {any} */ player = null) {
   const kind = WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (id)];
   if (kind) { const n = wardrobeCount(kind, wardrobe); return { held: wardrobe ? n.held : null, total: n.total }; }
+  if (id === 'appearances') return appearancesCount(player);   // APPEARANCES: every look there is, and those the character holds
+  if (isGatheredPart(id)) return gatheredCount(id, wardrobe);   // HUNTERS-MARK
   if (id === 'codex') { const n = codexCount(); return { held: n.gilded + n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics }; }
   const have = collectionOf(player?.items);
   const all = deckCards();

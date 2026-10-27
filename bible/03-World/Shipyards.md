@@ -38,8 +38,8 @@ are ports by their data stand them, and the harbour board's ports are the same 1
 PORTS). A seat's members' harbour (`hasPortFor`) is one guild's word, so it stands no shipyard: every client stands the
 same one. Its harbour - the quays and the DOCKS below - is sounded out to that same ring when the town's own shore
 gives no berth within HARBOUR_REACH (FB1020c HARBOUR-REACH, `03-World/Holdings.md` section 7): 37 of the 106 stood a
-shipyard and a lighthouse and no quay until then (Daggerfall, Sentinel and Wayrest among them); 105 stand one now,
-Aldbrugh none (open).
+shipyard and a lighthouse and no quay until then (Daggerfall, Sentinel and Wayrest among them); all 106 stand one now,
+Aldbrugh's in its ring's corner (ALDBRUGH-QUAY, `03-World/Holdings.md` section 7).
 
 **The ground** is the yards' (`world/merchantYards/merchantYardSites.js` `townGroundOf`): the town's navgrid on the enhanced lane's
 water table, its buildings `BUILDING_CLEAR_M` off, its props, flats, palace blocks and the monument - with the Stable and
@@ -217,8 +217,33 @@ a man's share (`navalDamage.js` `discharge`: no blow, no fire, no state). Where 
 (a galley's sixty stand eight), the man who steps up into the place is NAMED (L2-1: a stranger was minted); her LAST man
 is never paid off - crew none, she would strike her colours ("That is the last of her crew"). No fee comes back. Never
 while she fights (L2-11). A hand's post is changed from the same page - a Bard's the Fleet's own line, Lookout none - and
-he or she is spoken of as the hand is (L7-9). Online, a hire is the hiring client's: a peer draws the hall's seeded deck
-for the player's ship, and two players may sign the same named sailor (L2-10, L7-8 - FLAGGED: the wire carries no hall).
+he or she is spoken of as the hand is (L7-9).
+
+**Signed once online** (CREW-SIGNED, 2026-10-27). Every client draws a town's hall alike, so online two players
+could sign one named sailor (L2-10, L7-8). Now a hire in the shared world asks the account service first
+(`server-account/src/crewSigns.js`, migration 0180; `/v1/crew/hall`, `/v1/crew/sign`, `/v1/crew/release`). The first
+character to sign a recruit holds him for his day; another is told he has signed on elsewhere, and nothing is paid. Paid
+off, swapped out or his ship sold, he is let go to the hall for every player. The hall hides the sailors other players
+and the account's other characters hold (`scenes/crewSignBook.js`, read again after CREW_HALL_FRESH_MS), and the window
+takes no second press while the service answers.
+
+One account holds CREW_SIGN_DAY_MAX (24) a day, across its characters. The day is the shared clock's, a day either side
+asked. A service without the routes leaves the hall the client's own, as before; offline nothing is asked. No gold
+moves at the service. A hand lost with his ship stays held until his day ends.
+
+AUDIT HORIZONTAL C2: the cap was a count, then a write, two round trips apart, so 36 asks at once held 36. The count
+and the hold are one statement now (`INSERT ... SELECT ... WHERE` the account's count is under the cap); a refused ask
+reads the row back to say `crew-taken` or `crew-many`. C8: the hold was the account's, so two of its characters hired
+one man and the first to pay him off let him go from under the other. Every ask names the character (`character`, the
+save's id: `world.js` hands it as the shipmaster's `online()`), and a row's holder is `<account>:<character>`. No
+migration: the cap counts the account's holders by their prefix.
+
+The departure is the port's own (DFU has no crew hall). THE FOUR HOSTS: `world.js` tells the shipmaster's host whether
+the game is in the shared world; `worldModes.js`, `dungeonContext.js` and `exterior.js` stand no shipyard. Pins:
+`test/server/crewsigned.test.js` (the real Worker; AUDIT HORIZONTAL G5: its service tests hold the clock at one
+instant, as a crew day turns every two real hours; G9: the three days' keep pinned as stated),
+`test/systems/shipyards1_host.test.js` (CREW-SIGNED, through the real service). Mutants: `tools/mutants/seaopen.json`
+(CREW-, all dead).
 
 ## The lighthouse
 
@@ -432,7 +457,7 @@ are.
 | L2-7 LOW: a Bard's posts, the hands drawn over the hall's header, "Small Ship 'I''s Deckhand" | CONFIRMED | the Fleet's own post line; the order; "signs on to X as her Y" |
 | L2-8 LOW: a day turned mid-visit said "signed on elsewhere" | CONFIRMED | "a new day's roster" |
 | L2-9 LOW: a name hid another man | CONFIRMED (0.3% of days) | the hand carries the recruit's id; a same-ship name clash refused |
-| L2-10, L7-8 LOW: online, a hire is the hiring client's | CONFIRMED | FLAGGED (below) |
+| L2-10, L7-8 LOW: online, a hire is the hiring client's | CONFIRMED | CREW-SIGNED: the account service holds a recruit for the first character to sign him (AUDIT HORIZONTAL C8) |
 | L2-11 LOW: hire and pay-off while she fights | CONFIRMED | refused, as a sale is |
 | L3-1 HIGH: on a bearing the light stood beside the yard | CONFIRMED | `LIGHT_APART_K` 0.5 (THE LIGHT STANDS OFF THE YARD ON A BEARING: 30+ cells, was 14.5) |
 | L3-2 LOW: the docks row waited on the shipyard's test | CONFIRMED | the harbour book's own (`csaIsPortTown`) |
@@ -467,9 +492,7 @@ are.
 | L7-9, L7-10, L7-11 LOW: the hand's pronoun, "parts is", "turn it on" without a reload | CONFIRMED | mended |
 | L7-12: a puff flashed past the gallery's eye each sweep | ADAPTED | puffs fade as the eye comes into them |
 
-**Open flags.** Online hires are the hiring client's (L2-10, L7-8): a peer draws the hall's deck off the seed for the
-player's ship and two players may sign one named sailor - the wire carries no hall; a fix sends a hire as a ship's own
-record. Quays and the port's places (U1): a harbour's quay might be laid across a shipyard's ground - unseen without
+**Open flags.** Quays and the port's places (U1): a harbour's quay might be laid across a shipyard's ground - unseen without
 ARENA2; a fix closes the berths' plans on the port's sites. Adjacent ports' harbours (U3): the harbour book sounds the
 port near the player's pixel and its neighbours' (`navalHarbourNear`) - as it was, noted only.
 

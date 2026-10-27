@@ -34,6 +34,7 @@ import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
+import { t } from '../textManager.js';   // FISH-BOATS: the fishing boats' class names in the player's language
 
 /** Come Sail Away's hull indices (systems/comeSailAway/comeSailAwayBoat.js HULL_NAMES). */
 export const HULL = Object.freeze({ Rowboat: 0, LargeBoat: 1, SmallShip: 2, LargeGalley: 3, Carrack: 4 });
@@ -394,6 +395,10 @@ export const FACTION_IDS = Object.freeze(Object.keys(NAVAL_FACTIONS));
 /** ETHER-LEGENDS: a legend's class's `minLevel` - past any captain's, so no draw by level (classFor, the encounters, the
  *  board's bounties, the raiders) ever finds one. */
 export const LEGEND_LEVEL = 999;
+/** FISH-BOATS: a fishing boat's `minLevel`, a legend's for the same reason - no draw by level ever finds one. */
+export const FISHER_LEVEL = LEGEND_LEVEL;
+/** FISH-BOATS: a skiff's way under her two oars (m/s) - no canvas, so the wind gives her none (navalAI.js helm). */
+export const FISH_OAR_MPS = 1.8;
 /**
  * The classes. `hullHp`/`sailHp`/`crew` scale the hull's own build; `speed` is the best way it makes with the wind
  * on the quarter at the rated wind (m/s; navalAI.js WIND_RATED - AUDIT NAV1 set it off the player's own hulls at
@@ -425,15 +430,20 @@ export const SHIP_CLASSES = Object.freeze([
   cls('legendLantern', 'pirate', HULL.SmallShip, 'Legendary Brigantine', { hullHp: 2, sailHp: 1.5, crew: 40, speed: 8.8, turn: 11, skill: 0.9, range: 100, cargo: 4, minLevel: LEGEND_LEVEL, weight: 0, boarders: 26, legend: true }),
   cls('legendRegent', 'pirate', HULL.Carrack, 'Legendary Carrack', { hullHp: 3.2, sailHp: 1.6, crew: 60, speed: 6.8, turn: 6, skill: 0.95, range: 125, cargo: 4, minLevel: LEGEND_LEVEL, weight: 0, boarders: 36, legend: true }),
   cls('legendStarless', 'pirate', HULL.Carrack, 'Legendary Carrack', { hullHp: 3.6, sailHp: 1.8, crew: 70, speed: 7.4, turn: 7, skill: 0.92, range: 120, cargo: 4, minLevel: LEGEND_LEVEL, weight: 0, boarders: 40, legend: true }),
+  // FISH-BOATS (bible/03-World/Naval-Combat.md, FISH-BOATS): a port's fishing boats, last so the wire's class rows stand.
+  // Lawful merchantmen to the law and the captains; never drawn by level or weight - the port's fleet launches them by id
+  cls('fishingSkiff', 'merchant', HULL.Rowboat, () => t('naval.class.fishingSkiff', 'Fishing Skiff'), { hullHp: 0.8, sailHp: 1, crew: 2, speed: FISH_OAR_MPS, turn: 24, skill: 0.1, range: 50, cargo: 1, minLevel: FISHER_LEVEL, weight: 0, boarders: 2, fisher: true }),
+  cls('fishingSmack', 'merchant', HULL.LargeBoat, () => t('naval.class.fishingSmack', 'Fishing Smack'), { hullHp: 0.8, sailHp: 0.9, crew: 4, speed: 3.6, turn: 14, skill: 0.15, range: 50, cargo: 1, minLevel: FISHER_LEVEL, weight: 0, boarders: 3, fisher: true }),
 ]);
 
 function cls(id, faction, hull, title, o) {
   const b = hullBuild(hull);
   return Object.freeze({
-    id, faction, hull, title,
+    id, faction, hull,
+    get title() { return typeof title === 'function' ? title() : title; },   // FISH-BOATS: a fishing boat's in the player's language
     hullHp: Math.round(b.hullHp * o.hullHp), sailHp: Math.round(b.sailHp * o.sailHp), crew: o.crew,
     speed: o.speed, turn: o.turn, skill: o.skill, range: o.range, cargo: o.cargo, minLevel: o.minLevel,
-    weight: o.weight, boarders: o.boarders, flagship: !!o.flagship, tactic: o.tactic ?? 'broadside', legend: !!o.legend,
+    weight: o.weight, boarders: o.boarders, flagship: !!o.flagship, tactic: o.tactic ?? 'broadside', legend: !!o.legend, fisher: !!o.fisher,
   });
 }
 export const classById = (id) => SHIP_CLASSES.find((c) => c.id === id) ?? null;
@@ -537,6 +547,27 @@ export const NAME_WORDS = Object.freeze({
   scourges: Object.freeze(['Scourge', 'Terror', 'Bane', 'Plague', 'Curse', 'Dread', 'Shame', 'Ruin', 'Doom', 'Nightmare', 'Butcher', 'Wolf', 'Reaper',
     'Widowmaker']),
 });
+/** FISH-BOATS: a fishing boat's own words - what she takes and what she takes it with. */
+export const FISHER_WORDS = Object.freeze({
+  catches: Object.freeze(['Herring', 'Mackerel', 'Cod', 'Haddock', 'Pilchard', 'Sprat', 'Eel', 'Crab', 'Lobster', 'Oyster', 'Mussel', 'Skate',
+    'Plaice', 'Sole', 'Bream', 'Salmon', 'Shrimp', 'Whelk', 'Cockle', 'Ling', 'Hake', 'Turbot', 'Mullet', 'Gurnard', 'Dogfish', 'Slaughterfish']),
+  gear: Object.freeze(['Net', 'Line', 'Creel', 'Hook', 'Float', 'Keel', 'Oar', 'Shoal', 'Catch', 'Haul', 'Morning', 'Evening', 'Tide', 'Trawl']),
+});
+/** FISH-BOATS: a fishing boat's name off `r`, her name's own stream - "The Lucky Herring", "The Herring Lass". */
+export function fisherNameOf(r) {
+  const W = NAME_WORDS, F = FISHER_WORDS;
+  const pick = (words) => words[Math.floor(r() * words.length) % words.length];
+  /** @type {[number, () => string][]} */
+  const forms = [
+    [5, () => `The ${pick(W.fair)} ${pick(F.catches)}`],
+    [4, () => `The ${pick(F.catches)} ${pick(W.callings)}`],
+    [3, () => `The ${pick(W.ports)} ${pick(F.catches)}`],
+    [3, () => `The ${pick(W.fair)} ${pick(F.gear)}`],
+  ];
+  let x = r() * 15;
+  for (const [weight, make] of forms) { if ((x -= weight) < 0) return make(); }
+  return forms[forms.length - 1][1]();
+}
 /**
  * A ship's name off `r` (her name's own stream): the forms of her trade, each a weight - a crown's ship of her crown's
  * (`crown`, CROWNS'), else Daggerfall's. Answers the name with its article ("The Black Kraken", "Dagon's Tooth": a
@@ -608,7 +639,8 @@ export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = 
   const rng = mulberry32((seed ^ 0x5eaf00d) >>> 0);
   rng();   // SHIP-NAMES: the draw the name took off this stream - her captain's draws are the ones they always were
   const crown = shipClass.faction === 'navy' ? crownIn ?? crownOf(0, 0, null, regionIndex) : null;
-  const name = shipNameOf(shipClass.faction, mulberry32(((seed >>> 0) ^ SHIP_NAME_SALT) >>> 0), crown);
+  const named = mulberry32(((seed >>> 0) ^ SHIP_NAME_SALT) >>> 0);
+  const name = shipClass.fisher ? fisherNameOf(named) : shipNameOf(shipClass.faction, named, crown);   // FISH-BOATS: a fishing boat's own forms
   const saved = getSeed();
   let captain;
   try {

@@ -37,6 +37,7 @@
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { hullBuild, MOD_CARRACK_BUILD } from './navalShips.js';
+import { stepFishing, fishingHeld } from './fishingBoats.js';   // FISH-BOATS: a fishing boat's day, an errand of her own
 
 /** How far past the town's rect a berth may lie (m), the shore scan's grid (m), the water kept between a berth's hull
  *  and the shore (m), a berth's spacing (her lengths), and the most berths a harbour holds. */
@@ -188,8 +189,9 @@ export function boxesMeet(a, b) {
  * `isWater(x, z, hull)`. Answers `{ berths: [{ pos: [x, z], yaw, normal: [x, z], approach: [x, z] }], mouth: [x, z],
  * hull }`, the berths nearest the town first - or null where the town has no shore to berth at or no way out to sea.
  * AUDIT GN2-GN1: sounded for `hull`'s footprint in `deep`'s water too - the deepest keel that berths (BERTH_HULLS).
+ * ALDBRUGH-QUAY: `square` reads `reach` off the rect along each axis (a square), where it is read round by default.
  */
-export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH }) {
+export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH, square = false }) {
   const { length, halfWidth } = berthSize(hull);   // SHIPS-2: the berths' template's
   const isWater = (x, z, h) => !!own(x, z, h) && (h === deep || !!own(x, z, deep));
   const water = (x, z) => isWater(x, z, hull);
@@ -213,7 +215,7 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
       const off = halfWidth + BERTH_MARGIN;
       const pos = [x + nx * off, z + nz * off];
       const dx = Math.max(rect.minX - pos[0], 0, pos[0] - rect.maxX), dz = Math.max(rect.minZ - pos[1], 0, pos[1] - rect.maxZ);
-      if (Math.hypot(dx, dz) > reach) continue;
+      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;   // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all
       cands.push({ pos, normal: [nx, nz], d: Math.hypot(pos[0] - cx, pos[1] - cz) });
     }
   }
@@ -455,7 +457,7 @@ export function stepErrand(ship, dt, ctx) {
   const here = flat(ship.pos);
   const plan = (goal, sails = 1) => ({ want: heading(here, goal), goal: [goal[0], 0, goal[1]], sails });
   // a stall: no way under sail for STALL_S - a detour abeam into open water, then her way planned anew past what held her
-  if (e.kind !== 'moored') {
+  if (e.kind !== 'moored' && !fishingHeld(e)) {   // FISH-BOATS: at anchor or working her ground, she is where she means to be
     // AUDIT SHIP-LIFE A1: whatever sail she carries - the last of a berthing's way and a captain boxed in by the land
     // both shorten it, and a hulk across either held her there for good
     e.stall = ship.speed < STALL_WAY ? (e.stall ?? 0) + dt : 0;
@@ -592,6 +594,8 @@ export function stepErrand(ship, dt, ctx) {
       if (dist2(here, e.path[e.i]) <= REACH_M) e.i = (e.i + 1) % e.path.length;
       return plan(e.path[e.i], dist2(here, at) > LURK_R * 0.5 ? 1 : LURK_SAILS);
     }
+    case 'anchor': case 'fish': case 'home':   // FISH-BOATS (fishingBoats.js): her anchorage, her ground and her way home
+      return stepFishing(ship, dt, ctx, { here, plan, way });
     default:
       ship.errand = null;
       return null;

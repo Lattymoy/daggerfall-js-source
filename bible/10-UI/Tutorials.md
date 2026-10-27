@@ -40,7 +40,7 @@ curse's pins (`test/systems/quest/cursesync.test.js`) read its `_no_` task. Port
   holds every page to the limits.
   CRAFT-HOWTO (FIELD BUGS 2026-10-18d; MoonGeneral, the Discord's #bug-reports: "Write a bit more detailed piece about
   crafting in the tutorial ... something that helps new players know where to look") added a **Crafting** page to
-  Professions & Survival, after Professions: crafting is done at a station, worked from the Stores page - {Professions}, then Holdings > Stores (AUDIT FB1018D L1-6: "Menu > Holdings" is the Enhanced menu's alone);
+  Professions & Survival, after Professions: crafting is done at a station, worked from the Crafting page - {Professions} pressed at the station lands on it (CRAFT-HALL, `06-Systems/Professions-Arc.md` 56; it was {Professions}, then Holdings > Stores - AUDIT FB1018D L1-6: "Menu > Holdings" is the Enhanced menu's alone);
   each station's shops as the interior host's station questions answer them (a forge at Weaponsmiths and Armorers, a
   loom at Clothing Stores, a workbench at Furniture Stores and joineries, a jeweller's bench at Pawn Shops and Gem
   Stores, a mason's bench at General Stores, Alchemy at Alchemists, Enchanting at Mages Guild halls), a home's own

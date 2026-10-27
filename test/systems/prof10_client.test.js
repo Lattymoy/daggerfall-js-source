@@ -79,7 +79,7 @@ function pageOf(draw0 = drawStoresPage) {
     draw, text: () => root.textContent, buttons: () => [...root.querySelectorAll('button')], root: () => root,
     button: (label) => [...root.querySelectorAll('button')].find((b) => b.textContent === label) ?? null,
     recipe: (prefix) => [...root.querySelectorAll('button')].find((b) => b.className.includes('prof-recipe') && b.textContent.startsWith(prefix)) ?? null,
-    family: (word) => [...root.querySelectorAll('button')].find((b) => b.className.includes('prof-family') && b.textContent === word) ?? null,
+    family: (word) => [...root.querySelectorAll('button')].find((b) => b.className.includes('prof-family') && b.textContent.replace(/ \u2605$/, '') === word) ?? null,   // PIN MOVED (CRAFT-HALL): a base with a first-time bonus to earn carries a star
     box: (words) => [...root.querySelectorAll('label')].find((l) => l.textContent.includes(words))?.querySelector('input') ?? null,
     done() { root?.remove?.(); },
   };
@@ -128,13 +128,13 @@ test('PROF10 DONE WHEN: a Gold Ruby Ring cut with a clean facet at a Gem Store\'
   const page = pageOf();
   try {
     assert.match(page.text(), /The Jeweler's Bench/);
-    assert.match(page.text(), /The jeweler's bench - 50 gold a piece\. Smithing 25 \(Apprentice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
+    assert.match(page.text(), /The Jeweler's BenchSmithingApprentice 25[^]*?The jeweler's bench - 50 gold a piece\./);   // PIN MOVED (CRAFT3): the bench says the craft's track;// PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
     page.family('Gold').onclick();
     page.recipe('Gold Ruby Ring').onclick();
     assert.match(page.text(), /Gold Ruby Ring - rank 25Gold 1 \/ 1 \(1 stored\)Ruby 1 \/ 1 \(1 stored\)/);
     assert.match(page.text(), /2,160 enchantment points \(\+20%\)\. The item maker spends them, beside a Masterwork's own enchantment\./);
     // PIN MOVED (CRAFT-FIRST-SHOWN, FIELD BUGS 2026-10-15f): the XP its own line under the odds, the first's 500 with it
-    assert.match(page.text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(25\) is above the recipe's \(25\)\. Stop every turn where the stone catches the light to raise the result one quality\.60 Smithing experience, and 500 more the first time you make this piece at this grade\./);   // PIN MOVED (CRAFT3): a jewel's XP is Smithing's; PLAIN-ODDS's odds; VOICE2's experience line
+    assert.match(page.text(), /Quality chances: Crude 20% \| Standard 60% \| Fine 20%\. They get better the further your rank \(25\) is above the recipe's \(25\)\. Stop every turn where the stone catches the light to raise the result one quality\.60 Smithing experience, plus a 500 first-time bonus\./);   // PIN MOVED (CRAFT-HALL): the real Worker says it is still to earn   // PIN MOVED (CRAFT3): a jewel's XP is Smithing's; PLAIN-ODDS's odds; VOICE2's experience line
     page.button('Craft').onclick();
     assert.equal(profActUnderWay(), true);
     assert.match(page.text(), /The facet \(Gold Ruby Ring\) - stop the turn where the stone catches the light \(Space\): 5 facets/);
@@ -222,7 +222,7 @@ test('PROF10 pages: The Jeweler\'s Bench - away, the word; at a Pawn Shop or a G
   try {
     assert.deepEqual([...PROF_STATIONS], ['forge', 'workbench', 'loom', 'mason', 'jeweller']);
     assert.equal(stationColdLine('jeweller'), JEWEL_COLD_LINE);
-    assert.match(JEWEL_COLD_LINE, /Jewelcrafting is done online, from your Stores page/);
+    assert.match(JEWEL_COLD_LINE, /Jewelcrafting is done online, from your Crafting page/);   // PIN MOVED (CRAFT-HALL): the stations are worked from the Crafting page
     assert.match(page.text(), /The Jeweler's BenchJewelcrafting is done at a jeweler's bench: a Pawn Shop's or a Gem Store's \(50 gold a piece\), or your own home's\./);
     assert.equal(page.recipe('Silver Ring'), null, 'no piece offered away from a bench');
     page.done();
@@ -295,7 +295,7 @@ test('PROF10 pages: The Jeweler\'s Bench - away, the word; at a Pawn Shop or a G
     page.done();
     stubPages({ bench: { kind: 'home', fee: 0 }, purse: 0 });
     page = pageOf();
-    assert.match(page.text(), /Your jeweler's bench\. Smithing 0 \(Novice\)\./);   // PIN MOVED (CRAFT3): the bench says the craft's track
+    assert.match(page.text(), /The Jeweler's BenchSmithingNovice 0[^]*?Your jeweler's bench\./);   // PIN MOVED (CRAFT3): the bench says the craft's track;// PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
     page.recipe('Silver Ring').onclick();
     assert.equal(page.button('Craft').disabled, false, 'a home\'s asks no fee');
   } finally { page.done(); setProfessionsPages(null); setPref('gentleActs', false); }
@@ -401,7 +401,8 @@ test('PROF10 pages: Jewelcrafting practised on the Professions page - its four c
         ['Masterwright', 'Smithing', true], ['Quartermaster', 'Smithing', true], ['Master Jeweler', 'Jewelcrafting', true], ['Lapidary', 'Jewelcrafting', true]],
       'the Gemcutter offered (a change, as the smith\'s two), the Goldsmith chosen, the four at 100 shut below it');
     // PIN MOVED (CRAFT3): the jeweller's ladder among the smith's, each line its discipline's, by the rank it opens at
-    const unlocks = [...page.root().querySelectorAll('.px-stat')].map((r) => [r.querySelector('.k').textContent, r.querySelector('.v').textContent, r.className.includes('prof-locked')]);
+    // PIN MOVED (CRAFT-HALL): the unlocks' rows, not the What raises rows beside them (prof-raise)
+    const unlocks = [...page.root().querySelectorAll('.px-stat')].filter((r) => !r.className.includes('prof-raise')).map((r) => [r.querySelector('.k').textContent, r.querySelector('.v').textContent, r.className.includes('prof-locked')]);
     assert.deepEqual(unlocks.filter(([k]) => k.startsWith('Jewelcrafting: ')), [
       ['Jewelcrafting: Silver pieces; the Cloth Amulet', 'rank 0', false], ['Jewelcrafting: Gold pieces', 'rank 25', false],
       ['Jewelcrafting: Platinum pieces', 'rank 55', false], ['Jewelcrafting: The Wand, in Ironwood or Ghostwood', 'rank 70', true],
@@ -485,7 +486,7 @@ test('PROF10 wiring: the jeweller\'s bench a Pawn Shop\'s or a Gem Store\'s (ope
   assert.match(w, /: profession === 'jewelcrafting'[^\n]*\n\s*\? \{ here: \(\) => modes\?\.jewellerHere\?\.\(\) \?\? null, a: 'a jeweller\\'s bench', who: 'jeweller', noun: 'jeweller\\'s bench', kept: JEWEL_KEPT_TEXT, xp: professionName\('jewelcrafting'\) \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word; PIN MOVED (CRAFT3): the XP word the craft's track's
   assert.match(w, /jeweller: \(\) => modes\?\.jewellerHere\?\.\(\) \?\? null,/);
   assert.match(w, /facetBand: \(\) => facetBand\(\{ willpower: liveStat\(playerEntity, 'willpower'\), luck: liveStat\(playerEntity, 'luck'\) \}\),/);
-  assert.match(w, /craft: async \(recipe, \{ clean, heartwood = false, dye = null, cracked = false \}\) => \{/);
+  assert.match(w, /craft: async \(recipe, \{ clean, heartwood = false, dye = null, cracked = false, \.\.\.more \}\) => \{/);   // PIN MOVED (MASTER-ART): the door hands the page's other asks (a Master's work's lines) on
   assert.match(w, /const r = await profBook\.craft\(recipe, \{ clean, heartwood, dye, cracked, fee: /);
   const b = src('src/net/profBook.js');
   assert.match(b, /\.\.\.\(cracked === true \? \{ cracked: true \} : \{\}\) \};/);

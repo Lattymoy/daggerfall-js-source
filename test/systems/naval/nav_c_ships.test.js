@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   HULL, HULL_BUILDS, SHIP_CLASSES, NAVAL_FACTIONS, FACTION_IDS, CROWNS, CROWN_LORE,
-  classById, classFor, crownOf, shipNames, classLine, batteriesOf,
+  classById, classFor, crownOf, shipNames, classLine, batteriesOf, LEGEND_LEVEL,
 } from '../../../src/systems/naval/navalShips.js';
 import {
   OARS_FLOOR, LOOKAHEAD_MIN, AVOID_SWINGS, BEAR_DEG, ENGAGE_RANGE, FLEE_RANGE, PIRATE_RUNS_AT, GRAPPLE_RANGE, GRAPPLE_STILL_S,
@@ -34,12 +34,14 @@ const player = (pos, o = {}) => ({ id: 'me', kind: 'player', pos, vel: [0, 0, 0]
 test('NAV-C the classes: nine in three trades, each a hull with guns scaled off its build, one pirate flagship, the galleys fighting over the stem; classFor draws among the classes a level has reached by weight, the draw\'s edges exact (mutants: the level gate off, a weight ignored, the edge off by one)', () => {
   // PIN MOVED (ETHER-LEGENDS, bible/03-World/Eltheric-Ocean.md): the nine the sea draws, and the Eltheric Ocean's six legends
   // after them - each her own class, never drawn (LEGEND_LEVEL), launched by name in her haunt
-  assert.equal(SHIP_CLASSES.filter((c) => !c.legend).length, 9);
-  assert.equal(SHIP_CLASSES.length, 15);
+  // PIN MOVED (FISH-BOATS, Naval-Combat.md): and a port's two fishing boats last - never drawn (FISHER_LEVEL), a port's fleet
+  assert.equal(SHIP_CLASSES.filter((c) => !c.legend && !c.fisher).length, 9);
+  assert.equal(SHIP_CLASSES.length, 17);
+  assert.deepEqual(SHIP_CLASSES.slice(15).map((c) => [c.id, c.faction, c.hull, c.minLevel, c.weight, c.fisher]), [['fishingSkiff', 'merchant', HULL.Rowboat, LEGEND_LEVEL, 0, true], ['fishingSmack', 'merchant', HULL.LargeBoat, LEGEND_LEVEL, 0, true]]);
   assert.deepEqual(FACTION_IDS, ['pirate', 'merchant', 'navy']);
   for (const c of SHIP_CLASSES) {
     assert.ok(FACTION_IDS.includes(c.faction), c.id);
-    assert.ok(batteriesOf(c.hull).length > 0, `${c.id}: a class fights - no rowboat sails as one`);
+    assert.ok(batteriesOf(c.hull).length > 0 || c.id === 'fishingSkiff', `${c.id}: a class fights - the Fishing Skiff the one rowboat, and she never does`);
     assert.equal(classById(c.id), c);
     assert.equal(c.tactic, c.hull === HULL.LargeGalley ? 'bow' : 'broadside', `${c.id}: a galley's great guns are over her stem`);
   }
