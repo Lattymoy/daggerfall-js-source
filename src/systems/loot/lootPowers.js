@@ -58,7 +58,7 @@ import { registerSpellPowerMod, registerSpellPierceMod } from '../spell/spellPow
 import { hasSpecialAbility, SPECIAL_ABILITY, restIgnoresNoRegen } from '../rest/rest.js';   // BAL9c: a career that cannot regenerate magicka, rest's own gate
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M, registerSpireRedoubt, spireRoomNow } from '../sigil/sigilSetPowers.js';   // EG-ZH: the Spire's recovery - the breach the player stands in, and the Redoubt's door
 import { registerRollerLevel } from './lootLevelGate.js';   // LOOT-GATE
-import { effectiveLevel } from '../mentorMode.js';   // LOOT-GATE: Mentor Mode's level when it is on
+import { lootGateLevel } from '../mentorMode.js';   // LOOT-GATE, MENTOR2: the real level - a mentor is no young character
 import { playerDoor, paidBack, oweFoe } from '../playerDoor.js';   // BAL5: a blow paid back never kills; OPEN-HAND: a follow-up owed to a relay's body
 import { showFollowUp } from '../../ui/hitNumbers.js';   // FIELD BUGS 2026-10-15e ROSE-SEEN: a follow-up's own number
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
@@ -637,7 +637,7 @@ registerPlayerKillListener(LOOT_POWERS, lootKill);
 registerAbsorptionChance(LOOT_POWERS, lootAbsorbChance);
 registerMagicRoundHook(LOOT_POWERS, lootRound);
 registerLegendaryFind(LOOT_POWERS, lootFind);
-registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? effectiveLevel(me) : null; });   // LOOT-GATE: the live player's level (Mentor Mode's when on) holds the top tiers back - none before a host publishes its door, so a bare roll (a test, a tool) rolls at its source alone
+registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? lootGateLevel(me) : null; });   // LOOT-GATE: the live player's level holds the top tiers back - none before a host publish; MENTOR2: the real one while mentoringes its door, so a bare roll (a test, a tool) rolls at its source alone
 registerEntityFold(LOOT_POWERS, wardrobeFold);   // LOOT15
 registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken);   // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach
 

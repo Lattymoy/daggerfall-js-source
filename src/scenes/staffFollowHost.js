@@ -12,7 +12,8 @@ import { createStaffMap, noteHidden } from '../net/staffMap.js';
 import { keptMaps } from '../net/staffPlaces.js';   // STAFF-EVENT: the game's maps, for the Events page's place picker
 import { createStaffFollowBar } from '../ui/staffFollowBar.js';   // STAFF-FOLLOW-UNLOCK: the follow's Unlock in the game   // STAFF-MAP: the Staff Panel's region map
 import { playerEntity } from '../characters/playerEntity.js';   // STAFF-UNSEEN: the player a hidden staff member's foes do not sense
-import { RIDE_EYE_HEIGHT, CAPSULE_HEIGHT } from '../player/motor.js';   // a peer's eye, as the peers' bodies stand it (world.js: a rider's the saddle's)
+import { RIDE_EYE_HEIGHT, CAPSULE_HEIGHT } from '../player/motor.js';
+import { createStaffPilotHost } from './staffPilotHost.js';   // STAFF-PILOT: Play as boss   // a peer's eye, as the peers' bodies stand it (world.js: a rider's the saddle's)
 
 /** FOLLOW-FRAME (2026-10-24, mob, following a player into a dungeon: "u end up in the bottom left corner" "of the
  *  daggerfall map"): A POSE IS COPIED ONLY INTO ITS OWN FRAME. A dungeon's pose is its own scene's metres, a cell's is
@@ -113,7 +114,7 @@ export function relinkGame(minter, main, links) {
  *  @param {{ main: () => any, prepare: (d: any) => Promise<any>, mode: () => string, pixel: () => { x: number, y: number }, toScene: (p: any) => number[] | null, relink?: () => void, win?: any, Session?: any, entity?: any, maps?: () => any }} deps */
 export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink = undefined, win = globalThis.window, Session = undefined, entity = playerEntity, maps = keptMaps }) {
   // STAFF-MAP: the region map's link, its answers to the panel, and Hide me's relink remaking it too
-  const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }) });   // STAFF-EVENT: the Events page's place picker
+  const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }), pilot: (m) => pilot.word(m) });   // STAFF-EVENT: the Events page's place picker; STAFF-PILOT: Play as boss
   const hook = createStaffHook({ main, askToken: door.askToken, ...(Session ? { Session } : {}) });
   const map = createStaffMap({ main, post: door.post, ...(Session ? { Session } : {}) });
   // FOLLOW-HIDDEN-REJOIN: whether the game is hidden now, read off each token its presence session mints (noteHidden wraps once)
@@ -129,13 +130,15 @@ export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink 
     void staffHide(on, win).catch(() => false).then((ok) => { asking = false; if (ok) hiddenNow = on; });
   };
   const bar = createStaffFollowBar({ doc: win?.document, onUnlock: () => hook.unlock(), onHide: press });
+  // STAFF-PILOT: Play as boss - a hidden game is shown first (its frames, the boss's among them, reach no one hidden)
+  const pilot = createStaffPilotHost({ post: door.post, win, entity, hidden: () => hiddenNow, showMe: () => press(false) });
   // STAFF-UNSEEN (mob: "staff in overworld and flat need to stay in it and not have mobs pull them out"; the card's pick
   // "Monsters ignore hidden staff"): hidden, the game's player is no one to a foe (scenes/shared.js sensesContext's
   // `playerUnseen`) - and no foe near keeps the Overworld down or brings it down (world.js, the travel view's `danger`)
-  const unseen = () => { if (entity) entity.staffHidden = hiddenNow && !!main(); };
+  const unseen = () => { if (entity) entity.staffHidden = (hiddenNow || pilot.piloting()) && !!main(); };   // STAFF-PILOT: and while I steer my event's boss
   const barFrame = () => { if (door.panel()) bar.show({ following: hook.locked(), hidden: hiddenNow, asking, seeing: host.seeing() }); else bar.hide(); };
   return {
-    hook, map, frame: () => { watch(); map.tick(); const out = host.frame(); barFrame(); unseen(); return out; }, eye: host.eye, locked: () => hook.locked(),
+    hook, map, frame: () => { watch(); map.tick(); const out = host.frame(); barFrame(); pilot.frame(); unseen(); return out; }, eye: (/** @type {any} */ player, /** @type {any} */ cam) => { pilot.eye(cam); return host.eye(player, cam); }, locked: () => hook.locked(),
     follow: (/** @type {unknown} */ sub, /** @type {any} */ hint = null) => door.panel() && hook.follow(sub, hint),   // FOLLOW-GROUND-HINT: a ground pick's room
     // STAFF-VIEW1 (mob: "np player esp in staff panel?"): what the staff view reads (scenes/staffViewHost.js) - whether a
     // panel spoke here, the followed room's players, the game's own session, its frame and mode, and the panel's tags

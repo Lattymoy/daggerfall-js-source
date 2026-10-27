@@ -544,7 +544,7 @@ test('AUDIT SCHOOLS L2 F3: A REGENERATE READS ITS SCHOOL EVERY ROUND, as a damag
   assert.equal(round(3), 14, 'back');
 }));
 
-test('AUDIT SCHOOLS L2 F5: MENTORING LEAVES A SIGNATURE SPELL IN ITS PATH\'S SCHOOLS - priced, trained and sold by the pair (pathHeld), the powers asleep (pathAwake); a Necromancer\'s Siphon Life never turns into the Destruction they never chose (mutants: the cast school through pathAwake; the shelf through pathAwake)', () => clean(() => {
+test('AUDIT SCHOOLS L2 F5: MENTORING LEAVES A SIGNATURE SPELL IN ITS PATH\'S SCHOOLS - priced, trained and sold by the pair (pathHeld), the powers awake at the mentor\'s share (pathAwake - MENTOR2: they had slept); a Necromancer\'s Siphon Life never turns into the Destruction they never chose (mutants: the cast school through pathAwake; the shelf through pathAwake)', () => clean(() => {
   const ne = pathMage('necromancer', 150);
   ne.level = 30; ne.skills[DES] = 15;
   const sp = signatureSpell('necromancer');
@@ -553,7 +553,7 @@ test('AUDIT SCHOOLS L2 F5: MENTORING LEAVES A SIGNATURE SPELL IN ITS PATH\'S SCH
   const awake = price(sp);
   assert.ok(awake < price(plain), 'awake: the pair prices it');
   assert.equal(refreshMentor(ne, [8, 8]), 'on', 'a party of level 8s: mentoring, automatic');
-  assert.equal(AP.pathAwake(ne), null, 'the powers sleep');
+  assert.equal(AP.pathAwake(ne)?.id, 'necromancer', 'MENTOR2: the powers act, at the mentor\'s share (arcanePowers.js)');
   assert.equal(AP.pathHeld(ne)?.id, 'necromancer', 'the path is held');
   assert.equal(castSchool(ne, sp, sp.effects[0]), RES, 'cast in the pair (a tie: the first)');
   assert.deepEqual(signatureOffers(ne).map((s) => s.path), ['necromancer'], 'still sold to them');
