@@ -2,7 +2,7 @@
   {
     "name": "AUDIT-RPT1026-M1-the-head-counts-before-the-second-pass",
     "file": "bible/01-Overview/bugs/Field-Bugs-2026-10-26r.md",
-    "old": "| FIXED | 103 |",
+    "old": "| FIXED | 102 |",
     "new": "| FIXED | 100 |",
     "tests": ["test/bible/audit_rpt1026_m.test.js"]
   },
@@ -16,7 +16,7 @@
   {
     "name": "AUDIT-RPT1026-M1-active-arcs-keeps-the-old-count",
     "file": "bible/01-Overview/Active-Arcs.md",
-    "old": "- 103 fixed and pinned (",
+    "old": "- 102 fixed and pinned (",
     "new": "- 100 fixed and pinned (",
     "tests": ["test/bible/audit_rpt1026_m.test.js"]
   },

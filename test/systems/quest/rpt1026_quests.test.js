@@ -472,26 +472,31 @@ test('ARENA-ORDER: a ladder win the service has not counted yet holds the next F
   const S = await standService();
   const who = await S.registered('Ladderfighter');
   let t = 1_000_000, reach = false;
+  // AUDIT RPT1026 (the integration): the service's answers are SQLite and crypto, so a count of turns waits too little on a
+  // loaded machine - settle waits until every call the arena made has answered, then lets its continuations run
+  let inflight = 0;
+  const track = (p) => { inflight++; return p.finally(() => { inflight--; }); };
+  const settle = async () => { do await turns(); while (inflight > 0); await turns(); };
   const said = [], entered = [], attempts = [], asked = [], paid = [], sent = [];
   const session = { status: 'open', arenaOk: true, room: 'world:1,1', sendArena: (w) => { sent.push(w); return true; } };
   const A = createArenaOnline({
     now: () => t, session: () => session, say: (l) => said.push(l), guest: () => false, makeHall: () => ({ status: 'open', join() {}, leave() {}, sendArena: () => true }),
     bouts: { ask: (o) => asked.push(o), relayWord: () => true, dismiss() {}, holds: () => false, relay: () => null },
     account: {
-      board: async () => asClient(await S.call('/v1/arena/board', {}, who.secret)),
+      board: () => track((async () => asClient(await S.call('/v1/arena/board', {}, who.secret)))()),
       // the service out of reach until `reach` (a claim the way it fails online: net/accountClient.js's `offline`)
-      claim: async (receipt) => (reach ? asClient(await S.call('/v1/arena/claim', { receipt }, who.secret)) : { ok: false, error: 'offline' }),
-      attempt: async (tier, bout, room) => { const r = asClient(await S.call('/v1/arena/attempt', { tier, bout, room }, who.secret)); attempts.push([tier, bout, r.ok ? 'ticket' : r.error]); return r; },
+      claim: (receipt) => track((async () => (reach ? asClient(await S.call('/v1/arena/claim', { receipt }, who.secret)) : { ok: false, error: 'offline' }))()),
+      attempt: (tier, bout, room) => track((async () => { const r = asClient(await S.call('/v1/arena/attempt', { tier, bout, room }, who.secret)); attempts.push([tier, bout, r.ok ? 'ticket' : r.error]); return r; })()),
       me: () => who.id,
     },
     enterFloor: async (k, o) => { entered.push(o); return true; }, level: () => 4, maxHealth: () => 60,
   });
   A.model();
-  await turns();
+  await settle();
   // the first bout: its floor, its ticket, and the relay's verdict - the purse held (relayVerdict's `owe`), the receipt
   // signed as the relay signs it (its attempt's ticket, its room) and handed down the bout's room
   assert.equal(A.fightLadder().ok, true);
-  await turns();
+  await settle();
   assert.deepEqual(attempts, [[0, 0, 'ticket']]);
   const o = entered[0], room = arenaBoutRoom(o);
   session.room = room;
@@ -500,7 +505,7 @@ test('ARENA-ORDER: a ladder win the service has not counted yet holds the next F
   assert.match(String(tk), /^[0-9a-f]{16}$/, 'the `in` carries the attempt\'s ticket');
   asked.at(-1).relay.owe(150, (g) => paid.push(g));
   A.word({ k: 'rc', r: await mintArenaReceipt({ a: 'l', j: o, s: who.id, q: 0, u: 0, r: 1, h: 'fall', z: tk }, S.gatePriv, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) }) }, room);
-  await turns();
+  await settle();
   assert.equal(A.claims.ladderKept(), true, 'the win kept, the service not reached');
   // out through the gates: the bout let go
   session.room = 'world:1,1';
@@ -509,18 +514,18 @@ test('ARENA-ORDER: a ladder win the service has not counted yet holds the next F
   // past the wait: never the floor for the step just fought
   t += CLIMB_WAIT_MS;
   const r = A.fightLadder();
-  await turns();
+  await settle();
   assert.deepEqual(r, { ok: false, text: ARENA_TEXT.online.stillRecording }, 'refused at the Herald, in the words askTicket says');
   assert.equal(entered.length, 1, 'no floor entered for a stale step');
   assert.deepEqual(attempts, [[0, 0, 'ticket']], 'and no attempt asked');
   // the service reached: the refusal's own flush carries the win, the purse is paid, and the next Fight is the next step
   reach = true;
   assert.equal(A.fightLadder().ok, false, 'the receipt still kept at the press');
-  await turns();
+  await settle();
   assert.equal(A.claims.ladderKept(), false, 'the refusal carried it');
   assert.deepEqual(paid, [150], 'the win kept, its purse paid');
   assert.equal(A.fightLadder().ok, true);
-  await turns();
+  await settle();
   assert.deepEqual(attempts, [[0, 0, 'ticket'], [0, 1, 'ticket']], 'the next Fight asks the climb the service moved - never `order`');
   assert.equal(entered.length, 2);
   assert.ok(!said.some((l) => /not your next ladder bout/i.test(l)), 'never "not your next ladder bout"');

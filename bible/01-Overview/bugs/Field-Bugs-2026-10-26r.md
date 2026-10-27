@@ -16,11 +16,11 @@ A row's verdict is its Done column's first words; an "Answer the player" row's i
 
 | Verdict | Reports | What it means |
 |---|---|---|
-| FIXED | 103 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
+| FIXED | 102 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
 | ALREADY FIXED | 67 | Closed by a record newer than the build it was sent from (the update a report carries is its build - REL8) |
 | AS DESIGNED | 47 | The game's rule or DFU's, named; what to tell the player is in its row |
 | NOT REPRODUCED | 26 | Traced end to end on the real producers, and nothing there makes it; what was run is in its row |
-| NEEDS DATA | 37 | The cause is in one player's own record or machine; what to read is in its row |
+| NEEDS DATA | 38 | The cause is in one player's own record or machine; what to read is in its row |
 | STAFF | 10 | A staff action or a moderation call, not code (the last section) |
 | WITHDRAWN | 3 | Taken back by its own reporter |
 
