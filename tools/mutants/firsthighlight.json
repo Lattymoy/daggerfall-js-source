@@ -1,0 +1,47 @@
+[
+  {
+    "name": "FIRST-HIGHLIGHT-material-class-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "${star ? ' prof-owed' : ''}",
+    "new": "${''}",
+    "tests": [
+      "test/ui/firsthighlight.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-HIGHLIGHT-pattern-class-dropped",
+    "file": "src/ui/professions/profPages.js",
+    "old": "${f === 'owed' ? ' prof-owed-pattern' : ''}",
+    "new": "${''}",
+    "tests": [
+      "test/ui/firsthighlight.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-HIGHLIGHT-pattern-lit-when-made",
+    "file": "src/ui/professions/profPages.js",
+    "old": "${f === 'owed' ? ' prof-owed-pattern' : ''}",
+    "new": "${f ? ' prof-owed-pattern' : ''}",
+    "tests": [
+      "test/ui/firsthighlight.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-HIGHLIGHT-animation-dropped",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "animation: prof-owed-dash 1.4s linear infinite;",
+    "new": "",
+    "tests": [
+      "test/ui/firsthighlight.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-HIGHLIGHT-reduced-motion-keeps-moving",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "@media (prefers-reduced-motion: reduce) { .prof-family.prof-owed, .prof-recipe.prof-owed-pattern { animation: none; } }",
+    "new": "@media (prefers-reduced-motion: reduce) { .prof-family.prof-owed, .prof-recipe.prof-owed-pattern { animation: prof-owed-dash 1.4s linear infinite; } }",
+    "tests": [
+      "test/ui/firsthighlight.test.js"
+    ]
+  }
+]

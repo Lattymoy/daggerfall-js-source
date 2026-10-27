@@ -1821,6 +1821,21 @@ button.prof-track:hover, button.prof-track:focus-visible { border-color: var(--b
 .prof-show { font: inherit; font-size: 12px; padding: 4px 9px; color: #b9ab93; background: rgba(10,8,6,0.55); border: 1px solid rgba(192,138,62,0.25); cursor: pointer; }
 .prof-show.on { color: #f3cf86; border-color: var(--brass, #c08a3e); }
 .prof-first { font-size: 11px; color: #f3cf86; }
+/* FIRST-HIGHLIGHT: a grade whose first-time bonus is owed wears a slow dashed blue edge. A material: bright. A pattern card: faint. */
+.prof-family.prof-owed, .prof-recipe.prof-owed-pattern {
+  --dash: rgba(120, 175, 245, 0.85); --dash-step: 12px;
+  border-color: transparent; background-origin: border-box;
+  background-image: linear-gradient(90deg, var(--dash) 50%, transparent 50%), linear-gradient(90deg, var(--dash) 50%, transparent 50%),
+    linear-gradient(0deg, var(--dash) 50%, transparent 50%), linear-gradient(0deg, var(--dash) 50%, transparent 50%);
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size: var(--dash-step) 1px, var(--dash-step) 1px, 1px var(--dash-step), 1px var(--dash-step);
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  animation: prof-owed-dash 1.4s linear infinite;
+}
+.prof-recipe.prof-owed-pattern { --dash: rgba(120, 175, 245, 0.45); animation-duration: 2.6s; }
+.prof-family.prof-owed.on, .prof-recipe.prof-owed-pattern.on { box-shadow: inset 0 0 0 1px var(--brass, #c08a3e); }
+@keyframes prof-owed-dash { to { background-position: 12px 0, -12px 100%, 0 12px, 100% -12px; } }
+@media (prefers-reduced-motion: reduce) { .prof-family.prof-owed, .prof-recipe.prof-owed-pattern { animation: none; } }
 .prof-first::before { content: '★ '; }
 .prof-first.made { color: #8f8574; }
 .prof-first.made::before { content: '✓ '; }
