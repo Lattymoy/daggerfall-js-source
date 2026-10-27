@@ -6209,7 +6209,8 @@ with HUB1's hubs alone both answer `market-no-road`.
 **Pins.** `test/world/worldWide/bayleftsea_market.test.js` (4: the province's hub, the hubs a request carries and their
 memo, the host, the freeware and the real Worker). PIN MOVED with the host move: `test/net/audit30_client.test.js`,
 `audit31_client.test.js`, `prof5_client.test.js`, `test/systems/fb1001_market_goods.test.js`,
-`test/systems/online/profsave.test.js` (they read the module beside world.js). Mutants: `tools/mutants/bayleftsea.json`
+`test/systems/online/profsave.test.js` (they read the module beside world.js), and `test/ui/menuorder.test.js` (the
+board hands its tab `marketHubs()`). Mutants: `tools/mutants/bayleftsea.json`
 BLS-hub-* (16), all dead; the move's re-aimed records (`audit31.json`, `fb1001_market.json`, `prof5.json`, `prof6.json`,
 `profsave.json`) all dead.
 

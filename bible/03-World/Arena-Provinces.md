@@ -2163,7 +2163,8 @@ capital stands there.
 seven capitals and four harbours). PIN MOVED: `test/tesa10_capitals.test.js` (the host's ask lifts capitalPinPort),
 `test/systems/auditrr2.test.js` (G22's port test by the byte), `test/audit_tesa.test.js` (A4-F2's kept slot and its port
 word; A4-F4's ship by the byte), `test/world/merchantyards1.test.js` (the yards' measure: a capital's landmark by its
-footprint). Mutants: `tools/mutants/bayleftsea.json` BLS-cap-*, BLS-landmark-*, BLS-rows-*,
+footprint), `test/systems/naval/auditcaptsea.test.js` and `test/ui/seat2b_peace_client.test.js` (the ship sale's port
+test by the byte). Mutants: `tools/mutants/bayleftsea.json` BLS-cap-*, BLS-landmark-*, BLS-rows-*,
 BLS-host-pin-*, BLS-host-kept-*, BLS-yards-*, BLS-ship-* (12), all dead; re-aimed by content, all dead: `tesa10.json`
 TESA10-loc-harbour, TESA10-host-stale-slot and TESA10-host-not-deleted, `nibensea.json` ROWS-harbour-unported (onto
 capitalSlicePort), `audittesa2p.json` P7-capital-port-unsaid, `audittesa.json` AUDIT-TESA-A4-F4-travel-options-list,

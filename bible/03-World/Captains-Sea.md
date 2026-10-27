@@ -511,7 +511,8 @@ Daggerfall's at Northpoint - each with its board. Before: none.
 
 **Pins.** `test/world/worldWide/bayleftsea_harbour.test.js` (4: the law, the tab, the freeware's 29, the host's order).
 PIN MOVED: `test/world/worldWide/ww3_sea.test.js` (the world host hands its ports `crownAt`), `test/tesa6_ports.test.js`
-(a port past the Bay's line carries its crown). Mutants: `tools/mutants/bayleftsea.json` BLS-port-* (4), all dead;
+(a port past the Bay's line carries its crown), `test/systems/naval/auditgalleon2_sea.test.js` (PF6 slices navalIsWater
+to the next port reader - the crowns' capitals stand above the world's ports now). Mutants: `tools/mutants/bayleftsea.json` BLS-port-* (4), all dead;
 `tesa6.json` TESA6-a-crown-past-the-bay turned with the law (one crown for every port), `audittesa2p.json`
 P7-port-region-unsaid re-aimed - both dead.
 
