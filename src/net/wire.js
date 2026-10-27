@@ -15,7 +15,7 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //   client -> room:  {t:'hello', id, secret, name, look, pose}   once, first
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
-//                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
+//                    {t:'chat', text, item?}             CHAT_HZ_MAX a second at most (CHAT1; CHAT-POST: optional item)
 //                    {t:'say', text}                    RED1: THE SERVER SPEAKING - only from a socket whose
 //                                                       TOKEN carried the dev glyph; fanned as {t:'red', text, at}
 //                    {t:'narrate', text}                TITLE-N: THE DUNGEON MASTER SPEAKING - only from a socket whose
@@ -58,7 +58,9 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                    {t:'quest', quest:{questName, displayName, data}}   a quest shared with my party, to the hub alone (QUEST1): QUEST_HZ_MAX a second
 //                    {t:'amap', k, r:[key...]}          PARTY-MAP: automap rows I revealed under Shared Cartography, to the hub alone - one every AMAP_SEND_MS
 //                    {t:'pose', id, p}                  {t:'pong'}
-//                    {t:'chat', id, name, text, at, sub?}   to everyone who hears it, the sender included
+//                    {t:'chat', id, name, text, at, sub?, item?}   to everyone who hears it, the sender included
+//                    CHAT-POST: `item` is one plain item record (shape only here; the client projects through
+//                    validLootItem). An older relay drops it and the line is words alone.
 //                    MOD1: `sub` is the sender's VERIFIED account id (the token's `s`), on a chat line and on a channel's
 //                    roster rows and joins - what a moderator's /mute names, since a name is not unique and an id is.
 //                    NOT `acct`: that word is the social hub's own account (SOC1), a different id with a different law
@@ -350,6 +352,38 @@ export const HALO_OF_MAX = 9;
 export const BUSY_TOKEN_UNREAD = 'busy, token unread';
 /** A chat line's bound (UTF-16 units) - CHAT1. */
 export const CHAT_MAX = 240;
+/** CHAT-POST: the widest item record on a chat line (JSON length), under MAX_FRAME_BYTES with the line's wrapper. */
+export const CHAT_ITEM_MAX = 6 * 1024;
+/** CHAT-POST: how many linked pieces one line may carry (typed message with several [Name] inserts). */
+export const CHAT_ITEMS_MAX = 4;
+/** CHAT-POST: the widest sum of those records' JSON, so the whole chat frame fits MAX_FRAME_BYTES. */
+export const CHAT_ITEMS_BYTES = 8 * 1024;
+/** CHAT-POST: one item on a chat line, by SHAPE - a plain object whose JSON fits CHAT_ITEM_MAX. The receiving client
+ *  projects through validLootItem before a card is drawn; the relay is pure and cannot import the game's item law. */
+export function validChatItem(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const proto = Object.getPrototypeOf(v);
+  if (proto !== Object.prototype && proto !== null) return null;
+  const keys = Object.keys(v);
+  if (!keys.length || keys.length > 48) return null;
+  for (const k of keys) if (!k || k.length > 128 || k === '__proto__') return null;
+  try { if (JSON.stringify(v).length > CHAT_ITEM_MAX) return null; } catch { return null; }
+  return v;
+}
+/** CHAT-POST: one to CHAT_ITEMS_MAX items, each validChatItem, their JSON under CHAT_ITEMS_BYTES - or null. */
+export function validChatItems(v) {
+  if (!Array.isArray(v) || v.length < 1 || v.length > CHAT_ITEMS_MAX) return null;
+  const out = [];
+  let bytes = 0;
+  for (const raw of v) {
+    const one = validChatItem(raw);
+    if (!one) return null;
+    try { bytes += JSON.stringify(one).length; } catch { return null; }
+    if (bytes > CHAT_ITEMS_BYTES) return null;
+    out.push(one);
+  }
+  return out;
+}
 /** The most chat lines a client may send a second; the bucket's burst is the same number. */
 export const CHAT_HZ_MAX = 2;
 /** SAFE6 (2026-10-17, bible/11-Multiplayer/Chat-Safety-Arc.md section 7): A NEW VOICE'S PACE. A guest (the token's `k`),
@@ -1615,7 +1649,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world269';   // world269: BOW-TOPS (2026-10-26; bible/05-Combat/Balance-Arc.md section 18 BAL-ARCHERY, BOW-TOPS; NOT YET DEPLOYED): the arena's and the siege's weapon tops take BAL-ARCHERY's bows - a Short Bow 17, a Long Bow 19 (net/arena/arenaLaw.js ARENA_WEAPON_MAX, net/siege/siegeRef.js SIEGE_WEAPON_MAX) - so neither referee caps a bow's top blow one short of the game's; nothing else in the law moved
+export const RELAY_VERSION = 'world270';   // world270: CHAT-POST (2026-10-27; bible/06-Systems/Online-Arc.md CHAT-POST; NOT YET DEPLOYED): a chat frame may carry linked item records (`items`, and a legacy `item`) beside the words - the relay fans them with the line; before it, world269: BOW-TOPS (2026-10-26; bible/05-Combat/Balance-Arc.md section 18 BAL-ARCHERY, BOW-TOPS): the arena's and the siege's weapon tops take BAL-ARCHERY's bows - a Short Bow 17, a Long Bow 19 (net/arena/arenaLaw.js ARENA_WEAPON_MAX, net/siege/siegeRef.js SIEGE_WEAPON_MAX)
 // world267: KETCH-WORDS (2026-10-26, the owner: "Please rework the texts of the raid and the books/quest. Remove the \"her\" mentions and make it not ai-like and non overexplanstory"; bible/11-Multiplayer/Sky-Ketch.md section 21; NOT YET DEPLOYED) - net/ketch/ketchHerald.js: the Sky-Ketch's three Discord cards reworded, plain, the ship no longer she.
 // world266: AUDIT KETCH II (2026-10-26, world265 on its branch, renumbered past GATE-COURTS' world265 at the merge; the owner: "Can you audit the airship raid. Its a buggy mess"; bible/01-Overview/audits/Audit-Ketch-II.md; NOT YET DEPLOYED) - the `st` word's wave to KT_WATCH_WAVES, a ship's own sweep said `sw` on its `dn`, KT_VOYAGE_N_MAX a receipt's bound, her crews' last minutes forty-five (ketchLaw.js KT_LAST_MS), a Warden's fight lost after two minutes empty (ketchWarden.js KW_LOST_MS), the crew counted by its kept places (ketchBrain.js aboard), six Sentry posts, a Sentry that shoots when chased, the bow's and the hold's floors, her fall's receipts told before her record goes, a raised member's dying pose forgotten.
 // world265: GATE-COURTS (2026-10-26, the owner: "We need to develop instances for oblivion gate. The player counts are becoming too large for one instance"; bible/11-Multiplayer/World-Bosses.md section 29; NOT YET DEPLOYED) - a gate's night holds up to GATE_COURTS_MAX courts of GATE_COURT_FIGHTERS, each its own fight (`gate:<day>.<k>` past the first, net/gate/gateLaw.js gateRoomKey); the first court keeps the night's book of seats (net/gate/gateCourts.js placeSeat; GATE_INTERNAL_SEAT, GATE_INTERNAL_COURT, and the hub's GATE_INTERNAL_PARTY) and answers `go` with another court; a court's kill is said to everyone online as `cf`, and the night's `fell` (the gate's collapse, `w` and `cs`) once every court is done; GATE_BRAIN_V and GATE_BRAIN_MIN 7 (a game from before is told to reload).
@@ -2504,9 +2538,20 @@ export function parseClient(text, { hasHello = false } = {}) {
     // EMOTE1: an ACTION - `/me waves` - is a line said as what the speaker DOES ("Bran waves"): `me: true`, and
     // nothing else is admitted in its place (a truthy junk value is refused, never read as an action)
     if (m.me !== undefined && m.me !== true) return { error: 'bad chat' };
+    // CHAT-POST: optional linked items beside the words - `items` (1..CHAT_ITEMS_MAX) or a single legacy `item`
+    let items = null;
+    if (m.items !== undefined) {
+      items = validChatItems(m.items);
+      if (!items) return { error: 'bad chat' };
+    } else if (m.item !== undefined) {
+      const one = validChatItem(m.item);
+      if (!one) return { error: 'bad chat' };
+      items = [one];
+    }
     const me = m.me === true ? { me: true } : {};
-    if (m.ch === undefined) return { t: 'chat', text, ...me };
-    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };
+    const linked = items ? { items, item: items[0] } : {};   // `item` kept so a one-link line still reads on an older client build
+    if (m.ch === undefined) return { t: 'chat', text, ...me, ...linked };
+    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me, ...linked } : { error: 'bad chat' };
   }
   if (m.t === 'holdem') {
     // CARDS5: A WORD TO THE ROOM'S CARD TABLE - sit in a chair, stand, act, or look (net/holdemTable.js, both ends). The

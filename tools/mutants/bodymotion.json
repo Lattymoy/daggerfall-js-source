@@ -254,8 +254,8 @@
   {
     "name": "BODY-MOTION-one-run-blade",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, -0.51, -0.67),",
-    "new": "    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, 0.51, -0.67),",
+    "old": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }),",
+    "new": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, -0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "BODY-MOTION-two-blow-haft-dropped",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "    if (haf) out.L = { ...haf, w: armW.L, pole: norm([-0.55, -0.2, -0.75]) };",
-    "new": "    if (haf && false) out.L = { ...haf, w: armW.L, pole: norm([-0.55, -0.2, -0.75]) };",
+    "old": "    if (haf) out.L = { ...haf, w: armW.L, pole: norm(add(scale(frames.right, -0.55), add(scale(frames.up, -0.75), scale(frames.fwd, 0.45)))) };",
+    "new": "    if (haf && false) out.L = { ...haf, w: armW.L, pole: norm(add(scale(frames.right, -0.55), add(scale(frames.up, -0.75), scale(frames.fwd, 0.45)))) };",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
