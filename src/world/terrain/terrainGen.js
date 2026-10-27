@@ -23,6 +23,7 @@
 
 import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
 import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
+import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
@@ -79,11 +80,13 @@ import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
  *   every neighbour this pixel's own climate.
- * @param {?{px: number, py: number, sea?: boolean, seaEdges?: { N?: boolean, E?: boolean, S?: boolean, W?: boolean }}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
+ * @param {?{px: number, py: number, sea?: boolean, seaEdges?: { N?: boolean, E?: boolean, S?: boolean, W?: boolean }, relief?: string}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
  *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level. AUDIT TESA II
  *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
  *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
- *   too, where its canal stands; `seaEdges` its sides shared with its sea slice.
+ *   too, where its canal stands; `seaEdges` its sides shared with its sea slice. SOLITUDE-RELIEF: `relief` a capital on a
+ *   relief of its own (world/terrain/capitalRelief.js CAPITAL_RELIEFS' key) - flattened to its streets' level, every vertex
+ *   then the relief's (capitalReliefGround).
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
@@ -126,8 +129,10 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   let avg = 0;
   if (hasLocation) {
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
-    const flat = flattenAt ? (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, beyond, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null)) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor
-    const natural = flattenAt?.sea ? [Float32Array.from(samples), classic ? Float32Array.from(classic) : null] : null;   // RUMARE-WATER: the land's own ground, the far shore's and the rim's
+    const flat = flattenAt ? (flattenAt.relief ? reliefFlat(flattenAt.relief) : (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, beyond, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null))) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor; SOLITUDE-RELIEF: one on a relief of its own at its streets' level
+    const own = () => [Float32Array.from(samples), classic ? Float32Array.from(classic) : null];
+    const natural = flattenAt?.sea && !flattenAt.relief ? own() : null;   // RUMARE-WATER: the land's own ground, the far shore's and the rim's
+    const raised = flattenAt?.relief ? own() : null;   // SOLITUDE-RELIEF: its edge band's
     avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
     // TOWN-SHAPES (bible/03-World/Town-Shapes.md): a town with an outline flattens to it, at its own land's height - the sea
     // past its margin read on DFU's own samples (the classic pass's, where the ground is shaped), as its tiles are
@@ -135,6 +140,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples);
     if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);
     if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);   // RUMARE-WATER: its water the sea's, its land over it
+    if (raised) for (const [S, n] of [[samples, raised[0]], [classic, raised[1]]]) if (S && n) capitalReliefGround(S, n, flattenAt.relief);   // SOLITUDE-RELIEF: every vertex its relief's
     if (ground) {
       const mask = townGroundMask(locationRect.shape, ground);
       unstampOffShape(tilemap, locationRect.shape, mask);   // its tiles over the sea the sea's

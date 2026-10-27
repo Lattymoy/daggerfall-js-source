@@ -109,9 +109,10 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   assert.deepEqual(b.slice(0, 2).map((x) => x.name), [CAPITAL_BLOCKS.lake, CAPITAL_BLOCKS.garden]);
   assert.equal(new Set(b.map((x) => x.name)).size, b.length);
   assert.deepEqual(b.map((x) => x.index), b.map((_, i) => CAPITAL_BLOCK_INDEX + i));
-  const ring = (c) => c.plan.flatMap((row, r) => row.map((x, cx) => x === 'L' && onCapitalRing(c, cx, r))).filter(Boolean).length;
+  // PIN MOVED (SOLITUDE-RELIEF): a capital on its own ground (`ground`) lays every lake cell its own, on its relief
+  const ring = (c) => c.plan.flatMap((row, r) => row.map((x, cx) => x === 'L' && (onCapitalRing(c, cx, r) || !!c.ground))).filter(Boolean).length;
   // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): the Imperial City's blocks a family on the door, none here
-  assert.equal(b.length, 2 + CAPITALS.filter((c) => !c.family).reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes');
+  assert.equal(b.length, 2 + CAPITALS.filter((c) => !c.family).reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes (SOLITUDE-RELIEF: all of a capital\'s on its own ground)');
   const tile = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].tile(dx, dz);
   const closed = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].closed(dx, dz);
   assert.deepEqual([tile('alinor', 0, ALINOR.quay.edge - 1), tile('alinor', 0, ALINOR.quay.edge + 1)], [3, 0]);

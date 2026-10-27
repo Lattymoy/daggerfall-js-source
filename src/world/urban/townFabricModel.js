@@ -39,6 +39,42 @@ export const FABRIC_PILE = Object.freeze({ l: 1.5, h: 0.95, d: 0.62 });
 
 const C = NAV_CELL;
 const UP = [0, 1, 0];
+/** SOLITUDE-RELIEF: a town block's side in the fabric's cells (world/city/cityNavigation.js: 64 to a block). */
+const BLOCK_CELLS = 64;
+
+/** SOLITUDE-RELIEF: rectangles of cells cut wherever they cross a block's edge (each piece then one block's). */
+function rectsByBlock(rects) {
+  const out = [];
+  for (const [x0, z0, x1, z1] of rects) {
+    for (let bx = Math.floor(x0 / BLOCK_CELLS); bx * BLOCK_CELLS < x1; bx++) {
+      for (let bz = Math.floor(z0 / BLOCK_CELLS); bz * BLOCK_CELLS < z1; bz++) {
+        out.push([Math.max(x0, bx * BLOCK_CELLS), Math.max(z0, bz * BLOCK_CELLS), Math.min(x1, (bx + 1) * BLOCK_CELLS), Math.min(z1, (bz + 1) * BLOCK_CELLS)]);
+      }
+    }
+  }
+  return out;
+}
+/** SOLITUDE-RELIEF: runs of edges cut wherever their inner cells cross into another block (each piece then one block's). */
+function runsByBlock(runs, W) {
+  const blockOf = (e) => { const x = e.inner % W, z = (e.inner - x) / W; return `${Math.floor(x / BLOCK_CELLS)},${Math.floor(z / BLOCK_CELLS)}`; };
+  const out = [];
+  for (const run of runs) {
+    let cur = [run[0]];
+    for (let k = 1; k < run.length; k++) {
+      if (blockOf(run[k]) === blockOf(cur[0])) cur.push(run[k]);
+      else { out.push(cur); cur = [run[k]]; }
+    }
+    out.push(cur);
+  }
+  return out;
+}
+/** A mesh's copy raised `dy` metres. */
+function raised(m, dy) {
+  if (!dy) return m;
+  const positions = Float32Array.from(m.positions);
+  for (let i = 1; i < positions.length; i += 3) positions[i] += dy;
+  return { ...m, positions };
+}
 
 /** The rectangles of cells a mask marks, greedily (a row's run, grown down while every cell of it holds), each [x0, z0,
  *  x1, z1] in cells (the far edges exclusive). */
@@ -122,8 +158,10 @@ export const FABRIC_RUNS_A_BREATH = 64;
  * THE TOWN'S FABRIC MODEL (the header).
  * @param {ReturnType<typeof import('./townFabric.js').fabricPlan>} plan
  * @param {string} style an URBAN_STYLES key
- * @param {{ cobbles?: boolean, classicModel?: (id: number) => any }} [o] `cobbles` whether its side streets are laid
- *   (a city's), `classicModel` Daggerfall's pieces (the model door's - null where it has none: the port's own alone)
+ * @param {{ cobbles?: boolean, classicModel?: (id: number) => any, lift?: ?((bx: number, by: number) => number) }} [o] `cobbles`
+ *   whether its side streets are laid (a city's), `classicModel` Daggerfall's pieces (the model door's - null where it has
+ *   none: the port's own alone), `lift` (SOLITUDE-RELIEF) the metres a block of its grid stands over the town's ground
+ *   (world/tamrielCapitals.js capitalBlockLift) - every piece cut at a block's edge and stood on its block
  */
 export function townFabricModel(plan, style, o = {}) {
   const steps = townFabricSteps(plan, style, o);
@@ -150,14 +188,22 @@ export async function townFabricModelSliced(plan, style, o, breathe) {
  * The model's steps: a yield after its streets, after every FABRIC_RUNS_A_BREATH runs of its yards' fences, after its
  * dead ends and woodpiles and after its own faces are mapped; its return the model.
  * @param {ReturnType<typeof import('./townFabric.js').fabricPlan>} plan @param {string} style
- * @param {{ cobbles?: boolean, classicModel?: (id: number) => any }} [o]
+ * @param {{ cobbles?: boolean, classicModel?: (id: number) => any, lift?: ?((bx: number, by: number) => number) }} [o]
  */
-export function* townFabricSteps(plan, style, { cobbles = false, classicModel = () => null } = {}) {
+export function* townFabricSteps(plan, style, { cobbles = false, classicModel = () => null, lift = null } = {}) {
   const st = URBAN_STYLES[style] ?? URBAN_STYLES.imperial, K = FABRIC_KIND, W = plan.W, H = plan.H, n = W * H;
   const mb = new MeshBuilder(), parts = [];
   const setts = styleArt(style, 'setts'), flags = styleArt(style, 'flags'), cobble = styleArt(style, 'cobbles'), wallTex = styleArt(style, 'wall');
+  // SOLITUDE-RELIEF: a cell's block's lift (0 for a town on one ground: every piece as it was), pieces cut at blocks' edges
+  const liftAt = (x, z) => (lift ? lift(Math.floor(x / BLOCK_CELLS), Math.floor(z / BLOCK_CELLS)) : 0);
+  const runLift = (run) => { const x = run[0].inner % W; return liftAt(x, (run[0].inner - x) / W); };
+  const runsOf = (edges) => (lift ? runsByBlock(edgeRuns({ W }, edges), W) : edgeRuns({ W }, edges));
   const flat = (tex, mask, y) => {
-    for (const [x0, z0, x1, z1] of cellRects(W, H, mask)) mb.quad(tex, [x0 * C, y, z0 * C], [x1 * C, y, z0 * C], [x1 * C, y, z1 * C], [x0 * C, y, z1 * C], UP);
+    const rects = cellRects(W, H, mask);
+    for (const [x0, z0, x1, z1] of lift ? rectsByBlock(rects) : rects) {
+      const yy = y + liftAt(x0, z0);
+      mb.quad(tex, [x0 * C, yy, z0 * C], [x1 * C, yy, z0 * C], [x1 * C, yy, z1 * C], [x0 * C, yy, z1 * C], UP);
+    }
   };
   const of = (k) => { const m = new Uint8Array(n); for (let i = 0; i < n; i++) if (plan.kind[i] === k) m[i] = 1; return m; };
   // the main streets: setts between the kerbs (none on the planks' styles - their forest floor between two boardwalks)
@@ -176,48 +222,48 @@ export function* townFabricSteps(plan, style, { cobbles = false, classicModel = 
       kerbs.push({ inner: i, outer: j, dir });
     });
   }
-  for (const run of edgeRuns({ W }, kerbs)) {
-    const s = runSegment(run, W), [ox, oz] = s.out;
-    mb.quad(flags, [s.a[0], FABRIC_ROAD_Y, s.a[1]], [s.b[0], FABRIC_ROAD_Y, s.b[1]], [s.b[0], FABRIC_PAVE_Y, s.b[1]], [s.a[0], FABRIC_PAVE_Y, s.a[1]], [ox, 0, oz]);
+  for (const run of runsOf(kerbs)) {
+    const s = runSegment(run, W), [ox, oz] = s.out, dy = runLift(run);
+    mb.quad(flags, [s.a[0], FABRIC_ROAD_Y + dy, s.a[1]], [s.b[0], FABRIC_ROAD_Y + dy, s.b[1]], [s.b[0], FABRIC_PAVE_Y + dy, s.b[1]], [s.a[0], FABRIC_PAVE_Y + dy, s.a[1]], [ox, 0, oz]);
   }
   yield 'streets';
   // the yards' fences or walls, and the pillars at their gates
   const fenceModel = st.yard === 'fence' ? classicModel(FABRIC_PIECES.fence) : null;
   let laid = 0;
-  for (const run of edgeRuns({ W }, plan.fences)) {
+  for (const run of runsOf(plan.fences)) {
     if (++laid % FABRIC_RUNS_A_BREATH === 0) yield 'fences';
-    const s = runSegment(run, W), dir = [(s.b[0] - s.a[0]) / s.length, (s.b[1] - s.a[1]) / s.length];
+    const s = runSegment(run, W), dir = [(s.b[0] - s.a[0]) / s.length, (s.b[1] - s.a[1]) / s.length], dy = runLift(run);
     if (fenceModel) {
       const pieces = Math.max(1, Math.round(s.length / 3.2)), len = s.length / pieces;
-      for (let k = 0; k < pieces; k++) parts.push(pieceAlong(fenceModel, [s.a[0] + dir[0] * len * (k + 0.5), s.a[1] + dir[1] * len * (k + 0.5)], dir, len));
+      for (let k = 0; k < pieces; k++) parts.push(raised(pieceAlong(fenceModel, [s.a[0] + dir[0] * len * (k + 0.5), s.a[1] + dir[1] * len * (k + 0.5)], dir, len), dy));
     } else {
-      wallAlong(mb, wallTex, s, FABRIC_WALL.h, FABRIC_WALL.t);
-      wallAlong(mb, flags, s, FABRIC_WALL.copingH, FABRIC_WALL.t + 2 * FABRIC_WALL.coping, -FABRIC_WALL.coping, FABRIC_WALL.h);
+      wallAlong(mb, wallTex, s, FABRIC_WALL.h, FABRIC_WALL.t, 0, dy);
+      wallAlong(mb, flags, s, FABRIC_WALL.copingH, FABRIC_WALL.t + 2 * FABRIC_WALL.coping, -FABRIC_WALL.coping, FABRIC_WALL.h + dy);
     }
   }
   if (!fenceModel) {
-    for (const run of edgeRuns({ W }, plan.gates)) {
-      const s = runSegment(run, W);
-      for (const [x, z] of [s.a, s.b]) mb.box(wallTex, [x, FABRIC_WALL.pillarH / 2, z], [FABRIC_WALL.pillar, FABRIC_WALL.pillarH, FABRIC_WALL.pillar]);
+    for (const run of runsOf(plan.gates)) {
+      const s = runSegment(run, W), dy = runLift(run);
+      for (const [x, z] of [s.a, s.b]) mb.box(wallTex, [x, FABRIC_WALL.pillarH / 2 + dy, z], [FABRIC_WALL.pillar, FABRIC_WALL.pillarH, FABRIC_WALL.pillar]);
     }
   }
   yield 'yards';
   // the dead ends' walls
-  for (const run of edgeRuns({ W }, plan.walls)) wallAlong(mb, wallTex, runSegment(run, W), FABRIC_DEAD_WALL.h, FABRIC_DEAD_WALL.t, -FABRIC_DEAD_WALL.t / 2);
+  for (const run of runsOf(plan.walls)) wallAlong(mb, wallTex, runSegment(run, W), FABRIC_DEAD_WALL.h, FABRIC_DEAD_WALL.t, -FABRIC_DEAD_WALL.t / 2, runLift(run));
   // the woodpiles: against their fence, log ends to the yard and along it, bark over the top; Daggerfall's crate beside
   const crate = classicModel(FABRIC_PIECES.crate);
   for (const p of plan.props) {
-    const x = p.cell % W, z = (p.cell - x) / W, out = [[1, 0], [-1, 0], [0, 1], [0, -1]][p.dir], along = [-out[1], out[0]];
+    const x = p.cell % W, z = (p.cell - x) / W, out = [[1, 0], [-1, 0], [0, 1], [0, -1]][p.dir], along = [-out[1], out[0]], dy = liftAt(x, z);
     const back = [(x + 0.5) * C + out[0] * (C / 2 - FABRIC_PILE.d / 2 - 0.2), (z + 0.5) * C + out[1] * (C / 2 - FABRIC_PILE.d / 2 - 0.2)];
     const L = FABRIC_PILE.l, D = FABRIC_PILE.d, Y = FABRIC_PILE.h;
-    const corner = (a, b, y) => [back[0] + along[0] * a + out[0] * b, y, back[1] + along[1] * a + out[1] * b];
+    const corner = (a, b, y) => [back[0] + along[0] * a + out[0] * b, y + dy, back[1] + along[1] * a + out[1] * b];
     const ends = urbanArt('logEnds');
     mb.quad(ends, corner(-L / 2, -D / 2, 0), corner(L / 2, -D / 2, 0), corner(L / 2, -D / 2, Y), corner(-L / 2, -D / 2, Y), [-out[0], 0, -out[1]]);
     mb.quad(ends, corner(L / 2, D / 2, 0), corner(-L / 2, D / 2, 0), corner(-L / 2, D / 2, Y), corner(L / 2, D / 2, Y), [out[0], 0, out[1]]);
     mb.quad(BARK, corner(-L / 2, -D / 2, Y), corner(L / 2, -D / 2, Y), corner(L / 2, D / 2, Y), corner(-L / 2, D / 2, Y), UP);
     mb.quad(BARK, corner(L / 2, -D / 2, 0), corner(L / 2, D / 2, 0), corner(L / 2, D / 2, Y), corner(L / 2, -D / 2, Y), [along[0], 0, along[1]]);
     mb.quad(BARK, corner(-L / 2, D / 2, 0), corner(-L / 2, -D / 2, 0), corner(-L / 2, -D / 2, Y), corner(-L / 2, D / 2, Y), [-along[0], 0, -along[1]]);
-    if (crate) parts.push(pieceAlong(crate, [back[0] + along[0] * (L / 2 + 0.5), back[1] + along[1] * (L / 2 + 0.5)], along, 0.58));
+    if (crate) parts.push(raised(pieceAlong(crate, [back[0] + along[0] * (L / 2 + 0.5), back[1] + along[1] * (L / 2 + 0.5)], along, 0.58), dy));
   }
   yield 'props';
   const own = mb.groups.size ? vanillaTexels(mb.build()) : null;

@@ -119,8 +119,8 @@
  {
   "name": "TF-the-wall-unwired",
   "file": "src/world/townWalls.js",
-  "old": "    shutTownWall(nav, townWallCellsOf(dfLocation));\n  };",
-  "new": "  };",
+  "old": "    shutTownWall(nav, townWallCellsOf(dfLocation));\n    if (relief) shutRelief(nav, relief);\n  };",
+  "new": "    if (relief) shutRelief(nav, relief);\n  };",
   "tests": [
    "test/world/townfollow.test.js"
   ]

@@ -21,7 +21,7 @@ import { imperialPrebuilt } from './imperialPrebuild.js';   // IC-GRAND's perf p
 import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
 import { buildImperialTower, buildImperialTowerLod, buildImperialPalaceLod, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
-import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
+import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks, buildSolitudeCliffs, buildSolitudeTerraces } from './capitalSolitude.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
 import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
 import { buildGrahtOak } from './capitalFalinesti.js';
@@ -410,6 +410,8 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.solitudeWall]: () => buildSolitudeWall(),
     [CAPITAL_MODELS.castleDour]: () => buildCastleDour(),
     [CAPITAL_MODELS.solitudeDocks]: () => buildSolitudeDocks(),
+    [CAPITAL_MODELS.solitudeCliffs]: () => buildSolitudeCliffs(),   // SOLITUDE-RELIEF
+    [CAPITAL_MODELS.solitudeTerraces]: () => buildSolitudeTerraces(),
     [CAPITAL_MODELS.mournholdPlaza]: () => buildMournholdPlaza(),
     [CAPITAL_MODELS.highFane]: () => buildHighFane(),
     [CAPITAL_MODELS.mournholdPalace]: () => buildMournholdPalace(),

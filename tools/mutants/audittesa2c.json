@@ -47,7 +47,7 @@
   {
     "name": "AUDIT-TESA-II-C1-ring-lake-shared",
     "file": "src/world/tamrielCapitals.js",
-    "old": "out.push(CAPITALS[k] && onCapitalRing(CAPITALS[k], x0 + x, r0 + r) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);",
+    "old": "out.push(CAPITALS[k] && (onCapitalRing(CAPITALS[k], x0 + x, r0 + r) || CAPITALS[k].ground) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);",
     "new": "out.push(CAPITAL_BLOCKS.lake);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js",
@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-TESA-II-C2-no-sea-flag",
     "file": "src/world/tamrielCapitals.js",
-    "old": "...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}) }) : null;",
-    "new": "}) : null;",
+    "old": "...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}), ...(cap.relief ? { relief: cap.relief } : {}) }) : null;",
+    "new": "...(cap.relief ? { relief: cap.relief } : {}) }) : null;",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -122,7 +122,7 @@
   {
     "name": "AUDIT-TESA-II-C2-one-pixel-shore-unflattened",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  const flattenAt = many || cap.shore ? Object.freeze(",
+    "old": "  const flattenAt = many || cap.shore || cap.relief ? Object.freeze(",
     "new": "  const flattenAt = many ? Object.freeze(",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"

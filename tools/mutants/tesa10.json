@@ -663,8 +663,8 @@
   {
     "name": "TESA10b-quay-flipped",
     "file": "src/world/tamrielCapitals.js",
-    "old": "const solitudeTile = (dx, dz) => (dz < SOLITUDE.docks.edge ? 0 : 3);",
-    "new": "const solitudeTile = (dx, dz) => (dz > SOLITUDE.docks.edge ? 0 : 3);",
+    "old": "const solitudeTile = (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.stone);",
+    "new": "const solitudeTile = (dx, dz) => solitudeGroundTile(dx, -dz, SOLITUDE_TILES.stone);",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -672,7 +672,7 @@
   {
     "name": "TESA10b-terrace-open",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  if (dx >= 0 && dx < L.rampTo && Math.abs(dz) < L.w / 2) return true;",
+    "old": "  if (dx >= 0 && dx < L.stairTo && Math.abs(dz) < L.w / 2) return true;",
     "new": "  if (dx >= 0 && dx < 0 && Math.abs(dz) < L.w / 2) return true;",
     "tests": [
       "test/tesa10_capitals.test.js"
@@ -735,17 +735,18 @@
   {
     "name": "TESA10b-arch-solid",
     "file": "src/world/capitalSolitude.js",
-    "old": "  const foot = (x) => { const o = archOpening(x, A); return o > 0 ? o : -4; };",
-    "new": "  const foot = () => -4;",
+    "old": "o = archOpening(x, A), I = o > 0 ? o : -UNDER, depth = D - I;",
+    "new": "o = archOpening(x, A), I = -UNDER, depth = D - I;",
     "tests": [
-      "test/tesa10_capitals.test.js"
+      "test/tesa10_capitals.test.js",
+      "test/world/solitude_relief.test.js"
     ]
   },
   {
     "name": "TESA10b-north-gate-walled",
     "file": "src/world/capitalSolitude.js",
-    "old": "  gatedRun(mb, NORD, ne, nw, W.thick, W.h, W.east - W.northGate, W.gate, W.gateH);",
-    "new": "  wallRun(mb, NORD, ne, nw, W.thick, W.h);",
+    "old": "  on(up, () => gatedRun(mb, NORD, ne, nw, W.thick, W.h, W.east - W.northGate, W.gate, W.gateH, deep.north));",
+    "new": "  on(up, () => wallRun(mb, NORD, ne, nw, W.thick, W.h, deep.north));",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -762,8 +763,8 @@
   {
     "name": "TESA10b-castle-gate-walled",
     "file": "src/world/capitalSolitude.js",
-    "old": "  gatedRun(mb, NORD, nw, sw, C.thick, C.h, h, C.gate, C.gateH);",
-    "new": "  wallRun(mb, NORD, nw, sw, C.thick, C.h);",
+    "old": "  gatedRun(mb, NORD, nw, sw, C.thick, up + C.h, h, C.gate, C.gateH);",
+    "new": "  wallRun(mb, NORD, nw, sw, C.thick, up + C.h);",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -771,8 +772,8 @@
   {
     "name": "TESA10b-palace-on-water",
     "file": "src/world/capitalSolitude.js",
-    "old": "  const mb = new MeshBuilder(), B = S.palace, y = S.stack.top;",
-    "new": "  const mb = new MeshBuilder(), B = S.palace, y = 0;",
+    "old": "const mb = new MeshBuilder(), B = S.palace, st = S.stack, y = levelY(st.top);",
+    "new": "const mb = new MeshBuilder(), B = S.palace, st = S.stack, y = 0;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

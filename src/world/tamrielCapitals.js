@@ -36,6 +36,8 @@
 // inside the city's west wall - the palace at the arch's tip, above the Karth, where the Avenues end; Castle Dour and the
 // Emperor's Tower just within the main gate in the city's south-east, the Temple of the Divines on its grounds
 // (TESA-LORE); the docks on the quay below the north wall - and round them its districts, Daggerfall's city blocks again.
+// SOLITUDE-RELIEF: on its rock (world/solitudeRelief.js) - two tiers over cliffs to the sea, the docks at the water far
+// below, its upper tier's blocks lifted to it (capitalBlockLift), every lake cell its own block on the relief (`ground`).
 //
 // A PLAN READS AS A MAP: its first row the north. Daggerfall's block rows run from the south (DFU lays a location's
 // block row y at Unity +z, north; the port keeps +z north), so the grid's row y is the plan's row (height - 1 - y)
@@ -60,6 +62,7 @@ import { WATER_BYTE } from './roadsProducer.js';
 import { IMPERIAL, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialSliceName, imperialDistrictOfCell, imperialCodeCell, imperialCell } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine; IC-GRAND over 625, its plan a slice at a time
 import { imperialSliceMarkers, imperialOwnName, imperialAnchorCarrier, imperialSliceCarrier, imperialViewName, imperialBlockOf, NEAR_RING, NEAR_SLACK } from './imperialBlocks.js';   // IC-GRAND: its blocks a family, near and far
 import { ARENA_BLOCK } from './arena/arenaCity.js';   // IC-GRAND: Daggerfall's arena in the Arena District
+import { solitudeGroundTile, solitudeBlockLift, inDocks, SOLITUDE_TILES, SOLITUDE_DOCKS, SOLITUDE_LEVELS } from './solitudeRelief.js';   // SOLITUDE-RELIEF: its ground
 import { TOWN_OUTLINE_BLOCK } from './townOutline.js';   // TS5: the open ground past the Imperial City's lake
 import { unwalledLocation } from './townShape.js';   // TS7: a Bay city's own grid
 import {
@@ -89,7 +92,7 @@ export const CAPITAL_BLOCKS = Object.freeze({
 /** The landmarks' model ids (world/customModels.js registerCustomModel) - far past any ARCH3D record. */
 export const CAPITAL_MODELS = Object.freeze({
   ...IMPERIAL_MODELS,   // TESA11: the Imperial City's, from 910200
-  solitudeArch: 910110, bluePalace: 910111, solitudeWall: 910112, castleDour: 910113, solitudeDocks: 910114,
+  solitudeArch: 910110, bluePalace: 910111, solitudeWall: 910112, castleDour: 910113, solitudeDocks: 910114, solitudeCliffs: 910115, solitudeTerraces: 910116,   // SOLITUDE-RELIEF: the rock, the terraces
   mournholdPlaza: 910120, highFane: 910121, mournholdPalace: 910122, greatBazaar: 910123, mournholdWall: 910124,
   alinorPalace: 910130, alinorHarbour: 910132, alinorWall: 910133, alinorBridges: 910134,   // TESA-LORE: the Crystal Tower's 910131 retired with it
   grahtOak: 910140,
@@ -136,40 +139,47 @@ const ARENA_OWN = Object.freeze({ name: ARENA_BLOCK, external: true });
 
 /** SOLITUDE'S MEASURES, metres from its anchor (the grid point (2, 3): the city's west edge, level with the arch) - x
  *  east, z south: the sea stack, the arch (its deck from the stack's top to the terrace's, its opening between its
- *  springs over the river), the terrace and its ramp, the Blue Palace on the stack, the walls, Castle Dour, the keep and
+ *  springs over the river), the terrace and its stair, the Blue Palace on the stack, the walls, Castle Dour, the keep and
  *  the Emperor's Tower, the quay and the docks. AUDIT-TESA A6-3: the walls and their towers clear of the city's blocks (they
  *  stood up to 2 m into a house's block on the north, south and west). TESA-LORE: Castle Dour "just within the city's main
  *  gate" (UESP's Solitude) - its square on the four blocks east of the south gate's lane, a gate to that lane (west) and
- *  one to the city (north), where it stood in the east, 200 m from any gate. */
+ *  one to the city (north), where it stood in the east, 200 m from any gate. SOLITUDE-RELIEF: its heights are metres over
+ *  the sea (world/solitudeRelief.js SOLITUDE_LEVELS: the streets at 46) - the stack's top the palace's floor, the arch's
+ *  deck from it to the terrace, its crown the opening's height over the water; the docks on the quay's shelf
+ *  (SOLITUDE_DOCKS), the warehouse against the causeway's wall, the piers out from the quay's edge. */
 export const SOLITUDE = Object.freeze({
-  stack: Object.freeze({ x: -160, z: 0, r: 35, top: 30 }),
-  arch: Object.freeze({ from: -128, to: 2, w: 28, topW: 30, topE: 14, springW: -112, springE: -8, crown: 14, parapet: 1.1 }),
-  landing: Object.freeze({ x0: -4, x1: 40, w: 34, top: 14, rampTo: 76, rampW: 12 }),
-  palace: Object.freeze({
-    hall: Object.freeze({ x: -166, z: 0, w: 40, d: 22, h: 14, roof: 10 }),
-    wing: Object.freeze({ x: -140, z: 0, w: 12, d: 34, h: 12, roof: 8 }),
-    tower: Object.freeze({ s: 11, h: 38, spire: 16 }),
-    turret: Object.freeze({ r: 4, h: 28, roof: 10 }),
+  stack: Object.freeze({ x: -160, z: 0, r: 44, foot: 58, top: SOLITUDE_LEVELS.stack }),
+  arch: Object.freeze({ from: -116, to: -4, w: 30, springW: -112, springE: -20, crown: 42, parapet: 1.5, gate: Object.freeze({ s: 8, h: 15, gateH: 7 }) }),
+  landing: Object.freeze({ x0: -6, x1: 46, w: 40, top: SOLITUDE_LEVELS.terrace, stairTo: 96, stairW: 14 }),
+  palace: Object.freeze({   // SOLITUDE-RELIEF: the hall, the wings round its court, the portico and the fountain before it
+    hall: Object.freeze({ x: -168, z: 0, w: 46, d: 26, h: 17, roof: 11 }),
+    wing: Object.freeze({ x: -162, dz: 23, w: 30, d: 13, h: 13, roof: 7 }),
+    tower: Object.freeze({ s: 13, h: 44, spire: 17 }),
+    turret: Object.freeze({ r: 5, h: 32, roof: 11 }),
+    portico: Object.freeze({ d: 6, w: 14, h: 10 }),
+    fountain: Object.freeze({ x: -131, z: 0, r: 3.4 }),
   }),
   // AUDIT TESA II C1: the east wall in from the rim (it stood 10 m from the pixel's edge, on the land's slope now); C10: the
   // main gate on its lane between the tavern's block and Castle Dour's west curtain (it opened onto the tavern, 11 m in)
   wall: Object.freeze({
     west: -7, north: -108, east: 530, south: 416, thick: 5, h: 14, tower: 10, towerH: 20, gate: 10, gateH: 9,
     northGate: 250, southGate: 318.4, archGap: 17,
+    cliffSink: Object.freeze({ north: 22, west: 14 }), gatehouse: Object.freeze({ out: 1.5, up: 6 }),   // SOLITUDE-RELIEF: its feet in the cliffs, the main gate's storey
     along: Object.freeze({ north: Object.freeze([100, 430]), south: Object.freeze([120, 470]), west: Object.freeze([150, 290]), east: Object.freeze([40, 170, 300]) }),
   }),
   castle: Object.freeze({ x: 4 * BLOCK_M, z: 3 * BLOCK_M, half: 80, thick: 4, h: 16, tower: 12, towerH: 26, gate: 10, gateH: 9 }),
   keep: Object.freeze({ dx: 26, dz: 24, w: 36, d: 44, h: 28, roof: 11 }),
   emperorsTower: Object.freeze({ dx: -30, dz: -30, s: 12, h: 56, roof: 14 }),
-  quay: Object.freeze({ x0: BLOCK_M, x1: 4 * BLOCK_M }),
-  docks: Object.freeze({ edge: -1.5 * BLOCK_M, piers: Object.freeze([140, 216]), pierTo: -230, pierW: 7, deck: 1.4, warehouse: Object.freeze({ x: 330, z: -130, w: 52, d: 18, h: 9, roof: 6 }) }),   // AUDIT TESA II C15: BLOCK_M's
+  quay: Object.freeze({ x0: SOLITUDE_DOCKS.x0, x1: SOLITUDE_DOCKS.x1 }),
+  docks: Object.freeze({ edge: SOLITUDE_DOCKS.edge, piers: Object.freeze([270, 340]), pierTo: -238, pierW: 7, deck: 1.4, warehouse: Object.freeze({ x: 190, z: -153, w: 80, d: 22, h: 11, roof: 7 }) }),
 });
-/** Solitude's closed cells: the terrace and its ramp, the north wall's band (its gate open), the warehouse, Castle
+/** Solitude's closed cells: the terrace and its stair, the north wall's band (its gate open), the warehouse, Castle
  *  Dour's curtain (its gates open - TESA-LORE: west and north), its towers, its keep and the Emperor's Tower, and the east
- *  wall's band. */
+ *  wall's band - and (SOLITUDE-RELIEF) a cliff's rock and the sea, no walker's ground. */
 function solitudeClosed(dx, dz) {
   const S = SOLITUDE, W = S.wall, L = S.landing, C = S.castle, half = W.thick / 2 + 0.5;
-  if (dx >= 0 && dx < L.rampTo && Math.abs(dz) < L.w / 2) return true;
+  if (solitudeGroundTile(dx, dz) !== SOLITUDE_TILES.stone) return true;
+  if (dx >= 0 && dx < L.stairTo && Math.abs(dz) < L.w / 2) return true;
   if (Math.abs(dz - W.north) < half && Math.abs(dx - W.northGate) > W.gate / 2) return true;
   if (Math.abs(dx - W.east) < half && dz > W.north && dz < W.south) return true;
   const H = S.docks.warehouse;
@@ -181,11 +191,18 @@ function solitudeClosed(dx, dz) {
   if (Math.abs(cx - K.dx) < K.w / 2 && Math.abs(cz - K.dz) < K.d / 2) return true;
   return Math.abs(cx - E.dx) < E.s / 2 && Math.abs(cz - E.dz) < E.s / 2;
 }
-/** Solitude's ground: the quay's stone to its edge and the sea past it, stone everywhere else its own blocks lie. */
-const solitudeTile = (dx, dz) => (dz < SOLITUDE.docks.edge ? 0 : 3);
+/** Solitude's ground (SOLITUDE-RELIEF, world/solitudeRelief.js solitudeGroundTile): the sea where its relief is the
+ *  water's, a cliff's rock where it climbs, the paving everywhere else its own blocks lie. */
+const solitudeTile = (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.stone);
 /** Solitude's own blocks: the terrace (two), the quay (three), Castle Dour's square (four). */
 export const SOLITUDE_BLOCKS = Object.freeze(Object.fromEntries(['P0', 'P1', 'Q0', 'Q1', 'Q2', 'D0', 'D1', 'D2', 'D3'].map((code) => [code,
   Object.freeze({ name: `TESASO${code}.RMB`, tile: solitudeTile, closed: solitudeClosed })])));
+/** SOLITUDE-RELIEF: its water and its gardens on its relief - a lake cell the sea where the relief is the water's and the
+ *  cliff's rock elsewhere, a garden's grass the rock where it climbs; neither a walker's ground but a garden's grass. */
+const SOLITUDE_GROUND = Object.freeze({
+  lake: Object.freeze({ tile: (dx, dz) => solitudeGroundTile(dx, dz, inDocks(dx, dz) ? SOLITUDE_TILES.stone : SOLITUDE_TILES.rock), closed: (dx, dz) => !inDocks(dx, dz) || solitudeGroundTile(dx, dz) !== SOLITUDE_TILES.stone }),
+  garden: Object.freeze({ tile: (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.grass), closed: (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.grass) !== SOLITUDE_TILES.grass }),
+});
 export const SOLITUDE_PLAN = Object.freeze([
   'L L L L L L L L',
   'L L L Q0 Q1 Q2 L L',
@@ -233,7 +250,8 @@ export const CAPITALS = Object.freeze([
   capital({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
     sea: Object.freeze(['N', 'W']),   // AUDIT TESA II C9: the plan's water - the Sea of Ghosts north, the Karth west
     gates: Object.freeze(['S']),   // TESA14: the main gate south (the north gate is the docks')
-    anchor: Object.freeze([2, 3]), markers: Object.freeze([[90, -60], [90, 60], [200, -130]]), blocks: SOLITUDE_BLOCKS, models: Object.freeze([CAPITAL_MODELS.solitudeArch, CAPITAL_MODELS.bluePalace, CAPITAL_MODELS.solitudeWall, CAPITAL_MODELS.castleDour, CAPITAL_MODELS.solitudeDocks]) }),
+    relief: 'solitude', ground: SOLITUDE_GROUND, lift: solitudeBlockLift,   // SOLITUDE-RELIEF: on its rock (world/terrain/capitalRelief.js), its water and gardens on it, its upper tier's blocks lifted
+    anchor: Object.freeze([2, 3]), markers: Object.freeze([[96, -60, SOLITUDE_LEVELS.upper - SOLITUDE_LEVELS.city], [96, 60, SOLITUDE_LEVELS.upper - SOLITUDE_LEVELS.city], [318.4, 398]]), blocks: SOLITUDE_BLOCKS, models: Object.freeze([CAPITAL_MODELS.solitudeArch, CAPITAL_MODELS.bluePalace, CAPITAL_MODELS.solitudeWall, CAPITAL_MODELS.castleDour, CAPITAL_MODELS.solitudeDocks, CAPITAL_MODELS.solitudeCliffs, CAPITAL_MODELS.solitudeTerraces]) }),   // SOLITUDE-RELIEF: its markers on its streets' own levels - the terrace stair's foot on the upper tier, inside the main gate
   capital({ key: 'mournhold', tag: 'MH', name: 'Mournhold', province: 'Morrowind', shore: false, plan: MOURNHOLD_PLAN, districts: MOURNHOLD_DISTRICTS,
     gates: Object.freeze(['N', 'E', 'S', 'W']),   // TESA14: a gate in each side of its wall
     anchor: Object.freeze([4, 4]), markers: Object.freeze([[0, 120], [-50, 205], [50, 205], [0, -110]]), blocks: MOURNHOLD_BLOCKS, models: Object.freeze([CAPITAL_MODELS.mournholdPlaza, CAPITAL_MODELS.highFane, CAPITAL_MODELS.mournholdPalace, CAPITAL_MODELS.greatBazaar, CAPITAL_MODELS.mournholdWall]) }),   // TESA-LORE: the markers off the palace at the middle - the plaza's ways and the courtyard
@@ -507,7 +525,7 @@ export function capitalBlockNames(plan, k, names, own = CAPITALS[k] ? (cell) => 
   for (let r = plan.length - 1; r >= 0; r--) {
     for (let x = 0; x < plan[r].length; x++) {
       const cell = plan[r][x], mine = ownOf(cell);
-      if (cell === 'L') out.push(CAPITALS[k] && onCapitalRing(CAPITALS[k], x0 + x, r0 + r) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);   // AUDIT TESA II C1: its rim's
+      if (cell === 'L') out.push(CAPITALS[k] && (onCapitalRing(CAPITALS[k], x0 + x, r0 + r) || CAPITALS[k].ground) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);   // AUDIT TESA II C1: its rim's; SOLITUDE-RELIEF: every one of a capital on its own ground
       else if (cell === 'O') out.push(TOWN_OUTLINE_BLOCK);   // TS5: open ground - the land's own (world/townOutline.js)
       else if (cell === 'G') out.push(CAPITALS[k] ? capitalGardenName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.garden);   // AUDIT-TESA A6-2: its own
       else if (mine) out.push(mine.name);
@@ -578,8 +596,9 @@ export function portBlockJson(name, { tile, tree = () => -1, closed = () => fals
 }
 /** AUDIT-TESA A6-1: a START MARKER at a block's metres (x, z) on the ground - the editor's flat (archive 199, record 10:
  *  world/locationEntrance.js locationStartMarkers) an arrival - a portal's, a load's, a respawn's - lands by; DFU's flat record law
- *  (world/rmbFlats.js collectBlockFlats: x * 0.025, z + 4096). */
-export const startMarkerAt = (x, z) => ({ Position: 0, XPos: Math.round(x / 0.025), YPos: 0, ZPos: Math.round(z / 0.025) - RMB_UNITS, TextureArchive: 199, TextureRecord: 10, FactionID: 0, Flags: 0 });
+ *  (world/rmbFlats.js collectBlockFlats: x * 0.025, -y, z + 4096). SOLITUDE-RELIEF: `h` metres over the location's own
+ *  ground where the street it marks stands higher (the arrival refuses a floor over 3 m above its marker - world.js TL2). */
+export const startMarkerAt = (x, z, h = 0) => ({ Position: 0, XPos: Math.round(x / 0.025), YPos: h ? -Math.round(h / 0.025) : 0, ZPos: Math.round(z / 0.025) - RMB_UNITS, TextureArchive: 199, TextureRecord: 10, FactionID: 0, Flags: 0 });
 /** A misc model at a block's metres (x, z) on the ground, by DFU's own record law (world/rmbLayout.js: x * 0.025,
  *  (-y + PROPS_OFFSET_Y) * 0.025, (z + 4096) * 0.025). */
 export const miscModelAt = (id, x, z) => ({ ModelId: String(id), ModelIdNum: id, ObjectType: 0, XPos: Math.round(x / 0.025), YPos: -4, ZPos: Math.round(z / 0.025) - RMB_UNITS, XRotation: 0, YRotation: 0, ZRotation: 0 });
@@ -691,7 +710,7 @@ export function capitalPortBlocks({ footprint = null } = {}) {
           models: cap.models.filter((id) => carriers.get(id) === cell).map((id) => miscModelAt(id, at[0], at[1])),
           // AUDIT-TESA A6-1: its start markers with them, the anchor's metres (z south) to the block's (z north) - AUDIT TESA
           // II C7: every slice's carrier its slice's
-          flats: slices.get(s) === cell ? capitalSliceMarkers(cap, s).map(([dx, dz]) => startMarkerAt(at[0] + dx, at[1] - dz)) : [],
+          flats: slices.get(s) === cell ? capitalSliceMarkers(cap, s).map(([dx, dz, h = 0]) => startMarkerAt(at[0] + dx, at[1] - dz, h)) : [],
         });
       });
     }));
@@ -700,10 +719,12 @@ export function capitalPortBlocks({ footprint = null } = {}) {
     if (cap.family) continue;
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
       if (cell !== 'G') return;
-      const name = capitalGardenName(cap, cx, r);
+      const name = capitalGardenName(cap, cx, r), G = cap.ground?.garden ?? null;
       lazy(name, CAPITAL_BLOCK_INDEX + out.length, () => {
         const under = standsOf(cap), on = (x, z) => !!under?.(...anchorMetres(cap, cx, r, x, z));
-        return portBlockJson(name, rimmed(cap, cx, r, { tile: () => 2, tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: on }));
+        // SOLITUDE-RELIEF: a garden on a capital's own ground its ground's - its grass the rock where it climbs, a tree only on its grass
+        const tile = G ? (x, z) => G.tile(...anchorMetres(cap, cx, r, x, z)) : () => 2, shut = G ? (x, z) => G.closed(...anchorMetres(cap, cx, r, x, z)) : () => false;
+        return portBlockJson(name, rimmed(cap, cx, r, { tile, tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) || tile(x, z) !== 2 ? -1 : gardenTree(x, z)), closed: (x, z) => on(x, z) || shut(x, z) }));
       });
     }));
   }
@@ -711,10 +732,13 @@ export function capitalPortBlocks({ footprint = null } = {}) {
   for (const cap of CAPITALS) {
     if (cap.family) continue;
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
-      if (cell !== 'L' || !onCapitalRing(cap, cx, r)) return;
+      const W = cap.ground?.lake ?? null;
+      if (cell !== 'L' || !(onCapitalRing(cap, cx, r) || W)) return;
       const name = capitalLakeName(cap, cx, r);
       lazy(name, CAPITAL_BLOCK_INDEX + out.length, () => {
         const under = standsOf(cap), on = (x, z) => !!under?.(...anchorMetres(cap, cx, r, x, z));
+        // SOLITUDE-RELIEF: a lake on a capital's own ground its ground's - the sea, and the cliffs that stand in it
+        if (W) return portBlockJson(name, rimmed(cap, cx, r, { tile: (x, z) => W.tile(...anchorMetres(cap, cx, r, x, z)), closed: (x, z) => on(x, z) || W.closed(...anchorMetres(cap, cx, r, x, z)) }));
         return portBlockJson(name, rimmed(cap, cx, r, { tile: () => 0, closed: on }));
       });
     }));
@@ -785,7 +809,8 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
   // RUMARE-WATER (world/terrain/capitalSea.js): at the sea a shore capital, and the Imperial City where its canal stands;
   // a seam with the capital's sea slice water on both its sides
   const sea = cap.shore || capitalCanalOpen(k), seaEdges = sea && D.sea ? seaEdgesOf(D, sx, sy) : null;
-  const flattenAt = many || cap.shore ? Object.freeze({ px: ctx.px - (sx - D.mx), py: ctx.py - (sy - D.my), ...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}) }) : null;
+  // SOLITUDE-RELIEF: a capital on a relief of its own its relief's (world/terrain/capitalRelief.js) - the terrain asks it first
+  const flattenAt = many || cap.shore || cap.relief ? Object.freeze({ px: ctx.px - (sx - D.mx), py: ctx.py - (sy - D.my), ...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}), ...(cap.relief ? { relief: cap.relief } : {}) }) : null;
   return {
     ...base,
     name: capitalSliceName(cap, s),
@@ -817,6 +842,19 @@ function seaEdgesOf(D, sx, sy) {
   const own = sea(sx, sy), side = (x, y) => x >= 0 && y >= 0 && x < D.w && y < D.h && (own || sea(x, y));
   const e = { N: side(sx, sy - 1), E: side(sx + 1, sy), S: side(sx, sy + 1), W: side(sx - 1, sy) };
   return e.N || e.E || e.S || e.W ? Object.freeze(e) : null;
+}
+
+/** SOLITUDE-RELIEF: the lift, metres over a capital's location's own flatten, a block of its grid (bx, by - by from the
+ *  south, the grid's own) stands at - a classic block's its plan cell's (the capital's `lift`); 0 for the capital's own
+ *  blocks, gardens and water (their ground and models are laid at the relief's own heights), for a capital with none and
+ *  for any other location. @param {any} dfLocation @param {number} bx @param {number} by */
+export function capitalBlockLift(dfLocation, bx, by) {
+  const cap = dfLocation?.capital ? CAPITALS[dfLocation.capital.k] : null;
+  if (!cap?.lift) return 0;
+  const D = capitalDims(cap), s = dfLocation.capital.s ?? capitalCentre(cap), ed = dfLocation.exterior?.exteriorData;
+  const c = (s % D.w) * 8 + bx, r = Math.floor(s / D.w) * 8 + (ed?.height ?? 8) - 1 - by, cell = planCell(cap, r, c);
+  if (cell == null || cell === 'L' || cell === 'G' || cell === 'O' || ownBlockOf(cap, cell)) return 0;
+  return cap.lift(c, r);
 }
 
 /** The district a cell of a capital's grid belongs to, or null - IC-GRAND: the Imperial City's by its law. */

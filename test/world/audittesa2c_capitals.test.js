@@ -35,6 +35,7 @@ import { generatePixelTerrain } from '../../src/world/terrain/terrainGen.js';
 import { SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT } from '../../src/world/terrain/terrainSampler.js';
 import { syntheticWoodsBytes } from '../landformWorld.mjs';
 import { CAPITAL_LAND, CAPITAL_SEA, CAPITAL_FREEBOARD } from '../../src/world/terrain/capitalSea.js';
+import { CAPITAL_RELIEFS } from '../../src/world/terrain/capitalRelief.js';
 
 const root = new URL('../../', import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), 'utf8');
@@ -58,7 +59,7 @@ test('AUDIT TESA II C1: a capital leaves Daggerfall\'s rim to the land - its out
     if (cap.family) continue;   // PIN MOVED (IC-GRAND): the Imperial City's blocks a family's, each its rim by the same law (test/world/icgrand_lod.test.js)
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
       const own = Object.hasOwn(cap.blocks, cell) ? cap.blocks[cell].name : null;
-      const name = own ?? (cell === 'G' ? capitalGardenName(cap, cx, r) : cell === 'L' && onCapitalRing(cap, cx, r) ? capitalLakeName(cap, cx, r) : null);
+      const name = own ?? (cell === 'G' ? capitalGardenName(cap, cx, r) : cell === 'L' && (onCapitalRing(cap, cx, r) || cap.ground) ? capitalLakeName(cap, cx, r) : null);   // PIN MOVED (SOLITUDE-RELIEF): every lake of a capital on its own ground its own
       if (!name) return;
       const b = blocks.find((x) => x.name === name), g = b.json.RmbBlock.FldHeader.GroundData, A = b.json.RmbBlock.FldHeader.AutoMapData;
       g.GroundTiles.forEach((t, i) => {
@@ -72,7 +73,7 @@ test('AUDIT TESA II C1: a capital leaves Daggerfall\'s rim to the land - its out
       }
     }));
     // the ring's lakes its own, the shared lake's none on it
-    cap.plan.forEach((row, r) => row.forEach((cell, cx) => { if (cell === 'L' && !onCapitalRing(cap, cx, r)) assert.ok(!blocks.some((b) => b.name === capitalLakeName(cap, cx, r)), 'an inner lake the shared one'); }));
+    cap.plan.forEach((row, r) => row.forEach((cell, cx) => { if (cell === 'L' && !onCapitalRing(cap, cx, r) && !cap.ground) assert.ok(!blocks.some((b) => b.name === capitalLakeName(cap, cx, r)), 'an inner lake the shared one'); }));
   }
   assert.ok(laid > 1000, `the rims laid: ${laid}`);
   // the location's rect: the rim's land blends from where the city's ground ends (terrainTiles.js' capital arm)
@@ -85,11 +86,14 @@ test('AUDIT TESA II C1: no landmark stands in the rim on a side of land - every 
   const bridge = new Set([CAPITAL_MODELS.talosBridge, ...Array.from({ length: IMPERIAL_SPAN ** 2 }, (_, s) => imperialPartId(CAPITAL_MODELS.talosBridge, s))]);   // TS5: carried in its parts
   for (const cap of CAPITALS) {
     const W = (cap.plan ? cap.plan[0].length : cap.cells) * BLOCK_M, H = (cap.plan ? cap.plan.length : cap.cells) * BLOCK_M, water = new Set(cap.sea ?? []);   // PIN MOVED (IC-GRAND): the Imperial City's plan a law
+    // PIN MOVED (SOLITUDE-RELIEF): a capital on a relief of its own stands its whole pixel on it, its rim too - only the
+    // relief's edge band is the land's (world/terrain/capitalRelief.js), and its models stand clear of that
+    const relief = cap.relief ? CAPITAL_RELIEFS[cap.relief] : null, rim = relief ? (relief.band * relief.side) / 128 : CAPITAL_RIM_M;
     for (const id of cap.models) {
       const p = customModelFor(id).positions;
       for (let i = 0; i < p.length; i += 3) {
         const [X, Z] = planAt(cap, p[i], -p[i + 2]);
-        for (const [side, d] of [['W', X], ['E', W - X], ['N', Z], ['S', H - Z]]) if (!water.has(side)) assert.ok(d >= CAPITAL_RIM_M - 1e-3, `${cap.key} model ${id}: ${d.toFixed(2)} m from its ${side} edge`);
+        for (const [side, d] of [['W', X], ['E', W - X], ['N', Z], ['S', H - Z]]) if (!water.has(side)) assert.ok(d >= rim - 1e-3, `${cap.key} model ${id}: ${d.toFixed(2)} m from its ${side} edge`);
         if (bridge.has(id)) bridgeEnd = Math.min(bridgeEnd, X);
       }
     }
@@ -127,7 +131,8 @@ test('AUDIT TESA II C2: a shore capital stands at the sea\'s floor - every slice
       const f = loc.capital.flattenAt;
       // PIN MOVED (RUMARE-WATER, world/terrain/capitalSea.js): and the seam with its sea slice water on both its sides
       const seaEdges = D.sea ? (s === 0 ? { N: false, E: false, S: true, W: false } : { N: true, E: false, S: false, W: false }) : null;
-      if (cap.shore) assert.deepEqual(f, { px: 100 + D.mx, py: 100 + D.my, sea: true, ...(seaEdges ? { seaEdges } : {}) }, `${cap.key} slice ${s}`);
+      // PIN MOVED (SOLITUDE-RELIEF): and a capital on a relief of its own names it - its ground the relief's (world/terrain/capitalRelief.js)
+      if (cap.shore) assert.deepEqual(f, { px: 100 + D.mx, py: 100 + D.my, sea: true, ...(seaEdges ? { seaEdges } : {}), ...(cap.relief ? { relief: cap.relief } : {}) }, `${cap.key} slice ${s}`);
       else assert.equal(f?.sea, undefined, `${cap.key}: inland, its own ground`);
     }
   });
@@ -465,7 +470,10 @@ test('AUDIT TESA II C1/C2 with ARENA2: every capital meets the land round it lev
     assert.ok(outer < 0.01 && inner < 0.01, `${cap.key}: its seams ${outer.toFixed(3)} m to its neighbours, ${inner.toFixed(3)} m inside`);
     const flat = gen(pix[0].x, pix[0].y).avg * M;
     // PIN MOVED (RUMARE-WATER): its land a freeboard over the sea's floor - and the Imperial City's, its canal standing
-    if (cap.shore || cap.harbour) assert.ok(Math.abs(flat - (SCALED_OCEAN_ELEVATION + CAPITAL_FREEBOARD) * STREAMING_TERRAIN_SCALE) < 0.01, `${cap.key} at ${flat.toFixed(2)} m, a freeboard over the sea's floor`);
+    // PIN MOVED (SOLITUDE-RELIEF): a capital on a relief of its own at its streets' level over the sea (its water the sea's,
+    // test/world/solitude_relief.test.js)
+    if (cap.relief) assert.ok(Math.abs(flat - SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE - CAPITAL_RELIEFS[cap.relief].flat) < 0.01, `${cap.key} at ${flat.toFixed(2)} m, its streets' level`);
+    else if (cap.shore || cap.harbour) assert.ok(Math.abs(flat - (SCALED_OCEAN_ELEVATION + CAPITAL_FREEBOARD) * STREAMING_TERRAIN_SCALE) < 0.01, `${cap.key} at ${flat.toFixed(2)} m, a freeboard over the sea's floor`);
     // a water side: its shared edge the sea's height along most of it, its rim's tiles water out to it
     for (const side of cap.sea ?? []) {
       let sea = 0, all = 0, wet = 0, lanes = 0;

@@ -90,13 +90,13 @@ export function merlons(mb, tex, p, q, thick, h, w = 1.6, pitch = 3.6, mh = 1.6)
   }
 }
 /** A wall's run with a gap: from p to q, broken `gate` wide about the point `at` metres along it, a lintel over the gap
- *  from `gateH` to the wall's top. */
-export function gatedRun(mb, tex, p, q, thick, h, at, gate, gateH) {
+ *  from `gateH` to the wall's top; its foot sunk `sink` (SOLITUDE-RELIEF: a wall on a cliff's edge sunk into the rock). */
+export function gatedRun(mb, tex, p, q, thick, h, at, gate, gateH, sink = 3) {
   const len = Math.hypot(q[0] - p[0], q[1] - p[1]), ux = (q[0] - p[0]) / len, uz = (q[1] - p[1]) / len;
   const P = (s) => [p[0] + ux * s, p[1] + uz * s];
   const a = P(at - gate / 2), b = P(at + gate / 2);
-  wallRun(mb, tex, p, a, thick, h); merlons(mb, tex, p, a, thick, h);
-  wallRun(mb, tex, b, q, thick, h); merlons(mb, tex, b, q, thick, h);
+  wallRun(mb, tex, p, a, thick, h, sink); merlons(mb, tex, p, a, thick, h);
+  wallRun(mb, tex, b, q, thick, h, sink); merlons(mb, tex, b, q, thick, h);
   translated(mb, 0, gateH, 0, () => wallRun(mb, tex, a, b, thick, h - gateH, 0));
 }
 /** A round tower at (x, z): its drum, its crenel band, its conical roof. */
@@ -144,10 +144,10 @@ export function crenels(mb, tex, cx, cz, w, d, y, { pitch = 2.6, mw = 1.3, mh = 
     }
   }
 }
-/** A square tower at (x, z), side `s`: its shaft from below the ground to h, its crenels, and a pyramid roof (none at
- *  roofH 0). */
-export function squareTower(mb, x, z, s, h, { roofH = s * 0.9, wall = STONE, roof = ROOF } = {}) {
-  hall(mb, wall, x, z, s, s, -3, h);
+/** A square tower at (x, z), side `s`: its shaft from below the ground (`foot`) to h, its crenels, and a pyramid roof
+ *  (none at roofH 0). */
+export function squareTower(mb, x, z, s, h, { roofH = s * 0.9, wall = STONE, roof = ROOF, foot = -3 } = {}) {
+  hall(mb, wall, x, z, s, s, foot, h);
   crenels(mb, wall, x, z, s, s, h);
   if (roofH > 0) pyramid(mb, roof, x, z, s + 0.8, s + 0.8, h + 1.4, roofH);
 }

@@ -698,6 +698,9 @@ them. So a capital at the sea is now laid in two heights:
   far shore rising to the land's own (`rumareLandHeight`);
 - a vertex on the span's outer edge (a side with a rim) is the land's own height, water or land, as the pixel past it
   stands, so no seam opens.
+- Moved by SOLITUDE-RELIEF (2026-10-27, `03-World/Arena-Provinces.md`): Solitude no longer stands here - its ground is a
+  relief of its own (`world/terrain/capitalRelief.js`), its streets 46 m over the sea and its docks at 2.4 m. Alinor,
+  Torval and the Imperial City keep the two heights above.
 
 The Imperial City is flattened to the sea (`flattenAt.sea`) only where its canal stands (`capitalCanalOpen`). Alinor,
 Torval and Solitude take the same law as shore capitals: their water is unchanged, and their streets are a metre over it.
