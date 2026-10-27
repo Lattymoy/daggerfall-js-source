@@ -33,6 +33,7 @@
 // blocks in, the plan out, the same on every client.
 // ═══════════════════════════════════════════════════════════════════
 import { NAV_CELL, WATER_RECORDS_ENHANCED } from '../city/cityNavigation.js';
+import { ROAD_RECORDS } from '../road/roadEdge.js';   // ROAD-LOOK: Daggerfall's road tiles, their one home
 
 /** A block's cells a side - its town map's (64 x 64, NAV_CELL each). */
 export const FABRIC_CELLS = 64;
@@ -63,8 +64,9 @@ export const FABRIC_KIND = Object.freeze({ off: 0, built: 1, main: 2, pave: 3, s
  *  Daggerfall's wall's, 117 and 250-251 its specials': props). */
 const isHouseByte = (a) => a >= 1 && a <= 23;
 const WATER = new Set(WATER_RECORDS_ENHANCED);
-/** Daggerfall's road tiles - its town's own ways, a tile wide (CityNavigation.GetTileWeight's "Roads are great!"). */
-export const ROAD_RECORDS = Object.freeze([46, 47, 55]);
+/** Daggerfall's road tiles - its town's own ways, a tile wide (CityNavigation.GetTileWeight's "Roads are great!"); their one
+ *  home is world/road/roadEdge.js (ROAD-LOOK), read here. */
+export { ROAD_RECORDS };
 const ROADS = new Set(ROAD_RECORDS);
 
 /**

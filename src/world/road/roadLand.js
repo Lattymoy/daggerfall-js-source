@@ -77,13 +77,15 @@ export function landGrain(x, y) {
  * box (integer sums; the edge's box clipped), the shore (land with water among its eight neighbours) and the fords
  * (water on a run of no more than FORD_SPAN pixels, along a row, a column or a diagonal, with land a road walks at both
  * ends).
- * `grainOf(u, v)` the land's grain at a cell (landGrain at the pixel the cell stands for), none without it.
+ * `grainOf(u, v)` the land's grain at a cell (landGrain at the pixel the cell stands for), none without it. ROAD-LOOK:
+ * `still` 1 where the water is a lake's - water as any (its shore the shore's), never a ford: no road wades a lake.
  * @param {Uint8Array} heights @param {Uint8Array} water @param {?Uint8Array} keep @param {number} W @param {number} H
  * @param {Partial<Record<keyof typeof VOYAGER_DIALS, number>>} [dials] @param {?((u: number, v: number) => number)} [grainOf]
+ * @param {?Uint8Array} [still]
  * @returns {{ height: Float32Array, shore: Uint8Array, ford: Uint8Array, grain: ?Float32Array, river: ?Float32Array, d: Record<keyof typeof VOYAGER_DIALS, number>, step: typeof landStep }}
  *   the builder's `terrain` whole: the land, its dials (VOYAGER_DIALS with `d`'s own) and its step
  */
-export function landForRoutes(heights, water, keep, W, H, dials = VOYAGER_DIALS, grainOf = null) {
+export function landForRoutes(heights, water, keep, W, H, dials = VOYAGER_DIALS, grainOf = null, still = null) {
   const d = { ...VOYAGER_DIALS, ...dials };
   const r = d.smoothR;
   // a summed-area table: each box mean exact in integers
@@ -110,7 +112,7 @@ export function landForRoutes(heights, water, keep, W, H, dials = VOYAGER_DIALS,
         for (const [, dx, dy] of DIR_DELTA) if (wet(x + dx, y + dy)) { shore[i] = 1; break; }
         continue;
       }
-      if (!wet(x, y)) continue;
+      if (!wet(x, y) || (still && still[i])) continue;   // ROAD-LOOK: a lake's water is never a ford's
       // a ford: along some axis, the water through this pixel runs no more than FORD_SPAN with land at both ends
       for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
         let a = 1, b = 1;

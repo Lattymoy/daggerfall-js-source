@@ -289,9 +289,10 @@
   },
   {
     "name": "VOYAGER1-the-version-unmoved",
+    "reaimed": "ROAD-LOOK: re-aimed by content - the version 8, the carved lakes refused (bible/03-World/Roads.md ROAD-LOOK)",
     "file": "src/world/tamrielRoads.js",
-    "old": "export const TAMRIEL_ROADS_VERSION = 7;",
-    "new": "export const TAMRIEL_ROADS_VERSION = 6;",
+    "old": "export const TAMRIEL_ROADS_VERSION = 8;",
+    "new": "export const TAMRIEL_ROADS_VERSION = 7;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]

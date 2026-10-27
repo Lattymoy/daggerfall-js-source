@@ -36,6 +36,7 @@ import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD
 import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
 import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
+import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -150,6 +151,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // the grass placer can keep off a path it cannot name by record.
   let paths = null;
   let arenaPainted = false;   // TESA4: whether Arena's roads reached this pixel's paint - the host's sweep asks
+  let bridges = null;   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js), past the Bay with the rivers carved
   if (roads) {
     paths = new Uint8Array(tilemap.length);
     // ROAD-BEYOND: the network is the Bay's 1000 x 500 - a pixel past its east or west edge (TAMRIEL2) carries none of
@@ -175,6 +177,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
       paths,   // GRASS-PATH1
       curve: arena ? { px, py, byteAt: arenaRoadByte } : null,   // VOYAGER2: past the Bay, the roads drawn as curves (world/road/roadCurves.js)
     });
+    // ROAD-LOOK: under a bridge the river runs - its deck's tiles over the channel laid back before the smoothing and the
+    // waters' paint, which keeps a ford's (world/road/roadBridges.js); the pixel's own bridges to the host, which stands them
+    if (arena && landforms) { unpaveBridges(tilemap, paths, px, py, arenaRoadByte); bridges = bridgesOf(px, py, arenaRoadByte); }
     // ROADS 10: the ground under the road is smoothed - after the paint,
     // before the grid is built from the samples. The network carries the
     // switch (`smooth`, default on, the design's SmoothRoads) so the
@@ -250,6 +255,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
     beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line
     townGround: locationRect?.mask ?? null,   // TS6: the town's ground (townGroundMask) - its walkers' (world/townShape.js shutOffGround)
+    bridges,   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js bridgesOf) - null on the Bay, or with the rivers uncarved
   };
 }
 
