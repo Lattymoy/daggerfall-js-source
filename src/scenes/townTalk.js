@@ -985,6 +985,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
           workAvailable: eng.session?.workAvailable ?? false,
         })),
         answer: (row) => {
+          // COURT-DEEDS (AUDIT FB1026d B3): a row that hears the tone itself is handed it, to read the regard either side
+          if (row.legacy?.hearsTone) return row.legacy.answer(tone, _toneTaste(), _toneHeard);
           _toneHeard();   // LW7: the question's tone, in a resident's regard
           if (row.legacy) return row.legacy.answer(tone, _toneTaste());   // LEGACY5: the host's answer - TONE-TASTE: and how the tone was taken
           if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });

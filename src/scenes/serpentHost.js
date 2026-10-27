@@ -366,7 +366,7 @@ export function createSerpentHost(deps) {
     if (g.hurt.hull > 0) deps.strike?.(ship.boat, g.hurt, { shake: 0.6, line: 'The maelstrom\'s eye grinds at your hull!' });
   }
   /** Whether it counts as a hostile near - its waters within SERPENT_NEAR_M of me while it swims unslain (the time
-   *  scale's, the rest's and the yard's refusal; SERPENT4: its gale and the ships' bumpers). */
+   *  scale's, the rest's and the yard's refusal; SERPENT4: its gale - and its bumpers, until HULL-PASS retired them). */
   function nearMe() {
     const s = deps.link.state();
     if (!live || s.day !== live.day || s.fell || s.gone) return false;

@@ -638,6 +638,7 @@ import { packCapacityKg } from '../systems/naval/crewCompanions.js';   // COMPAN
 import { createComeSailAwayPool, CULL_DETAIL_PX, FADE_FLATS as CSA_FADE_FLATS } from './comeSailAway/comeSailAwayPool.js';   // CSA-B: Come Sail Away's boats, drawn
 import { createShipPortraits } from './shipPortraits.js';   // MENU-ORDER: a ship's own picture on the shipmaster's card
 import { createComeSailAwayPeers } from './comeSailAway/comeSailAwayPeers.js';   // CSA-J: another player's boats, seen
+import { peerHullSweep, hullsStood, hullPassesMyDeck } from './comeSailAway/peerHulls.js';   // HULL-PASS: another player's hull meets my helm only in a PvP zone - and passes my deck where it passes my helm (AUDIT FB1026d D1/D2)
 import { createComeSailAwayAboard, CSA_ABOARD_GRACE, deckPose as csaDeckPose, helmWord as csaHelmWordOf, localOf as csaLocalOf, worldOf as csaWorldOf } from './comeSailAway/comeSailAwayAboard.js';   // CSA-K: another player's boat, boarded; FIELD BUGS 2026-09-29 (the sea) #1: the deck's frame, the helmsman's place
 import { csaWireRecord, csaRecordKey } from '../systems/comeSailAway/comeSailAwayWire.js';   // CSA-J: my boats, said
 import { boatTriggers, boatMenuRows, boatMenuStart, pressBoatVerb, BOAT_VERB } from '../systems/comeSailAway/csaBoatMenu.js';   // BOAT-MENU: a boat of mine's verbs on the plaque
@@ -7790,7 +7791,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const col = modes?.sailingCabin ? collider : csaModeCollider();   // CABIN-HULL (FIELD BUGS 2026-10-03b, Regi: "i got into my boats interior and then got out and i'm in the void"): below deck the fleet stays afloat OUTSIDE (keepExteriorBoats) - in the street's collider, never the room's. The cabin is built at her own root, so her decks stood in the room as floors and walls (the ladder's box and the helm's rows within reach of a press), and the deck the way out lands on had gone with the room
     const want = new Set();
     const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];   // CABIN-HULL: and every peer's, below deck as on deck; FIELD BUGS 2026-10-01b (Mac: "Players aren't colliding with other players' boats and can't stand on board"): ANOTHER PLAYER'S BOAT STANDS IN MY COLLIDER AS MINE DOES - every one that stands, her hull and her deck's furniture, aboard her or not. CSA-K stood one only while I was aboard it (PR-WAGON1's "Others' wagons don't block", which Mac's word sets aside for boats): her hull was walked and swum through and her deck no floor to step, climb or come up onto (scenes/comeSailAway/comeSailAwayAboard.js: standing on her is aboard her). THE FOUR HOSTS: on the street alone, this host's - a building's frame (worldModes.js) and a dungeon's (dungeonContext.js) stand no one's boat, and the standalone street (exterior.js) has no peers
-    for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {   // NAV-H: and the sea's ships near enough to board and to ram (RAM-RETURN)
+    for (const boat of hullsStood(peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats(), csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat ?? null, player.pos, csa, csaColliderMesh)) {   // NAV-H: and the sea's ships near enough to board and to ram (RAM-RETURN); AUDIT FB1026d D1/D2 (comeSailAway/peerHulls.js): less every player's hull passing through the deck I stand on
       if (!boat.GameObject?.activeSelf) continue;
       const id = csaBoatId(boat);
       let i = 0;
@@ -8448,7 +8449,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       decreaseFatigue: (n) => { if (!modes?.drainPlayerFatigue?.(n)) playerTicker.sinks.drainFatigue(n); surfacePlayer(); },   // PlayerEntity.DecreaseFatigue: the one fatigue door, its collapse at 0 with it - CSA-J (the audit): the mode's own, so a collapse indoors is the mode's (its enemies, its rest)
     },
     cargoWeight: (items) => totalWeight(items ?? []),
-    sphereCastAll: csaSphereCastAll,
+    sphereCastAll: peerHullSweep(csaSphereCastAll, csa),   // HULL-PASS (Field-Bugs-2026-10-26d): peers' hulls dropped outside a PvP zone
     enemies: csaEnemies,
     // CSA-G: GameManager.AreEnemiesNearby(false, false) over the mode's foes; Travel Options' isTravelActive (null
     // without the mod, as HCC asks it); Time.timeScale, which the helm's keys now set (the motor reads the one number)
@@ -8952,7 +8953,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  turned with it (the helm's turnPlayer). One answer for another player's boat (csaPeersFrame, in the mod's step) and
    *  the sea's own ships (scenes/naval/seaDecks.js, after the sea poses them - naval.frame's `deck`). */
   const deckMayCarry = () => walkMode && playerSpawned && !_teleporting && !_traveling && (modes?.mode ?? 'exterior') === 'exterior' && !(playerEntity.health <= 0 || modes?.deathUp?.());   // a death puts me off (DC1: the body does not move while the camera dies)
-  const deckGround = (b) => (!player.grounded ? null : typeof player.groundKey === 'string' && player.groundKey.startsWith(`csaBoat:${csaBoatId(b)}:`) ? 'boat' : 'other');
+  const deckGround = (b) => (!player.grounded ? (hullPassesMyDeck(b) ? 'other' : null) : typeof player.groundKey === 'string' && player.groundKey.startsWith(`csaBoat:${csaBoatId(b)}:`) ? 'boat' : 'other');   // AUDIT FB1026d D1: a hull passing through my deck is never landed on from the air
   const deckCarry = (d, yawDeg) => { player.carryBy(d[0], d[1], d[2]); cam.yaw += (yawDeg * Math.PI) / 180; player.carryTurn?.((yawDeg * Math.PI) / 180); _csaMovedPlayer = true; };   // the helm's turnPlayer: the child's world yaw turned with its parent's
   function csaPeersFrame(dt) {
     if (_csaPeersPosed) return;
