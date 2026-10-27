@@ -6,8 +6,16 @@
 // terrain worker - which reaches world/ and formats/ alone (TAMRIEL2-WORKER) - reads the network by the same port the
 // travel machine does (world/road/roadBand.js, the jungle's roadside pairs); systems/travel/travelPaths.js re-exports
 // every name, and its follow machine reads them from here.
+//
+// BAY-LEFT-MAPS (2026-10-27, bible/06-Systems/Travel-Options.md BAY-LEFT-MAPS): PAST THE TABLE, THE ROADS PAST THE BAY. The
+// mod's arrays are the Bay's 1000 x 500, and every read past them answered 0 - so on every road past the Bay Follow Paths
+// said there was none, the junction map was blank and a walk on a road ran at the open ground's rate. Past the table a
+// pixel's road and track bytes are TESA's layer's (world/arenaRoads.js arenaRoadByte - ROADS 1's compass, the same bits the
+// table holds, installed on each thread that reads it, the terrain worker's included); it has no rivers or streams. On
+// the table every byte is the mod's own, unchanged.
 // ═══════════════════════════════════════════════════════════════════
 import { MAP_W, MAP_H } from './roadNetwork.js';
+import { arenaRoadByte } from '../arenaRoads.js';   // BAY-LEFT-MAPS: the roads past the Bay's layer, a pixel's compass byte
 
 /** TravelOptionsMod.cs:73-75 - the four path arrays, in the mod's own
  *  index order (and Basic Roads' own: it answers `getPathData` by it). */
@@ -44,9 +52,18 @@ export const P_SIZE = T_SIZE * 2;                           // 512 - a path's wi
 /** TravelOptionsMod.cs:808-814, GetPathsDataPoint: roads OR tracks, one
  *  byte. `net` is the port's road bundle - the four Uint8Arrays of
  *  world/roadsProducer.js loadModRoads, or the generated fallback,
- *  which carries the same compass. A pixel off the map answers 0. */
+ *  which carries the same compass. Past the mod's table, the roads past
+ *  the Bay (dataPoint, BAY-LEFT-MAPS); off every network 0. */
 export function pathsDataPoint(net, mapPixelX, mapPixelY) {
   return (dataPoint(net, PATH_ROADS, mapPixelX, mapPixelY) | dataPoint(net, PATH_TRACKS, mapPixelX, mapPixelY)) & 0xff;
+}
+
+/** BAY-LEFT-MAPS: roads OR tracks on the mod's own table alone - 0 past it, as the reads all were. The jungle's roadside
+ *  pairs (world/jungle/jungleRoadside.js) stand astride the table's straight lanes; past the Bay a road is drawn as a
+ *  curve (bible/03-World/Roads.md VOYAGER2), and a pair stood on a straight arm there would stand on the road's bend. */
+export function tablePathsDataPoint(net, mapPixelX, mapPixelY) {
+  if (!onTable(mapPixelX, mapPixelY)) return 0;
+  return pathsDataPoint(net, mapPixelX, mapPixelY);
 }
 
 /** :815-819, GetRoadsDataPoint - roads alone, which is what decides
@@ -56,14 +73,22 @@ export function roadsDataPoint(net, mapPixelX, mapPixelY) {
   return dataPoint(net, PATH_ROADS, mapPixelX, mapPixelY);
 }
 
+/** Is a pixel on the mod's table - the Bay's 1000 x 500? */
+const onTable = (x, y) => x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;
+
 /** One array's byte at a pixel, bounds-checked. The mod indexes
  *  `currMapPixel.X + (currMapPixel.Y * MapsFile.MaxMapPixelX)` with no
  *  check at all (:810) - off the map it would read another row or
  *  throw; the port answers 0, which every caller already treats as
- *  "no path here". */
+ *  "no path here". BAY-LEFT-MAPS: past the table a road's or a track's
+ *  byte is the roads past the Bay's (world/arenaRoads.js arenaRoadByte -
+ *  none while no layer is installed, so a thread with no land past the
+ *  Bay reads 0 there as before), and a river's or a stream's none. A
+ *  spawn's road test (world/spawnedDungeons.js pathFreePixel) reads it
+ *  too: no ruin stands on a road past the Bay. */
 export function dataPoint(net, pathType, mapPixelX, mapPixelY) {
   if (!net) return 0;
-  if (mapPixelX < 0 || mapPixelY < 0 || mapPixelX >= MAP_W || mapPixelY >= MAP_H) return 0;
+  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;
   const arr = net[PATH_KEYS[pathType]];
   if (!arr) return 0;
   return arr[mapPixelX + (mapPixelY * MAP_W)] & 0xff;

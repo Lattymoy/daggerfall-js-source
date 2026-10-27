@@ -546,7 +546,7 @@ import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squ
 import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
-import { playerOnPathAt, pathsDataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it
+import { playerOnPathAt, pathsDataPoint, dataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it; BAY-LEFT-MAPS: the junction map's bytes, past the Bay its roads'
 import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW) - TIME-DILATION: x1 inside a hostile ship's hold
 import { farPlaces, settlementPixels, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
 import { dungeonRows, spawnedPixels, filedSpawns, nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
@@ -16111,9 +16111,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       settings: () => travelOptionsSettings,
       pathsAt: (x, y, type) => {
         const net = terrainGen.roads();
-        if (!net || net.source !== 'basic-roads') return 0;
-        const arr = [net.roads, net.tracks, net.rivers, net.streams][type];
-        return arr ? (arr[y * 1000 + x] & 0xff) : 0;
+        return net?.source === 'basic-roads' ? dataPoint(net, type, x, y) : 0;   // BAY-LEFT-MAPS: the mod's table, and past it the roads past the Bay (it read `y * 1000 + x` - another row past the Bay's edge)
       },
       locationAt: (x, y) => {
         const summary = onTheBay(x, y) ? travelLocationSummaryAt(mapDict, x, y) : null;   // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row

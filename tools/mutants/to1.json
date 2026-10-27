@@ -112,7 +112,7 @@
   {
     "name": "data-point-unchecked",
     "file": "src/world/road/pathData.js",
-    "old": "  if (mapPixelX < 0 || mapPixelY < 0 || mapPixelX >= MAP_W || mapPixelY >= MAP_H) return 0;",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
     "new": "  if (false) return 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"

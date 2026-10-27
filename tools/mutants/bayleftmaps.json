@@ -181,5 +181,69 @@
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
+  },
+  {
+    "name": "BLM-C10-past-the-table-0-as-before",
+    "file": "src/world/road/pathData.js",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "  if (!onTable(mapPixelX, mapPixelY)) return 0;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-tracks-read-as-the-roads",
+    "file": "src/world/road/pathData.js",
+    "old": "arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "arenaRoadByte('roads', mapPixelX, mapPixelY) & 0xff : 0;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-rivers-read-as-the-roads",
+    "file": "src/world/road/pathData.js",
+    "old": "return pathType === PATH_ROADS || pathType === PATH_TRACKS ? arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "return arenaRoadByte(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-layer-read-on-the-table",
+    "file": "src/world/road/pathData.js",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType ===",
+    "new": "  if (true) return pathType ===",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-jungle-reads-the-layer",
+    "file": "src/world/road/pathData.js",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return 0;\n  return pathsDataPoint(net, mapPixelX, mapPixelY);",
+    "new": "  return pathsDataPoint(net, mapPixelX, mapPixelY);",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-section-held-to-the-bay",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "      if (!inWorldGrid(mpX, mpY)) continue;",
+    "new": "      if (mpX < 0 || mpY < 0 || mpX >= 1000 || mpY >= 500) continue;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js",
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-host-reads-its-row-again",
+    "file": "src/scenes/world.js",
+    "old": "        return net?.source === 'basic-roads' ? dataPoint(net, type, x, y) : 0;",
+    "new": "        return net?.source === 'basic-roads' ? (([net.roads, net.tracks, net.rivers, net.streams][type]?.[y * 1000 + x] ?? 0) & 0xff) : 0;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
   }
 ]
