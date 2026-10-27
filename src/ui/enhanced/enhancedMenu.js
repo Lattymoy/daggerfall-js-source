@@ -143,6 +143,7 @@ import { YARD_RANGE_TIERS, yardRangeOf } from '../../net/yardRange.js';   // YAR
 import { replacementCount } from '../../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { midiOutSupported, midiOutDenied, midiOutName, midiOutputs, setMidiOut, nextMidiOut, MIDI_OUT_PREF } from '../../systems/midiOut.js';   // MIDI-OUT1: the Audio tab's device row
 import { brandMark } from '../brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
+import { titleHeld } from '../intro/titleHeld.js';   // TITLE-DOOR: the film's held title, the boot home's ground
 import { soundReplacementCount } from '../../systems/soundReplacer.js';   // SNDREP1: the sound pack's count
 import { textureReplacementCount, bundleTextureCount } from '../../systems/textureReplacement.js';   // M-TEX: and the texture half; DFMOD1: and the bundles'
 import { attachedDfmods, DFMOD_DETAIL, dfmodMaxSize, setDfmodEnabled, unregisteredDfmods } from '../../systems/dfmodTextures.js';   // VE3: a mod switched on or off; AUDIT VE R5: and one stored that did not register
@@ -4402,8 +4403,12 @@ function renderHome() {
   // sky (there is a world behind), no wordmark (a masthead on every
   // Escape is a billboard), a scrim instead of the opaque night.
   const paused = mode === 'pause';
-  const home = el('div', `px-home${paused ? ' px-over' : ''}`);
-  if (!paused) {
+  // TITLE-DOOR (2026-10-27, the owner: "we use the intro title screen as the landing pad itself"): the boot door's face
+  // over the film's held title - no sky (the map is the ground), no wordmark (the film's mark is the masthead); the doors
+  // stand in a row under the mark (uiCalmStyle.js TITLE_DOOR_CSS)
+  const title = onTitle();
+  const home = el('div', `px-home${paused ? ' px-over' : ''}${title ? ' px-title' : ''}`);
+  if (!paused && !title) {
     const ground = document.createElement('canvas');
     ground.className = 'px-ground';
     const vw = () => globalThis.innerWidth ?? 1280;
@@ -4422,7 +4427,7 @@ function renderHome() {
     }
     home.append(ground);
   }
-  home.append(el('div', 'px-vignette'));
+  if (!title) home.append(el('div', 'px-vignette'));   // TITLE-DOOR: the film draws its own
 
   // PX3: PAUSE IS A WINDOW, NOT A SECOND MAIN MENU (Mac's reference:
   // Skyrim's journal - a framed panel with tabs over the paused game).
@@ -4517,12 +4522,14 @@ function renderHome() {
   }
 
   const stage = el('div', 'px-stage');
-  const mark = el('h1', 'px-wordmark');
-  mark.append(brandMark());
-  stage.append(mark);
-  const rule = el('div', 'px-rule');
-  rule.append(el('span', 'px-gem'));
-  stage.append(rule);
+  if (!title) {   // TITLE-DOOR: on the title the film's mark is the masthead
+    const mark = el('h1', 'px-wordmark');
+    mark.append(brandMark());
+    stage.append(mark);
+    const rule = el('div', 'px-rule');
+    rule.append(el('span', 'px-gem'));
+    stage.append(rule);
+  }
 
   const menu = el('nav', 'px-menu');
   menu.setAttribute('aria-label', t('menu.home.aria', 'Main menu'));
@@ -4575,6 +4582,8 @@ function renderHome() {
 
 /** UI-CALM: the two-question door stands on the enhanced front door alone (the classic skin's door keeps its list). */
 const twoQuestionDoor = () => mode === 'boot' && sections === SECTIONS_BOOT;
+/** TITLE-DOOR: the boot door's home, standing on the film's held title (ui/intro/introScreen.js land) - either skin's. */
+const onTitle = () => mode === 'boot' && section === 'home' && titleHeld();
 
 /**
  * One door of the front door: its name, and (UI-CALM) under it in a smaller hand what lies behind it.
@@ -6010,6 +6019,9 @@ function renderInto() {
   stopPost();   // SERVER-POST: and the mailbox's, and the envelope's count
   stopSeason();   // SEASON-BOOK: and the season window's
   app.innerHTML = '';
+  // TITLE-DOOR: the boot home stands on the film's held title, so its host is see-through there (uiCalmStyle.js
+  // TITLE_DOOR_CSS); every section keeps the opaque ground the canvas is hidden under
+  if (app.dataset) { if (onTitle()) app.dataset.overTitle = ''; else delete app.dataset.overTitle; }
   // PX1/PX2: both doors open on the pixel home; every section keeps
   // its shell.
   if (section === 'home') { renderHome(); return; }

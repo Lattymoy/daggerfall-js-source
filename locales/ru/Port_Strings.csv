@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Коснитесь в любом месте, чтобы
 menu.intro.resume,"Продолжить"
 menu.intro.resumeHint,"Коснитесь в любом месте, чтобы продолжить музыку и ролик."
 menu.intro.skip,"Пропустить вступление"
-menu.intro.tapContinue,"Коснитесь, чтобы продолжить"
 menu.load.deleteBody,"Удаление сохранения «{slot}» персонажа {name} нельзя отменить."
 menu.load.deleteTitle,"Удалить это сохранение"
 menu.load.noneHint,"Здесь появятся ваши сохранённые игры."

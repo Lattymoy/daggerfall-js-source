@@ -200,8 +200,8 @@
   {
     "name": "SCR-panel-sends-past-the-voice",
     "file": "src/ui/chatPanel.js",
-    "old": "(voice ? voice.send(log.active, text, onSend) : onSend?.(log.active, text))",
-    "new": "onSend?.(log.active, text)",
+    "old": "(voice ? voice.send(log.active, text, send) : send(log.active, text))",
+    "new": "send(log.active, text)",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]

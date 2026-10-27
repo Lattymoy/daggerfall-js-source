@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Atinge oriunde ca să începi. Mișcarea redusă este a
 menu.intro.resume,"Reia"
 menu.intro.resumeHint,"Atinge oriunde ca să reiei muzica și filmul."
 menu.intro.skip,"Sari peste introducere"
-menu.intro.tapContinue,"Atinge ca să continui"
 menu.load.deleteBody,"Ștergerea salvării „{slot}” a lui {name} nu poate fi anulată."
 menu.load.deleteTitle,"Șterge această salvare"
 menu.load.noneHint,"Jocurile tale salvate apar aici."

@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Touchez n’importe où pour commencer. Les animations 
 menu.intro.resume,"Reprendre"
 menu.intro.resumeHint,"Touchez n’importe où pour reprendre la musique et le film."
 menu.intro.skip,"Passer l’introduction"
-menu.intro.tapContinue,"Touchez pour continuer"
 menu.load.deleteBody,"La suppression de « {slot} » de {name} est irréversible."
 menu.load.deleteTitle,"Supprimer cette sauvegarde"
 menu.load.noneHint,"Vos parties sauvegardées apparaissent ici."

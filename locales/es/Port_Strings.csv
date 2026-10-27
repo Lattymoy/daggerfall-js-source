@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Toca en cualquier sitio para comenzar. El movimiento re
 menu.intro.resume,"Reanudar"
 menu.intro.resumeHint,"Toca en cualquier sitio para reanudar la música y el vídeo."
 menu.intro.skip,"Saltar introducción"
-menu.intro.tapContinue,"Toca para continuar"
 menu.load.deleteBody,"Borrar «{slot}» de {name} no se puede deshacer."
 menu.load.deleteTitle,"Borrar esta partida"
 menu.load.noneHint,"Tus partidas guardadas aparecen aquí."

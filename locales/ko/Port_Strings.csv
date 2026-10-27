@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"아무 곳이나 눌러 시작하세요. 동작 줄이�
 menu.intro.resume,"계속"
 menu.intro.resumeHint,"아무 곳이나 눌러 음악과 영상을 다시 재생하세요."
 menu.intro.skip,"인트로 건너뛰기"
-menu.intro.tapContinue,"눌러서 계속"
 menu.load.deleteBody,"{name}의 “{slot}”을(를) 삭제하면 되돌릴 수 없습니다."
 menu.load.deleteTitle,"이 저장 삭제"
 menu.load.noneHint,"저장한 게임이 여기에 나타납니다."

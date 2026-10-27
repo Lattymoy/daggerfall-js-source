@@ -1524,7 +1524,6 @@ menu.intro.readyReduced,"Dotknij w dowolnym miejscu, aby zacząć. Ograniczony r
 menu.intro.resume,"Wznów"
 menu.intro.resumeHint,"Dotknij w dowolnym miejscu, aby wznowić muzykę i film."
 menu.intro.skip,"Pomiń intro"
-menu.intro.tapContinue,"Dotknij, aby kontynuować"
 menu.load.deleteBody,"Usunięcia zapisu „{slot}” postaci {name} nie można cofnąć."
 menu.load.deleteTitle,"Usuń ten zapis"
 menu.load.noneHint,"Tu pojawią się twoje zapisane gry."

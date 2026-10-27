@@ -1526,7 +1526,6 @@ menu.intro.readyReduced,"どこかをタップしてはじめましょう。モ�
 menu.intro.resume,"再開"
 menu.intro.resumeHint,"どこかをタップすると、音楽と映像を再開します。"
 menu.intro.skip,"オープニングをスキップ"
-menu.intro.tapContinue,"タップして続ける"
 menu.load.deleteBody,"{name} の「{slot}」を削除すると、元に戻せません。"
 menu.load.deleteTitle,"このセーブを削除"
 menu.load.noneHint,"セーブしたゲームはここに表示されます。"

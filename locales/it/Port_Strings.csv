@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Tocca un punto qualsiasi per iniziare. Il movimento rid
 menu.intro.resume,"Riprendi"
 menu.intro.resumeHint,"Tocca un punto qualsiasi per riprendere la musica e il filmato."
 menu.intro.skip,"Salta l’introduzione"
-menu.intro.tapContinue,"Tocca per continuare"
 menu.load.deleteBody,"L’eliminazione di «{slot}» di {name} non può essere annullata."
 menu.load.deleteTitle,"Elimina questo salvataggio"
 menu.load.noneHint,"Le tue partite salvate compaiono qui."

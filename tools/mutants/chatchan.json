@@ -11,8 +11,8 @@
   {
     "name": "CC-unknown-channel-falls-to-the-room",
     "file": "src/net/wire.js",
-    "old": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };",
-    "new": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { t: 'chat', text, ...me };",
+    "old": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me, ...linked } : { error: 'bad chat' };",
+    "new": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me, ...linked } : { t: 'chat', text, ...me, ...linked };",
     "tests": [
       "test/net/chatchan.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "CC-parser-before-unstuck",
     "file": "src/scenes/world.js",
-    "old": "      onSend: (tabId, text) => {\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
-    "new": "      onSend: (tabId, text) => {\n        if (parseChatLine(text).kind === 'host') return false;\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
+    "old": "      onSend: (tabId, text, opts = {}) => {\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
+    "new": "      onSend: (tabId, text, opts = {}) => {\n        if (parseChatLine(text).kind === 'host') return false;\n        // SERVER-POST (AUDIT SERVER-POST: the classic skin's",
     "tests": [
       "test/net/chatchan.test.js",
       "test/net/chat1.test.js"
@@ -440,8 +440,8 @@
   {
     "name": "CC-ch-on-a-plain-line",
     "file": "src/net/online.js",
-    "old": "    const frame = { t: 'chat', text: line, ...(ch != null ? { ch } : {}), ...(me ? { me: true } : {}) };",
-    "new": "    const frame = { t: 'chat', text: line, ch, ...(me ? { me: true } : {}) };",
+    "old": "    const frame = { t: 'chat', text: line, ...(ch != null ? { ch } : {}), ...(me ? { me: true } : {}), ...linked };",
+    "new": "    const frame = { t: 'chat', text: line, ch, ...(me ? { me: true } : {}), ...linked };",
     "tests": [
       "test/net/chatchan.test.js",
       "test/net/chat1.test.js"
