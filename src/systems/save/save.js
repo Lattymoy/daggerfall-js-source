@@ -63,6 +63,7 @@ import { restoreKnightlyOrderFlags } from '../knightlyGifts.js';   // D9: Knight
 import { GUILD_GROUPS } from '../../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from '../appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 import { normalTribute } from '../../world/lefayMonument.js';   // LEFAY1: the flowers a character laid at Julian LeFay's monument
+import { normalPracticeHeld } from '../masterSkills.js';   // AUDIT RPT1026 F1: the practice Master Skills switched off holds aside
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from '../characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from '../online/onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
 import { STREAMING_TERRAIN_SCALE } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
@@ -361,6 +362,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.masterSkills = entity.masterSkills === true;   // SOFTCAP3: the Master Skills switch
   snap.masterSkillsAsked = !!entity.masterSkillsAsked;   // SOFTCAP3: the one-time offline offer, made
   snap.masterSkillsInfoSeen = !!entity.masterSkillsInfoSeen;   // SOFTCAP3: the one-time online explanation, shown
+  snap.masterPracticeHeld = normalPracticeHeld(entity.masterPracticeHeld);   // AUDIT RPT1026 F1: the tough-foe practice held while the switch is off
   snap.lefayTribute = normalTribute(entity.lefayTribute);   // LEFAY1: the flowers laid at Julian LeFay's monument - how many, and the newest where they lay
   snap.masteredSkills = Array.isArray(entity.masteredSkills) ? [...entity.masteredSkills] : [];   // SOFTCAP4: the permanent 2/2/1 masteries
   snap.masteryPrompted = Array.isArray(entity.masteryPrompted) ? [...entity.masteryPrompted] : [];   // SOFTCAP4: the skills already asked about
@@ -850,6 +852,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.masterSkills = snap.masterSkills === true;   // SOFTCAP3
   entity.masterSkillsAsked = snap.masterSkillsAsked === true;   // SOFTCAP3
   entity.masterSkillsInfoSeen = snap.masterSkillsInfoSeen === true;   // SOFTCAP3
+  entity.masterPracticeHeld = normalPracticeHeld(snap.masterPracticeHeld);   // AUDIT RPT1026 F1: a save from before it held none
   entity.lefayTribute = normalTribute(snap.lefayTribute);   // LEFAY1: a save from before it laid none
   entity.masteredSkills = Array.isArray(snap.masteredSkills) ? snap.masteredSkills.filter(Number.isInteger) : [];   // SOFTCAP4
   entity.masteryPrompted = Array.isArray(snap.masteryPrompted) ? snap.masteryPrompted.filter(Number.isInteger) : [];   // SOFTCAP4

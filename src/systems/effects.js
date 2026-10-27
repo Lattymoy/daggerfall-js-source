@@ -992,7 +992,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // E1: IsAbsorbingSpells (:1196) is LIVE - the AbsorbsSpells
       // enchantment's constant fold on the target. The caller's own
       // ctx.absorbing (probe surface) still wins when set.
-      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target), rolls });
+      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target), rolls, paid: caster.entity === target ? (caster.cast?.cost ?? 0) : 0 });   // AUDIT RPT1026 F3: my own spell's spend
       if (sp > 0) {
         totalAbsorbed += sp;
         out.absorbed = (out.absorbed ?? 0) + sp;

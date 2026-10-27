@@ -169,6 +169,31 @@ function dropPlainPractice(entity, id) {
   if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length) entity.skillUses[id] = 0;
 }
 
+/** AUDIT RPT1026 F1 (the drop above took practice the tough-foe rule had counted): THE SWITCH OFF HOLDS IT ASIDE. A
+ *  mastered skill past 100 counts only tough-foe uses while Master Skills is on, and its counter holds them until the
+ *  next rest's pass banks them (advancement.js MOVE-BANK) - so switched off and on before a rest, the drop threw away
+ *  every tough blow since the last one, under a line that says "Your progress is kept". At the switch off each such
+ *  counter is noted (`entity.masterPracticeHeld`, saved); the switch on drops the counter as before and gives the noted
+ *  uses back. (Off, a rest's pass may spend the counter - plain uses to a raise that never comes - but not the note.)
+ *  `{ [skill id]: uses }`, or null. */
+export function normalPracticeHeld(held) {
+  if (!held || typeof held !== 'object') return null;
+  const out = {};
+  for (const [k, n] of Object.entries(held)) if (/^\d+$/.test(k) && Number.isFinite(n) && n > 0) out[k] = n;
+  return Object.keys(out).length ? out : null;
+}
+function holdMasterPractice(entity) {
+  const held = {};
+  for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = entity.skillUses?.[id];
+  entity.masterPracticeHeld = normalPracticeHeld(held);
+}
+function returnMasterPractice(entity) {
+  const held = normalPracticeHeld(entity.masterPracticeHeld);
+  entity.masterPracticeHeld = null;
+  if (!held || !Array.isArray(entity.skillUses)) return;
+  for (const [k, n] of Object.entries(held)) if (Number(k) < entity.skillUses.length) entity.skillUses[Number(k)] = n;
+}
+
 /** Master it - PERMANENT. Returns { ok, text }. */
 export function masterSkill(entity, id, names = null) {
   const why = masteryRefusal(entity, id);
@@ -237,8 +262,9 @@ export function setMasterSkills(entity, on) {
   if (reason) return { ok: false, text: reason };
   const was = masterSkillsActive(entity);
   entity.masterSkills = !!on;
+  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity);   // AUDIT RPT1026 F1: switched off - the tough-foe practice set aside
   // RPT1026-PROGRESS: switched on - while it was off, every skill mastered and at the cap or beyond counted each use whole
-  if (!was && masterSkillsActive(entity)) for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);
+  if (!was && masterSkillsActive(entity)) { for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }   // AUDIT RPT1026 F1: and what it held comes back
   entity.masterSkillsAsked = true;
   return { ok: true, text: on ? MASTER_SKILLS_ON_TEXT : MASTER_SKILLS_OFF_TEXT };
 }

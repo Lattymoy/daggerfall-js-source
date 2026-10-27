@@ -211,6 +211,14 @@ export function summonedRecord(r, seqs) {
   return r;
 }
 
+/** AUDIT RPT1026 F4 (SUMMON-BARE's left item): A SUMMON IS SAVED ONE, AND LOADED ONE. The street's and a building's pool
+ *  save a living foe and re-mint it on a load (exteriorFoes.js snapshotWorld / restoreWorld) - its kind's loot rolled
+ *  again, the save's list laid over it, and no mark: so a summon loaded stood as a foe, and its death's finds (a bear's
+ *  meat, a card) lay on its body. savedSummon carries the mark in the foe's saved record `rec` (answers it);
+ *  restoredSummon marks the foe a record carrying it stands (answers `f`, null kept null). */
+export const savedSummon = (f, rec) => (f?.entity?.summoned === true ? { ...rec, summoned: true } : rec);
+export const restoredSummon = (f, sf) => (sf?.summoned === true && f?.entity ? summonedBody(f) : f);
+
 /** RPT1026-PROGRESS: a puppet whose record says it is a summon is one here too (summonedBody, once). Answers `f`. */
 export function markSummoned(f, r) {
   if (r?.sm === 1 && f?.entity && f.entity.summoned !== true) summonedBody(f);

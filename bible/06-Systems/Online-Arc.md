@@ -13643,7 +13643,9 @@ as a cell's loose stand is (WORLD6b), on the room's own lane (`scenes/dungeonCon
   and card - a friend's copy was the farm. The frame names my summons beside my loose stands (`sm`,
   `systems/foeLootCap.js` summonedWord, by the entity's `summoned` mark); the reader flags the record (`summonedRecord`)
   and marks its puppet in `applyOwnRecord` (`markSummoned`): bare alive, its death's finds emptied by capFoeLoot. The
-  mark rides the entity, so an heir streams a handed summon on as one. No relay or wire change, by OWN1's law above.
+  mark rides the entity (no summon is ever handed - the line above; AUDIT RPT1026 F5). No relay or wire change, by OWN1's
+  law above. AUDIT RPT1026 F4: and a summon the street or a building saved alive is loaded one (`foeLootCap.js`
+  savedSummon and restoredSummon, in `exteriorFoes.js` snapshotWorld and restoreWorld).
   Pinned: `test/scenes/rpt1026_progress_peersummon.test.js`, over the real lane, build and stream death.
 
 The ONLINE-DUNGEON-FOES flag is retired (above). Pinned: `test/scenes/summonsync.test.js` (9), mounted over the context's own
