@@ -29,8 +29,8 @@
   {
     "name": "KTL-the-sighting-late",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "const n = Math.floor((t - theatre * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
-    "new": "const n = Math.floor((t - theatre * KT_THEATRE_STAGGER_MS - KT_EPOCH_MS) / KT_EVERY_MS);",
+    "old": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
+    "new": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - KT_EPOCH_MS) / KT_EVERY_MS);",
     "tests": [
       "test/net/ketch/ketch_law.test.js"
     ]

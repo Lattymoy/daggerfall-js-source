@@ -409,8 +409,17 @@ test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CROWN\'S SEAT: on the free
     assert.ok(col.buckets.has(ketchSkyBucket(2)), 'Sentinel\'s ship stands to the collider');
     assert.deepEqual(kc.mapMarks().filter((m) => m.day === nSen).map((m) => [m.cx, m.cy]), [[sen.x + 0.5, sen.y + 0.5]], 'her ring about Sentinel');
     assert.ok(ketchStationNear(2, sen.x + KT_STATION_REACH_PX, sen.y) && !ketchStationNear(2, sen.x + KT_STATION_REACH_PX + 1, sen.y), 'framed within the reach');
+    // the frame told the Timers the stations stand and how a Bay pixel's crown is read: Sentinel's rows at Sentinel
+    assert.deepEqual(eventTimerRows({ now: st.clock, pixel: { x: sen.x, y: sen.y } }).filter((r) => r.kind === 'ketch').map((r) => r.where), ['Over Daggerfall', 'Over Sentinel']);
     await quiet(() => kc.board());
     assert.deepEqual(st.entered, [nSen], 'the lift at Sentinel boards Sentinel\'s own voyage');
+    // on a relay that keeps no station past the Bay's own, the lift's default there is the Bay's own voyage
+    online.ktTheatresOk = false; st.entered.length = 0;
+    const bay5 = ketchVoyageOf(5);
+    st.clock = bay5.at + 60_000;
+    await quiet(() => kc.board());
+    assert.deepEqual(st.entered, [5], 'an older relay: the Bay\'s own');
+    online.ktTheatresOk = true; st.clock = V2.at + KT_SKY.lower + 5000;
     // at Daggerfall the default is the Bay's own; Sentinel's sky taken back
     st.here.x = 207; st.here.y = 213; st.entered.length = 0;
     await quiet(() => { kc.frame(); kc.frame(); });
