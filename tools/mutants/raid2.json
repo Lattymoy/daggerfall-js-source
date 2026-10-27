@@ -260,8 +260,8 @@
   },
   {
     "name": "RAID2-host-no-one-in-town",
-    "file": "src/scenes/world.js",
-    "old": "peersInTown: () => (peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => p.id),",
+    "file": "src/scenes/raidHost.js",
+    "old": "peersInTown: () => (host.peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => p.id),",
     "new": "peersInTown: () => [],",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },

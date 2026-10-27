@@ -700,10 +700,13 @@ test('RAID3 client: my receipt is kept, one a raid, and handed on once (RAID4 ca
 
 test('RAID3 the world host by source: the raid system is told whether the relay keeps raids and sends its word through the session; the session\'s raid words and the hub link\'s reach the raid; the relay\'s arm is in the relay and the hub\'s door in its fetch', () => {
   const w = rd('src/scenes/world.js');
-  const at = w.indexOf('  setRaidingPartiesHost({');
-  const body = w.slice(at, w.indexOf('\n  });', at));
-  assert.match(body, /relayRaids: \(\) => !!online\?\.raidOk,/);
-  assert.match(body, /sendRaid: \(w, cell\) => !!online\?\.sendRaid\(w, cell\),/);
+  // PIN MOVED (WW6): the seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT), the host's live names
+  // read there as `host.<name>`
+  const rh = rd('src/scenes/raidHost.js');
+  const at = rh.indexOf('  setRaidingPartiesHost({');
+  const body = rh.slice(at, rh.indexOf('\n  });', at));
+  assert.match(body, /relayRaids: \(\) => !!host\.online\?\.raidOk,/);
+  assert.match(body, /sendRaid: \(w, cell\) => !!host\.online\?\.sendRaid\(w, cell\),/);
   assert.match(w, /online\.onRaid = \(f, room\) => raidRelayWord\(f, room\);/);
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onRaid = \(f, room\) => \(f\.k === 'tw' \? offerRaidTowns\(link, f\.h\) : raidRelayWord\(f, room\)\);/);   // RAID-ROLL: the hub's ask for the towns table beside it
   const relay = rd('server/src/index.js');

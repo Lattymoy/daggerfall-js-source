@@ -428,7 +428,7 @@
   },
   {
     "name": "RAID1-host-raiders-saved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/raidHost.js",
     "old": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, transient: true }),",
     "new": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true }),",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
@@ -449,15 +449,15 @@
   },
   {
     "name": "RAID1-host-fix8-the-sea-a-province",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/raidHost.js",
     "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(maps.getPoliticIndex(px.x, px.y)) ? _questRegionIndex() : -1;",
     "new": "return !(etherSea && inEther(px.x, px.y)) ? _questRegionIndex() : -1;",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-host-indoors-is-the-street",
-    "file": "src/scenes/world.js",
-    "old": "townHere: (outdoors) => ((modes?.mode ?? 'exterior') !== 'exterior' ? null :",
+    "file": "src/scenes/raidHost.js",
+    "old": "townHere: (outdoors) => ((host.modes?.mode ?? 'exterior') !== 'exterior' ? null :",
     "new": "townHere: (outdoors) => (false ? null :",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },

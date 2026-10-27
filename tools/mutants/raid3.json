@@ -628,8 +628,8 @@
   },
   {
     "name": "RAID3-host-relay-flag",
-    "file": "src/scenes/world.js",
-    "old": "    relayRaids: () => !!online?.raidOk,",
+    "file": "src/scenes/raidHost.js",
+    "old": "    relayRaids: () => !!host.online?.raidOk,",
     "new": "    relayRaids: () => false,",
     "tests": [
       "test/net/raid3_raidLedger.test.js"

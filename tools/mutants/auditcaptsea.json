@@ -1097,7 +1097,7 @@
   },
   {
     "name": "ACS-G7-raids",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/raidHost.js",
     "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(",
     "new": "return politicClaimed(",
     "tests": [
