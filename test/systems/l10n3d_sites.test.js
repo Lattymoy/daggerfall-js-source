@@ -130,7 +130,7 @@ const ROUTED = {
   'src/ui/pauseWindow.js': 1,
   'src/ui/potionMakerWindow.js': 4,
   'src/ui/prisonScreen.js': 1,
-  'src/ui/professions/profPages.js': 6,   // L10N4: the anvil's metals, Leather, Arrows, All and the smith's lone metals are DFU's words
+  'src/ui/professions/profPages.js': 7,   // L10N4: the anvil's metals, Leather, Arrows, All and the smith's lone metals are DFU's words; CRAFT-HALL: the pattern filters' All
   'src/ui/profileWindow.js': 19,
   'src/ui/quest/questJournal.js': 19,   // GUIDE2 (main): locationInRegionProvince lives in questLens.js now
   'src/ui/quest/questLens.js': 1,

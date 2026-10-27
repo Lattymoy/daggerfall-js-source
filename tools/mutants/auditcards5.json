@@ -1403,8 +1403,8 @@
   {
     "name": "AC5-D-C04-reset-keeps-part",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); }",
-    "new": "{ _picked = null; resetCardsPart(); resetWardrobePart(); }",
+    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
+    "new": "{ _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3768,8 +3768,8 @@
   {
     "name": "AC5-D-C03-reset-keeps-cards",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); }",
-    "new": "{ _part = 'titles'; _picked = null; resetWardrobePart(); }",
+    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
+    "new": "{ _part = 'titles'; _picked = null; resetWardrobePart(); resetAppearancesPart(); }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3780,8 +3780,8 @@
   {
     "name": "AC5-D-C05-reset-keeps-picked",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); }",
-    "new": "{ _part = 'titles'; resetCardsPart(); resetWardrobePart(); }",
+    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
+    "new": "{ _part = 'titles'; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",

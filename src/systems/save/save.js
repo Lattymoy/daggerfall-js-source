@@ -185,6 +185,9 @@ const ENTITY_FIELDS = [
   // LEGACY4: Project Legacy's blessings - an ancestor laid to rest, their best skill on the one who laid them
   // (systems/legacy/heirloom.js legacyFold). A save older than this field restores undefined: no blessing.
   'legacyBlessings',
+  // APPEARANCES (bible/04-Characters/Wardrobe.md): every look the character has held (systems/appearances.js), keys of
+  // net/appearanceLaw.js. A save older than this field restores undefined: none yet, and the first frame collects the pack.
+  'appearances',
 ];
 
 /** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35

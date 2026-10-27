@@ -313,6 +313,7 @@ export const FRAME_ROLES = {
   listRow: ['.pack-shell .loot-win .itemrow', '.trade-shell .itemrow',   // PLUS6: the shop's shelf and basket rows too
     'body .dfdecor-row',   // PLUS-DRESS: the decorator's catalogue
     'body .broker-offer',   // SET7: the Broker's offers
+    'body .wardrobe-look',   // APPEARANCES: a look on the Wardrobe's card, a line each - the one worn brass
     'body .dfnaval-item',   // NAV-F: a taken ship's hold, a line a piece
     'body .bounty-post',   // BOUNTY1: the board's notices
     'body .aw-tier',   // ARENA3: the ladder's ten tiers, a line each

@@ -66,12 +66,12 @@ import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
-import { MINUTES_PER_DAY, playerWeaponHitEntity, playerWeaponKillReported } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
+import { MINUTES_PER_DAY, playerWeaponHitEntity, playerWeaponKillReported, worldMinutes } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { FOES_MS } from '../net/online.js';   // AUDIT ALL B2: the watchman moved since the frame the striker swung at
 import { applyChampion, rollStreetChampion, championIndex, championName, properName } from '../systems/champions.js';   // LOOT7: the street's champions
 import { wildHere, wildRing, applyWildFoe, wildLootOpts, wildGiantSize, WILD_GIANT, WILD_GIANT_HEALTH_MULT, WILD_GIANT_DAMAGE_MULT } from '../systems/wild/wildZone.js';   // WILD1: the open zone's foes
 import { lootCrown } from './lootLines.js';   // LOOT11: a body's line of light
-import { validFoeRecord, LIVING_ID_RE, REVENANT_NAME_MAX, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, FOE_SEQ_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, hitSpellOf, hitSpellFields, HIT_ARROWS_MAX, hitClassField, hitClassOf } from '../net/wire.js';   // STRIKE-SHARED: a strike spell rides the hit
+import { validFoeRecord, LIVING_ID_RE, REVENANT_NAME_MAX, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, FOE_SEQ_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, hitSpellOf, hitSpellFields, HIT_ARROWS_MAX, hitClassField, hitClassOf, wallMsForClassicMinutes } from '../net/wire.js';   // STRIKE-SHARED: a strike spell rides the hit
 import { blowWire, blowWireKey, applyBlowRecord, puppetBlowTurn, puppetGapLanded, blowClassOf } from '../ai/puppetBlows.js';   // TELL8: a wind-up on the wire - the owner's word, the puppet's state, each judging its own feet, a blow's class
 /** TELL8: a puppet with no wind-up state: nothing held, nothing staggered. */
 const NO_PUPPET_BLOW = Object.freeze({ hold: false, staggered: false });
@@ -112,8 +112,9 @@ import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
 import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';
 import { STAR_CIRCLE_SHARE } from '../net/starfall/starfallLaw.js';   // STAR5: a master's circle's ward
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
-import { isBodyFoe, foeActor, foeFx, foeWireLook, applyWireLook } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
+import { isBodyFoe, foeActor, foeFx, foeWireLook, applyWireLook, kitWire } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { raidLeaderNameOf } from '../systems/raidKinds.js';   // RAID5: a raid's leader, by its party's word
+import { huntMarkSeen } from '../systems/hunt/namedMark.js';   // HUNTERS-MARK-II: a hunter's named mark, read off its record
 import { elitesAllowed, promoteEliteFoe, promoteRaidLeader, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, isStaffBoss, promoteStaffBoss, STAFF_BOSS_SPELL_TAKEN, staffBossHit, STAFF_BOSS_FIGHTERS_MAX } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 import { grantKindOf, grantElite } from '../net/grantLaw.js';   // GRANT3-GRANT4: a stand's grant - its kind, its member's elite (bible/11-Multiplayer/Spawn-Grants.md)
 
@@ -2568,7 +2569,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // AUDIT MW-NPC II K2-K4: the look its owner stands it in - its seed, and a person's kit - on a full frame and when it
       // changed since it last went (a frame the trim below cut it from owes it again)
       const lk = foeWireLook(f);
-      if (full || f._lkSent !== lk.key) { r.ls = lk.seed; if (lk.worn) r.lw = lk.worn; f._lkPend = lk.key; }
+      if (full || f._lkSent !== lk.key) { r.ls = lk.seed; if (lk.kit) Object.assign(r, lk.kit); f._lkPend = lk.key; }   // APPEARANCES-II: the kit (`lw`) and the looks its pieces wear (`la`) ride together
       const key = `${lk.key}|${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.k},${r.d},${r.a},${r.b},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'},${r.c},${r.s},${r.u},${r.o},${r.n},${r.bg ?? 0},${r.z ?? 0},${r.nm ?? ''},${r.yd ?? 0},${r.ex ?? 0},${r.sp ?? 0},${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rt ?? -1},${r.rb ?? 0},${traitWireKey(r)}${r.wk !== undefined || r.ws !== undefined ? `,${blowWireKey(r)}` : ''}`;   // TELL8: and the wind-up's (never `wl`); AUDIT WORLD-EVENTS L5-10: and the boss's wrath and live ward (a blow the ward took moved no health, and was never sent)
       const gkey = r.gr ? `${key}|${r.gr[0]}` : key;   // GRANT3: a grant carried into another cell is another number - said again
       const sent = gkey + body.keyFor(f);   // OUTDOOR-LOOT: and the body's takes digest, so a take re-sends the record
@@ -2769,7 +2770,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // same id, a tab that woke) - theirs again: mine goes, and their record stands it here as their puppet
       const took = _adopted.get(key);
       if (took) { _adopted.delete(key); if (r.d !== 1 && !took.dead && !took._gone) letGo(took); }
-      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, ls: r.ls ?? _pupPending.get(key).ls, lw: r.lw ?? _pupPending.get(key).lw, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site, _deep: _pupPending.get(key)._deep, _quest: _pupPending.get(key)._quest, _raid: _pupPending.get(key)._raid, _camp: campTags.get(r.i) ?? _pupPending.get(key)._camp, _cp: _pupPending.get(key)._cp }); continue; }   // AUDIT ALL A1: a pending build's SPECIES is fixed at the build - a later word without `t` (or with another) neither moves it out of its class's count (an unbounded stand: a peer re-worded a pending watch as no species and stood ten more) nor lands a record of the wrong species on the build   OW6: and its camp, the newest word
+      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, ls: r.ls ?? _pupPending.get(key).ls, ...(r.lw ? null : kitWire(_pupPending.get(key))), t: _pupPending.get(key).t, _site: _pupPending.get(key)._site, _deep: _pupPending.get(key)._deep, _quest: _pupPending.get(key)._quest, _raid: _pupPending.get(key)._raid, _camp: campTags.get(r.i) ?? _pupPending.get(key)._camp, _cp: _pupPending.get(key)._cp }); continue; }   // AUDIT ALL A1: a pending build's SPECIES is fixed at the build - a later word without `t` (or with another) neither moves it out of its class's count (an unbounded stand: a peer re-worded a pending watch as no species and stood ten more) nor lands a record of the wrong species on the build   OW6: and its camp, the newest word
       if (r.d === 1 || r.t === undefined || !ENEMY_BASICS[r.t] || !r.f) continue;
       if (heldOf(from) >= PEER_PUPPETS_TOTAL_MAX) { if (site) refused.add(site); continue; }   // FOE-FORGE: every allowance together, and what I took of theirs
       if (site && (isStarSite(site) ? livePuppetsOf(from, false, false, false, false, false, true) >= WOD_STAR_PUPPETS_MAX : livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX)) { refused.add(site); continue; }   // WOD7: a shared camp's foes under their own allowance - AUDIT STARFALL C7: a fallen star's under its own, the most its law stands
@@ -2882,7 +2883,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (r.h !== undefined && f._pupQuest && !f._qHurt && p.h != null && r.h < p.h) { f._qHurt = true; _questShare?.onPuppetHurt?.(f._pupQuest, f.puppet); }   // QUEST-PARTY: the first blow I see land is the injury my copy of the quest reads (QuestResourceBehaviour's own check)
     if (r.sb && !f.entity.staffBoss) promoteStaffBoss(f.entity, { own: false, sizePct: r.sb });   // STAFF-EVENT: its owner's mini boss - its size, its yellow (its maximum is `k`)
     if (r.z === 1 && !f.entity.eliteFoe && !f.entity.champion && markedOf(f.puppet, isElitePuppet) < PEER_ELITE_PUPPETS_MAX) promoteEliteFoe(f.entity, { own: false });   // ELITE FOES: its owner's elite - the blows, the size, the glow (its maximum is `k`); FOE-FORGE: no more of them than an owner rolls
-    if (f.entity.eliteFoe && r.rl === 1) promoteRaidLeader(f.entity, { own: false, name: raidLeaderNameOf(f.mobileType) });   // RAID5: its owner's raid leader - its size, its name
+    if (f.entity.eliteFoe && r.rl === 1) promoteRaidLeader(f.entity, { own: false, name: (f._pupRaid ? null : huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))?.title) ?? raidLeaderNameOf(f.mobileType) });   // RAID5: its owner's raid leader - its size, its name; HUNTERS-MARK-II: a leader no raid tags is a hunter's named mark, by the week's name (the event clock's)
     if (f.entity.eliteFoe && r.bt) { giveBossTraits(f.entity, bossTraitsOfMask(r.bt, r.rl === 1 ? 2 : 1), { own: false }); if (r.bw === 1 && markBossWrath(f.entity)) say?.(bossWrathLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); }   // BOSS-TRAITS: its owner's traits, on an elite alone (a mask on a plain foe stands nothing); AUDIT WORLD-EVENTS L2-11: no more than an elite carries (two a raid's leader), never an exclusive pair; L2-7: its wrath said here too
     if (r.bv !== undefined && hasBossTrait(f.entity, 'warded')) { if (f.entity.bossWardShown > 0 && r.bv === 0) say?.(bossWardBrokeLine(foeTitle(f.entity, enemyDisplayName(f.mobileType)) ?? '')); f.entity.bossWardShown = r.bv / 100; }   // AUDIT WORLD-EVENTS L2-7: its ward as its owner holds it - drawn, and its break said, here too
     f._pupYield = r.yd === 1;   // REVENANT-FATE: its owner's revenant kneels...

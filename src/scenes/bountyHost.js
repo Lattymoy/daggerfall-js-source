@@ -36,6 +36,7 @@ import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bounty/bountyJ
 import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
 import { sharedClockOn } from '../systems/worldTick.js';   // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
 import { festivalBountyPaid } from '../systems/festival/festivalClient.js';   // WITCH1: a bounty paid asks a find
+import { createHuntersMark } from './huntersMark.js';   // HUNTERS-MARK: the hunter's rank and the week's named mark
 
 /** How often the host looks at the world, seconds. */
 export const BOUNTY_TICK_S = 0.5;
@@ -95,6 +96,7 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   social?: () => ({ acct:string|null, inParty:boolean, mates:Array<{acct:string, name:string, p:any, online?:boolean}> } | null),
  *   posePixel?: () => ({x:number, y:number} | null),   // the pixel my party pose says I stand on (AUDIT 28 B8)
  *   rolls?: () => number,
+ *   hunt?: { door: any, storage?: any, character: () => (string|null), saved?: () => void } | null,   // HUNTERS-MARK: the hunt's ledger, online
  * }} deps `standPack` answers `far` when the group waits at its spot (the farm, the second group's): the host names
  *   the way and asks again as the hunter closes in
  */
@@ -141,6 +143,8 @@ export function createBountyHost(deps) {
   };
   const social = () => { try { return deps.social?.() ?? null; } catch { return null; } };
   const repaint = () => { try { boardView?.repaint?.(); } catch { /* the window's own problem */ } };
+  // HUNTERS-MARK (Bounty-Boards.md 12): the rank and the named mark - their own module, its clears reported from `pay`
+  const hunt = createHuntersMark({ ...deps, sitesFor, repaint, notice: (n) => notices.push(n) });
 
   // ── save ──────────────────────────────────────────────────────────
   const reset = (rec) => {
@@ -166,7 +170,7 @@ export function createBountyHost(deps) {
 
   // ── the journal (Mac: "i also dont see the bounty in my questlog means i cant abandon it?") ──
   setBountyJournal({
-    abandon: (id) => drop(id).ok,
+    abandon: (id) => (hunt.isMark(id) ? hunt.drop(id) : drop(id)).ok,   // HUNTERS-MARK: a named mark's from its own module
     share: (id) => share(id).ok,
     canShare: (id) => !!social()?.inParty && ledger.held.some((h) => h.id === id && !h.shared),
   });
@@ -327,6 +331,8 @@ export function createBountyHost(deps) {
       nextDayIn: () => MINUTES_PER_DAY - (deps.now() % MINUTES_PER_DAY),
       inParty: () => !!social()?.inParty,
       take, drop, share,
+      // HUNTERS-MARK: the board's header (the rank) and its named mark - each read as the window draws
+      hunt: () => ({ rank: hunt.boardRank(t), mark: hunt.boardMark(t), takeMark: (id) => hunt.take(id), dropMark: (id) => hunt.drop(id) }),
       attach: (view) => { boardView = view; },
       detach: () => { boardView = null; },
     });
@@ -358,6 +364,7 @@ export function createBountyHost(deps) {
     });
     deps.say(`Bounty fulfilled: ${posting.title}. +${posting.gold} gold, ${reward.item}.`);
     festivalBountyPaid();   // WITCH1: a Witches' Festival find (nothing while it is not live)
+    hunt.cleared(id, Number.isInteger(region) ? region : null);   // HUNTERS-MARK: reported to the hunt's ledger, kept until answered
     repaint();
     return true;
   }
@@ -516,6 +523,7 @@ export function createBountyHost(deps) {
     for (const [k, id] of paidIds) if (!ledger.paid.includes(k)) paidIds.delete(k);
     partyTick(now);
     packTick(now);
+    hunt.tick(BOUNTY_TICK_S);   // HUNTERS-MARK: the book's beat and the named mark's stand
     showNextNotice();
   }
 
@@ -526,14 +534,14 @@ export function createBountyHost(deps) {
 
   return {
     openBoard, tick, take, drop, share,
-    /** The black circles, for both maps. */
-    mapMarks: () => ledger.held.map((h) => {
+    /** The black circles, for both maps - HUNTERS-MARK: the named mark's beside them. */
+    mapMarks: () => [...hunt.mapMarks(), ...ledger.held.map((h) => {
       const p = postingOf(h.id);
       return p ? { cx: p.target.px + 0.5, cy: p.target.py + 0.5, r: BOUNTY_RING_R, label: p.place ? `${p.foes} - ${p.place}` : p.foes, id: h.id,
         place: p.kind === 'dungeon', farmKey: p.farm ? p.slotKey : null } : null;   // BOUNTY-SNAP: what the Overworld's click walks to
-    }).filter(Boolean),
-    /** The quest log's rows for my bounties (the world host folds them into questBridge.questLog). */
-    questLogEntries,
+    }).filter(Boolean)],
+    /** The quest log's rows for my bounties (the world host folds them into questBridge.questLog) - and the named mark's. */
+    questLogEntries: () => [...hunt.questLogEntries(), ...questLogEntries()],
     /** BOUNTY-FARM: the farm bounties I hold - their farms stand while I do (scenes/bountyFarms.js). */
     // BOUNTY-TIER: and my party's - a helper who cannot hold a bounty of another tier still sees the farm they hunt at
     farmsWanted: () => {
@@ -555,6 +563,7 @@ export function createBountyHost(deps) {
     _ledger: () => ledger,
     _packs: () => packs,
     _reset: reset,
+    hunt,   // HUNTERS-MARK: the rank and the named mark (a test's seam, the pages' book)
   };
 }
 

@@ -16,6 +16,11 @@ import { mintDeed, mintParts } from '../../src/systems/comeSailAway/comeSailAway
 import { HULL_PRICES, HULL_NAMES } from '../../src/systems/comeSailAway/comeSailAwayHulls.js';
 import { hullBuild } from '../../src/systems/naval/navalShips.js';
 import { CREW_PER_HAND } from '../../src/systems/naval/navalBoarding.js';
+import { createCrewSignBook } from '../../src/scenes/crewSignBook.js';   // CREW-SIGNED
+import { accountCrewSigns, SESSION_KEY } from '../../src/net/accountClient.js';
+import { crewDayAt } from '../../src/net/crewSignLaw.js';
+import { CREW_SIGN_TEXT } from '../../src/systems/crewHall.js';
+import { standService, sessionStorageOf } from '../accountDb.mjs';
 
 {   // the suite's DOM, a step nearer a browser for a window that greys its presses (test/ui/naval/nav_f_ui.test.js's own)
   const proto = Node_.prototype;
@@ -52,6 +57,8 @@ function rig({ gold = 500000, csa = true, naval = true } = {}) {
     // AUDIT SHIPYARDS L6-1 (TEST THE SHAPE THE PRODUCER MINTS): navalHost.js awayOf answers her ROSTER PLACES ashore
     awayOf: (boat) => { const names = st.away.get(boat.uid) ?? new Set(); return new Set((st.hands.get(boat.uid) ?? []).flatMap((h, i) => (names.has(h.name) ? [i] : []))); },
     enlistHand: (boat, r) => { log.enlisted.push([boat.uid, r.name, r.trade]); const h = { name: r.name, role: r.trade, hall: r.id }; st.hands.set(boat.uid, [...(st.hands.get(boat.uid) ?? []), h]); return { ok: true, text: '', hand: h, raise: CREW_PER_HAND }; },
+    // CREW-SIGNED: a recruit in a hand's place, as navalHost.js swapHand answers (the hand paid off with his hall id)
+    swapHand: (boat, outName, r) => { const hs = st.hands.get(boat.uid) ?? []; const out = hs.find((x) => x.name === outName); if (!out) return { ok: false, text: 'no such hand' }; const h = { name: r.name, role: r.trade, hall: r.id }; st.hands.set(boat.uid, [...hs.filter((x) => x !== out), h]); log.enlisted.push([boat.uid, r.name, r.trade]); return { ok: true, text: '', hand: h, out }; },
     releaseHand: (boat, name) => { log.released.push([boat.uid, name]); const hs = st.hands.get(boat.uid) ?? []; const h = hs.find((x) => x.name === name); if (!h) return { ok: false, text: 'There\'s no crew member by that name aboard.' }; st.hands.set(boat.uid, hs.filter((x) => x !== h)); return { ok: true, text: '', hand: h }; },
     forgetBoat: (uid) => log.forgotBoats.push(uid),
     // AUDIT SHIPYARDS L6-7: the shipwright's model as navalHost.js yardModelOf mints it (the yard window's own shape)
@@ -332,4 +339,120 @@ test('SHIPYARDS THE DOOR: the shipmaster\'s window a third slot of the sea fight
   assert.equal(shipyardOpen(), false);
   assert.equal(closeShipyard(), false);
   assert.ok(WARM_CHUNKS.some((f) => String(f).includes('shipyardWindow.js')), 'warmed');
+});
+
+/** CREW-SIGNED: a few turns of the event loop - a release is said and not waited on. */
+const settle = async () => { for (let i = 0; i < 30; i++) await new Promise((res) => setImmediate(res)); };
+
+test('CREW-SIGNED THE HALL ONLINE (through the real account service): a sailor another player holds is not at the table; a hire asks the service first, then is made and paid - a man another holds refused, nothing paid; paid off, swapped out or his ship sold, he is back at the hall for every player; a hire the world refuses while the service answered lets go of the hold it took (mutants: the hall unread, unasked, the hold kept, the pay-off\'s, the swap\'s, the sale\'s)', async () => {
+  const S = await standService();
+  const me = await S.registered('Ysolde'), them = await S.registered('Tavin');
+  const doorOf = (who) => accountCrewSigns({ fetch: S.fetch, storage: sessionStorageOf(SESSION_KEY, who) });
+  const theirs = doorOf(them);
+  const day = crewDayAt(Date.now());
+  const r = rig();
+  r.st.day = day;
+  const host = createShipyardHost({ ...r.deps, signs: createCrewSignBook({ live: () => true, character: () => me.character, door: doorOf(me) }) });   // PIN MOVED (AUDIT HORIZONTAL C8): the book asks as the character, as every direct ask below
+  own(r, 702, 4, 'laidup');
+  const all = recruitsOf({ mapId: SITE.mapId, day, regionIndex: SITE.regionIndex });
+  assert.equal((await theirs.sign({ id: all[0].id, character: them.character })).ok, true, 'another player holds the first');
+  let m = host.model(SITE, { page: 'crew' });
+  assert.ok(m.wait, 'the hall\'s read asked');
+  assert.equal(m.recruits.length, all.length, 'not yet read');
+  await m.wait;
+  m = host.model(SITE, { page: 'crew' });
+  assert.equal(m.wait, null, 'read, and fresh');
+  assert.deepEqual(m.recruits.map((x) => x.id), all.slice(1).map((x) => x.id), 'the one another holds is not at the table');
+  const p = host.act(SITE, 'hire', 702, all[1].id);
+  assert.equal(typeof p?.then, 'function', 'online: the service answers first');
+  assert.deepEqual(r.log.enlisted, [], 'nobody signed before it does');
+  const hired = await p;
+  assert.deepEqual([hired.ok, r.log.enlisted.length, r.log.paid.length], [true, 1, 1]);
+  assert.equal((await theirs.sign({ id: all[1].id, character: them.character })).error, 'crew-taken', 'held for me');
+  const stale = await host.act(SITE, 'hire', 702, all[0].id);
+  assert.deepEqual([stale.ok, stale.text, r.log.enlisted.length, r.log.paid.length], [false, CREW_HALL_TEXT.gone, 1, 1], 'another holds him: refused, nothing paid');
+  // paid off: back at the hall
+  assert.equal(host.act(SITE, 'payoff', 702, all[1].name).ok, true);
+  await settle();
+  assert.equal((await theirs.sign({ id: all[1].id, character: them.character })).ok, true, 'paid off: theirs to sign');
+  assert.equal((await theirs.release({ id: all[1].id, character: them.character })).ok, true);
+  // the world moved while the service answered: the hire refused, the hold this ask took let go
+  const gold = r.st.gold;
+  const q = host.act(SITE, 'hire', 702, all[2].id);
+  r.st.gold = 0;
+  assert.deepEqual([(await q).ok, r.log.enlisted.length], [false, 1]);
+  await settle();
+  assert.equal((await theirs.sign({ id: all[2].id, character: them.character })).ok, true, 'the hold let go');
+  assert.equal((await theirs.release({ id: all[2].id, character: them.character })).ok, true);
+  r.st.gold = gold;
+  // swapped out: back at the hall
+  own(r, 703, 2, 'here', { hands: ['Odo'] });
+  r.st.hands.get(703)[0].hall = all[3].id;
+  assert.equal((await doorOf(me).sign({ id: all[3].id, character: me.character })).ok, true, 'Odo signed online, a hall man');
+  assert.equal((await host.act(SITE, 'hire', 703, { id: all[4].id, replace: 'Odo' })).ok, true);
+  await settle();
+  assert.equal((await theirs.sign({ id: all[3].id, character: them.character })).ok, true, 'swapped out: theirs to sign');
+  // her ship sold: her hands back at the hall
+  assert.equal((await theirs.sign({ id: all[4].id, character: them.character })).error, 'crew-taken', 'the swap held him');
+  assert.equal(host.act(SITE, 'sell', 703).ok, true);
+  await settle();
+  assert.equal((await theirs.sign({ id: all[4].id, character: them.character })).ok, true, 'her ship sold: theirs to sign');
+});
+
+test('CREW-SIGNED THE BOOK\'S REFUSALS: a service that keeps no hall (not-found) hires as before and is never asked again; a service unread refuses the hire, nothing paid; the day turned and the cap said in the hall\'s words; offline nothing is asked (mutants: the old service read as a refusal, the unread hired)', async () => {
+  const asked = [];
+  const doorOf = (answer) => ({ hall: async (q) => (asked.push(['hall', q]), answer), sign: async (q) => (asked.push(['sign', q]), answer), release: async (q) => (asked.push(['release', q]), answer) });
+  const r = rig();
+  own(r, 702, 4, 'laidup');
+  const all = recruitsOf({ mapId: SITE.mapId, day: 100, regionIndex: SITE.regionIndex });
+  const old = createCrewSignBook({ live: () => true, door: doorOf({ ok: false, error: 'not-found', status: 404 }) });
+  const h1 = createShipyardHost({ ...r.deps, signs: old });
+  const first = await h1.act(SITE, 'hire', 702, all[0].id);
+  assert.deepEqual([first.ok, r.log.enlisted.length], [true, 1], 'an older service: hired as before');
+  assert.equal(old.live(), false);
+  const second = h1.act(SITE, 'hire', 702, all[1].id);
+  assert.equal(typeof second.then, 'undefined', 'never asked again');
+  assert.deepEqual(asked.map(([k]) => k), ['sign']);
+  for (const [answer, text] of [[{ ok: false, error: 'offline' }, CREW_SIGN_TEXT.unread], [{ ok: false, error: 'server', status: 500 }, CREW_SIGN_TEXT.unread],
+    [{ ok: false, error: 'crew-day', status: 400 }, CREW_HALL_TEXT.newDay], [{ ok: false, error: 'crew-many', status: 429 }, CREW_SIGN_TEXT.many]]) {
+    const n = r.log.paid.length;
+    const h = createShipyardHost({ ...r.deps, signs: createCrewSignBook({ live: () => true, door: doorOf(answer) }) });
+    const x = await h.act(SITE, 'hire', 702, all[2].id);
+    assert.deepEqual([x.ok, x.text, r.log.paid.length], [false, text, n], answer.error);
+  }
+  asked.length = 0;
+  const off = createCrewSignBook({ live: () => false, door: doorOf({ ok: true, data: {} }) });
+  assert.deepEqual(off.taken(1, 2), { slots: new Set(), wait: null });
+  assert.deepEqual(await off.sign('1:2:3'), { ok: true, fresh: false });
+  assert.equal(await off.release('1:2:3'), false);
+  assert.deepEqual(asked, [], 'offline: nothing asked');
+});
+
+test('CREW-SIGNED THE WINDOW: a press the service answers first says the crewmaster checks the roster, takes no second press while it is out, and says the answer when it lands; the hall\'s read in flight paints the window again when it lands (mutants: the second press taken, the read never painted)', async () => {
+  const host = globalThis.document.createElement('div');
+  globalThis.document.body.append(host);
+  let release, reads = 0;
+  const acts = [];
+  const recruit = { id: '4242:100:0', name: 'Pell', gradeLabel: 'Able', trade: 'Gunner', className: 'Sailor', sex: 'male', fights: 0, boardings: 0, line: 'Aye.', fee: 90, price: 90, why: null };
+  const model = () => {
+    reads++;
+    return { page: 'crew', title: 'Yard', keeper: '', gold: 500, crewName: 'Hall', choices: [], uid: 1, ship: { label: 'The Gull' }, hands: [], room: null, fighting: false,
+      recruits: [recruit], why: null, wait: reads === 1 ? new Promise((res) => { release = res; }) : null };
+  };
+  let answer;
+  const view = mountShipyardWindow(host, { model, act: (verb, a, b) => { acts.push([verb, a, b]); return new Promise((res) => { answer = res; }); }, page: 'crew' });
+  const note = () => byClass(host, 'dfnaval-note')[0].textContent;
+  const sign = () => byClass(byClass(host, 'dfyard-row').find((x) => x.getAttribute('data-recruit') === recruit.id), 'dfnaval-take')[0];
+  const before = reads;
+  release();
+  await settle();
+  assert.equal(reads, before + 1, 'painted again as the read landed');
+  sign().dispatch('click', { stopPropagation() {} });
+  assert.equal(note(), CREW_SIGN_TEXT.asking);
+  sign().dispatch('click', { stopPropagation() {} });
+  assert.equal(acts.length, 1, 'no second press while it is out');
+  answer({ ok: false, text: CREW_HALL_TEXT.gone });
+  await settle();
+  assert.equal(note(), CREW_HALL_TEXT.gone);
+  view.unmount();
 });

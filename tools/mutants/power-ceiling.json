@@ -1,0 +1,715 @@
+[
+  {
+    "name": "POWER-CEILING-a-blow-top-raised",
+    "file": "src/systems/powerCeiling.js",
+    "old": "export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 200,",
+    "new": "export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 210,",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-guard-top-raised",
+    "file": "src/systems/powerCeiling.js",
+    "old": "export const GUARD_TOPS = Object.freeze({ loot: 55,",
+    "new": "export const GUARD_TOPS = Object.freeze({ loot: 60,",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-room-past-the-product",
+    "file": "src/systems/powerCeiling.js",
+    "old": "  const take = pct <= room + SLACK ? pct : room;",
+    "new": "  const take = pct;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-price-cut",
+    "file": "src/systems/powerCeiling.js",
+    "old": "  const take = pct <= room + SLACK ? pct : room;",
+    "new": "  const take = pct <= room + SLACK ? Math.max(0, pct) : room;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-product-not-kept",
+    "file": "src/systems/powerCeiling.js",
+    "old": "_blow.k = k * (1 + take / 100);",
+    "new": "_blow.k = k;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-guard-room-past-the-share",
+    "file": "src/systems/powerCeiling.js",
+    "old": "  const take = less <= room + SLACK ? less : room;",
+    "new": "  const take = less;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-share-not-kept",
+    "file": "src/systems/powerCeiling.js",
+    "old": "_guard.k = k * (1 - take / 100);",
+    "new": "_guard.k = k;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-blow-runner-not-opening",
+    "file": "src/systems/entityMods.js",
+    "old": "  const was = openBlowCeiling();",
+    "new": "  const was = null;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-blow-runner-left-open",
+    "file": "src/systems/entityMods.js",
+    "old": "  } finally { closeBlowCeiling(was); }",
+    "new": "  } finally { void was; }",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-door-not-opening",
+    "file": "src/characters/playerEntity.js",
+    "old": "  const was = openGuardCeiling();",
+    "new": "  const was = null;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-door-left-open",
+    "file": "src/characters/playerEntity.js",
+    "old": "  } finally { closeGuardCeiling(was); }",
+    "new": "  } finally { void was; }",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-sigil-not-asking",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "  const pct = blowRoom(sigilPercent(weapon.sigil, _renown), 'sigil');",
+    "new": "  const pct = (sigilPercent(weapon.sigil, _renown));",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-sets-not-asking",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (pct > 0) pct = blowRoom(pct, 'sets');   // POWER-CEILING: the sets'",
+    "new": "  if (pct > 0) pct = (pct);   // POWER-CEILING: the sets'",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-loot-not-asking",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (pct > 0) pct = blowRoom(pct, 'loot');   // POWER-CEILING: the loot's",
+    "new": "  if (pct > 0) pct = (pct);   // POWER-CEILING: the loot's",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-sky-not-asking",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament')",
+    "new": "(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }))",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-mastery-not-asking",
+    "file": "src/systems/weaponMastery.js",
+    "old": "  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery');",
+    "new": "  const pct = (weaponPastPct(weapon, attacker, target));",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-paths-blow-not-asking",
+    "file": "src/systems/martialPowers.js",
+    "old": "  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial');",
+    "new": "  const pct = (martialBlowPct(attacker, target, info));",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-hex-not-asking",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "d *= 1 - guardRoom(hex.less, 'loot') / 100;",
+    "new": "d *= 1 - hex.less / 100;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-bedrock-not-asking",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "d *= 1 - guardRoom(bed.less * bedrockStacks(now), 'loot') / 100;",
+    "new": "d *= 1 - (bed.less * bedrockStacks(now)) / 100;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-last-stand-not-asking",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "d *= 1 - guardRoom(last.less, 'loot') / 100;",
+    "new": "d *= 1 - last.less / 100;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-unbroken-not-asking",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
+    "new": "Math.floor((dmg * (100 - UNBROKEN_LESS)) / 100)",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-hold-the-line-not-asking",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "    const owed = (d * guardRoom(hold.less, 'sets')) / 100 + _holdOwed;",
+    "new": "    const owed = (d * hold.less) / 100 + _holdOwed;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-gearward-not-asking",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "        d -= Math.round((d * guardRoom(gear.lighter, 'sets')) / 100);",
+    "new": "        d -= Math.round((d * gear.lighter) / 100);",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-skys-guard-not-asking",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "-guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament')",
+    "new": "-(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)))",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-paths-guard-not-asking",
+    "file": "src/systems/martialPowers.js",
+    "old": "  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed;",
+    "new": "  const owed = (dmg * pct) / 100 + _s.guardOwed;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-wardens-aegis-not-asking",
+    "file": "src/systems/arcanePowers.js",
+    "old": "  const owed = (dmg * guardRoom(N.livingAegis.lighter, 'arcane')) / 100 + _s.guardOwed;",
+    "new": "  const owed = (dmg * N.livingAegis.lighter) / 100 + _s.guardOwed;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-bound-in-silk-at-150",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "{ more: [60, 140] },",
+    "new": "{ more: [60, 150] },",
+    "tests": [
+      "test/combat/powerceiling.test.js",
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-last-stand-at-30",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "'the-warden': Object.freeze({ name: 'Last Stand', kind: 'laststand', below: 25, less: 25,",
+    "new": "'the-warden': Object.freeze({ name: 'Last Stand', kind: 'laststand', below: 25, less: 30,",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-tier-dropped-from-the-measure",
+    "file": "tools/powerCeiling.mjs",
+    "old": "  'bound-in-silk': (v) => v.more,\n",
+    "new": "",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-rung-added",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const RARITY_ORDER = Object.freeze(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded']);",
+    "new": "export const RARITY_ORDER = Object.freeze(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded', 'mythic']);",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-legendary-top-raised",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  damage: Object.freeze({ magic: [5, 12],  rare: [10, 25], legendary: [20, 40] }),",
+    "new": "  damage: Object.freeze({ magic: [5, 12],  rare: [10, 25], legendary: [20, 41] }),",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-rare-band-past-the-top",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  damage: Object.freeze({ magic: [5, 12],  rare: [10, 25], legendary: [20, 40] }),",
+    "new": "  damage: Object.freeze({ magic: [5, 12],  rare: [10, 45], legendary: [20, 40] }),",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-wire-reading-the-rare-band",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const max = AFFIX_RANGES[a.id].legendary[1];",
+    "new": "  const max = AFFIX_RANGES[a.id].rare[1];",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-walk-one-high",
+    "file": "tools/powerCeiling.mjs",
+    "old": "a.value <= top)) out.push(",
+    "new": "a.value <= top + 1)) out.push(",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-regalia-line-past-the-top",
+    "file": "src/systems/aetheric.js",
+    "old": "const armor = () => ({ id: 'armor', value: top('armor') });",
+    "new": "const armor = () => ({ id: 'armor', value: top('armor') + 1 });",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-hourlocks-shock-past-the-top",
+    "file": "src/systems/gilded.js",
+    "old": "    line('elemental', 10, 'shock'),\n  ]),\n  power: HOUR_TOLLS,",
+    "new": "    line('elemental', 11, 'shock'),\n  ]),\n  power: HOUR_TOLLS,",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-an-artifact-read-as-magic",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (item.artifact) return 'artifact';",
+    "new": "  if (item.artifact && false) return 'artifact';",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-perfect-diamond-past-the-top",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  diamond: Object.freeze({ weapon: graded('damage', null, [2, 4, 6, 9, 12]),",
+    "new": "  diamond: Object.freeze({ weapon: graded('damage', null, [2, 4, 6, 9, 41]),",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-the-gems-cap-from-the-legendary-band",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const gemPieceCap = (id) => AFFIX_RANGES[id]?.rare[1] ?? 0;",
+    "new": "export const gemPieceCap = (id) => AFFIX_RANGES[id]?.legendary[1] ?? 0;",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-ruhns-fire-past-50",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "tier(2, 'burning-gate', 'The Burning Gate', { fire: [15, 45], sear: [2, 6] },",
+    "new": "tier(2, 'burning-gate', 'The Burning Gate', { fire: [15, 51], sear: [2, 6] },",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "POWER-CEILING-a-recovery-shorter-than-any",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "tier(4, 'gearward', 'Gearward', { lighter: [15, 30], recover: [18, 12] },",
+    "new": "tier(4, 'gearward', 'Gearward', { lighter: [15, 30], recover: [18, 9] },",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-pace-x2",
+    "file": "src/systems/sigil/setReach.js",
+    "old": "export const CATCH_UP_MULT = 3;",
+    "new": "export const CATCH_UP_MULT = 2;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-best-rank-a-reach",
+    "file": "src/systems/sigil/setReach.js",
+    "old": "sorted[REACH_PIECES - 1] : -1;",
+    "new": "sorted[0] : -1;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-record-never-written",
+    "file": "src/systems/sigil/setReach.js",
+    "old": "    if (now > recordedReach(id)) _reach[id] = now;",
+    "new": "    if (now < recordedReach(id)) _reach[id] = now;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-split-paid-fast",
+    "file": "src/systems/sigil/setReach.js",
+    "old": "  if (was + fast <= to) return fast;",
+    "new": "  return fast;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-fast-past-the-reach",
+    "file": "src/systems/sigil/setReach.js",
+    "old": "  if (was >= to) return gain;",
+    "new": "  if (was >= to) return gain * CATCH_UP_MULT;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-record-left-out-of-the-save",
+    "file": "src/systems/sigil/setReach.js",
+    "old": "  getSaveData: () => ({ reach: { ..._reach } }),",
+    "new": "  getSaveData: () => ({ reach: {} }),",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-a-stage-past-ascendant-taken",
+    "file": "src/systems/sigil/setReach.js",
+    "old": "m[id] >= 0 && m[id] <= STAGE_MAX) out[id] = m[id];",
+    "new": "m[id] >= 0 && m[id] <= STAGE_MAX + 1) out[id] = m[id];",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-every-piece-drinking-whole",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };",
+    "new": "  const drink = () => xp;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-every-piece-drinking-fast",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };",
+    "new": "  const drink = () => xp * CATCH_UP_MULT;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-a-rise-not-recorded",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  if (awake) noteReach(wornSetRanks(entity));   // SET-CATCHUP: a rise",
+    "new": "  if (awake) void 0;   // SET-CATCHUP: a rise",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-said-for-a-piece-at-the-reach",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "st.heldPiece && sigilRank(st.heldPiece.sigil) < reach ?",
+    "new": "st.heldPiece && sigilRank(st.heldPiece.sigil) <= reach ?",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-tooltip-unsaid",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "${v.catchUp ? `, ${catchUpText(v.catchUp)}` : ''}`;   // SET-CATCHUP",
+    "new": "${''}`;   // SET-CATCHUP",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-card-unsaid",
+    "file": "src/ui/setCard.js",
+    "old": "${v.catchUp ? ` (${catchUpText(v.catchUp, next)})` : ''}",
+    "new": "${''}",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js",
+      "test/systems/set5_ui.test.js"
+    ]
+  },
+  {
+    "name": "SET-CATCHUP-the-pace-said-wrong",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "c.name === next ? `${c.mult}x XP`",
+    "new": "c.name !== next ? `${c.mult}x XP`",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D1-the-pack-counted-again",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "  return new Map([...wornSetPieces(entity)].map(([id, pieces]) => [id, pieces.map((p) => sigilRank(p.sigil))]));",
+    "new": "  const m = new Map(); for (const it of entity?.items ?? []) { const id = setIdOf(it); if (id) m.set(id, [...(m.get(id) ?? []), sigilRank(it.sigil)]); } return m;",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D4-a-registrys-own-top-not-read",
+    "file": "src/systems/powerCeiling.js",
+    "old": "  const top = registry == null ? BLOW_MOST : 1 + (BLOW_TOPS[registry] ?? 0) / 100;",
+    "new": "  const top = BLOW_MOST;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D4-a-guards-own-top-not-read",
+    "file": "src/systems/powerCeiling.js",
+    "old": "  const least = registry == null ? GUARD_LEAST : 1 - (GUARD_TOPS[registry] ?? 0) / 100;",
+    "new": "  const least = GUARD_LEAST;",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D4-a-registrys-own-product-not-kept",
+    "file": "src/systems/powerCeiling.js",
+    "old": " if (registry != null) _blow.per[registry] = own * (1 + take / 100); }",
+    "new": " }",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D4-a-guards-own-share-not-kept",
+    "file": "src/systems/powerCeiling.js",
+    "old": " if (registry != null) _guard.per[registry] = own * (1 - take / 100); }",
+    "new": " }",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D4-the-loot-asking-unnamed",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "pct = blowRoom(pct, 'loot');",
+    "new": "pct = blowRoom(pct);",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D4-the-aegis-asking-as-the-martial-path",
+    "file": "src/systems/arcanePowers.js",
+    "old": "guardRoom(N.livingAegis.lighter, 'arcane')",
+    "new": "guardRoom(N.livingAegis.lighter, 'martial')",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D2-the-sky-spends-its-raw-blow",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament');",
+    "new": "  const pct = blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }); blowRoom(pct, 'firmament');",
+    "tests": [
+      "test/combat/powerceiling_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D2-the-sky-spends-its-raw-guard",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament');",
+    "new": "  const pct = ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0); guardRoom(-pct, 'firmament');",
+    "tests": [
+      "test/combat/powerceiling_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D2-mastery-spends-its-raw-blow",
+    "file": "src/systems/weaponMastery.js",
+    "old": "  const pct = blowRoom(weaponPastPct(weapon, attacker, target), 'mastery');",
+    "new": "  const pct = weaponPastPct(weapon, attacker, target); blowRoom(pct, 'mastery');",
+    "tests": [
+      "test/combat/powerceiling_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D2-the-paths-spend-their-raw-blow",
+    "file": "src/systems/martialPowers.js",
+    "old": "  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial');",
+    "new": "  const pct = martialBlowPct(attacker, target, info); blowRoom(pct, 'martial');",
+    "tests": [
+      "test/combat/powerceiling_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D2-the-paths-spend-their-raw-guard",
+    "file": "src/systems/martialPowers.js",
+    "old": "  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed;",
+    "new": "  guardRoom(pct, 'martial'); const owed = (dmg * pct) / 100 + _s.guardOwed;",
+    "tests": [
+      "test/combat/powerceiling_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D2-the-aegis-spends-its-raw-guard",
+    "file": "src/systems/arcanePowers.js",
+    "old": "  const owed = (dmg * guardRoom(N.livingAegis.lighter, 'arcane')) / 100 + _s.guardOwed;",
+    "new": "  guardRoom(N.livingAegis.lighter, 'arcane'); const owed = (dmg * N.livingAegis.lighter) / 100 + _s.guardOwed;",
+    "tests": [
+      "test/combat/powerceiling_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D2-unbroken-spends-its-raw-half",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
+    "new": "Math.floor((dmg * (100 - UNBROKEN_LESS + 0 * guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
+    "tests": [
+      "test/combat/powerceiling_rooms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D3-an-eighth-rung-minted",
+    "file": "src/systems/questlines/qlRewards.js",
+    "old": "    if (isNamed) { item.name = named.name; item.qlNamed = true; }",
+    "new": "    if (isNamed) { item.name = named.name; item.qlNamed = true; item.rarity = 'mythic'; }",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D8-prismatic-ward-past-40",
+    "file": "src/systems/arcanePaths.js",
+    "old": "  prismaticWard: Object.freeze({ seconds: 30, chance: 40 }),",
+    "new": "  prismaticWard: Object.freeze({ seconds: 30, chance: 45 }),",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D8-opening-strike-past-30",
+    "file": "src/systems/martialPaths.js",
+    "old": "  openingStrike: Object.freeze({ pct: 30 }),",
+    "new": "  openingStrike: Object.freeze({ pct: 35 }),",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D8-absolution-sooner-than-any-today",
+    "file": "src/systems/arcanePaths.js",
+    "old": "  absolution: Object.freeze({ below: 0.3, heal: 25, recover: 180 }),",
+    "new": "  absolution: Object.freeze({ below: 0.3, heal: 25, recover: 60 }),",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D8-a-path-number-with-no-role",
+    "file": "src/systems/arcanePaths.js",
+    "old": "  bloodBoil: Object.freeze({ below: 0.3 }),",
+    "new": "  bloodBoil: Object.freeze({ below: 0.3, surge: 9 }),",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D8-a-weapon-channel-raised",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  weaponDmg: def('combat', 30,",
+    "new": "  weaponDmg: def('combat', 35,",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D8-the-skys-whole-blow-raised",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const BLOW_TOTAL_CAP = 50;",
+    "new": "export const BLOW_TOTAL_CAP = 60;",
+    "tests": [
+      "test/combat/powerceiling_walk.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D6-a-german-pace-in-the-english-line",
+    "file": "src/systems/sigil/sigilSets.js",
+    "old": "`${c.mult}x XP to ${c.name}`",
+    "new": "`${c.mult}x EP bis ${c.name}`",
+    "tests": [
+      "test/systems/sigil/setcatchup.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D7-mastery-read-at-the-raw-skill",
+    "file": "tools/powerCeiling.mjs",
+    "old": "Math.round((EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP) *",
+    "new": "Math.round((200 - SKILL_SOFT_CAP) *",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HORIZONTAL-D-the-sets-top-a-true-concealment-broken-by-a-blow",
+    "file": "src/systems/concealment.js",
+    "old": "export const NORMAL_POWER_CONCEALMENTS = Object.freeze(['chameleonNormal', 'invisNormal', 'shadeNormal']);",
+    "new": "export const NORMAL_POWER_CONCEALMENTS = Object.freeze(['chameleonNormal', 'invisNormal', 'shadeNormal', 'invisTrue']);",
+    "tests": [
+      "test/combat/powerceiling.test.js"
+    ]
+  }
+]

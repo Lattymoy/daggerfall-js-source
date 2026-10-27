@@ -260,8 +260,8 @@
   {
     "name": "INTA-the-craft-upgraded",
     "file": "server-account/src/judge.js",
-    "old": "      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)));",
-    "new": "      && true;",
+    "old": "      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)))\n",
+    "new": "      && true\n",
     "tests": [
       "test/server/int2_judge.test.js"
     ]

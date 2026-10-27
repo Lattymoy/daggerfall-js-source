@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { SHIP_TOUGHNESS, PLAYER_CREW_TOUGHNESS, playerBatteryWeight, shipBatteryWeight, setShipStanding, setGalleonStanding, hullBuild, MOD_SMALL_SHIP_BUILD, GUNS, HULL, SHIP_CLASSES, batteryOf, classById } from '../../../src/systems/naval/navalShips.js';
+import { SHIP_TOUGHNESS, PLAYER_CREW_TOUGHNESS, playerBatteryWeight, shipBatteryWeight, setShipStanding, setGalleonStanding, hullBuild, MOD_SMALL_SHIP_BUILD, GUNS, HULL, SHIP_CLASSES, batteryOf, batteriesOf, classById } from '../../../src/systems/naval/navalShips.js';
 import { ballMen, playerMen, shotDamage, createShipDamage, HOLED_BONUS, WATERLINE_BAND } from '../../../src/systems/naval/navalDamage.js';
 import { fightingPower, classPower, strikeTime, hitShare, layMin, rangeOfHull, TURN_PER_VOLLEY } from '../../../src/systems/naval/navalAI.js';
 import { volleyLaunches, reloadSeconds } from '../../../src/systems/naval/navalGunnery.js';
@@ -75,6 +75,7 @@ function emptying(hull, cls) {
 test('CREW-HOLD measured, on strikeTime\'s own terms: every ship of the line\'s fire leaves a player\'s galleon and Carrack their crews when their hulls are gone - a brigantine takes a galleon\'s men in 292 s and her hull in 176 (at SHIP_TOUGHNESS her men went in 146); a swivel boat\'s balls still thin a crew first, its trade, at half the pace (mutants: the toughness)', () => {
   for (const hull of [HULL.SmallShip, HULL.Carrack]) {
     for (const cls of SHIP_CLASSES) {
+      if (!batteriesOf(cls.hull).length) continue;   // PIN MOVED (FISH-BOATS): a ship of the line's fire - a Fishing Skiff carries no gun
       const t = emptying(hull, cls);
       if (cls.hull === HULL.LargeBoat) assert.ok(t.crew < t.timber, `${cls.id}'s swivels on hull ${hull}: her men first (${t.crew.toFixed(0)} s against ${t.timber.toFixed(0)})`);
       else assert.ok(t.crew > t.timber * 1.5, `${cls.id} on hull ${hull}: her crew outlasts her hull (${t.crew.toFixed(0)} s against ${t.timber.toFixed(0)})`);

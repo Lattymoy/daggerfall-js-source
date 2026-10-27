@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-27 - AUDIT HORIZONTAL.** The owner: *"Audit this"*, of pull request #1334 - the horizontal progression
+(CRAFT-HALL, MASTER-ART, HUNTERS-MARK, MARKS-OF-MASTERY, POWER-CEILING, APPEARANCES, SEA-OPEN and the PLAIN-TEXT law).
+Seven cold lanes on a frozen snapshot (37a7bd3a0), each finding proven on the real code. Paid: a Veil party took a
+member who had left the ship (C1); parallel crew asks signed past 24 a day (C2); a Master's work judged against today's
+tables (B1); an older build dropping a Master's work it held (B7); a quay tow through land and a ship under way giving
+the quay up (C3, C10); the composite cut falling on the last registry asked (D4); clears past 48 a day dropped (F3).
+Every one fixed and pinned red, its mutant record dead, or left and said. Record: `audits/Audit-Horizontal.md`.
+
 **2026-10-27 - AUDIT RPT1026.** The owner: *"Audit this"*, of FIELD BUGS 2026-10-26r (the 293 private reports, 100
 fixed in twelve lanes). Thirteen cold lanes at the batch head (2dc8f31a2), one for each fixing lane and one for the
 record and the integration, each finding proven on the real code; 68 found. Paid: the shared chest's window let a Use, a

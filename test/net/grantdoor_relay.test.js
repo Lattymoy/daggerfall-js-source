@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeRoom, fakeRooms } from '../fakeRoom.mjs';
-import { GROUND_LAW, GRANT_HELLO_LAW, GRANT_HELLO_LAW_WIRE_MAX, GRANT_OLD_REASON, CLOSE_POLICY, parseClient, cellRoomOfWire, PIXEL_UNITS } from '../../src/net/wire.js';
+import { GROUND_LAW, GRANT_HELLO_LAW, GRANT_HELLO_LAW_WIRE_MAX, GRANT_OLD_REASON, LOOT_HELLO_LAW, CLOSE_POLICY, parseClient, cellRoomOfWire, PIXEL_UNITS } from '../../src/net/wire.js';
 import { RELAY_CFG_KEYS, RELAY_INTERNAL_CFG, RELAY_CFG_TTL_MS, parseRelayCfgCommand } from '../../src/net/relayCfg.js';
 import { openGrantMeasure, GRANT_MEASURE_SIG_HEADER, GRANT_RELAY_READER } from '../../src/net/grantMeasure.js';
 import { foeHealthBound } from '../../src/net/foeBounds.js';
@@ -16,7 +16,7 @@ const { subtle } = globalThis.crypto;
 const quiet = async (fn) => { const w = console.warn, l = console.log; console.warn = () => {}; console.log = () => {}; try { return await fn(); } finally { console.warn = w; console.log = l; } };
 const P0 = { x: 402 * PIXEL_UNITS + 100, y: 60, z: (499 - 151) * PIXEL_UNITS + 100, yaw: 0, pitch: 0 };
 const CELL = cellRoomOfWire(P0.x, P0.z);
-const CURRENT = { gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1 };   // PIN MOVED (LEASE1, net/roomLease.js): a current build hands its hub's lease on too - a foes cell is a lease room
+const CURRENT = { gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1, ll: LOOT_HELLO_LAW };   // PIN MOVED (LEASE1, net/roomLease.js): a current build hands its hub's lease on too - a foes cell is a lease room. PIN MOVED (LOOT-DOOR, AUDIT HORIZONTAL B7): and says the loot it reads - one that did not would ask the hub for the loot door
 
 test('GRANT-DOOR THE WIRE: a hello says `gv` 1 to GRANT_HELLO_LAW_WIRE_MAX, any other value read as none (never refused for it); the setting is `grantDoor`, on or off; the refusal\'s reason fits a WebSocket close (mutants: the field dropped; the range)', () => {
   const hello = (gv) => parseClient(JSON.stringify({ t: 'hello', id: 'mac-0001', secret: 'secret-of-mac-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 0, items: [] }, pose: null, gv }), { hasHello: false });
