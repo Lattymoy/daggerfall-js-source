@@ -47,7 +47,7 @@ const host = (o) => ({ captainLedger: { isCharted: () => false, chartedCount: ()
 const TOWN = { mapId: countryPlaceId(1234), name: 'Ingmik', px: 1600, py: -420, type: T.TownHamlet, region: 64, location: -900, w: 2, h: 2 };
 const PORT = { mapId: 0x24180123 >>> 0, name: 'Dawnstar', px: 1700, py: -600, type: T.TownCity, region: 64, location: -800, w: 4, h: 4, port: true };
 
-test('BAY-LEFT-MAPS C3 A PLACE FOUND, NOT STANDING YET: its summary is its row\'s - id, name, region, location, type - known by the ids the pixel could hold, nothing stood to answer it; its location is stood the first time a journey reads it, once; its rect its grid\'s until then (mutants: the index alone as before; stood to answer; the location stood every read; the found law skipped)', () => {
+test('BAY-LEFT-MAPS C3 A PLACE FOUND, NOT STANDING YET: its summary is its row\'s - id, name, region, location, type - known by the ids the pixel could hold, nothing stood to answer it; its location is stood the first time a journey reads it, once; its rect its grid\'s until then (mutants: the index alone as before; stood to answer; the location stood every read; the found law skipped; the row\'s own find unchecked)', () => {
   const p = placesOf([TOWN, PORT]);
   const mp = createMapPlaces(host(p));
   assert.equal(mp.tvPlaceSummary(TOWN.px, TOWN.py), null, 'never found: no summary');
@@ -66,13 +66,26 @@ test('BAY-LEFT-MAPS C3 A PLACE FOUND, NOT STANDING YET: its summary is its row\'
   const again = mp.tvPlaceSummary(TOWN.px, TOWN.py);
   assert.equal(again.loc, loc, 'and the index\'s from then on');
   assert.equal(again.locationType, T.TownHamlet);
+  // the pixel could hold two places (an Arena place under a capital's slice, say) and the one found is not the one the build
+  // stands there: no summary - the row's own id is the one that must be found
+  const OTHER = { ...TOWN, mapId: countryPlaceId(4321), px: 1610, py: -420, name: 'Elsewhere' };
+  const q = placesOf([OTHER]);
+  q.pq.idsOnPixel = (px, py) => (px === OTHER.px && py === OTHER.py ? [OTHER.mapId, countryPlaceId(9999)] : []);
+  discoverLocation(countryPlaceId(9999), {});
+  assert.equal(createMapPlaces(host(q)).tvPlaceSummary(OTHER.px, OTHER.py), null, 'another id of the pixel found: not this place');
+  discoverLocation(OTHER.mapId, {});
+  assert.equal(createMapPlaces(host(q)).tvPlaceSummary(OTHER.px, OTHER.py)?.name, 'Elsewhere', 'its own found: its summary');
 });
 
-test('BAY-LEFT-MAPS C3 A QUEST\'S DIAMOND: a place a quest names past the Bay is its summary found or not (`named`), and the press reads its key west and north of the Bay\'s corner - the host\'s and the marks\' (mutants: named unread; the key\'s minus unread)', () => {
+test('BAY-LEFT-MAPS C3 A QUEST\'S DIAMOND: a place a quest names past the Bay is its summary found or not (`named`), and the press reads its key west and north of the Bay\'s corner - the host\'s and the marks\' (mutants: named unread; the index arm\'s named unread; the key\'s minus unread; a plate over a pending place reads its location)', () => {
   const p = placesOf([{ ...TOWN, px: -150, py: -40 }]);
   const mp = createMapPlaces(host(p));
   assert.equal(mp.tvPlaceSummary(-150, -40), null, 'unfound');
   assert.equal(mp.tvPlaceSummary(-150, -40, true)?.name, 'Ingmik', 'named by the quest');
+  const loc = mp.tvPlaceSummary(-150, -40, true).loc;   // a journey reads it: it stands
+  assert.ok(loc && p.index.get('-150,-40') === loc, 'read, it stands');
+  assert.equal(mp.tvPlaceSummary(-150, -40), null, 'standing, still unfound');
+  assert.equal(mp.tvPlaceSummary(-150, -40, true)?.loc, loc, 'standing, named by the quest: the index\'s place');
   const W = hostText('src/scenes/world.js');
   assert.match(W, /const qp = \/\^quest:\(-\?\\d\+\),\(-\?\\d\+\)\$\/\.exec\(key\);/);
   assert.match(W, /const plate = qp \? \{ summary: tvPlaceSummary\(Number\(qp\[1\]\), Number\(qp\[2\]\), true\) \} :/);
@@ -80,7 +93,7 @@ test('BAY-LEFT-MAPS C3 A QUEST\'S DIAMOND: a place a quest names past the Bay is
   assert.match(W, /const r = summary\.lightRect\?\.\(\) \?\? locationWorldRect\(summary\.loc, summary\.pixel\.x, summary\.pixel\.y\);/, 'a plate over a place not standing yet reads no location');
 });
 
-test('BAY-LEFT-MAPS C3 TV5\'S FAR PLATES: the Bay\'s towns gathered once (the Bay\'s alone, never a place past it the index held then), and past the Bay a near query - the registry\'s towns in the edge\'s circle (a capital once, by its centre) and the countryside\'s the roads laid - asked each time (mutants: the snapshot back; the capital\'s every slice; the countryside unread; the registry read once for good)', () => {
+test('BAY-LEFT-MAPS C3 TV5\'S FAR PLATES: the Bay\'s towns gathered once (the Bay\'s alone, never a place past it the index held then), and past the Bay a near query - the registry\'s towns in the edge\'s circle (a capital once, by its centre) and the countryside\'s the roads laid - asked each time (mutants: the snapshot back; the Bay\'s gathered with what stood past it; the capital\'s every slice; the countryside unread; the registry read once for good; the edge\'s circle held to the Bay)', () => {
   const index = new Map([['500,250', { name: 'Bayton', mapTableData: { mapId: 250500, locationType: T.TownCity } }], ['1601,-420', stoodLoc(TOWN)]]);
   let gen = 1;
   const listed = [
@@ -89,6 +102,7 @@ test('BAY-LEFT-MAPS C3 TV5\'S FAR PLATES: the Bay\'s towns gathered once (the Ba
     { mapId: capitalPlaceId(0, 0), px: 2069, py: 658, type: T.TownCity, name: 'Imperial City' },
     { mapId: capitalPlaceId(0, 3), px: 2070, py: 658, type: T.TownCity, name: 'Market District' },
     { mapId: 250501, px: 501, py: 250, type: T.TownCity, name: 'Bay row' },
+    { mapId: countryPlaceId(77), px: 1005, py: 10, type: T.TownHamlet, name: 'Over the edge' },
   ];
   const worldPlaces = { generation: () => gen, all: () => listed, byMapId: () => null };
   const mp = createMapPlaces(host({ index, worldPlaces }));
@@ -96,12 +110,13 @@ test('BAY-LEFT-MAPS C3 TV5\'S FAR PLATES: the Bay\'s towns gathered once (the Ba
   assert.deepEqual(mp.tvFarSettlements({ x: 500, y: 250 }).map((t) => [t.x, t.y]), [[500, 250]], 'on the Bay: the Bay\'s own, gathered once - never the place past the Bay the index held');
   assert.deepEqual(mp.tvFarSettlements({ x: 1580, y: -430 }).map((t) => [t.x, t.y]), [[500, 250], [1569, -430], [1590, -430]], 'Solitude in the circle, a village the roads laid; Dawnstar and the dungeon not');
   assert.deepEqual(mp.tvFarSettlements({ x: 2060, y: 650 }).map((t) => [t.x, t.y]), [[500, 250], [2069, 658]], 'the Imperial City once, by its centre');
+  assert.deepEqual(mp.tvFarSettlements({ x: 990, y: 10 }).map((t) => [t.x, t.y]), [[500, 250], [1005, 10]], 'on the Bay by its edge: the edge\'s circle reaches past it');
   listed.push({ mapId: 999999, px: 1700, py: -590, type: T.TownHamlet, name: 'New' });
   gen = 2;
   assert.deepEqual(mp.tvFarSettlements({ x: 1700, y: -590 }).map((t) => [t.x, t.y]), [[500, 250], [1700, -600], [1700, -590]], 'the registry moved: read again');
 });
 
-test('BAY-LEFT-MAPS C11 THE CARRIAGE TOWNS BY THEIR OWN KEY: a Bay town by its pixel id (DFU\'s mask); a walled city past the Bay by its whole id, found where the registry stands it; a countryside id never read as another pixel\'s place (mutants: every id the Bay\'s pixel id; the stood place\'s id unchecked)', async () => {
+test('BAY-LEFT-MAPS C11 THE CARRIAGE TOWNS BY THEIR OWN KEY: a Bay town by its pixel id (DFU\'s mask); a walled city past the Bay by its whole id, found where the registry stands it; a countryside id never read as another pixel\'s place (mutants: every id the Bay\'s pixel id; a Bay key read off the registry; the stood place\'s id unchecked)', async () => {
   const { latchModLoaded } = await import('../../src/systems/modSettings.js');
   const { IMMERSIVE_TRAVEL_VENDOR } = await import('../../src/systems/immersiveTravel.js');
   latchModLoaded(IMMERSIVE_TRAVEL_VENDOR, true);
@@ -127,7 +142,7 @@ test('BAY-LEFT-MAPS C11 THE CARRIAGE TOWNS BY THEIR OWN KEY: a Bay town by its p
   assert.equal(createMapPlaces(host({ index })).carriageTown(bayId), false, 'no carriages without the mod');
 });
 
-test('BAY-LEFT-MAPS C10 THE JUNCTION MAP\'S DOTS: on the Bay its row and DFU\'s discovery law, as it read; past the Bay a place found there - its dot drawn, its type its row\'s, nothing stood (mutants: the dots past the Bay unread)', () => {
+test('BAY-LEFT-MAPS C10 THE JUNCTION MAP\'S DOTS: on the Bay its row and DFU\'s discovery law, as it read; past the Bay a place found there - its dot drawn, its type its row\'s, nothing stood (mutants: the dots past the Bay unread; the host\'s read held to the Bay)', () => {
   const p = placesOf([TOWN]);
   const mp = createMapPlaces(host(p));
   assert.equal(mp.junctionPlaceAt(TOWN.px, TOWN.py), null, 'never found');

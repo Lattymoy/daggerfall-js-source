@@ -314,8 +314,8 @@
   {
     "name": "AUDIT-TESA-A2-3-summary-undiscovered",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "return loc?.name && id && hasDiscoveredLocationId(id) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
-    "new": "return loc?.name && id ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
+    "old": "return loc.name && id && (named || hasDiscoveredLocationId(id)) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
+    "new": "return loc.name && id ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
     "tests": [
       "test/audit_tesa.test.js"
     ]

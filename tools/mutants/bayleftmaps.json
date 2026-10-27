@@ -245,5 +245,199 @@
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
+  },
+  {
+    "name": "BLM-C3-the-index-alone-as-before",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      return row?.name && (named || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;",
+    "new": "      return null;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a place past the Bay is a summary only once its pixel has built (a booked passage there never resumes after a load, a port found in an earlier session leaves its masters' lists, a far plate and a quest's diamond are nothing)"
+  },
+  {
+    "name": "BLM-C3-stood-to-answer",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    let stood = null;\n    const rect = locationWorldRect(",
+    "new": "    let stood = provinceQuestPlaces?.standAt(px, py) ?? null;\n    const rect = locationWorldRect(",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a list's every summary stands its location - the build's 24-152 ms a place"
+  },
+  {
+    "name": "BLM-C3-the-location-stood-every-read",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      get loc() { return (stood ??= locationIndex.get(key) ?? provinceQuestPlaces?.standAt(px, py) ?? null); },",
+    "new": "      get loc() { return provinceQuestPlaces?.standAt(px, py) ?? null; },",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-found-law-skipped",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      const known = named || !!provinceQuestPlaces?.idsOnPixel(px, py).some((id) => hasDiscoveredLocationId(id));",
+    "new": "      const known = true;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "every pixel of a list reads its row (the countryside's roll) to learn it was never found"
+  },
+  {
+    "name": "BLM-C3-the-row's-own-find-unchecked",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      return row?.name && (named || hasDiscoveredLocationId(row.mapId)) ? pendingSummary",
+    "new": "      return row?.name ? pendingSummary",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "another place the pixel could hold found names the one the build stands there"
+  },
+  {
+    "name": "BLM-C3-named-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      const known = named || !!provinceQuestPlaces",
+    "new": "      const known = !!provinceQuestPlaces",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-index-arm's-named-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "return loc.name && id && (named || hasDiscoveredLocationId(id)) ?",
+    "new": "return loc.name && id && hasDiscoveredLocationId(id) ?",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a quest's site past the Bay, standing and unfound, is no journey"
+  },
+  {
+    "name": "BLM-C3-the-key's-minus-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const qp = /^quest:(-?\\d+),(-?\\d+)$/.exec(key);",
+    "new": "    const qp = /^quest:(\\d+),(\\d+)$/.exec(key);",
+    "tests": [
+      "test/scenes/bayleft_places.test.js",
+      "test/ui/travel/owquest.test.js"
+    ],
+    "note": "a quest's diamond west or north of the Bay's corner presses nothing"
+  },
+  {
+    "name": "BLM-C3-a-plate-reads-the-location",
+    "file": "src/scenes/world.js",
+    "old": "    const r = summary.lightRect?.() ?? locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);",
+    "new": "    const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a far plate over a place not standing stands it"
+  },
+  {
+    "name": "BLM-C3-the-snapshot-back",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    const out = [...bay];\n    if (worldPlaces) {",
+    "new": "    return bay;\n    const out = [...bay];\n    if (worldPlaces) {",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "TV5's edge speaks for the Bay's towns alone"
+  },
+  {
+    "name": "BLM-C3-the-bay's-gathered-with-what-stood-past-it",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "settlementPixels(locationIndex).filter((t) => !t.loc.ether && onTheBay(t.x, t.y))",
+    "new": "settlementPixels(locationIndex).filter((t) => !t.loc.ether)",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-capital's-every-slice",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": " && (!isCapitalPlaceId(p.mapId) || (p.mapId & 0x7ffff) < 16)).map((p) => ({ x: p.px, y: p.py }));",
+    "new": ").map((p) => ({ x: p.px, y: p.py }));",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "the Imperial City's 625 slices are 625 far towns"
+  },
+  {
+    "name": "BLM-C3-the-countryside-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    for (const p of pastBayPlacesIn(at.x - range, at.y - range, at.x + range + 1, at.y + range + 1))",
+    "new": "    for (const p of [])",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-registry-read-once-for-good",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      if (gen !== _pastBayTowns.gen) {",
+    "new": "      if (_pastBayTowns.gen < 0) {",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-edge's-circle-held-to-the-bay",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    if (onTheBay(at.x, at.y) && at.x >= range && at.y >= range && at.x < MAX_MAP_PIXEL_X - range && at.y < MAX_MAP_PIXEL_Y - range) return bay;",
+    "new": "    if (onTheBay(at.x, at.y)) return bay;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a town just past the Bay's edge never stands at the edge of a view on the Bay's side"
+  },
+  {
+    "name": "BLM-C11-every-id-the-bay's-pixel-id",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    const id = discoveryKeyOf(mapId);",
+    "new": "    const id = mapId & 0xfffff;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js",
+      "test/ui/fb1004e_overworld.test.js"
+    ],
+    "note": "a walled city past the Bay never shows its carriage wheel"
+  },
+  {
+    "name": "BLM-C11-a-bay-key-read-off-the-registry",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    if (key < BAY_PIXEL_IDS) return locationIndex.get(",
+    "new": "    if (false) return locationIndex.get(",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-stood-place's-id-unchecked",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    return (loc?.mapTableData?.mapId ?? -1) >>> 0 === key ? loc : null;",
+    "new": "    return loc;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a stale registry pixel names another place's gate"
+  },
+  {
+    "name": "BLM-C10-the-dots-past-the-bay-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    const s = tvPlaceSummary(x, y);\n    return s ? { locationType:",
+    "new": "    const s = null;\n    return s ? { locationType:",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-host's-dots-held-to-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "      locationAt: (x, y) => junctionPlaceAt(x, y),",
+    "new": "      locationAt: (x, y) => (onTheBay(x, y) ? junctionPlaceAt(x, y) : null),",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
   }
 ]
