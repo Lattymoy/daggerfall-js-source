@@ -274,7 +274,10 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNatur
 - **The walkers** (`world/townShape.js` shutOffGround, the terrain job's `townGround` - townGroundMask's): a walk grid cell
   whose tile is none of the town's ground walks no one - a town past the Bay's open cells, a Bay town's square past its
   outline, its tiles the sea took back (TS2); `scenes/pixelBuild.js` shuts it as it builds the grid. Four cells a tile, the
-  grid's rows the stamp's (`setLocationTiles`: a block's tile (tx, 15 - ty)), pinned against both.
+  grid's rows the stamp's (`setLocationTiles`: a block's tile (tx, 15 - ty)), pinned against both. TOWN-BOARDS
+  (2026-10-27, `03-World/Urban-Fabric.md` section 9): the law is one function, `world/townShape.js` onTownTile - the
+  walkers are shut by it and URBANIZER's fabric is planned on it, so no fence of a yard runs down the land past the ground
+  (and the fabric reads the painted paths by it, TS10 below).
 - **The wall** (`world/townWalls.js` townWallCells, townWallCellsOf): a city past the Bay's wall as cells of its town map
   (64 a block, 1.6 m) - a length its stretched 25.6 m by 9.6, a tower 16.8 m square, each turned to its line. Its walkers
   never cross it (shutTownWall - its gates shut, as Daggerfall's gate blocks carve theirs); its town map draws it in
@@ -438,6 +441,11 @@ every way (N, S, E, W, NE, SW): 8 of 373 yards stood on a painted road (Ripwark'
   pixel build wraps the walk shut in URBANIZER U3's (`world/urban/townFabricStand.js` fabricWalkShut), a new function
   that carried no `key`, so the memo read 'shut' whatever the roads and kept the yards placed before them - on the Bay
   and past it. The wrapper's key is now the town's shut's and whether its fabric stands, read when asked.
+- **TOWN-BOARDS 2 - the fabric's yards** (2026-10-27, `03-World/Urban-Fabric.md` section 9): URBANIZER's fabric read
+  Daggerfall's own roads alone, so a painted road over a cell it plans could be a yard's grass, fenced across. It reads the
+  same paths now (`world/urban/townFabric.js` fabricGrid `onRoad`, through `world/townShape.js` onTownTile - the tile law
+  paveOnGrid reads too): a painted cell is a road of the town's, and no yard, fence or woodpile of the fabric stands on it.
+  paveOnGrid and townWalkShut are unchanged.
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from CityNavigation.SetRMBData's weights, which read a block's own
 ground tile alone - a road the terrain painted on a town's ground is its grid's road. Tests `test/world/townpaths.test.js`

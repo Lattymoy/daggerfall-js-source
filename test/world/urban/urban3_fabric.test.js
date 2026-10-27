@@ -61,7 +61,7 @@ test('URBANIZER U3 the fields: a chamfer distance in cells (a side 1, a diagonal
   assert.equal(id[0], id[1]); assert.equal(id[3], id[9]); assert.equal(id[2], -1);
 });
 
-test('URBANIZER U3 the main streets: from each end to the middle along Daggerfall\'s roads (the walk\'s cells open, most on the road), wall to wall within FABRIC.kerb - setts within FABRIC.carriage of the walk, pavements past it and before a house; none for a town with no main streets (mutants: the road unread; the pavement band swapped; a village given streets; the corridor read by its cell)', () => {
+test('URBANIZER U3 the main streets: from each end to the middle along Daggerfall\'s roads (the walk\'s cells open, most on the road) - setts within FABRIC.carriage of the walk, pavements round them FABRIC.kerb deep by the eight ways and before a house; none for a town with no main streets (mutants: the road unread; the pavement band swapped; a village given streets; the corridor read by its cell)', () => {
   const g = town(), W = g.W;
   const plan = fabricPlan(g, { ends: [[0, 30], [W, 30]], centre: [W / 2, 30], seed: 1 });
   assert.equal(plan.paths.length, 2);
@@ -77,14 +77,20 @@ test('URBANIZER U3 the main streets: from each end to the middle along Daggerfal
   let mains = 0, paves = 0;
   for (let i = 0; i < plan.kind.length; i++) {
     if (plan.kind[i] === K.main) { mains++; assert.ok(dist(i) <= FABRIC.carriage + 1e-9, 'setts within the carriageway'); }
-    if (plan.kind[i] === K.pave) { paves++; assert.ok(dist(i) <= FABRIC.kerb + 1e-9, 'pavements within the kerb'); }
+    // PIN MOVED (TOWN-BOARDS): a pavement is the carriageway's ring by the eight ways, or the carriageway before a house -
+    // it had been the band within 3.5 of the walk in straight lines (test/world/urban/townboards.test.js)
+    if (plan.kind[i] === K.pave) {
+      paves++;
+      const x = i % W, z = Math.floor(i / W), nearCarriageway = [-1, 0, 1].some((dz) => [-1, 0, 1].some((dx) => { const j = (z + dz) * W + x + dx; return x + dx >= 0 && x + dx < W && j >= 0 && j < plan.kind.length && dist(j) <= FABRIC.carriage + 1e-9; }));
+      assert.ok(nearCarriageway, 'pavements round the carriageway');
+    }
   }
   assert.ok(mains > 400 && paves > 200, `${mains} setts, ${paves} pavement`);
-  // a cell between the carriageway and the kerb is pavement; one by a house is pavement however near the walk
+  // a cell past the carriageway is pavement; one by a house is pavement however near the walk
   const p0 = plan.paths[0][Math.floor(plan.paths[0].length / 2)], x0 = p0 % W, z0 = Math.floor(p0 / W);
   assert.equal(plan.kind[(z0 + 3) * W + x0], K.pave);
   assert.equal(plan.kind[(z0 + 1) * W + x0], K.main);
-  assert.deepEqual([FABRIC.carriage, FABRIC.kerb, FABRIC.pave], [2.5, 3.5, 1]);
+  assert.deepEqual([FABRIC.carriage, FABRIC.kerb, FABRIC.pave], [2.5, 1, 1]);   // PIN MOVED (TOWN-BOARDS): the kerb a ring a cell deep, no longer 3.5 of the walk
   // a cell of dirt by a house on wide open ground is open ground, not an alley: a corridor's width is its middle's
   assert.equal(plan.kind[cellOf(0, 0, 25, 15, W)], K.open);
   const village = fabricPlan(g, { ends: [[0, 30], [W, 30]], mains: false });
