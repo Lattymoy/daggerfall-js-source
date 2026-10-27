@@ -24,8 +24,11 @@
 //
 // SPECIALISING (Mac, 2026-09-29: "lets do 2/2/1 - when a skill reaches 100 the player gets to choose ... this
 // decision can not be undone"). Master Skills lets EVERY skill reach 100 (the 95 lock is lifted), but only the
-// skills a character MASTERS may pass it: 2 of the 3 primary, 2 of the 3 major, 1 of the 6 minor - five in all
-// (MASTERY_SLOTS). Miscellaneous skills never pass 100. The choice is offered the first quiet pass after a skill
+// skills a character MASTERS may pass it: all 3 primary, 2 of the 3 major, 1 of the 6 minor - six in all
+// (MASTERY_SLOTS). MASTER-THREE (2026-10-26, Discord #feature-feedback "Let us master all three primary skills": "1
+// minor, 2 major, 3 primary master skills ... helps alleviate the issue of trying to cram in two mastered weapon
+// skills"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md) gave the primaries their third; it was 2/2/1 before.
+// A character who chose two primaries keeps them and gains the third slot. Miscellaneous skills never pass 100. The choice is offered the first quiet pass after a skill
 // reaches 100 while its group has a slot (and any time after from the skill screen), says how many that group
 // allows and how many remain, and is PERMANENT (entity.masteredSkills, saved). A skill not mastered simply stays at
 // 100 - classic Daggerfall's ceiling - and teaches nothing more.
@@ -47,7 +50,7 @@ export const MASTER_SKILLS_OFFER_ROWS = Object.freeze([
   'You have mastered a skill.',
   'Activate Master Skills?',
   '',
-  'You can master 2 primary, 2 major and 1 minor',
+  'You can master 3 primary, 2 major and 1 minor',
   'skill once each reaches 100. A mastered skill',
   'can climb past 100, up to 200.',
   'Each point past 100 is much slower to earn',
@@ -64,7 +67,7 @@ export const MASTER_SKILLS_OFFER_ROWS = Object.freeze([
 
 /** The skill screen's description (enhanced pane; the classic box shows it as rows). */
 export const MASTER_SKILLS_ABOUT = Object.freeze([
-  'Every skill can reach 100. You can master 2 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',
+  'Every skill can reach 100. You can master 3 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',
   'Each point past 100 is much slower to earn and gives 25% of the boost of a point below 100, with milestone bonuses at 125, 150, 175 and 200.',
   'Past 100 a skill only improves against enemies that are tough for it. Weak enemies and repetition do not help. Below 100, skills rise as before, and mastering a primary skill no longer holds your other skills at 95.',
   'Dangerous dungeons send stronger enemies as your skills pass 100. Easy dungeons, towns and the wilds stay as they are.',
@@ -82,7 +85,7 @@ export const MASTER_SKILLS_INFO_ROWS = Object.freeze([
   'You have mastered a skill.',
   'Master Skills',
   '',
-  'You can now master 2 primary, 2 major and',
+  'You can now master 3 primary, 2 major and',
   '1 minor skill once each reaches 100. A mastered',
   'skill can climb past 100, up to 200.',
   'Each point past 100 is much slower to earn',
@@ -107,10 +110,10 @@ export const MASTER_SKILLS_INTRO_ROWS = Object.freeze([
 /** In force: always online; offline only when the player switched it on. */
 export const masterSkillsActive = (entity) => (entity?._online === true ? true : entity?.masterSkills === true);
 
-// ---- specialising: the 2 / 2 / 1 masteries ----------------------------------
+// ---- specialising: the 3 / 2 / 1 masteries ----------------------------------
 
 /** How many skills of each career group may pass 100. */
-export const MASTERY_SLOTS = Object.freeze({ primary: 2, major: 2, minor: 1 });
+export const MASTERY_SLOTS = Object.freeze({ primary: 3, major: 2, minor: 1 });
 export const MASTERY_GROUP_NAMES = Object.freeze({ primary: 'Primary', major: 'Major', minor: 'Minor' });
 
 /** 'primary' | 'major' | 'minor' | null (a miscellaneous skill). */
@@ -158,11 +161,48 @@ export function masteryRefusal(entity, id) {
   return null;
 }
 
+/** RPT1026-PROGRESS (a private report: weak-foe practice banked at 100 paid out after a mastery): THE PRACTICE A SKILL KEPT
+ *  UNDER THE PLAIN RULE IS DROPPED THE MOMENT IT MAY PASS 100. Below the cap - and at 100 for a skill that cannot pass it
+ *  - every use counts whole (skills.js tallySkill, DFU's TallySkill and its 20000 clamp); past it a use counts only
+ *  against a tough foe, and raiseSkills spends the counter as progress (advancement.js MOVE-BANK) without knowing which
+ *  rule counted it. A skill held at 100, practised on weak foes to the clamp and only then mastered (or Master Skills
+ *  switched on) turned 20,000 plain uses into a point every rest. The counter of a skill that may now pass 100 held
+ *  only plain uses, so it goes (the weighted fraction, skillUseFrac, is the tough-foe rule's own and stays). */
+function dropPlainPractice(entity, id) {
+  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length) entity.skillUses[id] = 0;
+}
+
+/** AUDIT RPT1026 F1 (the drop above took practice the tough-foe rule had counted): THE SWITCH OFF HOLDS IT ASIDE. A
+ *  mastered skill past 100 counts only tough-foe uses while Master Skills is on, and its counter holds them until the
+ *  next rest's pass banks them (advancement.js MOVE-BANK) - so switched off and on before a rest, the drop threw away
+ *  every tough blow since the last one, under a line that says "Your progress is kept". At the switch off each such
+ *  counter is noted (`entity.masterPracticeHeld`, saved); the switch on drops the counter as before and gives the noted
+ *  uses back. (Off, a rest's pass may spend the counter - plain uses to a raise that never comes - but not the note.)
+ *  `{ [skill id]: uses }`, or null. */
+export function normalPracticeHeld(held) {
+  if (!held || typeof held !== 'object') return null;
+  const out = {};
+  for (const [k, n] of Object.entries(held)) if (/^\d+$/.test(k) && Number.isFinite(n) && n > 0) out[k] = n;
+  return Object.keys(out).length ? out : null;
+}
+function holdMasterPractice(entity) {
+  const held = {};
+  for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = entity.skillUses?.[id];
+  entity.masterPracticeHeld = normalPracticeHeld(held);
+}
+function returnMasterPractice(entity) {
+  const held = normalPracticeHeld(entity.masterPracticeHeld);
+  entity.masterPracticeHeld = null;
+  if (!held || !Array.isArray(entity.skillUses)) return;
+  for (const [k, n] of Object.entries(held)) if (Number(k) < entity.skillUses.length) entity.skillUses[Number(k)] = n;
+}
+
 /** Master it - PERMANENT. Returns { ok, text }. */
 export function masterSkill(entity, id, names = null) {
   const why = masteryRefusal(entity, id);
   if (why) return { ok: false, text: why };
   entity.masteredSkills = [...masteredSkills(entity), id];
+  dropPlainPractice(entity, id);   // RPT1026-PROGRESS: what it practised unmastered was counted whole
   const n = names?.[id] ?? 'The skill';
   return { ok: true, text: `${n} mastered: it can now pass 100.` };
 }
@@ -223,7 +263,11 @@ export function masterSkillsBlockReason(entity) {
 export function setMasterSkills(entity, on) {
   const reason = masterSkillsBlockReason(entity);
   if (reason) return { ok: false, text: reason };
+  const was = masterSkillsActive(entity);
   entity.masterSkills = !!on;
+  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity);   // AUDIT RPT1026 F1: switched off - the tough-foe practice set aside
+  // RPT1026-PROGRESS: switched on - while it was off, every skill mastered and at the cap or beyond counted each use whole
+  if (!was && masterSkillsActive(entity)) { for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }   // AUDIT RPT1026 F1: and what it held comes back
   entity.masterSkillsAsked = true;
   return { ok: true, text: on ? MASTER_SKILLS_ON_TEXT : MASTER_SKILLS_OFF_TEXT };
 }

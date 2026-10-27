@@ -139,6 +139,24 @@ export const TITLE_TEXT = Object.freeze({
   witchwarden: 'Witchwarden',
   hearthkeeper: 'Hearthkeeper',
   nirnrootsage: 'Nirnroot Sage',   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer): Blob-Marley's own, the owner's word for it
+  // HUNTERS-MARK, MARKS-OF-MASTERY (2026-10-27): the hunt's four by the account's board clears, a profession's Master
+  // each, the sea's two by the serpents slain (net/huntLaw.js MASTERY_MARKS)
+  bloodhound: 'Bloodhound',
+  beastbane: 'Beastbane',
+  grandhuntsman: 'Grand Huntsman',
+  huntlegend: 'Legend of the Hunt',
+  mastermining: 'Master Miner',
+  masterlogging: 'Master Woodcutter',
+  masterherbalism: 'Master Herbalist',
+  masterhunting: 'Master Hunter',
+  masterfishing: 'Master Fisher',
+  mastersmithing: 'Master Smith',
+  masterbuilding: 'Master Builder',
+  masteroutfitting: 'Master Outfitter',
+  masterprovisioning: 'Master Provisioner',
+  masterenchanting: 'Master Enchanter',
+  serpenthunter: 'Serpent Hunter',
+  deepbane: 'Bane of the Deep',
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -398,6 +416,27 @@ export const TITLE_RGBA = Object.freeze({
   witchwarden: WITCH_FIRE,     // WITCH1: the coven's green - the colour a face that cannot draw a gradient uses
   hearthkeeper: HEARTH_TALLOW,   // WITCH1: the tallow's amber
   nirnrootsage: NIRN_GLOW,   // NIRNROOT-SAGE: a nirnroot's glow - the colour a face that cannot draw a gradient uses, and the glyph's
+  // HUNTERS-MARK (no colour named): the hunt's - a hound's russet, a kill's dried blood, the greenwood's, an antler's bone;
+  // MARKS-OF-MASTERY: a Master's each its profession's own where the marks' colours left room (ui/nodeMarks.js - the
+  // orchid, the sap green, the hide's rose), the ore's brown, a sail-blue, the anvil's iron, a mason's sandstone, a
+  // dyer's rose, a hearth's amber, an enchanter's blue; the sea's - the serpent's green and the deep's. Each more than 40
+  // from every other title (the pins' own measure)
+  bloodhound: Object.freeze([0.682, 0.388, 0.259, 1]),          // #ae6342
+  beastbane: Object.freeze([0.529, 0.118, 0.176, 1]),           // #871e2d
+  grandhuntsman: Object.freeze([0.435, 0.541, 0.224, 1]),       // #6f8a39
+  huntlegend: Object.freeze([0.835, 0.718, 0.529, 1]),          // #d5b787
+  mastermining: Object.freeze([0.541, 0.353, 0.165, 1]),        // #8a5a2a
+  masterlogging: Object.freeze([0.765, 0.835, 0.294, 1]),       // #c3d54b
+  masterherbalism: Object.freeze([0.906, 0.529, 0.906, 1]),     // #e787e7
+  masterhunting: Object.freeze([1, 0.435, 0.565, 1]),           // #ff6f90
+  masterfishing: Object.freeze([0.235, 0.706, 1, 1]),           // #3cb4ff
+  mastersmithing: Object.freeze([0.494, 0.518, 0.565, 1]),      // #7e8490
+  masterbuilding: Object.freeze([0.706, 0.6, 0.518, 1]),        // #b49984
+  masteroutfitting: Object.freeze([0.835, 0.529, 0.612, 1]),    // #d5879c
+  masterprovisioning: Object.freeze([0.918, 0.624, 0.235, 1]),  // #ea9f3c
+  masterenchanting: Object.freeze([0.435, 0.459, 0.882, 1]),    // #6f75e1
+  serpenthunter: Object.freeze([0.2, 0.835, 0.706, 1]),         // #33d5b4
+  deepbane: Object.freeze([0.118, 0.353, 0.553, 1]),            // #1e5a8d
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left

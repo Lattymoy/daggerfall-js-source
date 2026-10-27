@@ -11,48 +11,52 @@
   {
     "name": "BREATHTAKER2-ring-share-unforwarded",
     "file": "src/render/farRing.js",
-    "old": "(relief ? reliefByteHeight(byte, fade, beyond) :",
-    "new": "(relief ? reliefByteHeight(byte, fade) :",
+    "old": "nodeGround(byte, relief ? fade : 1, relief ? beyond : 0, relief)",
+    "new": "nodeGround(byte, relief ? fade : 1, 0, relief)",
     "tests": [
       "test/render/farlandmark.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): ringHeight is the node's ground (nodeGround), the share forwarded to it"
   },
   {
     "name": "BREATHTAKER2-grid-plain-law",
-    "file": "src/render/farRing.js",
-    "old": "heightOf = (x, y) => ringHeightAt(x, y, gridByte(x, y), true,",
-    "new": "heightOf = (x, y) => ringHeight(gridByte(x, y), true,",
+    "file": "src/world/landforms.js",
+    "old": "beyond = lift && !inEtherLaw(x, y) ? continentShare(gx, gy, 128, MAP_H, MAP_W, SEAM_PX) : 0;",
+    "new": "beyond = 0;",
     "tests": [
       "test/render/farlandmark.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the grid stands on ringGroundAt (centreGround) - its continent's share dropped"
   },
   {
     "name": "BREATHTAKER2-far-cell-unasked",
     "file": "src/render/farField.js",
-    "old": "heightOf(high[v], px, py)",
-    "new": "heightOf(high[v], 0, 0)",
+    "old": "heightOf(high[v], px, py, v)",
+    "new": "heightOf(high[v], 0, 0, v)",
     "tests": [
       "test/render/farlandmark.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): heightOf takes the vertex too"
   },
   {
     "name": "BREATHTAKER2-far-field-law-unwired",
     "file": "src/render/farRing.js",
-    "old": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief, 1, FAR_CELL / 2),",
+    "old": "heightOf: (byte, x, y, v) => answer.ground[v] + (inputs.relief ? redMountainNodeLift(x, y) * STREAMING_TERRAIN_SCALE : 0),",
     "new": "heightOf: (byte) => ringHeight(byte, !!inputs.relief),",
     "tests": [
       "test/render/farlandmark.test.js"
     ],
-    "note": "Re-aimed by content (RED-MOUNTAIN): the far field's law asks the cone's highest in the cell too."
+    "note": "Re-aimed by content (RELIEF-PEAKS): the far field stands on the worker's ground at each vertex; (RED-MOUNTAIN) with the smooth cone at its node"
   },
   {
     "name": "BREATHTAKER2-travel-view-plain-law",
     "file": "src/scenes/world.js",
-    "old": "return [x, ringHeightAt(px.x, px.y, byte, !!landform, fade)",
-    "new": "return [x, ringHeightAt(0, 0, byte, !!landform, fade)",
+    "old": "return [x, ringGroundAt(px.x, px.y,",
+    "new": "return [x, ringGroundAt(0, 0,",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the travel view past the grid stands on ringGroundAt"
   },
   {
     "name": "FAR-LANDMARK-ring-row-order",

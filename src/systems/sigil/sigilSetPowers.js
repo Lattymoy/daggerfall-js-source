@@ -134,7 +134,9 @@ import {
   RIPOSTE_SECONDS, MARK_METRES, MARK_SECONDS, BLOOD_SECONDS, BLOOD_STACKS, COIL_STACKS, COIL_SECONDS, SHED_BELOW,
   ROUND_SECONDS, REPRIEVE_BELOW, REPRIEVE_SECONDS, REPRIEVE_METRES, REPRIEVE_ALLY_SHARE,
   STRAND_HITS, STRAND_SECONDS, VEIL_BELOW,   // STAR7: the Starspun Weave
+  UNBROKEN_LESS,   // POWER-CEILING: Unbroken's half, named
 } from './sigilSets.js';
+import { blowRoom, guardRoom } from '../powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
 
 // ── the session's memory, and its voice ────────────────────────────
 let _now = () => performance.now() / 1000;
@@ -298,6 +300,7 @@ export function setBlow(weapon, damage, attacker, target, info) {
   const tow = t.get('eltheric')?.[1];
   if (tow && weapon) pct += atSea() ? tow.more : tow.more / 2;   // SEA-SET: Undertow - whole in the open sea, half ashore
   let out = damage;
+  if (pct > 0) pct = blowRoom(pct, 'sets');   // POWER-CEILING: the sets' room under the blow's one product
   if (pct > 0) {
     const key = weapon ?? attacker;
     const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
@@ -466,7 +469,7 @@ function spite(entity, blow, took) {
 
 // ── the damage I take: Unbroken's halving, Hold the Line, Iron Hide ──
 function unbrokenHalves(entity, dmg) {
-  return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2) ? Math.floor(dmg / 2) : dmg;   // AUDIT SET L1: whole points - a half point left health fractional, and a later blow of the rest spent Unbroken's save on a wound that was never lethal
+  return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2) ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;   // AUDIT SET L1: whole points - a half point left health fractional, and a later blow of the rest spent Unbroken's save on a wound that was never lethal; POWER-CEILING: its room under the guards' one share
 }
 /** RAID4b: Hold the Line's share of a hurt, in whole points - the fraction carried to the next hurt (the blow's own
  *  law), so a Faint tenth takes a point of every ten a run of small blows deals, not none of them. */
@@ -477,7 +480,7 @@ export function setDamageMod(entity, dmg) {
   let d = unbrokenHalves(entity, dmg);
   const hold = tierOf(entity, 'oath', 2);
   if (hold && d > 0 && belowHalf(entity)) {
-    const owed = (d * hold.less) / 100 + _holdOwed;
+    const owed = (d * guardRoom(hold.less, 'sets')) / 100 + _holdOwed;   // POWER-CEILING
     const cut = Math.min(d, Math.floor(owed + 1e-9));
     _holdOwed = owed - cut;
     d -= cut;
@@ -495,7 +498,7 @@ export function setDamageMod(entity, dmg) {
     if (now >= _s.gearReady) {
       const cut = Math.round((d * gear.lighter) / 100);
       if (cut > 0) {   // AUDIT SD: a blow too small to lighten by a whole point spends no winding
-        d -= cut;
+        d -= Math.round((d * guardRoom(gear.lighter, 'sets')) / 100);   // POWER-CEILING: the winding spent, its share under the guards' one
         _s.gearReady = now + gear.recover;
         sound('gear');
       }

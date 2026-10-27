@@ -191,17 +191,22 @@ test('AUDIT WORLD6b B1/B2/B10: the pool - a fall\'s, another foe\'s and a relaye
   rat.entity.activeEffects = [{ kind: 'soulTrap', chance: 100 }];   // a trap that succeeds with no empty gem TETHERS the foe at 1 (X5)
   rat.entity.health = 1;
   assert.equal(pool.applyHit('bob-0002', { k: 'world:3,12', i: rat.seq, dmg: 5 }), true);
-  assert.equal(rat.dead, true, 'B2: a peer\'s blow kills through the door - no trap of mine intercepts'); assert.deepEqual(said, [], 'and no kill notice of mine');
+  // PIN MOVED (RPT1026-FIGHTS TRAP-TO-OWNER): my own trap is read for a peer's kill - its soul is mine whoever struck (DFU's
+  // SetHealth, every source alike) - and never tethers it: here no empty gem, so its word is said and the rat falls
+  assert.equal(rat.dead, true, 'B2: a peer\'s blow kills through the door - no trap of mine tethers it');
+  assert.equal(said.length, 1, 'my trap\'s word alone - no kill notice of mine'); assert.match(said[0], /no empty soul traps/);
   const rat2 = await pool.spawnFoe(0, [12, 0, 12], { feetGiven: true });
   rat2.entity.activeEffects = [{ kind: 'soulTrap', chance: 100 }]; rat2.entity.health = 1;
   pool.damageFoe(rat2, 5, [0, 0, 0], null);
   assert.equal(rat2.dead, false, 'my own killing blow is intercepted by the trap (tethered at 1, X5\'s law)'); assert.equal(rat2.entity.health, 1);
   rat2.entity.activeEffects = [];
   pool.damageFoe(rat2, 5, [0, 0, 0], null);
-  assert.equal(rat2.dead, true); assert.equal(said.length, 2, 'and my own says the trap\'s word and the kill notice - a peer\'s said neither');
+  assert.equal(rat2.dead, true); assert.equal(said.length, 3, 'and my own says the trap\'s word and the kill notice - a peer\'s said the trap\'s alone');
   assert.equal(pool.applyHit('bob-0002', { k: 'world:4,4', i: rat.seq, dmg: 5 }), false, 'A7: another cell\'s blow is refused');
   const x = rd('src/scenes/exteriorFoes.js');
-  assert.match(x, /const trap = peer \|\| _peerTrap \? \{ allowDeath: true \} : attemptSoulTrap\(f\.entity, f\.mobileType, playerEntity\.items, Math\.random\(\)\);/, 'B2: the trap, by source (STRIKE-SHARED: and a peer\'s trap reads no gem of mine either)');
+  // PIN MOVED (RPT1026-FIGHTS TRAP-TO-OWNER): a peer's kill reads MY trap; a peer's trap reads no gem of mine (STRIKE-SHARED); only my blow tethers
+  assert.match(x, /const trap = _peerTrap \? \{ allowDeath: true \} : attemptSoulTrap\(f\.entity, f\.mobileType, playerEntity\.items, Math\.random\(\)\);/, 'B2: the trap, by source (STRIKE-SHARED: a peer\'s trap reads no gem of mine)');
+  assert.match(x, /if \(!trap\.allowDeath && !peer\) \{ f\.entity\.health = 1; return; \}/, 'B2: a peer\'s blow is never tethered');
   assert.match(x, /if \(!peer && !isClassEnemyId\(f\.mobileType\) && isAzurasStarEquipped\(playerEntity\)/, 'B2: the Star, by source');
   assert.match(x, /if \(fromPlayer && !peer\) \{\s*(?:\/\/[^\n]*\n\s*)*const _pt = f\._divertPt \?\? null; f\._divertPt = null;\s*(?:\/\/[^\n]*\n\s*)*const _wc = [^\n]*blowClassOf\([^\n]*\n\s*f\._divertFrame = _peerFrame;\s*f\._struckAt = _now\(\);[^\n]*\n\s*_net\?\.onPeerHit\?\.\(\{ to: f\.puppet, k: _owners\.get\(f\.puppet\)\?\.k \?\? _net\.room\?\.\(\) \?\? null, i: f\.seq, dmg: Math\.max\(0, Math\.round\(Number\(damage\) \|\| 0\)\), kind,[^\n]*\n\s*\.\.\.\(_pAt \? \{ p: [^\n]*\n\s*\.\.\.\(knockDir \? \{ d: [^\n]*\n\s*\.\.\.\(_pt != null \? \{ pt: _pt \} : \{\}\),[^\n]*\n\s*\.\.\.\(_wc \? \{ wc: hitClassField\(_wc\) \} : \{\}\),[^\n]*\n\s*\.\.\.\(kind === 'arrow' \? \{ ar: 1 \} : \{\}\),\n\s*\.\.\.\(spell \?\? \{\}\),[^\n]*\n\s*\.\.\.\(_whole \? \{ z: 1 \} : \{\}\) \}\);[^\n]*\n\s*\}\s*return;/, 'B1: the divert\'s gate, by source (WORLD6b-ii: the striker\'s feet and the blow\'s direction ride; WORLD6b-iii(e): the poison and the shaft; DISC10-E: the blow stamped for the owner\'s `slain` answer; AUDIT PSCALE1 DOORS-1: a kill rides as one; STRIKE-SHARED: a strike spell rides whole; PIN MOVED - TELL8: the blow\'s class rides beside the poison)');
   assert.match(rd('src/scenes/shared.js'), /if \(!f \|\| f\.dead \|\| !f\.entity \|\| f\.puppet\) continue;/, 'B1: the magic-round broker skips a puppet');

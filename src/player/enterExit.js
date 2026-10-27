@@ -291,29 +291,42 @@ export function repositionFeetY(terrainY, centreY, height = CAPSULE_HEIGHT) {
 
 export const LADDER_MODEL_ID = 41409;
 
+/** IC-INTERIORS: a ladder's reach from its middle to its head and to its foot (metres - 41409 stands one storey, 126
+ *  units, about its origin; world/interior/fabricInteriorKit.js KIT_LADDER). */
+export const LADDER_HALF = 1.6;
 /**
  * Verbatim DaggerfallLadder.ClimbLadder (interior-only upstream):
  * closest LadderTop / LadderBottom markers to the player; below the
  * top teleports TO the top, else above the bottom teleports to the
  * bottom. Markers arrive as {type, x, y, z} (interiorLayout).
+ *
+ * IC-INTERIORS (2026-10-27; bible/03-World/Arena-Provinces.md IC-INTERIORS) - DEPARTURE (named; Port-Ledger section A):
+ * where the host hands over the ladder climbed (`ladder`, its world matrix), the markers are that ladder's own - the top
+ * nearest its head and the bottom nearest its foot. DaggerfallLadder.ClimbLadder takes the two nearest the player, which
+ * is the same pair wherever an interior stands one ladder (1,683 of Daggerfall's) and wherever its two ladders stand far
+ * apart (its 18 that stand two); an Imperial City house of three storeys or more stands a ladder a storey, one over
+ * another's landing, and there the player's nearest top is the landing they stand on - DFU's law climbs nowhere. The
+ * rule which way (below the top: up; else over the bottom: down) is DFU's, unchanged.
  * @returns {[x,y,z]|null}
  */
-export function climbLadder(playerPos, markers, markerTypes) {
-  const closestOf = (type) => {
+export function climbLadder(playerPos, markers, markerTypes, ladder = null) {
+  const closestOf = (type, to) => {
     let best = null;
     let bestD = Infinity;
     for (const m of markers) {
       if (m.type !== type) continue;
-      const dx = m.x - playerPos[0];
-      const dy = m.y - playerPos[1];
-      const dz = m.z - playerPos[2];
+      const dx = m.x - to[0];
+      const dy = m.y - to[1];
+      const dz = m.z - to[2];
       const d = dx * dx + dy * dy + dz * dz;
       if (d < bestD) { bestD = d; best = m; }
     }
     return best;
   };
-  const top = closestOf(markerTypes.LADDER_TOP);
-  const bottom = closestOf(markerTypes.LADDER_BOTTOM);
+  const head = ladder ? [ladder[12], ladder[13] + LADDER_HALF, ladder[14]] : playerPos;
+  const foot = ladder ? [ladder[12], ladder[13] - LADDER_HALF, ladder[14]] : playerPos;
+  const top = closestOf(markerTypes.LADDER_TOP, head);
+  const bottom = closestOf(markerTypes.LADDER_BOTTOM, foot);
   if (top && playerPos[1] < top.y) return [top.x, top.y, top.z];
   if (bottom && playerPos[1] > bottom.y) return [bottom.x, bottom.y, bottom.z];
   return null;
@@ -446,6 +459,17 @@ export function safeGroundNear(collider, x, z, seaY) {
  *  DECOR-CLEAR (player/lateSolid.js): `height`, the body's own - a crouched one's head is lower. */
 export function heldInSolid(collider, feet, height = CAPSULE_HEIGHT) {
   return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]]);
+}
+
+/** PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): whether a raid's or a staff event's
+ *  monster may stand at `spot` ({ x, y, z }, its feet) - not held in a static solid (a closed building's shell, a rock)
+ *  and no solid over its head within RAID_SPOT_ROOF_M (a roof: a shell open below, a porch, an arch). Pure over the
+ *  collider's queries. */
+export const RAID_SPOT_ROOF_M = 30;
+export function raidSpotOpen(collider, spot) {
+  const feet = [spot.x, spot.y, spot.z];
+  if (heldInSolid(collider, feet)) return false;
+  return !Number.isFinite(collider.raycast([feet[0], feet[1] + CAPSULE_HEIGHT, feet[2]], [0, 1, 0], RAID_SPOT_ROOF_M));
 }
 
 /** floorLanding's footprint sweep: the highest floor its five rays (the centre and a ring at ~half the capsule's

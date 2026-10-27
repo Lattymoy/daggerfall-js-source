@@ -263,11 +263,12 @@
   {
     "name": "BAY-LEFT-GROUND-D1-level-the-Bays-key",
     "file": "src/world/landforms.js",
-    "old": "const k = (worldPixelKey(sx, sy) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1);",
-    "new": "const k = ((sy * MAP_W + sx) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1);",
+    "old": "const k = ((worldPixelKey(sx, sy) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1)) * 2",
+    "new": "const k = (((sy * MAP_W + sx) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1)) * 2",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the level's key takes the ranges' own bit after it"
   },
   {
     "name": "BAY-LEFT-GROUND-D1-level-on-the-Bays-law-past-the-seam",
@@ -490,11 +491,12 @@
   {
     "name": "BAY-LEFT-GROUND-D1-world-this-threads-landforms-without",
     "file": "src/scenes/world.js",
-    "old": "sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates }) : null);",
-    "new": "sites: _landformSites, beyond: null, climates: _landformClimates }) : null);",
+    "old": "sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates, ranges: !before }) : null);",
+    "new": "sites: _landformSites, beyond: null, climates: _landformClimates, ranges: !before }) : null);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the landforms take the ranges after the climates"
   },
   {
     "name": "BAY-LEFT-GROUND-D1-world-promotions-grid-without",
@@ -553,47 +555,52 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-dropped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
     "new": "",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the old lift's law is LIFT_FRAME_LAW now, GROUND_FRAME_LAW 3 the ground's own move"
   },
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-on-the-Bay",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
-    "new": "    if (landform && !(frame >= GROUND_FRAME_LAW)) y -= landformLiftAt(x, z, { before: true });",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !(frame >= LIFT_FRAME_LAW)) y -= landformLiftAt(x, z, { before: true });",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the old lift's law is LIFT_FRAME_LAW now, GROUND_FRAME_LAW 3 the ground's own move"
   },
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-on-a-stamped-record",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
     "new": "    if (landform && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the old lift's law is LIFT_FRAME_LAW now, GROUND_FRAME_LAW 3 the ground's own move"
   },
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-with-the-row-off",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
-    "new": "    if (!(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (!(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the old lift's law is LIFT_FRAME_LAW now, GROUND_FRAME_LAW 3 the ground's own move"
   },
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-by-todays-lift",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
-    "new": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z);",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z);",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the old lift's law is LIFT_FRAME_LAW now, GROUND_FRAME_LAW 3 the ground's own move"
   },
   {
     "name": "BAY-LEFT-GROUND-D5-lift-the-Bays-bound",

@@ -592,8 +592,8 @@
   {
     "name": "AUDIT-G2-the-personal-arm-again",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }",
-    "new": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u)) && !isRoomBaseContainer(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }",
+    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(roomUnreadableText(lootKeyOf(_u))); return 0; } }",
+    "new": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u)) && !isRoomBaseContainer(lootKeyOf(_u))) { setMidScreenText(roomUnreadableText(lootKeyOf(_u))); return 0; } }",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -602,7 +602,7 @@
   {
     "name": "AUDIT-G2-the-refusal-gone",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }",
+    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(roomUnreadableText(lootKeyOf(_u))); return 0; } }",
     "new": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { return 0; } }",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"

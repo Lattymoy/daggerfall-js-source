@@ -95,7 +95,7 @@ test('RUMARE-WATER the ground about it: the mouth\'s pixels the sea\'s bytes; th
   const far = tamrielHeightByte(2069 + r + RUMARE_BASIN.ramp + 2, 640);
   assert.ok(far > SHORE_BYTE, `past the basin the land's own (${far})`);
   assert.ok(tamrielLargeMap(2069, 650).every((col) => col.every((v) => v === 0)), 'the span: no detail');
-  assert.ok(tamrielLargeMap(2069 + r + RUMARE_BASIN.ramp + 2, 640).some((col) => col.some((v) => v > 0)), 'past the basin: the swell');
+  assert.ok(tamrielLargeMap(2069 + r + RUMARE_BASIN.ramp + 2, 640).some((col) => col.some((v) => v > 0)), 'past the basin: the large map (RELIEF-PEAKS: its law, where it was a swell)');
   setTamrielTrace(null);
   dropGroundCache();
   assert.equal(rumareBasin(2069, 658), 0);

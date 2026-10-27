@@ -17,7 +17,8 @@ import { CAPITALS, capitalPlaceId, capitalDims } from '../../src/world/tamrielCa
 import { capitalStreet } from '../../src/scenes/livingWorld/livingIndex.js';
 import { readFileSync } from 'node:fs';
 import { createHouses, allocateHouseToPlayer, isHouseOwned, deedHeldIn } from '../../src/systems/banking.js';
-import { imperialSlicePlan } from '../../src/world/imperialCity.js';
+import { IMPERIAL_SPAN, IMPERIAL_SECTORS, polar, imperialSlicePlan } from '../../src/world/imperialCity.js';
+import { fabricCellBuildings, isFabricHome } from '../../src/world/imperialFabricBuildings.js';
 
 const IC = CAPITALS.findIndex((c) => c.family);
 const OTHER = CAPITALS.findIndex((c) => !c.family && capitalDims(c).w * capitalDims(c).h > 1);   // a harbour's two slices
@@ -48,10 +49,18 @@ test('IC-GRAND THE LIVING WORLD - the Imperial City one town (WW7-11 capitalStre
 // Imperial City's 1,241 residences' keys are a residence's in two slices or more (up to sixteen - measured with the game's
 // rows and blocks, 31 s, not pinned here). DFU's (region, key) law owned them all with one deed.
 test('AUDIT RELEASE R2-9 A CAPITAL\'S DEED IS ITS SLICE\'S - a deed bought in one of a capital\'s slices owns its key there alone, never the same key in another slice; a Bay town and a question with no town keep DFU\'s (region, key) law; every host that asks names its town (mutants: the town unread; the slot\'s map id unread; every deed held to its town; a host\'s town dropped)', () => {
-  // the hazard, by the plan: slices holding a residences' block (RESI) at one sector of their eight by eight
-  const at = new Map();
-  for (let s = 0; s < 625; s++) imperialSlicePlan(s).forEach((row, y) => row.forEach((cell, x) => { if (cell === 'RESI') at.set(y * 8 + x, (at.get(y * 8 + x) ?? 0) + 1); }));
-  assert.ok([...at.values()].filter((n) => n > 1).length > 20, 'many sectors hold a residences\' block in two slices or more');
+  // the hazard: one key a residence in two slices or more. PIN MOVED (IC-PROPS, 2026-10-27): Daggerfall's residences'
+  // blocks are gone from the plan (world/imperialCity.js cellOf) - the fabric's homes are keyed as a block's buildings
+  // are (its cell of the slice's eight by eight and its record, world/imperialFabricBuildings.js fabricBuildingsIn), so
+  // the same cell and record of a dozen slices' grids, read through each district
+  const at = new Map(), S = 8 * 102.4, H = (IMPERIAL_SPAN * S) / 2;
+  for (const [, b] of IMPERIAL_SECTORS) for (const r of [3000, 5300]) {
+    const [x, z] = polar(b + 30, r), s = Math.floor((z + H) / S) * IMPERIAL_SPAN + Math.floor((x + H) / S);
+    for (const [i, j] of [[2, 2], [2, 5], [5, 2], [5, 5]]) {
+      for (const h of fabricCellBuildings(Math.floor(s / IMPERIAL_SPAN) * 8 + i, (s % IMPERIAL_SPAN) * 8 + j)) if (isFabricHome(h.type)) at.set(`${i},${j},${h.recordIndex}`, (at.get(`${i},${j},${h.recordIndex}`) ?? 0) + 1);
+    }
+  }
+  assert.ok([...at.values()].filter((n) => n > 1).length > 20, 'many keys a residence in two slices or more');
   const houses = createHouses(80), region = 70, key = 65792;
   const a = capitalPlaceId(IC, 7), b = capitalPlaceId(IC, 23), other = capitalPlaceId(OTHER, 1);
   allocateHouseToPlayer(houses, region, { buildingKey: key, mapId: a, location: 'Market District' });
@@ -82,7 +91,8 @@ test('AUDIT RELEASE R2-9 A CAPITAL\'S DEED IS ITS SLICE\'S - a deed bought in on
 // of several (a district wall whose gate stands in the next slice). Each near slice's fabric hands the town homes, shops
 // and taverns (world/imperialHomes.js fabricHomesIn), and a capital's slice is a town of quarters (places.js): each
 // quarter's people live, work and walk in it.
-const SPLIT = 341;   // a slice a district wall splits: its fabric's homes on two street nets
+const SPLIT = 112;   // a slice a district wall splits: its fabric's homes on two street nets (78 and 75) - PIN MOVED (IC-STAIRS: 341's split
+// was a far ring's court laid over another neighbourhood's streets, found at the stairs' sweep and gone)
 /** A slice's walkers' grid of its own blocks (Daggerfall's cells left shut - the fabric's streets alone). */
 async function sliceNav(s) {
   const { installCapitals, imperialSliceFootprint } = await import('../../src/world/capitalModels.js');

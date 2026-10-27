@@ -48,7 +48,8 @@ import { pickActivatableHit } from '../player/activate.js';
 import { getSeed, setSeed } from '../formats/dfRandom.js';   // CAT-MEOW: the readout keeps the classic stream
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature, plaqueWindow } from '../systems/worldHover.js';   // LOOT-SCROLL: the drawn window
-import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot, quickLootOn } from '../systems/quickLoot.js';
+import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot, quickLootOn, plaqueVerbsWanted } from '../systems/quickLoot.js';
+import { decorPressFrame } from '../systems/decor/decorLook.js';   // RPT1026-WORLD DECOR-VERBS: the decorator's frame where no plaque is drawn
 import { setClassicLootFrame } from '../systems/classicLootFrame.js';   // DISC22-C: the classic panel's frame, a leaf hud.js can read   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it; QUICK-LOOT-STATS: and the lit row's own numbers
 import { bodyStackMark, resetBodyStack } from '../player/lootStack.js';   // LOOT-STACK: the plaque counts the pile the pick noted
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js'; import { destroyPickupFeed, clearPickupFeed } from './pickupFeed.js';   // DISC29-D: the watchdog counts frames, not milliseconds; PICKUP-FEED: the take's cards, freed with this teardown
@@ -530,8 +531,11 @@ export function worldHoverFrame({
   // whole resolve was about the DOM plaque, and quick loot never needed the DOM
   const dom = worldPlaqueOn();
   const classic = !dom && classicPlaqueOn();
-  if (!dom && !classic) { hideWorldPlaque(); return null; }   // (the hide folds the highlight away too: AUDIT DISC7 A8)
-  if (classic) blankDom();
+  // RPT1026-WORLD DECOR-VERBS: and a decorator that browses (no plaque drawn: a touch screen, the classic skin with quick
+  // loot off) has its frame folded with its first verb alone - a press on a placed piece moves it, as on the plaque
+  const verbs = !dom && !classic && plaqueVerbsWanted();
+  if (!dom && !classic && !verbs) { hideWorldPlaque(); return null; }   // (the hide folds the highlight away too: AUDIT DISC7 A8)
+  if (!dom) blankDom();
   // `cursorActive` is the crosshair's OWN first statement (there is no
   // reticle while a window is up, hudCrosshair.js:"ROAD-E E5 - HUDCrosshair.Update's") and so it is the
   // plaque's. In the dungeon this was an accident of scheduling - the
@@ -577,7 +581,8 @@ export function worldHoverFrame({
     // exists is that a host closure can throw. The nudge is flushed
     // whether or not it moved anything, so a wheel click spent while
     // looking at a door does not arrive later at a chest.
-    foldQuickLoot(frame);
+    foldQuickLoot(verbs ? decorPressFrame(frame) : frame);
+    if (verbs) { setClassicLootFrame(null); return frame; }   // DECOR-VERBS: folded, and nothing drawn
     if (dom) showWorldPlaque(frame, plaqueAnchor(canvas));
     else { const lit = quickLootRow(frame), w = windowOf(frame, lit); setClassicLootFrame(w.frame, frameMark(), lit >= 0 ? lit - w.from : -1); }   // DISC22-C: drawHud draws it, this frame, its lit row with it - LOOT-SCROLL: the same window the plaque draws
     return frame;

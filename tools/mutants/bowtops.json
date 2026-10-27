@@ -1,0 +1,64 @@
+[
+  {
+    "name": "BOW-TOPS-1-arena-long-bow-short",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "129: 17, 130: 19 });",
+    "new": "129: 17, 130: 18 });",
+    "tests": [
+      "test/net/arena/arena4_client.test.js"
+    ],
+    "note": "The arena's referee would cap a Long Bow's top blow one short of the game's (BAL-ARCHERY's 19)."
+  },
+  {
+    "name": "BOW-TOPS-2-arena-short-bow-short",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "129: 17, 130: 19 });",
+    "new": "129: 16, 130: 19 });",
+    "tests": [
+      "test/net/arena/arena4_client.test.js"
+    ],
+    "note": "The arena's referee would cap a Short Bow's top blow one short of the game's (BAL-ARCHERY's 17)."
+  },
+  {
+    "name": "BOW-TOPS-3-siege-short-bow-short",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  126: 18, 127: 12, 128: 16, 129: 17, 130: 19,",
+    "new": "  126: 18, 127: 12, 128: 16, 129: 16, 130: 19,",
+    "tests": [
+      "test/systems/pvpref_law.test.js",
+      "test/net/arena/int7_arms.test.js"
+    ],
+    "note": "The siege's and the open zone's referee would cap a Short Bow's top blow one short."
+  },
+  {
+    "name": "BOW-TOPS-4-siege-long-bow-short",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  126: 18, 127: 12, 128: 16, 129: 17, 130: 19,",
+    "new": "  126: 18, 127: 12, 128: 16, 129: 17, 130: 18,",
+    "tests": [
+      "test/systems/pvpref_law.test.js",
+      "test/net/arena/int7_arms.test.js"
+    ],
+    "note": "The siege's and the open zone's referee would cap a Long Bow's top blow one short."
+  },
+  {
+    "name": "BOW-TOPS-5-intro-fall-reversed",
+    "file": "src/ui/intro/introShaders.js",
+    "old": "  float near = (1.0 - smoothstep(120.0, 900.0, length(vW - uEye)));",
+    "new": "  float near = smoothstep(900.0, 120.0, length(vW - uEye));",
+    "tests": [
+      "test/scenes/superDungeon/sd20c_render.test.js"
+    ],
+    "note": "INTRO4's near fade back on a reversed smoothstep, which GLSL leaves undefined."
+  },
+  {
+    "name": "BOW-TOPS-6-intro-worker-unfollowed",
+    "file": "test/ui/enhanced/enhancedPause.test.js",
+    "old": "(?:from|import\\(|new Worker\\(new URL\\()",
+    "new": "(?:from|import\\()",
+    "tests": [
+      "test/ui/enhanced/enhancedPause.test.js"
+    ],
+    "note": "The reach sweep would call INTRO4's worker, which the intro starts, a module nobody can open."
+  }
+]

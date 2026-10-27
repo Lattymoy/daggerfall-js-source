@@ -658,14 +658,25 @@ every set, the techniques, a Legendary's own power but these two.
 
 RECORDED, NOT CHANGED:
 
-- **The guards** compose with no overall ceiling (all eight about x0.49 of what lands; past their avoidance about 96%
+- **The guards** composed with no overall ceiling (all eight about x0.49 of what lands; past their avoidance about 96%
   off a blow at the extreme). A 50% ceiling at the door barely bound (7.22 -> 7.28 a blow) once the heals above were
-  answered, so the heals were the cause and the guards stand.
+  answered, so the heals were the cause and the guards stand. CHANGED by POWER-CEILING (below).
 - **Skill lines past the softcap** (gear's Critical Strike to 110 in the kit, x2.1 a crit): -6% in the measured kit;
   a ceiling on them is a watch item, not a cause.
-- **The blow powers** multiply across their three registries (sigil, sets, loot) with no ceiling; they bind only in a
-  stacked burst on a cooldown.
+- **The blow powers** multiplied across their registries (sigil, sets, loot) with no ceiling; they bind only in a
+  stacked burst on a cooldown. CHANGED by POWER-CEILING (below).
 - **Gortwog's Cleaver** keeps its record's Vampiric Effect: one named Legendary, never a random draw.
+
+CHANGED, POWER-CEILING (2026-10-27, `Power-Ceiling.md` section 5). The guards' shares now compose under one ceiling: a
+hurt keeps at least 10.71% of what reaches them (the loot 55% off, the sets 50%, the sky 15%, the martial path 30%,
+the arcane path 20%, each at its strongest). Points, pools, avoidance and a cap by health stand outside it, as they
+stood outside the 96% above.
+
+The blow powers, six registries now, multiply under one ceiling of x43.18 - the sigil +12%, the sets +200%, the loot
++240%, the Firmament +50%, weapon mastery +80%, the martial paths +40%, each at its own top. Each registry is held at
+its own top and each ceiling is the product of the tops, so nothing a player has is cut. A power added later that
+would take its registry past its top is cut at that top, and no other registry for it (AUDIT HORIZONTAL D4: the
+product alone cut the last registry asked).
 
 FIELD BUGS 2026-10-18f VAMPIRIC-WARD: the heal is the damage a blow DEALS, and a blow a referee's ward turns whole deals
 none. The stand-in says so (`warded`: the Warden's ward, the Brass Remnant shut, the Spire's turned blows - Elite-Gates.md
@@ -1156,6 +1167,7 @@ click-average stays 17. Sustained DPS is 16.25 against the longsword's 18.55, 87
 80-90%; the same clocks before this change were 77.5%). Against a Daedric cuirass the blows that remain
 are 9 and 6, and the bow's sustained DPS is 85.9% of the longsword's. The 70-80% PvP band is not met.
 No PvP multiplier was added to meet it. The paperdoll viewer still flies a shaft at MISSILE_SPEED.
+
 The Thunderlock's reload was the lab's fixed 1.7 s. It is now
 `Math.max(1, 1.7 * (1 - 0.004 * (speed - 50)))` on effective Speed
 (`combat/gun/gunFeel.js:"export function thunderlockReloadSeconds(speed) {"`), committed onto the machine's
@@ -1168,8 +1180,33 @@ player's blow in a siege, an arena bout, a duel and the open zone against its ow
 pinned equal to `characters/weapons.js`, and the account service signs a character's arms reach from one of them.
 Both copies still read 16 and 18, so a top bow blow stood over the referee's bucket. They read 17 and 19 now
 (`net/siege/siegeRef.js:"126: 18, 127: 12, 128: 16, 129: 17, 130: 19,"`,
-`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196, in the TESA fold's release
+`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196 (acct197 since the merge of main), in the TESA fold's release
 (#1184, which carried it while main stood red). The flight pins
 measured a shaft by MISSILE_SPEED's 1.25 m a 0.05 s step; they step it by the frame that flies those 1.25 m at
 ARROW_FLIGHT_SPEED now (`test/scenes/roadh_tail.test.js`, `test/systems/arrowfoes.test.js`, AUDIT 65 CV-2), and
-the volley's landings are timed at ARROW_FLIGHT_SPEED (TECHFX1). Mutants: `tools/mutants/archeryref.json`.
+the volley's landings are timed at ARROW_FLIGHT_SPEED (TECHFX1). Mutants: `tools/mutants/archeryref.json`. BOW-TOPS, below, made the same fix on main; at the merge of main into #1184 (2026-10-27)
+the two met with one set of values, and the relay's row is world270, past BOW-TOPS's world269.
+
+**BOW-TOPS (2026-10-26, the owner: "Deploy failed").** BAL-ARCHERY merged with the deploy red, and deploys 1705 to
+1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they
+kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
+Both copies now take the bows' new tops, a Short Bow 17 and a Long Bow 19
+(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX = Object.freeze({"`,
+`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX = Object.freeze({"`). Both files are in the relay's bundle,
+so RELAY_VERSION is `world269` with its LAW row, and every pin of `world268` is moved. relay-deploy.yml deploys it
+on the merge, which drops every open socket once.
+
+The pins that still read the old law are moved: the shaft fixtures
+of `arrowfoes.test.js`, `roadh_tail.test.js` and `audit65_constants.test.js` take a step of 1.25 at the shaft's own
+speed (`1.25 / ARROW_FLIGHT_SPEED`), so their geometry is unchanged, and a spell's flight stays on MISSILE_SPEED.
+`techfx1.test.js` times a volley's landing at ARROW_FLIGHT_SPEED. `audit39_worldmodes.test.js`'s Long Bow blow is 18,
+and `int7_arms.test.js`'s Long Bow reach is 19. `techfx1_audit.test.js` refuses any number a flight is divided by, not
+only 25. Seven mutant records are re-aimed by content (`techfx1.json`, `audit_martial.json`, `tell6d.json`,
+`pvpref.json`), and two that quote the version line (`nirnrootsage.json`, `soc1.json`). The 151 records these files
+touch were judged again: 150 dead, 1 equivalent as recorded. `tools/mutants/bowtops.json` (6, all dead).
+
+One cost is said out loud. A shaft's contact is tested after each step, not swept, and at the same frame time the
+step is now 1.35 times as long. A shaft through the middle of a body steps past it once the step is longer than the
+contact: 1.6 m for the player (MISSILE_COLLIDER_RADIUS 0.45 + 0.35) and 1.8 m for a foe (0.45 + 0.45). At
+ARROW_FLIGHT_SPEED that is a frame longer than 0.047 s for the player and 0.053 s for a foe (MISSILE_SPEED's were
+0.064 s and 0.072 s). A shaft off the middle meets a shorter chord, so it can pass at shorter frames.

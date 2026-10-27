@@ -462,13 +462,24 @@ test('LPT1 BB_VS mesh mode: the tree\'s vertex turned about +Y and scaled at its
   assert.ok(near(banded.vFade, 2.5, 1e-3));
 });
 
-test('LPT1 BB_VS mesh mode light (AUDIT LPT A2): at night a face takes the far picture\'s own law - LPT_IMPOSTOR_LIGHT turned to the eye - so the tree and its picture agree where they hand over; by day the sun\'s by its share; times its material\'s colour', () => {
-  const shade = (n, sun = [0, 1, 0, 0], color = [1, 1, 1]) => bbAt({ uMesh: 1, aCenter: [0, 1, 0], aCorner: [0, 0], aNormal: n, aInst: [0, 0, 0, 0], uLptCut: [0, 0, 10, 140], uLptSun: sun, uMeshColor: color }).vShade;
+// PIN MOVED (FLORA-GROUND, FIELD BUGS 2026-10-27: "reflective flora"): a face's light no longer asks where the eye is -
+// the far picture's light is the sky's, straight above (LPT_IMPOSTOR_LIGHT), and the 3D tree takes it unturned: a matte
+// face, the same from every side, as DFU's Lambert nature batch (DaggerfallBillboardBatch.shader) lights its flats.
+test('LPT1 BB_VS mesh mode light (AUDIT LPT A2; FLORA-GROUND): at night a face takes the far picture\'s own law - LPT_IMPOSTOR_LIGHT, the sky\'s from straight above, never turned to the eye - so the tree and its picture agree where they hand over and no face shines toward the viewer; by day the sun\'s by its share; times its material\'s colour', () => {
+  const shade = (n, sun = [0, 1, 0, 0], color = [1, 1, 1], eye = [0, 0, 10]) => bbAt({ uMesh: 1, aCenter: [0, 1, 0], aCorner: [0, 0], aNormal: n, aInst: [0, 0, 0, 0], uLptCut: [...eye, 140], uLptSun: sun, uMeshColor: color }).vShade;
   const law = (n) => Math.min(1, Math.max(0.5, 0.72 + 0.28 * (n[0] * LPT_IMPOSTOR_LIGHT[0] + n[1] * LPT_IMPOSTOR_LIGHT[1] + n[2] * LPT_IMPOSTOR_LIGHT[2])));
-  // the eye is at +z: a face toward it is the far picture's face toward its viewer (-z there)
-  assert.ok(near(shade([0, 0, 1])[0], law([0, 0, -1])), 'toward the eye');
-  assert.ok(near(shade([0, 1, 0])[0], law([0, 1, 0])), 'up');
-  assert.ok(near(shade([0, 0, -1])[0], 0.5), 'away: at the floor');
+  assert.deepEqual([...LPT_IMPOSTOR_LIGHT], [0, 1, 0], 'the sky\'s light, straight above');
+  // a face's light is the picture's law - and the same wherever the eye stands round the tree
+  for (const n of [[0, 0, 1], [0, 0, -1], [1, 0, 0], [0.6, 0.8, 0], [0, 1, 0], [0, -1, 0]]) {
+    for (const eye of [[0, 0, 10], [0, 0, -10], [10, 0, 0], [-7, 3, 7]]) assert.ok(near(shade(n, undefined, undefined, eye)[0], law(n)), `the face ${n} from ${eye}: the picture's law, unturned`);
+  }
+  assert.ok(near(shade([0, 1, 0])[0], 1), 'up: whole');
+  assert.ok(near(shade([0, 0, 1])[0], 0.72) && near(shade([0, 0, -1])[0], 0.72), 'a side toward the eye and one away alike');
+  assert.ok(near(shade([0, -1, 0])[0], 0.5), 'down: at the floor');
+  // the sun low in the east: no share, the sky's law alone (its face to the sun no brighter); its whole share, the sun's
+  const east = [Math.cos(0.2), Math.sin(0.2), 0];
+  assert.ok(near(shade([1, 0, 0], [...east, 0])[0], law([1, 0, 0])), 'no sun: the sky\'s, never the sun\'s');
+  assert.ok(near(shade([1, 0, 0], [...east, 1])[0], Math.min(1, 0.72 + 0.28 * east[0])), 'the sun\'s whole share: its face to the sun lit by it');
   assert.ok(near(shade([0, 1, 0], [0, 1, 0, 1])[0], 1), 'the sun overhead, whole');
   assert.ok(near(shade([0, 1, 0], [0, 1, 0, 0.5])[0], (law([0, 1, 0]) + 1) / 2), 'half the sun\'s share');
   assert.deepEqual(shade([0, 1, 0], [0, 1, 0, 1], [0.8, 0.8, 0.8]).map((x) => Math.round(x * 1e4) / 1e4), [0.8, 0.8, 0.8], 'Atlas_Opaque\'s _Color');

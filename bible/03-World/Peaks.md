@@ -135,3 +135,13 @@ deliberately, each re-derived and said why.
   carets (`ui/tamrielInk.js`) and the authored law (`tamrielGround.js` `rangeLift`) do not.
 - **World of Daggerfall's Mountains layouts** are retired as the mountain look then. Their Rocks layouts and the routes'
   `mountainPixels` stay.
+- **RELIEF-PEAKS (2026-10-27, `Tamriel.md`) stands the ranges past the Bay already.** KPbICA saw no mountains past the
+  Bay: the large map there was a swell (a third of the height left out) and the relief has nothing under its 6.3 km
+  grain. `world/tamriel/tamrielRanges.js` lays a ridged field under BREATHTAKER3's landforms past the Bay's seam (its
+  swing from nothing at 1,000 m to 1,250 m from 2,300 m) - its own Red Mountain cone retired for RED-MOUNTAIN's; and the
+  oriented frames this module reads (`orient`) now ease into a fixed frame where the direction is weak - a unit
+  direction at every node stood walls of 80 to 116 m at summits and saddles. So when PEAKS2 is wired, past the Bay it
+  stands either on RELIEF-PEAKS' ranges (its 375 m relief riding them) or in their place, never both at full; and it
+  reads the frames by their strength as `tamrielLandformAt` does. On the Bay nothing of RELIEF-PEAKS stands.
+- **The heights above moved past the Bay** (RELIEF-PEAKS): Skyrim's summit, the Jerall and the Reach's shoulder stand
+  their ranges' crests now (Red Mountain is RED-MOUNTAIN's, the table's row). PEAKS1's caps are by height, so they follow.

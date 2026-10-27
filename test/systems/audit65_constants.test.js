@@ -42,8 +42,8 @@ import { FNT_ASCII_START } from '../../src/formats/fntFile.js';
 import { ArrowFlight } from '../../src/combat/arrowFlight.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 import {
-  BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS, EXPLOSION_RADIUS, MISSILE_COLLIDER_RADIUS,
-  missileHitsCapsule, sphereOverlapsCapsule, ARROW_FLIGHT_SPEED,
+  BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS, EXPLOSION_RADIUS, MISSILE_COLLIDER_RADIUS, ARROW_FLIGHT_SPEED,
+  missileHitsCapsule, sphereOverlapsCapsule,
 } from '../../src/systems/spellcast.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../../src/player/motor.js';
 
@@ -228,9 +228,11 @@ test('AUDIT 65 CV-2: a blast meets the PLAYER at 4.0 + 0.35, two-sided, through 
 
 test('AUDIT 65 CV-2: an enemy shaft meets the player at 0.45 + 0.35, two-sided, through the real ArrowFlight', () => {
   const open = () => new ArrowFlight({ getGpuMesh: () => null, collider: { raycast: () => Infinity, heightAt: () => -100 } });
-  // ARROW_FLIGHT_SPEED * (1.25 / ARROW_FLIGHT_SPEED) = 1.25 per step (BAL-ARCHERY: a shaft's own speed), so a shaft loosed at z = -1.25
-  // stands exactly on the player's z after one update and its lateral
-  // offset from the capsule axis is read at face value.
+  // A step of 1.25, so a shaft loosed at z = -1.25 stands exactly on the
+  // player's z after one update and its lateral offset from the capsule
+  // axis is read at face value. PIN MOVED (BAL-ARCHERY, Balance-Arc.md
+  // section 18): the step was MISSILE_SPEED * 0.05; a shaft flies at
+  // ARROW_FLIGHT_SPEED now, so the step's time is read off that.
   const shaft = (lateral) => {
     const hits = [];
     const f = open();

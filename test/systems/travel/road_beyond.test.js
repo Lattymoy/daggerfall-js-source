@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { planRoute, searchByRoad, routeGround, ROUTE_COST, BEYOND_MAX_EXPANSIONS, BEYOND_MARGIN, BY_ROAD_MAX_EXPANSIONS, BY_ROAD_GREED, BY_ROAD_REACH, BY_ROAD_SEEK, ROUTE_MAX_EXPANSIONS } from '../../../src/systems/travel/travelRoute.js';
+import { planRoute, searchByRoad, routeGround, ROUTE_COST, BEYOND_MAX_EXPANSIONS, BEYOND_MARGIN, BY_ROAD_MAX_EXPANSIONS, BY_ROAD_GREED, BY_ROAD_SEEK, ROUTE_MAX_EXPANSIONS, ROAD_END_SLACK, ROAD_PIECE_CAP } from '../../../src/systems/travel/travelRoute.js';
 import { MAP_W, MAP_H, DIR } from '../../../src/world/road/roadNetwork.js';
 import { beyondKey, setArenaRoads } from '../../../src/world/arenaRoads.js';
 
@@ -43,7 +43,10 @@ test('ROAD-BEYOND the dials: the ladder\'s whole spend past the table, the roads
   assert.equal(BEYOND_MARGIN, 240);
   assert.equal(BY_ROAD_MAX_EXPANSIONS, 100000);
   assert.equal(BY_ROAD_GREED, 1.25);
-  assert.equal(BY_ROAD_REACH, 24);
+  // PIN MOVED (ROAD-FOLLOW, Travel-View.md ROAD-FOLLOW): BY_ROAD_REACH (24 pixels of open ground about either end) is gone -
+  // the open ground is each end's own leg (ROAD_END_SLACK rings past its nearest road) and a gap's narrowest crossing
+  assert.equal(ROAD_END_SLACK, 2);
+  assert.equal(ROAD_PIECE_CAP, 8192);
   assert.equal(BY_ROAD_SEEK, 96);
   assert.ok(BEYOND_MAX_EXPANSIONS < ROUTE_MAX_EXPANSIONS, 'the whole ladder past the table spends less than one rung on the Bay may');
 });
@@ -83,7 +86,8 @@ test('ROAD-BEYOND the open ground about the ends: a town in the field beside the
   const town = planRoute({ x: 1100, y: 100 }, { x: 1710, y: 410 }, { ...bay(), pathsBeyond, tally });
   assert.ok(count(town.kinds, 'road') >= 890 && count(town.kinds, 'open') <= 12, `the road, then the field: ${count(town.kinds, 'open')} open`);
   assert.ok(tally.n < 6000, `${tally.n} cells`);
-  // a traveller 60 pixels south of the road's row, 300 along it - past BY_ROAD_REACH, within BY_ROAD_SEEK
+  // a traveller 60 pixels south of the road's row, 300 along it - within BY_ROAD_SEEK (ROAD-FOLLOW: her own leg the 62 rings
+  // about her, out to the road and two past)
   tally = { n: 0 };
   const wild = planRoute({ x: 1400, y: 160 }, { x: 1700, y: 400 }, { ...bay(), pathsBeyond, tally });
   const firstRoad = wild.kinds.indexOf('road');
@@ -101,15 +105,28 @@ test('ROAD-BEYOND the roads\' search walks the open ground about its ends alone,
   const r = searchByRoad({ x: 1100, y: 300 }, { x: 1200, y: 300 }, { ...bay(), beyond: roadThrough(u) });
   assert.equal(count(r.kinds, 'road'), r.kinds.length, 'the road round, never the field\'s middle');
   assert.equal(r.cost, 400);
-  // and the plan keeps TV2's law: a way by the roads dearer than the straight walk is asked of the ladder, the cheaper kept
+  // PIN MOVED (ROAD-FOLLOW): the plan keeps the road round - TV2's law asked the ladder for a way by the roads dearer than
+  // the straight walk and kept its cut across the field (350); the road joins the two ends, so the road is the way
   const plan = planRoute({ x: 1100, y: 300 }, { x: 1200, y: 300 }, { ...bay(), pathsBeyond: roadThrough(u) });
-  assert.equal(plan.cost, 100 * ROUTE_COST.open, 'across the field');
-  // a road broken far from both ends (a pixel's bit with no bit back): no way by the roads alone - the ladder walks the gap
+  assert.equal(plan.cost, 400, 'round the field by the road');
+  assert.equal(count(plan.kinds, 'open'), 0);
+  // PIN MOVED (ROAD-FOLLOW): a road broken far from both ends (a pixel's bit with no bit back) - the roads' own search
+  // crosses the gap, its one open step (roadEndsSteps' narrowest crossing), where the ladder walked it
   const gap = roadThrough(ell());
   const broken = (k, x, y) => (x === 1400 && y === 100 ? gap(k, x, y) & ~DIR.W : gap(k, x, y));
-  assert.equal(searchByRoad({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), beyond: broken }), null, 'the gap is no step of the roads\' search');
+  const crossed = searchByRoad({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), beyond: broken });
+  assert.equal(count(crossed.kinds, 'open'), 1, 'the gap, one step');
   const walked = planRoute({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), pathsBeyond: broken });
-  assert.equal(count(walked.kinds, 'open'), 1, 'the ladder steps it');
+  assert.equal(count(walked.kinds, 'open'), 1, 'the plan steps it');
+  // ROAD-FOLLOW: the open ground an end's own leg alone - both its pixels in the end's ring (ROAD_END_SLACK past the nearest
+  // road): a road that passes a goal 8 pixels off before it comes round to 5 off is walked round, never cut from its first pass
+  const twice = [];
+  for (let x = 1100; x <= 1300; x++) twice.push([x, 100]);
+  for (let y = 101; y <= 113; y++) twice.push([1300, y]);
+  for (let x = 1299; x >= 1150; x--) twice.push([x, 113]);
+  const round = searchByRoad({ x: 1100, y: 100 }, { x: 1205, y: 108 }, { ...bay(), beyond: roadThrough(twice) });
+  assert.equal(count(round.kinds, 'open'), 5, 'the road round to its nearest pass, then its own leg');
+  assert.ok(round.cost > 300, `${round.cost}: never the cut from the first pass across the field`);
   // the spend: a road of 900 is no way in a hundred cells
   assert.equal(searchByRoad({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), beyond: roadThrough(ell()), maxExpansions: 100 }), null);
   // the lean: the road of 900 found in fewer cells than the plain A* walks (some 3,300 - the fields about its start)
@@ -161,7 +178,8 @@ test('ROAD-BEYOND the Bay\'s own plans are the Bay\'s: both ends on the table, n
   assert.deepEqual(r.kinds, new Array(40).fill('road'));
   const src = read('src/systems/travel/travelRoute.js');
   assert.match(src, /const past = offTable\(from\) \|\| offTable\(to\);/);
-  assert.match(src, /if \(past && beyond && \(!sea \|\| \(sea\.start === 'land' && sea\.goal !== 'sea'\)\)\) \{/);
+  // PIN MOVED (ROAD-FOLLOW): and only where the roads join the two ends (roadEndsSteps' `strict`)
+  assert.match(src, /if \(past && beyond && ends\?\.strict && \(!sea \|\| \(sea\.start === 'land' && sea\.goal !== 'sea'\)\)\) \{/);
 });
 
 // ── WITH ARENA2: the freeware's own Tamriel ─────────────────────

@@ -12,8 +12,8 @@
   {
     "name": "SKILL-TICK-level-one-price",
     "file": "src/systems/advancement.js",
-    "old": "entity.career?.advancementMultiplier ?? 1, entity.level ?? 1);",
-    "new": "entity.career?.advancementMultiplier ?? 1, 1);",
+    "old": "const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, raisePriceLevel(entity));",
+    "new": "const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, 1);",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],

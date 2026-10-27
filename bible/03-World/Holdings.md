@@ -383,19 +383,109 @@ TileMap's water), 37 of the 106 port towns sounded no harbour at all - Daggerfal
 their nearest berths 1,542 m, 721 m and 1,118 m off their footprints; Holwych's town stands at 272 m over a sea pixel
 whose shore the kernel lays 1.1 km off. A Bay port whose own shore gives no berth is sounded again out to the ring its
 port law read (`systems/naval/harbourBook.js` portRingReach: the pixels within SEA_RING of the town's -
-`harbourBook.js:"if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far); e.far = true; }"`),
+`harbourBook.js:"if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far) ?? sound(far, true); e.far = true; }"`),
 once every pixel of that ring is built (the world's `ready` at any reach - O1's law: never "no harbour" off a
 half-streamed ring, the port waits and is asked again each step), and once a book's life (its scan is some five times
 the near one's; the B7 retry asks the near reach alone). 36 of the 37 then stand a harbour, its quays at the nearest
-shore - up to some 1.6 km from the town. Aldbrugh (Shalgora) sounds none still: OPEN, its port kept. An isle past the
-Veil sounds its own reach alone (AUDIT CAPTAIN'S SEA H1). Two things it leaves: the ring's ground is built about a player
+shore - up to some 1.6 km from the town. Aldbrugh stands one since ALDBRUGH-QUAY (below). An isle past the
+Veil sounds its own reach alone (AUDIT CAPTAIN'S SEA H1). Two things it left: the ring's ground was built about a player
 within a pixel of the town at TerrainDistance 3 (DFU's default), so a ship come in from the sea to a far shore 2 pixels
-off - Daggerfall's - stands its quays once the player has been to the town, never before; and under Deep Waters (on by
-default) a berth lies some 80 m farther out, which Daggerfall's 97 m inside the ring's edge was not measured against.
-`test/systems/naval/fb1020c_harbourreach.test.js` (the 37 and the one, on ARENA2 - `test/portTerrain.mjs`, the pixel's
+off - Daggerfall's - stood its quays once the player had been to the town, never before (closed by FAR-QUAY, below); and
+under Deep Waters (on by default) a berth lies some 80 m farther out, which Daggerfall's 97 m inside the ring's edge was
+not measured against (still so).
+`test/systems/naval/fb1020c_harbourreach.test.js` (the 37 and all 106, on ARENA2 - `test/portTerrain.mjs`, the pixel's
 TileMap as the build makes it), `tools/mutants/fb1020c_harbourreach.json`.
 
-THE FOUR HOSTS: `scenes/world.js` keeps the harbours, stands the quays and hands the warp; a building's frame
+**SHIPS INSIDE THE WALLS** (PORT-SHIPS, 2026-10-27 - the owner's field report, item 8: *"I went to solitude and the ships
+at works were inside town walls"*; and after it: *"No band aids or half assed work"*). What the player saw: at Solitude
+the six ships moored at the port lay along the Karth at the city's west side, each one's hull through the west wall and
+her quay inside it, two of them under the arch. The cause is every port's, not Solitude's: a berth was kept on three
+lines of her footprint, a station every eighth of her length, asked of the water alone (`findHarbour` over the world's
+`navalIsWater`). The water says nothing of what stands on it, nor of the ground under it. Solitude's walls were drawn
+round its blocks clear of every house (AUDIT-TESA A6-3), and so 7 m out into the Karth on the west; the shore nearest
+the town's middle was the terrace's edge inside them. Measured on the freeware - every port past the Bay and the Bay's
+106 of the port law, as the game builds their ground (Deep Waters off, the tiles' water): Solitude's six through its
+walls; Alinor's six in the river that runs through the middle of its walled city; two of Torval's and one of the
+Waterfront's through a pier (a pier 6-10 m wide, a station 6.5 m from the next); and nine ships at seven ports with a
+side on a bank - water tiles a town's flatten lifts in its margin, or a bank's first slope: Windhelm's two, Winterhold's,
+Shimmerene's and Skywatch's past the Bay, Pilliweyn's, Chestertower's (28 m up) and Wadijerareg's two on the Bay.
+
+The fix, at every port: A BERTH STANDS WHERE A SHIP CAN (`systems/naval/shipLife.js` berthStands, asked by `findHarbour`
+of each berth and of her approach's hull), every KEEP_STEP (2 m) over her:
+- HER TOWN KEEPS ITS SHIPS OUT (`systems/naval/harbourKeep.js` harbourKeep - the port near the player hands it with the
+  port's footprint, `navalHarbourNear`, moved whole with the book to `scenes/harbourHost.js`, `01-Overview/Host-Split.md`
+  PORT-SHIPS - and the harbour book hands it on): a capital's ground inside its walls and their band, and every
+  landmark it stands over the water - Solitude's two piers, its sea stack and its arch; Alinor's and Torval's four piers
+  each (their walls three-sided, the quay's side open and its two end towers kept); the Imperial City's walled city, the
+  Waterfront's twenty-one piers, Talos Bridge and the causeways. A walled town - a city past the Bay on its outline (TS4),
+  a Bay city on its outline (TS7) - keeps the ground inside its wall's line and TOWN_WALL_KEEP either side of it (its
+  wall as registered, `world/townWalls.js` townWallOf), on a raster made once a wall. Her ship, her quay, her jetty's way
+  to the shore (walked landward from the quay's back, BERTH_JETTY_WALK at most) and her approach's hull are kept clear
+  of it.
+- HER WATERPLANE FLOATS (the world's `ground` - `surfaceAt` less `tvSeaY`, the depth `navalIsWater` reads): the ground
+  under her length, her beam drawn in to the stem over BOW_TAPER (0.3 of her length) and to the stern over STERN_TAPER
+  (0.12), stands no more than BERTH_DRY_M (0.1 m) over the sea's top.
+After it every berth of the 135 ports stands, and every port keeps as many berths as it had (the 29 past the Bay six
+each). Solitude's ships lie at its docks: five off the quay below its north wall, one of them between the two piers, and
+the sixth off the gardens outside its east wall. The quays, the Docks' place, the moored ships and the ones coming in
+read the same berths; under Deep Waters (on by default) the floor is her draft under the sea, so the ground asks no less.
+Two things it leaves: a berth refused beside a lifted bank is not stood farther out (on the freeware no port lost one by
+it), and a ship under way is not kept off a pier or a wall (the keep is the berth's; her ways are the water grid's).
+`test/systems/naval/portships.test.js` (the laws on shapes of the port's own, each capital's keep and a walled town's, the
+book and the host), `test/systems/naval/portships_real.test.js` and `portships_bay.test.js` (ARENA2, `test/portShipsWorld.mjs`:
+every port past the Bay and of the Bay before and after, each berth measured against the test's own reading of the town
+and the ground), `tools/mutants/portships.json` (29, all dead). PIN MOVED: `harbourbook.test.js`,
+`fb1020c_harbourreach.test.js`, `auditcaptsea.test.js`, `auditholdings.test.js` and `sealanes.test.js` (the book's and the
+host's lines carry the keep and the ground), and with `shiplife.test.js` and `etherplaces.test.js` they read the host whole
+(`hostText`: the port near the player is `scenes/harbourHost.js`'s now). Re-aimed by content: `shiplife.json`'s SHIPLIFE-WORLD-no-harbour-door and
+`sealanes.json`'s FEED-harbour-unnamed (dead); `auditgalleon2_sea.json`'s AUDIT-GN2-GN1-sounded-in-the-berth-hulls-own-water
+survives, as it did before this change - since SHIPS-2 the carrack's keel (4.65 m) stands within 0.05 m of the galleon's
+(4.7 m): OPEN, not this slice's.
+
+**THE FAR HARBOUR FROM THE SEA** (RPT1026-WORLD FAR-QUAY, 2026-10-27 - a private report: sailing port to port, no other
+port's docks stood, so most of the harbour office's contracts could not be done). Measured on the player's own data with
+a ship at each of the 36 far harbours' first berth and the world built TerrainDistance 3 about her, the old law sounded
+12: 7 first berths lie 2 pixels off their town (Daggerfall, Wayrest, Holwych, Ripmore, Isfakabi, Pencart, Gallocart),
+where the world host's 3 x 3 found no port at all; Pencart's lies within a pixel of Longham, and the host named the
+nearest port alone; and 16 more waited on a pixel past the ring - the readiness read its box's far edges, a pixel's own
+edge, as the next pixel's. Now (`systems/naval/harbourBook.js`):
+- the host names EVERY port town within SEA_RING of the player (`HARBOUR_TOWN_ORDER`, the 3 x 3 first in the order it was
+  always walked), each handed as `harbourOf` hands it - its footprint and its readiness, moved out of world.js
+  `navalHarbourNear`; the book sounds each as it sounded the one;
+- the readiness's box is half-open (`EDGE_IN`), its far edges inside the ring;
+- a pixel the scan reads is known where it is built - or where no build can stand water (`harbourKnown`, `dryPixel`: the
+  kernel read without its ground noise, a strict lower bound of every sample, over the ocean's elevation everywhere -
+  no water corner can stand, a location's flattening keeps it so, Deep Waters carves only under water; a river painted
+  across such a pixel is too narrow for any hull or mouth). An unbuilt pixel reads as land, and there that is the truth:
+  the harbour sounded is the whole ring's, to the bit, whichever way the player came (AUDIT HOLDINGS O1 kept).
+All 36 are sounded from their first berth now, each to its whole ring's harbour exactly. Not a DFU member (QUAYS).
+`test/systems/naval/rpt1026_world_farquay.test.js` (6); `tools/mutants/rpt1026_world.json`. PINS MOVED: the readiness's
+source pins in `fb1020c_harbourreach.test.js`, `auditholdings.test.js` and `shiplife.test.js` read `harbourBook.js`; their
+mutant records (`fb1020c_harbourreach.json`, `sealanes.json`) re-aimed by content.
+
+**ALDBRUGH'S QUAY** (ALDBRUGH-QUAY, 2026-10-27, the SEA-OPEN slice). The port law reads a square of pixels about the town
+(`portSites.js` seaBears), and the ring's sounding read a circle. Aldbrugh's sea lies only in the square's south-east
+corner, some 2.3 km off, past the circle: a port with no quay. Where the round ring finds no shore, the book sounds the
+square (`shipLife.js` findHarbour's `square`, cited above).
+A port whose round ring finds a shore keeps that harbour: the corners never add a berth to it. On ARENA2 all 106 port
+towns stand a harbour; Aldbrugh's berths lie 2,318-2,341 m from its town. The departure is the port's own (DFU has
+no harbours). `test/systems/naval/fb1020c_harbourreach.test.js`, `tools/mutants/seaopen.json` (ALDBRUGH-, 3, dead).
+Pin moved: `auditcaptsea.test.js` H1/P2 (the sounding's text names its shape). THE FOUR HOSTS as below: only
+`world.js` sounds a harbour.
+
+**A HARBOUR ON A WAY OUT** (SHIP AUDIT, 2026-10-27, `01-Overview/audits/Audit-Ship-Ready.md` S2). Lillandril had no ships
+once RELIEF-PEAKS raised the land past the Bay (`03-World/Tamriel.md` RELIEF-PEAKS) and its place stood a pixel west: the
+berths nearest the town's middle lay in a closed inlet along its east side, the mean of their shores' normals ran into the
+land past the inlet, no mouth stood within MOUTH_REACH, and `findHarbour` answered none - the open sea past the town's
+west side never sounded. Now, where the nearest berths find no mouth, the berths are taken again from the shores whose own
+way out - along her shore's normal, on the water alone - meets open water (`shipLife.js` findHarbour's `openOut`, `wet`).
+A harbour that found its mouth is never sounded again, so every port's berths stand as they did (the Bay's 106 among them).
+On the freeware every port past the Bay six berths again, every one standing (`portships_real.test.js`). Pinned by
+`test/systems/naval/harbour_inlet.test.js`; `tools/mutants/harbour_inlet.json` (3, dead). PIN MOVED: PORT-SHIPS'
+water-alone baseline (`portships_real.test.js`) - RELIEF-PEAKS' ground moved the banks: Sunhold's and Woodhearth's over
+the sea now, Windhelm's, Winterhold's, Shimmerene's and Skywatch's under it.
+
+THE FOUR HOSTS: `scenes/world.js` keeps the harbours (PORT-SHIPS: through `scenes/harbourHost.js`, which it constructs), stands the quays and hands the warp; a building's frame
 (`worldModes.js`) and a dungeon's (`dungeonContext.js`) have no sea, and the standalone street (`exterior.js`) no harbour.
 
 ## 8. Crew roles
@@ -436,11 +526,11 @@ and her orders' answers; with none aboard, her first hand aboard as before.
 ## 9. Files, tests
 
 `systems/fleet.js`, `scenes/fleetHost.js`, `ui/holdingsPages.js`, `ui/fleetPage.js`, `systems/naval/quays.js`,
-`world/quayModel.js`, `scenes/quayPool.js`, `systems/naval/harbourBook.js`; seams in `systems/horse/horseCart.js`,
+`world/quayModel.js`, `scenes/quayPool.js`, `systems/naval/harbourBook.js`, `systems/naval/harbourKeep.js` (PORT-SHIPS); seams in `systems/horse/horseCart.js`,
 `systems/comeSailAway/comeSailAway.js` (SummonBoat, LayUpBoat, laidUpHold, the book's seams, the refits' reads),
 `systems/comeSailAway/comeSailAwayWire.js`, `scenes/naval/navalHost.js` (fleetStatus, repairAway, refitBoat, freeBerth, the refits' reads),
 `scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js`, `ui/enhanced/enhancedMenu.js`, `ui/enhanced/enhancedFrame.js`; the quays'
-in `systems/naval/shipLife.js` (`alongside`), `systems/comeSailAway/comeSailAway.js` (`warp`), `world/deepWater/deepWaterFloor.js`
+in `systems/naval/shipLife.js` (`alongside`; PORT-SHIPS: `berthStands`), `world/townWalls.js` (PORT-SHIPS: `townWallOf`), `systems/comeSailAway/comeSailAway.js` (`warp`), `world/deepWater/deepWaterFloor.js`
 (`SHORE_TERRAIN_FIT_METERS`, exported for JETTY_MAX) and `scenes/naval/navalHost.js` (the book read, the docking, the
 gangways).
 
@@ -453,5 +543,5 @@ berth, the shore walked, what stands on it, its model, alongside, docking's law,
 gangway, Come Sail Away's seam, the Fleet's word, the world's wiring), `test/systems/naval/auditholdings.test.js` (AUDIT HOLDINGS,
 `01-Overview/audits/Audit-Holdings.md`: a pin a finding), `test/systems/naval/berthhidden.test.js` (BERTH-HIDDEN: a ship out of sight keeps
 her berth), `test/systems/naval/harbourbook.test.js` (HARBOUR-BOOK: the book, the sea reading the world's, the pier across the shelf,
-the world's wiring); `tools/mutants/holdings.json`, `tools/mutants/fb1015_wagonstabled.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
+the world's wiring), `test/systems/naval/portships.test.js`, `portships_real.test.js` and `portships_bay.test.js` (PORT-SHIPS: a berth stands where a ship can, every port on ARENA2); `tools/mutants/holdings.json`, `tools/mutants/portships.json`, `tools/mutants/fb1015_wagonstabled.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
 `tools/mutants/berthhidden.json`, `tools/mutants/harbourbook.json`.

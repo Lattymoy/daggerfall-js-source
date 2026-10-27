@@ -155,12 +155,14 @@
   {
     "name": "TDEEP-detail-at-sea",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing",
-    "new": "    for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing",
+    "old": "const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER",
+    "new": "const data = [], sea = false, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER",
     "tests": [
+      "test/world/reliefpeaks.test.js",
       "test/world/tamriel2.test.js",
       "test/world/deepWater/tamriel_deep.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the large map is the law of the bytes about a pixel - a sea pixel by the coast would take the land's"
   },
   {
     "name": "TDEEP-swell-cache-kept",

@@ -6,13 +6,18 @@
 //
 // THE LAYERS BY DISTANCE, each the one inside it drawn over it, at the far plane, in one pass (render/farRing.js draw):
 //   the streamed grid (Land View: 4.5 km)  ->  the middle ring (the kernel's own ground, 102 m cells, to 11.5 km,
-//   render/midRing.js)  ->  the far ring (the byte's macro height, 819 m cells, to 39 km)  ->  THE FAR FIELD (a cell's
-//   highest byte, 6.55 km cells, to 393 km - world/terrain/midRingGrid.js buildFarFieldBytes, on the terrain worker).
-// Its height is the far ring's own law (render/farRing.js ringHeight - the landforms' lift with the Landforms row), read
-// off the heightmap's own reader: the ground the stream grows, never a copy of it. Its colour is the far ring's tint at
-// the cell's centre, its sea the majority's, its light, haze, clouds' shadows and sea the far ring's program. A cell
-// inside the far ring's footprint is left to it (the hole), and the cells are written farthest first from the
-// traveller's cell (the painter's order the middle ring keeps), so a near range stands over a farther one.
+//   render/midRing.js)  ->  the far ring (the kernel's ground at a pixel's centre, 819 m cells, to 39 km)  ->  THE FAR
+//   FIELD (6.55 km cells, to 393 km - world/terrain/midRingGrid.js buildFarFieldBytes, on the terrain worker).
+// RELIEF-PEAKS: its vertex stands on the kernel's own ground at the node its cell's centre is (midRingGrid.js
+// farFieldCell's ground: world/landforms.js nodeGroundAt - the small term, the large map by its law, the landforms' lift
+// with the Landforms row and the ranges past the Bay), read off the heightmap's own reader: the ground the stream grows,
+// never a copy of it. It stood at its cell's highest byte by the far ring's byte law: measured on the freeware's ground,
+// past the Bay up to 105 m over the ground at its place (29 m on the mean), on the Bay 266 m under it on the mean (the
+// large map left out) and up to 253 m over it; now within 2 m past the Bay, within 45 m on the Bay (the large map's law
+// against WOODS.WLD's own). Its colour is the far ring's tint at the cell's centre, its sea the majority's, its light,
+// haze, clouds' shadows and sea the far ring's program. A cell inside the far ring's footprint is left to it (the hole),
+// and the cells are written farthest first from the traveller's cell (the painter's order the middle ring keeps), so a
+// near range stands over a farther one.
 //
 // WHY NO SPRITES. The spec asks for "multilayered 2D sprite composition"; the far field is the layered composition as
 // geometry instead: 14,641 vertices, one draw - cheaper than the impostor cards it would take to show the same ranges,
@@ -48,12 +53,13 @@ export function farFieldDisabled(search = globalThis.location?.search) {
 /**
  * The far field's vertex data from the worker's bytes, round base cell (baseCX, baseCY): positions in the frame of the
  * base cell's north-west pixel (x east, z north: x = (corner x - baseX) S, z = (baseY + 1 - corner y) S - the far ring's
- * frame), each vertex its cell's centre; its height `heightOf(byte)` (the far ring's law), or the sea's `seaY` where the
+ * frame), each vertex its cell's centre; its height `heightOf(byte, px, py, v)` (RELIEF-PEAKS: the worker's ground at the
+ * vertex's node - midRingGrid.js farFieldCell), or the sea's `seaY` where the
  * cell is the sea (more than half its samples at the sea's floor, or the ocean's climate at its centre); its colour
  * `tintAt(px, py, byte, v)` at the centre pixel (`v` the vertex: the worker's answers for it); normals by central
  * differences over the field.
  * @param {{ high: Uint8Array, low: Uint8Array, baseCX: number, baseCY: number, radius?: number, cell?: number,
- *   heightOf: (byte: number, px: number, py: number) => number, tintAt: (px: number, py: number, byte: number, v: number) => ArrayLike<number>,
+ *   heightOf: (byte: number, px: number, py: number, v: number) => number, tintAt: (px: number, py: number, byte: number, v: number) => ArrayLike<number>,
  *   oceanAt: (px: number, py: number, v: number) => boolean, seaY: number, snowAt?: ?((px: number, py: number, v: number) => number),
  *   floraAt?: ?((px: number, py: number, byte: number, v: number) => ?{ spec: any, art: any, ground: any }) }} o
  *   PEAKS1: `snowAt` a cell's cap line at its centre pixel (m above the sea), or null: a cell over it whitened by its height
@@ -87,7 +93,7 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
       const xc = cx * cell + half, yc = cy * cell + half, px = Math.floor(xc), py = Math.floor(yc);
       const wet = low[v] > majority || oceanAt(px, py, v);
       positions[o] = (xc - bx) * S;
-      positions[o + 1] = wet ? seaY : heightOf(high[v], px, py);   // BREATHTAKER2: the law at the cell's centre pixel
+      positions[o + 1] = wet ? seaY : heightOf(high[v], px, py, v);   // BREATHTAKER2: the law at the cell's centre pixel; RELIEF-PEAKS: `v` the vertex (the worker's ground at its node)
       positions[o + 2] = (by + 1 - yc) * S;
       const t = tintAt(px, py, wet ? 0 : high[v], v);
       colors[o] = t[0]; colors[o + 1] = t[1]; colors[o + 2] = t[2];

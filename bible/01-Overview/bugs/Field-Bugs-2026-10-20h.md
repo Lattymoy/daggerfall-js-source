@@ -792,8 +792,8 @@ Enemy Expansion's 282, a line of the mod's own MonsterBase table. DEX1 merged as
 by default (`modSettings.js:"  'daggerfall-enemy-expansion': Object.freeze({"`); its fifty enemies are 256-290 (monsters)
 and 384-398 (people), joined to the bestiary at the game's load (`dexInstall.js:"  registerEnemyRows(rows);"`). The soul
 trap's kill door hands the foe's own mobile id to the trap
-(`exteriorFoes.js:"const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());"`,
-`dungeonContext.js:"const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());"`),
+(`exteriorFoes.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());"`,
+`dungeonContext.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());"`),
 and the gem takes it (`mysticism.js:"  trap.trappedSoulType = soulType;"`) - DFU's own law: EnemyEntity.cs:217 hands
 `SoulTrap.FillEmptyTrapItem((MobileTypes)mobileEnemy.ID)` and SoulTrap.cs:158 writes it. With the mod installed DFU's
 EnemyBasics holds the custom id, and ItemHelper.cs:352-368 names the gem "Soul Trap (Ogre)", as the port does

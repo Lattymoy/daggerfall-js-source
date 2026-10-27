@@ -189,7 +189,9 @@ test('PLAIN-UI the talk panel\'s regard badge - a living resident\'s standing in
   const f = regardBadge({ regard: 46.4, standing: 'friend' });
   assert.deepEqual([f.standing, f.label, f.value, f.share], ['friend', 'Friend', '+46', 0.73]);
   assert.match(f.words, new RegExp(`^How they regard you: \\+46, from -100 to \\+100\\. A friend from \\+${FRIEND_AT}; an enemy from ${ENEMY_AT}, who will not speak to you; hostile from ${HOSTILE_AT}\\. `));
-  assert.doesNotMatch(f.words, /gift/, 'nothing notes a gift: the badge promises none');
+  // PIN MOVED (COURT-DEEDS, Field-Bugs-2026-10-26d): a gift is noted now (legacyHost answerDeed), so the badge names it with the other deeds;
+  // PIN MOVED (AUDIT FB1026d B4): as offered - Tell me about offers them to a townsperson one could court, never to the watch or kin
+  assert.match(f.words, /with Project Legacy, so do the deeds Tell me about offers a townsperson you could court - a compliment, a gift, and a hug once you are friends - each once a day\./);
   assert.deepEqual(['neutral', 'enemy', 'hostile'].map((s) => STANDING_NAMES[s]), ['Known', 'Enemy', 'Hostile']);
   const k = regardBadge({ regard: -3, standing: 'neutral' });
   assert.deepEqual([k.label, k.value, k.share], ['Known', '-3', 0.485]);

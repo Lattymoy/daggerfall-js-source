@@ -101,6 +101,13 @@ export function customModelFor(id, ctx = null) {
   return (m.cached ??= m.build(ctx));
 }
 export const hasCustomModel = (id) => (_models.has(Number(id)) ? !!_models.get(Number(id))?.isOn() : !!familyOf(Number(id)));
+/** IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): whether customModelFor(id) answers without building - a
+ *  registered model built once (or off), a family's kept. @param {number} id */
+export function customModelReady(id) {
+  const m = _models.get(Number(id));
+  if (m) return m.cached != null || !m.isOn();
+  return !!familyOf(Number(id))?.cache.has(Number(id));
+}
 
 /** GetModelData's `false`: a model with nothing in it - no geometry, no doors. */
 export function emptyModel() {

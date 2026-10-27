@@ -155,11 +155,12 @@
   {
     "name": "BLD-door-before-a-way-up",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "if ((g === GROUND.street || g === GROUND.square) && (g2 === GROUND.street || g2 === GROUND.square)) return",
+    "old": "if (DOOR_GROUND.includes(g) && DOOR_GROUND.includes(g2)) return",
     "new": "if (g !== GROUND.canal) return",
     "tests": [
       "test/world/icbld_buildings.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-STAIRS): re-aimed by content - the door law reads the street under a stair's upper flights (GROUND.under) open as well as the street and the square; a way up's own ground (GROUND.stair) still shuts a bay. Re-aimed by content at the fourth merge of main into #1184 (2026-10-27): the three grounds one list, DOOR_GROUND."
   },
   {
     "name": "BLD-quality-off-district",
@@ -173,11 +174,12 @@
   {
     "name": "BLD-guild-of-no-faction",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "factionId: GUILD_FACTION[pool] ?? 0",
-    "new": "factionId: 0",
+    "old": "factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction,",
+    "new": "factionId: 0,",
     "tests": [
       "test/world/icbld_buildings.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-PROPS): a building's faction its guild's, else its donor's own (a temple its god's) - re-aimed by content."
   },
   {
     "name": "BLD-guild-anywhere",
@@ -200,11 +202,12 @@
   {
     "name": "BLD-door-off-the-entrance",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "const P = (s, y, e) => [d.door[0] + t[0] * s + o[0] * e, y, d.door[1] + t[1] * s + o[1] * e];",
-    "new": "const P = (s, y, e) => [t[0] * s + o[0] * e, y, t[1] * s + o[1] * e];",
+    "old": "const P = (s, y, e) => [E.door[0] + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
+    "new": "const P = (s, y, e) => [E.door[0] + 0.5 + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];",
     "tests": [
       "test/world/icbld_buildings.test.js"
-    ]
+    ],
+    "note": "re-aimed (IC-INTERIORS): the entrance is FABRIC_ENTRANCE, the frame's origin (dropping it is no change) - the door model stood half a metre off it"
   },
   {
     "name": "BLD-no-building-door",

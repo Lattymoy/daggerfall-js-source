@@ -478,9 +478,11 @@ test('AUDIT MARTIAL L4 L3: a card shows only to a character that can EVER meet a
   assert.equal(AP.pathPossible(p), false, 'Destruction and Restoration both minor: the same');
   const f = fighter([], 50);
   assert.equal(MP.martialPossible(f), true);
-  const spent = fighter([SKILLS.Dodging, SKILLS.CriticalStrike], 100, buildCustomCareer({ name: 'Rogue', hp: 10, stats: STATS,
-    skills: [SKILLS.Dodging, SKILLS.CriticalStrike, LB, SKILLS.Running, SKILLS.Jumping, SKILLS.Climbing, SB, SKILLS.Swimming, SKILLS.Medical, SKILLS.Etiquette, SKILLS.Streetwise, SKILLS.Lockpicking] }));
-  assert.equal(MP.martialPossible(spent), false, 'the primary slots spent on Dodging and Critical Strike: Long Blade never, Short Blade alone among the majors');
+  // MASTER-THREE (Field-Bugs-2026-10-26d): three primary slots, so the slots Long Blade needs are spent among the MAJORS - every
+  // primary on others too, so nothing else of the class's opens a second weapon skill
+  const spent = fighter([SKILLS.Dodging, SKILLS.CriticalStrike, SKILLS.Running, SKILLS.Jumping, SKILLS.Climbing], 100, buildCustomCareer({ name: 'Rogue', hp: 10, stats: STATS,
+    skills: [SKILLS.Dodging, SKILLS.CriticalStrike, SKILLS.Running, SKILLS.Jumping, SKILLS.Climbing, LB, SB, SKILLS.Swimming, SKILLS.Medical, SKILLS.Etiquette, SKILLS.Streetwise, SKILLS.Lockpicking] }));
+  assert.equal(MP.martialPossible(spent), false, 'the major slots spent on Jumping and Climbing: Long Blade never, Short Blade alone among the minors');
 }));
 
 test('AUDIT MARTIAL L4 L4 / L4 L6 / L4 N1 / L4 N2: the martial ask is never the arcane ask\'s words; a found line asleep (the ladder off) leaves the key to the signature; the runner\'s English lines name a signature in English; no path is named as a star of the Firmament (mutants: the title shared; the sleeping line kept; the localised name in an English line)', () => clean(() => {

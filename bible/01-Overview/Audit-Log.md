@@ -33,6 +33,26 @@ voyage back from Daggerfall to six ports, each refusal a freeze of seconds (and 
 doubled article, Bulgarian's names, the writ's row off the picker; and twelve pins that could not fail. Each fixed and
 pinned red, with a mutant. 61 mutants, all dead. Record: `Audit-Starts.md` (AUDIT STARTS).
 
+**2026-10-27 - AUDIT HORIZONTAL.** The owner: *"Audit this"*, of pull request #1334 - the horizontal progression
+(CRAFT-HALL, MASTER-ART, HUNTERS-MARK, MARKS-OF-MASTERY, POWER-CEILING, APPEARANCES, SEA-OPEN and the PLAIN-TEXT law).
+Seven cold lanes on a frozen snapshot (37a7bd3a0), each finding proven on the real code. Paid: a Veil party took a
+member who had left the ship (C1); parallel crew asks signed past 24 a day (C2); a Master's work judged against today's
+tables (B1); an older build dropping a Master's work it held (B7); a quay tow through land and a ship under way giving
+the quay up (C3, C10); the composite cut falling on the last registry asked (D4); clears past 48 a day dropped (F3).
+Every one fixed and pinned red, its mutant record dead, or left and said. Record: `audits/Audit-Horizontal.md`.
+
+**2026-10-27 - AUDIT RPT1026.** The owner: *"Audit this"*, of FIELD BUGS 2026-10-26r (the 293 private reports, 100
+fixed in twelve lanes). Thirteen cold lanes at the batch head (2dc8f31a2), one for each fixing lane and one for the
+record and the integration, each finding proven on the real code; 68 found. Paid: the shared chest's window let a Use, a
+Salvage or a Dismantle work on its own copy of the pack - a duplication open to anyone with a home; a seller who kept a
+sold piece won it back through an accomplice's trade; a cleared piece moved through a vault held its owner again with a
+strike; a guest's kept hold locked an owner out of their chest; a fight on a stalled line closed the socket for good;
+one griefer stopped an Orrery a team had learned; a No made a choice in three questline quests; a purchase pressed
+during a sweep never arrived; a self-cast absorb at a full pool killed its caster (#286, AS DESIGNED no longer); the
+phone's Bank keypad behind the Bank; the record's tally not its rows'. Every one fixed or its record corrected, pinned
+red; 130 mutants, all dead. ACCOUNT_VERSION acct198, RELAY_VERSION world272 (main's CHAT-POST and MASTER-THREE took world270 and world271, and JEWEL-KIN acct197). Record:
+`audits/Audit-Rpt1026.md` (AUDIT RPT1026).
+
 **2026-10-26 - AUDIT LOCKPICK.** The owner: *"Audit this"* and *"Also ensure this is enhanced ui plus"*, of the branch
 that built LOCKPICK, RESOURCE-HIGHLIGHTS and AUDIT GATHER. Four cold lanes on a frozen snapshot (81ff3671f), each finding
 proven on the real code; 38 reported. Paid: every front-door pick threw (the steal ladder's own `lockpick`, the skill,

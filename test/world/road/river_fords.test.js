@@ -60,7 +60,7 @@ test('RIVER-FORDS the wiring: the regions\' build reads the rivers\' raster over
   assert.match(read('src/world/tamrielRoads.js'), /land\.river = riverFords\(riverRaster\(gx, gy, MAP_W, MAP_H\)\);/);
   assert.match(read('src/world/terrain/terrainGen.js'), /paintTamrielWaters\(tileData, px, py, hasLocation \? locationRect : null, undefined, paths\);/);
   const { TAMRIEL_ROADS_VERSION, GROUND_ROLL_VERSION } = await import('../../../src/world/tamrielRoads.js');
-  assert.deepEqual([TAMRIEL_ROADS_VERSION, GROUND_ROLL_VERSION], [7, 6]);   // PIN MOVED (ROAD-GAPS): 6, (EXACT-PIECES): 7 - the same release's one rebuild; (RUMARE-WATER) the ground's 5: the land let down about the Imperial City; (GHOSTFENCE) 6: no countryside within the Ghostfence, no lair or road on its line
+  assert.deepEqual([TAMRIEL_ROADS_VERSION, GROUND_ROLL_VERSION], [8, 6]);   // PIN MOVED (ROAD-GAPS): 6, (EXACT-PIECES): 7 - the same release's one rebuild; PIN MOVED (ROAD-LOOK): 8, the carved lakes refused; (RUMARE-WATER) the ground's 5: the land let down about the Imperial City; (GHOSTFENCE) 6: no countryside within the Ghostfence, no lair or road on its line
 });
 
 // ── WITH ARENA2: the freeware's own Cyrodiil ────────────────────

@@ -123,7 +123,7 @@ test('AUDIT QUESTLINES UI-9, UI-10: a Take ARMS on its first press - its words s
   });
 });
 
-test('AUDIT QUESTLINES UI-8: a stamped quest with no journal entry yet offers no Track, no Hide and no Abandon - the HUD\'s card reads entries, the rail hides by entries, and a quest set aside before its first entry was no row to reclaim; a quest with an entry offers all three (mutants: Track, Hide, Abandon on an entryless row)', async () => {
+test('AUDIT QUESTLINES UI-8: a stamped quest with no journal entry yet offers no Track and no Hide - the HUD\'s card reads entries, the rail hides by entries - but Abandon (RPT1026-QUESTS ABANDON-ALWAYS: one set aside so is an Abandoned row now); a quest with an entry offers all three (mutants: Track, Hide on an entryless row)', async () => {
   const j = journal();
   await withTab(j, (host) => {
     const presses = () => all(detailOf(host)).filter((n) => n.tagName === 'BUTTON').map((b) => b.textContent);
@@ -135,7 +135,7 @@ test('AUDIT QUESTLINES UI-8: a stamped quest with no journal entry yet offers no
     const silent = presses();
     assert.ok(!silent.some((w) => /Track/.test(w)), `no Track on a row the lens never sees (${silent})`);
     assert.ok(!silent.includes('Hide from journal'), 'no Hide the rail would ignore');
-    assert.ok(!silent.includes('Abandon quest'), 'no Abandon whose Reclaim no row could offer');
+    assert.ok(silent.includes('Abandon quest'), 'RPT1026-QUESTS ABANDON-ALWAYS: Abandon - its Reclaim is an Abandoned row now');
     assert.ok(silent.includes('Restart quest'), 'a restart is the quest again, a row again');
   });
 });

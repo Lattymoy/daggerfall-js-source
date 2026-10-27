@@ -2,8 +2,8 @@
   {
     "name": "AUDITTESA2Z-Z2-the-number-behind-its-row",
     "file": "src/net/wire.js",
-    "old": "export const WORLD_WIDE_RELAY_MIN = 269;",
-    "new": "export const WORLD_WIDE_RELAY_MIN = 268;",
+    "old": "export const WORLD_WIDE_RELAY_MIN = 274;",
+    "new": "export const WORLD_WIDE_RELAY_MIN = 273;",
     "tests": [
       "test/net/audittesa2z_worldwide.test.js"
     ]

@@ -61,7 +61,7 @@ import {
 } from '../../net/homeVoteLaw.js';   // HOME-VOTE: a town's word on a player's house
 import { takeSceneOwn, removePermanentScene } from '../sceneCache.js';   // ACCOUNT-HOMES: a home the account holds no more, let go
 import { ownBackLines } from '../decor/decorFurnish.js';   // ACCOUNT-HOMES: what is said of one's own things come back
-import { t } from '../textManager.js';   // ACCOUNT-HOMES, GUILD-HALL-SALE: their words in the player's language
+import { t, localizedText } from '../textManager.js';   // ACCOUNT-HOMES, GUILD-HALL-SALE: their words in the player's language; IC-PROPS: DFU's own "residence"
 
 /** How long a town's answer is believed before a door asks again. */
 export const HOME_TOWN_TTL_MS = 60_000;
@@ -228,8 +228,20 @@ export const homeDoorTitle = (home, questName = null) => {
  * can be your home ... Buy it?") at every door in town. A house whose door has verbs to list is named with DFU's own
  * word for one (Internal_Strings 50, "Residence"): its plaque stands, "Go in" lit, and the quest's residence - named
  * "The <surname> Residence" and never for sale - reads apart from the rest.
+ * IC-PROPS (2026-10-27, the owner: "Some doors in Imperial city can be entered but dont show the tooltip", then "a world
+ * wide issue"): DFU names EVERY residence so - PlayerGPS.GetBaseBuildingDiscoveryData (PlayerGPS.cs:1306-1309) gives a
+ * House1-4 the localized "residence" as its discovered name, and World Tooltips prints "To" and that name over every
+ * discovered building's door (Modded_HUDTooltipWindow.cs:719-728) - so the port's nameless house, offline and wherever it
+ * lists no verbs, was the one building door a player could walk through with no plaque: 6,325 of the 8,295 building
+ * doors with a room over the freeware's blocks and both town packs (House1-4 and House6, measured - the other two, a
+ * ship's deck's, worldModes.js names by their place). A house (`type` House1 to House6 - the
+ * homes' own kinds, homeCandidate's; a House5 or House6 has no name of DFU's either) with no name of its own is named
+ * "Residence" whatever its verbs; a quest's own name, a home's and a guild's hall's stand over it.
+ * @param {string} name @param {boolean} hasVerbs @param {number|null} [type]
  */
-export const homeDoorName = (name, hasVerbs) => name || (hasVerbs ? 'Residence' : '');
+export const homeDoorName = (name, hasVerbs, type = null) => name || (hasVerbs || isHouseType(type) ? localizedText('residence', 'Residence') : '');
+/** IC-PROPS: a house's building type - House1 to House6 (DFLocation.BuildingTypes 17-22). */
+const isHouseType = (t) => Number.isInteger(t) && t >= BUILDING_TYPES.House1 && t <= BUILDING_TYPES.House6;
 /** GUILD-YARD (Seats-Arc 8.2): WHOSE OUTSIDE THE PLAYING CHARACTER KEEPS - its own home's, or a guild's hall it is a
  *  keeper of (its Officers and its guildmaster, the service's `keeper` - net/hallLaw.js HALL_POWERS.decorate): the yard
  *  it furnishes and the outside it paints. A plain member keeps neither; the service holds it either way (decor.js OWNS). */

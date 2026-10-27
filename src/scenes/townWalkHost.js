@@ -21,7 +21,7 @@
 // The streaming host constructs it (scenes/world.js); the other three hosts stream no pixels and walk no journey
 // through a town: scenes/exterior.js (the fixed city - no Travel Options journey crosses it), scenes/worldModes.js (a
 // building) and scenes/dungeonContext.js (a dungeon).
-import { townWayCells, gatePassage, carveNav, componentsOf, edgePieces, snapCell, TOWN_PACE_MAX, IMPERIAL_PACE_MAX } from '../systems/travel/townWalk.js';
+import { townWayCells, townWayCellsSteps, gatePassage, carveNav, componentsOf, edgePieces, snapCell, TOWN_PACE_MAX, IMPERIAL_PACE_MAX } from '../systems/travel/townWalk.js';
 import { worldCoordToMapPixel } from '../formats/mapsFile.js';
 import { CITY_GATE_OPEN_MODEL_ID } from '../world/rmbLayout.js';
 import { capitalOnPixel } from '../world/tamrielCapitals.js';   // IC-PACE: the Imperial City's slices
@@ -29,6 +29,13 @@ import { capitalOnPixel } from '../world/tamrielCapitals.js';   // IC-PACE: the 
 /** IC-PACE: the most a journey's clock runs in the streets of the town on map pixel (x, y) - a town's pace, the Imperial
  *  City's own on every one of its slices (world/tamrielCapitals.js capitalOnPixel). */
 export const paceAt = (x, y) => (capitalOnPixel(x, y)?.cap.key === 'imperial-city' ? IMPERIAL_PACE_MAX : TOWN_PACE_MAX);
+
+/** IC-STUTTER (2026-10-27, the owner: "Traveling in the Imperial City at x60 presents really bad stuttering"; bible/03-World/
+ *  Arena-Provinces.md IC-STUTTER): how many steps of a way's search (systems/travel/townWalk.js townWayCellsSteps: a few
+ *  thousand cells each) one ask walks - a way not found by then answers `pending` and is walked on at the next ask (the
+ *  journey asks again every frame, systems/travel/travelOptions.js streetWait). A slice of the Imperial City is a grid of
+ *  512 by 512 cells, and its way, asked at every slice a journey at x60 crosses, was 10-200 ms of one task. */
+export const WAY_STEPS_AN_ASK = 6;
 
 /** How many towns' journey grids are kept at once - a walled city's is a copy of its grid, and its search's scratch and
  *  its pieces' labels live as long as it does: about 8 MB at the greatest (AUDIT OW-REVISITED L1-7). */
@@ -38,6 +45,8 @@ export const JOURNEY_GRIDS_MAX = 4;
 export function createTownWalk(host) {
   const { built, state } = host;
   const grids = new Map();   // pixel key -> { base, sig, nav, shut }
+  /** IC-STUTTER: the way in the making - its town, its grid's state and its point (`k`), its search's steps. */
+  let making = /** @type {?{ k: string, steps: Generator<void, any, void> }} */ (null);
   /** The town at a native point: its pixel's key, grid, origin and translation, and the point's cell - or null. */
   function townAt(n) {
     const px = worldCoordToMapPixel(n.x, n.z);
@@ -94,7 +103,16 @@ export function createTownWalk(host) {
       const t = state.localFromWorld(to.x, to.z);
       const toCell = town.nav.worldToNav(t[0] - town.o[0] - town.t[0], t[1] - town.o[2] - town.t[2]);
       const grid = journeyGrid(town);
-      const way = townWayCells(grid.nav, town.cell, toCell);
+      // IC-STUTTER: searched WAY_STEPS_AN_ASK steps an ask, from where the traveller stood when it was first asked (the walk's
+      // first run is checked from where the body stands - the pursuit takes it up from there); its own scratch (the grid's
+      // record), so the residents' searches between its steps never begin it again
+      const k = `${town.key}|${grid.sig}|${toCell[0]},${toCell[1]}`;
+      if (making?.k !== k) making = { k, steps: townWayCellsSteps(grid.nav, town.cell, toCell, { scratchKey: grid }) };
+      let got = making.steps.next();
+      for (let n = 1; !got.done && n < WAY_STEPS_AN_ASK; n++) got = making.steps.next();
+      if (!got.done) return { pending: true, pts: [], inside: true, shut: false, pace: paceAt(town.px.x, town.px.y) };
+      making = null;
+      const way = got.value;
       // short of its point: behind a shut gate - said, if the gates open by day would have let it through; else (a yard
       // the houses close in, its piece no street reaches) walked as far as it reaches, never blamed on the gates
       const pace = paceAt(town.px.x, town.px.y);   // IC-PACE

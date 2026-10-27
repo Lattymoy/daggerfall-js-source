@@ -101,11 +101,12 @@
   {
     "name": "RED-MOUNTAIN-a-cell-its-centre-alone",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "const dx = ax > h ? ax - h : ax < -h ? ax + h : 0, dy = ay > h ? ay - h : ay < -h ? ay + h : 0;",
-    "new": "const dx = ax, dy = ay;",
+    "old": "return redMountainSmooth(x * 128, (MAP_ROWS + 1 - y) * 128);",
+    "new": "return redMountainSmooth((x + 0.5) * 128, (MAP_ROWS - y) * 128 + 64);",
     "tests": [
       "test/world/redmountain.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the far field stands the cone at its vertex's node (redMountainNodeLift), never a pixel's centre."
   },
   {
     "name": "RED-MOUNTAIN-the-shaper-stands-none",
@@ -137,11 +138,12 @@
   {
     "name": "RED-MOUNTAIN-the-air-ground-without-it",
     "file": "src/world/landforms.js",
-    "old": "return h + lift * (fade ? fade(x, y) : 1) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
-    "new": "return h + lift * (fade ? fade(x, y) : 1);",
+    "old": "return (share > 0 ? land + share * rangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
+    "new": "return share > 0 ? land + share * rangeAt(ox + x, oy + y, land) : land;",
     "tests": [
       "test/world/redmountain.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the mean ground's ranges, then its smooth cone."
   },
   {
     "name": "RED-MOUNTAIN-a-byte-node-misplaced",
@@ -155,20 +157,22 @@
   {
     "name": "RED-MOUNTAIN-not-on-the-horizon",
     "file": "src/render/farRing.js",
-    "old": "ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0) + (relief ? redMountainLiftAt(x, y, half) * STREAMING_TERRAIN_SCALE : 0);",
-    "new": "ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0);",
+    "old": "(centreGround(byteAt, x, y, relief, fadeAt) + (relief ? redMountainLiftAt(x, y) : 0)) * STREAMING_TERRAIN_SCALE;",
+    "new": "centreGround(byteAt, x, y, relief, fadeAt) * STREAMING_TERRAIN_SCALE;",
     "tests": [
       "test/world/redmountain.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the far ring stands the kernel's mean ground (ringGroundAt) and the cone on it."
   },
   {
     "name": "RED-MOUNTAIN-the-far-field-its-centre",
     "file": "src/render/farRing.js",
-    "old": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief, 1, FAR_CELL / 2),",
-    "new": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),",
+    "old": "heightOf: (byte, x, y, v) => answer.ground[v] + (inputs.relief ? redMountainNodeLift(x, y) * STREAMING_TERRAIN_SCALE : 0),",
+    "new": "heightOf: (byte, x, y, v) => answer.ground[v],",
     "tests": [
       "test/world/redmountain.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the far field's vertex on the worker's ground, and the cone at its node."
   },
   {
     "name": "RED-MOUNTAIN-the-fire-undrawn",
@@ -209,8 +213,8 @@
   {
     "name": "RED-MOUNTAIN-the-levels-short",
     "file": "src/systems/weather/snowpack.js",
-    "old": "levels: Object.freeze({ from: -600, step: 200, count: 44 }),",
-    "new": "levels: Object.freeze({ from: -600, step: 200, count: 43 }),",
+    "old": "levels: Object.freeze({ from: -600, step: 200, count: 45 }),",
+    "new": "levels: Object.freeze({ from: -600, step: 200, count: 44 }),",
     "tests": [
       "test/world/redmountain.test.js",
       "test/render/precip4_snowground.test.js"

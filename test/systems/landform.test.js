@@ -10,12 +10,13 @@ import { readFileSync } from 'node:fs';
 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../../src/formats/woodsFile.js';
 import { generateSamples, ghostSampler, sampleKernel, kernelTerms, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION } from '../../src/world/terrain/terrainSampler.js';
-import { createLandforms, reliefLift, reliefByteHeight, landformLift, hillsAt, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS, LANDFORM_CEILING, HILLS_TOP } from '../../src/world/landforms.js';
+import { createLandforms, reliefLift, nodeGround, landformLift, hillsAt, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS, LANDFORM_CEILING, HILLS_TOP } from '../../src/world/landforms.js';
 import { generateTileData, BEACH_JITTER } from '../../src/world/terrain/terrainTiles.js';
 import { generatePixelTerrain, restrideGrid } from '../../src/world/terrain/terrainGen.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
 import { syntheticWoodsBytes, network } from '../landformWorld.mjs';   // the synthetic world, one home (AUDIT LANDFORMS)
 import { ringHeight, buildFarRingGrid } from '../../src/render/farRing.js';
+import { largeOfByte } from '../../src/world/tamriel/tamrielGround.js';   // RELIEF-PEAKS: the large map's law
 import { landformsOn } from '../../src/scenes/shared.js';
 import { FEATURES, checkFeature } from '../../src/systems/features.js';
 import { getPref, setPref } from '../../src/systems/uiPrefs.js';
@@ -100,12 +101,15 @@ test('LANDFORM1: the small heightmap is lifted - nothing under the median land, 
   assert.ok(Math.abs(reliefLift(LANDFORM_KNEE + 950) - 0.9 * 950) < 1e-9);
   let last = 0;
   for (let low = 0; low <= 1100; low += 0.5) { const l = reliefLift(low); assert.ok(l >= last - 1e-12, `never falls (${low})`); assert.ok(l - last < 2, `never jumps (${low})`); last = l; }
-  // the ring: a byte's macro height with the same lift; untouched with the row off; the lowlands the same either way
-  assert.equal(ringHeight(100), 100 * 8 * STREAMING_TERRAIN_SCALE);
-  assert.equal(ringHeight(100, true), reliefByteHeight(100) * STREAMING_TERRAIN_SCALE);
-  assert.equal(reliefByteHeight(100), 800 + reliefLift(800));
+  // the ring: a byte's macro height with the same lift; untouched with the row off; the lowlands the same either way.
+  // PIN MOVED (RELIEF-PEAKS): the byte's node's ground (world/landforms.js nodeGround) - the large map by its law with the
+  // byte's term, where reliefByteHeight left it out (test/world/reliefpeaks.test.js)
+  assert.equal(ringHeight(100), nodeGround(100, 1, 0, false) * STREAMING_TERRAIN_SCALE);
+  assert.equal(nodeGround(100, 1, 0, false), 800 + largeOfByte(100) * 4);
+  assert.equal(ringHeight(100, true), nodeGround(100) * STREAMING_TERRAIN_SCALE);
+  assert.equal(nodeGround(100), nodeGround(100, 1, 0, false) + reliefLift(800));
   assert.ok(ringHeight(127, true) > ringHeight(127) * 1.5, 'the top stands half as tall again and more');
-  assert.ok(Math.abs((reliefByteHeight(127) - LANDFORM_KNEE) / (127 * 8 - LANDFORM_KNEE) - 1.9) < 1e-12, 'the top byte: 1.9 x its own term over the knee, as the title says (AUDIT LANDFORMS D6)');
+  assert.ok(Math.abs((127 * 8 + reliefLift(127 * 8) - LANDFORM_KNEE) / (127 * 8 - LANDFORM_KNEE) - 1.9) < 1e-12, 'the top byte: 1.9 x its own term over the knee, as the title says (AUDIT LANDFORMS D6)');
   assert.equal(ringHeight(20, true), ringHeight(20), 'the lowlands are DFU\'s');
   assert.equal(ringHeight(0, true), SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE, 'the sea is the sea');
   const grid = (relief) => buildFarRingGrid({ heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT, climateAt: () => 231, baseX: 400, baseY: 250, radius: 2, relief });
@@ -164,7 +168,7 @@ test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s heigh
   assert.ok(Math.abs(roadAtCorner * UNIT - LIFT_CEILING) < 1e-3, 'a road graded over it is graded to the same - DFU\'s macro as DFU stands it');
   assert.ok(rollingTop * UNIT <= LANDFORM_CEILING + 1e-3 && rollingTop * UNIT > LIFT_CEILING - HILLS_TOP, `with the hills, under the landforms' ceiling (${(rollingTop * UNIT).toFixed(2)})`);
   assert.ok(worst < 1e-3, `and the relief's lift is reliefLift of the kernel's own small-heightmap term, the glitch's pixels too (${worst})`);   // AUDIT LANDFORMS II J9: the re-stand's field is the cuts' too since B2 - this is the lift alone
-  assert.ok(Math.abs(reliefByteHeight(255) - 255 * 8 - reliefLift(127 * 8)) < 1e-9, 'the ring takes the same lift');
+  assert.ok(Math.abs(nodeGround(255) - LIFT_CEILING) < 1e-9, 'the ring takes the same lift, held at DFU\'s ceiling as the kernel holds it');   // PIN MOVED (RELIEF-PEAKS): reliefByteHeight stood the glitch's byte at 255 x 8, 500 over DFU's ceiling
 });
 
 test('LANDFORM1-3: a seam is one number from both pixels - every shared edge and corner, across the road, the river, the stream and the diagonal track; and the ghost rows are the neighbour\'s shaped ground', () => {
@@ -374,7 +378,7 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /\n  const landform = landformsOn\(\);\n/, 'once, at the mount - the same job online and off: the room\'s river switch decides online');
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js);
   // D5: `before`, the old law's ground - the Bay's table alone (test/world/terrain/bayleftground_frame.test.js)
-  assert.match(WORLD, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');
+  assert.match(WORLD, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : beyondSites\.beyond\(\), climates: _landformClimates, ranges: !before \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');   // PIN MOVED (RELIEF-PEAKS): the old law's landforms without the ranges, which a record written then never stood
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
   assert.match(WORLD, /\n      landform,   \/\/ LANDFORM1-3: the shaped ground, cut along the kernel's own network\n    \}\);/, 'the pixel job');
   assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion off the thread');   // PIN MOVED (AUDIT WATER-NEXT P1): the bed carved with it
@@ -382,7 +386,7 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: beyondSites\.beyond\(\), climates: _landformClimates, bed: waterOn \? bedBytesOf\(p\) : null \}\)/, 'and on it');   // PIN MOVED (AUDIT WATER-NEXT P1)
   assert.match(WORLD, /_gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\);/, 'the gate\'s beacon stands on the shaped ground');
   assert.match(WORLD, /relief: !!landform,   \/\/ LANDFORM1: the ring stands the massifs/, 'the far ring');
-  assert.match(WORLD, /ringHeightAt\(px\.x, px\.y, byte, !!landform, fade\)/, 'the travel view past the built grid');   // PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is; PIN MOVED (BREATHTAKER2 on the horizon): at its pixel, the continent's lift with it
+  assert.match(WORLD, /ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/, 'the travel view past the built grid');   // PIN MOVED (RELIEF-PEAKS): the ring's ground at the pixel's centre, its fades the kernel's; PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is; PIN MOVED (BREATHTAKER2 on the horizon): at its pixel, the continent's lift with it
   // AUDIT LANDFORMS C1 MOVED THESE PINS: they read a stamp - every record is DFU's frame now, the row's lift put back on at
   // every read (test/world/terrain/auditlandforms.test.js runs each path, row on and off)
   assert.match(WORLD, /const today = was === STREAMING_TERRAIN_SCALE && !landform;/, 'the quickload');

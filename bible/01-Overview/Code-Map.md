@@ -110,6 +110,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Herald (the world events on Discord) | `net/herald/` - and each event's own: `net/gate/gateHerald.js`, `net/serpent/serpentHerald.js`, `net/superDungeon/sdHerald.js`, `net/eliteGates/egHerald.js` |
 | Home decorating | `systems/decor/`, `scenes/decor/` |
 | Horses | `systems/horse/` |
+| Hunt (HUNTERS-MARK: the trophies, what a character gathered) | `systems/hunt/`, and `net/huntLaw.js`, `net/huntBook.js`, `scenes/huntersMark.js` |
 | HUD (classic) | `ui/hud/` |
 | Iliac Hand | `systems/iliac/`, `net/iliac/` |
 | Ink maps | `ui/ink/` |
@@ -313,6 +314,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/grammar/` | Language grammar for the translations (`06-Systems/Localization-Arc.md`). |
 | `src/systems/guild/` | The guilds' law: their factions and variants, services and how a service flows, the hall's reveal. |
 | `src/systems/horse/` | The horse and cart, the horses' coats, a horse that follows - the law. |
+| `src/systems/hunt/` | HUNTERS-MARK (`06-Systems/Bounty-Boards.md` section 12): the Mounted Trophy minted, the fish and trophies a character has gathered, and the week's named mark read off a peer's foe (`namedMark.js`, HUNTERS-MARK-II). |
 | `src/systems/iliac/` | Iliac Hand, the tavern's other card game - the law. |
 | `src/systems/item/` | Items: templates, the item law, ids, kinds, fields, powers, binding, locks, the lists a character holds, dye, junk and transfer. |
 | `src/systems/ketch/` | The Sky-Ketch's own systems (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the Ketchmaster's hold's spoils, and every line of hers in the player's language. |
@@ -377,7 +379,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
-| `src/ui/intro/` | The intro: its screen, map, landscape and cue - its windows. |
+| `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |
 | `src/ui/item/` | Items on screen: the icons, the item maker and the scroller. |
 | `src/ui/ketch/` | The Sky-Ketch on the screen (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the voyage's tracker, the Tonal Warden's bar, her ring on the held map. |
 | `src/ui/legacy/` | Project Legacy: heirs and the realm line (`06-Systems/Legacy-Arc.md`) - its windows. |
@@ -401,6 +403,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/town/` | A town on screen: its sheet, its quarters, its marks and the door to its map. |
 | `src/ui/travel/` | Travel's windows: the travel map, its options, paths and junctions, pace, the pop-up and the HUD. |
 | `src/ui/vendor/` | A vendor's page, tab and map mark - its windows. |
+| `src/ui/wardrobe/` | The Wardrobe at a clothier's, armourer's or weaponsmith's counter: its window, its door and its preview (`04-Characters/Wardrobe.md`). |
 | `src/ui/wild/` | The open zone on screen: its map, ink and marks. |
 
 #### `src/world/`

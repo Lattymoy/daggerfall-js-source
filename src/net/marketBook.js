@@ -121,15 +121,16 @@ export function mintMarketRid() {
  *   holds?: ((provenance: string) => boolean) | null, sleep?: (ms: number) => Promise<void>,
  *   realm?: { act: (o: any) => Promise<any>, abandon?: (why: string) => void } | null,
  *   wallet?: ((region: number) => { gold: () => number, pay: (n: number) => ((() => void) | void), credit: (n: number) => void, bank: (n: number) => void }) | null,
- *   goods?: { receive: (item: any) => boolean } | null }} o
+ *   goods?: { receive: (item: any, why?: string | null) => boolean } | null }} o
  *   `stores` - the professions' book (AUDIT 30 U1: what an answer says of the Stores is its count too); `holds` - AUDIT 31
  *   H1: whether another book keeps an act on a piece (the writs' kept fill), so it is not taken twice; GOLD-MARKET:
  *   `realm` - a realm character's act on its record (systems/realmSaves.js realmGoldAct over the playing session), null
  *   for any other character (no gold trade, and - INT19 - no crafted piece listed or auctioned); `wallet` - the save's gold as it pays at a board's region (the purse, its
  *   letters, then that region's account - realmGoldLaw payFromSave's order; MARKET-AUDIT: answering the undo of exactly what it
  *   took, `credit` the whole cost only where it answers none) and `bank`, gold into that region's account;
- *   MARKET-ANY: `goods.receive(item)` - a piece from a pack, as the service put it into the record, into the save's pack
- *   (false: this game will not hold it - the session is abandoned, and a join reads the record)
+ *   MARKET-ANY: `goods.receive(item, why)` - a piece from a pack, as the service put it into the record, into the save's pack
+ *   (false: this game will not hold it - the session is abandoned, and a join reads the record); RPT1026-MARKET ARRIVE:
+ *   `why` the road's word on it ('bought', 'returned') when a settle collected it, null for the press's own collect
  */
 export function createMarketBook({ door, storage = null, character, now = () => Date.now(), marks = null, stores = null, holds = null, sleep = wait, realm = null, wallet = null, goods = null }) {
   let _shut = /** @type {number|null} */ (null);
@@ -374,18 +375,26 @@ export function createMarketBook({ door, storage = null, character, now = () => 
   /** MARKET-ANY: A PIECE FROM A PACK COLLECTED - bought, or come back - into this character's record by the service and
    *  into the save's pack on its answer (`goods.receive`). The answer IS the piece, so a lost one ends the session
    *  (realmGoldAct's `needsAnswer`): a join reads the record, which holds it or not. A repeat, or a piece this game will
-   *  not hold, abandons the session the same way - never a second piece, never a record the tab does not match. */
-  async function collectGood(delivery) {
+   *  not hold, abandons the session the same way - never a second piece, never a record the tab does not match.
+   *  RPT1026-MARKET COLLECT-LANDED (private reports 2026-10-26): but a repeat that names the record's sequence is THIS
+   *  ask's own collect, its first answer lost (its id is minted here, once, and the hold moved nothing else): the piece is
+   *  in the record and never reached the pack, so it is received now and the session stands - the service answers one
+   *  only to a tab that says `landed` (server-account/src/market.js collectGood). It ended the session, and the player
+   *  watched a piece they had just taken off the market vanish until a join read it back. `why` - a settle's: the road's
+   *  word on the delivery ('bought', 'returned'), so the pack says what came (net/marketArrivals.js); the press's own
+   *  collect says none. */
+  async function collectGood(delivery, why = null) {
     if (!realm || !goods) return { ok: false, error: 'market-gold-realm' };
     const me = character(), rid = mintMarketRid();
     const r = heard(await realm.act({
       needsAnswer: true,
       apply: (/** @type {any} */ a) => {
+        const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);
         let held = false;
-        try { held = !a?.data?.repeat && goods.receive(a?.data?.item ?? null) === true; } catch (e) { console.warn('[market] receive', e); }
+        try { held = mine && goods.receive(a?.data?.item ?? null, why) === true; } catch (e) { console.warn('[market] receive', e); }
         if (!held) realm.abandon?.('unknown');
       },
-      call: (/** @type {any} */ at) => door.collect(me, delivery, rid, at),
+      call: (/** @type {any} */ at) => door.collect(me, delivery, rid, at, { landed: true }),
     }));
     if (r?.ok) { forget(); offRoad(delivery); }
     return r ?? { ok: false, error: 'server' };
@@ -458,6 +467,14 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     /** HOME-VENDOR: A PIECE FROM A PACK COLLECTED AT ONCE - a trader's sale's delivery, or a piece taken back off a trader -
      *  into the record and the pack (collectGood), on the answer that named it, without waiting for a read of the road. */
     collectGood(delivery) { return once(`good|${delivery}`, () => collectGood(delivery)); },
+    /** RPT1026-MARKET ARRIVE: THE ROAD ALONE (server-account/src/market.js marketRoad) - the account's market settled on the
+     *  service and what is on its way to it read into `state.road`, its balance and the Stores it moved told as every
+     *  answer's are (`heard`). The arrivals' sweep reads it as a session stands (net/marketArrivals.js), so a delivery is
+     *  collected by the settle after it without the Market tab's read. A service from before it answers `not-found`. */
+    async road() {
+      if (!signedIn() || typeof door.road !== 'function') return { ok: false, error: 'no-session' };
+      return heard(await ask(() => door.road(character()))) ?? { ok: false, error: 'server' };
+    },
     /** HOME-VENDOR: the Vendor page's read - my traders, their stock, what they sold, the gold it holds. */
     async myVendors() { return heard(await ask(() => door.myVendors(character()))) ?? { ok: false, error: 'server' }; },
     /** MARKET-AUDIT U7: the character the book acts for - a delivery to another of the account's waits for that one. */
@@ -571,10 +588,23 @@ export function createMarketBook({ door, storage = null, character, now = () => 
           settled++;
           const dn = r.data?.sale?.kind === 'item' && r.data.sale.here ? r.data.delivery?.id : null;
           if (!dn || !here()) continue;
-          const c = await collectGood(dn);
+          const c = await collectGood(dn, 'bought');   // RPT1026-MARKET ARRIVE: said as a purchase arrived
           if (c.ok) settled++; else refused.push(c.error);
         }
-        for (const c of k.cancels) if (here() && (await keptAct('cancels', c, () => door.cancel(me, c.listing, c.rid), mint, key)).ok) settled++;
+        for (const c of k.cancels) {
+          if (!here()) continue;
+          const r = await keptAct('cancels', c, () => door.cancel(me, c.listing, c.rid), mint, key);
+          if (!r.ok) continue;
+          settled++;
+          // AUDIT RPT1026 D3: a piece from a pack taken back (a trader's, the Goods') comes back by a delivery arrived at
+          // once - a kept cancel's is collected here, on the answer that names it, as a kept buy's is. The road this
+          // settle reads was read before the cancel landed, so the piece left the stall and waited on the service until
+          // another settle; `market-gone`: another door collected it, and it is in the pack
+          const dn = r.data?.delivery?.id;
+          if (!dn || !here()) continue;
+          const g = await collectGood(dn, 'returned');
+          if (g.ok) settled++; else if (g.error !== 'market-gone') refused.push(g.error);
+        }
         for (const c of k.collects) if (here() && (await keptAct('collects', c, () => door.collect(me, c.delivery, c.rid), mint, key)).ok) settled++;
         for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {
           if (!here() || keptOf(key).collects.some((c) => c.delivery === d.id)) continue;
@@ -586,7 +616,7 @@ export function createMarketBook({ door, storage = null, character, now = () => 
         // MARKET-ANY: and every piece from a pack that has arrived for this character, into its record and its pack
         for (const d of state.road.filter((x) => x.kind === 'item' && x.ready && x.character === me)) {
           if (!here()) break;
-          const r = await collectGood(d.id);
+          const r = await collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought');   // RPT1026-MARKET ARRIVE: the pack says what came
           if (r.ok) settled++; else refused.push(r.error);
         }
         if (settled) forget();

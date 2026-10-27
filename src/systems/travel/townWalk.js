@@ -33,7 +33,8 @@
 // Not a DFU member: DFU's fast travel never walks a town (it fades to black), and Travel Options' autopilot never
 // paths. Ledger A row (OW-TOWN-WALK).
 // ═══════════════════════════════════════════════════════════════════
-import { findTownPath } from '../livingWorld/townPaths.js';
+import { townPathSearch } from '../livingWorld/townPaths.js';
+import { stepsDone } from '../../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
 
 /** The fastest a journey runs while it walks a town's streets (the clock's rate - travelPace.js's dials run to x100 on
  *  a road). Five times a walk: a town of eight blocks crossed in under a minute, the streets' turns taken at a pace the
@@ -159,25 +160,48 @@ export function simplifyWay(nav, cells, margin = TOWN_WAY_MARGIN) {
   return out;
 }
 
+/** IC-STUTTER: the cells a journey's search opens between two steps (townWayCellsSteps). */
+export const WAY_CELLS_A_STEP = 4096;
+/** IC-STUTTER: a search (townPathSearch's) run WAY_CELLS_A_STEP cells a step - its answer the whole search's.
+ *  @param {{ step: (n: number) => (number[][]|null|undefined) }} search @returns {Generator<void, number[][]|null, void>} */
+function* searchSteps(search) {
+  for (;;) {
+    const got = search.step(WAY_CELLS_A_STEP);
+    if (got !== undefined) return got;
+    yield;
+  }
+}
+
 /** @type {WeakMap<object, Int32Array>} */
 const piecesOf = new WeakMap();
+/** IC-STUTTER (2026-10-27, the owner: "Traveling in the Imperial City at x60 presents really bad stuttering"; bible/03-World/
+ *  Arena-Provinces.md IC-STUTTER): the cells a flood labels between two steps of componentsSteps - a slice of the Imperial
+ *  City is a grid of 512 by 512, flooded in one task by the traveller's first ask of its pace (10-130 ms; at x60 a new
+ *  one every slice crossed). The pixel's build floods it a step at a time before it stands (scenes/pixelBuild.js). */
+export const PIECES_CELLS_A_STEP = 16384;
 /**
  * THE GRID'S PIECES: each street cell labelled with the piece it belongs to (four neighbours, as the walkers step), 0 for
  * none - flooded once a grid and kept on it.
  */
-export function componentsOf(nav) {
+export const componentsOf = (nav) => stepsDone(componentsSteps(nav));
+/** IC-STUTTER: componentsOf a few thousand cells at a time - the same flood in the same order, the same labels, kept on
+ *  the grid as they are. @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
+ *  @returns {Generator<void, Int32Array, void>} */
+export function* componentsSteps(nav) {
   let label = piecesOf.get(nav);
   if (label && label.length === nav.width * nav.height) return label;
   const W = nav.width, H = nav.height;
   label = new Int32Array(W * H);
   const stack = new Int32Array(W * H);
-  let next = 0;
+  let next = 0, seen = 0;
   for (let i = 0; i < W * H; i++) {
+    if (++seen % PIECES_CELLS_A_STEP === 0) yield;
     if (label[i] || !open(nav, i % W, (i / W) | 0)) continue;
     next++;
     let top = 0;
     stack[top++] = i; label[i] = next;
     while (top) {
+      if (++seen % PIECES_CELLS_A_STEP === 0) yield;
       const c = stack[--top], x = c % W, y = (c / W) | 0;
       if (x + 1 < W && !label[c + 1] && open(nav, x + 1, y)) { label[c + 1] = next; stack[top++] = c + 1; }
       if (x > 0 && !label[c - 1] && open(nav, x - 1, y)) { label[c - 1] = next; stack[top++] = c - 1; }
@@ -267,19 +291,27 @@ function nearestIn(nav, label, id, to) {
  * @param {number[]} from - [gx, gy] @param {number[]} to - [gx, gy], anywhere
  * @returns {{ cells: number[][], inside: boolean, reached: boolean } | null}
  */
-export function townWayCells(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT } = {}) {   // the whole grid's cells: a way in its piece is never given up on early (the greatest cities' pieces are 200,000 cells)
+export const townWayCells = (nav, from, to, o = {}) => stepsDone(townWayCellsSteps(nav, from, to, o));
+/** IC-STUTTER (2026-10-27, bible/03-World/Arena-Provinces.md IC-STUTTER): townWayCells a few thousand cells at a time -
+ *  its pieces flooded (componentsSteps) and each search opened WAY_CELLS_A_STEP cells a step (`scratchKey` the scratch it
+ *  keeps: systems/livingWorld/townPaths.js townPathSearch); the same search in the same order, the same way. A slice of the
+ *  Imperial City is 512 cells a side, and a journey at x60 asked its way at every slice crossed, 10-200 ms of one task.
+ *  @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number, grid?: Uint8Array }} nav
+ *  @param {number[]} from @param {number[]} to @param {{ maxExpansions?: number, hWeight?: number, scratchKey?: object }} [o] */
+export function* townWayCellsSteps(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT, scratchKey = nav } = {}) {   // the whole grid's cells: a way in its piece is never given up on early (the greatest cities' pieces are 200,000 cells)
   const a = snapCell(nav, from);
   if (!a) return null;
-  const label = componentsOf(nav), W = nav.width, id = label[a[1] * W + a[0]];
+  const findTownPath = (/** @type {any} */ g, /** @type {number[]} */ p, /** @type {number[]} */ q, /** @type {any} */ opts) => searchSteps(townPathSearch(g, p, q, { ...opts, scratchKey }));
+  const label = yield* componentsSteps(nav), W = nav.width, id = label[a[1] * W + a[0]];
   const mine = (x, y) => label[y * W + x] === id;   // the traveller's own piece - the only one a way can reach
   if (inb(nav, to[0], to[1])) {
     const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, id, to);   // a point in another piece (a shut gate's far side): this piece's nearest
-    const path = b ? findTownPath(nav, a, b, { maxExpansions, hWeight }) : null;
+    const path = b ? yield* findTownPath(nav, a, b, { maxExpansions, hWeight }) : null;
     const own = snapCell(nav, to) ?? nearestIn(nav, label, 0, to);   // the point's own street, of whichever piece: reached when it is the traveller's
     return path ? { cells: simplifyWay(nav, path), inside: true, reached: !!own && mine(own[0], own[1]) } : null;
   }
   for (const exit of exitCells(nav, to, TOWN_EXIT_TRIES, mine)) {
-    const path = findTownPath(nav, a, exit, { maxExpansions, hWeight });
+    const path = yield* findTownPath(nav, a, exit, { maxExpansions, hWeight });
     if (path) return { cells: simplifyWay(nav, path), inside: false, reached: true };
   }
   return null;

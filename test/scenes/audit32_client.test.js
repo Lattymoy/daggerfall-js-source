@@ -325,6 +325,6 @@ test('AUDIT 32 wiring: a flyer\'s body where its corpse lies (H3); no click thro
   assert.match(src('src/systems/inputActions.js'), /\['ActChoice', 'Next action at a profession node'\]/, 'R1');   // PROF-MENU: the key steps the node's list
   const idx = src('server-account/src/index.js');
   assert.match(idx, /POST \/v1\/prof\/harvest \{ character, node, kind, climate, region, act, at, rid, foe\? \}/, 'S6');
-  assert.match(idx, /POST \/v1\/prof\/craft \{ character, recipe, clean, name\?, heartwood\?, dye\?, cracked\?, rid \}/);   // PIN MOVED (PROF10): a Lapidary's `cracked` gem
+  assert.match(idx, /POST \/v1\/prof\/craft \{ character, recipe, clean, name\?, heartwood\?, dye\?, cracked\?, mint\?, rid \}/);   // PIN MOVED (AUDIT FB1026d II D5): JEWEL-KIN's `mint`, the version its client mints; PIN MOVED (PROF10): a Lapidary's `cracked` gem
   assert.match(idx, /POST \/v1\/prof\/state \{ character \}\s+-> \{ tracks, today, taken, stores, writs, caps, hunt \}/);
 });

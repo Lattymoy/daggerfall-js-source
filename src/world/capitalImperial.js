@@ -11,6 +11,7 @@
 // on the canon - no game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure, outward } from './capitalShapes.js';
+import { STAIR } from './imperialFabric.js';   // IC-STAIRS: the city's one law of a stair
 import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt, palaceCorners, palaceGates, palacePillars, imperialGeo, STATUE_PLINTH, imperialTowerLod, imperialPalaceLod } from './imperialCity.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
@@ -203,16 +204,40 @@ function opyramid(mb, tex, P, f0, f1, s0, s1, y0, h) {
   for (let e = 0; e < 4; e++) { const a = P(q[e][0], q[e][1], y0), b = P(q[(e + 1) & 3][0], q[(e + 1) & 3][1], y0); mb.tri(tex, a, b, top, outward(a, b, top, mid)); }
 }
 
+/**
+ * IC-STAIRS: A FRONT FLIGHT in a frame (obox's) - a built stair's (world/imperialFabric.js STAIR: risers of STAIR.rise at
+ * the most, all alike, a tread of STAIR.tread) climbing `climb` from y0 up to a platform whose front face stands at f =
+ * `edge`, its last riser a centimetre proud of that face, its foot out along +f; across s0..s1, each riser and tread of
+ * `tex` laid in the world's metres, and a cheek block either side, `cheek` wide, level with the platform. Its foot's f.
+ */
+function frontFlight(mb, tex, P, edge, s0, s1, climb, { y0 = 0, cheek = 0.6 } = {}) {
+  const n = Math.ceil(climb / STAIR.rise - 1e-9), r = climb / n, T = STAIR.tread, foot = edge + 0.01 + (n - 1) * T;
+  const o = P(0, 0, 0), d = P(1, 0, 0), out = unit([d[0] - o[0], 0, d[2] - o[2]]), M = 1.6;
+  for (let k = 1; k <= n; k++) {
+    const f = foot - (k - 1) * T, ya = y0 + (k - 1) * r, yb = y0 + k * r;
+    mb.quad(tex, P(f, s0, ya), P(f, s1, ya), P(f, s1, yb), P(f, s0, yb), out, [[s0 / M, ya / M], [s1 / M, ya / M], [s1 / M, yb / M], [s0 / M, yb / M]]);
+    if (k < n) mb.quad(tex, P(f, s0, yb), P(f, s1, yb), P(f - T, s1, yb), P(f - T, s0, yb), [0, 1, 0], [[s0 / M, f / M], [s1 / M, f / M], [s1 / M, (f - T) / M], [s0 / M, (f - T) / M]]);
+  }
+  for (const [a, b] of [[s1, s1 + cheek], [s0 - cheek, s0]]) obox(mb, tex, P, edge - 0.01, foot + 0.02, a, b, -1, y0 + climb);
+  return foot;
+}
+/** IC-STAIRS: an emperor's tomb's front flight - from Green Emperor Way's walk (`walk` wide) up to its portico's floor. */
+export const TOMB_FLIGHT = Object.freeze({ climb: 1.2 });
 /** THE EMPERORS' TOMBS: a ring of marble mausolea, each its stepped pyramid and its gilt cap. IC-GRAND (the coordinator's
  *  review: "the emperors' tombs as real monuments along the way"): on Green Emperor Way's inner verge, each turned to face
  *  it - its podium and its steps, its cella, a portico of `columns` under its entablature before its door, its stepped
- *  pyramid over all and its gilt cap. */
+ *  pyramid over all and its gilt cap. IC-STAIRS: its front a built flight (frontFlight) as wide as its walk, from the walk
+ *  at the podium's edge up to the portico's floor between two cheek blocks - the podium and its step cut back for it (a
+ *  0.6 m podium and a 0.6 m step had been its way up). */
 export function buildEmperorsTombs(T = IMPERIAL.tombs) {
-  const mb = new MeshBuilder(), w = T.w / 2, pd = T.podium, deep = 6;
+  const mb = new MeshBuilder(), w = T.w / 2, pd = T.podium, deep = 6, hw = T.walk / 2, ch = 0.6;
+  const edge = w + pd - 0.01 - (Math.ceil(TOMB_FLIGHT.climb / STAIR.rise - 1e-9) - 1) * STAIR.tread;   // its flight's last riser: its foot at the podium's edge
   for (let i = 0; i < T.n; i++) {
     const [x, z] = tombAt(i), P = framed(x, z, unit([x, z]));
-    obox(mb, MARBLE, P, -w - pd, w + pd, -w - pd, w + pd, -1, 0.6);   // the podium
-    obox(mb, MARBLE, P, -w - pd / 2, w + pd / 2, -w - pd / 2, w + pd / 2, 0.6, 1.2);   // its step
+    obox(mb, MARBLE, P, -w - pd, edge, -w - pd, w + pd, -1, 0.6);   // the podium
+    for (const [a, b] of [[-w - pd, -hw - ch], [hw + ch, w + pd]]) obox(mb, MARBLE, P, edge, w + pd, a, b, -1, 0.6);   // its front either side of the flight
+    obox(mb, MARBLE, P, -w - pd / 2, edge, -w - pd / 2, w + pd / 2, 0.6, 1.2);   // its step
+    frontFlight(mb, MARBLE, P, edge, -hw, hw, TOMB_FLIGHT.climb, { cheek: ch });   // IC-STAIRS: its flight up to the portico
     obox(mb, MARBLE, P, -w, w - deep, -w, w, 1.2, T.h);   // the cella
     obox(mb, MARBLE, P, w - deep, w, -w, w, T.h - 2.2, T.h);   // the portico's entablature
     for (let k = 0; k < T.columns; k++) {   // its columns
@@ -416,8 +441,13 @@ export function buildTempleOfTheOne(T = IMPERIAL.temple) {
     pyramid(mb, SLATE, tx, tz, T.towerS + 0.6, T.towerS + 0.6, T.towerH + 1.4, T.towerS * 1.8);
   }
   for (const dx of [-9, 0, 9]) darkDoor(mb, DARK, x + dx, front, dx ? 4 : 6, dx ? 8 : 12, [0, -1]);
+  // IC-STAIRS: a built flight before its three doors from the street up to its podium (TEMPLE_FLIGHT), between cheek blocks
+  frontFlight(mb, MARBLE, framed(x, front - 2, [0, -1]), 0, -TEMPLE_FLIGHT.half, TEMPLE_FLIGHT.half, TEMPLE_FLIGHT.climb);
   return mb.build();
 }
+/** IC-STAIRS: the Temple of the One's front flight - its podium's height, and its half width (its three doors' and a
+ *  pier's either side). */
+export const TEMPLE_FLIGHT = Object.freeze({ climb: 1, half: 13 });
 
 /**
  * TALOS PLAZA'S DRAGON: a bronze dragon on a stepped marble plinth at the plaza's middle, its head toward the tower - its

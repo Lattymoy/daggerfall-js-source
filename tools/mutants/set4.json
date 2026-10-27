@@ -47,8 +47,8 @@
   {
     "name": "SET4-the-weapon-in-hand-drinking-twice",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "for (const p of pieces) if (p !== held) drinkSigil(p, xp);",
-    "new": "for (const p of pieces) drinkSigil(p, xp);",
+    "old": "for (const p of pieces) if (p !== held) drinkSigil(p, drink(p));",
+    "new": "for (const p of pieces) drinkSigil(p, drink(p));",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "SET4-the-pieces-drinking-in-a-duel",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "const worn = setsAwake() ? wornSetPieces(entity) : new Map();",
+    "old": "const worn = awake ? wornSetPieces(entity) : new Map();",
     "new": "const worn = wornSetPieces(entity);",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "SET4-the-sets-rank-read-after-the-weapon-drank",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n  // AUDIT SET D8: a set's weapon sleeps with its set in a duel (section 2: \"no piece drinks\"); a plain sigil weapon\n  // drinks as SIGIL1 says\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, xp);\n",
-    "new": "  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, xp);\n  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n",
+    "old": "  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n  // SET-CATCHUP: each set's reach, recorded as the drink finds it; a piece below it drinks faster until it gets there\n  const reach = awake ? noteReach(wornSetRanks(entity)) : new Map();\n  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };\n  // AUDIT SET D8: a set's weapon sleeps with its set in a duel (section 2: \"no piece drinks\"); a plain sigil weapon\n  // drinks as SIGIL1 says\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));\n",
+    "new": "  const reach = awake ? noteReach(wornSetRanks(entity)) : new Map();\n  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));\n  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SET4-a-piece-in-the-pack-drinking",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  for (const pieces of worn.values()) for (const p of pieces) if (p !== held) drinkSigil(p, xp);",
-    "new": "  if (worn.size) for (const p of entity.items) if (p !== held && sigilSetId(p?.sigil)) drinkSigil(p, xp);",
+    "old": "  for (const pieces of worn.values()) for (const p of pieces) if (p !== held) drinkSigil(p, drink(p));",
+    "new": "  if (worn.size) for (const p of entity.items) if (p !== held && sigilSetId(p?.sigil)) drinkSigil(p, drink(p));",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SET4-a-sets-weapon-drinking-in-a-duel",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, xp);",
-    "new": "const rank = drinkSigil(held, xp);",
+    "old": "const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, drink(held));",
+    "new": "const rank = drinkSigil(held, drink(held));",
     "tests": [
       "test/systems/set4_drops_growth.test.js"
     ]

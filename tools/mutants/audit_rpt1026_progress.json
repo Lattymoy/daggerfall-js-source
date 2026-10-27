@@ -1,0 +1,212 @@
+[
+  {
+    "name": "AUDIT-RPT1026-F1-nothing-held",
+    "file": "src/systems/masterSkills.js",
+    "old": "  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity);",
+    "new": "  if (false) holdMasterPractice(entity);",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the switch off notes nothing, and the switch on drops the tough-foe practice with the plain"
+  },
+  {
+    "name": "AUDIT-RPT1026-F1-nothing-returned",
+    "file": "src/systems/masterSkills.js",
+    "old": "dropPlainPractice(entity, id); returnMasterPractice(entity); }",
+    "new": "dropPlainPractice(entity, id); }",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the held practice is never given back"
+  },
+  {
+    "name": "AUDIT-RPT1026-F1-note-empty",
+    "file": "src/systems/masterSkills.js",
+    "old": "for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = entity.skillUses?.[id];",
+    "new": "for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = 0;",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the note holds nothing of the counter"
+  },
+  {
+    "name": "AUDIT-RPT1026-F1-save-drops-held",
+    "file": "src/systems/save/save.js",
+    "old": "  snap.masterPracticeHeld = normalPracticeHeld(entity.masterPracticeHeld);",
+    "new": "  snap.masterPracticeHeld = null;",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a save made with the switch off loses the held practice"
+  },
+  {
+    "name": "AUDIT-RPT1026-F1-load-drops-held",
+    "file": "src/systems/save/save.js",
+    "old": "  entity.masterPracticeHeld = normalPracticeHeld(snap.masterPracticeHeld);",
+    "new": "  entity.masterPracticeHeld = null;",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a load forgets the held practice"
+  },
+  {
+    "name": "AUDIT-RPT1026-F2-kind-never-asks-worth",
+    "file": "src/systems/quickslots.js",
+    "old": "return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';",
+    "new": "return castsWhenUsed(item) ? 'use' : 'wear';",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "JEWEL-USED's kind: every Cast When Used piece a used slot"
+  },
+  {
+    "name": "AUDIT-RPT1026-F2-press-never-asks-worth",
+    "file": "src/systems/quickslots.js",
+    "old": "(!wornForMore(worn) || isEquipped(worn))",
+    "new": "(true || isEquipped(worn))",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a worn slot of a piece worth wearing casts it unworn - the finding"
+  },
+  {
+    "name": "AUDIT-RPT1026-F2-press-never-asks-worn",
+    "file": "src/systems/quickslots.js",
+    "old": "(!wornForMore(worn) || isEquipped(worn))",
+    "new": "(!wornForMore(worn) || false)",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a piece worth wearing, once on, is taken off by its slot rather than cast"
+  },
+  {
+    "name": "AUDIT-RPT1026-F2-armour-no-worth",
+    "file": "src/systems/quickslots.js",
+    "old": "const wornForMore = (item) => item?.group === 'Armor'",
+    "new": "const wornForMore = (item) => false",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a Cast When Used cuirass is never put on from the bar"
+  },
+  {
+    "name": "AUDIT-RPT1026-F2-side-effect-counted",
+    "file": "src/systems/quickslots.js",
+    "old": " && isPower(ENCHANTMENT_NAME[e?.type])));",
+    "new": "));",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a side effect's cost reads as a worn power"
+  },
+  {
+    "name": "AUDIT-RPT1026-F2-feather-counted",
+    "file": "src/systems/quickslots.js",
+    "old": " && e?.type !== ENCHANTMENT_TYPES.FeatherWeight",
+    "new": "",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "Feather Weight, which weighs the piece wherever it lies, reads as a worn power"
+  },
+  {
+    "name": "AUDIT-RPT1026-F2-cast-when-used-counted",
+    "file": "src/systems/quickslots.js",
+    "old": "e?.type !== ENCHANTMENT_TYPES.CastWhenUsed && e?.type !== ENCHANTMENT_TYPES.FeatherWeight",
+    "new": "e?.type !== ENCHANTMENT_TYPES.FeatherWeight",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the Cast When Used row itself reads as a worn power - no piece is cast unworn"
+  },
+  {
+    "name": "AUDIT-RPT1026-F3-undiscounted-room",
+    "file": "src/systems/absorption.js",
+    "old": "  const drink = paid > 0 ? Math.min(cost, paid) : cost;",
+    "new": "  const drink = cost;",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the absorb asks room for the undiscounted price - a rested caster dies to their own discounted blast"
+  },
+  {
+    "name": "AUDIT-RPT1026-F3-whole-price-drunk",
+    "file": "src/systems/absorption.js",
+    "old": "  if (careerAbsorbs(target?.career, { day, inside })) return drink;",
+    "new": "  if (careerAbsorbs(target?.career, { day, inside })) return cost;",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a self-absorb drinks the whole price, more than the cast spent"
+  },
+  {
+    "name": "AUDIT-RPT1026-F3-every-caster-paid",
+    "file": "src/systems/effects.js",
+    "old": "paid: caster.entity === target ? (caster.cast?.cost ?? 0) : 0",
+    "new": "paid: caster.cast?.cost ?? 0",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "my discounted blast on another absorber asks their room for what I paid"
+  },
+  {
+    "name": "AUDIT-RPT1026-F3-payment-unread",
+    "file": "src/systems/effects.js",
+    "old": "paid: caster.entity === target ? (caster.cast?.cost ?? 0) : 0",
+    "new": "paid: 0",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the cast's own spend never reaches the absorb - the batch's head"
+  },
+  {
+    "name": "AUDIT-RPT1026-F4-mark-unsaved",
+    "file": "src/systems/foeLootCap.js",
+    "old": "(f?.entity?.summoned === true ? { ...rec, summoned: true } : rec)",
+    "new": "(rec)",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a summon's saved record carries no mark"
+  },
+  {
+    "name": "AUDIT-RPT1026-F4-mark-unrestored",
+    "file": "src/systems/foeLootCap.js",
+    "old": "(sf?.summoned === true && f?.entity ? summonedBody(f) : f)",
+    "new": "(f)",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a loaded record's mark is read by nobody"
+  },
+  {
+    "name": "AUDIT-RPT1026-F4-save-unwired",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      return savedSummon(f, {",
+    "new": "      return ((_f, r) => r)(f, {",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the street's save never asks the mark"
+  },
+  {
+    "name": "AUDIT-RPT1026-F4-restore-unwired",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (!restoredSummon(f, sf)) return;",
+    "new": "        if (!f) return;",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "the street's restore never asks the mark - the batch's head"
+  },
+  {
+    "name": "AUDIT-RPT1026-F4-death-finds-kept",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);",
+    "new": "",
+    "tests": [
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "SUMMON-BARE's last word at the death gone - pinned end to end here (a real death handler's meat on the Skull's copy); the batch's own pin of it is a hand-built entity"
+  }
+]

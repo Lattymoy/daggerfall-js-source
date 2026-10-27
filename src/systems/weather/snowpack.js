@@ -50,7 +50,7 @@ import { MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
  */
 export const SNOWPACK = Object.freeze({
   stepMinutes: 180,
-  levels: Object.freeze({ from: -600, step: 200, count: 44 }),   // RED-MOUNTAIN: to 8,000 m, over its rim on the relief's top byte (23 to 3,800 before)
+  levels: Object.freeze({ from: -600, step: 200, count: 45 }),   // RED-MOUNTAIN: to 8,200 m, over its rim on the relief's top byte with the large map (23 to 3,800 before)
   rate: Object.freeze({ rain: 1.3, thunder: 3.3, snow: 0.8 }),
   melt: 4 / 24,
   rainMelt: 4.19 / 334,

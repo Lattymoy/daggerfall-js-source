@@ -141,9 +141,9 @@ test('VOYAGER1 the shore: a route between two towns on a lake\'s shore keeps to 
 });
 
 test('VOYAGER1 the regions build on the land\'s law - a pixel of the Bay water and never a ford, the grain at the pixel\'s own place - and their key moves with it (mutants: the terrain unhanded, the Bay a ford, the grain\'s origin, the version, the dials unprinted)', () => {
-  assert.equal(TAMRIEL_ROADS_VERSION, 7);   // PIN MOVED (RIVER-FORDS): 5, the carved rivers crossed as fords; PIN MOVED (ROAD-GAPS): 6; PIN MOVED (EXACT-PIECES): 7
+  assert.equal(TAMRIEL_ROADS_VERSION, 8);   // PIN MOVED (RIVER-FORDS): 5, the carved rivers crossed as fords; PIN MOVED (ROAD-GAPS): 6; PIN MOVED (EXACT-PIECES): 7; PIN MOVED (ROAD-LOOK): 8, the carved lakes refused
   const src = read('src/world/tamrielRoads.js');
-  assert.match(src, /landForRoutes\(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, \(u, v\) => landGrain\(gx \+ u, gy \+ v\)\)/);
+  assert.match(src, /landForRoutes\(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, \(u, v\) => landGrain\(gx \+ u, gy \+ v\), still\)/);   // PIN MOVED (ROAD-LOOK): and the carved lakes' pixels, never a ford
   assert.match(src, /terrain: land, trunks: legs/);
   const base = { woodsBytes: new Uint8Array(4), fit: null, trace: null, spec: {}, nodes: [], obstacles: [], gates: [] };
   assert.notEqual(inputsPrint(base), inputsPrint({ ...base, trunks: { roads: [] } }), 'the named roads are in the print');

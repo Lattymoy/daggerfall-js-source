@@ -286,17 +286,14 @@ export function redMountainSmooth(gx, gy) {
   return (lift - (lift - (D.lift - D.depth)) * smooth01(-d / (D.rim - D.floor))) / UNIT_M;
 }
 
-/** THE FAR VIEWS' VOLCANO at Bay pixel (px, py), kernel units over the land (render/farRing.js ringHeightAt: the far
- *  ring, the middle ring's eased rim, the far field and the travel view): the smooth cone at the pixel's centre. With
- *  `half` (pixels), the most of it over the box of that half-width about the pixel, crowned whole: a far field cell
- *  stands its highest, as its byte is its highest (render/farField.js). 0 past the reach. */
-export function redMountainLiftAt(px, py, half = 0) {
-  const gx = (px + 0.5) * 128, gy = (MAP_ROWS - py) * 128 + 64;
-  if (!(half > 0)) return redMountainSmooth(gx, gy);
-  const f = redMountainFrame();
-  if (!f) return 0;
-  const h = half * 128, ax = gx - f.cx, ay = gy - f.cy;
-  const dx = ax > h ? ax - h : ax < -h ? ax + h : 0, dy = ay > h ? ay - h : ay < -h ? ay + h : 0;   // the box's nearest point
-  const d = Math.sqrt(dx * dx + dy * dy) * SAMPLE_M - D.rim;
-  return d < FLANK_REACH ? (coneProfile(d > 0 ? d : 0) * (1 + D.lobes.amp)) / UNIT_M : 0;
+/** THE FAR VIEWS' VOLCANO at Bay pixel (px, py), kernel units over the land (render/farRing.js ringGroundAt: the far
+ *  ring, the middle ring's eased rim and the travel view; ringTintAt its ash): the smooth cone at the pixel's centre. 0
+ *  past the reach. */
+export function redMountainLiftAt(px, py) {
+  return redMountainSmooth((px + 0.5) * 128, (MAP_ROWS - py) * 128 + 64);
+}
+/** The smooth cone at Bay point (x, y) - a pixel corner, where a far field vertex stands on its node's ground (RELIEF-PEAKS:
+ *  render/farField.js, the vertex's node), kernel units over the land. 0 past the reach. */
+export function redMountainNodeLift(x, y) {
+  return redMountainSmooth(x * 128, (MAP_ROWS + 1 - y) * 128);
 }

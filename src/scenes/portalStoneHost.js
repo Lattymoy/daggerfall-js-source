@@ -7,7 +7,7 @@ import { hudFade } from '../ui/fadeLayer.js';
 import { isOnShip } from '../systems/ship.js';
 import { madeRuleHere } from '../systems/madeLevel.js';
 import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
-import { PORTAL_HOLD_TEXT, PORTAL_TEXT, portalHold, portalPlace, spendPortalStone } from '../systems/portalStone.js';
+import { PORTAL_HOLD_TEXT, PORTAL_TEXT, portalHold, portalStonePlace, spendPortalStone } from '../systems/portalStone.js';
 import { travelMapDoorReady } from '../ui/travel/travelMapDoor.js';
 import { teleportJourney } from '../systems/travel/pastBayTravel.js';   // PORTAL-BAY: the teleport's law past the Bay
 
@@ -69,7 +69,7 @@ export function createPortalStoneHost(host) {
     return true;
   }
   /** The pick: the door asked again (the world moved on while the map stood - a foe came, a duel was called, death),
-   *  the place found (portalPlace: short of a wall, on the ground), ONE stone spent, the portal torn open, and - online
+   *  the place found (portalStonePlace: short of a wall, on the ground, off an event's gate's ground), ONE stone spent, the portal torn open, and - online
    *  - the next foes frame owed full, so the cell hears of it at once. The classic teleport box smashed the screen to
    *  black for an arrival that is not coming yet, so a black screen lifts; the held map smashes nothing, and nothing is
    *  faded there (AUDIT PORTAL1 U4: every pick on it flashed the screen black). */
@@ -80,7 +80,7 @@ export function createPortalStoneHost(host) {
     if (why) { townTalk.say(why); return; }
     if (teleportRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5: never into the open zone (the guild's teleport's and Recall's law) - PORTAL-BAY: the teleport's whole gate, before a stone is spent
     const feet = walkMode && host.playerSpawned ? player.feetAt() : cam.pos;
-    const place = portalPlace(feet, cam.yaw, {
+    const place = portalStonePlace(feet, cam.yaw, {   // RPT1026-EVENTS GATE-WAY: refused before an event's gate (systems/eventGround.js), nothing spent
       ground: (o, d, m) => collider.surfaceHit(o, d, m)?.dist,   // the ground there - a mesh or the terrain, whichever is nearer (CAMP-GROUND's probe)
       wall: (o, d, m) => collider.raycastHit(o, d, m)?.dist,   // a wall, a fence, a house in the way
     });

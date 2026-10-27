@@ -47,7 +47,7 @@
   {
     "name": "QRESET-questor-rung",
     "file": "src/systems/quest/machine.js",
-    "old": "    if ([...quest.resources.values()].some((r) => r?.isPerson && r.isQuestor && boundByClick(r))) return 'questor';\n",
+    "old": "    if (holdsQuestorDoor(quest)) return 'questor';\n",
     "new": "",
     "tests": [
       "test/scenes/quest/questreset1.test.js"

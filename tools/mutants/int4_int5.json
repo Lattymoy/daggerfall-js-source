@@ -65,7 +65,7 @@
   {
     "name": "INT3-the-lift-unsaid",
     "file": "src/systems/item/itemIds.js",
-    "old": "  if (now == null) return prev ? TRADE_OPEN_NOTICE : null;",
+    "old": "  if (now == null) return prev ? t('realm.held.open', TRADE_OPEN_NOTICE) : null;",
     "new": "  if (now == null) return null;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"

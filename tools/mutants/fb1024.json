@@ -36,24 +36,6 @@
   ]
  },
  {
-  "name": "BUF1-the-theme-back-to-interactive",
-  "file": "src/systems/introTheme.js",
-  "old": "      return Ctor ? new Ctor({ latencyHint: 'playback' }) : null;",
-  "new": "      return Ctor ? new Ctor({ latencyHint: 'interactive' }) : null;",
-  "tests": [
-   "test/systems/fb1024_themebuffer.test.js"
-  ]
- },
- {
-  "name": "BUF1-the-theme-no-hint",
-  "file": "src/systems/introTheme.js",
-  "old": "      return Ctor ? new Ctor({ latencyHint: 'playback' }) : null;",
-  "new": "      return Ctor ? new Ctor() : null;",
-  "tests": [
-   "test/systems/fb1024_themebuffer.test.js"
-  ]
- },
- {
   "name": "RID1-insignia-lost-taken-for-refusal",
   "file": "src/systems/sigil/sigilBroker.js",
   "old": "  if (insigniaUnheard(r)) {\n    const s = await askAfter(settle, rid);\n    if (!s) return oweSale({ kind: 'insignia'",

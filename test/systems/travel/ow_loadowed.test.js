@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { StreamingWorldState, worldCoordToMapPixel } from '../../../src/world/streamingWorld.js';
 import { TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
-import { createLoadGovernor, unbuiltAround, unbuiltCount, TV_GOV_CLEAR_S } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, travellerPace, unbuiltAround, unbuiltCount, TV_GOV_CLEAR_S } from '../../../src/systems/travel/travelGovernor.js';
 import { threatCap, foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
 import { foeHostile, foeAlerted } from '../../../src/systems/encounters.js';
 import { TRAVEL_VIEW_TEXT, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
@@ -60,10 +60,13 @@ function journeyHost() {
   const d = { t: 0, pBuilds: 0, failP: null, said: [] };
   const player = { pos: at, speed: WALK_MPS, isPlayerSwimming: false, feetAt: () => [...player.pos] };
   const scope = {
+    // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers which pixel is ready (scenes/capitalPrebuild.js
+    // firstReady) - none of the city's here, every pixel ready
+    capitalPrebuild: { firstReady: () => true },
     // the journey and the view
     travelControlUI: { isShowing: true }, travelOptions: { state: { autopilot: {} } },
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,
-    worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, MAX_TIME_SCALE,
+    worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, travellerPace, MAX_TIME_SCALE,
     // the stream and the count
     state, built, queue, unbuiltAround, unbuiltCount, StreamingWorldState, worldCoordToMapPixel, modes: null, walkMode: true, playerSpawned: true,
     player, cam: { pos: at },

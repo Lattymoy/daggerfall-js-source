@@ -692,6 +692,13 @@ wiring lives there. `bootWorld` 36,389 (main's, at the merge) -> 36,251 logical 
 pin read the moved code's text; the stall's settle is held by a test that builds the vendor host and opens a stall
 (`fb1025_vendorlost.test.js`). The tool wrote Windows absolute paths into the module's imports on this machine; they were
 set back to the host's relative ones by hand.
+
+RPT1026-MARKET (private reports 2026-10-26) put its arrivals' sweep there too (`net/marketArrivals.js`, built in
+`createVendorHost`), and the one thing it reads of `bootWorld` - the checkpoint's gate, `checkpointGateOpen` - is one
+entry of the host object. To pay for it, the Vendor page's Collect (`setVendorPage`'s `collectGold`, four statements)
+moved beside the stall's other acts as `vendorCollectGold`: `bootWorld` 36,222 -> 36,216 logical lines, net six out. The
+ceiling was left where it stood for the batch's merge (other branches of the batch edit the same row).
+
 ## PARTY-FOLLOW's move - the party arrival out of bootWorld (2026-10-25)
 PARTY-FOLLOW (`06-Systems/Online-Arc.md`) changes how a follower lands beside the party leader: it waits for a spot
 beside them before taking the place's own arrival, and says when it took it. That law stood in `bootWorld` - the
@@ -802,3 +809,19 @@ wiring three (the places' getter, their handle to the spawn's ground, the boards
 TVD-WORLD's handle none (an edit in place), QUARRY-WORLD's one (`wildAt: bountyLandWild(maps)`). The ceiling stays at its
 measure, 35,740. `createWorldModes` 11,025 and `buildDungeonContext` 8,436 (two lines edited in place, `isAbyssMapId`)
 did not move.
+
+## PORT-SHIPS - the port near the player and its harbour book out of bootWorld (2026-10-27)
+
+The fix for the owner's field report (item 8: Solitude's ships inside its walls; `03-World/Holdings.md` section 7
+PORT-SHIPS) hands the harbour book two laws - the port's town's keep beside its footprint, and the world's ground - three
+logical lines, and `bootWorld` stood at its ceiling (35,366). The port near the player (`navalHarbourNear`, its memo) and
+the book made off it (`harbourBook`), three contiguous members, went out first, verbatim, by `tools/hostMove.mjs`, to
+`scenes/harbourHost.js` `createHarbourHost`; the memo, a `let` the tool refuses to move, became a holder written in place
+(`_navalHarbourAt`, its key and its town) before the move. Seventeen names by value, none live, `harbourBook` returned (read
+above the construction by `buildPixelNow`'s getter and `docksBerthOf`, inside closures run after it). The two laws went in
+the module. `bootWorld` 35,366 -> 35,315 logical lines, and the ceiling at it (`test/scenes/hostceiling.test.js`, its
+mutant re-aimed under it). The tool re-aimed ten mutant records over the moved lines (`auditcaptsea.json`,
+`audittesa.json`, `etherplaces.json`, `fb1020c_harbourreach.json`, `sealanes.json`, `shiplife.json`, `tesa6.json` and two of
+`portships.json`'s); the pins that read the moved lines off world.js's own text read the host whole (`hostText`:
+`shiplife.test.js`, `sealanes.test.js`, `auditholdings.test.js`, `etherplaces.test.js` - PIN MOVED, PORT-SHIPS).
+

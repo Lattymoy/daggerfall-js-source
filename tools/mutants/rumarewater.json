@@ -92,11 +92,12 @@
   {
     "name": "RW-GROUND-the-large-map's-detail-whole",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "keep = 1 - rumareBasin(x, y);",
-    "new": "keep = 1;",
+    "old": "const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER",
+    "new": "const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1;   // RUMARE-WATER",
     "tests": [
       "test/world/rumarewater.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): largeMapBefore keeps the same line - today's large map named by its note"
   },
   {
     "name": "RW-GROUND-the-roll-unmoved",

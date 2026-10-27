@@ -13,7 +13,7 @@ import {
   RED_MOUNTAIN_DIALS, RED_MOUNTAIN_REACH, RED_MOUNTAIN_TOP, CRATER_FLOOR_LIFT, coneProfile, redMountainFrame, redMountainLand,
   redMountainReaches, redMountainTopNear, redMountainGround, coneGrade, dirOf,
 } from '../../src/world/tamriel/redMountain.js';
-import { createLandforms, redMountainGroundOf, byteBase, groundTopOf, reliefByteHeight, byteBeyond, landformSitesBeyond } from '../../src/world/landforms.js';
+import { createLandforms, redMountainGroundOf, byteBase, groundTopOf, nodeGround, centreGround, byteBeyond, landformSitesBeyond } from '../../src/world/landforms.js';
 import { groundWoods, tamrielHeightByte, dropGroundCache } from '../../src/world/tamriel/tamrielGround.js';
 import { tamrielBiomeAt, heartsAnchor } from '../../src/world/tamriel/tamrielBiomes.js';
 import { MOUNTAIN_RANGES } from '../../src/world/tamriel/tamrielGeography.js';
@@ -161,7 +161,7 @@ test('RED-MOUNTAIN in the kernel: a pixel on the cone built through the landform
   assert.equal(floor, byteBase((x, y) => g.getHeightMapValue(x, y))(f.cx, f.cy) + CRATER_FLOOR_LIFT);
   assert.equal(redMountainGroundOf(g), redMountainGroundOf(g), 'made once a world');
   const b = byteBase((x, y) => g.getHeightMapValue(x, y));
-  assert.equal(b((px + 1) * 128, (MAP_HEIGHT - py) * 128), reliefByteHeight(g.getHeightMapValue(px, py), 1, byteBeyond(px, py)), 'a byte node where the kernel stands it');
+  assert.equal(b((px + 1) * 128, (MAP_HEIGHT - py) * 128), nodeGround(g.getHeightMapValue(px, py), 1, byteBeyond(px, py)), 'a byte node where the kernel stands it (the far views\' node law, RELIEF-PEAKS)');
   const k = (x, y) => sampleKernel(g, x, y, 129, true, lf);
   const c = k(px, py), e = k(px + 1, py), n = k(px, py - 1);
   const at = (fn, x, y) => fn(x, y) * MAX_TERRAIN_HEIGHT;
@@ -216,9 +216,9 @@ test('RED-MOUNTAIN its fire and its horizon: the cap line rides the cone (a zone
   const { capLineOfPixel, SNOWCAP, CAP_NONE } = await import('../../src/world/peaks/snowcap.js');
   const { SNOWPACK, levelAltitude } = await import('../../src/systems/weather/snowpack.js');
   const { airParamsAt, setAirGround } = await import('../../src/systems/weather/airTemperature.js');
-  const { ringHeight, ringHeightAt } = await import('../../src/render/farRing.js');
+  const { ringGroundAt } = await import('../../src/render/farRing.js');
   const { meanGroundField } = await import('../../src/world/landforms.js');
-  const { redMountainLiftAt, redMountainSmooth } = await import('../../src/world/tamriel/redMountain.js');
+  const { redMountainLiftAt, redMountainNodeLift, redMountainSmooth } = await import('../../src/world/tamriel/redMountain.js');
   const { CLIMATES } = await import('../../src/formats/mapsTables.js');
   const f = redMountainFrame(), cx = Math.floor(f.bx), cy = Math.floor(f.by);
   // the cap line: a zone with a line, on the cone, stands it over the cone's own lift
@@ -243,20 +243,19 @@ test('RED-MOUNTAIN its fire and its horizon: the cap line rides the cone (a zone
   const airGround = read('src/systems/weather/airGround.js');
   assert.match(airGround, /heatAt: \(x, z\) => \(landforms \? LAPSE_C_PER_M \* redMountainSmooth\(\(x \/ TERRAIN_SIZE\) \* span, \(z \/ TERRAIN_SIZE \+ 1\) \* span\) \* STREAMING_TERRAIN_SCALE : 0\),/);
   // the snow's levels: over the highest the cone and the relief's top byte can stand
-  const highest = reliefByteHeight(180, 1, 1) * UNIT + RED_MOUNTAIN_TOP * UNIT;
+  const highest = nodeGround(180, 1, 1) * UNIT + RED_MOUNTAIN_TOP * UNIT;
   assert.ok(levelAltitude(SNOWPACK.levels.count - 1) > highest, `the levels to ${levelAltitude(SNOWPACK.levels.count - 1)} m, over ${highest.toFixed(0)}`);
-  // the horizon: the ring's term at a pixel's centre, the field's cell its highest
+  // the horizon (RELIEF-PEAKS' far views, the merge): the far ring's vertex the kernel's mean ground at its pixel's centre
+  // and the smooth cone there; the far field's vertex the worker's ground at its node and the cone at that node
+  const byteAt = (x, y) => (x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT ? 20 : 60);
   for (const [x, y] of [[cx, cy], [cx + 2, cy - 1], [cx - 9, cy + 5], [cx + 60, cy], [cx + 200, cy]]) {
-    assert.equal(ringHeightAt(x, y, 90, true), ringHeight(90, true, 1, byteBeyond(x, y)) + redMountainLiftAt(x, y) * UNIT);
-    assert.equal(ringHeightAt(x, y, 90, false), ringHeight(90), 'none on the classic law');
+    assert.equal(ringGroundAt(x, y, byteAt, true), (centreGround(byteAt, x, y, true) + redMountainLiftAt(x, y)) * UNIT);
+    assert.equal(ringGroundAt(x, y, byteAt, false), centreGround(byteAt, x, y, false) * UNIT, 'none on the classic law');
     assert.equal(redMountainLiftAt(x, y), redMountainSmooth((x + 0.5) * 128, (MAP_HEIGHT - y) * 128 + 64));
-    let most = 0;
-    for (let j = -4; j <= 4; j++) for (let i = -4; i <= 4; i++) most = Math.max(most, redMountainLiftAt(x + i, y + j));
-    assert.ok(redMountainLiftAt(x, y, 4) >= most - 1e-9, `the cell about ${x},${y} its highest`);
+    assert.equal(redMountainNodeLift(x, y), redMountainSmooth(x * 128, (MAP_HEIGHT + 1 - y) * 128), 'a node a pixel corner');
   }
-  assert.equal(redMountainLiftAt(cx, cy), (D.lift - D.depth) / UNIT, 'the crater\'s floor at the centre\'s pixel, on the horizon');
-  assert.ok(redMountainLiftAt(cx + 3, cy) * UNIT > 3000, 'and its flank');
-  assert.match(read('src/render/farRing.js'), /heightOf: \(byte, x, y\) => ringHeightAt\(x, y, byte, !!inputs\.relief, 1, FAR_CELL \/ 2\),/, 'the far field asks the cell\'s highest');
+  assert.ok(Math.abs(redMountainNodeLift(cx + 6, cy) - redMountainLiftAt(cx + 6, cy)) * UNIT > 50, 'the node, not the pixel\'s centre');
+  assert.match(read('src/render/farRing.js'), /heightOf: \(byte, x, y, v\) => answer\.ground\[v\] \+ \(inputs\.relief \? redMountainNodeLift\(x, y\) \* STREAMING_TERRAIN_SCALE : 0\),/, 'the far field stands the cone at its vertex');
   // the air's mean ground: the smooth cone over the land
   const g = groundWoods(new StubWoods());
   const withCone = meanGroundField(g, cx + 3, cy, true), without = meanGroundField(g, cx + 60, cy, true);

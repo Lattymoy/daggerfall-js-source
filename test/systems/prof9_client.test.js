@@ -136,7 +136,7 @@ test('PROF9 DONE WHEN: a Hunter\'s Stew cooked with a clean pan at a fire from t
   const page = pageOf();
   try {
     assert.match(page.text(), /The Fire/);
-    assert.match(page.text(), /A fire to cook at\. Provisioning 0 \(Novice\)\. A Skillet in your pack would widen the pan's window\./);   // PIN MOVED (CRAFT3): the fire reads Provisioning's track
+    assert.match(page.text(), /ProvisioningNovice 0[^]*?A fire to cook at\. A Skillet in your pack would widen the pan's window\./);   // PIN MOVED (CRAFT3): the fire reads Provisioning's track;// PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
     page.dish('Hunter\'s Stew (northern Root Bulb)').onclick();
     assert.match(page.text(), /Raw Meat 2 \/ 2 \(2 stored\)/);
     assert.match(page.text(), /Endurance \+5 for 2 hours\./);
@@ -285,7 +285,7 @@ test('PROF9 pages: The Fire - away from one, the word (no dish offered); at one,
     // a Skillet: the window half again; a Cook's two; a Provisioner's keeping
     const st = stubPages({ skillet: true, rank: 100, specs: { 50: 'cook', 100: 'provisioner' } });
     page = pageOf();
-    assert.match(page.text(), /Provisioning 100 \(Master\)\. Your Skillet widens the pan's window\./);   // PIN MOVED (CRAFT3): the fire reads Provisioning's track
+    assert.match(page.text(), /ProvisioningMaster 100[^]*?A fire to cook at\. Your Skillet widens the pan's window\./);   // PIN MOVED (CRAFT3): the fire reads Provisioning's track;// PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
     page.dish('Hunter\'s Stew (northern').onclick();
     assert.match(page.text(), /Endurance \+5 for 2 hours\. Yours never spoil\./);
     // PIN MOVED (CRAFT3): a dish raises Provisioning. PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): a Master's track
@@ -357,7 +357,8 @@ test('PROF9 pages: Cooking practised on the Professions page - its four cards ch
       ['Brewer', 'Alchemy', false], ['Distiller', 'Alchemy', false], ['Cook', 'Cooking', false], ['Field Cook', 'Cooking', true],
       ['Master Alchemist', 'Alchemy', true], ['Transmuter', 'Alchemy', true], ['Chef', 'Cooking', true], ['Provisioner', 'Cooking', true],
     ], 'the Brewer, the Distiller and the Cook offered (a change), the Field Cook chosen, the four at 100 shut below it');
-    assert.deepEqual([...page.root().querySelectorAll('.px-stat')].map((r) => [r.querySelector('.k')?.textContent, r.querySelector('.v')?.textContent]), [
+    // PIN MOVED (CRAFT-HALL): the unlocks' rows, not the What raises rows beside them (prof-raise)
+    assert.deepEqual([...page.root().querySelectorAll('.px-stat')].filter((r) => !r.className.includes('prof-raise')).map((r) => [r.querySelector('.k')?.textContent, r.querySelector('.v')?.textContent]), [
       ['Alchemy: Orc Strength, Stamina, Healing, Water Walking', 'rank 0'], ['Cooking: Hunter\'s Stew, Fisherman\'s Supper', 'rank 0'],
       ['Alchemy: Resist Fire, Resist Frost, Resist Shock, Restore Power', 'rank 10'], ['Cooking: Orchard Tart', 'rank 10'],
       ['Alchemy: Slow Falling, Water Breathing, Cure Disease, Heal True', 'rank 25'], ['Alchemy: Resist Poison, Free Action, Levitation', 'rank 40'],

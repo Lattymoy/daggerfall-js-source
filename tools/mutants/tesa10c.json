@@ -247,20 +247,22 @@
   {
     "name": "TESA10c-roots-short",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    const top = [c * trunkRadius(6) * 0.7, 9, s * trunkRadius(6) * 0.7], bend = [c * (F.rootOut * 0.6), 2.5, s * (F.rootOut * 0.6)], end = [c * F.rootOut, -1.5, s * F.rootOut];",
-    "new": "    const top = [c * trunkRadius(6) * 0.7, 9, s * trunkRadius(6) * 0.7], bend = [c * (F.rootOut * 0.4), 2.5, s * (F.rootOut * 0.4)], end = [c * F.rootOut * 0.5, -1.5, s * F.rootOut * 0.5];",
+    "old": "reach: F.rootOut - (1 - k) * 18,",
+    "new": "reach: F.rootOut * 0.5 - (1 - k) * 18,",
     "tests": [
       "test/tesa10c_capitals.test.js"
-    ]
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the roots are buttresses now (world/capitalFalinesti.js grahtRoots) - their reach halved, none out to rootOut"
   },
   {
     "name": "TESA10c-no-platforms",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    ledge(mb, TIMBER, PLATFORM_SIDES, r + F.platformW, r - 2, y - 0.7, y, 0, platformOpen(F));",
-    "new": "    void r;",
+    "old": "    ring(mb, TIMBER, PLATFORM_SIDES, rr - 2, rr + F.platformW, y, 0, platformOpen(F));   // AUDIT TESA II C4: open over the walkway's last rise to it\n    ring(mb, TIMBER, PLATFORM_SIDES, rr - 2, rr + F.platformW, y - 0.7, 0, platformOpen(F));\n",
+    "new": "",
     "tests": [
       "test/tesa10c_capitals.test.js"
-    ]
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the platform's deck its two rings now (its fascia and rail apart) - both gone"
   },
   {
     "name": "TESA10c-trunk-radius-flat",
@@ -274,11 +276,13 @@
   {
     "name": "TESA10c-crown-low",
     "file": "src/world/capitalFalinesti.js",
-    "old": "  blob(mb, LEAVES, 0, F.crown.y + 16, 0, 70, 30, 70, { seed: 0xfd0, n: 12 });",
-    "new": "  blob(mb, LEAVES, 0, F.crown.y - 40, 0, 70, 30, 70, { seed: 0xfd0, n: 12 });",
+    "old": "out.push({ c, r: rad, squash, cards, size, seed: 0x6a70 + out.length * 7, detail });",
+    "new": "out.push({ c: [c[0], c[1] - 56, c[2]], r: rad, squash, cards, size, seed: 0x6a70 + out.length * 7, detail });",
     "tests": [
-      "test/tesa10c_capitals.test.js"
-    ]
+      "test/tesa10c_capitals.test.js",
+      "test/world/capitaltrees.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the crown is masses in storeys now (grahtCrown), not one blob - every mass sunk the old blob's 56 m, the crown's top under its band"
   },
   {
     "name": "TESA10c-secunda-red",
