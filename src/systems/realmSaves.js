@@ -548,6 +548,8 @@ export function createRealmSession({
   // RESCUE-PACK: every change of the copy is a generation; a packing that finishes after the copy moved on (a landing,
   // a drop, a newer save kept) writes nothing
   let copyGen = 0;
+  /** @type {(() => void) | null} */
+  let pageSave = null;   // CLOSE-SAVE: the host's page-hide checkpoint (saveAsItGoes)
   const keepNow = (going = false) => {   // CLOSE-SAVE: `going` - the page goes now, visible or not (leave's keepalive)
     if (unkeptTimer) { unkeptTimer(); unkeptTimer = null; }
     if (unkept == null) return;
@@ -831,15 +833,17 @@ export function createRealmSession({
       const r = await realmWedHalf(io, id, lease, sid, partner, partnerChar, opts);
       return r.ok ? { ok: true, wed: r.data?.wed === true, union: r.data?.union ?? null } : { ok: false, error: r.error };
     },
+    /** CLOSE-SAVE: the host's page-hide checkpoint (whenPageHides hands it), asked by a leave as the page goes. */
+    saveAsItGoes(/** @type {() => void} */ fn) { pageSave = fn; },
     /** The session's end: what is waiting is sent first (unless the page is going - `keepalive` sends the leave alone,
      *  which a browser can finish after the page is gone), then the lease given up. CLOSE-SAVE (FIELD BUGS 2026-10-26,
-     *  a worn Ruhn's Warden-Plate gone after the update's reload): `save` - the host's checkpoint - is asked first. A
-     *  close, a reload and a navigation fire pagehide BEFORE visibilitychange (the HTML spec's unload steps; Edge
-     *  measured), so the checkpoint the hidden page asks (world.js whenPageHides) came after this leave and was
-     *  refused: the page kept nothing and sent nothing, and everything since the last landed checkpoint was lost. */
-    async leave({ keepalive = false, save = null } = {}) {
+     *  a worn Ruhn's Warden-Plate gone after the update's reload): a page going asks the host's page-hide checkpoint
+     *  first (`saveAsItGoes`). A close, a reload and a navigation fire pagehide BEFORE visibilitychange (the HTML
+     *  spec's unload steps; Edge measured), so that checkpoint came after this leave and was refused: the page kept
+     *  nothing and sent nothing, and everything since the last landed checkpoint was lost. */
+    async leave({ keepalive = false } = {}) {
       if (lost) return { ok: false, error: lost };
-      try { save?.(); } catch (e) { console.warn('[realm] the leaving save failed', e); }
+      if (keepalive) { try { pageSave?.(); } catch (e) { console.warn('[realm] the page\'s last checkpoint failed', e); } }
       if (!keepalive) { if (running) await running; if (pending) await session.checkpoint(pending.text, pending.summary); }
       keepNow(keepalive);   // RESCUE-SAVE: whatever never landed is on the device before the lease goes - as it stands on a page going
       lost = 'left';
@@ -1053,9 +1057,12 @@ export const realmDoorShut = (/** @type {any} */ session) => !!session?.terminal
 export const REALM_EXIT_WAIT_MS = 5_000;
 
 /** REALM P1.3: A PAGE PUT AWAY (a phone's home button, another tab) - `fn` runs as it hides, while it still can send.
- *  The realm's own hook, kept here: the world host's frame loop answers to no page-lifecycle timer (AUDIT WORLD7/8). */
-export function whenPageHides(/** @type {any} */ doc, /** @type {() => void} */ fn) {
+ *  The realm's own hook, kept here: the world host's frame loop answers to no page-lifecycle timer (AUDIT WORLD7/8).
+ *  CLOSE-SAVE: `session` is handed `fn` too, for its leave as the page goes - a close or a reload hides the page only
+ *  after pagehide, where the lease has gone. */
+export function whenPageHides(/** @type {any} */ doc, /** @type {() => void} */ fn, /** @type {any} */ session = null) {
   doc?.addEventListener?.('visibilitychange', () => { if (doc.visibilityState === 'hidden') fn(); });
+  session?.saveAsItGoes?.(fn);
 }
 /** AUDIT REALM2 C2: THE PAGE GOING, AND COMING BACK - `gone` as the page is unloaded or put in the back-forward cache
  *  (pagehide: the unload guard's "Leave site?" already answered, so a Stay never reaches it), `back` as a page that

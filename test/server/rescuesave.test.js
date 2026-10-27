@@ -803,7 +803,8 @@ test('CLOSE-SAVE (FIELD BUGS 2026-10-26): a long life\'s save handed to the page
   const text = longSave(37);
   assert.ok(text.length > REALM_UNSENT_PACK_OVER);
   dev.door.plan = ['hang'];   // the leaving save's put, cut off by the page's going
-  const left = c.session.leave({ keepalive: true, save: () => { void c.session.checkpoint(text); } });
+  c.session.saveAsItGoes(() => { void c.session.checkpoint(text); });   // world.js's page-hide checkpoint, as whenPageHides hands it
+  const left = c.session.leave({ keepalive: true });
   assert.equal(JSON.parse(readUnsent(dev.storage, c.id).text).level, 37, 'on the device as it stands, before the page can go');
   await left;
   const boot = await openRealmBoot({ io: dev.io, id: c.id });

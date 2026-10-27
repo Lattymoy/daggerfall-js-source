@@ -34,10 +34,13 @@ MEASURED, before the fix (main `56eb3cb15a`, the pre-update build `cf20b37141`, 
   door (`recoverSpoils`), unworn. The court's own safety net holds; this report's piece most likely reached the pack by
   another door (the Lost and Found's mailbox, for one). Not proven.
 
-THE FIX. The session's `leave` takes the host's checkpoint as `save` and asks it before the lease goes; world.js's
-pagehide statement hands it `onlineCheckpoint`. The save is composed and handed over synchronously, and the leave keeps
-it on the device at once (`keepNow(going)`): a long life's save as it stands, never packed off the frame, which a going
-page never finishes. Its put may land (the copy is then the save the realm holds, and the join drops it -
+THE FIX. `whenPageHides` hands the host's page-hide checkpoint to the session too (`saveAsItGoes`), and a keepalive
+`leave` - the page going - asks it before the lease goes. world.js's hook passes `realmSession` as the third argument;
+the pagehide statement is unchanged. The hook is registered where the boot has declared everything the checkpoint
+reads, so a pagehide during the boot's awaits reaches no binding in its dead zone (BOOT-HIDE), and `bootWorld` grows no
+logical line (HOST-SPLIT). The save is composed and handed over synchronously, and the leave keeps it on the device at
+once (`keepNow(going)`): a long life's save as it stands, never packed off the frame, which a going page never
+finishes. Its put may land (the copy is then the save the realm holds, and the join drops it -
 `settleMovedCopy`) or be cut off (the copy follows the record's sequence, and the join plays it).
 
 PINNED. `test/systems/auditrealm2_client.test.js` (CLOSE-SAVE in the host) mounts world.js's own pagehide and
@@ -45,6 +48,13 @@ visibilitychange statements over the real session and Worker and fires them in t
 `test/server/rescuesave.test.js` (CLOSE-SAVE) holds the long save's synchronous copy. Mutant records:
 `auditrealm2_client.json` CLOSE-SAVE-host-leaves-without-the-save, `rescuesave.json`
 CLOSE-SAVE-a-going-page-packs-off-the-frame.
+
+VERIFIED IN GAME on the fix (`3fc4a9740d`, headless Edge, the same probe and the same local workerd): the plate worn, no
+checkpoint asked, then the page closed (and, apart, reloaded). The record still stood at the join's sequence without
+the plate - the leaving put cut off - and the next boot played the device's copy: the plate worn in the chest slot, the
+pack 47 as it was, no stranded notice; the boot's first checkpoint gave it to the service (sequence 3, the plate in
+slot 18). The gate's burst itself was not played - the harness has no gate key pair on main - so the plate was minted
+by `aetheric.js` mintAetheric and worn through `equip.js` equipItem.
 
 NOT RECOVERED HERE. The plate a player lost before this fix is not on any device. Staff restore it
 (`/v1/staff/item/give`); the census trail (`/v1/staff/census/find`, `/v1/staff/contested/piece`) shows which records held
