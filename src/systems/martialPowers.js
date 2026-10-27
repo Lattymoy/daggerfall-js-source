@@ -45,10 +45,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SKILLS } from './skills.js';
-import { martialAwake, MARTIAL_NUMBERS, MARTIAL_BY_ID, signatureById } from './martialPaths.js';
+import { martialAwake, MARTIAL_NUMBERS, MARTIAL_BY_ID, signatureById, martialWords } from './martialPaths.js';
 import './weaponMastery.js';   // MARTIAL2: the weapons past 100 - registered at import beside the paths, so every host that has one has the other
 import { sigilDueling } from './sigil/sigil.js';
 import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS } from './entityMods.js';
+import { blowRoom, guardRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
 import { registerPlayerDamageMod, registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
 import { registerPlayerStrikeListener } from '../combat/formulas.js';
 import { registerPlayerKillListener } from './playerKills.js';
@@ -165,7 +166,7 @@ export function martialBlowPct(attacker, target, info = null) {
 /** THE BLOW (entityMods.js registerWeaponBlowMod): my blow at a foe, the fraction carried. */
 export function martialBlow(weapon, damage, attacker, target, info) {
   if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !foeOf(target)) return damage;
-  const pct = martialBlowPct(attacker, target, info);
+  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial');   // POWER-CEILING
   if (!(pct > 0)) return damage;
   const key = weapon ?? attacker;
   const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
@@ -223,7 +224,7 @@ export function martialGuardPct(entity) {
 export function martialDamageMod(entity, dmg) {
   const pct = martialGuardPct(entity);
   if (!(pct > 0) || !(dmg > 0)) return dmg;
-  const owed = (dmg * pct) / 100 + _s.guardOwed;
+  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed;   // POWER-CEILING
   const cut = Math.floor(owed + 1e-9);
   _s.guardOwed = owed - cut;
   return Math.max(0, dmg - cut);
@@ -361,6 +362,23 @@ registerPlayerKillListener(MARTIAL_POWERS, martialKill);
 registerEntityFold(MARTIAL_POWERS, martialFold);
 registerTechniqueLandedListener(MARTIAL_POWERS, martialLanded);
 registerTechniqueUsedListener(MARTIAL_POWERS, martialUsed);
+
+// ── the HUD ─────────────────────────────────────────────────────────
+
+const NO_CHIPS = Object.freeze([]);
+/** RPT1026-PROGRESS (a private report: the Blademaster's passive showed no sign of
+ *  working): THE PASSIVE'S CHIP, beside the sets' and the Legendaries' (scenes/world.js
+ *  hands all three to the HUD). Flowing Steel worked - +3% a landed blow, five deep, four seconds after the last - and
+ *  said nothing; the Legendary Flow, the same law on a blade, has carried its chip since LOOT5 (lootPowers.js
+ *  lootHudChips). `{ key, set: 'martial', name, text, state }`: the passive's name and its stacks, the seconds left. None
+ *  for anyone but me, while the path sleeps, or with no stack standing (the frame at rest allocates nothing). */
+export function martialHudChips(entity, now = _now()) {
+  if (awakeMartialId(entity) !== 'blademaster') return NO_CHIPS;
+  const n = flowStacks(now);
+  if (!n) return NO_CHIPS;
+  const name = martialWords('blademaster')?.passiveName ?? '';   // the path's own words, in the player's language (martial.blademaster.passive)
+  return [{ key: 'flowing-steel', set: 'martial', name: `${name} ${n}`, text: `${Math.max(0, Math.ceil(_s.flowUntil - now))}s`, state: 'active' }];
+}
 
 /** Tests only: every window and recovery fresh, a clock and dice of their own (seconds; [0, 1)). */
 export function _resetMartialPowersForTests() { _s = fresh(); _carry = new WeakMap(); _say = (line) => { hudText(line); }; _now = () => performance.now() / 1000; _rand = Math.random; }   // AUDIT MARTIAL L5 L2: the clock and the dice too

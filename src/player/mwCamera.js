@@ -21,13 +21,20 @@
 //    deg/s yaw orbit): needs an idle-input timer the port's hosts do
 //    not yet expose, and fVanityDelay is a Morrowind GMST this port
 //    does not read. Deferred, not faked.
-//  - viewOverShoulder / shoulder offsets / zoomOutWhenMoveCoef / head
-//    bobbing / previewIfStandStill / slowViewChange: all DEFAULT OFF in
-//    the reference (settings.lua:43-55, 67), and vanilla Morrowind has
-//    none of them - the third-person camera sits centered behind the
-//    actor. With those defaults, third_person.lua:135-137 collapses the
-//    preferred distance to the base distance flat, which is what this
-//    module implements.
+//  - zoomOutWhenMoveCoef / head bobbing / previewIfStandStill /
+//    slowViewChange: all DEFAULT OFF in the reference (settings.lua:43-55,
+//    67), and vanilla Morrowind has none of them - the third-person camera
+//    sits centered behind the actor. With those defaults,
+//    third_person.lua:135-137 collapses the preferred distance to the base
+//    distance flat, which is what this module implements.
+//  - viewOverShoulder (settings.lua:44, off) IS here since MW-SHOULDER, as
+//    the player's option and off by default (the shoulder's law, below).
+//    Its two DISTANCE terms are not: with it on, the reference pulls the
+//    camera out as the look rises and as the actor speeds up
+//    (third_person.lua:80-84, :152-161, zoomOutWhenMoveCoef 20). The option
+//    moves the focal point; the distance stays the wheel's. Nor is
+//    autoSwitchShoulder (settings.lua:47, off: the shoulder is the one the
+//    player chose).
 //  - castSphere (camera.cpp:186/201): the port's colliders cast RAYS.
 //    The reference backs the hit off by the sphere radius along the hit
 //    NORMAL; for a head-on surface that equals backing off along the
@@ -69,6 +76,67 @@ export const CAMERA_OBSTACLE_LIMIT = 5;
  *  collision area". */
 export const FOCAL_OBSTACLE_LIMIT = 10;
 
+/**
+ * MW-SHOULDER (FIELD BUGS 2026-10-26c; feature-feedback via Mac: "add an option to move camera a bit to the side ... for
+ * morrowind 3rd person models ... because crosshair is located on top of character's head and it is inconvenient to
+ * target something with ranged attacks"): THE REFERENCE'S VIEW OVER THE SHOULDER, the player's option
+ * (systems/features.js 'mw-shoulder-camera'). The focal point - the head the camera turns about - stands off the
+ * actor's line: settings.lua:45-46's [x, y] behind the chosen shoulder (third_person.lua:39-40 - the left the right's
+ * mirror), and while a weapon or a spell is out, or the actor swims, centred and raised (third_person.lua:27, :89-92).
+ * Raised, the crosshair stands over the head, not on it; and a shot - which leaves the head along the look in every
+ * host, as the reference's projectile leaves the actor (weaponanimation.cpp:111-114) - still lands where the crosshair
+ * says, 15 units under it. Behind a shoulder its line would pass 30 units to the side of the crosshair's.
+ * [x, y] are MW units: x to the actor's right (camera.cpp:101-107 getFocalPointOffset), y up.
+ */
+export const SHOULDER_OFFSET = Object.freeze([30, -10]);
+/** third_person.lua:27 - combatOffset, the focal point while a weapon or a spell is out (and while swimming). */
+export const COMBAT_OFFSET = Object.freeze([0, 15]);
+/** third_person.lua:110-116 - the focal transition's speed: into or out of combat, and every other change. */
+export const FOCAL_TRANSITION_SPEED = Object.freeze({ combat: 5.0, normal: 1.0 });
+/** The player's three choices (the feature's tiers): no offset (vanilla's centred camera), and the two shoulders. */
+export const SHOULDER_SIDES = Object.freeze(['off', 'right', 'left']);
+
+/**
+ * camera.cpp:247-294 - THE FOCAL POINT'S TRANSITION, verbatim: setFocalPointTargetOffset carries the speed the offset
+ * was moving at into the new transition (its influence fading at the transition's speed), and each frame the offset
+ * closes on its target by `dt * (1 + 5 / |delta|) * speed`, at most all of it; instantTransition skips to the target
+ * on the next step. Pure state; [x, y] in MW units.
+ */
+export function createFocalOffset() {
+  let current = [0, 0], target = [0, 0], coef = 1;
+  let speed = [0, 0], prevSpeed = [0, 0], prevExtra = [0, 0], prevInfluence = 0, skip = true;
+  return {
+    current: () => current,
+    target: () => target,
+    /** setFocalTransitionSpeed (third_person.lua:110-116). */
+    setSpeed(v) { coef = v; },
+    /** camera.cpp:247-252 setFocalPointTargetOffset. */
+    setTarget(v) { target = [v[0], v[1]]; prevSpeed = [speed[0], speed[1]]; prevInfluence = 1; },
+    /** camera.cpp:423-426 instantTransition's focal half. */
+    instant() { skip = true; },
+    /** camera.cpp:254-294 updateFocalPointOffset. */
+    step(dt) {
+      if (!(dt > 0)) return current;
+      if (skip) { skip = false; prevExtra = [0, 0]; prevInfluence = 0; current = [target[0], target[1]]; }
+      const old = [current[0], current[1]];
+      if (prevInfluence > 0) {
+        current = [current[0] - prevExtra[0], current[1] - prevExtra[1]];
+        prevExtra = [prevExtra[0] / prevInfluence + prevSpeed[0] * dt, prevExtra[1] / prevInfluence + prevSpeed[1] * dt];
+        prevInfluence = Math.max(0, prevInfluence - dt * coef);
+        prevExtra = [prevExtra[0] * prevInfluence, prevExtra[1] * prevInfluence];
+        current = [current[0] + prevExtra[0], current[1] + prevExtra[1]];
+      }
+      const delta = [target[0] - current[0], target[1] - current[1]], dl = Math.hypot(delta[0], delta[1]);
+      if (dl > 0) {
+        const k = Math.min(1, dt * (1 + 5 / dl) * coef * (1 - prevInfluence));
+        current = [current[0] + delta[0] * k, current[1] + delta[1] * k];
+      } else { prevExtra = [0, 0]; prevInfluence = 0; }
+      speed = [(current[0] - old[0]) / dt, (current[1] - old[1]) / dt];
+      return current;
+    },
+  };
+}
+
 /** MW-D30 / camera.cpp:323-331 - setPitch clamps to +/-(PI/2 - epsilon)
  *  with epsilon 0.000001f. The hosts had a hand-rolled +/-1.5, which
  *  stops the look ~4 degrees short of straight up and down. */
@@ -107,6 +175,10 @@ export function createMwCamera() {
   // view will stop all playing animations, so if we are playing
   // anything important, queue the view change for later."
   let queuedFirstPerson = null;
+  // MW-SHOULDER: the player's side ('off' | 'right' | 'left'), third_person.lua's `state` and noThirdPersonLastFrame,
+  // and camera.cpp's focal offset
+  let shoulder = 'off', shoulderState = null, noThirdLast = true;
+  const focalShift = createFocalOffset();
 
   function setFirstPerson(next, ready) {
     if (next === firstPerson) { queuedFirstPerson = null; return; }
@@ -174,6 +246,45 @@ export function createMwCamera() {
     wheel(clicks, { ready = true } = {}) {
       if (!clicks) return;
       zoom(clicks * WHEEL_STEP, ready);
+    },
+
+    /** MW-SHOULDER: the player's side ('off', 'right', 'left'; anything else is off). A change is updateSettings'
+     *  (third_person.lua:31-44): the next step takes the new offset at once. */
+    setShoulder(side) {
+      const next = SHOULDER_SIDES.includes(side) ? side : 'off';
+      if (next !== shoulder) { shoulder = next; noThirdLast = true; }
+    },
+    shoulder: () => shoulder,
+    shoulderState: () => shoulderState,
+    focalOffset: () => focalShift.current(),
+
+    /**
+     * MW-SHOULDER: THE FRAME'S SHOULDER - third_person.lua M.update (:129-162) without its distance terms (the module
+     * head), then camera.cpp's focal transition (:145, updateFocalPointOffset). `stance` is the actor's: 'combat' (a
+     * weapon or a spell out - Actor.getStance, :89), 'swimming' (Actor.isSwimming, :91), or nothing. In first person
+     * the next third-person frame starts afresh (:131-133); with the option off the offset is none, at once (:135-143);
+     * on, updateState (:86-127, autoSwitchShoulder off): the chosen shoulder, or the combat offset, eased at the
+     * transition's speed - fast into and out of combat - and at once on the frame the view or the option changed.
+     */
+    stepShoulder(dt, stance = null) {
+      if (firstPerson) { noThirdLast = true; focalShift.step(dt); return; }
+      if (shoulder === 'off') {
+        if (noThirdLast) { focalShift.setTarget([0, 0]); focalShift.instant(); noThirdLast = false; }
+        shoulderState = null;
+        focalShift.step(dt);
+        return;
+      }
+      const own = shoulder === 'left' ? 'left' : 'right';
+      const old = shoulderState;
+      if (stance === 'combat') shoulderState = 'combat';
+      else if (stance === 'swimming') shoulderState = 'swimming';
+      else shoulderState = own;   // :93-104 - out of combat or the water, or none yet: the default shoulder (no auto switch)
+      if (old !== shoulderState || noThirdLast) {
+        focalShift.setSpeed(old === 'combat' || shoulderState === 'combat' ? FOCAL_TRANSITION_SPEED.combat : FOCAL_TRANSITION_SPEED.normal);
+        focalShift.setTarget(shoulderState === 'right' ? SHOULDER_OFFSET : shoulderState === 'left' ? [-SHOULDER_OFFSET[0], SHOULDER_OFFSET[1]] : COMBAT_OFFSET);
+      }
+      if (noThirdLast) { focalShift.instant(); noThirdLast = false; }   // :153-156 - just into third person: no transition
+      focalShift.step(dt);
     },
 
     /** camera.cpp:135 - a queued view change lands as soon as the upper
@@ -270,7 +381,26 @@ export function createMwCamera() {
       const cast = spherecast
         ? (o, d, m, r) => spherecast(o, r, d, m)
         : (raycast ? (o, d, m) => raycast(o, d, m) : null);
-      if (cast) {
+      // MW-SHOULDER: the focal point's offset (camera.cpp:101-107 - x along the actor's right, y up; this port's right
+      // is (cos yaw, 0, -sin yaw), the strafe's, world/mat4.js's handedness law), and camera.cpp:177-193's guard in
+      // full: a sphere swept from the actor's line to the offset focal point (the +10 ceiling term added to its run,
+      // camera.cpp:180), the focal point left where it touches. With no offset - the option off, the vanilla camera -
+      // the clause is the one below, as it always was.
+      const fo = focalShift.current();
+      const shoulderOn = cast && (fo[0] !== 0 || fo[1] !== 0);
+      if (fo[0] !== 0 || fo[1] !== 0) {
+        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] -= Math.sin(yaw) * fo[0] * u;
+        if (pivotFloor != null) focal[1] = Math.max(focal[1], pivotFloor);
+      }
+      if (shoulderOn) {
+        const run = [Math.cos(yaw) * fo[0] * u, (fo[1] + FOCAL_OBSTACLE_LIMIT) * u, -Math.sin(yaw) * fo[0] * u];
+        const len = Math.hypot(run[0], run[1], run[2]);
+        const dir = [run[0] / len, run[1] / len, run[2] / len];
+        const from = [focal[0] - run[0], focal[1] - run[1], focal[2] - run[2]];
+        const hit = cast(from, dir, len, FOCAL_OBSTACLE_LIMIT * u);
+        const k = hit != null && hit < len ? Math.max(0, spherecast ? hit : hit - FOCAL_OBSTACLE_LIMIT * u) : null;
+        if (k != null) for (let i = 0; i < 3; i++) focal[i] = from[i] + dir[i] * k;
+      } else if (cast) {
         // camera.cpp:177-193 with the default zero focal offset: the
         // offset the cast walks is the +10 ceiling term alone
         // (camera.cpp:180), so the whole clause reduces to "keep the

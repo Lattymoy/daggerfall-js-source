@@ -265,6 +265,28 @@ export const CROUCH_EYE_HEIGHT = 0.8;
  *  CanStand (:525-531) casts UP from the controller centre:
  *  `(controllerStandingHeight - controllerCrouchHeight) / 2f` = 0.45. */
 export const CROUCH_TO_STAND_DIST = (CAPSULE_HEIGHT - CROUCH_HEIGHT) / 2;
+/**
+ * RPT1026-WORLD STAND-THROUGH (a private report, 2026-10-22: in dungeons a crouch and a jump left the level's geometry,
+ * a low ceiling held nobody, and the treasure of an upper room was taken through its floor
+ * from below): A STAND NEVER PUTS THE HEAD PAST A FACE. DFU's CanStand (PlayerHeightChanger.cs:525-531, AUDIT 64 F5,
+ * below) sweeps the camera's rise alone, to feet + 1.25, and DoStand raises the capsule to 1.8 whatever stands over it -
+ * so under a ceiling 1.25 to 1.45 m over the feet the standing head sphere's centre (feet + 1.45) stood on the FAR side of
+ * the ceiling's face, and the collider, which reads no face's facing, pushed it out that way: up into the slab and onto
+ * the floor of the room above, or out of the level (AUDIT 64 F5's own RESIDUE, "the head sphere resolves from ABOVE the
+ * plane"). Measured through the real motor: crouched under a ceiling tilted 10 degrees at 1.35 m, a room's floor 0.15 m
+ * over it, one stand put the body on that floor, 3.8 m along. Unity's CharacterController never crosses a plane. The
+ * stand is refused where the line the head's centre rises along - from the capsule's head now to the standing capsule's -
+ * crosses a face: a blocked stand, as DFU's own refusal is (retried until timerFast, then forgotten). Under a ceiling 1.45
+ * to 1.8 m up the head's centre stays under the face, the stand stands, and the head clips as DFU's does. A departure from
+ * CanStand for that 0.2 m band (Port-Ledger A, STAND-THROUGH). A collider with no `raycast` (a test's stand-in) asks
+ * nothing. Pure over the collider's ray.
+ * @param {any} collider @param {ArrayLike<number>} feet @param {number} height the capsule's height now
+ */
+export function standHeadClear(collider, feet, height) {
+  const rise = CAPSULE_HEIGHT - height;
+  if (!(rise > 0)) return true;
+  return !Number.isFinite(collider.raycast?.([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]], [0, 1, 0], rise));
+}
 /** PlayerHeightChanger.cs:56 - "Height of a horse plus seated rider.
  *  (1.6m + 1m)". The camera sits height/2 - eyeHeight above the
  *  controller's centre (:110-112), so the port's eye level for a rider
@@ -1419,7 +1441,7 @@ export class PlayerMotor {
       }
     } else if (!Number.isFinite(this.collider.sphereCast(
       [this.pos[0], this.pos[1] + this.height / 2, this.pos[2]],
-      CAPSULE_RADIUS, [0, 1, 0], CROUCH_TO_STAND_DIST).dist)) {
+      CAPSULE_RADIUS, [0, 1, 0], CROUCH_TO_STAND_DIST).dist) && standHeadClear(this.collider, this.pos, this.height)) {   // RPT1026-WORLD STAND-THROUGH
       // AUDIT 64 F5 - CanStand, VERBATIM (PlayerHeightChanger.cs
       // :525-531): `Ray(controller.transform.position, Vector3.up)` and
       // `!Physics.SphereCast(ray, controller.radius, distance)` with
@@ -1860,7 +1882,7 @@ export class PlayerMotor {
     // next FixedUpdate (PlayerMotor.cs:278) out of the collisionFlags
     // ClimbingMotor.cs:767 writes after its own controller.Move, so the
     // collider's LIVE grounded written above IS DFU's answer, one step
-    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1903).
+    // lagged on both sides (the SWIM branch is the one that latches: Player-Arc.md:1922).
     this.standing = this.grounded;   // PlayerMotor.cs:325 - moveDirection zeroed, so :113-125 collapses to grounded
     this.movingLessThanHalfSpeed = this.grounded
       ? true

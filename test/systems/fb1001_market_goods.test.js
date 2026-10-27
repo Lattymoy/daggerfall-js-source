@@ -415,7 +415,10 @@ test('MARKET-ANY client: the pack side offers what may go and says why the rest 
 });
 
 test('MARKET-ANY client: a collected piece this game will not hold - or an answer that is a repeat - ends the session (a join reads the record), never a second piece (mutants: received regardless; the repeat received)', async () => {
-  for (const answer of [{ ok: true, status: 200, data: { item: { ...sigilStone() }, realm: { seq: 2 } } }, { ok: true, status: 200, data: { repeat: true, item: { templateIndex: 113, group: 'Weapons', name: 'Dagger' }, realm: { seq: 2 } } }]) {
+  // PIN MOVED (RPT1026-MARKET COLLECT-LANDED): a repeat that names the record's sequence is this ask's own collect, its
+  // first answer lost, and is received (test/net/rpt1026_market_arrive.test.js) - the repeat the service answers a collect
+  // made before this ask names none, and still ends the session
+  for (const answer of [{ ok: true, status: 200, data: { item: { ...sigilStone() }, realm: { seq: 2 } } }, { ok: true, status: 200, data: { repeat: true, item: { templateIndex: 113, group: 'Weapons', name: 'Dagger' } } }]) {
     const pack = { items: [] };
     const goods = createMarketGoods(pack);
     let abandoned = null;
@@ -560,7 +563,7 @@ test('MARKET-ANY wiring: the host builds the pack side over the live player (a p
   const w = src('src/scenes/world.js');
   assert.match(w, /const marketGoods = createMarketGoods\(playerEntity, \{ kept: \(pv\) => pieceKept\(pv\), say: \(t\) => townTalk\.say\(t\) \}\);/);
   assert.match(w, /drop: marketDrop, goods: \(\) => marketGoods\.goods\(\), good: \(it\) => marketGoods\.good\(it\), goodName: \(rec\) => marketGoods\.goodName\(rec\),/);
-  assert.match(w, /abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec\) => marketGoods\.receive\(rec\) \} : null,/);
+  assert.match(w, /abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec, why\) => marketGoods\.receive\(rec, why\) \} : null,/);   // PIN MOVED (RPT1026-MARKET ARRIVE): the road's word handed through
   const index = src('server-account/src/index.js');
   assert.match(index, /'\/v1\/market\/list': \(\) => marketList\(mctx, who\.player, env, body\),/);
   assert.match(index, /'\/v1\/market\/collect': \(\) => marketCollect\(mctx, who\.player, env, body\),/);

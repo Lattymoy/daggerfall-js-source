@@ -205,8 +205,8 @@
   {
     "name": "WB9g-the-view-says-no-purse",
     "file": "server-account/src/index.js",
-    "old": "purse: await insigniaPurse(ctx, who.player) },   // SEAT1c: and a Charter's titles",
-    "new": "},   // SEAT1c: and a Charter's titles",
+    "old": "purse: await insigniaPurse(ctx, who.player), annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK",
+    "new": "annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],

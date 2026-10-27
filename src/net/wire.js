@@ -15,7 +15,7 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //   client -> room:  {t:'hello', id, secret, name, look, pose}   once, first
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
-//                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
+//                    {t:'chat', text, item?}             CHAT_HZ_MAX a second at most (CHAT1; CHAT-POST: optional item)
 //                    {t:'say', text}                    RED1: THE SERVER SPEAKING - only from a socket whose
 //                                                       TOKEN carried the dev glyph; fanned as {t:'red', text, at}
 //                    {t:'narrate', text}                TITLE-N: THE DUNGEON MASTER SPEAKING - only from a socket whose
@@ -58,7 +58,9 @@ import { HUB_SHARD_ROOMS, isHubShard, HUB_FIND_Q_MAX, REGION_SHARD_ROOMS } from 
 //                    {t:'quest', quest:{questName, displayName, data}}   a quest shared with my party, to the hub alone (QUEST1): QUEST_HZ_MAX a second
 //                    {t:'amap', k, r:[key...]}          PARTY-MAP: automap rows I revealed under Shared Cartography, to the hub alone - one every AMAP_SEND_MS
 //                    {t:'pose', id, p}                  {t:'pong'}
-//                    {t:'chat', id, name, text, at, sub?}   to everyone who hears it, the sender included
+//                    {t:'chat', id, name, text, at, sub?, item?}   to everyone who hears it, the sender included
+//                    CHAT-POST: `item` is one plain item record (shape only here; the client projects through
+//                    validLootItem). An older relay drops it and the line is words alone.
 //                    MOD1: `sub` is the sender's VERIFIED account id (the token's `s`), on a chat line and on a channel's
 //                    roster rows and joins - what a moderator's /mute names, since a name is not unique and an id is.
 //                    NOT `acct`: that word is the social hub's own account (SOC1), a different id with a different law
@@ -220,6 +222,7 @@ import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // GATE-COURTS: a cour
 import { validGateMods, GATE_FEEDS_MAX, validGatePortents } from './gate/gateMods.js';   // WB8b: the Warden's marks on a gate's state - gateMods.js imports nothing, so the worker's graph stays flat
 import { egStampOk } from './eliteGates/egShape.js';   // EG-FULL: a Spire blow's FULL shape stamp, checked as the wire carries it - egShape.js imports nothing, so the worker's graph stays flat
 import { KT_WATCH_WAVES } from './ketch/ketchLaw.js';   // AUDIT KETCH II L2-2: the Watch's waves, one number for the `wave` and the `st` words (the `st`'s stood at three) - ketchLaw.js imports instanceRoom.js alone, which the relay walks already
+import { validWireAppearance } from './appearanceLaw.js';   // APPEARANCES: a worn piece's look on a look's item - appearanceLaw.js imports systems/armorMaterials.js alone, a leaf, so the worker's graph stays flat
 export { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX };
 export { validHoldemIn, validHoldemOut };
 export { validIliacIn, validIliacOut };
@@ -350,6 +353,38 @@ export const HALO_OF_MAX = 9;
 export const BUSY_TOKEN_UNREAD = 'busy, token unread';
 /** A chat line's bound (UTF-16 units) - CHAT1. */
 export const CHAT_MAX = 240;
+/** CHAT-POST: the widest item record on a chat line (JSON length), under MAX_FRAME_BYTES with the line's wrapper. */
+export const CHAT_ITEM_MAX = 6 * 1024;
+/** CHAT-POST: how many linked pieces one line may carry (typed message with several [Name] inserts). */
+export const CHAT_ITEMS_MAX = 4;
+/** CHAT-POST: the widest sum of those records' JSON, so the whole chat frame fits MAX_FRAME_BYTES. */
+export const CHAT_ITEMS_BYTES = 8 * 1024;
+/** CHAT-POST: one item on a chat line, by SHAPE - a plain object whose JSON fits CHAT_ITEM_MAX. The receiving client
+ *  projects through validLootItem before a card is drawn; the relay is pure and cannot import the game's item law. */
+export function validChatItem(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const proto = Object.getPrototypeOf(v);
+  if (proto !== Object.prototype && proto !== null) return null;
+  const keys = Object.keys(v);
+  if (!keys.length || keys.length > 48) return null;
+  for (const k of keys) if (!k || k.length > 128 || k === '__proto__') return null;
+  try { if (JSON.stringify(v).length > CHAT_ITEM_MAX) return null; } catch { return null; }
+  return v;
+}
+/** CHAT-POST: one to CHAT_ITEMS_MAX items, each validChatItem, their JSON under CHAT_ITEMS_BYTES - or null. */
+export function validChatItems(v) {
+  if (!Array.isArray(v) || v.length < 1 || v.length > CHAT_ITEMS_MAX) return null;
+  const out = [];
+  let bytes = 0;
+  for (const raw of v) {
+    const one = validChatItem(raw);
+    if (!one) return null;
+    try { bytes += JSON.stringify(one).length; } catch { return null; }
+    if (bytes > CHAT_ITEMS_BYTES) return null;
+    out.push(one);
+  }
+  return out;
+}
 /** The most chat lines a client may send a second; the bucket's burst is the same number. */
 export const CHAT_HZ_MAX = 2;
 /** SAFE6 (2026-10-17, bible/11-Multiplayer/Chat-Safety-Arc.md section 7): A NEW VOICE'S PACE. A guest (the token's `k`),
@@ -1155,6 +1190,19 @@ export const CELL_HELLO_LAW = 1;
 export const CELL_HELLO_LAW_WIRE_MAX = 65535;
 /** The cell door's close reason (a WebSocket close's reason is at most 123 bytes). */
 export const CELL_OLD_REASON = 'old cells';
+/** LOOT-DOOR (AUDIT HORIZONTAL B7; bible/06-Systems/Professions-Arc.md 57.8): THE LOOT THIS BUILD READS, by number - 1: a
+ *  Master's work and a Mounted Trophy. An older law drops a piece it cannot read, so an older build in a room's seat said
+ *  a container without it, and every peer landed that. A loot room's hello says it (`ll`); while `lootDoor` is on
+ *  (net/relayCfg.js) the relay refuses a hello there that says less or none (LOOT_OLD_REASON). It moves, and RELAY_VERSION
+ *  with it, when the item law takes a piece an older law refuses. */
+export const LOOT_HELLO_LAW = 1;
+/** The most `ll` a hello may say - a later build's number, read; past it, read as none. */
+export const LOOT_HELLO_LAW_WIRE_MAX = 65535;
+/** LOOT-DOOR: the rooms whose words carry a shared list - a world room's acts (a container) and a cell's or a world
+ *  room's foes and hits (a body's pile); the relay routes those frames in no other room. */
+export const lootRoom = (key) => streamsFoes(key);
+/** LOOT-DOOR: the refusal's close reason (a WebSocket close's reason is at most 123 bytes); the words are GROUND-GATE's. */
+export const LOOT_OLD_REASON = 'old loot';
 /** SCALE5d (2026-10-11, Mac's decision 3 - a full city overflows into a layer rather than refusing `room full`;
  *  bible/11-Multiplayer/Scale-Arc.md SCALE5d): A CROWDED PLACE OVERFLOWS INTO LAYERS - copies of the same place, each
  *  an object of its own, whose players do not see each other. A room is still its KEY everywhere (every law that reads
@@ -1398,6 +1446,22 @@ export function validFoeRecord(r) {
     }
     out.lw = lw;
   }
+  // APPEARANCES-II (bible/04-Characters/Wardrobe.md section 6): `la` the looks the kit's pieces wear - [its index in `lw`,
+  // t, m, v], each piece once, in order - and only beside `lw`. A look kept is one there is and of its piece's kind (net/
+  // appearanceLaw.js validWireAppearance, validLookItem's law); any other is dropped and its piece stands in its own
+  if (r.la !== undefined) {
+    if (!out.lw || !Array.isArray(r.la) || r.la.length > out.lw.length) return null;
+    const la = [];
+    let last = -1;
+    for (const it of r.la) {
+      if (!Array.isArray(it) || it.length !== 4 || !it.every(Number.isInteger) || it[0] <= last || it[0] >= out.lw.length) return null;
+      last = it[0];
+      const piece = out.lw[it[0]];
+      const ap = validWireAppearance({ templateIndex: piece[2], group: LOOK_GROUPS[piece[1]] }, it.slice(1));
+      if (ap) la.push([it[0], ...ap]);
+    }
+    if (la.length) out.la = la;
+  }
   // TELL8 (bible/12-Enhanced-AI/Feud-Arc.md 10.1): THE WIND-UP - `wk` its shape (0-6, ai/puppetBlows.js WIRE_KINDS) +8
   // iron +16 a feint (AUDIT TELL O2: +32 its landing, said after it; FEUD WIRE: +64 a revenant's signature), `wy` its yaw, `wl` ms to its landing
   // (0..FOE_WINDUP_MS - relative, each client's own clock), `wo` its origin (bounded as `f`), `wn` its serial (0-255),
@@ -1615,7 +1679,12 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world269';   // world269: BOW-TOPS (2026-10-26; bible/05-Combat/Balance-Arc.md section 18 BAL-ARCHERY, BOW-TOPS; NOT YET DEPLOYED): the arena's and the siege's weapon tops take BAL-ARCHERY's bows - a Short Bow 17, a Long Bow 19 (net/arena/arenaLaw.js ARENA_WEAPON_MAX, net/siege/siegeRef.js SIEGE_WEAPON_MAX) - so neither referee caps a bow's top blow one short of the game's; nothing else in the law moved
+export const RELAY_VERSION = 'world273';   // world273: APPEARANCES and HUNTERS-MARK, one release (2026-10-27; bible/04-Characters/Wardrobe.md section 6, bible/06-Systems/Bounty-Boards.md section 12; NOT YET DEPLOYED - world270, world271, then world272, on the branch, renumbered past main's CHAT-POST world270, MASTER-THREE world271 and FIELD BUGS 2026-10-26r world272 at the merges): a look item may carry `ap` - [t, m, v], the look a worn piece wears - kept only when it is a look there is and of the same kind as the piece (validLookItem, through net/appearanceLaw.js validWireAppearance); appearanceLaw.js and systems/armorMaterials.js join the bundle. Either side may deploy first: a relay before it drops `ap`, and the piece is seen in its own look; and net/identityToken.js's TITLES gains the hunt's four, the ten Marks of Mastery and the sea's two, last - the relay reads a token's title as every badge; the bundle's files unchanged; and APPEARANCES-II's sworn revenant's kit carries its look (validFoeRecord's `la`, each of its piece's kind - an older relay drops it and the piece is drawn in its own); and AUDIT HORIZONTAL B7's LOOT-DOOR: a loot room's hello (a world room or a cell - lootRoom) says the loot its build reads (`ll`, LOOT_HELLO_LAW), and while the setting `lootDoor` is on (net/relayCfg.js - off unset, and off until the site serves this build, since the relay deploys first) a hello there that says less or none is refused (LOOT_OLD_REASON, GROUND-GATE's words)
+// world272: FIELD BUGS 2026-10-26r (RPT1026, the private reports of 10-18 to 10-26; world270, then world271, on its branch, renumbered past CHAT-POST's world270 and MASTER-THREE's world271 at the merges; bible/01-Overview/bugs/Field-Bugs-2026-10-26r.md; NOT YET DEPLOYED): RETIRED-BLOW (a blow from a fighter whose share was retired brings the share back at the boss's fraction first - the Remnant, its Echoes and Hearts, the gate's Warden, the Tonal Warden and its forks - and a Hour or Ketch blow from a pose past SD_POSE_FRESH_MS is dropped), BLOCK STAMP (the trade and page frames carry the sender's account, `sub`, through Room _directedFrame), ORRERY-HANDS (a stone's last turner named, the wrong turner held for the Hollow), and PROGRESS's masterSkills.js in the bundle; the trade and page frames the relay routes gain the sender's `sub`, which an older client ignores (AUDIT RPT1026 M7); and AUDIT RPT1026 I1 (sdBrain.js orreryWaited): a turner refused behind turners all over the Orrery's limit has the snap free it; and AUDIT RPT1026 F1 (masterSkills.js): the switch off notes the tough-foe practice it gives back on
+// world271: MASTER-THREE (FIELD BUGS 2026-10-26d, world269, then world270, on its branch, renumbered past BOW-TOPS' world269 and CHAT-POST's world270 at the merges; Discord #feature-feedback "Let us master all three primary skills"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md; NOT YET DEPLOYED) - systems/masterSkills.js, which the bundle reaches, holds MASTERY_SLOTS 3/2/1 (it was 2/2/1) and its boxes' words say 3; no relay code reads the slots, so nothing the relay does moved, but the bytes it ships did.
+// world270: CHAT-POST (2026-10-27; bible/06-Systems/Online-Arc.md CHAT-POST; NOT YET DEPLOYED): a chat frame may carry linked item records (`items`, and a legacy `item`) beside the words - the relay fans them with the line
+// world269: BOW-TOPS (2026-10-26; bible/05-Combat/Balance-Arc.md section 18 BAL-ARCHERY, BOW-TOPS; NOT YET DEPLOYED): the arena's and the siege's weapon tops take BAL-ARCHERY's bows - a Short Bow 17, a Long Bow 19 (net/arena/arenaLaw.js ARENA_WEAPON_MAX, net/siege/siegeRef.js SIEGE_WEAPON_MAX) - so neither referee caps a bow's top blow one short of the game's; nothing else in the law moved
+// world268: NIRNROOT-SAGE (2026-10-26, world267 on its branch, renumbered past KETCH-WORDS' world267 at the merge; for Blob-Marley, an Immortal backer: "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"; bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md NIRNROOT-SAGE; NOT YET DEPLOYED): the vocabulary's three new words - NIRNROOT SAGE last of TITLES and of GLYPHS, SAGE'S SMOKE last of AURAS (net/identityToken.js), which the relay reads off every hello's token; nothing else in the law moved. Deploy the relay BEFORE the account service (acct194), or every token Blob-Marley is signed - the glyph rides it whether or not he wears anything - is refused whole
 // world267: KETCH-WORDS (2026-10-26, the owner: "Please rework the texts of the raid and the books/quest. Remove the \"her\" mentions and make it not ai-like and non overexplanstory"; bible/11-Multiplayer/Sky-Ketch.md section 21; NOT YET DEPLOYED) - net/ketch/ketchHerald.js: the Sky-Ketch's three Discord cards reworded, plain, the ship no longer she.
 // world266: AUDIT KETCH II (2026-10-26, world265 on its branch, renumbered past GATE-COURTS' world265 at the merge; the owner: "Can you audit the airship raid. Its a buggy mess"; bible/01-Overview/audits/Audit-Ketch-II.md; NOT YET DEPLOYED) - the `st` word's wave to KT_WATCH_WAVES, a ship's own sweep said `sw` on its `dn`, KT_VOYAGE_N_MAX a receipt's bound, her crews' last minutes forty-five (ketchLaw.js KT_LAST_MS), a Warden's fight lost after two minutes empty (ketchWarden.js KW_LOST_MS), the crew counted by its kept places (ketchBrain.js aboard), six Sentry posts, a Sentry that shoots when chased, the bow's and the hold's floors, her fall's receipts told before her record goes, a raised member's dying pose forgotten.
 // world265: GATE-COURTS (2026-10-26, the owner: "We need to develop instances for oblivion gate. The player counts are becoming too large for one instance"; bible/11-Multiplayer/World-Bosses.md section 29; NOT YET DEPLOYED) - a gate's night holds up to GATE_COURTS_MAX courts of GATE_COURT_FIGHTERS, each its own fight (`gate:<day>.<k>` past the first, net/gate/gateLaw.js gateRoomKey); the first court keeps the night's book of seats (net/gate/gateCourts.js placeSeat; GATE_INTERNAL_SEAT, GATE_INTERNAL_COURT, and the hub's GATE_INTERNAL_PARTY) and answers `go` with another court; a court's kill is said to everyone online as `cf`, and the night's `fell` (the gate's collapse, `w` and `cs`) once every court is done; GATE_BRAIN_V and GATE_BRAIN_MIN 7 (a game from before is told to reload).
@@ -2109,7 +2178,7 @@ const rideOf = (rd, rv, hs, rc) => {
   return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(uint(hs, 1) ? { hs: 1 } : {}), ...(c ? { rc: c } : {}) } : {};   // AUDIT DISC7 B8: uint's law, as rd and rv
 };
 
-/** One equipped item as the look carries it - the six fields, clamped, and a weapon's glow - or null. */
+/** One equipped item as the look carries it - the six fields, clamped, a weapon's glow and a look worn over it - or null. */
 export function validLookItem(it) {
   if (!it || typeof it !== 'object') return null;
   const templateIndex = uint(it.templateIndex, 65535), equipSlot = uint(it.equipSlot, 1e6);
@@ -2117,6 +2186,8 @@ export function validLookItem(it) {
   const out = { templateIndex, group: it.group, equipSlot };
   for (const k of ['material', 'dye', 'variant']) { const v = uint(it[k], 4095); if (v != null) out[k] = v; }
   if (lookGlowOk({ ...out, glow: it.glow })) out.glow = it.glow;   // WEAPON-GLOW1: a weapon's in a hand, read off the clamped slot
+  const ap = validWireAppearance(out, it.ap);   // APPEARANCES (bible/04-Characters/Wardrobe.md): the look it is drawn in, a look of its kind - OMITTED when none, `class`'s law; a relay before this one drops it, and the piece is seen in its own
+  if (ap) out.ap = ap;
   return out;
 }
 
@@ -2485,6 +2556,7 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (Number.isSafeInteger(m.gl) && m.gl >= 1 && m.gl <= GROUND_LAW_WIRE_MAX) hello.gl = m.gl;
     if (Number.isSafeInteger(m.gv) && m.gv >= 1 && m.gv <= GRANT_HELLO_LAW_WIRE_MAX) hello.gv = m.gv;   // GRANT-DOOR: the grants this build stands on - read as GROUND-GATE's `gl` is
     if (Number.isSafeInteger(m.cv) && m.cv >= 1 && m.cv <= CELL_HELLO_LAW_WIRE_MAX) hello.cv = m.cv;   // COST-2 part two: the cell law this build stands on - read as GROUND-GATE's `gl` is
+    if (Number.isSafeInteger(m.ll) && m.ll >= 1 && m.ll <= LOOT_HELLO_LAW_WIRE_MAX) hello.ll = m.ll;   // LOOT-DOOR (AUDIT HORIZONTAL B7): the loot this build reads - read as GROUND-GATE's `gl` is
     if (m.ls === 1) hello.ls = 1;   // LEASE1: this build hands its hub's lease to the room (net/roomLease.js) - 1 or nothing, the `w2` law
     if (m.sm === 1) hello.sm = 1;   // STAFF-PANEL5-MESSAGE: this build shows a staff message's box (net/staffMessages.js) - 1 or nothing, the `w2` law: a hub socket without it is "old game, not shown"
     if (m.fv === 1) hello.fv = 1;   // STAFF-PANEL5-FREEZE: this build shows the freeze screen (net/staffChat.js) - 1 or nothing; a frozen account's socket from a build without it is closed with the reload words
@@ -2504,9 +2576,20 @@ export function parseClient(text, { hasHello = false } = {}) {
     // EMOTE1: an ACTION - `/me waves` - is a line said as what the speaker DOES ("Bran waves"): `me: true`, and
     // nothing else is admitted in its place (a truthy junk value is refused, never read as an action)
     if (m.me !== undefined && m.me !== true) return { error: 'bad chat' };
+    // CHAT-POST: optional linked items beside the words - `items` (1..CHAT_ITEMS_MAX) or a single legacy `item`
+    let items = null;
+    if (m.items !== undefined) {
+      items = validChatItems(m.items);
+      if (!items) return { error: 'bad chat' };
+    } else if (m.item !== undefined) {
+      const one = validChatItem(m.item);
+      if (!one) return { error: 'bad chat' };
+      items = [one];
+    }
     const me = m.me === true ? { me: true } : {};
-    if (m.ch === undefined) return { t: 'chat', text, ...me };
-    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };
+    const linked = items ? { items, item: items[0] } : {};   // `item` kept so a one-link line still reads on an older client build
+    if (m.ch === undefined) return { t: 'chat', text, ...me, ...linked };
+    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me, ...linked } : { error: 'bad chat' };
   }
   if (m.t === 'holdem') {
     // CARDS5: A WORD TO THE ROOM'S CARD TABLE - sit in a chair, stand, act, or look (net/holdemTable.js, both ends). The
@@ -3576,7 +3659,9 @@ export const TRADE_FRAME_MAX = 12 * 1024;
 /** AUDIT DROPS B4: the widest trade DATA - the frame's cap less the wrapper the frame and the relay's fan-out put
  *  around it (`{"t":"trade","id":"<16>","data":` and `}`, under 64 bytes). validTradeData bounded the DATA at the
  *  FRAME's cap, so an honest offer of sixteen heavy items could pass at home and be refused at the relay's door as
- *  'frame too large' - which CLOSES the socket. What passes here now fits parseClient at the relay by construction. */
+ *  'frame too large' - which CLOSES the socket. What passes here now fits parseClient at the relay by construction.
+ *  RPT1026-SECNET: the fan-out carries the sender's account too (`"sub"`, the relay's `_directedFrame`) and may stand a few
+ *  dozen bytes past this cap - no door reads it at TRADE_FRAME_MAX (the receiver's is INBOUND_FRAME_MAX). */
 export const TRADE_DATA_MAX = TRADE_FRAME_MAX - 64;
 /** The most trade frames a socket may send a second, and the most one socket is sent (the destination's funnel). */
 export const TRADE_HZ_MAX = 8;
@@ -3609,7 +3694,9 @@ export const CAST_HZ_MAX = 4;
  *  and the relay cannot tell a mate from a stranger. A mate's cast now waits only on the mate's own spamming. */
 export const CAST_DEST_SENDERS_MAX = 8;
 export const CAST_IN_HZ_MAX = CAST_HZ_MAX * 2;
-/** AUDIT ALLY-CAST B3/C3: the honest ceilings. A player is level 30 at most (classic's cap), SPELLS.STD's components
+/** AUDIT ALLY-CAST B3/C3: the honest ceilings. A cast's level is 30 at most - the frame's bound, not a player's level
+ *  (LEVEL-45 caps that at 45, systems/levelCap.js; AUDIT FB1026d II C4: this said classic's cap): the sender clamps to it
+ *  (PEER-CAST, systems/allyCast.js), so a caster past 30 casts at 30, and raising it is a larger crafted gift, Mac's call; SPELLS.STD's components
  *  are bytes (formats/spellsStd.js) and the maker's spinners stop under 100 (spellMaker.js SPINNER_RANGES) - the
  *  first cut's 60 and 1000 let a crafted mate grant a 61,000-point Shield for 42 game days. Nothing on the wire can
  *  vouch for the level (no pose carries one); the bound is what the receiver can refuse. */

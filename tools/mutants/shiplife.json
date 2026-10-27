@@ -20,7 +20,7 @@
   {
     "name": "SHIPLIFE-harbour-any-shore",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (Math.hypot(dx, dz) > reach) continue;",
+    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
     "new": "      if (false) continue;",
     "tests": [
       "test/systems/naval/shiplife.test.js"

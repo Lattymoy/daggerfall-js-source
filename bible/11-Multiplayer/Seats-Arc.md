@@ -258,6 +258,7 @@ A region may hold several seats, so a guild's work in a region needs a target.
 | **Homes** | Bounded, not witnessed | **25 a home a day**, at most 5 homes a guild a seat | Members' homes in the seat's town (`homes.map_id`). FACT: `homeLaw.js` checks only the ranges of the map id and building key, and a home is bought with save gold, so a modified client could register homes that do not exist; the cap (875 a week) is the defence, and a home counts only for a 7-day member bound to the guild |
 | **Renown in the region** | Client-reported, bounded | **1 per 20 Renown XP**, capped **400 an account a week** | The Renown report grows `region` (0-61); the service keeps a per-account, per-region, per-week sum beside the tracks |
 | **Tribute** | Service-witnessed (Marks) | **1 per 10 Marks**, capped at **20%** of the guild's week at that seat | Marks from the guild's Marks treasury, spent on the pledge by the Guildmaster, and **burnt** - a sink: the town's favour is bought, and nobody pockets it |
+| **Bounty clears** (HUNTERS-MARK, 2026-10-27) | Client-reported, bounded (the hunt's ledger) | **25 a clear**, capped **250 an account a week** | A bounty board's clear the account service recorded (`hunts.js`, `06-Systems/Bounty-Boards.md` section 12), on a board of the seat's region, for a 7-day member's war-guild; `seatInfluence.js` creditHunt, the source `hunt` (migration 0182) |
 
 - **BUILT** (SEAT1b, 2026-09-30, `06-Systems/Online-Arc.md` SEAT1b): the pledge, the Watch, gate kills, homes, Renown in
   the region and Tribute, with every cap below, per-account war and the new member's wait, and the standings on the
@@ -271,6 +272,8 @@ A region may hold several seats, so a guild's work in a region needs a target.
   week, and cannot fight in any other guild's siege or as a sellsword against it. Membership stays per character
   (GUILD1: "Per character"); only the war is per person.
 - **A new member waits**: a character who joined a guild within the last **7 days** contributes nothing to its seats.
+- **No sailing source** (HUNTERS-MARK): the service witnesses one sailing record for good, the serpents slain, and a
+  serpent names no seat's region; a port's trade the Watch vouches for already counts as the Watch.
 - **Legacy**: at the Turning, **10%** of a guild's influence at each seat it pledged carries into the next week.
 - **The stockpiles are spent once**: at the Turning a challenger's **Siege Camp** is spent - its siege works (a Ram
   Kit) go to the siege it won, and everything else is burnt; a camp that won no Right of Siege is burnt whole. The

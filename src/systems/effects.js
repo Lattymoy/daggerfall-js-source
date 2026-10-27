@@ -495,18 +495,24 @@ export const isElementalResistance = (e) => e.type === 8 && e.subType >= 0 && e.
 export const isSpellAbsorptionEffect = (e) => e.type === 20 && classicSub(e) === 255;
 export const isSpellResistanceEffect = (e) => e.type === 22 && classicSub(e) === 255;
 export const isShieldEffect = (e) => e.type === 35 && classicSub(e) === 255;
-/** X2: the live Spell Resistance chance - the FIRST live instance,
- *  not a sum. DFU reads FindIncumbentEffect<SpellResistance>(), which
+/** X2: the live Spell Resistance chance - ONE live instance's, not a
+ *  sum. DFU reads FindIncumbentEffect<SpellResistance>(), which
  *  returns the first match and nothing else (EEM:666-678); summing
  *  made a 50% item and a 50% spell read as a certainty. (Elemental
  *  Resistance really IS additive - RaiseResistanceChance sums onto a
- *  per-frame-cleared slate - so that one keeps its sum.) */
-export function spellResistanceChance(target) {
-  for (const a of target?.activeEffects ?? []) {
-    if (a.kind === 'spellResistance' && !a.ended) return a.chance ?? 0;
-  }
-  return 0;
+ *  per-frame-cleared slate - so that one keeps its sum.)
+ *  RPT1026-PROGRESS (a private report: a party mate's lesser ward hid the player's greater one): THE BEST live instance, as
+ *  Spell Absorption's reader has taken since AUDIT SPELL-GIFT B4. DFU's incumbent is one bundle because a recast merges
+ *  into it; a party mate's gift never merges with my own (AUDIT ALLY-CAST C2) and a worn item's bundle never merges
+ *  with a spell's (E2), so two stand - and the first in the list, a level-one mate's 6%, made my own 100% read 6 for
+ *  the gift's whole duration, the HUD showing both. The Hierophant's Sanctify and a ward cast past 100 in Thaumaturgy
+ *  (SCHOOLS2) are entries of that kind too, hidden alike. Port-Ledger A, FindIncumbentEffect's first match. */
+export function bestLiveChance(target, kind) {
+  let best = 0;
+  for (const a of target?.activeEffects ?? []) if (a.kind === kind && !a.ended && (a.chance ?? 0) > best) best = a.chance;
+  return best;
 }
+export function spellResistanceChance(target) { return bestLiveChance(target, 'spellResistance'); }
 // X11: the third member of the absorb/reflect/resist chain, and the
 // one the X2 note above said still pended. SpellReflection.cs is the
 // same SHAPE as SpellResistance - IncumbentEffect, duration+chance,
@@ -515,15 +521,10 @@ export function spellResistanceChance(target) {
 // its landing rides the same arm and its chance is frozen at cast
 // from the CASTER's level, exactly as resistance's is.
 export const isSpellReflectionEffect = (e) => e.type === 21 && classicSub(e) === 255;
-/** The live Spell Reflection chance. FindIncumbentEffect returns the
- *  FIRST match and nothing else (EEM:666-678) - the X2 rule, which
- *  cost the port a bug when resistance summed instead. */
-export function spellReflectionChance(target) {
-  for (const a of target?.activeEffects ?? []) {
-    if (a.kind === 'spellReflection' && !a.ended) return a.chance ?? 0;
-  }
-  return 0;
-}
+/** The live Spell Reflection chance - one instance's, never a sum (the
+ *  X2 rule, which cost the port a bug when resistance summed instead);
+ *  RPT1026-PROGRESS: the best live one's, as resistance's above. */
+export function spellReflectionChance(target) { return bestLiveChance(target, 'spellReflection'); }
 /** "Spell was reflected." - the HUD line TryReflection prints, and
  *  only when the PLAYER is the one reflecting (EEM:1231-1233). */
 export const SPELL_REFLECTED_TEXT = 'Spell was reflected.';
@@ -537,13 +538,8 @@ export const spellReflectedText = () => localizedText('spellReflected', SPELL_RE
 // the language roll (FormulaHelper.cs:377-380). combat/formulas.js
 // has carried a comment naming this seam since the C-slice.
 export const isComprehendLanguages = (e) => e.type === 44 && classicSub(e) === 255;
-/** The live Comprehend Languages bonus, or 0. Same first-match law. */
-export function comprehendLanguagesChance(target) {
-  for (const a of target?.activeEffects ?? []) {
-    if (a.kind === 'comprehendLanguages' && !a.ended) return a.chance ?? 0;
-  }
-  return 0;
-}
+/** The live Comprehend Languages bonus, or 0. Same law: RPT1026-PROGRESS's best live instance. */
+export function comprehendLanguagesChance(target) { return bestLiveChance(target, 'comprehendLanguages'); }
 
 // X11: DISINTEGRATE (Destruction 5,255). The shortest effect class in
 // DFU - chance-only, TargetFlags_Other, and a MagicRound that does one
@@ -940,7 +936,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // three for three, where the caster's own cast of the same spell merges into one.
   const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && (!prior.has(a) || (!!a.bundleAlly === allyCast && !!a.bundleDuel === duelCast)) && pred(a)));
   // AUDIT SCHOOLS (L1 M1, L2 F1): A POWER'S BUNDLE ON ME (ctx.powerCast - a path's rider, through the door's castOnPlayer
-  // with `power`) merges as DFU's incumbents merge, one entry a kind, so every reader keeps DFU's first-match law (X11) -
+  // with `power`) merges as DFU's incumbents merge, one entry a kind (the ward readers take the best live entry - RPT1026-PROGRESS) -
   // but where EITHER side of a merge is a power's, the Shield's pool and a ward's chance take the LARGER: by DFU's recast
   // law alone a 40-point rider Shield capped my own 140-point Shield cast after it at 40, and my own 6-point Shield
   // swallowed every rider after it. The entry a power made says so (`bundlePower`).
@@ -996,7 +992,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // E1: IsAbsorbingSpells (:1196) is LIVE - the AbsorbsSpells
       // enchantment's constant fold on the target. The caller's own
       // ctx.absorbing (probe surface) still wins when set.
-      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target), rolls });
+      const sp = tryAbsorption(e, spell.rangeType ?? 0, target, { ...ctx, absorbing: ctx?.absorbing ?? entityAbsorbsSpells(target), rolls, paid: caster.entity === target ? (caster.cast?.cost ?? 0) : 0 });   // AUDIT RPT1026 F3: my own spell's spend
       if (sp > 0) {
         totalAbsorbed += sp;
         out.absorbed = (out.absorbed ?? 0) + sp;

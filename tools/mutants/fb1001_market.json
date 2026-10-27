@@ -422,8 +422,8 @@
   {
     "name": "MARKET-ANY-book-the-repeat-received",
     "file": "src/net/marketBook.js",
-    "old": "held = !a?.data?.repeat && goods.receive(a?.data?.item ?? null) === true;",
-    "new": "held = goods.receive(a?.data?.item ?? null) === true;",
+    "old": "held = mine && goods.receive(a?.data?.item ?? null, why) === true;",
+    "new": "held = goods.receive(a?.data?.item ?? null, why) === true;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -485,7 +485,7 @@
   {
     "name": "MARKET-ANY-pack-nothing-said",
     "file": "src/systems/tradePack.js",
-    "old": "      say(`${itemLongName(items[0])} is in your pack.`);\n",
+    "old": "      say(why === 'bought' ? marketArrivedText(name) : why === 'returned' ? marketBackText(name) : `${name} is in your pack.`);\n",
     "new": "",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
@@ -575,7 +575,7 @@
   {
     "name": "MARKET-ANY-host-the-book-receive-unwired",
     "file": "src/scenes/world.js",
-    "old": " goods: realmSession ? { receive: (rec) => marketGoods.receive(rec) } : null,\n",
+    "old": " goods: realmSession ? { receive: (rec, why) => marketGoods.receive(rec, why) } : null,\n",
     "new": "\n",
     "tests": [
       "test/systems/fb1001_market_goods.test.js",

@@ -50,6 +50,8 @@ import { MAX_STAT_VALUE } from '../../src/systems/statMods.js';
 import { SKILL_HARD_CAP } from '../../src/systems/skillSoftcap.js';
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
 import { pathFindings } from '../../src/systems/arcanePaths.js';   // SCHOOLS5: a save's specialisation
+import { isMasterWork, masterSignature, masterLinesOfRecord } from '../../src/net/masterLaw.js';   // MASTER-ART: a Master's work's lines, its record's
+import { readProductRecord } from '../../src/net/productRecord.js';
 
 /** The judge's version: the item law's, and its own character law beside it. */
 export const JUDGE_VERSION = ITEM_LAW_VERSION;
@@ -169,6 +171,39 @@ export function characterFindings(save, summary) {
   return out;
 }
 
+/** RPT1026-LEDGERLAW: the most characters a judgement's values (lawValuesOf) keep. */
+export const LAW_VALUES_MAX = 1000;
+/** The value a character finding was found on, as the save holds it. */
+function lawValueOf(/** @type {any} */ save, /** @type {any} */ summary, /** @type {{ code: string, at?: any }} */ f) {
+  if (f.code === 'level') return save?.level;
+  if (f.code === 'level-claim') return [save?.level, summary?.level];
+  if (f.code === 'gold') return save?.goldPieces;
+  if (f.code === 'bank') { const a = arrayOf(save?.bankAccounts)[f.at]; return [a?.accountGold, a?.loanTotal]; }
+  if (f.code === 'stat') return save?.stats?.[f.at];
+  if (f.code === 'skill') return save?.skills?.[f.at];
+  if (f.code === 'path') return save?.arcanePath;
+  return undefined;
+}
+/**
+ * RPT1026-LEDGERLAW (a private report: staff's clear of one bad purse let every purse after it pass): THE
+ * VALUES THE CHARACTER LAW FOUND, each finding's key and the value it read - `gold@=-8000000`, `stat@agility=101` - sorted,
+ * or null for none. A law finding's signature (verdict.js lawSigOf) names a character finding by its code alone, so staff's
+ * clear of a negative purse excused every purse after it, however far past the game's own bound. The excuse is written over the
+ * signature AND these (review.js clear), so it excuses the state staff read and no other.
+ * @param {any} save @param {{ level?: unknown } | null} summary
+ */
+export function lawValuesOf(save, summary) {
+  const found = characterFindings(save, summary);
+  if (!found.length) return null;
+  return cutOf(found.map((f) => `${f.code}@${f.at ?? ''}=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`).sort().join(','), LAW_VALUES_MAX);
+}
+/** AUDIT RPT1026 C5: THE MARK A JUDGEMENT'S VALUES CARRY WHERE THEY WERE CUT (a value past 40 characters, the whole past
+ *  LAW_VALUES_MAX). They were cut silently, so a state past the cut - eighty bank accounts below nothing ahead of the
+ *  purse in the sort - read the same whatever stood past it, and a clear of it excused every purse after it. A state
+ *  cut is no state an excuse can name (verdict.js lawExcused): staff mend it (PURSE-MEND, STAFF-SET-BANK). */
+export const LAW_VALUES_CUT = '\u2026';
+const cutOf = (/** @type {string} */ s, /** @type {number} */ n) => (s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s);
+
 /** A law finding's item codes, safe: a piece the law cannot read without throwing (AUDIT INT: `enchantments: [null]`
  *  threw, and the checkpoint answered 500) is a piece of no shape the game writes. */
 const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); } catch { return ['shape']; } };
@@ -189,13 +224,13 @@ export function judgeSave(save, summary = null, o = {}) {
   if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0] };
   for (const f of characterFindings(save, summary)) keep(f);
   let items = 0;
-  /** @type {{ provenance: string, t: number, m: unknown, q: unknown, w: number }[]} */
+  /** @type {{ provenance: string, t: number, m: unknown, q: unknown, w: number, l?: string }[]} */
   const provenances = [];
   possessedItemLists(save).forEach((list, li) => {
     list.forEach((/** @type {any} */ it, /** @type {number} */ i) => {
       items++;
       for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });
-      if (typeof it?.provenance === 'string' && PROVENANCE_RE.test(it.provenance)) provenances.push({ provenance: it.provenance, t: it.templateIndex, m: it.material, q: it.quality, w: worthless(it) ? 0 : itemWorth(it) });
+      if (typeof it?.provenance === 'string' && PROVENANCE_RE.test(it.provenance)) provenances.push({ provenance: it.provenance, t: it.templateIndex, m: it.material, q: it.quality, w: worthless(it) ? 0 : itemWorth(it), ...(isMasterWork(it) ? { l: masterSignature(it.affixes) } : {}) });   // MASTER-ART: a Master's work's lines
     });
   });
   // INT7: THE ARMS - the most reach of the weapons in the pack the law takes, and whether a lawful bow is among them
@@ -229,6 +264,13 @@ export function ledgerPieces(/** @type {any} */ save) {
   return out;
 }
 
+/** MASTER-ART: the lines a record's Master's work mints, as one string - '' for a record that names none, so no piece
+ *  claims a Master's lines on another craft's provenance. AUDIT HORIZONTAL B1: the values the record signs
+ *  (masterLaw.js masterLinesOfRecord), never a roll of today's bands. @param {unknown} record */
+const recordLines = (record) => {
+  const c = readProductRecord(record);
+  return c?.l ? masterSignature(masterLinesOfRecord(c.l) ?? []) : '';
+};
 /** How many provenances one statement asks about - D1 binds at most 100 a statement. */
 const PROVENANCE_CHUNK = 90;
 
@@ -239,11 +281,12 @@ const PROVENANCE_CHUNK = 90;
  * for another template or material, or holds lower than the piece claims, is no craft - a finding (AUDIT INT: a
  * Crude Iron Dagger's provenance on a Masterwork Daedric one passed, five of them at once). A piece disenchanted is gone
  * from the table and from the save together (alchemy.js), so no honest piece is left behind.
+ * MASTER-ART: a Master's work (`l`, its lines) holds a record that names a Master's lines, at the values it signs.
  * Answers `{ findings, arrived }` - `arrived` the lawful pieces `player`'s account owns that the service has not yet
  * witnessed arriving (`products.credited` 0: made, or bought at the market, since), each with its worth: the budget's
  * witness for a piece the service minted and the client's pack took (AUDIT INT: a crafted or market-bought piece was
  * charged to the budget as a find).
- * @param {any} db @param {{ provenance: string, t: number, m?: unknown, q?: unknown, w?: number }[]} provenances @param {string | null} [player]
+ * @param {any} db @param {{ provenance: string, t: number, m?: unknown, q?: unknown, w?: number, l?: string }[]} provenances @param {string | null} [player]
  * @returns {Promise<{ findings: any[], arrived: { provenance: string, w: number }[] }>}
  */
 export async function judgeProducts(db, provenances, player = null) {
@@ -256,14 +299,15 @@ export async function judgeProducts(db, provenances, player = null) {
   const have = new Map();
   for (let i = 0; i < ids.length; i += PROVENANCE_CHUNK) {
     const chunk = ids.slice(i, i + PROVENANCE_CHUNK);
-    const rows = await db.prepare(`SELECT provenance, template, material, quality, owner, credited FROM products WHERE provenance IN (${chunk.map(() => '?').join(', ')})`).bind(...chunk).all();
+    const rows = await db.prepare(`SELECT provenance, template, material, quality, owner, credited, record FROM products WHERE provenance IN (${chunk.map(() => '?').join(', ')})`).bind(...chunk).all();
     for (const r of rows?.results ?? []) have.set(r.provenance, r);
   }
   for (const [p, piece] of want) {
     const row = have.get(p);
     const lawful = !!row && row.template === piece.t
       && (piece.m == null || row.material == null || Number(row.material) === piece.m)
-      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)));
+      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)))
+      && (piece.l === undefined || piece.l === recordLines(row.record));   // MASTER-ART: a Master's lines are its record's
     if (!lawful) out.push({ code: 'provenance', at: p, t: piece.t });
     else if (player != null && row.owner === player && Number(row.credited) === 0) arrived.push({ provenance: p, w: Number.isSafeInteger(piece.w) ? /** @type {number} */ (piece.w) : 0 });
   }

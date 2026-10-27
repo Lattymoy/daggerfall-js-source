@@ -511,7 +511,7 @@ test('CHAT-CHAN panel: each tab says who it reaches (and the region\'s name), th
 
 test('CHAT-CHAN host: the commands are tested in their order - the host\'s own first, then the parser - a refusal keeps the line, /red is the World\'s, each tab has its own door, the Region tab follows the player only on a relay that opens region rooms, and a party\'s news lands on the Party tab (mutants: the parser before /unstuck; /red on the active tab; a party line with no party sent; the region joined before the welcome; party notes on the World tab)', () => {
   const w = rd('src/scenes/world.js');
-  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
+  const onSend = /onSend: \(tabId, text, opts = \{\}\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   const at = (s) => { const i = onSend.indexOf(s); assert.ok(i >= 0, `onSend has ${s}`); return i; };
   // the parser is asked ONCE, after every command of the host's own. EMOTE1 re-aimed this pin to the parser over the
   // shortcodes and it let a SECOND call live before the commands - which reads /unstuck, /red, /mute and /ready as the
@@ -523,12 +523,12 @@ test('CHAT-CHAN host: the commands are tested in their order - the host\'s own f
   assert.ok(at('/^\\/unstuck(\\s+cancel)?$/i') < at('const red = ') && at('const red = ') < at('parseModCommand(text)') && at('parseModCommand(text)') < at("/^\\/ready$/i") && at("/^\\/ready$/i") < parser, 'the host\'s own commands by their own tests, then the parser');
   assert.match(onSend, /if \(cmd\.kind === 'help'\) \{ for \(const line of helpLines\(\)\) note\(line\); return 'read'; \}/);   // PIN MOVED (AUDIT EG V, c: L7-21 - /help's lines with /breach's own, net/chatCommands.js helpLines)
   for (const k of ['unknown', 'empty', 'host']) assert.match(onSend, new RegExp(`if \\(cmd\\.kind === '${k}'\\) \\{ note\\([^)]*\\)\\); return false; \\}`), `${k}: refused in words, the line kept to be mended`);
-  assert.match(onSend, /if \(cmd\.kind === 'channel'\) return chatSend\(cmd\.tab, cmd\.wrap === 'ooc' \? oocText\(cmd\.text\) : cmd\.text, tabId\);/);
+  assert.match(onSend, /if \(cmd\.kind === 'channel'\) return chatSend\(cmd\.tab, cmd\.wrap === 'ooc' \? oocText\(cmd\.text\) : cmd\.text, tabId, opts\);/);   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   assert.match(onSend, /if \(red\) return chatLinks\.get\('world'\)\?\.sendRed\(red\[1\]\) \?\? false;/);
   const send = w.slice(w.indexOf('const chatSend = '), w.indexOf('const _regionHold'));
   assert.match(send, /if \(\(tabId === 'party' \|\| tabId === 'region'\) && chanOld\(\)\) return why\(CHAN_OLD_RELAY_TEXT\);/);
-  assert.match(send, /if \(tabId === 'local'\) return online\?\.sendChat\(text, \{ me \}\) \?\? false;/);
-  assert.match(send, /if \(!social\?\.party\) return why\(NO_PARTY_TEXT\);\s*return socialLink\(\)\?\.sendChat\(text, \{ ch: 'party', me \}\) \?\? false;/);
+  assert.match(send, /if \(tabId === 'local'\) return online\?\.sendChat\(text, \{ me, item, items \}\) \?\? false;/);   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
+  assert.match(send, /if \(!social\?\.party\) return why\(NO_PARTY_TEXT\);\s*return socialLink\(\)\?\.sendChat\(text, \{ ch: 'party', me, item, items \}\) \?\? false;/);   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   assert.match(w, /const chatRegionFrame = \(now\) => \{\s*if \(seatOut\(\)\) return;[^\n]*\s*const link = chatLinks\?\.get\('region'\);\s*if \(!link \|\| !chatLinks\.get\('world'\)\?\.chanOk\) return;/, 'never before the welcome says region rooms open');
   assert.match(w, /const room = nextRegionRoom\(_regionHold, chatRegionRoom\(index\), chatLog\.tab\('region'\)\.room, now\);/);
   assert.match(w, /chatLog\.setRoom\('region', room, place\);\s*link\.join\(channelLinkRoom\(room\)\);[^\n]*\s*chatLog\.push\('region', \{ text: regionJoinedText\(place\), system: true \}\);/);

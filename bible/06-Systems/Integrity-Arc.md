@@ -191,9 +191,22 @@ at the next clean checkpoint until `STRIKES_FOR_TIMED` (3) HOLDS have come - a s
 audit: one piece carried six minutes was staff's), the same piece taken up again included - and the third is TIMED: a
 week, a month each after it, a clean checkpoint inside it no way out and the first past it lifting it (AUTO-HOLD); every
 law hold's notice says the holds are counting (RING-WARN, `01-Overview/bugs/Field-Bugs-2026-10-12.md`); its finding is
-written once a signature. Staff who judge the law's word wrong clear it (`law_excused`): the same signature holds
-nothing again, a new one does. A verdict writes over the row only as it read it (`judge_rev`): a staff act landing in
+written once a signature. Staff who judge the law's word wrong clear it (`law_excused`): the same finding holds
+nothing again, a new one does - the same pieces and the same values of the character law, an excuse of the values only
+until a checkpoint the law finds nothing in, and none of a state whose values were cut (RPT1026-LEDGERLAW and its audit,
+below: the signature alone excused every purse after a cleared one). A verdict writes over the row only as it read it (`judge_rev`): a staff act landing in
 between stands, and the next checkpoint judges again.
+
+What the player is told (RPT1026-MARKET HOLD-SAID, private reports 2026-10-26: gathering stopped overnight under a
+notice that named only a trade freeze and gave no reason; crafting and gathering were found counted as
+trading): a hold refuses every progression claim as well as every trade (INT16's seat, below - a harvest, a
+smelt, a craft, a brew, a disenchant, a temper, a writ's delivery), so every notice says the three a player meets - its
+trading, gathering and crafting - and its lifting says them open again. Staff's names no reason (the note is staff's own,
+`staffRealm.js`, and stays so) and says how to reach them: a private report with /bug, or the game's Discord. A
+`trade-held` refusal anywhere - a harvest's toast, a craft's, a sale's - says the standing hold's own notice as the
+session last heard it (`net/realm/realmTradeLaw.js` tradeHeldSaid, wired by `scenes/realmHoldHost.js`; with none heard
+yet, what a hold freezes), where it had said only that "the notice shown when it froze says why" - a line said once, in a
+chat a player may never have read. The notices are in the player's language now (they were English to every player).
 
 Every route that hands a realm character's value to another player says so - `prepareRealmRecord(..., { outbound: true
 })`: a market listing and purchase, a vault deposit, a treasury deposit, a rent, a card table's stake, a disenchant - and
@@ -227,7 +240,9 @@ witness needed); still with it past `DUPE_GRACE_S` (300 s), the claim was a COPY
 and locked (`item_dupes` - that piece moves by no route from it, and is never found twice), and the holder's piece stays
 the holder's to sell. It is no strike (AUTO-HOLD): the holder's checkpoint cannot tell a copier from a receiver whose
 giver's game died before its record saw the give. A crafted piece's copy is told by its craft's record: the account
-`products` names owns it, so a seller that kept a sold piece is the copier, never the buyer. A piece shown twice in one
+`products` names owns it, so a seller that kept a sold piece is the copier, never the buyer - the account the service
+last handed the piece to, where a hand-over came after its owner's and from the account the record named (RPT1026-LEDGERLAW
+and its audit, below: a realm trade moves no owner, and a maker that wrote a traded piece back into its save took it back). A piece shown twice in one
 record is that record's copy at once - one strike on `dupes` a checkpoint, however many pieces, and `dupes` holds
 nothing. A piece let go is no row (a row kept `gone` only
 while a copy of it is known, so the copy cannot take it up); a character that dies, retires or is deleted lets go of all
@@ -280,7 +295,7 @@ The record and staff's check: `01-Overview/bugs/Field-Bugs-2026-10-11g.md` HELD-
 
 A developer's alone: `/v1/mod/realm-holds` (the held and flagged, each with its last finding), `realm-findings` (a
 character's findings and its wealth by the hour), `realm-clear` (a hold, its strikes and its timed holds lifted, a flag cleared, the law's
-finding standing excused, the bucket refilled), `realm-hold` (a hold by hand), `realm-rollback` (the record back to its
+finding standing excused as it stands - RPT1026-LEDGERLAW, below - the bucket refilled), `realm-hold` (a hold by hand), `realm-rollback` (the record back to its
 last checkpoint judged clean - kept past the row's rotation, and carried forward by a service move made ON a clean record
 - its seat taken from any tab so the next join loads it; never past a move the service made since (`service-moved`: a
 sold piece would come back and stand sold), never for the dead, its size the clean save's) and `realm-budget` (the
@@ -609,10 +624,57 @@ save's copy on.
 the writs' files moved (PIN MOVED: sellers seated, the piece in the record first - `test/realmSeat.mjs` holdPieces - and
 the pins' own call naming the record for a crafted act, `test/accountDb.mjs`, as the client's realm act does).
 
+### RPT1026-LEDGERLAW - the craft's record follows the service's hand-overs; staff's excuse is of the state it read (2026-10-26, `server-account/src/ledger.js`, `verdict.js`, `review.js`, migration 0178)
+
+Two private reports, each with its steps run against the live code, both on lane 1's own law. Daggerfall has no realm,
+no ledger and no review: nothing of DFU's is departed from.
+
+- **A maker won back a crafted piece it had traded away.** INT4 settles a contested claim on a crafted piece for the account
+  `products.owner` names: a holder that is not it, past `DUPE_GRACE_S`, kept a piece it sold, and the piece goes to the
+  claimant. The market moves the owner with a sale, an auction and a commission (INT19); a realm trade, a market
+  delivery collected from the pack route (MARKET-ANY), a guild vault's withdrawal and a shared chest's take move the
+  piece and never the owner (Professions-Arc 18's hand-over of the owner was never built). So a maker who traded a piece
+  away, then wrote it back into its save with a modified client, won it back at its buyer's next checkpoint past the
+  grace: the buyer's piece moved to the maker and was locked as the copy (`craft`), the maker kept the price and an untouched
+  piece. Now the craft's record is the account the service last HANDED the piece to: every move of a crafted piece into
+  a record (`ledgerMoves`' entered set - the trade, the collect, the vault, the chest, a staff return, the zone's escrow)
+  BY THE ACCOUNT THE RECORD NAMES (AUDIT RPT1026 C1: the trade's other side, or the account its escrow row names - the
+  batch took any giver's, so a seller that kept a piece it sold, holding the ledger's row first, handed the record to an
+  accomplice by one trade or one listing, and the buyer's claim was the copy)
+  writes `products.handed_to` (NULL where it is the owner's own account), a sale that moves the owner clears it (market.js
+  `pieceSoldSteps`, writs.js's fill), and the uphold reads `COALESCE(handed_to, owner)` (`CRAFT_RECORD_SQL`) - and never
+  against the owner holding it: a piece come back to its owner by a peer's hands is the owner's, whoever the service
+  handed it to before. The maker's written-back piece is the claimant's copy, locked, no strike, as every contested
+  claim's. `products.owner` itself is unmoved: who may list a piece as a crafted piece, for which currency, stays the
+  market's own question (the hand-over of Professions-Arc 18 and `01-Overview/bugs/Field-Bugs-2026-10-01.md`'s question
+  (3) - should a handed-on piece count as bought with gold - are the owner's still).
+- **One cleared purse let every purse after it pass.** `review.js` clear wrote `law_excused = law_sig`, and the
+  signature names a character finding by its code alone (`gold:`, `stat:`): staff clearing a victim of a wrapped sale's
+  negative purse excused that character's every purse after it, however far past the game's bound. Now each judgement keeps
+  the character law's VALUES beside the signature (`judge.js` lawValuesOf: `gold@=-8000000`, `stat@agility=101` -
+  `realm_characters.law_v`), the clear excuses the two (`verdict.js` lawExcuseOf: the signature alone for a finding of
+  pieces, as every excuse was), and a checkpoint the law finds nothing in drops an excuse of the values (AUDIT RPT1026 C2:
+  a piece's stands - the batch dropped every one, so a cleared piece put away for a checkpoint held and struck its holder
+  when it came back). A state whose values were cut (1,000 characters, 40 a value) is marked so and no excuse names it
+  (C5: eighty bank accounts below nothing put the purse past the cut). A state that moves holds again - and back at the
+  state staff read, is excused again. An excuse written before this covers its pieces' findings still and no character
+  finding: an excused purse holds again at its next checkpoint, and that hold is a strike. The
+  clear's help says so (`tools/realmReview.mjs`); a purse below nothing is PURSE-MEND's (`mend`), which reads the
+  signature as it always did (`PURSE_SIG`).
+
+Left open: a crafted piece passed hand to hand (the ground, a shelf, a room's container) moves no craft's record - the
+ledger cannot tell a giver's copy from an owner's piece taken back, and the craft's record stands for the account the
+service last handed it to (its owner, where none) as it did for its owner - and a service move by its new holder hands it
+none either (AUDIT RPT1026 C1). An owner holding the piece keeps it whatever the record names, so a buyer whose checkpoint
+shows the piece gone while its maker's written-back copy still claims it hands it to the maker. `test/server/rpt1026_ledgerlaw.test.js`,
+`test/server/audit_rpt1026_ledgerlaw.test.js`; `tools/mutants/rpt1026_ledgerlaw.json`, `tools/mutants/audit_rpt1026_ledgerlaw.json`.
+
 ### What lane 1 leaves open
 
 - ~~**A crafted piece lists, auctions and fills a commission without its record (the exploit audit, 2026-10-11 - OPEN,
-  its plan below).**~~ **CLOSED by INT19 (above, 2026-10-17), to this plan.** The piece route (`server-account/src/market.js` marketList `kind: 'piece'`, marketAuction,
+  its plan below).**~~ **CLOSED by INT19 (above, 2026-10-17), to this plan - all but its last clause:** a realm trade
+  still moved no `products.owner`, so the ledger settled a contested claim on a traded piece for its maker, and the
+  honest holder was still the one it charged, until RPT1026-LEDGERLAW (above, 2026-10-26). The piece route (`server-account/src/market.js` marketList `kind: 'piece'`, marketAuction,
   `writs.js` fulfilCommission) decides on the `products` row alone - never the seller's lease, its record or the ledger -
   and the client takes the piece out of its pack only locally (`net/marketBook.js` postPiece). So a tab that lost its
   seat to a second device (it sends no checkpoint, so it never hears `lease`) lists a piece the live record still holds:
@@ -638,6 +700,15 @@ the pins' own call naming the record for a crafted act, `test/accountDb.mjs`, as
   (`01-Overview/bugs/Field-Bugs-2026-10-12f.md`, For Mac).
 - **Customs** brings an offline character's items in whole (RESTORE, "Keep all"); its first judgement charges what they
   add past its level's allowance to the budget, which holds nothing until staff turn it on.
+- **A side effect's setting laid twice** (SIDE-ONCE, `01-Overview/bugs/Field-Bugs-2026-10-19f.md`, its Open for the
+  owner): the item maker lays a setting once since 2026-10-19, and the item law still counts the maker's rows by effect
+  so a piece made before keeps its copies - so a modified client's new piece with ten copies of User Takes Damage passes
+  it too. RPT1026-LEDGERLAW traced what telling the two apart takes: the rows carry no time, and the item maker is the
+  client's (the service never sees it), so it is a record the service keeps - and each one found carries an owner's call:
+  a table of the stacked pieces' prints read off each record at its first checkpoint misses the pieces in transit then
+  (a listing, a delivery, a shelf - their next holders held) and lets any configuration it read be minted again; a law
+  against the record last judged clean (INT6's `clean_obj`) holds a receiver whose own record is held for something
+  else; locking every stacked piece from trade, as a copy is locked, changes what an honest pre-fix piece may do.
 - A piece's id rides only the character's own five lists' stamping: a piece set out in a room or kept in a chest since
   before INT4 carries none until it comes back to the pack, and the ledger does not follow it there.
 - A temper's or a Reforge's rise in a piece's worth is charged to the budget (small; the service knows the step, not
@@ -800,9 +871,24 @@ caster's cast window on every blow (the striker is unstruck), so a crafted clien
 vitality alone. **THE FOUR HOSTS.** `scenes/world.js` WIRED (the duel's, the zone's and a siege's casts, each a number
 for its referee); `scenes/dungeonContext.js` WIRED - the zone's halls through world.js's own `wildSpellOut`, the arena's
 rival through its own law pinned equal
-(`dungeonContext.js:"castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut ? (id, sp) => opts.wildSpellOut(id, sp) : null),"`);
+(`dungeonContext.js:"castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),"`) -
+asked at the cast since RPT1026-FIGHTS HALL-SPELLS (2026-10-26, two private reports: no spell met a player in the PvP
+zone's dungeons): the seam had been chosen at the build by whether the context was handed the arena's door, and the world-hosted
+dungeon is handed it always (`worldModes.js` `arenaRival`, null off the sand), so until then no spell of a player met
+another in the zone's halls - only a swing did;
 `scenes/worldModes.js` (a building) no spell meets another player there - no fight is struck indoors; `scenes/exterior.js`
 NOT WIRED on purpose: offline, no other player.
+
+**RPT1026-FIGHTS STRIKE-UNVEILS (2026-10-26, a private report: a Chameleon stayed up after its wearer
+attacked a player).** A blow between players is rolled on a stub of the striker's sheet (INT8), so the
+formula's tail - EntityEffectManager.BreakNormalPowerConcealmentEffects, `formulas.js` calculateAttackDamage - took the
+normal-power concealment off the stub, and the striker's own Chameleon, Invisibility or Shadow stood through every blow
+it landed on a player. The one stand-in now carries the entity that strikes it (`duelCombat.js` duelStandIn(striker),
+`struckBy`), and a blow that lands damage unveils that entity (resolveDuelStrike) - DFU's law, on the striker, never its
+copy; the true powers stand. The world host's four rolls hand the player (a duel's, a siege work's, a battle's, the
+zone's - a hall's swing reaches the zone's). A spell's harm is counted with the player as its caster
+(`siegeCombat.js` siegeSpellNumbers), whose damage arms already unveil. Pins: `test/combat/rpt1026_fights_unveil.test.js`
+(2); the four rolls' pins (`auditcc_pvp`, `duel_combat`, `twohands`) moved with them.
 
 ### 5b. The audit (2026-10-09, Mac: "Lets audit this")
 
@@ -1299,6 +1385,14 @@ six records on the lines this slice touched run again, all dead.
 
 ## Progress
 
+- **RPT1026-LEDGERLAW (2026-10-26, the private report inbox): lane 1's law, two of its holes closed.** Section 4,
+  RPT1026-LEDGERLAW. A crafted piece's contested claim is settled for the account the service last handed it to
+  (`products.handed_to`, written by `ledgerMoves` where the account the record names hands it on, cleared by a sale), so a traded piece written back into its maker's
+  save is the maker's copy; and staff's clear excuses the law's finding with the character law's values beside its
+  signature (`realm_characters.law_v`), ended by a clean checkpoint, so a cleared purse excuses no other. AUDIT RPT1026
+  (lane C, 2026-10-27): the hand-over from the record's own account alone (C1), a piece's excuse kept through a clean
+  checkpoint (C2), a cut state excused never (C5). Migration 0178 (0176 on its branch, renumbered past main's 0176 and 0177 at the merge).
+  `test/server/rpt1026_ledgerlaw.test.js`; `tools/mutants/rpt1026_ledgerlaw.json`.
 - **INT19 (2026-10-17, the owner: "Take care of the integrity arc"; on #987 with lane 4): lane 1's open item closed - a
   crafted piece handed on leaves its seller's realm record.** Section 4, INT19. A listing, an auction and a commission's
   fill ask the record first and take the piece out of it by provenance in their own batch (`server-account/src/

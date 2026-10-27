@@ -74,7 +74,8 @@ import { mustDistributeBonusPointsText } from '../charsheet.js';
 import { REMAINING_POINTS_ERROR, remainingPointsLabel, TAKE_ONE_BACK_HINT } from '../virtueLevelUp.js';
 import { attributeOffset, canRaiseAttribute, canLowerAttribute, LEVELUP_TOTAL, levelBarProgress, levelingSettings, usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // ASCEND-ANYTIME: a mod-law view still needs the mod's own prices to draw a row
 import { LEVELUP_SKILL_SUM_PER_LEVEL, skillRecentlyIncreased } from '../../systems/advancement.js';
-import { onlineLevelFraction } from '../../systems/levelCap.js';   // LEVEL-45
+import { onlineLevelFraction } from '../../systems/levelClimb.js';   // LEVEL-45
+import { atLevelCap } from '../../systems/levelCap.js';   // LEVEL-45: the bar at the cap
 import { SKILL_NAMES, displaySkillValue } from '../../systems/skills.js';
 import { liveStat } from '../../systems/statMods.js';   // ASCEND-LIVE: what a star IS, beside what the rollout spends
 import { sheetModel } from '../enhanced/enhancedCharSheet.js';
@@ -570,6 +571,8 @@ export function levelUpCrown(entity, screen) {
  */
 export function levelProgress(entity, screen) {
   const e = entity ?? {};
+  // LEVEL-45 (systems/levelCap.js): at the cap no level is next - the bar is full and says so, on either lane
+  if (atLevelCap(e)) return { now: 1, max: 1, carried: 0, label: t('levelup.progress.cap', 'Highest level reached'), cap: true };   // AUDIT FB1026d II C3: `cap` - the bar says its label alone
   if (levelUpLane(screen) === LANE_VIRTUE || usesVirtueLeveling(e)) {
     return {
       now: levelBarProgress(e),
@@ -578,7 +581,7 @@ export function levelProgress(entity, screen) {
       label: t('levelup.progress.virtue', 'Progress to next level'),
     };
   }
-  if (e._online === true) {   // LEVEL-45: online the climb is shared out to 45 (systems/levelCap.js), so the bar is its fraction
+  if (e._online === true) {   // LEVEL-45: online the climb is shared out to 45 (systems/levelClimb.js), so the bar is its fraction
     return {
       now: Math.trunc(onlineLevelFraction(e.startingLevelUpSkillSum ?? 0, e.currentLevelUpSkillSum ?? 0) * 100),
       max: 100,
@@ -699,6 +702,7 @@ export function riseRibbon(entity) {
   for (let id = 0; id < SKILL_NAMES.length; id++) {
     if (!groups.has(id) && skillRecentlyIncreased(e, id)) ids.push(id);
   }
+  const capped = atLevelCap(e);
   const rows = ids.map((id) => ({
     id,
     name: SKILL_NAMES[id] ?? '',
@@ -707,7 +711,7 @@ export function riseRibbon(entity) {
     value: displaySkillValue(e, id),   // SOFTCAP1: the printed 0..200 value, not the formula's
     group: groups.get(id) ?? t('levelup.group.misc', 'Miscellaneous'),
     role: roles.get(id) ?? ROLE_IDLE,
-    note: ROLE_NOTE[roles.get(id) ?? ROLE_IDLE],
+    note: capped ? '' : ROLE_NOTE[roles.get(id) ?? ROLE_IDLE],   // AUDIT FB1026d II C3: at the cap no skill counts toward a next level
     risen: !!skillRecentlyIncreased(e, id),
   }));
   // RISEN FIRST, then the career's own order. A sort that only ever

@@ -161,7 +161,8 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   by regard.
 - **`relations.js`.** A regard per resident (-100..100), a stranger 0: a word +3 once a day, a polite word +1, a gift
   +8, help +20, a life saved +35, a blow -45, a crime -15, one of theirs slain -60, a blunt word -6 (TONE-TASTE: the
-  +1 and the -6 are a tone taken kindly and one taken ill, by the resident's own taste - section TONE-TASTE); friend at 40, enemy
+  +1 and the -6 are a tone taken kindly and one taken ill, by the resident's own taste - section TONE-TASTE); COURT-DEEDS
+  (`06-Systems/Legacy-Arc.md`): a compliment +2, a hug +3 and a kiss +4, the gift's +8 paid at last, each once a day; friend at 40, enemy
   at -40, hostile at -70; eased toward zero half a point a day unseen and never across; 600 kept; the save's record
   `{ v: 1, people }`, a bad one nobody known. [REGARD-OWN, FIELD BUGS 2026-10-21d: its days are the character's own
   (`regardClock.js` characterRelations, the one making), not the sky's living day - online the sky ran on while the

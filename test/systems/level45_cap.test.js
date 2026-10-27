@@ -1,23 +1,25 @@
 // LEVEL-45 (2026-10-27, mob: "need to always be 45", "not let over leveling waste a player time", "everyone is
 // converting", "get rid of it for online", "juidge will need changed to lvl 45"): online the six-skill climb is shared
-// out so every start lands on exactly 45 at the top (800), every realm character's level is read again from its skills
+// out so every start lands on exactly 45 at the top (840), every realm character's level is read again from its skills
 // at its join, and online character creation has no biography.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ONLINE_LEVEL_CAP, LEVEL_SUM_TOP, ROLLED_START_MIN, ROLLED_START_AVERAGE,
   onlineLevelFor, onlineLevelFraction, onlineLevelConvert,
-} from '../../src/systems/levelCap.js';
+} from '../../src/systems/levelClimb.js';
 import { calculatePlayerLevel, checkForLevelUp } from '../../src/systems/advancement.js';
 import { evenHpFloor } from '../../src/systems/levelEven.js';
+import { LEVEL_CAP } from '../../src/systems/levelCap.js';
 import { crossLeveling } from '../../src/systems/realmCustoms.js';
 import { JUDGE_LEVEL_MAX, characterFindings } from '../../server-account/src/judge.js';
 import { REALM_LEVEL_CLAIM_MAX } from '../../server-account/src/realm.js';
 import { rollSkills, spendPoolLowest } from '../../src/systems/chargen.js';
 import { levelUpSkillSum } from '../../src/systems/skills.js';
 
-test('LEVEL-45: the top is 5 masteries at 140 and the sixth at 100, and the judge and the claim cap at the same 45', () => {
-  assert.equal(LEVEL_SUM_TOP, 800);
+test('LEVEL-45: the top is the six counted skills mastered at 140 (MASTER-THREE\'s 3 / 2 / 1), and the judge, the claim and the cap at the same 45', () => {
+  assert.equal(LEVEL_SUM_TOP, 840);
+  assert.equal(ONLINE_LEVEL_CAP, LEVEL_CAP, 'the one cap (levelCap.js)');
   assert.equal(ONLINE_LEVEL_CAP, 45);
   assert.equal(JUDGE_LEVEL_MAX, ONLINE_LEVEL_CAP, 'the judge reads the cap');
   assert.equal(REALM_LEVEL_CLAIM_MAX, ONLINE_LEVEL_CAP, 'the claim reads the cap');
@@ -40,14 +42,14 @@ test('LEVEL-45: every start from 100 to 700 reaches exactly 45 at the top and ne
   }
 });
 
-test('LEVEL-45: a start of 153 levels exactly as Daggerfall does (the 28 head start kept), and no start climbs a point for nothing', () => {
-  for (let sum = 153; sum <= LEVEL_SUM_TOP; sum++) assert.equal(onlineLevelFor(153, sum), Math.min(45, calculatePlayerLevel(153, sum)), `sum ${sum}`);
+test('LEVEL-45: a start of 193 levels exactly as Daggerfall does (the 28 head start kept), and no start climbs a point for nothing', () => {
+  for (let sum = 193; sum <= LEVEL_SUM_TOP; sum++) assert.equal(onlineLevelFor(193, sum), Math.min(45, calculatePlayerLevel(193, sum)), `sum ${sum}`);
   for (const start of [133, 144, 154, 169]) {
     let first45 = null;
     for (let sum = start; sum <= LEVEL_SUM_TOP; sum++) if (first45 == null && onlineLevelFor(start, sum) === 45) first45 = sum;
     assert.equal(first45, LEVEL_SUM_TOP, `start ${start}: 45 arrives on the last point`);
   }
-  assert.equal(onlineLevelFraction(153, 153 + 15 + 2), (28 + 17) / 15 - 3);
+  assert.equal(onlineLevelFraction(193, 193 + 15 + 2), (28 + 17) / 15 - 3);
   assert.equal(onlineLevelFraction(144, LEVEL_SUM_TOP), 1, 'full at the cap');
 });
 
@@ -69,12 +71,13 @@ test('LEVEL-45: the creation\'s starts - 144 the least any roll gives, 154 the a
   assert.equal(Math.round(total / n), ROLLED_START_AVERAGE);
 });
 
-test('LEVEL-45: online the level-up check reads the shared climb and stops at 45; offline Daggerfall\'s 15 stands', () => {
-  const e = (online) => ({ _online: online, level: 45, startingLevelUpSkillSum: 133, currentLevelUpSkillSum: 800 });
+test('LEVEL-45: online the level-up check reads the shared climb; offline Daggerfall\'s 15 stands, stopped at the cap', () => {
+  const e = (online) => ({ _online: online, level: 44, startingLevelUpSkillSum: 133, currentLevelUpSkillSum: 830 });
   const on = e(true);
-  assert.equal(checkForLevelUp(on), false, 'online: 45 is the top');
+  assert.equal(checkForLevelUp(on), false, 'online: 44 until the last points');
   const off = e(false);
-  assert.equal(checkForLevelUp(off), true, 'offline: 46 is owed, as Daggerfall says');
+  assert.equal(checkForLevelUp(off), true, 'offline: 48 by Daggerfall, 45 owed at the cap');
+  assert.equal(off.pendingLevel, 45);
   const early = { _online: true, level: 1, startingLevelUpSkillSum: 150, currentLevelUpSkillSum: 150 + 30 };
   assert.equal(checkForLevelUp(early), true);
   assert.equal(early.pendingLevel, 2);
@@ -93,8 +96,8 @@ test('LEVEL-45: the conversion - an Oblivion crossover (start no roll gives) tak
   assert.equal(onlineLevelConvert(s), true);
   assert.equal(s.startingLevelUpSkillSum, ROLLED_START_AVERAGE);
   assert.equal(s.level, onlineLevelFor(ROLLED_START_AVERAGE, 700));
-  assert.equal(s.level, 38);
-  assert.equal(s.maxHealth, evenHpFloor({ career: s.career, level: 38 }, 100));
+  assert.equal(s.level, 36);
+  assert.equal(s.maxHealth, evenHpFloor({ career: s.career, level: 36 }, 100));
   assert.equal(s.health, s.maxHealth);
   assert.equal(s.readyToLevelUp, false);
   assert.equal(s.pendingLevel, null);
@@ -102,7 +105,7 @@ test('LEVEL-45: the conversion - an Oblivion crossover (start no roll gives) tak
 });
 
 test('LEVEL-45: the conversion - a level 113 with every counted skill maxed comes to 45; one its skills put below its level comes down to them', () => {
-  const top = save({ level: 113, start: 150, current: 800 });
+  const top = save({ level: 113, start: 150, current: LEVEL_SUM_TOP });
   onlineLevelConvert(top);
   assert.equal(top.level, 45);
   assert.equal(top.startingLevelUpSkillSum, 150, 'a real start is kept');
@@ -128,8 +131,8 @@ test('LEVEL-45: the conversion keeps the sum the level stands on (SWAP-CYCLE) an
   assert.equal(held.currentLevelUpSkillSum, 640, 'never below the held sum');
   const crossing = { ...save({ level: 60, start: 200, current: 700 }), levelingSystem: 'virtue', levelProgress: 40, readyToLevelUp: false };
   crossLeveling(crossing);
-  assert.equal(crossing.level, 38, 'switched, then converted');
-  const classic = save({ level: 113, start: 150, current: 800 });
+  assert.equal(crossing.level, 36, 'switched, then converted');
+  const classic = save({ level: 113, start: 150, current: LEVEL_SUM_TOP });
   assert.equal(crossLeveling(classic), false, 'no switch said for a Daggerfall character');
   assert.equal(classic.level, 45, 'but converted all the same');
 });

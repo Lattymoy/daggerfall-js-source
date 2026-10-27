@@ -316,7 +316,7 @@ export class ChatLog {
   /** The line's record, or null for nothing to say. DICE1: `roll` is a roll the RELAY made (the host hands it from the
    *  frame type, `onRoll`, never from a chat line) - kept only when the dice's law holds, and then the line's words are
    *  the dice's (rollText), its kind 'roll'. */
-  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, dm = false, roll = null, me = false, sub = null, sg = null, raw = null, copy = null } = {}, tabId) {
+  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, dm = false, roll = null, me = false, sub = null, sg = null, raw = null, copy = null, item = null, items = null } = {}, tabId) {
     const rolled = roll && validRoll(roll) ? { n: roll.n, m: roll.m, k: roll.k, dice: [...roll.dice], total: roll.total } : null;
     if (roll && !rolled) return null;
     if (rolled) text = rollText(rolled);
@@ -351,7 +351,11 @@ export class ChatLog {
     const said = !sys && typeof sub === 'string' && sub ? { sub, ...stamp } : {};
     // STAFF-PANEL5-FREEZE: `copy`, words a game's line offers to copy (the Staff tab's Discord invite) - a system line's alone
     const copied = sys && typeof copy === 'string' && copy ? { copy } : {};
-    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, ...(dm ? { dm: true } : {}), kind, tab: tabId, ...(rolled ? { roll: rolled } : {}), ...said, ...copied };
+    // CHAT-POST: linked pieces from the wire - the panel draws coloured [Name]s (and their cards) inside the words
+    const list = !sys && Array.isArray(items) && items.length ? items.filter((it) => it && typeof it === 'object' && !Array.isArray(it))
+      : (!sys && item && typeof item === 'object' && !Array.isArray(item) ? [item] : null);
+    const linked = list?.length ? { items: list, item: list[0] } : {};
+    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, ...(dm ? { dm: true } : {}), kind, tab: tabId, ...(rolled ? { roll: rolled } : {}), ...said, ...copied, ...linked };
   }
 
   /** SAFE1: AN ACCOUNT'S LINES TAKEN BACK - every line `sub` said, off every tab, the moment it is blocked: a block hides

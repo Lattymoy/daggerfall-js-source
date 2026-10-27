@@ -162,6 +162,15 @@ journey the player sees is the same - the ground goes past at the
 acceleration and the clock keeps up with it - and what interrupts a
 journey interrupts it on its own honest clock.
 
+**AND A JOURNEY TRAINS AT THE REAL CLOCK (RPT1026-PROGRESS, 2026-10-26, a private report: Jumping, and Running
+on auto-run, trained in seconds on an accelerated journey).**
+Under the mod's `Time.timeScale` PlayerEntity's classic-update cadence scales with everything else, so the Running
+tally (`PlayerEntity.cs:309-320`, a use every 0.25 s) and the Jumping tally (one a jump, and a scaled motor lands a jump
+a frame) ran sixty to a hundred times faster a real second: a held run or jump key on the road filled the uses a rest
+or an arrival raises in seconds. DFU's own fast travel trains nothing. The tick (`systems/worldTick.js`) counts a
+journey's run in its REAL seconds and each jump as 1/scale of a use, so a journey trains as walking the same real
+minutes does; at x1 nothing changes. Port-Ledger A. Pinned by `test/systems/rpt1026_progress.test.js`.
+
 ## What the travel map gains
 
 - the **PORTS** filter (`TOportsOff/On`, 45x11 at 231,180) while the

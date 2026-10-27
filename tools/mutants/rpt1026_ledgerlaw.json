@@ -1,0 +1,242 @@
+[
+  {
+    "name": "RPT1026-LEDGERLAW-105-craft-record-owner-alone",
+    "file": "server-account/src/ledger.js",
+    "old": "const CRAFT_RECORD_SQL = 'COALESCE(p.handed_to, p.owner)';",
+    "new": "const CRAFT_RECORD_SQL = 'p.owner';",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the law before the fix: the uphold reads products.owner alone, and a traded piece goes back to its maker"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-105-hand-over-unwritten",
+    "file": "server-account/src/ledger.js",
+    "old": "`UPDATE products SET handed_to = CASE WHEN owner = ?1 THEN NULL ELSE ?1 END\n",
+    "new": "`UPDATE products SET handed_to = NULL\n",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "a service move into a record writes no hand-over - the trade and the market's collect leave the maker's word standing"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-105-owner-holding-upheld-against",
+    "file": "server-account/src/ledger.js",
+    "old": "\n          AND p.owner != ?${part.length + 1}`).bind(...part, at.player).all();",
+    "new": "`).bind(...part, at.player).all();",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the account a trade handed it to wins it back from its owner, who has it again by a peer's hands - the report's exploit turned round"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-105-sale-keeps-hand-over",
+    "file": "server-account/src/market.js",
+    "old": "  db.prepare(`UPDATE products SET handed_to = NULL WHERE provenance = (${p}) AND handed_to IS NOT NULL`).bind(...binds),\n",
+    "new": "",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "a sale that moved the owner leaves the hand-over before it standing - the seller that kept the sold piece wins it"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-105-fill-keeps-hand-over",
+    "file": "server-account/src/writs.js",
+    "old": "bought_with = 'marks', handed_to = NULL\n",
+    "new": "bought_with = 'marks'\n",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "a commission's fill leaves the hand-over before it standing"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-99-excuse-ignores-values",
+    "file": "server-account/src/verdict.js",
+    "old": "&& excused === lawExcuseOf(sig, values)\n",
+    "new": "&& excused.split('|')[0] === sig\n",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the law before the fix: an excuse of a signature stands for any purse under it - 9e15 passes (AUDIT RPT1026 C5: re-aimed by content - the cut's mark read after it)"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-99-values-unread",
+    "file": "server-account/src/verdict.js",
+    "old": "  const values = law > 0 ? lawValuesOf(save, summary) : null;",
+    "new": "  const values = null;",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the verdict reads no values - the clear excuses the signature alone again"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-99-clean-keeps-excuse",
+    "file": "server-account/src/verdict.js",
+    "old": "    + \" law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END\"\n",
+    "new": "    + ' law_excused = law_excused'\n",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "a clean checkpoint keeps staff's excuse - the same state later passes for good (AUDIT RPT1026 C2: re-aimed by content - the end narrowed to an excuse of the character law's values)"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-99-clear-writes-no-values",
+    "file": "server-account/src/review.js",
+    "old": "law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END,",
+    "new": "law_excused = law_sig,",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the clear writes the signature alone: the state staff read holds again"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-99-value-dropped",
+    "file": "server-account/src/judge.js",
+    "old": "=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`",
+    "new": "=`",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the values name each finding's key and no value - one excuse stands for any purse (AUDIT RPT1026 C5: re-aimed by content - the cut is marked)"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-99-rise-unsaid",
+    "file": "server-account/src/verdict.js",
+    "old": "  if (law > 0 && (sig !== row.law_sig || (rising && values !== (row.law_v ?? null)))) {",
+    "new": "  if (law > 0 && sig !== row.law_sig) {",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the hold an excuse's end starts on the same signature is written as no finding - staff read the excused purse as the last"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-99-help-words",
+    "file": "tools/realmReview.mjs",
+    "old": "  '         (clear lifts the hold and EXCUSES the finding standing, exactly as it stands now - its pieces, purse, bank,',\n",
+    "new": "",
+    "tests": [
+      "test/server/rpt1026_ledgerlaw.test.js"
+    ],
+    "note": "the clear's usage lines say nothing of the excuse again"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-98-paid-repair-spends-nothing",
+    "file": "src/systems/repairService.js",
+    "old": "  spendOwnMends(item);\n  item.currentCondition = item.maxCondition;",
+    "new": "  item.currentCondition = item.maxCondition;",
+    "tests": [
+      "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
+    ],
+    "note": "the law before the fix: a smith's restore pays out again what wear spent"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-98-credit-unspent",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  spendOwnMends(item, from);   // RPT1026-LEDGERLAW",
+    "new": "  // RPT1026-LEDGERLAW",
+    "tests": [
+      "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
+    ],
+    "note": "the variant: a kit's credit adds to a count wear already spent"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-98-spend-to-condition",
+    "file": "src/systems/item/foundMark.js",
+    "old": "Math.max(0, Math.trunc(at ?? 0) - item.foundCondition)",
+    "new": "Math.max(0, Math.trunc(at ?? 0))",
+    "tests": [
+      "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
+    ],
+    "note": "the count cut to the condition, never to what it holds above the mark"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-98-job-restores-whole-raw",
+    "file": "src/systems/repairService.js",
+    "old": "    if (isRepairFinished(item, nowMinutes)) repairWhole(item);",
+    "new": "    if (isRepairFinished(item, nowMinutes)) item.currentCondition = item.maxCondition;",
+    "tests": [
+      "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
+    ],
+    "note": "a finished job's restore past the one door"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-98-keyed-instant-raw",
+    "file": "src/scenes/worldModes.js",
+    "old": "      repairWhole(it);   // the InstantRepairs branch (:1062-1065)",
+    "new": "      it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)",
+    "tests": [
+      "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
+    ],
+    "note": "the keyed flow's InstantRepairs arm restores past the one door"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-98-counter-instant-raw",
+    "file": "src/scenes/worldModes.js",
+    "old": "        for (const it of staged) repairWhole(it);",
+    "new": "        for (const it of staged) it.currentCondition = it.maxCondition;",
+    "tests": [
+      "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
+    ],
+    "note": "the counter's InstantRepairs arm restores past the one door"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-269-goods-row-untagged",
+    "file": "src/ui/marketTab.js",
+    "old": "    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag()));",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_ledgerlaw_stolen.test.js"
+    ],
+    "note": "the report: the market's Goods row says nothing of the theft"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-269-goods-bar-silent",
+    "file": "src/ui/marketTab.js",
+    "old": "    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine()));",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_ledgerlaw_stolen.test.js"
+    ],
+    "note": "the picked Goods row says nothing of what buying it means"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-269-trader-row-untagged",
+    "file": "src/ui/vendor/vendorTab.js",
+    "old": "    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag()));",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_ledgerlaw_stolen.test.js"
+    ],
+    "note": "the report: a trader's row says nothing of the theft"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-269-look-unsaid",
+    "file": "src/systems/item/itemLook.js",
+    "old": "stolen: isStolen(it) ? stolenLine() : null",
+    "new": "stolen: null",
+    "tests": [
+      "test/ui/rpt1026_ledgerlaw_stolen.test.js"
+    ],
+    "note": "a trader's piece looked at says nothing of the theft"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-269-look-undrawn",
+    "file": "src/ui/vendor/vendorTab.js",
+    "old": "  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen));",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_ledgerlaw_stolen.test.js"
+    ],
+    "note": "the look's node draws no theft"
+  },
+  {
+    "name": "RPT1026-LEDGERLAW-269-page-untagged",
+    "file": "src/ui/vendor/vendorPage.js",
+    "old": "${isStolen(r.item) ? ` · ${stolenTag()}` : ''}",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_ledgerlaw_stolen.test.js"
+    ],
+    "note": "the Vendor page's search says nothing of the theft"
+  }
+]

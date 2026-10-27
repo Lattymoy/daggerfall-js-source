@@ -250,7 +250,7 @@ test('REST1 the enhanced card online: the channel card with its meter, the night
 
 test('REST1 by source: every host that rests online names its rest point - the open road\'s fire or a pressed bed, a building (CanRest decides), a dungeon\'s fire - and the save keeps the night\'s stamp', () => {
   assert.match(rd('src/scenes/world.js'), /restPoint: \(\) => \(_restFromBed \? \{ kind: 'bed', where: null \} : camps\.restPointAt\(/);
-  assert.match(rd('src/scenes/worldModes.js'), /restPoint: \(\) => \{ const p = interiorRestPlaceHere\(\); return \{ kind:/);
+  assert.match(rd('src/scenes/worldModes.js'), /restPoint: \(\) => interiorRestSpot\(interiorRestPlaceHere\(\), \{ pressedBed: _restFromBed, fireNear: interiorCamps\.fireNear\(player\.pos\) \}\),/);   // PIN MOVED (RPT1026-MISC BED-PRESS-INDOOR): the place's law in restSession.js, a bed pressed among its beds
   assert.match(rd('src/scenes/dungeonContext.js'), /restPoint: \(\) => \(_restFromBed \|\| bedInReach\(dungeonBeds, _fpFeet\) \? \{ kind: 'bed', where: null \} : _fpFeet \? camps\.restPointAt\(_fpFeet\) : null\)/);   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: and a bed
   assert.match(rd('src/systems/save/save.js'), /\n  'restNightAt',\n/);   // in ENTITY_FIELDS (LEGACY4's blessings appended after it)
 });

@@ -21,6 +21,7 @@ import {
   PROFESSIONS, SAW_RECIPES, CURE_RECIPES, SMELT_RECIPES, MASON_RECIPES, COOK_FIRE, WEAVERS_STOCK, COUNTER_ONLY, trackOf, WEAVE_RECIPES, SPIN_RECIPES,
 } from '../../../src/net/professionLaw.js';
 import { RECIPES, COOKING_RECIPES, craftXp, cookXp } from '../../../src/net/recipeLaw.js';
+import { xpSources, gradeNote } from '../../../src/ui/professions/craftHall.js';
 import { LOCALE_CATALOG } from '../../../src/systems/localeCatalog.js';
 import {
   setProfessionsPages, drawProfessionsPage, resetProfPages, CRAFT_HOW, GATHER_HOW, FISHING_HOW, ALCHEMY_HOW, ENCHANTING_HOW,
@@ -67,6 +68,8 @@ function panes() {
 test('CRAFT-HOWTO THE PAGE: every profession\'s pane says how it is done - each craft its CRAFT_HOW words where a gathering one\'s stand (Provisioning its brew and then its cooking, Enchanting its disenchanting), every gatherer as before; no profession of the ten without one (mutants: Smithing\'s, Building\'s, Outfitting\'s and the cooking line dropped; the crafts\' branch, the brew, the disenchanting, the three gatherers\', Hunting\'s and Fishing\'s dropped)', () => {
   const said = panes();
   assert.deepEqual(Object.keys(said), PROFESSIONS.map((p) => p.id), 'the ten, every one drawn');
+  // CRAFT-HALL: a pane's last note is its grade note where it has one (craftHall.js gradeNote), after the how-to
+  for (const p of PROFESSIONS) if (gradeNote(p.id, 0)) assert.equal(said[p.id].pop(), gradeNote(p.id, 0), `${p.name}: its grade note last`);
   assert.deepEqual(said, {
     mining: [GATHER_HOW.mining, MINING_GROUND_LINE],
     logging: [GATHER_HOW.logging],
@@ -100,12 +103,13 @@ function stationQuestions() {
   }
   return out;
 }
-/** A shop type's words, as the page says them (a Weaponsmith's), and as the Tutorials' list says them (Weaponsmiths). */
+/** A shop type's words, as the page says them, and as the Tutorials' list says them. PIN MOVED (PLAIN-TEXT): the page
+ *  names the shops as the list does (Weaponsmiths), not one shop's (a Weaponsmith's), to say it within forty words. */
 const SHOP_WORDS = Object.freeze({
-  WeaponSmith: ['Weaponsmith\'s', 'Weaponsmiths'], Armorer: ['Armorer\'s', 'Armorers'], FurnitureStore: ['Furniture Store\'s', 'Furniture Stores'],
-  ClothingStore: ['Clothing Store\'s', 'Clothing Stores'], GeneralStore: ['General Store\'s', 'General Stores'], PawnShop: ['Pawn Shop\'s', 'Pawn Shops'],
-  GemStore: ['Gem Store\'s', 'Gem Stores'], Alchemist: ['Alchemist\'s', 'Alchemists'],
-  GuildHall: ['Mages Guild hall', 'Mages Guilds'],   // POTION-DOOR: the Mages Guild's hall an alchemy station (alchemyHere); the tutorial's list within its sixty words
+  WeaponSmith: ['Weaponsmiths', 'Weaponsmiths'], Armorer: ['Armorers', 'Armorers'], FurnitureStore: ['Furniture Stores', 'Furniture Stores'],
+  ClothingStore: ['Clothing Stores', 'Clothing Stores'], GeneralStore: ['General Stores', 'General Stores'], PawnShop: ['Pawn Shops', 'Pawn Shops'],
+  GemStore: ['Gem Stores', 'Gem Stores'], Alchemist: ['Alchemists', 'Alchemists'],
+  GuildHall: ['Mages Guild halls', 'Mages Guilds'],   // POTION-DOOR: the Mages Guild's hall an alchemy station (alchemyHere); the tutorial's list within its sixty words
 });
 /** Each craft's how-to by the station questions it names. */
 const HOW_OF = () => ({
@@ -120,41 +124,48 @@ test('CRAFT-HOWTO THE WORDS ARE THE CODE\'S: each craft names the shops its stat
     assert.ok(qs[q].types.length, `${q}: a shop answers it`);
     for (const ty of qs[q].types) assert.ok(words.includes(SHOP_WORDS[ty][0]), `${q}: its ${ty} named - "${SHOP_WORDS[ty][0]}"`);
     assert.ok(qs[q].home, `${q}: a home's station answers it`);
-    assert.match(words, /your own home/, `${q}: and the words say so`);
+    assert.match(words, /your home/, `${q}: and the words say so`);   // PIN MOVED (PLAIN-TEXT): "your own home" said plainly
   }
   // a Mages Guild hall is the enchanting station's shop, said by the item maker's own page
   assert.match(qs.enchantHere.body, /BUILDING_TYPES\.GuildHall && interiorBuilding\.factionId/);
   assert.match(qs.enchantHere.body, /=== GUILD_GROUPS\.MagesGuild\) return \{ kind: 'shop'/);
-  assert.match(ENCHANTING_HOW(0), /at an enchanting station, in a Mages Guild hall or your own home, from the Stores page/, 'PIN MOVED (VOICE2): the station\'s places in the sentence, not in brackets');
+  assert.match(ENCHANTING_HOW(0), /at an enchanting station, on the Crafting page\. Mages Guild halls and your home have one\./, 'PIN MOVED (PLAIN-TEXT): the station\'s places said plainly');
   // CARP-YARD: a joinery's bench is the street's workbench question (scenes/world.js)
   assert.match(src('src/scenes/world.js'), /workbench: \(\) => workbenchHere\(\),\s+\/\/ CARP-YARD: and a joinery's in the street/);
-  assert.match(CRAFT_HOW.building(), /a Furniture Store's, a joinery's or one in your own home/);
+  assert.match(CRAFT_HOW.building(), /^Carpentry needs a workbench: Furniture Stores, joineries and your home have one\./, 'PIN MOVED (PLAIN-TEXT)');
   // the fire is any lit one, and nobody's to charge for
   assert.deepEqual(COOK_FIRE, { kind: 'fire', fee: 0 });
-  assert.match(CRAFT_HOW.provisioning(), /^Cook at any lit fire, such as a campfire, a hearth or a brazier: stand close to its flame/);
-  // every one is worked on the Stores page, the Holdings tab's (enhancedMenu.js: the Professions page the Stats rail's)
-  assert.deepEqual(PROF_PAGE_SECTIONS.map(([id]) => id), ['professions', 'stores']);
+  assert.match(CRAFT_HOW.provisioning(), /^Cook at any lit fire: a campfire, a hearth or a brazier\. Stand close to the flame\./, 'PIN MOVED (PLAIN-TEXT)');
+  // PIN MOVED (CRAFT-HALL): every one is worked on the Crafting page, beside the Professions page on the Stats rail; the
+  // Stores page is the Holdings tab's. The key opens the Crafting page at a station, and that page says so, not each how-to.
+  assert.deepEqual(PROF_PAGE_SECTIONS.map(([id]) => id), ['professions', 'crafting', 'stores']);
   const menu = src('src/ui/enhanced/enhancedMenu.js');
-  assert.match(menu, /const PROF_HOLD_SECTIONS = Object\.freeze\(PROF_PAGE_SECTIONS\.filter\(\(\[id\]\) => id !== 'professions'\)\);/);
+  assert.match(menu, /const PROF_HOLD_SECTIONS = Object\.freeze\(PROF_PAGE_SECTIONS\.filter\(\(\[id\]\) => !PROF_STATS_PAGES\.includes\(id\)\)\);/);
   assert.match(menu, /\['holdings', 'Holdings'\]/);
-  for (const k of ['smithing', 'building', 'outfitting', 'provisioning']) assert.match(CRAFT_HOW[k](), /open the Stores page (there )?\(Holdings > Stores\)/i, `${k}: where it is worked`);
+  for (const k of ['smithing', 'building', 'outfitting', 'provisioning']) assert.doesNotMatch(CRAFT_HOW[k](), /Stores page/, `${k}: worked on the Crafting page`);
+  assert.match(src('src/ui/professions/profPages.js'), /'Stand at a station to craft\. Press \{key\} there to open this page on it\.'/);
 
   // THE WORKS: the forge's ingots of mined ore pay Smithing; a saw and a cure pay nothing, a mason's work Building
   const ingots = SMELT_RECIPES.filter((r) => r.out.startsWith('ingot:') && r.inputs.every((i) => /^(metal|ore):/.test(i.key)));
   assert.ok(ingots.length >= 8 && ingots.every((r) => trackOf(r.xp) === 'smithing'), 'the forge smelts the ore you mine, for Smithing XP');
-  assert.match(CRAFT_HOW.smithing(), /The Forge smelts the ore you mine into ingots, and the Anvil makes weapons, armor and tools from them, or from raw ore by smelting it first\./, 'PIN MOVED (VOICE2): armor, American spelling');
-  assert.match(CRAFT_HOW.smithing(), /Smelting and every piece you make earn Smithing experience\.$/);
+  assert.match(CRAFT_HOW.smithing(), /It smelts ore into ingots; its anvil makes weapons, armor and tools, even from raw ore\./, 'PIN MOVED (PLAIN-TEXT)');
+  // PIN MOVED (CRAFT-HALL, PLAIN-TEXT): what pays XP is said once, in the page's What raises rows (craftHall.js xpSources)
+  const raises = (id) => Object.fromEntries(xpSources(id, 0));
+  const pays = (v) => /^\d[\d,]* XP\b/.test(v ?? '');
+  assert.ok(pays(raises('smithing')['Smelting an ingot']) && pays(raises('smithing')['A piece at the anvil or jeweler\'s bench']));
   assert.ok(SAW_RECIPES.length && SAW_RECIPES.every((r) => r.xp === null && r.station === 'workbench'), 'a saw pays no XP');
-  assert.match(CRAFT_HOW.building(), /saws the logs you fell into planks/);
-  assert.match(CRAFT_HOW.building(), /Every piece, cut and mix earns Building experience; sawing earns none\.$/);   // AUDIT FB1018D L1-5: each XP clause whole
+  assert.match(CRAFT_HOW.building(), /It saws logs into planks/);
+  assert.equal(raises('building')['Sawing planks'], 'No XP');   // AUDIT FB1018D L1-5: each XP clause whole
+  assert.ok(pays(raises('building')['A piece at the workbench']) && pays(raises('building')['A cut or mix at the mason\'s bench']));
   assert.ok(MASON_RECIPES.every((r) => trackOf(r.xp) === 'building' && r.station === 'mason'), 'the cut and the mix pay Building');
   assert.deepEqual(MASON_RECIPES.map((r) => r.id), ['cut:stone', 'mix:mortar']);
   assert.ok(CURE_RECIPES.length && CURE_RECIPES.every((r) => r.xp === null && r.station === 'loom' && r.inputs[0].key.startsWith('hide:')), 'a cure pays no XP');
-  assert.match(CRAFT_HOW.outfitting(), /tanning rack cures the hides you skin into leather/);
+  assert.match(CRAFT_HOW.outfitting(), /It cures hides into leather/);
   // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): the loom weaves Linen and spins Wool, and neither pays XP, as a cure pays none
-  assert.match(CRAFT_HOW.outfitting(), /Every piece earns Outfitting experience; curing, weaving and spinning earn none\.$/);
+  assert.equal(raises('outfitting')['Curing, weaving and spinning'], 'No XP');
+  assert.ok(pays(raises('outfitting')['A piece at the loom']));
   assert.ok([...WEAVE_RECIPES, ...SPIN_RECIPES].every((r) => r.xp === null && r.station === 'loom'), 'a weave and a spin pay no XP');
-  assert.match(CRAFT_HOW.outfitting(), /the loom weaves Root Tendrils into Linen and spins furs into Wool/);
+  assert.match(CRAFT_HOW.outfitting(), /weaves Root Tendrils into Linen and spins furs into Wool/);
   assert.deepEqual([...new Set(WEAVE_RECIPES.filter((r) => r.out === 'cloth:linen').map((r) => r.inputs[0].key.slice(3)))], ['12'], 'Root Tendrils, template 12');
   assert.ok(SPIN_RECIPES.length && SPIN_RECIPES.every((r) => r.out === 'cloth:wool' && r.inputs[0].key.startsWith('hide:')), 'Wool from hides');
   // every piece a station makes pays its craft's track, a dish Provisioning's as a brew does, and Linen and Wool are bought
@@ -165,16 +176,18 @@ test('CRAFT-HOWTO THE WORDS ARE THE CODE\'S: each craft names the shops its stat
   }
   assert.deepEqual(WEAVERS_STOCK.map((s) => s.key), ['cloth:linen', 'cloth:wool']);
   assert.ok(COUNTER_ONLY.includes('cloth:linen') && COUNTER_ONLY.includes('cloth:wool'));
-  assert.match(CRAFT_HOW.outfitting(), /The Weavers sell Linen and Wool too, at a Clothing Store's loom or a Notice Board's Market, but cloth bought with silver earns no first-time bonus/);   // PIN MOVED (CLOTH-GEMS); (WOVEN-PAYS): the wall named silver
+  assert.match(CRAFT_HOW.outfitting(), /Weavers sell Linen and Wool too\.$/);   // PIN MOVED (CLOTH-GEMS; PLAIN-TEXT: where they sell is the loom's counter and the Market's own)
+  // WOVEN-PAYS: cloth bought with silver earns no first-time bonus - said once, in What raises (CRAFT-HALL, PLAIN-TEXT)
+  assert.ok(raises('outfitting')['Your first piece at each grade (not of cloth bought with silver)']);
   assert.ok(RECIPES.some((r) => r.kind === 'dish') && RECIPES.filter((r) => r.kind === 'dish').every((r) => trackOf(r.profession) === 'provisioning'), 'a dish pays Provisioning');
-  assert.match(CRAFT_HOW.provisioning(), /Brewing and cooking both earn Provisioning experience\.$/);
+  assert.ok(pays(raises('provisioning')['Cooking a dish']) && raises('provisioning')['Your first of each dish and potion']);
   // a dish's goods: the meat a body gives, the net's fish, the herbs and the Basket's food
   const goods = new Set(COOKING_RECIPES.flatMap((r) => r.inputs.map((i) => i.key.split(':')[0] === 'food' ? i.key : 'herb')));
   assert.deepEqual([...goods].sort(), ['food:apple', 'food:egg', 'food:fish', 'food:meat', 'food:mushroom', 'food:orange', 'herb']);
-  assert.match(CRAFT_HOW.provisioning(), /from the meat you skin, the fish you net, herbs and the food a Basket finds, and go to your pack/);
+  assert.match(CRAFT_HOW.provisioning(), /Dishes use the meat you skin, the fish you net, herbs and Basket finds, and go to your pack\.$/);
   // BAG-CRAFT: the brew reads what is carried as every station does - the brew's words said the Stores alone
   assert.match(src('src/ui/professions/profPages.js'), /function drawAlchemyStation[\s\S]*?const held = \(k\) => workOf\(book, k\);/);
-  assert.match(ALCHEMY_HOW, /from the Stores page, with what you carry or keep in your Stores\./, 'PIN MOVED (VOICE2): the brew\'s words reworded, the carried goods kept');
+  assert.match(ALCHEMY_HOW, /from what you carry or store\./, 'PIN MOVED (PLAIN-TEXT): the brew\'s words reworded, the carried goods kept');
 });
 
 test('CRAFT-HOWTO THE TUTORIAL: a Crafting page among Professions & Survival, after Professions, popping with the first gather beside it - every station\'s shop named as the host answers it, the Stores page where the menu keeps it, found by the pane\'s search; the Professions page no longer says its key opens the Stores (mutants: the page moved off its group; a shop dropped from its list; the seam dropped; the Professions page\'s old words)', () => {
@@ -189,7 +202,7 @@ test('CRAFT-HOWTO THE TUTORIAL: a Crafting page among Professions & Survival, af
   const words = [...body, ...points].join(' ');
   // AUDIT FB1018D L1-6: by the key - "Menu > Holdings" is the Enhanced menu's alone (the Classic skin's Escape is DFU's
   // pause, no tabs), and the key opens the pages on either skin (ui/pauseDoor.js profPageAt)
-  assert.match(body[0], /stand at one, press \[DOWN\] and open Holdings > Stores\. Cook at any fire\.$/);
+  assert.match(body[0], /stand at a station and press \[DOWN\]: the Crafting page opens on it\. Cook at any fire\.$/);   // PIN MOVED (CRAFT-HALL); the page within TUT1's sixty words
   assert.doesNotMatch(words, /Menu >/);
   // every shop a station question answers, as the list names them
   const qs = stationQuestions();
@@ -210,10 +223,11 @@ test('CRAFT-HOWTO THE TUTORIAL: a Crafting page among Professions & Survival, af
   const prof = tutorialText(tutorialById('professions'), () => 'DOWN').body.join(' ');
   assert.doesNotMatch(prof, /opens them and your Stores/);
   assert.match(prof, /\[DOWN\] opens them, and your stored goods are under Holdings > Stores in the same window\.$/);
-  assert.match(src('src/ui/pauseDoor.js'), /if \(profPageAt\(hooks\.at\)\) \{\n {4}if \(!profPagesShown\(\)\) \{ hudText\(profPagesClosedLine\(\)\); return null; \}\n {4}if \(typeof document !== 'undefined'\) return enhancedPauseOverlay\(show, hooks\);/,
+  // PIN MOVED (CRAFT-HALL): at a station the key's page is the Crafting page (professionsKeyAt)
+  assert.match(src('src/ui/pauseDoor.js'), /if \(profPageAt\(hooks\.at\)\) \{\n {4}if \(!profPagesShown\(\)\) \{ hudText\(profPagesClosedLine\(\)\); return null; \}\n {4}\/\/ [^\n]*\n {4}if \(typeof document !== 'undefined'\) return enhancedPauseOverlay\(show, hooks\.at === 'professions' \? \{ \.\.\.hooks, at: professionsKeyAt\(\) \} : hooks\);/,
     'the key\'s page opens the tabbed window on either skin - where Holdings > Stores is');
   // AUDIT FB1018D L1-7: and the key's Controls row says the same - it opens the Professions page, the Stores a tab away
-  assert.equal(actionLabel('Professions'), 'Open your Professions page (online)');
+  assert.equal(actionLabel('Professions'), 'Open your Professions page, or the Crafting page at a station (online)');   // PIN MOVED (AUDIT HORIZONTAL A7): at a station the key lands on the Crafting page, and its row says so
 });
 
 test('CRAFT-HOWTO IN EVERY WHOLE LANGUAGE: the new words are drafted in each language the catalog holds whole, the Crafting page\'s last point naming the key it fills (the l10n gate holds the rest)', () => {
