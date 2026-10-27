@@ -959,6 +959,7 @@ import { readWildReceipt, wildFallGraceS } from '../net/wild/wildReceipt.js';   
 import { WILD_REF, wildKin, sameGuild } from '../net/wild/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD); MAC (2026-10-14): and its kin, one law with the referee's
 import { createWildFight } from '../net/wild/wildFight.js';
 import { createWildRemains, remainsMine, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
+import { wildSelf } from '../net/wild/wildSelf.js';   // WILD-HUBLESS: my account in the zone, the hub's or the signed-in session's
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
 import { WILD_REMAINS_MS, WDUN_SALT, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
@@ -23041,7 +23042,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  to carry first, mine to carry once its grace has gone by with no remains of theirs in the room (wildFallGraceS: none
    *  when it was signed with them gone - WILD-REJOIN). */
   const wildRcIn = (g, room) => {
-    const c = readWildReceipt(g.rc), me = social?.acct ?? null;
+    const c = readWildReceipt(g.rc), me = wildSelf(social, appStorage());   // WILD-HUBLESS: a game the hub has not seated still knows its own fall
     if (!c || c.r !== g.r || !me) return;
     if (c.f === me) { wildTakeDrop(g.rc, room); return; }
     if (c.k !== me || _wildSeize.has(c.r)) return;
@@ -23533,7 +23534,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     pool: () => (wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null)),
     toScene: (p) => onlineToScene({ x: p[0], y: p[1], z: p[2] }),
     canTake: (rec) => rec.mine || !(rec.oid && (social?.isPartyPeer(rec.oid) || sameGuild((online?.drawable?.() ?? []).find((d) => d.id === rec.oid)?.gt, myGuildTag()))),   // PVPDUNGEONS: party and guild members cannot take a fallen friend's pile
-    mine: (rec) => remainsMine(rec, social?.acct ?? null, online?.id ?? null, _wildMine?.r ?? null),   // WILD-REMAINS-LOSS: by the fallen's account, never by who carried the deposit
+    mine: (rec) => remainsMine(rec, wildSelf(social, appStorage()), online?.id ?? null, _wildMine?.r ?? null),   // WILD-REMAINS-LOSS: by the fallen's account, never by who carried the deposit
     pack: () => (playerEntity.items ??= []),
     mint: (list) => validLootList(list),
     addItem: (list, item) => (isGoldPieces(item) ? addGoldPieces(playerEntity, item.stackCount ?? 1) : addItem(list, item)),   // WILD GOLD: coin goes to the purse
@@ -23543,7 +23544,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     say: (l) => townTalk.say(l),
     now: () => performance.now(),
     nameOf: (item) => itemLongName(item),
-    me: () => social?.acct ?? null,   // INT9: the killer's piece, mine alone
+    me: () => wildSelf(social, appStorage()),   // INT9: the killer's piece, mine alone (WILD-HUBLESS: hub or no hub)
     collect: (cr, at) => wildEscrow.collectHeard(cr, at),   // MAC (2026-10-14): the room's collect of my piece in escrow, carried to the service
   });
   setHudZone(() => (wildHere() ? { name: `${WILD_TEXT.chip} - ${zoneRingName(wildRing())}, ${wildRingBonus(wildRing())}`, foot: `${wildRing()}/${WILD_RINGS}` } : null));   // WILD1: the HUD's glyph, on the enhanced skin...

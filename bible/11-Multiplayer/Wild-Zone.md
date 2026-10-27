@@ -362,7 +362,9 @@ with the minutes left.
   laid by the killer, whose socket's name and peer had made it "Traveller" and the killer's own
   (`wildRemains.js:"export const remainsMine = "`). The room checks a deposit's order with its verifying key loaded
   first: a room woken from hibernation since its last hello refused every deposit, and the drop the service had taken
-  lay nowhere.
+  lay nowhere. A game knows its own account in the zone by the hub's word, else by its signed-in session's
+  (`wildSelf.js:"export const wildSelf = "`, WILD-HUBLESS): a game the hub had not seated never took its own drop, and
+  the fallen rose holding what its killer's seizure had put in the remains.
 
 - NOT A FRIEND'S (PVPDUNGEONS, the owner: "Party/guildmembers cant pick it up"): a fallen's remains are theirs and
   their foes', never their party's or their guild's. The room refuses the take
@@ -1055,4 +1057,5 @@ AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/au
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`):
 `test/systems/wild/wildrejoin.test.js`, int9's WILD-REJOIN THE SERVICE, `tools/mutants/wildrejoin.json` (22, all dead).
 WILD-REMAINS-LOSS (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`): `test/net/wildremainsloss.test.js`,
-`tools/mutants/wildremainsloss.json` (9, all dead).
+`tools/mutants/wildremainsloss.json` (9, all dead); WILD-HUBLESS `test/net/wildself.test.js`,
+`tools/mutants/wildself.json` (2, all dead).

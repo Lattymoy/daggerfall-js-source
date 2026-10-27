@@ -1,0 +1,16 @@
+[
+  {
+    "name": "WILD-HUBLESS-the-session-never-read",
+    "file": "src/net/wild/wildSelf.js",
+    "old": "export const wildSelf = (social, storage) => social?.acct || storedSession(storage)?.id || null;",
+    "new": "export const wildSelf = (social, storage) => social?.acct || null;",
+    "tests": ["test/net/wildself.test.js"]
+  },
+  {
+    "name": "WILD-HUBLESS-the-session-over-the-hub",
+    "file": "src/net/wild/wildSelf.js",
+    "old": "export const wildSelf = (social, storage) => social?.acct || storedSession(storage)?.id || null;",
+    "new": "export const wildSelf = (social, storage) => storedSession(storage)?.id || social?.acct || null;",
+    "tests": ["test/net/wildself.test.js"]
+  }
+]
