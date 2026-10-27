@@ -79,6 +79,40 @@ export function frameFitBudget({ intervalMs, busyMs, streamingMs = 0, awaited = 
   return Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_MS, left));
 }
 
+/** BOOT-HIDDEN: what a breath resumed by a turn hears, where a frame's would hear its timestamp. */
+export const TURNED = Symbol('turned');
+
+/** BOOT-HIDDEN: one turn of the event loop - a message to itself, which no background throttling holds. */
+function nextTurn(fn) {
+  const channel = new globalThis.MessageChannel();
+  channel.port1.onmessage = () => {
+    channel.port1.close();
+    fn();
+  };
+  channel.port2.postMessage(null);
+}
+
+/**
+ * BOOT-HIDDEN (bible/01-Overview/Desktop-App.md): THE YIELD A HIDDEN BOOT CAN WAKE FROM. A minimized window gets no
+ * animation frames at all on Windows, whatever the shell's background throttling says (measured in the desktop app:
+ * the boot stood at its first pixel until the window came back), so a breather waiting on the next frame waited for the
+ * player. In the desktop app (a `daggerShell` bridge) a hidden page yields one event-loop turn instead: the build goes
+ * on, and nothing is drawn that nobody sees. The browser build keeps the frame - a hidden tab still waits, as Chrome's
+ * own background rules have it. A slice resumed by a turn is not lent (createBreather): no frame sampled the time
+ * between, and the first frame back would read the whole hidden build as its own script.
+ * @param {(resumedBy?: unknown) => void} fn
+ * @param {{ shell?: unknown, doc?: { hidden?: boolean } | undefined, raf?: (fn: () => void) => unknown, turn?: (fn: () => void) => void }} [seams]
+ */
+export function breathFrame(fn, {
+  shell = globalThis.daggerShell,
+  doc = globalThis.document,
+  raf = (f) => requestAnimationFrame(f),
+  turn = nextTurn,
+} = {}) {
+  if (shell && doc?.hidden) turn(() => fn(TURNED));
+  else raf(fn);
+}
+
 /**
  * @param {{now?: () => number, raf?: (fn: () => void) => unknown, sliceMs?: number, budget?: ?(() => number), onSlice?: ?((ms: number) => void), frames?: ?(() => number)}} [opts]
  *   PERF-EXT24: `budget` answers each slice's milliseconds as the slice
@@ -107,7 +141,7 @@ export function frameFitBudget({ intervalMs, busyMs, streamingMs = 0, awaited = 
  */
 export function createBreather({
   now = () => performance.now(),
-  raf = (fn) => requestAnimationFrame(fn),
+  raf = (fn) => breathFrame(fn),   // BOOT-HIDDEN: the next frame, or a turn while the desktop app's page is hidden
   sliceMs = BUILD_SLICE_MS,
   budget = null,
   onSlice = null,
@@ -125,9 +159,9 @@ export function createBreather({
       if (spent < sliceBudget) return;
       b.yields++;
       if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside
-      await new Promise((resolve) => raf(resolve));
+      const resumedBy = await new Promise((resolve) => raf(resolve));
       sliceStart = now();
-      sliceFrame = framesNow();
+      sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for
       sliceBudget = budget ? budget() : sliceMs;
     },
     /** A new build starts a fresh slice (the awaits before it were someone else's). */

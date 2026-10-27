@@ -1166,6 +1166,57 @@ the GPU process killed by `chrome://gpucrash` in a hidden window wrote its own e
 `test/render/gputrail.test.js`, `test/tooling/gputrail_crashlog.test.js`, `test/tooling/gputrail_lost.test.js`; mutants:
 `tools/mutants/gputrail.json`, `tools/mutants/gputrail_lost.json`.
 
+## The compiled scripts are kept (CODE-CACHE, 2026-10-27)
+
+A player reported that the app loaded worse than the browser. Chrome keeps V8's code cache for an https site. Electron
+keeps none for a custom scheme unless the scheme asks for one (the CustomScheme privilege `codeCache`, "only works when
+`standard` is also set to true. Default false"). So `main.cjs` registers `dagger` with `codeCache: true`. The launcher's
+`dagger://launcher` shares the scheme and is cached too.
+
+Chromium's rule decides when the cache is used. The first load of a script writes a marker, and the second load
+produces the cache after the compile. The third and later loads consume it. Measured in the built app (Electron 42,
+Windows, an i9-12900KF with an RTX 5080), three launches on one new profile each, base and head interleaved:
+
+| launch | 1 | 2 | 3 |
+|---|---|---|---|
+| boot, base A / head / base B (s) | 28.8 / 26.8 / 26.5 | 11.0 / 9.4 / 9.4 | 11.0 / 9.4 / 9.2 |
+| compile on the main thread, base B / head (ms) | 639 / 531 | 612 / 664 | 607 / 623 |
+| compile off the main thread, base B / head (ms) | 320 / 296 | 320 / 298 | 303 / 6 |
+| `Code Cache/js` on head | 200 KB | 26.6 MB | 26.6 MB |
+
+Launch 3 consumed 748 scripts (25.7 MB), and V8 rejected none. Launch 2 paid 288 ms to produce the cache. The work the
+cache removes is the module compile, which Chromium streams on a worker thread. The main thread's compile is mostly lazy
+functions (`V8.CompileCode`), and the module cache does not hold them. So on this CPU the boot is no faster. A machine
+with fewer cores, where the worker competes with the main thread, is where the cache can show. Base A ran in an earlier
+slot, and its 1.6 s lead over the other two columns is drift, not the change.
+
+An update cannot be served stale code: every script in `dist/` has a content hash in its name, so a changed script is a
+new URL with no cache. Checked: one line added to `src/main.js` and the app rebuilt changed only `main-*.js`. On the
+profile above, that script compiled with no cache, its line ran, and the other 747 came from the cache. A script whose
+text changed at the same URL would rely on V8's own check of the cache alone. `dist/` has no such script.
+
+## The boot runs behind another window (BOOT-HIDDEN, 2026-10-27)
+
+The same player reported that the app did not load while its window was covered or minimized. The world's build yields
+between models (`src/systems/buildBreather.js`, PERF7), and it waited on the next animation frame. A hidden page gets
+none, so the boot stopped at its first pixel until the player looked again. Measured on the base, the boot stood at
+"building player pixel" from 7 s until the window came back at 90 s, minimized or covered alike (95.8 s each).
+
+Electron's `webContents.setBackgroundThrottling(false)` does not fix it. With it off from the load to the boot's end,
+the minimized page stayed `hidden` and the boot stalled the same (93.5 s). Windows gives a minimized window no frames,
+whatever the throttling says. So the fix is in the breather: in the desktop app (a `daggerShell` bridge), a hidden page
+yields one event-loop turn (a `MessageChannel` message) instead of a frame (`breathFrame`). The browser build keeps the
+frame - a hidden tab still waits, as Chrome's own background rules have it. A slice resumed by a turn is not lent to
+the frame clock (PERF-EXT24): no frame sampled it, and the first frame back would have read the whole hidden build as
+its own script.
+
+Measured in the built app, the throttling left as Electron's default: the cold boot took 26.6 s covered and 26.4 s
+minimized, where a visible one took 26.5-26.8 s; a warm minimized boot took 9.2 s. In play the throttling is the
+base's. Minimized, the page drew 8 frames in 8 s (base 0, full rate about 1,900). Covered after a visible boot, it drew
+0 (base 0). One limit: a window covered from the launch to the end of the boot keeps drawing about 100 frames a second
+while it stays covered, until its visibility next changes (seen with and without the throttling lift; the base never
+reaches play covered). Pins: `test/tooling/boot_hidden.test.js`.
+
 ## What deliberately did NOT move
 
 Music packs, texture packs and Morrowind data still live in IndexedDB

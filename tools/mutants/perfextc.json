@@ -496,8 +496,8 @@
   {
     "name": "PERF-EXT24-the-budget-is-asked-once-and-never-again",
     "file": "src/systems/buildBreather.js",
-    "old": "      sliceStart = now();\n      sliceFrame = framesNow();\n      sliceBudget = budget ? budget() : sliceMs;",
-    "new": "      sliceStart = now();\n      sliceFrame = framesNow();",
+    "old": "      sliceStart = now();\n      sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for\n      sliceBudget = budget ? budget() : sliceMs;",
+    "new": "      sliceStart = now();\n      sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -886,8 +886,8 @@
   {
     "name": "PERF-EXT24-review-the-resume-never-reads-the-count",
     "file": "src/systems/buildBreather.js",
-    "old": "      sliceFrame = framesNow();\n",
-    "new": "      sliceFrame = -1;\n",
+    "old": "      sliceFrame = resumedBy === TURNED ? null : framesNow();",
+    "new": "      sliceFrame = resumedBy === TURNED ? null : -1;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]

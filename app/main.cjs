@@ -338,9 +338,11 @@ async function locateArena2(win) {
 // ---- the dagger:// protocol ---------------------------------------
 // Standard + fetch-capable so the game's relative fetches, ESM
 // imports and workers behave exactly as they do over https.
+// CODE-CACHE (bible/01-Overview/Desktop-App.md): and V8's code cache, as Chrome keeps one for an https site - without
+// it every launch compiled the game's scripts again. Electron's default is off for a custom scheme.
 protocol.registerSchemesAsPrivileged([{
   scheme: 'dagger',
-  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
+  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, codeCache: true },
 }]);
 
 const MIME = {
