@@ -12,10 +12,20 @@
 // said there was none, the junction map was blank and a walk on a road ran at the open ground's rate. Past the table a
 // pixel's road and track bytes are TESA's layer's (world/arenaRoads.js arenaRoadByte - ROADS 1's compass, the same bits the
 // table holds, installed on each thread that reads it, the terrain worker's included); it has no rivers or streams. On
-// the table every byte is the mod's own, unchanged.
+// the table every byte is the mod's own, unchanged. The layer hands its reader in as it loads (setRoadsPastTable): this
+// file never imports it, for the account Worker bundles this file (world/spawnedDungeons.js, for hash32) and holds no
+// land past the Bay - its bundle and its deploy's path filter stay as they were (test/server/accountdeploy.test.js
+// ACC1-CI).
 // ═══════════════════════════════════════════════════════════════════
 import { MAP_W, MAP_H } from './roadNetwork.js';
-import { arenaRoadByte } from '../arenaRoads.js';   // BAY-LEFT-MAPS: the roads past the Bay's layer, a pixel's compass byte
+
+/** BAY-LEFT-MAPS: a road's or a track's compass byte past the table - (kind, x, y) => byte, kind 'roads' or 'tracks'.
+ *  world/arenaRoads.js sets its arenaRoadByte here as it loads; a thread that never loads the layer reads 0 past the
+ *  table, as one with no layer installed does.
+ *  @type {(kind: string, x: number, y: number) => number} */
+let roadsPastTable = () => 0;
+/** @param {(kind: string, x: number, y: number) => number} read */
+export const setRoadsPastTable = (read) => { roadsPastTable = read; };
 
 /** TravelOptionsMod.cs:73-75 - the four path arrays, in the mod's own
  *  index order (and Basic Roads' own: it answers `getPathData` by it). */
@@ -81,14 +91,15 @@ const onTable = (x, y) => x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;
  *  check at all (:810) - off the map it would read another row or
  *  throw; the port answers 0, which every caller already treats as
  *  "no path here". BAY-LEFT-MAPS: past the table a road's or a track's
- *  byte is the roads past the Bay's (world/arenaRoads.js arenaRoadByte -
- *  none while no layer is installed, so a thread with no land past the
- *  Bay reads 0 there as before), and a river's or a stream's none. A
+ *  byte is the roads past the Bay's (world/arenaRoads.js arenaRoadByte,
+ *  handed in by setRoadsPastTable - none while no layer is installed or
+ *  loaded, so a thread with no land past the Bay reads 0 there as
+ *  before), and a river's or a stream's none. A
  *  spawn's road test (world/spawnedDungeons.js pathFreePixel) reads it
  *  too: no ruin stands on a road past the Bay. */
 export function dataPoint(net, pathType, mapPixelX, mapPixelY) {
   if (!net) return 0;
-  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;
+  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;
   const arr = net[PATH_KEYS[pathType]];
   if (!arr) return 0;
   return arr[mapPixelX + (mapPixelY * MAP_W)] & 0xff;

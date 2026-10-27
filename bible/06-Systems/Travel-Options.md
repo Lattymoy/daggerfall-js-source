@@ -1501,11 +1501,16 @@ road ran at the open ground's rate (RATE-LAW's x60, not x100).
 
 **What it is now.** Past the table a road's and a track's byte are the roads past the Bay's own (`world/arenaRoads.js`
 arenaRoadByte - ROADS 1's compass, the bits the table holds); a river's and a stream's none (the roads past the Bay lay no
-water). With no layer installed it is 0, so a thread without the land reads what it read. On the table every byte is the
+water). With no layer installed it is 0, so a thread without the land reads what it read. The layer hands its reader to
+the path data as it loads (`world/road/pathData.js` setRoadsPastTable), and the path data never imports it: the account
+Worker bundles the path data (for `world/spawnedDungeons.js` hash32) and holds no land past the Bay, so its bundle and its
+deploy's path filter stay as they were (`test/server/accountdeploy.test.js` ACC1-CI). On the table every byte is the
 mod's, unchanged. The junction map's section is bounded by the world's grid (`world/worldWide/worldGrid.js` inWorldGrid),
 and the host's bytes come through dataPoint (an in-place edit of `scenes/world.js`); its dots past the Bay are the places
 found there (`06-Systems/Travel-View.md` BAY-LEFT-MAPS). The spawns' road test reads the same law, so no ruin past the
-Bay stands on a road. The jungle's roadside pairs read the table alone (`tablePathsDataPoint`): they stand astride the
+Bay stands on a road. Online no spawn stands past the Bay yet (AUDIT LEFT IN THE BAY A1 and A3); the layer is installed a
+region at a time, so a spawn there is to be decided where its region's roads are in, as SPAWN-ROADS' sweep does for the
+Bay's network. The jungle's roadside pairs read the table alone (`tablePathsDataPoint`): they stand astride the
 table's straight lanes, and past the Bay a road is a curve (`03-World/Roads.md` VOYAGER2).
 
 **Measured** (lane C's p9 on the freeware): at (1569, -430) the paths read 0, and the junction section about Solitude
@@ -1515,7 +1520,7 @@ reads, and the section about a road past the Bay asks 800 and lights 252.
 **The four hosts.** `scenes/world.js` reads its bytes through dataPoint (in place); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` run no Travel Options journey.
 
-Pins `test/systems/travel/bayleft_paths.test.js` (5). Mutants `tools/mutants/bayleftmaps.json` BLM-C10-* (7 here, and the
+Pins `test/systems/travel/bayleft_paths.test.js` (5). Mutants `tools/mutants/bayleftmaps.json` BLM-C10-* (8 here, and the
 junction dots' 2), all dead; `tools/mutants/to1.json` data-point-unchecked and i6-discovery-by-map-id-again re-aimed by
 content and run (dead). A departure from Travel Options, whose data is the Bay's: Port-Ledger A, BAY-LEFT-MAPS.
 

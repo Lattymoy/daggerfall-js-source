@@ -185,7 +185,7 @@
   {
     "name": "BLM-C10-past-the-table-0-as-before",
     "file": "src/world/road/pathData.js",
-    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
     "new": "  if (!onTable(mapPixelX, mapPixelY)) return 0;",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "BLM-C10-the-tracks-read-as-the-roads",
     "file": "src/world/road/pathData.js",
-    "old": "arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
-    "new": "arenaRoadByte('roads', mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "roadsPastTable('roads', mapPixelX, mapPixelY) & 0xff : 0;",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "BLM-C10-the-rivers-read-as-the-roads",
     "file": "src/world/road/pathData.js",
-    "old": "return pathType === PATH_ROADS || pathType === PATH_TRACKS ? arenaRoadByte(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
-    "new": "return arenaRoadByte(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
+    "old": "return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "return roadsPastTable(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
@@ -1033,6 +1033,15 @@
     "new": "      _csaPics.painting = renderer.uploadTexture(",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-layer-never-handed-in",
+    "file": "src/world/arenaRoads.js",
+    "old": "setRoadsPastTable(arenaRoadByte);",
+    "new": "void setRoadsPastTable;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
     ]
   }
 ]

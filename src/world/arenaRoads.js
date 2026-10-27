@@ -17,6 +17,7 @@
 // Nothing of Arena ships or crosses the wire (bible/01-Overview/Port-Doctrine.md): each player's roads are laid from
 // their own Daggerfall files, the same for every player.
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
+import { setRoadsPastTable } from './road/pathData.js';   // BAY-LEFT-MAPS: Travel Options' reads past the table are this layer's
 import { inBay } from './tamriel/tamrielFrame.js';
 
 /** TESA5: how deep inside its edge a Bay road may lie and still be joined, Bay pixels. */
@@ -191,6 +192,9 @@ export function arenaRoadTilePixels(tx, ty) {
 export const layerByte = (layer, kind, x, y) => layer?.[kind]?.get(beyondKey(x, y)) ?? 0;
 /** The installed layer's byte at a Bay pixel. */
 export const arenaRoadByte = (kind, x, y) => layerByte(_layer, kind, x, y);
+// BAY-LEFT-MAPS (bible/06-Systems/Travel-Options.md BAY-LEFT-MAPS): past the Bay's table, Basic Roads' path data reads this
+// layer - handed in as the module loads, so pathData.js need not import it (the account Worker bundles pathData.js).
+setRoadsPastTable(arenaRoadByte);
 /** Its corner byte at a Bay pixel, as the mod's (world/road/roadPainter.js pathCorners): the east neighbour's SW|NW bits and
  *  the west neighbour's NE|SE. */
 export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);
