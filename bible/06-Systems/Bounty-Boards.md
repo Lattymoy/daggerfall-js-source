@@ -371,6 +371,13 @@ packs' purse of its tier (huntMarkGold) and a mounted trophy under its name, nev
 board's; the service takes one a week a character, and only from the rung (`hunt-rung`). One is held at a time, Give
 up asks twice, and a mark held past the seats' Turning lapses.
 
+**Past the Bay too** (SHIP AUDIT, 2026-10-27, `01-Overview/audits/Audit-Ship-Ready.md` S3). A mark's id carried its
+board's town as the Bay's pixel (`m.<week>.<px>.<py>.<level>`, three unsigned digits, under 1000 x 500), so a board past
+the Bay - a capital's, an Arena town's, any west or north of the Bay - read its mark as none and posted none, and the
+service would have refused its clear. The town is the world's pixel now (`net/huntLaw.js` HUNT_MARK_ID_RE and
+parseHuntMarkId, `net/wire.js` worldPixelOk), as a board notice's is since LAIR-WORLD (section 12). The account service
+reads the same law. Pinned by `test/server/huntersmark_service.test.js` (THE LAW); `tools/mutants/shipaudit_hunt.json`.
+
 **A mate sees it named** (HUNTERS-MARK-II, 2026-10-27; it closes 12.8's FLAGGED line). A mark is a pure function of the
 week and the tier, so a mate's machine reads it off what the hunter's foe record already carries (`net/wire.js`
 validFoeRecord): an elite (`z`) and a leader (`rl`) that no raid tags (the frame's `rz`), of a kind that is its tier's

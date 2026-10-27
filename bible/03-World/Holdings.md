@@ -473,6 +473,18 @@ no harbours). `test/systems/naval/fb1020c_harbourreach.test.js`, `tools/mutants/
 Pin moved: `auditcaptsea.test.js` H1/P2 (the sounding's text names its shape). THE FOUR HOSTS as below: only
 `world.js` sounds a harbour.
 
+**A HARBOUR ON A WAY OUT** (SHIP AUDIT, 2026-10-27, `01-Overview/audits/Audit-Ship-Ready.md` S2). Lillandril had no ships
+once RELIEF-PEAKS raised the land past the Bay (`03-World/Tamriel.md` RELIEF-PEAKS) and its place stood a pixel west: the
+berths nearest the town's middle lay in a closed inlet along its east side, the mean of their shores' normals ran into the
+land past the inlet, no mouth stood within MOUTH_REACH, and `findHarbour` answered none - the open sea past the town's
+west side never sounded. Now, where the nearest berths find no mouth, the berths are taken again from the shores whose own
+way out - along her shore's normal, on the water alone - meets open water (`shipLife.js` findHarbour's `openOut`, `wet`).
+A harbour that found its mouth is never sounded again, so every port's berths stand as they did (the Bay's 106 among them).
+On the freeware every port past the Bay six berths again, every one standing (`portships_real.test.js`). Pinned by
+`test/systems/naval/harbour_inlet.test.js`; `tools/mutants/harbour_inlet.json` (3, dead). PIN MOVED: PORT-SHIPS'
+water-alone baseline (`portships_real.test.js`) - RELIEF-PEAKS' ground moved the banks: Sunhold's and Woodhearth's over
+the sea now, Windhelm's, Winterhold's, Shimmerene's and Skywatch's under it.
+
 THE FOUR HOSTS: `scenes/world.js` keeps the harbours (PORT-SHIPS: through `scenes/harbourHost.js`, which it constructs), stands the quays and hands the warp; a building's frame
 (`worldModes.js`) and a dungeon's (`dungeonContext.js`) have no sea, and the standalone street (`exterior.js`) no harbour.
 
