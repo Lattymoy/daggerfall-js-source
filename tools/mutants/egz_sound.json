@@ -191,8 +191,8 @@
   {
     "name": "EGZ-audio-scope-unread",
     "file": "src/systems/audio.js",
-    "old": "    const level = volume * this._scale;\n    if (!this._voiceTake(level)) return undefined;",
-    "new": "    const level = volume;\n    if (!this._voiceTake(level)) return undefined;",
+    "old": "    const level = volume * this._scale;\n    if (!this._voiceTake(level, true)) return undefined;",
+    "new": "    const level = volume;\n    if (!this._voiceTake(level, true)) return undefined;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]

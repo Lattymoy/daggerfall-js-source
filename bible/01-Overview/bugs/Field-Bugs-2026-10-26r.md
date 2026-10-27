@@ -1882,9 +1882,18 @@ counted. THE DEPARTURE: Unity's number, not Unity's law - Unity keeps a virtual 
 one-shot here is let go, and one that finds no voice never starts. Ledger A (VOICE-CAP).
 
 PINS. `test/systems/rpt1026_events_audio.test.js` (3): the law and the distance models; forty players' blows round my
-ear, at most 32 sounding, the stolen faded and stopped, a far one refused, a flat shot always finding a voice; the chains
-let go and the voices freed. The 62 audio pin files that were there pass (886 tests). Mutants: 6, dead. PIN MOVED:
-`auditgatherfeel.json` (two) and `egz_sound.json` (one) re-aimed by content. Record: `08-Audio/Audio.md` VOICE-CAP.
+ear, at most 32 sounding, the stolen faded and stopped, a far one refused, a flat shot at the crowd's own level finding a
+voice (AUDIT RPT1026 I2: at a real crowd's it did not - below); the chains let go and the voices freed. The 62 audio pin
+files that were there pass (886 tests). Mutants: 6, dead. PIN MOVED: `auditgatherfeel.json` (two) and `egz_sound.json` (one) re-aimed by content. Record: `08-Audio/Audio.md` VOICE-CAP.
+
+AUDIT RPT1026 I2 (2026-10-27): the page's own sounds were not safe from the bound. A peer's swing is played whole inside
+six metres at 1.1 (`net/remotePlayers.js` `PEER_SOUND_PROFILE`), louder at the ear than the blow that lands on me, my cry
+and my steps, so thirty-two peers swinging about me refused every one of mine and a near swing stole any that sounded;
+the pin's crowd had been built by hand at the flat shot's own level. Now a flat one-shot always takes a voice, the
+quietest positional one stolen for it, and a positional shot never steals a flat voice
+(`audio.js:"export function voiceRoom("`). Pinned by `test/systems/audit_rpt1026_events_audio.test.js` (the crowd's own
+producer); mutants `tools/mutants/audit_rpt1026_events.json` (I2, 6, dead); `egz_sound.json` EGZ-audio-scope-unread
+re-aimed by content.
 
 ### RPT1026-EVENTS GATE-WAY (219, 287) - `src/systems/eventGround.js` (new), `src/systems/portalStone.js`, `src/scenes/portalGates.js`, `src/scenes/horseCartPool.js`, `src/scenes/gate/gatePool.js`, `src/scenes/eliteGates/egArch.js`, `src/scenes/eliteGates/egCall.js`, `src/scenes/starfall/starfallHost.js`, `src/scenes/world.js`
 
@@ -1953,6 +1962,17 @@ the snap a griefer turns only after the company's minute; a second snap's lash i
 `sd20a_fight`, and `egseam_law`'s golden Orrery frames (the Hour's realm through the real Room, taken again: 229 frames,
 every one up to the held turn the seam's). Mutants: 9, dead; `sd11b.json` SD11b-L7H2-a-fresh-thread-never re-aimed by
 content. Record: `11-Multiplayer/Super-Dungeons.md` section 8 and ORRERY-HANDS. A relay change: RELAY_VERSION owed.
+
+AUDIT RPT1026 I1 (2026-10-27): held hands hold each other - a held hand waits while ANY other has turned within the
+company's minute - and the Hollow-long count took away the snap that had freed them. A team that spent its six apiece
+learning the gearing (each long turn mended) was held out of every thread by one held griefer account turning on: over
+the realm's own judge the Concord came in no slot of 24 against one griefer (the old law's 24). Now a hand the thread
+held out behind held hands alone is marked (`sdBrain.js:"export function orreryWaited("`) and begun again at the snap; a
+hand held out by a free hand's turns keeps its count, so the contest above stands. Against one, two, four or eight griefer
+accounts the learned team reaches the Concord in every slot. Pinned by `test/net/superDungeon/audit_rpt1026_events.test.js`
+(the realm's judge, `orreryJudge`, and its snap); mutants `tools/mutants/audit_rpt1026_events.json` (I1, 5, dead);
+`rpt1026_events.json` (two) and `sd11b.json` SD11b-L7H2-the-rights-unasked re-aimed by content. A relay change (`sdBrain.js`
+is in its bundle): RELAY_VERSION owed again.
 
 ### RPT1026-EVENTS CROWD-KIN (197) - `src/net/gate/gateCrowd.js`, `src/systems/combatVisuals.js`, `src/player/activate.js`
 

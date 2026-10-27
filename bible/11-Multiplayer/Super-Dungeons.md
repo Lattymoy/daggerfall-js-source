@@ -346,7 +346,9 @@ Six Ending-stones stand on a ring in the hall, each carved with one of the Bay's
   refused while anyone else has turned in the last minute - *"The stones will not answer you while others turn them."*
   A lone learner is never held, and a solver who knows the way never is; every guest turns as one (a guest is one
   click). One griefer spends at most a dozen turns of the forty-eight, once a Hollow. (RPT1026-EVENTS ORRERY-HANDS: the
-  count was begun again at every snap, so each griefer's dozen came back with the thread - below.)
+  count was begun again at every snap, so each griefer's dozen came back with the thread - below.) A hand the thread
+  held out behind held hands alone - a team that spent its six learning the gearing, kept out while one held hand
+  turned on - begins its count again at the snap (AUDIT RPT1026 I1, below).
 - **The hands named** (RPT1026-EVENTS ORRERY-HANDS). A stone's plaque, under the crosshair, names the last hand that
   turned it - *"Last turned by Ash"* - and the snap's line names the turners it found no help in, the peers its lash
   falls on: *"The Hour snaps back. No help came from Ash, Bram and 2 others."* (five named at most). The names
@@ -3597,6 +3599,17 @@ concealed body is drawn by nobody (INVIS-NET), so the forty could not tell which
   comes in every slot, the Hour snapping back at most once for every two griefer accounts. A lone learner is still
   never held (the company's minute is the law's), and a solver who knows the way never is. The bound is now per account
   per Hollow: a griefer with many accounts still spends a dozen turns with each.
+- **AUDIT RPT1026 I1 (2026-10-27): the hands held out by held hands, freed at the snap.** Held hands hold each other:
+  a held hand waits while ANY other has turned in the company's minute, so the first held hand to turn keeps the thread
+  while it turns. The snap had freed every hand; counted for the Hollow, nothing did. A team that spent its six apiece
+  learning the gearing (each long turn mended) was held out of every thread by one held griefer account turning on: over
+  the realm's own judge the Concord came in no slot of 24 against a single griefer, where the old law's came in all 24.
+  Now a hand told to wait while every hand it waits behind is held too is marked
+  (`sdBrain.js:"export function orreryWaited("`), and the snap begins its count again (`orreryRightsSnapped`); a hand
+  held out by a free hand's turns -
+  a solver's, a learner's inside its six - keeps its count, so the contest above stands. The learned team reaches the
+  Concord in every slot against one, two, four or eight griefer accounts. Pinned by
+  `test/net/superDungeon/audit_rpt1026_events.test.js`; `tools/mutants/audit_rpt1026_events.json` (I1, 5).
 - **Named** (`scenes/superDungeon/sdHall.js` `sdHallNamed`, `sdSnapLine`; `scenes/world.js` sdHallHeard): the realm's
   word on a turn already carried its turner's peer (`id`), and the snap's carried the peers its lash falls on (`ls`).
   The world host names both off its roster (`peerName`, every peer of the room, drawn or concealed - "you" for me). The

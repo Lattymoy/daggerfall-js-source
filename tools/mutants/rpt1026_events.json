@@ -233,22 +233,22 @@
   {
     "name": "ORRERY-HANDS-counts-begun-again",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "export const orreryRightsSnapped = (R) => ({ by: R.by, ids:",
-    "new": "export const orreryRightsSnapped = (R) => ({ by: {}, ids:",
+    "old": "  for (const [k, v] of Object.entries(R.by)) by[k] = R.wt?.[k] ? { long: 0, at: v.at } : v;",
+    "new": "  for (const [k, v] of Object.entries(R.by)) by[k] = { long: 0, at: v.at };",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],
-    "note": "the defect as reported: every griefer's dozen back at every snap - the Concord never comes"
+    "note": "the defect as reported: every griefer's dozen back at every snap - the Concord never comes (re-aimed by content, AUDIT RPT1026 I1: orreryRightsSnapped rebuilds the counts)"
   },
   {
     "name": "ORRERY-HANDS-nets-kept",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "export const orreryRightsSnapped = (R) => ({ by: R.by, ids: /** @type {Record<string, number>} */ ({}) });",
-    "new": "export const orreryRightsSnapped = (R) => ({ by: R.by, ids: R.ids });",
+    "old": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt:",
+    "new": "  return { by, ids: R.ids, wt:",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],
-    "note": "the lash's nets carried past the snap - a thread's lash counts the last thread's turns"
+    "note": "the lash's nets carried past the snap - a thread's lash counts the last thread's turns (re-aimed by content, AUDIT RPT1026 I1)"
   },
   {
     "name": "ORRERY-HANDS-relay-fresh",
