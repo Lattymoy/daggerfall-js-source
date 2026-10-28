@@ -8834,6 +8834,11 @@
   "tr": "57e9ba36fc93",
   "by": "claude-in-session"
  },
+ "menu.settings.tip.vsyncVulkan": {
+  "en": "416f4a493087",
+  "tr": "b80ba7c3b0f8",
+  "by": "claude-in-session"
+ },
  "menu.settings.unavailableBlurb": {
   "en": "474ef2faeaaf",
   "tr": "765a4f2d4148",
@@ -9175,8 +9180,8 @@
   "by": "claude-in-session"
  },
  "menu.video.backendNote": {
-  "en": "f1d1b9e187c0",
-  "tr": "8413782991c0",
+  "en": "1324b99e3436",
+  "tr": "e8fc7c5b0e99",
   "by": "claude-in-session"
  },
  "menu.video.backendVulkan": {

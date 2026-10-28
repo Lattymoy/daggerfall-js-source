@@ -3081,7 +3081,7 @@ function portRowsInterface({ pause = false } = {}) {
 function graphicsBackendRow() {
   if (globalThis.daggerShell?.platform !== 'win32') return null;
   const row = choiceRow('graphicsBackend', t('menu.video.backend', 'Graphics backend'),
-    `${t('menu.video.backendNote', 'Vulkan prepares the graphics faster at the first start after an update, but runs a little slower in play. If it cannot start, the app goes back to Direct3D 11 by itself.')} ${TIER_TEXT.restart}`,
+    `${t('menu.video.backendNote', 'Vulkan prepares the graphics faster at the first start after an update, but runs a little slower in play. Wait For Screen Refresh stays on with it. If it cannot start, the app goes back to Direct3D 11.')} ${TIER_TEXT.restart}`,
     [['default', t('menu.video.backendDefault', 'Direct3D 11')], ['vulkan', t('menu.video.backendVulkan', 'Vulkan')]], { tier: 'restart' });
   row.dataset.opt = 'graphicsBackend'; row.dataset.pref = 'graphicsBackend';   // ORG2
   return row;

@@ -103,6 +103,16 @@ function backendLaunch(userDataRoot, { platform = process.platform, env = proces
   return { backend, switches: BACKEND_SWITCHES[backend].map(([name, value]) => [name, value]), held: null };
 }
 
+/** Whether this launch keeps VSync on whatever the VSync setting says: it took Vulkan's switches. With VSync off the shell
+ *  adds `disable-gpu-vsync` and `disable-frame-rate-limit` (frameRate.cjs), and on Vulkan with the GPU sandbox off either
+ *  one froze the page for good on a stream of resizes (3 to 6 steps) or on leaving fullscreen; with VSync on there was no
+ *  freeze in 400 resize steps or 20 toggles, and D3D11 and the sandboxed Vulkan never froze (2026-10-28, bible GPU-BACKEND,
+ *  dfo-verify/tools/perf/vulkan-half-2026-10-28/notes.md). A launch held on the default, or one that fell back to D3D11
+ *  after a failed Vulkan, took no switches, so it gets the VSync setting as before. */
+function holdsVSync(launch) {
+  return launch?.backend === 'vulkan' && launch.switches.length > 0;
+}
+
 /** Whether a renderer string names a software renderer. */
 function isSoftwareRenderer(renderer) {
   const text = String(renderer ?? '').toLowerCase();
@@ -297,6 +307,6 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit 
 
 module.exports = {
   UI_PREFS, GRAPHICS_BACKEND_PREF, CONFIG_NAME, FAILURE_RECORD, BACKEND_ENV, GPU_GONE_GRACE_MS, PAGE_REPORT_TIMEOUT_MS, HOLD_DEFAULT_ARG, BACKEND_SWITCHES,
-  savedBackend, failureRecord, backendLaunch, isSoftwareRenderer, rendererMissesBackend, gpuKey, rendererOf, backendFailedNotice,
+  savedBackend, failureRecord, backendLaunch, holdsVSync, isSoftwareRenderer, rendererMissesBackend, gpuKey, rendererOf, backendFailedNotice,
   webgl2Report, watchBackend,
 };

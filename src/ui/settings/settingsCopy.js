@@ -276,8 +276,15 @@ const portTip = (/** @type {string} */ key) => (key === 'Video/TargetFrameRate'
  *  alone rather than inventing a sentence (RPT1026-CLIENT: but for a
  *  row whose behaviour is the port's own, portTip). */
 export function helpOf(key) {
-  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? portTip(key);
+  const own = SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? portTip(key);
+  return key === 'Video/VSync' ? withVulkanNote(own) : own;
 }
+
+/** GPU-BACKEND: the desktop app on Windows keeps VSync on while the graphics backend is Vulkan (app/lib/graphicsBackend.cjs
+ *  holdsVSync), so this row says so. */
+const withVulkanNote = (/** @type {string} */ own) => (globalThis.daggerShell?.platform === 'win32'
+  ? `${own} ${t('menu.settings.tip.vsyncVulkan', 'With the Vulkan graphics backend, the desktop app keeps this on.')}`.trim()
+  : own);
 
 /** MENU: what a NOT-AVAILABLE row prints where its control would be.
  *  "n/a" tells a player they were denied something; "classic" tells

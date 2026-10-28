@@ -15,6 +15,7 @@ import { codeHasOnce } from '../codeOnly.mjs';
 const require = createRequire(import.meta.url);
 const B = require('../../app/lib/graphicsBackend.cjs');
 const { createFileStorage } = require('../../app/lib/fileStorage.cjs');
+const { frameRateSwitches, VSYNC_OFF_SWITCHES } = require('../../app/lib/frameRate.cjs');
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
 const WIN = { platform: 'win32', env: {} };
@@ -399,4 +400,21 @@ test('GPU-BACKEND: only Vulkan lifts the GPU sandbox - the cost of a GPU process
   assert.ok(names('vulkan').includes('disable-gpu-sandbox'));
   for (const door of ['metal', 'd3d9']) assert.ok(!names(door).includes('disable-gpu-sandbox'), door);
   assert.deepEqual(B.backendLaunch('unused', { platform: 'win32', env: {}, argv: [] }).switches, [], 'no pref: D3D11, nothing added');
+});
+
+test('GPU-BACKEND: a launch on Vulkan keeps VSync on - the resize freeze with VSync off; a default launch, a held one (the fallback) and a probe door take the VSync setting (mutants: held on every launch; never held)', () => {
+  assert.equal(B.holdsVSync({ backend: 'vulkan', switches: VULKAN, held: null }), true);
+  assert.equal(B.holdsVSync({ backend: 'default', switches: [], held: null }), false, 'D3D11');
+  assert.equal(B.holdsVSync({ backend: 'vulkan', switches: [], held: { gpu: 'x' } }), false, 'Vulkan on record as failed: the launch is on D3D11, VSync off applies again');
+  assert.equal(B.holdsVSync({ backend: 'metal', switches: [['use-gl', 'angle'], ['use-angle', 'metal']], held: null }), false, 'a probe door');
+  const root = mkdtempSync(join(tmpdir(), 'gpubackend-vsync-'));
+  try {
+    const store = createFileStorage(root);
+    store.setItem('dagger.ui.v1', JSON.stringify({ graphicsBackend: 'vulkan' }));
+    store.setItem('dagger.settings.v1', JSON.stringify({ Video: { VSync: 'False' } }));
+    assert.deepEqual(frameRateSwitches(root), [...VSYNC_OFF_SWITCHES], 'the setting alone would lift the wait');
+    assert.equal(B.holdsVSync(B.backendLaunch(root, WIN)), true, 'VSync off and Vulkan: the shell skips the VSync-off switches');
+    writeFileSync(join(root, 'config.json'), JSON.stringify({ [B.FAILURE_RECORD]: { backend: 'vulkan', gpu: null, chromium: process.versions.chrome, reason: 'x', at: 'then' } }));
+    assert.equal(B.holdsVSync(B.backendLaunch(root, WIN)), false, 'after the fallback, the same profile gets VSync off back');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

@@ -2874,6 +2874,11 @@
   "tr": "69b49826e964",
   "by": "claude-in-session"
  },
+ "menu.settings.tip.vsyncVulkan": {
+  "en": "416f4a493087",
+  "tr": "f32286515680",
+  "by": "claude-in-session"
+ },
  "menu.video.backend": {
   "en": "82291b6b3f70",
   "tr": "4cf1508f0730",
@@ -2885,8 +2890,8 @@
   "by": "claude-in-session"
  },
  "menu.video.backendNote": {
-  "en": "f1d1b9e187c0",
-  "tr": "8a7278a4f7db",
+  "en": "1324b99e3436",
+  "tr": "2a1f79a7391b",
   "by": "claude-in-session"
  },
  "menu.video.backendVulkan": {

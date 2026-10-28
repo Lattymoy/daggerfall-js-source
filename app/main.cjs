@@ -37,7 +37,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { frameRateSwitches } = require('./lib/frameRate.cjs');   // FPS-VSYNC: VSync off lifts Chromium's wait
-const { backendLaunch, watchBackend } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
+const { backendLaunch, holdsVSync, watchBackend } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
 
 // DAGGER_USER_DATA points saves/config somewhere else - the probe's
 // door (tools/appShellProbe.mjs writes into a temp dir it can read
@@ -55,13 +55,6 @@ const { backendLaunch, watchBackend } = require('./lib/graphicsBackend.cjs');   
 if (process.env.DAGGER_USER_DATA) app.setPath('userData', process.env.DAGGER_USER_DATA);
 else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall JavaScript'));
 
-// FPS-VSYNC (2026-09-28): the player's saved VSync, read BEFORE the app is ready - Chromium takes its switches at
-// launch or never. VSync off lifts the screen's wait, and the page's Frame Rate Cap holds the frames instead
-// (DFU's own law, app/lib/frameRate.cjs). VSync on - DFU's default - changes nothing. Read ONCE: the page is told
-// what this launch runs with (dagger:frames-lifted, below) - its pacer is for a lifted wait only (AUDIT 28e).
-const FRAME_SWITCHES = frameRateSwitches(app.getPath('userData'));
-for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);
-
 // GPU-BACKEND (2026-10-26): Vulkan on Windows, the player's opt-in (`graphicsBackend`), held on the default while a
 // failure is on record. The guard reads the renderer once the first window is up and relaunches on the default when
 // the chosen backend did not start (app/lib/graphicsBackend.cjs).
@@ -69,6 +62,14 @@ const BACKEND_LAUNCH = backendLaunch(app.getPath('userData'));
 for (const [name, value] of BACKEND_LAUNCH.switches) app.commandLine.appendSwitch(name, value);
 const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts), beforeExit: () => gpuGone.flush() });
 app.once('browser-window-created', (_e, w) => w.webContents.on('did-finish-load', backendGuard.check));
+
+// FPS-VSYNC (2026-09-28): the player's saved VSync, read BEFORE the app is ready - Chromium takes its switches at
+// launch or never. VSync off lifts the screen's wait, and the page's Frame Rate Cap holds the frames instead
+// (DFU's own law, app/lib/frameRate.cjs). VSync on - DFU's default - changes nothing. Read ONCE: the page is told
+// what this launch runs with (dagger:frames-lifted, below) - its pacer is for a lifted wait only (AUDIT 28e).
+// GPU-BACKEND: a launch on Vulkan keeps VSync on whatever the setting says (holdsVSync); the page is told so below.
+const FRAME_SWITCHES = holdsVSync(BACKEND_LAUNCH) ? [] : frameRateSwitches(app.getPath('userData'));
+for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);
 
 // PERF-GPU1 (2026-10-10, a player via Mac: 5 fps in every room "with the graphics all low", playable only at 800x600):
 // THE DISCRETE GPU. On a laptop with two GPUs Chromium draws on whichever the system hands a browser - the integrated
