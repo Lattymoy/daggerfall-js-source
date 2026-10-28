@@ -9260,12 +9260,12 @@ export function createWorldModes(host) {
    *  law: this host's dungeon arm with a level made in code, entered from the open world at the Hollow's own pixel (the
    *  world host takes the player out of the Hollow and to its pixel first, under the veil - scenes/world.js
    *  sdEnterRealm). `r` is { s: the Hollow's slot, hollow: { key, px, py, name } - where the way back leads, site: the
-   *  climate and region at its pixel }. The realm's room is the relay's `sd:<s>`. Online alone - the Hollow is. */
+   *  climate and region at its pixel, owner: the party's digest }. The realm's room is the relay's `sd:<s>.<owner>`. Online alone - the Hollow is. */
   async function enterSdRealm(r) {
-    if (mode !== 'exterior' || !r || !Number.isSafeInteger(r.s) || !(playerEntity.health > 0)) return false;
+    if (mode !== 'exterior' || !r || !sdRoomKey(r.s, r.owner) || !(playerEntity.health > 0)) return false;   // SD-PARTY: and a party's Hour to key
     const site = r.site ?? null;
-    const dfLocation = sdRealmLocation({ s: r.s, hollow: r.hollow ?? null, regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });
-    const hit = { dfLocation, blocksFile: sdRealmBlocks(blocks), sdRealm: r.s, sdHollow: r.hollow ?? null, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: sdRoomKey(r.s), door: null, dfBlock: null, recordIndex: -1 };
+    const dfLocation = sdRealmLocation({ ...r, regionIndex: site?.regionIndex ?? -1, regionName: site?.regionName ?? '', climate: site?.climate ?? undefined });   // SD-PARTY: its slot, its owner and the Hollow it was entered from, as asked
+    const hit = { dfLocation, blocksFile: sdRealmBlocks(blocks), sdRealm: r.s, sdHollow: r.hollow ?? null, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: sdRoomKey(r.s, r.owner), door: null, dfBlock: null, recordIndex: -1 };
     return gatedTransition((live) => dungeonTransition(hit, [], true, live));
   }
   /** EG-PLAY (bible/11-Multiplayer/Elite-Gates.md section 31, EG-PLAY): INTO AN ELITE BREACH'S CIRCLE (world/eliteGates/egHall.js) -
@@ -13174,7 +13174,7 @@ export function createWorldModes(host) {
     // ONLINE1: what the host needs to name the room - the mounted dungeon's
     // location, the interior's building; null in the exterior
     // ARENA4: the floor's instance standing a relay's bout is that bout's room (`arena:b<id>`)
-    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } : isEgHall(dungeonLoc) ? { kind: 'eg', b: dungeonLoc.egBreach } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : isKetchShip(dungeonLoc) ? { kind: 'kt', key: dungeonLoc.ketch.key } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), instance: placeInstance })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SHARED (2026-10-12): Privateer's Hold keys its shared room as every dungeon does (HOLD-SOLO's `solo` reverted)
+    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm, o: dungeonLoc.sdOwner } : isEgHall(dungeonLoc) ? { kind: 'eg', b: dungeonLoc.egBreach } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : isKetchShip(dungeonLoc) ? { kind: 'kt', key: dungeonLoc.ketch.key } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), instance: placeInstance })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at); HOLD-SHARED (2026-10-12): Privateer's Hold keys its shared room as every dungeon does (HOLD-SOLO's `solo` reverted)
       : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, instance: placeInstance, ...(interiorCabin ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the

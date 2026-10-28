@@ -10,14 +10,14 @@
   ]
  },
  {
-  "name": "AUDIT-WE-L1-1-unraised-admitted",
+  "name": "SD-BACK-the-dead-left-lying",
   "file": "server/src/index.js",
-  "old": "if (lies === 'down') return SD_NO_BUSY;",
-  "new": "if (lies === 'down' && false) return SD_NO_BUSY;",
+  "old": "const back = !!sub && (lies != null ||",
+  "new": "const back = !!sub && (lies === 'rise' ||",
   "tests": [
-   "test/net/superDungeon/auditwe_rez.test.js",
-   "test/net/superDungeon/sd12_onelife.test.js"
-  ]
+   "test/net/superDungeon/auditwe_rez.test.js"
+  ],
+  "note": "SD-BACK (2026-10-28) replaces AUDIT-WE-L1-1-unraised-admitted: an unraised death is a rise at its own copy's door now, off the lying and the dead."
  },
  {
   "name": "AUDIT-WE-L1-1-raise-unchecked",
@@ -72,12 +72,13 @@
  {
   "name": "AUDIT-WE-L1-8-rise-before-refusal",
   "file": "server/src/index.js",
-  "old": "if (lies === 'down') return SD_NO_BUSY;",
-  "new": "if (lies === 'down') return SD_NO_BUSY; if (lies === 'rise') await this._sdRose(realm, sub, now);",
+  "old": "const back = !!sub && (lies != null || realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null));",
+  "new": "const back = !!sub && (lies != null || realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null)); if (back) await this._sdRose(realm, sub, now);",
   "tests": [
    "test/net/superDungeon/auditwe_rez.test.js",
    "test/net/superDungeon/sd12_onelife.test.js"
-  ]
+  ],
+  "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
  },
  {
   "name": "AUDIT-WE-L1-7-slice-forgets",

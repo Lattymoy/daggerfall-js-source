@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { webcrypto as crypto } from 'node:crypto';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { SD_KEY, SD_REALM_KEY, SOCIAL_ROOM, PIXEL_UNITS, SD_FIGHTERS_MAX, SD_INTERNAL_FOUND, worldRoom, chatRegionRoom, sdDeadKey } from '../../../src/net/wire.js';
-import { sdRoomKey, SD_NO_FALLEN, SD_REZ_MS } from '../../../src/net/superDungeon/sdLaw.js';
+import { sdRoomKey, SD_REZ_MS } from '../../../src/net/superDungeon/sdLaw.js';
 import { SD_ARENA, realmToDungeon } from '../../../src/net/superDungeon/sdBrain.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { mintSdReceipt } from '../../../src/net/superDungeon/sdReceipt.js';
@@ -19,6 +19,9 @@ import { importPublicKeyB64 } from '../../../src/net/identityToken.js';
 import { claimSd, sdHonoursRoll } from '../../../server-account/src/sds.js';
 import { createGuest } from '../../../server-account/src/accounts.js';
 import { d1 } from '../../accountDb.mjs';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const subtle = crypto.subtle;
 const T0 = 1_800_000_000_000, PX = 300, PY = 200, UNITS_PER_M = PIXEL_UNITS / PIXEL_M;
@@ -96,7 +99,7 @@ test('SD20b ONE LIFE A HOLLOW, HOWEVER MANY HAVE DIED IN IT (R2): past the realm
   await withHub(async ({ world, cell, rec, step }) => {
     const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
     await cell.raw(mara, found(rec().s));
-    const realm = world.room(sdRoomKey(rec().s));
+    const realm = world.room(sdTestKey(rec().s));
     const h = await realm.room._sdHallOf(rec().s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
     const r = await realm.room._sdRealmOf(rec().s);
     r.dead = Array.from({ length: SD_FIGHTERS_MAX }, (_, k) => `acct-gone-${k}`);
@@ -110,9 +113,9 @@ test('SD20b ONE LIFE A HOLLOW, HOWEVER MANY HAVE DIED IN IT (R2): past the realm
     await realm.drop(main);
     step(SD_REZ_MS + 1);
     const back = await hello('peer-main');
-    assert.equal(realm.store.get(sdDeadKey('acct-peer-main')), 1, 'its death under its own key');
     assert.equal(realm.store.get(SD_REALM_KEY).dead.length, SD_FIGHTERS_MAX, 'the list as it was');
-    assert.deepEqual(back.closed?.reason, SD_NO_FALLEN, 'never back in');
+    assert.equal(back.closed, null, 'its own Hour takes it back');   // PIN MOVED (SD-BACK, 2026-10-28): it was SD_NO_FALLEN, never back in
+    assert.equal(realm.store.get(sdDeadKey('acct-peer-main')), undefined, 'and its own key let go');
     assert.equal((await hello('peer-other')).closed, null, 'another, alive: admitted');
   });
   assert.equal(sdDeadKey('acct-x'), 'sddead:acct-x');

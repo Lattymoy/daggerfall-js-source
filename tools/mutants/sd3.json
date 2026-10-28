@@ -192,12 +192,12 @@
   {
     "name": "SD3-a-returner-refused",
     "file": "server/src/index.js",
-    "old": "    if (sub && realm.in.includes(sub)) { if (lies === 'rise') await this._sdRose(realm, sub, now); this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH; AUDIT WORLD-EVENTS L1-8: a rise off the lying once it is let in, never before a refusal",
+    "old": "    if (sub && realm.in.includes(sub)) { if (f?.fell && now - f.fell.at > SD_COLLAPSE_MS) return SD_NO_CLOSED; if (back) await this._sdRose(realm, sub, now); this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH; AUDIT WORLD-EVENTS L1-8: a rise once it is let in, never before a refusal",
     "new": "",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "SD-THROUGH (re-aimed by content): a returner's admission tells the hub too (the Way Through). One who entered may come back until the Hollow is gone."
+    "note": "SD-THROUGH (re-aimed by content): a returner's admission tells the hub too (the Way Through). One who entered may come back until the Hollow is gone. PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
   },
   {
     "name": "SD3-two-seats",

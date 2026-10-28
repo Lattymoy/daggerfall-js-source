@@ -2,25 +2,31 @@
   {
     "name": "R3-1-world-wide-on-the-fold",
     "file": "src/net/wire.js",
-    "old": "export const WORLD_WIDE_RELAY_MIN = 275;",
+    "old": "export const WORLD_WIDE_RELAY_MIN = 276;",
     "new": "export const WORLD_WIDE_RELAY_MIN = 260;",
-    "tests": ["test/net/audittesa2z_worldwide.test.js"],
-    "note": "Re-aimed by content (the merge of main into #1184, 2026-10-27): the gate moved to world270 with its LAW row, past BOW-TOPS's world269 (main's). the world-wide gates left at TESA's old number - main's world260 is THE FOLD, which reads no pixel past the Bay"
+    "tests": [
+      "test/net/audittesa2z_worldwide.test.js"
+    ],
+    "note": "Re-aimed by content (the merge of main into #1184, 2026-10-27): the gate moved to world270 with its LAW row, past BOW-TOPS's world269 (main's). the world-wide gates left at TESA's old number - main's world260 is THE FOLD, which reads no pixel past the Bay The eighth merge of main (re-aimed by content): the gate is 276, past main's live world275; the mutant lets world275 in."
   },
   {
     "name": "R3-1-castle-on-the-fold",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 275;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276;",
     "new": "export const GUILD_INSTANCE_RELAY_MIN = 260;",
-    "tests": ["test/net/domain2_castles.test.js"],
-    "note": "Re-aimed by content (the merge of main into #1184, 2026-10-27): the gate moved to world270 with its LAW row, past BOW-TOPS's world269 (main's). the castle's gate left on THE FOLD's world260, which keeps no guild arm"
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ],
+    "note": "Re-aimed by content (the merge of main into #1184, 2026-10-27): the gate moved to world270 with its LAW row, past BOW-TOPS's world269 (main's). the castle's gate left on THE FOLD's world260, which keeps no guild arm The eighth merge of main (re-aimed by content): the gate is 276, past main's live world275; the mutant lets world275 in."
   },
   {
     "name": "R3-3-all-names-provinces",
     "file": "src/net/hubShards.js",
     "old": "Array.from({ length: REGION_SPLIT }, (_, region) => region)",
     "new": "Array.from({ length: REGION_CHANNELS }, (_, region) => region)",
-    "tests": ["test/net/cost1_regions.test.js"],
+    "tests": [
+      "test/net/cost1_regions.test.js"
+    ],
     "note": "REGION_SHARDS=all naming the provinces past the Bay, which have no shard key"
   },
   {
@@ -28,7 +34,9 @@
     "file": "src/net/hubShards.js",
     "old": "/^\\d{1,2}$/.test(part) && canon(part, REGION_SPLIT))",
     "new": "/^\\d{1,2}$/.test(part) && canon(part, REGION_CHANNELS))",
-    "tests": ["test/net/cost1_regions.test.js"],
+    "tests": [
+      "test/net/cost1_regions.test.js"
+    ],
     "note": "a province's number in the var read as a region to split"
   },
   {
@@ -36,7 +44,9 @@
     "file": "src/net/hubShards.js",
     "old": "  if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;\n",
     "new": "",
-    "tests": ["test/net/sleepcost.test.js"],
+    "tests": [
+      "test/net/sleepcost.test.js"
+    ],
     "note": "a province sent to a shard when the set it is handed names it"
   },
   {
@@ -44,7 +54,9 @@
     "file": "src/systems/instancePlaces.js",
     "old": "INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0)",
     "new": "INSTANCE_ROWS_MAX - rows.length",
-    "tests": ["test/net/domain2_castles.test.js"],
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ],
     "note": "main's party-first order without the bound's room for my own row - the tenth row, which no key chooses"
   },
   {
@@ -52,7 +64,10 @@
     "file": "server/src/index.js",
     "old": "    if (!court) { this._gateFells.set(lane, fell); await this.state.storage.put(gateLaneKey('gatefell', lane), fell); }",
     "new": "    this._gateFells.set(lane, fell); await this.state.storage.put(gateLaneKey('gatefell', lane), fell);",
-    "tests": ["test/net/gate/gatecourts.test.js", "test/net/release_r3.test.js"],
+    "tests": [
+      "test/net/gate/gatecourts.test.js",
+      "test/net/release_r3.test.js"
+    ],
     "note": "a court's kill kept as its lane's fall - the gate collapses for the night's other courts"
   },
   {
@@ -60,7 +75,9 @@
     "file": "server/src/index.js",
     "old": "    if (!court) { this._gateFells.set(lane, fell); await this.state.storage.put(gateLaneKey('gatefell', lane), fell); }",
     "new": "    if (!court) { this._gateFells.set(0, fell); await this.state.storage.put(gateLaneKey('gatefell', 0), fell); }",
-    "tests": ["test/net/release_r3.test.js"],
+    "tests": [
+      "test/net/release_r3.test.js"
+    ],
     "note": "main's side taken whole: every lane's fall stored as the Bay's"
   },
   {
@@ -68,7 +85,9 @@
     "file": "server/src/index.js",
     "old": "{ hold: now + GATE_HERE_HOLD_MS } : {}) }, sub, c.x === 'rite']); }",
     "new": "{ hold: now + GATE_HERE_HOLD_MS } : {}) }, sub, false]); }",
-    "tests": ["test/net/gate/gatecourts.test.js"],
+    "tests": [
+      "test/net/gate/gatecourts.test.js"
+    ],
     "note": "TESA's side taken whole: a rite receipt written over a court's of the same day (AUDIT GATE-COURTS R3)"
   }
 ]

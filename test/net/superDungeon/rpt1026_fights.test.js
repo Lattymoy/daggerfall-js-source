@@ -23,6 +23,9 @@ import {
 import { ABSENT_RETIRE_MS, HIT_KINDS, HIT_CAP_X, dpsRef, newFight, joinFight, stepBrain, applyHit, BRAIN_TICK_MS } from '../../../src/net/gate/gateBrain.js';
 import { newWardenFight, joinWarden, stepWarden, applyWardenHit, applyForkHit, forksOpen, KW_TTK_S, KW_SHARE_X } from '../../../src/net/ketch/ketchWarden.js';
 import { KT_BRIDGE } from '../../../src/net/ketch/ketchDeck.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const T0 = 1_800_000_000_000;
 const seeded = (s) => () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
@@ -180,7 +183,7 @@ async function withRealm(fn) {
       const cell = world.room(worldRoom(PX, PY));
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
       const beatTo = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
       const hello = async (id, pose) => { const ws = realm.connect(); await realm.hello(ws, id, pose, { name: id.replace('peer-', '') }); return ws; };

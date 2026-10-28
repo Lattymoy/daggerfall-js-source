@@ -47,6 +47,9 @@ import { ARMOR_MATERIAL } from '../../../src/systems/armorMaterials.js';
 // the relay
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -175,6 +178,7 @@ function riftHost({ rec = null, entered = true, s = 7 } = {}) {
     SD_REALM_TEXT: { lost: 'lost' }, setMidScreenText: (t) => log.push(['said', t]), _teleportToPixel: async () => log.push('pixel'), _sdEntered: new Set(), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): the Hour's lines through its voice
     sdVeilCentre: () => null, standBeforeHollowDoor: () => true,   // SD-LOOK S5: the veil's centre; AUDIT SD IV (F40): before its door
+    sdCopy: { ownerFor: async () => '0123456789abcdef' },   // SD-PARTY (PIN MOVED): my party's own Hour
   };
   const body = `${constOf('sdRiftOf')}\n${fnOf('sdEnterRealm')}\nreturn { sdRiftOf, sdEnterRealm };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
@@ -226,7 +230,7 @@ test('AUDIT SD MY HOUR RECEIPT, WHEREVER IT COMES: the hub\'s hand of it (at the
   const h = receiptHost();
   h.at(7);
   const r = await receiptFor(7);
-  h.sdSpoilsReceipt(r, sdRoomKey(7));
+  h.sdSpoilsReceipt(r, sdTestKey(7));
   await tick();
   assert.deepEqual([h.grants.length, h.kept.size], [0, 1], 'in my realm: kept for the burst');
   // out of the realm before the burst
@@ -492,7 +496,7 @@ async function withRealm(fn, { concord = true } = {}) {
   const realNow = Date.now;
   let clock = T0;
   Date.now = () => clock;
-  const world = fakeRooms({ now: () => clock });
+  const world = fakeRooms({ now: () => clock, vars: { SD_COLLAPSE: 'on' } });   // SD-PARTY (PIN MOVED): the first kill's collapse for all, the hub's setting on
   const hub = world.room(SOCIAL_ROOM);
   try {
     await quiet(async () => {
@@ -507,7 +511,7 @@ async function withRealm(fn, { concord = true } = {}) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       if (concord) { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }
       let down = false;
       const ROOMS = realm.room.env.ROOMS;

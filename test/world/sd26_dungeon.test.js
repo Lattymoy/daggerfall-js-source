@@ -448,6 +448,7 @@ test('SD26 THE STEP OUT TO THE HOUR STANDS BEFORE THE HOLLOW\'S DOOR (AUDIT SD I
       sdHost: { hollow: () => hollow }, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, SD_REALM_TEXT, isSdRealm: (loc) => loc?.sdRealm != null,
       sdRiftOf: () => ({ word: asked++ === 0 ? word : late }), sdSay: (t) => log.push(['said', t]), _sdEntered: new Set(), sdVeilCentre: () => null,
       _teleportToPixel: async (x, y) => log.push(['pixel', x, y]),
+      sdCopy: { ownerFor: async () => '0123456789abcdef' },   // SD-PARTY (PIN MOVED): my party's own Hour
     };
     const body = `${sd[1]}\n${hd[1]}\n${fnIn(W, 'standBeforeHollowDoor')}\n${fnIn(W, 'sdEnterRealm')}\n${fnIn(W, 'sdWayBack')}\nreturn { sdEnterRealm, sdWayBack, cam };`;
     return { ...new Function(...Object.keys(env), body)(...Object.values(env)), log, run: () => step?.() };

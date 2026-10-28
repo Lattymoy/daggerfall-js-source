@@ -192,11 +192,12 @@
   {
     "name": "SPAWN-WORLD-the-relay-the-world-row-first-reads",
     "file": "src/net/wire.js",
-    "old": "export const OW_WORLD_RELAY_MIN = 275;",
-    "new": "export const OW_WORLD_RELAY_MIN = 274;",
+    "old": "export const OW_WORLD_RELAY_MIN = 276;",
+    "new": "export const OW_WORLD_RELAY_MIN = 275;",
     "tests": [
       "test/world/spawnworld.test.js"
-    ]
+    ],
+    "note": "The eighth merge of main (re-aimed by content): the gate is 276, past main's live world275; the mutant lets world275 in."
   },
   {
     "name": "SPAWN-WORLD-a-row-past-the-Bay-to-any-relay",
