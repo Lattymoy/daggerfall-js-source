@@ -293,6 +293,8 @@ member is told so, and a player without staff glyphs never sees the command.
   with no save or resistance. It passes through party mates, duel opponents, bosses of the court and other players.
   It costs no magicka.
 - **This page alone.** The ride, its pace and its balls are never sent; the relay judges no pose speed outside an arena
-  bout, so the flight needs no relay change. Other players see the rider fly; seeing the dragon under the rider is the
-  relay's pose word (a ride value of its own), on the relay pull request.
+  bout, so the flight needs no relay change. **Others see the dragon** from world276: my pose's `rd` says 3
+  (`dragonPoseRide`, the wire's `POSE_RIDE.Dragon`), and their games draw me as the Dwarven Dragon's own sprite, its
+  rider in the art. An older relay would clamp 3 to the cart, so the pose says it only once the relay's welcome named
+  world276 or later (`noteDragonRelay`); before that, others see me fly on foot.
 

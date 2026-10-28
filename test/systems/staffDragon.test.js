@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {
   mayRideDragon, ridingDragon, mountDragon, landDragon, dragonFlyMult, dragonFire, dragonFiring, dragonBolt, dragonVolley,
   DRAGON_FLY_MULT, DRAGON_BOLT_DAMAGE, DRAGON_BOLT_COOLDOWN_MS, DRAGON_BOLT_MEET, _resetDragonRide,
-  parseDragonCommand, DRAGON_HELP_LINE,
+  parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide, DRAGON_POSE_RIDE,
 } from '../../src/systems/staffDragon.js';
 import { registerFlySpeedMod, flySpeedMult } from '../../src/player/motor.js';
 import { parseStaffCommand } from '../../src/net/staffCommands.js';
@@ -72,4 +72,20 @@ test('DRAGON-RIDE /dragon\'s grammar: bare turns the ride over, on and off say s
   assert.equal(parseDragonCommand('/fly'), null);
   assert.equal(parseStaffCommand('/dragon'), null, 'the relay-read grammar is untouched');
   assert.ok(DRAGON_HELP_LINE.startsWith('/dragon '));
+});
+
+test('DRAGON-RIDE my pose says the dragon only while I ride, and only to a relay from world276 (mutants: said to an older relay, which draws a cart; said on foot)', () => {
+  _resetDragonRide();
+  noteDragonRelay('world276');
+  assert.equal(dragonPoseRide(), null);
+  mountDragon(false);
+  assert.equal(dragonPoseRide(), DRAGON_POSE_RIDE);
+  assert.equal(DRAGON_POSE_RIDE, 3);
+  noteDragonRelay('world275');
+  assert.equal(dragonPoseRide(), null);
+  noteDragonRelay('world277');
+  assert.equal(dragonPoseRide(), DRAGON_POSE_RIDE);
+  landDragon();
+  assert.equal(dragonPoseRide(), null);
+  _resetDragonRide();
 });

@@ -21,6 +21,15 @@ export const DRAGON_BOLT_MEET = 40;
 export const DRAGON_FIRE_SHOW_MS = 160;
 /** The saddle's two pictures under public/art/dwarven-dragon/: at rest, and the cannons firing. */
 export const SADDLE_PICTURES = Object.freeze(['saddle-0', 'saddle-1']);
+/** The pose's ride while I ride - the wire's POSE_RIDE.Dragon from world276, which others draw as the dragon itself. An
+ *  older relay clamps it to the cart, so it is said only to a relay at DRAGON_POSE_RELAY_MIN or later. */
+export const DRAGON_POSE_RIDE = 3;
+export const DRAGON_POSE_RELAY_MIN = 276;
+let _relayKeepsRide = false;
+/** The relay's version, as each welcome says it (scenes/world.js onRelayVersion). @param {unknown} v */
+export function noteDragonRelay(v) { _relayKeepsRide = Number(/^world(\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? NaN) >= DRAGON_POSE_RELAY_MIN; }
+/** My pose's `rd` while I ride on a relay that keeps it, else null (the pose's own ride stands). */
+export const dragonPoseRide = () => (_ride && _relayKeepsRide ? DRAGON_POSE_RIDE : null);
 
 /** @type {{ flyWas: boolean, firedAt: number } | null} */
 let _ride = null;
@@ -81,4 +90,4 @@ export function parseDragonCommand(text) {
 }
 
 /** For tests: no ride. */
-export function _resetDragonRide() { _ride = null; }
+export function _resetDragonRide() { _ride = null; _relayKeepsRide = false; }
