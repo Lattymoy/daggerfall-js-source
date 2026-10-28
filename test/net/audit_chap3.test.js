@@ -312,7 +312,7 @@ test('AUDIT CHAP3 C3/C4/C5/C9: the hosts\' wiring - a kept gate claim waits for 
   // PIN MOVED (WW-GATES-EVERYWHERE A2b): the wait the Bay's lane's alone - a lane past the Bay's region is its number's, no scan's
   assert.match(world, /if \(!gateClaimWaits\(readReceipt\(r\)\?\.d, _gateScan\) \|\| Date\.now\(\) - _gateClaimsFrom >= GATE_SCAN_WAIT_MS\) return true;[^\n]*\n\s+warmGateScan\(\);\n\s+return false;/);
   assert.match(world, /sayLate: \(text\) => chatNotice\(text\),/);
-  assert.match(world, /if \(error === 'roll-seed' \|\| error === 'roll-claim'\) chatNotice\(accountRefusalText\(error\)\);/);
+  assert.match(world, /onStop: \(error\) => sayRollStop\(error, chatNotice\),/);   // the words themselves: test/net/rollUnheard.test.js
 });
 
 // ── DAGGERFALL'S LAW ────────────────────────────────────────────────

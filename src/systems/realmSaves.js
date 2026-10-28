@@ -247,15 +247,21 @@ export const REALM_UNSENT_GRACE_MS = 1_500;
 /** SCALE2b (Scale-Arc "Checkpoints: every 120 s, sent even when the save has not changed"): a checkpoint whose save is
  *  the one that last landed, but for its clock and its look, goes at least this often - and otherwise not at all. */
 export const REALM_IDLE_CHECKPOINT_MS = 10 * 60 * 1000;
-/** SCALE2b: what a save says once its clock and its look are set aside - the character's two minutes (`classicMinutes`,
- *  the world's `worldMinutes`) and where the camera points (`pose.yaw`, `pose.pitch`, `pose.camera`) move every
- *  checkpoint of a player standing still; nothing else does. Null for a text that is not a save's JSON (no skip). */
+/** SCALE2b: what a save says once its clock and its look are set aside: the two minutes (`classicMinutes`,
+ *  `worldMinutes`), where the camera points (`pose.yaw`, `pitch`, `camera`), and what the clock moves in an idle tab -
+ *  each quest's `ownSecondsAt`, the automap's `lastVisited`, and `survival`'s `lastMinute`, `rotMinutes`, `thirst` and
+ *  `fed` (STRANDED's idle test, 2026-10-27). Thirst and fed also fall when the player eats or drinks, but eating spends
+ *  an item and a waterskin drink its charge, so the pack still differs: only a fountain's or a well's drink since the
+ *  last landed save is not told apart. Null for a text that is not a save's JSON (no skip). */
 export function idleKeyOf(text, summary = null) {
   let s;
   try { s = JSON.parse(text); } catch { return null; }
   if (!s || typeof s !== 'object' || Array.isArray(s)) return null;
   const { classicMinutes, worldMinutes, ...rest } = s;
   if (rest.pose && typeof rest.pose === 'object') { const { yaw, pitch, camera, ...pose } = rest.pose; rest.pose = pose; }
+  if (rest.survival && typeof rest.survival === 'object') { const { lastMinute, rotMinutes, thirst, fed, ...survival } = rest.survival; rest.survival = survival; }
+  for (const quest of Object.values(rest.quest?.machine?.quests ?? {})) if (quest && typeof quest === 'object') delete quest.ownSecondsAt;
+  for (const map of Object.values(rest.automap ?? {})) if (map && typeof map === 'object') delete map.lastVisited;
   return JSON.stringify([rest, summary]);
 }
 
@@ -309,7 +315,7 @@ export function keepUnsent(/** @type {any} */ storage, /** @type {string} */ id,
     if (lease && owner && owner !== lease) return false;
     prev = storage.getItem(unsentAtKey(id));
     storage.removeItem(unsentAtKey(id));
-    storage.setItem(unsentKey(id), text);
+    setYieldingStranded(storage, unsentKey(id), text, id);
   } catch {
     // AUDIT RESCUE-SAVE A5: the new text did not fit, and a refused write leaves the one before it standing - so does
     // its record: the copy already kept is newer than anything the service holds
@@ -443,6 +449,51 @@ export function readStranded(/** @type {any} */ storage, /** @type {string} */ i
 export function forgetStranded(/** @type {any} */ storage, /** @type {string} */ id) {
   try { storage?.removeItem?.(strandedAtKey(id)); storage?.removeItem?.(strandedKey(id)); } catch { /* storage away */ }
 }
+/** The ids of every character with a copy set aside on this device. */
+function strandedIds(/** @type {any} */ storage) {
+  const ids = [];
+  try {
+    for (let i = 0; i < (storage?.length ?? 0); i++) {
+      const key = storage.key(i);
+      if (typeof key === 'string' && key.startsWith(REALM_STRANDED_PREFIX) && key.endsWith('.at')) ids.push(key.slice(REALM_STRANDED_PREFIX.length, -'.at'.length));
+    }
+  } catch { /* storage away */ }
+  return ids;
+}
+/**
+ * Writes the device's copy of `id`, making room by dropping set-aside copies when the device has none left: this
+ * character's first, then every other. A copy set aside holds play that MAY not be in the realm; the copy being written
+ * holds play that is not. Throws as `setItem` does when even that is not room enough.
+ */
+function setYieldingStranded(/** @type {any} */ storage, /** @type {string} */ key, /** @type {string} */ text, /** @type {string} */ id) {
+  try {
+    storage.setItem(key, text);
+    return;
+  } catch (full) {
+    if (!strandedIds(storage).length) throw full;
+  }
+  // the copies dropped are put back when even that is not room enough: the write fails, and they hold play the realm may lack
+  const dropped = [];
+  const drop = (/** @type {string} */ stranded) => {
+    const at = storage.getItem(strandedAtKey(stranded)), held = storage.getItem(strandedKey(stranded));
+    if (at != null && held != null) dropped.push([stranded, at, held]);
+    forgetStranded(storage, stranded);
+  };
+  drop(id);
+  try {
+    storage.setItem(key, text);
+    return;
+  } catch { /* still no room: the others go too */ }
+  for (const other of strandedIds(storage)) drop(other);
+  try {
+    storage.setItem(key, text);
+  } catch (full) {
+    for (const [stranded, at, held] of dropped) {
+      try { storage.setItem(strandedKey(stranded), held); storage.setItem(strandedAtKey(stranded), at); } catch { /* storage away */ }
+    }
+    throw full;
+  }
+}
 /** A join found the device's copy behind the record it joined: set aside when a put of it failed and it is not the
  *  save the realm holds now (`serviceText`), else dropped. Answers whether it was set aside. */
 async function settleMovedCopy(/** @type {any} */ storage, /** @type {string} */ id, /** @type {{ missed: boolean, text: string | null, packed?: string }} */ kept, /** @type {string} */ serviceText, /** @type {number} */ recordSeq) {
@@ -532,6 +583,9 @@ export function createRealmSession({
   // is on this device alone, and the host tells them once it has been so for a while (online/realmUnsavedNotice.js)
   /** @type {number | null} */
   let missedSince = null;
+  // When the realm last held this tab's progress: the join, a put that landed, or a periodic save the realm already
+  // holds but for its clock (`idle`). The host tells the player when it is long ago (online/realmUnsavedNotice.js)
+  let savedAt = now();
   const markMissed = () => {
     missed = true;
     missedSince ??= now();
@@ -668,6 +722,7 @@ export function createRealmSession({
           heardLocked(r.data?.locked);
           landedText = job.text;
           landedKey = idleKeyOf(job.text, job.summary); landedAt = now();   // SCALE2b
+          savedAt = landedAt;
           // RESCUE-SAVE: the newest save landed - no copy; or a newer one waits, its copy at the sequence now held
           missed = false;
           missedSince = null;
@@ -679,7 +734,14 @@ export function createRealmSession({
         if (REALM_LOST.includes(r.error) || r.error === 'seq' || !putMayClear(r)) {
           // RESCUE-SAVE: kept for the next join to decide (another tab took the lease, the account signed out), or a copy
           // no join may play, dropped
-          if (UNSENT_KEPT_ON.includes(r.error)) { markMissed(); keepNow(); revise({ missed: true }); } else dropCopy();
+          // STRANDED: a `lease` refusal marks the copy missed only when it differs from the last save that landed but for its
+          // clock and its look (idleKeyOf). Such a copy holds nothing the realm lacks (an idle tab at the seat's loss), so it
+          // is not set aside as one that "may hold progress". Any other copy holds play since the last landed put, up to a
+          // checkpoint's worth, and stays marked: the next join sets it aside unless the realm already holds it.
+          if (UNSENT_KEPT_ON.includes(r.error)) {
+            if (r.error !== 'lease' || idleKeyOf(job.text, job.summary) !== landedKey) { markMissed(); revise({ missed: true }); }
+            keepNow();
+          } else dropCopy();
           lose(r.error); last = { ok: false, error: r.error }; answer(job, last); break;
         }
         // offline, a busy service, the hour's bound: this save waits for the next checkpoint unless a newer one came - and
@@ -709,6 +771,11 @@ export function createRealmSession({
     /** When the first put since the last that landed was refused or went unanswered (the session's `now`), or null
      *  while every save handed has reached the realm. */
     get missedSince() { return missedSince; },
+    /** When the realm last held this tab's progress (the session's `now`): the join, a put that landed, or a periodic
+     *  save answered by the save the realm holds. */
+    get savedAt() { return savedAt; },
+    /** Whether a put is out or a save waits for one - its answer is not in yet. */
+    get busy() { return !!running || !!pending; },
     /** Told after each run of puts the realm answered, while the session stands; the host's to set. @type {(() => void) | null} */
     onCheckpointAnswered: null,
     /** INT3: the judge's hold the last landed checkpoint said - a reason, null for none, undefined before any said. */
@@ -741,7 +808,10 @@ export function createRealmSession({
       // whatever it held - an account write every two minutes for someone standing still. The save the service holds
       // is answered for it: the one that last landed, but for its clock and its look (idleKeyOf), with nothing queued,
       // nothing missed, inside REALM_IDLE_CHECKPOINT_MS - and never on a page going away, whose save the next join reads.
-      if (idleOk && landedKey != null && !pending && !running && !missed && !hidden() && now() - landedAt < REALM_IDLE_CHECKPOINT_MS && idleKeyOf(text, summary) === landedKey) return Promise.resolve({ ok: true, seq: current, idle: true });
+      if (idleOk && landedKey != null && !pending && !running && !missed && !hidden() && now() - landedAt < REALM_IDLE_CHECKPOINT_MS && idleKeyOf(text, summary) === landedKey) {
+        savedAt = now();   // the realm holds this save but for its clock
+        return Promise.resolve({ ok: true, seq: current, idle: true });
+      }
       // RESCUE-SAVE: NEVER IN THIS PAGE'S MEMORY ALONE - on the device once its put waits out the grace, and at once on a
       // hidden page, whose put the page's going cuts off (a close, a reload, the keepalive leave ahead of it)
       unkept = text;
@@ -1032,8 +1102,9 @@ export function realmRefusalText(/** @type {string} */ error) {
 export const REALM_RESTORED_TEXT = 'Your last save had not reached the realm when you left. This device kept it, and you continue from it.';
 /** STRANDED: said once the world stands, when the join set aside this device's copy of a save the realm never took
  *  because the character was played on elsewhere since - in the player's language. "May": a put whose answer was lost
- *  may have landed after all. */
-export const realmStrandedText = () => t('realm.stranded', 'This device kept a save of this character that did not reach the realm, and the character was played somewhere else since. That save may hold progress you do not have now. It is set aside on this device, not played.');
+ *  may have landed after all. And where it can be had again: the Online door copies it as an offline character
+ *  (systems/online/strandedCopy.js). */
+export const realmStrandedText = () => `${t('realm.stranded', 'This device kept a save of this character that did not reach the realm, and the character was played somewhere else since. That save may hold progress you do not have now. It is set aside on this device, not played.')} ${t('realm.strandedWayBack', 'To keep it, recover it from this character\u2019s tile at the Online door.')}`;
 /** Said once the world stands, when an online boot carried no realm character (a stale address, a local save). */
 export const REALM_OFFLINE_TEXT = 'Online characters live in the realm now, so this one plays offline. Use the Online door to bring it in. You can do this once.';
 

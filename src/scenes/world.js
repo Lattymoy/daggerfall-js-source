@@ -872,7 +872,7 @@ import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the le
 import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createChapterBanners } from './chapterBanners.js';   // CHAP7b: a patron's banners at its chapter's halls
-import { createRollTracker, rollEntityDoors, rollPaceOf } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
+import { createRollTracker, rollEntityDoors, rollPaceOf, sayRollStop } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
 import { rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, seatLinesOf, seatRankAt, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
 import { chapterSeasonLines } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season in words, its candidates named
 import { setHudRenown } from '../ui/hud/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
@@ -973,8 +973,8 @@ import { allyCastSpell, allyCastable, strangerCastable, allyReachFor, allyCastTa
 import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effects on the party pose   // ALLY-CAST: a beneficial spell at a party mate; SPELL-GIFT: and the stranger's list
 import { stampItemIds, tradeHeldNotice } from '../systems/item/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { wireRealmHolds } from './realmHoldHost.js';   // INT3 + AUTO-HOLD: the hold and the locked pieces, said to the player
-import { checkpointAllowed, checkpointWhenDue, checkpointedTradePack, createSaveSoon } from '../systems/online/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
-import { watchRealmUnsaved } from '../systems/online/realmUnsavedNotice.js';   // the player told while their saves do not reach the realm
+import { checkpointAllowed, checkpointedTradePack, createSaveSoon } from '../systems/online/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
+import { createOnlineCheckpointClock } from '../systems/online/onlineCheckpointClock.js';   // the periodic checkpoint, the one at seat loss, and the word while the realm holds nothing new
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack, packTradeRefusal } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
@@ -1347,7 +1347,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
    *  deleted, the account signed out - takes the player to the door with the reason. */
   const realmSession = realmBoot ? createRealmSession({ io: realmIoNow(), id: params.get('realm'), lease: realmBoot.lease, seq: realmBoot.seq, gzip: realmBoot.gzip, onLost: (why) => realmLost(why) }) : null;   // REALM-GZIP: packed when the join said so
-  if (realmSession) watchRealmUnsaved(realmSession, { say: (text) => townTalk.say(text) });   // the session's own clock, Date.now
   // LEGACY7 (bible/06-Systems/Legacy-Arc.md section 9): ONLINE, PROJECT LEGACY'S LINES ARE THE REALM'S - read into the
   // device's store before any save is restored (a death another device wrote stands here), written after each of the
   // device's writes; and the account's living realm characters, the question "is there a save of this member?" online
@@ -17278,6 +17277,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const opts = sink ? { quiet: true, sink } : { quiet: true };   // AUDIT PRE-MERGE 1003 O10: a caller's sink, to hear the put's answer
     return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
   }
+  const checkpointClock = createOnlineCheckpointClock({ session: realmSession, checkpoint: () => onlineCheckpoint(), lastAt: () => _checkpointAt, say: (text) => townTalk.say(text), stands: () => _bootLoaded });
   /** AUDIT PRE-MERGE 1003 O10: A CHECKPOINT THAT LANDED - for a door that must not say a thing done before the save that
    *  holds it is the realm's (systems/online/onlineHomes.js moveArenaHomes: a displaced home's move said read). A realm
    *  character's checkpoint answers the realm's word on the PUT that carried it (the composer's sink - scenes/shared.js
@@ -19922,11 +19922,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // CHAP4b: ranks 8 and 9 are seats - the book held at 7 said once a hold, the seats as they stand and as they move
     ...rollNoticeDoors({ entityOf: () => playerEntity, say: (text) => chatNotice(text) }),   // SEAT-WORDS / STANDING-WORDS: the hold (and the Chapters page), and what the Roll moved
     onSeats: (seats, before) => { for (const line of seatLinesOf(before, seats)) chatNotice(line); },
-    // shut: the save keeps it, quietly - AUDIT CHAP3 C9: a build too old for the service says so, as Renown's stop does
-    onStop: (error) => {
-      if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));
-      else if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error);
-    },
+    onStop: (error) => sayRollStop(error, chatNotice),   // stopped: the save keeps what is earned, and the player is told
   }) : null;
   // CHAP4b: the rank the playing character's seat gives it at a hall of `faction` where it stands - the politic region,
   // as the chapter sheet's (AUDIT CHAP3 C6) - null offline, before the Roll's first word, or with no seat here
@@ -27699,6 +27695,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wagonRiders?.clear();   // WAGONS2 (FINAL AUDIT): offline, nobody rides with me nor I with anyone - my riders' seats were kept for the gone, my companions walking at heel and every journey waiting GO_LEAD_MS on them
     caravanVisitLink.close();   // WAGONS2-VISIT: and the visited caravan's listener goes with the seat
     seatLock?.release();
+    checkpointClock.seatLost();   // a realm character saved at once: a lease another device took is heard now, not a period later
     console.info('[online] another tab, window or device has the seat - this one is offline');
   };
   /** ONE-SEAT: the word that the seat is gone - the hub's close, the browser's, a room's - acted on as it arrives. */
@@ -27758,7 +27755,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         setMidScreenText(SEAT_MID_TEXT);
       }
       // out of the seat a realm character still saves as it plays: the service's lease, not the seat, decides whose save lands
-      checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());
+      checkpointClock.frame(now);
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;
     }
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
@@ -27794,7 +27791,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;   // PEERLIGHT2: and no candle hangs over the dead; AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
-    checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());   // SCALE2b: the periodic one may be answered by the save the service holds (realmSaves.js idle)   // REALM P0.5: every ONLINE_CHECKPOINT_MS (five real minutes, CHECKPOINT-5), alive and in the seat (the first such frame persists the join's call-in)
+    checkpointClock.frame(now);   // SCALE2b: the periodic one may be answered by the save the service holds (realmSaves.js idle)   // REALM P0.5: every ONLINE_CHECKPOINT_MS (five real minutes, CHECKPOINT-5), alive and in the seat (the first such frame persists the join's call-in)
     if (instanceDoor.refused(online)) modes?.forceExitToExterior?.();   // INSTANCES (the audit): alive, an instance's door shut on me (not of its owner's party - a kick, a lapse) - out, as the realm's door does, never left inside it alone
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const cabin = modes?.sailingCabin;

@@ -237,16 +237,16 @@ export const initialOf = (save) => (String(save?.name ?? '').trim()[0] ?? '?').t
  * @param {Document} doc
  * @param {{name?: string, race?: string, career?: string, level?: number, health?: number,
  *          maxHealth?: number, gold?: number|null, when?: string|null, hour?: string|null,
- *          saveName?: string, house?: string|null}} save  one row of the pane's own save list - every field
- *        optional, because a card can come from an older build (saveSlots.js's
- *        `SaveInfo` typedef says the same about its own, for the same reason)
+ *          saveName?: string, house?: string|null}} save  one row of the pane's own save list - every field optional,
+ *        because a card can come from an older build (saveSlots.js's `SaveInfo` says the same, for the same reason)
  * @param {object} [opts]
  * @param {Array<{label: string, primary?: boolean, disabled?: boolean, onClick?: Function|null}>} [opts.actions]
  * @param {{state?: string, when?: string|null, why?: string|null, actions?: Array<any>}|null} [opts.cloud]
  * @param {HTMLCanvasElement|Promise<HTMLCanvasElement|null>|null} [opts.face]
  * @param {boolean} [opts.current]  this is the slot the pane is ABOUT (the most recent, the one being overwritten)
+ * @param {{say: string, actions?: Array<any>}|null} [opts.notice]  a word about this save that its facts cannot say, and its way on
  */
-export function saveTile(doc, save, { actions = [], cloud = null, face = null, current = false } = {}) {
+export function saveTile(doc, save, { actions = [], cloud = null, face = null, current = false, notice = null } = {}) {
   const el = (t, cls, txt) => {
     const n = doc.createElement(t);
     if (cls) n.className = cls;
@@ -306,6 +306,17 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
   // tiles of equal height has its buttons at four different heights -
   // measured, and it reads as four misaligned cards rather than a row.
   const foot = el('div', 'svfoot');
+
+  // ── A NOTICE, ONE LINE ──────────────────────────────────────────
+  // A word the caller has about this save (STRANDED: progress this device kept that never reached the realm - ui/enhanced/
+  // strandedNotice.js), in the cloud line's shape and brass: one sentence and its button, APART from the tile's own
+  // buttons. As a fourth button beside Copy to offline it read as a second way to copy the character.
+  if (notice?.say) {
+    const bar = el('div', 'svcloud is-only svnotice');
+    bar.append(el('span', 'svsay', notice.say));
+    for (const a of notice.actions ?? []) bar.append(actionButton(el, a));
+    foot.append(bar);
+  }
 
   // ── THE CLOUD, ONE LINE ─────────────────────────────────────────
   if (cloud && cloud.state && cloud.state !== 'off') {

@@ -82,7 +82,7 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and APPEARANCES-II's ONE (`wardrobe/wardrobePreview.js`: the character wearing a look tried in the Wardrobe, before Wear is paid - the doll, or the Morrowind body on Enhanced Plus - `04-Characters/Wardrobe.md` section 4);
 - and TITLE-DOOR's MARK (`intro/titleHeld.js`: the page's word that the film's title stands under the menu - the film writes it when it lands, the menu reads it and draws its home over the film; `10-UI/UI-Arc.md` TITLE-DOOR);
 - and SHOP's TWO (`enhanced/enhancedShop.js`: the pause face's gem and the shop's window - the disclaimer, a tab a category, a panel a ware; `titleFlame.js`: the Genesis title's fire, one stepped CSS background - `06-Systems/Shop.md`);
-449 modules
+450 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

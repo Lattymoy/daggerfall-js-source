@@ -1711,7 +1711,7 @@
   "src/systems/online/onlineHomes.js": 93,
   "src/systems/online/onlineLane.js": 189,
   "src/systems/online/onlineSync.js": 20,
-  "src/systems/online/realmUnsavedNotice.js": 12,
+  "src/systems/online/realmUnsavedNotice.js": 8,
   "src/systems/overhauls.js": 10,
   "src/systems/ownMwAssets.js": 31,
   "src/systems/padCursor.js": 18,

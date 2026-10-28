@@ -74,8 +74,8 @@
   {
     "name": "RESCUE-SAVE-a-refused-copy-kept",
     "file": "src/systems/realmSaves.js",
-    "old": "revise({ missed: true }); } else dropCopy();",
-    "new": "revise({ missed: true }); }",
+    "old": "            keepNow();\n          } else dropCopy();",
+    "new": "            keepNow();\n          }",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

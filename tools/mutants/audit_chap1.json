@@ -488,8 +488,8 @@
   {
     "name": "ACHAP-KEPT-SHAPE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return null;",
-    "new": "if (!Number.isSafeInteger(seq)) return null;",
+    "old": "if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return unheard ? { unheard } : null;",
+    "new": "if (!Number.isSafeInteger(seq)) return unheard ? { unheard } : null;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
