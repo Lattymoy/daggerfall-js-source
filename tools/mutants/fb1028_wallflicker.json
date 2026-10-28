@@ -113,7 +113,9 @@
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
     ],
-    "note": "Re-aimed by content at the merge with the Bay's walls (FB1028): the reach takes the grown towers' `thick` (T). AUDIT FB1028: it dies, so not equivalent; the synthetic bends' towers grown as wallPieces mints them."
+    "equivalent": true,
+    "why": "Its only reader left is the first filter of the towers by the part's own box, and a length or a gate ends in its towers' middles, so its box holds them at any reach; the per-triangle reach reads the tower frame's own boxes. AUDIT FB1028: re-run on 0be4199e9's pins with ARENA2 and the synthetic towers grown, it survives, and it changes none of the Bay's 410 wall models.",
+    "note": "Re-aimed by content at the merge with the Bay's walls (FB1028): the reach takes the grown towers' `thick` (T)."
   },
   {
     "name": "AUDIT-FB1028-across-ungrown",

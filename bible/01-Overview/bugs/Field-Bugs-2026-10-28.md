@@ -73,7 +73,7 @@ mitres and grown towers, the model of every fifth Bay city holds 10.6 per cent m
 takes about seven times as long to make (37 against 5 ms a city, on a loaded machine), so it is made 16 pieces a breath.
 
 Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2). Mutants `tools/mutants/fb1028_wallflicker.json` (23:
-20 dead, 3 recorded equivalent with why, two of them the mitre's branch, which cuts on mitreEnds' own plane).
+19 dead, 4 recorded equivalent with why, two of them the mitre's branch, which cuts on mitreEnds' own plane).
 
 ## BAY-WALLS: Daggerfall's walls, kept and fixed (7)
 
