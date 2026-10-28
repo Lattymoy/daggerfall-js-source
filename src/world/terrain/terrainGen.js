@@ -154,7 +154,8 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const tileData = generateTileData(classic ?? samples, px, py);
   // GRASS-PATH1: the painter's own record of which tiles it wrote, so
   // the grass placer can keep off a path it cannot name by record.
-  let paths = null, yardPaths = null;
+  let paths = null;
+  let yardPaths = null;   // FB1028 YARDS: #1184's paths, the yards' alone
   let arenaPainted = false;   // TESA4: whether Arena's roads reached this pixel's paint - the host's sweep asks
   let bridges = null;   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js), past the Bay with the rivers carved
   if (roads) {

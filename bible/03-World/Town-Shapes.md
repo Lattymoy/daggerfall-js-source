@@ -813,9 +813,95 @@ what they read at #1184: the paths with no arm taken up and the roads of the gat
 them as `yard`), and that wall's cells - no street's gate, no tower grown (townWall's `yardPieces`). The host shuts the
 yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
 
-Measured over all 410: 1,254 of the 1,258 yards stand on #1184's cells; four stables stand 1 to 4 cells off (Knightsgate, Issaqumbaa, Syra-Kom, Puweyn), their cause not
-yet found. Under the new wall and roads 52 are left where #1184 stood them though they no longer fit: 50 on a gate's new
-road outside the wall, and 2 on the new wall's cells (Knightsmore's Stable, Tigonus's joinery).
+**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = []) {"`). A
+yard keeps its #1184 place unless the place no longer fits the town as it stands (siteFits: its cells on no road and
+nothing shut, its pad clear of the wall and every closed cell). One that does not is placed again by its kind's law on
+the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `yardWalkShut`).
+
+Measured over all 410: 1,183 of the 1,258 yards stand on #1184's cells; none broken after (none in, against or on
+the wall, on a road, off its ground or out of reach), none over another. The 75 moved:
+
+| city | yard | why |
+| --- | --- | --- |
+| Akhahanu | Stable | on a gate's new road |
+| Akhahanu | Wagon Yard | on a gate's new road |
+| Akhera-Korom | joinery | on a gate's new road |
+| Aldhope | Stable | against a grown tower |
+| Aldingborne Commons | joinery | against a grown tower |
+| Aldleigh | Wagon Yard | on a gate's new road |
+| Atrohala | joinery | on a gate's new road |
+| Baelhead | Stable | against a grown tower |
+| Baelwall | Wagon Yard | on a gate's new road |
+| Baelway | Stable | against a grown tower |
+| Baelwood | Stable | on a gate's new road |
+| Bhoriane | joinery | on a gate's new road |
+| Blackley | joinery | on a gate's new road |
+| Broadwell | Wagon Yard | on a gate's new road |
+| Burgham | joinery | on a gate's new road |
+| Burgwold | joinery | on a gate's new road |
+| Ceranda-Kom | Wagon Yard | on a gate's new road |
+| Charbeth | Wagon Yard | on a gate's new road |
+| Charenwall | joinery | against a grown tower |
+| Charenworth | Stable | on a gate's new road |
+| Charenworth | Wagon Yard | against a grown tower |
+| Chesterbeth | joinery | on a gate's new road |
+| Chesterbeth | Wagon Yard | on a gate's new road |
+| Cromtry | Stable | against a grown tower |
+| Cromwark Hamlet | Stable | on a gate's new road |
+| Crosswych Wood | joinery | against a grown tower |
+| Deerbridge Hollow | Stable | against a grown tower |
+| Eastcastle | Stable | on a gate's new road |
+| Elotunia | joinery | on a gate's new road |
+| Fontbeth | Wagon Yard | on a gate's new road |
+| Fontfort | Stable | on a gate's new road |
+| Gothwark | Stable | on a gate's new road |
+| Graybrone Court | Wagon Yard | against a grown tower |
+| Graybury | Wagon Yard | against a grown tower |
+| Gyselah | Wagon Yard | on a gate's new road |
+| Holway | Stable | on a gate's new road |
+| Issaqumbaa | Stable | the gate dressing moved (not fixed) |
+| Jaladnia | Stable | on a gate's new road |
+| Khajastareg | Wagon Yard | on a gate's new road |
+| Knightsgate | joinery | on a gate's new road |
+| Knightsgate | Stable | the gate dressing moved (not fixed) |
+| Knightsmore | Stable | in the new wall |
+| Longbeth | Stable | against a grown tower |
+| Longhope End | Stable | on a gate's new road |
+| Merborne | joinery | on a gate's new road |
+| Mesajer | Wagon Yard | on a gate's new road |
+| Midbury | joinery | on a gate's new road |
+| Newcester | Stable | on a gate's new road |
+| Newmarket | joinery | on a gate's new road |
+| Newvale | Wagon Yard | on a gate's new road |
+| Osenabu | Wagon Yard | on a gate's new road |
+| Oxfort | Stable | against a grown tower |
+| Oxway | joinery | on a gate's new road |
+| Penbrugh | Wagon Yard | against a grown tower |
+| Penwood | Wagon Yard | on a gate's new road |
+| Pothago | Stable | on a gate's new road |
+| Puweyn | Stable | the gate dressing moved (not fixed) |
+| Pythinis | Stable | on a gate's new road |
+| Reycastle | Stable | against a grown tower |
+| Ripmarket | joinery | against a grown tower |
+| Singcroft | Wagon Yard | on a gate's new road |
+| Singham | Wagon Yard | on a gate's new road |
+| Syra-Kom | Stable | the gate dressing moved (not fixed) |
+| Syrunnuweyn | Wagon Yard | on a gate's new road |
+| Tasoparet | Wagon Yard | on a gate's new road |
+| Tigonus | joinery | in the new wall |
+| Tsetetturia | joinery | against a grown tower |
+| Tsetissiara | Stable | on a gate's new road |
+| Tulaelius | Wagon Yard | against a grown tower |
+| Tunborne | joinery | on a gate's new road |
+| Tuntale | Wagon Yard | on a gate's new road |
+| Umberadax | Wagon Yard | on a gate's new road |
+| Whitewark | Stable | on a gate's new road |
+| Wrothgaria | joinery | against a grown tower |
+| Zenirijet | Stable | on a gate's new road |
+
+The four by the gate dressing: TS7 steps a gate's boards and carriage clear of the wall's cells, the grown towers'
+now, so they stand up to 0.8 m over (Knightsgate's two, measured), and a yard's measures read them. Their places fit
+the town; the yards' measures still read the new dressing.
 
 **Not changed, and why.** The wall is one model, so its pixel's build stands its 14,600 triangles in one step: 30 to 94 ms
 on the collider, and as much again with the player in town (the late solids' gate, `player/lateSolid.js`, builds a probe of
@@ -825,8 +911,8 @@ inside crosses the town's open cells as its fabric's road, and is left for its o
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from Daggerfall's wall pieces - no door where the wall is a model of
 the town's own, a length cut at a bend and its tower grown across; from Basic Roads' tiles on a Bay wall's ground. Tests
-`test/world/fb1028_walls.test.js` (9, three on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (31, all dead). PINS
+`test/world/fb1028_walls.test.js` (10, four on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (32, all dead). PINS
 MOVED: `test/world/gateroads.test.js` (the kernel handed the town's ground), `test/world/townbends.test.js` (a tower's
 footprint as wide as it stands); `baywalls`, `ic_stutter`, `merchantyards1`, `shipyards1_found` (the host hands the
-places the yards' shut); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,
+places the yards' shut), `carpyard1` (the kept yards), `road/roads` (the yards' paths); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,
 TF-the-length-and-thickness-swapped, TW-the-turn-mirrored, TB-the-walk-unshared, TF-the-wall-unwired, TS10-key-blind.

@@ -278,5 +278,14 @@
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
+  },
+  {
+    "name": "FB1028-a-broken-yard-kept",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "  const broken = sites.filter((s) => YARD_FOOT[s.kind] && !siteFits(g, s));",
+    "new": "  const broken = [];",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
   }
 ]

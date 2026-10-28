@@ -421,3 +421,28 @@ test('FB1028 YARDS with ARENA2: every yard where #1184 stood it - placed on the 
   assert.ok(host.includes('townWalkShut(dfLocation, townGround, yardPaths ?? paths, true)'), 'the host shuts the yards\' ground as #1184 stood it');
   assert.ok(host.includes('climate?.people, loc, yardShut,'), 'and hands the yards that');
 });
+
+test('FB1028 YARDS with ARENA2: a yard broken by the new wall and roads placed again - Chesterbeth\'s Wagon Yard on a gate\'s new road (the bare law\'s; Knightsmore\'s and Akhahanu\'s break only with the game\'s measures) stands again by its law clear of the new roads and wall and of its town\'s other yards, which keep a779c9c29\'s cells (mutant: a broken yard kept)', { skip: skipReal, timeout: 1_800_000 }, async () => {
+  const { cities, maps, blocks, roadsB, tracksB, pixelOf, bytes } = await freeware();
+  const { setLocationTiles } = await import('../../src/world/terrain/terrainTiles.js');
+  const { generatePixelTerrain } = await import('../../src/world/terrain/terrainGen.js');
+  const { WoodsFile } = await import('../../src/formats/woodsFile.js');
+  const { layoutLocation } = await import('../../src/world/locationLayout.js');
+  const Y = await import('../../src/world/merchantYards/merchantYardSites.js');
+  const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
+  const loc = cities.find((c) => c.name === 'Chesterbeth'), { px, py } = pixelOf(loc), tm = new Uint8Array(D * D), rect = setLocationTiles(loc, maps, blocks, tm);
+  rect.gateRoads = townGateRoads(loc, maps, blocks);
+  const job = generatePixelTerrain({ woods, px, py, tilemap: tm, locationRect: rect, hasLocation: true, climateType: 0, roads: { roads: roadsB, tracks: tracksB, smooth: true } });
+  const yl = layoutLocation(loc, maps, blocks), str = (q) => `${q.kind} ${q.gx} ${q.gy} ${q.turn}`;
+  const was = Y.townGroundOf(yl, {}, townWalkShut(loc, job.townGround, job.yardPaths, true)), sites = [...Y.yardSitesOn(was), ...Y.craftYardSitesOn(was)];
+  assert.deepEqual(sites.map(str), ['stable 292 60 0', 'transport 210 37 1', 'carpenter 279 116 0'], 'placed on #1184\'s ground, a779c9c29\'s cells');
+  const now = () => Y.townGroundOf(yl, {}, townWalkShut(loc, job.townGround, job.paths)), g = now();
+  assert.ok(!Y.siteFits(g, sites[1]), 'its Wagon Yard broken on the new ground');
+  const run = (gen) => { let r; while (!(r = gen.next()).done); return r.value; };
+  const kept = run(Y.keptSitesSteps(now(), sites, []));
+  assert.deepEqual([str(kept[0]), str(kept[2])], ['stable 292 60 0', 'carpenter 279 116 0'], 'the others kept');
+  assert.notEqual(str(kept[1]), 'transport 210 37 1', 'the Wagon Yard placed again');
+  assert.ok(kept.every((s) => Y.siteFits(g, s)), 'every yard fits the new ground');
+  const t = kept[1];
+  for (const q of [kept[0], kept[2]]) assert.ok(t.gx + t.nx <= q.gx || q.gx + q.nx <= t.gx || t.gy + t.nz <= q.gy || q.gy + q.nz <= t.gy, `clear of its ${q.kind}`);
+});
