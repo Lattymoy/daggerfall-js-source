@@ -1928,3 +1928,118 @@ flat-slice record no verdict - its `perf7.test.js` fails here with no mutant, th
 follow-up 2 (`27636a695d`) mended after this branch's base; and the one record of another list inside the field,
 `grasslit2.json`'s AUDIT-GRASSLIT2-C-ask-no-slope, dead. With `fb1021b_grass.json`, one run: 215 records, 210 dead,
 4 equivalent, 1 no verdict.
+
+# THE SNOW'S BUILDS OFF THE MAIN THREAD (SNOW-THREAD, 2026-10-26)
+
+*The real-GPU performance pass (P6 of its proposal): standing in Daggerfall in winter the main thread was 92-96% busy at
+120 fps with the GPU mostly idle, and on the move its idle fell to 0.2%. The snow's simulation and draw were 6% of the
+busy time standing and 17% moving; the middle ring's rebuild was 8% alone, and one copy helper inside it (`copy4`) 3.9%.*
+
+## What changed
+
+- **Step 1 - the copies are runs.** The window's recentre and the ring's rebuild copied the last build's texels and
+  vertices a value at a time through `copy3`/`copy4`, called with float and byte arrays alike (a megamorphic helper).
+  Both now gather consecutive copies into runs and copy each run with one typed-array `set` an array
+  (`snowfallRuntime.js` `_midCopyMesh`, `_midCopyStatic`, and the recentre's static stretch). Same bytes; the budget a
+  copied vertex spends is its own as before.
+- **Step 2 - the builds on a worker.** The two builds that sample the ground run whole on a module worker
+  (`systems/snowfall/snowBuildWorker.js` over `snowBuildKernel.js`), driven through the runtime's own code - a
+  `SnowfallRuntime` whose commits are the build's halves alone (`_midFinish`, `_localFinish`) - over a copy of the ground
+  it reads. The main thread posts a build where it would begin one and takes the finished arrays the first
+  frame they are in (`snowBuildClient.js`); the arrays they replace go back. A pixel's ground crosses once a version of
+  it, copied (`snowGroundLaw.js` `snowGroundSnapshot`), keyed by the arrays it was taken from. The drawn
+  ground's laws moved out of the `snowGround.js` adapter into `snowGroundLaw.js`, which both threads call (main moved that
+  adapter from `bootWorld`); `carvedFloorLocalY` moved beside the floor it reads (`world/deepWater/deepWaterFloor.js`)
+  and the base64 pair to `systems/save/base64Bytes.js`, so the worker loads 36 modules, not the 820 that
+  `save/saveTransfer.js` pulled in.
+- **The fallback is the old path**: `?snowthread=off`, no `Worker`, a worker that faults or falls silent for 10 s with a
+  build out (`JOB_DEADLINE_MS`), or a ground the worker cannot
+  copy (`scenes/exterior.js`'s hands no `data` or `frame`) build on the main thread as before. THE FOUR HOSTS:
+  `world.js` wired; `exterior.js` builds its snow on its own thread (its ground hands no copy); `worldModes.js` and
+  `dungeonContext.js` build no snow.
+- **Not moved, and why**: the track masks, the persistent field and the snowpack are read synchronously by the save
+  (`getSaveData`), the surface (`sync` and `draw` read the arrays and the dirty rectangles each frame) and `snow_status`;
+  a worker would need a mirror of each. The blanket's tile builds stay too (`_blanketTick` 2.2% of the base's busy time
+  moving, most of it `terrainsNear`, the host's own query).
+- **Departure** (`03-World/Snowfall.md`, THE PORT'S PACE; Port-Ledger SNOWFALL): with the worker up, a ring or a window
+  lands the first frame it is ready, sooner than the mod's own sample counts stand it. The bytes are the same.
+
+## Measured
+
+`dfo-verify/tools/perf/hitchProbe.mjs`, headed Edge on this PC's RTX 5080 (ANGLE over D3D11), Daggerfall city at 15:00 on
+the start date (winter), fly camera: a warm-up boot, then `boot,settled,out` on a fresh profile, `FLY_S=60`, `SHOT=1`.
+Base `9aa6bc4662`; head this branch, and the same build with `?snowthread=off` (step 1 alone). Shares are of the main
+thread's busy time (`attr.cjs`, inclusive: the snow is `snowfallHost.js` `frame` plus `draw`, the grass `frameGrass`);
+ms/s divide by the phase's seconds. Output: `E:/git-repos/travddm/dfo-verify/tools/perf/p6-snow-2026-10-26/` (`base/`,
+`head-off/`, `head/`, each with its `.log`).
+
+| | base | step 1 (`?snowthread=off`) | steps 1 + 2 |
+|---|---|---|---|
+| standing fps (settled, 20 s) | 120.3 | 120.3 | 120.3 |
+| flying fps (out) | 112.0 | 118.1 | 118.6 |
+| flying frame p99 / max, ms | 16.8 / 133.3 | 12.6 / 108.3 | 12.6 / 108.2 |
+| the snow's share moving | 17.7% (165 ms/s) | 15.3% (119 ms/s) | 8.4% (63 ms/s) |
+| the grass's share moving | 8.6% (80 ms/s) | 10.3% (80 ms/s) | 10.3% (78 ms/s) |
+| main thread moving: script / program / gc / idle | 88.3 / 3.9 / 1.2 / 6.6 | 73.5 / 3.4 / 0.8 / 22.3 | 71.0 / 3.2 / 0.8 / 25.0 |
+| main thread standing: idle | 18.4% | 33.9% | 29.8% |
+| the snow's share standing | 6.1% (50 ms/s) | 7.4% (49 ms/s) | 6.2% (43 ms/s) |
+
+Every phase's p50 in those runs is 8.3 ms. They read it as a 120 Hz cap, but the display is 240 Hz: 120 fps was the
+CPU's ceiling for those builds, and the interleaved runs below replace the fps figures. Standing, the snow costs the same (nothing builds while the player stands); the
+standing idle moved between the runs with the rest of the frame, not the snow (busy 16.3, 13.2 and 14.1 s). On the move
+`_midProcess` is gone from the main thread's profile; what is left of the snow there is the commit and the blanket
+(`_midAwait` 0.7%, the ramp 0.7%, `_blanketTick` 2.6%, of it `terrainsNear` 2.0%) and the draw (3.4%).
+
+**The interleaved A/B (2026-10-27).** `dfo-verify/tools/perf/README.md` "A/B protocol": A is the branch's merge base with
+main (`56eb3cb15a`), B the branch (`633e7a2c7a`); one cold throwaway boot per arm, then A, B, A, B on each arm's warm
+profile, each launch after a census under 10% CPU with no other game run or test suite. Mean of an arm's two runs, the
+runs in brackets. Output: `p6-snow-2026-10-26/ab/` (each phase's `load` census and `<phase>.gaps.json`).
+
+| | A: base | B: the branch |
+|---|---|---|
+| standing fps | 164.9 (164.4, 165.3) | 164.2 (162.8, 165.6) |
+| flying fps | 150.7 (151.3, 150.0) | 172.4 (171.9, 172.8) |
+| flying frame p50 / p99, ms | 8.3 / 12.6 | 4.2 / 12.5 |
+| flying frames under 7 ms | 46.0% | 64.4% |
+| main thread busy per flying frame | 6.63 ms | 5.76 ms |
+| the snow's share flying | 16.6% (166 ms/s) | 7.3% (72 ms/s) |
+
+The frame gaps fall in two groups, one vsync of the 240 Hz display (about 4.2 ms) and two (about 8.3 ms), with none
+between 7 and 8 ms. The branch moves the median flying frame into the first group. The main thread is busy almost all
+of the time in both arms (idle 0.2% and 0.8% flying), so the gain shows as frames. Standing, the arms are the same.
+
+**The picture.** `pngdiff.cjs` and `pngmask.cjs` over the settled screenshots: base against head, 0.01% of the pixels
+differ by more than 8 and none by more than 64 - the walkers and lights in the far town and one glyph of the tutorial
+card; the snow on the ground is the same. Head against step 1 alone: 0.00%. (`mask-settled-*.png` beside the runs.) The
+fly camera lays no player tracks; the townspeople's are on the ground in both.
+
+Pins: `test/systems/snowthread.test.js` (4) - the ground law against its snapshot after a structured clone; every ring
+and window a same-thread runtime commits along a flight (a stride-2 pixel, a shore's bed, the carved sea, Basic Roads,
+a town, a floating origin's move, a slope limit changed) is, array for array, what the worker answers for the same build;
+a runtime on the worker builds nothing on the main thread, and a window recentred from the worker's own copy is the one
+recentred from the main thread's; the fallbacks. Re-aimed by content: `audit_environs.json` (two P3 records, at
+the runs), `snowfall1.json` (the carved sea's, at the law's call), `hostsplit.json` (the ceiling). Mutants:
+`tools/mutants/snowthread.json` 17, all dead. A build a door or a teleport lets go before it lands keeps
+nothing: posting the next of its kind sends its arrays back (`_forget`).
+
+# THE GRASS ON A WORKER (GRASS-THREAD, 2026-10-26) - not built
+
+PERF-EXT22's worker was looked at again with the measurement in hand (moving: the grass 8.6% of the busy time, 80 ms a
+second, `stepGrassCell` 6.9%). The design asked for was a placement over an explicit, versioned snapshot a pixel,
+refused when stale. It stops there: what `world.js` `frameGrass`'s `keep` asks of each candidate is not all the pixel's
+data. Missing from any snapshot without reaching into the hosts' state:
+
+- **The snow cover** - `snowCoverHost.js` `buries(p, lx, lz, y)`: the lattice's shown lines (read again every
+  `SNOW_COVER.nowMinutes` of game time and moved by the weather), the lane's switch and the flat's draw. A snapshot is
+  stale within game minutes, and refusing it then places again every cell the snow line crosses.
+- **The jungle floor** - `jungleFloorHost.js` `claims(x, z)`: its own field's live meadows (BANTHA2).
+- **The burned ground** - `riteHost.clearing()` and `starfall.clearing()`, read each frame.
+
+The rest can cross as data (the TileMap, its ground archive and ECOTONE1's border grounds, the grass and floor records,
+the road painter's `paths`, the World of Daggerfall site, the water corners and puddles, the samples at their stride, the
+sea level, the tiles' mean colours, the grass's normals). FB1021B's pacing would also turn from a budget a frame into a
+latency, and the pack (`writeSlot`, ~2.3 ms a cell) stays on the main thread either way.
+
+**Seen on the way, not changed:** in this winter scene the placer runs on the move (80 ms a second) though the snow
+buries every blade it would stand (`keep` asks `buries` last, after the rest of the pixel's laws) - no grass is drawn in
+`settled.png`.
