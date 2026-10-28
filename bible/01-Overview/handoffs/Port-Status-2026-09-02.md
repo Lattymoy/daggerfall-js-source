@@ -593,10 +593,10 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   the largest of the six.
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
-  four sites inside the renderer's own frame brackets
+  four sites inside the renderer's frame brackets
   (`render/renderer.js:"gl.viewport(0, 0, pw, ph)", render/renderer.js:"full drawing buffer".."this._restoreWorldViewport();", render/renderer.js:"this._worldViewportPx = s.worldViewportPx".."gl.viewport(0, 0, this.canvas.width, this.canvas.height);", render/renderer.js:"_ensureScreenQuadProgram({ start =".."const gl = this.gl;"`) and the 2D passes
   need the full canvas back. D10 withdrew one clause as stale with
-  evidence: no screen-to-ray conversion needs a fix: the
+  evidence: there are no screen-to-ray conversions to fix, because the
   port's activation ray is the camera's forward vector, not a pixel
   unprojected through the projection matrix, so a reduced viewport
   would move no pick. D10 shipped the other half of this file's flag -

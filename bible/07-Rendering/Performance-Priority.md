@@ -2611,51 +2611,6 @@ all dead:
 
 The audit: `01-Overview/audits/Audit-Mem-Audit.md`.
 
-## OW-STREAM — the Overworld's frames on a fixed route, the held map's time to whole, and what the horizon's layers cost
-
-*The owner (2026-10-26): "The held map still struggles to load everything at once, the overworld experiences hitching
-and we need to find a way to expand the overworld view distance without killing performance. Currently tiles visibly
-load in with distance".*
-
-Two slices answer it where their systems live - the held map whole from its first frames (`03-World/Arena-Provinces.md`
-MAP-WHOLE) and the horizon in layers past the streamed grid (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD). This
-record is their measure, and the hitching's.
-
-**The probes, in the tree** (OW-HITCH's and MEM-AUDIT's drivers lived in a session's scratch, and nothing could make
-their figures again):
-- `tools/owHitchProbe.mjs` - OW-HITCH's journey as a tool: Knightstale at 15:00, no foes, the stream settled, the
-  Overworld raised and W held for SECONDS (`WALK=1`: the same route on foot). Every frame timed in the page - `cb` the
-  frame callback's own time (requestAnimationFrame wrapped before the page's scripts), `gap` start to start (what a
-  player waits through: a worker's answer handled, an idle callback, the collector) - beside the browser's long tasks;
-  the draws stubbed by default (SwiftShader's raster is the machine's CPU, no GPU's), so what is left is the main
-  thread's own. `TREE=` serves another worktree (the A/B, one command an arm); `LAND=` and `HEAP_MB=` size the page.
-- `tools/heldMapLoadProbe.mjs` - the held map's views (the continent, far, mid, near, home and a wheel's zoom out and
-  in) set as a zoom or a pan sets them (`__heldMapLoad`, behind the shot gate), every frame after read: the paint's
-  milliseconds and the tiles' own count - painted, stood in for, HOLES - to the first frame nothing is owed.
-- `tools/horizonProbe.mjs` - the Overworld's view photographed with the horizon's layers and with their doors shut.
-
-**What the new layers ask of a frame** - the figures in Travel-View's record: every height, cell and far climate on the
-terrain worker, a band at a time between the stream's own jobs; on this thread the landed grounds laid under
-HORIZON_BUDGET_MS (2 ms a frame) in steps whose p95 measured 0.04-0.16 ms on the freeware's ground, an order written a
-pixel or a cell crossed (1.6-7.9 ms, 2.2-2.5 ms), a rebuild's uploads (2.4 MB every three pixels, 0.6 MB every two
-cells). Measuring it on the real ground found the one long task the layers had brought: a first far field's tints read
-the continent's biomes on this thread (some 150 ms the first read, a step to 196 ms) - they are the worker's now.
-
-**NOT MEASURED HERE - the frames in the real game.** Every arm of the A/B (the base and this tree, the Overworld's and
-the held map's) was started twenty times between 01:00 and 04:40 on this container and none finished: the world page grows to
-1.8-3.3 GB as it boots, the memory group it shares with six other agents' pages and test runs stood at its 14.3 GB
-limit, and the kernel's OOM killer takes the largest Chromium renderer first (Chromium's own +300). The probes and
-their figures are the A/B's tools; the A/B is the owner's to run (For the owner). What WAS seen: the three layers drawn
-by the game's own modules over the freeware's ground in a scratch page (not the game's frame - the far ring's pass
-alone, from a raised eye), with and without their doors: the middle ring's hills where the far ring was facets, the far
-field's land on past the old 28 km rim to the horizon, no hole and no seam between the layers.
-
-**What is left** (OW-HITCH's and MEM-AUDIT's, unchanged by this pass): the collector's pauses over the standing world's
-live heap - 1,459 MB after a forced collection at the boot's end in Daggerfall itself at Land View 1, measured here,
-the largest the sampling profile named the city's replacement blocks (`worldDataReplacement.js`), the colliders, the
-MAPS records and the deep waters' location rects, as MEM-AUDIT found at Knightstale - and the pixel builds' own
-allocations.
-
 ## BOOT-COMPILE — the boot's programs start together, while the boot works
 
 *The owner's performance review (2026-10-25, P1 and P2): players report hitches and low frame rates when things load
@@ -2695,12 +2650,14 @@ real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RT
   `FOE_TELEGRAPH_PROGRAMS`). The renderer and the air pass name theirs in functions beside the builds
   (`worldSetPrograms`, `airPassPrograms`). What installing the lane builds is listed by `render/bootPrograms.js`
   `laneBootPrograms`, a plain function over the renderer's state rather than a Renderer method, so the class does not
-  grow (the owner's extract-what-you-touch rule; the class is a knot `01-Overview/Host-Split.md` names). `worldSetPrograms` and the classic set's source stay in `renderer.js`: the constructor's own start needs them, and
-  `renderer.js` importing `bootPrograms.js` would put 118 modules on the entry's static graph (BOOT2's ceiling), while a
-  leaf of its own reading the renderer's shaders would be an import cycle. `render/bootPrograms.js` starts them all
-  through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling).
+  grow (the owner's extract-what-you-touch rule; the class is a knot `01-Overview/Host-Split.md` names).
 
-  It
+  `worldSetPrograms` and the classic set's source stay in `renderer.js`: the constructor's own start needs them, and
+  `renderer.js` importing `bootPrograms.js` would put 118 modules on the entry's static graph (BOOT2's ceiling), while a
+  leaf of its own reading the renderer's shaders would be an import cycle.
+
+  `render/bootPrograms.js` starts them all
+  through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
   starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
   passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or
   `?dungeon`. The cloud march goes first: it is the longest single compile (6.6 s alone). The constructor starts its
@@ -2757,15 +2714,13 @@ What still waits on a cold cache (1.5 s in all, pair 1):
   (0.10-0.16 s), the far ring, the ocean holes, the duel wall, the flags and banners (20-80 ms each). Each is a few tens
   of milliseconds; listing them is SHADER-STALL's pattern again if they ever matter.
 
-**Known cost.** The switches are read at page load, before the menu decides anything. The bare menu URL names no
+**Known cost.** The switches are read at page load, before the menu decides. The bare menu URL names no
 indoor door, so about 45 programs (the lane, the air pass, the clouds and their noise, the grass, Dynamic Skies) start
 while the player is at the intro and the menu. A player who then starts in a dungeon compiled the clouds, the sky and
-the grass for nothing, and those programs stay started for the session; so does a pass whose switch the player turns
+the grass for nothing, and they stay started; so does a pass whose switch the player turns
 off in the menu (and the clip is left out where an online room later turns Deep Waters on: it compiles at its build,
 as before). `render/glProgram.js releasePrograms` could let the outdoor starts go when the first host mounts indoors;
-that is left until a measurement shows the cost.
-
-The intro draws on a context of its own; whether its frames wait
+that is left until a measurement shows the cost. The intro draws on a context of its own; whether its frames wait
 behind these compiles is measured below.
 
 **Trade-off: starting at page load** (2026-10-26, the owner: "Is it risky to start all of those shaders at page load? I
@@ -3014,6 +2969,51 @@ the frame of the first sweep's last stripe. Pins moved with the controller's tex
 `enhancedSky`, `sunbaby1_event`; P1's `bootcompile` pin that `outdoorPasses` answers as the controller builds holds
 on the mount's start. Mutants: `tools/mutants/cloudcompile.json`, 9, all dead; `owhorizon.json`'s
 OWH-the-deck-carries-no-far and `tv4.json`'s AUDIT-DEEP2-D3-the-field-not-the-sky re-aimed by content.
+
+## OW-STREAM — the Overworld's frames on a fixed route, the held map's time to whole, and what the horizon's layers cost
+
+*The owner (2026-10-26): "The held map still struggles to load everything at once, the overworld experiences hitching
+and we need to find a way to expand the overworld view distance without killing performance. Currently tiles visibly
+load in with distance".*
+
+Two slices answer it where their systems live - the held map whole from its first frames (`03-World/Arena-Provinces.md`
+MAP-WHOLE) and the horizon in layers past the streamed grid (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD). This
+record is their measure, and the hitching's.
+
+**The probes, in the tree** (OW-HITCH's and MEM-AUDIT's drivers lived in a session's scratch, and nothing could make
+their figures again):
+- `tools/owHitchProbe.mjs` - OW-HITCH's journey as a tool: Knightstale at 15:00, no foes, the stream settled, the
+  Overworld raised and W held for SECONDS (`WALK=1`: the same route on foot). Every frame timed in the page - `cb` the
+  frame callback's own time (requestAnimationFrame wrapped before the page's scripts), `gap` start to start (what a
+  player waits through: a worker's answer handled, an idle callback, the collector) - beside the browser's long tasks;
+  the draws stubbed by default (SwiftShader's raster is the machine's CPU, no GPU's), so what is left is the main
+  thread's own. `TREE=` serves another worktree (the A/B, one command an arm); `LAND=` and `HEAP_MB=` size the page.
+- `tools/heldMapLoadProbe.mjs` - the held map's views (the continent, far, mid, near, home and a wheel's zoom out and
+  in) set as a zoom or a pan sets them (`__heldMapLoad`, behind the shot gate), every frame after read: the paint's
+  milliseconds and the tiles' own count - painted, stood in for, HOLES - to the first frame nothing is owed.
+- `tools/horizonProbe.mjs` - the Overworld's view photographed with the horizon's layers and with their doors shut.
+
+**What the new layers ask of a frame** - the figures in Travel-View's record: every height, cell and far climate on the
+terrain worker, a band at a time between the stream's own jobs; on this thread the landed grounds laid under
+HORIZON_BUDGET_MS (2 ms a frame) in steps whose p95 measured 0.04-0.16 ms on the freeware's ground, an order written a
+pixel or a cell crossed (1.6-7.9 ms, 2.2-2.5 ms), a rebuild's uploads (2.4 MB every three pixels, 0.6 MB every two
+cells). Measuring it on the real ground found the one long task the layers had brought: a first far field's tints read
+the continent's biomes on this thread (some 150 ms the first read, a step to 196 ms) - they are the worker's now.
+
+**NOT MEASURED HERE - the frames in the real game.** Every arm of the A/B (the base and this tree, the Overworld's and
+the held map's) was started twenty times between 01:00 and 04:40 on this container and none finished: the world page grows to
+1.8-3.3 GB as it boots, the memory group it shares with six other agents' pages and test runs stood at its 14.3 GB
+limit, and the kernel's OOM killer takes the largest Chromium renderer first (Chromium's own +300). The probes and
+their figures are the A/B's tools; the A/B is the owner's to run (For the owner). What WAS seen: the three layers drawn
+by the game's own modules over the freeware's ground in a scratch page (not the game's frame - the far ring's pass
+alone, from a raised eye), with and without their doors: the middle ring's hills where the far ring was facets, the far
+field's land on past the old 28 km rim to the horizon, no hole and no seam between the layers.
+
+**What is left** (OW-HITCH's and MEM-AUDIT's, unchanged by this pass): the collector's pauses over the standing world's
+live heap - 1,459 MB after a forced collection at the boot's end in Daggerfall itself at Land View 1, measured here,
+the largest the sampling profile named the city's replacement blocks (`worldDataReplacement.js`), the colliders, the
+MAPS records and the deep waters' location rects, as MEM-AUDIT found at Knightstale - and the pixel builds' own
+allocations.
 
 ## For the owner
 
