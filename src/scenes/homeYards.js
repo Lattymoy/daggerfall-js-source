@@ -325,6 +325,10 @@ export function yardLot(origin, box, margin = YARD_MARGIN, rects = null) {
   const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]]) : [house];
   return { house, walls, lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
 }
+/** AUDIT TAMRIEL-WIDE A1: A HOME'S LOT off its frame (pixelBuild.js homeFrames) - none for a terraced house: an
+ *  Imperial City house's plot is its building (world/imperialFabricBuildings.js), its one model the door, so a lot grown
+ *  round it held the owner's own rooms, the neighbours' and the street. @param {any} frame */
+export const lotOfFrame = (frame) => (frame?.terraced ? null : yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects));
 const inRect = (x, z, r, pad = 0) => x >= r[0] - pad && x <= r[2] + pad && z >= r[1] - pad && z <= r[3] + pad;
 /** HOME-LINE (FIELD BUGS 2026-10-11b): how far (x, z) stands from the nearest of these footprints [x0, z0, x1, z1] - 0 on
  *  one, Infinity for none. */
@@ -584,7 +588,7 @@ export function createHomeYards(deps) {
    *  kept one merges alone, as its owner writes into it. */
   function makeYard(key, p, bk, frame, kept) {
     const door = kept ? null : blocks.door(`${p.px},${p.py}:${yardCellOf(bk)}`, p.px, p.py, () => deps.translation(p.px, p.py));
-    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept, door, lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
+    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept, door, lot: lotOfFrame(frame), pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),

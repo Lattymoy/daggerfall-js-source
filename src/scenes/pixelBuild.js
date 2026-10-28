@@ -58,6 +58,7 @@ import { insideRocks, rockFootprint } from '../world/terrain/terrainNature.js';
 import { isClimateFreeModel, NO_CLIMATE_REMAP, isSolidModel } from '../world/customModels.js';   // IC-GRAND: a far skyline is drawn, never solid
 import { capitalBuildView, capitalViewOf, capitalBlockLift } from '../world/tamrielCapitals.js';   // IC-GRAND: the Imperial City's slices near and far; SOLITUDE-RELIEF: a block's tier
 import { cityHomesOf } from '../world/imperialHomes.js';   // IC-GRAND x THE LIVING WORLD: the fabric's homes in its living town
+import { isFabricDoorId } from '../world/imperialFabricBuildings.js';   // AUDIT TAMRIEL-WIDE A1: a terraced house has no yard
 import { isDrySourceFlat, isWaterSourceFlat, WATER_SOURCE_MODELS } from '../systems/survival/items.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { stampPixelFade } from '../render/pixelFade.js';   // MID-RING: a pixel built past the near rings eases out of the middle ring's tint
@@ -599,7 +600,7 @@ export function createPixelBuild(host) {
             const bd = b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[placed.recordIndex] ?? null;   // YARD-LINE: whether it could hold a lot of its own
             const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
             const f = pixelHomeFrames.get(homeKey);
-            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]] });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind)
+            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum) });   // AUDIT TAMRIEL-WIDE A1: a fabric house's one model is its door   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind)
             else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.parts?.push([cpu, local]); }
           }
           const homeRow = homeKey != null ? townHomes?.get(homeKey) ?? null : null;

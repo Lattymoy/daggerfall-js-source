@@ -23,6 +23,8 @@ import { locationWorldRect } from '../../../src/world/streamingWorld.js';
 import { standingRace, figureLook } from '../../../src/characters/peopleBodies.js';
 import { setFolkPlace } from '../../../src/characters/provinceFolk.js';
 import { regionOfTheatre } from '../../../src/formats/mapsTables.js';
+import { lotOfFrame, yardLot, YARD_MARGIN } from '../../../src/scenes/homeYards.js';
+import { readFileSync } from 'node:fs';
 
 test('AUDIT TAMRIEL-WIDE C1: the raid host names the region the player stands in past the Bay - a province\'s politic is its region\'s, as the Bay\'s is - and the sea none, on either side (mutant: the province\'s politic unread)', () => {
   const at = (pol, region, x = 2441, y = -600) => {
@@ -114,4 +116,12 @@ test('AUDIT TAMRIEL-WIDE E2: a person by a province\'s border is of the people w
     const flats = { getFlatData: () => ({ gender: '1', caption: 'merchant' }) };
     assert.equal(figureLook({ piece: { id: 'p1', flat: [182, 3] } }, { flats, race: 1 }, [1300, 0, -256])?.race, 'Nord', 'a figure the same');
   } finally { setFolkPlace(null, null); }
+});
+
+test('AUDIT TAMRIEL-WIDE A1: an Imperial City house has no yard - its plot is its building, its frame the door\'s - while a Bay house\'s lot is the one it was; the pixel\'s build marks a fabric house terraced (mutants: the mark unread; the host\'s mark dropped)', () => {
+  const frame = { at: [10, 0, 10], box: [9, 0, 9, 11, 4, 11], rects: [[9, 9, 11, 11]] };
+  assert.deepEqual(lotOfFrame(frame), yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), 'a house of Daggerfall\'s blocks: its lot as before');
+  assert.equal(lotOfFrame({ ...frame, terraced: true }), null, 'a terraced house: none');
+  const pb = readFileSync(new URL('../../../src/scenes/pixelBuild.js', import.meta.url), 'utf8');
+  assert.match(pb, /parts: \[\[cpu, local\]\], terraced: isFabricDoorId\(placed\.modelIdNum\) \}\);/, 'the frame marked by its door model');
 });

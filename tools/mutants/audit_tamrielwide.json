@@ -109,5 +109,25 @@
       "test/world/fb1028_walls.test.js"
     ],
     "note": "A yard placed again may stand on a port's shipyard or lighthouse."
+  },
+  {
+    "name": "AUDIT-TW-A1-the-mark-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "(frame?.terraced ? null : yardLot(",
+    "new": "(false ? null : yardLot(",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "An Imperial City house's lot is grown round its door again: pieces in its walls and the street."
+  },
+  {
+    "name": "AUDIT-TW-A1-the-host-mark-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "terraced: isFabricDoorId(placed.modelIdNum) });",
+    "new": "terraced: false });",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "The build never marks a fabric house, so its lot is grown round its door."
   }
 ]
