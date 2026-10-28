@@ -1,6 +1,6 @@
 # The spear lab - a left sweep, a right sweep and a thrust, before the spear exists
 
-`spear-proto.html` + `src/tools/spearLab.js` + `src/combat/spear/spearStrip.js` + `src/combat/spear/spearStrikes.js` +
+`spear-proto.html` + `src/tools/spearLab.js` + `src/combat/spearStrip.js` + `src/combat/spearStrikes.js` +
 `src/formats/rotSprite.js` + `tools/spearProtoProbe.mjs` + `vite.config.spear.js` (SPEAR-LAB, 2026-10-27)
 
 The owner, handing over five frames: *"We're making our next weapo, the spear. This needs to have left, right and thrust
@@ -34,7 +34,7 @@ They arrive registered: the arms leave every frame through the same edges. The 1
 `WEAPON10.CIF` frame (the bare hand, record 2 frame 1). Aligned there, the mirrored sprite shares 472 to 486 texels with
 each of the three: the grey sleeve is Daggerfall's, the glove follows its drawing, repainted. Frames 4 and 5 match
 nothing exactly. Asked, the owner approved carrying the frames: they are Port-Doctrine's FIFTH EXCEPTION, the
-directory listed with its sha256 in `vendor/spear/spear.files.json`.
+directory listed with its sha256 in `public/art/spear/spear.files.json`.
 
 They are one thrust, in the order given (`SPEAR_POSE`):
 

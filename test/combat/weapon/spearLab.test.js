@@ -14,8 +14,8 @@ import {
   createSpearGesture, spearGestureStep, spearPageRect, spearPageState, stageAnchor, createGunRig, gunRigStep, gunMotion,
   gunWidgetSettings, DIRECTION_TO_STRIKE, CLICK_ATTACK_DIRECTIONS, createSfxPlayer,
 } from '../../../src/tools/spearLab.js';
-import { bleedArms, edgeRuns, runLean, rearLean, REAR_LEAN, REAR_REACH } from '../../../src/combat/spear/spearStrip.js';
-import { surfacePoint, HEAD_REACH, SMEAR_GHOSTS } from '../../../src/combat/spear/spearStrikes.js';
+import { bleedArms, edgeRuns, runLean, rearLean, REAR_LEAN, REAR_REACH } from '../../../src/combat/spearStrip.js';
+import { surfacePoint, HEAD_REACH, SMEAR_GHOSTS } from '../../../src/combat/spearStrikes.js';
 import { cutCell } from '../../../src/combat/gun/pistolStrip.js';
 import { rotSprite, scale2x, drawTurned, rotSpriteUp } from '../../../src/formats/rotSprite.js';
 import * as PISTOLET_ART from '../../../tools/pistoletArt.mjs';
@@ -66,10 +66,10 @@ test('SPEAR-LAB RotSprite has one home: the Pistolet\'s doll tool reads it from 
 });
 
 test('SPEAR-LAB the strip is the one picture the fifth exception carries: the listing names it and its bytes', () => {
-  const listing = JSON.parse(readFileSync('vendor/spear/spear.files.json', 'utf8'));
+  const listing = JSON.parse(readFileSync('public/art/spear/spear.files.json', 'utf8'));
   assert.equal(SPEAR_STRIP.file, 'spear/spear-frames.png');
-  assert.deepEqual(listing.Files, ['spear-frames.png']);
-  assert.deepEqual(readdirSync('public/art/spear'), listing.Files);
+  assert.deepEqual(listing.Files, ['spear-frames.png', 'spear.files.json']);
+  assert.deepEqual(readdirSync('public/art/spear').sort(), listing.Files);
   assert.equal(createHash('sha256').update(readFileSync(`public/art/${SPEAR_STRIP.file}`)).digest('hex'), listing.Sha256['spear-frames.png']);
   assert.match(readFileSync('bible/01-Overview/Port-Doctrine.md', 'utf8'), /\*\*THE FIFTH EXCEPTION - THE SPEAR'S FRAMES[^\n]*`public\/art\/spear\/`/);
 });

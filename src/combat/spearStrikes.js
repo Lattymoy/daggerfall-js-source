@@ -7,7 +7,7 @@
 // bible/05-Combat/Spear-Lab.md.
 
 import { SPEAR_POSE, SPEAR_STRIP } from './spearStrip.js';
-import { rotSpriteUp, drawTurned, turnedPoint } from '../../formats/rotSprite.js';
+import { rotSpriteUp, drawTurned, turnedPoint } from '../formats/rotSprite.js';
 
 /** Where the five sit at rest, on DFU's 320x200 surface: their canvas's bottom-right corner on the screen's (FPSWeapon's
  *  AlignRight, Offset 0, one art texel a texel of the surface - they are drawn at Daggerfall's own scale). */

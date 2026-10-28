@@ -3,8 +3,8 @@
 // A leaf, for pistolStrip.js's reason: the lab's standalone build (vite.config.spear.js) reads it and has no use for the
 // texture pipeline or the weapon tables. Design and record: bible/05-Combat/Spear-Lab.md.
 
-import { cutCell, bleedArm, armLean, EDGE_GAP, ARM_LEAN_ROWS } from '../gun/pistolStrip.js';   // PISTOL-EDGE's walk-back, for the rear arm
-import { contentBox, unionBox } from '../gun/gunSheet.js';
+import { cutCell, bleedArm, armLean, EDGE_GAP, ARM_LEAN_ROWS } from './gun/pistolStrip.js';   // PISTOL-EDGE's walk-back, for the rear arm
+import { contentBox, unionBox } from './gun/gunSheet.js';
 
 /** The strip: the owner's five 187x189 canvases side by side, pixels unchanged, in the order they were given. */
 export const SPEAR_STRIP = Object.freeze({ frames: 5, cellW: 187, cellH: 189, file: 'spear/spear-frames.png' });
@@ -21,7 +21,7 @@ export const SPEAR_POSE = Object.freeze({ rest: 0, chamber: 1, drive: 2, extend:
  */
 export const SPEAR_BLEED = Object.freeze({ side: 96, bottom: 96 });
 /** How many rows (or columns) in from a cut edge an arm's lean is read from. */
-export const LEAN_SPAN = 20;
+export const ARM_LEAN_SPAN = 20;
 /** The steepest lean an arm is carried along, texels sideways a texel out. */
 export const LEAN_MAX = 2.5;
 
@@ -49,7 +49,7 @@ export function edgeRuns(isOn, len) {
  * is a cut, not the arm's outline. Answers texels along the edge per texel out (clamped to LEAN_MAX); 0 with no free
  * side. `at(line, i)` says whether texel `i` of the line `line` in from the edge is opaque; `len` is a line's length.
  */
-export function runLean(run, at, len, span = LEAN_SPAN) {
+export function runLean(run, at, len, span = ARM_LEAN_SPAN) {
   let [s, e] = run;
   const lo = [], hi = [];
   for (let line = 0; line < span; line++) {

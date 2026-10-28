@@ -1,5 +1,5 @@
 // ROTSPRITE - a pixel picture turned with no new colour in it. Pure, no DOM, beside resample.js. The Pistolet's doll
-// layers (tools/pistoletArt.mjs) and the spear lab's strikes (combat/spear/spearStrikes.js) both turn the owner's pixels
+// layers (tools/pistoletArt.mjs) and the spear lab's strikes (combat/spearStrikes.js) both turn the owner's pixels
 // with it, so it has one home here (Home.md, ONE DFU MEMBER, ONE EXPORT, for our own code too).
 
 /** Scale2x (EPX), exact on colours: twice the size, a diagonal edge rounded rather than doubled into a staircase. */

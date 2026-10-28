@@ -115,7 +115,7 @@ const setTick = (id, v) => { state[id] = v; $(id).checked = v; };
 const setPick = (id, v) => { state[id] = v; $(id).value = String(v); };
 
 // ── the art: the five cut to 1 bit, carried past their cut, and every strike frame drawn from them (the game's own
-// functions, combat/spear/*.js). Drawn once at load: each pose's 8x picture is the costly part.
+// functions, combat/spearStrip.js, combat/spearStrikes.js). Drawn once at load: each pose's 8x picture is the costly part.
 let art = null;
 const stripImg = new Image();
 function canvasOf(img) {

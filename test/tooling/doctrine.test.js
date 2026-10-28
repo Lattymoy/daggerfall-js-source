@@ -1084,7 +1084,7 @@ const BUNDLE_ART = new Map([
   // SPEAR-LAB (2026-10-27, the owner: "Approve an exception"): THE FIFTH EXCEPTION - the owner's spear frames, the front
   // arm of three drawn over WEAPON10.CIF's bare hand; the folder answers to its listing (each file and its sha256).
   ['public/art/spear/',
-    { manifest: 'vendor/spear/spear.files.json', derived: SPEAR_DERIVED,
+    { manifest: 'public/art/spear/spear.files.json', derived: SPEAR_DERIVED,
       why: "OURS - the owner's five first-person spear frames for the spear lab, pixels unchanged, carried under the owner's fifth exception; the front arm of frames 1-3 is Daggerfall's WEAPON10.CIF record 2 frame 1, mirrored, its glove repainted (bible/05-Combat/Spear-Lab.md)" }],
   // WINDFALL1: the mod's own three pictures - leaves and a snowflake, the author's pixels (no Daggerfall record).
   ['vendor/windfall/Textures/',

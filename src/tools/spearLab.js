@@ -7,7 +7,7 @@
 // (SWING-LAW: Speed, the heft by Strength, the handling), the drag's direction (gestureDirection, DIRECTION_TO_STRIKE)
 // and the weapon frame with Weapon Widget's Offset, Bob and Inertia (gun/gunViewmodel.js, the guns' own).
 
-import { SPEAR_STRIKES, SPEAR_STRIKE_OF, SPEAR_STAGE, SPEAR_REST_AT } from '../combat/spear/spearStrikes.js';
+import { SPEAR_STRIKES, SPEAR_STRIKE_OF, SPEAR_STAGE, SPEAR_REST_AT } from '../combat/spearStrikes.js';
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection, MAX_GESTURE_SECONDS, MELEE_NUM_FRAMES,
   swingFrameSeconds, swingHeft, swingHandling,
@@ -15,10 +15,10 @@ import {
 import { DIRECTION_TO_STRIKE } from '../characters/anims.js';
 import { gunFrameRect } from '../combat/gun/gunViewmodel.js';
 
-export { SPEAR_STRIP, SPEAR_POSE, SPEAR_BLEED, spearFrameSet } from '../combat/spear/spearStrip.js';
+export { SPEAR_STRIP, SPEAR_POSE, SPEAR_BLEED, spearFrameSet } from '../combat/spearStrip.js';
 export {
   SPEAR_STRIKES, SPEAR_STRIKE_OF, SPEAR_STAGE, SPEAR_REST_AT, SPEAR_AIM, SPEAR_IDLE, SMEAR_GHOSTS, drawSpearFrames,
-} from '../combat/spear/spearStrikes.js';
+} from '../combat/spearStrikes.js';
 export { CLICK_ATTACK_DIRECTIONS } from '../characters/weaponStates.js';
 export { DIRECTION_TO_STRIKE };
 export { createGunRig, gunRigStep, gunMotion, gunWidgetSettings } from '../combat/gun/gunViewmodel.js';

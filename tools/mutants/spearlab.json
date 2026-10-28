@@ -1,7 +1,7 @@
 [
   {
     "name": "SL-rear-lean-never-its-own",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "export const rearLean = (read) => (read && read[0] / read[1] >= REAR_LEAN[0] / REAR_LEAN[1] ? read : REAR_LEAN);",
     "new": "export const rearLean = (read) => (read && read[0] / read[1] <= REAR_LEAN[0] / REAR_LEAN[1] ? read : REAR_LEAN);",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "SL-every-run-the-front-arm",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "  const front = runs.filter((r) => r[1] < w - 1 - REAR_REACH);",
     "new": "  const front = runs.filter((r) => r[1] < w - 1 + REAR_REACH);",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "SL-lean-the-wrong-way-out",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "    return den > 0 ? -num / den : null;   // per line IN from the edge, negated: per texel OUT",
     "new": "    return den > 0 ? num / den : null;   // per line IN from the edge, negated: per texel OUT",
     "tests": [
@@ -28,7 +28,7 @@
   },
   {
     "name": "SL-owner-pixels-not-restored",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "  for (let y = 0; y < h; y++) out.set(data.subarray(y * w * 4, (y + 1) * w * 4), (y * W + L) * 4);   // the owner's pixels, whole\n",
     "new": "",
     "tests": [
@@ -37,7 +37,7 @@
   },
   {
     "name": "SL-front-arm-not-carried",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "      for (let x = run[0]; x <= run[1]; x++) if (opaque(data, ((h - 1) * w + x) * 4)) put(L + x + dx, h - 1 + t, ((h - 1) * w + x) * 4);",
     "new": "      for (let x = run[0]; x <= run[1]; x++) if (opaque(data, ((h - 1) * w + x) * 4)) put(L + x + dx, h - 1, ((h - 1) * w + x) * 4);",
     "tests": [
@@ -46,7 +46,7 @@
   },
   {
     "name": "SL-tip-off-the-diagonal",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "      if (x + y < score) { score = x + y; best = [x, y]; }",
     "new": "      if (x - y < score) { score = x - y; best = [x, y]; }",
     "tests": [
@@ -55,7 +55,7 @@
   },
   {
     "name": "SL-anchor-the-full-frame",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "  const anchor = boxes[SPEAR_POSE.rest];",
     "new": "  const anchor = boxes[SPEAR_POSE.full];",
     "tests": [
@@ -64,7 +64,7 @@
   },
   {
     "name": "SL-cell-on-the-pistol-layout",
-    "file": "src/combat/spear/spearStrip.js",
+    "file": "src/combat/spearStrip.js",
     "old": "  const cells = Array.from({ length: SPEAR_STRIP.frames }, (_, i) => cutCell(strip, i, cut, SPEAR_STRIP));",
     "new": "  const cells = Array.from({ length: SPEAR_STRIP.frames }, (_, i) => cutCell(strip, i, cut));",
     "tests": [
@@ -73,7 +73,7 @@
   },
   {
     "name": "SL-rest-place-by-height",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "export const SPEAR_REST_AT = Object.freeze([320 - SPEAR_STRIP.cellW, 200 - SPEAR_STRIP.cellH]);",
     "new": "export const SPEAR_REST_AT = Object.freeze([320 - SPEAR_STRIP.cellH, 200 - SPEAR_STRIP.cellH]);",
     "tests": [
@@ -82,7 +82,7 @@
   },
   {
     "name": "SL-thrust-not-turned-onto-the-aim",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "      F('full', 8, [0, 14], { scale: 0.97, smear: true }),   // on the aim, fully out: the hit",
     "new": "      F('full', 0, [0, 14], { scale: 0.97, smear: true }),   // on the aim, fully out: the hit",
     "tests": [
@@ -91,7 +91,7 @@
   },
   {
     "name": "SL-left-sweep-the-wrong-way",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "      F('full', 24, [-24, 3], SMEAR),",
     "new": "      F('full', -24, [24, 3], SMEAR),",
     "tests": [
@@ -100,7 +100,7 @@
   },
   {
     "name": "SL-down-sweeps-left",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "  StrikeUp: 'thrust', StrikeDown: 'thrust',",
     "new": "  StrikeUp: 'thrust', StrikeDown: 'left',",
     "tests": [
@@ -109,7 +109,7 @@
   },
   {
     "name": "SL-surface-off-the-stage",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "  return [p[0] - stage.x, p[1] - stage.y];",
     "new": "  return [p[0] + stage.x, p[1] - stage.y];",
     "tests": [
@@ -118,7 +118,7 @@
   },
   {
     "name": "SL-smear-the-hands",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "  return (X, Y, qx, qy) => ((X + Y) & 1) === 0 && (qx - ox - tx) + (qy - oy - ty) < HEAD_REACH;",
     "new": "  return (X, Y, qx, qy) => ((X + Y) & 1) === 0 && (qx - ox - tx) + (qy - oy - ty) > HEAD_REACH;",
     "tests": [
@@ -127,7 +127,7 @@
   },
   {
     "name": "SL-smear-solid",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "  return (X, Y, qx, qy) => ((X + Y) & 1) === 0 && (qx - ox - tx) + (qy - oy - ty) < HEAD_REACH;",
     "new": "  return (X, Y, qx, qy) => (qx - ox - tx) + (qy - oy - ty) < HEAD_REACH;",
     "tests": [
@@ -136,7 +136,7 @@
   },
   {
     "name": "SL-smear-over-the-frame",
-    "file": "src/combat/spear/spearStrikes.js",
+    "file": "src/combat/spearStrikes.js",
     "old": "        drawTurned(smeared, up, stagePose(frame, pivot, bled, stage));\n",
     "new": "",
     "tests": [
