@@ -147,7 +147,7 @@ import { WEAPON_REACH, weaponPoseOf, applyWeaponPose as setWeaponPose } from '..
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
 import { tallySkill, skillValue, SKILLS, permanentSkillValue } from '../systems/skills.js';
 import { tallySwingSkills, SWING_FATIGUE_COST, playPlayerVoice, playerPainVoice, makeEnemiesHostile, isBowWeapon, aimedBlowInfo, playerBlowFrame } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
-import { createPopulationLane } from '../characters/npcBodies.js'; import { personLook, personActor } from '../characters/peopleBodies.js';   // MWNPC8a: the building's standing people in Morrowind bodies
+import { createPopulationLane } from '../characters/npcBodies.js'; import { personLook, personActor, standingPersonLook } from '../characters/peopleBodies.js';   // MWNPC8a: the building's standing people in Morrowind bodies
 import { createNpcMarks, staticNpcRouteIn } from './npcMarksHost.js';   // NPC-MARKS: the marks over the people who do something, and the click's route built in one place
 import { createExteriorFoes } from './exteriorFoes.js'; import { INTERIOR_CLEAR } from '../render/renderer.js';   // IF: the ONE foe-pool factory - see interiorFoes below; REVIEW 2026-09-05: the mode frames clear BLACK (CameraClearManager.cs:23-25)
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
@@ -2070,7 +2070,7 @@ export function createWorldModes(host) {
     if (pn._mwLook !== undefined) return pn._mwLook;
     const dict = townTalk?.factionDict ?? null;
     if (!dict) return null;
-    return personLook(pn, staticNpcData(pn, staticNpcSceneCtx(pn)), dict.get(pn.factionID) ?? null);
+    return standingPersonLook(pn, staticNpcSceneCtx(pn), dict, figureCtx.race);   // AUDIT PROVINCE-FOLK A2: the faction table and the region's race, as the street's
   };
   /** MWNPC8c (section 13c): A QUEST'S STOOD PERSON (standQuestFlatIn - Azura summoned, a questor at a marker) read as
    *  the click reads them (clickQuestFlat: the Person's gender, faction and name seed through the bridge's SetLayoutData,

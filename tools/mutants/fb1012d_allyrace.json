@@ -51,8 +51,8 @@
   {
     "name": "FB1012d-the-stamp-without-its-person",
     "file": "src/systems/revenant/revenant.js",
-    "old": "sigBlow: signatureStamp(r), person: revenantPerson(r), dread: r.dread === true });",
-    "new": "sigBlow: signatureStamp(r), dread: r.dread === true });",
+    "old": "sigBlow: signatureStamp(r), person: revenantPerson(r), race: r.race ?? null, dread: r.dread === true });",
+    "new": "sigBlow: signatureStamp(r), race: r.race ?? null, dread: r.dread === true });",
     "tests": ["test/scenes/fb1012d_allyrace.test.js"]
   },
   {

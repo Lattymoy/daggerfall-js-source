@@ -3,7 +3,7 @@
 // Bay keeps the nearest Bay crown's office (navalShips.js crownOf over the three capitals: the law a Bay port's crown is
 // read by, the crown whose colours its navy already flies), so its board, contracts, letter of marque and Admiralty
 // carrack stand there. The Eltheric freeports stay crownless - ETHER-PORTS' recorded design (bible/03-World/
-// Eltheric-Ocean.md, "No crown's: ... THE FREEPORT'S HARBOURMASTER is the tab instead"). On the freeware: the 29 ports
+// Eltheric-Ocean.md, "No crown's: ... THE FREEPORT'S HARBOURMASTER is the tab instead"). On the freeware: the 36 ports
 // past the Bay, each with its crown and a board (bible/03-World/Captains-Sea.md BAY-LEFT-SEA).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -65,7 +65,7 @@ test('BAY-LEFT-SEA THE HARBOURMASTER\'S TAB STANDS PAST THE BAY: the office\'s m
 });
 
 const realSkip = HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)';
-test('BAY-LEFT-SEA (ARENA2): on the freeware all 29 ports past the Bay keep a crown\'s office - Wayrest\'s 18, Sentinel\'s 10, Daggerfall\'s Northpoint - each with its board', { skip: realSkip }, async () => {
+test('BAY-LEFT-SEA (ARENA2): on the freeware all 36 ports past the Bay keep a crown\'s office - Wayrest\'s 24, Sentinel\'s 11, Daggerfall\'s Northpoint - each with its board', { skip: realSkip }, async () => {
   globalThis.atob ??= (s) => Buffer.from(s, 'base64').toString('binary');
   const bytes = (n) => new Uint8Array(readFileSync(join(/** @type {string} */ (ARENA2), n)));
   const { DFPalette } = await import('../../../src/formats/dfPalette.js');
@@ -98,8 +98,9 @@ test('BAY-LEFT-SEA (ARENA2): on the freeware all 29 ports past the Bay keep a cr
     const by = {};
     for (const p of ports) (by[p.crown] ??= []).push(p.name);
     assert.deepEqual(by, {
-      Wayrest: ['Imperial City', 'Solitude', 'Torval', 'Jehanna', 'Rihad', 'Windhelm', 'Winterhold', 'Dawnstar', 'Necrom', 'Ebonheart', 'Vivec', 'Haven', 'Woodhearth', 'Southpoint', 'Senchal', 'Lilmoth', 'Soulrest', 'Archon'],
-      Sentinel: ['Alinor', 'Hegathe', 'Taneth', 'Gilane', 'Dusk', 'Lillandril', 'Shimmerene', 'Sunhold', 'Firsthold', 'Skywatch'],
+      // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): Farrun, Shornhelm, Blacklight, Tear, Elden Root, Thorn and Silinorin
+      Wayrest: ['Imperial City', 'Solitude', 'Torval', 'Farrun', 'Jehanna', 'Shornhelm', 'Rihad', 'Windhelm', 'Winterhold', 'Dawnstar', 'Blacklight', 'Necrom', 'Ebonheart', 'Tear', 'Vivec', 'Elden Root', 'Haven', 'Woodhearth', 'Southpoint', 'Senchal', 'Lilmoth', 'Soulrest', 'Archon', 'Thorn'],
+      Sentinel: ['Alinor', 'Hegathe', 'Taneth', 'Gilane', 'Dusk', 'Lillandril', 'Shimmerene', 'Sunhold', 'Firsthold', 'Skywatch', 'Silinorin'],
       Daggerfall: ['Northpoint'],
     });
     for (const port of ports) {

@@ -108,7 +108,8 @@ test('TESA6 with ARENA2: on the player\'s own trace 28 of the lore\'s 30 ports s
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
   const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
   const g = groundWoods(woods);
-  const ports = arenaPixels().stood.filter((p) => p.port);
+  const { CITIES } = await import('../src/world/tamriel/tamrielGeography.js');
+  const ports = arenaPixels().stood.filter((p) => p.port && CITIES.some((c) => c.port && c.name === p.name));   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): the lore's - the coast's own are fb1028b_seasquare's
   assert.equal(ports.length, 28, 'PIN MOVED (TESA12): the lore\'s ports, not A.EXE\'s 51');
   for (const p of ports) {
     // PIN MOVED (AUDIT TESA II P11): the sea beside it is the ground's WATER (isWaterPixel - the Ocean climate, or a byte at

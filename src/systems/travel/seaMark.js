@@ -18,12 +18,28 @@
 // 14 of them into Daggerfall's approach (207,215), which has no water at all - and the leg is passed: she makes for the
 // next (the landfall's own run in, where it is the last at sea).
 
-import { MP_WORLD_UNITS, T_SIZE as TILE } from './travelPaths.js';
+import { MP_WORLD_UNITS, T_SIZE as TILE, mapPixelWorldOrigin } from './travelPaths.js';
+import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** A map pixel's tiles, the built ground's 128 a side (travelPaths.js: MPworldUnits over TSize). */
 export const PIXEL_TILES = MP_WORLD_UNITS / TILE;
 /** Half the block of water a mark must stand in, in tiles: 5 by 5 - 32 m. */
 export const MARK_BLOCK_HALF = 2;
+/** SEA-SQUARE (FIELD BUGS 2026-10-28b): the window (a pixel wide, native, its south-west corner) a sailed leg into map pixel
+ *  (x, y) is aimed in - its square on the Bay; past the Bay centred on its byte, the square's south-east corner, where the
+ *  planner's water is (world/terrain/terrainSampler.js squareCornersAll). */
+export function seaLegWindow(x, y) {
+  const o = mapPixelWorldOrigin(x, y);
+  return inBay(x, y) ? o : { x: o.x + MP_WORLD_UNITS / 2, z: o.z - MP_WORLD_UNITS / 2 };
+}
+/** Whether the ground about a window's middle is built (`waterAt` answers there). SEA-SQUARE: past the Bay that middle is
+ *  a byte's point, where four squares meet - built when all four are. @param {{ x: number, z: number }} origin
+ *  @param {(x: number, z: number) => boolean | null} waterAt */
+export function seaLegBuiltAt(origin, waterAt) {
+  const c = MP_WORLD_UNITS / 2;
+  for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) if (waterAt(origin.x + c + (a * TILE) / 2, origin.z + c + (b * TILE) / 2) === null) return false;
+  return true;
+}
 /** A leg's pixel whose ground is not built yet - aimed at its middle, and again once it is. */
 export const SEA_LEG_UNBUILT = Object.freeze({ unbuilt: true });
 /** A leg's pixel built where nowhere floats her - the leg is passed. */
@@ -32,7 +48,7 @@ export const SEA_LEG_DRY = Object.freeze({ dry: true });
 /**
  * The point a leg sailed into a map pixel is aimed at, in native units - or null where its middle floats her (the
  * middle quarter stands), SEA_LEG_UNBUILT where its ground is not built yet, SEA_LEG_DRY where nothing in it floats her.
- * @param {{ x: number, z: number }} origin - the pixel's corner (travelPaths.js mapPixelWorldOrigin)
+ * @param {{ x: number, z: number }} origin - the window's corner (seaLegWindow: on the Bay the pixel's own)
  * @param {((x: number, z: number) => boolean | null) | null | undefined} waterAt - the built ground's water, native
  *  units: null where no ground is built
  * @returns {{ x: number, z: number } | typeof SEA_LEG_UNBUILT | typeof SEA_LEG_DRY | null}
@@ -46,7 +62,7 @@ export function seaLegMark(origin, waterAt) {
   const mid = PIXEL_TILES / 2;
   const at = (/** @type {number} */ i, /** @type {number} */ j) => ({ x: origin.x + (i + 0.5) * TILE, z: origin.z + (j + 0.5) * TILE });
   const centre = { x: origin.x + MP_WORLD_UNITS / 2, z: origin.z + MP_WORLD_UNITS / 2 };
-  if (waterAt(centre.x, centre.z) === null) return SEA_LEG_UNBUILT;
+  if (!seaLegBuiltAt(origin, waterAt)) return SEA_LEG_UNBUILT;
   if (floats(centre.x, centre.z)) return null;
   const lo = MARK_BLOCK_HALF, hi = PIXEL_TILES - 1 - MARK_BLOCK_HALF;
   /** @type {{ x: number, z: number } | null} */

@@ -178,7 +178,7 @@ test('START3 the held map: a press on a quest\'s diamond past the Bay picks the 
     const win = heldMap();
     win._tamriel = true;
     const pick = win._questPlace({ px: LAIR_PX.x, py: LAIR_PX.y, placeName: 'The Haunt of Baringon' });
-    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true, pastBay: true, portal: false, walk: false });   // PIN MOVED (OW-PAST-BAY): no Travel Options here, so no walk (test/ui/owpastbay_walk.test.js)
+    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true, pastBay: true, portal: false, walk: false, place: true });   // PIN MOVED (OW-PAST-BAY): no Travel Options here, so no walk (test/ui/owpastbay_walk.test.js); PIN MOVED (OW-PLACE-WALK): the quest's place is handed as a place
     win.gotoPlace({ siteDetails: { regionIndex: 64, regionName: 'Skyrim', locationName: 'The Haunt of Baringon', worldPixel: LAIR_PX } });
     win._consumeGotoPlace();
     assert.equal(win._selected?.name, 'The Haunt of Baringon', 'the find picks it');

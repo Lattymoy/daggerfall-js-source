@@ -144,17 +144,19 @@ export function straighten(pixels, waterNative) {
 /**
  * A port's roadstead: the nearest map pixel within ROADSTEAD_PX of its town that is open sea (`open(px, py)`), ring by
  * ring, the first found in a ring by its own order (deterministic) - or null: an inland "port", or a coast too shallow.
+ * SEA-SQUARE: `roomy` (the lanes past the Bay) - of a ring's pixels the one with the most open sea about it first.
  */
-export function roadsteadOf(port, open) {
+export function roadsteadOf(port, open, roomy = false) {
+  const room = (/** @type {number} */ x, /** @type {number} */ y) => { let n = 0; for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if ((i || j) && open(x + i, y + j)) n++; return n; };
   for (let r = 1; r <= ROADSTEAD_PX; r++) {
-    let best = null, bd = Infinity;
+    let best = null, bd = Infinity, br = -1;
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
         const x = port.px + dx, y = port.py + dy;
         if (!open(x, y)) continue;
-        const d = dx * dx + dy * dy;
-        if (d < bd) { bd = d; best = { x, y }; }
+        const d = dx * dx + dy * dy, n = roomy ? room(x, y) : 0;
+        if (n > br || (n === br && d < bd)) { br = n; bd = d; best = { x, y }; }
       }
     }
     if (best) return best;
@@ -168,10 +170,10 @@ export function roadsteadOf(port, open) {
  * and `b` `{ id, name, px, py, region, road }` - the same list on every client, whatever port it stands by. AUDIT TESA
  * II P7: `maxPx` the reach - the Bay's LANE_MAX_PX by default; the lanes past the Bay have their own
  * (scenes/naval/worldLanes.js BEYOND_LANE_MAX_PX: their ports stand hundreds of pixels apart); NIBEN-SEA: a port's own
- * `reach` where it is farther (a harbour up a canal, world/worldWide/worldPorts.js CANAL_PORT_REACH_PX).
+ * `reach` where it is farther (a harbour up a canal, world/worldWide/worldPorts.js CANAL_PORT_REACH_PX). `roomy` roadsteadOf's.
  */
-export function laneNetwork(ports, open, maxPx = LANE_MAX_PX) {
-  const sea = [...ports].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, open) })).filter((p) => p.road);
+export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false) {
+  const sea = [...ports].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) })).filter((p) => p.road);   // SEA-SQUARE: past the Bay the roomiest roadstead
   const pairs = new Map();
   for (const p of sea) {
     const reach = Math.max(maxPx, p.reach ?? 0);   // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)
