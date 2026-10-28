@@ -982,11 +982,12 @@ laws.
   (`systems/travel/travelOptions.js` locationTypeName). No press: TESA-NO-FAST keeps a portal's ends to the cities -
   but on the Portal Stone's map, since PORTAL-ANYWHERE (2026-10-26, the owner: "Anywhere on land"), a press on any land
   past the Bay is a portal's end, named by its province (`06-Systems/Portal-Stone.md`).
-- **A recorded departure - no discovery law.** The Bay's map marks a place once it is discovered (DFU's
-  checkLocationDiscovered); every place past the Bay is inked, as TESA1's cities, towns and villages are. The discovery
-  store keys a place by its map id's low twenty bits (DFU's MapId & 0xfffff), and the countryside's sixty-four lanes and
-  the lairs' share those bits (`world/tamrielCountry.js` countryPlaceId, `world/tamrielDungeons.js` lairPlaceId), so a
-  discovery law past the Bay needs a key of its own first.
+- **The discovery law (AUDIT TAMRIEL-WIDE D2, 2026-10-28; it was a recorded departure, inking every place).** A place
+  past the Bay is inked and hovered once it is known as the Overworld knows it: by its kind (systems/discovery.js
+  BAKED_KNOWN_TYPES, the kinds MAPS.BSA bakes as found), or found - its row's id, read as tvPlaceSummary reads it
+  (`scenes/mapPlacesHost.js` knownPastBayIn). The key the departure waited on is discoveryKeyOf's whole id (AUDIT TESA
+  II P6). A find moves the tiles' stamp (`ui/tamrielInk.js` pastBayStamp), so a found lair is painted. Pinned in
+  `test/world/worldWide/audit_tamrielwide.test.js` D2.
 - **THE FOUR HOSTS.** `scenes/world.js` wired as above, at the one map seam. `scenes/worldModes.js` (interiors) and
   `scenes/dungeonContext.js` open the world host's map - nothing to wire. `scenes/exterior.js`, the single-town bench,
   traces no picture and stands no countryside: nothing to ink.

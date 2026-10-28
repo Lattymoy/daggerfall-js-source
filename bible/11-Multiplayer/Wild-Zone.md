@@ -1392,6 +1392,10 @@ journey's law a teleport also passed, and the teleport map's press.
 - THE FOUR HOSTS: `scenes/world.js` WIRED (the law asked where the zone's refusal stood; bootWorld's length unchanged);
   `scenes/worldModes.js` and `scenes/dungeonContext.js` NOT WIRED - a building's and a dungeon's teleports are the world
   host's own; `scenes/exterior.js`, offline, stands no zone.
+- WHERE IT LANDS (AUDIT TAMRIEL-WIDE E1, 2026-10-28): a Recall, a party's jump to its leader and a ship's cabin land
+  at a point, not at a city - the arriving end is that point in a settlement's streets (`systems/wild/zoneSafe.js`
+  landsSettled, settledAt's own law over a pixel not built), so a Mark beside a village's walls is the open country. A
+  guild's and a stone's pick land at the city, and keep the pixel's test.
 - KNOWN LIMIT: the refusal's words are English alone, as they were (`test/systems/l10n4_hardcoded.test.js` counts them).
 
 Pins: `test/systems/wild/wildcityport.test.js` (the law over every kind of place, the streets, a building, a dungeon),
