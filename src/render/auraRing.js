@@ -1944,6 +1944,7 @@ vec3 eternalPoint(vec2 q, float t) {
   float wave = ${g3(ETERNAL_FLOW_M)} * h * h * (0.7 * sin(CLOAK_TAU * (ub * 2.0 + y * 1.6) - t * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.wave)}) + 0.3 * sin(CLOAK_TAU * (ub * 5.0 - y * 3.0) - t * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.wave * 2)}));
   float flare = ${g3(ETERNAL_FLARE_M)} * pow(h, 1.5) * cloakBackOf(ub);   // standing out behind, as a cape of fire would
   vec2 more = cloakWorldXZ(uSwing.xy) * ${g3(ETERNAL_SWING - 1)} * pow(h, 1.6);   // and trailing further than the cloak's cloth
+  more -= cloakFwd() * uWingBack;   // ETERNAL-FIT: WINGS-FIT's law - on a sprite's flat card hung as far back as its wings root
   return cloakPoint(vec2(ub, q.y), t) + vec3(b.x, 0.0, b.y) * (wave + flare) + vec3(more.x, 0.0, more.y);
 }
 float eternalLife(float k) {

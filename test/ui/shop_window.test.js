@@ -22,8 +22,9 @@ import { flameSheetPixels, flameFramePixels, flameCss, FLAME_CLASS, flameClassOf
 import { wardrobeEntry, AVAIL_NOW, AVAIL_TAG, AVAIL_LINE, WARDROBE_SOURCES } from '../../src/ui/collections/wardrobeCatalogue.js';
 import {
   AURA_LOOK, AURA_CARDS, AuraRingRenderer, auraEyeAtHead, eternalRatesWhole, ETERNAL_RGB, ETERNAL_CARDS, CLOAK_REST_POSE, CLOAK_ROUND, CLOAK_ROWS,
-  auraPrograms,
+  auraPrograms, AURA_VS, AURA_GROUND_R, AURA_LIFT_M, ETERNAL_TOP, ETERNAL_POOL_R, WING_SPRITE_BACK, EOTB_FIGURE, auraSpriteBones, auraCapePose,
 } from '../../src/render/auraRing.js';
+import { glslFunctions } from '../glsl.mjs';
 import { previewMesh, previewStroll, PREVIEW_FIGURE, PREVIEW_STROLL } from '../../src/render/auraPreview.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -434,6 +435,49 @@ test('SHOP: Eternal\'s draw - its pool, its cloth\'s two sides on the cloak\'s m
   }
   assert.equal(auraEyeAtHead({ at: [0, 0, 0], yaw: 0 }, [0, CLOAK_REST_POSE.head[1], 0]), true);
   assert.equal(auraEyeAtHead({ at: [0, 0, 0], yaw: 0 }, [0, 1.5, -2]), false);
+});
+
+test('SHOP: ETERNAL-FIT (the owner: "The new aura isnt properly positioned. It needs to follow the same law as the wing aura") - on a sprite\'s flat card the cape hangs as far back as the wings root (WINGS-FIT\'s uWingBack): the pass uploads it for the cape; its cloth and its wisps and embers move back along the facing, at any yaw; and from the front round to either side none of it lies over the body (mutants: the push dropped; the push forward)', () => {
+  const sp = auraCapePose(auraSpriteBones({ base: 0, mpp: EOTB_FIGURE.mpp }));
+  assert.equal(sp.wingBack, WING_SPRITE_BACK, 'a sprite\'s pose carries the depth (WINGS-FIT)');
+  const calls = [];
+  const gl = new Proxy({ TRIANGLES: 8, BLEND: 9, ONE: 10, CULL_FACE: 11, POLYGON_OFFSET_FILL: 12, ONE_MINUS_SRC_ALPHA: 13, FRONT: 14, BACK: 15 }, {
+    get(tg, k) { if (k in tg) return tg[k]; return (...a) => { calls.push([k, ...a]); if (k === 'getShaderParameter' || k === 'getProgramParameter') return true; if (k === 'getUniformLocation') return a[1]; return {}; }; },
+  });
+  const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  new AuraRingRenderer(gl).draw([{ at: [0, 0, 0], aura: 'eternal', yaw: 0, cape: sp }], new Float32Array(I), new Float32Array(I), [0, 1.5, -4], 10);
+  assert.deepEqual(calls.filter((c) => c[0] === 'uniform1f' && c[1] === 'uWingBack').map((c) => c[2]), [WING_SPRITE_BACK], 'uploaded with the cape\'s pose');
+  const QUIET = 13.2;
+  const F = glslFunctions(AURA_VS, { uWingBack: 0, uSeed: 0.37, uRingR: ETERNAL_POOL_R, uGroundR: AURA_GROUND_R, uFlameH: ETERNAL_TOP, uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uAt: [0, 0, 0], uFocus: [0, 0, 0, 0], uLift: AURA_LIFT_M, uVP: I, uSide: 1, uTorn: -1, uSwing: [0, 0, 0, 0],
+    uCapeS: [...sp.shoulders], uCapeH: [...sp.head], uKneeL: [0, 0, 0], uKneeR: [0, 0, 0], uTorsoU: [0, 1, 0], uTorsoF: [0, 0, 1], uKind: 1, uTime: QUIET, uYaw: 0, uCamPos: [0, 1.5, -6] });
+  // back along the facing, as the wings' roots: the cloth and a card's flight alike, at any yaw
+  for (const yaw of [0, 1.1, -2.3]) {
+    F.globals.uYaw = yaw;
+    F.globals.uWingBack = 0; const a = F.eternalPoint([0.3, 0.4], QUIET), fa = F.eternalFlight(5, QUIET);
+    F.globals.uWingBack = WING_SPRITE_BACK; const b = F.eternalPoint([0.3, 0.4], QUIET), fb = F.eternalFlight(5, QUIET);
+    const back = [-Math.sin(yaw) * WING_SPRITE_BACK, 0, -Math.cos(yaw) * WING_SPRITE_BACK];
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(b[i] - a[i] - back[i]) < 1e-6 && Math.abs(fb[i] - fa[i] - back[i]) < 1e-6, `yaw ${yaw}: moved back ${WING_SPRITE_BACK} m`);
+  }
+  F.globals.uYaw = 0;
+  // THE LAW, WINGS-FIT's: the card stands through the axis square to the eye; the body in it 0.25 m either side to its
+  // shoulders, the head 0.15 m above them. From its front round to either side no point of the cloth (a grid over its
+  // mesh) or of a wisp's or ember's flight lies nearer the eye than the card and inside that outline
+  const headTop = sp.head[1] + 0.12;
+  const overBody = (back) => {
+    F.globals.uWingBack = back;
+    const pts = [];
+    for (let i = 0; i <= 16; i++) for (let j = 0; j <= 12; j++) pts.push(F.eternalPoint([i / 16, j / 12], QUIET));
+    for (let k = 0; k < ETERNAL_CARDS; k++) for (const t of [QUIET, QUIET + 0.4, QUIET + 0.9]) pts.push(F.eternalFlight(k, t).slice(0, 3));
+    let n = 0;
+    for (const deg of [0, 30, 60, 90, -30, -60, -90]) {
+      const ph = deg * Math.PI / 180, to = [Math.sin(ph), Math.cos(ph)];   // the eye's way from the feet - the wearer faces +z
+      for (const p of pts) if (p[0] * to[0] + p[2] * to[1] > 0 && Math.abs(p[0] * to[1] - p[2] * to[0]) < (p[1] < sp.shoulders[1] ? 0.25 : 0.15) && p[1] < headTop) n++;
+    }
+    return n;
+  };
+  assert.equal(overBody(WING_SPRITE_BACK), 0, 'none of the cape over the body, from its front round to either side');
+  const was = overBody(0);
+  assert.ok(was > 100, `hung on the axis, it lay over the body (${was} points)`);
 });
 
 test('SHOP: the aura\'s stage - a floor and a stand-in figure whose shoulders are the cloak\'s rest pose\'s, its stroll walking, turning and stopping so a cape swings (mutants: the figure\'s shoulders off the pose; a stroll that never stops)', () => {
