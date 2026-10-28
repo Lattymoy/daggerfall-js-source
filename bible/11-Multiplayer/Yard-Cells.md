@@ -597,7 +597,7 @@ These are the working notes. The pull request holds the checks as they are run.
   registry (the `onHomeOrders` shape): `online.js` hands the yard words and the hub link's state to it, and
   `accountClient.js` hands it the orders. `homeYards.js` and `yardCellSync.js` subscribe to it. On the relay, the
   arm is a module of its own (the `staffFreeze.js` shape), with one dispatch line in `_message`.
-- **ACCOUNT_VERSION moves (acct208).** The site's deploy waits until the service serves the version in the tree
+- **ACCOUNT_VERSION moves (acct207, one release with YC1's).** The site's deploy waits until the service serves the version in the tree
   (`deploy.yml`, "Read the account service this build talks to"). Without the move, a new site could go live on
   an old service: its writes would carry no order, and with a healthy hub socket its poll would be the slow one, which
   is worse than YC1.
@@ -608,7 +608,7 @@ These are the working notes. The pull request holds the checks as they are run.
 the bus's fan reaches every shard's sockets. The yard arm takes that route, as the home arm does. Read in the code,
 not driven: no test stands a sharded hub for the yard word.
 
-**What was built** (account acct208, relay world278 - over YC1's acct207 and world277; world271 to world277, and acct198 to acct200 then acct205 and acct206, on the branch, renumbered past YC1 at the merges):
+**What was built** (account acct207, relay world277 - one release with YC1's; world271 to world278, and acct198 to acct200 then acct205 to acct208, on the branch, renumbered past YC1 at the merges):
 
 - Service: `settleYardCell` answers `{ cell, ver }` off `RETURNING built`; the decor routes answer `yardVer` and
   `yardOrder` (`server-account/src/index.js` yardOrderOf); `net/identityToken.js` kind `yard`, `mintYardOrder`.
@@ -645,7 +645,7 @@ was block 1287, about 450 m from B.
 - **The skip.** With B's tab hidden, B heard the hub's word for A's next piece but asked nothing in 10 s. When the tab
   showed, B asked that cell at once and showed the piece after 0.6 s.
 - Not driven here: a window over the world, which reads the same gate as the hidden tab and was driven in YC1's
-  checks, and the hub's shards (above). The relay was renumbered world272 to world278, and the account acct199 to acct208, after this run; the renumbers move no code.
+  checks, and the hub's shards (above). The relay was renumbered world272 to world277, and the account acct199 to acct207, after this run; the renumbers move no code.
 
 ## 12. YC5 - built (2026-10-28): strangers' yards drawn a block at a time
 
