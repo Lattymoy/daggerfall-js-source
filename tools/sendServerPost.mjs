@@ -67,6 +67,7 @@ export const HOURS_FIRST_RECORD = "{\"group\":\"Weapons\",\"templateIndex\":560,
  *  0188 (`--migration tamriel`) sends it with the deploy; its words and record are FROZEN here, as HOURS_FIRST's. */
 export const TAMRIEL_POST = Object.freeze({
   batch: 'tamriel-portal-stones',
+  sender: 'DFO Team',
   subject: 'Thank you, and something for the road',
   body: [
     'Thank you for playing, and for sticking with us.',
@@ -75,11 +76,9 @@ export const TAMRIEL_POST = Object.freeze({
     '',
     'There are ten Portal Stones in this letter. Go and see it: the ash on Red Mountain, the reeds of the Shadowfen, the vineyards of Summerset.',
     '',
-    'Claim them and they go into the pack of the online character you are playing.',
-    '',
     "We're really glad you're here. See you out there.",
     '',
-    `- ${POST_SENDER}`,
+    '- DFO Team',
   ].join('\n'),
 });
 /** TAMRIEL-POST: the stones' record as 0188 sends it - `portalStones(10)` that day (systems/gate/gateSpoils.js), frozen. */
@@ -155,10 +154,10 @@ export const hoursFirstSql = () => sendSql({ ...HOURS_FIRST, record: HOURS_FIRST
 
 /** TAMRIEL-POST: a send to EVERY registered account standing when it runs - a migration's alone (the workflow names its
  *  accounts, POST_RECIPIENTS_MAX at most); once a send an account, as sendSql's. */
-export function everyoneSql({ batch, subject, body, record = null }) {
+export function everyoneSql({ batch, sender = POST_SENDER, subject, body, record = null }) {
   const b = postBatch(batch), words = postWords({ subject, body });
   return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)
-SELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(POST_SENDER)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)
+SELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)
 FROM players p WHERE p.handle IS NOT NULL;`;
 }
 /** TAMRIEL-POST: the update's letter, as migration 0188 holds it. */

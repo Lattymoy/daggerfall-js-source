@@ -122,19 +122,20 @@ test('TAMRIEL-POST THE UPDATE\'S LETTER, migration 0188: the tool\'s own stateme
   assert.deepEqual(stones, portalStones(10), 'the frozen record is the mint\'s own');
   assert.ok(isPortalStone(stones) && stones.stackCount === 10, 'ten Portal Stones, one stack');
   assert.ok(TAMRIEL_POST.subject.length <= POST_SUBJECT_MAX && TAMRIEL_POST.body.length <= POST_BODY_MAX);
-  assert.ok(TAMRIEL_POST.body.endsWith(`- ${POST_SENDER}`), 'signed by its sender');
+  assert.equal(TAMRIEL_POST.sender, 'DFO Team');
+  assert.ok(TAMRIEL_POST.body.endsWith(`- ${TAMRIEL_POST.sender}`), 'signed by its sender');
   for (const sentence of TAMRIEL_POST.body.split(/(?<=[.!?:])\s+/)) assert.ok(sentence.split(/\s+/).length <= 25, `a plain sentence (PLAIN-TEXT): ${sentence}`);
 
   const svc = await standService();
   const ann = await svc.registered('Ann'), bob = await svc.registered('Bob');
   player(svc.env.DB, 'p-guest', null);
   svc.env.DB._raw.exec(mig);
-  const pieces = rows(svc.env.DB, 'SELECT id, to_id, batch, item FROM server_post');
+  const pieces = rows(svc.env.DB, 'SELECT id, to_id, batch, sender, item FROM server_post');
   assert.deepEqual(new Set(pieces.map((p) => p.to_id)), new Set([ann.id, bob.id]), 'every registered account, once, and no guest');
   assert.equal(pieces.length, 2);
-  assert.ok(pieces.every((p) => p.batch === TAMRIEL_POST.batch && p.item === TAMRIEL_POST_RECORD));
+  assert.ok(pieces.every((p) => p.batch === TAMRIEL_POST.batch && p.sender === 'DFO Team' && p.item === TAMRIEL_POST_RECORD));
   const box = await postBoxOf({ db: svc.env.DB }, { id: ann.id });
-  assert.deepEqual([box.post[0].subject, box.post[0].item?.name, box.unclaimed], [TAMRIEL_POST.subject, 'Portal Stone', 1]);
+  assert.deepEqual([box.post[0].from, box.post[0].subject, box.post[0].item?.name, box.unclaimed], ['DFO Team', TAMRIEL_POST.subject, 'Portal Stone', 1]);
 
   const R = await seatRealm(svc.env, ann.secret, 'Ann', { name: 'Ann', level: 5, goldPieces: 10, items: [] });
   const id = pieces.find((p) => p.to_id === ann.id).id;

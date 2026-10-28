@@ -7,15 +7,13 @@
 -- which the deploy runs (ACC1-CI), and once a send an account besides: INSERT OR IGNORE over 0093's ux_server_post_batch.
 -- The statement is the tool's own (`--migration tamriel` prints it), held to it by test/tooling/serverpost_send.test.js.
 INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)
-SELECT lower(hex(randomblob(12))), p.id, 'tamriel-portal-stones', 'The Developers', 'Thank you, and something for the road', 'Thank you for playing, and for sticking with us.
+SELECT lower(hex(randomblob(12))), p.id, 'tamriel-portal-stones', 'DFO Team', 'Thank you, and something for the road', 'Thank you for playing, and for sticking with us.
 
 This update opens up the rest of Tamriel, past the Iliac Bay. It took a long time to build, and a lot of it was shaped by your bug reports and ideas.
 
 There are ten Portal Stones in this letter. Go and see it: the ash on Red Mountain, the reeds of the Shadowfen, the vineyards of Summerset.
 
-Claim them and they go into the pack of the online character you are playing.
-
 We''re really glad you''re here. See you out there.
 
-- The Developers', '{"group":"UselessItems2","templateIndex":572,"name":"Portal Stone","value":1250,"maxCondition":1000,"currentCondition":1000,"stackCount":10}', CAST(strftime('%s', 'now') AS INTEGER)
+- DFO Team', '{"group":"UselessItems2","templateIndex":572,"name":"Portal Stone","value":1250,"maxCondition":1000,"currentCondition":1000,"stackCount":10}', CAST(strftime('%s', 'now') AS INTEGER)
 FROM players p WHERE p.handle IS NOT NULL;

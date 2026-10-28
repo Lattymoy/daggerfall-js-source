@@ -353,8 +353,8 @@
   {
     "name": "TAMRIEL-POST-the-send-not-once",
     "file": "tools/sendServerPost.mjs",
-    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(POST_SENDER)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
-    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(POST_SENDER)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],

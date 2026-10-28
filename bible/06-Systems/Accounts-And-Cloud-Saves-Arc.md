@@ -4053,8 +4053,9 @@ unique different version of the aura, a title named Hour's First, and each the g
 
 The owner: "Send a heartfelt, non-ai like message to players in their inbox and attach 10 portal stones".
 
-- **The send.** Migration 0188 writes every registered account standing when it runs one piece of the post: "Thank you,
-  and something for the road", holding ten Portal Stones in one stack (`src/systems/gate/gateSpoils.js` `portalStones`).
+- **The send.** Migration 0188 writes every registered account standing when it runs one piece of the post from the
+  DFO Team (its own sender; every other piece's is The Developers): "Thank you, and something for the road", holding ten
+  Portal Stones in one stack (`src/systems/gate/gateSpoils.js` `portalStones`).
   It is the tool's own statement (`node tools/sendServerPost.mjs --migration tamriel`, `everyoneSql`), once a send an
   account. A guest is sent nothing, and an account made after the deploy is not sent it.
 - **Frozen.** The words and the record are `TAMRIEL_POST` and `TAMRIEL_POST_RECORD` in the tool; the test holds the record
