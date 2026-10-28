@@ -6,6 +6,9 @@ screenshots with no word beside them. Each was read to its root on main with the
 things before the lanes ran: the Bay's walled cities keep their new walls, fixed, not reverted; and the yards keep the
 places #1184 gave them.
 
+#1371 shipped this and deployed on the owner's word. AUDIT FB1028 then read it cold (`../audits/Audit-FB1028.md`); its
+corrections are made below, and its fixes are their own pull request.
+
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | Lee: Westhead Moor - "Weird crop hovering, giant craters and cliffs on the outskirts.." | TS2's town ground: the sea kept a sample from a town raised over it, an ease of twelve samples whatever the height, the pixel's edge band easing the town's own ground, and a crop field's record tile alone on the outline | FIXED (TOWN-GROUND) |
