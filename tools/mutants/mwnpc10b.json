@@ -38,7 +38,7 @@
  {
   "name": "MWNPC10b-roster-unkept",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race) return rec._mwRosterLook;",
+  "old": "  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race && rec._mwRosterHome === home) return rec._mwRosterLook;",
   "new": "  if (false) return rec._mwRosterLook;",
   "tests": [
    "test/systems/mwnpc10b_rosters.test.js"
@@ -182,8 +182,8 @@
  {
   "name": "MWNPC10b-crew-one-look",
   "file": "src/scenes/naval/navalCrew.js",
-  "old": "seed: Math.imul((ship.seed | 0) + i, 0x9e3779b1) >>> 0 });",
-  "new": "seed: 0 });",
+  "old": "seed: Math.imul((ship.seed | 0) + i, 0x9e3779b1) >>> 0, home: ship.home });",
+  "new": "seed: 0, home: ship.home });",
   "tests": [
    "test/systems/mwnpc10b_rosters.test.js"
   ]

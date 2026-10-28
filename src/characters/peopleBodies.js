@@ -14,14 +14,14 @@
 // pictures rather than a guess (section 21's NOT HERE). They stand idle and turn to face the player, as Daggerfall's
 // billboards always did, at a person's pace.
 import { GENDERS } from './nameHelper.js';
-import { isChildNPCData, isChildNPCTexture } from './staticNpc.js';   // MWNPC18: and a child's picture, a figure's
+import { isChildNPCData, isChildNPCTexture, staticNpcData } from './staticNpc.js';   // MWNPC18: and a child's picture, a figure's; AUDIT PROVINCE-FOLK A2: a room's person's record
 import { flatGender } from '../formats/flatsFile.js';   // MWNPC18: a figure's sex, FLATS.CFG's column
 import { textSeed } from '../systems/livingWorld/seed.js';   // MWNPC18: a figure's seed, its piece's id
 import { RACES } from '../systems/races.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { isNpcFlat } from '../world/npcFlatArchives.js';   // STALL-FLATS: RDBLayout.NPCFlatArchives, the people's pictures
 import { dressPerson } from './wardrobe.js';   // MWNPC17: the wardrobe's roles
-import { nativeHere } from './provinceFolk.js';   // PROVINCE-FOLK: Cyrodiil's people in their own body
+import { nativeHere } from './provinceFolk.js';   // PROVINCE-FOLK: the place's own people past the Bay
 
 const RACE_NAME = Object.freeze(Object.fromEntries(Object.entries(RACES).map(([k, v]) => [v, k])));
 
@@ -80,7 +80,7 @@ export function personLook(pn, data, faction) {
   // no person's archive, so this one law keeps the marker's sprite-less flat bodiless too.
   if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);
   const kind = wardrobeOf(faction);
-  const race = data.questPerson || faction?.type === FACTION_TYPES.Individual ? RACE_NAME[data.race] : imperialHere(RACE_NAME[data.race]);   // PROVINCE-FOLK: a named one and a quest's keep their record's
+  const race = standingRace(data, faction);   // PROVINCE-FOLK: past the Bay the place's own people
   if (kind === 'none' || !race) return (pn._mwLook = null);
   const gender = data.gender === GENDERS.Female ? 'female' : 'male';
   const seed = mix((data.nameSeed | 0) ^ mix(data.hash | 0));
@@ -114,11 +114,27 @@ export function figureLook(fig, ctx = null) {
   if (!gender) return (fig._mwLook = null);
   const seed = textSeed(`decor:${piece.id}`);
   const d = dressPerson({ role: figureRole(row.caption), gender, seed });
-  return (fig._mwLook = { race: imperialHere(raceNameOf(ctx?.race ?? null)), gender, faceIndex: seed % 10, items: d.items, npc: d.npc });
+  return (fig._mwLook = { race: nativeHere() ?? raceNameOf(ctx?.race ?? null), gender, faceIndex: seed % 10, items: d.items, npc: d.npc });   // PROVINCE-FOLK: past the Bay the place's own people
 }
-/** PROVINCE-FOLK (bible/03-World/World-Wide.md): Cyrodiil's people are Bretons in the game's records (WW-R - DFU's races
- *  hold no Imperial) and Imperials in their body, where the player stands in Cyrodiil. @param {string|undefined} race */
-export const imperialHere = (race) => (race === 'Breton' && nativeHere() === 'Imperial' ? 'Imperial' : race);
+/** PROVINCE-FOLK (bible/03-World/World-Wide.md): A STANDING PERSON'S BODY'S RACE - their record's (GetRaceFromFaction), but
+ *  past the Bay one whose race is the region's, or a region's faction's (a Bay town's People, a province's Court), is the
+ *  place's own people (provinceFolk.js nativeHere: Cyrodiil's Imperials - WW-R records them as Bretons - the Reach's
+ *  Reachmen, Skyrim's Nords); a named one (an Individual faction) and a faction's own people keep theirs.
+ *  @param {any} data staticNpcData's @param {any} faction its FACTION.TXT row */
+export function standingRace(data, faction) {
+  const own = RACE_NAME[data.race], native = own ? nativeHere() : null;
+  if (!native || faction?.type === FACTION_TYPES.Individual) return own;
+  const regional = !faction || !Number.isInteger(faction.race) || faction.race < 0 || faction.race > 7 || (Number.isInteger(faction.region) && faction.region >= 0);
+  return regional ? native : own;
+}
+/** AUDIT PROVINCE-FOLK A2: A ROOM'S PERSON, read as the street reads one (world.js's): their record with the faction table
+ *  and the region's race - GetRaceFromFaction's two doors. The room's context carried neither, so every factioned person
+ *  indoors stood a Nord (a miss reads FactionRaces 0) and every factionless one no body (race 0).
+ *  @param {any} pn @param {any} sceneCtx @param {Map<number, any>} dict @param {number|null} regionRace REGION_RACES + 1 */
+export function standingPersonLook(pn, sceneCtx, dict, regionRace) {
+  const getFaction = (/** @type {number} */ id) => dict.get(id) ?? null;
+  return personLook(pn, staticNpcData(pn, { ...sceneCtx, getFaction, raceOfCurrentRegion: () => regionRace ?? 0 }), getFaction(pn.factionID));
+}
 /** MWNPC18: TEXTURE.175, the Daedra Princes as their quests summon them - never a person's body. */
 export const DAEDRA_PRINCES_ARCHIVE = 175;
 /** MWNPC18: a race the host names (a RACES id, or a name) as the look spells it - the Bay's Breton when it names none. */

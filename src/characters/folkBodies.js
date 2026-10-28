@@ -61,11 +61,11 @@ let _shells = 0;
  * @param {any} person @param {string} race
  */
 function spawnOf(person, race) {
-  const key = `${person.archive}|${person.personFaceRecordId ?? 0}|${person.nameNPC ?? ''}|${person.gender ?? 0}|${race}`;
+  const roll = `${person.archive}|${person.personFaceRecordId ?? 0}|${person.nameNPC ?? ''}|${person.gender ?? 0}`, key = `${roll}|${race}`;
   if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;
   const shell = person._mwShell ??= ++_shells;
   const n = (person._mwFolk?.n ?? 0) + 1;
-  const seed = mix(strHash(key) ^ mix(shell));
+  const seed = mix(strHash(roll) ^ mix(shell));   // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key
   return (person._mwFolk = { key, n, id: `${shell}.${n}`, seed, look: folkLookOf(person, race, seed) });
 }
 

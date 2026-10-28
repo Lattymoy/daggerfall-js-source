@@ -65,8 +65,8 @@
  {
   "name": "PFOLK-the-place-a-Bay-region's",
   "file": "src/characters/provinceFolk.js",
-  "old": "export const folkHere = () => (_placeRegion ? folkOfRegion(_placeRegion()) : null);",
-  "new": "export const folkHere = () => (_placeRegion ? folkOfRegion(_placeRegion()) : PROVINCE_FOLK.HighRock);",
+  "old": "export const folkHere = () => folkWhere(null);",
+  "new": "export const folkHere = () => PROVINCE_FOLK.HighRock;",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]
@@ -164,7 +164,7 @@
  {
   "name": "PFOLK-the-keeper's-race-unread",
   "file": "src/systems/merchantYards.js",
-  "old": "const race = folkRace(folkOfRegion(regionIndex), seed ^ 0x666f6c6b);",
+  "old": "const race = folkRace(people, seed ^ 0x666f6c6b);",
   "new": "const race = null;",
   "tests": [
    "test/characters/provincefolk.test.js"
@@ -173,8 +173,8 @@
  {
   "name": "PFOLK-the-hand's-region-ignored",
   "file": "src/scenes/portHost.js",
-  "old": "return folkRace(folkOfRegion(site?.regionIndex ?? -1),",
-  "new": "return folkRace(folkOfRegion(-1),",
+  "old": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(site?.regionIndex ?? -1),",
+  "new": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(-1),",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]
@@ -182,8 +182,8 @@
  {
   "name": "PFOLK-the-foe-the-Bay's-anywhere",
   "file": "src/characters/foeBodies.js",
-  "old": "return { race: (own ? null : folkRace(folkHere(), h)) ?? race,",
-  "new": "return { race,",
+  "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? ownRace(f) ?? bay : placeRace(f, h));",
+  "new": "const personRace = (f, h, bay) => bay;",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]
@@ -191,8 +191,8 @@
  {
   "name": "PFOLK-a-companion-the-place's",
   "file": "src/characters/foeBodies.js",
-  "old": "return { race: (own ? null : folkRace(folkHere(), h)) ?? race,",
-  "new": "return { race: folkRace(folkHere(), h) ?? race,",
+  "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? ownRace(f) ?? bay : placeRace(f, h));",
+  "new": "const personRace = (f, h, bay) => placeRace(f, h);",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]
@@ -200,17 +200,17 @@
  {
   "name": "PFOLK-the-Imperial-everywhere",
   "file": "src/characters/peopleBodies.js",
-  "old": "export const imperialHere = (race) => (race === 'Breton' && nativeHere() === 'Imperial' ? 'Imperial' : race);",
-  "new": "export const imperialHere = (race) => (race === 'Breton' ? 'Imperial' : race);",
+  "old": "const own = RACE_NAME[data.race], native = own ? nativeHere() : null;",
+  "new": "const own = RACE_NAME[data.race], native = own ? nativeHere() ?? 'Imperial' : null;",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]
  },
  {
-  "name": "PFOLK-a-quest's-person-lifted",
+  "name": "PFOLK-the-named-one-lifted",
   "file": "src/characters/peopleBodies.js",
-  "old": "const race = data.questPerson || faction?.type === FACTION_TYPES.Individual ? RACE_NAME[data.race] : imperialHere(RACE_NAME[data.race]);",
-  "new": "const race = faction?.type === FACTION_TYPES.Individual ? RACE_NAME[data.race] : imperialHere(RACE_NAME[data.race]);",
+  "old": "  if (!native || faction?.type === FACTION_TYPES.Individual) return own;",
+  "new": "  if (!native) return own;",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]
@@ -218,8 +218,8 @@
  {
   "name": "PFOLK-the-place-unset",
   "file": "src/scenes/world.js",
-  "old": "  setFolkPlace(_questRegionIndex);",
-  "new": "  void _questRegionIndex;",
+  "old": "  setFolkPlace((feet) =>",
+  "new": "  void ((feet) =>",
   "tests": [
    "test/characters/provincefolk.test.js"
   ]
@@ -227,7 +227,7 @@
  {
   "name": "PFOLK-the-pool's-folk-dropped",
   "file": "src/scenes/pixelBuild.js",
-  "old": "          folk: folkOfRegion(dfLocation.regionIndex),",
+  "old": "          folk: folkOfLocation(dfLocation),",
   "new": "          folk: null,",
   "tests": [
    "test/characters/provincefolk.test.js"
@@ -254,7 +254,7 @@
  {
   "name": "PFOLK-the-regular-a-Breton",
   "file": "src/world/card/cardRegulars.js",
-  "old": "const race = (bank === BANK_TYPES.Imperial ? nativeHere() : null) ?? RACE_OF_BANK[bank] ?? 'Breton';",
+  "old": "const race = (bank === BANK_TYPES.Imperial ? (native === undefined ? nativeHere() : native) : null) ?? RACE_OF_BANK[bank] ?? 'Breton';",
   "new": "const race = RACE_OF_BANK[bank] ?? 'Breton';",
   "tests": [
    "test/characters/provincefolk.test.js"

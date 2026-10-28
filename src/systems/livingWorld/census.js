@@ -17,7 +17,7 @@
 // Slot ids are the town's and the slot's: `L<mapId>.<slot>` for a household, `L<mapId>.t<slot>` for a traveller,
 // `L<mapId>.w<slot>` for the watch - the same person for every reader, the key a relation is saved under (relations.js).
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace, spriteRaceOf } from '../../characters/mobile/mobilePerson.js';
-import { folkOfArea, folkOfRegion, folkRace, folkNameBank } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK
+import { folkOfArea, folkOfRegion, folkRace, folkNameBank, withZone } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { fullName, GENDERS } from '../../characters/nameHelper.js';
 import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's bank on the Bay
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
@@ -122,7 +122,7 @@ export function mintResident(town, roll, slot, job, at = {}) {
   const climate = walkerRace(town.people, town.area ?? town.region);   // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)
   // PROVINCE-FOLK: past the Bay a resident is one of the province's people, on a stream of their own (the rest of them
   // is drawn as it was); their picture their race's where Daggerfall draws one, else the town's
-  const people = town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1);
+  const people = withZone(town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1), town.px, town.py);   // AUDIT PROVINCE-FOLK B6: its zone's
   const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate;   // 'folk'
   const sprite = spriteRaceOf(race, climate);
   const guard = job === 'guard';

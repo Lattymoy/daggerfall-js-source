@@ -38,7 +38,7 @@
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
 import { residentName } from './livingWorld/census.js';
-import { folkOfRegion, folkRace, folkNameBank } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
+import { folkOfRegion, folkRace, folkNameBank, folkKeyOf } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { setItemFields, mintCondition, TRANSPORT_HORSE } from './item/itemTemplates.js';
 import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagon/wagonKinds.js';
 import { birthHorses } from './horse/horseCoats.js';   // STEED1: the stable's horses born at the yard
@@ -145,18 +145,18 @@ export const yardSeed = (mapId, kind) => townSeed(mapId, YARD_KINDS[validYardKin
  * home of a keeper's draw: a yard's (`yardKeeper`) and a port's (systems/portPlaces.js portKeeper). Pure.
  * @param {number} seed @param {number} regionIndex
  */
-export function townKeeper(seed, regionIndex) {
+export function townKeeper(seed, regionIndex, people = folkOfRegion(regionIndex)) {
   const female = ((seed >>> 7) & 1) === 1;
   const gender = female ? GENDERS.Female : GENDERS.Male;
-  const race = folkRace(folkOfRegion(regionIndex), seed ^ 0x666f6c6b);   // PROVINCE-FOLK: past the Bay one of the province's people, named from their own bank
+  const race = folkRace(people, seed ^ 0x666f6c6b);   // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank
   const name = residentName(seed, race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender);
-  return { name, gender, sex: female ? 'female' : 'male', variant: (seed >>> 11) & 3, ...(race ? { race } : {}) };
+  return { name, gender, sex: female ? 'female' : 'male', variant: (seed >>> 11) & 3, ...(race ? { race, home: folkKeyOf(people) } : {}) };   // `home`: whose people, for the place's hands (portHost.js raceOf)
 }
 /**
  * A yard's keeper, on the yard's seed (townKeeper's draw). Pure.
  * @param {number} mapId @param {string} kind @param {number} regionIndex
  */
-export const yardKeeper = (mapId, kind, regionIndex) => townKeeper(yardSeed(mapId, kind), regionIndex);
+export const yardKeeper = (mapId, kind, regionIndex, people = undefined) => townKeeper(yardSeed(mapId, kind), regionIndex, people);
 
 /** SHIPYARDS: a place named after its keeper - their surname where the bank gives one, else their name - and its
  *  title ("Halbrecht's Stables"); with no name, "The <title>". The one home of the yards' and the shipyard's names. Pure. */

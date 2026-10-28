@@ -64,7 +64,7 @@ import { PORT_PAINTERS, PORT_ARCHIVE, PORT_HOW } from '../world/portArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the port's pictures in Daggerfall's colours
 import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the port's are)
 import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS, spriteRaceOf } from '../characters/mobile/mobilePerson.js';
-import { folkOfRegion, folkRace } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
+import { folkOfRegion, folkOfKey, folkRace } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';
 import { personActor } from '../characters/peopleBodies.js';
@@ -172,7 +172,7 @@ export function folkOf(key, role, i) {
  *  crewmaster's their draw's (merchantYards.js townKeeper), a hand's off the place's key; null on the Bay. Pure. */
 export function raceOf(site, p) {
   if (p.role === 'keeper' || p.role === 'crewmaster') return site?.[p.role]?.race ?? null;
-  return folkRace(folkOfRegion(site?.regionIndex ?? -1), textSeed(`${site?.key ?? ''}|${p.role}|${p.i}|folk`));
+  return folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(site?.regionIndex ?? -1), textSeed(`${site?.key ?? ''}|${p.role}|${p.i}|folk`));   // AUDIT PROVINCE-FOLK B6: the keeper's people, the zone's
 }
 /** Everyone a place stands: `{ role, i, at: [x, y, z] in its frame, sex, variant }`. Pure. */
 export function peopleOf(site) {
