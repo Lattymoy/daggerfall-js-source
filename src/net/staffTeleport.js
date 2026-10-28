@@ -11,7 +11,7 @@ export const STAFF_TP_RELAY_MIN = 159;   // world156 now belongs to upstream's a
 export const STAFF_TP_TIMEOUT_MS = 8000;
 export const STAFF_TP_ERRORS = Object.freeze(['offline', 'ambiguous', 'busy', 'private', 'battle', 'unavailable', 'denied', 'frozen']);
 export const staffTeleportSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_TP_RELAY_MIN;
-/** STAFF-PULL (2026-10-28, mob: "tpa player so tp them to us"): the first relay that carries a pull. An older one
+/** STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"): the first relay that carries a pull. An older one
  *  closes a socket on a `stp` kind it does not know, so a pull is never sent to it. */
 export const STAFF_PULL_RELAY_MIN = 276;
 export const staffPullSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_PULL_RELAY_MIN;

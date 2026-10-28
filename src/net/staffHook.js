@@ -267,7 +267,7 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
     else if (m.dfoStaff === 'here?') post(staffHere(placesOf()?.maps, placesOf()?.pixel ?? null));   // STAFF-EVENT: where I stand
     else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && pilot) { seen = true; pilot(m); }
     else if (m.dfoStaff === 'pull' && pull && typeof m.sub === 'string' && ID_RE.test(m.sub)) {
-      // STAFF-PULL (2026-10-28, mob: "tpa player so tp them to us"; scenes/staffPullHost.js), no version bump:
+      // STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"; scenes/staffPullHost.js), no version bump:
       // { dfoStaff: 'pull', sub } -> { dfoStaff: 'pulled', sub, ok, line } - that account's player brought to me, `line`
       // what happened in words; a hook before it says nothing
       const sub = m.sub;
