@@ -3899,9 +3899,74 @@
   "tr": "496c73a2fa4f",
   "by": "claude-in-session"
  },
- "account.wear.armory": {
-  "en": "b8314b7db1da",
-  "tr": "4dab2c638df8",
+ "account.slots.face": {
+  "en": "7452269bc7aa",
+  "tr": "96f4c12e3c49",
+  "by": "claude-in-session"
+ },
+ "account.slots.head": {
+  "en": "ee9946c82d4a",
+  "tr": "286395835b52",
+  "by": "claude-in-session"
+ },
+ "account.slots.hint": {
+  "en": "5c1bb441e273",
+  "tr": "08f81d499b0b",
+  "by": "claude-in-session"
+ },
+ "account.slots.icon": {
+  "en": "92b6b1bf71e0",
+  "tr": "271de5dbbcc4",
+  "by": "claude-in-session"
+ },
+ "account.slots.mw": {
+  "en": "05f97976b345",
+  "tr": "05f97976b345",
+  "by": "claude-in-session"
+ },
+ "account.slots.none": {
+  "en": "6eef6648406c",
+  "tr": "34bd5b320fbb",
+  "by": "claude-in-session"
+ },
+ "account.slots.notHeld": {
+  "en": "0359158cc3f5",
+  "tr": "153d90ce04b5",
+  "by": "claude-in-session"
+ },
+ "account.slots.open": {
+  "en": "f425d4911038",
+  "tr": "03c3e1d43800",
+  "by": "claude-in-session"
+ },
+ "account.slots.plate": {
+  "en": "983d4167b9fb",
+  "tr": "404aabf6f447",
+  "by": "claude-in-session"
+ },
+ "account.slots.setLook": {
+  "en": "0484b9b1e925",
+  "tr": "083d617bf198",
+  "by": "claude-in-session"
+ },
+ "account.slots.setOff": {
+  "en": "5c73920cd4ff",
+  "tr": "91a336b654a4",
+  "by": "claude-in-session"
+ },
+ "account.slots.setOn": {
+  "en": "25074da6c0c7",
+  "tr": "2e48ed9a17da",
+  "by": "claude-in-session"
+ },
+ "account.slots.sprite": {
+  "en": "b6b52cb47d12",
+  "tr": "b6b52cb47d12",
+  "by": "claude-in-session"
+ },
+ "account.slots.weaponNote": {
+  "en": "3617d33559e8",
+  "tr": "2200db6c9f17",
   "by": "claude-in-session"
  },
  "account.wear.aura": {
@@ -3924,11 +3989,6 @@
   "tr": "0a8e68fa4075",
   "by": "claude-in-session"
  },
- "account.wear.icon": {
-  "en": "716f63b96e0c",
-  "tr": "15cb8bd4b6ba",
-  "by": "claude-in-session"
- },
  "account.wear.title": {
   "en": "768e0c1c6957",
   "tr": "b2f23da948c4",
@@ -3942,6 +4002,16 @@
  "account.wear.worn": {
   "en": "109ed08cf9d2",
   "tr": "cda088f08346",
+  "by": "claude-in-session"
+ },
+ "armory.line.dagonfire": {
+  "en": "03ba10ac34d0",
+  "tr": "f433c25f06cc",
+  "by": "claude-in-session"
+ },
+ "armory.line.eternal": {
+  "en": "2791d0df0274",
+  "tr": "ff56338b54bd",
   "by": "claude-in-session"
  },
  "armory.look.ashbound": {

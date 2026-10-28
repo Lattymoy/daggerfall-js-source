@@ -83,7 +83,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and TITLE-DOOR's MARK (`intro/titleHeld.js`: the page's word that the film's title stands under the menu - the film writes it when it lands, the menu reads it and draws its home over the film; `10-UI/UI-Arc.md` TITLE-DOOR);
 - and SHOP's TWO (`enhanced/enhancedShop.js`: the pause face's gem and the shop's window - the disclaimer, a tab a category, a panel a ware; `titleFlame.js`: the Genesis title's fire, one stepped CSS background - `06-Systems/Shop.md`);
 - and ARMORY's ONE (`armoryText.js`: the Aura Armory's slots, pieces and looks in the player's language - `04-Characters/Aura-Armory.md`);
-451 modules
+- and PROFILE-SLOTS' THREE (`characterSlots.js`: the profile's Character section - the eight slots round the character's stage, a picker each, a choice tried on and worn; `profileBody.js`: the body that stage draws, Morrowind's or the sprite the world draws; `namePlate.js`: the world's plate over its head, still - `04-Characters/Aura-Armory.md` section 10);
+454 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

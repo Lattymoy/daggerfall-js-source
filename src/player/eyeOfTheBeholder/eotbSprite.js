@@ -26,10 +26,12 @@
 // drive this module through its seams rather than through the bundle.
 
 import { ORIENTATIONS, stateFor, tableArchive, spriteKey, STATE_TABLES, frameCount } from './eotbBillboard.js';
-import { layeredSprite, isLayeredKey } from './layeredArmor.js';   // WORN-ARMOUR: the on-foot body in the armour it wears
+import { layeredSprite, isLayeredKey, decodeLayered } from './layeredArmor.js';   // WORN-ARMOUR: the on-foot body in the armour it wears
 import { classSkinOf, classRecord, classFrame, classRecordScale } from '../classSkins.js';   // SKIN2: Daggerfall's classes, past the mod's sixteen
 import { toColor32, toColor32OrderInPlace } from '../../formats/color32Order.js';   // EOTB-FLIP: the ONE row-order door a PNG crosses on its way to a world billboard
 import { horseLookCode, horseLookOfCode, lookSuffix, recolorHorse } from '../../systems/horse/horseCoats.js';   // COATS1: the mount's look
+import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
+import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import spriteInfo from '../../../vendor/eye-of-the-beholder/spriteInfo.json' with { type: 'json' };
 
 const IN_BROWSER = typeof window !== 'undefined';
@@ -139,13 +141,13 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
   // outfit with no art falls through to that skin
   if (look.wornArmour && !table.endsWith('Horse') && !table.endsWith('Lycan')) {
     const worn = layeredSprite(table, st.record - STATE_TABLES[table].base, frame, frameCount(table), look, mirror);
-    if (worn) return worn;
+    if (worn) return { ...worn, view: st.record - STATE_TABLES[table].base };
   }
   const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;
   if (skin) {
     const record = classRecord(skin, table, st.record - STATE_TABLES[table].base);
     const f = classFrame(skin, record, frame, frameCount(table));
-    return { archive: skin.archive, record, frame: f, mirror, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}${mirror ? 'm' : ''}` };
+    return { archive: skin.archive, record, frame: f, mirror, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}${mirror ? 'm' : ''}`, view: st.record - STATE_TABLES[table].base };
   }
   const archive = tableArchive(table, look);
   // COATS1: a mounted table's horse wears the rider's horse's look (`look.horse`, its code - systems/horse/horseCoats.js) -
@@ -161,6 +163,8 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
      *  own record, because it is its own pixels */
     rec: `${st.record}-${frame}${mirror ? 'm' : ''}${lookSuffix(horse)}`,
     horse,
+    /** ARMORY: which of the five views it is (eotbBillboard.js RECORD_OFFSETS: 0 the front, 2 the side, 4 the back) */
+    view: st.record - STATE_TABLES[table].base,
   };
 }
 
@@ -205,6 +209,17 @@ export function worldOrderColors(image, { owned = false } = {}) {
   if (owned) { const { width, height, data } = toColor32OrderInPlace(image); return { width, height, colors: new Uint32Array(data.buffer, data.byteOffset, data.byteLength / 4) }; }
   const { width, height, colors } = toColor32(image);
   return { width, height, colors: new Uint32Array(colors.buffer, colors.byteOffset, colors.byteLength / 4) };
+}
+
+/**
+ * THE BROWSER DECODE, lifted out so it can be replaced (eotbBody.js takes it as its `decode`; PROFILE-SLOTS: the
+ * profile's stage too, without the body's own module). EOTB-FLIP: the dropped torch's door - `decodePng`, then the one
+ * row-order converter - never a canvas of its own. A decode that fails answers a rejection. FIRST-VISIT: decodeServedPng
+ * fetches and decodes.
+ */
+export async function decodeSprite(url) {
+  if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng, { picture: decodeServedPng }), { owned: true });   // WORN-ARMOUR: composed from its strip
+  return worldOrderColors(await decodeServedPng(url), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
 }
 
 /**

@@ -187,6 +187,7 @@ const HARDCODED = {
   'src/render/auraRing.js': 3,
   'src/render/bannerPass.js': 2,
   'src/render/cardFaces.js': 14,
+  'src/render/characterStage.js': 1,   // PROFILE-SLOTS: the stage's picture shader - GLSL the scan reads as prose (`in vec2`), armoryPass.js's same line
   'src/render/classicShadowLane.js': 3,
   'src/render/cloudNoise.js': 4,
   'src/render/comeSailAwayRender.js': 9,
@@ -625,7 +626,7 @@ const HARDCODED = {
   'src/ui/eliteGates/egHud.js': 32,   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: -1, the Gauntlet's line routed (eg.progress.gauntlet). AUDIT EG V (a1): +2, the rest's beacon - *The next circle bears: ...* and *The next Court: ...* (egNextCircleText) - the arc's English, owed its localization wave with the rest; EG-PLUS: -6, the panel's heads, the asks' lines and its foot through the text core
   'src/ui/eliteGates/egSpireHud.js': 15,   // AUDIT EG IV (the lords' group): +1, an errand's numerals' markup (egSigilHtml's `given` - a template the scan counts; its words are the company's numerals and names)
   'src/ui/eliteGates/egStartWindow.js': 5,
-  'src/ui/enhanced/enhancedAccount.js': 9,   // ARMORY: a piece's button's class names, the aura's line beside it
+  'src/ui/enhanced/enhancedAccount.js': 7,   // PROFILE-SLOTS: -2, the wardrobe's rows moved to ui/characterSlots.js, its class lists built from parts
   'src/ui/enhanced/enhancedBook.js': 1,
   'src/ui/enhanced/enhancedCharSheet.js': 1,
   'src/ui/enhanced/enhancedChargen.js': 108,

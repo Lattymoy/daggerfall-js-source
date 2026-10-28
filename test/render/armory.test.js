@@ -13,7 +13,8 @@ import { INSIGNIA, ARMORY_BROKER_PRICE } from '../../src/net/insignia.js';
 import { SHOP_WARES, shopKeysOf, shopOwns } from '../../src/net/shopLaw.js';
 import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
-import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks } from '../../src/render/armoryPose.js';
+import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen } from '../../src/render/armoryPose.js';
+import { spriteFor } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
 import {
   armoryDraws, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryPrograms, armoryRatesWhole, ARMORY_BODY_PIECES, ARMORY_PROGRAMS,
   ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer,
@@ -141,18 +142,81 @@ test('ARMORY the pose: a rig\'s bones its joints, a sprite\'s figure its card an
   assert.ok(Math.abs(o[0] - (10 + fwd)) < 1e-6 && Math.abs(o[2] - 10) < 1e-6, 'facing +x, the chest\'s forward is +x');
 });
 
-test('ARMORY a picture\'s marks: the run nearest the middle at each body row, a staff beside it never the head (mutants: the widest run taken; the narrow-run floor gone)', () => {
+test('ARMORY a picture\'s marks: the run nearest the middle at each body row, a staff beside it never the head - nor its orb, wide as a head (mutants: the widest run taken; the narrow-run floor gone; the top any run\'s)', () => {
   const w = 64, h = 128, px = new Uint32Array(w * h);
   const fill = (/** @type {number} */ x0, /** @type {number} */ x1, /** @type {number} */ y0, /** @type {number} */ y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px[y * w + x] = 0xff000000; };
   fill(30, 40, 0, 104);   // the body, 3.5 px right of the middle (31.5), its top row 104
   fill(24, 25, 0, 120);   // a staff to its left, two pixels wide, over the head
+  fill(21, 28, 112, 122);   // PROFILE-SLOTS (the audit): its orb, eight wide - EOTB sets 6, 7 and 11 read their crowns off it
   const m = spriteMarks(px, w, h);
   assert.ok(m, 'a body stands');
-  assert.equal(m.top, 104, 'the head\'s top, never the staff\'s');
+  assert.equal(m.top, 104, 'the head\'s top, never the staff\'s nor its orb\'s');
+  const front = new Uint32Array(w * h);
+  for (let y = 0; y <= 104; y++) for (let x = 30; x <= 40; x++) front[y * w + x] = 0xff000000;
+  for (let y = 0; y <= 125; y++) for (let x = 33; x <= 34; x++) front[y * w + x] = 0xff000000;   // a staff held up in front of the head
+  for (let y = 118; y <= 125; y++) for (let x = 30; x <= 37; x++) front[y * w + x] = 0xff000000;   // its orb on it
+  assert.equal(spriteMarks(front, w, h)?.top, 104, 'a shaft over the head is no head, nor what it holds up');
+  const blade = new Uint32Array(w * h);
+  for (let y = 0; y <= 90; y++) for (let x = 33; x <= 43; x++) blade[y * w + x] = 0xff000000;   // the body on its feet at 38
+  for (let y = 91; y <= 104; y++) for (let x = 40; x <= 48; x++) blade[y * w + x] = 0xff000000;   // its head leant right
+  for (let y = 60; y <= 118; y++) for (let x = 36; x <= 37; x++) blade[y * w + x] = 0xff000000;   // a blade held up over the feet
+  assert.equal(spriteMarks(blade, w, h)?.top, 104, 'the head is a head\'s width - never a blade by it');
+  // the body found from its feet: a sword held far out makes the picture wide, the body far off its middle (a side view)
+  const W2 = 120, wide = new Uint32Array(W2 * h);
+  const put = (/** @type {number} */ x0, /** @type {number} */ x1, /** @type {number} */ y0, /** @type {number} */ y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) wide[y * W2 + x] = 0xff000000; };
+  put(80, 90, 0, 90); put(81, 89, 91, 104);   // the body, 25.5 px right of the picture's middle (59.5)
+  for (let i = 0; i < 70; i++) put(10 + i, 11 + i, 70 + Math.round(i / 6), 70 + Math.round(i / 6));   // a sword out to the left, two pixels thick
+  const far = spriteMarks(wide, W2, h);
+  assert.equal(far?.head, 25.5, 'the head where the body stands, not lost off the middle');
+  assert.equal(far?.top, 104);
+  assert.equal(spriteMarks(wide, W2, h, { arms: false })?.arms, null, 'a side view: its arms are not read');
+  assert.deepEqual([spriteArmsSeen(0), spriteArmsSeen(1), spriteArmsSeen(2), spriteArmsSeen(4)], [true, true, false, true]);
   assert.equal(m.head, 3.5);
   assert.equal(m.chest, 3.5);
   assert.equal(spriteMarks(new Uint32Array(w * h), w, h), null, 'nothing painted, no marks');
   assert.equal(spriteMarks(px, 0, h), null);
+});
+
+test('ARMORY a picture\'s arms (PROFILE-SLOTS audit, the owner: "The arm effects on the sprite aren\'t positioned correctly"): each arm read down its own outer edge - one hanging apart, one bent out to its elbow, a shield on the forearm stepped past - and the pose\'s arms where the picture draws them, across its card (mutants: the shield taken for the arm; the arms off the table again)', () => {
+  const w = 64, h = 128, px = new Uint32Array(w * h);
+  const fill = (/** @type {number} */ x0, /** @type {number} */ x1, /** @type {number} */ y0, /** @type {number} */ y1) => { for (let y = y0; y <= y1; y++) for (let x = Math.max(0, x0); x <= Math.min(w - 1, x1); x++) px[y * w + x] = 0xff000000; };
+  fill(26, 37, 0, 90);   // the torso and legs, on the middle (31.5)
+  fill(28, 35, 91, 104);   // the head
+  fill(18, 23, 50, 88); fill(24, 25, 84, 88);   // the left arm hanging apart, its shoulder joined to the torso
+  for (let r = 50; r <= 88; r++) { const c = Math.round(38 + (88 - r) / 2); fill(c - 2, c + 3, r, r); }   // the right bent out, half a pixel a row
+  fill(40, 62, 68, 78);   // a shield over its forearm, joined to it
+  const m = spriteMarks(px, w, h);
+  assert.ok(m?.arms, 'both arms read');
+  const { L, R } = m.arms;
+  assert.deepEqual(L.rows, [86, 67, 50]);
+  assert.deepEqual([L.sh, L.el], [-10, -10], 'the hanging arm: its middle, half an arm in from its outer edge');
+  const line = (/** @type {number} */ r) => Math.round(38 + (88 - r) / 2) + 3 - 3.5 - 31.5;   // the bent arm's middle at row r
+  assert.ok(Math.abs(R.sh - line(86)) <= 1, `the bent arm's shoulder (${R.sh})`);
+  assert.ok(Math.abs(R.el - line(67)) <= 1.5, `its elbow on its own line (${R.el} by ${line(67)}), never the shield's rim (${62 - 3.5 - 31.5})`);
+  const pose = newPose();
+  poseFromFigure({ base: 0.1, mpp: 0.02, marks: m, shift: 0.05 }, pose);
+  assert.equal(+pose.dx[POSE_AT.elR / 3].toFixed(4), +(0.05 + R.el * 0.02).toFixed(4), 'the elbow across the card where the picture draws it');
+  assert.equal(pose.pts[POSE_AT.elR], 0, 'none of it turned with the body - the picture is what is seen');
+  assert.equal(+pose.pts[POSE_AT.elL + 1].toFixed(4), +(0.1 + 67 * 0.02).toFixed(4), 'at its row over the card\'s foot');
+  assert.equal(m.beast.arms, undefined, 'a beast\'s arms are its own - it wears nothing');
+  // THE LEGS: a stride's two legs at their own middles; a robe beside a staff split at its quarters, the shaft no leg
+  const legsOf = (/** @type {(f: (x0: number, x1: number, y0: number, y1: number) => void) => void} */ draw) => {
+    const q = new Uint32Array(w * h);
+    draw((x0, x1, y0, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) q[y * w + x] = 0xff000000; });
+    return spriteMarks(q, w, h)?.legs;
+  };
+  const stride = legsOf((f) => { f(14, 21, 0, 45); f(40, 47, 0, 45); f(20, 42, 46, 90); f(27, 36, 91, 104); });
+  assert.deepEqual([stride?.knee, stride?.ankle], [[-14, 12], [-14, 12]], 'each leg at its own middle');
+  const robe = legsOf((f) => { f(20, 41, 0, 90); f(26, 35, 91, 104); f(8, 10, 0, 100); });
+  assert.deepEqual(robe?.knee, [-6.5, 4.5], 'a robe two legs wide, at its quarters - never the staff beside it');
+  const walker = newPose();
+  poseFromFigure({ base: 0, mpp: 0.02, marks: { ...m, legs: stride }, shift: 0 }, walker);
+  assert.equal(+walker.dx[POSE_AT.knR / 3].toFixed(3), 0.24, 'the knee across the card where the picture stands it');
+  assert.equal(walker.pts[POSE_AT.ftL], 0);
+  // which view a picture is, as the sprite's own table says it: the front, the side (mirrored or not), the back
+  assert.deepEqual([0, 1, 2, 4, 6].map((o) => spriteFor('Idle', o, 0, { onFoot: 0 })?.view), [0, 1, 2, 4, 2]);
+  assert.equal(spriteFor('Idle', 2, 0, { onFoot: 20 })?.view, 2, 'a class skin\'s');
+  assert.equal(spriteFor('Idle', 2, 0, { onFoot: 0, wornArmour: true, gender: 'female', outfit: 'p6p6p6' })?.view, 2, 'Layered Gearing\'s');
 });
 
 test('ARMORY what a piece draws: a crown on the head, a heart on the chest, arms and legs on both sides; a sprite\'s forearm stands down; a rider\'s legs and a sunk body\'s chest none; the weapon\'s nothing here (mutants: the weapon drawn on the body; a rider\'s greaves drawn; the forearm drawn on a card)', () => {
@@ -201,6 +265,13 @@ test('ARMORY the pass: a program a body piece with its piece a constant, the rat
   assert.ok(born <= ARMORY_TRAIL);
   armoryMotionStep(walker, 1.0 + 10);   // a long gap: a placement, never a stride
   assert.deepEqual([...walker.vel], [0, 0, 0]);
+  // a sprite's feet stand across its card, along the view's right - its embers left a foot each side, never on its middle
+  const card = { at: [0, 0, 0], yaw: 0, pose: newPose() };
+  card.pose.card = true;
+  for (const [n, d] of /** @type {[string, number][]} */ ([['ftL', -0.12], ['ftR', 0.12]])) { card.pose.pts[POSE_AT[n]] = 0; card.pose.dx[POSE_AT[n] / 3] = d; }
+  for (let i = 0; i <= 40; i++) { card.at[2] = i * 0.05; armoryMotionStep(card, i * 0.025, [1, 0, 0]); }
+  const xs = [...card.trail].filter((_, i) => i % 4 === 0 && card.trail[i + 3] >= 0).map((x) => Math.round(x * 100) / 100);
+  assert.deepEqual([...new Set(xs)].sort(), [-0.12, 0.12], 'the ember at the foot that strode, off the middle');
 });
 
 test('ARMORY on the Morrowind body: every bone the pose reads stands on retail\'s own skeleton, read by the game\'s own reader (fpArm armBonesInBody, what thirdBones and a peer\'s bonesOf answer) - and the pieces land on its parts (mutants: a bone misnamed; the chest on the spine, not its face; the forearm left off the rig; the Sigil\'s back inside the torso)', () => {
@@ -328,4 +399,8 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   assert.match(w, /auraHost\.frame\(seen\);/);
   assert.match(w, /const insigniaRows = \(\) => INSIGNIA\.map\(\(o\) => insigniaRowOf\(o, _insignia\)\);/, 'the Broker\'s rows, every kind\'s, the module\'s too');
   assert.ok(!/new ArmoryRenderer|armoryWearers\(/.test(w), 'the armory\'s pass is the module\'s alone');
+  const h = rd('src/scenes/auraHost.js');
+  assert.match(h, /const vw = renderer\._view, right = vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null;/, 'the view\'s right, the draw\'s (ArmoryRenderer.draw)');
+  assert.match(h, /selfPose\(selfKit\.pose, player\); armoryMotionStep\(selfKit, t, right\);/);
+  assert.match(h, /peerPose\(d\.id, w\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');
 });

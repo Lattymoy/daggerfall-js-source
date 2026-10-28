@@ -29,6 +29,14 @@ export const ARMORY_EMBER_S = 2.5;
 export const ARMORY_STRIDE_M = 0.8;
 /** The rates (Hz), each whole over the clock: the heart's beat, the halo's light, the sigil's, the motes' orbit. */
 export const ARMORY_HZ = Object.freeze({ beat: 1, halo: 1 / 6, sigil: 1 / 8, orbit: 1 / 24, spark: 1 / 4 });
+/** THE HEAD PIECES' MEASURES (m, at the body's scale), read by their build (armoryDraws), their shader's motes and their
+ *  tip (armoryHeadTip): the crown's band `brow` over the head point and `band` tall, `r` round, its flames `flame` over
+ *  it narrowing to `tip` across; the halo `lift` over the crown, `r` round, its axis tipped `tilt` back, its motes
+ *  orbiting `orbit` times as far round, bobbing `bob`, `mote` across. */
+export const ARMORY_HEAD = Object.freeze({
+  burningcrown: Object.freeze({ brow: 0.015, band: 0.05, r: 0.13, flame: 0.27, tip: 0.075 }),
+  eternalhalo: Object.freeze({ lift: 0.05, r: 0.165, tilt: 0.3, orbit: 1.12, bob: 0.03, mote: 0.013 }),
+});
 /** Every rate whole over AURA_CLOCK_PERIOD. Pure. */
 export const armoryRatesWhole = () => Object.values(ARMORY_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 
@@ -72,7 +80,7 @@ vec4 cardAt(float k, out vec4 info) {
     }
     float ang = TAU * (k / ${ARMORY_CARDS.toFixed(1)} * 1.5 + uTime ${hz(ARMORY_HZ.orbit)});   // motes orbiting the halo
     info = vec4(0.5, 0.0, 0.6 + 0.4 * sin(TAU * (uTime ${hz(ARMORY_HZ.halo)} + k / 8.0)), 0.0);
-    return vec4(uA + ringOut(uU, ang) * uR.x * 1.12 + uU * 0.03 * uScale * sin(TAU * (uTime ${hz(ARMORY_HZ.halo)} + k / 8.0)), 0.013 * uScale);
+    return vec4(uA + ringOut(uU, ang) * uR.x * ${ARMORY_HEAD.eternalhalo.orbit.toFixed(2)} + uU * ${ARMORY_HEAD.eternalhalo.bob.toFixed(2)} * uScale * sin(TAU * (uTime ${hz(ARMORY_HZ.halo)} + k / 8.0)), ${ARMORY_HEAD.eternalhalo.mote.toFixed(3)} * uScale);
   }
   if (uPiece == 1 || uPiece == 6) {
     if (uPart == 1) { info = vec4(0.0, 1.0, 1.0, 0.0); return vec4(uA, uSize); }   // the glow at the heart
@@ -409,6 +417,28 @@ const mix = (/** @type {ArrayLike<number>} */ a, /** @type {ArrayLike<number>} *
 const UP = Object.freeze([0, 1, 0]);
 
 /**
+ * THE HEAD PIECE'S TIP on wearer `w` (armoryDraws' wearer, its kit `w.kit`): the world height of the highest thing its
+ * head piece keeps drawn - the crown's flames, the halo's ring and its motes (the embers that drift up off the crown and
+ * fade are left out) - or null with no head piece. A plate over the head stands clear of it (ui/characterSlots.js, the
+ * world's names: scenes/auraHost.js nameTopOf). A sprite's points move across its card, never up it. Pure.
+ * @param {any} w
+ */
+export function armoryHeadTip(w) {
+  const key = armoryKitPieces(w?.kit).head, pose = w?.pose;
+  if (!key || !pose) return null;
+  const s = pose.scale > 0 ? pose.scale : 1, at = w.at ?? [0, 0, 0], yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
+  const pt = (/** @type {string} */ n) => /** @type {number[]} */ (poseWorld(pose, n, at, yaw, [0, 0, 0]));
+  const head = pt('head'), up = unit(sub(head, pt('neck'))), across = Math.sqrt(Math.max(0, 1 - up[1] * up[1]));
+  if (key === 'burningcrown') { const C = ARMORY_HEAD.burningcrown; return head[1] + up[1] * (C.brow + C.band + C.flame) * s + C.tip * across * s; }
+  if (key === 'eternalhalo') {
+    const H = ARMORY_HEAD.eternalhalo, axis = unit(add(up, [Math.sin(yaw), 0, Math.cos(yaw)], -H.tilt));
+    const c = add(pt('crown'), up, H.lift * s);
+    return c[1] + (H.orbit * H.r * Math.sqrt(Math.max(0, 1 - axis[1] * axis[1])) + H.bob + H.mote) * s;
+  }
+  return null;
+}
+
+/**
  * WHAT A PIECE DRAWS on wearer `w` this frame - its draws `{ mesh, part, A, B, N, U, r, size, count, face, gain }` in the
  * world (`w.at`, `w.yaw`, `w.pose` - armoryPose.js), `eye` the camera, `near` whether its embers and motes are drawn. A
  * sprite's forearm and weapon are not (its pose's `limbs` 'upper'), nor a rider's legs, nor anything but the head on a body
@@ -431,13 +461,13 @@ export function armoryDraws(key, w, eye, near, right = null) {
   const full = pose.limbs === 'full', speed = Math.min(1, Math.hypot(w.vel?.[0] ?? 0, w.vel?.[2] ?? 0) / 4);
   const head = pt('head'), up = unit(sub(head, pt('neck')));
   if (key === 'burningcrown') {
-    const brow = add(head, up, 0.015 * s), r = 0.13 * s, top = add(brow, up, 0.05 * s);
-    tube(0, brow, top, 0.13, 0.133);
-    tube(2, add(top, up, -0.005 * s), add(top, up, 0.27 * s), 0.133, 0.075);
-    cards(2, 10, top, top, up, [r, 0.27 * s]);
+    const C = ARMORY_HEAD.burningcrown, brow = add(head, up, C.brow * s), r = C.r * s, top = add(brow, up, C.band * s);
+    tube(0, brow, top, C.r, 0.133);
+    tube(2, add(top, up, -0.005 * s), add(top, up, C.flame * s), 0.133, C.tip);
+    cards(2, 10, top, top, up, [r, C.flame * s]);
   } else if (key === 'eternalhalo') {
-    const axis = unit(add(up, fwd, -0.3)), c = add(pt('crown'), up, 0.05 * s), r = 0.165 * s;
-    tube(0, add(c, axis, -0.012 * s), add(c, axis, 0.012 * s), 0.165, 0.165);
+    const H = ARMORY_HEAD.eternalhalo, axis = unit(add(up, fwd, -H.tilt)), c = add(pt('crown'), up, H.lift * s), r = H.r * s;
+    tube(0, add(c, axis, -0.012 * s), add(c, axis, 0.012 * s), H.r, H.r);
     cards(1, 1, add(c, fwd, r), c, axis, [r, 0], 0.075 * s, 1, 1, true);
     cards(2, 8, c, c, axis, [r, 0]);
   } else if (key === 'emberheart' || key === 'eternalsigil') {
@@ -507,9 +537,10 @@ export function armoryEyeAtHead(/** @type {any} */ w, /** @type {ArrayLike<numbe
 /**
  * A WEARER'S MOTION, each frame: their velocity smoothed (`w.vel`, what wisps trail and sparks answer) and, for the
  * Cinderstride, an ember left at the leading foot every stride walked (`w.trail`, ARMORY_TRAIL of [x, y, z, born]). A
- * jump past a run's reach is a placement, never a stride. Writes `w`; pure but for it.
+ * jump past a run's reach is a placement, never a stride. `right` the view's right: a sprite's feet stand off its card's
+ * middle along it, as armoryDraws draws them. Writes `w`; pure but for it.
  */
-export function armoryMotionStep(/** @type {any} */ w, /** @type {number} */ t) {
+export function armoryMotionStep(/** @type {any} */ w, /** @type {number} */ t, /** @type {ArrayLike<number>|null} */ right = null) {
   const m = w.motion ?? (w.motion = { t: null, at: [0, 0, 0], walked: 0, foot: 0 });
   const vel = w.vel ?? (w.vel = [0, 0, 0]);
   const trail = w.trail ?? (w.trail = new Float32Array(ARMORY_TRAIL * 4).fill(-1));
@@ -524,7 +555,7 @@ export function armoryMotionStep(/** @type {any} */ w, /** @type {number} */ t) 
       if (m.walked >= stride && w.pose && !w.mounted) {
         m.walked -= stride;
         m.foot = 1 - m.foot;
-        const p = /** @type {number[]} */ (poseWorld(w.pose, m.foot ? 'ftR' : 'ftL', w.at, Number.isFinite(w.yaw) ? w.yaw : 0, [0, 0, 0]));
+        const p = /** @type {number[]} */ (poseWorld(w.pose, m.foot ? 'ftR' : 'ftL', w.at, Number.isFinite(w.yaw) ? w.yaw : 0, [0, 0, 0], 0, w.pose.card ? right : null));
         let slot = 0;
         for (let i = 1; i < ARMORY_TRAIL; i++) if (trail[i * 4 + 3] < trail[slot * 4 + 3]) slot = i;
         trail[slot * 4] = p[0]; trail[slot * 4 + 1] = w.at[1]; trail[slot * 4 + 2] = p[2]; trail[slot * 4 + 3] = t;

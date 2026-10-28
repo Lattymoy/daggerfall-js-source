@@ -79,8 +79,8 @@
   {
     "name": "ARMORY-the-staff-taken-for-the-head",
     "file": "src/render/armoryPose.js",
-    "old": "if (runAt(r, HEAD_MIN_PX)) return r;",
-    "new": "if (runAt(r)) return r;",
+    "old": "first = runAt(r0, HEAD_MIN_PX);",
+    "new": "first = runAt(r0);",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -404,6 +404,114 @@
     "new": "return armoryWarePieces(w.key).some((k) => kit[",
     "tests": [
       "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-shield-taken-for-the-arm",
+    "file": "src/render/armoryPose.js",
+    "old": "      else e += slope;",
+    "new": "      else e = near.hi;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-staff-in-front-the-head",
+    "file": "src/render/armoryPose.js",
+    "old": "      if (thin >= 3) break;\n",
+    "new": "",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-arms-off-the-table-again",
+    "file": "src/render/armoryPose.js",
+    "old": "const arms = mk?.arms;",
+    "new": "const arms = null;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-crowns-tip-at-its-band",
+    "file": "src/render/armoryPass.js",
+    "old": "(C.brow + C.band + C.flame) * s",
+    "new": "(C.brow + C.band) * s",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-halos-motes-left-out",
+    "file": "src/render/armoryPass.js",
+    "old": "(H.orbit * H.r * Math.sqrt(Math.max(0, 1 - axis[1] * axis[1])) + H.bob + H.mote) * s",
+    "new": "0",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-staff-taken-for-a-leg",
+    "file": "src/render/armoryPose.js",
+    "old": "Math.abs((x0 + x1) / 2 - axis) <= BODY_OFF_PX + 8 && !shaft(r, x0, x1))",
+    "new": "Math.abs((x0 + x1) / 2 - axis) <= BODY_OFF_PX + 8)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-body-sought-at-the-pictures-middle",
+    "file": "src/render/armoryPose.js",
+    "old": "const axis = legW ? legSum / legW : mid;",
+    "new": "const axis = mid;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-side-views-arms-read",
+    "file": "src/render/armoryPose.js",
+    "old": "export const spriteArmsSeen = (/** @type {number|undefined} */ view) => view !== 2;",
+    "new": "export const spriteArmsSeen = (/** @type {number|undefined} */ view) => true;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-legs-off-the-table-again",
+    "file": "src/render/armoryPose.js",
+    "old": "const legs = mk?.legs;",
+    "new": "const legs = null;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-robe-one-leg",
+    "file": "src/render/armoryPose.js",
+    "old": "return wd >= 2 * LEG_MIN_PX + 2 ? [",
+    "new": "return false ? [",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-embers-on-the-middle",
+    "file": "src/render/armoryPass.js",
+    "old": "[0, 0, 0], 0, w.pose.card ? right : null));",
+    "new": "[0, 0, 0], 0, null));",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-peers-embers-off-no-right",
+    "file": "src/scenes/auraHost.js",
+    "old": "peerPose(d.id, w); armoryMotionStep(w, t, right);",
+    "new": "peerPose(d.id, w); armoryMotionStep(w, t);",
+    "tests": [
+      "test/render/armory.test.js"
     ]
   }
 ]

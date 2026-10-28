@@ -612,14 +612,19 @@ test('WB9g the account card and its flow: an Aura row beside the titles when the
   flow.wardrobe = { ...wardrobe(null), purse: 4 };
   const card = accountCard(cardDoc(), flow);
   card.paint();
-  const auraBtn = () => card.root.all.find((n) => n.tag === 'button' && n.className.includes('actaura'));
+  // PIN MOVED (PROFILE-SLOTS): the aura is a slot of the character's now - its tile pressed opens its picker
+  const auraTile = card.root.all.find((n) => n.tag === 'button' && n.className.startsWith('slottile') && n.children[0]?.textContent === 'Aura');
+  assert.ok(auraTile, 'the Aura slot');
+  auraTile.onclick();
+  card.paint();
+  const auraBtn = () => card.root.all.find((n) => n.tag === 'button' && n.className.startsWith('acttitle actaura aura-'));
   let b = auraBtn();
   assert.ok(b, 'an Aura row');
   assert.equal(b.className, 'acttitle actaura aura-dagonfire');
   assert.equal(b.children[0].className, 'actauraword');
   assert.equal(b.children[0].textContent, AURA_TEXT.dagonfire);
   assert.equal(b.attrs['aria-pressed'], 'false');
-  assert.ok(card.root.all.some((n) => n.className === 'fieldlabel' && n.textContent === 'Aura'));
+  assert.ok(card.root.all.some((n) => n.className === 'slots-pickname' && n.textContent === 'Aura'), 'its picker, under its name');
   assert.equal(await b.onclick(), true);
   assert.deepEqual(sent.at(-1), ['/v1/account/aura', { aura: 'dagonfire' }]);
   assert.equal(flow.wardrobe.aura, 'dagonfire', 'the answer\'s word');
@@ -660,7 +665,7 @@ test('WB9g the world host, by source: the auras gathered with the peers each fra
   const w = rd('src/scenes/world.js'), h = rd('src/scenes/auraHost.js');
   assert.match(w, /auraHost\.frame\(seen\);   \/\/ WB9g/);
   assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); auraHost\.draw\(\); nodeGlintPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); partyPing\?\.draw\(renderer\); \};/);   // NODE-MARKS: the nodes' glow rides the hook after the auras
-  assert.match(h, /frame\(\/\*\* @type \{any\[\]\} \*\/ seen\) \{\n      auraList\.length = 0; armoryList\.length = 0;\n      const online = deps\.online\(\);\n      if \(!online \|\| deps\.travelActive\(\)\) return;/);
+  assert.match(h, /frame\(\/\*\* @type \{any\[\]\} \*\/ seen\) \{\n      auraList\.length = 0; armoryList\.length = 0; gathered\+\+;\n      const online = deps\.online\(\);\n      if \(!online \|\| deps\.travelActive\(\)\) return;/);
   assert.match(w, /travelActive: \(\) => !!travelView\?\.active/);
   assert.match(h, /const mine = ownAura\(\), kit = ownArmory\(\);/);
   assert.match(h, /if \(deps\.veiled\(d\.id\) \|\| !d\.shown\) continue;   \/\/ a concealed peer's fire is concealed with them/);

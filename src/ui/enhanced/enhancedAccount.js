@@ -28,9 +28,8 @@
 
 import { STAGES, FIELDS, FIELD_SPEC, AGREEMENTS, AGREEMENT_SPEC, recoveryCodesText, recoveryCodesFileName } from '../accountFlow.js';   // RECOVERY-SET: the codes as the saved file says them
 import { profileIconNode, ICON_TEXT } from '../profileIcons.js';   // WITCH1: the profile icons, worn in the portrait well
-import { TITLE_TEXT, AURA_TEXT, glyphBadges, glyphArtNode, badgeClass } from '../playerBadge.js';
-import { ARMORY_SLOTS, armoryPieceOf, armoryKitPieces } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's slots, its pieces and the kit worn
-import { armoryPieceName, armorySlotName } from '../armoryText.js';
+import { TITLE_TEXT, glyphBadges, glyphArtNode, badgeClass } from '../playerBadge.js';
+import { characterSlots } from '../characterSlots.js';   // PROFILE-SLOTS: the character on its stage between its slots - the wardrobe's picker now
 import { setTitleFlame } from '../titleFlame.js';   // SHOP: a flame title's plate - a class, as every colour here is   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
 import { duelRecordText } from '../../net/duel/duelRecord.js';   // DUEL1: the account card's K/D row
 import { renownText, renownProgressText, renownProgress } from '../../net/renown.js';   // RENOWN1: Renown, left of the name and in its rows
@@ -179,7 +178,7 @@ export const STAGE_ACTS = Object.freeze({   // L10N4: the button's word a getter
  * @param {Document} doc
  * @param {ReturnType<typeof import('../accountFlow.js').AccountFlow>} flow
  */
-export function accountCard(doc, flow, { onClose = null, face = null, character = null } = {}) {
+export function accountCard(doc, flow, { onClose = null, face = null, character = null, slots = null } = {}) {
   const el = (t, cls, txt) => {
     const n = doc.createElement(t);
     if (cls) n.className = cls;
@@ -337,146 +336,15 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
   }
 
   /**
-   * ACC3c — THE WARDROBE, and it is a PICKER rather than a list.
-   *
-   * Mac: "Players can tap the account icon to equip 1 feature along
-   * with signing out." So it sits on the signed-in card beside Sign
-   * out, which is where he put it.
-   *
-   * IT DRAWS NOTHING WHERE THERE IS NOTHING TO CHOOSE. A player who
-   * holds no title sees no picker - not an empty box with a heading
-   * over it - because ACC1e's own correction was Mac's ("there's
-   * uneeded text explaining what an account is") and a control with
-   * no options is exactly that. GLYPH-WEAR (2026-10-02, Mac: "can we
-   * make it where players can also equip/unequip their glyphs"): each
-   * glyph is a button too - pressed off, pressed back on - though it
-   * stays TRUE of the player: hiding one is paint, and what it grants
-   * stays.
+   * PROFILE-SLOTS (2026-10-28, the owner: "Overhaul the profile page and selection options to have a detailed character
+   * slot section") - THE CHARACTER: its stage between its slots, every slot's picker under it (ui/characterSlots.js).
+   * ACC3c's wardrobe lives there now - the same presses and classes, a slot at a time. Kept for the card's life, so its
+   * canvas and stage outlive the repaints; `slots` the door's stage, bodies and catalogue (ui/enhanced/enhancedMenu.js).
    */
-  function wardrobe() {
-    const w = flow.wardrobe;
-    const held = Array.isArray(w?.titles) ? w.titles : [];
-    const glyphs = glyphBadges(w);
-    const icons = Array.isArray(w?.icons) ? w.icons : [];   // WITCH1: the profile icons held
-    const auras = Array.isArray(w?.auras) ? w.auras : [];   // WB9g: the Broker's auras this account owns; AEGIS: and a listed title's (PRIMARCH: the Golden Radiance; SHADOW-CLOAK: the Holo Shadow Cloak; SERAPH-WINGS: a developer's Seraph Wings)
-    const armory = Array.isArray(w?.armoryHeld) ? w.armoryHeld : [];   // ARMORY: the Aura Armory pieces held
-    if (!held.length && !glyphs.length && !auras.length && !icons.length && !armory.length) return;
-
-    const box = el('div', 'acctwear');
-    if (held.length) {
-      box.append(el('span', 'fieldlabel', t('account.wear.title', 'Title')));
-      const row = el('div', 'acctwearrow');
-      for (const key of held) {
-        // PRESSING THE ONE WORN TAKES IT OFF (the flow decides that,
-        // not this), so the button says which way it will go rather
-        // than leaving the player to guess from a highlight alone.
-        const worn = w.title === key;
-        // THE CLASS CARRIES THE COLOUR, not this file. enhancedStyle.js
-        // writes one rule per title out of ui/playerBadge.js's own
-        // table, so the gold here and the gold over a head are one
-        // fact - and this card goes on bringing no design language of
-        // its own, which is the rule ACC1e was built under.
-        // SHADOW-FANG: the word in a span of its own, so a gradient title's paint clips to the letters and leaves
-        // the button's border in its plain colour (ui/playerBadge.js badgeCss)
-        const b = keyedAs(el('button', `acttitle ${badgeClass('tl', key)}${worn ? ' worn' : ''}`), `title:${key}`);
-        const word = el('span', 'acttitleword', TITLE_TEXT[key] ?? key);
-        setTitleFlame(word, key);   // SHOP: Genesis on its fire
-        b.append(word);
-        b.type = 'button';
-        b.disabled = !!flow.busy;
-        b.setAttribute('aria-pressed', worn ? 'true' : 'false');
-        b.title = worn ? t('account.wear.worn', 'Worn. Press to take it off.') : t('account.wear.wear', 'Wear {name}', { name: TITLE_TEXT[key] ?? key });   // WB13b
-        b.onclick = () => flow.equip(key);
-        row.append(b);
-      }
-      box.append(row);
-    }
-    if (auras.length) {
-      // WB9g: AN AURA IS WORN AS A TITLE IS - one at a time, pressed on, pressed off (the flow decides which), the fire at
-      // the feet every other player sees once the next hello carries it
-      box.append(el('span', 'fieldlabel', t('account.wear.aura', 'Aura')));
-      const row = el('div', 'acctwearrow');
-      for (const key of auras) {
-        const worn = w.aura === key;
-        const b = keyedAs(el('button', `acttitle actaura aura-${key}${worn ? ' worn' : ''}`), `aura:${key}`);
-        b.append(el('span', 'actauraword', AURA_TEXT[key] ?? key));
-        b.type = 'button';
-        b.disabled = !!flow.busy;
-        b.setAttribute('aria-pressed', worn ? 'true' : 'false');
-        b.title = worn ? t('account.wear.worn', 'Worn. Press to take it off.') : t('account.wear.wear', 'Wear {name}', { name: AURA_TEXT[key] ?? key });
-        b.onclick = () => flow.wearAura(key);
-        row.append(b);
-      }
-      box.append(row);
-    }
-    if (armory.length) {
-      // ARMORY: A PIECE IS WORN IN ITS SLOT AS AN AURA IS WORN - pressed on, pressed off (the flow decides which) - a row a
-      // slot, each slot named, every piece of it the account holds in its line's paint
-      box.append(el('span', 'fieldlabel', t('account.wear.armory', 'Aura Armory')));
-      const worn = armoryKitPieces(w.armory);
-      for (const slot of ARMORY_SLOTS) {
-        const pieces = armory.filter((k) => armoryPieceOf(k)?.slot === slot);
-        if (!pieces.length) continue;
-        const row = el('div', 'acctwearrow acctarmoryrow');
-        row.append(el('span', 'acctarmoryslot', armorySlotName(slot)));
-        for (const key of pieces) {
-          const on = worn[slot] === key;
-          const b = keyedAs(el('button', `acttitle actaura actarmory aura-${armoryPieceOf(key)?.line ?? 'eternal'}${on ? ' worn' : ''}`), `armory:${key}`);
-          b.append(el('span', 'actauraword', armoryPieceName(key)));
-          b.type = 'button';
-          b.disabled = !!flow.busy;
-          b.setAttribute('aria-pressed', on ? 'true' : 'false');
-          b.title = on ? t('account.wear.worn', 'Worn. Press to take it off.') : t('account.wear.wear', 'Wear {name}', { name: armoryPieceName(key) });
-          b.onclick = () => flow.wearArmory(slot, key);
-          row.append(b);
-        }
-        box.append(row);
-      }
-    }
-    if (icons.length) {
-      // WITCH1: AN ICON IS WORN AS AN AURA IS - one at a time, pressed on, pressed off - in the portrait well
-      box.append(el('span', 'fieldlabel', t('account.wear.icon', 'Icon')));
-      const row = el('div', 'acctwearrow');
-      for (const key of icons) {
-        const worn = w.icon === key;
-        const b = keyedAs(el('button', ['acttitle', 'acticon', ...(worn ? ['worn'] : [])].join(' ')), `icon:${key}`);
-        const art = profileIconNode(doc, key, 'acticonart', 22);
-        if (art) { art.setAttribute('aria-hidden', 'true'); b.append(art); }   // its word stands beside it: read once
-        b.append(el('span', 'acticonword', ICON_TEXT[key] ?? key));
-        b.type = 'button';
-        b.disabled = !!flow.busy;
-        b.setAttribute('aria-pressed', worn ? 'true' : 'false');
-        b.title = worn ? t('account.wear.worn', 'Worn. Press to take it off.') : t('account.wear.wear', 'Wear {name}', { name: ICON_TEXT[key] ?? key });
-        b.onclick = () => flow.wearIcon(key);
-        row.append(b);
-      }
-      box.append(row);
-    }
-    if (glyphs.length) {
-      box.append(el('span', 'fieldlabel', t('account.wear.glyphs', 'Glyphs')));
-      const row = el('div', 'acctwearrow');
-      const off = Array.isArray(w?.glyphsOff) ? w.glyphsOff : [];
-      for (const g of glyphs) {
-        // GLYPH-WEAR: A BUTTON NOW, worn as a title's is - full strength while shown, faded while hidden - and the
-        // press asks the service (flow.toggleGlyph). Still a fact about the account: hidden, it grants what it did.
-        const shown = !off.includes(g.key);
-        const chip = keyedAs(el('button', `acctglyph ${badgeClass('gl', g.key)}${shown ? ' worn' : ''}`), `glyph:${g.key}`);
-        chip.type = 'button';
-        chip.disabled = !!flow.busy;
-        chip.setAttribute('aria-pressed', shown ? 'true' : 'false');
-        chip.title = shown ? t('account.wear.glyphShown', 'Shown. Press to hide it') : t('account.wear.glyphHidden', 'Hidden. Press to show it');
-        chip.onclick = () => flow.toggleGlyph(g.key);
-        // SHADOW-FANG: the one drawing's colourless half (ui/playerBadge.js glyphArtNode) - its shapes are
-        // currentColor, which this chip's class colours; a gradient glyph brings its own fill and eye
-        const svg = glyphArtNode(doc, g, 'acctglyphart', 1.6);
-        if (svg) chip.append(svg);
-        chip.append(el('span', null, GLYPH_LABEL[g.key] ?? g.key));
-        row.append(chip);
-      }
-      box.append(row);
-    }
-    host.append(box);
-  }
+  const charSlots = characterSlots(doc, flow, {
+    ...(slots ?? {}), glyphLabel: GLYPH_LABEL, keyedAs: (n, key) => keyedAs(n, key),
+    who: () => ({ name: flow.account?.name ?? '', lv: renownTracksOfCard(flow.account?.renown)[0]?.level ?? null }),
+  });
 
   function paint() {
     const stage = STAGES.includes(flow.stage) ? flow.stage : 'out';
@@ -589,14 +457,14 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
   /** PATREON-LINK: BACK FROM THE BROWSER, the account is read again - a link that landed, or a pledge that moved, is on
    *  the card the player comes back to. One listener a card, gone on the first focus after the card is. */
   const win = doc.defaultView;
-  let off = () => {};   // MEM-AUDIT (2026-10-23): the card's owner lets it go when it draws the next - a repaint makes a card a render
+  let off = () => charSlots.dispose();   // MEM-AUDIT (2026-10-23): the card's owner lets it go when it draws the next - a repaint makes a card a render
   if (win && typeof win.addEventListener === 'function') {
     const onFocus = () => {
       if (!root.isConnected) { win.removeEventListener('focus', onFocus); return; }
       if (flow.stage === 'in' && flow.patreon?.on && typeof flow.refresh === 'function') Promise.resolve(flow.refresh()).catch(() => {});
     };
     win.addEventListener('focus', onFocus);
-    off = () => win.removeEventListener('focus', onFocus);
+    off = () => { win.removeEventListener('focus', onFocus); charSlots.dispose(); };
   }
 
   function build(stage) {
@@ -649,6 +517,7 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
 
     // ── THE SIGNED-IN PROFILE ───────────────────────────────────────
     if (signedIn) {
+      root.append(charSlots.node(paint));   // PROFILE-SLOTS: the character, the whole window's width, under the plate
       const grid = el('div', 'acctgrid');
       const deeds = el('div', 'acctcol');
       const kept = el('div', 'acctcol');
@@ -733,12 +602,6 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
         bar(p.need > 0 ? p.into : 1, p.need > 0 ? p.need : 1, renownProgressText(tr.xp));   // at the cap, a full bar
       }
       keep(deeds, chars);
-
-      // THE WARDROBE (ACC3c) and THE PATRON'S LINK (PATREON-LINK), each under its head, where there is one to draw
-      host = el('section', 'acctsec');
-      host.append(el('h4', 'acctsechead', 'Wardrobe'));
-      wardrobe();
-      if (host.children.length > 1) kept.append(host);
 
       // THE ACCOUNT - what it is: the name it goes by, its kind, when it was made and the time played on it - NAME-AS: and
       // which name the room reads - and its Patreon link, which is the account's too.

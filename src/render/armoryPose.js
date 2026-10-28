@@ -47,6 +47,17 @@ const MARK_ROWS = Object.freeze({ head: [EOTB_FIGURE.neck, EOTB_FIGURE.head + 6]
 /** The narrowest run a head is (px) - a blade, a staff or a bowstring held over it is a pixel or three - and how far off
  *  the picture's middle the body may stand (px). */
 const HEAD_MIN_PX = 5, BODY_OFF_PX = 16;
+/** THE ARMS IN A PICTURE, in the sets' pixels: an arm's half-width, how far its outer edge moves in a row before what is
+ *  there is something held over it (a shield, a sack, a blade's guard) and no longer the arm, and how far out from the
+ *  body's middle an arm reaches. Read at the sets' rows (EOTB_FIGURE.shoulder, SPRITE_ROWS' elbow and wrist): a
+ *  figure's top is its helmet's, its hood's or its horns', no measure of where its shoulders stand. */
+export const ARM_PX = Object.freeze({ half: 3.5, step: 3, reach: 34 });
+/** Whether a view's arms are read from its picture: a side view's outer edges are its chest and its back, so its arms
+ *  stay the sets' rows turned with the body (eotbSprite.js spriteFor's `view`, 2 the side). Pure. */
+export const spriteArmsSeen = (/** @type {number|undefined} */ view) => view !== 2;
+/** The rows the legs stand in over the frame's foot - the shins and the feet, or a robe's hem - and the narrowest run a
+ *  leg is (px): a staff's shaft beside them is narrower, and in these rows nothing else is held. */
+const LEG_ROWS = 30, LEG_MIN_PX = 5;
 
 /**
  * WHERE THE BODY STANDS IN A SPRITE'S OWN PICTURE (`colors` its color32 pixels, bottom-up as uploaded - mirrored already
@@ -56,20 +67,34 @@ const HEAD_MIN_PX = 5, BODY_OFF_PX = 16;
  * on its feet - its sword arm out, its staff beside it - so a piece hung at the picture's middle hangs beside the head.
  * `beast` the same at a beast's rows (EOTB_FIGURE.beast). Null where nothing stands. Pure.
  */
-export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {number} */ w, /** @type {number} */ h) {
+export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {number} */ w, /** @type {number} */ h, { arms = true } = {}) {
   if (!colors || !(w > 0) || !(h > 0) || colors.length < w * h) return null;
   const mid = (w - 1) / 2;
+  const solid = (/** @type {number} */ x, /** @type {number} */ r) => x >= 0 && x < w && r >= 0 && r < h && ((colors[r * w + x] >>> 24) & 255) > 127;
+  /** Every opaque run of row `r`, [first, last] column - each row read once, the arms, legs and shafts asking again. */
+  const rowRuns = /** @type {number[][][]} */ ([]);
+  const runsAt = (/** @type {number} */ r) => {
+    if (r < 0 || r >= h) return [];
+    if (rowRuns[r]) return rowRuns[r];
+    const out = [];
+    for (let x = 0, start = -1; x <= w; x++) {
+      const on = x < w && solid(x, r);
+      if (on && start < 0) start = x;
+      if (!on && start >= 0) { out.push([start, x - 1]); start = -1; }
+    }
+    return (rowRuns[r] = out);
+  };
+  // THE BODY'S AXIS: the middle of its legs, every run a leg's width in their rows weighed by its width - a picture is
+  // as wide as what it holds, so a sword or a mace held out stands the body far off its middle (a side view's most)
+  let legSum = 0, legW = 0;
+  for (let r = 0; r < Math.min(h, LEG_ROWS); r++) for (const [x0, x1] of runsAt(r)) { const wd = x1 - x0 + 1; if (wd >= LEG_MIN_PX) { legSum += ((x0 + x1) / 2) * wd; legW += wd; } }
+  const axis = legW ? legSum / legW : mid;
+  /** Row `r`'s run at least `minW` wide nearest the axis, within BODY_OFF_PX of it: { c its middle, wd its width } - or null. */
   const runAt = (/** @type {number} */ r, minW = 1) => {
-    if (r < 0 || r >= h) return null;
-    let best = null, start = -1;
-    for (let x = 0; x <= w; x++) {
-      const solid = x < w && ((colors[r * w + x] >>> 24) & 255) > 127;
-      if (solid && start < 0) start = x;
-      if (!solid && start >= 0) {
-        const c = (start + x - 1) / 2, wd = x - start;
-        if (wd >= minW && Math.abs(c - mid) <= BODY_OFF_PX && (!best || Math.abs(c - mid) < Math.abs(best.c - mid))) best = { c, wd };
-        start = -1;
-      }
+    let best = null;
+    for (const [x0, x1] of runsAt(r)) {
+      const c = (x0 + x1) / 2, wd = x1 - x0 + 1;
+      if (wd >= minW && Math.abs(c - axis) <= BODY_OFF_PX && (!best || Math.abs(c - axis) < Math.abs(best.c - axis))) best = { c, wd };
     }
     return best;
   };
@@ -78,11 +103,72 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
     for (let r = Math.round(rows[0] * k); r <= Math.round(rows[1] * k); r++) { const run = runAt(r, minW); if (run) { sum += run.c; n++; } }
     return n ? sum / n - mid : null;
   };
-  const topOf = (/** @type {number} */ k) => { for (let r = h - 1; r >= Math.round(EOTB_FIGURE.neck * k); r--) if (runAt(r, HEAD_MIN_PX)) return r; return null; };
+  /** The head's top: up from the neck the run over the body's middle, each row the run most over the last - never the
+   *  orb of a staff or the tip of a blade beside it, on runs of their own; a run three rows under 3 px is a shaft. */
+  const topOf = (/** @type {number} */ k) => {
+    const r0 = Math.round(EOTB_FIGURE.neck * k), first = runAt(r0, HEAD_MIN_PX);
+    if (!first) return null;
+    let a = Math.round(first.c - (first.wd - 1) / 2), b = a + first.wd - 1, top = r0, thin = 0;
+    for (let r = r0 + 1; r < h; r++) {
+      let best = null, most = 0;
+      for (const [x0, x1] of runsAt(r)) { const over = Math.min(b, x1) - Math.max(a, x0) + 1; if (over > most) { most = over; best = [x0, x1]; } }
+      if (!best) break;
+      thin = best[1] - best[0] + 1 < 3 ? thin + 1 : 0;
+      if (thin >= 3) break;
+      [a, b] = best;
+      if (!thin) top = r;
+    }
+    return top;
+  };
+  /** ONE ARM (`s` its side, -1 the picture's left), its outer edge followed down from the shoulder row by row: each row
+   *  the run on that side whose edge stands nearest the last row's, within ARM_PX.step - and under something held over
+   *  it (the run reaching past the arm's edge) the edge goes on as it went. Its shoulder, elbow and wrist, half an arm in
+   *  from the edge: { sh, el, wa } columns off the picture's middle at `rows` [shoulder, elbow, wrist] - or null. */
+  const armOf = (/** @type {number} */ s, /** @type {number} */ cx) => {
+    const rows = /** @type {number[]} */ ([EOTB_FIGURE.shoulder, SPRITE_ROWS.elbow, SPRITE_ROWS.wrist]), { reach, step, half } = ARM_PX, out = (/** @type {number} */ x) => s * (x - cx);
+    const c0 = Math.round(cx);
+    let x = c0;
+    if (!solid(x, rows[0])) return null;
+    while (out(x + s) <= reach && (solid(x + s, rows[0]) || solid(x + 2 * s, rows[0]))) x += s;   // out along the shoulder's row, over a one-pixel gap
+    const edge = new Map([[rows[0], x]]), seen = [x];
+    let e = x, slope = 0;
+    for (let r = rows[0] - 1; r >= rows[2]; r--) {
+      let near = null;
+      for (const [x0, x1] of runsAt(r)) {
+        const hi = s > 0 ? x1 : x0, lo = s > 0 ? Math.max(x0, c0) : Math.min(x1, c0);
+        if (out(hi) < 0 || out(hi) > reach) continue;   // the other side's, or past an arm's reach
+        const spans = out(lo) <= out(e) && out(e) <= out(hi), d = Math.abs(hi - e);
+        if ((spans || d <= step) && (!near || d < near.d)) near = { hi, d };
+      }
+      if (!near) break;
+      // a thing held over the arm: the arm goes on under it as its last few rows went (a pixel staircase's mean)
+      if (near.d <= step) { e = near.hi; seen.push(e); if (seen.length > 7) seen.shift(); slope = Math.max(-step, Math.min(step, (e - seen[0]) / Math.max(1, seen.length - 1))); }
+      else e += slope;
+      edge.set(r, e);
+    }
+    const last = [...edge.values()].pop() ?? x, at = (/** @type {number} */ r) => (edge.get(r) ?? last) - s * half - mid;
+    return { sh: at(rows[0]), el: at(rows[1]), wa: at(rows[2]), rows };
+  };
+  /** A shaft, not a leg: a staff's run is as narrow a dozen rows over or under it, where a leg has its shin or thigh. */
+  const shaft = (/** @type {number} */ r, /** @type {number} */ x0, /** @type {number} */ x1) => [r - 12, r + 12].some((q) => q >= 0 && q < h
+    && !runsAt(q).some(([a, b]) => b >= x0 && a <= x1 && b - a + 1 >= LEG_MIN_PX));
+  /** THE LEGS at a row: the two runs a leg's width nearest the axis, their middles - or one robe, or legs one before
+   *  the other, split at its quarters when it is two legs wide - as [left, right] columns off the picture's middle. */
+  const legsAt = (/** @type {number} */ r) => {
+    const runs = runsAt(r).filter(([x0, x1]) => x1 - x0 + 1 >= 3 && Math.abs((x0 + x1) / 2 - axis) <= BODY_OFF_PX + 8 && !shaft(r, x0, x1))
+      .sort((p, q) => Math.abs((p[0] + p[1]) / 2 - axis) - Math.abs((q[0] + q[1]) / 2 - axis));
+    if (!runs.length) return null;
+    if (runs.length > 1) { const [a, b] = [runs[0], runs[1]].sort((p, q) => p[0] - q[0]); return [(a[0] + a[1]) / 2 - mid, (b[0] + b[1]) / 2 - mid]; }
+    const [x0, x1] = runs[0], wd = x1 - x0 + 1;
+    return wd >= 2 * LEG_MIN_PX + 2 ? [x0 + wd / 4 - 0.5 - mid, x1 - wd / 4 + 0.5 - mid] : [(x0 + x1) / 2 - mid, (x0 + x1) / 2 - mid];
+  };
   const read = (/** @type {number} */ k) => ({ top: topOf(k), head: across(MARK_ROWS.head, k, HEAD_MIN_PX), chest: across(MARK_ROWS.chest, k), pelvis: across(MARK_ROWS.pelvis, k) });
   const own = read(1);
   if (own.chest === null && own.head === null) return null;
-  return { ...own, beast: read(EOTB_FIGURE.beast) };
+  // the arms of a standing figure (a beast's are its own, and wear nothing)
+  const cx = mid + (own.chest ?? own.head ?? 0), L = arms ? armOf(-1, cx) : null, R = arms ? armOf(1, cx) : null;
+  const knee = legsAt(SPRITE_ROWS.knee), ankle = legsAt(SPRITE_ROWS.ankle);
+  return { ...own, arms: L && R ? { L, R } : null, legs: knee && ankle ? { knee, ankle } : null, beast: read(EOTB_FIGURE.beast) };
 }
 
 const set = (/** @type {Float32Array} */ pts, /** @type {string} */ name, /** @type {ArrayLike<number>} */ v) => { const i = POSE_AT[name]; pts[i] = v[0]; pts[i + 1] = v[1]; pts[i + 2] = v[2]; };
@@ -151,6 +237,24 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
   const shift = Number.isFinite(fig.shift) ? fig.shift : 0, off = (/** @type {number|null|undefined} */ v) => shift + (Number.isFinite(v) ? /** @type {number} */ (v) * fig.mpp : 0);
   const head = off(mk?.head), chest = off(mk?.chest ?? mk?.head), pelvis = off(mk?.pelvis ?? mk?.chest);
   for (const n of POSE_POINTS) out.dx[POSE_AT[n] / 3] = ['head', 'crown', 'neck'].includes(n) ? head : ['chest', 'shL', 'shR', 'elL', 'elR', 'waL', 'waR'].includes(n) ? chest : pelvis;
+  // the arms where the picture draws them (spriteMarks' arms - a beast's marks carry none): across the card, as the
+  // picture is seen from any side
+  const arms = mk?.arms;
+  if (arms) {
+    for (const S of /** @type {const} */ (['L', 'R'])) {
+      const a = arms[S];
+      set(pts, `sh${S}`, [0, at(a.rows[0]), 0]); set(pts, `el${S}`, [0, at(a.rows[1]), 0]); set(pts, `wa${S}`, [0, at(a.rows[2]), 0.02]);
+      out.dx[POSE_AT[`sh${S}`] / 3] = off(a.sh); out.dx[POSE_AT[`el${S}`] / 3] = off(a.el); out.dx[POSE_AT[`wa${S}`] / 3] = off(a.wa);
+    }
+  }
+  // the knees and the feet where the picture stands them, a stride's front leg and back leg included
+  const legs = mk?.legs;
+  if (legs) {
+    ['L', 'R'].forEach((S, i) => {
+      set(pts, `kn${S}`, [0, at(R.knee), 0.02]); set(pts, `ft${S}`, [0, at(R.ankle), -0.02]);
+      out.dx[POSE_AT[`kn${S}`] / 3] = off(legs.knee[i]); out.dx[POSE_AT[`ft${S}`] / 3] = off(legs.ankle[i]);
+    });
+  }
   out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp;
   return true;
 }

@@ -231,14 +231,16 @@ test('ACC3c: the card writes a CLASS and the skin carries the colour - walked ou
 });
 
 test('ACC3c, GLYPH-WEAR: a glyph is a button now - Mac (2026-10-02): "can we make it where players can also equip/unequip their glyphs" - pressed off and on through the flow, and it says which way it will go', () => {
-  const js = src('src/ui/enhanced/enhancedAccount.js');
+  // PIN MOVED (PROFILE-SLOTS): the wardrobe is the character's slots' pickers (ui/characterSlots.js) - the over-the-head
+  // slot's picker holds the titles and the glyphs, each pressed through the flow
+  const js = src('src/ui/characterSlots.js');
   // Read off the source, as the pin it replaces was: the glyph arm builds a button, hangs the flow's toggle on it, and
   // says whether it is shown - the title's own picker shape.
-  const wardrobe = js.slice(js.indexOf('function wardrobe()'), js.indexOf('function paint()'));
-  assert.match(wardrobe, /el\('button', `acttitle/, 'a title is pressable');
+  const wardrobe = js.slice(js.indexOf('function picker()'), js.indexOf('function bodySwitch()'));
+  assert.match(wardrobe, /el\('button', cls\('acttitle', badgeClass\('tl', key\)/, 'a title is pressable');
   const glyphArm = wardrobe.slice(wardrobe.indexOf("'Glyphs'"));
-  assert.match(glyphArm, /el\('button', `acctglyph/, 'and so is a glyph');
-  assert.match(glyphArm, /onclick = \(\) => flow\.toggleGlyph\(g\.key\)/);
+  assert.match(glyphArm, /el\('button', cls\('acctglyph'/, 'and so is a glyph');
+  assert.match(glyphArm, /choice\(chip, \{ slot: 'glyph', key: g\.key \}, \(\) => flow\.toggleGlyph\(g\.key\)\)/);
   assert.match(glyphArm, /aria-pressed/);
 });
 

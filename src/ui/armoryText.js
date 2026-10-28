@@ -14,6 +14,11 @@ export const ARMORY_SLOT_TEXT = Object.freeze({
   legs: () => t('armory.slot.legs', 'Legs'),
   weapon: () => t('armory.slot.weapon', 'Weapon'),
 });
+/** PROFILE-SLOTS: each line's name - the set a whole line makes (the profile's Wear the whole set). */
+export const ARMORY_LINE_TEXT = Object.freeze({
+  dagonfire: () => t('armory.line.dagonfire', 'Dagonfire'),
+  eternal: () => t('armory.line.eternal', 'Eternal'),
+});
 /** Each piece's name. */
 export const ARMORY_TEXT = Object.freeze({
   burningcrown: () => t('armory.name.burningcrown', 'Crown of the Burning Door'),
@@ -47,6 +52,8 @@ export const ARMORY_SET_LOOK = Object.freeze({
 });
 /** A piece's name - or a set's - by its key, or the key for one that is neither. */
 export const armoryPieceName = (/** @type {string} */ key) => (ARMORY_TEXT[/** @type {keyof typeof ARMORY_TEXT} */ (key)] ?? ARMORY_SET_TEXT[/** @type {keyof typeof ARMORY_SET_TEXT} */ (key)])?.() ?? key;
+/** PROFILE-SLOTS: a line's name by its key. */
+export const armoryLineName = (/** @type {string} */ line) => ARMORY_LINE_TEXT[/** @type {keyof typeof ARMORY_LINE_TEXT} */ (line)]?.() ?? line;
 /** A slot's name by its key. */
 export const armorySlotName = (/** @type {string} */ slot) => ARMORY_SLOT_TEXT[/** @type {keyof typeof ARMORY_SLOT_TEXT} */ (slot)]?.() ?? slot;
 /** A piece's slot's name, or ''. */

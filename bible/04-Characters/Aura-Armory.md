@@ -103,6 +103,14 @@ chest and pelvis stand in that picture, read off its alpha once at upload (`spri
 sword arm out is not centred on its feet. A peer's Morrowind body stands the wearer at its own drawn feet and facing
 (`peerBodies.bonesOf`), as the cape does. With no body to read, the rest pose, crouched or in the saddle.
 
+**A sprite's arms, legs and head are read from its picture** (section 10's audit). The body is found from its legs, so
+a sword held far out never takes it off the picture's middle. Each arm's outer edge is followed down from the shoulder
+row; where something held reaches past it - a shield, a sack, a blade's guard - the arm goes on under it as it went. The
+shoulder, elbow and wrist stand half an arm in from that edge, across the card, as the picture is seen. The knees and
+feet are the two leg runs nearest the body, a robe split at its quarters, a staff's shaft never one. The head's top is
+traced up from the neck. On a side view the near arm lies over the body with no edge to read, so its arm pieces keep
+the sets' rows, turned with the body.
+
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
 the boot's idle (`src/render/playPrograms.js`). Every rate is whole over the auras' clock, so nothing jumps at its wrap.
@@ -153,7 +161,45 @@ At most 24 wearers draw, nearest first, within 60 m. Past 25 m a wearer's embers
 **Others' Aura Armory** (Features: All, Near, None) lets a player on a weak machine draw every peer's pieces, those
 within 20 m, or none. My own kit always draws.
 
-## 10. How it is checked
+## 10. The profile's character slots (PROFILE-SLOTS)
+
+The owner (2026-10-28), before this push: *"Overhaul the profile page and selection options to have a detailed
+character slot section. Slots for each of the aura armor, the aura cosmetic, the title and glyph above the head and an
+actual preview of either your morrowind/sprite for the selected character"* and *"Audit placement and ensure
+perfection"*. Then, of the first pictures: *"The arm effects on the sprite aren't positioned correctly."*
+
+**The section** (`src/ui/characterSlots.js`): the character on its stage between eight slots - Head, Torso, Arms and
+Legs down the left; Over the head, Weapon, Portrait and Aura down the right. A slot pressed opens its picker under the
+stage. A choice pointed at or focused is tried on the stage; pressed, it is worn through the account flow's own doors,
+so the presses and the paint are the old Wardrobe's. A piece not held is tried on and says how it is had. A line held
+whole has a button for the whole set. On a narrow window the stage stands over the slots, two to a row.
+
+**The stage** (`src/render/characterStage.js`) draws the body as the world does, by the world's own aura and armory
+passes. Paused in a game with a Morrowind body, that body: `fpArm.stage()` draws its portrait, and prisms on its bones
+write the depth the pieces pass behind. Otherwise the sprite the world draws on foot: the chosen skin, or Layered
+Gearing in the save's own armour (`src/ui/profileBody.js`). With no body, the shop's stand-in. A switch offers both
+bodies where both stand.
+
+**The frame and the plate.** One camera for every body (`STAGE_FRAME`): orthographic, a little above level, the highest
+the plate can stand 21% down the picture and the widest aura ring's near edge 95% down. The plate is the world's own
+label (`src/ui/namePlate.js`, the name layer's sheet), where the world stands it: a Morrowind body's head height
+(`peerBodies.heightOf`), a sprite's card top (`peerRiders.heightOf`), 5 px over it. Over a head piece worn or tried on,
+it rises to the piece's tip (`armoryHeadTip`). The frame keeps room for the tallest head piece, so a try-on moves the
+plate and never the camera.
+
+**The world's names** rise the same way: a peer's name stands over the crown's flames or the halo it wears
+(`scenes/auraHost.js` nameTopOf into `remotePlayers.nameFrame`), where it covered them before. It is one wiring entry in
+bootWorld, and its ceiling went up by one with that reason.
+
+**The audit** drew every on-foot sprite - the sixteen sets, the twenty class skins, Layered Gearing in both bodies -
+from the front, the three-quarter and the side, with its pose over it (`tools/spriteArmsSheet.mjs`). The arms and legs
+were one symmetric table, so on most pictures an arm piece ran inside the torso, a bent, staff or shield arm was
+missed, and a side view's stride had one greave between its legs; they are read from the picture now (section 6).
+Three staff sets read the head's top off the staff's orb, so a crown floated over the hood. A side view with a sword
+or a mace held out lost its body, its head points in the air beside it. The phone's account window filled the screen
+only because the skin card's row happened to; its grid track is the screen's now.
+
+## 11. How it is checked
 
 - `test/render/armory.test.js` - the kit's law, the wire, the words, the pose, the marks, each piece's draws, the pass
   against a logging GL, the world host's gather.
@@ -164,8 +210,13 @@ within 20 m, or none. My own kit always draws.
   skeleton; placement, the card law, the clock's wrap, and the weapon pieces' stages.
 - `01-Overview/audits/Audit-Armory.md` - the audit and what it fixed.
 - `tools/mutants/armory.json` - every law above, mutated.
+- `test/ui/profileslots.test.js` - the slots, the presses, the stage's frame, the head pieces' tips, the bodies, and the
+  world's names over a head piece; `tools/mutants/profileslots.json` mutates them.
+- `tools/profileSlotsProbe.mjs` - the section on a real GPU, desktop and phone, round three bodies: the plate clear of
+  the drawn head, a try-on and a press, and close-ups of each line's set. `tools/spriteArmsSheet.mjs` - every sprite's
+  pose on its picture.
 
-## 11. Decided while building
+## 12. Decided while building
 
 The owner asked for the system built without further questions. These were chosen and are the owner's to change:
 
@@ -174,3 +225,8 @@ The owner asked for the system built without further questions. These were chose
 - The kit per account, as the aura is.
 - The sprite's forearm and third-person weapon left undrawn (sections 7 and 8), rather than drawn where the art has no
   measure for them.
+- The profile's plate stands where the world's does. On a Layered Gearing body it stands well over the head, as in the
+  world: those pictures carry room over the head, and the world's law was kept rather than given a second one.
+- The weapon slot's piece is not on the profile's stage: it is the weapon glow's (section 8), shown on the shop's stage.
+- The Morrowind body shows on the profile only when paused in a game, where its rig is built; at the door, the save's
+  sprite.

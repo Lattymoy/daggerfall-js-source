@@ -50,8 +50,8 @@ import {
   meleeStrokeFrames, forwardFrames, holdDrawFrames, mirrorFlips, mirrorRevertTime,
   DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed, portrayedYaw,
 } from './eotbBillboard.js';
-import { spriteMarks } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels } from './eotbSprite.js';
+import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
+import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels, decodeSprite } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
@@ -208,18 +208,7 @@ export function bodyState(s = {}) {
   };
 }
 
-/**
- * THE BROWSER DECODE, lifted out so it can be replaced.
- *
- * EOTB-FLIP: the decode is the DROPPED TORCH's door - `decodePng`, then
- * the one row-order converter - and not a canvas of its own. A decode
- * that fails answers a rejection, as the Image's onerror did.
- * FIRST-VISIT: decodeServedPng (vanillaEnhancedPack.js) fetches and decodes.
- */
-export async function decodeSprite(url) {
-  if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng, { picture: decodeServedPng }), { owned: true });   // WORN-ARMOUR: composed from its strip
-  return worldOrderColors(await decodeServedPng(url), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
-}
+export { decodeSprite };   // PROFILE-SLOTS: the decode's one door is eotbSprite.js's now - the profile's stage takes it too
 
 const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / l, 0, v[2] / l] : [0, 0, 0]; };
 
@@ -408,7 +397,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height) };   // ARMORY: the body's place in the picture, read once
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view) }) };   // ARMORY: the body's place in the picture, read once
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },

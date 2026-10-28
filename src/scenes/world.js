@@ -28146,6 +28146,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       renderer, font: townTalk.font, scale, hudScale: enhancedHudScale(),
       extra: noticeCountPoints,   // NOTICE1: "3 new" over a Notice Board, in the names' own face and law
       mask: wildNameMask,   // WILD3: in the open zone no name but my party's and my guild's - the rest are Strangers, in red
+      lift: auraHost.nameTopOf,   // PROFILE-SLOTS: a name over the head piece its peer wears
     });
     if (covered) { sayNetStatus(null); return; }
     sayNetStatus(online?.statusLine());   // AUDIT ONLINE D12/E11: connecting, reconnecting, refused, replaced - said, not silent (FONT1: in the enhanced face)

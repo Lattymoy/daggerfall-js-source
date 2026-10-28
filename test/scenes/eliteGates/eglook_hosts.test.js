@@ -51,7 +51,7 @@ test('EG-G2 THE WORLD HOST AND THE DUNGEON ARM (scenes/world.js, scenes/worldMod
   const W = read('src/scenes/world.js');
   assert.match(W, /drawEgSky: \(\{ proj, view, eye \}\) => \{ if \(egClient\?\.drawSky\(proj, view, eye, deadlandsSeconds\(\), courtFogNow\(\), skyGain\(renderer\._fogColor, egHallFog\(modes\?\.egHallCircle\?\.\(\)\)\.color\)\)\) renderer\.markForeignPass\(\); \},/);
   // PIN MOVED (ARMORY, HOST-SPLIT): the gather is scenes/auraHost.js's, the trial's word handed over by the world host
-  assert.match(read('src/scenes/auraHost.js'), /auraList\.length = 0; armoryList\.length = 0;\n      const online = deps\.online\(\);\n      if \(!online \|\| deps\.travelActive\(\)\) return;\n      if \(deps\.quiet\(\)\) return;/, 'the auras quiet in a trial - gathered for none, so neither drawn nor lit; ARMORY: the Aura Armory with them');
+  assert.match(read('src/scenes/auraHost.js'), /auraList\.length = 0; armoryList\.length = 0; gathered\+\+;\n      const online = deps\.online\(\);\n      if \(!online \|\| deps\.travelActive\(\)\) return;\n      if \(deps\.quiet\(\)\) return;/, 'the auras quiet in a trial - gathered for none, so neither drawn nor lit; ARMORY: the Aura Armory with them');
   assert.match(W, /quiet: \(\) => !!egClient\?\.quiet\?\.\(\)/);
   assert.match(W, /renderer, gl: renderer\.gl, getTexture, uploadRecordFrame, audio, music, link, now: \(\) => \(egClient \? egClient\.sharedNow\(\) : egNow\(\)\)/);   // PIN MOVED (EG-H1, merged): the fight on the breach's corrected clock
   const frameAt = W.indexOf('\n  function frame(now) {\n'), frameEnd = W.indexOf('\n  }\n', frameAt);
