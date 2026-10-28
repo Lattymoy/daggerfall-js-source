@@ -1308,6 +1308,22 @@ At the cap the two are the same. Uncapped, Vulkan is about 10% lower on the mean
 run-to-run spread is large on both. So Vulkan's case is the cold compile, and it costs a little in play. Superseded
 for 1440p: the sandboxed Vulkan's 64 to 66 fps.
 
+### Switches tried to speed Vulkan up (2026-10-28)
+
+Read from chrome://gpu on Vulkan's switches (`switch-trials/chrome-gpu.txt`, `angle-features.json`) and tried one
+at a time with VSync on, interleaved, against plain Vulkan and D3D11. The CPU never fell under 10%, so the launch gate was
+25% with no other game or test run. None is kept: each equals plain Vulkan inside the run-to-run noise.
+
+- `enableParallelCompileAndLink` (off): turns on `KHR_parallel_shader_compile`, and changes no cold-boot number.
+- `skipPipelineCacheSerialization` off, `preferMonolithicPipelinesOverLibraries`: no change on cold or warm boots.
+- `mergeProgramPipelineCachesToGlobalCache` with `syncMonolithicPipelinesToBlobCache`: crashed the GPU process at launch;
+  the guard fell back to D3D11.
+- `--enable-features=Vulkan`, `--enable-zero-copy`, `--enable-gpu-rasterization`: 170 to 177 fps against plain Vulkan's 174
+  (rasterization reads `enabled_force` with no gain). There is no async command queue feature in this ANGLE.
+
+Plain Vulkan's boot stall of 1.4 to 2.3 s is the same warm, so it is not shader compile. Shipped mode (Vulkan, VSync on)
+runs about 172 fps against D3D11's 201 at 2560x1440, about 15% lower. Data: `dfo-verify/tools/perf/vulkan-half-2026-10-28/switch-trials/`.
+
 ### VSync stays on with Vulkan (2026-10-28)
 
 With the GPU sandbox off, Vulkan's GPU compositing and either of FPS-VSYNC's switches (`disable-gpu-vsync`,
