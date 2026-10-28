@@ -66,7 +66,8 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   // the pass
   assert.match(a, /vol: color\(bw, bh, this\.volLinear\), volB: color\(bw, bh, this\.volLinear\),/, 'at the bloom\'s size, linear where the GL has a float target');
   assert.match(a, /this\.targets\.volOut = this\.volLinear \? color\(bw, bh\) : this\.targets\.volB;/, 'the byte image the readers take');
-  assert.match(a, /this\.volLinear = !!\(gl\.getExtension\('EXT_color_buffer_float'\) \|\| gl\.getExtension\('EXT_color_buffer_half_float'\)\);/);
+  assert.match(a, /export const airVolLinear = \(gl\) => !!\(gl\.getExtension\('EXT_color_buffer_float'\) \|\| gl\.getExtension\('EXT_color_buffer_half_float'\)\);/);   // BOOT-COMPILE: the question, a function the boot's program list asks too
+  assert.match(a, /this\.volLinear = airVolLinear\(gl\);/);
   assert.match(a, /if \(linear\) gl\.texImage2D\(gl\.TEXTURE_2D, 0, gl\.RGBA16F, cw, ch, 0, gl\.RGBA, gl\.HALF_FLOAT, null\);/);
   assert.match(a, /try \{\n\s*const vol = P\(QUAD_VS, volFs\(opts\.glsl, opts\.maxLights \?\? 48, this\.volLinear\), \['uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uCamPos', 'uViewRot', 'uPointLights', 'uPointColors', 'uPointCount', 'uScatter', 'uExposure', 'uAdapt'\]\);\n\s*if \(this\.volLinear\) this\.programs\.volTone = P\(QUAD_VS, volToneFs\(opts\.glsl\), \['uSrc', 'uScatter', 'uExposure', 'uAdapt'\]\);/, 'built with the lane\'s blocks, the tone pass only with a float target');
   assert.match(a, /\} catch \(e\) \{\n\s*this\.programs\.vol = null; this\.programs\.volTone = null;/, 'a shader the GL refuses costs the glow alone');

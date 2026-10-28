@@ -62,6 +62,9 @@ async function boot() {
     ? await import('./render/gpuTrail.js').then((m) => m.gpuTrailOn(canvas, globalThis.daggerShell.gpuTrail)).catch(() => null) : null;
   const renderer = new Renderer(canvas);
   onPageGone(() => { pageGoing = true; loseGlContext(renderer.gl); });   // GL-LEAK: the game's own context, let go as the page goes
+  // The boot's programs start compiling now, on the driver's threads, while the boot does its own work; each pass's
+  // build then reads a link made meanwhile (render/bootPrograms.js). Behind a door: BOOT2's ceiling on the entry's graph.
+  import('./render/bootPrograms.js').then((m) => m.startBootPrograms(renderer, location.search)).catch((err) => console.warn('[boot] the programs could not be started early:', err?.message ?? err));
   import('./render/portraitRenderer.js').then(({ setPortraitRenderer }) => setPortraitRenderer(renderer)).catch(() => {});   // PORTRAIT3D: the faces' renderer, for the menu's wells that hold none (behind a door: BOOT2's ceiling)
   renderer.setRetroSource(retroFrameConfig);   // RETRO1: DFU's retro mode - asked once per world frame, so the settings screen's change lands on the next
   renderer.setRenderScaleSource(renderScaleSetting);   // PERF-SCALE: the world's share of the window's pixels - asked once per world frame, and retro wins

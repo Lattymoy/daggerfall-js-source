@@ -1273,6 +1273,28 @@ void main() {
   outColor = vec4(uColor * a * a * vVis, 1.0);
 }`;
 
+/** VOL1 (AUDIT VOL1): whether the glow renders to a float target - the GL has one (the linear path). */
+export const airVolLinear = (gl) => !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+
+/** BOOT-COMPILE: the pass's programs for `opts` (the constructor's; `build` unused), in the order its constructor builds
+ *  them: what the boot starts ahead of the build (render/bootPrograms.js). test/render/bootcompile.test.js holds the list
+ *  to the constructor's builds.
+ *  @param {{ vs: { mesh: string, bb: string }, glsl?: { shadow: string, tonemap: string, scatter: string }, maxLights?: number }} opts
+ *  @param {boolean} volLinear airVolLinear's answer @returns {Array<[string, string]>} */
+export function airPassPrograms(opts, volLinear) {
+  const quad = (fs) => /** @type {[string, string]} */ ([QUAD_VS, fs]);
+  return [
+    quad(AO_FS), quad(BOX_FS), quad(GAUSS_FS), quad(SHAFT_FS),
+    [opts.vs.mesh, EMIT_MESH_FS], [opts.vs.bb, EMIT_BB_FS], [GLARE_VS, GLARE_FS],
+    quad(LUM_FS), quad(ADAPT_FS),
+    quad(brightFs(0)), quad(brightFs(1)),
+    quad(resolveFs(0, 0)), quad(resolveFs(0, 1)), quad(resolveFs(1, 0)), quad(resolveFs(1, 1)),
+    quad(VOLBLUR_FS),
+    ...(opts.glsl ? [quad(volFs(opts.glsl, opts.maxLights ?? 48, volLinear))] : []),
+    ...(opts.glsl && volLinear ? [quad(volToneFs(opts.glsl))] : []),
+  ];
+}
+
 /**
  * The pass. `opts.build(vs, fs)` compiles; `opts.vs` is { mesh, bb } - the
  * renderer's own vertex shaders for the emission replay.
@@ -1319,7 +1341,7 @@ export class AirPass {
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     // VOL1: the glow's programs, with the lane's blocks in hand. AUDIT VOL1: a float target where the GL has one (the
     // linear path); and a shader the GL refuses (a link past its uniform budget) costs the glow alone, not the air pass
-    this.volLinear = !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+    this.volLinear = airVolLinear(gl);
     if (opts.glsl) {
       try {
         const vol = P(QUAD_VS, volFs(opts.glsl, opts.maxLights ?? 48, this.volLinear), ['uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uCamPos', 'uViewRot', 'uPointLights', 'uPointColors', 'uPointCount', 'uScatter', 'uExposure', 'uAdapt']);
