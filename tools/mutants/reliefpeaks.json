@@ -297,8 +297,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-on-stamped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "!(frame >= GROUND_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
-    "new": "!bayAt(x, z) ? movedAt(x, z) : 0;",
+    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0)",
+    "new": "!bayAt(x, z) ? movedAt(x, z) : 0)",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-on-the-bay",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "!(frame >= GROUND_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
-    "new": "!(frame >= GROUND_FRAME_LAW) ? movedAt(x, z) : 0;",
+    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0)",
+    "new": "!(frame >= RELIEF_FRAME_LAW) ? movedAt(x, z) : 0)",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-unhanded",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "movedAt: groundMovedAt });",
-    "new": "movedAt: null });",
+    "old": "movedAt: groundMovedAt, townMovedAt });",
+    "new": "movedAt: null, townMovedAt });",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/terrain/bayleftground_frame.test.js"

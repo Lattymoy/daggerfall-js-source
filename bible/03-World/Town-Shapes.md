@@ -148,14 +148,26 @@ A town's level moved at 103 of the 3,444 (the edge band takes margin off its mea
 bake draws an isle's outline off its template's packed basis, which carries the crops' tiles too (`etherWatersBake.js`
 etherPlaceRects), and the boot walks' kept blocks keep a model's id (FIRST-VISIT, `groundTilesKept.js`), so a second
 launch's outlines hold the crops as the first's. THE GROUND MOVED: its shores and outskirts by tens of metres, so GROUND_LAW (`net/wire.js`) moves 2 to
-3, and RELAY_VERSION with it - the print reads no real town (`03-World/Landforms.md` GROUND-GATE).
+3, and RELAY_VERSION with it; the print now reads a town (`03-World/Landforms.md` GROUND-GATE).
 
-Tests `test/world/terrain/fb1028_townground.test.js` (7) and `test/world/terrain/fb1028_townground_real.test.js` (ARENA2).
-Mutants `tools/mutants/fb1028_townground.json` (24, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
+**The records.** A saved height is DFU's frame: DFU's own samples through the town's classic blend
+(`scenes/groundFrameHost.js`). The blend moved that ground: of the 3,444 town pixels, 747 by over 5 m and 147 by over
+20 m (Chesterbrugh +291.8 m, Westhead Moor +55 m, Aldwall Rock -37.8 m). The ground's print, which read no town, held
+the same cells under GROUND_LAW 2 and 3; TS2's 12-sample ease now moves it 8.9 m.
+So GROUND_FRAME_LAW (`world/terrain/terrainSampler.js`) moves 3 to 4: a record stamped before 4 (an outer camp, a pile,
+an anchor, the restored position) is moved by its town's blend's change at its spot (`world/landforms.js`
+townGroundMovedField, today's blend less TS2's), on the Bay and past it, the row on or off. TS2's blend is kept for this
+alone, over the outline before the crops (`world/terrain/townBlendBefore.js`). RELIEF-PEAKS keeps its own law,
+RELIEF_FRAME_LAW 3.
+
+Tests `test/world/terrain/fb1028_townground.test.js` (7), `fb1028_townground_real.test.js` (ARENA2) and
+`fb1028_townground_frame.test.js` (5). Mutants `tools/mutants/fb1028_townground.json` (37, all dead). PINS MOVED:
+`test/world/reliefpeaks.test.js` and `bayleftground_frame.test.js` (the stamp 4), the ground's print (a town's cell),
+`test/world/terrain/townshapes.test.js`
 (Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3),
 `test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water alone no ship stands on a
 bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's cliffs); re-aimed by content:
-TS-the-sea-lifted, TS-the-edge-moved, TW-the-round-unread, E1-4-the-version-unmoved.
+TS-the-sea-lifted, TS-the-edge-moved, TW-the-round-unread, E1-4-the-version-unmoved, RELIEF-PEAKS-record-move-on-stamped, -on-the-bay and -unhanded.
 
 ## 5. TS3 - a town past the Bay is its own outline of blocks (BUILT)
 
@@ -813,7 +825,7 @@ what they read at #1184: the paths with no arm taken up and the roads of the gat
 them as `yard`), and that wall's cells - no street's gate, no tower grown (townWall's `yardPieces`). The host shuts the
 yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
 
-**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = []) {"`). A
+**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = [], gained = null) {"`). A
 yard keeps its #1184 place unless the place no longer fits the town as it stands (siteFits: its cells on no road and
 nothing shut, its pad clear of the wall and every closed cell). One that does not is placed again by its kind's law on
 the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `yardWalkShut`).

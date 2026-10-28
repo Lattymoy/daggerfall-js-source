@@ -217,5 +217,122 @@
   "tests": [
    "test/net/fb1017f_groundgate.test.js"
   ]
+ },
+ {
+  "name": "FB1028-frame-stamp-at-3",
+  "file": "src/world/terrain/terrainSampler.js",
+  "old": "export const GROUND_FRAME_LAW = 4;",
+  "new": "export const GROUND_FRAME_LAW = 3;",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-town-move-by-law-3",
+  "file": "src/scenes/groundFrameHost.js",
+  "old": "      + (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) ? townMovedAt(x, z) : 0);",
+  "new": "      + (townMovedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) ? townMovedAt(x, z) : 0);",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-town-move-past-the-bay-alone",
+  "file": "src/scenes/groundFrameHost.js",
+  "old": "      + (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) ? townMovedAt(x, z) : 0);",
+  "new": "      + (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z) ? townMovedAt(x, z) : 0);",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-town-move-unhanded",
+  "file": "src/scenes/groundFrameHost.js",
+  "old": "movedAt: groundMovedAt, townMovedAt });",
+  "new": "movedAt: groundMovedAt });",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-before-read-as-today",
+  "file": "src/world/landforms.js",
+  "old": "  if (blendShapedBefore(was, shapeWas, ground, hDim) === null)",
+  "new": "  if (blendLocationTerrain(was, avg, locationRect, hDim, ground) === null)",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-move-sign",
+  "file": "src/world/landforms.js",
+  "old": "  const moved = now.map((v, i) => (v - was[i]) * MAX_TERRAIN_HEIGHT);",
+  "new": "  const moved = now.map((v, i) => (was[i] - v) * MAX_TERRAIN_HEIGHT);",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-before-reach-not-12",
+  "file": "src/world/terrain/townBlendBefore.js",
+  "old": "const BLEND_TILES = 12, EDGE_TILES = 4;",
+  "new": "const BLEND_TILES = 17, EDGE_TILES = 4;",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-before-fields-kept",
+  "file": "src/world/terrain/townBlendBefore.js",
+  "old": "outlineOfBasis({ ...shape.basis, fields: null }, seed)",
+  "new": "outlineOfBasis(shape.basis, seed)",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-before-sea-lifted",
+  "file": "src/world/terrain/townBlendBefore.js",
+  "old": "    if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;\n",
+  "new": "",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-frame-before-edge-unfaded",
+  "file": "src/world/terrain/townBlendBefore.js",
+  "old": "    s *= edge * edge * (3 - 2 * edge);",
+  "new": "",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-print-the-ease-twelve-samples",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
+  "new": "        const t = Math.max(0, 1 - d / SHAPE_BLEND_TILES);",
+  "tests": [
+   "test/net/fb1017f_groundgate.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-print-the-edge-share-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "        s = Math.min(t * t * (3 - 2 * t), e / (e + d));",
+  "new": "        s = t * t * (3 - 2 * t);",
+  "tests": [
+   "test/net/fb1017f_groundgate.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-print-the-edge-band-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+  "new": "    const edge = e < SHAPE_EDGE_TILES;",
+  "tests": [
+   "test/net/fb1017f_groundgate.test.js"
+  ]
  }
 ]
