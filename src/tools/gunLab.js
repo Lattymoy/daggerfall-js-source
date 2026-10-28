@@ -208,58 +208,9 @@ export const SFX_CANDIDATES = Object.freeze({
   ]),
 });
 
-/**
- * A tiny one-shot player: decode once, keep the buffer, and start a
- * fresh source per shot so a fast second shot layers over the first
- * rather than cutting it - which is what a real one does, and what the
- * recoil spring already assumes.
- *
- * PITCH VARIANCE is the one liberty. Daggerfall plays a clip at its
- * own rate every time, but a gun fired six times in four seconds is
- * the case where the ear notices a sample repeating, and DFU's own
- * weapon code varies the swing pitch for exactly this reason
- * (playbackRate here, ±`vary`). Zero it and the clip is the file.
- */
-export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {}) {
-  const buffers = new Map();   // name -> AudioBuffer (or a pending promise)
-  let ctx = null;
-  const p = {
-    vary, volume, enabled: true,
-    /** A gesture is what a browser wants before it will make noise. */
-    resume() {
-      ctx ??= new (globalThis.AudioContext ?? globalThis.webkitAudioContext)();
-      if (ctx.state === 'suspended') ctx.resume();
-      return ctx;
-    },
-    load(name) {
-      if (buffers.has(name)) return buffers.get(name);
-      const c = p.resume();
-      const url = new URL(`${base}${name}.wav`, globalThis.document?.baseURI ?? 'http://localhost/').href;
-      const pending = fetch(url)
-        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${r.status} ${name}`))))
-        .then((b) => c.decodeAudioData(b))
-        .then((buf) => { buffers.set(name, buf); return buf; })
-        .catch((e) => { buffers.delete(name); throw e; });
-      buffers.set(name, pending);
-      return pending;
-    },
-    play(name, gain = 1) {
-      if (!p.enabled || !name) return false;
-      const buf = buffers.get(name);
-      if (!buf || typeof buf.then === 'function') { p.load(name).catch(() => {}); return false; }
-      const c = p.resume();
-      const src = c.createBufferSource();
-      src.buffer = buf;
-      src.playbackRate.value = 1 + (Math.random() * 2 - 1) * p.vary;
-      const g = c.createGain();
-      g.gain.value = p.volume * gain;
-      src.connect(g).connect(c.destination);
-      src.start();
-      return true;
-    },
-  };
-  return p;
-}
+// The labs' one-shot sound player lives in a leaf (src/tools/sfxPlayer.js): the spear lab plays it without this
+// module's world.
+export { createSfxPlayer } from './sfxPlayer.js';
 
 /**
  * THE SCREENSHAKE, which is the CAMERA and not the weapon.

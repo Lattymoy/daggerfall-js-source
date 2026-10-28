@@ -22,7 +22,7 @@ export {
 export { CLICK_ATTACK_DIRECTIONS } from '../characters/weaponStates.js';
 export { DIRECTION_TO_STRIKE };
 export { createGunRig, gunRigStep, gunMotion, gunWidgetSettings } from '../combat/gun/gunViewmodel.js';
-export { createSfxPlayer } from './gunLab.js';
+export { createSfxPlayer } from './sfxPlayer.js';
 
 /** The swing's voice until the item has DFU's own: the gather lab's synthesised tool swing (public/sfx, ours), the two
  *  takes in turn, at the blow's release - its first smeared frame (spearReleaseFrame). */
