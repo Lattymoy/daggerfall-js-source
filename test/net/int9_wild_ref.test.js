@@ -818,7 +818,7 @@ test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its hea
   await say(a, { k: 'zone', z: 1 });
   await say(b, { k: 'zone', z: 1 });
   assert.equal(vits(b, 'ask').length, 1, 'the pool made waits for the player\'s health');
-  step(300);
+  step(WILD_GRACE.ms + 300);   // PIN MOVED (TRAVIS-ALL: SHARED-HEALTH met main's ZONE-GRACE): past the safe passage both took at their entry, as INT9's fight test
   await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 20 });
   assert.equal(vits(b, 'h').length, 0, 'an unanchored count is told to nobody');
   // half its own health: the pool anchored there, less the blow dealt before the report
