@@ -18,9 +18,9 @@ const BLOCK = 102.4;
 const SOLITUDE_ANCHOR = CAPITALS.find((c) => c.key === 'solitude').anchor;
 after(async () => { (await portShipsWorld())?.done(); });
 
-test('PORT-SHIPS (ARENA2): EVERY PORT PAST THE BAY - the 29 harbours sounded as the host hands them: every berth\'s ship and her quay clear of her town\'s walls and its landmarks, her waterplane over ground under the sea, and every port its six berths still; sounded off the water alone they stood five of Solitude\'s at its west cliff\'s foot (SOLITUDE-RELIEF), two of them under its arch, Alinor\'s six inside them, two of Torval\'s and one of the Waterfront\'s through a pier, and five ships on a bank until RELIEF-PEAKS and FB1028 moved the shores (mutants: the keep unhanded; the ground unhanded; a law\'s arm)', { skip }, async () => {
+test('PORT-SHIPS (ARENA2): EVERY PORT PAST THE BAY - the 36 harbours sounded as the host hands them: every berth\'s ship and her quay clear of her town\'s walls and its landmarks, her waterplane over ground under the sea, and every port its six berths still; sounded off the water alone they stood five of Solitude\'s at its west cliff\'s foot (SOLITUDE-RELIEF), two of them under its arch, Alinor\'s six inside them, two of Torval\'s and one of the Waterfront\'s through a pier, and five ships on a bank until RELIEF-PEAKS and FB1028 moved the shores (mutants: the keep unhanded; the ground unhanded; a law\'s arm)', { skip }, async () => {
   const w = await portShipsWorld();
-  assert.equal(w.pastBay.length, 29, 'BAY-LEFT-SEA\'s 29 ports');
+  assert.equal(w.pastBay.length, 36, 'BAY-LEFT-SEA\'s 29 ports and COAST-PORT\'s seven');   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT)
   const before = measurePorts(w, w.pastBay, false), now = measurePorts(w, w.pastBay, true);
   assert.deepEqual(Object.fromEntries(before.filter((r) => r.wrong.length).map((r) => [r.name, r.wrong])), {
     'Waterfront District': ['pier'],
@@ -30,7 +30,8 @@ test('PORT-SHIPS (ARENA2): EVERY PORT PAST THE BAY - the 29 harbours sounded as 
   }, 'sounded off the water alone');   // PIN MOVED (FB1028): Sunhold's and Woodhearth's banks were TS2's shore cliffs, eased to the sea now   // PIN MOVED (RELIEF-PEAKS, at its merge into #1184): the land past the Bay stands on the kernel's own large map, so the shores' ground moved - Windhelm's, Winterhold's, Shimmerene's and Skywatch's banks under the sea now, Sunhold's and Woodhearth's over it
   assert.deepEqual(now.filter((r) => r.wrong.length).map((r) => [r.name, r.wrong]), [], 'every berth stands');
   assert.deepEqual(now.map((r) => [r.name, r.berths.length]), before.map((r) => [r.name, 6]), 'every port its six berths');
-  assert.ok(now.every((r) => r.keep), 'every port past the Bay keeps its town (a capital, or a city walled on its outline)');
+  // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): Silinorin, a village, has no walls to keep - its berths stand as any port's
+  assert.deepEqual(now.filter((r) => !r.keep).map((r) => r.name), ['Silinorin'], 'every port past the Bay keeps its town (a capital, or a city walled on its outline)');
 });
 
 test('PORT-SHIPS (ARENA2): SOLITUDE\'S SHIPS AT ITS DOCKS - five of its six berths on the water off its quay below the north cliff, each outside the walls, beside the quay between and past its two piers, the sixth on the sea past the east wall; none at the west cliff\'s foot in the Karth, where five lay (mutants: the walls\' band; the piers; the rock)', { skip }, async () => {

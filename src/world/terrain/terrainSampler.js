@@ -152,6 +152,11 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
   };
 }
 
+/** SEA-SQUARE (FIELD BUGS 2026-10-28b): a map pixel's square is built between the bytes of columns x - 1 and x and rows
+ *  y - 1 and y (kernelTerms' control points), so byte (x, y) is the height at its square's south-east corner, never its
+ *  middle. Whether `byteIs` holds at all four corners - the square's own ground, whole. */
+export const squareCornersAll = (byteIs, x, y) => byteIs(x - 1, y - 1) && byteIs(x, y - 1) && byteIs(x - 1, y) && byteIs(x, y);
+
 /**
  * The kernel's two windows for one map pixel - the small heightmap's 4 x 4 (`shmAt(r, c)`: r east, c the map's rows from
  * the pixel's two north-west) and the large heightmap's 9 x 9 (`lhmAt(r, c)`) - read once. kernelTerms interpolates them;

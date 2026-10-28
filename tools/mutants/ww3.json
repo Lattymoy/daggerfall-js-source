@@ -128,8 +128,8 @@
   {
     "name": "WW3-the-lane-water-unswitched",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && ((water(px, py)",
-    "new": "    : inWorldGrid(px, py) && !inEther(px, py) && ((water(px, py)",
+    "old": "    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py)",
+    "new": "    : inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py)",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WW3-the-lane-water-in-the-box",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && ((water(px, py)",
-    "new": "    : beyond() && inWorldGrid(px, py) && ((water(px, py)",
+    "old": "    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py)",
+    "new": "    : beyond() && inWorldGrid(px, py) && (rumareSeaPixel(px, py)",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WW3-the-lane-water-any-climate",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": " && ((water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py)));",
-    "new": " && ((water(px, py)) || rumareSeaPixel(px, py)));",
+    "old": " => (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);",
+    "new": " => (water(px, py)) || rumareSeaPixel(px, py);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WW3-the-beyond-lanes-in-the-bays-water",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX);",
-    "new": "beyondList = laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX);",
+    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
+    "new": "beyondList = laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX, true);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
