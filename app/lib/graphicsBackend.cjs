@@ -51,8 +51,14 @@ const PAGE_REPORT_TIMEOUT_MS = 60_000;
 const HOLD_DEFAULT_ARG = '--dagger-default-backend';
 
 /** Each backend's Chromium switches, as [name, value]. */
+// disable-gpu-sandbox, on Vulkan only: with Chromium's GPU sandbox on, ANGLE's Vulkan path has no GPU compositor on Windows
+// (gpu_compositing disabled_software, webgl enabled_readback), so every frame's WebGL canvas is read back and composited
+// on the CPU - 64 fps against D3D11's 120 (its cap) at 2560x1440 (2026-10-28, bible GPU-BACKEND). Without the sandbox the GPU
+// composites (120 at the cap, 230 uncapped). The game window's renderer already runs with sandbox: false (main.cjs
+// webPreferences, for the preload's file IO), fenced to dagger:// by its navigation handlers, so lifting the GPU sandbox
+// adds only what reaches the driver through WebGL: the game's own shaders and its own or installed textures. D3D11 keeps it.
 const BACKEND_SWITCHES = Object.freeze({
-  vulkan: Object.freeze([['use-gl', 'angle'], ['use-angle', 'vulkan']]),
+  vulkan: Object.freeze([['use-gl', 'angle'], ['use-angle', 'vulkan'], ['disable-gpu-sandbox', '']]),
   metal: Object.freeze([['use-gl', 'angle'], ['use-angle', 'metal']]),
   d3d9: Object.freeze([['use-gl', 'angle'], ['use-angle', 'd3d9']]),
 });

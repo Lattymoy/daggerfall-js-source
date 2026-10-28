@@ -18,7 +18,7 @@ const { createFileStorage } = require('../../app/lib/fileStorage.cjs');
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
 const WIN = { platform: 'win32', env: {} };
-const VULKAN = [['use-gl', 'angle'], ['use-angle', 'vulkan']];
+const VULKAN = [['use-gl', 'angle'], ['use-angle', 'vulkan'], ['disable-gpu-sandbox', '']];
 
 const roots = [];
 /** A userData folder with the shell's file store on the page's bridge, as app/preload.cjs puts it there. */
@@ -392,4 +392,11 @@ test('GPU-BACKEND: a GPU process that exited cleanly is not a backend that faile
   const crashed = rig({ launch: ARMED, info: infoOf(D3D11) });
   await crashed.guard.onGpuGone({ type: 'GPU', reason: 'crashed' });
   assert.ok(crashed.calls.includes('relaunch'));
+});
+
+test('GPU-BACKEND: only Vulkan lifts the GPU sandbox - the cost of a GPU process with no compositor at 1440p; the default and the probe doors keep it (mutants: the switch on every backend; the switch dropped)', () => {
+  const names = (backend) => B.BACKEND_SWITCHES[backend].map(([name]) => name);
+  assert.ok(names('vulkan').includes('disable-gpu-sandbox'));
+  for (const door of ['metal', 'd3d9']) assert.ok(!names(door).includes('disable-gpu-sandbox'), door);
+  assert.deepEqual(B.backendLaunch('unused', { platform: 'win32', env: {}, argv: [] }).switches, [], 'no pref: D3D11, nothing added');
 });
