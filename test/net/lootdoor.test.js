@@ -43,7 +43,7 @@ test('LOOT-DOOR THE WIRE: a hello says `ll` 1 to LOOT_HELLO_LAW_WIRE_MAX, any ot
   assert.equal(RELAY_CFG_VARS.lootDoor, 'LOOT_DOOR');
   assert.deepEqual(parseRelayCfgCommand('lootdoor on'), { cmd: 'relay', k: 'lootDoor', v: 'on' });
   assert.equal(RELAY_CFG_KEY_MIN.lootDoor, 273);   // world273: main's FIELD BUGS 2026-10-26r took world272 at the merge
-  assert.deepEqual([relayCfgSupported('world272', 'lootDoor'), relayCfgSupported('world274', 'lootDoor'), relayCfgSupported(RELAY_VERSION, 'lootDoor')], [false, true, true]);
+  assert.deepEqual([relayCfgSupported('world272', 'lootDoor'), relayCfgSupported('world275', 'lootDoor'), relayCfgSupported(RELAY_VERSION, 'lootDoor')], [false, true, true]);   // PIN MOVED: world275, SHARED-HEALTH (the open zone, a duel and a siege referee the health of the player as a share - the vit frame; world270, then world274, then world274, on its branch, renumbered past CHAT-POST, MASTER-THREE and RPT1026 at the merges; NOT YET DEPLOYED); PIN MOVED: world274, LADDER-CUT (systems/skillSoftcap.js, a file the bundle reaches; NOT YET DEPLOYED)
 });
 
 test('LOOT-DOOR THE NUMBER READS WHAT IT SAYS: 1 is a Master\'s work and a Mounted Trophy, each minted by its producer - both ride a room\'s stored word whole at this build, where main\'s law drops the one and cannot read the other', () => {
