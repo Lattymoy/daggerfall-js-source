@@ -333,5 +333,131 @@
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
+  },
+  {
+    "name": "FB1028-Y1-the-carrier-as-it-stands",
+    "file": "src/world/townWalls.js",
+    "old": "value: (/** @type {any} */ yl) => (dfLocation ? townWallYardLayout(yl, dfLocation) : yl) });",
+    "new": "value: (/** @type {any} */ yl) => yl });",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y1-the-carrier-laid-as-today",
+    "file": "src/world/townWalls.js",
+    "old": "    const then = gateFurniture(was, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, was, rmbOf));",
+    "new": "    const then = gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf));",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y1-the-markers-today",
+    "file": "src/world/townWalls.js",
+    "old": "const was = { ...wall, pieces: wall.yardPieces, streetWays: [] }, markers = gateMarkers(was.pieces);",
+    "new": "const was = { ...wall, pieces: wall.yardPieces, streetWays: [] }, markers = wall.markers;",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y1-the-yards-layout-unread",
+    "file": "src/scenes/world.js",
+    "old": "yardMeasuresSteps(shut?.yardLayout?.(yl) ?? yl, {",
+    "new": "yardMeasuresSteps(yl, {",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y1-the-keep-reads-1184s-things",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways);",
+    "new": "townGroundSteps(yl, measures, now, ways);",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y1-the-things-move-read-as-any-closed",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "  if (was) gained = g.blocked.map(",
+    "new": "  if (false) gained = g.blocked.map(",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y1-the-shared-block-measured-twice",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "now.push(b === yl.blocks[i] ? was[i] : one(b));",
+    "new": "now.push(one(b));",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y2-the-edge-band-read",
+    "file": "src/world/terrain/townBlendBefore.js",
+    "old": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
+    "new": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(x < 4 || wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y2-the-yards-on-todays-mask",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "yardGround = townGroundMaskBefore(locationRect.shapeWas ?? locationRect.shape, ground, HEIGHTMAP_DIMENSION);",
+    "new": "yardGround = mask;",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y2-the-ring-kept",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "if (ring[i] && yardGround[i]) out[i] = 0;",
+    "new": "if (false) out[i] = 0;",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y2-the-ring-cleared-off-the-ground",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "if (ring[i] && yardGround[i]) out[i] = 0;",
+    "new": "if (ring[i]) out[i] = 0;",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y2-the-paths-unswapped",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    if (yardGround && locationRect?.ring) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);",
+    "new": "    if (false) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y2-the-crops-kept",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);",
+    "new": "locationRect.shapeWas = locationRect.shape;",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "FB1028-Y2-the-host-reads-todays-ground",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true)",
+    "new": "townWalkShut(dfLocation, townGround, yardPaths ?? paths, true)",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
   }
 ]
