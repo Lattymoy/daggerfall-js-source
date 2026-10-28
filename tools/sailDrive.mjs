@@ -8,6 +8,7 @@
 import { scene } from '../test/csaScene.mjs';
 import { BOAT_ACTIONS } from '../src/systems/comeSailAway/comeSailAwayActions.js';
 import { WEATHER_TYPE } from '../src/systems/comeSailAway/comeSailAway.js';
+import { isMain } from './lib/isMain.mjs';
 
 const TS = 819.2;
 const STEPS = 30;
@@ -86,7 +87,7 @@ export function driveOnce(rnd, { classic = false } = {}) {
   return null;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMain(import.meta.url)) {
   const seed = arg('--seed', 1), runs = arg('--runs', 300), classic = process.argv.includes('--classic');
   const rnd = stream(seed);
   let stops = 0;
