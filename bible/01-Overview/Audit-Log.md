@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-28 - AUDIT TAMRIEL-NODES.** The request: *"audit the main tamriel PR and just ensure the new gathering points
+show in the overworld across tamriel properly"*, of #1184's gathering past the Bay (WW-C1). The Overworld's groups, marks
+and filter read no ground of the Bay's, and every zone's herbs, veins and trees stood their law on the kernel's own
+ground. Paid: no boulder stood anywhere past the Bay or on the Eltheric isles - a boulder is a rock field's piece, and the
+fields are the Bay's alone - so the stone-rich provinces' boulders were never seen and every Mining group counted veins
+alone. Past the Bay a boulder is now a heap on the stone (STONE-HEAPS). 9 mutants, all dead. Record:
+`03-World/World-Wide.md` STONE-HEAPS.
+
 **2026-10-27 - AUDIT RED-MOUNTAIN.** The owner: *"Audit this"*, of RED-MOUNTAIN and GHOSTFENCE, the volcano at
 Vvardenfell's heart and the Tribunal's fence round it. Five cold lanes on a frozen head (`774fbff133`), each reproducing
 every finding with a node probe on the real code. Paid: a body walked through the fence at 22 runs (its solid one flat
