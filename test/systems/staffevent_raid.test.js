@@ -703,3 +703,37 @@ test('BOSS-ONE (mob 2026-10-28: "there was 20 mini bosses", "just only spawn onc
   raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 1 } }, room);
   assert.equal(frame(0.1), 'boss', 'it fell: the next call stands');
 });
+
+test('PILOT-BAR (mob 2026-10-28: "let me see the bosses bar so i know when im hurt"): while I steer, my boss\'s health on the gate\'s boss bar - its name, its share, the numbers - and put away when it falls or I leave (mutants: the bar never drawn, never put away)', async () => {
+  const P = await import('../../src/systems/staffBossPilot.js');
+  const { createStaffPilotHost } = await import('../../src/scenes/staffPilotHost.js');
+  const { pilotBarModel, PILOT_BAR_TEXT } = await import('../../src/ui/staffPilotBar.js');
+  P.resetPilot();
+  const drawn = [];
+  let boss = null;
+  const host = createStaffPilotHost({ post: () => {}, win: null, entity: {}, bossOf: () => boss, now: () => 5, drawBar: (m) => drawn.push(m) });
+  host.frame();
+  assert.equal(drawn.length, 0, 'not steering: nothing drawn');
+  host.word({ dfoStaff: 'pilot', on: true, ev: EV.id });
+  host.frame();
+  assert.equal(drawn.length, 0, 'armed, no boss yet: no bar');
+  boss = { raidKey: KEY, dead: false, puppet: null, mobileType: 17, entity: { staffBoss: { size: 2 }, health: 1500, maxHealth: 5000 }, ai: { feet: [0, 0, 0], yaw: 0 } };
+  host.frame();
+  const m = drawn.at(-1);
+  assert.equal(m.frac, 0.3);
+  assert.equal(m.title, PILOT_BAR_TEXT.title);
+  assert.equal(m.fightersLine, 'Health 1500 / 5000');
+  assert.deepEqual(m.spent, [true, false], 'past half, not yet a quarter');
+  boss.entity.health = 500;
+  host.frame();
+  assert.equal(drawn.at(-1).low, true, 'under a fifth: low');
+  boss.dead = true;
+  host.frame();
+  assert.equal(drawn.at(-1), null, 'it fell: the bar put away');
+  const n = drawn.length;
+  host.frame();
+  assert.equal(drawn.length, n, 'put away once');
+  assert.equal(pilotBarModel(null, 0), null);
+  assert.equal(pilotBarModel({ dead: false, entity: { health: 10, maxHealth: 0 } }, 0).frac, 1, 'no max: whole, never a divide by nothing');
+  P.resetPilot();
+});

@@ -259,5 +259,8 @@ half `src/scenes/staffPilotHost.js`).
   (`staffBossPlace`). Play as boss is armed until a boss stands - the meter's next, or Spawn mini boss now - and never
   gives up on its own (the panel calls no boss at the press since Admin Tools 0.2.185). While any boss of the event stands,
   mine or a peer's puppet, a later call stands no second one, on any game.
+- **PILOT-BAR** (2026-10-28, mob: "let me see the bosses bar so i know when im hurt"): while I steer it, my boss's name and
+  health stand on the gate's boss bar (`ui/staffPilotBar.js`, drawn by `scenes/staffPilotHost.js`), marks at half and a
+  quarter, put away when it falls or I leave.
 - **Known limits**: the boss walks at my pace, not its kind's; a game that ran the event before keeps the monsters it had
   stood (they fight on as theirs); my own weapon still swings at a click if drawn.
