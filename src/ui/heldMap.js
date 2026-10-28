@@ -2653,7 +2653,7 @@ export class HeldMapWindow {
     const w = this._waypointAt(pp[0], pp[1]);
     if (w) {
       openWaypointMenu({ x: clientX, y: clientY, id: w.id, by: ctx.by, canKind: ctx.canKind ?? { party: false, guild: false }, owner: 'heldmap', onNote: note,
-        onTravel: this._coordsAllowedHere() && inBay(Math.floor(w.mx), Math.floor(w.my)) ? (wp) => this._waypointTravel(wp) : null });   // BAY-LEFT-MAPS: no "Travel here" on a flag past the Bay (TESA-NO-FAST)
+        onTravel: this._flagTravels(w) ? (wp) => this._waypointTravel(wp) : null });   // OW-PLACE-WALK: past the Bay a flag on land is walked to
       return true;
     }
     const [mx, my] = toMap(this._view, pp[0], pp[1]);
@@ -2665,13 +2665,19 @@ export class HeldMapWindow {
     return true;
   }
 
-  /** "Travel here" on a flag: the bare pixel's own journey, as a click there opens it (MAP2's coordinates decision) - on the
-   *  Bay alone (BAY-LEFT-MAPS: TESA-NO-FAST - a flag past the Bay is walked to on the Overworld, never travelled to here). */
-  _waypointTravel(w) {
-    if (this._phase !== 'map' || !this._coordsAllowedHere()) return;
+  /** "Travel here" on a flag: the bare pixel's own journey, as a click there opens it (MAP2's coordinates decision). Past
+   *  the Bay it is the walk a press on that land is (OW-PLACE-WALK, OW-PAST-BAY's law): never the sea. */
+  _flagTravels(w) {
     const px = Math.floor(w.mx), py = Math.floor(w.my);
-    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) return;
-    this._select({ coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: toFormat(TO_TEXT.MsgTargetCoords, px, py), summary: null, mapId: null });
+    return this._coordsAllowedHere() && (inBay(px, py) || (this._walksPastBay() && !!portalLandAt(px, py)));
+  }
+  _waypointTravel(w) {
+    if (this._phase !== 'map' || !this._flagTravels(w)) return;
+    const px = Math.floor(w.mx), py = Math.floor(w.my), name = toFormat(TO_TEXT.MsgTargetCoords, px, py);
+    const pick = !inBay(px, py) ? this._pastBayPick(px, py, name)
+      : px < this._size.width && py < this._size.height ? { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name, summary: null, mapId: null } : null;
+    if (!pick) return;
+    this._select(pick);
     this._openPanel('travel');
     this._dirty = true;
   }
@@ -2732,7 +2738,7 @@ export class HeldMapWindow {
    *  shows (the player pointed at the quest's diamond, which every band draws), else - its kind hidden by the key - the
    *  place's own record, the journal goto's way (_consumeGotoPlace). Null for a place the player has not found. */
   _questPlace(q) {
-    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName);   // START3: past the Bay, the quest's own place
+    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName, true);   // START3: past the Bay, the quest's own place
     const hit = (this._ensureWorldModel()?.marks ?? []).find((k) => Math.floor(k.x) === q.px && Math.floor(k.y) === q.py);
     if (hit) return hit;
     const summary = locationSummaryAt(this.deps.mapDict, q.px, q.py);
@@ -3087,7 +3093,7 @@ export class HeldMapWindow {
   /** The classic wrapper's own pick shape, verbatim - and for a bare
    *  pixel (MAP2), the coordinates popup's own {pixel, name}. */
   _pickOf(selected) {
-    if (selected.coords) return { pixel: { x: Math.floor(selected.x), y: Math.floor(selected.y) }, name: selected.name };
+    if (selected.coords) return { pixel: { x: Math.floor(selected.x), y: Math.floor(selected.y) }, name: selected.name, ...(selected.place ? { place: true } : {}) };   // OW-PLACE-WALK
     const { summary } = selected;
     const pos = summaryPixel(summary);   // WW-C2: a zone hall's own pixel past the Bay
     return {
@@ -3432,7 +3438,7 @@ export class HeldMapWindow {
     const site = this._gotoPlace?.siteDetails ?? this._gotoPlace ?? {};
     // START3: a site past the Bay by its own pixel (systems/quest/place.js siteWorldPixel) - MAPS.BSA names none there
     if (site.worldPixel) {
-      const pick = this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName);
+      const pick = this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName, true);
       if (!pick) return;
       this._focusOn(pick.x, pick.y);
       this._select(pick);
@@ -3454,11 +3460,12 @@ export class HeldMapWindow {
   /** START3: a place past the Bay a quest names: its pixel and its name, no record of MAPS.BSA's under it (`pastBay`). On
    *  the travel map a walk (`walk`, OW-PAST-BAY - never fast travel: TESA-NO-FAST);
    *  on the teleport map the portal's end only where it is a city's (`portal`, TESA2's: TESA13 keeps a portal's ends to
-   *  the cities - U2), else picked and named alone. Null while the sheet shows no land past the Bay. */
-  _pastBayPick(px, py, name) {
+   *  the cities - U2), else picked and named alone. Null while the sheet shows no land past the Bay. `place`: a city, a
+   *  mark or a quest's place, which the host walks to as the place (OW-PLACE-WALK), never a bare spot. */
+  _pastBayPick(px, py, name, place = false) {
     if (!this._tamriel || !Number.isInteger(px) || !Number.isInteger(py)) return null;
     const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));   // PORTAL-ANYWHERE: on the stone's map any land
-    return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true, pastBay: true, portal, walk: this._walksPastBay() };
+    return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true, pastBay: true, portal, walk: this._walksPastBay(), place };
   }
 
   /** OW-PAST-BAY: does the travel map walk to a place past the Bay? Travel Options' coordinates journey - walked, the
@@ -3530,7 +3537,7 @@ export class HeldMapWindow {
   _searchPick(entry) {
     // BAY-LEFT-MAPS (C9): a place past the Bay picked as a quest's site past it is (START3's _pastBayPick: no journey -
     // TESA-NO-FAST - and on the teleport map a portal's end where it is one)
-    const pick = entry.pastBay ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)
+    const pick = entry.pastBay ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name, true)
       : { x: entry.pos.x + 0.5, y: entry.pos.y + 0.5, colorIndex: 11, kind: 'city', name: entry.name, summary: entry.summary };
     if (pick) { this._focusOn(pick.x, pick.y); this._select(pick); }
     this._chrome.searchInput.value = '';
@@ -4145,7 +4152,7 @@ export class HeldMapWindow {
       const px = Math.floor(mx), py = Math.floor(my);
       const past = this._pastBayHover(mx, my);
       const end = past?.city?.pixel ? past.city : past?.on === 'mark' ? past : null;
-      const pick = end && !inBay(end.pixel.x, end.pixel.y) ? this._pastBayPick(end.pixel.x, end.pixel.y, end.name)
+      const pick = end && !inBay(end.pixel.x, end.pixel.y) ? this._pastBayPick(end.pixel.x, end.pixel.y, end.name, true)
         : past?.on === 'land' && !inBay(px, py) && this._coordsAllowedHere() ? this._pastBayPick(px, py, toFormat(TO_TEXT.MsgTargetCoords, px, py)) : null;
       if (pick) { this._select(pick); this._openPanel('travel'); return; }
     }

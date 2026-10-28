@@ -220,6 +220,15 @@ into, a dungeon to go down - and the held map takes the player there.
   map keeps TESA2's and PORTAL-ANYWHERE's portals. PIN MOVED: `test/tesa2_arena.test.js`'s cursor,
   `start3_pastbay_marks`' pick (`walk`). Pins `test/ui/owpastbay_walk.test.js` (3); mutants `tools/mutants/owpastbay.json`
   (9, all dead), six records re-aimed by content.
+- **OW-PLACE-WALK** (2026-10-28, the owner: "ensure travel when clicking a point on the held map properly makes you
+  travel"): in the game on the freeware, Begin on Solitude said "You cannot walk out onto the water." - OW-PAST-BAY
+  handed a city as a bare pixel, and Solitude's pixel is the sea's byte. A city, a countryside mark, a quest's, a found
+  or the journal's place past the Bay is now handed as a place (`ui/heldMap.js` `_pastBayPick`'s `place`), and Begin
+  walks to its door as the Overworld does (`scenes/world.js` beginAcceleratedTravel: `tvPlaceSummary`,
+  `travelViewRouteTo`); a place the Overworld does not know is walked to as a spot. "Travel here" on a flag on land past
+  the Bay is the walk a press there is (`_flagTravels`), never on the sea. PIN MOVED: BAY-LEFT-MAPS C2, START3's pick,
+  OW-ONLY's and TESA2's source pins. Pins `test/ui/owplacewalk.test.js` (3); mutants `tools/mutants/owplacewalk.json`
+  (13, all dead), four records re-aimed by content.
 - **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.
