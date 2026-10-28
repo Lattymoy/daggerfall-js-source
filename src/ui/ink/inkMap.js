@@ -8,9 +8,11 @@
 // terrain uses (ui/overworldModel.js isWaterPixel); the province
 // borders are where the politic bytes change hands between two land
 // pixels; the roads and tracks are Hazelnut's vendored arrays traced
-// into chains (traceChains - the port's own generated network is never
-// drawn on a map, bible/03-World/Roads.md, and the `source` field TO1
-// put on the network object is what tells them apart); the marks are
+// into chains (traceChains - the port's own generated network on the Bay
+// is never drawn on a map, bible/03-World/Roads.md, and the `source` field
+// TO1 put on the network object is what tells them apart; TESA13: past the
+// Bay Arena's network is the only road, and ui/tamrielInk.js draws it
+// through pathChains and strokePaths here); the marks are
 // MAPS.BSA through the classic window's discovery and bucket laws
 // (buildMarkerModel); the names are the game's own strings in a face
 // the port ships. It is drawn in an INK style - lines, carets for the
@@ -508,20 +510,55 @@ export function borderChains({ width, height, regionAt, isLand }) {
   }
   return linkSegments(segs).map((c) => inkChain(c, 0.9));
 }
-
 /**
  * The roads and tracks - ONLY the mod's arrays. The network object the
  * host hands carries `source: 'basic-roads'` when it was read off
  * vendor/roads-hazelnut (world/roadsProducer.js loadModRoads); the
- * port's own generated network carries no such word and is never inked
- * (bible/03-World/Roads.md). Chains are pixel CENTRES, so a road
- * meets a town's mark rather than its corner.
+ * port's own generated network on the Bay carries no such word and is
+ * never inked (bible/03-World/Roads.md). Chains are pixel CENTRES, so a
+ * road meets a town's mark rather than its corner.
  */
 export function roadChains(net, width, height) {
   if (!net || net.source !== 'basic-roads') return { roads: [], tracks: [] };
-  const centre = (chain) => chain.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
-  const soften = (mask) => (mask ? traceChains(mask, width, height).map((c) => roundCorners(simplifyChain(centre(c)))) : []);
-  return { roads: soften(net.roads), tracks: soften(net.tracks) };
+  return { roads: pathChains(net.roads, width, height), tracks: pathChains(net.tracks, width, height) };
+}
+
+const centre = (chain) => chain.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
+/** A path mask's chains as the sheet inks a road: walked (traceChains), on pixel CENTRES, thinned and rounded - or none
+ *  with no mask. TESA13: the roads past the Bay are walked through it too (ui/tamrielInk.js arenaRoadInk). */
+export function pathChains(mask, width, height) {
+  return mask ? traceChains(mask, width, height).map((c) => roundCorners(simplifyChain(centre(c)))) : [];
+}
+
+/** How wide a track is at far, paper pixels - a hair: the web reads, and no dash of it does (TESA15). */
+export const FAR_TRACK_PEN = 0.6;
+/** The roads and the tracks onto the sheet through a pen (penOf's `stroke`): the roads at every band, the tracks dotted,
+ *  each under its filter (TRUE hides). TESA13: the Bay's and the land past it, one law. TESA15 (the owner, of the map
+ *  past the Bay against the network's own picture: "doesnt match ... the fidelity of it"): at far the tracks are a hair
+ *  in the soft pen, not left off - a dot and a dash at a pixel a Bay pixel was noise, but the web of them is most of
+ *  what a country's ways are (on the freeware's continent two track pixels to every road's). */
+export function strokePaths(stroke, { roads = [], tracks = [] }, band, filters = {}) {
+  for (const kind of PATH_KINDS) {
+    if (filters[kind]) continue;
+    const pen = pathPen(kind, band);
+    stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);
+  }
+}
+/** AUDIT TESA II M10: the order strokePaths lays the kinds in - the roads, then the tracks over them. */
+export const PATH_KINDS = Object.freeze(/** @type {const} */ (['roads', 'tracks']));
+/** AUDIT TESA II M10: a kind's pen at a band - strokePaths' own, read by the land past the Bay's sliced paint
+ *  (ui/tamrielInk.js) so the two cannot part: the roads 1 at far and 1.5 in, the tracks the far hair or dotted.
+ *  @param {'roads' | 'tracks'} kind @param {string} band @returns {{ width: number, style: string, dash: ?number[] }} */
+export function pathPen(kind, band) {
+  if (kind === 'roads') return { width: band === 'far' ? 1 : 1.5, style: PEN.line, dash: null };
+  return band === 'far' ? { width: FAR_TRACK_PEN, style: PEN.soft, dash: null } : { width: 1, style: PEN.soft, dash: [2, 3] };
+}
+/** AUDIT TESA II M10: an `rgba(...)` pen as its solid colour and its alpha - a translucent pass laid solid on a scratch
+ *  canvas a step at a time, then down whole at the alpha, reads as one stroke (the overlaps of one fill or stroke are
+ *  never laid twice). @param {string} style @returns {{ solid: string, alpha: number }} */
+export function penSolid(style) {
+  const m = /^rgba\(\s*([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*\)$/.exec(style);
+  return m ? { solid: `rgb(${m[1]}, ${m[2]}, ${m[3]})`, alpha: Number(m[4]) } : { solid: style, alpha: 1 };
 }
 
 /** Where each province's name sits: the mean of its land pixels. */
@@ -1007,11 +1044,11 @@ export function paintInkStatic(ctx, model, view, opts) {
     ctx.moveTo(x - k, y + k * 0.6); ctx.lineTo(x, y - k * 0.6); ctx.lineTo(x + k, y + k * 0.6);
   }
   ctx.stroke();
-  // the provinces
-  stroke(model.borders, 1, PEN.soft, [4, 3]);
+  // the provinces - REGION-LINES: not out on the continent, where the Bay is one province's share of the sheet and its
+  // sixty-two borders hatched it as no province past it is; the provinces' own line stands there (ui/tamrielInk.js)
+  if (!opts.continent) stroke(model.borders, 1, PEN.soft, [4, 3]);
   // the roads and the tracks
-  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
-  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
+  strokePaths(stroke, model, band, opts.filters ?? {});
   // WILD1 (ui/wild/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
   // laid over the mountains and the roads and under every place, so a town in the fog still reads
   if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
@@ -1106,6 +1143,11 @@ export function paintInkMarks(ctx, model, view, opts) {
   // restricts ship travel to ports (the classic page's ports button
   // shows under the same condition, TravelOptionsMapWindow.cs:148)
   const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
+  // REGION-LINES (2026-10-25, the owner: "daggerfall's clustered icons need to be fixed amd standardized across tamriel"):
+  // out on the continent the Bay inks no mark of its own - its capitals stand with every other province's, in the
+  // continent's layer (ui/tamrielInk.js bayCapitals) - and none of the ports' anchors, the carriage wheels, the hubs' and
+  // the seats' rings that piled into a smudge where the Bay is a hand's width; the player's own mark stays (below)
+  const continent = !!opts.continent;
   // MAP-FIELD6: EVERY halo first, then every glyph. One pass per mark
   // would let a neighbour's halo fall on the ink already laid down, so
   // a crowded coast would come out with bites taken out of it - which
@@ -1114,7 +1156,7 @@ export function paintInkMarks(ctx, model, view, opts) {
   const harbours = [];   // PORT-MAP: [beside, x, y] - a port's anchor, at every band
   const wheels = [];   // OW-HUBS: [beside, x, y] - a carriage town's wheel, at every band, as a port's anchor
   for (const m of model.marks) {
-    if (!visible(m.x, m.y, reach)) continue;
+    if (continent || !visible(m.x, m.y, reach)) continue;
     const ink = shown.has(m.colorIndex);
     if (ink) inked.push([m, ...toPaper(view, m.x, m.y)]);
     if (opts.ports && m.port) harbours.push([ink, ...toPaper(view, m.x, m.y)]);
@@ -1232,14 +1274,17 @@ export function paintInkOverlay(ctx, view, opts) {
   const pulse = opts.pulse ?? 0;
   // WB1: the gate's ring under everything else that breathes - a party member standing in it reads over it
   if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);
+  // WW2: and the gates past the Bay, in the gate's own colours
+  for (const g of opts.gates ?? []) if (visible(g.cx, g.cy, g.r + 2)) paintGateRing(ctx, view, g, pulse);
   // SERPENT1: the sea serpent's ring beside it, in the sea's colours
   if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);
-  // SD2c: the Super dungeon's ring once it is found, in its omen's brass
-  if (opts.sd && visible(opts.sd.cx, opts.sd.cy, opts.sd.r + 2)) paintGateRing(ctx, view, opts.sd, pulse, SD_MAP_INK);
+  // SD2c: the Super dungeon's ring once it is found, in its omen's brass - WW5: every theatre's (`sds`; `sd` the one ring a
+  // caller from before WW5 hands)
+  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : [])) if (m && visible(m.cx, m.cy, m.r + 2)) paintGateRing(ctx, view, m, pulse, SD_MAP_INK);
   // EG-F: my company's Elite arch while it stands, in its gold
   if (opts.arch && visible(opts.arch.cx, opts.arch.cy, opts.arch.r + 2)) paintGateRing(ctx, view, opts.arch, pulse, EG_ARCH_MAP_INK);
   // KETCH: the Sky-Ketch while she is in Daggerfall's sky, in the aether's blue
-  if (opts.ketch && visible(opts.ketch.cx, opts.ketch.cy, opts.ketch.r + 2)) paintGateRing(ctx, view, opts.ketch, pulse, KT_MAP_INK);
+  for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : [])) if (k && visible(k.cx, k.cy, k.r + 2)) paintGateRing(ctx, view, k, pulse, KT_MAP_INK);   // KETCH-EVERYWHERE: every station's ring
   // BOUNTY1: each held bounty's black circle, under the party too
   for (const b of opts.bounties ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse);
   // RVN7c: each revenant lair the player has heard of - the same circle in blood red, under the party too

@@ -29,7 +29,7 @@
 // skyCells through world.js fieldCellsHere, the ones the clouds draw), at
 // the shared minute - two players in the view see the same storm in the
 // same place. A sandstorm is a wall on the ground already; fog and cloud
-// do not fall.
+// do not fall. ASHFALL1: an ashfall's veil is the rain's in its pall's tint.
 //
 // A FOREIGN PASS on the world host alone (the renderer's markForeignPass
 // follows it), drawn only while the travel view is up.
@@ -62,10 +62,16 @@ export const CURTAIN_MEMO_M = 32;
 export const CURTAIN_RAIN_COLOR = Object.freeze([0.5, 0.54, 0.6]);
 export const CURTAIN_SNOW_COLOR = Object.freeze([0.84, 0.86, 0.9]);
 const _mix = new Float32Array(3);
-/** PRECIP1: the curtain's colour at its snow share `k` (0 rain, 1 snow) - one scratch, read before the next. */
-export function mixColor(a, b, k) {
+/** PRECIP1: the curtain's colour at its snow share `k` (0 rain, 1 snow) - one scratch, read before the next. ASHFALL1:
+ *  where its cell has a `tint` (volumetricClouds.js CELL_TINT - the ash's), its grey times the tint, as the sky's veil
+ *  is: the rain's blue-grey times the ash's tint read neutral. */
+export function mixColor(a, b, k, tint = null) {
   const t = Math.min(1, Math.max(0, Number(k) || 0));
   for (let i = 0; i < 3; i++) _mix[i] = a[i] + (b[i] - a[i]) * t;
+  if (tint) {
+    const grey = 0.299 * _mix[0] + 0.587 * _mix[1] + 0.114 * _mix[2];
+    for (let i = 0; i < 3; i++) _mix[i] = grey * tint[i];
+  }
   return _mix;
 }
 /** The streaks' fall, cycles a second up the curtain's height (a whole number over the clock's period, so it never
@@ -78,7 +84,7 @@ export const curtainClock = (s) => ((s % CURTAIN_CLOCK_PERIOD) + CURTAIN_CLOCK_P
  * THE CURTAINS TO DRAW, nearest the traveller first: the cells that fall (VC7c's own `fall`, grown with its system),
  * whose veil stands within CURTAIN_REACH_M of the focus, at most CURTAINS_MAX, each a cylinder in the scene -
  * `centre` (x, foot y, z), `radius`, `height` (foot to a little into the base), `depth` (the extinction a metre),
- * `kind` (0 rain, 1 snow) and `alpha` (the fade as the eye - or the traveller - comes over it). A storm cell's clip keeps
+ * `kind` (0 rain, 1 snow), `tint` (its cell's, or null) and `alpha` (the fade as the eye - or the traveller - comes over it). A storm cell's clip keeps
  * its veil inside the disc it paints within. Pure.
  * @param {Array<any>} cells - world.js fieldCellsHere's, in the host's metres (volumetricClouds.js cellOfField)
  * @param {{ focus: number[], eye: number[], ground?: number, groundAt?: (x:number, z:number) => number, reach?: number,
@@ -114,7 +120,7 @@ export function curtainsOf(cells, { focus, eye, ground = null, groundAt = null, 
     const ramp = (dist) => Math.min(1, Math.max(0, (dist - radius * 0.85) / (radius * 0.3)));
     const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2])) * Math.max(CURTAIN_OWN_ALPHA, ramp(d));
     if (alpha <= 0.001) continue;
-    out.push({ centre: [c.x, 0, c.z], radius, height: base, depth: CURTAIN_EXT * c.fall, kind: c.fallKind ?? 0, alpha, d, shape, clip });   // PRECIP1: the snow share, 0..1
+    out.push({ centre: [c.x, 0, c.z], radius, height: base, depth: CURTAIN_EXT * c.fall, kind: c.fallKind ?? 0, tint: c.tint ?? null, alpha, d, shape, clip });   // PRECIP1: the snow share, 0..1; ASHFALL1: the cell's tint
   }
   out.sort((a, b) => a.d - b.d);
   const kept = [];
@@ -315,7 +321,7 @@ export class RainCurtainsRenderer {
       if (cl) { gl.uniform4f(U.uClip, cl.x, cl.z, cl.r, cl.rim); const ks = cl.shape ?? CIRCLE; gl.uniform4f(U.uClipA, ks[0], ks[1], ks[2], ks[3]); gl.uniform4f(U.uClipB, ks[4], ks[5], ks[6], ks[7]); } else gl.uniform4f(U.uClip, 0, 0, -1, 1);
       gl.uniform1f(U.uDepth, c.depth);
       gl.uniform1f(U.uAlpha, Math.min(1, c.alpha) * k);
-      gl.uniform3fv(U.uColor, mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, c.kind));   // PRECIP1: a curtain over the snow line greys toward white
+      gl.uniform3fv(U.uColor, mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, c.kind, c.tint));   // PRECIP1: a curtain over the snow line greys toward white; ASHFALL1: an ash veil its pall's
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

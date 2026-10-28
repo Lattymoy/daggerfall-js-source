@@ -103,13 +103,13 @@
   },
   {
     "name": "OW5-S3-moored-always",
-    "file": "src/scenes/world.js",
-    "old": "    if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;\n    return replan();",
-    "new": "    return null;",
+    "file": "src/systems/travel/seaAsk.js",
+    "old": "  if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;\n  return replan();",
+    "new": "  return null;",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
-    "note": "A moored boat boards every journey begun near it."
+    "note": "A moored boat boards every journey begun near it. Re-aimed by content (PLAN-SLICES, 2026-10-26): tvMooredDry moved out of the host to systems/travel/seaAsk.js."
   },
   {
     "name": "OW5-S4-no-leg",

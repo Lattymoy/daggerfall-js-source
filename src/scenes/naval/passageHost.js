@@ -29,6 +29,7 @@
 //     player -> the motor (feetAt(), spawn(x, y, z), transportMode)     remount(mode) -> the player rides as they rode
 //     talk -> the street's words (say(text), showOverlay(window))
 //     gold() / pay(n) / pack() -> the purse and the pack - the player entity's own (court.js) unless handed
+//     writ(port) -> START2: an opened start's commission is the Crown's writ of passage to this port (scenes/startsHost.js)
 //   }
 //
 // Not a DFU member. Ledger A (PASSAGE).
@@ -73,14 +74,16 @@ export function createPassageHost(deps) {
     if (!csa()) { say(PASSAGE_TEXT.noSail); return false; }
     if (charterBoat()) { say(PASSAGE_TEXT.booking); return false; }
     if (deps.ether?.(deps.pixel())) { say(PASSAGE_TEXT.ether); return false; }
-    const list = passageDestinations(deps.ports?.() ?? [], deps.pixel(), { hereKey: deps.here?.()?.key ?? null, known: (p) => !!deps.place(p) });
+    // START2 (Passage.md "The writ"): the port an opened commission's writ is for is sailed to for nothing - the Crown pays
+    const list = passageDestinations(deps.ports?.() ?? [], deps.pixel(), { hereKey: deps.here?.()?.key ?? null, known: (p) => !!deps.place(p) })
+      .map((d) => (deps.writ?.(d.port) ? { ...d, fare: 0, writ: true } : d));
     if (!list.length) { say(PASSAGE_TEXT.none); return false; }
     show(new ListPickerWindow({ items: list.map(PASSAGE_TEXT.row), onPick: (i) => { if (list[i]) ask(ship, list[i]); } }));
     return true;
   }
   /** The question: the port, the fare and the purse - nothing paid until Yes. */
   function ask(ship, d) {
-    show(new YesNoBoxWindow({ rows: PASSAGE_TEXT.ask(ship.name, d.port.name, d.fare, gold()), onYes: () => book(ship, d) }));
+    show(new YesNoBoxWindow({ rows: d.writ ? PASSAGE_TEXT.askWrit(ship.name, d.port.name) : PASSAGE_TEXT.ask(ship.name, d.port.name, d.fare, gold()), onYes: () => book(ship, d) }));
   }
   /** Yes: the passage made, all of it or none of it. Answers whether she sails. */
   function book(ship, d) {
@@ -111,7 +114,7 @@ export function createPassageHost(deps) {
     n.charterSailed(ship.id);   // under way: her ship let go, her boat in her place
     pay(d.fare);
     resetClock(boat, false);
-    say(PASSAGE_TEXT.booked(ship.name, ship.captain, d.fare, d.port.name));
+    say(d.writ ? PASSAGE_TEXT.bookedWrit(ship.name, d.port.name) : PASSAGE_TEXT.booked(ship.name, ship.captain, d.fare, d.port.name));
     return true;
   }
   /** Her boat out of the world: Come Sail Away's laying up (her hold moved under her number, as it moves every ship's),
@@ -162,9 +165,22 @@ export function createPassageHost(deps) {
       // for it soon; a fare to the next port bought a crewed ship to sail where the passenger liked
       const to = deps.journeyTo?.();
       if (to && (to === 'spot' || to.x !== rec.to.px || to.y !== rec.to.py)) { stopJourney(); say(PASSAGE_TEXT.holds(rec.to.name)); idle = 0; first = true; return; }
+      // PASSAGE-QUAY (scenes/naval/passageQuay.js): her port's harbour near with a free berth - the voyage is over, and
+      // her master brings her in to its quay
+      if (deps.naval?.()?.bringIn?.(boat)) { stopJourney(); said = null; say(PASSAGE_TEXT.comesIn(rec.ship, rec.to.name)); }
       idle = 0;
       return;
     }
+    // PASSAGE-QUAY: brought in, no try of his is wanted - made fast, the helm is let go and the gangway named once; her way
+    // in given up (a hull foul of it), said once and the landfall's way sailed on
+    const quay = deps.naval?.()?.berthing?.(boat) ?? null;
+    if (quay === 'fast') { if (said !== 'fast') { said = 'fast'; if (r.isSailing() && r.state?.CurrentBoat === boat) r.StopSailing(); say(PASSAGE_TEXT.madeFast(rec.ship, rec.to.name)); } idle = 0; return; }
+    if (quay === 'in') {   // her crew warp her in at her helm (Come Sail Away moves the boat at it): off it, asked for it once
+      if (!(r.isSailing() && r.state?.CurrentBoat === boat) && said !== 'helm') { said = 'helm'; say(PASSAGE_TEXT.helm(rec.to.name)); }
+      idle = 0;
+      return;
+    }
+    if (quay === 'foul') say(PASSAGE_TEXT.quayFoul);
     idle += Math.max(0, dt);
     if (idle < (first ? PASSAGE_FIRST_S : fails >= PASSAGE_RESUMES ? PASSAGE_RESUME_S * PASSAGE_SLOW : PASSAGE_RESUME_S)) return;
     idle = 0;

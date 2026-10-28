@@ -235,7 +235,7 @@
   },
   {
     "name": "PLACE-host-build",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "    if (etherSea && inEther(px, py)) return etherPlaceAt(px, py);   // ETHER-PLACES",
     "new": "    if (false) return etherPlaceAt(px, py);   // ETHER-PLACES",
     "tests": [
@@ -271,7 +271,7 @@
   },
   {
     "name": "PLACE-host-far-spawn",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnGroundHost.js",
     "old": "params.has('online') && !inEtherLaw(x, y) && spawnsDungeon(_spawnSalt, x, y)",
     "new": "params.has('online') && spawnsDungeon(_spawnSalt, x, y)",
     "tests": [
@@ -281,7 +281,7 @@
   {
     "name": "PLACE-host-wake",
     "file": "src/scenes/world.js",
-    "old": "const wake = inEther(from.x, from.y) ? { kind: 'dungeon', mapPixel: { x: from.x, y: from.y } } : undergroundWakeSpot",
+    "old": "const wake = inEther(from.x, from.y) || !onTheBay(from.x, from.y) ? { kind: 'dungeon', mapPixel: { x: from.x, y: from.y } } : undergroundWakeSpot",
     "new": "const wake = undergroundWakeSpot",
     "tests": [
       "test/world/etherplaces.test.js"
@@ -316,8 +316,8 @@
   },
   {
     "name": "PORT-harbour",
-    "file": "src/scenes/world.js",
-    "old": "      if (loc?.exterior?.exteriorData) town = { id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH };",
+    "file": "src/scenes/harbourHost.js",
+    "old": "      if (loc?.exterior?.exteriorData) add({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH });",
     "new": "",
     "tests": [
       "test/world/etherplaces.test.js"

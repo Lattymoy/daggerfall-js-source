@@ -66,7 +66,8 @@ test('audit24 lifetimes: an encounter foe frees its billboard batch on BOTH ends
   // the documentation being cut to fit the bound. V3 moved it again:
   // the Azura's Star kill-capture sits in the same gap, after the trap
   // (a filled Star must count) and before the release.
-  assert.match(dmg, /health <= 0[\s\S]{0,4200}releaseFoeBatch\(f\)/, 'death releases too');   // PIN MOVED (RVN3/RVN4: the will and the last stand join the yield arm in the gap)   // REVENANT-FATE: the yield arm sits in the gap (a revenant beaten kneels, its batch kept for its fate)   // ARENA2: the foe yield floor heads the gap (a bout fighter never dies, so never releases here)   // CREW-COMPANIONS: the knock-out arm heads the gap (a companion never dies, so never releases here)   // SET2: the kill told as mine widened the gap by one line   // AUDIT WORLD6b B2: the peer arm's note sits in the same gap (a proximity bound, not a law)   // STRIKE-SHARED: and a peer's trap's
+  // PIN MOVED (RPT1026-FIGHTS TRAP-TO-OWNER: the trap's comment names whose soul a peer's kill reads - 4,415 now)
+  assert.match(dmg, /health <= 0[\s\S]{0,4500}releaseFoeBatch\(f\)/, 'death releases too');   // PIN MOVED (RVN3/RVN4: the will and the last stand join the yield arm in the gap)   // REVENANT-FATE: the yield arm sits in the gap (a revenant beaten kneels, its batch kept for its fate)   // ARENA2: the foe yield floor heads the gap (a bout fighter never dies, so never releases here)   // CREW-COMPANIONS: the knock-out arm heads the gap (a companion never dies, so never releases here)   // SET2: the kill told as mine widened the gap by one line   // AUDIT WORLD6b B2: the peer arm's note sits in the same gap (a proximity bound, not a law)   // STRIKE-SHARED: and a peer's trap's
   // and the intercept must sit ahead of the release, not after it
   assert.ok(dmg.indexOf('attemptSoulTrap') < dmg.indexOf('releaseFoeBatch(f)'),
     'a trap that refuses the death must not have freed the batch first');
@@ -342,11 +343,14 @@ test('audit24: a quest item is found by QUEST IDENTITY, not object identity', ()
   // SEPARATELY, so afterwards they are two objects with equal content
   // and nothing relinks them. The tombstone sweep and `give item to`
   // silently no-opped on every quest item already carried.
+  // PIN MOVED (FIELD BUGS 2026-10-25i HEART-KEPT): the law left bootWorld for systems/item/itemTransfer.js
+  // heldQuestRecordIndex - read there, and the host's two hooks read through it (playerHasItem never a foe's clone)
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /const _heldItemIndex = \(dfItem\) => \{[\s\S]{0,600}it\.questUID === dfItem\.questUID[\s\S]{0,120}it\.questSymbol\?\.name === dfItem\.questSymbol\?\.name/,
+  assert.match(world, /const _heldItemIndex = \(dfItem, clones = true\) => heldQuestRecordIndex\(playerEntity\.items, dfItem, \{ clones \}\);/);
+  assert.match(read('src/systems/item/itemTransfer.js'), /export function heldQuestRecordIndex\(items, dfItem, \{ clones = false \} = \{\}\) \{[\s\S]{0,300}it\.questUID === dfItem\.questUID && it\.questSymbol\?\.name === dfItem\.questSymbol\?\.name/,
     'the fallback is the quest identity the sibling hooks already match on');
   assert.match(world, /removeItemFromPlayer: \(dfItem\) => \{[\s\S]{0,160}_heldItemIndex\(dfItem\)/);
-  assert.match(world, /playerHasItem: \(dfItem\) => _heldItemIndex\(dfItem\) >= 0/);
+  assert.match(world, /playerHasItem: \(dfItem\) => _heldItemIndex\(dfItem, false\) >= 0/);
   assert.doesNotMatch(world, /playerHasItem: \(dfItem\) => \(playerEntity\.items \?\? \[\]\)\.includes\(dfItem\)/,
     'the identity-only reads are gone');
 });

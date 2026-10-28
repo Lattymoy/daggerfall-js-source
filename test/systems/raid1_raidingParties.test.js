@@ -494,17 +494,21 @@ test('RAID1 the picker\'s bytes: the travel map\'s own TRAV0I01 bitmap, null unt
 
 test('RAID1 the world host by source: the seams answered where GameManager would - the street\'s pool, loose and transient, on the mod\'s band; the watch\'s defender; the sea refused; the street alone; both frames; the watch kept up for a raid', () => {
   const w = read('src/scenes/world.js');
-  const at = w.indexOf('  setRaidingPartiesHost({');
+  // PIN MOVED (WW6): the seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT) - the host's live names
+  // read there as `host.<name>`, the host constructing it where they stood
+  const rh = read('src/scenes/raidHost.js');
+  const at = rh.indexOf('  setRaidingPartiesHost({');
   assert.ok(at > 0);
-  const body = w.slice(at, w.indexOf('\n  });', at));
+  const body = rh.slice(at, rh.indexOf('\n  });', at));
+  assert.match(w, /\n {2}createRaidHost\(\{/, 'the host constructs it');
   assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true \}\)/);
   assert.match(body, /\}, mobileType, raidSpawnRange\(at\)\),/);   // PIN MOVED (STAFF-EVENT PACKS): the band through raidSpawnRange - a town raid's the mod's own, a staff event pack's its own
-  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true });
+  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // PACK-OPEN: never in a house or building
   assert.match(body, /standDefender: \(threats\) => cityGuards\.standDefender\(\{/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA G7): nor the Eltheric Ocean, whose composed politic is the isles' region's
   assert.match(body, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && politicClaimed\(maps\.getPoliticIndex\(px\.x, px\.y\)\) \? _questRegionIndex\(\) : -1; \}/);
   // PIN MOVED (STAFF-EVENT): `outdoors` (true) asks only that the player stands outdoors - an area's event; a raid's ask is the same
-  assert.match(body, /townHere: \(outdoors\) => \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior' \? null : outdoors \|\| \(_musicInLocationRect\(\) \? _questLoc\(\) : null\)\)/);
+  assert.match(body, /townHere: \(outdoors\) => \(\(host\.modes\?\.mode \?\? 'exterior'\) !== 'exterior' \? null : outdoors \|\| \(_musicInLocationRect\(\) \? _questLoc\(\) : null\)\)/);
   assert.match(body, /picker: \(\) => travelMapPickerData\(\)/);
   assert.match(body, /defendersAllowed: \(\) => !playerEntity\.crimeCommitted && !isTransformedLycanthrope\(playerEntity\)/);
   assert.match(body, /reputation: \(\) => \(\{ player: playerEntity, store: _questStore\(\) \}\)/);

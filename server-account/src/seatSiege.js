@@ -39,6 +39,7 @@ import {
   seatWeekOf, seatKeyOk, settleField, passWindowEnds, passOpens, siegeWinner, siegeAftermath, spoilsOf, SIEGE_HONOURS,
   CLAIM_FEE, STANDING_START, STANDING_MAX, seasonFloor, seasonZeroOf, siegeMinutes, seatWeekStartMs, seasonOf, STANDING_CHANGES,
 } from '../../src/net/townSeatLaw.js';
+import { domainsFor } from './domains.js';   // DOMAIN3: a Tourney's dead heat counts the region's homes at a seat of power
 
 const weekAt = (nowS) => seatWeekOf(nowS * 1000);
 /** The passes an account may ask for in an hour - one a connection, a battle's worth of reconnects. */
@@ -163,11 +164,11 @@ async function siegeWorks(db, b, nowS) {
  *  that made the seat Contested counted it (5.2 steps 1-2) - the standings' total of the week before the Tourney's (each
  *  source at its caps, reach, Tribute inside its room - never the rows' raw sum, where a Tribute row is Marks and a gate
  *  row counts unagreed), at that Turning's clock, and the Legacy each carried into that week. */
-async function higherOf(db, b, nowS, zero) {
+async function higherOf(db, b, nowS, zero, env = null) {   // DOMAIN3: `env`, the region law's week (its homes)
   const seat = (await confirmedSeats(db, nowS)).get(b.key);
   if (!seat) return null;
   const w = b.week - 1;
-  const list = await gatherStandings(db, seat, w, Math.floor(seatWeekStartMs(b.week) / 1000), !!seasonOf(w, zero));
+  const list = await gatherStandings(db, seat, w, Math.floor(seatWeekStartMs(b.week) / 1000), !!seasonOf(w, zero), await domainsFor(db, nowS, env, w));
   const { results: legacy = [] } = await db.prepare('SELECT guild_id, amount FROM town_seat_legacy WHERE week = ? AND key = ?').bind(w, b.key).all();
   const of = (g) => (list.find((s) => s.guild === g)?.total ?? 0) + Number(legacy.find((l) => l.guild_id === g)?.amount ?? 0);
   const a = of(b.attacker), d = of(b.defender);
@@ -218,7 +219,7 @@ export async function swordsSettled(db, week, key, nowS, { voided = false } = {}
  *     coming Edict void (a Neglect's lapse's statements).
  * Answers whether this request wrote it (a racing one finds it written).
  */
-async function applyResult(db, b, c, nowS, zero) {
+async function applyResult(db, b, c, nowS, zero, env = null) {
   const W = b.week, K = b.key, result = c.r, raised = c.a === 1 ? 1 : 0;
   const names = new Map();
   const { results: gs = [] } = await db.prepare('SELECT id, name, tag FROM guilds WHERE id IN (?, ?)').bind(b.attacker, b.defender).all();
@@ -248,7 +249,7 @@ async function applyResult(db, b, c, nowS, zero) {
       ...revoltStood(db, K, W, b.defender, nameOf(b.defender), nowS, history), ...swords]);
   }
   if (b.kind === 'tourney') {
-    const higher = result === 'tie' ? await higherOf(db, b, nowS, zero) : null;
+    const higher = result === 'tie' ? await higherOf(db, b, nowS, zero, env) : null;
     const winner = siegeWinner(result, higher);
     const order = winner === 'defend' ? [b.defender, b.attacker] : winner === 'attack' ? [b.attacker, b.defender] : [];
     const seat = (await confirmedSeats(db, nowS)).get(K);
@@ -336,7 +337,7 @@ export async function claimSiege({ db, nowS, subtle }, player, env, { receipt, c
   if (b.state === 'void') return { error: 'battle-void' };
   let r = await resultAt(db, c.sw, c.sk);
   const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);   // SEASON1: the once-a-Season rules read the Season counted
-  const applied = !r && await applyResult(db, b, c, nowS, zero);
+  const applied = !r && await applyResult(db, b, c, nowS, zero, env);
   r = await resultAt(db, c.sw, c.sk);
   if (!r) {
     // AUDIT-SEATS S3: the Turning came between the read and the write - the battle void, or its week settled without it

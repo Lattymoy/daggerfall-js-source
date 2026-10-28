@@ -283,6 +283,19 @@ Existing TEXTURE.210 fires are rest points too (2.1); the law only adds where no
   as beds so I can rest in a dungeon"). The page named no dungeon bed and the dungeon's point was a fire alone; its 108
   beds (Roleplay Realism's 41000-41002, 42 RDB blocks) are a bed's rest within a fire's reach of the box
   (`restAct.js` bedInReach), as is a bed pressed below deck. `01-Overview/bugs/Field-Bugs-2026-10-05.md`.
+- **A bed pressed indoors is a bed** (RPT1026-MISC BED-PRESS-INDOOR, 2026-10-26, a private report: a rest in a Fighters
+  Guild hall woke to the rough night's line, a bed clicked or not). The world and dungeon hosts already priced a pressed bed (`_restFromBed`) as a bed; the interior
+  host's `restKind` and `restPoint` never read it, so a guild hall's bed pressed priced as its boards. Both ask
+  `restSession.js:"export function interiorRestSpot"` now, handed the press. The R key in a guild hall is still the
+  rough night SURV4 makes it. Pinned by `test/systems/rest/rpt1026_misc_rest.test.js` (2). AUDIT RPT1026 L3: the press
+  lived only as long as the press, and a rest that asks first (REST-WARN, poisoned or diseased) opens its window on the
+  box's Yes - after it: the hall's bed pressed while poisoned still slept the boards rough, driven through the real
+  interior host. The press is the window's now: `createRestWindow`'s second argument is DaggerfallRestWindow's
+  `ignoreAllocatedBed`, which only a bed's press passes (BedActivation's `true`), and the door marks the bag
+  `bedPressed` for the open, where `setResting` and `restAct` read the place and the point
+  (`ui/restDoor.js`, `scenes/shared.js`). The street's ship bed hands its press through the same door (`world.js`'s
+  `restNow`, the press read as the toggle runs); a dungeon's bed is a bed in reach whatever the box (`bedInReach`).
+  `test/scenes/audit_rpt1026_l_bed.test.js` (2).
 - **Rooms count nights** (OPEN 10). Today `checkRent` counts rested hours down and the room's own expiry counts the
   character's days (`src/systems/tavern.js`'s sweep), and the two can disagree (the room's text says it expired while
   the sweep keeps it). Online under REST a room rented for N days buys **N nights**: a night at its bed spends one,
@@ -647,7 +660,8 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   the dungeon fires compare squared distances in plain arithmetic (Math.hypot's last bit differs between engines, and a
   tie must be the same tie on every client) and stand in no palace's block; the words - "Rest with my party", /ready
   online, the Online pane, an Ember Jar's last night, the patch notes. Kept, as readings: a guild hall's rest is a
-  rough night with Climates & Calories (SURV4's own law; 2.1's table listed it under Bed - the notes now say so); a
+  rough night with Climates & Calories (SURV4's own law; 2.1's table listed it under Bed - the notes now say so; a bed
+  there pressed is a bed since RPT1026-MISC BED-PRESS-INDOOR, section 5); a
   quest box raised during a night no longer pauses it (the night is one step; the box waits at the wake, over the
   rest window's own). Not verifiable here: the fires on the real dungeons (no ARENA2 in this container -
   `tools/dungeonFireProbe.mjs` reports them) and a spot on a room's roof between storeys (the collider's rays are

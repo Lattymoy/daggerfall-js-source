@@ -72,7 +72,7 @@ import { PakFile } from './pakFile.js';
 import { readBuildingData, BUILDING_DATA_SIZE } from './blocksFile.js';
 // PROF1: the three FALL.EXE / MapsFile tables and the map's bounds the account service reads too, in a module that reads no file (mapsTables.js) -
 // one home, re-exported here so every importer stands where it stood.
-import { REGION_NAMES, REGION_RACES, CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from './mapsTables.js';
+import { REGION_NAMES, REGION_RACES, CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y, BAY_REGION_COUNT, isProvinceRegion } from './mapsTables.js';
 export { REGION_NAMES, REGION_RACES, CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y };
 
 // World metrics.
@@ -110,6 +110,7 @@ export const REGION_TEMPLES = Object.freeze([
   88, 98, 82, 98, 84, 94, 36, 88, 94, 36,
   98, 84, 106, 88, 106, 88, 92, 84, 98, 88,
   82, 94,
+  0, 0, 0, 0, 0, 0, 0, 0, 0,   // WW-R: the provinces past the Bay - FALL.EXE names none of their temples
 ]);
 
 /** Block file prefixes indexed by blockIndex. */
@@ -199,9 +200,9 @@ export function mapPixelToWorldCoord(mapPixelX, mapPixelY) {
   return { x: mapPixelX * 32768, y: (499 - mapPixelY) * 32768 };
 }
 
-/** World coordinate to nearest map pixel. */
+/** World coordinate to the map pixel it stands in. WW-C2 (bible/03-World/World-Wide.md WW-C): FLOORED - DFU's truncation to the bit on the Bay, where every coordinate is non-negative and the two agree; past its west and south edges (a negative x or z) truncation named the NEXT pixel toward the Bay, and Cyrodiil's halls stood on a pixel the player standing on them never read. */
 export function worldCoordToMapPixel(worldX, worldZ) {
-  return { x: Math.trunc(worldX / 32768), y: 499 - Math.trunc(worldZ / 32768) };
+  return { x: Math.floor(worldX / 32768), y: 499 - Math.floor(worldZ / 32768) };
 }
 
 /**
@@ -330,17 +331,20 @@ export class MapsFile {
     return true;
   }
 
-  /** Name of specified region ('' if out of range). */
+  /** Name of specified region ('' if out of range) - WW-R: a province's past the Bay too (formats/mapsTables.js
+   *  PROVINCE_REGION_NAMES), which holds no MAPS.BSA record. */
   getRegionName(region) {
+    if (isProvinceRegion(region)) return REGION_NAMES[region];
     if (region < 0 || region >= this.regionCount) return '';
     return REGION_NAMES[region];
   }
 
-  /** Index of region with specified name, or -1. */
+  /** Index of region with specified name, or -1 - WW-R: a province's too. */
   getRegionIndex(name) {
     for (let i = 0; i < this.regionCount; i++) {
       if (REGION_NAMES[i] === name) return i;
     }
+    for (let i = BAY_REGION_COUNT; i < REGION_NAMES.length; i++) if (REGION_NAMES[i] === name) return i;
     return -1;
   }
 
@@ -510,7 +514,7 @@ export class MapsFile {
     // High Rock sea coast is the one politic value below the +128 band
     let result = politicIndex === 64 ? 31 : politicIndex - 128;
     if (result === 105) result = 16;   // known bad value -> Wrothgarian Mountains
-    if (result < 0 || result >= 62) result = 0;   // clamp out of range
+    if (result < 0 || result >= REGION_NAMES.length) result = 0;   // clamp out of range - WW-R: a province's region past the Bay is in range (its politic world/tamriel/tamrielGround.js groundPoliticIndex's)
     return result;
   }
 

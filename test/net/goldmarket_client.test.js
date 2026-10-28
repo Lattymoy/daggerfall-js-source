@@ -14,7 +14,11 @@ import { createMarketBook, MARKET_KEPT_TEXT } from '../../src/net/marketBook.js'
 import { realmGoldAct } from '../../src/systems/realmSaves.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { storesRows, storesSplit, GOLD_GOODS_LINE } from '../../src/ui/professions/profPages.js';
-import { createMarketTab, priceText, listableUnits, SPOILED_DISH_WHY } from '../../src/ui/marketTab.js';
+import { createMarketTab, priceText, listableUnits, SPOILED_DISH_WHY, CHANGED_PIECE_WHY } from '../../src/ui/marketTab.js';
+import { mintPiece } from '../../src/systems/smithItems.js';   // AUDIT MAKER-RARE B2: a Masterwork of your own make
+import { MASTERWORK } from '../../src/net/recipeLaw.js';
+import { applyEnchantments } from '../../src/systems/enchanting.js';
+import { enchantmentSettings } from '../../src/systems/enchantmentCatalogue.js';
 import { accountRefusalText } from '../../src/net/accountClient.js';
 import { courierFee, roadPixels, goldText, goldSaleOf } from '../../src/net/marketLaw.js';
 import { MARK_WORTH_GOLD } from '../../src/net/marksLaw.js';
@@ -291,7 +295,7 @@ test('GOLD-MARKET refusals: every new word the service says has its sentence', (
 test('GOLD-MARKET wiring: the host gives the market book the realm act over the playing session and a wallet that pays at the board\'s region (purse, letters, then that account - the service\'s order); the door has the collect; the service routes it', () => {
   const w = src('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-01, MARKET-ANY): the realm hook carries the session's abandon too, and the goods' receive beside it
-  assert.match(w, /realm: realmSession \? \{ act: \(o\) => realmGoldAct\(\{ \.\.\.o, session: realmSession, checkpoint: \(\) => onlineCheckpoint\(\) \}\), abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec\) => marketGoods\.receive\(rec\) \} : null,\n\s+wallet: realmWallet \}\)/);
+  assert.match(w, /realm: realmSession \? \{ act: \(o\) => realmGoldAct\(\{ \.\.\.o, session: realmSession, checkpoint: \(\) => onlineCheckpoint\(\) \}\), abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec, why\) => marketGoods\.receive\(rec, why\) \} : null,\n\s+wallet: realmWallet \}\)/);   // PIN MOVED (RPT1026-MARKET ARRIVE): the road's word on a collected piece handed through
   // PIN MOVED (CARDS6): the wallet is the host's one realm wallet, the card stakes' too
   assert.match(w, /const realmWallet = realmSession \? \(region\) => \{/);
   // MARKET-AUDIT (PIN MOVED: `deductGold`, its refusal's `credit` the whole cost as coins): the pay answers the undo of exactly
@@ -303,27 +307,31 @@ test('GOLD-MARKET wiring: the host gives the market book the realm act over the 
   assert.match(src('server-account/src/service.js'), /'\/v1\/market\/gold',/);
 });
 
-test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked lists neither way - the Crafted list leaves it out (its record mints it fresh: smithItems.js asMinted), and the pack\'s list says why, never "list it as a crafted piece"', async () => {
+test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked lists neither way - the Crafted list leaves it out (its record mints it fresh: smithItems.js asMinted), and the pack\'s list says why, never "list it as a crafted piece"; AUDIT MAKER-RARE B2: and so does a Masterwork of your own make enchanted at the item maker since', async () => {
   const fresh = { templateIndex: 531, name: 'Bread', provenance: 'aaaaaaaaaaaaaaaa' };
   const spoiled = { templateIndex: 531, name: 'Bread', provenance: 'bbbbbbbbbbbbbbbb', foodStage: 2 };
+  const enchanted = applyEnchantments(mintPiece({ recipe: 'cuirass:daedric', quality: MASTERWORK, seed: 1, maker: 'X' }, 'cccccccccccccccc'), [enchantmentSettings('StrengthensArmor', -1)]);
   const book = {
     state: { open: true, balance: 100, road: [], counts: {}, goldHeld: 0 }, pending: 0, cached: () => null, goldOk: true, purse: () => 500,
-    read: async () => ({ ok: true, data: { rows: [], orders: [], ways: { [fresh.provenance]: 'yours', [spoiled.provenance]: 'yours' } } }),
+    read: async () => ({ ok: true, data: { rows: [], orders: [], ways: { [fresh.provenance]: 'yours', [spoiled.provenance]: 'yours', [enchanted.provenance]: 'yours' } } }),
     settle: async () => ({ ok: true, settled: 0 }),
   };
   let root = null;
   const m = {
     book, stores: () => new Map(), region: DF, regionName: 'Daggerfall', regionNameOf: () => 'Daggerfall', hubs: HUBS, name: (k) => k, countName: (k) => k,
     pieces: () => [], take: () => true, putBack: () => {}, mint: () => {}, pieceName: () => 'a piece', weavers: [], stock: async () => ({ ok: true }),
-    goods: () => [fresh, spoiled].map((item) => ({ item, name: item.name, why: null })), good: () => null, goodName: (r) => (r.foodStage ? 'Mouldy Bread' : 'Bread'),
+    goods: () => [fresh, spoiled, enchanted].map((item) => ({ item, name: item.name, why: null })), good: () => null, goodName: (r) => (r.foodStage ? 'Mouldy Bread' : r.name),
   };
   const tab = createMarketTab(m, { busy: () => false, run: async (start) => start(), rerender: () => draw(), nowS: () => 0, alive: () => true });
   function draw() { root?.remove?.(); root = tab.body(); document.body.append(root); }
   await tab.open();
   [...root.querySelectorAll('button')].find((b) => b.textContent === 'My listings').onclick();
   await new Promise((r) => setTimeout(r, 0));
-  const what = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'What to list');
-  what.value = 'item'; what.onchange();
-  assert.ok(root.textContent.includes(`Not for the market: Bread (made by you. List it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}).`), root.textContent);
+  // PIN MOVED (PACK-PICK): the pack's kind a press (and a realm character's form opens on it), and each refused piece its
+  // own tile under "Not for the market", its why beneath its name - never one sentence
+  [...root.querySelectorAll('button')].find((b) => b.getAttribute('data-kind') === 'item').onclick();
+  const off = [...root.querySelectorAll('.packpick-refused')[0].querySelectorAll('.packpick-tile')]
+    .map((n) => [n.querySelectorAll('.packpick-name')[0].textContent, n.querySelectorAll('.packpick-why')[0].textContent]);
+  assert.deepEqual(off, [['Bread', 'made by you. List it as a crafted piece'], ['Mouldy Bread', SPOILED_DISH_WHY], [enchanted.name, CHANGED_PIECE_WHY]]);   // PIN MOVED (AUDIT MAKER-RARE B2): the enchanted Masterwork beside them
   root.remove();
 });

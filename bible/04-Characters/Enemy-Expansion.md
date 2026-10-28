@@ -479,6 +479,15 @@ Tests: `test/systems/enemyExpansion/dex7_bodies.test.js` (the census by the mod'
 and the riders, the looks at the door with the switch either way, the doors' refusals, once a page; a NoShadow row's
 body casting none, DEX7-7), mutants `tools/mutants/dex7.json`.
 
+RPT1026-ITEMS DEX-CORPSE (2026-10-27, a private report: the new Dremora's bodies gone at death, a pool of blood and
+their loot left): checked lane by lane. On the classic lane the Dremora Churl (285) dies into its row's own corpse,
+1708 record 25 - the authors' picture of it lying - which the archive's stand-in carries, measures and uploads; on
+the Morrowind lane it is Morrowind's dremora, laid in that body's death, the corpse flat under it casting its shadow
+alone, and a body with no death to pose lets the flat draw (MWNPC4). Neither lane lacks a body for it. The report's
+picture fits the Morrowind lane only if its body stands and draws nothing, which needs Morrowind's own files to run
+(none in the tree). `test/systems/enemyExpansion/rpt1026_items_dexcorpse.test.js`; mutants in
+`tools/mutants/rpt1026_items.json`.
+
 ## 11. DEX5 - the Troll that gets back up
 
 The mod ships a PREFAB for the Troll's corpse picture (`1618_20`), and DFU stands it in the corpse's place

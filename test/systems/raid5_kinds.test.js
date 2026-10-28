@@ -385,8 +385,11 @@ test('RAID5 the sites host on a grid of its own: the square the walkable cell ne
 test('RAID5 the hosts by source: the world host hands the raids its sites - the town\'s, the watch\'s bearer, the pool\'s refugees - says the objective beside the raid\'s word and hears a peer\'s; the pool names its refugees to every reader as allies; the thanks of a town held are richer (mutants: the sites unwired; the word unsent; the refugees hostile at a reader; the held thanks unread)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const raidSites = createRaidSites\(\{ townAt: wardenTownAt, townAtPixel: \(px, py\) => wardenTownOfPixel\(built\.values\(\), \(x, y\) => state\.pixelTranslation\(x, y, _wardenT\), px, py\), feet: enchantFeet, groundAt: surfaceAt, standGuard: cityGuards\.standBearer, spawnFoe: exteriorFoes\.spawnFoe \}\);/);   // PIN MOVED (AUDIT WORLD-EVENTS L4-4): and the raid's own town, off its pixel
-  const at = w.indexOf('  setRaidingPartiesHost({');
-  assert.match(w.slice(at, w.indexOf('\n  });', at)), /sites: \(\) => raidSites,/);
+  // PIN MOVED (WW6): the seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT), the host's live names
+  // read there as `host.<name>`
+  const rh = rd('src/scenes/raidHost.js');
+  const at = rh.indexOf('  setRaidingPartiesHost({');
+  assert.match(rh.slice(at, rh.indexOf('\n  });', at)), /sites: \(\) => host\.raidSites,/);
   assert.match(w, /const rk = raidWireWord\(\), ro = raidObjWord\(\); if \(rk\) frame\.rk = rk; if \(ro\) frame\.ro = ro;/);
   assert.match(w, /exteriorFoes\.setOnRaids\(\(from, rk, at, ro\) => raidPeerWord\(from, rk, at, ro\)\);/);
   assert.match(w, /raidSpoilsList\(c\.c, level, c\.y, typeof entry\.hd === 'boolean' \? entry\.hd : raidWasHeld\(c\.w\)\)/);   // PIN MOVED (AUDIT WORLD-EVENTS L3-14): held as the receipt came, for the character that fought

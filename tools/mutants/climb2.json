@@ -86,8 +86,8 @@
   {
     "name": "CLIMB2-grip-steep-top",
     "file": "src/player/parkour.js",
-    "old": "  if (!Number.isFinite(top.dist) || !top.normal || top.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) return null;\n  const y = hiY",
-    "new": "  if (!Number.isFinite(top.dist) || !top.normal) return null;\n  const y = hiY",
+    "old": "  const flat = Number.isFinite(top.dist) && top.normal && top.normal[1] >= PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER;",
+    "new": "  const flat = Number.isFinite(top.dist) && top.normal;",
     "tests": [
       "test/player/climb2.test.js",
       "test/systems/parkour.test.js",

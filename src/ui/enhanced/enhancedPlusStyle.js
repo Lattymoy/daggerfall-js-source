@@ -333,6 +333,38 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   .lvl-opt { min-height: 44px; padding: 12px 12px 10px; gap: 8px; } .lvl-opts { gap: 10px; } .lvl-lead { margin-bottom: 12px; } .lvl-hint { margin-top: 10px; }
 }
 
+/* START2: THE START-CHOICE PAGE (ui/enhanced/enhancedStartChoice.js) - the leveling question's shell and heading, the
+   eight starts as a sunk list down the left (the chosen one risen in brass, a homeland tagged, a shut one dimmed with
+   its reason) and the chosen start's story on the right with its Begin here; stacked on a phone. Tints and bevels
+   only, as the leveling tiles. */
+.lvl-shell .px-win.stc-win { width: min(940px, 100%); }
+.stc-grid { display: grid; grid-template-columns: minmax(250px, 2fr) 3fr; gap: 16px; align-items: stretch; }
+.stc-list { display: flex; flex-direction: column; gap: 6px; }
+.stc-opt { font: inherit; text-align: left; color: #d8cfae; cursor: pointer; display: flex; align-items: baseline; gap: 10px;
+  padding: 8px 12px; background: rgba(0,0,0,0.32); border: 2px solid;
+  border-color: ${FRAME_TONES.stoneDark} ${FRAME_TONES.stoneMid} ${FRAME_TONES.stoneLit} ${FRAME_TONES.stoneDim};
+  box-shadow: 0 0 0 1px #050608, inset 0 2px 0 rgba(0,0,0,0.45); transition: none; }
+.stc-opt.is-on, .stc-opt:focus-visible { outline: none; background: rgba(192,138,62,0.12);
+  border-color: ${FRAME_TONES.brassHi} ${FRAME_TONES.brassLo} #5c3f1a ${FRAME_TONES.brass};
+  box-shadow: 0 0 0 1px #050608, 0 0 14px rgba(243,207,134,0.18), inset 0 1px 0 rgba(255,244,210,0.18); }
+.stc-opt.is-on .lvl-key { color: rgb(243,239,44); border-color: ${FRAME_TONES.brass}; }
+.stc-opt-title { font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
+.stc-opt.is-on .stc-opt-title { color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+.stc-opt:disabled { cursor: default; opacity: 0.55; }
+.stc-detail { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(0,0,0,0.32); border: 2px solid;
+  border-color: ${FRAME_TONES.stoneDark} ${FRAME_TONES.stoneMid} ${FRAME_TONES.stoneLit} ${FRAME_TONES.stoneDim};
+  box-shadow: 0 0 0 1px #050608, inset 0 2px 0 rgba(0,0,0,0.45); }
+.stc-detail-title { font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
+.stc-detail-where { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: ${FRAME_TONES.brass}; text-shadow: 1px 1px 0 #050608; }
+.stc-pick { font: inherit; margin-top: auto; align-self: flex-end; cursor: pointer; padding: 8px 18px; font-size: 13px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); background: rgba(192,138,62,0.12); border: 2px solid;
+  border-color: ${FRAME_TONES.brassHi} ${FRAME_TONES.brassLo} #5c3f1a ${FRAME_TONES.brass}; box-shadow: 0 0 0 1px #050608; }
+@media (max-width: 720px) {
+  .stc-grid { grid-template-columns: 1fr; }
+  .stc-opt { min-height: 44px; }
+  .stc-pick { min-height: 44px; align-self: stretch; }
+}
+
 /* PLUS6: THE REST WINDOW WHILE RESTING (ui/enhanced/enhancedRest.js restingCard) - a title, a readout, a meter and a clear
    space before Stop. The vitals line sat on the button; now the rest reads top to bottom as a card: the mode as the
    window's heading, the hours in a large brass readout, a sunk meter with a banded brass fill, the vitals as three
@@ -942,6 +974,53 @@ export const TECH_BLOCK_CSS = `.techbox { --tech: #59c7ff; --tech-hi: #c4ecff; -
 .inv-tip.tip-compact .techbox .tech-note, .pack-shell .packtip.packdetail .card.card-compact .techbox .tech-note { display: none; }
 .inv-tip.tip-tight .techbox .tech-foot, .pack-shell .packtip.packdetail .card.card-tight .techbox .tech-foot { display: none; }
 .inv-tip.tip-tight .techbox.compact p.tech-effect, .pack-shell .packtip.packdetail .card.card-tight .techbox.compact p.tech-effect { margin: 0; }`;
+/** AUDIT LOCKPICK C1 (bible/06-Systems/Lockpicking.md section 4): THE LOCK'S WINDOW (ui/lockpickWindow.js) - the layout
+ *  alone; the kit dresses its frame, header, well, presses and chips by role (ui/enhanced/enhancedFrame.js FRAME_ROLES), so a
+ *  Plus colour and the DFO Grimoire dress repaint it as they repaint the Broker. The classic skin lays it with the kit cut
+ *  to its own selectors (lockpickWindow.js lockSkinCss), as AUDIT SET U1 laid the Broker's. */
+export const LOCK_CSS = `/* ── LOCKPICK: THE LOCK'S WINDOW (ui/lockpickWindow.js) - the tumblers in cross-section over a stone window; the kit
+   dresses it (FRAME_ROLES), this is the layout and the words' ink ── */
+.lk-host { position: fixed; inset: 0; z-index: 13; display: flex; align-items: center; justify-content: center; padding: 8px;
+  background: rgba(0,0,0,0.42); font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; }
+.lk-win { width: min(560px, 96vw); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; border: 2px solid;
+  padding: 0 0 10px; color: #f1ead8; font-size: 15px; line-height: 1.35; user-select: none; -webkit-user-select: none; }   /* C2: never past the screen - it scrolls */
+.lk-head { padding: 10px 14px 8px; }
+.lk-title { color: #efe0b8; font-size: 18px; letter-spacing: 0.06em; text-shadow: 2px 2px 0 #050608; }
+.lk-diff { color: #d9d0bc; font-size: 15px; }   /* C10: DFU's look-at line is read - a reading line's size */
+.lk-canvas { display: block; width: calc(100% - 20px); height: auto; margin: 10px auto 6px; aspect-ratio: 520 / 260; cursor: pointer;
+  touch-action: none; image-rendering: auto; }   /* C2: the lock alone takes the finger's drag; the window scrolls */
+.lk-word { min-height: 2.7em; padding: 0 14px; text-align: center; color: #fbf8f0; }   /* two lines held - three on a phone (C11) */
+.lk-word.bad { color: #ffc4bb; } .lk-word.good { color: #c9f0b0; } .lk-word.warn { color: #ffd98a; }
+.lk-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 10px; padding: 4px 14px 0; font-size: 13px; }
+.lk-meta > span { padding: 2px 8px; color: #e2dccd; }
+.lk-meta b { color: #f3cf86; font-weight: normal; }
+.lk-acts { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; padding: 10px 14px 2px; }
+.lk-acts button { font: inherit; color: #e6dec6; padding: 6px 14px; cursor: pointer; }
+/* C7 (MENU-ORDER, the Broker's refusal): a refused press is never disabled - pressed, it says why - and it reads refused
+   under the pointer, held and focused too, its word in the dim bone */
+body .lk-host .lk-win .lk-acts button[aria-disabled="true"], body .lk-host .lk-win .lk-acts button[aria-disabled="true"]:hover,
+body .lk-host .lk-win .lk-acts button[aria-disabled="true"]:active, body .lk-host .lk-win .lk-acts button[aria-disabled="true"]:focus-visible {
+  color: #9c937d; text-shadow: none; border-color: rgba(125,116,96,0.3); background-color: rgba(12,14,18,0.6); background-image: none;
+  box-shadow: 0 0 0 1px rgba(5,6,8,0.6); translate: none; cursor: help; }
+.lk-keys { padding: 6px 14px 0; text-align: center; color: #b9ab93; font-size: 12px; }
+.lk-win.pad .lk-keys { display: none; }   /* C3/C9: a pad's prompts stand on its bar - no key letters to a thumb */
+@media (pointer: coarse) {
+  .lk-keys { display: none; }   /* C9: no keyboard keys told to a finger */
+  .lk-acts button { min-height: 44px; min-width: 44px; padding: 8px 16px; }   /* C5: a finger's press */
+}
+@media (max-width: 420px) { .lk-word { min-height: 4.05em; } }   /* C11: three lines held where the words wrap to three */
+@media (max-height: 520px) {   /* C2: a phone on its side - the lock beside its words and presses, the whole of it on the screen */
+  .lk-win { width: min(880px, 98vw); display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); grid-template-areas: "head head" "lock word" "lock meta" "lock acts"; align-content: start; }
+  .lk-head { grid-area: head; padding: 6px 12px 4px; }
+  .lk-canvas { grid-area: lock; width: auto; max-width: calc(100% - 16px); max-height: calc(100dvh - 96px); margin: 8px; }
+  .lk-word { grid-area: word; min-height: 4.05em; padding: 8px 10px 0; }
+  .lk-meta { grid-area: meta; } .lk-acts { grid-area: acts; }
+  .lk-keys { display: none; }
+}
+/* S3: the pad's prompt bar up under it (plusPad.js promptClearance) - the window stands above the bar, never under it */
+html.plus-pad-prompts-visible .lk-host { padding-bottom: calc(var(--plus-pad-clearance, 0px) + 8px); }
+html.plus-pad-prompts-visible .lk-win { max-height: calc(100dvh - var(--plus-pad-clearance, 0px) - 16px); }
+@media (prefers-reduced-motion: reduce) { .lk-win { scroll-behavior: auto; } }`;
 /** SET7: the Sigil Broker's window (ui/brokerWindow.js) - every rule the window's own class; the window lays it itself on the classic skin (AUDIT SET U1), with the kit made for its roles alone. */
 export const BROKER_CSS = `/* ── SET7: THE SIGIL BROKER'S WINDOW (ui/brokerWindow.js) - the Info box's kind: a stone window over the world, the
    day's six offers in a list, the one pressed shown whole beside it (under it on a phone). The kit dresses the window,
@@ -1076,6 +1155,38 @@ export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/ref
    no press of its own gives that column to its name */
 .reforge-shell .broker-offer:not(.codex-row):not(.codex-set):not(.codex-gilded):not(.scry-row):not(:has(> button)) { grid-template-columns: 48px minmax(0, 1fr) max-content; }
 .reforge-shell .broker-name { white-space: normal; line-height: 1.25; }`;
+/** APPEARANCES (bible/04-Characters/Wardrobe.md): THE WARDROBE'S WINDOW (ui/wardrobe/wardrobeWindow.js) - the Broker's shape,
+ *  so his sheet lays it; these are its own rules: a worn piece's row with no price, and the card's looks, a line each.
+ *  Geometry and the words' colours alone - the kit dresses the rest. APPEARANCES-II: the preview at the card's head (the
+ *  figure beside its name, a doll's pixels kept square) and a look's picture and name as one press that tries it on. */
+export const WARDROBE_CSS = `/* ── APPEARANCES: THE WARDROBE ── */
+.wardrobe-shell .broker-offer.wardrobe-piece { grid-template-columns: 48px minmax(0, 1fr); }
+.wardrobe-shell .broker-offer.wardrobe-piece .broker-set { white-space: normal; }
+.wardrobe-shell .wardrobe-count { margin: 0 0 8px; font-size: 12px; color: #b9ab93; }
+.wardrobe-shell .wardrobe-looks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.wardrobe-shell .wardrobe-look { display: grid; grid-template-columns: minmax(0, 1fr) max-content minmax(96px, max-content); align-items: center; gap: 8px; padding: 4px 6px; }
+.wardrobe-shell .wardrobe-try { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; margin: 0; padding: 2px;
+  appearance: none; background: transparent; border: 1px solid transparent; box-shadow: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.wardrobe-shell .wardrobe-try[aria-pressed="true"] { border-color: rgba(243,207,134,0.55); background: linear-gradient(90deg, rgba(243,207,134,0.12), transparent 85%); }
+.wardrobe-shell .wardrobe-try:focus-visible { outline: 2px solid #f3cf86; outline-offset: 2px; }
+.wardrobe-shell .wardrobe-name { min-width: 0; font-size: 13px; color: #e6dccb; overflow-wrap: anywhere; }
+.wardrobe-shell .wardrobe-look.on .wardrobe-name, .wardrobe-shell .wardrobe-look.own .wardrobe-name { color: #f3cf86; }
+.wardrobe-shell .wardrobe-press { width: auto; }
+.wardrobe-shell .wardrobe-preview { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; padding: 8px; border: 1px solid rgba(243,207,134,0.25); background: rgba(0,0,0,0.35); }
+.wardrobe-shell .wardrobe-figure { flex: 0 0 auto; width: auto; height: 220px; max-width: 50%; object-fit: contain; }
+.wardrobe-shell .wardrobe-figure.doll { image-rendering: pixelated; }
+.wardrobe-shell .wardrobe-figure.busy { width: 120px; }
+.wardrobe-shell .wardrobe-preview-said { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wardrobe-shell .wardrobe-preview-head { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #b9ab93; }
+.wardrobe-shell .wardrobe-preview-name { font-size: 14px; color: #f3cf86; overflow-wrap: anywhere; }
+@media (pointer: coarse) { .wardrobe-shell .wardrobe-press, .wardrobe-shell .wardrobe-piece, .wardrobe-shell .wardrobe-try { min-height: 40px; } }
+@media (max-width: 720px) {
+  .wardrobe-shell .wardrobe-look { grid-template-columns: minmax(0, 1fr) minmax(96px, max-content); }
+  .wardrobe-shell .wardrobe-try { grid-template-columns: 44px minmax(0, 1fr); }
+  .wardrobe-shell .wardrobe-look .broker-price { grid-column: 1; grid-row: 2; padding-left: 54px; }
+  .wardrobe-shell .wardrobe-look .wardrobe-press { grid-column: 2; grid-row: 1 / span 2; }
+  .wardrobe-shell .wardrobe-figure { height: 160px; }
+}`;
 /** BOUNTY1 (2026-09-28): THE BOUNTY BOARD'S WINDOW and the payday notice (ui/bounty/bountyWindow.js) - the Broker's kind: a
  *  stone window over the world, the town's notices in a list, the one pressed read whole beside it (under it on a
  *  phone). The kit dresses the window, the card, the rows, the header and the presses (ui/enhanced/enhancedFrame.js); this is
@@ -1135,6 +1246,15 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 .bounty-noticebody .bounty-story { font-size: 14px; }
 .bounty-rewardbox { display: flex; flex-direction: column; gap: 3px; align-self: stretch; }
 .bounty-rewarditem { font-size: 15px; text-shadow: 1px 1px 0 #050608; }
+/* HUNTERS-MARK: the hunter's rank under the title and its bar to the next rung; the week's named mark in the list */
+.bounty-rank { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 6px 0 0; font-size: 12px; color: #d8ccb6; }
+.bounty-rank b { font-weight: normal; letter-spacing: 0.08em; text-transform: uppercase; color: #f3cf86; }
+.bounty-rankbar { flex: 1 1 100px; max-width: 200px; height: 6px; border: 1px solid rgba(243,207,134,0.45); background: rgba(0,0,0,0.35); }
+.bounty-rankbar i { display: block; height: 100%; background: #c08a3e; }
+.bounty-ranknext, .bounty-rankwait { color: #b9ab93; }
+.bounty-post.bounty-mark { border-color: rgba(213,183,135,0.5); background: linear-gradient(90deg, rgba(135,30,45,0.24), transparent 90%); }
+.bounty-post.bounty-mark .bounty-post-title { color: #f0d9a8; }
+.bounty-marktraits { margin: 0 0 8px; font-size: 12px; color: #e59a8e; }
 @media (max-width: 720px) {
   .bounty-shell { padding: 8px; }
   .bounty-body { flex-direction: column; padding: 10px 12px 12px; }
@@ -1294,6 +1414,12 @@ export const NOTICE_CSS = `/* ── NOTICE1: THE NOTICE BOARD ── */
   text-transform: uppercase; color: #f3cf86; }
 .notice-seat-works-line, .notice-seat-works-stock { margin: 0 0 6px; }
 .notice-seat-works .act { margin: 0 0 8px; }
+.notice-seat-gifts { margin-top: 10px; }
+.notice-seat-gift { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 8px; }
+.notice-seat-gift-what { flex: 1 1 220px; min-width: 0; }
+.notice-seat-gift-n { width: 84px; }
+.notice-seat-gifts .notice-seat-gift .act { margin: 0; }
+.notice-seat-gift-recent { margin: 0 0 4px; color: #cdbf9f; font-size: 13px; }
 @media (max-width: 720px) {
   .notice-shell { padding: 8px; }
   .notice-cork { padding: 10px; }
@@ -1675,6 +1801,51 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .prof-works > .prof-smelt.prof-locked { border-color: rgba(192,138,62,0.1); }
 .prof-recipes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 6px; margin: 4px 0 10px; }
 .prof-recipes > .prof-recipe { margin: 0; grid-template-columns: minmax(0, 1fr); align-content: center; min-height: 46px; }
+/* CRAFT-HALL (2026-10-26): a track's header - its name and rank, its bar, its XP and its first-time bonuses - over every
+   station worked and in the Crafting page's strip (a button there, opening it on the Professions page); a station's
+   shows (All, Can make now, First-time bonus); a card's or a row's first-time bonus, owed (lit) or made (quiet); the
+   owed list; Craft x N */
+.prof-track { display: flex; flex-direction: column; gap: 3px; margin: 2px 0 8px; padding: 6px 8px; text-align: left; font: inherit; font-size: 12px;
+  color: var(--bone, #e9e4d9); background: rgba(10,8,6,0.5); border: 1px solid rgba(192,138,62,0.25); }
+button.prof-track { width: 100%; cursor: pointer; }
+button.prof-track:hover, button.prof-track:focus-visible { border-color: var(--brass, #c08a3e); outline: none; }
+.prof-track-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.prof-track-top b { color: #efe0b8; font-weight: normal; letter-spacing: 0.06em; }
+.prof-track .px-meter { height: 6px; }
+.prof-track-xp { font-size: 11px; color: #b9ab93; font-variant-numeric: tabular-nums; }
+.prof-track-firsts, .prof-firsts { font-size: 11px; color: #e8b872; }
+.prof-firsts { margin: 4px 0; font-size: 12px; }
+.prof-trackstrip { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin: 4px 0 8px; }
+.prof-trackstrip > .prof-track { margin: 0; }
+.prof-shows { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 6px; }
+.prof-show { font: inherit; font-size: 12px; padding: 4px 9px; color: #b9ab93; background: rgba(10,8,6,0.55); border: 1px solid rgba(192,138,62,0.25); cursor: pointer; }
+.prof-show.on { color: #f3cf86; border-color: var(--brass, #c08a3e); }
+.prof-first { font-size: 11px; color: #f3cf86; }
+.prof-first::before { content: '★ '; }
+.prof-first.made { color: #8f8574; }
+.prof-first.made::before { content: '✓ '; }
+.prof-raise { align-items: baseline; }
+.prof-raise .k { font-size: 13px; letter-spacing: 0.02em; text-transform: none; color: #d9cfbd; }   /* an act's sentence reads as one, not a label */
+.prof-raise .v { font-size: 14px; text-align: right; white-space: normal; color: #f3cf86; }
+.prof-owed { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 6px; font-size: 12px; color: #d9cfbd; }
+.prof-owed-row::before { content: '★ '; color: #f3cf86; }
+.prof-times { display: flex; align-items: center; gap: 6px; }
+.prof-doors { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+@media (pointer: coarse) { .prof-show, button.prof-track { min-height: 40px; } }
+/* MASTER-ART: a Master's work in a craft box - its three line pickers and its press 40px for a finger and a key, the
+   catalysts as inputs, the last work's card in the Legendary orange (lootRarity.js RARITIES.legendary.colour) */
+.prof-master { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid rgba(224,122,46,0.45); }
+.prof-master-head { color: #e07a2e; font-weight: normal; letter-spacing: 0.06em; }
+.prof-master-lines { display: flex; flex-direction: column; gap: 6px; }
+.prof-master-line { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 8px; color: #d9cfbd; }
+.prof-master-pick { min-height: 40px; min-width: 0; padding: 4px 8px; font: inherit; font-size: 13px; color: var(--bone, #e9e4d9);
+  background: rgba(10,8,6,0.75); border: 1px solid rgba(192,138,62,0.35); }
+.prof-master-pick:focus-visible, .prof-master-go:focus-visible { outline: 2px solid #e07a2e; outline-offset: 1px; }
+.prof-master-go { min-height: 40px; align-self: flex-start; }
+.prof-master-card { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px; border: 1px solid #e07a2e; background: rgba(224,122,46,0.1); }
+.prof-master-name { color: #e07a2e; font-weight: normal; }
+.prof-master-tier { font-size: 11px; color: #e8b872; letter-spacing: 0.08em; text-transform: uppercase; }
+.prof-master-got { flex: 1 1 100%; margin: 0; padding-left: 16px; color: #efe0b8; }
 /* Existing readable text roles follow the active theme rather than one hard-coded Stone palette. */
 .px-qdetail.prof-detail .px-note { color: var(--bone); }
 .prof-matbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 4px; font-size: 12px; color: #d9cfbd; }
@@ -1851,6 +2022,8 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .market-where, .market-quality, .market-units, .market-state { color: #c9bba1; font-size: 12px; }
 .market-median { color: #cdbd9f; font-size: 12px; white-space: nowrap; }
 .market-mine, .market-mod { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #efe0b8; }
+.market-stolen { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #e3a08f; }   /* RPT1026-LEDGERLAW: a stolen piece's row */
+.market-stolenline { flex: 1 1 100%; margin: 0; font-size: 12px; color: #e3a08f; }
 .market-line { width: 60px; height: 16px; }
 .market-line polyline { fill: none; stroke: #f3cf86; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .market-bar, .market-counterrow, .market-order, .market-listing, .market-histrow { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
@@ -1878,6 +2051,71 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 /* in the field's column a select's own flex-basis (AUDIT 31 U14's 160px) is its HEIGHT - the field takes the row's basis */
 .market-field > * { flex: 0 0 auto; }
 .market-formnotes:empty { display: none; }
+/* PACK-PICK (ui/packPicker.js): the List form's kinds as presses, the views' chips' own; the pack's pieces as pictured
+   tiles in their tiers' frames (the tiers' colours laid here too - the board is drawn on either skin), a sift's bar over
+   them, the refused folded under them, and the piece chosen looked at over its price */
+${rarityVarsCss('.market-listform ')}
+.market-kinds { display: flex; flex-wrap: wrap; gap: 4px; }
+/* AUDIT PACK-PICK A5: chips (notice-tab) as the views' are - as the frame's .act they lost every rule below to its own */
+.market-kinds .market-kind, .market-filters .market-sellpack { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 13px;
+  letter-spacing: 0.06em; border: 1px solid rgba(192,138,62,0.22); background: rgba(10,8,6,0.4); }
+.market-kinds .market-kind[data-dficon]::before, .market-filters .market-sellpack[data-dficon]::before { width: 16px; height: 16px; margin: 0; }
+.market-kinds .market-kind.on { color: #f3cf86; border-color: var(--brass, #c08a3e); background: rgba(192,138,62,0.16); box-shadow: none; }
+.market-filters .market-sellpack { margin-left: auto; color: #f3cf86; border-color: rgba(192,138,62,0.5); }
+.packpick { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.packpick-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.packpick-find { flex: 1 1 160px; min-width: 0; }
+.packpick-menu { flex: 0 1 auto; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+.packpick-count { margin-left: auto; font-size: 12px; color: #b9ab93; white-space: nowrap; }
+.packpick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px; max-height: 300px; overflow-y: auto; padding: 1px; }
+.packpick-tile { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 8px 4px 4px; text-align: left; font: inherit; font-size: 12px;
+  color: var(--bone, #e9e4d9); background: rgba(10,8,6,0.62); border: 1px solid rgba(192,138,62,0.25); cursor: pointer; }
+button.packpick-tile:hover, .packpick-tile:focus-visible { border-color: rgba(192,138,62,0.65); }   /* AUDIT PACK-PICK B: a refused tile is no press */
+.packpick-tile.on { border-color: var(--brass, #c08a3e); background-color: rgba(192,138,62,0.2); box-shadow: inset 0 0 0 1px rgba(243,207,134,0.4); }
+.packpick-tile[data-rarity] { border-color: var(--rar-hi) var(--rar-lo) var(--rar-lo) var(--rar-hi);
+  background-image: radial-gradient(ellipse at 0% 50%, rgba(var(--rar-rgb),0.2), transparent 60%); }
+.packpick-tile.on[data-rarity] { box-shadow: inset 0 0 0 1px var(--rar), 0 0 6px rgba(var(--rar-rgb),0.4); }
+/* AUDIT PACK-PICK A6: a tier's tile answers the pointer and the keys too - its frame outranked the plain tile's hover */
+button.packpick-tile[data-rarity]:hover { border-color: var(--rar); background-color: rgba(var(--rar-rgb),0.12); }
+/* AUDIT PACK-PICK B5: the chosen tile marked past its colour - a mark and a light inner line, never brass alone (a
+   chosen Common read as an unchosen Rare) */
+.packpick-tile { position: relative; }
+.packpick-tile.on::after { content: '\\2713'; position: absolute; top: 2px; right: 5px; font-size: 12px; line-height: 1; color: #f3ead8; }
+.packpick-tile.on { padding-right: 18px; box-shadow: inset 0 0 0 2px #f3ead8; }
+.packpick-tile.on[data-rarity] { box-shadow: inset 0 0 0 2px #f3ead8, 0 0 6px rgba(var(--rar-rgb),0.4); }
+.packpick-tile:focus-visible { outline: 2px solid #f3cf86; outline-offset: -2px; }
+.packpick-tile[data-rarity] .packpick-name, .packpick-card[data-rarity] .packpick-name { color: var(--rar-hi); }
+.packpick-tile.off { cursor: default; opacity: 0.62; }
+/* AUDIT PACK-PICK A10: a frame the size of its box, the picture in it at its own fitted size (UI1), as a market row's */
+.packpick-pic { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; }
+.packpick-bigpic { width: 48px; height: 48px; }
+.packpick-img { image-rendering: pixelated; }
+.packpick-nopic { display: inline-block; background: rgba(5,6,8,0.5); box-shadow: inset 0 0 0 1px rgba(192,138,62,0.18); }
+.packpick-words { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.packpick-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; color: #f3ead8; }
+.packpick-sub { font-size: 11px; color: #c9bba1; }
+.packpick-why { font-size: 11px; color: #e3a57c; }
+.packpick-none { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; grid-column: 1 / -1; margin: 4px 0; }
+.packpick-refused > summary { cursor: pointer; font-size: 12px; letter-spacing: 0.06em; color: #cdbd9f; }
+.packpick-refused[open] > summary { margin-bottom: 6px; }
+.packpick-card { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: rgba(12,10,8,0.78);
+  border: 1px solid rgba(192,138,62,0.4); border-left: 3px solid var(--rar, var(--brass, #c08a3e)); }
+.packpick-cardhead { display: flex; align-items: center; gap: 10px; }
+.packpick-card .packpick-name { font-size: 14px; font-weight: normal; -webkit-line-clamp: 3; }
+.packpick-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: #d9cfbd; }
+.packpick-stat { white-space: nowrap; }
+.packpick-magic { margin: 0; padding: 0 0 0 14px; font-size: 12px; color: #f3cf86; }
+.packpick-magic li { margin: 1px 0; }
+.packpick-cardnone { margin: 0; font-style: italic; }
+@media (pointer: coarse) { .packpick-tile, .market-kinds .market-kind, .market-filters .market-sellpack { min-height: 44px; }
+  /* AUDIT PACK-PICK B4: the rest of the form a finger's too - the fold's name was 14px tall */
+  .packpick-find, .packpick-menu, .market-listform .market-num { min-height: 44px; }
+  .packpick-refused > summary { display: flex; align-items: center; min-height: 44px; } }
+@media (max-width: 640px) { .packpick-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); max-height: 240px; } .packpick-count { margin-left: 0; }
+  .market-filters .market-sellpack { margin-left: 0; }
+  /* a phone's four kinds two by two - one a row stood them three rows deep over the pack */
+  .market-kinds { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .market-kinds .market-kind { min-width: 0; text-align: left; white-space: normal; font-size: 12px; } }
 .market-listing.state-sold, .market-listing.state-cancelled, .market-listing.state-expired, .market-listing.state-removed { opacity: 0.62; }
 /* AUDIT 30 U5: a crafted row its own columns - its quality line the width the name gave up; at a phone's width two
    even columns, every cell able to shrink (the name drew 0px, the price over the road) */
@@ -2141,7 +2379,9 @@ ${TECH_BLOCK_CSS}
 @media (pointer: coarse) { .setline { min-height: 40px; } .setstrip { max-height: 216px; } }   /* AUDIT SET U14: a line a thumb presses, as every other press on a touch screen */
 ${BROKER_CSS}
 ${REFORGE_CSS}
+${WARDROBE_CSS}
 ${BOUNTY_CSS}
+${LOCK_CSS}
 ${NOTICE_CSS}
 ${PROF_CSS}
 ${ARENA_WINDOW_CSS}
@@ -2178,6 +2418,9 @@ ${ARENA_WINDOW_CSS}
    words, in the lock's line style without the padlock, muted. */
 .pack-shell [data-junk] .tile > *, .trade-shell [data-junk] .tile > *, .ptrade-shell [data-junk] .tile > * { opacity: 0.5; filter: grayscale(0.7); }
 .card .junkline, .pack-shell .card p.junkline { color: #a89f88; }
+/* WILD-INSURE (net/wild/wildInsureBook.js): an insured piece's card says so in the lock's line style, in the green the
+   comparison block reads as better */
+.card .insuredline, .pack-shell .card p.insuredline { color: #74d9a0; }
 `;
 
 /** AUDIT MERGE-PLUS D3: the lane's words on Stone's light grey (ONLINE_DRESS_CSS, last) - each 4.5:1 or better over

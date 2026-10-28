@@ -8,13 +8,14 @@
 //
 // Nothing here is saved: an event is the hub's, said again at every hello.
 import { validStaffEvent, staffEventKey, staffEventIdOf, isAreaEvent, STAFF_EVENTS_MAX } from '../net/staffEvent/staffEventLaw.js';
+import { raidTownIs } from '../world/raidShared.js';   // WW6: a town's event's town - the Bay's by region and location, past the Bay by its own index
 
 /**
  * A staff event held as a raid: the fields systems/raidingParties.js reads off a raid, and the event's own.
  * @typedef {{ staff: import('../net/staffEvent/staffEventLaw.js').StaffEvent, key: string, regionIndex: number,
  *   locationIndex: number, locationName: string, px: number, py: number, startMinute: number, endMinute: number,
  *   attackAmount: number, type: number, killed: number, struck: boolean, announced: boolean, cleansed: boolean,
- *   routed: boolean, bossFc: number, bossUp: 0|1, bossDown: 0|1, bossSaid: number, mine: number, fillS?: number, bossLostAt?: number, handSeen: number, clearSince?: number, clearWait?: Set<any> }} StaffRaid
+ *   routed: boolean, bossFc: number, bossUp: 0|1, bossDown: 0|1, bossSaid: number, mine: number, fillS?: number, bossLostAt?: number, handSeen: number, bossHand?: number, clearSince?: number, clearWait?: Set<any> }} StaffRaid
  *   `fillS` STAFF-EVENT PACKS' pace: the seconds its packs take to stand the cap, rolled once (raidingParties.js).
  *   `mine` THE REWARD's: its monsters that fell after a blow of mine, mine to stand or a puppet of another's.
  *   `bossFc` the boss call (the ledger's `fc`) whose boss I stood, -1 none; `bossSaid` the call whose boss was announced;
@@ -96,13 +97,14 @@ export const staffRaidOfKey = (key) => { const id = staffEventIdOf(key); return 
 
 /**
  * THE EVENT I STAND IN, or null: a town's while I stand in its town (the host's `townHere` - outdoors, in the rect, the
- * raid's own test); an area's while I stand outdoors on its pixel.
+ * raid's own test - WW6: a town past the Bay by its own location index, world/raidShared.js raidTownIs); an area's while
+ * I stand outdoors on its pixel.
  * @param {{regionIndex: number, locationIndex: number}|null} town @param {{x: number, y: number}|null} px @param {boolean} outdoors
  */
 export function staffRaidHere(town, px, outdoors) {
   for (const r of _raids.values()) {
     if (r.cleansed) continue;
-    if (isAreaEvent(r.staff) ? outdoors && !!px && px.x === r.px && px.y === r.py : !!town && town.regionIndex === r.regionIndex && town.locationIndex === r.locationIndex) return r;
+    if (isAreaEvent(r.staff) ? outdoors && !!px && px.x === r.px && px.y === r.py : raidTownIs(r, town)) return r;
   }
   return null;
 }

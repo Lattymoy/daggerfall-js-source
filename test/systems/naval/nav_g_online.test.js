@@ -41,6 +41,8 @@ test('NAV-G my word: each ship I stand in the wire frame\'s natives, rounded as 
   const self = navalWireRecord({ me: { hull: 0.426, crippled: true, boarders: false }, law: { Wayrest: 80.4, Daggerfall: 0, Sentinel: 250 } });
   assert.deepEqual(self, { s: [], v: [], b: [], p: [43, 1, 0], n: [[1, 80], [2, 100]] });
   assert.equal(navalWireRecord({ law: { Wayrest: 0 } }), null, 'owed nothing and nothing else: null');
+  // AUDIT HORIZONTAL (lane C): my boat alone is a word - NAV1O-wire-self-alone-unsaid's own pin; `self` above says a law too
+  assert.deepEqual(navalWireRecord({ me: { hull: 0.5, crippled: false, boarders: true } }), { s: [], v: [], b: [], p: [50, 0, 1] });
   // AUDIT NAV1 (online #15): my Ships at sea by its row - never the default, which saying nothing already says
   assert.deepEqual(['few', 'many', 'off'].map((traffic) => navalWireRecord({ traffic })), [1, 3, 0].map((t) => ({ s: [], v: [], b: [], t })));
   assert.deepEqual([TRAFFIC_DEFAULT, 'lots', undefined].map((traffic) => navalWireRecord({ traffic })), [null, null, null]);
@@ -123,7 +125,7 @@ test('NAV-G a peer\'s word through the door, whole or not at all: my own word co
 test('NAV-G a blow on a ship another stands: the striker sends the directed hit frame - the ship, her hurts, a fire (a ball\'s 1, a barrel\'s 2 - AUDIT NAV1), the zone - and the stander\'s door takes only bounded numbers, a known fire and a known zone; AUDIT NAV1 (online): no board claims - a ship boarded is taken over at the grapple, never marked in her stander\'s world - and a GRAPPLE (my ship alongside your boat) carries no hurt (mutants: the ceiling, the zone\'s codes, a grapple with a hurt)', () => {
   const d = navalHitData('ann', { n: 7, hull: 33.4, sail: 5.6, crew: 2, fire: true, zone: 'holed' });
   assert.deepEqual(d, { to: 'ann', nv: { n: 7, h: 33, s: 6, c: 2, f: 1, z: 2 } });
-  assert.deepEqual(validNavalHit(d), { n: 7, hull: 33, sail: 6, crew: 2, fire: true, zone: 'holed', grapple: false, cask: null, answer: false, foul: 0 });   // RAM-BOARD (AUDIT 2026-10-17): a blow says no foul
+  assert.deepEqual(validNavalHit(d), { n: 7, hull: 33, sail: 6, crew: 2, fire: true, zone: 'holed', grapple: false, cask: null, answer: false, ram: false });   // RAM-RETURN (AUDIT): a ball's blow is no ram's
   // AUDIT NAV1 (online #15): a cask's claim, and its owner's answer
   const k = navalHitData('ann', { n: 0, cask: 4000000000 }), a = navalHitData('bob', { n: 0, cask: 9, answer: true });
   assert.deepEqual([k.nv.k, k.nv.a, a.nv.k, a.nv.a], [4000000000, undefined, 9, 1]);

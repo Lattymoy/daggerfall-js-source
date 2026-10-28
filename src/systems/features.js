@@ -301,8 +301,10 @@ export const MOD_CURATED = Object.freeze({
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
-  // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness.
-  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),
+  // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness. RPT1026-CLIENT (a private report:
+  // no setting on the mod's tile could hold a spell's shake down): and the camera
+  // shake's ceiling, the most one hit or landing spell can shake the view (betterAmbience.weaponKick).
+  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness', 'Camera Shake.maxShake']),
   // ORL1: the mod ships SEVEN knobs and `primarySkillsImpact` is the
   // port's own eighth (Daggerfall has a tier of chosen skills Morrowind
   // does not). All eight are on the tile - the
@@ -732,6 +734,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'weaponGlow', initial: true, online: 'player' }),   // WEAPON-GLOW1: systems/weaponGlow.js WEAPON_GLOW_PREF
   }),
+  // RESOURCE-HIGHLIGHTS (2026-10-26, the owner: "Reintroduce resource highlights as an option" - bible/06-Systems/
+  // Professions-Arc.md section 54): what lights a gathering node - NODE-GLINT's glints on its own picture (the default, the
+  // owner's choice of 2026-10-20 after players found the ring unimmersive), NODE-OUTLINE's ring round it in its profession's
+  // colour (back as a choice, for a player who would rather find a node than see it catch the light), or both. The
+  // player's own: it lights nothing a peer sees and is never on the wire. Read each frame (render/nodeGlint.js
+  // createNodeGlintPass, RESOURCE_HIGHLIGHT_PREF), so it takes effect at once.
+  Object.freeze({
+    id: 'resource-highlights',
+    group: 'sight',
+    get title() { return t('features.resourceHighlights.title', 'Resource highlights'); },
+    get note() { return t('features.resourceHighlights.note', 'How herbs, veins, trees and other gathering spots near you stand out. Glint makes them '
+      + 'catch the light with sparkles; Outline rings each one in its profession\u2019s color, plain to see day or night; Both does both.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'resourceHighlights', initial: 'glint', online: 'player', tiers: Object.freeze([tier('glint', () => t('features.resourceHighlights.glint', 'Glint')), tier('outline', () => t('features.resourceHighlights.outline', 'Outline')), tier('both', () => t('features.resourceHighlights.both', 'Both'))]) }),   // render/nodeGlint.js RESOURCE_HIGHLIGHT_PREF, RESOURCE_HIGHLIGHTS
+  }),
   // QUICK-LOOT B4 (2026-09-22, Mac: Arc B of the world-hover arcs, and
   // "How does skyrim do it" when the shape was put to him). Vanilla
   // Skyrim does not; what everyone means by it is the QuickLoot mod,
@@ -961,6 +979,21 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'banthaJungle', initial: true, online: true }),
+  }),
+  // TESA-LANDS (2026-10-27, the owner: "Ensuring each region recieves proper landscape details and textures (minus cyrodil
+  // and valenwood) and refined detail"): THE LANDS PAST THE BAY - each zone of seven provinces its own ground, its own
+  // flats and its own landmarks (world/tamriel/tamrielLands.js, bible/03-World/Tamriel-Lands.md). FORCED ON ONLINE: its
+  // flats are where Logging's trees stand and its landmarks turn the player, so a room has one land. `?lands=off` the kill
+  // door; systems/landsSwitch.js tamrielLandsOn composes it.
+  Object.freeze({
+    id: 'tamriel-lands',
+    group: 'world',
+    get title() { return t('features.tamrielLands.title', 'Lands of Tamriel'); },
+    get note() { return t('features.tamrielLands.note', 'Each region past the Bay gets its own ground, plants and landmarks: Morrowind\'s ash and giant '
+      + 'mushrooms, Black Marsh\'s Hist, Summerset\'s vineyards. Off keeps each climate\'s original look.'); },
+    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielLands', initial: true, online: true }),
   }),
   // LANDFORM1-3 (2026-10-06, Mac: "Can we adjust the heightmap to be more of this? and allow roads to carve through
   // terrian and caverns without breaking anything and rivers to actually have depth"): LANDFORMS - the small heightmap
@@ -1304,6 +1337,23 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwBodyMotion', initial: true, online: 'player' }),
+  }),
+  // MW-SHOULDER (FIELD BUGS 2026-10-26c, feature-feedback via Mac: "please, add an option to move camera a bit to the side
+  // ... for morrowind 3rd person models ... because crosshair is located on top of character's head"): the reference's
+  // view over the shoulder for the Morrowind body's camera (player/mwCamera.js) - behind the right or the left shoulder,
+  // and with a weapon or a spell out centred over the head, so a shot lands where the crosshair is. Off by default, as the
+  // reference ships it (settings.lua:44). The VIEWER'S: how this machine frames its own body, never the wire. Read every
+  // frame by player/mwView.js, so it lands at once. Eye Of The Beholder's sprite camera keeps its own offsets.
+  Object.freeze({
+    id: 'mw-shoulder-camera',
+    group: 'sight',
+    get title() { return t('features.mwShoulder.title', 'Over the Shoulder'); },
+    get note() { return t('features.mwShoulder.note', 'With a Morrowind body in third person, the camera sits behind a shoulder so your head no longer hides '
+      + 'your aim. With a weapon or a spell out it rises over your head instead, so shots land on the crosshair.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwShoulderCam', initial: 'off', online: 'player', tiers: Object.freeze([
+      tier('off', OFF), tier('right', () => t('features.mwShoulder.right', 'Right')), tier('left', () => t('features.mwShoulder.left', 'Left'))]) }),
   }),
   // MWNPC5b (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE PEOPLE IN
   // MORROWIND BODIES - the NPC lanes (characters/npcBodies.js) under ONE frame budget (MWNPC11, NPC_FRAME_TIERS): Off, the

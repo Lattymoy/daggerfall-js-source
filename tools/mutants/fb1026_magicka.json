@@ -1,0 +1,43 @@
+[
+  {
+    "name": "FB1026-killMana-unread",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  if (c.killMana) manaMine(m, (m.maxMagicka * c.killMana) / 100);\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ],
+    "note": "Soul Siphon's Spell Points never come back on a kill - the report's second line"
+  },
+  {
+    "name": "FB1026-mpRegen-unread",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ],
+    "note": "Font of Magnus and Clarity regenerate nothing - the report's first line"
+  },
+  {
+    "name": "FB1026-mpRegen-a-percent",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);",
+    "new": "manaMine(entity, (entity.maxMagicka * c.mpRegen) / 100);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ],
+    "note": "a round's regeneration read in percents, not tenths of one - 2% where the star says 0.2%"
+  },
+  {
+    "name": "FB1026-mpRegen-past-full",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(",
+    "new": "  if (c.mpRegen) manaMine(",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ],
+    "equivalent": true,
+    "why": "playerHeal.js manaMine never raises magicka past maxMagicka itself - the guard only spares the call; the full pool's pin ('full: nothing past the maximum') holds the clamp"
+  }
+]

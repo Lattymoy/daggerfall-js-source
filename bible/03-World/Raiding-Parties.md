@@ -9,7 +9,8 @@ questions, Mac answered "1. Server 2. Keep 3. We can also add renown and it's ow
 
 ## What it does
 
-Each game day, towns across the Iliac Bay are raided. The roll picks a region evenly among the travel map's regions
+Each game day, towns across the Iliac Bay are raided (and, since WW6, the towns of every province past it - each
+province's own day, below). The roll picks a region evenly among the travel map's regions
 that hold a city, hamlet or village, then a town evenly in that region; a town is raided at most once a day. Each raid
 starts between 00:00 and 22:00, lasts two game hours (ten real minutes), and brings one party - knights (Knights),
 bandits (Rogue 50%, Thief 30%, Burglar 20%) or orcs (Orc 70%, Sergeant 25%, Warlord 5%) - with 15 to 25 deaths to
@@ -133,6 +134,12 @@ else (`world/raidShared.js` validates everything new, at the reader). RAID3 is b
 standing raiders until they die or are culled, so for a moment two owners' raiders can stand together. A frame's word
 is a client's: nothing stops a modified client saying a false share - at a RAID3 relay the count is the relay's, and
 RAID4's rewards pay from its signed receipt.
+
+MAIN-RED (2026-10-26): the pin that the relay reads nothing inside a foes frame (`test/systems/raid2_raidsOnline.test.js`)
+reads the relay's TREE now, not its text. Its regex took AUDIT KETCH II's local `rz = V.players[b.sub]?.rzAt` for a
+frame's field and reddened main, holding back the deploy; a field is a member read (`x.rz`), a pattern's key
+(`{ rz } = x`) or a literal's (`{ rk: 0 }`), outside `_grantStripped`, and a local of that name is none of them. No
+relay change, so no `RELAY_VERSION`; `tools/mutants/mainred1.json` holds four reads and writes the pin still fails.
 
 ## The relay holds the raid (RAID3, 2026-09-27)
 
@@ -333,7 +340,8 @@ Pinned in `test/net/auditonline2.test.js` (F2, F3, F5) and `test/net/world6biiic
 - **The towns table's pin is the operator's to set.** Until `RAID_TOWNS_SHA256` holds the hash of the table from real
   game files (`tools/raidTowns.mjs`), the relay reads the day's slots alone; this container has no ARENA2 to take it
   from.
-- The travel map's eligible-region count (and so the day's count) has not been measured against the data.
+- The travel map's eligible-region count (and so the day's count) has not been measured against the data. MEASURED
+  (WW6, 2026-10-27, on the freeware): 43 regions, 3,444 towns, 22 raids a day.
 
 ## On the held map (EVENT-TIP, 2026-09-28)
 
@@ -481,3 +489,34 @@ Pins: `test/systems/raid5_kinds.test.js` (13: the kind, the plan, the words, the
 the thanks, the board, the sites, the hosts); `tools/mutants/raid5.json` (35, 35 dead); the audit's
 `test/systems/auditwe_raid.test.js` (14) and `tools/mutants/auditwe_raid.json` (34, 34 dead) -
 `01-Overview/audits/Audit-World-Events.md`.
+
+## WW6 - the raids past the Bay (2026-10-27)
+
+The owner's call taken (2026-10-26: *"Every single thing here needs to be addressed. No exceptions."*; the audit's item 27,
+`01-Overview/audits/Audit-Left-In-The-Bay.md`). The record is `03-World/World-Wide.md` WW6; in short:
+
+- **A lane a theatre.** The Bay's raids are lane 0, the roll above to the byte (its generator, its roll, its slots, its
+  records - pinned against the old law written out). Each province past the Bay is a lane of its own: its own day's
+  generator (`net/raid/raidLaw.js raidDayRandom(day, lane)`), its towns the world's registry's listed towns there grouped by
+  AREA - the province's districts, what a region is to the Bay's draw (`systems/raidingParties.js raidLaneGroups`; a capital
+  one town, its centre) - each keyed by its own location index (`64:-1000124:600` - Torbarke in Skyrim), at the mod's pace
+  (half a raid an area a game day: 125 a day past the Bay on the freeware beside the Bay's 22). Cyrodiil, the open zone,
+  stands none (the owner's call, taken 2026-10-26: no site-bound world event in the open PvP zone).
+- **The province's own parties.** A lane draws the mod's parties its province's fauna stands (TESA-BIOME's rosters,
+  `RAID_LANE_PARTIES`): High Rock all three (Orsinium's orcs), Valenwood bandits and orcs (Malabal Tor's), Morrowind and
+  Summerset knights and bandits, Hammerfell, Skyrim, Elsweyr and Black Marsh bandits - no orc war band raids Black Marsh.
+- **Told in its area.** A raid past the Bay is announced, withdrawn and cleansed to the players in its district (a
+  province is some thirty of a region's size), the line naming the province: "Torbarke in Skyrim is under attack by
+  bandits!". The board's and the timers' rows read the same.
+- **Stood in its town** by its own index (`world/raidShared.js raidTownIs`): the raiders, the watch's defenders, the kinds
+  (RAID5), the relay's ledger in the town's cell on the world's grid, the receipt, the thanks and the reputation (the
+  province's region's) as on the Bay. The held map marks it on the continent's sheet.
+- **The wire.** A raid's key names every region 0..70 (a province's with its town's own index), its tuple and word the
+  world's pixel, its town on its own side of the Bay's edge (`raidSideOk` - junk otherwise); the relay reads a word against
+  its lane's slots, and the pinned towns table (RAID-ROLL's) is the Bay's lane's alone. Relay world270 (a client sends a
+  raid past the Bay to world270 on alone, `RAID_WORLD_RELAY_MIN`), account service acct196 (the same law; no migration).
+- **The host.** The world host's raid seams moved verbatim to `scenes/raidHost.js` (HOST-SPLIT), which hands the raids
+  the registry and the capital's street law.
+
+Pins: `test/world/worldWide/ww6_raids.test.js` (12, its last half with ARENA2) and `test/server/townecon_service.test.js`
+(a raid past the Bay's receipt at the account service); `tools/mutants/ww6.json` (59, all dead).

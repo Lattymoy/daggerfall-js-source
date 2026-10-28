@@ -82,11 +82,12 @@ test('QUESTOR-SAID: a guild\'s quest-giver with your quest open says so, naming 
   assert.deepEqual(step, { kind: 'close', reason: ACTIVE_QUESTOR, quest }, 'mutants: the close bare, its reason or its quest dropped');
   assert.equal(step.quest, quest, 'the quest still open - the very one');
   const boxes = bridge.offerBoxes(step, () => []);
-  assert.deepEqual(boxes, [{ rows: [{ text: 'You have not finished the work you were given here: The Offered Errand.', center: true }] }],
+  const way = { text: 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.', center: true };   // RPT1026-QUESTS ABANDON-ALWAYS
+  assert.deepEqual(boxes, [{ rows: [{ text: 'You have not finished the work you were given here: The Offered Errand.', center: true }, way] }],
     'mutants: the chain empty - worldModes\' questOffer arm read that as "That service is not available yet."');
   let closed = 0;
   const win = new ServiceFlowWindow(boxes, { onClose: () => { closed++; } });
-  assert.deepEqual(win.top.rows.map((r) => r.text), ['You have not finished the work you were given here: The Offered Errand.']);
+  assert.deepEqual(win.top.rows.map((r) => r.text), ['You have not finished the work you were given here: The Offered Errand.', way.text]);
   assert.equal(win.top.buttons, undefined, 'a click-anywhere box');
   win.click(10, 10);
   assert.equal(win.done, true);
@@ -104,8 +105,10 @@ test('QUESTOR-SAID: a quest with no DisplayName - the work alone, never an empty
   const quest = takeQuest(bridge);
   assert.equal(quest.displayName || '', '');
   bridge.clickNpc(bridge.giver, HALL);
-  assert.deepEqual(bridge.offerBoxes(askGuild(bridge), () => []), [{ rows: [{ text: 'You have not finished the work you were given here.', center: true }] }]);
-  assert.deepEqual(questorBusyRows(null), [{ text: 'You have not finished the work you were given here.', center: true }]);
+  // RPT1026-QUESTS ABANDON-ALWAYS: and the way out, a row of its own under the work
+  const busy = [{ text: 'You have not finished the work you were given here.', center: true }, { text: 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.', center: true }];
+  assert.deepEqual(bridge.offerBoxes(askGuild(bridge), () => []), [{ rows: busy }]);
+  assert.deepEqual(questorBusyRows(null), busy);
 });
 
 test('QUESTOR-SAID: the coven\'s Quest button the same (DaggerfallWitchesCovenPopupWindow.GetQuest :125-129); the social door keeps DFU\'s bare close, its talk session having declined first', () => {
@@ -135,8 +138,10 @@ test('QUESTOR-SAID: the words are the text core\'s (quest.offer.questorBusy, que
   tm.patchLocaleTable('fr', 'Port_Strings', rows);
   try {
     tm.setLocale('fr');
-    assert.deepEqual(questorBusyRows(quest), [{ text: fr.get('quest.offer.questorBusy').replace('{quest}', 'La course'), center: true }]);
-    assert.deepEqual(questorBusyRows(null), [{ text: fr.get('quest.offer.questorBusyUnnamed'), center: true }]);
+    const out = { text: fr.get('quest.offer.questorBusyAbandon'), center: true };   // RPT1026-QUESTS ABANDON-ALWAYS: the way out
+    assert.ok(out.text, 'French drafted');
+    assert.deepEqual(questorBusyRows(quest), [{ text: fr.get('quest.offer.questorBusy').replace('{quest}', 'La course'), center: true }, out]);
+    assert.deepEqual(questorBusyRows(null), [{ text: fr.get('quest.offer.questorBusyUnnamed'), center: true }, out]);
   } finally { tm.setLocale('en'); }
   const en = new Map(tm.loadStringTableCsv(rd('locales/en/Port_Strings.csv')));
   assert.equal(en.get('quest.offer.questorBusy'), 'You have not finished the work you were given here: {quest}.', 'the English catalog is the source\'s (tools/l10nExtract.mjs)');
@@ -202,7 +207,7 @@ test('QUESTOR-SAID AUDIT FB1019f F1: on the classic skin the busy box wraps its 
   const box = classicBox(rows, font);
   assert.ok(box.x >= 0 && box.x + box.w <= 320, `the parchment ${box.w} wide at ${box.x}`);
   assert.ok(box.rows.length >= 2, 'wrapped');
-  assert.equal(box.rows.map((r) => r.text).join(' '), rows[0].text, 'every word, in order');
+  assert.equal(box.rows.map((r) => r.text).join(' '), rows.map((r) => r.text).join(' '), 'every word, in order');   // RPT1026-QUESTS ABANDON-ALWAYS: the way out its second row
   assert.ok(box.rows.every((r) => r.center === true && measureText(font.fnt, r.text) <= BOX_FIT_W), 'centred, each row inside the fit');
 });
 
@@ -217,10 +222,10 @@ test('QUESTOR-SAID AUDIT FB1019f F1 in FONT0003: for every guild quest\'s title 
   for (const title of [...titles, null]) {
     const rows = questorBusyRows(title == null ? null : { displayName: title });
     const said = JSON.stringify(title);
-    if (layoutMessageBox(font, rows).w > 320) ran++;
+    if (layoutMessageBox(font, rows.slice(0, 1)).w > 320) ran++;   // the work's own line (ABANDON-ALWAYS's way out runs past it whole too)
     const box = classicBox(rows, font);
     assert.ok(box.x >= 0 && box.x + box.w <= 320, `${said}: the parchment ${box.w} wide at ${box.x}`);
-    assert.equal(box.rows.map((r) => r.text).join(' '), rows[0].text, `${said}: every word, in order`);
+    assert.equal(box.rows.map((r) => r.text).join(' '), rows.map((r) => r.text).join(' '), `${said}: every word, in order`);
   }
   assert.equal(ran, titles.length - 1, 'left whole, all but one of the titled lines ran past the panel');
   const rsc = new TextRsc().load(new Uint8Array(readFileSync(join(ARENA2, 'TEXT.RSC'))));

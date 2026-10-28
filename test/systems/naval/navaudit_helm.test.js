@@ -9,12 +9,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AIM_SLOPE, lookReach, aimSolution } from '../../../src/systems/naval/navalGunnery.js';
 import { HULL, batteryOf, hullBuild } from '../../../src/systems/naval/navalShips.js';
-import { SHIP_STATES, BRACE_TAKEN, BARE_POLES, WRECKED_OARS, STRUCK_AT } from '../../../src/systems/naval/navalDamage.js';
-import { BOARD_RANGE, BOARD_SPEED } from '../../../src/systems/naval/navalBoarding.js';
+import { SHIP_STATES, BARE_POLES, WRECKED_OARS, STRUCK_AT } from '../../../src/systems/naval/navalDamage.js';
 import { NAVAL_DEG, shotPosition, segmentBoxEntry } from '../../../src/systems/naval/navalBallistics.js';
-import { hullBoxOf, rigBoxesOf, AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, AIM_CAM_AHEAD, RAM_REACH, RAM_MEMORY_S, RAM_DAMAGE, RAM_RECOIL, BOW_RECOIL, GALLEY_RAM, RAM_SPEED, RAM_COOLDOWN_S, HEAVE_TO_DECEL, HEAVE_TO_S, HEAVE_TO_M, heaveToDecel, heaveToRun, COMPASS_SHIP_RANGE, PLAYER_SKILL, PLAYER_SKILL_THIN } from '../../../src/scenes/naval/navalHost.js';
+import { hullBoxOf, rigBoxesOf, AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, AIM_CAM_AHEAD, COMPASS_SHIP_RANGE, PLAYER_SKILL, PLAYER_SKILL_THIN } from '../../../src/scenes/naval/navalHost.js';
 import { reachAlong } from '../../../src/scenes/naval/aimCamera.js';   // AIM-ENDS: the eye over her bow past all of her
-import { CSA_BRAKE_MAX } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { drawShipCompassMarks, SHIP_MARK_COLORS, compassMarkerLerp, DETECT_MARKER_W, DETECT_MARKER_H } from '../../../src/ui/hud/hud.js';
 import { navalHudText, drawNavalHud, destroyNavalHud, navalTouchBrace, NAVAL_BRACE_H, NAVAL_HUD_CSS } from '../../../src/ui/naval/navalHud.js';
 import { NavalRenderer, NAVAL_STRIDE, aimTone, AIM_TONES, AIM_POST_HALF_W, AIM_POST_HALF_H, AIM_STRIKE_HALF, flatAcross } from '../../../src/render/navalRender.js';
@@ -491,84 +489,6 @@ test('AUDIT NAV1 H10 the brace is the brace and nothing else: at the helm the Cr
   assert.match(NAVAL_HUD_CSS, /\.dfnaval-brace \{[^}]*pointer-events: auto; touch-action: none;/, 'pressable through the readout\'s own none');
 });
 
-// ── the ram ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-/** Her broadside across my bow (my boat at the origin heading +z), her near side `gap` past my stem: her place. */
-function across(h, gap, hull = HULL.SmallShip) {
-  frames(h, [[h.e, { pos: [0, 0, 90], yaw: Math.PI / 2 }]]);
-  const b = boxOf(h, h.e);
-  const ext = Math.abs(b.ax[2]) * b.h[0] + Math.abs(b.ay[2]) * b.h[1] + Math.abs(b.az[2]) * b.h[2];
-  return { pos: [0, 0, 90 + hullBuild(hull).bowZ + gap - (b.c[2] - ext)], yaw: Math.PI / 2 };
-}
-
-test('AUDIT NAV1 H11 the ram lands: from her own stem (bowZ) within RAM_REACH of the other\'s box, at the way she came in with - the most of the last RAM_MEMORY_S, the collider having taken it at the planking - less the other\'s own way along her course; RAM_DAMAGE a metre a second, BOW_RECOIL times RAM_RECOIL back (half braced); once a stretch; a galley\'s ram from her stem, GALLEY_RAM times, a GALLEY_RAM-th back (mutants: the old point, the way forgotten, her way ignored, the recoil, the cooldown)', async () => {
-  const h = await helm();
-  const hullOf = () => h.e.ship.damage.hull;
-  const mine = () => h.host.hudModel().ship.hull * hullBuild(HULL.SmallShip).hullHp;
-  const way = (v) => { h.runtime.state.velocityCurrent = [0, 0, v]; };
-  // at her side, lying still: nothing
-  const touching = across(h, RAM_REACH / 2);
-  way(0);
-  frames(h, [[h.e, touching]], 2);
-  const full = hullOf();
-  assert.equal(hullOf(), full);
-  // coming in at 6 m/s, the stem 30 m off her: the way remembered
-  way(6);
-  frames(h, [[h.e, across(h, 30)]]);
-  assert.equal(hullOf(), full, 'not yet');
-  // the collider takes the way at her planking - the ram is the way she came in with
-  way(0.1);
-  frames(h, [[h.e, touching]]);
-  const dealt = Math.round(6 * RAM_DAMAGE);
-  assert.equal(full - hullOf(), dealt, 'RAM_DAMAGE a metre a second of the way she came in with');
-  near(mine(), hullBuild(HULL.SmallShip).hullHp - Math.round(dealt * RAM_RECOIL * BOW_RECOIL), 0.01, 'BOW_RECOIL x RAM_RECOIL back');
-  // the way is spent on her: another hull met the next moment is not rammed with it
-  const other = h.host._sea.get(h.host.spawnShip('merchantGalleon', { range: 900 }));
-  frames(h, [[h.e, { pos: [0, 0, 400], yaw: 0 }], [other, { pos: [0, 0, 500], yaw: 0 }]], 2);
-  frames(h, [[h.e, { pos: [0, 0, 400], yaw: 0 }], [other, touching]]);
-  assert.equal(other.ship.damage.hull, other.ship.damage.maxHull, 'the way spent on the first');
-  way(6);
-  frames(h, [[h.e, touching], [other, { pos: [0, 0, 500], yaw: 0 }]], Math.floor(RAM_COOLDOWN_S * 10) - 5);
-  assert.equal(full - hullOf(), dealt, 'once a stretch');
-  // just out of reach: nothing
-  const h2 = await helm();
-  const short = across(h2, RAM_REACH + 0.6);
-  h2.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(h2, [[h2.e, short]], 3);
-  assert.equal(h2.e.ship.damage.hull, h2.e.ship.damage.maxHull, 'her planking out of the stem\'s reach');
-  // the way remembered only RAM_MEMORY_S
-  h2.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(h2, [[h2.e, across(h2, 30)]]);
-  h2.runtime.state.velocityCurrent = [0, 0, 0.1];
-  frames(h2, [[h2.e, across(h2, 30)]], Math.ceil(RAM_MEMORY_S * 10) + 1);
-  frames(h2, [[h2.e, across(h2, RAM_REACH / 2)]]);
-  assert.equal(h2.e.ship.damage.hull, h2.e.ship.damage.maxHull, 'a way long spent is no ram');
-  // her own way along my course: a ship sailing on ahead takes the difference
-  const h3 = await helm();
-  frames(h3, [[h3.e, { pos: [0, 0, 90], yaw: 0 }]]);
-  const b3 = boxOf(h3, h3.e);
-  const ahead = { pos: [0, 0, 90 + hullBuild(HULL.SmallShip).bowZ + RAM_REACH / 2 - (b3.c[2] - b3.h[2])], yaw: 0, speed: 5 };
-  h3.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(h3, [[h3.e, ahead]], 3);
-  assert.ok(6 - 5 < RAM_SPEED);
-  assert.equal(h3.e.ship.damage.hull, h3.e.ship.damage.maxHull, 'closing at 1 m/s: a bump');
-  // braced, half the recoil
-  const h4 = await helm();
-  const t4 = across(h4, RAM_REACH / 2);
-  h4.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(h4, [[h4.e, t4]], 1, { brace: true });
-  near(h4.host.hudModel().ship.hull * hullBuild(HULL.SmallShip).hullHp, hullBuild(HULL.SmallShip).hullHp - Math.round(dealt * RAM_RECOIL * BOW_RECOIL * BRACE_TAKEN), 0.01, 'braced for it');
-  // a galley's ram, from her own stem 51 m out
-  const g = await helm({ hull: HULL.LargeGalley });
-  const tg = across(g, RAM_REACH / 2, HULL.LargeGalley);
-  g.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(g, [[g.e, tg]], 1);
-  const gd = Math.round(6 * RAM_DAMAGE * GALLEY_RAM);
-  assert.equal(g.e.ship.damage.maxHull - g.e.ship.damage.hull, Math.min(gd, g.e.ship.damage.maxHull), 'GALLEY_RAM times');
-  near(g.host.hudModel().ship.hull * hullBuild(HULL.LargeGalley).hullHp, hullBuild(HULL.LargeGalley).hullHp - Math.round(gd * RAM_RECOIL / GALLEY_RAM), 0.01, 'a GALLEY_RAM-th back');
-  assert.ok(hullBuild(HULL.LargeGalley).bowZ > 50, 'her stem, where the old point stood 29 m inside it');
-});
-
 // ── her hurts in her handling ──────────────────────────────────────────────────────────────────────────────────────
 
 test('AUDIT NAV1 H12 her hurts in her handling: Come Sail Away\'s way is the host\'s share of it - under sail BARE_POLES and the rest by the canvas left, under oars full and a wreck\'s WRECKED_OARS; a wreck or a rig shot away refuses the sail with its word, and a rig lost with the canvas set strikes it once, not a line a frame (mutants: the canvas unread, the oars unread, the refusal unsaid, a line a frame)', async () => {
@@ -820,99 +740,7 @@ test('AUDIT NAV1 H15 the shipwright\'s window: his words for her - each row what
   assert.ok(WARM_CHUNKS.some((f) => String(f).includes('navalYardWindow.js')), 'warmed');
 });
 
-// ── heave to, the compass, my own deck afire, my crews' hands ───────────────────────────────────────────────────────
-
-/** A struck merchantman abeam to starboard, within BOARD_RANGE of my Small Ship's side. */
-function struckAbeam(h) {
-  const beams = hullBuild(HULL.SmallShip).beam * 2;
-  const at = { pos: [beams + BOARD_RANGE / 2, 0, 0], yaw: 0 };
-  frames(h, [[h.e, at]], 2);
-  h.e.ship.damage.apply({ hull: Math.ceil(h.e.ship.damage.maxHull * (1 - STRUCK_AT)) + 1, sail: 0, crew: 0 }, 0);
-  assert.equal(h.e.ship.damage.state, SHIP_STATES.struck);
-  return at;
-}
-
-test('AUDIT NAV1 H16 heave to: a struck ship in reach with the helm too fast to board - the card and the hint say so, and Activate strikes the sails and takes her way off at HEAVE_TO_DECEL (Come Sail Away\'s `brake`, m/s^2 - HELM-WAY: its own number, never a multiple of a rate the Ship handling moves), nothing driving her on, until she is under BOARD_SPEED - then the grapples are the key\'s; HEAVE_TO_S at most, and never for a ship no longer struck (mutants: the refusal silent, the brake unwired, the sails left set, the heave-to held past its end)', async () => {
-  const h = await helm();
-  const at = struckAbeam(h);
-  const name = h.e.ship.names.name;
-  h.runtime.state.sailPosition = 1;
-  let lowered = 0;
-  h.runtime.LowerSails = () => { lowered++; h.runtime.state.sailPosition = 0; };
-  h.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(h, [[h.e, at]]);
-  let m = h.host.hudModel();
-  assert.deepEqual(m.board, { name, kind: 'heave', heaving: false });
-  const keys = { board: 'E' };
-  let t = navalHudText({ ...m, target: { ...m.target, name, state: 'struck' } }, keys);
-  assert.equal(t.plate.hint, `E: heave to beside ${name}`);
-  assert.equal(t.card.state, 'Colors struck - E: heave to');
-  assert.equal(h.host.brake(), 0);
-  // the press
-  assert.equal(h.host.activate(), true);
-  assert.equal(lowered, 1, 'the sails struck');
-  assert.match(h.log.say.at(-1), /^Heave to!/);
-  assert.equal(h.host.brake(), HEAVE_TO_DECEL, 'her way comes off hard');
-  assert.deepEqual([h.host.wayScale(true), h.host.wayScale(false)], [0, 0], 'nothing driving her on');
-  frames(h, [[h.e, at]]);
-  m = h.host.hudModel();
-  assert.equal(m.board.heaving, true);
-  t = navalHudText({ ...m, target: { ...m.target, name, state: 'struck' } }, keys);
-  assert.equal(t.plate.hint, `Heaving to beside ${name}`);
-  assert.equal(t.card.state, 'Colors struck, heaving to');
-  // under BOARD_SPEED: done, and the grapples are the key's
-  h.runtime.state.velocityCurrent = [0, 0, BOARD_SPEED - 0.5];
-  frames(h, [[h.e, at]]);
-  assert.equal(h.host.brake(), 0, 'heaved to');
-  assert.equal(h.host.hudModel().board.kind, 'board');
-  // HEAVE_TO_S at most
-  h.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(h, [[h.e, at]]);
-  h.host.activate();
-  frames(h, [[h.e, at]], Math.floor(HEAVE_TO_S * 10) - 2);
-  assert.equal(h.host.brake(), HEAVE_TO_DECEL, 'still heaving to');
-  frames(h, [[h.e, at]], 4);
-  assert.equal(h.host.brake(), 0, 'past HEAVE_TO_S');
-  // AUDIT SHIPS A3 (2026-10-06): a heave-to at SAIL-FREE's way brakes by it - her way off within HEAVE_TO_M
-  h.runtime.state.velocityCurrent = [0, 0, 16];
-  frames(h, [[h.e, at]]);
-  assert.equal(h.host.activate(), true);
-  assert.ok(Math.abs(h.host.brake() - heaveToDecel(16)) < 1e-9 && heaveToDecel(16) > HEAVE_TO_DECEL, `the brake her way needs (${h.host.brake()})`);
-  frames(h, [[h.e, at]], Math.floor(HEAVE_TO_S * 10) + 4);
-  assert.equal(h.host.brake(), 0, 'past HEAVE_TO_S');
-  h.runtime.state.velocityCurrent = [0, 0, 6];
-  // she is gone from the struck: the heave-to with her
-  h.host.activate();
-  assert.equal(h.host.brake(), HEAVE_TO_DECEL);
-  h.e.ship.damage.scuttle();
-  frames(h, [[h.e, at]]);
-  assert.equal(h.host.brake(), 0, 'nothing to heave to for');
-  // the world hands the brake to Come Sail Away
-  assert.match(src('scenes/world.js'), /brake: \(\) => naval\?\.brake\(\) \?\? 0,/);
-});
-
-test('AUDIT SHIPS 2 XA5 a heave-to is offered by where it leaves her (heaveToRun at heaveToDecel, never past the runtime\'s CSA_BRAKE_MAX): a storm\'s Carrack on her quarter at 38.9 m/s, a struck ship abeam 16 m off her side, runs 37.7 m before her way is off - out of BOARD_RANGE of her, so no heave-to is offered; coming up on her from astern she is offered it while it leaves her alongside, and it does; offered whenever she was in reach, the brake asked 47 m/s^2, got 20, and she ended 34 m off (mutants: offered where she is; the brake past the runtime\'s bound)', async () => {
-  assert.ok(heaveToDecel(38.9) <= CSA_BRAKE_MAX && heaveToDecel(28) < CSA_BRAKE_MAX, 'never past the runtime\'s bound');
-  near(heaveToRun(38.9), (38.9 ** 2 - BOARD_SPEED ** 2) / (2 * CSA_BRAKE_MAX), 1e-9);
-  assert.ok(heaveToRun(38.9) > 37 && heaveToRun(16) === HEAVE_TO_M, 'a storm\'s way runs past HEAVE_TO_M; a fair day\'s stops within it');
-  const h = await helm();
-  const at = struckAbeam(h);
-  h.runtime.state.sailPosition = 1;
-  h.runtime.LowerSails = () => { h.runtime.state.sailPosition = 0; };
-  h.runtime.state.velocityCurrent = [0, 0, 38.9];
-  frames(h, [[h.e, at]]);
-  assert.equal(h.host.hudModel().board, null, 'abeam at a storm\'s way: no heave-to - it would leave her out of reach');
-  assert.equal(h.host.activate(), false);
-  assert.equal(h.host.brake(), 0);
-  // coming up on her from astern: offered where the heave-to leaves her beside her
-  const astern = { pos: [at.pos[0], 0, at.pos[2] + heaveToRun(38.9)], yaw: 0 };
-  frames(h, [[h.e, astern]]);
-  assert.equal(h.host.hudModel().board?.kind, 'heave', 'offered as she comes up on her');
-  assert.equal(h.host.activate(), true);
-  near(h.host.brake(), CSA_BRAKE_MAX, 1e-9, 'at the runtime\'s bound');
-  const beams = hullBuild(HULL.SmallShip).beam * 2;
-  assert.ok(Math.hypot(astern.pos[0], astern.pos[2] - heaveToRun(38.9)) - beams <= BOARD_RANGE, 'and it leaves her in reach of her');
-});
+// ── the compass, my own deck afire, my crews' hands ─────────────────────────────────────────────────────────────────
 
 test('AUDIT NAV1 H17 the sea\'s ships on the compass: within COMPASS_SHIP_RANGE, afloat or struck, each marked by what she is to me - hostile, a ship, struck - on the classic box a triangle turned up (never the party\'s or a Detect\'s) in SHIP_MARK_COLORS, on the enhanced strip a pooled mark; none going down, none far, none with the arc off (mutants: the range unread, the kinds merged, the marks never drawn, the triangle the party\'s)', async () => {
   const h = await helm();

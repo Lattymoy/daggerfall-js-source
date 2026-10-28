@@ -1,0 +1,303 @@
+[
+  {
+    "name": "WWR-a-provinces-number",
+    "file": "src/formats/mapsTables.js",
+    "old": "BAY_REGION_COUNT - 1 + t : -1);",
+    "new": "BAY_REGION_COUNT + t : -1);",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-theatres-inverse",
+    "file": "src/formats/mapsTables.js",
+    "old": "r < BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length ? r - BAY_REGION_COUNT + 1 : -1);",
+    "new": "r < BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length ? r - BAY_REGION_COUNT : -1);",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-cyrodiils-bank",
+    "file": "src/formats/mapsTables.js",
+    "old": "REGION_RACES.slice(0, BAY_REGION_COUNT), 0, 1, 2, 3, 4, 5, 6, 7, 7]);",
+    "new": "REGION_RACES.slice(0, BAY_REGION_COUNT), 0, 1, 2, 3, 4, 5, 6, 7, 0]);",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-cyrodiils-body",
+    "file": "src/formats/mapsTables.js",
+    "old": "  0, 1, 2, 3, 4, 5, 6, 7, 0,\n]);",
+    "new": "  0, 1, 2, 3, 4, 5, 6, 7, 7,\n]);",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-provinces-bank-the-bays",
+    "file": "src/characters/nameHelper.js",
+    "old": "  if (regionIndex > -1) return REGION_NAME_BANKS[regionIndex];",
+    "new": "  if (regionIndex > -1) return REGION_NAME_BANKS[Math.min(regionIndex, 61)];",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-clamp-the-bays",
+    "file": "src/formats/mapsFile.js",
+    "old": "if (result < 0 || result >= REGION_NAMES.length) result = 0;",
+    "new": "if (result < 0 || result >= 62) result = 0;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js",
+      "test/formats/audit24_formats.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-provinces-politic",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    return r >= 0 ? 128 + r : bayPoliticIndex(x, y);",
+    "new": "    return bayPoliticIndex(x, y);",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-politic-uncomposed",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  maps.getPoliticIndex = groundPoliticIndex(maps.getPoliticIndex.bind(maps));\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-provinces-name-unread",
+    "file": "src/formats/mapsFile.js",
+    "old": "    if (isProvinceRegion(region)) return REGION_NAMES[region];\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-provinces-index-unfound",
+    "file": "src/formats/mapsFile.js",
+    "old": "    for (let i = BAY_REGION_COUNT; i < REGION_NAMES.length; i++) if (REGION_NAMES[i] === name) return i;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-laws-store-the-bays",
+    "file": "src/systems/region/regionConditions.js",
+    "old": "export const REGION_COUNT = REGION_NAMES.length;",
+    "new": "export const REGION_COUNT = 62;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-banks-the-bays",
+    "file": "src/systems/banking.js",
+    "old": "export const BANK_REGION_COUNT = REGION_NAMES.length;",
+    "new": "export const BANK_REGION_COUNT = 62;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-padding-short",
+    "file": "src/systems/banking.js",
+    "old": "  for (let i = rows.length; i < BANK_REGION_COUNT; i++) rows.push(make(i));",
+    "new": "  for (let i = rows.length; i < BANK_REGION_COUNT - 1; i++) rows.push(make(i));",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-saves-accounts-unpadded",
+    "file": "src/systems/save/save.js",
+    "old": "padRegionTable(snap.bankAccounts.map((a) => ({ ...a })), blankAccount)",
+    "new": "snap.bankAccounts.map((a) => ({ ...a }))",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-saves-houses-unpadded",
+    "file": "src/systems/save/save.js",
+    "old": "padRegionTable(snap.houses.map(copyHouseSlot), blankHouse)",
+    "new": "snap.houses.map(copyHouseSlot)",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-node-the-bays",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const regionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;",
+    "new": "export const regionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-town-book-the-worlds",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const bayRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT;",
+    "new": "export const bayRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-harvest-the-bays",
+    "file": "server-account/src/professions.js",
+    "old": "(!climateHolds(n.kind, climate) || !regionOk(region))) return { error: 'prof-pixel' };",
+    "new": "(!climateHolds(n.kind, climate) || !bayRegionOk(region))) return { error: 'prof-pixel' };",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-writ-board-the-worlds",
+    "file": "server-account/src/professions.js",
+    "old": "  if (!regionOk(region)) return { error: 'bad-region' };   // WW-R: a writ board was a Bay region's town's; WW7-5: any region's, the provinces' too",
+    "new": "  if (!regionOk(region) || region >= 62) return { error: 'bad-region' };   // WW-R: a writ board was a Bay region's town's; WW7-5: any region's, the provinces' too",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-channels-the-bays",
+    "file": "src/net/wire.js",
+    "old": "export const CHAT_REGION_COUNT = 71;",
+    "new": "export const CHAT_REGION_COUNT = 62;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-shards-the-bays",
+    "file": "src/net/hubShards.js",
+    "old": "export const REGION_CHANNELS = 71;",
+    "new": "export const REGION_CHANNELS = 62;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-channel-ungated",
+    "file": "src/net/wire.js",
+    "old": "index < (provincesOk ? CHAT_REGION_COUNT : CHAT_BAY_REGIONS) ?",
+    "new": "index < CHAT_REGION_COUNT ?",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-gate-an-older-relay",
+    "file": "src/net/wire.js",
+    "old": "export const relaySupportsProvinceRegions = relaySupportsWorldWide;",
+    "new": "export const relaySupportsProvinceRegions = (v) => relaySupportsWorldWide(v) || v === 'world259';",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129)."
+  },
+  {
+    "name": "WWR-the-census-the-bays",
+    "file": "src/net/wire.js",
+    "note": "WW5 (2026-10-27): the law moved on purpose - the census counts every region's channel now, each lane its own regions (bible/03-World/World-Wide.md WW5); WW-R's pin moved with it (test/world/worldWide/wwr_regions.test.js PIN MOVED), so this record holds the moved law from the other side.",
+    "old": "export const SD_REGION_COUNT = CHAT_REGION_COUNT;",
+    "new": "export const SD_REGION_COUNT = CHAT_BAY_REGIONS;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-province-on-the-naval-wire",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1]);",
+    "new": "sh.region >= 0 && sh.region < 71 ? sh.region : -1]);",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-place-the-providers-region",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre);",
+    "new": "  const region = bayRegion;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-an-area-a-provinces-region",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "export const BAY_AREA_COUNT = BAY_REGION_COUNT;",
+    "new": "export const BAY_AREA_COUNT = REGION_NAMES.length;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-gate-scan-a-provinces-politic",
+    "file": "src/systems/gate/gateSite.js",
+    "old": "(pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105;",
+    "new": "(pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105;",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-host-ungated",
+    "file": "src/scenes/world.js",
+    "old": "chatRegionRoom(index, !!chatLinks.get('world')?.provinceRegionsOk)",
+    "new": "chatRegionRoom(index)",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-client-trusts-any-relay",
+    "file": "src/net/online.js",
+    "old": "this.provinceRegionsOk = relaySupportsProvinceRegions(relayV); }",
+    "new": "this.provinceRegionsOk = true; }",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-talk-breton-or-redguard",
+    "file": "src/scenes/townTalk.js",
+    "old": "  const npcRaceNow = () => REGION_PEOPLE[regionNow()] ?? 'Breton';",
+    "new": "  const npcRaceNow = () => (REGION_PEOPLE[regionNow()] === 'Redguard' ? 'Redguard' : 'Breton');",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-a-town-book-reads-the-worlds",
+    "file": "server-account/src/market.js",
+    "old": "import { material, regionOk, WITNESS } from '../../src/net/nodeLaw.js';",
+    "new": "import { material, bayRegionOk as regionOk, WITNESS } from '../../src/net/nodeLaw.js';",
+    "tests": [
+      "test/world/worldWide/wwr_regions.test.js"
+    ]
+  },
+  {
+    "name": "WWR-the-temples-the-bays",
+    "file": "src/formats/mapsFile.js",
+    "old": "  0, 0, 0, 0, 0, 0, 0, 0, 0,   // WW-R: the provinces past the Bay - FALL.EXE names none of their temples\n",
+    "new": "",
+    "tests": [
+      "test/formats/maps.test.js"
+    ]
+  }
+]

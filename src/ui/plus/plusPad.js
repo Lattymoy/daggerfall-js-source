@@ -24,6 +24,7 @@ import { isEnhancedPlus } from '../../systems/uiSkin.js';
 import { PIXEL_FONT_CSS } from '../pixelifyFive.js';   // FONT3: the prompt bar in the whole trio
 import { getPref, setPref } from '../../systems/uiPrefs.js';
 import { hdGlyphSvg, hdGlyphName } from '../padGlyphsHD.js';
+import { t } from '../../systems/textManager.js';   // AUDIT LOCKPICK C3: the lock's prompt row in the player's language
 
 /** Is the Plus controller layer in force - never throws (a node harness has no location). */
 export function plusPadActive() {
@@ -264,6 +265,24 @@ export const LOOT_DPAD = Object.freeze({
 export const HELM_DPAD = Object.freeze({
   JoystickAxis7Button0: 'up', JoystickAxis7Button1: 'down', JoystickAxis6Button1: 'left', JoystickAxis6Button0: 'right',
 });
+/** AUDIT LOCKPICK C3 (bible/06-Systems/Lockpicking.md section 4): THE LOCK'S ARM - while the lock's window stands
+ *  (ui/lockpickWindow.js registers { up(), gentle(), dpad(dir, at) -> [x, y]|null, auto() -> bool }), the d-pad's left
+ *  and right move the pick and answer the point of its chamber for the cursor (so A presses that pin), X is the Auto
+ *  attempt, and the prompt bar says so. Answers the unregister. */
+let _lock = null;
+export function registerLockArm(api) {
+  _lock = api ?? null;
+  return () => { if (_lock === api) _lock = null; };
+}
+/** The lock's arm while its window stands, else null. */
+export function lockArm() { try { return _lock?.up?.() ? _lock : null; } catch { return null; } }
+/** The prompt rows while the lock's window stands. Pure, for the pin. */
+export function lockPrompts({ gentle = false, click = 'JoystickButton0', back = 'JoystickButton1' } = {}) {
+  const rows = gentle ? [] : [[['JoystickAxis6Button1', 'JoystickAxis6Button0'], t('lock.pad.choose', 'Choose a pin')], [[click], t('lock.pad.press', 'Lift / set')]];
+  rows.push([['JoystickButton2'], t('lock.act.auto', 'Auto attempt')], [[back], t('lock.act.leave', 'Leave')]);
+  if (!gentle) rows.push([['StickL'], t('lock.pad.cursor', 'Move the cursor')]);
+  return rows;
+}
 /** The prompt rows while looting. */
 export function lootPrompts({ take = 'JoystickButton0' } = {}) {
   return [[['JoystickAxis7Button0', 'JoystickAxis7Button1'], 'Choose'], [[take], 'Take'],

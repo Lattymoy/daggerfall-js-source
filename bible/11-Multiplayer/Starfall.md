@@ -26,7 +26,8 @@ So, as decided here:
   `net/festivalLaw.js` `FESTIVALS`), the calendar the relay, every client and the questline read alike.
 - **Three stars a night, in one coven's land.** Every real hour is a night on the sky (TimeScale 24, `Online-Time-Arc.md`),
   and each night one of the Bay's covens works the rite: three stars fall in the wilds of its region, one after another,
-  near three different towns.
+  near three different towns. Since WW5 (section 16), every theatre's night: the Bay's covens on the Bay, each
+  province's own coven past it, Cyrodiil's open zone none.
 - **The foes are Daggerfall's own**, owned by a player's machine as every foe in the open world is (the rite's camp
   law), with Daggerfall's own AI, spells and pathing. The relay holds the ledger: the wave, the star's light, the
   master's fall, who defended. This is a departure from the world bosses' Option B, named in section 10.
@@ -744,9 +745,11 @@ that lands in the grace turns its stone and its beacon gold from lit, never from
 | `{t:'star', k:'st', n, s, px, py, p, w, wz, kn, wl, lt, nd, b, ow, hc, hd, lo, why, hm?}` | cell -> cell, cell -> a speaker | the ledger: phase, wave, its size and deaths, the time left in the phase, light, defenders, band, an owner and its credited blows, held, lost and why; `hm` on the speaking socket's copy alone - its own account's credited blows, a count bounded like `hb` (`STAR_BLOWS_WIRE_MAX`) |
 | `{t:'star', k:'hd', n, s, px, py, at, top, c}` | cell -> cell, hub -> everyone | held, by whom (the first `STAR_TOP_MAX` named, `c` how many) |
 | `{t:'star', k:'rc', r}` | cell or hub -> one | an earner's receipt |
-| `{t:'star', k:'hds', l: [...]}` | hub -> a hello | the night's held stars |
+| `{t:'star', k:'hds', l: [...]}` | hub -> a hello | the night's held stars (WW5: every lane's, the Bay's first - section 16) |
 
 `STAR_RELAY_MIN` names the first relay that speaks it (`relaySupportsStar`), and an older relay is never sent a word.
+WW5 (section 16): a star past the Bay's three - a province's, on a world pixel off the Bay's map - goes only to a relay
+from `WW5_RELAY_MIN` (270) on (`relaySupportsWw5`); an older one refuses its word as junk.
 `STAR_HZ_MAX` bounds a socket's words (the rite's bucket, deeper than the client's burst). No live event gates it: the
 stars keep the festival's own days (section 12).
 
@@ -869,9 +872,60 @@ minted before this, so no finding a law made could be a finding to ask again (it
 | STAR8 | the questline: The Thirteenth of Frostfall - four scripts and sheets, the `festival` group, `opens.event`, the `starfall` need on the festival's calendar, the `star-held` act, the `star`/`stars3` witnesses, Starwarden; `ql name` names a foe (`star8_frostfall`, `ql12_claim`) |
 | AUDIT STAR | the words, the plate, the glass's name and the Weave's powers read again (sections 6 and 8; `Sigil-Sets.md` 6f) |
 | AUDIT STAR-TUNE | STAR-TUNE read cold (pull request #1090): F1 the `star` kind asked only of a relay that mints it, F2 a wave's floor shared by its defenders, F3 an older tab's `st` kept (`wx`), F4 a crater built again asks the body again (sections 4, 10, 13; `Spawn-Grants.md` 4) |
+| WW5 | every theatre's night: a star's number its lane, the provinces' covens, a province's stars over its theatre's ground (section 16; `03-World/World-Wide.md` WW5) |
 
 ## 15. Not done, and why
 
 - **No Discord herald yet.** The gate's and the serpent's posts are the hub's alarm beat; a star an hour would post
   three times an hour. Left for the owner's word on how much of it the channel wants.
 - **No lamia.** Daggerfall's lamia never leaves the water (section "The lore").
+
+## 16. Every theatre's night (WW5, 2026-10-27)
+
+The owner, after the audit Left In The Bay (item 26), 2026-10-26: *"Every single thing here needs to be addressed. No
+exceptions."* The Starfall stood on the Bay alone: one coven a night over the Bay scan's pixels, a star word the Bay's
+0..999. Two calls of the owner's are taken with it: **a site-bound world event stands nowhere in the open PvP zone**
+(Cyrodiil's lane never stands a night), and **a province's covens are authored as content** - FACTION.TXT's covens are
+all the Bay's, so a province's night needs a coven of its own. The record is `03-World/World-Wide.md` WW5; here, what
+it means for the Starfall:
+
+- **One sky.** Every theatre that stands a night (`net/wire.js` `SITE_EVENT_LANES`: the Bay's lane and the eight
+  provinces') has its night in the same hour, its three stars at the Bay's instants (section 1). A star's NUMBER names
+  its lane: lane t's three are `3t + 0..2` (`net/starfall/starfallLaw.js` `starOfLane`, `starLaneOf`, `starIndexOf`), so
+  the Bay's are the 0, 1 and 2 they always were, and every ledger, receipt, row and key keeps its shape. Its instant, its
+  master and the Heart-Star read its place in the night (`starIndexOf`); its rolls, spot and ledger its number.
+- **The provinces' covens** (`systems/starfall/starfallCovens.js` `STAR_PROVINCE_COVENS`), the port's own, one a
+  province, each worshipping as the rite does. Each carries no FACTION.TXT faction and no MAPS.BSA place; its words go
+  through `t()` (`starfall.coven.<id>`, `starfall.member.<id>`, `starfall.leader.<id>`) in every complete locale, and its
+  leader comes for the star where a Bay coven's Coven Mother does (`systems/starfall/starCoven.js` `starMasterOf`):
+
+  | province | coven | a member | its leader |
+  |---|---|---|---|
+  | High Rock | The Sisters of the Moor | Sister of the Moor | Mother Gwenllian |
+  | Hammerfell | The Sand Witches | Sand Witch | Mother Adara |
+  | Skyrim | The Witches of the Rime | Witch of the Rime | Mother Hjordis |
+  | Morrowind | The Ash Witches | Ash Witch | Wise Woman Ulyne |
+  | Sumurset Isle | The Sisters of Dusk | Sister of Dusk | Mother Calanwe |
+  | Valenwood | The Briar Witches | Briar Witch | Mother Thaewen |
+  | Elsweyr | The Daughters of Mafala | Daughter of Mafala | Clan Mother Ri'shazra |
+  | Black Marsh | The Fen Witches | Fen Witch | Mother Neeta-Hei |
+
+  A theatre's night is its own covens' (`covensOfLane`): the Bay's bag night for night as before (section 2), a
+  province's one coven every night.
+- **A province's stars** (`systems/starfall/starfallSites.js` `findTheatreStarSites`): section 2's law over its
+  theatre's ground - the gate's suitable pixels of the theatre (`systems/gate/theatreGateSite.js` over the registry's
+  places), each star `STAR_APART_PX` from the others and from its theatre's gate of that game day, by a town of its own
+  where the province has them. The scans are the gate's own, kept (`scenes/gate/gateLanes.js` `keptTheatreScans`), warmed
+  a theatre at a time in idle moments (`scenes/eventTheatres.js`).
+- **The page** (`scenes/starfall/starfallHost.js`): every theatre's stars stand, each its own key, on a relay that keeps
+  them (`net/online.js` `ww5Ok`, `net/wire.js` `WW5_RELAY_MIN` 270); the map's cards are every theatre's; the Timers show
+  the theatre I stand in (the Bay's on the Bay, at sea and in Cyrodiil); a province's hold is said in its own theatre,
+  the Bay's to everyone as it always was.
+- **The relay and the account service.** The word in and out on its lane's pixel (`starWireOk`), the hub's held list 60
+  long and the Bay's first (`starHeldOrder` - an older client reads the first twelve), a stored ledger on its own lane's
+  pixel (`starLedgerSane`); the claim reads a province's star by its number, inside the service's nine a day (section 6).
+  world270 and acct196, folded in while undeployed (section 13's order: the relay, the account service, the site).
+- **The questline** reads a star by its number: a province's held star is `star-held` as a Bay star's is (section 7).
+
+Pins and mutants: `03-World/World-Wide.md` WW5 (`test/world/worldWide/ww5_stars.test.js`,
+`tools/mutants/ww5_stars.json`).

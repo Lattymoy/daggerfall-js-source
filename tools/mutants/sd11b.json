@@ -83,8 +83,8 @@
   {
     "name": "SD11b-L7M3-a-registered-account-a-guest",
     "file": "server/src/index.js",
-    "old": "const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked');",
-    "new": "const no = await this._sdAdmit(a.key, who.subject, now, true);",
+    "old": "const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked', isStaff(who.glyphs));",
+    "new": "const no = await this._sdAdmit(a.key, who.subject, now, true, isStaff(who.glyphs));",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -173,8 +173,9 @@
   {
     "name": "SD11b-L3F7-the-mark-unkept",
     "file": "server/src/index.js",
-    "old": "    await this.state.storage.put({ [SD_KEY]: rec, [SD_SLOT_KEY]: hw });",
-    "new": "    await this.state.storage.put(SD_KEY, rec);",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "    await this.state.storage.put({ [sdLaneKey(SD_KEY, lane)]: rec, [sdLaneKey(SD_SLOT_KEY, lane)]: hw });",
+    "new": "    await this.state.storage.put(sdLaneKey(SD_KEY, lane), rec);",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -182,8 +183,9 @@
   {
     "name": "SD11b-L3F7-the-first-beat-from-zero",
     "file": "server/src/index.js",
-    "old": "if (due.act === 'first') { const hw = await this._sdHwOf(); await this._sdSave(hw > 0 ? { ...sdFirst(now), s: hw } : sdFirst(now)); continue; }",
-    "new": "if (due.act === 'first') { await this._sdSave(sdFirst(now)); continue; }",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "if (due.act === 'first') { const hw = await this._sdHwOf(lane); await this._sdSave(hw > 0 ? { ...sdFirst(now, lane), s: hw } : sdFirst(now, lane)); continue; }",
+    "new": "if (due.act === 'first') { await this._sdSave(sdFirst(now, lane)); continue; }",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -281,7 +283,8 @@
   {
     "name": "SD11b-L7L2-any-slot-written",
     "file": "server/src/index.js",
-    "old": "    if (!(slot <= ((await this._sdOf())?.s ?? 0))) return;",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "    if (!SD_LANES.includes(lane) || !(slot <= ((await this._sdOf(lane))?.s ?? 0))) return;",
     "new": "    void 0;",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
@@ -290,8 +293,8 @@
   {
     "name": "SD11b-L7H2-the-rights-unasked",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  if (R && !orreryMayTurn(R, who, now)) return { wait: true };",
-    "new": "  if (false) return { wait: true };",
+    "old": "  if (R && !orreryMayTurn(R, who, now)) { orreryWaited(R, who, now); return { wait: true }; }",
+    "new": "  if (false) { orreryWaited(R, who, now); return { wait: true }; }",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -335,7 +338,7 @@
   {
     "name": "SD11b-L7H2-a-fresh-thread-never",
     "file": "server/src/index.js",
-    "old": "    if (res.x) this._sdRights = { s, R: orreryRightsFresh() };   // the snap begins a fresh thread",
+    "old": "    if (res.x) this._sdRights = { s, R: orreryRightsSnapped(R) };   // the snap begins a fresh thread - RPT1026-EVENTS ORRERY-HANDS: for the lash alone; a hand's lengthening is counted for the Hollow",
     "new": "    void 0;",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
@@ -483,8 +486,9 @@
   {
     "name": "SD11b-L8G9-the-beats-retry-unarmed",
     "file": "server/src/index.js",
-    "old": "} catch (e) { console.warn('[sd] beat failed', e?.message ?? e); await this._hubArm(now + SD_BEAT_RETRY_MS); }",
-    "new": "} catch (e) { console.warn('[sd] beat failed', e?.message ?? e); }",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "} catch (e) { console.warn('[sd] beat failed', lane, e?.message ?? e); await this._hubArm(now + SD_BEAT_RETRY_MS); }",
+    "new": "} catch (e) { console.warn('[sd] beat failed', lane, e?.message ?? e); }",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -492,7 +496,8 @@
   {
     "name": "SD11b-L8G9-the-record-not-read-again",
     "file": "server/src/index.js",
-    "old": "          const cur = await this._sdOf();",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "          const cur = await this._sdOf(lane);",
     "new": "          const cur = rec;",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"

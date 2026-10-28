@@ -337,6 +337,11 @@ REAL account service, both in local workerd (`wrangler dev`; the service behind 
 - It refuses every address but its own two.
 - A run serves its tree live (`wrangler dev` rebuilds on every source change), so each column below ran from a
   `git worktree` of its commit.
+- It runs on Linux, macOS and Windows, and so do the probes built on it (`tools/partyLootProbe.mjs`,
+  `tools/onlineFrameProbe.mjs`) and `tools/accountProbe.mjs`. `tools/lib/wranglerLaunch.mjs` holds what differs
+  (HARNESS-WIN, 2026-10-25). On Windows it runs wrangler's own `wrangler.js` (or npm's `npx-cli.js`) under node, keeps
+  each wrangler attached with no console window, and kills its tree with `taskkill /T /F`, because Windows has no
+  process groups.
 
 **What it is not.** Local workerd is not Cloudflare: D1 is one SQLite file with no queue and no network, and the fleet
 shares four cores with both Workers. Latency here is relative. The counts are the code's own: statements a request,
@@ -1428,6 +1433,10 @@ Developer's alone - a token whose glyphs say `dev`), and `/relay <setting> -` ha
   foes room (a cell, a world room) refuses a hello that does not say the spawn grants its build stands on (`gv`), with
   GROUND-GATE's words; a cold room asks the hub before its first such hello. Off until the site serves the build that
   says it.
+- LOOT-DOOR (`06-Systems/Professions-Arc.md` 57.8, AUDIT HORIZONTAL B7): `lootDoor` (var LOOT_DOOR) on or off, off unset -
+  while on, a loot room (a world room, a cell) refuses a hello that does not say the loot its build reads (`ll`,
+  net/wire.js LOOT_HELLO_LAW), with GROUND-GATE's words; a cold room asks the hub before its first such hello. Off until
+  the site serves the build that says it.
 
 **A halo told when its cell judges poses** (`server/src/index.js` _refereesPoses, `_rfSay`). SCALE2c moved a halo's
 pose rate here because the relay judges fights off the poses that reach each cell, a halo's copies too:
@@ -4064,15 +4073,67 @@ The frames held are the held sent, the held gone and the still held:
 - `tools/foesFirstBench.mjs`: each send read by its frame's number, the senders' tail, a handover its owner heard, the
   `burst`, `liar` and `leavers` scenes.
 
-## COST-1: built (2026-10-24, this branch - relay world260 (world256, world257, world258, then world259, until the merges with main, whose STAFF-EVENT, STAFF-EVENT BOSS, KETCH-LONGER and ASK-LONGER took them), NOT YET DEPLOYED; one relay drop at its merge)
+## PROVINCE-SLEEP and the live bill (2026-10-25, the TESA branch - relay world260, NOT YET DEPLOYED; no client change)
 
+Mac, 2026-10-25, of the land past the Bay: "ensuring this new integration doesnt implode the server or insanely skyrocket
+our server cost". The bill was read before the branch was: Cloudflare's GraphQL analytics, the account's own token.
+
+### Measured (live, main's relay world259 and account service acct188)
+
+- **The run-rate is some $2,400 a month** (the last invoice, 2026-10-05, was $12.80). A day of the week to 2026-10-25:
+  Durable Object duration 3.7-4.5 million GB-s (400,000 a month are included; some $1,480 a month), their requests some
+  37 million billed (335 million hibernated socket messages at 20 to 1, 19 million HTTP; some $170), their SQLite rows
+  written some 6 million (some $135); D1 4-11 billion rows read and 8-12 million written (some $200 and $250); the
+  account Worker 11-13 million requests and 85,000 CPU seconds (some $160). Every figure is the published Workers Paid
+  price over the analytics' counts, not an invoice.
+- **What the duration is**, 2026-10-24 by room kind (`durableObjectsPeriodicGroups` active time, each object named
+  through `durableObjectsInvocationsAdaptiveGroups`): the region channels 1.56 million GB-s (219 objects, 9,154 s of
+  CPU), world cells 1.48 million (1,882), dungeons 0.77 million (5,095), interiors 0.28 million, the hub's shards 0.19
+  million. On 2026-10-10 the 62 unsplit region channels were 1,176 GB-s between them.
+- **Why the region channels.** Each split region's shards keep a poll open at its bus while they hold a socket
+  (HUB-PULL), and before it the bus's pushes and its count every HUB_COUNT_MS woke them: a split region with players
+  in it keeps five objects awake, idle or not (`chat:region.23.2`, 24.1 hours awake on 30 s of CPU).
+- **Why the cells.** GRANT2's measure held a ten-minute timer in every cell asked in (`Spawn-Grants.md` section 22,
+  GRANT-SLEEP, built beside this).
+
+### Built
+
+- **PROVINCE-SLEEP** (`net/hubShards.js` REGION_SPLIT): the Bay's 62 regions stay split; a province past the Bay is one
+  channel, its sockets held by the channel itself, which sleeps between its lines - `shardOf` names no shard for it at
+  either end and no province shard key is a room. Nine split provinces would have been up to 45 more objects awake
+  all day (at 128 MB, some $4 a month each), and the open zone's crowd is Cyrodiil's. CHAT_SOCKETS_MAX bounds a
+  channel, as it bounded every region before SCALE5c part two; a province nearing it is split by raising REGION_SPLIT.
+- **GRANT-SLEEP**: `Spawn-Grants.md` section 22.
+
+### The rest of the branch, read for its cost
+
+No route, poll or client clock is added; the relay bundle grows 6 KiB (2,392 KiB, 638 KiB gzipped) and the account
+service's shrinks 4 KiB (4,200 KiB). The gates' lanes past the Bay stand none (GATE_LANES_OPEN is the Bay's alone), so
+no gate room, hub record or herald beat is added; the Abyss census stays the Bay's 62. The account service's new
+province law is validation over figures it already reads (`nodeLaw.js` regionOnPixel, jungleGroundOk), and a
+province's richer ground meets the same PROF_OPS_MAX (600 an account an hour) every harvest does. What the land does
+cost is SPREAD: the same players over more cells and channels, each awake while someone stands in it - which is why
+the two fixes above are the rooms that stayed awake when nobody did.
+
+### Left for the owner
+
+- **The Bay's regions, unsplit too** - some 1.38 million GB-s a day (some $520 a month) on 2026-10-21. A relay whose
+  `shardOf` names no Bay shard while `isRegionShard` still knows the keys sends a remembered shard link to its channel
+  (the hello's hop, `shardOf(...) ?? busOf(...)`), so no deployed page breaks; the cost is SCALE5c part two's - a
+  region channel's CHAT_SOCKETS_MAX, and a line fanned by one object.
+- **The hub's sixteen shards** (0.19 million GB-s a day, some $70 a month) are every player's, and stay.
+
+Pins: `test/net/sleepcost.test.js` (4); PIN MOVED `test/net/scale5c.test.js`'s region shard count and
+`test/world/worldWide/wwr_regions.test.js`'s province shards; `tools/mutants/sleepcost.json` (9, all dead) and
+`tools/mutants/scale5c.json`'s SCALE5c-region-fifth-shard re-aimed at REGION_SPLIT.
+
+## COST-1: built (2026-10-24, this branch - relay world260 (world256, world257, world258, then world259, until the merges with main, whose STAFF-EVENT, STAFF-EVENT BOSS, KETCH-LONGER and ASK-LONGER took them), NOT YET DEPLOYED; one relay drop at its merge)
 The owner's Cloudflare bill (2026-10-23): about $90 a day, $50 of it Durable Objects compute duration - some 370 objects
 held in memory around the clock at $0.135 an object-day (128 MB billed whatever an object uses, $12.50 per million GB-s).
 Cloudflare bills duration while an object runs or sits in memory unable to hibernate, and two things keep one from
 hibernating: an event (a socket's frame, an alarm firing) every few seconds, and anything pending - a timer, a call out.
 COST-0 (above, `do-active.yml`) is the measurement; this slice ships the two fixes the code alone shows, without waiting
 for it (the owner: the most savings at a moderate risk).
-
 **What kept them awake, read in the code.**
 - **A region's channel, five objects.** SCALE5c part two split each region's channel four ways for 2,048 sockets a
   region at the 10,000 target. HUB-PULL (above) then gave every shard holding a socket a call held open at its bus, up to
@@ -4083,7 +4144,6 @@ for it (the owner: the most savings at a moderate risk).
   staff traffic feed (staffFeeds.js `netArm`, the end of its NET_FEED_MS window); the reaction feed's tick re-arms every
   REACT_EPISODE_MS while rows wait, and a public line arms the reviewer's feed (FEED_WAIT_MS). A player who crossed a cell
   left it billed up to ten minutes after they walked on.
-
 **Built.**
 - **A region's channel whole again** (`src/net/hubShards.js` shardOf, regionsSharded; `server/src/index.js` `_shardOf`).
   shardOf answers no shard for a region's channel unless the region is named, so a region link says hello to
@@ -4109,15 +4169,12 @@ for it (the owner: the most savings at a moderate risk).
 - **A write counted by the rows it bills** (`server/src/relayScale.js` countedState, rowsWritten): a put of entries and a
   delete of keys count a row a key, and an alarm set or deleted is a row - so the metrics' `writes` (double11) is the
   storage rows the bill counts. `relay-load.yml`'s `storage` question reads it.
-
 **Expected:** $20-40 a day from the regions (up to 248 shards and the buses' held polls asleep - each always-on object is
 $4.05 a month) and $2-8 a day from the windows - DO duration from $50 a day to $20-30.
-
 **The measurement that confirms it.** "Durable Objects awake" (`do-active.yml`, COST-0) for 7 days before the merge and 7
 days after: the objects awake past 22 hours a day fall from about 330 (the chat layer) toward the hub's 17 and the
 crowded cells, and the window's object-days a day fall with the bill's duration line. `relay-load.yml`'s `kinds`
 question: `chat` room-windows fall, and `busy` stays 0 on the region channels.
-
 **Left, each with its reason.**
 - **The Elite Gates' beat in an empty room.** The plan read it as waste: a breach's room beats every second with nobody
   in it until its stage ends (net/eliteGates/egDurable.js egTickAt). It is not idle: that beat runs the breach's clock -
@@ -4128,7 +4185,6 @@ question: `chat` room-windows fall, and `busy` stays 0 on the region channels.
   charges an outgoing call to the newest incoming request the object serves (HUB-PULL, "Why"), so the depth chain
   HUB-PULL ended comes back as a race. Not built; a whole region needs no bus at all.
 - **Bigger cells** - COST-2, its own drop, merged a few days after this one so the two savings can be told apart.
-
 **Pins.** `test/net/cost1_regions.test.js` (3): the law (a region whole unless named, the var read strictly, `all`, the
 hub's sixteen untouched, the shards still rooms the Worker opens, the relay shipped naming none, the relay reading its
 own var); over real Rooms a region's channel whole (welcomed there, real sockets, no shard, a line and a mark heard and
@@ -4144,40 +4200,33 @@ their timers cleared, a failed post's retry let go in an empty room and kept und
   two hops and `scale2b.json`'s drain re-aimed by content.
 - RELAY_VERSION world260, its hash and the bundle's new file (`server/src/drainWindows.js`) in
   `test/net/relayversion.test.js`, every pin on world259 moved.
-
 **The deploy.** One relay drop, world260, at the merge (relay-deploy.yml) - every socket closes once, as every relay
 deploy does. No account-service change, no migration. Rollback is a revert (another drop); a page of either build joins
 whichever the relay answers, so no page change is needed either way. The region shards' stored `hubkey` stays in their
 storage, read by nothing until a region is split again.
-
 ## COST-2 part one: built (2026-10-24, this branch - relay world261 (world258, world259, then world260, until the merges with main, whose STAFF-EVENT BOSS took world257, KETCH-LONGER world258 and ASK-LONGER world259; COST-1 holds world260), NOT YET DEPLOYED; one relay drop at its merge, after COST-1's) - cells that can size themselves, the tree fixed at L0
-
 The owner (2026-10-24), of COST's third slice: not static bigger cells. A 64-pixel cell fills a town's SOCKETS_MAX early,
 its crowd spills into layers that cannot see each other, and it is wrong both ways at the 10,000 target. So cells size
 themselves to their players: coarse where the map is empty, fine (down to today's 16 pixels, then layers) where it is
 crowded. The page keeps computing its 16-pixel cell (wire.js worldRoom, cellHaloFor) as before. It ships in two drops.
 This one is the plumbing with the tree fixed at "every node at L0", so every object a cell's socket reaches is the one it
 reached before and every law reads as it did; part two seeds the tree at L2 and lets it split and merge.
-
 **The tree** (`src/net/cellTree.js`, pure). Levels over the fixed grid: L0 is today's 16-pixel cell under its own
 `world:<cx>,<cy>` key (its stored rows stay valid); L1 to L4 are 32 to 256 pixels under `cell:<L>:<nx>,<ny>`. The tree
 is the set of split nodes around a base level: a node above the base is split unless the tree joined it, a node at or
 below it whole unless the tree split it. A fine cell's node (leafOf) is the walk down from its L4 node while the node it
 stands in is split. `L0_TREE` splits everything down to L0: today's partition exactly. readTree reads a tree strictly (its
 version, its base, each node coarse, on its list's side of the base, once, at most TREE_NODES_MAX).
-
 **A node is an object's name; a socket keeps the key it joined with** - the layers' pattern (wire.js layerName). The
 Worker (`server/src/cellNodes.js` cellDoor) asks the directory for the tree, keeps it CELL_TREE_KEEP_MS (30 s) in its
 isolate, and passes the page's request on unchanged to the node's object, walked through its layers as SCALE5d walks a
 place. The object is told its node (NODE_HEADER, set whatever the page sent) and believes it only when the node holds the
 socket's cell. A page's own coarse node key (`/room/cell:...`) is refused 404.
-
 **The directory**: one object, CELL_DIRECTORY (`#cells`, a name wire.js roomOf never gives), answers the tree
 (CELL_INTERNAL_TREE): `L0_TREE` while it stores none, and nothing writes one in this drop (part two seeds and moves it while the `cellSeed` setting is on - below). **It fails safe to the last
 tree an isolate saw**, and to the fine key only when it never saw one: once part two seeds the tree coarse, the fine key
 is not today's behaviour - it would stand a player alone in a fine object no one else of its node is in. A failed ask is
 not repeated for CELL_TREE_RETRY_MS (5 s), so a directory down costs an isolate one ROOM_CALL_MS deadline, not every page.
-
 **A socket covers its node** (the owner's session, of a crossing inside a node: a leave and a join on three of four
 crossings is a regression against today's seamless halo promotion). One law, both ends' (cellTree.js coversCell): a
 socket's COVER is its coarse node, kept on its attachment (`nd`, so a woken object still knows), or its own key, and a
@@ -4204,7 +4253,6 @@ itself alone - today's law.
   CLOSE_SAME_ROOM (4002) at once - a browser sees no HTTP status on a refused upgrade - and asks no object: two sockets of
   one peer in one object would replace each other. The page asks that halo again HALO_WAIT_MS later, with no drop weighed
   and no backoff. At L0 no halo is ever in a room its page holds.
-
 **The handover** (`server/src/cellHandover.js` handOver, takeHandover, CELL_INTERNAL_TAKE). When the tree moves, the
 departing node's rows go to the nodes that hold them now, by pixel, clamped into the receivers' square (a ledger row may
 stand OW_CELL_MARGIN_PX past its cell). Every key a node holds has a class: `part` (the parked teams and the overworld
@@ -4213,11 +4261,9 @@ swept at every drain), and `block` - everything else, a key nobody has named inc
 is never repartitioned, so the tree can only move where the handover is whole. A receiver takes rows idempotently by their
 own keys, and the departing node lets its rows go only when every receiver took its part; a handover asked again after a
 partial failure leaves every receiver as one would.
-
 **The node's level** rides each room's metrics point (`server/src/relayScale.js` RoomMetrics, blob11): `0` for a fine
 cell, 1-4 for a coarse node, '' for a room told none (part two: a coarse node woken by a frame reads its own back). Part
 two's `levels` question in `tools/relayLoad.mjs` reads it (below).
-
 **Read in the code and left for part two, each with its reason.**
 - **The plan named caravan decor and cell memory**: neither lives in a cell. A caravan's decor is its own room's
   (privateInterior.js caravanKeyOf), and a cell keeps no world memory (WORLD6b).
@@ -4232,11 +4278,9 @@ two's `levels` question in `tools/relayLoad.mjs` reads it (below).
   replace its own socket (CLOSE_REPLACED). Part two keeps such pages out of a coarse node with a door of its own
   (wire.js CELL_HELLO_LAW, below); it does not raise the ground law.
 - **Layers keep no ledger, but they may keep parks**: part two hands over a crowded node's layers too (it asks every one).
-
 **Expected:** nothing saved in this drop - the tree is L0 - and one object more: the directory, which every Worker
 isolate asks once a CELL_TREE_KEEP_MS, so at peak it is awake around the clock (about $4 a month). Part two: $9-19 a day on duration (the 64-pixel saving, more at
 night), with no layering in a town until a 16-pixel cell itself fills.
-
 **Pins.** `test/net/celltree.test.js` (3): the nodes, the tree and the walk (L0_TREE every cell its own node across the
 map and past it; a seeded tree's split town, base and joined corner; the reader's every refusal), the partition.
 `test/server/cellnodes.test.js` (5): at L0 every cell reaches the object it reached before - its own name, its layer's,
@@ -4261,16 +4305,12 @@ a wait and not a drop, no `of` for a page in no cell. `tools/mutants/cost2.json`
   auditwb_relay, fb1016b_graveparty, fb1021b_foeshold, lease1, scale5b).
 - RELAY_VERSION world261, its hash and the bundle's three new files (`src/net/cellTree.js`, `server/src/cellNodes.js`,
   `server/src/cellHandover.js`) in `test/net/relayversion.test.js`, every pin on world259 moved.
-
 **The deploy.** One relay drop at the merge, after COST-1's, and the page with it (GitHub Pages). No account-service
 change, no migration, no object renamed: every cell's object is the one it was.
-
 ## COST-2 part two: built (2026-10-25, this branch - relay world262 (world260, then world261, until part one took them at the merges with main), NOT YET DEPLOYED; cut from part one, Lattymoy/daggerfall-js-source#1228, and merges after it) - the tree moves
-
 The second drop of COST-2: the directory seeds its tree coarse and moves it one node at a time, by its nodes' counts.
 **The tree moves only once a developer sets the relay setting `cellSeed`** (off unset), after the site serves this
 build. Part one's plumbing - the tree, the Worker's door, the cover, the handover - keeps its shape; this is what it adds.
-
 **The seed is a setting, off until the site serves this build.** `cellSeed` (`src/net/relayCfg.js`, var CELL_SEED,
 read by `src/net/cellTree.js` cellSeedOf): `off` or unset - the tree is L0_TREE, part one exactly - or the level 1 to 4
 the directory seeds at; 2 is 64-pixel cells. The directory (`server/src/cellNodes.js` directoryTree) asks the hub for the
@@ -4280,7 +4320,6 @@ off and on again, and a later level changes nothing while one is stored. Why a s
 deploys first (`deploy.yml` publishes the site only once the account service serves its version, and
 `account-deploy.yml` waits on the relay), and a coarse node turns away every page from before this build (the cell door,
 below) - seeded at the deploy, every player in the open country would be turned away until the site landed.
-
 **The cell door** (`src/net/wire.js` CELL_HELLO_LAW; `server/src/cellMoves.js` cellDoorShut, wired in index.js
 `_doorRefused`): a cell's hello says `cv` 1 - this build names its rooms on every halo (`?of=`), keeps what each socket
 covers (`cells`) and joins again on CLOSE_REPARTITION. A COARSE node refuses a cell's hello without it, with GROUND-GATE's
@@ -4291,31 +4330,26 @@ of. **A departure from the brief**, which said
 "the ground-law bump for pages without `of`": GROUND_LAW is the terrain's law (pinned to fb1017f's fingerprint) and gated
 by `groundGate`, and a bump would refuse every ground room's hello - towns, dungeons, interiors - from part one's pages
 too. The cell door refuses only in a coarse node.
-
 **The counts** (cellTell): an object the Worker says stands in a moving tree (`cellNodes.js` CELL_TELL_HEADER, the
 Worker's word whatever the page sent) tells the directory its named sockets, by node and layer, at most every
 COUNT_TELL_MS (15 s), from its metrics tick and never awaited. A page poses at least every HEARTBEAT_MS, so a node with
 players is heard; a node unheard for COUNT_STALE_MS (60 s) counts none. An instance woken by a frame (the runtime tells a
 hibernated object nothing at its wake) reads its coarse node back off a socket's attachment (nodeOfRoom), so it tells its
 count, and its metrics point its level, again.
-
 **The law** (`src/net/cellTree.js` cellMoveDue, pure): a leaf above L0 whose count stays past CELL_SPLIT_AT for
 CELL_SPLIT_DWELL_MS splits into its four children; four sibling leaves whose players together stay under CELL_MERGE_AT for
 CELL_MERGE_DWELL_MS merge into their parent - above the seed's level too, so empty country coarsens to 256 pixels. One
 move at a time, a split first, the longest dwell first. Every tree a move makes (splitTree, mergeTree) lists only nodes
 the walk reaches, so its leaves hold every fine cell once.
-
 | var (`server/wrangler.toml`) | default | why |
 |---|---|---|
 | CELL_SPLIT_AT | 150 named sockets | SOCKETS_MAX is 256: a crowd splits before its node fills and layers |
 | CELL_SPLIT_DWELL_MS | 60000 (a minute) | a crowd that stays |
 | CELL_MERGE_AT | 40, the four siblings together | far under a split's 150, so a split's children never merge back |
 | CELL_MERGE_DWELL_MS | 600000 (ten minutes) | quiet that stays |
-
 A var that is not a whole number is its default, and a merge line not under the split line makes all four their defaults
 (cellLawOf). A node whose move its rows blocked, or a layer of which never answered, is left alone MOVE_COOLDOWN_MS (ten
 minutes).
-
 **The move**, made by the directory's alarm (cellPlanAlarm - the directory knows itself by its id, isCellDirectory, so no
 other room's alarm reads anything for it), never inside a node's own call to it. The plan is stored before each stage, so
 a directory that stops resumes where it stopped:
@@ -4327,34 +4361,28 @@ a directory that stops resumes where it stopped:
    socket CLOSE_REPARTITION (4003) and reaps them as a refusal's, then sends its rows again (a take is idempotent, so the
    second send is the first's delta) and lets them go. A key that blocks and arrived since stage 1 is left behind and named
    in the log (`force`: the tree is committed). A layer that does not answer is asked again CLOSE_RETRY_MS (5 s) on.
-
 **A moved node** answers a socket, a park drop or a staff event's call from a caller in a moving tree 503 with
 MOVED_HEADER, for MOVED_KEEP_MS (twice an isolate's keep of its tree); after it, it admits them and lets the mark go. A
 node that takes rows is a node again. The Worker (cellDoor), answered "moved", marks its kept tree stale, asks the
 directory at once and walks once more; with the directory down it keeps the tree it had - part one's law, never the fine
 key - and the page is answered the 503 and retries.
-
 **The page** (`src/net/online.js`): a socket closed CLOSE_REPARTITION joins its cell again BACKOFF_MIN_MS on and within
 REPARTITION_SPAN_MS (2 s) more - a split's crowd spread over its children's hello gates - with no drop weighed and no
 backoff; a halo the same.
-
 **The calls between rooms that name a cell** go through the tree (`cellNodes.js` cellCall, on ROOM_CALL_MS, walked once
 more past a move): the park registry's drop (index.js `_parkTellDrop`: the registry's fine cell and layer, now that
 layer of the node that holds the cell) and a staff event's call to its cell (`server/src/staffEvents.js` tellCell).
 **Read in the code**: the others the brief named - a raid's cleanse, a star held, a gate's kill, a Super dungeon's find -
 are a cell's calls to the hub (SOCIAL_ROOM); none names a cell.
-
 **The seed has no handover: a coarse node pulls.** A fine cell's first socket in a coarse node (its place, layer 0) pulls
 the rows that cell's own object kept before the seed - its parks, its ledger and its copy keys (CELL_INTERNAL_GIVE, taken
 by takeHandover), then CELL_INTERNAL_FORGET there - and the node remembers the cell (CELL_PULLED_KEY). A cell that gave
 once gives nothing again, so the pulled set is never handed over.
-
 **Metrics.** blob12 and blob13 (`server/src/relayScale.js` RoomMetrics): the directory's moves made and moves blocked, on
 its points (kind `cells`). Two questions in `tools/relayLoad.mjs`, which `relay-load.yml` asks with the others: `levels`,
 the cells' points by their node's level (blob11) - the room-windows each level was awake (over 12 an hour: its objects
 awake on the mean), the sockets and the most one held, the sockets refused full, the poses and the sends - and `moves`,
 the moves made and blocked.
-
 **Departures from the plan, named.**
 - The seed at the deploy: a setting a developer turns on instead (above). So the tree moves only once the site serving
   this build has gone out - which means part one's site has too.
@@ -4365,7 +4393,6 @@ the moves made and blocked.
   (2026-10-25): a node a raid or an event holds layers at SOCKETS_MAX as a crowded cell does today - over its 64 pixels
   rather than a cell's 16.
 - Six calls between rooms through the tree: two name a cell (above).
-
 **Known gaps**, each the deploy's or a later slice's to weigh:
 - **The seed cuts off what a fine cell's object holds that blocks.** A live raid, a held star, a serpent's fight, a staff
   event's ledger, the wild's remains and debts stay in the L0 object when the seed goes on: its sockets go to the coarse
@@ -4384,12 +4411,10 @@ the moves made and blocked.
   and a later `/relay cellSeed 2` finds them in its nodes again.
 - **The directory hears every node that has players every 15 s.** It was awake whenever anyone played already (part
   one: the Worker's asks); now it does a little work for each node too.
-
 **Expected:** -$9-19 a day on duration once the seed is on, nothing before it (the plan's 64-pixel figure; more at night,
 when coarse nodes hold the few players still awake). Over static 64-pixel cells the quadtree saves only about $2-3 a day
 more: it is built for town visibility - no layering until a 16-pixel cell itself fills - and the 10,000 target, not for
 the dollars.
-
 **Confirming it**, read for a week before the seed and a week after:
 - `do-active.yml` (Lattymoy/daggerfall-js-source#1220, "Durable Objects awake"): the relay's awake objects and their
   duration - the object-days x $0.135 that the bill's duration line is. It cannot tell a cell's level: an object's id is
@@ -4400,7 +4425,6 @@ the dollars.
 - `relay-load.yml` `moves`: moves made and blocked. If blocked dominates, a later slice partitions the keys that block
   (raids, stars, serpents, staff events, the wild's remains) by their pixel.
 - `relay-load.yml` `crowds`: a town's peak in one object - `room_full` stays 0 while a split comes before a node fills.
-
 **Pins.** `test/net/celltreemoves.test.js` (4): the seed and the setting read; a split and a merge above and below the
 base, the joined top split back to leaves; 400 random moves each reading back whole, listing only reached nodes, every
 fine cell in one leaf; the hysteresis (the dwell, the line, the sum, staleness, the cool, an L0 or split node, the order).
@@ -4418,6 +4442,123 @@ walk; the calls that name a cell, the staff event's made through its own export,
   re-aimed by content (cost2: six, fb1021b_foeshold: three, heraldcards, ketch_herald, relayload).
 - RELAY_VERSION world262, its hash and the bundle's new file (`server/src/cellMoves.js`) in
   `test/net/relayversion.test.js`, every pin on world261 moved.
-
 **The deploy.** One relay drop at the merge (after part one's), and the site with it; the tree stays L0 until a developer
 sets `/relay cellSeed 2` at the hub, once the site serves this build. No account-service change, no migration.
+
+## LONE-SLEEP: a lone player's pose once a minute (2026-10-26 - client only; the relay unchanged, gated on the release's world269), composed with main's HIBERNATE
+
+The owner, 2026-10-26, choosing among AUDIT RELEASE R4's levers (`01-Overview/audits/Audit-Release-R4.md` R4-3, lever 2):
+"Idle lone cells" - a player with nobody near sends their position only on the heartbeat, so their cells can sleep;
+full rate the moment someone comes near. No visible change to players. And, through the coordinator the same day: the
+hidden law gets no side channel (a hidden staff socket is never counted), and the interval is the longest one the
+readers allow, a constant of its own - HEARTBEAT_MS itself is everyone's and does not move.
+
+Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row (ONLINE1's).
+
+### What was true before
+
+A STILL player said a pose only every HEARTBEAT_MS (20 s - `sendPose` skips an unmoved pose under it), its socket kept
+alive by the ping the runtime answers in the object's sleep (`server/src/index.js:"if (state.setWebSocketAutoResponse"`,
+RELAY-H1); and since main's HIBERNATE (world263, merged into this release at its second merge) a still player ALONE says
+none at all - not even the heartbeat. A MOVING one said POSE_HZ (10) down its own cell's socket and each halo's when due
+(HALO-THIN), so a lone mover held its cell and its ~0.9 halo cells awake the whole time it moved (R4-3: ~1.9 objects,
+~$7.8 a month a lone concurrent player) - HIBERNATE leaves a mover as it was.
+
+**Alone is one notion** (the second merge with main; `src/net/loneSleep.js:"export function aloneNow(s) {"`, asked by
+the session through `aloneOf`): no referee (the host's `haloWhole`, a cell's `rf` on any socket I hold), nobody else in
+my own room (`othersHere`) or any I hold (`peers`), in a world cell, a building or an ordinary dungeon. HIBERNATE's
+`aloneQuiet` and LONE-SLEEP's `loneNow` both read it: alone and standing, nothing (HIBERNATE); alone and moving in a
+world cell, on LONE-SLEEP's further conditions below, a pose each LONE_POSE_MS; the wake as below.
+
+### The client (`src/net/loneSleep.js`, wired by `net/online.js`; no host grew)
+
+- **LONE** (`loneOf`): ALONE (above - no peer in any room it holds, a peer anywhere I could see or be seen; no referee,
+  `rf` for a duel's bout, a Wild zone fighter, a serpent's fight, `haloWhole` for the host's), and a presence session in
+  a world cell, its own cell's socket open and welcomed by a relay at LONE_RELAY_MIN or later (`loneOk`, read off the
+  welcome's `v`; LONE_RELAY_MIN is the release's one number, WORLD_WIDE_RELAY_MIN - world260 on the branch, world269 at
+  the second merge, where world260 is main's THE FOLD), not standing in the open zone (`_wildZone`, my own zone word),
+  and outside a fight's hold.
+- **Lone**, `src/net/online.js:"const lone = loneStep(this, pose, now);"`: a MOVED pose goes down my own cell's socket
+  once each `src/net/loneSleep.js:"export const LONE_POSE_MS = 60_000;"` (an unmoved one never - HIBERNATE's), and
+  **down no halo** - an empty halo
+  hears no pose at all (its liveness is its ping, answered asleep). A crossing's promotion clears `_lastSentAt`, so the
+  cell crossed into hears me at once; a new halo's and a new room's hello carries my pose.
+- **The wake** (`loneWake`, after every frame read): a join, a welcome's roster, a stranger's pose or a referee's word
+  that ends the quiet says my pose at once - the notice's own turn, before the next frame - down my cell's socket and
+  each halo it is due to (one quiet a heartbeat or more always is), and POSE_HZ from the next frame. Never from a body
+  lying dead (the pose would stand it up).
+- **A fight**: `src/net/loneSleep.js:"export const LONE_HOLD_MS = 5_000;"` of POSE_HZ after a pose whose fight counters
+  moved (`wd`, `an`, `cn`, `ar`, `hk`, `hu` - that pose goes at once) and after a grant's mint is asked.
+- **A word carries my pose** (`src/net/loneSleep.js:"export function loneAhead(s, ws, room) {"`, beside LEASE1's
+  `_leased`, the same shape; a halo's socket keeps COST-2's `?of=` and is wrapped the same): any frame but a ping, a hello, a pose or a lease said down a cell's socket while lone goes
+  behind my current pose when that socket last heard me elsewhere, and restarts the minute. Chat, a door, a zone's word,
+  a grant, a raid's, a rite's - each is judged where I stand.
+- **Logout**: the leave closes the sockets; nobody is there to be told where I stood.
+
+### Every reader of a pose on the relay, read for the lone minute (none changed)
+
+| reader | safe how |
+|---|---|
+| the fan and its range (`server/src/index.js:"async _poseFrame(ws, a, m) {"`), the chat's and the foes' range | nobody to hear; a peer's arrival wakes me first |
+| SLAM8's keepalive and stop floors, the pose gate and its strikes | a minute's changed pose is a move; a minute apart is far under any gate; nothing is struck (pinned) |
+| the grant's cell and pixel (`server/src/index.js:"_grantHere(ws, a, id) {"`, `_grantMint`) | my pose goes ahead of the ask (pinned) |
+| raid, rite, star, serpent site, the Hour's door, the Wild zone's word, a duel's open | my pose ahead of the word; a referee's cell is never quiet (`rf`) |
+| SEAT1b's Watch (`server/src/index.js:"async _watchTick(ws, sub, p, moved, now) {"`) | it ticks on a pose that finds its last tick WATCH_TICK_MS (120 s) old, at that pose's pixel - a minute's poses tick every two minutes as a pose a second does (pinned: 5 receipts in 10 minutes either way); WATCH_MOVED_MS (300 s) is five of them |
+| the reaction feed (`server/src/staffFeeds.js:"export function staffReactPose(room, ws, p, now) {"`, REACTION_FEED_URL set) | the mint holds POSE_HZ for LONE_HOLD_MS, past `server/src/staffFeedLaw.js:"export const REACT_FIRST_MS = 3_000;"`; each first it times (a draw, a swing, a cast, an arrow, a blow either way) is a fight counter, said at once; a death is `sendDeath`'s, at once |
+| duelPose, wildPose, the serpent's trail (`server/src/index.js:"_refereesPoses() {"`) | a referee in the cell says `rf`, and a session hearing it is never quiet; but the cell says it only at the pose or hello after the referee began, and the zone's `wildPose` steps every pose through `refereeStep` (a window's walk at most - a minute's would be a jump, and a jump refuses the fighter's blows for WILD_REF.jumpMs), so a session that has said it stands in the open zone is never quiet from that word on (pinned); a serpent's fight is the host's `haloWhole` the frame it begins |
+| siege and Royal `refereeStep`, a court, the Hour, a ship, the arena, an instance | not world cells - never quiet |
+| the warden's throw (first frame in the room) | at most a minute late, nobody there to see it but me |
+| a newcomer's welcome roster | stands me where the relay last heard me; my answer to their join lands one round trip later (pinned) |
+| a hidden staff spectator, a staff follow | not counted (no side channel): it hears a pose a minute, under its silence law's `src/net/online.js:"export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;"` (80 s), so a moving target never vanishes - the accepted cost (a STILL alone target says nothing at all since HIBERNATE, main's); the hub's where note (5 s moving) is unchanged |
+| the hub, the party's marks, travellers, the region channels | other sockets, unchanged |
+| the relay's count of poses (`_metrics.c.poses`) | falls - expected |
+| a dead socket | the relay detects none by silence (a failed send, or the runtime's close); liveness is the ping |
+
+**What bounds LONE_POSE_MS**: under PEER_TIMEOUT_MS (80 s) - a peer that does hold me (a hidden spectator) must never
+hide me between two; a whole part of WATCH_TICK_MS (120 s) - 90 s would tick the Watch every 180 s; over HEARTBEAT_MS,
+or nothing is saved. Sixty seconds is the longest that holds all three.
+
+### Mixed builds
+
+An older client (always POSE_HZ) is read as ever - the relay is unchanged. This client goes quiet only to a relay that
+welcomed its own cell's socket as the release's number or later (`loneSupported`, WORLD_WIDE_RELAY_MIN - world269); to
+main's relays before it, or to one that names no version, it says POSE_HZ as before (pinned) - HIBERNATE's quiet
+standing is main's own and needs no gate. No frame and no relay byte moved, so world260's row in
+`test/net/relayversion.test.js` is not re-hashed.
+
+### The saving, on R4's numbers
+
+Re-checked with HIBERNATE in it: a still lone player already sleeps (main's - no heartbeat at all), so LONE-SLEEP's
+saving is the MOVING lone player's alone; the figures below are that.
+R4-3: a lone mover holds ~1.9 objects awake ($4.11 an object-month at 128 MB) - ~$7.8 a month. With LONE-SLEEP its own
+cell hears an event a minute (~10 s awake of 60, ~0.17) and its halos none (~0.02 for a halo's hello at a crossing a
+13 km cell apart): **~0.19 objects, ~$0.8 a month, between encounters**. R4-2's estimate of ~3 grant asks a minute in
+the open (a mint and a free a foe, a renew each eight minutes) wakes the own cell too: some three wakes a minute, a
+mint's 5 s hold among them, ~35 s of 60 - **~0.6 objects, ~$2.5 a month, fighting through the open**. So a lone mover
+costs 68-90% less. (A still lone player: HIBERNATE's ~0, not counted here.) With COST-2's seed on (`cellSeed` 2,
+64-pixel nodes - R4-3's lever 1) a lone mover holds ~1.2 objects before LONE-SLEEP and the same ~0.2-0.6 after: the
+saving is then ~$2.5-4 a month a lone concurrent mover rather than ~$5-7. On R4-3's table, 30% of 1,000 concurrent players alone past the Bay (570 objects, ~$2,340 a month) become
+~60-180 objects: **~$1,600-2,100 a month saved per 1,000 concurrent players** if they move (~$700-1,200 with COST-2's
+64-pixel seed on) - less whatever share of them stands in the open zone (Cyrodiil's), where the zone's referee steps
+every pose and a lone player costs what it did, and less the still ones HIBERNATE already sleeps. Today's population is the Bay's: in the
+evening's hour R4 measured, cells that never held more than one socket were 11% of the 162 awake cells' time (~18
+objects, ~$73 a month), most of which this takes. Measure it the week after release with R4's hour-by-object query.
+
+### Pins
+
+`test/net/lonesleep.test.js` (12): the interval and its bounds, the gate, alone and lone clause by clause, the count (a
+lone session walking N seconds says ceil(N / LONE_POSE_MS) poses down its own cell's socket and none down a halo, its
+pings carrying none; standing, nothing - HIBERNATE's), mixed builds, the wake one notice after a join in a halo or my own cell or a stranger's pose (and never
+for the dead), referees, the open zone, my own socket down, a fight and a mint, a word's pose ahead, and on the fake relay: poses a
+minute and 600 m apart taken whole, the Watch's receipts the same, and a peer arriving seeing the lone player where it
+stands one answer after the join. `tools/mutants/lonesleep.json` (43: 42 dead on the merged code and one recorded equivalent - alone's own-room clause,
+which `peers` already holds; ten re-aimed by content at the second merge, two added). The other streams' mutants inside
+`sendPose` (halothin, scale2b, scale5b, deckpose, auditonline3b - 13) die on it too. Main's HIBERNATE record `tools/mutants/lease1.json`
+HIBERNATE-halo-peer-heartbeat-dropped re-aimed by content to `aloneNow`; its pins (`halothin`, `online`, `lease1`,
+`chat1` and the rest of #1275's) pass on the composed code. Re-aimed by content (the socket's
+`loneAhead` wrap; all four dead): `tools/mutants/lease1.json` LEASE1-a-halo-skipped,
+`tools/mutants/auditscale2_client.json` AUDIT-SCALE2-R3-10-halo-at-the-place and -layer-unasked,
+`tools/mutants/scale5d.json` SCALE5d-hint-unasked. PIN MOVED (LONE-SLEEP): `test/net/staffpanel5drop_e2e.test.js`
+FOLLOW-DROP's "draws the target where they stand" - a target with nobody near but hidden watchers (the staff game
+hidden, or out of its room) is lone, and the follow draws it where its last pose put it, never more than a lone
+minute's walk behind; with the staff game standing in the cell, shown, where it stands, as before.

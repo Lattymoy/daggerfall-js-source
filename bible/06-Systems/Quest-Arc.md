@@ -5336,7 +5336,8 @@ addFace/dropFace rows - removing a row means mounting it.
 
 Pins: 12 in `test/systems/quest/escortfaces.test.js`. Campaign: 13 mutants, 13
 killed. QUEST-SHELF-FACES (2026-10-25) added a 13th: a quest set aside shows no
-faces (its section, below).
+faces (its section, below). ESCORT-TOUCH-ROW (2026-10-25) added two more: the
+column starts below a touch screen's top row (its section, below).
 
 ## RW1 - THE QUESTCOMPLETE LOOT WINDOW (2026-08-28)
 
@@ -6666,6 +6667,27 @@ a quest up carried its letter, its package, its body part until they took it up 
   once - so the quest can still be finished. The journal says so ("Its item is back in your pack.").
 - Pinned by `test/systems/quest/questshelf.test.js` (QUEST-SHELF-DROP) and `tools/mutants/questshelf.json`.
 
+## ESCORT-TOUCH-ROW - the escort faces start below a touch screen's top row (2026-10-25)
+
+QUEST-SHELF-FACES' phone pass (Edge, phone emulation, on main): at HUD scale 1 - a phone upright (390x664) and on its
+side (844x390) - the touch layer's dial (`ui/touch/touch.js`, 16 to 64 CSS px from the top left) stood over the
+escort column's first face (FE1, startY 36, 48 px), and about half the portrait was hidden. The iPad (1180x820, scale 3)
+was clear: its column starts at 108.
+
+- **The rule** (`ui/hud/hudEscortFaces.js escortStartY`): the column starts at DFU's startY (36) unless the touch
+  layer's top row reaches lower; then one ESCORT_TOUCH_AIR (8 CSS px) under that row, rounded up into the HUD's own
+  units. The row is MEASURED where it stands, as the status widget measures it (`ui/enhanced/enhancedHud.js`
+  STAT_ABOVE): the lowest bottom edge of the `.dftouch-btn` presses that cross the column's width and start above the
+  screen's middle. So a notched phone's safe-area inset counts, the presses at the foot never do, and with no touch
+  layer (a mouse, a pad) DFU's place stands. It is measured every ESCORT_MEASURE_EVERY (30) frames and at once on a new
+  window size, as a rotation moves the row.
+- **The status widget follows**: `escortFacesBottom` reports the moved column, so the enhanced HUD's widget keeps
+  below it (hud.js `escortBottomPx`).
+- A RECORDED DEPARTURE (Port-Ledger A, TI1's row): DFU has no touch layer, so its startY never meets one.
+- Pinned by `test/systems/quest/escortfaces.test.js` (ESCORT-TOUCH-ROW: the drawn face's top at the three sizes, with and
+  without the row, a press at the foot or beside the column moving nothing; and `escortStartY`'s arithmetic) and
+  `tools/mutants/escorttouchrow.json` (3, all dead).
+
 ## QUEST-SHELF-FACES - an abandoned quest's escort face is hidden, kept (2026-10-25)
 
 A player: *"I was unable to complete the Acolyte Quest where you escort the Oracle, I ended up abandoning the quest and
@@ -6686,6 +6708,34 @@ quest was set aside, and it rode the save.
 - Pinned by `test/systems/quest/escortfaces.test.js` (QUEST-SHELF-FACES, a real quest set aside and reclaimed through a
   bare bridge) and `tools/mutants/questshelffaces.json` (2, both dead). UI3's `the-escorts-top-for-their-bottom` record
   (`tools/mutants/ui3.json`) was re-aimed by content to the new loop, and still dies.
+
+## FACE-ORPHAN - a face whose quest is gone is never drawn, and not saved (RPT1026-MISC, 2026-10-26)
+
+A private report: three escort portraits stood on the HUD, and neither finishing nor abandoning quests cleared them. The
+column loses a face by DropFace or by the quest-end sweep, and QUEST-SHELF-FACES hides one whose quest is set aside. A
+face whose quest left the machine WITHOUT ending - a quest a load could not restore (`machine.js` restoreSaveData skips
+it, "expected after removing a mod with custom quest actions", and the faces are restored all the same) - had neither,
+and stood for good: no quest of it was left to turn in, abandon or end.
+
+- `setEscortQuestGone` is handed `(uid) => !machine.getQuest(uid)` by the bridge (`scenes/quest/questBridge.js`, beside
+  `setEscortQuestAway`); `shownColumn` leaves such a face out and `getEscortFacesSaveData` drops it from the save, so
+  the next load is clean. No host grows.
+- A DEPARTURE (Port-Ledger A, FACE-ORPHAN): DFU's faces outlive a quest that never ends.
+- Pinned by `test/systems/quest/rpt1026_misc_faces.test.js` (1); `escortfaces.test.js`'s QUEST-SHELF-FACES test resets
+  the new seam the real bridge sets (pin moved); `tools/mutants/rpt1026_misc.json` (3).
+
+## RUMOR-ORPHAN - a quest's progress rumor goes with the quest (RPT1026-MISC, 2026-10-26)
+
+A private report: asked for news in a town, a resident said a quest's own words with their macros bare (A0C01Y09's
+post-quest rumor, its `_sister_` and `%g3` unexpanded). The tombstone files a quest's RumorsPostSuccess / RumorsPostFailure as its progress rumor (Quest.cs:637-640),
+and `machine.js` removeQuest, a week of the quest's clock later, left it in the mill: the next telling asks for a quest
+the machine no longer holds, and the expansion's null-parent bail hands the words over unexpanded. DFU has the same
+orphan until its next load, whose RestoreConversationData sweep (TalkManager.cs:2522-2533; the port's
+`removeOrphanedQuestRumors`) takes it - and a session online is days of a character's clock.
+
+- removeQuest calls the machine's `removeProgressRumors` dep with the quest's uid (`machine.js:"this.deps.removeProgressRumors?.(quest.uid);"`).
+- A DEPARTURE in WHEN only (Port-Ledger A, RUMOR-ORPHAN): the rumor goes with its quest, not at the next load.
+- Pinned by `test/systems/quest/rpt1026_misc_rumor.test.js` (1); `tools/mutants/rpt1026_misc.json` (1).
 
 ## NO-ASKS-AGAIN - a No that leads nowhere asks again, on the next click (2026-10-13, FIELD BUGS 2026-10-13e)
 
@@ -6708,7 +6758,8 @@ of it one of noAsksAgain.js:"export const CLICK_TRIGGERS", and the task named by
 (noAsksAgain.js:"export function askAgain"): its task cleared as a `clear` clears it, the prompt alone made incomplete,
 the No variable cleared. The next click asks again, a Yes then runs as a first Yes does, and a No that does something
 else stays DFU's - a No whose every action is a `clear` of its asking task alone is the author's own ask-again, and asks
-again too (QUEST-AUDIT III; C0C00Y10's healer, below). Two doors: Quest.update each tick (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a prompt")
+again too (QUEST-AUDIT III; C0C00Y10's healer, below), and so does one whose every action hands back the item its click
+toted (RPT1026-QUESTS NO-GIVES-BACK, below) - unless a stamped quest's questlines sheet reads it (AUDIT RPT1026 H1). Two doors: Quest.update each tick (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a prompt")
 and the end of Quest.restoreSaveData (quest.js:"NO-ASKS-AGAIN (not DFU's - quest/noAsksAgain.js): a save"), so a save
 taken after such a No loads asking again, as do a party member's copy and a reclaimed quest.
 
@@ -6717,7 +6768,8 @@ _foe_` - a robber's or a guard's "hand it over" (A0C00Y14, A0C00Y15, K0C00Y03, O
 O0B10Y00, R0C10Y00, R0C10Y01, R0C10Y02, R0C10Y18, R0C11Y19). There the No is the refusal and the courier's road goes
 on, and the trigger is Foe.injuredTrigger, a latch that holds until the foe is stood again: re-armed, the demand would
 come back the next tick, every tick, until a Yes gave the goods away. In the shipped corpus the law re-arms The Lost
-Child and, since QUEST-AUDIT III, C0C00Y10's healer (below).
+Child and, since QUEST-AUDIT III, C0C00Y10's healer (below); since RPT1026-QUESTS, the four Nos that hand an item
+back (NO-GIVES-BACK, below) - of them, with the questlines on, the queen's alone (AUDIT RPT1026 H1).
 
 C0C00Y10 (the healer's `prompt 1014 yes _S.11_ no _no_` under `clicked npc _healer_ say 1013`) answers a No with `_no_
 task: clear _S.10_` - the author's own ask-again - which Prompt.cs's `allowRearm = false` defeats in DFU: the healer said
@@ -6828,7 +6880,8 @@ sentence, which says the service is unbuilt.
   and the potion and item makers mounted their window and answered null, which pushed the sentence onto the popup they
   had just replaced - they hand the window back now, as the book and the repair list do. The host: three logical lines
   fewer.
-- **THE BOX STANDS ON THE SCREEN** (AUDIT FB1019f F1). The line is one row, and the flow's box laid its rows as they came:
+- **THE BOX STANDS ON THE SCREEN** (AUDIT FB1019f F1). The line was one row (two since RPT1026-QUESTS ABANDON-ALWAYS, below:
+  the way out under it), and the flow's box laid its rows as they came:
   on the classic skin, in the interior's shop font (FONT0003), the line naming a guild's quest ran past both edges of
   the 320-px panel for 177 of the 178 guild quests' titles. ServiceFlowWindow wraps a long row now, as the guild popup's
   own box does (SS5's fitBoxRows - AUDIT GUILD-WORDS II F-2): `guildServiceWindows.js:"this._box = layoutMessageBox(font, fitBoxRows(font, t.rows), buttons);"`.
@@ -6843,6 +6896,79 @@ every whole language's `{quest}`; what still reaches the sentence; the classic b
 FONT0003 for every guild quest's title, the service records unchanged (ARENA2, the suite's usual skip). PIN MOVED:
 `test/systems/quest/covenwindow.test.js` (the coven's close carries its reason and its quest).
 `tools/mutants/questor_said.json` (16), all dead.
+
+## RPT1026-QUESTS - the private report inbox's quest reports (2026-10-26)
+
+The 2026-10-26 batch of the private report inbox, its quest reports read to their roots. Five changes to the quest law
+here (the arena's ARENA-ORDER is `11-Multiplayer/Arena.md`'s, the bounty boards' BOUNTY-WAY `Bounty-Boards.md`'s section
+5); each pinned by `test/systems/quest/rpt1026_quests.test.js` (13 - ten here, one the arena's, two the boards') and
+mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the arena's, two the boards'), all dead.
+
+- **ABANDON-ALWAYS** - a quest that shuts its questor's door is always a row with its Abandon. Six reports: The Lost
+  Artifact shared in a party (the knight paid, every objective struck, nothing to abandon, the order's door shut to
+  both), a Knights of the Dragon whose questor counted a quest the journal did not hold, a Mages Guild that refused
+  a new quest with none listed. DFU's law shuts the door while a quest whose questor is the NPC clicked runs
+  (IsLastNPCClickedAnActiveQuestor - `machine.js:"lastNPCClickedQuestorOf() {"`). B0B81Y02's knight answers the lich's
+  death with `give pc nothing` and `remove log step 0` and the quest runs on under `_2dung_` (RAVEN-CLOSE closes it
+  online on the short wait); N0B21Y14 writes its first entry only when its letter is read. A quest with nothing in its
+  journal was no row: the bridge's walk listed only a stamped quest with objectives, and AUDIT QUESTLINES UI-8 drew no
+  Abandon on one. Now `machine.js:"export const holdsQuestorDoor = (quest) =>"` names the quests that hold the door (a
+  Person its questor by the click), each is a row whether or not it has written anything
+  (`questBridge.js:"if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;"`), an Abandoned row once set aside
+  (so its Reclaim stands), its detail says "Nothing is written in your journal for this quest yet." where it has no
+  objectives, and the questor's close (QUESTOR-SAID) adds the way out: "If you cannot finish it, you can abandon it from
+  the Quests tab of the pause menu." (AUDIT RPT1026 H2: on the classic skin, whose pause window has no tabs, the way
+  AUDIT QUESTLINES UI-6 names - Controls, then Escape, then Quests.) A quest with nothing written and no questor the player met (the main story's
+  backbone, a letter's errand) stays off the tab. Port-Ledger A, QUEST-SHELF's row, widened.
+- **QUEST-CROWD** - two quests' Persons never stand in one pick box. Five reports of a questline's contact missing from
+  the tavern its journal named (A Hand of Cards with Raiders at the Gate, both at one inn; The Long Haul; Raiders at the
+  Gate; a raid's defender; two quests that met at one person's place, only one of them left there). The intro lines' contacts
+  are `local` Persons in a `local tavern`; DFU's GetAllActiveQuestSites reads only the running quests, so two quests
+  parsed before either starts take one building (the lines were started together before QL-OFFERED), and 215 of
+  Daggerfall's 345 tavern interiors lay one spawn marker - GameObjectHelper.AddQuestNPC stood both on it, one billboard
+  over the other. FB1020c CROWD-CLEAR moved a Person off a resident; another quest Person already stood in the room now
+  crowds as a resident does (`sceneMount.js:"export function crowdOf(people, stands = null, self = null) {"`), and with
+  no spawn marker clear the Person stands beside its own, on the same floor and in plain line - never through a wall,
+  onto a table or past a ledge (`sceneMount.js:"export function besideSpot(at, collider, lift, w, crowd) {"`). Its layout
+  data (its name, its click) stays the drawn marker's. Port-Ledger A, QUEST-MARKERS' row, widened.
+- **NO-GIVES-BACK** - a No that hands the letter back asks again. The report: Lord K'avar's letter given to the Queen of
+  Sentinel, No pressed, and she never spoke of it again. M0B11Y18 asks under `toting _I.03_ and _ruler_ clicked` and its
+  No (`_S.20_`) is a `get item _I.03_` - not inert, not a clear, so NO-ASKS-AGAIN left it DFU's: the prompt spent, the
+  click a set task's. Now a No whose every action hands back the item its asking click toted
+  (`noAsksAgain.js:"export function givesBackNo(quest, task, prompt) {"`) asks again once that item is back in the pack.
+  The corpus has four: M0B11Y18 `_S.20_`, 80C0XY00 `_school_`, $CUREWER `_S.15_`, N0B00Y09 `_nononono_`
+  (`test/systems/quest/fb1013e_noasks.test.js`'s census, PIN MOVED to six). Port-Ledger A, NO-ASKS-AGAIN's row, widened.
+  AUDIT RPT1026 H1, NARROWED: three of the four are answers the questlines' sheets read as the player's choice
+  (N0B00Y09's "Keep it for the Guild" and its `refused` ending, $CUREWER's `spared`, 80C0XY00's kept secret); forgotten,
+  N0B00Y09 ended `loyal` and lost the standing its refusal moves, and $CUREWER's refusal ended as a failure. A stamped
+  quest's No that its sheet reads (`noAsksAgain.js:"export function sheetReadTasks(quest) {"`) is DFU's, asked once; the
+  queen's still asks again, and with the questlines off all four do (`test/systems/quest/audit_rpt1026_quests.test.js`).
+- **QUEST-ZONE** - online a quest's remote dungeon is never one the open zone seals. The report: a vampire's lair in the
+  middle of the open zone, its door sealed ("The way in is sealed. Only the halls marked on the map are open today."). Of
+  the real MAPS.BSA's dungeons 205 stand inside the Wrothgarian cut, and their doors open only on the day their hall is
+  marked (`world.js` wildDungeonGate), so a quest drawn into one could not be done. Online the draw skips every dungeon
+  inside the cut (`place.js:"_zoneSeal(world) {"`, passed to KVAR-HOLD's own collector), and the load's re-seat draws a
+  saved site there again by KVAR-HOLD's law; offline the zone is no law and DFU's draw stands. Port-Ledger A, KVAR-HOLD's
+  row, widened.
+
+- **CATALOG-READ** - Azimuthal Vectors' catalogue is a step until it is READ. Two reports: after the scholar's
+  teleport the catalogue's dungeon held nothing to find and no marker showed; on the dead end no payment came from the
+  Guildmagister. N0B00Y17 moves on reading its catalogue, never on carrying it (`_map2_ used do _S.15_`
+  reveals the item's dungeon; `_I.03_ used do _S.16_` is the dead end's last condition), and the questlines' sheet struck
+  "Look for the old catalog" when it was picked up - so a player who found it first, then took the scholar's errand, was
+  teleported to a dungeon already emptied, with no step left that named the letter in the pack. Driven on the
+  freeware's data through the real machine and Place (24 draws, online: every marker - the catalogue's, the vambrace's,
+  the scholar's, the teleport's landing at spawn marker 0 - stands in a block of the dungeon whole, which the quest's
+  instance builds), the placement holds; the step did not. Now the sheet has the reading as its own step, open while the
+  catalogue is carried unread: "Read the old catalog from ___hintdung_, which is in your pack"
+  (`src/systems/questlines/sheets/magesGuild.json`, N0B00Y17's `read`). Over every sheet the questlines carry, it is the
+  one objective struck on carrying an item whose script moves only on its use (N0C00Y13 and S0000017 turn theirs in by
+  carrying it). The port's own layer, not a DFU member.
+
+THE FOUR HOSTS: none grows. ABANDON-ALWAYS is the bridge's walk and the pause window's (both hosts read them); QUEST-CROWD
+rides the one logical line of `worldModes.js` standQuestFlatIn that CROWD-CLEAR already wrote (its interior adapter serves
+world.js and exterior.js; dungeonContext.js stands its quest people on Daggerfall's RDB markers, unaffected);
+NO-GIVES-BACK and QUEST-ZONE are the quest system's own.
 
 ## QUEST-AUDIT III - the quest system read whole, and STORY-AGAIN (2026-10-23)
 
@@ -6879,3 +7005,268 @@ restart replaying the Totem's reward, an old save offering steps the story went 
 counted, a questline choice answered twice) - each fixed and pinned red on the snapshot, or left with its reason, in the
 record's own section; `auditqa3_story.test.js`, `auditqa3_share.test.js`, `auditqa3_life.test.js`,
 `tools/mutants/auditqa3_*.json`.
+
+## AUDIT RELEASE R2-5 - A PROVINCE'S REGION: a quest giver past the Bay sends the player across their province (2026-10-26)
+
+The owner, before the release that carries TESA: *"expand our world seamlessly. All systems should be integrated
+precisely"*. Audit lane R2 found the gap (`01-Overview/audits/Audit-Release-R2.md` R2-5, its proposal taken here).
+DFU draws a remote site from the questor's region's MAPS.BSA rows: Place.SelectRemoteTownSite (:790-870),
+SelectRemoteDungeonSite (:880-935) and SelectRemoteLocationExteriorSite (:940-985), ported whole at
+`src/systems/quest/place.js:"_selectRemoteTownSite(world, requiredBuildingType) {"`. A province's region (62..70, WW-R) has
+no MAPS.BSA rows, so every quest that wanted another town or a dungeon threw at its parse, and DFU's own catch answered
+for it. A guild's Get Quest had no work, a social giver the same, and a Daedra summoned past the Bay "has no task for you
+in this region. You keep your gold." That held in every province, so past the Bay no quest left town.
+
+**THE LAW.** The quest layer's maps (`src/scenes/questWorld.js`, the `Object.create(maps)` it already wrapped for the
+smaller-dungeon law) answer a province's region from `src/scenes/quest/questProvinceSites.js:"export function createQuestProvinceSites("`:
+
+- **Its towns** are the theatre's listed places on the world's registry (`world/worldWide/worldPlaces.js` inTheatre,
+  `world/pastBayRows.js`): the capitals' slices and the model's cities, towns and villages that stand a location. A
+  place is kept where the politic map reads its pixel as this region, which is the region its clone carries. They come
+  in the registry's order, the same on every client.
+- **Its dungeons** are the province's lairs (`world/tamrielDungeons.js`, TESA8). The table takes the nearest
+  PROVINCE_LAIR_COUNT (12) within PROVINCE_LAIR_REACH (66 pixels, a Bay region's span) of the questor, on the pixels where
+  the build stands them: no capital, Arena place or countryside place first, the same pixel test as START2's start lairs
+  (`scenes/tamrielPlacesHost.js` lairFree). A lair is a pixel's roll, and a province holds thousands; some 250 stand
+  within a Bay region's span, each read a few milliseconds.
+
+  So a table reads at most PROVINCE_LAIR_ROLLS (16) cells,
+  nearest first, kept or not, and a cell once read is kept. **The coordinator's bound:** the first table at a pixel had
+  been about 1.8 s in one main-thread task when a player asked for work. It is now bounded by count, and the bound is
+  pinned. (16 lairs and 40 first rolls at R2-5; R2-5d made the bound the pixel's alone; R2-5e set it beside the
+  countryside's.)
+- **Its countryside** (R2-5e, below): the nearest hamlets, villages, farms, homes, inns and temples.
+- **Each row** is DFU's MapTable shape: mapId, locationType, dungeonType, and the longitude and latitude its pixel reads
+  back. So NEARBY-QUESTS' reach measures it like a Bay row. `getLocation(r, i)` is the place the build stands there
+  (`tamrielPlacesHost.js` provinceQuestPlaces.standAt: a capital, an Arena place, the countryside, a lair - the pixel
+  build's own order and the same object). Its building keys and its dungeon's blocks are the ones the player meets. Where
+  its pixel now stands another place, it is null, and the dart misses. `readClassicLocation` is null past the Bay,
+  because the town mods took nothing there. `currentLocationIndex` is the questor's own row, which a remote draw sets aside.
+- **A name the table does not hold** is found by the site that names it. That covers a lair drawn from another pixel, a
+  session after the draw, and a party member's copy of the quest. A quest's site past the Bay carries its own pixel
+  (START3 `worldPixel`), and the place standing there under that name and map id joins the table. So a site resolves
+  after a save's load and a relog as it did at its draw. The lookup is `placeByName`'s last word too, so
+  discoverLocation, the clocks' travel time and the respawn at a site find it.
+
+So DFU's draw runs unchanged over the province: the building types a town must have (the MAPS directory's pre-check,
+then the block walk; a town without the kind is refused as DFU refuses it), the dungeon types and their retry as any
+dungeon, the markers and MARKERLESS-DRAW, the house fallback, and the smaller-dungeon law (questSized over getLocation).
+START3's marks, the street compass and the journal's find already read the site's pixel, and a Skyrim questor's courier
+walks to another town of Skyrim (TESA-NO-FAST).
+
+**THE IMPERIAL CITY, A DESTINATION SLICE BY SLICE (R2-5b).** The owner, the same day: *"Take care of exclusions and
+gaps."* At first the city was left out. Its 625 slices are 625 locations under fourteen names, and DFU's name lookup
+(DFRegion.MapNameLookup, a name to one index) reads them as fourteen.
+
+- **Quest names.** Each slice now has a quest name of its own (`capitalQuestNames`): its district's name, plus ", quarter
+  N" where the district spans several slices, N its rank among them by slice index. A quest name is a key, the same in
+  every language and session. It is shown through getLocalizedLocationName, as every place's name is.
+- **One name everywhere in the quest layer.** The quest layer sees every slice location under its quest name: `questView`
+  (a shallow copy, its record the build's own) over the table's rows and over the questor's own location (questWorld.js
+  `_questLoc`). So a site drawn in a slice, local or remote, names that slice alone.
+- **Left out by the plan alone** (`isUnsitedSlice`, the same on every client whatever has been built):
+  - the centre slice, the White-Gold Tower's grounds, where no building stands;
+  - a shore capital's harbour sea;
+  - the 367 slices the plan names after none of its districts (`PLAN_FILL_NAMES`, imperialSliceName's own last arm: its
+    isle, lake and shore - none stands a building).
+- **The rest are rows.** That leaves 257 slices, of which 96 stand no building today (the palace grounds, the prison, a
+  district's edge). Each is a row whose dart misses, as DFU's dart misses a town without the building.
+
+**A CAPITAL IS ONE TOWN: THE CENTRE'S LOCAL SITES (R2-5c).** The same owner's word. A questor in a capital slice with no
+building of the asked kind - the Imperial City's centre, the White-Gold Tower's grounds, holds none at all - threw at a
+`local` site ("Could not find local site ... in Cyrodiil/Imperial City"): a Mages Guild or a commoner standing there had
+no work.
+
+The city is one town (WW7-11 capitalStreet), so a local site the questor's slice cannot give is taken in the
+city's nearest slice that can (`src/systems/quest/place.js:"_citySites(world, location, p2, p3) {"` over
+`capitalSlicesNear`: the capital's other slices nearest first, a tie by slice index - the same on every client - the
+slices no site stands in left out, each stood only as the search reaches it), by SetupLocalSite's own search there (its
+house fallback with it), and marked a near site (the travel map is shown it). The same for any capital of several
+slices whose questor's slice lacks the kind. Its name is the slice's quest name (R2-5b). Not a DFU member: Daggerfall's
+towns are one location each.
+
+**THE PARSE'S COST, MADE IN IDLE TIME (R2-5d).** A draw reads a town by standing it. On the Bay that is a MAPS.BSA record
+(cheap, read once). Past the Bay it is a place the build makes, some 20 ms each the first time (an Imperial City slice
+14-21 ms, a Skyrim town 19 ms, measured on the freeware). A temple's `remote house2` asked in the Imperial City tried
+its pools' slices one by one and took 20 s. The build keeps a place once stood, so
+`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm("` stands the questor's province's table in
+idle time while the player is in that province:
+
+- **Nearest first, bounded by count.** At most WARM_PER_TICK (2) places a tick are stood for the first time, nearest the
+  player first (`requestIdleCallback`; a wait while on the Bay or once all is stood).
+- **The draw is untouched.** The same table, the same darts and the same site on every client; a warm cache only makes it
+  fast.
+- **The tables' own bounds count every cell or pixel they read, cached or not.** So a table is the pixel's alone: a warm
+  client had read further than a cold one, and that is fixed.
+
+On the freeware, with each province made ready first, no giver's parse stood a place for the first time (pinned: the
+world's index does not grow while asking for work). Skyrim and Morrowind parsed in 30-630 ms on a machine at a load
+average of 25 on 4 cores. The Imperial City was the exception, closed by R2-5f (below).
+
+**THE COUNTRYSIDE, A DESTINATION (R2-5e).** At first a province's table held its listed towns alone. The countryside's
+hamlets, villages, farms, homes, inns and temples (TESA7) are a pixel's roll and no list. The listed towns are few and far
+apart, so a courier's town was often hundreds of pixels off: NEARBY-QUESTS' reach found none, and DFU's darts went
+province-wide. Now the table holds the countryside's places nearest the questor
+(`src/scenes/tamrielPlacesHost.js:"function countryNear(px, py, reach, count = Infinity, rolls = Infinity) {"`):
+
+- **Which places.** PROVINCE_COUNTRY_COUNT (16) within PROVINCE_COUNTRY_REACH (24 pixels). Each is on a pixel the build
+  stands it on (no capital or Arena place there), and each is DFU's MapTable row.
+- **Bounded by count, the same on every client.** The pixels are read nearest first. Of those the roll may stand a place
+  on (countryMayStandAt, no plateau), at most PROVINCE_COUNTRY_ROLLS (32) are rolled whole (a plateau, about 1 ms, kept a
+  pixel), whatever was read before. The lairs' bound is the same, now 12 within 66 pixels and at most 16 cells read, so the
+  first table at a pixel stays under the 100 ms a task may take.
+- **One name, one row.** A table lists a name once (the listed towns first), so a site's name names one place.
+
+So a courier's town is near, as on the Bay.
+
+**THE IMPERIAL CITY'S SLICES' SITES INDEX (R2-5f).** The owner held the release for *"proper fixes"*. R2-5d left the
+Imperial City open. A search there stood slice after slice and walked each one's blocks for its kind, and the walk made
+every one of the city's own generated cells afresh, about a second a slice. Cold at the centre, a Mages Guild's local
+hall (N0B20Y02) took 154-279 s on the freeware; a temple's `remote house2` took 20 s, and a parse there 0.1-18 s even
+made ready. Now:
+
+- **A town's sites by kind** (`src/systems/quest/place.js:"export function townSitesIndex(world, location) {"`): every
+  building of its blocks a search could ever take - one with a quest marker - as its type, its faction and its key. It
+  is CollectQuestSitesOfBuildingType's walk (`townBuildings`) and its law (`buildingAdmits`: the wildcards, the hall's
+  and the temple's faction, never the Dark Brotherhood's or the Thieves Guild's), each now one home the search reads too
+  (`_townBuildingsOfType`). No quest or owner changes it, so it holds for the session.
+- **Kept a slice, read before the slice stands** (`src/scenes/quest/questProvinceSites.js:"const sliceIndexAt = (px, py) => {"`):
+  off the slice as the build lays it - the stood slice, else its clone, not stood
+  (`src/scenes/tamrielPlacesHost.js:"function capitalSliceAt(px, py) {"`, over capitalCloneOf, the one law capitalLocationAt
+  stands) - and by the warmer in idle time.
+- **A search stands only the slices its index admits.** The centre's local search (`_citySites`) passes over, unstood,
+  every slice whose index cannot give its kind (`siteIndexGives`: SetupLocalSite's kinds and its house fallback). The
+  slices it stands are the ones it picks, counted (`picked()`). A dart on a slice's row whose index holds none of the
+  dart's kind (`_dartIndexGives`: _tryTownLocation's own arms) is the miss its walk would be, known before the slice
+  stands (`siteIndexRefuses`).
+- **The city's own cells are never made for a walk.** R2-5f read a capital's cell the quest layer names
+  (`world/imperialBlocks.js` imperialBlockOf) as holding no building, synthesizeCapitalLocation's own law for its
+  directory; QUEST-FABRIC (below) reads it as a quest reads it instead
+  (`src/systems/quest/place.js:"const dfBlock = world.questBlock?.(blockName) ?? world.getBlock(blockName);"`), its
+  buildings without its fabric, and a slice's index takes its fabric baked. And `dryKinds` keeps its answer a names list
+  (it was 17 of a slice's 20 ms).
+
+The draw is untouched. The index is the search's own answer, so it refuses only a slice the walk would find nothing in,
+and every client draws the same site. No draw changes, so this is no departure.
+
+Pinned on fixtures by `test/systems/quest/auditrelease_r25f.test.js` (the law, the index, the kept slice, the refusal, the
+skipped cells, the seams), and on the freeware by `test/systems/quest/auditrelease_r25_freeware.test.js` (R2-5f), cold at
+the centre:
+
+- N0B20Y02 stands 2 slices and A0C00Y06 3: one for each local site the city gives, the stands equal to the slices
+  picked. The walk over every slice nearest first stands 18 and 27 for the same sites (177 and 27 before QUEST-FABRIC,
+  whose fabric holds a Mages Guild hall nearer). N0B20Y02 parses in 0.5 s (1.1-2.5 s before), by the machine's load
+  (measured, not pinned).
+- A temple's `remote house2` from the Temple District: its darts stand 80 slices, each whose index holds a house2 (67
+  before QUEST-FABRIC: the fabric's houses admit more, each then missed at the directory's pre-check, as DFU's walk
+  misses there), fewer than without the index, for the same house.
+- None of the city's own cells is made for a walk.
+- Each of the city's 257 sited slices is read cold off its clone, the clone is the slice the build then stands, and its
+  index is the search's own answer there for each of Quests-Places' 29 town rows.
+
+42 mutants (`tools/mutants/questsites.json`, R25f-), all dead (45 at R2-5f; QUEST-FABRIC retired the three that held the skip).
+
+**QUEST-FABRIC - A QUEST LANDS IN THE FABRIC'S BUILDINGS (2026-10-26, the owner, asked whether quests may land in
+BLD-3's buildings: "Let quests use them").** The city's fabric buildings (`03-World/Arena-Provinces.md` BLD: records,
+Daggerfall's doors and interiors, the interiors' quest markers among them) stood in the cells R2-5f's walk skipped, so
+no quest site landed in one: the Temple District's first quarter holds 865 marked buildings, 5 of them in the Daggerfall
+blocks the walk read; the Arena District's eighteenth holds 1,189, and 28. Now every block is read, the city's own
+cells too, in three parts:
+
+- **A cell read as a quest reads it** (`src/world/imperialFabricBuildings.js:"export function fabricQuestBlock(name, blocksFile) {"`,
+  the quest world's `questBlock`): withFabricBuildings' records, subrecords and donors' interiors over an empty block,
+  without the cell's ground, models, lamps or town-map bytes. Made by the scene's door a cell is its whole fabric, some
+  15 ms, and never a block the scene's cache needs evicted for a search.
+- **A slice's index takes its fabric baked** (`src/scenes/questWorld.js:"const sitesIndexOf = (loc) => {"`): its
+  Daggerfall blocks walked, its own cells read as holding none, and the kinds its fabric gives a quest
+  (`src/world/imperialFabricBuildings.js:"export function fabricSliceSites(s) {"`) read off
+  `src/world/imperialFabricSites.js`, which `tools/bakeFabricSites.mjs` writes from the plan and BLOCKS.BSA's donors
+  (43 of the 53 marked; 625 slices, 50 distinct sets) and holds with `--check`. Laid out cell by cell the fabric's half is
+  some 0.1 s a slice, and a temple's darts over the city read some ninety slices' indexes.
+- **The quest suite's world binds BLOCKS.BSA** (`test/systems/quest/r25World.mjs` bindWorldDataBlocks, as the world host
+  does), so its pins stand the fabric's buildings.
+
+Measured on the freeware, cold, a temple's `remote house2` from the Temple District (91 darts, one site): 0.25 s with the
+cells unread; 83 s with them made by the scene's door (5,507 cells over 80 slices); 15.5 s read as a quest reads them
+but each index laid out; 0.45-1.0 s with the fabric's index baked, by the machine's load. The centre's N0B20Y02: 1.0 s
+unread, 6.9 s made, 0.5 s now; A0C00Y06: 0.33 s unread, 0.4 s now (measured, not pinned). The draw changes where the fabric holds the building - the
+centre's local Mages Guild hall in the fabric's, nearer than a Daggerfall block's - and is every client's: the records
+are the plan's and the interiors BLOCKS.BSA's.
+
+Pinned by `test/systems/quest/questfabric.test.js` (the view equal to the
+made block on everything a quest reads, for a spread of the plan's cells; the baked table the plan's on a spread of
+slices, the donors' marks BLOCKS.BSA's with ARENA2), `test/systems/quest/auditrelease_r25f.test.js` (a fabric tavern the
+centre's local tavern, its donor's marker, no cell made; a slice's index the walk's own kinds, no own cell read for it)
+and the freeware test (none of the city's own cells made; every sited slice's index the search's own answer for each
+town row). Mutants: `tools/mutants/questsites.json` QF-, 12, all dead.
+
+**THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
+the nearest lairs where a Bay region lists every dungeon, the nearest countryside places where it lists every home
+(R2-5e), the Imperial City's slices under quest names of their own and its unbuilt ones left out (R2-5b), a capital one
+town for a local site (R2-5c), a name once a table, and the held site's pixel. Every Bay region's draw is MAPS.BSA's to
+the byte (pinned).
+
+**END TO END, on the freeware** (`test/systems/quest/auditrelease_r25_freeware.test.js`, `test/systems/quest/r25World.mjs`). The
+places host stands the world past the Bay in Node from ARENA2 (the trace on the freeware's fit, the game's own rows,
+templates and blocks, the registry), and the quest layer and a real QuestMachine run over it, with NEARBY-QUESTS on as the
+game's default has it. A second quest layer at the same pixel (a party member's game) draws every site the same under
+the same roll. The givers: the Fighters Guild (M0B00Y07), the Mages Guild (N0B00Y06), a temple (C0B00Y00), a
+commoner (A0C00Y00) and a Daedra (Azura T0C00Y00, Hircine X0C00Y00) at Solitude, Mournhold, and the Imperial City's
+Arena District, Arcane University and Temple District slices. Every one offers its quest. For every remote site:
+
+- It is a place the build stands in the giver's province, on its own pixel.
+- It is found by its name.
+- Its mark is on the held map.
+- Its building stands in its town, or its markers are its dungeon's as the build lays it.
+- The foe or item the quest puts there at its start is placed when the player arrives (sceneMount.js
+  addQuestResourceObjects).
+
+Each saved quest is then loaded again with the world's index forgotten and the player on the Bay, and every site is the
+same place. A Fighters Guild in Daggerfall still draws the Bay's own places. A wider probe (every quest of every guild,
+temple and social list, and all sixteen Daedra, at the three capitals) parsed all twenty Fighters Guild quests at
+Solitude, all sixteen Daedra in Morrowind and Cyrodiil, and nearly every list at Mournhold. Every failure seen was a local
+site or the probe's missing questor click, never a remote site.
+
+Not checked here: the running game (no browser). That covers the parse's frame time in a live boot, where each dart
+stands a town's clone the first time (a parse measured 0.1-1.4 s in Node), and a party's shared copy over the wire,
+whose sites resolve by the held-site lookup above.
+
+## BAY-LEFT-B - %di, the map reveals, scrying and %lp past the Bay (2026-10-27)
+
+The audit "no system left behind in the Bay" (B3, B5 = C8, B6, B7; the owner: *"Every single thing here needs to be
+addressed. No exceptions."*, 2026-10-26). R2-5 (above) gave the quest layer a province's table; four readers still read
+the host's raw MAPS.BSA reader, which holds no table for a province's region (62..70). One table now answers all of
+them - the quest layer's maps (`scenes/questWorld.js`, a province's region `scenes/quest/questProvinceSites.js`'s), the
+same table the talk's regional "Where is" reads (`06-Systems/Talk-Arc.md` BAY-LEFT-B, where each row's key is recorded).
+
+- **%di's remote arm** (GetLocationCompassDirection, TalkManager.cs:1238-1281) said "...never mind..." for every site past
+  the Bay (28 of DFU's quests use it): `questWorld.js` handed it the raw `maps`, and `systems/talk/talk.js` bounded the
+  politic region by MapFileReader.RegionCount (62). It reads `questWorld.maps`, the region bounded by the world's regions
+  (`talk.js:"if (region < 0 || region >= REGION_NAMES.length) region = -1;"`). On the freeware Solitude's Fighters Guild
+  sends the player to Fenrarik Manor, "northeast", and to the Citadel of Alarne, "east"; the Bay's directions are as they
+  were (Daggerfall's: Uplech and Greenfield's Hold, "northwest").
+- **The map item's and the guilds' reveals** (DiscoverRandomLocation, PlayerGPS.cs:892-910: the map item, the Thieves
+  Guild's ranks 6 and 8, the Dark Brotherhood's promotion) read the region of the LOCATION under the player
+  (`locationIndex`), so a map read in the wilderness, on a road or at sea found none and was spent - on the Bay too; and
+  past the Bay no table at all. DFU reads PlayerGPS.CurrentRegion - the politic map's. The reveal now reads the politic
+  region (`_questRegionIndex`) over the quest layer's table (`world.js:"const region = questWorld.maps.getRegion(_questRegionIndex());"`):
+  a province's places (its towns, the countryside and lairs nearest the player, R2-5e), each discovered by its whole id
+  (AUDIT TESA II P6). The map is still spent either way, as DFU spends it (RemoveItem outside its catch).
+- **The Mages Guild's scrying** (LOOT19, `systems/loot/lootScry.js`) refused "nowhere" past the Bay (`scryWhere` read the
+  raw maps): it reads the same table, and finds the family's nearest lair. A town's row past the Bay is NoDungeon (255) as
+  MAPS.BSA's towns are (`questProvinceSites.js:"export function provinceRow(p) {"`): it had read as type 0, a crypt, so an
+  undead scrying would have named a town.
+- **%lp** (MacroHelper LocalProvince: "High Rock" in a Breton region, else "Hammerfell") said "Hammerfell" everywhere past
+  the Bay ("High Rock" in Cyrodiil - its people's race): a province's region answers its own name, as shown
+  (`systems/quest/questMacros.js`, GetLocalizedRegionName, %reg's): Skyrim, Morrowind, Cyrodiil. The Bay's two answers are
+  DFU's.
+
+A departure each where DFU has no province (Port-Ledger A, BAY-LEFT-B); the reveal's politic region is DFU's own read,
+restored. THE FOUR HOSTS: `scenes/world.js` wired (the reveal and the scrying are its; `scenes/worldModes.js` reaches both
+through it - the interior's map item and the Reforge's scry); `scenes/dungeonContext.js` reads the reveal through the
+world host's `revealMap` (MAPLOOT1); `scenes/exterior.js` (the bench) has no region table past the Bay to read - FLAGGED.
+
+Pins: `test/systems/quest/bayleftb_quest.test.js` (8, the freeware: the quests' directions past the Bay and on it; the
+compass's bound; the table's keys; the pipeline over the province; provinceRow; the reveal run off world.js's own text
+past the Bay and on the Bay's road; the scrying's lair; %lp's eleven). Mutants: `tools/mutants/bayleftb.json`
+(BAY-LEFT-B-B3-*, -B5-*, -B6-*, -B7-*).

@@ -10,7 +10,8 @@
 //
 // A sample: the renderer's own context's live objects by kind (its create* and delete* counted), the fps counter's
 // last second (ui/fpsCounter.js: frames, mean and worst ms, draws and binds, the minute's worst hitch), the JS heap
-// where Chromium tells it, whether the page is hidden and whether the context is lost. No byte estimate: a texture
+// where Chromium tells it, whether the page is hidden, whether the context is lost, and whether this is the sample taken
+// as it came back (restored). No byte estimate: a texture
 // re-uploaded at a level and a buffer filled again would make a running byte total mislead on the very question asked.
 // Nothing runs in the frame - no getError, no getParameter: the counts are a wrapped call on each create and delete, and
 // the rest is read once a sample.
@@ -80,18 +81,26 @@ export function createTrail(keep = GPU_TRAIL_KEEP) {
 const whole = (v) => (Number.isFinite(v) ? Math.round(v) : null);
 
 /**
+ * The minute's worst hitch in ms: 0 when the fps counter kept none (it answers `hitch: null` then - a number it has),
+ * null with no second to read it from.
+ * @param {any} frame
+ */
+const hitchOf = (frame) => (frame ? (frame.hitch ? whole(frame.hitch.ms) : 0) : null);
+
+/**
  * One sample. Pure. `frame` is the fps counter's last second (ui/fpsCounter.js mountFpsCounter `last`), or null - before
  * its first second, and when it is the second the sample before had (no frame has been drawn since: the page hidden, or
- * the frames stopped); `heap` the JS heap's used bytes, or null where the browser does not say.
- * @param {{ at: number, upMs: number, live: GlLive, frame: any, heap: number|null, hidden: boolean, lost: boolean }} o
+ * the frames stopped); `heap` the JS heap's used bytes, or null where the browser does not say; `restored` the sample
+ * taken as the context came back.
+ * @param {{ at: number, upMs: number, live: GlLive, frame: any, heap: number|null, hidden: boolean, lost: boolean, restored?: boolean }} o
  */
-export function gpuSample({ at, upMs, live, frame, heap, hidden, lost }) {
+export function gpuSample({ at, upMs, live, frame, heap, hidden, lost, restored = false }) {
   return {
     at, upS: whole(upMs / 1000),
     textures: live.textures, buffers: live.buffers, vaos: live.vaos, framebuffers: live.framebuffers, programs: live.programs,
     fps: whole(frame?.fps), frameMs: Number.isFinite(frame?.meanMs) ? Math.round(frame.meanMs * 10) / 10 : null, worstMs: whole(frame?.worstMs),
-    hitchMs: whole(frame?.hitch?.ms), draws: whole(frame?.draws), binds: whole(frame?.binds), viewDraws: whole(frame?.viewDraws), shadowDraws: whole(frame?.shadowDraws),
-    heapMB: heap == null ? null : whole(heap / 1048576), hidden: !!hidden, lost: !!lost,
+    hitchMs: hitchOf(frame), draws: whole(frame?.draws), binds: whole(frame?.binds), viewDraws: whole(frame?.viewDraws), shadowDraws: whole(frame?.shadowDraws),
+    heapMB: heap == null ? null : whole(heap / 1048576), hidden: !!hidden, lost: !!lost, restored: !!restored,
   };
 }
 
@@ -106,24 +115,28 @@ export function gpuSample({ at, upMs, live, frame, heap, hidden, lost }) {
 export function startGpuTrail({ canvas, gl, live, frames, gpu = null, send, timers = globalThis }) {
   const trail = createTrail();
   let lastFrame = null;
-  const sample = () => {
+  const sample = (restored = false) => {
     const frame = frames?.() ?? null;
     const s = gpuSample({
       at: Date.now(), upMs: globalThis.performance?.now?.() ?? 0, live, frame: frame === lastFrame ? null : frame,
       heap: /** @type {any} */ (globalThis.performance)?.memory?.usedJSHeapSize ?? null, hidden: !!globalThis.document?.hidden, lost: gl.isContextLost(),
+      restored,
     });
     lastFrame = frame;
     try { send({ gpu, samples: trail.push(s) }); } catch { /* the shell gone first: the next sample tries again */ }
   };
-  const first = timers.setTimeout(sample, GPU_TRAIL_FIRST_MS);
-  const every = timers.setInterval(sample, GPU_TRAIL_MS);
-  canvas.addEventListener('webglcontextlost', sample);
-  canvas.addEventListener('webglcontextrestored', sample);
+  // A timer and the lost event would hand their own argument to `sample`; each says what it is instead.
+  const sampleNow = () => sample(false);
+  const sampleRestored = () => sample(true);
+  const first = timers.setTimeout(sampleNow, GPU_TRAIL_FIRST_MS);
+  const every = timers.setInterval(sampleNow, GPU_TRAIL_MS);
+  canvas.addEventListener('webglcontextlost', sampleNow);
+  canvas.addEventListener('webglcontextrestored', sampleRestored);
   return {
-    sample,
+    sample: sampleNow,
     stop() {
       timers.clearTimeout(first); timers.clearInterval(every);
-      canvas.removeEventListener('webglcontextlost', sample); canvas.removeEventListener('webglcontextrestored', sample);
+      canvas.removeEventListener('webglcontextlost', sampleNow); canvas.removeEventListener('webglcontextrestored', sampleRestored);
     },
   };
 }

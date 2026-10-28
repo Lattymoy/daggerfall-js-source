@@ -201,7 +201,7 @@ export function shieldTextureName(index) {
  *  `GetShieldProtectedBodyParts` is already the port's
  *  (combat/enemyEquipment.js), so this is the mod's loop over it. */
 export function isPartShielded(item, bodyPart) {
-  const parts = shieldProtectedBodyParts(item?.templateIndex ?? -1);
+  const parts = shieldProtectedBodyParts(item?.coverTemplate ?? item?.templateIndex ?? -1);   // AUDIT HORIZONTAL E2: the piece's own, under any look (weaponRig.js shieldItem)
   for (let i = 0; i < parts.length; i++) if (parts[i] === bodyPart) return true;
   return false;
 }

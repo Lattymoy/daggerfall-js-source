@@ -48,8 +48,12 @@ export function roadsCacheKey({ settlements, woodsLength, dials = {} }) {
 /** The IndexedDB store. Every method answers null on any failure.
  *  DW-A: the database and store names are arguments (the roads' by default),
  *  so Iliac Puddle No More's coastline keeps its own cache through this one
- *  door rather than a second copy of it (deepWatersBakeCache.js). */
-export function idbStore(indexedDBRef = globalThis.indexedDB, { db: dbName = DB, store: storeName = STORE } = {}) {
+ *  door rather than a second copy of it (deepWatersBakeCache.js).
+ *  AUDIT TESA II R10: `set` answers the key once the value is kept (null when
+ *  it is not), and lets go of every key in each `evict` range ([lower, upper],
+ *  both in) in the same transaction - a store keeps one entry where a caller's
+ *  keys say only the newest is read again. `keyRange` is IDBKeyRange's door. */
+export function idbStore(indexedDBRef = globalThis.indexedDB, { db: dbName = DB, store: storeName = STORE, keyRange = globalThis.IDBKeyRange } = {}) {
   if (!indexedDBRef) return null;
   const open = () => new Promise((resolve) => {
     try {
@@ -70,7 +74,22 @@ export function idbStore(indexedDBRef = globalThis.indexedDB, { db: dbName = DB,
   });
   return {
     async get(key) { const db = await open(); if (!db) return null; const v = await tx(db, 'readonly', (s) => s.get(key)); db.close(); return v; },
-    async set(key, value) { const db = await open(); if (!db) return null; const v = await tx(db, 'readwrite', (s) => s.put(value, key)); db.close(); return v; },
+    async set(key, value, { evict = [] } = {}) {
+      const db = await open();
+      if (!db) return null;
+      const v = await new Promise((resolve) => {
+        try {
+          const t = db.transaction(storeName, 'readwrite'), s = t.objectStore(storeName);
+          for (const [lower, upper] of evict) s.delete(keyRange.bound(lower, upper));
+          s.put(value, key);
+          t.oncomplete = () => resolve(key);
+          t.onerror = () => resolve(null);
+          t.onabort = () => resolve(null);
+        } catch { resolve(null); }
+      });
+      db.close();
+      return v;
+    },
   };
 }
 

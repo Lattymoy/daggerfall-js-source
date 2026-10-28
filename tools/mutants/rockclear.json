@@ -11,11 +11,12 @@
   {
     "name": "RC-the-towns-models-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          late.add(gateKey, cpu.positions, cpu.indices, local,\n",
-    "new": "          collider.addMesh(gateKey, cpu.positions, cpu.indices, local,\n",
+    "old": "          if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,\n",
+    "new": "          if (isSolidModel(placed.modelIdNum)) collider.addMesh(gateKey, cpu.positions, cpu.indices, local,\n",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): a model that is drawn, never solid (a far skyline), adds no collider."
   },
   {
     "name": "RC-gothways-boards-past-the-gate",
@@ -83,8 +84,8 @@
   {
     "name": "RC-the-probe-off-the-provider",
     "file": "src/player/lateSolid.js",
-    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation);",
-    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix);",
+    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, null, null, false, h.sight);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -101,8 +102,8 @@
   {
     "name": "RC-the-stand-off-the-provider",
     "file": "src/player/lateSolid.js",
-    "old": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation);",
-    "new": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix);",
+    "old": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, null, null, false, h.sight);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -110,8 +111,8 @@
   {
     "name": "RC-the-translation-dropped",
     "file": "src/player/lateSolid.js",
-    "old": "      const h = partOf(positions, indices, matrix, translation);\n      const now = bodyNow(body);",
-    "new": "      const h = partOf(positions, indices, matrix, null);\n      const now = bodyNow(body);",
+    "old": "      const h = partOf(positions, indices, matrix, translation, sight);\n      const now = bodyNow(body);",
+    "new": "      const h = partOf(positions, indices, matrix, null, sight);\n      const now = bodyNow(body);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]

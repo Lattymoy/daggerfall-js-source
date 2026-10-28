@@ -679,7 +679,7 @@ select, input, textarea { font: inherit; }
    wizard: its rail is a readout and its phone strip is its own (below).
    TALL-TOUCH (2026-10-13, Discord #bug-reports, on an ASUS ROG Xbox Ally X: "it's impossible to configure the game
    settings because of a huge game logo that won't minimize or go away"). NOT ONLY A SHORT ONE: ANY LANDSCAPE SCREEN.
-   The stack sizes the logo by the screen's WIDTH (59.5% of it, at the mark's 1.63:1), so held sideways it stands at
+   The stack sizes the logo by the screen's WIDTH (59.5% of it, at BR5's 1.63:1; BR6's 43.4% is that height), so held sideways it stands at
    least half the height at any size - 1280x720 (a 1080p handheld at Windows' 150%) drew it ~470 px of 720 and left
    the Settings pane a strip. The 560 px ceiling caught the AYN Thor and missed the Ally. So every landscape screen
    600 px wide or more that the stack would take - a touch screen of any height, or a window narrowed under 860 px -
@@ -944,7 +944,9 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 
    AUDIT INV2 A7: THE LADDER, walked rather than eyeballed. Every
    z-index literal in src/ and index.html: the doors' hosts are 11-14,
-   the boot error and three bottom sheets are 20, enhancedChunk's "the
+   the boot error and three bottom sheets are 20, the layer a message box
+   lays over an open enhanced window to take its clicks is 29 (BOX-ON-TOP,
+   ui/boxClickCatcher.js), enhancedChunk's "the
    game was updated" scrim is 30, the notice stack (ENH-NOTICE1; AUDIT
    ENH-NOTICE3 A7 lifted it off a tie with that scrim) is 31, the asset
    picker is 40 (and test/scenes/mwattach.test.js holds that it outranks
@@ -2361,20 +2363,24 @@ ${badgeCss()}
    HEIGHT it had, so nothing above or below it moves: the door's old mark
    stood 540 x 769/2112 tall, and the same height at the new ratio is
    540 x 769/2112 x 526/322 = 321px wide (84vw -> 50vw; the short landscape
-   screen's 394px -> 234, 56vw -> 33.3vw). */
-.px-wordmark:has(.brand-logo) { width: min(321px, 50vw); line-height: 0; flex-shrink: 0; }
+   screen's 394px -> 234, 56vw -> 33.3vw).
+   BR6: the dragon mark is 1232 x 1034 (1.19:1), painted to its edges too;
+   the same heights at its ratio are 540 x 769/2112 x 1232/1034 = 234px
+   (36.4vw), and the short landscape screen's 171px (24.3vw). */
+.px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw); line-height: 0; flex-shrink: 0; }
 .brand-logo { display: block; width: 100%; height: auto; object-fit: contain;
-  image-rendering: auto; }
+  image-rendering: auto; transform: translateX(-10%); }   /* LOGO-CENTRE: the letters on the centre line (brandMark.js) */
 /* BR5: the masthead's mark spent 769/2112 of the column's width in height
    (BR4's file less its empty rows); the DFO mark spends the same height at
    769/2112 x 526/322 = 59.5% of the width, centred. No margin pulls
-   anything up any more - the file has no empty rows. */
-.brand-home .brand-logo { width: 59.5%; margin: 0 auto; }
+   anything up any more - the file has no empty rows. BR6: the dragon
+   mark's 1.19:1 spends that height at 769/2112 x 1232/1034 = 43.4%. */
+.brand-home .brand-logo { width: 43.4%; margin: 0 auto; }
 .brand-home { display: block; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .brand-home:focus-visible { outline: 2px solid var(--brass); outline-offset: 6px; }
 .shell .brand h1:has(.brand-logo) { line-height: 0; }
 @media (max-height: 560px) and (min-width: 600px) {
-  .px-wordmark:has(.brand-logo) { width: min(234px, 33.3vw); }   /* BR4: INTRO2's 430px, at the same height; BR5: BR4's 394px, at the same height */
+  .px-wordmark:has(.brand-logo) { width: min(171px, 24.3vw); }   /* BR4: INTRO2's 430px, at the same height; BR5 and BR6: BR4's 394px, at the same height */
 }
 .px-wordmark small { display: block; font-family: ${PIXEL_STACK};
   font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
@@ -2429,6 +2435,49 @@ ${badgeCss()}
 .px-about:hover, .px-about:focus-visible { outline: none;
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* ── TITLE-DOOR (2026-10-27, the owner: "we use the intro title screen as the landing pad itself") ──
+   The boot door's face on the film's held title (enhancedMenu.js onTitle, ui/intro/introScreen.js land): the host is
+   see-through there - the film stands under it at 11 - and the home has no ground of its own. The doors stand in a row in
+   the band between the mark and the foot, where Tap to continue stood: the band starts at the film's --intro-doors-top
+   (the landed mark's foot), and the stage ends at the measured foot (--px-foot-h). Either skin's door, so this sheet's,
+   not a dress's; every rule outweighs the door's own column (Plus's MENU_CSS, UI-CALM's two questions) on purpose. */
+#enhanced-menu[data-over-title] { background: transparent !important; }
+.px-home.px-title { background: transparent; }
+#enhanced-menu .px-home.px-title > .px-stage:not(.px-acctstage) { justify-content: center; padding-top: calc(var(--intro-doors-top, 62dvh) + 6px); }
+.px-home.px-title .px-menu { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: stretch;
+  width: min(1120px, 100%); gap: 10px 14px; }
+.px-home.px-title .px-menu .doorbtn { flex: 0 1 auto; min-height: 50px; padding: 4px 18px; gap: 12px;
+  font-size: 20px; letter-spacing: 0.14em; text-indent: 0.14em; }
+.px-home.px-title .px-menu .doorbtn .px-c { font-size: 14px; }
+.px-home.px-title .px-menu[data-level="top"] { width: min(780px, 100%); gap: 10px 18px; }
+.px-home.px-title .px-menu[data-level="top"] .doorbtn { flex: 1 1 300px; min-height: 76px; padding-top: 8px; padding-bottom: 8px; font-size: 28px; }
+.px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
+.px-home.px-title .px-menu[data-level="offline"] .px-pagenote { flex: 0 0 100%; margin: 0; }
+/* the offline level's word and line stand bare on the map, among its own names - a glow of the night under them (Plus's
+   alone: DFO Grimoire writes them on its page) */
+:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
+:root:not([data-plus-dress="grimoire"]) .px-home.px-title .px-menu[data-level="offline"] .px-pagenote { text-shadow: 1px 1px 0 #000, 0 0 6px #000, 0 0 14px #000; }
+.px-home.px-title .px-menu .doorbtn.door-back { margin-top: 0; min-height: 50px; font-size: 15px; }
+/* a phone: the two questions one over the other, the games two to a row and the way back under them */
+@media (max-width: 600px) {
+  .px-home.px-title .px-menu[data-level="top"] { flex-direction: column; width: min(420px, 100%); gap: 8px; }
+  .px-home.px-title .px-menu[data-level="top"] .doorbtn { flex: 0 0 auto; min-height: 68px; font-size: 24px; }
+  .px-home.px-title .px-menu:not([data-level="top"]) { gap: 8px; }
+  .px-home.px-title .px-menu:not([data-level="top"]) .doorbtn { flex: 1 1 calc(50% - 4px); min-height: 46px; padding: 2px 10px;
+    font-size: 16px; letter-spacing: 0.08em; text-indent: 0.08em; }
+  .px-home.px-title .px-menu .doorbtn.door-back { flex-basis: 100%; }
+}
+/* a short screen: the same row, a size down - the games and the way back on one row, their diamonds put away, and the
+   offline word and line left to the rail (Offline's door said them a press ago) */
+@media (max-height: 560px) {
+  .px-home.px-title .px-menu[data-level="top"] .doorbtn { min-height: 58px; padding-top: 4px; padding-bottom: 4px; font-size: 22px; }
+  .px-home.px-title .px-menu .doorbtn { min-height: 44px; padding: 2px 14px; font-size: 16px; letter-spacing: 0.1em; text-indent: 0.1em; }
+  .px-home.px-title .px-menu:not([data-level="top"]) .doorbtn .px-c { display: none; }
+  .px-home.px-title .px-menu .door-sub { font-size: 12px; }
+  .px-home.px-title .px-menu[data-level="offline"] .px-pagehead,
+  .px-home.px-title .px-menu[data-level="offline"] .px-pagenote { display: none; }
+}
 
 /* ── ACC1f: THE PROFILE MARK AND THE ACCOUNT WINDOW ─────────────────
    Mac: the online details live "as a popup on main menu startup and a
@@ -2510,7 +2559,7 @@ ${badgeCss()}
 /* SUPPORT1: ON THE FRONT DOOR THE CAPTION IS BOUNDED IN PIXELS. Its two lines' 14ch and 22ch are the font's - up to
    158px in Pixelify Sans - and a reach that is the font's cannot be the band's (THE CORNERS' BAND, below). 140px keeps
    "No character yet" whole (123px) and holds the mark's reach to 234px, so the band ended at 1007 under BR4's 540px
-   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ends it at 788); a character's longer line
+   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ended it at 788, BR6's 234px at 701); a character's longer line
    ends in its ellipsis three letters sooner. */
 .px-home:not(.px-over) .px-profilename { max-width: min(14ch, 140px); }
 .px-home:not(.px-over) .px-profilesub { max-width: min(22ch, 140px); }
@@ -2973,12 +3022,12 @@ ${SUPPORT_MARKS_CSS}
    clear of the corner marks over a game. With a mark in each top corner, the door's stage starts below them wherever
    the wordmark is wide enough to reach under either: the asks reach 122px in (18, their 98, the Plus frame's 6), the
    profile 234 (18, its 58px portrait, the 12px gap, its caption's 140px bound, the frame's 6), and
-   (vw - min(321px, 50vw)) / 2 is less than 234 at every width under 789 (BR5: BR4's min(540px, 84vw) took it to
-   1008) - and on a phone, where the marks stand 10px in and the caption is hidden, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own
+   (vw - min(234px, 36.4vw)) / 2 is less than 234 at every width under 702 (BR6: BR5's min(321px, 50vw) took it to
+   789, BR4's min(540px, 84vw) to 1008) - and on a phone, where the marks stand 10px in and the caption is hidden, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own
    opaque pixels onto the screen across 192 sizes, a caption at its bound among them. The band costs height, and where
    the door no longer fits it scrolls (DOOR-FIT, above); its foot keeps the one-row foot's 68px, so the last row can be
    scrolled clear of About and Screenshots. */
-@media (min-width: 481px) and (max-width: 788px) {
+@media (min-width: 481px) and (max-width: 701px) {
   .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { padding: 84px 24px 76px; }
 }
 @media (max-width: 480px) {
@@ -3215,6 +3264,28 @@ html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage > .px-win { ma
   .talk-topics { border-left: 0; border-top: 2px solid rgba(125,116,96,0.45); }
   .talk-say { grid-template-columns: auto 1fr; }
   .talk-say .talk-q { grid-column: 1 / -1; }
+}
+/* RPT1026-MISC TALK-SIDEWAYS (a private report from a phone's browser: the talk window ran off the screen and could not
+   be used): A PHONE ON ITS SIDE GIVES THE PANEL THE SCREEN'S HEIGHT. The panel was 52dvh - two hundred pixels
+   of a phone's 390 - and the head, the foot and the topics' two strips (the modes, the categories) took all of it: the
+   topic list stood 12 pixels tall, drawn past its column under the foot, and nothing could be asked. On a short screen
+   the panel stands the height less a margin, and the columns stay side by side however narrow (stacked, the strips
+   alone outgrew the topics' half). */
+@media (max-height: 500px) {
+  .talk-shell .talk-panel { height: calc(100dvh - 12px); bottom: 6px; }
+  .talk-main { grid-template-columns: 1fr minmax(200px, 40%); grid-template-rows: minmax(0, 1fr); }
+  .talk-topics { border-top: 0; border-left: 2px solid rgba(125,116,96,0.45); }
+  /* AUDIT RPT1026 L2: AND A NARROW ONE KEEPS ITS HEAD AND FOOT TO A ROW EACH. Under 720 pixels wide (a 360-wide phone on its
+     side, 640 x 360; an iPhone SE's 667 x 375 and 568 x 320) the phone rule above still stacked the name over the tones and
+     the question over Note and Ask - 108 and 90 pixels of a 308-pixel panel - and the topic list stood 66 pixels tall at
+     640 x 360, 26 at 568 x 320, under one row; the categories, in the topics' 40%, ran past the panel's edge, Work cut off
+     at 640 and wholly off the screen at 568. One row each, and the strip's buttons shrink to fit it. */
+  .talk-head { grid-template-columns: 1fr auto auto; }
+  .talk-head .door-goodbye { grid-row: auto; grid-column: auto; }
+  .talk-tone { grid-row: auto; grid-column: auto; }
+  .talk-say { grid-template-columns: 1fr auto auto; }
+  .talk-say .talk-q { grid-column: auto; }
+  .talk-cat { flex: 1 1 auto; min-width: 0; padding: 0 2px; letter-spacing: 0.04em; text-indent: 0.04em; }
 }
 /* ── PX30: THE GAMEPLAY HUD ─────────────────────────────────────
    Mac's reference is ESO's Clean UI - a compass across the top, the
@@ -5878,7 +5949,7 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 /* OW-WHO: the Players row's word - the row's first cell, so never hidden with the glyphs' words on a phone (the
    grid's rows are display: contents, and a hidden first cell would shift every row after it a column) */
 .hmkeywho { font-size: 11px; color: #c5bda2; letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-/* WILD2: THE ZONE MAP'S LEGEND (ui/wild/wildZoneMap.js buildZoneLegend) - the Wrothgarian Mountains' four rings, where I
+/* WILD2: THE ZONE MAP'S LEGEND (ui/wild/wildZoneMap.js buildZoneLegend) - the open zone's four rings (Cyrodiil's), where I
    stand and the zone's laws, in the held map's plaque language (the hover card's frame, the key's bone and brass): a
    panel on the right of the paper, the room the zone map's view leaves it (ZONE_LEGEND_W). Each ring's swatch is its
    fill on the sheet; the ring I stand in wears the brass edge. A solid panel, so a press on it is never a drag. */

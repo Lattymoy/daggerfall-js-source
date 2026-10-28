@@ -609,11 +609,12 @@
   {
     "name": "SEAT2b-works-inland-port",
     "file": "src/ui/seatTab.js",
-    "old": "          forts, seat, port: host.port === true, busy: ui.busy(),",
-    "new": "          forts, seat, port: true, busy: ui.busy(),",
+    "old": "  const port = town === seat && host.port === true;",
+    "new": "  const port = true;",
     "tests": [
       "test/net/seat2b_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the Charter's own coast (C1)."
   },
   {
     "name": "SEAT2b-works-unheld",
@@ -627,11 +628,12 @@
   {
     "name": "SEAT2b-works-no-reload",
     "file": "src/ui/seatTab.js",
-    "old": "          onBegin: (work) => act(() => book.fortFund(seat, work, host.port === true)),",
-    "new": "          onBegin: (work) => ui.run(() => book.fortFund(seat, work, host.port === true)),",
+    "old": "          onBegin: (work) => act(() => book.fortFund(seat, work, port)),",
+    "new": "          onBegin: (work) => ui.run(() => book.fortFund(seat, work, port)),",
     "tests": [
       "test/net/seat2b_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DOMAINS): the Charter's own coast (C1)."
   },
   {
     "name": "SEAT2b-works-unread",

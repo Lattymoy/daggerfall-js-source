@@ -414,8 +414,9 @@ test('PX22: a quest is filed under its kind, never TITLED by it', () => {
   // AUDIT 68 S31-questshare-mainquest-dup: MOVED, deliberately - the predicate had a second copy in
   // systems/quest/questShare.js; its one home is systems/quest/questLists.js and the rail imports it.
   assert.match(read('src/ui/quest/questRail.js'), /import \{ isMainQuestName as isMainQuest \} from '\.\.\/\.\.\/systems\/quest\/questLists\.js';/);
+  // START1: and a start's quest (systems/starts/starts.js), the main quest's prologue - by its own name too
   assert.match(read('src/systems/quest/questLists.js'),
-    /export const isMainQuestName = \(questName\) => \/\^S0000\/\.test\(questName \?\? ''\) \|\| questName === '_BRISIEN';/);
+    /export const isMainQuestName = \(questName\) => \/\^S0000\/\.test\(questName \?\? ''\) \|\| questName === '_BRISIEN' \|\| isStartQuestName\(questName\);/);
   assert.match(src, /from '\.\.\/quest\/questRail\.js'/, 'and the pause window takes it from there');
   // The archive is NOT split by kind, and that is the data's shape: the
   // notebook's filed header keeps only the display name, so the
@@ -760,7 +761,9 @@ test('AUDIT UI 2: every enhanced window is REACHABLE from a host', () => {
   const text = Object.fromEntries(files.map((f) => [f, hostText(f)]));
   const edges = {};
   for (const f of files) {
-    edges[f] = [...new Set([...text[f].matchAll(/(?:from|import\()\s*['"](\.[^'"]+)['"]/g)]
+    // INTRO4: and a worker - `new Worker(new URL('./x.js', import.meta.url))` is how Vite bundles one, so the module
+    // it names is reached by the page that starts it (src/ui/intro/introBuildWorker.js, the first worker under src/ui/)
+    edges[f] = [...new Set([...text[f].matchAll(/(?:from|import\(|new Worker\(new URL\()\s*['"](\.[^'"]+)['"]/g)]
       .map((m) => relative(root, resolve(join(root, dirname(f)), m[1])))
       .filter((p) => text[p] !== undefined))];
   }

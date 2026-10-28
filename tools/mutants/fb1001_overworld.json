@@ -2,7 +2,7 @@
   {
     "name": "OW-WEATHER-the-eye-back-to-the-head",
     "file": "src/scenes/world.js",
-    "old": "    const wxEye = tvf ? mwv.eye : cam.pos;",
+    "old": "    const wxEye = mwv.eye;",
     "new": "    const wxEye = cam.pos;",
     "tests": [
       "test/net/peer/fb1001_overworld.test.js"

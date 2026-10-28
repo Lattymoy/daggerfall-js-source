@@ -51,7 +51,7 @@ test('RP1: the NPC race is a live read, not a boot constant', () => {
   const tt = read('src/scenes/townTalk.js');
   assert.equal(/const npcRace = REGION_RACES\[/.test(tt), false,
     'the `const` computed at construction is gone');
-  assert.match(tt, /const npcRaceNow = \(\) => \(REGION_RACES\[regionNow\(\)\] === 1 \? 'Redguard' : 'Breton'\);/);
+  assert.match(tt, /const npcRaceNow = \(\) => REGION_PEOPLE\[regionNow\(\)\] \?\? 'Breton';/);   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): each region's people, a province's its own
   // both %oth expansions read it at CALL time - they are the consumers
   // that made the staleness visible in play (a Redguard region's oaths
   // spoken by Bretons, or the reverse).
@@ -80,7 +80,9 @@ test('RP1: the map-discovery key is the CURRENT region', () => {
   // AUDIT 63 F49 gave DiscoverBuilding its overrideName + quest-seam
   // arguments (PlayerGPS.cs:917, :945-959); the KEY this pin is for is
   // unchanged.
-  assert.match(tt, /discoverBuilding\(`\$\{regionNow\(\)\}:\$\{cityName\(\)\}`, building, null, questBuildingSource\)/);
+  // PIN MOVED (BAY-LEFT-MAPS C7 = E2, test/systems/bayleft_disckey.test.js): the key by the one key-maker - the Bay's byte for
+  // byte, a place past the Bay its map id after it (systems/discovery.js townBookId)
+  assert.match(tt, /discoverBuilding\(townBookId\(regionNow\(\), cityName\(\), topics\?\.mapId\), building, null, questBuildingSource\)/);
 });
 
 test('RP1: the world host passes its live PlayerGPS read; the dev hosts keep their number', () => {

@@ -357,12 +357,13 @@
   },
   {
     "name": "DECOR2b-furniture-back-into-the-pack",
-    "file": "src/scenes/worldModes.js",
-    "old": "    if (isFurnishing(item)) { decorHome(item).push(item); return; }\n",
+    "file": "src/systems/decor/decorPack.js",
+    "old": "    if (isFurnishing(item)) { decorHome(item).push(item); return item; }\n",
     "new": "",
     "tests": [
       "test/systems/decor/decor2b.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1025i E1 (PIN MOVED): re-aimed by content - the doors moved to systems/decor/decorPack.js."
   },
   {
     "name": "DECOR2b-one-line-per-piece",

@@ -16,7 +16,7 @@ import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../.
 import { MOD_CURATED, modDials } from '../../../src/systems/features.js';
 import { TRAVEL_OPTIONS_VENDOR } from '../../../src/systems/travel/travelOptions.js';
 import { travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
-import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, travellerPace, unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../../../src/systems/timeScale.js';
 
@@ -163,14 +163,14 @@ test('OW-TOGGLE host: a first-person journey under a view brought down runs at t
     setTimeScale(20);   // the journey's own ask, set by the mod's panel
     const g = mountGovernor({
       travelControlUI: { isShowing: true },   // RATE-LAW: no spinner, no limit - the journey's ask is travelAsked below
-      foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
+      foePaced, foeRate, tvTownPace: () => null,   /* OW-TOWN-WALK: out of town */ travellerOnRoad: () => false,
       travelOptions: { state: { autopilot: {} } },
       travelWalkRate, TV_MOVE_ACTIONS,
       travelView: { active: false, state: 'off' },   // brought down
       held: () => false, keys: new Set(), walkMode: true, playerSpawned: true, player: { isPlayerSwimming: false },
       csaBoatUnderMe: () => null, gamePaused: () => false,
       setWorldTimeScale: setTimeScale, worldTimeScale: timeScale, resetTimeScale,
-      travelAsked: 20, csaHoldsTimeScale: () => false, travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
+      travelAsked: 20, csaHoldsTimeScale: () => false, travellerPace, travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
       state: { terrainDistance: 3 }, playerTravelPixel: () => ({ x: 100, y: 200 }), tvGroundGenNow: () => 0,
       unbuiltAround, unbuiltCount, built: { has: () => true },
       tvOwnsJourneys: () => owns,

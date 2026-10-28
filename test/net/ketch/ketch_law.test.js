@@ -14,13 +14,13 @@ import { PARTY_MAX } from '../../../src/net/wire.js';
 const OWNER = '0123456789abcdef';
 const H = 3600 * 1000;
 
-test('KETCH THE VOYAGE ON THE REAL CLOCK: voyage 0 arrives 2026-10-25 at midnight UTC, the first after she goes live, and every voyage ten hours on; sighted an hour before, at station seven hours, the crews\' last twenty minutes after - away an hour and forty of every round (KETCH-EVERY; mutants: the epoch moved; a round of nine hours; the station shortened)', () => {
+test('KETCH THE VOYAGE ON THE REAL CLOCK: voyage 0 arrives 2026-10-25 at midnight UTC, the first after she goes live, and every voyage ten hours on; sighted an hour before, at station seven hours, the crews\' last forty-five minutes after - away an hour and a quarter of every round (KETCH-EVERY, AUDIT KETCH II L5-1; mutants: the epoch moved; a round of nine hours; the station shortened)', () => {
   assert.equal(new Date(KT_EPOCH_MS).toISOString(), '2026-10-25T00:00:00.000Z');   // PIN MOVED (KETCH-EVERY): it was Saturday 2026-10-24, a week a voyage
   assert.equal(KT_EVERY_MS, 10 * H);
-  assert.deepEqual([KT_SIGHT_MS, KT_STATION_MS, KT_LAST_MS], [1 * H, 7 * H, 20 * 60 * 1000]);
+  assert.deepEqual([KT_SIGHT_MS, KT_STATION_MS, KT_LAST_MS], [1 * H, 7 * H, 45 * 60 * 1000]);   // PIN MOVED (AUDIT KETCH II L5-1): twenty minutes, shorter than a KETCH-LONGER voyage
   assert.ok(KT_SIGHT_MS + KT_STATION_MS + KT_LAST_MS < KT_EVERY_MS, 'gone before she is sighted again');
   const v3 = ketchVoyageOf(3);
-  assert.deepEqual(v3, { n: 3, sightAt: KT_EPOCH_MS + 3 * KT_EVERY_MS - H, at: KT_EPOCH_MS + 3 * KT_EVERY_MS, departAt: KT_EPOCH_MS + 3 * KT_EVERY_MS + 7 * H, endAt: KT_EPOCH_MS + 3 * KT_EVERY_MS + 7 * H + 20 * 60 * 1000 });
+  assert.deepEqual(v3, { n: 3, sightAt: KT_EPOCH_MS + 3 * KT_EVERY_MS - H, at: KT_EPOCH_MS + 3 * KT_EVERY_MS, departAt: KT_EPOCH_MS + 3 * KT_EVERY_MS + 7 * H, endAt: KT_EPOCH_MS + 3 * KT_EVERY_MS + 7 * H + 45 * 60 * 1000 });
   assert.equal(new Date(v3.at).toISOString(), '2026-10-26T06:00:00.000Z', 'ten hours a round, round the clock');
   assert.deepEqual(ketchVoyageOf(-4).n, 0, 'no voyage before the first');
   assert.deepEqual([...KT_PHASES], ['away', 'sighted', 'docked', 'departing']);

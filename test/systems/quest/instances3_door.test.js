@@ -21,6 +21,7 @@ import { dungeonSizeFor, smallerDungeonsStateNow, SMALLER_DUNGEONS_STATE, ONLINE
 import { isPrivateersHold, HOLD_ONCE_TEXT } from '../../../src/systems/startDungeon.js';
 import { PRIVATEERS_HOLD_MAP_ID } from '../../../src/world/dungeon/dungeonTextures.js';
 import { RDB_RESOURCE_TYPES } from '../../../src/formats/blocksFile.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 {
   const dir = new URL('../../../vendor/dfu-quests/Tables/', import.meta.url);
   const sources = {};
@@ -314,6 +315,44 @@ test('QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c, MD-Geist: "the Objective just did
   assert.deepEqual([home.elsewhere, home.text], [false, 'Nothing was missing from your active quest.'], 'anywhere else: as before');
 });
 
+test('QUEST-FIRST (FIELD BUGS 2026-10-26, runa: "The Masoleum of Darkivaron ... an area (up the elevator in the large central space) is missing ... this one is in a Main Quest to slay a specific Mummy"): where a quest of mine names a dungeon the world lays smaller in public, Public is the LAST row - the first, taken by habit, is a room the quest can be done in (the party\'s, then mine); anywhere else the order stands (mutants: relaid never passed; Public first; the Hold\'s public room)', async () => {
+  // the law
+  const partners = [{ name: 'Ann', acct: 'a1', owner: '0123456789abcdef', epoch: '89abcdef' }];
+  const kinds = (o) => instanceOffer({ online: true, instanceOk: true, ...o })?.map((r) => r.kind) ?? null;
+  assert.deepEqual(kinds({ questHere: true, relaid: true }), ['mine', 'public']);
+  assert.deepEqual(kinds({ questHere: true, relaid: true, partners }), ['join', 'mine', 'public'], 'the party\'s room still before my own');
+  assert.deepEqual(kinds({ questHere: true }), ['public', 'mine'], 'laid whole in public: its things stand there too');
+  assert.deepEqual(kinds({ relaid: true, partners }), ['public', 'join'], 'no quest of mine here: the shared world first');
+  assert.deepEqual(kinds({ isHold: true, questHere: true, relaid: true }), ['mine'], 'HOLD-ONCE: never its public room');
+  // the report's crypt: Isle of Balfiera's Masoleum of Darkivaron, its eight blocks as MAPS.BSA lays them - its public room
+  // built small (SD-ONLINE), N0000057 (the hall the lift rises to) replaced by a border block
+  const DARKIVARON = {
+    name: 'The Masoleum of Darkivaron', hasDungeon: true, mapTableData: { mapId: 9601832 },
+    dungeon: { blocks: [['N0000091', 0, 0], ['N0000057', 0, 1], ['B0000014', -1, 0], ['B0000000', -1, 1], ['B0000012', 0, -1], ['B0000005', 0, 2], ['B0000013', 1, 0], ['B0000010', 1, 1]]
+      .map(([n, x, z], i) => ({ blockName: `${n}.RDB`, x, z, isStartingBlock: i === 0 })) },
+  };
+  assert.equal(onlineDungeonSize(DARKIVARON), 'small');
+  const t = door();
+  t.q.resources.get('crypt').siteDetails.mapId = DARKIVARON.mapTableData.mapId;
+  const site = t.d.dungeonSite(DARKIVARON);
+  assert.equal(site.relaid, true);
+  let pending = t.d.choose(site);
+  await until(() => t.shown.length === 1);
+  assert.deepEqual(t.shown[0].win.options.map((o) => o.label), [`1 - ${INSTANCE_TEXT.mine()}`, `2 - ${INSTANCE_TEXT.public()}`, `Esc - ${INSTANCE_TEXT.leave()}`]);
+  assert.deepEqual(t.shown[0].win.lines, ['The Masoleum of Darkivaron', INSTANCE_TEXT.line(), INSTANCE_TEXT.questPublic()]);
+  t.shown[0].win.input('Digit1');
+  assert.deepEqual(await pending, { instance: { owner: ME, epoch: t.q.instanceEpoch }, whole: true }, 'the first row: the crypt whole, its mummy and its upper hall');
+  pending = t.d.choose(site); await until(() => t.shown.length === 2); t.shown[1].win.input('Digit2');
+  assert.deepEqual(await pending, { instance: null, whole: false }, 'Public still there, last');
+  // a quest's dungeon laid whole in public: as it was
+  const whole = door();
+  const pend = whole.d.choose(whole.d.dungeonSite(COPPERING));
+  await until(() => whole.shown.length === 1);
+  assert.deepEqual(whole.shown[0].win.options.map((o) => o.code === 'Escape' ? 'esc' : o.label), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.mine()}`, 'esc']);
+  whole.shown[0].win.input('Escape');
+  await pend;
+});
+
 test('INSTANCES the door\'s other words: atDoor - Leave spends the press, a row enters; refused - an instance\'s door shut on this page, said once a room; poseWord - inside, the room the relay joined; questElsewhere - once a build', async () => {
   const { d, shown, said } = door();
   const site = d.dungeonSite(COPPERING);
@@ -494,17 +533,19 @@ test('INSTANCES the hosts, by source: the place\'s instance is the MODE\'s - set
   assert.match(fns.get('enterInteriorCore'), /place = entry \?\? \(restore\?\.ins != null && door \? await door\.entryFor\(/);
   assert.match(fns.get('mountQuestResources'), /host\.instanceDoor\?\.questElsewhere\?\.\(dungeonLoc\); return 'elsewhere'; \}/);   // PIN MOVED (QUEST-ELSEWHERE, FIELD BUGS 2026-10-16c): the gate answers 'elsewhere', and a repair says so
   assert.match(read('src/scenes/dungeonContext.js'), /mapId: mt\.mapId \?\? null, \.\.\.\(opts\.placeRecord\?\.\(\) \?\? \{\}\) \};/);
-  const W = read('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   assert.match(W, /instance: ident\?\.instance \?\? null,/);
   assert.match(W, /\.\.\.instanceDoor\.poseWord\(mode, online\?\.room\),/);
   assert.match(W, /if \(instanceDoor\.refused\(online\)\) modes\?\.forceExitToExterior\?\.\(\);/);
   assert.match(W, /landed = !!\(await modes\?\.startInDungeon\?\.\(\{ recorded: a\.dungeon \?\? \{\} \}\)\);/, 'a Recall');
   assert.match(W, /interior: inside\.interior, dungeon: inside\.dungeon \?\? null,/, 'the anchor is set with the dungeon\'s record');
-  assert.match(W, /startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: extras\.dungeon \?\? \{\} \}\)/, 'a load');
+  assert.match(W, /startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/, 'a load');   // PIN MOVED (AUDIT STARTS W3): a start's own dungeon through the quest's entry
   assert.match(W, /startInDungeon\?\.\(\{ locationKey: d\.locationKey \?\? null, holdOpen: true, recorded: \{ ins: d\.ins \?\? null, whole: d\.whole === true, staff: true \} \}\)/, 'a staff landing in a dungeon');
   assert.match(W, /\.\.\.\(d\.ins \? \{ ins: d\.ins, staff: true \} : \{\}\) \}, null, \{ strictDoor: true \}\)/, 'and in a building');
   assert.match(W, /var modes = createWorldModes\(\{\n {4}climbFeel[,:][^\n]*\n {4}outsideView,[^\n]*\n {4}instanceDoor,/);
-  assert.match(W, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \}/, 'the quest\'s world: the dungeon whole online');
+  // PIN MOVED (START2): the quest layer's one sizing (questWorld.js questSized), its location doors through it
+  assert.match(W, /const questSized = \(loc\) => dungeonLocationFor\(loc, \{ questMachine: (?:host\.)?questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\);/, 'the quest\'s world: the dungeon whole online');
+  assert.match(W, /getLocation: \{ value: \(r, l\) => questSized\(provinces && isProvinceRegion\(r\) \? provinces\.getLocation\(r, l\) : maps\.getLocation\(r, l\)\) \}/);   // PIN MOVED (AUDIT RELEASE R2-5): a province's region's place sized the same way
 });
 
 test('INSTANCES the Recall anchor keeps a dungeon\'s room and layout (systems/teleportAnchor.js makeAnchor) - its instance\'s word and whether it stood whole; a building\'s rides its door identity, outside none; a malformed word is dropped', () => {

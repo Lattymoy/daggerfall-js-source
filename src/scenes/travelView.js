@@ -62,6 +62,10 @@ import {
   anglesOf, rightOf, leanedUp, turnHeading, forwardOf, tvOwnGrow, keysHeading,
 } from '../player/travelCamera.js';
 import { travelRateOf } from '../systems/timeScale.js';   // RATE-LAW: the keys' travel runs at its ground's rate
+import { planning } from '../systems/travel/planSlices.js';   // PLAN-SLICES: the readout says a journey's plan is being made
+import { t } from '../systems/textManager.js';   // PLAN-SLICES: its words in the player's language
+/** PLAN-SLICES: the readout's line while a journey's plan is being made (systems/travel/planSlices.js planning). */
+const planningLine = () => t('travelView.planning', 'Planning the way...');
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** A press that moves further than this (px) before it lifts is a drag (the orbit), not a click (a pick). */
@@ -633,7 +637,7 @@ export function createTravelView(deps) {
     deps.hud.update({
       feet: f, heading: lastHeading, yaw: camera?.yaw ?? 0, where: deps.where?.() ?? '',
       touch: !!deps.touch, fade: t, marks, keys: hintKeys,
-      route: routeWorld.map(proj), trip: deps.trip?.() ?? '', sky: deps.sky?.() ?? '',   // OW-FORECAST: the weather ahead
+      route: routeWorld.map(proj), trip: planning() ? planningLine() : deps.trip?.() ?? '', sky: deps.sky?.() ?? '',   // OW-FORECAST: the weather ahead; PLAN-SLICES: the plan being made
       routeDots: routeGroundDots(routeWorld, proj, { w: deps.canvas?.clientWidth || Infinity, h: deps.canvas?.clientHeight || Infinity, keep: dotSpacing }),   // OW-DOTS-GROUND; OW-DOTS-EVEN: the line's spacing kept frame to frame
       routeDotSizes: ROUTE_DOT_SIZES,   // OW-DOTS-EVEN: the readout's path pair a size
       followDist: deps.followDist?.() ?? null,   // WAYPOINTS: the followed list's distances

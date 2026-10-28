@@ -1,0 +1,120 @@
+[
+  {
+    "name": "ROAD-BEYOND-the-box-stops-at-the-end",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const reachOf = (margin) => (past ? {",
+    "new": "  const reachOf = (margin) => (false ? {",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-no-roads-first",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (past && beyond && ends?.strict && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-ladder-unspent",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    const left = past ? Math.min(cap, BEYOND_MAX_EXPANSIONS - (tally.n - spent)) : cap;",
+    "new": "    const left = cap;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-field-priced-a-road",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const hCost = past && !roads && !tracks && !sea ? ROUTE_COST.open : ROUTE_COST.road;",
+    "new": "  const hCost = ROUTE_COST.road;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-no-walk-across-country",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (!best && past && (roads || tracks) && !sea) return yield* planRouteSteps(",
+    "new": "  if (false) return yield* planRouteSteps(",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-ends-open-ground-everywhere",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue;   // ROAD-FOLLOW: the open ground on an end's own leg alone",
+    "new": "      if (kind < 0) continue;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-seek-unasked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const rf = ringOf(from), rt = ringOf(to), f = leg(rf), t = leg(rt), bridges = new Set();",
+    "new": "  const rf = 0, rt = 0, f = leg(rf), t = leg(rt), bridges = new Set();",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-step-leaves-by-any-edge",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (closed.has(n) || (!(here & STEP_BIT[d]) && !near(nx, ny))) continue;",
+    "new": "if (closed.has(n)) continue;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-search-unbounded",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (tally) tally.n++;\n    if (++expanded > maxExpansions) return null;\n    const { x: cx",
+    "new": "    if (tally) tally.n++;\n    const { x: cx",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-no-layer-still-searched",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (!beyond) return null;\n  const pathAt",
+    "new": "  const pathAt",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-rung-unbounded",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    const margin = past ? Math.min(rung, BEYOND_MARGIN) : rung;",
+    "new": "    const margin = rung;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-FOLLOW-the-cut-across-the-field-kept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (byRoad) return byRoad;",
+    "new": "    if (byRoad && byRoad.cost <= ROUTE_COST.open * Math.hypot(to.x - from.x, to.y - from.y)) return byRoad;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ],
+    "note": "PIN MOVED (ROAD-FOLLOW): ROAD-BEYOND-the-dearer-road-kept's law (TV2's: a way by the roads dearer than the straight walk asked of the ladder, the cheaper kept) is retired - the record re-aimed at its return: the road round the field must be the plan."
+  },
+  {
+    "name": "ROAD-BEYOND-no-greed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "open.push(ng + BY_ROAD_GREED * h(nx, ny), n);",
+    "new": "open.push(ng + h(nx, ny), n);",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  }
+]

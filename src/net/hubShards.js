@@ -50,18 +50,27 @@ export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRo
  *  stay: a link of an older build that asks for one is told the channel (`hub`), and a region the relay names is split
  *  as before. */
 export const REGION_SHARDS = 4;
-export const REGION_CHANNELS = 62;
+export const REGION_CHANNELS = 71;   // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)
+/** PROVINCE-SLEEP (2026-10-25, bible/11-Multiplayer/Scale-Arc.md PROVINCE-SLEEP): THE CHANNELS THAT ARE SPLIT - the
+ *  Bay's 62 (wire.js CHAT_BAY_REGIONS, pinned equal: wire.js imports this module). A shard keeps a poll open at its bus
+ *  while it holds a socket (HUB-PULL), so a split region with anyone in it keeps its bus and every shard its players
+ *  land on awake, and billed, all day: on the live relay the region channels were 1.56 million of the 4.49 million GB-s
+ *  every Durable Object was billed on 2026-10-24, over 9,154 s of CPU. A province past the Bay is one channel, as every
+ *  region was before SCALE5c part two - its sockets held by the channel itself, which sleeps between its lines (the 62
+ *  unsplit channels' whole day, 2026-10-10: 1,176 GB-s). CHAT_SOCKETS_MAX bounds it, as it bounded them; a province
+ *  whose crowd nears it is split by raising this. */
+export const REGION_SPLIT = 62;
 const REGION_BUS_RE = /^chat:region\.(\d{1,2})$/;
 const REGION_SHARD_RE = /^chat:region\.(\d{1,2})\.(\d{1,2})$/;
 const canon = (d, n) => String(Number(d)) === d && Number(d) < n;
 /** Is `key` a region's own channel - a region shard's bus? */
 export const isRegionBus = (key) => { const m = REGION_BUS_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_CHANNELS); };
-/** Is `key` one of a region's shards? */
-export const isRegionShard = (key) => { const m = REGION_SHARD_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_CHANNELS) && canon(m[2], REGION_SHARDS); };
-/** Region `r`'s shard `k`, or null for one the map does not have. */
-export const regionShardRoom = (r, k) => (Number.isInteger(r) && r >= 0 && r < REGION_CHANNELS && Number.isInteger(k) && k >= 0 && k < REGION_SHARDS ? `chat:region.${r}.${k}` : null);
-/** Every region shard's key, region by region. */
-export const REGION_SHARD_ROOMS = Object.freeze(Array.from({ length: REGION_CHANNELS * REGION_SHARDS }, (_, i) => /** @type {string} */ (regionShardRoom(Math.floor(i / REGION_SHARDS), i % REGION_SHARDS))));
+/** Is `key` one of a region's shards? PROVINCE-SLEEP: a split region's - a province has none. */
+export const isRegionShard = (key) => { const m = REGION_SHARD_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS); };
+/** Region `r`'s shard `k`, or null for one the map does not have (PROVINCE-SLEEP: a province's). */
+export const regionShardRoom = (r, k) => (Number.isInteger(r) && r >= 0 && r < REGION_SPLIT && Number.isInteger(k) && k >= 0 && k < REGION_SHARDS ? `chat:region.${r}.${k}` : null);
+/** Every region shard's key, region by region - the split regions'. */
+export const REGION_SHARD_ROOMS = Object.freeze(Array.from({ length: REGION_SPLIT * REGION_SHARDS }, (_, i) => /** @type {string} */ (regionShardRoom(Math.floor(i / REGION_SHARDS), i % REGION_SHARDS))));
 /** The bus a shard's key hands its frames to - `chat:world` for a hub shard, the region's own channel for a region's -
  *  or null for a key that is no shard. */
 export const busOf = (key) => (isHubShard(key) ? HUB_BUS : isRegionShard(key) ? String(key).slice(0, String(key).lastIndexOf('.')) : null);
@@ -79,7 +88,9 @@ const shardedByVar = new Map();
 /** THE WAY BACK: the regions the relay keeps split, read off its `REGION_SHARDS` var (server/wrangler.toml [vars]) -
  *  region numbers separated by commas, or `all`; anything else names none. A start region whose reconnect wave through
  *  its one hello gate shows again (the reason the regions were split) is split again by the var, with no change to the
- *  code. */
+ *  code. PROVINCE-SLEEP x COST-1 (the merge of main into TESA, bible/01-Overview/audits/Audit-Release-R3.md R3-2): the
+ *  var names the Bay's regions alone (REGION_SPLIT) - a province past the Bay has no shard key, so `all` is the Bay's 62
+ *  and a province's number names nothing. */
 export function regionsSharded(raw) {
   const text = typeof raw === 'string' ? raw.trim() : '';
   if (!text) return NO_REGIONS;
@@ -87,12 +98,12 @@ export function regionsSharded(raw) {
   if (!regions) {
     regions =
       text === 'all'
-        ? new Set(Array.from({ length: REGION_CHANNELS }, (_, region) => region))
+        ? new Set(Array.from({ length: REGION_SPLIT }, (_, region) => region))
         : new Set(
             text
               .split(',')
               .map((part) => part.trim())
-              .filter((part) => /^\d{1,2}$/.test(part) && canon(part, REGION_CHANNELS))
+              .filter((part) => /^\d{1,2}$/.test(part) && canon(part, REGION_SPLIT))
               .map(Number),
           );
     if (shardedByVar.size < 64) shardedByVar.set(text, regions);
@@ -100,11 +111,13 @@ export function regionsSharded(raw) {
   return regions;
 }
 /** The shard of the channel `bus` an account lands on, by its verified subject - null for no subject or no such bus. A
- *  region's channel has shards only where `sharded` (regionsSharded) names its region - none by default. */
+ *  region's channel has shards only where `sharded` (regionsSharded) names its region - none by default - and PROVINCE-SLEEP:
+ *  never a province past the Bay's (REGION_SPLIT - a name past it is no shard; its link holds the channel itself, both ends). */
 export const shardOf = (bus, sub, sharded = NO_REGIONS) => {
   if (bus === HUB_BUS) return hubOfSubject(sub);
   // a region bus's key ends in its region's number (`chat:region.<r>`)
   if (!isRegionBus(bus) || typeof sub !== 'string' || !sub || !sharded.has(Number(String(bus).slice(String(bus).lastIndexOf('.') + 1)))) return null;
+  if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;
   return `${bus}.${shardHash(sub) % REGION_SHARDS}`;
 };
 

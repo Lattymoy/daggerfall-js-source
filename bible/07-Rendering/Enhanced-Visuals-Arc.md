@@ -34,7 +34,7 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:"if (this.ignoreLostGrounding)".."const clip = this.alternate ? set[1] : set[0];"), and `_playerStill` reads one moving
-frame per crossing (world.js:"getLocationByName:").
+frame per crossing (questWorld.js:"getLocationByName:").
 
 frame per crossing (world.js:"INDIRECT_LIGHT_COLOR[0]").
 
@@ -310,6 +310,14 @@ SAMPLES, never the render grid, so the far ring is presentation all
 the way down. distantland.test.js pins all of it; the moving picture
 (the far haze at distance 4, the vanished seam lattice at grazing
 sun) is owed to a data-bearing session.
+
+FLORA-GROUND, THE RINGS (2026-10-27): the far ring's plants. "Models,
+flats ... all stay" now means their PLACES stay. Each plant of the ground
+is drawn on the ground the far ring draws (`terrainSurface.js`
+drawnGroundAt, `scenes/floraSeat.js` seatFlora) and back on the walk floor
+when its pixel is promoted. The stride-4 cut had parted from the walk
+floor by more than 25 cm under 18.8% of the Bay's plants, 6.6 m at worst.
+The record is `03-World/World-Arc.md` FLORA-GROUND, THE RINGS.
 
 EV5 (2026-08-31): MOONLIGHT AND THE NIGHT. The enhanced sky computed
 both moons' directions, phases and visibilities every frame since ES1

@@ -117,7 +117,7 @@ test('AUDIT WORLD-EVENTS L1-4 THE SKY-KETCH: a crewmate\'s Resurrect at a member
   assert.equal(KT_DOWN_MS, EG_DOWN_MS, 'one minute on the ship as in the Spire (the tile says one)');
   assert.deepEqual(validKetchIn({ k: 'rz', to: 'acct-b1' }), { k: 'rz', to: 'acct-b1' });
   assert.deepEqual(validKetchOut({ k: 'rez', s: 'acct-b1', n: 'Bo', by: 'Ann', at: 5 }), { k: 'rez', s: 'acct-b1', n: 'Bo', by: 'Ann', at: 5 });
-  assert.match(read('server/src/index.js'), /for \(const r of out\) if \(r\.k === 'rez' && V\.players\[r\.s\]\) bodyLife\(V\.players\[r\.s\], now, line\.body\);/);
+  assert.match(read('server/src/index.js'), /for \(const r of out\) if \(r\.k === 'rez' && V\.players\[r\.s\]\) \{ bodyLife\(V\.players\[r\.s\], now, line\.body\); V\.players\[r\.s\]\.rzAt = now; \}/);   // PIN MOVED (AUDIT KETCH II L1-5): and the raise's moment kept
   assert.match(read('src/net/ketch/ketchBrain.js'), /p\.lay = b\.dead \? \(p\.lay\?\.at \? \{ \.\.\.p\.lay, x: b\.x, y: b\.y, z: b\.z \} : \{ x: b\.x, y: b\.y, z: b\.z, at: now \}\) : null;/, 'where a member lies, and since when');
 });
 

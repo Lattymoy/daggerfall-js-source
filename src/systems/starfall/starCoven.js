@@ -15,7 +15,7 @@
 // Pure. Not a DFU member. Ledger A (STARFALL).
 import { MOBILE_TYPES as M } from '../../characters/mobile/mobileTypes.js';
 import { enemyDisplayName } from '../../characters/enemy/enemyBasics.js';
-import { starRoll, STAR_WAVES } from '../../net/starfall/starfallLaw.js';
+import { starRoll, STAR_WAVES, starIndexOf } from '../../net/starfall/starfallLaw.js';
 import { getLocalizedEnemyName, t } from '../textManager.js';
 
 /** The coven's members: Mage, Sorcerer, Battlemage, Nightblade - its witches. */
@@ -82,8 +82,26 @@ export const STAR_MASTER_TABLE = Object.freeze({
   2: Object.freeze(['mother', 'flesh', 'mother']),
   3: Object.freeze(['lord', 'seducer', 'lich']),
 });
-/** The master of star `k` in `band`. Pure. */
-export const starMasterOf = (band, k) => STAR_MASTERS[STAR_MASTER_TABLE[bandOk(band)][Math.max(0, Math.min(2, k | 0))]];
+/** WW5: A PROVINCE COVEN'S LEADER AS ITS MASTER - she comes for the star where a Bay coven's Coven Mother does (her career,
+ *  her circle), by her own name (systems/starfall/starfallCovens.js `leader`): the call and the circle in her name, a
+ *  proper name's lines (no article to drop). One a coven, kept. */
+const _leaders = new WeakMap();
+const leaderOf = (coven) => {
+  let L = _leaders.get(coven);
+  if (!L) {
+    const name = () => coven.leader();
+    L = Object.freeze({ ...STAR_MASTERS.mother, id: 'leader', name, call: () => t('starfall.master.leader.call', '{name} comes for the star!', { name: name() }), circle: () => t('starfall.master.leader.circle', '{name} calls her circle. Break it!', { name: name() }) });
+    _leaders.set(coven, L);
+  }
+  return L;
+};
+/** The master of star `k` in `band` - WW5: by its place in its night (net/starfall/starfallLaw.js starIndexOf - a province's
+ *  three stand the Bay's three masters), the Coven Mother a province coven's own leader (`coven`, its night's - a Bay
+ *  coven has none and keeps her). Pure. */
+export const starMasterOf = (band, k, coven = null) => {
+  const M = STAR_MASTERS[STAR_MASTER_TABLE[bandOk(band)][Math.max(0, Math.min(2, starIndexOf(Math.max(0, k | 0))))]];
+  return M.id === 'mother' && typeof coven?.leader === 'function' ? leaderOf(coven) : M;
+};
 /** The master's circle at its call `call` (0, 1): `size` careers off the fourth wave's roster, its own rolls. Pure. */
 export function starCircleFoes(n, k, call, size, band) {
   const roster = STAR_ROSTERS[bandOk(band)][STAR_WAVES - 1];

@@ -29,7 +29,7 @@ test('WAYPOINTS: a point is map pixels, the held map\'s unit - the Overworld\'s 
   assert.equal(waypointCss('nope'), WAYPOINT_COLORS[0].css, 'an unknown colour is the first');
 });
 
-test('WAYPOINTS: add, rename, recolour, follow and remove - names cleaned and bounded, the next "Waypoint N" offered, a point off the bay refused, each kind capped', () => {
+test('WAYPOINTS: add, rename, recolour, follow and remove - names cleaned and bounded, the next "Waypoint N" offered, a point off the world refused, each kind capped', () => {
   fresh();
   assert.equal(nextWaypointName(), 'Waypoint 1');
   const a = addWaypoint({ mx: 10, my: 20 });
@@ -37,8 +37,10 @@ test('WAYPOINTS: add, rename, recolour, follow and remove - names cleaned and bo
   assert.equal(a.waypoint.kind, 'personal');
   assert.equal(a.shared, null, 'a personal one is never said');
   assert.equal(nextWaypointName(), 'Waypoint 2');
-  assert.equal(addWaypoint({ mx: -1, my: 20 }), null, 'off the bay');
-  assert.equal(addWaypoint({ mx: 1000, my: 20 }), null);
+  // PIN MOVED (BAY-LEFT-MAPS): a flag stands anywhere on the world's grid (net/wire.js worldPixelOk) - the Bay's edge was
+  // no edge of the map past the Bay; a point off the world is refused
+  assert.equal(addWaypoint({ mx: 8192, my: 20 }), null, 'off the world');
+  assert.equal(addWaypoint({ mx: 20, my: -8192.5 }), null);
   assert.equal(cleanWaypointName('  a\u0007b\n  c  '), 'a b c', 'one line, no control characters');
   assert.equal(cleanWaypointName('x'.repeat(80)).length, WAYPOINT_NAME_MAX);
   assert.equal(cleanWaypointName('   ', 'fallback'), 'fallback');
@@ -93,7 +95,7 @@ test('WAYPOINTS: THE WIRE - a party\'s waypoint is said on the party channel as 
   assert.equal(isWaypointLine('hello there'), false);
   assert.deepEqual(decodeWaypointLine(line), { op: 'add', id: r.waypoint.id, mx: 123.457, my: 45.5, color: 'gold', name: 'Camp by the river' });
   assert.equal(decodeWaypointLine(`${WP_WIRE_PREFIX} add BAD! 1 1 red x`), null, 'an id of the wrong shape');
-  assert.equal(decodeWaypointLine(`${WP_WIRE_PREFIX} add abc 2000 1 red x`), null, 'off the bay');
+  assert.equal(decodeWaypointLine(`${WP_WIRE_PREFIX} add abc 9000 1 red x`), null, 'off the world');   // PIN MOVED (BAY-LEFT-MAPS): 2000 is a point past the Bay now
   assert.equal(encodeWaypointLine(['del', 'abc']), `${WP_WIRE_PREFIX} del abc`);
   renameWaypoint(r.waypoint.id, 'Old camp');
   assert.equal(said.at(-1)[1], `${WP_WIRE_PREFIX} ren ${r.waypoint.id} Old camp`, 'mine and shared: the rename is said');
@@ -163,7 +165,7 @@ test('WAYPOINTS: kept on the device through the storage seam - the list, the fol
     toggleWaypointKind('guild');
     assert.deepEqual(heard, ['add', 'follow', 'show']);
     const raw = JSON.parse(store.get(WAYPOINT_STORE_KEY));
-    raw.list.push({ id: 'bad', kind: 'nope', mx: 1, my: 1 }, { id: 'far', kind: 'personal', mx: 5000, my: 1 });
+    raw.list.push({ id: 'bad', kind: 'nope', mx: 1, my: 1 }, { id: 'far', kind: 'personal', mx: 9000, my: 1 });   // PIN MOVED (BAY-LEFT-MAPS): 5000 is a point past the Bay now; 9000 is off the world
     store.set(WAYPOINT_STORE_KEY, JSON.stringify(raw));
     _resetWaypoints();
     assert.deepEqual(listWaypoints().map((x) => [x.id, x.name]), [[w.id, 'Keep']]);
@@ -276,7 +278,7 @@ test('WILD-WAYPOINT: my remains in the open zone plant one followed red flag, ke
   removeWaypoint(c);
   assert.equal(W.remainsMarkTick(0), true, 'removed by hand: the record goes too');
   assert.equal(W.remainsMark(), null);
-  assert.equal(W.markRemains({ mx: -5, my: 3, until: 1e15 }), null, 'off the map: no flag');
+  assert.equal(W.markRemains({ mx: -9000, my: 3, until: 1e15 }), null, 'off the world: no flag');   // PIN MOVED (BAY-LEFT-MAPS): -5 is a point past the Bay, west of its corner, now
   // the host
   const src = rd('src/scenes/world.js');
   assert.match(src, /online\.onWildRoom = \(w, room\) => \{\n\s*if \(!online\.heldRooms\(\)\.includes\(room\)\) return;\n\s*wildRemains\.setRooms\(online\.heldRooms\(\)\);\n\s*wildRemains\.onWord\(w, room\);\n\s*if \(w\?\.k === 'gone'\) \{ remainsGone\(w\.r\);/, 'WILD-SEEN + HALO-REMAINS: the rooms first, so a near relay\'s hello is never cleared as another room\'s by the frame after it');

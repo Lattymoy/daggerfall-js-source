@@ -115,7 +115,7 @@ import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../../wor
 import { panelPicture, canvasBoxUnder } from '../panelPicture.js';   // MENU-ORDER: a model's own picture, drawn small
 import { remapLawOf } from '../../world/texRemap.js';   // AUDIT MENU-ORDER C3: a picture kept by the law its textures were built in
 import { isTextEntryTarget, eventActions } from '../../ui/input.js';
-import { plaqueListing, quickLootWheel } from '../../systems/quickLoot.js';
+import { plaqueListing, quickLootWheel, wantPlaqueVerbs } from '../../systems/quickLoot.js';
 import { HOTBAR_SLOT_ACTIONS } from '../../systems/inputActions.js';
 import { holdHotbarKeys, coverHotbar, hotbarKeyOf, ensureHotbarSkin } from '../../ui/enhanced/enhancedHotbar.js';
 import { walletReserve } from '../../net/realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
@@ -376,8 +376,9 @@ export const eyePoint = (collider, eye, dir, skip = null) => eyeHit(collider, ey
  *   pack(), identity() - DECOR2a: the items carried, and who carries them (a worn item's picture reads the body)
  *   furnishings()    - DECOR2b: the furniture delivered and standing nowhere
  *   packHas(item), packTake(item), packGive(item) - whether it is still carried; one of it out of the pack (the
- *                      moved record, as a drop moves it - or null); an item back in (DECOR2b: furniture, to the
- *                      deliveries - where it lives)
+ *                      moved record, as a drop moves it - or null; AUDIT FB1025i E9: never one worn); an item back
+ *                      in (DECOR2b: furniture, to the deliveries - where it lives), answering the record that holds it
+ *                      (a stack it joined)
  *   homeDecor, character() - the account service's door and the character that writes (online homes)
  *   visit()          - the host's visit token (a room left between a write and its answer is not stood in)
  *   openSlot(o), closeSlot(o) - put the panel in the room's overlay slot, and take it out
@@ -435,6 +436,8 @@ export function createDecorTool(deps) {
   /** @type {any} */ let scan = null;
   /** @type {any} */ let slot = null;
   /** @type {any} */ let placing = null;
+  // RPT1026-WORLD DECOR-VERBS: while it browses, its verbs are folded where no plaque is drawn (ui/worldPlaque.js)
+  const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());
   let spin = 0;
   let named = false;
   let listening = false;
@@ -1139,6 +1142,18 @@ export function createDecorTool(deps) {
       }
     }, () => {});
   }
+  /** DECOR-ACCESS: what a chest's Access moved, on the service's word alone - its goods out of the save's list into the
+   *  bin (`moved`), or the bin's poured back into it (`restored`). */
+  function keepChestGoods(/** @type {string} */ id, /** @type {any} */ answer) {
+    const data = answer?.data;
+    const list = pool.itemsOf?.(id);
+    if (!list || !data) return;
+    if (data.moved) list.length = 0;
+    if (Array.isArray(data.restored)) {
+      const have = new Set(list.map((/** @type {any} */ it) => it?.uid));
+      for (const it of data.restored) if (it && !have.has(it.uid)) list.push(it);
+    }
+  }
   /** A press moves who may use this chest or station on, as a home's door does. No window. */
   async function cycleUse(piece) {
     const r = deps.room?.();
@@ -1181,16 +1196,7 @@ export function createDecorTool(deps) {
     const circle = decorUseCircle(deps.social?.());
     const names = mode === 'friends' ? circle.friends : mode === 'party' ? circle.party : [];
     const body = { mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), op: 'set', id: piece.id, kind, mode, names };
-    const keepGoods = (answer) => {
-      const data = answer?.data;
-      const list = pool.itemsOf?.(piece.id);
-      if (!list || !data) return;
-      if (data.moved) list.length = 0;
-      if (Array.isArray(data.restored)) {
-        const have = new Set(list.map((it) => it?.uid));
-        for (const it of data.restored) if (it && !have.has(it.uid)) list.push(it);
-      }
-    };
+    const keepGoods = (/** @type {any} */ answer) => keepChestGoods(piece.id, answer);
     try {
       const act = !r.hall && kind === 'storage' ? deps.realm?.() : null;
       if (!r.hall && kind === 'storage' && !act) {
@@ -1312,7 +1318,13 @@ export function createDecorTool(deps) {
 
   /** DECOR-BATCH: an online home, a guild hall included, stages into the room and writes once, on Confirm. A palace
    *  keeps one write a piece. A wagon stages the same way and pays on Confirm, into the save. The revision is the
-   *  list's, read when the session opens, never a zero sent before it answers. */
+   *  list's, read when the session opens, never a zero sent before it answers.
+   *  FIELD BUGS 2026-10-25i CHEST-DRAFT ("I placed 89 rare/legendary items in a chest ... they were all 'Realm Locked'"):
+   *  the draft stages PIECES and the owner's own things it moves (`moves`, in order) - never what a storage piece holds,
+   *  which the inventory window moves at once and the save keeps as it lies. The draft kept a picture of every chest and
+   *  Discard wrote it back: a piece taken out since stood in the chest AND the pack, and the next checkpoint locked both
+   *  (ledger.js, a key shown twice); a piece put in since was gone. In the #1223 build the draft outlived the room, and a
+   *  Discard in the ship's or the caravan's decorator stood the home's chests there with a copy of all they held. */
   let draft = null;
   const usesBatch = (r) => !!(r && r.kind === 'home' && !r.seat && typeof deps.homeDecor?.batch === 'function');
   const stages = (r) => usesBatch(r) || r?.kind === 'caravan';
@@ -1337,7 +1349,8 @@ export function createDecorTool(deps) {
       : Promise.resolve();
     draft = {
       key, rev: usesBatch(r) ? null : 0, txn: mintDecorTxn(), before,
-      items: pool.itemsSnapshot?.() ?? null, owns: pool.ownSnapshot?.() ?? null, packOut: [], packIn: [], asked,
+      owns: pool.ownSnapshot?.() ?? null, moves: [], asked,   // AUDIT FB1025i E1: { op: 'out' (set down) | 'in' (taken down), id, item }, in order
+      keeping: false,   // RPT1026-WORLD CONFIRM-ONCE: a Confirm on its way
     };
     return draft;
   }
@@ -1351,7 +1364,7 @@ export function createDecorTool(deps) {
     const d = liveDraft();
     if (!d) return false;
     const delta = decorDelta([...d.before.values()], roomPieces());
-    return delta.put.length + delta.drop.length > 0 || d.packOut.length + d.packIn.length > 0;
+    return delta.put.length + delta.drop.length > 0 || d.moves.length > 0;
   };
   /** Other players' Confirm, while this one stands in the room and is not mid-edit. One row until the revision moves. */
   let heardRev = null;
@@ -1397,15 +1410,37 @@ export function createDecorTool(deps) {
   function discardDraft() {
     const d = liveDraft();
     if (!d) return false;
-    for (const p of roomPieces()) if (!d.before.has(p.id)) pool.remove(p.id);
+    for (const p of roomPieces()) {
+      if (d.before.has(p.id)) continue;
+      // CHEST-DRAFT: what the chests hold stays as it lies; a piece the draft stood and takes away again gives back what
+      // was put in it - to the pack, never lost under an id no piece stands for (AUDIT FB1025i E6: the pack, as the own
+      // things the draft set down go back to it - the goods were the player's to hand a moment ago - and said)
+      if (pool.holdsAny?.(p.id)) {
+        for (const it of pool.itemsOf?.(p.id)?.splice(0) ?? []) deps.packGive?.(it);
+        deps.say?.(t('decor.tool.discardGaveBack', 'What the {name} held is back in your pack.', { name: entryOf(p).name }));
+      }
+      pool.remove(p.id);
+    }
     for (const p of d.before.values()) pool.put(snapPiece(p));
-    pool.setItems?.(d.items);
     pool.setOwn?.(d.owns);
-    for (const item of d.packOut) deps.packGive?.(item);
-    for (const item of d.packIn) deps.packTake?.(item);
+    // CHEST-DRAFT (AUDIT FB1025i E1): the draft's own moves of the owner's things, undone last first - one set down and
+    // taken down again in it is in the pack, where it is: neither given back on top of itself nor taken. AUDIT FB1025i
+    // E3: one the draft took down that is no longer in the pack (stored, sold, dropped - or E9, worn) is where it went,
+    // and its piece stays taken down for Confirm to take down, said; standing it again was a second of it
+    const still = [];
+    for (const [i, m] of [...d.moves.entries()].reverse()) {
+      if (m.op === 'in' && d.moves.some((o, j) => j < i && o.op === 'out' && o.id === m.id)) continue;
+      if (m.op === 'out' && d.moves.some((o, j) => j > i && o.op === 'in' && o.id === m.id)) continue;
+      if (m.op === 'out') { deps.packGive?.(pool.takeOwn?.(m.id) ?? m.item); continue; }
+      const got = deps.packTake?.(m.item);
+      if (got) { pool.keepOwn?.(m.id, got); continue; }
+      pool.takeOwn?.(m.id);
+      pool.remove(m.id);
+      still.push(m);
+      deps.say?.(t('decor.tool.discardNotInPack', '{name} is no longer in your pack, or is worn. Confirm takes its piece down.', { name: itemLongName(m.item) || DECOR_KINDS.decor }));
+    }
     for (const id of [...usePending]) if (!d.before.has(id)) { usePending.delete(id); useMode.delete(id); useRank.delete(id); }
-    d.packOut = [];
-    d.packIn = [];
+    d.moves = still;
     if (placing) placing.draftWhy = null;
     publishDraft();
     return true;
@@ -1431,38 +1466,60 @@ export function createDecorTool(deps) {
       const kind = piece.station ? 'station' : piece.storage ? 'storage' : null;
       if (!kind) { usePending.delete(id); continue; }
       const names = mode === 'friends' ? circle.friends : mode === 'party' ? circle.party : [];
-      const res = await deps.homeDecor.use({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), op: 'set', id, kind, mode, names, realm: null });
-      if (!res?.ok) { deps.say?.(deps.refusal?.(res?.error) ?? t('decor.tool.unkept', 'It could not be kept.')); continue; }
+      const body = { mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), op: 'set', id, kind, mode, names };
+      // CHEST-DRAFT (AUDIT FB1025i E2): a chest's Access moves what it holds into the service's bin (decorAccess.js
+      // moveChest) - through the record's act, as a press of it does (cycleUse): the save checkpointed first, so the
+      // service moves what the chest holds now, and the goods leave the save's list only on its word that they moved.
+      // Asked with no record, it moved none of what was stored since the last checkpoint, and the list was cleared.
+      const act = kind === 'storage' ? deps.realm?.() : null;
+      if (kind === 'storage' && !act) { usePending.delete(id); useMode.delete(id); deps.say?.(t('decor.tool.unkept', 'It could not be kept.')); continue; }
+      const res = act
+        ? await act({ needsAnswer: true, apply: (/** @type {any} */ a) => keepChestGoods(id, a), call: (/** @type {any} */ at) => deps.homeDecor.use({ ...body, realm: at }) })
+        : await deps.homeDecor.use({ ...body, realm: null });
+      if (!res?.ok) { deps.say?.(res?.error === 'bad-item' ? t('decor.tool.unmarked', 'Take out what has no mark first.') : (deps.refusal?.(res?.error) ?? t('decor.tool.unkept', 'It could not be kept.'))); continue; }
       usePending.delete(id);
-      if (kind === 'storage') {
-        noteDecorShared(id, mode !== 'private');
-        const snap = pool.itemsSnapshot?.() ?? {};
-        delete snap[id];
-        pool.setItems?.(snap);
-      }
+      if (kind === 'storage') noteDecorShared(id, mode !== 'private');
     }
+  }
+  /** RPT1026-WORLD CONFIRM-REREAD (a private report, 2026-10-25: in a home, Confirm did nothing): the room's revision is
+   *  read once, as the draft opens - and a read the service left unanswered (DECOR_LIST_WAIT_MS, a slow database) left
+   *  every Confirm of the visit refused, the standing poll never mending it while the draft had changes. Confirm asks
+   *  again, and takes the revision only for the room the draft began from: a room another hand changed since is the
+   *  service's own stale-revision refusal, never written over. */
+  async function rereadRev(r, d) {
+    const res = await Promise.resolve(deps.homeDecor.list(r.mapId, r.buildingKey, false, !!r.yard)).catch(() => null);
+    const rev = Number(res?.data?.rev);
+    if (liveDraft() !== d) return false;
+    if (!res?.ok || !Number.isSafeInteger(rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }
+    const held = (res.data.pieces ?? []).map((p) => decorPieceOf(p)).filter(Boolean);
+    const since = decorDelta([...d.before.values()], held);
+    if (since.put.length || since.drop.length) { deps.say?.(deps.refusal?.('decor-rev') ?? t('decor.tool.unkeptRoom', 'The changes could not be kept.')); return false; }
+    d.rev = rev;
+    return true;
   }
   async function confirmDraft() {
     const r = deps.room?.();
     const d = liveDraft();
     if (!d) return false;
+    // RPT1026-WORLD CONFIRM-ONCE: a Confirm clicked again while one is on its way (the service slow, nothing on the bar
+    // yet) sent the same batch twice and paid the purse twice for one room
+    if (d.keeping) return false;
+    d.keeping = true;
     if (placing) placing.busy = true;
     try {
       await d.asked;
-      if (usesBatch(r) && !Number.isSafeInteger(d.rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }
+      if (usesBatch(r) && !Number.isSafeInteger(d.rev) && !(await rereadRev(r, d))) return false;
       const before = [...d.before.values()];
       const after = roomPieces();
       const delta = decorDelta(before, after);
-      if (!delta.put.length && !delta.drop.length) { d.packOut = []; d.packIn = []; if (placing) placing.draftWhy = null; if (usesBatch(r)) await flushStagedUse(r); publishDraft(); return true; }
+      if (!delta.put.length && !delta.drop.length) { d.moves = []; if (placing) placing.draftWhy = null; if (usesBatch(r)) await flushStagedUse(r); publishDraft(); return true; }
       const gold = draftGoldNow();
       if (!usesBatch(r)) {
         if ((deps.wallet?.().gold ?? 0) + Math.min(gold, 0) < 0) { deps.say?.(t('decor.tool.short', 'Not enough gold.')); return false; }
         if (gold < 0) deps.wallet().pay(-gold);
         if (gold > 0) deps.wallet().credit?.(gold);
         d.before = new Map(roomPieces().map((p) => [p.id, snapPiece(p)]));
-        d.packOut = [];
-        d.packIn = [];
-        d.items = pool.itemsSnapshot?.() ?? null;
+        d.moves = [];
         d.owns = pool.ownSnapshot?.() ?? null;
         if (placing) placing.draftWhy = null;
         publishDraft();
@@ -1493,9 +1550,7 @@ export function createDecorTool(deps) {
       d.before = new Map(roomPieces().map((p) => [p.id, snapPiece(p)]));
       if (Number.isSafeInteger(res.data?.rev)) d.rev = res.data.rev;
       d.txn = mintDecorTxn();
-      d.packOut = [];
-      d.packIn = [];
-      d.items = pool.itemsSnapshot?.() ?? null;
+      d.moves = [];
       d.owns = pool.ownSnapshot?.() ?? null;
       if (placing) placing.draftWhy = null;
       await flushStagedUse(r);
@@ -1503,6 +1558,7 @@ export function createDecorTool(deps) {
       deps.say?.(share ? t('decor.tool.keptShare', 'The room is kept. The guild has its share.') : t('decor.tool.kept', 'The room is kept.'));
       return true;
     } finally {
+      d.keeping = false;
       if (placing) placing.busy = false;
     }
   }
@@ -1709,7 +1765,7 @@ export function createDecorTool(deps) {
       if (!moved) return false;
       pool.put(piece);
       pool.keepOwn(piece.id, moved);
-      draft?.packOut.push(moved);
+      draft?.moves.push({ op: 'out', id: piece.id, item: moved });   // AUDIT FB1025i E1
       publishDraft();
       deps.say?.(t('decor.tool.setAside', '{name} set aside. Confirm keeps it.', { name: p.entry.name }));
       if (placing === p) { const fly = [...p.fly]; endPlacing(); beginBrowse(fly); }
@@ -1884,7 +1940,8 @@ export function createDecorTool(deps) {
       const d = openDraft();
       pool.remove(piece.id);
       const item = pool.takeOwn?.(piece.id) ?? null;
-      if (item) { d?.packIn.push(item); deps.packGive?.(item); }
+      // CHEST-DRAFT (AUDIT FB1025i E1): in the draft's order, for a Discard - as the record the pack holds it in (a stack it joined)
+      if (item) d?.moves.push({ op: 'in', id: piece.id, item: deps.packGive?.(item) ?? item });
       publishDraft();
       deps.say?.(t('decor.tool.setAsideDown', '{name} set aside. Confirm takes it down.', { name }));
       return true;
@@ -2555,6 +2612,7 @@ export function createDecorTool(deps) {
       button?.destroy(); panel?.destroy(); bar?.destroy(); hotbar?.destroy();
       button = panel = bar = hotbar = null;
       deps.win?.removeEventListener?.('keydown', onDecorateKey, true);
+      verbsOff();
     },
   };
 }

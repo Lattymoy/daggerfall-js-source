@@ -189,7 +189,8 @@ const OWN_CHOICES = Object.freeze({
   hunting: Object.freeze({
     50: pair(spec('tracker', 'Tracker', 'Animals within 100 m are marked.'),
       spec('tanner', 'Tanner', 'Hides cure 1:1, not 2:1.')),
-    100: pair(spec('trophy-hunter', 'Trophy Hunter', 'A trophy decor piece from a tier 5+ kill.', 'trophy'),   // PROF7: no piece to stand as
+    // HUNTERS-MARK (Professions-Arc 58): the Mounted Trophy built - a clean pelt of a tier 5+ body mounts its beast
+    100: pair(spec('trophy-hunter', 'Trophy Hunter', 'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.'),
       spec('butcher', 'Butcher', 'Meat x2, and it spoils half as fast.')),
   }),
   fishing: Object.freeze({
@@ -245,7 +246,7 @@ const OWN_CHOICES = Object.freeze({
   }),
   jewelcrafting: Object.freeze({
     50: pair(spec('gemcutter', 'Gemcutter', 'A set gem adds +10% enchantment points.'),
-      spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')),
+      spec('goldsmith', 'Goldsmith', 'Silver jewelry you make has the enchantment points and worth of Gold.')),   // RPT1026-PROGRESS: "Silver counts as Gold" read as Silver standing in for Gold in a recipe, which it never did (recipeLaw.js jewelHand)
     100: pair(spec('master-jeweller', 'Master Jeweler', 'Jewelry Masterwork chance +5%.'),
       spec('lapidary', 'Lapidary', 'Siege-cracked Gems set as any gem.')),
   }),
@@ -337,7 +338,7 @@ export const PROF_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
 
 /** A common herb comes up by hand in this long, with no moment. The steady hand holds for `steadyS`, bruised by a turn
  *  past `steadyDeg` (x the band, x Botanist's) or a move past `moveM`. */
-export const HERB_ACT = Object.freeze({ commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5 });
+export const HERB_ACT = Object.freeze({ commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5, wet: 0.8 });   // AUDIT GATHER F7: `wet` - rain wets the herbs, the steady window -20% (5.3)
 /** The Basket's search: three finds glint in turn, each `glintS` long (`masterGlintS` at Master), a `gapS` between. */
 export const BASKET_ACT = Object.freeze({ finds: 3, glintS: 1.0, masterGlintS: 1.4, gapS: 0.4 });
 /** The attribute bands' widening of an act's window (FORAGE0 14.4), by Foraging's own band. */
@@ -643,6 +644,10 @@ export const HIGH_HIDES_PER_DAY = 3;
 export const HIGH_HIDE_TIER = 5;
 /** A body's DFU part (4.4): one body in four, lost with a torn pelt (PROF0 29). */
 export const PART_CHANCE = 0.25;
+/** HUNTERS-MARK (Professions-Arc 58): a Trophy Hunter's trophy - a CLEAN pelt of a body of HIGH_HIDE_TIER or past it, so
+ *  inside the account's HIGH_HIDES_PER_DAY, its rare hides' own bound. */
+export const TROPHY_HUNTER = 'trophy-hunter';
+export const trophyHunted = ({ spec100, tier, clean }) => spec100 === TROPHY_HUNTER && clean === true && tier >= HIGH_HIDE_TIER;
 /** A body's butchery (PROF0 29): one Raw Meat (or Raw Fish) into the Stores; a Butcher's two (3.3). */
 export const BUTCHERY = Object.freeze({ meat: 1, butcher: 2 });
 /** A hide's yield before the act (PROF0 6): one; a clean pelt x1.5, the fraction a chance (the act's bound). */
@@ -689,6 +694,14 @@ export const SLAUGHTERFISH_SCALES = 'hide:slaughterfish';
 export const HAUL_YIELD = Object.freeze([1, 2]);
 /** A school's fish on top (PROF0 6) - a Netter's two (3.3). */
 export const SCHOOL_FISH = Object.freeze({ plain: 1, netter: 2 });
+/** AUDIT GATHER F3 (Professions-Arc section 55): the SCHOOLS a day an account's school's fish are counted on. A school is
+ *  the client's word (the service has no water to measure a cast against) - section 30 took it so because the day's forty
+ *  hauls bound it, and CAP-OFF lifted that bound from the hauls and never from the school: every haul of a lying client
+ *  claimed one, the act's report moving the yield by +117% (a Netter's +183%) past 5.1's +50%. Forty schools an account a
+ *  day - twenty pixels' worth, two a pixel - and the hauls themselves uncapped. AUDIT LOCKPICK D2: the schools that counted
+ *  are counted (the harvest row's `school`, migration 0176), never every haul - an honest angler's first school after forty
+ *  plain hauls was refused its fish. */
+export const SCHOOL_HAULS_DAY = 40;
 /** The finds, a haul each (5.2): at sea, on ground the witnesses confirmed, a Pearl 1 in 50 (a Pearl Diver's x3, a
  *  Deep-Sea's x2) and a Slaughterfish 1 in 100 (a Deep-Sea's x2); a trophy 1 in 200 anywhere. */
 export const FISH_CHANCE = Object.freeze({ pearl: 1 / 50, slaughterfish: 1 / 100, trophy: 1 / 200, pearlDiver: 3, deepSea: 2 });

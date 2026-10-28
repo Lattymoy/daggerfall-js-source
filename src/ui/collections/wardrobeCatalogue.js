@@ -23,6 +23,9 @@ import { wareById, festivalAt, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../
 import { QL_LINES } from '../../systems/questlines/qlLines.js';
 import { QL_SERVICE_LINES } from '../../net/questlineClaims.js';
 import { ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES } from '../../net/arena/arenaLaw.js';   // AUDIT COLLECTIONS-II (lane 1): the laurel's floor
+import { HUNT_TITLES, MASTERY_TITLES, SEA_TITLES } from '../../net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: each title's count, the service's own law
+import { professionName } from '../../net/professionLaw.js';
+import { shopWareById, shopPriceText } from '../../net/shopLaw.js';   // SHOP: a ware's price, the shop's own
 
 /** The four kinds, in the Collections page's order, and the wardrobe's list that holds each (accountFlow.js wardrobe). */
 export const WARDROBE_KINDS = Object.freeze(['title', 'aura', 'icon', 'glyph']);
@@ -38,12 +41,15 @@ export const WARDROBE_SOURCES = Object.freeze([
   wordPair('serpent', () => t('coll.src.serpent', 'The Sea Serpent')),
   wordPair('broker', () => t('coll.src.broker', 'The Sigil Broker')),
   wordPair('questlines', () => t('coll.src.questlines', 'Questlines')),
+  wordPair('hunt', () => t('coll.src.hunt', 'The Hunt')),   // HUNTERS-MARK: the bounty boards' clears
+  wordPair('mastery', () => t('coll.src.mastery', 'Marks of Mastery')),   // MARKS-OF-MASTERY: a profession's Master
   wordPair('festival', () => t('coll.src.festival', 'The Witches’ Festival')),
   wordPair('seats', () => t('coll.src.seats', 'The Seats')),
   wordPair('chapters', () => t('coll.src.chapters', 'The Guild Chapters')),
   wordPair('ranked', () => t('coll.src.ranked', 'The Arena and the Card Tables')),
   wordPair('world', () => t('coll.src.world', 'Around the Bay')),
   wordPair('account', () => t('coll.src.account', 'Your Account')),
+  wordPair('shop', () => t('coll.src.shop', 'The Shop')),   // SHOP: the pause face's shop, its pre-alpha wares
   wordPair('patrons', () => t('coll.src.patrons', 'Patrons')),
   wordPair('staff', () => t('coll.src.staff', 'The Game’s Staff')),
   wordPair('bestowed', () => t('coll.src.bestowed', 'Bestowed by Name')),
@@ -65,9 +71,9 @@ export const sourceName = (/** @type {string} */ id) => WARDROBE_SOURCES.find(([
  *             a guest from before the cutoff earns it by registering, a character from before it brings it along)
  *   retired   given once and closed (a first company's name)
  */
-export const WARDROBE_AVAIL = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'offseason', 'patron', 'dormant', 'auto', 'staff', 'bestowed', 'closed', 'retired']);
+export const WARDROBE_AVAIL = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'offseason', 'patron', 'dormant', 'auto', 'staff', 'bestowed', 'closed', 'retired', 'shop']);   // SHOP: `shop`, sold in the shop while the pre-alpha lasts (wrangler.toml SHOP_ON_SALE)
 /** The availabilities a player can act on now - the page's "Obtainable" filter. */
-export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron']);
+export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);
 /** Each availability's tag (a chip on the row), as a player reads it. */
 export const AVAIL_TAG = Object.freeze({
   open: () => t('coll.avail.open', 'Obtainable'),
@@ -82,6 +88,7 @@ export const AVAIL_TAG = Object.freeze({
   bestowed: () => t('coll.avail.bestowed', 'Bestowed'),
   closed: () => t('coll.avail.closed', 'Closed'),
   retired: () => t('coll.avail.retired', 'No longer obtainable'),
+  shop: () => t('coll.avail.shop', 'In the shop'),
 });
 /** Each availability in a sentence (the row opened whole). `date` the open festival's last day, in words. */
 export const AVAIL_LINE = Object.freeze({
@@ -97,6 +104,7 @@ export const AVAIL_LINE = Object.freeze({
   bestowed: () => t('coll.availLine.bestowed', 'It cannot be earned.'),
   closed: () => t('coll.availLine.closed', 'Closed to newcomers: only someone who played before it closed can still bring it to an account.'),
   retired: () => t('coll.availLine.retired', 'It can no longer be obtained. Those who hold it keep it.'),
+  shop: () => t('coll.availLine.shop', 'Sold in the shop during the pre-alpha only. Those who buy it keep it.'),
 });
 
 // ── the numbers the service keeps to itself (the pin holds each to its table) ─────────────────────────────────────────
@@ -113,6 +121,8 @@ export const SPIRE_CHAMPIONS_TOP = 10;
 export const TABLE_CHAMPION_FLOOR = Object.freeze({ iliacchampion: Object.freeze({ games: 10, foes: 5 }), grandmaster: Object.freeze({ games: 10, foes: 5 }) });
 
 // ── the words of how ──────────────────────────────────────────────────────────────────────────────────────────────────
+/** SHOP: a ware's words of how - the gem on the pause face, its price the shop's own (net/shopLaw.js SHOP_WARES). */
+const shop = (/** @type {string} */ id) => () => t('coll.how.shop', 'Buy it from the shop, the gem on the pause screen, for {price}. All proceeds go to the costs of developing DFO Online.', { price: shopPriceText(shopWareById(id)?.cents ?? 0, intlLocale()) });
 const bestowed = () => t('coll.how.bestowed', 'Made for one player and granted to them by name.');
 const patron = (/** @type {string} */ tier) => () => t('coll.how.patron', 'Support DFO Online on Patreon at the {tier} tier, then link Patreon from your profile - or be granted it by name.', { tier: TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (tier)] });
 /** Apostle: a Patreon tier's title no pledge maps yet (server-account/wrangler.toml PATREON_TIERS), held by name alone. */
@@ -133,6 +143,13 @@ const crown = () => t('coll.how.crown', 'Belong to a guild that holds this kingd
 /** AUDIT COLLECTIONS-II (lane 1): a seat's glyph is the character's - minted beside its name while its guild holds the
  *  seat (server-account/src/index.js, the token's seat glyphs) - never kept by the account the page reads. */
 const PER_CHARACTER = Object.freeze({ scope: 'character' });
+
+/** HUNTERS-MARK, MARKS-OF-MASTERY: a title's count off the law both ends read (net/huntLaw.js) - the account's board
+ *  clears, the serpents it helped slay - and a profession's Master. */
+const countOf = (/** @type {ReadonlyArray<ReadonlyArray<string | number>>} */ list, /** @type {string} */ id) => Number(list.find(([k]) => k === id)?.[1] ?? 0);
+const hunt = (/** @type {string} */ id) => () => t('coll.how.hunt', 'Clear {n} bounties from the towns’ bounty boards. Every character of your account counts.', { n: countOf(HUNT_TITLES, id) });
+const sea = (/** @type {string} */ id) => () => t('coll.how.sea', 'Help slay {n} Sea Serpents. One serpent a day counts.', { n: countOf(SEA_TITLES, id) });
+const master = (/** @type {string} */ prof) => () => t('coll.how.mastery', 'Reach Master in {profession} on a living character of your account.', { profession: professionName(prof) });
 
 /** THE QUESTLINE THAT PAYS A TITLE (net/questlineClaims.js QL_SERVICE_LINES), its line's own words (qlLines.js): its
  *  name, and who begins it from what level - or the line it follows. */
@@ -156,6 +173,8 @@ const questline = (/** @type {string} */ title) => () => {
  *  character shows and the account never keeps (a seat's glyph) - its holding unknown to the page, never counted. */
 const E = (/** @type {string} */ src, /** @type {string} */ avail, /** @type {() => string} */ how, extra = {}) => Object.freeze({ src, avail, how, ...extra, ...(extra.with ? { with: Object.freeze([...extra.with]) } : {}) });
 
+/** MARKS-OF-MASTERY: a profession's Master's title each, in the professions' order. */
+const MASTERS = Object.freeze(Object.fromEntries(Object.entries(MASTERY_TITLES).map(([prof, title]) => [title, E('mastery', 'open', master(prof))])));
 /** @type {Readonly<Record<string, Readonly<Record<string, WardrobeEntry>>>>} */
 export const WARDROBE = Object.freeze({
   title: Object.freeze({
@@ -221,6 +240,15 @@ export const WARDROBE = Object.freeze({
     skyfarer: E('questlines', 'open', questline('skyfarer')),   // KETCH: the Sky-Ketch's line
     witchwarden: E('festival', 'seasonal', wyrd('title:witchwarden')),
     hearthkeeper: E('festival', 'seasonal', () => t('coll.how.hearthkeeper', 'Set a Hearth Offering at your home’s door during the Witches’ Festival, and have other players take {n} Soul Cakes from it.', { n: HEARTHKEEPER_GIVEN })),   // AUDIT COLLECTIONS-II (lane 1): `fest_given` counts the cakes others take (festival.js takeFromOffering)
+    nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['aura:sagesmoke', 'glyph:nirnrootsage'] }),   // NIRNROOT-SAGE: Blob-Marley's own
+    genesis: E('shop', 'shop', shop('title:genesis')),   // SHOP: the pre-alpha title, on its plate of fire
+    bloodhound: E('hunt', 'open', hunt('bloodhound')),   // HUNTERS-MARK
+    beastbane: E('hunt', 'open', hunt('beastbane')),
+    grandhuntsman: E('hunt', 'open', hunt('grandhuntsman')),
+    huntlegend: E('hunt', 'open', hunt('huntlegend')),
+    ...MASTERS,   // MARKS-OF-MASTERY: a profession's Master each
+    serpenthunter: E('serpent', 'open', sea('serpenthunter')),   // MARKS-OF-MASTERY: sailing's, off the relay's serpent receipts
+    deepbane: E('serpent', 'open', sea('deepbane')),
   }),
   aura: Object.freeze({
     dagonfire: E('broker', 'open', broker('aura:dagonfire'), { look: () => t('coll.look.dagonfire', 'A ring of Oblivion’s fire burning on the ground at your feet.') }),
@@ -237,6 +265,8 @@ export const WARDROBE = Object.freeze({
     firstlight: E('spire', 'retired', spireFirst, { with: ['title:spirefirst'], look: () => t('coll.look.firstlight', 'A dawn-white ring of light.') }),
     lilacwarren: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'glyph:wikimaid'], look: () => t('coll.look.lilacwarren', 'Rabbits hopping round your feet on a ring of lilac light.') }),
     witchfire: E('festival', 'seasonal', wyrd('aura:witchfire'), { look: () => t('coll.look.witchfire', 'A coven’s green fire round your feet, tallow candles burning in its ring.') }),
+    sagesmoke: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'glyph:nirnrootsage'], look: () => t('coll.look.sagesmoke', 'Smoke billowing about you, nirnroots circling your waist and small green runes glowing round your feet.') }),
+    eternal: E('shop', 'shop', shop('aura:eternal'), { look: () => t('coll.look.eternal', 'A cape of blue-violet fire on your back, flowing as you move, wisps of flame trailing behind you.') }),   // SHOP
   }),
   icon: Object.freeze({
     tallowskull: E('festival', 'seasonal', wyrd('icon:tallowskull')),
@@ -259,11 +289,20 @@ export const WARDROBE = Object.freeze({
     crownDF: E('seats', 'open', crown, PER_CHARACTER),
     crownWR: E('seats', 'open', crown, PER_CHARACTER),
     crownSN: E('seats', 'open', crown, PER_CHARACTER),
+    crownSK: E('seats', 'open', crown, PER_CHARACTER),   // WW7-3
+    crownMW: E('seats', 'open', crown, PER_CHARACTER),
+    crownSU: E('seats', 'open', crown, PER_CHARACTER),
+    crownVW: E('seats', 'open', crown, PER_CHARACTER),
+    crownEW: E('seats', 'open', crown, PER_CHARACTER),
+    crownBM: E('seats', 'open', crown, PER_CHARACTER),
+    crownCY: E('seats', 'open', crown, PER_CHARACTER),
     laurel: E('ranked', 'ranked', arenaTop, { with: ['title:arenachampion'] }),
     aegis: E('bestowed', 'bestowed', bestowed, { with: ['title:aegis', 'aura:oblivionward'] }),
     primarch: E('bestowed', 'bestowed', bestowed, { with: ['title:primarch', 'aura:radiance'] }),
     crystalfist: E('bestowed', 'bestowed', bestowed, { with: ['title:crystalfist', 'aura:resonance'] }),
     wikimaid: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'aura:lilacwarren'] }),
+    nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'aura:sagesmoke'] }),
+    origin: E('shop', 'shop', shop('glyph:origin')),   // SHOP: the pre-alpha glyph, the ouroboros dragon
   }),
 });
 

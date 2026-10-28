@@ -218,7 +218,7 @@ test('BAG-CRAFT the stations read what may be worked: a Steel Longsword whose go
     const buttons = () => [...root.querySelectorAll('button')];
     assert.ok(buttons().some((b) => b.textContent === 'Burn'), 'the forge burns the bag\'s Pine Logs');
     const sword = buttons().find((b) => b.className.includes('prof-recipe') && b.textContent.startsWith('Longsword'));
-    assert.equal(sword?.textContent, 'Longswordcan make now', 'the bag\'s goods, uncounted, held as they stand');
+    assert.equal(sword?.textContent, 'Longswordcan make nowFirst-time bonus', 'the bag\'s goods, uncounted, held as they stand');   // PIN MOVED (CRAFT-HALL): its first-time bonus still to earn, starred
     sword.onclick();
     buttons().find((b) => b.textContent.startsWith('Steel')).onclick();
     buttons().find((b) => b.textContent.startsWith('Quick craft')).onclick();

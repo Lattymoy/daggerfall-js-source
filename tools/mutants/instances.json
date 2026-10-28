@@ -65,22 +65,24 @@
   {
     "name": "INSTANCES-HELLO-UNGATED",
     "file": "server/src/index.js",
-    "old": "      if (instRoom) { const v = await this._instanceHello(a.key, who, now); if (v.no) { this._refuse(ws, v.no, v.no === 'busy' ? CLOSE_BUSY : undefined); return; } instParty = v.as === 'party'; }\n",
+    "old": "      if (instRoom) { const v = await this._instanceHello(a.key, who, now); if (v.no) { this._refuse(ws, v.no, v.no === 'busy' ? CLOSE_BUSY : undefined); return; } instAtt = v.att; }\n",
     "new": "",
     "tests": [
       "test/net/instances2_relay.test.js"
     ],
-    "why": "the relay never asks who comes in"
+    "why": "the relay never asks who comes in",
+    "note": "Re-aimed by content (DOMAIN2): the instance hello hands back the attachment a right carries (`att` - `ip` a party member's, `ig` a castle's guild's), where it had handed back the party flag alone."
   },
   {
     "name": "INSTANCES-HUB-SILENCE-REFUSES",
     "file": "server/src/index.js",
-    "old": "    return as ? { as } : { no: silent ? 'busy' : INSTANCE_DOOR_WORD };",
-    "new": "    return as ? { as } : { no: INSTANCE_DOOR_WORD };",
+    "old": "return as ? { as, att: as === 'party' ? { ip: 1 } : as === 'guild' ? { ig: who.gi } : {} } : { no: silent ? 'busy' : INSTANCE_DOOR_WORD };",
+    "new": "return as ? { as, att: as === 'party' ? { ip: 1 } : as === 'guild' ? { ig: who.gi } : {} } : { no: INSTANCE_DOOR_WORD };",
     "tests": [
       "test/net/instances2_relay.test.js"
     ],
-    "why": "a hub that does not answer turns a party member away for good instead of busy"
+    "why": "a hub that does not answer turns a party member away for good instead of busy",
+    "note": "Re-aimed by content (DOMAIN2): the instance hello hands back the attachment a right carries (`att` - `ip` a party member's, `ig` a castle's guild's), where it had handed back the party flag alone."
   },
   {
     "name": "INSTANCES-HUB-ALWAYS-KIN",
@@ -125,8 +127,8 @@
   {
     "name": "INSTANCES-HOLD-PUBLIC",
     "file": "src/systems/instancePlaces.js",
-    "old": "  if (!isHold) rows.push({ kind: 'public' });",
-    "new": "  rows.push({ kind: 'public' });",
+    "old": "  if (!isHold && !publicLast) rows.push({ kind: 'public' });",
+    "new": "  if (!publicLast) rows.push({ kind: 'public' });",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

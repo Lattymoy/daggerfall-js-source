@@ -131,6 +131,9 @@ function worldReveal() {
     return { revealLocation, revealMap, mapMacro: () => _locationRevealedByMapItem };
   `, {
     locationIndex: new Map([['5,6', { regionIndex: 17 }]]), playerTravelPixel: () => ({ x: 5, y: 6 }),
+    // PIN MOVED (BAY-LEFT-B, 06-Systems/Quest-Arc.md): the reveal reads the politic region (_questRegionIndex,
+    // PlayerGPS.CurrentRegion) over the quest layer's maps - a province's region its table of the places past the Bay
+    _questRegionIndex: () => 17, questWorld: { maps: { getRegion: () => CRYPT_REGION } },
     maps: { getRegion: () => CRYPT_REGION }, discoverRandomLocation, questBridge: { notebook: { addNote: (t) => notes.push(t) } },
     localizedStrings: tm.localizedStrings, getLocalizedLocationName: tm.getLocalizedLocationName,
   });
@@ -528,6 +531,7 @@ function npcHost() {
     openQuestOfferFor() {}, mountServiceWindow() {}, interiorOverlay: null, mode: 'exterior', staticNpcPortrait: () => null,
     localizedText: tm.localizedText, ctx: { npcTargets: () => [{ npcData: lord, archive: -1, record: -1 }] },
     officeName: () => null,   // ARENA-FIX (main): an office's name first - the lord holds none
+    host: {},   // AUDIT-TESA A2-5 (at the merge of main into TESA): currentNameBank asks the host's province bank first - none on the Bay
   });
   return { ...api, said, plates, partners };
 }

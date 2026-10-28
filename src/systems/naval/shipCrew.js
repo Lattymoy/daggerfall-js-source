@@ -221,22 +221,23 @@ const roleOf = (i, mobile, held) => (i === 0 ? FIRST_MATE : mobile === MOBILE.Ba
  * A hand's name: NameHelper.FullName over the waters' bank, on the boat's seed and the hire's number (DFU's own global
  * stream put back as it stood).
  * @param {number} seed @param {number} hire @param {'male'|'female'} gender @param {number} regionIndex
+ * @param {number|null} [bank] WW3: the waters' people's bank where the caller knows better (systems/naval/shipNameBank.js)
  */
-export function handName(seed, hire, gender, regionIndex = 17) {
+export function handName(seed, hire, gender, regionIndex = 17, bank = null) {
   const s = (Math.imul((seed >>> 0) ^ 0x7a3d, 0x9e3779b1) + Math.imul(hire + 1, 0x85ebca6b)) >>> 0;
   const saved = getSeed();
   try {
     srand(s || 1);
-    const bank = getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17);
-    return fullName(bank, gender === 'female' ? GENDERS.Female : GENDERS.Male);
+    const b = Number.isInteger(bank) ? /** @type {number} */ (bank) : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17);
+    return fullName(b, gender === 'female' ? GENDERS.Female : GENDERS.Male);
   } finally { setSeed(saved); }
 }
 
 /**
  * One boat's crew as people.
- * @param {{ seed: number, regionIndex?: number, record?: any }} o - `record` a save's (`snapshot()`), or none: a new crew
+ * @param {{ seed: number, regionIndex?: number, bank?: number|null, record?: any }} o - `record` a save's (`snapshot()`), or none: a new crew
  */
-export function createShipCrew({ seed, regionIndex = 17, record = null }) {
+export function createShipCrew({ seed, regionIndex = 17, bank = null, record = null }) {
   /** @type {{ name: string, role: string, mobile: number, gender: 'male'|'female', fights: number, boardings: number, prior: number, hall?: string, lift?: number }[]} */
   let hands = [];
   let morale = MORALE_START, hires = 0, seaT = 0, portT = 0, losses = 0, lossT = 0;
@@ -289,7 +290,7 @@ export function createShipCrew({ seed, regionIndex = 17, record = null }) {
         const gender = r.gender === 'female' ? 'female' : 'male';
         const held = new Map();
         for (const x of hands) held.set(x.role, (held.get(x.role) ?? 0) + 1);
-        const h = { name: handName(seed, hires++, gender, regionIndex), role: roleOf(i, r.mobile, held), mobile: r.mobile, gender, fights: 0, boardings: 0, prior: start };
+        const h = { name: handName(seed, hires++, gender, regionIndex, bank), role: roleOf(i, r.mobile, held), mobile: r.mobile, gender, fights: 0, boardings: 0, prior: start };
         hands.push(h);
         joined.push(h);
       }

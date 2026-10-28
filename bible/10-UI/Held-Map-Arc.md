@@ -32,8 +32,10 @@ experience the map of daggerfall in enhanced format."*
 of the Iliac Bay is a painted asset: the coastline comes off WOODS.WLD's
 heights, the province borders off the politic bytes, the roads and
 tracks off Hazelnut's vendored arrays (the port's own generated network
-is never drawn here - `03-World/Roads.md`, and the `source` field TO1
-put on the network object is what tells them apart), the locations off
+on the Bay is never drawn here - `03-World/Roads.md`, and the `source`
+field TO1 put on the network object is what tells them apart; past the
+Bay Arena's network is the only road the world paints, and TESA13 draws
+it - `03-World/Arena-Provinces.md`), the locations off
 MAPS.BSA with the discovery store deciding which are inked, and the names
 in a hand-lettered face. It is rendered in an INK style - lines, hatching
 for relief, stippled coast - into an offscreen canvas that is uploaded as
@@ -302,13 +304,16 @@ billed inn nights and showed days the popup waives (`sleepModeInn &&
 own line is on the card. [SUPERSEDED BY LIVED1: the journey counts its days
 online too - "N days of your time" - and the fare stands (TRAVEL-FARE).] H6 a box held only the stage - a search pick
 under the resume prompt could begin a second journey; the chrome is
-pointer-dead under any box. H7 a close during the opening fade snapped
+pointer-dead under any box.
+
+H7 a close during the opening fade snapped
 to full before lowering, and the boxes stayed painted through it; the
 fade starts where the sheet is and the boxes come down with it. H8 a
 line-mode wheel zoomed a fraction of a percent a notch; the delta is
 normalised. The display face is ASKED for (`document.fonts.load`; a
 canvas font never triggers a load) and the sheet repainted when it
-lands. Confirmed sound by the host reviewer: every arm the host calls,
+lands (AUDIT TESA II M2, 2026-10-25: the whole sheet - ZOOM-FAST's kept parts of the world sheet had been drawn as
+they were, the names in the fallback face until the first pan; `heldMap.js:"_inkAgain() {"`). Confirmed sound by the host reviewer: every arm the host calls,
 in every mount (outdoors, the guild's teleport map, the journal, the
 mod's journey UI, online); no listener outlives the window; the chain
 cache keyed on a stable network reference; the state machine under
@@ -1293,6 +1298,10 @@ dungeon's plan shows none.
 lit toggle that seems to do nothing: every kind the band does not ink is dimmed, titled "zoom in to see" (at mid, the
 graveyards, covens and homes). The toggles flip the store at every band.
 
+TESA15 (2026-10-24, `03-World/Arena-Provinces.md` TESA15 - the owner, of the map past the Bay: "the fidelity of it"):
+at far the TRACKS are a hair now (`ui/ink/inkMap.js` strokePaths, FAR_TRACK_PEN 0.6 in the soft pen), not left off - the
+Bay's sheet and the land past it, one law. The far band's marks are as above: the cities alone.
+
 Pins: `test/ui/fb0929d_mapkey.test.js` (8; the last measures the player's own FMAP_PAL.COL where ARENA2_PATH has it).
 `tools/mutants/fb0929d_mapkey.json`: 39, 39 dead - the two on `MARK_INK_MIX` against the real palette alone - and the
 403 older records on the four files it touched re-judged (400 dead, 3 equivalent as recorded). Re-aimed:
@@ -1348,3 +1357,84 @@ A place keeps its own answer. The record: `01-Overview/bugs/Field-Bugs-2026-10-1
 A pan redrew every place. The kept ink is keyed by the view, so each step of a drag painted the coast and, inside that, walked every mark onto the paper again. The place marks are a layer of their own now (`inkMap.js:"export function syncMarksLayer(prev, spec) {"`): the glyphs, a hub's circle, a seat's ring, a port's anchor, a carriage town's wheel, and the marked place's ring. A pan that stays inside what that layer baked — half a paper past each edge, and never a bitmap over 8192 device pixels on a side or 16777216 device pixels in area — is one blit (`inkMap.js:"export function blitMarksLayer(ctx, layer, view) {"`), and only while that blit still covers the whole view. A zoom, a band change, or a pan that walks off the bake paints the marks again: a glyph is a paper-pixel size, so the layer is not scaled. The coast, the roads and the breathing rings are as they were. With no 2D context on the layer the sheet inks the marks where it always did.
 
 Pins: `test/ui/mappan.test.js`.
+
+## BAY-LEFT-MAPS - the held map past the Bay (2026-10-27, AUDIT LEFT IN THE BAY C1, C2, C9, C11)
+
+The owner, after AUDIT LEFT IN THE BAY (2026-10-26): *"Every single thing here needs to be addressed. No exceptions."* -
+C11's small gaps, low, built with the rest.
+
+**C1 - the marks.** The held map read its party, its travellers, the trader's coin, the serpent's ring (and a Super
+dungeon's, an arch's, the Ketch's), the Motherlodes, the POIs, the raids and the stars against the Bay's 1000 x 500
+(`this._size` - no host hands `mapSize`), where the gates past the Bay, the bounties and the quests were read over the
+sheet's own box. Every reader of the poll reads one box now (`ui/heldMap.js` _marksBox: the continent's frame while it is
+shown or the zone map is up, the Bay's sheet else), through box variants of the readers (readGateMarkIn,
+readVendorMarkIn, readPartyMarksIn, readTravellerMarksIn, readRaidMarksIn; readBountyMarksIn already was). Each Bay
+reader is its box reader over the Bay's own box, to the pixel. Lane C's p3 on the freeware: the party kept 1 of 2 -> 2 of
+2, the travellers 1 of 2 -> 2 of 2, the coin and the serpent's ring dropped -> kept, Motherlodes 0 -> 1.
+
+**C2 - the flags.** A waypoint (personal, party, guild) and WILD-WAYPOINT's remains flag were held to the Bay's map
+(`systems/map/mapWaypoints.js` onMap), so none stood past it - and the open zone is Cyrodiil's since WW-C2, so the remains
+flag never planted. The world's grid now (`net/wire.js` worldPixelOk). A client from before decodes a line naming a point
+past the Bay as no waypoint and still takes it off the chat: nothing stored, nothing shown. The right click opens the add
+menu anywhere the sheet shows, and "Travel here" is never offered on a flag past the Bay (TESA-NO-FAST). Lane C's p4:
+Solitude's and Torval's waypoints refused -> placed, a party line past the Bay refused -> decoded; p13: the remains by the
+Imperial City and by Bruma refused -> planted.
+
+**C9 - the Find box.** The Find box (the travel map's, the Portal Stone's, the teleport map's) indexed MAPS.BSA's 62
+regions alone, so no place past the Bay was ever found - Solitude, Whiterun, the Imperial City, every one of the 296
+names. While the sheet shows the continent it reads the registry's listed rows as the continent's ink stands them
+(`ui/tamrielInk.js` tamrielFindRows): the ink's cities, each on the pixel the world stands it on, and a standing capital's
+slices one a name (its slice nearest the centre; the harbour's for its own name). A row is named by its province's region
+(WW-R: Cyrodiil, as the Bay's rows are named by theirs, not the painting's "Imperial Province"). A place past the Bay is
+found whether or not it was found in the game (the sheet inks it either way, TESA1), and under the Ports filter only a
+port is. A pick is START3's pick of a place past the Bay (`_pastBayPick`): no journey (TESA-NO-FAST), and on the teleport
+map a portal's end where it is one. The index is kept by that ink, which moves as the places stand. Lane C's p1: 0 of 296
+names found -> 296 of 296.
+
+**C11 - the small gaps.**
+- **The ports' anchors and the Ports filter.** Past the Bay no port carried its anchor, and the Ports filter (Travel
+  Options' ShipTravelPortsOnly button) hid nothing. A continent's city carries its port by the registry's word
+  (`arenaInkCities`: the stood place's - a lore port only on its shore, TESA6 - and a capital's whose own place is one or
+  whose harbour's canal is open, NIBEN-SEA); in to the Bay's own scale its anchor stands beside its glyph (`inkMap.js`
+  paintHarbour, PORT-MAP's), and out on the continent none, as the Bay draws none there (REGION-LINES). Under the Ports
+  filter a port alone is inked, hovered, pressed and found, and no countryside or lair mark is (TESA7: no harbour); the
+  kept tiles are keyed by the filter.
+- **The teleport card's province.** A bare pixel's card read its region against MAPS.BSA's count, so past the Bay it named
+  none; it is bounded by the world's regions now (REGION_NAMES, WW-R).
+- **The Overworld's carriage wheel** past the Bay: `06-Systems/Travel-View.md` BAY-LEFT-MAPS.
+
+**Decisions.** C9: past the Bay the Find box follows the sheet's law, not DFU's discovery law (every place past the Bay is
+inked, found or not); its region column is the region's name. C11: a capital is one row and one mark, its harbour's port
+its own - the registry's word, not the lore's.
+
+**The four hosts.** The world sheet is `ui/heldMap.js`'s, opened by `scenes/world.js` through `ui/travel/travelMapDoor.js`
+with what it handed before (no host line changed for C1, C9 and C11; C2's flags are the waypoint module's). The held map's
+other sheets - the town map (`scenes/exterior.js`, `scenes/world.js`) and the automap (`scenes/worldModes.js`,
+`scenes/dungeonContext.js`) - poll no world mark, find no place and draw no continent: nothing changes there.
+
+Pins `test/ui/bayleft_marks.test.js` (8, one on the freeware) for C1 and C2, `test/ui/bayleft_find.test.js` (6, one on the
+freeware) for C9 and C11. Mutants `tools/mutants/bayleftmaps.json`: BLM-C1-* (16), BLM-C2-* (4), BLM-C9-* (13), the
+C11 ink's and card's 14 - all dead. PIN MOVED (BAY-LEFT-MAPS): `test/systems/map/waypoints.test.js` (four "off the bay"
+points that are past the Bay now), `test/ui/mineperks.test.js`, `test/ui/wb1_gate_omen.test.js`,
+`test/ui/enhanced/sd2c_omen.test.js`, `test/systems/starts/start3_pastbay_marks.test.js`,
+`test/systems/revenant/lairworld.test.js`, `test/poi/auditpoi_runtime.test.js` R7 (the readers by their box), and for C11
+`test/tesa13_mapink.test.js`, `test/tesa2_arena.test.js`, `test/ui/tamriel.test.js`, `test/tesa15_mapfidelity.test.js`,
+`test/audit_tesa.test.js` A7-4 (the filter handed on, the port carried). Re-aimed by content and run, all dead: eventtip
+x2, homevendor, lairworld, mineperks, start3, wb1, audittesa2m M7 x2, map1 search-no-focus, map2 ports-filter-skips-search,
+tesa13 marks-at-far, tesa15 tiles-keyless, ww7 WW7-6-the-capital-keyed-as-a-city. A departure from DFU's travel map,
+whose places and find are MAPS.BSA's: Port-Ledger A, BAY-LEFT-MAPS.
+
+## PAD-CAPTURE - a pad's press on the map never throws (RPT1026-CLIENT, 2026-10-26)
+
+A private report: a pad's A pressed anywhere on the open world map threw a NotFoundError out of
+Element.setPointerCapture (an invalid pointer id), and the crash report stood until a reload. The pad's press is a
+synthetic pointer (`plusPad.js` domPointer, `enhancedDialog.js` replayClick: `pointerId: 1`, the mouse's id in
+Chromium). Firefox numbers its mouse 0 and holds no pointer 1, so the stage's capture on the press threw out of its
+listener to the page - each of the four arms of the stage's `pointerdown` (the turn, a pinch's second finger, a
+control's press, the pan). A capture is a drag's comfort, never its law: refused, the press still lands where it was
+pressed. Every capture and release in the game's own windows now goes through one door that answers a refusal
+(`ui/pointerCapture.js` capturePointer, releasePointer - the map's four, and the Firmament's sky, the charts, the sky
+window, the work board, the pack's figure, the deck plan, the family tree, the chat's grip and the POI editor's), and
+the four that already caught their own on their line stand. Pins: `test/ui/rpt1026_client_capture.test.js` (3: the
+press through the pad's own dispatch on a stage that refuses as Firefox does; the door; a sweep of `src/` for a capture
+outside it).

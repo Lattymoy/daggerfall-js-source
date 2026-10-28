@@ -147,7 +147,8 @@ test('AUDIT CARDS-2 H1: a load\'s road pays nothing - the chips belonged to the 
   assert.match(body(WM, 'forceExitToExterior'), /standFromCardTable\(\{ cashOut: !load \}\);/);
   assert.match(WM, /cardTableLive: \(\) => !!cardGame\?\.session && !cardGame\.friendly,/);
   const W = read('src/scenes/world.js');
-  assert.match(body(W, 'worldQuickSave'), /if \(modes\?\.cardTableLive\?\.\(\)\) \{ if \(!quiet\) townTalk\.say\('You cannot save with chips on the table\.'\); return false; \}/);
+  // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the save is scenes/worldQuickSave.js's, the host's live names read through host
+  assert.match(body(read('src/scenes/worldQuickSave.js'), 'worldQuickSave'), /if \(host\.modes\?\.cardTableLive\?\.\(\)\) \{ if \(!quiet\) townTalk\.say\('You cannot save with chips on the table\.'\); return false; \}/);
   // PIN MOVED (CARDS10): the pause's Save also waits on a card staked at Iliac Hand
   assert.match(W, /savingPrevented: \(\) => !!naval\?\.saveRefused\?\.\(\) \|\| !!modes\?\.cardTableLive\?\.\(\) \|\| !!modes\?\.gambitStaked\?\.\(\) \|\| !!modes\?\.iliacStaked\?\.\(\),/);   // PIN MOVED (KG3): and gold staked on The King's Gambit
 });

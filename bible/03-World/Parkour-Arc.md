@@ -1208,6 +1208,38 @@ into a 43-degree face let go (the hold now turns to a new face only when that fa
 the leaning top past 50 degrees, and a 2 m by 0.4 m niche whose lintel the hang meets. Pinned:
 `test/world/fb1002_audit.test.js` (12, its last on ARENA2); `tools/mutants/fb1002_audit.json` (19).
 
+## CLIMB-CREST (2026-10-26): OVER A CITY'S WALL
+
+The owner, on the tamriel branch's walls: *"Pre existing issue where walls cant be climbed over"*. Daggerfall's city wall
+(ARCH3D 445, measured on the freeware: 9.6 m thick, each face rising to a knife edge at 8.05 m, the coping's back falling
+76 degrees from it, 1.6 m in 0.4, to the wall walk at 6.45) has no top to stand on. A real PlayerMotor on the real wall
+(three lengths in a row, Forward held, Climbing 100): the classic climb went over (its hug shoves the capsule over any
+lip); the enhanced climb free-climbed to 7.7 m, held under the edge until its grip gave (30 s) and fell, again and
+again, from either side - the ledge sensor read the coping's back as a roof too steep to stand on (`steep-top`), and the
+hand-hold the same. A body put on the walk could not leave it over either coping.
+
+A CREST is now a lip (`player/parkour.js crestTop`): the face's own top - bisected to a millimetre between the rung that
+met the face and the one that did not - where, PARKOUR_CREST_PAST (3 cm) past it, nothing stands within
+PARKOUR_CREST_DROP (5 cm) under it (its far side falls away 59 degrees at the least: a coping's back, a parapet's other
+face, the drop past a wall) and nothing within PARKOUR_CREST_OPEN (1 m) over it (an eave standing out over a face's top
+is the eave's law - AUDIT CLIMB-FIELD E1 - and a roof rising from a face's top is refused for its pitch, as it was).
+Asked only where the top past the edge would have been refused: `senseLedge` (its lip the crest, its `depth` 0 - no
+top to stand on, `crest` set) and `senseGrip`'s own law (the hands hold the crest; the body hangs under it off the face).
+A crest is gone over, never stood on (`motor.js _pkOnto`): the clamber onto the floor behind it as far down as a hang's
+let-go (AUDIT CLIMB-ARC D3's law, PARKOUR_HANG_DROP and its clearance - the walk lies 1.6 m under the coping, past the
+clamber's own step of 1.5), else CLIMB-DOWN's over-hang into a hang on its far face - from the ground, a jump, a hang or
+the top of a free climb alike. So Forward held climbs a city wall whole: up the face, over the coping onto the walk,
+across it, up the far coping and over it into a hang on the far face; Back takes it down. The same both ways, on the
+game's wall and on its profile, at Climbing 50 and 100 (at 0 the grip gives a few metres up, as on any wall that tall).
+The classic lane is untouched.
+
+Pinned: `test/player/climbcrest.test.js` (5, its last on ARENA2); `tools/mutants/climbcrest.json` (9, all dead). Records
+re-aimed by content (the lip's and the hold's refusal lines moved, the clamber's call grew a line): `climb1.json`
+CLIMB1-steep-top-taken, `climb2.json` CLIMB2-grip-steep-top and `auditclimb1.json` AUDITCLIMB1-G3-no-clamber (dead), and
+`climbdown.json`'s four 45-DEGREE records (their mutation - the rays' scatter off a 50-degree limit - survives on the
+branch's base too: a top at exactly 45 degrees is far from the 50-degree line since AUDIT CLIMB-FIELD R1 moved it; recorded,
+not changed here). All 254 tests of the climb's suites pass, their ARENA2 halves too.
+
 ## Still open
 
 - **Real geometry**: `test/world/climbreal.test.js`'s real half ran with the freeware ARENA2 (`tools/fetch-data.sh`) during

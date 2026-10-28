@@ -123,15 +123,28 @@ export const PASSAGE_TEXT = Object.freeze({
   /** The look comes onto her at her berth. */
   hint: (name) => t('passage.hint', '{ship} lies at her berth - Activate to book passage.', { ship: ship(name) }),
   /** A row of her master's list. */
-  row: (d) => (d.bearing
-    ? t('passage.row', '{port} - {wind}, {fare} gold', { port: d.port.name, wind: windText(d.bearing), fare: d.fare })
-    : t('passage.rowHere', '{port} - {fare} gold', { port: d.port.name, fare: d.fare })),
+  // START2: an opened commission's writ of passage pays it (scenes/startsHost.js) - AUDIT STARTS U8: its row inside the
+  // picker's art (ui/listPicker.js: the list at x 26 of its 200, so 174 of FONT0003) - "Daggerfall - north-west, by
+  // writ" is 147; "..., the Crown's writ" had run to 189, under the scroll bar and off the art
+  row: (d) => (d.writ
+    ? (d.bearing ? t('passage.rowWrit', '{port} - {wind}, by writ', { port: d.port.name, wind: windText(d.bearing) })
+      : t('passage.rowWritHere', '{port} - by writ', { port: d.port.name }))
+    : d.bearing
+      ? t('passage.row', '{port} - {wind}, {fare} gold', { port: d.port.name, wind: windText(d.bearing), fare: d.fare })
+      : t('passage.rowHere', '{port} - {fare} gold', { port: d.port.name, fare: d.fare })),
   /** The question, before a coin is paid. */
   ask: (name, dest, fare, gold) => [
     t('passage.ask', 'Book passage on {ship} to {port}?', { ship: ship(name), port: dest }),
     t('passage.askFare', 'The fare is {fare} gold. You have {gold}.', { fare, gold }),
     t('passage.askRule', 'Her master sails you there. Step off her and the passage ends.'),
   ],
+  /** START2: the question when the Emperor's writ pays - nothing asked of the purse. */
+  askWrit: (name, dest) => [
+    t('passage.ask', 'Book passage on {ship} to {port}?', { ship: ship(name), port: dest }),
+    t('passage.askWrit', "The Emperor's writ of passage pays your fare."),
+    t('passage.askRule', 'Her master sails you there. Step off her and the passage ends.'),
+  ],
+  bookedWrit: (name, dest) => t('passage.bookedWrit', "Her master reads the Emperor's writ and bows. {ship} sails for {port}.", { ship: ship(name), port: dest }),
   booked: (name, captain, fare, dest) => (captain
     ? t('passage.bookedCaptain', 'Captain {captain} takes your {fare} gold. {ship} sails for {port}.', { captain, fare, ship: ship(name), port: dest })
     : t('passage.booked', 'Her master takes your {fare} gold. {ship} sails for {port}.', { fare, ship: ship(name), port: dest })),
@@ -147,6 +160,10 @@ export const PASSAGE_TEXT = Object.freeze({
   stuck: (dest) => t('passage.stuck', 'Her master can find no way on toward {port} from here - he will try again. Step ashore to end the passage.', { port: dest }),
   holds: (dest) => t('passage.holds', 'Her master holds his course for {port}.', { port: dest }),
   get goods() { return t('passage.goods', 'What you put in her hold is carried off her.'); },
+  /** PASSAGE-QUAY: her master brings her in to her port's quay, she is made fast there, or her way in is blocked. */
+  comesIn: (name, dest) => t('passage.comesIn', '{ship} comes in to {port}\'s quay.', { ship: ship(name), port: dest }),
+  madeFast: (name, dest) => t('passage.madeFast', '{ship} is made fast at {port}\'s quay. Take the gangway ashore.', { ship: ship(name), port: dest }),
+  get quayFoul() { return t('passage.quayFoul', 'Her way in to the quay is blocked. Her master puts you ashore instead.'); },
   ended: (name) => t('passage.ended', '{ship} stands out to sea.', { ship: ship(name) }),
 });
 /** The look's word on her (navalHost.js passageHint). */

@@ -23,12 +23,20 @@ const world = hostText('src/scenes/world.js');
 test('FIX-C: the roads sweep RE-QUEUES what it tears down, nearest-first, and holds the motor on the player\u2019s own pixel', () => {
   const body = world.slice(world.indexOf('function sweepRoadless() {'), world.indexOf('function sweepRoadless() {') + 1400);
   assert.match(body, /for \(const \[, p\] of \[\.\.\.built\]\) if \(!p\.withRoads\) again\.push\(\{ px: p\.px, py: p\.py \}\);/, 'the roadless pixels are collected first');
-  assert.match(body, /if \(walkMode && playerSpawned && again\.some\(\(k\) => `\$\{k\.px\},\$\{k\.py\}` === under\)\) _seasonHoldKey = under;/, 'the hold is armed BEFORE the ground goes, on the pixel under the player, only if it is going');
-  const destroyAt = body.indexOf('for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });');
-  const pushAt = body.indexOf('queue.push(...again.sort(');
-  const holdAt = body.indexOf('_seasonHoldKey = under;');
+  // PIN MOVED (IC-SWAP-BEHIND): the hold, the teardown and the re-queue are scenes/swapBehind.js rebuild's - every sweep's one
+  // tail. Behind its standing view a pixel's ground never goes, and nothing is held; the switch off (or nothing standing),
+  // torn down as here before (test/scenes/swapbehind.test.js runs both)
+  assert.match(body, /if \(!again\.length\) return;\n\s*swap\.rebuild\(again\);/, 'built again through the swap');
+  const SW = read('src/scenes/swapBehind.js');
+  const reb = SW.slice(SW.indexOf('    rebuild(again, '), SW.indexOf('\n    },\n', SW.indexOf('    rebuild(again, ')));
+  assert.match(reb, /if \(host\.walkMode\(\) && host\.playerSpawned\(\) && !api\.stands\(under\) && again\.some\(\(k\) => `\$\{k\.px\},\$\{k\.py\}` === under\)\) host\.seasonHold\(under\);/, 'the hold is armed BEFORE the ground goes, on the pixel under the player, only if it is going');
+  const destroyAt = reb.indexOf('for (const k of again) api.mark(k.px, k.py);');
+  const pushAt = reb.indexOf('host.queue.push(...sorted);');
+  const holdAt = reb.indexOf('host.seasonHold(under);');
   assert.ok(holdAt > 0 && destroyAt > holdAt && pushAt > destroyAt, 'hold, then destroy, then re-queue');
-  assert.match(body, /queue\.push\(\.\.\.again\.sort\(nearestFirstFrom\(state\.current\)\)\);/, 'nearest-first: the load list\u2019s own order, the player\u2019s pixel back first');
+  assert.match(SW, /if \(!api\.stands\(key\)\) \{ host\.destroyPixel\(px, py, \{ collectLoose: false \}\); return false; \}/, 'torn down where no view stands to build behind');
+  assert.match(reb, /const sorted = again\.sort\(host\.nearestFirst\(host\.state\.current\)\);/, 'nearest-first: the load list\u2019s own order, the player\u2019s pixel back first');
+  assert.match(read('src/scenes/tamrielSweepsHost.js'), /nearestFirst: nearestFirstFrom, get state\(\) \{ return host\.state; \},/, 'the streamer\u2019s own order');
   // and the sweep runs on the FRAME, between builds - a pixel in flight publishes before its key can be torn down
   assert.match(world, /function rebuildRoadless\(\) \{ roadsSweepDue = true; \}/, 'the network\u2019s arrival marks the sweep');
   assert.match(world, /tickSeason\(\);\s*\n\s*if \(roadsSweepDue && !building\) \{ roadsSweepDue = false; sweepRoadless\(\); \}/, 'the frame runs it beside the season tick, never over a build in flight');

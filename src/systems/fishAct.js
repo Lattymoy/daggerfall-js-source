@@ -43,7 +43,7 @@ export function createFishAct({ rank = 0, band = 1, angler = false, hour = 12, s
     /** the wind held, 0 to 1 of its range, and the throw it made (m) */
     wind: 0, windS: 0, throwM: 0,
     /** the wait's length and what is left of it; the tug's window and what is left of it */
-    waitS: 0, waitLeft: 0, tugS: tugWindow(angler) * firmActMult('fishing'), tugLeft: 0, tugged: false,   // FIRM1: the tug's window, the Firmament's longer
+    waitS: 0, waitLeft: 0, tugS: tugWindow(angler) * firmActMult('fishing') * band, tugLeft: 0, tugged: false,   // FIRM1: the tug's window, the Firmament's longer; AUDIT GATHER F6: and the net's attribute band's, as FORAGE0 14.4-14.5 has it ("within 600 ms x the band")
     /** the haul: the weight's place and speed, the band's centre and width, the meter's fill and the slip, 0 to 1 */
     weight: 0.5, speed: 0, bandAt: 0.2, bandW: width, fill: 0, slip: 0, haulS: 0, slipped: false,
     /** the school the cast landed in, or null */

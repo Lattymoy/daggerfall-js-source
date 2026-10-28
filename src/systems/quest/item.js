@@ -47,6 +47,7 @@ export function makeItemPermanent(dfItem) {
     dfItem.questUID = 0;
     dfItem.questSymbol = null;
     dfItem.questItem = false;
+    delete dfItem.questClone;   // HEART-KEPT: a plain item is no quest's clone either
   }
 }
 

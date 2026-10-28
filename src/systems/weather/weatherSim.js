@@ -46,6 +46,7 @@ import { isEnhanced } from '../uiSkin.js';   // CLK2: the evolution is the enhan
 import { getPref } from '../uiPrefs.js';
 import { groundWearsSnow, climateSeasonFromMinutes } from '../../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
 import { fieldAt, FIELD_RANGE_M, pixelOfField } from './weatherField.js';   // WEATHER2b: the day's words as places
+import { biomeStamp } from '../../world/tamriel/tamrielBiomes.js';   // ASHFALL1's audit: the found systems follow the land past the Bay
 import { systemsNear, wornAmong, skyCells, approachAt, insideClip, isWet } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
 
 export { WEATHER_TYPES };
@@ -206,7 +207,7 @@ export const MAP_JUMP_M = 2000;
 const MAP_REFIND_M = 250;
 let _mapAt = null;   // the last sample's place, for the crossing-or-arrival test
 let _mapSampledAt = null;   // its minute
-let _mapNear = [], _mapNearAt = null, _mapNearMinute = null, _mapNearLookup = null;
+let _mapNear = [], _mapNearAt = null, _mapNearMinute = null, _mapNearLookup = null, _mapNearStamp = null;
 let _mapIntensity = 0;
 let _mapApproach = 0;
 let _arrivals = 0;
@@ -230,9 +231,12 @@ export const currentCloudBase = () => (weatherMapOn() ? 'sunny' : null);
 export const currentWeatherIntensity = () => (weatherMapOn() ? _mapIntensity : null);
 function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
   const minute = Math.floor(nowMinutes);
-  if (minute !== _mapNearMinute || climateAt !== _mapNearLookup || !_mapNearAt || Math.hypot(at[0] - _mapNearAt[0], at[1] - _mapNearAt[1]) > MAP_REFIND_M) {
+  // ASHFALL1's audit (lane A): and when the land past the Bay moved (its zones' stamp: the trace landing, a fit) - the map
+  // drew its births again (weatherMap.js memoised), and a minute's found systems kept the old land's weather over it
+  const stamp = biomeStamp();
+  if (minute !== _mapNearMinute || climateAt !== _mapNearLookup || stamp !== _mapNearStamp || !_mapNearAt || Math.hypot(at[0] - _mapNearAt[0], at[1] - _mapNearAt[1]) > MAP_REFIND_M) {
     _mapNear = systemsNear(at[0], at[1], minute, climateAt, FIELD_RANGE_M + MAP_REFIND_M);
-    _mapNearAt = [at[0], at[1]]; _mapNearMinute = minute; _mapNearLookup = climateAt;
+    _mapNearAt = [at[0], at[1]]; _mapNearMinute = minute; _mapNearLookup = climateAt; _mapNearStamp = stamp;
   }
   // AUDIT-3i: the player's word through the SAME ground law as every other reader's - rain over snow ground is snow
   // BEFORE the strongest is chosen, so the strength the player feels is the one that falls there (resolved raw first,
@@ -757,7 +761,7 @@ export function resetWeatherSim() {
   _heard = null; _heardGain = 1; _heardAtJump = -1; _heardFall = null;   // DISC9 / DISC11; AUDIT PRECIP FALL-4
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
   _mapOverride = null; _mapUrlDoor = null; _mapAt = null; _mapSampledAt = null;   // WEATHER3b
-  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0; _mapApproach = 0; _arrivals = 0;
+  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapNearStamp = null; _mapIntensity = 0; _mapApproach = 0; _arrivals = 0;
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);
   _climateWeathersValid = false;

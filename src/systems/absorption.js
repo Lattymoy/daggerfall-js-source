@@ -13,7 +13,9 @@
 //     tested against every incoming effect, so a benign self-heal
 //     would otherwise be swallowed.
 //   - the cost is computed AS IF THE TARGET CAST IT (:1177), not the
-//     real caster - they agree for a self-cast anyway.
+//     real caster - they agree for a self-cast in DFU. The port's cast
+//     is priced with its modifiers and this cost is not, so a self-cast
+//     asks the room, and drinks, no more than it spent (AUDIT RPT1026 F3).
 //   - the target must have ROOM: cost > (maxMagicka - magicka) refuses
 //     (:1180-1184). An absorber at full magicka absorbs nothing.
 //   - then the sources in order: the Spell Absorption EFFECT, the
@@ -84,28 +86,35 @@ export function registerAbsorptionChance(name, fn) { if (typeof fn === 'function
  *  when the effect passes through. `absorbing` is DFU's persistent
  *  IsAbsorbingSpells state (:1196) - the port has no such effect yet,
  *  so it is an injectable the caller may leave false. */
-export function tryAbsorption(effect, targetType, target, { day = false, inside = true, absorbing = false, rolls = Math.random } = {}) {
+export function tryAbsorption(effect, targetType, target, { day = false, inside = true, absorbing = false, rolls = Math.random, paid = 0 } = {}) {
   if (!effect) return 0;
   if (!isDestructionEffect(effect)) return 0;
   const cost = effectCastingCost(effect, targetType, target);
   const available = (target?.maxMagicka ?? 0) - (target?.magicka ?? 0);
-  if (cost > available) return 0;
+  // AUDIT RPT1026 F3 (a private report: after a rest a player's own blast was never absorbed): MY OWN SPELL NEEDS NO MORE
+  // ROOM THAN IT SPENT. DFU prices the absorb "as if the target cast the spell" and notes a self-absorb is "the same
+  // thing" (:1177) - at a full pool the cast makes room for its own price, and its absorb fits. The port's cast is priced
+  // with more (spellcost.js calculateCastCost: the focus pieces, the sets, a path's school), this absorb without, so a
+  // discounted cast made too little room and a rested caster died to their own blast. `paid` is that cast's own spend
+  // (effects.js applySpell: the release's token, when caster and target are one), and what it drinks is never more.
+  const drink = paid > 0 ? Math.min(cost, paid) : cost;
+  if (drink > available) return 0;
   // X1: the EFFECT-based arm is tried FIRST (:1186-1189), and it is
   // the one place DFU rolls the TARGET's level rather than the
   // caster's (TryEffectBasedAbsorption :1287-1292 vs the generic
   // ChanceValue). A failed roll falls THROUGH to career and to the
   // persistent flag - DFU's own order, not classic's override.
   const chance = spellAbsorptionChance(target);
-  if (chance > 0 && Math.floor(rolls() * 100) < chance) return cost;
+  if (chance > 0 && Math.floor(rolls() * 100) < chance) return drink;
   for (const fn of _absorbChances.values()) {   // SET2: the port's own, each its own roll - none is rolled that answers 0
     let c = 0;
     try { c = Number(fn(target)) || 0; } catch { c = 0; }
-    if (c > 0 && Math.floor(rolls() * 100) < c) return cost;
+    if (c > 0 && Math.floor(rolls() * 100) < c) return drink;
   }
-  if (careerAbsorbs(target?.career, { day, inside })) return cost;
+  if (careerAbsorbs(target?.career, { day, inside })) return drink;
   // ABSORB-NERF (2026-09-30, Discord: "Nerf spell absorption, it breaks the game"): the AbsorbsSpells enchantment is
   // a 50% roll, no longer DFU's flat always (:1196)
-  if (absorbing && Math.floor(rolls() * 100) < ABSORB_ENCHANT_CHANCE) return cost;
+  if (absorbing && Math.floor(rolls() * 100) < ABSORB_ENCHANT_CHANCE) return drink;
   return 0;
 }
 

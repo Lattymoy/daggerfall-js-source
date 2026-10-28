@@ -9,6 +9,7 @@
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { sdHallNamed, sdSnapLine } from '../../../src/scenes/superDungeon/sdHall.js';   // RPT1026-EVENTS ORRERY-HANDS: world.js's hall word, named
 import { readFileSync } from 'node:fs';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { SD_KEY, SOCIAL_ROOM, PIXEL_UNITS, HEARTBEAT_MS, worldRoom, chatRegionRoom } from '../../../src/net/wire.js';
@@ -33,6 +34,9 @@ import { createSdRemnantBlows } from '../../../src/scenes/superDungeon/sdRemnant
 import { sdPerilAt } from '../../../src/scenes/superDungeon/sdArenaRead.js';
 import { arenaToDungeon } from '../../../src/scenes/superDungeon/sdRemnant.js';
 import { hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../../../src/characters/playerEntity.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -164,7 +168,7 @@ async function withRealm(fn) {
       const cell = world.room(worldRoom(PX, PY));
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
       const hello = async (id, pose) => { const ws = realm.connect(); await realm.hello(ws, id, pose, { name: id.replace('peer-', '') }); return ws; };
@@ -349,6 +353,7 @@ test('SD20a THE HOUR\'S COSTS ARE SETBACKS (F10): the void\'s cast-back and the 
       modes: { sdRealmSlot: () => 4 }, sdSay: () => {}, sdDungeonToRealm: () => [0, 0, 0], player: { pos: [hx, 0, hz] }, playerEntity: g,
       inOrreryHall: () => true, SD_FRAY_LASH, hurtPlayer, flashPlayerDamage: () => {}, online: { id: 'peer-me' },
       SD_HALL_TEXT: { snap: 'The Hour snaps back.' }, SD_TURN_WAIT_LINE: 'wait',
+      sdHallNamed, sdSnapLine, peerName: () => null,   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the hall's word named off the roster
     };
     const heard = new Function(...Object.keys(env), `let _sdHall = null;\n${fnOf('sdHallHeard')}\nreturn sdHallHeard;`)(...Object.values(env));
     assert.ok(Math.round(100 * SD_FRAY_LASH) >= 5, 'a lash that would kill');

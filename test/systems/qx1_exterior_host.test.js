@@ -110,7 +110,7 @@ const QW_PARAMS = [
   'placeFoeEnv', 'placeFoeFreely', 'entityOccupancy', 'questFoeGender', 'ENEMY_BASICS',
   'fieldOfView', 'walkMode', 'player', 'cam', 'collider', 'exteriorFoes', 'exteriorFoePool',
   // ...and the G4 spell registry CastSpellDo reads through this host's
-  // own `getClassicSpellEffects` (world.js:".HasMatchForClassicEffect"'s seam).
+  // own `getClassicSpellEffects` (questWorld.js:".HasMatchForClassicEffect"'s seam).
   'spellRecordOfIndex',
   // QUEST-WAVE: the held spots a placement keeps until its stand lands (questFoeHost.js) - appended, as above
   'heldSpots', 'holdSpotWhile',
@@ -309,7 +309,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:"currentRegionPeople:"/world.js:"currentRegionCourt:"'s verbatim, and talk.js's
+  // expressions are questWorld.js:"currentRegionPeople:"/questWorld.js:"currentRegionCourt:"'s verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -536,7 +536,7 @@ test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell read
   // Without these the action self-completes at PARSE
   // (actions.js:"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)"/actions.js:"CastSpellDo could not find".."this.setComplete();   // C#: the TEMPLATE completes - kept" - no effects, so C#'s template completes and
   // the task can never fire), which would have left `cast X spell do`
-  // dead on this route even with the doors above wired. world.js:".HasMatchForClassicEffect"'s
+  // dead on this route even with the doors above wired. questWorld.js:".HasMatchForClassicEffect"'s
   // pair, byte-folded on both sides exactly as MakeClassicKey folds.
   const { world } = mountQuestWorld();
   assert.deepEqual(world.getClassicSpellEffects(0x105), [{ type: 5, subType: 1 }],

@@ -32,6 +32,7 @@ import { canModerate, handleList } from './titles.js';
 import { REALM_ID_RE, REALM_PLAYING_S, realmSaveTextOf, realmNameOf, mustChange } from './realm.js';
 import { possessedItemLists, ledgerKeyOf } from './judge.js';
 import { receiptOf } from './review.js';
+import { lawExcused } from './verdict.js';   // RPT1026-LEDGERLAW: an excuse is of the values the law found too
 import { REALM_TRADE_KEEP_S } from './realmTrade.js';
 import { itemWorth } from '../../src/systems/item/itemLaw.js';
 import { liquidWorthOf, REALM_LETTER_TEMPLATE } from '../../src/net/realm/realmGoldLaw.js';
@@ -104,8 +105,8 @@ const plural = (/** @type {number} */ n, /** @type {string} */ one, many = `${on
 /** Online now: a tab of the account beat within the play clock's grace (accounts.js creditPlay) - the service's word; the
  *  relay's own list is the live one. @param {any} p @param {number} nowS */
 export const onlineNow = (p, nowS) => Number.isSafeInteger(p?.played_at) && nowS - p.played_at <= PLAY_GRACE_S;
-/** A character's law finding stands: found, and not the one staff excused (verdict.js). @param {any} c */
-const lawStands = (c) => c?.law_sig != null && c.law_sig !== c.law_excused;
+/** A character's law finding stands: found, and not the one staff excused (verdict.js lawExcused). @param {any} c */
+const lawStands = (c) => c?.law_sig != null && !lawExcused(c.law_excused, c.law_sig, c.law_v);
 /** A stored law finding that names a piece - the item law's (its list and place), a craft's or a forged id's - is the
  *  Equipment tab's; the rest (the level, attributes, skills, gold: judge.js characterFindings) the Skills tab's. @param {any} f */
 export const isPieceFinding = (f) => f?.list != null || f?.code === 'provenance' || f?.code === 'uid';
@@ -269,7 +270,7 @@ function charView(c, nowS) {
 /** The character a tab reads: the one asked for, or the one played last that lives. @param {any[]} chars @param {unknown} id */
 const chosen = (chars, id) => chars.find((c) => c.id === id) ?? chars.find((c) => c.dead_at == null) ?? chars[0] ?? null;
 
-const CHARS_SQL = `SELECT id, name, summary, seq, lease, lease_at, obj, dead_at, held, held_at, held_until, strikes, law_sig, law_excused, review,
+const CHARS_SQL = `SELECT id, name, summary, seq, lease, lease_at, obj, dead_at, held, held_at, held_until, strikes, law_sig, law_excused, law_v, review,
   wealth, allowance, witnessed, judged_seq, level_seen, created_at, updated_at FROM realm_characters WHERE player = ?1 ORDER BY updated_at DESC LIMIT ${CHARS_READ_MAX}`;
 
 /**

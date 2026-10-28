@@ -56,8 +56,35 @@
   {
     "name": "JUNGLE-TRAILS-the-town-s-rect-painted",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "          if (rect && x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax) continue;   // the town's own ground, to its edge\n",
+    "old": "          if (rect && cornerCleared(rect, x, y)) continue;   // the town's own ground and its clearing (E1-5: its outline's)\n",
     "new": "",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "E1-5-the-outline-unread",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "  if (!rect.shape) return x >= rect.xMin",
+    "new": "  if (!rect.shap) return x >= rect.xMin",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "E1-5-a-corner-s-south-row-unread",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "for (let ty = Math.max(0, y - 1);",
+    "new": "for (let ty = Math.max(0, y - 0);",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "E1-5-a-corner-s-west-column-unread",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "for (let tx = Math.max(0, x - 1);",
+    "new": "for (let tx = Math.max(0, x - 0);",
     "tests": [
       "test/world/jungletrails.test.js"
     ]

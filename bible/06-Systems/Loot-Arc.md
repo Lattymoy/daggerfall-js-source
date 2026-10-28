@@ -60,7 +60,20 @@ own combat skills would be a tuning slice, not a fix". A skill affix's skill is 
 |---|---|---|---|
 | a weapon | its own weapon skill (the skill that swings it: a bow's Archery, a staff's Blunt Weapon) | the strike's kin: Critical Strike, Backstabbing, Dodging | any skill |
 | armour | - | the body's twelve: the seven ways of fighting (the six weapon skills, Critical Strike) and Dodging, Running, Jumping, Climbing, Swimming | any skill |
-| jewellery | - | the mind's thirteen: the six schools, Etiquette, Streetwise, Mercantile, Lockpicking, Pickpocket, Stealth, Medical | any skill |
+| jewellery | - | the mind's thirteen: the six schools, Etiquette, Streetwise, Mercantile, Lockpicking, Pickpocket, Stealth, Medical - and, since JEWEL-KIN, the bare hand's two: Hand-to-Hand and Critical Strike | any skill |
+
+JEWEL-KIN (2026-10-26, Discord #feature-feedback "jewelcrafting, roll chances not equal (h2h, critical)": "i crafted
+around 100 rare rings ... and h2h or critical not roll on them"; `01-Overview/bugs/Field-Bugs-2026-10-26d.md`): Hand-to-Hand
+is no weapon's own and Critical Strike a weapon's strike kin, but on a ring each was one of the open share's
+thirty-five - about 0.43% of its skill lines, one in 230, against a mind skill's 7% (AUDIT FB1026d II D4/D5). Jewellery's kin is fifteen now (`lootRarity.js` JEWEL_KIN), each
+about one skill line in sixteen. A crafted piece re-mints from its record, so a record before MINT_V_JEWEL_KIN (4,
+`net/productRecord.js`; ARMOR-LEAN's armour lean is 3) keeps the mind's thirteen (`skillKin`'s `fists` false) and a ring already made keeps its lines.
+A craft's record is stamped with the version its client mints, never past the service's (craftMintVersion; a client
+that names none, or names one below MINT_V_JEWEL_KIN, MINT_V_LINES - AUDIT FB1026d C3 and II D1), so a ring is minted
+alike by its maker and by every reader of this build or later; a reader still on a build from before reads a record of
+4 by its own last law, 3, and sees other lines on a new ring until it updates (AUDIT FB1026d II D2). A client that
+names none - one on the release before - is stamped 2, so its armour leaves ARMOR-LEAN's family lean until it updates
+(II D3): 2 is the newest law every build reads alike.
 
 A WEIGHTING, NEVER A FENCE: a language was a skill affix 9 times in 35; now about 1 in 30. A step with no free skill
 (a kind with a param never repeats one on a piece) gives way to the next, so the draw never comes back empty. The
@@ -756,6 +769,21 @@ doubling price, every line's press), `tech1_roster` (a technique's line not offe
 `tools/mutants/affixlines.json` (36, all dead); `loot9.json` re-aimed (three records whose law was inverted renamed and
 aimed at the new one; LOOT9-carried-kind-again equivalent as recorded - its guard is belt-and-braces beside the draw's
 weights); AUDIT LOOT II A4 pinned from its other side (a gem's kind free for the piece's own lines).
+
+**NAME-KEPT (FIELD BUGS 2026-10-25i item 1; SaberGGaming again: "if you've renamed your item it will revert it back
+into its original name"; reworked by AUDIT FB1025i A1-A5)**: the reforge named a Magic or Rare piece again from its
+TEMPLATE (`rarityName`), so a name the Item Maker gave (RenameItem) was lost, a Masterwork's own name ("Silver Ring"
+under its maker's mark) took the ladder's words its mint withholds, and a crafted jewel lost its metal and gem. The law
+now (`lootRarity.js` linesName): a name is the ladder's - at most one of its tier's prefix words and one of its suffix
+words around the piece's BASE, read off the piece (a crafted jewel's recipe name, a Masterwork's bare template, else the
+RRI word and the template; an older save's bare template besides) - or it is the piece's own and stands. The ladder's is
+built again from the piece's own lines (a set gem's never - AUDIT GEM), a Masterwork's base alone. The first cut parsed
+a name by the lines it had: a curse's line added after the name, an unset gem's word, an older reforge's damage and a
+partial rename ("Porter's Pride") each came out wrong (the audit's A1-A5). The Imbue keeps a name of the piece's own too
+(`reforge.js` imbuePiece - a questline's named reward), and a load gives a crafted piece the old law broke its own
+base's name back (`repairCraftedNames`, in save.js repairItemLists; never a found piece - a curse's line is added after
+its name by design). `test/systems/loot/fb1025i_namekept.test.js` (9), `tools/mutants/fb1025i_namekept.json` (14: 13
+dead, 1 equivalent as recorded).
 
 ### LOOT10 - the codex, and the imprint (2026-10-01)
 

@@ -17,7 +17,10 @@
 import { accountRefusalText } from '../../net/accountClient.js';
 import { goldText, wearOf, wearText, MARKET_PRICE_MAX } from '../../net/marketLaw.js';
 import { vendorSearch, VENDOR_LISTING_S } from '../../net/vendorLaw.js';
-import { pictureNode } from '../menu/menuGlyphs.js';   // MENU-ORDER: a piece's picture, the host's
+import { pictureNode, frameWake } from '../menu/menuGlyphs.js';   // MENU-ORDER: a piece's picture, the host's
+import { packPickerNode, packCardNode, freshPackSift, packTierWord } from '../packPicker.js';   // PACK-PICK: the piece put up chosen from its picture
+import { t } from '../../systems/textManager.js';
+import { isStolen, stolenTag } from '../../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
 
 const el = (tag, cls = null, text = null) => {
   const n = document.createElement(tag);
@@ -47,11 +50,12 @@ export function standsText(expiresAt, nowS) {
   const hours = Math.max(1, Math.ceil(left / 3600));
   return `${hours} hour${hours === 1 ? '' : 's'} left`;
 }
-/** A piece's stats as the Notice Board and the Vendor page show them - `stats` the host's `{ rows, magic }` (the look
- *  panel's rows - damage, armour, hands, material, condition, weight - and the magic the trade window names), a row a
- *  line and the magic in the tier's gold under them; null for a piece the host cannot read. */
+/** A piece's stats as the Notice Board and the Vendor page show them - `stats` the host's `{ rows, magic, stolen }` (the
+ *  look panel's rows - damage, armour, hands, material, condition, weight - the magic the trade window names, and
+ *  RPT1026-LEDGERLAW the theft's card line on a stolen piece), a row a line, the magic in the tier's gold under them and
+ *  the theft's line last; null for a piece the host cannot read. */
 export function vendorStatsNode(stats, el = (t, c = null, x = null) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }) {
-  if (!stats || (!stats.rows?.length && !stats.magic?.length)) return null;
+  if (!stats || (!stats.rows?.length && !stats.magic?.length && !stats.stolen)) return null;
   const box = el('div', 'vendor-stats');
   if (stats.rows?.length) {
     const dl = el('div', 'vendor-statrows');
@@ -63,6 +67,7 @@ export function vendorStatsNode(stats, el = (t, c = null, x = null) => { const n
     for (const m of stats.magic) ul.append(el('li', null, m));
     box.append(ul);
   }
+  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen));   // RPT1026-LEDGERLAW
   return box;
 }
 /** The stats' dress - the Plus palette, the board's and the pause window's alike. */
@@ -70,7 +75,8 @@ export const VENDOR_STATS_CSS = `.vendor-stats { flex: 1 1 100%; display: flex; 
 .vendor-statrows { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: #d9cfbd; }
 .vendor-stat { white-space: nowrap; }
 .vendor-magic { margin: 0; padding: 0 0 0 14px; font-size: 12px; color: #f3cf86; }
-.vendor-magic li { margin: 1px 0; }`;
+.vendor-magic li { margin: 1px 0; }
+.vendor-stolen { margin: 0; font-size: 12px; color: #e3a08f; }`;
 export function injectVendorStatsCss() {
   if (typeof document === 'undefined' || document.getElementById?.('vendor-stats-css')) return;
   const st = document.createElement('style');
@@ -105,7 +111,8 @@ export const VENDOR_TEXT = Object.freeze({
  * @param {any} v @param {{ busy: () => boolean, run: (start: () => Promise<any>) => Promise<void>, rerender: () => void, nowS: () => number, alive: () => boolean }} ui
  */
 export function createVendorTab(v, ui) {
-  const st = { data: /** @type {any} */ (null), error: /** @type {string|null} */ (null), loading: false, query: '', picked: /** @type {string|null} */ (null), price: 100, good: /** @type {any} */ (null) };
+  const st = { data: /** @type {any} */ (null), error: /** @type {string|null} */ (null), loading: false, query: '', picked: /** @type {string|null} */ (null), price: 100, good: /** @type {any} */ (null),
+    sift: freshPackSift() };   // PACK-PICK: the put-up picker's search and menus
   const stall = v.mode === 'stall';
   const nameOf = (it) => { try { return v.nameOf?.(it) || 'a piece'; } catch { return 'a piece'; } };
   const townOf = (map) => { try { return v.townOf?.(map) || 'a town'; } catch { return 'a town'; } };
@@ -145,8 +152,9 @@ export function createVendorTab(v, ui) {
   });
 
   /** MENU-ORDER (AUDIT MENU-ORDER C5): the one wake every row's picture is asked with - a picture that lands wakes the
-   *  board once (textureCanvas.js hears a wake once), never once a row */
-  const wake = () => ui.rerender();
+   *  board once (textureCanvas.js hears a wake once), never once a row - and (AUDIT PACK-PICK A1) the pictures that land in
+   *  one frame, once */
+  const wake = frameWake(() => ui.rerender());
   /** A row as the Market tab draws one (its `.market-row`, its picked `.market-bar` straight under it in the list - the
    *  Plus dress's own rules, no wrapper of this tab's): the row, and its bar when picked. */
   function rowNodes(row, { buy = false, take = false, where = false } = {}) {
@@ -161,6 +169,7 @@ export function createVendorTab(v, ui) {
       el('span', 'market-quality', wearText(wearOf(row.item)) ?? 'whole'),
       el('span', 'market-price', goldText(row.price)),
       el('span', 'market-where', where ? `${row.owner ?? 'someone'}'s house, ${townOf(row.map)}` : standsText(row.expiresAt, ui.nowS())));
+    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag()));   // RPT1026-LEDGERLAW: the theft's mark rides the listing
     if (row.mine && !stall) b.append(el('span', 'market-mine', 'yours'));   // at my own stall every piece is mine: said once, in its title
     if (st.picked !== row.id) return [b];
     const bar = el('div', 'market-bar');
@@ -209,13 +218,18 @@ export function createVendorTab(v, ui) {
   function putNode() {
     const box = el('div', 'market-listform');   // the Market tab's List form's dress
     box.append(el('h4', null, 'Put up a piece from your pack'));
-    const goods = (v.goods?.() ?? []).filter((g) => !g.why);
-    if (!goods.some((g) => g.item === st.good)) st.good = goods[0]?.item ?? null;
-    if (!goods.length) { box.append(el('p', 'notice-tip', VENDOR_TEXT.packEmpty)); return box; }
-    const sel = /** @type {HTMLSelectElement} */ (el('select', 'notice-select market-select'));
-    sel.setAttribute('aria-label', 'Piece from your pack');
-    goods.forEach((g, i) => { const o = /** @type {HTMLOptionElement} */ (el('option', null, nameOf(g.item))); o.value = String(i); if (g.item === st.good) o.selected = true; sel.append(o); });
-    sel.onchange = () => { st.good = goods[Number(sel.value)]?.item ?? null; ui.rerender(); };
+    // PACK-PICK (ui/packPicker.js): the pack's pieces as the Market's List form shows them - pictured and sifted, what may
+    // not go folded with why, the one chosen looked at (the stall's own `stats`) - and none chosen until one is pressed
+    const all = v.goods?.() ?? [];
+    const goods = all.filter((g) => !g.why);
+    if (!goods.some((g) => g.item === st.good)) st.good = null;
+    if (!all.length) { box.append(el('p', 'notice-tip', VENDOR_TEXT.packEmpty)); return box; }
+    const entries = all.map((g) => ({ item: g.item, name: nameOf(g.item), sub: [packTierWord(g.item), wearText(wearOf(g.item))].filter(Boolean).join(' · ') || null, why: g.why ?? null }));
+    box.append(packPickerNode({ entries, chosen: st.good, sift: st.sift, pick: (it) => { st.good = st.good === it ? null : it; ui.rerender(); },
+      picture: v.picture ?? null, wake, label: t('market.list.packLabel', 'The pieces in your pack'), focus: 'vendor-good', empty: VENDOR_TEXT.packEmpty,
+      refusedWhat: t('vendor.put.refused', 'Stays in your pack'), redraw: () => ui.rerender() }),
+    packCardNode(entries.find((e) => e.item === st.good) ?? null, { picture: v.picture ?? null, wake, look: (it) => v.stats?.(it) ?? null,
+      none: t('market.list.pickPack', 'Press a piece above to look at it and set its price.') }));
     const price = /** @type {HTMLInputElement} */ (el('input', 'notice-input market-num'));
     price.type = 'number'; price.min = '1'; price.max = String(MARKET_PRICE_MAX); price.value = String(st.price);
     price.setAttribute('aria-label', 'Price in gold');
@@ -223,12 +237,13 @@ export function createVendorTab(v, ui) {
     price.oninput = () => { st.price = intOf(price.value, 1, MARKET_PRICE_MAX); };
     const chosen = st.good;
     const go = button('primary market-post', ui.busy() ? 'Putting up...' : 'Put up for sale', () => act(() => v.put(chosen, st.price)));
+    go.setAttribute('data-focus', 'vendor-post');   // AUDIT PACK-PICK B2: a redraw keeps the focus on it
     go.disabled = ui.busy() || !chosen;
     // AUDIT 657 B3: its fields under their names, as the List form's (marketTab.js field) - BOARD-UI stood that form's
     // fields in a column, and this form, in its dress, stood its select and its press each the window's width
     const field = (name, input, cls = '') => { const f = el('label', `market-field${cls ? ` ${cls}` : ''}`); f.append(el('span', 'notice-label', name), input); return f; };
     const fields = el('div', 'market-fields');
-    fields.append(field('Piece', sel, 'market-field-wide'), field('Price in gold', price), go);
+    fields.append(field('Price in gold', price), go);   // PACK-PICK: the piece is the picker's, above
     box.append(fields, el('p', 'notice-tip', VENDOR_TEXT.stockTip));
     return box;
   }

@@ -81,8 +81,8 @@ test('SD19 THE SKY AND THE LIGHT, by source: the sky controller grades the land\
   assert.ok(w.indexOf('sky.setBrass?.(sdAirW);') < w.indexOf('sky.fogColorFor(fogNow)'), 'before the haze is read');   // BANTHA1 (PIN MOVED): the law's colour read inside the jungle's haze call
   assert.match(w, /sdBrassLight\(sunbabyLight\(dreadLight\(withMoonAmbient\(/, 'the ambient');
   // PIN MOVED (ETHER-LIGHT, bible/03-World/Eltheric-Ocean.md): and the key leaned again past the Veil, outermost of the chain
-  assert.match(w, /sdBrassLight\(sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW, ETHER_KEY_TINT\)\);/, 'the key');
-  assert.match(w, /sunbabyFace\.evil\), sdAirW\), etherAirW\), sunScale\(minute\)/, 'the ambient\'s weight the same (PIN MOVED, ETHER-LIGHT: past the Veil leaned once more)');
+  assert.match(w, /sdBrassLight\(sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW, ETHER_KEY_TINT\), jungle\?\.canopy, 0\)\);/, 'the key (VALENWOOD-CANOPY, PIN MOVED: leaned under a closed canopy last)');
+  assert.match(w, /sunbabyFace\.evil\), sdAirW\), etherAirW\), jungle\?\.canopy\), sunScale\(minute\)/, 'the ambient\'s weight the same (PIN MOVED, ETHER-LIGHT: past the Veil leaned once more)');
 });
 
 test('SD19 THE BANNER AT ITS DOOR: its name, what it is and its state - fading, collapsing; within SD_BANNER_M of its centre while it stands, outside, its marks on the gate\'s own card (none once it fell); the gate\'s wish first, cleared indoors', () => {
@@ -202,7 +202,7 @@ test('SD19 THE WORDS: its marks said with its find - its Ending, its signature a
   h3.frame();
   assert.deepEqual(s3.lines, [], 'its place not yet known');
   const H = read('src/scenes/superDungeon/sdHost.js');
-  assert.match(H, /if \(hh \|\| \(memo && memo\.s === rec\.s && memo\.none\)\) \{ hourSaidS = rec\.s; say\(sdHourLine\(\{ name: hh\?\.loc\?\.name, near: hh\?\.site\?\.cityName \|\| '', region: regionName\(rec\.r\) \|\| '' \}\)\); \}/, 'with no Hollow: the region\'s');   // AUDIT SD III (T19, PIN MOVED): said as a region
+  assert.match(H, /if \(hh \|\| \(memo && memo\.s === rec\.s && memo\.none\)\) \{ hourSaidS = rec\.s; say\(sdHourLine\(\{ name: hh\?\.loc\?\.name, near: hh\?\.site\?\.cityName \|\| '', region: province \? '' : regionName\(rec\.r\) \|\| '', province \}\)\); \}/, 'with no Hollow: the region\'s');   // PIN MOVED (WW5): a province lane's in its province   // AUDIT SD III (T19, PIN MOVED): said as a region
 });
 
 test('SD19 THE NEXT ONE\'S RISE: once a Hollow is gone - beaten, collapsed or faded - the Timers count the next slot\'s not-before, never where; none once it may rise', () => {

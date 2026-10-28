@@ -22,6 +22,7 @@
 //   Basket's (FORAGE0 14.3); the machine is systems/herbAct.js; the
 //   Sickle's steady hand draws DFU's Tanto in the hand.
 // ═══════════════════════════════════════════════════════════════════
+import { fallingWeather } from '../systems/weather/weatherSim.js';   // AUDIT GATHER F7: rain wets the herbs
 import { herbPatches, nodeKey, HERB_TABLES } from '../net/nodeLaw.js';
 import { tierOpen, TIER_RANKS, actBand, PROF_RANK_MAX, herbKey, storesFullIn, goneIn, fullWordsIn, GROUND_WHERE, GROUND_WHERE_WORDS } from '../net/professionLaw.js';
 import { natureStandsAt, insideRocks } from '../world/terrain/terrainNature.js';
@@ -51,15 +52,16 @@ export const PATCH_MARK = Object.freeze({ w: 2.2, h: 1.3 });
  * and glowing, and no look reached it; it stands nowhere, as VEIN-CLEAR's last vein does.
  * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/road/roadVerge.js vergeClear), when handed, keeps a patch's
  * glow off the roads: a patch whose ring (PATCH_MARK's width) would reach one stands nowhere that day.
- * @param {{ px: number, py: number, day: number, climate: number, confirmed?: boolean, seasonalEye?: boolean,
+ * WW-C1: `region` - the pixel's, an herb-rich province's richness on confirmed ground (net/nodeLaw.js nodeSlots).
+ * @param {{ px: number, py: number, day: number, climate: number, region?: number|null, confirmed?: boolean, seasonalEye?: boolean,
  *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][],
  *   verge?: ((x: number, z: number, reach: number) => boolean)|null, beach?: ?Float32Array }} p
  */
-export function standPatches({ px, py, day, climate, confirmed = false, seasonalEye = false, samples, tilemap, locationRect = null, rocks = [], verge = null, beach = null }) {
+export function standPatches({ px, py, day, climate, region = null, confirmed = false, seasonalEye = false, samples, tilemap, locationRect = null, rocks = [], verge = null, beach = null }) {
   const out = [];
   if (!HERB_TABLES[climate]) return out;
   const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.w / 2) : null;
-  for (const p of herbPatches({ x: px, y: py, day, climate, confirmed, seasonalEye })) {
+  for (const p of herbPatches({ x: px, y: py, day, climate, region, confirmed, seasonalEye })) {
     const tx = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(p.u * WORLD_MAP_TILE_DIM));
     const ty = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(p.v * WORLD_MAP_TILE_DIM));
     const base = natureStandsAt(samples, tilemap, locationRect, tx, ty, clear, beach);   // AUDIT LANDFORMS II H2
@@ -115,6 +117,11 @@ export function patchPlan({ patch, taken, counting, basket, rank, sickle, basket
 /** The Sickle in the hand for the steady hand's length (FORAGE0 14.2): DFU's own Tanto, its idle frame. */
 export const SICKLE_HAND = Object.freeze({ group: 'Weapons', templateIndex: 114, material: 0 });
 
+/** AUDIT GATHER F7 (Professions-Arc 5.3, section 55): rain wets the herbs - rain or thunder falling on the player (WET-FALL's
+ *  one truth, systems/weather/weatherSim.js fallingWeather: the street's word, never the sim's over a dry spell) narrows the
+ *  steady hand's window (HERB_ACT.wet). */
+export const herbsWet = (weather = fallingWeather().word) => weather === 'rain' || weather === 'thunder';
+
 /**
  * HERBALISM'S KIND in the gathering host (scenes/gatherHost.js): its patches, their pictures, the plan, the act.
  * @param {{ book: any }} deps
@@ -137,7 +144,7 @@ export function herbKind({ book }) {
     nodesOf({ px, py, day, info, confirmed, specs, entry, near }) {
       if (!HERB_TABLES[info.climate]) return [];
       return standPatches({
-        px, py, day, climate: info.climate, confirmed, seasonalEye: specs('herbalism')[100] === 'seasonal-eye',
+        px, py, day, climate: info.climate, region: info.region, confirmed, seasonalEye: specs('herbalism')[100] === 'seasonal-eye',
         samples: entry.samples, tilemap: entry.tilemap, locationRect: entry.locationRect ?? entry.wodSite ?? null,   // AUDIT 29 C8: a WoD site's rect, as nature keeps off it (terrainGen.js)
         rocks: [...(entry.rocks ?? []), ...(near ?? [])],   // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too
         verge: entry.verge ?? null,   // VERGE1: nor over a road
@@ -175,7 +182,7 @@ export function herbKind({ book }) {
       const tool = plan.harvest === 'food' ? foragingToolIn(entity, FT.Basket) : common ? null : foragingToolIn(entity, FT.Sickle);
       const r = rank('herbalism');
       return {
-        act: createHerbAct({ kind, band: actBand(liveStat(entity, 'intelligence')), botanist: book.track('herbalism').specs?.[50] === 'botanist', master: r >= PROF_RANK_MAX, gentle: getPref('gentleActs') === true }),
+        act: createHerbAct({ kind, band: actBand(liveStat(entity, 'intelligence')), botanist: book.track('herbalism').specs?.[50] === 'botanist', master: r >= PROF_RANK_MAX, gentle: getPref('gentleActs') === true, wet: herbsWet() }),
         // STEADY-SAID (AUDIT 2026-10-01 part four): the steady hand's key, which E's start must hold to the end - the meter
         // said "hold still" and nothing of the key, and a tap of E ended the act with nothing taken (the Sickle's Use
         // holds it itself: no key to name)

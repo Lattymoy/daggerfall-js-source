@@ -143,6 +143,8 @@ function spendWord(/** @type {any} */ s, /** @type {number} */ now) {
  * a fire set; `kin` the caller's wildKin over the two. Judged as the head says. Answers `{ ok, dealt, frac, sail, fire,
  * left, wreck, evicted, why }` - `frac` and `sail` the shares of her bar and her canvas that landed, `left` her bar's share
  * left, `wreck` the referee's record when this shot wrecked her (and `evicted` a full room's oldest, to be signed).
+ * AUDIT PVP-EASE L3-3: ZONE-GRACE as a blow's - a shooter under safe passage loses it (`graceEnded`), and a ship whose
+ * captain is under it takes nothing (`why` 'grace').
  * @param {any} st @param {string} by @param {string} to
  * @param {{ d?: number, s?: number, f?: boolean, kin?: boolean, rid?: string, room?: string }} o @param {number} now
  */
@@ -158,22 +160,28 @@ export function seaShot(st, by, to, { d = 0, s: sail = 0, f = false, kin = false
   if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');
   if (now - me.at > SEA_REF.helmMs) return no('helm');   // E6A: the shooter's word alone - her target's page may be paused
   if (now - a.jumpAt < WILD_REF.jumpMs) return no('jump');   // a jumper fires at nothing, as it strikes nothing
-  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM) return no('reach');
+  // AUDIT PVP-EASE L3-3 (ZONE-GRACE, as wildRef.js wildBlow): my shot at a fair captain ends my safe passage; hers keeps
+  // her ship from it - a graced captain wrecked a sloop under it, and a ship under it was broadsided and boarded
+  const graceEnded = a.graceUntil > now;
+  if (graceEnded) a.graceUntil = -Infinity;
+  if (x.graceUntil > now) return { ...no('grace'), graceEnded };
+  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM) return { ...no('reach'), graceEnded };
   const ref = SHIP_REF[clampHull(me.hl)] ?? 0;
-  if (!(ref > 0)) return no('guns');
-  if (!spendWord(me, now)) return no('rate');
+  if (!(ref > 0)) return { ...no('guns'), graceEnded };
+  if (!spendWord(me, now)) return { ...no('rate'), graceEnded };
   const bucket = Math.min(SEA_REF.depthX * ref, me.bucket + (Math.max(0, now - me.bucketAt) / 1000) * SEA_REF.rateX * ref);
   const got = Math.max(0, Math.min(Number.isFinite(d) ? d : 0, SEA_REF.capX * ref, bucket, her.hp));
   me.bucket = bucket - got; me.bucketAt = now;
   const canvas = her.sailMax > 0 ? Math.max(0, Math.min(Number.isFinite(sail) ? sail : 0, SEA_REF.sailCapX * ref)) / her.sailMax : 0;
   const fire = !!f && now - her.fireAt >= SEA_REF.fireMs;
   if (fire) her.fireAt = now;
-  if (!(got > 0) && !(canvas > 0) && !fire) return { ok: true, dealt: 0, frac: 0, sail: 0, fire: false, left: her.max > 0 ? her.hp / her.max : 0, wreck: null, evicted: null, why: null };
+  if (!(got > 0) && !(canvas > 0) && !fire) return { ok: true, dealt: 0, frac: 0, sail: 0, fire: false, left: her.max > 0 ? her.hp / her.max : 0, wreck: null, evicted: null, why: null, graceEnded };
   her.struckAt = now;
+  a.fightAt = now; x.fightAt = now;   // AUDIT PVP-EASE L3-3: a gunfight is a fight, for an entry's ask (wildRef.js wildZone)
   if (got > 0) { her.hp -= got; her.by = by; her.byAt = now; }   // E6B: her killer is a captain whose shot took her bar
   const frac = her.max > 0 ? got / her.max : 0;
   const [wreck, evicted] = her.hp <= 1e-6 ? wreckOf(st, to, her, by, now, rid, room) : [null, null];   // a shot lands only on a bar above none: one that took none wrecks nothing
-  return { ok: true, dealt: got, frac, sail: Math.min(1, canvas), fire, left: her.max > 0 ? Math.max(0, her.hp) / her.max : 0, wreck, evicted, why: null };
+  return { ok: true, dealt: got, frac, sail: Math.min(1, canvas), fire, left: her.max > 0 ? Math.max(0, her.hp) / her.max : 0, wreck, evicted, why: null, graceEnded };
 }
 
 /**

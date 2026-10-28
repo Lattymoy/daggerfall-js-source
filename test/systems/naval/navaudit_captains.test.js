@@ -20,7 +20,7 @@ import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { NAVAL_DEG } from '../../../src/systems/naval/navalBallistics.js';
 import { BERTH_GAP } from '../../../src/systems/naval/navalBoarding.js';
 import { createNavalDirector, DESPAWN_BEYOND, FIRST_ROLL_S, DENSITY } from '../../../src/systems/naval/navalDirector.js';
-import { FRAME_STEP_S, FRAME_STEPS_MAX, RAM_SPEED, SHIP_FADE_S } from '../../../src/scenes/naval/navalHost.js';
+import { FRAME_STEP_S, FRAME_STEPS_MAX, SHIP_FADE_S } from '../../../src/scenes/naval/navalHost.js';
 import { sea } from '../../navalSea.mjs';
 import { HELM_WAY, HULL_HELM, steerage } from '../../../src/systems/helmWay.js';   // HELM-WAY: the captains turn at the player's own helm
 
@@ -669,28 +669,6 @@ test('AUDIT NAV1 M6 the host keeps hulls apart: a ship of mine standing in anoth
   assert.deepEqual(boat.GameObject.position, before, 'my boat unmoved');
   assert.ok(hullGap(c.ship.pos, c.ship.yaw, c.ship.hull, [0, 0, 0], 0, 2) > -0.2, 'she stands clear of my hull');
   assert.ok(c.ship.speed < 2, `her way into it taken off (${c.ship.speed.toFixed(2)})`);
-});
-
-test('AUDIT NAV1 G9 a galley rams: her stem into a hull at RAM_SPEED or more is the ram\'s own law - my boat takes it on my client (braced, half), a ship of mine is struck - and she takes a share back; RAM_COOLDOWN_S between (mutants: the galley\'s ram never checked, the brace unread)', async () => {
-  const { host, run, boat } = await sea({ hull: 2 });
-  const g = host._sea.get(host.spawnShip('pirateGalley', { range: 200, bearing: 0 }));
-  const b = hullBuild(HULL.LargeGalley);
-  g.ship.pos = [0, 0, -(b.bowZ + 2)]; g.ship.yaw = 0; g.ship.speed = RAM_SPEED + 4;
-  g.ship.course = [0, 5000];
-  const st = () => host.hudModel().ship.hull;
-  const h0 = st();
-  run(0.3);
-  assert.ok(st() < h0, `my hull took the ram (${h0} -> ${st()})`);
-  assert.ok(g.ship.damage.hullShare() < 1, 'she takes a share back');
-  assert.ok(boat, 'at my helm');
-  // braced, the same blow does half
-  const b2 = await sea({ hull: 2 });
-  const g2 = b2.host._sea.get(b2.host.spawnShip('pirateGalley', { range: 200, bearing: 0 }));
-  g2.ship.pos = [0, 0, -(b.bowZ + 2)]; g2.ship.yaw = 0; g2.ship.speed = RAM_SPEED + 4; g2.ship.course = [0, 5000];
-  const u = h0 - st();
-  b2.host.frame(0.1, { brace: true }); b2.host.frame(0.1, { brace: true }); b2.host.frame(0.1, { brace: true });
-  const v = h0 - b2.host.hudModel().ship.hull;
-  near(v, u / 2, 0.02, 'braced: half');
 });
 
 test('AUDIT NAV1 M8 the sea keeps the world\'s time: a long frame (Come Sail Away\'s time scale) is stepped in FRAME_STEP_S steps up to FRAME_STEPS_MAX - a ship crosses the same water in one 1 s frame as in ten 0.1 s frames (mutants: the one clamped step)', async () => {
