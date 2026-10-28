@@ -3,6 +3,7 @@
 // original data. Default scene is Daggerfall city (8x8 blocks, 316 buildings),
 // selectable with ?region=<name>&loc=<name>. Ground archive comes from the
 // location's climate (CLIMATE.PAK -> GetWorldClimateSettings).
+// FLAGGED (bible/11-Multiplayer/Video-Surfaces.md VIDEO1): no painting video surfaces — interiors only (worldModes).
 
 import { setAirGround } from '../systems/weather/airTemperature.js';   // PRECIP1: the air's map (none here)
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off

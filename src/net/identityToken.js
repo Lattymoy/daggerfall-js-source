@@ -609,7 +609,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);   // YARD-CELL YC2: a yard's cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 3.6)   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard', 'video']);   // VIDEO1: a home painting's video surface moved to a revision (bible/11-Multiplayer/Video-Surfaces.md)   // YARD-CELL YC2: a yard's cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 3.6)   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -686,6 +686,9 @@ export function orderValid(c) {
   // YARD-CELL YC2: a yard order is `{o:'yard', s, m, c, v, i, e}` and carries nothing else; no other kind carries `m`, `c` or `v`
   if (c.o !== 'yard' && (c.m !== undefined || c.c !== undefined || c.v !== undefined)) return false;
   if (c.o === 'yard' && !yardOrderValid(c)) return false;
+  // VIDEO1: a video order is `{o:'video', s, vm, vb, vs, vr, i, e}` and carries nothing else; no other kind carries those
+  if (c.o !== 'video' && (c.vm !== undefined || c.vb !== undefined || c.vs !== undefined || c.vr !== undefined)) return false;
+  if (c.o === 'video' && !videoOrderValid(c)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -750,6 +753,29 @@ export async function mintYardOrder({ s, m, c, v }, privateKey, { subtle, nowS, 
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintYardOrder needs an integer epoch-seconds clock');
   const claims = { o: 'yard', s, m, c, v, i: nowS, e: nowS + ttlS };
   if (!orderValid(claims)) throw new TypeError('mintYardOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/* ═══ VIDEO1: THE VIDEO ORDER (bible/11-Multiplayer/Video-Surfaces.md) ═══════════════════════════════════════════════
+ *
+ * A command that moved a painting's video surface. The service hands the acting client its word:
+ * `{o:'video', s, vm, vb, vs, vr, i, e}` - account `s` moved map `vm` building `vb` piece `vs` to revision `vr`.
+ * The hub checks the signature and fans a word; peers load the snapshot. Media bytes never ride the order.
+ */
+const VIDEO_ORDER_KEYS = Object.freeze(['o', 's', 'vm', 'vb', 'vs', 'vr', 'i', 'e']);
+/** Same shape as decorLaw DECOR_ID_RE — kept local so identityToken does not import decorLaw (cycle via textManager). */
+const VIDEO_PIECE_ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
+function videoOrderValid(c) {
+  if (Object.keys(c).some((k) => !VIDEO_ORDER_KEYS.includes(k))) return false;
+  if (!homeMapIdOk(c.vm) || !homeBuildingKeyOk(c.vb)) return false;
+  if (typeof c.vs !== 'string' || !VIDEO_PIECE_ID_RE.test(c.vs)) return false;
+  return Number.isSafeInteger(c.vr) && c.vr >= 1;
+}
+/** VIDEO1: mint a video order. */
+export async function mintVideoOrder({ s, vm, vb, vs, vr }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintVideoOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'video', s, vm, vb, vs, vr, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintVideoOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
 

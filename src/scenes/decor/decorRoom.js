@@ -862,7 +862,7 @@ export function createDecorRoom({
   return {
     /** YARD-BLOCK: what this pool gives its host's merge now, from where it stands (decorMergeParts). */
     mergeParts: () => decorMergeParts(standing.values(), origin?.() ?? [0, 0, 0]),
-    put, remove, hold, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, list, live, showSaved, hearths, size: () => standing.size,   // DECOR-USE: the placed fires
+    put, remove, hold, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, entryOf: (id) => standing.get(id) ?? null, list, live, showSaved, hearths, size: () => standing.size,   // DECOR-USE: the placed fires; VIDEO1: entryOf for screen mounts
     itemsOf, holdsAny, itemsSnapshot, setItems, takeUnserved, keep, kept: () => kept,
     ownOf, keepOwn, takeOwn, ownSnapshot, setOwn, ownIds, refreshMounts, mountPicture, standPicture, onRefresh,
   };

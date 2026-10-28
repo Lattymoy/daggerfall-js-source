@@ -376,6 +376,7 @@ export async function releaseHome(ctx, player, { mapId, buildingKey, realm = nul
     db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price')
       .bind(mapId, buildingKey, player.id),
     db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey),
+    db.prepare('DELETE FROM home_video_surface WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey),   // VIDEO1
     db.prepare(`DELETE FROM home_offers WHERE map_id = ? AND building_key = ? AND state = 'open'`).bind(mapId, buildingKey),
   ]);
   const row = gone?.results?.[0];

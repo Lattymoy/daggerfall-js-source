@@ -1,6 +1,7 @@
 // @ts-check
 import { validStaffEventIn, validStaffEventOut, relaySupportsStaffEvents } from './staffEvent/staffEventLaw.js';   // STAFF-EVENT
 import { yardLinkWelcomed, yardLinkClosed, hearYardFrame } from './yardPush.js';   // YARD-CELL YC2: the hub link's end of the yard push
+import { videoLinkWelcomed, videoLinkClosed, hearVideoFrame } from './videoPush.js';   // VIDEO1
 import { relaySupportsFoeInventory } from './wire.js';
 import { loneStep, loneWake, loneAhead, loneSupported, aloneOf, LONE_HOLD, LONE_SAY } from './loneSleep.js';   // LONE-SLEEP: a lone session's pose at LONE_POSE_MS
 // ONLINE1 (2026-09-12, Mac: "the basic bones of multiplayer. The goal is
@@ -2516,6 +2517,7 @@ export class OnlineSession {
       if (room == null) return;
       const code = ev?.code ?? 1005;
       if (room === this.room) yardLinkClosed(this);   // YARD-CELL YC2: the push broken until the next welcome
+      if (room === this.room) videoLinkClosed(this);   // VIDEO1
       if (room !== this.room) {
         // WORLD6b-iii(b): a halo's socket closed - its peers go unless another room holds them; a terminal close ends
         // the halo (the primary hears the same verdict on its own socket), a busy or dropped one is retried on tick
@@ -3665,6 +3667,7 @@ export class OnlineSession {
       if (_rnWs) { this._gdOf(_rnWs).ok = relaySupportsGuild(relayV); this._flushGuild(now); }   // GUILD1c: this socket's own word, as renown's - and a held guild order goes now
       if (primary) { this.homeOk = relaySupportsHome(relayV); this._hmAt = -Infinity; this._flushHome(now); }   // QUEST-HOME: the hub's own word - and a held home order goes now
       if (primary && isSocialRoom(this.room)) yardLinkWelcomed(this, m, (frame) => this._yardSend(frame), now);   // YARD-CELL YC2: whether the hub hears yard orders (net/yardPush.js)
+      if (primary && isSocialRoom(this.room)) videoLinkWelcomed(this, m, (frame) => this._yardSend(frame), now);   // VIDEO1: same hub send path
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
       if (primary) this.caravanOk = relaySupportsCaravan(relayV);   // WAGONS2-VISIT: and for a caravan's room
       if (primary) this.instanceOk = relaySupportsInstances(relayV);   // INSTANCES: and for an instance's (bible/11-Multiplayer/Instances.md)
@@ -4161,6 +4164,9 @@ export class OnlineSession {
     } else if (m.t === 'yard') {
       // YARD-CELL YC2: yard cells that moved, by the hub alone (net/yardPush.js gates them and hands them on)
       if (primary && isSocialRoom(room)) hearYardFrame(this, m, now);
+    } else if (m.t === 'video') {
+      // VIDEO1: a painting's video revision moved
+      if (primary && isSocialRoom(room)) hearVideoFrame(this, m, now);
     } else if (m.t === 'dm') {
       // TITLE-N: THE DUNGEON MASTER SPEAKING - the red arm's law: known by the FRAME TYPE, no id and no name on it to
       // forge, and gated coming in on the chat line's own bucket, because the relay is the player's own choice.

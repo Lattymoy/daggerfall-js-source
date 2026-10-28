@@ -402,6 +402,7 @@ const DECOR_STATION_NOT_READY = 'The station is not ready yet. Try again in a mo
 /** AUDIT HOME-STATIONS S7: a maker's refusal whose TEXT.RSC record did not answer. */
 const DECOR_STATION_REFUSED = 'You cannot use the station right now.';
 import { createDecorRoom, decorIdOfKey, askDecorList, offerDecorFigures, primeDecorList, primedDecorList, decorListKey } from './decor/decorRoom.js';   // MWNPC18: a placed figure in its body; the door's list starts when the player goes in
+import { createInteriorVideoSurfaces, videoInteriorBag } from './decor/videoSurfaceHost.js';   // VIDEO1
 // DECOR1d: the decorator itself - the button, the panel, the free camera - and what its catalogue scan reads
 import { createDecorTool } from './decor/decorTool.js';
 import { decorScanDeps } from '../systems/decor/decorScan.js';   // DECOR-DUNGEON: the scan's deps, one constructor for both hosts
@@ -1856,6 +1857,8 @@ export function createWorldModes(host) {
     for (const q of questFlats ?? []) if (!q.dead && near(q.x, q.z)) return SEAT_HALL_TEXT.clear;
     return null;
   }
+  // VIDEO1: painting televisions — host owns lifecycle; this file only wires (HOST-SPLIT).
+  const videoSurfaces = createInteriorVideoSurfaces(renderer, audio, () => videoInteriorBag(interiorDecor, host, interiorBuilding, cam.pos, buildingOrigin(), homeTownOf));
   const decorTool = createDecorTool({
     doc: typeof document !== 'undefined' ? document : null, win: typeof window !== 'undefined' ? window : null,
     canvas, touch: isTouchDevice(), renderer, pool: interiorDecor, names: decorNames,
@@ -5073,6 +5076,7 @@ export function createWorldModes(host) {
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
     if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
+    if (interiorHome && videoSurfaces.tryOpen(piece, id, !!interiorHome.own, say)) return;   // VIDEO1
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
     if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall
     if (!piece?.storage) return;
@@ -5481,6 +5485,7 @@ export function createWorldModes(host) {
         interiorCtx?.base?.setHidden(Array.isArray(r.data.hidden) ? r.data.hidden : []);   // BASE-HIDE: the room its owner cleared, for everyone
         noteDecorGrants(host.homeDecor, Number(homeTownOf(b)) >>> 0, b.buildingKey, host.decorCharacter?.() ?? null, interiorHome?.own && !_sceneHeldForLayout ? interiorDecor : null, playerEntity);   // DECOR-ACCESS; HOME-STRANDED: the owner's chests take back what the old pour left under the building
         bindDecorHouseFrom(host, playerEntity, say, accountRefusalText, Number(homeTownOf(b)) >>> 0, b.buildingKey, (loot) => (interiorOverlay = openDecorChest(interiorInventory, loot) ?? interiorOverlay));
+        void videoSurfaces.load();   // VIDEO1: snapshot after pieces stand
       },
     });
   }
@@ -8505,7 +8510,7 @@ export function createWorldModes(host) {
       // sibling pile pool (interiorDropped) restored correctly beside
       // it. The sweep belongs here, where the transition is.
       interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
-      interiorDecor.destroyAll(); _decorVisit++; decorTool.close();   // DECOR1c: and the placed pieces go with the room
+      interiorDecor.destroyAll(); _decorVisit++; decorTool.close(); videoSurfaces.destroy();   // DECOR1c: and the placed pieces go with the room; VIDEO1
       interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: and the room's own fires - one building's hearth is not the next one's
       // E2/P1: the building's identity, resolved BEFORE the interior
       // stands. DFU's transition does the same three things in this
@@ -9224,7 +9229,7 @@ export function createWorldModes(host) {
     betterAmbience.onTransition(null);   // BA1: OnTransitionExterior
     host.onTransitionExterior?.();   // CSA-C: Come Sail Away's OnTransition (PlayerEnterExit.OnTransitionExterior)
     interiorTorches.destroyAll();   // HT1: DestroyLightSources_OnTransition
-    interiorDecor.destroyAll(); _decorVisit++; decorTool.close();   // DECOR1c: and the placed pieces go with the room
+    interiorDecor.destroyAll(); _decorVisit++; decorTool.close(); videoSurfaces.destroy();   // DECOR1c: and the placed pieces go with the room; VIDEO1
     questBridge?.onExteriorTransition();   // Q4-v: CreateFoe's pending-wave invalidation
     npcSession?.onWorldChanged();          // TK-v: OnTransitionToExterior (:3599-3603)
     unleveledLootExteriorTransition();     // UL1: OnTransitionExterior - the BUILDING exit alone clears the mod's dungeon
@@ -10503,6 +10508,7 @@ export function createWorldModes(host) {
     if (mode === 'interior') interiorLootFrame(interiorCtx, _intShared, { now: performance.now(), open: (w) => interiorWindows.containsWindow(w) });   // WORLD6a: a container's window gone (the stack reconciled above) is the close's word; OUTDOOR-LOOT: and the cupboards' claims, lapse and re-ask
     seatHallsFrame(performance.now());   // AUDIT SEATS-2 C1: the seat halls, known late
     decorTool.frame({ dt, cam, overlayUp: overlayHeld, interior: mode === 'interior' });   // DECOR1d: the button, the panel's scan, the free camera
+    if (mode === 'interior') void videoSurfaces.tick(dt);   // VIDEO1
     if (mode === 'interior') cardGameFrame(performance.now());   // CARDS4: the card table's patrons think and deal on, under any window
     if (mode === 'interior') iliacGame?.frame(performance.now());   // CARDS10: and the Iliac regular thinks and the turn turns over
     if (mode === 'interior') gambitGame?.frame(performance.now());   // KG3: and The King's Gambit's regular, at the mod's beats
@@ -11236,6 +11242,7 @@ export function createWorldModes(host) {
     if (mwStamp !== _decorMwStamp) { _decorMwStamp = mwStamp; interiorDecor.refreshMounts(); }
     interiorDecor.drawMounts(renderer);   // DECOR2c: the hung weapons and shields, on the decal pass, after the solid room
     decorTool.drawMounts(renderer);   // DECOR2c: and the one being hung
+    videoSurfaces.draw(renderer);   // VIDEO1: direct-video textures on painting mounts
     if (cardGame?.scene) cardDrawGame(cardGame, proj, view, mwv.eye);   // CARDS3: the cards and chips on the cloth - CARDS3b: the player's own two held before the eye
     iliacGame?.draw(performance.now());   // CARDS10: an Iliac game's cards on the cloth
     gambitGame?.draw(performance.now(), { proj, view, eye: mwv.eye });   // KG3: The King's Gambit's board - and the lens its next press is read through
@@ -13692,7 +13699,7 @@ export function createWorldModes(host) {
         interiorTorches.destroyAll();   // AUDIT 66 F6: HT1's pool was the one that never joined this list - a quest teleport or a load out of a building left the room's torches lit, batched and burning in the ear
         interiorHitEffects.clear();   // HE1: the same
         interiorBloodMarks.clear();   // BLOOD1a (HARD1): and the same for the ring
-        interiorDecor.destroyAll(); _decorVisit++; decorTool.close();   // DECOR1c: the placed pieces too, on the quest-teleport / load arm
+        interiorDecor.destroyAll(); _decorVisit++; decorTool.close(); videoSurfaces.destroy();   // DECOR1c: the placed pieces too, on the quest-teleport / load arm; VIDEO1
         interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: the same list, for the same reason
         // ...and the OnPop the comment above is about, on every window
         // the stack holds (ROAD-B B1).

@@ -190,6 +190,8 @@ import { hiddenMay, hiddenAsked, seatsTaken, hiddenSeats, hiddenHello, hiddenPos
 import { takeStaffEventLaw, sayStaffBook, staffEventWord, staffBookInternal, staffTellInternal, staffCallInternal, SEV_INTERNAL_BOOK, SEV_INTERNAL_TELL, SEV_INTERNAL_CALL } from './staffEvents.js';   // STAFF-EVENT: a staff event's book (the hub) and meter (its place's cell)
 import { takeYardOrder } from './yardWords.js';
 import { YARD_WELCOME_FIELD } from '../../src/net/yardWordLaw.js';   // YARD-CELL YC2: the hub's welcome says it hears yard orders   // YARD-CELL YC2: a yard that moved, said to every page online
+import { takeVideoOrder } from './videoSurfaceRoom.js';   // VIDEO1
+import { VIDEO_WELCOME_FIELD } from '../../src/net/videoSurfaceWordLaw.js';
 import { STAFF_ORDER_KINDS, takeStaffOrder, frozenHello, busFreeze, frozenFrame, staffLine, freezeMoved, seatBarred, frozenAt, busMissed } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: freeze player and the staff chat
 import { privateInteriorOf, privateInteriorAdmits, caravanKeyOf } from '../../src/net/privateInterior.js';   // WAGONS2-VISIT: and a caravan's own room
 import { isInstanceRoom, instanceOf, instanceAdmission, partyHoldsOwner, INSTANCE_INTERNAL_KIN, INSTANCE_KIN_KEEP_MS, INSTANCE_DOOR_WORD } from '../../src/net/instanceRoom.js';   // INSTANCES: an instance's room, its door and the hub's party answer (bible/11-Multiplayer/Instances.md)
@@ -3891,7 +3893,7 @@ export class Room {
         // AUDIT DEEP T3-6: each with its AGE (`ag`, whole seconds) - a joiner stamps it that old, so a mark four minutes
         // stale here is not five minutes fresh there
         const tr = isRegionRoom(a.key) ? others.filter((b) => b.tm && now - b.tm.at <= TRAV_STALE_MS).slice(0, TRAV_WELCOME_MAX).map((b) => { const { at, bd, sr, ...p } = b.tm; return badged({ id: b.id, name: b.name, sub: b.sub, p, ...(bd ? { bd } : {}), ...(sr ? { sr } : {}), ag: Math.max(0, Math.floor((now - at) / 1000)) }, b); }) : [];
-        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: shard ? this._hubN(others.length + 1) : others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1 } : {}), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}), ...(isSocialRoom(a.key) && !shard ? { ldo: relayCfgValue(await this._relayCfgOf(), this.env, 'leaseDoor') === 'on' ? 1 : 0 } : {}) }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome   // LEASE1: a direct hub hello says the door; a shard's joiner hears it from the bus
+        if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: shard ? this._hubN(others.length + 1) : others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(isSocialRoom(a.key) ? { [YARD_WELCOME_FIELD]: 1, [VIDEO_WELCOME_FIELD]: 1 } : {}), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}), ...(isSocialRoom(a.key) && !shard ? { ldo: relayCfgValue(await this._relayCfgOf(), this.env, 'leaseDoor') === 'on' ? 1 : 0 } : {}) }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome   // LEASE1: a direct hub hello says the door; a shard's joiner hears it from the bus   // VIDEO1: hub also hears video orders
         if (isSocialRoom(a.key) && !shard) await sayStaffBook(this, ws, now);   // STAFF-EVENT: the staff events live (a shard's joiner hears them from the bus)
         // AUDIT SCALE5a C1-C3: AND THE ROOM'S COUNT, as the welcome says it (`n`). A client whose roster the welcome cut at
         // CHAT_ROSTER_MAX kept the count by arithmetic, a join +1 and a leave -1, and every door that says one without the
@@ -5167,6 +5169,7 @@ export class Room {
       for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in the hub, the carrier included - that is the receipt
     }
     if (m.t === 'yard') await takeYardOrder(this, ws, a, m, Date.now());   // YARD-CELL YC2 (yardWords.js)
+    if (m.t === 'video') await takeVideoOrder(this, ws, a, m, Date.now());   // VIDEO1
   }
 
   async webSocketClose(ws, code, reason) {

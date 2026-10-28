@@ -5,6 +5,7 @@
 // pixels build nearest-first around the camera within TerrainDistance 3,
 // locations appear on their pixels, and crossing a pixel boundary
 // recenters the world (streamingWorld.js).
+// FLAGGED (bible/11-Multiplayer/Video-Surfaces.md VIDEO1): no painting video surfaces in this host — interiors only (worldModes).
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
 import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlocked } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance

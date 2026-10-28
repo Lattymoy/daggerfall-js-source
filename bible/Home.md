@@ -359,7 +359,9 @@ alone, flagged at its new site inside calculateAttackDamage.
 - `src/player/mwView.js` - FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
 - `src/player/seatPose.js` - FLAGGED (Tavern-Cards.md section 12, CARDS2c): the seat poses the Morrowind body alone - Eye Of The Beholder has no sitting art, so a sprite body (a peer's walker, their paperdoll) stands at its seat facing the table.
 - `src/scenes/craftWritHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench never goes online, so it posts no crafting writ, as no Court writ.
+- `src/scenes/dungeonContext.js` - FLAGGED (bible/11-Multiplayer/Video-Surfaces.md VIDEO1): no painting video surfaces in dungeons — interiors only (worldModes).
 - `src/scenes/dungeonContext.js` - FLAGGED (bible/12-Enhanced-AI/Feud-Arc.md 10.1, section 32): this stream carries none of the street record's z, nm, yd, ex or sp - FEUD adds its own fields alone (RVN13: so no band follower's rt either)
+- `src/scenes/exterior.js` - FLAGGED (bible/11-Multiplayer/Video-Surfaces.md VIDEO1): no painting video surfaces — interiors only (worldModes).
 - `src/scenes/exterior.js` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
 - `src/scenes/horseCartPool.js` - FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their second horse is not drawn at their parked wagon while they ride the first (bible/06-Systems/Wagons.md WAGONS3).
 - `src/scenes/horseCartPool.js` - FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest (bible/06-Systems/Wagons.md WAGONS3).
@@ -375,6 +377,7 @@ alone, flagged at its new site inside calculateAttackDamage.
 - `src/scenes/seatBanners.js` - and dungeonContext.js stand no street; exterior.js (the bench) FLAGGED -
 - `src/scenes/soundscapeHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench stands no sea, no boats and no streamed shore - its ambience is DFU's.
 - `src/scenes/wagon/wagonWardenHost.js` - scenes/exterior.js - FLAGGED: the single-town bench runs no town watch (its wagon is never stamped nor thrown).
+- `src/scenes/world.js` - FLAGGED (bible/11-Multiplayer/Video-Surfaces.md VIDEO1): no painting video surfaces in this host — interiors only (worldModes).
 - `src/scenes/world.js` - FLAGGED (Legacy-Arc.md section 3): exterior.js, the fixed city, keeps DFU's death - no streamer to birth an heir into.
 - `src/systems/playerTorch.js` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js` - FLAGGED (blocked on data this reference tree does not carry): the

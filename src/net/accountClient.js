@@ -2158,6 +2158,9 @@ export function accountDecor({ fetch, storage, listWaitMs = DECOR_LIST_WAIT_MS }
     use: (body) => post('/v1/homes/decor/use', body),   // DECOR-ACCESS
     // BASE-HIDE: the room's own furniture taken out - the whole list, written by the owner
     hidden: ({ mapId, buildingKey, character, keys }) => post('/v1/homes/decor/hidden', { mapId, buildingKey, character, keys }),
+    // VIDEO1: painting video surfaces
+    videoSurfaces: ({ mapId, buildingKey, character }) => post('/v1/homes/video', { mapId, buildingKey, character }),
+    videoCmd: (body) => post('/v1/homes/video/cmd', body),
   };
 }
 

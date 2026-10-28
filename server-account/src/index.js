@@ -240,6 +240,7 @@ import {
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { videoSurfacesOf, videoSurfaceCmd, clearVideoForPiece } from './videoSurface.js';   // VIDEO1
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
@@ -1806,6 +1807,19 @@ const service = {
           const r = await decorOf(ctx, who.player, body);
           return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
         }
+        if (path === '/v1/homes/video') {   // VIDEO1: snapshot of a home's video surfaces
+          const r = await videoSurfacesOf(ctx, who.player, body);
+          return 'error' in r ? no(r.error, r.error === 'no-home' ? 404 : 400, origin) : json(r, 200, origin);
+        }
+        if (path === '/v1/homes/video/cmd') {   // VIDEO1: authoritative play/pause/seek/source/clear
+          if (accountKind(who.player) !== 'linked') return no('homes-need-account', 403, origin);
+          const r = await videoSurfaceCmd({ ...ctx, bucket: env.SAVES }, who.player, body, { env, subtle });
+          if (!('error' in r)) return json(r, 200, origin);
+          const status = r.error === 'video-rev' || r.error === 'decor-shut' ? 409
+            : r.error === 'video-rate' ? 429
+              : r.error === 'no-home' || r.error === 'no-painting' ? 404 : 400;
+          return no(r.error, status, origin);
+        }
         if (path === '/v1/homes/rooms') {   // HOME-RENT: a home's rooms, read by anyone at its door
           const r = await roomsOf(ctx, who.player, body);
           return 'error' in r ? no(r.error, r.error === 'no-home' ? 404 : 400, origin) : json(r, 200, origin);
@@ -1826,6 +1840,14 @@ const service = {
           if (path !== '/v1/homes/decor/use') {   // a chest's list, settle or release moves no yard
             forgetYardCell(body?.mapId, body?.buildingKey);   // YARD-CELL: the cell's kept answer let go, whatever the write did
             settled = await settleYardCell(ctx.db, body?.mapId, body?.buildingKey).catch((e) => { console.warn('[yards] the cell not built', e?.message ?? e); return null; });   // and built again (the clock builds one this misses)
+          }
+          // VIDEO1: a removed piece (or a batch drop) loses its screen; move/place keep the row on the same id
+          if (!('error' in r)) {
+            if (path === '/v1/homes/decor/batch' && Array.isArray(body?.drop)) {
+              for (const dropId of body.drop) await clearVideoForPiece(ctx.db, body?.mapId, body?.buildingKey, dropId).catch(() => {});
+            } else if (path !== '/v1/homes/decor/place' && path !== '/v1/homes/decor/move' && path !== '/v1/homes/decor/hidden' && path !== '/v1/homes/decor/batch' && path !== '/v1/homes/decor/use') {
+              await clearVideoForPiece(ctx.db, body?.mapId, body?.buildingKey, body?.id).catch(() => {});
+            }
           }
           if (!('error' in r)) return json(await yardOrderOf(r, settled, body?.mapId, who.player.id, env, subtle, nowS), 200, origin);   // YC2: a yard that moved, said to every page online
           const said = realmNo(r);

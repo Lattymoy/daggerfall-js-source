@@ -1178,6 +1178,29 @@ export class AudioEngine {
 
 export const audio = new AudioEngine();
 
+/**
+ * VIDEO1: route an HTMLMediaElement through the master bus.
+ * Answers `{ gain, disconnect }` or null when the context cannot attach.
+ * @param {HTMLMediaElement} el
+ */
+AudioEngine.prototype.attachMediaElement = function attachMediaElement(el) {
+  if (!this.ctx || !el || typeof this.ctx.createMediaElementSource !== 'function') return null;
+  if ((this.ctx.state ?? 'running') !== 'running') return null;
+  const src = this.ctx.createMediaElementSource(el);
+  const gain = this.ctx.createGain();
+  gain.gain.value = 1;
+  const out = this._out();
+  src.connect(gain);
+  if (out) gain.connect(out);
+  else gain.connect(this.ctx.destination);
+  return {
+    gain,
+    disconnect() {
+      try { src.disconnect(); gain.disconnect(); } catch { /* */ }
+    },
+  };
+};
+
 /** CSA-G: AudioRolloffMode.Logarithmic - Unity's (FMOD's inverse) rolloff: full inside minDistance, minDistance over
  *  the distance past it, and no quieter past maxDistance, where it stops attenuating. The panner's own inverse model
  *  never stops, so a caller holding Unity's curve works it out here and hands the panner a rolloff factor of 0. */

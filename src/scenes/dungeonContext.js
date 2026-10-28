@@ -7,6 +7,7 @@
 // serves exteriors too and must stay untouched. UVs therefore keep
 // original-archive sizes while pixels come from the table archive,
 // which is exactly the dungeon convention already on record.
+// FLAGGED (bible/11-Multiplayer/Video-Surfaces.md VIDEO1): no painting video surfaces in dungeons — interiors only (worldModes).
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
