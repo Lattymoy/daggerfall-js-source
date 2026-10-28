@@ -11,8 +11,8 @@
   {
     "name": "spellnumbers-peer",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (mine && !o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS",
-    "new": "      if (!o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS",
+    "old": "if (mine && !o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS",
+    "new": "if (!o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS",
     "tests": [
       "test/scenes/spellnumbers.test.js"
     ]

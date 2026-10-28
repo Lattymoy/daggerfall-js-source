@@ -811,9 +811,8 @@ export function createPlayerMagic({
     if (mine && foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);
     let dealt = 0;   // SPELL-NUMBERS: what MY landing struck off the foe, for the damage numbers
     const landing = sinks?.hurt ? { ...sinks, hurt: (n, o) => {
-      const d = o?.whole || o?.round ? n : blowTaken(n, striker, foe.entity, null, { kind: 'spell', element: spell?.element ?? null });
+      const d = o?.whole || o?.round ? n : blowTaken(n, striker, foe.entity, null, { kind: 'spell', element: spell?.element ?? null }); if (mine && !o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS: what it struck, for the number
       if (mine && !o?.round) noteFeudHarm(foe.entity, elementFeudClass(spell?.element), d);
-      if (mine && !o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS
       return sinks.hurt(d, { ...(o ?? {}), element: spell?.element ?? null });   // RVN3: the element rides to the door (its weakness's weight)
     } } : sinks;
     const healthBefore = foe?.entity?.health;
