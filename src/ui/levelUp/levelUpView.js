@@ -74,7 +74,7 @@ import { mustDistributeBonusPointsText } from '../charsheet.js';
 import { REMAINING_POINTS_ERROR, remainingPointsLabel, TAKE_ONE_BACK_HINT } from '../virtueLevelUp.js';
 import { attributeOffset, canRaiseAttribute, canLowerAttribute, LEVELUP_TOTAL, levelBarProgress, levelingSettings, usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // ASCEND-ANYTIME: a mod-law view still needs the mod's own prices to draw a row
 import { LEVELUP_SKILL_SUM_PER_LEVEL, skillRecentlyIncreased } from '../../systems/advancement.js';
-import { onlineLevelPoints } from '../../systems/levelClimb.js';   // LEVEL-45, LEVEL-BAR
+import { onlineLevelRawPoints } from '../../systems/levelClimb.js';   // LEVEL-45, LEVEL-BAR, LEVEL-RAW
 import { atLevelCap } from '../../systems/levelCap.js';   // LEVEL-45: the bar at the cap
 import { SKILL_NAMES, displaySkillValue } from '../../systems/skills.js';
 import { liveStat } from '../../systems/statMods.js';   // ASCEND-LIVE: what a star IS, beside what the rollout spends
@@ -581,8 +581,8 @@ export function levelProgress(entity, screen) {
       label: t('levelup.progress.virtue', 'Progress to next level'),
     };
   }
-  if (e._online === true) {   // LEVEL-45: online the climb is shared out to 45 (systems/levelClimb.js); LEVEL-BAR: in skill points
-    const { now, max } = onlineLevelPoints(e.startingLevelUpSkillSum ?? 0, e.currentLevelUpSkillSum ?? 0);
+  if (e._online === true) {   // LEVEL-45: online the climb is shared out to 45 (systems/levelClimb.js); LEVEL-RAW: in the sheet's points
+    const { now, max } = onlineLevelRawPoints(e);
     return {
       now,
       max,
