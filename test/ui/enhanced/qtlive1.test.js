@@ -97,9 +97,9 @@ test('QT-LIVE1e every setInterval in the enhanced menu is cleared by the rebuild
   const owners = new Set([...src.matchAll(/(\w+) = setInterval\(/g)].map((m) => m[1]));
   assert.ok(owners.has('groundTimer') && owners.has('questTimer'), `the intervals: ${[...owners].join(', ')}`);
   const rebuild = src.slice(src.indexOf('function renderInto() {'), src.indexOf('const shell = el(\'div\', \'shell\');'));
-  const unmountAt = src.indexOf('if (keyHandler) globalThis.removeEventListener(\'keydown\', keyHandler, { capture: true });');
+  const unmountAt = src.indexOf('unlistenKeys?.();   // the press and the release both');   // COVERED-KEYS: the one key door's unlisten
   assert.ok(unmountAt > 0);
-  const unmount = src.slice(unmountAt, src.indexOf('keyHandler = null;', unmountAt));
+  const unmount = src.slice(unmountAt, src.indexOf('unlistenKeys = null;', unmountAt));
   for (const v of owners) {
     assert.match(src, new RegExp(`^let ${v} = null;`, 'm'), `${v} is module state, one owner`);
     assert.match(rebuild, new RegExp(`if \\(${v}\\) \\{ clearInterval\\(${v}\\); ${v} = null; \\}`), `${v} cleared by the rebuild`);
