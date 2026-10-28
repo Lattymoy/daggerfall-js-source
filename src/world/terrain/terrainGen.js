@@ -193,7 +193,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
     // GATE-ROADS (world/road/gateRoads.js): a walled town's gates on their roads - after the painter and its smoothing, so
     // Basic Roads' tiles and the ground's heights are their own
-    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads);
+    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);   // FB1028: on its ground
   }
   // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
   // a location's own rect) - their shore laid by assignTiles, their sheet on the level ground (world/tamriel/tamrielWaters.js)

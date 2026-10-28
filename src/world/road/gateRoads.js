@@ -6,7 +6,7 @@
 // a gate. Each gate's road is laid here, the terrain kernel's, after the painter: from the town's nearest street inside,
 // through the gate, out to the nearest painted road - round every house, never over water or the wall. Pure and the
 // worker's: the gates and what blocks them come from the main thread on the location's rect (world/townGates.js).
-import { TILE } from './roadPainter.js';
+import { TILE, TRACK_TILES } from './roadPainter.js';
 import { ROAD_RECORDS } from './roadEdge.js';
 import { convertTile } from '../terrain/terrainSurface.js';
 import { WATER_MASK_TABLE } from '../water/waterCorners.js';
@@ -79,13 +79,15 @@ export function gateWay(from, open, goal) {
  * painter's paths (GRASS-PATH1: the tiles a road holds) - `gates` each `{ x, y, ox, oy, half }` (its opening's middle in
  * the pixel's tiles, x east and y north, its outward normal and the opening's half width), `blocked` per tile
  * (GATE_BLOCK). A gate whose way out reaches no painted road within GATE_ROAD.reach lays none; its way in, where it
- * reaches the town's paving, joins it. Answers the gates given a road.
- * @param {Uint8Array} tilemap @param {Uint8Array} paths @param {Uint8Array} tileData 129 x 129 corner kinds
- * @param {{ gates: Array<{ x: number, y: number, ox: number, oy: number, half?: number }>, blocked: Uint8Array }} town */
-export function layGateRoads(tilemap, paths, tileData, town) {
+ * reaches the town's paving, joins it. Answers the gates given a road. FB1028: with `town.inside` and `ground` (its
+ * townGroundMask) the painter's arms there taken up first (takeUpArms), each cut one joined to a gate after (joinArms).
+ * @param {Uint8Array} tilemap @param {Uint8Array} paths @param {Uint8Array} tileData 129 x 129 corner kinds @param {{ gates: Array<{ x: number, y: number, ox: number, oy: number, half?: number }>, blocked: Uint8Array, inside?: Uint8Array }} town @param {?Uint8Array} [ground] */
+export function layGateRoads(tilemap, paths, tileData, town, ground = null) {
   const { gates, blocked } = town;
   const tileAt = (x, y) => (x >= 0 && y >= 0 && x < D && y < D ? Math.floor(x) + Math.floor(y) * D : -1);
   const paving = (i) => ROAD_RECORDS.includes(tilemap[i] & 0x3f) && tilemap[i] !== 0xff;
+  const cut = town.inside && ground ? takeUpArms(tilemap, paths, town.inside, ground) : null;
+  const ways = [];   // FB1028: every tile a gate's road lays or keeps, the arms' joins' goal
   let laid = 0;
   for (const g of gates) {
     const len = Math.hypot(g.ox, g.oy) || 1, ox = g.ox / len, oy = g.oy / len, T = GATE_ROAD.through, h = (g.half ?? 0) / 2;
@@ -126,10 +128,70 @@ export function layGateRoads(tilemap, paths, tileData, town) {
       if (j >= 0 && away(j) === 1 && !paving(j)) beside.push(j);
     }
     for (const i of [...passage, ...out.slice(0, -1), ...beside, ...(into ? into.slice(0, -1) : [])]) {
+      ways.push(i);
       if (paving(i)) continue;   // a road there already - the town's own paving, or the painter's - kept as it lies
       tilemap[i] = TILE.road; paths[i] = 1;
     }
     laid++;
   }
+  if (cut) joinArms(tilemap, paths, tileData, town, cut, ways);
   return laid;
+}
+
+/** FB1028 ROADS: a painter's road or track tile - its record one of the two tables' (never a river's or a stream's, never
+ *  water) - or a track's mark over dirt (written as nothing, VERGE1). @param {Uint8Array} tilemap @param {number} i */
+const isArmTile = (tilemap, i) => tilemap[i] !== 0xff && (tilemap[i] === 0 || ARM_RECORDS.has(tilemap[i] & 0x3f));
+const ARM_RECORDS = new Set([...ROAD_RECORDS, ...TRACK_TILES.flatMap((t) => t ?? []).filter((r) => r > 0 && r !== TILE.NO_CHANGE)]);
+
+/**
+ * FB1028 ROADS (the owner's staff, after #1184: "roads lead to nowhere"): A BAY WALL'S GROUND TAKES UP THE PAINTER'S ARMS.
+ * GATE-ROADS slid each gate along the wall onto a street, and the arm it left ran on into blank wall. On the town's ground
+ * (`ground`) every painter's tile outside the wall's inner face (`inside` 0) is taken up, and every one inside it joined
+ * to those by painter's tiles (the arm's stub, between the wall and the town's blocks). The ring round the ground is off
+ * it and stays. Answers the tiles taken up.
+ * @param {Uint8Array} tilemap @param {Uint8Array} paths @param {Uint8Array} inside @param {Uint8Array} ground
+ */
+export function takeUpArms(tilemap, paths, inside, ground) {
+  const cut = new Uint8Array(D * D), stack = [];
+  for (let i = 0; i < D * D; i++) if (paths[i] && ground[i] && !inside[i] && isArmTile(tilemap, i)) { cut[i] = 1; stack.push(i); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % D, y = (i - x) / D;
+    for (const [dx, dy] of STEPS) {
+      const nx = x + dx, ny = y + dy, j = nx + ny * D;
+      if (nx >= 0 && ny >= 0 && nx < D && ny < D && !cut[j] && paths[j] && ground[j] && inside[j] && isArmTile(tilemap, j)) { cut[j] = 1; stack.push(j); }
+    }
+  }
+  for (let i = 0; i < D * D; i++) if (cut[i]) { tilemap[i] = 0; paths[i] = 0; }
+  return cut;
+}
+
+/**
+ * FB1028 ROADS: EACH ARM CUT JOINED TO A GATE - an arm's end (a painter's tile beside one taken up) that no run of road
+ * tiles joins to a gate's road has its way laid to the nearest gate's (gateWay, GATE_ROAD.reach), round houses and the
+ * wall, never over water: the ring round the town does it where the pixel has roads, this where it has only tracks.
+ * @param {Uint8Array} tilemap @param {Uint8Array} paths @param {Uint8Array} tileData @param {{ blocked: Uint8Array }} town
+ * @param {Uint8Array} cut takeUpArms' @param {number[]} ways every gate's road's tiles
+ */
+function joinArms(tilemap, paths, tileData, town, cut, ways) {
+  const road = (i) => !!paths[i] || (ROAD_RECORDS.includes(tilemap[i] & 0x3f) && tilemap[i] !== 0xff);
+  const joined = new Uint8Array(D * D), stack = [];
+  const reach = (from) => {
+    for (const i of from) if (!joined[i]) { joined[i] = 1; stack.push(i); }
+    while (stack.length) {
+      const i = /** @type {number} */ (stack.pop()), x = i % D, y = (i - x) / D;
+      for (const [dx, dy] of STEPS) { const nx = x + dx, ny = y + dy, j = nx + ny * D; if (nx >= 0 && ny >= 0 && nx < D && ny < D && !joined[j] && road(j)) { joined[j] = 1; stack.push(j); } }
+    }
+  };
+  reach(ways);
+  const goal = new Set(ways);
+  for (let i = 0; i < D * D; i++) {
+    if (!paths[i] || joined[i] || cut[i]) continue;
+    const x = i % D, y = (i - x) / D;
+    if (!STEPS.some(([dx, dy]) => { const nx = x + dx, ny = y + dy; return nx >= 0 && ny >= 0 && nx < D && ny < D && cut[nx + ny * D]; })) continue;
+    const away = (j) => (town.blocked[j] === GATE_BLOCK.hard || wet(tilemap, tileData, j) ? Infinity : town.blocked[j] === GATE_BLOCK.soft ? GATE_ROAD.flat : 1);
+    const way = gateWay(i, away, (j) => goal.has(j));
+    if (!way) continue;
+    for (const j of way) if (!road(j)) { tilemap[j] = TILE.road; paths[j] = 1; }
+    reach(way);
+  }
 }

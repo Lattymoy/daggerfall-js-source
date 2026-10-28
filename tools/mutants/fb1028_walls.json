@@ -1,0 +1,177 @@
+[
+  {
+    "name": "FB1028-the-doors-kept",
+    "file": "src/world/townWalls.js",
+    "old": "  if (!m.subMeshes.some(isDoor)) { _doorless.set(m, m); return m; }",
+    "new": "  if (true) { _doorless.set(m, m); return m; }",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-door-its-own-uvs",
+    "file": "src/world/townWalls.js",
+    "old": "    byKey.get(key(face.s)).rows.push(t.ids.map((v) => row(v, uvAt(at(v)))));",
+    "new": "    byKey.get(key(face.s)).rows.push(t.ids.map((v) => row(v, [U[v * 2], U[v * 2 + 1]])));",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-any-face-sharing-a-corner",
+    "file": "src/world/townWalls.js",
+    "old": "    const face = tris.find((q) => !isDoor(q.s) && coplanar(q) && q.ids.some(",
+    "new": "    const face = tris.find((q) => !isDoor(q.s) && q.ids.some(",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-towers-doors-kept",
+    "file": "src/world/townWalls.js",
+    "old": "m = wallDoorless(tower ? bendTower(classicModel(p.model)) : classicModel(p.model));",
+    "new": "m = tower ? bendTower(classicModel(p.model)) : wallDoorless(classicModel(p.model));",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-cut-unmade",
+    "file": "src/world/townWalls.js",
+    "old": "    parts.push(tower ? part : mitreEnds(part, p, towers));",
+    "new": "    parts.push(part);",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-cut-the-wrong-side",
+    "file": "src/world/townWalls.js",
+    "old": "    planes.push({ at: t.at, n: [k * n[0], k * n[1]] });",
+    "new": "    planes.push({ at: t.at, n: [-k * n[0], -k * n[1]] });",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-tower-unthickened",
+    "file": "src/world/townWalls.js",
+    "old": "out: /** @type {[number, number]} */ ([nx / m, ny / m]), stretch: 1, thick });",
+    "new": "out: /** @type {[number, number]} */ ([nx / m, ny / m]), stretch: 1 });",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-model-ungrown",
+    "file": "src/world/townWalls.js",
+    "old": "th = tower ? p.thick ?? 1 : 1;",
+    "new": "th = 1;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-grown-along",
+    "file": "src/world/townWalls.js",
+    "old": "      const lx = m.positions[v * 3] * p.stretch, ly = m.positions[v * 3 + 1], lz = m.positions[v * 3 + 2] * th;",
+    "new": "      const lx = m.positions[v * 3] * p.stretch * th, ly = m.positions[v * 3 + 1], lz = m.positions[v * 3 + 2] * th;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-cells-unwidened",
+    "file": "src/world/townWalls.js",
+    "old": "WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick",
+    "new": "WALL_FOOT.tower : WALL_FOOT.thick",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-half-turn-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    const half = Math.max(0.5, (nx * n1[0] + ny * n1[1]) / m), thick",
+    "new": "    const half = 1, thick",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-tower-flush",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWER_PROUD = 0.1;",
+    "new": "export const TOWER_PROUD = 0;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-no-street-gate",
+    "file": "src/world/townWalls.js",
+    "old": "  const streetWays = town ? streetGates(pts, town, onStreets) : [];",
+    "new": "  const streetWays = [];",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-a-street-gate-beside-a-gate",
+    "file": "src/world/townWalls.js",
+    "old": "    if (taken.some((a) => Math.abs(((a - mid + P / 2) % P + P) % P - P / 2) < GATE_ARMS_MERGE)) continue;\n",
+    "new": "",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-paving-unread",
+    "file": "src/world/townWalls.js",
+    "old": "ty < town.H && !!town.streets[ty * town.W + tx]; };",
+    "new": "ty < town.H && !town.streets[ty * town.W + tx]; };",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-run-at-its-start",
+    "file": "src/world/townWalls.js",
+    "old": "    const mid = (from + u - STEP) / 2;",
+    "new": "    const mid = from;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-no-take-up",
+    "file": "src/world/road/gateRoads.js",
+    "old": "  const cut = town.inside && ground ? takeUpArms(tilemap, paths, town.inside, ground) : null;",
+    "new": "  const cut = null;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-ground-unread",
+    "file": "src/world/road/gateRoads.js",
+    "old": "if (paths[i] && ground[i] && !inside[i] && isArmTile(tilemap, i))",
+    "new": "if (paths[i] && !inside[i] && isArmTile(tilemap, i))",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-stub-left",
+    "file": "src/world/road/gateRoads.js",
+    "old": "!cut[j] && paths[j] && ground[j] && inside[j] && isArmTile(tilemap, j)) { cut[j] = 1; stack.push(j); }",
+    "new": "!cut[j] && paths[j] && ground[j] && inside[j] && isArmTile(tilemap, j)) cut[j] = 0;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-a-river-taken",
+    "file": "src/world/road/gateRoads.js",
+    "old": "const isArmTile = (tilemap, i) => tilemap[i] !== 0xff && (tilemap[i] === 0 || ARM_RECORDS.has(tilemap[i] & 0x3f));",
+    "new": "const isArmTile = (tilemap, i) => tilemap[i] !== 0xff;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-arms-unjoined",
+    "file": "src/world/road/gateRoads.js",
+    "old": "  if (cut) joinArms(tilemap, paths, tileData, town, cut, ways);",
+    "new": "",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-ground-unhanded",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);",
+    "new": "layGateRoads(tilemap, paths, tileData, locationRect.gateRoads);",
+    "tests": ["test/world/gateroads.test.js"]
+  },
+  {
+    "name": "FB1028-inside-never-handed",
+    "file": "src/world/townGates.js",
+    "old": "  return wall && dfLocation.outline?.bay ? { gates, blocked, inside: insideWall(wall, walls, w * S, o) } : { gates, blocked };",
+    "new": "  return { gates, blocked };",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-inside-past-the-bay",
+    "file": "src/world/townGates.js",
+    "old": "  return wall && dfLocation.outline?.bay ? { gates, blocked, inside",
+    "new": "  return wall ? { gates, blocked, inside",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  },
+  {
+    "name": "FB1028-the-wall-read-as-inside",
+    "file": "src/world/townGates.js",
+    "old": "        if (!(cx >= 0 && cy >= 0 && cx < CW && cy < CH && cells[cy * CW + cx])) out[tx + ty * D] = 1;",
+    "new": "        out[tx + ty * D] = 1;",
+    "tests": ["test/world/fb1028_walls.test.js"]
+  }
+]
