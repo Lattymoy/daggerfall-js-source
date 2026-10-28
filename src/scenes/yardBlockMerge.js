@@ -1,13 +1,10 @@
 // @ts-check
 // YARD-BLOCK (2026-10-28, bible/11-Multiplayer/Yard-Cells.md section 12): STRANGERS' YARDS MERGED A BLOCK AT A TIME.
-// YARD-MERGE made each yard one draw a texture. A full city stands about 500 strangers' yards within the default 300 m,
-// so the yards still cost hundreds of draws a frame. Here the yards of one block (YARD-CELL's cell) that are within the
-// player's yard range share one merge: one mesh a texture and one billboard batch a picture for the whole block.
-//
-// - A piece going out of a merged yard lets the block's merge go at once, as YARD-MERGE lets a yard's go.
-// - The yards in range decide what a block merges. When a yard crosses the range, the old merge is drawn until the new
-//   one is made, so YARD-RANGE's distance is kept to within a merge's wait.
-// - Merges are made nearest first on a time budget a frame, always at least one.
+// YARD-MERGE made each yard one draw a texture, but a full city stands about 500 strangers' yards within 300 m. Here
+// the yards of one block (YARD-CELL's cell) within the yard range share one mesh a texture and one batch a picture.
+// A piece going out of a merged yard lets the block's merge go at once, as YARD-MERGE lets a yard's go. A yard
+// crossing the range is merged in or out at the next merge, the old merge drawn until then. Merges are made nearest
+// block first on a time budget a frame, always at least one.
 
 import { DECOR_MERGE_SETTLE_MS, DECOR_DRAW, DECOR_SHADOW, standDecorMerge, decorMergeMatrix, decorFlatSeen } from './decor/decorRoom.js';
 import { transformedAabb } from '../render/frustum.js';
@@ -22,11 +19,8 @@ export const YARD_BLOCK_MERGE_BUDGET_MS = 2;
  *   merged: BlockMerge | null, held: Set<BlockYard>, changed: boolean, changedAt: number, distance: number }} Block
  */
 
-/**
- * The host's blocks of strangers' yards.
- * @param {{ renderer: any, now: () => number, clock: () => number }} deps
- *   `now` is the merge's settle clock (ms, decorRoom's `merge.now`); `clock` times the frame's budget (ms).
- */
+/** The host's blocks of strangers' yards. `now`: the merges' settle clock (ms); `clock`: the frame's budget's (ms).
+ *  @param {{ renderer: any, now: () => number, clock: () => number }} deps */
 export function createYardBlockMerge({ renderer, now, clock }) {
   /** @type {Map<string, Block>} */
   const blocks = new Map();

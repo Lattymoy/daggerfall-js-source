@@ -327,10 +327,8 @@ export function decorMatrix(piece, origin) {
  *                  above the piece's base it hangs - or null for none. `size` is the drawn picture's, null until it
  *                  stands. None for a room: a piece gives the light it carries (`piece.light`), where the room hangs it
  *                  (decorLightLift's height; a mount's at its centre)
- *   merge         - YARD-MERGE: `{ take() -> boolean, now() -> ms }` - the host lets the pool's models merge (take: whether
- *                  its budget allows one this frame), or null: every piece its own draw, as a room's. YARD-BLOCK: or
- *                  `{ now(), changed(), letGo() }` with no `take` - the host merges this pool with others (mergeParts),
- *                  told each change, and `letGo` lets that merge go when a piece in it goes
+ *   merge         - YARD-MERGE: `{ take(), now() }` - the pool merges on its host's budget; YARD-BLOCK: `{ now, changed, letGo }`
+ *                  - the host merges it with others (mergeParts), told each change; null: each piece its own draw, as a room's
  *   body          - DECOR-CLEAR: the player's body, live - the motor (its `pos` and `height`) - or none. A model's collider
  *                  bucket goes through the collider's one gate (player/lateSolid.js): a piece landing round the body draws,
  *                  and is solid only once the body is clear of it, asked every frame by `draw` (the host's own per-frame
