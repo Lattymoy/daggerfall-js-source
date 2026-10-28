@@ -49,11 +49,11 @@ export function pastBayJourney(from, to, mask, zone) {
  * teleport's verdict past the Bay is the zone's alone: its into-and-out-of law is PVPDUNGEONS' (world.js
  * wildTeleportRefused), the Veil's is the Veil's (veilRefused). The journeys keep pastBayJourney's.
  * @param {{ x: number, y: number }|null} _from @param {{ x: number, y: number }|null} _to @param {any} _mask
- * @param {{ ok: boolean, text?: string, fee?: number }} zone
+ * @param {{ ok: boolean, text?: string, fee?: number }} _zone
  * @returns {{ ok: boolean, text?: string, fee?: number }}
  */
-export function teleportJourney(_from, _to, _mask, zone) {
-  return zone;
+export function teleportJourney(_from, _to, _mask, _zone) {
+  return { ok: true, fee: 0 };   // WILD-CITY-PORT: nor the zone's journey law (its in and out, its wait, its fare) - a teleport's is world.js wildTeleportRefused's
 }
 
 /**

@@ -277,11 +277,12 @@
   {
     "name": "AUDITTESA2M-M5-the-zone-zoom-ungated",
     "file": "src/ui/heldMap.js",
-    "old": "    if (!this._zoneMap && this._zoneLaws()) {\n      const mask = this.deps.wildMask?.() ?? null;\n      const [zx, zy] = toMap(this._view, sx, sy);\n      if (mask && wildInside(mask, zx, zy) && this._openZoneMap()) return;\n    }\n    const m = this._markerAt(sx, sy);",
-    "new": "    if (!this._zoneMap) {\n      const mask = this.deps.wildMask?.() ?? null;\n      const [zx, zy] = toMap(this._view, sx, sy);\n      if (mask && wildInside(mask, zx, zy) && this._openZoneMap()) return;\n    }\n    const m = this._markerAt(sx, sy);",
+    "old": "    if (!this._zoneMap && this._zoneLaws() && !this._portalCityAt(sx, sy)) {",
+    "new": "    if (!this._zoneMap && !this._portalCityAt(sx, sy)) {",
     "tests": [
       "test/ui/audittesa2m_window.test.js"
-    ]
+    ],
+    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - ZONE-ZOOM's condition asks the press's city too"
   },
   {
     "name": "AUDITTESA2M-M5-the-bare-ground-ungated",
