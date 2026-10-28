@@ -241,6 +241,7 @@ test('BOSS-CLEAR: Spawn mini boss now is at once, monsters standing or not; the 
   await tick();
   // one nobody can reach never holds it back past two minutes
   raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 6, bd: 1, bu: 1, bk: 1, fc: 1 } }, room);
+  for (const f of log.raiders) if (f.entity.staffBoss) kill(f);   // the call's boss fell (BOSS-ONE: one standing holds the next)
   at.puppets = [{ _pupRaid: KEY, dead: false, entity: {} }];
   raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 6, bd: 1, bu: 0, bk: 0, fc: 2 } }, room);
   assert.notEqual(frame(0.1), 'boss');
@@ -583,12 +584,12 @@ test('STAFF-PILOT (mob 2026-10-26: "like play as a boss as attack players", card
   const boss = staffPilotBoss();
   assert.ok(boss?.entity?.staffBoss, 'Spawn mini boss now stands it on my machine - the boss I steer');
   assert.equal(boss.o?.near, undefined, 'PILOT-ON-ME: about me, never by the biggest group');
-  // PILOT-ONCE: a later call while I steer stands no second boss
+  // BOSS-ONE: a later call while a boss of the event stands stands no second one
   const bosses = () => log.raiders.filter((f) => f.entity.staffBoss).length;
   raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 2 }] } }, 'social');
   staffEventLedger({ id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 1 });
   for (let i = 0; i < 20; i++) { frame(0.1); await tick(); }
-  assert.equal(bosses(), 1, 'one boss while I steer');
+  assert.equal(bosses(), 1, 'one boss while one stands');
   assert.equal(staffPilotBoss(), boss);
   pilotStop();
   assert.equal(staffPilotBoss(), null);
@@ -632,8 +633,8 @@ test('STAFF-PILOT: the boss stands where I stand and faces where I look; its own
   boss.dead = true;
   assert.equal(P.pilotLost(null, 2000), 'fell');
   P.pilotStart(EV.id, 0);
-  assert.equal(P.pilotLost(null, P.PILOT_WAIT_MS - 1), null);
-  assert.equal(P.pilotLost(null, P.PILOT_WAIT_MS + 1), 'none', 'none stood: it ends');
+  assert.equal(P.pilotLost(null, 3_600_000), null, 'PILOT-ARM: none stood yet - armed, it waits for the meter\'s boss');
+  assert.equal(P.piloting(), true);
   P.resetPilot();
 });
 
@@ -682,4 +683,23 @@ test('STAFF-PILOT: the page\'s half - the panel\'s word starts and ends it, a hi
   assert.equal(EnemyCaster.prototype.update.call({ entity: { spells: [{}] } }, 1, { _pilot: { cast: true } }, atk, [0, 0, 1], {}), null, 'no cast of its own');
   assert.match(pool, /if \(f\.dead \|\| !f\._mout\) continue;\n\s*if \(pilotFoe\(f\)\) continue;/, 'my copy not drawn');
   P.resetPilot();
+});
+
+test('BOSS-ONE (mob 2026-10-28: "there was 20 mini bosses", "just only spawn once", card "Both"): a boss call while a boss of the event stands - a peer\'s puppet too - stands no second one; once it is gone the next call stands', async () => {
+  const { at, log } = rig();
+  restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
+  setSharedClock(() => at.now);
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [EV] } }, 'social');
+  await run(4);
+  const room = log.words.at(-1)?.room ?? 'world:0';
+  at.puppets = [{ _pupRaid: KEY, dead: false, entity: { staffBoss: { size: 2 } } }];
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 1 }] } }, 'social');
+  raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 0 } }, room);
+  assert.notEqual(frame(0.1), 'boss', 'a peer\'s boss stands: none of mine');
+  await run(2);
+  assert.equal(log.raiders.filter((f) => f.entity.staffBoss).length, 0);
+  at.puppets[0].dead = true;
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 2 }] } }, 'social');
+  raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 1 } }, room);
+  assert.equal(frame(0.1), 'boss', 'it fell: the next call stands');
 });

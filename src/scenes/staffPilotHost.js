@@ -22,7 +22,7 @@ export function createStaffPilotHost({ post, win = globalThis.window, entity = n
       if (hidden()) showMe();
       post({ dfoStaff: 'pilot', on: true, ev: evOf(), boss: !!bossOf() });
     },
-    /** Each frame: my body no one's while I steer; the steering ends when its boss fell or none stood. */
+    /** Each frame: my body no one's while I steer; the steering ends when its boss fell (PILOT-ARM: armed until one stands). */
     frame() {
       if (entity) entity.staffPilot = piloting();
       if (!piloting()) return;

@@ -651,7 +651,7 @@ export function raidFrame(dt = 0) {
   if (raid.staff) {
     const fc = staffBossWanted(raid);
     const waits = fc >= 0 && !staffBossByHand(raid) && !staffFieldClear(raid, h) && !staffClearLong(raid, localNow());   // BOSS-CLEAR: the meter's boss once every monster standing at its call is dead - the packs come on meanwhile
-    if (fc >= 0 && !waits && staffPilotBoss() && pilotKey() === raidKey(raid)) raid.bossFc = fc;   // PILOT-ONCE (mob 2026-10-28: "there was 20 mini bosses", "just only spawn once"): while I steer my event's boss, a later call stands no second one
+    if (fc >= 0 && !waits && staffBossStanding(raid, h)) raid.bossFc = fc;   // BOSS-ONE (mob 2026-10-28: "there was 20 mini bosses", "just only spawn once", card "Both"): while a boss of the event stands - mine or a peer's - a later call stands no second one
     else if (fc >= 0 && !waits) { raid.bossFc = fc; raid.bossHand = raid.staff.fb ?? 0; spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }   // BOSS-RETRY: its field's wait and staff's by-hand word spent once it stands, not at the try
     const lost = staffBossLost(raid, staffBossStanding(raid, h), localNow());   // BOSS-LOST: stood, then gone without falling
     if (lost >= 0) { raid.bossFc = lost; spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }

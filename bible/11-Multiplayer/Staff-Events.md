@@ -234,8 +234,8 @@ only - no relay, no account service: it rides words the wire already carries (`s
 half `src/scenes/staffPilotHost.js`).
 
 - **Start**: the Events page's Play as boss posts `pilot` (`net/staffHook.js`) with the event's id. A hidden game is shown
-  first (a hidden game's frames reach no one). The game answers whether a boss of mine already stood; if not, the panel
-  calls one (Spawn mini boss now) and it stands on my machine.
+  first (a hidden game's frames reach no one). The game answers whether a boss of mine already stood; if not, Play as
+  boss is armed (PILOT-ARM): the meter's next boss, or Spawn mini boss now pressed by hand, stands on my machine.
 - **The run is mine**: while I steer, my claim on the event's raid says `PILOT_CLAIM_AGE` (= `RAID_CLAIM_AGE_MAX`, the
   oldest the wire carries), so every game in the place - an old page too, which reads the same oldest-claim law
   (`world/raidShared.js` `raidRunnerOf`) - hands me the run (`raidingParties.js` `runsRaid`). A claim's age on the wire
@@ -248,14 +248,16 @@ half `src/scenes/staffPilotHost.js`).
 - **My body is no one**: my pose's concealment says 7 (all three bits - `effects.js` `concealBits`); this build draws no
   body and no name for a 7 (`combatVisuals.js` `peerDraw`), an older one the shimmer of an invisible player inside the
   boss. Foes do not sense me (`playerEntity.staffHidden`).
-- **The end**: the boss falls (its reward and lines as ever), none stands in `PILOT_WAIT_MS` (60 s), or Leave boss - the
+- **The end**: the boss falls (its reward and lines as ever), or Leave boss - the
   boss, if it still stands, goes back to its own brain where it stands. The game tells the panel why (`left`, `fell`,
   `none`).
 - **PILOT-ECHO** (2026-10-28, live: the list redrew without end, Leave boss lost, a boss called on every pass): the game's
   answer (`{ on, ev, boss }`, `{ on: false, ev, why }`) goes out on the same window the panel's ask comes in on, so the
   door (`net/staffHook.js`) takes `pilot` only without `boss` or `why` - its own answer is never heard as an ask.
-- **PILOT-ON-ME / PILOT-ONCE** (2026-10-28, mob: "only spawn on on my position", "just only spawn once"): the boss of the event
-  I steer stands about me, never by the biggest group (`staffBossPlace`), and while it stands a later call stands no second
-  boss on my machine.
+- **PILOT-ON-ME / PILOT-ARM / BOSS-ONE** (2026-10-28, mob: "only spawn on on my position", "just only spawn once", "we ether
+  become the boss at kill", card "Both"): the boss of the event I steer stands about me, never by the biggest group
+  (`staffBossPlace`). Play as boss is armed until a boss stands - the meter's next, or Spawn mini boss now - and never
+  gives up on its own (the panel calls no boss at the press since Admin Tools 0.2.185). While any boss of the event stands,
+  mine or a peer's puppet, a later call stands no second one, on any game.
 - **Known limits**: the boss walks at my pace, not its kind's; a game that ran the event before keeps the monsters it had
   stood (they fight on as theirs); my own weapon still swings at a click if drawn.
