@@ -33,6 +33,9 @@ import { HIT_KINDS, dpsRef, ABSENT_RETIRE_MS } from '../../../src/net/gate/gateB
 import { mintSdReceipt } from '../../../src/net/superDungeon/sdReceipt.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { SD_FRAY_LASH, inOrreryHall, dungeonToRealm, SD_ORRERY } from '../../../src/net/superDungeon/sdBrain.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -63,7 +66,7 @@ async function withRealm(fn, { concord = true } = {}) {
   const realNow = Date.now;
   let clock = T0;
   Date.now = () => clock;
-  const world = fakeRooms({ now: () => clock });
+  const world = fakeRooms({ now: () => clock, vars: { SD_COLLAPSE: 'on' } });   // SD-PARTY (PIN MOVED): the first kill's collapse for all, the hub's setting on
   const hub = world.room(SOCIAL_ROOM);
   try {
     await quiet(async () => {
@@ -92,7 +95,7 @@ async function withRealm(fn, { concord = true } = {}) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       gated(realm);
       if (concord) { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };

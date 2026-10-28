@@ -16,6 +16,9 @@ import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { sdRiftWord, SD_FALLEN_KEY, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../../../src/world/superDungeon/sdDungeon.js';
 import { sdSlotsKept, SD_REZ_PAGE_SLACK_MS } from '../../../src/systems/superDungeon/sdSlots.js';
 import { SD_REALM_TEXT } from '../../../src/world/superDungeon/sdRealm.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -45,7 +48,7 @@ async function withRealm(fn) {
       const cell = world.room(worldRoom(PX, PY));
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
       const hello = async (id, pose) => { const ws = realm.connect(); await realm.hello(ws, id, pose, { name: id.replace('peer-', '') }); return ws; };
       await fn({ world, realm, cell, mara, rec, hello, step: (ms) => { clock += ms; } });
@@ -72,13 +75,18 @@ test('SD-ONELIFE / SD-REZ THE REALM REMEMBERS A DEATH: the dying pose (PCORPSE1\
     await realm.raw(raised, JSON.stringify({ t: 'pose', p: inArena(0, -12, { dd: 1 }) }));
     assert.deepEqual(realm.store.get(SD_REALM_KEY).down.map(([x]) => x), ['acct-peer-ann'], 'down again');
     step(SD_REZ_MS + 1);
+    // PIN MOVED (SD-BACK, 2026-10-28, the owner: "let them go back in if they die to that partys instance"): past the
+    // window her own Hour takes her back - a rise, off the lying and the dead (it was SD_NO_FALLEN, one life a Hollow);
+    // the hub keeps every other copy shut to her (sdparty_relay.test.js)
     const again = await hello('peer-ann', inArena(0, -12));
-    assert.equal(again.closed?.reason, SD_NO_FALLEN, 'past the window: one life');
+    assert.equal(again.closed, null, 'past the window: back in her own Hour');
     assert.equal(SD_NO_FALLEN, 'The Hour will not take you back.');
-    assert.deepEqual([realm.store.get(SD_REALM_KEY).dead, realm.store.get(SD_REALM_KEY).down], [['acct-peer-ann'], []], 'buried');
+    assert.deepEqual([realm.store.get(SD_REALM_KEY).dead, realm.store.get(SD_REALM_KEY).down], [[], []], 'risen');
+    await realm.raw(again, JSON.stringify({ t: 'pose', p: inArena(0, -12, { dd: 1 }) }));
+    step(SD_REZ_MS + 1);
     realm.room._sdRealm = undefined;
     const later = await hello('peer-ann', inArena(0, -12));
-    assert.equal(later.closed?.reason, SD_NO_FALLEN, 'across an instance');
+    assert.equal(later.closed, null, 'across an instance');
     const bo2 = await hello('peer-bo', inArena(4, -12));
     assert.equal(bo2.closed, null, 'the living come back as before');
     await realm.raw(bo2, JSON.stringify({ t: 'pose', p: inArena(4, -12, { dd: 1 }) }));
@@ -129,7 +137,7 @@ test('SD-ONELIFE THE PAGE, from the world host\'s own text: the slot of the Hour
   assert.notEqual(SD_FALLEN_KEY, SD_ENTERED_KEY);
   assert.match(W, /const _sdFallen = sdSlotsKept\(SD_FALLEN_KEY, \(\) => _accountSds\.me\(\)\);/);   // PIN MOVED (WITCH1): the account handed in
   assert.match(W, /if \(_deathWasOnline == null\)[^\n]*\n\s*\{ const hourSlot = modes\?\.sdRealmSlot\?\.\(\) \?\? null; if \(hourSlot != null\) _sdFallen\.add\(hourSlot\); \}/, 'kept the frame I die');   // AUDIT SD III (PIN MOVED): under D-ONLINE1's capture, which stays the death block's first statement (AUDIT WORLD B6, MWBODY1)
-  assert.match(W, /const seen = \{ entered: _sdEntered\.has\(s\), fallen: _sdFallen\.has\(s\) \};\n\s*return \{ word: sdRiftWord\(rec, s, now, seen\),[^\n]*look: riftLook\(rec, s, now, seen\),/, 'the Rift asked with it');   // SD-LOOK (PIN MOVED): and its look told the same
+  assert.match(W, /const seen = \{ entered: _sdEntered\.has\(s\), fallen: false \};[^\n]*\n\s*return \{ word: sdRiftWord\(rec, s, now, seen\),[^\n]*look: riftLook\(rec, s, now, seen\),/, 'the Rift asked with it');   // PIN MOVED (SD-BACK): never fallen - the realm's word says which Hour takes me back   // SD-LOOK (PIN MOVED): and its look told the same
   // PIN MOVED (SD-REZ, EVENT-RULES - the owner: "Resurrect allowed"): a friend's Resurrect raises me in the Hour, inside its
   // realm's window; past it my party pose says the death is for good (`fg` - the caster told, nothing spent)
   assert.match(W, /const rez = social\?\.acct && madeRuleHere\('resurrect'\) !== 'refused' && hourRezOpen\(\) \? rezFor\(social\.others\(\), social\.acct, _rezSeen\) \?\? legacyHost\?\.raised\(\) \?\? null : null;[^\n]*\n\s*if \(rez && legacyHost\?\.raise\(rez\) !== false\) \{ resurrectInPlace\(rez\); return; \}/, 'a Resurrect in the Hour, inside the window');
@@ -153,5 +161,5 @@ test('SD-ONELIFE THE PAGE, from the world host\'s own text: the slot of the Hour
   assert.equal(rz.has(4), false, 'raised: the slot let go, on the device too');
   assert.equal(JSON.parse(store.get(`${SD_FALLEN_KEY}:acct-z`)).includes(4), false);
   assert.equal(rz.mayRise(4), true);
-  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.');
+  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out. You wake before the Abyss Dungeon\'s door.');   // PIN MOVED (SD-BACK, 2026-10-28): no longer for good - its Rift takes you back to your own Hour
 });

@@ -34,6 +34,9 @@ import { BOSS_SEAM_KEYS, bossSeam, GATE_SEAM, SD_SEAM, SERPENT_SEAM } from '../.
 import { judgeGate, judgeRemnant, judgeSerpent, posAt, posAfter, posYAt } from '../../../src/net/bossRef.js';
 import { createSdSteps, sdStepKey } from '../../../src/scenes/superDungeon/sdSteps.js';
 import { Collider } from '../../../src/player/collider.js';
+import { sdTestKey, sdOneParty } from '../superDungeon/sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const quiet = async (fn) => { const w = console.warn, i = console.info; console.warn = () => {}; console.info = () => {}; try { return await fn(); } finally { console.warn = w; console.info = i; } };
 const sha = (lines) => createHash('sha256').update(lines.join('\n')).digest('hex');
@@ -99,7 +102,7 @@ async function withRealmOf(fn, { concord = true } = {}) {
     const cell = world.room(worldRoom(PX, PY));
     const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
     await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-    const realm = world.room(sdRoomKey(rec.s));
+    const realm = world.room(sdTestKey(rec.s));
     realm.env.BOSS_BODY = ENFORCE;
     if (concord) { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }
     const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
