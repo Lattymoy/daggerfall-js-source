@@ -34,15 +34,15 @@ const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 test('OW-WEATHER: under the Overworld the falling weather and the wind wrap round the eye the view is drawn from - never round the traveller\'s head (mutants: the eye back to the head; a draw left on it)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const mwv = tvf \? \{ \.\.\.mwv0, eye: tvf\.eye \}/, 'the frame\'s eye under the view is the view\'s');
-  assert.match(w, /\n {4}const wxEye = tvf \? mwv\.eye : cam\.pos;\n/, 'the weather\'s eye: the view\'s under it, the head\'s on the ground');
+  assert.match(w, /\n {4}const wxEye = mwv\.eye;\n/, 'the weather\'s eye: the view\'s, under it and on the ground (PIN MOVED, RPT1026-WORLD RAIN-EYE: the head\'s on the ground stood a box of rain round a ship seen from her helm\'s scrolled-out camera)');
   assert.match(w, /\n {4}const drawFalling = \(\) => \{\n {6}wxEye32\[0\] = wxEye\[0\]; wxEye32\[1\] = wxEye\[1\]; wxEye32\[2\] = wxEye\[2\];/, 'copied into the one array as the falling weather is drawn (RAIN-LEAK)');
   for (const [what, re] of [
-    ['the sand', /sand\.draw\(\{ on: true, strength01: fx\.intensity, windV: wd\.windV, step: wd\.step, gust: wd\.gust \}, proj, view, wxEye32, now \/ 1000\);/],
+    ['the sand', /dryFall\.draw\(\{ on: true, kind: precipShown, strength01: fx\.intensity, windV: wd\.windV, step: wd\.step \}, proj, view, wxEye32, now \/ 1000, renderer\.worldViewportPx\?\.\[3\]\);/],   // PIN MOVED (ASHFALL1, 2026-10-27): the dry falls' one renderer, the sand and the ash
     ['the rain and the snow', /precip\.drawFall\(precipShown, proj, view, wxEye32, camRight, now \/ 1000\);/],   // PRECIP1: the fall at the air's snow share
     ['the wisps', /wisps\.draw\(wd, proj, view, wxEye32, now \/ 1000\);/],
   ]) assert.match(w, re, what);
   const at = w.indexOf('    const wxEye = ');
-  assert.ok(at > w.indexOf('    const mwv = tvf ?') && at < w.indexOf("if (precipShown === 'sand') {"), 'after the frame\'s eye, before the first draw');
+  assert.ok(at > w.indexOf('    const mwv = tvf ?') && at < w.indexOf('if (isDryFall(precipShown)) {'), 'after the frame\'s eye, before the first draw');   // PIN MOVED (ASHFALL1, 2026-10-27)
   assert.equal((w.slice(at, w.indexOf('    // GR1: THE LAB\'S GRASS', at)).match(/new Float32Array\(cam\.pos\)/g) || []).length, 0, 'no weather draw left on the head');
 });
 

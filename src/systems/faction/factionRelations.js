@@ -14,6 +14,7 @@
 
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { rand, randomRangeInclusive } from '../../formats/dfRandom.js';
+import { isProvinceRegion } from '../../formats/mapsTables.js';   // PROVINCE-COURTS: a province's region is no row of DFU's border table
 
 /** PersistentFactionData.borderRegions (:52-113) - eleven neighbours per
  *  region, zero-padded, indexed `[11 * region + i]`. Transcribed
@@ -84,6 +85,23 @@ export const BORDER_REGIONS = Object.freeze([
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 ]);
 export const BORDERS_PER_REGION = 11;
+
+/** PROVINCE-COURTS (bible/03-World/World-Wide.md): THE BORDERS PAST THE BAY - DFU's table is the Bay's 62 rows, and a
+ *  province's region (62..70, WW-R) is no row of it. These are the pairs whose land meets on the politic map past the Bay
+ *  (WW-R's groundPoliticIndex, measured on the freeware: every two regions whose pixels touch), each pair both ways:
+ *  the provinces with each other (Sumurset Isle meets none), and each across the Bay's edge with the Bay regions it
+ *  meets there. A pair with a province in it is read here and nowhere else - DFU's rows name a 62 three times
+ *  (Bantha's and the two High Rock coasts', regions no faction holds), which was never the port's High Rock. */
+export const PROVINCE_BORDERS = Object.freeze([
+  // the provinces past the Bay
+  [62, 63], [62, 64], [63, 64], [63, 70], [64, 65], [64, 70], [65, 69], [65, 70], [67, 68], [67, 70], [68, 70], [69, 70],
+  // across the Bay's edge: High Rock past the Bay and the Bay's north; Hammerfell past it and the Bay's south and east
+  [16, 62], [32, 62], [38, 62], [40, 62],
+  [0, 63], [1, 63], [11, 63], [16, 63], [43, 63], [52, 63], [57, 63],
+].map((p) => Object.freeze(p)));
+const PROVINCE_BORDER_KEYS = new Set(PROVINCE_BORDERS.flatMap(([a, b]) => [`${a}|${b}`, `${b}|${a}`]));
+/** Do two regions' lands meet, one of them a province's past the Bay? @param {number} a @param {number} b */
+export const provinceRegionsBorder = (a, b) => PROVINCE_BORDER_KEYS.has(`${a}|${b}`);
 
 const get = (dict, id) => dict?.get(id) ?? null;
 const alliesOf = (f) => [f.ally1, f.ally2, f.ally3];
@@ -270,10 +288,17 @@ export function endFactionEnemies(dict, factionID1, factionID2) {
 /** IsEnemyStatePermanentUntilWarOver (:838-849): are the two regions
  *  NEIGHBOURS? Eleven slots per region, and the padding zeros are
  *  compared like any other entry - so region 0 (Alik'r Desert) reads as
- *  a neighbour of every region whose row is short. DFU's, kept. */
+ *  a neighbour of every region whose row is short. DFU's, kept.
+ *
+ *  PROVINCE-COURTS: a pair with a province's region in it (62..70) is read off PROVINCE_BORDERS, and only for two
+ *  Provinces - FACTION.TXT's nine vampire clans carry regions 62..70 too (the provinces' very numbers), and a clan is
+ *  no province's crown. Every pair of the Bay's own answers DFU's table as before. */
 export function isEnemyStatePermanentUntilWarOver(faction1, faction2) {
   if (!faction1 || !faction2) return false;
   if (faction1.region === -1 || faction2.region === -1) return false;
+  if (isProvinceRegion(faction1.region) || isProvinceRegion(faction2.region)) {
+    return faction1.type === FACTION_TYPES.Province && faction2.type === FACTION_TYPES.Province && provinceRegionsBorder(faction1.region, faction2.region);
+  }
   for (let i = 0; i < BORDERS_PER_REGION; i++) {
     if (BORDER_REGIONS[(BORDERS_PER_REGION * faction1.region) + i] === faction2.region) return true;
   }

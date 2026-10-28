@@ -263,6 +263,7 @@ the Daedra-summoning day. So they are derived once, in
 | `thunder` | `StartStorming` | raining, storming, overcast |
 | `snow` | `StartSnowing` | snowing, overcast |
 | `sandstorm` | - | **the port's own** |
+| `ashfall` | - | **the port's own** (ASHFALL1) |
 
 Two of those look wrong and are not. Cloudy weather tells a mod
 "Clear", and fog tells it "Cloudy" rather than "Rainy", because
@@ -272,7 +273,9 @@ Two of those look wrong and are not. Cloudy weather tells a mod
 WEATHER2d's `sandstorm` is the port's eighth word and DFU's switch has
 no case for it, so there is nothing to port. It is answered here, once,
 as **overcast**: the sky in a sandstorm is not clear, and it is neither
-rain nor snow.
+rain nor snow. ASHFALL1's `ashfall`, the ninth (`07-Rendering/Weather-Arc.md`
+E), is answered the same, for the same reasons: its pall is no clear sky,
+and what falls is ash.
 
 ## AT0 - settings, row, credit
 

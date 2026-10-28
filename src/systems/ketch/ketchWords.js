@@ -10,7 +10,7 @@
 // net/ketch/ketchConstructs.js - the page reads them by key, never by those words) and the herald's Discord cards
 // (net/ketch/ketchHerald.js). The relay sets no locale; this file is what the page says. Not a DFU member. Ledger A (KETCH).
 import { t } from '../textManager.js';
-import { KT_TEXT, ketchVoyageAt } from '../../net/ketch/ketchLaw.js';
+import { KT_TEXT, ketchVoyageAt, KT_STATION_CITIES } from '../../net/ketch/ketchLaw.js';
 
 /** THE VOYAGE'S AND THE SHIP'S LINES. */
 export const KT_WORDS = Object.freeze({
@@ -37,6 +37,17 @@ export const KT_WORDS = Object.freeze({
   get bridgeOpen() { return t('ketch.bridgeOpen', 'The bridge is open. The bosun\'s line runs from the main top.'); },
   get lineTaken() { return t('ketch.lineTaken', 'You ride the bosun\'s line down to the bridge.'); },
   get cabinOpen() { return t('ketch.cabinOpen', 'The Ketchmaster\'s cabin opens.'); },
+});
+
+/** KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): a station's city (net/ketch/ketchLaw.js
+ *  KT_STATION_CITIES - Daggerfall the Bay's), and THE VOYAGE'S LINES THAT NAME IT, by station: the Bay's its own words, as
+ *  they always were; a station past the Bay's the same words of its own city. */
+export const ketchCity = (theatre = 0) => KT_STATION_CITIES[theatre] ?? KT_STATION_CITIES[0];
+export const KT_STATION_WORDS = Object.freeze({
+  sighted: (theatre = 0) => (theatre ? t('ketch.sightedAt', 'The Sky-Ketch has been sighted east of {city}.', { city: ketchCity(theatre) }) : KT_WORDS.sighted),
+  arrived: (theatre = 0) => (theatre ? t('ketch.arrivedAt', 'The Sky-Ketch has arrived over {city}. Its anchor-lift is down in the fields east of the city.', { city: ketchCity(theatre) }) : KT_WORDS.arrived),
+  lowered: (theatre = 0) => (theatre ? t('ketch.loweredAt', 'The anchor-lift sets you down in the fields outside {city}.', { city: ketchCity(theatre) }) : KT_WORDS.lowered),
+  away: (theatre = 0) => (theatre ? t('ketch.refuse.awayAt', 'The Ketch is not over {city} right now. It comes every ten hours.', { city: ketchCity(theatre) }) : KT_REFUSE_WORDS.away),
 });
 
 /** THE DOOR'S REFUSALS in the player's language: the relay's four (net/ketch/ketchLaw.js KT_TEXT.refuse, key for key -
@@ -104,12 +115,12 @@ export function ketchWhen(v, now) {
   return d >= 1 ? t('ketch.when.days', '{d}d {h}h', { d, h: h % 24 }) : h >= 1 ? t('ketch.when.hours', '{h}h {m}m', { h, m: m % 60 }) : t('ketch.when.minutes', '{m}m', { m });
 }
 /** What is left of her voyage's turn at `now` - sighted in, arrives in, over Daggerfall with what is left, weighing anchor -
- *  the map card's line under her phase. */
-export function ketchWhenLine(now) {
-  const v = ketchVoyageAt(now), w = ketchWhen(v, now);
+ *  the map card's line under her phase. KETCH-EVERYWHERE: station `theatre`'s (the Bay's by default), over its own city. */
+export function ketchWhenLine(now, theatre = 0) {
+  const v = ketchVoyageAt(now, theatre), w = ketchWhen(v, now);
   if (v.phase === 'away') return t('ketch.left.away', 'sighted in {w}', { w });
   if (v.phase === 'sighted') return t('ketch.left.sighted', 'arrives in {w}', { w });
-  if (v.phase === 'docked') return t('ketch.left.docked', 'over Daggerfall, {w} left', { w });
+  if (v.phase === 'docked') return theatre ? t('ketch.left.dockedAt', 'over {city}, {w} left', { city: ketchCity(theatre), w }) : t('ketch.left.docked', 'over Daggerfall, {w} left', { w });
   return t('ketch.left.departing', 'weighing anchor, {w}', { w });
 }
 /** Her phase as the map's card says it. */

@@ -163,13 +163,13 @@
   {
     "name": "PROF5b-svc-never-closed",
     "file": "server-account/src/market.js",
-    "old": "  if (dueAuctions.length) await closeAuctions(ctx, dueAuctions);",
+    "old": "  if (dueAuctions.length) await closeAuctions(ctx, dueAuctions, env);",
     "new": "  // closeAuctions",
     "tests": [
       "test/net/prof5b_service.test.js",
       "test/net/prof5b_client.test.js"
     ],
-    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+    "note": "Re-aimed by content (DOMAIN3): a read closes the auctions with the region law's week (`env`). GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
   {
     "name": "PROF5b-svc-outbid-kept",

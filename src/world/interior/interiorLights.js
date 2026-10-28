@@ -43,6 +43,31 @@ export const INTERIOR_LIGHT_DIR = (() => {
 
 export const INTERIOR_AMBIENT = Object.freeze([0.18, 0.18, 0.18]);
 export const INTERIOR_NIGHT_AMBIENT = Object.freeze([0.20, 0.18, 0.20]);
+/** PlayerAmbientLight.cs:29-30, InteriorAmbientLight_AmbientOnly and InteriorNightAmbientLight_AmbientOnly: the level DFU
+ *  lights a room by when its Lit Interiors setting (AmbientLitInteriors) hangs no lamp in it. */
+export const INTERIOR_AMBIENT_ONLY = Object.freeze([0.8, 0.8, 0.8]);
+export const INTERIOR_NIGHT_AMBIENT_ONLY = Object.freeze([0.5, 0.5, 0.5]);
+
+/**
+ * RPT1026-WORLD DARK-ROOM (two private reports, 2026-10-24 and 10-26: an inn with not one lamp lit; Westhead Moor's
+ * The Howling Mug, black from wall to wall): A ROOM DAGGERFALL LIGHTS WITH NOTHING IS LIT AS DFU LIGHTS
+ * A ROOM BY AMBIENT ALONE. The Howling Mug is MARKAA01.RMB's first room (classic and under Beautiful Cities alike): 27
+ * models and no archive-210 flat, so AddLight hangs no lamp in it and DFU draws it at InteriorAmbientLight's 0.18 - and
+ * on the Enhanced Lighting lane that is 0.027 in linear under an eye held to 1.2 (INTERIOR-DIM), black. BLOCKS.BSA has
+ * 177 such rooms of its 6,832 (5 taverns of 290, 30 weaponsmiths of 55, 16 banks of 31...). A room whose own
+ * lamps (`lamps`: the lamps the room was BUILT with - its archive-210 flats as the build hung them, scenes/interiorContext.js
+ * `roomLamps`) are none takes DFU's own ambient-only level for the hour (`ambient`, the clock's INTERIOR_AMBIENT or
+ * INTERIOR_NIGHT_AMBIENT); a room with a lamp keeps the clock's, to the bit. A departure from PlayerAmbientLight's
+ * InteriorAmbientLight for those rooms alone (Port-Ledger A, DARK-ROOM). Pure.
+ * AUDIT RPT1026 J1: never the room's LIVE list (`lights`) - a home's placed lamps join it and a lamp its owner takes out
+ * leaves it, so one candle set down in an unlit room put it back to 0.18 (dark but for the candle), and the caravan's
+ * lantern taken out lit the caravan at 0.8. Nothing a player does in a room moves the level it is lit at.
+ * @param {readonly number[]} ambient @param {ArrayLike<unknown> | null | undefined} lamps
+ */
+export function roomAmbient(ambient, lamps) {
+  if ((lamps?.length ?? 0) > 0) return ambient;
+  return ambient === INTERIOR_NIGHT_AMBIENT ? INTERIOR_NIGHT_AMBIENT_ONLY : INTERIOR_AMBIENT_ONLY;
+}
 
 // The DaggerfallLight [Interior] prefab's own light: the base every
 // record of AddLight's second switch starts from (and the value the

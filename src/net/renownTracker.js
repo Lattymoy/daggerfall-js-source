@@ -253,7 +253,7 @@ export function createRenownTracker({ report, leave = null, character, name = ()
     if (n > 0) {
       let r = null;
       try { r = region(); } catch { r = null; }
-      const k = Number.isSafeInteger(r) && r >= 0 && r <= 61 ? r : null;
+      const k = Number.isSafeInteger(r) && r >= 0 && r <= 70 ? r : null;   // WW7-3: a province's region past the Bay too (WW-R's 62-70)
       pend.set(k, (pend.get(k) ?? 0) + n);
     }
     return n;

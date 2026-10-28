@@ -18,6 +18,10 @@
 //     main thread reads MAPS.BSA and BLOCKS.BSA, this thread cannot.
 //     ETHER-DEEP: `ether` the Eltheric Ocean's places' rects (etherWatersBake.js etherPlaceRects) when it stands - its
 //     bake is built beside the Bay's, over the sea composed on this thread's reader (as the terrain worker composes it).
+//     TAMRIEL-DEEP: `continent` the land past the Bay streams - room for the continent's bake beside the Bay's.
+//   {t: 'tamriel', trace, fit} - TAMRIEL-DEEP: the trace and the fit landed (or went: trace null); this thread installs
+//     its own copies (as the terrain worker does) and sets the continent's bake over the ground composed on its reader;
+//     held until the bake is in.
 //   {t: 'pixel', id, job, centre?} - a pixel to promote (deepWatersPixel.js
 //     buildDeepWatersPixel's job); held until the bake is in. `centre`
 //     ([px, py], the player's pixel) bounds this thread's plane caches.
@@ -36,9 +40,14 @@ import { cachedBake, bakeCacheKey, fnv1a, rectsFingerprint, rectsLookup } from '
 import { buildDeepWatersPixel, deepWatersPixelTransfers } from './deepWatersPixel.js';
 import { worldBakes } from '../etherWatersBake.js';   // ETHER-DEEP
 import { etherWoods } from '../ethericSea.js';
+import { TamrielWatersBake } from '../tamrielWatersBake.js';   // TAMRIEL-DEEP
+import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';
+import { setTamrielTrace } from '../tamriel/tamrielLand.js';
+import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 
 
 let bake = null;            // this thread's DeepWatersBake, once built
+let reader = null;          // TAMRIEL-DEEP: the WOODS reader it was built over, the continent's ground composed on it
 let failed = null;          // the build's error message, when it failed
 const waiting = [];         // pixel messages that arrived before the bake
 
@@ -46,6 +55,13 @@ globalThis.onmessage = (ev) => { handle(ev.data ?? {}); };
 
 async function handle(m) {
   if (m.t === 'build') return build(m);
+  if (m.t === 'tamriel') {
+    if (!bake) { if (!failed) waiting.push(m); return; }
+    setTamrielTrace(m.trace ?? null);
+    setTamrielFit(m.fit ?? null);
+    dropGroundCache();
+    return bake.setTamriel?.(m.trace ? new TamrielWatersBake({ woods: groundWoods(reader), bay: bake.bay }) : null);
+  }
   if (m.t === 'pixel') {
     if (bake) return pixel(m);
     if (failed) return globalThis.postMessage({ t: 'pixel', id: m.id, error: failed });
@@ -62,7 +78,8 @@ async function build(m) {
     const locationRectAt = rectsLookup(rows);
     const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt }) });
     if (!g) throw new Error('deep waters bake produced nothing');
-    bake = worldBakes(new DeepWatersBake({ woods, global: g, locationRectAt }), { woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null });
+    reader = woods;
+    bake = worldBakes(new DeepWatersBake({ woods, global: g, locationRectAt }), { woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null, continent: !!m.continent });
     // the main thread's copy crosses; this thread's arrays stay behind for the pixels
     const record = { state: g.state.slice(), classes: g.classes.slice(), partialIndex: g.partialIndex.slice(), partialBits: g.partialBits.slice(), stats: { ...g.stats, cached: !!g.cached } };
     globalThis.postMessage({ t: 'built', record }, [record.state.buffer, record.classes.buffer, record.partialIndex.buffer, record.partialBits.buffer]);

@@ -401,13 +401,13 @@
   {
     "name": "AUDIT-SCALE-LANED-auctions-one-page",
     "file": "server-account/src/cron.js",
-    "old": "  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX, ctx.budget)],",
-    "new": "  ['auctions', (ctx) => closeAuctions(ctx)],",
+    "old": "  ['auctions', (ctx, env) => rounds(() => closeAuctions(ctx, null, env), SETTLE_MAX, ctx.budget)],",
+    "new": "  ['auctions', (ctx, env) => closeAuctions(ctx, null, env)],",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
     ],
-    "note": "lane D survivor, re-aimed: one page a minute, a backlog never caught up"
+    "note": "Re-aimed by content (DOMAIN3): the clock hands the auctions the region law's week (`env`). lane D survivor, re-aimed: one page a minute, a backlog never caught up"
   },
   {
     "name": "AUDIT-SCALE-LANED-hb-board-falsy-unanswered",

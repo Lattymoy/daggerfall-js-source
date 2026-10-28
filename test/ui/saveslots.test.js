@@ -174,7 +174,7 @@ test('SAV4: a failed NEW save leaves no orphan; a failed overwrite keeps the old
 });
 
 test('SAV4: the host wiring source pins - per-character quickslots, the boot arm loads most recent', () => {
-  const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');
   // Save(name, saveName) with the QuickSave default - F9 and the slot
   // window's saveAs share the ONE producer.
   assert.match(world, /function worldQuickSave\(saveName = QUICK_SAVE_NAME, \{ quiet = false, sink = null \} = \{\}\)/);   // REALM P0.5: and the checkpoint's quiet; P1.3: and the realm's sink
@@ -253,6 +253,7 @@ import {
   NAME_MAX_CHARS, RENAME_MAX_CHARS,
 } from '../../src/ui/saveWindow.js';
 import { MB_BUTTONS } from '../../src/ui/messageBox.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - its save is scenes/worldQuickSave.js's
 
 // The window reads the module store; give it a real localStorage.
 function withStorage(entries, fn) {

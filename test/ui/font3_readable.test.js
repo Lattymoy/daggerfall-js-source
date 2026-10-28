@@ -15,6 +15,7 @@ import { PLUS_CSS } from '../../src/ui/enhanced/enhancedPlusStyle.js';
 import { DEATH_CSS } from '../../src/ui/enhanced/enhancedDeath.js';
 import { TEXT_LAYER_CSS, TEXT_LAYER_FIT, drawEnhancedTextLayer, hideEnhancedTextLayer } from '../../src/ui/enhanced/enhancedTextLayer.js';
 import { PrisonScreenWindow, ENHANCED_PRISON_DAYS_ID } from '../../src/ui/prisonScreen.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ruleOf = (css, sel) => {
@@ -162,7 +163,7 @@ test('FONT3: a draw list\'s words - one layer per id, a line per text at its own
   hideEnhancedTextLayer('t-layer');
   assert.equal(root.style.display, 'none', 'the window\'s dispose takes the layer down');
   // world.js: the map's list names the layer, the window's dispose hides it
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT, BAY-LEFT-MAPS): the draw list is scenes/csaMapHost.js's - the host read whole
   assert.match(world, /if \(draws\) csaDrawList\(draws, CSA_MAP_TEXT_LAYER\);/);
   assert.match(world, /dispose\(\) \{ if \(_csaMapWindow === win\) _csaMapWindow = null; hideEnhancedTextLayer\(CSA_MAP_TEXT_LAYER\); \}/);
   assert.match(world, /const words = layerId && isEnhanced\(\) && typeof document !== 'undefined' \? \[\] : null;/);

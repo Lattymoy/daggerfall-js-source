@@ -444,7 +444,7 @@ test('AUDIT BR5: the drawn words no producer exports - the profession pages, the
   assert.equal(owed.size, OWED.length, 'and every owed line is still where it was read - the walk still sees the files');
   // A-2, A-4 and A-5 as they read now: the potion maker is the classic one, the map joins the BAY's own coast (not
   // "the classic coast", which said nothing), and the cries are the ORIGINAL game's (not "the game", which is this one)
-  assert.ok(read('src/ui/professions/profPages.js').includes("A potion maker anywhere else, such as a temple\\'s, still works, but what it mixes earns no Provisioning experience.';"), 'A-2');   // PIN MOVED (POTION-DOOR): the maker brews at a station now - the one anywhere else says it earns nothing, the original game unnamed
+  assert.ok(read('src/ui/professions/profPages.js').includes("Elsewhere, a potion maker earns no Provisioning experience.';"), 'A-2');   // PIN MOVED (POTION-DOOR): the maker brews at a station now - the one anywhere else says it earns nothing, the original game unnamed; PIN MOVED (PLAIN-TEXT)
   const { FEATURES } = await import('../../src/systems/features.js');
   const note = (id) => FEATURES.find((f) => f.id === id)?.note ?? '';
   assert.match(note('tamriel-map'), /joined to the Bay’s own coast\./, 'A-4');
@@ -461,7 +461,8 @@ test('BR5: the keys other systems hold keep their spelling, and what moving each
   assert.match(read('src/net/accountClient.js'), /export const DEFAULT_ACCOUNT_SERVICE = 'https:\/\/daggerfall-accounts\.mackcothran\.workers\.dev';/,
     'the account service\'s - the same');
   assert.match(read('server/wrangler.toml'), /^name = "daggerfall-online"$/m, 'the relay Worker\'s name IS its hostname');
-  assert.match(read('server-account/src/patreon.js'), /salt: enc\.encode\('daggerfall-accounts patreon-link'\)/,
+  // PIN MOVED (SHOP): the sealing moved to sealed.js, shared with the shop - the salt is still Patreon's own constant
+  assert.match(read('server-account/src/patreon.js'), /const PATREON_SEAL_SALT = 'daggerfall-accounts patreon-link';/,
     'a key-derivation salt - change it and every linked Patreon\'s stored secret stops opening');
   assert.match(read('.github/workflows/account-deploy.yml'), /DB_NAME: daggerfall-accounts/, 'the D1 database, by its name');
   assert.ok(read('.github/FUNDING.yml').includes('ko_fi: daggerfallonline'), 'the Ko-fi page is where it is - an account outside the tree, as the Patreon is');

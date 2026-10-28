@@ -560,7 +560,9 @@ test('AUDIT FONT F5/F6: with the enhanced hook the layer AND its naming field ar
     const abc = h.el.children.find((c) => c.textContent === 'abc')
       ?? h.el.children.flatMap((c) => c.children ?? []).find((c) => c.textContent === 'abc');
     abc.fire('touchstart', { preventDefault() {}, stopPropagation() {} });
-    const field = h.el.children.find((c) => c.style?.cssText?.includes('placeholder') || c.type === 'text');
+    // PIN MOVED (AUDIT RPT1026 L1): the field is the page's own (document.body), over the window that raised it - it was
+    // the layer's child, under every DOM window
+    const field = globalThis.document.body.children.find((c) => c.style?.cssText?.includes('placeholder') || c.type === 'text');
     return { root: h.el.style.cssText, entry: field?.style?.cssText ?? '' };
   });
   const PIXEL = "font-family: 'Pixelify Five', 'Pixelify Sans', monospace";

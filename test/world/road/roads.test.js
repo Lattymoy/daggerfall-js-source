@@ -210,7 +210,8 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   const fs = await import('node:fs');
   const worker = fs.readFileSync('src/world/terrain/terrainGenWorker.js', 'utf8');
   assert.match(worker, /m\.t === 'roads'/, 'the worker accepts the network');
-  assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads, sites, climates \}\)/, 'and hands it to the kernel on every job');   // LANDFORM4: beside the sites
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
+  assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads, sites, beyond, climates \}\)/, 'and hands it to the kernel on every job');   // LANDFORM4: beside the sites
   const client = fs.readFileSync('src/world/terrain/terrainGenClient.js', 'utf8');
   assert.match(client, /setRoads\(settlements, onStats = null, switches = null\)/, 'the client has the door (ROADS 24: the switches ride it)');
   assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 6,   // LANDFORM1-3: and the three paths a promotion's grid takes here - its ghost rows are cut along the same network
@@ -280,8 +281,8 @@ test('AUDIT ROADS F3: the heuristic is scaled by the road discount, so A* still 
   // steps. So the behaviour above is a regression guard, not the proof.
   // The guarantee is pinned at the source: h carries the discount.
   const src = (await import('node:fs')).readFileSync('src/world/road/roadNetwork.js', 'utf8');
-  assert.match(src, /Math\.hypot\(x - to\.x, y - to\.y\) \* d\.roadDiscount/,
-    'h is scaled by the cheapest step, which is what admissibility requires');
+  assert.match(src, /const hScale = d\.roadDiscount \* \(terrain \? Math\.min\(1, terrain\.d\.shoreCost\) : 1\);\n\s+const h = \(x, y\) => Math\.hypot\(x - to\.x, y - to\.y\) \* hScale;/,
+    'h is scaled by the cheapest step, which is what admissibility requires - PIN MOVED (VOYAGER1): and by the shore\'s price on the land\'s law');
 });
 
 // ROADS 22: THE PAINTER DRAWS NO RING. The mod paints none - its towns
@@ -400,8 +401,11 @@ test('ROADS 25: the network is traced into chains, simplified, rounded and lifte
   const ink = fs.readFileSync('src/ui/ink/inkMap.js', 'utf8');
   assert.match(ink, /if \(!net \|\| net\.source !== 'basic-roads'\) return \{ roads: \[\], tracks: \[\] \};/, 'only the mod\'s arrays are inked');
   assert.match(ink, /traceChains\(mask, width, height\)\.map\(\(c\) => roundCorners\(simplifyChain\(centre\(c\)\)\)\)/, 'traced, simplified, rounded (the bounded cut) - the ROADS 25 chain');
-  assert.match(ink, /stroke\(model\.roads, band === 'far' \? 1 : 1\.5, PEN\.line\)/, 'the roads are LINES in the pen');
-  assert.match(ink, /stroke\(model\.tracks, 1, PEN\.soft, \[2, 3\]\)/, 'the tracks dotted and softer under them');
+  // PIN MOVED (TESA13): the two strokes are inkMap's strokePaths now - the Bay's ink and the continent's one home
+  assert.match(ink, /strokePaths\(stroke, model, band, opts\.filters \?\? \{\}\);/, 'the Bay\'s paint hands its model');
+  // PIN MOVED (AUDIT TESA II M10): a kind's pen is inkMap pathPen's, strokePaths' and the past-Bay paint's one law
+  assert.match(ink, /if \(kind === 'roads'\) return \{ width: band === 'far' \? 1 : 1\.5, style: PEN\.line, dash: null \};/, 'the roads are LINES in the pen');
+  assert.match(ink, /: \{ width: 1, style: PEN\.soft, dash: \[2, 3\] \};/, 'the tracks dotted and softer under them');   // PIN MOVED (AUDIT TESA II M10): pathPen
   // the model's own order of the four classes is still the law the
   // retired renderer read: water under the tracks, tracks under the trunk
   assert.deepEqual(Object.keys(roadModel({}, ctx)), ['stream', 'river', 'track', 'trunk']);
@@ -535,8 +539,8 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   // READS them at paint time - a flag TRUE hides its layer, the classic
   // inversion (AUDIT 47 A1's law: read from the store, not assumed).
   const ink = (await import('node:fs')).readFileSync('src/ui/ink/inkMap.js', 'utf8');
-  assert.match(ink, /if \(!opts\.filters\?\.roads\) stroke\(model\.roads/, 'a hidden roads flag is not inked');
-  assert.match(ink, /if \(band !== 'far' && !opts\.filters\?\.tracks\) stroke\(model\.tracks/, 'the tracks likewise - and never at the far band');
+  assert.match(ink, /for \(const kind of PATH_KINDS\) \{\n\s+if \(filters\[kind\]\) continue;/, 'a hidden roads flag is not inked');   // PIN MOVED (TESA13): inkMap strokePaths; PIN MOVED (AUDIT TESA II M10): a kind at a time
+  assert.match(ink, /return band === 'far' \? \{ width: FAR_TRACK_PEN, style: PEN\.soft, dash: null \} : \{ width: 1, style: PEN\.soft, dash: \[2, 3\] \};/, 'the tracks likewise - PIN MOVED (TESA15): a hair at the far band; PIN MOVED (AUDIT TESA II M10): pathPen');
   // MAP-FIELD2: `names` is a literal null now (Mac: the town names are
   // clutter) - what this pin is about is the FILTERS being the live
   // store object, which is unchanged.
@@ -755,7 +759,7 @@ test('ROADS 21: the web\u2019s two real-map rules, pinned at the source with the
   const src = (await import('node:fs')).readFileSync('src/world/road/roadNetwork.js', 'utf8');
   assert.match(src, /for \(const t of trackNodes\) trackBlocked\[t\.y \* MAP_WIDTH \+ t\.x\] = 0;/, 'a track may cross a track-grade pixel');
   assert.match(src, /for \(const t of trackNodes\) trackTowns\[t\.y \* MAP_WIDTH \+ t\.x\] = 1;/, 'and a village is one of the web\u2019s towns');
-  assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side');
+  assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns, terrain,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side (PIN MOVED (VOYAGER1): on the land\u2019s law past the Bay)');
 });
 
 // ROADS 22: HIS NETWORK, 1:1. The four arrays load byte-exact from the
@@ -862,7 +866,9 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   // FIX-C: the arrival MARKS the sweep; the frame RUNS it (between builds), and the sweep re-queues what it tears down
   assert.match(world, /function rebuildRoadless\(\) \{ roadsSweepDue = true; \}/);
   // SPAWN-ROADS: the sweep's first act takes back crossed provisional ruins, one line more before the rebuild
-  assert.match(world, /function sweepRoadless\(\) \{[\s\S]{0,520}for \(const k of again\) destroyPixel\(k\.px, k\.py, \{ collectLoose: false \}\);\s*\n\s*queue\.push\(\.\.\.again\.sort\(/);
+  // PIN MOVED (IC-SWAP-BEHIND): built again through the swap - behind its standing view, or torn down and re-queued
+  // (scenes/swapBehind.js rebuild; test/scenes/fixc_firstStart.test.js, test/scenes/swapbehind.test.js)
+  assert.match(world, /function sweepRoadless\(\) \{[\s\S]{0,520}if \(!again\.length\) return;\n\s*swap\.rebuild\(again\);/);
   assert.match(world, /terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}[^\n]*rebuildRoadless\(\); return; \}/, 'the mod-data path');
   assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);\s*\n\s*rebuildRoadless\(\);/, 'our own network');
   // A pixel IN FLIGHT when the network landed arrives roadless after the
@@ -872,7 +878,8 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   // camera, the teleport landing) never receives undefined. Once: the
   // worker's message order guarantees the second paint has the network.
   // AUDIT 68 S22: the teardown is the FIRST paint's alone - the second is kept as painted, not torn down and then read
-  assert.match(world, /if \(!withRoads && terrainGen\.hasRoads\) \{\s*\n\s*if \(!roadsRetry\) \{\s*\n\s*destroyPixel\(px, py, \{ collectLoose: false \}\);\s*\n\s*return buildPixelNow\(px, py, \{ roadsRetry: true \}\);\s*\n\s*\}\s*\n\s*console\.warn\([^\n]*kept as painted[^\n]*\);\s*\n\s*\}/);
+  // PIN MOVED (IC-SWAP-BEHIND): the first paint goes back through the swap's mark - built again behind the roadless view
+  assert.match(world, /if \(!withRoads && terrainGen\.hasRoads\) \{\s*\n\s*if \(!roadsRetry\) \{\s*\n\s*swap\.mark\(px, py\);[^\n]*\n\s*return buildPixelNow\(px, py, \{ roadsRetry: true \}\);\s*\n\s*\}\s*\n\s*console\.warn\([^\n]*kept as painted[^\n]*\);\s*\n\s*\}/);
   assert.match(world, /async function buildPixelNow\(px, py, \{ roadsRetry = false \} = \{\}\) \{/);
   assert.doesNotMatch(world, /terrainGen\.hasRoads\) \{ destroyPixel\(px, py, \{ collectLoose: false \}\); return; \}/, 'no path in the builder resolves the player\u2019s pixel to nothing');
   assert.match(read('src/world/terrain/terrainGenClient.js'), /get hasRoads\(\) \{ return !!this\._roads \|\| !!this\._settlements; \}/);

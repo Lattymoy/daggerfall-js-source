@@ -662,7 +662,7 @@ a script. What they found, and what became of it:
 
 | # | found | now |
 |---|---|---|
-| R1 | **a share stayed after its fighter left**: twenty throwaway accounts that said `in` and went left the Warden unkillable before the Wrath for the ten who stayed (the only release was a full court's idle seat) | a fighter absent `ABSENT_RETIRE_MS` (30 s) takes its share out of his health at the fraction he stands at, and brings it back at the fraction he stands at when it returns; its seat, blows and claim are kept (`retireShare`/`restoreShare`) |
+| R1 | **a share stayed after its fighter left**: twenty throwaway accounts that said `in` and went left the Warden unkillable before the Wrath for the ten who stayed (the only release was a full court's idle seat) | a fighter absent `ABSENT_RETIRE_MS` (30 s) takes its share out of his health at the fraction he stands at, and brings it back at the fraction he stands at when it returns; its seat, blows and claim are kept (`retireShare`/`restoreShare`). RPT1026-FIGHTS RETIRED-BLOW (2026-10-26): and a blow is a return - one struck before the beat saw its fighter back brought its share back first (`gateBrain.js` applyHit, the Brass Remnant's `sighted`); a retired fighter's blow had landed with its share out |
 | R2 | one beat stood, or a blow of 1e-300, held a seat for the day - 256 accounts held the court | a seat is kept by a blow worth RECEIPT_SHARE of its share, or `SEAT_KEEP_MS` (30 s) stood |
 | R3 | a fighter against the court's rim stood 6.2 m past his body - out of the cleave's 6, inside the charge's 8 - and he struck nothing all phase one | the cleave's range is 7 (its cone of 9 always reached) |
 | R4 | "stood half the fight" was half the wall's time since the first `in`, a court nobody stood in counted | half of `liveMs`, the time a living fighter stood in the court |
@@ -2497,8 +2497,23 @@ the same held places, the same doors asking it (`scenes/world.js` `visiblePeers`
 - NOTHING OF THEIRS STANDS WITHOUT THEM (AUDIT CROWD-WIDE B1, B3): a player the count leaves undrawn is hidden from the
   cart pool and the boat pool as a concealed one is (`hcc.setPeerLook`, `csaPeers.setPeerLook` answer 'hidden' - their
   team and wagon, their boat, kept in the world parked and moored as a hidden owner's are), and their torch lights
-  nothing (`peerTorchLights`). Nor are they handed a page (`pageReaders`, AUDIT CROWD-WIDE B5). Their companions are the
-  one thing left standing - see the audit's open item.
+  nothing (`peerTorchLights`). Nor are they handed a page (`pageReaders`, AUDIT CROWD-WIDE B5). Their companions were the
+  one thing left standing (the audit's open item) until CROWD-KIN, below.
+- THEIR OWN FOES GO WITH THEM (RPT1026-EVENTS CROWD-KIN, 2026-10-26; a private report: the count hid other players and
+  left their revenants standing). A player's revenants, their
+  bands and their companions are puppets of a foe pool, stood by the owner's screen about the owner - and a crowd of
+  forty cut to twelve still stood every revenant the forty brought, walking an empty ground. Every foe pool's one draw
+  question asks the page's one crowd now (`net/gate/gateCrowd.js` `crowdCutsPeer` - the crowd `createGateCrowd` made last,
+  the world host's; no host grew): one of a cut player's own (`crowdKinHidden` - its owner's word made it a revenant
+  (`nm`), a band's follower (`rt`) or a companion (`cp`)) is HIDDEN (`systems/combatVisuals.js` foeDraw, which the open
+  world's, a building's, a dungeon's and the watch's pools all ask where they draw) - no sprite, no body - and has no box
+  for the ray (`player/activate.js` foeAabb, which the plaque's sweep and the press's both read), so it is neither named
+  nor pressed. Never one on ME (`_pupMine`: its blow is mine to take, and nothing that strikes me stands unseen), and never
+  the world's foes a peer's screen happens to run (a cell's encounter, a camp, a raid) - those are everyone's. Pinned by
+  `test/scenes/rpt1026_events_crowdkin.test.js` (3: the crowd's word; the real open-world pool over the owner's own
+  records - the revenant, its band and the companion hidden and unpressable, the plain foe drawn, the revenant on me
+  drawn, all drawn again with the owner; a dungeon's by its records' shape, the draw question and the box);
+  `tools/mutants/rpt1026_events.json` (CROWD-KIN, 8).
 - WHO SHOWS (AUDIT CROWD-WIDE B4): `shows(id)` is false only for a player the last cut left out by the count - one it never
   saw (below deck, filtered before it; not yet in the room) is not its to answer for, as PEER-RANGE's is not. Before the
   audit it answered false for every player not handed to it wherever it ran, so a struck player below deck went unheard
@@ -3141,6 +3156,17 @@ before this, as recorded (AUDWBX2-M3-the-mark-handed-over, section 22's AUDIT GA
 section 29), and WB3b-a-kill-said-twice, open since section 29: a court's own `fell` says no kill, so only the hub's
 word said again (every hello hears it while the gate holds) reaches the link's guard - `wb3b_gate_arena` now says it
 twice (PIN MOVED).
+
+## 31. A gate in every province (WW-GATES-EVERYWHERE, 2026-10-26)
+
+The owner, after the audit "no system left behind in the Bay": *"Every single thing here needs to be addressed. No
+exceptions."* The lanes WW2 built for every theatre stand now past the Bay: the Bay's and the eight provinces' (`net/wire.js`
+GATE_LANES_OPEN 0 to 8; Cyrodiil's, the open zone's, never). A province's gate has everything the Bay's has - its omen
+on its own card, its ring, its stone and plaque, its court of courts, its Warden, its marks and portents, its receipts,
+its rite, the herald's posts once two accounts agree where it stands - and its kill counts at its own province's seats
+(`scenes/gate/gateSeat.js`); its court is laid in its province (the site's region, WW-R's). The provinces' scans are made
+in the page's idle moments, a lane at a time (1,741 ms in one task before; the longest slice 42 ms). The record:
+`03-World/World-Wide.md` WW-GATES-EVERYWHERE.
 
 ## Shipped
 

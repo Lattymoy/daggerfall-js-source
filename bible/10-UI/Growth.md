@@ -116,8 +116,9 @@ spell, the martial law's weapons and technique, one shape). Pure model (`specGui
   order, and within a state the nearest first - the points its pair still owes 100 - then the laws' order.
 - **The state's line** names the skill when only one still needs it ("Raise Axe to 100 and master it", "Master
   Alteration on the Master Skills page"), "both" only when both do (LANE1-12); with Master Skills off, a pair with nothing
-  left to climb says to turn it on (LANE1-2). The chosen path says when its powers are off - Master Skills off,
-  mentoring, a refereed duel, the beast for a martial path (`pathAwake`, `martialAwake` and the powers' gates; LANE1-3).
+  left to climb says to turn it on (LANE1-2). The chosen path says when its powers are off - Master Skills off, a
+  refereed duel, the beast for a martial path (`pathAwake`, `martialAwake` and the powers' gates; LANE1-3) - and, while
+  mentoring, the share they act at (MENTOR2, `ui/growth/specGuide.js` chosenLine).
   A skill past 100 shows the value the game reads (`masterCappedSkill`: 100 while Master Skills is off).
 - **What opens it** (the detail's Requirements): each skill of the pair in its own words (`skillStandText`) - mastered,
   ready to master in Master Skills, its climb ("76 of 100, then master it"), no mastery slots left in its group, or not
@@ -359,7 +360,7 @@ The Discord's #suggestions, 2026-10-19 (Brother Frank: *"I'd very much like it i
 one weapon skill"*), through Mac; asked, Mac: *"Paid skill swap"*. Record: `01-Overview/bugs/Field-Bugs-2026-10-19b.md`.
 
 - **The law** (`systems/skillSwap.js`): one class skill the character has not mastered out, one miscellaneous skill in,
-  in the same group (the 2/2/1 slots stand); a mastered skill never leaves; the values stay; the career becomes the
+  in the same group (the 3/2/1 slots stand); a mastered skill never leaves; the values stay; the career becomes the
   character's own copy, saved whole and marked `swapped`, so an heir keeps it (`legacy/family.js` careerFields, AUDIT
   SUGGESTIONS-1019 L5-4) and its household still wears the class. The level and the progress to the next stand, and a
   skill's training leaves with it (SWAP-CYCLE, `01-Overview/bugs/Field-Bugs-2026-10-20g.md`): the stored current sum is

@@ -111,33 +111,33 @@
   },
   {
     "name": "PL-one-key-for-both-kinds",
-    "file": "server-account/src/patreon.js",
-    "old": "salt: enc.encode('daggerfall-accounts patreon-link'), info: enc.encode(kind) },",
-    "new": "salt: enc.encode('daggerfall-accounts patreon-link'), info: enc.encode('state') },",
+    "file": "server-account/src/sealed.js",
+    "old": "salt: enc.encode(salt), info: enc.encode(kind) }",
+    "new": "salt: enc.encode(salt), info: enc.encode('state') }",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
-    "note": "One key for both kinds: a state - which the account read hands every registered player - opens as a confirm's ticket."
+    "note": "One key for both kinds: a state - which the account read hands every registered player - opens as a confirm's ticket. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "PL-expiry-not-read",
-    "file": "server-account/src/patreon.js",
+    "file": "server-account/src/sealed.js",
     "old": "!Number.isSafeInteger(claims.x) || claims.x < nowS) return null;",
     "new": "!Number.isSafeInteger(claims.x) || claims.x < 0) return null;",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
-    "note": "A link or a ticket good for ever."
+    "note": "A link or a ticket good for ever. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "PL-account-not-required",
-    "file": "server-account/src/patreon.js",
-    "old": "  if (typeof claims.p !== 'string' || !claims.p) return null;",
+    "file": "server-account/src/sealed.js",
+    "old": "  if (typeof claims.p !== 'string' || !claims.p) return null;\n",
     "new": "",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
-    "note": "A sealed value naming no account opened as one."
+    "note": "A sealed value naming no account opened as one. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "PL-missing-status-null",
@@ -352,12 +352,12 @@
   {
     "name": "PL-policy-dropped",
     "file": "server-account/src/patreon.js",
-    "old": "      'content-security-policy': \"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'\",\n",
+    "old": "      'content-security-policy': `default-src 'none'; style-src 'unsafe-inline'; form-action 'self'${to}; frame-ancestors 'none'; base-uri 'none'`,\n",
     "new": "",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
-    "note": "The confirm page framed, its button clicked under another page."
+    "note": "The confirm page framed, its button clicked under another page. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "PL-refresh-never-reads",

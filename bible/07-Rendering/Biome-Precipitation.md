@@ -44,7 +44,9 @@ was a map pixel's straight edge. The classic lane is DFU's, 1:1, and untouched.
 **The law's map** (`systems/weather/airGround.js` `lawAirGround`, handed by the host with `setAirGround`; AIR-1): CLIMATE.PAK
 as the file holds it (`undilated` - the coastal dilation is a texture repair, and its edge drew a snow line in the sea),
 the continent past the Bay and the Eltheric Ocean's own composition, whatever the client's own rows - online every client
-reads one air. It answers the drawn ground's mean (`groundAt`) and its top (`topAt`, the snowpack's ceiling).
+reads one air. It answers the drawn ground's mean (`groundAt`) and its top (`topAt`, the snowpack's ceiling). Both are
+kept a pixel and dropped when the zones' stamp moves (the trace or the relief landing after the boot, a fit), and the
+snowpack drops its points and systems with them (`snowpack.js` `fresh` - AUDIT TESA II G3, `03-World/Tamriel-Biomes.md`).
 
 **The blend.** Each pixel's air (`pixelAir`) is its climate's row - a sea pixel's the nearest land's within
 `MARITIME.reach` - blended toward the Ocean's by its MARITIME SHARE: a half at the shoreline, none 12 pixels inland, all

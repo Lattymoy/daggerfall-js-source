@@ -374,7 +374,7 @@ test('LW15 the host\'s seams: the region\'s patrons read online alone, now and t
   assert.match(w, /patronsOf: \(\) => _livingPatrons\.get\(livingTown\.mapId >>> 0\) \?\? null,/);
   assert.match(w, /patronName: \(pt\) => livingPatronName\(pt\),/);
   const lt = readFileSync(new URL('../../../src/systems/livingWorld/livingTown.js', import.meta.url), 'utf8');
-  assert.match(lt, /plan = dayPlan\(res, this\.places, day, \{ mpm: this\.o\.mpm, away, watch: this\._watchSize, bandOf: this\._bandOf, \.\.\.this\._patronsFor\(res, day\) \}\);/);   // PIN MOVED (the merge): CHAP5b's bands beside it
+  assert.match(lt, /plan = dayPlan\(res, P, day, \{ mpm: this\.o\.mpm, away, watch: this\._watchSize, bandOf: this\._bandOf, \.\.\.this\._patronsFor\(res, day, P\) \}\);/);   // PIN MOVED (the merge): CHAP5b's bands beside it; PIN MOVED (IC-GRAND, a town of quarters): the places its home's quarter's (`P`, the town's own in a Bay town)
   assert.match(lt, /\(e\.pb !== undefined && e\.pv !== this\._patronV\(\) && !this\._patronsKept\(e, res, day\)\)\)/);   // PIN MOVED (AUDIT LW-II-2 W1/W5): asked of a plan that read the word alone, made again where what it read moved
   const m = readFileSync(new URL('../../../server-account/src/market.js', import.meta.url), 'utf8');
   // PIN MOVED (AUDIT LW-II P10): each read hands the reckoning the service's env - its secret, the draw's

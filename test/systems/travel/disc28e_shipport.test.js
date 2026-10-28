@@ -251,9 +251,10 @@ test('SHIP-SAIL: the passage is priced by the map\'s own popup, which prices its
   // partyTripFare itself, mounted over the real popup: the gate's two halves told apart (AUDIT 28e) - coins short of the
   // inns' nights while the purse holds the fare, or the purse short of the fare.
   const purse = { gold: 1000, pieces: 1000 };
-  const tripFare = new Function('d', `const { TravelPopUpWindow, travelFareDeps, playerTravelOrigin, maps, travelLocationSummaryAt, mapDict, guildFastTravel, playerEntity, diseaseCount, poisonCount } = d;\n${fnOf('  function partyTripFare(to, opts) {')}\nreturn partyTripFare;`)({
+  // PIN MOVED (AUDIT-TESA A2-3): its summary asked of a Bay pixel alone - the harness on the Bay
+  const tripFare = new Function('d', `const { TravelPopUpWindow, travelFareDeps, playerTravelOrigin, maps, travelLocationSummaryAt, mapDict, guildFastTravel, playerEntity, diseaseCount, poisonCount, onTheBay } = d;\n${fnOf('  function partyTripFare(to, opts) {')}\nreturn partyTripFare;`)({
     TravelPopUpWindow, playerTravelOrigin: () => DAGGERFALL.pixel, maps: { getClimateIndex: (x) => strait(x) }, mapDict: null,
-    travelLocationSummaryAt: () => ({ mapID: ALDINGHOPE.mapId }), guildFastTravel: (_, m) => m, playerEntity: {}, diseaseCount: () => 0, poisonCount: () => 0,
+    travelLocationSummaryAt: () => ({ mapID: ALDINGHOPE.mapId }), guildFastTravel: (_, m) => m, playerEntity: {}, diseaseCount: () => 0, poisonCount: () => 0, onTheBay: () => true,
     travelFareDeps: () => ({ travelOptions: () => ({ settings }), currentLocationMapId: () => DAGGERFALL.mapId, isOnShip: () => false, gold: () => purse.gold, goldPieces: () => purse.pieces }),
   });
   const inns = { speedCautious: true, sleepModeInn: true, travelShip: false };

@@ -141,12 +141,15 @@ const quiet = (fn) => { const warn = console.warn; console.warn = () => {}; retu
  *  Discord says. The director's record is seeded (`rec`, else a rise a minute off) and its own beat runs as it does. */
 async function withHerald(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD_ROLE: ROLE, SD_DISCORD_ROLE: OWN }, rec = null, herald = null } = {}) {
   const r = fakeRoom(SOCIAL_ROOM);
-  Object.assign(r.env, env);
+  Object.assign(r.env, { SD_COLLAPSE: 'on' }, env);   // SD-PARTY (PIN MOVED): the fall a Hollow's collapse, the hub's setting on
   r.room._heraldBeat = async () => {}; r.room._heraldNextAt = () => null;
   r.room._serpentHeraldBeat = async () => {}; r.room._serpentHeraldArm = async () => {};
   const realNow = Date.now, realFetch = globalThis.fetch;
   let clock = T0;
   r.store.set(SD_KEY, rec ?? { s: 0, ph: 'gone', r: -1, at: T0, until: T0, next: T0 + 60_000 });
+  // PIN MOVED (WW5): the provinces' lanes rest a year - this is the Bay's lane's herald alone (each lane's own posts, its
+  // province named, are test/world/worldWide/ww5_hollows.test.js's)
+  for (let lane = 1; lane <= 8; lane++) r.store.set(`${SD_KEY}:${lane}`, { s: lane * 10_000_000, ph: 'gone', r: -1, at: T0, until: T0, next: T0 + 365 * 86_400_000 });
   if (herald) r.store.set('sdherald', herald);
   const posts = [];
   const discord = { answer: () => ({ ok: true, status: 204 }) };

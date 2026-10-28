@@ -61,7 +61,8 @@ test('COST-1 the law: a region\'s channel has no shard unless the relay names it
   assert.equal(H.shardOf('chat:world', 'acct-x'), H.hubOfSubject('acct-x'), 'the hub keeps its sixteen whatever the var');
   assert.equal(H.shardOf('chat:world', 'acct-x', H.regionsSharded('all')), H.hubOfSubject('acct-x'));
   assert.deepEqual([...H.regionsSharded(' 5, 23 ,x,62,05,-1,5.5,')].sort((a, b) => a - b), [5, 23], 'region numbers alone, written as the map writes them');
-  assert.equal(H.regionsSharded('all').size, H.REGION_CHANNELS);
+  assert.equal(H.regionsSharded('all').size, H.REGION_SPLIT, 'PIN MOVED (PROVINCE-SLEEP x COST-1, the merge of main into TESA): the Bay\'s regions, never a province past it');
+  assert.deepEqual([...H.regionsSharded('61,62,70')], [61], 'PIN MOVED (PROVINCE-SLEEP x COST-1): a province\'s number names nothing');
   for (const none of ['', '  ', undefined, null, 7, 'none']) assert.equal(H.regionsSharded(none).size, 0, String(none));
   assert.equal(H.regionsSharded('5,23'), H.regionsSharded('5,23'), 'read once');
   for (const k of H.REGION_SHARD_ROOMS) assert.ok(CHAT_ROOMS.has(k), `${k} still a room the Worker opens`);

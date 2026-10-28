@@ -25,7 +25,7 @@
 //     fresh approval back down. A kept copy sets no such floor: the service's answer beats last session's copy.
 // ═══════════════════════════════════════════════════════════════════
 
-import { poiDocProblems, poiPixelId, POI_SHA_RE } from './poiLaw.js';
+import { poiDocProblems, poiPixelId, poiPixelKey, POI_SHA_RE } from './poiLaw.js';
 import { idbStore } from '../world/roadsCache.js';
 
 /** How often a playing game asks whether the approved set moved. */
@@ -177,7 +177,7 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
       return asking.then(() => asking ?? tick());
     },
     /** The POIs standing on a map pixel - live, with this screen's drafts over them. */
-    atPixel(/** @type {number} */ px, /** @type {number} */ py) { return byPixel.get(py * 1000 + px) ?? NONE; },
+    atPixel(/** @type {number} */ px, /** @type {number} */ py) { return byPixel.get(poiPixelKey(px, py)) ?? NONE; },   // AUDIT RELEASE R2-8: the world's pixel
     /** Every standing POI. */
     all() { return [...byPixel.values()].flat(); },
     /** The live set alone, by id. */

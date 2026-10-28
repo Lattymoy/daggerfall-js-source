@@ -92,11 +92,12 @@
   {
     "name": "LANDFORM4-worker-grid-unpulled",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
-    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, climates });",
+    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates });",
+    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, beyond, climates });",
     "tests": [
       "test/world/terrain/landform45.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "LANDFORM4-client-keeps-them-to-itself",

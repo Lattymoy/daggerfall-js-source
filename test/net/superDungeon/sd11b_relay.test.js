@@ -11,6 +11,7 @@
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { sdHallNamed, sdSnapLine } from '../../../src/scenes/superDungeon/sdHall.js';   // RPT1026-EVENTS ORRERY-HANDS: world.js's hall word, named
 import { readFileSync } from 'node:fs';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import {
@@ -32,6 +33,9 @@ import { HIT_KINDS, dpsRef, ABSENT_RETIRE_MS } from '../../../src/net/gate/gateB
 import { mintSdReceipt } from '../../../src/net/superDungeon/sdReceipt.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { SD_FRAY_LASH, inOrreryHall, dungeonToRealm, SD_ORRERY } from '../../../src/net/superDungeon/sdBrain.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -62,7 +66,7 @@ async function withRealm(fn, { concord = true } = {}) {
   const realNow = Date.now;
   let clock = T0;
   Date.now = () => clock;
-  const world = fakeRooms({ now: () => clock });
+  const world = fakeRooms({ now: () => clock, vars: { SD_COLLAPSE: 'on' } });   // SD-PARTY (PIN MOVED): the first kill's collapse for all, the hub's setting on
   const hub = world.room(SOCIAL_ROOM);
   try {
     await quiet(async () => {
@@ -91,7 +95,7 @@ async function withRealm(fn, { concord = true } = {}) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       gated(realm);
       if (concord) { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
@@ -155,6 +159,7 @@ test('SD11b A BLOW WHOSE FIGHT WAS REPLACED IS DROPPED (L3 F1): a blow that awai
     // the purse judged at the landing: a blow held three seconds is spent at its resolving
     realm.room._sdFight = f;
     step(11_000);
+    await realm.pose(ann, inArenaAt(0, -12.1));   // PIN MOVED (RPT1026-FIGHTS RETIRED-BLOW): its heartbeat - a blow is judged from a pose no older than SD_POSE_FRESH_MS
     mode('hold');
     const sent = now();
     const p2 = realm.raw(ann, say({ k: 'hit', q: 2, d: 40, r: HIT_KINDS.Spell }));
@@ -526,7 +531,7 @@ test('SD11b THE STONES\' RIGHTS, THE LAW (L7 H2): every turn moves the road by o
   void sdTurnsFor;
 });
 
-test('SD11b THE STONES\' RIGHTS, THE REALM (L7 H2): a lone turner turning every stone the long way is never refused; once another turns, a turner that has lengthened the road its six times this thread turns nothing - no fray, no word to the hall - and is told so, once in four seconds (`w`); every guest is one turner; the snap names whom its lash falls on (`ls`) (mutants: the rights unasked; the refusal unsaid; said every press; the guest its own; the snap unnamed)', async () => {
+test('SD11b THE STONES\' RIGHTS, THE REALM (L7 H2): a lone turner turning every stone the long way is never refused; once another turns, a turner that has lengthened the road its six times this Hollow (RPT1026-EVENTS ORRERY-HANDS: this thread, before) turns nothing - no fray, no word to the hall - and is told so, once in four seconds (`w`); every guest is one turner; the snap names whom its lash falls on (`ls`) (mutants: the rights unasked; the refusal unsaid; said every press; the guest its own; the snap unnamed)', async () => {
   await withRealm(async ({ realm, rec, hello, step }) => {
     const o = orreryOf(rec.s);
     const ann = await hello('peer-ann', atStone(0), { kind: 'linked' });
@@ -552,12 +557,17 @@ test('SD11b THE STONES\' RIGHTS, THE REALM (L7 H2): a lone turner turning every 
     await turn(ann, 'ann', 0, 1);
     assert.equal(halls(ann).filter((m) => m.w === 1).length, 2, 'past it: again');
     assert.equal(SD_TURN_WAIT_LINE, 'The stones will not answer you while others turn them.');
-    // the snap begins a fresh thread: Ann quiet past the company's minute, Bo spends the rest of it alone - then Ann turns
+    // the snap: Ann quiet past the company's minute, Bo spends the rest of the thread alone - then Ann turns.
+    // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the snap began a fresh thread for Ann's count too, so a griefer's dozen came
+    // back with every snap; her count is the Hollow's now - beside him she still waits, and alone again she turns
     step(SD_TURN_COMPANY_MS);
     for (let k = 0; k < 60 && realm.room._sdHall.f > 0; k++) await turn(bo, 'bo', 1, 1);
     assert.equal(realm.room._sdHall.f, 0, 'snapped back');
     await turn(ann, 'ann', 0, 1);
-    assert.equal(realm.room._sdHall.f, 1, 'a fresh thread: Ann turns again beside him');
+    assert.equal(realm.room._sdHall.f, 0, 'the snap frees no hand: beside him Ann still waits');
+    step(SD_TURN_COMPANY_MS);
+    await turn(ann, 'ann', 0, 1);
+    assert.equal(realm.room._sdHall.f, 1, 'the hall quiet past the company\'s minute: Ann turns again, alone');
   }, { concord: false });
   // the guests: one turner
   await withRealm(async ({ realm, rec, hello, step }) => {
@@ -585,6 +595,14 @@ test('SD11b THE STONES\' RIGHTS, THE REALM (L7 H2): a lone turner turning every 
     assert.equal(snap.x, 1);
     assert.deepEqual(snap.ls, ['peer-ann'], 'her forty-eight turns brought it no nearer');
     assert.deepEqual(realm.room._sdHall.st, [...o.start]);
+    // RPT1026-EVENTS ORRERY-HANDS: the next thread's lash is its own - Ann, who turned nothing in it, is not named again
+    // (the counts are the Hollow's, the nets the thread's: orreryRightsSnapped)
+    step(SD_TURN_COMPANY_MS);
+    const cy = await hello('peer-cy', atStone(1));
+    for (let k = 0; k < SD_FRAY_MAX; k++) { step(SD_STONE_SETTLE_MS); await realm.raw(cy, say({ k: 'pz', i: 1, a: 1, q: ++n })); }
+    const snap2 = halls(cy).at(-1);
+    assert.equal(snap2.x, 1, 'the second snap');
+    assert.deepEqual(snap2.ls, ['peer-cy'], 'its lash on its own thread\'s turners alone');
   }, { concord: false });
 });
 
@@ -686,7 +704,7 @@ test('SD11b THE RELAY BY SOURCE: the seams these fixes stand on - the realm\'s a
   assert.match(r, /const charLv = \(isCellRoom\(a\.key\) \|\| realmRoom \|\| ktRoom\) && Number\.isSafeInteger\(who\.cl\) && who\.cl >= 1 \? \{ cl: who\.cl \} : \{\};/);   // PIN MOVED (KETCH): and a ship's member's, the level its token signs
   assert.match(r, /try \{ await this\._sdHeldBeat\(now\); \}/);
   assert.match(r, /if \(this\._sdFellTelling\) return this\._sdFellTelling;/);
-  assert.match(r, /await this\.state\.storage\.put\(\{ \[SD_KEY\]: rec, \[SD_SLOT_KEY\]: hw \}\);/);
+  assert.match(r, /await this\.state\.storage\.put\(\{ \[sdLaneKey\(SD_KEY, lane\)\]: rec, \[sdLaneKey\(SD_SLOT_KEY, lane\)\]: hw \}\);/);   // PIN MOVED (WW5): a lane's record and its mark, together - the Bay's under the keys it always had (wire.js sdLaneKey)
   assert.match(r, /if \(isSdRoom\(a\.key\)\) \{ try \{ if \(!\(await this\._sdHelloFight\(ws, who\.subject, sdSlotOfRoom\(a\.key\), now\)\)\) return; \}/);
 });
 
@@ -700,6 +718,7 @@ test('SD11b THE PAGE LASHES WHOM THE REALM NAMES (L7 H2): a snap\'s word lashes 
     player: { pos: [hx, 0, hz] }, playerEntity: { health: 100, maxHealth: 100 }, inOrreryHall, SD_FRAY_LASH,
     hurtPlayer: (e, d) => hurt.push(d), flashPlayerDamage: () => {}, online: { id: 'peer-me' },
     SD_HALL_TEXT: { snap: 'The Hour snaps back.' }, SD_TURN_WAIT_LINE,
+    sdHallNamed, sdSnapLine, peerName: () => null,   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the word named off the roster (here nobody's known: the snap's line alone)
   };
   const heard = new Function(...Object.keys(env), `let _sdHall = null;\n${fnOf('sdHallHeard')}\nreturn sdHallHeard;`)(...Object.values(env));
   const hall = { k: 'pz', s: 4, st: [0, 0, 0, 0, 0, 0], f: 0, lit: 0, ok: false, i: 0, a: 1, id: 'peer-x', q: 48, x: 1 };
@@ -764,6 +783,8 @@ test('SD11b THE RELAY\'S SMALLER ARMS (L8 G13, added at SD11c): a fighter\'s NEW
     hub.room.env.ROOMS = { idFromName: HR.idFromName, get: () => ({ fetch: async () => new Response(JSON.stringify({ n: 1e9 }), { status: 200 }) }) };
     const counts = await hub.room._sdCensus();
     hub.room.env.ROOMS = HR;
-    assert.ok(counts.length > 0 && counts.every((n) => n === CHAT_SOCKETS_MAX), 'bounded by a channel\'s sockets');
+    // PIN MOVED (WW5): the Bay's lane's census asks the Bay's 62 alone - a province's region is its own lane's to count
+    assert.ok(counts.length === 71 && counts.slice(0, 62).every((n) => n === CHAT_SOCKETS_MAX), 'bounded by a channel\'s sockets');
+    assert.ok(counts.slice(62).every((n) => n === 0), 'a province\'s channel never asked by the Bay\'s lane');
   });
 });

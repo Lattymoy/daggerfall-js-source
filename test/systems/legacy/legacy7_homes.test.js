@@ -91,7 +91,8 @@ test('LEGACY7 part five the world host reads the account\'s homes (ACCOUNT-HOMES
   assert.match(w, /heldHousesWhole: \(\) => isOnlinePage\(\),/);
   // PIN MOVED (AUDIT LEGACY III W1): named off the boot's own complete table - the Living World's index read rows the boot had emptied
   assert.match(w, /location: _townOfMapId\.get\(h\.mapId >>> 0\)\?\.name \?\? '',/);
-  assert.match(w, /heldHouses: \(\) => \(isOnlinePage\(\) \? \(realmSession \? _legacyOnlineHomes : null\) : \(playerEntity\.houses \?\? \[\]\)\.filter\(\(h\) => \(h\?\.buildingKey \| 0\) > 0 && deedStands\(h\)\)\),/);
+  // PIN MOVED (HOUSES-3): every region's three deeds (banking.js allDeeds)
+  assert.match(w, /heldHouses: \(\) => \(isOnlinePage\(\) \? \(realmSession \? _legacyOnlineHomes : null\) : allDeeds\(playerEntity\.houses\)\.filter\(deedStands\)\),/);
   assert.match(w, /if \(legacyRealmLine\) legacyOnlineHomesRead\(\);/);
   // PIN MOVED (PERMADEATH-HOUSES): the dead's deeds the save took up ride the sync (household.js syncHouses' `taken`) -
   // ACCOUNT-HOMES: and online the account's homes are the line's whole

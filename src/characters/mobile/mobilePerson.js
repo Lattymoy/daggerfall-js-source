@@ -21,7 +21,7 @@
 // locations - DFU samples the terrain collider).
 
 import { mobileOrientation } from './mobileUnit.js';
-import { REGION_RACES } from '../../formats/mapsTables.js';   // REGIONAL-FOLK: the region's race, FALL.EXE's
+import { areaRace } from '../../world/worldWide/worldGrid.js';   // REGIONAL-FOLK: the region's race, FALL.EXE's (WW1: an area's - the province's past the Bay)
 
 export const PERSON_MOVE_SPEED = 1.3;          // movementSpeed
 export const PERSON_IDLE_DISTANCE = 2.5;       // idleDistance
@@ -58,8 +58,11 @@ export const PERSON_FACE_RECORDS = Object.freeze({
 export const RACE_OF_PEOPLE = Object.freeze({ 0: 'Nord', 2: 'Redguard', 3: 'Breton' });
 /** @param {number|undefined|null} people */
 export const raceOfPeople = (people) => RACE_OF_PEOPLE[/** @type {0|2|3} */ (people)] ?? 'Breton';
-/** REGIONAL-FOLK: FALL.EXE names the region Redguard (REGION_RACES 1). @param {number|undefined|null} region */
-export const redguardRegion = (region) => Number.isInteger(region) && REGION_RACES[/** @type {number} */ (region)] === 1;
+/** REGIONAL-FOLK: FALL.EXE names the region Redguard (REGION_RACES 1). WW1: the number is an AREA
+ *  (world/worldWide/worldGrid.js) - on the Bay its region, so every region's answer is FALL.EXE's; past the Bay a
+ *  province's, and Hammerfell's beyond the Bay is Redguard as its regions on it are.
+ *  @param {number|undefined|null} region */
+export const redguardRegion = (region) => Number.isInteger(region) && areaRace(/** @type {number} */ (region)) === 'Redguard';
 /** REGIONAL-FOLK (FIELD BUGS 2026-10-10, the Discord's "Add Regional NPCs"; Port-Ledger A): THE RACE A TOWN'S WALKERS
  *  WEAR. DFU dresses them by the climate (above) and names them by the REGION (MobilePersonNPC.cs:214, FALL.EXE's
  *  REGION_RACES), so Sentinel and the Dragontail Mountains walked Breton and Nord bodies under Redguard names. A

@@ -16,6 +16,7 @@ import * as MP from '../../src/systems/martialPaths.js';
 import * as POW from '../../src/systems/martialPowers.js';
 import * as WM from '../../src/systems/weaponMastery.js';
 import * as AP from '../../src/systems/arcanePaths.js';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { createCharacter } from '../../src/systems/chargen.js';
 import { buildCustomCareer } from '../../src/systems/customClass.js';
 import { masterSkill, setMasterSkills } from '../../src/systems/masterSkills.js';
@@ -168,9 +169,10 @@ test('MARTIAL1 THE CHOICE: two weapon skills mastered open their path; the choic
   assert.equal(MP.chooseMartialPath(p, 'ranger').ok, false, 'chosen once');
   assert.deepEqual(MP.martialChoices(p), [], 'nothing more to choose');
   assert.equal(MP.martialHeld(p)?.id, 'ranger'); assert.equal(MP.martialAwake(p)?.id, 'ranger');
-  p._mentor = { level: 5 };
+  p._mentor = mentorProfile(p, [5]);
+  assert.ok(p._mentor, 'a level 20 beside a level 5: mentoring');
   assert.equal(MP.martialHeld(p)?.id, 'ranger', 'mentoring, held');
-  assert.equal(MP.martialAwake(p), null, 'mentoring, asleep');
+  assert.equal(MP.martialAwake(p)?.id, 'ranger', 'MENTOR2: mentoring, awake - its numbers at the mentor\'s share (martialPowers.js)');
   p._mentor = null;
   assert.equal(MP.martialHeld({ ...p, peer: 'x' }), null, 'never a peer\'s stand-in');
   const off = fighter([LB, AR]);
@@ -298,7 +300,13 @@ test('MARTIAL2 THE WEAPON PAST 100: online, each effective point of the climb - 
     lb.skills[LB] = 200;
     assert.equal(blow100(lsw, lb, { ...foe(), isPlayer: true }), 100, 'never at a player');
     assert.equal(blow100(lsw, lb, foe({ warded: true })), 100, 'nor the Warden\'s ward');
-    lb._mentor = { level: 3 }; assert.equal(blow100(lsw, lb, foe()), 100, 'mentoring'); lb._mentor = null;
+    // MENTOR2: mentoring pays the MENTORED climb - none beside a level 5 (Long Blade mentored under 100), some beside a level 20
+    lb._mentor = mentorProfile(lb, [5]); assert.equal(blow100(lsw, lb, foe()), 100, 'mentoring a level-5 group: no climb'); lb._mentor = null;
+    WM._resetWeaponMasteryForTests();
+    lb.level = 30; lb._mentor = mentorProfile(lb, [20]);
+    const mid = blow100(lsw, lb, foe());
+    assert.ok(mid > 100 && mid < 140, `mentoring a level-20 group: the mentored climb (${mid})`);
+    lb._mentor = null; lb.level = 20; WM._resetWeaponMasteryForTests();
     lb.isInBeastForm = true; assert.equal(blow100(lsw, lb, foe()), 100, 'the beast'); lb.isInBeastForm = false;
     setSigilDueling(true); try { assert.equal(blow100(lsw, lb, foe()), 100, 'a refereed fight'); } finally { setSigilDueling(false); }
     assert.equal(blow100(lsw, { ...lb, peer: 'x' }, foe()), 100, 'a peer\'s stand-in');
@@ -473,11 +481,13 @@ test('MARTIAL4 THE PASSIVES: each through its own seam, on both sides of its lin
   const br = pathFighter('brawler'); br.health = 100; br.fatigue = 0;
   POW.martialRound(br);
   assert.equal(br.health, 102); assert.equal(br.fatigue, Math.round(maxFatigue(br) * 0.02));
-  // asleep: a duel, mentoring, the beast
+  // asleep: a duel, the beast - MENTOR2: mentoring, at the mentor's share
   reset();
   const cz = pathFighter('cutthroat');
   setSigilDueling(true); try { assert.equal(blow100(w, cz, foe(), { unaware: true }), 100); } finally { setSigilDueling(false); }
-  cz._mentor = { level: 2 }; assert.equal(blow100(w, cz, foe(), { unaware: true }), 100); cz._mentor = null;
+  cz._mentor = mentorProfile(cz, [2]);
+  assert.equal(blow100(w, cz, foe(), { unaware: true }), 100 + Math.floor(MP.MARTIAL_NUMBERS.cheapShot.pct * cz._mentor.powerScale), 'Cheap Shot at the mentor\'s share');
+  cz._mentor = null; reset();
   cz.isInBeastForm = true; assert.equal(blow100(w, cz, foe(), { unaware: true }), 100);
 });
 

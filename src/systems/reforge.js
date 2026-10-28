@@ -288,7 +288,7 @@ export function imbuePiece(item, player, rolls = Math.random) {
   }
   const putBack = () => { for (const k of Object.keys(item)) delete item[k]; Object.assign(item, was); };
   try {
-    applyRarity(item, tier, rolls);
+    applyRarity(item, tier, rolls, null, { flat: true });   // PRESS-FLAT: a bought roll leans nowhere - no skill to the item's own, no damage first
     if (item.rarity === tier) item.name = linesName(item, tier, was);   // NAME-KEPT (AUDIT FB1025i A4): a name of its own stands - a questline's (`qlNamed`) - where applyRarity named it from its template
     // AUDIT UPDATE L2: what the piece keeps, at its new tier's law - a technique rolled again in the new band (the law
     // reads a Rare's line by the Rare's band), a won sigil at least at the new tier's floor

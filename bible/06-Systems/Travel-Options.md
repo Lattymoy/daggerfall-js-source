@@ -162,6 +162,15 @@ journey the player sees is the same - the ground goes past at the
 acceleration and the clock keeps up with it - and what interrupts a
 journey interrupts it on its own honest clock.
 
+**AND A JOURNEY TRAINS AT THE REAL CLOCK (RPT1026-PROGRESS, 2026-10-26, a private report: Jumping, and Running
+on auto-run, trained in seconds on an accelerated journey).**
+Under the mod's `Time.timeScale` PlayerEntity's classic-update cadence scales with everything else, so the Running
+tally (`PlayerEntity.cs:309-320`, a use every 0.25 s) and the Jumping tally (one a jump, and a scaled motor lands a jump
+a frame) ran sixty to a hundred times faster a real second: a held run or jump key on the road filled the uses a rest
+or an arrival raises in seconds. DFU's own fast travel trains nothing. The tick (`systems/worldTick.js`) counts a
+journey's run in its REAL seconds and each jump as 1/scale of a use, so a journey trains as walking the same real
+minutes does; at x1 nothing changes. Port-Ledger A. Pinned by `test/systems/rpt1026_progress.test.js`.
+
 ## What the travel map gains
 
 - the **PORTS** filter (`TOportsOff/On`, 45x11 at 231,180) while the
@@ -1489,6 +1498,40 @@ The deep audit of the branch found three holes in the law; each is fixed and pin
 Recorded, not changed: OW6's lead-in before an enemy's reach is THREAT_WARN_S of real time at the journey's rate, so
 at the law's x60 and x100 it starts 1.5 to 2.5 times as far out as at the old dial's x40 (a rider at x100 slows about
 960 m short of a band's sight, not 384) - a tuning for the owner to call.
+
+## BAY-LEFT-MAPS - Travel Options' roads past the Bay (2026-10-27, AUDIT LEFT IN THE BAY C10)
+
+The owner, after AUDIT LEFT IN THE BAY (2026-10-26): *"Every single thing here needs to be addressed. No exceptions."*
+
+**What stood.** Basic Roads' path data is the Bay's 1000 x 500 table (`world/road/pathData.js` dataPoint), and every read
+past it answered 0. So on every road past the Bay Follow Paths said "no path"; the junction map was blank (its section
+skipped every pixel off the table, and the host read `y * 1000 + x` - another row past the Bay's edge); and a walk on a
+road ran at the open ground's rate (RATE-LAW's x60, not x100).
+
+**What it is now.** Past the table a road's and a track's byte are the roads past the Bay's own (`world/arenaRoads.js`
+arenaRoadByte - ROADS 1's compass, the bits the table holds); a river's and a stream's none (the roads past the Bay lay no
+water). With no layer installed it is 0, so a thread without the land reads what it read. The layer hands its reader to
+the path data as it loads (`world/road/pathData.js` setRoadsPastTable), and the path data never imports it: the account
+Worker bundles the path data (for `world/spawnedDungeons.js` hash32) and holds no land past the Bay, so its bundle and its
+deploy's path filter stay as they were (`test/server/accountdeploy.test.js` ACC1-CI). On the table every byte is the
+mod's, unchanged. The junction map's section is bounded by the world's grid (`world/worldWide/worldGrid.js` inWorldGrid),
+and the host's bytes come through dataPoint (an in-place edit of `scenes/world.js`); its dots past the Bay are the places
+found there (`06-Systems/Travel-View.md` BAY-LEFT-MAPS). The spawns' road test reads the same law, so no ruin past the
+Bay stands on a road. Online no spawn stands past the Bay yet (AUDIT LEFT IN THE BAY A1 and A3); the layer is installed a
+region at a time, so a spawn there is to be decided where its region's roads are in, as SPAWN-ROADS' sweep does for the
+Bay's network. The jungle's roadside pairs read the table alone (`tablePathsDataPoint`): they stand astride the
+table's straight lanes, and past the Bay a road is a curve (`03-World/Roads.md` VOYAGER2).
+
+**Measured** (lane C's p9 on the freeware): at (1569, -430) the paths read 0, and the junction section about Solitude
+asked 0 pixels and lit 0. Now, Solitude's region built and installed: 1,593 of 1,593 road pixels read by the follow's two
+reads, and the section about a road past the Bay asks 800 and lights 252.
+
+**The four hosts.** `scenes/world.js` reads its bytes through dataPoint (in place); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` run no Travel Options journey.
+
+Pins `test/systems/travel/bayleft_paths.test.js` (5). Mutants `tools/mutants/bayleftmaps.json` BLM-C10-* (8 here, and the
+junction dots' 2), all dead; `tools/mutants/to1.json` data-point-unchecked and i6-discovery-by-map-id-again re-aimed by
+content and run (dead). A departure from Travel Options, whose data is the Bay's: Port-Ledger A, BAY-LEFT-MAPS.
 
 ## Pins
 

@@ -1,11 +1,11 @@
 // @ts-check
 // LW1 (2026-10-04, bible/06-Systems/Living-World.md): THE LIVING WORLD'S SEEDS. Every resident, plan, meeting and trip
 // is a pure function of the world's data, a seed and the sky's clock (LW0 decision 2), and this is where the seeds are
-// made: the port's one integer mix (`world/spawnedDungeons.js hash32`, FNV-1a with two avalanche steps) under the
+// made: the port's one integer mix (`world/blockHash.js hash32`, FNV-1a with two avalanche steps) under the
 // living world's own salt, and the port's one small generator (`systems/wind/wind.js seededRng`, mulberry32) over it - so no
 // part of the living world rolls on Math.random or on DFRandom's global stream (a name draw puts that stream back as it
 // stood, `census.js residentName`).
-import { hash32 } from '../../world/spawnedDungeons.js';
+import { hash32 } from '../../world/blockHash.js';   // AUDIT BAY-LEFT (its packages merged): the mix's own leaf - spawnedDungeons.js re-exports it, and SPAWN-WORLD's imports would ride into the account Worker's bundle through here
 import { seededRng } from '../wind/wind.js';
 
 /** The living world's salt: changing it re-rolls every resident in the world. */

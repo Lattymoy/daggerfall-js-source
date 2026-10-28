@@ -96,15 +96,19 @@ import { legalRepOf, changeLegalRep, LEGAL_REP_MIN, LEGAL_REP_MAX } from './cour
 import { ORDERS } from './guild/guildVariants.js';
 import { GUILDS } from './guild/guilds.js';
 import { renownStruckAt } from '../net/renownTracker.js';
-import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool
-import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too
+import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX, RAID_CLAIM_AGE_MAX, raidTownIs } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool; WW6: a raid's town, the Bay's or past it
+import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash, raidLaneOfRegion, raidLaneOpen, raidLaneParties, raidLaneCount, RAID_LANES_BEYOND } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too; WW6: a lane a theatre
+import { inBay } from '../world/tamriel/tamrielFrame.js';   // WW6: the Bay's own map
+import { areaAt } from '../world/worldWide/worldGrid.js';   // WW6: the area a raid is told of past the Bay - a province's district
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';
 import { worldRoom, isCellRoom } from '../net/wire.js';
+import { worldCoordToMapPixel } from '../world/streamingWorld.js';   // PACK-EVERY: an area event's players, on its pixel
 import { isWildRegion } from './wild/wildZone.js';   // PVPDUNGEONS: no world event in the open zone
 import { noteAct } from './questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 import { staffRaids, staffRaidsEnded, staffRaidHere, staffRaider, staffRaidRoom, staffBossWanted, staffBossLost, staffBossByHand, staffBossToSay, staffEventBook, staffEventEnd, staffEventLedger, staffRaidOfKey } from './staffEvents.js';   // STAFF-EVENT: a staff event runs as a raid
-import { validStaffEventIn, staffEventKey } from '../net/staffEvent/staffEventLaw.js';
+import { validStaffEventIn, staffEventKey, STAFF_EVENT_AREA } from '../net/staffEvent/staffEventLaw.js';   // WW6: an area's own word
 import { readStaffReceipt } from '../net/staffEvent/staffEventReceipt.js';   // STAFF-EVENT THE REWARD: my receipt
+import { pilotKey, PILOT_CLAIM_AGE } from './staffBossPilot.js';   // STAFF-PILOT: a staff member steering its event's boss runs the event
 import { promoteStaffBoss, promoteRaidLeader } from './eliteFoes.js';   // STAFF-EVENT: its mini boss; RAID5: a raid's leader
 import { giveBossTraits, rollBossTraits } from './bossTraits.js';   // RAID5: the leader's two traits (BOSS-TRAITS)
 import { RAID_KIND_ORDER, raidKindOf, raidKindAsk, raidKindName, raidWavePlan, raidWaveAt, raidWaveLine, raidLeaderLine, raidLeaderName, raidLeaderOf, raidLeaderNameOf,
@@ -146,7 +150,7 @@ export const RAID_SPAWN_MIN_DISTANCE = 10;
 export const RAID_SPAWN_MAX_DISTANCE = 35;
 /** The placement standRaider stands a raider by (scenes/hostEnchant.js standLooseFoe's): the mod's just out of view, or
  *  STAFF-EVENT PACKS' `{ min, max, los }`. @param {{ min?: number, max?: number, los?: boolean } | undefined} at */
-export const raidSpawnRange = (at) => ({ minDistance: at?.min ?? RAID_SPAWN_MIN_DISTANCE, maxDistance: at?.max ?? RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: at?.los ?? true });
+export const raidSpawnRange = (at) => ({ minDistance: at?.min ?? RAID_SPAWN_MIN_DISTANCE, maxDistance: at?.max ?? RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: at?.los ?? true, open: true });   // PACK-OPEN: never in a house or building (scenes/hostEnchant.js standLooseFoe)
 /** GrantReputation [IL_1240]. */
 export const RAID_LEGAL_REP = 5;
 export const RAID_PEOPLE_REP = 5;
@@ -234,25 +238,62 @@ export function raidRegions(maps, pickerData) {
 }
 
 /**
+ * WW6 (bible/03-World/World-Wide.md WW6): SELECTRAIDS' LISTS PAST THE BAY - a lane's towns (its theatre's): the world's
+ * registry's LISTED places there (world/worldWide/worldPlaces.js inTheatre - TESA's capitals, cities, towns and villages,
+ * every client standing the land the same) of the types SelectRaids takes (RAID_TOWN_TYPES), a capital one town (its
+ * centre: `street` WW7-11's law, scenes/livingWorld/livingIndex.js capitalStreet), each keyed by its OWN location index
+ * (the registry's `location` - a place past the Bay's, negative: no MAPS.BSA row holds it) - grouped by AREA, the
+ * province's districts (world/worldWide/worldGrid.js - what a region is to the Bay's draw, World-Wide decision 4), the areas
+ * ascending, each its towns by map id, each beside its province's region. None for the Bay's lane (raidRegions is its own)
+ * nor for a lane that stands no raid (the open zone's).
+ * @param {{ inTheatre: (t: number) => ReadonlyArray<any> }|null|undefined} places @param {number} lane
+ * @param {(p: any) => boolean} [street]
+ * @returns {ReadonlyArray<{ region: number, area: number, towns: ReadonlyArray<{ index: number, name: string, px: number, py: number }> }>}
+ */
+export function raidLaneGroups(places, lane, street = () => false) {
+  if (!places?.inTheatre || lane === 0 || !raidLaneOpen(lane)) return Object.freeze([]);
+  const types = new Set(RAID_TOWN_TYPES);
+  /** @type {Map<number, any[]>} */ const byArea = new Map();
+  for (const p of places.inTheatre(lane) ?? []) {
+    if (!types.has(p?.type) || !Number.isSafeInteger(p.location) || p.location >= 0 || raidLaneOfRegion(p.region) !== lane || !Number.isInteger(p.area) || street(p)) continue;
+    let g = byArea.get(p.area);
+    if (!g) byArea.set(p.area, (g = []));
+    g.push(p);
+  }
+  return Object.freeze([...byArea.keys()].sort((a, b) => a - b).map((area) => {
+    const ps = byArea.get(area).slice().sort((a, b) => (a.mapId >>> 0) - (b.mapId >>> 0));
+    return Object.freeze({ region: ps[0].region, area, towns: Object.freeze(ps.map((p) => Object.freeze({ index: p.location, name: String(p.name ?? ''), px: p.px, py: p.py }))) });
+  }));
+}
+
+/**
  * SelectRaids' roll [IL_0cda-IL_0dc5]: `count` raids, each a region evenly among those with a town left, a town
  * evenly in it and struck off (a region with none left is struck off too), a start, a party, two hours and a kill
  * target - in the IL's draw order (region, town, start, party, target). RAID-ROLL: the draws are net/raid/raidLaw.js
- * rollRaidTowns' - the one copy the relay reads a word against.
+ * rollRaidTowns' - the one copy the relay reads a word against. WW6: a lane's groups are its areas (each raid keeps its
+ * `area`, the Bay's none) and its parties its own (`parties`, raidLaw.js RAID_LANE_PARTIES).
  */
-export function rollRaids(day, regions, count, random) {
-  return rollRaidTowns(day, regions, count, random).map(({ region, town, st, ty, tg }) => ({
+export function rollRaids(day, regions, count, random, parties = undefined) {
+  return rollRaidTowns(day, regions, count, random, parties).map(({ region, area, town, st, ty, tg }) => ({
     regionIndex: region, locationIndex: town.index, startDay: day, locationName: town.name,
     type: ty, startMinute: st, endMinute: st + RAID_DURATION_MINUTES,
     killed: 0, attackAmount: tg, cleansed: false,
     announced: false, struck: false,   // fixes 3 and 5: the port's own two, saved with the rest
     px: town.px, py: town.py,
     sacked: false, safe: 0, lost: 0,   // RAID5: its objective's (systems/raidKinds.js)
+    ...(Number.isInteger(area) ? { area } : {}),   // WW6: past the Bay the area it is told of (the Bay's raid carries none - its region is its area)
   }));
 }
 
 /** Fix 1: THE DAY'S raids - the roll off the day's own generator (RAID-ROLL: net/raid/raidLaw.js raidDayRandom, worldTick's
  *  dayRng for the raids' salt - the relay's one copy), the count off the pace. */
 export const raidsForDay = (day, regions) => rollRaids(day, regions, raidsPerDay(regions?.length ?? 0), raidDayRandom(day));
+/** WW6: A LANE'S DAY - its own generator (raidDayRandom's lane), its pace (half a raid an area, raidLaw.js raidLaneCount),
+ *  its own parties - off its towns (raidLaneGroups). @param {number} day @param {number} lane @param {ReadonlyArray<any>} groups */
+export const raidsForLane = (day, lane, groups) => rollRaids(day, groups, raidLaneCount(groups?.length ?? 0), raidDayRandom(day, lane), raidLaneParties(lane));
+/** WW6: where a raid is told of (its announcement, its withdrawal, the board's card): its AREA - on the Bay its region,
+ *  as RAID1 has it, past the Bay its province's district. @param {{ area?: number, regionIndex: number }} raid */
+export const raidHome = (raid) => (Number.isInteger(raid?.area) ? /** @type {number} */ (raid.area) : raid.regionIndex);
 
 /** RaidEnemyName's bracket [IL_13cc]: one raid, one key - the region, the town and the day. */
 export const raidKey = (raid) => raid.key ?? `${raid.regionIndex}:${raid.locationIndex}:${raid.startDay}`;   // STAFF-EVENT: an event's own (`s.<id>`)
@@ -318,6 +359,7 @@ export const getRaidSaveData = () => ({
     cleansed: r.cleansed, announced: r.announced, struck: r.struck, px: r.px, py: r.py,
     ...(r.sacked ? { sacked: true } : {}), ...(r.safe ? { safe: r.safe } : {}), ...(r.lost ? { lost: r.lost } : {}),   // RAID5: its objective, where it went
     ...(r.ld ? { ld: true } : {}), ...(r.wv >= 0 ? { wv: r.wv } : {}), ...(r.asked ? { asked: true } : {}), ...(r.ow ? { ow: r.ow.slice() } : {}),   // AUDIT WORLD-EVENTS L3-11: its leader's fall, its wave, and what was said of it - once, as RAID1's own lines are
+    ...(Number.isInteger(r.area) ? { area: r.area } : {}),   // WW6: a raid past the Bay's area (a Bay raid's record the one it always was)
   })),
   ...(_held.length ? { held: _held.slice() } : {}),   // RAID5: the raids held, for their thanks
 });
@@ -342,15 +384,17 @@ export function restoreRaidSaveData(data) {
       sacked: r.sacked === true, safe: Number.isInteger(r.safe) && r.safe >= 0 ? r.safe : 0, lost: Number.isInteger(r.lost) && r.lost >= 0 ? r.lost : 0,   // RAID5
       ...(r.ld === true ? { ld: true } : {}), ...(Number.isInteger(r.wv) && r.wv >= 0 ? { wv: r.wv } : {}), ...(r.asked === true ? { asked: true } : {}),   // AUDIT WORLD-EVENTS L3-11
       ...(Array.isArray(r.ow) && r.ow.length === 3 && r.ow.every((x) => Number.isInteger(x)) ? { ow: r.ow.slice() } : {}),
+      ...(Number.isInteger(r.area) ? { area: r.area } : {}),   // WW6
     });
   }
   state = { lastSelectedDay: day, raids };
+  _laneSig = null;   // WW6: the lanes rolled again, the saved raids of theirs kept by key and tuple (syncLanes)
   _held = Array.isArray(data?.held) ? data.held.filter((k) => typeof k === 'string').slice(-RAID_HELD_KEPT) : [];   // RAID5
   _dayFromSave = true;   // AUDIT LIVED1b A3: the one check that may roll another day than a later one
   _peerWords = new Map();
   _myClaims = new Map();
   _live = [];
-  _peerObj = new Map(); _pack = null;   // AUDIT WORLD-EVENTS L3-11: and RAID5's words heard (the said live on each raid, `ow`)
+  _peerObj = new Map(); _pack = null; _bossMisses = 0;   // AUDIT WORLD-EVENTS L3-11: and RAID5's words heard (the said live on each raid, `ow`)
   scheduleNextSpawn(-1);
   scheduleNextDefender();
   _lastRegion = -1;
@@ -384,6 +428,9 @@ const allRaids = () => { const s = staffRaids(); return s.length ? [...state.rai
  *                             board's news by default (systems/eventNotices.js), where the mod's line had stood on the
  *                             HUD's line (filed in the journal - and still, by the door's log); the board off, the
  *                             HUD's line again (hudText). `id` the raid's (`raid:<raidKey>`, AUDIT EVENTS1 A1)
+ *   places()                  WW6: the world's registry (world/worldWide/worldPlaces.js) - the towns past the Bay a lane
+ *                             raids (raidLaneGroups); none, and the Bay's lane alone stands
+ *   street(place)             WW6: a capital's slice that is no town of its own (WW7-11's capitalStreet)
  */
 let _host = null;
 export function setRaidingPartiesHost(host) { _host = host ?? null; }
@@ -443,6 +490,70 @@ const regionsNow = () => {
   return _regions;
 };
 
+// ---- WW6: the lanes past the Bay ------------------------------------------------------------------------------------
+/** The registry's generation the lanes' towns were read at (-1: no registry), and each lane's towns then. */
+let _laneGen = NaN;
+let _laneGroups = new Map();
+/** The day and generation the lanes were last rolled for (`day|gen`), null: roll them again. */
+let _laneSig = null;
+const placesGen = () => { const p = host().places?.() ?? null; return p?.generation ? p.generation() : -1; };
+/** A lane's towns as the registry holds them now (made again when its generation moves - TESA's land, trace or fit). */
+function laneGroupsNow(lane) {
+  const places = host().places?.() ?? null, gen = placesGen();
+  if (gen !== _laneGen) { _laneGen = gen; _laneGroups = new Map(); }
+  let g = _laneGroups.get(lane);
+  if (!g) { g = raidLaneGroups(places, lane, host().street ?? undefined); _laneGroups.set(lane, g); }
+  return g;
+}
+/** Every lane past the Bay's raids for a day. @param {number} day */
+const lanesForDay = (day) => RAID_LANES_BEYOND.flatMap((lane) => raidsForLane(day, lane, laneGroupsNow(lane)));
+/** A raid's identity: its key and its tuple (AUDIT RAID R1's - the relay's ledger's too). */
+const raidIdOf = (raid) => `${raidKey(raid)}|${raidSigOf(raid)}`;
+/** Whatever the runtime kept of a raid that leaves the list (its words, the relay's, its objective's). */
+function forgetRaid(r) {
+  _peerWords.delete(raidKey(r)); _unclaimedSince.delete(raidKey(r)); _relay.delete(raidKey(r));   // RAID2: its words go with it; RAID3: and the relay's
+  _peerObj.delete(raidKey(r));   // RAID5: and its objective's
+}
+/**
+ * WW6: THE LANES' DAY - every lane past the Bay rolled for the day the Bay's list was (fix 1's day; the lane's own
+ * generator, so every client standing the same places past the Bay names the same raids), off its towns as the registry
+ * holds them now, and rolled again whenever the day turns or the registry's places move. A raid already held (its key and
+ * its tuple) keeps what it has - its count, its words, its cleanse, its announcement; one the roll no longer names stands
+ * down and goes; one that has run out goes at the expiry pass that follows it in the frame (C), unsaid - it was never
+ * announced - so none is ever rolled back in. The Bay's raids are never touched.
+ */
+function syncLanes() {
+  const day = state.lastSelectedDay;
+  if (day < 0) return;
+  const sig = `${day}|${placesGen()}`;
+  if (_laneSig === sig) return;
+  _laneSig = sig;
+  const held = new Map(state.raids.filter((r) => raidLaneOfRegion(r.regionIndex) > 0).map((r) => [raidIdOf(r), r]));
+  const lanes = [];
+  for (const r of lanesForDay(day)) {
+    const id = raidIdOf(r), had = held.get(id);
+    if (had) { held.delete(id); lanes.push(had); } else lanes.push(r);
+  }
+  for (const r of held.values()) { routRaid(r); forgetRaid(r); }   // a town the registry no longer holds
+  state.raids = [...state.raids.filter((r) => raidLaneOfRegion(r.regionIndex) <= 0), ...lanes];
+}
+/** WW6: the area the player is told of raids in - the region on the Bay (fix 8's -1 at sea and past the Veil), past the
+ *  Bay the province's district the player stands in (-1 at sea there). @param {number} [region] the host's regionIndex */
+function homeNow(region = host().regionIndex?.() ?? -1) {
+  if (!(region >= 0)) return -1;
+  const px = host().playerPixel?.();
+  return px && Number.isInteger(px.x) && Number.isInteger(px.y) && !inBay(px.x, px.y) ? areaAt(px.x, px.y, () => -1) : region;
+}
+/** WW6: a raid's town on my map - the Bay's by its region and MAPS.BSA row, past the Bay by its own location index in its
+ *  lane's towns. @param {{ regionIndex: number, locationIndex: number }} r */
+function townOfRaid(r) {
+  if (r.locationIndex >= 0) return regionsNow()?.find((x) => x.region === r.regionIndex)?.towns.find((t) => t.index === r.locationIndex) ?? null;
+  const lane = raidLaneOfRegion(r.regionIndex);
+  if (!(lane > 0)) return null;
+  for (const g of laneGroupsNow(lane)) { const t = g.towns.find((x) => x.index === r.locationIndex); if (t) return t; }
+  return null;
+}
+
 /** Fix 6: an ended raid's raiders are routed - taken at the first sweep they are out of sight. */
 function routRaid(raid) {
   const key = raidKey(raid);
@@ -474,7 +585,7 @@ export function raidPoolCleared() {
 export function raidDefendingHere(now = (host().now ?? worldMinutes)()) {
   const town = host().townHere?.();
   if (!town) return false;
-  return state.raids.some((r) => raidActive(r, now) && r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex);
+  return state.raids.some((r) => raidActive(r, now) && raidTownIs(r, town));   // WW6: a town past the Bay by its own index
 }
 
 /** The cleanse [IL_1117-IL_1179]: the raid ends, its raiders are routed, a player who fought and stands on the
@@ -541,10 +652,10 @@ function spawn(raid, kind, mobileType, o = undefined, pack = null) {
   const boss = kind === 'boss';   // STAFF-EVENT: a staff event's mini boss - one raider, promoted
   Promise.resolve(promise).then((foe) => {
     if (_pending === p) _pending = null;
-    if (!foe) { if (boss) raid.bossFc = -1; if (pack && !pack.at) { pack.left++; pack.far = false; } return; }   // STAFF-EVENT: no spot - the call is answered again; a pack's leader tried again, nearer
+    if (!foe) { if (boss) { raid.bossFc = -1; _bossMisses++; } if (pack && !pack.at) { pack.left++; pack.far = false; pack.fails = (pack.fails ?? 0) + 1; } return; }   // STAFF-EVENT: no spot - the call is answered again; a pack's leader tried again, nearer
     if (pack && !pack.at && Array.isArray(foe.ai?.feet)) pack.at = [...foe.ai.feet];   // STAFF-EVENT PACKS: its pack stands around it
     if (p.cancelled && kind !== 'defender') { h.removeFoe?.(foe); if (boss) raid.bossFc = -1; return; }
-    if (boss) { promoteStaffBoss(foe.entity, { sizePct: raid.staff.bs, healthX: raid.staff.bh, hp: raid.staff.hp }); raid.bossUp = 1; raid.bossDown = 0; }
+    if (boss) { promoteStaffBoss(foe.entity, { sizePct: raid.staff.bs, healthX: raid.staff.bh, hp: raid.staff.hp }); raid.bossUp = 1; raid.bossDown = 0; raid.clearSince = undefined; raid.clearWait = undefined; if (raid.bossHand != null) raid.handSeen = raid.bossHand; _bossMisses = 0; }   // BOSS-RETRY
     if (kind === 'bearer' || kind === 'refugee') foe.raidGoal = p.key;   // AUDIT WORLD-EVENTS L6-5: its raiders' quarry first (enemyTargets.js), whatever infighting reads
     if (kind === 'bearer' && foe.entity && objOf(raid).share < 1) foe.entity.health = Math.max(1, Math.round(foe.entity.maxHealth * objOf(raid).share));   // AUDIT WORLD-EVENTS L4-6: raised again as he was let go - never a whole standard for a walk-off
     if (kind === 'leader') { promoteRaidLeader(foe.entity, { name: raidLeaderNameOf(foe.mobileType ?? mobileType) }); foe.entity.bossTraits = undefined; foe.entity.bossWard = undefined; giveBossTraits(foe.entity, rollBossTraits(RAID_LEADER_TRAITS, rnd())); }   // RAID5: the party's leader - an elite with two traits (AUDIT WORLD-EVENTS L2-6: its two in place of any its stand drew as an elite)
@@ -565,6 +676,7 @@ export function raidFrame(dt = 0) {
   const now = (h.now ?? worldMinutes)();
   const day = Math.floor(now / MINUTES_PER_DAY);
   const region = h.regionIndex?.() ?? -1;
+  const home = homeNow(region);   // WW6: the area I am told of raids in - my region on the Bay, my district past it
   _nextSpawnIn -= dt;
   _nextDefenderIn -= dt;
   _sweepIn -= dt;
@@ -594,7 +706,7 @@ export function raidFrame(dt = 0) {
   if (day > state.lastSelectedDay || (sharedClockOn() && _dayFromSave && day !== state.lastSelectedDay)) {
     const regions = regionsNow();
     if (!regions) return null;   // no picker, no Update [IL_04b5]
-    expire(now, region);
+    expire(now, home);
     for (const r of state.raids) routRaid(r);
     state.lastSelectedDay = day;
     state.raids = raidsForDay(day, regions).filter((r) => !isWildRegion(r.regionIndex));   // PVPDUNGEONS (the owner: "Do not spawn world events in the PVP zone!"): every client drops the zone's towns from the day's roll alike
@@ -604,16 +716,19 @@ export function raidFrame(dt = 0) {
     _lastRegion = region;
   }
   if (sharedClockOn()) _dayFromSave = false;   // AUDIT LIVED1b A3: the save's record has met the world's day (an offline frame is not the world's)
+  syncLanes();   // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)
   // C. the raids that ran out [IL_0540-IL_05b9]
-  expire(now, region);
+  expire(now, home);
   // D. a new region cancels the spawn in flight [IL_05b9]
   if (region !== _lastRegion) { _lastRegion = region; cancelPending(); }
-  // E. the region's raids, each announced once (fix 3), never at sea (fix 8)
-  if (region >= 0) {
+  // E. the region's raids, each announced once (fix 3), never at sea (fix 8). WW6: the AREA's - my region on the Bay, as
+  // the mod has it; past the Bay my district (a province is some thirty of a region's size - its every raid said to all of it
+  // was a line every few minutes), each line naming its province
+  if (home >= 0) {
     for (const r of state.raids) {
-      if (!raidActive(r, now) || r.regionIndex !== region || r.announced) continue;
+      if (!raidActive(r, now) || raidHome(r) !== home || r.announced) continue;
       r.announced = true;
-      say(attackLine(r.locationName, regionName(region), r.type), r);
+      say(attackLine(r.locationName, regionName(r.regionIndex), r.type), r);
     }
   }
   // STAFF-EVENT: an event in my region, said once
@@ -621,7 +736,7 @@ export function raidFrame(dt = 0) {
   // F. is the player standing in a raid [IL_0de4]? STAFF-EVENT: in a staff event first - a town's, as a raid's; an
   // area's, outdoors on its pixel (the host's `townHere(true)`: outdoors at all)
   const town = h.townHere?.() ?? null;
-  const raid = staffRaidHere(town, h.playerPixel?.() ?? null, !!h.townHere?.(true)) ?? (town ? state.raids.find((r) => raidActive(r, now) && r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null);
+  const raid = staffRaidHere(town, h.playerPixel?.() ?? null, !!h.townHere?.(true)) ?? (town ? state.raids.find((r) => raidActive(r, now) && raidTownIs(r, town)) : null);   // WW6: a town past the Bay by its own index
   if (raid?.staff && staffBossToSay(raid) >= 0) say(staffBossLine(raid), raid);
   // RAID3: my word to the town's ledger, whoever runs the raid. FIELD BUGS 2026-10-11g RAID-WORD ("Doesn't register raid
   // 20%ish of the time"): the relay credits a word said from the town's PIXEL (server/src/index.js _raidWord's `here`,
@@ -649,7 +764,7 @@ export function raidFrame(dt = 0) {
   if (raid.staff) {
     const fc = staffBossWanted(raid);
     const waits = fc >= 0 && !staffBossByHand(raid) && !staffFieldClear(raid, h) && !staffClearLong(raid, localNow());   // BOSS-CLEAR: the meter's boss once every monster standing at its call is dead - the packs come on meanwhile
-    if (fc >= 0 && !waits) { raid.bossFc = fc; raid.handSeen = raid.staff.fb ?? 0; raid.clearSince = undefined; raid.clearWait = undefined; spawn(raid, 'boss', raid.staff.b, staffBossPlace()); return 'boss'; }
+    if (fc >= 0 && !waits) { raid.bossFc = fc; raid.bossHand = raid.staff.fb ?? 0; spawn(raid, 'boss', raid.staff.b, staffBossPlace()); return 'boss'; }   // BOSS-RETRY: its field's wait and staff's by-hand word spent once it stands, not at the try
     const lost = staffBossLost(raid, staffBossStanding(raid, h), localNow());   // BOSS-LOST: stood, then gone without falling
     if (lost >= 0) { raid.bossFc = lost; spawn(raid, 'boss', raid.staff.b, staffBossPlace()); return 'boss'; }
   }
@@ -682,16 +797,16 @@ export function raidFrame(dt = 0) {
 }
 
 /** The expiry pass [IL_0540-IL_05b9], from the end of the list: a raid past its end is withdrawn - said only of one
- *  the player was told of (fix 2), in the player's region - its raiders routed, and it leaves the list. */
-function expire(now, region) {
+ *  the player was told of (fix 2), in the player's region (WW6: the player's area, `home` - the region on the Bay) - its
+ *  raiders routed, and it leaves the list. */
+function expire(now, home) {
   for (let i = state.raids.length - 1; i >= 0; i--) {
     const r = state.raids[i];
     if (now < r.endMinute) continue;
-    if (!r.cleansed && r.announced && region >= 0 && r.regionIndex === region) say(withdrawnLine(r.locationName, regionName(r.regionIndex)), r);
+    if (!r.cleansed && r.announced && home >= 0 && raidHome(r) === home) say(withdrawnLine(r.locationName, regionName(r.regionIndex)), r);
     routRaid(r);
     state.raids.splice(i, 1);
-    _peerWords.delete(raidKey(r)); _unclaimedSince.delete(raidKey(r)); _relay.delete(raidKey(r));   // RAID2: its words go with it; RAID3: and the relay's
-    _peerObj.delete(raidKey(r));   // RAID5: and its objective's
+    forgetRaid(r);
   }
 }
 
@@ -1030,6 +1145,7 @@ function runsRaid(raid) {
   const h = host(), key = raidKey(raid), t = localNow();
   const me = h.selfId?.() ?? null;
   if (!me) return false;
+  if (pilotKey() === key) { if (t - (_myClaims.get(key) ?? t) < PILOT_CLAIM_AGE) _myClaims.set(key, t - PILOT_CLAIM_AGE); return true; }   // STAFF-PILOT: a staff member steering its boss runs the event - its claim the oldest the wire says
   const claims = [];
   for (const [id, e] of _peerWords.get(key) ?? []) if (e.since != null && t - e.at <= RAID_WORD_STALE_MS) claims.push({ id, age: t - e.since });
   if (_myClaims.has(key)) claims.push({ id: me, age: t - _myClaims.get(key) });
@@ -1068,7 +1184,7 @@ export function raidWireWord(t = localNow()) {
     if (out.length >= RAID_WORDS_MAX) break;
     const key = raidKey(r);
     if (!raidActive(r, now) || (!_myClaims.has(key) && r.killed === 0)) continue;
-    out.push([key, Math.min(r.killed, 999), _myClaims.has(key) ? Math.max(0, Math.round(t - _myClaims.get(key))) : -1]);
+    out.push([key, Math.min(r.killed, 999), _myClaims.has(key) ? Math.min(RAID_CLAIM_AGE_MAX, Math.max(0, Math.round(t - _myClaims.get(key)))) : -1]);   // STAFF-PILOT: never past the wire's bound (validRaidWords drops a word over it - a claim two hours old fell silent)
   }
   return out.length ? out : null;
 }
@@ -1123,7 +1239,7 @@ export function raidRelayWord(f, room = null) {
   }
   if (f.k === 'cl') {
     if (!raid || raid.cleansed) return false;
-    const inRegion = raid.announced && (host().regionIndex?.() ?? -1) === raid.regionIndex;
+    const inRegion = raid.announced && homeNow() === raidHome(raid);   // WW6: told of it, and in its area (the Bay's: its region)
     cleanse(raid, { said: (typeof room === 'string' && isCellRoom(room)) || inRegion, top: f.top, n: f.n });
     return true;
   }
@@ -1157,8 +1273,9 @@ export const STAFF_PACK_FAR_MIN = 20;
 export const STAFF_PACK_FAR_MAX = 60;
 export const STAFF_PACK_NEAR = 6;
 export const STAFF_PACK_STEP_S = 0.15;
-export const STAFF_PACK_FILL_MIN_S = 20;
-export const STAFF_PACK_FILL_MAX_S = 45;
+// PACK-FAST (mob 2026-10-26: "wayy slowwwwwww", "needt to be x3"): three times the pace - 20-45 s was 7-15 s.
+export const STAFF_PACK_FILL_MIN_S = 7;
+export const STAFF_PACK_FILL_MAX_S = 15;
 /** A pack's gap after it: its share of the event's pace (`paceS`). The first pack comes at once, so the cap stands when
  *  all but its last pack - 1 to 5, the cap cutting it short - have had their gaps. @param {number} paceS @param {number} size */
 export const staffPackGapS = (paceS, size) => paceS * size / (MAX_RAID_ENEMIES - 1);
@@ -1166,6 +1283,21 @@ export const staffPackGapS = (paceS, size) => paceS * size / (MAX_RAID_ENEMIES -
 const packWaitS = (paceS, size) => Math.max(STAFF_PACK_STEP_S, staffPackGapS(paceS, size) - STAFF_PACK_STEP_S * (size - 1));
 /** The event's pace, rolled once: a last pack of STAFF_PACK_MAX stands the cap at its least, of one at its most. @param {() => number} roll */
 export const staffPackPaceS = (roll) => rangeFloat(STAFF_PACK_FILL_MIN_S * (MAX_RAID_ENEMIES - 1) / (MAX_RAID_ENEMIES - STAFF_PACK_MAX), STAFF_PACK_FILL_MAX_S, roll);
+/** PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in town"): whether a peer's `feet` stand in
+ *  my event's place - the town's rect where I am in one (`inRect`, the host's test of a foe's feet), or, out of any town
+ *  (a staff AREA event: systems/staffEvents.js staffRaidHere), my own map pixel `me`. Out of a town the rect answered no
+ *  one, and every pack, the scale and the boss went to me. @param {number[]|null} feet @param {((f: any) => boolean)|null} inRect
+ *  @param {{ worldCoords: (p: number[]) => { x: number, z: number } }} world @param {{ x: number, y: number }} me */
+export function peerInEventPlace(feet, inRect, world, me) {
+  if (inRect) return inRect({ ai: { feet } });
+  if (!Array.isArray(feet) || !me) return false;
+  const wc = world.worldCoords(feet), at = worldCoordToMapPixel(wc.x, wc.z);
+  return at.x === me.x && at.y === me.y;
+}
+/** PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a pack whose leader found no spot this
+ *  many times about its player goes to the next player in turn. It was tried about the same player for ever, and while
+ *  it tried, no pack stood anywhere - for anyone. */
+export const STAFF_PACK_LEADER_TRIES = 3;
 /** The pack standing now: `{ key, left, size, at, far }` - its raid, how many more, how many in all, its leader's feet, whether its leader is sought far. */
 let _pack = null;
 /** One step of a staff event's packs (section I's, the clock run out). @param {any} raid @param {number} standing */
@@ -1177,6 +1309,7 @@ function staffPackStep(raid, standing) {
   raid.fillS ??= staffPackPaceS(rnd());   // the event's pace, once
   if (!_pack) { const size = rangeInt(STAFF_PACK_MIN, STAFF_PACK_MAX + 1, rnd()); _pack = { key, left: size, size, at: null, far: true, near: staffPackPlayer() }; }
   const pack = _pack;
+  if (!pack.at && (pack.fails ?? 0) >= STAFF_PACK_LEADER_TRIES) { pack.near = staffPackPlayer(); pack.far = true; pack.fails = 0; }   // PACK-STALL: the next player's turn
   pack.left--;
   const o = pack.at ? { at: pack.at, min: 1.5, max: STAFF_PACK_NEAR, los: false }
     : pack.far ? { min: STAFF_PACK_FAR_MIN, max: STAFF_PACK_FAR_MAX, los: false, near: pack.near } : { min: RAID_SPAWN_MIN_DISTANCE, max: RAID_SPAWN_MAX_DISTANCE, los: false, near: pack.near };
@@ -1228,10 +1361,16 @@ export function staffBossSpot(players) {
 export const STAFF_BOSS_GROUP_M = 30;
 /** BOSS-SPOT: where my mini boss stands - beside the biggest group's player; mine (undefined: about me) when it is me. */
 function staffBossPlace() {
+  if (_bossMisses >= STAFF_PACK_LEADER_TRIES) return undefined;   // BOSS-RETRY: no spot by its group so often - about me
   const me = host().selfId?.() ?? '';
   const at = staffBossSpot(host().peerFeetInTown?.() ?? []);
   return at && at[0] !== me ? { near: at[1] } : undefined;
 }
+/** BOSS-RETRY (mob 2026-10-26: "mini boss sometimes doent spawn"): the boss's tries in a row that found no spot. A miss
+ *  used to clear the field's wait, so the boss waited for the whole field again (up to STAFF_BOSS_CLEAR_MAX_MS) and
+ *  tried the same group's spot - which missed again. Now the wait holds, and past STAFF_PACK_LEADER_TRIES misses it
+ *  stands about me. */
+let _bossMisses = 0;
 /** PACK-SPREAD's turn: the packs stood so far. */
 let _packTurn = 0;
 /** THE REWARD: a staff event's monster another stands that fell after a blow of mine is my kill on the board (its
@@ -1269,6 +1408,11 @@ function staffBossStanding(raid, h) {
   if (_live.some((e) => e.key === key && e.boss && !e.foe.dead)) return true;
   return (h.raidPuppets?.() ?? []).some((pup) => pup._pupRaid === key && !pup.dead && pup.entity?.staffBoss);
 }
+/** STAFF-PILOT: the mini boss of the event I steer that I stand now, or null (systems/staffBossPilot.js). */
+export function staffPilotBoss() {
+  const key = pilotKey();
+  return key ? _live.find((e) => e.key === key && e.boss && !e.foe.dead)?.foe ?? null : null;
+}
 /** A foe of mine taken over from a fallen runner: its event's mini boss is still the boss I stand now. */
 function tookStaffBoss(f) {
   if (!f?.entity?.staffBoss) return false;
@@ -1279,16 +1423,16 @@ function tookStaffBoss(f) {
 /** The name a staff event's place is said by: its town's, off my own map (the panel's word when the map has none), or
  *  its region's for an area. */
 function staffPlaceName(r) {
-  if (r.locationIndex >= 0) {
-    const town = regionsNow()?.find((x) => x.region === r.regionIndex)?.towns.find((t) => t.index === r.locationIndex);
-    if (town?.name) return town.name;
-  }
+  const town = staffTownOf(r);
+  if (town?.name) return town.name;
   return r.locationName || regionName(r.regionIndex);
 }
+/** A staff event's town on my map, or null for an area's - WW6: a town past the Bay in its lane's towns (townOfRaid). */
+const staffTownOf = (r) => (r.locationIndex === STAFF_EVENT_AREA ? null : townOfRaid(r));
 const kindName = (t) => enemyDisplayName(t) ?? 'monster';
 /** Is a staff event's place a city? The panel's word (`ct`, off the game's map), or a town of my own map. Anything else
  *  is said as an area (mob 2026-10-24: "make sure to add that it is a city ... and make sure to say its an area if it not"). */
-const staffCity = (r) => r.locationIndex >= 0 && (r.staff?.ct === 1 || !!regionsNow()?.find((x) => x.region === r.regionIndex)?.towns.some((t) => t.index === r.locationIndex));
+const staffCity = (r) => r.locationIndex !== STAFF_EVENT_AREA && (r.staff?.ct === 1 || !!staffTownOf(r));
 export const staffAttackLine = (r) => (staffCity(r)
   ? t('staffEvent.attackCity', 'The city of {place} is under attack!', { place: staffPlaceName(r) })
   : t('staffEvent.attackArea', 'The area of {place} is under attack!', { place: staffPlaceName(r) }));
@@ -1359,12 +1503,14 @@ export function staffBoardLine(top) {
  * @param {number} [aheadMs]
  */
 export function raidTimerList(relayOf, regionName = () => '', aheadMs = 0) {
+  const home = homeNow();   // WW6: a raid past the Bay's row says whether it is the player's to be told of (its area, `home`)
   const row = (r) => {
     const led = raidRelayState(raidKey(r));
     return {
       name: r.locationName, region: regionName(r.regionIndex) ?? '', type: raidTypeName(r.type), startMs: relayOf(r.startMinute), endMs: relayOf(r.endMinute),
       done: !!r.cleansed, px: r.px, py: r.py, key: raidKey(r), n: Number.isFinite(led?.n) ? led.n : null, tg: Number.isFinite(led?.tg) ? led.tg : null,
       kind: raidKindName(kindOf(r)), obj: objDetail(r),   // RAID5: its kind, and its objective in words where it has one
+      ...(Number.isInteger(r.area) ? { home: home >= 0 && raidHome(r) === home } : {}),   // WW6: a province's raid is its district's (its region names the whole province), a Bay raid's row the one it was
     };
   };
   const out = state.raids.map(row);
@@ -1372,13 +1518,14 @@ export function raidTimerList(relayOf, regionName = () => '', aheadMs = 0) {
   // looks ahead of nothing)
   const next = state.lastSelectedDay + 1, now = (host().now ?? worldMinutes)(), turn = next * MINUTES_PER_DAY;
   if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= aheadMs) {
-    if (_ahead.day !== next) { const regions = regionsNow(); if (regions) _ahead = { day: next, raids: raidsForDay(next, regions).filter((r) => !isWildRegion(r.regionIndex)) }; }
+    const gen = placesGen();   // WW6: and the lanes past the Bay's next day, as the registry holds their towns now
+    if (_ahead.day !== next || _ahead.gen !== gen) { const regions = regionsNow(); if (regions) _ahead = { day: next, gen, raids: [...raidsForDay(next, regions).filter((r) => !isWildRegion(r.regionIndex)), ...lanesForDay(next)] }; }
     if (_ahead.day === next) out.push(..._ahead.raids.map(row));   // the regions not read yet: asked again next read
   }
   return out;
 }
-/** AUDIT EVENTS1 A4: the next day's roll, made once a day for raidTimerList. */
-let _ahead = { day: NaN, raids: [] };
+/** AUDIT EVENTS1 A4: the next day's roll, made once a day for raidTimerList (WW6: and again when the registry's places move). */
+let _ahead = { day: NaN, gen: NaN, raids: [] };
 /** AUDIT EVENTS1 A8 / C7: the region the raids count the player in - PlayerGPS.CurrentRegionIndex less the sea and the
  *  Eltheric Ocean (fix 8, AUDIT CAPTAIN'S SEA G7: the host's own `regionIndex`) - -1 where none. */
 export const raidRegionNow = () => { try { return host().regionIndex?.() ?? -1; } catch { return -1; } };
@@ -1414,9 +1561,9 @@ let _townsText = null, _townsHash = null;
 /** Test seam. */
 export function _resetRaidingParties() {
   state = newRaidSaveData(); _live = []; _pending = null; _nextSpawnIn = 0; _nextDefenderIn = 0; _sweepIn = 0;
-  _lastRegion = -1; _regions = null; _host = null; _installed = false; _townsText = null; _townsHash = null;
+  _lastRegion = -1; _regions = null; _host = null; _laneGen = NaN; _laneGroups = new Map(); _laneSig = null; _installed = false; _townsText = null; _townsHash = null;
   _peerWords = new Map(); _myClaims = new Map(); _unclaimedSince = new Map();
-  _relay = new Map(); _receipts = new Map(); _lastWord = null; _ahead = { day: NaN, raids: [] }; _staffBoards.clear(); _pupKilled = new WeakSet(); _pack = null; _packTurn = 0;
+  _relay = new Map(); _receipts = new Map(); _lastWord = null; _ahead = { day: NaN, gen: NaN, raids: [] }; _staffBoards.clear(); _pupKilled = new WeakSet(); _pack = null; _packTurn = 0; _bossMisses = 0;
   _peerObj = new Map(); _held = [];   // RAID5
 }
 /** Test seam: the runtime, read-only. */

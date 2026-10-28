@@ -39,7 +39,7 @@
 // its bracket to Port-Ledger section A, row ONLINE (Spawn-Grants section 6).
 import { _b64url, SIG_BYTES, ID_RE, characterLevelIssuable, renownIssuable } from './identityToken.js';
 import { coversCell } from './cellTree.js';   // COST-2 (b): a grant stands in any cell the reader's socket covers
-import { EG_CALL_SG_RE, roomOf, tokenGate } from './wire.js';   // a signature's shape on the wire (64 bytes, base64url) - the wire's own; a room's name; the relay's one bucket
+import { EG_CALL_SG_RE, roomOf, tokenGate, worldPixelOk, WORLD_WIDE_RELAY_MIN, relaySupportsWorldWide } from './wire.js';   // a signature's shape on the wire (64 bytes, base64url) - the wire's own; a room's name; the relay's one bucket
 
 /** The version leading the signed bytes, and the line that ends it. */
 export const GRANT_SIG_V = 'spawn-grant1';
@@ -207,7 +207,7 @@ export function validGrant(v) {
   if (!intIn(v.g, 0, 0x7fffffff) || typeof v.o !== 'string' || !ID_RE.test(v.o)) return null;
   if (typeof v.q !== 'string' || roomOf(`/room/${v.q}`) !== v.q) return null;
   if (typeof v.a !== 'string' || (v.a !== '' && !ID_RE.test(v.a))) return null;
-  if (!Array.isArray(v.p) || v.p.length !== 2 || !intIn(v.p[0], 0, 999) || !intIn(v.p[1], 0, 499)) return null;
+  if (!Array.isArray(v.p) || v.p.length !== 2 || !worldPixelOk(v.p[0]) || !worldPixelOk(v.p[1])) return null;   // AUDIT TESA-BIOME F2: the world's pixel (TV-BEYOND, net/wire.js WORLD_PIXEL_BOUND) - a cell past the Bay mints its own, as the relay reads it off the pose
   if (!intIn(v.m, 0, Number.MAX_SAFE_INTEGER) || !intIn(v.x, 1, Number.MAX_SAFE_INTEGER)) return null;
   if (!(v.l === 0 || characterLevelIssuable(v.l)) || !(v.r === 0 || renownIssuable(v.r))) return null;
   if (!intIn(v.n, 1, law.max) || !intIn(v.s, 0, 0xffffffff) || !intIn(v.e, 0, (1 << v.n) - 1)) return null;
@@ -309,6 +309,18 @@ export const relaySupportsGrantStats = (v) => Number(/^world(\d+)$/.exec(String(
 export const STAR_GRANT_RELAY_MIN = 238;
 /** Does the relay at version `v` mint the `star` kind? */
 export const relaySupportsStarGrant = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAR_GRANT_RELAY_MIN;
+/** AUDIT TESA II Z6: THE FIRST RELAY THAT READS A GRANT'S PIXEL PAST THE BAY - AUDIT TESA-BIOME F2's `validGrant` on the
+ *  world's pixel, which shipped in the world-wide relay (net/wire.js WORLD_WIDE_RELAY_MIN, one number for all its gates).
+ *  An older relay MINTS a grant on any pose's pixel (its mapPixelOfWire has no bound) but reads it back nowhere: a renewal,
+ *  a carry or a handover naming it is junk there - a strike, and no answer - so the grant lapsed unrenewed and the strikes
+ *  ran to the socket's close. A client on such a relay takes no grant off the Bay's map (grantPixelReadBack), as before F2:
+ *  its stand stands ungranted there. */
+export const GRANT_WORLD_RELAY_MIN = WORLD_WIDE_RELAY_MIN;
+/** Does the relay at version `v` read a grant's pixel past the Bay? */
+export const relaySupportsGrantWorld = relaySupportsWorldWide;
+/** AUDIT TESA II Z6: does a relay read grant `g`'s pixel back - any pixel of the world where it reads the world (`world`,
+ *  relaySupportsGrantWorld's word), else the Bay's own map alone. Pure. @param {any} g @param {boolean} world */
+export const grantPixelReadBack = (g, world) => world || (intIn(g?.p?.[0], 0, 999) && intIn(g?.p?.[1], 0, 499));
 
 /** The law's modes (relayCfg `grantMode`, the welcome's `gm`): `off` - no ask is made or answered; `measure` - every ask
  *  is granted and what the gate would refuse is counted (GRANT2 to GRANT5); `enforce` - the gate refuses (GRANT6). */
@@ -436,6 +448,58 @@ export function grantBucketIdle(k, b, nowMs) {
   const law = Object.hasOwn(GRANT_KINDS, k) ? GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (k)] : null;
   if (!law || !b) return true;
   return b.tokens + ((nowMs - b.at) / 1000) * law.rate >= law.cap;
+}
+
+// ── AUDIT TESA III E2-1: A CELL'S GATE OUTLIVES ITS SLEEP (bible/01-Overview/audits/Audit-Tesa-III-E2.md) ─────────────
+// GRANT-SLEEP (section 22) left nothing pending to hold a quiet cell awake, and the gate - each account's bucket per kind,
+// the live grants that count against the ceiling, the counter, the sockets that stood on a grant - lived in the object's
+// memory alone: ten silent seconds and a hibernation handed every account a full bucket and the cell an empty ceiling,
+// where the cell before it held both for its window's ten minutes. So the relay keeps the gate in the cell's storage,
+// written at each ask that moved it and read once an instance life (server/src/index.js `_grantGateLoad`,
+// `_grantGateKeep`); the measure's window stays a sample, in memory.
+/** The storage key a cell keeps its gate under. */
+export const GRANT_GATE_KEY = 'grantgate';
+/** The kept gate's shape's version - a gate of another is read as none. */
+export const GRANT_GATE_V = 1;
+/** The most live grants a kept gate holds, the newest kept: the ceiling's GRANT_CELL_CEILING hostile members, their
+ *  carries and heirs and every account's allies stay well under it. */
+export const GRANT_GATE_LIVE_MAX = 1024;
+/** The most sockets a kept gate remembers standing on a grant (GRANT9's `askers`), the newest kept. */
+export const GRANT_GATE_ASKERS_MAX = 256;
+/**
+ * THE GATE A CELL KEEPS - `{ v, n, b, l, a }`: its counter; each bucket that still binds (an idle one is a first ask's,
+ * full - grantBucketIdle), `[key, tokens, at]`; each live grant, `[g, members, expiry, body, handed members]`; the sockets
+ * that stood on a grant - or null where nothing binds (the key is let go). Plain arrays, so storage keeps it as written.
+ * Pure. @param {{ n: number, buckets: Map<string, { tokens: number, at: number }>, live: Map<number, any>, askers?: Set<string> }} G
+ * @param {number} nowMs
+ */
+export function grantGateKept(G, nowMs) {
+  const b = [...G.buckets].filter(([k, v]) => !grantBucketIdle(k.slice(k.lastIndexOf('|') + 1), v, nowMs)).map(([k, v]) => [k, v.tokens, v.at]);
+  const l = [...G.live].filter(([, v]) => v.x > nowMs).slice(-GRANT_GATE_LIVE_MAX).map(([g, v]) => [g, v.n, v.x, v.gr, v.handed ? [...v.handed] : []]);
+  if (!b.length && !l.length) return null;
+  return { v: GRANT_GATE_V, n: G.n, b, l, a: [...(G.askers ?? [])].slice(-GRANT_GATE_ASKERS_MAX) };
+}
+/**
+ * A KEPT GATE READ BACK - `{ n, buckets, live, liveN, askers }`, the live grants past their expiry let go (the buckets'
+ * idle ones the relay's own prune lets go), anything malformed passed over - or null for none (no key, another shape).
+ * Pure. @param {any} v @param {number} nowMs
+ */
+export function grantGateOf(v, nowMs) {
+  if (!v || typeof v !== 'object' || v.v !== GRANT_GATE_V || !Number.isSafeInteger(v.n) || !Array.isArray(v.b) || !Array.isArray(v.l)) return null;
+  /** @type {Map<string, { tokens: number, at: number }>} */
+  const buckets = new Map();
+  for (const e of v.b) if (Array.isArray(e) && typeof e[0] === 'string' && Number.isFinite(e[1]) && Number.isFinite(e[2])) buckets.set(e[0], { tokens: e[1], at: e[2] });
+  /** @type {Map<number, any>} */
+  const live = new Map();
+  let liveN = 0;
+  for (const e of v.l) {
+    if (!Array.isArray(e) || !Number.isSafeInteger(e[0]) || !Number.isSafeInteger(e[1]) || e[1] < 0 || !(Number.isFinite(e[2]) && e[2] > nowMs) || !e[3] || typeof e[3] !== 'object' || live.has(e[0])) continue;
+    const handed = Array.isArray(e[4]) ? e[4].filter((i) => Number.isSafeInteger(i)) : [];
+    live.set(e[0], { n: e[1], x: e[2], gr: e[3], ...(handed.length ? { handed: new Set(handed) } : {}) });
+    liveN += e[1];
+  }
+  const askers = new Set((Array.isArray(v.a) ? v.a : []).filter((s) => typeof s === 'string'));
+  return { n: v.n, buckets, live, liveN, askers };
 }
 
 /** A socket's asks a second at the relay, and its burst - a chunk entered rolls up to three camps at once

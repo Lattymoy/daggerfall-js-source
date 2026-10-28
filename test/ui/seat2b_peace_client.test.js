@@ -117,7 +117,7 @@ test('SEAT2b part two A CRAFT CARRIES ITS TOWN: the book keeps the town the stat
 test('SEAT2b part two THE HOST\'S SEAMS: a members\' Harbour is the travel map\'s, the popup\'s, the held map\'s, Roleplay Realism\'s and the deed\'s port; the board\'s coast is the sea beside the town; a craft names the held town whose hall steps it; the Watchtowers asked from the frame; a Ram Kit\'s craft and its Stores say where it waits (mutants: each seam; the words)', () => {
   assert.match(W, /setSeatHarbours\(\(mapId\) => harbourPortFor\(seatHere\(mapId\), guildBook\?\.guild\?\.id \?\? null\)\);/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA P10): past the Veil an isle's place answers by its own kind first, the Bay's as before
-  assert.match(W, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : modSetting\('travel-options', 'Enabled'\) === true \? hasPortFor\(loc\.mapTableData\?\.mapId\) :/);
+  assert.match(W, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? \(loc\.exterior\?\.exteriorData\?\.portTownAndUnknown \?\? 0\) !== 0 : modSetting\('travel-options', 'Enabled'\) === true \? hasPortFor\(loc\.mapTableData\?\.mapId\) :/);   // PIN MOVED (BAY-LEFT-SEA): past the Bay by the place's own port byte; PIN MOVED (AUDIT-TESA A4-F4)
   assert.match(W, /if \(hasPortFor\(summary\.id\)\) return true;/);
   for (const f of ['src/ui/travel/travelPopUp.js', 'src/ui/travel/travelMapOptions.js', 'src/ui/heldMap.js']) {   // TIDY2: whole paths, so a move rewrites them
     assert.match(readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8'), /import \{ hasPortFor as hasPort \} from '(?:\.\.\/)+systems\/travel\/travelPorts\.js';/, f);
@@ -127,7 +127,7 @@ test('SEAT2b part two THE HOST\'S SEAMS: a members\' Harbour is the travel map\'
   assert.match(W, /port: coastalAt\(town\.px, town\.py, seaPixel, csaIsPortTown\(town\.px, town\.py\)\),/);
   assert.match(W, /const \{ seat \} = myHall\(recipeById\(recipe\)\?\.profession\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): fortLaw.js hallStepsFor (prof9_client.test.js drives it)
   assert.match(W, /const myHall = \(profession\) => hallStepsFor\(seatHere\(_musicLoc\?\.mapTableData\?\.mapId\), guildBook\?\.guild\?\.id \?\? null, profession\);/);
-  assert.match(W, /name: typeof playerEntity\?\.name === 'string' \? playerEntity\.name : null, seat \}, profMintCraft\);/);
+  assert.match(W, /name: typeof playerEntity\?\.name === 'string' \? playerEntity\.name : null, seat, \.\.\.more \}, profMintCraft\);/);   // PIN MOVED (MASTER-ART): the page's other asks handed on after the seat
   assert.match(W, /\{ const g = guildBook\?\.guild\?\.id \?\? null; if \(g && seatBook\?\.towersDue\(g\)\) seatBook\.towers\(g, \(t\) => townTalk\.say\(t, 6\)\)\.catch\(\(\) => \{\}\); \}/);
   assert.match(W, /const made = rec\?\.kind === 'siege' \? storedText\(rec\.name, Number\(r\.data\.count\) \|\| 1\) : craftedText\(mintPieces\(r\.data\)\);/);
   assert.equal(storedText('Ram Kit'), 'You made a Ram Kit. It waits in your Stores');

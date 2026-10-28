@@ -63,10 +63,10 @@ test('GUIDE5 ONLY WHAT THE MAP HOLDS - a mark for each quest whose target the pl
   ];
   const marks = questMapMarks(views, '4', pixelOf);
   assert.deepEqual(marks, [
-    { key: 'quest:3,7', px: 3, py: 7, tracked: false, label: `The First Road / Same Town - Bigtown in ${REGION} province`,
+    { key: 'quest:3,7', px: 3, py: 7, tracked: false, placeName: 'Bigtown', label: `The First Road / Same Town - Bigtown in ${REGION} province`,   // START3: the place's own name
       tip: { title: '2 quests', lines: [`Bigtown in ${REGION} province`, `The First Road - ${timeLeftWords(90000)}`, 'Same Town'] },
       quests: [{ title: 'The First Road', left: timeLeftWords(90000) }, { title: 'Same Town', left: '' }] },   // AUDIT GUIDE K8: named on the place card
-    { key: 'quest:8,2', px: 8, py: 2, tracked: true, label: `The Second Road - Llugwych in ${REGION} province`,
+    { key: 'quest:8,2', px: 8, py: 2, tracked: true, placeName: 'Llugwych', label: `The Second Road - Llugwych in ${REGION} province`,
       tip: { title: 'The Second Road', lines: [`Llugwych in ${REGION} province`] },
       quests: [{ title: 'The Second Road', left: '' }] },
   ]);
@@ -354,7 +354,7 @@ test('GUIDE5 THE COMPASS - one mark, the tracker\'s quest\'s place: a hollow dia
 
 test('GUIDE5 ONE HOST, ITS LAWS - the street resolves a place with the held map\'s goto law, hands the held map every quest\'s place while the marks are on, and hands the compass the tracker\'s quest\'s place (the pixel\'s middle, the party marks\' own sum) on the street alone; drawHud forwards it and the enhanced HUD draws it; the classic map is DFU\'s and gets none; the switch is a Features row beside the tracker\'s; the module stays light (mutants: the marks off the switch; the compass indoors; the point off the pixel\'s middle; the forward dropped)', () => {
   const W = rd('src/scenes/world.js');
-  assert.match(W, /const questPixel = \(find\) => questPlacePixel\(maps, find\?\.regionName \?\? '', find\?\.locationName \?\? ''\);/, 'AUDIT GUIDE O3: the host\'s memo - the held map\'s goto law (placePixelOf), read once a place');
+  assert.match(W, /const questPixel = \(find\) => find\?\.worldPixel \?\? questPlacePixel\(maps, find\?\.regionName \?\? '', find\?\.locationName \?\? ''\);/, 'AUDIT GUIDE O3: the host\'s memo - the held map\'s goto law (placePixelOf), read once a place');   // PIN MOVED (START3): a place past the Bay by its own pixel first
   assert.match(W, /quests: \(\) => \(marksOn\(\) \? questMapMarks\(questTracker\.views, questTracker\.shown\(\)\?\.id \?\? null, questPixel\) : \[\]\),/);
   assert.match(W, /const questCompassMark = \(\) => \{\n\s*if \(!marksOn\(\) \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) return null;\n\s*const find = questTracker\.shown\(\)\?\.target\?\.find;\n\s*const p = find \? questPixel\(find\) : null;\n\s*if \(!p\) return null;\n\s*const t = state\.pixelTranslation\(p\.x, p\.y\);\n\s*return \[t\[0\] \+ TERRAIN_SIZE \/ 2, t\[2\] \+ TERRAIN_SIZE \/ 2\];/);
   assert.match(W, /quest: (?:vendorCompassMark\(\) \?\? )?(?:townQuestCompassMark\(\) \?\? )?questCompassMark\(\),   \/\/ GUIDE5/);   // HOME-VENDOR: a trader's waypoint first, while it is set

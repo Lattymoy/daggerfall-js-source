@@ -354,7 +354,7 @@
   },
   {
     "name": "AUDITLIVED1-T3-the-save-records-the-worlds-minute",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "classicMinutes: Math.floor(playerTicker.ownMinutes),   // LIVED1: the save's clock",
     "new": "classicMinutes: Math.floor(playerTicker.classicMinutes),   // LIVED1: the save's clock",
     "tests": [

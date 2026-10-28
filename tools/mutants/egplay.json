@@ -102,7 +102,7 @@
   {
     "name": "EGPLAY-the-next-circle-never-built",
     "file": "src/scenes/eliteGates/egClient.js",
-    "old": "{ if (E.sg === 'arrive' || returning === E.b) swapTo(E, c); return; }",
+    "old": "{ if (E.sg !== 'rest' || returning === E.b) swapTo(E, c); return; }",
     "new": "{ return; }",
     "tests": [
       "test/net/eliteGates/egplay_client.test.js"

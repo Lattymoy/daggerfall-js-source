@@ -61,10 +61,12 @@ import {
   workSpecOk,   // PROF12: a Transmuter's transmutation asks its choice
   workEmbers,   // DAEDRIC-SMELT: the Deadlands Embers a work spends out of the account's purse
   SCHOOL_HAULS_DAY,   // AUDIT GATHER F3: the school's fish bounded as the day's forty bound them
+  WORK_RECIPES,   // CRAFT-HALL: the works whose first pays, read with the state
 } from '../../src/net/professionLaw.js';
 import {
   recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, rollsQuality, craftXp, craftCount,
   makerMark, counterMade, firstCraftKin, recipeInputs, takesHeartwood, carriesMark, dyeOk,   // CLOTH-GEMS: S1 judged by the units
+  RECIPES,   // CRAFT-HALL: the judged patterns, read by the state's `made`
   JUDGED_CLOTH,   // WOVEN-PAYS: the cloth S1 counts when it is bought with silver
   firstCraftXp, workFirstXp, FIRST_MAKE_FLOOR,   // FIRST-BUDGET: its track's first-make share (Professions-Arc 52); WOVEN-PAYS: an old row's paid first
   masonXp,   // PROF11: the mason's bench's XP
@@ -72,14 +74,15 @@ import {
   jewelHand, takesCracked, masterworkSpec, LAPIDARY,   // PROF10: the jeweller's hand, a Lapidary's cracked gem, the Master Jeweller's points
   PROVENANCE_RE,   // CRAFT4: a tempered piece's id
 } from '../../src/net/recipeLaw.js';
-import { mintProductRecord, readProductRecord, MINT_VERSION } from '../../src/net/productRecord.js';   // CRAFT4: a tempered piece's record re-signed; CRAFT-PROCS: the mint's version
+import { mintProductRecord, readProductRecord, craftMintVersion } from '../../src/net/productRecord.js';   // CRAFT4: a tempered piece's record re-signed; CRAFT-PROCS: the mint's version (AUDIT FB1026d C3: the client's, at most ours)
 import { temperableRecipe, temperFrom, temperCost, temperXp } from '../../src/net/temperLaw.js';   // CRAFT4: the temper
 import { signingKey } from './signing.js';
 import {
   parseNodeKey, nodeCount, herbPatch, herbSeasonMult, daySeason, HERB_TABLES, HERB_YIELD, FOOD_YIELD, herbYield, foodYield,
   basketFood, isMarch, regionOk, pixelOk, pixelKey, pixelReport, witnessedFact, factConfirmed, WITNESS, material,
   regionWritTable, courtWrits, VEIN_TABLES, vein, boulder, dungeonVein, dungeonOk, veinYield, boulderYield, VEIN_YIELD,
-  BOULDER_YIELD, veinGem, veinSlots, treeSlots, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,
+  BOULDER_YIELD, veinGem, nodeSlots, regionOnPixel, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,   // WW-C1: one slot law, a province never claimed on the Bay's map
+  jungleGroundOk,   // AUDIT TESA II J5: a jungle word only where a jungle zone may stand
   haulYield, haulFinds, haulAtSea,   // PROF8
 } from '../../src/net/nodeLaw.js';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
@@ -95,6 +98,7 @@ import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls st
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
 import { SURVEYOR } from '../../src/net/professionLaw.js';   // MINE-PERKS: Mining 100's Surveyor (the Stonebreaker's id)
+import { trophyHunted } from '../../src/net/professionLaw.js';   // HUNTERS-MARK: a Trophy Hunter's clean pelt of a tier 5+ body
 import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk, looseOrder, LOOSE_ORIGIN, STATION_ORIGINS, WRIT_ORIGINS } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
 import { hallWrits, hallWritCountIn, hallWritId, hallHidden, HALL_WRIT_REP, memberWrit, memberWritId, MERIT_WRIT, chapterBandOf, chaptersSwitchOf, meritWeekOf, chapterFocusesOf, crackdownMerit, doctrineWritCount } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild; CHAP3a: a member's own
 import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guild/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
@@ -185,7 +189,7 @@ export const silverClothIn = (db, select, binds) => db.prepare(`INSERT INTO prof
 /** WOVEN-PAYS: A STATION'S USE OF A CLOTH TAKES ITS BOLTS OFF THE SILVER COUNT - `qtySql` units of `materialSql` where `guard`
  *  holds (the act's own row; ?1 the player, ?2 the character, `binds` from ?3), a row at nought deleted. A craft's and a
  *  temper's, whatever the recipe: a bolt used is a bolt used. */
-const silverClothOut = (db, { player, character, materialSql, qtySql, guard, binds }) => [
+export const silverClothOut = (db, { player, character, materialSql, qtySql, guard, binds }) => [
   db.prepare(`UPDATE prof_silver_cloth SET qty = qty - MIN(qty, ${qtySql}) WHERE player = ?1 AND char_id = ?2 AND material = ${materialSql} AND ${guard}`).bind(player, character, ...binds),
   db.prepare('DELETE FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty = 0').bind(player, character),
 ];
@@ -285,16 +289,39 @@ export async function sweepHarvests(db, nowS, limit = 500) {
 }
 
 /**
+ * CRAFT-HALL: what the character has made, read the way the first-make decisions read it - crafted recipes, works that
+ * pay a first (the mason's cut and mix) and brewed potions. One statement on the tables' existing indexes, in the
+ * state's batch, so the client can show which first-time bonuses are spent.
+ */
+const FIRST_WORKS_SQL = WORK_RECIPES.filter((w) => workFirstXp(w) > 0).map((w) => `'${w.id}'`).join(', ') || "''";
+// WOVEN-PAYS: a judged pattern (counterMade) is made only by the craft that laid its first on - a row from before
+// `first_paid` where it was the first and its XP holds the share. craftAtAnvil's `patternMade` and the state's `made` read it
+const PAID_FIRST_SQL = `(first_paid = 1 OR (first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))`;
+const JUDGED_SQL = RECIPES.filter(counterMade).map((r) => `'${r.id}'`).join(', ') || "''";
+const madeStatement = (db, player, character) => db.prepare(`SELECT 'craft' AS kind, recipe AS key FROM prof_crafts WHERE player = ?1 AND char_id = ?2
+    AND (recipe NOT IN (${JUDGED_SQL}) OR ${PAID_FIRST_SQL}) GROUP BY recipe
+  UNION ALL SELECT 'work', recipe FROM prof_smelts WHERE player = ?1 AND char_id = ?2 AND recipe IN (${FIRST_WORKS_SQL}) GROUP BY recipe
+  UNION ALL SELECT 'brew', potion FROM prof_brews WHERE player = ?1 AND char_id = ?2 GROUP BY potion`).bind(player, character);
+/** CRAFT-HALL: madeStatement's rows as `{ crafts, works, brews }`. */
+const madeFrom = (/** @type {any[]} */ results) => {
+  const out = { crafts: /** @type {string[]} */ ([]), works: /** @type {string[]} */ ([]), brews: /** @type {string[]} */ ([]) };
+  for (const r of results) (r.kind === 'craft' ? out.crafts : r.kind === 'work' ? out.works : out.brews).push(String(r.key));
+  return out;
+};
+
+/**
  * A CHARACTER'S PROFESSIONS, as the Professions and Stores tabs and the nodes read them: every track, today's harvests
- * and the nodes taken, the Stores, today's writs filled (the Court's and the halls', CHAP2a), and the bounds.
+ * and the nodes taken, the Stores, today's writs filled (the Court's and the halls', CHAP2a), the bounds, and (CRAFT-HALL)
+ * what it has made.
  */
 export async function profState({ db, nowS }, player, env, { character } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
   if (refused) return refused;
   const day = utcDay(nowS);
-  // GATHER-SPEED: the state's eight reads in ONE round trip - the tracks, the Stores, the day's nodes, the carried count,
-  // the day's harvests, the Court's writs and the hides and hauls - where they were eight trips in a row
-  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows] = await readAll(db, [
+  // GATHER-SPEED: the state's reads in ONE round trip - the tracks, the Stores, the day's nodes, the carried count,
+  // the day's harvests, the Court's writs and the hides and hauls - where they were eight trips in a row (WOVEN-PAYS adds
+  // the cloth's silver counts, CRAFT-HALL `made`; MASTER-ART today's Master's work)
+  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await readAll(db, [
     db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character),
     db.prepare('SELECT material, origin, qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND qty > 0 ORDER BY material').bind(player.id, character),
     db.prepare('SELECT node, kind FROM node_harvests WHERE player = ?1 AND char_id = ?2 AND day = ?3').bind(player.id, character, day),
@@ -306,6 +333,8 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
     haulsStatement(db, player.id, day),
     // WOVEN-PAYS: the silver counts of its cloth (the loom's first-time line reads them)
     db.prepare('SELECT material, qty FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty > 0').bind(player.id, character),
+    madeStatement(db, player.id, character),   // CRAFT-HALL
+    db.prepare('SELECT 1 FROM prof_masters WHERE player = ?1 AND char_id = ?2 AND day = ?3').bind(player.id, character, day),   // MASTER-ART: one a day
   ]);
   const byProf = new Map(rows.map((r) => [r.profession, r]));
   const held = new Map();
@@ -332,6 +361,8 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
     hauls: Number(hauls[0]?.n ?? 0),   // PROF8: the account's hauls today (PROF0 6)
     caps: { stores: STORES_MAX, withdraw: WITHDRAW_MAX, highHides: HIGH_HIDES_PER_DAY },   // CAP-OFF: no day's harvests, hides or hauls
     silver: Object.fromEntries(silverRows.map((r) => [r.material, Number(r.qty)])),   // WOVEN-PAYS: the cloth's silver counts standing
+    made: madeFrom(made),   // CRAFT-HALL
+    master: { made: master.length > 0 },   // MASTER-ART (Professions-Arc 57): whether today's Master's work is made
   };
 }
 
@@ -353,7 +384,7 @@ function factsFrom(keys, /** @type {any[]} */ results) {
   for (const [k, rows] of rowsBy) out.set(k, witnessedFact(rows));
   return out;
 }
-const factView = (f) => (factConfirmed(f) ? { state: f.state, climate: f.climate, region: f.region } : { state: f.state });
+const factView = (f) => (factConfirmed(f) ? { state: f.state, climate: f.climate, region: f.region, ...(f.jungle ? { jungle: true } : {}) } : { state: f.state });   // AUDIT TESA II J5: and a confirmed jungle's
 /**
  * THE STATES OF WHAT A CLIENT HAS STREAMED: `{ pixels: [{ x, y, state, climate?, region? }], dungeons: [{ id, ... }] }`
  * - the confirmed answer where there is one (a client whose own derivation disagrees stands no node it could not
@@ -538,6 +569,7 @@ function cutsOf(act, tier, lumberjack) {
 export async function harvestNode(ctx, player, env, body = {}) {
   const { db, nowS, rand } = ctx;
   const { character, node, kind, climate, region, act, at, rid, foe } = body ?? {};
+  const jungle = body?.jungle === true;   // AUDIT TESA II J5: the client's word that its pixel past the Bay is a jungle zone's - witnessed, never taken alone
   const refused = asks(player, { character, rid });
   if (refused) return refused;
   // BAG1: A CARRYING CLIENT's harvest lands in its bag or pack - the carried count (bagLaw.js) - never the Stores; `held`
@@ -558,6 +590,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const isBody = n.kind === 'body';   // PROF7: a body names no ground (PROF0 6)
   const isHaul = n.kind === 'haul';   // PROF8: a haul names its pixel, and no slot
   if (!isBody && (!climateHolds(n.kind, climate) || !regionOk(region))) return { error: 'prof-pixel' };
+  if (n.kind !== 'dvein' && !isBody && !regionOnPixel(region, n.x, n.y)) return { error: 'prof-pixel' };   // WW-C1: a province's richness never claimed on the Bay's own ground
   const day = utcDay(nowS);
   if (n.day !== day) return { error: 'prof-day' };   // PROF0 19: a node whose UTC day has ended lapses
   if (!Number.isSafeInteger(at) || at < nowS - HARVEST_LATE_S || at > nowS + HARVEST_EARLY_S || utcDay(at) !== day) return { error: 'prof-late' };
@@ -581,25 +614,27 @@ export async function harvestNode(ctx, player, env, body = {}) {
     readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)])
       .then((rows) => (key === null ? [[], ...rows] : rows)),
     // A dungeon's vein and a body name no ground of a town
-    !deep && !isBody && seatsOpenFor(player, env) ? levyAt(db, nowS, region, [n.x, n.y]) : null,
+    !deep && !isBody && seatsOpenFor(player, env) ? levyAt(db, nowS, region, [n.x, n.y], env) : null,
   ]);
   if (over) return { error: 'prof-rate' };
   const fact = key === null ? null : factsFrom([key], factRows).get(key);
   const confirmed = factConfirmed(fact);
   const witness = !isBody && Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - WITNESS.ageS ? 1 : 0;
-  if (confirmed && (fact.climate !== climate || fact.region !== region)) {
+  const jungleSaid = deep ? false : jungle;   // a dungeon's ground names no jungle
+  if (jungleSaid && (isBody || !jungleGroundOk(n.x, n.y, climate, region))) return { error: 'prof-pixel' };   // AUDIT TESA II J5: no jungle word where no jungle zone can stand
+  if (confirmed && (fact.climate !== climate || fact.region !== region || (fact.jungle === true) !== jungleSaid)) {
     // AUDIT 29 A4: refused - and, from an account that may witness, written down: a dissent is what a dispute is made
     // of (SEAT0 3.2), and a refusal that kept no report let the first three words stand for good
     if (witness) {
       await db.prepare('INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
-        .bind(wkind, key, player.id, pixelReport(climate, region), region, nowS).run();
+        .bind(wkind, key, player.id, pixelReport(climate, region, jungleSaid), region, nowS).run();
     }
     return { error: 'prof-pixel' };
   }
   // a vein's slots are its climate's and, on confirmed ground, its region's signature beside them (AUDIT 29 A6); a tree's
   // its climate's, and the jungle's in the owner's area (JUNGLE-WOODS); a body has none (AUDIT 32 S2: its unchecked
-  // ground is never read)
-  if (!deep && !isBody && !isHaul && n.slot >= (n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : n.kind === 'tree' ? treeSlots({ x: n.x, y: n.y, climate }) : nodeCount(climate, n.kind))) return { error: 'bad-node' };
+  // ground is never read). WW-C1: one law, the client's (nodeLaw.js nodeSlots) - a province's richness on confirmed ground
+  if (!deep && !isBody && !isHaul && n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed, jungle: fact?.jungle === true })) return { error: 'bad-node' };   // AUDIT TESA II J5: the jungle's trees past the Bay on its confirmed word
 
   // THE TRACK it is worked under
   const row = trackRows[0] ?? null;
@@ -643,9 +678,12 @@ export async function harvestNode(ctx, player, env, body = {}) {
     gem = finds.part;
     extra = finds.meat;
     extraQty = finds.meatQty || 1;
+    // HUNTERS-MARK (Professions-Arc 58): a Trophy Hunter's clean pelt of a tier 5+ body mounts its beast - written on the
+    // row the rare hides' day decides, so it is bounded by their three
+    trophy = trophyHunted({ spec100: specs[100], tier, clean }) ? 1 : 0;
   } else if (n.kind === 'tree') {
     // PROF4: THE WOOD-AXE - a tree's logs; Resin one in four, Heartwood a Clean Cut's find on confirmed ground (PROF0 25)
-    const found = tree({ x: n.x, y: n.y, day, slot: n.slot, climate, confirmed });
+    const found = tree({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, jungle: fact?.jungle === true });   // AUDIT TESA II J5
     if (!found) return { error: 'bad-node' };
     tier = found.tier;
     if (!tierOpen(rank, tier)) return { error: 'prof-rank' };
@@ -657,7 +695,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     gem = finds.heartwood;
     extra = finds.resin;
   } else if (n.kind === 'herb') {
-    const patch = herbPatch({ x: n.x, y: n.y, day, slot: n.slot, climate, confirmed, seasonalEye: specs[100] === 'seasonal-eye' });
+    const patch = herbPatch({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, seasonalEye: specs[100] === 'seasonal-eye' });
     if (!patch) return { error: 'bad-node' };
     if (kind === 'herbs') {
       tier = patch.tier;
@@ -690,7 +728,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     // counted none), never the March's or a Tide's (named by the region, on confirmed ground alone)
     const surveyed = n.kind === 'vein' && !confirmed && specs[100] === SURVEYOR;
     const found = n.kind === 'vein' ? vein({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, surveyed })
-      : n.kind === 'boulder' ? boulder({ x: n.x, y: n.y, day, slot: n.slot, climate })
+      : n.kind === 'boulder' ? boulder({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed })
         : dungeonVein({ dungeon: n.dungeon, day, slot: n.slot, climate, confirmed });
     if (!found) return { error: 'bad-node' };
     tier = found.tier;
@@ -793,7 +831,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     // (AUDIT 32 S2: its ground is never checked, and a hand-built one was bound here - a 500 and an hour's act spent)
     ...(isBody ? [] : [db.prepare(`INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at)
       SELECT ?9, ?4, ?1, ?5, ?6, ?7 WHERE ?8 = 1 AND EXISTS (SELECT 1 FROM node_harvests WHERE ${mine})`)
-      .bind(player.id, rid, nonce, key, pixelReport(climate, region), region, nowS, witness, wkind)]),
+      .bind(player.id, rid, nonce, key, pixelReport(climate, region, jungleSaid), region, nowS, witness, wkind)]),
     ...(find ? [find] : []),   // SILVER-FINDS: the find, last
     db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid),
   ];
@@ -1303,8 +1341,8 @@ async function emberPurse(db, id) {
 
 // ─── A CRAFT AT THE ANVIL (PROF0 9, 24) ──────────────────────────────
 
-/** A provenance id: 16 hex digits from the service's CSPRNG (PROF0 9.1). */
-function provenanceId(rand) {
+/** A provenance id: 16 hex digits from the service's CSPRNG (PROF0 9.1). MASTER-ART: a Master's work's too (masterWork.js). */
+export function provenanceId(rand) {
   const b = new Uint8Array(8);
   rand(b);
   return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
@@ -1378,7 +1416,7 @@ export async function seatStepsFor(db, player, character, seat, profession, nowS
   return held ? stationSteps(profession, await fortTiersOf(db, seat, nowS)) : 0;
 }
 
-export async function craftAtAnvil(ctx, player, env, { character, recipe: id, clean, name, heartwood = false, dye = null, rid, seat = null, cracked = false } = {}) {
+export async function craftAtAnvil(ctx, player, env, { character, recipe: id, clean, name, heartwood = false, dye = null, rid, seat = null, cracked = false, mint = null } = {}) {
   const { db, nowS, rand, subtle } = ctx;
   const refused = asks(player, { character, rid });
   if (refused) return refused;
@@ -1424,7 +1462,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   const key = await signingKey(env, subtle);
   const u = dye ?? null;
   const hand = dishHand(r, specs[100]) ?? jewelHand(r, specs[50]);   // PROF9: a Chef's feast, a Provisioner's dish - the dish's wherever it goes; PROF10: a Goldsmith's Silver, a Gemcutter's gem
-  const records = await Promise.all(provs.map((p) => mintProductRecord({ p, s: player.id, h: character, r: r.id, q: quality, m: maker, c: seed, a: marked === 1 && maker !== null, u, f: hand, v: MINT_VERSION }, key, { subtle, nowS })));   // AUDIT 30 L4: the mark signed; PROF7: the dye; PROF9: the hand; CRAFT-PROCS: the law it mints under (its last pass)
+  const records = await Promise.all(provs.map((p) => mintProductRecord({ p, s: player.id, h: character, r: r.id, q: quality, m: maker, c: seed, a: marked === 1 && maker !== null, u, f: hand, v: craftMintVersion(mint) }, key, { subtle, nowS })));   // AUDIT 30 L4: the mark signed; PROF7: the dye; PROF9: the hand; CRAFT-PROCS: the law it mints under (its last pass) - AUDIT FB1026d C3: the one its client mints
   const nonce = mintId(rand);
   // ?1 player ?2 character ?3 rid ?4 recipe ?5 quality ?6 count ?7 provenance ?8 provenance2 ?9 seed ?10 the XP before the
   // first craft's ?13 (AUDIT 32 S1: CLOTH-GEMS - laid on a recipe wholly of the counter's goods only where its units are
@@ -1453,7 +1491,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   // first and its XP holds the share (FIRST_MAKE_FLOOR: no share is under it, and no judged craft's own XP reaches it -
   // tiers 1-2, pinned). Every other recipe's pattern is made by any craft of it, as before (FACT, pinned: no pattern at a
   // tier holds both)
-  const patternMade = counterMade(r) ? `${madeBefore} AND (first_paid = 1 OR (first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))` : madeBefore;
+  const patternMade = counterMade(r) ? `${madeBefore} AND ${PAID_FIRST_SQL}` : madeBefore;
   const decided = 'EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND rid = ?5 AND n = ?6)';
   // AUDIT PROF-541 B7: A PIECE MADE OF BOUGHT GOODS IS BOUGHT - 'marks' (GOLD-MARKET's Drakes, products.bought_with) where
   // any input held a bought unit as the pieces are minted, BEFORE the spends (bought first - the smelt's rule, professionLaw
@@ -1835,7 +1873,7 @@ async function hiddenMemberships(db, player, character) {
 export async function listWrits({ db, nowS }, player, env, { character, region } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
   if (refused) return refused;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };   // WW-R: a writ board was a Bay region's town's; WW7-5: any region's, the provinces' too
   const day = utcDay(nowS);
   const halls = chaptersOpenFor(player, env);   // CHAP2a: a chapter's writs only where the Roll is open to the account
   const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);

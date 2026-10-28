@@ -8,6 +8,67 @@
 
 Newest first.
 
+**2026-10-28 - AUDIT TAMRIEL-NODES.** The request: *"audit the main tamriel PR and just ensure the new gathering points
+show in the overworld across tamriel properly"*, of #1184's gathering past the Bay (WW-C1). The Overworld's groups, marks
+and filter read no ground of the Bay's, and every zone's herbs, veins and trees stood their law on the kernel's own
+ground. Paid: no boulder stood anywhere past the Bay or on the Eltheric isles - a boulder is a rock field's piece, and the
+fields are the Bay's alone - so the stone-rich provinces' boulders were never seen and every Mining group counted veins
+alone. Past the Bay a boulder is now a heap on the stone (STONE-HEAPS). 9 mutants, all dead. Record:
+`03-World/World-Wide.md` STONE-HEAPS.
+
+**2026-10-27 - AUDIT RED-MOUNTAIN.** The owner: *"Audit this"*, of RED-MOUNTAIN and GHOSTFENCE, the volcano at
+Vvardenfell's heart and the Tribunal's fence round it. Five cold lanes on a frozen head (`774fbff133`), each reproducing
+every finding with a node probe on the real code. Paid: a body walked through the fence at 22 runs (its solid one flat
+quad a run over gullies); from a far eye the lake showed through the summit; snow lay white on the volcano in winter;
+42 spawned dungeons stood on the fence's line, and the route planner walked straight across it; the flats painted over
+the glow. The owner's call: one Red Mountain, this change's; RELIEF-PEAKS's cone retired at the merge. 51 mutants, all
+dead. Record: `audits/Audit-Red-Mountain.md` (AUDIT RED-MOUNTAIN).
+
+**2026-10-26 - AUDIT PVP-EASE.** The owner: *"Can we audit this"*, of PVP-EASE, the open PvP overhaul, the day it was
+written. Four cold lanes on a frozen worktree, each reproducing every finding with a probe on the real code; 21 reported,
+16 defects, all fixed. Paid: a cell crossed and a room woken from its sleep granted a fresh minute of safe passage (the
+hub's carry was a struck fighter's alone, read within the mend); the repeat shield measured by when a fall was carried, so
+a killer holding a receipt half an hour took the second kill whole; policies on pieces long gone shut the insurer's door
+for good; the game's policy book read once, for an id the save had not loaded yet; ships' guns blind to safe passage; the
+grace's end said outside the zone; a tutorial row in twelve languages still saying the cart drops. The owner's four calls:
+a combat lock on storing for a minute after a player's blow (storage open anywhere had made the drop optional), a policy
+spent only when it saved its piece, any take from remains ends safe passage, and every rise in the zone grants it. 39
+mutants, all dead. Relay world270, account acct196 (world269 and acct195 on its branch, renumbered past the TESA fold's
+at its fold into #1184). Record: `audits/Audit-PvP-Ease.md` (AUDIT PVP-EASE).
+
+**2026-10-25 - AUDIT STARTS.** The owner: *"Audit this and ensure its perfect"*, of the alternate starts (START1-START3,
+pull request #1216). Five cold lanes on a frozen head - the quest layer, the world host, the voyages, the page and the
+map, the pins - each given the asks and the files and never the record's conclusions; 51 reported, 45 defects. Paid: the
+writ of passage, which never sailed (the machine files a task under its inner name, and the pin built one by hand), and
+would have sailed a week past the start's end and on the Bay's letter; the Imperial start online, in the open zone's
+sealed dungeons; a birth online's reload woken at the dungeon's door into a room without its quest; a load mid-start
+overrun, a trace that never landed, a refused start, a failed move, an unlatched move, a door inside a model, a save from
+before the story; `_BRISIEN`'s cave and wreck told as every player's; a phone's tap committing a start unseen; a journey
+and a portal offered past the Bay, a dead press on the zone map, "(you are here)" refused in the start dungeon; the
+voyage back from Daggerfall to six ports, each refusal a freeze of seconds (and the fix's first cut, at five); French's
+doubled article, Bulgarian's names, the writ's row off the picker; and twelve pins that could not fail. Each fixed and
+pinned red, with a mutant. 61 mutants, all dead. Record: `Audit-Starts.md` (AUDIT STARTS).
+
+**2026-10-27 - AUDIT HORIZONTAL.** The owner: *"Audit this"*, of pull request #1334 - the horizontal progression
+(CRAFT-HALL, MASTER-ART, HUNTERS-MARK, MARKS-OF-MASTERY, POWER-CEILING, APPEARANCES, SEA-OPEN and the PLAIN-TEXT law).
+Seven cold lanes on a frozen snapshot (37a7bd3a0), each finding proven on the real code. Paid: a Veil party took a
+member who had left the ship (C1); parallel crew asks signed past 24 a day (C2); a Master's work judged against today's
+tables (B1); an older build dropping a Master's work it held (B7); a quay tow through land and a ship under way giving
+the quay up (C3, C10); the composite cut falling on the last registry asked (D4); clears past 48 a day dropped (F3).
+Every one fixed and pinned red, its mutant record dead, or left and said. Record: `audits/Audit-Horizontal.md`.
+
+**2026-10-27 - AUDIT RPT1026.** The owner: *"Audit this"*, of FIELD BUGS 2026-10-26r (the 293 private reports, 100
+fixed in twelve lanes). Thirteen cold lanes at the batch head (2dc8f31a2), one for each fixing lane and one for the
+record and the integration, each finding proven on the real code; 68 found. Paid: the shared chest's window let a Use, a
+Salvage or a Dismantle work on its own copy of the pack - a duplication open to anyone with a home; a seller who kept a
+sold piece won it back through an accomplice's trade; a cleared piece moved through a vault held its owner again with a
+strike; a guest's kept hold locked an owner out of their chest; a fight on a stalled line closed the socket for good;
+one griefer stopped an Orrery a team had learned; a No made a choice in three questline quests; a purchase pressed
+during a sweep never arrived; a self-cast absorb at a full pool killed its caster (#286, AS DESIGNED no longer); the
+phone's Bank keypad behind the Bank; the record's tally not its rows'. Every one fixed or its record corrected, pinned
+red; 130 mutants, all dead. ACCOUNT_VERSION acct198, RELAY_VERSION world272 (main's CHAT-POST and MASTER-THREE took world270 and world271, and JEWEL-KIN acct197). Record:
+`audits/Audit-Rpt1026.md` (AUDIT RPT1026).
+
 **2026-10-26 - AUDIT LOCKPICK.** The owner: *"Audit this"* and *"Also ensure this is enhanced ui plus"*, of the branch
 that built LOCKPICK, RESOURCE-HIGHLIGHTS and AUDIT GATHER. Four cold lanes on a frozen snapshot (81ff3671f), each finding
 proven on the real code; 38 reported. Paid: every front-door pick threw (the steal ladder's own `lockpick`, the skill,

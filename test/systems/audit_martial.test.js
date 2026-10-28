@@ -18,6 +18,7 @@ import * as MP from '../../src/systems/martialPaths.js';
 import * as POW from '../../src/systems/martialPowers.js';
 import * as WM from '../../src/systems/weaponMastery.js';
 import * as AP from '../../src/systems/arcanePaths.js';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { createCharacter } from '../../src/systems/chargen.js';
 import { buildCustomCareer } from '../../src/systems/customClass.js';
 import { masterSkill, masterableCount } from '../../src/systems/masterSkills.js';
@@ -478,9 +479,11 @@ test('AUDIT MARTIAL L4 L3: a card shows only to a character that can EVER meet a
   assert.equal(AP.pathPossible(p), false, 'Destruction and Restoration both minor: the same');
   const f = fighter([], 50);
   assert.equal(MP.martialPossible(f), true);
-  const spent = fighter([SKILLS.Dodging, SKILLS.CriticalStrike], 100, buildCustomCareer({ name: 'Rogue', hp: 10, stats: STATS,
-    skills: [SKILLS.Dodging, SKILLS.CriticalStrike, LB, SKILLS.Running, SKILLS.Jumping, SKILLS.Climbing, SB, SKILLS.Swimming, SKILLS.Medical, SKILLS.Etiquette, SKILLS.Streetwise, SKILLS.Lockpicking] }));
-  assert.equal(MP.martialPossible(spent), false, 'the primary slots spent on Dodging and Critical Strike: Long Blade never, Short Blade alone among the majors');
+  // MASTER-THREE (Field-Bugs-2026-10-26d): three primary slots, so the slots Long Blade needs are spent among the MAJORS - every
+  // primary on others too, so nothing else of the class's opens a second weapon skill
+  const spent = fighter([SKILLS.Dodging, SKILLS.CriticalStrike, SKILLS.Running, SKILLS.Jumping, SKILLS.Climbing], 100, buildCustomCareer({ name: 'Rogue', hp: 10, stats: STATS,
+    skills: [SKILLS.Dodging, SKILLS.CriticalStrike, SKILLS.Running, SKILLS.Jumping, SKILLS.Climbing, LB, SB, SKILLS.Swimming, SKILLS.Medical, SKILLS.Etiquette, SKILLS.Streetwise, SKILLS.Lockpicking] }));
+  assert.equal(MP.martialPossible(spent), false, 'the major slots spent on Jumping and Climbing: Long Blade never, Short Blade alone among the minors');
 }));
 
 test('AUDIT MARTIAL L4 L4 / L4 L6 / L4 N1 / L4 N2: the martial ask is never the arcane ask\'s words; a found line asleep (the ladder off) leaves the key to the signature; the runner\'s English lines name a signature in English; no path is named as a star of the Firmament (mutants: the title shared; the sleeping line kept; the localised name in an English line)', () => clean(() => {
@@ -675,11 +678,13 @@ test('AUDIT MARTIAL L5 M1: EVERY LINE ON BOTH SIDES, EVERY WINDOW AT ITS END - S
   edge('Mark of the Hunt', () => { const me = pathFighter('ranger'); door([], me); const prey = realFoe(ORC); land('huntersMark', rec('p', prey), 10); return { me, prey }; }, ({ me, prey }) => POW.martialBlowPct(me, prey) === N.huntersMark.pct, N.huntersMark.seconds);
 }));
 
-test('AUDIT MARTIAL L5 M2 / L5 L1: THE LAW\'S GUARDS - a mentored Ranger keeps the pounce (held) though its powers sleep (awake); a path restored with one of its skills unmastered (the save restores the id alone) holds nothing; the Thunderlock past 100 is paid on Archery; the hand at rest (restingWeapon) names the form (mutants: the signature through awake; a mastery unread; the Thunderlock unpaid; the resting hand unread)', () => clean(() => {
+test('AUDIT MARTIAL L5 M2 / L5 L1: THE LAW\'S GUARDS - a mentored Ranger keeps the pounce (held), its powers at the mentor\'s share (MENTOR2 - they had slept); a path restored with one of its skills unmastered (the save restores the id alone) holds nothing; the Thunderlock past 100 is paid on Archery; the hand at rest (restingWeapon) names the form (mutants: the signature through awake; a mastery unread; the Thunderlock unpaid; the resting hand unread)', () => clean(() => {
   const ranger = pathFighter('ranger');
-  ranger._mentor = { level: 5 };
+  ranger.level = 30;
+  ranger._mentor = mentorProfile(ranger, [5]);
+  assert.ok(ranger._mentor.powerScale > 0.5 && ranger._mentor.powerScale < 1, 'a level 30 beside a level 5: mentoring, its share under whole');
   assert.equal(techniqueInHand(ranger, { weapon: weapon(WEAPONS.Longsword) })?.id, 'huntersPounce', 'held while mentoring');
-  assert.equal(POW.martialBlowPct(ranger, realFoe(RAT)), 0, 'its powers asleep');
+  assert.equal(POW.martialBlowPct(ranger, realFoe(RAT)), MP.MARTIAL_NUMBERS.huntersInstinct.pct * ranger._mentor.powerScale, 'its powers at the mentor\'s share');
   for (const [have, label] of [[[LB], 'Archery'], [[AR], 'Long Blade']]) {
     const forged = fighter(have, 150); forged.martialPath = 'ranger';
     assert.equal(MP.martialHeld(forged), null, `${label} unmastered: nothing held`);

@@ -24,6 +24,9 @@ import { dpsRef, POSE_SLACK, HIT_KINDS } from '../../../src/net/gate/gateBrain.j
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
 import { OnlineSession } from '../../../src/net/online.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
@@ -41,7 +44,7 @@ async function withRealm(fn) {
   const realNow = Date.now;
   let clock = T0;
   Date.now = () => clock;
-  const world = fakeRooms({ now: () => clock });
+  const world = fakeRooms({ now: () => clock, vars: { SD_COLLAPSE: 'on' } });   // SD-PARTY (PIN MOVED): the first kill's collapse for all, the hub's setting on
   const hub = world.room(SOCIAL_ROOM);
   try {
     await quiet(async () => {
@@ -56,7 +59,7 @@ async function withRealm(fn) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }   // AUDIT SD: past the Orrery, kept as a realm keeps it - the fight's door asks its Concord (PIN MOVED)
       /** Beat the realm's alarm while it is armed, up to `ms` of the clock. */
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
@@ -67,7 +70,7 @@ async function withRealm(fn) {
 
 test('SD8b THE WIRE: the fight\'s words each way, projected and bounded - an `in` (a level, a brain), a blow (its number, a damage the wire bounds, its kind) on the Remnant, an Echo or a Heart; the whole fight as the law says it, a body\'s walk and blow, the health, a phase\'s turn, the Echoes, the Hearts, the stun, the fall, a loss, a refusal; its numbers the law\'s own, pinned equal (mutants: an Echo past the second; a Heart past the eighth; the Hour\'s blow from a body)', () => {
   assert.deepEqual([...SD_KINDS], ['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt', 'rz']);   // PIN MOVED (INT12): and a body's word; SD9a: and a slot's spoils taken (PIN MOVED); PIN MOVED (AUDIT WORLD-EVENTS L1-1): and a friend's Resurrect, for the realm to record
-  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd']);   // PIN MOVED (INT12): and the count's fall; SD9a: and the fall's receipt (PIN MOVED)
+  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd', 'ln']);   // PIN MOVED (WW5): and `ln`, a province lane's record   // PIN MOVED (INT12): and the count's fall; SD9a: and the fall's receipt (PIN MOVED)
   // the law's numbers
   assert.equal(SD_BODIES, Object.keys(SD_BODY).length);
   assert.equal(SD_FIGHT_BLOWS, SD_BLOW_BY_ID.length);
@@ -164,7 +167,9 @@ test('SD8b THE REALM RUNS THE FIGHT: an `in` from the arena joins and is answere
     await beat(20_000);
     assert.ok(fights(ann).some((m) => m.k === 'atk' && m.b === SD_BODY.remnant), 'its blows said');
     assert.deepEqual(fights(ann).filter((m) => m.k === 'atk').map((m) => m.i), fights(bo).filter((m) => m.k === 'atk').map((m) => m.i), 'to everyone');
-    // a blow believed: the health falls on the next beat's word
+    // a blow believed: the health falls on the next beat's word. PIN MOVED (RPT1026-FIGHTS RETIRED-BLOW): from a pose no older
+    // than SD_POSE_FRESH_MS - Ann's heartbeat, which the port's client sends every 20 s standing still (her hello was 27 s ago)
+    await realm.pose(ann, inArenaAt(0, -12.1));
     const f = realm.room._sdFight;
     const h0 = f.hp;
     await realm.raw(ann, say({ k: 'hit', q: 1, d: 40, r: HIT_KINDS.Spell }));
@@ -305,7 +310,7 @@ function rig(room, relayV = RELAY_VERSION) {
 }
 
 test('SD8b THE PAGE: an `in` and a blow go down my own socket in the realm at a relay that keeps it, on the fight\'s bucket, the brain said; the fight is heard from my own realm alone - never a hub\'s or a cell\'s (mutants: no brain said; the fight heard from anywhere)', () => {
-  const realmKey = sdRoomKey(4);
+  const realmKey = sdTestKey(4);
   assert.equal(rig(worldRoom(PX, PY)).s.sendSdIn(33), false, 'never from a cell');
   const old = rig(realmKey, 'world174');
   assert.equal(old.s.sendSdIn(33), false, 'never at a relay that would close the socket on it');

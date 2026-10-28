@@ -25,6 +25,8 @@
 // reaches the town's edge, which is what a road does.
 
 import { DIR } from './roadNetwork.js';
+import { RING } from '../townShape.js';   // TS9: a town's ring's codes (terrain/terrainTiles.js townRoadRing)
+import { paintCurvedPaths, RING_HALF } from './roadCurves.js';   // VOYAGER2: the roads past the Bay, drawn as curves; TS9: a ring's half tile, its home there
 
 export const TILE = Object.freeze({
   water: 0, dirt: 1, grass: 2, stone: 3,
@@ -34,8 +36,9 @@ export const TILE = Object.freeze({
 });
 
 /** Indexed by the ground type under the tile: [water, dirt, grass, stone]
- *  -> the tile to write, or NO_CHANGE. Water is never paved: a road
- *  bit over water is a routing bug and this refuses to hide it. */
+ *  -> the tile to write, or NO_CHANGE. (ROADS 2's "water is never paved"
+ *  is history: his road table paves it - AUDIT 51 and RPT1026-WORLD
+ *  CAUSEWAY below.) */
 // ROADS 20: THE TABLES ARE THE MOD'S, read from its own painter. A
 // cardinal road is two tiles of 46 with no edge column; 47/55 are the
 // diagonal's flanks. A track's diagonal inner is 51/52, not the
@@ -55,8 +58,13 @@ export const TILE = Object.freeze({
 // wide and not four.
 const NC = TILE.NO_CHANGE;
 // AUDIT 51: the tables are the mod's COLUMNS TOO, water included. His
-// road table paves water (46/47 in column 0) - his data never routes a
-// road across it, so it never shows, but the oracle compares columns.
+// road table paves water (46/47 in column 0), and the oracle compares
+// columns. RPT1026-WORLD CAUSEWAY: his data does route a road across it -
+// 42 road pixels whose WOODS byte is the sea's (the Grayidge inlet's
+// (72, 131), a coast road in the sea at 515-559, 296-316), each a paved
+// strip with the water either side - and the Overworld's route walks it
+// (systems/travel/travelRoute.js pavedStep). His track's column 0 is
+// water: a track over the sea is a ford.
 export const ROAD_TILES = Object.freeze([
   [46, 46, 46, 46],   // cardinal inner
   null,               // cardinal outer
@@ -81,10 +89,14 @@ const MID_LO = 63, MID_HI = 64;
 
 /** The corner byte for a pixel: the EAST neighbour's SW|NW bits and the
  *  WEST neighbour's NE|SE bits, exactly as the mod derives it. A
- *  diagonal leaving a neighbour brushes this pixel's corner tile. */
+ *  diagonal leaving a neighbour brushes this pixel's corner tile.
+ *  ROAD-BEYOND (TAMRIEL2's land past the Bay): a neighbour past the mask's
+ *  east or west edge is none, where `y * w + x +- 1` read the next or last
+ *  row's own pixel; a row above or below it reads off the array's ends,
+ *  which is none already. On the mask, the mod's byte. */
 export function pathCorners(mask, x, y, w = 1000) {
-  const east = x + 1 < w ? mask[y * w + x + 1] : 0;
-  const west = x > 0 ? mask[y * w + x - 1] : 0;
+  const east = x + 1 >= 0 && x + 1 < w ? mask[y * w + x + 1] : 0;
+  const west = x > 0 && x <= w ? mask[y * w + x - 1] : 0;
   return (east & 0x5) | (west & 0x50);
 }
 
@@ -93,23 +105,28 @@ export function pathCorners(mask, x, y, w = 1000) {
  * streams if water is on, then tracks - the first that paints a tile
  * wins, because a painted tile is skipped by the next.
  *
- * GRASS-PATH1 (2026-09-19, Mac: "The grass is causing issues with
- * dirtroads etc it just overgrows them. Grass shouldnt be on dirt
- * paths"): WHICH TILES THE PAINTER WROTE, as a mask. The grass placer
- * decides by RECORD (labGrass.js grassRecordsOf) and a record cannot
- * answer this question: a track across grass writes 10/11/12/51, the
- * very records the natural dirt-grass marching squares write, so
- * excluding them by number would strip the grass from every dirt edge
- * in the world to clear one path. Only the painter knows, and it knows
- * it exactly - so it says so, one byte a tile, at the moment it writes.
- * `opts.paths` is that Uint8Array (128x128, 1 = painted - VERGE1: or a
- * track laid over dirt, which the mod writes nothing for, tile()); absent,
- * the painter is byte-for-byte what it was.
+ * GRASS-PATH1 (2026-09-19, Mac: "The grass is causing issues with dirtroads etc it just overgrows them. Grass shouldnt
+ * be on dirt paths"): WHICH TILES THE PAINTER WROTE, as a mask. The grass placer decides by RECORD (labGrass.js
+ * grassRecordsOf) and a record cannot answer this question: a track across grass writes 10/11/12/51, the very records
+ * the natural dirt-grass marching squares write, so excluding them by number would strip the grass from every dirt edge
+ * in the world to clear one path. Only the painter knows, and it knows it exactly - so it says so, one byte a tile, at
+ * the moment it writes. `opts.paths` is that Uint8Array (128x128, 1 = painted - VERGE1: or a track laid over dirt,
+ * which the mod writes nothing for, tile()); absent, the painter is byte-for-byte what it was.
+ *
+ * VOYAGER2: `opts.curve` ({ px, py, byteAt } - a pixel past the Bay, the layer's reader) draws its roads and tracks as
+ * the port's curves (world/road/roadCurves.js paintCurvedPaths); absent - every Bay pixel - none of it runs.
  *
  * @param {object} masks - { road, track, river, stream } bytes for this pixel
  * @param {object} corners - { road, track, river, stream } corner bytes
  */
 export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect = null, tdDim = 129, opts = {}) {
+  // VOYAGER2 (world/road/roadCurves.js): a pixel past the Bay - `curve`, the kernel's: its place and the layer's reader -
+  // has its roads and tracks drawn as the port's curves; its rivers and streams (none of the Bay's arrays reach it) as here
+  if (opts.curve) {
+    const { px, py, byteAt } = opts.curve;
+    const curved = paintCurvedPaths(tileData, tilemap, { px, py, road: roadMask | 0, track: trackMask | 0, byteAt, rect: locationRect, paths: opts.paths ?? null, tdDim });
+    return curved + paintRoads(tileData, tilemap, 0, 0, locationRect, tdDim, { ...opts, curve: null, corners: { river: opts.corners?.river | 0, stream: opts.corners?.stream | 0 } });
+  }
   const masks = { road: roadMask | 0, track: trackMask | 0, river: opts.river | 0, stream: opts.stream | 0 };
   const corners = { road: opts.corners?.road | 0, track: opts.corners?.track | 0, river: opts.corners?.river | 0, stream: opts.corners?.stream | 0 };
   const water = !!opts.water;
@@ -122,6 +139,7 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
   const ctx = { tilemap, i: 0, x: 0, y: 0, ground: 0, rect: locationRect, paths };
   for (let y = 0; y < DIM; y++) {
     for (let x = 0; x < DIM; x++) {
+      const i = y * DIM + x;
       // FAST-SUITE: A TILE NO PAINTER CAN REACH is passed by. Every arm, cap, ring, gap, elbow and river join below
       // lies on the pixel's centre cross (x or y within MID_LO-1..MID_HI+1 - a river join two out, at MID_LO-2 or
       // MID_HI+2, has its other coordinate on the cross), on its two diagonals (x-y, or the mirror's, within 2 - the
@@ -131,8 +149,8 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
       // map, water on and off: `node tools/roadGuardProof.mjs` (103,487 real-map cases, none differing).
       if (!(x >= MID_LO - 1 && x <= MID_HI + 1) && !(y >= MID_LO - 1 && y <= MID_HI + 1)
         && Math.abs(x - y) > 2 && Math.abs(DIM - 1 - x - y) > 2
-        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)) continue;
-      const i = y * DIM + x;
+        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)
+        && !locationRect?.ring?.[i]) continue;   // TS9, AUDIT TESA III E1-1: nor a tile of a town's ring, which runs past its rect
       if (tilemap[i] !== 0) continue;   // a location's own tile, or already painted
       // AUDIT 51: NO RECT SKIP. The mod does not skip the location rect;
       // a location's own tiles are non-zero and stop every painter by
@@ -239,11 +257,17 @@ function paintPath(ctx, T, m, corners) {
   // THIS is how the mod rings a town: the location's own tiles are
   // non-zero and untouched; the band between them and the rect's edge
   // becomes road.
-  if (m && ctx.rect && T === ROAD_TILES && x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax) {
+  // TOWN-SHAPES: round a town with an outline, its ring (terrainTiles.js townRoadRing) - where the rect's padding was;
+  // AUDIT TESA III E1-1: never over the sea a shore town keeps (TS2: 2,670 ring tiles over water, 516 of them paved)
+  if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === RING.road && ctx.ground !== TILE.water : x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax)) {
     ctx.tilemap[ctx.i] = 46;
     if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1
     return true;
   }
+  // TS9: and its angled edges blended - a half tile, the diagonal's own edge (DIAG_OUT), its road toward the ring; never
+  // over the sea nor over a road an arm laid here
+  const half = m && ctx.rect?.ring && T === ROAD_TILES ? RING_HALF[ctx.rect.ring[ctx.i]] : null;
+  if (half && !has && ctx.ground !== TILE.water) return tile(ctx, T[DIAG_OUT], half[0], half[1]);
   // Map pixel corners: a neighbour's diagonal brushes this pixel's corner
   if (corners && T[DIAG_OUT]) {
     if ((corners & DIR.NW) && x === DIM - 1 && y === DIM - 1) has = tile(ctx, T[DIAG_OUT], true, false) || has;
@@ -482,6 +506,7 @@ export function smoothRoadHeights(samples, tilemap, hDim = 129, rect = null) {
   for (let y = 1; y < hDim - 2; y++) {
     for (let x = 1; x < hDim - 2; x++) {
       if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;   // Rect.Contains: min in, max OUT
+      if (rect?.ring?.[y * tDim + x]) continue;   // AUDIT TESA III E1-1: nor TS2's ring - the padding it stands for was never smoothed
       const tile = tilemap[y * tDim + x];
       if (tile !== 46 && tile !== 0xff) continue;
       const idx = x * hDim + y;   // TerrainSampler.cs:123 JobA.Idx(y, x, hDim) - the HEIGHTMAP's layout, not the tilemap's

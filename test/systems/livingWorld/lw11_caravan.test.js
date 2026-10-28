@@ -758,13 +758,14 @@ test('AUDIT LW-II C6/C7: a caravan the band robbed first has no purse left for t
 });
 
 test('AUDIT LW-II C10: a report\'s crime is the law\'s and its region the map\'s, read or written; a witness the road took on the way carries nothing (mutants: the crime, the region, the road\'s fallen)', () => {
-  const loaded = createRelations({ v: 1, people: {}, road: { reports: [[999, 3, 0, 'x', 'L1.t1'], [13, -7, 0, 'x', 'L1.t1'], [13, 62, 0, 'y', 'L1.t2'], [0, 3, 0, 'z', 'L1.t3'], [13, 61, 5, 'w', 'L1.t4', 'L1.t4:2']] } });
+  const loaded = createRelations({ v: 1, people: {}, road: { reports: [[999, 3, 0, 'x', 'L1.t1'], [13, -7, 0, 'x', 'L1.t1'], [13, 71, 0, 'y', 'L1.t2'], [0, 3, 0, 'z', 'L1.t3'], [13, 61, 5, 'w', 'L1.t4', 'L1.t4:2']] } });
   assert.deepEqual(loaded.reports().map((r) => [r.crime, r.region, r.trip]), [[13, 61, 'L1.t4:2']], 'only the law\'s crime in one of the map\'s regions');
   const r = createRelations();
   assert.equal(r.report({ crime: 999, region: 3, at: 1, witnesses: ['a'] }), false);
   assert.equal(r.report({ crime: CRIMES.None, region: 3, at: 1, witnesses: ['a'] }), false);
   assert.equal(r.report({ crime: CRIMES.Theft, region: -1, at: 1, witnesses: ['a'] }), false, 'the sea is no region');
-  assert.equal(r.report({ crime: CRIMES.Theft, region: 62, at: 1, witnesses: ['a'] }), false);
+  assert.equal(r.report({ crime: CRIMES.Theft, region: 71, at: 1, witnesses: ['a'] }), false);   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): 62..70 the provinces', 71 none
+  assert.equal(createRelations().report({ crime: CRIMES.Theft, region: 64, at: 1, witnesses: ['a'] }), true, 'a crime in Skyrim is Skyrim\'s');
   assert.equal(r.report({ crime: CRIMES.Theft, region: 0, at: 1, witnesses: ['a'] }), true);
   // the witnesses fall on the way (the trip's own fallen, the road's - no hand death): void at the town
   const trip = armedCaravan();

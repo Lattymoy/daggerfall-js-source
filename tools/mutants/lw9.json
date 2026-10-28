@@ -110,7 +110,7 @@
   {
     "name": "LW9-patrol-region",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (job === 'patrol') return home.region == null || t.region === home.region;",
+    "old": "  if (job === 'patrol') return (home.area ?? home.region) == null || (t.area ?? t.region) === (home.area ?? home.region);",
     "new": "  if (job === 'patrol') return true;",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"

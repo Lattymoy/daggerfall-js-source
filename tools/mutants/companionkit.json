@@ -47,8 +47,8 @@
   {
     "name": "CK-gift-raw",
     "file": "src/scenes/hostMagic.js",
-    "old": "applySpellToFoe(gift, effectiveLevel(playerEntity), rec,",
-    "new": "applySpellToFoe(sp, effectiveLevel(playerEntity), rec,",
+    "old": "applySpellToFoe(gift, castingLevel(playerEntity), rec,",
+    "new": "applySpellToFoe(sp, castingLevel(playerEntity), rec,",
     "tests": [
       "test/systems/companionkit.test.js"
     ]

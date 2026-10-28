@@ -64,6 +64,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - questWorld is scenes/questWorld.js's
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const QUESTS = join(ROOT, 'vendor/dfu-quests/Quests');
@@ -404,7 +405,7 @@ test('AUDIT QUESTS 5: every world hook the engine reads is answered by the shipp
 
   // What the SHIPPED host answers: world.js's questWorld, read as the
   // keys of the object literal it hands the machine.
-  const host = readFileSync(join(ROOT, 'src/scenes/world.js'), 'utf8').split('\n');
+  const host = hostText('src/scenes/world.js').split('\n');
   const start = host.findIndex((l) => /^\s*const questWorld = \{/.test(l));
   assert.ok(start >= 0, 'world.js still builds a questWorld');
   const provided = new Set();

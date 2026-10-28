@@ -145,7 +145,7 @@ test('GRASS3: the law is NOT bilinear - a different surface, though on real grad
   }
   // the placer reads the drawn surface now, and says so
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /const h = surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\);/, 'the grass placer asks for the DRAWN height');
+  assert.match(world, /const h = walkGroundAt\(p\.samples, lx, lz\);/, 'the grass placer asks for the DRAWN height');   // PIN MOVED (FLORA-GROUND): the ground's one law (terrainSurface.js walkGroundAt, the drawn surface at the stride-1 ring the grass stands on) - the walker's and every plant's
   assert.ok(!/s2\[x0 \* hDim \+ z0\] \* \(1 - ax\)/.test(world), 'and the bilinear read is gone, not merely unused');
 });
 

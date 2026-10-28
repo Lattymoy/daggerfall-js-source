@@ -22,6 +22,7 @@ import { collectInteriorPeople } from '../../../src/characters/interiorPeople.js
 import { questorCandidateBuildings, makeBuildingKey } from '../../../src/systems/talk/talkTopics.js';
 import { configureLayoutPins, recordStands, _resetLayoutPins } from '../../../src/systems/layoutPins.js';
 import { mapPixelToWorldCoord } from '../../../src/formats/mapsFile.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 {
   const T = new URL('../../../vendor/dfu-quests/Tables/', import.meta.url);
@@ -302,7 +303,7 @@ test('QUESTOR-MOVED: "me and my friend" - a party member\'s copy taken before th
 test('QUESTOR-MOVED: the hosts - the world\'s quest seam says when its towns\' layouts are known (applyLayoutPins\' own gate); the interior\'s one name derivation asks for a moved questor\'s name first (mutants: the seam always known; the name preference dropped)', () => {
   // PIN MOVED (AUDIT QA2): known AND standing - the pins and their held-back towns set (_homeLayoutsApplied), not the
   // service's word alone: a share landing while the packs were fetched was chosen again unpinned
-  assert.match(src('src/scenes/world.js'), /\n {4}townLayoutsKnown: \(\) => !homeLayoutsOnline \|\| _homeLayoutsApplied,/);
-  assert.match(src('src/scenes/world.js'), /const reseated = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : \(questBridge\?\.machine\?\.reseatMovedSites\?\.\(\) \?\? 0\);/, 'the load\'s gate it mirrors');
+  assert.match(hostText('src/scenes/world.js'), /\n {4}townLayoutsKnown: \(\) => !homeLayoutsOnline \|\| (?:host\.)?_homeLayoutsApplied,/);
+  assert.match(hostText('src/scenes/world.js'), /const reseated = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : \(questBridge\?\.machine\?\.reseatMovedSites\?\.\(\) \?\? 0\);/, 'the load\'s gate it mirrors');
   assert.match(src('src/scenes/worldModes.js'), /return questBridge\?\.machine\?\.movedQuestorName\?\.\(npcData\) \?\? staticNpcName\(npcData, /);
 });

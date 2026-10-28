@@ -14,11 +14,18 @@ import { fakeRooms } from '../fakeRoom.mjs';
 
 test('PVPDUNGEONS wire: a hall is a pixel, its room a world room of its own lane; the words in and out are bounded', () => {
   assert.equal(wdunHall('512,88'), '512,88');
-  assert.equal(wdunHall('1000,1'), null);
-  assert.equal(wdunHall('5,500'), null);
+  // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): a hall is a WORLD map pixel's - Cyrodiil's past the Bay; past the
+  // world's grid none
+  assert.equal(wdunHall('1000,1'), '1000,1');
+  assert.equal(wdunHall('2400,900'), '2400,900');
+  assert.equal(wdunHall('-5,500'), '-5,500');
+  assert.equal(wdunHall('8192,1'), null);
+  assert.equal(wdunHall('1,-8192'), null);
   assert.equal(wdunHall('a,b'), null);
   assert.ok(isWorldRoom(wdunRoomKey('512,88')), 'the hall\'s room is a world room the relay admits');
+  assert.ok(isWorldRoom(wdunRoomKey('2400,900')), 'and Cyrodiil\'s');
   assert.notEqual(wdunRoomKey('512,88'), wdunRoomKey('513,88'));
+  assert.notEqual(wdunRoomKey('2400,900'), wdunRoomKey('2400,901'));
   assert.deepEqual(validWdunIn({ k: 'in', h: '3,4' }), { k: 'in', h: '3,4' });
   assert.equal(validWdunIn({ k: 'in' }), null);
   assert.equal(validWdunIn({ k: 'boom', h: '3,4' }), null);

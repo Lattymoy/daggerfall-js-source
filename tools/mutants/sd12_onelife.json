@@ -18,15 +18,6 @@
     ]
   },
   {
-    "name": "SD12-ONELIFE-unread-at-the-door",
-    "file": "server/src/index.js",
-    "old": "    if (sub && (lies === 'fallen' || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;",
-    "new": "    if (false) return SD_NO_FALLEN;",
-    "tests": [
-      "test/net/superDungeon/sd12_onelife.test.js"
-    ]
-  },
-  {
     "name": "SD12-ONELIFE-memory-alone",
     "file": "server/src/index.js",
     "old": "gu: strs(v.gu), dead: strs(v.dead), down: downs(v.down), raised: raised(v.raised) }",
@@ -72,15 +63,6 @@
     ]
   },
   {
-    "name": "SD12-ONELIFE-the-rift-blind",
-    "file": "src/scenes/world.js",
-    "old": "{ entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }",
-    "new": "{ entered: _sdEntered.has(s) }",
-    "tests": [
-      "test/net/superDungeon/sd12_onelife.test.js"
-    ]
-  },
-  {
     "name": "SD12-ONELIFE-a-resurrect-in-the-hour",
     "file": "src/scenes/world.js",
     "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' && hourRezOpen() ? rezFor(",
@@ -91,12 +73,13 @@
     "why": "SD-REZ (EVENT-RULES): re-aimed - the Hour's raise window unread"
   },
   {
-    "name": "SD12-ONELIFE-a-forgiving-death",
+    "name": "SD-BACK-the-death-said-final",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "casts you out for good. You wake",
-    "new": "casts you out. You wake",
+    "old": "casts you out. You wake",
+    "new": "casts you out for good. You wake",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
-    ]
+    ],
+    "note": "SD-BACK (2026-10-28) replaces SD12-ONELIFE-a-forgiving-death: the death's words no longer say it is for good."
   }
 ]

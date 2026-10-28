@@ -111,10 +111,12 @@ test('FB1020c CROWD-CLEAR: a Person whose marker shares the guild questor\'s pic
   assert.equal(p?.factionID, 63, 'it was the questor she would have stood in');
 });
 
-test('FB1020c CROWD-CLEAR: the nearest clear spawn marker of the site, a crowded one passed over and an item\'s marker never taken; none clear - DFU\'s own marker, never the room\'s door (mutants: the reach; the item markers taken; the enter markers taken)', async () => {
+test('FB1020c CROWD-CLEAR: the nearest clear spawn marker of the site, a crowded one passed over and an item\'s marker never taken; none clear - beside its own (RPT1026-QUESTS QUEST-CROWD), never the room\'s door (mutants: the reach; the item markers taken; the enter markers taken)', async () => {
   near((await standAt([A, C, B], [QUESTOR()])).npc, [106, 0, 51], 'C crowded too: B');
   near((await standAt([A, mark(ITEM, 120, 0, 40), B], [QUESTOR()])).npc, [106, 0, 51], 'an item\'s marker 2 m off and clear is no place for her: the spawn marker');
-  near((await standAt([A, C], [QUESTOR()])).npc, [101, 0, 51], 'no clear marker: its own, as DFU - not the door at (93, 0, 50)');
+  // PIN MOVED (RPT1026-QUESTS QUEST-CROWD, sceneMount.js besideSpot): no clear marker - beside her own, out of the
+  // questor's box (north: east and north-east are still in it), never the door at (93, 0, 50)
+  near((await standAt([A, C], [QUESTOR()])).npc, [101, 0, 51 + 1.1 * 0.95], 'no clear marker: beside its own, not the door');
 });
 
 test('FB1020c CROWD-CLEAR: a person the room does not stand (hidden - a shut shop, an owned house, a quest\'s away arm), one upstairs, or one clear of the box on either axis crowds nothing - the marker stands as DFU stands it (mutants: always moved; the hidden counted; the storey; an axis dropped)', async () => {

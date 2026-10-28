@@ -39,6 +39,23 @@ DUAL-RUN (the pair's run - both arms locked straight behind, swinging a tenth of
 128 degrees off its elbow's hinge, past the 85 to 90 AUDIT CARRY-7 holds every run's to); and RUN-EASE (RUN-STIFF's legs
 halfway back). The lantern at the waist, on the same report, is Handheld-Torches.md HT-WAIST-SIZE.
 
+**FIELD BUGS 2026-10-26c (one #feature-feedback thread through the owner, patriot_505: "Morrowind models + weapon
+animations need a little tweaking"; `01-Overview/bugs/Field-Bugs-2026-10-26c.md`)** - rows and keys moved, each measured on the
+retail biped and pinned (`test/characters/bodyMotion/fb1026c_mwbody.test.js`; `tools/mutants/fb1026c.json`), marked where
+they changed a row below. THRUST-CHAMBER ("Two-handed sword (claymore) forward pierce attack animation causes
+character's hands to clip through his back"): the two-hander's thrust winds up with its hilt chambered before the right
+hip, the point raised, the draw the trunk's coil - drawn back beside the hip, the left hand closed toward the pommel stood
+0.31 to 0.38 of an arm behind the shoulders. ONE-RUN ("Running and sprinting with one-handed weapon looks off, because
+hand is in twisted position pointing weapon to the side unnaturally"): the one-hander runs in the stand's own format, the
+blade forward and a little down, the forearm within 21 degrees of its hinge, and its class carries no `via` (the trailing
+blade's way round the back, which swung the forward blade 11 degrees a frame). And the drawn bow under the layer is the
+clip's arms pitched by the look (BOW-AIM, `combat/spineAim.js`): the slot runs before this layer, which keeps the clip's
+chest while the clip has the arms. Then, on the owner's "Continue" (TWO-CLEAR), BOTH arms of the two-handed family against
+the audit's own trunk - 9 units about the pelvis-to-neck line, under 3 in, which AUDIT MELEE-1 read for the striking arm
+alone: the hand on the haft had gone 4.5 to 6.3 units into it in the two-hander's guard and 5.8 to 8.5 through every
+blow of a two-hander's, a staff's and a spear's. The guard's hands stand before the belly, the blows' hands lead, the haft
+hand's elbow points forward, and a blow's pair is held before the trunk (the rows and the blows below).
+
 ## What the clips did - the reference, and why it was not enough
 
 - **One clip per frame, every bone.** The rig's winner ladder (`src/combat/fpArm.js` update: death, the weapon action,
@@ -178,8 +195,8 @@ degrees; searched again, with the shoulder turned out to carry its share.)
 | Class | When | At rest | At a run |
 |---|---|---|---|
 | free | nothing in the hand, or sheathed | arms hanging, palms in | the gait's pump: elbows near 90, the swing; each hand on its own side of the body, as far apart at their nearest as the walk's (RUN-WIDE: the forearm turned in 22 degrees and the arm held out 10 - the hands crossed the middle, 4.3 units apart against the walk's 22.1; turned out 4 and held out 18, they stand 22.8 apart) |
-| one | a one-hander (short or long blade, blunt, axe) | Mac's: held down and away from the side, the blade forward, down and out | "the same format": the arm low and out, the blade trailing behind and down; the free arm pumps - with a shield on it, the clip's arm carries the shield (SHIELD-RUN) |
-| two | a two-hander (long blade, warhammer, war axe) | a low guard in both hands, the blade forward and down, the left hand toward the pommel; the stance's feet split, the hips turned | Mac's: at the hip, in BOTH hands (TWO-RUN - the left let go and pumped: "the greatsword running doesnt use both hands"; then "held lower at the hio, but not attached to the hip"): the grip low before the right hip and clear of it, the arms hanging nearly straight, the left hand on the hilt toward the pommel, the blade trailing behind, down and out past the right leg; the chest turned 32 degrees toward it and leaning 10 more (`runTurn`, `runLean`), and the arms not swinging - a hand on each end of one weapon |
+| one | a one-hander (short or long blade, blunt, axe) | Mac's: held down and away from the side, the blade forward, down and out | "the same format": the arm low and out, nearly straight and swinging with the stride, the blade forward and a little down (ONE-RUN: it trailed behind, down and out to the side on a forearm turned 64 to 74 degrees); the free arm pumps - with a shield on it, the clip's arm carries the shield (SHIELD-RUN) |
+| two | a two-hander (long blade, warhammer, war axe) | a low guard in both hands, the blade forward and down, the left hand toward the pommel, the hands before the belly a little right of the middle (TWO-CLEAR: held by the right hip, the left arm reached across at its full length and ran through the chest); the stance's feet split, the hips turned | Mac's: at the hip, in BOTH hands (TWO-RUN - the left let go and pumped: "the greatsword running doesnt use both hands"; then "held lower at the hio, but not attached to the hip"): the grip low before the right hip and clear of it, the arms hanging nearly straight, the left hand on the hilt toward the pommel, the blade trailing behind, down and out past the right leg; the chest turned 32 degrees toward it and leaning 10 more (`runTurn`, `runLean`), and the arms not swinging - a hand on each end of one weapon |
 | wide | a staff | both hands, the staff across the body, its head up and left | at the hip, trailing; the left pumps |
 | spear | a spear | both hands on the haft (AUDIT CARRY-2), the point forward and up | at the hip, the point forward and down; the left pumps |
 | dual | a pair (TWO-HANDS) | Mac's: both held down and away from the sides, mirror images | Mac's: both swept behind the body, the blades trailing; the trunk leans in (`runLean`); pumping (DUAL-RUN: 0.4 of the gait's swing and a fifth of its elbow - the elbows 21 to 26 degrees - each hand 18.7 units fore and aft behind the hips, the shoulder turned out 60 so the forearm turns 52 to 66 off its hinge; it stood locked straight, swinging a tenth - 8.5 units - the forearm turned 128) |
@@ -236,7 +253,12 @@ closes on the haft (`hafHand`): the right hand's own request reflected across th
 the other side of it) and moved along the blade by `TWO_HAND_GRIP` (a two-hander two fifths of an arm toward the
 pommel - AUDIT CARRY-1: a fifth stood it inside the right forearm); a staff's and a spear's slides along its haft
 within `TWO_HAND_HAFT` to where its arm reaches (AUDIT MELEE-9: held at one place it fell 0.2 to 0.54 arm lengths
-short through a thrust).
+short through a thrust). Its elbow points out and FORWARD of the chest (TWO-CLEAR: pointed back, it folded into it), and in
+a blow the pair is held before the trunk: where the haft hand's wrist would stand nearer the trunk's line than
+`TRUNK_CLEAR` (0.29 of an arm - the audit's 9 units and a forearm), both hands go forward by as much as it takes
+(`carry.js` trunkPush; `bodyMotion.js` blowHands). The keys keep that near nothing - read by their keys alone
+(`createBodyMotion({ trunkClear: 0 })`), every blow stands under 2.5 units in - but a blow begun sneaking or at a run,
+or one cut by the next, closed the claymore's left hand up to 3 units into the trunk without it.
 
 ## The blows - `src/characters/bodyMotion/melee.js`
 
@@ -264,7 +286,13 @@ throughout), 'fists' (the straight, the hook, the overhand and - for Daggerfall'
 (wound up by the head, its blade up, down through the front), slash (the forehand: wound up right and behind, through
 the front, out to the left), back (Daggerfall's StrikeRight, MS1's reversed slash: wound up across to the left, out to
 the right) and thrust (drawn back to the lower ribs - AUDIT MELEE-13: "to the hip" - and driven straight out with a
-lunge). A pair's left blade's blow and a left fist's are the right's mirror; a weapon held alone strikes with its own
+lunge; a two-hander's chambered before the right hip with the point raised, its draw the trunk's coil - THRUST-CHAMBER:
+drawn back beside the hip, its left hand stood behind the back). The two-handed family's hands LEAD (TWO-CLEAR): each
+wind-up gathers the hilt in front before it is drawn back - the chop's raised before the face, the slash's swung out to
+the right and raised at the right shoulder, the backhand's at the left, not behind them - each release passes its blade
+upright or across with the grip out before the face or the chest, and the chop, the slash and the backhand land two
+thirds of an arm out (they landed at 0.55 to 0.58, where the left hand, a third of an arm down a claymore's grip, stood
+in the chest). A pair's left blade's blow and a left fist's are the right's mirror; a weapon held alone strikes with its own
 right hand whichever hand the machine leads with (AUDIT MELEE-7: a left lead swung the empty hand).
 
 **The body under it** (AUDIT MELEE-4/6/8/11): the lead foot steps - lifted, quickly enough (`TURN.quick`) to come down
@@ -354,7 +382,7 @@ draw no weapon at a sneak and no change between gaits or classes - AUDIT CARRY-1
 female's or the beast's own rest, never under a skinned body, and never against the retail clips the layer leans on
 for the hands' shapes. The layer measures each skeleton it is handed, so the families take the same requests; but how a
 request reads on Morrowind's own bodies is for Mac's eye on his own data, and every table (`GAIT_STYLES`,
-`BODY_STYLES`, `STAND`, `STEER`, `TURN`, `CARRY`, `TWO_HAND_GRIP`, `TWO_HAND_HAFT`, `MELEE`, `BLOW_TRUNK`, `ANKLE`,
+`BODY_STYLES`, `STAND`, `STEER`, `TURN`, `CARRY`, `TWO_HAND_GRIP`, `TWO_HAND_HAFT`, `TRUNK_CLEAR`, `MELEE`, `BLOW_TRUNK`, `ANKLE`,
 `SLOPE`) is one frozen row to move there. THE RUN's first-person change (RUN-WIDE, `handsLaw.js` `RUN_3D`) moved the
 law's own place on the picture: no retail first-person skeleton is vendored, and the test's fixture arm reaches neither
 the old place nor the new (its right wrist stood 0.54 of the half-frame out at the top of the stroke with 0.36 asked,

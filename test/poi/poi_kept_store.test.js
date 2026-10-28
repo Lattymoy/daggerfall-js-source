@@ -25,7 +25,11 @@ function fakeIndexedDB() {
         close() {},
         transaction(s) {
           const rows = stores.get(s);
-          return { objectStore: () => ({ get: (k) => answer(rows.get(k)), put: (v, k) => { rows.set(k, v); return answer(k); } }) };
+          const tx = { oncomplete: null, onerror: null, onabort: null, objectStore: () => ({
+            get: (k) => answer(rows.get(k)),
+            put: (v, k) => { rows.set(k, v); setTimeout(() => tx.oncomplete?.()); return answer(k); },
+          }) };
+          return tx;
         },
       };
       const req = { result: db, onupgradeneeded: null, onsuccess: null, onerror: null, onblocked: null };

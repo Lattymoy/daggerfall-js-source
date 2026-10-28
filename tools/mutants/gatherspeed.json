@@ -52,8 +52,8 @@
  {
   "name": "GATHER-SPEED-state-apart",
   "file": "server-account/src/professions.js",
-  "old": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows] = await readAll(db, [",
-  "new": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows] = await ((sts) => Promise.all(sts.map(async (st) => (await st.all()).results ?? [])))([",
+  "old": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await readAll(db, [",
+  "new": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await ((sts) => Promise.all(sts.map(async (st) => (await st.all()).results ?? [])))([",
   "tests": [
    "test/net/gatherspeed.test.js"
   ],
@@ -72,22 +72,22 @@
  {
   "name": "GATHER-SPEED-levy-unkept",
   "file": "server-account/src/seatHolding.js",
-  "old": "  const seat = bailiwickOf((await confirmedSeats(db, nowS)).values(), region, pixel);\n  return seat && results",
-  "new": "  const seat = bailiwickOf((await confirmedSeats(db, nowS, { fresh: true })).values(), region, pixel);\n  return seat && results",
+  "old": "  const seats = (await confirmedSeats(db, nowS)).values();",
+  "new": "  const seats = (await confirmedSeats(db, nowS, { fresh: true })).values();",
   "tests": [
    "test/net/gatherspeed.test.js"
   ],
-  "note": "a Levy's seat read off every seat row again"
+  "note": "Re-aimed by content (DOMAIN3): the bailiwick's seats are read in one home for the Tithe, the Levy and the Bounty (seatHolding.js bailiwickSeats). a Levy's seat read off every seat row again"
  },
  {
   "name": "MARKET-SPEED-tithe-unkept",
   "file": "server-account/src/seatHolding.js",
-  "old": "  const seat = bailiwickOf((await confirmedSeats(db, nowS)).values(), region, pixel);\n  const h = seat",
-  "new": "  const seat = bailiwickOf((await confirmedSeats(db, nowS, { fresh: true })).values(), region, pixel);\n  const h = seat",
+  "old": "  const seats = (await confirmedSeats(db, nowS)).values();",
+  "new": "  const seats = (await confirmedSeats(db, nowS, { fresh: true })).values();",
   "tests": [
    "test/net/gatherspeed.test.js"
   ],
-  "note": "a Tithe's seat read off every seat row again"
+  "note": "Re-aimed by content (DOMAIN3): the bailiwick's seats are read in one home for the Tithe, the Levy and the Bounty (seatHolding.js bailiwickSeats). a Tithe's seat read off every seat row again"
  },
  {
   "name": "MARKET-SPEED-hall-unkept",

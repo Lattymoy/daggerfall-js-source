@@ -53,7 +53,7 @@ function render() {
   const wrap = el('div', 'tavern-menu-acts');
   for (const b of buttons) {
     const btn = el('button', 'act tavern-act', b.label);
-    const icon = MERCHANT_ICONS[b.label];   // MENU-ORDER: each press its picture
+    const icon = b.icon ?? MERCHANT_ICONS[b.label];   // MENU-ORDER: each press its picture; APPEARANCES: a press may name its own (its word is the player's language)
     if (icon) btn.setAttribute('data-dficon', icon);
     btn.onclick = b.onClick;
     wrap.append(btn);

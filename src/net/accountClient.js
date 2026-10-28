@@ -70,6 +70,8 @@ import { busyRead, busyAnswer, busyWaitMs, retryAfterMs, BUSY_HOLD_MS } from './
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
 import { cardById } from './iliac/iliacCards.js';   // AUDIT CARDS-6 D7: the card a short deck lacks, said by its name
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
+import { tradeHeldSaid } from './realm/realmTradeLaw.js';   // RPT1026-MARKET HOLD-SAID: the standing hold's own notice
+import { MINT_VERSION } from './productRecord.js';   // AUDIT FB1026d C3: a craft asks its record be stamped with the version this build mints
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -245,6 +247,9 @@ const REFUSAL_WORDS = {
   'patreon-down': () => t('account.refusal.patreonDown', 'Patreon did not answer. Try linking again in a minute.'),
   'patreon-needs-account': () => t('account.refusal.patreonNeedsAccount', 'Linking Patreon needs a username and a password. Give this account one first.'),
   signature: () => t('account.refusal.signature', 'The account service could not check who sent that request.'),
+  // SHOP (server-account/src/shop.js): the shop's doors are pages in a browser and Stripe's webhook, met by no screen here
+  'shop-closed': () => t('account.refusal.shopClosed', 'The shop does not take payments yet.'),
+  'stripe-down': () => t('account.refusal.stripeDown', 'Stripe did not answer. Try again in a minute.'),
   // MOD1, moderation. A moderator reads these in chat, beside the
   // command they just typed.
   'not-moderator': () => t('account.refusal.notModerator', 'Only moderators can do that.'),
@@ -306,7 +311,7 @@ const REFUSAL_WORDS = {
   'home-update': () => t('account.refusal.homeUpdate', 'This game is out of date. Reload it to buy a home.'),   // WD3 (AUDIT WD3 B2): a build from before the town mods
   'home-towns': () => t('account.refusal.homeTowns', 'This town did not load the way other players see it. Reload the game to buy a home.'),   // WD3 (AUDIT WD3 B1): a town mod's pack did not load
   'home-layout': () => t('account.refusal.homeLayout', 'This town is still loading. Try again in a moment.'),   // WD3: the town is built again as the room's (scenes/world.js hearHomeLayouts)
-  'home-cap': () => t('account.refusal.homeCap', 'A character can buy at most {max} homes. Sell one it bought to buy another.', { max: HOME_CAP }),   // ACCOUNT-HOMES: the account owns them all; the cap counts what each character bought
+  'home-cap': () => t('account.refusal.homeCap', 'A character can buy at most {max} homes in a region. Sell one it bought there to buy another.', { max: HOME_CAP }),   // ACCOUNT-HOMES: the account owns them all; the cap counts what each character bought - HOUSES-3: in the home's region
   'home-rate': () => t('account.refusal.homeRate', 'You have bought and sold a lot of homes this hour. Try again later.'),
   'no-home': () => t('account.refusal.noHome', 'That home is not yours any more.'),
   'not-heir': () => t('account.refusal.notHeir', 'Only a living character of the same line as its fallen owner can take up that home.'),   // PERMADEATH-HOUSES: server-account/src/homes.js inheritHome
@@ -349,6 +354,7 @@ const REFUSAL_WORDS = {
   'bad-decor': () => t('account.refusal.badDecor', 'The account service could not read that piece.'),
   'decor-figure': () => t('account.refusal.decorFigure', 'That figure has been set back to its normal size. Look at the room again.'),   // AUDIT HOME-VOTE II C2: a stale copy of a figure grown before DECOR-FIGURE
   'decor-busy': () => t('account.refusal.decorBusy', 'Someone else is using this chest.'),
+  'decor-lapsed': () => t('account.refusal.decorLapsed', 'The chest was left open too long, so nothing in it moved. Open it again.'),   // RPT1026-CHESTGOLD
   'decor-shut': () => t('account.refusal.decorShut', 'You cannot use that.'),
   'decor-held': () => t('account.refusal.decorHeld', 'Empty it before it is removed.'),
   'decor-holds': () => t('account.refusal.decorHolds', 'Empty what a piece holds before you remove it.'),
@@ -379,7 +385,11 @@ const REFUSAL_WORDS = {
   'no-invite': () => t('account.refusal.noInvite', 'That invitation is no longer open.'),
   'guild-master-leaves': () => t('account.refusal.guildMasterLeaves', 'Hand the guild on to another member before you leave it.'),
   'guild-treasury': () => t('account.refusal.guildTreasury', 'Take the gold out of the treasury first.'),
-  'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, or goods on the way or waiting to be collected. Settle it first.'),   // PROF-DELETE   // AUDIT 28 M3: the Marks go to the guildmaster with the guild
+  // RPT1026-MARKET ARRIVE (private reports 2026-10-26: a character the delete refused while a trade with another player
+  // stood open, a trader's purchase still waiting for it): the goods waiting come to its pack on their own now as it plays
+  // (net/marketArrivals.js), and a trader's takings held for it are said too - they hold the delete (realm.js
+  // REALM_MARKET_OPEN_SQL's `market_gold`) and the line never named them
+  'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, goods on the way or waiting to be collected, or a trader\'s takings. Settle it first. Play it online once and goods waiting for it come to its pack on their own; takings are collected on the Vendor page.'),   // PROF-DELETE   // AUDIT 28 M3: the Marks go to the guildmaster with the guild
   'no-member': () => t('account.refusal.noMember', 'That member is no longer in the guild.'),
   'bad-ranks': () => t('account.refusal.badRanks', 'Each rank needs a name of its own, 1 to {max} letters, digits, spaces, apostrophes or hyphens.', { max: GUILD_RANK_NAME_MAX }),
   'bad-gold': () => t('account.refusal.badGold', 'Gold goes in or out 1 to {max} at a time.', { max: GUILD_MOVE_MAX }),
@@ -421,6 +431,11 @@ const REFUSAL_WORDS = {
   'marks-bank-cap': () => t('account.refusal.marksBankCap', 'The Bank buys at most {perDay} silver from you a day.', { perDay: MARKS_BANK.perDay }),
   'marks-full': () => t('account.refusal.marksFull', 'An account holds at most {max, number} silver.', { max: MARKS_MAX }),
   'guild-marks-short': () => t('account.refusal.guildMarksShort', 'The treasury does not hold that much silver.'),
+  // DOMAIN2 (bible/11-Multiplayer/Domains.md 6): a castle - none in that region, its crown not the guild's, another guild's, none of the guild's to give up
+  'castle-none': () => t('account.refusal.castleNone', "No castle stands in that region for a guild to keep. Only a crown's city keeps one - Daggerfall, Wayrest, Sentinel and each province's capital but the Imperial City."),   // AUDIT TESA III E2-2: WW7-4's castles past the Bay
+  'castle-not-held': () => t('account.refusal.castleNotHeld', "Your guild does not hold that region's crown, so its castle is not yours to buy."),
+  'castle-taken': () => t('account.refusal.castleTaken', 'That castle belongs to another guild.'),
+  'castle-not-yours': () => t('account.refusal.castleNotYours', 'Your guild does not keep that castle.'),
   'guild-marks-full': () => t('account.refusal.guildMarksFull', 'A guild\'s treasury holds at most {max, number} silver.', { max: MARKS_MAX }),
   'marks-rate': () => t('account.refusal.marksRate', 'You have moved too much silver this hour. Try again later.'),
   'bad-find': () => t('account.refusal.badFind', 'That find could not be read.'),   // SILVER-FINDS: a loot find of no kind the service knows
@@ -443,7 +458,9 @@ const REFUSAL_WORDS = {
   'bad-watch': () => t('account.refusal.badWatch', 'Those watch records could not be read.'),
   // SEAT1c: the Charters
   'seat-not-held': () => t('account.refusal.seatNotHeld', 'Your guild does not hold that Charter.'),
+  'seat-none-here': () => t('account.refusal.seatNoneHere', 'Your guild neither holds a Charter in this region nor is pledged to a seat here this week, so there is nowhere here to give to.'),   // DOMAIN1: a gift with no stockpile or Siege Camp of the guild's in the region
   'seat-held-here': () => t('account.refusal.seatHeldHere', 'Your guild holds a Charter in this region, and is pledged to it.'),
+  'seat-not-charter': () => t('account.refusal.seatNotCharter', 'This town is a holding of its region\'s Charter. Pledge to the Charter at its seat of power.'),   // DOMAIN3
   // SEAT1d: the holder's levers
   'bad-tithe': () => t('account.refusal.badTithe', 'A Tithe is a whole percent, no more than the seat allows: 10% at a palace and 15% at a crown, and a point more for each stage of its Market Hall.'),   // AUDIT SEATS-3 C6: the Market Hall raises the cap (fortLaw.js marketHallTitheCap)
   'tithe-this-week': () => t('account.refusal.titheThisWeek', 'The Tithe has been set this week already. It may change again after the Turning.'),
@@ -548,6 +565,10 @@ const REFUSAL_WORDS = {
   'prof-temper-stale': () => t('account.refusal.profTemperStale', 'That piece\'s quality has changed. Check your Stores again.'),
   'prof-reforge': () => t('account.refusal.profReforge', 'Arcane Essence can reforge a line on a Magic or Rare piece, but never on a Legendary, Aetheric or artifact piece.'),
   'prof-no-essence': () => t('account.refusal.profNoEssence', 'That piece carries too little enchantment to give any Arcane Essence.'),
+  // MASTER-ART: a Master's work's refusals (server-account/src/masterWork.js)
+  'prof-master': () => t('account.refusal.profMaster', 'A Master\'s work is a weapon, armor, clothing or jewelry piece that can wear a tier.'),
+  'prof-master-lines': () => t('account.refusal.profMasterLines', 'Choose three different lines this piece can carry, with at most one effect.'),
+  'prof-master-day': () => t('account.refusal.profMasterDay', 'You have made today\'s Master\'s work. The next can be made after midnight UTC.'),
   'bad-qty': () => t('account.refusal.badQty', 'Take 1 to {max} at a time.', { max: WITHDRAW_MAX }),
   'bad-pixels': () => t('account.refusal.badPixels', 'That land could not be read.'),
   'bad-region': () => t('account.refusal.badRegion', 'That region could not be read.'),
@@ -816,6 +837,11 @@ const REFUSAL_WORDS = {
   // SHIP-PVP (server-account/src/seaWreck.js): a wreck's prizes
   'sea-prize-realm': () => t('account.refusal.seaPrizeRealm', 'Only an online character of the realm can take a prize from a wreck.'),
   'sea-prize-moved': () => t('account.refusal.seaPrizeMoved', 'Those goods were already taken. Look at the board again.'),
+  // CREW-SIGNED (server-account/src/crewSigns.js): a crew hall's recruit
+  'crew-bad': () => t('account.refusal.crewBad', 'The crewmaster does not know that sailor.'),
+  'crew-day': () => t('account.refusal.crewDay', 'The crewmaster has a new day\'s roster.'),
+  'crew-taken': () => t('account.refusal.crewTaken', 'That sailor has signed on elsewhere.'),
+  'crew-many': () => t('account.refusal.crewMany', 'You have signed on as many sailors as one day allows. Come back tomorrow.'),
   'cards-closed': () => t('account.refusal.cardsClosed', 'The realm is not holding stakes for card tables right now. Try again later.'),
   'cards-stake-paid': () => t('account.refusal.cardsStakePaid', 'That stake has already been settled.'),
   'bad-table': () => t('account.refusal.badTable', 'The account service could not read that card table.'),
@@ -831,7 +857,9 @@ const REFUSAL_WORDS = {
   'sea-held': () => t('account.refusal.seaHeld', 'Bounties, prizes or hold goods are waiting for this character at a freeport. Collect them before the character is deleted.'),   // AUDIT SEA VENTURES B4
   // INT3/INT4 (bible/06-Systems/Integrity-Arc.md): the judge's own (server-account/src/realm.js holdRefusal,
   // prepareRealmRecord)
-  'trade-held': () => t('account.refusal.tradeHeld', 'This character\'s trading is frozen. The notice shown when it froze says why, and until when.'),   // AUDIT AUTO-HOLD: no review comes - a hold lifts on its own, or with the piece
+  // RPT1026-MARKET HOLD-SAID (private reports 2026-10-26): the hold's own notice as the session stands - why, and what it
+  // freezes - and with none heard yet, what a hold freezes: a harvest's and a craft's refusal too, which "trading" never said
+  'trade-held': () => tradeHeldSaid() ?? t('account.refusal.tradeHeld', 'This character\'s trading, gathering and crafting are frozen. The notice shown when it froze says why, and until when.'),   // AUDIT AUTO-HOLD: no review comes - a hold lifts on its own, or with the piece
   'record-unjudged': () => t('account.refusal.recordUnjudged', 'The realm has not checked this character\'s latest save yet. Play a moment and try again.'),
   // INT16-INT17 (bible/06-Systems/Integrity-Arc.md section 7): a progression claim's seat, and the play that pays for it
   // (server-account/src/progress.js)
@@ -856,6 +884,9 @@ const REFUSAL_WORDS = {
   'firm-rate': () => t('account.refusal.firmRate', 'Too many changes this hour. Try again later.'),
   'firm-stale': () => t('account.refusal.firmStale', 'Your stars changed in another session. Check them and try again.'),
   'firm-respec-empty': () => t('account.refusal.firmRespecEmpty', 'Nothing is learned yet.'),
+  'insure-held': () => t('account.refusal.insureHeld', 'That piece is already insured.'),   // WILD-INSURE (server-account/src/wildInsure.js)
+  'insure-full': () => t('account.refusal.insureFull', 'You already hold as many policies as the insurers will write. One is spent each time it saves its piece.'),
+  'insure-piece': () => t('account.refusal.insurePiece', 'That piece cannot be insured. Only gear the realm tracks (Magic and up, enchanted, artifacts, crafted) that a death in the zone could take.'),
   'repair-no-faction': () => t('account.refusal.repairNoFaction', 'That character\'s record holds no such faction, so nothing was repaired.'),   // SUMMON-REPAIR: the review's repair (tools/realmReview.mjs)
   'repair-not-set': () => t('account.refusal.repairNotSet', 'That faction does not have that flag on this character, so nothing was repaired. Check that it is the right character.'),   // SUMMON-REPAIR: a repair aimed at the wrong character mends nothing
   'mend-not-negative': () => t('account.refusal.mendNotNegative', 'That character\'s gold is not below zero, so nothing was mended. Check that it is the right character.'),   // PURSE-MEND: the review's mend (tools/realmReview.mjs)
@@ -893,6 +924,15 @@ const REFUSAL_WORDS = {
   'fallen-frozen': () => t('account.refusal.fallenFrozen', 'That player is held by staff. Nothing can be taken from them.'),
   'bad-text': () => t('account.refusal.badText', 'Write something to send.'),
   'no-thread': () => t('account.refusal.noThread', 'There is no staff chat open for you right now.'),
+  // HUNTERS-MARK (server-account/src/hunts.js): the hunt's ledger - a clear the service will not record
+  'hunt-need-account': () => t('account.refusal.huntNeedAccount', 'Only a registered account keeps a hunter\'s rank.'),
+  'hunt-character': () => t('account.refusal.huntCharacter', 'That character keeps no hunter\'s rank.'),
+  'hunt-rate': () => t('account.refusal.huntRate', 'Too many bounty reports at once. Try again later.'),
+  'hunt-id': () => t('account.refusal.huntId', 'That bounty notice cannot be read.'),
+  'hunt-late': () => t('account.refusal.huntLate', 'That bounty is too old to count.'),
+  'hunt-early': () => t('account.refusal.huntEarly', 'That bounty has not been posted yet.'),
+  'hunt-tier': () => t('account.refusal.huntTier', 'That bounty is not for your level.'),
+  'hunt-rung': () => t('account.refusal.huntRung', 'Named beasts are posted to Stalkers and above.'),
 };
 /** AUDIT SAFE CLIENT-2 (2026-10-17): THE SERVICE'S LAST WORD ON A BAN - `{ until, reason }` off the newest `banned`
  *  refusal any door answered (`call`), or null. The service refuses a banned account on every door but signing out
@@ -1797,11 +1837,16 @@ export const wildFallAsk = (io, body) => call(io, '/v1/wild/fall', body);
 export const wildCollectAsk = (io, body) => call(io, '/v1/wild/collect', body);
 export const wildReclaimAsk = (io, body) => call(io, '/v1/wild/reclaim', body);
 export const wildEscrowsAsk = (io, body) => call(io, '/v1/wild/escrows', body);
+/** WILD-INSURE (2026-10-26 - server-account/src/wildInsure.js): policies written on pieces of gear (`{ realm, keys, region }`
+ *  - the record's `at`, the pieces' ledger keys, the bank the shortfall is paid from) - answers `{ policies, gold, realm }` -
+ *  and the character's policies in force (`{ character }`) - answers `{ policies }`. */
+export const wildInsureAsk = (io, body) => call(io, '/v1/wild/insure', body);
+export const wildPoliciesAsk = (io, body) => call(io, '/v1/wild/policies', body);
 /** INT9: the zone's calls, bound to this device's stored session (the duels' way). */
 export function accountWild({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   const on = (/** @type {(io: any, body: any) => Promise<any>} */ ask) => async (/** @type {any} */ body) => { const i = io(); return i ? ask(i, body) : { ok: false, error: 'no-session' }; };
-  return { fall: on(wildFallAsk), collect: on(wildCollectAsk), reclaim: on(wildReclaimAsk), escrows: on(wildEscrowsAsk) };
+  return { fall: on(wildFallAsk), collect: on(wildCollectAsk), reclaim: on(wildReclaimAsk), escrows: on(wildEscrowsAsk), insure: on(wildInsureAsk), policies: on(wildPoliciesAsk) };
 }
 
 /** WB5b: the kill receipt the relay signed for this account, carried to
@@ -2140,6 +2185,9 @@ export function accountGuilds({ fetch, storage }) {
     hallBuy: ({ character, mapId, buildingKey, region, price, layout = null }) => post('/v1/guilds/hall/buy', { character, mapId, buildingKey, region, price, layout: layout || null }),
     hallSell: (character, at = null) => post('/v1/guilds/hall/sell', { character, ...(at ? { mapId: at.mapId, buildingKey: at.buildingKey } : {}) }),   // GUILD-HALL-SALE: at its door, the door's building
     hallEntry: (character, entry) => post('/v1/guilds/hall/entry', { character, entry }),
+    // DOMAIN2 (bible/11-Multiplayer/Domains.md 6): the region's castle, bought and given up by the Guildmaster
+    castleBuy: (character, region, rid) => post('/v1/guilds/castle/buy', { character, region, rid }),
+    castleSell: (character, region, rid) => post('/v1/guilds/castle/sell', { character, region, rid }),
     heraldry: (character, heraldry, rid = null) => post('/v1/guilds/heraldry', { character, heraldry, ...(rid ? { rid } : {}) }),
     // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price; the vault - read, a piece put in and taken
     // out on the realm record where it stands (`realm`), the guildmaster's grants
@@ -2222,7 +2270,7 @@ export function accountTowns({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     econ: () => post('/v1/towns/econ', {}),
     witness: (town, receipt) => post('/v1/towns/witness', { town, receipt }),   // AUDIT TOWN-ECON 2 SVC-1: a walk's tick
     strike: (map) => post('/v1/towns/strike', { map }),   // SVC-1: a developer's
-    audit: (region) => post('/v1/towns/audit', { region }),
+    audit: (region, page = 0) => post('/v1/towns/audit', page ? { region, page } : { region }),   // BAY-LEFT-SEA: a page past the first
     /** SEA-TRADE: `sea` the indices of the receipts that vouch a dealing at a port's exchange (none sent, none) */
     watch: (receipts, sea = []) => post('/v1/towns/watch', sea.length ? { receipts, sea } : { receipts }),
     /** the signed-in account - whose ticks are kept */
@@ -2262,7 +2310,7 @@ export function accountSeats({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     /** SEAT1b: the account this device is signed in as - the Watch's receipts it may claim are its alone. */
     me: () => storedSession(storage)?.id ?? null,
     list: () => post('/v1/seats/list', {}),
-    witness: (seat) => post('/v1/seats/witness', { seat }),
+    witness: (seat, domain = undefined) => post('/v1/seats/witness', { seat, ...(domain ? { domain } : {}) }),   // DOMAIN3: and its region's seat of power
     strike: (key) => post('/v1/seats/strike', { key }),
     voidSiege: (key) => post('/v1/seats/siege/void', { key }),   // VOID (Seats-Arc 18): a moderator's `/siege void <key>`
     // SEAT1b: influence - the standings at a seat (with the reader's own guild), a pledge set or taken down, the Watch's
@@ -2293,6 +2341,9 @@ export function accountSeats({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     // SEAT2b: a seat's works read; a project begun (`port`: DFU names the town a port - a Harbour's ask)
     forts: (key) => post('/v1/seats/forts', { key }),
     fortFund: (character, key, work, rid, port = false) => post('/v1/seats/fort/fund', { character, key, work, rid, ...(port ? { port: true } : {}) }),
+    // DOMAIN1 (bible/11-Multiplayer/Domains.md 5): where this character's guild gives in a region, and a gift made
+    gifts: (character, region) => post('/v1/seats/gifts', { character, region }),
+    give: (character, region, material, units, rid) => post('/v1/seats/give', { character, region, material, units, rid }),
     fealty: (character, tag, as) => post('/v1/seats/fealty', { character, tag, as }),
     fealtyAccept: (character, tag) => post('/v1/seats/fealty/accept', { character, tag }),
     fealtyBreak: (character, tag) => post('/v1/seats/fealty/break', { character, ...(tag ? { tag } : {}) }),
@@ -2323,16 +2374,28 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     withdraw: (character, material, qty, rid, carry = null) => post('/v1/stores/withdraw', { character, material, qty, rid, ...(carry ? { carry: true, held: carry.held, ...(carry.seen == null ? {} : { seen: carry.seen }) } : {}) }),
     deposit: (character, material, qty, held, order, rid, seen = null) => post('/v1/stores/deposit', { character, material, qty, held, order, rid, ...(seen == null ? {} : { seen }) }),   // BAG1: carried units into the Stores
     smelt: (character, recipe, count, rid, clean = false) => post('/v1/prof/smelt', { character, recipe, count, rid, ...(clean === true ? { clean: true } : {}) }),   // PROF2: the forge; PROF11: the mason's bench, `clean` the chisel's report
-    craft: (character, recipe, clean, name, rid, heartwood = false, dye = null, seat = null, cracked = false) => post('/v1/prof/craft', { character, recipe, clean, name, rid, heartwood, ...(dye == null ? {} : { dye }), ...(seat == null ? {} : { seat }), ...(cracked === true ? { cracked: true } : {}) }),   // SEAT2b part two: `seat` the held town the station stands in   // PROF3: the anvil - `clean` the act's report, `name` the maker's mark; PROF4: the workbench, `heartwood` for a plank; PROF7: the loom, a garment's `dye`; PROF10: the jeweller's bench, `cracked` a Lapidary's Siege-cracked Gem for the gem
+    craft: (character, recipe, clean, name, rid, heartwood = false, dye = null, seat = null, cracked = false) => post('/v1/prof/craft', { character, recipe, clean, name, rid, heartwood, ...(dye == null ? {} : { dye }), ...(seat == null ? {} : { seat }), ...(cracked === true ? { cracked: true } : {}), mint: MINT_VERSION }),   // AUDIT FB1026d C3: `mint` the version this build mints at - its record is stamped with it   // SEAT2b part two: `seat` the held town the station stands in   // PROF3: the anvil - `clean` the act's report, `name` the maker's mark; PROF4: the workbench, `heartwood` for a plank; PROF7: the loom, a garment's `dye`; PROF10: the jeweller's bench, `cracked` a Lapidary's Siege-cracked Gem for the gem
     stock: (character, material, qty, rid) => post('/v1/prof/stock', { character, material, qty, rid }),   // PROF3: the smith's stock
     brew: (character, potion, keys, rid, seat = null) => post('/v1/prof/brew', { character, potion, keys, rid, ...(seat == null ? {} : { seat }) }),   // PROF12: the alchemy station's brew - `keys` the cauldron as the Stores hold it, `seat` the held town it stands in
     temper: (character, recipe, quality, provenance, rid) => post('/v1/prof/temper', { character, recipe, quality, rid, ...(provenance ? { provenance } : {}) }),   // CRAFT4: a piece a quality step better
+    master: (character, recipe, lines, name, rid, dye = null) => post('/v1/prof/master', { character, recipe, lines, name, rid, ...(dye == null ? {} : { dye }) }),   // MASTER-ART: a Master's work, its three lines chosen
     reforge: (character, tier, rid, count = 0) => post('/v1/prof/reforge', { character, tier, count, rid }),   // CRAFT4: an Enchanter's Reforge for Arcane Essence - the seed its line is rolled with; REFORGE-REPLACE: the piece's reforges, its price doubled for each
     disenchant: (character, provenance, rid, realm = null) => post('/v1/prof/disenchant', { character, provenance, rid, ...(realm ? { realm } : {}) }),   // PROF12: a crafted piece into Arcane Essence; AUDIT PROF-541 B2: a realm character's record where it stands
     writs: (character, region) => post('/v1/writs/list', { character, region }),
     deliver: (character, id, rid) => post('/v1/writs/deliver', { character, id, rid }),
     craftWrit: (character, id, rid, realm, pieces = null) => post('/v1/writs/craft', { character, id, rid, realm, ...(pieces ? { pieces } : {}) }),   // CRAFT-WRITS: a crafting writ filled - its goods out of the realm record where it stands
     motherlodes: (character) => post('/v1/prof/motherlodes', { character }),   // PROF2b: today's three (a strike rides `harvest`)
+  };
+}
+
+/** HUNTERS-MARK: THE HUNT'S DOOR (server-account/src/hunts.js) - a character's clears read, and a paid bounty reported
+ *  with its board's region (the seats' influence). Every answer is `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most. */
+export function accountHunt({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    account: () => storedSession(storage)?.id ?? null,
+    state: (character) => post('/v1/hunt/state', { character }),
+    clear: (character, id, region = null) => post('/v1/hunt/clear', { character, id, ...(Number.isSafeInteger(region) ? { region } : {}) }),
   };
 }
 
@@ -2366,7 +2429,10 @@ export function accountMarket({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) 
     vendor: (vendor) => post('/v1/market/vendor', { vendor }),
     vendors: (region, character = null) => post('/v1/market/vendors', { region, ...(character ? { character } : {}) }),   // HOME-VENDOR: each house's door, for this character
     myVendors: (character) => post('/v1/market/myvendors', { character }),
-    collect: (character, delivery, rid, realm = null) => post('/v1/market/collect', { character, delivery, rid, ...(realm ? { realm } : {}) }),
+    // RPT1026-MARKET COLLECT-LANDED: `landed` - this tab reads a repeat with the record's sequence as its own collect, landed
+    collect: (character, delivery, rid, realm = null, { landed = false } = {}) => post('/v1/market/collect', { character, delivery, rid, ...(realm ? { realm } : {}), ...(landed ? { landed: true } : {}) }),
+    // RPT1026-MARKET ARRIVE: the road alone - the account's market settled and what is on its way to it (market.js marketRoad)
+    road: (character) => post('/v1/market/road', { character }),
     report: (listing) => post('/v1/market/report', { listing }),
     remove: (listing) => post('/v1/market/remove', { listing }),
     // PROF5b: an auction posted (a Masterwork at its opening bid), and a bid on one
@@ -2417,6 +2483,18 @@ export function accountSeaWreck({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }
 export function accountSeaSeason({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   const post = waitedPost({ fetch, storage }, waitMs);
   return { board: (req) => post('/v1/sea/season/board', req) };
+}
+
+/** CREW-SIGNED: A CREW HALL'S DOOR (server-account/src/crewSigns.js) - a town's hall on a day (`hall`: `{ town, day }` -
+ *  the slots others hold and the asker's), a recruit held (`sign`: `{ id }`) and let go (`release`: `{ id }`). Every
+ *  answer is `call`'s shape. */
+export function accountCrewSigns({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    hall: (req) => post('/v1/crew/hall', req),
+    sign: (req) => post('/v1/crew/sign', req),
+    release: (req) => post('/v1/crew/release', req),
+  };
 }
 
 /** CARDS10: ILIAC HAND'S DOOR (server-account/src/iliac.js) - a ranked seat's deck vouched for (`deck`: `{ character,

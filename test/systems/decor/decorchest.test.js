@@ -39,6 +39,8 @@ test('DECOR-ACCESS the first take uses the row the window drew', async () => {
 test('DECOR-ACCESS gold in a chest is written with the other goods and taken back as purse', async () => {
   const pack = [];
   const given = [];
+  const paid = [];
+  const entity = { goldPieces: 0, items: pack };
   const lying = { uid: 'dddddddddddddddd', group: 'Currency', templateIndex: 276, stackCount: 4, value: 1 };
   const sent = [];
   let opened = null;
@@ -48,6 +50,7 @@ test('DECOR-ACCESS gold in a chest is written with the other goods and taken bac
     items: () => pack,
     take(uid) { const i = pack.findIndex((it) => it?.uid === uid); if (i >= 0) pack.splice(i, 1); },
     give(it) { given.push(it); },
+    pay(n) { paid.push(n); },
     say() {}, refusal: (e) => e,
     open: (spec) => { opened = spec; },
     realm: () => async ({ apply, call }) => { call({ id: 'r', seq: 2 }); apply(); return { ok: true }; },
@@ -59,18 +62,24 @@ test('DECOR-ACCESS gold in a chest is written with the other goods and taken bac
   const goods = dropped.loot.items();
   assert.equal(await dropped.loot.commit('put', pile, 4, () => { goods.push(pile); return pile; }), true);
   assert.equal(pack.includes(pile), true, 'the save carries the pile until the chest keeps it');
-  assert.equal(await dropped.loot.commit('take', pile, 4, () => { goods.splice(goods.indexOf(pile), 1); return null; }), true);
-  assert.equal(pack.includes(pile), false, 'taking the same pile back leaves the pack');
+  // RPT1026-CHESTGOLD (PIN MOVED): the take is the window's own transfer, and a pile from the chest comes back a pile -
+  // the pack still holds it, as it held it parked, and the purse took nothing
+  assert.equal(await dropped.loot.commit('take', pile, 4, () => applyTransfer(pile, { amount: 4 }, goods, dropped.items(), { entity, toPlayer: true })), true);
+  assert.equal(pack.includes(pile), true, 'the pile taken back is the pack\'s, as it was');
+  assert.equal(entity.goldPieces, 0, 'and no coin of it went into the purse beside it');
   dropped.loot.closed();
   noteDecorBin('chest-lying', [lying]);
   assert.equal(await openSharedChest('chest-lying'), true);
   const from = opened.loot.items();
-  assert.equal(await opened.loot.commit('take', from[0], 4, () => { from.splice(0, 1); return null; }), true);
+  assert.equal(await opened.loot.commit('take', from[0], 4, () => applyTransfer(from[0], { amount: 4 }, from, opened.items(), { entity, toPlayer: true })), true);
+  assert.equal(entity.goldPieces, 0, 'the click pays no purse');
   opened.loot.closed();
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(sent.length, 1);
   assert.deepEqual(sent[0].take, [lying.uid]);
-  assert.equal(given.length, 0, 'the purse already has the coins');
+  assert.equal(sent[0].purse, 4, 'the service is told the coins it pays');
+  assert.equal(given.length, 0, 'the coins are no item in the pack');
+  assert.deepEqual(paid, [4], 'the purse takes them as the settle lands');
 });
 
 test('DECOR-ACCESS a take still waiting for the list is settled when the chest closes', async () => {
@@ -79,29 +88,31 @@ test('DECOR-ACCESS a take still waiting for the list is settled when the chest c
   const listed = new Promise((r) => { release = r; });
   const sent = [];
   let opened = null;
-  let purse = 0;
+  const entity = { goldPieces: 0 };
   bindDecorHouse({
     use: (req) => {
       if (req.op === 'settle') sent.push(req);
       return req.op === 'list' ? listed : Promise.resolve({ ok: true });
     },
     mapId: 1, buildingKey: 2, character: () => 'c',
-    items: () => [], take() {}, give() {}, say() {}, refusal: (e) => e,
+    items: () => [], take() {}, give() {}, pay(n) { entity.goldPieces += n; }, say() {}, refusal: (e) => e,
     open: (spec) => { opened = spec; },
     realm: () => async ({ apply, call }) => { call({ id: 'r', seq: 2 }); apply(); return { ok: true }; },
   });
   noteDecorBin('chest-race', [gold]);
   assert.equal(await openSharedChest('chest-race'), true);
   const from = opened.loot.items();
-  const take = opened.loot.commit('take', from[0], 4, () => { purse += from[0].stackCount; from.splice(0, 1); return null; });
+  const row = from[0];
+  // RPT1026-CHESTGOLD (PIN MOVED): the window's own transfer; the purse is paid by the settle, not the click
+  const take = opened.loot.commit('take', row, 4, () => applyTransfer(row, { amount: 4 }, from, opened.items(), { entity, toPlayer: true }));
   opened.loot.closed();
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(sent.length, 0, 'the close waits while the take is still reading the chest');
-  assert.equal(purse, 0);
+  assert.equal(entity.goldPieces, 0);
   release({ ok: true, data: { items: [{ uid: gold.uid, group: 'Currency', templateIndex: 276, stackCount: 4, value: 1 }] } });
   assert.equal(await take, true);
   await new Promise((r) => setTimeout(r, 0));
-  assert.equal(purse, 4);
+  assert.equal(entity.goldPieces, 4);
   assert.deepEqual(sent.map((s) => s.take), [[gold.uid]]);
 });
 

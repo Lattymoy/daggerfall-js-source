@@ -11,6 +11,8 @@ import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
 const OFFER_S = 3 * 24 * 60 * 60;
 const PRICE_MAX = 100_000_000;
 const UID_RE = /^[0-9a-f]{16}$/;
+/** HOUSES-3: a character's homes in the region of the home at (map id, key) - none where no home stands there. */
+const REGION_HOMES_SQL = 'SELECT COUNT(*) AS n FROM homes WHERE player = ? AND char_id = ? AND guild_id IS NULL AND region = (SELECT region FROM homes WHERE map_id = ? AND building_key = ?)';
 
 const offerId = () => [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
 
@@ -128,7 +130,8 @@ async function acceptHome(ctx, player, body) {
   }
   const mine = await db.prepare('SELECT id FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(character, player.id).first();
   if (!mine) return { error: 'no-home' };
-  const owned = Number((await db.prepare('SELECT COUNT(*) AS n FROM homes WHERE player = ? AND char_id = ? AND guild_id IS NULL').bind(player.id, character).first())?.n) || 0;
+  // HOUSES-3: the cap is the buyer's homes in the offered home's region (net/homeLaw.js HOME_CAP)
+  const owned = Number((await db.prepare(REGION_HOMES_SQL).bind(player.id, character, offer.map_id, offer.building_key).first())?.n) || 0;
   if (owned >= HOME_CAP) return { error: 'home-cap' };
   const home = await houseOf(db, offer.map_id, offer.building_key, offer.seller);
   if (!home || home.char_id !== offer.seller_char || home.deed === 1) {
@@ -185,7 +188,7 @@ async function acceptHome(ctx, player, body) {
     ...(buyerPrep?.steps ?? []),
     db.prepare(`UPDATE homes SET player = ?1, char_id = ?2, owner_name = ?3
       WHERE map_id = ?4 AND building_key = ?5 AND player = ?6 AND char_id = ?7 AND guild_id IS NULL AND (deed IS NULL OR deed = 0)
-      AND (SELECT COUNT(*) FROM homes WHERE player = ?1 AND char_id = ?2 AND guild_id IS NULL) < ?8`)
+      AND (SELECT COUNT(*) FROM homes h WHERE h.player = ?1 AND h.char_id = ?2 AND h.guild_id IS NULL AND h.region = homes.region) < ?8`)
       .bind(player.id, character, displayName(player), offer.map_id, offer.building_key, offer.seller, offer.seller_char, HOME_CAP),
     mustChange(db),
     db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(offer.map_id, offer.building_key),
@@ -217,7 +220,7 @@ async function acceptHome(ctx, player, body) {
     if (nowRev !== rev) return { error: 'offer-stale' };
     const still = await houseOf(db, offer.map_id, offer.building_key, offer.seller);
     if (!still) return { error: 'no-home' };
-    const after = Number((await db.prepare('SELECT COUNT(*) AS n FROM homes WHERE player = ? AND char_id = ? AND guild_id IS NULL').bind(player.id, character).first())?.n) || 0;
+    const after = Number((await db.prepare(REGION_HOMES_SQL).bind(player.id, character, offer.map_id, offer.building_key).first())?.n) || 0;
     if (after >= HOME_CAP) return { error: 'home-cap' };
     return { error: 'offer-closed' };
   }

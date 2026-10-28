@@ -37,6 +37,7 @@
 import { SEA_SHOT_MAX } from '../../net/wire.js';
 import { SEA_REF } from '../../net/sea/seaRef.js';
 import { t } from '../../systems/textManager.js';
+import { noteWildBlow } from '../../systems/wild/wildZone.js';   // AUDIT PVP-EASE L2-1: a gunfight locks storing as a blow does
 
 /** A ship's shots are said this often, gathered (ms). */
 export const SEA_SHOT_MS = 250;   // a word a ship four times a second - two ships under my guns within the referee's SEA_REF.hz
@@ -144,6 +145,7 @@ export function createSeaBroadsides(deps) {
     const me = deps.me?.();
     if (!g || !me) return;
     if (g.k === 'hull') {
+      if (g.to === me || g.by === me) noteWildBlow(now());
       if (g.to === me) {
         pvp()?.struck?.({ frac: g.d / 1000, sail: g.s / 1000, fire: g.f === 1, left: g.h / 1000 });
         once(`on:${g.by}`, () => deps.say?.(t('sea.pvp.underFire', '{name}\'s guns are on you!', { name: nameOf(g.by) }), 4));

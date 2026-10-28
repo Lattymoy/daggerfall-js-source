@@ -13,6 +13,7 @@ import { t } from '../systems/textManager.js';
 import { boxesMeet } from '../systems/naval/shipLife.js';   // AUDIT 2: two turned boxes' overlap - the berths' own law (QUAY-CROSSING)
 import { DECK_FITTINGS, DECK_FITTINGS_MAX, FITTING_GAP, YAW_STEPS, fittingsOf, fittingKind } from '../systems/naval/deckFittings.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const DECK_PLAN_STYLE_ID = 'deck-plan-style';
 export const DECK_PLAN_CSS = `
@@ -212,7 +213,7 @@ export function mountDeckPlanWindow(host, { name, deck, fittings, footprint = ()
   /** A press on the plan at a screen point: a fitting there taken up, else the chosen one set there. */
   function press(sx, sy, pointerId = null) {
     const i = under(sx, sy);
-    if (i >= 0) { picked = i; dragging = true; if (pointerId != null) canvas.setPointerCapture?.(pointerId); tell(t('naval.deck.taken', '{what} selected. Drag to move, Q/E to turn, Del to remove.', { what: fittingName(list[i].m) })); return; }
+    if (i >= 0) { picked = i; dragging = true; if (pointerId != null) capturePointer(canvas, pointerId); tell(t('naval.deck.taken', '{what} selected. Drag to move, Q/E to turn, Del to remove.', { what: fittingName(list[i].m) })); return; }
     const [x, z] = toDeck(sx, sy).map(snap);
     if (list.length >= DECK_FITTINGS_MAX) { tell(t('naval.deck.full', 'A deck holds at most {max} fittings.', { max: DECK_FITTINGS_MAX }), true); return; }
     const why = placeRefusal(deck, [x, z], list, { m: Number(chosen), yaw: 0 }, footprint);   // AUDIT 2: its whole box

@@ -63,7 +63,8 @@ start-of-frame past the tables) or WebP (VP8, VP8L or VP8X), at most 4096 a side
 pixels; the browser that draws it does.
 
 **THE DOCUMENT** (`src/poi/poiLaw.js`). `{ v: 1, id, name, about?, tags?, place, parts, lights?, marker? }`. `place` is
-a map pixel (`px` 0-999, `py` 0-499), metres east and north inside it from its south-west corner (`x`, `z`, 0 to 819.2 -
+a map pixel (`px` 0-999, `py` 0-499 on the Bay's map; AUDIT RELEASE R2-8, 2026-10-26: any pixel of the world's grid, within
+WORLD_PIXEL_BOUND either side of the Bay's corner - `01-Overview/audits/Audit-Release-R2.md`), metres east and north inside it from its south-west corner (`x`, `z`, 0 to 819.2 -
 `streamingWorld.js pixelTranslation`'s frame), a height `y` above the ground (`ground: 'snap'`) or absolute, a unit
 quaternion and a size. Each part names a mesh, a transform from the place, `collide` ('mesh' or 'none'), `shadow`, and
 one material per submesh: base texture and colour, emissive texture and colour, alpha (opaque, cutout with its cutoff,
@@ -543,3 +544,16 @@ Pinned by `test/poi/poi6_review.test.js` (8); `tools/mutants/poi6.json` 21, all 
 `test/poi/auditpoi_packs.test.js` (10), the queue, history and pack dialogs in `test/poi/auditpoi_panels.test.js`, the round
 trip in `test/poi/auditpoi_gltf.test.js`, `test/poi/auditpoi_lead.test.js` (L4, L5); `tools/mutants/auditpoi_packs.json` 57, all
 dead.
+
+## AUDIT RELEASE R2-8 - a POI past the Bay (2026-10-26)
+
+The owner: "Take care of exclusions and gaps" (`01-Overview/audits/Audit-Release-R2.md` R2-8). A POI stood on MAPS.BSA's
+1000 x 500 alone: the law refused a place past it (the editor, the account service and the game read one law), the editor
+held a place to the Bay's map, and the feed filed the standing set by `py * 1000 + px`, which past the Bay gives two pixels
+one id ((-1, 0) and (999, -1)), as the world host's riding frames did. Now the place is any pixel of the world's grid
+(`poiLaw.js` POI_WORLD_BOUND, the wire's WORLD_PIXEL_BOUND, held equal by its pin - the law stands alone in the service);
+a pixel's id is `poiPixelKey` - the Bay's MapsFile id, every one as it was, and past the Bay the world key's law after
+the Bay's ids (POI_PAST_BAY_ID_BASE), one a pixel; the feed and the host's riding frames ask it; the editor carries a
+place over the Bay's edge to the grid's. Nothing stored moves: a POI's id is its document's own (`poi-<12 hex>`), and the
+store keeps a revision's `px`, `py` as plain numbers with no bound (0116_poi.sql) - no migration. The words a refusal
+says are the same ("It stands off the map, east or west.").
