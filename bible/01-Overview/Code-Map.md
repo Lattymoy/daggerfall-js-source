@@ -92,7 +92,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Deep Waters | `systems/deepWater/`, `world/deepWater/`, `scenes/deepWater/` |
 | Diverse Weapons | `combat/diverseWeapons/` |
 | Duels | `net/duel/` |
-| Dungeons | `systems/dungeon/`, `world/dungeon/` |
+| Dungeons | `systems/dungeon/`, `world/dungeon/`, `net/delve/` (DELVE II's encounters) |
 | Dynamic Skies | `systems/dynamicSkies/` |
 | Elite Gates (the Elite Breach) | `systems/eliteGates/`, `net/eliteGates/`, `world/eliteGates/`, `render/eliteGates/`, `scenes/eliteGates/`, `ui/eliteGates/` |
 | Enemies | `characters/enemy/` |
@@ -230,6 +230,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/net/arena/` | The Arena: bouts, the ladder, the league (`11-Multiplayer/Arena.md`) - online - the law both ends run. |
 | `src/net/card/` | The tavern's card table: Hold'em and the regulars (`11-Multiplayer/Tavern-Cards.md`) - online - the law both ends run. |
 | `src/net/duel/` | Duels between players - online - the law both ends run. |
+| `src/net/delve/` | DELVE II, the dungeons' encounters (`03-World/Delve-II.md`) - offline and online - the law the game and the relay run: the kinds, the ledger's machine, the plan's hash. |
 | `src/net/eliteGates/` | The Elite Breach, the Battlespire's torn halls (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - online - the law both ends run: the director and the halls' law, the spans and the fragments, the legion, the lords and the run, the route and its proofs, the pay and the receipts. |
 | `src/net/firmament/` | The Firmament (`06-Systems/Firmament.md`) - online - the law both ends run. |
 | `src/net/gambit/` | The King's Gambit (`11-Multiplayer/Kings-Gambit.md`) - online - the law both ends run. |
@@ -417,7 +418,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/card/` | The card table in the world: the tables, the scene, the regulars, a hand and its motion. |
 | `src/world/city/` | A city's gates, lights and navigation - its models and assembly. |
 | `src/world/deepWater/` | Deep Waters in the world: the sea floor and its bathymetry, the surface, swimming, the look and the bake. |
-| `src/world/dungeon/` | A dungeon's build: its layout, lights, textures, fires, label and end. |
+| `src/world/dungeon/` | A dungeon's build: its layout, lights, textures, fires, encounter sites, label and end. |
 | `src/world/eliteGates/` | The Elite Breach in the world (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the halls, the ground, the ruin, the vista and the underside, the platforms, the rooms, the kit and its art, the air and the lamps - its models and assembly. |
 | `src/world/gate/` | The Oblivion Gate in the world: the arena, the art, the boss, the model, the clearance and the spew. |
 | `src/world/interior/` | Interiors: layout, lights, glass - its models and assembly. |

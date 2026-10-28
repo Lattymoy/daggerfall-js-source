@@ -112,7 +112,7 @@ function levelDisc(probe, pos, rings) {
  * @typedef {{ probe?: any, doors?: number[][], enemies?: number[][], items?: number[][], fires?: number[][],
  *   start?: number[] | null, tally?: Record<string, any> | null, law?: Readonly<SiteLaw> }} LandOpts
  */
-export function landSites(cands, /** @type {LandOpts} */ { probe, doors = [], enemies = [], items = [], fires = [], start = null, tally = null, law = DSITE } = {}) {
+export function landDelveSites(cands, /** @type {LandOpts} */ { probe, doors = [], enemies = [], items = [], fires = [], start = null, tally = null, law = DSITE } = {}) {
   const out = [];
   const storeyClear = (list, pos, m) => list.every((q) => flat2(q, pos) >= SQ(m) || Math.abs(q[1] - pos[1]) >= law.storeyM);
   const no = (rule) => { if (tally) tally[rule] = (tally[rule] ?? 0) + 1; };
@@ -197,11 +197,11 @@ export function delveSitePlan(/** @type {PlanOpts} */ { blocks, probe, doors = [
   if (count <= 0) return { sites: [], candidates: cands.length, valid: 0, small: 0 };
   const start = dungeonStart(blocks);
   const marks = { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks), fires, start };
-  const valid = landSites(cands, { ...marks, tally });
+  const valid = landDelveSites(cands, { ...marks, tally });
   const large = chooseSites(valid, { seed, start, count }).map((c) => ({ c, r: DSITE.r }));
   let small = [];
   if (large.length < count) {
-    const spots = landSites(siteCandidates(blocks, DSITE_SMALL.gridM), { ...marks, tally: tally ? (tally.small ??= {}) : null, law: DSITE_SMALL });
+    const spots = landDelveSites(siteCandidates(blocks, DSITE_SMALL.gridM), { ...marks, tally: tally ? (tally.small ??= {}) : null, law: DSITE_SMALL });
     small = chooseSites(spots, { seed, start, count: count - large.length, taken: large.map(({ c }) => c.pos) }).map((c) => ({ c, r: DSITE_SMALL.r }));
   }
   const chosen = [...large, ...small];

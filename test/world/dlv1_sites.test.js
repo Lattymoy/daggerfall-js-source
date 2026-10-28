@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DSITE, DSITE_SMALL, delveSiteCount, colliderSiteProbe, siteCandidates, landSites, chooseSites, siteKinds, delveSitePlan,
+  DSITE, DSITE_SMALL, delveSiteCount, colliderSiteProbe, siteCandidates, landDelveSites, chooseSites, siteKinds, delveSitePlan,
 } from '../../src/world/dungeon/delveSites.js';
 import { DELVE_KINDS, delvePlanHash } from '../../src/net/delve/delveLaw.js';
 import { Collider } from '../../src/player/collider.js';
@@ -82,18 +82,18 @@ test('DLV1 THE RULES: a floor, flat, dry, clear of a door by 4.5 m, an enemy mar
     fires: [[800, 0, 11.99], [1100, 0, 12]],
   };
   const tally = {};
-  const kept = landSites(cands, { probe, ...marks, tally });
+  const kept = landDelveSites(cands, { probe, ...marks, tally });
   assert.deepEqual(kept.map((k) => k.pos[0] / 100), [11], 'every rule at its edge, kept');
   assert.deepEqual(kept[0].pos, [1100, 0, 0], 'landed on its floor');
   assert.deepEqual(kept[0].walls, walls(9));
   assert.deepEqual(tally, { floor: 2, water: 1, door: 1, enemy: 1, item: 1, start: 1, fire: 1, level: 1, room: 1 });
   assert.deepEqual(asked, [4, 4], 'the room asked for the large disc');
   asked.length = 0;
-  const small = landSites(cands, { probe, ...marks, law: DSITE_SMALL });
+  const small = landDelveSites(cands, { probe, ...marks, law: DSITE_SMALL });
   assert.deepEqual(small.map((k) => k.pos[0] / 100), [4, 6, 7, 8, 9, 11], 'the small room: nearer a door, an item, the way in and a fire; level to 3 m only');
   assert.ok(asked.every((r) => r === 3));
-  assert.deepEqual(landSites(cands, { probe: { floor: () => ({ y: 0.4, ny: 1 }), room: () => ({ walls: walls() }) } }).length, 11, 'level is the disc against its heart, not against the grid');
-  assert.deepEqual(landSites([{ ...at(3), water: -0.5 }], { probe: open }).length, 1, 'half a metre over the water, kept');
+  assert.deepEqual(landDelveSites(cands, { probe: { floor: () => ({ y: 0.4, ny: 1 }), room: () => ({ walls: walls() }) } }).length, 11, 'level is the disc against its heart, not against the grid');
+  assert.deepEqual(landDelveSites([{ ...at(3), water: -0.5 }], { probe: open }).length, 1, 'half a metre over the water, kept');
 });
 
 /** A square room `2H` across and `T` high, centred on the origin: floor, ceiling, four walls - the 'dungeon' bucket. */
