@@ -16033,8 +16033,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const why = travelViewAllowed();
       if (!why.ok) { if (why.why) tvSay(why.why); return false; }
       if (!travelViewCanGo()) return false;
-      if (!coords) {
-        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y);
+      // OW-PLACE-WALK: a place past the Bay the map hands as its pixel (`place` - a city, a mark, a quest's) is walked to as
+      // the place, to its door; its pixel's byte may be the sea (Solitude's), and the spot's walk refused it as water
+      const summary = !coords || pick.place ? tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place) : null;
+      if (!coords || summary) {
         return summary ? travelViewRouteTo(summary, { roads: tvMapForcesRoads() }) : false;   // TO-ROADS x OW-PATH
       }
       const o = mapPixelToWorldCoords(pick.pixel.x, pick.pixel.y);
