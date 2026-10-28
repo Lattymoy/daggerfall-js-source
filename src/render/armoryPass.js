@@ -178,81 +178,168 @@ vec3 cardLight() {
   if (vS.y > 1.5) return fireRamp(0.85 - 0.55 * vS.x) * e * (0.85 + 0.15 * sin(TAU * (uTime * 2.0 + vS.x))) * 0.9;   // a footfall ember burning out
   return ramp(0.95 - 0.55 * vS.x) * e * (uPiece == 1 ? uFace : 1.0);
 }
-// CROWN OF THE BURNING DOOR: the band (part 0) and the horns of flame rising from it (part 2)
+// two nearest cell distances of a periodic Voronoi lattice - the edges between its cells are where d.y - d.x is small
+vec2 cellsP(vec2 p, vec2 per) {
+  vec2 i = floor(p), f = fract(p), d = vec2(8.0);
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    vec2 g = vec2(float(x), float(y)), c = mod(i + g, per);
+    float e = length(g + vec2(h21(c), h21(c + 17.3)) * 0.8 + 0.1 - f);
+    d = e < d.x ? vec2(e, d.x) : vec2(d.x, min(d.y, e));
+  }
+  return d;
+}
+float lineAt(float d, float w) { return 1.0 - smoothstep(w * 0.4, w, abs(d)); }
+// CROWN OF THE BURNING DOOR: a circlet of molten iron (part 0) - two rims, rivets, a glint running round - and over it
+// horns of flame, tall and short by turns (part 2), with the Door itself at the brow: a pointed arch of white fire, the
+// Deadlands burning through it
 vec3 crownLight() {
   float u = vP.x, v = vP.y;
   float n = fbmP(vec2(u * 28.0, v * 2.5 - uTime * 2.4), vec2(28.0, 288.0));
+  float uf = abs(fract(u + 0.5) - 0.5);   // 0 at the brow, 0.5 at the back
   if (uPart == 0) {
-    float band = smoothstep(0.0, 0.3, v) * (1.0 - smoothstep(0.7, 1.0, v));
-    float stud = pow(max(cos(TAU * 7.0 * u), 0.0), 18.0);
-    return fireRamp(0.38 + 0.35 * n + 0.3 * stud) * band * (0.5 + 0.5 * (1.0 - abs(vS.x))) * 0.75;
+    float rims = exp(-pow((v - 0.14) / 0.08, 2.0)) + exp(-pow((v - 0.86) / 0.08, 2.0));
+    float rivet = pow(max(cos(TAU * 14.0 * u), 0.0), 30.0) * exp(-pow((v - 0.5) / 0.14, 2.0)) * smoothstep(0.03, 0.06, uf);
+    float gd = abs(fract(u - uTime ${hz(ARMORY_HZ.spark)} + 0.5) - 0.5), glint = exp(-gd * gd * 900.0) * (0.4 + 0.6 * rims);
+    float key = exp(-pow(uf / 0.025, 2.0)) * (1.0 - smoothstep(0.6, 1.0, v));   // the Door's sill, the circlet's front
+    float heat = 0.28 + 0.16 * n + 0.42 * rims + 0.5 * rivet + 0.45 * glint + 0.4 * key;
+    return fireRamp(clamp(heat, 0.0, 1.0)) * (0.55 + 0.45 * (1.0 - abs(vS.x))) * (0.35 + 0.65 * smoothstep(0.25, 0.6, heat));
   }
-  float du = abs(fract(u * 7.0 + 0.5 + (n - 0.5) * 0.35 * v) - 0.5) / 7.0;   // the nearest horn, wavering as it climbs
-  float hornH = 0.78 + 0.22 * vnoiseP(vec2(floor(u * 7.0 + 0.5), uTime * 1.5), vec2(7.0, 180.0));
-  float width = 0.034 * pow(max(1.0 - v / hornH, 0.0), 0.75) + 0.002;
-  float horn = (1.0 - smoothstep(width * 0.25, width, du)) * step(v, hornH);
-  float low = (1.0 - smoothstep(0.0, 0.32, v)) * (0.35 + 0.65 * n);   // the low fire between the horns
-  float heat = max(horn * (0.88 - 0.7 * v / hornH) * (0.75 + 0.3 * n), low * 0.6);
-  return fireRamp(clamp(heat, 0.0, 1.0)) * smoothstep(0.02, 0.15, heat) * 0.8;
+  float circ = TAU * (0.133 - 0.058 * v), y = v * 0.27, x = uf * circ;   // metres across from the brow and up the horns
+  float wob = (n - 0.5) * 0.35 * v;
+  float dT = abs(fract(u * 7.0 + 0.5 + wob) - 0.5) / 7.0, dS = abs(fract(u * 7.0 + wob) - 0.5) / 7.0;   // the nearest tall horn, and short
+  float hT = 0.8 + 0.2 * vnoiseP(vec2(floor(u * 7.0 + 0.5), uTime * 1.5), vec2(7.0, 180.0));
+  float hS = 0.42 + 0.14 * vnoiseP(vec2(floor(u * 7.0) + 11.0, uTime * 1.5), vec2(7.0, 180.0));
+  float wT = 0.034 * pow(max(1.0 - v / hT, 0.0), 0.75) + 0.002, wS = 0.026 * pow(max(1.0 - v / hS, 0.0), 0.8) + 0.002;
+  float tall = (1.0 - smoothstep(wT * 0.25, wT, dT)) * step(v, hT) * smoothstep(0.05, 0.09, x);   // none where the Door stands
+  float stub = (1.0 - smoothstep(wS * 0.25, wS, dS)) * step(v, hS);
+  float core = max(tall * (1.0 - smoothstep(0.0, wT * 0.45, dT)), stub * (1.0 - smoothstep(0.0, wS * 0.45, dS)));
+  float low = (1.0 - smoothstep(0.0, 0.32, v)) * (0.35 + 0.65 * n);
+  float heat = max(max(tall * (0.82 - 0.62 * v / hT), stub * (0.72 - 0.55 * v / hS)) * (0.75 + 0.3 * n) + 0.22 * core, low * 0.6);
+  // THE DOOR: straight jambs to 0.09 m, then a pointed arch to 0.17 m; its frame white-hot, the Deadlands swirling in it
+  float jamb = 0.042 * (y < 0.09 ? 1.0 : pow(max(1.0 - (y - 0.09) / 0.08, 0.0), 0.6));
+  float frame = lineAt(x - jamb, 0.007) * step(y, 0.17) + lineAt(y - 0.006, 0.006) * step(x, 0.042);
+  float inside = step(x, jamb) * step(y, 0.17);
+  float swirl = fbmP(vec2(u * 56.0 + v * 6.0, v * 5.0 - uTime * 2.4), vec2(56.0, 288.0));
+  heat = max(heat * (1.0 - inside), max(frame * (0.88 + 0.12 * n), inside * (0.25 + 0.55 * swirl * swirl)));
+  return fireRamp(clamp(heat, 0.0, 1.0)) * smoothstep(0.02, 0.15, heat) * 0.85;
 }
-// EMBER HEART: the coal and its veins (the decal), beating
+// EMBER HEART: a coal crusted in plates, molten in their cracks, beating; veins of fire running out from it across the
+// ribs, a pulse along them each beat, and fine capillaries off them
 vec3 heartLight() {
   float r = length(vP), a = atan(vP.y, vP.x) / TAU + 0.5;
   float beat = heartBeat();
-  float grain = vnoiseP(vec2(a * 24.0, r * 6.0), vec2(24.0, 64.0));
-  float coal = (1.0 - smoothstep(0.05, 0.34, r));
+  float coal = 1.0 - smoothstep(0.08, 0.36, r);
+  vec2 cd = cellsP(vec2(a * 9.0, r * 7.0), vec2(9.0, 64.0));
+  float crack = 1.0 - smoothstep(0.02, 0.1, cd.y - cd.x);
+  float plate = 0.32 + 0.18 * vnoiseP(vec2(a * 24.0, r * 6.0), vec2(24.0, 64.0));
+  float coalHeat = mix(plate * (0.7 + 0.3 * beat), 0.72 + 0.28 * beat, crack) + 0.35 * (1.0 - smoothstep(0.0, 0.14, r)) * beat;
   float ridge = 1.0 - abs(2.0 * vnoiseP(vec2(a * 9.0, r * 4.0 + 3.0), vec2(9.0, 64.0)) - 1.0);
-  float veins = pow(ridge, 9.0) * (1.0 - smoothstep(0.25, 0.98, r)) * smoothstep(0.12, 0.3, r);
-  float wave = 0.5 + 0.5 * cos(TAU * (r * 1.6 - uTime ${hz(ARMORY_HZ.beat)} - uSeed));
-  float heat = max(coal * (0.5 + 0.35 * beat + 0.15 * grain), veins * (0.32 + 0.4 * wave + 0.25 * beat));
-  return fireRamp(heat) * smoothstep(0.03, 0.12, heat) * uFace * 0.9;
+  float fine = 1.0 - abs(2.0 * vnoiseP(vec2(a * 23.0, r * 9.0 + 7.0), vec2(23.0, 128.0)) - 1.0);
+  float reach = (1.0 - smoothstep(0.3, 0.98, r)) * smoothstep(0.14, 0.32, r);
+  float veins = pow(ridge, 9.0) * reach, caps = pow(fine, 22.0) * (1.0 - smoothstep(0.35, 0.9, r)) * smoothstep(0.2, 0.4, r);
+  float wave = pow(0.5 + 0.5 * cos(TAU * (r * 1.6 - uTime ${hz(ARMORY_HZ.beat)} - uSeed)), 3.0);
+  float ribY = vP.y + 0.42 * vP.x * vP.x, ribs = exp(-pow((fract(ribY * 3.4) - 0.5) / 0.05, 2.0)) * smoothstep(0.32, 0.55, abs(vP.x)) * (1.0 - smoothstep(0.75, 0.95, r));
+  float heat = max(coal * coalHeat, max(veins * (0.3 + 0.45 * wave + 0.25 * beat), max(caps * (0.22 + 0.4 * wave), ribs * wave * 0.32)));
+  return fireRamp(heat) * smoothstep(0.03, 0.12, heat) * uFace * 0.92;
 }
-// ASHBOUND BRACERS: a chain of embers wound round the limb, flickering along it
+// ASHBOUND BRACERS: a chain of iron wound round the limb - its links by turns flat (an oval) and edge-on (a bar) -
+// molten inside, a fire running along it; here and there a link gone to dull coal, and a smoulder on the limb between
 vec3 chainLight() {
   float u = vP.x, v = vP.y, L = vS.y;
-  float turns = max(1.0, floor(L / 0.11));
-  float ph = u * 2.0 + v * turns;
-  float across = abs(fract(ph) - 0.5);
-  float along = fract(v * turns * 3.0 + u * 6.0);
-  float ring = (1.0 - smoothstep(0.1, 0.16, across)) * smoothstep(0.06, 0.1, across) * (0.5 + 0.5 * (1.0 - smoothstep(0.3, 0.5, abs(along - 0.5))));   // a link's two sides
-  float bar = (1.0 - smoothstep(0.0, 0.1, across)) * (1.0 - smoothstep(0.06, 0.16, abs(along - 0.5)));   // and the next link through it
+  float turns = max(1.0, floor(L / 0.075));
+  float p = u + v * turns, across = fract(p) - 0.5, S = (u - floor(p)) * 14.0;   // across the strand in pitches; along it in links
+  float le = S - 2.0 * floor(S * 0.5 + 0.5), lo = S - 1.0 - 2.0 * floor((S - 1.0) * 0.5 + 0.5);
+  float ed = length(vec2(le / 1.05, across / 0.36));
+  float ring = lineAt(ed - 0.8, 0.22), rim = lineAt(ed - 0.8, 0.08);
+  float bar = (1.0 - smoothstep(0.06, 0.11, abs(across))) * (1.0 - smoothstep(0.7, 0.9, abs(lo)));
+  float link = floor(S * 0.5 + 0.5) * 2.0 + (bar > ring ? 1.0 : 0.0);
+  float cool = step(0.84, h21(vec2(link, floor(p))));
+  float run = 0.5 + 0.5 * cos(TAU * (S / 28.0 - uTime / 2.0));
   float n = vnoiseP(vec2(u * 16.0, v * 8.0 - uTime * 1.5), vec2(16.0, 180.0));
   float chain = max(ring, bar);
-  float heat = chain * (0.55 + 0.4 * n) + 0.06 * n;
-  return fireRamp(heat) * (chain * 1.1 + 0.05) * (0.6 + 0.4 * (1.0 - abs(vS.x)));
+  float heat = chain * mix(0.42 + 0.3 * run + 0.18 * n, 0.24 + 0.06 * n, cool) + 0.22 * max(rim, bar * 0.7) * (1.0 - cool) + 0.05 * n;
+  return fireRamp(clamp(heat, 0.0, 1.0)) * (chain * 1.1 + 0.06 * n) * (0.6 + 0.4 * (1.0 - abs(vS.x)));
 }
-// CINDERSTRIDE, ETERNAL GREAVES: flames licking up the leg from the ankle
+// CINDERSTRIDE: a ring of cracked coal at the ankle and two sheets of flame licking up the shin from it, a hot core
+// in each tongue. ETERNAL GREAVES: blue-violet flame from the foot to the knee, under a lattice of light winding up the
+// leg and a band at the knee with the Origin's spark at its front
 vec3 legLight() {
   float u = vP.x, v = vP.y;
-  float twist = uPiece == 8 ? v * 0.6 : 0.0;
+  bool eternal = uPiece == 8;
+  float twist = eternal ? v * 0.6 : 0.0;
   float n = fbmP(vec2((u + twist) * 20.0, v * 2.0 - uTime * 2.4), vec2(20.0, 288.0));
+  float n2 = fbmP(vec2((u - twist) * 13.0 + 5.0, v * 1.5 - uTime * 2.4), vec2(13.0, 288.0));
   float tongues = pow(0.5 + 0.5 * cos(TAU * ((u + twist) * 7.0 + n * 0.6)), 1.5);
-  float h = (uPiece == 8 ? 0.95 : 0.72) * (0.42 + 0.5 * tongues * n + 0.3 * n);
-  float edge = h - v;
+  float h = (eternal ? 0.95 : 0.72) * (0.42 + 0.5 * tongues * n + 0.3 * n);
+  float h2 = (eternal ? 0.7 : 0.55) * (0.4 + 0.6 * n2);   // the second sheet, lower and slower
+  float edge = h - v, edge2 = h2 - v;
   float flame = smoothstep(0.0, 0.12, edge) * smoothstep(0.0, 0.14, v);   // none of it where the leg meets the ground
-  float heat = clamp(edge / max(h, 0.05) * (uPiece == 8 ? 0.8 : 1.05) + 0.15 * n, 0.0, uPiece == 8 ? 0.68 : 0.92);   // AUDIT ARMORY: the greaves short of the Eternal's white core - its near and far sides add
-  return ramp(heat) * flame * (uPiece == 8 ? 0.6 : 0.8);
+  float flame2 = smoothstep(0.0, 0.1, edge2) * smoothstep(0.0, 0.14, v) * 0.55;
+  float core = pow(tongues, 3.0) * smoothstep(0.1, 0.4, edge) * 0.25;
+  float top = eternal ? 0.68 : 0.95;   // AUDIT ARMORY: the greaves short of the Eternal's white core - their near and far sides add
+  float heat = clamp(max(edge / max(h, 0.05) * (eternal ? 0.8 : 1.05) + 0.15 * n + core, edge2 / max(h2, 0.05) * 0.7), 0.0, top);
+  vec3 c = ramp(heat) * max(flame, flame2) * (eternal ? 0.6 : 0.8);
+  if (!eternal) {
+    vec2 cd = cellsP(vec2(u * 26.0, v * 9.0), vec2(26.0, 64.0));
+    float ring = exp(-pow((v - 0.17) / 0.05, 2.0)), crack = 1.0 - smoothstep(0.02, 0.09, cd.y - cd.x);
+    c += fireRamp(0.3 + 0.55 * crack + 0.12 * n) * ring * (0.3 + 0.7 * crack) * 0.7;
+  } else {
+    float l1 = lineAt(fract(u * 3.0 + v * 2.2 + 0.5) - 0.5, 0.035), l2 = lineAt(fract(u * 3.0 - v * 2.2 + 0.5) - 0.5, 0.035);
+    float lattice = max(l1, l2) * smoothstep(0.12, 0.2, v) * (1.0 - smoothstep(0.82, 0.88, v));
+    float knee = lineAt(v - 0.9, 0.035), uf = abs(fract(u + 0.5) - 0.5);
+    float star = exp(-pow(uf / 0.012, 2.0) - pow((v - 0.9) / 0.09, 2.0) * 0.4) + exp(-pow(uf / 0.05, 2.0) - pow((v - 0.9) / 0.02, 2.0));
+    float dd = abs(fract(u * 3.0 + v * 2.2 - uTime ${hz(ARMORY_HZ.halo)} + 0.5) - 0.5);
+    c += eternalRamp(0.58 + 0.2 * exp(-dd * dd * 60.0)) * lattice * 0.38 + eternalRamp(0.6) * knee * 0.45 + eternalRamp(0.85) * min(star, 1.0) * 0.5;
+  }
+  return c;
 }
-// ETERNAL HALO, ETERNAL ARMLETS: a ring of blue-violet fire with a light running round it
+// ETERNAL HALO: a band of blue-violet fire between two bright rims, the Origin's runes round it, a comet of light running
+// round with its tail. ETERNAL ARMLETS: the same band low on the arm, a chain of diamonds engraved on it, flames licking
+// up off its upper rim
 vec3 ringLight() {
   float u = vP.x, v = vP.y;
+  bool halo = uPiece == 5;
   float n = fbmP(vec2(u * 40.0, v * 2.0 - uTime * 2.4), vec2(40.0, 288.0));
-  float dd = abs(fract(u - uTime ${hz(ARMORY_HZ.halo)} + 0.5) - 0.5);
-  float run = exp(-dd * dd * 180.0);
-  float flick = uPiece == 5 ? 1.0 : smoothstep(0.0, 0.25, v) * (1.0 - smoothstep(0.3, 0.55 + 0.45 * n, v));   // an armlet's flames licking up off its band
-  float heat = 0.3 + 0.32 * n + 0.42 * run;
-  return eternalRamp(heat) * flick * (0.45 + 0.55 * (1.0 - abs(vS.x))) * (uPiece == 5 ? 0.85 : 0.6);
+  float s = fract(u - uTime ${hz(ARMORY_HZ.halo)});
+  float comet = exp(-s * 14.0) * 0.85 + exp(-pow(min(s, 1.0 - s) / 0.012, 2.0)) * 0.6;
+  if (halo) {
+    float rims = lineAt(v - 0.12, 0.1) + lineAt(v - 0.88, 0.1);
+    float g = floor(u * 36.0), gx = fract(u * 36.0) - 0.5, gy = v - 0.5, kind = floor(h21(vec2(g, 3.0)) * 3.0);
+    float rune = kind < 1.0 ? lineAt(gx, 0.09) * (1.0 - smoothstep(0.18, 0.26, abs(gy)))   // a stroke
+      : kind < 2.0 ? lineAt(abs(gx) * 1.6 + abs(gy) - 0.28, 0.07)   // a diamond
+      : exp(-(gx * gx + gy * gy) / 0.006);   // a point
+    float heat = 0.26 + 0.2 * n + 0.32 * rims + 0.34 * rune + 0.5 * comet;
+    return eternalRamp(clamp(heat, 0.0, 1.0)) * (0.45 + 0.55 * (1.0 - abs(vS.x))) * 0.85;
+  }
+  float bandV = v / 0.4, inBand = step(v, 0.4);
+  float rims = lineAt(bandV - 0.12, 0.12) + lineAt(bandV - 0.88, 0.12);
+  float dx = abs(fract(u * 16.0) - 0.5), diamond = lineAt(dx * 1.5 + abs(bandV - 0.5) - 0.32, 0.08);
+  float band = inBand * (0.22 + 0.18 * n + 0.38 * rims + 0.32 * diamond + 0.42 * comet);
+  float flick = smoothstep(0.36, 0.44, v) * (1.0 - smoothstep(0.44, 0.66 + 0.34 * n, v));   // flames licking up off the band
+  float heat = max(band, flick * (0.3 + 0.32 * n + 0.3 * comet));
+  return eternalRamp(clamp(heat, 0.0, 0.9)) * max(inBand, flick) * (0.45 + 0.55 * (1.0 - abs(vS.x))) * 0.62;
 }
-// ETERNAL SIGIL: the Origin's ring and its spark, on the chest and the back
+// ETERNAL SIGIL: the Origin's ouroboros - a dragon of light in scales biting its own tail, its eye bright - round the
+// spark, a ring of runes inside it and rays turning slowly out from the spark; ticks at the rim. On the chest and the back
 vec3 sigilLight() {
   float r = length(vP), a = atan(vP.y, vP.x) / TAU + 0.5;
-  float ring = exp(-pow((r - 0.62) / 0.055, 2.0)) * smoothstep(0.02, 0.06, abs(fract(a - 0.25 + 0.5) - 0.5));
+  float ga = fract(a - 0.25 + 0.5) - 0.5;   // round from the mouth: the head just past it, the tail just before
+  float head = exp(-pow((ga - 0.06) / 0.03, 2.0)), taper = (1.0 - smoothstep(-0.22, -0.02, ga)) * step(ga, 0.0) + step(0.0, ga);
+  float w = 0.055 * (0.35 + 0.65 * taper + 0.7 * head) * step(0.012, abs(ga) + step(0.0, ga) * 0.02);
+  float across = (r - 0.62) / max(w, 1e-3);
+  float body = 1.0 - smoothstep(0.7, 1.0, abs(across));
+  float t = a * 48.0, sx = fract(t) - 0.5, scale = lineAt(across - (-0.6 + 1.1 * (1.0 - 4.0 * sx * sx)), 0.2) * body;
+  float edgeL = lineAt(abs(across) - 0.85, 0.2) * body;
+  float eye = exp(-(pow((ga - 0.075) * 3.9 / 0.08, 2.0) + pow((across - 0.35) / 0.25, 2.0)));
+  float dd = abs(fract(a - uTime ${hz(ARMORY_HZ.sigil)} + 0.5) - 0.5), run = exp(-dd * dd * 120.0);
+  float ring = body * (0.32 + 0.3 * run) + scale * 0.32 + edgeL * 0.35 + eye * 1.1;
   float ticks = exp(-pow((r - 0.82) / 0.03, 2.0)) * pow(max(cos(TAU * 12.0 * a), 0.0), 24.0);
-  float dd = abs(fract(a - uTime ${hz(ARMORY_HZ.sigil)} + 0.5) - 0.5);
-  float run = exp(-dd * dd * 120.0);
+  float rg = floor(a * 24.0), rx = fract(a * 24.0) - 0.5, ry = (r - 0.44) / 0.05;
+  float runes = (h21(vec2(rg, 9.0)) < 0.5 ? lineAt(rx, 0.12) * (1.0 - smoothstep(0.6, 0.9, abs(ry))) : lineAt(abs(rx) * 1.4 + abs(ry) * 0.5 - 0.3, 0.1)) * (1.0 - smoothstep(0.9, 1.3, abs(ry)));
+  float ra = fract(a * 8.0 + uTime ${hz(ARMORY_HZ.orbit)}) - 0.5, rays = exp(-pow(ra / 0.02, 2.0)) * smoothstep(0.08, 0.16, r) * (1.0 - smoothstep(0.2, 0.36, r));
   float star = max(exp(-abs(vP.x) * 16.0 - abs(vP.y) * 3.5), exp(-abs(vP.y) * 16.0 - abs(vP.x) * 3.5)) * (1.0 - smoothstep(0.0, 0.5, r));
-  float heat = ring * (0.5 + 0.5 * run) + ticks * 0.6 + star * (0.75 + 0.25 * sin(TAU * uTime ${hz(ARMORY_HZ.spark)}));
-  return eternalRamp(0.3 + 0.7 * heat) * min(heat, 1.2) * uFace * 0.85;
+  float heat = ring + ticks * 0.6 + runes * 0.4 + rays * 0.35 + star * (0.75 + 0.25 * sin(TAU * uTime ${hz(ARMORY_HZ.spark)}));
+  return eternalRamp(0.3 + 0.7 * min(heat, 1.0)) * min(heat, 1.2) * uFace * 0.85;
 }
 `;
 

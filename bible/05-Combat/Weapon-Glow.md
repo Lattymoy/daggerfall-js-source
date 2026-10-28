@@ -77,8 +77,8 @@ shades, never a smooth blend), its REACH - how far the band stands off the edge 
 | frost | square (Chebyshev - ice is angular) | 0.8 + 0.8 x level, still spikes where a cell's hash says, a 3 s breath | a crystal glints white for a fifth of a second |
 | shock | diamond (Manhattan - jagged) | 1.6 + 0.3 x level, arcs out where a stepped noise peaks, a surge on one in five of its thirds of a second | the band crackles in 2x2 blocks twelve times a second |
 | arcane | round | 1.6 + 0.6 x level, a slow wave | an even halo that turns |
-| brand (law 7) | round | (1 + 0.7 x level) x (0.6 + 0.8 x a noise scrolled DOWN the weapon, or a drip) | molten fire runs down the blade and drips off it |
-| edge (law 7) | round | 1 + 0.4 x level + 1.6 x a light running along the blade | a white-hot line on the blade, a light sweeping its length |
+| brand (law 7) | round | (1 + 0.7 x level) x (0.6 + 0.8 x a noise scrolled DOWN the weapon, a drip, or a gout falling down its column) | molten fire runs down the blade and drips off it; a spark caught in the band now and then |
+| edge (law 7) | round | 1 + 0.4 x level + 1.6 x a light running along the blade (or 0.6 x a slower one running back) | a white-hot line on the blade, a light sweeping its length; glints in the band |
 
 Inside the silhouette the weapon's own edge takes the element's light (the rim), so the outline reads as the weapon's
 and not a sticker behind it.
