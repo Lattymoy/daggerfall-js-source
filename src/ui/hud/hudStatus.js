@@ -233,6 +233,13 @@ export const STATUS_GLYPHS = Object.freeze({
     '....kkabbakk....', '...kkabkkbakk...', '.kkkabkkkkbakkk.', '.kgggkk..kkgggk.',
     '.kkckk....kkckk.', '.kcck......kcck.', '.kkkk......kkkk.', '................',
   ] }),
+  // MENTOR2 (systems/mentorText.js mentorHudTile): a tall figure in gold, its arm on a smaller one's shoulder in blue
+  mentor: Object.freeze({ pal: { a: '#e8c070', b: '#fff0c8', c: '#8fb8ff', d: '#d8e6ff' }, rows: [
+    '.kkkkk..........', '.kbaak..........', '.kbaak..........', '.kaaak..........',
+    'kkkkkkk..kkkkk..', 'kbbaaak..kdcck..', 'kbaaaak..kdcck..', 'kaaaaakkkkccck..',
+    'kaaaaaaaaakkkkk.', 'kaaaaakkkddccck.', 'kkakakk.kccccck.', '.kakak..kccccck.',
+    '.kakak..kkckckk.', '.kakak...kckck..', '.kkkkk...kkkkk..', '................',
+  ] }),
 });
 /** The kit's outline black (ui/enhanced/enhancedFrame.js FRAME_TONES.outline). */
 const OUTLINE = '#050608';
@@ -338,13 +345,13 @@ export function needGlyph(chip) {
 /**
  * The widget's tiles, in the order the foot row read them: the spells (mine, then others'), the set powers, the
  * poisons and diseases, the needs.
- * @param {{ spells?: any[], powers?: any[], afflictions?: any[], needs?: any[], rested?: { minutes: number }|null, zone?: { name: string, foot?: string|null }|null, rules?: { level: string, name: string, foot?: string|null }|null }} lists - `spells` ui/enhanced/enhancedHud.js
+ * @param {{ spells?: any[], powers?: any[], afflictions?: any[], needs?: any[], rested?: { minutes: number }|null, zone?: { name: string, foot?: string|null }|null, rules?: { level: string, name: string, foot?: string|null }|null, mentor?: { name: string, foot?: string|null }|null }} lists - `spells` ui/enhanced/enhancedHud.js
  *   effectRows, `powers` the host's set chips (systems/sigil/sigilSetPowers.js setHudChips), `afflictions` afflictionRows,
  *   `needs` survivalHudChips, `rested` REST1's night interval (its real minutes left), `zone` WILD1's open zone (its
- *   tile first), `rules` EVENT-RULES' made level (ui/hud/statusTips.js madeRulesTile - first, beside the zone's)
+ *   tile first), `rules` EVENT-RULES' made level (ui/hud/statusTips.js madeRulesTile - first), `mentor` MENTOR2's
  * @returns {StatusTile[]}
  */
-export function statusTiles({ spells = [], powers = [], afflictions = [], needs = [], rested = null, zone = null, rules = null } = {}) {
+export function statusTiles({ spells = [], powers = [], afflictions = [], needs = [], rested = null, zone = null, rules = null, mentor = null } = {}) {
   /** @type {StatusTile[]} */
   const out = [];
   const tile = (t) => out.push({ foot: null, blink: false, item: false, recovering: false, spell: null, glyph: null, set: null, bundle: null, endable: false, say: null, cost: false, ...t });
@@ -353,6 +360,7 @@ export function statusTiles({ spells = [], powers = [], afflictions = [], needs 
   // EVENT-RULES (2026-10-25, the owner: a world event's rules shown, never silent): the made level's own, first - its
   // regeneration's pause at its foot while it runs
   if (rules) tile({ key: 'rules', kind: 'warn', name: String(rules.name ?? ''), glyph: 'rules', foot: rules.foot ?? null, level: String(rules.level ?? '') });
+  if (mentor) tile({ key: 'mentor', kind: 'buff', name: String(mentor.name ?? ''), glyph: 'mentor', foot: mentor.foot ?? null });   // MENTOR2: mentoring, or a mentor beside me
   spells.forEach((e, i) => tile({
     // AUDIT UI C3: a party mate's gift is a BUFF - ALLY-CAST lets a mate lay only what helps (systems/allyCast.js)
     key: `spell${i}`, kind: e.self || e.ally ? 'buff' : 'debuff', name: String(e.name ?? ''),
