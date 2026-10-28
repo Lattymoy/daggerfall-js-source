@@ -94,12 +94,9 @@ function nextTurn(fn) {
 
 /**
  * BOOT-HIDDEN (bible/01-Overview/Desktop-App.md): THE YIELD A HIDDEN BOOT CAN WAKE FROM. A minimized window gets no
- * animation frames at all on Windows, whatever the shell's background throttling says (measured in the desktop app:
- * the boot stood at its first pixel until the window came back), so a breather waiting on the next frame waited for the
- * player. In the desktop app (a `daggerShell` bridge) a hidden page yields one event-loop turn instead: the build goes
- * on, and nothing is drawn that nobody sees. The browser build keeps the frame - a hidden tab still waits, as Chrome's
- * own background rules have it. A slice resumed by a turn is not lent (createBreather): no frame sampled the time
- * between, and the first frame back would read the whole hidden build as its own script.
+ * animation frames on Windows, whatever the shell's throttling says. In the desktop app (a `daggerShell` bridge) a
+ * hidden page, or one that turns hidden while its frame is pending, yields one event-loop turn instead. The browser
+ * build keeps the frame. A slice resumed by a turn is not lent (createBreather): no frame sampled it.
  * @param {(resumedBy?: unknown) => void} fn
  * @param {{ shell?: unknown, doc?: { hidden?: boolean } | undefined, raf?: (fn: () => void) => unknown, turn?: (fn: () => void) => void }} [seams]
  */

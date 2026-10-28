@@ -1214,15 +1214,13 @@ between models (`src/systems/buildBreather.js`, PERF7), and it waited on the nex
 none, so the boot stopped at its first pixel until the player looked again. Measured on the base, the boot stood at
 "building player pixel" from 7 s until the window came back at 90 s, minimized or covered alike (95.8 s each).
 
-Electron's `webContents.setBackgroundThrottling(false)` does not fix it. With it off from the load to the boot's end,
-the minimized page stayed `hidden` and the boot stalled the same (93.5 s). Windows gives a minimized window no frames,
-whatever the throttling says. So the fix is in the breather: in the desktop app (a `daggerShell` bridge), a hidden page
-yields one event-loop turn (a `MessageChannel` message) instead of a frame (`breathFrame`). The browser build keeps the
-frame - a hidden tab still waits, as Chrome's own background rules have it. A slice resumed by a turn is not lent to
-the frame clock (PERF-EXT24): no frame sampled it, and the first frame back would have read the whole hidden build as
-its own script. A page that is visible when a breath starts has a frame pending, and a window minimized before it fires
-gets none: the breath also resumes by a turn when `visibilitychange` shows the page hidden (not run in the built
-app; pinned by execution in the test).
+`webContents.setBackgroundThrottling(false)` does not fix it: with it off to the boot's end, the minimized page stayed
+`hidden` and the boot stalled the same (93.5 s). Windows gives a minimized window no frames. So the fix is in the
+breather: in the desktop app (a `daggerShell` bridge), a hidden page yields one event-loop turn (a `MessageChannel`
+message) instead of a frame (`breathFrame`). The browser build keeps the frame. A slice resumed by a turn is not lent to
+the frame clock (PERF-EXT24): no frame sampled it. A window minimized while a breath's frame is pending gets none, so
+the breath also resumes by a turn when `visibilitychange` shows the page hidden (pinned by execution, not run in the
+built app).
 
 Measured in the built app, the throttling left as Electron's default: the cold boot took 26.6 s covered and 26.4 s
 minimized, where a visible one took 26.5-26.8 s; a warm minimized boot took 9.2 s. In play the throttling is the
