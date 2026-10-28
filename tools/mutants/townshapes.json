@@ -74,11 +74,12 @@
  {
   "name": "TS-the-sea-lifted",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
-  "new": "        const t = Math.max(0.05, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
+  "old": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
+  "new": "      const off = Math.abs(level - ground[idx]), kept = Math.min(0.95, smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
   "tests": [
    "test/world/terrain/townshapes.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the ease never quite the land's."
  },
  {
   "name": "TS-the-pixel-s-mean",

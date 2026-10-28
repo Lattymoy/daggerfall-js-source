@@ -65,11 +65,12 @@
   {
     "name": "E1-4-the-version-unmoved",
     "file": "src/world/deepWater/deepWatersBakeCache.js",
-    "old": "export const BAKE_GENERATOR_VERSION = 3;",
+    "old": "export const BAKE_GENERATOR_VERSION = 4;",
     "new": "export const BAKE_GENERATOR_VERSION = 1;",
     "tests": [
       "test/world/audittesa3e1.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): BAKE_GENERATOR_VERSION 4."
   },
   {
     "name": "E1-1-the-guard-passes-the-ring",
