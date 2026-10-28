@@ -297,5 +297,5 @@ test('AUDIT SERPENT M4/S1/L4/D2/D6/D5 and L2/B6/T4: the world\'s wiring and the 
   assert.match(n, /const k = st\.guns\.braced \? BRACE_TAKEN : 1;\n[^\n]*\n\s+const men = playerMen\(hurt\.crew \?\? 0, random\(\)\);\n\s+const change = st\.damage\.apply\(\{ \.\.\.hurt, crew: men, \.\.\.\(k < 1 \? \{ hull: Math\.round\(\(hurt\.hull \?\? 0\) \* k\), sail: Math\.round\(\(hurt\.sail \?\? 0\) \* k\) \} : \{\}\) \}, clock\);/);
   assert.match(n, /const v = best\.e \? velocityOf\(best\.e\.ship\) : best\.v;/);
   assert.match(n, /ships\.push\(\{ e: SERPENT_AIM, v: t\.v \?\? \[0, 0, 0\]/);
-  assert.match(src('src/net/online.js'), /isSocialRoom\(room\) \? r\.k === 'fell' \|\| r\.k === 'rcpt' : isCellRoom\(room\)/, 'the hub hands a receipt (S5)');
+  assert.match(src('src/net/online.js'), /isSocialRoom\(room\) \? r\.k === 'fell' \|\| r\.k === 'rcpt' \|\| r\.k === 'at' : isCellRoom\(room\) && r\.k !== 'at'/, 'the hub hands a receipt (S5)');   // PIN MOVED (WW7-12): and the hub alone the agreed site
 });

@@ -391,11 +391,12 @@
   {
     "name": "AF-H3-lair-anywhere",
     "file": "src/scenes/dungeonContext.js",
-    "old": " || isArenaFloor(dfLocation) || (Number(",
-    "new": " || (Number(",
+    "old": " || isArenaFloor(dfLocation) || isAbyssMapId(",
+    "new": " || isAbyssMapId(",
     "tests": [
       "test/systems/auditfeud.test.js"
-    ]
+    ],
+    "note": "PITS-WORLD re-aimed by content: the abyss after it is known by world/oceanHoles.js isAbyssMapId."
   },
   {
     "name": "AF-H3-pixel-unguarded",

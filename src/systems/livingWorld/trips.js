@@ -32,6 +32,7 @@ import { seededRng } from '../wind/wind.js';
 import { DAY_MIN, DAY_START_MIN } from './dayPlan.js';
 import { WORLD_MAP_TERRAIN_DIM as NATIVE_PIXEL } from '../../formats/mapsFile.js';
 import { NATIVE_PER_M } from '../travel/travelDungeons.js';
+import { worldPixelKey, WORLD_PIXEL_KEYS } from '../../world/worldWide/worldGrid.js';   // WW1: one key a pixel of the whole world
 import { CITY_COURT_BLOCKS } from './census.js';
 import { companiesOf, companyOfPlace, namedIn, COMPANY_DIVE_CHANCE, holyDayOf, holyDepartMin, holyDraw } from './companies.js';   // LW13: the companies, the pilgrims' holy day
 
@@ -89,12 +90,13 @@ export const PATROL_RISK = 0.5;
 /** The farthest a traveller's home can be from a town and still be read for visitors or the roads (map pixels). */
 export const TRIP_REACH_PX = 18;
 /** OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): the key a host keeps a
- *  `townsNear(px, py, r)` answer by - a number, one a pixel and a reach (any reach, and a pixel up to half a map past
- *  its 1000 x 500 either way),
+ *  `townsNear(px, py, r)` answer by - a number, one a pixel and a reach (any reach, and any pixel of the world's grid:
+ *  WW1, world/worldWide/worldGrid.js worldPixelKey - the first key held half a map past the Bay's 1000 x 500 and two
+ *  pixels of the land past it shared one),
  *  where it was a template string a call: a way's inns ask it at every pixel of the way (innsAlong) - and how many the
  *  host keeps. 512 was fewer than one long way's pixels, so the book was cleared inside a single trip's inns and asked
  *  again cold; a journey on the Overworld brings a town's roads in every few seconds. */
-export const livingNearKey = (px, py, r) => (r * 1024 + (py + 256)) * 2048 + (px + 512);
+export const livingNearKey = (px, py, r) => r * WORLD_PIXEL_KEYS + worldPixelKey(px, py);
 export const LIVING_NEAR_KEPT = 8192;
 /** LW6: the share of an adventurer's trips that are DIVES - into a dungeon in reach, when one is - and the reach
  *  (map pixels, nearest and farthest), and the hours inside (the clock's minutes, fewest and most). */
@@ -107,6 +109,13 @@ export const DIVE_MIN = Object.freeze([240, 600]);
 export const SEA_CHANCE = Object.freeze({ merchant: 0.4, pilgrim: 0.3, courier: 0.35, pedlar: 0.2, adventurer: 0.15 });
 export const SEA_PACE_X = 3;
 export const SEA_TIDE_H = Object.freeze([6, 9]);
+/** WW7-11 (bible/03-World/World-Wide.md; the owner, 2026-10-26, on passages past the Bay being rare: "Make them longer"):
+ *  THE LONGEST PASSAGE a traveller books, in the calendar's days - the longest way a lane of the world is let have (a
+ *  crossing lane's, scenes/naval/worldLanes.js CROSS_LANE_PATH_PX: 1,216 map pixels, 996 km) out and back at SEA_PACE_X,
+ *  with the longest stay and the turn-round (seaTrip's span). A FAR lane's passage (past the Bay or across its edge -
+ *  scenes/livingWorld/livingLanes.js `far`) takes as many of its traveller's cycles as it needs, up to the block this
+ *  makes (voyageBlock); the Bay's own lanes keep a cycle a passage. */
+export const SEA_VOYAGE_DAYS = 74;
 /** The calendar's walking pace (metres a clock minute): DFU's 1.3 m/s over CLASSIC_MINUTES_PER_SECOND. */
 export const CALENDAR_MPM = 1.3 / 0.2;
 /** LW-DRY: the ground a party's stop stands on - its middle and a ring this far about it (native: 5 m, past the widest
@@ -131,9 +140,13 @@ export const DRY_STEP_N = 80;
  *   dungeonsNear?: (px: number, py: number, rMax: number) => LwTown[],
  *   fated?: (res: Resident, k: number) => boolean,
  *   fate?: (trip: Trip) => (Trip | undefined),
- *   lanesFrom?: (town: LwTown) => ({ to: LwTown, len: number, key: string }[] | undefined),
+ *   lanesFrom?: (town: LwTown) => ({ to: LwTown, len: number, key: string, far?: boolean }[] | undefined),
  *   dryAt?: (nx: number, nz: number) => boolean,
  *   marketBandOf?: (town: LwTown, day: number) => (string | null),
+ *   waiting?: (town: LwTown) => boolean,
+ *   waitingArea?: (area: number) => boolean,
+ *   generation?: () => number,
+ *   longPassages?: boolean,
  * }} TripWorld - the host's: towns near a pixel (the game's own rows, populated); the planner's way between two towns
  *   (undefined while it is being asked, null for none); a town's travellers (census.js travellerRoster). LW4: who holds
  *   a traveller's place in a cycle (lives.js - null while it stands empty; unasked, the census's own), whether its
@@ -141,15 +154,20 @@ export const DRY_STEP_N = 80;
  *   a trip meets (trouble.js - the trip as it left it; AUDIT LW-II E1: undefined while it waits on a way). LW6: the dungeons near a pixel (`dungeon: true` rows - an
  *   adventurer's dives). LW5b: the Bay's lanes from a port town (naval/seaLanes.js: the far port, the lane's length in
  *   metres; none for a town with no harbour; undefined while the map is unread). LW-DRY: whether the ground at a native
- *   point is dry (`nativeDry` over world/dryGround.js - the height map's own, every client's alike); unasked, all is dry)
+ *   point is dry (`nativeDry` over world/dryGround.js - the height map's own, every client's alike); unasked, all is dry).
+ *   WW7-7 (bible/03-World/World-Wide.md): whether a town's trips WAIT (`waiting` - a town past the Bay while the roads past
+ *   the Bay are still being laid: none of its trips is the one every client will walk yet, so each answers undefined, as
+ *   one waiting on a way does), and the world's GENERATION (`generation` - its towns near move with it: the choices kept
+ *   off them are made again); WW7-11: whether the land past the Bay stands (`longPassages` - its far lanes'
+ *   passages may take more cycles than one: voyageBlock)
  * @typedef {{ id: string, k?: number, kind: string, leader: Resident, party: Resident[], from: LwTown, to: LwTown, way: Way,
  *   pace: number, outT0: number, outT1: number, backT0: number, backT1: number, trim0: number, trim1: number,
  *   enc?: any, halt?: { t0: number, t1: number, fightEnd: number, s: number, leg: 'out'|'back' },
  *   fallen?: { res: Resident, t: number, s: number, inside?: boolean, hand?: boolean, atSea?: boolean }[], turned?: boolean, dive?: { t0: number, t1: number },
- *   sea?: { key: string, len: number }, market?: boolean, wild?: { x: number, z: number }, company?: { key: string, name: string },
+ *   sea?: { key: string, len: number, cycles?: number }, market?: boolean, wild?: { x: number, z: number }, company?: { key: string, name: string },
  *   holy?: { day: number, id: number }, hiredBy?: string }} Trip - LW13: `company` the company walking it, `holy` a pilgrims'
  *   holy day it is bound for, `hiredBy` a company's trip a merchant's train took on. LW5b: `sea` a passage
- *   by sea, its lane and length (no road under it). LW9: `market` a carter's day to market, `wild` a hunter's point in the
+ *   by sea, its lane and length (no road under it; WW7-11 `cycles` the cycles a long passage takes, from its own). LW9: `market` a carter's day to market, `wild` a hunter's point in the
  *   wild (its `to` no town: `mapId` -1). LW6: `dive` an
  *   adventurer's hours in the dungeon it went to (its `to` a dungeon). LW4: `k` its cycle; the trouble's
  *   `enc`, its `halt`, the `fallen` and whether it `turned` home (trouble.js troubledTrip). LW7: a fallen by a `hand`
@@ -364,13 +382,14 @@ export function cycleOf(res, day, scale) {
 }
 
 /**
- * LW9: where the road's new traffic may be bound - a patrol keeps its own region, a noble goes to another court (a city
+ * LW9: where the road's new traffic may be bound - a patrol keeps its own region (WW1: its AREA - the region on the
+ * Bay, the province past it, world/worldWide/worldGrid.js), a noble goes to another court (a city
  * of CITY_COURT_BLOCKS), a minstrel to a town big enough for a tavern's crowd; the first's jobs anywhere their range
  * says.
  * @param {string} job @param {LwTown} home @param {LwTown} t
  */
 export function roadBound(job, home, t) {
-  if (job === 'patrol') return home.region == null || t.region === home.region;
+  if (job === 'patrol') return (home.area ?? home.region) == null || (t.area ?? t.region) === (home.area ?? home.region);
   if (job === 'noble') return t.type === 0 && (t.blocks | 0) >= CITY_COURT_BLOCKS;
   if (job === 'minstrel') return (t.blocks | 0) >= MARKET_BLOCKS;
   return true;
@@ -539,14 +558,19 @@ export function innAhead(way, s, dir, lo, hi) {
 
 /**
  * The trip a traveller makes in cycle `k` (only the traveller's own choice - no caravan yet), null for none, undefined
- * while a way it needs is still being asked.
- * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world @param {{ mpm: number }} o
+ * while a way it needs is still being asked. WW7-11: none in a cycle its block's long passage spends at sea (voyageOver -
+ * the passage read through `o.memo`, the trips' book).
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world @param {{ mpm: number, memo?: Map<string, Trip|null> }} o
  * @returns {Trip|null|undefined}
  */
-export function ownTrip(res, home, k, world, { mpm }) {
+export function ownTrip(res, home, k, world, o) {
+  const { mpm } = o;
   const chance = rowOf(TRIP_CHANCE, ROAD_TRIP_CHANCE, res.job);
   if (!(chance > 0)) return null;
+  if (world.waiting?.(home)) return undefined;   // WW7-7: its towns near not yet known - every trip of it waits, none is lost
   if ((res.job === 'patrol' || res.job === 'adventurer') && leaderOf(res, world.rosterOf(home))) return null;   // LW9: a patrol's rides with its first; LW13: a company's with its first
+  const away = voyageOver(res, home, k, world, o);   // WW7-11: a cycle spent at sea on its block's long passage - no trip of its own
+  if (away !== null) return away === undefined ? undefined : null;
   const company = res.job === 'adventurer' ? companyOfPlace(res, world.rosterOf(home)) : null;   // LW13: the company it leads
   // LW13: its company's other places; AUDIT LW-II F2: a patrol's round its riders' - the patrol rides as one, as a company
   // walks, so a rider the road takes this cycle sends the round out (before, a fated rider's first stayed home on its own
@@ -588,7 +612,7 @@ export function ownTrip(res, home, k, world, { mpm }) {
   if (home.port && world.lanesFrom && seaShare > 0) {
     const srng = lwRng(res.town, res.slot, k, 0x736561);   // 'sea'
     if (srng() < seaShare) {
-      const sea = seaTrip(res, home, k, world, { start, len, mpm, pace, rng: srng });
+      const sea = seaTrip(res, home, k, world, { start, len, mpm, pace, rng: srng, room: voyageRoom(res, home, k, world, riders, scale) });   // WW7-11: a block's first cycle may sail a long passage
       if (sea !== null) return sea;   // undefined (the map unread) or the passage; none that fits, the road's trip
     }
   }
@@ -636,12 +660,20 @@ export function ownTrip(res, home, k, world, { mpm }) {
  *  @param {LwTown} home @param {string} job @param {TripWorld} world
  *  @returns {{ picks: { town: LwTown, w: number }[], total: number, farFirst: { town: LwTown, d: number }[] } | null} */
 const _roadChoices = new WeakMap();
+/** WW7-7: a trip world's book of `kept` (by the world), made again when the world's generation moves - the towns near it
+ *  moved (TESA's places landed past the Bay, the roads past the Bay laid again), so every choice kept off them goes.
+ *  @param {WeakMap<object, { g: number, map: Map<any, any> }>} kept @param {TripWorld} world @returns {Map<any, any>} */
+function bookOf(kept, world) {
+  const g = world.generation?.() ?? 0;
+  let book = kept.get(world);
+  if (!book || book.g !== g) kept.set(world, (book = { g, map: new Map() }));
+  return book.map;
+}
 /** AUDIT TRIP-PICKS: the towns' choices a trip world keeps - a stop asks about fifty towns (the median within its reach)
  *  for each of the four jobs that choose a road, so some ten stops' worth; past it the longest unasked quarter goes. */
 export const ROAD_CHOICES_KEPT = 2048;
 export function roadChoices(home, job, world) {
-  let byHome = _roadChoices.get(world);
-  if (!byHome) _roadChoices.set(world, (byHome = new Map()));
+  const byHome = bookOf(_roadChoices, world);
   const key = `${home.mapId}:${job}`;
   const kept = byHome.get(key);
   if (kept !== undefined) { byHome.delete(key); byHome.set(key, kept); return kept; }   // the newest asked
@@ -718,8 +750,7 @@ const noWay = () => ({ pts: [], cum: [0], len: 0, kinds: [] });
  *  @param {LwTown} home @param {TripWorld} world @returns {LwTown[]} */
 const _templesNear = new WeakMap();
 export function templesNear(home, world) {
-  let byHome = _templesNear.get(world);
-  if (!byHome) _templesNear.set(world, (byHome = new Map()));
+  const byHome = bookOf(_templesNear, world);
   const kept = byHome.get(home.mapId);
   if (kept) return kept;
   const [rMin, rMax] = TRIP_RANGE_PX.pilgrim;
@@ -770,12 +801,14 @@ export function holyTrip(res, home, k, world, { start, len, pace }) {
  * (`world.lanesFrom`: the far port and the lane's length), the bigger and the nearer the likelier (a pilgrim's a temple
  * town's); the pick, then the nearer lanes, the longest of them first. Out from the dock on a morning tide (SEA_TIDE_H),
  * the crossing at SEA_PACE_X a walker's pace by night as by day, the stay, home on a later morning's tide (a ship turns
- * round overnight at the least) - inside the cycle, or none (null); undefined while the map is unread.
+ * round overnight at the least) - inside the cycle, or none (null); undefined while the map is unread. WW7-11: a FAR
+ * lane's (`far`: past the Bay or across its edge) inside as many whole cycles as its span needs, `room` at most (voyageRoom
+ * - more than one at its block's first cycle alone), set out inside its own; such a passage says how many (`sea.cycles`).
  * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world
- * @param {{ start: number, len: number, mpm: number, pace: number, rng: () => number }} o
+ * @param {{ start: number, len: number, mpm: number, pace: number, rng: () => number, room?: number }} o
  * @returns {Trip|null|undefined}
  */
-export function seaTrip(res, home, k, world, { start, len, mpm, pace, rng }) {
+export function seaTrip(res, home, k, world, { start, len, mpm, pace, rng, room = 1 }) {
   const all = world.lanesFrom?.(home);
   if (all === undefined) return undefined;
   const lanes = all.filter((l) => l.to && l.to.mapId !== home.mapId && l.len > 0);
@@ -799,15 +832,87 @@ export function seaTrip(res, home, k, world, { start, len, mpm, pace, rng }) {
   for (const l of order) {
     const cross = Math.ceil(l.len / (Math.max(0.1, mpm) * SEA_PACE_X));   // the clock's minutes, by night as by day
     const span = Math.ceil((2 * cross) / DAY_MIN) + Math.max(1, stay) + 1;
-    const outT0 = (start + Math.floor(offsetRoll * Math.max(0, len - span))) * DAY_MIN + tideMin;
+    const c = l.far ? Math.max(1, Math.ceil(span / len)) : 1;   // WW7-11: a far lane's passage the whole cycles it needs
+    if (c > room) continue;
+    const outT0 = (start + Math.floor(offsetRoll * Math.max(0, c * len - span))) * DAY_MIN + tideMin;   // WW7-11: c cycles' room less its span - under a cycle's: out inside its own
     const outT1 = outT0 + cross;
     const backT0 = Math.max(outT1 + 60, (Math.floor(outT1 / DAY_MIN) + Math.max(1, stay)) * DAY_MIN + tideMin);
     const backT1 = backT0 + cross;
-    if (backT1 > cycleEnd) continue;
+    if (backT1 > cycleEnd + (c - 1) * len * DAY_MIN) continue;
     return { id: `${res.id}:${k}`, k, kind: res.job, leader: res, party: [res], from: home, to: l.to, way: noWay(), pace,
-      outT0, outT1, backT0, backT1, trim0: 0, trim1: 0, sea: { key: l.key, len: l.len } };
+      outT0, outT1, backT0, backT1, trim0: 0, trim1: 0, sea: { key: l.key, len: l.len, ...(c > 1 ? { cycles: c } : {}) } };
   }
   return null;
+}
+
+/**
+ * WW7-11: A TRAVELLER'S BLOCK OF LONG PASSAGES about cycle `k` - its first cycle and how many cycles it holds, `{ k0, m }`:
+ * a port's sea-going traveller's (SEA_CHANCE) where the land past the Bay stands (the trip world's `longPassages`) holds
+ * as many cycles as the longest passage needs (SEA_VOYAGE_DAYS, at the clock's pace), its first seeded by the place;
+ * anyone else's, and anywhere the land past the Bay is not, is every cycle its own (`m` 1 - the Bay's trips as they were).
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world @param {number} scale
+ */
+export function voyageBlock(res, home, k, world, scale) {
+  const m = world.longPassages && home.port && (SEA_CHANCE[/** @type {keyof typeof SEA_CHANCE} */ (res.job)] ?? 0) > 0
+    ? Math.max(1, Math.ceil((SEA_VOYAGE_DAYS * scale) / cycleOf(res, 0, scale).len)) : 1;
+  if (m <= 1) return { k0: k, m: 1 };
+  const ph = lwSeed(res.town, res.slot, 0x766f79) % m;   // 'voy'
+  return { k0: k - ((((k + ph) % m) + m) % m), m };
+}
+/** WW7-11: did a place's cycle `k` roll its passage by sea (ownTrip's own first draw of its sea dice)? @param {Resident} res @param {number} k */
+export const seaRolled = (res, k) => {
+  const share = SEA_CHANCE[/** @type {keyof typeof SEA_CHANCE} */ (res.job)] ?? 0;
+  return share > 0 && lwRng(res.town, res.slot, k, 0x736561)() < share;   // 'sea'
+};
+/**
+ * WW7-11: THE ROOM A PASSAGE SET OUT ON IN CYCLE `k` HAS - the cycles it may take: one, but at its block's first cycle
+ * (voyageBlock) the block's, short of any cycle the lives take the traveller, or one who walks with them (its company's
+ * places, a merchant's contract sellswords), on - that death is met on that cycle's own trip, never at sea on another's
+ * (a holder the lives take at its first cycle sails no longer passage than ever).
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world @param {Resident[]} riders @param {number} scale
+ */
+export function voyageRoom(res, home, k, world, riders, scale) {
+  const { k0, m } = voyageBlock(res, home, k, world, scale);
+  if (m <= 1 || k0 !== k) return 1;
+  const roster = world.rosterOf(home);
+  const crew = [res, ...riders, ...(res.job === 'merchant' ? dealOf(roster).sellswords.filter((sw) => contractOf(sw, roster)?.slot === res.slot) : [])];
+  const doomed = (/** @type {number} */ j) => crew.some((p) => !!world.fated?.(p, j));
+  if (doomed(k)) return 1;
+  let room = 1;
+  while (room < m && !doomed(k + room)) room++;
+  return room;
+}
+/**
+ * WW7-11: THE LONG PASSAGE A TRAVELLER IS AWAY ON in cycle `k` - its block's first cycle's (voyageBlock), whoever held the
+ * place then, when it is a passage of more cycles (`sea.cycles`) still under way in `k`; null for none, undefined while it
+ * is still being asked (a way it read). Read through the trips' book (memoTrip), so the cycles it spans and the passage
+ * are of one reading.
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world @param {{ mpm: number, memo?: Map<string, Trip|null> }} o
+ * @returns {Trip|null|undefined}
+ */
+export function voyageOver(res, home, k, world, o) {
+  const { k0, m } = voyageBlock(res, home, k, world, paceScale(o.mpm));
+  if (m <= 1 || k0 === k || !seaRolled(res, k0)) return null;
+  const place = world.rosterOf(home).find((r) => r.slot === res.slot) ?? res;
+  const holder = world.holderOf ? world.holderOf(place, k0) : place;
+  if (!holder) return null;
+  const trip = memoTrip(holder, home, k0, world, o);
+  if (trip === undefined) return undefined;
+  return trip && trip.sea?.cycles && k < k0 + trip.sea.cycles ? trip : null;
+}
+/**
+ * WW7-11: THE CYCLES WHOSE TRIPS MAY STAND ON A DAY OF CYCLE `k` - the one before and its own, and before them the first
+ * cycle of the block either lies in (voyageBlock), where its sea dice came up: a long passage set out on there may be
+ * under way still. Every cycle its own block, the two it always was.
+ * @param {Resident} res @param {LwTown} home @param {number} k @param {TripWorld} world @param {number} scale
+ */
+export function cyclesAbout(res, home, k, world, scale) {
+  const ks = [k - 1, k];
+  for (const j of [k, k - 1]) {
+    const { k0, m } = voyageBlock(res, home, j, world, scale);
+    if (m > 1 && k0 < k - 1 && !ks.includes(k0) && seaRolled(res, k0)) ks.unshift(k0);
+  }
+  return ks;
 }
 
 /**
@@ -942,7 +1047,7 @@ export function townTrips(town, t, world, o) {
     for (const res of roster) {
       if (!(rowOf(TRIP_CHANCE, ROAD_TRIP_CHANCE, res.job) > 0)) continue;
       const cyc = cycleOf(res, day, scale);
-      for (const k of [cyc.k - 1, cyc.k]) {
+      for (const k of cyclesAbout(res, town, cyc.k, world, scale)) {   // WW7-11: and its block's first, a long passage under way
         const holder = world.holderOf ? world.holderOf(res, k) : res;   // LW4: whoever holds the place that cycle - none while it stands empty
         if (!holder) continue;
         const trip = tripOf(holder, k);
@@ -1001,7 +1106,7 @@ export function formCaravans(town, trips, roster, tripOf, scale, holderOf, fated
     const d = dayOf(j);
     for (const m of merchants) {
       const mt = placeTrip(m, d);
-      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d) return mt;
+      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d && !mt.sea?.cycles && !j.sea?.cycles) return mt;   // WW7-11: a long passage is its own - none joins it, it joins none
     }
     return null;
   };
@@ -1269,6 +1374,7 @@ export function awayOf(res, trips) {
  * @returns {{ res: Resident, trip: Trip, inT: number, outT: number, yaw: number, dock: boolean }[] | undefined}
  */
 export function visitorsOf(town, day, world, o) {
+  if (world.waiting?.(town)) return undefined;   // WW7-9: its towns near not yet known - its visitors wait with them
   const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
   const out = [];
   let pending = false;
@@ -1306,6 +1412,7 @@ const firstMinute = (a, b, ok) => {
  * @returns {{ res: Resident, trip: Trip, inT: number, outT: number, yaw: number, dock: boolean }[] | undefined}
  */
 export function innGuestsOf(inn, day, world, o) {
+  if (world.waiting?.(inn)) return undefined;   // WW7-9: its towns near not yet known
   const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
   const out = [];
   const seen = new Set();
@@ -1489,7 +1596,8 @@ export const DEEP_REMAINS_MIN = 3 * DAY_MIN;
 export function fallenIn(dungeon, t, world, o) {
   /** @type {Map<string, { key: string, res: Resident, trip: Trip, t: number }>} */
   const found = new Map();
-  let pending = false;
+  let pending = !!world.waiting?.(dungeon);   // WW7-9: its towns near not yet known - pending, and none read
+  if (pending) return { remains: [], pending };
   for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
     // a trip is its town's within a day of its end: read back over the days the remains lie
     for (let back = 0; back * DAY_MIN <= DEEP_REMAINS_MIN + DAY_MIN; back++) {
@@ -1516,7 +1624,8 @@ export function fallenIn(dungeon, t, world, o) {
  */
 export function diversAt(dungeon, t, world, o) {
   const divers = [];
-  let pending = false;
+  let pending = !!world.waiting?.(dungeon);   // WW7-9: its towns near not yet known - pending, and none read
+  if (pending) return { divers, pending };
   for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
     const trips = townTrips(town, t, world, o);
     if (trips === undefined) { pending = true; continue; }
@@ -1539,7 +1648,8 @@ export function diversAt(dungeon, t, world, o) {
 export function divesIn(dungeon, t0, t1, world, o) {
   /** @type {Map<string, Trip>} */
   const found = new Map();
-  let pending = false;
+  let pending = !!world.waiting?.(dungeon);   // WW7-9: its towns near not yet known - pending, and none read
+  if (pending) return { dives: [], pending };
   for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
     for (let back = 0; t1 - back * DAY_MIN >= t0 - DAY_MIN; back++) {
       const trips = townTrips(town, t1 - back * DAY_MIN, world, o);

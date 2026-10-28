@@ -12,8 +12,8 @@
   {
     "name": "PLACE-LRU-release-never-trims",
     "file": "src/scenes/placeHolds.js",
-    "old": "        shelf.set(key, h);\n        trim(kind);",
-    "new": "        shelf.set(key, h);",
+    "old": "        shelf.set(h.key, h);\n        trim(kind);",
+    "new": "        shelf.set(h.key, h);",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "PLACE-LRU-a-second-keep-of-one-place-never-dropped",
     "file": "src/scenes/placeHolds.js",
-    "old": "        if (older) { shelf.delete(key); drop(older); }",
+    "old": "        if (older) { shelf.delete(h.key); drop(older); }",
     "new": "",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "PLACE-LRU-world-publish-never-settles",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const entry = built.get(key); pipeline.settle();",
-    "new": "    const entry = built.get(key);",
+    "old": "    const entry = built.get(pkey); pipeline.settle();",
+    "new": "    const entry = built.get(pkey);",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "PLACE-LRU-world-the-build-asks-through-the-host",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const key = `${px},${py}`, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;",
-    "new": "const key = `${px},${py}`;",
+    "old": "const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;",
+    "new": "const pkey = `${px},${py}`, key = swap.keyFor(px, py);",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],

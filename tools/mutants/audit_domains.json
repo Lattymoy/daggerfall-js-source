@@ -1,0 +1,182 @@
+[
+  {
+    "name": "AUDIT-DOMAINS-S1-homes-only-at-the-seat-of-power",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  const region = domains?.get?.(seat.region)?.key === seat.key;",
+    "new": "  const region = domains != null;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S1-the-turning-unhanded",
+    "file": "server-account/src/seatTurning.js",
+    "old": "gatherStandings(db, seat, week, atS, counted, lawNow ? ruled : null);",
+    "new": "gatherStandings(db, seat, week, atS, counted, null);",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S1-the-tie-break-unhanded",
+    "file": "server-account/src/seatSiege.js",
+    "old": "!!seasonOf(w, zero), await domainsFor(db, nowS, env, w));",
+    "new": "!!seasonOf(w, zero), null);",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S2-offers-read-unreleased",
+    "file": "server-account/src/castles.js",
+    "old": "  await releaseCastles(db, nowS);\n  const castles = await castlesOf(db, g);",
+    "new": "  const castles = await castlesOf(db, g);",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S2-the-turning-keeps-castles",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  try { await releaseCastles(db, nowS); } catch { /* the next read releases it */ }\n",
+    "new": "",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S3-the-bare-three",
+    "file": "server-account/src/domains.js",
+    "old": "agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
+    "new": "agreeing >= 3) return 'agreed';",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S4-a-line-of-nothing",
+    "file": "server-account/src/castles.js",
+    "old": "        AND MIN(?3, ?4 - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0)) > 0\n        AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10",
+    "new": "        AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S5-the-row-forgets",
+    "file": "server-account/src/castles.js",
+    "old": "  if (await db.prepare('SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, `${rid}:castle`).first()) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S6-the-lease-unasked",
+    "file": "server-account/src/index.js",
+    "old": "'/v1/guilds/castle/buy': castleAct(buyCastle),",
+    "new": "'/v1/guilds/castle/buy': buyCastle,",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S6-sold-unheld",
+    "file": "server-account/src/castles.js",
+    "old": "WHERE EXISTS (SELECT 1 FROM guild_castles c WHERE c.region = ?2 AND c.guild_id = ?1 AND ${HELD_SQL('c')})",
+    "new": "WHERE EXISTS (SELECT 1 FROM guild_castles c WHERE c.region = ?2 AND c.guild_id = ?1)",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-S7-the-hold-rows-region",
+    "file": "server-account/src/seatTurning.js",
+    "old": "into = domains.get(registry.get(key).region).key",
+    "new": "into = domains.get(Number(h.region))?.key",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-R1-any-door",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "const c = site?.siteType === SITE_TYPES.Dungeon ? deps.castle?.(site) ?? null : null;",
+    "new": "const c = deps.castle?.(site) ?? null;",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-R2-any-room",
+    "file": "src/net/instanceRoom.js",
+    "old": "guild != null && GUILD_ROOMS.has(r.base) && r.owner",
+    "new": "guild != null && r.owner",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-R2-any-key-sold",
+    "file": "server-account/src/castles.js",
+    "old": "  if (!castleKeyOk(Number(hold.key))) return { error: 'castle-none' };",
+    "new": "",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-R3-the-world-link-unread",
+    "file": "src/scenes/world.js",
+    "old": "online?.guildInstanceOk || chatLinks?.get('world')?.guildInstanceOk ? seatHalls",
+    "new": "online?.guildInstanceOk ? seatHalls",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-R5-gone-refused-again",
+    "file": "server/src/index.js",
+    "old": "if (this._dead.has(ws) || this._gone.has(ws) || !this.state.getWebSockets().includes(ws)) return;   // AUDIT DOMAINS R5",
+    "new": "if (this._dead.has(ws) || !this.state.getWebSockets().includes(ws)) return;   // AUDIT DOMAINS R5",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-C1-the-holdings-coast",
+    "file": "src/ui/seatTab.js",
+    "old": "  const port = town === seat && host.port === true;",
+    "new": "  const port = host.port === true;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-C2-the-line-english",
+    "file": "src/net/townSeatLaw.js",
+    "old": "return holder ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) }) : t('seat.info.unheld', '{charter}: unheld', { charter });",
+    "new": "return `${charter}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;",
+    "tests": [
+      "test/net/domain3_regions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-C3-the-repeat-says-nothing",
+    "file": "server-account/src/castles.js",
+    "old": "return { ok: true, repeat: true, region, back: Number(done.amount),",
+    "new": "return { ok: true, repeat: true, region,",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DOMAINS-C4-a-tenth-row",
+    "file": "src/systems/instancePlaces.js",
+    "old": "(partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)))",
+    "new": "(partners ?? [])",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  }
+]

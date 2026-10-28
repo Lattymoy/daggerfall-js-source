@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  WILD_REGION, WILD_RINGS, WILD_RING_LOOT, buildWildMask, wildRingAt, wildRingLoot, wildRingBonus, wildRingChains, wildRingAnchors,
+  WILD_RINGS, WILD_RING_LOOT, buildWildMask, wildRingAt, wildRingLoot, wildRingBonus, wildRingChains, wildRingAnchors,
   wildLootOpts, wildFoeLoot, wildPileMore, applyWildFoe, wildJourney, WILD_TRAVEL_FEE, WILD_TRAVEL_FEES, WILD_TRAVEL_COOLDOWN_MS, wildGiantSize,
   WILD_GIANT, WILD_GIANT_SIZE, setWildHere, wildRing, WILD_STRANGER_M, WILD_STRANGER_SLOW_M,
 } from '../../src/systems/wild/wildZone.js';
@@ -16,9 +16,9 @@ import { scaleMinOf } from '../../src/ui/ink/inkMap.js';
 import { setPaceZoneCap, paceRateOn, paceNow, paceCanRise, WILD_PACE_CAP, _resetTravelPace } from '../../src/systems/travel/travelPace.js';
 import { RemotePlayers } from '../../src/net/remotePlayers.js';
 
-/** A 60 x 40 map whose zone is the 40 x 30 box at (10..49, 5..34) - the whole region (`cut: null`; ZONE-CUT's pin is
- *  test/systems/wild1_zone.test.js's). */
-const mask = buildWildMask({ width: 60, height: 40, regionAt: (x, y) => (x >= 10 && x < 50 && y >= 5 && y < 35 ? WILD_REGION : 0), cut: null });
+/** A 60 x 40 map whose zone is the 40 x 30 box at (10..49, 5..34), a cell a pixel (WW-C2: the grid's own pin is
+ *  test/systems/wild1_zone.test.js's, Cyrodiil's test/world/worldWide/wwc2_zone.test.js's). */
+const mask = buildWildMask({ width: 60, height: 40, inZone: (x, y) => x >= 10 && x < 50 && y >= 5 && y < 35 });
 const W = (rel) => readFileSync(new URL(`../../${rel}`, import.meta.url), 'utf8');
 
 test('WILD2: four rings by depth - the outer quarter at the edge, the heart in the middle, never lighter going in; +25% to +100%', () => {
@@ -75,7 +75,7 @@ test('WILD3: a fast journey - never into or out of the zone; inside it 2,500 gol
   const inA = { x: 20, y: 20 }, inB = { x: 12, y: 8 }, out = { x: 2, y: 2 };   // PVPTIERS: inB in the foothills - the fee is the tier it lands in
   assert.deepEqual(wildJourney({ from: out, to: { x: 55, y: 2 }, mask }), { ok: true, fee: 0 });
   assert.equal(wildJourney({ from: out, to: inA, mask, gold: 1e6 }).ok, false, 'not in');
-  assert.match(wildJourney({ from: inA, to: out, mask, gold: 1e6 }).text, /out of the Wrothgarian/, 'not out');
+  assert.match(wildJourney({ from: inA, to: out, mask, gold: 1e6 }).text, /out of Cyrodiil/, 'not out');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): Cyrodiil's
   assert.deepEqual(wildJourney({ from: inA, to: inB, mask, gold: WILD_TRAVEL_FEE }), { ok: true, fee: 2500 });
   assert.equal(wildJourney({ from: inA, to: inB, mask, gold: WILD_TRAVEL_FEE - 1 }).ok, false, 'the fee in coin');
   // PVPTIERS: deeper costs more - 2.5k, 5k, 10k, 15k by the tier it lands in

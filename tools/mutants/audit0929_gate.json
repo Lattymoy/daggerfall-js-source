@@ -91,7 +91,7 @@
   {
     "name": "AUDIT0929-W2-2-the-card-worded-a-frame",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "  if (day !== _marksDay) {",
+    "old": "  if (line === undefined) {",
     "new": "  if (true) {",
     "tests": [
       "test/net/gate/audit0929_gate.test.js",

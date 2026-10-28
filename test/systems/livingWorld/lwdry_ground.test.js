@@ -275,9 +275,11 @@ test('LW-DRY the fallen and the halted: a trouble that takes lives on wet ground
 });
 
 test('LW-DRY the host: the streaming host hands its trips the height map\'s own ground (world/dryGround.js, read in the ways\' frame) - the four hosts named in the record (mutants: the host unwired)', () => {
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /dryAt: \(nx, nz\) => \(_livingDry \?\?= nativeDry\(createDryGround\(woods\)\)\)\(nx, nz\),/);
-  const at = w.indexOf('const livingTripWorld = {');
+  // PIN MOVED (WW7-7): the trips' world scenes/livingWorld/livingTrips.js's, the host handing its ground (`woods`)
+  const w = readFileSync(new URL('../../../src/scenes/livingWorld/livingTrips.js', import.meta.url), 'utf8');
+  assert.match(w, /dryAt: \(\/\*\* @type \{number\} \*\/ nx, \/\*\* @type \{number\} \*\/ nz\) => \(dry \?\?= nativeDry\(createDryGround\(woods\)\)\)\(nx, nz\),/);
+  assert.match(readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8'), /createLivingTrips\(\{ places: worldPlaces,[^\n]*\n[^\n]*\bmaps, woods, roads: /);
+  const at = w.indexOf('const world = {');
   const end = w.indexOf('};', at);
   assert.ok(at > 0 && w.slice(at, end).includes('dryAt:'), 'in the trips\' world');
   const bible = readFileSync(new URL('../../../bible/06-Systems/Living-World.md', import.meta.url), 'utf8');

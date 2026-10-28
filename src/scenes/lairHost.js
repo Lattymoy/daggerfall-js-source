@@ -18,12 +18,20 @@
 //
 // The answer is kept a pixel (and a model's, a model id), so a ring is laid once a session; nothing of a mesh is kept.
 //
+// LAIR-WORLD (2026-10-26, the owner: "with revenants and their lairs, this will work everywhere correct?"; asked, "Fix
+// both in this PR"): PAST THE BAY the dungeons are TESA8's lairs (world/tamrielDungeons.js), which no MAPS.BSA row holds -
+// the index here held the Bay's alone, so a revenant's deed past the Bay found no dungeon in its ring and roamed, with no
+// hunt, rumour, map circle or trail, and the mend sought only the Bay's 1000 x 500. `pastBay` (scenes/tamrielPlacesHost.js
+// provinceQuestPlaces) answers there: the lair on a pixel (`lairAt`), its region, and its plan laid unstood
+// (`lairCloneAt`) for the same door test - a graveyard past the Bay is laid on a Bay template, and may place no door.
+//
 // Not a DFU member: revenants are the port's own (bible/12-Enhanced-AI/Feud-Arc.md 18.1, LAIR-DOOR).
 import { bountyDungeons } from '../systems/bounty/bountyBoard.js';
 import { RUMOR_PX } from '../systems/revenant/revenantFeud.js';
 import { meshHasDungeonEntrance } from '../systems/travel/travelDungeonModels.js';
 import { layoutLocation } from '../world/locationLayout.js';
 import { isEnhanced } from '../systems/uiSkin.js';
+import { worldPixelOk } from '../net/wire.js';   // LAIR-WORLD: a map pixel of the world, the Bay's and past it
 
 /**
  * Whether laid blocks place a dungeon-entrance door: `entranceOf(modelIdNum)` answers true, false, or null where the
@@ -62,12 +70,13 @@ export const LAIR_MEND_PX = RUMOR_PX;
  * locations (the world data door's), `dungeons` the game's own dungeons' names, `regions` their regions.
  * @param {{ maps: any, blocks: any, arch: { getRecordIndex: (id: number) => number, getMesh: (i: number) => any },
  *   locations: Map<string, any>, dungeons: Map<string, string>, regions: Map<string, number>, here: () => { x: number, y: number },
- *   enhanced?: () => boolean, layout?: typeof layoutLocation }} deps
+ *   enhanced?: () => boolean, layout?: typeof layoutLocation, pastBay?: { lairAt: (x: number, y: number) => any,
+ *   lairCloneAt: (x: number, y: number) => any, regionAt: (x: number, y: number) => number } | null }} deps
  */
-export function createLairDoor({ maps, blocks, arch, locations, dungeons, regions, here, enhanced = isEnhanced, layout = layoutLocation }) {
-  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? null;
-  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || null;
-  const regionAt = (x, y) => regions.get(`${x},${y}`) ?? -1;
+export function createLairDoor({ maps, blocks, arch, locations, dungeons, regions, here, enhanced = isEnhanced, layout = layoutLocation, pastBay = null }) {
+  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? pastBay?.lairCloneAt(x, y) ?? null;   // LAIR-WORLD: a lair past the Bay laid unstood
+  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || pastBay?.lairAt(x, y)?.name || null;   // LAIR-WORLD: and the lairs past the Bay
+  const regionAt = (x, y) => regions.get(`${x},${y}`) ?? (pastBay?.lairAt(x, y) ? pastBay.regionAt(x, y) : -1);
   /** @type {Map<number, boolean | null>} a model's door, by id */
   const byModel = new Map();
   /** @type {Map<string, boolean>} a place's, by skin and pixel */
@@ -98,7 +107,7 @@ export function createLairDoor({ maps, blocks, arch, locations, dungeons, region
     for (let dy = -LAIR_MEND_PX; dy <= LAIR_MEND_PX; dy++) {
       for (let dx = -LAIR_MEND_PX; dx <= LAIR_MEND_PX; dx++) {
         const d = Math.max(Math.abs(dx), Math.abs(dy)), x = px + dx, y = py + dy;
-        if (d === 0 || d >= bestD || x < 0 || y < 0 || x >= 1000 || y >= 500) continue;
+        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500
         const name = dungeonAt(x, y);
         if (!name || !enterable(x, y)) continue;
         best = { px: x, py: y, name: String(name).slice(0, 80), region: regionAt(x, y) };   // revenantFeud.js sanitizeLair's shape

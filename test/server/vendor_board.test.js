@@ -355,7 +355,14 @@ test('VENDOR-BOARD the writes that move a board are the database\'s own - every 
   assert.doesNotThrow(() => raw.prepare("UPDATE home_decor SET place = 'still not' WHERE id = 'bad'").run());
   assert.doesNotThrow(() => raw.prepare("DELETE FROM home_decor WHERE id = 'bad'").run());
   const files = readdirSync(new URL('../../server-account/migrations', import.meta.url)).filter((f) => f > '0137');
-  for (const f of files) assert.doesNotMatch(src(`server-account/migrations/${f}`), /DROP TABLE (market_listings|home_decor|homes|market_patron_sales)\b/, `${f} rebuilds a table the board's triggers stand on - make them again in it`);
+  // PIN MOVED (WW7-5): 0170 rebuilds market_listings for its region's CHECK - and makes its three triggers again in it
+  const LISTING_TRIGGERS = ['vendor_board_listed', 'vendor_board_listing', 'vendor_board_unlisted'];
+  for (const f of files) {
+    const s = src(`server-account/migrations/${f}`);
+    for (const [, t] of s.matchAll(/DROP TABLE (market_listings|home_decor|homes|market_patron_sales)\b/g)) {
+      assert.ok(t === 'market_listings' && LISTING_TRIGGERS.every((n) => s.includes(`CREATE TRIGGER IF NOT EXISTS ${n} `)), `${f} rebuilds ${t}, a table the board's triggers stand on - make them again in it`);
+    }
+  }
   // AUDIT LEAN-READS 2 B1: EVERY WRITE THE BOARD READS, AND WHICH REGIONS IT MOVES - each by name, those no route makes
   // today too (a listing or a trader deleted outright, an heir's house): the random oracle meets them too seldom to hold
   // them alone. And (B3) a write moves its region's version row, never the kept board's.

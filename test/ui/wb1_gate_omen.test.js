@@ -360,7 +360,7 @@ test('WB1 the ink: the ring in map pixels, never under ten paper pixels, with it
 
 test('WB1 the seams: online alone, the omen before the dead return, both maps handed the ring, the compass its mark', () => {
   const world = read('src/scenes/world.js');
-  assert.match(world, /const gateOmen = params\.has\('online'\) \? createGateOmen\(/, 'offline there is no gate');
+  assert.match(world, /const gateOmen = params\.has\('online'\) \? createGateLanes\(/, 'offline there is no gate');   // PIN MOVED (WW2): the omen a lane at a time (scenes/gate/gateLanes.js)
   const frame = world.slice(world.indexOf('const onlineFrame = (now, dt) => {'));
   const dead = frame.indexOf('if (townTalk.overlay instanceof DeathScreen');
   assert.ok(frame.indexOf('gateFrame();') > 0 && frame.indexOf('gateFrame();') < dead, 'the omen speaks to the dead too');
@@ -368,14 +368,14 @@ test('WB1 the seams: online alone, the omen before the dead return, both maps ha
   assert.match(world, /gate: gateCompassMark\(\),/);
   assert.match(world, /now: \(\) => Date\.now\(\) \+ _sharedOffsetMs,/, 'the relay\'s clock, as the sky reads it');
   // EVENTS1: on every screen's event board (systems/eventNotices.js), where it had been a line on every chat tab
-  assert.match(world, /say: \(text\) => eventNotice\('gate', text\),/, 'every screen\'s - the gate happened to the whole game');
+  assert.match(world, /say: \(text, n\) => eventNotice\('gate', text, gateLineId\(n\)\),/, 'every screen\'s - the gate happened to the whole game');   // PIN MOVED (AUDIT WW F5): on its own gate's card
   const hud = read('src/ui/hud/hud.js');
   assert.match(hud, /gate: gate \?\? null,/);
   const ehud = read('src/ui/enhanced/enhancedHud.js');
   assert.match(ehud, /drawGateMark\(opts\.gate \?\? null, opts\.playerXZ \?\? null, heading01\);/);
   assert.match(ehud, /compassMarkerLerp\(gate, playerXZ, heading01\)/, 'the Detect markers\' own bearing law');
   const held = read('src/ui/heldMap.js');
-  assert.match(held, /readGateMark\(this\.deps\.gate, this\._size\)/);
+  assert.match(held, /readGateMarkIn\(this\.deps\.gate, sheet\)/);   // PIN MOVED (BAY-LEFT-MAPS): over the sheet's box (_marksBox), the Bay's own sheet the Bay's bound
   assert.match(held, /gate: this\._gate,/);
   const page = read('src/ui/travel/travelMapWindow.js');
   assert.match(page, /gateRingTexels\(gate, originX, originY, width, height\)\) plot\(x, y, gatePx\)/);

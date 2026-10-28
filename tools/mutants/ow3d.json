@@ -121,7 +121,7 @@
   },
   {
     "name": "OW3D3-grid-not-handed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "    const list = nearDungeons({ at, grid, dungeons, locAt,",
     "new": "    const list = nearDungeons({ at, dungeons, locAt,",
     "tests": [
@@ -131,9 +131,9 @@
   },
   {
     "name": "OW3D3-rows-off-the-index",
-    "file": "src/scenes/world.js",
-    "old": "    const bay = (_tvDungeonRows ??= dungeonRows(mapDict));",
-    "new": "    const bay = (_tvDungeonRows ??= dungeonRows(locationIndex));",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "    const bay = (host._tvDungeonRows ??= dungeonRows(mapDict));",
+    "new": "    const bay = (host._tvDungeonRows ??= dungeonRows(locationIndex));",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -141,7 +141,7 @@
   },
   {
     "name": "OW3D3-spawns-snapshotted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "isFound, spawns: [...spawnedPixels(locationIndex),",
     "new": "isFound, spawns: [...(_tvDungeonRows.spawns ??= spawnedPixels(locationIndex)),",
     "tests": [
@@ -151,9 +151,9 @@
   },
   {
     "name": "OW3D3-index-churn-unseen",
-    "file": "src/scenes/world.js",
-    "old": " && tvDng.grid === grid && tvDng.n === n) return tvDng.list;",
-    "new": " && tvDng.grid === grid) return tvDng.list;",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": " && host.tvDng.grid === grid && host.tvDng.n === n) return host.tvDng.list;",
+    "new": " && host.tvDng.grid === grid) return host.tvDng.list;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -161,7 +161,7 @@
   },
   {
     "name": "OW3D1-host-unsaid-known",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "  const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);",
     "new": "  const tvSpawnKnown = () => true;",
     "tests": [
@@ -171,7 +171,7 @@
   },
   {
     "name": "OW3D1-host-said-not-known",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "  const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);",
     "new": "  const tvSpawnKnown = (s) => tvSpawnFound(s);",
     "tests": [
@@ -181,7 +181,7 @@
   },
   {
     "name": "OW3D1-host-said-is-named",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "  const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId);",
     "new": "  const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId) || _announcedSpawnPixels.has(`${s.x},${s.y}`);",
     "tests": [

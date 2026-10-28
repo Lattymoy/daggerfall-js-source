@@ -291,29 +291,42 @@ export function repositionFeetY(terrainY, centreY, height = CAPSULE_HEIGHT) {
 
 export const LADDER_MODEL_ID = 41409;
 
+/** IC-INTERIORS: a ladder's reach from its middle to its head and to its foot (metres - 41409 stands one storey, 126
+ *  units, about its origin; world/interior/fabricInteriorKit.js KIT_LADDER). */
+export const LADDER_HALF = 1.6;
 /**
  * Verbatim DaggerfallLadder.ClimbLadder (interior-only upstream):
  * closest LadderTop / LadderBottom markers to the player; below the
  * top teleports TO the top, else above the bottom teleports to the
  * bottom. Markers arrive as {type, x, y, z} (interiorLayout).
+ *
+ * IC-INTERIORS (2026-10-27; bible/03-World/Arena-Provinces.md IC-INTERIORS) - DEPARTURE (named; Port-Ledger section A):
+ * where the host hands over the ladder climbed (`ladder`, its world matrix), the markers are that ladder's own - the top
+ * nearest its head and the bottom nearest its foot. DaggerfallLadder.ClimbLadder takes the two nearest the player, which
+ * is the same pair wherever an interior stands one ladder (1,683 of Daggerfall's) and wherever its two ladders stand far
+ * apart (its 18 that stand two); an Imperial City house of three storeys or more stands a ladder a storey, one over
+ * another's landing, and there the player's nearest top is the landing they stand on - DFU's law climbs nowhere. The
+ * rule which way (below the top: up; else over the bottom: down) is DFU's, unchanged.
  * @returns {[x,y,z]|null}
  */
-export function climbLadder(playerPos, markers, markerTypes) {
-  const closestOf = (type) => {
+export function climbLadder(playerPos, markers, markerTypes, ladder = null) {
+  const closestOf = (type, to) => {
     let best = null;
     let bestD = Infinity;
     for (const m of markers) {
       if (m.type !== type) continue;
-      const dx = m.x - playerPos[0];
-      const dy = m.y - playerPos[1];
-      const dz = m.z - playerPos[2];
+      const dx = m.x - to[0];
+      const dy = m.y - to[1];
+      const dz = m.z - to[2];
       const d = dx * dx + dy * dy + dz * dz;
       if (d < bestD) { bestD = d; best = m; }
     }
     return best;
   };
-  const top = closestOf(markerTypes.LADDER_TOP);
-  const bottom = closestOf(markerTypes.LADDER_BOTTOM);
+  const head = ladder ? [ladder[12], ladder[13] + LADDER_HALF, ladder[14]] : playerPos;
+  const foot = ladder ? [ladder[12], ladder[13] - LADDER_HALF, ladder[14]] : playerPos;
+  const top = closestOf(markerTypes.LADDER_TOP, head);
+  const bottom = closestOf(markerTypes.LADDER_BOTTOM, foot);
   if (top && playerPos[1] < top.y) return [top.x, top.y, top.z];
   if (bottom && playerPos[1] > bottom.y) return [bottom.x, bottom.y, bottom.z];
   return null;
@@ -399,7 +412,7 @@ export function floorLanding(collider, pos, maxDist = 10, extraHeight = 0) {
 export const OPEN_GROUND_RINGS = Object.freeze([0, 4, 8, 16, 32, 64, 128, 256]);
 /** UNSTUCK-OUT: the spacing of the spots on a ring (metres along it), and the body's points asked of the solids. */
 export const OPEN_GROUND_STEP = 8;
-export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step = OPEN_GROUND_STEP, dry = null } = {}) {
+export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step = OPEN_GROUND_STEP, dry = null, level = false } = {}) {
   for (const r of rings) {
     const n = r === 0 ? 1 : Math.max(8, Math.round((2 * Math.PI * r) / step));
     for (let i = 0; i < n; i++) {
@@ -407,12 +420,40 @@ export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step
       const px = x + r * Math.cos(a), pz = z + r * Math.sin(a);
       const h = collider.heightAt?.(px, pz);
       if (!Number.isFinite(h) || (dry && !dry(h))) continue;
+      if (level && !levelGroundAt(collider, px, pz, h)) continue;   // PORTAL-ANYWHERE: and, where asked, no cliff
       if (heldInSolid(collider, [px, h, pz])) continue;
       if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;
       return [px, h, pz];
     }
   }
   return null;
+}
+/** PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner, 2026-10-26: "Anywhere on land"): LEVEL GROUND - the
+ *  terrain LANDING_LEVEL_REACH out on each of four sides of a spot within LANDING_STEEP of its floor (`floor`, the feet's
+ *  height): a cliff's face or its lip, or the top of a rock standing over the terrain, is none (metres). */
+export const LANDING_LEVEL_REACH = 2;
+export const LANDING_STEEP = 1.5;
+export function levelGroundAt(collider, x, z, floor) {
+  for (const [dx, dz] of [[LANDING_LEVEL_REACH, 0], [-LANDING_LEVEL_REACH, 0], [0, LANDING_LEVEL_REACH], [0, -LANDING_LEVEL_REACH]]) {
+    const h = collider.heightAt?.(x + dx, z + dz);
+    if (!Number.isFinite(h) || Math.abs(h - floor) > LANDING_STEEP) return false;
+  }
+  return true;
+}
+/** PORTAL-ANYWHERE: SAFE GROUND for an arrival no place's start markers stand (a Portal Stone's portal to bare land past
+ *  the Bay - DFU's PositionPlayerToLocation "fail back to terrain origin"): feet `feet` at or above the water's height
+ *  `seaY` (the sea's floor, a lake's bed, is no ground), on level ground (levelGroundAt), and open - no static solid
+ *  holding the feet or the head, the torso's sphere clear (openGroundNear's own law). */
+export function safeGroundAt(collider, feet, seaY) {
+  if (!(feet[1] >= seaY)) return false;
+  if (!levelGroundAt(collider, feet[0], feet[2], feet[1])) return false;
+  if (heldInSolid(collider, feet)) return false;
+  return !collider.sphereOverlaps([feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], CAPSULE_RADIUS);
+}
+/** PORTAL-ANYWHERE: where it is not, the nearest that is - openGroundNear's rings out from (`x`, `z`), each spot dry
+ *  above `seaY` and level as well as open - or null (none within the last ring: the arrival keeps its own landing). */
+export function safeGroundNear(collider, x, z, seaY) {
+  return openGroundNear(collider, x, z, { dry: (floor) => floor >= seaY, level: true });
 }
 /** UNSTUCK-OUT: whether a body standing with its feet at `feet` is held by a static solid (its feet or its head).
  *  DECOR-CLEAR (player/lateSolid.js): `height`, the body's own - a crouched one's head is lower. */

@@ -495,6 +495,10 @@ MORE-NODES (2026-10-02, Mac: "increase all profession nodes", asked: "Double"; t
 
 JUNGLE-WOODS (2026-10-19, the owner: "The forest region we recently implemented should be a large tree gathering spot. Moreso than other places within daggerfall"; the service's acct161, acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges): a map pixel of the Jungle of Bantha - the owner's area, `world/jungle/banthaArea.js` (`03-World/Bantha-Jungle.md`) - stands **48 trees a day** (`net/nodeLaw.js` `JUNGLE_TREE_SLOTS`), four times the richest woods' anywhere else (the Woodlands' and the Rainforest's 12), so the next tree stands about half as far; whatever the pixel's climate (the area holds the Rainforest and, in the Dragontail foothills, the Mountain), none where no wood grows (`treeSlots`). And **every jungle slot stands a tree**: a slot whose wood waits on the witnesses - an unconfirmed Rainforest's Teak and Mahogany, past tier 2 - stands Pine there, where elsewhere it stands nothing (PINE-SHARE left 3 in 5 of an unconfirmed Rainforest's slots empty, so the jungle stood about 5 trees a pixel until three accounts vouched for it); on confirmed ground the jungle's own woods and the rare Ironwood stand as the Rainforest's do. The law is the area's, never the Features row's: the service recomputes every tree from it (the harvest's slot check reads `treeSlots` beside a vein's `veinSlots`), and a room has one jungle - offline with the jungle off, the area's count stands at DFU's palms. The jungle's ~5,400 tree flats a pixel carry them easily (`scenes/treeHost.js` `standTrees`, its rock check now asked once a flat, not once a flat a tree). `world/jungle/banthaArea.js` joins the account deploy's path filter (the law imports it). Pinned by `test/net/junglewoods.test.js` (5) and `tools/mutants/junglewoods.json` (12, all dead).
 
+JUNGLE-WOODS PAST THE BAY (AUDIT TESA II J5, AUDIT TESA-BIOME J5): the 48 had stood on the owner's area alone, so a jungle zone's pixel past the Bay (`world/tamriel/tamrielBiomes.js` `jungle` - the Nibenay's and Colovia's jungle, Blackwood, Valenwood's forest) stood its climate's count. The service holds no trace to read the zones by, so the client's word is witnessed: a pixel's report carries `,1` where the reporter stands a jungle zone's pixel (`net/nodeLaw.js` pixelReport, parseReport - a report without it reads as no jungle, every report written before among them), and the 48 stand on that word confirmed (`jungleWoods`), only where a jungle zone may stand (`jungleGroundOk`: off the Bay's map, a jungle province's region - Valenwood's, Black Marsh's, Cyrodiil's - and a jungle climate, the Rainforest or the Swamp). An unconfirmed jungle pixel stands its climate's count, as every other pixel's facts wait on the witnesses.
+
+The service refuses a jungle word on ground no jungle zone can stand, or against the witnesses' confirmed word, and writes the word with the ground (`server-account/src/professions.js` harvestNode, its fact's `jungle` in the states it answers - `factView`). The client says the word it reads off the zones (`scenes/gatherHost.js` withJungleWord) and stands its trees by the confirmed one (`scenes/treeHost.js` nodesOf, `net/profBook.js`). No pixel past the Bay was ever witnessed before TESA (main's `pixelOk` held the Bay and the Eltheric Ocean), so no confirmed fact predates the word. The four hosts: `scenes/world.js` WIRED (the gathering host is the streamed world's); `scenes/exterior.js` FLAGGED - the fixed city is the Bay's map, where the area's own law stands; `scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED - an interior and a dungeon stand no tree. Pinned by `test/net/audittesa2g_jungle.test.js` (4) and `tools/mutants/audittesa2g.json`.
+
 UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but there were not a single vein of silver, gold, platinum or mithril in the mountains ... maybe Mountain area and MountainWoods area are bugged"; the service's acct102): not a bug - the law. A vein on a pixel nobody else had vouched for was held to tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3: every mountain pixel a lone miner worked stood Iron alone, the Mountain Woods never its Silver, and a lone miner's word confirms nothing (three accounts a week old, the witnessed world above), so the far mountains never came to the rest. A vein on such ground is held to `UNCONFIRMED_VEIN_TIER`, 3 (`net/nodeLaw.js`, the one cap the wilderness vein and the Court's vein metals read - and the deep vein, until DEEP-OPEN, section 50, drew its whole table on anyone's word) - so the Mountain stands Silver beside its Iron (73 : 27 by the weights) and the Mountain Woods its Silver beside its three; no other climate's table holds a tier 3, so no other ground moves. Gold, Platinum, Mithril and a region's signature still wait on the witnesses, and a lie about a pixel buys Silver at most. The herbs and the trees keep 2. The Mining page says so in the player's words (`ui/professions/profPages.js` MINING_GROUND_LINE). PIN MOVED: PROF2's "an unconfirmed Mountain pixel yields Iron alone" (`test/net/prof2_law.test.js`). Pinned by `test/net/fb1009e_unwitnessedore.test.js`; `tools/mutants/fb1009e_unwitnessedore.json` (4, all dead). ORE-MAP (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): the held map's bare ground says it for a place - its veins, its dungeons', its kingdom's own ore and whether its ground is witnessed (`ui/oreMapTip.js`).
 
 GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of them are"; asked: "Groups nearby"): on the Overworld each profession's group on a stood pixel - its nodes not yet worked today, as NODE-MARKS would mark them - is one diamond in its compass colour at their middle, its count beside it ("Mining ×6"), the nearest twelve within 3 km (the land streams three pixels out), read again twice a second; the view's filters have a Gathering switch. Not a click of its own: a click there walks to the ground under it. None with the professions shut, nor underground; Hunting's bodies are no group. `scenes/gatherHost.js` overworldGroups, `systems/travel/travelViewFilters.js`, `ui/travel/travelViewHud.js`, `scenes/travelViewMarks.js` travelViewMarks (out of world.js since HOST-SPLIT 1).
@@ -6379,6 +6383,48 @@ own tests: 171, 131 and 133, all passing. No HIGH; one MEDIUM; nine LOW. Every o
   R7's floor (`test/systems/audit_gatherfeel.test.js`, `0.75 * 1000 / POSE_HZ`), PROF8's tug (`test/world/terrain/prof8_client.test.js`,
   x the band), PROF1's steady window (`test/systems/foraging/prof1_law.test.js`, `HERB_ACT`'s `wet`). Mutants:
   `tools/mutants/auditgather.json` (17 - 16 dead, the insert's guard equivalent as recorded).
+
+## 56. BAY-LEFT-SEA - the market's hubs past the Bay (BUILT 2026-10-27)
+
+**What stood.** The courier's road runs hub to hub (the witnessed road above, `net/marketLaw.js` roadPixels): every market
+request hands the service this client's hubs, `{ [region]: [x, y] }`, and the service reads the witnesses' answer for a
+region, else the asking client's (`hubPixel`). The client's hubs were HUB1's alone (`systems/region/regionHubs.js`
+pickRegionHubs, off MAPS.BSA's rows), so the nine provinces past the Bay (regions 62-70, WW-R) had none. Every buy, fill
+and bid between a province's board and any other region answered `market-no-road` ("The couriers do not know the road
+there yet."), both ways - though the service has taken a hub on the world's grid since WW7-5 (`hubPixelOk`). AUDIT
+BAY-LEFT item 7 (B2 = E1), confirmed by two lanes, the second on the real Worker over sqlite.
+
+**As built** (`systems/region/marketHubs.js`):
+- A PROVINCE'S HUB (`provinceHubOf`), the same on every client: its crown seat's pixel - the capital's centre, the seat of
+  power the seats past the Bay stand (`systems/town/townSeats.js` replaceSeats' `powers`, WW7-3) - else its largest listed
+  city on the world's registry (`world/worldWide/worldPlaces.js`), by HUB1's own claim on a registry row: a city over a town
+  over a village (`regionHubs.js` settlementRank), then the most blocks, then the lower map id. High Rock and Hammerfell
+  past the Bay keep no capital: theirs is the largest of Arena's city-states there. A province with neither standing on this
+  client (its places not landed yet) has no hub of this client's; the witnesses' answer, where one stands, is the road's.
+- THE HUBS A REQUEST CARRIES (`marketHubsOf`): the Bay's, HUB1's byte for byte, then each province's that stands.
+- MADE AGAIN AS THE SEATS OR THE PLACES MOVE (`createMarketHubs`, read as `marketHubs()`): kept while the seats' book's
+  `version` and the registry's `generation()` stand - the trace landing, Arena attached, the capitals standing.
+- The host: the market's pieces and hubs moved out of `bootWorld` verbatim (HOST-SPLIT, `01-Overview/Host-Split.md`
+  BAY-LEFT-SEA) to `scenes/marketPiecesHost.js` and handed the seats and the places; the board hands its tab `marketHubs()`
+  as it opens, and a trader's stall reads them at its buy (`scenes/vendorHost.js`).
+- No account change: the service's hub law already takes a pixel past the Bay.
+
+**On the freeware.** The Bay's 43 hubs are HUB1's, byte for byte. The provinces': High Rock past the Bay (62) (709, -337),
+Hammerfell past the Bay (63) (190, 662), Skyrim (64) Solitude (1569, -430), Morrowind (65) Mournhold (3293, 550), Sumurset
+Isle (66) Alinor (8, 1533), Valenwood (67) Falinesti (1247, 1449), Elsweyr (68) Torval (1922, 1705), Black Marsh (69)
+Helstrom (3355, 1108), Cyrodiil (70) the Imperial City (2069, 658). On the real Worker over node:sqlite a board in Solitude
+fills a Daggerfall order - the courier's fee 123 Marks over a road of 1,506 pixels - and Daggerfall buys a Skyrim listing;
+with HUB1's hubs alone both answer `market-no-road`.
+
+**Not DFU** (DFU has no market): Port-Ledger section A, BAY-LEFT-SEA's row.
+
+**Pins.** `test/world/worldWide/bayleftsea_market.test.js` (4: the province's hub, the hubs a request carries and their
+memo, the host, the freeware and the real Worker). PIN MOVED with the host move: `test/net/audit30_client.test.js`,
+`audit31_client.test.js`, `prof5_client.test.js`, `test/systems/fb1001_market_goods.test.js`,
+`test/systems/online/profsave.test.js` (they read the module beside world.js), and `test/ui/menuorder.test.js` (the
+board hands its tab `marketHubs()`). Mutants: `tools/mutants/bayleftsea.json`
+BLS-hub-* (16), all dead; the move's re-aimed records (`audit31.json`, `fb1001_market.json`, `prof5.json`, `prof6.json`,
+`profsave.json`) all dead.
 
 ## 56. CRAFT-HALL - the Crafting page (BUILT 2026-10-26)
 

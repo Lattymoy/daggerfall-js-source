@@ -15,6 +15,7 @@ import {
   PUSH_RETRY_AFTER_S, HOME_WATCH, discordInvite, freezeRefusal, retryFreezePushes, sweepStaffChat, pushFreeze,
 } from '../../server-account/src/staffFreeze.js';
 import { ROUTES, STAFF_ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES } from '../../server-account/src/service.js';
+import { SHOP_OPEN_ROUTES } from '../../server-account/src/shop.js';   // SHOP: a sealed ticket's doors and Stripe's signed word - no game session
 import { MINUTE_JOBS, HOUR_JOBS, runCron, CRON_MINUTE } from '../../server-account/src/cron.js';
 import { verifyOrder, tokenBodyOf } from '../../src/net/identityToken.js';
 import { mintWildReceipt } from '../../src/net/wild/wildReceipt.js';
@@ -202,7 +203,8 @@ test('STAFF-PANEL5-FREEZE: ONE GATE - A MODDED CLIENT that ignores the freeze sc
     const until = nowS() + 3600;
     const want = { error: 'frozen', until, reason: 'botting in Daggerfall' };
     // the doors that take no game session at all: a stranger's, the self-proving, and the public reads answered before one
-    const selfProving = new Set([...OPEN_ROUTES, ...PATREON_OPEN_ROUTES, ...SAFE_OPEN_ROUTES, '/v1/auth/register', '/v1/pubkey', '/v1/relaykey', '/v1/mod/grant-feed', '/v1/mod/reaction-feed', '/v1/mod/hidden-seen', '/v1/homes/yards', '/v1/seats/sieges/live']);
+    // PIN MOVED (SHOP): the shop's doors are self-proving, as Patreon's - a sealed ticket or Stripe's signature, never a session
+    const selfProving = new Set([...OPEN_ROUTES, ...PATREON_OPEN_ROUTES, ...SAFE_OPEN_ROUTES, ...SHOP_OPEN_ROUTES, '/v1/auth/register', '/v1/pubkey', '/v1/relaykey', '/v1/mod/grant-feed', '/v1/mod/reaction-feed', '/v1/mod/hidden-seen', '/v1/homes/yards', '/v1/seats/sieges/live']);
     const shut = [...ROUTES].filter((r) => !r.startsWith('/v1/staff/') && !selfProving.has(r) && !FREEZE_ALLOWED.includes(r));
     assert.ok(shut.length > 100, `every game door (${shut.length})`);
     for (const r of ['/v1/market/buy', '/v1/market/list', '/v1/market/bid', '/v1/realm/trade', '/v1/realm/die', '/v1/wild/fall', '/v1/heartbeat', '/v1/account/played']) assert.ok(shut.includes(r), r);

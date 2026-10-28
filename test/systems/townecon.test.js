@@ -345,7 +345,7 @@ test('TOWN-ECON the wiring: the counter\'s factor in worldModes.js\'s shopAdjust
   assert.match(wm, /const f = host\.townShopFactor\?\.\(b, mode\) \?\? \(mode === 'Buy' \|\| mode === 'Repair' \? host\.seatShopFactor\?\.\(b\) \?\? 1 : mode === 'Sell' \|\| mode === 'SellMagic' \? Math\.min\(1, host\.seatShopFactor\?\.\(b\) \?\? 1\) : 1\);/);
   const w = rd('src/scenes/world.js');
   assert.match(w, /townShopFactor: \(b, mode\) => townEcon\.shopFactor\(b, mode, seatEdicts\.shopFactor\(b\)\),/);
-  assert.match(w, /const townEcon = createTownEconHost\(\{ online: isOnlinePage, townOf: \(mapId\) => _townOfMapId\.get\(mapId\), seatAt: seatHere, nowMs: battleNowMs,[^\n]*\n\s*seats: \(\) => \(seatBook\?\.open === true \? seatBook\.data\?\.seats \?\? null : null\),[^\n]*\n\s*raidedAt: \(px, py\) => raidingPartiesOn\(\) && raidState\(\)\.raids\.some\(\(r\) => r\.px === px && r\.py === py && raidActive\(r, worldMinutes\(\)\)\),[^\n]*\n\s*locAt: \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\)\?\.mapTableData \?\? null, portLanes: \(\) => \(_lanesReady && mapDict \? laneNet\(\) : null\) \}\);/);   // TE2: built by its host module (scenes/townEconHost.js); PIN MOVED (SEA-TRADE): the MAPS location a pixel, and the lanes
+  assert.match(w, /const townEcon = createTownEconHost\(\{ online: isOnlinePage, townOf: \(mapId\) => _townOfMapId\.get\(mapId\), seatAt: seatHere, nowMs: battleNowMs,[^\n]*\n\s*seats: \(\) => \(seatBook\?\.open === true \? seatBook\.data\?\.seats \?\? null : null\),[^\n]*\n\s*raidedAt: \(px, py\) => raidingPartiesOn\(\) && raidState\(\)\.raids\.some\(\(r\) => r\.px === px && r\.py === py && raidActive\(r, worldMinutes\(\)\)\),[^\n]*\n\s*locAt: \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\)\?\.mapTableData \?\? null, portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.all\(\) : null\) \}\);/);   // PIN MOVED (WW3): the Bay's lanes (SEA-TRADE's ticks are the Bay's, WW7); PIN MOVED (WW7-10): the world's, a Bay port's the Bay's   // TE2: built by its host module (scenes/townEconHost.js); PIN MOVED (SEA-TRADE): the MAPS location a pixel, and the lanes
   assert.match(w, /const battleNowMs = \(\) => Date\.now\(\) \+ _sharedOffsetMs;/, 'the relay\'s clock');
   assert.match(w, /townTipAt: \(summary\) => townEcon\.tipAt\(summary\?\.mapID \?\? summary\?\.mapId\),/);
   assert.match(w, /seaRaidPeerChase, townEcon, state, travelViewBands,/, 'the Overworld\'s marks handed the town economy');
@@ -504,7 +504,7 @@ test('TOWN-ECON TE2 the players\' share\'s law (Town-Economy-Arc section 2): the
   assert.deepEqual(townReportOf({ ...r, map: 212207 }), { ...r, map: 212207 }, 'the high bits its own');
   assert.equal(townReportText(r), `[${MAP},207,212,17,5]`);
   assert.deepEqual(parseTownReport(`[${MAP},207,212,17,5]`), r);
-  for (const bad of [{ ...r, map: 0 }, { ...r, map: 2 ** 32 }, { ...r, px: 1000 }, { ...r, py: 500 }, { ...r, region: 62 }, { ...r, location: 10000 }, { ...r, px: 1.5 }, null,
+  for (const bad of [{ ...r, map: 0 }, { ...r, map: 2 ** 32 }, { ...r, px: 1000 }, { ...r, py: 500 }, { ...r, region: 71 }, { ...r, location: 10000 }, { ...r, px: 1.5 }, null,
     { ...r, px: 208 }, { ...r, py: 211 }, { ...r, map: MAP + 1 }, { ...r, map: 4000000000 },
     { ...r, px: 1000, map: (3 << 20) | (212 * 1000 + 1000) }]) assert.equal(townReportOf(bad), null, JSON.stringify(bad));   // past the map's edge, whatever its id's bits say
   assert.equal(parseTownReport(`[${MAP}, 207, 212, 17, 5]`), null, 'read back only as written');

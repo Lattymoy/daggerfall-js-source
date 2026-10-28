@@ -83,7 +83,7 @@
   {
     "name": "PRECIP2-the-fall-by-look",
     "file": "src/systems/weather/weatherFront.js",
-    "old": "const fallOf = (mode) => (mode && mode !== 'sand' && precipLawOn() ? 'wet' : precipKind(mode));",
+    "old": "const fallOf = (mode) => (mode && !isDryFall(mode) && precipLawOn() ? 'wet' : precipKind(mode));",
     "new": "const fallOf = (mode) => precipKind(mode);",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
@@ -429,8 +429,8 @@
   {
     "name": "PRECIP4-the-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);\n",
-    "new": "",
+    "old": " : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);\n",
+    "new": " : tex;\n",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "PRECIP4-the-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);\n",
-    "new": "",
+    "old": " : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);\n",
+    "new": " : tex;\n",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "PRECIP4-the-twin-unloaded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "await loadGroundSet(groundArchive, pipeline, snowCover?.winterOf(climate) ?? null);",
-    "new": "await loadGroundSet(groundArchive, pipeline, null);",
+    "old": "const ownSet = loadGroundSet(groundArchive, pipeline, snowCover?.winterOf(climate) ?? null);",
+    "new": "const ownSet = loadGroundSet(groundArchive, pipeline, null);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

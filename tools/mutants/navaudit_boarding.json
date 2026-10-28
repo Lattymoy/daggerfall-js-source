@@ -308,8 +308,8 @@
   },
   {
     "name": "NAVB-B14-F9-around-it",
-    "file": "src/scenes/world.js",
-    "old": "    if (naval?.saveRefused?.()) { if (!quiet) townTalk.say('You cannot save now.'); return false; }\n",
+    "file": "src/scenes/worldQuickSave.js",
+    "old": "    if (host.naval?.saveRefused?.()) { if (!quiet) townTalk.say('You cannot save now.'); return false; }\n",
     "new": "",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"
@@ -392,7 +392,7 @@
   },
   {
     "name": "NAVB-B10-the-wave-never-waits",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "      if (_deck === false) return false;\n",
     "new": "",
     "tests": [

@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setPref, _resetForTests, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { setUiSkin } from '../../src/systems/uiSkin.js';
 import { SOUND } from '../../src/systems/soundClips.js';
-import { ARROW_FLIGHT_SPEED } from '../../src/systems/spellcast.js';
+import { ARROW_FLIGHT_SPEED } from '../../src/systems/spellcast.js';   // BAL-ARCHERY: a volley's shafts fly at the arrow's speed
 import * as LR from '../../src/systems/loot/lootRarity.js';
 import * as T from '../../src/combat/techniques.js';
 import * as FX from '../../src/combat/technique/techniqueFx.js';

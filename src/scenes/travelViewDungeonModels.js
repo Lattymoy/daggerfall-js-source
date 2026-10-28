@@ -27,7 +27,7 @@ export function createTravelViewDungeonModels(host) {
    *  nearest TV_DUNGEON_MODELS_MAX; read again as TV6's is, when the pixel, the finds or the index move. */
   function tvDungeonModelList() {
     if (typeof host._tvListsReady !== 'undefined' && !host._tvListsReady) return [];   // BOOT-TDZ II (typeof: a slice lifted without the flag reads as standing)
-    const at = playerTravelPixel(), dg = tvKnownGen(), n = host._locIndexGen;   // AUDIT ETHER-OW C2-2: the finds and the charts
+    const at = playerTravelPixel(), dg = tvKnownGen(), n = `${host._locIndexGen}:${tvDungeonRowsAt.gen?.() ?? 0}`;   // AUDIT ETHER-OW C2-2: the finds and the charts; TVD-WORLD: and the lairs past the Bay still owed
     if (host.tvDngModels.list.some((g) => g.spawn && !g.loc?.superTier && tvSpawnGone(g.px, g.py))) host.tvDngModels.at = null;   // AUDIT OW4 D2's law: a spawn whose time ran out goes
     if (host.tvDngModels.at && host.tvDngModels.at.x === at.x && host.tvDngModels.at.y === at.y && host.tvDngModels.dg === dg && host.tvDngModels.n === n) return host.tvDngModels.list;
     const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),

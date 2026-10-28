@@ -225,7 +225,8 @@ test('LANDFORM4: the sites ride every kernel - the worker keeps the ones the cli
     assert.deepEqual([...grid.normals], [...restrideGrid({ woods: upland, px: t.px + 1, py: t.py, stride: 4, samples: here.samples, landform: true, sites: SITES }).normals], 'a promotion\'s ghost rows too');
   } finally { globalThis.postMessage = prevPost; globalThis.onmessage = prevOn; }
   const client = src('src/world/terrain/terrainGenClient.js');
-  assert.equal((client.match(/roads: this\._roads \?\? null, sites: this\._sites, climates: this\._climates, /g) ?? []).length, 6, 'every same-thread kernel the client runs takes them');
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside them (test/world/terrain/bayleftground_sites.test.js)
+  assert.equal((client.match(/roads: this\._roads \?\? null, sites: this\._sites, beyond: this\._beyond, climates: this\._climates, /g) ?? []).length, 6, 'every same-thread kernel the client runs takes them');
   assert.match(client, /this\._worker\.postMessage\(\{ t: 'landform-tables', sites: s, climates: c \}, \[s, c\]\.filter\(Boolean\)\.map\(\(a\) => a\.buffer\)\);/, 'the worker gets copies');
   const world = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT SD IV S2): the rows read through classicRow once, above, for the landforms and the Hollow's lists alike

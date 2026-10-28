@@ -125,4 +125,5 @@ random lots; the mark kept by every move but the two PRICE-2 closed; every mutan
 
 Built while the lanes read (section 8), it was held to every finding above: its dealing rides the Watch's claim (INT16,
 the caps read first, `full`); its exchange's goods carry the mark (no patron takes them - and no shop buys them, AUDIT
-CAPTAIN'S SEA B2); its lanes' count waits for the lanes to stand (BOOT-TDZ II). `tools/mutants/townecon4.json`: 28 dead.
+CAPTAIN'S SEA B2); its lanes' count waits for the lanes to stand (BOOT-TDZ II). `tools/mutants/townecon4.json`: 28 dead
+(27 since WW7-10: one retired with its guard, `03-World/World-Wide.md` WW7-10).

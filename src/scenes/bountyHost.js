@@ -36,7 +36,19 @@ import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bounty/bountyJ
 import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
 import { sharedClockOn } from '../systems/worldTick.js';   // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
 import { festivalBountyPaid } from '../systems/festival/festivalClient.js';   // WITCH1: a bounty paid asks a find
+import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { createHuntersMark } from './huntersMark.js';   // HUNTERS-MARK: the hunter's rank and the week's named mark
+
+/** THE PIXEL OF THE DUNGEON I AM IN, for a hunt underground (the host's `dungeonPixel`): the dungeon's OWN pixel - its
+ *  location's map-table position - rather than the streamer's last pixel (frozen at the entrance underground, which is
+ *  where the player crossed in from, not necessarily the dungeon's); with no position, the streamer's; out of a dungeon,
+ *  null. HOST-SPLIT (LAIR-WORLD): out of bootWorld, verbatim. @param {any} modes @param {() => any} travelPixel */
+export function bountyDungeonPixel(modes, travelPixel) {
+  if ((modes?.mode ?? 'exterior') !== 'dungeon') return null;
+  const mt = modes?.dungeonLocation?.mapTableData;
+  if (mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)) return longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
+  return travelPixel();
+}
 
 /** How often the host looks at the world, seconds. */
 export const BOUNTY_TICK_S = 0.5;
@@ -82,6 +94,8 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   siteOk: (x:number, y:number) => boolean, // may a pack stand on this map pixel
  *   dungeonAt?: (x:number, y:number) => (string|null),   // the game's own dungeon on this pixel, by name
  *   graveyardAt?: (x:number, y:number) => (string|null),   // GRAVEYARD-BOUNTY: the graveyard on this pixel, by name - its hunt stands outside it
+ *   placesVersion?: () => string,   // LAIR-WORLD: the stamp of what the places past the Bay stand on - a town's ground and dungeons kept under it
+ *   wildAt?: (px:number, py:number) => (Array<[number, number]>|null),   // QUARRY-WORLD: the land's own wild about a town (bountyQuarry.js bountyLandWild)
  *   playerPixel: () => ({x:number, y:number} | null),     // outdoors: my pixel; elsewhere null
  *   dungeonPixel?: () => ({x:number, y:number} | null),   // in a dungeon: its entrance's pixel; elsewhere null
  *   canStand: () => boolean,                 // outdoors, awake, not on a journey, not in the water
@@ -97,8 +111,7 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   posePixel?: () => ({x:number, y:number} | null),   // the pixel my party pose says I stand on (AUDIT 28 B8)
  *   rolls?: () => number,
  *   hunt?: { door: any, storage?: any, character: () => (string|null), saved?: () => void } | null,   // HUNTERS-MARK: the hunt's ledger, online
- * }} deps `standPack` answers `far` when the group waits at its spot (the farm, the second group's): the host names
- *   the way and asks again as the hunter closes in
+ * }} deps `standPack` answers `far` while the group waits at its spot: the host names the way and asks again
  */
 export function createBountyHost(deps) {
   const rolls = deps.rolls ?? Math.random;
@@ -122,8 +135,11 @@ export function createBountyHost(deps) {
   /** AUDIT 28 B2: a pack whose bounty was given up, by its notice - taken again, its live beasts are the hunt's again */
   const orphans = new Map();
 
+  /** LAIR-WORLD: a town's ground and dungeons are kept under what the places past the Bay stand on (the host's
+   *  `placesVersion`): a board past the Bay read before the land landed is read again after it. */
+  const keyOf = (px, py) => `${px},${py}|${deps.placesVersion?.() ?? ''}`;
   const sitesFor = (px, py) => {
-    const k = `${px},${py}`;
+    const k = keyOf(px, py);
     let s = sitesCache.get(k);
     if (!s) sitesCache.set(k, s = bountySites(px, py, deps.siteOk));
     return s;
@@ -131,15 +147,18 @@ export function createBountyHost(deps) {
   /** the dungeons in each town's reach, by "px,py" - the game's own, so the same on every client */
   const dungeonsCache = new Map();
   const dungeonsFor = (px, py) => {
-    const k = `${px},${py}`;
+    const k = keyOf(px, py);
     let d = dungeonsCache.get(k);
     if (!d) dungeonsCache.set(k, d = bountyDungeons(px, py, deps.dungeonAt, deps.graveyardAt));
     return d;
   };
+  /** QUARRY-WORLD: the land's own wild about a town (systems/bounty/bountyQuarry.js, the host's `wildAt` - kept there), the
+   *  beasts its board hunts; none handed, the ladder's. */
+  const wildFor = (px, py) => { try { return deps.wildAt?.(px, py) ?? null; } catch { return null; } };
   const postingOf = (id) => {
     const b = parseBountyId(id);
     if (!b) return null;
-    return postingFromId(id, { name: deps.townName(b.px, b.py), sites: sitesFor(b.px, b.py), dungeons: dungeonsFor(b.px, b.py) });
+    return postingFromId(id, { name: deps.townName(b.px, b.py), sites: sitesFor(b.px, b.py), dungeons: dungeonsFor(b.px, b.py), wild: wildFor(b.px, b.py) });
   };
   const social = () => { try { return deps.social?.() ?? null; } catch { return null; } };
   const repaint = () => { try { boardView?.repaint?.(); } catch { /* the window's own problem */ } };
@@ -233,7 +252,7 @@ export function createBountyHost(deps) {
   function boardRows(town) {
     const now = deps.now();
     const day = bountyDay(now);
-    const posts = boardPostings({ day, px: town.px, py: town.py, name: town.name, level: deps.level(), sites: sitesFor(town.px, town.py), dungeons: dungeonsFor(town.px, town.py) });
+    const posts = boardPostings({ day, px: town.px, py: town.py, name: town.name, level: deps.level(), sites: sitesFor(town.px, town.py), dungeons: dungeonsFor(town.px, town.py), wild: wildFor(town.px, town.py) });
     const mates = matesOnBoard();
     return posts.map((p) => {
       const held = ledger.held.find((h) => parseBountyId(h.id)?.slotKey === p.slotKey) ?? null;

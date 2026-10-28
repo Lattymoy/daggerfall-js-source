@@ -66,20 +66,22 @@
   {
     "name": "ARENA1-PORT-BLOCK-GATED",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  if (blockName && _portBlocks.has(blockName)) return portBlock(blockName);   // ARENA1: the port's own, behind no door\n",
+    "old": "  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName);   // ARENA1: the port's own, behind no door; IC-GRAND: a family's too\n",
     "new": "",
     "tests": [
       "test/world/arena/arena1_city.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the line asks the block families too (bible/03-World/Arena-Provinces.md IC-GRAND) - re-aimed by content."
   },
   {
     "name": "ARENA1-PORT-INDEX",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? newBlockIndices.get(blockName) ?? -1;",
-    "new": "export const getNewDFBlockIndex = (blockName) => newBlockIndices.get(blockName) ?? -1;",
+    "old": "export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;",
+    "new": "export const getNewDFBlockIndex = (blockName) => (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;",
     "tests": [
       "test/world/arena/arena1_city.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): a family's index asked after the port's own - the port block's index dropped, the families' kept."
   },
   {
     "name": "ARENA1-MAPS-NO-EDIT",

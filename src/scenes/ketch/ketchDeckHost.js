@@ -37,6 +37,7 @@ import {
 } from '../../net/ketch/ketchDeck.js';
 import { castBackTo, spanAt } from '../../world/superDungeon/sdSteps.js';   // AUDIT KETCH II L2-4: the Sailwalk's checkpoint, for a body off it on the lid or the roof
 import { KT_STAGE } from '../../net/ketch/ketchLaw.js';
+import { REGION_NAMES, isProvinceRegion } from '../../formats/mapsTables.js';   // KETCH-EVERYWHERE: a province's station's ship laid in its province
 import { KW_SECTION_WARN_MS } from '../../net/ketch/ketchWarden.js';
 import { MOONLIGHT, moonlightTerm, skyState } from '../../render/enhancedSky.js';
 import { skyMinutes } from '../../systems/worldTick.js';
@@ -598,7 +599,10 @@ export function createKetchDeckHost({ renderer, host, wm, moon = ketchMoonNow })
 export function ketchShipHit(r, blocks) {
   if (!r || !Number.isSafeInteger(r.n) || typeof r.owner !== 'string') return null;
   const site = r.site ?? null;
-  const dfLocation = ketchShipLocation({ n: r.n, owner: r.owner, regionIndex: site?.regionIndex ?? 17, regionName: site?.regionName || 'Daggerfall', climate: site?.climate ?? undefined });
+  // KETCH-EVERYWHERE: a station past the Bay's ship is laid in its province (the site's region, WW-R's) and named for it -
+  // the site names no region's name, and 'Daggerfall' stood for every ship; the Bay's as it always was
+  const regionName = site?.regionName || (isProvinceRegion(site?.regionIndex) ? REGION_NAMES[site.regionIndex] : 'Daggerfall');
+  const dfLocation = ketchShipLocation({ n: r.n, owner: r.owner, regionIndex: site?.regionIndex ?? 17, regionName, climate: site?.climate ?? undefined });
   if (!dfLocation.ketch) return null;
   return { dfLocation, blocksFile: ketchShipBlocks(blocks), ketch: dfLocation.ketch, climateBase: site?.climateBase ?? 2, season: site?.season ?? 0, group: dfLocation.ketch.key, door: null, dfBlock: null, recordIndex: -1 };
 }

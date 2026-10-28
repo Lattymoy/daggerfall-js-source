@@ -23,6 +23,7 @@ its ceiling, stripped of its lights and filled with the deep's own foes.
 | OH-D | THE ABYSS: the template, the clone, the entry, the flood, the exit to the pit, the recall, the save | `scenes/oceanHolesAbyss.js`, `scenes/worldModes.js` (`enterAbyss`, the four DFU events, the layout's dungeon, the build's own location, the dungeon save's mod records), `scenes/world.js` | landed |
 | OH-E | THE ABYSS'S CONTENTS: the flame foes gone, the replacements, the aquatic quota, the lights, the quest resources, the loot, the fog and the light | `scenes/dungeonContext.js` (`abyss`), `world/oceanHoles.js` (the loot pair), `systems/loot/loot.js` (`lootMatrix`, `tableLootSpawned`), `characters/enemy/enemyEntity.js` (`enemyLootSpawned`), `combat/enemyEquipment.js` (`weaponOfMaterial`) | landed |
 | OH-F | THE CLOSE: the audit (three lanes against the assembly), its eleven fixes, the docs, the patch notes | `scenes/oceanHolesHost.js` (`checkSettings`, indoors), `world/oceanHolesMiasma.js` (`miasmaReach`), `scenes/oceanHolesAbyss.js` (`loadRebuilds`, `entering`, `returnPoint`), `scenes/dungeonContext.js` (the destroy saved, the settled restore, the spawn's marks at the build), `characters/dungeonEnemies.js` (`enemyHierarchyOrder`), `scenes/hostCombat.js` / `systems/loot/loot.js` (the rolling host), `scenes/world.js` | landed |
+| PITS-WORLD | THE PITS PAST THE BAY (2026-10-27, AUDIT BAY-LEFT item 35): the hold the world's grid, an abyss past the Bay named in the world's abyss lane, the readers by `isAbyssMapId`, none in the open zone online (section PITS-WORLD below) | `world/oceanHoles.js`, `world/worldWide/worldLanes.js`, `scenes/oceanHolesHost.js`, `scenes/dungeonContext.js` | landed |
 
 ## The settings (OH-A)
 
@@ -456,6 +457,52 @@ fixed:
     prepare) sees the runner's destroyed flame foe as a body - the stream
     can say only "dead", and a "destroyed, no body" word is a wire field and
     a relay deploy.
+21. **A pit past the Bay** (PITS-WORLD). The mod's IsValidMapPixel holds a pit to
+    the Bay's 1000 x 500; the port's hold is the world's grid (`pitPixelOk`), so
+    the continent's sea and the Eltheric Ocean's open pits as the Bay's does.
+22. **An abyss past the Bay has an id of its own** (PITS-WORLD). The mod's
+    GetAbyssMapId is 0x60000000 over the pixel id's low twenty bits, unique on
+    the Bay alone; past the Bay the port names the abyss in the world's abyss
+    lane. A Bay pit's id is the mod's, to the bit.
+23. **Online, the open zone stands no pit** (PITS-WORLD, the owner's call on
+    site-bound things in the open PvP zone). The mod has no zone.
+
+## PITS-WORLD - the pits past the Bay and past the Veil (2026-10-27)
+
+The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26), item 35. The mod stands its pits on Daggerfall's own map: its
+IsValidMapPixel holds a pit to the Bay's 1000 x 500, and its GetAbyssMapId names the drowned dungeon by the pit pixel's
+id's low twenty bits (`y * 1000 + x`), which the Bay's map alone keeps apart. ETHER-DEEP held the pits to the Bay for that
+id alone (`03-World/Eltheric-Ocean.md`, "HELD: THE PITS"), and TAMRIEL-DEEP carves the continent's sea past the Bay
+(`03-World/Deep-Waters.md`), so the id was the only thing in the way. The owner's call taken ("Every single thing here
+needs to be addressed. No exceptions.", 2026-10-26): the pits' abyss id stands in a world id lane
+(`03-World/World-Wide.md` WORLD-LANES).
+
+What stands now:
+- **The hold is the world's grid** (`world/oceanHoles.js:"export const pitPixelOk = (mapPixelX, mapPixelY) => inWorldGrid(mapPixelX, mapPixelY);"`):
+  the Bay's sea, the continent's past it (the Topal Bay, the Sea of Ghosts) and the Eltheric Ocean's. The bake
+  still says where the sea is, and every other gate of the queue is the mod's, in its order.
+- **An abyss past the Bay is named in the world's abyss lane** (`world/worldWide/worldLanes.js` ABYSS_WORLD_LANE, 0x600 to
+  0x7ff with the lane's flag, over the pit's world pixel key): one abyss a pit, never a Bay abyss's id, never another
+  place's. A Bay pit's abyss is the mod's own id, to the bit.
+- **The readers know an abyss by `isAbyssMapId`**: the Bay's abyss (0x600 over a Bay pixel id) and the lane, nothing else.
+  `scenes/dungeonContext.js` took every id from 0x60000000 up for an abyss's (a lair's home, the tutorial's page), so a zone
+  hall (0xf0000000 up) and an Abyss Dungeon (0x80100000 up) read as one: a hall opened the Ocean Holes' tutorial page. It
+  reads `isAbyssMapId` now (two lines in place).
+- **Online, the open PvP zone stands no pit** (`scenes/oceanHolesHost.js` openZoneAtNow, `rejected:open-zone`): Cyrodiil's
+  mask, the water it encloses among it (Lake Rumare, the Niben). The owner's call on site-bound things in the open zone
+  is taken for it: a pit is a dungeon's door, and the zone stands its tier's halls and no other dungeon (PVPDUNGEONS).
+  Offline there is no zone, and a pit there is cut as anywhere.
+
+The abyss's room is a world room as before (`net/wire.js` WORLD_ROOM): no relay change. Measured over the freeware (the
+continent's own carved sea): of 152 pit pixels the hash picks in the Topal Bay and the Sea of Ghosts, 0 stood before (all
+`rejected:off-the-map`) and 152 now, with 152 abyss ids.
+
+Pins: `test/world/pitsworld.test.js` (7; the ARENA2 half the Topal Bay's pits, and Lake Rumare's none online). Mutants:
+`tools/mutants/pitsworld.json` (13, dead). PIN MOVED: `test/scenes/oh_host.test.js` (ETHER-DEEP's off-the-map case: past
+the Veil and west of the Bay a pit stands, off the grid none), `test/systems/auditfeud2.test.js` and
+`test/ui/tut1_tutorials.test.js` (the readers by `isAbyssMapId`). Re-aimed by content, all dead: `audit_etherow`
+AEOW-T-pits-ether-only, `ether_deep` ED-pits-everywhere, `auditfeud` AF-H3-lair-anywhere, `auditfeud2`
+AF2-W5-abyss-lairable.
 
 ## Tests
 

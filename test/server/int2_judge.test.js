@@ -181,7 +181,9 @@ test('INT3: EVERY ROUTE THAT HANDS A REALM CHARACTER\'S VALUE ON SAYS SO - no pr
   const dir = new URL('../../server-account/src/', import.meta.url);
   // payFromSave into nobody's hands: the realm's own price (FIRM1: the Firmament's respec, its gold burnt in the change's batch)
   // DECOR-ACCESS: the decorator's batch (decorBatch.js) is decor.js's sink in one Confirm - the realm's price for the pieces, the goods set in the room
-  const SINKS = { 'homes.js': 1, 'decor.js': 1, 'decorBatch.js': 1, 'guilds.js': 1, 'firmament.js': 1 };
+  // WILD-INSURE (PVP-EASE, 2026-10-26, PIN MOVED): a policy's premium (wildInsure.js) is the realm's price too - burnt in
+  // the batch that writes the policy, into no player's hands
+  const SINKS = { 'homes.js': 1, 'decor.js': 1, 'decorBatch.js': 1, 'guilds.js': 1, 'firmament.js': 1, 'wildInsure.js': 1 };
   const found = {};
   for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {
     const src = readFileSync(new URL(f, dir), 'utf8');

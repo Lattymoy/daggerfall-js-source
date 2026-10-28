@@ -126,7 +126,7 @@ export function sdMarksLine({ name, s }) {
 }
 /** A found Hollow's last hour, said to the realm once. */
 export const SD_HOUR_LEFT_MS = 60 * 60 * 1000;
-export const sdHourLine = ({ name, near, region }) => `${name || 'The Abyss Dungeon'} ${sdWhere(near, region)} will fade within the hour.`;   // AUDIT SD III (T19): where, as the find's line says it
+export const sdHourLine = ({ name, near, region, province = '' }) => `${name || 'The Abyss Dungeon'} ${sdWhere(near, region, province)} will fade within the hour.`;   // AUDIT SD III (T19): where, as the find's line says it
 
 /** SD18c: what the taverns say of a Hollow by the Ending it keeps - the omen that goes with it. */
 export const SD_ENDING_RUMOR = Object.freeze({

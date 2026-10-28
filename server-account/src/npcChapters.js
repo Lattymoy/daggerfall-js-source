@@ -36,7 +36,7 @@
 
 import { chaptersOpenFor } from './npcRoll.js';
 import { REALM_ID_RE } from './realm.js';   // CHAP4d: a Master's character, as the Roll names one
-import { regionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { allRegionChapters, hallRowsRead } from './npcHalls.js';
 import { weekSettled, keepWeekSettled } from './weekKept.js';   // PRIMARY-FOLD: a week read settled, kept
 import { agreedGateRegions } from './seatInfluence.js';   // AUDIT CHAP3 E1: a gate's region, as three of the day's claims agree on it

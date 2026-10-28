@@ -285,8 +285,8 @@
   {
     "name": "INT9-LAW-A-KEPT-PIECE-TAKEN",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const hb = aside(bag), hc = aside(cart);",
-    "new": "  const hb = [], hc = aside(cart);",
+    "old": "  const aside = bag.map((it, i) => (held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);",
+    "new": "  const aside = [];",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -439,7 +439,7 @@
   {
     "name": "INT9-AUDIT-THE-CARRY-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!carry || !Number.isFinite(carry.at) || !(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return;",
+    "old": "  if (!carry || !Number.isFinite(carry.at)) return;",
     "new": "  return;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -548,8 +548,8 @@
   {
     "name": "INT9-AUDIT-A-HEAVY-RECORD-TAKEN",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    const held = list.map((it, i) => (keep(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);",
-    "new": "    const held = list.map((it, i) => (keep(it) || (letters && shareLetter(it)) ? [i, it] : null)).filter((x) => x !== null);",
+    "old": "(held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)",
+    "new": "(held(it) || (letters && shareLetter(it)) ? [i, it] : null)",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -565,18 +565,6 @@
     ]
   },
   {
-    "name": "INT9-AUDIT-THE-CARTS-COIN-INTO-THE-PURSE",
-    "file": "src/systems/wild/wildDropLaw.js",
-    "old": "      if (cartCoin) cartCoin.stackCount = Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) + gold.cart;\n      for (const [l, n] of shares) l.value += n;",
-    "new": "      entity.goldPieces += gold.cart;\n      for (const [l, n] of shares) l.value += n;",
-    "equivalent": true,
-    "why": "the gold is the second record a death takes, after one piece of at most WILD_RECORD_BYTES_MAX (4 KiB), and a remains holds WILD_REMAINS_ITEMS_MAX (96) records and WILD_REMAINS_BYTES_MAX (100 KiB): the gold always fits, so its put-back never runs - kept as the law's word on a coin that would not fit; the cart's share out of the cart is pinned where the gold is taken (test/net/int9_wild_ref.test.js, the poor pack).",
-    "tests": [
-      "test/net/int9_wild_ref.test.js"
-    ],
-    "note": "Re-aimed by content (AUDIT FOE-KEEPS): the letters made whole beside it"
-  },
-  {
     "name": "INT9-AUDIT-THE-PLACE-ALONE-BELIEVED",
     "file": "src/systems/wild/wildDropLaw.js",
     "old": "  if (!Array.isArray(wt)) return offer[w] ?? null;",
@@ -588,7 +576,7 @@
   {
     "name": "INT9-AUDIT-THE-CANDIDATES-UNWORN-ONLY",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  return k ? [k, ...drop] : drop;",
+    "old": "  return k && !insured(k) ? [k, ...drop] : drop;",
     "new": "  return drop;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -661,8 +649,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-FITTED-FEW-ASKED",
     "file": "server-account/src/wild.js",
-    "old": "  const barred = await piecesBarred(ctx.db, charId, wildDropCandidates(stored, w, wt, cart).map(ledgerKeyOf).filter((k) => k != null));",
-    "new": "  const barred = await piecesBarred(ctx.db, charId, takeWildDeath(JSON.parse(JSON.stringify(stored)), w, () => false, wt, cart).taken.map(ledgerKeyOf).filter((k) => k != null));",
+    "old": "  const barred = await piecesBarred(ctx.db, charId, wildDropCandidates(stored, w, wt, { insured }).map(ledgerKeyOf).filter((k) => k != null));",
+    "new": "  const barred = await piecesBarred(ctx.db, charId, takeWildDeath(JSON.parse(JSON.stringify(stored)), w, () => false, wt, { insured }).taken.map(ledgerKeyOf).filter((k) => k != null));",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -679,8 +667,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-TOOK-UNSAID",
     "file": "server-account/src/wild.js",
-    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold };",
-    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 } };",
+    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}) };",
+    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 }, ...(spent.length ? { insured: spent } : {}) };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -743,8 +731,8 @@
   {
     "name": "INT9-AUDIT-RELAY-THE-GONE-STILL-A-FIGHTER",
     "file": "server/src/index.js",
-    "old": "{ wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); }   // SHIP-PVP",
-    "new": "{ seaGone(this._wildRef, a.sub, Date.now()); }   // SHIP-PVP",
+    "old": "{ wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP",
+    "new": "{ seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

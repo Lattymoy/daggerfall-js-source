@@ -292,7 +292,7 @@ test('SHADOW-FANG the account card: the button keeps the plain crimson (its bord
   assert.equal((badgeCss().match(/\.acttitleword/g) ?? []).length, Object.keys(TITLE_GRADIENT).length, 'only a gradient title gets a word rule - Shadow Fang\'s, and since PENITENT Penitent\'s');
   const js = rd('src/ui/enhanced/enhancedAccount.js');
   const wardrobe = js.slice(js.indexOf('function wardrobe()'), js.indexOf('function paint()'));
-  assert.match(wardrobe, /b\.append\(el\('span', 'acttitleword', TITLE_TEXT\[key\] \?\? key\)\);/);
+  assert.match(wardrobe, /const word = el\('span', 'acttitleword', TITLE_TEXT\[key\] \?\? key\);\n\s*setTitleFlame\(word, key\);[^\n]*\n\s*b\.append\(word\);/);   // PIN MOVED (SHOP): the word kept in hand, so a flame title's plate is set on it before it is appended
   assert.match(wardrobe, /const svg = glyphArtNode\(doc, g, 'acctglyphart', 1\.6\);/);
   assert.doesNotMatch(js, /createElementNS/, 'no svg door of the card\'s own');
 });

@@ -2,8 +2,8 @@
   {
     "name": "RR-seed-off",
     "file": "src/net/raid/raidLaw.js",
-    "old": "let a = ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1)) >>> 0;",
-    "new": "let a = ((day * 7919) ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1)) >>> 0;",
+    "old": "let a = ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1) ^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;",
+    "new": "let a = ((day * 7919) ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1) ^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;",
     "tests": ["test/systems/raidroll.test.js"]
   },
   {
@@ -86,15 +86,15 @@
   {
     "name": "RR-relay-slots-unasked",
     "file": "server/src/index.js",
-    "old": "    if (!raidOnSlot(m, this._raidSlotsOf(day))) return;\n",
+    "old": "    if (!raidOnSlot(m, this._raidSlotsOf(day, lane))) return;\n",
     "new": "",
     "tests": ["test/systems/raidroll.test.js"]
   },
   {
     "name": "RR-relay-slot-miss-struck",
     "file": "server/src/index.js",
-    "old": "    if (!raidOnSlot(m, this._raidSlotsOf(day))) return;\n",
-    "new": "    if (!raidOnSlot(m, this._raidSlotsOf(day))) { this._junk(ws); return; }\n",
+    "old": "    if (!raidOnSlot(m, this._raidSlotsOf(day, lane))) return;\n",
+    "new": "    if (!raidOnSlot(m, this._raidSlotsOf(day, lane))) { this._junk(ws); return; }\n",
     "tests": ["test/systems/raidroll.test.js"]
   },
   {

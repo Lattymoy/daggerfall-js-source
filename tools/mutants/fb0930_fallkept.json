@@ -1,7 +1,7 @@
 [
   {
     "name": "FALL-KEPT-the-save-forgets-the-fall",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "transport: player.transportMode, fall: player.fallSnapshot() },",
     "new": "transport: player.transportMode },",
     "tests": [

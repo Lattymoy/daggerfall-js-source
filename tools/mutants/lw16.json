@@ -595,7 +595,7 @@
   {
     "name": "LW16-AUDIT-B8-own-region",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && town.region === region));",
+    "old": "        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && (town.area ?? town.region) === region));",
     "new": "        d = this.deedNews(minute, town);",
     "tests": [
       "test/systems/livingWorld/lw16_word.test.js"

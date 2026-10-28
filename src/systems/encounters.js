@@ -115,7 +115,9 @@ export function resolveEncounterTableIndex(ctx) {
   if (ctx.underwater) return 19;
   if (ctx.dungeonType != null) return ctx.dungeonType;
   if (ctx.buildingType != null) return BUILDING_TABLE.get(ctx.buildingType) ?? 39;
-  const band = CLIMATE_TABLE.get(ctx.climateIndex);
+  // TESA-BIOME: past the Bay a pixel's own biome's band (systems/tamrielFauna.js faunaBandAt, the ctx's `fauna`) before its
+  // climate's - DFU's three, in DFU's order
+  const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);
   if (!band) return null;
   if (ctx.inLocationRect) {
     if (ctx.isDay) return null;   // a town by day spawns nothing

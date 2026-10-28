@@ -123,15 +123,24 @@ test('RES-MARK: a townsperson who knows where a quest\'s residence is marks it o
 
 test('HOME-PLAQUE: a nameless house whose door has verbs is a "Residence" - its plaque stands and lists them; a named building keeps its name; no verbs, no name (mutants: the word dropped; the verbs read after the name)', async () => {
   const { homeDoorName, homeBuyRows } = await import('../../src/systems/online/onlineHomes.js');
+  const { BUILDING_TYPES } = await import('../../src/world/buildingNames.js');   // IC-PROPS
   const { staticDoorName } = await import('../../src/systems/worldTooltips.js');
   assert.equal(homeDoorName('', true), 'Residence');
   assert.equal(homeDoorName('The Mosrey Residence', true), 'The Mosrey Residence', 'the quest\'s own name stands');
-  assert.equal(homeDoorName('', false), '', 'a house with nothing to list stays DFU\'s nameless door');
-  assert.equal(staticDoorName('building', { displayName: homeDoorName('', false) }), null, 'no plaque, as before');
+  // PIN MOVED (IC-PROPS, 2026-10-27: "Some doors ... can be entered but dont show the tooltip", "a world wide issue"): DFU's
+  // door is NOT nameless - PlayerGPS.GetBaseBuildingDiscoveryData (PlayerGPS.cs:1306-1309) names every House1-4
+  // "Residence", and World Tooltips prints "To" and it (Modded_HUDTooltipWindow.cs:728). A nameless HOUSE is a Residence
+  // whatever its verbs; a nameless building of another kind, with nothing to list, is still nameless here (the hover then
+  // names it by its place - scenes/worldModes.js)
+  assert.equal(homeDoorName('', false), '', 'no type, no verbs: no name of its own');
+  assert.equal(homeDoorName('', false, BUILDING_TYPES.House3), 'Residence', 'a house with nothing to list: DFU\'s "Residence"');
+  assert.equal(homeDoorName('', false, BUILDING_TYPES.Tavern), '', 'a building of another kind keeps no house\'s word');
+  assert.equal(staticDoorName('building', { displayName: homeDoorName('', false) }), null, 'no name, no plaque');
+  assert.match(JSON.stringify(staticDoorName('building', { displayName: homeDoorName('', false, BUILDING_TYPES.House2) })), /To\\nResidence/, 'every house\'s door its plaque');
   const plaque = staticDoorName('building', { displayName: homeDoorName('', !!homeBuyRows(4000)) });
   assert.ok(plaque, 'a plaque stands for a house for sale');
   assert.match(JSON.stringify(plaque), /Residence/);
   const m = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(m, /const houseVerbs = homeDoorVerbs\(bd, home\);\n\s*_doorText = staticDoorName\('building', \{\n\s*displayName: home \? homeDoorTitle\(home, questSiteHere\(bd\) && db\.isOverrideName \? db\.displayName : null\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs\),/);   // PIN MOVED (QUEST-RESIDENCE, FIELD BUGS 2026-10-15c): a quest's home says the quest's name - homeDoorTitle's second word
+  assert.match(m, /const houseVerbs = homeDoorVerbs\(bd, home\);\n\s*_doorText = staticDoorName\('building', \{\n\s*displayName: home \? homeDoorTitle\(home, questSiteHere\(bd\) && db\.isOverrideName \? db\.displayName : null\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs, bd\.buildingType\),/);   // PIN MOVED (QUEST-RESIDENCE, FIELD BUGS 2026-10-15c): a quest's home says the quest's name - homeDoorTitle's second word; PIN MOVED (IC-PROPS): a house by its type (a nameless building by its place - systems/worldTooltips.js)
   assert.match(m, /const verbs = _doorText \? houseVerbs : null;/);
 });

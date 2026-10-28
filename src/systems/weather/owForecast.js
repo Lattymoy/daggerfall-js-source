@@ -39,6 +39,7 @@ export const FORECAST_WORDS = Object.freeze({
   get thunder() { return t('forecast.word.thunder', 'Thunderstorm'); },
   get snow() { return t('forecast.word.snow', 'Snow'); },
   get sandstorm() { return t('forecast.word.sandstorm', 'Sandstorm'); },
+  get ashfall() { return t('forecast.word.ashfall', 'Ashfall'); },   // ASHFALL1
 });
 /** What a traveller meets, as said after another ("Rain - snow in 30 min") - its own words, never a lowercased one. */
 const FORECAST_TURNS = Object.freeze({
@@ -47,9 +48,10 @@ const FORECAST_TURNS = Object.freeze({
   get thunder() { return t('forecast.turn.thunder', 'thunderstorm'); },
   get snow() { return t('forecast.turn.snow', 'snow'); },
   get sandstorm() { return t('forecast.turn.sandstorm', 'sandstorm'); },
+  get ashfall() { return t('forecast.turn.ashfall', 'ashfall'); },   // ASHFALL1
 });
 /** What a traveller meets on the way - what falls, what blinds; the rest is the sky's look. */
-export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm']));
+export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall']));
 /** The way ahead is asked every ROUTE_STEP_M (field metres - AUDIT OW-REVISITED L3-5: a fog bank under a kilometre across
  *  slipped between the two-pixel samples it was), out to ROUTE_AHEAD_M (the far ring's own reach, past what the view
  *  shows) and at its end, ROUTE_SAMPLES_MAX at most - read a few a frame (the host's FORECAST_SLICE), never a pass in one

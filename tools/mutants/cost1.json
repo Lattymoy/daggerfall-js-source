@@ -11,8 +11,8 @@
   {
     "name": "COST1-var-loose",
     "file": "src/net/hubShards.js",
-    "old": "/^\\d{1,2}$/.test(part) && canon(part, REGION_CHANNELS))",
-    "new": "canon(part, REGION_CHANNELS))",
+    "old": "/^\\d{1,2}$/.test(part) && canon(part, REGION_SPLIT))",
+    "new": "canon(part, REGION_SPLIT))",
     "tests": [
       "test/net/cost1_regions.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "COST1-all-short",
     "file": "src/net/hubShards.js",
-    "old": "Array.from({ length: REGION_CHANNELS }, (_, region) => region)",
-    "new": "Array.from({ length: REGION_CHANNELS - 1 }, (_, region) => region)",
+    "old": "Array.from({ length: REGION_SPLIT }, (_, region) => region)",
+    "new": "Array.from({ length: REGION_SPLIT - 1 }, (_, region) => region)",
     "tests": [
       "test/net/cost1_regions.test.js"
     ]

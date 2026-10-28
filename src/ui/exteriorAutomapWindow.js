@@ -128,6 +128,7 @@ import { hexColor32 } from './automap/automapWindow.js';
 import {
   QUARTERS, quarterOf, isShowAllByte, CLASSIC_ARGB, CLASSIC_SETTING,
 } from './town/townQuarters.js';
+import { CAPITAL_CLOSED_BYTE } from '../world/tamrielCapitals.js';   // IC-TOWNMAP: a capital's closed cell, the town map painting none
 import { shortcutOrFallback, exteriorAutomapTooltipFor } from './automap/automapText.js';
 import { bindings } from './input.js';
 import { getBinding } from '../systems/inputActions.js';
@@ -288,7 +289,11 @@ export function buildExteriorLayout(gridW, gridH, blocks, mode, colours) {
       for (let x = 0; x < BLOCK_PX; x++) {
         let byte = data[y * BLOCK_PX + x];
         if (removeGroundFlats && byte === 0xfb) byte = 0;   // the copy-side strip (BlocksFile.cs:434-440; never in place here)
-        if (byte === 0) continue;
+        // IC-TOWNMAP (the owner: "Curious how the town map will look"): a capital's closed cell (world/tamrielCapitals.js
+        // CAPITAL_CLOSED_BYTE - a wall, a tower, a court the walkers may not cross) is in no quarter and no show-all byte, so
+        // the ladder below gave it the debug red (255, 0, 254) and painted the Imperial City's tower and palace solid magenta;
+        // it paints nothing, as the held map's sheet paints it. No Daggerfall block writes it (every RMB's grid: 0..24, 117, 250, 251)
+        if (byte === 0 || byte === CAPITAL_CLOSED_BYTE) continue;
         // EM7: the ladder is townQuarters' own, so this window and the
         // enhanced sheet cannot come to sort a byte differently.
         const quarter = quarterOf(byte);
