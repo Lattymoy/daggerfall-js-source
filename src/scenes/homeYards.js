@@ -71,6 +71,7 @@ import { RMB_TILE_SIDE } from '../world/locationEntrance.js';   // FB1001 ROAD-L
 import { createYardCellSync, YARD_ASK_M, YARD_KEEP_MARGIN_M } from './yardCellSync.js';   // YARD-CELL: the yards asked and held a block at a time
 import { onYardWords, yardPushState } from '../net/yardPush.js';   // YARD-CELL YC2: the hub's word that a cell moved
 import { yardCellOf } from '../net/yardCellLaw.js';
+import { createYardBlockMerge } from './yardBlockMerge.js';   // YARD-BLOCK: strangers' yards merged a block at a time
 import { TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
 import { homeOutsideKept, homeYardWhere, homeCandidate } from '../systems/online/onlineHomes.js';   // GUILD-YARD: a hall's keepers keep its outside
 import { homeDecorShown } from '../net/homeVoteLaw.js';   // HOME-VOTE: a shunned home's yard stands for its insiders alone
@@ -183,8 +184,8 @@ export const YARD_MARK_HIGH = 1;
 export { YARD_TOWN_TTL_MS, YARD_RETRY_MS, YARD_RETRY_MAX_MS, yardRetryMs, YARD_WRITE_HOLD_MS, YARD_ASK_M } from './yardCellSync.js';
 /** How often the yards are brought in line with the town, seconds. */
 export const YARD_SYNC_S = 0.5;
-/** YARD-MERGE: how many yards' models are merged in one frame (decorRoom.js DECOR_MERGE_SETTLE_MS) - a town streaming in
- *  stands every yard at once, and its merges are spread a frame each. */
+/** YARD-MERGE: how many kept yards' models are merged in one frame (decorRoom.js DECOR_MERGE_SETTLE_MS). YARD-BLOCK:
+ *  strangers' yards merge a block at a time on their own budget (yardBlockMerge.js YARD_BLOCK_MERGE_BUDGET_MS). */
 export const YARD_MERGES_A_FRAME = 1;
 /**
  * HOW LONG ONE FRAME SPENDS STANDING STRANGERS' YARDS, milliseconds. YARD-TOWN (2026-10-25) measured a town's answer
@@ -539,11 +540,12 @@ export function createHomeYards(deps) {
   const offYardWords = (deps.onYardWords ?? onYardWords)((words) => cells.hear(words));   // YC2: a pushed cell asked; the ear let go with the yards (destroy)
   /** What a frame's standing time is read on - the host's clock for its tests, else the page's. */
   const standClock = () => deps.standClock?.() ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, src: any[] | null, srcSig: string, kept: boolean, lot: any, frame: any, entry: any, skin: number, trees: Map<string, any>, treeSet: any}>} */
+  /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, src: any[] | null, srcSig: string, kept: boolean, door: any, lot: any, frame: any, entry: any, skin: number, trees: Map<string, any>, treeSet: any}>} */
   const yards = new Map();
   const yardFigs = [];   // MWNPC18 (AUDIT MWNPC16-18 D4): figures()'s one list
   let mergesLeft = 0;   // YARD-MERGE: this frame's merges still to make (draw refills it)
   const merge = { take: () => (mergesLeft > 0 ? (mergesLeft--, true) : false), now };
+  const blocks = createYardBlockMerge({ renderer: deps.renderer, now, clock: () => standClock() });
   let syncIn = 0;
   /** @type {any} the owner's own yard the decorator stands in, or null */
   let cur = null;
@@ -578,8 +580,11 @@ export function createHomeYards(deps) {
     const f = y.frame;
     return [t[0] + f.at[0], t[1] + f.at[1], t[2] + f.at[2]];
   };
-  function makeYard(key, p, bk, frame) {
-    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept: false, lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
+  /** A yard made for home `bk` of pixel `p`. YARD-BLOCK: a stranger's (not `kept`) merges with its block's other yards; a
+   *  kept one merges alone, as its owner writes into it. */
+  function makeYard(key, p, bk, frame, kept) {
+    const door = kept ? null : blocks.door(`${p.px},${p.py}:${yardCellOf(bk)}`, p.px, p.py, () => deps.translation(p.px, p.py));
+    const y = { key, px: p.px, py: p.py, mapId: p.homeTown, bk, frame, t: [...deps.translation(p.px, p.py)], sig: '', src: null, srcSig: '', kept, door, lot: yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects), pool: null, entry: p, skin: p._skinGen ?? 0, trees: new Map(), treeSet: null };
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
@@ -588,7 +593,7 @@ export function createHomeYards(deps) {
       // YARD-LIGHT: a lamp lights as the town's (yardLampOf) - the room's machinery mounts it when its picture stands, moves
       // it with a recentre (restand) and takes it down with the piece; `lamps` reads them in the order the pieces stand
       lampOf: yardLampOf,
-      merge,   // YARD-MERGE: a yard's models one mesh once it settles, a frame's budget at a time
+      merge: door ?? merge,   // YARD-MERGE: a yard's models one mesh once it settles, a frame's budget at a time (YARD-BLOCK: a stranger's, its block's)
       flatAnims: () => entryOf(y)?.flatAnims ?? null,   // DECOR-OUTDOOR: a street's animal or flame moves as its town's own (the pixel's animator, ticked with it)
       prepareModel: (gpu) => climateOf(y, gpu),   // DECOR-OUTDOOR: its town's climate
       // DECOR-OUTDOOR: a tree or a plant in its town's season - the climate's own, drawn as its pixel draws its nature;
@@ -600,7 +605,14 @@ export function createHomeYards(deps) {
       },
     });
     yards.set(key, y);
+    if (door) blocks.join(door, y);
     return y;
+  }
+  /** A yard taken down: its pieces, and its place in its block. */
+  function takeDown(key, y) {
+    y.pool.destroyAll();
+    if (y.door) blocks.leave(y.door, y);
+    yards.delete(key);
   }
 
   /** How far a home stands from the player's feet, metres on the ground - 0 where the host says no feet, or the frame
@@ -648,14 +660,20 @@ export function createHomeYards(deps) {
         if (!homeOutsideKept(home) && range() === 0) continue;   // YARD-RANGE: none of a stranger's - taken down where it stood
         const key = `${pk}:${bk}`;
         live.add(key);
-        const y = yards.get(key) ?? makeYard(key, p, bk, frame);
+        const kept = homeOutsideKept(home);
+        let y = yards.get(key);
+        // YARD-BLOCK: a yard that became its owner's (or stopped being) is made again, to merge the other way
+        if (y && y.kept !== kept) {
+          takeDown(key, y);
+          y = undefined;
+        }
+        y ??= makeYard(key, p, bk, frame, kept);
         const moved = t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2];
         // YARD-RANGE: the town's answer written out again only when it is another answer - every half second, for every
         // home of every built town, it was two thousand pieces stringified to learn nothing had changed (the town's lists
         // are replaced, never written into: ensure and keep)
         if (pieces && pieces !== y.src) { y.src = pieces; y.srcSig = JSON.stringify(pieces); }
         const sig = pieces ? y.srcSig : '';
-        y.kept = homeOutsideKept(home);
         // DECOR-OUTDOOR: its pixel BUILT AGAIN (a season's turn, an install, a painted home leaving the merge) - every piece
         // stood again in the new pixel's climate table, animator and season, as the town's own flats are; AUDIT PRECIP
         // HOST-7: or RE-SKINNED where it stands (the snow's turn - scenes/pixelBuild.js reskinPixelNow), its season new
@@ -672,7 +690,7 @@ export function createHomeYards(deps) {
       }
     }
     cells.update([...wishes.values()]);
-    for (const [key, y] of yards) if (!live.has(key)) { y.pool.destroyAll(); yards.delete(key); }
+    for (const [key, y] of yards) if (!live.has(key)) takeDown(key, y);
     // a stranger's yard past this frame's budget waits, as it was, for the next frame's sync
     waiting.sort((a, b) => a.distance - b.distance);
     const started = standClock();
@@ -688,8 +706,20 @@ export function createHomeYards(deps) {
     return behind;
   }
   const busyWriting = () => !!tool.flying() || !!tool.panelOpen();
-  /** A yard's pixel's climate swaps (its texRemap), or none. */
-  const remapOf = (y) => deps.built?.()?.get?.(`${y.px},${y.py}`)?.texRemap ?? null;
+  /** A pixel's climate swaps (its texRemap), or none. */
+  const remapAt = (px, py) => deps.built?.()?.get?.(`${px},${py}`)?.texRemap ?? null;
+  /** A yard's pixel's climate swaps. */
+  const remapOf = (y) => remapAt(y.px, y.py);
+  /** YARD-BLOCK: how far a block is from the eye - its nearest yard's distance (no eye: 0). */
+  function blockDistance(block, eye) {
+    if (!eye) return 0;
+    let nearest = Infinity;
+    for (const y of block.yards) {
+      const o = originOf(y);
+      nearest = Math.min(nearest, Math.hypot(o[0] - eye[0], o[2] - eye[2]));
+    }
+    return nearest;
+  }
 
   /** THE OWNER'S YARD the player stands on (or near), in this frame - or null. AUDIT GUILD-YARD C1: of the kept yards
    *  under the feet (a home's owner who keeps a hall beside it stands on two lots between them), the one whose lot holds
@@ -863,6 +893,7 @@ export function createHomeYards(deps) {
       y.t = [...t];
       y.pool.restand();   // in place, at once - put again, a model stands only after this frame is drawn
     }
+    blocks.rebase();   // YARD-BLOCK: the blocks' merges with them
   }
 
   const _treeSets = [];
@@ -905,6 +936,11 @@ export function createHomeYards(deps) {
       const eye = deps.eye?.() ?? null;
       const cull = deps.cull ?? null;   // PERF-YARD: the host's view test, a piece's box at a time (decorRoom.js draw)
       mergesLeft = YARD_MERGES_A_FRAME;   // YARD-MERGE: the frame's budget
+      // YARD-BLOCK: the blocks merged over the yards in range now, then drawn - a stranger's yard's own pool draws only
+      // what its block's merge does not hold
+      blocks.step((y) => nearEye(y, eye), (block) => blockDistance(block, eye));
+      _eye = eye;
+      n += blocks.draw(r, _eye || cull ? seenCull : null, remapAt);
       for (const y of yards.values()) {
         if (!nearEye(y, eye)) continue;   // YARD-RANGE: the player's distance for a stranger's, YARD_DRAW_M for one's own
         _eye = y === cur?.yard ? null : eye;   // YARD-RANGE: never the yard being placed in
@@ -920,6 +956,7 @@ export function createHomeYards(deps) {
     batches() {
       _batches.length = 0;
       const eye = deps.eye?.() ?? null;
+      blocks.batches(_batches, eye, YARD_MIN_ANGLE);   // YARD-BLOCK: the blocks' merged flats
       for (const y of yards.values()) if (nearEye(y, eye)) y.pool.batchesSeen(_batches, y === cur?.yard ? null : eye, YARD_MIN_ANGLE);
       for (const b of tool.batches()) _batches.push(b);
       return _batches;
@@ -969,6 +1006,6 @@ export function createHomeYards(deps) {
     yards: () => [...yards.values()],
     here: () => cur,
     tool: () => tool,
-    destroy() { for (const y of yards.values()) y.pool.destroyAll(); yards.clear(); tool.destroy(); offYardWords(); },
+    destroy() { for (const y of yards.values()) y.pool.destroyAll(); yards.clear(); blocks.destroy(); tool.destroy(); offYardWords(); },
   };
 }
