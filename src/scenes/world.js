@@ -787,7 +787,7 @@ import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the 
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
 import { restrideGrid, gridBed } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
-import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader } from '../world/terrain/terrainTiles.js';
+import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader, locationFootprintRect } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
 // from FIVE sites, not one, and FOUR of them are here - the court
@@ -29750,7 +29750,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (had && had.loc === loc) return had.rects;
     let rects = null;
     if (loc?.exterior?.exteriorData && loc.mapTableData) {
-      const r = built.get(key)?.locationRect ?? setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128));
+      // FAR-RINGS: past the Bay a place not built yet is rung by its footprint (LANDFORM4's, off the map table): stamping its
+      // tiles generates its blocks, and a route asks every pixel it crosses - the Imperial City's slices took 14 s in one task
+      const r = built.get(key)?.locationRect ?? (onTheBay(x, y) ? setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128)) : locationFootprintRect(loc));
       if (r && Number.isFinite(r.xMin + r.xMax + r.yMin + r.yMax)) {
         const o = mapPixelToWorldCoords(x, y);
         rects = locationRectsOf(o.x, o.z, { x: r.xMin, y: r.yMin, width: r.xMax - r.xMin, height: r.yMax - r.yMin }, loc.mapTableData.locationType === LOCATION_TYPES.TownCity, hasCustomLocationPosition(loc));

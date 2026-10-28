@@ -2,7 +2,7 @@
   {
     "name": "GREEDY-BEYOND-the-lean-dropped",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!best && past && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {\n    return yield* searchSteps(",
+    "old": "  if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {\n    return yield* searchSteps(",
     "new": "  if (false) {\n    return yield* searchSteps(",
     "tests": [
       "test/systems/travel/greedy_beyond.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "GREEDY-BEYOND-asked-of-every-refusal",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (!best && past && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {",
-    "new": "if (!best && past && !sea) {",
+    "old": "if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {",
+    "new": "if (!best && past && !roads && !tracks && !sea) {",
     "tests": [
       "test/systems/travel/greedy_beyond.test.js"
     ]

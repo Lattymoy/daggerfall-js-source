@@ -135,6 +135,24 @@ test('ROAD-BEYOND the roads\' search walks the open ground about its ends alone,
   assert.ok(leaned.n < 2800, `${leaned.n} cells`);
 });
 
+// GREEDY-BEYOND's mutants' sweep: ROAD-FOLLOW keeps the roads' search on its roads, so one long road costs it few cells
+// leaning or not (ROAD-BEYOND-no-greed lived), and no pin asked it without a layer (-no-layer-still-searched lived)
+test('ROAD-BEYOND the roads\' search leans on its goal over a lattice of roads - the same way, at the same price, in far fewer cells than the plain A* (51,501 measured); and with no layer past the Bay it searches nothing (mutants: the greed; the layer unasked)', () => {
+  const lines = [];
+  for (let y = 100; y <= 300; y += 4) { const p = []; for (let x = 1100; x <= 1500; x++) p.push([x, y]); lines.push(roadThrough(p)); }
+  for (let x = 1100; x <= 1500; x += 4) { const p = []; for (let y = 100; y <= 300; y++) p.push([x, y]); lines.push(roadThrough(p)); }
+  const lattice = (k, x, y) => lines.reduce((b, f) => b | f(k, x, y), 0);
+  const tally = { n: 0 };
+  const r = searchByRoad({ x: 1100, y: 100 }, { x: 1500, y: 300 }, { ...bay(), beyond: lattice, tally });
+  assert.equal(r.cost, 600, 'by the roads, as short as the lattice allows');
+  assert.equal(count(r.kinds, 'road'), r.kinds.length);
+  assert.ok(tally.n < 40000, `${tally.n} cells`);
+  assert.equal(searchByRoad({ x: 1100, y: 100 }, { x: 1500, y: 300 }, { ...bay() }), null, 'no layer: no search');
+  const net = bay();
+  for (let x = 100; x <= 140; x++) net.roads[200 * MAP_W + x] = (x > 100 ? DIR.W : 0) | (x < 140 ? DIR.E : 0);
+  assert.equal(searchByRoad({ x: 100, y: 200 }, { x: 140, y: 200 }, { ...net }), null, 'nor over the Bay\'s own roads: the layer is its subject');
+});
+
 test('ROAD-BEYOND the ladder\'s rungs past the table are no wider than BEYOND_MARGIN about the ends: a causeway running off a thousand pixels is asked no further (the whole map\'s rung there allotted millions of cells for a spend that walks a hundred thousand), and the roads\' search asks a pixel\'s water only for a step its road\'s edge leaves by away from the ends (mutants: the rung, the edge)', () => {
   // the land a causeway one pixel wide along row 100 from 1100 to 3000; the goal on another
   let far = 0;

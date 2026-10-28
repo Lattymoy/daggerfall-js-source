@@ -533,7 +533,7 @@ export function* planRouteSteps(from, to, opts = {}) {
   // every monotone path costs the same, so a detour near the goal made the exact search expand the whole parallelogram
   // between the ends: Daggerfall to the Imperial City, round Lake Rumare's west arm, 530,000 cells. A box that held no
   // way is not searched again.
-  if (!best && past && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {
+  if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {
     return yield* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds: reachOf(BEYOND_MARGIN), margin: BEYOND_MARGIN, maxExpansions: BEYOND_MAX_EXPANSIONS, openBlocked, goalExempt, peakAt, sea, beyond, hCost: BEYOND_GREED * ROUTE_COST.open, tally, endLeg });
   }
   return best;

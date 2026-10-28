@@ -3900,3 +3900,22 @@ pin's wall, open 80 above, 7.3).
 - The hosts: none changes; the planner is the Overworld's, the held map's journey and its own click alike.
 - Pins `test/systems/travel/greedy_beyond.test.js` (4, the last with ARENA2); mutants `tools/mutants/greedybeyond.json`
   (7, all dead). PIN MOVED: ROAD-BEYOND's spend (`road_beyond.test.js`): a no-way plan's count adds the lean's.
+
+## FAR-RINGS - a far route rung by the footprints past the Bay, never their stamps (2026-10-28, the owner)
+
+The owner: *"when planning a really far away route, the game comes to a halt and really lags"*. Measured in the game on
+the freeware (a CPU profile of Daggerfall to the Imperial City): one task of 17.7 s as the plan landed, 14.5 s of it in
+`routeLegs` asking every pixel of the route for its town's ring (OW-TOWN-RING) - `tvTownRects` stamped each place's tiles to
+read its rect, and past the Bay a place not built yet has its blocks generated to be stamped (the Imperial City's slices,
+its districts and fabric, 11.9 s).
+
+Past the Bay a place not built is now rung by its footprint (`terrainTiles.js:"export function locationFootprintRect(dfLocation) {"`,
+LANDFORM4's: the block grid and the clearance, off the map table), which holds every tile the stamp could. The Bay's places
+keep their stamped rect (their blocks are BLOCKS.BSA's, and the painted ring roads follow it), a built pixel its build's.
+`bootWorld` does not grow. Pin `test/scenes/far_rings.test.js`.
+
+GREEDY-BEYOND's mutants' sweep (its fallback asked of the planner's 126 records): one record its own (no-walk-across-country,
+killed by the lean asked of an all-open plan alone); two old ones killed by new pins (ROAD-BEYOND-no-greed on a road lattice,
+-no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
+step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
+of Infinity loops), so it is no verdict; its record wants a finite mutant.
