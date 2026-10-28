@@ -2651,9 +2651,12 @@ real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RT
   (`worldSetPrograms`, `airPassPrograms`). What installing the lane builds is listed by `render/bootPrograms.js`
   `laneBootPrograms`, a plain function over the renderer's state rather than a Renderer method, so the class does not
   grow (the owner's extract-what-you-touch rule; the class is a knot `01-Overview/Host-Split.md` names).
+
   `worldSetPrograms` and the classic set's source stay in `renderer.js`: the constructor's own start needs them, and
   `renderer.js` importing `bootPrograms.js` would put 118 modules on the entry's static graph (BOOT2's ceiling), while a
-  leaf of its own reading the renderer's shaders would be an import cycle. `render/bootPrograms.js` starts them all
+  leaf of its own reading the renderer's shaders would be an import cycle.
+
+  `render/bootPrograms.js` starts them all
   through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
   starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
   passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or
@@ -2711,10 +2714,10 @@ What still waits on a cold cache (1.5 s in all, pair 1):
   (0.10-0.16 s), the far ring, the ocean holes, the duel wall, the flags and banners (20-80 ms each). Each is a few tens
   of milliseconds; listing them is SHADER-STALL's pattern again if they ever matter.
 
-**Known cost.** The switches are read at page load, before the menu decides anything. The bare menu URL names no
+**Known cost.** The switches are read at page load, before the menu decides. The bare menu URL names no
 indoor door, so about 45 programs (the lane, the air pass, the clouds and their noise, the grass, Dynamic Skies) start
 while the player is at the intro and the menu. A player who then starts in a dungeon compiled the clouds, the sky and
-the grass for nothing, and those programs stay started for the session; so does a pass whose switch the player turns
+the grass for nothing, and they stay started; so does a pass whose switch the player turns
 off in the menu (and the clip is left out where an online room later turns Deep Waters on: it compiles at its build,
 as before). `render/glProgram.js releasePrograms` could let the outdoor starts go when the first host mounts indoors;
 that is left until a measurement shows the cost. The intro draws on a context of its own; whether its frames wait
