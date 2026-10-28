@@ -112,7 +112,7 @@ export const SD_REALM_TEXT = Object.freeze({
   lost: 'The way to the Shattered Hour is lost.',
   // AUDIT SD II (L6 F4): a death in the Hour is the Hour's own - said so through its veil (the gate's court: "You are cast
   // out of the Burning Court."), never the plain dungeon's waking
-  died: 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.',   // SD-ONELIFE: one life a Hollow
+  died: 'The Shattered Hour casts you out. You wake before the Abyss Dungeon\'s door.',   // SD-BACK (2026-10-28): its Rift takes you back to your own Hour
   // SD-ALONE (Mac: "We need to make sure companions dont enter the rift"): said as a player steps through with any at
   // their side - the court's own words for its gate (world/gate/gateArena.js COURT_TEXT.noCompanions)
   noCompanions: 'Your companions cannot follow you through the Rift.',

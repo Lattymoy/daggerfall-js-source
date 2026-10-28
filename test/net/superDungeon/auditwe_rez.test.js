@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { SD_KEY, SD_REALM_KEY, SOCIAL_ROOM, PIXEL_UNITS, worldRoom, chatRegionRoom, SD_FIGHTERS_MAX, validSdIn } from '../../../src/net/wire.js';
-import { sdRoomKey, SD_REZ_MS, SD_REZ_REACH_M, SD_NO_FALLEN, sdDownWord, sdMayRaise } from '../../../src/net/superDungeon/sdLaw.js';
+import { sdRoomKey, SD_REZ_MS, SD_REZ_REACH_M, sdDownWord, sdMayRaise } from '../../../src/net/superDungeon/sdLaw.js';
 import { SD_ARENA, realmToDungeon } from '../../../src/net/superDungeon/sdBrain.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { sdSlotsKept, SD_REZ_PAGE_SLACK_MS } from '../../../src/systems/superDungeon/sdSlots.js';
@@ -64,9 +64,6 @@ test('AUDIT WORLD-EVENTS L1-1: the Hour lets a body back only when a living figh
     const down = realm.store.get(SD_REALM_KEY).down.find(([x]) => x === 'acct-peer-ann');
     assert.ok(down && Number.isFinite(down[2]) && Number.isFinite(down[3]), 'down where she fell');
     step(5000);
-    const sneak = await hello('peer-ann', inArena(0, -12));
-    assert.equal(sneak.closed?.reason, 'busy', 'nobody raised her: held at the door');
-    assert.deepEqual(realm.store.get(SD_REALM_KEY).down.map(([x]) => x), ['acct-peer-ann'], 'still lying');
     await raise(realm, cy, 'acct-peer-ann');
     assert.deepEqual(realm.store.get(SD_REALM_KEY).raised ?? [], [], `a raise from ${40} m off is nothing`);
     const ghost = realm.connect(); await realm.hello(ghost, 'peer-zed', inArena(0, -12), { name: 'zed' });
@@ -79,12 +76,17 @@ test('AUDIT WORLD-EVENTS L1-1: the Hour lets a body back only when a living figh
     const risen = await hello('peer-ann', inArena(0, -12));
     assert.equal(risen.closed, null, 'raised: back in the Hour');
     assert.deepEqual([realm.store.get(SD_REALM_KEY).down.map(([x]) => x), realm.store.get(SD_REALM_KEY).raised], [['acct-peer-zed'], []], 'off the lying and the raised');
-    // a second death: the old raise is not this one's
+    // PIN MOVED (SD-BACK, 2026-10-28, the owner: "let them go back in if they die to that partys instance"): unraised -
+    // inside the window or past it - its own Hour takes it back, off the lying and the dead (it was held at the door, busy,
+    // and past the window refused SD_NO_FALLEN)
     await realm.raw(risen, JSON.stringify({ t: 'pose', p: inArena(0, -12, { dd: 1 }) }));
     step(1000);
-    assert.equal((await hello('peer-ann', inArena(0, -12))).closed?.reason, 'busy');
-    step(SD_REZ_MS);
-    assert.equal((await hello('peer-ann', inArena(0, -12))).closed?.reason, SD_NO_FALLEN, 'past the window, unraised: for good');
+    const back = await hello('peer-ann', inArena(0, -12));
+    assert.equal(back.closed, null, 'unraised, inside the window: back');
+    await realm.raw(back, JSON.stringify({ t: 'pose', p: inArena(0, -12, { dd: 1 }) }));
+    step(SD_REZ_MS + 1000);
+    assert.equal((await hello('peer-ann', inArena(0, -12))).closed, null, 'past the window: back all the same');
+    assert.ok(!realm.store.get(SD_REALM_KEY).dead.includes('acct-peer-ann') && !realm.store.get(SD_REALM_KEY).down.some(([x]) => x === 'acct-peer-ann'), 'off the dead and the lying');
   });
   // the law, pure
   const realm = { in: ['a', 'b', 'c'], dead: ['c'], down: [['x', 1000, 10, 20]], raised: [] };
@@ -110,11 +112,12 @@ test('AUDIT WORLD-EVENTS L1-1: the Hour lets a body back only when a living figh
 
 test('AUDIT WORLD-EVENTS L1-2/L1-8: the raised is a new life on the count, and comes off the lying only once the door lets it in (mutants: no new life; the down cleared before the refusals)', () => {
   const relay = read('server/src/index.js');
-  assert.match(relay, /async _sdRose\(realm, sub, now\) \{\n\s*realm\.down = realm\.down\.filter\(\(\[x\]\) => x !== sub\);\n\s*realm\.raised = \(realm\.raised \?\? \[\]\)\.filter\(\(\[x\]\) => x !== sub\);\n\s*await this\.state\.storage\.put\(SD_REALM_KEY, realm\);\n\s*const f = await this\._sdFightOf\(\);\n\s*if \(f\?\.players\?\.\[sub\]\) \{ bodyLife\(f\.players\[sub\], now, this\._bodyLine\(\)\.body\); await this\._sdFightSave\(f, now, true\); \}/);
+  assert.match(relay, /async _sdRose\(realm, sub, now\) \{\n\s*realm\.down = realm\.down\.filter\(\(\[x\]\) => x !== sub\);\n\s*realm\.raised = \(realm\.raised \?\? \[\]\)\.filter\(\(\[x\]\) => x !== sub\);\n\s*realm\.dead = realm\.dead\.filter\(\(x\) => x !== sub\);[^\n]*\n\s*await this\.state\.storage\.put\(SD_REALM_KEY, realm\);\n\s*await this\.state\.storage\.delete\(sdDeadKey\(sub\)\);\n\s*const f = await this\._sdFightOf\(\);\n\s*if \(f\?\.players\?\.\[sub\]\) \{ bodyLife\(f\.players\[sub\], now, this\._bodyLine\(\)\.body\); await this\._sdFightSave\(f, now, true\); \}/);
   const admit = relay.slice(relay.indexOf('  async _sdAdmit('), relay.indexOf('  async _sdRose(realm, sub, now) {'));
-  assert.ok(admit.indexOf("if (lies === 'down') return SD_NO_BUSY;") < admit.indexOf('return SD_NO_FALLEN'), 'unraised: held');
+  // PIN MOVED (SD-BACK): no hold and no SD_NO_FALLEN at a copy's own door - a death, raised or not, is a rise there
+  assert.ok(!admit.includes('return SD_NO_FALLEN') && !admit.includes("if (lies === 'down') return SD_NO_BUSY;"), 'its own Hour takes the dead back');
   assert.equal((admit.match(/_sdRose\(realm, sub, now\)/g) ?? []).length, 2, 'a rise kept at each admission');
-  assert.ok(admit.lastIndexOf("if (lies === 'rise') await this._sdRose(realm, sub, now);") > admit.lastIndexOf('return SD_NO_FULL'), 'after every refusal');
+  assert.ok(admit.lastIndexOf('if (back) await this._sdRose(realm, sub, now);') > admit.lastIndexOf('return SD_NO_FULL'), 'after every refusal');
 });
 
 test('AUDIT WORLD-EVENTS L1-5/L1-6/L1-7: the window is the body\'s minute - the corpse\'s and the death screen\'s, and the tile says it; the page stamps its death once; a death past the list is buried, never forgotten (mutants: two minutes; the stamp every frame; the slice forgetting)', async () => {

@@ -12,8 +12,8 @@
   {
     "name": "SD-PARTY-the-death-untold",
     "file": "server/src/index.js",
-    "old": "    sdAcctTell(this, s, sub, 'down');",
-    "new": "    void 0;",
+    "old": "    if (key) sdAcctTell(this, key, sub);",
+    "new": "    void key;",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
     ],
@@ -22,7 +22,7 @@
   {
     "name": "SD-PARTY-the-hub-unasked",
     "file": "server/src/index.js",
-    "old": "await sdNewcomerWord(this.env, s, sub) : null;",
+    "old": "await sdNewcomerWord(this.env, s, sub, sdOwnerOfRoom(key) ?? '') : null;",
     "new": "null : null;",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "SD-PARTY-the-bare-key",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "const SD_ROOM = /^sd:([1-9]\\d{0,8})\\.([0-9a-f]{16})$/;",
-    "new": "const SD_ROOM = /^sd:([1-9]\\d{0,8})(?:\\.([0-9a-f]{16}))?$/;",
+    "old": "const SD_ROOM = /^sd:([1-9]\\d{0,8})\\.([0-9a-f]{16}|p(?:0|[1-9]\\d?))$/;",
+    "new": "const SD_ROOM = /^sd:([1-9]\\d{0,8})(?:\\.([0-9a-f]{16}|p(?:0|[1-9]\\d?)))?$/;",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
     ],
@@ -68,5 +68,136 @@
       "test/net/superDungeon/sdparty_relay.test.js"
     ],
     "note": "A party's win closes its own Hour alone while the setting is off."
+  },
+  {
+    "name": "SD-BACK-another-copy-admits",
+    "file": "server/src/sdCopy.js",
+    "old": "...(mine && mine.o !== c.o ? { w: 'down' } : {})",
+    "new": "...({})",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-BACK-its-own-copy-refuses",
+    "file": "server/src/sdCopy.js",
+    "old": "...(mine && mine.o !== c.o ? { w: 'down' } : {})",
+    "new": "...(mine ? { w: 'down' } : {})",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-BACK-the-last-copy-kept",
+    "file": "server/src/sdCopy.js",
+    "old": "if (!mine) await room.state.storage.put(sdAcctKey(c.a)",
+    "new": "await room.state.storage.put(sdAcctKey(c.a)",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-BACK-the-rift-reads-the-death",
+    "file": "src/scenes/world.js",
+    "old": "const seen = { entered: _sdEntered.has(s), fallen: false };",
+    "new": "const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js",
+      "test/world/superDungeon/sd4b_rift.test.js"
+    ]
+  },
+  {
+    "name": "SD-SOLO-the-shared-door-shut",
+    "file": "server/src/sdCopy.js",
+    "old": "  if (isSdPubOwner(owner)) return null;",
+    "new": "",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-SOLO-a-seat-freed",
+    "file": "server/src/index.js",
+    "old": "isSdPubOwner(sdOwnerOfRoom(key)) ? realm.in.length >= SD_PUB_SEATS : realm.in.length",
+    "new": "realm.in.length",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-SOLO-the-open-passed-over",
+    "file": "server/src/sdCopy.js",
+    "old": "if (r.has || r.open) return",
+    "new": "if (r.has) return",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-SOLO-the-holder-passed-over",
+    "file": "server/src/sdCopy.js",
+    "old": "if (r.has || r.open) return",
+    "new": "if (r.open) return",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-SOLO-the-walk-unrouted",
+    "file": "server/src/index.js",
+    "old": "    if (url.pathname === SD_OPEN_PATH) return sdOpenDoor(env, url);",
+    "new": "",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-SOLO-alone-in-my-own",
+    "file": "src/scenes/superDungeon/sdCopy.js",
+    "old": "return sdPubOwner(n) ?? me;",
+    "new": "return me;",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-SOLO-the-count-unsaid",
+    "file": "src/scenes/superDungeon/sdCopy.js",
+    "old": "{ n: Math.max(1, Math.min(SD_PUB_SEATS, n | 0)), max: SD_PUB_SEATS }",
+    "new": "{ n: SD_PUB_SEATS, max: SD_PUB_SEATS }",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-WON-a-won-copy-open",
+    "file": "server/src/index.js",
+    "old": "if (f?.fell && now - f.fell.at > SD_COLLAPSE_MS) return SD_NO_CLOSED; ",
+    "new": "",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD-WON-shut-at-once",
+    "file": "server/src/index.js",
+    "old": "if (f?.fell && now - f.fell.at > SD_COLLAPSE_MS) return SD_NO_CLOSED; ",
+    "new": "if (f?.fell) return SD_NO_CLOSED; ",
+    "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ]
   }
 ]

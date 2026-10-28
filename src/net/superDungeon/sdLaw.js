@@ -218,15 +218,20 @@ export function sdNameOf(s, city = '') {
 
 // ═══ THE ROOM ═════════════════════════════════════════════════════════
 //
-// SD-PARTY (2026-10-28, the owner: "we need to make this a party instance ... to stop griefin on the bosses"): the
-// Shattered Hour is ONE room per slot AND party: `sd:<s>.<owner>`, the owner the account digest of the one whose party
-// it is (net/instanceRoom.js instanceOwnerOf - the Ketch's crew law). No zero, no padding - the wire admits exactly
-// these keys (AUDIT WORLD6a B4's law), and each party's Hour is a fresh object. The room's door admits the owner, staff
-// and the owner's party alone (server/src/index.js _sdCopyRight).
-const SD_ROOM = /^sd:([1-9]\d{0,8})\.([0-9a-f]{16})$/;
+// SD-PARTY (2026-10-28, the owner: "we need to make this a party instance"): ONE room per slot AND party, `sd:<s>.<owner>`,
+// the owner the party's account digest (net/instanceRoom.js instanceOwnerOf - the Ketch's crew law); its door the owner,
+// staff and the owner's party (server/src/sdCopy.js). SD-SOLO ("if no one is in a party allow them to be put into a 8
+// player instance"): owner `p<n>`, a shared Hour of SD_PUB_SEATS, the next opened when it is full or won.
+const SD_ROOM = /^sd:([1-9]\d{0,8})\.([0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
+const SD_OWNER = /^(?:[0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
+export const SD_PUB_SEATS = 8;
+export const SD_PUB_MAX = 64;
+/** SD-SOLO: the shared Hour `n`'s owner, or null. @param {number} n */
+export const sdPubOwner = (n) => (Number.isSafeInteger(n) && n >= 0 && n < SD_PUB_MAX ? `p${n}` : null);
+export const isSdPubOwner = (o) => typeof o === 'string' && /^p(?:0|[1-9]\d?)$/.test(o) && Number(o.slice(1)) < SD_PUB_MAX;
 /** @param {number} s @param {string} owner */
-export const sdRoomKey = (s, owner) => (Number.isSafeInteger(s) && s > 0 && typeof owner === 'string' && /^[0-9a-f]{16}$/.test(owner) ? `sd:${s}.${owner}` : null);
-export const isSdRoom = (key) => SD_ROOM.test(String(key ?? ''));
+export const sdRoomKey = (s, owner) => (Number.isSafeInteger(s) && s > 0 && typeof owner === 'string' && SD_OWNER.test(owner) && (owner[0] !== 'p' || isSdPubOwner(owner)) ? `sd:${s}.${owner}` : null);
+export const isSdRoom = (key) => { const m = SD_ROOM.exec(String(key ?? '')); return !!m && (m[2][0] !== 'p' || isSdPubOwner(m[2])); };
 /** The slot a realm room is for, or null. */
 export const sdSlotOfRoom = (key) => { const m = SD_ROOM.exec(String(key ?? '')); return m ? Number(m[1]) : null; };
 /** SD-PARTY: the owner's digest a realm room is for, or null. */

@@ -615,7 +615,7 @@ test('SD11c THE WORLD HOST\'S FIGHT, RUN FROM ITS OWN TEXT (L8 G3, L5 F5): in th
 // ── L6 F4, F14: the Hour's death, the floor's last words ──────────────
 
 test('SD11c A DEATH IN THE HOUR IS THE HOUR\'S, AND THE FLOOR\'S LAST WORDS GO TO THE CHAT (L6 F4, F14): the respawn reads the Hour before it leaves it, and wakes under the veil with the Hour\'s own words (it woke with a plain dungeon\'s); what the floor still held, gathered as I leave, is said in the chat - over the screen it took the place of the way home\'s line or the cast-out\'s a frame after (mutants: read after the exit; the dungeon\'s words; the gathered line over the screen)', () => {
-  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.');   // SD-ONELIFE (PIN MOVED): one life; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
+  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out. You wake before the Abyss Dungeon\'s door.');   // PIN MOVED (SD-BACK, 2026-10-28): no longer for good - its Rift takes you back to your own Hour; SD-ONELIFE (PIN MOVED): one life; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
   const w = strip(W);
   const at = w.indexOf("const diedInHour = madeRuleHere('death') === 'final';");   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): a death in the Hour is final for its Hollow
   const go = w.indexOf('Promise.resolve().then(async () => {', at);

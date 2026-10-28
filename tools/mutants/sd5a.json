@@ -173,11 +173,12 @@
   {
     "name": "SD5A-left-in-a-room-that-refused-me",
     "file": "src/scenes/world.js",
-    "old": "    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);",
+    "old": "    if (modes?.unstuck?.()) sdSay(/\\bHour\\b/.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);",
     "new": "    void SD_REALM_TEXT;",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
   },
   {
     "name": "SD5A-the-edge-lost",
