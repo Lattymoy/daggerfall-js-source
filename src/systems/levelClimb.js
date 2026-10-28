@@ -1,28 +1,25 @@
 // @ts-check
 // LEVEL-45 online (2026-10-27, mob: "need to always be 45", "everyone is converting"; Port-Ledger A LEVEL-45).
 // Daggerfall's 15 a level gave a low roll its last level early and a high one late. Online the climb from the start to
-// the six-skill top (840) is shared out, so every start reaches 45 on its last point:
-//     level = floor((28 + 647 * climbed / (840 - start)) / 15)        647 = 45 x 15 - 28
+// the six-skill top (800) is shared out, so every start reaches 45 on its last point:
+//     level = floor((28 + 647 * climbed / (800 - start)) / 15)        647 = 45 x 15 - 28
 // A DEPARTURE from FormulaHelper.CalculatePlayerLevel. levelCap.js is the cap's leaf and offline's law; this reads it.
-// onlineLevelConvert reads every realm character's level again at its join - the one place a level comes down.
+// onlineLevelConvert reads every realm character's level again at its join - the one place a level comes down; one owed
+// is offered there through the level-up window and its points, or given whole to attributes already at their maximum.
 
 import { EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from './skillSoftcap.js';
-import { MASTERY_SLOTS } from './masterSkills.js';
 import { PRIMARY_SKILL_MIN, MAJOR_SKILL_MIN, MINOR_SKILL_MIN, BONUS_POOL_PER_SKILL_GROUP } from './chargen.js';
 import { levelUpSkillSum } from './skills.js';
+import { masterCappedSkill, skillCanPassCap } from './masterSkills.js';
 import { evenHpFloor } from './levelEven.js';
 import { LEVEL_CAP } from './levelCap.js';
+import { STAT_KEYS_ORDER, MAX_STAT_VALUE } from './statMods.js';
 
 /** LEVEL-45: the highest level an online character reaches - the cap's own (levelCap.js). */
 export const ONLINE_LEVEL_CAP = LEVEL_CAP;
-/** The skills each group counts in the sum (skills.js levelUpSkillSum: the three primaries, the two best majors, the best minor). */
-const COUNTED = Object.freeze({ primary: 3, major: 2, minor: 1 });
-/** The six-skill sum's top online: each counted skill a mastery can take at the hard cap's effective value, any other
- *  at 100 (840 at MASTER-THREE's 3 / 2 / 1). */
-export const LEVEL_SUM_TOP = /** @type {const} */ (['primary', 'major', 'minor']).reduce((sum, g) => {
-  const mastered = Math.min(MASTERY_SLOTS[g], COUNTED[g]);
-  return sum + mastered * EFFECTIVE_SKILL_MAX + (COUNTED[g] - mastered) * SKILL_SOFT_CAP;
-}, 0);
+/** The six-skill sum's top online: five masteries at the hard cap's effective value and the sixth skill at 100 (800).
+ *  LEVEL-TOP (mob: "dont count the 6th mastery"): MASTER-THREE's sixth slot climbs the skill, never the level. */
+export const LEVEL_SUM_TOP = 5 * EFFECTIVE_SKILL_MAX + SKILL_SOFT_CAP;
 /** Daggerfall's head start and divisor (advancement.js calculatePlayerLevel's 28 and 15). */
 const HEAD_START = 28, PER_LEVEL = 15;
 /** The share of the climb a character spreads over the levels after the head start (647). */
@@ -55,6 +52,48 @@ export function onlineLevelFraction(startingSum, currentSum) {
   return exact >= ONLINE_LEVEL_CAP ? 1 : exact - Math.floor(exact);
 }
 
+/** The climbed points at which level `level` begins (0 for level 1): the least `climbed` onlineLevelFor gives it at. */
+const levelStart = (level, room) => Math.max(0, Math.ceil(((PER_LEVEL * level - HEAD_START) * room) / CLIMB_SHARE));
+
+/** LEVEL-BAR (2026-10-27, mob: "800/45", "yessss"): the level bar in skill points - `now` of the `max` this level takes
+ *  (about 16 at an average start). The level the sums earn; at the cap the bar is full. */
+export function onlineLevelPoints(startingSum, currentSum) {
+  const room = LEVEL_SUM_TOP - startingSum;
+  const level = onlineLevelFor(startingSum, currentSum);
+  if (!(room > 0) || level >= ONLINE_LEVEL_CAP) {
+    const max = room > 0 ? levelStart(ONLINE_LEVEL_CAP, room) - levelStart(ONLINE_LEVEL_CAP - 1, room) : 1;
+    return { now: max, max };
+  }
+  const climbed = Math.max(0, Math.min(currentSum - startingSum, room));
+  const from = levelStart(level, room);
+  return { now: climbed - from, max: levelStart(level + 1, room) - from };
+}
+
+/** LEVEL-RAW: the skill sheet's points one counted point costs past 100 (2.5: 100 points climb 40). */
+export const RAW_PER_POINT_PAST = (2 * SKILL_SOFT_CAP - SKILL_SOFT_CAP) / (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP);
+
+/** LEVEL-RAW ("show raw point to each level"): the bar in the sheet's own points - the counted span times the
+ *  mean cost of the six counted skills still climbing (1 to 100, 2.5 past it), so ~38 a level at the masteries. */
+export function onlineLevelRawPoints(entity) {
+  const { now, max } = onlineLevelPoints(entity.startingLevelUpSkillSum ?? 0, entity.currentLevelUpSkillSum ?? 0);
+  const rate = countedRate(entity);
+  return { now: Math.round(now * rate), max: Math.max(1, Math.round(max * rate)) };
+}
+
+/** The mean raw cost of a counted point over the six skills the level reads (skills.js levelUpSkillSum's choice) that
+ *  still climb - an unmastered skill at 100 waits for its mastery, so all six held there cost the mastery's 2.5. */
+function countedRate(entity) {
+  const c = entity.career, skills = entity.skills;
+  if (!c || !skills) return 1;
+  const at = (id) => ({ id, v: masterCappedSkill(entity, skills[id] ?? 0, id) });
+  const majors = (c.majorSkills ?? []).map(at).sort((x, y) => y.v - x.v).slice(0, 2);
+  const minors = (c.minorSkills ?? []).map(at).sort((x, y) => y.v - x.v).slice(0, 1);
+  const six = [...(c.primarySkills ?? []).map(at), ...majors, ...minors];
+  const climbing = six.filter(({ id, v }) => v < SKILL_SOFT_CAP || (v < 2 * SKILL_SOFT_CAP && skillCanPassCap(entity, id)));
+  if (!climbing.length) return six.some(({ v }) => v >= SKILL_SOFT_CAP) ? RAW_PER_POINT_PAST : 1;
+  return climbing.reduce((t, { v }) => t + (v < SKILL_SOFT_CAP ? 1 : RAW_PER_POINT_PAST), 0) / climbing.length;
+}
+
 /**
  * THE CONVERSION, on a save snapshot (realmCustoms.js crossLeveling runs it at every join and at customs). Moves the
  * start, the level, the stored maximum health and the owed level-up; skills, attributes and items are never touched.
@@ -80,6 +119,19 @@ export function onlineLevelConvert(snap) {
     const floor = evenHpFloor({ career: snap.career, level: earned }, snap.stats?.endurance ?? NaN);
     if (floor > 0 && Number.isFinite(snap.maxHealth) && snap.maxHealth > floor) snap.maxHealth = floor;
     if (Number.isFinite(snap.health) && Number.isFinite(snap.maxHealth) && snap.health > snap.maxHealth) snap.health = snap.maxHealth;
+    moved = true;
+  } else if (level < earned && STAT_KEYS_ORDER.every((k) => (snap.stats?.[k] ?? 0) >= MAX_STAT_VALUE)) {
+    // LEVEL-OWED ("not to those that are capped out naturaliy"): no point left to place, so the level is given here
+    snap.level = earned;
+    snap.readyToLevelUp = false;
+    snap.pendingLevel = null;
+    snap.pendingBonusPool = null;
+    const floor = evenHpFloor({ career: snap.career, level: earned }, snap.stats.endurance);
+    if (floor > 0 && Number.isFinite(snap.maxHealth) && snap.maxHealth < floor) snap.maxHealth = floor;
+    moved = true;
+  } else if (level < earned && snap.readyToLevelUp !== true) {   // LEVEL-OWED ("give the atribuit point"): the window offers it at the join
+    snap.readyToLevelUp = true;
+    snap.pendingLevel = level + 1;
     moved = true;
   }
   return moved;

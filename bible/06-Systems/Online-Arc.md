@@ -16490,7 +16490,7 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   picture is drawn off its place in the room too.
 - **THE PARTY'S LEVEL.** `roomBaseLevel`: SOFTCAP1's group reference (`mentorMode.js` `groupReferenceLevel`, the harmonic
   mean that leans to the lowest member) of the minter's own level and its party's online members' levels (their poses'
-  `cl` - `world.js` `partyMateLevels`, MENTOR MODE's own list), rounded, 1 to 100. It is fixed in the container's TERMS
+  `cl` - `world.js` `partyMateLevels`, the whole party's), rounded, 1 to 100. It is fixed in the container's TERMS
   and carried in the room's word, so no client computes it from a list that could differ from another's.
 - **THE TERMS ARE MINTED ONCE** - `g` the generation, `lv`, `n` the fight's count, `tm` the relay's clock - by the room's
   host at the container's birth: a body's at its death (`roomBodyBorn` from the one corpse door, `spawnCorpse`), a pile's
@@ -16604,7 +16604,7 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   word recomposes a body a load laid its own list on). The save still writes the lists it holds.
 
 **The four hosts.** `scenes/dungeonContext.js` WIRED (the dungeon is the only room with a world of containers);
-`scenes/world.js` hands it the party's levels (`partyLevels`, the one home MENTOR MODE reads too); `scenes/worldModes.js`
+`scenes/world.js` hands it the party's levels (`partyLevels`; MENTOR2 reads the members beside me); `scenes/worldModes.js`
 passes them through to the dungeon and leaves its interiors as WORLD5 built them - a building's shelves and containers
 are rolled at the OPEN and never shown before it, so the claim WORLD5 makes is still the first anyone sees; its treasure
 markers' piles ~~and its foes' bodies~~ are each player's own; `scenes/exterior.js` is the offline bench, with no room.

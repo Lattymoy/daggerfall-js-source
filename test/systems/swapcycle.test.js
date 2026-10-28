@@ -50,9 +50,9 @@ test('SWAP-CYCLE THE REPORT: every skill outside the class cycled through a prim
   const p = made();
   const start = p.startingLevelUpSkillSum;
   // PIN MOVED: LEVEL-45 online (2026-10-27, systems/levelClimb.js) - online the climb is shared out to 45 at the six-skill
-  // top (840), so the class's sum at 100 stands at 29 there where Daggerfall's 15 a level said 31; the law is unchanged
+  // top (800), and the class's sum at 100 stands at 31 there as Daggerfall's 15 a level says; the law is unchanged
   const ceiling = onlineLevelFor(start, 600);   // six counted skills at 100: the most the class's sum can be
-  assert.equal(ceiling, 29);
+  assert.equal(ceiling, 31);
   assert.equal(calculatePlayerLevel(start, 600), 31, 'Daggerfall\'s 15 a level, offline');
   for (const id of [...PRIMARY, ...MAJOR, ...MINOR]) train(p, id, 100);
   assert.equal(p.level, ceiling, 'every class skill at 100: the ceiling, by training alone');
