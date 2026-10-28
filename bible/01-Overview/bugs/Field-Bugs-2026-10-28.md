@@ -107,18 +107,24 @@ Puweyn. Since the audit's B5 and B2 (`0be4199e9`), the 19 and
 Puweyn's stable stand on their #1184 cells: 1,203 stand, and 55 moved. Town-Shapes section 16 lists them all. Westhead
 Moor's shipyard is not among them.
 
+FIXED AFTER (FB1028 YARDS Y1-Y3).
+- The three stables: the yards now measure the gate furniture as #1184 laid it, and the game keeps today's. Knightsgate's
+  stable stands on its #1184 cells again. Issaqumbaa's and Syra-Kom's #1184 places lie on a gate's new road, so they are
+  broken and move. 1,203 of 1,258 yards stand where #1184 stood them, 1,199 before. Naresa's Wagon Yard moved since the
+  merge, and not by the yards' law.
+- The yards also read the town ground and the ring as #1184 drew them. On the Bay this puts back three port places at
+  Wayrest and Penwall Derry. Past the Bay, 1 of 306 sampled yards moves, not 11.
+- The three street gates have a road out. Each opens onto the town's paving, and GATE-ROADS lays on to the ring. The
+  audit's probe read only the painter's tiles near the gate.
+
 OPEN.
-- Three stables are not broken but moved 1 to 4 cells, because the gate furniture now steps clear of the grown towers
-  and the yard measures read it: Knightsgate, Issaqumbaa and Syra-Kom. Holding them needs a second layout of that
-  furniture for the yards.
-- Past the Bay, the same slide leaves road arms at walls. The new town-ground mask moved yards there too: 11 of 306
-  sampled. Not fixed: to match #1184 the ring would be painted twice.
-- Three street gates have no road out: Naresa (460.9, 700.8), Akhahanu (358.7, 496.5) and Menakat (255.9, 598.9).
+- Past the Bay, the same slide leaves road arms at walls. One sampled yard (template 297's stable) still moves, and
+  neither the ground nor the ring moves it.
 - Two ground findings wait, because a fix moves the ground again: a seam drop in the edge band at Sentinel with the
   Landforms row off, and an ease that is not monotone beside tall relief.
 
 AT THE MERGE. WALL-FLICKER cut a length clear of a tower's body as the wall's width, and the grown towers left a turned
 length's face 1 to 3 cm under the tower's (Berbaaqnia, 72 m2). The cut reads the grown body now, and none is left.
 
-Tests `test/world/fb1028_walls.test.js` (15, four on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (37, every one
+Tests `test/world/fb1028_walls.test.js` (21, six on ARENA2) and `test/world/fb1028_yards_past.test.js` (1). Mutants `tools/mutants/fb1028_walls.json` (51; the first 37, every one
 dead without ARENA2: the yard law and the host's wiring run on synthetic towns).

@@ -403,7 +403,8 @@
     "old": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
     "new": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(x < 4 || wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
     "tests": [
-      "test/world/fb1028_walls.test.js"
+      "test/world/fb1028_walls.test.js",
+      "test/world/fb1028_yards_past.test.js"
     ]
   },
   {
@@ -412,7 +413,8 @@
     "old": "yardGround = townGroundMaskBefore(locationRect.shapeWas ?? locationRect.shape, ground, HEIGHTMAP_DIMENSION);",
     "new": "yardGround = mask;",
     "tests": [
-      "test/world/fb1028_walls.test.js"
+      "test/world/fb1028_walls.test.js",
+      "test/world/fb1028_yards_past.test.js"
     ]
   },
   {
@@ -421,7 +423,8 @@
     "old": "if (ring[i] && yardGround[i]) out[i] = 0;",
     "new": "if (false) out[i] = 0;",
     "tests": [
-      "test/world/fb1028_walls.test.js"
+      "test/world/fb1028_walls.test.js",
+      "test/world/fb1028_yards_past.test.js"
     ]
   },
   {
@@ -430,7 +433,8 @@
     "old": "if (ring[i] && yardGround[i]) out[i] = 0;",
     "new": "if (ring[i]) out[i] = 0;",
     "tests": [
-      "test/world/fb1028_walls.test.js"
+      "test/world/fb1028_walls.test.js",
+      "test/world/fb1028_yards_past.test.js"
     ]
   },
   {
@@ -439,7 +443,8 @@
     "old": "    if (yardGround && locationRect?.ring) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);",
     "new": "    if (false) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);",
     "tests": [
-      "test/world/fb1028_walls.test.js"
+      "test/world/fb1028_walls.test.js",
+      "test/world/fb1028_yards_past.test.js"
     ]
   },
   {
@@ -448,7 +453,8 @@
     "old": "locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);",
     "new": "locationRect.shapeWas = locationRect.shape;",
     "tests": [
-      "test/world/fb1028_walls.test.js"
+      "test/world/fb1028_walls.test.js",
+      "test/world/fb1028_yards_past.test.js"
     ]
   },
   {
@@ -457,7 +463,8 @@
     "old": "townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true)",
     "new": "townWalkShut(dfLocation, townGround, yardPaths ?? paths, true)",
     "tests": [
-      "test/world/fb1028_walls.test.js"
+      "test/world/fb1028_walls.test.js",
+      "test/world/fb1028_yards_past.test.js"
     ]
   }
 ]
