@@ -13,6 +13,7 @@ import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
 import { creatureLook } from './creatureBodies.js';   // MWNPC9: a creature foe's look, its Morrowind creature
 import { ARMOR_ENUM, WEAPONS_ENUM, equipmentVariantFor } from '../combat/enemyEquipment.js'; import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; import { MOBILE_TYPES } from './mobile/mobileTypes.js';   // MWNPC10: a roster's people, armoured and armed by their class
 import { npcHint } from './wardrobe.js';   // MWNPC17: the man under the kit his own - his head, his hair, the clothes' records
+import { folkHere, folkRace } from './provinceFolk.js';   // PROVINCE-FOLK: past the Bay a foe is one of the province's people
 import { isClassEnemyId, isClassicEnemyId } from './enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class; DEX7: a mod's person row names its own mobile
 
 /** The Iliac Bay's people, weighted - the races a class foe is drawn as (Daggerfall's own spelling, the look's). The
@@ -81,10 +82,12 @@ const pick = (list, h) => list[h % list.length];
 
 /** MWNPC10: the person a seed draws - a race of the Bay's by its weight and a face - one home for the foe's look and
  *  the roster's (rosterLook). */
-function bayPerson(h) {
+function bayPerson(h, own = false) {
   let r = mix(h ^ 0x51ed27) % RACE_TOTAL, race = FOE_RACES[0][0];
   for (const [name, w] of FOE_RACES) { if (r < w) { race = name; break; } r -= w; }
-  return { race, faceIndex: mix(h ^ 0xfa) % 10 };
+  // PROVINCE-FOLK: past the Bay a foe of the place is one of its people - every machine in the room stands there. A
+  // person of their own (ALLY-RACE, ownPerson) is drawn as themselves wherever they go.
+  return { race: (own ? null : folkRace(folkHere(), h)) ?? race, faceIndex: mix(h ^ 0xfa) % 10 };
 }
 /** MWNPC10: the clothes under what `items` already holds - a shirt, legs and shoes for each slot nothing fills, dyed
  *  off the seed (the reference's slot law: the armour shows, the clothes are under it). */
@@ -177,7 +180,7 @@ export function foeLook(f) {
   const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}:${it.variant ?? ''}:${it.ap ?? ''}`).join('|');
   if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;
   f._mwLookSeed = h;
-  const bay = bayPerson(h), faceIndex = bay.faceIndex;
+  const bay = bayPerson(h, ownPerson(f) != null), faceIndex = bay.faceIndex;
   const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? bay.race;   // MWNPC12: an orc in Morrowind's Orc body; DEX7: a mod's person in its row's race
   const gender = f.gender === 'female' ? 'female' : 'male';
   f._mwLookKey = wornKey;

@@ -305,6 +305,7 @@ import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the pl
 import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
 import { provinceByKey } from '../world/tamriel/tamrielGeography.js';   // TESA3: its name and race
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
+import { setFolkPlace } from '../characters/provinceFolk.js';   // PROVINCE-FOLK: past the Bay the foes and the standing people are the province's
 import { groundWoods, groundMaps, tamrielClimateAt, climateNeighbourIn, feltClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground; WW-R: the politic map past the Bay
 import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
 import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door; AUDIT TESA II F6: its bands' ground
@@ -18037,6 +18038,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const px = playerTravelPixel();
     return maps.getRegionIndexAt(px.x, px.y);
   }
+  setFolkPlace(_questRegionIndex);   // PROVINCE-FOLK (characters/provinceFolk.js): who stands where the player is - the room's every machine stands there
   /** TESA3 (bible/03-World/Arena-Provinces.md): THE PROVINCE PAST THE BAY - the province (world/tamriel/tamrielGeography.js: its
    *  key, its name, its race) a pixel beyond the Bay stands on (world/tamriel/tamrielLand.js provinceKeyBeyondBay: the trace's, or
    *  the authored shape's), or null: the Bay's own ground, the sea, past the Veil, the land beyond the Bay not streamed.

@@ -66,6 +66,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
 | PROVINCE-COURTS | Each province's own court and people: a Province, its named ruler, its Court and its People for each of regions 62..70 (the owner's call taken, 2026-10-26: "Every single thing here needs to be addressed. No exceptions."), read by every reader of a region's court and people; the capitals' castles their courts; a bloodline a province; a clan never a province's | BUILT (below) |
+| PROVINCE-FOLK | Each province's own people (the owner, 2026-10-28: "The world of tamriel needs to have their accurate races present within their respective regions"): its own race most of all and the others the lore puts there - the street's walkers, the living world's residents, the yards' and ports' keepers, the foes, the watch and the rosters past the Bay, and Cyrodiil's standing people as Imperials | BUILT (below) |
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | BUILT (below, 2026-10-27: a coven night and a Hollow on the Bay's lane and each province's, Cyrodiil's open zone none) |
@@ -786,6 +787,89 @@ door, as the talk host does.
 
 Section A, PROVINCE-COURTS (OURS: DFU's factions are FACTION.TXT's, and it has none past the Bay; the provinces' are the
 port's own, the Bay's to the byte).
+
+## PROVINCE-FOLK - each province its own people (BUILT, 2026-10-28)
+
+The owner: *"The world of tamriel needs to have their accurate races present within their respective regions"*. WW-R put
+each province's people in the tables (their names, their talk), but the bodies past the Bay were still the Bay's. A
+walker wore the climate's Breton, Nord or Redguard (DFU's three townsfolk races), a resident the same, a foe the Bay's
+mix, and Cyrodiil's standing people stood as Bretons. Mournhold's streets were Nords and Bretons.
+
+### The people (`characters/provinceFolk.js` PROVINCE_FOLK)
+
+| Province | Its own | The others |
+|---|---|---|
+| High Rock | Breton 82 | Redguard 5, Nord 4, Imperial 4, High Elf 3, Wood Elf 2 |
+| Hammerfell | Redguard 82 | Breton 6, Imperial 5, Khajiit 3, Nord 2, Dark Elf 2 |
+| Skyrim | Nord 84 | Imperial 5, Breton 4, Dark Elf 4, Khajiit 2, Redguard 1 |
+| Morrowind | Dark Elf 82 | Imperial 6, Argonian 4, Nord 3, Breton 3, Khajiit 2 |
+| Sumurset Isle | High Elf 92 | Wood Elf 4, Imperial 3, Breton 1 |
+| Valenwood | Wood Elf 82 | High Elf 6, Khajiit 5, Imperial 5, Breton 2 |
+| Elsweyr | Khajiit 84 | Wood Elf 6, Imperial 5, Argonian 3, Redguard 2 |
+| Black Marsh | Argonian 84 | Imperial 7, Dark Elf 5, Khajiit 2, Breton 2 |
+| Cyrodiil | Imperial 64 | Breton 6, Nord 6, Redguard 6, Dark Elf 4, Wood Elf 4, Khajiit 4, High Elf 3, Argonian 3 |
+
+Each province's own race (`tamrielGeography.js` PROVINCES; the Imperial for the Imperial Province) holds most of its
+people. The others are the neighbours, traders and garrisons the lore puts there: the Reach's Bretons and eastern
+Skyrim's Dark Elves, the Legion and the East Empire Company in Morrowind, Gideon's Imperials in Black Marsh, the Alik'r
+caravans' Khajiit. Sumurset Isle keeps to its own. Cyrodiil, the Empire's heart, holds every people. No Orcs: DFU's
+name banks hold none, and Daggerfall's orcs already stand as foes (`04-Characters/Morrowind-NPCs.md` MWNPC12).
+
+### Who reads it
+
+- **The street's walkers** (`systems/town/townPopulation.js`): past the Bay each spawn draws the walker's race first
+  (`person.folk`), on the pool's own rolls, so on the Bay RandomiseNPC draws exactly as before. The name comes from
+  their own people's bank (`folkNameBank`: an Imperial's and an Argonian's the Imperial bank, NameHelper's law). Their
+  Morrowind body is that race (`folkBodies.js folkActor`). The pool takes the town's region's people
+  (`pixelBuild.js`, `folkOfRegion`).
+- **The picture far off** (`mobilePerson.js spriteRaceOf`): Daggerfall draws townsfolk in three races. A Breton, a Nord
+  or a Redguard wears their own race's picture and talk face; every other race wears the town's (walkerRace, DFU's
+  climate law). The Morrowind body is where a Dark Elf, an Imperial or a Khajiit is drawn as one.
+- **The living world's residents** (`census.js mintResident`): the same, on a stream of their own (`lwSeed(seed,
+  'folk')`), so the rest of a resident is drawn as it was. A resident's `race` is their own race now; their picture is
+  their `archive`.
+- **The keepers** (`merchantYards.js townKeeper`): a yard's or a port's keeper past the Bay carries their `race`, named
+  from their bank; a port's hands draw theirs off the place's key, once a place (`portHost.js raceOf`). A Bay keeper's
+  record is as it was.
+- **The foes, the watch and the rosters** (`foeBodies.js`): past the Bay a foe of the place is one of its people
+  (`folkHere`: the region the world host names, `setFolkPlace(_questRegionIndex)`). Every machine in a room stands at
+  that place, so they agree. A person of their own (ALLY-RACE: a crew hand ashore, a sworn revenant) keeps their draw
+  wherever they go. A roster told its race (a resident on the road) keeps it.
+- **Cyrodiil's standing people** (`peopleBodies.js imperialHere`): the game's records keep them Breton (WW-R: DFU's Races
+  hold no Imperial), and their body is Imperial where the player stands in Cyrodiil. A named one (an Individual
+  faction) and a quest's person keep their record's race. Elsewhere past the Bay a standing person was the province's
+  race already: GetRaceFromFaction's region fallback over WW-R's table.
+- **The tavern's card regulars** (`world/card/cardRegulars.js regularLook`): a regular named from the Imperial bank is
+  the province's own people where the player stands - an Imperial in Cyrodiil, an Argonian in Black Marsh (NameHelper
+  names Argonians from that bank). They stood as Bretons; on the Bay they still do.
+
+THE FOUR HOSTS: world.js names the place, and its streets' pools (`pixelBuild.js`) carry the province's people;
+worldModes.js's buildings and dungeonContext.js's dungeons stand in the world host's page and read the place it names;
+exterior.js FLAGGED: the fixed city's bench stands the Bay alone and names no place.
+
+### What stays (recorded)
+
+- The Bay: every walker, resident, keeper and foe on the Bay is drawn as before. `folkOfRegion` answers null there, and
+  each reader keeps its old path.
+- A peer's copy of someone's companion past the Bay: the wire carries the seed alone (`ls`), so the copy is drawn from
+  the province while its owner keeps the companion's own draw. Only the body differs, and only past the Bay.
+- The talk window's oath (`%oth`) reads the region's people (`townTalk.js npcRaceNow`), not the person's.
+- Legacy's line is the eight playable races: an Imperial resident who marries in becomes a Breton (`marriage.js`'s own
+  fallback).
+
+### Pins and mutants
+
+`test/characters/provincefolk.test.js` (10): the table and its shares; the lookups; the draw and the banks; the picture;
+the street, with the Bay's draws counted; the census; the yards and the ports; the foes, the rosters and a companion;
+Cyrodiil's standing people and the tavern's regulars; the hosts' wiring. Mutants `tools/mutants/provincefolk.json`
+(29, all dead).
+
+PINS MOVED: `fb1010_regionalfolk.test.js` (the census asks walkerRace for the town's picture, `climate`),
+`ww1_world.test.js` (a resident past the Bay named from their own people's bank). Mutant records re-aimed by content (4,
+all dead): RFOLK-census-climate, WW1-census-bank, AUDIT-MERCHANT-YARDS-R1-every-keeper-a-breton,
+MWNPC7-female-variant-unread.
+
+Section A, PROVINCE-FOLK (OURS: DFU's townsfolk are one race a climate and its people stop at the Bay).
 
 ## WW-C1 - the provinces' ground (BUILT, 2026-10-24)
 

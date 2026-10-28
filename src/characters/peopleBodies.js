@@ -21,6 +21,7 @@ import { RACES } from '../systems/races.js';
 import { SOCIAL_GROUPS, GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { isNpcFlat } from '../world/npcFlatArchives.js';   // STALL-FLATS: RDBLayout.NPCFlatArchives, the people's pictures
 import { dressPerson } from './wardrobe.js';   // MWNPC17: the wardrobe's roles
+import { nativeHere } from './provinceFolk.js';   // PROVINCE-FOLK: Cyrodiil's people in their own body
 
 const RACE_NAME = Object.freeze(Object.fromEntries(Object.entries(RACES).map(([k, v]) => [v, k])));
 
@@ -79,7 +80,7 @@ export function personLook(pn, data, faction) {
   // no person's archive, so this one law keeps the marker's sprite-less flat bodiless too.
   if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);
   const kind = wardrobeOf(faction);
-  const race = RACE_NAME[data.race];
+  const race = data.questPerson || faction?.type === FACTION_TYPES.Individual ? RACE_NAME[data.race] : imperialHere(RACE_NAME[data.race]);   // PROVINCE-FOLK: a named one and a quest's keep their record's
   if (kind === 'none' || !race) return (pn._mwLook = null);
   const gender = data.gender === GENDERS.Female ? 'female' : 'male';
   const seed = mix((data.nameSeed | 0) ^ mix(data.hash | 0));
@@ -113,8 +114,11 @@ export function figureLook(fig, ctx = null) {
   if (!gender) return (fig._mwLook = null);
   const seed = textSeed(`decor:${piece.id}`);
   const d = dressPerson({ role: figureRole(row.caption), gender, seed });
-  return (fig._mwLook = { race: raceNameOf(ctx?.race ?? null), gender, faceIndex: seed % 10, items: d.items, npc: d.npc });
+  return (fig._mwLook = { race: imperialHere(raceNameOf(ctx?.race ?? null)), gender, faceIndex: seed % 10, items: d.items, npc: d.npc });
 }
+/** PROVINCE-FOLK (bible/03-World/World-Wide.md): Cyrodiil's people are Bretons in the game's records (WW-R - DFU's races
+ *  hold no Imperial) and Imperials in their body, where the player stands in Cyrodiil. @param {string|undefined} race */
+export const imperialHere = (race) => (race === 'Breton' && nativeHere() === 'Imperial' ? 'Imperial' : race);
 /** MWNPC18: TEXTURE.175, the Daedra Princes as their quests summon them - never a person's body. */
 export const DAEDRA_PRINCES_ARCHIVE = 175;
 /** MWNPC18: a race the host names (a RACES id, or a name) as the look spells it - the Bay's Breton when it names none. */

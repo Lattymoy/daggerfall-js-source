@@ -25,6 +25,7 @@ import { hideoutsOf } from '../../../src/systems/livingWorld/outlaws.js';
 import { roadBound } from '../../../src/systems/livingWorld/trips.js';
 import { mintResident, residentName } from '../../../src/systems/livingWorld/census.js';
 import { lwSeed } from '../../../src/systems/livingWorld/seed.js';
+import { folkNameBank, PROVINCE_FOLK } from '../../../src/characters/provinceFolk.js';   // PROVINCE-FOLK: a resident's own people's bank
 import { GENDERS } from '../../../src/characters/nameHelper.js';
 import { createDryGround } from '../../../src/world/dryGround.js';
 import { codeOnly } from '../../codeOnly.mjs';
@@ -300,14 +301,21 @@ test('WW1 the living world groups by AREA: a patrol keeps its own (a region on t
   assert.ok(bays >= 40 && beyonds >= 40 && borders >= 40, `every area's band stood (${bays}, ${beyonds}, ${borders})`);
 });
 
-test('WW1 a resident past the Bay is named from its area\'s people - a Nord of Skyrim\'s district by the Nord bank - and one of the Bay by its region\'s, as before (mutants: the census\'s bank)', () => {
+// PIN MOVED (PROVINCE-FOLK, bible/03-World/World-Wide.md): a resident of Skyrim's district is one of Skyrim's people, named
+// from their own people's bank - a Nord's the Nord bank, an Imperial among them the Imperial bank.
+test('WW1 a resident past the Bay is named from its area\'s people - a Nord of Skyrim\'s district by the Nord bank, PROVINCE-FOLK: one of its other people by their own - and one of the Bay by its region\'s, as before (mutants: the census\'s bank)', () => {
   const skyrim = areaOfDistrict(THEATRE_KEYS.indexOf('Skyrim'), 90, 70);
   const town = { mapId: 7001, px: 1600, py: -400, type: 0, region: -1, area: skyrim, people: 0, blocks: 9 };
-  for (let slot = 0; slot < 6; slot++) {
+  const races = new Set();
+  for (let slot = 0; slot < 40; slot++) {
     const res = mintResident(town, 'h', slot, 'townsperson');
     const seed = lwSeed(7001, 'h'.charCodeAt(0), slot);
-    assert.equal(res.name, residentName(seed ^ 0x5eed1e55, BANK_TYPES.Nord, res.gender === GENDERS.Female ? GENDERS.Female : GENDERS.Male));
+    races.add(res.race);
+    assert.ok(PROVINCE_FOLK.Skyrim.some(([r]) => r === res.race), res.race);
+    assert.equal(res.name, residentName(seed ^ 0x5eed1e55, folkNameBank(res.race), res.gender === GENDERS.Female ? GENDERS.Female : GENDERS.Male));
+    if (res.race === 'Nord') assert.equal(folkNameBank(res.race), BANK_TYPES.Nord);
   }
+  assert.ok(races.has('Nord') && races.size > 1, `Skyrim's own and its others: ${[...races]}`);
   const bay = { mapId: 7002, px: 300, py: 200, type: 0, region: 20, area: 20, people: 2, blocks: 9 };
   const res = mintResident(bay, 'h', 0, 'townsperson');
   assert.equal(res.name, residentName(lwSeed(7002, 'h'.charCodeAt(0), 0) ^ 0x5eed1e55, getNameBankOfRegion(20), res.gender));

@@ -38,6 +38,7 @@
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
 import { residentName } from './livingWorld/census.js';
+import { folkOfRegion, folkRace, folkNameBank } from '../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { setItemFields, mintCondition, TRANSPORT_HORSE } from './item/itemTemplates.js';
 import { WAGON_KIND_ORDER, newWagonItem, isWagonItem } from './wagon/wagonKinds.js';
 import { birthHorses } from './horse/horseCoats.js';   // STEED1: the stable's horses born at the yard
@@ -147,8 +148,9 @@ export const yardSeed = (mapId, kind) => townSeed(mapId, YARD_KINDS[validYardKin
 export function townKeeper(seed, regionIndex) {
   const female = ((seed >>> 7) & 1) === 1;
   const gender = female ? GENDERS.Female : GENDERS.Male;
-  const name = residentName(seed, getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender);
-  return { name, gender, sex: female ? 'female' : 'male', variant: (seed >>> 11) & 3 };
+  const race = folkRace(folkOfRegion(regionIndex), seed ^ 0x666f6c6b);   // PROVINCE-FOLK: past the Bay one of the province's people, named from their own bank
+  const name = residentName(seed, race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender);
+  return { name, gender, sex: female ? 'female' : 'male', variant: (seed >>> 11) & 3, ...(race ? { race } : {}) };
 }
 /**
  * A yard's keeper, on the yard's seed (townKeeper's draw). Pure.

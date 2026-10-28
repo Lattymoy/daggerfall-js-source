@@ -14,8 +14,9 @@
 import { BANK_TYPES } from '../../characters/nameHelper.js';
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
 import { seatTopByte } from '../../player/seatPose.js';
+import { nativeHere } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK: the Imperial bank's people where the player stands
 
-/** The races a name bank stands for (the Imperial bank's people are drawn as Bretons - the bay's own). */
+/** The races a name bank stands for (the Imperial bank's people are drawn as Bretons on the Bay - past it, the province's own). */
 const RACE_OF_BANK = Object.freeze({
   [BANK_TYPES.Breton]: 'Breton', [BANK_TYPES.Redguard]: 'Redguard', [BANK_TYPES.Nord]: 'Nord', [BANK_TYPES.DarkElf]: 'DarkElf',
   [BANK_TYPES.HighElf]: 'HighElf', [BANK_TYPES.WoodElf]: 'WoodElf', [BANK_TYPES.Khajiit]: 'Khajiit', [BANK_TYPES.Imperial]: 'Breton',
@@ -57,7 +58,8 @@ export function regularLook(seed, bank, gender) {
   if (female && r() < 0.35) put(pick(r, REGULAR_CLOTHES.female.gown), EQUIP_SLOTS.ChestClothes);
   else { put(pick(r, kit.chest), EQUIP_SLOTS.ChestClothes); put(pick(r, kit.legs), EQUIP_SLOTS.LegsClothes); }
   put(pick(r, kit.feet), EQUIP_SLOTS.Feet);
-  return { race: RACE_OF_BANK[bank] ?? 'Breton', gender: female ? 'female' : 'male', faceIndex: Math.floor(r() * REGULAR_FACES), items };
+  const race = (bank === BANK_TYPES.Imperial ? nativeHere() : null) ?? RACE_OF_BANK[bank] ?? 'Breton';   // PROVINCE-FOLK: Cyrodiil's Imperials and Black Marsh's Argonians, both named from that bank
+  return { race, gender: female ? 'female' : 'male', faceIndex: Math.floor(r() * REGULAR_FACES), items };
 }
 
 /**

@@ -16,7 +16,8 @@
 //
 // Slot ids are the town's and the slot's: `L<mapId>.<slot>` for a household, `L<mapId>.t<slot>` for a traveller,
 // `L<mapId>.w<slot>` for the watch - the same person for every reader, the key a relation is saved under (relations.js).
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace } from '../../characters/mobile/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace, spriteRaceOf } from '../../characters/mobile/mobilePerson.js';
+import { folkOfArea, folkOfRegion, folkRace, folkNameBank } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK
 import { fullName, GENDERS } from '../../characters/nameHelper.js';
 import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's bank on the Bay
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
@@ -118,13 +119,18 @@ export function mintResident(town, roll, slot, job, at = {}) {
   const gen = at.gen ?? null;
   const seed = gen == null ? lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot) : lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot, 0x67656e, gen);   // 'gen'
   const rng = seededRng(seed);
-  const race = walkerRace(town.people, town.area ?? town.region);   // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)
+  const climate = walkerRace(town.people, town.area ?? town.region);   // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)
+  // PROVINCE-FOLK: past the Bay a resident is one of the province's people, on a stream of their own (the rest of them
+  // is drawn as it was); their picture their race's where Daggerfall draws one, else the town's
+  const people = town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1);
+  const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate;   // 'folk'
+  const sprite = spriteRaceOf(race, climate);
   const guard = job === 'guard';
   const female = !guard && rng() < 0.5;
-  const tables = PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton;
+  const tables = PERSON_TEXTURES[sprite] ?? PERSON_TEXTURES.Breton;
   const set = female ? tables.female : tables.male;
   const variant = guard ? 0 : Math.floor(rng() * set.length);
-  const faces = PERSON_FACE_RECORDS[race] ?? PERSON_FACE_RECORDS.Breton;
+  const faces = PERSON_FACE_RECORDS[sprite] ?? PERSON_FACE_RECORDS.Breton;
   const face = (female ? faces.female : faces.male)[variant] + Math.floor(rng() * NUM_PERSON_FACE_VARIANTS);
   const gender = female ? GENDERS.Female : GENDERS.Male;
   const w = TEMPER_OF[/** @type {keyof typeof TEMPER_OF} */ (job)] ?? DEFAULT_TEMPER;
@@ -142,7 +148,7 @@ export function mintResident(town, roll, slot, job, at = {}) {
   return {
     id: `L${town.mapId >>> 0}.${roll === 'h' ? '' : roll}${slot}${gen == null ? '' : `~${gen}`}`,
     town: town.mapId >>> 0, slot, roll,
-    name: residentName(seed ^ 0x5eed1e55, nameBankOfArea(town.area ?? town.region ?? -1), gender),   // WW1: the area's people - the region's bank on the Bay, the province's past it
+    name: residentName(seed ^ 0x5eed1e55, people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1), gender),   // WW1: the region's bank on the Bay; PROVINCE-FOLK: past it their own people's
     gender, sex: female ? 'female' : 'male', race, variant,
     archive: guard ? GUARD_TEXTURE : set[variant], face, guard, job,
     // WATCH-DAY: a watchman's own clothes, for off duty - one of his people's outfits, drawn on its own stream so the
