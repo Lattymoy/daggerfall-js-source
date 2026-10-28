@@ -21,7 +21,9 @@ export function createCsaAudio(host) {
           let node = _csaSourceNodes.get(src);
           if (!node) { node = csaNodeOf(boat.GameObject, src); if (node) _csaSourceNodes.set(src, node); }
           let ch = _csaLoops.get(src);
-          if (!src.isPlaying || !node?.activeInHierarchy) { if (ch) { ch.handle?.stop(); _csaLoops.delete(src); } continue; }
+          // AUDIT HELM-SIGHT A4: a boat whose helm is held from another pixel (a party's landing pending) stays in sight
+          // for her sails' sake, and is not heard from there
+          if (!src.isPlaying || !node?.activeInHierarchy || boat.helmAfar) { if (ch) { ch.handle?.stop(); _csaLoops.delete(src); } continue; }
           seen.add(src);
           if (ch && ch.plays !== src.plays) { ch.handle?.stop(); _csaLoops.delete(src); ch = null; }   // AudioSource.Play: from the clip's start
           if (!ch) { ch = { plays: src.plays, handle: null }; _csaLoops.set(src, ch); csaSounds(); }
