@@ -743,8 +743,8 @@
   {
     "name": "RVN5-stand-unstamped",
     "file": "src/systems/revenant/revenant.js",
-    "old": "sigBlow: signatureStamp(r), person: revenantPerson(r), dread",
-    "new": "sigBlow: null, person: revenantPerson(r), dread",
+    "old": "sigBlow: signatureStamp(r), person: revenantPerson(r), race: r.race ?? null, dread",
+    "new": "sigBlow: null, person: revenantPerson(r), race: r.race ?? null, dread",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]

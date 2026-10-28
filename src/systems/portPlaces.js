@@ -91,7 +91,7 @@ export const lettersOnMap = (buildingKey) => !UNLETTERED.has(buildingKey);
 
 /** A place's keeper: townKeeper's draw on the town's map id and the place's salt. Pure.
  *  @param {number} mapId @param {string} place @param {number} regionIndex */
-export const portKeeper = (mapId, place, regionIndex) => townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex);
+export const portKeeper = (mapId, place, regionIndex, people = undefined) => townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex, people);
 
 /**
  * A place's name: the shipyard and the crew hall after their keepers ("Halbrecht's Shipyard", "Voss's Crew Hall"), the

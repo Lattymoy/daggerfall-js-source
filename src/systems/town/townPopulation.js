@@ -13,9 +13,10 @@
 // people (the scene passes the tables); the guard crime RESPONSE
 // pends the crime system (they spawn and walk now).
 
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, MobilePerson } from '../../characters/mobile/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, MobilePerson, spriteRaceOf } from '../../characters/mobile/mobilePerson.js';
 import { NAV_CELL } from '../../world/city/cityNavigation.js';
 import { fullName, getNameBank, GENDERS } from '../../characters/nameHelper.js';
+import { folkRace, folkNameBank } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK: past the Bay, each walker one of the province's people
 
 export const POP_TICKS_PER_SECOND = 10;
 export const POP_PER_16_BLOCKS = 24;           // populationIndexPer16Blocks
@@ -46,7 +47,7 @@ export class TownPopulation {
    * @param opts { totalBlocks, race, makePerson(archive, guard) ->
    *   MobilePerson (the scene owns textures/collider/ground), rand }
    */
-  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, makePerson, rand = Math.random, suppressSpawns = () => false } = {}) {
+  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, folk = null, makePerson, rand = Math.random, suppressSpawns = () => false } = {}) {
     // V4: PopulationManager.cs:174-176 - a racial override can
     // suppress population (the transformed lycanthrope); the gate
     // holds the PROMOTE arm (:186-191), so pending walkers wait and
@@ -59,6 +60,7 @@ export class TownPopulation {
     // billboard race (the climate's, or REGIONAL-FOLK's Redguard region's -
     // characters/mobile/mobilePerson.js walkerRace); null falls back to the race bank.
     this.nameBank = nameBank;
+    this.folk = folk;   // PROVINCE-FOLK: the province's people past the Bay (characters/provinceFolk.js), null on the Bay
     this.makePerson = makePerson;
     this.rand = rand;
     this.maxPopulation = maxPopulationFor(totalBlocks);
@@ -89,22 +91,27 @@ export class TownPopulation {
    *  same split DFU has between UnityEngine.Random and DFRandom - so
    *  the RandomiseNPC roll stream is untouched. */
   _randomiseNPC(person) {
-    const bank = this.nameBank ?? getNameBank(this.race);
+    // PROVINCE-FOLK: past the Bay a walker is one of the province's people - their body, their name's bank and, where
+    // Daggerfall draws their race, their picture. Drawn only there, so the Bay's stream is RandomiseNPC's own.
+    const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;
+    const sprite = spriteRaceOf(own, this.race);
+    person.folk = own ?? this.race;
+    const bank = own ? folkNameBank(own) : (this.nameBank ?? getNameBank(this.race));
     if (Math.floor(this.rand() * GUARD_CHANCE_DENOM) === 0) {
       person.setIdentity(GUARD_TEXTURE, true);
       person.gender = GENDERS.Male;
       person.nameNPC = fullName(bank, GENDERS.Male);
-      this._setFaceRecord(person, GENDERS.Male, 0);   // the guard arm is personOutfitVariant 0 (:147-149)
+      this._setFaceRecord(person, GENDERS.Male, 0, sprite);   // the guard arm is personOutfitVariant 0 (:147-149)
       return;
     }
-    const tables = PERSON_TEXTURES[this.race] ?? PERSON_TEXTURES.Breton;
+    const tables = PERSON_TEXTURES[sprite] ?? PERSON_TEXTURES.Breton;
     const female = Math.floor(this.rand() * 2) === 1;
     const genderTable = female ? tables.female : tables.male;
     const variant = Math.floor(this.rand() * genderTable.length);   // personOutfitVariant
     person.setIdentity(genderTable[variant], false);
     person.gender = female ? GENDERS.Female : GENDERS.Male;
     person.nameNPC = fullName(bank, person.gender);
-    this._setFaceRecord(person, person.gender, variant);
+    this._setFaceRecord(person, person.gender, variant, sprite);
   }
 
   /** ROAD-D D10 - SetPerson's tail (MobilePersonNPC.cs:218-224): the
@@ -115,8 +122,8 @@ export class TownPopulation {
    *  - the name rides DFRandom, so the two streams never interleave.
    *  Nothing minted this before, so every mobile conversation showed
    *  the talk window's empty portrait frame. */
-  _setFaceRecord(person, gender, variant) {
-    const faces = PERSON_FACE_RECORDS[this.race] ?? PERSON_FACE_RECORDS.Breton;
+  _setFaceRecord(person, gender, variant, race = this.race) {
+    const faces = PERSON_FACE_RECORDS[race] ?? PERSON_FACE_RECORDS.Breton;
     const table = gender === GENDERS.Female ? faces.female : faces.male;
     person.personFaceRecordId = table[variant] + Math.floor(this.rand() * NUM_PERSON_FACE_VARIANTS);
   }
