@@ -36,6 +36,7 @@ import { getBool } from './settings/settings.js';   // RRI2: InstantRepairs pick
 import { conditionBasedPricesOn, conditionRepairCostBase } from './roleplayRealismItems/rriRealism.js';   // RRI2: the CalculateItemRepairCost override
 import { localizedText } from './textManager.js';   // L10N3d: the refusal, the interrupt box, the label
 import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a ticket names the smith's town and its layout
+import { spendOwnMends } from './item/foundMark.js';   // RPT1026-LEDGERLAW: a paid repair spends what wear took of a found piece's own mends
 
 /** CalculateItemRepairCost (:1901-1922): free at full condition; ten
  *  percent of the item's base value floored at 1, through the shop's
@@ -188,9 +189,22 @@ export function repairJobsAt(entity, buildingKey, nowMinutes, mapId = null) {
   const out = [];
   for (const item of entity.otherItems ?? []) {
     if (!isBeingRepaired(item) || isBeingRepairedAt(item, buildingKey, mapId)) out.push(item);
-    if (isRepairFinished(item, nowMinutes)) item.currentCondition = item.maxCondition;
+    if (isRepairFinished(item, nowMinutes)) repairWhole(item);
   }
   return out;
+}
+
+/** A SMITH'S PAID REPAIR, DONE - DFU's whole restore (`currentCondition = maxCondition`: the InstantRepairs arm of
+ *  ConfirmTrade, DaggerfallTradeWindow.cs:1062-1065, and a finished job's in FilterRemoteItems, DaggerfallTradeWindow.cs:705-728).
+ *  RPT1026-LEDGERLAW: a found piece's own mends are spent to what it held above its mark first (item/foundMark.js
+ *  spendOwnMends) - a paid repair is worth nothing at a sale, and returns nothing wear spent. Every paid repair restores
+ *  through here: this module's finished job, and the host's two InstantRepairs arms (scenes/worldModes.js - the counter's
+ *  and the keyed flow's).
+ * @param {any} item @returns {any} the item */
+export function repairWhole(item) {
+  spendOwnMends(item);
+  item.currentCondition = item.maxCondition;
+  return item;
 }
 
 /** UXB1-K (2026-09-25, the UX backlog: "Countdown timer/estimate for repairs when not instant."): WHEN A JOB IS READY.

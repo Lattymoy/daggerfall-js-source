@@ -432,7 +432,8 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
     raceName.textContent = [m.crown.race, m.crown.career].filter(Boolean).join(' ');
     levelJump.textContent = crownTitle(m.crown);
     levelFill.style.width = `${m.progress.max > 0 ? Math.max(0, Math.min(100, (m.progress.now / m.progress.max) * 100)) : 0}%`;
-    levelNote.textContent = t('levelup.progress.bar', '{label}: {now}/{max}', { label: m.progress.label, now: m.progress.now, max: m.progress.max })
+    levelNote.textContent = m.progress.cap ? m.progress.label   // AUDIT FB1026d II C3: "Highest level reached", never its 1/1
+      : t('levelup.progress.bar', '{label}: {now}/{max}', { label: m.progress.label, now: m.progress.now, max: m.progress.max })
       + (m.progress.carried > 0 ? ` · ${t('levelup.progress.carried', '{n} carried over', { n: m.progress.carried })}` : '');
 
     plateCount.textContent = String(m.pool);
@@ -523,7 +524,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
       const sk = ribbonRows[ribbonAt];
       const g = el('span', 'g', sk.group);
       skRole.textContent = '';
-      skRole.append(g, document.createTextNode(` · ${sk.note}`));
+      skRole.append(g, document.createTextNode(sk.note ? ` · ${sk.note}` : ''));   // AUDIT FB1026d II C3: no note at the cap
     } else {
       skRole.textContent = '';
     }

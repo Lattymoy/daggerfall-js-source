@@ -542,7 +542,8 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
 
   if (path === '/v1/staff/trade-unhold') {
     // review.js `clear`: the hold lifted with its strikes and timed holds, the standing finding EXCUSED (the same signature
-    // holds nothing again) and the allowance refilled - the answer says all of it (design doc weak spots: "Unfreeze trade
+    // over the same values holds nothing again - RPT1026-LEDGERLAW, verdict.js lawExcused) and the allowance refilled - the
+    // answer says all of it (design doc weak spots: "Unfreeze trade
     // also excuses the finding and refills the allowance, so its button says so")
     const note = noteOf(body.note);
     const r = await reviewAct(c, me, env, 'clear', { id: row.id, note });

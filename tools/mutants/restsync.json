@@ -112,7 +112,7 @@
   {
     "name": "RESTSYNC-no-frame-lists-them-whole",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (full && n === shared.length) frame.xf = 1;",
+    "old": "    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;",
     "new": "",
     "tests": [
       "test/net/restsync.test.js"
@@ -121,8 +121,8 @@
   {
     "name": "RESTSYNC-a-shed-frame-lists-them-whole",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (full && n === shared.length) frame.xf = 1;",
-    "new": "    if (full) frame.xf = 1;",
+    "old": "    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;",
+    "new": "    if (full) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;",
     "tests": [
       "test/net/restsync.test.js"
     ]
@@ -148,7 +148,7 @@
   {
     "name": "RESTSYNC-bodies-before-the-standing",
     "file": "src/scenes/dungeonContext.js",
-    "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))) {",
+    "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))) {",
     "new": ") {",
     "tests": [
       "test/net/restsync.test.js"
@@ -166,7 +166,7 @@
   {
     "name": "RESTSYNC-the-joiner-hears-none",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === 1);   // REST-SYNC\n",
+    "old": "    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === XF_WHOLE || data.xf === XF_STANDING ? data.xf : 0);   // REST-SYNC; RPT1026-ITEMS BODY-CAP: 2, whole for the standing\n",
     "new": "",
     "tests": [
       "test/net/restsync.test.js"

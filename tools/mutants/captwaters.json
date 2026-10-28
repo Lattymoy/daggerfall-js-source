@@ -137,11 +137,12 @@
   {
     "name": "CW-host-entry",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "region, deep: !!spec.deep, ether,",
-    "new": "region, deep: false, ether,",
+    "old": "region, area, deep: !!spec.deep, ether,",
+    "new": "region, area, deep: false, ether,",
     "tests": [
       "test/systems/naval/captwaters.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-8): the entry keeps the area her names were drawn in."
   },
   {
     "name": "CW-host-hold",

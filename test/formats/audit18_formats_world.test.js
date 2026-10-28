@@ -54,16 +54,18 @@ const blocksFile = () => {
 
 test('audit18: ruler-title table is the whole GetRulerTitle switch', () => {
   // MacroHelper.cs:368-399, case for case.
+  // PIN MOVED (PROVINCE-COURTS, bible/03-World/World-Wide.md): the port's four titles after DFU's twelve (High King,
+  // High Queen, Emperor, Empress - the provinces' rulers past the Bay); the switch's twelve and its default unchanged
   assert.deepEqual({ ...RULER_TITLES }, {
     1: 'King', 2: 'Queen', 3: 'Duke', 4: 'Duchess', 5: 'Marquis',
     6: 'Marquise', 7: 'Count', 8: 'Countess', 9: 'Baron', 10: 'Baroness',
-    11: 'Lord', 12: 'Lady',
+    11: 'Lord', 12: 'Lady', 13: 'High King', 14: 'High Queen', 15: 'Emperor', 16: 'Empress',
   });
   // 12 -> Lady is the row that was missing; 11/13/0 -> Lord is what stops
   // the wrong "fix" of flipping the default to Lady.
   assert.equal(rulerTitle(12), 'Lady');
   assert.equal(rulerTitle(11), 'Lord');
-  assert.equal(rulerTitle(13), 'Lord');
+  assert.equal(rulerTitle(17), 'Lord');   // PIN MOVED (PROVINCE-COURTS): past the port's four, 13 the High King's
   assert.equal(rulerTitle(0), 'Lord');
 });
 

@@ -431,7 +431,10 @@ test('LW4 the road shows its trouble: a beset party in its ring FIGHT_RING_N fac
 
 test('LW4 the streaming host: the trouble\'s world (the climate at the place, the campers\' themed group at the party\'s level, a class foe at the party\'s, the lives at each member\'s own cycle, the character\'s won and lost); the trip world\'s holders, fates and trouble through books made again at each turn of fate; the town\'s holders, away windows by the holder and news; the foe\'s word on the marks; a beset party\'s mark in the bands\' red (mutants: each seam)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /: rollGroupComposition\(\{ climateIndex, skyMinutes: minute, inLocationRect: false, playerLevel: level, size \}, rolls\)\?\.mobileTypes \?\? null\),/, 'on the land, the campers\' themed group');
+  // PIN MOVED (BAY-LEFT-GROUND): the host's lambda left for its own module (scenes/livingWorld/troubleFoes.js, the roads'
+  // harness's producer too), and it rolls the group on the land's own wild where the trouble falls - past the Bay its zone's
+  assert.match(w, /foesOf: troubleFoesOf\(\{ faunaAt: \(x, y\) => maps\.getFaunaBand\?\.\(x, y\) \}\),/, 'the host\'s trouble world: the land\'s group, on its own wild');
+  assert.match(rd('src/scenes/livingWorld/troubleFoes.js'), /: rollGroupComposition\(\{ climateIndex, fauna: px != null && py != null \? faunaAt\(px, py\) : null, skyMinutes: minute, inLocationRect: false, playerLevel: level, size \}, rolls\)\?\.mobileTypes \?\? null\);/, 'on the land, the campers\' themed group');
   assert.match(w, /foeLevel: enemyLevelOf,/, 'a foe at its kind\'s level - the enemy table\'s law, the harness\'s own (HOST-SPLIT, at DEX\'s merge)');   // PIN MOVED: the lambda left the host for enemyBasics.js
   assert.equal(enemyLevelOf(4, 9), ENEMY_BASICS[4].level, 'a monster at its row\'s level (MobileEnemy.Level, EnemyEntity.cs:284)');
   assert.equal(enemyLevelOf(141, 9), 9, 'a class at the level handed - the party\'s (EnemyEntity.cs:299)');

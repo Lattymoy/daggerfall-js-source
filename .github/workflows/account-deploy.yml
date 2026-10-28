@@ -86,11 +86,14 @@ on:
       - "src/net/repairLaw.js"
       - "src/systems/crimeGuilds.js"
       - "src/net/hallLaw.js"
+      - "src/net/castleLaw.js"
+      - "src/net/domainLaw.js"
       - "src/net/heraldryLaw.js"
       - "src/net/townSeatLaw.js"
       - "src/net/townEconLaw.js"
       - "src/net/tideLaw.js"
       - "src/net/fortLaw.js"
+      - "src/net/seatGiftLaw.js"
       - "src/net/watchReceipt.js"
       - "src/net/marksLaw.js"
       - "src/net/motherlodeLaw.js"
@@ -99,7 +102,11 @@ on:
       - "src/net/firmament/firmamentLaw.js"
       - "src/net/firmament/firmamentTree.js"
       - "src/net/questlineClaims.js"
+      - "src/net/huntLaw.js"
+      - "src/systems/bounty/bountyBoard.js"
+      - "src/net/trophyLaw.js"
       - "src/net/nodeLaw.js"
+      - "src/net/provinceNodes.js"
       - "src/world/ethericSea.js"
       - "src/world/jungle/banthaArea.js"
       - "src/net/skyLaw.js"
@@ -107,6 +114,7 @@ on:
       - "src/net/busyLaw.js"
       - "src/net/recipeLaw.js"
       - "src/net/productRecord.js"
+      - "src/net/masterLaw.js"
       - "src/net/marketLaw.js"
       - "src/net/vendorLaw.js"
       - "src/net/patronLaw.js"
@@ -149,7 +157,10 @@ on:
       - "src/net/sea/seaBountyLaw.js"
       - "src/net/sea/seaSeasonLaw.js"
       - "src/net/sea/seaPrizeLaw.js"
+      - "src/net/crewSignLaw.js"
       - "src/systems/wild/wildDropLaw.js"
+      - "src/systems/wild/wildInsureLaw.js"
+      - "src/systems/wild/wildStoreLock.js"
       - "src/systems/wild/wildLeaf.js"
       - "src/systems/item/itemKinds.js"
       - "src/net/gate/gateMods.js"
@@ -169,6 +180,7 @@ on:
       - "src/systems/mathf.js"
       - "src/net/card/cardWorthLaw.js"
       - "src/net/realm/realmTradeLaw.js"
+      - "src/net/appearanceLaw.js"
       - "src/net/bagLaw.js"
       - "src/net/guild/guildVaultLaw.js"
       - "src/net/canon.js"
@@ -211,6 +223,7 @@ on:
       - "src/net/eliteGates/egStartLaw.js"
       - "src/net/superDungeon/sdMarks.js"
       - "src/net/postLaw.js"
+      - "src/net/shopLaw.js"
       - "src/net/lostLaw.js"
       - "src/systems/superDungeon/sdSpoils.js"
       - "src/systems/eliteGates/egSpoils.js"
@@ -341,6 +354,7 @@ on:
       - "src/systems/nearbyObjects.js"
       - "src/systems/online/onlineLane.js"
       - "src/systems/pageQuery.js"
+      - "src/systems/powerCeiling.js"
       - "src/systems/professions/profTemplates.js"
       - "src/systems/races.js"
       - "src/systems/racialLive.js"
@@ -356,6 +370,7 @@ on:
       - "src/systems/sigil/sigil.js"
       - "src/systems/sigil/sigilBroker.js"
       - "src/systems/sigil/sigilSets.js"
+      - "src/systems/sigil/setReach.js"
       - "src/systems/skillSoftcap.js"
       - "src/systems/skills.js"
       - "src/systems/soundClips.js"
@@ -385,7 +400,9 @@ on:
       - "src/systems/walletItem.js"
       - "src/systems/upkeep/upkeepItemRows.js"
       - "src/systems/upkeep/upkeepTiers.js"
+      - "src/world/blockHash.js"
       - "src/world/buildingNames.js"
+      - "src/world/capitalLane.js"
       - "src/world/meshReader.js"
       - "src/world/perlin.js"
       - "src/world/puddleDry.js"
@@ -396,6 +413,7 @@ on:
       - "src/world/terrain/terrainSampler.js"
       - "src/world/terrain/terrainSurface.js"
       - "src/world/terrain/terrainTiles.js"
+      - "src/world/townShape.js"
       - "src/world/water/waterCorners.js"
       - "src/world/weather.js"
       - "src/systems/party/partyScale.js"
@@ -930,6 +948,33 @@ jobs:
             echo "- webhook secret: $([ -n "${PATREON_WEBHOOK_SECRET}" ] && echo put || echo 'not set - pledges are not followed')"
             echo "- the Patreon client's redirect URI: \`$base/v1/patreon/callback\`"
             echo "- the Patreon webhook's URL: \`$base/v1/patreon/webhook\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 4d. THE SHOP'S TWO STRIPE SECRETS, WHERE THE REPOSITORY HAS THEM ──
+      #
+      # SHOP (bible/06-Systems/Shop.md): Stripe takes the money on its own page, and the service needs the two things only
+      # Stripe and the owner hold - the API's secret key (to open a checkout) and the webhook endpoint's signing secret
+      # (to believe Stripe's word on a payment). Put on EVERY deploy, Patreon's way, through one pipe so neither value is
+      # echoed. An unset one is not an error: the shop stays closed (shop.js shopOn). The summary names the webhook's URL.
+      - name: Put the Stripe secrets, where the repository has them
+        working-directory: server-account
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          if [ -z "${STRIPE_SECRET_KEY}" ] && [ -z "${STRIPE_WEBHOOK_SECRET}" ]; then
+            echo "neither STRIPE_SECRET_KEY nor STRIPE_WEBHOOK_SECRET is set for this repository - the shop stays closed"
+          else
+            jq -n 'env | {STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+          fi
+          {
+            echo "### The shop"
+            echo ""
+            echo "- Stripe secret key: $([ -n "${STRIPE_SECRET_KEY}" ] && echo put || echo 'not set - the shop is closed')"
+            echo "- Stripe webhook secret: $([ -n "${STRIPE_WEBHOOK_SECRET}" ] && echo put || echo 'not set - the shop is closed')"
+            echo "- the Stripe webhook endpoint's URL: \`$base/v1/shop/webhook\` (events: checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created, charge.dispute.closed)"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's

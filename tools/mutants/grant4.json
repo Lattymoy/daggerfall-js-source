@@ -153,7 +153,7 @@
   {
     "name": "GRANT4-watch-grant-any-species",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';",
+    "old": "  if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';",
     "new": "",
     "why": "a watch grant stands a monster",
     "tests": [
@@ -204,8 +204,8 @@
   {
     "name": "GRANT4-carry-out-of-room-client",
     "file": "src/scenes/grantHost.js",
-    "old": "g.q !== room && isCellRoom(g.q));",
-    "new": "g.q !== room);",
+    "old": "g.q !== room && isCellRoom(g.q) && grantPixelReadBack(g, worldOk()));",
+    "new": "g.q !== room && grantPixelReadBack(g, worldOk()));",
     "why": "a room's grants carried into a cell",
     "tests": [
       "test/scenes/grant4_lanes.test.js"
@@ -314,8 +314,8 @@
   {
     "name": "GRANT8-reader-unchecked",
     "file": "src/scenes/grantHost.js",
-    "old": "      if (r.t !== grantSpecies(gr, i, c, false) && r.t !== grantSpecies(gr, i, c, true)) return 'dice';",
-    "new": "      void c; void i;",
+    "old": "    if (r.t !== grantSpecies(gr, i, c, false, z) && r.t !== grantSpecies(gr, i, c, true, z)) return 'dice';",
+    "new": "      void c; void i; void z;",
     "why": "an encr member of another species believed",
     "tests": [
       "test/scenes/grant4_lanes.test.js"

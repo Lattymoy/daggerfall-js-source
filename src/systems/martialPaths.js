@@ -21,13 +21,13 @@
 //   - WHO may choose (`martialChoices`: Master Skills in force, two or more weapon skills mastered, no martial path yet)
 //     and the choice (`chooseMartialPath`: undone only by SPEC-RESET's paid reset, systems/specReset.js - nothing
 //     here undoes it);
-//   - when a path ACTS (`martialAwake`: my own entity, Master Skills in force, both its skills mastered, not mentoring -
-//     and the powers add the refereed fight's word, sigil.js sigilDueling, the one every loot and set power sleeps on).
+//   - when a path ACTS (`martialAwake`: my own entity, Master Skills in force, both its skills mastered; MENTOR2: mentoring
+//     too, its numbers at the mentor's share in martialPowers.js - and the powers add the refereed fight's word, sigil.js sigilDueling, the one every loot and set power sleeps on).
 // No judge's finding (the design page, section 7): a path acts only with both its masteries held, read here at every
 // ask, and the account service's judge reads no mastery - a finding would add a version and stop nothing.
 //
 // An arcane path and a martial path are two choices (the owner: "Yes, one of each") - neither reads the other, and the
-// masteries they need come from the one 2 / 2 / 1 (masterSkills.js MASTERY_SLOTS).
+// masteries they need come from the one 3 / 2 / 1 (masterSkills.js MASTERY_SLOTS).
 //
 // Everything a player reads is `t()`, read when it is read.
 
@@ -452,10 +452,10 @@ export function martialHeld(entity) {
   if (!p || !masterSkillsActive(entity) || !isMasteredSkill(entity, p.skills[0]) || !isMasteredSkill(entity, p.skills[1])) return null;
   return p;
 }
-/** Does the path ACT for this entity now - its passive and its signature's rider? Held, and not mentoring. (A refereed
- *  fight is the powers' word to add - systems/martialPowers.js.) */
+/** Does the path ACT for this entity now - its passive and its signature's rider? Held. (A refereed fight is the
+ *  powers' word to add - systems/martialPowers.js.) MENTOR2: mentoring scales its numbers there, never stops it. */
 export function martialAwake(entity) {
-  return entity?._mentor ? null : martialHeld(entity);
+  return martialHeld(entity);
 }
 
 /** THE SIGNATURE IN HAND: the form of MY held path's signature that answers a weapon of `family` (techniqueRoster.js

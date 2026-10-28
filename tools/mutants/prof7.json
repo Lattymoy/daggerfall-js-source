@@ -195,10 +195,10 @@
     ]
   },
   {
-    "name": "PROF7-trophy-chosen",
+    "name": "HUNTERS-MARK-trophy-hunter-waits-again",
     "file": "src/net/professionLaw.js",
-    "old": "'A trophy decor piece from a tier 5+ kill.', 'trophy')",
-    "new": "'A trophy decor piece from a tier 5+ kill.')",
+    "old": "'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.'),",
+    "new": "'A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast.', 'trophy'),",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -792,8 +792,8 @@
   {
     "name": "PROF7-host-ask-no-foe",
     "file": "src/scenes/huntHost.js",
-    "old": "        ask: { foe: b.foe },",
-    "new": "        ask: {},",
+    "old": "        ask: (skinned.set(b.key, b.foe), { foe: b.foe }),",
+    "new": "        ask: (skinned.set(b.key, b.foe), {}),",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -911,8 +911,8 @@
   {
     "name": "PROF7-book-dye-dropped",
     "file": "src/net/profBook.js",
-    "old": "Number.isInteger(w.dye) ? w.dye : null",
-    "new": "null",
+    "old": "w.rid, w.heartwood === true, Number.isInteger(w.dye) ? w.dye : null",
+    "new": "w.rid, w.heartwood === true, null",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]

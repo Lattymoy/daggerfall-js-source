@@ -672,12 +672,13 @@
   {
     "name": "SEAT2a2-relay-attach",
     "file": "server/src/index.js",
-    "old": "sub: who.subject, ...(instParty ? { ip: 1 } : {}), ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu,",
-    "new": "sub: who.subject, ...(instParty ? { ip: 1 } : {}), mu: who.mu,",
+    "old": "sub: who.subject, ...instAtt, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu,",
+    "new": "sub: who.subject, ...instAtt, mu: who.mu,",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the instance hello hands back the attachment a right carries (`att` - `ip` a party member's, `ig` a castle's guild's), where it had handed back the party flag alone."
   },
   {
     "name": "SEAT2a2-relay-camp-in",

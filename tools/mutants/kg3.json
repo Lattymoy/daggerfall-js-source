@@ -1082,9 +1082,9 @@
  },
  {
   "name": "KG3-W-save-door",
-  "file": "src/scenes/world.js",
-  "old": "if (modes?.gambitStaked?.()) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
-  "new": "if (modes?.gambitStaked?.() && quiet) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
+  "file": "src/scenes/worldQuickSave.js",
+  "old": "if (host.modes?.gambitStaked?.()) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
+  "new": "if (host.modes?.gambitStaked?.() && quiet) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
   "tests": [
    "test/systems/kg3_host.test.js"
   ],

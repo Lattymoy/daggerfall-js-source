@@ -46,6 +46,7 @@
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { setTitleFlame } from './titleFlame.js';   // SHOP: a flame title's plate
 import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
 import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
@@ -479,6 +480,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
           tag.titled = titleKey;
           const paint = titlePaint(badge);
           for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];
+          setTitleFlame(tag.title, badge?.flame ? badge.key : null);   // SHOP: Genesis on its fire, written with its paint
         }
         if (p.glyphs?.length || tag.worn !== '') setGlyphs(tag, p);   // PERF-NAMES1: a peer with no glyph and none worn has nothing to compare
         const b = bubbles.get(p.id);

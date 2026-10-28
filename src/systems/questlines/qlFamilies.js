@@ -1,8 +1,10 @@
 // @ts-check
 // QL5-QL10 (bible/06-Systems/Questlines-Arc.md sections 3 and 9): THE FAMILIES the sheets and the branches are filed by
-// - one file of each a family (sheets/<family>.json, patches/<family>.json) - and which quests each holds. A leaf: the
-// sheets' and the patches' registries read it, and the pins (test/systems/questlines/ql1_sheets.test.js) hold every
+// - one file of each a family (sheets/<family>.json, patches/<family>.json) - and which quests each holds. A leaf (it
+// reads the starts' names, another leaf, and nothing else): the sheets' and the patches' registries read it, and the pins (test/systems/questlines/ql1_sheets.test.js) hold every
 // quest a player can be given to exactly one family's sheet.
+
+import { START_QUESTS } from '../starts/starts.js';   // START1: the starts' quests, filed with the main quest
 
 /** The families, in the order the waves write them. */
 export const QL_FAMILY_NAMES = Object.freeze([
@@ -19,10 +21,12 @@ export const LIST_GROUP_FAMILY = Object.freeze({
 });
 
 /** The quests no classic list offers, by family: the sixteen Princes' summonings (systems/daedraSummoning.js), the two
- *  cures (systems/racialQuests.js), the main quest (34 S0000 scripts and _BRISIEN - quest/machine.js isMainQuestName's
- *  set), DFU's own custom list's one, and the mods' (vendored with their authors' permission). */
+ *  cures (systems/racialQuests.js), the main quest (34 S0000 scripts and _BRISIEN - quest/questLists.js isMainQuestName's
+ *  set - read off the pack's own files, and the starts' quests named here: START1, systems/starts/starts.js), DFU's own
+ *  custom list's one, and the mods' (vendored with their authors' permission). */
 export const UNLISTED_FAMILY = Object.freeze({
   Daedra: Object.freeze(['10C00Y00', '20C00Y00', '30C00Y00', '40C00Y00', '50C00Y00', '60C00Y00', '70C00Y00', '80C0XY00', '90C00Y00',
     'T0C00Y00', 'U0C00Y00', 'V0C00Y00', 'W0C00Y00', 'X0C00Y00', 'Y0C00Y00', 'Z0C00Y00']),
   Vampires: Object.freeze(['$CUREVAM', '$CUREWER']),
+  MainQuest: Object.freeze([...START_QUESTS]),
 });

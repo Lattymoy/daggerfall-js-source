@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import { material } from '../../src/net/nodeLaw.js';
 import { makerName, MAKER_MAX, PLANE_ACT, MASTERWORK } from '../../src/net/recipeLaw.js';
-import { mintProductRecord, readProductRecord, productRecordValid, PRODUCT_RECORD_MAX } from '../../src/net/productRecord.js';
+import { mintProductRecord, readProductRecord, productRecordValid, PRODUCT_RECORD_MAX, MINT_V_MASTER } from '../../src/net/productRecord.js';
 import {
   wearText, saleTax, saleTaxOn, marketCatalogue, UNYIELDED, pieceListable, MARKET_WORTH_MAX,
 } from '../../src/net/marketLaw.js';
@@ -33,7 +33,9 @@ test('AUDIT 30 L3: a maker\'s name is well-formed - no lone surrogate kept, no p
   assert.equal(makerName('Ab\udc00c'), 'Abc', 'a lone low surrogate');
   assert.equal(makerName('Silver\u{1F600}thorn'), 'Silver\u{1F600}thorn', 'a whole pair kept');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
-  const wide = claims({ m: '\u0001'.repeat(MAKER_MAX), h: 'H'.repeat(64), c: 0xffffffff });
+  // PIN MOVED (MASTER-ART): the bound is 640 - a Master's three lines (`l`) ride the widest record past it
+  // PIN MOVED (AUDIT HORIZONTAL B1): the bound is 704 and `l` the lines at their signed values - still past it here
+  const wide = claims({ m: '\u0001'.repeat(MAKER_MAX), h: 'H'.repeat(64), c: 0xffffffff, r: 'clothamulet:linen:flawless-turquoise', q: MASTERWORK, v: MINT_V_MASTER, l: [['stat', 15, 'intelligence'], ['stat', 15, 'personality'], ['stat', 15, 'willpower']] });
   await assert.rejects(mintProductRecord(wide, kp.privateKey, { subtle, nowS: 9_999_999_999 }), RangeError, 'a record its own reader refuses');
   const rec = await mintProductRecord(claims(), kp.privateKey, { subtle, nowS: 1 });
   assert.ok(rec.length <= PRODUCT_RECORD_MAX && readProductRecord(rec));

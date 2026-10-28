@@ -237,8 +237,9 @@ export function validTags(m) {
  *  links would knock for nothing). Messages from another window or origin are not the panel's.
  *  STAFF-MAP: and `map?` and `regions?` for the region map (`mapOf()`, net/staffMap.js), whose answers go out by `post`.
  *  STAFF-EVENT: and `places?` and `here?` for the Events page, off `placesOf()` - the game's maps and my map pixel.
- *  @param {any} win @param {() => any} hookOf @param {{ setTimer?: typeof setTimeout, clearTimer?: typeof clearTimeout, relink?: (() => void) | null, now?: () => number, mapOf?: () => any, placesOf?: () => any }} [t] */
-export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer = clearTimeout, relink = null, now = () => Date.now(), mapOf = () => null, placesOf = () => null } = {}) {
+ *  STAFF-PILOT: and `pilot`, handed to `pilot(m)` (scenes/staffFollowHost.js).
+ *  @param {any} win @param {() => any} hookOf @param {{ setTimer?: typeof setTimeout, clearTimer?: typeof clearTimeout, relink?: (() => void) | null, now?: () => number, mapOf?: () => any, placesOf?: () => any, pilot?: ((m: any) => void) | null }} [t] */
+export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer = clearTimeout, relink = null, now = () => Date.now(), mapOf = () => null, placesOf = () => null, pilot = null } = {}) {
   /** @type {Map<string, (tok: string|null) => void>} */
   const waiting = new Map();
   let seen = false;
@@ -263,6 +264,7 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
     else if (m.dfoStaff === 'regions?') post({ dfoStaff: 'regions', names: mapOf()?.regions() ?? [] });
     else if (m.dfoStaff === 'places?') post(staffPlaces(placesOf()?.maps, m.region));   // STAFF-EVENT: a region's places
     else if (m.dfoStaff === 'here?') post(staffHere(placesOf()?.maps, placesOf()?.pixel ?? null));   // STAFF-EVENT: where I stand
+    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && pilot) { seen = true; pilot(m); }   // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10)
   });
   /** @param {string} sub @param {string} room @returns {Promise<string|null>} */
   const askToken = (sub, room) => new Promise((resolve) => {

@@ -208,6 +208,9 @@ test('HALO-THIN the halos\' own keepalive: standing and turning for half a minut
   const count = new Map(sockets.slice(1).map((ws) => [ws, 0]));
   for (let f = 0; f < 30 * 60; f++) {
     clock.t += 1000 / 60;
+    // PIN MOVED (RPT1026-SECNET, LINE-STALL): my own cell busy HEARS its room too - a cell that hears nothing for PING_MS
+    // is pinged, and that ping goes down every halo with it, which is no halo's own clock
+    if (f % 6 === 0) sockets[0].receive({ t: 'pong' });
     s.sendPose({ ...start, mv: 0, yaw: f * 0.01 });
     s.tick();
     for (const ws of sockets.slice(1)) {

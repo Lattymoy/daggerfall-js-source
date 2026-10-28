@@ -1,0 +1,342 @@
+[
+  {
+    "name": "RED-MOUNTAIN-the-summit-cone-rounder",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "Object.freeze({ share: 0.54, reach: 10000, power: 2 }),",
+    "new": "Object.freeze({ share: 0.54, reach: 10000, power: 3 }),",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-body-shares-more",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "Object.freeze({ share: 0.2, reach: 35000, power: 2 }),",
+    "new": "Object.freeze({ share: 0.25, reach: 35000, power: 2 }),",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-centre-a-row-off",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "cy = (MAP_ROWS + 1 - by) * 128, k = 1 / SAMPLE_M;",
+    "new": "cy = (MAP_ROWS - by) * 128, k = 1 / SAMPLE_M;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-foyada-leave-the-centre",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const along = i * D.trough.step, r = D.rim + along;",
+    "new": "const along = i * D.trough.step, r = along;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-crown",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const crownOf = (ux, uy) => 1 + D.lobes.amp * (2 * perlinNoise(ux * D.lobes.radius + 17.31, uy * D.lobes.radius + 5.77) - 1);",
+    "new": "const crownOf = (ux, uy) => 1 + 0 * (ux + uy);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-foyada-floor-rising",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "lv[i] = own < above ? own : above;",
+    "new": "lv[i] = own;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-landforms-whole-on-the-rim",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "let land = base + hills * smooth01(d / D.keep) * still + lift / UNIT_M;",
+    "new": "let land = base + hills * still + lift / UNIT_M;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-foyada-floor-not-flat",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "land += (_near[1] - land) * (1 - smooth01((_near[0] - 0.5) / 0.5));",
+    "new": "land += (_near[1] - land) * (1 - smooth01(_near[0]));",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-crater-floor",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  return land + (ground.floor - land) * s;",
+    "new": "  return land + 0 * s;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-bound-at-the-far-side",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  const dx = f.cx < x0 ? x0 - f.cx : f.cx > x0 + 128 ? f.cx - x0 - 128 : 0;",
+    "new": "  const dx = f.cx < x0 ? x0 + 128 - f.cx : f.cx > x0 + 128 ? f.cx - x0 : 128;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-horizon-has-no-crater",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  return (lift - (lift - (D.lift - D.depth)) * smooth01(-d / (D.rim - D.floor))) / UNIT_M;",
+    "new": "  return lift / UNIT_M;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-cell-its-centre-alone",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "return redMountainSmooth(x * 128, (MAP_ROWS + 1 - y) * 128);",
+    "new": "return redMountainSmooth((x + 0.5) * 128, (MAP_ROWS - y) * 128 + 64);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the far field stands the cone at its vertex's node (redMountainNodeLift), never a pixel's centre."
+  },
+  {
+    "name": "RED-MOUNTAIN-the-shaper-stands-none",
+    "file": "src/world/landforms.js",
+    "old": ": crater !== null ? redMountainLand(gx, gy, base, hh, crater) : base + hh;",
+    "new": ": base + hh;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-site-on-the-old-land",
+    "file": "src/world/landforms.js",
+    "old": "sum += crater !== null ? redMountainLand(ox + x, oy + y, h + lift * fade, hh, crater) : h + lift * fade + hh;",
+    "new": "sum += h + lift * fade + hh;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-top-unbounded",
+    "file": "src/world/landforms.js",
+    "old": "Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);",
+    "new": "Math.max(hill, TAMRIEL_TOP);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-air-ground-without-it",
+    "file": "src/world/landforms.js",
+    "old": "return (share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
+    "new": "return share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the mean ground's ranges, then its smooth cone."
+  },
+  {
+    "name": "RED-MOUNTAIN-a-byte-node-misplaced",
+    "file": "src/world/landforms.js",
+    "old": "const fx = gx / 128 - 1, fy = MAP_H - gy / 128,",
+    "new": "const fx = gx / 128, fy = MAP_H - gy / 128,",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-not-on-the-horizon",
+    "file": "src/render/farRing.js",
+    "old": "(centreGround(byteAt, x, y, relief, fadeAt) + (relief ? redMountainLiftAt(x, y) : 0)) * STREAMING_TERRAIN_SCALE;",
+    "new": "centreGround(byteAt, x, y, relief, fadeAt) * STREAMING_TERRAIN_SCALE;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the far ring stands the kernel's mean ground (ringGroundAt) and the cone on it."
+  },
+  {
+    "name": "RED-MOUNTAIN-the-far-field-its-centre",
+    "file": "src/render/farRing.js",
+    "old": "heightOf: (byte, x, y, v) => answer.ground[v] + (inputs.relief ? redMountainNodeLift(x, y) * STREAMING_TERRAIN_SCALE : 0),",
+    "new": "heightOf: (byte, x, y, v) => answer.ground[v],",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): the far field's vertex on the worker's ground, and the cone at its node."
+  },
+  {
+    "name": "RED-MOUNTAIN-the-fire-undrawn",
+    "file": "src/render/farRing.js",
+    "old": "const cone = eye && worldProj ? this._coneNow() : null, fire = cone ? this._fireNow(cone) : null,",
+    "new": "const cone = eye && worldProj ? this._coneNow() : null, fire = null,",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-fire-without-the-lift",
+    "file": "src/render/farRing.js",
+    "old": "    if (!inputs?.relief) return null;\n    const frame = redMountainFrame();\n    if (!frame) return null;\n    const ground = redMountainGround(",
+    "new": "    const frame = redMountainFrame();\n    if (!frame) return null;\n    const ground = redMountainGround(",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-snow-on-its-ash",
+    "file": "src/world/peaks/snowcap.js",
+    "old": "return line >= CAP_NONE ? line : line + redMountainLiftAt(px, py) * STREAMING_TERRAIN_SCALE;",
+    "new": "return line;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-fire-in-the-air",
+    "file": "src/systems/weather/airTemperature.js",
+    "old": "  if (_ground?.heatAt) out.mean += _ground.heatAt(x, z);",
+    "new": "  if (_ground?.heatAt) out.mean += 0;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-levels-short",
+    "file": "src/systems/weather/snowpack.js",
+    "old": "levels: Object.freeze({ from: -600, step: 200, count: 45 }),",
+    "new": "levels: Object.freeze({ from: -600, step: 200, count: 44 }),",
+    "tests": [
+      "test/world/redmountain.test.js",
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-profile-no-crater",
+    "file": "src/render/redMountainFire.js",
+    "old": "    out[i] = D.lift - D.depth * s;",
+    "new": "    out[i] = D.lift;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-lake-on-the-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "ly = floorY + FIRE.lakeOver;",
+    "new": "ly = floorY;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-river-on-its-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "y: lv[i] * STREAMING_TERRAIN_SCALE + FIRE.riverOver,",
+    "new": "y: lv[i] * STREAMING_TERRAIN_SCALE,",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-hiding-over-the-cone",
+    "file": "src/render/redMountainFire.js",
+    "old": "bool under(vec3 q, float m) { return q.y < coneAt(q.xz) - m; }",
+    "new": "bool under(vec3 q, float m) { return q.y < coneAt(q.xz) + m; }",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-eye's-ground-not-given-back",
+    "file": "src/render/redMountainFire.js",
+    "old": "  float slack = max(0.0, coneAt(uEye.xz) - uEye.y);",
+    "new": "  float slack = 0.0;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-rim's-crest-unasked",
+    "file": "src/render/redMountainFire.js",
+    "old": "  return (ta > 0.0 && ta < stop && crestAt(p, ta, margin) < 0.0) || (tb > 0.0 && tb < stop && crestAt(p, tb, margin) < 0.0);",
+    "new": "  return false;",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/redmountain.test.js"
+    ],
+    "note": "AUDIT RED-MOUNTAIN R2: not equivalent - the crest's own test decides 198 of 2,640 rays round the mountain; an eye 20 km out, 300 m over the flank, its ray to the plume passing under the crowned crest between the profile's samples (test/world/audit_redmountain.test.js R2)"
+  },
+  {
+    "name": "RED-MOUNTAIN-the-profile-even",
+    "file": "src/render/redMountainFire.js",
+    "old": "export const profileR = (i) => ((i / (FIRE.profile - 1)) ** 2) * RED_MOUNTAIN_REACH;",
+    "new": "export const profileR = (i) => (i / (FIRE.profile - 1)) * RED_MOUNTAIN_REACH;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-summits-in-the-haze",
+    "file": "src/render/horizonHaze.js",
+    "old": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7, ease: 8000 });",
+    "new": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0, ease: 8000 });",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-lane's-ring-in-the-haze",
+    "file": "src/render/enhancedLighting.js",
+    "old": "uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
+    "new": "uRimStart, uRimEnd, uHazeHold)));",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-grade-one-power-off",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  for (const t of D.tiers) g += (t.share * t.power * falloff(d / t.reach, t.power * 2 - 2)) / t.reach;",
+    "new": "  for (const t of D.tiers) g += (t.share * t.power * falloff(d / t.reach, t.power * 2)) / t.reach;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-run's-box-skips-its-sample",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy > ch[c + 3]) { i += CHUNK - 1; continue; }",
+    "new": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy < ch[c + 3]) { i += CHUNK - 1; continue; }",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-snowfield-on-the-cone",
+    "file": "src/render/farRing.js",
+    "old": "export const ringTintAt = (tint, x, y, relief) => (relief ? ashTint(tint, redMountainLiftAt(x, y) * STREAMING_TERRAIN_SCALE) : tint);",
+    "new": "export const ringTintAt = (tint) => tint;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-rock-at-the-summit",
+    "file": "src/render/redMountainFire.js",
+    "old": "    out[c] = Math.round(ash + (A.rock[c] - ash) * r);",
+    "new": "    out[c] = Math.round(ash);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  }
+]

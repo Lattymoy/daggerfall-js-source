@@ -52,7 +52,7 @@
   {
     "name": "STAFF-UNSEEN-page-never-says-hidden",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "if (entity) entity.staffHidden = hiddenNow && !!main();",
+    "old": "if (entity) entity.staffHidden = (hiddenNow || pilot.piloting()) && !!main();",
     "new": "if (entity) entity.staffHidden = false;",
     "why": "the game never tells its foes the staff member hides",
     "tests": [

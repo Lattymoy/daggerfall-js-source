@@ -210,8 +210,9 @@
   {
     "name": "SD26-F37-the-hosts-ground-unhanded",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "findSdSite(at, sc, near, ground)",
-    "new": "findSdSite(at, sc, near)",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "findSite(at, sc, near, ground)",
+    "new": "findSite(at, sc, near)",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]

@@ -933,8 +933,8 @@
   {
     "name": "AUDIT-SERPENT-S5-online-rcpt",
     "file": "src/net/online.js",
-    "old": "r.k === 'fell' || r.k === 'rcpt' :",
-    "new": "r.k === 'fell' :",
+    "old": "r.k === 'fell' || r.k === 'rcpt' || r.k === 'at' :",
+    "new": "r.k === 'fell' || r.k === 'at' :",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

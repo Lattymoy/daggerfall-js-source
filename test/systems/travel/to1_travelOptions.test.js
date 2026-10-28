@@ -1659,7 +1659,7 @@ test('AUDIT-TO1 B1/B2/B3: the location rects come off the BUILT terrain, and the
   assert.match(w, /travelOptions\.onMapPixelChanged\(playerTravelPixel\(\)\);/, 'PlayerGPS.OnMapPixelChanged');
   assert.match(w, /if \(_travelRegionSeen !== null && _region !== _travelRegionSeen\) travelOptions\.onRegionIndexChanged\(\);/, 'OnRegionIndexChanged');
   assert.match(w, /travelOptions\?\.onEnterLocationRect\(_musicLoc \? \{/, 'OnEnterLocationRect, on the rect edge');
-  assert.match(w, /raiseOnEncounterEvent: \(\) => \{ travelOptions\?\.onEncounter\(\); modes\?\.raiseOnEncounterEvent\?\.\(\); \},/, 'GameManager.OnEncounter');
+  assert.match(w, /raiseOnEncounterEvent: \(\) => \{ (?:host\.)?travelOptions\?\.onEncounter\(\); (?:host\.)?modes\?\.raiseOnEncounterEvent\?\.\(\); \},/, 'GameManager.OnEncounter');
   assert.match(w, /if \(host\.travelOptions && dfLocation\) \{\n\s*const here = playerTravelPixel\(\);\n\s*if \(px === here\.x && py === here\.y\) host\.travelOptions\.initLocationRects\(here\);/, 'StreamingWorld.OnUpdateLocationGameObject - BOOT-TDZ2: the mod asked first, the pixel read once');
   // the tile rect the C# reads is the terrain's own, extraClearance included
   const t = read('src/world/terrain/terrainTiles.js');
@@ -1695,8 +1695,10 @@ test('AUDIT-TO1 G1/G2/G3/I2/I3/I4/I6/J1/K2/H1/H2: the host seams the sweep found
   assert.match(w, /coordsAllowed: \(\) => !!travelOptions,/, 'TO-ONLINE: the door opens wherever the journey runs, which is now everywhere the mod is on');
   assert.match(read('src/ui/travel/travelMapWindow.js'), /\(this\.deps\.coordsAllowed\?\.\(\) \?\? true\)/);
   // I6: the discovery store is read by the key its writers use
-  assert.match(w, /return loc\?\.name \? discoveredBuildings\(`\$\{summary\.regionIndex\}:\$\{loc\.name\}`\) : \[\];/);
-  assert.match(w, /discoveryLocationId: \(\) => `\$\{_questLoc\(\)\?\.regionIndex \?\? -1\}:\$\{_questLoc\(\)\?\.name \?\? ''\}`,/, 'the writer\'s own key shape');
+  // PIN MOVED (BAY-LEFT-MAPS C7 = E2, test/systems/bayleft_disckey.test.js): the key by the one key-maker - the Bay's byte for
+  // byte, a place past the Bay its map id after it (systems/discovery.js townBookId)
+  assert.match(w, /return loc\?\.name \? discoveredBuildings\(townBookOf\(loc\)\) : \[\];/);
+  assert.match(w, /discoveryLocationId: \(\) => townBookOf\(_questLoc\(\)\),/, 'the writer\'s own key shape');
   // J1: the two switches have readers
   assert.match(w, /\} else if \(precipShown && precip\) \{[\s\S]{0,2500}?if \((?:\(!_travelWeatherOff \|\| tvf\)|!_travelWeatherOff)(?: && !_dwPrecipOff)?\) \{\s*\n\s*precip\.drawFall\(precipShown, proj, view/, 'the rain (the branch literal is W1/WX2/WEATHER2d\'s; the switch wraps the draw; DW-D: and the sea\'s own stand-down beside it; PRECIP1: the draw at the air\'s snow share)');
   assert.match(w, /const _step = _travelSoundsOff (?:\|\| _csaFootstepsOff )?\? null : footsteps\.update\(player\.pos, \{/, 'the classic stride: the component does not RUN (the one-gate line is BA1/IF1\'s literal; CSA-D\'s helm disables it too)');

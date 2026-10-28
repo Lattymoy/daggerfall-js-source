@@ -2,8 +2,8 @@
   {
     "name": "SPAMTAKE-card-stays",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "landed = next === picked ? p.slotKey : null; picked = next; }",
-    "new": "landed = next === picked ? p.slotKey : null; }",
+    "old": "landed = next === at ? p.slotKey : null; picked = next; }",
+    "new": "landed = next === at ? p.slotKey : null; }",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -127,9 +127,9 @@
   },
   {
     "name": "RFOLK-breton-regions",
-    "file": "src/characters/mobile/mobilePerson.js",
-    "old": "REGION_RACES[/** @type {number} */ (region)] === 1;",
-    "new": "REGION_RACES[/** @type {number} */ (region)] === 0;",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "  if (isBayArea(a)) return REGION_RACES[a] === 1 ? 'Redguard' : 'Breton';",
+    "new": "  if (isBayArea(a)) return REGION_RACES[a] === 0 ? 'Redguard' : 'Breton';",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "RFOLK-census-climate",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  const race = walkerRace(town.people, town.region);",
+    "old": "  const race = walkerRace(town.people, town.area ?? town.region);",
     "new": "  const race = walkerRace(town.people, null);",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
@@ -371,7 +371,7 @@
   {
     "name": "AUDIT-A1-never-landed",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "landed = next === picked ? p.slotKey : null;",
+    "old": "landed = next === at ? p.slotKey : null;",
     "new": "landed = null;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-A3-no-page",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "    const page = el('div', 'bounty-cardpage');",
-    "new": "    const page = card;",
+    "old": "    card = el('div', 'bounty-card');\n    const page = el('div', 'bounty-cardpage');",
+    "new": "    card = el('div', 'bounty-card');\n    const page = card;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]

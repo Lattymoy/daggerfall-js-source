@@ -62,10 +62,10 @@ test('POI-3 THE PLACE: map metres both ways; a move over a pixel\'s east, west, 
   assert.deepEqual([p.px, p.py], [101, 200]); near(p.z, 15, 1e-9);
   movePlace(p, [-20, 0, 0]);  // west
   assert.deepEqual([p.px, p.py], [100, 200]); near(p.x, POI_PIXEL_M - 9.2, 1e-9);
-  // the map's own edges hold
-  const corner = { px: 0, py: 0, x: 1, z: 818, y: 0, ground: 'snap', r: [0, 0, 0, 1], s: 1 };
+  // the map's own edges hold - PIN MOVED (AUDIT RELEASE R2-8): the world's grid's (8191 pixels either side of the Bay's corner), not the Bay's
+  const corner = { px: -8191, py: -8191, x: 1, z: 818, y: 0, ground: 'snap', r: [0, 0, 0, 1], s: 1 };
   movePlace(corner, [-50, 0, 50]);
-  assert.deepEqual([corner.px, corner.py, corner.x], [0, 0, 0]);
+  assert.deepEqual([corner.px, corner.py, corner.x], [-8191, -8191, 0]);
   assert.ok(corner.z < POI_PIXEL_M && corner.z > 819);
   // a turn about the world's +y through the origin, and a size held to 0.01 - 100
   rotatePlace(p, [0, 1, 0], 90);

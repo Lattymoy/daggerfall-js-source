@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-QL-ACTS-M13-fishHost-only-a-trophy-haul-counts",
     "file": "src/scenes/fishHost.js",
-    "old": "      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag\n      if (!d?.trophy || trophied.has(d.node)) return;",
-    "new": "      if (!d?.trophy || trophied.has(d.node)) return;\n      noteAct('fish-caught');",
+    "old": "      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag\n",
+    "new": "      if (d?.trophy) noteAct('fish-caught');\n",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { mintSeaWreck, verifySeaWreck, readSeaWreck, seaWreckValid, verifyWildReceipt, SEA_WRECK_GRACE_S, SEA_WRECK_TTL_S, WILD_RECEIPT_MAX } from '../../../src/net/wild/wildReceipt.js';
 import * as P from '../../../src/net/sea/seaPrizeLaw.js';
 import * as R from '../../../src/net/sea/seaRef.js';
-import { newWildRef, wildZone, wildPose, WILD_REF } from '../../../src/net/wild/wildRef.js';
+import { newWildRef, wildZone, wildPose, WILD_REF, WILD_GRACE } from '../../../src/net/wild/wildRef.js';
 import { SHIP_REF } from '../../../src/net/serpent/serpentBrain.js';
 import { HULL_BUILDS } from '../../../src/systems/naval/navalShips.js';
 import { refitShare, UPGRADE_TIERS } from '../../../src/systems/fleet.js';
@@ -94,8 +94,10 @@ test('SHIP-PVP the prize\'s law: her hold the boat the wreck names; her best pie
 /** A room's referee state: two captains in the zone, their places `gap` metres apart. */
 function seaRoom(gap = 50, now = 1000) {
   const st = newWildRef();
-  wildZone(st, 'a', { id: 'pa', lv: 10, ci: RK }, true, { x: 0, y: 0, z: 0 }, now);
-  wildZone(st, 'b', { id: 'pb', lv: 10, ci: RC }, true, { x: gap * SIEGE_UNITS_PER_M, y: 0, z: 0 }, now);
+  // PIN MOVED (AUDIT PVP-EASE L3-3, 2026-10-26): entered a minute before - ZONE-GRACE's safe passage keeps a captain's ship
+  // from a shot, and these are captains at war
+  wildZone(st, 'a', { id: 'pa', lv: 10, ci: RK }, true, { x: 0, y: 0, z: 0 }, now - WILD_GRACE.ms);
+  wildZone(st, 'b', { id: 'pb', lv: 10, ci: RC }, true, { x: gap * SIEGE_UNITS_PER_M, y: 0, z: 0 }, now - WILD_GRACE.ms);
   return st;
 }
 
@@ -785,14 +787,14 @@ test('SHIP-PVP the seams by source: the naval host\'s guns asked and its seams b
   assert.match(sea, /send: \(d, o\) => deps\.cell\?\.\(\)\?\.sendWild\?\.\(d, o\) === true,/);
   const w = src('src/scenes/world.js');
   assert.match(w, /cell: \(\) => online, foe: \(id\) => wildIsStranger\(id, online\?\.drawable\?\.\(\)\?\.find\(\(d\) => d\.id === id\)\?\.gt\),/);
-  assert.match(w, /else if \(g\.k === 'rc'\) wildRcIn\(g, room\);\n\s+else seaVentures\.wref\(g, room\);/);
+  assert.match(w, /else if \(g\.k === 'rc'\) wildRcIn\(g, room\);\n\s+else if \(g\.k === 'grace'\) wildGrace\.heard\(g\);[^\n]*\n\s+else seaVentures\.wref\(g, room\);/);   // PIN MOVED (ZONE-GRACE, 2026-10-26): safe passage's word before the sea's
   const on = src('src/net/online.js');
   assert.match(on, /this\.seaPvpOk = relaySupportsSeaPvp\(relayV\);/);
   assert.match(on, /if \(SEA_PVP_KINDS\.includes\(d\.k\) && !this\._seaPvpOn\(ws\)\) return false;/);
   const relay = src('server/src/index.js');
   assert.match(relay, /if \(k === 'helm' \|\| k === 'shot' \|\| k === 'board'\) \{ await this\._seaWord\(a, m\.data, now\); return; \}/);
   assert.ok(relay.indexOf('if (d.k === \'board\') { const w = seaBoard(st, a.sub, d.r, now);') < relay.indexOf('const target = this._idFirst(d.to);\n    const tb = target?.[1];\n    if (!tb?.sub) return;\n    const fa = st.fighters.get(a.sub)'), 'a boarding asks nothing of her captain\'s socket');
-  assert.match(relay, /wildGone\(this\._wildRef, a\.sub, Date\.now\(\)\); seaGone\(this\._wildRef, a\.sub, Date\.now\(\)\); \}/);
+  assert.match(relay, /wildGone\(this\._wildRef, a\.sub, Date\.now\(\)\); seaGone\(this\._wildRef, a\.sub, Date\.now\(\)\); this\._wildLeaveCarry\(a, Date\.now\(\)\); \}/);   // PIN MOVED (AUDIT PVP-EASE L3-1): and the leave kept at the hub
   assert.match(relay, /for \(const w of seaStep\(st, now\)\) await this\._seaSign\(w, now\);/);
   assert.match(relay, /for \(const \[, v\] of await this\.state\.storage\.list\(\{ prefix: SEA_WRECK_PREFIX \}\)\) \{ const w = seaWreckOf\(v\); if \(w\) \(st\.wrecks \?\?= new Map\(\)\)\.set\(w\.r, w\); \}/);
   const idx = src('server-account/src/index.js');

@@ -114,7 +114,7 @@ test('OW-QUEST the look: never filtered (a quest is the point, not clutter); the
 test('OW-QUEST the host: the quest marks read the host\'s own place law (questPixel, the compass\'s and the held map\'s), and a pressed diamond is a journey by the roads to its place - its summary from the pixel, wherever on the map it lies (mutants: the press unread; the pixel\'s numbers swapped)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /createTravelViewMarks\(\{[^]*?playerTravelPixel, questPixel, seaRaidPeerChase,[^]*?\}\);/, 'handed the place law');
-  assert.match(w, /const qp = \/\^quest:\(\\d\+\),\(\\d\+\)\$\/\.exec\(key\);[^\n]*\n\s+const plate = qp \? \{ summary: tvPlaceSummary\(Number\(qp\[1\]\), Number\(qp\[2\]\)\) \} : /, 'the press: its place by its pixel');
+  assert.match(w, /const qp = \/\^quest:\(-\?\\d\+\),\(-\?\\d\+\)\$\/\.exec\(key\);[^\n]*\n\s+const plate = qp \? \{ summary: tvPlaceSummary\(Number\(qp\[1\]\), Number\(qp\[2\]\), true\) \} : /, 'the press: its place by its pixel');   // PIN MOVED (BAY-LEFT-MAPS): a pixel west or north of the Bay's corner too, the place the quest names
   assert.match(w, /if \(plate\?\.summary && travelViewCanGo\(\)\) travelViewRouteTo\(plate\.summary\);/, 'by the roads, where the view may go');
 });
 

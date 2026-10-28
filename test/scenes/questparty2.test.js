@@ -264,6 +264,6 @@ test('AUDIT pre-merge Q4 + Q7 by source: a shared quest\'s foe past my relevance
   assert.match(x, /const partyNearFoe = \(f, r\) => peerCandidates\(\)\.some\(\(c\) => _peerMayHit\(c\.id, f\) && Math\.hypot\(c\.feet\[0\] - f\.ai\.feet\[0\], c\.feet\[1\] - f\.ai\.feet\[1\], c\.feet\[2\] - f\.ai\.feet\[2\]\) <= r\);/);
   assert.match(x, /&& !\(_qTag\(f\) && partyNearFoe\(f, _cullAt\)\) && !_relentless\) \{/, 'the cull asks it');   // PIN MOVED (RVN2: nor a Relentless revenant hunting me)
   assert.match(w, /const _liveSharer = \(q\) => \(questBridge\?\.machine\?\.hasSharedQuestNamed\?\.\(q\) \? \(_questSharer\.get\(q\) \?\? null\) : null\);/);
-  assert.equal((w.match(/sharerOf: \(q\) => _liveSharer\(q\)/g) ?? []).length, 2, 'both the open air\'s and the rooms\' wave gates');
+  assert.equal((w.match(/sharerOf: \(q\) => (?:host\.)?_liveSharer\(q\)/g) ?? []).length, 2, 'both the open air\'s and the rooms\' wave gates');
   assert.doesNotMatch(w, /sharerOf: \(q\) => _questSharer\.get\(q\)/);
 });

@@ -2,8 +2,8 @@
   {
     "name": "TAMRIEL2-the-sea-stands-on-the-shore",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "if (!provinceKeyAt(px, py)) return 0;",
-    "new": "if (!provinceKeyAt(px, py)) return SHORE_BYTE;",
+    "old": "if (!provinceKeyAt(px, py) || straitAt(px, py)) return 0;",
+    "new": "if (!provinceKeyAt(px, py) || straitAt(px, py)) return SHORE_BYTE;",
     "tests": [
       "test/world/tamriel2.test.js"
     ]
@@ -20,11 +20,12 @@
   {
     "name": "TAMRIEL2-the-noise-takes-land-under-the-shore",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));",
-    "new": "return Math.max(0, Math.min(255, Math.round(h)));",
+    "old": "  return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));\n}",
+    "new": "  return Math.max(0, Math.min(255, Math.round(h)));\n}",
     "tests": [
       "test/world/tamriel2.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (TAMRIEL-RELIEF: the relief's cells ride with the trace; the relief's branch carries the same floor)."
   },
   {
     "name": "TAMRIEL2-the-edge-distance-forgets-the-south",
@@ -47,19 +48,10 @@
     "why": "equivalent: the store and the read use the one key function, and any injective key answers every pixel the same - a shifted key is still one key a pixel"
   },
   {
-    "name": "TAMRIEL2-the-climate-past-the-bay-is-woodlands",
-    "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;",
-    "new": "return key ? CLIMATES.Woodlands : CLIMATES.Ocean;",
-    "tests": [
-      "test/world/tamriel2.test.js"
-    ]
-  },
-  {
     "name": "TAMRIEL2-the-sea-wears-a-climate",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;",
-    "new": "return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Woodlands;",
+    "old": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
+    "new": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Woodlands;",
     "tests": [
       "test/world/tamriel2.test.js"
     ]
@@ -85,8 +77,8 @@
   {
     "name": "TAMRIEL2-the-blend-never-reaches-the-authored",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "const t = Math.min(1, (d - SEAM_PX) / BLEND_PX);",
-    "new": "const t = Math.min(0.5, (d - SEAM_PX) / BLEND_PX);",
+    "old": "const t = Math.min(1, (d - SEAM_PX) / BLEND_PX), own",
+    "new": "const t = Math.min(0.5, (d - SEAM_PX) / BLEND_PX), own",
     "tests": [
       "test/world/tamriel2.test.js"
     ]
@@ -94,20 +86,22 @@
   {
     "name": "TAMRIEL2-the-large-map-past-the-seam-is-the-clamp",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return bayEdgeDistance(x, y) <= SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);",
-    "new": "return woods.getLargeMapData(x, y);",
+    "old": "const own = tamrielLargeMap(x, y);",
+    "new": "const own = woods.getLargeMapData(x, y);",
     "tests": [
       "test/world/tamriel2.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the large map past the seam is blended in from the edge's"
   },
   {
     "name": "TAMRIEL2-the-large-map-on-the-bay-is-the-continents",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return bayEdgeDistance(x, y) <= SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);",
-    "new": "return bayEdgeDistance(x, y) < SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);",
+    "old": "if (d <= SEAM_PX) return woods.getLargeMapData(x, y);",
+    "new": "if (d <= 0) return woods.getLargeMapData(x, y);",
     "tests": [
       "test/world/tamriel2.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the blend starts at the seam at the edge's own large map, so `<` for `<=` is the same ground - the seam band handed to the blend instead"
   },
   {
     "name": "TAMRIEL2-a-copy-not-a-child",

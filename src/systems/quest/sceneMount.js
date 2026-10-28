@@ -366,14 +366,71 @@ export function crowdingPerson(p, w, people) {
  *  nearest first; a spot has a floor when the room's `collider` meets one within MARKER_FLOOR_REACH under it, rayed from
  *  `lift` over it (a person's from its centre, an item's from just over it); `w` a Person's billboard width, null for
  *  an item (no one). A Person whose spot shares a standing person's pick box stands at the first of those spawn markers
- *  with a floor that shares none - never on an item's marker nor at the room's door - else where the backstop stood it,
- *  as DFU does. */
-export function buildingStandSpot(own, spots, collider, lift, w = null, people = null) {
+ *  with a floor that shares none - never on an item's marker nor at the room's door - else (RPT1026-QUESTS QUEST-CROWD)
+ *  beside its own spot (besideSpot), else where the backstop stood it, as DFU does. */
+export function buildingStandSpot(own, spots, collider, lift, w = null, people = null, stands = null, self = null) {
   const hasFloor = (p) => Number.isFinite(collider?.raycast?.([p[0], p[1] + lift, p[2]], [0, -1, 0], MARKER_FLOOR_REACH));
   const at = standSpot(own, spots, hasFloor);
-  if (w == null || !crowdingPerson(at, w, people)) return at;
-  for (const p of spots?.spawns ?? []) if (hasFloor(p) && !crowdingPerson(p, w, people)) return p;
-  return at;
+  const crowd = crowdOf(people, stands, self);   // RPT1026-QUESTS QUEST-CROWD: and the quest people already stood here
+  if (w == null || !crowdingPerson(at, w, crowd)) return at;
+  for (const p of spots?.spawns ?? []) if (hasFloor(p) && !crowdingPerson(p, w, crowd)) return p;
+  return besideSpot(at, collider, lift, w, crowd) ?? at;
+}
+
+/** QUEST-CROWD: how far beside a crowded spot a Person may stand - in pick boxes (its billboard's width), nearest first. */
+export const QUEST_BESIDE_REACH = Object.freeze([1.1, 1.6]);
+/** QUEST-CROWD: how far a spot beside may stand above or below the floor under the spot it leaves, metres. */
+export const BESIDE_FLOOR_M = 0.3;
+
+/**
+ * RPT1026-QUESTS QUEST-CROWD: BESIDE, NEVER INSIDE. 215 of the 345 tavern interiors of BLOCKS.BSA and the two town packs
+ * hold a single quest spawn marker (15 of those inside a resident's pick box), and the questlines' first steps (QLIT01,
+ * QLIW01, QLIR02...) each stand their Person in a `local tavern` - two quests drawn before either ran took the one tavern,
+ * and with no other spawn marker CROWD-CLEAR left the second on the first, inside it, and the player met neither. Such a
+ * Person stands at the first of eight spots about its own (`at`), QUEST_BESIDE_REACH pick boxes out, that stands on the same
+ * floor (rayed down from `lift` over it, within BESIDE_FLOOR_M of the floor under `at`), in plain line from `at` (nothing
+ * between them a metre up - never through a wall) and clear of everyone (crowdingPerson over `crowd`); else null, and
+ * DFU's own spot stands.
+ */
+export function besideSpot(at, collider, lift, w, crowd) {
+  const down = (p) => collider?.raycast?.([p[0], p[1] + lift, p[2]], [0, -1, 0], MARKER_FLOOR_REACH);
+  const base = down(at);
+  if (!Number.isFinite(base)) return null;
+  const floor = at[1] + lift - base;
+  for (const k of QUEST_BESIDE_REACH) {
+    const d = k * w;
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4, dir = [Math.cos(a), 0, Math.sin(a)];
+      const p = [at[0] + dir[0] * d, at[1], at[2] + dir[2] * d];
+      const hit = down(p);
+      if (!Number.isFinite(hit) || Math.abs((p[1] + lift - hit) - floor) > BESIDE_FLOOR_M) continue;
+      const wall = collider?.raycast?.([at[0], floor + 1, at[2]], dir, d);
+      if (Number.isFinite(wall) && wall < d) continue;
+      if (!crowdingPerson(p, w, crowd)) return p;
+    }
+  }
+  return null;
+}
+
+/**
+ * RPT1026-QUESTS QUEST-CROWD (a private report: two quests that met at one person's place left only one of them there):
+ * THE QUEST PEOPLE ALREADY STOOD IN THE ROOM CROWD TOO. Two quests whose Places took one building each draw a marker of
+ * its own (Place.cs GetSiteMarker), and where both drew the same one DFU stands both Persons on it
+ * (GameObjectHelper.AddQuestNPC) - one billboard over the other, one pick box: the click finds the one in front, and the
+ * other quest's Person is never met. A departure (Port-Ledger A, the QUEST-MARKERS row): CROWD-CLEAR's law reads every
+ * quest Person already stood in the room as a standing person, after the room's own `people`. `stands` the host's stand
+ * records (worldModes.js standQuestFlatIn's list: x, y, z in the room's frame, its `width` and `batch` once drawn,
+ * `active`, `dead`, and the `behaviour` that names its resource) - every Person's drawn where it stands, but `self`; one
+ * not drawn yet (its spot not yet chosen), an item, a hidden or a gone stand crowds nothing, so the first drawn keeps
+ * DFU's marker. Answers `people` itself when no quest Person stands.
+ */
+export function crowdOf(people, stands = null, self = null) {
+  const stood = [];
+  for (const s of stands ?? []) {
+    if (!s || s === self || !s.batch || s.dead || s.active === false || !s.behaviour?.targetResource?.isPerson) continue;
+    stood.push({ stood: true, active: true, x: s.x, y: s.y, z: s.z, width: s.width });
+  }
+  return stood.length ? [...(people ?? []), ...stood] : people;
 }
 
 // ---- PlaceFoeFreely (CreateFoe.cs:260-345) - the raycast ring ----

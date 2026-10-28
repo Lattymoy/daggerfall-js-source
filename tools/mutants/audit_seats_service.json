@@ -1,772 +1,773 @@
 [
- {
-  "name": "AUDIT-SEATS-S1-bounty-no-case",
-  "file": "server-account/src/seatTurning.js",
-  "old": "SELECT 'escrow', ?1, CASE WHEN ${home} THEN 'guild' ELSE 'burn' END, CASE WHEN ${home} THEN e.guild_id END, 'bounty-return'",
-  "new": "SELECT 'escrow', ?1, 'guild', e.guild_id, 'bounty-return'",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S1-bounty-cap",
-  "file": "server-account/src/seatTurning.js",
-  "old": "+ e.set_aside - e.spent <= ${MARKS_MAX}`;",
-  "new": "+ e.set_aside - e.spent <= 2 * ${MARKS_MAX}`;",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S1-bounty-gone",
-  "file": "server-account/src/seatTurning.js",
-  "old": "const home = `EXISTS (SELECT 1 FROM guilds WHERE id = e.guild_id) AND COALESCE",
-  "new": "const home = `COALESCE",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S1-due-break",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    else if (r.failed) break;\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S1-failed-flag",
-  "file": "server-account/src/seatTurning.js",
-  "old": "return { settled: false, failed: !(await db.prepare('SELECT 1 FROM town_seat_weeks WHERE week = ?').bind(week).first()) };",
-  "new": "return { settled: false, failed: false };",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S2-account-fit",
-  "file": "server-account/src/seatSiege.js",
-  "old": "COALESCE((SELECT balance FROM marks WHERE account = h.account), 0) + h.fee <= ${MARKS_MAX}",
-  "new": "COALESCE((SELECT balance FROM marks WHERE account = h.account), 0) <= ${MARKS_MAX}",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S2-guild-fit",
-  "file": "server-account/src/seatSiege.js",
-  "old": "COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) + h.fee <= ${MARKS_MAX}",
-  "new": "COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) <= ${MARKS_MAX}",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S2-account-gone",
-  "file": "server-account/src/seatSiege.js",
-  "old": "? `EXISTS (SELECT 1 FROM players WHERE id = h.account) AND COALESCE",
-  "new": "? `COALESCE",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a contract's account always stands: town_seat_hires.account cascades ON DELETE with its player (0052), so the hire is gone with it - kept as the CASE's own word that no line pays an account that is not there"
- },
- {
-  "name": "AUDIT-SEATS-S2-guild-gone",
-  "file": "server-account/src/seatSiege.js",
-  "old": ": `EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id) AND COALESCE",
-  "new": ": `COALESCE",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a side's guild cannot go while its battle is to come (guilds.js SEAT_BATTLE_PENDING: a Right not yet past its Turning refuses the going), and a result or a void comes before that Turning ends; kept so the CASE never names a treasury that is not there"
- },
- {
-  "name": "AUDIT-SEATS-S2-one-statement",
-  "file": "server-account/src/seatSiege.js",
-  "old": "FROM town_seat_hires h WHERE h.week = ?1 AND h.key = ?2 AND h.account = ?3 AND h.state = ?4 AND h.fee > 0`)",
-  "new": "FROM town_seat_hires h WHERE h.week = ?1 AND h.key = ?2 AND h.state = ?4 AND h.fee > 0`)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-void-update",
-  "file": "server-account/src/seatTurning.js",
-  "old": "UPDATE town_seat_battles SET state = 'void' WHERE week = ?1 AND key = ?2 AND state = 'scheduled'",
-  "new": "UPDATE town_seat_battles SET state = state WHERE week = ?1 AND key = ?2 AND state = 'scheduled'",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-void-guard",
-  "file": "server-account/src/seatTurning.js",
-  "old": "\n        AND NOT EXISTS (SELECT 1 FROM town_seat_results WHERE week = ?1 AND key = ?2)`).bind(week, key), mustChange(db));",
-  "new": "`).bind(week, key), mustChange(db));",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a result's own batch writes the result row AND moves the battle off `scheduled` together (seatSiege.js applyResult's head), so the state's ask already refuses a battle a result reached; the NOT EXISTS is the void's own word for it"
- },
- {
-  "name": "AUDIT-SEATS-S3-void-mustchange",
-  "file": "server-account/src/seatTurning.js",
-  "old": "AND NOT EXISTS (SELECT 1 FROM town_seat_results WHERE week = ?1 AND key = ?2)`).bind(week, key), mustChange(db));",
-  "new": "AND NOT EXISTS (SELECT 1 FROM town_seat_results WHERE week = ?1 AND key = ?2)`).bind(week, key));",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-carry-off",
-  "file": "server-account/src/seatTurning.js",
-  "old": "carried: carriedAt.get(key) ?? null,   // AUDIT-SEATS S3",
-  "new": "carried: null,   // AUDIT-SEATS S3",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-carry-standing",
-  "file": "server-account/src/seatTurning.js",
-  "old": "u.kind === 'siege' && Number(u.standing) && holds.get",
-  "new": "u.kind === 'siege' && holds.get",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-carry-holder",
-  "file": "server-account/src/seatTurning.js",
-  "old": "&& holds.get(Number(u.key))?.guild_id === u.defender)",
-  "new": "&& true)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a seat a battle names changes hands only by that battle's result (or a Turning's claim, at an unheld seat alone), so a void siege's seat is held by its defender or by nobody - and nobody keeps no Charter (turningPlan's keeps) - kept as the carry's own word"
- },
- {
-  "name": "AUDIT-SEATS-S3-carry-scheduled",
-  "file": "server-account/src/seatTurning.js",
-  "old": "unfought.filter((u) => u.state === 'scheduled' && u.kind === 'siege'",
-  "new": "unfought.filter((u) => u.kind === 'siege'",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a battle already void at its settle is a struck seat's (townSeats.js strikeSeat), whose key the registry no longer holds - no seat of the plan carries it"
- },
- {
-  "name": "AUDIT-SEATS-S3-void-history",
-  "file": "server-account/src/seatTurning.js",
-  "old": "      if (u.kind !== 'revolt') stmts.push(history(key, 'siege-void', { battle: u.kind, guild: nameOr(u.attacker), holder: nameOr(u.defender), carried }));\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-void-swords",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    stmts.push(...(await swordsSettled(db, week, key, nowS, { voided: true })));\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-unfought-struck",
-  "file": "server-account/src/seatTurning.js",
-  "old": "WHERE b.week = ? AND b.state IN ('scheduled', 'void') AND NOT EXISTS",
-  "new": "WHERE b.week = ? AND b.state IN ('scheduled') AND NOT EXISTS",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-right-row",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    if (!r.carried) stmts.push(history(r.key, 'right',",
-  "new": "    stmts.push(history(r.key, 'right',",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-void-signed-paid",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    const paid = h.state === 'signed' && !voided;",
-  "new": "    const paid = h.state === 'signed';",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-void-signed-kept",
-  "file": "server-account/src/seatSiege.js",
-  "old": "state IN ('offered'${voided ? \", 'signed'\" : ''})",
-  "new": "state IN ('offered')",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-result-state",
-  "file": "server-account/src/seatSiege.js",
-  "old": "      WHERE EXISTS (SELECT 1 FROM town_seat_battles WHERE week = ?1 AND key = ?2 AND state = 'scheduled')\n        AND NOT EXISTS",
-  "new": "      WHERE 1\n        AND NOT EXISTS",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-result-week",
-  "file": "server-account/src/seatSiege.js",
-  "old": "\n        AND NOT EXISTS (SELECT 1 FROM town_seat_weeks WHERE week = ?1)`).bind(W, K, result, raised, winner, ridOf(), nowS),",
-  "new": "`).bind(W, K, result, raised, winner, ridOf(), nowS),",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-result-mustchange",
-  "file": "server-account/src/seatSiege.js",
-  "old": "AND NOT EXISTS (SELECT 1 FROM town_seat_weeks WHERE week = ?1)`).bind(W, K, result, raised, winner, ridOf(), nowS),\n    mustChange(db),",
-  "new": "AND NOT EXISTS (SELECT 1 FROM town_seat_weeks WHERE week = ?1)`).bind(W, K, result, raised, winner, ridOf(), nowS),",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-claim-word",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  if (b.state === 'void') return { error: 'battle-void' };",
-  "new": "  if (b.state === 'void') return { error: 'battle-none' };",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-claim-after",
-  "file": "server-account/src/seatSiege.js",
-  "old": "    if (settled || (await battleAt(db, c.sw, c.sk))?.state === 'void') return { error: 'battle-void' };",
-  "new": "    if ((await battleAt(db, c.sw, c.sk))?.state === 'void') return { error: 'battle-void' };",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-status",
-  "file": "server-account/src/index.js",
-  "old": "  'battle-void': 409, 'window-reckoning': 409,",
-  "new": "  'window-reckoning': 409,",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-claims-let-go",
-  "file": "src/net/siege/siegeClaims.js",
-  "old": " || r?.error === 'battle-void') return true;   // AUDIT-SEATS S3: void at its Turning",
-  "new": ") return true;   // AUDIT-SEATS S3: void at its Turning",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-law-one",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    seatTaken.add(s.key); guildTaken.add(s.carried.guild);\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-law-keeps",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if (!keeps(s) || !s.carried) continue;",
-  "new": "    if (!s.holder || !s.carried) continue;",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S3-law-words",
-  "file": "src/net/townSeatLaw.js",
-  "old": ", and ${guildWords(d.guild)}'s Right of Siege carries to the next week.`",
-  "new": ".`",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-hold",
-  "file": "server-account/src/townSeats.js",
-  "old": "    db.prepare('DELETE FROM town_seat_holds WHERE key = ?').bind(key),",
-  "new": "    db.prepare('DELETE FROM town_seat_holds WHERE key = ? AND 0').bind(key),",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-edict",
-  "file": "server-account/src/townSeats.js",
-  "old": "\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed'\"",
-  "new": "\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed' AND 0\"",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-battle",
-  "file": "server-account/src/townSeats.js",
-  "old": "\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'\"",
-  "new": "\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled' AND 0\"",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-refund",
-  "file": "server-account/src/townSeats.js",
-  "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS",
-  "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND 0 AND EXISTS",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-season",
-  "file": "server-account/src/townSeats.js",
-  "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS",
-  "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 - 100 AND EXISTS",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-room",
-  "file": "server-account/src/townSeats.js",
-  "old": "MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0))",
-  "new": "l.amount",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-claim-rid",
-  "file": "server-account/src/townSeats.js",
-  "old": "('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-'",
-  "new": "('claim-' || h.since_week || '-' || h.key, 'tourney-'",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-tourney-rid",
-  "file": "server-account/src/townSeats.js",
-  "old": "'tourney-' || h.since_week || '-' || h.key)",
-  "new": "'tourney-' || (h.since_week - 1) || '-' || h.key)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-guild-gone",
-  "file": "server-account/src/townSeats.js",
-  "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)",
-  "new": "      WHERE h.key = ?1 AND h.since_week >= ?5",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a hold's guild always stands: town_seat_holds.guild_id cascades ON DELETE with its guild (0050), so the JOIN finds no hold of a guild that is gone - kept as the refund's own word"
- },
- {
-  "name": "AUDIT-SEATS-S4-history",
-  "file": "server-account/src/townSeats.js",
-  "old": "...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {})",
-  "new": "...{}",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-refund-row",
-  "file": "server-account/src/townSeats.js",
-  "old": "json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0))",
-  "new": "json_set(?3, '$.refund', 0)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-lapse",
-  "file": "server-account/src/seatTurning.js",
-  "old": "  for (const h of unregistered) {",
-  "new": "  for (const h of []) {",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-lapse-edict",
-  "file": "server-account/src/seatTurning.js",
-  "old": "    stmts.push(db.prepare(\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND week = ? AND state = 'proclaimed'\").bind(Number(h.key), next));\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-keeper",
-  "file": "server-account/src/seatTurning.js",
-  "old": ", ...unregistered.map((h) => Number(h.key))]);   // AUDIT-SEATS S4",
-  "new": "]);   // AUDIT-SEATS S4",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S4-words",
-  "file": "src/net/townSeatLaw.js",
-  "old": "${Number(d.refund) > 0 ? ` - its claim fee of ${marksText(Number(d.refund))} refunded` : ''}",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S5-kept",
-  "file": "server-account/src/seatTurning.js",
-  "old": "export const SEASON_ZERO_KEPT = Object.freeze({ town_seat_history: \"kind = 'strike'\" });",
-  "new": "export const SEASON_ZERO_KEPT = Object.freeze({});",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S5-not",
-  "file": "server-account/src/seatTurning.js",
-  "old": "` WHERE NOT (${SEASON_ZERO_KEPT[t]})`",
-  "new": "` WHERE (${SEASON_ZERO_KEPT[t]})`",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-gate-count",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate' AND week = ?1) < ?11`)",
-  "new": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate' AND week = ?1) <= ?11`)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-gate-week",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate' AND week = ?1) < ?11`)",
-  "new": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate') < ?11`)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-gate-why",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "why: Number(n?.n ?? 0) >= GATE_WEEK_RECEIPTS ? 'capped' : 'bound-elsewhere'",
-  "new": "why: 'bound-elsewhere'",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-renown-guard",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "AND ${pledgedOrHeldSql('?1', '?2', '?3')} AND ${banked} < ?8",
-  "new": "AND ${pledgedOrHeldSql('?1', '?2', '?3')}",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-renown-clamp",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "MIN(?7, ?8 - ${banked})",
-  "new": "?7",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-renown-week",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "const banked = '(SELECT COALESCE(SUM(xp), 0) FROM town_seat_renown WHERE week = ?1 AND account = ?4)';",
-  "new": "const banked = '(SELECT COALESCE(SUM(xp), 0) FROM town_seat_renown WHERE week = ?1 AND account = ?4 AND region = ?6)';",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-law-receipts",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const GATE_WEEK_RECEIPTS = GATE_WEEK_CAP / GATE_INFLUENCE;",
-  "new": "export const GATE_WEEK_RECEIPTS = GATE_WEEK_CAP / GATE_INFLUENCE + 1;",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S7-law-xp",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const RENOWN_WEEK_XP = RENOWN_WEEK_CAP * RENOWN_XP_PER_INFLUENCE;",
-  "new": "export const RENOWN_WEEK_XP = RENOWN_WEEK_CAP * RENOWN_XP_PER_INFLUENCE * 2;",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S8-week",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  const w = b.week - 1;",
-  "new": "  const w = b.week;",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S8-total",
-  "file": "server-account/src/seatSiege.js",
-  "old": "const of = (g) => (list.find((s) => s.guild === g)?.total ?? 0) + Number(",
-  "new": "const of = (g) => 0 + Number(",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S8-legacy",
-  "file": "server-account/src/seatSiege.js",
-  "old": " + Number(legacy.find((l) => l.guild_id === g)?.amount ?? 0);",
-  "new": ";",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S8-legacy-week",
-  "file": "server-account/src/seatSiege.js",
-  "old": "FROM town_seat_legacy WHERE week = ? AND key = ?').bind(w, b.key)",
-  "new": "FROM town_seat_legacy WHERE week = ? AND key = ?').bind(b.week, b.key)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S9-void",
-  "file": "server-account/src/seatSiege.js",
-  "old": "db.prepare('UPDATE town_seat_influence SET voided = 1 WHERE week = ? AND key = ? AND guild_id = ?')",
-  "new": "db.prepare('DELETE FROM town_seat_influence WHERE week = ? AND key = ? AND guild_id = ?')",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S9-filter",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "WHERE week = ? AND key = ? AND voided = 0 GROUP BY guild_id, account, source, region, day",
-  "new": "WHERE week = ? AND key = ? GROUP BY guild_id, account, source, region, day",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-phase",
-  "file": "server-account/src/seatBattles.js",
-  "old": "  if (seatPhaseOf(nowS * 1000) !== 'muster') return { error: 'window-reckoning' };\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-window-status",
-  "file": "server-account/src/index.js",
-  "old": "  'battle-void': 409, 'window-reckoning': 409,",
-  "new": "  'battle-void': 409,",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-heraldry-pre",
-  "file": "server-account/src/halls.js",
-  "old": "  if (was && await inBattle()) return { error: 'heraldry-siege' };",
-  "new": "  if (false) return { error: 'heraldry-siege' };",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-heraldry-first",
-  "file": "server-account/src/halls.js",
-  "old": "  if (was && await inBattle()) return { error: 'heraldry-siege' };",
-  "new": "  if (await inBattle()) return { error: 'heraldry-siege' };",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-heraldry-write",
-  "file": "server-account/src/halls.js",
-  "old": "AND ${stillMaster} AND ${noBattle}`).bind(json, gid, row.heraldry),",
-  "new": "AND ${stillMaster}`).bind(json, gid, row.heraldry),",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-heraldry-catch",
-  "file": "server-account/src/halls.js",
-  "old": "    if (await inBattle()) return { error: 'heraldry-siege' };   // AUDIT-SEATS S10: a Turning placed a battle meanwhile\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-heraldry-void-read",
-  "file": "server-account/src/halls.js",
-  "old": "AND (attacker = ? OR defender = ?) AND state <> 'void'\")",
-  "new": "AND (attacker = ? OR defender = ?)\")",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-heraldry-void-write",
-  "file": "server-account/src/halls.js",
-  "old": "AND (attacker = guilds.id OR defender = guilds.id) AND state <> 'void')`;",
-  "new": "AND (attacker = guilds.id OR defender = guilds.id))`;",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S10-heraldry-status",
-  "file": "server-account/src/index.js",
-  "old": "  'heraldry-siege': 409,   // AUDIT-SEATS S10",
-  "new": "  // AUDIT-SEATS S10",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S11-group",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "SELECT guild_id, account, source, region, day, SUM(amount) AS amount, COUNT(*) AS n FROM town_seat_influence\n    WHERE week = ? AND key = ? AND voided = 0 GROUP BY guild_id, account, source, region, day`)",
-  "new": "SELECT guild_id, account, source, region, day, amount, 1 AS n FROM town_seat_influence\n    WHERE week = ? AND key = ? AND voided = 0`)",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S11-gate-n",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "a(r.account).gates += Number(r.n ?? 1); }",
-  "new": "a(r.account).gates += 1; }",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ],
-  "equivalent": true,
-  "why": "a gate row is one an account a game day (its ref, `day:account`, is unique - town_seat_influence UNIQUE (source, ref)), so a group of gate rows always counts one; `n` keeps the grouped read's meaning exact all the same"
- },
- {
-  "name": "AUDIT-SEATS-S11-day-bound",
-  "file": "server-account/src/seatTurning.js",
-  "old": "WHERE day BETWEEN ? AND ? AND dst_kind = 'guild'",
-  "new": "WHERE ? IS NOT NULL AND ? IS NOT NULL AND dst_kind = 'guild'",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S11-prune-influence",
-  "file": "server-account/src/seatTurning.js",
-  "old": "  stmts.push(db.prepare('DELETE FROM town_seat_influence WHERE week <= ?').bind(week - INFLUENCE_KEPT_WEEKS));",
-  "new": "  stmts.push(db.prepare('DELETE FROM town_seat_influence WHERE week <= ?').bind(week - INFLUENCE_KEPT_WEEKS + 1));",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-S11-prune-renown",
-  "file": "server-account/src/seatTurning.js",
-  "old": "  stmts.push(db.prepare('DELETE FROM town_seat_renown WHERE week <= ?').bind(week - INFLUENCE_KEPT_WEEKS));",
-  "new": "  stmts.push(db.prepare('DELETE FROM town_seat_renown WHERE week <= ?').bind(-1));",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-T1-minus",
-  "file": "src/net/townSeatLaw.js",
-  "old": "standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0, taken: false };",
-  "new": "standing: raised ? SIEGE_STANDING.held : 0, taken: false };",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-T1-th",
-  "file": "server-account/src/seatSiege.js",
-  "old": "  const throne = c.th === 1 ? 1 : 0;",
-  "new": "  const throne = 0;",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-T1-row",
-  "file": "server-account/src/seatSiege.js",
-  "old": "...(kind === 'siege-held' ? { throne } : {})",
-  "new": "...{}",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-T1-never",
-  "file": "src/net/townSeatLaw.js",
-  "old": "${d.throne === 0 ? ' The Throne was never reached.' : ''}",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-T1-reached",
-  "file": "src/net/townSeatLaw.js",
-  "old": "${d.throne === 1 ? ', though its Throne was reached' : ''}",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- },
- {
-  "name": "AUDIT-SEATS-T2-disputed",
-  "file": "server-account/src/townSeats.js",
-  "old": " || s.fact.state === 'disputed';",
-  "new": ";",
-  "tests": [
-   "test/net/audit_seats_service.test.js"
-  ]
- }
+  {
+    "name": "AUDIT-SEATS-S1-bounty-no-case",
+    "file": "server-account/src/seatTurning.js",
+    "old": "SELECT 'escrow', ?1, CASE WHEN ${home} THEN 'guild' ELSE 'burn' END, CASE WHEN ${home} THEN e.guild_id END, 'bounty-return'",
+    "new": "SELECT 'escrow', ?1, 'guild', e.guild_id, 'bounty-return'",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S1-bounty-cap",
+    "file": "server-account/src/seatTurning.js",
+    "old": "+ e.set_aside - e.spent <= ${MARKS_MAX}`;",
+    "new": "+ e.set_aside - e.spent <= 2 * ${MARKS_MAX}`;",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S1-bounty-gone",
+    "file": "server-account/src/seatTurning.js",
+    "old": "const home = `EXISTS (SELECT 1 FROM guilds WHERE id = e.guild_id) AND COALESCE",
+    "new": "const home = `COALESCE",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S1-due-break",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    else if (r.failed) break;\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S1-failed-flag",
+    "file": "server-account/src/seatTurning.js",
+    "old": "return { settled: false, failed: !(await db.prepare('SELECT 1 FROM town_seat_weeks WHERE week = ?').bind(week).first()) };",
+    "new": "return { settled: false, failed: false };",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S2-account-fit",
+    "file": "server-account/src/seatSiege.js",
+    "old": "COALESCE((SELECT balance FROM marks WHERE account = h.account), 0) + h.fee <= ${MARKS_MAX}",
+    "new": "COALESCE((SELECT balance FROM marks WHERE account = h.account), 0) <= ${MARKS_MAX}",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S2-guild-fit",
+    "file": "server-account/src/seatSiege.js",
+    "old": "COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) + h.fee <= ${MARKS_MAX}",
+    "new": "COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0) <= ${MARKS_MAX}",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S2-account-gone",
+    "file": "server-account/src/seatSiege.js",
+    "old": "? `EXISTS (SELECT 1 FROM players WHERE id = h.account) AND COALESCE",
+    "new": "? `COALESCE",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a contract's account always stands: town_seat_hires.account cascades ON DELETE with its player (0052), so the hire is gone with it - kept as the CASE's own word that no line pays an account that is not there"
+  },
+  {
+    "name": "AUDIT-SEATS-S2-guild-gone",
+    "file": "server-account/src/seatSiege.js",
+    "old": ": `EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id) AND COALESCE",
+    "new": ": `COALESCE",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a side's guild cannot go while its battle is to come (guilds.js SEAT_BATTLE_PENDING: a Right not yet past its Turning refuses the going), and a result or a void comes before that Turning ends; kept so the CASE never names a treasury that is not there"
+  },
+  {
+    "name": "AUDIT-SEATS-S2-one-statement",
+    "file": "server-account/src/seatSiege.js",
+    "old": "FROM town_seat_hires h WHERE h.week = ?1 AND h.key = ?2 AND h.account = ?3 AND h.state = ?4 AND h.fee > 0`)",
+    "new": "FROM town_seat_hires h WHERE h.week = ?1 AND h.key = ?2 AND h.state = ?4 AND h.fee > 0`)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-void-update",
+    "file": "server-account/src/seatTurning.js",
+    "old": "UPDATE town_seat_battles SET state = 'void' WHERE week = ?1 AND key = ?2 AND state = 'scheduled'",
+    "new": "UPDATE town_seat_battles SET state = state WHERE week = ?1 AND key = ?2 AND state = 'scheduled'",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-void-guard",
+    "file": "server-account/src/seatTurning.js",
+    "old": "\n        AND NOT EXISTS (SELECT 1 FROM town_seat_results WHERE week = ?1 AND key = ?2)`).bind(week, key), mustChange(db));",
+    "new": "`).bind(week, key), mustChange(db));",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a result's own batch writes the result row AND moves the battle off `scheduled` together (seatSiege.js applyResult's head), so the state's ask already refuses a battle a result reached; the NOT EXISTS is the void's own word for it"
+  },
+  {
+    "name": "AUDIT-SEATS-S3-void-mustchange",
+    "file": "server-account/src/seatTurning.js",
+    "old": "AND NOT EXISTS (SELECT 1 FROM town_seat_results WHERE week = ?1 AND key = ?2)`).bind(week, key), mustChange(db));",
+    "new": "AND NOT EXISTS (SELECT 1 FROM town_seat_results WHERE week = ?1 AND key = ?2)`).bind(week, key));",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-carry-off",
+    "file": "server-account/src/seatTurning.js",
+    "old": "carried: carriedAt.get(key) ?? null,   // AUDIT-SEATS S3",
+    "new": "carried: null,   // AUDIT-SEATS S3",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-carry-standing",
+    "file": "server-account/src/seatTurning.js",
+    "old": "u.kind === 'siege' && Number(u.standing) && holds.get",
+    "new": "u.kind === 'siege' && holds.get",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-carry-holder",
+    "file": "server-account/src/seatTurning.js",
+    "old": "&& holds.get(Number(u.key))?.guild_id === u.defender)",
+    "new": "&& true)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a seat a battle names changes hands only by that battle's result (or a Turning's claim, at an unheld seat alone), so a void siege's seat is held by its defender or by nobody - and nobody keeps no Charter (turningPlan's keeps) - kept as the carry's own word"
+  },
+  {
+    "name": "AUDIT-SEATS-S3-carry-scheduled",
+    "file": "server-account/src/seatTurning.js",
+    "old": "unfought.filter((u) => u.state === 'scheduled' && u.kind === 'siege'",
+    "new": "unfought.filter((u) => u.kind === 'siege'",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a battle already void at its settle is a struck seat's (townSeats.js strikeSeat), whose key the registry no longer holds - no seat of the plan carries it"
+  },
+  {
+    "name": "AUDIT-SEATS-S3-void-history",
+    "file": "server-account/src/seatTurning.js",
+    "old": "      if (u.kind !== 'revolt') stmts.push(history(key, 'siege-void', { battle: u.kind, guild: nameOr(u.attacker), holder: nameOr(u.defender), carried }));\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-void-swords",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    stmts.push(...(await swordsSettled(db, week, key, nowS, { voided: true })));\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-unfought-struck",
+    "file": "server-account/src/seatTurning.js",
+    "old": "WHERE b.week = ? AND b.state IN ('scheduled', 'void') AND NOT EXISTS",
+    "new": "WHERE b.week = ? AND b.state IN ('scheduled') AND NOT EXISTS",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-right-row",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    if (!r.carried) stmts.push(history(r.key, 'right',",
+    "new": "    stmts.push(history(r.key, 'right',",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-void-signed-paid",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    const paid = h.state === 'signed' && !voided;",
+    "new": "    const paid = h.state === 'signed';",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-void-signed-kept",
+    "file": "server-account/src/seatSiege.js",
+    "old": "state IN ('offered'${voided ? \", 'signed'\" : ''})",
+    "new": "state IN ('offered')",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-result-state",
+    "file": "server-account/src/seatSiege.js",
+    "old": "      WHERE EXISTS (SELECT 1 FROM town_seat_battles WHERE week = ?1 AND key = ?2 AND state = 'scheduled')\n        AND NOT EXISTS",
+    "new": "      WHERE 1\n        AND NOT EXISTS",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-result-week",
+    "file": "server-account/src/seatSiege.js",
+    "old": "\n        AND NOT EXISTS (SELECT 1 FROM town_seat_weeks WHERE week = ?1)`).bind(W, K, result, raised, winner, ridOf(), nowS),",
+    "new": "`).bind(W, K, result, raised, winner, ridOf(), nowS),",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-result-mustchange",
+    "file": "server-account/src/seatSiege.js",
+    "old": "AND NOT EXISTS (SELECT 1 FROM town_seat_weeks WHERE week = ?1)`).bind(W, K, result, raised, winner, ridOf(), nowS),\n    mustChange(db),",
+    "new": "AND NOT EXISTS (SELECT 1 FROM town_seat_weeks WHERE week = ?1)`).bind(W, K, result, raised, winner, ridOf(), nowS),",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-claim-word",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  if (b.state === 'void') return { error: 'battle-void' };",
+    "new": "  if (b.state === 'void') return { error: 'battle-none' };",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-claim-after",
+    "file": "server-account/src/seatSiege.js",
+    "old": "    if (settled || (await battleAt(db, c.sw, c.sk))?.state === 'void') return { error: 'battle-void' };",
+    "new": "    if ((await battleAt(db, c.sw, c.sk))?.state === 'void') return { error: 'battle-void' };",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-status",
+    "file": "server-account/src/index.js",
+    "old": "  'battle-void': 409, 'window-reckoning': 409,",
+    "new": "  'window-reckoning': 409,",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-claims-let-go",
+    "file": "src/net/siege/siegeClaims.js",
+    "old": " || r?.error === 'battle-void') return true;   // AUDIT-SEATS S3: void at its Turning",
+    "new": ") return true;   // AUDIT-SEATS S3: void at its Turning",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-law-one",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    seatTaken.add(s.key); guildTaken.add(s.carried.guild);\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-law-keeps",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (!keeps(s) || !s.carried) continue;",
+    "new": "    if (!s.holder || !s.carried) continue;",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S3-law-words",
+    "file": "src/net/townSeatLaw.js",
+    "old": ", and ${guildWords(d.guild)}'s Right of Siege carries to the next week.`",
+    "new": ".`",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-hold",
+    "file": "server-account/src/townSeats.js",
+    "old": "    db.prepare('DELETE FROM town_seat_holds WHERE key = ?').bind(key),",
+    "new": "    db.prepare('DELETE FROM town_seat_holds WHERE key = ? AND 0').bind(key),",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-edict",
+    "file": "server-account/src/townSeats.js",
+    "old": "\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed'\"",
+    "new": "\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed' AND 0\"",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-battle",
+    "file": "server-account/src/townSeats.js",
+    "old": "\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'\"",
+    "new": "\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled' AND 0\"",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-refund",
+    "file": "server-account/src/townSeats.js",
+    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS",
+    "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND 0 AND EXISTS",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-season",
+    "file": "server-account/src/townSeats.js",
+    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS",
+    "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 - 100 AND EXISTS",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-room",
+    "file": "server-account/src/townSeats.js",
+    "old": "MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0))",
+    "new": "l.amount",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-claim-rid",
+    "file": "server-account/src/townSeats.js",
+    "old": "('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-'",
+    "new": "('claim-' || h.since_week || '-' || h.key, 'tourney-'",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-tourney-rid",
+    "file": "server-account/src/townSeats.js",
+    "old": "'tourney-' || h.since_week || '-' || h.key)",
+    "new": "'tourney-' || (h.since_week - 1) || '-' || h.key)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-guild-gone",
+    "file": "server-account/src/townSeats.js",
+    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)",
+    "new": "      WHERE h.key = ?1 AND h.since_week >= ?5",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a hold's guild always stands: town_seat_holds.guild_id cascades ON DELETE with its guild (0050), so the JOIN finds no hold of a guild that is gone - kept as the refund's own word"
+  },
+  {
+    "name": "AUDIT-SEATS-S4-history",
+    "file": "server-account/src/townSeats.js",
+    "old": "...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-refund-row",
+    "file": "server-account/src/townSeats.js",
+    "old": "json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0))",
+    "new": "json_set(?3, '$.refund', 0)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-lapse",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  for (const h of unregistered) {",
+    "new": "  for (const h of []) {",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-lapse-edict",
+    "file": "server-account/src/seatTurning.js",
+    "old": "    stmts.push(db.prepare(\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND week = ? AND state = 'proclaimed'\").bind(Number(h.key), next));\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S4-keeper",
+    "file": "server-account/src/seatTurning.js",
+    "old": ", ...unregistered.map((h) => Number(h.key)), ...folded.map((h) => Number(h.key))]);   // AUDIT-SEATS S4; DOMAIN3: the fold",
+    "new": ", ...folded.map((h) => Number(h.key))]);   // AUDIT-SEATS S4; DOMAIN3: the fold",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the lapsed set names the fold's Charters beside the unregistered."
+  },
+  {
+    "name": "AUDIT-SEATS-S4-words",
+    "file": "src/net/townSeatLaw.js",
+    "old": "${Number(d.refund) > 0 ? ` - its claim fee of ${marksText(Number(d.refund))} refunded` : ''}",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S5-kept",
+    "file": "server-account/src/seatTurning.js",
+    "old": "export const SEASON_ZERO_KEPT = Object.freeze({ town_seat_history: \"kind = 'strike'\" });",
+    "new": "export const SEASON_ZERO_KEPT = Object.freeze({});",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S5-not",
+    "file": "server-account/src/seatTurning.js",
+    "old": "` WHERE NOT (${SEASON_ZERO_KEPT[t]})`",
+    "new": "` WHERE (${SEASON_ZERO_KEPT[t]})`",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-gate-count",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate' AND week = ?1) < ?11`)",
+    "new": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate' AND week = ?1) <= ?11`)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-gate-week",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate' AND week = ?1) < ?11`)",
+    "new": "AND (SELECT COUNT(*) FROM town_seat_influence WHERE account = ?4 AND source = 'gate') < ?11`)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-gate-why",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "why: Number(n?.n ?? 0) >= GATE_WEEK_RECEIPTS ? 'capped' : 'bound-elsewhere'",
+    "new": "why: 'bound-elsewhere'",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-renown-guard",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "AND ${pledgedOrHeldSql('?1', '?2', '?3')} AND ${banked} < ?8",
+    "new": "AND ${pledgedOrHeldSql('?1', '?2', '?3')}",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-renown-clamp",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "MIN(?7, ?8 - ${banked})",
+    "new": "?7",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-renown-week",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "const banked = '(SELECT COALESCE(SUM(xp), 0) FROM town_seat_renown WHERE week = ?1 AND account = ?4)';",
+    "new": "const banked = '(SELECT COALESCE(SUM(xp), 0) FROM town_seat_renown WHERE week = ?1 AND account = ?4 AND region = ?6)';",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-law-receipts",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const GATE_WEEK_RECEIPTS = GATE_WEEK_CAP / GATE_INFLUENCE;",
+    "new": "export const GATE_WEEK_RECEIPTS = GATE_WEEK_CAP / GATE_INFLUENCE + 1;",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S7-law-xp",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const RENOWN_WEEK_XP = RENOWN_WEEK_CAP * RENOWN_XP_PER_INFLUENCE;",
+    "new": "export const RENOWN_WEEK_XP = RENOWN_WEEK_CAP * RENOWN_XP_PER_INFLUENCE * 2;",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S8-week",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  const w = b.week - 1;",
+    "new": "  const w = b.week;",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S8-total",
+    "file": "server-account/src/seatSiege.js",
+    "old": "const of = (g) => (list.find((s) => s.guild === g)?.total ?? 0) + Number(",
+    "new": "const of = (g) => 0 + Number(",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S8-legacy",
+    "file": "server-account/src/seatSiege.js",
+    "old": " + Number(legacy.find((l) => l.guild_id === g)?.amount ?? 0);",
+    "new": ";",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S8-legacy-week",
+    "file": "server-account/src/seatSiege.js",
+    "old": "FROM town_seat_legacy WHERE week = ? AND key = ?').bind(w, b.key)",
+    "new": "FROM town_seat_legacy WHERE week = ? AND key = ?').bind(b.week, b.key)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S9-void",
+    "file": "server-account/src/seatSiege.js",
+    "old": "db.prepare('UPDATE town_seat_influence SET voided = 1 WHERE week = ? AND key = ? AND guild_id = ?')",
+    "new": "db.prepare('DELETE FROM town_seat_influence WHERE week = ? AND key = ? AND guild_id = ?')",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S9-filter",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "WHERE week = ? AND key = ? AND voided = 0 GROUP BY guild_id, account, source, region, day",
+    "new": "WHERE week = ? AND key = ? GROUP BY guild_id, account, source, region, day",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-phase",
+    "file": "server-account/src/seatBattles.js",
+    "old": "  if (seatPhaseOf(nowS * 1000) !== 'muster') return { error: 'window-reckoning' };\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-window-status",
+    "file": "server-account/src/index.js",
+    "old": "  'battle-void': 409, 'window-reckoning': 409,",
+    "new": "  'battle-void': 409,",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-heraldry-pre",
+    "file": "server-account/src/halls.js",
+    "old": "  if (was && await inBattle()) return { error: 'heraldry-siege' };",
+    "new": "  if (false) return { error: 'heraldry-siege' };",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-heraldry-first",
+    "file": "server-account/src/halls.js",
+    "old": "  if (was && await inBattle()) return { error: 'heraldry-siege' };",
+    "new": "  if (await inBattle()) return { error: 'heraldry-siege' };",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-heraldry-write",
+    "file": "server-account/src/halls.js",
+    "old": "AND ${stillMaster} AND ${noBattle}`).bind(json, gid, row.heraldry),",
+    "new": "AND ${stillMaster}`).bind(json, gid, row.heraldry),",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-heraldry-catch",
+    "file": "server-account/src/halls.js",
+    "old": "    if (await inBattle()) return { error: 'heraldry-siege' };   // AUDIT-SEATS S10: a Turning placed a battle meanwhile\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-heraldry-void-read",
+    "file": "server-account/src/halls.js",
+    "old": "AND (attacker = ? OR defender = ?) AND state <> 'void'\")",
+    "new": "AND (attacker = ? OR defender = ?)\")",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-heraldry-void-write",
+    "file": "server-account/src/halls.js",
+    "old": "AND (attacker = guilds.id OR defender = guilds.id) AND state <> 'void')`;",
+    "new": "AND (attacker = guilds.id OR defender = guilds.id))`;",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S10-heraldry-status",
+    "file": "server-account/src/index.js",
+    "old": "  'heraldry-siege': 409,   // AUDIT-SEATS S10",
+    "new": "  // AUDIT-SEATS S10",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S11-group",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "SELECT guild_id, account, source, region, day, SUM(amount) AS amount, COUNT(*) AS n FROM town_seat_influence\n    WHERE week = ? AND key = ? AND voided = 0 GROUP BY guild_id, account, source, region, day`)",
+    "new": "SELECT guild_id, account, source, region, day, amount, 1 AS n FROM town_seat_influence\n    WHERE week = ? AND key = ? AND voided = 0`)",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S11-gate-n",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "a(r.account).gates += Number(r.n ?? 1); }",
+    "new": "a(r.account).gates += 1; }",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "a gate row is one an account a game day (its ref, `day:account`, is unique - town_seat_influence UNIQUE (source, ref)), so a group of gate rows always counts one; `n` keeps the grouped read's meaning exact all the same"
+  },
+  {
+    "name": "AUDIT-SEATS-S11-day-bound",
+    "file": "server-account/src/seatTurning.js",
+    "old": "WHERE day BETWEEN ? AND ? AND dst_kind = 'guild'",
+    "new": "WHERE ? IS NOT NULL AND ? IS NOT NULL AND dst_kind = 'guild'",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S11-prune-influence",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  stmts.push(db.prepare('DELETE FROM town_seat_influence WHERE week <= ?').bind(week - INFLUENCE_KEPT_WEEKS));",
+    "new": "  stmts.push(db.prepare('DELETE FROM town_seat_influence WHERE week <= ?').bind(week - INFLUENCE_KEPT_WEEKS + 1));",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-S11-prune-renown",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  stmts.push(db.prepare('DELETE FROM town_seat_renown WHERE week <= ?').bind(week - INFLUENCE_KEPT_WEEKS));",
+    "new": "  stmts.push(db.prepare('DELETE FROM town_seat_renown WHERE week <= ?').bind(-1));",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-T1-minus",
+    "file": "src/net/townSeatLaw.js",
+    "old": "standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0, taken: false };",
+    "new": "standing: raised ? SIEGE_STANDING.held : 0, taken: false };",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-T1-th",
+    "file": "server-account/src/seatSiege.js",
+    "old": "  const throne = c.th === 1 ? 1 : 0;",
+    "new": "  const throne = 0;",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-T1-row",
+    "file": "server-account/src/seatSiege.js",
+    "old": "...(kind === 'siege-held' ? { throne } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-T1-never",
+    "file": "src/net/townSeatLaw.js",
+    "old": "${d.throne === 0 ? ' The Throne was never reached.' : ''}",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-T1-reached",
+    "file": "src/net/townSeatLaw.js",
+    "old": "${d.throne === 1 ? ', though its Throne was reached' : ''}",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEATS-T2-disputed",
+    "file": "server-account/src/townSeats.js",
+    "old": " || s.fact.state === 'disputed';",
+    "new": ";",
+    "tests": [
+      "test/net/audit_seats_service.test.js"
+    ]
+  }
 ]

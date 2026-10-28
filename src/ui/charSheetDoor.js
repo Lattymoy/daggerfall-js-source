@@ -48,6 +48,7 @@ import { charSheetHooks } from './charSheetNav.js';
 import { VirtueLevelUpScreen } from './virtueLevelUp.js';   // ORL1
 import { levelNotices } from './levelUp/levelNotice.js';   // LV2: who already played the fanfare
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
+import { releaseCapLatch } from '../systems/levelCap.js';   // AUDIT FB1026d C1: F5 at the cap opens the sheet, never a level-up with no level
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -110,6 +111,7 @@ const fanfared = new WeakMap();
  * Ascension in its pane) both build it here. `virtue` the caller's own read of the law, when it made one.
  */
 export function levelUpScreenFor(entity, virtue = !entity?.oghmaLevelUp && usesVirtueLeveling(entity)) {
+  releaseCapLatch(entity);   // LEVEL-45 (AUDIT FB1026d C1)
   if (!entity?.readyToLevelUp) return null;
   // LV2: ...and whether the WINDOW still owes the fanfare. On the
   // enhanced skin ui/levelUp/levelNotice.js played it at the moment the level
@@ -173,6 +175,7 @@ export function createCharSheetWindow(deps = {}) {
   // wants, through that screen's own `input`, so the Level++, the
   // health roll and the mod's caps stay exactly where a11 and ORL1 put
   // them.
+  releaseCapLatch(deps.entity);   // LEVEL-45 (AUDIT FB1026d C1): a level latched past the cap opens nothing
   if (deps.entity?.readyToLevelUp) {
     const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);
     const rollout = () => levelUpScreenFor(deps.entity, virtue);   // GROWTH1: the screen's one home (LV2's fanfare with it)

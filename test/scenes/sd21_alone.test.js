@@ -110,12 +110,13 @@ test('SD-ALONE the party panel: no card for a companion in the Hour, the crew\'s
 
 test('SD-ALONE the word: said once, through the Hour\'s voice, as a player steps through the Rift with companions at their side - once the step\'s veil has opened and nothing holds the screen; nothing said without any; owed again once out (mutants: said under the veil; said through the door; said under a window; said every frame; never owed again; said with nobody at my side; other words; never said; out of the Hour\'s frame)', () => {
   const m = lift(/\n {2}(let _sdAloneSaid = false;\n {2}const sdAloneFrame = \(\) => \{[\s\S]*?\n {2}\};)\n/, 'sdAloneFrame');
-  const s = { slot: null, transitioning: false, busy: false, paused: false, companions: 2 };
+  const s = { slot: null, transitioning: false, busy: false, paused: false, companions: 2, welcomed: true };
   const said = [];
-  const frame = new Function('d', `const { modes, gateVeil, gamePaused, companionsWithYou, sdSay, SD_REALM_TEXT } = d;\n${m[1]}\nreturn sdAloneFrame;`)({
+  const frame = new Function('d', `const { modes, gateVeil, gamePaused, companionsWithYou, sdSay, SD_REALM_TEXT, online, sdCopyLine } = d;\n${m[1]}\nreturn sdAloneFrame;`)({
     modes: { sdRealmSlot: () => s.slot, get transitioning() { return s.transitioning; } },
     gateVeil: { get busy() { return s.busy; } }, gamePaused: () => s.paused, companionsWithYou: () => s.companions,
     sdSay: (text, ...rest) => { said.push([text, ...rest]); return true; }, SD_REALM_TEXT,
+    online: { get welcomed() { return s.welcomed; }, peers: new Map() }, sdCopyLine: () => null,   // PIN MOVED (SD-SOLO): after the Hour's welcome, and its copy's line (sdparty_relay.test.js)
   });
   frame();
   assert.equal(said.length, 0, 'out of the Hour: nothing');
@@ -128,7 +129,10 @@ test('SD-ALONE the word: said once, through the Hour\'s voice, as a player steps
   s.busy = false; s.paused = true;
   frame();
   assert.equal(said.length, 0, 'not under a window');
-  s.paused = false;
+  s.paused = false; s.welcomed = false;
+  frame();
+  assert.equal(said.length, 0, 'not before the Hour\'s welcome');
+  s.welcomed = true;
   frame(); frame(); frame();
   assert.deepEqual(said, [[SD_REALM_TEXT.noCompanions]], 'once, as the veil opens - a refusal of the Hour\'s voice (its turn rank)');
   assert.equal(SD_REALM_TEXT.noCompanions, 'Your companions cannot follow you through the Rift.');

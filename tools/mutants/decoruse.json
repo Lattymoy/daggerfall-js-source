@@ -128,7 +128,7 @@
   {
     "name": "DECORUSE-the-use-unwired",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (focusStoresStation('fire'), interiorKeyCtx.togglePause({ at: 'stores' }), true))) return;",
+    "old": "    if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;",
     "new": "    if (false) return;",
     "tests": [
       "test/systems/decor/decoruse.test.js"
@@ -173,7 +173,7 @@
   {
     "name": "AUDITDECOR-D2-the-stores-door-unwired",
     "file": "src/scenes/worldModes.js",
-    "old": ", () => forgeOffered() && (focusStoresStation('fire'), interiorKeyCtx.togglePause({ at: 'stores' }), true))) return;",
+    "old": ", () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;",
     "new": ")) return;",
     "tests": [
       "test/systems/decor/decoruse.test.js"

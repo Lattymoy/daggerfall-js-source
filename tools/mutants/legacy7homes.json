@@ -48,8 +48,9 @@
   {
     "name": "LEGACY7H-world-offline-deeds-online",
     "file": "src/scenes/world.js",
-    "old": "heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses",
-    "new": "heldHouses: () => ((playerEntity.houses",
+    "old": "heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : allDeeds(playerEntity.houses",
+    "new": "heldHouses: () => (allDeeds(playerEntity.houses",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/legacy/legacy7_homes.test.js"
     ]

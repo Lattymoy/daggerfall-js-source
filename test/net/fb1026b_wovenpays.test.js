@@ -148,6 +148,10 @@ test('AUDIT WOVEN-PAYS A1, B3: a Weavers\' bolt bought with silver, withdrawn, s
   assert.equal(craftXpLine(breeches, 0, 'Outfitting', {}, silverOf(book, breeches)), '20 Outfitting experience. Bolts of this cloth bought with silver and not yet used: 1. Until you have used that many, no piece of it earns a first-time bonus.');
   const b = await craft('garment-152:linen');
   assert.deepEqual([b.xp, b.first, b.firstPaid], [20, true, false], 'the pack\'s Weavers\' bolt, in loose, paid none');
+  // CRAFT-HALL: its first still owed - the book notes no made pattern, and the service's state read again agrees
+  assert.equal(book.state.made.crafts.has('garment-152:linen'), false, 'a craft that laid no first on makes no pattern');
+  assert.equal((await book.refresh()).ok, true);
+  assert.equal(book.state.made.crafts.has('garment-152:linen'), false, 'nor does the state say it is made (madeStatement)');
   assert.equal(craftXpText(breeches, b, 'Outfitting'), '(+20 Outfitting experience. Cloth bought with silver earns no first-time bonus, so this piece\'s is still yours to earn)');
   assert.deepEqual([silver('cloth:linen'), book.silver('cloth:linen')], [0, 0], 'used: the count spent, and the book heard it');
 });
@@ -164,6 +168,7 @@ test('AUDIT WOVEN-PAYS A2, B1, C1: cloth the loom weaves of Root Tendrils bought
   assert.deepEqual([w.data.bought, rows('prof_carried', 'cloth:linen')], [1, [['bought', 1]]], 'woven, bought, carried out');
   const armbands = await craft('garment-142:linen');
   assert.deepEqual([armbands.xp, armbands.firstPaid], [20 + SHARE, true]);
+  assert.equal(book.state.made.crafts.has('garment-142:linen'), true, 'CRAFT-HALL: a craft that laid its first on makes the pattern');
   give('cloth:linen', 'bought', 3);   // a guildmate's cloth out of the guild Stores (writs.js guild withdraw: bought)
   assert.equal((await book.refresh()).ok, true);
   const net = await craft('fishingnet:linen');

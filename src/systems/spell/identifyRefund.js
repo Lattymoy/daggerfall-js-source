@@ -13,6 +13,12 @@
 // player whose magicka pool was smaller than the undiscounted price could cast Identify but met "You do not have
 // enough spell points left." on every click. Pricing the effect through the cast's own formula keeps the refund
 // and the window's charge equal to what the cast spent on it.
+//
+// RPT1026-PROGRESS (a private report, 2026-10-26: a discounted Identify gave back more than it took): the price
+// here is taken as the spell LANDS, and floored at 5 after every discount, so it is the window's charge but not, by
+// itself, the refund: the cast engine gives back no more than the release spent (scenes/hostMagic.js, the cast's
+// token) - a cast a modifier took to 1 gave back 5, and a discount gone between the ready and the release gave back
+// the whole price.
 
 import { calculateCastCost } from '../spellcost.js';
 
@@ -20,7 +26,7 @@ import { calculateCastCost } from '../spellcost.js';
 export const IDENTIFY_REFUND_FLOOR = 5;
 
 /**
- * The magicka the Identify effect refunds, and the magicka the identify window then charges.
+ * The Identify effect's price: the magicka the identify window charges, and the most its refund gives back.
  *
  * The effect is priced alone, as a copy of its spell holding that one effect: DFU refunds only the Identify
  * effect's cost, and the other effects bundled with it stay paid. The copy keeps the spell's range type (the

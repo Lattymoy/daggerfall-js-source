@@ -622,7 +622,10 @@ world, locked to its own family.
   region already, and the bank deeds one a region. Sell yours there to take it up."), taken up the first tick the slot is
   free. **Departure (recorded):** offered as "sold into the estate", it waits instead - DFU prices a house off its
   building's model (`housePrice(meshRadius)`), which only its own town's directory can read, and a waiting house is not
-  lost: the family still lives in it and the player chooses which to keep.
+  lost: the family still lives in it and the player chooses which to keep. HOUSES-3 (2026-10-27,
+  `06-Systems/Online-Arc.md` HOUSES-3): a region holds THREE houses now, so the inherited one waits only when the taker
+  holds three others there ("... you already own 3 houses in that region, as many as the bank allows. Sell one there to
+  take it."), and is taken up beside the region's others.
 
 **Handed over** (`deps.inheritHouse(row, fallen)` - `'given'`, `'waits'`, `'gone'`, or still asked):
 - **Offline** - Daggerfall's own deed (`allocateHouseToPlayer`: the slot, "<heir>'s residence" on the map, the notebook's
@@ -637,8 +640,8 @@ world, locked to its own family.
   its entry, its sale (its `paid` - the deed's share comes back to the heir's record if they sell). Its cupboards are the
   fallen's realm record's (HOME1: the owner's storage is the owner's save), read through `/v1/realm/<id>/data` (a
   tombstone's record is read, never written) and grafted under the home's scene. A Knightly Order's house the realm held
-  (KNIGHT-HOUSE's deed row) is Daggerfall's bank deed as well: one a region, and the deed and its house scene given as
-  offline. A home the fallen sold after their last save reached the line is `'gone'` and leaves the line's houses.
+  (KNIGHT-HOUSE's deed row) is Daggerfall's bank deed as well: one a region (HOUSES-3: three), and the deed and its house
+  scene given as offline. A home the fallen sold after their last save reached the line is `'gone'` and leaves the line's houses.
 
 ## 11. THE UI (Enhanced Plus)
 
@@ -901,3 +904,136 @@ frame hears the Resurrect under them (`modes?.deathUp?.()`), their resets ask `l
 `test/systems/legacy/fb1016b_rezbloodline.test.js` (5, over the real death door, host, realm session and the line's realm copy on the
 real account Worker and its minute's clock, party wire, caster's cast, death screen and world.js's own statements);
 `tools/mutants/fb1016b_rezbloodline.json` (all dead - the record's count in the Field Bugs section).
+
+## BAY-LEFT-B - the heir born at a seat past the Bay (2026-10-27)
+
+The audit "no system left behind in the Bay" (B1, HIGH; the owner: *"Every single thing here needs to be addressed. No
+exceptions."*, 2026-10-26). WHAT STOOD: the seat is the first town the house stands in
+(`scenes/legacyHost.js:"if (!family.seat) {"`), and TESA's places stand in the location index as they build, so a seat
+could be `{ region: 'Skyrim', loc: 'Solitude', mapId }`. The birth booted `?region=Skyrim&loc=Solitude`
+(`systems/legacy/places.js` birthSearch), the named start read MAPS.BSA alone (`maps.getLocationByName`), and it threw
+"location not found: Skyrim/Solitude" - the page never booted, and the address kept the birth's parameters, so a reload
+failed too. The Online page's waiting-house birth took the same route (`main.js`). A house with no seat walked the
+Bay's 62 regions for its heir's town (`nearestTownAnywhere`), so an heir of one who fell past the Bay was born in a Bay
+town hundreds of pixels away.
+
+WHAT IT IS NOW:
+
+- **The start's lookup left bootWorld** (HOST-SPLIT, verbatim - by hand, as `tools/hostMove.mjs` refuses a group whose
+  `let` the statements after it write): `scenes/bootStartHost.js:"export function createBootStart(host) {"`. The classic
+  cell, EE13's random spawn and the named start stand as they did.
+- **A start past the Bay** (`bootStartHost.js:"export function farStartOf(params, regionName, locationName) {"`): a name
+  MAPS.BSA does not hold, with the address's kept map id (`seat`) or a province's region (62..70). It is booted the way a
+  save made in a town past the Bay loads (TESA2): the world stands first at the Bay's town nearest the place where its
+  pixel is known before the trace (else the boot's own default, Daggerfall); once the boot's world stands
+  (`playerSpawned`, `_bootLoaded`, no load) and the land has its trace (`arenaTraced`, ARENA_LOAD_WAIT_MS at most - the
+  load's own wait), the player is moved there (`_teleportToPixel`, on a start marker, as `__tesaJump` lands). The place's
+  pixel (`bootStartHost.js:"export function farPixelOf(far, worldPlaces) {"`): by its map id - the registry's place (a
+  capital's slice, an Arena place), a country place's id read back to its pixel where the countryside stands it there
+  (`world/tamrielCountry.js:"export function countryPixelOfId(id) {"`), an isle's to its centre
+  (`world/etherPlaces.js:"export function etherPlacePixelOfId(id) {"`) - else by name, the registry's first listed place
+  of that name and region past the Bay. Any `?region=&loc=` boot reaches it, a dev boot's as a birth's; a load's place
+  stays the save's; a Bay name MAPS.BSA lacks still throws, as it always did.
+- **The birth waits on the move** (`world.js:"Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])"`), so
+  the heir is made, and first saved (offline `onBorn`, online the realm's checkpoint, legacyRealmBirth), at the seat; a
+  reload loads that save. No way to it (the trace never landed, the place gone): said (`start.noSite`, START2's own
+  words) and born where the world stood.
+- **The address carries the seat's id** (birthSearch's `seat`; loadSearch and realmBootSearch drop it - a door key,
+  `systems/online/onlineLane.js` BOOT_DOOR_KEYS), and the waiting house's place, the Online page's pick and the front door
+  carry it (`waitingHouses.js` takeUpLine, `enhancedMenu.js` carryOn, `main.js`). A seat noted before it knew its id
+  (LEGACY-HOME learns it the next time the house stands there) is found by its names.
+- **A house with no seat** bears its heir in the WORLD's nearest town
+  (`systems/legacy/places.js:"export function nearestTownAnywhere(nearestOf, regionNames, pixel) {"` over
+  `scenes/tamrielPlacesHost.js` nearestTownOf - the registry's places, the Bay's MAPS.BSA rows and those past the Bay,
+  and the countryside's towns the session stood, now named as the registry's are - deathRespawn.js nearestSafePlace's
+  law, a town alone). The player's region's own nearest town first, as before; on the Bay the same town as the 62
+  regions' walk (pinned against it).
+- **The Online page's waiting house with no seat** is unchanged: its heir is born in Daggerfall
+  (`systems/legacy/waitingHouses.js` DEFAULT_BIRTH_PLACE) wherever the fallen fell, on the Bay as past it. The menu has
+  no world loaded to find a nearest town in, and the waiting record keeps no place of the fall (`family.pending`). A
+  seatless line taken up in the world bears its heir in the world's nearest town, as above.
+
+THE FOUR HOSTS: `scenes/world.js` wired (the start, the birth's wait, the nearest town). `scenes/worldModes.js` and
+`scenes/dungeonContext.js` - a birth is the world host's boot; neither boots a start. FLAGGED: `scenes/exterior.js` (the
+single-town bench) and `scenes/dungeon.js` read `?region=&loc=` over MAPS.BSA alone - benches that stream no land past
+the Bay, where no place past the Bay can stand (Arena-Provinces.md's recorded bench).
+
+bootWorld 35,799 -> 35,788 (the start out) -> 35,792 at the slice's end (the move's doors in, the reveal's own read and
+the seatless birth's lines out); its ceiling 35,792 (`test/scenes/hostceiling.test.js`).
+
+Pins: `test/systems/legacy/bayleftb_seat.test.js` (8, the freeware's Solitude: the birth boots at Charencester Garden
+and is moved to Solitude by its id, and by its names; the Bay's starts, a Bay name's throw, a load's and a world not
+standing yet move nothing; a lost seat is said; the id's read-backs; the world's nearest town past the Bay and the Bay's
+as the old walk's; the address; the host's wiring), `test/systems/fb1009f.test.js` and
+`test/systems/legacy/fb1012d_familytree.test.js` (the waiting house's seat id through the front door). Mutants:
+`tools/mutants/bayleftb.json` (BAY-LEFT-B-B1-*; the list's 46, B1 to B7 and the houses, all dead - the seatless town's
+kind and B4's unstood template key were killed by pins added at the package's finish). PIN MOVED: fb1012d's start pin runs the module where it ran world.js's
+text, and its two birth addresses carry the seat's id; classicstart's and enhancedMenu's start text pins read the
+module.
+
+At the slice's finish, with ARENA2_PATH, were run again: the seven smaller lists it re-aimed whole; of the four larger
+(auditcaptsea, icgrand, questsites, tesa10), every record on code it changed (within 80 lines of its hunks, or in a
+file under 2,000 lines) and auditcaptsea's first hundred besides; and every record of any list naming a pin it moved -
+781 records, 759 dead, 2 equivalent as recorded (auditcaptsea's ACS-B4 and ACS-D17). Twenty survive, every one outside this
+slice's code and surviving the same on the PR's head (`1d21d66137`) without it: auditdisc28_quests' AD28Q-J-host-no-party-word
+and its sixteen AD28Q-J2-cell-* (owed to their arc, `01-Overview/bugs/Field-Bugs-2026-10-20c.md`), and three found here -
+AD28Q-S4-grace-resynced (`systems/quest/machine.js` updateSharedQuest's grace guard), AUDIT-STARTS-V4-the-end-unpadded
+(`systems/travel/travelRoute.js` the landfall's `endPad`) and TESA11-wall-band-unreserved (`world/imperialCity.js` the
+wall's band). Each is its own arc's to pin or to mark.
+
+## HEIR-WAITS - a waiting line with no living kin offers its newborn (RPT1026-MISC, 2026-10-26)
+
+A private report: a high-level Bloodline character's death offered an heir, the game went back to the menu before one
+was chosen, and the parent was gone from the realm. A Bloodline's fall is the realm's tombstone at the death door, before the Succession - so the fallen is gone
+from the roster by design, and a page that went back to the title left the Succession waiting on the line's record.
+HOUSE-WAITS (FIELD BUGS 2026-10-09f) is the Online page's door to such a line, and it named the line's LIVING members
+alone, where the fall's own Succession offers a newborn heir of the fallen too (`legacyHost.js` fallOutcome). A fallen
+with no sibling or child left the house with no card and nothing to press.
+
+- `systems/legacy/waitingHouses.js` waitingHouses lists a line whose fall may raise a newborn (the heir answer rolled at
+  the fallen's birth, the Descendants dial at Always, or an elder retired - fallOutcome's own test), and takeUpLine's
+  `newborn` makes that child as the Succession makes one (addChild, then rollSiblings, at the fall's own minute) and
+  leaves their birth for the boot. The card's button: "Raise a child of {name} as your heir"
+  (`legacy.houseWaits.newborn`); a press with no child to raise is refused in words (`legacy.houseWaits.noNewborn`).
+- `ui/enhanced/enhancedMenu.js` waitingHouseCards draws the button and carryOn passes it, with the player's legacy
+  settings. No host grows.
+- The level the fallen reached is not the heir's: a Bloodline heir starts at level 1 (the arc's own law).
+- Pinned by `test/systems/legacy/rpt1026_misc_heir.test.js` (2); `tools/mutants/rpt1026_misc.json` (3).
+
+## COURT-DEEDS - a compliment, a gift, a hug, a kiss (FIELD BUGS 2026-10-26d)
+
+Discord #feature-feedback "Better Courtship" - lumin: "There should be specific interactions with NPC for courtship.
+Compliments, giving gifts, hugging, kissing ... Right now it's confusing on what exactly you're supposed to use to improve
+relationships"; Revy: "the only thing that seems to work is to have 1 conversation per day with an NPC, with specific
+attitude (blunt etc), to raise their disposition by 1 point". (The talk's +3 is noted before the window opens, so the
+panel showed only the tone's +1 move; a friend took about twelve days of talk, and a courtship eight to ten more.)
+
+- **The rows** (`systems/legacy/courtDeeds.js`, offered by `scenes/legacyHost.js` topicRows after the courtship's own):
+  Pay a compliment, Give a gift (50 gold), Hug, Kiss - to every courtable townsperson (section 8's `courtable`) and to the
+  member's spouse; a member wed to another offers no kiss to anyone else.
+- **Each once a day per resident**, stamped on the Living World's regard record and saved with it (`relations.js`
+  DEED_STAMPS, `deedDay`): regard +2, +8, +3, +4 (`EVENTS` - LW1's gift +8, which no door had paid, is the gift's); and
+  while a courtship is begun and not betrothed, affection +3 (+1 more in a tone taken kindly), +6, +5, +8
+  (`marriage.js` warmCourtship), the deed's day stamped on the courtship it warmed too, and kept by the house's loader
+  (`family.js`) - the affection rides the house's record, the regard the character's save, and a load that hands back the
+  one never hands the other again (AUDIT FB1026d B1). A compliment in a tone taken ill falls flat.
+- **A hug waits on a friend** (FRIEND_AT) or a courtship; **a kiss on a courtship at 34** (KISS_AT, MARRIAGE_TEXT.courted's
+  second tier), a betrothal or a marriage - read against the regard as it stands when the row is answered, never as
+  the page opened (AUDIT FB1026d B2). Refused, each says what it waits on and costs nothing - no gold, and no tone
+  heard (AUDIT FB1026d II B2).
+- **Every answer says what it moved**: "(Regard +2, now +14. Courtship +4, now 41 of 100.)" - the courtship's number was
+  never shown anywhere before. The regard's move is the whole answer's: a deed row hears the talk's tone itself
+  (`townTalk.js` `hearsTone`), as the deed lands (AUDIT FB1026d B3, II B2). The regard badge names the deeds as they
+  are offered, to a townsperson one could court with Project Legacy (B4, II B4), and the Family page's "Marriage and
+  children" names them.
+- **Once a day, on the save's own day**: the regard's stamp refuses a deed again that day; the courtship's stamp only
+  keeps its warm - a save loaded on a deed's day, or from days before later deeds, gives the regard as the save stands
+  and warms nothing until the courtship's own day for it is past (AUDIT FB1026d II B1: it had refused the whole deed for
+  every day rewound). The deeds' day is the Living World's, which turns at 4 in the morning (`regardClock.js`
+  regardDayOf); Courtship's own talk turns at midnight (`marriage.js` dayOf) - two laws older than the deeds (II B5).
+- With the talk, a compliment and a gift each day a friend comes in about three days of play (eight with the
+  compliment alone, twelve with the talk alone), and a courtship reaches Marriage in about four (AUDIT FB1026d II F3).
+
+Pinned by `test/systems/legacy/fb1026d_courtdeeds.test.js` (the real host over the real relations); pins moved by
+intent: `lw1_livingWorld` (EVENTS), `plainui` (the badge names the deeds as offered). `tools/mutants/fb1026d_courtdeeds.json`.
+

@@ -695,7 +695,8 @@
   {
     "name": "SOUNDSCAPE-HOST-the-towns-size-unread",
     "file": "src/scenes/soundscapeHost.js",
-    "old": "blocks = p ? deps.towns?.()?.get(p.y * 1000 + p.x)?.blocks ?? 1 : 1;",
+    "old": "blocks = p ? deps.townAt?.(p.x, p.y)?.blocks ?? 1 : 1;",
+    "note": "Re-aimed by content (TESA x MAIN, the merge after WORLD-WIDE's fold, #1184): a town's size off WW1's world-keyed townAt, never the Bay's y * 1000 + x.",
     "new": "blocks = 1;",
     "tests": [
       "test/scenes/soundscapehost.test.js"

@@ -170,7 +170,11 @@ every pixel's edge, on the worker and the main thread, every client alike, with 
 
 **Painted** (`paintJungleTrails`, by the terrain kernel `world/terrain/terrainGen.js` after the road painter and before
 the marching squares): a corner within 0.75 tile of a trail's line - past a corner's diagonal half, so the dirt runs
-unbroken at every heading - on land, out of the location's rect, where the jungle is whole (`JUNGLE_EDGE.in` deep; at
+unbroken at every heading - on land, off the location's clearing (`cornerCleared`: a corner of no tile its trees keep
+off - TS6's `natureCleared`, the outline and four tiles round it; a rect without an outline, a capital's, its rect; AUDIT
+TESA III E1-5, measured on the freeware: the rect's square had let trails run on over the cleared ground of 442 jungle
+towns past it - 10,891 corners, 3,603 of them corners of a town's own outline - and cut 35 short among the trees of
+their open ground), where the jungle is whole (`JUNGLE_EDGE.in` deep; at
 its edge the ground is the pixel's own layout's too, and DFU's scatter reads no mask), is dirt, and DFU's own
 dirt-to-grass tiles blend its edges. Every tile two of whose corners are the trail's - half dirt by its marching
 square's art and more - that no painter wrote goes into the pixel's `paths` (a tile with one is the trail's edge, a
@@ -341,7 +345,8 @@ Logging's trees a day** (`net/nodeLaw.js` `JUNGLE_TREE_SLOTS`, `treeSlots`) - fo
 Rainforest's 12, the most anywhere else - every slot a tree (on ground nobody has vouched for, a slot whose Teak or
 Mahogany waits on the witnesses stands Pine, where an ordinary Rainforest pixel stands nothing), each at a jungle tree
 of the day's law point (`scenes/treeHost.js` `standTrees`). The area's law, the service's as the client's (acct161):
-`06-Systems/Professions-Arc.md` JUNGLE-WOODS. Each glints on its own 3D tree near the eye
+`06-Systems/Professions-Arc.md` JUNGLE-WOODS. Past the Bay a jungle zone's pixel stands the same 48 once three
+witnesses confirm its jungle (AUDIT TESA II J5, Professions-Arc's JUNGLE-WOODS PAST THE BAY). Each glints on its own 3D tree near the eye
 (NODE-GLINT, Professions-Arc 47 - NODE-OUTLINE's ring in Logging's green before it, 46).
 
 ## The floor
@@ -473,6 +478,9 @@ interior, a dungeon or a panel never inherits the jungle's air; a sprite drawn o
 tinted toward green, its brightness kept (`hazeColorOf`). The frame's ONE fog colour is the weather's and the haze's
 weighed by their optical depths at 300 m (`fogColorWith`): each medium scatters in its own colour in proportion to what
 it takes out. The ground, the sky's horizon and the far ring close into that one colour, so no skyline steps.
+NIGHT-FOG (2026-10-26, `07-Rendering/Weather-Arc.md`): the weather's colour it starts from is never darker than the air
+the open air's light lights (`systems/weather/nightFog.js`). Under Dynamic Skies that colour was black from dusk to
+dawn, so the haze was a black wall at 100 m on every night in the jungle. It is lit grey-blue air now, leaned humid.
 
 **What it hides - the performance it buys.** A pixel whose every point sends less than 1/512 of its light through the
 haze ALONE is not drawn (`hazeHides`, asked at the world host's pixel gate - terrain, models and flats with it; AUDIT
@@ -504,6 +512,27 @@ the area, so a room has one jungle. The floor's carpet is drawn alone (no tree, 
 its thickness follows each player's grass row, as the meadow's does. Offline, the Features row `bantha-jungle` (prefs `banthaJungle`, on by default) on the
 enhanced skin; the classic skin keeps DFU's own woods. `?jungle=off` the kill door (offline); `?junglehaze=off` stands
 the jungle under clear air. Read once, as the world loads.
+
+## Past the Bay - Cyrodiil's jungle (TESA-BIOME, 2026-10-24)
+
+The owner: *"Cyrodil receives the unique jungle biome we developed."* Cyrodiil's Nibenay Jungle round the Nibenay Valley's grassland,
+its Colovian uplands and Blackwood (on both sides of the Black Marsh border) are jungle zones (`03-World/Tamriel-Biomes.md`, `world/tamriel/tamrielBiomes.js`), and the field reads them through
+`beyond` (`world/jungle/jungleRegion.js` jungleField): a pixel off the Bay's map is the jungle's where its zone is, its side
+and distance kept in maps (JUNGLE_BEYOND_MAX of each before they are dropped and read again), the Bay's own in the typed
+arrays as before - every Bay pixel's distance the same to the bit. The host makes its field again when the zones' stamp
+moves (`scenes/jungleHost.js` `version`: the trace landing, a fit). Everything else here stands as written: the storeys,
+the floor, the roadside pairs, the trails, the haze and its cull, the rainforest's air. Where the valley, the Gold Coast and the
+Jerall meet it, the jungle's edge is this page's own ecotone.
+
+**Valenwood (VALENWOOD-CANOPY, 2026-10-24, the owner: "i want valenwood to have no sky like the trees will cover it
+up").** Grahtwood, Malabal Tor and Greenshade stand the jungle too, and close its canopy over it: its graht-oaks
+(GRAHT1, `03-World/Graht-Oaks.md`) stand over the jungle's storeys as a fifth - laid by this page's layout first, every
+storey under them and every roadside pair off their feet, the floor's plants off their trunks - and their crowns close
+the sky; the light under them is dimmed and greened (`03-World/Tamriel-Biomes.md` "Valenwood's closed canopy",
+`world/jungle/jungleCanopy.js`). The host reads the zones whole (`zoneAt`: the jungle's pixels their `jungle`, the
+canopy's their `canopy`), and hands each terrain job the canopy's field beside the jungle's. Bantha's own jungle and Cyrodiil's keep their sky. AUDIT TESA-BIOME (`01-Overview/audits/Audit-Tesa-Biome.md`):
+the Imperial City stands in the valley's grassland, not the jungle (the Pocket Guide's "center, the grassland of the
+Nibenay Valley, is enclosed by an equatorial rain forest"); a far pixel's distance is the float32 the typed arrays keep.
 
 ## Departures from DFU (Port-Ledger A, THE JUNGLE OF BANTHA)
 

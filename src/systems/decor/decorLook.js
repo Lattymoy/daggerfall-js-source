@@ -94,3 +94,22 @@ export function decorBuiltInPlaque(title, entry, editing) {
   const holds = Array.isArray(entry.items) && entry.items.length > 0;
   return decorPlaque({ title: name }, { key: entry.baseKey, kind: 'base', mayEdit: true, name, holds });
 }
+
+/** RPT1026-WORLD DECOR-VERBS: the keys the decorator writes its verbs on while it browses - a placed piece (indoors or in
+ *  a yard), the room's own furniture and cupboards, a swing door and a placed one. */
+const DECOR_VERB_KEYS = Object.freeze(['decor:', 'base:', 'container:', 'shelf:', 'chair:', 'bed:', 'door:', 'act:decor:']);
+export const decorVerbKey = (key) => typeof key === 'string' && DECOR_VERB_KEYS.some((k) => key.startsWith(k));
+
+/**
+ * RPT1026-WORLD DECOR-VERBS (a private report, 2026-10-25: since the decorator's new menus, nothing in the caravan could
+ * be moved): WHERE NO PLAQUE IS DRAWN, THE PRESS STILL HAS ITS VERB. Since the overhaul a placed piece is moved by a
+ * press on it, the plaque's lit row - and the plaque is drawn on the enhanced skin alone, never on a touch screen nor on
+ * the classic skin with quick loot off (ui/worldPlaque.js), so there the hover folded no row and a press on a piece
+ * opened its chest or did nothing: no Move but the catalogue's In this room. There the decorator's frame is folded all
+ * the same, with its first verb alone - the row the plaque lights first, so a press does what it does on the plaque, and
+ * no wheel steps a list nobody sees. Anything else folds nothing.
+ */
+export function decorPressFrame(frame) {
+  if (frame?.kind !== 'actions' || !decorVerbKey(frame.key) || !frame.rows?.length || frame.startUnlit) return null;
+  return { ...frame, rows: frame.rows.slice(0, 1) };
+}

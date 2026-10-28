@@ -828,9 +828,12 @@ A window redesigned on purpose: it cites this page, not DFU (SCOPE1). The rail, 
   as the machine opened them: done struck, failed crossed, optional marked, alternatives joined by "or"), YOUR
   CHOICES, HOW IT ENDED, and what finishing it pays (the tier's floor in words, read off TIER_FLOORS - only where the
   row's `gear` says the quest can pay a choice of gear: AUDIT QUESTLINES UI-4). A stamped quest whose objectives stand
-  before its first journal entry is a row too (`unloggedRail`), with no Track, no Hide and no Abandon - the HUD's card and
-  the rail read entries, and abandoned it was lost (AUDIT QUESTLINES UI-8); on a phone a row pressed brings its page into
-  view (UI-14).
+  before its first journal entry is a row too (`unloggedRail`), with no Track and no Hide - the HUD's card and the rail
+  read entries (AUDIT QUESTLINES UI-8) - and with its Abandon: set aside, it is an Abandoned row with its Reclaim, and
+  DFU's own quest that holds its questor's door with nothing written is a row of its own (RPT1026-QUESTS ABANDON-ALWAYS,
+  the batch's Field-Bugs page: UI-8 had kept Abandon off such a row while one set aside was no row at all, and The Lost
+  Artifact's knight, whose `remove log step 0` empties the journal, shut the Order's door with no way to give the quest
+  up); on a phone a row pressed brings its page into view (UI-14).
 - **Questlines** - every line begun or on offer, the ones under way first, then those waiting, those on offer, the
   finished last; QL-OFFERED: a line its gate shuts is no row (UI-Calm's law - nothing drawn that cannot be taken; QL0
   drew all fifteen, locked ones "Not begun"), so offline a line that can only begin online is not drawn, and one begun

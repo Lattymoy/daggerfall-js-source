@@ -9,7 +9,9 @@
 
 import { CLOUD_SHADOW_GLSL, cloudFarOf } from './cloudShadow.js';   // EE5 / VC4: the cloud shadow's reader - VC6c's one home, shared with the air pass's shafts; OW-HORIZON: and the ground past its square
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // SHIP-FADE: the mesh shader's dissolve over the port's one bayer4
+import { pixelFadeShare } from './pixelFade.js';   // MID-RING: a just-built pixel's tint, eased out (a leaf)
 import { LPT_FS_HEAD, LPT_FS_KEEP, LPT_FS_TEXEL } from './lowPolyTreesGlsl.js';   // LPT1: a low-poly tree's fragment half, both lanes' billboard shaders
+import { LPT_IMPOSTOR_LIGHT } from '../world/lowPolyTrees.js';   // FLORA-GROUND: the sky's light a tree's faces take (a leaf: no imports of its own)
 import { FOG_GLSL } from './fogGlsl.js';
 import { WINDFALL_SWAY_GLSL, windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: Windfall's vertex wind - the flora's lean while the mod is on
 import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's share - a foe under Iliac Puddle No More's sea is in the depth texture its top reads   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home, for all seven world programs
@@ -681,13 +683,14 @@ void main() {
     }
     vBBBase = aInst.xyz;
     vUV = aCorner;
-    // its faces' light (AUDIT LPT A2): the far picture's own - from above and the eye's side, LPT_IMPOSTOR_LIGHT turned to
-    // face the eye - crossfaded to the sun's by its share, so at night and at the handover the two are one picture
-    vec2 toEye = uLptCut.xz - aInst.xz;
-    vec2 fe = length(toEye) > 1e-4 ? normalize(toEye) * 0.8 : vec2(0.0, 0.8);
-    float faceEye = clamp(0.72 + 0.28 * dot(wn, vec3(fe.x, 0.6, fe.y)), 0.5, 1.0);
+    // its faces' light (AUDIT LPT A2): the far picture's own - FLORA-GROUND: the sky's, from straight above
+    // (world/lowPolyTrees.js LPT_IMPOSTOR_LIGHT), which no viewer turns: a matte face, as DFU's Lambert billboard batch
+    // lights its flats - crossfaded to the sun's by its share, so at night and at the handover the two are one picture.
+    // It was LPT_IMPOSTOR_LIGHT turned to face the EYE: a face toward the viewer lit whole and one away at half, the
+    // light following the player round every 3D tree, bush and stump - a reflective sheen on the flora by night
+    float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(${LPT_IMPOSTOR_LIGHT.map((v) => v.toFixed(4)).join(', ')})), 0.5, 1.0);
     float faceSun = clamp(0.72 + 0.28 * dot(wn, uLptSun.xyz), 0.5, 1.0);
-    vShade = uMeshColor * mix(faceEye, faceSun, uLptSun.w);
+    vShade = uMeshColor * mix(faceSky, faceSun, uLptSun.w);
     vAlpha = uMeshAlpha;
     vFade = uLptCut.w > 0.0 ? 3.0 - clamp((distance(aInst.xz, uLptCut.xz) - uLptCut.w) / max(uLptBand, 1e-3), 0.0, 1.0) : 3.0;
   }
@@ -1014,11 +1017,12 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform vec4 uFadeTint;   // MID-RING: a just-built pixel's tint (rgb) and its share left (a) - render/pixelFade.js
 out vec4 outColor;
 ${FOG_GLSL}
 ${ecotoneGlsl()}
 ${snowCoverGlsl()}
-${WATER_BED_GLSL}
+${snowCapGlsl('', SNOW_TILE_M)}
 // DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
 // column-major, so these are the TRANSPOSES of the shader source
 // (caught in R9 build: rotated tiles sampled the wrong direction).
@@ -1029,6 +1033,9 @@ const mat2 ROT[4] = mat2[4](
   mat2(0.0, 1.0, -1.0, 0.0));
 const vec2 TRANS[4] = vec2[4](
   vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
+${roadEdgeGlsl()}
+${groundEdgeGlsl()}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)
+${WATER_BED_GLSL}
 void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
   ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(127));
@@ -1058,11 +1065,20 @@ void main() {
   vec2 gx = ROT[t] * dFdx(unwrapped);
   vec2 gy = ROT[t] * dFdy(unwrapped);
   vec3 tex = textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb;
+  // COAST-LOOK (render/groundEdgeGlsl.js): a transition is its two kinds' own ground, each its own picture at its share,
+  // each taking the border's sets (ECOTONE1) and the snow's winter twin by the same
+  highp uint geA, geB; float geS;
+  bool ge = groundMix(data, tileUV, unwrapped, geA, geB, geS);
+  vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;   // the coordinate's own gradient (ROT is orthonormal)
   vec4 ew = ecoWeights(vLocalXZ);   // ECOTONE1: the border's shares, once (AUDIT PRECIP GROUND-6: the snow crosses it by the same)
-  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
+  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);
+  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)
+  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
   float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)
-  tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
+  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)
+  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
   ${waterBedMix()}
+  tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   // EE5: the deck's field, sampled where this ground's ray to the sun
@@ -1143,10 +1159,13 @@ export function terrainClipFs(fs) {
   const at = fs.indexOf(CLIP_AFTER);
   if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw new Error('FAR-CLIP1: a terrain program ends its tile decode with ONE gradient line, which the clip goes after');
   const cut = at + CLIP_AFTER.length;
-  return `${fs.slice(0, cut)}  if (data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater)\n${fs.slice(cut)}`;
+  // COAST-LOOK (render/groundEdgeGlsl.js coastCut): with the ground's kinds blended, the cut follows a wandering line per
+  // fragment - inside the cut cells, a kept point of one drawing the nearest kept cell - where the mod cut a whole tile
+  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\n${fs.slice(cut)}`;
 }
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
+const ZERO_TINT = new Float32Array(3);   // MID-RING: no pixel easing in
 /** BLOOD1b: a billboard quad's four corners, ONE copy. `createBillboardBatch`
  *  bakes them and `moveBillboardBatch` rewrites them, and the two disagreeing
  *  about the winding would tear every moved quad. */
@@ -1561,8 +1580,11 @@ import { packWaterMask, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorner
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { lightIdsOf, lightList, packLight } from './lightId.js';   // LIGHT-ID: each light's identity, lifted off its list for the shadow pass (and the flash packed through the seam)
+import { roadEdgeGlsl, roadEdgesOn } from './roadEdgeGlsl.js';   // ROAD-LOOK: a road's edge blended into its ground, both terrain programs' one chunk, and its switch
+import { groundEdgeGlsl, coastEdgesOn } from './groundEdgeGlsl.js';   // COAST-LOOK: the ground's kinds blended and the sea's cut on their line, both terrain programs' one chunk, and its switch
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
-import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
+import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
+import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER, snowSurfaceRise } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
 import { GLOW_SPRITE_VS, GLOW_SPRITE_FS, GLOW_FIELD_VS, GLOW_FIELD_FS, GLOW_FIELDS_MAX, GLOW_REACH_MAX, glowFieldReach, GLOW_MESH_FS, GLOW_CLOCK_PERIOD, GLOW_CHARGE_PULL, GLOW_DRAWS_MAX, GLOW_DEPTH_FLOOR, glowUnit, glowMeshVs, glowRingDraws } from './weaponGlowGlsl.js';   // WEAPON-GLOW1: a weapon's element, drawn
 const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
@@ -1889,6 +1911,7 @@ export class Renderer {
     this._bbGlintOn = false;   // TELL2: the billboard program's uGlint as last sent - a glinting batch's (the frame block resets it to none)
     this._bbTintOn = false;   // ARENA5: the billboard program's uBatchTint as last sent - a washed batch's (the frame block resets it to white)
     this._heldFlats = [];   // GRASS-PORTAL: the blended flats a host held back for a later call (holdBlended / drawHeld)
+    this._afterFlats = null;   // AUDIT RED-MOUNTAIN N2: a draw armed for after the frame's flats (afterFlats)
     this._dwCamFwd = new Float32Array(3);
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
@@ -2471,6 +2494,8 @@ export class Renderer {
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
     this.tUWaterBed = gl.getUniformLocation(this.terrainProgram, 'uWaterBed');   // WATER-NEXT 2: the bed under the water
     this.tUBedMask = gl.getUniformLocation(this.terrainProgram, 'uBedMask');
+    this.tURoadEdge = gl.getUniformLocation(this.terrainProgram, 'uRoadEdge');   // ROAD-LOOK: the road's edge blended (render/roadEdgeGlsl.js)
+    this.tUGroundEdge = gl.getUniformLocation(this.terrainProgram, 'uGroundEdge');   // COAST-LOOK: the ground's kinds blended, the sea cut on their line (render/groundEdgeGlsl.js)
     // ECOTONE1 (render/ecotoneGlsl.js): the neighbours' tile sets' samplers, which set each neighbour wears, and the
     // pixel's first world tile - the installed terrain program's own, so what the last draw set them to is forgotten
     this.tEco = {
@@ -2496,6 +2521,8 @@ export class Renderer {
     this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
+    this.tUFadeTint = gl.getUniformLocation(this.terrainProgram, 'uFadeTint');   // MID-RING: a just-built pixel's tint
+    this._tFade = -1;
     this._bbFog = this._fogLocs(this.bbProgram);
     this._terrainFog = this._fogLocs(this.terrainProgram);
     this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
@@ -5647,6 +5674,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   beginFrame(proj, view, lightDir, opts = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
+    this._afterFlats = null;   // AUDIT RED-MOUNTAIN N2: an armed draw is its frame's
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0; s.bbCulled = 0; s.shadowDraws = 0;   // PERF-CROWD2; PASS-COUNT
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
@@ -7588,6 +7616,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._activeTexture(gl.TEXTURE0);
   }
 
+  /** MID-RING (render/pixelFade.js PIXEL_FADE_MS): the terrain draw's tint - a surface the stream has just built carries its
+   *  arrival and its tint, and its share left is uploaded (in the program's own space: the lane's linear); every other draw
+   *  is whole (0), uploaded only when the last was not. A surface whose ease is done drops its stamp. */
+  _terrainFade(surface) {
+    const from = surface?._fadeFrom;
+    let share = 0;
+    if (from != null) {
+      share = pixelFadeShare(from, performance.now());
+      if (!(share > 0)) { surface._fadeFrom = null; share = 0; }
+    }
+    if (share === 0 && this._tFade === 0) return;
+    const c = share > 0 ? this._c3(surface._fadeTint) : ZERO_TINT;
+    this.gl.uniform4f(this.tUFadeTint, c[0], c[1], c[2], share);
+    this._tFade = share;
+  }
+
   /** FAR-CLIP1: the set's terrain CLIP program (terrainClipFs) - built
    *  from the set's own terrain shader the first time it is asked for, and
    *  kept with the set (PERF-WARM's on-demand kind: a page that never draws
@@ -7831,6 +7875,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // WATER-NEXT 2: the ground under the enhanced water is a bed - the switch and the corner table, a frame's like the rest
       gl.uniform1f(this.tUWaterBed, this.waterBed ? 1 : 0);
       gl.uniform4uiv(this.tUBedMask, BED_MASK);
+      gl.uniform1f(this.tURoadEdge, this.roadEdges ? 1 : 0);   // ROAD-LOOK: a frame's, as the bed's switch
+      gl.uniform1f(this.tUGroundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: a frame's, as the road edge's
       this._uploadFog(this._terrainFog);
       gl.uniform3fv(this.tULightDir, this._lightDir);
       gl.uniform3fv(this.tUAmbient, this._c3(this._ambient));
@@ -7848,6 +7894,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this._uploadEl('terrain');   // EL1
       gl.uniform1i(this.tUTileArr, 0);
       gl.uniform1i(this.tUTilemap, 2);
+      this._tFade = -1;   // MID-RING: the pixel tint's whole, with the frame's block
       for (let k = 0; k < ECO_UNITS.length; k++) gl.uniform1i(this.tEco.arr[k], ECO_UNITS[k]);   // ECOTONE1
       // AUDIT PRECIP GROUND-7: the frame's snow - its lines on their unit, its frame; the switch itself a draw's (below)
       const sf = this._snowFrame;
@@ -7869,6 +7916,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     this._activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
+    this._terrainFade(surface);   // MID-RING: a just-built pixel's tint, its share left
     // ECOTONE1: a border pixel's neighbours - their sets on units 3-5 (shadowed: a frame's border pixels share them) and
     // the three uniforms that say which wears which; any other pixel sets the one switch off, once while it stays off
     const snowOn = !!(snow && this._snowFrame && this._snowTex);   // PRECIP4: this draw's snow, on a frame that has it
@@ -7970,7 +8018,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'),
       lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
       moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
-      zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
+      zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), f0: u('uF0'), shoreSoft: u('uShoreSoft'), groundEdge: u('uGroundEdge'),
       swell: u('uSwell'), absorb: u('uAbsorb'), open: u('uOpen'), openColor: u('uOpenColor'),   // WATER-NEXT 2
       sceneOn: u('uSceneOn'), scene: u('uScene'), sceneDepth: u('uSceneDepth'), sceneSize: u('uSceneSize'),
       rippleOn: u('uRippleOn'), ripple: u('uRipple'), rippleRect: u('uRippleRect'),   // WATER-NEXT 4
@@ -7993,6 +8041,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** WATER-NEXT 2: whether the ground under the enhanced water is drawn as a bed (render/waterBedGlsl.js) - the hosts
    *  that draw the enhanced water set it; the classic skin never does */
   waterBed = false;
+  /** ROAD-LOOK: whether a road's edge is blended into its ground (render/roadEdgeGlsl.js) - the page's, taken as the renderer
+   *  is made (roadEdgesOn: the enhanced skin, `?roadedges=off` the kill door); off, every tile is its own, as DFU draws it */
+  roadEdges = roadEdgesOn();
+  /** COAST-LOOK: whether the ground's kinds are blended and the sea cut on their line (render/groundEdgeGlsl.js) - the
+   *  page's, taken as the renderer is made (coastEdgesOn: the enhanced skin, `?coastedges=off` the kill door); off, every
+   *  tile is its own and the cut the mod's whole tile, as DFU and Iliac Puddle No More draw them */
+  coastEdges = coastEdgesOn();
   /** WATER-NEXT: the Water quality row's Simple - no copy under the water (the blend looks through it) */
   waterSimple = false;
   /** WATER-NEXT 2: the open sea's rows, reused a frame to the next (drawSeaSurfaces) */
@@ -8067,6 +8122,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(L.tint, u.tint);
     gl.uniform1f(L.f0, u.f0);
     gl.uniform1f(L.shoreSoft, u.shoreSoft);
+    gl.uniform1f(L.groundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: the sheet's shore on the ground's line (render/groundEdgeGlsl.js)
     this._bindUnderWater(L);
     this._bindRipples(L);
     // the ground's own light, term for term, so the surface sits in the
@@ -8338,6 +8394,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  drawHeld to draw after the passes that would paint over them - the renderer's one list, emptied by each hold and
    *  each draw, so nothing a frame held reaches the next. */
   holdBlended(batches) { holdBlendedBillboards(batches, this._heldFlats); }
+  /** AUDIT RED-MOUNTAIN N2: A DRAW AFTER THE FRAME'S FLATS - `fn` run once at the end of the frame's next drawBillboards,
+   *  after the water and the flats that would paint over a pass writing no depth (the Ghostfence's glow), the shadows
+   *  forgotten after it. One a frame: beginFrame lets an unrun one go. */
+  afterFlats(fn) { this._afterFlats = fn; }
   /** GRASS-PORTAL: DRAW WHAT holdBlended HELD, in a drawBillboards of its own - and let it go. */
   drawHeld(camRight, camUp) {
     const held = this._heldFlats;
@@ -8645,6 +8705,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     this._use(this.program);
+    const after = this._afterFlats;
+    if (after) { this._afterFlats = null; after(); this.markForeignPass(); this._use(this.program); }   // AUDIT RED-MOUNTAIN N2
   }
 
   /** Draw one placed mesh: bind per-submesh texture, indexed draw per range. */

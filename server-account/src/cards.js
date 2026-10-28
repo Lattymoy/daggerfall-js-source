@@ -21,7 +21,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
-import { regionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { mintStakeOrder, STAKE_ROOM_RE } from '../../src/net/identityToken.js';
 import { verifyCardReceipt, CARD_RECEIPT_TTL_S } from '../../src/net/card/cardReceipt.js';
 import { HOLDEM_BBS, HOLDEM_STAKE_MIN_BB, HOLDEM_STAKE_MAX_BB, HOLDEM_TABLES_MAX, HOLDEM_TOPUP_MIN_BB, holdemGoldTable } from '../../src/net/holdemTable.js';

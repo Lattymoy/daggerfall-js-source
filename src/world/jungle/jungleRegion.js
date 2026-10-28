@@ -18,12 +18,19 @@
 //     and the haze's (world/jungle/jungleHaze.js JUNGLE_HAZE.edge: the haze drifts out past the trees and thickens further
 //     in) - each a smoothstep of the one depth.
 // A job to the terrain worker carries the pixel's 3x3 of distances (jungleNine) - nine numbers, nothing else crosses.
+// TESA-BIOME (2026-10-24, bible/03-World/Tamriel-Biomes.md): AND PAST THE BAY. Cyrodiil is the jungle's too - its zones'
+// `jungle` (world/tamriel/tamrielBiomes.js) - so a field may read the pixels off the Bay's map through `beyond`: their
+// sides and distances kept in maps (the continent is 6,000 x 3,750 pixels, and the stream reads a few thousand of them),
+// the Bay's in its typed arrays as before, and every pixel of the Bay answered to the bit as without it.
 // ═══════════════════════════════════════════════════════════════════
 import { ecoNoise, ecoOrigin } from '../ecotone.js';
 import { banthaAreaHas } from './banthaArea.js';
 
 /** How far (pixels) from the edge the field is exact; past it a pixel reads this much and a half, its side's sign. */
 export const JUNGLE_FIELD_REACH = 6;
+/** TESA-BIOME: the pixels past the map a field keeps (their sides and distances) before it drops them whole - the answers
+ *  are pure, so a dropped pixel is read again, the same. */
+export const JUNGLE_BEYOND_MAX = 1 << 20;
 /** A map pixel (m) - terrainSampler.js TERRAIN_SIZE, held here as ecotone.js holds its own. */
 const PIXEL_M = 819.2;
 const TILE_M = 6.4;
@@ -47,15 +54,29 @@ const smoothstep = (a, b, v) => {
  * read the first time it is asked - its neighbours' sides out to the reach, ring by ring, stopping once no nearer ring
  * can beat what it found - and kept, as each pixel's side is kept once read: a pixel the stream never builds is never
  * read, and no frame or boot pays for the map's other 499,000 pixels. `insideAt(x, y)` whether a pixel is the jungle's
- * (banthaArea.js banthaAreaHas, the owner's area); a pixel off the map is outside.
- * @param {{ width: number, height: number, insideAt?: (x: number, y: number) => boolean, reach?: number }} o
+ * (banthaArea.js banthaAreaHas, the owner's area); a pixel off the map is outside - unless `beyond` answers it (TESA-BIOME:
+ * the continent past the Bay, Cyrodiil's jungle).
+ * @param {{ width: number, height: number, insideAt?: (x: number, y: number) => boolean,
+ *   beyond?: ((x: number, y: number) => boolean)|null, reach?: number, beyondMax?: number }} o   `beyondMax` the far maps' cap (JUNGLE_BEYOND_MAX; the pins' seam)
  */
-export function jungleField({ width, height, insideAt = banthaAreaHas, reach = JUNGLE_FIELD_REACH }) {
+export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = null, reach = JUNGLE_FIELD_REACH, beyondMax = JUNGLE_BEYOND_MAX }) {
   const side = new Uint8Array(width * height).fill(2);   // 2 not yet read, 1 the jungle's, 0 not
   const dist = new Float32Array(width * height).fill(NaN);
+  const farSide = new Map(), farDist = new Map();   // TESA-BIOME: the pixels past the map `beyond` answers, kept
+  const farKey = (x, y) => (x + 8192) * 32768 + (y + 8192);
   const far = reach + 0.5;
+  const onMap = (x, y) => x >= 0 && y >= 0 && x < width && y < height;
   const sideAt = (x, y) => {
-    if (x < 0 || y < 0 || x >= width || y >= height) return 0;
+    if (!onMap(x, y)) {
+      if (!beyond) return 0;
+      const k = farKey(x, y);
+      let v = farSide.get(k);
+      if (v === undefined) {
+        if (farSide.size >= beyondMax) farSide.clear();
+        farSide.set(k, v = beyond(x, y) ? 1 : 0);
+      }
+      return v;
+    }
     const i = y * width + x;
     let v = side[i];
     if (v === 2) side[i] = v = insideAt(x, y) ? 1 : 0;
@@ -66,21 +87,28 @@ export function jungleField({ width, height, insideAt = banthaAreaHas, reach = J
     return Math.min(best, Math.hypot(Math.max(Math.abs(dx) - 0.5, 0), Math.max(Math.abs(dy) - 0.5, 0)));
   };
   return {
-    width, height, reach,
-    /** A pixel read as the jungle's (1) or not (0) - off the map, not. */
+    width, height, reach, beyond,
+    /** A pixel read as the jungle's (1) or not (0) - off the map, not (unless `beyond` says it is). */
     inside: sideAt,
     /** A pixel's signed distance from the jungle's edge (pixels). */
     at(x, y) {
-      if (x < 0 || y < 0 || x >= width || y >= height) return -far;
-      const i = y * width + x;
-      const known = dist[i];
-      if (known === known) return known;   // read before
+      const off = !onMap(x, y);
+      if (off && !beyond) return -far;
+      const i = off ? farKey(x, y) : y * width + x;
+      const known = off ? farDist.get(i) : dist[i];
+      if (known === known && known !== undefined) return known;   // read before
       const me = sideAt(x, y);
       let best = far;
       // ring r's nearest square is r - 0.5 off: past the best found, no ring can beat it
       for (let r = 1; r <= reach && r - 0.5 < best; r++) {
         for (let k = -r; k <= r; k++) { best = toOther(me, x, y, k, -r, best); best = toOther(me, x, y, k, r, best); }
         for (let k = -r + 1; k <= r - 1; k++) { best = toOther(me, x, y, -r, k, best); best = toOther(me, x, y, r, k, best); }
+      }
+      if (off) {   // TESA-BIOME: the same float32 the map's typed array keeps (LAY-8)
+        if (farDist.size >= beyondMax) farDist.clear();
+        const v = Math.fround(me ? best : -best);
+        farDist.set(i, v);
+        return v;
       }
       dist[i] = me ? best : -best;
       return dist[i];   // AUDIT BANTHA1 LAY-8: the first read the float32 every later read is - never the float64 it came from

@@ -65,8 +65,8 @@
   {
     "name": "HOUSE-classic-asks-nothing",
     "file": "src/ui/native/nativeInventory.js",
-    "old": "        groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop",
-    "new": "        groundRefusal: null,",
+    "old": "        groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }), storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop",
+    "new": "        groundRefusal: null, storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),",
     "tests": [
       "test/systems/housedrop.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "HOUSE-classic-gold-silent",
     "file": "src/ui/native/nativeInventory.js",
-    "old": "if (!plan.ok) { if (plan.refusal?.reason === 'ground') this._refuse(plan.refusal); return; }",
+    "old": "if (!plan.ok) { if (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store') this._refuse(plan.refusal); return; }",
     "new": "if (!plan.ok) return;",
     "tests": [
       "test/systems/housedrop.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "HOUSE-enhanced-stow-asks-nothing",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    getQuest: deps.getQuest ?? null,\n    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop",
-    "new": "    getQuest: deps.getQuest ?? null,",
+    "old": "    getQuest: deps.getQuest ?? null,\n    groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop",
+    "new": "    getQuest: deps.getQuest ?? null,\n    storeRefusal: storeRefusalOf(deps, session),",
     "tests": [
       "test/systems/housedrop.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "HOUSE-enhanced-gold-silent",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  else if (!plan.ok && plan.refusal?.reason === 'ground') notice = plan.refusal.text;",
+    "old": "  else if (!plan.ok && (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store')) notice = plan.refusal.text;",
     "new": "  void 0;",
     "tests": [
       "test/systems/housedrop.test.js"

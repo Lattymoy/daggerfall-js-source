@@ -21,7 +21,7 @@ test('EG-E THE HOSTS (sections 15, 19, 20, 25.4): the claim with its character a
   // the Timers row's Elite entries and the start window share - its `open` the skin's and the service's, as before
   assert.match(w, /board: \(\) => egBoardDoor\(\),/);
   assert.match(w, /open: \(o\) => openEgBoard\(\{ doc: document, classic: !isEnhancedPlus\(\), fetchBoard: \(\) => _accountEg\.board\(\)/);
-  assert.match(w, /setSetPowersAllies\(\{\s*near: \(m\) => \{[^\n]*p\.mate && p\.feet && Math\.hypot\([^\n]*<= m\); \},\s*shield: \(a, sp\) => castAtAllyDoor\(a\.id, allyCastFrame\(sp, effectiveLevel\(playerEntity\), a\.id\)\),/);
+  assert.match(w, /setSetPowersAllies\(\{\s*near: \(m\) => \{[^\n]*p\.mate && p\.feet && Math\.hypot\([^\n]*<= m\); \},\s*shield: \(a, sp\) => castAtAllyDoor\(a\.id, allyCastFrame\(sp, castingLevel\(playerEntity\), a\.id\)\),/);
   assert.match(w, /setSpireRecovery\(\(\) => modes\?\.egHallBreach\?\.\(\) \?\? null\);/);
   assert.match(w, /if \(egClient\?\.quiet\?\.\(\)\) return;/);
   assert.match(w, /now: \(\) => \(egClient \? egClient\.sharedNow\(\) : egNow\(\)\)/);
@@ -36,7 +36,7 @@ test('EG-E3 THE FIND\'S HOST DOORS (section 5): the owner\'s death names the str
   assert.match(d, /raiseEnemyDeath\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\), by: foe\._killedBy \?\? null \}\);/);
   assert.match(d, /r\.v === \(opts\.selfId\?\.\(\) \?\? null\)\) egFindStruck\(f\.entity, roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\.catch\(\(\) => \{\}\);/);   // PIN MOVED (the merge of main into PR #800 - PARTY-LOOT): a room's body's key to the pack (test/systems/eliteGates/egeco_find.test.js)
   assert.match(w, /registerEgFind\(\{\s*ask: \(t\) => _accountEg\.find\(t\)/);
-  assert.match(w, /tierNow: \(\) => \(_mode\(\) === 'dungeon' && modes\?\.dungeonLocation \? dungeonTier\(modes\?\.dungeonLocation\) : null\)/);
+  assert.match(w, /placeNow: \(\) => egFindPlace\(_mode\(\), modes\),/);   // PIN MOVED (AUDIT RPT1026 K1): the tier and the visit - egFindPlace reads the dungeon's tier as this door did
   // the seam: the joiner's door reaches the registered find, and nothing once it is disposed
   const asked = [];
   const elite = { eliteFoe: true, items: [] };

@@ -1,0 +1,340 @@
+[
+  {
+    "name": "RPT1026-PROGRESS-mastery-keeps-plain-practice",
+    "file": "src/systems/masterSkills.js",
+    "old": "  dropPlainPractice(entity, id);   // RPT1026-PROGRESS: what it practised unmastered was counted whole\n",
+    "new": "",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "a skill held at 100 and practised to the clamp, then mastered, banks its 20,000 plain uses: a point every rest"
+  },
+  {
+    "name": "RPT1026-PROGRESS-switch-keeps-plain-practice",
+    "file": "src/systems/masterSkills.js",
+    "old": "for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }",
+    "new": "returnMasterPractice(entity); }",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "offline, practice counted with Master Skills off is spent by the over-cap rule once it is switched on"
+  },
+  {
+    "name": "RPT1026-PROGRESS-switch-drops-every-skill",
+    "file": "src/systems/masterSkills.js",
+    "old": "for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);",
+    "new": "for (const id of entity.skills.keys()) if (entity.skillUses) entity.skillUses[id] = 0;",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "switched on, a skill below 100 loses the uses the plain rule rightly counted"
+  },
+  {
+    "name": "RPT1026-PROGRESS-switch-unmoved-drops",
+    "file": "src/systems/masterSkills.js",
+    "old": "  if (!was && masterSkillsActive(entity)) {",
+    "new": "  if (masterSkillsActive(entity)) {",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "a switch pressed On while already on drops the tough-foe rule's own uses"
+  },
+  {
+    "name": "RPT1026-PROGRESS-drop-below-100",
+    "file": "src/systems/masterSkills.js",
+    "old": "  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses)",
+    "new": "  if (Array.isArray(entity.skillUses)",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "equivalent": true,
+    "why": "a mastery needs the skill at 100 (masteryRefusal) and the switch walks mastered skills alone, so no caller hands it a skill below 100; the guard keeps the helper's promise to any later caller"
+  },
+  {
+    "name": "RPT1026-PROGRESS-first-ward-read",
+    "file": "src/systems/effects.js",
+    "old": "  for (const a of target?.activeEffects ?? []) if (a.kind === kind && !a.ended && (a.chance ?? 0) > best) best = a.chance;\n  return best;",
+    "new": "  for (const a of target?.activeEffects ?? []) if (a.kind === kind && !a.ended) return a.chance ?? 0;\n  return best;",
+    "tests": [
+      "test/scenes/rpt1026_progress_magic.test.js"
+    ],
+    "note": "the first live entry read again: a mate's 6% gift masks my own 100% ward, reflection and comprehension alike"
+  },
+  {
+    "name": "RPT1026-PROGRESS-ward-ended-read",
+    "file": "src/systems/effects.js",
+    "old": "if (a.kind === kind && !a.ended && (a.chance ?? 0) > best)",
+    "new": "if (a.kind === kind && (a.chance ?? 0) > best)",
+    "tests": [
+      "test/scenes/rpt1026_progress_magic.test.js",
+      "test/scenes/x11.test.js",
+      "test/systems/effectarms.test.js"
+    ],
+    "note": "an ended ward still read"
+  },
+  {
+    "name": "RPT1026-PROGRESS-identify-refund-uncapped",
+    "file": "src/scenes/hostMagic.js",
+    "old": "(playerEntity.magicka ?? 0) + Math.min(r.identify.refund, spent));",
+    "new": "(playerEntity.magicka ?? 0) + r.identify.refund);",
+    "tests": [
+      "test/scenes/rpt1026_progress_magic.test.js"
+    ],
+    "note": "the refund priced at the landing and floored at 5: a cast of 1 makes 4, a discount gone before the release makes the difference"
+  },
+  {
+    "name": "RPT1026-PROGRESS-identify-free-refunded",
+    "file": "src/scenes/hostMagic.js",
+    "old": "const spent = caster?.entity === playerEntity ? (caster.cast?.cost ?? 0) : 0;",
+    "new": "const spent = caster?.entity === playerEntity ? (caster.cast?.cost || Infinity) : 0;",
+    "tests": [
+      "test/scenes/rpt1026_progress_magic.test.js"
+    ],
+    "note": "a free ready (an item's, a trap's) given the price back: magicka from nothing"
+  },
+  {
+    "name": "RPT1026-PROGRESS-maker-souls-frozen",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": "  get _souls() { return this._filledSouls(); }",
+    "new": "  get _souls() { return (this.__souls ??= this._filledSouls()); }",
+    "tests": [
+      "test/ui/rpt1026_progress_ui.test.js",
+      "test/systems/audit63_effects.test.js"
+    ],
+    "note": "the window enumerates once, as DFU's Setup does: the spent soul is offered again"
+  },
+  {
+    "name": "RPT1026-PROGRESS-maker-souls-unasked",
+    "file": "src/ui/item/itemMakerWindow.js",
+    "old": ", souls: this._souls });   // PROF12",
+    "new": " });   // PROF12",
+    "tests": [
+      "test/ui/rpt1026_progress_ui.test.js"
+    ],
+    "note": "the Enchant button asks the law nothing of the pack: a stale Soul Bound row binds the soul a second time"
+  },
+  {
+    "name": "RPT1026-PROGRESS-law-soul-gone-unrefused",
+    "file": "src/systems/enchanting.js",
+    "old": "    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return",
+    "new": "    if (false && [...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return",
+    "tests": [
+      "test/ui/rpt1026_progress_ui.test.js"
+    ],
+    "note": "the law's refusal gone: a single gem pays for item after item"
+  },
+  {
+    "name": "RPT1026-PROGRESS-law-soul-asked-unnamed",
+    "file": "src/systems/enchanting.js",
+    "old": "  if (souls !== null) {\n    const held",
+    "new": "  {\n    const held",
+    "tests": [
+      "test/ui/rpt1026_progress_ui.test.js"
+    ],
+    "note": "no pack named, every bound soul refused (the decision's other callers ask no pack)"
+  },
+  {
+    "name": "RPT1026-PROGRESS-summon-unmarked",
+    "file": "src/scenes/hostEnchant.js",
+    "old": ".then(summonedBody, () => null); },",
+    "new": ".then(() => null, () => null); },",
+    "tests": [
+      "test/scenes/rpt1026_progress_summon.test.js",
+      "test/systems/artifacts.test.js"
+    ],
+    "note": "the Skull's copy keeps its kind's whole loot"
+  },
+  {
+    "name": "RPT1026-PROGRESS-summon-body-kept",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);   // RPT1026-PROGRESS: a summon's body (summonedBody)\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_progress_summon.test.js"
+    ],
+    "note": "what the death's handlers lay on a summon's body stays"
+  },
+  {
+    "name": "RPT1026-PROGRESS-summon-items-kept",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  e.summoned = true;\n  e.items = [];",
+    "new": "  e.summoned = true;",
+    "tests": [
+      "test/scenes/rpt1026_progress_summon.test.js"
+    ],
+    "note": "the summon marked but its spawn's loot left on it"
+  },
+  {
+    "name": "RPT1026-PROGRESS-flow-chip-none",
+    "file": "src/systems/martialPowers.js",
+    "old": "  return [{ key: 'flowing-steel', set: 'martial', name: `${name} ${n}`",
+    "new": "  return NO_CHIPS || [{ key: 'flowing-steel', set: 'martial', name: `${name} ${n}`",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "Flowing Steel builds and says nothing - the report"
+  },
+  {
+    "name": "RPT1026-PROGRESS-flow-chip-any-path",
+    "file": "src/systems/martialPowers.js",
+    "old": "  if (awakeMartialId(entity) !== 'blademaster') return NO_CHIPS;",
+    "new": "  if (!awakeMartialId(entity)) return NO_CHIPS;",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "equivalent": true,
+    "why": "flowStacks only ever rises under the Blademaster's own strike (martialStrike's `id === 'blademaster'`), so another path reads no stack and answers no chip either way; the guard keeps the chip the passive's"
+  },
+  {
+    "name": "RPT1026-PROGRESS-flow-chip-unwired",
+    "file": "src/scenes/world.js",
+    "old": "...lootHudChips(e), ...martialHudChips(e)]);",
+    "new": "...lootHudChips(e)]);",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "the HUD is never handed the passive's chip"
+  },
+  {
+    "name": "RPT1026-PROGRESS-hotbar-jewel-worn",
+    "file": "src/systems/quickslots.js",
+    "old": "return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';",
+    "new": "return 'wear';",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "a Cast When Used jewel on the bar is put on and taken off - the report"
+  },
+  {
+    "name": "RPT1026-PROGRESS-hotbar-saved-slot-worn",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
+    "new": "  if (false && castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "a slot saved as worn before the fix still wears the jewel"
+  },
+  {
+    "name": "RPT1026-PROGRESS-hotbar-held-used",
+    "file": "src/systems/quickslots.js",
+    "old": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed);",
+    "new": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed || e?.type === ENCHANTMENT_TYPES.CastWhenHeld);",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js",
+      "test/scenes/audit_rpt1026_progress.test.js"
+    ],
+    "note": "a Cast When Held jewel, whose power needs wearing, used instead of worn"
+  },
+  {
+    "name": "RPT1026-PROGRESS-journey-run-scaled",
+    "file": "src/systems/worldTick.js",
+    "old": "+ dt / pace;   // RPT1026-PROGRESS: a journey's run, its real seconds",
+    "new": "+ dt;   // RPT1026-PROGRESS: a journey's run, its real seconds",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "an x60 journey's run tallies 240 Running uses a real second - the report's auto-run"
+  },
+  {
+    "name": "RPT1026-PROGRESS-journey-jump-whole",
+    "file": "src/systems/worldTick.js",
+    "old": "entity._jumpTallyAcc = (entity._jumpTallyAcc ?? 0) + 1 / pace;",
+    "new": "entity._jumpTallyAcc = (entity._jumpTallyAcc ?? 0) + 1;",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "every jump the scaled motor lands a whole use - sixty a real second, the report's jumping"
+  },
+  {
+    "name": "RPT1026-PROGRESS-journey-jump-never",
+    "file": "src/systems/worldTick.js",
+    "old": "    if (entity._jumpTallyAcc >= 1) { entity._jumpTallyAcc -= 1; tallyMovementSkill(entity, SKILLS.Jumping); }",
+    "new": "    if (entity._jumpTallyAcc > 1) { entity._jumpTallyAcc -= 1; tallyMovementSkill(entity, SKILLS.Jumping); }",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js",
+      "test/systems/audit23_hosts.test.js"
+    ],
+    "note": "on foot a jump's whole use never reaches the tally (1 > 1 is false)"
+  },
+  {
+    "name": "RPT1026-PROGRESS-goldsmith-old-words",
+    "file": "src/net/professionLaw.js",
+    "old": "spec('goldsmith', 'Goldsmith', 'Silver jewelry you make has the enchantment points and worth of Gold.')",
+    "new": "spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')",
+    "tests": [
+      "test/systems/rpt1026_progress.test.js"
+    ],
+    "note": "the card's words back to the design's shorthand, read as Silver standing in for Gold in a recipe - the report"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-frame-silent",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "...(lf.length ? { lf } : {}), ...summonedWord(src, out), ",
+    "new": "...(lf.length ? { lf } : {}), ",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the owner's frame names no summon: every other player's copy of it rolls its kind's loot"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-reader-deaf",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "summ = validLooseSeqs(data.sm);",
+    "new": "summ = validLooseSeqs(undefined);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the reader drops the frame's word: the copy stands with its own roll"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-record-unflagged",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const r = summonedRecord(validFoeRecord(raw), summ);",
+    "new": "      const r = validFoeRecord(raw);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the word read but never laid on the record: no stand or update hears it"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-puppet-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    applyFoeRecord(markSummoned(f, r), r);",
+    "new": "    applyFoeRecord(f, r);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "the record flagged but the puppet never marked: the copy keeps its roll, alive and dead"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-word-every-loose",
+    "file": "src/systems/foeLootCap.js",
+    "old": "if (!qt && f?.entity?.summoned === true && out[k]) sm.push(out[k].i);",
+    "new": "if (!qt && out[k]) sm.push(out[k].i);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "every loose stand named a summon: a Wabbajack's change bare on a friend's machine"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-record-every-one",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  if (r && seqs?.has?.(r.i)) r.sm = 1;",
+    "new": "  if (r) r.sm = 1;",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "every record of the frame flagged a summon"
+  },
+  {
+    "name": "RPT1026-PROGRESS-peer-mark-unasked",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  if (r?.sm === 1 && f?.entity && f.entity.summoned !== true) summonedBody(f);",
+    "new": "  if (f?.entity && f.entity.summoned !== true) summonedBody(f);",
+    "tests": [
+      "test/scenes/rpt1026_progress_peersummon.test.js"
+    ],
+    "note": "every puppet marked, the record's word unread"
+  }
+]

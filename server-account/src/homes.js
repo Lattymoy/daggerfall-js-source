@@ -21,7 +21,8 @@
 // ═══ ONE STATEMENT DECIDES ═════════════════════════════════════════
 //
 // The claim is ONE INSERT that lands only while the character holds
-// fewer than HOME_CAP and the building is nobody's (the key is the
+// fewer than HOME_CAP in the home's region (HOUSES-3: three a region,
+// where it was three in all) and the building is nobody's (the key is the
 // table's primary key, and OR IGNORE turns a taken key into no change
 // rather than a thrown error). So two claims racing for one building,
 // or one character's two claims racing for its last place, cannot both
@@ -81,18 +82,19 @@ const homeOf = (row) => ({
  *  before the realm is still no sale, `crossed`). */
 const realmSaleOf = (row) => (Number(row.paid) > 0 ? { refund: homeSaleRefund(Number(row.paid)) } : { crossed: true });
 
-/** THE CLAIM'S ONE WRITE: the house the character's, while it is nobody's and the character holds fewer than its cap.
+/** THE CLAIM'S ONE WRITE: the house the character's, while it is nobody's and the character holds fewer than its cap in
+ *  the home's region (HOUSES-3, net/homeLaw.js HOME_CAP).
  *  `paid` (AUDIT REALM L1-F3, migration 0020): the gold a realm record paid for it - the price, for a realm character's
  *  claim; nothing for any other character's, whose client paid (or did not) out of a save the service never sees. */
 // WD3 (AUDIT WD3 R5): a town's homes in ONE layout, in the write itself (townLayout.js - AUDIT PRE-MERGE 1003 WD1: a
 // guild's hall is written with the same SQL)
 // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the cap counts the homes a character BOUGHT - a deed held for it (holdDeed) is
-// Daggerfall's gift, bounded by Daggerfall's own law (one a region), and costs none of the three
+// Daggerfall's gift, bounded by the bank's own law (three a region, HOUSES-3), and costs none of a region's three
 const claimStatement = (db, player, { mapId, buildingKey, region, character, price, layout = null }, nowS, paid = 0) => db.prepare(`INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout)
     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}
-    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND deed = 0) < ?
+    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?
       AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)
-  .bind(mapId, buildingKey, player.id, character, displayName(player), region, HOME_ENTRY_DEFAULT, price, nowS, paid, mapId, mapId, layout, player.id, character, HOME_CAP, mapId, ...layoutMatchBinds(layout));
+  .bind(mapId, buildingKey, player.id, character, displayName(player), region, HOME_ENTRY_DEFAULT, price, nowS, paid, mapId, mapId, layout, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));
 
 /** ACCOUNT-HOMES (2026-10-06): whether a home's row is the caller's account's own, for `character` to act on - any home
  *  of the account, whichever of its characters bought it; a deed the realm gave, its knight's alone; never a guild's hall
@@ -173,6 +175,10 @@ export async function claimHome(ctx, player, body = {}) {
     const town = await db.prepare('SELECT layout FROM homes WHERE map_id = ? ORDER BY bought_at, building_key LIMIT 1').bind(mapId).first();
     if (town && !homeLayoutsMatch(town.layout, layout)) return { error: 'home-layout', layout: homeLayoutOk(town.layout) ? town.layout ?? null : null };
   }
+  // HOUSES-3: the cap counts a region's homes, and the region is the claim's word - a town three players witnessed
+  // (townEcon.js, town_econ_towns) is held to its own, so no claim names another region to pass its region's cap there
+  const witnessed = await db.prepare('SELECT region FROM town_econ_towns WHERE map = ?').bind(mapId).first();
+  if (witnessed && Number(witnessed.region) !== region) return { error: 'bad-home' };
   if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };
   return realmClaim(ctx, player, side.at, { mapId, buildingKey, region, character, price, layout: layout ?? null });   // a realm character's side is always its record
 }
@@ -536,7 +542,7 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
 }
 
 /**
- * THE CALLER'S OWN, every character's, oldest first - and the cap each character is held to.
+ * THE CALLER'S OWN, every character's, oldest first - and the cap each character is held to in a region (HOUSES-3).
  * @param {{db: any}} ctx
  */
 export async function homesOf({ db }, player) {

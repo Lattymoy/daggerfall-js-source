@@ -1,0 +1,194 @@
+[
+  {
+    "name": "TVD-WORLD-the-budget-gone",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "        if (read >= budget) { owed = true; continue; }",
+    "new": "        if (false) { owed = true; continue; }",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "Every lair cell in the far range read in one call: forty first-time rolls in a frame."
+  },
+  {
+    "name": "TVD-WORLD-the-gen-unmoved",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "    if (owed) gen++;",
+    "new": "    if (owed) gen += 0;",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "Cells still owed, and the lists built on the answer kept: the far lairs never fill in."
+  },
+  {
+    "name": "TVD-WORLD-nearest-not-first",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "    near.sort((a, b) => a.d - b.d || a.c - b.c);",
+    "new": "    near.sort((a, b) => b.d - a.d || a.c - b.c);",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "The farthest cells read first: the lair beside the traveller waits on the edge's."
+  },
+  {
+    "name": "TVD-WORLD-the-Bay's-cells-asked",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "        if (d <= range && !inBay(s.px, s.py)) near.push({ c, s, d });",
+    "new": "        if (d <= range) near.push({ c, s, d });",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "The Bay's own cells asked of the places host - a read spent on a cell that holds no lair."
+  },
+  {
+    "name": "TVD-WORLD-the-circle-a-square",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "        if (d <= range && !inBay(s.px, s.py)) near.push({ c, s, d });",
+    "new": "        if (!inBay(s.px, s.py)) near.push({ c, s, d });",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "A cell's site past the far range's circle read."
+  },
+  {
+    "name": "TVD-WORLD-the-stamp-unread",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "    if (v !== ver) { ver = v; cells.clear(); laid.clear(); gen++; }",
+    "new": "    if (ver === null) { ver = v; gen++; }",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "What stands the places moved (the trace landing, a road) and the lairs read before it are kept."
+  },
+  {
+    "name": "TVD-WORLD-the-laid-unkept",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "    if (!laid.has(key)) laid.set(key, lairAt(x, y) ? cloneAt(x, y) ?? null : null);",
+    "new": "    laid.set(key, lairAt(x, y) ? cloneAt(x, y) ?? null : null);",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "A lair laid out again at every ask."
+  },
+  {
+    "name": "TVD-WORLD-the-region-unread",
+    "file": "src/systems/travel/travelLairs.js",
+    "old": "row: { mapID: row.mapId, regionIndex: regionAt(row.px, row.py), locationType: row.type }",
+    "new": "row: { mapID: row.mapId, regionIndex: 0, locationType: row.type }",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "A lair's row in the Alik'r's region: the find files it there."
+  },
+  {
+    "name": "TVD-WORLD-the-host-no-lairs",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "    return tvLairs ? [...rows, ...tvLairs.rowsNear(at, range)] : rows;",
+    "new": "    return rows;",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "Past the Bay the Overworld's dungeons are the map's rows again: no lair plated, marked, found or drawn."
+  },
+  {
+    "name": "TVD-WORLD-the-stand-unlaid",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "    : tvLairs && !onTheBay(x, y) ? tvLairs.lairPlaceAt(x, y) : null);",
+    "new": "    : null);",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "A lair's pixel not built stands nothing: its row is dropped."
+  },
+  {
+    "name": "TVD-WORLD-the-summary-unfiled",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "    return loc?.name && id && hasDiscoveredLocationId(id) ? { pixel: { x, y }",
+    "new": "    return loc?.name && id ? { pixel: { x, y }",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "Every lair past the Bay found unfound: a plate where a \"?\" stands."
+  },
+  {
+    "name": "TVD-WORLD-the-found-test-the-place's",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "    const dungeons = tvDungeonRowsAt(at), locAt = tvDungeonAt, isFound = tvDungeonFound;",
+    "new": "    const dungeons = tvDungeonRowsAt(at), locAt = tvDungeonAt, isFound = (x, y) => !!tvPlaceSummary(x, y);",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "A found lair past the Bay, its pixel not built, a \"?\" for good."
+  },
+  {
+    "name": "TVD-WORLD-the-plate's-summary-the-place's",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "summary: g.found && !g.spawn ? tvDungeonSummary(g.x, g.y) : null,",
+    "new": "summary: g.found && !g.spawn ? tvPlaceSummary(g.x, g.y) : null,",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "A found lair's plate journeys nowhere."
+  },
+  {
+    "name": "TVD-WORLD-the-list's-key-without-the-gen",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "n = `${host._locIndexGen}:${tvDungeonRowsAt.gen()}`;",
+    "new": "n = host._locIndexGen;",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "The plates' list kept while the lairs in reach are still being read."
+  },
+  {
+    "name": "TVD-WORLD-the-find's-found-test-the-place's",
+    "file": "src/scenes/world.js",
+    "old": "      locAt: tvDungeonAt, isFound: tvDungeonFound }).filter((g) => !g.found)",
+    "new": "      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found)",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "The find asks a found lair again, for good."
+  },
+  {
+    "name": "TVD-WORLD-the-find's-key-without-the-gen",
+    "file": "src/scenes/world.js",
+    "old": "    const at = playerTravelPixel(), dg = tvKnownGen(), n = `${_locIndexGen}:${tvDungeonRowsAt.gen()}`;",
+    "new": "    const at = playerTravelPixel(), dg = tvKnownGen(), n = _locIndexGen;",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "The find's list kept while its lairs are still being read."
+  },
+  {
+    "name": "TVD-WORLD-the-places-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "    provinceQuestPlaces,   // TVD-WORLD: the lairs past the Bay on the Overworld (systems/travel/travelLairs.js)\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "The host hands the Overworld's dungeons no places: no lair past the Bay."
+  },
+  {
+    "name": "TVD-WORLD-the-models'-key-without-the-gen",
+    "file": "src/scenes/travelViewDungeonModels.js",
+    "old": "n = `${host._locIndexGen}:${tvDungeonRowsAt.gen?.() ?? 0}`;",
+    "new": "n = host._locIndexGen;",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js"
+    ],
+    "note": "The models' list kept while the lairs in reach are still being read."
+  },
+  {
+    "name": "TVD-WORLD-the-filed-spawns-the-Bay's",
+    "file": "src/systems/travel/travelDungeons.js",
+    "old": "  for (let y = Math.max(1 - WORLD_PIXEL_SPAN, at.y - r); y <= Math.min(WORLD_PIXEL_SPAN - 1, at.y + r); y++) {",
+    "new": "  for (let y = Math.max(0, at.y - r); y <= Math.min(499, at.y + r); y++) {",
+    "tests": [
+      "test/systems/travel/tvdworld.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
+    ],
+    "note": "A found spawn past the Bay's rows, its pixel never built, never on the Overworld."
+  }
+]

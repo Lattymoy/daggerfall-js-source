@@ -23,6 +23,7 @@ import { withArenaHonoursAll } from './arena.js';
 import { withIliacHonoursAll } from './iliac.js';
 import { withEgHonoursAll } from './egHonours.js';   // EG-E2: and the Spire Champions
 import { withGambitHonoursAll } from './gambit.js';   // KG6: and The King's Gambit's GRANDMASTER
+import { withMasteryMarksAll } from './hunts.js';   // MARKS-OF-MASTERY
 
 /**
  * Players by id, each with the badge they wear now: `{ name, title, glyphs }` (titles.js). `own` names the honours the
@@ -41,6 +42,7 @@ export async function boardNamesOf(ctx, ids, env, nowS, own) {
     if (!own.iliac) rows = await withIliacHonoursAll(ctx, rows, nowS);
     rows = await withEgHonoursAll(ctx, rows, nowS);   // EG-E2: and the last season's Spire Champions, the Worker's kept word on every board
     if (!own.gambit) rows = await withGambitHonoursAll(ctx, rows, nowS);
+    rows = await withMasteryMarksAll(ctx, rows);   // MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles, read off their rows
     for (const row of rows) {
       const withH = { ...row, ...(own.arena ? { arena: own.arena(row) } : {}), ...(own.iliac ? { iliac: own.iliac(row) } : {}), ...(own.gambit ? { gambit: own.gambit(row) } : {}) };
       out.set(row.id, { name: displayName(row), title: titleWorn(withH, env) ?? null, glyphs: glyphsOf(withH, env, nowS) });

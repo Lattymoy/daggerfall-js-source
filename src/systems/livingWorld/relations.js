@@ -94,9 +94,16 @@ export const EVENTS = Object.freeze({
   slain: -75,     // one of their own - their household, their party - struck down by the player
   insulted: -6,   // a word in a tone they take ill (TONE-TASTE: Polite with townsfolk)
   poached: -4,    // LW14: a find of theirs taken before them in the deep (once a day, as a tone)
+  compliment: 2,  // COURT-DEEDS: a compliment paid (once a day, as a tone; systems/legacy/courtDeeds.js)
+  embrace: 3,     // COURT-DEEDS: a hug, from one they count a friend (once a day)
+  kiss: 4,        // COURT-DEEDS: a kiss, in a courtship well begun (once a day)
 });
+/** COURT-DEEDS (2026-10-26, Discord #feature-feedback "Better Courtship"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md):
+ *  each deed's day stamp on a record - a compliment, a gift, a hug or a kiss counts once a day per resident, as a tone. */
+export const DEED_STAMPS = Object.freeze({ compliment: 'compl', gift: 'gift', embrace: 'hug', kiss: 'kiss' });
+const STAMPED = Object.freeze(['polite', 'blunt', 'poach', ...Object.values(DEED_STAMPS)]);
 
-/** @typedef {{ r: number, met: number, seen: number, talked: number, polite?: number, blunt?: number, poach?: number }} Regard - `met`,
+/** @typedef {{ r: number, met: number, seen: number, talked: number, polite?: number, blunt?: number, poach?: number, compl?: number, gift?: number, hug?: number, kiss?: number }} Regard - `met`,
  *  `seen`, `talked` days (the clock's day numbers); LW7 `polite`, `blunt` the days a tone of word last counted; LW14
  *  `poach` the day a find of theirs last counted */
 
@@ -189,7 +196,7 @@ export function createRelations(record = null) {
       if (!Number.isFinite(r)) continue;
       /** @type {Regard} */
       const got = { r: clamp(r), met: Number.isFinite(met) ? met : 0, seen: Number.isFinite(seen) ? seen : 0, talked: Number.isFinite(talked) ? talked : -1 };
-      for (const tone of /** @type {const} */ (['polite', 'blunt', 'poach'])) { const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) got[tone] = d; }   // LW7
+      for (const tone of STAMPED) { const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) /** @type {any} */ (got)[tone] = d; }   // LW7; COURT-DEEDS: the deeds' days
       map.set(id, got);
     }
   }
@@ -214,6 +221,8 @@ export function createRelations(record = null) {
     standing(id, day) { return regardStanding(this.regard(id, day)); },
     /** Whether the player has met `id`. @param {string} id */
     known: (id) => map.has(id),
+    /** COURT-DEEDS: the day a deed (`kind`, a DEED_STAMPS key) last counted with `id`, or null. @param {string} id @param {string} kind */
+    deedDay: (id, kind) => { const k = DEED_STAMPS[/** @type {keyof typeof DEED_STAMPS} */ (kind)]; const d = k ? /** @type {any} */ (map.get(id))?.[k] : null; return Number.isFinite(d) ? d : null; },
     /**
      * Something happened between the player and `id` on `day`: `kind` an EVENTS key (or `amount` given). A `talk` counts
      * once a day, and (LW7) each tone of word - `polite`, `insulted` - once a day; LW14 a find `poached`, once a day. Answers the new regard.
@@ -226,8 +235,8 @@ export function createRelations(record = null) {
       const now = eased(e, day);
       let delta = Number.isFinite(amount) ? Number(amount) : (EVENTS[kind] ?? 0);
       if (kind === 'talk') { if (e.talked === day) delta = 0; else e.talked = day; }
-      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : kind === 'poached' ? 'poach' : null;   // LW14: a find taken, once a day
-      if (tone) { if (e[tone] === day) delta = 0; else e[tone] = day; }
+      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : kind === 'poached' ? 'poach' : DEED_STAMPS[/** @type {keyof typeof DEED_STAMPS} */ (kind)] ?? null;   // LW14: a find taken, once a day; COURT-DEEDS: a deed
+      if (tone) { if (/** @type {any} */ (e)[tone] === day) delta = 0; else /** @type {any} */ (e)[tone] = day; }
       e.r = clamp(now + delta);
       e.seen = day;
       map.set(id, e);
@@ -341,6 +350,7 @@ export function createRelations(record = null) {
         if (e.polite != null) people[id].polite = e.polite;   // LW7: only once counted
         if (e.blunt != null) people[id].blunt = e.blunt;
         if (e.poach != null) people[id].poach = e.poach;   // LW14: only once counted
+        for (const k of Object.values(DEED_STAMPS)) if (/** @type {any} */ (e)[k] != null) /** @type {any} */ (people[id])[k] = /** @type {any} */ (e)[k];   // COURT-DEEDS: likewise
       }
       // LW4: only once there is one; LW7 each hand death's kind only once there is one of it - [key, t, seen, who]
       const handsOut = Object.fromEntries(HAND_KINDS.filter((k) => hands[k].size).map((k) => [k, [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who])]));

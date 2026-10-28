@@ -106,10 +106,10 @@
   {
     "name": "MOD1-14-the-line-names-no-account",
     "file": "server/src/index.js",
-    "old": "text: m.text, at: now, sub: a.sub, ...(m.me === true ? { me: true } : {}) }, now);",
-    "new": "text: m.text, at: now, ...(m.me === true ? { me: true } : {}) }, now);",
+    "old": "text: m.text, at: now, sub: a.sub, ...(m.me === true ? { me: true } : {}), ...(m.items",
+    "new": "text: m.text, at: now, ...(m.me === true ? { me: true } : {}), ...(m.items",
     "tests": ["test/net/mod1.test.js"],
-    "note": "A moderator cannot name who said it."
+    "note": "Re-aimed by content (the second merge of main into #1184, 2026-10-27): CHAT-POST (main, #1342) wrote linked items into this code and left the record quoting the old line. A moderator cannot name who said it."
   },
   {
     "name": "MOD1-15-two-names-one-guess",

@@ -79,15 +79,15 @@
   {
     "name": "OWQ-press-unread",
     "file": "src/scenes/world.js",
-    "old": "const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2])) } : ",
+    "old": "const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2]), true) } : ",
     "new": "const plate = ",
     "tests": ["test/ui/travel/owquest.test.js"]
   },
   {
     "name": "OWQ-pixel-swapped",
     "file": "src/scenes/world.js",
-    "old": "summary: tvPlaceSummary(Number(qp[1]), Number(qp[2]))",
-    "new": "summary: tvPlaceSummary(Number(qp[2]), Number(qp[1]))",
+    "old": "summary: tvPlaceSummary(Number(qp[1]), Number(qp[2]), true)",
+    "new": "summary: tvPlaceSummary(Number(qp[2]), Number(qp[1]), true)",
     "tests": ["test/ui/travel/owquest.test.js"]
   },
   {"name": "AOWR-L5-6-phrase-english", "file": "src/ui/quest/questRail.js", "old": "export const timeLeftWords = (s) => t('quest.remain.left', '{time} left', { time: remainWords(s) });", "new": "export const timeLeftWords = (s) => `${remainWords(s)} left`;", "tests": ["test/ui/travel/owquest.test.js"]},

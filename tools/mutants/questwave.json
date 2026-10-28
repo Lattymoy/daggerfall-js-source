@@ -30,7 +30,7 @@
   },
   {
     "name": "QUESTWAVE-the-street-arm-asks-no-holds",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "        isOccupied: entityOccupancy((f) => f.ai?.feet, () => [...exteriorFoePool(), ...heldSpots(collider)], feet),",
     "new": "        isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),",
     "tests": ["test/scenes/questwave.test.js", "test/scenes/audit62_hosts.test.js"]

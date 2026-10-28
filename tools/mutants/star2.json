@@ -47,8 +47,9 @@
   {
     "name": "STAR2-the-gate-site-ignored",
     "file": "src/systems/starfall/starfallSites.js",
-    "old": "if (gate && !apart(gate, px, py)) return false;",
-    "new": "if (false) return false;",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "      const px = id % W, py = Math.floor(id / W);\n      if (gate && !apart(gate, px, py)) return false;",
+    "new": "      const px = id % W, py = Math.floor(id / W);\n      if (false) return false;",
     "tests": [
       "test/systems/starfall/star2_covens.test.js"
     ]

@@ -55,7 +55,7 @@
   },
   {
     "name": "host-drops-lord-name",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "    lordNameForFaction: (id, old = false) => lordNameForFaction(townTalk.factionDict, id, old),\n",
     "new": "",
     "tests": [
@@ -64,7 +64,7 @@
   },
   {
     "name": "host-drops-legal-rep",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n",
     "new": "",
     "tests": [
@@ -73,7 +73,7 @@
   },
   {
     "name": "exemption-gone-stale",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n",
     "new": "    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),\n    talkHonoric: () => null,\n",
     "tests": [
