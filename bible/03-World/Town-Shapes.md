@@ -167,8 +167,51 @@ townMove); with the ground there not yet loaded it is moved, as one written befo
 **Not a Bay town's ground alone.** The blend is every shaped town's, so towns past the Bay moved too (Sunhold's and
 Woodhearth's banks, below).
 
-Tests `test/world/terrain/fb1028_townground.test.js` (7), `fb1028_townground_real.test.js` (ARENA2) and
-`fb1028_townground_frame.test.js` (6). Mutants `tools/mutants/fb1028_townground.json` (38, all dead). PINS MOVED:
+**AUDIT FB1028 A2-A3 (GROUND_LAW 4).** The cold audit of #1371 found two defects. A2: a town's own ground stood at its
+level to the pixel's last sample but one, so where its margin reached the edge band the seam was a cliff (Sentinel's
+south seam fell 47 m in 12.8 m). A3: each sample read its reach off its own height, so the departure kept,
+Δ·S(c/Δ), fell as Δ grew past 4c/3: beside tall relief, land further off the town's level ended nearer it (a pit on a
+hill's flank; Chesterbrugh's row y = 83 rose, then fell, over land rising 964 to 1021 m).
+
+**The law now** (`world/terrain/terrainTiles.js` blendShapedTerrain). The departure kept `d` samples out is the least of
+the land's departure times the smoothstep over SHAPE_BLEND_TILES and a smooth cone (easeCone: 32/3 of that smoothstep
+to nine samples, then one grade a sample). It never falls as the land stands further off. On a constant shore or
+hillside it rises at 4/3 of SHAPE_GRADE at the most, and it reaches the land where FB1028's did. The weight reads
+`ground` alone, so every blend of a pixel still eases alike.
+
+**The seam.** A sample's share of the way to the edge is measured, inside the band the seam needs, from the town's last
+stood sample: a corner of a tile within a tile of a building's, a model's, a flat's or a crop's (a model's foot overhangs
+its own tile: at distance 0 alone Aldwall Rock's model 323 stood 1.9 m in its ground). Every stood sample keeps the
+level, so only the core's corners past a tile ease with the seam. Where buildings stand in the band (Sentinel fills its
+pixel) the seam stays steeper than the grade: easing it would stand them off their ground, as TS2 did.
+
+**The records' frame.** This ground is unmerged, so GROUND_FRAME_LAW stays 4: a record stamped 4 was written on it, and
+townGroundMovedField reads today's blend, this law (Westhead Moor's move 60.0 m at the most, where FB1028's was 55 m).
+GROUND_LAW moves 3 to 4 (RELAY_VERSION world279); the print's town cell moves 7.8 m at 19 of its points;
+BAKE_GENERATOR_VERSION moves 3 to 4.
+
+**AUDIT FB1028 A2-A3 measured.** As above, the stream's build of every Bay town pixel; the row off reads the blend alone.
+
+| the Bay's 3,444 town pixels | FB1028 | A2-A3 |
+| --- | --- | --- |
+| towns with a step over 10 m (row on) | 3 | 3 |
+| the worst step | 18.6 m | 18.6 m |
+| steps over 6 m at a pixel edge / on land | 1,222 / 6,333 | 1,184 / 3,705 |
+| flats and models off their plane | 0 | 0 |
+| sea samples kept | 135,907 | 135,885 |
+| ports with ground over the jetty's deck (over 6 m, of 106) | 5 (worst 11.5 m) | 5 (worst 11.4 m) |
+| towns whose edge row the blend steepens over 5 m (row off) | 56 (worst 23.3 m) | 52 (worst 23.1 m) |
+| slope reversals 10 samples in (row off) | 19,065 (107 towns over 3 m, worst 11.0 m) | 19,984 (110 towns over 3 m, worst 11.0 m) |
+| Westhead Moor's / Aldwall Rock's worst step | 7.33 / 7.73 m | 7.33 / 7.73 m |
+
+**What grew, and why.** Slope reversals, 919 more: the cone climbs with distance, so on a hill's far side the eased ground rises while the land falls (the cone alone 682 more), and the seam's run turns the land's own slope by an edge. The worst is Naresa's at its seam, as before. A jetty's landward ground at the 90th percentile rose from 0.1 to 1.1 m over its deck: the cone keeps more of the sea's depth by a town. 22 fewer sea samples are kept. The seam gained little (edge rows over 5 m 56 to 52, the three towns over 10 m the same): its room is the core's corners past a tile, since all a model may stand on keeps the level.
+
+Tests `test/world/terrain/fb1028_townground.test.js` (9; A2's and A3's after the edge's), `fb1028_townground_real.test.js`
+(ARENA2) and `fb1028_townground_frame.test.js` (6). Mutants `tools/mutants/fb1028_townground.json` (45, all dead). PINS
+MOVED by A2-A3: the edge test's level under the buildings (its stood samples, not all its ground), the frame's Westhead
+Moor move (55 to 60.0 m), the bake's version 4, world279's 44 pins; re-aimed by content: the ease's mutants here,
+TS-the-sea-lifted, E1-4-the-version-unmoved, BAY-LEFT-GROUND-GROUND-LAW-not-moved, NIRNROOT-SAGE-relay-unmoved,
+S38-version-not-bumped. PINS MOVED by FB1028:
 `test/world/reliefpeaks.test.js` and `bayleftground_frame.test.js` (the stamp 4), the ground's print (a town's cell),
 `test/world/terrain/townshapes.test.js` (Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js`
 (the bake's version 3), `test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water

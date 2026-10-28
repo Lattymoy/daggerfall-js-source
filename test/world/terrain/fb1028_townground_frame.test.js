@@ -162,6 +162,6 @@ test('FB1028 with ARENA2: Westhead Moor\'s ground under a record moved with the 
     worst = Math.max(worst, Math.abs(m)); if (Math.abs(m) > 5) over5++;
   }
   console.log(`# FB1028 Westhead Moor: the blend moved DFU's ground up to ${worst.toFixed(1)} m, ${over5} samples over 5 m`);
-  // PIN MOVED (AUDIT FB1028 A2-A3): the ease keeps the cone's departure by the town, 63.5 m; FB1028's 55 m
-  assert.ok(worst > 58 && worst < 68, `a record there was off its ground by up to ${worst.toFixed(1)} m (the audit: 55 m; A2-A3: 63.5 m)`);
+  // PIN MOVED (AUDIT FB1028 A2-A3): the ease keeps the cone's departure by the town, 60.0 m; FB1028's 55 m
+  assert.ok(worst > 57 && worst < 63, `a record there was off its ground by up to ${worst.toFixed(1)} m (the audit: 55 m; A2-A3: 60.0 m)`);
 });
