@@ -27,12 +27,9 @@
 import { mulberry32 } from '../render/grassPixelArt.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 
-const _fields = new Map();   // id -> { spec, isOn }
-
-/** `spec`: { rangeX, rangeZ, spacing, noise, firstRecordOnly } in metres. */
-export function registerFlatField(id, spec, isOn = () => true) { _fields.set(Number(id), { spec: Object.freeze({ ...spec }), isOn }); }
-export function flatFieldFor(id) { const f = _fields.get(Number(id)); return f && f.isOn() ? f.spec : null; }
-export function _resetFlatFields() { _fields.clear(); }
+/** The registry: id -> `spec` { rangeX, rangeZ, spacing, noise, firstRecordOnly } in metres. FB1028 CROP-GROUND: its home
+ *  is world/townShape.js, where the terrain's outline reads a field's tiles. */
+export { registerFlatField, flatFieldFor, _resetFlatFields } from './townShape.js';
 
 /** The crop archive and the plants of each climate's nature archive (RMBCropBillboardBatch.AdjustRecordBasedOnClimate):
  *  [archive, records]. A snowed nature archive (the odd ones from 505) is winter: the stubble. `climateIndex` is the

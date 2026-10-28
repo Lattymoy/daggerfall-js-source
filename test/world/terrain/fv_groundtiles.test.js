@@ -121,12 +121,12 @@ test('FIRST-VISIT ground tiles: a block is kept by its name - the next launch\'s
   _resetGroundTiles();
 });
 
-test('FIRST-VISIT ground tiles: a kept block gives back its town-map cells and misc places as the outline reads them (mutants: the cells dropped; a record moved; a cell set that was not)', async () => {
+test('FIRST-VISIT ground tiles: a kept block gives back its town-map cells and misc places as the outline reads them - FB1028: and a model\'s id, by which the outline reads a field of crops (mutants: the cells dropped; a record moved; a cell set that was not; the id dropped)', async () => {
   const store = storeOf();
   const cells = new Uint8Array(64 * 64);
   for (const c of [0, 1, 63, 64, 2047, 4095]) cells[c] = 9;
   const groundTiles = Array.from({ length: 16 }, (_, x) => Array.from({ length: 16 }, (_, y) => ({ tileBitfield: x + y, textureRecord: 3 })));
-  const part = () => ({ groundTiles, autoMapData: cells, misc3dObjectRecords: [{ xPos: 100, zPos: -300, id: 7 }], miscFlatObjectRecords: [{ xPos: 5, zPos: 2.5 }] });
+  const part = () => ({ groundTiles, autoMapData: cells, misc3dObjectRecords: [{ xPos: 100, zPos: -300, modelIdNum: 53211 }], miscFlatObjectRecords: [{ xPos: 5, zPos: 2.5 }] });
   await prefetchGroundTiles({ blocksBytes: BYTES, serving: 'open|A', store });
   const miss = keptGroundTiles('w', 'A.RMB', part);
   assert.equal(miss.autoMapData, cells, 'a miss answers the block as read');
@@ -138,6 +138,7 @@ test('FIRST-VISIT ground tiles: a kept block gives back its town-map cells and m
   assert.deepEqual([...hit.autoMapData.keys()].filter((c) => hit.autoMapData[c]), [0, 1, 63, 64, 2047, 4095]);
   const places = [...hit.misc3dObjectRecords, ...hit.miscFlatObjectRecords].map((r) => [r.xPos, r.zPos]);
   assert.deepEqual(places, [[100, -300], [5, 2.5]]);
+  assert.deepEqual([...hit.misc3dObjectRecords, ...hit.miscFlatObjectRecords].map((r) => r.modelIdNum), [53211, undefined], 'a model\'s id kept, a flat none');
   _resetGroundTiles();
   await prefetchGroundTiles({ blocksBytes: BYTES, serving: 'open|A', store });
   const none = keptGroundTiles('w', 'B.RMB', () => ({ groundTiles }));

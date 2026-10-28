@@ -178,7 +178,7 @@ test('TS8 with ARENA2: every ninth city past the Bay - every length\'s and gate\
     for (let v = 0; v < model.positions.length; v += 3) {
       if (model.positions[v + 1] >= CORNER_TOWER.crown - 0.02) continue;
       const x = model.positions[v], z = model.positions[v + 2];
-      const inside = wall.pieces.some((p) => { const [a, o] = local(p, x, z), hl = p.model === WALL_MODELS.tower ? HALF : (TOWN_WALL.piece * p.stretch) / 2; return Math.abs(a) <= hl + 0.01 && Math.abs(o) <= HALF + 0.01; });
+      const inside = wall.pieces.some((p) => { const [a, o] = local(p, x, z), hl = p.model === WALL_MODELS.tower ? HALF : (TOWN_WALL.piece * p.stretch) / 2; return Math.abs(a) <= hl + 0.01 && Math.abs(o) <= HALF * (p.thick ?? 1) + 0.01; });   // PIN MOVED (FB1028): a bend's tower grown across
       assert.ok(inside, `${t.name}: (${x.toFixed(2)}, ${model.positions[v + 1].toFixed(2)}, ${z.toFixed(2)}) in a piece's footprint - no stub`);
     }
   }

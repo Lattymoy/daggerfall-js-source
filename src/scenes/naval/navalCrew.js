@@ -131,7 +131,7 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
         const flats = peopleFlatsOf(w.boat).filter((f) => f.feet[1] >= main - DECK_STEP);   // never the rowers below her deck
         for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }
         const life = createCrewLife({ deck: w.deck, roster: w.hold ? [] : w.rosterOf(), seed: w.seed, places: flats.map((f) => f.feet), faction: w.faction ?? null });
-        ship = { key: w.key, boat: w.boat, deck: w.deck, life, flats, sprites: new Map(), battle: false, held: !!w.hold, seed: w.seed | 0 };   // MWNPC10: her seed, her hands' looks
+        ship = { key: w.key, boat: w.boat, deck: w.deck, life, flats, sprites: new Map(), battle: false, held: !!w.hold, seed: w.seed | 0, home: w.home ?? null };   // MWNPC10: her seed, her hands' looks; AUDIT PROVINCE-FOLK A3: her waters' people (none: the Bay's)
         for (const m of life.members) ship.sprites.set(m, sprite(m));
         ships.set(w.key, ship);
       }
@@ -209,7 +209,7 @@ export function createNavalCrew({ renderer, getTexture, uploadRecordFrame, rand 
       for (const [m, s] of ship.sprites) {
         i++;
         if (!s?.batch || !s.unit || m.below) continue;   // turned in below her deck: kept, not drawn (a gone hand's sprite is already dropped)
-        const look = rosterLook(s, { mobileType: m.mobile, gender: m.gender, seed: Math.imul((ship.seed | 0) + i, 0x9e3779b1) >>> 0 });
+        const look = rosterLook(s, { mobileType: m.mobile, gender: m.gender, seed: Math.imul((ship.seed | 0) + i, 0x9e3779b1) >>> 0, home: ship.home });
         if (!look) continue;
         bodiesLane.offer(rosterActor(s, { id: s.id, look, feet: s.origin, yaw: s.yaw, moving: !!m.moving, swingKey: s.swings || null }), s.batch, ship.boat.conceal ?? null);
       }

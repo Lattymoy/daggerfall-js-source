@@ -42,13 +42,16 @@ function mix(h) {
 }
 const strHash = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193); return h >>> 0; };
 
-/** The outfit variant a walker's sprite archive is (PERSON_TEXTURES' index), or 0. */
+/** The outfit variant a walker's sprite archive is (PERSON_TEXTURES' index), or 0. PROVINCE-FOLK: whichever race's
+ *  picture it is - past the Bay a Dark Elf walks in a Breton's or a Nord's (mobilePerson.js spriteRaceOf). */
 export function folkVariant(archive, race) {
-  const t = PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton;
-  const i = t.male.indexOf(archive);
-  if (i >= 0) return i;
-  const j = t.female.indexOf(archive);
-  return j >= 0 ? j : 0;
+  for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {
+    const i = t.male.indexOf(archive);
+    if (i >= 0) return i;
+    const j = t.female.indexOf(archive);
+    if (j >= 0) return j;
+  }
+  return 0;
 }
 
 let _shells = 0;
@@ -58,11 +61,11 @@ let _shells = 0;
  * @param {any} person @param {string} race
  */
 function spawnOf(person, race) {
-  const key = `${person.archive}|${person.personFaceRecordId ?? 0}|${person.nameNPC ?? ''}|${person.gender ?? 0}`;
+  const roll = `${person.archive}|${person.personFaceRecordId ?? 0}|${person.nameNPC ?? ''}|${person.gender ?? 0}`, key = `${roll}|${race}`;
   if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;
   const shell = person._mwShell ??= ++_shells;
   const n = (person._mwFolk?.n ?? 0) + 1;
-  const seed = mix(strHash(key) ^ mix(shell));
+  const seed = mix(strHash(roll) ^ mix(shell));   // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key
   return (person._mwFolk = { key, n, id: `${shell}.${n}`, seed, look: folkLookOf(person, race, seed) });
 }
 
@@ -107,7 +110,7 @@ export function spriteSex(archive) {
 }
 
 /** The look a walker stands in (their spawn's). @param {any} person @param {string} race */
-export const folkLook = (person, race) => spawnOf(person, race).look;
+export const folkLook = (person, race) => spawnOf(person, person.folk ?? race).look;
 
 /**
  * The actor the lane stands for a walker (characters/npcBodies.js `stand`): their spawn's id and look, their feet as
@@ -117,7 +120,7 @@ export const folkLook = (person, race) => spawnOf(person, race).look;
  * @param {any} person @param {number[]} feet @param {string} race
  */
 export function folkActor(person, feet, race) {
-  const s = spawnOf(person, race);
+  const s = spawnOf(person, person.folk ?? race);   // PROVINCE-FOLK: the walker's own people, past the Bay the province's
   const a = person._mwActor ??= { id: '', look: null, feet: null, yaw: 0, moving: false, running: false, drawn: false, swings: 0, strike: 0, casts: 0, castRange: 0, hits: 0, dead: 0 };
   a.id = s.id; a.look = s.look; a.feet = feet;
   a.yaw = Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0);

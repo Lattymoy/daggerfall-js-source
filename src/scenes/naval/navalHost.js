@@ -71,6 +71,8 @@ import { createShipDamage, shotDamage, shotMen, ballMen, playerMen, SHIP_STATES,
 import { createGunDeck, aimSolution, volleyLaunches, bearingOf, sideForBearing, toWorld, RIPPLE_S, READY_FLASH_S } from '../../systems/naval/navalGunnery.js';
 import { flatHull, hullOverlap, hullBuild, firstBuildOf, batteryOf, batteriesOf, GUNS, classById, classFor, shipNames, crownOf, classLine, SIDES, SIDE_DIR, BARREL, NAVAL_FACTIONS, HULL, PLAYER_CREW_TOUGHNESS, SHIP_TOUGHNESS, shipBatteryWeight, MOD_BUILDS, flagOf, CROWNS } from '../../systems/naval/navalShips.js';
 import { shipNameBank } from '../../systems/naval/shipNameBank.js';   // WW3: the waters' people, past the Bay a province's
+import { folkKeyOf, folkOfArea, folkOfRegion } from '../../characters/provinceFolk.js';   // AUDIT PROVINCE-FOLK A3: a crew's people
+import { BAY_AREA_COUNT } from '../../world/worldWide/worldGrid.js';
 import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside, BERTH_SNAP_M, BERTH_WAY } from '../../systems/naval/shipLife.js';   // SHIP-LIFE
 import { createHarbourBook, HARBOUR_RETRY_S } from '../../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours, the world's and mine
 import { hash32 } from '../../world/spawnedDungeons.js';
@@ -643,6 +645,9 @@ const arcTo = (l, t) => Array.from({ length: 18 }, (_, j) => shotPosition(l.p0, 
 /** WW3: the waters' people - a crew's region and its name bank, the province's past the Bay - off one read of the
  *  waters (AUDIT WW F12: the host's `where` is a search of the ports, asked once). @param {{ region?: number, area?: number }} w */
 const watersFolk = (w) => ({ regionIndex: w.region ?? 17, bank: shipNameBank(w.region ?? 17, w.area ?? -1) });
+/** AUDIT PROVINCE-FOLK A3: the people a ship's crew are of - her waters', where her names were drawn (WW3's area past the
+ *  Bay, else her region); null on the Bay. Every machine stands her with the region and area her word carries. */
+const watersFolkKey = (e) => folkKeyOf(Number.isInteger(e.area) && e.area >= BAY_AREA_COUNT ? folkOfArea(e.area) : folkOfRegion(e.region ?? -1));
 /** WW3: a ship's names by her waters' people - her region's on the Bay, and past it the name bank of the area she is
  *  named in (`area`: a packet's her home port's, another's the waters here). AUDIT TESA II K7: built here, beside
  *  watersFolk, so the host's scope keeps only the call (the hosts do not grow, bible/01-Overview/Host-Split.md). */
@@ -5440,7 +5445,7 @@ export function createNavalHost(deps) {
           const from = helm ? helm.GameObject.position : (feet ??= deps.feet());
           if (helm ? boardingGap(helm, e) != null : footReach(e, from)) { toward = helm ? abeam(e, from, yawOfRot(helm.GameObject.rotation)) : from; way = 'repel'; }
         }
-        out.push({ key: e.id, boat: e.boat, pos: e.ship.pos, shipClass: e.ship.cls, crewShare: e.ship.damage.crewShare(), seed: e.ship.seed, faction: e.ship.cls.faction, way, battle, struck: st !== SHIP_STATES.afloat, hold, toward, work: st === SHIP_STATES.afloat ? workOf(e.ship.damage) : 0 });   // SHIP-WATCH: her hurts, mended
+        out.push({ key: e.id, boat: e.boat, pos: e.ship.pos, shipClass: e.ship.cls, crewShare: e.ship.damage.crewShare(), seed: e.ship.seed, home: watersFolkKey(e), faction: e.ship.cls.faction, way, battle, struck: st !== SHIP_STATES.afloat, hold, toward, work: st === SHIP_STATES.afloat ? workOf(e.ship.damage) : 0 });   // SHIP-WATCH: her hurts, mended; AUDIT PROVINCE-FOLK A3: `home` her crew her waters' people
       }
       return out;
     },

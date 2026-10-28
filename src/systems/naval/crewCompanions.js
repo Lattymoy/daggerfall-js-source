@@ -43,7 +43,7 @@ export const COMPANION_WHY = Object.freeze({ full: 'two ashore already', resting
 /** The picker's words. */
 export const COMPANION_TEXT = Object.freeze({ take: 'Take ashore', back: 'Send back aboard', ashore: 'ashore', resting: 'resting' });
 
-/** @typedef {{ boat: number, name: string, role: string, mobile: number, gender: 'male'|'female', health: number|null, maxHealth: number|null, items: any[] }} Companion */
+/** @typedef {{ boat: number, name: string, role: string, mobile: number, gender: 'male'|'female', health: number|null, maxHealth: number|null, items: any[], folk?: string|null }} Companion */
 /** @typedef {{ boat: number, name: string, until: number }} Resting */
 
 const isName = (s) => typeof s === 'string' && s.length > 0 && s.length <= 80;
