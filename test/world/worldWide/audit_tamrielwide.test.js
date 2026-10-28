@@ -20,6 +20,9 @@ import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { zonePortFree, landingOf } from '../../../src/systems/wild/zoneSafe.js';
 import { buildWildMask } from '../../../src/systems/wild/wildZone.js';
 import { locationWorldRect } from '../../../src/world/streamingWorld.js';
+import { standingRace, figureLook } from '../../../src/characters/peopleBodies.js';
+import { setFolkPlace } from '../../../src/characters/provinceFolk.js';
+import { regionOfTheatre } from '../../../src/formats/mapsTables.js';
 
 test('AUDIT TAMRIEL-WIDE C1: the raid host names the region the player stands in past the Bay - a province\'s politic is its region\'s, as the Bay\'s is - and the sea none, on either side (mutant: the province\'s politic unread)', () => {
   const at = (pol, region, x = 2441, y = -600) => {
@@ -99,4 +102,16 @@ test('AUDIT TAMRIEL-WIDE E1: a teleport into the open zone lands in a settlement
   assert.equal(free(undefined), true, 'a city pick (a guild\'s, a stone\'s) lands at the city: its pixel');
   assert.equal(free(null), false, 'a ship whose body is not stood');
   assert.equal(zonePortFree(zone, bay, bay, null, undefined, new Map(), locAt, null), true, 'outside the zone, as ever');
+});
+
+test('AUDIT TAMRIEL-WIDE E2: a person by a province\'s border is of the people where they stand, not where the player stood when they were first drawn - a Skyrim townsperson a Nord seen from High Rock\'s side; with no feet, the player\'s place as before (mutant: the feet unread)', () => {
+  const player = { x: 1254, y: -256 };
+  setFolkPlace((feet) => (feet ? { x: feet[0], y: feet[2] } : player), (x) => (x >= 1255 ? regionOfTheatre(3) : regionOfTheatre(1)));
+  try {
+    assert.equal(standingRace({ race: 1 }, null, [1300, 0, -256]), 'Nord', 'stood in Skyrim');
+    assert.equal(standingRace({ race: 1 }, null, [1200, 0, -256]), 'Breton', 'stood in High Rock');
+    assert.equal(standingRace({ race: 1 }, null), 'Breton', 'no feet: where the player stands');
+    const flats = { getFlatData: () => ({ gender: '1', caption: 'merchant' }) };
+    assert.equal(figureLook({ piece: { id: 'p1', flat: [182, 3] } }, { flats, race: 1 }, [1300, 0, -256])?.race, 'Nord', 'a figure the same');
+  } finally { setFolkPlace(null, null); }
 });

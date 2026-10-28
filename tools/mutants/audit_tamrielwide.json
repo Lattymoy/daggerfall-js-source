@@ -89,5 +89,25 @@
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],
     "note": "The host never hands the zone its callers' landings."
+  },
+  {
+    "name": "AUDIT-TW-E2-the-feet-unread",
+    "file": "src/characters/provinceFolk.js",
+    "old": "export const nativeAt = (feet = null) => folkWhere(feet)?.[0][0] ?? null;",
+    "new": "export const nativeAt = (feet = null) => folkWhere(null)?.[0][0] ?? null;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "A person by a border takes the player's side's people again."
+  },
+  {
+    "name": "AUDIT-TW-E5-the-ports-unclosed",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);",
+    "new": "for (const s of [...sites]) if (!broken.includes(s)) closeSite(g, s);",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ],
+    "note": "A yard placed again may stand on a port's shipyard or lighthouse."
   }
 ]

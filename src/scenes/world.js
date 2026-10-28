@@ -3480,7 +3480,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const crewFlatDrawn = (f, b) => { b.castOnly = false; };
   let _crewEye = [0, 0, 0], _crewDt = 0;   // the frame's eye and clock, set before the crews are walked
   const offerCrewPerson = (f, b) => {
-    const look = b.conceal ? null : figureLook(f, yardFigureCtx);
+    const look = b.conceal ? null : figureLook(f, yardFigureCtx, b.origin);
     if (look) streetPeople.offer(personActor(f, look, b.origin, _crewEye, _crewDt), b);
     else b.castOnly = false;
   };
@@ -3493,11 +3493,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
   // MWNPC18: what a yard's figure is read by - FLATS.CFG and the region's race, asked only when a figure is first looked at
   const yardFigureCtx = { get flats() { return pipeline.flatsFile?.() ?? null; }, get race() { return REGION_RACES[_questRegionIndex()] + 1; } };
-  const streetLook = (pn) => {
+  const streetLook = (pn, feet) => {   // AUDIT TAMRIEL-WIDE E2: `feet` where they stand, read once with the look
     if (pn._mwLook !== undefined) return pn._mwLook;
     const dict = _questStore()?.dict ?? null;
     if (!dict) return null;   // never before the faction table: asked again
-    return personLook(pn, staticNpcData(pn, { getFaction: (id) => dict.get(id) ?? null, raceOfCurrentRegion: () => REGION_RACES[_questRegionIndex()] + 1 }), dict.get(pn.factionID) ?? null);
+    return personLook(pn, staticNpcData(pn, { getFaction: (id) => dict.get(id) ?? null, raceOfCurrentRegion: () => REGION_RACES[_questRegionIndex()] + 1 }), dict.get(pn.factionID) ?? null, feet);
   };
   /** CARDS4b: THE REGULARS AT THE CARD TABLE (world/card/cardRegulars.js) - stood by the interior host each frame on layers of
    *  their own, seated through the pose's `st` as a seated peer is; what they say, over their heads. */
@@ -33322,10 +33322,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // read at the draw, so after the walk does as well as before it)
       if (p.npcs) for (const pn of p.npcs) {
         if (!pn.standBatch) continue;
-        const look = _peopleOn && ring <= 1 ? streetLook(pn) : null;
-        if (!look) { pn.standBatch.castOnly = false; continue; }
         const f = pn._mwFeet ??= [0, 0, 0];
         f[0] = pn.x + t[0]; f[1] = pn.y + t[1]; f[2] = pn.z + t[2];
+        const look = _peopleOn && ring <= 1 ? streetLook(pn, f) : null;
+        if (!look) { pn.standBatch.castOnly = false; continue; }
         streetPeople.offer(personActor(pn, look, f, mwv.eye, dt), pn.standBatch);
         npcMarks.consider(pn, streetMarkCtx);   // NPC-MARKS
       }
@@ -33338,10 +33338,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           standingHorses.offer(sf, sf.feet, sf.yaw, sf.look, sf.batch, sf.seed);
           continue;
         }
-        const look = _peopleOn ? figureLook(sf, yardFigureCtx) : null;
-        if (!look) { sf.batch.castOnly = false; continue; }
         const f = sf._mwFeet ??= [0, 0, 0];
         f[0] = sf.x + t[0]; f[1] = sf.y + t[1]; f[2] = sf.z + t[2];
+        const look = _peopleOn ? figureLook(sf, yardFigureCtx, f) : null;
+        if (!look) { sf.batch.castOnly = false; continue; }
         streetPeople.offer(personActor(sf, look, f, mwv.eye, dt), sf.batch);
       }
       else if (p.standFlats) for (const sf of p.standFlats) if (sf.kind === 'person') sf.batch.castOnly = false;
