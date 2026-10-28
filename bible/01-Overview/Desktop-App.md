@@ -1196,7 +1196,7 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
   `vulkan`. Settings > Graphics > Display draws it after VSync, in the app on Windows only, with the restart tier's dot
   and words (`enhancedMenu.js` graphicsBackendRow). A browser chooses its own backend.
 - **The switches.** `lib/graphicsBackend.cjs` backendLaunch reads the pref before the app is ready (one file, through
-  `fileStorage.cjs` readPref, as FPS-VSYNC reads VSync) and answers `use-gl=angle`, `use-angle=vulkan` and `disable-gpu-sandbox` (see "The GPU sandbox" below). `main.cjs`
+  `fileStorage.cjs` readPref, as FPS-VSYNC reads VSync) and answers `use-gl=angle`, `use-angle=vulkan` and `disable-gpu-sandbox` (see "The GPU sandbox" below), and skips FPS-VSYNC's switches ("VSync stays on"). `main.cjs`
   appends them beside FPS-VSYNC's. A failure on record in `config.json` (`graphicsBackendFailure`) holds the launch on
   the default. The module reads `config.json` itself: `main.cjs` defines CONFIG_FILE after the switches are appended.
 - **The guard.** watchBackend, on a launch that took the switches. Each of these four checks fails the launch:
@@ -1307,6 +1307,22 @@ Video settings; 2560x1440 fullscreen; CPU under 15% at each launch; interleaved;
 At the cap the two are the same. Uncapped, Vulkan is about 10% lower on the mean, and the ranges overlap: this machine's
 run-to-run spread is large on both. So Vulkan's case is the cold compile, and it costs a little in play. Superseded
 for 1440p: the sandboxed Vulkan's 64 to 66 fps.
+
+### VSync stays on with Vulkan (2026-10-28)
+
+With the GPU sandbox off, Vulkan's GPU compositing and either of FPS-VSYNC's switches (`disable-gpu-vsync`,
+`disable-frame-rate-limit`) froze the page for good: on a stream of resizes within 3 to 6 steps, and on leaving
+fullscreen. With VSync on there was no freeze in 400 steps or 20 toggles; the sandboxed Vulkan and D3D11 never froze
+(`dfo-verify/tools/perf/vulkan-half-2026-10-28/notes.md`).
+
+`graphicsBackend.cjs` holdsVSync: a launch that took Vulkan's switches keeps VSync on whatever the setting says, and
+`main.cjs` skips `frameRateSwitches` then (the page is told the wait is not lifted). A launch held on the default, or
+the relaunch after a failed Vulkan, took no switches and gets the VSync setting as before. The VSync row's help and the
+Vulkan row's note say so. Pins: `test/tooling/gpubackend.test.js`, `test/ui/settings/disc28e_vsync.test.js`.
+
+Re-checked on commit `2a85b3e372` (the `app/` dir unpackaged over its own `dist/`; Vulkan chosen, the setting VSync
+off): 400 of 400 drag steps and 20 of 20 fullscreen toggles answered, each ending "after frame ok". A control with the two
+switches added by hand froze at step 2 (`dfo-verify/tools/perf/vulkan-half-2026-10-28/branch-resize/`).
 
 The guard in the app (2026-10-27, head `0765a2564a`, the same machine and shell, one launch each, fresh userData; the
 notice answered with Enter; `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/webgl2-check/`):
