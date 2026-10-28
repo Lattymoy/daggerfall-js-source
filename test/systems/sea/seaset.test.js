@@ -225,11 +225,10 @@ test('SEA-SET THE CAPTAIN\'S DUE (6): the ship\'s door - my ship\'s balls\' harm
   setPlayerDoor(null);
 });
 
-test('SEA-SET THE SEAMS by source: the naval host\'s every ball of mine over her refit and the Due\'s guns, a ball\'s and a ram\'s hurt on my ship under the Due\'s hull; a legend ended rolls her band\'s Tidemail off her seed into the boat I sail; a ruin\'s pile rolls it last - the layout\'s, the emptied pile\'s and the room\'s base on its own dice (mutants: each seam)', () => {
+test('SEA-SET THE SEAMS by source: the naval host\'s every ball of mine over her refit and the Due\'s guns, a ball\'s hurt on my ship under the Due\'s hull; a legend ended rolls her band\'s Tidemail off her seed into the boat I sail; a ruin\'s pile rolls it last - the layout\'s, the emptied pile\'s and the room\'s base on its own dice (mutants: each seam)', () => {
   const n = src('src/scenes/naval/navalHost.js');
   assert.match(n, /const k = \(Number\.isFinite\(refit\) && refit > 0 \? refit : 1\) \* captainsDue\(\)\.guns;/);
   assert.match(n, /const hurt = dueOnHull\(shotDamage\(gun, zone, \{ braced: st\.guns\.braced/);
-  assert.match(n, /hull: Math\.round\(dealt \* captainsDue\(\)\.hull\), sail: 0, crew: ramMen\(dealt/);
   // PIN MOVED (AUDIT SEA VENTURES D1, D12): her piece out of the host (navalSeaSet.js), and only with her purse
   assert.match(n, /if \(legend\) legendTidemail\(legend, s\.seed, deps\.ether\?\.legendEnded\?\.\(legend\.id, act\), \{ give: \(items\) => deps\.board\?\.giveItems\?\.\(items, boatInPlay\(\) \?\? null, \{ force: true \}\), say: \(text, n\) => deps\.say\?\.\(text, n\) \}\);/);
   assert.match(src('src/scenes/naval/navalSeaSet.js'), /if \(!\(Number\(paid\) > 0\)\) return null;\n  const piece = rollElthericPiece\(mulberry32\(\(\(seed >>> 0\) \^ TIDEMAIL_SALT\) >>> 0\), elthericChance\('legend', legend\.band\)\);\n  if \(!piece\) return null;\n  give\(\[piece\]\);/);

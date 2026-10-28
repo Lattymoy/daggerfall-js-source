@@ -21,7 +21,7 @@ import { t } from '../../systems/textManager.js';
 import { KT_WORDS, ketchPhaseName } from '../../systems/ketch/ketchWords.js';
 
 /**
- * @typedef {{ id: number, k: number, x: number, y: number, z: number, yw: number, h: number, m: number, wake: number, up: number, mv: any, down: number, hurtAt: number }} KtBody
+ * @typedef {{ id: number, k: number, x: number, y: number, z: number, yw: number, h: number, m: number, wake: number, up: number, mv: any, down: number, hurtAt: number, sw?: number }} KtBody
  * @typedef {{ n: number, sg: number, sga: number, crew: Array<[string, string]>, bodies: KtBody[], blows: any[], wv: number,
  *   cl: any, br: {at: number, by: string}|null, ws: any, fell: {at: number, top: string[], n: number}|null, heardAt: number }} KtState
  */
@@ -44,7 +44,7 @@ export const KT_LINK_TEXT = Object.freeze({
     return [
       t('ketch.link.no.gone', 'The Ketch is gone.'),
       t('ketch.link.no.over', 'The fight on the bridge is over.'),
-      t('ketch.link.no.older', 'Your game is older than this Ketch. Leave it, then reload or update the app to fight.'),
+      t('ketch.link.no.older', 'Your game is out of date. Leave the Ketch and reload or update to fight.'),
     ];
   },
   get wave() {
@@ -53,32 +53,32 @@ export const KT_LINK_TEXT = Object.freeze({
       t('ketch.link.wave.1', 'The Watch sounds! Dwarven Spheres drop from the rigging.'),
       t('ketch.link.wave.2', 'Sentries march up from below with the second wave!'),
       // KETCH-LONGER (2026-10-25): five waves - the third and fourth more brass, the Watch-Captain with the fifth
-      t('ketch.link.wave.more', 'More brass climbs aboard - the Watch\'s wave {w}!', { w: 3 }),
-      t('ketch.link.wave.more', 'More brass climbs aboard - the Watch\'s wave {w}!', { w: 4 }),
+      t('ketch.link.wave.more', 'Wave {w} of the Watch climbs aboard!', { w: 3 }),
+      t('ketch.link.wave.more', 'Wave {w} of the Watch climbs aboard!', { w: 4 }),
       t('ketch.link.wave.3', 'The Watch-Captain climbs onto the deck!'),
     ];
   },
-  get wardens() { return t('ketch.link.wardens', 'Two Hammer Wardens stand guard over the landing. Step past the last hammers and they will wake.'); },
+  get wardens() { return t('ketch.link.wardens', 'Two Hammer Wardens guard the landing. They wake when you pass the last hammers.'); },
   get woke() { return t('ketch.link.woke', 'The Hammer Wardens wake!'); },
-  engine: (n) => t('ketch.link.engine', 'The Starved Engine needs {n} aether cells. Take them from the cradles aft and set them in its sockets.', { n }),
+  engine: (n) => t('ketch.link.engine', 'The engine needs {n} aether cells. Bring them from the cradles to its sockets.', { n }),
   banked: (who, k, n) => t('ketch.link.banked', '{who} sets a cell in the engine ({k} of {n}).', { who: someone(who), k, n }),
   dropped: (who, why) => (why === 'struck' ? t('ketch.link.dropped.struck', '{who} is struck and drops their aether cell.', { who: someone(who) })
     : why === 'fell' ? t('ketch.link.dropped.fell', '{who} falls and drops their aether cell.', { who: someone(who) })
-      : why === 'left' ? t('ketch.link.dropped.left', '{who} carries their aether cell off its deck, and it is lost.', { who: someone(who) })   // AUDIT KETCH L3-14: never "lets go"
+      : why === 'left' ? t('ketch.link.dropped.left', '{who} leaves the deck with their aether cell. It is lost.', { who: someone(who) })   // AUDIT KETCH L3-14: never "lets go"
         : t('ketch.link.dropped.let', '{who} lets go of their aether cell.', { who: someone(who) })),
   bridge: (by) => t('ketch.link.bridge', '{who} reaches the bridge. {open}', { who: someone(by), open: KT_WORDS.bridgeOpen }),
   phase: (n) => t('ketch.link.phase', '{phase}!', { phase: ketchPhaseName(n) }),
-  get discord() { return t('ketch.link.discord', 'The Warden puts the ship out of tune! Carry cells from the bridge\'s cradles to the four resonators.'); },
+  get discord() { return t('ketch.link.discord', 'The Warden throws the ship out of tune! Carry cells to the four resonators.'); },
   retuned: (left) => (left > 0 ? t('ketch.link.retuned', 'A resonator rings true. {left, plural, one {# is} other {# are}} still false.', { left })
     : t('ketch.link.retunedAll', 'The last resonator rings true! The Warden\'s ward breaks!')),
-  get lastNote() { return t('ketch.link.lastNote', 'The Last Note! The Warden sings the keel-song. Break its tuning-forks before the song lands.'); },
+  get lastNote() { return t('ketch.link.lastNote', 'The Last Note! Break the tuning-forks before the song ends.'); },
   get song() { return t('ketch.link.song', 'The Warden sings the Keel-Song! Break the tuning-forks!'); },
   forkBroken: (who, left) => (left > 0 ? t('ketch.link.forkBroken', '{who} breaks a fork. {left, plural, one {# stands} other {# stand}}.', { who: someone(who), left })
     : t('ketch.link.forkBrokenAll', '{who} breaks the last fork!', { who: someone(who) })),
   get stunned() { return t('ketch.link.stunned', 'The song breaks! The Warden reels!'); },
   get sections() { return t('ketch.link.sections', 'The bridge\'s outer ring shudders - get onto the core!'); },
-  get west() { return t('ketch.link.west', 'The Ketch turns west. Her keel-song drowns everything.'); },
-  get lost() { return t('ketch.link.lost', 'The bridge falls quiet. The Warden returns to its helm.'); },
+  get west() { return t('ketch.link.west', 'The Ketch turns west!'); },
+  get lost() { return t('ketch.link.lost', 'The bridge is empty. The Warden returns to the helm.'); },
   fell: (top) => (top?.length ? t('ketch.link.fell', 'The Tonal Warden falls - {top} struck the hardest. {open}', { top: top.join(', '), open: KT_WORDS.cabinOpen })
     : t('ketch.link.fellNone', 'The Tonal Warden falls. {open}', { open: KT_WORDS.cabinOpen })),
 });
@@ -126,7 +126,9 @@ export function foldKetch(s, w, now) {
       return { ...s, blows: [...live(s.blows), b], bodies: s.bodies.map((B) => (B.id === b.o ? { ...B, mv: null, atkAt: b.at, atkWu: b.wu } : B)), heardAt: now };
     }
     case 'hp': { const H = new Map(w.h); return { ...s, bodies: s.bodies.map((B) => (H.has(B.id) ? { ...B, h: H.get(B.id) } : B)), heardAt: now }; }
-    case 'dn': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, h: 0, down: w.at, mv: null } : B)), heardAt: now };
+    // AUDIT KETCH II L3-5: its walk stepped to the fall's moment (its start was where it lay - up to 23 m back); L3-3: one the
+    // ship took off (`sw`) kept so
+    case 'dn': return { ...s, bodies: s.bodies.map((B) => { if (B.id !== w.o) return B; const p = ktBodyAt(B, w.at); return { ...B, x: p[0], z: p[1], h: 0, down: w.at, mv: null, sw: w.sw === 1 ? 1 : 0 }; }), heardAt: now };
     case 'wk': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, wake: 1 } : B)), heardAt: now };
     case 'sg': return { ...s, sg: w.sg, sga: w.at, br: w.sg === KT_STAGE.bridge ? { at: w.at, by: w.by ?? '' } : s.br, heardAt: now };
     case 'wave': return { ...s, wv: w.w, heardAt: now };
@@ -160,14 +162,21 @@ export function createKetchLink({ now, say = () => {}, me = () => null }) {
   let inAt = -Infinity, mine = 0, refused = null;
   /** @type {any[]} */
   let owed = [];
+  // RPT1026-EVENTS KETCH-OWED (a private report: in the Tonal Warden's resonator phase a crew took more than a whole health
+  // bar at once, spending every death-saving piece they wore): THE BLOWS PAID, by fight and number. A whole bridge's blow stays
+  // in the fight's list a breath past its landing (ktBlowDone, 1.5 s), and every word folded in that breath owed it again -
+  // the room's walks and health come several a second - so the page landed one Discord (a quarter of everyone's health)
+  // once for each word heard after it, and a crew of eight took it six or seven times over. Paid is paid for good.
+  const paidKeys = new Set();
+  const paidKey = (fi, i) => `${fi}:${i}`;
   const said = new Set();
   /** the songs whose forks were all broken before they landed (by their number in their fight) - never owed */
   const broken = new Set();
   const once = (key, text) => { if (said.has(key)) return; said.add(key); if (text) say(text); };
   function owe(was) {
     const ws = state.ws;
-    if (!ws || (was.ws && ws.fi !== was.ws.fi)) owed = owed.filter((b) => ws && b.fi === ws.fi);
-    if (ws && mine === ws.fi) for (const b of ws.bl ?? []) if (ktWholeBridge(b) && !owed.some((o) => o.i === b.i && o.fi === ws.fi)) owed.push({ ...b, fi: ws.fi });
+    if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); paidKeys.clear(); }
+    if (ws && mine === ws.fi) for (const b of ws.bl ?? []) if (ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && !owed.some((o) => o.i === b.i && o.fi === ws.fi)) owed.push({ ...b, fi: ws.fi });   // RPT1026-EVENTS KETCH-OWED: never one already paid
     if (owed.length > KT_OWED_MAX) owed.splice(0, owed.length - KT_OWED_MAX);
     if (ws?.fell || ws?.lost) owed = owed.filter((b) => b.at <= (ws.fell?.at ?? ws.lost ?? Infinity));
   }
@@ -222,13 +231,17 @@ export function createKetchLink({ now, say = () => {}, me = () => null }) {
     /** Whether song `i` of the fight in hand was broken before it landed (its forks all down - the room's `stun`). */
     songBroken: (i) => broken.has(`${state.ws?.fi ?? 0}:${i}`),
     /** Blow `i` judged - owed no more. */
-    paid(i) { owed = owed.filter((o) => o.i !== i); },
+    paid(i) {
+      for (const o of owed) if (o.i === i) paidKeys.add(paidKey(o.fi, i));   // RPT1026-EVENTS KETCH-OWED: and remembered - the newest KT_OWED_MAX x 2
+      while (paidKeys.size > 2 * KT_OWED_MAX) paidKeys.delete(paidKeys.values().next().value);
+      owed = owed.filter((o) => o.i !== i);
+    },
     /** Who carries a cell (accounts). */
     carriers: () => (state.cl?.ca ?? []).map((c) => c[0]),
     /** Whether I carry a cell. */
     carrying: () => { const m = me(); return !!m && (state.cl?.ca ?? []).some((c) => c[0] === m); },
     /** Off the ship: its state forgotten, my place, the refusals and the words said with it. */
-    leave() { state = KT_EMPTY; inAt = -Infinity; mine = 0; refused = null; owed = []; said.clear(); broken.clear(); },
+    leave() { state = KT_EMPTY; inAt = -Infinity; mine = 0; refused = null; owed = []; paidKeys.clear(); said.clear(); broken.clear(); },
   };
 }
 /** A body's kind's record by its wire number. */

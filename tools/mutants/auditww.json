@@ -1,0 +1,191 @@
+[
+  {
+    "name": "AUDITWW-F1-the-lane-test",
+    "file": "src/net/wire.js",
+    "old": "&& id >>> 28 === WDUN_WORLD_LANE;",
+    "new": "&& id >>> 28 >= 0;",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F1-the-discovery-guard",
+    "file": "src/systems/discovery.js",
+    "old": "  if (isHallMapId(mapId)) return false;\n  const key = discoveryKeyOf(mapId);",
+    "new": "  const key = discoveryKeyOf(mapId);",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F1-the-found-guard",
+    "file": "src/systems/discovery.js",
+    "old": "return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId));",
+    "new": "return _locations.has(discoveryKeyOf(mapId));",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F1-the-docks-guard",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "const pixelIdOf = (mapId) => (isHallMapId(Number(mapId)) ? -1 : (mapId | 0) & PIXEL_MASK);",
+    "new": "const pixelIdOf = (mapId) => (mapId | 0) & PIXEL_MASK;",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F1-the-carriage-guard",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "!Number.isFinite(mapId) || isHallMapId(mapId)) return false;",
+    "new": "!Number.isFinite(mapId)) return false;",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F2-every-lane-open",
+    "file": "src/net/wire.js",
+    "old": "export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);",
+    "new": "export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F2-the-admission-unbounded",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;",
+    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F2-the-hold-unbounded",
+    "file": "src/net/gate/gateLaw.js",
+    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
+    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F2-the-client-lanes-unbounded",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "[BAY_THEATRE, ...scans.theatres().filter(open)]",
+    "new": "[BAY_THEATRE, ...scans.theatres()]",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F2-the-words-unbounded",
+    "file": "src/net/wire.js",
+    "old": "export const gatePixelOk = (d, px, py) => gateNumberOk(d) && gateLanePixelOk(gateLaneWire(d), px, py);",
+    "new": "export const gatePixelOk = (d, px, py) => Number.isSafeInteger(d) && d >= 0 && gateLanePixelOk(gateLaneWire(d), px, py);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F3-the-spent-word-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  if (m.k === 'spent') return gateNumberOk(m.d) ? { k: 'spent', d: m.d } : null;",
+    "new": "  if (m.k === 'spent') return Number.isSafeInteger(m.d) && m.d >= 0 ? { k: 'spent', d: m.d } : null;",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F6-a-lane-on-the-Bay",
+    "file": "src/net/wire.js",
+    "old": "  return lane === 0 ? bay : !bay && worldPixelOk(px) && worldPixelOk(py);",
+    "new": "  return lane === 0 ? bay : worldPixelOk(px) && worldPixelOk(py);",
+    "tests": [
+      "test/world/worldWide/ww2_gates.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F4-the-hosts-woods",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "  const heightAt = (x, y) => land.getHeightMapValue(x, y);",
+    "new": "  const heightAt = (x, y) => woods.getHeightMapValue(x, y);",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F4-the-giants-unwired",
+    "file": "src/scenes/world.js",
+    "old": "  const _giantHeight = zoneHalls.heightAt;",
+    "new": "  const _giantHeight = (x, y) => woods.getHeightMapValue(x, y);",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F5-the-Bays-lines-id-less",
+    "file": "src/systems/eventTimers.js",
+    "old": "export const gateEventId = (n) => (Number.isSafeInteger(n) && n >= 0 ? `gate:${n}` : null);",
+    "new": "export const gateEventId = (n) => (Number.isSafeInteger(n) && n >= 100000000 ? `gate:${n}` : null);",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F5-the-falls-line",
+    "file": "src/scenes/world.js",
+    "old": "boss: gateBossOf(day).name }), gateLineId(day)); },",
+    "new": "boss: gateBossOf(day).name })); },",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F5-the-rites-line",
+    "file": "src/scenes/riteHost.js",
+    "old": "say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n }), C.day);",
+    "new": "say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n }));",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F7-the-lanes-list-kept",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "    if (n !== net || g !== gen) {",
+    "new": "    if (net === null || g !== gen) {",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F7-the-generation-kept",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "    if (n !== net || g !== gen) {",
+    "new": "    if (n !== net) {",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F7-the-hideouts-generation",
+    "file": "src/scenes/world.js",
+    "old": "    generation: () => `${livingWays.generation}|${livingIndex.generation()}`,",
+    "new": "    generation: () => livingWays.generation,",
+    "tests": [
+      "test/world/worldWide/auditww.test.js"
+    ]
+  },
+  {
+    "name": "AUDITWW-F9-the-band-over-the-border",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "!inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;",
+    "new": "inBay(px, py) || !inWorldGrid(px, py)) continue;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  }
+]

@@ -173,11 +173,12 @@
   {
     "name": "KTB-the-hold-left-standing",
     "file": "src/net/ketch/ketchBrain.js",
-    "old": "      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }",
-    "new": "      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 1e12) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }",
+    "old": "      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', sw: 1, at: now }); }",
+    "new": "      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 1e12) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', sw: 1, at: now }); }",
     "tests": [
       "test/net/ketch/ketch_brain.test.js"
-    ]
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content): the sweep's `dn` says `sw`."
   },
   {
     "name": "KTB-the-engine-fed-one-short",

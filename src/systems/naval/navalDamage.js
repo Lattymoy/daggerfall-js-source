@@ -123,7 +123,7 @@ export function shotDamage(gun, zone, { braced = false, roll = 0.5, tough = SHIP
  *  gun's own. What a blow says on the wire: whoever stands the ship she strikes reckons the toughness (`ballMen`), so a
  *  peer's ball is the same blow on every build. */
 export const shotMen = (gun, zone) => (zone === 'rig' ? (gun.crew > 0 ? 1 : 0) : gun.crew);
-/** TOUGHER-SHIPS: the whole men a blow of `men` (a ball's `shotMen`, a ram's men) takes - `men` over her crew's
+/** TOUGHER-SHIPS: the whole men a blow of `men` (a ball's `shotMen`, a ram's - navalRam.js ramMen) takes - `men` over her crew's
  *  toughness `tough` on the average, the `roll` (0..1) deciding the odd man (a hardier crew, the same weight of metal).
  *  CREW-HOLD: SHIP_TOUGHNESS a captain's crew, PLAYER_CREW_TOUGHNESS a player's (`playerMen`). */
 export const ballMen = (men, roll, tough = SHIP_TOUGHNESS) => (men > 0 ? Math.floor(men / tough + clamp(roll, 0, 0.999999)) : 0);

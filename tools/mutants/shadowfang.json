@@ -56,12 +56,12 @@
   {
     "name": "SHADOWFANG-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
-    "new": "hierophant: 'hierophant', shadowfang: 'apostle', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "old": "hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "new": "hierophant: 'hierophant', shadowfang: 'apostle', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
-    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
+    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "SHADOWFANG-vocabulary-without-the-glyph",
@@ -139,20 +139,22 @@
   {
     "name": "SHADOWFANG-edge-a-fixed-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "    path.setAttribute('stroke', 'currentColor');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_W));",
-    "new": "    path.setAttribute('stroke', '#d3193c');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_W));",
+    "old": "    path.setAttribute('stroke', 'currentColor');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_OF[",
+    "new": "    path.setAttribute('stroke', '#d3193c');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_OF[",
     "tests": [
       "test/ui/shadowfang.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SHADOWFANG-card-word-unwrapped",
     "file": "src/ui/enhanced/enhancedAccount.js",
-    "old": "        b.append(el('span', 'acttitleword', TITLE_TEXT[key] ?? key));",
-    "new": "        b.textContent = TITLE_TEXT[key] ?? key;",
+    "old": "        b.append(word);\n",
+    "new": "        b.textContent = TITLE_TEXT[key] ?? key;\n",
     "tests": [
       "test/ui/shadowfang.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SHADOWFANG-classic-one-tint",

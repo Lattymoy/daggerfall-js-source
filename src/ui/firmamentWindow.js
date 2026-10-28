@@ -30,7 +30,8 @@ import {
   buildCode, treeOfCode, treeFault,
 } from '../net/firmament/firmamentLaw.js';
 import { firmamentBook } from '../net/firmament/firmamentBook.js';
-import { firmamentStatus, onFirmamentChange } from '../systems/firmamentLive.js';   // FIRM-STATUS: whether the stars act now, said on the side panel
+import { firmamentStatus, onFirmamentChange, firmamentMentorScale } from '../systems/firmamentLive.js';
+import { firmamentMentoringText } from '../systems/mentorText.js';   // MENTOR2: the combat stars' share while mentoring   // FIRM-STATUS: whether the stars act now, said on the side panel
 import { sigilDueling } from '../systems/sigil/sigil.js';
 import { accountRefusalText } from '../net/accountClient.js';   // AUDIT UICALM-FIRM1 L4 L4: a refusal the window has no words for, in the account's
 import { FRAME_TONES } from './enhanced/enhancedFrame.js';
@@ -41,6 +42,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedSty
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { audio } from '../systems/audio.js';   // the UI's own click, for a press on the sky (its buttons click through ui/uiClickSound.js)
 import { SOUND } from '../systems/soundClips.js';
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const FIRM_STYLE_ID = 'firmament-window-css';
 
@@ -389,7 +391,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   let preview_ = /** @type {Set<string>} */ (new Set());   // the way a hover would allocate
   let refundPreview = /** @type {Set<string>} */ (new Set());
   let matches = /** @type {Set<string>} */ (new Set());
-  /** @type {{ key: string, t0: number }[]} */
+  /** @type {{ key: string, t0: number|null }[]} - t0 is the FRAME clock's, stamped by the first frame that draws it */
   let bursts = [];
   let dead = false;
   let dirty = true;
@@ -468,8 +470,9 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     }
     const p = purse();
     // the caps (firmamentLaw.js STAT_DEFS, BLOW_CAP, BLOW_TOTAL_CAP) and where the sky sleeps (firmamentPowers.js firmamentAwake: offline,
-    // a duel or an arena bout, mentoring; never a blow or a spell at a player - a siege and the Wrothgarian zone included)
-    parts.push(el('p', 'fmt-note', `${t('firmament.side.caps', 'Limits for all stars together: +30% weapon damage (up to +50% against unaware foes, or while you are below half Health), +30% spell damage, 15% less damage taken.')} ${t('firmament.side.where', 'Stars work only online, and not while you mentor. Combat stars do nothing in duels or Arena fights, and never add damage against other players.')}`));
+    // a duel or an arena bout; never a blow or a spell at a player - a siege and the Wrothgarian zone included). MENTOR2:
+    // mentoring scales the combat stars, it no longer stops them
+    parts.push(el('p', 'fmt-note', `${t('firmament.side.caps', 'Limits for all stars together: +30% weapon damage (up to +50% against unaware foes, or while you are below half Health), +30% spell damage, 15% less damage taken.')} ${t('firmament.side.where', 'Stars work only online. While you mentor, your combat stars work at a lower share. Combat stars do nothing in duels or Arena fights, and never add damage against other players.')}`));
     parts.push(el('p', 'fmt-note', `${p.renown < p.refund.freeBelow
       ? t('firmament.side.refundFree', 'Removing stars is free until Renown {renown}.', { renown: p.refund.freeBelow })
       : t('firmament.side.refundCost', 'Removing an accepted star costs {silver} silver.', { silver: p.refund.perStar })} ${t('firmament.side.respec', 'A respec removes all your stars and your birthsign for {gold, number} gold.', GOLD)}`));
@@ -560,7 +563,12 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     pending = { start: pending.start, keys: pending.keys.filter((k) => !takes.has(k)) };
     refresh();
   }
-  function burst(key) { if (!still) bursts.push({ key, t0: performance.now() }); }
+  // RPT1026-CLIENT (a private report: an IndexSizeError, an arc's radius below nought, on every Accept): a
+  // burst was stamped with performance.now() and drawn by the requestAnimationFrame clock, and every callback of one frame
+  // is handed that frame's START - so a burst stamped later in the same frame (Accept's answer lands in a microtask after
+  // the world's own frame callback, which can run for half a second) had t - t0 < 0, and the ring's radius went negative.
+  // A burst now starts on the first frame that draws it: one clock, so its age is never below nought.
+  function burst(key) { if (!still) bursts.push({ key, t0: null }); }
 
   // ── the confirm ──
   let confirming = /** @type {'accept'|'respec'|'share'} */ ('accept');
@@ -708,7 +716,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     if (status === 'seat') return t('firmament.status.seat', 'Your stars are off: another tab or device is playing online, so this one is offline.');
     if (status === 'unread') return t('firmament.status.unread', 'Your stars are off until they load from the server.');
     if (status === 'no-sign') return t('firmament.status.noSign', 'Your stars are off until you choose a birthsign and press {accept}.', { accept: t('firmament.accept', 'Accept') });
-    if (status === 'mentoring') return t('firmament.status.mentoring', 'Your stars are off while you mentor a lower-level party. They return when you leave the party.');
+    if (status === 'mentoring') return firmamentMentoringText(firmamentMentorScale());   // MENTOR2: the combat stars at a share, the life stars whole
     if (status === 'duel') return t('firmament.status.duel', 'Your combat stars are off during this duel or Arena fight. Your crafting and trade stars still work.');
     return t('firmament.status.active', 'Your accepted stars are active.');
   }
@@ -800,7 +808,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   let longPress = 0;
   const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture?.(e.pointerId);
+    capturePointer(canvas, e.pointerId);
     const p = local(e);
     pointers.set(e.pointerId, p);
     if (pointers.size === 2) {
@@ -1148,11 +1156,12 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   function sparks(t) {
     if (!bursts.length) return;
     const life = 900;
-    bursts = bursts.filter((b) => t - b.t0 < life);
+    for (const b of bursts) b.t0 ??= t;
+    bursts = bursts.filter((b) => t - /** @type {number} */ (b.t0) < life);
     for (const b of bursts) {
       const n = FIRM_NODES.get(b.key);
       if (!n) continue;
-      const u = (t - b.t0) / life;
+      const u = (t - /** @type {number} */ (b.t0)) / life;
       ctx.beginPath();
       ctx.arc(n.x, n.y, NODE_R[n.kind] + u * 60, 0, Math.PI * 2);
       ctx.strokeStyle = n.ring === 'life' ? P.edgeLifeLit : P.edgeLit;
@@ -1192,13 +1201,15 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     if (dead) return;
     const was = committed;
     committed = cloneTree(book.current());
-    // a pending sky over a tree that moved under it starts again from the new one
-    if (treeDiff(was, committed).added.length || treeDiff(was, committed).removed.length) pending = cloneTree(committed);
+    // a pending sky over a tree that moved under it starts again from the new one - FIRM-SIGNPANEL: a birthsign alone
+    // is a move (UICALM-FIRM1 L4 M5's rule), or a sign accepted elsewhere left the panel saying none was chosen
+    const moved = treeDiff(was, committed);
+    if (moved.added.length || moved.removed.length || moved.startChanged) pending = cloneTree(committed);
     refresh();
     const fail = readFailText(book.state);
     if (fail) say(fail, true, true);
   }) : null;
-  // FIRM-STATUS: the side panel's status line moves when the page goes offline or online, or mentoring starts or ends
+  // FIRM-STATUS: the side panel's status line moves when the page goes offline or online, or the mentor's share moves
   const offSky = preview ? null : onFirmamentChange(() => {
     if (!dead) refresh();
   });

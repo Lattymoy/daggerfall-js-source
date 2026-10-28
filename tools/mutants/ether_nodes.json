@@ -2,12 +2,12 @@
   {
     "name": "EN-bay-alone",
     "file": "src/net/nodeLaw.js",
-    "old": "  && onBayOrEther(x, y);",
-    "new": "  && x >= 0 && y >= 0 && x < 1000 && y < 500;",
+    "old": "&& worldPixelOk(x) && worldPixelOk(y);",
+    "new": "&& x >= 0 && y >= 0 && x < 1000 && y < 500;",
     "tests": [
       "test/net/ether_nodes.test.js"
     ],
-    "note": "RE-AIMED (ETHER-OW): the node law's ground the Bay's map alone again - its pixelOk reads the one home now (world/ethericSea.js onBayOrEther)."
+    "note": "RE-AIMED (ETHER-OW): the node law's ground the Bay's map alone again - its pixelOk reads the one home now (world/ethericSea.js onBayOrEther). RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the node law's ground the Bay's map alone - its pixelOk the world's grid now (net/wire.js worldPixelOk)."
   },
   {
     "name": "EN-law-margin",

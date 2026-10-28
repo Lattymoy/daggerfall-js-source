@@ -34,6 +34,7 @@ import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
+import { t } from '../textManager.js';   // FISH-BOATS: the fishing boats' class names in the player's language
 
 /** Come Sail Away's hull indices (systems/comeSailAway/comeSailAwayBoat.js HULL_NAMES). */
 export const HULL = Object.freeze({ Rowboat: 0, LargeBoat: 1, SmallShip: 2, LargeGalley: 3, Carrack: 4 });
@@ -68,10 +69,11 @@ export const SIDE_DIR = Object.freeze({ starboard: Object.freeze([1, 0, 0]), por
  * Each hull's fighting build, measured off its prefab. `broadside` lists the STARBOARD muzzles (the port side is
  * their mirror); `bow` and `stern` their own. `hullHp`, `sailHp` and `crew` are what the PLAYER's boat of that hull
  * stands with; a class scales them. `deck` is the height boarders stand on, `beam` the half beam at it, `ram` a bow
- * that rams (the galley's). AUDIT NAV1 (2026-09-29): `bowZ`, `aftZ` and `halfWidth` are the hull's own MeshCollider
- * bounds in the root's frame (its stem, its stern and its widest half beam - measured off the vendored prefabs
- * through the real pool): what a captain steers clear of, the length its turning circle is scaled by, and the stem a
- * ram strikes with; `keel` and `top` the same box's floor and roof - what a gun must lay between to strike her.
+ * built to ram (the galley's - RAM-RETURN, systems/naval/navalRam.js GALLEY_SHARE). AUDIT NAV1 (2026-09-29): `bowZ`,
+ * `aftZ` and `halfWidth` are the hull's own MeshCollider bounds in the root's frame (its stem, its stern and its widest
+ * half beam - measured off the vendored prefabs through the real pool): what a captain steers clear of, the length its
+ * turning circle is scaled by, the stem a ram strikes with, and - BOARD-MAGNET - where two hulls lie side by side
+ * (navalBoarding.js berthHull); `keel` and `top` the same box's floor and roof - what a gun must lay between to strike her.
  * `rig` is her canvas and spars as boxes (`[min, max]` in the root's frame, as she stands at rest): the mod's hulls'
  * over that roof, their masts and yards measured off the same prefabs (their rigid meshes - a skinned sail's
  * bind-pose box is not where it hangs), the canvas hung from each yard - the galley's one square sail across her at the
@@ -105,8 +107,8 @@ export const SHIP_TOUGHNESS = 1.6;
  * her. At twice it every ship of the line's fire leaves her crew standing when her hull is gone - a galleon's men in
  * 292 s of a brigantine's fire against 176 for her hull, a Carrack's 365 against 234; a swivel boat's balls still thin
  * them first (a galleon's in 134 s), its trade, at half the pace. A player's own ship
- * alone: every ball, fire, ram and serpent's blow on her (navalHost.js landHit, the galley's ram, serpentStrike; her
- * fire's `wound`). The captains' crews keep SHIP_TOUGHNESS, so a captain's ship strikes by her men as she did.
+ * alone: every ball, fire, ram and serpent's blow on her (navalHost.js landHit, a galley's ram - scenes/naval/navalRams.js,
+ * serpentStrike; her fire's `wound`). The captains' crews keep SHIP_TOUGHNESS, so a captain's ship strikes by her men as she did.
  */
 export const PLAYER_CREW_TOUGHNESS = 2 * SHIP_TOUGHNESS;
 /** A hull's points over its first build's, toughened. */
@@ -294,6 +296,41 @@ export const buildsStamp = () => stamp;
 /** A hull's build, or the rowboat's for anything unknown - a hull the port's ship stands in for the mod's own build's
  *  while its model does not stand (AUDIT GN-G4). */
 export const hullBuild = (hull) => (MOD_BUILDS[hull] && !standing[hull] ? MOD_BUILDS[hull] : HULL_BUILDS[hull] ?? HULL_BUILDS[0]);
+/** A build's middle along her keel (m, the root's frame): halfway from her stern to her stem. BOARD-MAGNET: one law for a
+ *  hull on the flat, the water between two, and the berth's middle to middle (navalBoarding.js berthHull). */
+export const hullMid = (b) => (b.bowZ + b.aftZ) / 2;
+/** A hull on the flat, off its build: its centre, forward and right, half length and half width. */
+export function flatHull(pos, yaw, hull) {
+  const b = hullBuild(hull);
+  const f = [Math.sin(yaw), Math.cos(yaw)];
+  const mid = hullMid(b);
+  return { c: [pos[0] + f[0] * mid, pos[2] + f[1] * mid], f, r: [f[1], -f[0]], hl: (b.bowZ - b.aftZ) / 2, hw: b.halfWidth };
+}
+/** The least push that takes hull A out of hull B (separating axes on the flat), or null when they stand apart. */
+export function hullOverlap(A, B) {
+  const d = [B.c[0] - A.c[0], B.c[1] - A.c[1]];
+  let best = null, least = Infinity;
+  for (const u of [A.f, A.r, B.f, B.r]) {
+    const ra = A.hl * Math.abs(A.f[0] * u[0] + A.f[1] * u[1]) + A.hw * Math.abs(A.r[0] * u[0] + A.r[1] * u[1]);
+    const rb = B.hl * Math.abs(B.f[0] * u[0] + B.f[1] * u[1]) + B.hw * Math.abs(B.r[0] * u[0] + B.r[1] * u[1]);
+    const dd = d[0] * u[0] + d[1] * u[1];
+    const o = ra + rb - Math.abs(dd);
+    if (o <= 0) return null;
+    if (o < least) { least = o; best = [-Math.sign(dd || 1) * u[0] * o, -Math.sign(dd || 1) * u[1] * o]; }
+  }
+  return best;
+}
+/** The open water between two flat hulls (m): the widest gap along any of their four axes - 0 or less when they touch. */
+export function flatGap(A, B) {
+  const d = [B.c[0] - A.c[0], B.c[1] - A.c[1]];
+  let gap = -Infinity;
+  for (const u of [A.f, A.r, B.f, B.r]) {
+    const ra = A.hl * Math.abs(A.f[0] * u[0] + A.f[1] * u[1]) + A.hw * Math.abs(A.r[0] * u[0] + A.r[1] * u[1]);
+    const rb = B.hl * Math.abs(B.f[0] * u[0] + B.f[1] * u[1]) + B.hw * Math.abs(B.r[0] * u[0] + B.r[1] * u[1]);
+    gap = Math.max(gap, Math.abs(d[0] * u[0] + d[1] * u[1]) - ra - rb);
+  }
+  return gap;
+}
 /** TOUGHER-SHIPS: the timbers and canvas a hull stood with before it was toughened - what a save from before measured
  *  her hurts against. */
 export function firstBuildOf(hull) {
@@ -358,6 +395,10 @@ export const FACTION_IDS = Object.freeze(Object.keys(NAVAL_FACTIONS));
 /** ETHER-LEGENDS: a legend's class's `minLevel` - past any captain's, so no draw by level (classFor, the encounters, the
  *  board's bounties, the raiders) ever finds one. */
 export const LEGEND_LEVEL = 999;
+/** FISH-BOATS: a fishing boat's `minLevel`, a legend's for the same reason - no draw by level ever finds one. */
+export const FISHER_LEVEL = LEGEND_LEVEL;
+/** FISH-BOATS: a skiff's way under her two oars (m/s) - no canvas, so the wind gives her none (navalAI.js helm). */
+export const FISH_OAR_MPS = 1.8;
 /**
  * The classes. `hullHp`/`sailHp`/`crew` scale the hull's own build; `speed` is the best way it makes with the wind
  * on the quarter at the rated wind (m/s; navalAI.js WIND_RATED - AUDIT NAV1 set it off the player's own hulls at
@@ -389,15 +430,20 @@ export const SHIP_CLASSES = Object.freeze([
   cls('legendLantern', 'pirate', HULL.SmallShip, 'Legendary Brigantine', { hullHp: 2, sailHp: 1.5, crew: 40, speed: 8.8, turn: 11, skill: 0.9, range: 100, cargo: 4, minLevel: LEGEND_LEVEL, weight: 0, boarders: 26, legend: true }),
   cls('legendRegent', 'pirate', HULL.Carrack, 'Legendary Carrack', { hullHp: 3.2, sailHp: 1.6, crew: 60, speed: 6.8, turn: 6, skill: 0.95, range: 125, cargo: 4, minLevel: LEGEND_LEVEL, weight: 0, boarders: 36, legend: true }),
   cls('legendStarless', 'pirate', HULL.Carrack, 'Legendary Carrack', { hullHp: 3.6, sailHp: 1.8, crew: 70, speed: 7.4, turn: 7, skill: 0.92, range: 120, cargo: 4, minLevel: LEGEND_LEVEL, weight: 0, boarders: 40, legend: true }),
+  // FISH-BOATS (bible/03-World/Naval-Combat.md, FISH-BOATS): a port's fishing boats, last so the wire's class rows stand.
+  // Lawful merchantmen to the law and the captains; never drawn by level or weight - the port's fleet launches them by id
+  cls('fishingSkiff', 'merchant', HULL.Rowboat, () => t('naval.class.fishingSkiff', 'Fishing Skiff'), { hullHp: 0.8, sailHp: 1, crew: 2, speed: FISH_OAR_MPS, turn: 24, skill: 0.1, range: 50, cargo: 1, minLevel: FISHER_LEVEL, weight: 0, boarders: 2, fisher: true }),
+  cls('fishingSmack', 'merchant', HULL.LargeBoat, () => t('naval.class.fishingSmack', 'Fishing Smack'), { hullHp: 0.8, sailHp: 0.9, crew: 4, speed: 3.6, turn: 14, skill: 0.15, range: 50, cargo: 1, minLevel: FISHER_LEVEL, weight: 0, boarders: 3, fisher: true }),
 ]);
 
 function cls(id, faction, hull, title, o) {
   const b = hullBuild(hull);
   return Object.freeze({
-    id, faction, hull, title,
+    id, faction, hull,
+    get title() { return typeof title === 'function' ? title() : title; },   // FISH-BOATS: a fishing boat's in the player's language
     hullHp: Math.round(b.hullHp * o.hullHp), sailHp: Math.round(b.sailHp * o.sailHp), crew: o.crew,
     speed: o.speed, turn: o.turn, skill: o.skill, range: o.range, cargo: o.cargo, minLevel: o.minLevel,
-    weight: o.weight, boarders: o.boarders, flagship: !!o.flagship, tactic: o.tactic ?? 'broadside', legend: !!o.legend,
+    weight: o.weight, boarders: o.boarders, flagship: !!o.flagship, tactic: o.tactic ?? 'broadside', legend: !!o.legend, fisher: !!o.fisher,
   });
 }
 export const classById = (id) => SHIP_CLASSES.find((c) => c.id === id) ?? null;
@@ -501,6 +547,27 @@ export const NAME_WORDS = Object.freeze({
   scourges: Object.freeze(['Scourge', 'Terror', 'Bane', 'Plague', 'Curse', 'Dread', 'Shame', 'Ruin', 'Doom', 'Nightmare', 'Butcher', 'Wolf', 'Reaper',
     'Widowmaker']),
 });
+/** FISH-BOATS: a fishing boat's own words - what she takes and what she takes it with. */
+export const FISHER_WORDS = Object.freeze({
+  catches: Object.freeze(['Herring', 'Mackerel', 'Cod', 'Haddock', 'Pilchard', 'Sprat', 'Eel', 'Crab', 'Lobster', 'Oyster', 'Mussel', 'Skate',
+    'Plaice', 'Sole', 'Bream', 'Salmon', 'Shrimp', 'Whelk', 'Cockle', 'Ling', 'Hake', 'Turbot', 'Mullet', 'Gurnard', 'Dogfish', 'Slaughterfish']),
+  gear: Object.freeze(['Net', 'Line', 'Creel', 'Hook', 'Float', 'Keel', 'Oar', 'Shoal', 'Catch', 'Haul', 'Morning', 'Evening', 'Tide', 'Trawl']),
+});
+/** FISH-BOATS: a fishing boat's name off `r`, her name's own stream - "The Lucky Herring", "The Herring Lass". */
+export function fisherNameOf(r) {
+  const W = NAME_WORDS, F = FISHER_WORDS;
+  const pick = (words) => words[Math.floor(r() * words.length) % words.length];
+  /** @type {[number, () => string][]} */
+  const forms = [
+    [5, () => `The ${pick(W.fair)} ${pick(F.catches)}`],
+    [4, () => `The ${pick(F.catches)} ${pick(W.callings)}`],
+    [3, () => `The ${pick(W.ports)} ${pick(F.catches)}`],
+    [3, () => `The ${pick(W.fair)} ${pick(F.gear)}`],
+  ];
+  let x = r() * 15;
+  for (const [weight, make] of forms) { if ((x -= weight) < 0) return make(); }
+  return forms[forms.length - 1][1]();
+}
 /**
  * A ship's name off `r` (her name's own stream): the forms of her trade, each a weight - a crown's ship of her crown's
  * (`crown`, CROWNS'), else Daggerfall's. Answers the name with its article ("The Black Kraken", "Dagon's Tooth": a
@@ -565,20 +632,21 @@ export function crownOf(px, py, capitals = null, regionIndex = -1) {
  * stood.
  * @param {any} shipClass
  * @param {number} seed
- * @param {{ regionIndex?: number, crown?: any }} [where] - the waters' region (the captain's name bank) and the crown
- *   a navy ship serves (crownOf's answer)
+ * @param {{ regionIndex?: number, crown?: any, bank?: number|null }} [where] - the waters' region (the captain's name bank)
+ *   and the crown a navy ship serves (crownOf's answer); WW3: `bank` the waters' people's where the caller knows better
+ *   (systems/naval/shipNameBank.js - past the Bay a province's), the region's else
  */
-export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = null } = {}) {
+export function shipNames(shipClass, seed, { regionIndex = 17, crown: crownIn = null, bank = null } = {}) {
   const rng = mulberry32((seed ^ 0x5eaf00d) >>> 0);
   rng();   // SHIP-NAMES: the draw the name took off this stream - her captain's draws are the ones they always were
   const crown = shipClass.faction === 'navy' ? crownIn ?? crownOf(0, 0, null, regionIndex) : null;
-  const name = shipNameOf(shipClass.faction, mulberry32(((seed >>> 0) ^ SHIP_NAME_SALT) >>> 0), crown);
+  const named = mulberry32(((seed >>> 0) ^ SHIP_NAME_SALT) >>> 0);
+  const name = shipClass.fisher ? fisherNameOf(named) : shipNameOf(shipClass.faction, named, crown);   // FISH-BOATS: a fishing boat's own forms
   const saved = getSeed();
   let captain;
   try {
     srand((seed >>> 0) || 1);
-    const bank = getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17);
-    captain = fullName(bank, rng() < 0.5 ? GENDERS.Male : GENDERS.Female);
+    captain = fullName(Number.isInteger(bank) ? /** @type {number} */ (bank) : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17), rng() < 0.5 ? GENDERS.Male : GENDERS.Female);
   } finally { setSeed(saved); }
   return { name, captain, crown: crown?.name ?? null };
 }

@@ -19,6 +19,13 @@ import { STAFF_EVENT_KEY_RE, STAFF_BOSS_SIZE_MIN, STAFF_BOSS_SIZE_MAX } from '..
 /** A raid's key, or a staff event's (net/staffEvent/staffEventLaw.js - it runs as a raid: its raiders tagged, its words
  *  said, its runner elected by the raid's own law). @param {unknown} key */
 const raidLikeKey = (key) => typeof key === 'string' && (RAID_KEY_RE.test(key) || STAFF_EVENT_KEY_RE.test(key));
+/** WW6 (bible/03-World/World-Wide.md WW6): IS A RAID THIS TOWN'S - the town the host's GPS names (FindCurrentRaid's
+ *  `{ regionIndex, locationIndex }`, the location the player stands outdoors in): on the Bay its region and its MAPS.BSA
+ *  location, as RAID1 asked; past the Bay its town's own location index alone - a place of the port's own, one index a
+ *  place of the world (world/arenaLocations.js, world/tamrielCapitals.js), whose stood record's region is its pixel's as
+ *  the land read it then. A staff event's town too (systems/staffEvents.js staffRaidHere).
+ *  @param {{ regionIndex: number, locationIndex: number }} r @param {{ regionIndex: number, locationIndex: number }|null|undefined} town */
+export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);
 /** Two claims inside this window (a frame's latency, generously) are a race, settled by id - WOD7's own number
  *  (wodShared.js WOD_CLAIM_WINDOW_MS). */
 export const RAID_CLAIM_WINDOW_MS = 5000;

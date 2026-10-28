@@ -11,6 +11,7 @@
 // REST arm is live through the alert state.
 
 import { mobileTeamOf } from '../characters/enemy/enemyTargets.js';   // MT-ii: :709's MobileEnemy.Team read
+import { wouldBeSpawnedInClassic } from '../characters/enemy/enemyMotor.js';   // AUDIT FB1025i D3: the classic spawn band, for fightNear
 import { CLIMATES } from '../formats/mapsFile.js';
 import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
 import { encounterTable } from '../characters/encounterTableDoor.js';   // DEX3: the table a mod's write left, DFU's otherwise
@@ -114,7 +115,9 @@ export function resolveEncounterTableIndex(ctx) {
   if (ctx.underwater) return 19;
   if (ctx.dungeonType != null) return ctx.dungeonType;
   if (ctx.buildingType != null) return BUILDING_TABLE.get(ctx.buildingType) ?? 39;
-  const band = CLIMATE_TABLE.get(ctx.climateIndex);
+  // TESA-BIOME: past the Bay a pixel's own biome's band (systems/tamrielFauna.js faunaBandAt, the ctx's `fauna`) before its
+  // climate's - DFU's three, in DFU's order
+  const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);
   if (!band) return null;
   if (ctx.inLocationRect) {
     if (ctx.isDay) return null;   // a town by day spawns nothing
@@ -368,6 +371,26 @@ export function areEnemiesNearby(foes, { resting = false, includingPacified = fa
     // :709 - the hostility/team gate, INSIDE the proximity arm
     if (includingPacified) return true;
     if (foeHostile(f)) return true;
+  }
+  return false;
+}
+
+/** AUDIT FB1025i D3: A FIGHT NEAR ME - PROTECT-FIGHT's own question (scenes/cityGuards.js playerSparesPerson: under
+ *  Protect Bystanders a fight passes the townspeople and, since ROAD-SPARE, the road's travellers by), not the rest's. It
+ *  was AreEnemiesNearby above, whose band (`wouldBeSpawned`) a foe's own senses raise - and a PEER's foe is a puppet in my
+ *  pool that runs none (exteriorFoes.js latches `targetIsLocalPlayer` from its stream, `_pupMine`), so a party's fight with
+ *  every attacker on my partner beside me read as no fight of mine and a swing past the partner's foe fell on the
+ *  townsperson or the traveller behind it. Now: what AreEnemiesNearby answers, or a hostile foe (the gate below) within
+ *  the classic spawn band of my feet (EnemySenses.WouldBeSpawnedInClassic's open-world arm - the band a foe of my own
+ *  pool is measured by), whatever its target, a puppet's too. The rest gate keeps its own law.
+ *  @param {any[]} foes @param {number[] | null} feet my feet, in the pool's frame */
+export function fightNear(foes, feet) {
+  if (areEnemiesNearby(foes)) return true;
+  if (!feet) return false;
+  for (const f of foes ?? []) {
+    if (!foeHostile(f) || f.ai.unreachable || !f.ai.feet) continue;
+    const dx = f.ai.feet[0] - feet[0], dy = f.ai.feet[1] - feet[1], dz = f.ai.feet[2] - feet[2];
+    if (wouldBeSpawnedInClassic(Math.hypot(dx, dy, dz), dy, false, 0, false)) return true;
   }
   return false;
 }

@@ -111,7 +111,8 @@ test('ARENA1 city: the port\'s block at a fixed index past any BSA, served behin
   assert.equal(getNewDFBlockIndex('TEST.RMB'), -1);
   assert.equal(ARENA_BLOCK_INDEX, 900100);
   const src = read('src/formats/worldData/worldDataReplacement.js');
-  assert.match(src, /if \(blockName && _portBlocks\.has\(blockName\)\) return portBlock\(blockName\);[^\n]*\n\s*if \(!worldDataOn\(\) \|\| !blockName\) return null;/, 'before the door\'s gate');
+  // PIN MOVED (IC-GRAND): a block family's name served there too (the Imperial City's forty thousand cells' blocks)
+  assert.match(src, /if \(blockName && \(_portBlocks\.has\(blockName\) \|\| familyIndex\(blockName\) >= 0\)\) return portBlock\(blockName\);[^\n]*\n\s*if \(!worldDataOn\(\) \|\| !blockName\) return null;/, 'before the door\'s gate');
   assert.match(read('src/formats/mapsFile.js'), /dfLocation\.locationIndex = location;\n\s*worldDataDoor\(\)\?\.editLocation\?\.\(dfLocation, this\);/);
   assert.doesNotMatch(read('src/formats/mapsFile.js').match(/readClassicLocation\(region, location\) \{[\s\S]*?\n {2}\}/)[0], /editLocation/, 'a pack\'s edit is taken against the city as MAPS.BSA holds it');
   assert.match(read('src/scenes/modWorldData.js'), /installWorldDataReplacement\(\);\n\s*await installArena\(\);/);

@@ -417,7 +417,9 @@ test('HOME-VOTE AUDIT II the door: a hall\'s member with a vote cast before they
   const m = src('src/scenes/worldModes.js');
   assert.match(m, /lines: \[\.\.\.rentPickLines\(got\.owner \|\| home\.owner\), \.\.\.homeVoteLines\(home\)\],[^\n]*\n\s*options: \[\n\s*\.\.\.homeVoteChoices\(home\)\.map\(\(c\) => \(\{ code: c\.code, label: c\.label, action: \(\) => pressHomeVote\(bd, c\.vote\) \}\)\),/, 'B1');
   assert.match(m, /lines: \[\.\.\.homeOwnerLines\(home\), \.\.\.homeVoteLines\(home\)\],/, 'B2');
-  assert.match(m, /async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false, verb = null, listed = plaqueListing\(\) && worldPlaqueOn\(\) \} = \{\}\) \{/, 'B4: read with the verb');
+  // PIN MOVED (LOCKPICK, bible/06-Systems/Lockpicking.md): the door's options carry `picked` beside the verb - a front door the
+  // pick window opened walks in through the same door, picked
+  assert.match(m, /async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false, verb = null, listed = plaqueListing\(\) && worldPlaqueOn\(\), picked = false \} = \{\}\) \{/, 'B4: read with the verb');
   assert.equal(m.includes('&& !plaqueListing()) { openHomeVoteMenu'), false, 'B4: never after the wait');
 });
 

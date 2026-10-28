@@ -35,13 +35,15 @@ const quiet = (fn) => { const info = console.info, warn = console.warn; console.
 
 test('CHAT-CHAN wire: one channel per politic region, whitelisted by enumeration; a line may name the party channel and nothing else; world102 is the first relay that routes either (world99 before the first merge, world101 before the sixth: main\'s world99, world100 and world101 route neither) (mutants: a region key off the end of the map; the whitelist a prefix test; an unknown channel falling through to the room; the version gate one high)', () => {
   assert.equal(CHAT_REGION_COUNT, REGION_NAMES.length, 'the politic map\'s regions, all of them - the channel a player joins is PlayerGPS.CurrentRegionIndex\'s');
-  assert.equal(CHAT_REGION_COUNT, 62);
+  assert.equal(CHAT_REGION_COUNT, 71);   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): the Bay's 62 and the provinces' nine
   assert.equal(chatRegionRoom(0), `${CHAT_REGION_PREFIX}0`);
   assert.equal(chatRegionRoom(61), 'chat:region.61');
-  for (const bad of [-1, 62, 1.5, NaN, null, undefined, '3']) assert.equal(chatRegionRoom(bad), null, `no region ${String(bad)}`);
+  for (const bad of [-1, 71, 1.5, NaN, null, undefined, '3']) assert.equal(chatRegionRoom(bad), null, `no region ${String(bad)}`);
+  // PIN MOVED (WW-R, bible/03-World/World-Wide.md): a province's channel only where the relay opens it
+  assert.deepEqual([chatRegionRoom(64), chatRegionRoom(64, false), chatRegionRoom(61, false)], ['chat:region.64', null, 'chat:region.61']);
   for (let i = 0; i < CHAT_REGION_COUNT; i++) assert.ok(isChatRoom(chatRegionRoom(i)), `region ${i}'s channel is one the relay opens`);
-  assert.equal(CHAT_ROOMS.size, 1 + CHAT_REGION_COUNT + 16 + CHAT_REGION_COUNT * 4 + 15 + 2);   // PIN MOVED, SCALE5c: and the hub's sixteen shards; part two: and each region's four; CHAT-LANG: and the fifteen language channels; CHAT-TRADE: and the Trade and LFG channels
-  for (const bad of ['chat:region.62', 'chat:region.-1', 'chat:region.01', 'chat:region.x', 'chat:party.q123']) assert.equal(isChatRoom(bad), false, `${bad}: a list, not a prefix (AUDIT CHAT A1)`);
+  assert.equal(CHAT_ROOMS.size, 1 + CHAT_REGION_COUNT + 16 + 62 * 4 + 15 + 2);   // PIN MOVED, SCALE5c: and the hub's sixteen shards; part two: and each region's four; CHAT-LANG: and the fifteen language channels; CHAT-TRADE: and the Trade and LFG channels   // PIN MOVED (PROVINCE-SLEEP, bible/03-World/Scale-Arc.md): the four a region the Bay's 62 alone - a province's channel is never split
+  for (const bad of ['chat:region.71', 'chat:region.-1', 'chat:region.01', 'chat:region.x', 'chat:party.q123']) assert.equal(isChatRoom(bad), false, `${bad}: a list, not a prefix (AUDIT CHAT A1)`);
   assert.ok(isSocialRoom(SOCIAL_ROOM) && !isSocialRoom(chatRegionRoom(4)), 'a region\'s channel is no hub: it keeps no seats');
 
   assert.deepEqual(CHAT_LINE_CHANNELS, ['party', 'guild', 'staff']);   // STAFF-PANEL5-FREEZE: and a staff chat thread's nudge   // GUILD1c: and a guild's line (test/net/guild1c.test.js)
@@ -511,7 +513,7 @@ test('CHAT-CHAN panel: each tab says who it reaches (and the region\'s name), th
 
 test('CHAT-CHAN host: the commands are tested in their order - the host\'s own first, then the parser - a refusal keeps the line, /red is the World\'s, each tab has its own door, the Region tab follows the player only on a relay that opens region rooms, and a party\'s news lands on the Party tab (mutants: the parser before /unstuck; /red on the active tab; a party line with no party sent; the region joined before the welcome; party notes on the World tab)', () => {
   const w = rd('src/scenes/world.js');
-  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
+  const onSend = /onSend: \(tabId, text, opts = \{\}\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   const at = (s) => { const i = onSend.indexOf(s); assert.ok(i >= 0, `onSend has ${s}`); return i; };
   // the parser is asked ONCE, after every command of the host's own. EMOTE1 re-aimed this pin to the parser over the
   // shortcodes and it let a SECOND call live before the commands - which reads /unstuck, /red, /mute and /ready as the
@@ -523,14 +525,14 @@ test('CHAT-CHAN host: the commands are tested in their order - the host\'s own f
   assert.ok(at('/^\\/unstuck(\\s+cancel)?$/i') < at('const red = ') && at('const red = ') < at('parseModCommand(text)') && at('parseModCommand(text)') < at("/^\\/ready$/i") && at("/^\\/ready$/i") < parser, 'the host\'s own commands by their own tests, then the parser');
   assert.match(onSend, /if \(cmd\.kind === 'help'\) \{ for \(const line of helpLines\(\)\) note\(line\); return 'read'; \}/);   // PIN MOVED (AUDIT EG V, c: L7-21 - /help's lines with /breach's own, net/chatCommands.js helpLines)
   for (const k of ['unknown', 'empty', 'host']) assert.match(onSend, new RegExp(`if \\(cmd\\.kind === '${k}'\\) \\{ note\\([^)]*\\)\\); return false; \\}`), `${k}: refused in words, the line kept to be mended`);
-  assert.match(onSend, /if \(cmd\.kind === 'channel'\) return chatSend\(cmd\.tab, cmd\.wrap === 'ooc' \? oocText\(cmd\.text\) : cmd\.text, tabId\);/);
+  assert.match(onSend, /if \(cmd\.kind === 'channel'\) return chatSend\(cmd\.tab, cmd\.wrap === 'ooc' \? oocText\(cmd\.text\) : cmd\.text, tabId, opts\);/);   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   assert.match(onSend, /if \(red\) return chatLinks\.get\('world'\)\?\.sendRed\(red\[1\]\) \?\? false;/);
   const send = w.slice(w.indexOf('const chatSend = '), w.indexOf('const _regionHold'));
   assert.match(send, /if \(\(tabId === 'party' \|\| tabId === 'region'\) && chanOld\(\)\) return why\(CHAN_OLD_RELAY_TEXT\);/);
-  assert.match(send, /if \(tabId === 'local'\) return online\?\.sendChat\(text, \{ me \}\) \?\? false;/);
-  assert.match(send, /if \(!social\?\.party\) return why\(NO_PARTY_TEXT\);\s*return socialLink\(\)\?\.sendChat\(text, \{ ch: 'party', me \}\) \?\? false;/);
+  assert.match(send, /if \(tabId === 'local'\) return online\?\.sendChat\(text, \{ me, item, items \}\) \?\? false;/);   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
+  assert.match(send, /if \(!social\?\.party\) return why\(NO_PARTY_TEXT\);\s*return socialLink\(\)\?\.sendChat\(text, \{ ch: 'party', me, item, items \}\) \?\? false;/);   // PIN MOVED (CHAT-POST #1342: the linked items ride the line - the pin was left on the old send)
   assert.match(w, /const chatRegionFrame = \(now\) => \{\s*if \(seatOut\(\)\) return;[^\n]*\s*const link = chatLinks\?\.get\('region'\);\s*if \(!link \|\| !chatLinks\.get\('world'\)\?\.chanOk\) return;/, 'never before the welcome says region rooms open');
-  assert.match(w, /const room = nextRegionRoom\(_regionHold, chatRegionRoom\(index\), chatLog\.tab\('region'\)\.room, now\);/);
+  assert.match(w, /const room = nextRegionRoom\(_regionHold, chatRegionRoom\(index, !!chatLinks\.get\('world'\)\?\.provinceRegionsOk\), chatLog\.tab\('region'\)\.room, now\);/);
   assert.match(w, /chatLog\.setRoom\('region', room, place\);\s*link\.join\(channelLinkRoom\(room\)\);[^\n]*\s*chatLog\.push\('region', \{ text: regionJoinedText\(place\), system: true \}\);/);
   assert.match(w, /const index = _questRegionIndex\(\);/, 'PlayerGPS.CurrentRegionIndex - the politic map\'s word, the quests\' own');
   assert.match(w, /social\.onNote = \(note, text\) => \{ if \(text\) chatLog\.push\(partyNoteTab\(note, social, tab\.id\), \{ text, system: true \}\); \};/);   // CHAT-P: net/chat.js partyNoteTab - the Party tab while a party is

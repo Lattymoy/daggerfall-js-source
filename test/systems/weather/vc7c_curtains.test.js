@@ -46,7 +46,7 @@ test('VC7c: the constants - rain\'s own extinction, and what falls under which w
   // integral of the core's declared profile; the first chord took its axis weight all the way, and read a twentieth)
   const T = veils(marchFns([{ ...cellOf('thunder', 0, 0, 6000), dark: 0 }], FLAT), [-20000, 0, 0], unit([1, 0.02, 0])).front[3];
   assert.ok(T > 0.05 && T < 0.12, `a storm's core passes ${T.toFixed(3)}`);
-  assert.deepEqual(CURTAIN_FALL, { rain: [1, 0], thunder: [1.3, 0], snow: [0.7, 1] });
+  assert.deepEqual(CURTAIN_FALL, { rain: [1, 0], thunder: [1.3, 0], snow: [0.7, 1], ashfall: [0.9, 0] });   // PIN MOVED (ASHFALL1, 2026-10-27): the ash's veil
   assert.ok(Object.isFrozen(CURTAIN_FALL) && Object.values(CURTAIN_FALL).every(Object.isFrozen));
 });
 

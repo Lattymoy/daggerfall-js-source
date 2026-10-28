@@ -2,8 +2,8 @@
   {
     "name": "TRADE-LOC-II-a-the-row-without-it",
     "file": "src/ui/enhanced/enhancedPlayerTrade.js",
-    "old": "const sub = [letterWorthLine(item), line.material, line.word]",
-    "new": "const sub = [line.material, line.word]",
+    "old": "const sub = [letterWorthLine(item), line.material, line.word, line.quest",
+    "new": "const sub = [line.material, line.word, line.quest",
     "tests": [
       "test/systems/fb1011_tradeloc.test.js"
     ]

@@ -179,6 +179,9 @@ test('PERF-COL1: the walks keep their laws - the live local point per triangle, 
   // ROCK-FREE's beside it, hullSweepAll's own (the parts holding the hull's centre; its audit, 2026-10-02b, swept the
   // sphere itself, and the spokes' Set went with them), module scratch as it is: made once, cleared a bucket at a
   // time, never a Set a walk
-  assert.equal((src.match(/new Set\(\)/g) || []).length, 2, 'the module scratch alone - the sphere walks and the ray stamp, and the hull sweep\'s');
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): and the collider's own held keys (`this._holding`), a member made
+  // once with the collider - no walk's
+  assert.equal((src.match(/new Set\(\)/g) || []).length, 3, 'the module scratch alone - the sphere walks and the ray stamp, and the hull sweep\'s - and the collider\'s held keys');
+  assert.deepEqual(src.match(/^ {4}this\.\w+ = new Set\(\);/gm), ['    this._holding = new Set();'], 'the third the constructor\'s own member');
   assert.deepEqual(src.match(/^const \w+ = new Set\(\);/gm), ['const VISITED = new Set();', 'const SWEEP_HELD = new Set();'], 'each at the module\'s top level');
 });

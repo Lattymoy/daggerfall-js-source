@@ -194,7 +194,8 @@ export const RRI_WEAPON_MIN_DAMAGE = Object.freeze(Object.fromEntries([
   [[W.Dagger, W.Tanto, W.Wakazashi, W.Saber, W.Katana, W.Dai_Katana], 1],
   [[W.Shortsword, W.Broadsword, W.Longsword, W.Claymore], 2],
   [[W.Battle_Axe, W.War_Axe, W.Staff], 3],
-  [[W.Mace, W.Flail, W.Warhammer, W.Short_Bow, W.Long_Bow], 4],
+  [[W.Mace, W.Flail, W.Warhammer], 4],
+  [[W.Short_Bow, W.Long_Bow], 5],   // BAL-ARCHERY: +1, the same step as the default table
 ].flatMap(([ws, v]) => ws.map((w) => [w, v]))));
 /** CalculateWeaponMaxDamage (:343-379). */
 export const RRI_WEAPON_MAX_DAMAGE = Object.freeze(Object.fromEntries([
@@ -206,8 +207,10 @@ export const RRI_WEAPON_MAX_DAMAGE = Object.freeze(Object.fromEntries([
   [[W.Battle_Axe], 13],
   [[W.Broadsword, W.Saber], 14],
   [[W.Longsword], 15],
-  [[W.Katana, W.Flail, W.Short_Bow], 16],
-  [[W.Dai_Katana, W.War_Axe, W.Warhammer, W.Long_Bow], 18],
+  [[W.Katana, W.Flail], 16],
+  [[W.Short_Bow], 17],   // BAL-ARCHERY: +1, the same step as the default table
+  [[W.Dai_Katana, W.War_Axe, W.Warhammer], 18],
+  [[W.Long_Bow], 19],   // BAL-ARCHERY: +1, the same step as the default table
   [[W.Claymore], 19],
 ].flatMap(([ws, v]) => ws.map((w) => [w, v]))));
 export const weaponBalanceOn = () => rriModule('weaponBalance');

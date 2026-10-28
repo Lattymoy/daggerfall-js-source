@@ -19,8 +19,8 @@
 //   health and magicka             the ONLINE LAYER beside Renown's (renownLayer.js setOnlineLayerExtra), moved each round
 //
 // THE COMBAT CHANNELS SLEEP (`awake`) offline (the tree is not in force), in a duel and an arena bout (sigil.js
-// sigilDueling - the word every loot and set power sleeps on), while mentoring (SOFTCAP2's `_mentor`, as the Arcane paths
-// sleep), and never answer a blow or a spell at a player. A SIEGE AND THE ZONE ARE NOT REFEREED BOUTS (AUDIT UICALM-FIRM1
+// sigilDueling - the word every loot and set power sleeps on), and never answer a blow or a spell at a player. While
+// mentoring they act at the mentor's power scale (MENTOR2, mentorMode.js mentorPowerScale; the life channels whole). A SIEGE AND THE ZONE ARE NOT REFEREED BOUTS (AUDIT UICALM-FIRM1
 // L1 M3 - this header had said a siege slept): there, as the loot's and the sets' powers do, the pace, the price and the
 // pool act; what lands on a player is rolled with the sky off (below), and the relay's referee holds its harm and its
 // casts to its own ceilings. IN THE WROTHGARIAN ZONE the sky FIGHTS ITS BEASTS (the lead dev, 2026-10-13: "this should help
@@ -33,9 +33,11 @@
 
 import { SKILLS, SKILL_KEYS, permanentSkillValue } from './skills.js';
 import { ATTRIBUTES, COMBAT_SKILLS, LIFE_SKILLS, FIRM_ELEMENTS, blowPct, castCostPct, statDef, pctOf } from '../net/firmament/firmamentLaw.js';
-import { firmamentStats, onFirmamentChange, firmamentInForce } from './firmamentLive.js';
+import { firmamentStats, firmamentStatsAt, onFirmamentChange, firmamentInForce } from './firmamentLive.js';
+import { mentorPowerScale } from './mentorMode.js';   // MENTOR2: the combat stars at the mentor's share
 import { sigilDueling } from './sigil/sigil.js';
 import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS, NUMBER_BODY_PARTS, STANDING_CHANNELS, computeEntityMods } from './entityMods.js';
+import { blowRoom, guardRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
 import { registerSpellPowerMod, registerSpellPierceMod } from './spell/spellPower.js';
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
@@ -56,12 +58,12 @@ import { regenShare } from './courtRules.js';   // AUDIT WORLD-EVENTS L1-3: the 
 /** @type {Readonly<Record<string, number>>} */
 const NONE = Object.freeze({});
 const mine = (e) => !!e?.isPlayer && !e.peer;
-/** Whether the sky's COMBAT channels act for `e` now: mine, the tree in force, no refereed fight, not mentoring. */
-export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !sigilDueling() && !e?._mentor;
-/** The capped channels that act for `e` in a fight now (none asleep). */
-const fight = (e) => (!_quiet && firmamentAwake(e) ? firmamentStats() : NONE);
-/** The capped channels that act for `e` in a life (the tree in force, mine). */
-const life = (e) => (!_quiet && mine(e) && !e?._mentor ? firmamentStats() : NONE);
+/** Whether the sky's COMBAT channels act for `e` now: mine, the tree in force, no refereed fight. */
+export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !sigilDueling();
+/** The capped channels that act for `e` in a fight now (none asleep) - MENTOR2: at the mentor's share while mentoring. */
+const fight = (e) => (!_quiet && firmamentAwake(e) ? firmamentStatsAt(mentorPowerScale(e)) : NONE);
+/** The capped channels that act for `e` in a life (the tree in force, mine) - whole, mentoring or not. */
+const life = (e) => (!_quiet && mine(e) ? firmamentStats() : NONE);
 /** True while a sheet is read with the sky taken off it (withoutFirmament). */
 let _quiet = false;
 /** THE SKY TAKEN OFF: `fn()` read with none of the tree's channels on `entity` - its fold recomputed without the sky
@@ -142,7 +144,7 @@ export function firmamentBlow(weapon, damage, attacker, target, info) {
   if (c === NONE) return damage;
   const skill = weapon ? SKILL_KEYS[weaponSkillUsed(weapon.templateIndex)] ?? null : 'HandToHand';
   const wounded = Number.isFinite(attacker.health) && attacker.maxHealth > 0 && attacker.health < attacker.maxHealth / 2;
-  const pct = blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded });
+  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament');   // POWER-CEILING
   if (!pct) return damage;
   return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, !info?.estimate));
 }
@@ -168,7 +170,7 @@ export function firmamentDamage(entity, dmg) {
   const c = fight(entity);
   if (c === NONE || !(dmg > 0)) return dmg;
   const ch = pendingPlayerBlow() ? 'blow' : 'spell';
-  const pct = ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0);
+  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament');   // POWER-CEILING: a share off is the guards'; a price is taken whole
   if (!pct) return dmg;
   const exact = (dmg * pct) / 100 + _takenOwed[ch];
   const whole = pct >= 0 ? Math.floor(exact + 1e-9) : Math.ceil(exact - 1e-9);

@@ -65,7 +65,8 @@ test('PERF-ON4 (AUDIT PERF-ON4 F4): EACH EDIT DOES WHAT IT IS FOR, as the probes
   const world = served('src/scenes/world.js');
   const hook = world.indexOf('window.__probeOnline = () => ({ peers: online ? online.drawable().length : null, status: online ? online.status : null, ways: livingWays.size');
   assert.ok(hook > 0, 'the hook is served');
-  assert.ok(world.indexOf('const livingWays = createWayBook(') < hook && world.indexOf('let online = null') < hook, 'the way book and the session declared before it, in the host');
+  const ways = world.indexOf('ways: livingWays, world: livingTripWorld');   // PIN MOVED (WW7-7): the way book scenes/livingWorld/livingTrips.js's, named in the host
+  assert.ok(ways > 0 && ways < hook && world.indexOf('let online = null') < hook, 'the way book and the session declared before it, in the host');
   assert.ok(world.includes('window.__probeSaveText = () =>'), 'and the composer\'s hook');
   // the crowds
   assert.deepEqual(crowdsOf(undefined).map((c) => [c.crowd, c.name]), [[0, 'online0'], [20, 'online20'], [60, 'online60'], [0, 'online0b']]);

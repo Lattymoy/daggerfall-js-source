@@ -143,8 +143,9 @@ test('SEAT-HALL the hosts by source: the visit\'s palace latched at the door for
   assert.match(m, /const isHallBoard = \(piece\) => \(!!interiorHome\?\.hall \|\| !!interiorSeatHall\) && piece\?\.model === BULLETIN_BOARD_MODEL_ID && !piece\.item;/);
   assert.match(m, /const hallNameHere = \(\) => interiorHome\?\.hall\?\.name \?\? interiorSeatHall\?\.name \?\? '';/);
   assert.match(m, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member,/);
-  const w = src('src/scenes/world.js');
-  const here = w.slice(w.indexOf('    seatHall: {'), w.indexOf('    guildHall: {'));
+  // PIN MOVED (DOMAIN2, HOST-SPLIT): the seat's halls moved out of bootWorld, into their own host (scenes/seatHallHost.js)
+  const w = src('src/scenes/seatHallHost.js');
+  const here = w.slice(w.indexOf('    here(mapId) {'), w.indexOf('    crown(mapId, instance = null) {'));
   assert.match(here, /const g = seat\?\.tier === 'palace' \? seat\.holder\?\.guild \?\? null : null;/, 'a crown\'s castle is no Charter Room');
   assert.match(here, /const member = seatHallOf\(seat, mine\?\.id \?\? null\);/);
   assert.match(here, /keeper: member && hallMay\(Number\(mine\?\.rank\), 'decorate'\)/);

@@ -24,6 +24,8 @@ export function registerEncounterTableSelector(selector) {
   _selectors.push(selector);
   _gen++;
 }
+/** Whether `selector` stands on the door (TESA-BIOME: systems/tamrielFauna.js stands its own once). */
+export const hasEncounterTableSelector = (selector) => _selectors.includes(selector);
 /** Moves when the selectors do - what a reader that keeps an answer keys it by. */
 export const encounterTableGeneration = () => _gen;
 /** The test seam. */

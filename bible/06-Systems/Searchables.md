@@ -36,8 +36,9 @@ the texture archive each wears and where it stands; the ids are DFU's model numb
 - Find: one to four items, the first always gold, from the kind's goods, then the rarity ladder at the place's pile tier.
 - The message: a parchment box the player clicks away; the foes stand, or the find opens, only from its `onClose`
   (ui/actionText.js - deferred past the dismissal, once, never for a replaced box).
-- Locks: one chest or crate in three, lock 1..15, a hash of where it stands; picked in Steal mode by the interior door
-  formula, Lockpicking tallied. A picked lock stays picked.
+- Locks: one chest or crate in three, lock 1..15, a hash of where it stands; picked in Steal mode (or Grab) with a
+  Lockpick, in the lock's window - its tumblers, the interior door formula their tolerance (LOCKPICK,
+  `06-Systems/Lockpicking.md`). A picked lock stays picked.
 - Five game hours (`SEARCH_COOLDOWN_MINUTES`) per object, on the save (`modSaveData` vendor `Searchables`) - with the
   searcher's name when it was a partymate's (GRAVE-PARTY), the later search holding the hours.
 

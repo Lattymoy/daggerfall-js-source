@@ -81,11 +81,11 @@ export const CATEGORIES = Object.freeze([
     sec("character", "Character & survival", [
       "feat:mod-oblivion-remaster-leveling", "feat:mod-project-legacy", "feat:mod-climates-calories", "feat:mod-roleplay-realism"]),
     sec("moving", "Climbing & gathering", [
-      "feat:enhanced-climbing", "Enhancements/AdvancedClimbing", "feat:mod-foraging"]),
+      "feat:enhanced-climbing", "Enhancements/AdvancedClimbing", "feat:resource-highlights", "feat:mod-foraging"]),
     sec("start", "Starting a new game", [
       "Startup/StartInDungeon", "Startup/StartCellX", "Startup/StartCellY"]),
     sec("camera", "Camera", [
-      "feat:mod-eye-of-the-beholder"]),
+      "feat:mw-shoulder-camera", "feat:mod-eye-of-the-beholder"]),
     sec("others", "Other players", [
       "card:peerSprites"]),
     sec("advanced", "Advanced", [
@@ -107,7 +107,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("world", "World", [
     sec("land", "Land", [
-      "feat:tamriel-land", "feat:landforms", "feat:real-forests", "feat:bantha-jungle", "feat:climate-blend", "feat:road-verges", "feat:mod-roads-hazelnut"]),
+      "feat:tamriel-land", "feat:landforms", "feat:real-forests", "feat:bantha-jungle", "feat:tamriel-lands", "feat:climate-blend", "feat:road-verges", "feat:mod-roads-hazelnut"]),
     sec("weather", "Weather & ambience", [
       "feat:weather-events", "feat:mod-better-ambience"]),
     sec("towns", "Towns & people", [
@@ -177,7 +177,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("accessibility", "Accessibility", [
     sec("motion", "Motion", [
-      "Controls/HeadBobbing", "Controls/CameraRecoilStrength", "port:techniqueMotion", "port:reducedMotion", "Effects/MotionBlurEnable", "Effects/MotionBlurShutterAngle",
+      "Controls/HeadBobbing", "Controls/CameraRecoilStrength", "port:techniqueMotion", "port:peerSpellShake", "port:reducedMotion", "Effects/MotionBlurEnable", "Effects/MotionBlurShutterAngle",
       "Effects/MotionBlurSampleCount", "Effects/VignetteEnable", "Effects/VignetteIntensity", "Effects/VignetteSmoothness", "Effects/VignetteRoundness",
       "Effects/VignetteRounded"]),
     sec("reading", "Readability", [

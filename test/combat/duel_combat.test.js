@@ -181,7 +181,7 @@ test('DUEL1 hosts by source: the swing reaches my opponent before any pool and i
   assert.equal(/_duelScope|duelSpare|registerDuelFell|duelBlowIn/.test(w), false, 'no defender\'s half left');
   // PIN MOVED (AUDIT C&C H5): rolled against the neutral stand-in - the stub of my own sheet it was rolled against
   // cancelled every attribute I brought and charged me for my own luck (test/systems/auditcc_pvp.test.js)
-  assert.match(w, /const r = resolveDuelStrike\(\{ by, a, \.\.\.\(w \? \{ w \} : \{\}\), \.\.\.\(sw \? \{ sw \} : \{\}\), \.\.\.at, \.\.\.\(off \? \{ off \} : \{\}\) \}, duelStandIn\(\)\);/, 'rolled on my own sheet against the neutral stand-in');   // PIN MOVED (TWO-HANDS AUDIT): and the off hand's terms
+  assert.match(w, /const r = resolveDuelStrike\(\{ by, a, \.\.\.\(w \? \{ w \} : \{\}\), \.\.\.\(sw \? \{ sw \} : \{\}\), \.\.\.at, \.\.\.\(off \? \{ off \} : \{\}\) \}, duelStandIn\(playerEntity\)\);/, 'rolled on my own sheet against the neutral stand-in');   // PIN MOVED (TWO-HANDS AUDIT): and the off hand's terms; PIN MOVED (RPT1026-FIGHTS STRIKE-UNVEILS): the striker named
   assert.match(w, /const n = duelMgr\.blow\('strike', \{ by, p: campToWire\(player\.feetAt\(\)\), d: Math\.trunc\(r\.dmg\),/, 'sent as a number');
   assert.match(w, /const n = duelMgr\.blow\('spell', \{ p: campToWire\(player\.feetAt\(\)\), d: siegeCastClamp\(harm, false\) \}\);/, 'a spell\'s harm, counted at home');
   // NAV-H (2026-09-28): a hostile ship in reach joined the same doors, after the duel and the foes

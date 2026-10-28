@@ -65,8 +65,9 @@ import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // A
 import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS3: a bound piece stays the player's on this skin too; WALLET1: and a pack-only one in the pack
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
 import { walletContents, walletLines, refreshWalletSilver } from '../../systems/walletItem.js';   // WALLET1: the wallet's box
+import { lookLine } from '../../systems/appearances.js';   // APPEARANCES-II: the Info box says the look a piece wears
 import { BINDER_CARD_LINES } from '../../systems/iliac/iliacItems.js';   // CARDS8 (AUDIT CARDS-5 C5): the binder's box
-import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
+import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { YesNoBoxWindow } from '../yesNoBox.js';   // SS5: the dismantle's question, DFU's own Yes/No box
 import { ListPickerWindow, listPickerArtLoaded } from '../listPicker.js';   // MEND-AIM: the piece a repair kit mends, chosen
 import { paintingImage, setPaintingArtDeps } from '../paintingImage.js';   // ROAD-A7: the painting's picture
@@ -92,12 +93,14 @@ import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical I
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
-  openState, remoteTarget, planWagonToggle, closeSession, holdChestSave,
+  openState, remoteTarget, planWagonToggle, closeSession, holdChestSave, settlesOwnPieces,   // RPT1026-CHESTGOLD: a store that settles its own pieces
+  chestActRefusal,   // AUDIT RPT1026 B1/B4: and its pack changes by the chest's door alone
   remoteTargetType, REMOTE_TARGET_TYPES,   // AUDIT MERGE-PLUS C3: whether a Remove drops on the ground
   // G5: the drop icon's five laws - the OnPush seed, CanChangeDropIcon,
   // the cycling arithmetic and dropIconIdxs' record lookup.
   openDropIcon, canChangeDropIcon, cycleDropIcon, dropIconRecord,
   groundRefusalOf,   // HOUSE-DROP: the host's word against the ground
+  storeRefusalOf,   // AUDIT PVP-EASE L2-1: the combat lock on storing
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   theftTarget,   // STOLEN-GOODS: a take from someone else's keeping is a theft
 } from '../../systems/inventorySession.js';
@@ -118,7 +121,7 @@ import { firstHotkey } from '../../systems/dialogShortcuts.js';   // A8: the Dag
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { magicPowersLines } from '../../systems/item/itemPowers.js';   // MACRO-3: %mpw
 import { itemIsIdentified } from '../../systems/tradeModes.js';   // MACRO-3: MagicPowers' identified arm
-import { localizedText, formatText } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, formatText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { getLocalizedItemName } from '../../systems/textManager.js';   // L10N3e: the equipping cue's template name, by its index
 import { bagMayLeave } from '../../systems/materialsBag.js';   // AUDIT2 BAG1 H11: a loaded bag stays - the one test
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -741,7 +744,11 @@ export class NativeInventoryWindow {
       this.infoItem = it;
       return;
     }
-    this.boxes = [{ rows: infoRows }];
+    // APPEARANCES-II (bible/04-Characters/Wardrobe.md section 5): a look worn over the piece is the record's last line, in
+    // its alignment - the pack's picture is the piece's own, so the box says what the body shows. A box of its own would
+    // wait behind a click; the Enhanced Plus pack says it too (enhancedInventory.js itemInfoBoxes)
+    const look = lookLine(it);
+    this.boxes = [{ rows: look ? [...infoRows, { text: look, center: infoRows.at(-1)?.center ?? true }] : infoRows }];
     // MACRO-3: 1016 is "Item powers:" over %mpw, and %mpw is a LIST - one
     // line per power (DaggerfallUnityItemMCP.MagicPowers), so the token's
     // row becomes that many rows, each keeping the record row's alignment.
@@ -866,6 +873,10 @@ export class NativeInventoryWindow {
    *  as the split popup's is (AUDIT-CM struck the " > " the first cut
    *  invented for the label). */
   _dropGold() {
+    // RPT1026-CHESTGOLD: never into a store that settles its own pieces, as the enhanced pack's field is not (its goldMayGo,
+    // AUDIT UPDATE II B1) - the shared chest's service keeps the pieces it can name, and the purse paid for a pile it never
+    // named was gone at the close
+    if (settlesOwnPieces(this.hooks) && !this.usingWagon) return;
     this.inputBox = new InputMessageBoxWindow({
       lines: expandRowValues(this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }], null),   // MACRO-3: %gii, the world's
       value: '0',
@@ -884,12 +895,12 @@ export class NativeInventoryWindow {
           carried: goldAmount(player),
           usingWagon: this.usingWagon,
           remote: this._remote(),
-          groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP
+          groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }), storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP
           capacity: storeCapacityOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // COMPANION-WEIGHT
           wagonKg: wagonKgFor(this.hooks.entity),   // WAGONS1: the driven wagon's capacity
         });
         if (plan.notice) this.boxes = [{ rows: [{ text: plan.notice, center: true }] }];
-        if (!plan.ok) { if (plan.refusal?.reason === 'ground') this._refuse(plan.refusal); return; }   // HOUSE-DROP: the floor's refusal is said
+        if (!plan.ok) { if (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store') this._refuse(plan.refusal); return; }   // HOUSE-DROP: the floor's refusal is said - AUDIT PVP-EASE L2-1: and the combat lock's
         deductGold(player, plan.amount);
         addItem(this._remote(), goldStack(plan.amount));
       },
@@ -897,6 +908,7 @@ export class NativeInventoryWindow {
   }
 
   _use(it, collection, target = null) {
+    { const no = chestActRefusal(this.hooks); if (no) { this._refuse(no); return; } }   // AUDIT RPT1026 B1: never over a chest's copy of the pack
     this._useResult(useItem(it, collection, {
       target, chooseTarget: target == null,   // MEND-AIM: this window can ask which piece a kit mends
       entity: this.hooks.entity,
@@ -1010,7 +1022,7 @@ export class NativeInventoryWindow {
       const plan = planStore(it, {
         remote: to, usingWagon: this.usingWagon, chooseOne: this.chooseOne,
         getQuest: this.hooks.getQuest ?? null,
-        groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop
+        groundRefusal: groundRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }), storeRefusal: storeRefusalOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // HOUSE-DROP: a floor that refuses a drop
         capacity: storeCapacityOf(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }),   // COMPANION-WEIGHT: a companion's pack takes what fits
         wagonKg: wagonKgFor(this.hooks.entity),   // WAGONS1: the driven wagon's capacity
         bagLoaded: !bagMayLeave(this.hooks.entity),   // BAG1: a loaded Materials Bag never leaves the pack (AUDIT2 H11: the one test)
@@ -1020,15 +1032,15 @@ export class NativeInventoryWindow {
       // runs, the item is consumed, nothing lands in the destination.
       // The use arm IS RecordLocationFromMap here, no-seam pending law
       // included.
-      if (plan.map) { this._use(it, this.hooks.items()); return; }
+      if (plan.map && !settlesOwnPieces(this.hooks)) { this._use(it, this.hooks.items()); return; }   // AUDIT RPT1026 B5: into a chest it is put, not read
       // CM5: the split popup (:1515-1539), BELOW the quest arm the plan
       // already ran and above DoTransferItem. The popup's handler is
       // the same transfer with the typed count.
-      const perform = (amount) => {
+      const perform = (amount) => this._held('put', it, amount, () => {
         audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
-        applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true,   // F157: a lit torch leaving the pack goes out
+        return applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true,   // F157: a lit torch leaving the pack goes out
           returnTo: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });   // STOLEN-GOODS: the owner's piece put back is theirs again
-      };
+      });
       if (!whole && this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
       perform(plan.amount);
       return;
@@ -1046,6 +1058,7 @@ export class NativeInventoryWindow {
       // U8g: EquipItem live (the unequipped swap-outs stay in the
       // bag and reappear in the lists)
       if (this._refuseForbidden(it)) return;   // S23
+      { const no = chestActRefusal(this.hooks, { wear: true, item: it }); if (no) { this._refuse(no); return; } }   // AUDIT RPT1026 B4: a piece the pack does not hold yet
       if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
       return;
     }
@@ -1087,7 +1100,7 @@ export class NativeInventoryWindow {
    *  ground, which its binding refuses: the refusal and the offer in DFU's own Yes/No box (ui/yesNoBox.js, pressed or
    *  keyed). Yes dismantles it (systems/sigil/sigilBroker.js dismantleWare) and says so; No leaves it in the pack. */
   _askDismantle(it, n) {
-    const name = itemLongName(it, { getQuest: this.hooks.getQuest ?? null });
+    const name = wareName(itemLongName(it, { getQuest: this.hooks.getQuest ?? null }), it);   // AUDIT FB1025i A8: and its set's
     this._tip.hide();   // AUDIT SS: the piece's tooltip drew over the question until the mouse moved
     this.inputBox = new YesNoBoxWindow({
       rows: [{ text: boundText(name), center: true }, { text: DISMANTLE_INSTEAD(n), center: true }],
@@ -1129,10 +1142,10 @@ export class NativeInventoryWindow {
         getQuest: this.hooks.getQuest ?? null,
       });
       if (!plan.ok) { this._refuse(plan.refusal); return; }
-      if (plan.map) { this._use(it, remote); return; }   // F156: either direction
+      if (plan.map && !settlesOwnPieces(this.hooks)) { this._use(it, remote); return; }   // F156: either direction; AUDIT RPT1026 B5: off a chest it is taken, not read
       // CM5: the same split gate on this side (:1515-1539); the tail
       // below is DoTransferItem's, run with the typed count.
-      const perform = (amount) => {
+      const perform = (amount) => this._held('take', it, amount, () => {
         // DoTransferItem: gold rides its own clink (:1569), everything
         // else the button click (:1583) - after the carry gate, so a
         // refused transfer stays silent.
@@ -1144,8 +1157,10 @@ export class NativeInventoryWindow {
         // equip (:1580), no choose-one close (:1585-1591).
         const taken = applyTransfer(it, { ...plan, amount }, remote, bag, { entity: this.hooks.entity, toPlayer: true,
           stolenFrom: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });   // STOLEN-GOODS: the owner's piece off a shut shop's shelf, a stranger's cupboard, a robbed caravan - marked as it lands
-        if (taken === null) return;
-        if (plan.equip && this.hooks.entity) {
+        if (taken === null) return taken;
+        // RPT1026-CHESTGOLD: a piece out of a store that settles its own is the window's pack's until the close - worn now,
+        // the character would wear a piece its pack does not hold yet. It is taken, not worn: worn from the pack once shut
+        if (plan.equip && this.hooks.entity && !settlesOwnPieces(this.hooks)) {
           // S23: the taken item still has to pass the career gate
           if (this._refuseForbidden(taken)) return;
           if (equipItem(this.hooks.entity, taken) !== null) refreshPaperDoll(this.hooks.entity);
@@ -1159,10 +1174,29 @@ export class NativeInventoryWindow {
           this._closeSilently();
           cb?.(taken);
         }
-      };
+        return taken;
+      });
       if (this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
       perform(plan.amount);
     }
+  }
+
+  /**
+   * RPT1026-CHESTGOLD (a private report): A STORE THAT SETTLES ITS OWN PIECES (`loot.commit` - the shared chest,
+   * systems/decor/decorGrants.js openSharedChest) MOVES THEM THROUGH THAT DOOR, on this skin as on the enhanced pack's
+   * (enhancedInventory.js heldThen): `go` is the move, run by the chest once it can answer, and the close sends what the
+   * door kept. This window ran `go` itself, so the close had nothing to settle and released the chest - every take and put
+   * undone, and before the gold arm kept a chest's coin a pile, its gold click paid the purse and left the pile in the
+   * chest. One move a piece at a time. Every other list moves at once, as it did.
+   */
+  _held(dir, it, amount, go) {
+    const commit = this.hooks.loot?.commit;
+    if (typeof commit !== 'function' || this.usingWagon || this.chooseOne) { go(); return; }
+    this._heldBusy ??= new Set();
+    if (this._heldBusy.has(it)) return;
+    this._heldBusy.add(it);
+    const done = () => { this._heldBusy.delete(it); };
+    Promise.resolve(commit(dir, it, amount, go)).then(done, () => { done(); this._refuse({ text: t('inventory.store.chestShut', 'The chest stays shut.') }); });
   }
 
   get topBox() { return this.boxes.length ? this.boxes[0] : null; }

@@ -161,7 +161,8 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   by regard.
 - **`relations.js`.** A regard per resident (-100..100), a stranger 0: a word +3 once a day, a polite word +1, a gift
   +8, help +20, a life saved +35, a blow -45, a crime -15, one of theirs slain -60, a blunt word -6 (TONE-TASTE: the
-  +1 and the -6 are a tone taken kindly and one taken ill, by the resident's own taste - section TONE-TASTE); friend at 40, enemy
+  +1 and the -6 are a tone taken kindly and one taken ill, by the resident's own taste - section TONE-TASTE); COURT-DEEDS
+  (`06-Systems/Legacy-Arc.md`): a compliment +2, a hug +3 and a kiss +4, the gift's +8 paid at last, each once a day; friend at 40, enemy
   at -40, hostile at -70; eased toward zero half a point a day unseen and never across; 600 kept; the save's record
   `{ v: 1, people }`, a bad one nobody known. [REGARD-OWN, FIELD BUGS 2026-10-21d: its days are the character's own
   (`regardClock.js` characterRelations, the one making), not the sky's living day - online the sky ran on while the
@@ -295,8 +296,8 @@ the trample (`retire`), the probes.
   (0.09) a day of walking, out and home, weighed by the ground the way crosses (`GROUND_RISK`: a road 0.6, a track 0.9,
   open country 1.4), to `RISK_MAX` (0.55); a party carrying a fated death always meets it. It falls on the way out or
   home at a seeded stretch of the walk, or - a leg its first day does not finish - now and then (`CAMP_SHARE`, 0.3) on
-  that night's camp at eleven. THE FOES are the land's own: the climate's encounter table at the place it falls, day or
-  night, the campers' themed group (`campEncounters.js rollGroupComposition`, the TV7 bands' own roll), at the party's
+  that night's camp at eleven. THE FOES are the land's own: the climate's encounter table at the place it falls (past
+  the Bay its zone's wild, BAY-LEFT-GROUND below), day or night, the campers' themed group (`campEncounters.js rollGroupComposition`, the TV7 bands' own roll), at the party's
   level (its armed's best, two at least), sized to the party (the fated: the party and two more), to `FOES_MAX` (6).
   THE END: a fated encounter's is the lives' - the leader among the fated, the party FELL (the rest turn home); else
   WON at that cost. Any other is the party's strength (`strengthOf`: the armed 4 and 1.5 a level, a merchant 1.5, the
@@ -327,6 +328,35 @@ the trample (`retire`), the probes.
   won, a lost one fled). Read over the dice (`fateHits`, `troubleOf`'s `turnOf`), kept `TURNS_MAX` (200) a kind, saved
   beside the regards (a record with none reads as before). The host's books (the places, the fates, the trips) are
   made again at each turn and each load (`livingTurnsFresh`). The live fight that makes them is LW4b's.
+
+## BAY-LEFT-GROUND - the road's trouble on the land's own wild past the Bay (2026-10-26)
+
+The audit "no system left behind in the Bay" (2026-10-26, `01-Overview/audits/Audit-Left-In-The-Bay.md`), its item 9
+(D2); the owner: *"Every single thing here needs
+to be addressed. No exceptions."* LW4's trouble handed the encounter law no `fauna`, so a caravan past the Bay was beset
+out of Daggerfall's climate tables - Black Marsh's Centaurs, Orcs and Orc Warlords - against TESA-BIOME's recorded
+choice 4 (a province's own beasts, `03-World/Tamriel-Biomes.md`), which every other encounter path follows.
+
+- `trouble.js troubleOf` hands `foesOf` the place the trouble falls (`px`, `py`) beside its climate.
+- The host's `foesOf` left `bootWorld` for its own module (`scenes/livingWorld/troubleFoes.js` troubleFoesOf), the roads'
+  harness's producer too (`test/lwRoads.mjs` wrote the host's lambda out): on the land the campers' group rolled on
+  `faunaAt(px, py)` - the composed maps' `getFaunaBand`, as every other encounter path reads it; inside a dive's dungeon
+  the deep's own table, as LW6 wrote it. On the Bay a pixel is no zone's (`faunaBandAt` answers null) and the roll is the
+  climate's, roll for roll.
+
+Measured (lane D's probe p2, 400 groups of three at each city on the freeware's trace): at Helstrom 322 of the 1,200
+foes were the Bay's Centaurs and Orcs (Centaur 99, Orc Sergeant 83, Orc 70, Orc Warlord 70), none now - the zone's own
+(blackMarshHist's); Whiterun, Torval and Mournhold the same, each its zone's.
+
+THE FOUR HOSTS. `scenes/world.js` WIRED (the living world's trouble world). `scenes/exterior.js` FLAGGED - the fixed city
+streams no living world's roads. `scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED - the trouble is the
+road's, rolled over the trips' world the streaming host composes.
+
+Pins: `test/systems/livingWorld/bayleftground_trouble.test.js` (4: the query's pixel the encounter's own; past the Bay
+the zone's roll and every foe of its tables, the Bay's unchanged over 240 seeds, a dive's the deep's; the host's
+wiring; with ARENA2 Helstrom, Whiterun, Torval and Mournhold on the real trace). PIN MOVED: `lw4_trouble`'s host line,
+`lw6_deep`'s dive line, `tesabiome_fauna`'s wiring. Mutants: `tools/mutants/bayleftground.json`'s D2 (5), all dead;
+`lw6.json`'s LW6-host-deep-from-the-land re-aimed by content onto the module.
 
 ## LW4b - the fight, stood (2026-10-05)
 
@@ -396,12 +426,15 @@ link with the ship AI at ports" - LW3's trips kept to the land; a port's travell
   with their merchant. The cycle's own dice ('sea'), apart from the road's, so a cycle that does not sail is the trip it
   always was.
 - **Where.** A port a lane of the Bay runs to from theirs (`world.lanesFrom`: the far port, the lane's length in
-  metres): the bigger and the nearer the likelier (a pilgrim's a temple town's). Lanes are the Bay's own - the ones its
+  metres): the bigger and the nearer the likelier (a pilgrim's a temple town's). Lanes are the Bay's own (WW7-7, `03-World/World-Wide.md`: a port town past the Bay's the lanes past it) - the ones its
   packets sail (LW5) - so a passage can reach a port beyond any road's `TRIP_REACH_PX`.
 - **When.** Out from the dock on a morning tide (`SEA_TIDE_H`, 6 to 9 o'clock); the crossing at `SEA_PACE_X` (3) a
   walker's pace, by night as by day; the stay (the job's `STAY_DAYS`); home on a later morning's tide, the same hour
   (a ship turns round overnight at the least). The whole passage inside the cycle: a lane too long for it gives way to
-  the longest shorter lane that fits; none that fits (or no lane at all), the road's trip it always was.
+  the longest shorter lane that fits; none that fits (or no lane at all), the road's trip it always was. WW7-11
+  (`03-World/World-Wide.md`; the owner: *"Make them longer"*): a FAR lane's passage (past the Bay or across its edge) takes
+  the whole cycles it needs, set out at the first cycle of its traveller's block of long passages (`voyageBlock`), and the
+  cycles it spends at sea make no trip of their own; the Bay's lanes keep a cycle a passage, to the byte.
 - **At sea, never on the road.** A passage is `sea` while it sails, out and home, and `stay` between - never `out` or
   `back`, so no road, Overworld mark or roadside fight shows it (it has no way under it). Its party is a caravan's
   like any trip's: a merchant's sellswords and the joiners of the day (LW3) take the same ship.
@@ -2072,3 +2105,19 @@ Pinned by `test/systems/livingWorld/tonetaste.test.js` (4: the law over every gr
 courtship, the talk's door); pins moved by intent, each a PIN MOVED note (`legacy5_marriage`, `lw7_deeds`,
 `lwfix2_watch`, `lw8_indoors`); `tools/mutants/tonetaste.json` (11, all dead) and six LW7/LW8 records re-aimed at the
 taste, dead.
+
+## IC-GRAND - a town of quarters (2026-10-26)
+
+The owner, walking the Imperial City: "Seems like NPCs arent navigating the entirety of the city". A capital's slice is
+cut from one city at its pixel's lines, so its walkers' grid holds pieces of several of the city's street nets (a
+district wall whose gate stands in the next slice parts it), and the town walked the one its most doors open onto - the
+others' people stayed in. A capital's slice is now A TOWN OF QUARTERS (`src/systems/livingWorld/places.js:"export function quartersOf(nav, doors, streets, main) {"`):
+every component QUARTER_MIN of its buildings open onto is the town's (its net the union) and each a quarter - the town's
+places over its own street alone (`quarters`, `quarterAt`). Its people are each quarter's own (`census.js` quarterCensus:
+the town's own quarter's as townCensus mints them - households, watch, travellers - each other quarter's households of
+its buildings alone, on the 'q' roll and slots of their own, QUARTER_SLOTS), and each one's day is planned over its
+home's quarter (`livingTown.js` `_placesFor` - a lodger's over its tavern's; a patron's errands and a browser's doors its
+quarter's), so every walk of a day runs on one street. A Bay town asks no quarters: one town, one net, as the field's law
+above keeps it (no pin of a Bay town moved). The Imperial City's own blocks' homes are world/imperialHomes.js's
+(bible/03-World/Arena-Provinces.md IC-GRAND). Pinned in `test/world/icgrand_living.test.js`; mutants in
+`tools/mutants/icgrand_people.json`.

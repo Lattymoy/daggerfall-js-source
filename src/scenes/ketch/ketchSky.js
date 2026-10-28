@@ -16,6 +16,10 @@
 // her place; the lift is world/ketch/ketchModel.js buildKetchAnchorLift's. Pure but for its set (createKetchSky), whose seams
 // the client hands in (scenes/ketch/ketchClient.js).
 //
+// KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): a sky a STATION - `theatre` the station's lane (ketchLaw.js
+// KT_THEATRES), its voyage that lane's on the clock, its city the client's (Daggerfall's for the Bay's own, as it always
+// was), its collider its own bucket (the Bay's own KT_SKY_BUCKET, every other station's `kt:sky:<lane>`).
+//
 // Not a DFU member: Daggerfall has no airship. Ledger A (KETCH).
 import { ketchVoyageAt, KT_SIGHT_MS } from '../../net/ketch/ketchLaw.js';
 import { KT_ANCHOR_LIFT, deckToDungeon } from '../../net/ketch/ketchDeck.js';
@@ -32,11 +36,12 @@ export const KT_SKY = Object.freeze({ centre: 118, approach: 6000, high: 90, tur
 /** How long a body stands in the lowered lift before it rises; how near the lift its prompt is said. */
 export const KT_BOARD_HOLD_MS = 2500;
 export const KT_LIFT_NEAR_M = 14;
-/** Her collider's bucket while she keeps station. */
+/** Her collider's bucket while she keeps station - KETCH-EVERYWHERE: the Bay's; a station past it its own (ketchSkyBucket). */
 export const KT_SKY_BUCKET = 'kt:sky';
+export const ketchSkyBucket = (theatre = 0) => (theatre ? `${KT_SKY_BUCKET}:${theatre}` : KT_SKY_BUCKET);
 /** The words - each read through the text core when it is said (L10N4). */
 export const KT_SKY_TEXT = Object.freeze({
-  get near() { return t('ketch.sky.near', 'The anchor-lift hangs from the Ketch. Stand in it to ride it up.'); },
+  get near() { return t('ketch.sky.near', 'Stand in the anchor-lift to ride it up.'); },
   rising: (s) => t('ketch.sky.rising', 'The anchor-lift rises in {s}...', { s }),
   get up() { return t('ketch.sky.up', 'The anchor-lift is drawn up.'); },
 });
@@ -46,11 +51,12 @@ const smooth = (k) => { const u = Math.max(0, Math.min(1, k)); return u * u * (3
 /**
  * WHERE SHE IS at `now` (relay ms): her middle's offset from her station's (`dx` east, `dy` up, `dz` north - metres), her
  * turn (`yaw` - 0 her station's heading, bow south; PI/2 bow west), her lift let down (`lift`, 0 up to 1 on the fields),
- * whether she moves (`moving`), the voyage - or null: no Ketch in the sky. Pure.
- * @param {number} now
+ * whether she moves (`moving`), the voyage - or null: no Ketch in the sky. KETCH-EVERYWHERE: station `theatre`'s (the
+ * Bay's by default). Pure.
+ * @param {number} now @param {number} [theatre]
  */
-export function ketchSkyPose(now) {
-  const v = ketchVoyageAt(now), S = KT_SKY;
+export function ketchSkyPose(now, theatre = 0) {
+  const v = ketchVoyageAt(now, theatre), S = KT_SKY;
   if (v.phase === 'away') return null;
   if (v.phase === 'sighted') {
     const u = Math.max(0, Math.min(1, (now - v.sightAt) / KT_SIGHT_MS)), s = (1 - u) ** 2;
@@ -85,15 +91,43 @@ export function ketchSkyMatrix(out, mid, pose) {
 }
 
 /**
+ * KETCH-EVERYWHERE: HER MESHES MADE ONCE for every station's sky - her ship, her lamps, her lift and its chain, and her
+ * collider's triangles - a function answering them (null where none could be made), and its `destroy`.
+ * @param {any} renderer
+ */
+export function createKetchSkyArt(renderer) {
+  /** @type {null | { ship: any, lamps: any, hit: any, lift: any, chain: any }} */ let art = null;
+  let built = false;
+  const get = () => {
+    if (built || !renderer?.createMesh) return art;
+    built = true;
+    try {
+      ketchArtUp(renderer);
+      const s = buildKetchShip(), a = buildKetchAnchorLift();
+      art = { ship: renderer.createMesh(s.model), lamps: renderer.createMesh(s.lamps), hit: packKetchHit(s.hit), lift: renderer.createMesh(a.cage), chain: renderer.createMesh(a.chain) };
+    } catch (e) { console.warn('[kt] the Ketch would not build in the sky', /** @type {any} */ (e)?.message ?? e); art = null; }
+    return art;
+  };
+  get.destroy = () => {
+    if (art) for (const m of [art.ship, art.lamps, art.lift, art.chain]) if (m) { try { renderer?.destroyMesh?.(m); } catch { /* gone */ } }
+    art = null; built = false;
+  };
+  return get;
+}
+
+/**
  * THE SET: her mesh and her lift drawn where the clock has her, her collider while she keeps station, and the lift's ride.
  * @param {{
  *   renderer?: any, collider?: () => any, city?: () => ([number, number]|null), groundAt?: (x: number, z: number) => number,
  *   frameY?: () => number, now: () => number, feet?: () => (number[]|null), say?: (text: string) => void,
- *   onBoard?: () => void, mayBoard?: () => boolean,
- * }} deps `city` Daggerfall's centre in the scene now (east, north) or null; `groundAt` the terrain under a scene point
- *   (NaN where none streams); `frameY` the scene's vertical shift (its floating frame's); `feet` mine outside, or null
+ *   onBoard?: () => void, mayBoard?: () => boolean, theatre?: number, art?: ReturnType<typeof createKetchSkyArt> | null,
+ * }} deps `city` Daggerfall's centre in the scene now (east, north) or null - KETCH-EVERYWHERE: the station's city's;
+ *   `groundAt` the terrain under a scene point (NaN where none streams); `frameY` the scene's vertical shift (its floating
+ *   frame's); `feet` mine outside, or null; `theatre` the station's (the Bay's, 0, by default); `art` her meshes shared with
+ *   the other stations' skies (createKetchSkyArt - none: made here, and freed with this sky)
  */
-export function createKetchSky({ renderer = null, collider = () => null, city = () => null, groundAt = () => NaN, frameY = () => 0, now, feet = () => null, say = () => {}, onBoard = () => {}, mayBoard = () => true }) {
+export function createKetchSky({ renderer = null, collider = () => null, city = () => null, groundAt = () => NaN, frameY = () => 0, now, feet = () => null, say = () => {}, onBoard = () => {}, mayBoard = () => true, theatre = 0, art = null }) {
+  const bucket = ketchSkyBucket(theatre);
   let ship = null, lamps = null, lift = null, chain = null, hit = null, built = false;
   /** the fields' height under the lift, less the frame's shift - the terrain's own, found once */
   let groundLocal = null;
@@ -106,6 +140,7 @@ export function createKetchSky({ renderer = null, collider = () => null, city = 
   function build() {
     if (built || !renderer?.createMesh) return;
     built = true;
+    if (art) { const a = art(); if (a) ({ ship, lamps, hit, lift, chain } = a); return; }   // KETCH-EVERYWHERE: the stations' one set
     try {
       ketchArtUp(renderer);
       const s = buildKetchShip();
@@ -121,15 +156,15 @@ export function createKetchSky({ renderer = null, collider = () => null, city = 
     const col = collider();
     if (!col?.addMesh) return;
     if (want ? same(M, colliderAt) : colliderAt === null) return;
-    col.removeBucket?.(KT_SKY_BUCKET);
+    col.removeBucket?.(bucket);
     colliderAt = null;
     if (!want || !hit) return;
-    try { col.addMesh(KT_SKY_BUCKET, hit.positions, hit.indices, M); colliderAt = new Float32Array(M); } catch (e) { console.warn('[kt] her collider', e?.message ?? e); }
+    try { col.addMesh(bucket, hit.positions, hit.indices, M); colliderAt = new Float32Array(M); } catch (e) { console.warn('[kt] her collider', e?.message ?? e); }
   }
   return {
     /** One frame outside: where she is, her collider, the lift's ride. Answers her place (or null). */
     frame() {
-      const t = now(), pose = ketchSkyPose(t), c = pose ? city() : null;
+      const t = now(), pose = ketchSkyPose(t, theatre), c = pose ? city() : null;
       if (!pose || !c) { place = null; standCollider(false); standAt = -1; shown = false; return null; }
       build();
       // the fields under her lift: the terrain's own height (the frame's shift taken off), found once it streams
@@ -177,7 +212,7 @@ export function createKetchSky({ renderer = null, collider = () => null, city = 
     /** Gone for good: her meshes freed. */
     destroy() {
       standCollider(false);
-      for (const m of [ship, lamps, lift, chain]) if (m) { try { renderer?.destroyMesh?.(m); } catch { /* gone */ } }
+      if (!art) for (const m of [ship, lamps, lift, chain]) if (m) { try { renderer?.destroyMesh?.(m); } catch { /* gone */ } }   // KETCH-EVERYWHERE: a shared set is its owner's to free
       ship = lamps = lift = chain = null; built = false; shown = false;
     },
   };

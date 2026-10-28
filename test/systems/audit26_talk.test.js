@@ -64,7 +64,9 @@ test('F016: the static NPC name bank is the REGION\'s, and the race path is gone
   // (WORLD-HOVER added three: the dungeon plaque's, the interior
   // plaque's and the street's. Every hover arm reads the same bank as
   // the click beside it, or the two would call one person two things.)
-  assert.ok(wm.includes('const currentNameBank = () => getNameBankOfRegion('), 'GetNameBankOfCurrentRegion');
+  // PIN MOVED (AUDIT-TESA A2-5): past the Bay the current region's bank is the province's (the host's TESA3 bank), else
+  // the region's, as ever.
+  assert.ok(wm.includes('const currentNameBank = () => host.provinceBank?.() ?? getNameBankOfRegion('), 'GetNameBankOfCurrentRegion');
 });
 
 // ── F020 ──────────────────────────────────────────────────────────

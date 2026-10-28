@@ -37,6 +37,7 @@
 import {
   GRANT_ASK_ID_MAX, GRANT_KINDS, GRANT_WAIT_MS, GRANT_RENEW_LEAD_MS, GRANT_RENEW_MAX, GRANT_TALLY_MS, GRANT_TALLY_ROWS_MAX, GRANT_TALLY_COUNT_MAX,
   GRANT_FRAME_GRANTS_MAX, GRANT_SKEW_MS, GRANT_STANDDOWN_REASONS, validGrant, verifyGrant, grantRefusal, grantMarksAllow, wireGrant, grantDice,
+  grantPixelReadBack,
 } from '../net/grantLaw.js';
 import { isNight } from '../world/worldClock.js';
 import { isCellRoom, mapPixelOfWire } from '../net/wire.js';
@@ -87,24 +88,47 @@ const LEVELLED_KINDS = new Set(['enc', 'camp', 'band', 'encr']);
  *  level (1 where it signs none), drawn from the member's own species die (net/grantLaw.js grantDice). -1 where the place
  *  rolls none. DEX3: a roll every machine agrees on, so where a mod offers more than one table for the place the die picks
  *  one of them first (characters/encounterTableDoor.js) - never a table a machine's own events picked. Pure.
- *  @param {{ s: number, m: number, l: number }} gr @param {number} i @param {number} climate @param {boolean} inRect */
-export function grantSpecies(gr, i, climate, inRect) {
-  return chooseRandomEnemy({ climateIndex: climate, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 }, grantDice(gr.s, i).species);
+ *  TESA-BIOME: `fauna` the pixel's zone's band past the Bay (systems/tamrielFauna.js faunaBandAt) - its tables before the climate's.
+ *  @param {{ s: number, m: number, l: number }} gr @param {number} i @param {number} climate @param {boolean} inRect
+ *  @param {ReadonlyArray<number>|null} [fauna] */
+export function grantSpecies(gr, i, climate, inRect, fauna = null) {
+  return chooseRandomEnemy({ climateIndex: climate, fauna, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 }, grantDice(gr.s, i).species);
 }
 
 const _speciesOf = new Map();
 /** THE SPECIES A GRANTED ENCOUNTER OR CAMP MAY STAND at climate `c`: every species of its band's three tables - a town's
  *  night, the wild's day, the wild's night (systems/encounters.js resolveEncounterTableIndex). A camp's members are its
- *  seed's faction-mates out of the same table. Null for a climate with no band. Pure. @param {unknown} c */
-export function grantSpeciesOf(c) {
+ *  seed's faction-mates out of the same table. Null for a climate with no band. Pure. TESA-BIOME: `fauna` a zone's band past
+ *  the Bay, read before the climate's. @param {unknown} c @param {ReadonlyArray<number>|null} [fauna] */
+export function grantSpeciesOf(c, fauna = null) {
   if (!Number.isInteger(c)) return null;
-  const key = `${c}:${encounterTableGeneration()}`;   // DEX3: kept per climate while the tables' selectors stand
+  const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;   // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand
   if (_speciesOf.has(key)) return _speciesOf.get(key);
   const tables = [{ inLocationRect: true, isDay: false }, { inLocationRect: false, isDay: true }, { inLocationRect: false, isDay: false }]
-    .map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o })).filter((i) => i != null);
+    .map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o })).filter((i) => i != null);
   const set = tables.length ? new Set(tables.flatMap((i) => encounterTableChoices(/** @type {number} */ (i)).flat())) : null;   // DEX3: every table any machine's mod may have picked
   _speciesOf.set(key, set);
   return set;
+}
+
+/** What a seed cannot rebuild left aside, what it bounds: a rolled kind's species from its pixel's tables, a levelled
+ *  kind's class foe at the owner's signed level or under, GRANT_LEVEL_SLACK aside (a guest's 0 says none), the watch's a
+ *  watchman - 'dice', or null. `climateAt` a map pixel's climate (null: no species law), `faunaAt` its zone's band past
+ *  the Bay (TESA-BIOME: the zone's tables before the climate's - AUDIT TESA-BIOME P2 pins it here, out of the host). Pure.
+ *  @param {any} gr @param {any} r @param {((px: number, py: number) => number)|null} climateAt
+ *  @param {(px: number, py: number) => ReadonlyArray<number>|null} faunaAt */
+export function grantDiceRefusal(gr, r, climateAt, faunaAt = () => null) {
+  if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';   // GRANT4: the watch's grant stands the watch alone
+  if (gr.k === 'encr' && climateAt) {   // GRANT8: its seed's species exactly - out of a location's rect or in one (its owner's place, which a reader cannot see)
+    const c = climateAt(gr.p[0], gr.p[1]), z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];   // TESA-BIOME: and its zone's band
+    if (r.t !== grantSpecies(gr, i, c, false, z) && r.t !== grantSpecies(gr, i, c, true, z)) return 'dice';
+  }
+  if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';
+  if (ROLLED_KINDS.has(gr.k) && climateAt) {
+    const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]), faunaAt(gr.p[0], gr.p[1]));
+    if (set && !set.has(r.t)) return 'dice';
+  }
+  return null;
 }
 
 /** The relay's public half, from the account service's open route - null when it cannot be had. */
@@ -118,12 +142,13 @@ async function relayKeyOf({ subtle }) {
 const capMap = (m, max) => { while (m.size > max) m.delete(m.keys().next().value); };
 
 /**
- * @param {{ session: () => any, climateAt?: ((px: number, py: number) => number)|null, now?: () => number,
+ * @param {{ session: () => any, climateAt?: ((px: number, py: number) => number)|null,
+ *   faunaAt?: (px: number, py: number) => ReadonlyArray<number>|null, now?: () => number,
  *   fetchKey?: (env: { subtle: SubtleCrypto }) => Promise<CryptoKey|null>, subtle?: SubtleCrypto, wait?: number, verdictWait?: number }} deps
- *   `session` the online session now (null offline); `climateAt` a map pixel's climate (the reader's species law); `now` the
- *   relay's clock
+ *   `session` the online session now (null offline); `climateAt` a map pixel's climate (the reader's species law); TESA-BIOME:
+ *   `faunaAt` its zone's band past the Bay (null on the Bay); `now` the relay's clock
  */
-export function createGrantHost({ session, climateAt = null, now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0), fetchKey = relayKeyOf, subtle = globalThis.crypto?.subtle, wait = GRANT_WAIT_MS, verdictWait = GRANT_VERDICT_WAIT_MS }) {
+export function createGrantHost({ session, climateAt = null, faunaAt = () => null, now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0), fetchKey = relayKeyOf, subtle = globalThis.crypto?.subtle, wait = GRANT_WAIT_MS, verdictWait = GRANT_VERDICT_WAIT_MS }) {
   // AUDIT GRANT A6: `now` the RELAY's clock (net/online.js clockOffsetMs, from the welcome) - a grant's expiry is the relay's
   // ── the asks ─────────────────────────────────────────────────────────────────────────────────────────────────────
   let askId = 0;
@@ -134,6 +159,10 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
   /** GRANT6: a socket open whose welcome has not said the law yet (net/online.js: null) - a stand waits on it, so a cell
    *  crossed is never a moment of ungranted stands. */
   const unsaid = () => { const s = session(); return !!s && s.status === 'open' && s.grantMode == null && typeof s.sendGrant === 'function'; };
+  /** AUDIT TESA II Z6: does my cell's relay read a grant's pixel past the Bay (net/grantLaw.js relaySupportsGrantWorld) -
+   *  the session's word off its welcome: `gateLanesOk`, set by relaySupportsGateLanes, which IS the world-wide relay's one
+   *  test (net/wire.js relaySupportsWorldWide). An older relay's grant off the Bay's map is taken nowhere (grantPixelReadBack). */
+  const worldOk = () => !!session()?.gateLanesOk;
   /** An ask sent, its id - 0 when it did not go. */
   function send(body) {
     const s = open();
@@ -171,7 +200,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
     for (let at = 0; at < all.length; at += max) {
       const chunk = all.slice(at, at + max);
       ask({ k: 'mint', kind, n: chunk.length }).then((a) => {
-        if (a?.k === 'ok') { const gr = { ...a.gr, _members: 0 }; chunk.forEach((res, i) => res({ gr, i })); }
+        if (a?.k === 'ok' && grantPixelReadBack(a.gr, worldOk())) { const gr = { ...a.gr, _members: 0 }; chunk.forEach((res, i) => res({ gr, i })); }   // AUDIT TESA II Z6: an older relay's grant off the Bay is no grant (it would junk its renewal)
         else chunk.forEach((res) => res(a?.k === 'no' ? { refused: a.r } : null));
       });
     }
@@ -196,7 +225,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
   /** Foe `f` handed on to socket `to` - its member signed to the heir, then gone from me. */
   function handed(f, to) {
     const gr = f?._grant;
-    if (gr && !gr._dead && typeof to === 'string' && to) post('heir', { gr: wireGrant(gr), i: f._grantI, to });
+    if (gr && !gr._dead && grantPixelReadBack(gr, worldOk()) && typeof to === 'string' && to) post('heir', { gr: wireGrant(gr), i: f._grantI, to });   // AUDIT TESA II Z6: never to a relay that cannot read it back
     ended(f);
   }
   /** AUDIT GRANT A7: A TURN'S FREES AND HEIRS, ONE ASK EACH - a cull or a death ends a dozen grants at once, and every ask
@@ -227,7 +256,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
    *  answered (a timeout, an answer gone to a socket that is now a halo's) is carried again while I stand in a cell,
    *  GRANT_CARRY_TRIES times, then given up. */
   async function carry(room) {
-    const gs = [...live].filter((g) => !g._dead && g.q !== room && isCellRoom(g.q));
+    const gs = [...live].filter((g) => !g._dead && g.q !== room && isCellRoom(g.q) && grantPixelReadBack(g, worldOk()));   // AUDIT TESA II Z6: as the renewal
     if (!gs.length) return;
     carrying = true;
     let unanswered = false;
@@ -250,7 +279,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
       if (s.room !== lastRoom) { const from = lastRoom; lastRoom = s.room; carryTo = from && isCellRoom(s.room) ? s.room : null; carryTries = 0; }   // GRANT4: cell to cell - a world room's grants stay its own (carry: a cell's alone)
       if (carryTo && !carrying) { const to = carryTo; carryTo = null; if (to === s.room) void carry(to); }   // AUDIT GRANT A13: a crossing made while a carry was out is carried when it lands
       if (!renewing && !carrying) {
-        const due = [...live].filter((g) => !g._dead && g.q === s.room && g.x - t <= GRANT_RENEW_LEAD_MS).slice(0, GRANT_RENEW_MAX);
+        const due = [...live].filter((g) => !g._dead && g.q === s.room && g.x - t <= GRANT_RENEW_LEAD_MS && grantPixelReadBack(g, worldOk())).slice(0, GRANT_RENEW_MAX);   // AUDIT TESA II Z6: a relay that cannot read a grant back is never asked to renew it
         if (due.length) void renew(due);
       }
     }
@@ -386,22 +415,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
       ?? twice(from, g, i, r.i);
     return why ? note(from, why) : null;
   }
-  /** What a seed cannot rebuild left aside, what it bounds: a rolled kind's species from its pixel's tables, a levelled
-   *  kind's class foe at the owner's signed level or under, GRANT_LEVEL_SLACK aside (a guest's 0 says none), the watch's
-   *  a watchman. */
-  function diceRefusal(gr, r) {
-    if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';   // GRANT4: the watch's grant stands the watch alone
-    if (gr.k === 'encr' && climateAt) {   // GRANT8: its seed's species exactly - out of a location's rect or in one (its owner's place, which a reader cannot see)
-      const c = climateAt(gr.p[0], gr.p[1]), i = r.gr[1];
-      if (r.t !== grantSpecies(gr, i, c, false) && r.t !== grantSpecies(gr, i, c, true)) return 'dice';
-    }
-    if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';
-    if (ROLLED_KINDS.has(gr.k) && climateAt) {
-      const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]));
-      if (set && !set.has(r.t)) return 'dice';
-    }
-    return null;
-  }
+  const diceRefusal = (gr, r) => grantDiceRefusal(gr, r, climateAt, faunaAt);
   function twice(from, g, i, seq) {
     const k = `${from}|${g}|${i}`, was = members.get(k);
     members.set(k, seq);
@@ -462,7 +476,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
     if (res) { pending.delete(a.id); res(a); }
   }
   /** GRANT8: my `encr` member's species - its seed's at its pixel's climate (-1: none, or no map to read). */
-  const speciesOf = (gr, i, inRect) => (gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect) : -1);
+  const speciesOf = (gr, i, inRect) => (gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);
   /** Is the law enforcing in my cell (GRANT6: the pool stands down what the check refuses)? */
   const enforcing = () => open()?.grantMode === 'enforce';
   /** GRANT6: does an enforcing reader stand down a foe its check refused for `why` (GRANT_STANDDOWN_REASONS)? */

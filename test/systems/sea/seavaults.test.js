@@ -204,7 +204,8 @@ test('SEA-VAULTS the seams by source: the world host builds the sea\'s ventures 
   const w = src('src/scenes/world.js');
   assert.match(w, /const seaVentures = createSeaVentures\(\{\n\s+live: \(\) => etherSea && _onlineWorldSession\(\) && !!online\?\.wildOk, day: wdunDayNow, pixel: playerTravelPixel, locks: _wdunLocks, crows: _wdunCrows, mine: \(\) => _wildMine,\n/);
   assert.match(w, /return seaVentures\.vaultHere\(\) \?\? \(a && p \? wildHallAt\(a, p\.x, p\.y\) : null\);/);
-  assert.match(w, /if \(!wildInside\(mask, p\.x, p\.y\) && !seaVentures\.vaultHere\(\)\) return true;/);
+  // PIN MOVED (WW7-4): a capital's castle passes the mask too (World-Wide.md WW7-4)
+  assert.match(w, /if \(\(!wildInside\(mask, p\.x, p\.y\) && !seaVentures\.vaultHere\(\)\) \|\| hit\?\.dfLocation\?\.capital\) return true;/);
   assert.match(w, /const sea = seaVentures\.crowLine\(h\);[^\n]*\n\s*if \(!wildHere\(\) \|\| !!sea !== \(wildZoneKind\(\) === ETHER_KIND\)\) return;/);
   assert.match(w, /const line = sea \?\? `Crows gather over/);
   assert.match(w, /const wdKey = \(\) => \{ const p = playerTravelPixel\(\); return seaVentures\.vaultHere\(\)\?\.key \?\? `\$\{p\.x\},\$\{p\.y\}`; \};/, 'a death after a load names the vault, never its pixel');

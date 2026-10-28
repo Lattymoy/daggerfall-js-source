@@ -154,7 +154,7 @@ test('AUDIT C&C H5 THE HOSTS BY SOURCE - ONE CONSTRUCTION SEAM: every blow a hos
   for (const f of files) {
     if (f === 'combat/duelCombat.js' || f === 'combat/siegeCombat.js') continue;   // the producers' own definitions
     for (const line of read(`src/${f}`).split('\n')) {
-      if (line.includes('resolveDuelStrike(')) rolls.push([f, line.trim().endsWith(', duelStandIn());')]);
+      if (line.includes('resolveDuelStrike(')) rolls.push([f, line.trim().endsWith(', duelStandIn(playerEntity));')]);   // PIN MOVED (RPT1026-FIGHTS STRIKE-UNVEILS): and the striker named, its concealment its own
       if (line.includes('siegeSpellNumbers(')) counts.push([f, /, duelStandIn\(\), playerEntity\)\)?;/.test(line)]);   // FIRM1: a count at a player may be read with the sky off (withoutFirmament(playerEntity, () => ...))
       if (line.includes('duelStub(')) stubs.push(f);
     }
@@ -165,10 +165,10 @@ test('AUDIT C&C H5 THE HOSTS BY SOURCE - ONE CONSTRUCTION SEAM: every blow a hos
   // each by its own function: the duel's, the siege work's, the siege's and the zone's roll; the four counts
   const w = read('src/scenes/world.js');
   const body = (decl) => { const i = w.indexOf(decl); assert.ok(i >= 0, decl); return w.slice(i, w.indexOf('\n  };\n', i)); };
-  assert.ok(body('const duelStrikeOut = (').includes('const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn());'));   // PIN MOVED (TWO-HANDS AUDIT): and the off hand's terms
-  assert.ok(body('const siegeWorkHit = (').includes("const r = resolveDuelStrike({ by: 'melee', a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(weaponRig.playerWeapon.offStrike ? { off: true } : {}) }, duelStandIn());"));   // PIN MOVED (TWO-HANDS AUDIT)
-  assert.ok(body('const siegeStrikeOut = (').includes('const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}), ...(off ? { off } : {}) }, duelStandIn());'));   // PIN MOVED (TWO-HANDS AUDIT)
-  assert.ok(body('const wildStrikeOut = (').includes('const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn());'));   // PIN MOVED (TWO-HANDS AUDIT)
+  assert.ok(body('const duelStrikeOut = (').includes('const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn(playerEntity));'));   // PIN MOVED (TWO-HANDS AUDIT): and the off hand's terms; PIN MOVED (RPT1026-FIGHTS STRIKE-UNVEILS)
+  assert.ok(body('const siegeWorkHit = (').includes("const r = resolveDuelStrike({ by: 'melee', a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(weaponRig.playerWeapon.offStrike ? { off: true } : {}) }, duelStandIn(playerEntity));"));   // PIN MOVED (TWO-HANDS AUDIT); PIN MOVED (RPT1026-FIGHTS STRIKE-UNVEILS)
+  assert.ok(body('const siegeStrikeOut = (').includes('const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}), ...(off ? { off } : {}) }, duelStandIn(playerEntity));'));   // PIN MOVED (TWO-HANDS AUDIT); PIN MOVED (RPT1026-FIGHTS STRIKE-UNVEILS)
+  assert.ok(body('const wildStrikeOut = (').includes('const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn(playerEntity));'));   // PIN MOVED (TWO-HANDS AUDIT); PIN MOVED (RPT1026-FIGHTS STRIKE-UNVEILS)
   for (const decl of ['const duelSpellOut = (', 'const siegeSpellOut = (', 'const wildSpellOut = (']) {
     assert.ok(body(decl).includes('const { harm } = withoutFirmament(playerEntity, () => siegeSpellNumbers(sp, Math.max(1, Math.trunc(playerEntity.level || 1)), duelStandIn(), playerEntity));'), decl);   // FIRM1: with the sky off
   }

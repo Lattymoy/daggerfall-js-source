@@ -83,7 +83,8 @@
   {
     "name": "SD8B-the-record-swallowed",
     "file": "src/net/wire.js",
-    "old": "  if (m.k !== 'ev') return validSdFightOut(m);   // SD8b: the realm's fight",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "  if (m.k !== 'ev' && m.k !== SD_LANE_KIND) return validSdFightOut(m);   // SD8b: the realm's fight",
     "new": "  return validSdFightOut(m);   // SD8b: the realm's fight",
     "tests": [
       "test/net/superDungeon/sd8b_fight.test.js",
@@ -138,8 +139,8 @@
   {
     "name": "SD8B-the-dead-strike",
     "file": "server/src/index.js",
-    "old": "    const pose = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._arenaPoseOf(a.pose) : null;",
-    "new": "    const pose = a.pose && !bodyOut(f.players[a.sub], line.enforce) ? this._arenaPoseOf(a.pose) : null;",
+    "old": "    const pose = a.pose && !a.pose.dd && now - (a.pAt ?? a.since ?? 0) <= SD_POSE_FRESH_MS && !bodyOut(f.players[a.sub], this._bodyLine().enforce) ? this._arenaPoseOf(a.pose) : null;",
+    "new": "    const pose = a.pose && now - (a.pAt ?? a.since ?? 0) <= SD_POSE_FRESH_MS && !bodyOut(f.players[a.sub], this._bodyLine().enforce) ? this._arenaPoseOf(a.pose) : null;",
     "tests": [
       "test/net/superDungeon/sd8b_fight.test.js"
     ],
@@ -229,8 +230,9 @@
   {
     "name": "SD8B-the-fight-heard-from-anywhere",
     "file": "src/net/online.js",
-    "old": "else if (r && r.k !== 'ev') { if (room === this.room && isSdRoom(room)) this._deliver('sd', () => this.onSdFight?.(r, room)); }",
-    "new": "else if (r && r.k !== 'ev') { this._deliver('sd', () => this.onSdFight?.(r, room)); }",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "else if (r && r.k !== 'ev' && r.k !== SD_LANE_KIND) { if (room === this.room && isSdRoom(room)) this._deliver('sd', () => this.onSdFight?.(r, room)); }",
+    "new": "else if (r && r.k !== 'ev' && r.k !== SD_LANE_KIND) { this._deliver('sd', () => this.onSdFight?.(r, room)); }",
     "tests": [
       "test/net/superDungeon/sd8b_fight.test.js"
     ]

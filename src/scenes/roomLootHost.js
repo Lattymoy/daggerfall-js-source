@@ -5,13 +5,13 @@
 import { addGoldPieces, addItem, isGoldPieces, stacksWith } from '../systems/inventory.js';
 import { asTheRoom } from '../systems/online/onlineLane.js';
 import { withRollerLevel } from '../systems/loot/lootLevelGate.js';   // AUDIT UPDATE L1: the room's base at the room's level
-import { baseSignature, bonusSpent, carriedBase, claimOf, claimWord, composeRoomView, isPersonalLoot, isRoomBaseKind, isRoomWord, judgeRoomClaim, legacyCounts, legacyDelta, legacySig, markPersonal, mergeRoomWord, pieceCount, recentAnswers, roomEmptied, ROOM_ANSWERS_KEPT, ROOM_BASE_FIND, ROOM_BASE_LUCK, ROOM_BASE_MAX, ROOM_BASE_QUARTERS, ROOM_CLAIM_TIMEOUT_MS, ROOM_CLAIMS_MAX, ROOM_PUT_RESAY_MS, ROOM_TAKEN_TEXT, roomBaseGender, roomBaseLevel, roomClaimId, roomClaimOrder, roomContainerName, roomRoller, roomState, roomTermsBeat, roomWord, sameRoomTerms, seededRolls, settleBonusSpent, validRoomWord } from '../systems/roomLoot.js';
+import { baseSignature, bonusSpent, carriedBase, claimOf, claimWord, composeRoomView, isPersonalLoot, isRoomBaseKind, isRoomWord, judgeRoomClaim, legacyCounts, legacyDelta, legacySig, markPersonal, mergeRoomWord, pieceCount, recentAnswers, roomEmptied, ROOM_ANSWERS_KEPT, ROOM_BASE_FIND, ROOM_BASE_LUCK, ROOM_BASE_MAX, ROOM_BASE_QUARTERS, ROOM_CLAIM_TIMEOUT_MS, ROOM_CLAIMS_MAX, ROOM_PUT_RESAY_MS, ROOM_TAKEN_TEXT, LOOT_SKEW_TEXT, ROOM_LAPSED_TEXT, roomBaseGender, roomBaseLevel, roomClaimId, roomClaimOrder, roomContainerName, roomRoller, roomState, roomTermsBeat, roomWord, sameRoomTerms, seededRolls, settleBonusSpent, validRoomWord } from '../systems/roomLoot.js';
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { grantEliteLoot } from '../systems/eliteFoes.js';
 import { isDeepPileKey } from '../systems/rest/restItems.js';
 import { isEquipped, unequipItem } from '../systems/equip.js';
 import { CLAIM_KEEP_MS, CLAIMS_KEPT_MAX } from '../systems/loot/claimLedger.js';
-import { LOOT_LIST_MAX, validLootList } from '../systems/loot/loot.js';
+import { LOOT_LIST_MAX, validLootList, LOOT_NEWER_TEXT } from '../systems/loot/loot.js';   // RPT1026-ITEMS LOOT-SKEW: M2's line, for a word that IS a newer piece's
 import { markRoomCarried } from '../systems/loot/roomCarriedList.js';
 import { SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX } from '../systems/searchables.js';
 import { SEARCH_FOREIGN_PER_OBJECT } from './searchRoom.js';
@@ -62,6 +62,7 @@ export function createRoomLoot(host) {
   const _roomSearcher = new Map();  // canon -> { by, bn }: the searching account and character a find's words name (searchRoom.fields)
   const _roomLegacy = new Map();    // `canon|peer` -> an older build's last whole list, as a census (roomLoot.js legacyCounts): its next word is read against it
   const _roomStale = new Set();     // canon -> a find's mint lost its tie-break while this player's window stood open on it: what that window took or laid is put right at its close
+  const _roomSkew = new Set();      // RPT1026-ITEMS LOOT-SKEW: canon -> unreadable here because a live peer's base is another build's (never because a piece in it is)
   const isCarried = (canon) => typeof canon === 'string' && canon.startsWith('srch:');
   /** Two mints of one container are one base when their terms agree - and, for a carried base (one client's roll), their signature. */
   const sameMint = (a, b) => sameRoomTerms(a, b) && (a?.h ?? null) === (b?.h ?? null);
@@ -387,6 +388,7 @@ export function createRoomLoot(host) {
           restartStaleContainer(canon);
           return 0;
         }
+        _roomSkew.add(canon);   // RPT1026-ITEMS LOOT-SKEW: another build's base, whichever is newer
         host._lootSeen.add(canon);
         host._lootUnreadable.add(canon);
         return 0;
@@ -416,9 +418,13 @@ export function createRoomLoot(host) {
   /** AUDIT SETS M2: the room's word, in terms this build cannot read - the container is the room's, unread here (a find's, only
    *  when it is this player's party's: a stranger's unreadable word is nobody's). */
   function unreadableWord(canon, h, mine) {
+    _roomSkew.delete(canon);   // RPT1026-ITEMS LOOT-SKEW: a word this build cannot read at all - M2's own line
     if (mine && roomBorn(h)) { host._lootSeen.add(canon); host._lootUnreadable.add(canon); }
     return 0;
   }
+  /** RPT1026-ITEMS LOOT-SKEW: what a room container this build cannot read says at its press - another build's base, or
+   *  (M2) a word holding a piece no build of this one reads. */
+  const roomUnreadableText = (canon) => (_roomSkew.has(canon) ? LOOT_SKEW_TEXT() : LOOT_NEWER_TEXT);
   /** A find's mint was replaced by another's (it lost the tie-break, or a new period's search beat it): this player's claims and
    *  puts on the old one are let go - a piece taken from a roll that never was the room's stays out of the pack, a piece laid
    *  in comes home - and, if their window stands open on it, what that window did is put right at its close (roomSettle). */
@@ -481,6 +487,7 @@ export function createRoomLoot(host) {
   function landLegacyList(canon, h, rec) {
     const items = peerHanded(validLootList(rec?.r));
     const _now = host._wallNow();
+    if (!items) _roomSkew.delete(canon);   // RPT1026-ITEMS LOOT-SKEW: a piece no build of this one reads - M2's own line, as unreadableWord's
     if (!items) { if (roomBorn(h) && !respawnDue(rec?.t, _now)) { host._lootSeen.add(canon); host._lootUnreadable.add(canon); } return 0; }
     if (respawnDue(rec.t, _now)) return 0;
     if (!roomBorn(h)) { _roomPending.set(canon, rec); return 0; }
@@ -713,7 +720,7 @@ export function createRoomLoot(host) {
     const due = new Set();
     for (const canon of [..._roomSeen.keys()]) if (roomSettle(canon)) due.add(canon);
     for (const m of _roomMine.values()) {
-      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); }
+      if (m.claim && !m.lapsed && nowMs - m.at >= ROOM_CLAIM_TIMEOUT_MS) { m.lapsed = true; composeRoomContainer(m.canon); setMidScreenText(ROOM_LAPSED_TEXT()); }   // RPT1026-ITEMS LOOT-SKEW: said
       if (host._authority || m.refused || nowMs - m.saidAt < ROOM_PUT_RESAY_MS) continue;
       m.saidAt = nowMs; due.add(m.canon);   // OUTDOOR-LOOT D-2.1: a claim with no verdict is said AGAIN, as a put is - a lapsed one too, which the host may still grant (a dropped word lost the piece)
     }
@@ -815,5 +822,5 @@ export function createRoomLoot(host) {
       if (host._authority || due(canon)) mintRoomTerms(canon, bodyGeneration(canon, f));
     }
   }
-  return { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomRecordsOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus };
+  return { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomRecordsOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, roomUnreadableText, searchFound, settleRoomBonus };
 }

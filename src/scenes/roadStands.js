@@ -13,8 +13,10 @@
 //  - AN ARMED FRIEND (FRIEND_AT and above) COMES TO THE PLAYER'S SIDE within HELP_M while the player is fighting
 //    (`fighting` - a foe on the player near): stood live as the player's ally (team PlayerAlly, a `shipmate` no blow of
 //    the player's reaches), until the fight has been done CALM_S, and they go back to their party.
-// THE END IS WHAT HAPPENS. A foe cut down is SLAIN - the character's hand (`slay`, seen: their party stood by), and their
-// party's living turned against the player (`slain` - its other armed now hostile, if they were not). A friend cut down
+// THE END IS WHAT HAPPENS. A foe the player cut down is SLAIN - the character's hand (`slay`, seen: their party stood by -
+// the road's Murder report, LW11), and their party's living turned against the player (`slain` - its other armed now
+// hostile, if they were not); AUDIT FB1025i D2: one another hand cut down - a beast, a peer, an ally (the pool's
+// `killedBy`) - is KILLED (`killed`: dead for good, no report, nobody's regard moved). A friend cut down
 // DIED at the player's side (`died` - their place empty for it; their town talks of it). The dead are the pool's own (a
 // corpse to search). A stand left - the player past KEEP_M from where it was stood, nothing able to stand (indoors, the
 // Overworld up, a sweep), a friend's fight done - is let go: the body taken out, the member back with their party.
@@ -46,14 +48,15 @@ export const FIGHT_NEAR_M = 30;
  *   sceneOf: (nx: number, nz: number) => number[],
  *   relations: () => any,
  *   slay: (res: any, t: number, seen: boolean) => void,
+ *   killed: (res: any, t: number) => void,
  *   died: (res: any, t: number) => void,
  *   deadAt?: (res: any, t: number) => boolean,
  *   fighting: () => boolean,
  *   say?: (text: string) => void,
  *   door?: any,
  *   wanted?: (res: any, trip: any) => (string | null),
- * }} deps - `ready()` whether a body can be stood now (on foot in the open world, nothing loading); `slay`/`died` the
- *   host's hand turns; `fighting()` whether a foe is on the player near; `door` the roads' handle each body carries; LW9
+ * }} deps - `ready()` whether a body can be stood now (on foot in the open world, nothing loading); `slay`/`killed`/`died` the
+ *   host's hand turns (the player's, another hand's, at the player's side); `fighting()` whether a foe is on the player near; `door` the roads' handle each body carries; LW9
  *   `wanted(res, trip)` - a patrol's knight before a player wanted in its region: its halt, said as it draws (null: no)
  */
 export function createRoadStands(deps) {
@@ -123,10 +126,13 @@ export function createRoadStands(deps) {
         // here too, never a slaying (a crime the caravan reports) nor a death at the player's side
         if (s.rec?.dead && !killed(s.rec)) { stands.delete(id); continue; }
         if (s.rec?.dead) {
-          if (s.kind === 'foe') {
+          // AUDIT FB1025i D2: SLAIN BY THE PLAYER'S OWN HAND ALONE - the pool's death door names whose (`killedBy`); a foe
+          // a beast, a peer or an ally cut down is KILLED (`killed` - dead for good, no report, nobody's regard moved)
+          if (s.kind === 'foe' && s.rec.killedBy === 'player') {
             deps.slay(s.res, t, true);   // struck down before their party
             for (const m of membersAt(s.trip, t)) if (m.id !== s.res.id) rel?.note(m.id, 'slain', day);
-          } else deps.died(s.res, t);   // fallen at the player's side
+          } else if (s.kind === 'foe') deps.killed(s.res, t);
+          else deps.died(s.res, t);   // fallen at the player's side
           stands.delete(id);
           continue;
         }

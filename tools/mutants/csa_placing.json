@@ -473,7 +473,7 @@
   {
     "name": "CSA-C-marker-twice",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (!state.mapMarkers.some((m) => m.position[0] === mapPixel[0] && m.position[1] === mapPixel[1])) state.mapMarkers.push",
+    "old": "    if (!state.mapMarkers.some((m) => markerOn(m, mapPixel, sheet))) state.mapMarkers.push",
     "new": "    state.mapMarkers.push",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"

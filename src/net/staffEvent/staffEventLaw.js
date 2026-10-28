@@ -84,6 +84,29 @@ export const STAFF_EVENT_BOARD_MAX = 10;
 export const STAFF_EVENT_STAND_TICK_MS = 4000;
 
 const intIn = (/** @type {unknown} */ v, /** @type {number} */ lo, /** @type {number} */ hi) => Number.isSafeInteger(v) && /** @type {number} */ (v) >= lo && /** @type {number} */ (v) <= hi;
+/** AUDIT RELEASE R2-7 (bible/01-Overview/audits/Audit-Release-R2.md; the owner: "Take care of exclusions and gaps"): AN
+ *  EVENT'S PIXEL IS THE WORLD'S - within the wire's WORLD_PIXEL_BOUND either side of the Bay's corner (net/wire.js; held
+ *  equal here by its pin, since this file imports nothing), so an AREA's event stands past the Bay as on it. */
+export const STAFF_EVENT_PIXEL_BOUND = 8192;
+const worldPx = (/** @type {unknown} */ v) => intIn(v, 1 - STAFF_EVENT_PIXEL_BOUND, STAFF_EVENT_PIXEL_BOUND - 1);
+/** An AREA's event: the pixel alone, no town (`loc`). */
+export const STAFF_EVENT_AREA = -1;
+/** WW6: the least location index a town past the Bay carries - its place's own, negative, eight digits (net/raid/raidLaw.js
+ *  RAID_KEY_RE's; world/arenaLocations.js arenaLocationIndex, world/tamrielCapitals.js capitalLocationIndex). */
+export const STAFF_TOWN_INDEX_MIN = -99999999;
+/** The provinces' regions past the Bay (formats/mapsTables.js, WW-R - pinned equal; this file imports nothing). */
+export const STAFF_PROVINCE_REGIONS = Object.freeze([62, 70]);
+/** A place's word: an area (-1), a Bay town's MAPS.BSA location (0..9999), or a town past the Bay's own index. @param {unknown} loc */
+const staffLocOk = (loc) => loc === STAFF_EVENT_AREA || intIn(loc, 0, 9999) || intIn(loc, STAFF_TOWN_INDEX_MIN, STAFF_EVENT_AREA - 1);
+/** AUDIT RELEASE R2-7: ...and a TOWN's event stands where its town does. A town's event runs as the town's raid runs
+ *  (systems/raidingParties.js RAID2 - its town by its location), and WW6 (03-World/World-Wide.md WW6) stands the raids past
+ *  the Bay: a Bay town (its MAPS.BSA location, 0..9999) on the Bay's own map, as it always was; a town past the Bay (its
+ *  place's own index, negative - no MAPS.BSA row holds it) on the world's grid off the Bay, in a province's region (62..70).
+ *  A town's event with its location and its pixel on two sides of the Bay's edge is refused by name (`town`).
+ *  @param {unknown} px @param {unknown} py @param {unknown} [loc] @param {unknown} [rg] */
+export const staffTownPixelOk = (px, py, loc = 0, rg = 0) => (/** @type {number} */ (loc) >= 0
+  ? intIn(px, 0, 999) && intIn(py, 0, 499)
+  : worldPx(px) && worldPx(py) && !(intIn(px, 0, 999) && intIn(py, 0, 499)) && intIn(rg, STAFF_PROVINCE_REGIONS[0], STAFF_PROVINCE_REGIONS[1]));
 const bit = (/** @type {unknown} */ v) => v === 1 ? 1 : 0;
 const clean = (/** @type {unknown} */ s, /** @type {number} */ max) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max) : '');
 /** Is `t` a kind an event may bring? @param {unknown} t */
@@ -92,7 +115,8 @@ export const staffEventKindOk = (t) => intIn(t, 0, STAFF_EVENT_KIND_MAX) && !STA
 /**
  * @typedef {{ id: string, rg: number, loc: number, px: number, py: number, nm: string, ct: 0|1, mt: number[], n: number, m: number,
  *   b: number, bs: number, bh: number, hp: number, at: number, ue: number, eb: 0|1, fb: number, by: string }} StaffEvent
- *   `loc` -1 for an area (the pixel alone); `ct` 1 when the place is a city (a town on the game's own map - the panel's
+ *   `loc` -1 for an area (the pixel alone), else its town's - a Bay town's MAPS.BSA location, a town past the Bay's own
+ *   index (negative, WW6); `ct` 1 when the place is a city (a town on the game's own map - the panel's
  *   pick), never for an area, so its lines say a city or an area; `ue` the end it was set to (ms, 0 none); `eb` 1 ends it at the boss's fall;
  *   `bh` the mini boss's health, times its kind's; `hp` BOSS-HP's exact health, which wins over `bh` (0 none);
  *   `fb` how many times staff called the boss by hand (Spawn mini boss now) - each call is one more boss.
@@ -105,7 +129,7 @@ export const staffEventKindOk = (t) => intIn(t, 0, STAFF_EVENT_KIND_MAX) && !STA
 export function validStaffEvent(e) {
   if (staffEventFault(e)) return null;
   const mt = [...new Set(/** @type {number[]} */ (e.mt))];
-  return { id: e.id, rg: e.rg, loc: e.loc, px: e.px, py: e.py, nm: clean(e.nm, STAFF_EVENT_PLACE_MAX), ct: e.loc >= 0 ? bit(e.ct) : 0, mt, n: e.n, m: e.m, b: e.b, bs: e.bs, bh: e.bh ?? STAFF_BOSS_HEALTH_DEFAULT, hp: e.hp ?? 0, at: e.at, ue: e.ue, eb: bit(e.eb), fb: e.fb ?? 0, by: clean(e.by, STAFF_EVENT_BY_MAX) };
+  return { id: e.id, rg: e.rg, loc: e.loc, px: e.px, py: e.py, nm: clean(e.nm, STAFF_EVENT_PLACE_MAX), ct: isAreaEvent(e) ? 0 : bit(e.ct), mt, n: e.n, m: e.m, b: e.b, bs: e.bs, bh: e.bh ?? STAFF_BOSS_HEALTH_DEFAULT, hp: e.hp ?? 0, at: e.at, ue: e.ue, eb: bit(e.eb), fb: e.fb ?? 0, by: clean(e.by, STAFF_EVENT_BY_MAX) };
 }
 /**
  * EVENT-FAULT (mob 2026-10-25: "service refused", "toop of event menu says the refusal"): the first field validStaffEvent
@@ -116,8 +140,9 @@ export function staffEventFault(e) {
   if (!e || typeof e !== 'object' || Array.isArray(e)) return 'event';
   if (typeof e.id !== 'string' || !STAFF_EVENT_ID_RE.test(e.id)) return 'id';
   if (!intIn(e.rg, 0, 255)) return 'region';
-  if (!intIn(e.loc, -1, 9999)) return 'place';
-  if (!intIn(e.px, 0, 999) || !intIn(e.py, 0, 499)) return 'pixel';
+  if (!staffLocOk(e.loc)) return 'place';
+  if (!worldPx(e.px) || !worldPx(e.py)) return 'pixel';
+  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town';   // AUDIT RELEASE R2-7, WW6: a town's event where its town stands - the Bay's or past it
   if (!Array.isArray(e.mt) || !e.mt.length || e.mt.length > STAFF_EVENT_KINDS_MAX || !e.mt.every(staffEventKindOk)) return 'monsters';
   if (!intIn(e.n, STAFF_EVENT_TOTAL_MIN, STAFF_EVENT_TOTAL_MAX)) return 'total';
   if (!intIn(e.m, STAFF_EVENT_METER_MIN, Math.min(STAFF_EVENT_METER_MAX, e.n))) return 'meter';
@@ -131,8 +156,9 @@ export function staffEventFault(e) {
 }
 /** Is the event over by its own clock at `nowMs`? @param {StaffEvent} e @param {number} nowMs */
 export const staffEventLapsed = (e, nowMs) => e.ue > 0 && nowMs >= e.ue;
-/** Is it an area's (any pixel) rather than a town's? @param {StaffEvent} e */
-export const isAreaEvent = (e) => e.loc < 0;
+/** Is it an area's (any pixel) rather than a town's? WW6: the area's own word - a town past the Bay's location is negative
+ *  too. @param {{ loc: number }} e */
+export const isAreaEvent = (e) => e.loc === STAFF_EVENT_AREA;
 
 // ═══ THE WORDS ═══════════════════════════════════════════════════════════════════════════════════
 
@@ -147,7 +173,7 @@ export const isAreaEvent = (e) => e.loc < 0;
 export function validStaffEventIn(m) {
   if (!m || typeof m !== 'object' || m.k !== 'w') return null;
   if (typeof m.id !== 'string' || !STAFF_EVENT_ID_RE.test(m.id)) return null;
-  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX) || !intIn(m.fb ?? 0, 0, 99) || !intIn(m.h ?? 0, 0, STAFF_EVENT_WORD_KILLS_MAX)) return null;
+  if (!worldPx(m.px) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX) || !intIn(m.fb ?? 0, 0, 99) || !intIn(m.h ?? 0, 0, STAFF_EVENT_WORD_KILLS_MAX)) return null;
   for (const k of ['s', 'bu', 'bk']) if (m[k] !== undefined && m[k] !== 0 && m[k] !== 1) return null;
   return { k: 'w', id: m.id, px: m.px, py: m.py, n: m.n, s: bit(m.s), bu: bit(m.bu), bk: bit(m.bk), fb: m.fb ?? 0, h: m.h ?? 0 };
 }

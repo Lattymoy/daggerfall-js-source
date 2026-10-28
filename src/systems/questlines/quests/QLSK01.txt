@@ -19,73 +19,66 @@ DisplayName: The Ketch That Never Lands
 QRC:
 
 QuestFail:  [1003]
-<ce>       Imrah Bel-Tavir has gone home to Sentinel. She
-<ce>                     left no word for you.
+<ce>         Imrah Bel-Tavir has gone back to Sentinel.
 
 QuestComplete:  [1004]
-<ce>       Imrah counts _gold_ gold into your hand. "For your
-<ce>          eyes. Mine are not what they were, and they
-<ce>                  were never any good at chains."
+<ce>        Imrah counts out _gold_ gold. "For being my
+<ce>                      eyes up there."
 
 QuestLogEntry:  [1010]
 %qdt:
- A letter from Imrah Bel-Tavir, an antiquarian of
- Sentinel, with her book on the brass ship that
- comes to keep station over Daggerfall. She asks me
- to ride its anchor-lift up from the fields east of
- the city, and then to find her at _tavern_ in
- __tavern_ and tell her what is on its deck.
+ Imrah Bel-Tavir, an antiquarian from Sentinel,
+ sent me a letter and a book about the airship
+ over Daggerfall. She wants me to ride its
+ anchor-lift up from the fields east of the city,
+ then meet her at _tavern_ in __tavern_.
 
 Message:  1011
 %pcn,
 
-     They tell me you have seen the shape over
- Daggerfall. I have watched it from Sentinel for a
- year and from Daggerfall's walls for a month, and I
- am too old to climb a chain.
+     I hear you have seen the airship over
+ Daggerfall. I have studied it for a year, but I am
+ too old to climb a chain.
 
-     While she keeps station she lets down her
- anchor-lift to the fields east of the city. Ride it
- up, with friends you trust, and then come and tell
- me what is on her deck. My book says what the
- boatmen say. I want what is true. I am at _tavern_,
- in __tavern_.
+     When it stops over the city it lowers an
+ anchor-lift into the fields to the east. Ride it
+ up with people you trust, then come and tell me
+ what you saw on deck. My book is mostly boatmen's
+ stories. I want to know what is true. I am at
+ _tavern_, in __tavern_.
 
 <ce>                Imrah Bel-Tavir, Antiquarian
 
 Message:  1013
-<ce>       Imrah's table is covered in charts of the sky,
-<ce>       each with the same shape inked on it, a little
-<ce>       further east on every sheet.
+<ce>          Imrah's table is covered in sky charts.
 <ce>
-<ce>       "Constructs on her weather deck? Spheres that
-<ce>        unfold?" She writes it down. "Then the boatmen
-<ce>        were right about that, too. Rourken work. The
-<ce>        clan that would not kneel with the others, and
-<ce>        built where their lord's hammer fell."
+<ce>           "Spheres on the deck that unfold into
+<ce>       soldiers?" She writes it down. "Rourken work,
+<ce>         then. The clan that refused to follow the
+<ce>        others, and built where their lord's hammer
+<ce>                           fell."
 
 Message:  1014
 The antiquarian? She draws the sky all day and never looks at the street.
 <--->
-Imrah Bel-Tavir came up from Sentinel to watch the brass ship. She pays well for stories about it.
+Imrah Bel-Tavir came from Sentinel to watch the brass ship. She pays well for stories about it.
 <--->
-They say a woman from Sentinel wrote a book about the ship in the sky. They say she has never been aboard.
+They say a woman from Sentinel wrote a book about the ship in the sky, and has never been aboard.
 
 Message:  1015
-<ce>       Imrah looks up from her charts. "Her anchor-lift
-<ce>        comes down while she keeps station, east of the
-<ce>        city. Ride it, and then come and tell me."
+<ce>            Imrah looks up from her charts. "The
+<ce>       anchor-lift comes down east of the city while
+<ce>       the ship is here. Ride it up, then come back."
 
 Message:  1016
 %qdt:
- I have ridden the anchor-lift up to the Sky-Ketch.
- Imrah Bel-Tavir is waiting to hear of it at
- _tavern_ in __tavern_.
+ I rode the anchor-lift up to the Sky-Ketch. Imrah
+ Bel-Tavir is waiting at _tavern_ in __tavern_.
 
 Message:  1020
-<ce>       You stand on the deck of a ship in the sky, the
-<ce>       fields of Daggerfall far below the rail. Imrah
-<ce>                 will want to hear of this.
+<ce>       You are on the deck of a ship in the sky, with
+<ce>       Daggerfall far below. Imrah will want to hear
+<ce>                        about this.
 
 -- Symbols used in the QRC file:
 --

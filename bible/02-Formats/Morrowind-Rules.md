@@ -449,6 +449,10 @@ it (rotatecontroller.cpp:41-47) - which sits ABOVE the file root. On
 a rig whose root rotates Rz90, the pitch becomes a rotation about the
 graph's Y, and the pin drives it THROUGH poseAssembly because a
 direct call with the right argument let the call-site mutant survive.
+(BOW-AIM, 2026-10-26: the NECK'S OWN turn is about the graph's Y - Ry(t) -
+and the WORLD's is the root's X, Rx(-t), the look's own pitch; the
+line had been OSG's letters, which in this port's column convention
+turn the world the other way. See BOW-AIM below.)
 
 TOOLING NOTE: pyffi 2.2.3 (the pip release) models NiGeometryData's
 "Num UV Sets" as a lone UByte, one byte short of the uint16 OpenMW
@@ -3683,7 +3687,7 @@ sound, this is the condition it must not be read past):
 
 > The rule omits a guard that inverts its central claim. It asserts only "Two guards run after the loop" and cites :2907-2926 and :2928-2934, but there are two further blocks between the loop and :2907. The decisive one is nifloader.cpp:2899-2906: `if (lightmode == LightMode_Emissive) { diffuse = (0,0,0,diffuse.a()); mat->setDiffuse(diffuse); mat->setAmbient(osg::Vec4f()); }`. Trace a NiVertexColorProperty with VertMode_SrcAmbDif + LightMode_Emissive on a mesh with no colour array: inside the loop (2808-2812) the mode is forced to None and `lightmode` is latched to LightMode_Emissive; at 2899 ambient and diffuse RGB are zeroed to black; at 2907 the !hasVertexColors switch sees mode None, hits `default:`, and writes nothing back to white; at 2930 the material now differs from defaultMat so it IS attached, carrying black ambient and black diffuse. That directly refutes "a NiVertexColorProperty on a colourless mesh yields plain white, not black" — stated as always-true when it holds only while lightmode != LightMode_Emissive — and refutes the corollary that such a shape carries no material state and inherits from above. A second omitted block at 2891-2897 (`mVersion <= VER_MW || !specEnabled`) also runs after the loop and unconditionally stomps specular to (0,0,0,0), shininess to 0 and specularStrength to 1, so on Morrowind-era NIFs a NiMaterialProperty's mSpecular/mGlossiness never reach the stateset. Everything else in the rule checks out against the fetched sources: MaterialConfig defaults at material.hpp:27-36 are exactly as stated; the redundant white re-set of diffuse/ambient is real; the colour mode is indeed the only non-default material state set before the loop; Material::operator== (material.cpp:68-75) compares mVertexColorMode, so a vertex-coloured shape with no NiMaterialProperty does get a material attached with AmbientAndDiffuse; and the property.cpp:505-521 claims hold (mAmbient/mDiffuse read only when bethVersion < 26, mEmissiveMult only when bethVersion >= 22, mAlpha a single float becoming diffuse.a while setAmbient/setEmission/setSpecular each pass 1.f as alpha).
 
-> Refuted on its premise, not by an override. The rule describes OpenMW's C++ NIF loader, and none of it exists in the codebase under review. Working directory is /home/user/project-dagger, a JavaScript 1:1 Daggerfall port on a hand-rolled WebGL2 renderer. Verified: (1) the claimed source components/nifosg/nifloader.cpp:2731-2934 does not exist, and there is no components/, nifosg/, or sceneutil/ directory anywhere; (2) the repo contains ZERO C++ sources - find for *.cpp/*.hpp/*.cc/*.h returns nothing; (3) grep across the whole tree including vendor/ for applyDrawableProperties, NiMaterialProperty, NiVertexColorProperty, SceneUtil, emissiveMult, vertexColorMode, bethVersion and openmw returns zero hits. vendor/ holds only dfu-books, dfu-quests, dfu-settings (Daggerfall Unity text data). The only "Morrowind" matches are a province name at /home/user/project-dagger/src/ui/provinceMap.js:93 and a font remark at /home/user/project-dagger/bible/10-UI/UI-Arc.md:892. The actual rendering model is incompatible with the rule rather than a variant of it: /home/user/project-dagger/src/render/characterMesh.js packs interleaved [pos.xyz, color.rgb, normal.xyz] per vertex and /home/user/project-dagger/src/render/renderer.js lights it in-shader against a scene ambient/sun/point model - no OSG state sets, no material objects, no inheritance from parent state, no NIF property loop, so there is no "attach only if it differs from a default-constructed Material" behaviour to override. The first-person framing has no counterpart either: per /home/user/project-dagger/src/combat/fpsWeapon.js:1-22 first-person view is classic 2D CIF sprite art and the voxel FP viewmodel is explicitly "ON ICE" as of a 2026-08-17 design pivot, so there is no first-person 3D player body carrying material state. Beast/werewolf and vampire handling (/home/user/project-dagger/src/characters/beasts.js, /home/user/project-dagger/src/characters/pieces/beastHead.js, /home/user/project-dagger/src/characters/paperdollPayload.js) drives paperdoll and sprite art, never mesh materials. IMPORTANT CAVEAT: I did not find a caller, subclass, or special case that contradicts the rule as a statement about real OpenMW - I found that OpenMW is not present in this session at all, so the rule is unverifiable here and must not be recorded as confirmed. If the intent was to audit the genuine OpenMW repository, it needs to be attached first; nothing in project-dagger can confirm or refute its NIF material defaults.
+> Refuted on its premise, not by an override. The rule describes OpenMW's C++ NIF loader, and none of it exists in the codebase under review. Working directory is /home/user/project-dagger, a JavaScript 1:1 Daggerfall port on a hand-rolled WebGL2 renderer. Verified: (1) the claimed source components/nifosg/nifloader.cpp:2731-2934 does not exist, and there is no components/, nifosg/, or sceneutil/ directory anywhere; (2) the repo contains ZERO C++ sources - find for *.cpp/*.hpp/*.cc/*.h returns nothing; (3) grep across the whole tree including vendor/ for applyDrawableProperties, NiMaterialProperty, NiVertexColorProperty, SceneUtil, emissiveMult, vertexColorMode, bethVersion and openmw returns zero hits. vendor/ holds only dfu-books, dfu-quests, dfu-settings (Daggerfall Unity text data). The only "Morrowind" matches are a province name at /home/user/project-dagger/src/ui/provinceMap.js:93 and a font remark at /home/user/project-dagger/bible/10-UI/UI-Arc.md:908. The actual rendering model is incompatible with the rule rather than a variant of it: /home/user/project-dagger/src/render/characterMesh.js packs interleaved [pos.xyz, color.rgb, normal.xyz] per vertex and /home/user/project-dagger/src/render/renderer.js lights it in-shader against a scene ambient/sun/point model - no OSG state sets, no material objects, no inheritance from parent state, no NIF property loop, so there is no "attach only if it differs from a default-constructed Material" behaviour to override. The first-person framing has no counterpart either: per /home/user/project-dagger/src/combat/fpsWeapon.js:1-22 first-person view is classic 2D CIF sprite art and the voxel FP viewmodel is explicitly "ON ICE" as of a 2026-08-17 design pivot, so there is no first-person 3D player body carrying material state. Beast/werewolf and vampire handling (/home/user/project-dagger/src/characters/beasts.js, /home/user/project-dagger/src/characters/pieces/beastHead.js, /home/user/project-dagger/src/characters/paperdollPayload.js) drives paperdoll and sprite art, never mesh materials. IMPORTANT CAVEAT: I did not find a caller, subclass, or special case that contradicts the rule as a statement about real OpenMW - I found that OpenMW is not present in this session at all, so the rule is unverifiable here and must not be recorded as confirmed. If the intent was to audit the genuine OpenMW repository, it needs to be attached first; nothing in project-dagger can confirm or refute its NIF material defaults.
 
 **Corrected form offered:** applyDrawableProperties starts from a fresh SceneUtil::Material whose MaterialConfig defaults are diffuse (1,1,1,1), ambient (1,1,1,1), specular (0,0,0,0), emission (0,0,0,1), shininess 0, emissiveMult 1, specularStrength 1, vertexColorMode None (components/sceneutil/material.hpp:27-36), then redundantly re-sets diffuse and ambient to white. The only non-default material state set before the property loop is the colour mode: AmbientAndDiffuse when the geometry has a colour array, None when it does not — so a shape with vertex colours and no NiMaterialProperty still gets a material whose vertex colours drive ambient and diffuse. FOUR things then run after the loop, not two. (1) :2891-2897 — if mVersion <= VER_MW or specular was disabled, specular is forced to (0,0,0,0), shininess to 0 and specularStrength to 1, discarding whatever a NiMaterialProperty or BSLightingShaderProperty set. (2) :2899-2906 — if a NiVertexColorProperty selected VertMode_SrcAmbDif with LightMode_Emissive, diffuse RGB is zeroed (alpha kept) and ambient is set to (0,0,0,0), i.e. genuinely black. (3) :2907-2926 — only if the geometry has no colour array, the channel matching the currently selected mode is writte
 
@@ -7151,7 +7155,9 @@ of it reached the screen. Four faults, each pinned in `test/combat/mwcast1.test.
   `combat/fpsSpellCasting.js` HOLDS its release for the Morrowind hands on
   screen - on their key, or when they stop casting without one, or at
   `HELD_RELEASE_MAX_S` (1.5 s) whatever happens, so nothing waits for ever.
-  The classic lane's frame 5 is untouched.
+  The classic lane's frame 5 is untouched. (CAST-PACE, below: an arm whose
+  group carries the key is now paced to bring it onto the classic frame 5,
+  and the spell leaves on that frame; the hold is an unpaced arm's.)
 - **The weapon stayed in the casting hand.** OpenMW shows no weapon in the
   Spell stance; a readied spell and a cast in flight put it out of the hand
   on both rigs (`weaponInHand`).
@@ -7253,7 +7259,11 @@ have casting speed a new rarity affix along with scaling with speed"*.
   base_anim.1st.kf, and no committed file carries them
   (`test/fixtures/mw/castClip.mjs` uses made-up times a pin can step to).
   If Mac's eye on a Morrowind cast says the classic lane is still quick or
-  now slow, change this one constant.
+  now slow, change this one constant. CAST-QUICK (2026-10-09, the owner:
+  "the casting got slowed in a update i think") put it back to DFU's 0.04 s
+  - the release at 0.2 s - and CAST-RECOVER holds the next cast 0.7 s from
+  the click; the 0.1 s here is history, and CAST-PACE (below) is how the
+  Morrowind hands keep that clock.
 - **The hands own their whole motion.** castInProgress closes at the
   release, and the hands play on for two more steps. A click in that tail
   found PlayOneShot refusing ("Do nothing if already playing anim"), and
@@ -7298,6 +7308,36 @@ have casting speed a new rarity affix along with scaling with speed"*.
 
 `test/systems/castspeed.test.js` (5), `test/systems/hostmagic.test.js` (the tail gate),
 `tools/mutants/castspeed.json` (17, all dead).
+
+## DECLARED DIVERGENCE (CAST-PACE, RPT1026-MISC, 2026-10-26): the Morrowind hands on the classic clock
+
+A private report: a caster with the Morrowind look got spells off more
+slowly than one with the Daggerfall look, whose hands move faster. True since
+CAST-QUICK: the classic hands let the spell go on frame 5, 0.2 s after the
+cast at rate 1, and the Morrowind hands held it for their spellcast group's
+"<type> release" (MW-CAST1) with the group played at the cast's rate - the
+section's own lead, longer, so the same caster's spell left later, and the
+next cast (castBusy reads the held release) waited on it.
+
+- **The section is paced to the spell's moment.** `combat/fpsSpellCasting.js`
+  `castReleaseS(rate)` is frame 5 at the cast's rate; `combat/weapon/weaponRig.js`
+  castSpellAnim hands it to `fpArm.castSpell(rangeType, rate, releaseIn)`,
+  and the arm plays its section at the pace that brings "<type> release" there
+  from "<type> start" (`blowRate`, MW-PACE1's fit of a blow to the machine's
+  hit and its bounds). `castPaced()` says the fit was made.
+- **A paced arm's spell leaves on frame 5**, the classic lane's own moment
+  (castSpellAnim's `armHolds`): the cast's time is the same whatever the hands
+  look like, to the frame. Only an arm with no release key to pace is still
+  held for its end (MW-CAST1's never-traps hold and its ceiling).
+- OpenMW plays the spellcast group at 1 and casts on the key; the port plays
+  it at the pace the classic clock asks. A DEPARTURE, Port-Ledger A
+  (CAST-PACE). A peer's and an NPC's arm are unchanged (they play at 1, as
+  CAST-SPEED says - only how it looks).
+
+`test/combat/rpt1026_misc_cast.test.js` (2: the real arm on MW-CAST1's
+fixture releasing within one step of the classic hands at rate 1 and 1.25,
+the rig's frame-5 release and the unpaced hold), `test/formats/morrowind/fparm.test.js`
+and `tools/mutants/mwcast1.json` (pins moved by content); `tools/mutants/rpt1026_misc.json` (5).
 
 ## DECLARED DIVERGENCE (BODY-MOTION, 2026-10-18): the third-person body's own motion over the clips
 
@@ -7393,3 +7433,42 @@ Morrowind.esm, not committed): a Khajiit in iron boots and an Argonian in daedri
 shin over their bare feet, a Khajiit's iron helm is not drawn and its chain coif is. Not covered: the townsfolk
 outfits (MW-FOLK1), which are drawn on the human races alone, and the first person, which draws no foot or head.
 `test/formats/morrowind/mwbeast1_beastboots.test.js` (10), `tools/mutants/beastboots.json` (20, all dead).
+
+## BOW-AIM (2026-10-26): the ranged aim pitch, ported - and RotateController in this port's convention
+
+FIELD BUGS 2026-10-26c (`01-Overview/bugs/Field-Bugs-2026-10-26c.md`; the Discord through the owner, "Bow, while being
+drawn, is pointed upwards too much"). The three [C] rules above - "The ranged aim pitch is TWO RotateControllers", "The
+spine controllers are attached only in VM_Normal", "setPitchFactor" - are ported whole in `src/combat/spineAim.js`:
+`spinePitchFactor` is character.cpp:1868-1895, `applySpineAim` configureControllers (weaponanimation.cpp:175-211), half
+of rot[0] times the factor about -X in the actor root's frame on spine1 and then spine2. The third-person body's pose
+hands it the slot (`poseAssembly`'s `aim`, after the clip and the neck, before BODY-MOTION, which keeps the clip's chest
+while the clip has a bow's arms); the first-person arm takes none, as VM_FirstPerson attaches none. rot[0] is + down,
+the port's look + up: the pose negates it, as `neckPitch` does. A peer's body and a townsperson's stand at pitch 0.
+Not a divergence: the reference's law, where the port had none.
+
+ROOT-TURN. RotateController's line (rule 31: `worldOrient * mRotate * worldOrientInverse * matrix.getRotate()`) is OSG's,
+and OSG multiplies ROW vectors: its matrix and quaternion products are the transposes of this port's, where a world is
+`parent * local` and a point `M v` (`mwNifMesh.js` composeTransform). Written in this port's convention it is
+`local * W^T * R * W` (`mwFirstPerson.js` rootSpaceTurn): the world becomes `R * world`, R in the root's frame. The port
+had the letters, `W * R * W^T * local`, which turns the world by R conjugated by `parent * W` - right where every frame is
+the identity (armfp.nif's, near enough), wrong on retail's turned bones: a "look down" of 0.3 tipped the third-person
+chest BACK about an axis up to 3 degrees off the root's X. The first-person neck (rule 30) turns through the same helper
+now, and MW-D20's pin holds the hand-worked answer (its local Ry(t), its world Rx(-t) * Rz90). Pinned on the vendored
+retail biped, four bones of four frames each (`test/combat/fb1026c_bowaim.test.js`).
+
+## MW-SHOULDER (2026-10-26): the view over the shoulder, the player's option
+
+FIELD BUGS 2026-10-26c again ("add an option to move camera a bit to the side ... because crosshair is located on top
+of character's head"). OpenMW's viewOverShoulder - off by default in the reference (settings.lua:44), named in
+`player/mwCamera.js`'s head as not here until now - is the player's option, Over the Shoulder (`systems/features.js`
+'mw-shoulder-camera': Off by default, Right, Left). The focal point stands at settings.lua:45-46's [30, -10] behind the
+chosen shoulder (the left its mirror, third_person.lua:39-40), and at combatOffset [0, 15] - centred, raised over the
+head - while a weapon or a spell is out or the actor swims (third_person.lua:27, :86-127); it eases verbatim
+(camera.cpp:247-294, at 5 into and out of combat, 1 otherwise) and lands at once when third person begins or the option
+changes; a wall at the shoulder holds it where camera.cpp:177-193's sphere touches. The raised combat offset is what
+keeps a shot on the crosshair: the shot leaves the head along the look (weaponanimation.cpp:111-114), so behind a
+shoulder it would pass 30 units to the side of the crosshair's ray.
+
+DECLARED DIVERGENCE (Port-Ledger A, MW-SHOULDER): with the option on the reference also pulls the camera out as the look
+rises and as the actor speeds up (third_person.lua:80-84, :152-161) - here the distance stays the wheel's alone. No auto
+switch (settings.lua:47, off in the reference) and no key: the side is the player's choice.

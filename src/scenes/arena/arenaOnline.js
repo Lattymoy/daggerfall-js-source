@@ -769,6 +769,12 @@ export function createArenaOnline(deps) {
     if (bout || deps.inBout?.()) return { ok: false, text: O.whyBusy };
     const L = climb();
     if (!L) return { ok: false, text: O.climbWait };
+    // RPT1026-QUESTS ARENA-ORDER (two private reports: the next ladder bout's floor with no opponent on it, "not your next
+    // ladder bout" said there): A LADDER BOUT OF MINE THE SERVICE HAS NOT COUNTED YET HOLDS THE NEXT FIGHT HERE, before the
+    // floor. The climb waits on a held purse CLIMB_WAIT_MS at most (a loss holds none), and past it the board's climb was
+    // still the one before that bout: the floor entered for a stale step, and only there did askTicket's own guard (or
+    // the service's `order`, once the flush moved the climb) let the bout go - the player left on an empty floor
+    if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }
     const next = nextLadderBout(L);
     if (!next) return { ok: false, text: ARENA_TEXT.herald.ladderDone };
     if (deps.guest?.()) return { ok: false, text: O.guestLadder };   // AUDIT ARENA-LADDER 2: the ladder online takes a registered account

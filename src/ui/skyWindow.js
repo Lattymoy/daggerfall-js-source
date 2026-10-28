@@ -22,6 +22,7 @@ import { GRIM_TONES, GRIMOIRE_STACK } from './grimoireDress.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 const G = GRIM_TONES;
 /** A star's colours in a dress: its line dim and lit, its way's fill, its rim dim and lit, its fill lit, its glow.
@@ -317,7 +318,7 @@ export function mountSkyWindow(host, sky, { changed = () => {}, onExit = () => {
   let longPress = 0;
   const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture?.(e.pointerId);
+    capturePointer(canvas, e.pointerId);
     const p = local(e);
     pointers.set(e.pointerId, p);
     if (pointers.size === 2) {

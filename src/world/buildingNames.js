@@ -14,7 +14,7 @@
 
 import { srand, rand, randomRange } from '../formats/dfRandom.js';
 import { firstName, GENDERS } from '../characters/nameHelper.js';
-import { localizedText, localizedTable, localizedTextList } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, localizedTable, localizedTextList, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; PROVINCE-COURTS: the port's own titles
 import { getLocalizedFactionName } from '../systems/textManager.js';   // L10N3e: a guild hall's and a temple's faction names, as shown
 import { isOnlinePage } from '../systems/online/onlineLane.js';   // EMPIRE-BANK: online, every bank is the Empire's
 
@@ -84,7 +84,10 @@ export const libraryStoresB = () => localizedTextList('LibraryStoresB', ['Librar
 // MacroHelper.GetRulerTitle: twelve explicit cases, then `default: "Lord"`.
 // 11 is written out even though it equals the default - the table is a
 // transcription of the switch, and 'Lady' is reachable only via case 12.
-export const RULER_TITLES = localizedTable({ 1: ['King', 'King'], 2: ['Queen', 'Queen'], 3: ['Duke', 'Duke'], 4: ['Duchess', 'Duchess'], 5: ['Marquis', 'Marquis'], 6: ['Marquise', 'Marquise'], 7: ['Count', 'Count'], 8: ['Countess', 'Countess'], 9: ['Baron', 'Baron'], 10: ['Baroness', 'Baroness'], 11: ['Lord', 'Lord'], 12: ['Lady', 'Lady'] });
+// PROVINCE-COURTS (bible/03-World/World-Wide.md): the port's own titles after DFU's twelve, for the provinces' rulers past
+// the Bay (systems/faction/provinceFactions.js RULER) - the same law, odd a man's and even a woman's ((ruler + 1) % 2).
+export const RULER_TITLES = localizedTable({ 1: ['King', 'King'], 2: ['Queen', 'Queen'], 3: ['Duke', 'Duke'], 4: ['Duchess', 'Duchess'], 5: ['Marquis', 'Marquis'], 6: ['Marquise', 'Marquise'], 7: ['Count', 'Count'], 8: ['Countess', 'Countess'], 9: ['Baron', 'Baron'], 10: ['Baroness', 'Baroness'], 11: ['Lord', 'Lord'], 12: ['Lady', 'Lady'],
+  13: () => t('faction.ruler.highKing', 'High King'), 14: () => t('faction.ruler.highQueen', 'High Queen'), 15: () => t('faction.ruler.emperor', 'Emperor'), 16: () => t('faction.ruler.empress', 'Empress') });
 export const rulerTitle = (ruler) => RULER_TITLES[ruler] ?? localizedText('Lord', 'Lord');
 
 const STORE_B = {

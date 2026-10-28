@@ -80,7 +80,7 @@
 // host forgives the player's stray ball on her (navalHost.js ALLY_STRAY_SHARE). And the bay is gentler: a quarter of
 // the pirates bold (BOLD_SHARE), and a boat lying still grappled only after GRAPPLE_STILL_S.
 
-import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS, shipBatteryWeight } from './navalShips.js';
+import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS, shipBatteryWeight, flatHull, flatGap } from './navalShips.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';   // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
 import { createShipDamage, SHIP_STATES, STRUCK_AT, HOLED_BONUS, WATERLINE_BAND } from './navalDamage.js';
 import { createGunDeck, aimSolution, reloadSeconds } from './navalGunnery.js';
@@ -91,7 +91,6 @@ import { steerage, HULL_HELM, HELM_WAY, WIND_RATED, WIND_SHARE, windShare } from
 import { stepErrand, MOOR_EASE_S } from './shipLife.js';   // SHIP-LIFE: a ship going somewhere
 import { nightSight } from './shipWatch.js';   // SHIP-WATCH: by night a lit ship is seen far, a dark one close
 import { legendOfClass, LEGEND_RELOAD_K } from './etherShips.js';   // ETHER-LEGENDS: a `gunnery` legend's quicker guns
-import { holdFouled } from './navalFoul.js';   // RAM-BOARD: a fouled ship's way held
 import { shotGun, naturalShot } from './shotKinds.js';   // SHOT-KINDS: a captain's loads
 
 /** A galley's oars: its least way, as a share of its best. */
@@ -733,6 +732,7 @@ function offRunOf(yaw, wind) {
  */
 export function tackCourse(ship, want, goal, wind) {
   const wl = Math.hypot(wind?.[0] ?? 0, wind?.[2] ?? 0);
+  if (ship.hull === HULL.Rowboat) { ship.tack = null; return want; }   // FISH-BOATS: a skiff is pulled, any course
   if (ship.hull === HULL.LargeGalley || wl < 1e-6 || offRunOf(want, wind) <= CLOSE_HAULED * DEG) { ship.tack = null; return want; }
   const eye = wrapAngle(Math.atan2(wind[0], wind[2]) + Math.PI);
   const g = goal ?? [ship.pos[0] + Math.sin(want) * 1000, 0, ship.pos[2] + Math.cos(want) * 1000];
@@ -751,6 +751,7 @@ export function tackCourse(ship, want, goal, wind) {
  *  any course). */
 export function sailable(ship, want, wind) {
   const wl = Math.hypot(wind?.[0] ?? 0, wind?.[2] ?? 0);
+  if (ship.hull === HULL.Rowboat) return want;   // FISH-BOATS: a skiff is pulled, any course
   if (ship.hull === HULL.LargeGalley || wl < 1e-6 || offRunOf(want, wind) <= CLOSE_HAULED * DEG) return want;
   const eye = wrapAngle(Math.atan2(wind[0], wind[2]) + Math.PI);
   return wrapAngle(eye + (wrapAngle(want - eye) >= 0 ? 1 : -1) * (180 - CLOSE_HAULED) * DEG);
@@ -934,6 +935,7 @@ export function stepCaptain(ship, world) {
   }
   if (ship.mode !== 'board') { ship.approach = null; ship.route = null; }   // AUDIT NAV2 F22: a boarding's tally and way are its own
   ship.sweeps = plan.sweeps ?? 0;   // AUDIT NAV1 (online #10): her sweeps out, or in
+  if (ship.hull === HULL.Rowboat) ship.sweeps = Math.max(ship.sweeps, ship.cls.speed * plan.sails * ship.damage.wayShare());   // FISH-BOATS: a skiff pulled at the plan's stroke
   let want = plan.sailable ? plan.want : tackCourse(ship, plan.want, plan.goal, world.wind);
   want = trafficCourse(ship, want, world.contacts, ship.mode === 'board' ? ship.target : null);
   if (!plan.berthing) want = avoidLand(ship, want, isWater, world.wind);   // SHIP-LIFE: the last leg into a sounded berth
@@ -942,7 +944,6 @@ export function stepCaptain(ship, world) {
   ship.sailsWant = ship.avoid.heading != null ? Math.min(plan.sails, BOXED_SAILS) : plan.sails;
   ship.sails = clamp(ship.sails + clamp(ship.sailsWant - ship.sails, -0.5 * dt, 0.4 * dt), 0, 1);
   helm(ship, want, dt, world, 1, plan.track ? trackRate(ship, want, dt) : (ship.wantPrev = null, ship.wantRate = 0));
-  holdFouled(ship, dt, world.now);   // RAM-BOARD (navalFoul.js): fouled by a stem, her way held under FOUL_WAY - her guns still answer
   moveShip(ship, dt, isWater);
 
   // the guns - held at a wreck, and all but the chasers while she comes alongside - SHOT-KINDS: unless her broadsides
@@ -1140,6 +1141,7 @@ function helm(ship, want, dt, world, power, lead = 0) {
     const wl = wl0;
     let best = ship.cls.speed * windFactor(offRunOf(ship.yaw, wind)) * windShare(wl) * ship.damage.wayShare();
     if (ship.hull === HULL.LargeGalley) best = Math.max(best, ship.cls.speed * OARS_FLOOR);
+    if (ship.hull === HULL.Rowboat) best = 0;   // FISH-BOATS: no canvas - a skiff's way is her oars' alone (ship.sweeps)
     const helmShare = maxRate > 0 ? Math.min(1, Math.abs(ship.yawRate) / maxRate) : 0;
     const sailed = best * ship.sails * (1 - TURN_SPEED_LOSS * helmShare);
     const target = Math.max(sailed, ship.sweeps) * (ship.aground > 0 ? AGROUND_WAY : 1);   // AUDIT NAV1 (online #10): her sweeps' way where the wind gives less
@@ -1517,19 +1519,7 @@ function giveUp(ship, target) {
 /** The open water between two hulls on the flat (m): the widest gap along any of their four axes - 0 or less when
  *  they touch. Hulls off their builds; `hull` null is a Large Boat. */
 export function hullGap(aPos, aYaw, aHull, bPos, bYaw, bHull) {
-  const box = (pos, yaw, hull) => {
-    const b = hullBuild(hull ?? HULL.LargeBoat), f = [Math.sin(yaw), Math.cos(yaw)], mid = (b.bowZ + b.aftZ) / 2;
-    return { c: [pos[0] + f[0] * mid, pos[2] + f[1] * mid], f, r: [f[1], -f[0]], hl: (b.bowZ - b.aftZ) / 2, hw: b.halfWidth };
-  };
-  const A = box(aPos, aYaw, aHull), B = box(bPos, bYaw ?? 0, bHull);
-  const d = [B.c[0] - A.c[0], B.c[1] - A.c[1]];
-  let gap = -Infinity;
-  for (const u of [A.f, A.r, B.f, B.r]) {
-    const ra = A.hl * Math.abs(A.f[0] * u[0] + A.f[1] * u[1]) + A.hw * Math.abs(A.r[0] * u[0] + A.r[1] * u[1]);
-    const rb = B.hl * Math.abs(B.f[0] * u[0] + B.f[1] * u[1]) + B.hw * Math.abs(B.r[0] * u[0] + B.r[1] * u[1]);
-    gap = Math.max(gap, Math.abs(d[0] * u[0] + d[1] * u[1]) - ra - rb);
-  }
-  return gap;
+  return flatGap(flatHull(aPos, aYaw, aHull ?? HULL.LargeBoat), flatHull(bPos, bYaw ?? 0, bHull ?? HULL.LargeBoat));   // BOARD-MAGNET: navalShips.js's one flat hull
 }
 
 /** Running: the fastest point of sail within FLEE_SPREAD of dead away from what she runs from. */

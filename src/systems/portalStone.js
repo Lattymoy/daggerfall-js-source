@@ -34,9 +34,9 @@ import { shardsHeld, spendShards, shardsText } from './reforge.js';
 import { addItem, findExistingStack } from './inventory.js';
 import { LOOT_STACK_MAX } from './loot/loot.js';   // PORTAL-BULK: the most one stack holds (itemLaw.js flags a stack past it)
 import { t } from './textManager.js';
+import { eventGroundAt } from './eventGround.js';   // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
 import { registerItemUseHandler } from './item/itemTemplates.js';
-import { POSE_BOUND, POSE_Y_BOUND } from '../net/wire.js';
-import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';
+import { POSE_BOUND, POSE_Y_BOUND, worldPixelOk } from '../net/wire.js';
 
 export { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, isPortalStone };
 
@@ -83,6 +83,8 @@ export const PORTAL_TEXT = Object.freeze({
   noMap: 'You cannot see the map to choose a destination.',
   room: 'There is no room here for a portal.',
   ground: 'There is no ground here for a portal to stand on.',
+  /** RPT1026-EVENTS GATE-WAY (systems/eventGround.js): the place stands on an event's gate's ground. */
+  get event() { return t('portal.refused.event', 'A portal cannot open this close to an event\'s gate.'); },
   gone: `The ${PORTAL_STONE.name} is no longer where you kept it.`,
   opened: (name) => `A portal to ${name} tears open. Step through before it closes.`,
   /** PORTAL-GIFT (gateSpoils.js givePortalGift): said once the world stands. */
@@ -196,6 +198,14 @@ export function portalPlace(feet, yaw, { ground = null, wall = null } = {}) {
   if (!Number.isFinite(d) || /** @type {number} */ (d) > PORTAL_GROUND_PROBE) return { refused: 'ground' };
   return { at: [x, top - /** @type {number} */ (d), z] };
 }
+/** RPT1026-EVENTS GATE-WAY: WHERE A PORTAL STONE'S PORTAL OPENS - portalPlace's place, refused 'event' where it stands within
+ *  EVENT_GROUND_M of an event's gate standing on this screen (systems/eventGround.js), where a crowd runs to its fire; nothing
+ *  is spent on a refusal. An Elite Breach's call opens its own portal by portalPlace alone: it is the way INTO the event.
+ *  @param {number[]} feet @param {number} yaw @param {Parameters<typeof portalPlace>[2]} [probes] */
+export function portalStonePlace(feet, yaw, probes = {}) {
+  const p = portalPlace(feet, yaw, probes);
+  return p.at && eventGroundAt(p.at) ? { refused: 'event' } : p;
+}
 /** Whether feet stand inside a portal at `at` (both in one frame). */
 export function insidePortal(feet, at) {
   if (!feet || !at) return false;
@@ -224,7 +234,9 @@ export function validPortalRecord(r) {
   if (!Array.isArray(r.p) || r.p.length !== 3 || !r.p.every(Number.isFinite)) return null;
   if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;
   if (!Array.isArray(r.d) || r.d.length !== 2 || !r.d.every(Number.isInteger)) return null;
-  if (r.d[0] < 0 || r.d[0] >= MAX_MAP_PIXEL_X || r.d[1] < 0 || r.d[1] >= MAX_MAP_PIXEL_Y) return null;
+  // AUDIT-TESA A2-2: a portal's end is a pixel of the world - the land past the Bay a stone reaches too (TESA-NO-FAST:
+  // its one road there), within the wire's own bound
+  if (!worldPixelOk(r.d[0]) || !worldPixelOk(r.d[1])) return null;
   if (!Number.isFinite(r.r) || r.r <= 0 || r.r > PORTAL_OPEN_MS) return null;
   return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r };
 }

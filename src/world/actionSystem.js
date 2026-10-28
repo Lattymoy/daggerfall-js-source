@@ -507,6 +507,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     // ActivateLockUnlock sound on success
     this.onLockpickTally = null;
     this.onLockpickResult = null;
+    // LOCKPICK (bible/06-Systems/Lockpicking.md): onLockpickAttempt(o) - a host that plays the lock's tumblers
+    // (scenes/lockpickHost.js) takes the attempt from the roll below, and answers its opened lock through lockpicked(o)
+    this.onLockpickAttempt = null;
     // WAVE D: onFlatMoved(o) - a MOVE-flag FLAT reached a new pose.
     // The host owns the billboard, so it owns the draw; this system
     // owns the tween. Fires on every advance and on a restore settle,
@@ -1374,6 +1377,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  inventory. */
   attemptLockpicking(o) {
     if (o.state === 'forward' || o.state === 'reverse') return false;   // IsMoving
+    // LOCKPICK: a host that plays the tumblers takes a lock DFU would roll for - the magic arm below stays DFU's - and its
+    // snapped picks are what a retry costs, so the retry gate is not read for it (Ledger A, LOCKPICK)
+    if (this.onLockpickAttempt && o.currentLockValue < MAGIC_LOCK_THRESHOLD) { this.onLockpickAttempt(o); return false; }
     const skill = this._lockpickSkill();
     if (o.failedSkillLevel === skill) return false;   // the retry gate (:157) - == exactly, so a skill moved EITHER way re-opens it
     if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) {
@@ -1390,6 +1396,15 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     this.onLockpickResult?.(o, true);
     o.currentLockValue = 0;   // :176
     this.toggleDoor(o, true);   // :184 - a successful pick opens the door
+    return true;
+  }
+
+  /** LOCKPICK: the lock a host's tumblers opened (onLockpickAttempt) - AttemptLockpicking's success tail (:176-184): the
+   *  lock zeroed and the door opened. A door moving meanwhile, or already open, is left as it stands. */
+  lockpicked(o) {
+    if (!o || o.state === 'forward' || o.state === 'reverse' || o.currentLockValue <= 0) return false;
+    o.currentLockValue = 0;
+    this.toggleDoor(o, true);
     return true;
   }
 
@@ -1625,12 +1640,14 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   }
 }
 
-// WORLD3: the five ENTRIES a player or a foe reaches this graph by ride
+// WORLD3: the ENTRIES a player or a foe reaches this graph by ride
 // the change seam (_changed) - wrapped here, on the prototype, so each
 // keeps its own signature and its own body above; a nested entry (the
 // cascade's receive, a pick's toggleDoor, activate's three) rides the
-// outermost one and diffs nothing of its own.
-for (const name of ['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking']) {
+// outermost one and diffs nothing of its own. LOCKPICK: and the lock a
+// host's tumblers opened (lockpicked) - its lock zeroed and its door
+// swung in one diff, as the roll's success always was.
+for (const name of ['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking', 'lockpicked']) {
   const body = ActionSystem.prototype[name];
   ActionSystem.prototype[name] = function (...args) { return this._changed(() => body.apply(this, args)); };
 }

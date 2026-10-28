@@ -37,8 +37,11 @@ import {
   isPitPixel, placementFraction, getScaledSliderValue, deformSeafloorVertices, raycastFloorY, findPitOpeningY, oceanSurfaceWorldY,
   MAX_FLOOR_WAIT_FRAMES, MINIMUM_DEPTH, MINIMUM_EDGE_DISTANCE, FLOOR_FLATTEN_VARIANCE, SURFACE_OUTER_RADIUS, SURFACE_MIASMA_MAX_PARTICLES,
   SURFACE_MIASMA_HEIGHT, OCEAN_HOLES_VENDOR,
+  pitPixelOk,   // PITS-WORLD: IsValidMapPixel's hold - the world's grid, where an abyss has an id (ETHER-DEEP held it to the Bay's map)
 } from '../world/oceanHoles.js';
-import { isValidMapPixel } from '../world/deepWater/deepWatersBake.js';   // ETHER-DEEP: IsValidMapPixel - the pits' map is the Bay's
+import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // PITS-WORLD: the open zone stands no pit
+import { wildInside } from '../systems/wild/wildZone.js';
+import { isOnlinePage } from '../systems/online/onlineLane.js';
 import { sampleMeshLocalY, TILE_WORLD_SIZE_F32 } from '../world/deepWater/deepWaterFloor.js';   // AUDIT PRE-MERGE 0928 H4: terrainData.size, a float
 import { modSetting, modSettingsGeneration } from '../systems/modSettings.js';
 import { OCEAN_CLIMATE } from '../world/terrain/terrainHelper.js';   // worldClimate 223: the unverified placement's own check
@@ -70,6 +73,17 @@ export function oceanHolesSettings() {
 export const PIT_REFRESH_KEYS = Object.freeze(['SurfaceHoleSize', 'SeafloorHoleSize', 'PitSpawnRate', 'MiasmaParticleCount', 'MiasmaHeight']);
 const snapshotOf = (s) => `${s.surfaceHoleRadius}|${s.seafloorHoleScale}|${s.pitSpawnRate}|${s.miasmaParticleCount}|${s.miasmaHeight}`;
 
+/** PITS-WORLD (the owner's call taken, 2026-10-26: site-bound things stand nowhere in the open PvP zone): IS A PIXEL THE OPEN
+ *  ZONE'S - online, Cyrodiil's mask (systems/wild/cyrodiilZone.js, the world host's wildMapMask: the province whole and the
+ *  water it encloses, Lake Rumare and the Niben among it). The zone stands its tier's halls and no other dungeon
+ *  (PVPDUNGEONS - the spawner's own gate, scenes/spawnStandHost.js), and a pit is a dungeon's door. Offline there is no
+ *  zone. */
+export function openZoneAtNow(mapX, mapY) {
+  if (!isOnlinePage()) return false;
+  const m = cyrodiilMask();
+  return !!m && wildInside(m, mapX, mapY);
+}
+
 function roundHalfEven(v) {   // Mathf.RoundToInt
   const f = Math.floor(v);
   return v - f === 0.5 ? (f % 2 === 0 ? f : f + 1) : Math.round(v);
@@ -88,10 +102,12 @@ function roundHalfEven(v) {   // Mathf.RoundToInt
  * @param {() => number} [deps.now] - Time.time
  * @param {() => object} [deps.settings]
  * @param {() => boolean} [deps.inside] - PlayerEnterExit.IsPlayerInside: DisableAllParents has the ExteriorParent off
+ * @param {(mapX: number, mapY: number) => boolean} [deps.openZoneAt] - PITS-WORLD: whether a pixel is the open PvP zone's
+ *   (online, Cyrodiil's mask - openZoneAt below), where no pit is cut
  */
 export function createOceanHoles({ deepWaters, decor = null, built, pixelTranslation, hasLocation, worldClimateOf,
   pits = null, onEnterPit = () => {}, now = () => performance.now() / 1000, settings = oceanHolesSettings, warn = (m) => console.warn(m),
-  inside = () => false }) {
+  inside = () => false, openZoneAt = openZoneAtNow }) {
   const pendingTerrains = [];            // Queue<DaggerfallTerrain>
   const queuedTerrains = new Set();      // HashSet<DaggerfallTerrain>
   const states = new WeakMap();          // entry -> OceanPitTileState
@@ -268,12 +284,14 @@ export function createOceanHoles({ deepWaters, decor = null, built, pixelTransla
       return;
     }
     const v = version(entry);
-    // ETHER-DEEP (bible/03-World/Eltheric-Ocean.md): the pits are the Bay's. The Eltheric Ocean's floors are carved now
-    // (world/etherWatersBake.js), and a pit's drowned dungeon is named by its pixel's id's low twenty bits
-    // (GetAbyssMapId) - the Bay's 1000 x 500 alone keeps those apart; a pit past the Veil would share a Bay pit's abyss
-    if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }
+    // PITS-WORLD (bible/03-World/World-Wide.md WORLD-LANES): the pits are the world's. ETHER-DEEP held them to the Bay's
+    // map because a pit's drowned dungeon was named by its pixel's id's low twenty bits (GetAbyssMapId), which the Bay's
+    // 1000 x 500 alone keeps apart; past the Bay an abyss is named in the world's abyss lane now, so every pixel of the
+    // world's grid may open one - the continent's sea (TAMRIEL-DEEP) and the Eltheric Ocean's (ETHER-DEEP) as the Bay's
+    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }
     if (!isPitPixel(st.mapX, st.mapY, s.pitSpawnRate)) { markTerrainProcessed(st, v, 'rejected:not-selected'); return; }
     if (hasLocation(entry)) { markTerrainProcessed(st, v, 'rejected:has-location'); return; }
+    if (openZoneAt(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:open-zone'); return; }   // PITS-WORLD: the open zone stands no pit
     const flag = !!deepWaters.tryGetSeafloor(entry);   // TryGetFloorCollider
     if (!flag || !deepWaters.isSeafloorCurrent(entry)) {
       const text = flag ? 'stale-seafloor' : 'missing-seafloor';

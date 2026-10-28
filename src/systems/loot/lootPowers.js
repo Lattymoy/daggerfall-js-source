@@ -48,6 +48,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { registerWeaponBlowMod, registerEntityFold, newMods, EMPTY_MODS } from '../entityMods.js';
+import { blowRoom, guardRoom } from '../powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
 import { effectSchool } from '../spellcost.js';   // LOOT15: Stendarr's Mercy reads a spell's school
 import { hoodUp } from '../survival/temperature.js';   // LOOT15: Unseen reads the hood (HOOD-SAID's one law)
 import { registerPlayerStrikeListener, enemyEntityGroup, ENEMY_GROUPS } from '../../combat/formulas.js';
@@ -57,7 +58,7 @@ import { registerSpellPowerMod, registerSpellPierceMod } from '../spell/spellPow
 import { hasSpecialAbility, SPECIAL_ABILITY, restIgnoresNoRegen } from '../rest/rest.js';   // BAL9c: a career that cannot regenerate magicka, rest's own gate
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M, registerSpireRedoubt, spireRoomNow } from '../sigil/sigilSetPowers.js';   // EG-ZH: the Spire's recovery - the breach the player stands in, and the Redoubt's door
 import { registerRollerLevel } from './lootLevelGate.js';   // LOOT-GATE
-import { effectiveLevel } from '../mentorMode.js';   // LOOT-GATE: Mentor Mode's level when it is on
+import { lootGateLevel } from '../mentorMode.js';   // LOOT-GATE, MENTOR2: the real level - a mentor is no young character
 import { playerDoor, paidBack, oweFoe } from '../playerDoor.js';   // BAL5: a blow paid back never kills; OPEN-HAND: a follow-up owed to a relay's body
 import { showFollowUp } from '../../ui/hitNumbers.js';   // FIELD BUGS 2026-10-15e ROSE-SEEN: a follow-up's own number
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
@@ -260,6 +261,7 @@ export function lootBlow(weapon, damage, attacker, target, info) {
       default: break;
     }
   }
+  if (pct > 0) pct = blowRoom(pct, 'loot');   // POWER-CEILING: the loot's room under the blow's one product
   if (pct > 0) out += shareOf(weapon ?? attacker, damage, pct, !info?.estimate);
   return out + flat;
 }
@@ -411,13 +413,13 @@ export function lootDamageMod(entity, dmg) {
   }
   let d = dmg;
   const hex = kind('hex');
-  if (blow && hex && hexed(blow.attacker, now)) d *= 1 - hex.less / 100;
+  if (blow && hex && hexed(blow.attacker, now)) d *= 1 - guardRoom(hex.less, 'loot') / 100;   // POWER-CEILING: each share asks the guards' room
   const bed = kind('bedrock');
-  if (blow && bed) d *= 1 - (bed.less * bedrockStacks(now)) / 100;
+  if (blow && bed) d *= 1 - guardRoom(bed.less * bedrockStacks(now), 'loot') / 100;
   const wall = kind('bulwark');
   if (blow && wall) d = Math.max(1, d - wall.less);
   const last = kind('laststand');
-  if (last && share(entity) < last.below / 100) d *= 1 - last.less / 100;
+  if (last && share(entity) < last.below / 100) d *= 1 - guardRoom(last.less, 'loot') / 100;
   const titan = kind('unyielding');
   if (titan && entity.maxHealth > 0) d = Math.min(d, Math.max(1, Math.ceil((entity.maxHealth * titan.most) / 100)));
   return Math.max(dmg > 0 && d > 0 ? 1 : 0, Math.round(d));
@@ -635,7 +637,7 @@ registerPlayerKillListener(LOOT_POWERS, lootKill);
 registerAbsorptionChance(LOOT_POWERS, lootAbsorbChance);
 registerMagicRoundHook(LOOT_POWERS, lootRound);
 registerLegendaryFind(LOOT_POWERS, lootFind);
-registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? effectiveLevel(me) : null; });   // LOOT-GATE: the live player's level (Mentor Mode's when on) holds the top tiers back - none before a host publishes its door, so a bare roll (a test, a tool) rolls at its source alone
+registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? lootGateLevel(me) : null; });   // LOOT-GATE: the live player's level holds the top tiers back - none before a host publish; MENTOR2: the real one while mentoringes its door, so a bare roll (a test, a tool) rolls at its source alone
 registerEntityFold(LOOT_POWERS, wardrobeFold);   // LOOT15
 registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken);   // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach
 

@@ -10,6 +10,13 @@
 // out of the record, and only the service's list is ever deposited. Every import a leaf the Worker already reads (the
 // trade's refusals over plain data - net/realm/realmTradeLaw.js tradeableRecord, the pack's own refusal's law - never the
 // pack's module).
+//
+// STORE-KEEPS (2026-10-26, the owner: "Make it where you cant lose your wagon/horse or anything stored on death"; asked,
+// "Wagon + companions' packs"): A DEATH TAKES THE BAG ALONE. The wagon's cargo and every companion's pack and kit are
+// storage, and no death in the zone takes storage - neither a piece nor a share of its coin, wherever the wagon stands
+// and whoever stands at the side. So the take reads `items` and the purse, and nothing else (CART-AWAY's word and
+// COMPANION-DROP's packs retired with it); wildTakeTook still takes out of any list a take names, for an answer from
+// before the word asked again (server-account/src/wild.js answers a fall its first take).
 // ═══════════════════════════════════════════════════════════════════
 import { isPotion, isLightSource, TEMPLATES } from '../item/itemKinds.js';
 import { isSurvivalItem } from '../survival/items.js';
@@ -26,7 +33,7 @@ import { liquidWorthOf, NAVAL_VENDOR, REVENANT_VENDOR } from '../../net/realm/re
 import { goldStack } from '../inventory.js';
 import { isWalletItem, walletHolds } from '../walletItem.js';   // KEEP-WALLET
 import { classicPiece, itemWorth } from '../item/itemLaw.js';   // INT9: a classic save's piece stays its character's
-import { HCC_VENDOR, WAGON_MODE } from '../horse/horseCartLaw.js';   // CART-AWAY: the wagon's record, the mod's own words (a leaf the Worker bundles already)
+import { ledgerKeyOf } from '../item/itemIds.js';   // AUDIT PVP-EASE L1-3: a policy names its piece by the ledger's key
 
 // The groups no death in the zone ever drops: a leaf of their own (wildLeaf.js), re-exported for the drop's readers.
 import { WILD_NEVER_GROUPS } from './wildLeaf.js';
@@ -58,22 +65,19 @@ export function wildCanLose(item) {
 }
 
 /**
- * THE DROP: what a death in the zone takes out of the bag (`items`, never a worn piece) and the cart (`wagon`) -
- * REMOVED from both lists, in their order, and handed back to be deposited. Pure over the two arrays it is given.
+ * THE DROP: what a death in the zone takes out of the bag (`items`, never a worn piece) - REMOVED from it, in its order,
+ * and handed back to be deposited. Pure over the array it is given. STORE-KEEPS: the bag alone - the cart is storage.
  */
-export function takeWildDrop(items, wagon = null) {
-  const lift = (list, worn) => {
-    const out = [];
-    if (!Array.isArray(list)) return out;
-    for (let i = list.length - 1; i >= 0; i--) {
-      const it = list[i];
-      if ((worn && isEquipped(it)) || !wildCanLose(it)) continue;
-      list.splice(i, 1);
-      out.unshift(it);
-    }
-    return out;
-  };
-  return [...lift(items, true), ...lift(wagon, false)];
+export function takeWildDrop(items) {
+  const out = [];
+  if (!Array.isArray(items)) return out;
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (isEquipped(it) || !wildCanLose(it)) continue;
+    items.splice(i, 1);
+    out.unshift(it);
+  }
+  return out;
 }
 
 /** WILD GOLD: a death at another player's hand in the zone drops a share of the gold carried - each purse's whole
@@ -88,31 +92,30 @@ export const WILD_GOLD_DIVISOR = 10;
  *  stood beside the divisor as a second number no code read). */
 export const WILD_GOLD_LOSS = 1 / WILD_GOLD_DIVISOR;
 
-/** A list's gold stack (its `Currency` item) - the cart's, a companion's pack's - or null. */
+/** A list's gold stack (its `Currency` item) - a companion's pack's, in an answer from before STORE-KEEPS - or null. */
 const coinIn = (/** @type {any} */ list) => (Array.isArray(list) ? list.find((i) => i?.group === 'Currency') ?? null : null);
 
-/** Take a tenth (each source's whole pieces / WILD_GOLD_DIVISOR, floored) of the purse (`entity.goldPieces`) AND of
- *  the cart's gold stack (the `Currency` item in `entity.wagonItems`), in place; answers the gold as ONE pile record
- *  (purse + cart share), or null. CART-AWAY (Mac, 2026-10-15): `cart` false - the wagon away from the death
- *  (wildCartMayBeAway) - and the purse's share alone. COMPANION-DROP: and of each pack at the side's gold stack (`packs` -
- *  wildPacks; a record's own, wildPacksOf, by default), into the same pile.
- *  @param {any} entity @param {{ cart?: boolean, packs?: WildPack[] }} [opts] */
-export function takeWildGold(entity, { cart: withCart = true, packs = wildPacksOf(entity) } = {}) {
-  let take = 0;
+/** Take a tenth (the purse's whole pieces / WILD_GOLD_DIVISOR, floored) of the purse (`entity.goldPieces`), in place;
+ *  answers it as ONE pile record, or null. STORE-KEEPS: the purse alone - the cart's gold stack and a companion's are
+ *  storage (they paid their tenth beside it since CART-AWAY and COMPANION-DROP).
+ *  @param {any} entity */
+export function takeWildGold(entity) {
   const have = Math.max(0, Math.floor(entity?.goldPieces ?? 0));
   const purse = Math.floor(have / WILD_GOLD_DIVISOR);
-  if (purse >= 1) { entity.goldPieces = have - purse; take += purse; }
-  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;
-  for (const coin of [cart, ...packs.map((p) => coinIn(p.items))]) {
-    if (!coin) continue;
-    const n = Math.max(0, Math.floor(coin.stackCount ?? 1));
-    const share = Math.floor(n / WILD_GOLD_DIVISOR);
-    if (share >= 1) { coin.stackCount = n - share; take += share; }
-  }
-  return take >= 1 ? goldStack(take) : null;
+  if (purse < 1) return null;
+  entity.goldPieces = have - purse;
+  return goldStack(purse);
 }
 
-/** THE KILLER'S CHOICE: the worn pieces a body offers - worn, and a death may let them go - at most WILD_ITEMS_MAX. */
+/** WILD-INSURE: no piece is insured - the law's default where no policy is read (a death to a foe takes nothing; a test). */
+const UNINSURED = (/** @type {any} */ _it) => false;
+
+/** THE KILLER'S CHOICE: the worn pieces a body offers - worn, and a death may let them go - at most WILD_ITEMS_MAX.
+ *  AUDIT PVP-EASE L2-2 (the owner: a policy spent "only when it saved the piece"): an insured piece is offered as any
+ *  other, and the killer's pick of one lands on nothing - the piece kept and its policy spent (takeWildDeath's `saved`).
+ *  So the offer reads no policy at either end, and one end's offer is the other's whatever book each has read
+ *  (AUDIT PVP-EASE L2-3, L4-1: the page's book read late or never, its offer named a piece the service's left out).
+ *  @param {any} items */
 export const wornOffer = (items) => (Array.isArray(items) ? items.filter((it) => it && isEquipped(it) && wildCanLose(it)).slice(0, WILD_ITEMS_MAX) : []);
 
 /** A record for the wire: a plain-data copy with the RECEIVER's marks off (its slot, its quest - loot.js's own clamp
@@ -135,17 +138,16 @@ export function wildPickOf(items, w = -1, wt = null) {
   return is(offer[w]) ? offer[w] : (offer.find(is) ?? null);
 }
 
-/** INT9 (AUDIT): EVERY PIECE A DEATH COULD TAKE out of `entity` (its killer's piece, the bag's and the cart's drop) -
- *  unfitted, untouched. The account service asks the ledger of all of them before it takes any (AUDIT INT9: it asked of
- *  a dry run's fitted few, and a piece kept back let in one it never asked of). CART-AWAY: `cart` false, none of the
- *  cart's (takeWildDeath's own option). COMPANION-DROP: and every pack's at the side (`packs`, takeWildDeath's own).
- *  @param {any} entity @param {number} [w] @param {number[] | null} [wt] @param {{ cart?: boolean, packs?: WildPack[] }} [opts] */
-export function wildDropCandidates(entity, w = -1, wt = null, { cart: withCart = true, packs = wildPacksOf(entity) } = {}) {
+/** INT9 (AUDIT): EVERY PIECE A DEATH COULD TAKE out of `entity` (its killer's piece and the bag's drop) - unfitted,
+ *  untouched. The account service asks the ledger of all of them before it takes any (AUDIT INT9: it asked of a dry
+ *  run's fitted few, and a piece kept back let in one it never asked of). STORE-KEEPS: the bag's alone. WILD-INSURE: never
+ *  a piece a policy keeps (`insured`, takeWildDeath's own).
+ *  @param {any} entity @param {number} [w] @param {number[] | null} [wt] @param {{ insured?: (item: any) => boolean }} [opts] */
+export function wildDropCandidates(entity, w = -1, wt = null, { insured = UNINSURED } = {}) {
   const bag = Array.isArray(entity?.items) ? entity.items : [];
-  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];
   const k = wildPickOf(bag, w, wt);
-  const drop = [...bag.filter((it) => !isEquipped(it) && wildCanLose(it)), ...cart.filter((it) => wildCanLose(it)), ...packs.flatMap((p) => p.items.filter((it) => wildCanLose(it)))];
-  return k ? [k, ...drop] : drop;
+  const drop = bag.filter((it) => !isEquipped(it) && wildCanLose(it) && !insured(it));
+  return k && !insured(k) ? [k, ...drop] : drop;
 }
 
 /** A piece's worth to the drop's order: a coin or a letter at its gold, any other at its worth (the judge's wealth's own
@@ -153,114 +155,89 @@ export function wildDropCandidates(entity, w = -1, wt = null, { cart: withCart =
 const dropWorth = (/** @type {any} */ it) => { const l = liquidWorthOf(it); return l > 0 ? l : itemWorth(it); };
 
 /**
- * INT9: A DEATH'S WHOLE TAKE, in place, off `entity` - a live character or a judged record alike (`items`, `wagonItems`,
- * `goldPieces`): the killer's worn piece first (wildPickOf - `w` its place in wornOffer, `wt` what the offer showed;
- * -1 none), then the purse's and the cart's share of their gold, then the bag's and the cart's drop BY WORTH, the most
- * first - every piece `keep` names left where it lies, and one heavier than a remains' record (net/wild/wildLaw.js recordFits)
- * left too - fitted to one remains (remainsFit), and what does not fit put back where it came from (AUDIT INT9: the
- * purse came last, so a bag of junk ahead of it kept the gold and the valuables; and a coin's share put back went into
- * the purse, the cart's too). The record's lit light (`lightSourceIndex`, an index into `items` - systems/save/save.js)
- * follows its piece. Answers `{ taken, from, records, killer, gold }`: the pieces taken (the gold a stack of it), where
- * each came from ('bag', 'cart', 'gold'), their wire records in that order, whether the first is the killer's, and the
- * gold taken `{ purse, cart }`. The account service runs it on the record (server-account/src/wild.js) and answers what
- * it took; the fallen's game takes out exactly that (wildTakeTook) - it never guesses what the ledger kept.
- * CART-AWAY (Mac, 2026-10-15: "if its parked outside the zone nothing should be lost"): `cart` false - the wagon away
- * from the death, parked off the zone, stabled or none (the service's word, wildCartMayBeAway) - takes nothing of the
- * cart, neither a piece nor its coin's share; the bag and the purse as ever.
- * COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in zone"): AND EVERY PACK AT
- * THE FALLEN'S SIDE (`packs` - wildPacks: a crew hand's ashore, a sworn one's at the side and its kit; a record's own,
- * wildPacksOf, by default) as the cart is - its pieces in the drop by worth (`from` its word, WILD_PACK), its coin's
- * share in the pile (`gold.packs`, by that word), what does not fit put back in it.
+ * INT9: A DEATH'S WHOLE TAKE, in place, off `entity` - a live character or a judged record alike (`items`, `goldPieces`):
+ * the killer's worn piece first (wildPickOf - `w` its place in wornOffer, `wt` what the offer showed; -1 none), then the
+ * purse's share of its gold, then the bag's drop BY WORTH, the most first - every piece `keep` names left where it lies,
+ * and one heavier than a remains' record (net/wild/wildLaw.js recordFits) left too - fitted to one remains (remainsFit),
+ * and what does not fit put back where it came from (AUDIT INT9: the purse came last, so a bag of junk ahead of it kept
+ * the gold and the valuables; and a coin's share put back went into the purse). The record's lit light
+ * (`lightSourceIndex`, an index into `items` - systems/save/save.js) follows its piece. Answers `{ taken, from, records,
+ * killer, gold }`: the pieces taken (the gold a stack of it), where each came from ('bag', 'gold'), their wire records in
+ * that order, whether the first is the killer's, and the gold taken `{ purse }`. The account service runs it on the
+ * record (server-account/src/wild.js) and answers what it took; the fallen's game takes out exactly that (wildTakeTook) -
+ * it never guesses what the ledger kept.
+ * STORE-KEEPS (2026-10-26, the owner: "Make it where you cant lose your wagon/horse or anything stored on death"): the bag
+ * and the purse alone. The cart's pieces and coin (CART-AWAY's `cart`, 2026-10-15) and every companion's pack, kit and
+ * coin (COMPANION-DROP's `packs`, 2026-10-19) are storage, and stay whole.
+ * WILD-INSURE (2026-10-26, the owner chose "Kept, policy spent"): `insured` - a piece a policy keeps stays where it lies,
+ * worn or in the bag - systems/wild/wildInsureLaw.js wildInsuredBy. AUDIT PVP-EASE L1-3, L2-2 (the owner: spent "only when
+ * it saved the piece"): `saved` the ledger keys of the insured pieces THIS death would have taken without them - the
+ * killer's pick landed on one, or the bag's drop would have carried it into the remains (a dry run of this same law
+ * without the policies, so the remains' bound and the ledger's `keep` judge it as they judge the take). Only those
+ * policies are spent: one on a piece no pick named, in a hall that searches no body or past the remains' bound, stays.
  * AUDIT FOE-KEEPS LETTERS-TENTH: `letters` true (the fallen's word, WILD_FALL_LETTERS; a seizure's) - each letter of
- * credit pays a tenth of its worth into the same pile (`gold.letters`, by its id) and stays where it lies; false, the
- * letters drop whole as any piece (LETTERS-DROP), for a game from before the word.
+ * credit in the bag pays a tenth of its worth into the same pile (`gold.letters`, by its id) and stays where it lies;
+ * false, the letters drop whole as any piece (LETTERS-DROP), for a game from before the word.
  * @param {any} entity @param {number} [w] @param {(item: any) => boolean} [keep] @param {number[] | null} [wt]
- * @param {{ cart?: boolean, packs?: WildPack[], letters?: boolean }} [opts]
+ * @param {{ letters?: boolean, insured?: (item: any) => boolean }} [opts]
  */
-export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = wildPacksOf(entity), letters = false } = {}) {
+export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { letters = false, insured = UNINSURED } = {}) {
+  /** @type {string[]} AUDIT PVP-EASE L1-3: the policies this death spends - what it would have taken, kept */
+  const saved = insured === UNINSURED ? [] : wildSaved(entity, w, keep, wt, letters, insured);
   const bag = Array.isArray(entity?.items) ? entity.items : [];
-  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];
   const lit = Number.isSafeInteger(entity?.lightSourceIndex) && entity.lightSourceIndex >= 0 ? bag[entity.lightSourceIndex] : undefined;
+  const held = (/** @type {any} */ it) => keep(it) || insured(it);   // WILD-INSURE: a policy keeps as the ledger does
   /** @type {[any, string][]} each piece taken, and where it came from */
   const took = [];
   const k = wildPickOf(bag, w, wt);
-  if (k && !keep(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }
+  if (k && !held(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }
   const killer = took.length > 0;
-  // the gold, second: the purse's share and the cart's - COMPANION-DROP: and each pack's at the side
-  const cartCoin = cart.find((i) => i?.group === 'Currency') ?? null;
-  const purse0 = Math.max(0, Math.floor(entity?.goldPieces ?? 0)), cart0 = cartCoin ? Math.max(0, Math.floor(cartCoin.stackCount ?? 1)) : 0;
-  const packCoins = packs.map((p) => coinIn(p.items)), pack0 = packCoins.map((c) => (c ? Math.max(0, Math.floor(c.stackCount ?? 1)) : 0));
-  const coin = takeWildGold(entity, { cart: withCart, packs });
-  /** @type {{ purse: number, cart: number, packs?: Record<string, number>, letters?: Record<string, number> }} */
-  const gold = { purse: coin ? purse0 - Math.max(0, Math.floor(entity.goldPieces ?? 0)) : 0, cart: coin && cartCoin ? cart0 - Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) : 0 };
-  packCoins.forEach((c, i) => { const n = c ? pack0[i] - Math.max(0, Math.floor(c.stackCount ?? 0)) : 0; if (n > 0) (gold.packs ??= {})[packs[i].f] = n; });
+  // the gold, second: the purse's share
+  const purse0 = Math.max(0, Math.floor(entity?.goldPieces ?? 0));
+  const coin = takeWildGold(entity);
+  /** @type {{ purse: number, letters?: Record<string, number> }} */
+  const gold = { purse: coin ? purse0 - Math.max(0, Math.floor(entity.goldPieces ?? 0)) : 0 };
   // LETTERS-TENTH (the fallen's word, `letters`): each letter's tenth into the same pile, the letter kept where it lies
-  const shares = letters ? lettersTenth([bag, cart, ...packs.map((p) => p.items)], keep) : [];
+  const shares = letters ? lettersTenth([bag], held) : [];
   const lettersGold = shares.reduce((g, [, n]) => g + n, 0);
   const pile = lettersGold > 0 ? (coin ? Object.assign(coin, { stackCount: coin.stackCount + lettersGold }) : goldStack(lettersGold)) : coin;
   if (lettersGold > 0) gold.letters = Object.fromEntries(shares.map(([it, n]) => [it.uid, n]));
   if (pile) took.push([pile, 'gold']);
   // a piece kept stands aside while the drop is taken, and comes back to its place - LETTERS-TENTH: a letter too
-  const aside = (/** @type {any[]} */ list) => {
-    const held = list.map((it, i) => (keep(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);
-    for (let n = held.length - 1; n >= 0; n--) list.splice(/** @type {any} */ (held[n])[0], 1);
-    return held;
-  };
-  const back = (/** @type {any[]} */ list, /** @type {any[]} */ held) => { for (const [i, it] of held) list.splice(Math.min(i, list.length), 0, it); };
-  const hb = aside(bag), hc = aside(cart);
-  const hp = packs.map((p) => aside(p.items));
+  const aside = bag.map((it, i) => (held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);
+  for (let n = aside.length - 1; n >= 0; n--) bag.splice(/** @type {any} */ (aside[n])[0], 1);
   /** @type {[any, string][]} */
-  const drop = [...takeWildDrop(bag).map((it) => /** @type {[any, string]} */ ([it, 'bag'])), ...takeWildDrop([], cart).map((it) => /** @type {[any, string]} */ ([it, 'cart'])),
-    ...packs.flatMap((p) => takeWildDrop([], p.items).map((it) => /** @type {[any, string]} */ ([it, p.f])))];
-  back(bag, hb); back(cart, hc); packs.forEach((p, i) => back(p.items, hp[i]));
+  const drop = takeWildDrop(bag).map((it) => /** @type {[any, string]} */ ([it, 'bag']));
+  for (const [i, it] of /** @type {[number, any][]} */ (aside)) bag.splice(Math.min(i, bag.length), 0, it);
   const worth = new Map(drop.map(([it]) => [it, dropWorth(it)]));
   drop.sort((a, b) => worth.get(b[0]) - worth.get(a[0]));   // stable: equal worth keeps the pack's order
   took.push(...drop);
   const records = remainsFit(took.map(([it]) => wildRecord(it)));
   for (const [it, from] of took.slice(records.length)) {
-    if (from === 'bag') bag.push(it);
-    else if (from === 'cart') cart.push(it);
-    else if (from !== 'gold') packs.find((p) => p.f === from)?.items.push(it);   // COMPANION-DROP: back in his pack
-    else {
-      entity.goldPieces = Math.max(0, Math.floor(entity.goldPieces ?? 0)) + gold.purse;
-      packCoins.forEach((c, i) => { const n = gold.packs?.[packs[i].f] ?? 0; if (c && n) c.stackCount = Math.max(0, Math.floor(c.stackCount ?? 0)) + n; });
-      if (cartCoin) cartCoin.stackCount = Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) + gold.cart;
-      for (const [l, n] of shares) l.value += n;   // LETTERS-TENTH: whole again
-      gold.purse = 0; gold.cart = 0; delete gold.packs; delete gold.letters;
-    }
+    if (from === 'bag') { bag.push(it); continue; }
+    entity.goldPieces = Math.max(0, Math.floor(entity.goldPieces ?? 0)) + gold.purse;
+    for (const [l, n] of shares) l.value += n;   // LETTERS-TENTH: whole again
+    gold.purse = 0; delete gold.letters;
   }
-  for (const p of packs) p.put?.(p.items);   // COMPANION-DROP: a kit's slots as its list now stands
   if (lit !== undefined) entity.lightSourceIndex = bag.indexOf(lit);
   const kept = took.slice(0, records.length);
-  return { taken: kept.map(([it]) => it), from: kept.map(([, f]) => f), records, killer: killer && records.length > 0, gold };
+  return { taken: kept.map(([it]) => it), from: kept.map(([, f]) => f), records, killer: killer && records.length > 0, gold, saved };
 }
 
-/** CART-AWAY (FIELD BUGS 2026-10-15d; Mac, asked "If parked outside of the pvp zone in the wrothgarian mountains, can it
- *  be lost?": "Yeah, if its parked outside the zone nothing should be lost"): THE WAGON'S RECORD a save carries - Horse
- *  Cart and Cargo's (horseCartLaw.js newSaveData, in the save's `modData` under HCC_VENDOR) - or null. */
-export const wildCartRecordOf = (/** @type {any} */ save) => { const r = save?.modData?.[HCC_VENDOR]; return r && typeof r === 'object' ? r : null; };
-
-/** CART-AWAY: MAY THIS RECORD'S WAGON STAND AWAY FROM ITS FALLEN, by its mode alone - no wagon (None), parked (Deployed:
- *  whether off the zone only its mask can say, which a client holds - systems/wild/wildCart.js wildCartAway), or sent to the
- *  stable (WithPlayer with WAGON-STABLED's word). Never driven, following, or beside them on foot (WithPlayer unstabled:
- *  the mod's next door parks it there, so it is where they are), and no record says nothing. The account service honours
- *  a fallen's word that its wagon is away only where the record it keeps says this (server-account/src/wild.js).
- *  @param {any} rec @returns {boolean} */
-export function wildCartMayBeAway(rec) {
-  if (!rec || typeof rec !== 'object') return false;
-  if (rec.Mode === WAGON_MODE.None || rec.Mode === WAGON_MODE.Deployed) return true;
-  return rec.Mode === WAGON_MODE.WithPlayer && rec.WagonStabled === true;
+/** AUDIT PVP-EASE L1-3: the insured pieces a death would have taken without its policies - takeWildDeath run on a copy
+ *  of `entity` with none, its taken pieces' ledger keys that a policy names. @returns {string[]} */
+function wildSaved(/** @type {any} */ entity, /** @type {number} */ w, /** @type {(item: any) => boolean} */ keep, /** @type {number[] | null} */ wt, /** @type {boolean} */ letters, /** @type {(item: any) => boolean} */ insured) {
+  const copy = { items: JSON.parse(JSON.stringify(Array.isArray(entity?.items) ? entity.items : [])), goldPieces: entity?.goldPieces ?? 0 };
+  const would = takeWildDeath(copy, w, keep, wt, { letters });
+  return [...new Set(would.taken.filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];
 }
 
-// ── COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in zone") ────────────────
-// A COMPANION AT THE FALLEN'S SIDE DROPS HIS PACK WITH THEIRS. CART-AWAY's law, for the companions: storage WITH the
-// player drops, storage outside the zone keeps. A crew hand ashore (CREW-COMPANIONS, systems/naval/crewCompanions.js)
-// walks with the player through every door - the sea's record keeps him in its `party` - so he is with them wherever
-// they fall; a sworn revenant is with them while it walks at their side (REVENANT-COMPANION's 'with'), and in the zone
-// only the first WILD_REVENANTS_MAX stand there (PVPDUNGEONS) - the rest wait outside it. What each carries is the
-// player's own (COMPANION-KIT's pack; RVN-GEAR's kit, given from the pack and taken back to it at will), so the zone's
-// own law reads it as it reads the bag: what never changes hands stays (wildCanLose), the rest drops, a tenth of his coin
-// with it (FOE-KEEPS; it halved).
+// ── THE PACKS AT THE SIDE (COMPANION-DROP, FIELD BUGS 2026-10-19f; STORE-KEEPS, 2026-10-26) ───────────────────────────
+// COMPANION-DROP had a companion at the fallen's side drop his pack with theirs: a crew hand ashore (CREW-COMPANIONS,
+// systems/naval/crewCompanions.js) and the sworn revenant at the side, his pack and his kit. STORE-KEEPS made every pack
+// storage, which no death takes (takeWildDeath above). The lists stay named here for the one reader left: a fall taken
+// before STORE-KEEPS and asked again is answered its first take (server-account/src/wild.js), which may name a pack's
+// piece and coin - and the fallen's game takes that out of the pack it names (wildTakeTook), never another list's.
 
 // The zone's count of the sworn at the side and which ones they are: the same leaf (wildLeaf.js), so the companions read
 // them without this law's graph; re-exported here for the drop's readers and the account service.
@@ -308,11 +285,8 @@ export const wildPacksOf = (save) => wildPacks(save?.modData?.[NAVAL_VENDOR]?.pa
 
 /** COMPANION-DROP (AUDIT FB1019f B2): THE FALLEN'S WORD THAT ITS GAME READS THE PACKS - `packs` 1 on /v1/wild/fall
  *  (systems/wild/wildDeath.js wildFallWords): its game takes a pack's piece out of that pack and lowers that pack's coin by
- *  its share (wildTakeTook's `packs`, `gold.packs`). A game from before COMPANION-DROP says none, and its take read every
- *  piece not the cart's as the bag's and no pack's coin: handed a take of a companion's pack, it stripped a piece of the
- *  bag bearing the same marks - a worn one too - and left his piece and his coin where the record no longer had them, his
- *  coin twice at its next checkpoint. So the account service hands a take of the packs to no fallen's tab that does not
- *  say this (server-account/src/wild.js, wildTakesPacks). */
+ *  its share (wildTakeTook's `packs`, `gold.packs`). STORE-KEEPS: no take of a pack is made any more, and the service
+ *  reads no such word; it is still true of this game, which applies an answer from before the word (a fall asked again). */
 export const WILD_FALL_PACKS = 1;
 
 /** AUDIT FOE-KEEPS LETTERS-TENTH (2026-10-24; the owner, asked whether a kill should take a letter of credit whole, a tenth
@@ -326,8 +300,8 @@ export const WILD_FALL_LETTERS = 1;
 /** A letter of credit a kill may take a share of: tradeable, not a quest's, with the id the game finds it again by. */
 const shareLetter = (/** @type {any} */ it) => !!it && it.group === 'MiscItems' && it.templateIndex === TEMPLATES.Letter_of_credit && !it.questItem
   && typeof it.uid === 'string' && !!it.uid && Number.isSafeInteger(it.value) && it.value > 0 && wildCanLose(it);
-/** LETTERS-TENTH: each letter in `lists` the ledger does not keep, lowered by a tenth of its worth, in place - answers
- *  `[letter, share]` for each. */
+/** LETTERS-TENTH: each letter in `lists` neither the ledger nor a policy keeps (`keep`), lowered by a tenth of its worth,
+ *  in place - answers `[letter, share]` for each. */
 function lettersTenth(/** @type {any[][]} */ lists, /** @type {(item: any) => boolean} */ keep) {
   /** @type {[any, number][]} */ const out = [];
   for (const list of lists) for (const it of list) {
@@ -337,11 +311,6 @@ function lettersTenth(/** @type {any[][]} */ lists, /** @type {(item: any) => bo
   }
   return out;
 }
-/** COMPANION-DROP (AUDIT FB1019f B2): DOES A TAKE - takeWildDeath's answer - TAKE ANYTHING OF A PACK AT THE SIDE: a piece
- *  out of one (`from` a pack's word), or a share of one's coin (`gold.packs`)?
- *  @param {{ from: string[], gold: { packs?: Record<string, number> } }} drop @returns {boolean} */
-export const wildTakesPacks = (drop) => drop.from.some((f) => f !== 'bag' && f !== 'cart' && f !== 'gold') || !!drop.gold.packs;
-
 /** INT9 (AUDIT): WHAT THE SERVICE TOOK, as the fallen's game finds it again - a piece's own marks (`g` group, `t`
  *  template, `m` material, `u` its id, `p` its craft's provenance, `n` its stack, `f` where it lay). */
 export const wildTookOf = (/** @type {any[]} */ taken, /** @type {string[]} */ from) => taken.map((it, i) => ({ g: it.group ?? null, t: it.templateIndex ?? null, m: it.material ?? 0, u: typeof it.uid === 'string' ? it.uid : null, p: typeof it.provenance === 'string' ? it.provenance : null, n: Math.max(1, Math.floor(it.stackCount ?? 1)), f: from[i] })).filter((x) => x.f !== 'gold');

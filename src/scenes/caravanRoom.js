@@ -20,7 +20,27 @@ import { quatRotate } from '../world/quat.js';
 import { WAGON_MODE } from '../systems/horse/horseCartLaw.js';
 
 import { CARAVAN_STANDS_NATIVES, CARAVAN_STANDS_TURN, turnGap } from '../systems/caravanRoom.js';   // WAGONS2 (AUDIT): the room's caravan where it stands - FINAL AUDIT: and which way
+import { repositionFeetY, heldInSolid, openGroundNear } from '../player/enterExit.js';   // RPT1026-WORLD WAGON-OUT: the door's landing law, and UNSTUCK-OUT's
 export { CARAVAN_STANDS_NATIVES };
+
+/**
+ * RPT1026-WORLD WAGON-OUT (a private report, 2026-10-20: a wagon called up with part of it in a house, or hard by one,
+ * entered and left again, set the player down inside the house, and only /unstuck got them out): THE
+ * CARAVAN'S DOOR NEVER LETS THE PLAYER OUT INTO A WALL. Its door's landing is the ground behind the rear door (world.js's
+ * `ground`: the street's collider floor under it, the door's landing law - enterExit.js repositionFeetY), and nothing
+ * asked what stands there: a caravan parked with its back to a house, a palisade or a rock put that ground inside the
+ * solid, and the body stood in it (the collider holds both faces of a skin, so from inside a building its walls hold
+ * it in). The landing is asked as a fast travel's is (UNSTUCK-OUT, world.js _teleportToPixel): a point a static solid
+ * holds (`heldInSolid`, its feet or its head) stands on the nearest open ground instead (`openGroundNear`, the rings
+ * out from the door's own spot), above the sea where `seaY` (the world's sea level, read when asked) is handed; with none
+ * open, where it was. `collider` the street's (a building's room is never the caravan's ground). Not a DFU member - DFU
+ * has no caravan.
+ * @param {any} collider @param {number[]} p @param {(() => number) | null} [seaY]
+ */
+export function caravanStepOut(collider, p, seaY = null) {
+  const at = [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]];
+  return heldInSolid(collider, at) ? openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at : at;
+}
 /** Where a Horse Cart and Cargo record (the runtime's state, or a save's) has its wagon parked - `[WorldX, WorldZ]` in
  *  natives - or null when it stands nowhere. */
 /** FINAL AUDIT: and its heading as a room's turn (caravanTurnOf's degrees), or null for a state with none. */

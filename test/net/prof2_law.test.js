@@ -34,7 +34,7 @@ test('PROF2 law: the kingdoms are SEAT0 4.3\'s, one home - three crowns, the Mar
   assert.deepEqual({ ...FREE_LANDS }, { balfiera: 9, orsinium: 26, wrothgarian: 16 });
   const all = [...Object.values(KINGDOMS).flatMap((k) => k.regions), ...K_MARCHES, ...Object.values(FREE_LANDS)];
   assert.equal(new Set(all).size, all.length, 'no region in two lands');
-  assert.equal(all.length, 44, 'the eighteen left out hold no seat');
+  assert.equal(all.length, 51, 'the Bay\'s 44 (the eighteen left out hold no seat) and seven provinces\' crowns');   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): High Rock's and Hammerfell's past the Bay no crown's
   assert.deepEqual([kingdomOf(17), kingdomOf(23), kingdomOf(0), kingdomOf(21), kingdomOf(9), kingdomOf(31)], ['daggerfall', 'wayrest', 'sentinel', null, null, null]);
   assert.deepEqual([isMarch(21), isMarch(17), isFreeLand(26), isFreeLand(17)], [true, false, true, false]);
   assert.equal(MARCH_REGIONS, K_MARCHES, 'the nodes\' Marches are the kingdoms\' own object');
@@ -124,11 +124,14 @@ test('PROF2 law: the veins\' tables are PROF0 4.1\'s; a vein\'s tier is drawn ov
 });
 
 test('PROF2 law: the signatures by kingdom (PROF0 4.7) - on a confirmed pixel, Daggerfall\'s Moonstone two veins, the others one, beside the climate\'s (AUDIT 29 A6); never unconfirmed', () => {
-  assert.deepEqual(regionSignature(17), { ore: 'ore:moonstone', slots: 2 });
-  assert.deepEqual(regionSignature(23), { ore: 'ore:mithril', slots: 1 });
-  assert.deepEqual(regionSignature(0), { ore: 'ore:ebony', slots: 1 });
-  assert.deepEqual([regionSignature(26), regionSignature(16)], [{ ore: 'ore:orichalcum', slots: 1 }, { ore: 'ore:orichalcum', slots: 1 }]);
-  assert.deepEqual(regionSignature(9), { ore: 'ore:adamantium', slots: 1 });
+  // PIN MOVED (WW-C1, bible/03-World/World-Wide.md WW-C): a signature names the ore of each of its slots (`ores`) - a crown's
+  // its one ore, Cyrodiil's every province's (test/world/worldWide/wwc1_ground.test.js)
+  const signature = (r) => { const g = regionSignature(r); if (g) assert.deepEqual(g.ores, Array(g.slots).fill(g.ore), `${r}: one ore, each slot`); return g && { ore: g.ore, slots: g.slots }; };
+  assert.deepEqual(signature(17), { ore: 'ore:moonstone', slots: 2 });
+  assert.deepEqual(signature(23), { ore: 'ore:mithril', slots: 1 });
+  assert.deepEqual(signature(0), { ore: 'ore:ebony', slots: 1 });
+  assert.deepEqual([signature(26), signature(16)], [{ ore: 'ore:orichalcum', slots: 1 }, { ore: 'ore:orichalcum', slots: 1 }]);
+  assert.deepEqual(signature(9), { ore: 'ore:adamantium', slots: 1 });
   assert.equal(regionSignature(21), null, 'a March: its +25%, no signature');
   assert.equal(regionSignature(31), null);
   const at = (region, confirmed, climate = C.Woodlands) => veins({ x: 300, y: 200, day: DAY, climate, region, confirmed });
@@ -140,7 +143,7 @@ test('PROF2 law: the signatures by kingdom (PROF0 4.7) - on a confirmed pixel, D
   assert.equal(at(17, false).length, 4);
   const swamp = veins({ x: 300, y: 200, day: DAY, climate: C.Swamp, region: 17, confirmed: true });
   assert.deepEqual(swamp.map((v) => v.signature), [false, false, true, true], 'a Swamp pixel\'s two veins kept (MORE-NODES), and the two Moonstones');
-  // Orichalcum grows nowhere else: no climate's table and no other region's signature holds it
+  // Orichalcum grows nowhere else on the Bay: no climate's table and no other region's signature holds it (WW-C1: past it Skyrim's own, and Cyrodiil's)
   assert.ok(Object.values(VEIN_TABLES).every((t) => !t.includes('ore:orichalcum')));
   assert.ok(Array.from({ length: 62 }, (_, r) => r).filter((r) => regionSignature(r)?.ore === 'ore:orichalcum').every((r) => r === 26 || r === 16));
 });

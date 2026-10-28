@@ -42,7 +42,8 @@ test('STAFF-EVENT: an event is held to its bounds - kinds any monster but the tw
 
 test('STAFF-EVENT: the words each way are projected - a player\'s word, the hub\'s book and end, a cell\'s ledger, a tell', () => {
   assert.deepEqual(validStaffEventIn({ k: 'w', id: EV.id, px: 207, py: 213, n: 4, s: 1, extra: 9 }), { k: 'w', id: EV.id, px: 207, py: 213, n: 4, s: 1, bu: 0, bk: 0, fb: 0, h: 0 });
-  for (const bad of [{ k: 'x' }, { n: -1 }, { n: 10_000 }, { bu: 2 }, { fb: 100 }, { px: 1000 }]) assert.equal(validStaffEventIn({ k: 'w', id: EV.id, px: 207, py: 213, n: 1, ...bad }), null);
+  // PIN MOVED (AUDIT RELEASE R2-7): the word's pixel is the world's grid - (1000, 213) is land past the Bay now, 8192 past the wire's
+  for (const bad of [{ k: 'x' }, { n: -1 }, { n: 10_000 }, { bu: 2 }, { fb: 100 }, { px: 8192 }]) assert.equal(validStaffEventIn({ k: 'w', id: EV.id, px: 207, py: 213, n: 1, ...bad }), null);
   const book = validStaffEventOut({ k: 'ev', l: [EV, EV, { ...EV, id: 'zz' }, { ...EV, id: 'cc22dd33ee' }] });
   assert.deepEqual(book.l.map((e) => e.id), [EV.id, 'cc22dd33ee'], 'each event once, a bad one dropped');
   assert.deepEqual(validStaffEventOut({ k: 'end', id: EV.id, why: 'nope' }), { k: 'end', id: EV.id, why: 'staff' });

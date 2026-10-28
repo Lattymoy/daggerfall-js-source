@@ -26,7 +26,7 @@
 //       KW_SECTION_EVERY_MS two of its eight sections shudder KW_SECTION_WARN_MS and fall away for KW_SECTION_GONE_MS (a
 //       body on one falls - the nets cast it back, net/ketch/ketchLaw.js castBack - and the bridge comes back together).
 //   THE KETCH TURNS WEST: KW_ENDS_MS after the wake, every KW_END_EVERY_MS, KW_END_PCT of everyone's health - a crew that
-//     cannot fell it in fourteen minutes does not.
+//     cannot fell it in twenty-two minutes does not.
 //   Every blow a FULL SHAPE STAMP (net/eliteGates/egShape.js), judged on the struck player's own machine; the relay
 //   counts the plain ones on its trails (judgeWarden).
 //
@@ -47,10 +47,10 @@ import { deepIn, BODY_AFTER_MS } from '../bossBody.js';
 
 // ── the numbers ────────────────────────────────────────────────────────
 /** A fighter's share: KW_TTK_S seconds of its reference damage x KW_SHARE_X. */
-export const KW_TTK_S = 600;   // KETCH-LONGER: 300 before - a solo fight of some seven minutes, where the live run's went in three and a half
+export const KW_TTK_S = 600;   // KETCH-LONGER: 300 before - some eleven minutes at reference damage (AUDIT KETCH II L5-3), where the live run's went in three and a half
 export const KW_SHARE_X = 1;
 export const KW_OPENING_MS = 6000;
-export const KW_LOST_MS = 30_000;
+export const KW_LOST_MS = 120_000;   // AUDIT KETCH II L5-4, L5-5: thirty seconds before - a solo who fell (nobody to raise it) was never back in time over the fastest way up (some forty seconds), so one death began an eleven-minute fight again; and a raise inside its window (KT_DOWN_MS, a minute) stood a body up on a fight already lost
 /** The phases' floors (their names are the page's - systems/ketch/ketchWords.js ketchPhaseName), the turn's moment. */
 export const KW_PHASE_AT = Object.freeze([0.65, 0.35]);
 export const KW_TURN_MS = 2500;
@@ -177,6 +177,11 @@ export function joinWarden(f, sub, name, lv, now, present = null) {
 }
 
 const poseIn = (pose) => !!pose && onBridge(pose.x, pose.z, 1.5) && (!Number.isFinite(pose.y) || Math.abs(pose.y - KT_BRIDGE.y) <= 4);
+/** RPT1026-FIGHTS (RETIRED-BLOW - net/superDungeon/sdRemnant.js sighted, the Hour's law rung for rung): A BLOW IS A SIGHTING.
+ *  A member the beat had not seen on the bridge ABSENT_RETIRE_MS has its share out of the Warden, and its blows from a pose
+ *  on the bridge (the relay drops one older than KT_POSE_FRESH_MS) landed whole on the share of the rest - it is seen now,
+ *  its share back at the fraction the Warden stands at, before what it lands is judged. */
+function sighted(f, p, now) { p.seenAt = now; restoreShare(f, p); }
 /**
  * A blow on the Warden: `got` - what the crew's purse already accepted (net/ketch/ketchBrain.js spends the voyage's hand
  * and purse, the one a member strikes everything with) - laid on it: refused (answers 0, and the brain gives the purse
@@ -191,6 +196,7 @@ export function applyWardenHit(f, sub, d, r, pose, now, spend) {
   const W = f.wd;
   stepWalk(W, now);
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, W.x, W.z) - KW_BODY.r > MELEE_REACH + POSE_SLACK) return 0;
+  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged
   const got = spend(d * (now < f.stunUntil ? KW_STUN_HIT_X : 1), Math.max(0, f.hp - floorOf(f)));
   if (got > 0) { f.threat[sub] = (f.threat[sub] ?? 0) + got; p.dealt += got; p.hits = (p.hits ?? 0) + 1; p.best = Math.max(p.best ?? 0, got); }
   f.hp -= got;
@@ -235,6 +241,7 @@ export function applyForkHit(f, sub, c, d, r, pose, now, spend) {
   const p = f.players[sub], X = f.fk, q = X && Number.isInteger(c) ? X.c[c] ?? null : null;
   if (!p || over(f, now) || !q || !(q.h > 0) || !Number.isFinite(d) || !(d > 0) || !forksOpen(f, now) || !poseIn(pose)) return out;
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - KW_FORK.r > MELEE_REACH + POSE_SLACK) return out;
+  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a fork's striker stands on the bridge too
   const got = spend(d, q.h);
   p.dealt += got;   // a part in the fight, as the gate's crystals are (AUDIT KETCH L1-8: a fork's damage counted for nothing)
   p.cxd = (p.cxd ?? 0) + got;

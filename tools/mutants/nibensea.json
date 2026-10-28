@@ -1,0 +1,224 @@
+[
+  {
+    "name": "NIBEN-course-corners-only",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "      const [ax, ay] = run[Math.max(0, k - 1)], [bx, by] = run[k];\n      for (let x = ax, y = ay; ; x += Math.sign(bx - ax), y += Math.sign(by - ay)) {\n        out.set(",
+    "new": "      const [ax, ay] = run[k], [bx, by] = run[k];\n      for (let x = ax, y = ay; ; x += Math.sign(bx - ax), y += Math.sign(by - ay)) {\n        out.set(",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "NIBEN-walk-a-corner-short",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "    for (let k = 0; k < run.length; k++) {\n      const [ax, ay] = run[Math.max(0, k - 1)], [bx, by] = run[k];\n      for (let x = ax, y = ay; ; x += Math.sign(bx - ax), y += Math.sign(by - ay)) {\n        out.set(",
+    "new": "    for (let k = 0; k < run.length - 1; k++) {\n      const [ax, ay] = run[Math.max(0, k - 1)], [bx, by] = run[k];\n      for (let x = ax, y = ay; ; x += Math.sign(bx - ax), y += Math.sign(by - ay)) {\n        out.set(",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "NIBEN-guard-unread",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  if (w !== 320 || h !== 200 || NIBEN_JOINS.some(([x, y]) => land[y * w + x])) return 0;",
+    "new": "  if (w !== 320 || h !== 200) return 0;",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "NIBEN-province-kept",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "    if (land[i]) { land[i] = 0; province[i] = 0; opened++; }",
+    "new": "    if (land[i]) { land[i] = 0; opened++; }",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "NIBEN-unopened",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  if (niben) openNiben(land, province, w, h);   // NIBEN-SEA",
+    "new": "  if (niben && false) openNiben(land, province, w, h);   // NIBEN-SEA",
+    "tests": [
+      "test/world/nibensea.test.js",
+      "test/ui/tamriel4.test.js"
+    ]
+  },
+  {
+    "name": "CANAL-span-unread",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (idAt(cx + dx, cy + dy) !== id) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "CANAL-reach-unbounded",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "  for (let y = cy + r + 1; y <= cy + r + reach; y++) {",
+    "new": "  for (let y = cy + r + 1; y <= cy + r + 1000; y++) {",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "CANAL-edge-water-a-canal",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "    if (y === cy + r + 1) return null;   // the water at the city's edge: no canal to cut\n",
+    "new": "",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "CANAL-province-unread",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "    if (c && px >= c.p0 && px < c.p1 && py >= c.q0 && py < c.q1) return null;",
+    "new": "    if (false && c) return null;",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-the-centre",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const capitalHarbourSlice = (cap) => (cap.harbour ? cap.harbour[1] * capitalDims(cap).w + cap.harbour[0] : capitalCentre(cap));",
+    "new": "export const capitalHarbourSlice = (cap) => capitalCentre(cap);",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "HARBOUR-canal-unasked",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + D.h - D.my);",
+    "new": "  return D.w > 0;",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "ROWS-harbour-unported",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const capitalSlicePort = (k, s, pinPort) => !!CAPITALS[k] && s === capitalHarbourSlice(CAPITALS[k]) && (!!pinPort || capitalCanalOpen(k));",
+    "new": "export const capitalSlicePort = (k, s, pinPort) => !!CAPITALS[k] && s === capitalHarbourSlice(CAPITALS[k]) && !!pinPort;",
+    "tests": [
+      "test/world/nibensea.test.js",
+      "test/world/audittesa2p_world.test.js"
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the harbour slice's port word moved from the registry's rows (pastBayRows.js) to tamrielCapitals.js capitalSlicePort, the rows' and the slice's byte's one law - the canal unread there."
+  },
+  {
+    "name": "PORT-name-the-slice",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "name: cap?.name ?? p.name, px: p.px,",
+    "new": "name: p.name, px: p.px,",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "PORT-reach-unset",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}) });",
+    "new": "      ...({}) });",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "LANES-reach-unread",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    const reach = Math.max(maxPx, p.reach ?? 0);",
+    "new": "    const reach = maxPx;",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "LANES-way-cap-the-lanes",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "export const beyondPathPx = (lane) => Math.max(BEYOND_LANE_PATH_PX, 2 * Math.max(lane.a.reach ?? 0, lane.b.reach ?? 0));",
+    "new": "export const beyondPathPx = (lane) => BEYOND_LANE_PATH_PX + 0 * (lane.a.reach ?? 0);",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-one-bank-enough",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "  return (bank(-1, 0) && bank(1, 0)) || (bank(0, -1) && bank(0, 1));",
+    "new": "  return (bank(-1, 0) || bank(1, 0)) || (bank(0, -1) && bank(0, 1));",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-another-province-bank",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "      if (land[by * w + bx]) return province[by * w + bx] === IMPERIAL_ID;",
+    "new": "      if (land[by * w + bx]) return province[by * w + bx] > 0;",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-water-unasked",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y) });",
+    "new": "pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE });",
+    "tests": [
+      "test/systems/wild/audittesa2z_zone.test.js",
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "NIBEN-relief-bake-reads-the-river",
+    "file": "tools/bakeTamrielRelief.mjs",
+    "old": "palette: pal, relief: false, niben: false })",
+    "new": "palette: pal, relief: false })",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-dam-unbuilt",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "      dam(bx, by, [ia, ib, ic, id]);\n      continue;",
+    "new": "      continue;",
+    "tests": [
+      "test/world/nibensea.test.js",
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-dam-the-laws",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "    if ((ia !== ib && one(bx, by, bx + 1, by))",
+    "new": "    if (false && (ia !== ib && one(bx, by, bx + 1, by))",
+    "tests": [
+      "test/world/nibensea.test.js",
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-water-by-the-picture",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "  if (provinceKeyAt(qx, qy) !== null) return false;",
+    "new": "  if (provinceKeyAt(qx, qy) !== null && false) return false;",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "BOOT-the-bake-kept",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  const store = niben ? bootStore(indexedDBRef) : null;",
+    "new": "  const store = bootStore(indexedDBRef);",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  }
+]

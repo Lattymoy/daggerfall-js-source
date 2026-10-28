@@ -246,7 +246,9 @@ test('SD9d THE HOUR TURNS (6): a blow that would kill me does not - the door lea
 
 test('SD9d THE HOST: world.js gives the Brass\'s powers the Orrery hall\'s own sounds through the voice\'s index door, as the hall plays them - the gear\'s clunk for Gearward, the low bell\'s toll for The Hour Turns (mutants: a power unvoiced; the sounds crossed)', () => {
   const w = strip(read('src/scenes/world.js'));
-  assert.match(w, /import \{ SD_HALL_TEXT, SD_HALL_SOUNDS \} from '\.\/superDungeon\/sdHall\.js';/);
+  // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the snap's line is sdSnapLine's now (it names whom it lashes), so SD_HALL_TEXT
+  // left the import; the sounds are the hall's as ever
+  assert.match(w, /import \{ sdSnapLine, sdHallNamed, SD_HALL_SOUNDS \} from '\.\/superDungeon\/sdHall\.js';/);
   // PIN MOVED (AUDIT SD IV A3): the index door (playOneShot) - the ID door played whatever record carries the ID 433 or
   // 107, not the hall's records (sd26_audio runs the voice)
   assert.match(w, /else if \(name === 'gear'\) audio\.playOneShot\(SD_HALL_SOUNDS\.clunk, 1\);/);

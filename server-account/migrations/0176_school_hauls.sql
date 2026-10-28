@@ -1,0 +1,14 @@
+-- AUDIT LOCKPICK D2 (2026-10-26, the owner: "Audit this"; bible/06-Systems/Professions-Arc.md section 55, F3): A HAUL'S
+-- SCHOOL, KEPT ON ITS ROW.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI). Deploy this service (acct195)
+-- before the site; no relay change.
+--
+-- AUDIT GATHER F3 bounded the school's fish - the client's word - to an account's first forty HAULS of the day, so an
+-- honest angler's first school after forty plain hauls (twenty minutes at the net, CAP-OFF lifting the haul's own cap)
+-- earned nothing. The bound is the account's SCHOOLS a day: a haul whose school counted says so on its row, and
+-- professions.js counts those (SCHOOL_HAULS_DAY). Every row before this one took no school as far as the count knows - the
+-- day it lands on is counted from nought, which only ever errs toward the angler.
+ALTER TABLE node_harvests ADD COLUMN school INTEGER NOT NULL DEFAULT 0 CHECK (school IN (0, 1));

@@ -150,7 +150,8 @@ test('AUDIT TACT A3/D10: the brain\'s clock is the foes\' own time - a held fram
   assert.ok(Math.abs(tacticsNow() - t0 - 0.05) < 1e-12);
   setTacticsClock(() => T);
   // PIN MOVED (AUDIT TELL H1): and held under the dungeon's window that holds its foes, in all three hosts
-  assert.match(hostText('src/scenes/world.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && !!modes\?\.dungeonCtx\?\.uiOverlayActive\) \? 0 : dt\)\);/);
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE, scenes/windowWorld.js): online a dungeon's window holds its foes over a death alone (the world runs on under the rest)
+  assert.match(hostText('src/scenes/world.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && windowHoldsDungeon\(modes\?\.dungeonCtx\?\.uiOverlayActive, playerEntity\.health > 0 && !modes\?\.deathUp\?\.\(\)\)\) \? 0 : dt\)\);/);
   assert.match(rd('src/scenes/exterior.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && !!modes\?\.dungeonCtx\?\.uiOverlayActive\) \? 0 : dt\)\);/);
   assert.match(rd('src/scenes/dungeon.js'), /tickTactics\(foeFrameDt\(ctx\.uiOverlayActive \? 0 : dt\)\);/);
   assert.doesNotMatch(rd('src/ai/tactics.js'), /performance\.now/, 'never the wall');

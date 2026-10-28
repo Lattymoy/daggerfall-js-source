@@ -23,6 +23,7 @@ import { openHiddenSeen, HIDDEN_SEEN_SIG_HEADER, HIDDEN_SEEN_PATH } from '../../
 import { hiddenMay, hiddenEntered, hiddenSeenOn, HIDDEN_RESERVE, HIDDEN_LAPSED, HIDDEN_FRAMES, HIDDEN_CHAT, isHidden } from '../../server/src/staffHidden.js';
 import worker from '../../server/src/index.js';
 import { SAFE_LAW_PATH } from '../../server/src/relay.js';
+import { sdTestKey } from './superDungeon/sdParty.mjs';   // SD-PARTY
 
 const subtle = globalThis.crypto.subtle;
 const quiet = async (fn) => { const keep = { info: console.info, warn: console.warn, log: console.log }; console.info = console.warn = console.log = () => {}; try { return await fn(); } finally { Object.assign(console, keep); } };
@@ -381,7 +382,7 @@ test('STAFF-PANEL5-HIDDEN the admissions: a private home admits the hidden spect
 
 test('STAFF-PANEL5-HIDDEN a battle and a realm: a hidden spectator is let into a siege\'s field and a Super dungeon\'s realm without a pass, a side or a place in the realm\'s record - and the player who has none is still refused (mutants: the siege\'s pass asked of it; the realm\'s record asked of it)', async () => {
   await quiet(async () => {
-    for (const key of ['siege:3021:20', 'sd:1']) {
+    for (const key of ['siege:3021:20', sdTestKey(1)]) {   // PIN MOVED: SD-PARTY - a realm is a party's own Hour
       const r = fakeRoom(key);
       const stranger = r.connect(); await r.hello(stranger, 'strg-0001', P);
       assert.ok(!welcomeOf(stranger), `${key}: a player with no pass or place is refused`);

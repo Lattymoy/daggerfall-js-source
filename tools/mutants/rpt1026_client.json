@@ -1,0 +1,273 @@
+[
+  {
+    "name": "RPT1026-SPARKS-performance-clock",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "  function burst(key) { if (!still) bursts.push({ key, t0: null }); }",
+    "new": "  function burst(key) { if (!still) bursts.push({ key, t0: performance.now() }); }",
+    "tests": [
+      "test/ui/rpt1026_client_firmsparks.test.js"
+    ],
+    "note": "the burst stamped with the page's clock again - drawn by the frame's, it went younger than nought (the report's IndexSizeError)"
+  },
+  {
+    "name": "RPT1026-SPARKS-never-stamped",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    for (const b of bursts) b.t0 ??= t;\n",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_client_firmsparks.test.js"
+    ],
+    "note": "a burst never stamped by its first frame - it is never drawn, nor ever over"
+  },
+  {
+    "name": "RPT1026-CRASH-no-dismiss",
+    "file": "src/main.js",
+    "old": "  el.textContent = `CRASH\\n${msg}`;\n  crashDismiss(el);\n",
+    "new": "  el.textContent = `CRASH\\n${msg}`;\n",
+    "tests": [
+      "test/scenes/rpt1026_client_crashdismiss.test.js"
+    ],
+    "note": "the first report put up with no way off it"
+  },
+  {
+    "name": "RPT1026-CRASH-second-loses-button",
+    "file": "src/main.js",
+    "old": "    prior.textContent = `CRASH (${prior._count})\\n${msg}`;\n    crashDismiss(prior);\n",
+    "new": "    prior.textContent = `CRASH (${prior._count})\\n${msg}`;\n",
+    "tests": [
+      "test/scenes/rpt1026_client_crashdismiss.test.js"
+    ],
+    "note": "a second throw's text replaces the children - the button with them"
+  },
+  {
+    "name": "RPT1026-CRASH-button-click-through",
+    "file": "src/main.js",
+    "old": "padding:2px 10px;font:12px monospace;pointer-events:auto;cursor:pointer",
+    "new": "padding:2px 10px;font:12px monospace;cursor:pointer",
+    "tests": [
+      "test/scenes/rpt1026_client_crashdismiss.test.js"
+    ],
+    "note": "the button inherits the body's pointer-events:none - no click ever reaches it"
+  },
+  {
+    "name": "RPT1026-CRASH-dismiss-reloads",
+    "file": "src/main.js",
+    "old": "  b.onclick = (e) => { e?.stopPropagation?.(); el.remove(); };",
+    "new": "  b.onclick = () => { el.remove(); };",
+    "tests": [
+      "test/scenes/rpt1026_client_crashdismiss.test.js"
+    ],
+    "note": "the dismiss's click goes on to the lost context's tap-to-reload beneath it"
+  },
+  {
+    "name": "RPT1026-CRASH-phone-words",
+    "file": "src/main.js",
+    "old": "crashOverlay('the graphics stopped: the graphics card was reset, or ran short of memory\\n\\nclick or tap here to reload')",
+    "new": "crashOverlay('the graphics stopped (often low memory on a phone)\\n\\ntap here to reload')",
+    "tests": [
+      "test/scenes/rpt1026_client_crashdismiss.test.js"
+    ],
+    "note": "the old line, which told a PC player their phone was low on memory"
+  },
+  {
+    "name": "RPT1026-WEIR-restack-ignores-lying",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  const want = Math.max(0, n - weirKeysLying());",
+    "new": "  const want = n;",
+    "tests": [
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js"
+    ],
+    "note": "every restack the whole balance, whatever lies on a body"
+  },
+  {
+    "name": "RPT1026-WEIR-taken-still-lying",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  for (let i = _lying.length - 1; i >= 0; i--) if (!_lying[i].list.includes(_lying[i].face)) _lying.splice(i, 1);\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js"
+    ],
+    "note": "a face taken up still counted as lying - the pack a key short for good"
+  },
+  {
+    "name": "RPT1026-WEIR-away-not-folded",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  if (!_facesHere()) { foldLyingWeirKeys(); return 0; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js",
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "out of the dungeon the faces left behind still lie - the pack short of them, and a face still there to take. AUDIT RPT1026 K1: the next line folds every face of another visit, so only a face laid while away (no visit) needs this line - the K1 pin lays one"
+  },
+  {
+    "name": "RPT1026-WEIR-load-keeps-lying",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  _lying.length = 0;   // RPT1026-CLIENT: the load's world is a new one - every face it holds out of the pack is folded here\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js"
+    ],
+    "note": "a load keeps the old world's lying faces - the loaded pack short of them"
+  },
+  {
+    "name": "RPT1026-WEIR-here-door-unset",
+    "file": "src/systems/eliteGates/egFind.js",
+    "old": "  setWeirKeyFacesHere(here);\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js"
+    ],
+    "note": "the find never tells the faces where its bodies are - they lie for ever"
+  },
+  {
+    "name": "RPT1026-WEIR-card-unsaid",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });",
+    "new": "out.push({ text: EG_TEXT.keyLine, center: true });",
+    "tests": [
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js"
+    ],
+    "note": "the card says nothing of whose the keys are - the report's key back at the next sign-in, unexplained"
+  },
+  {
+    "name": "RPT1026-FRAMECAP-off-free",
+    "file": "src/systems/frameCap.js",
+    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);",
+    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300));",
+    "tests": [
+      "test/systems/rpt1026_client_framecap.test.js"
+    ],
+    "note": "DFU's Off again where the wait is lifted - frames as fast as they go"
+  },
+  {
+    "name": "RPT1026-FRAMECAP-browser-capped",
+    "file": "src/systems/frameCap.js",
+    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);",
+    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || LIFTED_OFF_FPS;",
+    "tests": [
+      "test/systems/rpt1026_client_framecap.test.js"
+    ],
+    "note": "the ceiling everywhere - a browser's Off, which the screen paces, capped too"
+  },
+  {
+    "name": "RPT1026-FRAMECAP-never-lifted",
+    "file": "src/systems/frameCap.js",
+    "old": "  _lifted = true;   // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)\n",
+    "new": "",
+    "tests": [
+      "test/systems/rpt1026_client_framecap.test.js"
+    ],
+    "note": "the install never says the wait is lifted"
+  },
+  {
+    "name": "RPT1026-FRAMECAP-ceiling-240",
+    "file": "src/systems/frameCap.js",
+    "old": "export const LIFTED_OFF_FPS = FRAME_CAP_MAX;",
+    "new": "export const LIFTED_OFF_FPS = 240;",
+    "tests": [
+      "test/systems/rpt1026_client_framecap.test.js"
+    ],
+    "note": "a ceiling under a rate the row itself offers"
+  },
+  {
+    "name": "RPT1026-FRAMECAP-tip-gone",
+    "file": "src/ui/settings/settingsCopy.js",
+    "old": "  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? portTip(key);",
+    "new": "  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';",
+    "tests": [
+      "test/systems/rpt1026_client_framecap.test.js"
+    ],
+    "note": "the row never says what Off does in the app"
+  },
+  {
+    "name": "RPT1026-SHAKE-peer-whole",
+    "file": "src/scenes/hostMagic.js",
+    "old": "heard: m.sky ? SKY_FIRE_HEARD_M : 40, shake: (blast ? 4.5 : 3) * peerKickShare(m),",
+    "new": "heard: m.sky ? SKY_FIRE_HEARD_M : 40, shake: blast ? 4.5 : 3,",
+    "tests": [
+      "test/scenes/rpt1026_client_peershake.test.js"
+    ],
+    "note": "another player's spell kicks at its whole strength, whatever the setting (the report)"
+  },
+  {
+    "name": "RPT1026-SHAKE-mine-scaled",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!m?.visual || m.casterId == null) return 1;",
+    "new": "    if (m?.casterId != null) return 1;",
+    "tests": [
+      "test/scenes/rpt1026_client_peershake.test.js"
+    ],
+    "note": "the share read for the wrong missiles - mine scaled, the peer's whole"
+  },
+  {
+    "name": "RPT1026-SHAKE-default-full",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  peerSpellShake: 0.5,",
+    "new": "  peerSpellShake: 1,",
+    "tests": [
+      "test/scenes/rpt1026_client_peershake.test.js"
+    ],
+    "note": "Full by default - the tremor stands until the player finds the row"
+  },
+  {
+    "name": "RPT1026-SHAKE-unmapped",
+    "file": "src/ui/settings/settingsMap.js",
+    "old": "\"Controls/CameraRecoilStrength\", \"port:techniqueMotion\", \"port:peerSpellShake\",",
+    "new": "\"Controls/CameraRecoilStrength\", \"port:techniqueMotion\",",
+    "tests": [
+      "test/scenes/rpt1026_client_peershake.test.js"
+    ],
+    "note": "the row in no section - on no screen"
+  },
+  {
+    "name": "RPT1026-SHAKE-ceiling-off-tile",
+    "file": "src/systems/features.js",
+    "old": "'Dungeon Lighting.dungeonDarkness', 'Camera Shake.maxShake']),",
+    "new": "'Dungeon Lighting.dungeonDarkness']),",
+    "tests": [
+      "test/scenes/rpt1026_client_peershake.test.js"
+    ],
+    "note": "Better Ambience's shake ceiling off its tile again"
+  },
+  {
+    "name": "RPT1026-CAPTURE-map-pan-bare",
+    "file": "src/ui/heldMap.js",
+    "old": "      panned = false;\n      capturePointer(stage, e.pointerId);",
+    "new": "      panned = false;\n      stage.setPointerCapture?.(e.pointerId);",
+    "tests": [
+      "test/ui/rpt1026_client_capture.test.js"
+    ],
+    "note": "the map's pan captures bare again - a pad's press throws NotFoundError out of the listener (the report)"
+  },
+  {
+    "name": "RPT1026-CAPTURE-door-throws",
+    "file": "src/ui/pointerCapture.js",
+    "old": "  try { el?.setPointerCapture?.(id); return true; } catch { return false; }",
+    "new": "  el?.setPointerCapture?.(id); return true;",
+    "tests": [
+      "test/ui/rpt1026_client_capture.test.js"
+    ],
+    "note": "the door lets the refusal through"
+  },
+  {
+    "name": "RPT1026-CAPTURE-release-throws",
+    "file": "src/ui/pointerCapture.js",
+    "old": "  try { el?.releasePointerCapture?.(id); return true; } catch { return false; }",
+    "new": "  el?.releasePointerCapture?.(id); return true;",
+    "tests": [
+      "test/ui/rpt1026_client_capture.test.js"
+    ],
+    "note": "the release's refusal let through"
+  },
+  {
+    "name": "RPT1026-CAPTURE-firmament-bare",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    capturePointer(canvas, e.pointerId);",
+    "new": "    canvas.setPointerCapture?.(e.pointerId);",
+    "tests": [
+      "test/ui/rpt1026_client_capture.test.js"
+    ],
+    "note": "a capture outside the door - the sweep finds it"
+  }
+]

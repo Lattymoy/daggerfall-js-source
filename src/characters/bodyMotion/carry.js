@@ -15,7 +15,7 @@
 // curl is relative), driving a closed hand's fingers into its palm. So the layer turns the hand and leaves its fingers.
 //
 // THE CLASSES (carryClassOf): 'free' (nothing in hand - the gait's own swing), 'one' (a one-hander, held down and away
-// from the side, Mac's stance; run "in the same format" - the arm low and out, the blade trailing), 'two' (a two-hander
+// from the side, Mac's stance; run "in the same format" - the arm low and out, the blade forward - ONE-RUN), 'two' (a two-hander
 // in a low guard with both hands; run with it at the hip in both hands, the blade trailing behind - TWO-RUN), 'wide' (a
 // staff, both hands across the body), 'spear' (a spear, both hands, the point forward), 'dual' (a pair, held down and
 // away from both sides; run with both swept behind), 'fists' (bare-handed with the fists up: a guard), and 'clip' (a
@@ -85,16 +85,25 @@ export const CARRY = Object.freeze({
   one: Object.freeze({
     idle: { R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, -0.62), edge: dir(-0.26, -0.56, -0.78) }), L: row(3, 8, 12, 4, 0) },
     walk: { R: row(5, 22, 3, -1, 0.3, { blade: dir(0.23, 0.81, -0.53), edge: dir(-0.39, -0.42, -0.82) }), L: row(2, 8, 12, 6, 1, { gaitElbow: 1 }) },
-    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, -0.51, -0.67), edge: dir(-0.21, 0.69, -0.69) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },
+    // ONE-RUN (feature-feedback via Mac, 2026-10-26: "Running and sprinting with one-handed weapon looks off, because hand
+    // is in twisted position pointing weapon to the side unnaturally"): the stand's own format at a run - the arm low and
+    // out, nearly straight, swinging with the stride, the blade forward and a little down. The blade had trailed behind,
+    // down and out to the right, the forearm turned 64 to 74 degrees off its elbow's hinge to hold it there; a bent elbow
+    // with the blade still forward and down asked the wrist for 40 to 95 degrees of ulnar deviation. And no `via`: the
+    // trailing blade's way round, back and up, swung the new one 11 degrees a frame between a stand and a run.
+    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },
     sneak: { R: row(21, 29, 54, -44, 0.2, { blade: dir(0.12, 0.98, -0.18), edge: dir(0.8, -0.2, -0.56) }), L: row(14, 16, 40, 10, 0.6) },
     stand: { feet: { L: [0, 0.05], R: [0.02, -0.03] }, hipYaw: -6 },
-    via: dir(0, -0.643, 0.766),
   }),
   two: Object.freeze({
-    idle: { R: row(29, 7, 10, 42, 0, { blade: dir(-0.3, 0.89, -0.35), edge: dir(-0.08, -0.39, -0.92) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
-    walk: { R: row(40, -5, 7, 56, 0.12, { blade: dir(-0.52, 0.84, -0.15), edge: dir(0.13, -0.1, -0.99) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
+    // TWO-CLEAR (feature-feedback via Mac, 2026-10-26: the claymore's hands through the body): the guard's hands before the
+    // belly, a little right of the middle - the low guard's blade still forward and down. Held at the right hip, the left
+    // hand closed a third of an arm down the grip reached across the body at its full length, and the left arm ran
+    // through the chest - 4.5 to 6.3 units into the audit's trunk at rest, at a walk and sneaking.
+    idle: { R: row(36, -3, 10, 52, 0, { blade: dir(-0.34, 0.89, -0.29), edge: dir(-0.41, -0.42, -0.81) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
+    walk: { R: row(40, -7, 11, 11, 0.12, { blade: dir(-0.34, 0.94, -0.1), edge: dir(-0.35, -0.22, -0.91) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
     run: { R: row(43, 10, 0, -31, 0, { blade: dir(0.8, -0.23, -0.55), edge: dir(-0.31, 0.62, -0.72) }), L: row(0, 0, 0, 0, 0, { grip: true }) },
-    sneak: { R: row(51, 2, 7, 22, 0.1, { blade: dir(-0.34, 0.94, 0.09), edge: dir(-0.1, 0.06, -0.99) }), L: row(0, 0, 0, 0, 0, { grip: true }) },   // AUDIT BODY-MOTION CARRY-3: the guard raised to level - the chest's lean tipped the low guard's blade into the ground and the right thigh
+    sneak: { R: row(52, -2, 11, 52, 0.1, { blade: dir(-0.26, 0.95, 0.17), edge: dir(-0.21, 0.12, -0.97) }), L: row(0, 0, 0, 0, 0, { grip: true }) },   // AUDIT BODY-MOTION CARRY-3: the guard raised to level - the chest's lean tipped the low guard's blade into the ground and the right thigh
     stand: { feet: { L: [-0.02, 0.15], R: [0.04, -0.09] }, hipYaw: -16, lean: 3 },
     via: dir(0, -0.259, 0.966),
     runTurn: -32, runLean: 10,
@@ -302,6 +311,18 @@ export function hafHand(rightReq, rightGrip, Rblade, along, arm, slide = null) {
   return { ...req, at: add(req.at, scale(b, a * arm)), along: a };
 }
 
+/** TWO-CLEAR: how far along `fwd` the haft hand's wrist `at` must move to stand `clear` off the trunk's line (`a` the
+ *  pelvis, `c` the neck) - 0 where it already does. */
+export function trunkPush(at, a, c, fwd, clear) {
+  const ab = sub(c, a), u = norm(ab);
+  const t = Math.max(0, Math.min(1, dot(sub(at, a), ab) / dot(ab, ab)));
+  const v = sub(at, add(a, scale(ab, t)));
+  if (len(v) >= clear) return 0;
+  const f = sub(fwd, scale(u, dot(fwd, u))), ff = dot(f, f), vf = dot(v, f);
+  if (ff < 1e-9) return 0;
+  return Math.max(0, (-vf + Math.sqrt(Math.max(0, vf * vf - ff * (dot(v, v) - clear * clear)))) / ff);
+}
+
 /**
  * THE CARRY'S HANDS this frame: { L, R } climb hand requests (or null where the clip keeps the arm), for the class
  * `cls` at the gait `gp`, on the frame the trunk now stands in (`ctx` - bodySolve.js's: body, mats, frames). `wb`,
@@ -360,7 +381,7 @@ export function carryHands(cls, gp, ctx, { armW = { L: 1, R: 1 }, shares: given 
     const haf = hafHand(out.R, out.grip.R, out.R.frame, TWO_HAND_GRIP[cls], body.arm, { shoulder: frames.shoulder.L, reach: body.arms.L, range: TWO_HAND_HAFT[cls] });
     if (haf) {
       haf.w = armW.L;
-      haf.pole = norm(add(scale(F.right, -0.55), add(scale(F.up, -0.75), scale(F.fwd, -0.2))));
+      haf.pole = norm(add(scale(F.right, -0.55), add(scale(F.up, -0.75), scale(F.fwd, 0.45))));   // TWO-CLEAR: the elbow before the chest (back, it folded into it)
       // closed on the haft by the haft's own share, eased off the free arm the other rows give it
       const k = clamp01(lRow.grip);
       out.L = k >= 1 - 1e-9 || !out.L ? haf : blendHand(out.L, haf, k * k * (3 - 2 * k));

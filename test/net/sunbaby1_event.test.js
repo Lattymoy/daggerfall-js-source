@@ -241,7 +241,7 @@ test('SUNBABY1 host: world.js hears the sun baby on the hub\'s one onEvent, SHOW
   assert.match(world, /link\.onEvent = \(ev, o\) => \{ dread\.set\(ev, o\); sunbaby\.set\(ev, o\); rocket\.set\(ev, o\); \};/);   // ROCKET1 (PIN MOVED): and the rocket
   assert.match(world, /const sunbabyW = sunbaby\.tick\(dt\);/);
   assert.match(world, /if \(isEnhanced\(\) && !weatherOverride && !sunbaby\.on\) \{[^\n]*\n\s*const ds = distantStorms\.tick\(/);
-  assert.match(world, /sunbabyLight\(dreadLight\(withMoonAmbient\(exteriorAmbient\([\s\S]*?\), moonNow\), skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW\), sunScale\(minute\)/);   // SUNBABY2 moved it: the wrath; SD19 (PIN MOVED): leaning brass near a Hollow; ETHER-LIGHT (PIN MOVED): leaned once more past the Veil
+  assert.match(world, /sunbabyLight\(dreadLight\(withMoonAmbient\(exteriorAmbient\([\s\S]*?\), moonNow\), skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW\), jungle\?\.canopy\), sunScale\(minute\)/);   // VALENWOOD-CANOPY (PIN MOVED): leaned under a closed canopy last   // SUNBABY2 moved it: the wrath; SD19 (PIN MOVED): leaning brass near a Hollow; ETHER-LIGHT (PIN MOVED): leaned once more past the Veil
   const set = world.indexOf('sky.setSunbaby(sunbabyW, sunbaby.on);');
   assert.ok(set > 0 && set < world.indexOf('sky.use(('), 'before the sky\'s frame reads it');
   assert.match(world, /if \(staged\.kind && !relayKnowsLiveEvent\(hub\.eventV, staged\.kind\)\) return say\('The server cannot stage that event yet\.'\);/);

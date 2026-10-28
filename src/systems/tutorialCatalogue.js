@@ -61,7 +61,10 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'welcome', group: 'basics', title: 'Welcome to DFO', trigger: TOUR,
     body: [
-      'You awaken in a small cave. Take what you need from your pack, find the way out and make for the nearest town.',
+      // START1 (bible/06-Systems/Alternate-Starts-Arc.md): the main story waits on the commission (systems/starts/starts.js) -
+      // START2: in whichever start the character chose, so the page names none of them. AUDIT STARTS U9: neither "find
+      // them" (the commission in hand starts in the pack) nor "begins when you do" (it begins in the city they name)
+      "Your story begins with the Emperor's sealed orders, your commission. When you hold them, open them from your pack: they name the city where the main story begins.",
       'When you meet something new, a short note like this one explains it. All of them can be read again under Menu > Tutorials.',
     ],
   }),
@@ -403,7 +406,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'bounties', group: 'quests', title: 'Bounties', trigger: 'When you first read a bounty board.',
     body: [
-      'Bounty boards list four hunts. Take one, slay the quarry and return for gold and an item. It also raises your standing in the region.',
+      'Bounty boards list four hunts. Take one and make for the middle of its black circle on your map, or the dungeon it names. There the quarry shows itself, or you are told which way it waits; the Quests tab keeps the way. The last kill pays gold and an item and raises your standing in the region.',
     ],
   }),
   page({
@@ -470,13 +473,13 @@ export const TUTORIALS = Object.freeze([
     // tutorial (doesn't have to be step for step, but something that helps new players know where to look)"): where the
     // stations stand - the shops the interior host's station questions answer (scenes/worldModes.js forgeHere ..
     // enchantHere), a joinery's bench (scenes/world.js workbenchHere), any fire (net/professionLaw.js COOK_FIRE) - and
-    // that a station is worked on the Stores page - by the Professions key, the one door to it on either skin (AUDIT FB1018D
-    // L1-6). Each crafting profession's own page says the rest
+    // that a station is worked on the Crafting page, the Professions key's landing at a station (CRAFT-HALL; the Stores
+    // page, its second press, until then - AUDIT FB1018D L1-6's one door on either skin). Each crafting profession's own page says the rest
     // (ui/professions/profPages.js CRAFT_HOW). Pops with the first gather, after the two pages it follows.
     id: 'crafting', group: 'livelihood',
     get title() { return t('tutorials.crafting.title', 'Crafting'); },
     get trigger() { return t('tutorials.crafting.trigger', 'When you first gather something.'); },
-    get body() { return [t('tutorials.crafting.body', 'Online, craft at a station: stand at one, press {Professions} and open Holdings > Stores. Cook at any fire.')]; },
+    get body() { return [t('tutorials.crafting.body', 'Online, stand at a station and press {Professions}: the Crafting page opens on it. Cook at any fire.')]; },
     get points() {
       return [
         t('tutorials.crafting.shops1', 'Forge: Weaponsmiths, Armorers. Loom: Clothing Stores. Workbench: Furniture Stores, joineries.'),
@@ -554,8 +557,8 @@ export const TUTORIALS = Object.freeze([
     get trigger() { return t('tutorials.skyKetch.trigger', 'When you first ride the anchor-lift up to the Sky-Ketch.'); },
     get body() {
       return [
-        t('tutorials.skyKetch.body1', 'Every ten hours the Rourken sky-ketch keeps station over the fields east of the capital, for seven hours at a time. Ride her anchor-lift up with your party, eight hands at most.'),
-        t('tutorials.skyKetch.body2', 'Carry aether cells from the cradles to the Starved Engine; a blow knocks one loose. Her nets catch a fall; only death wakes you below.'),
+        t('tutorials.skyKetch.body1', 'Every ten hours the Sky-Ketch stays over the fields east of the capital for seven hours. Ride its anchor-lift up with your party, eight players at most.'),
+        t('tutorials.skyKetch.body2', 'Carry aether cells to the engine. A hit makes you drop the cell. Nets catch a fall; only death wakes you in the fields below.'),
       ];
     },
   }),
@@ -622,12 +625,13 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'wild-zone', group: 'online', title: 'The Open Zone', trigger: 'When you first enter the open zone.',
     // FOE-KEEPS; AUDIT FOE-KEEPS O4: the page pops in either zone, the sea's too, and said the bag and cart lost whole at
-    // a kill - the cart only goes while it is with them (CART-AWAY), a tenth of the gold with them, and any other death
-    // there costs the usual tenth; through the text core (L10N4), read when shown
+    // a kill - a tenth of the gold with them, and any other death there costs the usual tenth. STORE-KEEPS and WILD-INSURE
+    // (2026-10-26): the cart and the companions' packs are kept now, and so is insured gear; through the text core
+    // (L10N4), read when shown; WW-C2: the open zone is Cyrodiil's
     get body() {
       return [
-        t('tutorials.wildZone.body1', 'Players may fight one another in the Wrothgarian Mountains and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
-        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops (your cart too, if with you) with a tenth of your gold, and they may take one worn item. Any other death costs the usual tenth.'),
+        t('tutorials.wildZone.body1', 'Players may fight one another in Cyrodiil and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
+        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions\' packs and insured gear are kept. Any other death costs the usual tenth.'),
       ];
     },
   }),

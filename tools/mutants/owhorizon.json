@@ -183,20 +183,22 @@
   {
     "name": "OWH-the-key-blind-to-builds",
     "file": "src/render/farRing.js",
-    "old": "    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1}`;",
-    "new": "    const key = `${holeX},${holeY},${holeRadius}`;",
+    "old": "    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1},${mid ? `${mid.baseX},${mid.baseY},${mid.radius}` : '-'}`;",
+    "new": "    const key = `${holeX},${holeY},${holeRadius},${mid ? `${mid.baseX},${mid.baseY},${mid.radius}` : '-'}`;",
     "tests": [
       "test/render/owhorizon.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MID-RING): the key carries the middle ring's base too."
   },
   {
     "name": "OWH-the-key-by-size",
     "file": "src/render/farRing.js",
-    "old": "    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1}`;",
-    "new": "    const key = `${holeX},${holeY},${holeRadius},${built ? built.size : -1}`;",
+    "old": "    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1},${mid ? `${mid.baseX},${mid.baseY},${mid.radius}` : '-'}`;",
+    "new": "    const key = `${holeX},${holeY},${holeRadius},${built ? built.size : -1},${mid ? `${mid.baseX},${mid.baseY},${mid.radius}` : '-'}`;",
     "tests": [
       "test/render/owhorizon.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MID-RING): the key carries the middle ring's base too."
   },
   {
     "name": "OWH-a-replace-counted",
@@ -247,12 +249,13 @@
   {
     "name": "OWH-the-host-ring-laneonly",
     "file": "src/scenes/world.js",
-    "old": "new FarRingRenderer(renderer.gl, { renderer })",
-    "new": "new FarRingRenderer(renderer.gl, { lane: renderer.lightingLane })",
+    "old": "new FarRingRenderer(renderer.gl, { renderer, mid: terrainGen })",
+    "new": "new FarRingRenderer(renderer.gl, { lane: renderer.lightingLane, mid: terrainGen })",
     "tests": [
       "test/render/owhorizon.test.js",
       "test/ui/farring.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MID-RING): the ring is handed the terrain's client too."
   },
   {
     "name": "OWH-the-host-hole-blind",

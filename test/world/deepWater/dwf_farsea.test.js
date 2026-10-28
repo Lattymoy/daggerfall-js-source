@@ -261,7 +261,7 @@ test('DW-F: WATER1 reads the cap\'s TileMap - the carved sea and the repainted w
 
 test('DW-F: the far ground\'s clip is the index set the world draws, rebuilt at its own stride (pins)', () => {
   const world = rd('src/scenes/world.js');
-  assert.match(world, /const idx = p\._dwBytes \? clippedTerrainIndices\(p\._dwBytes, p\._stride \?\? 1\) : null;/);
+  assert.match(world, /const idx = p\._dwBytes \? clippedTerrainIndices\(p\._dwBytes, p\._stride \?\? 1, renderer\.coastEdges\) : null;/);   // PIN MOVED (COAST-LOOK): the renderer's switch keeps the coast's ring
   const cap = rd('src/world/deepWater/deepWaterCap.js');
   assert.match(cap, /const tiles = \[\(t\) => t, \(t\) => last \* dim \+ t, \(t\) => t \* dim, \(t\) => t \* dim \+ last\];/, 'south row 0, north row 127, west column 0, east column 127 - buildTerrainIndices\' own edge order');
 });

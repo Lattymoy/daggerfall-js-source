@@ -279,8 +279,8 @@
   {
     "name": "SILVER-WAYS-cli-gate-character-unsent",
     "file": "src/scenes/world.js",
-    "old": "return site ? { region: site.region, character } : character ? { character } : null;",
-    "new": "return site ? { region: site.region, character } : null;",
+    "old": "return region != null ? { region, character } : character ? { character } : null;",
+    "new": "return region != null ? { region, character } : null;",
     "tests": [
       "test/net/silverways_client.test.js"
     ]

@@ -172,7 +172,9 @@ export function foeLook(f) {
   }
   f._mwLookSlots = slots.slice();
   const worn = f._mwWire === 'kit' ? f._mwWornWire : composeLook(e, { eotbSet: null }).items;
-  const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}`).join('|');
+  // APPEARANCES-II: a piece's style and the look it wears are the body too - a piece swapped for its twin in another
+  // look (a sworn one's gift, net/remotePlayers.js composeLook's `ap`) kept the old body
+  const wornKey = worn.map((it) => `${it.equipSlot}:${it.templateIndex}:${it.material ?? ''}:${it.dye ?? ''}:${it.variant ?? ''}:${it.ap ?? ''}`).join('|');
   if (f._mwLook && f._mwLookKey === wornKey && f._mwLookSeed === h) return f._mwLook;
   f._mwLookSeed = h;
   const bay = bayPerson(h), faceIndex = bay.faceIndex;
@@ -185,59 +187,77 @@ export function foeLook(f) {
 /** AUDIT MW-NPC II K2: a worn piece on the wire - [equipSlot, group (LOOK_GROUPS' index), templateIndex, material, dye,
  *  variant], -1 where the piece has none (net/wire.js validFoeRecord `lw`). */
 const WORN_FIELDS = Object.freeze(['material', 'dye', 'variant']);
-/** @param {any[]} items @returns {number[][]} */
-function encodeWorn(items) {
-  const out = [];
+/**
+ * THE KIT ON THE WIRE: its pieces (`lw`) and - APPEARANCES-II - the looks they wear (`la`, a piece's index in `lw` and its
+ * look's [t, m, v]), as a player's look item carries `ap`. OMITTED when no piece wears one, so a kit without one keeps
+ * its bytes; a field of its own, so a reader from before it drops `la` and stands the pieces in their own looks, where a
+ * longer piece would have refused the whole record.
+ * @param {any[]} items @returns {{ lw: number[][], la: number[][] | null }}
+ */
+function encodeKit(items) {
+  const lw = [], la = [];
   for (const it of items) {
     const g = LOOK_GROUPS.indexOf(it.group);
     if (g < 0 || !Number.isInteger(it.templateIndex) || !Number.isInteger(it.equipSlot)) continue;
-    out.push([it.equipSlot, g, it.templateIndex, ...WORN_FIELDS.map((k) => (Number.isInteger(it[k]) ? it[k] : -1))]);
+    if (Array.isArray(it.ap)) la.push([lw.length, ...it.ap]);
+    lw.push([it.equipSlot, g, it.templateIndex, ...WORN_FIELDS.map((k) => (Number.isInteger(it[k]) ? it[k] : -1))]);
   }
-  return out;
+  return { lw, la: la.length ? la : null };
 }
-/** The pieces a record's `lw` names, as a look's items. @param {number[][]} lw */
-export function decodeWorn(lw) {
-  return lw.map(([equipSlot, g, templateIndex, ...rest]) => {
+/** The pieces a record's `lw` names, as a look's items - each wearing its look from `la` as `ap`, which every renderer
+ *  draws through net/appearanceLaw.js drawnPiece (net/remotePlayers.js peerStubEntity). @param {number[][]} lw @param {number[][]|null} [la] */
+export function decodeWorn(lw, la = null) {
+  const items = lw.map(([equipSlot, g, templateIndex, ...rest]) => {
     const it = /** @type {any} */ ({ templateIndex, group: LOOK_GROUPS[g], equipSlot });
     WORN_FIELDS.forEach((k, i) => { if (rest[i] >= 0) it[k] = rest[i]; });
     return it;
   });
+  for (const [i, t, m, v] of la ?? []) if (items[i]) items[i].ap = [t, m, v];
+  return items;
 }
+/** APPEARANCES-II: a record's kit as it rides - `{ lw }`, `{ lw, la }` with a look worn, or null with no kit. */
+export const kitWire = (/** @type {{ lw?: number[][], la?: number[][] | null }} */ r) => (Array.isArray(r?.lw) ? (r.la ? { lw: r.lw, la: r.la } : { lw: r.lw }) : null);
+const kitKey = (/** @type {number[][]} */ lw, /** @type {number[][]|null|undefined} */ la) => `${lw.map((w) => w.join(',')).join(';')}${la ? `|${la.map((w) => w.join(',')).join(';')}` : ''}`;
 /**
  * AUDIT MW-NPC II K2-K4: WHAT THE OWNER STREAMS OF ITS FOE'S LOOK - its seed (`ls`, foeSeed) and, a person's, the kit it
- * wears (`lw`: the owner's equip table - or, a copy it adopted, the kit its first owner streamed, which it still wears).
- * `key` changes only when either does; kept on the foe, so a frame that changes nothing composes nothing.
- * @param {any} f @returns {{ seed: number, worn: number[][]|null, key: string }}
+ * wears (`lw`: the owner's equip table - or, a copy it adopted, the kit its first owner streamed, which it still wears),
+ * APPEARANCES-II: with the looks its pieces wear (`la`; `kit` the two as a record carries them). `key` changes only when
+ * one does; kept on the foe, so a frame that changes nothing composes nothing. A worn piece's look changes only off its
+ * slot (the Wardrobe dresses the player's own), so the slots' identity is still the whole question.
+ * @param {any} f @returns {{ seed: number, worn: number[][]|null, looks: number[][]|null, kit: { lw: number[][], la?: number[][] }|null, key: string }}
  */
 export function foeWireLook(f) {
   const seed = foeSeed(f);
-  let worn = null;
+  let worn = null, looks = null;
   if (isPersonFoe(f)) {
-    if (f._mwWornWireRaw) worn = f._mwWornWireRaw;
+    if (f._mwWornWireRaw) { worn = f._mwWornWireRaw; looks = f._mwWornWireLooks ?? null; }
     else {
       const slots = equipTableOf(f.entity), held = f._mwWireSlots;
       let same = !!held && held.length === slots.length;
       if (same) for (let i = 0; i < slots.length; i++) if (slots[i] !== held[i]) { same = false; break; }
-      if (!same) { f._mwWireSlots = slots.slice(); f._mwWireWorn = encodeWorn(composeLook(f.entity, { eotbSet: null }).items); f._mwWireKey = null; }
-      worn = f._mwWireWorn;
+      if (!same) { const kit = encodeKit(composeLook(f.entity, { eotbSet: null }).items); f._mwWireSlots = slots.slice(); f._mwWireWorn = kit.lw; f._mwWireLooks = kit.la; f._mwWireKey = null; }
+      worn = f._mwWireWorn; looks = f._mwWireLooks ?? null;
     }
   }
-  if (f._mwWireKey == null || f._mwWireKeySeed !== seed || f._mwWireKeyWorn !== worn) {
-    f._mwWireKeySeed = seed; f._mwWireKeyWorn = worn;
-    f._mwWireKey = `${seed}|${worn ? worn.map((w) => w.join(',')).join(';') : ''}`;
+  if (f._mwWireKey == null || f._mwWireKeySeed !== seed || f._mwWireKeyWorn !== worn || f._mwWireKeyLooks !== looks) {
+    f._mwWireKeySeed = seed; f._mwWireKeyWorn = worn; f._mwWireKeyLooks = looks;
+    f._mwWireKey = `${seed}|${worn ? kitKey(worn, looks) : ''}`;
+    f._mwWireKit = kitWire({ lw: worn ?? undefined, la: looks });
   }
-  return { seed, worn, key: f._mwWireKey };
+  return { seed, worn, looks, kit: f._mwWireKit, key: f._mwWireKey };
 }
 /**
- * AUDIT MW-NPC II K2-K4: a record's look onto the copy it drives - the owner's seed (`ls`) and kit (`lw`), each kept
- * until the owner says another (a record that carries neither changes nothing).
- * @param {any} f @param {{ ls?: number, lw?: number[][] }} r
+ * AUDIT MW-NPC II K2-K4: a record's look onto the copy it drives - the owner's seed (`ls`) and kit (`lw`, APPEARANCES-II:
+ * and the looks its pieces wear, `la`, which rides with it), each kept until the owner says another (a record that
+ * carries neither changes nothing).
+ * @param {any} f @param {{ ls?: number, lw?: number[][], la?: number[][] }} r
  */
 export function applyWireLook(f, r) {
   if (Number.isInteger(r.ls)) f._mwSeedWire = r.ls;
   if (Array.isArray(r.lw)) {
-    const k = r.lw.map((w) => w.join(',')).join(';');
-    if (k !== f._mwWornWireKey) { f._mwWornWireKey = k; f._mwWornWireRaw = r.lw; f._mwWornWire = decodeWorn(r.lw); f._mwWornWireSlots = [f._mwWornWire]; }   // the slots foeLook compares: the kit, as one piece
+    const la = Array.isArray(r.la) ? r.la : null;
+    const k = kitKey(r.lw, la);
+    if (k !== f._mwWornWireKey) { f._mwWornWireKey = k; f._mwWornWireRaw = r.lw; f._mwWornWireLooks = la; f._mwWornWire = decodeWorn(r.lw, la); f._mwWornWireSlots = [f._mwWornWire]; }   // the slots foeLook compares: the kit, as one piece
   }
 }
 

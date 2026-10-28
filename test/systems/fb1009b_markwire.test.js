@@ -23,12 +23,12 @@ import { ARROW_TEMPLATE } from '../../src/systems/inventory.js';
 const { recordIsOffered, takeTradeGoods, TRADE_VOLATILE_FIELDS } = law;
 
 test('MARK-WIRE: the receiver\'s marks are ONE list - the realm\'s volatile fields, the wire\'s clamp and a wild death\'s record all drop every one of them, `acquired` among them (mutants: the volatile list spelled out without it; the moved record keeps it)', () => {
-  assert.deepEqual(law.RECEIVER_MARKS, ['equipSlot', 'questItem', ACQUIRED_FIELD, 'wagonEntry', 'horseBond', 'horseFed']);   // WAGONS2-VISIT (AUDIT): a caravan's door, its owner's word; STEED1: a horse's bond, its owner's; AUDIT STEED1: and its food's clock, its owner's character's
+  assert.deepEqual(law.RECEIVER_MARKS, ['equipSlot', 'questItem', ACQUIRED_FIELD, 'wagonEntry', 'horseBond', 'horseFed', 'appearance']);   // WAGONS2-VISIT (AUDIT): a caravan's door, its owner's word; STEED1: a horse's bond, its owner's; AUDIT STEED1: and its food's clock, its owner's character's; PIN MOVED (APPEARANCES): the look a piece wears, its wearer's (bible/04-Characters/Wardrobe.md)
   const dagger = createWeapon(113, 1, () => 0.5);
   for (const k of law.RECEIVER_MARKS) {
     assert.ok(TRADE_VOLATILE_FIELDS.includes(k), `${k} is volatile to the realm`);
     const rec = k === 'horseBond' || k === 'horseFed' ? { group: 'Transportation', templateIndex: 94, name: 'Horse', value: 1000, horseSeed: 77, [k]: k === 'horseBond' ? 420 : 2_000_000 }   // STEED1: a bond is a horse's, in tenths; its food's clock a minute
-      : { ...JSON.parse(JSON.stringify(dagger)), [k]: k === 'equipSlot' ? 3 : k === 'wagonEntry' ? 'public' : true };   // WAGONS2-VISIT (AUDIT): a door's word is one of a home's
+      : { ...JSON.parse(JSON.stringify(dagger)), [k]: k === 'equipSlot' ? 3 : k === 'wagonEntry' ? 'public' : k === 'appearance' ? { t: 120, m: 6, v: 0 } : true };   // WAGONS2-VISIT (AUDIT): a door's word is one of a home's
     const wire = validLootItem(rec);
     assert.equal(k in wire, false, `the wire's clamp strips ${k}`);
     assert.equal(k in wildRecord(rec), false, `a wild death's record strips ${k}`);

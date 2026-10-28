@@ -1,0 +1,12 @@
+[
+  {
+    "name": "BAYLEFT-MERGE-the-seed-through-the-spawns",
+    "file": "src/systems/livingWorld/seed.js",
+    "old": "import { hash32 } from '../../world/blockHash.js';",
+    "new": "import { hash32 } from '../../world/spawnedDungeons.js';",
+    "tests": [
+      "test/server/accountdeploy.test.js"
+    ],
+    "note": "AUDIT BAY-LEFT, its packages merged (2026-10-27): the living world's seed reached spawnedDungeons.js for hash32 alone, so SPAWN-WORLD's imports there (arenaRoads.js, worldLanes.js, worldGrid.js, tamrielFrame.js and the traced map behind them) rode into the account Worker's bundle outside the deploy's path filter (ACC1-CI, DISCORD-CODE). The mix is the leaf's (world/blockHash.js)."
+  }
+]

@@ -12,7 +12,7 @@ import {
   chooseFor, beatConstruct, hitConstruct, constructAt, mvWord,
 } from '../../../src/net/ketch/ketchConstructs.js';
 import { judgeVoyage, KT_STOREY_BAND, KT_HAZARD_SPAN_S } from '../../../src/net/ketch/ketchJudge.js';
-import { KT_LIFT, KT_MAIN_MAST, KT_HOLD, KT_GALLERY, KT_HAMMER, hammerPhase, KT_ARCS, KT_ANCHOR, KT_WAIST } from '../../../src/net/ketch/ketchDeck.js';
+import { KT_LIFT, KT_MAIN_MAST, KT_HOLD, KT_GALLERY, KT_HAMMER, hammerPhase, KT_ARCS, KT_ANCHOR, KT_WAIST, ketchBowHalf } from '../../../src/net/ketch/ketchDeck.js';
 import { dpsRef, HIT_KINDS, MELEE_REACH, POSE_SLACK, BUCKET_DEPTH_X, GATE_HIT_HZ_MAX, REPEAT_MAX } from '../../../src/net/gate/gateBrain.js';
 import { egFloorWindup } from '../../../src/net/eliteGates/egShape.js';
 import { BODY_AFTER_MS } from '../../../src/net/bossBody.js';
@@ -53,7 +53,7 @@ test('KETCH THEIR HEALTH: `hpS` seconds of the crew\'s mean reference damage; th
 test('KETCH A BODY ON ITS FLOOR: kept inside its edge (the landing wider aft, the bridge its core\'s disc); its walk round what stands in the way - the waist\'s capstans and covers, the mast-lift\'s tower and the main mast beside it (mutants: the tower forgotten; the bridge\'s disc a square; the Watch held off the Anchor Deck)', () => {
   const W = KT_FLOORS.waist;
   assert.deepEqual(keepOnFloor(W, 40, 30, 1), [KT_WAIST.x1 - 1, 30], 'the waist\'s beam');
-  assert.deepEqual(keepOnFloor(W, 40, 6, 1), [KT_ANCHOR.x1 - 1, 6], 'and the Anchor Deck\'s, narrower - the waist\'s floor runs over it');
+  assert.deepEqual(keepOnFloor(W, 40, 6, 1), [ketchBowHalf(6) - 1, 6], 'and the Anchor Deck\'s, narrower - the waist\'s floor runs over it');   // PIN MOVED (AUDIT KETCH II L4-4): its box's beam before - the bow narrows inside it
   assert.deepEqual(keepOnFloor(W, 0, -5, 1), [0, KT_ANCHOR.z0 + 1], 'never off the bow');
   assert.deepEqual(keepOnFloor(KT_FLOORS.landing, 8, 120, 0), [8, 120], 'the landing wider aft');
   assert.deepEqual(keepOnFloor(KT_FLOORS.landing, 8, 100, 0), [KT_GALLERY.x1, 100], 'the corridor before it');

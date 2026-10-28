@@ -15,6 +15,7 @@ import { isleOfCell, veilhaven, CELLS_W, CELLS_H, ETHER_BOX, ISLE_CELL_PX, VEIL_
 import { LOCATION_TYPES, longitudeLatitudeToMapPixel } from '../../src/formats/mapsFile.js';
 import { SALT_MAX } from '../../src/world/spawnedDungeons.js';
 import { REGION_NAMES } from '../../src/formats/mapsTables.js';
+import { hostText } from '../hostText.mjs';   // PORT-SHIPS: a host's whole, its moved modules with it
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** A place row as MAPS.BSA's reader shapes one - enough of it for the clone. */
@@ -121,27 +122,31 @@ test('ETHER-PLACES the clone: the template never written; its ids the place\'s (
 });
 
 test('ETHER-PLACES by source: the world host keeps the isles\' templates off the classic rows before they go, builds an isle\'s pixel through etherPlaceAt (stood in the index once), never clones a spawn past the Veil, wakes an isle\'s ruin\'s sleeper at its own door, and answers its region the isles\' (mutants: each seam)', () => {
-  const src = read('src/scenes/world.js');
-  assert.match(src, /const _etherTemplates = etherSea \? etherTemplates\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\), isMainStoryDungeon\) : null;\n  _classicRows = null;/);
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the build's answer and the spawn's stand left world.js for
+  // scenes/spawnStandHost.js and scenes/spawnGroundHost.js - read with it, the isles' place up to the stand's construction
+  const src = ['src/scenes/world.js', 'src/scenes/spawnStandHost.js', 'src/scenes/spawnGroundHost.js'].map(read).join('\n');
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): BAY-LEFT-GROUND's sites past the Bay are made between the isles'
+  // templates and the rows' letting go (they read no row) - the rows are still let go after the isles' read
+  assert.match(src, /const _etherTemplates = etherSea \? etherTemplates\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\), isMainStoryDungeon\) : null;\n(?:  \/\/[^\n]*\n)*  const beyondSites = createLandformSites\(\{[^\n]*\n  _classicRows = null;/);
   assert.match(src, /if \(etherSea && inEther\(px, py\)\) return etherPlaceAt\(px, py\);/);
-  const body = src.slice(src.indexOf('function etherPlaceAt(px, py) {'), src.indexOf('/** AUDIT OW4 D4: THE CLONE a pixel\'s spawn IS'));
+  const body = src.slice(src.indexOf('function etherPlaceAt(px, py) {'), src.indexOf('  const { _liftLocationAt, _spawnCloneAt, spawnGroundPlace'));
   assert.match(body, /if \(had\?\.ether\) return had;/);
   assert.match(body, /if \(!isle \|\| isle\.px !== px \|\| isle\.py !== py\) return null;/);
   assert.match(body, /synthesizeEtherLocation\(template, isle, \{ regionIndex: ETHER_REGION, regionName: REGION_NAMES\[ETHER_REGION\] \?\? ETHER_REGION_NAME, politic: 128 \+ ETHER_REGION, climate: getWorldClimateSettings\(isle\.climate\) \}\)/);   // PIN MOVED (AUDIT CAPTAIN'S SEA P8)
   assert.match(body, /_locIndexGen \+= 1;\n    locationIndex\.set\(key, loc\);/);
   assert.match(src, /params\.has\('online'\) && !inEtherLaw\(x, y\) && spawnsDungeon\(_spawnSalt, x, y\)/);
-  assert.match(src, /const wake = inEther\(from\.x, from\.y\) \? \{ kind: 'dungeon', mapPixel: \{ x: from\.x, y: from\.y \} \} : undergroundWakeSpot/);
+  assert.match(src, /const wake = inEther\(from\.x, from\.y\) \|\| !onTheBay\(from\.x, from\.y\) \? \{ kind: 'dungeon', mapPixel: \{ x: from\.x, y: from\.y \} \} : undergroundWakeSpot/);   // PIN MOVED (AUDIT-TESA A2-4): past the Bay too
   assert.match(src, /etherSea && inEther\(px, py\) \? ETHER_SEA_NAME : REGION_NAMES\[maps\.getRegionIndexAt\(px, py\)\]/, 'the loading screen');
   assert.match(src, /etherSea && inEther\(px\.x, px\.y\) \? ETHER_SEA_NAME : maps\.getRegionName/, 'the Overworld\'s line');
 });
 
 test('ETHER-PORTS by source: a port isle answers as a port to the Come Sail Away deeds, the naval host\'s waters, the harbour book (its town\'s harbour sounded - its quays) and the harbour office (no crown\'s); the Eltheric freeport\'s harbourmaster its own tab; the crown\'s waters none past the Veil (mutants: each seam)', () => {
-  const src = read('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');   // PIN MOVED (PORT-SHIPS): the port near the player moved whole to scenes/harbourHost.js (HOST-SPLIT) - the host read whole
   assert.match(src, /if \(etherSea && inEther\(x, y\)\) return !!etherPortAt\(x, y\);/);
   assert.match(src, /const etherPortOf = \(i\) => \(\{ key: `\$\{i\.px\},\$\{i\.py\}`, name: i\.name, px: i\.px, py: i\.py, region: ETHER_REGION, crown: null, ether: true \}\);/);
   assert.match(src, /return i && i\.kind === 'port' && i\.px === x && i\.py === y \? i : null;/);
   assert.match(src, /const isle = etherSea && inEther\(p\.x, p\.y\) \? etherPortNear\(p\.x, p\.y\) : null;/);
-  assert.match(src, /if \(loc\?\.exterior\?\.exteriorData\) town = \{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): sounded out to its isle's shore
+  assert.match(src, /if \(loc\?\.exterior\?\.exteriorData\) add\(\{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \}\);/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): sounded out to its isle's shore; PIN MOVED (RPT1026-WORLD FAR-QUAY): one of every port town near; PIN MOVED (the fourth merge of main into #1184): each town once (`add`)
   assert.match(src, /_navalPortHereAt = \{ key, port: isle \? etherPortOf\(isle\) : null \};/);
   assert.match(src, /etherSea && inEther\(p\.x, p\.y\) \? null : navalCrownOf\(/);
   assert.match(src, /if \(port\?\.ether\) \{ const o = etherHost\.office\(port\);/);

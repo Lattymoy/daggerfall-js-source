@@ -311,8 +311,8 @@
   {
     "name": "SET3-the-halving-never-ends",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2) ? Math.floor(dmg / 2) : dmg;",
-    "new": "return _s.halvedUntil > 0 && tierOf(entity, 'malacath', 2) ? Math.floor(dmg / 2) : dmg;",
+    "old": "return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2) ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;",
+    "new": "return _s.halvedUntil > 0 && tierOf(entity, 'malacath', 2) ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "SET3-a-half-point-kept",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "? Math.floor(dmg / 2) : dmg;",
-    "new": "? dmg / 2 : dmg;",
+    "old": "? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;",
+    "new": "? (dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100 : dmg;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]

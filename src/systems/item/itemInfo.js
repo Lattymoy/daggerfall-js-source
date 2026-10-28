@@ -34,7 +34,8 @@ import { expandLetterSignoff } from '../quest/questMacros.js';   // ResolveItemL
 import { itemArmorValue, isShieldTemplate } from '../armorMaterials.js';
 import { weaponMaterialModifier, weaponMinDamage, weaponMaxDamage, WEAPON_MATERIALS } from '../../characters/weapons.js';
 import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js';   // MAC-M2: GetItemHands, the one home
-import { ARMOR_MATERIAL } from '../armorMaterials.js';
+import { ARMOR_MATERIAL, familyOfNative } from '../armorMaterials.js';
+import { rriNativeMaterialValue } from '../roleplayRealismItems/rriItems.js';   // ARMOR-TYPE: the class's NativeMaterialValue, the family the equip gate reads
 import { getInt } from '../settings/settings.js';   // AUDIT 28 W3: HelmAndShieldMaterialDisplay
 import { srand, rand, randomRangeInclusive } from '../../formats/dfRandom.js';   // the painting identity's whole PRNG
 import { fullName } from '../../characters/nameHelper.js';   // %an: NameHelper.FullName(race, gender)
@@ -48,14 +49,19 @@ import { maskText } from '../../net/nameFilter.js';   // TEXT-F1: a name a playe
 import { isWalletItem, WALLET_CARD_LINES } from '../walletItem.js';   // WALLET1: the wallet's card
 import { isSoulCake, isHearthOffering, SOUL_CAKE_TEXT } from '../festival/soulCake.js';   // WITCH1: the festival's two items' cards
 import { isStarglass, STARGLASS_TEXT } from '../starfall/starglass.js';   // AUDIT STAR I2: Starfall Glass's card
+import { isLockpick, LOCKPICK_TEXT } from '../lockpick/lockpickItem.js';   // LOCKPICK: the Lockpick's card
 import { isWeirKey } from '../eliteGates/weirKey.js'; import { EG_TEXT } from '../../net/eliteGates/egLaw.js';   // AUDIT EG V (c, L8-6): the Weir Key's card and its line (Elite-Gates.md section 5)
 import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES, isCardPack, CARD_PACK_LINES } from '../iliac/iliacItems.js';   // CARDS8: a card's name and lines, the binder's
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from '../survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS, FOOD_STAGE } from '../survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
-import { localizedText, localizedTable, formatText } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, localizedTable, formatText, t } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; RPT1026-CLIENT: and the Weir Key's account line
 import { getLocalizedItemName, getLocalizedMagicItemName, getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the names of things, by their own ids
 import { getMagicItemTemplates } from '../loot/loot.js';   // L10N3e: the MAGIC.DEF template a magic item's name came from
 import { makerMark, PROVENANCE_RE } from '../../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
+/** RPT1026-CLIENT (private reports: Weir Keys that seemed to vanish, and one back again at the next sign-in): the Weir Keys are the
+ *  account's balance (Elite-Gates.md section 5), shared by every character on it, and nothing the player saw said so. The
+ *  card's second line - EG_TEXT's own lines ride the relay's bundle, so this one is the card's. */
+export const weirKeySharedLine = () => t('eg.key.shared', 'Every character on your account shares the same Weir Keys.');
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -290,6 +296,28 @@ export const itemHandsLine = (item) => (
  *  piece of armour has one, and a shield's comes off the same
  *  `itemArmorValue` the paperdoll totals. */
 export const itemArmourLine = (item) => (item?.group === 'Armor' ? armourModString(item) : null);
+
+/** ARMOR-TYPE (2026-10-26, a player: "can we add an info to every item what TYPE of armor it is (chain leather or
+ *  plate)"): THE FAMILY A PIECE OF ARMOUR BELONGS TO - 'Leather', 'Chain' or 'Plate' - for the same surfaces MAC-M1
+ *  gave the armour number to. The family is what a class's armour restriction tests and what sets the piece's armour
+ *  ladder (armorMaterials.js materialArmorValue: leather 3, chain 6, plate 7..21), so it is worth a row of its own: a
+ *  plate piece's name says its METAL ("Iron Cuirass"), never the word "plate", and below Rare the metal is withheld.
+ *
+ *  NO NEW LAW. It reads the class's NativeMaterialValue (rriItems.js rriNativeMaterialValue), the SAME read the equip
+ *  gate's armour-type test takes (equip.js:"if (!shield && ((1 << (rriNativeMaterialValue(item) >> 8)) & forbiddenArmors) !== 0) return true;"):
+ *  `>> 8` is 0 leather, 1 chain, 2 plate. So a Roleplay &
+ *  Realism mail hauberk says Chain and a brigandine or fur jerkin says Leather, exactly as a class restriction treats
+ *  them - the card cannot call a piece Plate that the equip table refuses as Chain. A shield says its family too (it
+ *  weighs and is worth by it), though its armour number is material-blind. Null for anything not armour.
+ *
+ *  The enhanced card's alone, with its Damage/Armour/Hands rows: the classic popup's records are DFU's (THE
+ *  NATIVE-WINDOW RULE, itemHandsLine above).
+ *  @returns {'Leather'|'Chain'|'Plate'|null} */
+export const ARMOR_TYPE_WORDS = Object.freeze(['Leather', 'Chain', 'Plate']);
+export function itemArmorTypeLine(item) {
+  if (item?.group !== 'Armor') return null;
+  return ARMOR_TYPE_WORDS[familyOfNative(rriNativeMaterialValue(item))] ?? null;   // null for ArmorMaterialTypes.None
+}
 
 /** AC-COMPARE (FIELD BUGS 2026-09-29d): WeaponDamage()'s two NUMBERS (:150-154) - the template's base damage, both ends
  *  shifted by the material modifier - which weaponDamageString prints and the enhanced pack's card sets against the
@@ -541,6 +569,9 @@ export function potionRecipeIngredientNames(item) {
 function templateText(t) {
   return t ? getLocalizedItemName(t.index, t.name ?? '') : '';
 }
+/** APPEARANCES (systems/appearances.js lookName): a piece's metal and its template's name as shown, past the
+ *  HelmAndShieldMaterialDisplay gate - one look is told from another by its metal. */
+export const lookNameParts = (item) => ({ material: materialText(item), name: templateText(templateByIndex(item?.templateIndex)) });
 
 /** A trapped soul's name as shown - GetLocalizedEnemyName(soul.ID)
  *  (ItemHelper.cs:361, and %hs at DaggerfallUnityItemMCP.cs:227) over
@@ -848,10 +879,11 @@ export function survivalInfoTokens(item) {
   else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
   else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1
-  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true });   // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it
+  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });   // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are
   else if (isSoulCake(item)) for (const text of SOUL_CAKE_TEXT.cake()) out.push({ text, center: true });   // WITCH1
   else if (isHearthOffering(item)) for (const text of SOUL_CAKE_TEXT.offering()) out.push({ text, center: true });   // WITCH1
   else if (isStarglass(item)) for (const text of STARGLASS_TEXT.glass()) out.push({ text, center: true });   // AUDIT STAR I2
+  else if (isLockpick(item)) for (const text of LOCKPICK_TEXT.card()) out.push({ text, center: true });   // LOCKPICK
   else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1
   else if (isIliacCard(item)) for (const text of iliacCardLines(item)) out.push({ text, center: true });   // CARDS8
   else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8
@@ -869,7 +901,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);
-  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);   // AUDIT EG V (c, L8-6): and the Weir Key's   // AUDIT CARDS-6 A5: and the sealed pack's (CARD_PACK_LINES had no gate to show them); CARDS8: and a card's and the binder's   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers
@@ -997,6 +1029,7 @@ export function itemStatRows(item) {
   const push = (label, text) => { if (text != null && text !== '') rows.push({ label, text }); };
   push('Damage', itemDamageLine(item));
   push('Armour', itemArmourLine(item));
+  push('Type', itemArmorTypeLine(item));   // ARMOR-TYPE: Leather, Chain or Plate
   push('Hands', itemHandsLine(item));
   // The material PREFIX is the name's (itemNameParts), so a Daedric
   // Dagger does not read "Daedric Dagger / Material Daedric"; this row
@@ -1007,7 +1040,7 @@ export function itemStatRows(item) {
   // MAT-SHOW: a Rare or better piece of armour or a weapon says its metal
   // here even while the long name keeps the prefix off. push drops an empty.
   push('Material', itemNameParts(item).material);
-  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item);   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
+  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isLockpick(item);   // AUDIT LOCKPICK B2: and the Lockpick's lines   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
   // STEED1: a horse's nature - its four stats as it was born (a Stable's horses say theirs before they are bought), and

@@ -329,7 +329,7 @@ unbuilt ground, and sounded once; an isle's own reach; the source; with ARENA2, 
 `Aldbrugh` without. Mutants `tools/mutants/fb1020c_harbourreach.json` (9, all dead). Pins moved: `auditholdings.test.js`
 O1 and `auditcaptsea.test.js` H1 (the reach's seam).
 
-OPEN. Aldbrugh (Shalgora) sounds no berth within the ring and keeps its port without a quay. Daggerfall's far berth
+Aldbrugh (Shalgora) stands its quay in the ring's corner since ALDBRUGH-QUAY (`03-World/Holdings.md`). Daggerfall's far berth
 lies 97 m inside the ring's edge; under Deep Waters a berth lies some 80 to 92 m farther out, not measured here. At the
 default TerrainDistance a shore two pixels off is sounded once the player has come within a pixel of the town.
 

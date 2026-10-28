@@ -21,7 +21,7 @@
 import { t } from '../../systems/textManager.js';
 import { TIER_FLOORS, REWARD_CHOICES } from '../../systems/questlines/qlRewards.js';
 import { affixLine } from '../../systems/loot/lootRarity.js';
-import { itemDamageLine, itemArmourLine, itemHandsLine, weightString } from '../../systems/item/itemInfo.js';   // AUDIT QUESTLINES UI-11: the pack card's own numbers
+import { itemDamageLine, itemArmourLine, itemArmorTypeLine, itemHandsLine, weightString } from '../../systems/item/itemInfo.js';   // AUDIT QUESTLINES UI-11: the pack card's own numbers
 import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js';   // UI-11: GetItemHands, the one home (itemHandsLine's own read)
 import { accountRefusalText } from '../../net/accountClient.js';   // AUDIT QUESTLINES UI-19: a refused claim, in the service's own words
 import { isEnhanced } from '../../systems/uiSkin.js';   // AUDIT QUESTLINES UI-6: the way to the Quests tab, on the skin worn
@@ -126,6 +126,14 @@ const KIND_WORD = () => ({ weapon: t('ql.journal.weapon', 'Weapon'), armor: t('q
 const handsWords = (item) => (itemHandsLine(item) == null ? null
   : getItemHands(item) === ITEM_HANDS.Both ? t('ql.journal.pieceTwoHanded', 'Two-handed') : t('ql.journal.pieceOneHanded', 'One-handed'));
 
+/** ARMOR-TYPE: a piece of armour's family (systems/item/itemInfo.js itemArmorTypeLine), in the player's language. */
+const armorTypeWords = (item) => {
+  const type = itemArmorTypeLine(item);
+  return type === 'Leather' ? t('ql.journal.pieceLeather', 'Leather armor')
+    : type === 'Chain' ? t('ql.journal.pieceChain', 'Chain armor')
+    : type === 'Plate' ? t('ql.journal.piecePlate', 'Plate armor') : null;
+};
+
 /**
  * AUDIT QUESTLINES UI-11: WHAT A PIECE IS, in one line - the enhanced pack card's own numbers (systems/item/itemInfo.js:
  * the damage of a weapon or the armour of a piece, its hands, and its weight - the classic popup's `%kg`), never a second
@@ -138,6 +146,7 @@ export function pieceStatWords(item) {
   return [
     damage != null ? t('ql.journal.pieceDamage', 'Damage {range}', { range: damage }) : null,
     armour != null ? t('ql.journal.pieceArmour', 'Armor {mod}', { mod: armour }) : null,
+    armorTypeWords(item),   // ARMOR-TYPE: Leather, Chain or Plate
     handsWords(item),
     t('ql.journal.pieceWeight', '{kg} kg', { kg: weightString(item) }),
   ].filter(Boolean).join(' \u00b7 ');

@@ -63,34 +63,6 @@
     ]
   },
   {
-    "name": "AUDIT-SHIPS-A3-the-fixed-brake",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "export const heaveToDecel = (v) => Math.min(CSA_BRAKE_MAX, Math.max(HEAVE_TO_DECEL, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * HEAVE_TO_M)));",
-    "new": "export const heaveToDecel = (v) => HEAVE_TO_DECEL + 0 * v;",
-    "tests": [
-      "test/systems/auditships_sail.test.js",
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-SHIPS-A3-the-host-brake-fixed",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "const brake = () => (enabled && heaveTo && myBoat() ? heaveTo.decel : 0);",
-    "new": "const brake = () => (enabled && heaveTo && myBoat() ? HEAVE_TO_DECEL : 0);",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-SHIPS-A3-her-way-unread",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "if (fast) { startHeaveTo(fast, boat); return true; }",
-    "new": "if (fast) { startHeaveTo(fast); return true; }",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-SHIPS-A4-the-calm-under-sail-free",
     "file": "src/systems/seaHelm.js",
     "old": "(q.free ? windLen > 0 : windLen >= H.calm)",

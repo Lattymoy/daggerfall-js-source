@@ -1,0 +1,289 @@
+[
+  {
+    "name": "WOVEN-PAYS-svc-silver-unread",
+    "file": "server-account/src/professions.js",
+    "old": "  const silverHeld = inputs.map((_, i) => `${silverSql('?1', '?2', `?${17 + 2 * i}`)} > 0`).join(' OR ') || '0';",
+    "new": "  const silverHeld = '0';",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-bought-units-read-as-silver",
+    "file": "server-account/src/professions.js",
+    "old": "  const pays = counterMade(r) ? `CASE WHEN ${silverHeld} THEN 0 ELSE 1 END` : '1';",
+    "new": "  const pays = counterMade(r) ? `CASE WHEN ${silverHeld} OR EXISTS (SELECT 1 FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?17 AND origin = 'bought' AND qty > 0) THEN 0 ELSE 1 END` : '1';",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "note": "AUDIT WOVEN-PAYS A2, B1, B2: the origin's wall back - the loom's own cloth of silver-bought goods, a guildmate's cloth, walled again."
+  },
+  {
+    "name": "WOVEN-PAYS-svc-loose-walled-again",
+    "file": "server-account/src/professions.js",
+    "old": "  const pays = counterMade(r) ? `CASE WHEN ${silverHeld} THEN 0 ELSE 1 END` : '1';",
+    "new": "  const pays = counterMade(r) ? `CASE WHEN ${silverHeld} OR EXISTS (SELECT 1 FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?17 AND origin = 'loose' AND qty > 0) THEN 0 ELSE 1 END` : '1';",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
+      "test/net/clothgems_service.test.js"
+    ],
+    "note": "The report's law turned back: loose cloth (the loom's own of looted goods) walled from its first again - CLOTHGEMS-svc-loose-pays's inverse, retired with the law it killed."
+  },
+  {
+    "name": "WOVEN-PAYS-svc-purchase-uncounted",
+    "file": "server-account/src/professions.js",
+    "old": "    silverClothIn(db, 'SELECT player, char_id, material, qty FROM prof_stock WHERE player = ?1 AND rid = ?2 AND n = ?3', [player.id, rid, nonce]),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-other-goods-counted",
+    "file": "server-account/src/professions.js",
+    "old": "SELECT player, char_id, material, qty FROM (${select}) WHERE material IN (${CLOTH_SQL}) AND qty > 0",
+    "new": "SELECT player, char_id, material, qty FROM (${select}) WHERE qty > 0",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-craft-use-uncounted",
+    "file": "server-account/src/professions.js",
+    "old": "    ...inputs.filter((inp) => JUDGED_CLOTH.includes(inp.key)).flatMap((inp) => silverClothOut(db, {\n      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],\n    })),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-temper-use-uncounted",
+    "file": "server-account/src/professions.js",
+    "old": "    ...(JUDGED_CLOTH.includes(cost.key) ? silverClothOut(",
+    "new": "    ...(false ? silverClothOut(",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-nought-kept",
+    "file": "server-account/src/professions.js",
+    "old": "  db.prepare('DELETE FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty = 0').bind(player, character),",
+    "new": "  db.prepare('DELETE FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty < 0').bind(player, character),",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-store-silent",
+    "file": "server-account/src/professions.js",
+    "old": "  return JUDGED_CLOTH.includes(key) ? { ...out, silver: await silverOf(db, player, character, key) } : out;",
+    "new": "  return out;",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-state-silent",
+    "file": "server-account/src/professions.js",
+    "old": "    silver: Object.fromEntries(silverRows.map((r) => [r.material, Number(r.qty)])),",
+    "new": "    silver: {},",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-any-craft-makes-the-pattern",
+    "file": "server-account/src/professions.js",
+    "old": "  const patternMade = counterMade(r) ? `${madeBefore} AND ${PAID_FIRST_SQL}` : madeBefore;",
+    "new": "  const patternMade = madeBefore;",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-old-row-made-whatever-its-xp",
+    "file": "server-account/src/professions.js",
+    "old": "(first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR})",
+    "new": "(first_paid IS NULL)",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-old-row-owed-whatever-its-xp",
+    "file": "server-account/src/professions.js",
+    "old": "first_paid = 1 OR (first_paid IS NULL AND first = 1",
+    "new": "first_paid = 1 OR (0 AND first = 1",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-floor-edge",
+    "file": "server-account/src/professions.js",
+    "old": "AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))`;",
+    "new": "AND first = 1 AND xp > ${FIRST_MAKE_FLOOR}))`;",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "note": "AUDIT WOVEN-PAYS C8: the floor's edge, killed by an old row at exactly the floor (a share the crafter's limit cut there)."
+  },
+  {
+    "name": "WOVEN-PAYS-svc-old-row-first-unread",
+    "file": "server-account/src/professions.js",
+    "old": "(first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR})",
+    "new": "(first_paid IS NULL AND xp >= ${FIRST_MAKE_FLOOR})",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT WOVEN-PAYS C8: an old row that was not its pattern's first laid no share on, so its XP is a judged craft's own - under FIRST_MAKE_FLOOR at any rank and every star (pinned: 'an old row's XP says whether it paid its first'). `first = 1` is kept as the row's own word, not the XP's inference."
+  },
+  {
+    "name": "WOVEN-PAYS-svc-first-paid-unwritten",
+    "file": "server-account/src/professions.js",
+    "old": "        f, ?11, ?12, ?15, ?16, f * p\n",
+    "new": "        f, ?11, ?12, ?15, ?16, NULL\n",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-answer-old-reading-gone",
+    "file": "server-account/src/professions.js",
+    "old": "    firstPaid: row.first_paid == null ? Number(row.first) === 1 && (!counterMade(r) || Number(row.xp) >= FIRST_MAKE_FLOOR) : Number(row.first_paid) === 1,",
+    "new": "    firstPaid: Number(row.first_paid) === 1,",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-svc-answer-old-row-read-off-its-piece",
+    "file": "server-account/src/professions.js",
+    "old": "(!counterMade(r) || Number(row.xp) >= FIRST_MAKE_FLOOR)",
+    "new": "(!counterMade(r) || by.get(row.provenance)?.bought_with == null)",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "note": "AUDIT WOVEN-PAYS A4: the answer reading an old row off its piece, as CLOTH-GEMS did, where the decision reads its XP."
+  },
+  {
+    "name": "WOVEN-PAYS-mkt-buy-uncounted",
+    "file": "server-account/src/market.js",
+    "old": "    silverClothIn(db, \"SELECT buyer AS player, char_id, material, units AS qty FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1\", [me, rid, nonce]),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-mkt-courier-uncounted",
+    "file": "server-account/src/market.js",
+    "old": "      silverClothIn(db, \"SELECT buyer AS player, char_id, material, units AS qty FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND dn = ?3 AND currency IS NOT 'gold'\", [me, s.rid, nonce]),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-mkt-courier-gold-counted",
+    "file": "server-account/src/market.js",
+    "old": " AND dn = ?3 AND currency IS NOT 'gold'\", [me, s.rid, nonce]),",
+    "new": " AND dn = ?3\", [me, s.rid, nonce]),",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-mkt-fill-uncounted",
+    "file": "server-account/src/market.js",
+    "old": "    silverClothIn(db, 'SELECT poster AS player, ?4 AS char_id, material, units AS qty FROM market_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3', [me, rid, nonce, o.char_id]),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-realm-delete-leaves-the-count",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare('DELETE FROM prof_silver_cloth WHERE player = ? AND char_id = ?').bind(playerId, id),   // WOVEN-PAYS: and its cloth's silver counts\n",
+    "new": "",
+    "tests": [
+      "test/server/profdelete.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-book-store-row-unheard",
+    "file": "src/net/profBook.js",
+    "old": "    if (Number.isSafeInteger(s.silver)) { if (s.silver > 0) state.silver.set(s.material, s.silver); else state.silver.delete(s.material); }\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-book-state-unheard",
+    "file": "src/net/profBook.js",
+    "old": "    state.silver = new Map(Object.entries(data?.silver && typeof data.silver === 'object' ? data.silver : {}).filter(([, n]) => Number.isSafeInteger(n) && n > 0));   // WOVEN-PAYS\n",
+    "new": "    state.silver = new Map();\n",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-pages-count-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": "(typeof book?.silver === 'function' ? book.silver(i.key) | 0 : 0)",
+    "new": "0",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-words-share-beside-count",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  const more = walled ? 0 : firstCraftXp(r, true);",
+    "new": "  const more = firstCraftXp(r, true);",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "why": "the loom reads the crafter's limit against a share a craft beside a silver count never lays on"
+  },
+  {
+    "name": "WOVEN-PAYS-words-count-unread",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  const walled = counterMade(r) && silver > 0;",
+    "new": "  const walled = false;",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js",
+      "test/systems/clothgems_client.test.js",
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-law-cloth-another-key",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const JUDGED_CLOTH = Object.freeze([...new Set(RECIPES.filter(counterMade).flatMap((r) => r.inputs.map((i) => i.key)))]);",
+    "new": "export const JUDGED_CLOTH = Object.freeze(['cloth:linen']);",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ]
+  },
+  {
+    "name": "WOVEN-PAYS-law-floor-moved",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const FIRST_MAKE_FLOOR = 500;",
+    "new": "export const FIRST_MAKE_FLOOR = 520;",
+    "tests": [
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "note": "AUDIT WOVEN-PAYS C9: the record's claimed floor mutant, now written."
+  }
+]

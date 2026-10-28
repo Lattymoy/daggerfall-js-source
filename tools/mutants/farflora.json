@@ -1,0 +1,479 @@
+[
+  {
+    "name": "FAR-FLORA-the-sample-tile",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "forestAt(px * WORLD_MAP_TILE_DIM + Math.min(127, i * step), -py * WORLD_MAP_TILE_DIM + Math.min(127, j * step))",
+    "new": "forestAt(px * WORLD_MAP_TILE_DIM + Math.min(127, j * step), -py * WORLD_MAP_TILE_DIM + Math.min(127, i * step))",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-field-sign",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "-py * WORLD_MAP_TILE_DIM + Math.min(127, j * step))",
+    "new": "py * WORLD_MAP_TILE_DIM + Math.min(127, j * step))",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-a-corner",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "[[-4, -4], [4, -4], [-4, 4], [4, 4]]",
+    "new": "[[-4, -4], [4, -4], [-4, 4], [4, 5]]",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-beach",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "if (steep || height < SCALED_BEACH_ELEVATION) continue;",
+    "new": "if (steep) continue;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-face",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "const steep = gx * gx + gz * gz > TAN_STEEP * TAN_STEEP;",
+    "new": "const steep = false;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-packing",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "b(n[2] / 4) << FLORA_GRASS",
+    "new": "b(n[2] / 4) << FLORA_DIRT",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-height-unscaled",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "const toSample = 1 / STREAMING_TERRAIN_SCALE;",
+    "new": "const toSample = 1;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-laws-pick",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "  if (spec.forests) {\n    const g = FOREST.ground;",
+    "new": "  if (!spec.forests) {\n    const g = FOREST.ground;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-a-forest-chance",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "(FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wood)",
+    "new": "(FOREST.plainTree + FOREST.forestTree * wood)",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-elevation-clamp",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "Math.min(1, Math.max(0.4, byte / 128))",
+    "new": "Math.min(1, Math.max(0, byte / 128))",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-desert-quarter",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "(spec.desert ? FLORA.desert : 1)",
+    "new": "1",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-tree-share",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "treeShare: (forests && !desert) ? 1 : trees.length / 31",
+    "new": "treeShare: (forests && !desert) ? 1 : trees.length / 32",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-cover-exponent",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "1 - Math.exp(-trees * FLORA.grazing * crownM * crownM * (Math.PI / 4) / tile)",
+    "new": "1 - Math.exp(-trees * crownM * crownM * (Math.PI / 4) / tile)",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-stand-face",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "export const standsTrees = (ny, h) => ny >= COS_STEEP && h >= SCALED_BEACH_ELEVATION;",
+    "new": "export const standsTrees = (ny, h) => h >= SCALED_BEACH_ELEVATION;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-expectation",
+    "file": "src/world/terrain/floraCover.js",
+    "old": ": treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte));",
+    "new": ": treesPerTile(1, 0, 1, 0, spec, byte));",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-canopy-art",
+    "file": "src/render/midRing.js",
+    "old": "canopy[o + 1 + c] = Math.round(art.rgb[c]);",
+    "new": "canopy[o + 1 + c] = Math.round(art.rgb[c] * 0.5);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-lift",
+    "file": "src/render/midRing.js",
+    "old": "return cover * art.h * FLORA.lift;",
+    "new": "return cover * art.h;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-cover-byte",
+    "file": "src/render/midRing.js",
+    "old": "canopy[o] = Math.round(cover * 255);",
+    "new": "canopy[o] = 255;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ground-mix",
+    "file": "src/render/midRing.js",
+    "old": "ground.grass[c] * grass + ground.stone[c] * stone) / sum",
+    "new": "ground.grass[c] * grass + ground.stone[c] * stone)",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-pixel",
+    "file": "src/render/midRing.js",
+    "old": "const f = floraOfPixel(Math.min(n - 1, Math.floor(gx / sub)), Math.min(n - 1, Math.floor(gz / sub)));",
+    "new": "const f = floraOfPixel(Math.min(n - 1, Math.floor(gz / sub)), Math.min(n - 1, Math.floor(gx / sub)));",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-lift-unnormalled",
+    "file": "src/render/midRing.js",
+    "old": "midRingNormals(lifted, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));",
+    "new": "midRingNormals(heights, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ease",
+    "file": "src/render/midRing.js",
+    "old": "* (1 - ease) + f.expected * ease;",
+    "new": "* 1 + f.expected * 0;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ground-ease",
+    "file": "src/render/midRing.js",
+    "old": "dirt + (g[1] - dirt) * ease, grass + (g[2] - grass) * ease",
+    "new": "dirt, grass",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-woods-step",
+    "file": "src/render/midRing.js",
+    "old": "const rowsAStep = woods ? MID_ROWS_A_STEP / 2 : MID_ROWS_A_STEP;",
+    "new": "const rowsAStep = MID_ROWS_A_STEP;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-attribute",
+    "file": "src/render/midRing.js",
+    "old": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4);",
+    "new": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, false, 4);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-mid-snow-canopy",
+    "file": "src/render/midRing.js",
+    "old": "if (woods?.[v * 4]) whiten(woods, v * 4 + 1, share);",
+    "new": "if (woods?.[v * 4]) whiten(woods, v * 4 + 1, 0);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ring-snow-canopy",
+    "file": "src/render/farRing.js",
+    "old": "if (flora?.[(o / 3) * 4]) whiten(flora, (o / 3) * 4 + 1, share);",
+    "new": "if (flora?.[(o / 3) * 4]) whiten(flora, (o / 3) * 4 + 1, 0);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-field-snow-canopy",
+    "file": "src/render/farField.js",
+    "old": "whiten(flora, (j * side + i) * 4 + 1, capShare(",
+    "new": "whiten(flora, (j * side + i) * 4 + 2, capShare(",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ring-stand",
+    "file": "src/render/farRing.js",
+    "old": "if (floraOf && standsTrees(normals[o + 1], byte * BASE_HEIGHT_SCALE)) {",
+    "new": "if (floraOf) {",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ring-ground-array",
+    "file": "src/render/farRing.js",
+    "old": "      if (ground) ground[o / 3] = positions[o + 1];\n",
+    "new": "\n",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-knob",
+    "file": "src/render/farRing.js",
+    "old": "return book && this._floraRadius >= FLORA_MIN_LAND_VIEW ?",
+    "new": "return book && this._floraRadius >= FLORA_MIN_LAND_VIEW - 1 ?",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-job-flag",
+    "file": "src/render/farRing.js",
+    "old": "landform: !!inputs.relief, flora: !!floraOf, lands:",
+    "new": "landform: !!inputs.relief, flora: true, lands:",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-stale-test",
+    "file": "src/render/farRing.js",
+    "old": "return (layer.floraVersion ?? -1) !== now;",
+    "new": "return false;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-grain-uniform",
+    "file": "src/render/farRing.js",
+    "old": "gl.uniform3f(this.u.uFlora, this._floraOf() ? 1 : 0, FLORA_CROWN_M, FLORA_GROVE_M);",
+    "new": "gl.uniform3f(this.u.uFlora, 1, FLORA_CROWN_M, FLORA_GROVE_M);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-groundAt-canopy",
+    "file": "src/render/farRing.js",
+    "old": "(g.ground ? g.ground[j * g.side + i] : g.positions[(j * g.side + i) * 3 + 1])",
+    "new": "g.positions[(j * g.side + i) * 3 + 1]",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ring-attribute",
+    "file": "src/render/farRing.js",
+    "old": "if (flora) buf(flora, 5, gl.UNSIGNED_BYTE, true, 4);",
+    "new": "if (flora) buf(flora, 4, gl.UNSIGNED_BYTE, true, 4);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-canopy-share",
+    "file": "src/render/farRing.js",
+    "old": "smoothstep(uCanopyBand.x, uCanopyBand.y, max(cb.x, cb.y)) : 1.0);",
+    "new": "1.0 - smoothstep(uCanopyBand.x, uCanopyBand.y, max(cb.x, cb.y)) : 1.0);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-canopy-band-on",
+    "file": "src/render/farRing.js",
+    "old": "bandOn ? 1 : 0, 0);",
+    "new": "0, 0);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-canopy-from",
+    "file": "src/render/farRing.js",
+    "old": "origin[0] + (bd.baseX - this.baseX + 0.5) * TERRAIN_SIZE",
+    "new": "origin[0] + (bd.baseX - this.baseX) * TERRAIN_SIZE",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-classic-mix",
+    "file": "src/render/farRing.js",
+    "old": "floraGrain(vWorld.xz), vFlora);\n",
+    "new": "floraGrain(vWorld.xz), 0.0);\n",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-field-lift-first",
+    "file": "src/render/farField.js",
+    "old": "  if (lift) for (let v = 0; v < n; v++) positions[v * 3 + 1] += lift[v];",
+    "new": "  if (lift) for (let v = 0; v < 0; v++) positions[v * 3 + 1] += lift[v];",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-alpha-test",
+    "file": "src/render/farFlora.js",
+    "old": "if (!all && !data[i + 3]) continue;",
+    "new": "if (!all && data[i + 3] > 255) continue;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-weighting",
+    "file": "src/render/farFlora.js",
+    "old": "r += m[0] * m[3]; g += m[1] * m[3]; b += m[2] * m[3]; n += m[3];",
+    "new": "r += m[0]; g += m[1]; b += m[2]; n += 1;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-size",
+    "file": "src/render/farFlora.js",
+    "old": "if (s?.h > 0) { h += s.h; w += s.w; sized++; }",
+    "new": "if (s?.h > 0) { h += s.h; w += s.h; sized++; }",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ask-once",
+    "file": "src/render/farFlora.js",
+    "old": "if (!arts.has(artKey) && (spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey,",
+    "new": "if ((spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey,",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-version",
+    "file": "src/render/farFlora.js",
+    "old": "book.set(archive, art); if (art) version++;",
+    "new": "book.set(archive, art);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-worker-flag",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "const flora = m.flora ? buildMidRingHeights(",
+    "new": "const flora = !m.flora ? buildMidRingHeights(",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-worker-transfer",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "...(flora ? [flora.buffer] : []), ...(cover",
+    "new": "...(cover",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-band-place",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "if (m.flora) (flora ??= new Uint32Array(side * side)).set(m.flora, pj0 * job.sub * side);",
+    "new": "if (m.flora) (flora ??= new Uint32Array(side * side)).set(m.flora, 0);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-off-test",
+    "file": "src/render/horizonHaze.js",
+    "old": "if (uFlora.x < 0.5) return 1.0;",
+    "new": "if (uFlora.x < -0.5) return 1.0;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-flats-light",
+    "file": "src/render/horizonHaze.js",
+    "old": "return ambient + moonColor * (moonScale * 0.5) + sunColor * (sun * 0.5);",
+    "new": "return ambient + moonColor * (moonScale * 0.5) + sunColor * sun;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-fade",
+    "file": "src/render/horizonHaze.js",
+    "old": "float fc = 1.0 - smoothstep(0.3, 0.8, length(fwidth(c)));",
+    "new": "float fc = 1.0;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-lane-mix",
+    "file": "src/render/enhancedLighting.js",
+    "old": "elDecode(vCanopy) * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);",
+    "new": "elDecode(vCanopy) * floraGrain(vWorld.xz), vFlora);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  }
+]

@@ -38,6 +38,7 @@
 
 import { isTextEntryTarget } from '../ui/input.js';   // PL2: a typed field's Enter is the field's (CG2)
 import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
+import { isTouchDevice } from '../ui/touch/touchDevice.js';   // RPT1026-MISC TOUCH-NO-LOCK: a finger never takes the lock
 
 let _errBound = false;
 const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -335,6 +336,13 @@ export function requestLook(canvas) {
   // act aimed by the look, which clears the flag). Nor a cursor an act
   // holds free, until it lets go.
   if (_cursorActive || _cursorHolds.size) return;
+  // RPT1026-MISC TOUCH-NO-LOCK (a private report from a phone: Chrome's pointer-lock banner, how to get a cursor back,
+  // came up with every menu): A TOUCH SCREEN NEVER ASKS FOR THE LOCK. The look there is
+  // the touch layer's drag (ui/touch/touch.js), and the lock is a mouse's - but every relock door (a window's close, the
+  // look gate's close edge, a dial's goodbye) asked for it on a phone too, Chrome on Android granted it to the tap that
+  // closed the window, and its banner said how to give back a cursor the phone does not have. The click net (PL3,
+  // bindCursorToggle) already let a finger's press go by; this is the one door all the others go through.
+  if (isTouchDevice()) return;
   _lastRequestAt = nowMs();
   if (!_errBound && typeof document !== 'undefined') {
     document.addEventListener('pointerlockerror', () => {

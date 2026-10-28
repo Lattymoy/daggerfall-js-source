@@ -16,8 +16,9 @@
 // FPS-VSYNC (2026-09-28): EXCEPT IN THE DESKTOP APP WITH VSYNC OFF. The
 // shell lifts Chromium's wait at launch (app/lib/frameRate.cjs), rAF
 // then runs past the screen, and the cap is what holds the frames -
-// DFU's targetFrameRate exactly, Off letting them run free - through
-// THE PACER below, not this gate alone (AUDIT 28e).
+// DFU's targetFrameRate, through THE PACER below, not this gate alone
+// (AUDIT 28e). Off there is no longer DFU's running free: it holds at
+// LIFTED_OFF_FPS (RPT1026-CLIENT, below).
 //
 // HOW A FRAME IS HELD. Each host's rAF callback asks `frameCapSkip(now)`
 // before its clock stamp and its input frame (the pins in
@@ -50,9 +51,22 @@ export function frameCapRate(n) {
   return Number.isFinite(n) && n >= FRAME_CAP_FLOOR ? Math.min(FRAME_CAP_MAX, Math.floor(n)) : 0;
 }
 
-/** The player's cap, read as DFU reads it. */
+/** RPT1026-CLIENT (a private report: the desktop app with VSync off runs Chromium unthrottled, and with the game's own
+ *  Frame Rate Cap at its default, Off, nothing held the frames back at all): OFF HAS A CEILING WHERE THE WAIT IS LIFTED.
+ *  DFU's VSync off with no target runs free
+ *  (StartGameBehaviour.cs:244-250, `Application.targetFrameRate` left at -1), and FPS-VSYNC followed it - so the app with
+ *  VSync off and the cap at its default drew a thousand frames a second and more, each one's garbage collected with it
+ *  (the report measured ~3,760 collections in ten seconds against 28 capped, the heap's peak 77% higher). Off there holds
+ *  at the row's own top: never faster than any rate the row offers, and past every screen the stops name. A browser and
+ *  the app with VSync on are unchanged - the screen paces them, and Off is no cap. Departure, Port-Ledger A (FPS-CAP1's
+ *  row). */
+export const LIFTED_OFF_FPS = FRAME_CAP_MAX;
+/** Whether the shell lifted the wait at this launch (installFramePacer). */
+let _lifted = false;
+
+/** The player's cap, read as DFU reads it - and Off, where the wait is lifted, LIFTED_OFF_FPS. */
 export function frameCapFps() {
-  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300));   // spelled out: MENU T5 reads this clamp against the row's range
+  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);   // spelled out: MENU T5 reads this clamp against the row's range
 }
 
 /**
@@ -93,7 +107,7 @@ export function capTake(state, stamp, fps) {
   state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;
 }
 
-export function _resetFrameCap() { _state.due = 0; _state.at = -1; _state.held = false; }
+export function _resetFrameCap() { _state.due = 0; _state.at = -1; _state.held = false; _lifted = false; }
 
 /**
  * THE PACER (FPS-VSYNC, AUDIT 28e: the frame lane measured it). With Chromium's frame-rate limit lifted, a rAF callback
@@ -105,9 +119,10 @@ export function _resetFrameCap() { _state.due = 0; _state.at = -1; _state.held =
  * (PACER_LEAD_MS) and is handed to the browser only then, and the frame that answers IS the slot (capTake) - so no
  * callback runs that does not draw. Every request of one slot rides one browser frame with one stamp, whoever made it
  * (a host, the counter, a menu's loop, a window's one-off), and the hosts' own question for that stamp reads the same
- * answer and draws. The cap Off hands every request straight through: DFU's VSync off with no target frame rate, as
- * fast as it goes. Measured in the app (Electron 42 under Xvfb, the frame lane's harness): 144, 240 and 300 draw 144,
- * 240 and 300. Pure over its seams, so the tests drive it on a clock of their own.
+ * answer and draws. A cap of none (`fps()` 0) hands every request straight through - as the installed pacer's never
+ * is since RPT1026-CLIENT: there, Off is LIFTED_OFF_FPS (above), no longer DFU's as fast as it goes. Measured in the
+ * app (Electron 42 under Xvfb, the frame lane's harness): 144, 240 and 300 draw 144, 240 and 300. Pure over its seams,
+ * so the tests drive it on a clock of their own.
  * @param {{ raf: (cb: (t:number) => void) => number, caf: (id:number) => void, later: (fn: () => void, ms:number) => unknown,
  *   now: () => number, fps: () => number, take: (stamp:number) => void, due: () => number, report?: (e:unknown) => void }} seams
  */
@@ -141,6 +156,7 @@ export function createFramePacer({ raf, caf, later, now, fps, take, due, report 
  *  every frame waits for the screen and the gate holds frames as it always did. Once; true when installed. */
 export function installFramePacer(win = globalThis) {
   if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame !== 'function' || win.__framePacer) return false;
+  _lifted = true;   // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)
   const raf = win.requestAnimationFrame.bind(win), caf = win.cancelAnimationFrame.bind(win);
   const pacer = createFramePacer({
     raf, caf, later: (fn, ms) => win.setTimeout(fn, ms), now: () => win.performance.now(),

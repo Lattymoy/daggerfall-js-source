@@ -101,3 +101,9 @@ export const confiscatedText = (/** @type {number} */ n) => t('stolen.taken', 'T
 
 /** The piece's card line (the enhanced pack's, beside the lock's and the junk's). */
 export const stolenLine = () => t('stolen.card', 'Stolen. Merchants buy it but never sell it on, and the court takes it if you are convicted.');
+
+/** RPT1026-LEDGERLAW (a private report: a stolen piece another player sold looked like any other): the word a piece
+ *  offered to another player carries in its row - the market's Goods (ui/marketTab.js) and a home's trader
+ *  (ui/vendor/vendorTab.js). The mark rides the listing (a piece handed on is no less stolen), so its buyer takes the
+ *  court's risk and a counter that destroys it; the rows named it nowhere. */
+export const stolenTag = () => t('stolen.tag', 'Stolen');

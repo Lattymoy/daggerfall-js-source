@@ -179,13 +179,13 @@ test('SUPPORT1: the corners\' band - the door\'s stage starts below its corner m
   assert.equal(caption, 140, 'a new player\'s "No character yet" (123px) stands whole under it');
   const reach = Math.max(asks, px(profile, 'right') + px(rule('.px-portrait'), 'width') + px(profile, 'gap') + caption + OUTSET);
   assert.equal(reach, 234, 'the profile reaches further in than the asks');
-  // the wordmark is min(321px, 50vw) wide and centred (BR5; BR4's was min(540px, 84vw)), so it reaches under a mark
-  // at every width under 321 + 2 * reach; a 1024x768 door, which fits unscrolled, stays outside the band - the reason
+  // the wordmark is min(234px, 36.4vw) wide and centred (BR6; BR5's was min(321px, 50vw), BR4's min(540px, 84vw)), so it
+  // reaches under a mark at every width under 234 + 2 * reach; a 1024x768 door, which fits unscrolled, stays outside the band - the reason
   // the bound is 140 and not 158, when the band ran to 1007
-  const mark = rule('.px-wordmark:has(.brand-logo)').match(/width: min\((\d+)px, (\d+)vw\);/);
+  const mark = rule('.px-wordmark:has(.brand-logo)').match(/width: min\((\d+)px, (\d+(?:\.\d+)?)vw\);/);   // BR6: 36.4vw
   assert.ok(mark, 'the wordmark\'s width is px and vw');
   const edge = Number(mark[1]) + 2 * reach - 1;
-  assert.equal(edge, 788);   // PIN MOVED: BR5, 1007 under BR4's mark
+  assert.equal(edge, 701);   // PIN MOVED: BR6, 788 under BR5's mark and 1007 under BR4's
   assert.ok(edge < 1024, `the band ends at ${edge}px, short of 1024`);
   const band = mediaRule(`(min-width: 481px) and (max-width: ${edge}px)`, stage);
   // ...it starts below the taller mark - the asks' plaque, or the profile's portrait - with air

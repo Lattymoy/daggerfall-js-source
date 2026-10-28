@@ -7,7 +7,7 @@
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
-    "why": "an enchanted found Daedric cuirass fences at its whole 47,553, unmended"
+    "why": "an enchanted found Daedric cuirass fences at its whole 23,776 (47,553 before DAEDRIC-SALE), unmended"
   },
   {
     "name": "AUDIT-MEND-THIRD-L3-1-fence-offline-too",

@@ -256,8 +256,9 @@ export function createComeSailAwayAboard({ peers, geometry, selfId = () => null 
     for (const id of [...posed]) if (!alive?.has?.(id)) posed.delete(id);
   }
   function clearRiders() { riders.clear(); posed.clear(); }
-  /** How many of the others stand aboard an owner's place (the owner's pack refuses while any do). */
-  const passengersOn = (owner, slot) => { let n = 0; for (const r of riders.values()) if (r.owner === owner && r.slot === slot) n++; return n; };
+  /** How many of the others stand aboard an owner's place (the owner's pack refuses while any do) - VEIL-PARTY: but
+   *  those `skip(id)` names (the crossing's: her captain's party). */
+  const passengersOn = (owner, slot, skip = null) => { let n = 0; for (const [id, r] of riders) if (r.owner === owner && r.slot === slot && !skip?.(id)) n++; return n; };
 
   /**
    * The others as drawn: each whose pose or word stands them aboard a boat that stands here, on that boat at their place

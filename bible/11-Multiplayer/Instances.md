@@ -82,6 +82,23 @@ An instance is its place's public world room with an owner and an epoch after it
     another member's digest is the owner's (partyHoldsOwner).
   - A stranger is refused INSTANCE_DOOR_WORD (`private instance`); the hub silent is `busy` (CLOSE_BUSY - the page tries
     again), never a way in.
+- **A guild's castle** (DOMAIN2, world256, `bible/11-Multiplayer/Domains.md` section 6): a castle's room
+  (`CASTLE_MAP_IDS`, a crown city's own dungeon, whole) whose owner is a GUILD's digest (`instanceGuildOwnerOf`, the
+  hash domain `instance:guild:`, never an account's) admits a socket whose verified token names that guild
+  (instanceAdmission: 'guild', after 'staff' and 'owner', before the party - no guest asks the hub of a guild's room,
+  since no account's party holds a guild's digest). Let in as the guild, the socket is marked (`ig`); the moment
+  `_setAttach` writes it another guild or none, it is refused out (`_instanceGuildOut`, once).
+  - **A member's hello is held while the hub is asked, so its page says nothing past the hello until the welcome** (SD-HELLO's law,
+    `Super-Dungeons.md`). The room takes the socket's next frame while the hello's ask is out, and a frame read before
+    the socket is named is refused with a policy close - terminal, the member offline in the room until it changes room.
+    The act sender went round SD-HELLO (RPT1026-SECNET, 2026-10-26, from a private report): `sendAct` asked only that the socket was open, which it is from the hello, and a door
+    touched while the socket was away went out the frame it opened - read ahead of the hello whenever the member's yes
+    was older than INSTANCE_KIN_KEEP_MS (every return after a death, or a while away, or a deploy), and parseClient refused it.
+    It asks the socket's welcome now (`online.welcomed`); a refused act stays in the world host's pending set (world.js
+    actSend) and is sent once the welcome has come. Pinned through the real Room and session with the hub held
+    (`test/net/rpt1026_secnet_net.test.js`). A rehello (AURA-LIVE: an aura or a name chosen) says a hello the hub is
+    asked about too, and its replacement socket keeps the host it knew: a blow at the host and the host's memory wait for
+    its welcome as well (AUDIT RPT1026 A5, `test/net/audit_rpt1026_secnet.test.js`).
 - **A member let in as the party is asked again while it stays** (`ip` on its attachment, `_instanceRecheck` off its
   pose, at most every INSTANCE_KIN_KEEP_MS, never awaited by the pose): kicked, lapsed, or its party no longer the owner's,
   it is refused out (its leave said, the host's seat handed on). The hub silent leaves it in.
@@ -128,6 +145,13 @@ THE LAW is pure (instancePlaces.js):
     quest's room where a quest names it too - the dungeon whole as well, so it stands the remains), and at the Hold.
     It comes after the party's rooms (WIPE-RETURN, section 11): a member holding a copy of the quest has a room of its
     own, and the first instance row taken by habit was that one, apart from the party.
+
+  QUEST-FIRST (FIELD BUGS 2026-10-26, `01-Overview/bugs/Field-Bugs-2026-10-26.md` - runa, of The Masoleum of
+  Darkivaron: "an area (up the elevator in the large central space) is missing ... this one is in a Main Quest to slay a
+  specific Mummy"): where a quest of mine names the place and the world builds its public room smaller (`dungeonSite`'s
+  `relaid`), Public is the LAST row - the party's rooms, then mine, then Public. That room stands none of the quest's
+  things (questMountsHere) and lacks blocks the whole dungeon has, so the first row, taken by habit, is one the quest can
+  be done in. Everywhere else the order above stands.
 
   A place with nothing but its public room has no popup: the door opens as it always did.
 - **questMountsHere**: online, a quest's things stand only in a dungeon whole - an instance, a main-story keep, a dungeon
@@ -260,7 +284,9 @@ stands in.
   "the Objective just did not want to spawn (I tried the dungeon in 'Public' mode) even after 'Quest Repair'") says it
   BEFORE the choice, in the popup, where the world builds the public room smaller (`dungeonSite`'s `relaid` - the size
   built, which the mount reads too; AUDIT FB1019f B1), and Quest
-  Repair in that room says where the things are instead of "Nothing was missing". The automap keeps each layout's map
+  Repair in that room says where the things are instead of "Nothing was missing". The line was not enough: runa took
+  Public at Darkivaron, built small online (its lift rises into a border block where N0000057, the upper hall, stood),
+  and found neither the hall nor the mummy - so since QUEST-FIRST (section 4) Public is the last row there. The automap keeps each layout's map
   (LAYOUT-KEEP): exploring one room no longer wipes the other's.
 - **Reachability.** The public world's re-laid dungeons can still seal an area from their entrance - the Hold of
   Coppering's medium build does - for anyone exploring them. A reachability pass over every dungeon's small and medium

@@ -305,6 +305,10 @@ export async function confirmedSeats(db, nowS, { fresh = false } = {}) {
   return new Map(seats.filter((s) => factConfirmed(s.fact)).map((s) => [s.key, { ...s.fact.seat, state: s.fact.state }]));
 }
 
+/** DOMAIN3: the accounts the seats' law ignores this week (seatIgnoredAccounts), off the service's kept facts - a seat
+ *  of power's witness counts none of theirs, as a seat's does not (domains.js). */
+export const seatIgnored = async (db, nowS) => (await keptSeatFacts(db, nowS)).ignored;
+
 /**
  * A SEAT WITNESSED - the client standing in a seat town reports the seat it derived (`{ key, name, region, tier, pixel }`,
  * checked by townSeatLaw.js seatReportOf). A registered account a week old is counted (its first answer on the seat

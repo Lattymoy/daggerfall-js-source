@@ -11,85 +11,78 @@ DisplayName: The Tonal Warden
 QRC:
 
 QuestFail:  [1003]
-<ce>       Imrah Bel-Tavir has gone home to Sentinel. She
-<ce>                     left no word for you.
+<ce>         Imrah Bel-Tavir has gone back to Sentinel.
 
 QuestComplete:  [1004]
-<ce>       Imrah pays you _gold_ gold. "For her steersman,"
-<ce>       she says, "who kept her course for longer than
-<ce>              there has been a Daggerfall."
+<ce>        Imrah pays you _gold_ gold. "That steersman
+<ce>         held its course longer than Daggerfall has
+<ce>                          stood."
 
 QuestLogEntry:  [1010]
 %qdt:
- Imrah Bel-Tavir writes that the thing at the
- Sky-Ketch's helm is her steersman, a construct of
- the Rourken's Tonal Guard. She asks me to cross
- the Sailwalk to the bridge and still it, and then
- to tell her of it at _tavern_ in __tavern_.
+ Imrah Bel-Tavir says the thing at the Sky-Ketch's
+ helm is its steersman, a Rourken construct. She
+ wants me to cross the Sailwalk, defeat it, and
+ report back at _tavern_ in __tavern_.
 
 Message:  1011
 %pcn,
 
-     Her crew vanished at their posts on the day the
- Dwemer went. Her steersman did not, because it was
- never alive: a construct of the Rourken's Tonal
- Guard, bound to her helm. It has kept her last course
- for three thousand years.
+     The ship's crew vanished with the rest of the
+ Dwemer. The steersman did not, because it was
+ never alive. It is a construct bound to the helm,
+ and it has held the same course ever since.
 
-     Something has changed that course, and brought
- her down over Daggerfall. The steersman will know
- what. Cross to her bridge and still it, and its
- master's cabin will open. Then come to _tavern_ in
- __tavern_, and tell me what the cabin holds.
+     Something changed that course and brought the
+ ship over Daggerfall. Cross to the bridge and stop
+ the steersman, and the master's cabin should open.
+ Then come to _tavern_ in __tavern_ and tell me
+ what is inside.
 
 <ce>                Imrah Bel-Tavir, Antiquarian
 
 Message:  1012
-<ce>       The porter brings the letter at a run. "She has
-<ce>        not slept," he says. "She says it is the most
-<ce>                important letter she has ever written."
+<ce>       The porter arrives out of breath. "She hasn't
+<ce>                      slept," he says.
 
 Message:  1013
-<ce>       Imrah hears all of it: the bridge's ring falling
-<ce>       away, the false resonators, the keel-song and the
-<ce>       forks that had to break before it ended.
+<ce>       Imrah listens to all of it: the falling ring,
+<ce>          the resonators, the song and the forks.
 <ce>
-<ce>       "A song that could hold a ship in the air, sung
-<ce>        at you. And you broke it." She is quiet. "When
-<ce>        the steersman fell, did you see the stone set in
-<ce>        her helm? Blue and brass, turning on its own?
-<ce>        That is her lodestone. That is what she follows."
+<ce>       "And you broke it." She is quiet for a moment.
+<ce>         "When the steersman fell, did you see the
+<ce>       stone behind the helm? Blue and brass, turning
+<ce>         on its own? That is the lodestone. That is
+<ce>                  what the ship follows."
 
 Message:  1014
-The antiquarian? She says someone stilled the thing that steers the brass ship. She has not stopped writing since.
+The antiquarian? She says someone stopped the thing that steers the brass ship. She hasn't stopped writing since.
 <--->
-Imrah Bel-Tavir asks everyone who comes down from the brass ship about a stone at its helm.
+Imrah Bel-Tavir asks everyone who comes down from the brass ship about a stone at the helm.
 <--->
 They say the brass ship's steersman sings. They say it sang a whole crew off the deck.
 
 Message:  1015
-<ce>       "The steersman," Imrah says. "On the bridge, past
-<ce>        the Sailwalk. Still it, and come back to me."
+<ce>        "The steersman," Imrah says. "On the bridge,
+<ce>        past the Sailwalk. Stop it, then come back."
 
 Message:  1016
 %qdt:
- I have stilled the Tonal Warden, the Sky-Ketch's
- steersman, and its master's cabin is open. Imrah
- Bel-Tavir is waiting to hear of it at _tavern_ in
- __tavern_.
+ I defeated the Tonal Warden, the Sky-Ketch's
+ steersman, and the master's cabin is open. Imrah
+ Bel-Tavir is waiting at _tavern_ in __tavern_.
 
 Message:  1020
-<ce>       The Warden's last note dies away through the hull.
-<ce>       Behind the helm, the Ketchmaster's cabin unseals
-<ce>       with a hiss, and the stone at the helm turns on,
-<ce>                      untroubled, alone.
+<ce>       The Warden's last note fades. Behind the helm
+<ce>        the Ketchmaster's cabin opens, and the stone
+<ce>               on the console keeps turning.
 
 -- Symbols used in the QRC file:
 --
 --               %pcn occurs 1 time.
 --               %qdt occurs 2 times.
 --             _gold_ occurs 1 time.
---           _tavern_ occurs 4 times.
+--           _tavern_ occurs 3 times.
 --          __tavern_ occurs 3 times.
 
 QBN:

@@ -14,85 +14,76 @@ DisplayName: The Starved Engine
 QRC:
 
 QuestFail:  [1003]
-<ce>       Imrah Bel-Tavir has gone home to Sentinel. She
-<ce>                     left no word for you.
+<ce>         Imrah Bel-Tavir has gone back to Sentinel.
 
 QuestComplete:  [1004]
-<ce>       Imrah pays you _gold_ gold, and presses her other
-<ce>       book into your hands with it. "Read the part about
-<ce>              the beads. Then read it again."
+<ce>          Imrah pays you _gold_ gold and hands you
+<ce>       another of her books. "Read the part about the
+<ce>                          beads."
 
 QuestLogEntry:  [1010]
 %qdt:
- Imrah Bel-Tavir writes that the Sky-Ketch's engine
- is starving. She asks me to carry an aether cell
- from the cradles in her hold and set it with my
- own hands in the engine or in one of the bridge's
- resonators, and then to tell her of it at _tavern_
- in __tavern_.
+ Imrah Bel-Tavir wants me to set an aether cell in
+ the Sky-Ketch's engine or in one of the bridge's
+ resonators, then report back at _tavern_ in
+ __tavern_.
 
 Message:  1011
 %pcn,
 
-     A ship that size cannot hang in the air on a
- song alone. The boatmen say she is starving, and if
- they are right she is fed on aetherium, the blue
- crystal the Dwemer went to war over.
+     A ship that size cannot stay in the air on
+ nothing. The boatmen say its engine is starving,
+ and that it runs on aetherium, the blue crystal
+ the Dwemer fought wars over.
 
-     Find her engine. Find what it eats, and feed it
- with your own hands, once at least, so you will
- know the weight of it. Then come to _tavern_ in
- __tavern_. Bring nothing back with you. Not yet.
+     Find the engine and feed it yourself, at
+ least once. Then come to _tavern_ in __tavern_.
 
 <ce>                Imrah Bel-Tavir, Antiquarian
 
 Message:  1012
-<ce>       The porter in Sentinel's colors again. "She says
-<ce>         to carry it with both hands," he says, "and that
-<ce>                you will know what she means."
+<ce>          The porter in Sentinel's colors is back.
+<ce>       "Carry it with both hands," he says. "She said
+<ce>                   you would understand."
 
 Message:  1013
-<ce>       "Cells," Imrah says. "Glass and brass, with the
-<ce>        blue burning inside, and they knock out of your
-<ce>        hands at a touch." She shakes her head. "The
-<ce>        Rourken built a whole ship that a single blow
-<ce>        can rob of its supper. They never meant her to
-<ce>        be crewed by anyone who had to fight."
+<ce>       "Cells," Imrah says. "Glass and brass with the
+<ce>       blue burning inside, and one blow knocks them
+<ce>       out of your hands." She shakes her head. "The
+<ce>           Rourken never expected anyone to fight
+<ce>                          aboard."
 <ce>
-<ce>       "The beads their guns throw are made the same
-<ce>        way, a mote of aetherium sealed in brass. If her
-<ce>        hold keeps guns, it keeps beads. My other book
-<ce>        is about both."
+<ce>         "Their guns fire beads made the same way,
+<ce>       aetherium sealed in brass. If the ship carries
+<ce>        guns, it carries beads. My other book covers
+<ce>                           both."
 
 Message:  1014
 The antiquarian? She asked me if I had ever lifted anything blue. Odd woman.
 <--->
-Imrah Bel-Tavir says the brass ship is starving. How can a ship starve?
+Imrah Bel-Tavir says the brass ship is starving. How does a ship starve?
 <--->
-They say the woman from Sentinel has a gun of the Dwemer in her room. They say she has never fired it.
+They say the woman from Sentinel keeps a Dwemer gun in her room and has never fired it.
 
 Message:  1015
-<ce>       "Her engine," Imrah says, without looking up.
-<ce>        "Feed it. A cell, with your own hands. Then
-<ce>                    come back to me."
+<ce>        "The engine," Imrah says without looking up.
+<ce>          "Set one cell yourself. Then come back."
 
 Message:  1016
 %qdt:
- I have set an aether cell in the Sky-Ketch with my
- own hands. Imrah Bel-Tavir is waiting to hear of it
- at _tavern_ in __tavern_.
+ I set an aether cell in the Sky-Ketch. Imrah
+ Bel-Tavir is waiting at _tavern_ in __tavern_.
 
 Message:  1020
-<ce>       The cell seats with a sound like a struck bell,
-<ce>       and the whole ship hums a little louder for it.
-<ce>                Imrah will want to hear of this.
+<ce>        The cell clicks into place and the ship hums
+<ce>        louder. Imrah will want to hear about this.
 
 -- Symbols used in the QRC file:
 --
 --               %pcn occurs 1 time.
 --               %qdt occurs 2 times.
 --             _gold_ occurs 1 time.
---           _tavern_ occurs 4 times.
+--           _tavern_ occurs 3 times.
 --          __tavern_ occurs 3 times.
 
 QBN:
