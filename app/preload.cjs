@@ -22,9 +22,14 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const path = require('node:path');
 const { createFileStorage } = require('./lib/fileStorage.cjs');
+const { webgl2Report } = require('./lib/graphicsBackend.cjs');
 
 const root = ipcRenderer.sendSync('dagger:user-data-path');
 const store = createFileStorage(root);
+
+// GPU-BACKEND: on a launch that took a graphics backend's switches, this page's own WebGL2 context, made before any game
+// script and told to the shell's guard (app/lib/graphicsBackend.cjs webgl2Report, watchBackend pageReport)
+if (ipcRenderer.sendSync('dagger:backend-probe') === true) ipcRenderer.send('dagger:backend-webgl2', webgl2Report(document));
 
 // DA8: an update that arrived while the game runs (app/main.cjs tellGame).
 // Heard HERE, before any game script, and kept - the page subscribes from

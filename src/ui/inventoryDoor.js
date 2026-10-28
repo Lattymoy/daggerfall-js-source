@@ -182,10 +182,11 @@ function enhancedInventoryOverlay(deps) {
   // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js). The arms
   // module keeps its own optional catch - a missing fpArm is a feature
   // that is off, not a screen that failed.
+  // COVERED-KEYS: `owner` is the window the pack's keys are gated on (ui/windowStack.js listenWindowKeys).
   mountEnhancedChunk({
     load: () => Promise.all([import('./enhanced/enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
     mount: ([{ mountEnhancedInventory }, armMod]) => {
-      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
+      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null, owner: overlay });
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'inventory',
   });

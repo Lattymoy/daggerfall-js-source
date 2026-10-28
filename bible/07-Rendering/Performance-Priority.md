@@ -85,6 +85,11 @@ frame's script read off it. Nine changes, each taking out a frame's spike or the
 for, and none of them a change to what a player sees but one: the snow under a grass blade reads the slope the ground is
 drawn with. Its section is after SNOW-BUDGET's.
 
+BOOT-COMPILE (2026-10-25, the owner's performance review, P1 and P2: a first launch froze 24-35 s on D3D11, nearly all of
+it waiting on shader links) starts every program the boot builds together, as soon as the renderer exists, so the
+driver compiles them beside the boot's own work. It does not move the picture. Its section is the last before For the
+owner.
+
 ## How the pass was run
 
 NOT IN THE REAL GAME. The frame probe (`tools/frameProbe.mjs`, PERF-NEXT's recipe) needs the freeware ARENA2, and its
@@ -241,7 +246,8 @@ pieces never were. YARD-RANGE's "Left" named the lever.
 **The fix.** A pool its host lets merge (`createDecorRoom`'s `merge` - the town's yards; a room's host gives none) merges
 once it has stood unchanged `DECOR_MERGE_SETTLE_MS` (500 ms: a town's yards stand piece by piece as their models land -
 one merge, not one a landing) and its host's budget allows (`homeYards.js` `YARD_MERGES_A_FRAME`, one a frame: a town
-streaming in stands every yard at once).
+streaming in stands every yard at once). Since YARD-BLOCK (YC5, `11-Multiplayer/Yard-Cells.md` section 12) this is
+the kept yards' path; strangers' yards merge a block at a time.
 
 - **The models.** PERF4's `StaticBatchBuilder` over every model piece standing (`decorMergeable`: its triangles,
   normals and texture coordinates in hand, no door, standing from the pool's origin) - each piece's own matrix less the
@@ -2487,7 +2493,7 @@ live; the rest stands in many small holders - AUDIT P11):
    after 40 pixels: a couple of minutes at x60. (AUDIT P11: whether FIELD BUGS 2026-10-21b's travellers were online, that
    page does not say - this is no claim about their black screens.) A torn-down pixel's schools are now forgotten. `schoolPlaces` already passed any entry the gather host no longer
    stood.
-2. **The cover index's cells** (`ai/cover.js` `fileIn`, CELL_EXACT). The census at Knightstale counted 964k cover proxies
+2. **The cover index's cells** (`ai/cover.js` `fileIn`, CELL_EXACT; superseded: COVER-COMPACT, below). The census at Knightstale counted 964k cover proxies
    and 523k bodies in 2.07M cells:
    - 63% of the cover grid's cells and 97% of the bodies' hold one proxy;
    - a cell grown by push from `[]` has seventeen slots from its first push (AUDIT C4).
@@ -2580,9 +2586,9 @@ audit's fixes on the same bar:
 - The decoded TEXTURE frames (80 MB measured over all 472 files) are each a file's, kept while the file is.
 - The weather's births memo (40,000 a lookup, ~27 MB at its cap) is bounded.
 - The per-frame arrays of the Morrowind bodies' sprite quads are eight small arrays a frame at most.
-- A cell of one proxy could hold the proxy itself, not an array of one (1.5M of the 2.07M cells, ~42 MB more): every
+- (Superseded: COVER-COMPACT, below.) A cell of one proxy could hold the proxy itself, not an array of one (1.5M of the 2.07M cells, ~42 MB more): every
   reader of a cell then asks which it holds, in the sight ray's own loop. Left for a pass that measures the ray's frame.
-- From the audit, the same before this pass: the cover index's `near()` bumps its stamp once a set with bodies, uncull'd
+- From the audit, the same before this pass (the stamp part superseded: COVER-COMPACT, below): the cover index's `near()` bumps its stamp once a set with bodies, uncull'd
   (121 a frame) - after ~1.07e9 stamps (hours of play) every `_mark` widens to a double; `hit(..., Infinity)` would loop
   for ever, and no caller asks it. `tools/enhancedMenuProbe.mjs` is stale against the front door (its doors moved). The
   Real windows row and the Steady shadows part's own label are English (RW1's, FLICKER-FIX's).
@@ -2605,6 +2611,619 @@ all dead:
 - `org2.json`: ORG2-the-preset-past-the-lane (`audit_flicker.json`'s R1 back to main's at the merge, with PEER-ART's store).
 
 The audit: `01-Overview/audits/Audit-Mem-Audit.md`.
+
+## FIRST-VISIT — what a warm launch worked out again, kept in the player's store
+
+**Found.** A warm launch in Daggerfall city (headed Edge, RTX 5080, ANGLE over D3D11, shaders cached) still stalled on work
+whose inputs do not change between launches. Per item, the main thread's inclusive ms over the boot (the profile's own
+attribution; the brief's proposal figures were a different run):
+
+- the boot's two location walks (BOOT-RECTS) served ~400 blocks through the world-data door, a town pack's file rebuilt
+  for each, to read their ground tiles - 1,283 ms, inside the boot's 2.7 s frame;
+- the town's first trips (`trips.js townTrips`) - 459 ms, a third of it the route planner folding the land into pieces
+  (`travelRoute.js routeGround`);
+- the port town's shipyard and lighthouse placed (`portSites.js portSitesOn`) - 228 ms;
+- the three port ships' prefabs built (`comeSailAwayModels.js shipBuilt`) - 219 ms;
+- the weapon rig's body sprites fetched and decoded on the page's thread (`eotbBody.js decodeSprite`) - 200 ms;
+- the ships' painted pictures (`galleonArt.js shipStandIns`, laid in the player's palette) - 145 ms;
+- the Bay fitted to the picture of Tamriel (`tamrielLand.js fitBayToPicture`, after FIT-BITS) - 145 ms.
+
+**The fix.** Each answer is kept in the player's derived store (`dataSource.js` DERIVED_STORE, a structured clone through
+`storeDerivedValue`, swept with an ARENA2 re-pick) under a key over its inputs and a hand version - a different input is
+a different key, worked out again and kept under its own; a malformed record is refused. The shared door is
+`systems/firstVisit/firstVisitStore.js`. The synchronous readers find their records fetched before they run: the mod
+world-data loader fetches the walks' tiles and the port sites once the door is set (`modWorldData.js`), the way book
+waits on the land's pieces for each new network (`ways.js`), and the rest are asked from code that already awaits.
+
+**Refresh on update** (the owner, 2026-10-26: "make sure any of our changes relating to caching do not prevent anything
+from refreshing properly ... scoped to only the things that have changed"; and, approving the next step, "Yes, please do").
+A cache's version is not the build's tag and not a number anyone bumps: it is the PIN of its own computation
+(`tools/computationPin.mjs`: the named roots and every top-level declaration they reach by name, across imports, as
+tokens - a comment or a line break moves nothing - and any shipped data the computation reads), GENERATED. The pins live
+in `src/firstVisitPins.js`, gitignored:
+
+`npm install` / `npm ci` write it (`postinstall`, `scripts/firstVisitPins.mjs`),
+so every checkout and CI job has it before lint, the types or a test; every Vite build writes it at its start and bundles
+the pins it computed then (`firstVisitPinsPlugin`, a `vite.config.js` plugin); and the dev server computes the pins for
+each page load (the store asks under a URL of the load's own), so a dev edit is a new key as a deployed update is. A cache
+reads its pin through `firstVisitStore.js firstVisitPin`, which throws when there is none - never a key on undefined. So
+an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
+keeps it.
+
+Each key leads with its scope; writing an answer deletes every other key of its scope
+(`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow
+across updates. A write the store refuses (a full quota) sweeps nothing (`firstVisitStore.js keepAnswer`): the older
+answer is then the only one there is, and stays. The store's writes also reject when the transaction aborts (a
+commit the quota refuses raises no request error), and the two callers that waited on a write - the port ships' models and
+the ways' land pieces - answer with what they built without waiting for it (`test/systems/firstVisit/fv_abort.test.js`).
+
+| cache | module | key inputs | refreshed by | swept by |
+|---|---|---|---|---|
+| walks' ground tiles | `world/terrain/groundTilesKept.js` | the pin (BlocksFile, the world-data door, packs, patches, the arena's block, the carriages' layer, and the mods' shipped WorldData, WorldDataPatches and packs); BLOCKS.BSA's stamp; what the door serves blocks by (each block file's mod, pack version, layers, in name order); each block by its name | a change to that code or shipped world data; another BLOCKS.BSA; a mod switched, a pack updated, a layer added | `fv-ground:` - one record |
+| land's pieces | `systems/travel/landPiecesKept.js` | the pin (`routeGround` and the step law); every byte the fold reads (climate, heights, roads, tracks) | a change to the fold; another ground or road network | `fv-pieces:` - one network's |
+| port sites | `world/portSitesKept.js` | the pin (`portSitesOn`, `closeSite` and what they reach); per town, the ground's cells and the sea field at every cell | a change to the placing; a town's ground or water changed | `fv-port-sites:` - one record |
+| ship builds | `systems/comeSailAway/shipBuildsKept.js` | the pin (the three prefab builders and what they reach); the bake's sha256 and text, the mod prefabs read, the base | a change to a builder; a new bake or mod prefab | `fv-ship:<ship>:` - one a ship |
+| ships' pictures | `world/ships/standInsKept.js` | the pin (the three ships' art and the palette's look); the picture's name; the palette | a change to the painting; another palette | `fv-standin:<name>:` - one a picture |
+| Bay fit | `world/tamriel/bayFitKept.js` | the pin (`fitBayToPicture` and what it reaches); the trace's land and the Bay's land at every pixel | a change to the fit; another picture or another Bay | `fv-bayfit:` - one |
+
+Nothing kept reads the save, the day or the clock, so a save loaded or a day turned refuses nothing. An ARENA2 re-pick
+sweeps the whole derived store (`clearStoredData`), and a changed data file is another stamp. No key names BUILD_TAG:
+every computation's inputs could be named. The pin follows names, not meaning - a code path a root reaches only
+through a value handed in at run time (a registry, a callback) is not followed, which is why the ground tiles' roots
+name the mod loader, the arena, the carriages' layer and the shipped world data beside the door.
+
+Held by
+`test/systems/firstVisit/fv_versions.test.js`: every cache that keeps answers asks a pin and every pin is generated; a
+missing pin throws; no pin reads the pins; the pin's moves (the code reached, the data read) and non-moves (a comment, an
+unreached declaration); the same pin across CRLF and LF and either path separator; the dev server's pins for each load; a refused write sweeps nothing. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
+(`vanillaEnhancedPack.js decodeServedPng`), the worn armour's strips through `layeredArmor.js decodeLayered`'s `picture`.
+A departure from the proposal: it named the block rebuild itself (pack and block); what the walks read of a block is its
+ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose structured clone reads back at ~0.7x the rebuild's cost
+(measured in node over Daggerfall's 40 blocks), so the tiles are kept.
+
+**Measured.** The real-GPU probe (`dfo-verify/tools/perf/hitchProbe.mjs`, Daggerfall city 15:00, `&shot&fly`), base
+`9aa6bc4662` and this branch on the same server and scene, each on a fresh browser profile: a first launch, then the
+second launch below (the head: this branch's last commit, `final-second`). Inclusive ms over the boot, second launch:
+
+| item | base | head |
+|---|---:|---:|
+| walks' ground tiles (`getDFBlockReplacementData`) | 1,283 | 226 |
+| town's trips (`townTrips`) | 459 | 275 |
+| ...the land's pieces folded | (in the above) | 0 |
+| port sites | 228 | 0 |
+| ship models | 219 | 9 |
+| rig sprite decode (main thread) | 200 | 7 |
+| ships' pictures | 145 | 4 |
+| Bay fit | 145 | 0 (+18 its stamp) |
+
+Frames over 100 ms after the first world frame: base 6, 1,042 ms; head 6, 863 ms - the frames left are quest start's
+and the wagons' art (not kept) and two that are the frame's own and a collection. That metric starts after most of
+these stalls - the world's first frame lands at ~26-35 s, after the boot's own long frames - so from the boot's first
+world-host frame: base 17 frames, 7,168 ms, the longest 2,746 ms; head 17 frames, 4,826 ms, the longest 1,459 ms. The
+first launch fills the store for ~80 ms of main thread beyond the base's (the stamps, ~30 ms; the clones written,
+~40 ms) - the work itself runs as before.
+
+Two earlier head pairs: pair 1 found the door's stamp in registration order
+(the packs register as their fetches end, so the walks' tiles missed on the second launch); pair 2, with that fixed,
+missed the land's pieces once (162 ms) - the network the first way is asked on was not the one the last launch kept,
+which a miss pays at the old cost, never with a wrong answer. The final pair hit every record.
+
+Pictures: the settled frame (`SHOT=1`, the same scene), base `9aa6bc4662` against the review's head `84505b622e` on a
+second launch whose kept answers all hit: 0.04% of pixels past a tolerance of 8, in the sky's moving clouds, against 0.01%
+between two launches of the same tree; the town itself (the frame left of the HUD's column) 0.016% against 0.013%, and a
+launch that worked every answer out against one that read it back, 0.01%. The one picture that differed by launch is the
+main quest's opening box ("You wake and look around the room", `_BRISIEN`'s `say 1025`): the quest machine does not
+tick while any window stands, so whichever opens first - that box or the welcome tour's first page - comes up first, and
+the other waits.
+
+The base showed the box on one launch and not on the next; the head, which boots sooner, showed it on
+every launch. It is never lost, only ordered.
+
+Left: quest start (54-97 ms) and the wagons' art (34-60 ms) are under 100 ms; the town's trips keep ~250-280 ms of lives
+and routes, which read the save.
+Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`base-cold`, `base-second`, `head1-*`,
+`head-*`, `final-first`, `final-second`; each `boot.json` and `boot.cpuprofile`).
+
+Pins: `test/world/terrain/fv_groundtiles.test.js` (5), `test/systems/travel/fv_landpieces.test.js` (3),
+`test/world/fv_portsites.test.js` (2), `test/systems/comeSailAway/fv_shipbuilds.test.js` (2),
+`test/world/ships/fv_standins.test.js` (2), `test/world/fv_bayfit.test.js` (2),
+`test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2), `test/systems/firstVisit/fv_versions.test.js` (10), `test/systems/firstVisit/fv_abort.test.js` (3).
+
+## BOOT-COMPILE — the boot's programs start together, while the boot works
+
+*The owner's performance review (2026-10-25, P1 and P2): players report hitches and low frame rates when things load
+for the first time. On a first launch on D3D11 the boot froze for 24-35 s, and 22-37 s of that was the main thread
+waiting on shader links.*
+
+**Found.** SHADER-STALL kept the renderer's own programs and the passes the boot builds out of its door: "built in its
+constructor behind the loading screen (2.6-3.1 s here)". That was a software renderer's figure. On D3D11 with a cold
+shader cache (a first launch, and every launch after an update that changes a shader), the base commit's boot waited
+23.5 s on program links, one program after another, each in its owner's constructor:
+
+| Built by | Cold wait (s) |
+|---|---|
+| `VolumetricClouds` and its `CloudNoise` | 6.9 |
+| the lighting lane's world set (`setLightingLane`), its water surface, its shadow and air passes | 7.3 |
+| the renderer constructor's classic set and water | 3.5 |
+| the terrain's clip program (`prepareTerrainClip`, Deep Waters on) | 2.5 |
+| the idle warm steps (character quad, windows' background, foes' telegraph, weapon glow) | 2.2 |
+| Dynamic Skies, the grass, the rest | 1.2 |
+
+Between the constructor and the lane's set, the boot ran its own CPU work for 21 s (the dev server's boot) with no
+compile running at all.
+
+**What the driver overlaps** (measured, not assumed). A scratch page compiled the boot's 109 programs, captured from the
+real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RTX 5080, Edge):
+
+| How | Main thread waited |
+|---|---|
+| each built and read, one after another (the base boot) | 28.5 s |
+| all started, then each read | 10.3 s |
+| all started, then 15 s of the page's own work, then each read | 0 ms (every `COMPLETION_STATUS_KHR` poll 0 ms; 108 of 109 done at 9 s) |
+| all started, the first seven read | 1.85 s (the driver starts programs in the order handed over) |
+
+**The fix.**
+- **P1.** Each pass lists its programs beside its constructor, and the constructor builds from the list where that is
+  a small change (`CLOUD_PROGRAMS`, `CLOUD_NOISE_PROGRAMS`, `DYNAMIC_SKIES_PROGRAMS`, `labGrassPrograms`,
+  `FOE_TELEGRAPH_PROGRAMS`). The renderer and the air pass name theirs in functions beside the builds
+  (`worldSetPrograms`, `airPassPrograms`). What installing the lane builds is listed by `render/bootPrograms.js`
+  `laneBootPrograms`, a plain function over the renderer's state rather than a Renderer method, so the class does not
+  grow (the owner's extract-what-you-touch rule; the class is a knot `01-Overview/Host-Split.md` names).
+
+  `worldSetPrograms` and the classic set's source stay in `renderer.js`: the constructor's own start needs them, and
+  `renderer.js` importing `bootPrograms.js` would put 118 modules on the entry's static graph (BOOT2's ceiling), while a
+  leaf of its own reading the renderer's shaders would be an import cycle.
+
+  `render/bootPrograms.js` starts them all
+  through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
+  starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
+  passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or
+  `?dungeon`. The cloud march goes first: it is the longest single compile (6.6 s alone). The constructor starts its
+  own seven programs before it reads the first. Each pass's build is unchanged: `buildProgram` takes the started
+  program for the same sources. Where the driver cannot compile beside the page, nothing is started.
+- **P2.** `warmSteps()` and `lazyWarmSteps()` are `{ start, run, need }` steps (`render/warmPrograms.js`): a step's
+  build runs once the driver says its programs are done, and a step whose program a draw built first stands down. The
+  four builders whose sources are written inline (`_ensureScreenQuadProgram`, `_ensureScreenQuadRunProgram`,
+  `_ensureCharQuadProgram`, `_ensureOverlayProgram`) take `{ start: true }`, which starts the program and returns. The
+  foes' telegraph loads its module first, as `_loadFoeTelegraph` does. The play passes' start (`playPrograms.js`) stays a
+  bare step: it starts and builds nothing.
+- The Deep Waters switch moved to `scenes/deepWater/deepWatersSwitch.js` (the host re-exports it), so the early start
+  does not bring the sea's whole graph onto the boot.
+
+THE FOUR HOSTS: none is wired. The start is the entry's (`main.js`), before any host loads, and every host's builds take
+from it: the world's and the fixed city's sky and lane, the interior's and the dungeon's lane.
+
+**Measured.** Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server, Daggerfall city at 15:00
+(`hitchProbe.mjs`'s default scene, Enhanced on). Base `9aa6bc4662`, head `9563162679`, one after the other on the same
+server. The commit after the head gates the constructor's start on the extension, a path these runs do not take. Cold:
+a fresh browser profile. Warm: a second launch on the same profile. "Play" starts at the first world frame.
+Two pairs: the first on a quiet machine, the second while another session ran the game on the same machine (both arms
+of it stood near 95 fps where the first pair stood near 130). The throwaway boot before each first pair was cold too.
+
+| | Base: pair 1 / pair 2 (throwaway) | Head: pair 1 / pair 2 (throwaway) |
+|---|---|---|
+| Cold: main thread waiting on links (GL reads over 15 ms) | 23.5 / 22.7 s | 1.5 / 5.9 (2.0) s |
+| Cold: longest frozen frame | 20.4 / 20.8 (18.4) s | 3.0 / 7.6 (3.6) s |
+| Cold: the constructor's frame | 3.5 / 3.0 s | 0.8 / 1.5 s |
+| Cold: first world frame after navigation | 54.9 / 56.2 s | 37.9 / 49.3 s |
+| Cold: frames over 100 ms in the first 25 s of play (sum) | 8 (1.39 s) / 5 (0.83 s) | 5 (0.83 s) / 8 (1.54 s) |
+| Warm: worst stall in the boot | 2.8 s | 2.4 s |
+| Warm: links waited on | 0.16 s | 0 |
+| Standing still, 20 s (fps) | 129.7 / 95.3 | 127.8 / 95.7 |
+| Flying, about 115 s (fps) | 134.7 / 85.3 | 120.6 / 104.6 |
+
+The frame rates move with the machine's load, and the arms trade places between the pairs: no change in them is
+measured, and the change runs nothing per frame. The play frames over 100 ms are the town's population and terrain on
+both arms: the base's warm steps waited before the first world frame in these runs, so P2 shows here as zero link waits
+after the first world frame, not as fewer slow play frames.
+
+The head's longest frame is the boot's own work, with no compile in it: `bootWorld` setting the location's tiles and
+rebuilding blocks' replacement data (`terrainTiles.js`, `worldDataReplacement.js`, 1.2-1.3 s each), the same work as
+the base's worst warm stall. On the quiet machine the cold frozen stretch is down to the boot's own CPU time. On the
+busy one the cloud march was still compiling 29 s after its start, and `VolumetricClouds` waited 3.6 s of the 7.6 s
+frame for it: the driver's compile threads share the CPU with everything else on the machine. Both boots linked the
+same 114 programs; no program compiled twice that the base did not also compile twice (the wind wisps' and the spoils
+glow's, on both).
+
+What still waits on a cold cache (1.5 s in all, pair 1):
+- the constructor's classic set, 0.75 s in one read. Nothing runs before it to overlap: the page has just loaded. A
+  deferred link read would need the set installed lazily, and the constructor reads every uniform table at once;
+- the passes `bootWorld` builds that nothing starts: Deep Waters' six (0.21 s), the shadow pass's depth programs
+  (0.10-0.16 s), the far ring, the ocean holes, the duel wall, the flags and banners (20-80 ms each). Each is a few tens
+  of milliseconds; listing them is SHADER-STALL's pattern again if they ever matter.
+
+**Known cost.** The switches are read at page load, before the menu decides. The bare menu URL names no
+indoor door, so about 45 programs (the lane, the air pass, the clouds and their noise, the grass, Dynamic Skies) start
+while the player is at the intro and the menu. A player who then starts in a dungeon compiled the clouds, the sky and
+the grass for nothing, and they stay started; so does a pass whose switch the player turns
+off in the menu (and the clip is left out where an online room later turns Deep Waters on: it compiles at its build,
+as before). `render/glProgram.js releasePrograms` could let the outdoor starts go when the first host mounts indoors;
+that is left until a measurement shows the cost. The intro draws on a context of its own; whether its frames wait
+behind these compiles is measured below.
+
+**Trade-off: starting at page load** (2026-10-26, the owner: "Is it risky to start all of those shaders at page load? I
+could see us gating them by the first scene where they're present, but we need to examine the trade-offs closer and
+whether it's really worth it"). Measured on the same machine (RTX 5080, ANGLE D3D11, Edge, the dev server):
+- **What the starts cost the intro and the menu: nothing measurable.** The bare menu URL, a cold profile, 30 s, base
+  `9aa6bc4662` against head `cfdf8fa99d`:
+
+  | | Base | Head |
+  |---|---|---|
+  | Frames over 100 ms | 9 | 9 |
+  | p50 / p95 frame | 4.2 / 4.3 ms | 4.2 / 4.3 ms |
+  | The intro's own link waits (`introLandscape.js`) | 91 ms | 92 ms |
+  | The constructor's frozen frame | 2.7 s | 1.3 s |
+  | Main thread waiting on links in all | 2.8 s | 1.4 s |
+
+  The intro's three programs wait the same with ~45 programs compiling beside them. The menu's slow frames are its own
+  transitions (at 4-6 s and 19-20 s on both arms). The first frame came 60-90 ms later on the head in both pairs, before
+  the constructor or the start run.
+- **What they cost in memory:** the compile lab, a fresh Edge, all 109 of the boot's programs started against none: the
+  largest Edge process +48 MB and another +14 MB, about 60 MB. The boot's own set is about 45 of them. The menu's total
+  Edge working set after 30 s: 1,996 MB on the head, 1,972 MB on the base.
+- **What they cost in wasted work:** a dungeon start, or a pass switched off in the menu, compiled on the driver's
+  threads for nothing, and its programs stay held (the memory above, at most). No frame pays for it.
+- **What gating by the first scene would save:** that wasted compile and up to ~25 MB on a dungeon start. Nothing else
+  measured.
+- **What gating would cost:** the menu's head start. Gated at the scene's choice, the compiles start when the player
+  chooses, which is what this section's direct-boot A/B measured (its start is at navigation): 1.5-2.4 s of waits on a
+  quiet machine, 5.9 s on a loaded one, where the cloud march was still compiling when built. Started at page load, a
+  player who spends ten seconds at the menu meets every program done: the lab finished 108 of 109 in 5 s. Gated later
+  than the choice (at the host's own mount), the compile would land inside the transition, which is the freeze this
+  removes.
+- **Either way:** where the driver cannot compile beside the page (no `KHR_parallel_shader_compile`) nothing is
+  started, at page load or later. A lost context reloads the page, so nothing started for it is read.
+- **Recommendation: keep the start at page load.** It costs no frame and some tens of MB, and it buys the menu's dwell
+  time, which is the margin on a loaded or slower machine. Gating saves only the dungeon start's wasted compile. If that
+  memory ever matters, the cheaper fix is `releasePrograms` for the outdoor starts when the first host mounts indoors,
+  not a later start.
+
+**Not measured.** A production build: its boot does less module loading between the constructor and the first builds,
+so a compile still running at its build would be waited on for the rest (in the scratch page the cloud march finished
+last, about 9-14 s after the start). Other GPUs and drivers. A machine with fewer cores, where the driver's compile
+threads share the CPU with the boot's own work. The desktop app (the same Chromium and ANGLE).
+
+The runs: `E:/git-repos/travddm/dfo-verify/tools/perf/boot-compile-2026-10-25/` (`base-cold`, `base-warm`, `head-cold`,
+`head-warm`, the fps repeat, the scratch page's results, and the probe's additions that log every GL read over 15 ms).
+
+Pins: `test/render/bootcompile.test.js` (15): each list against its builds over a stub context whose compiles are done,
+every started program taken, no warm start untaken, a built pass's step standing down (before its start, and while the
+warm polls), no early start where the driver cannot compile beside the page (the boot's, the constructor's and the
+telegraph's), the sky's answers against what `createSkyController` builds for each door and the environments switch,
+the grass's three switches, the air's door, and the retro step standing down while nothing draws a present. Pins moved: `auditretro1`, `perfscale` and `weaponglow1` call a warm step's `run`;
+`vol1_glow` reads the float target's question in `airVolLinear`. Mutants: `tools/mutants/bootcompile.json`, 23, all dead;
+`auditretro1.json`'s AUDITRETRO1-E7-no-warm-step, `grasspx.json`'s
+AUDIT-GRASSPX-the-renderer-ignores-the-stages-it-is-handed and `weaponglow1.json`'s WEAPON-GLOW1-the-mesh-glow-cold
+re-aimed by content, all dead. The hand-over page's anchor into `_ensureScreenQuadProgram` moved with its signature.
+
+**AUDIT BOOT-COMPILE (2026-10-26, the owner: "do a final review pass on each PR").** A cold reader went over the whole
+diff. What it found, and what was done:
+- **Without the extension the telegraph's warm compiled early.** Its start ran when the module arrived and its build an
+  idle later, so on a driver that compiles in line the frames between waited behind that compile. Now its start starts
+  nothing there, as every other step's, and the build compiles and reads in one go as before.
+- **A fight that built the telegraph first left a second start behind**, never taken. The start now stands down when
+  the pass is built.
+- **The pins held less than the record said**: the boot's own extension gate, the sky's and the grass's switches past
+  the indoor doors, the air's door, a step standing down mid-poll and the retro step's `need` had none. Each has a pin
+  and a mutant now (above). The anchors into the hosts' switch lines quote the whole line, so a condition added to one
+  goes red at the anchor.
+- **The menu path and the switches read before the menu decides** were not in the record: Known cost, above.
+- Checked and faithful: every list against its builds, the classic set still built and installed, the air pass's
+  inputs, the clip after the lane, the guards, the four builders' `{ start: true }`, the warm loop's end on every path,
+  a lost context.
+
+Measured again in the game on the audited head (`0fe66ac270`), the same scene, a fresh profile each, one after the other
+with the base twice:
+
+| | Base / base again | Head `0fe66ac270` |
+|---|---|---|
+| Cold: waiting on shader links | 19.4 / 23.9 s | 2.4 s |
+| Cold: longest frozen frame | 17.9 / 20.9 s | 3.5 s (the throwaway boot before it: 3.5 s) |
+| Cold: first world frame after navigation | 55.3 / 55.0 s | 37.5 s |
+| Cold: frames over 100 ms in the first 25 s of play (sum) | 2 (0.40 s) / 8 (1.32 s) | 6 (1.04 s) |
+| Standing still, 20 s (fps) | 151.6 / 141.6 | 137.1 |
+
+The picture: the town after 20 s standing, base against head, differs in 0.02% of its pixels by more than 8 of 255 (the
+mean difference 0.07): the wind's streaks, a few townsfolk and chimney smoke, one swaying flat's edge and the cursor -
+what moves between any two runs. The base's second shot still showed the first launch's story page over the town, so
+its own difference (22%) is that page, not the world. Nothing is drawn later than before: a started program is still
+built where its owner builds it, and every draw that builds on demand still does. The standing frame rate was lower on
+the head in two of the three pairs, by less than the two base runs differ from each other (10 fps); the change runs
+nothing per frame, and these runs cannot tell a few percent either way.
+
+## CLOUD-COMPILE — the volumetric clouds arrive when their programs are done
+
+*The owner's performance review (2026-10-26, P3): BOOT-COMPILE's busy pair still waited 3.6 s for the clouds' march
+program, the boot's longest single compile on D3D11 (seconds, against 0.28 s on Vulkan).*
+
+**Found.** Each program's own compile on D3D11, with nothing else compiling (a scratch page, each source made new by a
+comment so that no cache answered; median of three rounds, Edge, RTX 5080, ANGLE D3D11):
+
+| Program | Compile (ms) |
+|---|---|
+| the clouds' march (`MARCH_FS`) | 5,705 (5,285-6,080) |
+| the Enhanced world set: mesh / terrain / billboards / decals / character | 2,016 / 1,486 / 1,210 / 681 / 624 |
+| the clouds' shadow march (`SHADOW_FS`) | 517 |
+| the noise: shape / detail / lab slice | 319 / 117 / 5 |
+| the clouds' composite / the lab's viewer | 48 / 4 |
+
+What D3D11's compiler (FXC) pays for in the march, each variant measured in the same round as the march itself:
+
+| The march with | Compile (ms) | The march in that round |
+|---|---|---|
+| `SPANS` 9 -> 5, the 96-step march -> 48, the light march's 8 -> 4, `MS_OCTAVES` 3 -> 2, `VEIL_PANELS` 16 -> 8, the cell loops 8 -> 4 | 5,741-6,520 each | 5,705 |
+| the cirrus left out | 5,633 | 5,705 |
+| the curtains left out (`curtains()` returns nothing) | 3,294 / 2,736 / 3,235 | 5,705 / 4,850 / 6,304 |
+| the curtains' three pieces in one call (one chord, not cut at the base and the slab) | 3,390 / 4,634 | 4,850 / 6,304 |
+| the curtains' three `veilPiece` calls in a three-step loop | 4,118 | 4,850 |
+| the three pieces walked in one loop of 51 samples, each sample's arithmetic as `veilPiece`'s | 5,485 | 6,304 |
+| `veilAcross` left out of the panel's sample | 3,770 | 4,850 |
+
+No loop count moves the compile: FXC does not unroll them. The curtains are 42%, 44% and 49% of it in the three rounds, and nearly all of that is
+`veilPiece` inlined three times (the chord below the base, between the base and the slab's start, past it), each copy
+carrying `veilAcross` and its two shaped distances. The shadow march's loops move nothing either.
+
+**The fix.** `render/cloudsArrival.js` is the clouds' door for the sky controller (`scenes/shared.js`
+createSkyController): `compiledPass` over the noise's three programs and the clouds' four, never forced - nothing the
+game is played by reads the clouds. The door starts the seven programs at the controller's mount, where the driver
+compiles beside the page (the boot started them already; a sky whose switches the boot read otherwise compiles from
+there), and nothing where it cannot. The controller asks it once a frame in `use`, before the frame's state is handed
+to the clouds; the build restores the rect the sky last drew in. Until the clouds are built, the sky stands as it does
+with `?clouds=off`: the dome's own decks (`cloudsExternal` false), the dome's occlusion on the key light (`sunFactor`),
+the ground's deck without a shadow map, the curtains on the field's cells (`drawnCells` null).
+
+A recenter before the
+build is summed and handed to the clouds, so their field is sampled where a build at the boot would have sampled it. HOST-SPLIT: no host is touched.
+
+**A compile that beat the boot costs nothing.** When the programs are done at the sky's first frame - every launch
+measured here - the clouds are built on that first ask and take the sky over at once, frame for frame as the base's
+build at the mount did: their first sweep of the sky map marched from that frame, the dome's decks down from it, the
+composite drawn in the frame the sweep completes (pinned over the stub context: the composite's first frame is the
+sweep's last stripe). Clouds built later, mid-play, keep the dome's decks until their own first sweep is marched, so no
+frame shows a sky with neither; the frame after it they take the sky over.
+
+Neither arm has clouds at the first world frame. The base's composite, like the head's, draws nothing until the first
+sweep (`VolumetricClouds.draw`), and both march that sweep from the sky's first frame, about half a second before the
+first world frame; over the boot's long first frames the clouds stood 1.1-1.3 s after it in the head's runs, and the
+base marches the same stripes in the same frames. (The runs below were made with an earlier door that waited a frame
+more and kept the dome's decks through that first sweep; the door above matches the base frame for frame, in the stub,
+and has not been run in the game.)
+
+Departures:
+- A build that fails (a driver's compile fault) now leaves the sky without volumetric clouds and warns, where it threw
+  out of the scene's boot.
+- Where the compile is slower than the boot, the sky shows the dome's own decks until it is done and the first sweep is
+  marched, where the base froze for the rest of the compile and then drew bare sky through the sweep.
+
+**Not changed: the shader.** The picture-identical restructure (the 51-sample walk) took 5,485 ms against the march's
+6,304 in its round: 13% saved. The cut that walks the chord as one piece took 3,390 against 4,850 (30%) and 4,634
+against 6,304 (26%), but the veil's depth is then no longer integrated piece by piece around the base and the slab's
+start: a different picture. With the door the march's compile blocks nothing, so neither is taken (option C below).
+
+**For the owner: clouds at the first frame** (the owner, 2026-10-26: "I think I would prefer the first frame already
+having clouds, but we should weigh the solutions that could get us there against any possible risks").
+
+| Option | What a player sees | Cost and risk | Numbers |
+|---|---|---|---|
+| **A. The door (this branch)** | Where the compile beat the boot: exactly the base's frames. Where it did not: the dome's own decks, then the clouds once compiled and swept - never a freeze. | A late cloud pop on slow compilers and loaded machines. | Here the compile beat the boot in every run: the march done 5.2-8.3 s before the base's build read it. Where it did not (BOOT-COMPILE's busy pair) the base froze 3.6 s. |
+| **B. Hold the loading screen** until the clouds' programs are done, at most a bound (say 5 s), then go on with A | A's first frame, plus the clouds' where the compile ends inside the bound. | A longer loading screen on slow compilers; a bound to choose; a wait added to the boot's lift (the hosts' path - HOST-SPLIT wiring). | Never waits on this machine (the margin above). Not built: the bound cannot be chosen without a slow machine's or the production build's numbers. |
+| **C. Restructure the march** | The same as A, the pop shorter. | Fidelity: a large shader diff. Its proof would be zero pixels past 0 in `pngdiff` on settled screenshots of a sky with falling cells (`?cloudcell=rain`), and the curtains' own pins (`vc7c_curtains` runs `curtains()` in the repo's GLSL reader); a compiler may still fuse the arithmetic differently in a new shape, on some GPU. | The curtains are 42-49% of the march's 5.7 s: `veilPiece`, a 17-sample Simpson integral, inlined three times (the chord below the base, to the slab's start, past it), each sample carrying `veilAcross` and its two shaped distances. A byte-for-byte rewrite is plausible but saves 13%; the 26-30% cut changes the picture. |
+| **D. March the first sweep whole** in the clouds' first frame (as the shadow map's first march already is) | Clouds in the first world frame wherever A builds them in time - the only option that puts them there on either arm. | One frame's GPU time for the whole sky map (1024 x 256 texels at default, up to 68 steps a texel, each lit by up to five more), in a boot frame that is already long; the clouds' author striped the first sweep on purpose ("the first is striped like every other - no stall"). Built as `?cloudsweep=whole`, off by default. | Measured below: the whole sweep 0.76 ms of GPU against a stripe's 0.13-0.23; the clouds drawn 0.4 s before the first world frame instead of 1.1 s after it. |
+
+**Option D, measured** (the owner, 2026-10-26: "Let's build and measure D, but I'm leaning toward A"). The default scene,
+this branch at `64731fa951`, A and D each a cold launch then a warm one on its profile, then a warm one with
+`?perf=zones`; every cloud-march draw timed on the GPU by its own query (the run folder's `sweepTimer.js`, below). The scene's sky paced
+its sweep at 16 frames (a covered sky).
+
+| | A (striped first sweep): cold / warm | D (`?cloudsweep=whole`): cold / warm |
+|---|---|---|
+| the clouds' first sweep complete, from the first world frame | +1.08 / +1.13 s | -0.39 / -0.38 s (drawn in the clouds' first frame) |
+| GPU time of the first sweep's march draw | 2.52 / 0.23 ms (16 rows) | 0.76 / 0.76 ms (all 256 rows) |
+| GPU time of a later stripe | 0.13-0.15 ms | 0.13-0.21 ms |
+| the frame the clouds were built in (its length is the town's population) | 813 / 804 ms | 738 / 813 ms |
+| first world frame | 33.4 / 30.9 s | 32.2 / 27.9 s |
+| longest frozen frame | 2.78 / 3.17 s | 2.66 / 2.25 s |
+
+The whole sweep costs about 0.6 ms of GPU more than a stripe, once, in a boot frame of some 800 ms: not measurable in
+that frame's length. The `?perf=zones` windows (120 frames each) put the sky at 0.46 (A) and 0.63 ms (D) in the first
+window, but the same windows' totals swing between 0.7 and 6.1 ms from run to run on this GPU's clocks, so they cannot
+resolve a difference this small; the per-draw timer can. Once both have swept, the pictures agree: the settled
+screenshots differ in 0.01% of pixels by more than 8 of 255 (mean channel difference 0.04 cold, 0.02 warm).
+
+Not
+measured: a slow GPU (the whole sweep scales with the GPU's speed; a part twenty times slower would spend some 15 ms on
+it, still inside the boot's long frame), and a storm's sky (a 32-frame pace under cells, more march steps a texel).
+
+Recommendation, revisited: **A with D on.** A keeps every frame free of the compile; D puts the clouds in the first world
+frame wherever A has built them by then (every launch measured here) for 0.6 ms of GPU once. They compose: D marches
+whichever frame A builds the clouds in. The one check before turning D on by default is the whole sweep's frame on a
+slow GPU and under a storm. Until the owner says so, D stays behind `?cloudsweep=whole` and A ships alone.
+
+**Decided** (the owner, 2026-10-26: "Keep A as the default with D behind the flag; revisit D after a slow-GPU and
+storm-sky check"). A ships. D stays behind `?cloudsweep=whole`, off by default. It is revisited once two checks are
+in: the whole first sweep's frame on a slow GPU, and under a storm sky (a 32-frame pace under cells).
+
+**Measured.** BOOT-COMPILE's setup: Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server,
+Daggerfall city at 15:00, a fresh profile each launch (cold), a throwaway boot after each server start. Base: P1's head
+`26ffc9849f`; head: this branch at `ef301b0eb5`, the same change on that base (the branch was rebased after the runs
+onto P1's audited `cfdf8fa99d`: the foe telegraph's warm and `laneBootPrograms` moved to `bootPrograms.js`, neither in
+the clouds' path; not measured again). "Waits" are GL reads over 15 ms.
+
+| Cold launch | Base: longest frame / waits / first world frame | Head: longest frame / waits / first world frame |
+|---|---|---|
+| quiet | 2.97 / 1.73 / 31.7 s | 3.19 / 2.14 / 32.5 s |
+| 24 busy CPU threads (`cpuLoad.cjs`, 100% of the CPU) | 3.15 / 2.10 / 31.0 s | 3.10 / 1.83 / 32.9 s |
+| a second Edge compiling seven heavy programs at once, batch after batch, for 75 s (the scratch page's `storm`) | 3.94 / 2.36 / 39.5 s | 3.90 / 2.81 / 38.7 s |
+
+Neither arm waited on a cloud program in any run, so the A/B is noise. On this machine the march is done long before
+the clouds are built: started at the renderer (3.9-5.7 s), done at 13.2-14.7 s quiet and 19.2-19.9 s in the storm,
+where the base's build read its link at 21.5 s and 24.4 s - 8.3 s and 5.2 s to spare (polled every 100 ms). On the head
+the clouds were built 0.4-0.5 s before the first world frame, at the sky's first draw (the build is about 3 ms of the
+main thread; its frame is the town's population), and stood 1.1-1.3 s after the first world frame, a sweep's frames
+over the boot's long first frames; the base marches the same stripes in the same frames (above).
+
+The settled pictures agree
+(0.01% of pixels past 8 of 255, the clouds' drift between the runs). A 16-thread burner and a second Edge compiling one
+program at a time moved nothing either.
+
+So the door changes nothing a player meets on a machine like this one (with the earlier door, one frame). It removes the wait where the margin runs out:
+BOOT-COMPILE's busy pair (another session's game on the machine, the march still compiling 29 s after its start, 3.6 s
+waited), a slower CPU, and a production build, whose boot does less between the renderer and the sky.
+
+**Not measured.** The production build, where the margin is smallest - the next measurement this slice owes. Other
+GPUs and drivers. The desktop app.
+
+The runs: `E:/git-repos/travddm/dfo-verify/tools/perf/clouds-compile-2026-10-26/` - `lab/` (the scratch page, its
+driver, `lab1`-`lab3`), `head-cold`, `base-cold`, `head-load`, `head-load24`, `base-load24`, `base-labload`,
+`head-storm`, `base-storm` (`head-storm-nowarmup` is discarded: no throwaway boot after the server's restart), the
+margin runs `margin-*`, option D's `optA-*` and `optD-*` (cold, warm, zones), and `tools/` (the probe's copy with the clouds' marks and the march's completion).
+
+Pins: `test/render/cloudsarrival.test.js` (9): the programs started at the mount only where the driver compiles beside
+the page, no build and no link read while the driver compiles, one build at the first ask after, the viewport handed
+back, the recenters handed over, a failed build that leaves no clouds, the controller's sky with the clouds off until a
+late build's first sweep, and a compile done before the sky's first frame taking the sky over at once, its composite in
+the frame of the first sweep's last stripe. Pins moved with the controller's text: `ds2_cloudsUnderMod`,
+`perfextd`, `tv4_weather_above`, `volumetricClouds`, `vc7b_shafts`, `weather2c_cloudcells`, `owhorizon`,
+`enhancedSky`, `sunbaby1_event`; P1's `bootcompile` pin that `outdoorPasses` answers as the controller builds holds
+on the mount's start. Mutants: `tools/mutants/cloudcompile.json`, 9, all dead; `owhorizon.json`'s
+OWH-the-deck-carries-no-far and `tv4.json`'s AUDIT-DEEP2-D3-the-field-not-the-sky re-aimed by content.
+
+## Instruments — the real-GPU probe
+
+*The owner (2026-10-26): "Yes we should" land it; "definitely don't run this in ci on push though".*
+
+`tools/frameProbe.mjs` and `tools/bootFreezeProbe.mjs` run headless on SwiftShader, and their figures are this machine's CPU
+and only relative. A shader's compile and a texture's upload are the driver's, and SwiftShader's are not D3D11's: the
+boot's shader links were 2.6-3.1 s there and 22-37 s on a player's driver. `tools/realGpu/` measures the game on the
+machine's own GPU:
+- `realGpuProbe.mjs <scene>` drives a headed Edge (ANGLE over D3D11 on Windows, the Windows players' path) through
+  phases: boot, standing, flying, walking, a second boot. Each phase gets one CPU profile, and every frame over
+  `GAP_MS` is attributed to the code that ran inside it. It also records the main thread's split (script, native,
+  GC, idle), the Edge processes' working set and, with `CLOG=1`, every WebGL read that waited, by caller. A run on a
+  fresh `PROFILE_DIR` is a cold shader cache; a second run on the same profile is warm. The scenes are
+  `frameProbe.mjs`'s `SCENES`; the env is documented in the file's header.
+- **The run judges itself** (`judgeRun`). A software renderer, a phase that drew no frame, a boot whose profile could
+  not be aligned to its frames, a boot with no world frame and a page that threw are each reported as no measurement,
+  and the probe exits 1.
+- **The readers:**
+  - `profileAttr.mjs`: a whole phase, by function.
+  - `compileWaits.mjs`: the time inside `buildProgram`, by caller.
+  - `compareRuns.mjs`: an A/B's arms, or ANGLE's backends, in one table.
+  - `pngDiff.mjs` and `pngMask.mjs`: two screenshots compared, and where they differ.
+- **Not for CI:** it needs a GPU, a visible window and minutes per phase. `test/tooling/realgpu_probe.test.js` holds
+  the judge and the readers to runs whose answers are known, and holds that no workflow and no npm script runs the
+  probe.
+- **An A/B:** the base and the head one after the other, on the same scene, with nothing else running the game. Name
+  the run's GPU and driver beside its numbers.
+
+## COVER-COMPACT — the cover index as typed columns
+
+*The performance proposal (2026-10-25, P4): the cover index was the largest site in the live heap at Daggerfall's 121
+pixels - 237 MB of ~735 MB sampled (`fill` 167, `coverProxies` 42).*
+
+**What changed** (`ai/cover.js` `createCoverIndex`; its interface and every export are unchanged). A set no longer holds
+a proxy object and a Map of small arrays. It holds:
+- columns by proxy index: the base array by reference (FELLED and `noCover` key on it, and a sunk tree's cover sinks with
+  it), radius, height and lift as Float64 (Float32 moves an answer), and a ray's mark as an Int32 that wraps before it
+  overflows (MEM-AUDIT's note on `near()`'s stamp widening `_mark` to a double no longer applies);
+- each grid (fine, wide, bodies) as three typed lists sorted by cell: the keys, where each cell's references start, the
+  references.
+
+A build merges the references filed since behind the old, cell by cell, so a cell holds its proxies in filing order as
+before. A `fill` builds when what it leaves waiting is at least half what is built; a `hit` or `near` builds the rest
+(below: why both). A body stays its own object, because `near` hands it to its visitor. `rayCylinder` keeps its signature and
+`hit` calls `rayUpright` on the columns. MEM-AUDIT's cell rule (CELL_EXACT, `fileIn`'s copy) is superseded; the
+constant stays for its importers. The proxies' makers still give `_mark`, which no reader uses any more (left so the
+makers' one shape and their pins stay as they are).
+
+**The same answers.** `test/ai/coverCompact.test.js` fills the base index (frozen in
+`test/ai/fixtures/coverIndexBefore.mjs`) and the new one from one fixture: four sets in their own frames, whole, sliced
+with reads between, staged and placed, appended, felled, made people, moved and regrown after filing, traded and taken
+away. Over ten states, some asking the bodies first and one filled
+group by group, 60,000 rays and 15,000 body queries (1,517 visits) answer equal to the last bit and the last
+visit, and 1,500 rays equal a brute-force reading of every proxy. One departure the fixture cannot reach: the same body
+OBJECT filed twice in one set was visited once by `near` (its `_mark`) and is now visited once a filing. No caller files
+one twice: every `prop-bodies` adder (`exterior.js`, `interiorContext.js`, `pixelBuild.js`) makes fresh bodies a call.
+
+Mutants: `tools/mutants/coverCompact.json`, 8, all dead; the cover records of
+`tact1`, `audittact`, `propbodies` and `bantha1` all dead (two re-aimed by content). MEM-AUDIT's five records on the
+cell arrays are retired with the arrays. Its pin now measures a proxy in a cell of its own at under 64 B, heap and
+array buffers together (52 B; 118 B before).
+
+**Measured.** Headed Edge, RTX 5080, ANGLE/D3D11, Daggerfall city 15:00, fly camera, 121 pixels; the base
+(`perf-base-9aa6bc46`) and the head, one after the other on port 5744, each on a fresh profile after a warm-up boot.
+Folders: `dfo-verify/tools/perf/cover-compact-2026-10-26/{base,head}/{town,fly}`; the drivers (the probe with its census,
+the census hook, the run script, the node benches) in its `tools/`.
+
+| | base | head |
+|---|---|---|
+| sampled live heap, town (`HEAP=boot`) | 640.8 MB | 549.1 MB |
+| sampled live heap, after the fly (`HEAP=boot2`) | 712.1 MB | 598.6 MB |
+| `ai/cover.js` sampled, town / fly | 136.1 / 179.3 MB | 46.8 / 62.1 MB |
+| of it, `fill`, town / fly | 58.2 / 76.6 MB | 3.5 / 5.7 MB |
+| Edge renderer working set at the end, town / fly | 3,281 / 3,206 MB | 3,217 / 3,138 MB |
+| standing, 20 s (`settled`) | 8.3 ms p50, 120 fps | 8.3 ms p50, 120 fps |
+| `cover.js` in the standing frame | 0 samples | 0 samples |
+
+Read these with three cautions:
+- The sampled heap does not see ArrayBuffer stores, so the head's typed lists are missing from its column. The node
+  bench below counts them.
+- `coverProxies` stays live on the head (42.7 MB in town): something outside the index keeps the pixels' proxy lists.
+- The working-set gap (~65 MB) is within what one run's phases swing (100-400 MB). A fly camera asks no cover, so no
+  frame in this scene shows `hit` or `near`.
+
+**Node bench** (`coverBenchKeep.mjs` in the drivers' folder above): 121 sets of 4,500 flats over 819 m each, 925,090 proxies and
+544,500 bodies, filled in 2,048-proxy slices. Its proxy lists are kept alive, as the game keeps them; held bytes count the
+heap and array buffers after two collections.
+
+| | base | head |
+|---|---|---|
+| the index's own bytes (held minus the same lists with no index: 258.2 MB), never read | 236.5 MB | 74.7 MB |
+| `hit`, a 10-60 m sight ray | 15.5 µs | 6.8 µs |
+| `near`, a 0.35 m body query | 51 µs | 12 µs |
+| `fill`, all 121 sets | 750-830 ms | 790-920 ms |
+| a jungle pixel (15,750 items in 2,048-item slices), whole / worst slice (`fillCost.mjs`) | 4-17 / 1-7 ms | 7 / 2-3 ms |
+| a host adding group by group, 300 adds of 40 flats (`fillCost.mjs`) | 5-8 ms | 6 ms |
+
+**Why a build both at a fill and at a read.** The first head run built a set's lists only at its first read. This scene
+never reads one, so that run measured an unbuilt index (`head-lazy-build/`, which does not stand). The head run above
+built them at the end of every fill (649dd100a2). The review then found that this re-merges a whole set for each `add`,
+and a host adds group by group (exterior.js's `tact1:flats`): 300 adds went 5 -> 185 ms. Building at a fill when what
+waits is half what is built keeps the merges linear (the rows above) and leaves at most a third of a never-read set
+waiting: 74.7 MB unread against 73.2 MB built in the bench, so the game run above stands for it within that.
+
+Each build
+sorts its references as packed numbers in a Float64Array. A comparator sort stands in when the cells' spread times the count passes
+2^53 (over 2M references in one fill); no test reaches that path.
+
+**Not done.** The brief's alternative second cut was an index only for the pixels within a foe's sight. It is not
+proposed: the index is 73 MB at this scale. The larger holder left is the proxy objects that outlive their fill
+(`coverProxies`, 43-56 MB sampled). Finding their holder is the next cut.
+
+## CACHE-BOUNDS — the never-freed caches, measured before any bound
+
+*The proposal's P7: four caches live for the session - the raw ARENA2 bytes (`scenes/dataSource.js` `mem`), the parsed
+TEXTURE files (`scenes/dataPipeline.js` `textureFiles`), the decoded Morrowind textures (`combat/fpArm.js`
+`TEXTURE_CACHE`) and every decoded sound (`systems/audio.js` `buffers`). Bound the ones that measurably grow.*
+
+**How.** A probe-only census (`census.patch`, a one-line hook a cache, applied to both served trees and never committed) summed each cache's distinct buffers after
+every phase of the runs above: after the town (20 s standing) and after the 150 s fly in one page. The head also ran a
+fly at 20 m a step (`head-lazy-build/longfly`), a growth reading on the head only, not compared with the base. These
+caches are the same code on both.
+
+| cache | after the town | after the fly | after the fast fly (head) | keyed by |
+|---|---|---|---|---|
+| raw ARENA2 bytes | 125.9 MB, 286 files | 126.5 MB, 291 | 128.0 MB, 305 | files read: 79.5 MB the BSAs and 24.8 MB WOODS.WLD at boot; then TEXTURE archives met, ~0.1 MB each |
+| parsed texture files, beyond those bytes | 3.7 MB, 168 archives | 4.6 MB, 178 | 6.0 MB, 192 | texture archives met |
+| decoded Morrowind textures | 0 | 0 | 0 | no Morrowind data attached in this scene |
+| decoded sounds | 124.3 MB, 97 | 124.5 MB, 98 | 124.5 MB, 98 | sounds played; 96 at boot |
+
+**Bounded: none.** Over a fly into new country the raw bytes grew 0.6-2.1 MB and the parsed textures 0.9-2.3 MB, keyed
+by the archives a region's flats and blocks name - at most all 472 TEXTURE files, 45 MB on disk, if every one were
+read. The sounds are a fixed set (124 MB for 98 decoded, about 1.3 MB each), not growth. The Morrowind textures were
+not reached: no Morrowind data in this scene, so they stay unmeasured. The renderer's working set rose ~1 GB over the
+fast fly while the JS heap and these caches did not (`longfly.log`): that growth is elsewhere (GPU uploads and native
+memory), outside P7's four caches.
 
 ## OW-STREAM — the Overworld's frames on a fixed route, the held map's time to whole, and what the horizon's layers cost
 

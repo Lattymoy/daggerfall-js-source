@@ -51,6 +51,7 @@ const SPELL_DRAG_BOX = 38;
 import { setHotbarDropMode, hotbarAcceptsDrops, beginHotbarDrag, takeHotbarDragClick, hotbarMode, toggleHotbarSpell,
   spellSigil, spellInitials,   // PX23b: the classic's OWN words for the two icons
   hotbarShownSlotOf, setHotbarPick } from './enhancedHotbar.js';   // DIAMOND-HB: shown-slot lookup; hover + key to slot
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -61,6 +62,7 @@ const el = (tag, cls, text) => {
 
 let host = null;
 let deps = {};
+let unlistenKeys = () => {};
 let onExit = () => {};
 let picked = 0;
 let notice = null;
@@ -517,7 +519,8 @@ export function mountEnhancedSpellbook(hostEl, d = {}) {
   deleting = null;
   choosingIcon = false;
   render();
-  window.addEventListener('keydown', onKey, true);
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(d.owner, onKey);   // COVERED-KEYS: d.owner, the book's window (ui/spellbookDoor.js)
   setHotbarDropMode('book', true, d.entity ?? null);   // HB1: the bar comes up under the book as a drop target
   // DIAMOND-HB: a hotbar key pressed while hovering a spell (or else the selected spell) puts it on that slot
   setHotbarPick('book', {
@@ -527,7 +530,7 @@ export function mountEnhancedSpellbook(hostEl, d = {}) {
   return {
     render,
     destroy() {
-      window.removeEventListener('keydown', onKey, true);
+      unlistenKeys();
       setHotbarDropMode('book', false);   // HB1
       host = null; deps = {}; picked = 0; notice = null; renaming = null; deleting = null; choosingIcon = false;
     },

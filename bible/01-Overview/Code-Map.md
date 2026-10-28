@@ -308,6 +308,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/enemyExpansion/` | Daggerfall Enemy Expansion (Kamer & Kab), the mod's own (`04-Characters/Enemy-Expansion.md`): its CSV reading, its tables and art index as generated text, the tables read as BestiaryMod reads them, its pictures on the texture door, its encounter tables as it picks them, its equipment as its copy of RRI's class arm reads a class (`dexEquipment.js`), and its install - the fifty enemies on DFU's custom-enemy doors. |
 | `src/systems/faction/` | The factions' relations, reputation and standing - the law. |
 | `src/systems/festival/` | The Witches' Festival on this screen (`06-Systems/Witches-Festival.md`): the Soul Cakes and the Hearth Offering, the finds, the Wyrd Sister's sales, the wearing, the offerings' moves and every word. |
+| `src/systems/firstVisit/` | The store a first visit's answers are kept in across launches - a key over each answer's inputs (`07-Rendering/Performance-Priority.md` FIRST-VISIT). |
 | `src/systems/foraging/` | The Foraging mod - the law. |
 | `src/systems/gambit/` | The King's Gambit (`11-Multiplayer/Kings-Gambit.md`) - the law. |
 | `src/systems/gate/` | The Oblivion Gate's law (`11-Multiplayer/World-Bosses.md`): the site, the omen, the score and the spoils. |
@@ -339,6 +340,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/serpent/` | The sea serpent, the sea's world boss (`11-Multiplayer/Sea-Serpent.md`) - the law. |
 | `src/systems/settings/` | The settings: the store, its defaults and its words. |
 | `src/systems/sigil/` | Sigil Sets (`11-Multiplayer/Sigil-Sets.md`) - the law. |
+| `src/systems/snowfall/` | The snow's builds off the main thread (`07-Rendering/Performance-Exterior.md` SNOW-THREAD): the drawn ground's laws both threads read, the client the host wires, the kernel and its worker, and the `?snowthread=verify` cross-check. |
 | `src/systems/song/` | Music: the songs, their player and manager - the law. |
 | `src/systems/soundscape/` | The world heard (`08-Audio/Audio.md` SOUNDSCAPE, SEA-SCORE): the deck's air at sea, the shore's, the wild's and the town's on land, the sea's songs at a helm, the beds made off the main thread and the port's clips loaded - the law. |
 | `src/systems/spell/` | Spells: effects, the spell maker, power and the impact's sound. |

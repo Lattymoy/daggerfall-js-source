@@ -246,7 +246,7 @@ test('REALM P1.3: a page put away checkpoints the realm character - the realm\'s
   listeners[0][1]();
   assert.equal(fired, 1, 'hidden: once');
   whenPageHides(null, () => {});   // no document: nothing, no throw
-  assert.match(hostText('src/scenes/world.js'), /whenPageHides\(globalThis\.document, \(\) => \{ if \(online\) onlineCheckpoint\(\); \}\);/);
+  assert.match(hostText('src/scenes/world.js'), /whenPageHides\(globalThis\.document, \(\) => \{ if \(online\) onlineCheckpoint\(\); \}, realmSession\);/);   // CLOSE-SAVE: and handed to the session's leave
 });
 
 test('REALM P1.3: a realm checkpoint that lands clears the gate\'s spoils it was composed holding - and only those; one that never lands clears none (without it every boot handed the same spoils back)', { timeout: 60_000 }, async () => {

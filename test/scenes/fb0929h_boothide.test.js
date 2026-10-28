@@ -140,7 +140,7 @@ test('BOOT-HIDE: no callback the boot hands to a page door reaches a binding the
 
 test('BOOT-HIDE: the gate names the shape the report crashed on', () => {
   // the page-hide hook put back where it stood, at the checkpoint - above the quest pack's await
-  const hook = "    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });\n";
+  const hook = "    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); }, realmSession);\n";
   assert.ok(SRC.includes(hook), 'the page-hide hook is no longer written as the report\'s build had it');
   const anchor = '  /** REALM P1.3: THE REALM\'S CHECKPOINT';
   assert.ok(SRC.includes(anchor), 'the realm checkpoint\'s header moved');

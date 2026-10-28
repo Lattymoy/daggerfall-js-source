@@ -213,5 +213,5 @@ test('PEER-RANGE the Other players card: the distance beside the crowd\'s count,
   assert.match(card, /c\.append\(choiceRow\('peerRange', t\('menu\.peers\.range', 'Draw distance'\),\n\s*t\('menu\.peers\.rangeNote', 'How far away other players are drawn\. Your party and your duel opponent always show\.[^']*'\),\n\s*PEER_RANGE_TIERS\.map\(\(m\) => \[m, m \? t\('menu\.peers\.metres', '\{m\} m', \{ m \}\) : t\('menu\.peers\.everyone', 'Everyone'\)\]\), \{ home: true, read: \(\) => peerRangeOf\(getPref\('peerRange'\)\) \}\)\);/);
   assert.ok(card.indexOf("choiceRow('peerRange'") < card.indexOf("choiceRow('gateCrowd'"), 'the distance before the crowd\'s count');
   // choiceRow shows the tier `read` answers
-  assert.match(menu, /function choiceRow\(key, name, note, tiers, \{ home = false, read = null, write = null \} = \{\}\) \{[\s\S]*?const cur = String\(read \? read\(\) : getPref\(key\)\);/);
+  assert.match(menu, /function choiceRow\(key, name, note, tiers, \{ home = false, read = null, write = null, tier = 'live' \} = \{\}\) \{[\s\S]*?const cur = String\(read \? read\(\) : getPref\(key\)\);/);
 });

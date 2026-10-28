@@ -3548,6 +3548,8 @@ the Cloudflare token: "Use it", then "Do everything. No band aids. No short fixe
   its reads.
 - **The Daggerfall city's yards past the bound**: YARD-TOWN's (`06-Systems/Online-Arc.md`, 2026-10-25) - the bound raised
   to what a built row keeps (6,500) and refused at the placement, every town built again at it (migration 0175).
+  YARD-CELL (`Yard-Cells.md`, 2026-10-26; YC1 built) replaced the town's row with one row a block, read by version,
+  and dropped the town-wide bound: `home_yards` and `home_yards_ver` stay only as the rollback's net until YC3.
 - **The arena's board past the bound**: its climb is every account that ever won a ladder bout, every season's; at some
   5,000-15,000 such accounts (lanes B and D measured) its text passes KEPT_BOARD_MAX_BYTES and the board is counted every
   time, as before - the log says so. Live, 2026-10-20: 13,051 ladder bouts in all, 230 banner members - far under it.
@@ -3671,10 +3673,10 @@ the traders' and the yards' kept rows.
   LEAN-READS 2: the triggers' and the judged reads' plans under ANALYZE's statistics against the unnamed reads they turn, the strikes of split, disputed
   and dissenting keys (each row once), a liar among a town's confirmers moving its region.
   `tools/mutants/lean_witness.json`: 45 dead, 3 recorded equivalent.
-- `test/server/yard_snap.test.js` (6): the oracle (pieces placed, moved within and between towns, in and out of a yard,
+- `test/server/yard_snap.test.js` (6; DELETED by YARD-CELL YC1 - its oracle carried to cells in `test/server/yard_cells.test.js`): the oracle (pieces placed, moved within and between towns, in and out of a yard,
   taken away, homes released), the bound and the order, the route and the clock, the backfill and its shape, another
   shape; AUDIT LEAN-READS 2: the version a row of its own, a town with no version row, a version made past the kept one,
-  rows past the bound. `tools/mutants/yard_snap.json`: 22 dead, 1 recorded equivalent (the sort after the build - json_group_array keeps
+  rows past the bound. `tools/mutants/yard_snap.json` (DELETED by YARD-CELL YC1): 22 dead, 1 recorded equivalent (the sort after the build - json_group_array keeps
   its ordered subquery's order wherever this service runs, which SQLite does not promise).
 - `test/server/vendor_board.test.js` (5): the oracle - the board's two statements as they stood before this slice, their
   caller's door asked in SQL, every field of the answer, against the service through every write that moves a board (an

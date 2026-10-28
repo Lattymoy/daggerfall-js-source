@@ -542,7 +542,7 @@ same `dynamicMoonState` the world's moonlight has taken since DS1,
 moved into the bridge with it so the sky lab can import both without
 the whole controller), and ITS fog colour as the horizon the clouds
 fade into. The ground's deck under the mod takes the clouds' shadow
-map (`Object.assign(dynamicDeck, clouds.shadow)`) - "the mod casts
+map (`Object.assign(dynamicDeck, cloudsShown.shadow)`) - "the mod casts
 none" in the seam section above is no longer the whole story: the mod
 casts none, and the port's clouds over it cast theirs. The composite
 lands after the mod's REDUCE_COLOR posterise and its sRGB encode, over

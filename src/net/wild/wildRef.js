@@ -13,9 +13,9 @@
 //     of the zone's fights, never into another's: an honest player outside the zone is nobody's target. And never on KIN
 //     (wildKin, below): a party member or one under the party's truce (the hub's word), the fighter's own duel opponent
 //     (the duel's referee holds that one), or - Mac's decision, 2026-10-14: "Guildmates are friends" - one of its guild.
-//   - THE VITALITY is the Royal Tourney's (300 + 2 x the Renown the token signs) - the zone's fights are the referee's
-//     bar, as a siege's and a duel's are; the save's health is the foes' alone. A fighter no player has struck for
-//     WILD_REF.mendMs is whole again.
+//   - THE VITALITY is counted in the Royal Tourney's units (300 + 2 x the Renown the token signs), and since SHARED-HEALTH
+//     (2026-10-26, net/siege/refereeHealthShare.js) it IS the player's own health, as a share: the client reports its
+//     health (a foe's blow, a potion) and the referee's blows set it. No pool refills by itself.
 //   - EVERY BLOW AND CAST is the referee's (refereeBlow, refereeCast - the weapon the striker's look holds, the arms its
 //     token signs, the reach from both fighters' last BELIEVED places: a run the referee allows, never a teleport).
 //   - A FALL is the referee's word: the fallen's vitality at none. The striker is its killer. AUDIT FOE-KEEPS E2 (the owner,
@@ -37,9 +37,10 @@
 // (DECIDED, the duel's: a room that restarts mid-fight forgets it; a fall already signed is the service's to settle).
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
+import { resetHealthShare } from '../siege/refereeHealthShare.js';
 
-/** The zone referee's own numbers: how long a fighter no player has struck - and that has stood in the zone as long - takes
- *  to be whole again; how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
+/** The zone referee's own numbers: how long a bar carried from another room stands (`mendMs` - SHARED-HEALTH: no longer a
+ *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
  *  (systems/wild/wildZone.js WILD_PARTY_TRUCE_MS, pinned equal - the hub holds it for the relay); how long a fallen stays down
  *  before its word that it stands in the zone raises it (the death screen's WILD_DEATH_HOLD_S, pinned equal - AUDIT INT9:
  *  it rose on its next word, where it fell, whole), and how long one away from the zone that long comes back whole; how
@@ -78,10 +79,10 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
  * A SOCKET'S WORD ON THE ZONE (`zone` - `z` true: it stands in the zone; false: it has left it): its fighter made or
  * kept (`id` its socket's id now, `lv` the Renown its token signs, `ci` its realm character), its place the pose it
  * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
- * `{ hp, max, down, downAt, at }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is older than
- * the mend. A fighter down rises whole on its word that it stands in the zone again once WILD_REF.riseMs has passed
- * (its respawn - never at once). One away from the zone WILD_REF.riseMs comes back whole; one back sooner keeps its bar
- * and mends only once it has stood in the zone WILD_REF.mendMs unstruck (AUDIT INT9: a word off and on was a heal).
+ * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
+ * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
+ * passed (its respawn - never at once), its count started again; so does one away from the zone WILD_REF.riseMs. One back
+ * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
 export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = false }, z, pose, now) {
@@ -97,7 +98,8 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = fa
   x.id = id; if (ci) x.ci = ci;
   if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; x.graceUntil = now + WILD_GRACE.ms; }   // ZONE-GRACE: a rise
   if (z && !x.zone) {
-    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; }
+    // SHARED-HEALTH: back after long away, the count starts again from the player's own health (its next report)
+    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }
     // ZONE-GRACE: an entry - away long enough, and out of every fight long enough. AUDIT PVP-EASE L3-6 (the owner: "Yes,
     // every rise"): or a rise from a death the referee did not keep (a foe's - `died` on its way out, `dd` carried)
     if (!x.down && x.diedAt > -Infinity) { x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms); x.diedAt = -Infinity; }
@@ -125,6 +127,11 @@ function takeCarry(x, carry, now) {
   if (!(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return;   // the bar and the fall: a word of a moment ago alone
   if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; return; }
   if (Number.isFinite(carry.hp) && carry.hp < x.f.max) { x.f.hp = Math.max(1, Math.min(x.f.max, Math.trunc(carry.hp))); x.struckAt = carry.at; }
+  // SHARED-HEALTH: a count anchored in the last room is the player's health already - its next report is a loss or a
+  // heal on it, never an anchor that could lift it back to whole
+  if (carry.heard && x.f.share) x.f.share.heard = true;
+  if (x.f.share) x.f.share.report = carry.rep;   // the last report this count took: the client's first word here keeps what its health did since
+  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;   // and its no-heal window: a step into another cell is no way out of a fight
 }
 
 /** INT9 (AUDIT): a hub's word on a fighter's carry, checked for the shape wildCarry writes - or null. AUDIT SEA VENTURES
@@ -135,7 +142,7 @@ export function wildCarryOf(v) {
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
   const grace = Number.isFinite(v.gr) ? { gr: v.gr } : {};   // ZONE-GRACE
   const pass = { ...(Number.isFinite(v.fa) ? { fa: v.fa } : {}), ...(v.in === 1 ? { in: 1 } : {}), ...(Number.isFinite(v.dd) ? { dd: v.dd } : {}), ...(typeof v.lr === 'string' && v.lr.length <= 96 ? { lr: v.lr } : {}) };   // AUDIT PVP-EASE L3-1 (`lr`, the last room: a foes frame's `rk` is a raid's, and the relay reads none - test/systems/raid2_raidsOnline.test.js)
-  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, ...grace, ...pass, ...(sea ? { sea } : {}) };
+  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...grace, ...pass, ...(sea ? { sea } : {}) };   // SHARED-HEALTH: `heard` - its count anchored to the player's health
 }
 
 /** INT9 (AUDIT): A FALL WAITING ON ITS PICK is kept in the room's storage under this prefix (a relay object that restarts
@@ -155,7 +162,7 @@ export function wildGone(st, sub, now) {
   if (x && x.zone) { x.zone = false; x.outAt = now; }
 }
 
-/** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall -
+/** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall (SHARED-HEALTH: its count's anchor, its no-heal window and its last report) -
  *  ZONE-GRACE: and its safe passage (`gr`), so a cell crossed ends none. A crossing is never an entry (AUDIT PVP-EASE L3-1):
  *  the carry says whether it stands in the zone (`in`), its last fight (`fa`) and a death the referee did not keep (`dd`),
  *  and the relay puts it as a fighter comes and goes (an entry, a leave, a socket gone, a death), when its passage ends
@@ -166,7 +173,7 @@ export const wildCarry = (st, sub, now) => {
   if (!x) return null;
   const grace = x.graceUntil > now ? { gr: x.graceUntil } : {};
   const pass = { ...(Number.isFinite(x.fightAt) ? { fa: x.fightAt } : {}), ...(x.zone ? { in: 1 } : {}), ...(x.diedAt > -Infinity ? { dd: x.diedAt } : {}) };
-  return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, ...grace, ...pass };
+  return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true, pvpAt: x.f.share?.playerBlowAt ?? 0, rep: x.f.share?.report ?? 0, ...grace, ...pass };   // SHARED-HEALTH: its count's anchor, its no-heal window and its last report
 };
 /** AUDIT PVP-EASE L3-4 (the owner: "Any take ends passage"): a fighter that takes from a remains - its own or another's -
  *  loses its safe passage, as its own blow ends it. Answers whether one ended. */
@@ -190,10 +197,13 @@ export function wildPose(st, sub, p, now) {
   return true;
 }
 
-/** Whole again: a fighter no player has struck for WILD_REF.mendMs that has stood in the zone as long (never one down) - its
- *  vitality alone (INT10: its own casts' window is its rate, never mended - the striker is unstruck, and every cast it made
- *  would have cleared it). */
-const mend = (x, now) => { if (!x.down && now - x.struckAt >= WILD_REF.mendMs && now - x.zoneAt >= WILD_REF.mendMs) x.f.hp = x.f.max; };
+/** A client before world277 never answers the ask or reports its health, so its count stays unheard: it keeps the zone's old
+ *  mend (whole again unstruck WILD_REF.mendMs and in the zone as long), or a struck player would lie at the lowered count
+ *  until it died. A count a report has anchored is the player's own health and mends by its own report alone. */
+const mendUnheard = (x, now) => {
+  if (x.down || x.f.share?.heard) return;
+  if (now - x.struckAt >= WILD_REF.mendMs && now - x.zoneAt >= WILD_REF.mendMs) x.f.hp = x.f.max;
+};
 
 /**
  * A BLOW OR A CAST in the zone - `by` and `to` accounts, `kin` the caller's wildKin over the two (one party or its truce,
@@ -218,7 +228,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   const graceEnded = a.graceUntil > now;
   if (graceEnded) a.graceUntil = -Infinity;
   if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };
-  mend(a, now); mend(t, now);
+  mendUnheard(a, now); mendUnheard(t, now);
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);

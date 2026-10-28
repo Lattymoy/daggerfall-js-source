@@ -147,12 +147,13 @@ function enhancedChronicleOverlay(deps, section) {
   document.body.append(host);
   unregister = registerOverlay(close);
   // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
+  // COVERED-KEYS: `owner` is the window the chronicle's keys are gated on (ui/windowStack.js listenWindowKeys).
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedChronicle.js'),
-    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close }); },
+    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close, owner: overlay }); },
     alive: () => !done, host, onDismiss: close, label: 'chronicle',
   });
-  return {
+  const overlay = {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
     // `onKey`. The hosts dereference these unguarded (townTalk.js's
     // `overlay.input(a, e)`, dungeonContext's `activeOverlay.input`,
@@ -188,4 +189,5 @@ function enhancedChronicleOverlay(deps, section) {
     dispose: close,
     destroy: close,
   };
+  return overlay;
 }

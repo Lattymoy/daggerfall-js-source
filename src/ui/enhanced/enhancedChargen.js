@@ -1148,6 +1148,9 @@ function nameStage() {
     bind: (btn) => { nameOk = btn; },
   };
   requestAnimationFrame(() => box.focus());
+  // The race and sex are settled by now, so the heads start loading while the name is typed and are usually drawn
+  // by the time the face stage opens.
+  ensureFaces();
   return pane;
 }
 
@@ -1168,8 +1171,12 @@ function faceStage() {
   const wrap = el('div', 'choose');
   wrap.append(el('h2', null, 'Which face is yours?'));
 
-  if (!faces?.canvases?.length) {
-    // NEVER TRAPS: no CIF, no portraits, and the wizard still walks.
+  ensureFaces();
+  // NEVER TRAPS: no CIF, no portraits, and the wizard still walks. The note is for a load that is OVER and drew
+  // nothing - while the heads are still loading the cells show their numbers and no note. The loader answers ten
+  // entries with a null for each face it could not draw, so an empty load is ten nulls, not an empty list.
+  const loadFailed = !loadFaces || (faces?.key === identityKey() && !faces.canvases.some(Boolean));
+  if (loadFailed) {
     wrap.append(el('p', 'mapnote', 'The portraits for this race could not be loaded. Any of the ten will do.'));
   }
   const grid = el('div', 'facegrid');
@@ -1193,16 +1200,18 @@ function faceStage() {
   a.append(ok);
   wrap.append(a);
   pane.append(wrap);
-  ensureFaces();
   return pane;
 }
+
+/** The identity the heads are loaded for: race and sex. */
+const identityKey = () => `${flow.race.key}|${flow.gender}`;
 
 /** Load the identity's ten heads, once, and repaint when they land.
  *  Coalesces the way chargenArt's own loader does - a race change
  *  mid-load must not leave a Khajiit wearing Breton heads. */
 function ensureFaces() {
   if (!loadFaces) return;
-  const want = `${flow.race.key}|${flow.gender}`;
+  const want = identityKey();
   if (faces?.key === want || faces?.pending === want) return;
   faces = { key: null, pending: want, canvases: [] };
   loadFaces(flow.race.key, flow.gender).then((set) => {
@@ -1211,7 +1220,10 @@ function ensureFaces() {
     if (flow.state === 'face') paint();
   }).catch((e) => {
     console.warn('[chargen] the FACE CIF would not load', e);
+    if (faces?.pending !== want) return;
     faces = { key: want, canvases: [] };
+    // the face stage is repainted, so the failure note stands at once
+    if (flow.state === 'face') paint();
   });
 }
 

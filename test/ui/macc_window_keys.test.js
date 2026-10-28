@@ -96,9 +96,10 @@ test('MAC-C: the enhanced sheet page has a key of its own, and gives it back', (
   // ESC-BOOK: the pack's crossover is the Pack door's own - the host's arm, opened in its slot (sheetPageDoors)
   assert.match(s, /const pack = acts\.includes\('Inventory'\) \? sheetPageDoors\(pause\?\.\(\), close\)\.openPack : undefined;\n\s*if \(!acts\.includes\('CharacterSheet'\) && !pack\) return;/,
     'the sheet closes on its own key and crosses over on the pack’s, and claims nothing else');
-  assert.match(s, /globalThis\.addEventListener\?\.\('keydown', onSheetKey, true\)/,
-    'on CAPTURE - a modal overlay owns its input - and OPTIONAL, because node drives these hosts headless');
-  assert.match(s, /globalThis\.removeEventListener\?\.\('keydown', onSheetKey, true\)/,
+  // COVERED-KEYS: through the window's one key door (ui/windowStack.js listenWindowKeys: on CAPTURE, OPTIONAL for node)
+  assert.match(s, /unlistenSheetKeys = listenWindowKeys\(overlay, onSheetKey\);/,
+    'on CAPTURE - a modal overlay owns its input - and gated on the sheet\'s window, so a box over it keeps its keys');
+  assert.match(s, /    unlistenSheetKeys\(\);/,
     'EVERY LISTENER HAS AN OWNER: an orphan capture handler would eat F5 for the life of the page');
   // the handler is hoisted, because `close` names it and registerOverlay
   // is handed `close` before the declaration is reached (PX28's hazard).

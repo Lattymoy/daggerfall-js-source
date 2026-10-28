@@ -32,6 +32,7 @@ import { breakableNote, filedOutcome } from '../../systems/notebook.js';   // JO
 import { pageOfNote, pageRefusalText } from '../../net/journalPage.js';   // JOURNAL1: a note as the page it would be shown as, or why it cannot be
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty's Abandon and Share
 import { isHuntQuestId, abandonHuntQuest } from '../../systems/huntJournal.js';   // RVN7c: a revenant's hunt - its Abandon
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { t } from '../../systems/textManager.js';   // L10N4: QUEST-SHELF-MAIN's words in the player's language, read when they are drawn
 
 const el = (tag, cls, text) => {
@@ -43,6 +44,7 @@ const el = (tag, cls, text) => {
 
 let host = null;
 let deps = {};
+let unlistenKeys = () => {};
 let onExit = () => {};
 let section = 'notes';
 let draft = '';   // PX24b: the note being written, kept across renders
@@ -734,12 +736,13 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   shelfWord = '';   // QUEST-SHELF-MAIN: nor what the last one said
   folded.clear();   // MAC-F: a fresh open reads whole, as it always has
   render();
-  window.addEventListener('keydown', onKey, true);
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(d.owner, onKey);   // COVERED-KEYS: d.owner, the chronicle's window (ui/chronicleDoor.js)
   return {
     render,
     destroy() {
       disarmClocks();
-      window.removeEventListener('keydown', onKey, true);
+      unlistenKeys();
       host = null; deps = {}; section = 'notes'; draft = ''; folded.clear(); sharing = null; shareWord = ''; bountyArmed = null;
     },
   };

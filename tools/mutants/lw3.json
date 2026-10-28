@@ -418,8 +418,8 @@
   {
     "name": "LW3-ways-network-kept",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if (raw.roads !== net) { if (net !== null) { book.clear(); generation++; } net = raw.roads; }",
-    "new": "      if (raw.roads !== net) { net = raw.roads; }",
+    "old": "        if (net !== null) { book.clear(); generation++; }",
+    "new": "        void 0;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]

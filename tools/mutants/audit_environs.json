@@ -490,8 +490,8 @@
   {
     "name": "AUDIT-ENVIRONS-P3-copy-spends-nothing",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "        copy3(M.bnrm, from * 3, M.nextBnrm, k * 3);\n      } else {",
-    "new": "        copy3(M.bnrm, from * 3, M.nextBnrm, k * 3);\n        continue;\n      } else {",
+    "old": "        else { this._midCopyMesh(run); run.k = k; run.from = from; run.len = 1; }\n      } else {",
+    "new": "        else { this._midCopyMesh(run); run.k = k; run.from = from; run.len = 1; }\n        continue;\n      } else {",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -499,7 +499,7 @@
   {
     "name": "AUDIT-ENVIRONS-P3-heights-uncopied",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "        copy4(M.heights, from * 4, M.nextHeights, k * 4);\n",
+    "old": "    M.nextHeights.set(M.heights.subarray(a * 4, b * 4), k * 4);\n",
     "new": "",
     "tests": [
       "test/systems/audit_environs.test.js"

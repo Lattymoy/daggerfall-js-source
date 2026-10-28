@@ -87,7 +87,7 @@ export function registerWorldDataPack(pack, isOn = null, { priority = 0 } = {}) 
   if (!pack?.names) return 0;
   let n = 0;
   for (const name of pack.names()) {
-    addAssetEntry(name, { json: null, get: (maps) => pack.rebuild(name, maps), isOn: typeof isOn === 'function' ? isOn : null, priority, vendor: pack.vendor });
+    addAssetEntry(name, { json: null, get: (maps) => pack.rebuild(name, maps), isOn: typeof isOn === 'function' ? isOn : null, priority, vendor: pack.vendor, version: pack.mod?.version ?? null });   // FIRST-VISIT: the pack's version names its files in worldDataBlocksServing
     n++;
   }
   return n;
@@ -105,6 +105,24 @@ export const worldDataVendorCarries = (vendor, fileName) => (_assets.get(fileNam
 function liveAsset(fileName) {
   for (const a of _assets.get(fileName) ?? []) if (assetOn(a)) return a;
   return null;
+}
+/** FIRST-VISIT: WHAT THE DOOR SERVES BLOCKS BY, as text - the gate, each block file's answering mod (and a pack's
+ *  version), the port's own blocks and the layers that are on, in name order (the packs register in whichever order their
+ *  fetches end). An answer derived from served blocks and kept across
+ *  launches (world/terrain/groundTilesKept.js) is keyed on it, so a mod switched, a pack updated or a layer added
+ *  refuses the kept answer. Asked with no town being read, so a save's layout pins are not in it: a pinned town's
+ *  blocks are read through, never from a kept answer (terrainTiles.js locationRectReader). */
+export function worldDataBlocksServing() {
+  if (!worldDataOn()) return 'closed';
+  const parts = ['open'];
+  for (const name of _assets.keys()) {
+    if (!name.includes('.RMB') && !name.includes('.RDB')) continue;
+    const a = liveAsset(name);
+    if (a) parts.push(`${name}=${a.vendor ?? ''}@${a.priority}:${a.version ?? ''}`);
+  }
+  for (const name of _portBlocks.keys()) parts.push(`port:${name}`);
+  for (const l of _layers) if (l.isOn?.() ?? true) parts.push(`layer:${l.vendor}`);
+  return parts.sort().join('|');
 }
 /** A pack file that will not rebuild on this player's data is said once and not served (WD1's "a patch whose ops do
  *  not land is said and not served") - the location or block is the classic one, never a throw out of the reader. */

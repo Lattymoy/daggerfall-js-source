@@ -291,7 +291,8 @@ import { createGroundSets } from './groundSets.js';   // OW-HITCH: a ground set 
 import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn, arenaPlacesOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
-import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it; WW2: which picture a theatre's gate scan read
+import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // WW2: which picture a theatre's gate scan read
+import { keptBayFit } from '../world/tamriel/bayFitKept.js';   // TAMRIEL3: where the Bay stands on it; FIRST-VISIT: kept across launches
 import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
 import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
 import { arenaTemplates, ARENA_LOAD_WAIT_MS } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
@@ -349,7 +350,8 @@ import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: OW-HIT
 import { townYardsOf } from '../world/merchantYards/townYards.js';   // IC-PROPS: what a town tells its yards' law - its fabric's ways, a capital's own yards
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
-import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
+import { townSeaOf, seaBearing, seaField, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
+import { keptPortSitesOn } from '../world/portSitesKept.js';   // FIRST-VISIT: a port town's sites kept across launches
 import { SHIPYARD as SHIPYARD_LAYOUT } from '../world/shipyardModel.js';   // SHIPYARDS: the crew hall's table, for the talk directory's row
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/professions/profItems.js';   // PROF1: a Stores material as DFU's own item
 import { oreMapTip } from '../ui/oreMapTip.js';   // ORE-MAP: the held map's word on a pixel's ore
@@ -835,7 +837,7 @@ import { spaceAcross, clearDoorways, doorSpotsNear, spacingSkips } from '../char
 import { Collider } from '../player/collider.js';
 import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2: a streamed pixel's buckets ride the floating origin
 import { createPoiHost } from './poiHost.js';   // POI-2: the approved POIs, standing in the streamed world
-import { createPoiFeed, browserPoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
+import { createPoiFeed, pagePoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
 import { poiPixelKey } from '../poi/poiLaw.js';   // AUDIT RELEASE R2-8: a pixel's one id, the Bay's and past it
 import { decodePoiImage, decodePoiImageSteps } from '../poi/poiImageDecode.js';   // POI-2: a POI's picture, decoded by the browser (AUDIT POI R8: the host's in steps)
 import { poiMapMarks } from '../ui/poi/poiMapMark.js';   // POI-2: their marks on both world maps
@@ -870,7 +872,7 @@ import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the le
 import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createChapterBanners } from './chapterBanners.js';   // CHAP7b: a patron's banners at its chapter's halls
-import { createRollTracker, rollEntityDoors, rollPaceOf } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
+import { createRollTracker, rollEntityDoors, rollPaceOf, sayRollStop } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
 import { rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, seatLinesOf, seatRankAt, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
 import { chapterSeasonLines } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season in words, its candidates named
 import { setHudRenown } from '../ui/hud/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
@@ -971,8 +973,8 @@ import { allyCastSpell, allyCastable, strangerCastable, allyReachFor, allyCastTa
 import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effects on the party pose   // ALLY-CAST: a beneficial spell at a party mate; SPELL-GIFT: and the stranger's list
 import { stampItemIds, tradeHeldNotice } from '../systems/item/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { wireRealmHolds } from './realmHoldHost.js';   // INT3 + AUTO-HOLD: the hold and the locked pieces, said to the player
-import { checkpointAllowed, checkpointWhenDue, checkpointedTradePack, createSaveSoon } from '../systems/online/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
-import { watchRealmUnsaved } from '../systems/online/realmUnsavedNotice.js';   // the player told while their saves do not reach the realm
+import { checkpointAllowed, checkpointedTradePack, createSaveSoon } from '../systems/online/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
+import { createOnlineCheckpointClock } from '../systems/online/onlineCheckpointClock.js';   // the periodic checkpoint, the one at seat loss, and the word while the realm holds nothing new
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack, packTradeRefusal } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
@@ -980,7 +982,7 @@ import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileRecordLines } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duel/duelSession.js';   // DUEL1: the duel's state machine (pure)
-import { duelVitality } from '../net/duel/duelBar.js';   // DUEL-BAR: my vitality as the referee says it, the HUD's health bar's for the duel's length
+import { createPlayerHealthMirror } from '../net/siege/refereeHealthMirror.js';   // SHARED-HEALTH: one health pool under the referee
 // WILD1 (2026-10-07, bible/11-Multiplayer/Wild-Zone.md): THE OPEN ZONE - the Wrothgarian Mountains: its law (a leaf), a
 // death's drop and its one piece, the fights between players, the room's remains as piles, and the HUD's two glyphs
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
@@ -995,7 +997,8 @@ import { wornOffer, wildRecord, wildChunks, wildSpawnSpot, wildRisePicks } from 
 import { readWildReceipt, wildFallGraceS } from '../net/wild/wildReceipt.js';   // INT9: the relay's fall, carried to the service
 import { WILD_REF, wildKin, sameGuild } from '../net/wild/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD); MAC (2026-10-14): and its kin, one law with the referee's
 import { createWildFight } from '../net/wild/wildFight.js';
-import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
+import { createWildRemains, remainsMine, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
+import { wildSelf } from '../net/wild/wildSelf.js';   // WILD-HUBLESS: my account in the zone, the hub's or the signed-in session's
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
 import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
@@ -1345,7 +1348,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
    *  deleted, the account signed out - takes the player to the door with the reason. */
   const realmSession = realmBoot ? createRealmSession({ io: realmIoNow(), id: params.get('realm'), lease: realmBoot.lease, seq: realmBoot.seq, gzip: realmBoot.gzip, onLost: (why) => realmLost(why) }) : null;   // REALM-GZIP: packed when the join said so
-  if (realmSession) watchRealmUnsaved(realmSession, { say: (text) => townTalk.say(text) });   // the session's own clock, Date.now
   // LEGACY7 (bible/06-Systems/Legacy-Arc.md section 9): ONLINE, PROJECT LEGACY'S LINES ARE THE REALM'S - read into the
   // device's store before any save is restored (a death another device wrote stands here), written after each of the
   // device's writes; and the account's living realm characters, the question "is there a save of this member?" online
@@ -4036,7 +4038,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         if (g && port) {
           const lp = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
           const bearing = seaBearing(lp.x, lp.y, openSea);   // AUDIT SHIPYARDS U2: and the town's own water against it is no sea; INLAND-PORTS: nor a lake the map draws
-          ports = portSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
+          ports = keptPortSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
         }
         if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
         memo = { sig, sites, ports };
@@ -6517,9 +6519,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let arenaTraceAsked = false;
   if (tamrielTraceOn()) {
     arenaTraceAsked = true;
-    preloadTamrielTrace({ fetchBytes, palette }).then((trace) => {
+    preloadTamrielTrace({ fetchBytes, palette }).then(async (trace) => {
       if (!trace) { console.warn('[tamriel] the picture traced to nothing; the authored continent stands'); return; }
-      const fit = fitBayToPicture({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
+      const fit = await keptBayFit({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
       const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
       terrainGen.setTamriel({ trace, fit: fitPx });
       StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
@@ -17276,6 +17278,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const opts = sink ? { quiet: true, sink } : { quiet: true };   // AUDIT PRE-MERGE 1003 O10: a caller's sink, to hear the put's answer
     return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
   }
+  const checkpointClock = createOnlineCheckpointClock({ session: realmSession, checkpoint: () => onlineCheckpoint(), lastAt: () => _checkpointAt, say: (text) => townTalk.say(text), stands: () => _bootLoaded });
   /** AUDIT PRE-MERGE 1003 O10: A CHECKPOINT THAT LANDED - for a door that must not say a thing done before the save that
    *  holds it is the realm's (systems/online/onlineHomes.js moveArenaHomes: a displaced home's move said read). A realm
    *  character's checkpoint answers the realm's word on the PUT that carried it (the composer's sink - scenes/shared.js
@@ -17298,8 +17301,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   if (realmSession) {
     // the title exit and the page put away are the checkpoint's: registered with its other doors (THE CHECKPOINT'S
     // DOORS, below the duel's). AUDIT REALM2 C2: the lease given up as the page GOES (pagehide, the unload guard answered) - the leave alone, with
-    // keepalive (the browser finishes it; a save that large it cannot, so the periodic checkpoints - ONLINE_CHECKPOINT_MS -
-    // and the one the page asked as it hid bound what a close costs) - and taken again when a page the back-forward cache kept is shown
+    // keepalive (the browser finishes it; a save that large it cannot) - and taken again when a page the back-forward cache kept is shown.
+    // CLOSE-SAVE (FIELD BUGS 2026-10-26): the leave asks the page-hide checkpoint first (whenPageHides below hands it to the session) and
+    // keeps it on the device - a close or a reload fires pagehide first, before the page counts as hidden, and there the lease has gone
     whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });   // REZ-BLOODLINE: a death held for a Resurrect decided first - its tombstone takes the lease, the leave then sends nothing
   }
   /** REALM P1.3: A CHARACTER BORN ONLINE - made at the service once chargen is done, its first save the service's
@@ -19920,11 +19924,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // CHAP4b: ranks 8 and 9 are seats - the book held at 7 said once a hold, the seats as they stand and as they move
     ...rollNoticeDoors({ entityOf: () => playerEntity, say: (text) => chatNotice(text) }),   // SEAT-WORDS / STANDING-WORDS: the hold (and the Chapters page), and what the Roll moved
     onSeats: (seats, before) => { for (const line of seatLinesOf(before, seats)) chatNotice(line); },
-    // shut: the save keeps it, quietly - AUDIT CHAP3 C9: a build too old for the service says so, as Renown's stop does
-    onStop: (error) => {
-      if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));
-      else if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error);
-    },
+    onStop: (error) => sayRollStop(error, chatNotice),   // stopped: the save keeps what is earned, and the player is told
   }) : null;
   // CHAP4b: the rank the playing character's seat gives it at a hall of `faction` where it stands - the politic region,
   // as the chapter sheet's (AUDIT CHAP3 C6) - null offline, before the Roll's first word, or with no seat here
@@ -20240,6 +20240,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onDuelRef = (g, room) => { if (g.k === 'bout') _duelRoom = room ?? null; duelMgr.onRef(g); };   // INT8: the referee's word on my bout - AUDIT INT8: and its room, where its frames go
     online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a fallen's offer at me (INT9: the one frame the zone routes) - the zone's law decides (net/wild/wildFight.js)
     online.onWildRef = (g, room) => wildRefIn(g, room);   // INT9: the zone referee's word - a blow landed, a fall, a fall signed
+    online.onVit = healthMirror.onVit;   // SHARED-HEALTH: a referee's ask for my health, or its count set on it
     // WILD1: my room's word on its remains (net/wild/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
     // own pile"): the book is told the room FIRST - the frame told it a frame late, and a near relay's hello answered inside
     // that frame, so the room's remains were heard and then cleared as "another room's" by the frame's setRoom
@@ -21255,16 +21256,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     for (const p of wedMgr.peers()) if (!online?.reachesPeer(p)) wedMgr.gone(p);
     if (performance.now() - _unionsAt > UNIONS_READ_MS) legacyUnionsRead();
   };
-  /** INT8: THE DUEL'S HUD - the referee's vitality (net/duel/duelRef.js: the Royal Tourney's, never my save's health), mine
-   *  over theirs, drawn on the battles' readout (ui/siegeHud.js) for the duel's life; its Leave is my yield. */
+  /** INT8: THE DUEL'S HUD - my opponent's count as the referee says it (net/duel/duelRef.js), drawn on the battles' readout
+   *  (ui/siegeHud.js) for the duel's life; its Leave is my yield. SHARED-HEALTH: my own count is my health, on my bar. */
   let _duelHud = null;
   const duelHudSay = (d) => {
     if (!d) { _duelHud?.hide(); return; }
     _duelHud ??= createSiegeHud(document, { onLeave: () => duelMgr.yieldDuel() });
     const me = online?.id ?? '', h = d.h ?? [];
-    const mine = h.find((x) => x[0] === me), theirs = h.find((x) => x[0] !== me);
+    const theirs = h.find((x) => x[0] !== me);
     const name = peerName(d.peer) ?? 'your opponent';
-    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: mine ? [`Your vitality: ${mine[1]} / ${mine[2]}`] : [], works: '', arms: null, card: null });
+    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: [], works: '', arms: null, card: null });   // SHARED-HEALTH: my own is my health bar
   };
   /** THE ATTACKER: my blow out - INT8: rolled on my own sheet against the neutral stand-in (AUDIT C&C H5: a body of my
    *  own sheet cancelled every attribute I brought and charged me for my own luck; the target's sheet is not mine to
@@ -21515,8 +21516,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // C7: a duel ended first and P0.5's gate passed, as the page's end and the seat's - realmCheckpoint straight wrote a
     // character that left mid-duel at the duel's 1 health, the opponent's spells on it
     setBeforeTitleExit(async () => { if (!realmSession.lost) { try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ } onlineCheckpoint(); await Promise.race([realmSession.leave(), new Promise((r) => { setTimeout(r, REALM_EXIT_WAIT_MS); })]); } });
-    // a tab put away (a phone's home button, another tab) is checkpointed while the page still can be
-    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });
+    // a tab put away (a phone's home button, another tab) is checkpointed while the page still can be; CLOSE-SAVE: and a page
+    // closed or reloaded, by the session's leave (pagehide comes first there)
+    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); }, realmSession);
   }
   // ═══ WILD1: THE OPEN ZONE - THE WROTHGARIAN MOUNTAINS (bible/11-Multiplayer/Wild-Zone.md) ═════════════════════════
   // The owner: "Wrothgarian mountains need to be turned into a open pvp zone". The law is in its own modules - the zone
@@ -22022,16 +22024,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return bodies.length ? bodies.map((b) => ({ ...b, name: peerName(b.id) ?? 'another player' })) : null;
   };
   // ── INT9: THE REFEREE'S WORD (net/wild/wildRef.js - the relay holds the zone's fights) ──
-  /** THE ZONE'S HUD - the referee's vitality (the Royal Tourney's, never my save's health: that is the foes' alone), mine
-   *  and my last foe's, on the battles' readout (ui/siegeHud.js, with nothing to leave) while the fight is fresh - the
-   *  referee makes a fighter no player has struck for WILD_REF.mendMs whole again. */
+  /** THE ZONE'S HUD - my last foe's count as the referee says it, on the battles' readout (ui/siegeHud.js, with nothing to
+   *  leave) while the fight is fresh (WILD_REF.mendMs). SHARED-HEALTH: my own count is my health, on my bar. */
   let _wildHud = null;
-  let _wildVit = null;   // { mine: [hp, max] | null, foe: { id, hp, max } | null, at }
+  const healthMirror = createPlayerHealthMirror(playerEntity, () => online);   // SHARED-HEALTH: my health reported to the referee that holds a fight of mine, and its count set on it
+  let _wildVit = null;   // { foe: { id, hp, max } | null, at }
   const wildHudSay = () => {
     if (!_wildVit) { _wildHud?.hide(); return; }
     _wildHud ??= createSiegeHud(document);
     const f = _wildVit.foe, name = f ? (peerName(f.id) ?? 'another player') : '';
-    _wildHud.update({ bar: [WILD_NAME, f ? `${name}: ${f.hp} / ${f.max}` : ''], sides: '', self: _wildVit.mine ? [`Your vitality: ${_wildVit.mine[0]} / ${_wildVit.mine[1]}`] : [], works: '', arms: null, card: null });
+    _wildHud.update({ bar: [WILD_NAME, f ? `${name}: ${f.hp} / ${f.max}` : ''], sides: '', self: [], works: '', arms: null, card: null });   // SHARED-HEALTH: my own is my health bar
   };
   const wildHudFrame = () => { if (_wildVit && (Date.now() - _wildVit.at > WILD_REF.mendMs || !wildHere())) { _wildVit = null; wildHudSay(); } };
   /** A BLOW OR A CAST LANDED (`wref` `hp`): the HUD's vitality; a blow of mine - the HUD's number (HN1's seam), and for a
@@ -22042,8 +22044,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (g.by !== me && g.to !== me) return;
     noteWildBlow();   // AUDIT PVP-EASE L2-1: a blow landed, mine or on me - storing locked (wildZone.js WILD_STORE_LOCK_MS)
     const foeId = g.by === me ? g.to : g.by;
-    const mine = g.h.find((x) => x[0] === me), theirs = g.h.find((x) => x[0] === foeId);
-    _wildVit = { mine: mine ? [mine[1], mine[2]] : (_wildVit?.mine ?? null), foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };
+    const theirs = g.h.find((x) => x[0] === foeId);
+    _wildVit = { foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };   // SHARED-HEALTH: my own count is my health, on my bar
     wildHudSay();
     if (g.by === me) {
       reportPlayerAttack({ hit: true, damage: g.d, critical: false, backstab: false, ineffective: false });
@@ -22089,7 +22091,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  to carry first, mine to carry once its grace has gone by with no remains of theirs in the room (wildFallGraceS: none
    *  when it was signed with them gone - WILD-REJOIN). */
   const wildRcIn = (g, room) => {
-    const c = readWildReceipt(g.rc), me = social?.acct ?? null;
+    const c = readWildReceipt(g.rc), me = wildSelf(social, appStorage());   // WILD-HUBLESS: a game the hub has not seated still knows its own fall
     if (!c || c.r !== g.r || !me) return;
     if (c.f === me) { wildTakeDrop(g.rc, room); return; }
     if (c.k !== me || _wildSeize.has(c.r)) return;
@@ -22351,6 +22353,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
     online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
+    healthMirror.frame(wildCan() || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
     wildDepositFrame(); wildSeizeFrame(); wildHudFrame();   // INT9: a drop's deposit, a fall to seize, the referee's readout
     wildEscrow.frame();   // MAC (2026-10-14, the two-phase handoff): my piece in escrow asked back, my collect carried
     wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);   // HALO-REMAINS: my room and the halo's
@@ -22554,7 +22557,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     pool: () => (wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null)),
     toScene: (p) => onlineToScene({ x: p[0], y: p[1], z: p[2] }),
     canTake: (rec) => rec.mine || !(rec.oid && (social?.isPartyPeer(rec.oid) || sameGuild((online?.drawable?.() ?? []).find((d) => d.id === rec.oid)?.gt, myGuildTag()))),   // PVPDUNGEONS: party and guild members cannot take a fallen friend's pile
-    mine: (rec) => (!!rec.os && rec.os === (social?.acct ?? null)) || (!!rec.oid && rec.oid === online?.id) || rec.r === _wildMine?.r,
+    mine: (rec) => remainsMine(rec, wildSelf(social, appStorage()), online?.id ?? null, _wildMine?.r ?? null),   // WILD-REMAINS-LOSS: by the fallen's account, never by who carried the deposit
     pack: () => (playerEntity.items ??= []),
     mint: (list) => validLootList(list),
     addItem: (list, item) => (isGoldPieces(item) ? addGoldPieces(playerEntity, item.stackCount ?? 1) : addItem(list, item)),   // WILD GOLD: coin goes to the purse
@@ -22564,7 +22567,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     say: (l) => townTalk.say(l),
     now: () => performance.now(),
     nameOf: (item) => itemLongName(item),
-    me: () => social?.acct ?? null,   // INT9: the killer's piece, mine alone
+    me: () => wildSelf(social, appStorage()),   // INT9: the killer's piece, mine alone (WILD-HUBLESS: hub or no hub)
     collect: (cr, at) => wildEscrow.collectHeard(cr, at),   // MAC (2026-10-14): the room's collect of my piece in escrow, carried to the service
   });
   setHudZone(() => (wildHere() ? { name: `${zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip} - ${zoneRingName(wildRing())}, ${wildRingBonus(wildRing())}`, foot: `${wildRing()}/${WILD_RINGS}` } : null));   // WILD1: the HUD's glyph, on the enhanced skin...
@@ -24455,7 +24458,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // stood on its pixel while the streamer holds it built: on the drawn ground, its colliders riding the pixel's floating
   // translation (one provider a pixel, as the streamed buckets'), drawn with the world and, translucent, after the water
   const _poiRides = new Map();
-  poiFeed = createPoiFeed({ base: () => serviceBase(appStorage()), cache: browserPoiCache() });
+  poiFeed = createPoiFeed({ base: () => serviceBase(appStorage()), cache: pagePoiCache() });
   poiFeed.start().catch((e) => console.warn('[poi] the kept feed', e?.message ?? e));
   poiHost = createPoiHost({
     renderer, feed: poiFeed, decodeImage: decodePoiImageSteps,   // AUDIT POI R8, R9: its readback a band a step, under the host's budget
@@ -27697,6 +27700,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wagonRiders?.clear();   // WAGONS2 (FINAL AUDIT): offline, nobody rides with me nor I with anyone - my riders' seats were kept for the gone, my companions walking at heel and every journey waiting GO_LEAD_MS on them
     caravanVisitLink.close();   // WAGONS2-VISIT: and the visited caravan's listener goes with the seat
     seatLock?.release();
+    checkpointClock.seatLost();   // a realm character saved at once: a lease another device took is heard now, not a period later
     console.info('[online] another tab, window or device has the seat - this one is offline');
   };
   /** ONE-SEAT: the word that the seat is gone - the hub's close, the browser's, a room's - acted on as it arrives. */
@@ -27756,7 +27760,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         setMidScreenText(SEAT_MID_TEXT);
       }
       // out of the seat a realm character still saves as it plays: the service's lease, not the seat, decides whose save lands
-      checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());
+      checkpointClock.frame(now);
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;
     }
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
@@ -27792,7 +27796,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;   // PEERLIGHT2: and no candle hangs over the dead; AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
-    checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());   // SCALE2b: the periodic one may be answered by the save the service holds (realmSaves.js idle)   // REALM P0.5: every ONLINE_CHECKPOINT_MS (five real minutes, CHECKPOINT-5), alive and in the seat (the first such frame persists the join's call-in)
+    checkpointClock.frame(now);   // SCALE2b: the periodic one may be answered by the save the service holds (realmSaves.js idle)   // REALM P0.5: every ONLINE_CHECKPOINT_MS (five real minutes, CHECKPOINT-5), alive and in the seat (the first such frame persists the join's call-in)
     if (instanceDoor.refused(online)) modes?.forceExitToExterior?.();   // INSTANCES (the audit): alive, an instance's door shut on me (not of its owner's party - a kick, a lapse) - out, as the realm's door does, never left inside it alone
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const cabin = modes?.sailingCabin;
@@ -34421,7 +34425,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3: the main cell's hand switch
           grip: player.gripShown,   // CLIMB2: the enhanced climb's grip - both HUDs draw it
           steed: _mode() === 'exterior' ? upkeep.bar(player.transportMode) : null,   // STEED1: the ridden horse's breath, in the grip's place
-          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),   // DUEL-BAR (FIELD BUGS 2026-10-19f, the owner: "Bar shows duel vitality"): the referee's vitality on both skins' bar while my duel is live, the save's at its end - display only
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
       csaDrawWindWidget();   // CSA-E: over the HUD
     }

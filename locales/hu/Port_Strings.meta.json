@@ -624,6 +624,11 @@
   "tr": "e72afbbdc8a8",
   "by": "claude-in-session"
  },
+ "account.refusal.badCells": {
+  "en": "2d3ef2cb9a95",
+  "tr": "668b9c49e68e",
+  "by": "claude-in-session"
+ },
  "account.refusal.badCode": {
   "en": "cca3778d98a6",
   "tr": "a29e929ede40",
@@ -1012,6 +1017,11 @@
  "account.refusal.chaptersClosed": {
   "en": "94444e3460c5",
   "tr": "93c2de324922",
+  "by": "claude-in-session"
+ },
+ "account.refusal.clientUpdate": {
+  "en": "03342c4f637c",
+  "tr": "68bab2b28232",
   "by": "claude-in-session"
  },
  "account.refusal.closed": {
@@ -2982,11 +2992,6 @@
  "account.refusal.yardCap": {
   "en": "2c2ab7f7a382",
   "tr": "50072f4d85c2",
-  "by": "claude-in-session"
- },
- "account.refusal.yardTownFull": {
-  "en": "0f069e781d8b",
-  "tr": "19e611eb7343",
   "by": "claude-in-session"
  },
  "account.wear.aura": {
@@ -8714,6 +8719,31 @@
   "tr": "d9c07f71c171",
   "by": "claude-in-session"
  },
+ "menu.realm.strandedAsk": {
+  "en": "878ad5daa5c6",
+  "tr": "9e756a20aeef",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedBody": {
+  "en": "18165e62b34f",
+  "tr": "5cf06826a4ba",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedCopied": {
+  "en": "5477256d8217",
+  "tr": "9bc20ecf4481",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedNote": {
+  "en": "3a27f11585aa",
+  "tr": "93ce970d3de9",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedRecover": {
+  "en": "43a870077e3d",
+  "tr": "20d4ce2e56eb",
+  "by": "claude-in-session"
+ },
  "menu.realm.undo": {
   "en": "cf10805d6eb2",
   "tr": "a42b42f0e1e8",
@@ -8917,6 +8947,11 @@
  "menu.settings.tabStatus": {
   "en": "03662c8d2f8f",
   "tr": "6c641dbabfed",
+  "by": "claude-in-session"
+ },
+ "menu.settings.tip.vsyncVulkan": {
+  "en": "416f4a493087",
+  "tr": "eb89435dfd50",
   "by": "claude-in-session"
  },
  "menu.settings.unavailableBlurb": {
@@ -9247,6 +9282,26 @@
  "menu.transfer.web": {
   "en": "a0508fd9805c",
   "tr": "c0e26b70663a",
+  "by": "claude-in-session"
+ },
+ "menu.video.backend": {
+  "en": "82291b6b3f70",
+  "tr": "24366485773d",
+  "by": "claude-in-session"
+ },
+ "menu.video.backendDefault": {
+  "en": "cdc9ca376378",
+  "tr": "cdc9ca376378",
+  "by": "claude-in-session"
+ },
+ "menu.video.backendNote": {
+  "en": "1324b99e3436",
+  "tr": "a4d588ebc631",
+  "by": "claude-in-session"
+ },
+ "menu.video.backendVulkan": {
+  "en": "96631601269e",
+  "tr": "96631601269e",
   "by": "claude-in-session"
  },
  "mods.ambientText.Enabled.description": {
@@ -13204,9 +13259,24 @@
   "tr": "914d3195cc83",
   "by": "claude-in-session"
  },
+ "realm.roll.stopped": {
+  "en": "a642f33d01cd",
+  "tr": "8fe537e1dfc3",
+  "by": "claude-in-session"
+ },
  "realm.stranded": {
   "en": "0c41402dad0b",
   "tr": "87d81b046171",
+  "by": "claude-in-session"
+ },
+ "realm.strandedWayBack": {
+  "en": "77703caf5c81",
+  "tr": "3eceb74c282d",
+  "by": "claude-in-session"
+ },
+ "realm.unsaved.notSent": {
+  "en": "8a8822826074",
+  "tr": "a92ad1684914",
   "by": "claude-in-session"
  },
  "realm.unsaved.reachedAgain": {

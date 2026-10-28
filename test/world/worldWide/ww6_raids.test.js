@@ -448,7 +448,7 @@ test('WW6 the relay: a raid past the Bay is kept in its town\'s cell as the Bay\
 
 test('WW6 the session: a raid past the Bay goes only to a relay that hears one (world274 on - an older relay refuses the word); a Bay raid to any raid relay as before; the halo says for itself (mutants: the gate unread; the version floor off)', () => {
   assert.equal(RAID_WORLD_RELAY_MIN, 276);   // PIN MOVED (the eighth merge of main into #1184): world276, past main's world275 (SD-PARTY, live), which refuses; PIN MOVED (the seventh merge of main into #1184): the gate is world275, past main's world274 (LADDER-CUT), which refuses; PIN MOVED (the fourth merge of main into #1184): the gate is world274, past main's world273, which refuses; PIN MOVED (the third merge of main into #1184): the gate is world272, past MASTER-THREE's world271 (main's), which refuses; world271 at the second merge, past CHAT-POST's world270
-  assert.deepEqual([relaySupportsRaidWorld('world275'), relaySupportsRaidWorld('world276'), relaySupportsRaidWorld(RELAY_VERSION), relaySupportsRaidWorld('x')], [false, true, true, false]);
+  assert.deepEqual([relaySupportsRaidWorld('world275'), relaySupportsRaidWorld('world277'), relaySupportsRaidWorld(RELAY_VERSION), relaySupportsRaidWorld('x')], [false, true, true, false]);
   const rigOf = (cell, v, pose) => {
     const { FakeWS, sockets } = fakeSocketClass();
     const s = new OnlineSession({ url: 'wss://relay.test', name: 'a', id: 'aaaa-0001', secret: 'secret-of-aaaa-0001', WebSocketImpl: FakeWS, now: () => 1000 });

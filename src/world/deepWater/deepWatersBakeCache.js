@@ -20,16 +20,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { idbStore } from '../roadsCache.js';
+import { fnv1a } from '../../formats/fnv1a.js';
 
 /** Bump when the bake's rules change shape. 2 (AUDIT TESA III E1-4): a coastal town's blend follows its outline (TOWN-SHAPES
  *  TS2) - a bake kept before it blended the rect DFU's way. 3 (FB1028): the sea a town's ease reaches is lifted. */
 export const BAKE_GENERATOR_VERSION = 3;
 
-/** FNV-1a 32 over bytes - the key's fingerprint, not a checksum anything trusts beyond "same archive". */
-export function fnv1a(bytes, h = 0x811c9dc5) {
-  for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193); }
-  return h >>> 0;
-}
+export { fnv1a };   // FIRST-VISIT: moved to formats/fnv1a.js, shared with the first visit's kept answers
 
 /** The rects' fingerprint: [pixelId, xMin, xMax, yMin, yMax] rows in pixel order - AUDIT TESA III E1-4: and a row's
  *  outline's bytes, where it carries one. */

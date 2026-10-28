@@ -106,7 +106,13 @@ const askWorker = (lanes, url, maxSize) => new Promise((resolve, reject) => {
 /** One shipped file as top-down RGBA, fitted to `maxSize` as a mip chain would be: a worker's decode where the page has
  *  one, else this thread's - and this thread's for good once a worker says it cannot. ALIKR1: `root` is the pack's. */
 async function decodeShipped(path, maxSize = Infinity, root = pack.Root) {
-  const url = vePackUrl(path, undefined, root);
+  return decodeAt(vePackUrl(path, undefined, root), maxSize);
+}
+/** FIRST-VISIT: any served PNG by its URL, top-down RGBA and whole, decoded as the pack's files are - in a decode worker
+ *  where the page has one (the weapon rig's body sprites: 200 ms of a warm launch's boot on this thread). A relative URL
+ *  is the page's, not the worker's. */
+export const decodeServedPng = (url) => decodeAt(new URL(url, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href, Infinity);
+async function decodeAt(url, maxSize) {
   const lanes = decodeWorkers();
   if (lanes) {
     try { return await askWorker(lanes, url, maxSize); } catch (e) {

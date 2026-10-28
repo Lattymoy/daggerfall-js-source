@@ -21,33 +21,33 @@
   },
   {
     "name": "YARDS-REPLICA-binding",
-    "file": "server-account/src/decor.js",
+    "file": "server-account/src/yardCells.js",
     "old": "try { db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from); } catch",
     "new": "try { db = ctx.db; } catch",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
-    "note": "a town's yards read on the binding - the primary's queue"
+    "note": "a town's yards read on the binding - the primary's queue Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "YARDS-REPLICA-write-unmarked",
-    "file": "server-account/src/decor.js",
-    "old": "  yardsWritten.add(mapId);   // YARDS-REPLICA: and its next read the primary's, which has the write\n",
-    "new": "",
+    "file": "server-account/src/yardCells.js",
+    "old": "  reading.get(key)?.stale.add(key);\n  keep(key, { ...WRITTEN });",
+    "new": "  reading.get(key)?.stale.add(key);",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
-    "note": "the read after a decor write here off a replica that may not have it"
+    "note": "the read after a decor write here off a replica that may not have it Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "YARDS-REPLICA-bookmark-unkept",
-    "file": "server-account/src/decor.js",
-    "old": "      if (mark) yardsMark.set(mapId, mark);\n",
-    "new": "",
+    "file": "server-account/src/yardCells.js",
+    "old": "      const mark = bookmarkOf(db);",
+    "new": "      const mark = null;",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
-    "note": "a read after a kept one from any instance - a replica behind it may answer"
+    "note": "a read after a kept one from any instance - a replica behind it may answer Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "SAVE-BATCH-ledger-apart",
@@ -121,43 +121,43 @@
   },
   {
     "name": "PRIMARY-TRIPS-AUDIT-floor-unkept",
-    "file": "server-account/src/decor.js",
-    "old": "        for (const m of yardsMark.values()) if (yardsFloor == null || m > yardsFloor) yardsFloor = m;   // PRIMARY-TRIPS audit\n",
+    "file": "server-account/src/yardCells.js",
+    "old": "    if (oldest.mark && (floor == null || oldest.mark > floor)) floor = oldest.mark;\n",
     "new": "",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
-    "note": "the bookmarks let go with the kept towns leave no floor"
+    "note": "the bookmarks let go with the kept towns leave no floor Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "PRIMARY-TRIPS-AUDIT-floor-oldest",
-    "file": "server-account/src/decor.js",
-    "old": "if (yardsFloor == null || m > yardsFloor) yardsFloor = m;",
-    "new": "if (yardsFloor == null || m < yardsFloor) yardsFloor = m;",
+    "file": "server-account/src/yardCells.js",
+    "old": "(floor == null || oldest.mark > floor)",
+    "new": "(floor == null || oldest.mark < floor)",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
-    "note": "the floor the oldest bookmark let go, not the newest"
+    "note": "the floor the oldest bookmark let go, not the newest Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "PRIMARY-TRIPS-AUDIT-floor-unread",
-    "file": "server-account/src/decor.js",
-    "old": "(yardsMark.get(mapId) ?? yardsFloor ?? YARDS_FROM)",
-    "new": "(yardsMark.get(mapId) ?? YARDS_FROM)",
+    "file": "server-account/src/yardCells.js",
+    "old": "  return newest ?? floor ?? YARD_CELLS_FROM;",
+    "new": "  return newest ?? YARD_CELLS_FROM;",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
-    "note": "a town with no mark of its own reads from any instance, the floor never read"
+    "note": "a town with no mark of its own reads from any instance, the floor never read Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "PRIMARY-TRIPS-AUDIT-floor-refused-kept",
-    "file": "server-account/src/decor.js",
-    "old": " if (yardsFloor === from) yardsFloor = null;",
+    "file": "server-account/src/yardCells.js",
+    "old": "      if (floor === from) floor = null;   // a read that failed from a bookmark: the next starts from none\n",
     "new": "",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
-    "note": "a floor whose read failed kept - every unmarked town's read fails with it"
+    "note": "a floor whose read failed kept - every unmarked town's read fails with it Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "PRIMARY-TRIPS-AUDIT-config-kept-late",
@@ -201,12 +201,12 @@
   },
   {
     "name": "PRIMARY-TRIPS-AUDIT-hold-dropped",
-    "file": "src/scenes/homeYards.js",
-    "old": "if (w.n > asked || now() - w.at < YARD_WRITE_HOLD_MS) byKey.set(bk, w.list);",
-    "new": "if (w.n > asked) byKey.set(bk, w.list);",
+    "file": "src/scenes/yardCellSync.js",
+    "old": "write.turn > held.askedTurn || now() - write.at < YARD_WRITE_HOLD_MS",
+    "new": "write.turn > held.askedTurn",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
     ],
-    "note": "the owner's write held over an answer asked before it alone"
+    "note": "the owner's write held over an answer asked before it alone Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   }
 ]
