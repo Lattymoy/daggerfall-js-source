@@ -785,7 +785,7 @@ function outsideBox(poly, tw, [a0, a1], [o0, o1]) {
  * Its end stands in the body (TS8): its faces lay in the tower's where the line runs straight, and its walk on the next
  * one's at a sharp bend, both drawn there. A part no tower reaches is handed back as it was.
  * @param {{ positions: Float32Array, normals: Float32Array, uvs: ArrayLike<number>, indices: ArrayLike<number>, subMeshes: any[] }} part
- * @param {Array<{ at: [number, number], out: [number, number] }>} towers
+ * @param {Array<{ at: [number, number], out: [number, number], thick?: number }>} towers
  */
 export function clearOfTowers(part, towers) {
   const P = part.positions, N = part.normals, U = part.uvs, half = (CORNER_TOWER.body[1] - CORNER_TOWER.body[0]) / 2;
