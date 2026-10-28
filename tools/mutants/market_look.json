@@ -9,7 +9,7 @@
   },
   {
     "name": "MARKET-LOOK-collect-own-mint",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": "    const it = mintMarketPiece(piece);   // MARKET-LOOK: the mint the board's look shows",
     "new": "    const it = mintPiece(piece, piece.provenance);",
     "tests": ["test/ui/market_look.test.js"],

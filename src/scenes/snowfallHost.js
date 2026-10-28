@@ -5,17 +5,19 @@
 // (snow_status). A host hands it the ground it stands (`ground`, below) and calls `frame` once a frame, outdoors and in;
 // it draws the snow with the opaque world, after the ground (`draw`), and carries it across the floating origin.
 //
-// THE FOUR HOSTS RULE (bible/Home.md): world.js and exterior.js build it; worldModes.js (the interiors) and
-// dungeonContext.js (the dungeons) do not - indoors and underground the host's own frame calls `frame` with
-// `inside: true`, which is all the mod does there (DynamicSnowController.Update: the surfaces hidden, the snowpack and
-// the refill still kept by the clock).
+// THE FOUR HOSTS RULE (bible/Home.md): world.js and exterior.js build it; indoors (worldModes.js) and underground
+// (dungeonContext.js) the host's own frame calls `frame` with `inside: true` (surfaces hidden, snowpack and refill kept).
 
 import { modSettingsGeneration, modSetting } from '../systems/modSettings.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
 import { registerCommand, gateConsoleCommand } from '../systems/consoleCommands.js';
 import { pageParam } from '../systems/pageQuery.js';
-import { SnowCoverage, BasicRoadsTerrain, roadCorners, snowfallSettings, winterArchiveOf, markAuthoredBlock, locationRect, isVanillaLocation, SNOWFALL_VENDOR, SNOW_MASK_ARCHIVES } from '../systems/snowfall.js';
+import { SnowCoverage, BasicRoadsTerrain, roadCorners, snowfallSettings, winterArchiveOf, markAuthoredBlock, locationRect, isVanillaLocation, SNOWFALL_VENDOR, SNOW_MASK_ARCHIVES, ROAD_KIND } from '../systems/snowfall.js';
+import { arenaRoadByte, arenaJoinByte } from '../world/arenaRoads.js';   // BAY-LEFT-GROUND: TESA's roads - past the Bay, and their crossings' joins on it (TESA5)
+import { curveField, CURVE_DIM, TRACK_HALF } from '../world/road/roadCurves.js';   // BAY-LEFT-GROUND: a track's curve past the Bay (VOYAGER2)
+import { WORLD_PIXEL_SPAN } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the world's grid, the box's clamp
 import { SnowfallRuntime } from '../systems/snowfallRuntime.js';
+import { SnowBuildClient } from '../systems/snowfall/snowBuildClient.js';   // SNOW-THREAD: the ring's and the window's builds on a worker
 import { SnowfallSurface } from '../render/snowfallSurface.js';
 import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFile.js';
 import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';
@@ -66,6 +68,8 @@ async function defaultAlbedo() {
  * @property {(minX: number, minZ: number, maxX: number, maxZ: number) => any[]} settlements - vanilla locations' rectangles (global metres)
  * @property {number} [size] - a tile's side, metres (819.2)
  * @property {number} [terrainDistance]
+ * @property {(p: any) => any} [data] - SNOW-THREAD: what systems/snowfall/snowGroundLaw.js reads of the tile (snowGroundSnapshot) - present only where `height`, `normal` and `bare` are those laws over it
+ * @property {() => number[]} [frame] - SNOW-THREAD: [map origin x, y, compensation x, z, pixel size] - pixelAt's and toGlobal's inputs (snowGroundLaw.js snowPixelX, snowGlobalOf)
  */
 
 /** The host standing now. A boot claims the frame and kills the loop before it (scenes/shared.js claimFrame), and that
@@ -82,6 +86,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
   standing?.dispose();
   let gen = -1, settings = snowfallSettings();
   let runtime = null, surface = null, pending = null, failed = false, asked = false, disposed = false;
+  let builds = null;             // SNOW-THREAD: the build worker's client, where the ground can be copied to it
   let wasInside = null, lastFrame = null, gameSecondsNow = 0, frameNo = 0, nextPrune = 0;
   let roadStatus = 'not sampled';   // AUDIT ENVIRONS S6: BasicRoadsContextCache.Status - the last tile's classification's word
   let climateNow = -1, desertNow = false, doorNow = -1;   // the climate's base type, read when the climate index changes
@@ -125,6 +130,8 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
       height: (lx, lz) => ground.height(p, lx, lz),
       normal: (lx, lz, out) => ground.normal(p, lx, lz, out),
       bare: snowless ? () => true : ground.bare ? (lx, lz) => ground.bare(p, lx, lz) : undefined,
+      // SNOW-THREAD: the tile as the build worker reads it - `bare` as above, the ground snowGroundLaw.js's over its data
+      snapshot: ground.data ? () => ({ mapX: t.mapX, mapY: t.mapY, size, tileMap: t.tileMap, winterArchive, bare: snowless ? 'all' : ground.bare ? 'ground' : null, ground: ground.data(p) }) : null,
       get roads() {   // BasicRoadsContextCache.Get: classified once a tile (TryCreate: a reason, and no roads, where it fails)
         if (!roadsMade) {
           roadsMade = true;
@@ -165,6 +172,8 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
       return out;
     },
     toGlobal: (x, z) => ground.toGlobal(x, z),
+    terrainOn: (px, py) => terrainOf(ground.pixelOn?.(px, py) ?? null),   // SNOW-THREAD: the tile terrainAt answers on a map pixel
+    frame: ground.frame ? () => ground.frame() : undefined,
     settlements: (a, b, c, d) => ground.settlements(a, b, c, d),
     footprints: () => [],   // LocationLoaderBridge: Location Loader is not the port's - none stand
     get terrainDistance() { return ground.terrainDistance ?? 3; },   // StreamingWorld.TerrainDistance, read when asked (a host's view distance can move)
@@ -208,7 +217,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     Promise.all([Promise.resolve().then(() => loadMasks()), gl ? Promise.resolve().then(() => loadAlbedo()) : null])
       .then(([masks, albedo]) => {
         if (disposed) return;   // a later boot's host stands now
-        runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: readSettings() });
+        const settings0 = readSettings();
+        if (ground.data && ground.frame) builds = new SnowBuildClient({ masks, settings: settings0 });
+        runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: settings0, builds });
         if (gl && renderer) {
           albedoIn = albedo;
           snowReady = renderer.startTerrainSnow?.() ?? (() => true);   // SHADER-STALL: its program started now, the surface made once it is compiled
@@ -332,7 +343,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     /** The world under the snow was rebuilt (a fast travel, a load's arrival) - every tier stands again. */
     worldReset() { runtime?.worldReset(); },
     /** Its GPU surfaces let go - the next host built calls it (above); nothing it holds is drawn again. */
-    dispose() { disposed = true; surface?.dispose(); surface = null; if (standing === host) standing = null; },
+    dispose() { disposed = true; surface?.dispose(); surface = null; builds?.dispose(); builds = null; if (standing === host) standing = null; },
   };
   standing = host;
   return host;
@@ -341,15 +352,49 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
 /** The road network round a map pixel, as BasicRoadsBridge.TryReadNetwork answers it: the pixel's road and track
  *  bits, and its corners from its west and east neighbours'. `net` Basic Roads' own network (world/roadsProducer.js:
  *  `roads`, `tracks`, 1000 x 500 bytes) - the mod asks the Basic Roads MOD, so the port's generated fallback is not
- *  it (the rule World of Daggerfall's LocationLoader keeps, world.js wodPathsPoint). */
-export function snowfallNetwork(net, x, y) {
+ *  it (the rule World of Daggerfall's LocationLoader keeps, world.js wodPathsPoint). BAY-LEFT-GROUND: and a crossing's
+ *  join on its road bits (`joinAt`, world/arenaRoads.js arenaJoinByte - TESA5's road carried out to the Bay's edge,
+ *  straight, which the ground paints there: world/terrain/terrainGen.js), so the snow knows the road the ground draws;
+ *  no join, the Bay's own byte for byte. */
+export function snowfallNetwork(net, x, y, joinAt = arenaJoinByte) {
   if (!net) return null;
   const at = (a, px) => (px >= 0 && px < 1000 && y >= 0 && y < 500 ? a[px + y * 1000] : 0);
   return {
-    roads: at(net.roads, x), paths: at(net.tracks, x),
+    roads: at(net.roads, x) | joinAt(x, y), paths: at(net.tracks, x),
     roadCorners: roadCorners(at(net.roads, x - 1), at(net.roads, x + 1)),
     pathCorners: roadCorners(at(net.tracks, x - 1), at(net.tracks, x + 1)),
   };
+}
+
+/** A tile the curve painter paves (world/road/roadCurves.js pavedTile: Basic Roads' road and its diagonal flanks). */
+const PAVED_RECORDS = Object.freeze([46, 47, 55]);
+/** How far a track's own tile's centre may lie off its curve: a corner within TRACK_HALF wears (paintCurvedPaths), and a
+ *  tile two of whose corners wear has its centre within TRACK_HALF + half a tile's diagonal of it. */
+const TRACK_TILE_REACH = TRACK_HALF + Math.SQRT1_2;
+
+/**
+ * BAY-LEFT-GROUND (the audit "no system left behind in the Bay", D3): THE ROADS PAST THE BAY, FOR THE SNOW - TESA's own
+ * layer (world/arenaRoads.js arenaRoadByte, TESA14's roads at the Bay's own law and scale - the one reader the Travel
+ * Options' paths read past the table too), as BasicRoadsBridge.TryReadNetwork would answer a network of them. Past the
+ * Bay the roads are drawn as CURVES (VOYAGER2), whose tiles no Basic Roads arm predicts, so a tile is classified by the
+ * painter's own word (`painted`, the build's GRASS-PATH1 record of the tiles it wrote): a paved tile a road's, a worn one
+ * within a track's reach of its curve (curveField, the painter's own field) a track's; a road's worn shoulder neither
+ * (the berm lies over it). Null where the pixel's build painted nothing. Departure: the mod reads Basic Roads' network,
+ * which is the Bay's alone; past the Bay the land's own roads stand in its place.
+ * @param {number} x @param {number} y @param {?ArrayLike<number>} painted
+ * @param {(kind: 'roads'|'tracks', x: number, y: number) => number} [byteAt]
+ */
+export function snowfallNetworkBeyond(x, y, painted, byteAt = arenaRoadByte) {
+  if (!painted) return null;
+  const road = byteAt('roads', x, y), track = byteAt('tracks', x, y);
+  const tracks = curveField(x, y, track, (a, b) => byteAt('tracks', a, b));
+  const kindAt = (tx, tz, tile) => {
+    const t = tz * CURVE_DIM + tx;
+    if (!painted[t]) return ROAD_KIND.none;
+    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.road;
+    return tracks && tracks.tiles[t] <= TRACK_TILE_REACH ? ROAD_KIND.path : ROAD_KIND.none;
+  };
+  return { roads: road, paths: track, roadCorners: 0, pathCorners: 0, kindAt };
 }
 
 /** BasicRoadsTerrain.TryCreate's authored scan: every block of `location` marked from its tile origin
@@ -385,12 +430,18 @@ export function settlementsIn(at, minX, minZ, maxX, maxZ) {
   return out;
 }
 
+/** The farthest pixel of the world's grid from the Bay's corner, either way (world/worldWide/worldGrid.js inWorldGrid). */
+const GRID_EDGE = WORLD_PIXEL_SPAN - 1;
+const onGrid = (v) => Math.max(-GRID_EDGE, Math.min(GRID_EDGE, v));
+
 /** SnowContextData.Prepare's box on the map: the map pixels (clamped to the map) a global box in metres touches -
- *  MapsFile.WorldCoordToMapPixel of its corners in world units, its rows running north to south. */
+ *  MapsFile.WorldCoordToMapPixel of its corners in world units, its rows running north to south. BAY-LEFT-GROUND: the
+ *  map is the world's grid (world/worldWide/worldGrid.js), not the Bay's 1000 x 500 - clamped to it, a box past the Bay
+ *  answered nothing but the Bay's corner pixel, and no snow lay deep, kept a track or banked a road anywhere past it. */
 export function snowPixelBox(minX, minZ, maxX, maxZ) {
   const a = worldCoordToMapPixel(Math.trunc(minX * 40), Math.trunc(minZ * 40)), b = worldCoordToMapPixel(Math.trunc(maxX * 40), Math.trunc(maxZ * 40));
   return {
-    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))), x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),
-    y0: Math.max(0, Math.min(499, Math.min(a.y, b.y))), y1: Math.max(0, Math.min(499, Math.max(a.y, b.y))),
+    x0: onGrid(Math.min(a.x, b.x)), x1: onGrid(Math.max(a.x, b.x)),
+    y0: onGrid(Math.min(a.y, b.y)), y1: onGrid(Math.max(a.y, b.y)),
   };
 }

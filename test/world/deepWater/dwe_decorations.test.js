@@ -485,7 +485,8 @@ test('DW-E2: the settings and the host wiring - the four decoration reads, the p
   assert.equal(s.frequency, scaledSliderValue(0.3, 3.75));
   assert.equal(s.maxPerTile, 1080);
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /if \(deepWaters\) deepWaters\.published\(built\.get\(key\), dwResult\);[^\n]*\n\s+if \(dwDecor\) dwDecor\.onPromote\(built\.get\(key\)\);/, 'HandlePromote after the floor builder\'s');
+  // PIN MOVED (IC-SWAP-BEHIND): the entry under the pixel's own key
+  assert.match(world, /if \(deepWaters\) deepWaters\.published\(built\.get\(pkey\), dwResult\);[^\n]*\n\s+if \(dwDecor\) dwDecor\.onPromote\(built\.get\(pkey\)\);/, 'HandlePromote after the floor builder\'s');
   assert.match(world, /if \(dwDecor\) dwDecor\.destroyed\(p\);/);
   assert.match(world, /queue\.push\(\.\.\.r\.load\);\n\s+announceNearbySpawns\([^\n]*\n\s+if \(dwDecor\) dwDecor\.onMapPixelChanged\(r\.current\);/, 'the crossing: PlayerGPS.OnMapPixelChanged');
   assert.match(world, /if \(deepWaters\.pump\(\) && dwDecor\) dwDecor\.refreshPlayerArea\(\);/, 'LoadSettings\' RefreshPlayerArea');

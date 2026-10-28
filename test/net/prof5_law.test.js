@@ -59,14 +59,14 @@ test('PROF5 law: the courier (10.4) - ceil(ceil(units / 20) x (1 + pixels / 25))
 
 test('PROF5 law: the road witnessed (SEAT0 3.2) - a hub\'s report "x,y" on MAPS.BSA\'s 1000 x 500; confirmed by three who agree, else the answer most give, else the asker\'s own; the pixels\' law unchanged', () => {
   assert.equal(hubReport(207, 212), '207,212');
-  assert.deepEqual([parseHubReport('207,212'), parseHubReport('1000,1'), parseHubReport('1,500'), parseHubReport('x,1'), parseHubReport(null)], [{ x: 207, y: 212 }, null, null, null, null]);
+  assert.deepEqual([parseHubReport('207,212'), parseHubReport('9000,1'), parseHubReport('1,9000'), parseHubReport('x,1'), parseHubReport(null)], [{ x: 207, y: 212 }, null, null, null, null]);   // PIN MOVED (WW7-5): the world's grid (marketLaw.js hubPixelOk)
   const row = (account, report, at) => ({ account, report, at });
   assert.deepEqual(hubPixel([row('a', '10,10', 1), row('b', '10,10', 2), row('c', '10,10', 3), row('d', '20,20', 4)]), { x: 10, y: 10, confirmed: true });
   assert.deepEqual(hubPixel([row('a', '10,10', 1), row('b', '20,20', 2), row('c', '20,20', 3)]), { x: 20, y: 20, confirmed: false }, 'unconfirmed: the answer most give');
   assert.deepEqual(hubPixel([], { x: 7, y: 8 }), { x: 7, y: 8, confirmed: false }, 'none: the asker\'s own');
   assert.deepEqual(hubPixel([row('a', '10,10', 1), row('b', '10,10', 2), row('c', '10,10', 3)], { x: 7, y: 8 }), { x: 10, y: 10, confirmed: true }, 'the witnesses over the asker');
   assert.equal(hubPixel([], null), null);
-  assert.equal(hubPixel([], { x: 1000, y: 1 }), null, 'a pixel off the map is no answer');
+  assert.equal(hubPixel([], { x: 9000, y: 1 }), null, 'a pixel off the map is no answer');   // PIN MOVED (WW7-5): off the world's grid
   assert.deepEqual(hubPixel([row('a', 'bad', 1)], { x: 3, y: 4 }), { x: 3, y: 4, confirmed: false }, 'a report out of shape is no report');
   // the pixels' law, the same function: a pixel's report still read as climate and region
   const px = witnessedFact([row('a', pixelReport(231, 17), 1), row('b', pixelReport(231, 17), 2), row('c', pixelReport(231, 17), 3)]);
@@ -109,7 +109,7 @@ test('PROF5 law: the ledger\'s market kinds - the fee, the tax and the courier b
   // seat's fee given back) - none of them the market's. PIN MOVED (SILVER-WAYS): and a raid's, a guild deed's, a Motherlode's;
   // PIN MOVED (EG-E1): and a Redoubt's of the Elite Breach; PIN MOVED (STAR7): and a fallen star's
   assert.deepEqual(Object.entries(MARKS_KINDS).filter(([, w]) => w === 'mint').map(([k]) => k),
-    ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund', 'raid', 'guild-deed', 'motherlode', 'serpent', 'gather', 'find', 'eg', 'star', 'craft-writ'], 'the market strikes no Mark');   // PIN MOVED (CRAFT-WRITS): a crafting writ's pay, not the market's
+    ['gate', 'writ', 'siege-honours', 'gate-incursion', 'seat-strike-refund', 'raid', 'guild-deed', 'motherlode', 'serpent', 'gather', 'find', 'eg', 'star', 'castle-sale', 'castle-lost', 'domain-fold', 'craft-writ'], 'the market strikes no Mark');   // PIN MOVED (CRAFT-WRITS): a crafting writ's pay, not the market's; PIN MOVED (DOMAIN2, DOMAIN3): a castle's refunds and a folded Charter's fee, silver home that its purchase or claim burnt
   const sql = src('server-account/migrations/0032_market.sql');
   assert.match(sql, /src_kind TEXT NOT NULL CHECK \(src_kind IN \('mint', 'account', 'guild', 'escrow'\)\)/);
   assert.match(sql, /dst_kind TEXT NOT NULL CHECK \(dst_kind IN \('burn', 'account', 'guild', 'escrow'\)\)/);

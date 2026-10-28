@@ -1,0 +1,417 @@
+[
+  {
+    "name": "START2-site-rows-unlaid",
+    "file": "src/systems/starts/startPlaces.js",
+    "old": "addIntoQuestTables({ places: START_PLACE_ROWS.map((line) => ({ line, unlessKey: line.split(',')[0].trim() })) });",
+    "new": "addIntoQuestTables({ places: [] });",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-bay-start-has-a-site",
+    "file": "src/systems/starts/starts.js",
+    "old": "  return s?.site ? s : null;   // the Bay's start has no site of its own",
+    "new": "  return s;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-homeland-fallback",
+    "file": "src/systems/starts/starts.js",
+    "old": "export const homelandStart = (raceKey) => STARTS.find((s) => s.homeland.includes(raceKey)) ?? BAY_START;",
+    "new": "export const homelandStart = (raceKey) => STARTS.find((s) => s.homeland.includes(raceKey)) ?? STARTS[1];",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-bridge-any-start",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "export const gameStartQuests = (start = BAY_START_QUEST) => Object.freeze(['S0000977', isStartQuestName(start) ? start : BAY_START_QUEST]);",
+    "new": "export const gameStartQuests = (start = BAY_START_QUEST) => Object.freeze(['S0000977', start]);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-place-hook-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "let location = start ? world.startSiteOfId?.(this.p1) ?? null : findQuestLocation(world.maps, this.p1);",
+    "new": "let location = findQuestLocation(world.maps, this.p1);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-start-site-a-town",
+    "file": "src/systems/quest/place.js",
+    "old": "      siteType = SITE_TYPES.Dungeon;\n    } else if (!location) {",
+    "new": "      siteType = SITE_TYPES.Town;\n    } else if (!location) {",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-farthest-first",
+    "file": "src/systems/starts/startSite.js",
+    "old": "found.sort((a, b) => a.d - b.d || a.py - b.py || a.px - b.px);",
+    "new": "found.sort((a, b) => b.d - a.d || a.py - b.py || a.px - b.px);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-want-order-ignored",
+    "file": "src/systems/starts/startSite.js",
+    "old": "  start.lair.forEach((w, i) => { for (const f of found) if (!taken.has(f) && wantMatches(w, f.type, f.dungeonType)) take(f, i); });",
+    "new": "  [...start.lair].reverse().forEach((w, i) => { for (const f of found) if (!taken.has(f) && wantMatches(w, f.type, f.dungeonType)) take(f, start.lair.length - 1 - i); });",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-any-province",
+    "file": "src/systems/starts/startSite.js",
+    "old": "if (d < min || d > reach || provinceAt(px, py) !== start.province || !free(px, py)) continue;",
+    "new": "if (d < min || d > reach || !free(px, py)) continue;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-doorstep",
+    "file": "src/systems/starts/startSite.js",
+    "old": "if (d < min || d > reach || provinceAt(px, py) !== start.province || !free(px, py)) continue;",
+    "new": "if (d > reach || provinceAt(px, py) !== start.province || !free(px, py)) continue;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-no-reach",
+    "file": "src/systems/starts/startSite.js",
+    "old": "if (d < min || d > reach || provinceAt(px, py) !== start.province || !free(px, py)) continue;",
+    "new": "if (d < min || provinceAt(px, py) !== start.province || !free(px, py)) continue;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-taken-pixel",
+    "file": "src/systems/starts/startSite.js",
+    "old": "if (d < min || d > reach || provinceAt(px, py) !== start.province || !free(px, py)) continue;",
+    "new": "if (d < min || d > reach || provinceAt(px, py) !== start.province) continue;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-any-type",
+    "file": "src/systems/starts/startSite.js",
+    "old": "  return LOCATION_TYPES[kind] === type && (dt === '*' || DUNGEON_TYPES[dt] === dungeonType);",
+    "new": "  return LOCATION_TYPES[kind] === type;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-marker-border-counted",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (QUEST_CAP_BLOCK_RE.test(dungeonBlock.blockName ?? '')) continue;\n    for (const group of getBlock(dungeonBlock.blockName)",
+    "new": "    for (const group of getBlock(dungeonBlock.blockName)",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-marker-spawn-counted",
+    "file": "src/systems/quest/place.js",
+    "old": "if (flat?.textureArchive === EDITOR_FLAT_ARCHIVE && flat.textureRecord === ITEM_MARKER_RECORD) n++;",
+    "new": "if (flat?.textureArchive === EDITOR_FLAT_ARCHIVE) n++;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-start-dungeon-unweighed",
+    "file": "src/scenes/questWorld.js",
+    "old": "const loc = start ? startLairAt?.(start, (l) => dungeonItemMarkerCount((name) => blocks.getBlockByName(name), questSized(l)) > 0) : null;",
+    "new": "const loc = start ? startLairAt?.(start, () => true) : null;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-host-unweighed",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (loc && usable(loc)) return lairLocationAt(site.px, site.py);",
+    "new": "      if (loc) return lairLocationAt(site.px, site.py);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-no-land-wait",
+    "file": "src/scenes/startsHost.js",
+    "old": "      const landed = await Promise.race([Promise.resolve(landReady).then(() => true, () => true), wait(landWaitMs).then(() => false)]);",
+    "new": "      const landed = true;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS Q6): the wait says whether the trace landed."
+  },
+  {
+    "name": "START2-quest-before-move",
+    "file": "src/scenes/startsHost.js",
+    "old": "        try { await moveInto(loc); moved = true; } catch (e) { console.warn('[starts] the move into the start dungeon failed', e); }\n        if (!live()) return;\n        then(moved ? start.quest : HAND_START_QUEST);",
+    "new": "        then(start.quest);\n        try { await moveInto(loc); moved = true; } catch (e) { console.warn('[starts] the move into the start dungeon failed', e); }\n        if (!live()) return;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS W4/Q5): the move caught alone, a load mid-start checked."
+  },
+  {
+    "name": "START2-failure-unsaid",
+    "file": "src/scenes/startsHost.js",
+    "old": "      talk.say(STARTS_TEXT.noSite);\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-no-commission-in-hand",
+    "file": "src/scenes/startsHost.js",
+    "old": "  const bayQuest = () => (params.has('classic') ? BAY_START.quest : HAND_START_QUEST);",
+    "new": "  const bayQuest = () => BAY_START.quest;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-door-ignored",
+    "file": "src/scenes/startsHost.js",
+    "old": "    if (getBool('Startup', 'StartInDungeon')) { await quests().respawnLatched(loc); return; }",
+    "new": "    { await quests().respawnLatched(loc); return; }",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS W5): the move the quest layer's latched one."
+  },
+  {
+    "name": "START2-writ-sealed",
+    "file": "src/scenes/startsHost.js",
+    "old": "      if (q.getTask?.(OPENED)?.getTriggerValue?.()) return true;",
+    "new": "      if (q.getTask?.(OPENED)) return true;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS Q1): the seal read by the task's name the machine files it under."
+  },
+  {
+    "name": "START2-writ-any-port",
+    "file": "src/scenes/startsHost.js",
+    "old": "    if (port?.name !== WRIT_PORT.name || REGION_NAMES[port.region] !== WRIT_PORT.region) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-writ-fare-kept",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      .map((d) => (deps.writ?.(d.port) ? { ...d, fare: 0, writ: true } : d));",
+    "new": "      .map((d) => (deps.writ?.(d.port) ? { ...d, writ: true } : d));",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-writ-unread",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      .map((d) => (deps.writ?.(d.port) ? { ...d, fare: 0, writ: true } : d));",
+    "new": "      .map((d) => d);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-page-homeland-unchosen",
+    "file": "src/ui/startChoice.js",
+    "old": "    const at = this.options.findIndex((o) => o.homeland && !o.locked);",
+    "new": "    const at = -1;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-page-shut-picked",
+    "file": "src/ui/startChoice.js",
+    "old": "    if (!opt || opt.locked) return false;\n    this.cursor = i;\n    if (sound) audio.playOneShot(SOUND.ButtonClick, 1);\n    return this.answer(opt.id);",
+    "new": "    if (!opt) return false;\n    this.cursor = i;\n    if (sound) audio.playOneShot(SOUND.ButtonClick, 1);\n    return this.answer(opt.id);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-page-row-anywhere",
+    "file": "src/ui/startChoice.js",
+    "old": "  if (vx < START_X0 || vx > START_X1 || vy < START_ROW_TOP) return -1;",
+    "new": "  if (vy < START_ROW_TOP) return -1;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-page-unasked",
+    "file": "src/systems/chargenSession.js",
+    "old": "  if (startChoice && STARTS.some((s) => s !== BAY_START && startChoice.open(s))) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-page-every-start-shut",
+    "file": "src/systems/chargenSession.js",
+    "old": "  if (startChoice && STARTS.some((s) => s !== BAY_START && startChoice.open(s))) {",
+    "new": "  if (startChoice) {",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-lanes-unasked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS V6): any helm's crossing past the table."
+  },
+  {
+    "name": "START2-lanes-narrow-box",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "export const LANE_MARGIN = 960;",
+    "new": "export const LANE_MARGIN = 480;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-lanes-short-floods",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "export const LANE_END_REACH = 256;",
+    "new": "export const LANE_END_REACH = 24;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-lanes-ashore-anywhere",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  for (let dy = -VOYAGE_LANDFALL_PX; dy <= VOYAGE_LANDFALL_PX; dy++) for (let dx = -VOYAGE_LANDFALL_PX; dx <= VOYAGE_LANDFALL_PX; dx++) if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });",
+    "new": "  for (let dy = -40; dy <= 40; dy++) for (let dx = -40; dx <= 40; dx++) if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-skyrim-tie",
+    "file": "src/systems/starts/quests/_STARTSK.txt",
+    "old": "\"The Underking sleeps. His heart does not.\"",
+    "new": "\"The old king sleeps. His heart does not.\"",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-hand-a-reward",
+    "file": "src/systems/starts/quests/_STARTHD.txt",
+    "old": "\tget item _commission_\n",
+    "new": "\tgive pc _commission_\n",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-hand-gate",
+    "file": "src/systems/starts/quests/_STARTHD.txt",
+    "old": "\twhen _opened_ and _incity_\n",
+    "new": "\twhen _opened_ or _incity_\n",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js",
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "START2-world-quest-first",
+    "file": "src/scenes/world.js",
+    "old": "    starts.begin((start) => { questBridge.initAtGameStart(start); startTutorialTour(); }, startKey);",
+    "new": "    questBridge.initAtGameStart(starts.start.quest); startTutorialTour();",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js",
+      "test/ui/tut1_tutorials.test.js"
+    ]
+  },
+  {
+    "name": "START2-realm-born-early",
+    "file": "src/scenes/world.js",
+    "old": "          if (realmNew) starts.settled.then(realmBirth).catch(",
+    "new": "          if (realmNew) realmBirth().catch(",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js",
+      "test/systems/realm3.test.js"
+    ]
+  },
+  {
+    "name": "START2-page-answer-dropped",
+    "file": "src/scenes/world.js",
+    "old": "          questInitAtGameStart(r.startKey);   // Q4-v: OnStartGame for the new character",
+    "new": "          questInitAtGameStart();   // Q4-v: OnStartGame for the new character",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js",
+      "test/ui/enhanced/mwarms_fps.test.js"
+    ]
+  },
+  {
+    "name": "START2-bench-bay-start",
+    "file": "src/scenes/exterior.js",
+    "old": "    questBridge.initAtGameStart(HAND_START_QUEST);",
+    "new": "    questBridge.initAtGameStart();",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js",
+      "test/ui/tut1_tutorials.test.js"
+    ]
+  },
+  {
+    "name": "START2-move-races-the-boot",
+    "file": "src/scenes/startsHost.js",
+    "old": "      await worldStands();\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-pending-answer-lost",
+    "file": "src/scenes/world.js",
+    "old": "  if (_questStartPending) questInitAtGameStart(_questStartPending);",
+    "new": "  if (_questStartPending) questInitAtGameStart();",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "START2-begin-key-ignored",
+    "file": "src/scenes/startsHost.js",
+    "old": "    begun = true;\n    choose(key);",
+    "new": "    begun = true;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  }
+]

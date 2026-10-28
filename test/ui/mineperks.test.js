@@ -437,7 +437,7 @@ test('AUDIT MINE-PERKS a Motherlode\'s hour is said on THIS machine\'s clock wit
 
 test('MINE-PERKS every map reads them: the held map (its poll, its sheet, its legend), the classic region page (its texels and its repaint), the ink, and the world host\'s dep - a Sense\'s alone (mutants: any unwired; shown without the Sense)', () => {
   const h = read('src/ui/heldMap.js');
-  assert.match(h, /const lodes = readBountyMarks\(this\.deps\.lodes, this\._size, LODE_LEGEND_TEXT\);/);
+  assert.match(h, /const lodes = readBountyMarksIn\(this\.deps\.lodes, sheet, LODE_LEGEND_TEXT\);/);   // PIN MOVED (BAY-LEFT-MAPS): over the sheet's box (heldMap.js _marksBox) - a Motherlode past the Bay is drawn
   assert.match(h, /if \(mKey !== this\._lodesKey\) \{ this\._lodesKey = mKey; this\._lodes = lodes; gateMoved = true; this\._dirty = true; \}/);
   assert.match(h, /lodes: this\._lodes,   \/\/ MINE-PERKS/);
   assert.match(h, /if \(this\._lodes\.length\) \{   \/\/ MINE-PERKS: and a Motherlode's teal circle\n\s*const dot = el\('span', 'hmlegdot'\);\n\s*dot\.style\.background = LODE_RING_CSS;\n\s*leg\.append\(dot, el\('span', 'hmlegtext', lodeLegendText\(\)\)\);/);

@@ -8,13 +8,15 @@
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
 import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlocked } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
+import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // WW-C2: the open zone is Cyrodiil's
+import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
 import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once   // GOTHWAY-NORTH: the walk grid's cell
 import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: PlayerGPS.ResetState, the jump core's
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
 import { iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL2
 import { RESURRECT_HOLD_MS, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, rezSnapshot, rezFor } from '../systems/resurrect.js';   // RESURRECT1
-import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND, portalHold, spendPortalStone, portalStonePlace } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
+import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
 import { createPartyMapSender, hasSharedCartography } from '../systems/party/partyMap.js';   // PARTY-MAP
 import { liveDungeonAutomapKey, getDungeonAutomap, mergePartyAutomap } from '../systems/automap/automap.js';   // PARTY-MAP: the live dungeon's record, and a mate's rows merged into it
 import { armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
@@ -38,14 +40,14 @@ import { attachGamepad, GLASS_PAD_ZOOM } from '../ui/gamepadInput.js';   // GP1:
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
 import { customModelFor, hasCustomModel, customModelNeeds, classicModelIdOf } from '../world/customModels.js';   // ARENA1: RuntimeMaterials' ApplyClimate 0 - the colosseum wears its own pictures; AUDIT MERCHANT-YARDS G1: the yards measure the registered models
-import { isUndercroftDoor, undercroftLocation, isArenaUndercroft, isArenaCity, inArenaCell, ARENA_REGION, ARENA_LOCATION, ARENA_BLOCK, ARENA_GATE_PEOPLE } from '../world/arena/arenaCity.js';   // ARENA1: the undercroft's stair and its record, the city's cell; ARENA2: the colosseum's block in a built pixel, the Herald's place; ARENA-MAP: its name on the town map
+import { isUndercroftDoor, undercroftLocation, isArenaUndercroft, standsArena, inArenaCell, ARENA_REGION, ARENA_LOCATION, ARENA_BLOCK, ARENA_GATE_PEOPLE } from '../world/arena/arenaCity.js';   // ARENA1: the undercroft's stair and its record, the city's cell; ARENA2: the colosseum's block in a built pixel, the Herald's place; ARENA-MAP: its name on the town map
 import { isFurnishing } from '../systems/decor/decorFurnish.js';   // ARENA2: a moved house's furniture back among the furnishings
 import { createArenaBouts } from './arena/arenaBouts.js';   // ARENA2: the bout on this screen - its law over real bodies, its crowd, its HUD
 import { createArenaSound } from '../systems/arena/arenaSound.js';   // ARENA2: the crowd, heard - built from DAGGER.SND's own voices
 import { arenaScoreSongs, ARENA_SCORE_SILENCE } from '../systems/arena/arenaScore.js';   // ARENA2: the march and the fanfare
 import { drawArenaHud } from '../ui/arena/arenaHud.js';   // ARENA2: the versus bar, the crowd's meter, the clock
 import { setPlayerBout, inBout } from '../characters/enemy/enemyTargets.js';   // ARENA2: the bout team's player arm; AUDIT ARENA-LADDER A2: a fighter on the sand is its bout's
-import { keptOffArenaGround, ARENA_GROUND_M } from '../systems/arena/arenaGround.js';   // CURSE-OFF-SAND: the curse's dead keep off the arena's grounds
+import { ARENA_GROUND_M } from '../systems/arena/arenaGround.js';   // CURSE-OFF-SAND: the curse's dead keep off the arena's grounds
 import { exhibitionFor, nextLadderBout, arenaLadderRestore, practiceBout } from '../systems/arena/arenaLadder.js';   // ARENA2: the hour's exhibition, the ladder's next bout
 import { arenaReplaysRestore } from '../systems/arena/arenaReplay.js';   // ARENA5: your ladder replay
 import { createArenaGate, nearArenaGate } from './arena/arenaGate.js';   // ARENA3; ARENA4b: the Herald's choice and the pause door's banner too
@@ -59,16 +61,16 @@ import { cityFloorCentre, standsRail, SAND_R } from '../world/arena/arenaFloor.j
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // ARENA1: the Daggerfall Bank's letter
 import { moveArenaRecords, arenaHomeFor, emptyArenaScene } from '../systems/arena/arenaMove.js';   // ARENA1: a deed whose house the arena took, moved once; ARENA4b: and an online home, by its owner's client
 import { loadModWorldData, ensureWorldDataPack, worldDataPacksMissing } from './modWorldData.js';   // RR3b; WD3: a pack a save's pins let in
-import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, admitPinnedPacks, stampLayout, layoutStampOfPixel, layoutStampOfMapId, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in; FIELD BUGS 2026-10-07 CRATE-LAYOUT: a moved home's town, as it stands
+import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, admitPinnedPacks, stampLayout, layoutStampOfMapId, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in; FIELD BUGS 2026-10-07 CRATE-LAYOUT: a moved home's town, as it stands
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/quest/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
 import { marksOn, questMapMarks } from '../ui/quest/questMarks.js'; import { boatCompassPoints } from '../ui/boatMarks.js';   // GUIDE5: where the quests point, on the held map and the compass; BOAT-MARK: where my boats lie, on the compass
 import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER_BYTE } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
-import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS, maskMapId } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
+import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt, terrainSampleHeightAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt, walkGroundAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none; FLORA-GROUND: the ground's one law
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { bedFields, sheetDepthsOf } from '../world/water/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/water/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
@@ -87,7 +89,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, identity, UP_Y, wrapA
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
 import { spherePlanes, batchVisible, setFlatLean, batchSphere } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
-import { FarRingRenderer, ringDisabled, ringHeight, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
+import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { flatFieldFor } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids; AUDIT MERCHANT-YARDS G1: and a yard off the field
@@ -117,15 +119,14 @@ import { LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // 
 import { characterRelations } from '../systems/livingWorld/regardClock.js';   // FIELD BUGS 2026-10-21d REGARD-OWN: counted in the character's own days
 import { friendCards } from '../systems/livingWorld/friendWord.js';   // AUDIT FB1021d RO-4: a friend made, named for the HUD
 import { firstNameOf } from '../systems/livingWorld/lines.js';
-import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX, livingNearKey, LIVING_NEAR_KEPT } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
-import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
+import { mintResident } from '../systems/livingWorld/census.js';   // LW4: a newcomer to a place the road emptied (LW3's travellers: scenes/livingWorld/livingTrips.js)
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage, residentOfId, regardBadge } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
 import { foeWord } from '../systems/livingWorld/lines.js';   // LW4: a foe's word for the town's talk and a mark
-import { portPackets, berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
-import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the travellers' ways, planned by the living world itself
+import { berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
+import { createLivingLanes } from './livingWorld/livingLanes.js';   // AUDIT WW F7: the lanes' books, made again when the world moves
 import { createLivingRoads } from './livingWorld/livingRoads.js';   // LW3: the parties on the road near the player
 import { createRoadTeams } from '../world/road/roadTeams.js';   // LW10: their horses and wagons
 import { createCaravanHost, travellerOf, tripOfId } from './caravanHost.js';   // LW11: the caravan's door
@@ -133,6 +134,14 @@ import { createHideouts, createHideoutBook, bandChest, BAND_KEEP_M } from './hid
 import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a patron named (the town deals them - LivingTown patronOfSale)
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
+import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
+import { pastBayJourney, teleportJourney } from '../systems/travel/pastBayTravel.js';   // AUDIT TESA II P4: no journey into the land past the Bay
+import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
+import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a town by its map id, the Bay's and the registry's
+import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
+import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
+import { rumareSeaPixel } from '../world/rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake the sea's - its ports' shore, its voyages' water
+import { createWorldLanes, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -181,7 +190,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER, clampFatigue
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/rest/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, regionDeedOf, allDeeds, regionHousesFull, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -191,8 +200,8 @@ import {
 } from '../systems/sceneCache.js';
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
-import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, travelMapPickerData, canFindPlace, placePixelMemo } from '../ui/travel/travelMapDoor.js';
-import { checkLocationDiscovered as travelCheckDiscovered, getPixelColorIndex as travelPixelColorIndex } from '../ui/travel/travelMapWindow.js';
+import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace, placePixelMemo } from '../ui/travel/travelMapDoor.js';
+import { getPixelColorIndex as travelPixelColorIndex } from '../ui/travel/travelMapWindow.js';
 import { travelMapFilters, travelMapMarkedMapId } from '../systems/travel/travelMapState.js';   // AUDIT-TO1 F2: the junction map honours the map's four filters; AUDIT-MAP: and reads the mark from the store
 import { shortcutBinding, sequenceString } from '../systems/dialogShortcuts.js';   // AUDIT-TO1 H2: TravelExit is a dialog SHORTCUT, as DFU reads it   // TO1: the junction map draws by the same two laws the page does
 // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
@@ -213,7 +222,7 @@ import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.G
 import { cureLycanthropy, racialSuppressTalk, lycanthropeMoveSound, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock, tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2; LW7: a traveller struck down is the Brotherhood's five
-import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
+import { vampireCryptPixel } from './vampireCrypt.js';   // V2e: GetRandomCemetery's pick half; AUDIT RELEASE R2-6: and the province's own past the Bay
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { prepareQuestShare, prepareShareData, shareSignature, receiveSharedQuest, SHARE_REFUSAL_TEXT, sayShareRefusal, syncBaselineAfter, questBusyAgain, shareSomeone, shareReceivedLine, shareRefusedLine, shareSentLine } from '../systems/quest/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
 import { careerSunAverse } from '../systems/passiveSpecials.js';   // AUDIT 64 F20: Career.DamageFromSunlight, the arrival clamp's second arm - HOOD-CAREER: under a bare head
@@ -235,15 +244,15 @@ import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under 
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
 import { LabGrassRenderer, createGrassField, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/wind/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
-import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
-import { createSnowfallHost, snowfallNetwork, authoredTiles, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
+import { createSnowfallHost } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
 import { createWindAudio, windSoundOn } from '../systems/wind/windAudio.js';   // WIND3: the wind, heard
-import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
+import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
-import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour, heldSpots, holdSpotWhile, questBoxHoldsFoes, questShareTag, partnerStandsQuestFoes, questBehaviourFor, adoptsOrphanQuestFoe, isPrivateQuestFoe, KeptKillLedger, creditKeptKills, questPrivateTag, partyQuestFoe, partyOnlyQuestShare } from './quest/questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
+import { placeFoeEnv, entityOccupancy, reviveQuestBehaviour, questBoxHoldsFoes, questShareTag, questBehaviourFor, adoptsOrphanQuestFoe, isPrivateQuestFoe, KeptKillLedger, creditKeptKills, questPrivateTag, partyQuestFoe, partyOnlyQuestShare } from './quest/questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS, enemyLevelOf } from '../characters/enemy/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { markFoeReach } from '../systems/foeReach.js';   // WATER-FOES: a foe in the water reaches no one aboard
 import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby, foeHostile, foeAlerted, fightNear } from '../systems/encounters.js';   // OW6: foeHostile, the one hostility gate   // CAMP-ROLL: REST5's quietNights moved with the carried night's sequence (scenes/shared.js restCampNight)
@@ -251,7 +260,7 @@ import { nightDue, setNightListener, nightStamp, nightKindOf, isNightStamp, carr
 import { createNightWatch, carriedNightAction, createCampWatch, campPasses } from '../systems/party/partyRestLaw.js';   // AUDIT REST-PARTY: the party's night, pinned by execution   // AUDIT REST II P1/P2: its watch   // CAMP-ROLL: the camp's one roll
 import { ambushNight } from '../systems/rest/restAct.js';   // AUDIT REST-PARTY A1: a resting encounter stood breaks the night that rolled it
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
-import { chooseRandomEnemy } from '../systems/encounters.js';   // LW6: a dungeon's own foes for a dive's trouble
+import { troubleFoesOf } from './livingWorld/troubleFoes.js';   // LW4/LW6: the road's trouble's foes - BAY-LEFT-GROUND: on the land's own wild past the Bay
 import { skillValue } from '../systems/skills.js';   // TO1: the avoid-encounter roll's live Stealth; WILD-ALERT: the notice's
 import { effectiveLevel, castingLevel } from '../systems/mentorMode.js';
 import { mentorStatusText, pupilStatusText, mentorPartyNote } from '../systems/mentorText.js';   // MENTOR2: mentoring's words
@@ -272,20 +281,38 @@ import { createGatherHost } from './gatherHost.js'; // PROF1/PROF2: the gatherin
 import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kind in it
 import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlintPass } from '../render/nodeGlint.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-GLINT: glinting on their own pictures
 import { treeKind } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it
+import { seatFlora } from './floraSeat.js';   // FLORA-GROUND, THE RINGS: a pixel's plants drawn on the ground it draws, at every ring
 import { createTreesHost } from './treesHost.js';   // LPT1 / BANTHA1 (HOST-SPLIT): the near 3D trees - Low Poly Trees' door and the jungle's, and their frame
 import { createJungleHost } from './jungleHost.js';   // BANTHA1: Bantha's jungle - its field, its trees' door, its haze
+import { canopyLight, canopyKey, canopyMoon } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY: the light under a closed canopy
 import { createJungleFloorHost, floorPictures } from './jungleFloorHost.js';   // BANTHA2: the jungle's floor - a second field of the grass
 import { createSnowCoverHost } from './snowCoverHost.js';
 import { createGroundSets } from './groundSets.js';   // OW-HITCH: a ground set made and uploaded a breath at a time (HOST-SPLIT)   // PRECIP4: the snow the ground keeps, about the player
 import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
-import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
+import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn, arenaPlacesOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
-import { fitBayToPicture } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it
-import { groundWoods, groundClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring
-import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
-import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
-import { tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
-import { createLandforms, landformLiftField, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
+import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // WW2: which picture a theatre's gate scan read
+import { keptBayFit } from '../world/tamriel/bayFitKept.js';   // TAMRIEL3: where the Bay stands on it; FIRST-VISIT: kept across launches
+import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
+import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
+import { arenaTemplates, ARENA_LOAD_WAIT_MS } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
+import { countryTemplates, countryCounts } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
+import { countrysideOn } from './shared.js';   // TESA7: its kill door
+import { capitalsOn } from './shared.js';   // TESA10: the capitals' kill door
+import { capitalBase, cityBlockNames, setCapitalsStanding, isCapitalLandmark } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand; BAY-LEFT-SEA: a landmark measured by its footprint
+import { lairTemplates, lairPools } from '../world/tamrielDungeons.js';   // TESA8: the lairs past the Bay
+import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the places past the Bay the roads' regions laid, for the held map
+import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
+import { provinceByKey } from '../world/tamriel/tamrielGeography.js';   // TESA3: its name and race
+import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
+import { setFolkPlace, folkOfLocation } from '../characters/provinceFolk.js';   // PROVINCE-FOLK: past the Bay the foes and the standing people are the province's
+import { groundWoods, groundMaps, tamrielClimateAt, climateNeighbourIn, feltClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground; WW-R: the politic map past the Bay
+import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
+import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door; AUDIT TESA II F6: its bands' ground
+import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
+import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME, isEtherPlaceId } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
+import { tamrielFrameInBay, inBay, inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground (WW3 reads it as inBay, TESA as onTheBay)
+import { createLandforms, landformSites, landformClimates } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { ecotoneOwner } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/road/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { forestAt } from '../world/terrain/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
@@ -293,6 +320,8 @@ import { freePull } from '../systems/travel/freePull.js';   // OW-FREE-STRAIGHT,
 import { createGrantHost } from './grantHost.js';   // GRANT2-GRANT4: the spawn grants - my stands' and my reading of others' (bible/11-Multiplayer/Spawn-Grants.md)
 import { wireOwnerClock } from './ownerCatchUp.js';   // OWNER-CLOCK: my foes' steps on the clock their frames carry, and the street's kept to my frame's pace while anyone else is in my room
 import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
+import { createBootStart } from './bootStartHost.js';   // HOST-SPLIT: the boot's start, moved out of bootWorld
+import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-B: a province's region the quest layer's table (the talk's Regional rows)
 import { createCraftWritHost } from './craftWritHost.js';   // CRAFT-WRITS: the Work tab's crafting writs, handed over from the pack
 import { createSeasonBook } from './seasonBookHost.js';   // SEASON-BOOK: the laurel's boards, asked while its window is open
 import { rollNoticeDoors } from './rollNoticeHost.js';   // SEAT-WORDS / STANDING-WORDS: what the Roll's tracker says
@@ -311,17 +340,20 @@ import { createWitchesHost } from './witchesHost.js';   // WITCH1: the Witches' 
 import { createPortHost, PORT_TEXT, stairRefusal, stairFeetY } from './portHost.js';   // SHIPYARDS: every port town's shipyard and lighthouse, their people, their press and the lamp - and the stair's refusals
 import { createShipyardHost } from './shipyardHost.js';   // SHIPYARDS: the shipmaster's window's host half
 import { createPassageHost } from './naval/passageHost.js';   // PASSAGE: a berth's friendly ship, booked and sailed
+import { createStartsHost } from './startsHost.js';   // START2: where a new character's story begins
 import { voyageSails } from '../systems/naval/passage.js';   // FIELD BUGS 2026-10-21d PASSAGE-IN: from her port's roadstead she runs in
 import { createWardenShows } from './wagon/wagonWardenShow.js';   // WARDEN1: the town watch's throw, played
 import { createWagonWarden, wardenTownIn, wardenTownOfPixel } from './wagon/wagonWardenHost.js';   // WARDEN1: the town watch - my wagon's stamp, the cell's words, the offline clock; AUDIT WARDEN1 D3: the town under a point, one pure home
 import { createWildEscrowHost } from './wildEscrowHost.js';   // PVP-ESCROW: the two-phase handoff's two sides, out of bootWorld (HOST-SPLIT)
 import { WARDEN_VENDOR } from '../systems/wagon/wagonWarden.js';   // WARDEN1: the stamp's save slot, and the towns a watch keeps
-import { townGroundOf, yardSitesOn, craftYardSitesOn, MONUMENT_KEEP_M, yardMeasuresOf, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them
+import { townGroundSteps, yardSitesSteps, craftYardSitesSteps, keptTownSitesSteps, MONUMENT_KEEP_M, yardMeasuresSteps, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them; IC-STUTTER: each pass a step at a time
+import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner - a town's places through the build's breather
+import { townYardsOf } from '../world/merchantYards/townYards.js';   // IC-PROPS: what a town tells its yards' law - its fabric's ways, a capital's own yards
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
-import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
+import { townSeaOf, seaBearing, seaField, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
+import { keptPortSitesOn } from '../world/portSitesKept.js';   // FIRST-VISIT: a port town's sites kept across launches
 import { SHIPYARD as SHIPYARD_LAYOUT } from '../world/shipyardModel.js';   // SHIPYARDS: the crew hall's table, for the talk directory's row
-import { createHarbourBook, HARBOUR_TOWN_ORDER, harbourOf } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's; RPT1026-WORLD FAR-QUAY: every port near, out to the ring, its ground known
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/professions/profItems.js';   // PROF1: a Stores material as DFU's own item
 import { oreMapTip } from '../ui/oreMapTip.js';   // ORE-MAP: the held map's word on a pixel's ore
 import { heldOf as bagHeldOf, heldKeysOf as bagHeldKeysOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands; UNCOUNTED: every material they hold
@@ -335,8 +367,6 @@ import { createIliacClaims } from '../net/iliac/iliacClaims.js';   // CARDS10: t
 import { createGambitClaims } from '../net/gambit/gambitClaims.js';   // KG6: and The King's Gambit's rated games'
 import { seasonCounted, seasonKept, seasonGuest, seasonFoeGuest } from '../ui/gambitTableWords.js';   // KG6: what the season's claims say
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
-import { wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF6: a commission's piece unworn
-import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
 
 import { unseenText } from '../net/boardLaw.js';   // NOTICE1: the count over a board
 import { alignSurvival, markOutCold } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT C&C N2: the collapse's hour a night on the ground
@@ -345,18 +375,20 @@ import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env
 import { elementalResistanceChance, ELEMENTS, BODY_CAPSULE_RADIUS, EFFECT_FLAGS, savingThrow } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances; WB4: the saving throw a boss's fire meets   // DW-E3: a foe's controller, as a fish's probe meets it
 import { createTownWatch, runTownWatchFrame } from '../systems/town/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
-import { WORLD_SALT, spawnsDungeon, spawnedMapId, pathFreePixel, createSpawnGround, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
-import { createSpawnGroundPlace } from '../world/spawnGroundPlace.js';   // GROUND-AGREE: the place a pixel's ground is shaped for
-import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
-import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
+import { WORLD_SALT, spawnsDungeon, pathFreePixel, createSpawnGround, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
+import { insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { createGateLanes, createTheatreGateScans } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
+import { gateSeatRegion, gateClaimWaits } from './gate/gateSeat.js';   // WW-GATES-EVERYWHERE (A2b): where a gate's kill counts - a lane past the Bay's its own province's
+import { gateScanner, findGateSite, gateSeaPixel } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
 import { createRocketHost } from './rocketHost.js';   // ROCKET1: /event rocket - the mounds, their poop, the farting horses and the frenzy
 import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faithful's rite - its circle, its smoke, its faithful, its word and its chest
-import { createSdHost } from './superDungeon/sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
+import { createSdLanes } from './superDungeon/sdLanes.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines; WW5: a Hollow in every theatre, a lane at a time (the Bay's host as it was)
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBannerText, SD_BANNER_M } from '../systems/superDungeon/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/superDungeon/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
-import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/superDungeon/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
+import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/superDungeon/sdLaw.js';
+import { createSdCopy, sdCopyLine } from './superDungeon/sdCopy.js';   // SD-PARTY: a party's own Hour   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
 import { egRoomKey, EG_TEXT } from '../net/eliteGates/egLaw.js';   // EG-PLAY: an Elite Breach's room, and its words
 import { createEgClient } from './eliteGates/egClient.js';   // EG-PLAY: the breach on this screen - the key, the call, the halls, the receipts
 import { createEgArchPool, egArchPlace, egArchSite, EG_ARCH_GATE_NEAR_M } from './eliteGates/egArch.js';   // EG-F: the Elite Breach's arch - its pool, its place, its site; a Dagon's Breach near
@@ -412,9 +444,8 @@ import { createGateClaims } from '../net/gate/gateClaims.js';   // WB5b: the kil
 import { createRaidClaims } from '../net/raid/raidClaims.js';   // RAID4: the raid receipts, carried to the account service until counted and paid
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';   // RAID4b: a raid receipt's raid, seed, party and account, for a town's thanks
 import { raidSpoilsList, raidSpoilsDay, RAID_SPOILS_KEYS, RAID_SPOILS_TEXT, RAID_SPOILS_RECORDS_MAX } from '../systems/raidSpoils.js';   // RAID4b: a town's thanks
-import { grantStaffSpoils } from '../systems/staffEventSpoils.js';   // STAFF-EVENT THE REWARD: an event's spoils
 import { createSerpentOmen, insideSerpentRing, SERPENT_OMEN_SETTLE_MS } from '../systems/serpent/serpentOmen.js';   // SERPENT1 (Mac: "a large scale sea serpent in the ocean"): the sea serpent's sighting - its lines, its ring, its compass mark
-import { findSerpentSite } from '../systems/serpent/serpentSite.js';   // SERPENT1: where it rises - on a packet lane, in open sea
+import { worldSerpentSite } from '../systems/serpent/serpentSite.js';   // SERPENT1: where it rises - on a packet lane, in open sea; WW7-12: the world's lanes', or the hub's word of it
 import { createSerpentLink } from '../net/serpent/serpentLink.js'; import { readSerpentReceipt } from '../net/serpent/serpentReceipt.js';   // SERPENT1: the cell's words of its fight, folded; a receipt's day, seed and earning
 import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client's half of the fight - the `in`, the volleys, the blows on my ship, the coil and the whirl
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
@@ -464,14 +495,14 @@ import { itemIconColor32 } from '../ui/item/itemIconColor32.js';   // WBX3: a sp
 import { setCourtRules } from '../systems/courtRules.js';   // WBX6: the court's laws, switched by the frame
 import '../systems/courtRulesDoor.js';   // AUDIT WORLD-EVENTS L1-10: and their pause, at the player's hurt door
 import { sendRaiseWord } from '../net/raiseWord.js';   // AUDIT WORLD-EVENTS L1-1, L1-4: a Resurrect said to the room that keeps the death
-import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, gatePortentsOf, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
+import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, gatePortentsOf, gateLaneOf, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { createGateCrowd, gateCrowdMax, crowdKept } from '../net/gate/gateCrowd.js';   // GATE-CROWD: the card's count draws the nearest of a crowd (CROWD-WIDE: everywhere a stranger cannot fight me)
 import { createPeerRange, peerRangeOf } from '../net/peer/peerRange.js';   // PEER-RANGE: the others drawn out to the distance on the Other players card
 import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
-import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
-import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot, exitAutosaveNames, enumerateSaves, onSlotSaved, onSlotLoaded, slotLoaded } from '../systems/save/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
+import { restorePlayer, resolvePendingSpells, restoreSessionState, dungeonPixelFor } from '../systems/save/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
+import { loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, capturePendingScreenshot, exitAutosaveNames, enumerateSaves, onSlotSaved, onSlotLoaded, slotLoaded } from '../systems/save/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { frameInterval, lastBusy, lendFrame, framesBegun } from '../systems/frameClock.js';   // PERF-EXT24: the frame's period and its own script, and the stream's slices lent back - those no frame ran inside
@@ -479,10 +510,10 @@ import { arrivalClampMinutes, playerTravelPosition, travelDays, setSeaTide } fro
 import { TIDE_EFFECTS } from '../net/tideLaw.js';   // SEASON1 part two: a Storm Season's sea (Seats-Arc 9.3)
 import { hallOfRecordsWindow } from '../ui/hallOfRecords.js';   // SEASON1 part three: a seat's Chronicle as a book (Seats-Arc 9.2)
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest/rest.js';   // F-slice: the NoRegen restore gate
-import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
+import { buildingCompassDirection, directionHintString } from '../systems/talk/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
 import { seasonValue, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
-import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
+import { getNameBankOfRegion, getRandomFullNameOfBank } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home - TESA3: its draw, from the bank where the player stands
 import { createHitEffects, setSplashObserver } from './hitEffects.js';
 import { noteMyBlow, noteMyHurt, isHurtClip, poseFx, createPeerFxPlayer } from '../net/peer/peerFx.js';   // PEERFX1: the others see and hear my blows, and hear me struck
 import { hitFlashStrength, setBatchHitFlash, HIT_FLASH_S } from '../systems/hitFlash.js';   // HITFLASH1: a struck body's red - the peers' curve is the foes'
@@ -514,16 +545,19 @@ import { showPaceBox, hidePaceBox } from '../ui/travel/travelPaceControls.js';  
 import { markShown, travellerKin } from '../systems/travel/travelViewFilters.js';   // OW-FILTER: a hidden group's sprites hidden with its marks
 import { travelPathMode, travelPathUsesRoads, pickTakesPlace, pickNearPlaceMiddle, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travel/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town; OW-TOWN-ROUND: only at its middle
 import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
-import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
+import { routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
+import { planRouteSliced as planRoute, planJourney } from '../systems/travel/planSlices.js';   // PLAN-SLICES: the journeys' plans a slice of cells at a time
+import { tvMooredDry, tvSeaAsk } from '../systems/travel/seaAsk.js';   // OWS2's two asks of the planner (PLAN-SLICES: out of the host)
 import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
 import { createLoadGovernor, unbuiltAround, unbuiltCount, travellerPace } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
-import { playerOnPathAt, pathsDataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it
+import { playerOnPathAt, pathsDataPoint, dataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it; BAY-LEFT-MAPS: the junction map's bytes, past the Bay its roads'
 import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW) - TIME-DILATION: x1 inside a hostile ship's hold
-import { farPlaces, settlementPixels, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
-import { dungeonRows, spawnedPixels, filedSpawns, nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
+import { farPlaces, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
+import { nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
 import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
+import { drawRouteRuns, drawOwnRun } from '../systems/travel/roadLine.js';   // ROAD-FOLLOW: the drawn route on the roads' curves past the Bay
 import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
 import { bandWordOf, validBandWord, chaseYields, bandLifeOf, bandNearMe, bandPixelOf, BAND_WORD_MS, BANDS_WIRE_MAX } from '../systems/travel/travelBands.js';   // TV7b: the chase, shared
 import { walkBegin, leaderWalkStep, walkHeard, memberAnswer, memberFollowing, memberStopOf, memberWalkStep, walkAskStands, sameWalkDest, NO_WALK_ANSWER, PARTY_WALK_RADIUS_M } from '../systems/party/partyWalk.js';   // TV8: group travel, the leader drives (AUDIT OW3: the whole law, pure)
@@ -541,7 +575,7 @@ import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: th
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eyeOfTheBeholder/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
 import { waterSourceHoverName } from '../systems/survival/items.js';   // WORLD-HOVER M6: a water source's word, beside its producer
-import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, setEotbCartYields, mwViewWagonActivate, setEotbComeSailAway, mwViewHoldThird, mwViewHoldChanged, mwViewSaveCamera, mwViewTogglePerspective, mwViewHoldFirst, mwViewCanTogglePerspective } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV; CSA-J: EOTB's boat
+import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, setEotbCartYields, mwViewWagonActivate, setEotbComeSailAway, mwViewHoldThird, mwViewHoldChanged, mwViewTogglePerspective, mwViewHoldFirst, mwViewCanTogglePerspective } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV; CSA-J: EOTB's boat
 import { mwViewAttachHorse, mwViewSaddle, mwViewHorseRig } from '../player/mwView.js';   // COATS3D: the 3D horse under the Morrowind body - its rig, the saddle the body sits
 import { seaZoomReach } from '../player/seaZoom.js';   // FIELD BUGS 2026-09-29 (the sea) #3: the zoom at a helm
 import { mwCamera } from '../player/mwCamera.js';   // MW-D30: persistence
@@ -551,7 +585,7 @@ import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, MOBILE_NPC_ACTIVATION_DISTAN
 import { setMidScreenText, midScreenText as _wildMidText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk/talk.js';   // GetRandomText(8999)
-import { spellRecordOfIndex, DUNGEON_LOOT_KEYS, generateItems as generateLootItems, addPileLootExtras, shownSpellName } from '../systems/loot/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry); WOD3: LootTables.GenerateLoot for the camps' piles; L10N3e: a spell's name as shown
+import { DUNGEON_LOOT_KEYS, generateItems as generateLootItems, addPileLootExtras, shownSpellName } from '../systems/loot/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry); WOD3: LootTables.GenerateLoot for the camps' piles; L10N3e: a spell's name as shown
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady, warmLevelUpWindow } from '../ui/charSheetDoor.js';
 import { announceLevelUp, levelOwed, announceRenownRise, announceQuestFoeSlain, questFoeName } from '../ui/levelUp/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
@@ -604,7 +638,7 @@ import { isEntityWaterWalking, assignModBundle, removeBundleNamed, WATER_WALKING
 import { pointNearPath, UNITS_PER_METRE, CAMP_ROAD_CLEAR_M } from '../world/road/roadClearance.js';   // FOREST1: and which picks are sites, and a site's footprint   // ROADS-CLEAR: WoD sites and pieces, and the camps, off the painted roads
 import { gateClearFor, createGateClearSweep } from '../world/gate/gateClearance.js';   // GATE-CLEAR: WoD's rock off the day's Oblivion Gate
 import { raidMapMarks } from '../ui/eventMapMarks.js';   // EVENT-TIP: the towns under attack, on the held map
-import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, nearestFirstFrom } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
+import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array; AUDIT 68 S22: the load list's one order
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool, ownedLine } from './horseCartPool.js';
 import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
@@ -612,7 +646,7 @@ import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peer/
 import { createHorseCartRuntime } from '../systems/horse/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setForagingHost } from '../systems/foraging/foragingInstall.js';   // FORAGE1: Foraging's reaches into the world, answered by this host
 import { registerContainerLootHandler } from '../systems/containerLoot.js';   // THE MERGE: CSA-H's shelf subscriber, by its mod's name, on PlayerActivate.OnLootSpawned's one home
-import { mintPieces, mintPiece, mintMarketPiece, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture, asMinted, pieceOfRecipe } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
+import { mintPieces, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
 import { heatBand, planeBand, stitchBand, chiselBand, recipeById } from '../net/recipeLaw.js';   // PROF3: the heat's attribute band; PROF4: the plane's, and a recipe's station; PROF7: the stitch's; PROF11: the chisel's
 import { COOK_KEPT_TEXT } from '../systems/smithItems.js';   // PROF9: the fire's word, a dish whose answer did not come
 import { JEWEL_KEPT_TEXT } from '../systems/smithItems.js';   // PROF10: the jeweller's bench's word, a piece whose answer did not come
@@ -629,7 +663,7 @@ import { SURVEYOR } from '../net/professionLaw.js';   // MINE-PERKS: Mining 100'
 import { lodeMapMarks } from '../ui/lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, on both maps and the Overworld
 import { seatEventBoard, eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the event board's source, seated where it is made, and the one door an event's line goes through (never the chat)
 import { EVENT_SOON_MS } from '../systems/eventBoard.js';   // AUDIT EVENTS1 A4: the board's horizon, the raids' look ahead
-import { localWhenText } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
+import { localWhenText, gateEventId as gateLineId } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
 import { setFeastShare, takeFeastGift, shareFeastWith } from '../systems/cookItems.js';   // PROF9: a feast shared with the party at the table
 import { hasSkillet, packSavedFires, CAMP_TEXT } from '../systems/survival/camp.js';   // PROF9: C&C's Skillet widens the pan's window; AUDIT REST II H5: a dungeon save's fires carried out
 import { allyCastFrame } from '../systems/allyCast.js';   // PROF9: a feast reaches a party mate as ALLY-CAST's gift
@@ -651,8 +685,7 @@ import { createWagonRiders, GO_LEAD_MS } from './wagon/wagonRiders.js';   // WAG
 import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagon/wagonSeats.js';
 import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
-import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, nodeOf as csaNodeOf, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
-import { travelMapPicture, TRAVEL_MAP_IMG, LINE_TEXTURE as CSA_LINE_TEXTURE } from '../systems/comeSailAway/comeSailAwayMap.js';   // CSA-I: the position reading's picture and lines
+import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
 import { createComeSailAwayRuntime, cargoModWords, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
 import { windWidgetFrameUrl as csaWindWidgetFrameUrl, waveDerivedUrl as csaWaveDerivedUrl, wavePaintUrl as csaWavePaintUrl, soundUrl as csaSoundUrl } from '../systems/comeSailAway/comeSailAwayModels.js';   // CSA-E: the wind widget's pictures; CSA-F: the waves' recipes and paints
 import { WAVE_FRAME_COUNT as CSA_WAVE_FRAME_COUNT, waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAway/comeSailAwayWaves.js';   // CSA-F
@@ -687,7 +720,7 @@ import { createNavalCrew, CREW_RANGE, CREW_KEEP } from './naval/navalCrew.js';  
 import { asleepHour } from '../systems/naval/shipWatch.js';   // SHIP-WATCH: the crews' sleeping hours
 import { crewRoster, crewCount } from '../systems/naval/crewLife.js';
 import { createCrewAshore } from './crewAshore.js';   // CREW-COMPANIONS: the party ashore, stood in every place
-import { revenantParty, setRetinuePlayer, setRetinueListener, setRetinueBodies, revenantsWithYou, leaveRefusal, isRevenantCompanionKey, revenantIdOfKey, applySwornStrength, sendRevenantAway, forgetSwornMember, swornFightStep, swornFightWon, devotedWithYou } from '../systems/revenant/revenantCompanions.js';   // REVENANT-COMPANION: the sworn, stood by the same layer
+import { revenantParty, setRetinuePlayer, setRetinueListener, setRetinueBodies, revenantsWithYou, isRevenantCompanionKey, revenantIdOfKey, applySwornStrength, sendRevenantAway, forgetSwornMember, swornFightStep, swornFightWon, devotedWithYou } from '../systems/revenant/revenantCompanions.js';   // REVENANT-COMPANION: the sworn, stood by the same layer
 import { registerCompanionCount, registerCompanionRoster, companionsWithYou, COMPANION_SLOTS } from '../systems/companionSlots.js';   // COMPANION-SLOTS: the crew's hands ashore counted with the sworn
 import { PERSONALITIES } from '../systems/revenant/revenantPersonality.js';   // REVENANT-COMPANION: the party card's word for one
 import { hullBuild } from '../systems/naval/navalShips.js';   // LIVING CREW: a room's boat's crew, her hull's own
@@ -708,10 +741,10 @@ import { horseOffsetHeight as csaHorseOffsetHeight } from '../ui/hud/hudLarge.js
 import { raycastColliders, rayBoxEntry, colliderPoses, invertAffine, BUILTIN_COLLIDER_MESHES, boxColliderTriangles } from '../world/prefabColliders.js';   // CSA-C: a boat's colliders under the ray; CSA-D: and in the world's collider
 import { DECK_STEP, DECK_HEADROOM, intoDeck, outOfDeck, mainLevel } from '../systems/naval/navalDeck.js';   // DECK-WALK: a body off her deck by more than a tread has left it; her deck's frame (AUDIT NAV2 F33: the headroom a deck point's ray starts under)
 import { warmAshesOn, LeaveShip, setWarmAshesHost, onPreFastTravel as warmAshesPreTravel, onPostFastTravel as warmAshesPostTravel, frame as warmAshesFrame, raidAtSea as warmAshesRaidAtSea, raidRefusal as warmAshesRaidRefusal, raidUnderWay as warmAshesRaidUnderWay, WA_RAID_QUESTS, WA_SEA_REGION } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships, the ambush at sea; OWS3: its raid, seen coming; THE MERGE (NAV-D, OWS3): one raid at a time
-import { laneNetwork, laneWay, packetsAt, packetAt, LANE_PATH_PX, LANE_DWELL_S } from '../systems/naval/seaLanes.js';   // SEA-LANES: the Bay's packets; LW5: where one is, and her dwell
+import { laneNetwork, laneWay, packetsAt, packetAt, LANE_DWELL_S } from '../systems/naval/seaLanes.js';   // SEA-LANES: the Bay's packets; LW5: where one is, and her dwell
 import { raidersNear, raiderAt, raiderSight, chaseStep as raiderChaseStep, pixelOfNative, NATIVE_PIXEL as RAID_NATIVE_PIXEL, RAIDER_CONTACT_M, RAIDER_CONTACT_PLAY_M, RAIDER_CHASE_MPS, RAIDERS_WIRE_MAX, RAIDER_WORD_MS, raiderWordOf, validRaiderWord, raiderLifeOf, raiderNearMe, RAIDER_LIFE_MS } from '../systems/seaRaiders.js';   // OWS3: Warm Ashes' raiders on the Overworld's sea
 import { RAIDER_LEAD_S } from '../systems/naval/navalRaiders.js';   // NAV-R: a raider ship steers its seeded course this far on
-import { peerInEventPlace as raidPeerInPlace, setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, raidActive, raidingPartiesOn, raidTimerList, raidRegionNow, raidDefendingHere, outOfSight as raidOutOfSight, raidWireWord, raidObjWord, raidWasHeld, raidOffsetAll, raidPeerWord, raidRelayWord, raidTownsFor, raidPoolCleared, raidRelayState, raidSpawnRange, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
+import { raidFrame as raidingPartiesFrame, raidState, raidActive, raidingPartiesOn, raidTimerList, raidRegionNow, raidDefendingHere, raidWireWord, raidObjWord, raidWasHeld, raidOffsetAll, raidPeerWord, raidRelayWord, raidTownsFor, raidPoolCleared, raidRelayState } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
 import { modSaveRecords, restoreModSaveRecords, newGameModSaveRecords, registerModSaveData } from '../systems/modSaveData.js';   // WA1: DFU's per-mod save slot, for the mods after HCC; OH-D: Ocean Holes' OceanHoleSaveData
 import { applyDeathPenalty, deathPenaltyText, stateDeathLoss, statedDeathLoss } from '../systems/deathPenalty.js';   // DEATH-PENALTY: an online death costs a tenth of the purse
 import { createLegacyHost, LEGACY_TEXT, REMAINS_FLAT } from './legacyHost.js';   // LEGACY1: Project Legacy's family - the record, the deaths, the births
@@ -726,7 +759,7 @@ import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's
 import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
 import { monthNames } from '../systems/gameDate.js';   // L10N3e: the month's name in the player's language, read when asked
-import { createBountyHost } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
+import { createBountyHost, bountyDungeonPixel } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { trophyDoor } from '../systems/hunt/trophies.js';   // HUNTERS-MARK: a Trophy Hunter's trophy into the pack
 import { huntOnline } from './huntersMark.js';   // HUNTERS-MARK: the hunt's ledger, the bounty host's
 import { createWorldPartyPing } from './partyPingHost.js';   // PARTY-PING: a look's point for the party, and the floor route while one follows
@@ -734,6 +767,7 @@ import { pingSubject, pingCrowd } from '../systems/party/partyPingCaption.js';  
 import { PING_TRAVEL_M } from '../systems/party/partyPing.js';   // PARTY-PING: how far the travel view's look reaches
 import { createBountyFarms, farmSpotLocal, pickFarm } from './bountyFarms.js';   // BOUNTY-FARM: a farm on a farm bounty's pixel, while it is held
 import { questBoardIndices } from '../systems/bounty/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half)
+import { bountyLandWild } from '../systems/bounty/bountyQuarry.js';   // QUARRY-WORLD: the land's own wild about a board's town
 import { createLairDoor } from './lairHost.js';   // RVN7, LAIR-DOOR: a revenant's lair, an enterable dungeon in the boards' ring
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bounty/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
 import { isQualifyingThreatState } from '../systems/horse/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
@@ -751,7 +785,7 @@ import { riddenHorseLook, birthHorses } from '../systems/horse/horseCoats.js';  
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
+import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
 import { restrideGrid, gridBed } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
@@ -769,8 +803,8 @@ import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/t
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
-import { dungeonLocationFor, builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at
-import { audio, QuestAudioSource, logarithmicRolloff, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
+import { builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at
+import { audio, QuestAudioSource, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather, fallTerms, phaseTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls; AUDIT PRECIP FALL-3: the deck's light and the fall's fog
@@ -784,13 +818,13 @@ import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/t
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: the world collider's late solids, withheld from the walking body until it is clear
-import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
+import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid, safeGroundAt, safeGroundNear } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, forcePlayerDeath, presentHeardDeath, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerPlayerDamageMod, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { bodySayer } from '../net/bossBody.js';   // INT15: my body, said to a boss fight's room
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weapon/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
-import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
+import { weaponPoseOf, applyWeaponPose, playerMeleeCanHit, registerPlayerSwingListener } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe, shaftOnRelayBody } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
 import { guildCardRoll, guildNameOfFaction } from '../systems/card/cardSources.js';   // CARDS9: a guild quest's card
@@ -804,7 +838,8 @@ import { spaceAcross, clearDoorways, doorSpotsNear, spacingSkips } from '../char
 import { Collider } from '../player/collider.js';
 import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2: a streamed pixel's buckets ride the floating origin
 import { createPoiHost } from './poiHost.js';   // POI-2: the approved POIs, standing in the streamed world
-import { createPoiFeed, browserPoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
+import { createPoiFeed, pagePoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
+import { poiPixelKey } from '../poi/poiLaw.js';   // AUDIT RELEASE R2-8: a pixel's one id, the Bay's and past it
 import { decodePoiImage, decodePoiImageSteps } from '../poi/poiImageDecode.js';   // POI-2: a POI's picture, decoded by the browser (AUDIT POI R8: the host's in steps)
 import { poiMapMarks } from '../ui/poi/poiMapMark.js';   // POI-2: their marks on both world maps
 import { createPoiEdit } from '../poi/poiEdit.js';   // POI-3: the editor's documents and their undo
@@ -838,7 +873,7 @@ import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the le
 import { createHallBook, hallFactionsOf, chapterFactionOf, parseHallCommand, hallAuditLines } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in; AUDIT CHAP2 E1: a developer's /hall
 import { createChapterSheet } from '../net/chapterSheet.js';   // CHAP3c: the chapter sheet, for the halls' prices and shelves
 import { createChapterBanners } from './chapterBanners.js';   // CHAP7b: a patron's banners at its chapter's halls
-import { createRollTracker, rollEntityDoors, rollPaceOf } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
+import { createRollTracker, rollEntityDoors, rollPaceOf, sayRollStop } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
 import { rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName, hallRememberLine, isChapterWrit, seatLinesOf, seatRankAt, chapterRollTitle, chapterRollLines, chapterBandOf } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named; CHAP3a: a member's own writ too; CHAP5a: the hall's roll; CHAP5b: a chapter's band, the living town's
 import { chapterSeasonLines } from '../net/chapterEvents.js';   // CHAP6c: a chapter's Season in words, its candidates named
 import { setHudRenown } from '../ui/hud/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
@@ -847,9 +882,8 @@ import { dungeonTier, tierPhrase } from '../systems/dungeon/dungeonTier.js';   /
 import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...with its size, never over a place the port made
 import { deriveTownSeats, seatAtMapId } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
-import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
-import { seatArrivalLine, seatHallOf, seatBannerOf, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; SEAT-HALL: whose hall a palace is; CROWN-HALL: the throne room's banners; AUDIT SEATS-3 D3: a board's Tithe
-import { hallMay } from '../net/hallLaw.js';   // SEAT-HALL: a palace's keepers are a hall's
+import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
+import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
 import { createHomesBoot } from './homesBootHost.js';   // KNIGHT-HOUSE's deed holds and ACCOUNT-HOMES' sweep, once a boot
 import { townBoardRows } from '../ui/town/townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing on the town map
@@ -860,7 +894,7 @@ import { setSetsDueling, setsDueling, drinkWorn, setSetsWearer } from '../system
 import { martialHudChips } from '../systems/martialPowers.js';   // RPT1026-PROGRESS: a martial path's passive on the HUD
 import { lootHudChips } from '../systems/loot/lootPowers.js'; import { setSetPowersVoice, setHudChips, heldPlayerBlow, remarkPlayerBlow } from '../systems/sigil/sigilSetPowers.js'; import '../systems/loot/lootDrought.js'; import '../systems/loot/lootCodex.js'; import { createLootLines } from './lootLines.js'; import { createNpcMarks } from './npcMarksHost.js';   // NPC-MARKS: the marks over the street's people who do something; SET3: what the sets DO - every power registered at import; its voice is this host's; SET5: its chips; LOOT4: and lootPowers.js beside it, what a loot piece DOES (the Loot arc), every kind registered at import; LOOT8: lootDrought.js, the drought's finder and take listener, registered at import; LOOT10: lootCodex.js, the codex's take listener, round sweep and record; LOOT11: the lines of light over a find
 import { computeEntityMods, registerEntityFold, EMPTY_MODS } from '../systems/entityMods.js';   // SET3: the sets' stat fold, recomputed the moment they wake or sleep; SEAT1d: the Festive buff's
-import { createSeatEdicts, FESTIVE_FOLD, festiveMods } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it
+import { createSeatEdicts, FESTIVE_FOLD, festiveMods, lairDenOf } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it; BAY-LEFT-SEA: a lair's den
 import { createTownEconHost } from './townEconHost.js';   // TOWN-ECON TE1: every town's economy - its counters' factor, its card; TE2: the players' share
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // SET3: the Wrath's and Eventide's sounds are the cast sounds of their schools
 import { itemLongName } from '../systems/item/itemInfo.js';   // SIGIL1: the weapon's name as its tooltip reads it
@@ -869,7 +903,7 @@ import { partySizeOf, partyExtraFoes, partyGroupMembers } from '../systems/party
 import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: outdoors, the party a roll stands for is the camp's own group
 import {
   realmIo, openRealmBoot, createRealmSession, realmSummaryOf, setRealmNotice, realmCreate, realmPut, realmBootSearch, realmRefusalText,
-  sayRealmSave, REALM_OFFLINE_TEXT, REALM_EXIT_WAIT_MS, whenPageHides, whenPageGoes, realmTradeEscrow, realmGoldAct, realmDoorShut,
+  REALM_OFFLINE_TEXT, REALM_EXIT_WAIT_MS, whenPageHides, whenPageGoes, realmTradeEscrow, realmGoldAct, realmDoorShut,
   REALM_RESTORED_TEXT, realmStrandedText, realmSaveWithHeld, realmList, realmUnions,
   realmFetch,   // PERMADEATH-HOUSES: a fallen member's record read, for their home's cupboards
 } from '../systems/realmSaves.js';   // REALM P1.3: an online character is the realm's - joined, loaded and checkpointed through the service
@@ -902,7 +936,7 @@ import { partyRosterSource, localRosterSource, guildRosterSource, placedRosterSo
 import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY: the party's points on the compass
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom, relaySupportsRite, relaySupportsCage } from '../net/wire.js';   // CHAT-CHAN: a region's channel
-import { cellRoomOfWire, seaVaultRoomId, seaRoomOf } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in; AUDIT SEA VENTURES D7, D8: a vault's own room
+import { cellRoomOfWire, seaVaultRoomId } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in; AUDIT SEA VENTURES D7, D8: a vault's own room
 import { parkKeyOf } from '../net/wire.js';   // WAGONS2-VISIT: my caravan's room is named by my park key
 import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';   // WAGONS2 (FINAL AUDIT): a caravan's save that cannot come back, said
@@ -940,34 +974,35 @@ import { allyCastSpell, allyCastable, strangerCastable, allyReachFor, allyCastTa
 import { composePartyFx } from '../net/partyBuffs.js';   // PARTY-BUFFS: my effects on the party pose   // ALLY-CAST: a beneficial spell at a party mate; SPELL-GIFT: and the stranger's list
 import { stampItemIds, tradeHeldNotice } from '../systems/item/itemIds.js';   // INT4: a valuable piece's id, minted at a realm checkpoint; INT3: the hold, said
 import { wireRealmHolds } from './realmHoldHost.js';   // INT3 + AUTO-HOLD: the hold and the locked pieces, said to the player
-import { checkpointAllowed, checkpointWhenDue, checkpointedTradePack, createSaveSoon } from '../systems/online/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
-import { watchRealmUnsaved } from '../systems/online/realmUnsavedNotice.js';   // the player told while their saves do not reach the realm
+import { checkpointAllowed, checkpointedTradePack, createSaveSoon } from '../systems/online/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
+import { createOnlineCheckpointClock } from '../systems/online/onlineCheckpointClock.js';   // the periodic checkpoint, the one at seat loss, and the word while the realm holds nothing new
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
-import { createTradePack, tradeRefusal, packTradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
-import { isLocked } from '../systems/item/itemLock.js';   // PROF5: a locked piece is not listed
+import { createTradePack, packTradeRefusal } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileRecordLines } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duel/duelSession.js';   // DUEL1: the duel's state machine (pure)
-import { duelVitality } from '../net/duel/duelBar.js';   // DUEL-BAR: my vitality as the referee says it, the HUD's health bar's for the duel's length
+import { createPlayerHealthMirror } from '../net/siege/refereeHealthMirror.js';   // SHARED-HEALTH: one health pool under the referee
 // WILD1 (2026-10-07, bible/11-Multiplayer/Wild-Zone.md): THE OPEN ZONE - the Wrothgarian Mountains: its law (a leaf), a
 // death's drop and its one piece, the fights between players, the room's remains as piles, and the HUD's two glyphs
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
-import { setWildHere, wildHere, isWildRegion, wildMaskOf, wildInside, wildNear, setWildDeath, wildDeath, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
+import { setWildHere, wildHere, isWildRegion, WILD_REGION, wildInside, wildNear, setWildDeath, wildDeath, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
 import { createPartyTruce } from '../systems/wild/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
-import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT } from '../systems/wild/wildZone.js';   // GREATER-GIANT
+import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
+import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT, noteWildBlow } from '../systems/wild/wildZone.js';   // GREATER-GIANT; AUDIT PVP-EASE L2-1: the combat lock's blow
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
 import { etherWildRingAt, etherRisePort, etherRiseSite, etherInPeace, ETHER_KIND, ETHER_WILD_TEXT } from '../systems/wild/etherWild.js';   // ETHER-WILD: the Eltheric Ocean past Veilhaven's peace, an open PvP zone
 import { createSeaVentures, seaStormShown } from './seaVenturesHost.js';   // SEA VENTURES: the sea's vaults, its events, its bounties and boards - wired here, held there
-import { wildTakeTook, wildPacks, wornOffer, wildRecord, wildChunks, wildSpawnSpot, wildFallWords, wildTookAny, wildRisePicks } from '../systems/wild/wildDeath.js';   // CART-AWAY (FIELD BUGS 2026-10-15d): my wagon away from my death keeps its cargo - and COMPANION-DROP's word that my game reads my companions' packs, one call (wildFallWords)
+import { wornOffer, wildRecord, wildChunks, wildSpawnSpot, wildRisePicks } from '../systems/wild/wildDeath.js';   // WILD1: the worn offer, the deposit's chunks, the rise
 import { readWildReceipt, wildFallGraceS } from '../net/wild/wildReceipt.js';   // INT9: the relay's fall, carried to the service
 import { WILD_REF, wildKin, sameGuild } from '../net/wild/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD); MAC (2026-10-14): and its kin, one law with the referee's
 import { createWildFight } from '../net/wild/wildFight.js';
-import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
+import { createWildRemains, remainsMine, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
+import { wildSelf } from '../net/wild/wildSelf.js';   // WILD-HUBLESS: my account in the zone, the hub's or the signed-in session's
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
-import { WILD_REMAINS_MS, WDUN_SALT, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
+import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot/loot.js';
 import { stacksWith } from '../systems/inventory.js';
 import { setHudZone } from '../ui/enhanced/enhancedHud.js';
@@ -996,12 +1031,12 @@ import { isTouchDevice } from '../ui/touch/touchDevice.js';   // JOURNAL1: ...or
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, relayRestartText, buildUpdateText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
-import { morrowindDataCount, morrowindDataGeneration, getBytes } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
+import { morrowindDataCount, morrowindDataGeneration, getBytes, clearRetiredArena } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows, choiceDoor } from './quest/questBridge.js';
 import { loadQuestPack } from './quest/questData.js';
 import { ensureFactionRep, getReputation, changeReputation } from '../systems/faction/factionRep.js';
-import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted, lowerRepForCrime, setCrimeRepFactor } from '../systems/court.js';   // the region's LegalRep: the status box, the quest actions, the crimes (REP1 retired :498-511's levy)
+import { changeLegalRep, CRIMES, setCrimeCommitted, lowerRepForCrime, setCrimeRepFactor } from '../systems/court.js';   // the region's LegalRep: the status box, the quest actions, the crimes (REP1 retired :498-511's levy)
 import { isEquipped, unequipSlot, unequipItem, wearableItem } from '../systems/equip.js';   // HACKED-GOLD: a worn offer holds what can be worn
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { isShelved } from '../systems/quest/quest.js';   // QUEST-SHELF: a quest set aside
@@ -1009,7 +1044,7 @@ import { guildOfFaction, membershipOf, guildFactionIdOfGroup, joinedGuildOfGroup
 import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';   // CHAP4b: the Mages Guild's faction, for its seat's teleport
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';   // the membership book's key - the travel popup's free-ship read   // AUDIT 39 (#23): GetRegionFaction's Province filter
 import { freeShipTravel, freeTavernRooms, avoidDeath, avoidDeathText } from '../systems/guild/guildServices.js';   // KnightlyOrder.FreeShipTravel, the second half of hasShip; FreeTavernRooms, the trip cost's inn nights
-import { resolveVariantGuild, orderOf, getDivine } from '../systems/guild/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
+import { resolveVariantGuild, orderOf } from '../systems/guild/guildVariants.js';   // TN1: GetFactionName's HolyOrder arm
 import { revealGuildHallsOnMap, revealingMemberships } from '../systems/guild/guildHallReveal.js';   // AUDIT 63 F9: ThievesGuild/DarkBrotherhood RevealGuildHallOnMap; AUDIT CHAP2 D4: either book's
 // TK-i: THE RUMOR MILL - the quest machine's rumor seams stop being silent.
 import { RumorMill, tokensToString } from '../systems/rumorMill.js';
@@ -1023,9 +1058,9 @@ import { expandQuestMessage, setIdRegion, setIdFactions } from '../systems/quest
 // TK-ii: THE TOPIC TREE - the quest topic/dialog-link seams land.
 import { TopicTree, QUEST_INFO_RESOURCE_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';
 import { NPCSession } from '../systems/npcSession.js';
-import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer, lordNameForFaction, findFactions } from '../systems/talk/talk.js';   // TN1: %fl1/%fl2/%ol1's one home; CQ1: the region's court   // AUDIT 39 (#23): GetRegionFaction
+import { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, getReactionToPlayer, findFactions } from '../systems/talk/talk.js';   // TN1: %fl1/%fl2/%ol1's one home; CQ1: the region's court   // AUDIT 39 (#23): GetRegionFaction
 import { liveVampirism } from '../systems/racialLive.js';   // AUDIT 39 (#23): the PC's clan, off the curse entry
-import { BUILDING_TYPES as TALK_BUILDING_TYPES, generateBuildingName } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
+import { BUILDING_TYPES as TALK_BUILDING_TYPES } from '../world/buildingNames.js';   // IH1: %cbd regenerates the current building's name
 import { AnswerPipeline, TALK_STRINGS, specialDungeonName } from '../systems/answerPipeline.js';
 import { expandRandomTextRecord as expandTalkRecord, expandMessageBoxTokens } from '../systems/talk/talkMacros.js';   // AUDIT 63 F3: DaggerfallMessageBox's null-mcp ExpandMacros pass
 import { TOKEN_TEXT } from '../formats/textRsc.js';   // AUDIT 63 F3: TextFile.Formatting.Text, for DaggerfallMessageBox.SetText(string)'s one-token tokenization
@@ -1038,11 +1073,11 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, discoveryGeneration, pruneDiscoveryLayouts } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, pruneDiscoveryLayouts, townBookOf, townBookId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
 import { scryRows } from '../systems/loot/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
-  weatherRng, fogFactor, precipitationForWeather,
+  weatherRng, fogFactor, precipitationForWeather, isDryFall,
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
@@ -1072,7 +1107,7 @@ import { parseEventCommand } from '../net/chatCommands.js';   // EVENT1: /event,
 import { createSunbaby, sunbabyLight, SUNBABY_WEATHER, sunbabyKey, createSunbabyRain } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's sky of flowers, the clear day and the light under it; SUNBABY2: the wrath's key light and its fireballs
 import { relayKnowsLiveEvent } from '../net/wire.js';   // SUNBABY1: a word staged only on a relay that knows it
 import { createStaffTeleportClient, validStaffDestination, staffDestinationKey, followStaffPlayer, staffTpLine } from '../net/staffTeleport.js';   // STAFF-PANEL5-FOLLOW: and the line a /tp @player ends on
-import { gameMaps } from '../net/staffPlaces.js';   // STAFF-EVENT: the game's maps, for the Staff Panel's place picker
+import { gameMaps, gamePlaces } from '../net/staffPlaces.js';   // STAFF-EVENT: the game's maps, for the Staff Panel's place picker; AUDIT RELEASE R2-7: and the world's places past the Bay
 import { staffFollowOnPage, relinkGame } from './staffFollowHost.js';   // STAFF-PANEL5-FOLLOW: the game's staff hook (net/staffHook.js) and the host's half of a follow; STAFF-HIDE-TOGGLE: and the panel's relink
 import { createStaffViewHost } from './staffViewHost.js';   // STAFF-VIEW1: the staff tags, Shift+M and a tag's follow
 import { privateInteriorPrefix, privateInteriorRoom, privateBoatRoom, privateInteriorOf } from '../net/privateInterior.js';
@@ -1109,7 +1144,7 @@ import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // WM2d: th
 import { beginLoading, syncLoading, setLoadingPlace, setLoadingAside, loadingPlaceOf, bootLine, BOOT_HOLD_MAX_MS } from '../ui/loadingScreen.js';   // LOAD1: the loading screen - the boot's, and every world move's
 import { syncInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load: the ring over the hotbar, and this screen aside
 import { setShotPlace, deliverOwedShots } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken; SHOT1: and it is read at this host's frame foot
-import { drawEnhancedTextLayer, hideEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
+import { hideEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { drawEnhancedStatusLine } from '../ui/enhanced/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
 import { rrRidingOn, rrRidingSetting, BED_MODELS, bedSleepingOn } from '../systems/roleplayRealism/rrRealism.js';   // RR2: EnhancedRiding's switches; CSA-G: the boat's bed is RR1's BedActivation
@@ -1133,7 +1168,6 @@ import { loadGraceActive, teleported as dwTeleported, loadStarted as dwLoadStart
 import { createUnderwaterDecorations, createDecorTextureSource } from './deepWater/deepWatersDecor.js';
 import { createOceanHoles, oceanHolesOn } from './oceanHolesHost.js';   // OH-B: There's a Hole in the Bottom of the Ocean (jet082) - the pits in the carved sea
 import { OceanHolesRenderer } from '../render/oceanHolesRender.js';   // OH-C: its discs and its miasma
-import { createMiasma, miasmaReach } from '../world/oceanHolesMiasma.js';
 import { SURFACE_INNER_COLOR, FLOOR_INNER_COLOR, placementFraction, OCEAN_HOLES_VENDOR } from '../world/oceanHoles.js';
 import { ohLootUpgrades } from './ohLootHost.js';   // OH-E: the abyss's loot upgrades (HOST-SPLIT: out of the host whole)
 import { createRaidSites } from './raidSitesHost.js';   // RAID5: a raided town's square, its way, its bearer and its refugees
@@ -1160,7 +1194,6 @@ import { breathStep, setWaterBreathingRule } from '../systems/breath.js';   // D
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';   // DW-D: PlayerEntity's classic cadence, the dungeon's import
 import { RACES } from '../systems/races.js';   // DW-D: ArgonianInfiniteBreath
 import { localizedStrings, localizedText, getLocalizedLocationName, getLocalizedRegionName, getLocalizedFactionName, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the names shown
-import { stakedSaveRefusal } from '../ui/gambitTableWords.js';   // KG3: the save's refusal while gold is staked on The King's Gambit
 import { hallStepsFor, harbourPortFor, coastalAt } from '../net/fortLaw.js';   // SEAT2b part two: a seat's crafting halls, its members' Harbour, a coast
 import { isWaterPixel } from '../ui/overworldModel.js';   // SEAT2b part two: a coast is the sea beside the town (the port's one water law)
 import { createSiegeNpcs } from './siegeNpcs.js';   // SEAT2b part two (c): the Barracks' guards and a revolt's rising, drawn
@@ -1184,14 +1217,35 @@ import { createTownWalk } from './townWalkHost.js';   // OW-TOWN-WALK
 import { createOverworldForecast } from './overworldForecastHost.js';   // OW-FORECAST
 import { regionChaseWords } from '../systems/travel/regionChase.js';   // OW-CHASE-RANGE: a chase seen as far as its band is drawn
 import { createRegionChaseHearing } from './regionChaseHost.js';   // OW-CHASE-RANGE: the region's chase words heard (AUDIT OW-REVISITED L4-2, L4-3)
-import { TOWN_PACE_MAX } from '../systems/travel/townWalk.js';   // OW-TOWN-WALK: the keys' travel in a town, held to a town's pace
 import { createExteriorAutomapToggle } from './exteriorAutomapToggle.js';   // HOST-SPLIT
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
+import { createTamrielPlaces } from './tamrielPlacesHost.js';   // HOST-SPLIT
+import { createTamrielSweeps } from './tamrielSweepsHost.js';   // HOST-SPLIT
+import { createTamrielPorts } from './tamrielPortsHost.js';   // HOST-SPLIT
+import { createQuestWorld } from './questWorld.js';   // HOST-SPLIT
+import { createWorldQuickSave } from './worldQuickSave.js';   // HOST-SPLIT
+import { createCsaAudio } from './csaAudio.js';   // HOST-SPLIT
+import { createOceanHolesPits } from './oceanHolesPits.js';   // HOST-SPLIT
 import { horseVolume } from '../systems/animalVolume.js';   // HORSE-VOL: the Wagon Warden's lifted team neighs on the Audio tab's Horse Volume
 import { createVendorHost } from './vendorHost.js';   // HOST-SPLIT
 import { createWildSeizeHost } from './wildSeizeHost.js';   // HOST-SPLIT
 import { createWildRejoin } from '../systems/wild/wildRejoin.js';   // WILD-REJOIN: a fall that outlives its page
 import { windowHoldsDungeon } from './windowWorld.js';   // RPT1026-FIGHTS (WINDOW-ONLINE): a dungeon's window holds its foes offline alone
+import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
+import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
+import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
+import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
+import { createMarketPieces } from './marketPiecesHost.js';   // HOST-SPLIT
+import { createRaidHost } from './raidHost.js';   // HOST-SPLIT
+import { createSpawnGroundHost } from './spawnGroundHost.js';   // HOST-SPLIT
+import { createSpawnStand } from './spawnStandHost.js';   // HOST-SPLIT
+import { createTravelViewDungeons } from './travelViewDungeonsHost.js';   // HOST-SPLIT
+import { createMapPlaces } from './mapPlacesHost.js';   // HOST-SPLIT
+import { createCsaMap } from './csaMapHost.js';   // HOST-SPLIT
+import { createSnowGround } from './snowGround.js';   // HOST-SPLIT
+import { createLandformSites } from './landformSitesHost.js';   // BAY-LEFT-GROUND (D1): the landforms' sites past the Bay
+import { createGroundFrame } from './groundFrameHost.js';   // HOST-SPLIT
+import { createHarbourHost } from './harbourHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -1295,7 +1349,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
    *  deleted, the account signed out - takes the player to the door with the reason. */
   const realmSession = realmBoot ? createRealmSession({ io: realmIoNow(), id: params.get('realm'), lease: realmBoot.lease, seq: realmBoot.seq, gzip: realmBoot.gzip, onLost: (why) => realmLost(why) }) : null;   // REALM-GZIP: packed when the join said so
-  if (realmSession) watchRealmUnsaved(realmSession, { say: (text) => townTalk.say(text) });   // the session's own clock, Date.now
   // LEGACY7 (bible/06-Systems/Legacy-Arc.md section 9): ONLINE, PROJECT LEGACY'S LINES ARE THE REALM'S - read into the
   // device's store before any save is restored (a death another device wrote stands here), written after each of the
   // device's writes; and the account's living realm characters, the question "is there a save of this member?" online
@@ -1505,9 +1558,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const tamrielLand = tamrielLandOn();
   if (tamrielLand) {
     woods = groundWoods(woods);   // every reader of `woods` from here on: the Bay to the byte, the continent past it
-    maps.getClimateIndex = groundClimateIndex(maps.getClimateIndex.bind(maps));
+    groundMaps(maps);   // the climate read the province's past the Bay; WW-R: and the politic map, its province's region
+    maps.getFaunaBand = faunaBandAt;   // TESA-BIOME: a pixel's zone's wild past the Bay (systems/tamrielFauna.js) - the encounter law's `fauna`; no map but this composed one answers it
   }
   StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
+  // TESA2 (bible/03-World/Arena-Provinces.md): THE PLACES STAND on the land beyond the Bay - TESA12: the port's own
+  // (world/tamrielPlaces.js: TAMRIEL1's lore cities and the towns and villages made beside them), on the trace from the
+  // player's Daggerfall files, so every client stands the same Tamriel, online and off. Nothing of Arena is read.
+  const arenaStands = tamrielLand && arenaPlacesOn();
+  setArenaStanding(arenaStands);
+  setArenaRoads(null);   // TESA4: a mount starts with no Arena roads on this thread - the last world's are not this one's (TESA14: the regions lay them again)
+  installTamrielFauna();   // TESA-BIOME (bible/03-World/Tamriel-Biomes.md): the zones' tables on DFU's door (characters/encounterTableDoor.js)
   // ETHER-SEA (bible/03-World/Eltheric-Ocean.md): THE ELTHERIC OCEAN'S GROUND - its isles and its open water, composed over
   // whatever the world grows past the Bay (world/ethericSea.js: its own box, far north of the continent's frame; the
   // worker composes its copy the same way), its climate read beside it, and its box a frame the world streams over
@@ -1586,10 +1647,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const again = [];
     for (const [, p] of [...built]) if (!p.withRoads) again.push({ px: p.px, py: p.py });
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // IC-SWAP-BEHIND: each built again behind its standing view (scenes/swapBehind.js)
     console.log(`[roads] ${again.length} pixel(s) built before the network landed - rebuilt with roads`);
   }
   (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {
@@ -1638,8 +1696,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  is asked of either kernel, and handed to both (setLandformTables). */
   let _landformSites = null, _landformClimates = null;
   /** LANDFORM1-3: this thread's landforms - the gate's beacon (gateGroundAt) and a record's frame (landformLiftAt)
-   *  read them, over the network this thread holds: the same arrays the worker cuts along; LANDFORM4: and its sites. */
-  const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);
+   *  read them, over the network this thread holds: the same arrays the worker cuts along; LANDFORM4: and its sites.
+   *  BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js); D5: `before` the landforms under a
+   *  record's frame's OLD law - the Bay's table alone, the ground past the Bay before its sites: what a record written past
+   *  the Bay before LIFT_FRAME_LAW stood on (scenes/groundFrameHost.js) - RELIEF-PEAKS: with no ranges, which it never stood. */
+  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates, ranges: !before }) : null);   // RELIEF-PEAKS: the old law's without the ranges
   // VERGE1: CLEAR ROADSIDES (world/road/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -1647,13 +1708,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // nature follow is one law for a world.
   const ecotones = climateBlendOn();
   /** ECOTONE1: a pixel's 3x3 of climates (getWorldClimateSettings), indexed (dz + 1) * 3 + (dx + 1) - dx east, dz north
-   *  (the map row py - dz) - a neighbour off the map wearing the pixel's own (`own`, its settings). */
+   *  (the map row py - dz) - a neighbour off the map wearing the pixel's own (`own`, its settings): the Bay's map for a Bay
+   *  pixel, the continent's frame past it (tamrielGround.js climateNeighbourIn). */
   const climates3x3 = (px, py, own) => {
     const out = new Array(9);
     for (let dz = -1; dz <= 1; dz++) {
       for (let dx = -1; dx <= 1; dx++) {
         const x = px + dx, y = py - dz;
-        out[(dz + 1) * 3 + dx + 1] = (dx === 0 && dz === 0) || x < 0 || y < 0 || x >= MAP_W || y >= MAP_H ? own : getWorldClimateSettings(maps.getClimateIndex(x, y));
+        out[(dz + 1) * 3 + dx + 1] = (dx === 0 && dz === 0) || !climateNeighbourIn(px, py, x, y) ? own : getWorldClimateSettings(maps.getClimateIndex(x, y));   // AUDIT TESA-BIOME Z4: past the Bay the continent's frame
       }
     }
     return out;
@@ -1686,10 +1748,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       else if (!inFlight.has(k)) _wodLate.delete(k);   // not standing: it builds on the list as it is now
     }
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // a rebuild the reference never makes: the carry keeps the markers
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // a rebuild the reference never makes: the carry keeps the markers; IC-SWAP-BEHIND: behind its view
     console.log(`[wod] ${again.length} pixel(s) named by a region that landed late - built again on the list in its order`);
   }
   // SD2b: THE HOLLOW'S PIXEL, BUILT AGAIN when it rises or goes on ground that already stands (scenes/superDungeon/sdHost.js stand and
@@ -1703,11 +1762,24 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       else if (!inFlight.has(k)) _sdLate.delete(k);   // not standing: it builds on the index as it is now
     }
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view
   }
+  const { swap, _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, capitalPrebuild } = createTamrielSweeps({   // HOST-SPLIT: src/scenes/tamrielSweepsHost.js; IC-STUTTER: the city's workers, for the pump (capitalPrebuild.firstReady)
+    destroyPixel, maps,
+    get _countryTemplates() { return _countryTemplates; },
+    get _lairTemplates() { return _lairTemplates; },
+    get _seasonHoldKey() { return _seasonHoldKey; }, set _seasonHoldKey(v) { _seasonHoldKey = v; },
+    get built() { return built; },
+    get collider() { return collider; }, get buildingDoors() { return buildingDoors; }, get doorGeneration() { return doorGeneration; }, set doorGeneration(v) { doorGeneration = v; },   // IC-SWAP-BEHIND (scenes/swapBehind.js): the doors a view swapped in brings, and their generation
+    get farRing() { return farRing; },   // IC-GRAND x FAR-LANDMARK: the Imperial City's landmarks on its pass (scenes/capitalSkyline.js)
+    get inFlight() { return inFlight; },
+    get locationIndex() { return locationIndex; },
+    get playerSpawned() { return playerSpawned; },
+    get queue() { return queue; },
+    get state() { return state; },
+    get walkMode() { return walkMode; },
+    get woods() { return woods; },
+  });
   // LocationLoader.cs:146-151 asks the Basic Roads MOD for the pixel's
   // road|track mask - so only Hazelnut's own arrays answer; the port's
   // generated fallback is not his mod, and with it the static stays 0.
@@ -1727,10 +1799,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const clear = _gateClearNow();
     const again = gateClearSweep.step(clear, built).map((p) => ({ px: p.px, py: p.py }));
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // the carry keeps the markers, as the late sweep's
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // the carry keeps the markers, as the late sweep's; IC-SWAP-BEHIND: behind its view
     console.log(`[gate] ${again.length} pixel(s) built again for the breach's clearing${clear ? ` (${clear.key})` : ''}`);
   }
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
@@ -1741,7 +1810,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // the far ring below takes the same lane, so the horizon lights as the
   // ground does.
   const lightingOn = syncLightingLane(renderer);
-  const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl, { renderer }) : null;   // EL1: the renderer's lighting lane; OW-HORIZON: and its focus and cloud deck, each frame
+  const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl, { renderer, mid: terrainGen }) : null;   // EL1: the renderer's lighting lane; OW-HORIZON: and its focus and cloud deck, each frame
   const _ringOrigin = [0, 0, 0];
 
   // One location per map pixel game-wide (pinned corpus invariant).
@@ -1771,7 +1840,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _bandPlacePixels = new Set();   // AUDIT OW4 B2 / AUDIT OW5 B2: the land a band may NOT stand on (below)
   const _layoutKeyPixel = new Map();   // WD3: a town's location key -> its pixel in the index (the layout pins' refresh)
   const _layoutKeyOfMapId = new Map();   // WD3: a town's map id (unsigned) -> its location key (a save's records name towns so)
-  const _townOfMapId = new Map();   // HOME-VENDOR: a town's map id (unsigned) -> { name, px, py, region, type } - a trader's town, named and found (TOWN-ECON: its type, whether it has an economy)
+  const _townOfMapId = createTownTable(() => worldPlaces);   // WW7: the registry's past the Bay too. HOME-VENDOR: a town's map id (unsigned) -> { name, px, py, region, type } - a trader's town, named and found (TOWN-ECON: its type, whether it has an economy)
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region) continue;
@@ -1838,19 +1907,48 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // a region's cities apart: its Hollow stood by another city, on another pixel, in another room.
   const _sdCityRows = params.has('online') ? _classicRows.filter((loc) => !!hubClaim(loc, maps.getRegionName(loc.regionIndex))) : [];
   const _sdTemplateRows = params.has('online') ? sdTemplates(_classicRows, isMainStoryDungeon) : [];
+  // TESA7 (world/tamrielCountry.js): THE COUNTRYSIDE'S TEMPLATES AND THE BAY'S COUNT OF THEM - the hamlets, villages, farms,
+  // homes, inns, temples and shrines a pixel past the Bay may clone, and how many of each kind stand on each climate of the
+  // Bay, off the same rows (the game's own, as MAPS.BSA holds them: every client rolls the same countryside), kept before
+  // the rows go. The land past the Bay streamed (TAMRIEL2), `?country` open; online too.
+  const _countryTemplates = tamrielLand && countrysideOn() ? countryTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
+  const _countryCounts = _countryTemplates ? countryCounts(_countryTemplates, (x, y) => maps.getClimateIndex(x, y)) : null;
+  // TESA8 (world/tamrielDungeons.js): THE LAIRS' TEMPLATES, THEIR COUNT AND THEIR BLOCKS - the labyrinths, keeps, ruins and
+  // graveyards a cell past the Bay may stand, how many of each the Bay's climates stand, and every dungeon type's blocks a
+  // lair's own plan is laid of - off the same rows, under the countryside's door
+  const _lairTemplates = _countryTemplates ? lairTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
+  const _lairCounts = _lairTemplates ? countryCounts(_lairTemplates, (x, y) => maps.getClimateIndex(x, y)) : null;
+  const _lairPools = _lairTemplates ? lairPools(_lairTemplates) : null;
+  // TESA10 (world/tamrielCapitals.js): THE CAPITALS' BASE AND THEIR BLOCKS - the city a capital stands on the shape of, and
+  // every classic city block the game's cities lay, by kind (a district's houses, shops, guilds and temples) - off the same
+  // rows, before they go. The land past the Bay streamed, `?capitals` open; online too.
+  const _capitalBase = tamrielLand && capitalsOn() ? capitalBase(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
+  const _capitalNames = _capitalBase ? cityBlockNames(_classicRows ?? _hubRows.map(classicRow).filter(Boolean)) : null;
+  setCapitalsStanding(!!_capitalBase);   // TESA10d: a capital on the map (a portal's end there - TESA-NO-FAST), Arena attached or not
+  // TESA2 (world/arenaLocations.js): THE PLACES' TEMPLATES - the cities, hamlets and villages a place past the Bay may
+  // clone, off the same rows (the game's own, as MAPS.BSA holds them), kept before the rows go
+  const _arenaTemplates = arenaStands ? arenaTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
   // ETHER-PLACES (world/etherPlaces.js): THE ISLES' TEMPLATES - the towns and the ruins an Eltheric isle's place may
   // clone, off the SAME rows (the game's own, as MAPS.BSA holds them: every client clones the same place), kept before
   // the rows go
   const _etherTemplates = etherSea ? etherTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
+  // BAY-LEFT-GROUND (D1, bible/03-World/Landforms.md "BAY-LEFT-GROUND"): THE LANDFORMS' SITES PAST THE BAY - the places
+  // past the Bay every client stands alike as a second table by the world's key, handed to both kernels now and made
+  // again on the frame as the places move (scenes/landformSitesHost.js)
+  const beyondSites = createLandformSites({ terrainGen, landform, arena: _arenaTemplates, capitals: !!_capitalBase, get built() { return built; }, get inFlight() { return inFlight; }, swap });
   _classicRows = null;   // read, let go
   // HUB1: every region's main city, one answer on every client (systems/region/regionHubs.js) - read online alone
   const regionHubs = pickRegionHubs(_hubRows, { regionNameOf: (r) => maps.getRegionName(r) });
   // SEAT1a (Seats-Arc 3.1): every location with a Palace a seat, the three capitals crowns - over the SAME rows, the
   // game's own (a mod's rows never count), so every client derives the same seats (systems/town/townSeats.js). Online alone.
   const townSeats = deriveTownSeats(_hubRows, { regionNameOf: (r) => maps.getRegionName(r), isHub: (k) => regionHubs.byMapId.has(k) });
-  // AUDIT LEGACY III W1: the rows are kept for the Living World's two indices (livingTownsIndex, livingDungeonsIndex -
-  // built at their first ask, far below) and let go once both stand: emptied here, at the boot, every index was empty -
-  // no town for the roads (LW3), no dungeon for the deep (LW6), no town name for an online home of the line
+  // WW1 (bible/03-World/World-Wide.md): THE WORLD'S PLACES - the game's own rows are the registry's first provider
+  // (world/worldWide/bayPlaces.js), filed by the world's own pixel key, and a provider past the Bay registers beside them
+  // (worldPlaces.register, registerPixels). The Living World's indices read the registry (scenes/livingWorld/livingIndex.js),
+  // so the rows are let go here - AUDIT LEGACY III W1's emptied index cannot come back: nothing reads them past this line.
+  const worldPlaces = gamePlaces(createWorldPlaces());
+  worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));
+  _hubRows.length = 0;
   setSeatTitlePlaces((key) => seatAtMapId(townSeats, key));   // SEAT1c: a seat title worded off the seats this client derived
   /** AUDIT 28 H8: which of a built pixel's boards are bounty boards (systems/bounty/bountyBoard.js questBoardIndices), worked out
    *  once a pixel - the count over the boards and the press's targets asked it every frame, a sort each time. A pixel's
@@ -1906,9 +2004,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deeds the realm gave, held once a boot; ACCOUNT-HOMES: the homes this save
   // keeps things in that the account holds no more, swept once a boot (scenes/homesBootHost.js) - built here, beside
   // them, above the boot's first landing
+  // The boot's world stands: the player spawned, the boot's load done, no load under way - asked by the homes' sweep, the
+  // start past the Bay (scenes/bootStartHost.js) and START2's move; called only once the world runs (`_loading` is far below)
+  const _worldReady = () => playerSpawned && _bootLoaded && !_loading;
   const homesBoot = createHomesBoot({
     homesApi, onlineHomes, realm: realmSession, giveOwn: arenaGiveOwn, player: () => playerEntity,
-    loaded: () => playerSpawned && _bootLoaded && !_loading, stands: () => !!modes,   // `modes` is declared far below: read only once the world stands
+    loaded: _worldReady, stands: () => !!modes,   // `modes` is declared far below: read only once the world stands
     say: (line) => townTalk.say(line),
   });
   let playerSpawned = false, _bootLoaded = false;   // HOTFIX 1003: here, above the boot's first landing - moveArenaHomesOnline reads it when the homes' towns land, which can be before the boot walk reached its old line (a TDZ ReferenceError live)
@@ -1939,16 +2040,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // and the seat this client stands in reported once a day (net/townSeatBook.js). Online only - offline the Bay is DFU's.
   // SEAT1b: and this device's half of influence - the standings, a pledge, Tribute, and the Watch's receipts, kept for the
   // signed-in account while they stand in a seat's own pixel as this client derives the seats
-  const seatPixels = new Set(townSeats.list.map((s) => `${s.pixel[0]},${s.pixel[1]}`));
   const _seatDoor = params.has('online') ? accountSeats({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
   const seatBook = _seatDoor
     ? createTownSeatBook({
       door: _seatDoor, storage: appStorage(), me: _seatDoor.me, character: () => characterIdOf(playerEntity),
-      isSeatPixel: (x, y) => seatPixels.has(`${x},${y}`),
+      seats: townSeats,   // DOMAIN1 (HOST-SPLIT): the seats' own pixels, built in systems/town/townSeats.js; DOMAIN3: and each region's seat of power
       relayNowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null),   // a receipt's life is the relay's
       // CROWN2: a Pact broken early, said in red on every tab as the server's own line (RED1) - offered again while there is no chat yet
       onRed: (line) => (redChat ? redChat(line) : false),
       turnMs: dayTurnMs(),   // DAY-TURN: its report's day turns at this page's moment past midnight
+      stores: (st) => profBook?.applyStore(st),   // DOMAIN1 (Domains.md 5): a gift's Stores told the professions' book, as a writ's are
     })
     : null;
   // CHAP2a (Chapters-Arc 4): the guild halls of the towns this client walks into, reported once a UTC day a town while
@@ -2050,7 +2151,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const townEcon = createTownEconHost({ online: isOnlinePage, townOf: (mapId) => _townOfMapId.get(mapId), seatAt: seatHere, nowMs: battleNowMs, chapters: chapterSheet, clockHeard: () => _sharedClockHeard,   // AUDIT TOWN-ECON LAW-2: the relay's clock, as every shared day is (AUDIT TOWN-ECON 2 CLI-6: a tick's life the relay's once heard); TE3: the chapters' patrons
     seats: () => (seatBook?.open === true ? seatBook.data?.seats ?? null : null), seatsHeard: () => !seatBook || seatBook.open != null, onBandsReady: () => _livingTripMemo.clear(),   // unread: nothing said of the area, never "no guild"; AUDIT TOWN-ECON 2 CLI-1: the market's band kept once the shares and the seats have answered, the trips planned before made again
     raidedAt: (px, py) => raidingPartiesOn() && raidState().raids.some((r) => r.px === px && r.py === py && raidActive(r, worldMinutes())), regionHere: () => { const p = playerTravelPixel(); try { return maps.getRegionIndexAt(p.x, p.y); } catch { return null; } },   // AUDIT TOWN-ECON 2 SVC-1: the `/town audit`'s region
-    locAt: (x, y) => locationIndex.get(`${x},${y}`)?.mapTableData ?? null, portLanes: () => (_lanesReady && mapDict ? laneNet() : null) });   // TE2: a Watch tick is kept where a town stands; SEA-TRADE: a port's town and its lanes (the lanes once they stand - BOOT-TDZ II)
+    locAt: (x, y) => locationIndex.get(`${x},${y}`)?.mapTableData ?? null, portLanes: () => (_lanesReady && mapDict ? worldLanes.all() : null) });   // TE2: a Watch tick is kept where a town stands; SEA-TRADE: a port's town and its lanes (the lanes once they stand - BOOT-TDZ II; WW7-10: the world's)
   // SEASON1 part two: a Storm Season's slow sea, on every voyage this client reckons (systems/travel/travel.js) - online alone
   setSeaTide(seatBook ? (end) => (seatBook.tideAt(maps.getRegionIndexAt(end.x, end.y)) === 'storms' ? TIDE_EFFECTS.stormsSea : 1) : null);
   registerEntityFold(FESTIVE_FOLD, (e) => (e === playerEntity && seatEdicts.festive() ? festiveMods(STAT_KEYS_ORDER) : EMPTY_MODS));
@@ -2279,96 +2380,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     if (pieces.length) { townTalk.say(craftedText(pieces)); saveSoon.changed(); }
   };
-  /** AUDIT 31 H5: every list of the save a crafted piece can be in - the pack, the home's things, the wagon, and a
-   *  repairer's hands (DFU's OtherItems) - so a piece is minted, put back and dropped once wherever it lies. */
-  const pieceLists = () => [playerEntity.items, playerEntity.furnishings, playerEntity.wagonItems, playerEntity.otherItems].filter(Array.isArray);
-  const heldProvenances = () => new Set(pieceLists().flat().map((it) => it?.provenance).filter(Boolean));
-  /** PROF5: A PIECE FROM THE MARKET (bought here, collected off the road, or come back from a listing): minted from its
-   *  record as the anvil mints it, at its wear (smithItems.js mintMarketPiece), into the pack - or, furniture, the home's
-   *  things - once by its provenance id. */
-  const marketMint = (piece) => {
-    if (!piece?.provenance) return;
-    if (heldProvenances().has(piece.provenance)) return;
-    const it = mintMarketPiece(piece);   // MARKET-LOOK: the mint the board's look shows
-    if (!it) return;
-    const home = isCraftedFurniture(it);
-    if (home) (playerEntity.furnishings ??= []).push(it); else addItem((playerEntity.items ??= []), it, 'back');
-    townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\'s things' : 'in your pack'}.`);
-    saveSoon.changed();
-  };
-  /** PROF5: a piece's name as its record mints it (the Crafted view's and the road's), kept by its provenance id. */
-  const _pieceNames = new Map();
-  const marketPieceName = (piece) => {
-    if (!piece?.provenance) return 'a crafted piece';
-    let n = _pieceNames.get(piece.provenance);
-    if (!n) { const it = mintPiece(piece, piece.provenance); n = it ? itemLongName(it) : 'a crafted piece'; _pieceNames.set(piece.provenance, n); }
-    return n;
-  };
-  /** MENU-ORDER: a crafted piece's picture - the piece its record mints, minted once and kept by its provenance id. */
-  const _pieceItems = new Map();
-  const marketPiecePicture = (piece, wake) => {
-    if (!piece?.provenance) return null;
-    if (!_pieceItems.has(piece.provenance)) { let it = null; try { it = mintPiece(piece, piece.provenance); } catch { it = null; } _pieceItems.set(piece.provenance, it); }
-    return itemPicture(_pieceItems.get(piece.provenance), { onReady: wake });
-  };
-  /** PROF5: the crafted pieces this character may list - in the pack, none worn, locked or bound (TRADE1's refusals), and
-   *  the home's crafted furniture not set down. AUDIT 30 C2: none enchanted since its craft - the market mints a piece
-   *  again from its record, and the item maker's work would be lost on the way (smithItems asMinted). */
-  /** AUDIT 31 H1: a piece either book keeps an act on (a listing, an auction or a fill whose answer is still to come) - it
-   *  is offered to neither again until that answer comes. MARKET-ANY: and the pack's side of a piece from the pack (systems/tradePack.js createMarketGoods). */
-  const pieceKept = (pv) => !!marketBook?.holdsPiece(pv) || !!writBook?.holdsPiece(pv); const marketGoods = createMarketGoods(playerEntity, { kept: (pv) => pieceKept(pv), say: (t) => townTalk.say(t) });
-  const marketPieces = () => [
-    ...(playerEntity.items ?? []).filter((it) => it?.provenance && asMinted(it) && !tradeRefusal(it) && !isLocked(it) && !pieceKept(it.provenance))
-      .map((item) => ({ item, where: 'pack', name: itemLongName(item) })),
-    ...(playerEntity.furnishings ?? []).filter((it) => it?.provenance && asMinted(it) && !pieceKept(it.provenance)).map((item) => ({ item, where: 'home', name: itemLongName(item) })),
-  ];
-  /** PROF6: the pieces in the save that answer a commission - listable as the market's are (as minted, not worn,
-   *  locked or bound), of its recipe (smithItems pieceOfRecipe), at least its quality, and unworn (a commission is new
-   *  work, Professions-Arc 28) - each taken out of the save and put back as a listed piece is. AUDIT 31 U7: and, where
-   *  the service named the pieces that would fill it (`eligible` - its own make, on no sale), only those, the least
-   *  quality first. */
-  const commissionPieces = (c) => {
-    const named = Array.isArray(c.eligible) ? new Map(c.eligible.map((e, i) => [e.provenance, i])) : null;
-    // AUDIT 31 L8: the law's own test of a piece that answers it (writLaw commissionFilledBy), never its clause restated
-    const answers = (it) => (!named || named.has(it.provenance))
-      && commissionFilledBy(c, { recipe: pieceOfRecipe(it, c.recipe) ? c.recipe : null, quality: it.quality ?? null }) && wearOf(it) === WEAR_WHOLE;
-    const out = marketPieces()
-      .filter((p) => answers(p.item))
-      .sort((a, b) => (named ? named.get(a.item.provenance) - named.get(b.item.provenance) : (a.item.quality ?? 0) - (b.item.quality ?? 0)))
-      .map((p) => ({ ...p, quality: p.item.quality ?? null, take: () => marketTake(p.item, p.where), putBack: marketPutBack }));
-    // AUDIT 31 H8: one that answers it but will not leave the pack (equipped, locked, bound) - the tab says so
-    return Object.assign(out, { blocked: (playerEntity.items ?? []).filter((it) => it?.provenance && answers(it) && (tradeRefusal(it) || isLocked(it))).length });
-  };
-  /** PROF5: a listed piece out of the save (the book keeps it until the service answers), and back on a refusal. */
-  const marketTake = (item, where) => {
-    const list = where === 'home' ? playerEntity.furnishings : playerEntity.items;
-    const i = (list ?? []).indexOf(item);
-    if (i < 0 || (where === 'pack' && (tradeRefusal(item) || isLocked(item)))) return false;
-    list.splice(i, 1);
-    saveSoon.changed();
-    return true;
-  };
-  /** AUDIT 30 C3: a piece a settled listing took, out of the save - the take was made in a save that may not have been
-   *  kept since (a crash, a seat handed over), and the piece would stand both listed and in the pack. */
-  const marketDrop = (item) => {
-    if (!item?.provenance) return;
-    for (const list of pieceLists()) {   // AUDIT 31 H5: the wagon and a repairer's hands too
-      const i = list.findIndex((it) => it?.provenance === item.provenance);
-      if (i < 0) continue;
-      if (list === playerEntity.items) unequipItem(playerEntity, list[i]);
-      list.splice(i, 1);
-      saveSoon.changed();
-    }
-  };
-  const marketPutBack = (item, where) => {
-    if (!item?.provenance) return;
-    if (heldProvenances().has(item.provenance)) return;
-    if (where === 'home') (playerEntity.furnishings ??= []).push(item); else addItem((playerEntity.items ??= []), item, 'back');
-    saveSoon.changed();
-  };
-  /** PROF5: every region's hub as this client derived it (HUB1) - the courier's road's ends, handed with every market
-   *  request for the service to witness (PROF0 26). */
-  const marketHubs = Object.fromEntries([...(regionHubs?.byRegion?.values?.() ?? [])].map((h) => [h.regionIndex, [h.pixel.x, h.pixel.y]]));
+  const { commissionPieces, heldProvenances, marketDrop, marketGoods, marketHubs, marketMint, marketPieceName, marketPiecePicture, marketPieces, marketPutBack, marketTake, pieceKept } = createMarketPieces({   // HOST-SPLIT: src/scenes/marketPiecesHost.js
+    marketBook, regionHubs, saveSoon, townSeats, worldPlaces, writBook,   // BAY-LEFT-SEA: the seats and the places, the provinces' market hubs
+    get townTalk() { return townTalk; },
+  });
   /** NOTICE1: the town a board on map pixel (px, py) belongs to - its map id (unsigned), its name, and whether one of its
    *  boards is a bounty board (the Notices tab then pins the line that sends the reader there) - or null off a location. */
   const noticeTownOf = (px, py, bountyLine = false) => {
@@ -2557,100 +2572,21 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // handles are declared far below too), play's callers the session's (wildActiveNow and wildHallStand, PVPDUNGEONS).
   let _wdunSkew = 0;   // the hub's clock less mine, off its `st` (wdunWord)
   const wdunDayNow = () => Math.floor((Date.now() + _wdunSkew) / WDUN_DAY_MS);
-  /** May a hall stand on this pixel: the game's own places never (not on one, not beside one), never the sea, never a
-   *  wet one - read off the map files every client holds alike (a mod's own rows are not, so they are not asked). */
-  const wildHallFree = (x, y) => {
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (_bountyLocPixels.has(`${x + dx},${y + dy}`)) return false;
-    return maps.getClimateIndex(x, y) !== CLIMATES.Ocean && _spawnGround(x, y);
-  };
-  let _wdCache = null;
-  /** The day's halls `[{ x, y, ring, key }]` over the zone's `mask` (null where there is no zone). */
-  const wildActiveOf = (mask) => {
-    if (!mask) return null;
-    const day = wdunDayNow();
-    if (_wdCache?.day === day && _wdCache.mask === mask) return _wdCache.active;
-    _wdCache = { day, mask, active: wildHallPicks(mask, wildHallFree, day) };
-    return _wdCache.active;
-  };
-  let _wildHallTemplates = null;
-  const _wildHallKeys = new Set();   // the pixels a hall stands on in the index - taken off when the day moves on
-  /** The hall on this pixel today over the zone's `mask`, stood in the index (a clone of a real dungeon - never a
-   *  graveyard's - on the zone's own lane of map ids, always elite, its tier on it), or null. */
-  const wildHallStandOf = (mask, px, py) => {
-    const hall = wildHallAt(wildActiveOf(mask), px, py);
-    if (!hall) return null;
-    const key = `${px},${py}`, day = wdunDayNow();
-    const had = locationIndex.get(key);
-    if (had?.wildHallDay === day) return had;
-    _wildHallTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon).filter(wildHallTemplateOk);
-    const template = pickTemplate(_wildHallTemplates, WDUN_SALT, px, py);
-    if (!template) return null;
-    const regionIndex = maps.getRegionIndexAt(px, py);
-    const loc = synthesizeDungeonLocation(template, { salt: WDUN_SALT, px, py, elite: true, where: {
-      regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
-    } });
-    loc.wildHall = { ring: hall.ring, key };
-    loc.wildHallDay = day;
-    loc.name = `Elite ${template.name} (${px},${py})`;
-    locationIndex.set(key, loc);
-    _wildHallKeys.add(key);
-    _locIndexGen += 1;
-    return loc;
-  };
-  const spawnedDungeonAt = (px, py) => {
-    if (!params.has('online')) return null;
-    try {
-      { const _wm = wildMaskOf(maps); if (_wm && wildInside(_wm, px, py)) return wildHallStandOf(_wm, px, py); }   // BOOT-TDZ2: the stand over the mask just read, never the session's (declared far below this build)   // PVPDUNGEONS: the spawner is excluded in the zone - only the tier rules stand halls there (the day's hall on this pixel, or nothing)
-      if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;
-      // SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): no ruin on a pixel a road,
-      // track, river or stream crosses (spawnedDungeons.js pathFreePixel). Online the network is the room's (the
-      // lane forces Basic Roads, onlineLane.js ONLINE_ROOM_MOD_KEYS), so every client asks the same bytes. Asked
-      // BEFORE the network lands, the answer is PROVISIONAL: the ruin stands for now and its key is kept, and the
-      // roads sweep (sweepRoadless) takes back every provisional one a path crosses before it rebuilds the pixels.
-      const net = terrainGen.roads();
-      if (net && !pathFreePixel(net, px, py)) return null;
-      // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule
-      // says so twice ("when there is no player in it"), and this is
-      // where it is kept: a pixel is only rebuilt from the overworld, so
-      // the one dungeon that could be underfoot is the one the mode
-      // machine is standing in. Its time runs out the moment they leave.
-      const key = `${px},${py}`;
-      // AUDIT OW5b D2: GONE IS GONE - the ledger's row is KEPT (its clocks keep it expired as the calendar goes on, and it
-      // rides the save), so the pixel stays empty. It was forgotten here, and the roll is a pure hash of the pixel: the
-      // very next ask - the build's own, a moment after buildPixel's probe had asked - stood the same dungeon again on a
-      // fresh seven days. "Spawned Dungeons should expire/removed" (TTL1, the creator's rule relayed by Mac)
-      // SPAWN-REBIRTH: gone until it stands again - REBIRTH_TTL_DAYS after it died the row is of a life that is over,
-      // `expired` answers false, and the same dungeon stands here with no clock running until a player enters it
-      if (_spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {
-        _locIndexGen += 1;   // AUDIT OW4 D5
-        locationIndex.delete(key);
-        return null;
-      }
-      const loc = _spawnCloneAt(px, py);
-      if (!loc) return null;
-      _locIndexGen += 1;   // AUDIT OW4 D5
-      locationIndex.set(key, loc);
-      if (!net) _spawnUnroaded.add(key);   // SPAWN-ROADS: decided without the network - the sweep asks again
-      // SPAWN-REBIRTH: standing it starts NO clock - the seven days start when a player enters it (onDungeonSpawned).
-      // A first sight here started them for every spawn within the terrain distance of a road walked, entered or not
-      return loc;
-    } catch (e) { console.warn('[spawned dungeons]', px, py, e?.message ?? e); return null; }
-  };
-  /** AUDIT OW5b D2: WHAT STANDS ON A PIXEL BEING BUILT - its place in the index, unless that is a spawn whose time has run
-   *  out with nobody in it: then it leaves the index and the pixel is built empty; else what spawnedDungeonAt stands. The
-   *  build took the index's word for a spawn it held, so one stood again at every rebuild whatever its clocks said, while
-   *  the Overworld (tvSpawnGone) had it gone. */
-  function _locationToBuild(px, py) {
-    if (etherSea && inEther(px, py)) return etherPlaceAt(px, py);   // ETHER-PLACES: an isle's place, or the open sea's none
-    const key = `${px},${py}`;
-    const loc = locationIndex.get(key);
-    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {   // AUDIT SPAWN-REBIRTH F6: a hall's day is its own
-      _locIndexGen += 1;   // AUDIT OW4 D5
-      locationIndex.delete(key);
-      return null;
-    }
-    return loc || spawnedDungeonAt(px, py);
-  }
+  /** WW-C2: THE ZONE'S HALLS (scenes/zoneHallsHost.js) - Cyrodiil's, their ground the continent's own whatever the land
+   *  switch, a place's pixels the registry's; the giants walk the same ground. */
+  const zoneHalls = createZoneHalls({ maps, woods, places: worldPlaces, locationIndex, isMainStory: isMainStoryDungeon, dayNow: wdunDayNow, indexMoved: () => { _locIndexGen += 1; } });
+  const { _locationToBuild } = createSpawnStand({   // HOST-SPLIT: src/scenes/spawnStandHost.js
+    _arenaTemplates, _capitalBase, _countryTemplates, _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt,
+    _spawnUnroaded, etherPlaceAt, etherSea, locationIndex, maps, params, terrainGen, zoneHalls,
+    get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; },
+    get _spawnClock() { return _spawnClock; },
+    get _spawnCloneAt() { return _spawnCloneAt; },
+    get arenaLocationAt() { return arenaLocationAt; },
+    get capitalLocationAt() { return capitalLocationAt; },
+    get countryLocationAt() { return countryLocationAt; },
+    get lairLocationAt() { return lairLocationAt; },
+    get provinceQuestPlaces() { return provinceQuestPlaces; },   // SPAWN-WORLD: past the Bay a place stands first
+  });
   /** ETHER-PLACES (world/etherPlaces.js): THE PLACE AN ISLE'S CENTRE PIXEL STANDS - a port's town or a ruin's dungeon,
    *  cloned off the game's own rows under the isle's own id, name and index, the region it answers for the Eltheric Isles'
    *  (etherPlaces.js ETHER_REGION) and its climate the isle's - stood in the index once (a building's door, a quest's
@@ -2667,6 +2603,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     locationIndex.set(key, loc);
     return loc;
   }
+  const { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js; WW7: arenaWarm registers TESA's places
+    _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
+    _lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,
+    townSeats, woodsBytes, worldPlaces, zoneHalls,   // AUDIT TESA II P7: the places past the Bay on the world's registry; Z7: the rolls the zone's halls keep off
+    get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; },
+    get woods() { return woods; },
+  });
   /** ETHER-OW: an isle's place, cloned and NOT stood (etherPlaceAt stands it as its pixel builds) - the Overworld marks a
    *  far isle's place without building it (tvSpawnAt's law), or null: a wild isle, a rock, no templates. */
   function etherPlaceClone(isle) {
@@ -2674,84 +2617,20 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!template) return null;
     return synthesizeEtherLocation(template, isle, { regionIndex: ETHER_REGION, regionName: REGION_NAMES[ETHER_REGION] ?? ETHER_REGION_NAME, politic: 128 + ETHER_REGION, climate: getWorldClimateSettings(isle.climate) });   // AUDIT CAPTAIN'S SEA P8: its region's own name - the quests resolve and gate a site by it
   }
-  /** AUDIT OW4 D4: THE CLONE a pixel's spawn IS - the template its hash picks, dressed as where it stands (region, politic,
-   *  climate, elite). Pure in the salt, the pixel and the map files, so the one answer serves spawnedDungeonAt (which stands
-   *  it) and the Overworld's far found spawns (tvSpawnAt, which marks it without building its pixel). */
-  function _spawnCloneAt(px, py) {
-    _spawnTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon);
-    const template = pickTemplate(_spawnTemplates, _spawnSalt, px, py);
-    if (!template) return null;
-    const regionIndex = maps.getRegionIndexAt(px, py);
-    return synthesizeDungeonLocation(template, { salt: _spawnSalt, px, py, where: {
-      regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
-    }, elite: isEliteSpawn(_spawnSalt, px, py) });   // ELITE: the same hash on every client
-  }
-  /** AUDIT OW4 D2: HAS A SPAWN'S TIME RUN OUT - the spawned feature's own test (spawnedDungeonAt's: the ledger's two
-   *  clocks, never while the player is in it), asked NOW: the index lets an expired spawn go only when its pixel next
-   *  builds, and until then its plate stood and its walk went. AUDIT OW5b D2: gone FROM THE GROUND - one standing on built
-   *  ground stands until that ground is next built (_locationToBuild takes it out then), and its plate stands with it.
-   *  FIELD BUGS 29h (SPAWN-PLATE; the Discord: "Elite Dungeons that despawn stay on map ... no entrance anymore but are
-   *  still marked"): standing on the ground is the BUILD's word - whether the pixel stood a location, never that it is
-   *  built. A pixel built after the clock ran out is built EMPTY, and read as built it kept its found plate (the store
-   *  files a spawn for good) and its walk to bare grass whenever the traveller came within the grid.
-   *  AUDIT SPAWN-REBIRTH F2: and the build's word BOTH WAYS - a pixel built empty while its spawn was dead stands none
-   *  until it is built again, though the spawn has stood again since (its time over, `expired` answers false: the plate
-   *  and the walk came back over the same bare grass, 29h's report the other way round); off the built ground, the clocks. */
-  const tvSpawnGone = (x, y) => { const key = `${x},${y}`; if (_insideSpawn(key)) return false; const b = built.get(key); return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };
-  /** GROUND-AGREE: the spawn law the Overworld and the ground share (world/spawnGroundPlace.js) - the gates it reads, handed in. */
-  const spawnGroundPlace = createSpawnGroundPlace({
-    maps,
-    online: params.has('online'),
-    etherSea,
-    plateauDry: _spawnGround,
-    terrainGen,
-    cloneAt: _spawnCloneAt,
-    spawnGone: tvSpawnGone,
+  const { _liftLocationAt, _spawnCloneAt, spawnGroundPlace, tvLocationAt, tvSpawnAt, tvSpawnGone } = createSpawnGroundHost({   // HOST-SPLIT: src/scenes/spawnGroundHost.js
+    _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt, etherSea, locationIndex, maps, params, terrainGen,
+    provinceQuestPlaces,   // SPAWN-WORLD: past the Bay a place stands first
+    _locationToBuild,   // BAY-LEFT-GROUND (D5): the lift past the Bay the build's own place (the stand is made above)
+    get _spawnClock() { return _spawnClock; },
+    get _spawnTemplates() { return _spawnTemplates; }, set _spawnTemplates(v) { _spawnTemplates = v; },
+    get built() { return built; },
   });
-  /** AUDIT OW4 D4: WHAT spawnedDungeonAt WOULD STAND on a pixel it has not built - its own gates (the sea, a path across
-   *  the pixel, the clocks; the roll and the page are asked by the caller) and its clone, with none of its writes (the
-   *  index, the roads' provisional keys): a far found spawn is marked, never built. */
-  const tvSpawnAt = spawnGroundPlace.spawnAt;
-  /** AUDIT OW5b D3: WHAT STANDS ON A PIXEL, built or not - the index's place, else the spawn its roll would stand (online,
-   *  side-effect free: tvSpawnAt). A member walking to the leader's spawn read the index alone, and a far spawn their own
-   *  pixels had never built was a bare spot to them. */
-  const tvLocationAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (params.has('online') && !inEtherLaw(x, y) && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);   // ETHER-PLACES: no spawn past the Veil - the isles stand their own
-  /** AUDIT LANDFORMS B1: landformLiftAt's pixels not built yet - what the build will stand there: the index's place, else
-   *  online the spawn its roll stands (GROUND-AGREE: alive or dead - its ground is the roll's), read here without taking
-   *  anything out of the index. AUDIT LANDFORMS II F1: declared here, beside the build's own answer, so it is the
-   *  whole answer before anything can ask it. It was bound beside the Overworld's probes, far below the boot's load
-   *  (`await worldQuickLoad({ ...bootLoadPick, snap })`) - online the only load - so that load stood a spawn's records on
-   *  the wild lift and every later save wrote them on the spawn's: a camp at a spawned dungeon drifted by up to 24 m a
-   *  session (the Citadel of Copperton), and a camp is never stood again. */
-  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));
 
-  // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
-  // resolve the start by NAME - it reads a map pixel out of settings
-  // (StartCellX/StartCellY, 109/158 = Privateer's Hold) and asks the
-  // world what location is there. ?classic takes that path so the new
-  // game begins where Daggerfall begins; every dev boot keeps the
-  // region/loc names it has always used.
-  //
-  // NEVER TRAPS: a start cell with no location falls back to the named
-  // location rather than throwing the player at a black screen.
-  let startLoc = null;
-  if (params.has('classic')) {
-    const cell = `${getInt('Startup', 'StartCellX')},${getInt('Startup', 'StartCellY')}`;
-    startLoc = locationIndex.get(cell) ?? null;
-    if (!startLoc) console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
-  }
-  // EE13 (Mac: a season test that spawns somewhere random, from the
-  // menu): ?spawn=random picks any TOWN in the index - a place with
-  // ground, roads and people, which is what the outdoors is being tested
-  // with. Seeded from the clock so two presses give two towns; the town
-  // is logged so a good one can be found again by ?region=&loc=.
-  if (!startLoc && params.get('spawn') === 'random') {
-    const towns = [...locationIndex.values()].filter((l) => [0, 1, 2].includes(l.mapTableData?.locationType));   // TownCity, TownHamlet, TownVillage (MapsFile LocationTypes)
-    const pick = towns.length ? towns[Math.floor((Date.now() / 7919) % towns.length)] : null;
-    if (pick) { startLoc = pick; console.info(`[world] random spawn: ${pick.regionName ?? pick.mapTableData?.regionName ?? '?'} / ${pick.name ?? '?'} (${params.get('season') ?? 'the calendar\u2019s season'})`); }
-  }
-  if (!startLoc) startLoc = maps.getLocationByName(regionName, locationName);
-  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);
+  // U31 / THE CLASSIC START (and EE13's random spawn, and the named start) - HOST-SPLIT: scenes/bootStartHost.js.
+  // BAY-LEFT-B: a start past the Bay (a family's seat there) stands the world on the Bay, then moves to it once its land
+  // stands (`farStart`, which a birth waits on) - as a save made past the Bay loads
+  const { startLoc, farStart } = createBootStart({ locationIndex, locationName, maps, params, regionName, _teleportToPixel, worldPlaces, _worldReady,
+    get arenaTraced() { return arenaTraced; }, get townTalk() { return townTalk; } });
   const startPixel = longitudeLatitudeToMapPixel(
     startLoc.mapTableData.longitude, startLoc.mapTableData.latitude);
   // BOOT-OVERLAP: THE TOWNS THE BOOT WAITS ON AS IT BUILDS THEM - the start's (the first build) and a realm save's own
@@ -2815,7 +2694,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
-  let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
+  let precip = precipMode && !isDryFall(precipMode) ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;   // ASHFALL1's audit: a dry fall at boot builds no rain program either
   const wxEye32 = new Float32Array(3);   // RAIN-LEAK: the falling weather's eye, filled each frame - never a fresh array a frame
   // PERF-WARM: the renderer's on-demand programs, and the rain's whole
   // renderer, paid for at idle rather than on the frame that first needs
@@ -2831,7 +2710,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
-  const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
+  const dryFall = sky.enhanced ? new DryFallRenderer(renderer.gl) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look; ASHFALL1: and the ashfall's ash and embers (render/dryFall.js)
   // HAZE1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): HEAT HAZE -
   // built on the enhanced lane (a shader fault is a boot fault), its switch read per frame (hazeFrameSettings: the mod's
   // own, and `?haze=off`). The state is the mod's per-frame law; the ring is drawn once the opaque world is whole.
@@ -2841,64 +2720,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // the enhanced outdoors' (scenes/windfallHost.js): ticked on every frame, outdoors and in; its law handed to the flats'
   // call in WIND3's place while the mod is on, its leaves and snow drawn with the opaque world.
   const windfall = createWindfallHost({ gl: renderer.gl, enhanced: !!sky.enhanced });
-  // SNOWFALL1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): SNOWFALL -
-  // the enhanced outdoors' snow (scenes/snowfallHost.js) on the streamed ground as it is DRAWN: each pixel's own
-  // surface at its stride and its TileMap (the cap's, where Deep Waters patched one), the sea it carved bare, the roads
-  // Basic Roads'. Ticked on every frame, outdoors and in; told each pixel published (OnPromoteTerrainData); drawn after
-  // the ground by the ground's own program - its sun, its shadows, its lights and its fog. The adapter reads the
-  // stream's bindings when it is asked, never here (they are declared below).
-  const _snowPixels = new Map();   // px * 1000 + py -> the built entry, this frame (cleared at the frame: a publish lands between frames)
-  const _snowIds = new WeakMap();
-  let _snowNextId = 0;
-  const snowIdOf = (o) => { if (!o) return 0; let id = _snowIds.get(o); if (id === undefined) { id = ++_snowNextId; _snowIds.set(o, id); } return id; };
-  const _snowG = [0, 0];
-  const snowGround = {
-    size: TERRAIN_SIZE,
-    get terrainDistance() { return state.terrainDistance; },
-    pixelAt(x, z) {
-      const c = state.compensation;
-      return snowGround.pixelOn(state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE), state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE));
-    },
-    pixelOn(px, py) {   // StreamingWorld.GetTerrainFromPixel: the built entry standing there, its ground published
-      if (px < 0 || px >= 1000 || py < 0 || py >= 500) return null;
-      const k = px * 1000 + py;
-      let p = _snowPixels.get(k);
-      if (p === undefined) { p = built.get(`${px},${py}`) ?? null; if (p && !(p.samples && p.tilemapBytes)) p = null; _snowPixels.set(k, p); }
-      return p;
-    },
-    pixelsNear(ring) {
-      const cur = state.current, out = [];
-      for (const p of built.values()) if (p.samples && p.tilemapBytes && Math.max(Math.abs(p.px - cur.x), Math.abs(p.py - cur.y)) <= ring) out.push(p);
-      return out.sort(nearestFirstFrom(cur));
-    },
-    translation: (p, out) => state.pixelTranslation(p.px, p.py, out),
-    height(p, lx, lz) {
-      if (p.deepWaters && deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return f; }   // DW-B: the floor is drawn there
-      const stride = p._stride ?? 1, h = surfaceHeightAt(p.samples, lx, lz, stride), d = p._bed?.depths, g = 128 / stride + 1;
-      return d ? h - gridValueAt(d, g, g, tileSide * stride, lx, lz) : h;   // WATER-NEXT 2: and the bed carved under a shore
-    },
-    normal: (p, lx, lz, out) => (p.groundNormals && (p._stride ?? 1) === 1 ? surfaceNormalAt(p.groundNormals, lx, lz, out) : surfaceNormalFromSamples(p.samples, lx, lz, p._stride ?? 1, out)),
-    tileMap: (p) => p._dwBytes ?? p.tilemapBytes,
-    climate: (p) => maps.getClimateIndex(p.px, p.py),
-    mapPixel: (p) => ({ x: p.px, y: p.py }),
-    stamp: (p) => `${p._stride ?? 1}/${snowIdOf(p._dwBytes ?? p.tilemapBytes)}/${snowIdOf(p.deepWaters)}/${snowIdOf(p._bed?.depths)}`,
-    bare: (p, lx, lz) => !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null,   // DW-B: the carved sea has no ground to lie on
-    roads(p) {
-      const raw = terrainGen.roads();
-      const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;
-      if (!net) return null;
-      const loc = p.locationRect ? locationIndex.get(`${p.px},${p.py}`) : null;
-      const authored = loc?.exterior?.exteriorData && (net.roads | net.roadCorners | net.paths | net.pathCorners) !== 0 ? authoredTiles(loc, maps, blocks) : new Uint8Array(16384);
-      return { ...net, authored, rect: p.locationRect ?? { xMin: 0, xMax: 0, yMin: 0, yMax: 0 } };
-    },
-    toGlobal(x, z) {
-      const c = state.compensation;
-      _snowG[0] = state.mapOrigin.x * TERRAIN_SIZE + (x - c[0]);
-      _snowG[1] = (499 - state.mapOrigin.y) * TERRAIN_SIZE + (z - c[2]);
-      return _snowG;
-    },
-    settlements: (minX, minZ, maxX, maxZ) => settlementsIn((x, y) => locationIndex.get(`${x},${y}`) ?? null, minX, minZ, maxX, maxZ),
-  };
+  const { _snowPixels, snowGround } = createSnowGround({   // HOST-SPLIT: src/scenes/snowGround.js
+    blocks, locationIndex, maps, terrainGen,
+    get built() { return built; },
+    get deepWaters() { return deepWaters; },
+    get state() { return state; },
+  });
   const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: snowGround });
   /** SNOWFALL1: who walks the snow - the player (the fly camera: the tiers round the eye, no tracks), the street's foes
    *  and its watch (an EnemyMotor's CharacterController), the town's people (a MobilePersonNPC: a citizen) - and the
@@ -3033,7 +2860,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
-    if (precipMode && precipMode !== 'sand' && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's
+    if (precipMode && !isDryFall(precipMode) && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's; ASHFALL1: nor the ash
     lightning = systemWordOf(w) === 'thunder'   // AUDIT PRECIP FALL-2: a storm's strobe is its system's (a storm falling as snow still strikes)
       ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
     if (changed) _onWeatherChange?.(w);
@@ -3133,7 +2960,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // `?junglehaze=off`). Both doors and their frame are the trees' host's (scenes/treesHost.js - HOST-SPLIT), the jungle's
   // field and air its own host's (scenes/jungleHost.js); a pixel HOLDS the handles its far pictures stand on and lets them go
   // with it (AUDIT LPT B5). The stream's state, its pixels and its ground are asked of the world, never held
-  const jungle = jungleOn() ? createJungleHost({ renderer, maps, mapWidth: MAP_W, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, heightAt: (x, z) => heightAt(x, z), breathe: () => breather.breathe(), haze: jungleHazeOn() }) : null;
+  const jungle = jungleOn() ? createJungleHost({ renderer, maps, mapWidth: MAP_W, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, heightAt: (x, z) => heightAt(x, z), breathe: () => breather.breathe(), haze: jungleHazeOn(),
+    zoneAt: tamrielLand ? tamrielBiomeAt : null, version: tamrielLand ? biomeStamp : null }) : null;   // TESA-BIOME: Cyrodiil's jungle past the Bay (world/tamriel/tamrielBiomes.js); VALENWOOD-CANOPY: and Valenwood's, its canopy closed
   const jungleFloor = jungle && labGrass ? createJungleFloorHost({ gl: renderer.gl, jungle, pictures: floorPictures({ getTexture, palette }), density: grassDensity / LAB_GRASS.density, provoke: pageParam('provoke') !== 'last', onArrive: () => { labGrassField = null; } }) : null;   // BANTHA2: the jungle's floor, a second field of the grass (scenes/jungleFloorHost.js) - made when the jungle comes near; the meadow's field placed again beside it
   let _snowArrival = null;   // AUDIT PRECIP HOST-2: a trip's arrival minute (the event clock's) while its time has yet to run - declared before the host that reads it
   const snowCover = createSnowCoverHost({ renderer, climateAt, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, owns: precipLawOn, markReskin: (key) => _reskin.skin(key), markRebuild: (key) => _reskin.mark(key), now: () => (_snowArrival !== null && worldMinutes() < _snowArrival ? _snowArrival : ((_snowArrival = null), worldMinutes())), place: () => ({ px: state.current.x, py: state.current.y }), arriving: () => !playerSpawned });   // AUDIT PRECIP HOST-2: ONE clock - a trip's arrival minute until its own time has run   // PRECIP4 (scenes/snowCoverHost.js): the ground's snow on the enhanced lane - its draws, its builds' seasons, the sweep
@@ -3163,115 +2991,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (_personTexLoad ??= Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))))
       .catch((e) => { _personTexLoad = null; throw e; }));
 
-  // LW3 (bible/06-Systems/Living-World.md): THE LIVING WORLD'S ROADS. The trips are pure (systems/livingWorld/trips.js);
-  // their world is this host's: the towns - the game's OWN rows (a mod's addition stands on one client and not another),
-  // the populated types, each as its MAPS row says it (its blocks, its climate's people, its region, its port) - and the
-  // way between two, the Travel Options planner's on Hazelnut's roads (the follow key's and the static's own: his bytes
-  // or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so every client walks
-  // the same way, a few a frame. A traveller's trip of a cycle never changes, so the book keeps every one it has made.
-  let _livingTowns = null;
-  /** AUDIT LEGACY III W1: the game's rows let go once both indices that read them stand. */
-  const releaseHubRows = () => { if (_livingTowns && _livingDungeons) _hubRows.length = 0; };
-  /** LW12: a region's towns (the index's, by region). @type {Map<number, any[]> | null} */
-  let _livingByRegion = null;
-  const livingTownsOfRegion = (region) => {
-    if (!_livingByRegion) {
-      _livingByRegion = new Map();
-      for (const t of livingTownsIndex().values()) { const k = t.region | 0; if (!_livingByRegion.has(k)) _livingByRegion.set(k, []); _livingByRegion.get(k)?.push(t); }
-    }
-    return _livingByRegion.get(region | 0) ?? [];
-  };
-  const livingTownsIndex = () => {
-    if (_livingTowns) return _livingTowns;
-    _livingTowns = new Map();
-    for (const loc of _hubRows) {
-      const md = loc.mapTableData;
-      if (!md || !populatesWanderingNpcs(md.locationType)) continue;
-      const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
-      const ed = loc.exterior?.exteriorData;
-      _livingTowns.set(p.y * 1000 + p.x, {
-        mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex,
-        people: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y))?.people, blocks: Math.max(1, (ed?.width ?? 1) * (ed?.height ?? 1)),
-        w: Math.max(1, ed?.width ?? 1), h: Math.max(1, ed?.height ?? 1),   // WALL-WAY: its grid's own shape - a road party leaves it past its walls
-        port: hasPort(md.mapId),
-      });
-    }
-    releaseHubRows();
-    return _livingTowns;
-  };
-  // LW6: THE DUNGEONS an adventurer dives - the game's own rows of a dungeon's kind (a labyrinth, a keep, a ruin, a
-  // graveyard), each with its dungeon's type
-  const LIVING_DIVE_TYPES = new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]);
-  let _livingDungeons = null, _livingDungeonById = null;
-  const livingDungeonsIndex = () => {
-    if (_livingDungeons) return _livingDungeons;
-    _livingDungeons = new Map(); _livingDungeonById = new Map();
-    for (const loc of _hubRows) {
-      const md = loc.mapTableData;
-      if (!md || !LIVING_DIVE_TYPES.has(md.locationType)) continue;
-      const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
-      const d = { mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex, blocks: 1, dungeon: true, dungeonType: md.dungeonType ?? 0 };
-      _livingDungeons.set(p.y * 1000 + p.x, d); _livingDungeonById.set(d.mapId, d);
-    }
-    releaseHubRows();
-    return _livingDungeons;
-  };
-  const _livingDungeonsNear = new Map();
-  const livingDungeonsNear = (px, py, r) => {
-    const key = livingNearKey(px, py, r);   // OW-HITCH
-    let got = _livingDungeonsNear.get(key);
-    if (got) return got;
-    got = [];
-    const idx = livingDungeonsIndex();
-    for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const d = idx.get(y * 1000 + x); if (d) got.push(d); }
-    got.sort((a, b) => a.mapId - b.mapId);
-    if (_livingDungeonsNear.size > LIVING_NEAR_KEPT) _livingDungeonsNear.clear();
-    _livingDungeonsNear.set(key, got);
-    return got;
-  };
-  const _livingNear = new Map();
-  const livingTownsNear = (px, py, r) => {
-    const key = livingNearKey(px, py, r);   // OW-HITCH
-    let got = _livingNear.get(key);
-    if (got) return got;
-    got = [];
-    const idx = livingTownsIndex();
-    for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const t = idx.get(y * 1000 + x); if (t) got.push(t); }
-    got.sort((a, b) => a.mapId - b.mapId);
-    if (_livingNear.size > LIVING_NEAR_KEPT) _livingNear.clear();
-    _livingNear.set(key, got);
-    return got;
-  };
-  // the ways: the living world's own planner (livingWorld/ways.js) on the drawn roads and the game's own ground - never a
-  // player's attached massifs (TO-ROADS: the host plans the player's journeys alone)
-  let _livingGround = null;
-  const livingWays = createWayBook({
-    roads: () => terrainGen.roads(),
-    ground: () => (_livingGround ??= routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE)),
-  });
-  const livingRouteOf = (a, b) => livingWays.wayOf(a, b);
-  const _livingRosters = new Map();
-  /** @type {((nx: number, nz: number) => boolean) | null} */
-  let _livingDry = null;
-  const livingTripWorld = {
-    townsNear: livingTownsNear,
-    routeOf: livingRouteOf,
-    rosterOf: (t) => { let r = _livingRosters.get(t.mapId); if (!r) { r = travellerRoster(t); _livingRosters.set(t.mapId, r); } return r; },
-    templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
-    dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
-    dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
-    townsIn: (region) => livingTownsOfRegion(region), marketBandOf: townEcon.marketBandOf,   // LW12: a region's towns, its bands' legs; TOWN-ECON TE3: a market town's band on a day
-  };
-  const _livingTripMemo = new Map();
-  let _livingWaysSeen = 0;
-  /** AUDIT-B8: the trips' memo kept to its bound and to the network's generation by every reader (the roads', the deep's
-   *  and the towns' - only the towns' asked it, and a long stay below grew it unbounded). */
-  const livingMemoFresh = () => { if (_livingTripMemo.size > 40000 || livingWays.generation !== _livingWaysSeen) { _livingTripMemo.clear(); _livingWaysSeen = livingWays.generation; } };
+  // LW3 (bible/06-Systems/Living-World.md): THE LIVING WORLD'S ROADS - the trips' world (its towns, the registry's - WW1 -
+  // its ways, its rosters, its ground) and the trips' memo: scenes/livingWorld/livingTrips.js (HOST-SPLIT). WW7-7
+  // (bible/03-World/World-Wide.md): and the land past the Bay lived in - its towns' trips wait on the roads past the Bay
+  // laid whole (`pastTheBay`, TESA14's host), then walk them; a trip keeps to its own side of the Bay's edge
+  const { index: livingIndex, ways: livingWays, world: livingTripWorld, memo: _livingTripMemo, memoFresh: livingMemoFresh } = createLivingTrips({ places: worldPlaces, populated: populatesWanderingNpcs,
+    peopleAt: (px, py) => getWorldClimateSettings(maps.getClimateIndex(px, py))?.people, maps, woods, roads: () => terrainGen.roads(), marketBandOf: townEcon.marketBandOf, pastTheBay: _tamrielRoads });
+  const livingTownAt = livingIndex.townAt;
   // LW4: THE LIVES AND THE TROUBLE (lives.js, trouble.js) - who holds each traveller's place in a cycle (the census's
   // newcomer after a death on the road; nobody while the place stands empty) and what befalls each party, read over the
   // character's own turns of fate (relations.js); each kept in a book, made again when a turn is made or a save loaded
-  const _livingTownById = new Map();
-  const livingTownOfId = (id) => { if (!_livingTownById.size) for (const t of livingTownsIndex().values()) _livingTownById.set(t.mapId, t); return _livingTownById.get(id) ?? null; };
+  const livingTownOfId = livingIndex.townOfId;
   const _livingPlaces = new Map();
   const _livingFates = new Map();
   let _livingTurnsRel = null, _livingTurnsV = -1;
@@ -3344,16 +3074,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // towns told the band-less news they read while it waited. As livingWordFresh makes it again - B11's last word told
   // while it is worked
   const livingHideoutsOf = createHideoutBook({
-    of: (region) => hideoutsOf(region, livingTripWorld),
-    generation: () => livingWays.generation,
+    of: (area) => hideoutsOf(area, livingTripWorld),
+    generation: () => `${livingWays.generation}|${livingIndex.generation()}`,   // AUDIT WW F7: and the world's places - an area's dungeons and towns
     resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },
   });
   const livingRouts = () => livingRelations.turns().routed;
-  /** The hideouts about native (`x`, `z`): of the regions of the towns within eight pixels. */
+  /** The hideouts about native (`x`, `z`): of the areas (WW1: the regions on the Bay) of the towns within eight pixels. */
   const livingHideoutsNear = (x, z) => {
     const px = Math.floor(x / 32768), py = 499 - Math.floor(z / 32768);
-    const regions = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.region | 0));
-    return [...regions].flatMap((r) => livingHideoutsOf(r));
+    const areas = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.area | 0));
+    return [...areas].flatMap((a) => livingHideoutsOf(a));
   };
   // AUDIT LW-II E1: a patrol's cover still waiting on a round's way (patrolCover's undefined) - the trouble read meanwhile is
   // no answer: it is never kept (`fate`), so every reader's trouble is the one read with every round known
@@ -3361,16 +3091,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const livingCovered = (c) => { if (c === undefined) _livingCoverPending = true; return !!c; };
   const livingTroubleWorld = {
     climateAt: (px, py) => maps.getClimateIndex(px, py),
-    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null
-      ? Array.from({ length: size }, () => chooseRandomEnemy({ dungeonType, playerLevel: level }, rolls)).filter((m) => m >= 0)   // LW6: the deep's own
-      : rollGroupComposition({ climateIndex, skyMinutes: minute, inLocationRect: false, playerLevel: level, size }, rolls)?.mobileTypes ?? null),
+    foesOf: troubleFoesOf({ faunaAt: (x, y) => maps.getFaunaBand?.(x, y) }),   // BAY-LEFT-GROUND (D2): the campers' group on the land's own wild where the trouble falls - past the Bay its zone's (scenes/livingWorld/troubleFoes.js); LW6: a dive's, the deep's own
     foeLevel: enemyLevelOf,   // a foe at its kind's level - the enemy table's law (enemyBasics.js), the roads' harness's too
     dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies && pl.hand == null; },   // LW7: one a hand took first the road's trouble never takes
     diced: (res, trip) => livingTripPlace(res, trip).diced,   // AUDIT-B1: the dice's own death - the trouble's shape, never a turn's
     turnOf: (id) => { const t = livingRelations.turns(); return t.won.has(id) ? 'won' : t.lost.has(id) ? 'lost' : null; },
     covered: (trip) => livingCovered(patrolCover(trip, livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo })),   // LW9: a patrol keeps the road
     // LW12: THE OUTLAWS - a band's hold-up, over the hideouts of the trip's two regions and the character's routs
-    bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t, [...livingHideoutsOf(trip.from?.region), ...(trip.to?.region != null && trip.to.region !== trip.from?.region ? livingHideoutsOf(trip.to.region) : [])], livingRouts()),
+    bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t, [...livingHideoutsOf(trip.from?.area), ...(trip.to?.area != null && trip.to.area !== trip.from?.area ? livingHideoutsOf(trip.to.area) : [])], livingRouts()),   // WW1: the bands of the trip's two AREAS (its regions on the Bay)
   };
   livingTripWorld.holderOf = (res, k) => livingPlaceOf(res, k).holder;
   livingTripWorld.fated = (res, k) => livingPlaceOf(res, k).diced;   // AUDIT-B1: the dice's - a trip a spare re-rolled was gone from the road
@@ -3545,48 +3273,28 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // town's trips and crews, which asked them in their temporal dead zone and threw. Until they stand the lanes answer
   // as the map unread does (lanesFrom: undefined, asked again; no crew ashore, no sailor's berth).
   let _lanesReady = false;
-  const _livingLaneCounts = new Map();
-  const livingLaneWay = (lane) => { let way = _laneWays.get(lane.key); if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); } return way; };
-  const livingLaneCount = (lane) => {
-    let n = _livingLaneCounts.get(lane.key);
-    if (n === undefined) { const way = livingLaneWay(lane); n = way ? packetsAt(lane, way, 0).length : 0; _livingLaneCounts.set(lane.key, n); }
-    return n;
-  };
+  const livingLaneWay = (lane) => worldLanes.way(lane);   // WW3: the world's lanes' one book of ways (scenes/naval/worldLanes.js)
   const livingPacketAt = (b) => { const way = livingLaneWay(b.lane); return way ? packetAt(b.lane, way, raidNowMs(), b.k, b.count) : null; };
   const livingSailing = () => !!naval?.enabled && !!mapDict;
-  let _livingTownByPort = null;
-  const livingTownOfPort = (portId) => {
-    if (!_livingTownByPort) { _livingTownByPort = new Map(); for (const t of livingTownsIndex().values()) if (t.port) _livingTownByPort.set(maskMapId(t.mapId), t); }
-    return _livingTownByPort.get(portId) ?? null;
-  };
+  const livingTownOfPort = livingIndex.townOfPort;
   const livingSailorsOf = (portId) => {
     const town = livingTownOfPort(portId);
     return town ? livingTripWorld.rosterOf(town).filter((r) => r.job === 'sailor') : [];
   };
   // LW5b: THE PASSAGE BY SEA - a port town's lanes (the Bay's own, naval/seaLanes.js: the far port, the lane's length),
-  // for its travellers to sail and its visitors to come off the ships by; the map read first (pure: every reader's alike)
-  const _livingLanesFrom = new Map();
+  // for its travellers to sail and its visitors to come off the ships by; the map read first (pure: every reader's alike).
+  // AUDIT WW F7: the lanes' books (a lane's packets, a town's lanes, a port's berths) scenes/livingWorld/livingLanes.js's,
+  // made again when the world's lanes or places move
+  const livingLanes = createLivingLanes({ lanes: () => laneNet(), way: livingLaneWay, townOfPort: livingTownOfPort, sailorsOf: livingSailorsOf, generation: livingIndex.generation });
   livingTripWorld.lanesFrom = (town) => {
     if (!town?.port) return [];
     if (!mapDict || (typeof _lanesReady !== 'undefined' && !_lanesReady)) return undefined;   // BOOT-TDZ II: the lanes not yet standing are the map unread (typeof: a lifted slice without the flag)
-    let got = _livingLanesFrom.get(town.mapId);
-    if (!got) {
-      const id = maskMapId(town.mapId);
-      got = laneNet().filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
-        const way = livingLaneWay(l), to = livingTownOfPort(l.a.id === id ? l.b.id : l.a.id);
-        return way && to ? [{ to, len: way.len, key: l.key }] : [];
-      });
-      _livingLanesFrom.set(town.mapId, got);
-    }
-    return got;
+    return livingLanes.from(town);
   };
-  const _livingBerths = new Map();
   /** Where one of a port's sailors is now ('home', 'sea', 'abroad'), null for anyone else or the ships not sailing. */
   const livingAshore = (town, res) => {
     if ((typeof _lanesReady !== 'undefined' && !_lanesReady) || res.job !== 'sailor' || res.town !== town?.mapId || !town?.port || !livingSailing()) return null;   // its own sailors: a visiting crew is the crews' own
-    const portId = maskMapId(town.mapId);
-    let book = _livingBerths.get(portId);
-    if (!book) { book = { packets: portPackets(laneNet(), portId, livingLaneCount), sailors: livingSailorsOf(portId) }; _livingBerths.set(portId, book); }
+    const portId = portIdOf(town), book = livingLanes.berths(portId);
     return sailorAt(berthOf(res, book.sailors, book.packets), portId, livingPacketAt).at;
   };
   /** The hands of the packets lying at a port from elsewhere, each ashore from her making fast to her sailing (the
@@ -3595,7 +3303,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if ((typeof _lanesReady !== 'undefined' && !_lanesReady) || !town?.port || !livingSailing()) return [];   // BOOT-TDZ II
     const nowS = raidNowMs() / 1000, t = skyMinutes(), rate = livingBaseRate();
     const day = Math.floor((t - 240) / 1440);
-    return crewsAshore(maskMapId(town.mapId), laneNet(), livingLaneCount, livingPacketAt, livingSailorsOf).flatMap((c) => {
+    return crewsAshore(portIdOf(town), laneNet(), livingLanes.count, livingPacketAt, livingSailorsOf).flatMap((c) => {
       const res = livingPlaceOf(c.res, livingCycleOf(c.res, day)).holder;   // LW7: the place's holder now - a newcomer after a death, none while it stands empty
       return res ? [{ res: res.id === c.res.id ? c.res : res, berth: c.berth, inT: t - Math.max(0, nowS - (c.until - LANE_DWELL_S)) * rate, outT: t + Math.max(0, c.until - nowS) * rate }] : [];
     });
@@ -3614,9 +3322,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const livingDungeonHere = () => {
     const loc = modes?.dungeonCtx?.abyss?.location?.();   // LW-FIX1: the dungeon's summary is its abyss seam's (DungeonSummary.LocationData) - it has no `location` of its own
     if (!loc) return null;
-    const row = maps.getLocation(loc.regionIndex, loc.locationIndex);
-    livingDungeonsIndex();
-    return row?.mapTableData ? _livingDungeonById.get(row.mapTableData.mapId >>> 0) ?? null : null;
+    const id = loc.mapTableData?.mapId ?? maps.getLocation(loc.regionIndex, loc.locationIndex)?.mapTableData?.mapId;   // WW7: a lair past the Bay its own id - it has no MAPS row
+    return id != null ? livingIndex.dungeonOfId(id >>> 0) : null;
   };
   // LW14 (bible/06-Systems/Living-World-II.md "LW14"): THE DIVE'S ROUTE over this dungeon's stops (the pool's own,
   // in a company's order - systems/livingWorld/deepRoute.js), kept by trip for the pool; the stops a dive left within
@@ -3641,8 +3348,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // RenameDungeon writes the abyss's own id only once the build stands), so its dives were the template's. The build's
     // one mark is the mod's own word on its loot (ShouldUpgradeLoot: the abyss building, bound, or a Recall landing in it)
     if (ohAbyss?.shouldUpgradeLoot()) return null;
-    livingDungeonsIndex();
-    const here = _livingDungeonById.get(loc.mapTableData.mapId >>> 0);
+    const here = livingIndex.dungeonOfId(loc.mapTableData.mapId >>> 0);
     if (!here) return null;
     const tBuild = skyMinutes();
     const from = entry ? { x: entry.x, y: entry.y, z: entry.z } : { x: stops[0].x, z: stops[0].z };   // AUDIT LW-III: the way out's last leg at the door's own floor
@@ -4062,6 +3768,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     inPool: (f) => exteriorFoes.foes.includes(f),
     relations: () => livingRelations,
     say: (text) => townTalk.say(text),
+    routed: seatEdicts.hideoutRouted,   // BAY-LEFT-SEA: a hideout routed past the Bay - a Bounty's den (systems/seatEdicts.js)
     chest: livingBandChest,
     dropPile: (items, feet) => droppedLoot.seedPile(items, feet, { archive: TREASURE_PILE_ARCHIVE, record: 0 }, null, null, { unsaved: true, owner: 'lw-hideout' }),
     removePile: (pile) => droppedLoot.removePile(pile),
@@ -4253,12 +3960,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  inland left out); past the Veil, the Eltheric Ocean's water round its isles (the ether's own ground - each isle a
    *  hill of land in open water, ethericSea.js isleByte); past the map's edge, only where the land beyond the Bay stands
    *  (AUDIT CAPTAIN'S SEA B10, the harbour's sites' law, moved here: else nothing streams there) - the continent's sea,
-   *  its land a province's and no lake in it (world/tamriel/tamrielGround.js authoredHeightByte). The one set the port towns, the
+   *  its land a province's (world/tamriel/tamrielGround.js authoredHeightByte) - AUDIT TESA II P12: and its lakes left out
+   *  as the Bay's are (the freeware's picture draws five; the sentence here said none, and Lake Rumare read as the open sea). The one set the port towns, the
    *  harbour board's ports and the harbour office's sites, cargoes and charts ask. */
   let _openSea = null;
   const openSea = (x, y) => {
     if (etherSea && inEther(x, y)) return seaPixel(x, y);
-    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y);
+    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));   // AUDIT TESA II P12: never one of the picture's lakes (Lake Rumare and four more on the freeware's - world/arenaPlaces.js pastBayLakeAt): the continent's sea is the water its border joins, as the Bay's open sea is
     _openSea ??= openSeaOf(seaPixel, MAP_WIDTH, MAP_HEIGHT);
     return _openSea[y * MAP_WIDTH + x] === 1;
   };
@@ -4269,6 +3977,21 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  Ilessan Hills' blocks). Never a seat's members' harbour (hasPortFor's word is one guild's - every client stands the
    *  same shipyard), and never csaIsPortTown, declared below the stream (BOOT-TDZ). */
   const portOnSea = (dfLocation) => portTownOnSea(dfLocation, hasPort, openSea);
+  let _navalCapitals = null;
+  /** The three crowns' capitals' map pixels (navalShips.js crownOf reads the nearest as the waters' crown) - once.
+   *  BAY-LEFT-SEA: declared above the world's ports, whose harbours past the Bay keep the nearest crown's office. */
+  const navalCapitals = () => (_navalCapitals ??= NAVAL_CROWNS.map((c) => {
+    try {
+      const loc = maps.getLocationByName(REGION_NAMES[c.region], c.name);
+      if (!loc?.mapTableData) return null;
+      const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
+      return { region: c.region, x: px.x, y: px.y };
+    } catch { return null; }
+  }).filter(Boolean));
+  /** WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S PORTS PAST THE BAY (world/worldWide/worldPorts.js) - the places its
+   *  providers call ports, of a port town's kind, that the open sea bears on; the Bay's are the game's data, as above. */
+  const worldPorts = createWorldPorts({ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: (x, y) => maps.getRegionIndexAt(x, y),
+    crownAt: (x, y) => navalCrownOf(x, y, navalCapitals()).name });   // BAY-LEFT-SEA: a port past the Bay keeps the nearest Bay crown's office (its navy's colours)
   const _yardMemo = new Map();   // mapId -> { sig, sites, ports }, the latest few towns
   const _yardBoxes = new Map();   // a registered model's local box, by id
   const palaceIn = (b) => {
@@ -4283,14 +4006,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  off the sea: the town's own shoreline cells, else the sea's bearing off the map pixels round it - seaPixel), each
    *  keyed by the town and its kind, with its keepers (systems/portPlaces.js portKeeper - the shipyard's crewmaster beside
    *  its shipmaster), its name and the town's people. One memo a town, keyed by its measures and whether it is a port;
-   *  one call a build (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole). */
-  function townPlacesFor(dfLocation, lefaySpot, people, loc = null) {
+   *  one call a build (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole). TS7: `shut` the town's walk
+   *  shut (world/townWalls.js townWalkShut) - its places on its own ground, never on its wall. IC-STUTTER (bible/03-World/
+   *  Arena-Provinces.md IC-STUTTER): every pass a step at a time through `breathe` (the build's breather) - a city's grid is
+   *  512 cells a side, and its measures, ground and yards' search were 0.2-0.4 s of one task of the Imperial City's every
+   *  near slice; the same passes in the same order, the same places. */
+  async function townPlacesFor(dfLocation, lefaySpot, people, loc = null, shut = null, breathe = async () => {}) {
     try {
       const yl = loc && isEnhanced() && windmillsOn() ? loc : layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
       const measures = {
-        ...yardMeasuresOf(yl, {
+        ...await stepsBreathing(yardMeasuresSteps(yl, {
           boxOf: (id, at) => placedModelBox(id, at, {
-            custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length ? customModelFor(cid)?.positions ?? null : null),
+            custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),   // BAY-LEFT-SEA: a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
             classic: (cid) => dfMeshSize(classicModelIdOf(cid)),
             cache: _yardBoxes,
           }),
@@ -4298,33 +4025,33 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           millBox: (at) => { const box = transformedAabb(archAabb('millBody', BODY.positions), at); return [box[0], box[2], box[3], box[5]]; },
           flatsOf: (b) => collectBlockFlats(b.dfBlock, 0),
           closedBlock: (b) => b.blockName === ARENA_BLOCK || palaceIn(b),
-        }),
+        }), breathe),
         keep: lefaySpot ? [[lefaySpot.x, lefaySpot.z, MONUMENT_KEEP_M]] : [],
       };
-      const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex);
+      const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex), folk = folkOfLocation(dfLocation);   // AUDIT PROVINCE-FOLK B6: its keepers its zone's people
       const yardTown = isYardTown(dfLocation), port = isPortTown(dfLocation, portOnSea(dfLocation));
-      const sig = `${JSON.stringify(measures)}|${yardTown ? 'yards' : ''}|${port ? 'port' : ''}`;
+      const sig = `${JSON.stringify(measures)}|${yardTown ? 'yards' : ''}|${port ? 'port' : ''}|${shut?.key ?? (shut ? 'shut' : '')}`;
       let memo = _yardMemo.get(mapId);
       if (!memo || memo.sig !== sig) {
-        const g = townGroundOf(yl, measures);
-        const sites = g && yardTown ? yardSitesOn(g) : [];
+        const g = await stepsBreathing(townGroundSteps(yl, measures, shut, townYardsOf(dfLocation)), breathe);   // IC-PROPS: its fabric's ways, a capital's own yards (world/merchantYards/townYards.js)
+        const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];
         let ports = [];
         if (g && port) {
           const lp = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
           const bearing = seaBearing(lp.x, lp.y, openSea);   // AUDIT SHIPYARDS U2: and the town's own water against it is no sea; INLAND-PORTS: nor a lake the map draws
-          ports = portSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
+          ports = keptPortSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
         }
-        if (g && yardTown) sites.push(...craftYardSitesOn(g));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
-        memo = { sig, sites, ports };
+        if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
+        memo = { sig, sites: g && shut?.now ? await stepsBreathing(keptTownSitesSteps(yl, measures, shut.now, townYardsOf(dfLocation), sites, ports), breathe) : sites, ports };   // FB1028 YARDS: #1184's places, a broken one placed again on the town as it stands
         _yardMemo.delete(mapId);
         _yardMemo.set(mapId, memo);
         while (_yardMemo.size > 8) _yardMemo.delete(_yardMemo.keys().next().value);
         if (yardTown && memo.sites.length < ALL_YARD_KINDS.length) console.log(`[yards] ${dfLocation.name}: no room for ${ALL_YARD_KINDS.filter((k) => !memo.sites.some((t) => t.kind === k)).join(' or ')}`);
         if (port && memo.ports.length < PORT_SITE_ORDER.length) console.log(`[port] ${dfLocation.name}: no room for its ${PORT_SITE_ORDER.filter((k) => !memo.ports.some((t) => t.kind === k)).join(' or its ')}`);
       }
-      const shipmaster = portKeeper(mapId, 'shipyard', regionIndex), crewmaster = portKeeper(mapId, 'crewhall', regionIndex), lightkeeper = portKeeper(mapId, 'lighthouse', regionIndex);
+      const shipmaster = portKeeper(mapId, 'shipyard', regionIndex, folk), crewmaster = portKeeper(mapId, 'crewhall', regionIndex, folk), lightkeeper = portKeeper(mapId, 'lighthouse', regionIndex, folk);
       return {
-        yards: memo.sites.map((t) => ({ ...t, key: `${mapId}:${t.kind}`, mapId, regionIndex, race, keeper: yardKeeper(mapId, t.kind, regionIndex) })),
+        yards: memo.sites.map((t) => ({ ...t, key: `${mapId}:${t.kind}`, mapId, regionIndex, race, keeper: yardKeeper(mapId, t.kind, regionIndex, folk) })),
         ports: memo.ports.map((t) => {
           const keeper = t.kind === 'lighthouse' ? lightkeeper : shipmaster;
           return {
@@ -4629,7 +4356,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const MILL_SAIL_PAD = 30;
   // Player collision (P1): per-pixel triangle buckets in PIXEL-LOCAL
   // space, resolved through the live floating-origin translation; the
-  // floor is the terrain heightmap, bilinear over the stored samples.
+  // floor is the terrain heightmap's own drawn surface over the stored
+  // samples - the ground's one law (FLORA-GROUND, terrainSurface.js
+  // walkGroundAt), which every plant stands on too.
   const heightCell = TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1);
   // EV2: the containing pixel is COMPUTABLE - pixelTranslation is an
   // affine map, so its inverse names the one pixel that can hold
@@ -4652,29 +4381,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const lz = z - t[2];
       if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return -Infinity;
       if (p.deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return terrainOnly ? -Infinity : f + t[1]; }   // DW-B: a carved cell's ground is the seafloor
-      const fx = lx / heightCell;
-      const fz = lz / heightCell;
-      const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx));
-      const iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz));
-      const sx = fx - ix;
-      const sz = fz - iz;
-      const at = (a, b) => p.samples[a * HEIGHTMAP_DIMENSION + b] * worldHeight;
-      const h =
-        at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) +
-        at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz;
-      return h + t[1];
+      return walkGroundAt(p.samples, lx, lz) + t[1];   // FLORA-GROUND: the ground's one law - the drawn ground, the flora's ground (terrainSurface.js walkGroundAt)
     }
     return -Infinity;
   };
-  // BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN. `heightAt` above is the
-  // bilinear read the capsule has always walked on; the terrain is cut
-  // into two triangles a quad (terrainSurface.js says why the two
-  // surfaces differ, and measured it: up to 0.08 apart on real grades).
-  // The grass placer asks this; the blood - lifted 2cm off "the
-  // ground" - was the one thing still placed by bilinear, so on a hill
-  // a mark lay clipped into the slope on one half of a quad and floated
-  // over it on the other. The capsule keeps its floor; what is PLACED
-  // asks this.
+  // BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN. The terrain is cut into
+  // two triangles a quad (terrainSurface.js surfaceHeightAt), at the
+  // ring class the pixel is drawn at; the blood - lifted 2cm off "the
+  // ground" - asks this, so a mark lies on the slope it is drawn on.
+  // FLORA-GROUND: `heightAt` above walks the same triangles at the near
+  // grid's stride (walkGroundAt) - it was a bilinear patch over them,
+  // and the woods stood on that patch, up to 46 cm over the drawn ground.
   const _stT = [0, 0, 0];
   const surfaceAt = (x, z) => {
     const c = state.compensation;
@@ -4855,26 +4572,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   _ohLootOff?.();
   _ohLootOff = null;
   if (ohAbyss) _ohLootOff = ohLootUpgrades(ohAbyss, () => playerEntity);   // AUDIT OH-F B3: the dungeon's loot alone; PARTY-LOOT: the raiser's dice and roller (scenes/ohLootHost.js)
-  /** OH-C: BuildPit's children that need a machine of their own - the miasma's particles and the entrance's BoxCollider,
-   *  pixel-local through the live translation (the walls' shape). The discs are one shared mesh, drawn from the pit. */
-  function ohCreatePit(entry, pit) {
-    const h = { entry, pit, miasma: createMiasma({ count: pit.miasma.count, height: pit.miasma.height, radius: pit.miasma.radius }), bucket: `${entry.px},${entry.py}:oceanhole` };
-    const [sx, sy, sz] = pit.entrance.size;
-    const x = pit.marker.localX, y = pit.entrance.y, z = pit.marker.localZ;
-    const bx = sx / 2, by = sy / 2, bz = sz / 2;
-    const pos = [x - bx, y - by, z - bz, x + bx, y - by, z - bz, x + bx, y + by, z - bz, x - bx, y + by, z - bz,
-      x - bx, y - by, z + bz, x + bx, y - by, z + bz, x + bx, y + by, z + bz, x - bx, y + by, z + bz];
-    const idx = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5];
-    const o = [0, 0, 0];
-    collider.addMesh(h.bucket, pos, idx, _ohIdentity, onFloatingFrame(state, () => state.pixelTranslation(entry.px, entry.py, o)));   // PERF-COL2: riding the floating origin
-    // AUDIT OH-F A2: Unity culls the plume by its particles' own bounds; here the pixel's box is the draw's verdict
-    // (drawOceanHolesTransparent), so the box reaches the plume - the rise, the drift, the largest puff. It only grows.
-    const b = entry._box, reach = miasmaReach(pit.miasma), c = [x, pit.miasma.y, z];
-    if (b) for (let i = 0; i < 3; i++) { b[i] = Math.min(b[i], c[i] + reach[i]); b[3 + i] = Math.max(b[3 + i], c[i] + reach[3 + i]); }
-    return h;
-  }
-  function ohDestroyPit(h) { if (h?.bucket) collider.removeBucket(h.bucket); h.bucket = null; }
-  const _ohIdentity = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const { ohCreatePit, ohDestroyPit } = createOceanHolesPits({   // HOST-SPLIT: src/scenes/oceanHolesPits.js
+    collider,
+    get state() { return state; },
+  });
   const OH_CONTACT_SKIN = 0.08;   // CharacterController.skinWidth (Unity's default): OnControllerColliderHit's reach
   /** OH-B: the frame's pit work - OceanHoles.Update's ProcessOneTerrain (and a settings change), the miasma's step on the
    *  game's clock, and OceanPitCollision: the swimmer's capsule touching the entrance box of the pit at their pixel. */
@@ -5276,6 +4977,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     p.terrain = renderer.createTerrainSurface(bed?.positions ?? grid.positions, bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     p._bed = { sheet: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheetDepths: bed?.sheetDepths ?? null, halo };   // the grid kept: a cap lifted carves it back
+    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants on the ground as carved now (scenes/floraSeat.js)
   }
   /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (the water's sheet, and its normals for a
    *  re-carve) and the depths; the carved ground is uploaded and let go. null where no vertex is under water. */
@@ -5301,7 +5003,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // (render/renderer.js terrainClipFs), which draws the pixel's ground while the cap's TileMap stands on it (the drain below).
   function dwClipTerrain(p) {
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }
-    const idx = p._dwBytes ? clippedTerrainIndices(p._dwBytes, p._stride ?? 1) : null;
+    const idx = p._dwBytes ? clippedTerrainIndices(p._dwBytes, p._stride ?? 1, renderer.coastEdges) : null;   // COAST-LOOK: the coast's ring of clipped tiles the program's to cut
     if (idx) { p.dwTerrain = renderer.createWaterSurface(p.terrain, idx); p.dwTerrain.bounds = p.terrain.bounds; }
   }
   /** FAR-CLIP1: the ground queue's order - the cap's pixels after the rest (a stable sort: near first within each),
@@ -5575,97 +5277,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     dwRender.drawSurfaces(_dwSurfaceList, { ...f.look, underwater: f.underwater, liftY: deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, surfaceScroll: surfaceScrollAt(nowMs / 1000), surfaceTexture: _dwSurfaceTex });
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
-  /** LANDFORM1: how far the landforms move DFU's ground at a scene point, in world units (world/landforms.js
-   *  landformLift - the kernel's own shaped ground less DFU's over the network this thread holds, the cuts with the
-   *  lift (AUDIT LANDFORMS B2), over the location rect of the pixel's build, so a town's levelled ground is exact).
-   *  What the row puts there, read while it is on. A pixel's field is kept for the next record a save or a load stands
-   *  on it - the last LIFT_FIELDS_KEPT pixels asked, the longest unasked let go first (AUDIT LANDFORMS II F3: dropped
-   *  whole past eight, a save whose records stood on nine pixels made every field again - a town's is a kernel pass,
-   *  146 ms for nine on the main thread and 0.4-0.6 s for sixteen - at every save, online every periodic checkpoint).
-   *  AUDIT LANDFORMS B1: the rect is the build's for a pixel not built yet too - the one setLocationTiles will stamp
-   *  (tvTownRects' own fallback). A load stands records before their pixels stream in (its camps anywhere in the world, a
-   *  neighbour's piles), and the wild lift it took there was up to 203 m off a location's levelled ground (Tamarilyn
-   *  Coven; 1,036 of 15,251 locations over a metre at the rect's centre), into a camp that is never stood again. */
-  const LIFT_FIELDS_KEPT = 32;   // a town's field is 129 x 129 floats (66 KB): 2 MB at the most
-  const _liftFields = new Map();
-  /** ...and the rect that build will stamp, kept per pixel while the same place stands there (a spawn's clone is made
-   *  afresh at each ask, so a spawn's is asked again - 50 us, against its field's kernel pass) */
-  const _liftRects = new Map();
-  const landformLiftAt = (x, z) => {
-    const c = state.compensation;
-    const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
-    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);
-    if (!woods || px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;
-    const t = state.pixelTranslation(px, py);
-    const at = built.get(`${px},${py}`);
-    let rect = at ? at.locationRect ?? null : null;
-    if (!at) {
-      const loc = _liftLocationAt(px, py), had = _liftRects.get(`${px},${py}`);
-      if (had && had.loc === loc) rect = had.rect;
-      else {
-        if (loc?.exterior?.exteriorData && loc.mapTableData) rect = setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128)) ?? null;
-        _liftRects.delete(`${px},${py}`);
-        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked
-        _liftRects.set(`${px},${py}`, { loc, rect });
-      }
-    }
-    // AUDIT LANDFORMS B2: the field follows the cuts, so it is the network's too - made again once the network lands
-    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0}`;
-    let field = _liftFields.get(key);
-    if (field) _liftFields.delete(key);   // asked again: the last to be let go
-    else {
-      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked
-      field = landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere());
-    }
-    _liftFields.set(key, field);
-    return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;
-  };
-  /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU'S FRAME. With the row on the ground at (x, z) stands
-   *  `landformLiftAt(x, z)` over DFU's, and every exterior height a record carries (the save, the scene cache, the ship's
-   *  deck, an anchor, a dungeon's outer camps) is written without it - so a build without the row reads it as it always
-   *  read one, and this one puts the lift back on (restandHeight). Written on the landforms' own ground (LANDFORM1's
-   *  stamp), a record stood the lift over its ground on any build before: a save loaded on a desktop copy that has not
-   *  updated, or after a revert, dropped its character - a fall of over 100 HP from 30% of the land. `y` is
-   *  compensation-free, (x, z) scene coordinates. */
-  const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);
-  /** ...for a record in NATIVE coordinates (a pile, a foe, a guard). */
-  const groundFrameNative = (nx, nz, y) => {
-    if (!landform) return y;
-    const [x, z] = state.localFromWorld(nx, nz);
-    return groundFrameHeight(y, x, z);
-  };
-  // TERRAIN-SCALE1: A HEIGHT WRITTEN UNDER ANOTHER TERRAIN SCALE, STOOD
-  // AGAIN ON TODAY'S GROUND. Every exterior height a save (or a scene
-  // cache, or an anchor) carries is compensation-free and stood on
-  // ground drawn at the scale it was written under - the prefab's 1.5
-  // for anything written before the game scene's 1.25 was found. The
-  // terrain is linear in the scale (sample * 1539 * scale, a location's
-  // levelled ground included), so a point `off` above the ground it was
-  // measured on keeps its `off`:
-  //     y' = y - ground'(x, z) * (was / now - 1)
-  // exact for a body on a hillside, a pile on a floor, a player on a
-  // roof or up a tower's stair, wherever the ground under (x, z) is
-  // built. Where it is not yet, the ratio stands in (y * now / was),
-  // exact for anything that stood ON its ground and a sixth of any
-  // height above it off. (x, z) are scene coordinates; `was` absent or
-  // equal to today's scale is today's ground, untouched.
-  //
-  // LANDFORM1: and every record's height is DFU's frame (AUDIT LANDFORMS
-  // C1: groundFrameHeight writes it so), so while the Landforms row is on
-  // it takes the lift at its own spot (landformLiftAt) back on, beside the
-  // scale's arm: on today's ground it is the ground's height there plus
-  // its own `off`.
-  const restandHeight = (y, x, z, was) => {
-    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y;
-    if (!Number.isFinite(y)) return y;
-    const now = landform ? landformLiftAt(x, z) : 0;
-    const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;
-    const h = heightAt(x, z);
-    if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;
-    return y * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;
-  };
-  /** TERRAIN-SCALE1: the scale a record without its own stamp was written on - the prefab's, before the stamp. */
-  const scaleOf = (stamp) => (stamp > 0 ? stamp : DEFAULT_TERRAIN_SCALE);
+  const { groundFrameHeight, groundFrameNative, restandHeight, scaleOf } = createGroundFrame({   // HOST-SPLIT: src/scenes/groundFrameHost.js
+    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, beyondSites,
+    get state() { return state; },
+    get woods() { return woods; },
+  });
   // Building doors (P3): registered pixel-local at build, activated
   // against the live translation; each carries what the transition
   // needs (its block + building record + sibling exterior doors).
@@ -5694,6 +5310,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const LOD_NEAR = 3;   // chebyshev distance where the far ring starts
   const lodOn = isEnhanced();
   const TERRAIN_INDICES_LOD = lodOn ? buildTerrainIndices(LOD_STRIDE) : null;   // AUDIT EV: the 1:1 lane never pays for the strided twin
+  const lodStride = lodOn ? LOD_STRIDE : 1;   // FLORA-GROUND, THE RINGS: the far ring's class, its plants' lifts made ahead in a near pixel's build
   const strideFor = (px, py) => ((lodOn
     && Math.max(Math.abs(px - state.current.x), Math.abs(py - state.current.y)) >= LOD_NEAR)
     ? LOD_STRIDE : 1);
@@ -5767,13 +5384,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
-    if (built.has(key)) return built.get(key);
+    if (built.has(key) && !swap.owes(key)) return built.get(key);   // IC-SWAP-BEHIND: one owed a build behind its view is built
     let flying = inFlight.get(key);
     if (flying) return flying;
     const _dwLoc = !!_locationToBuild(px, py);   // AUDIT OW5b D2   // DW-D: DeepWaterRuntime's activeLocationLoads - OnCreateLocationGameObject ...
     if (_dwLoc) dwLocationLoadBegan(performance.now() / 1000);
     flying = buildPixelNow(px, py)
-      .catch((e) => { releaseFailedBuild(key); throw e; })   // BUILD-FAIL1
+      .catch((e) => { releaseFailedBuild(swap.failed(px, py) ?? key); throw e; })   // BUILD-FAIL1; IC-SWAP-BEHIND: a build behind its view frees under its own key, the view standing
       .finally(() => inFlight.delete(key))
       .finally(() => { if (_dwLoc) dwLocationLoadEnded(); });   // ... OnUpdateLocationGameObject (the build settled, either way)
     inFlight.set(key, flying);
@@ -5851,11 +5468,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
     halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, labGrass, landform, livingArmOf, livingAshore,
     livingBaseRate, livingCarriedOf, livingChapterOf, livingCrews, livingCycleOf, livingDeadAt, livingFlatOf,
-    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownsIndex, livingTripsOf, loadGroundSet, lookOfHome,
+    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownAt, livingTripsOf, loadGroundSet, lookOfHome,
     jungle, lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
-    worldHeight,
+    worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class
+    provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
     get _lookPreviewGen() { return _lookPreviewGen; },
@@ -5963,7 +5581,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   // EV4: a built pixel crosses between the full-res core and the far
   // ring without rebuilding anything but its terrain SURFACE - the
-  // models, flats, collider, doors and population all stay. The grid
+  // models, flats, collider, doors and population all stay (FLORA-GROUND,
+  // THE RINGS: its plants' pictures drawn on the new surface, their
+  // places where they stood - scenes/floraSeat.js seatFlora). The grid
   // re-builds from the pixel's own cached samples (blended, so a
   // location's flattening survives the round trip); the culling box is
   // already deep enough for either class (the skirt drop at build).
@@ -6030,7 +5650,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
   }
 
-  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C
     renderer.destroyMesh(p.terrain);
@@ -6041,6 +5661,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const waterIndices = waterOn ? buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride) : null;   // DW-F: the cap's TileMap, where it patched one
     p.water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, p.terrain)) : null;
     p._stride = stride;
+    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants drawn on the ground it draws at the new ring class (scenes/floraSeat.js)
     p.groundNormals = labGrass && stride === 1 ? grid.normals : null;   // GRASS-LIT2: the grass's slope, at the ring class it stands on; AUDIT B1: only with grass
     if (p._dwBytes) dwClipTerrain(p);   // DW-C: the clip, at the new ring class
     // PERF-EXT21: a promotion is the other way a pixel joins the grass
@@ -6058,10 +5679,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  UNLOADS terrain for a season change (DaggerfallLocation re-skins
    *  what already stands), so the loose-object sweep below - which is
    *  the unload's CollectLooseObjects and nothing else - sits out. */
-  function destroyPixel(px, py, { collectLoose = true } = {}) {
+  function destroyPixel(px, py, { collectLoose = true, carried = false, carryOnly = false } = {}) {
     const key = `${px},${py}`;
     const p = built.get(key);
     if (!p) return;
+    // IC-SWAP-BEHIND (scenes/swapBehind.js): a rebuild's World of Daggerfall carry - its markers and its Hold, which the
+    // build after it adopts BEFORE it publishes - taken first; alone (`carryOnly`) where the view stands while its rebuild
+    // builds behind it, and not again (`carried`) when that view goes at the swap. The rest of its carry (the rubble, the
+    // pools - read after the publish) is taken at the teardown, as ever
+    if (!collectLoose && !carried && (p.wodSpawners || p.privateersHold)) carryWodSite(p, key, { hold: p.privateersHold?.state ?? null });   // WOD3/WOD4
+    if (carryOnly) return;
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }   // WATER-AUDIT: before the buffers it rides go
     renderer.destroyMesh(p.terrain);
     if (p.staticBatch) { renderer.destroyMesh(p.staticBatch); p.staticBatch = null; }   // PERF4
@@ -6105,8 +5732,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const piles = droppedLoot.takePixel(key, (pile) => pile.unsaved && !pile.owner).map((pile) => ({ items: pile.items, local: [pile.pos[0] - t[0], pile.pos[1] - t[1], pile.pos[2] - t[2]], archive: pile.archive, record: pile.record }));   // DW-E5: the site's own piles - a spawner's (the sunken loot's) die with the pixel below
         carryWodSite(p, key, { piles });
       }
-    } else {
-      if (p.wodSpawners || p.privateersHold) carryWodSite(p, key, { hold: p.privateersHold?.state ?? null });
     }
     // P2-slice (items-2): a loose pile dies WITH its pixel - the
     // reference's mid-session collection sweep (CollectLooseObjects);
@@ -6314,22 +5939,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const skin = keys.length ? null : _reskin.runSkin(built, state.current);
     if (skin) { building = true; skin.finally(() => { building = false; }); }
     if (!keys.length) return;
-    // ...and the hold is armed BEFORE the ground goes, on the pixel
-    // the streamer says the player is standing on (the same pixel the
-    // nearest-first rebuild below puts back first) - and only if that pixel is one of the ones going down, since a re-skin that leaves it standing takes no ground from under him.
-    if (walkMode && playerSpawned && keys.includes(`${state.current.x},${state.current.y}`)) _seasonHoldKey = `${state.current.x},${state.current.y}`;
-    for (const key of keys) {
-      const [bx, by] = key.split(',').map(Number);
-      destroyPixel(bx, by, { collectLoose: false });
-    }
-    // Nearest-first, the load list's own order (StreamingWorldState
-    // ._loadList): the pixel under the player comes back first.
-    const rebuild = keys.map((key) => {
-      const [px, py] = key.split(',').map(Number);
-      return { px, py };
-    }).sort(nearestFirstFrom(state.current));
-    queue.push(...rebuild);
-    console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${rebuild.length} pixels`);
+    // ...each built again behind its standing view (IC-SWAP-BEHIND, scenes/swapBehind.js rebuild) - or, the switch off, torn
+    // down with the hold armed BEFORE the ground goes on the pixel the streamer says the player is standing on - and
+    // queued nearest-first, the load list's own order (StreamingWorldState._loadList): the pixel under the player first.
+    swap.rebuild(keys.map((key) => { const [px, py] = key.split(',').map(Number); return { px, py }; }));
+    console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${keys.length} pixels`);
   }
 
   status(`building player pixel ${startPixel.x},${startPixel.y}`);
@@ -6478,7 +6092,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const hour = (((wm % 1440) + 1440) % 1440) / 60;
     const sheltered = m === 'exterior' && !!playerEntity.isResting && !!camps.tentNear(feet);   // AUDIT C&C I2: a rest at a tent sleeps under its roof
     return {
-      climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+      climateIndex: feltClimateIndex(playerTravelPixel().x, playerTravelPixel().y, maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y)),   // TESA-LANDS' audit: past the Bay a zone's air
       month: dateFromClassicMinutes(wm).month, hour, weather, falling: fallingWeather(weather),   // WET-FALL: the skin reads what the street's frame saw fall
       insideBuilding: m === 'interior', insideDungeon: m === 'dungeon',
       inSunlight: m === 'exterior' && sunlit({ hour, weather, sheltered }),   // AUDIT C&C: the sun's one law, the replay's too
@@ -6710,7 +6324,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  returns early when none is loaded, so a quest that tombstones
    *  while the player is elsewhere is a no-op in DFU too. */
   const undiscoverBuildingHere = (buildingKey, buildingName) => undiscoverBuilding(
-    `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null);
+    townBookOf(_questLoc()), buildingKey, true, buildingName ?? null);   // BAY-LEFT-MAPS (C7 = E2): its town's book by the one key-maker
   /** QUEST-HOME (Mac, 2026-10-15: "Close both"): every quest site not yet reached whose building a player's home is now,
    *  chosen again in its own town (QuestMachine.reseatHomedSites) - asked whenever the online homes learn of one (the
    *  boot's read, the hub's word, a town's answer) and after a load's layouts stand. Before the quest machine stands it
@@ -6725,7 +6339,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  quest's name (the tombstone's own undiscover, Quest.cs:655: residences only, the name matched), and where it did, the
    *  new building is discovered under the quest's name in its town (a record the player's map had, moved). */
   function questSiteMovedHere(place, was) {
-    const town = `${was?.regionIndex ?? -1}:${was?.locationName ?? ''}`;
+    const town = townBookId(was?.regionIndex ?? -1, was?.locationName ?? '', was?.mapId);   // BAY-LEFT-MAPS (C7 = E2): the site's own town's book
     const had = getDiscoveredBuilding(town, was?.buildingKey);
     const marked = !!had && had.displayName === was.buildingName;
     undiscoverBuilding(town, was?.buildingKey, true, was?.buildingName ?? null);
@@ -6748,7 +6362,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     isBuildingQuestResource: (mapID, buildingKey) => topicTree.isBuildingQuestResource(mapID, buildingKey),
     // AUDIT DISC28 QS-K1: DaggerfallBankManager.IsHouseOwned - DISC28-K's re-stamp (discovery.js restampQuestName)
     // never renames the player's own house, whose stored name is the purchase's, not a quest's
-    ownsHouse: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
+    // AUDIT-TESA A5-F3: never in a place the port made (an isle's, an Arena place's, the countryside's, a lair, a capital) -
+    // each answers a region a Bay town's deed is keyed by, so the same key would own a house there (worldModes houseOwnedAt)
+    ownsHouse: (buildingKey) => { const id = _questLoc()?.mapTableData?.mapId ?? 0; return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; BAY-LEFT-B: every place past the Bay's in its own town (banking.js deedHeldIn)
   };
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,
@@ -6766,6 +6382,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // declared below this call, so the arrow defers the read to call
     // time, which is what makes it live in the first place.
     regionIndex: () => _questRegionIndex(),
+    nameBank: () => provinceBankHere(),   // TESA3: past the Bay the province's people
     onCrime: () => _crimeResponse(),   // G1: late-bound - the guards mount below
     // QP1: GetBuildingList's questor half lands in the pool. Late-bound
     // like onCrime - npcSession mounts below, and the first topics set
@@ -6843,7 +6460,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // AUDIT-RR2 G22: `travelOptionsEnabled` asks TO's "hasPort" (RoleplayRealism.cs:635-644; TravelOptionsMapWindow.cs:870-873 - the hand-written port list), else the flag - SEAT2b part two: a members' Harbour at a seat among them (travelPorts.js hasPortFor)
     // AUDIT CAPTAIN'S SEA P10: past the Veil an isle's place is a port by its own kind - TO's list knows only the Bay's, and a
     // ruin kept its template's port byte
-    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (loc.ether ? loc.etherKind === 'port' : modSetting('travel-options', 'Enabled') === true ? hasPortFor(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness   // AUDIT CAPTAIN'S SEA P10: an isle's place a port by its kind, whatever Travel Options says
+    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (loc.ether ? loc.etherKind === 'port' : loc.arena || loc.capital ? (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0 : modSetting('travel-options', 'Enabled') === true ? hasPortFor(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness   // AUDIT CAPTAIN'S SEA P10: an isle's place a port by its kind, whatever Travel Options says   // AUDIT-TESA A4-F4: and a place past the Bay by its Arena place's port (TESA6) - Travel Options' list names none there; BAY-LEFT-SEA: by its own port byte - an Arena place's TESA6 word, a capital's harbour's (tamrielCapitals.js capitalSlicePort: the Imperial City's Waterfront too)
     // RR2: EnhancedRiding's reads - the look, the ground, the module's settings
     lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => heightAt(x, z),
     enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
@@ -6891,16 +6508,30 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // the land module and the frame for every reader - the held map's ink, the ground beyond the Bay on this thread and
   // on the worker (terrainGen.setTamriel), the stream's frame. Until it lands the authored shape stands; a missing
   // file leaves it standing and says so. `?tamrieltrace=off` the door.
+  // TESA1 (bible/03-World/Arena-Provinces.md): THE PLACES PAST THE BAY - TESA12: the port's own (world/tamrielPlaces.js),
+  // made on the trace as soon as it lands (~60 ms, once a trace) so the map's first open does not pay for it. Before the
+  // trace, and without one, the authored cities stand. `?arenaplaces=off` the door. The store a copy of Arena was once
+  // attached to is emptied (scenes/dataSource.js clearRetiredArena): nothing reads it now.
+  clearRetiredArena();
+  // TESA2: the trace's landing (or its failing, or the door shut - then no place stands, and nothing waits on it), for
+  // the boot's load
+  let arenaTraceLanded = () => {};
+  const arenaTraced = new Promise((r) => { arenaTraceLanded = r; });
+  let arenaTraceAsked = false;
   if (tamrielTraceOn()) {
-    preloadTamrielTrace({ fetchBytes, palette }).then((trace) => {
+    arenaTraceAsked = true;
+    preloadTamrielTrace({ fetchBytes, palette }).then(async (trace) => {
       if (!trace) { console.warn('[tamriel] the picture traced to nothing; the authored continent stands'); return; }
-      const fit = fitBayToPicture({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
+      const fit = await keptBayFit({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
       const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
       terrainGen.setTamriel({ trace, fit: fitPx });
       StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
       console.log(`[tamriel] the picture traced: ${trace.land.reduce((n, v) => n + v, 0)} land pixels; the Bay fitted at picture (${fit?.ox}, ${fit?.oy}) x${fit?.ppu}, ${fit ? Math.round((100 * fit.score) / fit.cells) : 0}% of its cells and ${fit ? Math.round((100 * fit.seam) / fit.edge) : 0}% of its edge agreeing`);   // TAMRIEL4: the seam the fit is made for
-    }).catch((e) => console.warn('[tamriel] TMAP00I0/TAMRIEL2 unavailable; the authored continent stands:', e?.message ?? e));
+      arenaWarm();   // TESA1: the places onto the trace that just landed
+    }).catch((e) => console.warn('[tamriel] TMAP00I0/TAMRIEL2 unavailable; the authored continent stands:', e?.message ?? e))
+      .finally(() => arenaTraceLanded());   // TESA2: landed, or never will
   }
+  if (!arenaTraceAsked) arenaTraceLanded();   // TESA2: the door shut - no trace to wait for
   // TO1: the mod's own control strip, beside it. Its own loader
   // swallows a missing file - the panel then draws its text on the
   // bare screen, which is what the mod's `Debug.LogError` arm leaves.
@@ -6992,12 +6623,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // reason); this is where it used to be, and the comment above still
   // describes what it is for.
   let _questStartPending = false, _questStarted = false;
-  const questInitAtGameStart = () => {
+  // START2 (scenes/startsHost.js): WHERE THE STORY BEGINS - the page's answer (`startKey`, ui/startChoice.js), a
+  // province's start dungeon past the Bay the character is moved into first, and its quest
+  const starts = createStartsHost({ params, pastBay: !!_lairTemplates, quests: () => questWorld,
+    teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: () => questBridge?.machine, ready: _worldReady });
+  const questInitAtGameStart = (startKey = null) => {
     if (_questStarted) return;
-    if (!questBridge) { _questStartPending = true; return; }
+    if (!questBridge) { _questStartPending = startKey ?? true; return; }   // START2: the page's answer kept while the bridge is still to come
     _questStarted = true;
-    questBridge.initAtGameStart();
-    startTutorialTour();   // TUT1: DFO's welcome tour, where DFU's _TUTOR__ spoke its first page (questBridge.js GAME_START_QUESTS)
+    // TUT1: DFO's welcome tour, where DFU's _TUTOR__ spoke its first page (questBridge.js gameStartQuests) - START2: both
+    // once the character stands where their story begins
+    starts.begin((start) => { questBridge.initAtGameStart(start); startTutorialTour(); }, startKey);
     // BA1: StartGameBehaviour.OnStartGame's two listeners in Better Ambience (the fog, the rain source), and
     // Immersive Footsteps' ModCompatibilityWarning_OnStartGame - the box a DFU player sees with both strides on.
     betterAmbience.onStartGame();
@@ -7125,9 +6761,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // (finishChargen over a result the family law builds - legacyHost.bornResult), in the town the boot stood the world
     // in (`?region=&loc=`). AUDIT LEGACY B7: a birth that waits for nobody (a stale address, a birth already made) or
     // whose files would not load goes back to the title menu, SAID - never to a stranger's wizard: the line waits on the
-    // record (its heir chosen, unborn), and the fallen's save asks again.
+    // record (its heir chosen, unborn), and the fallen's save asks again. BAY-LEFT-B: a seat past the Bay is reached
+    // first (`farStart`, scenes/bootStartHost.js), so the heir is made, and first saved, there.
     const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits. ${realmNew ? 'Choose who carries it on from the Online page' : 'Load the fallen\'s save to try again'}.`); releaseUnloadGuard(); exitToTitleMenu(); };   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): online the fallen is a tombstone - the Online page names the waiting house
-    Promise.all([createChargenFlow(fetchBytes), legacyReady]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
+    Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
       spellsByIndex = sbi;
       const r = host?.bornResult({ careers, factionDict });
       if (!r) { legacyBirthFailed('no birth waits for this address'); return; }
@@ -7180,6 +6817,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // this is a door the GAME opened - the same law `exitToTitleMenu`
         // follows. A player who presses Cancel has asked to leave.
         onCancel: () => { releaseUnloadGuard(); location.reload(); },
+        startChoice: starts.page,   // START2: where the story begins - the page past the Bay's starts (ui/startChoice.js)
         onDone: (r) => {
           setLoadingAside('window', false);   // AUDIT LOAD1 2: a boot still going stands its screen again; the frame asks from its first
           finishChargen(playerEntity, r, sbi);
@@ -7190,10 +6828,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();
-          questInitAtGameStart();   // Q4-v: OnStartGame for the new character
+          questInitAtGameStart(r.startKey);   // Q4-v: OnStartGame for the new character - START2: where their story begins
           autoBuildArms(playerEntity);   // MWA1: the new character's arms - race, sex and face are known now
           legacyHost?.onCharacterMade(r.legacyModel ?? null);   // LEGACY1: the family founded at the character's birth (D9), its model the question's answer
-          if (realmNew) realmBirth().catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online
+          if (realmNew) starts.settled.then(realmBirth).catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online - START2: where the story begins
         },
       }));
     }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
@@ -7270,7 +6908,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // had no caller; the fifth (OnEncounter) is wired at the seam below.
     if (travelOptions) {
       travelOptions.onMapPixelChanged(playerTravelPixel());
-      const _region = _questRegionIndex();
+      const _region = `${_questRegionIndex()}|${provinceHere()?.key ?? ''}`;   // TESA3: past the Bay a province's edge is a region's
       if (_travelRegionSeen !== null && _region !== _travelRegionSeen) travelOptions.onRegionIndexChanged();
       _travelRegionSeen = _region;
     }
@@ -7283,8 +6921,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // half of the travel map's visibility law; fast-travel arrivals
     // land here too, so one writer covers both.
     if (dfLocation) {
-      discoverLocation(dfLocation.mapTableData.mapId, {
-        regionName: maps.getRegionName(dfLocation.regionIndex), locationName: dfLocation.name,
+      discoverLocation(dfLocation.mapTableData.mapId, {   // AUDIT-TESA A1-2: an Arena place's name never rides a save (the realm's, the cloud's) - its map id alone
+        regionName: maps.getRegionName(dfLocation.regionIndex), locationName: dfLocation.arena && !dfLocation.capital ? '' : dfLocation.name,
       });
     }
     if (!cur || !dfLocation || !cur.locBlocks) { _talkPlayerPos = () => null; townTalk.setTopics(null); return; }
@@ -7332,7 +6970,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** SHIPYARDS-FOUND: the first berth of the harbour the book has sounded off a town's shore - its scene point [x, z] -
    *  or null (none sounded yet, or a shore with no berth). */
   function docksBerthOf(dfLocation) {
-    try { return harbourBook.get(`port:${maskMapId(dfLocation.mapTableData?.mapId ?? 0)}`)?.harbour?.berths?.[0]?.pos ?? null; } catch { return null; }   // BOOT-TDZ: the book stands below the stream
+    try { return harbourBook.get(`port:${portIdOfLocation(dfLocation)}`)?.harbour?.berths?.[0]?.pos ?? null; } catch { return null; }   // BOOT-TDZ: the book stands below the stream; WW3: its port id (worldPorts.js), the world's key past the Bay
   }
   /** SHIPYARDS-FOUND: the town whose docks row is still to come - one whose harbour the book sounds (csaIsPortTown, the
    *  book's own test: AUDIT SHIPYARDS L3-2 - the shipyard's test, asked here, kept a seat's docks to a second visit and
@@ -7455,6 +7093,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _portalRestores = 0; const portalGates = createPortalGates({   // _portalRestores: the restore count the portals last ended at (save.js restoresSoFar) - one line, so the cites below it hold
     renderer, audio, toScene: (p) => campToScene(p), toWire: (p) => campToWire(p),
     destOf: (x, y) => {
+      if (!onTheBay(x, y)) {
+        // AUDIT-TESA A2-2: past the Bay, the place this world stands there (named off this player's own files - no name
+        // rides the wire), else the province the pixel is land of
+        const here = locationIndex.get(`${x},${y}`) ?? capitalLocationAt(x, y) ?? (_arenaTemplates ? arenaLocationAt(x, y) : null);
+        const province = provinceByKey(provinceKeyBeyondBay(x, y));
+        return here?.name ? { pixel: { x, y }, name: here.name } : province ? { pixel: { x, y }, name: province.name } : null;
+      }
       const s = travelLocationSummaryAt(mapDict, x, y);
       const loc = s ? maps.getLocation(s.regionIndex, s.mapIndex) : null;
       return loc?.name ? { pixel: { x, y }, name: loc.name } : null;
@@ -7501,7 +7146,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const p = r?.pos;
       if (!Array.isArray(p)) return r;
       const [x, z] = state.localFromWorld(p[0], p[2]);
-      return { ...r, pos: [p[0], restandHeight(p[1], x, z, savedScale), p[2]] };
+      return { ...r, pos: [p[0], restandHeight(p[1], x, z, savedScale, extras.groundFrame), p[2]] };   // BAY-LEFT-GROUND: by its frame's law
     });
     camps.dropOwn(); camps.restore(rows, campFromNatives);
   }
@@ -8314,52 +7959,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     hideEnhancedTextLayer(CSA_MAP_TEXT_LAYER);   // AUDIT FONT3 F1: here, not in dispose alone - the interior and dungeon slots close a window without disposing it
     modes?.closeWindow?.(w);
   }
-  /** OnGUI's two pictures, built at the map's first draw: record 3 rebuilt from the player's TRAV0I00.IMG (the
-   *  port never carries it) and lineTexture, TEXTURE.000's solid record 112. */
-  let _csaMapTex = null, _csaMapTexLoad = null, _csaLineTex = null, _csaLineTexLoad = null;
-  function csaMapPictures() {
-    _csaMapTexLoad ??= (async () => {
-      const img = new ImgFile();
-      img.load(await fetchBytes(TRAVEL_MAP_IMG), TRAVEL_MAP_IMG);
-      const pal = new DFPalette();
-      pal.load(await fetchBytes(img.paletteName), img.paletteName);
-      _csaMapTex = renderer.uploadTexture('img', 'csa-map', csaToScreenOrder(travelMapPicture(img.getDFBitmap(0, 0), (i) => pal.get(i))));
-    })().catch((e) => console.warn('[come-sail-away] the position reading\'s map did not build', e));
-    _csaLineTexLoad ??= getTexture(CSA_LINE_TEXTURE.archive).then((t) => {
-      _csaLineTex = renderer.uploadTexture('img', 'csa-line', t.getColor32(t.getDFBitmap(CSA_LINE_TEXTURE.record, CSA_LINE_TEXTURE.frame), 0));
-    }).catch((e) => console.warn('[come-sail-away] the position reading\'s line texture did not load', e));
-    return { map: _csaMapTex, line: _csaLineTex };
-  }
-  /** A draw list the runtime answers (OnGUI's): each quad its picture stretched and tinted, each text
-   *  DaggerfallFont.DrawText's two passes - the shadow, then the text. */
-  function csaDrawList(draws, layerId = null) {
-    const pics = draws.some((d) => d.kind === 'quad') ? csaMapPictures() : null;
-    const font = townTalk.font;
-    const rgba = (c) => [c.r, c.g, c.b, c.a];
-    // FONT3: under the enhanced skin a list that names a layer says its words in the pixel face (ui/enhanced/enhancedTextLayer.js)
-    // - the pictures stay on the canvas. The debug values name none and keep the bitmap face, as F8's lines do.
-    const words = layerId && isEnhanced() && typeof document !== 'undefined' ? [] : null;
-    for (const d of draws) {
-      if (d.kind === 'quad') {
-        const tex = d.tex === 'map' ? pics?.map : pics?.line;
-        if (tex) renderer.drawScreenQuad(tex, d.rect, undefined, rgba(d.color));
-      } else if (words) {
-        words.push({ text: d.text, x: d.x, y: d.y, cell: (font?.fnt?.fixedHeight ?? 7) * d.scale, color: rgba(d.color), shadow: rgba(d.shadow), shadowPos: d.shadowPos });
-      } else if (font) {
-        drawText(renderer, font, d.text, d.x + d.shadowPos[0], d.y + d.shadowPos[1], d.scale, rgba(d.shadow));
-        drawText(renderer, font, d.text, d.x, d.y, d.scale, rgba(d.color));
-      }
-    }
-    if (words) drawEnhancedTextLayer(layerId, words, canvas);
-  }
-  /** OnGUI's map, while the reading has it up - drawn by its window, the slot's last. */
-  function csaDrawMap() {
-    if (!csaRuntime) return;
-    csaCall(() => {
-      const draws = csaRuntime.mapOverlay({ screenRect: { x: 0, y: 0, width: canvas.width, height: canvas.height }, screen: [canvas.width, canvas.height], unscaledTime: performance.now() / 1000 });
-      if (draws) csaDrawList(draws, CSA_MAP_TEXT_LAYER);
-    });
-  }
+  const { _csaPics, csaDrawList, csaDrawMap } = createCsaMap({   // HOST-SPLIT: src/scenes/csaMapHost.js
+    CSA_MAP_TEXT_LAYER, canvas, getTexture, renderer, townTalk,
+    get csaCall() { return csaCall; },
+    get csaRuntime() { return csaRuntime; },
+  });
   /** CSA-K: the others' words standing them on this boat of mine (the pack's refusal; OWS2: and a landfall's pack). */
   const csaPassengersOn = (boat, skip = null) => { const i = csaRuntime?.AllBoats.filter((b) => b.GameObject?.activeSelf).indexOf(boat) ?? -1; return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i, skip); };   // VEIL-PARTY: `skip` the riders the crossing leaves out (her captain's party)
   /** SerializeItems / DeserializeItems: the save's own item copy (save.js) - AUDIT WK-D11: ONE codec, the cargo's and
@@ -8406,7 +8010,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     midScreenText: (text, seconds) => setMidScreenText(text, seconds),
     log: (text) => console.log(text),
     time: () => _csaTime,
-    weatherType: () => WEATHER_TYPES.indexOf(seaStormShown() ?? currentWeather()),   // SEA-EVENTS: the Aether Storm's wind; CSA-E: PlayerWeather.WeatherType (the port's eighth word, the sandstorm, is none of UpdateWind's three)
+    weatherType: () => WEATHER_TYPES.indexOf(seaStormShown() ?? currentWeather()),   // SEA-EVENTS: the Aether Storm's wind; CSA-E: PlayerWeather.WeatherType (the port's eighth word, the sandstorm, and ninth, the ashfall, are none of UpdateWind's three)
     hour: () => Math.floor(minuteNow() / 60),   // CSA-E: WorldTime.Now.Hour
     persistentDungeonBoats: () => { try { return modSetting('come-sail-away', 'Compatibility.PersistentDungeonBoats') === true; } catch { return false; } },
     packedItems: packedItemsCodec,   // SerializeItems / DeserializeItems: the save's own item copy (save.js)
@@ -8559,8 +8163,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** ETHER-PORTS: a port isle as the harbour office and the naval host read a port - `{ key, name, px, py, region,
    *  crown: null, ether: true }`: no crown's writ runs past the Veil. */
   const etherPortOf = (i) => ({ key: `${i.px},${i.py}`, name: i.name, px: i.px, py: i.py, region: ETHER_REGION, crown: null, ether: true });
+  const { arenaPortNear } = createTamrielPorts({   // HOST-SPLIT: src/scenes/tamrielPortsHost.js
+    _arenaTemplates,
+  });
   const csaIsPortTown = (x, y) => {
     if (etherSea && inEther(x, y)) return !!etherPortAt(x, y);   // ETHER-PORTS: an isle's port, past the Veil
+    if (!onTheBay(x, y)) return worldPorts.at(x, y);   // TESA6: a port past the Bay - no table of the Bay's there - is its provider's word (WW3); AUDIT TESA II P7: TESA's places are the registry's now (world/pastBayRows.js), Arena's port test their row's
     const summary = travelLocationSummaryAt(mapDict, x, y);
     if (!summary) return false;
     if (hasPortFor(summary.id)) return true;   // SEAT2b part two: or a members' Harbour at a seat ("ships dock at the seat")
@@ -8569,7 +8177,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   /** DEED-PORT: the nearest of those harbours to the player's pixel, by name, and the way to it (map y runs south) - or
    *  null where none is named. */
-  const COMPASS_WAYS = ['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east'];
   const csaNearestPort = () => {
     const here = playerTravelPixel();
     // AUDIT CAPTAIN'S SEA P5: past the Veil the nearest of its port isles - the Bay's were named 1,500 leagues off, and a
@@ -8579,18 +8186,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const turn = Math.atan2(here.y - isle.py, isle.px - here.x) / (Math.PI / 4);
       return { name: isle.name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8], ether: true };
     }
-    let best = null, bestD = Infinity;
-    for (const id of PORT_LOCATION_IDS) {
-      const summary = mapDict?.get(id & 0x000fffff);
-      if (!summary) continue;
-      const at = getPixelFromPixelID(summary.id);
-      const d = Math.hypot(at.x - here.x, at.y - here.y);
-      if (d < bestD) { bestD = d; best = { summary, at }; }
-    }
-    const name = best ? maps.getRegion(best.summary.regionIndex)?.mapNames?.[best.summary.mapIndex] : null;
-    if (!name) return null;
-    const turn = Math.atan2(here.y - best.at.y, best.at.x - here.x) / (Math.PI / 4);
-    return { name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8] };
+    // AUDIT TESA II P5: past the Bay as on it, the nearest of the Bay's ports and the world's (TESA's, registered - P7) by
+    // the crow's flight: TESA6 answered Arena's alone past the Bay ("the Bay's are a world away"), and a captain just off
+    // the Bay's edge was sent to a port five hundred pixels off with a Bay port in sight
+    return worldPorts.nearestNamed(here, worldLanes.bayPorts() ?? []);   // WW3: the Bay's ports and the world's past it (AUDIT WW F10: the lanes' book of the Bay's, read once)
   };
   /** OpenCargo: InventoryWindow.LootTarget = the cargo (a DaggerfallLoot, as the pack reads one: `cargoLootTarget`),
    *  and the pack opened over whatever the mode draws. */
@@ -8891,32 +8490,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  places it); stopped otherwise, and a boat gone takes its two with it. */
   const _csaLoops = new Map();
   const _csaSourceNodes = new WeakMap();   // an AudioSource record -> the object it sits on (BoatSFXSlow, BoatSFXFast)
-  function csaAudioFrame() {
-    if (!csaRuntime) return;
-    const seen = new Set();
-    csaCall(() => {
-      const ear = audio.listenerPosition();
-      for (const boat of csaRuntime.AllBoats) {
-        for (const src of [boat.AudioSourceSlow, boat.AudioSourceFast]) {
-          if (!src) continue;
-          let node = _csaSourceNodes.get(src);
-          if (!node) { node = csaNodeOf(boat.GameObject, src); if (node) _csaSourceNodes.set(src, node); }
-          let ch = _csaLoops.get(src);
-          if (!src.isPlaying || !node?.activeInHierarchy) { if (ch) { ch.handle?.stop(); _csaLoops.delete(src); } continue; }
-          seen.add(src);
-          if (ch && ch.plays !== src.plays) { ch.handle?.stop(); _csaLoops.delete(src); ch = null; }   // AudioSource.Play: from the clip's start
-          if (!ch) { ch = { plays: src.plays, handle: null }; _csaLoops.set(src, ch); csaSounds(); }
-          const pos = [...node.position];
-          ch.handle ??= audio.loop3d(csaClipKey(src.clip), pos, 0, { refDistance: src.minDistance, maxDistance: src.maxDistance, distanceModel: 'inverse', rolloffFactor: 0 });   // null until the clip is decoded: asked again next frame
-          if (!ch.handle) continue;
-          ch.handle.move(pos);
-          const d = Math.hypot(pos[0] - ear[0], pos[1] - ear[1], pos[2] - ear[2]);
-          ch.handle.setVolume(csaUnityGain(src.volume * logarithmicRolloff(d, src.minDistance, src.maxDistance)));   // AudioRolloffMode.Logarithmic, the default neither loop changes
-        }
-      }
-    });
-    for (const [src, ch] of _csaLoops) if (!seen.has(src)) { ch.handle?.stop(); _csaLoops.delete(src); }
-  }
+  const { csaAudioFrame } = createCsaAudio({   // HOST-SPLIT: src/scenes/csaAudio.js
+    _csaLoops, _csaSourceNodes, csaCall, csaClipKey, csaRuntime, csaSounds, csaUnityGain,
+  });
   /** CSA-E: the wind widget's pictures (Start 1065-1076, TryImportTexture(112395, 1, i)), loaded at its first draw. */
   const _csaWidgetFrames = [];
   let _csaWidgetLoad = null;
@@ -9117,16 +8693,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const floor = surfaceAt(x, z);
     return Number.isFinite(floor) && floor < tvSeaY() - (hull < 0 ? 0.05 : navalDraftOf(hull));
   };
-  let _navalCapitals = null;
-  /** The three crowns' capitals' map pixels (navalShips.js crownOf reads the nearest as the waters' crown) - once. */
-  const navalCapitals = () => (_navalCapitals ??= NAVAL_CROWNS.map((c) => {
-    try {
-      const loc = maps.getLocationByName(REGION_NAMES[c.region], c.name);
-      if (!loc?.mapTableData) return null;
-      const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
-      return { region: c.region, x: px.x, y: px.y };
-    } catch { return null; }
-  }).filter(Boolean));
   /** A port town within a pixel of the player (the merchantmen's and the navies' water, navalDirector.js PORT_WEIGHTS). */
   let _navalPortAt = null;   // { key, near } - the answer for the pixel it was asked at
   const navalNearPort = () => {
@@ -9150,6 +8716,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _navalPorts ??= [...new Set(PORT_LOCATION_IDS)].map((id) => mapDict.get(id & 0x000fffff)).filter(Boolean).map((s) => getPixelFromPixelID(s.id));
     let d = Infinity;
     for (const q of _navalPorts) d = Math.min(d, Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)));
+    d = Math.min(d, worldPorts.nearestPx(p.x, p.y) ?? Infinity);   // WW3: and the world's ports past the Bay (TESA6's - AUDIT TESA II P7: registered, its own loop gone)
     _navalPortPxAt = { key, d: Number.isFinite(d) ? d : null };
     return _navalPortPxAt.d;
   };
@@ -9164,7 +8731,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _navalPortList = null;
   const navalPortList = () => {
     if (!mapDict) return [];
-    if (_navalPortList) return _navalPortList;
+    if (_navalPortList) return worldPorts.withBay(_navalPortList);   // WW3: the world's ports past the Bay after the Bay's
     const out = new Map();
     for (const id of new Set(PORT_LOCATION_IDS)) {
       const s = mapDict.get(id & 0x000fffff);
@@ -9177,7 +8744,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       out.set(key, { key, name, px: at.x, py: at.y, region: s.regionIndex, crown: navalCrownOf(at.x, at.y, navalCapitals(), s.regionIndex).name });
     }
     _navalPortList = [...out.values()];
-    return _navalPortList;
+    return worldPorts.withBay(_navalPortList);
   };
   /** CAPT-BOARD: the map's port within a pixel of the player (the nearest), or null - asked once a pixel. FB1020c
    *  BERTH-RING (the field: the tutorial's "sail from one harbor to another" never registered): WITHIN SEA_RING - the
@@ -9195,7 +8762,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       _navalPortHereAt = { key, port: isle ? etherPortOf(isle) : null };
       return _navalPortHereAt.port;
     }
-    const port = boardPortAt(navalPortList(), p.x, p.y);   // FIELD BUGS 2026-10-21b VOYAGE-HOLD: the nearest by the crow's flight (Pencart's water tied Longham's)
+    const port = boardPortAt(navalPortList(), p.x, p.y);   // AUDIT TESA II P7: past the Bay too - TESA's ports are the board's list's (worldPorts.withBay), within SEA_RING as the Bay's are (TESA6 asked a pixel's ring alone, FB1020c BERTH-RING's old law)   // FIELD BUGS 2026-10-21b VOYAGE-HOLD: the nearest by the crow's flight (Pencart's water tied Longham's)
     _navalPortHereAt = { key, port };
     return port;
   };
@@ -9210,38 +8777,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     return null;
   };
-  /** SHIP-LIFE (systems/naval/shipLife.js): the port town near the player (RPT1026-WORLD FAR-QUAY: within SEA_RING, the
-   *  nearest pixels first - systems/naval/harbourBook.js HARBOUR_TOWN_ORDER) - its location's key and its
-   *  footprint in the scene NOW (the native rect, locationWorldRect, through the floating origin's localFromWorld), which
-   *  the naval host finds its harbour off - or null where no port stands near. The town asked once a pixel. */
-  let _navalHarbourAt = null;   // { key, towns: [{ id, loc, x, y }] }
-  const navalHarbourNear = () => {
-    const p = playerTravelPixel();
-    const key = `${p.x},${p.y}`;
-    if (_navalHarbourAt?.key !== key) {
-      const towns = [];   // RPT1026-WORLD FAR-QUAY: every port town near - a far harbour's town and a neighbour port's both
-      const isle = etherSea && inEther(p.x, p.y) ? etherPortNear(p.x, p.y) : null;   // ETHER-PORTS: an isle's town, its harbour sounded as any port's
-      const loc = isle ? etherPlaceAt(isle.px, isle.py) : null;
-      if (loc?.exterior?.exteriorData) towns.push({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH });   // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town
-      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER) {   // RPT1026-WORLD FAR-QUAY: out to SEA_RING, the 3 x 3 first in its own order
-        if (!csaIsPortTown(p.x + dx, p.y + dy)) continue;
-        const summary = travelLocationSummaryAt(mapDict, p.x + dx, p.y + dy);
-        const loc = summary ? maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex) : null;
-        if (loc?.exterior?.exteriorData) towns.push({ id: summary.id, loc, x: p.x + dx, y: p.y + dy, name: maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null });
-      }
-      _navalHarbourAt = { key, towns };
-    }
-    // each town's footprint in the scene now and its readiness at any reach (AUDIT HOLDINGS O1, FB1020c HARBOUR-REACH,
-    // RPT1026-WORLD FAR-QUAY: moved whole to systems/naval/harbourBook.js harbourOf)
-    return _navalHarbourAt.towns.map((t) => harbourOf(t, { state, built: csaPixelAt, woods }));
-  };
-  // HARBOUR-BOOK (systems/naval/harbourBook.js; bible/03-World/Holdings.md section 7): THE HARBOURS NEAR THE PLAYER -
-  // this host's, sounded off the port near the player every exterior frame whatever runs on the water, moved with the
-  // floating origin and emptied at a transition, a jump and a load; the quays stand off it and the naval host reads it.
-  // It was the naval host's own and sounded only in its frame: with Naval Combat or Come Sail Away off, no port stood a quay.
-  const harbourBook = createHarbourBook({
-    harbourNear: navalHarbourNear,
-    isWater: navalIsWater,
+  const { harbourBook } = createHarbourHost({   // HOST-SPLIT: src/scenes/harbourHost.js
+    arenaLocationAt, arenaPortNear, capitalLocationAt, csaIsPortTown, csaPixelAt, etherPlaceAt, etherPortNear,
+    etherSea, locationIndex, mapDict, maps, navalIsWater, playerTravelPixel, state, surfaceAt, tvSeaY, worldPlaces,
+    get woods() { return woods; },   // RPT1026-WORLD FAR-QUAY: a dry pixel known off the reader the land is now (TAMRIEL2 rebinds it)
   });
   /** DECK-WALK: a point in a hull's deck frame (her mesh node's, systems/naval/navalDeck.js) to the world, where her
    *  node stands, rolls and pitches now - and back; into `out` when given. */
@@ -9586,7 +9125,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)],
     }),
     level: () => playerEntity.level ?? 1,
-    where: () => { const p = playerTravelPixel(); const nearPort = navalNearPort(); const ether = etherWatersHere(); return { px: p.x, py: p.y, region: _questRegionIndex(), day: Math.floor(worldMinutes() / 1440), nearPort, port: navalPortHere(), waters: ether ? 'ether' : watersOf({ nearPort, portPx: navalPortPx() }), ether, capitals: navalCapitals(), cityLights: isCityLightsOn(minuteNow()), night: isNight(minuteNow()) }; },   // ETHER-SEA: the Eltheric Ocean's band and depth, and whether she is in the Veil   // CAPT-BOARD: the port lain at (FB1020c BERTH-RING: a board port within SEA_RING, nearPort or not - navalHost.js inPortWaters)   // AUDIT WK-N5: the lanterns' hours and the dark's, apart - CAPT-WATERS: the deep waters
+    where: () => { const p = playerTravelPixel(); const nearPort = navalNearPort(); const ether = etherWatersHere(); return { px: p.x, py: p.y, region: _questRegionIndex(), area: worldPorts.seaAreaAt(p.x, p.y), day: Math.floor(worldMinutes() / 1440), nearPort, port: navalPortHere(), waters: ether ? 'ether' : watersOf({ nearPort, portPx: navalPortPx() }), ether, capitals: navalCapitals(), cityLights: isCityLightsOn(minuteNow()), night: isNight(minuteNow()) }; },   // ETHER-SEA: the Eltheric Ocean's band and depth, and whether she is in the Veil   // CAPT-BOARD: the port lain at (FB1020c BERTH-RING: a board port within SEA_RING, nearPort or not - navalHost.js inPortWaters)   // AUDIT WK-N5: the lanterns' hours and the dark's, apart - CAPT-WATERS: the deep waters
     say: (text, seconds) => townTalk.say(text, seconds),
     mid: (text, seconds) => setMidScreenText(text, seconds),
     shake: (amount) => betterAmbience.weaponKick(amount),   // FIELD-GUN6's door: a shake that is not a wound, under the player's own maxShake
@@ -9786,7 +9325,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // there - her boat at her berth, the Overworld's crossing at her helm (OWS2) - and the passage over when I step off her
   const passage = createPassageHost({ naval: () => naval, csa: () => (csaRuntime && csaOn() ? csaRuntime : null), ports: navalPortList, here: navalPortHere, pixel: playerTravelPixel,
     ether: (p) => !!etherSea && inEther(p.x, p.y), place: (p) => tvPlaceSummary(p.px, p.py), canGo: travelViewCanGo, route: travelViewRouteTo, travel: () => travelOptions,
-    journeyTo: () => tvTrip.plan?.summary?.pixel ?? (tvTrip.plan ? 'spot' : null), standsOn: csaStandsOn, busy: worldMoveBusy, player, remount: setTransportModeHere, talk: townTalk });
+    journeyTo: () => tvTrip.plan?.summary?.pixel ?? (tvTrip.plan ? 'spot' : null), standsOn: csaStandsOn, busy: worldMoveBusy, player, remount: setTransportModeHere, talk: townTalk,
+    writ: starts.writ });   // START2: an opened commission's writ of passage to Daggerfall (scenes/startsHost.js)
   setHoldingsProvider({
     ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [], onPainted: () => { _hccDirty = true; },
       upkeep, pass: upkeepPass }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it; STEED1/WAGONS4: and keeps them (a kit's hour a skip, as a camp meal's)
@@ -10150,7 +9690,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     for (const s of naval?.crewShips?.() ?? []) {
       if (!near(s.key, s.pos)) continue;
-      list.push({ key: s.key, boat: s.boat, deck: csa.deckOf(s.boat.hull, s.boat.variant ?? 0), count: crewCount({ hull: s.boat.hull, shipClass: s.shipClass, crewShare: s.crewShare }), rosterOf: () => crewRoster({ hull: s.boat.hull, seed: s.seed, shipClass: s.shipClass, crewShare: s.crewShare }), seed: s.seed, faction: s.faction, battle: s.battle, struck: s.struck, way: s.way ?? null, toward: s.toward, hold: s.hold, work: s.work ?? 0 });   // SHIP-WATCH: her hurts, mended
+      list.push({ key: s.key, boat: s.boat, deck: csa.deckOf(s.boat.hull, s.boat.variant ?? 0), count: crewCount({ hull: s.boat.hull, shipClass: s.shipClass, crewShare: s.crewShare }), rosterOf: () => crewRoster({ hull: s.boat.hull, seed: s.seed, shipClass: s.shipClass, crewShare: s.crewShare }), seed: s.seed, home: s.home, faction: s.faction, battle: s.battle, struck: s.struck, way: s.way ?? null, toward: s.toward, hold: s.hold, work: s.work ?? 0 });   // SHIP-WATCH: her hurts, mended
     }
     navalCrew.sync(list);
     const grapple = b?.phase === 'grapple' ? b : null;
@@ -10623,7 +10163,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // the sworn the mirror has with the player (and the naval arc switched back on counts its hands again): past the
     // slots, the one most lately sworn steps away to wait
     if (companionsWithYou() > COMPANION_SLOTS) {
-      const last = revenantsWithYou().filter((r) => !leaveRefusal(r)).sort((a, b) => (b.swornAt ?? 0) - (a.swornAt ?? 0))[0];   // COMPANION-DROP: never the one at my side in the open zone
+      const last = revenantsWithYou().sort((a, b) => (b.swornAt ?? 0) - (a.swornAt ?? 0))[0];
       if (last && sendRevenantAway(last.id, { byYou: false })) townTalk.say(`Your companions are full. ${last.name} steps away to wait.`);   // RVN11: the slots' hold, never the player's sending (no loyalty lost)
     }
     try { revenantCompanionBarks(); } catch { /* a bark is no frame's business */ }
@@ -10990,9 +10530,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // BOOT-TDZ2: the boot's first build publishes before they are declared, and the network lands inside it on most
   // boots, so read from the publish they were a dead zone (the boot died on `droppedLoot`: AUDIT LANDFORMS II K1).
   // Nothing lies on the ground before this.
-  rideGround = (t, key, moved) => {
+  rideGround = (t, key, moved, behind = false) => {   // IC-SWAP-BEHIND: `behind` - the view swapped in from behind the one the player stood on, unheld
     for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);
-    if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
+    if ((_seasonHoldKey === key || (behind && key === `${state.current.x},${state.current.y}`)) && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
   };
 
   // ═══ ARENA2 (2026-10-02, Mac: "Players can choose to watch AI fights ... and climb esclating tiers of opponents";
@@ -11222,6 +10762,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // tables roll, day and night.
         inLocationRect: _musicInLocationRect(),
         climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+        fauna: maps.getFaunaBand?.(playerTravelPixel().x, playerTravelPixel().y),   // TESA-BIOME: past the Bay its zone's wild
         playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode - the group's encounters
       });
       // WILD3: in the open zone's open country a wanderer is a GIANT one roll in WILD_GIANT_CHANCE (there are giants to meet)
@@ -11997,7 +11538,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): a deed in the open world - my map pixel (or the one asked: LAIR-DOOR's mend), and the named
     // dungeons in the boards' ring about it; LAIR-DOOR (FIELD BUGS 2026-10-22d): those the player can go down into (scenes/lairHost.js)
-    lairHere: createLairDoor({ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel }),
+    lairHere: createLairDoor({ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel, pastBay: provinceQuestPlaces }),   // LAIR-WORLD: and the lairs past the Bay
     allyMarks: (sp) => allyMarksNear(sp),   // AID1 onto ALLY-CAST: the party mates' bodies, for a beneficial touch, missile or blast (declared beside allyTargetPick, below) - SPELL-GIFT: the spell rides, for the strangers its list may reach
     peerBodies: () => peersNear(),   // SPELLFX1: every player's body, where a peer's drawn missile stops (declared below this engine's build)
     companionBodies: () => [...crewAshore.bodies(), ...revenantAshore.bodies()],   // COMPANION-KIT: my companions here - my healing and buffs reach them (REVENANT-COMPANION: the sworn too)
@@ -12993,10 +12534,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  does, or null - `name` the canonical one (the discovery's key, and
    *  the callers' gate: DaggerfallInventoryWindow.cs:1828,
    *  ThievesGuild.cs:112), its `mapId`, and `shown`, the name as the
-   *  map item shows it (GetLocalizedLocationName, :1831). */
+   *  map item shows it (GetLocalizedLocationName, :1831).
+   *
+   *  BAY-LEFT-B (B5): the CURRENT region is PlayerGPS.CurrentRegion - the politic map's under the player
+   *  (_questRegionIndex), never the location's under them: a map read in the wilderness, on the road or at sea revealed
+   *  nothing (none stands on the pixel), the map spent. And it is the quest layer's table (scenes/questWorld.js maps): a
+   *  province's region its places past the Bay (scenes/quest/questProvinceSites.js), where MAPS.BSA has none - the map
+   *  item, the Thieves Guild's and the Dark Brotherhood's reveals each did nothing there. */
   const revealLocation = (noteKey) => {
-    const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
-    const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
+    const region = questWorld.maps.getRegion(_questRegionIndex());
     if (!region) return null;
     const rows = region.mapTable.map((row, i) => ({
       mapId: row.mapId, discovered: row.discovered,
@@ -13021,10 +12567,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  region's map table as systems/loot/lootScry.js reads it, and the player's map pixel; null only where the region's table
    *  cannot load (AUDIT LOOT II B7: getRegionIndexAt always answers a region - the coast's 31, out of range the first -
    *  and a guild hall stands in one). The Mages Guild's window asks it through the interior host (scenes/worldModes.js
-   *  openReforge). */
+   *  openReforge). BAY-LEFT-B (B6): the quest layer's table (scenes/questWorld.js maps) - a province's region its places
+   *  past the Bay and its lairs nearest the player (scenes/quest/questProvinceSites.js), where MAPS.BSA has none and the
+   *  scryers refused "nowhere" past the Bay. */
   const scryWhere = () => {
     const at = playerTravelPixel();
-    const region = maps.getRegion(maps.getRegionIndexAt(at.x, at.y));
+    const region = questWorld.maps.getRegion(maps.getRegionIndexAt(at.x, at.y));
     return region ? { rows: scryRows(region), at: { x: at.x, y: at.y } } : null;
   };
 
@@ -13064,7 +12612,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // ...and the sheet's LOGBOOK button opens the same journal the HUD
     // key does, so it gets the same find-place seam (THE FOUR HOSTS).
     currentLocationName: () => _questLoc()?.name ?? '',
-    canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     gotoPlace: (place) => toggleTravelMap(place),
   });
   // QUEST1: the Share button's own two seams - OURS, not DFU's. Named
@@ -13186,7 +12734,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // map to be sent to and leave gotoPlace unset, which is the same
       // nothing a CanFindPlace miss produces.
       currentLocationName: () => _questLoc()?.name ?? '',
-      canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+      canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
       gotoPlace: (place) => toggleTravelMap(place),
       // GUIDE2: the ENHANCED chronicle's way there - offered only where the map can open. This builder is the
       // interior host's too (host.makeJournal), and indoors DFU's own door refuses the map (IsPlayerInside), so a
@@ -13895,10 +13443,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // UNSTUCK-OUT (FIELD BUGS 2026-10-08, Sahh: "I got stuck inside a mountain during fast travel"): a floor the ray
     // found INSIDE a rock - a World of Daggerfall mountain's inner face, or under the crown of one standing in the
     // ground - stands the body where the rock's walls cannot be seen and hold it. The nearest open ground instead.
-    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {
-      const open = openGroundNear(collider, pos[0], pos[2], { dry: (floor) => floor >= tvSeaY() });
+    // PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner: "Anywhere on land"): and a teleport's landing where no
+    // place stands (RandomStartMarker with no location - a Portal Stone's portal to bare land past the Bay, DFU's "fail back
+    // to terrain origin") is SAFE ground or the nearest that is: dry, level, open (player/enterExit.js safeGroundAt, safeGroundNear)
+    if (walkMode && (!local || ground) && (heldInSolid(collider, pos) || (reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY())))) {
+      const open = reposition === REPOSITION.RandomStartMarker && !landing ? safeGroundNear(collider, pos[0], pos[2], tvSeaY()) : openGroundNear(collider, pos[0], pos[2], { dry: (floor) => floor >= tvSeaY() });
       if (open) {
-        console.warn(`[travel] landing at ${pos[0].toFixed(1)},${pos[2].toFixed(1)} stands inside a rock - on open ground ${Math.hypot(open[0] - pos[0], open[2] - pos[2]).toFixed(0)} away instead`);
+        console.warn(`[travel] landing at ${pos[0].toFixed(1)},${pos[2].toFixed(1)} stands inside a rock, in the water or on a cliff - on open ground ${Math.hypot(open[0] - pos[0], open[2] - pos[2]).toFixed(0)} away instead`);
         pos = open;
       }
     }
@@ -14043,7 +13594,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       lootContainers: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))
         .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),   // AUDIT LANDFORMS C1: DFU's frame
       droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),
-      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on
+      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground these heights stand on; BAY-LEFT-GROUND: and their frame's law
     });
   }
   /** A scene never cached answers null and the arrival stands as the
@@ -14054,7 +13605,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // TERRAIN-SCALE1: an entry a save carried from before the stamp stood on the prefab's 1.5 - stood again on today's
     // ground, which the arrival has just built
     const was = scaleOf(arrived.terrainScale);
-    const restand = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };   // LANDFORM1: the row's lift put back on
+    const restand = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, arrived.groundFrame); };   // LANDFORM1: the row's lift put back on; BAY-LEFT-GROUND: by its frame's law
     droppedLoot.restoreWorld(arrived.lootContainers.map((c) => ({ ...c, y: restand(c.nativeX, c.nativeZ, c.y) })),
       (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
     droppedTorches.restore(arrived.droppedTorches.map((t) => { const p = t.position; return { ...t, position: [p[0], restand(p[0], p[2], p[1]), p[2]] }; }), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
@@ -14112,7 +13663,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const t = shipTransition(playerEntity, {
       boardShipPosition: playerEntity.boardShipPosition ?? null,
       mapPixel: here,
-      position: shipMemory({ mapPixel: here, pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }, state.compensation[1]),   // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
+      position: shipMemory({ mapPixel: here, pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, ...RECORD_GROUND_STAMP }, state.compensation[1]),   // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
     });
     if (!t) return;
     // AUDIT ETHER-OW C2-3 (AUDIT CAPTAIN'S SEA P6's law): NO BOARDING ACROSS THE VEIL - "Your Ship" is the Bay's (its two
@@ -14176,7 +13727,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // teleport stood the player on it verbatim (not grounded); stood again now, over the pixel just built
     if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {   // LANDFORM1: or with the row's lift to put back on
       const c = state.compensation[1];
-      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale)) + c;
+      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale), t.restore.groundFrame) + c;   // BAY-LEFT-GROUND: by its frame's law
       if (walkMode) player.spawn(localPos[0], y, localPos[2]);
       cam.pos = [localPos[0], y + (walkMode ? 0 : 40), localPos[2]];
     }
@@ -14238,7 +13789,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT LANDFORMS C1: DFU's frame - outside, and in a building (the exterior's frame); a dungeon's feet are its own
       // frame's, and its anchor lands on `local` alone (AUDIT LANDFORMS II F4: they were asked the lift as a scene point)
       y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),
-      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on
+      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground that height stands on; BAY-LEFT-GROUND: and its frame's law
       local: inside.local,
       yaw: cam.yaw, pitch: cam.pitch,
       buildingKey: inside.buildingKey,
@@ -14261,7 +13812,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const anchorLanding = (a) => {
     if (a.insideDungeon && a.local) return [...a.local];
     const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
-    return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];   // TERRAIN-SCALE1: an anchor set before the stamp stood on the prefab's 1.5; LANDFORM1: and the row's lift put back on
+    return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale), a.groundFrame) + state.compensation[1], lz];   // TERRAIN-SCALE1: an anchor set before the stamp stood on the prefab's 1.5; LANDFORM1: and the row's lift put back on
   };
 
   let _recalling = false;
@@ -14288,7 +13839,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // spent either way; DFU refunds nothing.
     if (!plan) { townTalk.say('You must set an anchor first.'); return; }
     if (plan.kind !== 'same-interior' && (wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null))) return;   // PVPDUNGEONS: no Recall into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
-    const wildTrip = plan.kind === 'same-interior' ? { ok: true, fee: 0 } : wildTravelGate(plan.anchor.pixel);   // WILD3: Recall is a fast journey too
+    const wildTrip = plan.kind === 'same-interior' ? { ok: true, fee: 0 } : wildTravelGate(plan.anchor.pixel, 0, teleportJourney);   // WILD3: Recall is a fast journey too - PORTAL-BAY: a teleport's, under the teleport's law past the Bay (an anchor set past the Bay is reached, as the guild's teleport is)
     if (!wildTrip.ok) return;
     wildTravelPaid(wildTrip);
     _recalling = true;
@@ -14410,12 +13961,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }));
   }
 
+  /** G5's teleport (below). PORTAL-BAY (bible/06-Systems/Portal-Stone.md): answers whether the player arrived - a caller
+   *  that blacked the screen first (a stone's portal, scenes/portalStoneHost.js portalArrive) lifts it on false. */
   async function teleportTo(pick) {
-    if (worldMoveBusy()) return;   // AUDIT 68 S22
-    if (_teleporting) return;
-    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
-    const wildTrip = wildTravelGate(pick.pixel);   // WILD3: the guild's teleport is a fast journey too
-    if (!wildTrip.ok) return;
+    if (worldMoveBusy()) return false;   // AUDIT 68 S22
+    if (_teleporting) return false;
+    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
+    const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is TESA-NO-FAST's own road there, never refused as a journey)
+    if (!wildTrip.ok) return false;
     wildTravelPaid(wildTrip);
     _teleporting = true;
     try {
@@ -14444,6 +13997,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // is awaited, which is the same instant.
       hudFade.fadeHUDFromBlack();
       townTalk.say(`You arrive at ${getLocalizedLocationName(pick.mapId, pick.name)}.`);   // L10N3e: the place as shown, by its MapId - the pick keeps the canonical name the journey is keyed by
+      return true;
     } finally {
       _teleporting = false;
     }
@@ -14521,13 +14075,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function transferToCemeteryArm() {
     // AUDIT CAPTAIN'S SEA P4: no cemetery of the Bay's past the Veil - the transfer skipped, as where a region has none
     { const p = playerTravelPixel(); if (etherSea && inEther(p.x, p.y)) { console.warn('[infection] past the Veil - no cemetery a crossing away; the transfer is skipped'); return; } }
-    const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
-    const idx = randomCemeteryLocationIndex(mapTable);
-    if (idx == null) {
-      console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)');
-      return;
-    }
-    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);
+    // AUDIT RELEASE R2-6 (scenes/vampireCrypt.js): the Bay's region's cemetery (DFU's draw); past the Bay the province's own,
+    // never skipped - the region's MAPS.BSA rows were the whole search, and a province holds none
+    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, worldPlaces);
+    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)'); return; }
     modes?.forceExitToExterior();
     Promise.resolve().then(async () => {
       _wodInside = true;   // WOD6: the crypt is inside
@@ -14877,6 +14428,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // the dead woke at a Bay temple a crossing away (the ship and her hold left past the Veil)
         const port = etherRisePort(px.x, px.y);
         land = { x: port.px, y: port.py }; kind = 'city';
+      } else if (!onTheBay(px.x, px.y)) {
+        // AUDIT-TESA A2-4: past the Bay the clamp's region is the Alik'r Desert's, a continent away. AUDIT TESA II P3: the
+        // nearest safe place of the world (scenes/tamrielPlacesHost.js nearestTownOf - the registry's places, the
+        // countryside's stood), at any distance: the index's towns within 48 pixels were the old law, and a death at sea past
+        // the Bay with none in reach rose where it fell, in the water
+        const town = nearestTownOf(px);
+        if (town) land = town.mapPixel;
+        kind = town?.kind ?? 'city';
       } else {
         const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
         // SEA-RISE: the open sea's region holds none of the three - the nearest in any region, never the seafloor
@@ -15197,138 +14756,21 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     return true;
   }
-  // P-slice: the ABOVE-GROUND QUICKSAVE (F9/F11, the dungeon's
-  // bindings). The envelope is the dungeon's snapshotPlayer - entity,
-  // items, spells, conditions, faction rep, the T4 discovery store -
-  // plus this host's world half: the map pixel and the NATIVE world
-  // coordinates (stable across every floating-origin recenter) with
-  // the compensation-free height. One classic slot, shared with the
-  // dungeon key: loading a save from the other side restores the
-  // CHARACTER and says so (cross-side travel-on-load pends with the
-  // dungeon's own note).
-  /** Save(name, saveName) over the host's own envelope; F9 is the
-   *  QuickSave name (QuickSave() = Save(Name, quickSaveName)) and the
-   *  slot window's saveAs passes the typed one. */
-  function worldQuickSave(saveName = QUICK_SAVE_NAME, { quiet = false, sink = null } = {}) {   // REALM P0.5: a quiet checkpoint takes no shot and says only a failure; P1.3: a realm character's goes to the service
-    // AUDIT OH-F B4: never a save inside the descent (one frame in DFU): it would write the swimmer on the template's
-    // land with the mod's record not yet Active. AUDIT REALM2 M5: said to a save pressed, never to the quiet checkpoint
-    if (ohAbyss?.entering) { if (!quiet) townTalk.say('You cannot save now.'); return false; }   // cannotSaveNow (Internal_Strings)
-    // AUDIT C&C (lens H): nor inside a journey. DFU's fast travel is one frame - TeleportToCoordinates, then RaiseTime
-    // (DaggerfallTravelPopUp.cs :333, :344) - and here the teleport is awaited, frames running, before the clock moves:
-    // a save between them (the online checkpoint, the page's exit save, a key) wrote the arrival's place with the
-    // departure's clock and needs, and a load of it was there for nothing. The checkpoint tries again when next due.
-    if (_traveling) { if (!quiet) townTalk.say('You cannot save now.'); return false; }
-    // AUDIT NAV1 (B14): nor in a boarding or on a ship of the sea's deck - the sea is never a save's, and the load set the
-    // player over open water, the ship and her prize gone
-    if (naval?.saveRefused?.()) { if (!quiet) townTalk.say('You cannot save now.'); return false; }
-    // AUDIT CARDS-2 H1: nor with chips on a card table - the purse is short the buy-in and the chips are in no save
-    if (modes?.cardTableLive?.()) { if (!quiet) townTalk.say('You cannot save with chips on the table.'); return false; }
-    // CARDS10: nor with a card staked on a game of Iliac Hand - the card it may cost is in no save
-    if (modes?.iliacStaked?.()) { if (!quiet) townTalk.say('You cannot save with a card staked on the table.'); return false; }
-    if (modes?.gambitStaked?.()) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }   // KG3: gold staked on The King's Gambit (Kings-Gambit.md 5.7)
-    const pf = walkMode && playerSpawned ? player.pos : cam.pos;
-    const wc = state.worldCoords(pf);
-    // IS1 (AUDIT 26 F221): the inside-building half (SerializablePlayer
-    // .cs:183-187) - resolved FIRST, because interiorSaveData writes
-    // the live scene into the entity's P1 cache and snapshotPlayer is
-    // about to read it. Null anywhere but interior mode. The world arm
-    // below stays valid either way: the exterior pixel stands under
-    // the building with its pools alive, and P8's unified frame makes
-    // the inside position a plain world position.
-    const interior = modes?.interiorSaveData?.() ?? null;
-    // WD3: the load re-enters this building by its door, which names a building only in its town's layout - the
-    // layout rides with it, and the load keeps the town in it (applyLayoutPins); none for classic
-    if (interior) { const at = playerTravelPixel(); stampLayout(interior, layoutStampOfPixel(at.x, at.y)); }
-    // AUDIT 63 F24: ...and the interior host's LIVE ENEMIES with it.
-    // SaveLoadManager.cs:865's enemyData is unconditional, and the
-    // fourth host's two pools rode nothing. Natives through the same
-    // converter the outdoor pools take, with the compensation shed per
-    // record - the pile/foe/guard law three lines below.
-    const interiorPools = modes?.interiorPoolSnapshot?.((pos) => state.worldCoords(pos)) ?? null;
-    if (interior && interiorPools) {
-      const shed = (rows) => (rows ?? []).map((r) => ({ ...r, y: groundFrameNative(r.nativeX, r.nativeZ, r.y - state.compensation[1]) }));   // AUDIT LANDFORMS C1: DFU's frame
-      interior.foes = shed(interiorPools.foes);
-      interior.guards = shed(interiorPools.guards);
-    }
-    // SL-2 (AUDIT 65): THE RIG IN THE PLAYER'S HANDS. DFU has ONE
-    // WeaponManager for every WorldContext and SerializablePlayer
-    // .cs:175-176 reads it wherever the save is taken; this host has
-    // four rigs and was reading its own EXTERIOR one unconditionally,
-    // so an F9 pressed inside a shop recorded the street's sheath and
-    // hand. The mode host answers for the rig that is actually drawn
-    // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:"damage = trunc(5 * (distance - 5))"), so exterior mode and a
-    // pre-seam mode host compose exactly as before, per field.
-    const wp = modes?.weaponPose?.() ?? null;
-    const snap = snapshotPlayer(playerEntity, {
-      interior,
-      classicMinutes: Math.floor(playerTicker.ownMinutes),   // LIVED1: the save's clock is the character's own (every marker it holds is on it); save.js adds the world's minute beside it online
-      readiedSpellIndex: magic.readiedIndex(),
-      // B4: quest (Q4-v: machine + notebook + one-time list) and talk
-      // (SaveDataConversation WHOLE, :368-375: the mill + questor-post
-      // dict (TK-i), dictQuestInfo (TK-ii), npcsWithWork +
-      // castleNPCsSpokenTo (TK-iv)) through the ONE composer both
-      // hosts call - two inline copies of this envelope is exactly
-      // how the dungeon half drifted to saving neither.
-      ...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, spawnLedger: _spawnLedger }),   // TTL1: the spawned-dungeon clocks ride every save
-      // AUDIT 26 F222/F223/F101: the POSE - weaponDrawn
-      // (SerializablePlayer :175, restored Sheathed = !weaponDrawn),
-      // yaw/pitch/isCrouching (PlayerPositionData_v1 :212-214).
-      // MW-D30: the camera's two persisted halves ride the pose - the
-      // reference saves the first/third flag in its own REC_CAM_ record
-      // (worldimp.cpp:425-427) and the zoom distance through the camera
-      // script's onSave (camera.lua:350-352).
-      // AUDIT 39: and the TRANSPORT MODE, SerializablePlayer.cs:179's
-      // own line beside the weapon and the boarding memory the port
-      // already took (:180 -> snap.boardShipPosition). The mode lives
-      // on the motor, host-owned like the weapon, so it rides the pose
-      // bag rather than the entity envelope.
-      // AUDIT 63 F25: the SECOND line of that pair. DFU writes the
-      // sheath and the HAND together - SerializablePlayer.cs:175-176
-      // `data.weaponDrawn = !weaponManager.Sheathed;` /
-      // `data.usingLeftHand = !weaponManager.UsingRightHand;` - and
-      // restores them together at :420-421. The port carried only the
-      // first line, so a player fighting with the left-hand weapon
-      // loaded back on the right hand's item (or bare fists). The
-      // port stores the POSITIVE sense because PlayerWeapon holds
-      // `usingRightHand`; it is the same bit.
-      // FALL-KEPT (FIELD BUGS 2026-09-30): and the FALL, which DFU never
-      // keeps - a save a metre above the ground loaded from rest and
-      // billed one metre. The motor's own record, null off a fall
-      // (motor.js fallSnapshot); the load lands it with the position.
-      pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, ...mergeWeaponPose(wp, weaponPoseOf(weaponRig.playerWeapon)), camera: mwViewSaveCamera(), transport: player.transportMode, fall: player.fallSnapshot() },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own - PER FIELD, which is mergeWeaponPose's whole job
-      modData: { [HCC_VENDOR]: hccRuntime.getSaveData(), ...modSaveRecords() },   // WA1: every registered mod's record beside it (systems/modSaveData.js)   // AUDIT HCC H3: the mod's own record (WagonSaveData, GetSaveData [IL_9354]) in DFU's per-mod slot - written whatever the switch says, so a save taken with the mod off keeps the horse's name and the parked wagon for when it comes back on
-      locationKey: 'world',
-      world: {
-        pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),   // AUDIT LANDFORMS C1: every height below in DFU's frame
-        // P2-slice (items-2): loose piles ride the envelope in
-        // NATIVES with the compensation-free height, the player
-        // half's exact law.
-        piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),
-        droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),
-        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives   // HT1: the mod's own save data rides the envelope
-        // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
-        // SaveData_v1 carries enemyData wherever the player stands
-        // (:865, restored :1006). Saved nowhere, a quickload during a
-        // wilderness ambush or a guard pursuit despawned every
-        // attacker with the spawn catch-up suppressed: a free escape
-        // from any outdoor fight. Natives, the pile law; the
-        // compensation-free height rides per record.
-        foes: exteriorFoes.snapshotWorld((pos) => state.worldCoords(pos)).map((sf) => ({ ...sf, y: groundFrameNative(sf.nativeX, sf.nativeZ, sf.y - state.compensation[1]) })),
-        guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: groundFrameNative(sg.nativeX, sg.nativeZ, sg.y - state.compensation[1]) })),
-      },
-    });
-    const into = sink ?? realmSaveSink();   // REALM P1.3: a realm character's save is the service's checkpoint, never a local slot
-    if (into) { const said = into(snap); if (!quiet) sayRealmSave(said, (t) => townTalk.say(t)); return true; }   // AUDIT REALM2 C2: the realm's answer, not a hope
-    const r = saveSlot(playerEntity.name, saveName, snap);
-    // SS1: the shot is DEFERRED to frame end (SaveGame's two
-    // WaitForEndOfFrame yields) - the frame loop's
-    // capturePendingScreenshot delivers it once the save window has
-    // popped, HUD in shot exactly as the C# leaves it.
-    if (r.ok && !quiet) requestScreenshot(r.key);
-    if (!r.ok || !quiet) townTalk.say(r.ok ? localizedText('gameSaved', 'Game saved.') : 'Save failed (storage full or disabled).');
-    return r.ok;
-  }
+  const { worldQuickSave } = createWorldQuickSave({   // HOST-SPLIT: src/scenes/worldQuickSave.js
+    HCC_VENDOR, _spawnLedger, cam, campToRecord, camps, cityGuards, droppedLoot, droppedTorches, exteriorFoes,
+    groundFrameHeight, groundFrameNative, hccRuntime, player, playerTicker, playerTravelPixel, state,
+    townTalk, walkMode, weaponRig,
+    get magic() { return magic; },   // the seam's law: a name the host's scope writes (a shadow's spelling) is read live
+    get _traveling() { return _traveling; },
+    get modes() { return modes; },
+    get naval() { return naval; },
+    get npcSession() { return npcSession; },
+    get ohAbyss() { return ohAbyss; },
+    get playerSpawned() { return playerSpawned; },
+    get questBridge() { return questBridge; },
+    get rumorMill() { return rumorMill; },
+    get topicTree() { return topicTree; },
+  });
   /** AUDIT 63r F24, the EXTERIOR half of SerializableEnemy.cs
    *  :206-217 - questFoeHost.reviveQuestBehaviour is the shared law,
    *  this is only the machine this host owns. No stand list is needed
@@ -15424,7 +14866,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     const summaries = buildingSummaries(city.exterior.buildings, list, { locationIndex: city.locationIndex, locationName: city.name, regionName: city.regionName });
     const took = blocks.getBlockByName(ed.arenaTook);
-    const locId = `${city.regionIndex}:${city.name}`;
+    const locId = townBookOf(city);   // BAY-LEFT-MAPS (C7 = E2): the one key-maker (Daggerfall's, the Bay's own key)
     return {
       city, summaries, mapId: city.mapTableData.mapId, locId,
       oldTypeOf: (key) => took?.rmbBlock?.fldHeader?.buildingDataList?.[key & 0xff]?.buildingType ?? null,
@@ -15533,7 +14975,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // ONLINE THE TOWNS ARE THE ROOM'S: only the service's homes hold one (every client the same pins - a save's own
     // records would stand one player's town apart from the room's); offline, the save's
     const records = homeLayoutsOnline ? (_serverLayoutRecords ?? []) : layoutRecordsOf({
-      houses: playerEntity.houses, rooms: playerEntity.rentedRooms,
+      houses: allDeeds(playerEntity.houses), rooms: playerEntity.rentedRooms,   // HOUSES-3: every deed, the region's three
       sites: questBridge?.machine?.getAllActiveQuestSites?.() ?? [],
       questors: questBridge?.machine?.getAllActiveQuestors?.() ?? [],   // AUDIT WD3 S3
       repairs: (playerEntity.otherItems ?? []).map((it) => it?.repairData).filter(Boolean),
@@ -15569,7 +15011,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       _locIndexGen += 1;   // AUDIT OW4 D5: a reader keeping a list off the index sees the change
       if (built.has(pixelKey)) {
         const [px, py] = pixelKey.split(',').map(Number);
-        destroyPixel(px, py, { collectLoose: false });
+        swap.mark(px, py);   // IC-SWAP-BEHIND: built again behind its view
         queue.push({ px, py });
         rebuilt++;
       }
@@ -15698,7 +15140,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // subject - RemoveAllOrphanedItems (SaveLoadManager.cs:1518)
       // runs inside the composer, after the quest machine is restored,
       // exactly where LoadGame runs it.
-      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = true;
+      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = starts.restored();   // AUDIT STARTS W5: a story never begun is handed its commission
       await applyLayoutPins(extras);   // WD3: the save's towns in the layouts its things were made in, before its place is built
       let csaElsewhere = false;   // CSA-J (the audit): the load did not land where its save stood
       if (extras.locationKey === 'world' && extras.world?.pixel) {
@@ -15711,13 +15153,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // building an inside save re-enters)
         const was = scaleOf(extras.terrainScale);
         const today = was === STREAMING_TERRAIN_SCALE && !landform;   // LANDFORM1: every height DFU's frame - the row's lift goes back on
-        const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };
+        const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras.groundFrame); };   // BAY-LEFT-GROUND: by its frame's law
         // a list the envelope does not carry passes through as it came, and a record without its position is the restore's to refuse
         const restandRows = (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
         const restandAt = (key) => (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
         if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
-        const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];
+        const ly = restandHeight(w.y ?? 2, lx, lz, was, extras.groundFrame) + state.compensation[1];
         // IS1: an inside save re-enters its building BEFORE the player
         // lands - the Respawner's building arm (PlayerEnterExit
         // .cs:559-567) with RestorePosition landing the saved
@@ -15818,7 +15260,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const pixel = extras.dungeon?.pixel ?? dungeonPixelFor(extras.locationKey, locationIndex.values(), (mt) => longitudeLatitudeToMapPixel(mt.longitude, mt.latitude));
         csaElsewhere = !pixel;   // CSA-J (the audit): a dungeon this world cannot find is no landing at the save's place
         if (!pixel) townTalk.say('(the dungeon you saved in could not be found. Your character is restored; travel there yourself)');
-        else if (onlineOn && !(pixel.x === getInt('Startup', 'StartCellX') && pixel.y === getInt('Startup', 'StartCellY'))) {
+        else if (onlineOn && !(pixel.x === getInt('Startup', 'StartCellX') && pixel.y === getInt('Startup', 'StartCellY')) && !starts.resumesAt(pixel)) {   // AUDIT STARTS W3: nor a start's own dungeon, its commission still in it
           // ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19): an online page never puts a character back INSIDE a dungeon -
           // it wakes them at the nearest temple, town or graveyard to it (the death respawn's own search, over the
           // region the dungeon stands in), on that place's start marker. The tutorial dungeon is the exception
@@ -15826,7 +15268,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           // AUDIT OH-F B5: a save in the drowned dungeon wakes nearest ITS door, the pit - not the borrowed template's
           const ohSaved = extras.modData?.[OCEAN_HOLES_VENDOR];
           const from = ohSaved?.Active && Number.isFinite(ohSaved.PitMapX) && Number.isFinite(ohSaved.PitMapY) ? { x: ohSaved.PitMapX, y: ohSaved.PitMapY } : pixel;
-          const wake = inEther(from.x, from.y) ? { kind: 'dungeon', mapPixel: { x: from.x, y: from.y } } : undergroundWakeSpot(maps.getRegion(maps.getRegionIndexAt(from.x, from.y))?.mapTable ?? [], from);   // ETHER-PLACES: an isle's ruin wakes at its own door - the region's search would read the Alik'r's past the map
+          // AUDIT-TESA A2-4: past the Bay the clamp's region is the Alik'r Desert's, a continent away - wake at its own door, as an isle's
+          const wake = inEther(from.x, from.y) || !onTheBay(from.x, from.y) ? { kind: 'dungeon', mapPixel: { x: from.x, y: from.y } } : undergroundWakeSpot(maps.getRegion(maps.getRegionIndexAt(from.x, from.y))?.mapTable ?? [], from);   // ETHER-PLACES: an isle's ruin wakes at its own door - the region's search would read the Alik'r's past the map
           await _teleportToPixel(wake.mapPixel.x, wake.mapPixel.y, null, { modEvent: 'load', reposition: REPOSITION.RandomStartMarker });
           // WOD6 (audit): a load all the same - SaveLoadManager.OnLoad, last, at the landed player
           { const s = walkMode && playerSpawned; const f = s ? player.pos : cam.pos; wodOnLoad([f[0], f[1] + (s ? player.height / 2 : 0), f[2]]); }
@@ -15836,7 +15279,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         } else {
           _wodInside = true;   // WOD6: a dungeon save lands inside - no marker hears this load
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
-          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true, recorded: extras.dungeon ?? {} }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
+          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true, recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {} }) ?? false);   // AUDIT STARTS W3: a start's dungeon through the quest's own entry (its instance)   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
           if (entered) { playerSpawned = true; await modes?.restoreDungeonSave?.(extras); }   // AUDIT OH-F B1: RestoreEnemyData whole before the mod loop below
           else { _wodInside = false; townTalk.say('(the dungeon could not be entered. Your character is restored at its door)'); }   // WOD6: it landed outside after all
           if (!entered) csaElsewhere = true;   // CSA-J (the audit): outside at its door, not where the save stood
@@ -16243,87 +15686,20 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     win?.activateTeleportationTravel();
     return win;
   }
-  /** PORTAL1 (systems/portalStone.js): THE HOLDS, here - portalHold's ladder over this host's own words: dead or a move
-   *  under way, my duel (an arena bout's hold with it), a siege's room (its wards: Teleport, Recall and Levitate do
-   *  nothing there), an enemy near (the travel map's own pool), a journey (Travel Options' or the Overworld's). The door,
-   *  the pick and the step all ask it (AUDIT PORTAL1 U2/U3/O4: the step asked none of it, and the pick only some). */
-  const portalHoldNow = () => portalHold({
-    dead: !(playerEntity.health > 0), busy: worldMoveBusy() || _teleporting,
-    duel: duelEnemyNear(), siege: inSiegeRoom(),
-    enemies: areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear(),
-    journey: !!travelOptions?.isTravelActive || travelView.state !== 'off',
+  const { openPortalStone, portalArrive, portalHoldNow } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
+    _mode, buildTravelMapWindow, cam, cityGuards, collider, csaBoatUnderMe, duelEnemyNear, exteriorFoes,
+    hccRuntimeOn, navalHostileNear, player, playerTravelPixel, portalGates, teleportTo, townTalk, walkMode,
+    worldMoveBusy,
+    get _foesFullAt() { return _foesFullAt; }, set _foesFullAt(v) { _foesFullAt = v; },
+    get _teleporting() { return _teleporting; },
+    get inSiegeRoom() { return inSiegeRoom; },
+    get playerSpawned() { return playerSpawned; },
+    get travelOptions() { return travelOptions; },
+    get travelView() { return travelView; },
+    get veilRefused() { return veilRefused; },
+    get wildTeleportRefused() { return wildTeleportRefused; },
+    get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
   });
-  /** Why a portal may not open where I stand, or null: the open world's alone, the holds, the water, a boat's deck (a
-   *  portal stands in the world's frame and would be sailed away from), and one of mine at a time. */
-  const portalDoorRefusal = () => {
-    if (_mode() !== 'exterior' || madeRuleHere('portalStone') === 'refused') return PORTAL_TEXT.notHere;   // EG-H2: and never in a made level (the made level's law - each is a dungeon too)
-    const hold = portalHoldNow();
-    if (hold) return PORTAL_HOLD_TEXT[hold];
-    if (player.isPlayerSwimming) return PORTAL_TEXT.water;
-    if (csaBoatUnderMe() || isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel())) return PORTAL_TEXT.aboard;
-    if (portalGates.mine()) return PORTAL_TEXT.standing;
-    return null;
-  };
-  /** PORTAL1: A PORTAL STONE USED - asked at the door (portalDoorRefusal), then the travel map in teleport mode - the
-   *  Mages Guild's, with no Travel Options fee: the stone is the fare - and a place picked there spends ONE stone
-   *  (standPortal). A map closed without a pick spends nothing. Answers false when refused (the hotbar's refusal), the
-   *  refusal said. */
-  function openPortalStone(item, list) {
-    const refuse = (line) => { townTalk.say(line); return false; };
-    const why = portalDoorRefusal();
-    if (why) return refuse(why);
-    if (veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it
-    if (!travelMapDoorReady()) return refuse(PORTAL_TEXT.noMap);
-    // the list it came from, read again at the pick - a load in between stands a new pack (AUDIT PRE-MERGE 0928 S2's
-    // law); a companion's or a sworn revenant's own storage is its own list (AUDIT PORTAL1 I2)
-    const live = list === playerEntity.wagonItems ? () => playerEntity.wagonItems
-      : list === playerEntity.items || !Array.isArray(list) ? () => playerEntity.items : () => list;
-    const win = buildTravelMapWindow({
-      travelOptions: () => null,   // the stone is the fare - never Travel Options' teleport fee
-      onTeleport: (pick) => { standPortal(pick, item, live); },
-    });
-    if (!win) return refuse(PORTAL_TEXT.noMap);
-    win.activateTeleportationTravel();
-    townTalk.showOverlay(win);
-    return true;
-  }
-  /** The pick: the door asked again (the world moved on while the map stood - a foe came, a duel was called, death),
-   *  the place found (portalStonePlace: short of a wall, on the ground, off an event's gate's ground), ONE stone spent, the portal torn open, and - online
-   *  - the next foes frame owed full, so the cell hears of it at once. The classic teleport box smashed the screen to
-   *  black for an arrival that is not coming yet, so a black screen lifts; the held map smashes nothing, and nothing is
-   *  faded there (AUDIT PORTAL1 U4: every pick on it flashed the screen black). */
-  function standPortal(pick, item, live) {
-    if (hudFade.backgroundColor[3] > 0 && !hudFade.fadeInProgress) hudFade.fadeHUDFromBlack();
-    if (!pick?.pixel) return;
-    const why = portalDoorRefusal();
-    if (why) { townTalk.say(why); return; }
-    if (veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6
-    const feet = walkMode && playerSpawned ? player.feetAt() : cam.pos;
-    const place = portalStonePlace(feet, cam.yaw, {   // RPT1026-EVENTS GATE-WAY: refused before an event's gate (systems/eventGround.js), nothing spent
-      ground: (o, d, m) => collider.surfaceHit(o, d, m)?.dist,   // the ground there - a mesh or the terrain, whichever is nearer (CAMP-GROUND's probe)
-      wall: (o, d, m) => collider.raycastHit(o, d, m)?.dist,   // a wall, a fence, a house in the way
-    });
-    if (place.refused) { townTalk.say(PORTAL_TEXT[place.refused]); return; }
-    if (!spendPortalStone(item, live())) { townTalk.say(PORTAL_TEXT.gone); return; }
-    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });
-    _foesFullAt = -Infinity;
-    surfacePlayer();
-    townTalk.say(PORTAL_TEXT.opened(pick.name));
-  }
-  /** THE ARRIVAL: the screen black at once, the teleport a microtask on - OFF THE FRAME's draw (AUDIT PORTAL1 U6: the
-   *  step is found inside the frame, and the teleport's synchronous half tore down batches the same frame then drew;
-   *  every other teleport is called from input or deferred the same way) - the guild's own (teleportTo), with the
-   *  following team's cache around it as every other journey's (HCC, AUDIT HCC H2: AUDIT PORTAL1 U7), and an arrival
-   *  that failed lifts the black (AUDIT PORTAL1 U5). */
-  function portalArrive(g) {
-    hudFade.smashHUDToBlack();
-    Promise.resolve().then(async () => {
-      if (worldMoveBusy() || _teleporting) { hudFade.clearFade(); return; }
-      hccRuntimeOn()?.handlePreFastTravel();
-      try { await teleportTo(g.dest); }
-      finally { hccRuntimeOn()?.handlePostFastTravel(); }
-    }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); hudFade.clearFade(); });
-  }
 
   // ── TO1: TRAVEL OPTIONS ────────────────────────────────────────────
   // The mod, its control panel and its junction map, built once with
@@ -16362,14 +15738,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       settings: () => travelOptionsSettings,
       pathsAt: (x, y, type) => {
         const net = terrainGen.roads();
-        if (!net || net.source !== 'basic-roads') return 0;
-        const arr = [net.roads, net.tracks, net.rivers, net.streams][type];
-        return arr ? (arr[y * 1000 + x] & 0xff) : 0;
+        return net?.source === 'basic-roads' ? dataPoint(net, type, x, y) : 0;   // BAY-LEFT-MAPS: the mod's table, and past it the roads past the Bay (it read `y * 1000 + x` - another row past the Bay's edge)
       },
-      locationAt: (x, y) => {
-        const summary = travelLocationSummaryAt(mapDict, x, y);
-        return summary ? { locationType: summary.locationType, mapId: summary.mapID ?? summary.mapId, discovered: travelCheckDiscovered(summary) } : null;
-      },
+      locationAt: (x, y) => junctionPlaceAt(x, y),   // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row - BAY-LEFT-MAPS: the place found there (scenes/mapPlacesHost.js)
       locationColorOf: (t) => {
         // AUDIT-TO1 F2: through the map's LIVE filter set - the mod's
         // DrawMapSection calls GetPixelColorIndex on the persistent window
@@ -16421,7 +15792,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  classic travel map and classic fast travel, whole. */
   _travelUIHolder.ui = travelControlUI;   // AUDIT-TO1 F2: the holder the enchant ctx reads
   const townWalk = createTownWalk({ built, state });   // OW-TOWN-WALK: the town a journey stands in, and its streets (scenes/townWalkHost.js)
-  const tvInTown = () => !!townWalk.townPace(state.worldCoords(player.pos));   // OW-TOWN-WALK: the traveller stands in a town's streets (AUDIT OW-REVISITED L1-4: never a walled city's fields)
+  const tvTownPace = () => townWalk.townPace(state.worldCoords(player.pos));   // OW-TOWN-WALK: the pace of the town's streets the traveller stands in, or null (AUDIT OW-REVISITED L1-4: never a walled city's fields; IC-PACE: the Imperial City's its own)
   travelOptions = travelOptionsOn ? createTravelOptions({   // BOOT-TDZ: ASSIGNED here; the binding stands above the stream that reads it
     townKey: townWalk.townKey, townWay: townWalk.townWay,   // OW-TOWN-WALK: in a town, its streets first, at its pace
     settings: travelOptionsSettings,
@@ -16450,7 +15821,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     locationTypeName: () => travelLocationTypeName(_musicLocationType()),
     climateIndex: () => { const px = playerTravelPixel(); return maps.getClimateIndex(px.x, px.y); },
     atSea: () => !!tvSea.means && (!!csaBoatUnderMe() || tvSea.phase === 'landing'),   // AUDIT OW5 S1: the CROSSING's alone - a journey of the mod's own begun at a helm (a map pick under First Person Travel, or the classic skin's) was never steered by it, and with the ocean stop stood down the boat ran on at the journey's speed and never arrived; the mod's stop ends it now, as the mod does. OWS2: at a helm or aboard - or coming ashore, the mod's disembark holding the traveller at the helm a second - the mod's ocean stop is for a traveller who walked into it
-    regionName: () => maps.getRegionName(_questRegionIndex()),
+    regionName: () => provinceHere()?.name ?? maps.getRegionName(_questRegionIndex()),   // TESA3: past the Bay, the province's
     entity: () => ({
       health: playerEntity.health, maxHealth: playerEntity.maxHealth, fatigue: playerEntity.fatigue,
       luck: liveStat(playerEntity, 'luck'), stealth: skillValue(playerEntity, SKILLS.Stealth),
@@ -16505,7 +15876,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // through it, and the rect the pixel build stored (null until the
     // terrain is built, which is the C#'s `GetTerrainFromPixel` null).
     locationTileRect: (pixel) => {
-      const summary = travelLocationSummaryAt(mapDict, pixel.x, pixel.y);
+      const summary = onTheBay(pixel.x, pixel.y) ? travelLocationSummaryAt(mapDict, pixel.x, pixel.y) : null;   // AUDIT-TESA A2-3
       if (!summary) return null;
       const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);
       if (!loc) return null;
@@ -16823,6 +16194,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return createTravelMapWindow({
       maps, mapDict, woods,
       roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
+      tamrielPlacesIn: tamrielLand ? pastBayPlacesIn : null,   // TESA13: the countryside and the lairs past the Bay, in the view - TESA15: the ones the roads' regions laid, all at once
+      tamrielPlaceName: tamrielLand ? tamrielPlaceName : null,   // TESA15: and a mark's name, as the hover asks
       // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
       // map reads it for the crosshair (:864), the player's region
       // (:1611) and the journey itself, and aboard a ship all three
@@ -16842,7 +16215,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       waypointCtx: () => waypointCtx(),   // WAYPOINTS: who I am on a shared waypoint, and which kinds I can share
       travellers: () => travellerBook.live(Date.now()).filter((t) => !social?.inMyParty(social.accountOfPeer(t.id))).map((t) => ({ id: t.id, name: t.name, ...t.p, ship: isShipMark(t.p), kin: travellerKin({ friend: !!social?.isFriendPeer(t.id), gt: t.gt }, myGuildTag()), lv: t.lv ?? null })),   // OW-KIN / OW-WHO: who they are to me, and their Renown   // OWS1: one at sea drawn as a ship   // TV3: the region's travellers, as the view draws them - AUDIT DEEP T3-9: bar my party, whom the map already rings as theirs
       travellerHidden: (t) => wildHidesPlayer({ kin: t.kin, pixel: t }),   // WILD1: in or near the open zone only my party and my guild are seen (the map asks of each row)
-      wildMask: () => wildMapMask(),   // WILD1: the open zone's fog and red line (ui/wild/wildMapInk.js)
+      wildMask: () => cyrodiilMask(),   // WILD1: the open zone's fog and red line (ui/wild/wildMapInk.js) - ZONE-OFFLINE (the owner: "the entire middle region should have the fire outline wrothgarian does"): Cyrodiil's on the map online and off; its rules (the halls, the giants, the drop) stay online's (wildMapMask)
       wildDungeons: () => wildActiveNow(),
       wildGiants: () => wildGiantMarks(),
       zoneFirst: () => wildHere() && !!wildMapMask() && modes?.mode !== 'dungeon',   // ZONE-FIRST: V in the zone opens the zone map   // ZONE-GIANTS: the zone's eight giants where they walk
@@ -16853,15 +16226,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // WB1: THE OBLIVION GATE'S RING - a function for the party's reason (the countdown moves while the map stands
       // open); null offline and while no gate is marked, and both maps draw nothing
       gate: () => gateOmen?.mapMark() ?? null,
+      gates: () => gateOmen?.mapMarks() ?? [],   // WW2: every lane's ring past the Bay
       // EVENT-TIP (Mac: "add a tooltip to the map for these type of events"): THE TOWNS UNDER ATTACK - every raid
       // running now on the raids' own clock, at its town, with the card a hover asks for (ui/eventMapMarks.js). A
       // function for the gate's reason; none while the mod is off. The enhanced map alone draws them.
       raids: () => (raidingPartiesOn() ? raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }) : []),   // TIME1: online the withdrawal in local time
       serpent: () => serpentOmen?.mapMark() ?? null,   // SERPENT1: the sea serpent's ring, in the sea's colours - the held map alone draws it
-      sd: () => sdHost?.mapMark() ?? null,   // SD2c: a found Super dungeon's ring, in its omen's brass - the held map alone draws it
+      sd: () => sdHost?.mapMarks() ?? null,   // SD2c: a found Super dungeon's ring, in its omen's brass - the held map alone draws it; WW5: every lane's
       stars: () => starfall?.mapMarks() ?? [],   // STAR6: the night's fallen stars, each its card
       arch: () => egClient?.archMapMark() ?? null,   // EG-F: my company's Elite arch while it stands, in its gold - the held map alone draws it
-      ketch: () => ketch?.mapMark() ?? null,   // KETCH: the Sky-Ketch over Daggerfall while she is in its sky - the held map alone draws it
+      ketch: () => ketch?.mapMarks() ?? [],   // KETCH: the Sky-Ketch over Daggerfall while she is in its sky - the held map alone draws it; KETCH-EVERYWHERE: every station's
       // GUIDE5: WHERE THE QUESTS POINT - every active quest's place the player's map holds, the followed one filled
       // (ui/quest/questMarks.js); a function for the gate's reason (a step logged while the map stands open). The enhanced
       // map alone draws them: a player who chose DFU's own maps chose DFU's look.
@@ -16919,11 +16293,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // by every writer (this host's own discoveryLocationId, exterior.js,
       // townTalk's reveal) - it was read here by NUMERIC map id, so the I
       // key answered "no knowledge" for every place in the game, a city
-      // whose every shop the player had entered included.
+      // whose every shop the player had entered included. BAY-LEFT-MAPS
+      // (C7 = E2): every writer and reader takes ONE key-maker now
+      // (systems/discovery.js townBookId - the Bay's key byte for byte,
+      // a place past the Bay its map id after it).
       discoveredBuildings: (summary) => {
         if (!summary) return [];
         const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);
-        return loc?.name ? discoveredBuildings(`${summary.regionIndex}:${loc.name}`) : [];
+        return loc?.name ? discoveredBuildings(townBookOf(loc)) : [];   // BAY-LEFT-MAPS (C7 = E2): the one key-maker
       },
       // :432-433 - DFU reads `exteriorAutomapBuildingType<Type>` out of
       // its own text table; the port has the enum and no such table, so
@@ -16967,7 +16344,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!dfLoc || !b?.locBlocks) return;
     // The location this edge fired for, resolved NOW - the wait below
     // is a microtask and the player must not be re-read after it.
-    const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    const locationId = townBookOf(dfLoc);   // BAY-LEFT-MAPS (C7 = E2): its own town's book
     const buildings = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
       { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 });
     // AUDIT 63 F9 (review round): THE NAME IS A FILE READ, so the
@@ -17064,7 +16441,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
 
   async function pump() {
-    if (building || !state.owes(queue)) return;   // QUEUE-OWED: a pixel the stream let go while it waited is never built
+    if (building || !state.owes(queue) || !capitalPrebuild.firstReady(queue)) return;   // QUEUE-OWED: a pixel the stream let go while it waited is never built; IC-STUTTER (scenes/capitalPrebuild.js): nor one of the Imperial City whose pieces its workers have not made - the next one ready first
     building = true;
     const next = queue.shift();
     _streamSince ??= performance.now();   // PERF-EXT24: a run of streamed builds begins
@@ -17129,10 +16506,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         now,
         pixel: playerTravelPixel(),
         gate: { place: gateOmen?.current?.()?.site?.place ?? null, site: gateOmen?.current?.()?.site ?? null, fellAt: (day) => gateLink?.fellAt?.(day) ?? null },
+        gates: (gateOmen?.currents() ?? []).filter((x) => x.lane && x.c.site).map(({ lane, c }) => ({ lane, place: c.site.place, site: c.site })),   // WW2: every lane's past the Bay that found its site
         // SERPENT-TIMERS: the sea serpent - the port it lies off as the omen found it, and its kill at this machine's site
         serpent: { place: serpentOmen?.current?.()?.site?.near ?? null, site: serpentOmen?.current?.()?.site ?? null, fellAt: (day) => { const site = serpentOmen?.current?.()?.site; return site && site.day === day ? serpentLink?.fellAt?.(day, site) ?? null : null; } },
         // SD2c: the Super dungeon - the hub's record, its name and its city (the row's own law asks the phase: a row once found)
-        sd: sdHost ? { rec: sdHost.record(), name: sdHost.hollow()?.loc?.name ?? null, site: sdHost.hollow()?.site ?? null } : null,   // AUDIT EVENTS1 A2: the site itself - its city the window's place, its pixel the board's way
+        sd: sdHost?.timers() ?? null,   // AUDIT EVENTS1 A2: the site itself - its city the window's place, its pixel the board's way; WW5: and each province lane's (scenes/superDungeon/sdLanes.js timers)
         stars: starfall?.timerRows() ?? null,   // STAR6: each fallen star's deadline, the next fall and the night's coven
         elite: egClient?.timers() ?? null,   // EG-F: my company's Elite Breach - its opening, its window, its hall and count
         doors: egClient ? { board: () => egBoardDoor() } : null,   // EG-ZM (Elite-Gates.md section 20): the boards' door on the Elite rows
@@ -17197,7 +16575,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE2: the Quests tab's WHERE and its way there - HandleQuestClicks' two world questions (the same two the
     // logbook is handed, makeJournalWindow) and the door itself: this bag is the street's, where the map opens.
     currentLocationName: () => _questLoc()?.name ?? '',
-    canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     showQuestPlace: (find) => showQuestPlace(find),
   });
   const keys = new Set();
@@ -17901,6 +17279,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const opts = sink ? { quiet: true, sink } : { quiet: true };   // AUDIT PRE-MERGE 1003 O10: a caller's sink, to hear the put's answer
     return !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, opts) : worldQuickSave(QUICK_SAVE_NAME, opts));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
   }
+  const checkpointClock = createOnlineCheckpointClock({ session: realmSession, checkpoint: () => onlineCheckpoint(), lastAt: () => _checkpointAt, say: (text) => townTalk.say(text), stands: () => _bootLoaded });
   /** AUDIT PRE-MERGE 1003 O10: A CHECKPOINT THAT LANDED - for a door that must not say a thing done before the save that
    *  holds it is the realm's (systems/online/onlineHomes.js moveArenaHomes: a displaced home's move said read). A realm
    *  character's checkpoint answers the realm's word on the PUT that carried it (the composer's sink - scenes/shared.js
@@ -17923,8 +17302,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   if (realmSession) {
     // the title exit and the page put away are the checkpoint's: registered with its other doors (THE CHECKPOINT'S
     // DOORS, below the duel's). AUDIT REALM2 C2: the lease given up as the page GOES (pagehide, the unload guard answered) - the leave alone, with
-    // keepalive (the browser finishes it; a save that large it cannot, so the periodic checkpoints - ONLINE_CHECKPOINT_MS -
-    // and the one the page asked as it hid bound what a close costs) - and taken again when a page the back-forward cache kept is shown
+    // keepalive (the browser finishes it; a save that large it cannot) - and taken again when a page the back-forward cache kept is shown.
+    // CLOSE-SAVE (FIELD BUGS 2026-10-26): the leave asks the page-hide checkpoint first (whenPageHides below hands it to the session) and
+    // keeps it on the device - a close or a reload fires pagehide first, before the page counts as hidden, and there the lease has gone
     whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });   // REZ-BLOODLINE: a death held for a Resurrect decided first - its tombstone takes the lease, the leave then sends nothing
   }
   /** REALM P1.3: A CHARACTER BORN ONLINE - made at the service once chargen is done, its first save the service's
@@ -18199,6 +17579,23 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       sea: state.pixelTranslation(e.px, e.py, [0, 0, 0])[1] + deepWaters.oceanLocalY }))
       .filter((r) => r.d && r.d !== 'rejected:not-selected') : null);
     window.__currentPixel = () => `${state.current.x},${state.current.y}`;
+    // TESA2 probe surface (bible/03-World/Arena-Provinces.md): a jump to a pixel, as a fast travel lands (its start marker),
+    // and what a built pixel stands - its place's name, its Arena slot, its blocks and buildings
+    window.__tesaJump = (x, y) => _teleportToPixel(x, y, null, { reposition: REPOSITION.RandomStartMarker });
+    // TESA13 probe surface (tools/tesa13MapProbe.mjs): the held map's read of the countryside and the lairs in a rectangle -
+    // TESA15: the places the roads' regions laid
+    window.__tesaPlaces = (x0, y0, x1, y1) => pastBayPlacesIn(x0, y0, x1, y1);
+    window.__tesaPlace = (x, y) => {
+      const b = built.get(`${x},${y}`), loc = locationIndex.get(`${x},${y}`);
+      return { built: !!b, location: b?.location ?? null, arenaKey: b?.arenaSlot ? `${b.arenaSlot.provinceIndex}|${b.arenaSlot.id}` : null, name: loc?.name ?? null, arena: loc?.arena ?? null,
+        mapId: loc?.mapTableData?.mapId ?? null, blocks: loc ? [loc.exterior?.exteriorData?.width, loc.exterior?.exteriorData?.height] : null,
+        buildings: loc?.exterior?.buildings?.length ?? null, region: loc?.regionName ?? null,
+        // TESA4: the Arena roads' layer it was painted with, whether they reached it, and the tiles the painter wrote
+        roads: b ? { epoch: b.arenaRoadsEpoch, painted: b.arenaRoadsPainted, tiles: b.paths ? b.paths.reduce((n, t) => n + (t ? 1 : 0), 0) : null } : null,
+        // TESA6: its harbour byte, and the shipyard's and the lighthouse's sites its build stood
+        port: loc ? (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) : null, portSites: b?.portSites?.length ?? null,
+        country: loc?.country ?? null, type: loc?.mapTableData?.locationType ?? null };   // TESA7: a country place's pixel, kind and template
+    };
     // ARENA2 probe surface (tools/arenaProbe.mjs): the city floor's sand and the Herald's place, the bout standing (its
     // phase, its fighters' health, the crowd's mood and how many sit), and the Herald's three doors pressed as his choice
     window.__arena = () => {
@@ -18393,7 +17790,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     /** CSA-I probe: the position reading's state, and the water walk as the effect list stands. */
     window.__csaMapState = () => (csaRuntime ? { showing: csaRuntime.state.mapShowing, reading: csaRuntime.state.mapShowingPosition, running: csaRuntime.state.showingBoatPosition != null,
       mode: csaRuntime.state.mapMarkerMode, markers: csaRuntime.state.mapMarkers.map((m) => ({ position: m.position, label: m.label })), window: !!_csaMapWindow, mouse: _csaMouse.map((v) => +v.toFixed(1)),
-      pictures: { map: !!_csaMapTex, line: !!_csaLineTex } } : null);
+      pictures: { map: !!_csaPics.map, line: !!_csaPics.line } } : null);
     window.__csaWaterWalk = () => ({ walking: isEntityWaterWalking(playerEntity), flag: !!player.waterWalking, bundles: liveBundles(playerEntity).map((b) => ({ name: b.name, icon: b.showIcon })) });
     window.__csaOverlay = () => { const o = townTalk?.overlay; return o ? { name: o.constructor?.name ?? null, keys: Object.keys(o).slice(0, 12), done: !!townTalk.overlayDone, active: !!townTalk.overlayActive } : null; };   // the street's window slot, what holds it
     window.__csaOarWatch = (i = 0) => {
@@ -18554,7 +17951,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
 
   const { installTownProbes } = createTownProbes({   // HOST-SPLIT: src/scenes/townProbes.js
-    _crimeResponse, built, cam, cityGuards, droppedLoot, minuteNow, state, townTalk, weaponRig,
+    _crimeResponse, built, cam, cityGuards, droppedLoot, livingRoadsOf, minuteNow, state, townTalk, weaponRig,   // WW7-7: the road's parties for the probe
   });
 
   // P3-P6 mode machine (worldModes.js, extracted at P7): the frame
@@ -18620,7 +18017,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _undercrofts = new WeakMap();
   function arenaDoorTarget(e) {
     const city = locationIndex.get(e.pixelKey);
-    if (!isUndercroftDoor(e, DOOR_TYPE.DUNGEON_ENTRANCE) || !isArenaCity(city)) return { dfLocation: city, group: e.pixelKey };
+    if (!isUndercroftDoor(e, DOOR_TYPE.DUNGEON_ENTRANCE) || !standsArena(city)) return { dfLocation: city, group: e.pixelKey };   // IC-GRAND: the Imperial City's arena's stair too
     let u = _undercrofts.get(city);
     if (!u) { u = undercroftLocation(city); _undercrofts.set(city, u); }
     return { dfLocation: u, group: `${e.pixelKey}:undercroft` };
@@ -18641,12 +18038,28 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const px = playerTravelPixel();
     return maps.getRegionIndexAt(px.x, px.y);
   }
+  setFolkPlace((feet) => (feet && (modes?.mode ?? 'exterior') === 'exterior' ? worldCoordToMapPixel(state.worldCoords(feet).x, state.worldCoords(feet).z) : playerTravelPixel()), (x, y) => maps.getRegionIndexAt(x, y));   // PROVINCE-FOLK (characters/provinceFolk.js): the pixel under scene feet (the player's own indoors, underground and for none) - AUDIT PROVINCE-FOLK A5: a foe drawn where it stands
+  /** TESA3 (bible/03-World/Arena-Provinces.md): THE PROVINCE PAST THE BAY - the province (world/tamriel/tamrielGeography.js: its
+   *  key, its name, its race) a pixel beyond the Bay stands on (world/tamriel/tamrielLand.js provinceKeyBeyondBay: the trace's, or
+   *  the authored shape's), or null: the Bay's own ground, the sea, past the Veil, the land beyond the Bay not streamed.
+   *  What it answers is a name and a people - never a region index: every system keyed by region (chat, banks, law,
+   *  prices, seats, the services) keeps the 62 regions' law (the clamp past the Bay, TAMRIEL2). */
+  function provinceAt(x, y) {
+    if (!tamrielLand || onTheBay(x, y) || (etherSea && inEther(x, y))) return null;
+    return provinceByKey(provinceKeyBeyondBay(x, y));
+  }
+  const provinceHere = () => { const px = playerTravelPixel(); return provinceAt(px.x, px.y); };
+  /** TESA3: THE NAMES OF THE PEOPLE WHERE THE PLAYER STANDS - past the Bay the province's own bank (world/tamrielPeople.js:
+   *  a Nord's in Skyrim, a Khajiit's in Elsweyr, the Imperial bank in Black Marsh by DFU's own Argonian law), else the
+   *  region's (MapsFile.GetNameBankOfRegion, verbatim). A raid's pinned region (AUDIT NAV1) names by its region. */
+  const provinceBankHere = () => (_questRegionPin == null ? provinceNameBank(provinceHere()?.key) : null);
+  const nameBankHere = () => provinceBankHere() ?? getNameBankOfRegion(_questRegionIndex());
   // LOAD1: WHERE A LOADING SCREEN AND A KEPT SCREENSHOT SAY THE PLAYER IS - the location at a map pixel, else its region
   // (the wilderness, the sea); underground, the dungeon's own record, as the quest system's own read has it.
   function placeAtPixel(px, py) {
     const key = `${px},${py}`;
     if (_ohGpsName?.key === key && _ohGpsName.name) return _ohGpsName.name;   // AUDIT LOAD1 4: the abyss wears its own name over the pixel it borrows (_questLoc's law)
-    return locationIndex.get(key)?.name || (etherSea && inEther(px, py) ? ETHER_SEA_NAME : REGION_NAMES[maps.getRegionIndexAt(px, py)]) || '';   // ETHER-SEA: the sea's own name past the Veil
+    return locationIndex.get(key)?.name || provinceAt(px, py)?.name || (etherSea && inEther(px, py) ? ETHER_SEA_NAME : REGION_NAMES[maps.getRegionIndexAt(px, py)]) || '';   // ETHER-SEA: the sea's own name past the Veil; TESA3: a province's past the Bay
   }
   function placeHere() {
     const px = playerTravelPixel();
@@ -18785,380 +18198,32 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (modes?.questOverlay ?? null) === win || (townTalk?.overlay ?? null) === win;
   // QUEST-POPUP-PAUSE: offline, this host's quest box on top holds the foes (questFoeHost.js questBoxHoldsFoes)
   const _questBoxHoldsFoes = () => questBoxHoldsFoes(_questBoxWin, { online: onlineOn, onTop: _liveQuestOverlay });
-  const questWorld = {
-    // AUDIT 28 W4 SELF-AUDIT (F-B2): DFU's smaller-dungeon law lives
-    // INSIDE MapsFile.GetLocation, so quest marker enumeration walks
-    // the FIVE-BLOCK dungeon when the law says so - the frozen quest
-    // state exists precisely so the same five blocks come back when
-    // the player arrives. The port sized only at the door: a quest
-    // set up under the setting picked markers from the FULL dungeon
-    // and could aim at a block the build does not have. The quest
-    // layer's maps therefore sizes getLocation/getLocationByName the
-    // way DFU's does, late-binding the machine (the bridge is created
-    // after this adapter, and DFU's GetLocation consults the global
-    // machine the same way - another quest's link on the same dungeon
-    // wins there too).
-    maps: Object.create(maps, {
-      // the page flag off `params`, not `onlineOn` - that const is declared far below, and a quest parsed at chargen
-      // asks for its dungeon before it is ("Parsing quest FAILED! Cannot access 'onlineOn' before initialization")
-      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: params.has('online'), whole: params.has('online') }) },   // INSTANCES: online a quest's markers are chosen on the dungeon whole - its instance's layout (bible/11-Multiplayer/Instances.md)   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
-      getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine, online: params.has('online'), whole: params.has('online') }) },
-    }),
-    getBlock: (name) => blocks.getBlockByName(name),
-    // NPC1: the =symbol_ macro's flat caption. The quest machine has
-    // declared this seam since Q2 and nothing production-side answered
-    // it - every =person_ expanded to nothing. FLATS.CFG answers it now.
-    flatCaption: (archive, record) => pipeline.flatCaption(archive, record),
-    // PlayerGPS.CurrentLocation is the location of the CURRENT MAP
-    // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
-    // music director's own live rect flag.
-    currentLocation: () => _questLoc(),
-    currentRegionIndex: () => _questRegionIndex(),
-    currentLocationIndex: () => _questLoc()?.locationIndex ?? -1,
-    // M-X: the macro table's world reads. legalRepNow feeds %ltn's
-    // fourteen bands; currentLocationType feeds %ct/%cn2. The talk
-    // getters (%fa/%fe/%fpc...), lordNameForFaction and oldLeaderFate
-    // stay unmounted - the talk-news arc's - and answer the charter's
-    // null through the handlers' optional reads; currentBuildingName
-    // is the interior host's and this exterior host answers none
-    // ('[invalid]' at the handler, DFU's own outside-a-building arm).
-    legalRepNow: () => legalRepOf(playerEntity, _questRegionIndex()),
-    // Q5: the Weather and Climate triggers' reads - the weather IS
-    // the seven-name enum, the climate the MAPS.BSA index at the
-    // player's pixel.
-    // AUDIT 39 (#27): the fold IS the identity and the index was a
-    // NAME - WEATHER_TYPES is the name array and currentWeather()
-    // already answers out of it, so the read was undefined -> null on
-    // every call and the always-on Weather trigger could never match.
-    currentWeatherKey: () => weatherOverride ?? currentWeather() ?? null,
-    // QG1: CastSpellDo's two documented world reads, live at last -
-    // the machine has declared both since the Q-arc and nothing
-    // production-side answered them, so `cast X spell do` (three
-    // corpus quests) completed its template at parse and the trigger
-    // was dead. The record read is the G4 SPELLS.STD registry
-    // (first-duplicate-wins, the Free Action patch applied - the same
-    // dict DFU's broker rebuilds); the match is EntityEffectBundle
-    // .HasMatchForClassicEffect over the port's spells, whose effect
-    // entries ARE the classic (type, subType) pairs - C# folds both
-    // sides through MakeClassicKey's byte casts (EntityEffect.cs:999-
-    // 1002), so the compare folds to byte too.
-    // TN1: THE TALK-NEWS GETTERS, mounted at last. The four faction
-    // names are TalkManager's npcData fields - TK-iv computed them in
-    // every arm of getGreetingIndex and recorded "the names nobody
-    // reads"; MacroHelper.cs:965-995 reads all four through the
-    // TalkManager getters (:1795-1824), so %fa/%fae/%fe/%fea/%fnpc/
-    // %fpc/%fpa stop expanding empty. GetFactionName's HolyOrder arm
-    // (:1815-1822) answers the TEMPLE'S deity - Temple.FactionOrder-
-    // Name is `parent.deity.ToString()` - resolved through getDivine
-    // off the building the player is inside; outside one (or in a
-    // non-temple) C# would be off in GetGuild's catch-land, and the
-    // port falls to pcFactionName, recorded.
-    // IH1: the LAST four pending world reads.
-    // %cbd - MacroHelper.CurrentBuilding (:849-867): inside a building
-    // the name is REGENERATED from the building's own seed through
-    // BuildingNames.GetName with the current location and region;
-    // outside one C# answers "[invalid]", which is the handler's own
-    // null arm here.
-    currentBuildingName: () => {
-      const b = modes?.interiorBuilding;
-      if (!b) return null;
-      return generateBuildingName(b.nameSeed, b.buildingType,
-        { ...(townTalk.nameOpts?.() ?? {}), factionId: b.factionId ?? 0 });
-    },
-    // %nt - MacroHelper.NearbyTavern (:630-642): "just gets a random
-    // tavern from current location and ignores how near it is" -
-    // UnityEngine.Random.Range over the directory's taverns (the
-    // ENGINE-PRNG rule's injectable uniform roll), the localized
-    // "tavern" when the location has none.
-    randomTavernName: (roll = Math.random) => {
-      const taverns = (townTalk.buildingDirectory ?? []).filter((b) => b.buildingType === TALK_BUILDING_TYPES.Tavern);
-      if (!taverns.length) return localizedText('tavern', 'tavern');   // L10N3d: MacroHelper.cs:641
-      return taverns[Math.floor(roll() * taverns.length)]?.name ?? localizedText('tavern', 'tavern');
-    },
-    // Place.SetupSites' residence filter (Place.cs:1196):
-    // DaggerfallBankManager.IsHouseOwned reads the CURRENT region's
-    // owned-house slot (:140-148) - banking.js's own law, H1's home.
-    isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
-    // HOME1: nor a player's online home - a quest must not send its player into a house its owner keeps shut. FIELD BUGS 2026-10-14 QUEST-HOME: in ANY town - the boot's read of every town's homes beside the towns this page has asked (systems/online/onlineHomes.js homeStands); the asked towns alone left every remote residence unguarded.
-    isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,
-    // QUEST-HOME (Mac, 2026-10-15: "Close both"): a site chosen again because its building became a player's home - its
-    // map mark moves with it: the old house's quest stamp undiscovered (Quest.cs:655's own undiscover), and where the
-    // player had it on the map, the new one discovered under the quest's name
-    questSiteMoved: (quest, place, was) => questSiteMovedHere(place, was),
-    townLayoutsKnown: () => !homeLayoutsOnline || _homeLayoutsApplied,   // QUESTOR-MOVED: a shared quest is mended on arrival only once the towns' layouts are known (applyLayoutPins' own gate, AUDIT WD3 S5) - AUDIT QA2: and STAND, the pins and their held-back towns set (a share landing while the packs were fetched was chosen again unpinned); the load's own re-seat mends one that landed before
-    // Place's _getBuildingName bag - townTalk's ONE name bag, so the
-    // quest's generated names and the talk directory's cannot drift.
-    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
-    factionNPC: () => npcSession.npcData?.npcFactionName ?? '',
-    factionNPCAlly: () => npcSession.npcData?.allyFactionName ?? '',
-    factionNPCEnemy: () => npcSession.npcData?.enemyFactionName ?? '',
-    factionPC: () => npcSession.npcData?.pcFactionName ?? '',
-    factionName: () => {
-      if (npcSession.npcData?.guildGroup === GUILD_GROUPS.HolyOrder) {
-        // AUDIT 39 (#26): factionId. The building record carries the
-        // lowercase spelling (buildingDataForDoor's merge); the
-        // uppercase one belongs to StaticNPC records, and reading it
-        // here handed getDivine a 0 that can never resolve.
-        const divine = getDivine(townTalk.factionDict, modes?.interiorBuilding?.factionId ?? 0);
-        if (divine) return divine;
-      }
-      return npcSession.npcData?.pcFactionName ?? '';
-    },
-    // %fl1/%fl2/%ol1 - MacroHelper.GetLordNameForFaction, the one home
-    // in systems/talk/talk.js (the first-child Individual, the parity
-    // gender, the seeded classic stream)
-    lordNameForFaction: (id, old = false) => lordNameForFaction(townTalk.factionDict, id, old),
-    // %olf - the pipeline's own localized fates (answerPipeline TALK_STRINGS)
-    oldLeaderFate: (i) => answerPipeline.getOldLeaderFateString(i),
-    getClassicSpellEffects: (spellID) => spellRecordOfIndex(spellID)?.effects ?? null,
-    spellHasMatchForClassicEffect: (sp, effect) => (sp?.effects ?? []).some((e) =>
-      ((e.type ?? 0) & 0xff) === ((effect.type ?? 0) & 0xff)
-      && ((e.subType ?? 0) & 0xff) === ((effect.subType ?? 0) & 0xff)),
-    currentClimateIndex: () => maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
-    currentLocationType: () => _questLoc()?.mapTableData?.locationType ?? null,
-    currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
-    isPlayerInLocationRect: () => _musicInLocationRect(),
-    // F114: the bridge declares this hook as GetPlayerTravelPosition
-    // "incl. its on-ship arm" (machine.js's ctx doc) and its one
-    // consumer is the quest clock's travel arm, so it answers the
-    // origin rule rather than PlayerGPS's raw pixel.
-    playerPixel: () => playerTravelOrigin(),
-    playerInside: () => {
-      // B2: the DUNGEON arm - PcAt / IsPlayerHere / ConfigureFrom-
-      // PlayerLocation never saw the player as inside one, which is
-      // where the majority of the quest corpus sends them.
-      if ((modes?.mode ?? 'exterior') === 'dungeon') {
-        return { dungeon: { name: modes?.dungeonLocation?.name ?? '' } };
-      }
-      const b = modes?.interiorBuilding;
-      if (!b) return null;
-      return { building: { buildingKey: b.buildingKey, buildingType: b.buildingType, factionId: b.factionId, name: b.name ?? '' } };
-    },
-    // AUDIT 24 (the seven-slice sweep): FOUR SEAMS THE MACHINE HAS
-    // DECLARED SINCE Q3 AND NOTHING ANSWERED. Every one of them was a
-    // ported law running into `world?.x?.()` and evaporating - the
-    // corpus's 193 `reveal` lines discovered nothing and filed no
-    // note, %oth had no text to read, and every Person whose faction
-    // race does not map fell to -1 instead of the region's race.
-    /** PlayerGPS.DiscoverLocation (:872-890): resolve by name and file
-     *  it, THROWING when the pair names nothing - C#'s own throw. */
-    discoverLocation: (regionName, locationName) => {
-      // AUDIT CAPTAIN'S SEA P8: an isle's place is in no MAPS.BSA table - found in the index it stands in (a guild's local
-      // job in an isle town threw here on its first tick, and the quest was removed)
-      const loc = maps.getLocationByName(regionName, locationName) ?? (etherSea ? [...locationIndex.values()].find((l) => l?.ether && l.name === locationName && l.regionName === regionName) ?? null : null);
-      if (!loc?.loaded && !loc?.ether) throw new Error(`Error finding location ${regionName} : ${locationName}`);
-      return discoverLocation(loc.mapTableData.mapId, { regionName: loc.regionName, locationName: loc.name });   // QREPAIR: whether it was new, for the repair's count (RevealLocation reads nothing back)
-    },
-    /** RevealLocation's readmap note - PlayerNotebook.AddNote(string). */
-    addNote: (text) => questBridge?.notebook?.addNote(text),
-    /** JournalNote's filing - the OTHER overload,
-     *  PlayerNotebook.AddNote(List<TextFile.Token>). */
-    addNoteTokens: (tokens) => questBridge?.notebook?.addNoteTokens(tokens),
-    /** PlayerGPS.GetRaceOfCurrentRegion (:432-435): a RACES value,
-     *  RegionRaces[index] + 1 - NOT a FactionRaces one. */
-    currentRegionRace: () => REGION_RACES[_questRegionIndex()] + 1,
-    // AUDIT 39 (#23): THE FIVE FACTION-TYPE READS Person.cs's
-    // GetFactionTypeFactionID makes (:967-1018) and the %vam name
-    // beside them. Unmounted, each `?? -1` landed in
-    // _setupFactionTypeNPC's ZERO_FACTION arm, so every quest Person
-    // declared `factiontype People/Courts/Province/Vampire_Clan` -
-    // and every `group Resident1-4` career default - was built from
-    // the zero record with a console warning. All five producers were
-    // already in this file; only the mounts were missing.
-    /** PlayerGPS.GetPeopleOfCurrentRegion (:440-457). Its sibling
-     *  npcSession seam takes the LOCATION's region; this one is
-     *  CurrentRegionIndex, which is what the C# reads. */
-    currentRegionPeople: () => getPeopleOfCurrentRegion(_questStore()?.dict ?? null, _questRegionIndex())?.id ?? -1,
-    /** PlayerGPS.GetCourtOfCurrentRegion (:469-483). */
-    currentRegionCourt: () => getCourtOfCurrentRegion(_questStore()?.dict ?? null, _questRegionIndex())?.id ?? -1,
-    /** PlayerGPS.GetCurrentRegionFaction (:459-467) - GetRegionFaction
-     *  is FindFactions(Province, -1, -1, region), first row. */
-    currentRegionFaction: () => _regionFaction()?.id ?? -1,
-    /** PlayerGPS.GetCurrentRegionVampireClan (:485-490): the SAME
-     *  Province record's `vam` column. */
-    currentRegionVampireClan: () => _regionFaction()?.vam ?? -1,
-    /** (racialEffect as VampirismEffect).VampireClan - the clan the
-     *  curse entry carries; -1 when the PC is no vampire. */
-    playerVampireClan: () => liveVampirism(playerEntity)?.clan ?? -1,
-    /** VampirismEffect.GetClanName (:317-320). NULL - never '' - is
-     *  what makes %vam print C#'s own "PC not a vampire" literal. */
-    playerVampireClanName: () => {
-      const clan = liveVampirism(playerEntity)?.clan ?? 0;
-      if (!clan) return null;
-      return _questStore()?.dict.get(clan)?.name ?? '';
-    },
-    /** TextProvider.GetRandomText (:250-268) - the flat Text-token
-     *  pool over one TEXT.RSC record. */
-    getRandomText: (id) => townTalk.randomText(id),
-    /** The journal clock's countdown toggle. AUDIT 24: clock.js has
-     *  read this seam since Q4-iv and nothing answered it, so the
-     *  port's own "Journal Countdowns" switch did nothing. */
-    showClocksAsCountdown: () => getBool('GUI', 'ShowQuestJournalClocksAsCountdown'),
-    locationRevealedByMapItem: () => _locationRevealedByMapItem,   // MACROS1: %map (questMacros.js) - PlayerGPS's field, set by the map reveal above
-    getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
-    findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
-    /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265):
-     *  an EXACT type+region match returns immediately (the first one
-     *  wins); otherwise the LAST `region == -1` faction of that type
-     *  is the partial match, because the loop keeps overwriting it;
-     *  a total miss answers the zero struct, which reads as null here
-     *  and lets %rt/%nrn take C#'s zero-struct fallbacks.
-     *
-     *  AUDIT 24 (wave 26): %rn/%rt have called this since Q4-i and
-     *  nothing answered it - it was invisible to the seam gate, which
-     *  could not see through questMacros.js's `const w = hooks?.world`
-     *  alias. */
-    findFactionByTypeAndRegion: (type, regionIndex) => {
-      const s = _questStore();
-      return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
-    },
-    /** GetLocationCompassDirection (TalkManager.cs:1238-1281) - %di's
-     *  remote arm. Same wave, same alias hole. */
-    locationCompassDirection: (place) => locationCompassDirection(
-      { playerMapPixel: playerTravelPixel, maps },
-      place?.siteDetails?.locationName ?? '',
-    ),
-    /** GetBuildingCompassDirection (TalkManager.cs:1203-1236) - %di's
-     *  LOCAL arm, over the SAME closure the answer pipeline is given. */
-    buildingCompassDirection: (buildingKey) => talkBuildingCompassDirection(buildingKey),
-    // AUDIT 39 (#25): LegalRepute.cs:48-52 writes
-    // PlayerGPS.CurrentRegionIndex, which is the POLITIC read - the
-    // location's regionIndex is absent across the whole wilderness,
-    // so the `?? 0` arm was the common case and filed the change
-    // against Alik'r. The object's own read (legalRepNow) always used
-    // _questRegionIndex; the write now agrees with it.
-    changeLegalRep: (amount) => changeLegalRep(playerEntity, _questRegionIndex(), amount),
-    mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
-    /** AUDIT 63 F1: ActiveGameObjectDatabase.GetActiveStaticNPCQuest
-     *  ResourceBehaviours (ActiveGameObjectDatabase.cs:307-311) - the
-     *  list AddQuestor walks to relink an individual's standing
-     *  behaviour (Quest.cs:483-496). DFU's cache spans every static
-     *  NPC in the scene, so the answer is the UNION of the modal
-     *  hosts' (interior people, interior and dungeon marker stands)
-     *  and this host's own STREET NPCs, which carry the same bootstrap
-     *  behaviour (exteriorNpcs.js's quest pass) and stand individuals
-     *  too. Inactive hosts are dropped - GetActiveComponents keeps
-     *  only activeInHierarchy objects (:32-46). */
-    staticNpcQuestBehaviours: () => {
-      const out = modes?.activeStaticNpcQuestBehaviours?.() ?? [];
-      for (const entry of built.values()) {
-        for (const pn of entry.npcs ?? []) {
-          const b = pn.questBehaviour;
-          if (!b || typeof b.host?.staticNpcFactionId !== 'number') continue;
-          if (b.host.isActive?.() === false) continue;
-          out.push(b);
-        }
-      }
-      return out;
-    },
-    // ---- B1 (AUDIT 25 blocker 1): THE FOE SPAWN SEAMS. The machine
-    // has declared these since Q3-iii and no host answered - the
-    // placement law sat fully ported in sceneMount.js with no caller,
-    // so no quest that kills or meets a Foe could ever complete.
-    /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
-     *  `count` inactive handles, one QuestResourceBehaviour each;
-     *  activation (bindHost + start) waits for placement. */
-    createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
-    /** CURSE-OFF-SAND (FIELD BUGS 2026-10-04e): CreateFoe's spawn event passes while the player stands where the wave is
-     *  kept off (systems/arena/arenaGround.js - the Curse of Daggerfall's dead off the arena's grounds, its floor and
-     *  undercroft): outside, the city's arena grounds; inside, the mode machine's answer. */
-    foeKeptOff: (foe) => ((modes?.mode ?? 'exterior') !== 'exterior'
-      ? !!modes?.questFoeKeptOff?.(foe)
-      : keptOffArenaGround({ questName: foe?.parentQuest?.questName, feet: player.pos, centre: arenaCityPixel() ? arenaCityStage.centre() : null })),
-    /** CreateFoe.TryPlacement (:183-211): the INSIDE arms live with
-     *  the modes host (dungeon places, interior pends - see the FLAG
-     *  there); outside, IsPlayerInLocationRect picks the location ring
-     *  (5/20) and the wilderness arm widens to 8/25 (:252-257).
-     *  DFU's wilderness arm also TrackLooseObject's the spawn into
-     *  the streaming world - the pool's cull owns that lifetime here. */
-    tryPlaceFoe: (handle) => {
-      const m = modes?.mode ?? 'exterior';
-      if (m !== 'exterior') {
-        // QUEST-PARTY phase 3b/3c: in a building or a dungeon the member who shared this quest, in the room and near,
-        // stands the wave (through a relay whose own lane carries it here); this copy counts it as placed, as the open
-        // air's does - VERMIN-SHARED: only while the sharer's foe of this wave's Foe stands here; else this copy stands its own
-        if ((m === 'interior' || m === 'dungeon') && online?.ownOk && isWorldRoom(online.room) && partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: player.pos, foes: modes?.insideFoes?.() ?? [] })) return true;
-        return modes?.tryPlaceQuestFoe?.(handle) ?? false;
-      }
-      if (!(walkMode && playerSpawned)) return false;
-      // NAV-D: a raid the sea fight started (a pirate grappled a crewed boat) stands its waves on the deck they board -
-      // the boat's own, not the wilderness ring (scenes/naval/navalHost.js placeQuestFoe): Warm Ashes' "Your crew quickly
-      // spring into action!" is a fight on your planks
-      // AUDIT NAV1 (B10): a spot held - a body on it, or one standing up there (the ring's own two tests) - is passed
-      // over, and the one taken held while its foe stands up; none free, the wave waits (`false`)
-      const _held = entityOccupancy((f) => f.ai?.feet, () => [...exteriorFoePool(), ...heldSpots(collider)], player.pos);
-      const _deck = naval?.placeQuestFoe(handle.foe?.parentQuest ?? null, (s) => !_held({ x: s[0][0], y: s[0][1] + 0.9, z: s[0][2] }, NAVAL_DECK_BODY_R));
-      if (_deck === false) return false;
-      if (_deck) {
-        holdSpotWhile(collider, { x: _deck[0][0], y: _deck[0][1] + 0.9, z: _deck[0][2] }, () => exteriorFoes.spawnFoe(handle.foe.foeType, _deck[0], { gender: questFoeGender(handle.foe), yaw: _deck[1], questBehaviour: handle.behaviour, feetGiven: true }))
-          .then((f) => { if (!raidAshore.late(handle.foe?.parentQuest, f)) navalDeckBody(f, _deck[2]); })   // DECK-WALK: a raid's wave stands on her deck, and stays on it; RAID-WON: unless its raid ended while it stood up
-          .catch((e) => console.error('[quest] naval deck foe stand failed:', e?.message ?? e));
-        return true;
-      }
-      const feet = player.pos;
-      // QUEST-PARTY: the member who shared this quest stands near - that copy stands the wave and this one sees it
-      // through the stream; here it counts as placed (its message and its count run on) - VERMIN-SHARED: only while the sharer's foe of this Foe stands here
-      if (partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet, foes: exteriorFoes.foes })) return true;
-      const env = placeFoeEnv({
-        collider,
-        // origin at the controller centre - DFU casts from
-        // PlayerObject.transform.position, not the feet
-        playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
-        playerYawRad: cam.yaw,
-        // MERGE (the S-A lane's catch): fieldOfView() answers RADIANS,
-        // the law speaks DEGREES - raw, every foe placed dead ahead
-        // inside the view instead of just outside the cone.
-        fovDegrees: fieldOfView() * 180 / Math.PI,
-        // AUDIT 62 F15: the WHOLE street, not the encounter pool alone.
-        // CreateFoe.cs:319-323 is `Physics.OverlapSphere(testPoint,
-        // overlapSphereRadius); if (colliders.Length > 0) return;` -
-        // ANY collider refuses the spot, and a watchman's capsule is a
-        // collider. This arm asked `exteriorFoes.foes` while its own
-        // sibling at :2457 and the ?exterior twin both ask the join, so
-        // a quest foe could be stood inside a standing watchman.
-        // QUEST-WAVE: and the spots a stand in flight holds - a wave placed in one tick saw none of its own
-        isOccupied: entityOccupancy((f) => f.ai?.feet, () => [...exteriorFoePool(), ...heldSpots(collider)], feet),
-      });
-      const spot = _musicInLocationRect() ? placeFoeFreely(env)
-        : placeFoeFreely(env, { minDistance: PLACE_FOE_DEFAULTS.wildernessMinDistance, maxDistance: PLACE_FOE_DEFAULTS.wildernessMaxDistance });   // AUDIT 68 S30-placefoe-defaults-dup
-      if (!spot) return false;
-      const foe = handle.foe;
-      // FinalizeFoe (CreateFoe.cs:341-359): a FLYING foe lifts 1.5
-      // from the test point; walkers land through the pool's own chain.
-      const _fly = (ENEMY_BASICS[foe.foeType]?.behaviour ?? 'General') === 'Flying';
-      holdSpotWhile(collider, spot, () => exteriorFoes.spawnFoe(foe.foeType, [spot.x, _fly ? spot.y + 1.5 : spot.y, spot.z], {
-        gender: questFoeGender(foe),
-        yaw: Math.atan2(feet[0] - spot.x, feet[2] - spot.z),   // LookAt player (CreateFoe.cs:328)
-        questBehaviour: handle.behaviour,
-      })).then((f) => raidAshore.late(foe.parentQuest, f)).catch((e) => console.error('[quest] exterior foe stand failed:', e?.message ?? e));   // RAID-WON (AUDIT FB1019 D1): a raid's wave landing after its raid ended, withdrawn
-      return true;
-    },
-    /** GameManager.RaiseOnEncounterEvent - its one core consumer is
-     *  the rest window's AbortRestForEnemySpawn, routed through the
-     *  modes host (dungeon mode owns the only rest overlay). */
-    raiseOnEncounterEvent: () => { travelOptions?.onEncounter(); modes?.raiseOnEncounterEvent?.(); },   // AUDIT-TO1 B3: GameManager_OnEncounter (:405-413) hears it first
-    // ---- B3: THE RESPAWN SEAMS (TeleportPc's transport - see
-    // _respawnAtSite above for the composition and the BT1 record of
-    // DFU's own partial implementation).
-    /** GetLocation + RespawnPlayer (TeleportPc.cs:96-118): true =
-     *  the respawn STARTED (the action idles on isRespawning); false =
-     *  unresolvable location, retry - the C#'s ONLY refusal. */
-    respawnPlayerAtSite: (place) => {
-      const sd = place?.siteDetails;
-      if (!sd || _respawning) return false;
-      const loc = maps.getLocationByName(sd.regionName, sd.locationName);
-      if (!loc?.loaded) return false;
-      _respawning = true;
-      _respawnAtSite(loc)
-        .catch((e) => console.error('[quest] respawn failed:', e?.message ?? e))
-        .finally(() => { _respawning = false; });
-      return true;
-    },
-    isRespawning: () => _respawning,
-    /** The marker landing on the tick after the respawn completes
-     *  (TeleportPc.cs:120-135) - scene space per the mounted mode. */
-    setPlayerScenePosition: (p) => { if (p) modes?.setPlayerScenePosition?.(p); },
-  };
+  /** AUDIT-TESA A2-1: a place by its region's name and its own - MAPS.BSA's, else one the world stands of its own (an
+   *  isle's, an Arena place's, a country place's or a lair, a capital: in no MAPS.BSA table, found in the index it stands
+   *  in). A quest's local site in any of them is found, revealed, timed and respawned at as a Bay place's. */
+  const placeByName = (regionName, locationName) => maps.getLocationByName(regionName, locationName)
+    ?? [...locationIndex.values()].find((l) => (l?.ether || l?.arena || l?.country || l?.capital) && l.name === locationName && l.regionName === regionName) ?? null;
+  const { questWorld } = createQuestWorld({   // HOST-SPLIT: src/scenes/questWorld.js
+    NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
+    _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
+    homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
+    playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,   // AUDIT RELEASE R2-5: the places past the Bay (a province's region; START2's start lair among them)
+    get _homeLayoutsApplied() { return _homeLayoutsApplied; },
+    get _liveSharer() { return _liveSharer; },
+    get _locationRevealedByMapItem() { return _locationRevealedByMapItem; },
+    get _respawning() { return _respawning; }, set _respawning(v) { _respawning = v; },
+    get answerPipeline() { return answerPipeline; },
+    get modes() { return modes; },
+    get naval() { return naval; },
+    get npcSession() { return npcSession; },
+    get online() { return online; },
+    get peersNear() { return peersNear; },
+    get playerSpawned() { return playerSpawned; },
+    get questBridge() { return questBridge; },
+    get raidAshore() { return raidAshore; },
+    get social() { return social; },
+    get travelOptions() { return travelOptions; },
+  });
   // TK-i: THE RUMOR MILL beside the bridge. Its three consumers are
   // all mounted now: "Any news?" and the questor-post greeting came in
   // with TK-v, and the BULLETIN BOARD's sign face reads through
@@ -19290,7 +18355,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // and the decision is made here, its sibling's convention).
     courtOfCurrentRegion: () => getCourtOfCurrentRegion(_questStore()?.dict ?? null, _questLoc()?.regionIndex ?? -1)?.id ?? 0,
     currentLocationIndex: () => _questLoc()?.locationIndex ?? 0,
-    nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness
+    nameBankOfCurrentRegion: () => nameBankHere(),   // AUDIT 24: the POLITIC-derived index, like every other region read - the location's is -1 across the whole wilderness; TESA3: past the Bay, the province's people
     // AUDIT 39 (#112): GetQuestorName (TalkManager.cs:2586-2590) is
     // srand(entry nameSeed) then NameHelper.FullName over the ENTRY's
     // OWN nameBank - not the region's, so this is not talkMcp's
@@ -19387,7 +18452,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  LOCATION's regionIndex is -1 across the whole wilderness and fell
    *  through getNameBankOfRegion to Breton, the same drift AUDIT 24
    *  fixed on the quest side. */
-  const talkFullName = (gender) => nameHelperFullName(getNameBankOfRegion(_questRegionIndex()), gender);
+  const talkFullName = (gender) => nameHelperFullName(nameBankHere(), gender);   // TESA3: the province's people past the Bay
 
   /** TalkManagerMCP's context: the two engine objects plus the host
    *  data the thirteen handlers read. Built lazily because the
@@ -19405,7 +18470,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // through to MacroHelper.GetRandomFullName, whose gender is a coin
     // flip on the DFRandom stream (:333-341) - not Male. One home, in
     // nameHelper.js beside its GetRandomNameBank sibling.
-    randomFullName: () => getRandomFullName(_questRegionIndex()),
+    randomFullName: () => getRandomFullNameOfBank(nameBankHere()),   // TESA3: MacroHelper.GetRandomFullName's draw, from the bank where the player stands
     fullName: (gender) => talkFullName(gender === 'female' ? GENDERS.Female : GENDERS.Male),
     localizedText: (key) => TALK_STRINGS[key] ?? '',
     // ROAD-E E7: THE ONE GAMEMANAGER. MacroHelper's GLOBAL rows read
@@ -19428,7 +18493,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // AUDIT 24: over the POLITIC-derived region index, like every
     // other region read - the location's regionIndex is -1 across the
     // whole wilderness and sent this to Breton everywhere outdoors.
-    raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[getNameBankOfRegion(_questRegionIndex())] ?? 'Breton'),
+    raceOfCurrentRegion: () => (RACE_BY_NAME_BANK[nameBankHere()] ?? 'Breton'),   // TESA3
     factionRaceId: (race) => (OATH_RACE_INDEX[race] ?? 0),
     // AUDIT 26 F097: GetMacroDataSource copies potentialQuestorGender
     // ONLY when the current question is Work and there are NPCs with
@@ -19503,15 +18568,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // tavern", the ten knightly orders - answered record 11, the
     // not-found line, and %fcn stayed empty forever. This is the plain
     // reader, not the quest layer's dungeon-sized adapter: TalkManager
-    // reads MapFileReader directly.
-    currentRegion: () => maps.getRegion(_questRegionIndex()) ?? null,
-    getLocation: (r, i) => maps.getLocation(r, i),
+    // reads MapFileReader directly. BAY-LEFT-B (B4): a province's region
+    // is the quest layer's table of the places past the Bay
+    // (scenes/quest/questProvinceSites.js, each row its location's key) -
+    // MAPS.BSA holds none, and every Regional row answered "not found".
+    currentRegion: () => questWorld.maps.getRegion(_questRegionIndex()) ?? null,
+    getLocation: (r, i) => (isProvinceRegion(r) ? questWorld.provinceSites?.getLocation(r, i) ?? null : maps.getLocation(r, i)),
     currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
-    getAnyBuilding: (buildingKey) => discoveredBuildings(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`)
+    getAnyBuilding: (buildingKey) => discoveredBuildings(townBookOf(_questLoc()))   // BAY-LEFT-MAPS (C7 = E2)
       .find((b) => b.buildingKey === buildingKey) ?? null,
     discoverBuilding: (buildingKey) => discoverBuilding(
-      `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+      townBookOf(_questLoc()),   // BAY-LEFT-MAPS (C7 = E2)
       (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey },
       null, questBuildingSource),   // AUDIT 63 F49: the quest name-override arm (PlayerGPS.cs:945-959)
     // S44: the real member (PersistentFactionData.cs:675-689). This hook
@@ -19608,7 +18676,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE4: the two questions the quest lens asks of a target (GUIDE2's gates, the pause bag's own answers) - is the
     // place on the player's map, and which place does the player stand in - so the HUD's quest card can say "(you are
     // here)" and name only what the map holds.
-    questWhere: { canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo
+    questWhere: { canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo
     // TK-ii: the topic/dialog seams land in the tree (TalkManager's
     // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
     // are already the C# ones)
@@ -19999,45 +19067,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return extra.length ? { ...log, active: [...(log?.active ?? []), ...extra] } : log;
     };
   }
-  // RAID1: World Events - Raiding Parties' reaches into GameManager, answered by this host (systems/raidingParties.js).
-  // Its raiders stand in the street's pool through DFU's loose-foe placement on the mod's own band - loose, so no
-  // encounter cap refuses one, and transient, so no save carries one (the raid stands them again) - and its defenders
-  // are the town watch's own (cityGuards.standDefender).
-  setRaidingPartiesHost({
-    random: Math.random,   // UnityEngine.Random.Range - THE ENGINE-PRNG RULE
-    maps: () => maps,
-    picker: () => travelMapPickerData(),   // DaggerfallUI.GetImgBitmap("TRAV0I01.IMG")
-    regionIndex: () => { const px = playerTravelPixel(); return !(etherSea && inEther(px.x, px.y)) && politicClaimed(maps.getPoliticIndex(px.x, px.y)) ? _questRegionIndex() : -1; },   // fix 8: the sea (politic 64) and an unmapped pixel are no province - AUDIT CAPTAIN'S SEA G7: nor the Eltheric Ocean (its composed politic is the isles' region's, and Betony's raids were announced to a captain past the Veil)
-    regionName: (r) => REGION_NAMES[r] ?? String(r),   // GetLocalizedRegionName - the port speaks one language (ui/travel/travelMapWindow.js)
-    townHere: (outdoors) => ((modes?.mode ?? 'exterior') !== 'exterior' ? null : outdoors || (_musicInLocationRect() ? _questLoc() : null)),   // FindCurrentRaid: outdoors, in the rect, at a location; STAFF-EVENT: `outdoors` (true) asks only that - an area's event
-    playerPixel: () => playerTravelPixel(),
-    standRaider: (mobileType, at) => standLooseFoe({   // STAFF-EVENT PACKS: `at` a pack's place - around its leader's feet, or far (systems/raidingParties.js staffPackStep)
-      collider, feet: at?.at ?? at?.near ?? enchantFeet(), yawRad: cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, foes: exteriorFoePool(),
-      spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, transient: true }),
-    }, mobileType, raidSpawnRange(at)),
-    standDefender: (threats) => cityGuards.standDefender({
-      playerFeet: [...enchantFeet()], playerFwd: [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)], threats,
-      minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE,
-    }),
-    defenderCount: () => cityGuards.defenderCount(),
-    defendersAllowed: () => !playerEntity.crimeCommitted && !isTransformedLycanthrope(playerEntity),   // the watch's own two refusals (_townWatchFrame)
-    removeFoe: (f) => exteriorFoes.removeFoe(f),
-    outOfSight: (f) => raidOutOfSight(f.ai?.feet, cam.pos, cam.yaw, fieldOfView() * 180 / Math.PI, (modes?.mode ?? 'exterior') === 'exterior'),
-    reputation: () => ({ player: playerEntity, store: _questStore() }),
-    // RAID2: the online arm - who I am, the peers standing in the raided town (their feet in the same rect the watch
-    // reads a foe's), the raid's puppets I may have struck, the raid's foes I took over, on the net's own clock
-    selfId: () => online?.id ?? null,
-    wallNow: () => performance.now(),
-    peersInTown: () => (peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => p.id),   // FIELD-RAID-FT: no room open (a fast travel between the old cell's room and the new) is nobody in town, never a null walked - the crash Discord reported arriving in a raided town
-    sites: () => raidSites,   // RAID5: the town's places and people a raid's kind stands (scenes/raidSitesHost.js)
-    peerFeetInTown: () => [[online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(peersNear() ?? []).filter((p) => raidPeerInPlace(p.feet, _musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map((p) => [p.id, p.feet, online?.peers.get(p.id)?.lv ?? 0])],   // PACK-SPREAD: where each player in the town stands, for its share of the packs; BOSS-SPOT: me first, and each one's level
-    raidPuppets: () => exteriorFoes.foes.filter((f) => f.puppet && f._pupRaid),   // STAFF-EVENT THE REWARD: the fallen too - a puppet I fought that fell is my kill on the board
-    ownRaidFoes: () => exteriorFoes.foes.filter((f) => !f.puppet && f.raidKey && !f.dead),
-    // RAID3: the relay's arm - does it keep this world's raids, and my word to the town's cell
-    relayRaids: () => !!online?.raidOk,
-    sendRaid: (w, cell) => !!online?.sendRaid(w, cell),
-    // RAID4: my receipt for a town I held - to the account service with the character that fought it
-    onRaidReceipt: (r, c, held) => { (c?.v ? grantStaffSpoils(raidSpoils, spoilsLock, c, playerEntity?.level ?? 1) : raidClaims?.add(r, characterIdOf(playerEntity), typeof playerEntity?.name === 'string' ? playerEntity.name : null, playerEntity?.level ?? 1, held === true)); },   // AUDIT WORLD-EVENTS L3-14: and whether the town was held, kept with the receipt for the character that fought; RAID4: to the account service - AUDIT RAID R4: whose answer gives the town's thanks (onSpoils); STAFF-EVENT THE REWARD: an event's receipt (`e1`, its claims name `v`) rolls its spoils here (systems/staffEventSpoils.js)
+  createRaidHost({   // HOST-SPLIT: src/scenes/raidHost.js
+    _foeInTownRect, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, cam, cityGuards, collider,
+    enchantFeet, etherSea, exteriorFoePool, exteriorFoes, maps, player, playerTravelPixel, state,
+    get _musicLoc() { return _musicLoc; },
+    get modes() { return modes; },
+    get online() { return online; },
+    get peersNear() { return peersNear; },
+    get raidClaims() { return raidClaims; },
+    get raidSites() { return raidSites; },
+    get raidSpoils() { return raidSpoils; },
   });
   // E3: the pixels this host laid BEFORE the bridge existed - the start
   // pixel is built during init, above - get RMBLayout's third act now.
@@ -20097,7 +19136,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // The clock the tally stamps its three-day letter from - the same
   // classic minute every other dated law in this host reads.
   setCrimeGuildClock(() => Math.floor(playerTicker.ownMinutes));
-  if (_questStartPending) questInitAtGameStart();
+  if (_questStartPending) questInitAtGameStart(_questStartPending);
   // ONLINE1 (2026-09-12, Mac: "the basic bones of multiplayer"): THE
   // OTHERS. `?online` (the front door's Online button, main.js) joins the
   // relay with this player's look and pose and draws the peers of the
@@ -20790,6 +19829,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     let pick = null;
     if (c.place != null) {
       const places = [...locationIndex.entries()].map(([k, loc]) => { const [px, py] = k.split(',').map(Number); return { name: loc.name, px, py }; });
+      if (_arenaTemplates) for (const a of arenaPixels()?.stood ?? []) if (!locationIndex.has(`${a.bx},${a.by}`)) places.push({ name: a.name, px: a.bx, py: a.by });   // TESA2: an Arena place, stood or not yet
       const hit = findPlace(places, c.place);
       if (!hit) { say(`No place called "${c.place}".`); return; }
       pick = { pixel: { x: hit.px, y: hit.py }, name: hit.name };
@@ -20886,11 +19926,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // CHAP4b: ranks 8 and 9 are seats - the book held at 7 said once a hold, the seats as they stand and as they move
     ...rollNoticeDoors({ entityOf: () => playerEntity, say: (text) => chatNotice(text) }),   // SEAT-WORDS / STANDING-WORDS: the hold (and the Chapters page), and what the Roll moved
     onSeats: (seats, before) => { for (const line of seatLinesOf(before, seats)) chatNotice(line); },
-    // shut: the save keeps it, quietly - AUDIT CHAP3 C9: a build too old for the service says so, as Renown's stop does
-    onStop: (error) => {
-      if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));
-      else if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error);
-    },
+    onStop: (error) => sayRollStop(error, chatNotice),   // stopped: the save keeps what is earned, and the player is told
   }) : null;
   // CHAP4b: the rank the playing character's seat gives it at a hall of `faction` where it stands - the politic region,
   // as the chapter sheet's (AUDIT CHAP3 C6) - null offline, before the Roll's first word, or with no seat here
@@ -20918,7 +19954,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // in an hour the bound has spent, since nothing earned then counts). Built only online, like the tracker.
     setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === renownHour() ? 0 : renownTracker.pending() }));
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
-    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site).catch(() => {}); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
+    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });   // BAY-LEFT-SEA: a lair's foe struck down past the Bay - its den, a Bounty's (systems/seatEdicts.js lairDenOf)   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
     renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;
@@ -21023,7 +20059,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     sweep: (ids, now) => { csaPeers.sweepOwners(ids, now, FOES_STALE_MS); csaAboard.sweepRiders(ids, now, FOES_STALE_MS); },
   });
-  const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y) });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
+  const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y), faunaAt: (x, y) => maps.getFaunaBand?.(x, y) ?? null });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
@@ -21206,6 +20242,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onDuelRef = (g, room) => { if (g.k === 'bout') _duelRoom = room ?? null; duelMgr.onRef(g); };   // INT8: the referee's word on my bout - AUDIT INT8: and its room, where its frames go
     online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a fallen's offer at me (INT9: the one frame the zone routes) - the zone's law decides (net/wild/wildFight.js)
     online.onWildRef = (g, room) => wildRefIn(g, room);   // INT9: the zone referee's word - a blow landed, a fall, a fall signed
+    online.onVit = healthMirror.onVit;   // SHARED-HEALTH: a referee's ask for my health, or its count set on it
     // WILD1: my room's word on its remains (net/wild/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
     // own pile"): the book is told the room FIRST - the frame told it a frame late, and a near relay's hello answered inside
     // that frame, so the room's remains were heard and then cleared as "another room's" by the frame's setRoom
@@ -22088,6 +21125,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const duelNear = (peerId) => { const b = duelBody(peerId); return !!b && tradeDistance(player.feetAt(), b.feet) <= DUEL_RANGE_M; };
   const duelAccount = accountDuels({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const wildAccount = accountWild({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });   // INT9: a death in the open zone's drop
+  // WILD-INSURE (2026-10-26, net/wild/wildInsureBook.js): my policies - the pack's card writes one and the drop's answer
+  // spends them. Written online for a realm character, outside the zone; paid as the Firmament's respec pays (the record's
+  // act, the wallet reserved first)
+  const wildInsure = createWildInsureBook({ door: wildAccount, realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) } : null,
+    wallet: realmWallet, character: () => realmSession?.id ?? null, region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now: () => Date.now() + _sharedOffsetMs });   // AUDIT PVP-EASE L4-1, L4-5: the joined character, the shared clock
+  setWildInsureBook(wildInsure);
+  wildInsure.read();
+  const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
@@ -22213,16 +21258,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     for (const p of wedMgr.peers()) if (!online?.reachesPeer(p)) wedMgr.gone(p);
     if (performance.now() - _unionsAt > UNIONS_READ_MS) legacyUnionsRead();
   };
-  /** INT8: THE DUEL'S HUD - the referee's vitality (net/duel/duelRef.js: the Royal Tourney's, never my save's health), mine
-   *  over theirs, drawn on the battles' readout (ui/siegeHud.js) for the duel's life; its Leave is my yield. */
+  /** INT8: THE DUEL'S HUD - my opponent's count as the referee says it (net/duel/duelRef.js), drawn on the battles' readout
+   *  (ui/siegeHud.js) for the duel's life; its Leave is my yield. SHARED-HEALTH: my own count is my health, on my bar. */
   let _duelHud = null;
   const duelHudSay = (d) => {
     if (!d) { _duelHud?.hide(); return; }
     _duelHud ??= createSiegeHud(document, { onLeave: () => duelMgr.yieldDuel() });
     const me = online?.id ?? '', h = d.h ?? [];
-    const mine = h.find((x) => x[0] === me), theirs = h.find((x) => x[0] !== me);
+    const theirs = h.find((x) => x[0] !== me);
     const name = peerName(d.peer) ?? 'your opponent';
-    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: mine ? [`Your vitality: ${mine[1]} / ${mine[2]}`] : [], works: '', arms: null, card: null });
+    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: [], works: '', arms: null, card: null });   // SHARED-HEALTH: my own is my health bar
   };
   /** THE ATTACKER: my blow out - INT8: rolled on my own sheet against the neutral stand-in (AUDIT C&C H5: a body of my
    *  own sheet cancelled every attribute I brought and charged me for my own luck; the target's sheet is not mine to
@@ -22473,8 +21518,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // C7: a duel ended first and P0.5's gate passed, as the page's end and the seat's - realmCheckpoint straight wrote a
     // character that left mid-duel at the duel's 1 health, the opponent's spells on it
     setBeforeTitleExit(async () => { if (!realmSession.lost) { try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ } onlineCheckpoint(); await Promise.race([realmSession.leave(), new Promise((r) => { setTimeout(r, REALM_EXIT_WAIT_MS); })]); } });
-    // a tab put away (a phone's home button, another tab) is checkpointed while the page still can be
-    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });
+    // a tab put away (a phone's home button, another tab) is checkpointed while the page still can be; CLOSE-SAVE: and a page
+    // closed or reloaded, by the session's leave (pagehide comes first there)
+    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); }, realmSession);
   }
   // ═══ WILD1: THE OPEN ZONE - THE WROTHGARIAN MOUNTAINS (bible/11-Multiplayer/Wild-Zone.md) ═════════════════════════
   // The owner: "Wrothgarian mountains need to be turned into a open pvp zone". The law is in its own modules - the zone
@@ -22485,10 +21531,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // and piles four times and twice) WIRED; exterior.js, the offline fixed city, NOT WIRED on purpose - the zone is
   // online's alone.
   /** The zone's mask over the maps file - for the maps, online alone (offline the mountains are Daggerfall's own). */
-  const wildMapMask = () => (_onlineWorldSession() ? wildMaskOf(maps) : null);
+  const wildMapMask = () => (_onlineWorldSession() ? cyrodiilMask() : null);
   /** Is a world-frame point (natives on x and z) in the zone - or, `near`, within its band? */
   const wildAtWire = (p, near = false) => {
-    const m = wildMaskOf(maps);
+    const m = cyrodiilMask();
     if (!p) return false;
     const px = worldCoordToMapPixel(p[0], p[2]);
     if (etherSea && (near ? inEther(px.x, px.y) : etherWildRingAt(px.x, px.y) > 0)) return true;   // ETHER-WILD: the open sea - and, near it, the whole sea past the Veil
@@ -22518,7 +21564,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _giantsDown = new Map();  // ZONE-GIANTS: giant -> when it walks again (this machine's clock)
   const _giantsStood = new Map(); // ZONE-GIANTS: giant -> { foe, promise } - the one stood here
   let _giantsAt = 0;
-  const _giantHeight = (x, y) => woods.getHeightMapValue(x, y);   // GIANT-FIELDS: the low ground's test
+  const _giantHeight = zoneHalls.heightAt;   // GIANT-FIELDS: the low ground's test - AUDIT WW F4: the continent's, never the land switch's
   /** GIANT-FIELDS: where on the ground a giant at scene point `at` stands - the flattest open spot within 160 m, never on a
    *  peak or a slope: each candidate's ground read at its four sides four metres out (the steepest step its slope), and
    *  one standing higher than the ring round it marked down (a crest). Null when no spot is flat enough. */
@@ -22548,7 +21594,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mask = wildMapMask();
     if (!mask) return [];
     const now = Date.now();
-    return wildGiantsAt(mask, wildHallFree, now + _wdunSkew, (g) => (_giantsDown.get(g) ?? 0) > now, _giantHeight);
+    return wildGiantsAt(mask, zoneHalls.free, now + _wdunSkew, (g) => (_giantsDown.get(g) ?? 0) > now, _giantHeight);
   };
   // GIANT-FALL (2026-10-08, the owner: "when a giant dies players in the zone get a screen shake and a message popup
   // which they have to click away when not in a fight that a giant has fallen. Then the giant skull is crossed"): the
@@ -22560,7 +21606,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mask = wildMapMask();
     const until = _giantsDown.get(g) ?? Date.now();
     const at = until - WILD_GIANT_RESPAWN_MS + _wdunSkew;
-    return mask ? (wildGiantsAt(mask, wildHallFree, at, () => false, _giantHeight).find((q) => q.g === g) ?? null) : null;
+    return mask ? (wildGiantsAt(mask, zoneHalls.free, at, () => false, _giantHeight).find((q) => q.g === g) ?? null) : null;
   };
   const giantFell = (g, where = null) => {
     if (_giantFalls.get(g)?.said) return;
@@ -22815,26 +21861,26 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildHallsRoll();
   };
   /** The day's halls `[{ x, y, ring, key }]` (null where there is no zone) - over the session's mask (BOOT-TDZ2: the
-   *  picks themselves, wildActiveOf, are declared above the pixel builder that stands them). */
-  const wildActiveNow = () => wildActiveOf(wildMapMask());
+   *  picks themselves, zoneHalls.activeOf, are built above the pixel builder that stands them). */
+  const wildActiveNow = () => zoneHalls.activeOf(wildMapMask());
   let _wildHallsDay = null;
   /** A day gone: its halls leave the index (the one I stand in stays until I leave it). */
   const wildHallsRoll = () => {
     const day = wildMapMask() ? wdunDayNow() : null;
     if (day == null || day === _wildHallsDay) return;
     _wildHallsDay = day;
-    for (const key of [..._wildHallKeys]) if (locationIndex.get(key)?.wildHallDay !== day && !_insideSpawn(key)) { locationIndex.delete(key); _wildHallKeys.delete(key); _locIndexGen += 1; }
+    for (const key of [...zoneHalls.keys]) if (locationIndex.get(key)?.wildHallDay !== day && !_insideSpawn(key)) { locationIndex.delete(key); zoneHalls.keys.delete(key); _locIndexGen += 1; }
   };
-  /** The hall on this pixel today, or null - stood over the session's mask (BOOT-TDZ2: wildHallStandOf, above the pixel
+  /** The hall on this pixel today, or null - stood over the session's mask (BOOT-TDZ2: zoneHalls.standOf, above the pixel
    *  builder that asks it first). */
-  const wildHallStand = (px, py) => wildHallStandOf(wildMapMask(), px, py);
+  const wildHallStand = (px, py) => zoneHalls.standOf(wildMapMask(), px, py);
   /** The halls as the maps' own place rows (ui/heldMap.js marks them as it marks every place - a door in the map's
    *  ink, seen by everyone in the zone, explored or not). */
   const wildHallSummaries = () => (wildActiveNow() ?? []).map((h) => {
     const loc = wildHallStand(h.x, h.y);
     const lt = loc?.mapTableData?.locationType;
     return {
-      id: h.y * 1000 + h.x, mapID: spawnedHallMapId(h.x, h.y), mapId: spawnedHallMapId(h.x, h.y), regionIndex: maps.getRegionIndexAt(h.x, h.y), mapIndex: -1,
+      id: spawnedHallMapId(h.x, h.y), pixel: { x: h.x, y: h.y }, mapID: spawnedHallMapId(h.x, h.y), mapId: spawnedHallMapId(h.x, h.y), regionIndex: loc?.regionIndex ?? WILD_REGION, mapIndex: -1,   // WW-C2: a world pixel - its own `pixel`, its id the hall's room's (never a Bay pixel's `y * 1000 + x`)
       locationType: lt === LOCATION_TYPES.DungeonLabyrinth || lt === LOCATION_TYPES.DungeonRuin ? lt : LOCATION_TYPES.DungeonKeep,
       dungeonType: loc?.mapTableData?.dungeonType ?? 0,
       wildHall: { ring: h.ring, key: h.key, name: loc?.name ?? `Elite hall (${h.x},${h.y})`, crows: _wdunCrows.has(h.key) },
@@ -22849,7 +21895,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mask = wildMapMask();
     if (!mask || fromLoad) return true;
     const p = playerTravelPixel();
-    if (!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) return true;   // SEA-VAULTS: past the Veil a vault keeps a hall's door; every other ruin is open
+    if ((!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) || hit?.dfLocation?.capital) return true;   // SEA-VAULTS: past the Veil a vault keeps a hall's door; every other ruin is open; WW7-4: a capital's castle is no ruin - the White-Gold Tower's halls open in the zone
     const hall = wildHallHere();
     // TESTBUILD: god mode walks into a sealed door - but a HALL keeps its hour's lock for god mode too (HALL-LOCK, the
     // owner: "i can still leave and reenter the dungeon as much as i want in the zone" - god mode skipped the whole gate,
@@ -22892,7 +21938,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (died) _wdunCrows.set(h, Date.now() + WILD_REMAINS_MS);
     socialLink()?.sendWdun?.({ k: died ? 'die' : 'out', h });
   };
-  const wildCan = () => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() || modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too
+  const wildCan = () => !!online?.wildOk && online.status === 'open' && wildHere() && (wildOutdoors() ? !settledAt(campToWire(player.feetAt()), locationIndex) : modes?.mode === 'dungeon') && playerEntity.health > 0 && !modes?.deathUp?.();   // PVPDUNGEON: players fight in the zone's dungeons too - ZONE-SAFE (systems/wild/zoneSafe.js): never outdoors in a settlement's streets
   /** Is this player one I may fight (and be fought by): standing in the zone, and never KIN - net/wild/wildRef.js wildKin, the
    *  referee's own law: my party, or one under its truce; my duel's opponent (a duel's blows are the duel's own); or, MAC'S
    *  DECISION (2026-10-14, "Guildmates are friends"), one of my guild - its tag as the relay stamped it, mine as the hub
@@ -22901,7 +21947,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildFair = (peerId) => {
     if (!peerId || !wildCan()) return false;
     if (wildKin({ party: !!social?.isPartyPeer(peerId) || _wildTruce.holds(peerId, Date.now()), duel: duelMgr.live && duelMgr.opponent === peerId, guilds: [myGuildTag(), online?.guildTagOf?.(peerId) ?? null] })) return false;
-    return modes?.mode === 'dungeon' || wildAtWire(duelWorldOf(peerId));   // AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
+    return modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex));   // ZONE-SAFE: never a body in a settlement's streets - AUDIT FB1018 L3-5: in a dungeon a peer's pose is the dungeon's own frame - the place is the zone (wildCan's wildHere, the door's pixel), and the room is that place's
   };
   /** PARTY-TRUCE: the row a party's walk asks with when it ends in the zone or at its edge - the walk is the one door
    *  into it no journey's gate asks (wildJourney: "The Overworld map's journeys are walked, never asked"). */
@@ -22915,12 +21961,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   let _wildLastWeapon = null;   // INT9: the weapon of my last strike that left - the referee's word on it wears it
   // ZONE-WATCH (the owner: "attacking other players in cities will call the guards"): my blow or my spell on a player in a
-  // town of the zone - in its streets or under one of its roofs - is ASSAULT, the watch's own crime, and the watch comes
-  // (ten times as strong here - ZONE_WATCH_SCALE) for me; once each ten seconds, so a fight keeps it called without a storm of posts
+  // town of the zone is ASSAULT, the watch's own crime, and the watch comes (ten times as strong here - ZONE_WATCH_SCALE) for
+  // me; once each ten seconds, so a fight keeps it called without a storm of posts. ZONE-SAFE (2026-10-25, the owner: "All
+  // cities should be considered safe zones"): no blow is struck in a settlement's streets, nor under any roof, so the towns
+  // it answers are DFU's others - a farm, a manor, an inn, a temple (systems/wild/zoneSafe.js says why they are no settlements)
   let _zoneWatchAt = -Infinity;
   const zoneWatchCall = () => {
     const mode = modes?.mode ?? 'exterior';
-    const inTown = mode === 'interior' || (mode === 'exterior' && _isPlayerInTownStrict());
+    const inTown = mode === 'exterior' && _isPlayerInTownStrict();
     if (!inTown || !wildHere()) return;
     const now = performance.now();
     if (now - _zoneWatchAt < 10_000) return;
@@ -22978,16 +22026,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return bodies.length ? bodies.map((b) => ({ ...b, name: peerName(b.id) ?? 'another player' })) : null;
   };
   // ── INT9: THE REFEREE'S WORD (net/wild/wildRef.js - the relay holds the zone's fights) ──
-  /** THE ZONE'S HUD - the referee's vitality (the Royal Tourney's, never my save's health: that is the foes' alone), mine
-   *  and my last foe's, on the battles' readout (ui/siegeHud.js, with nothing to leave) while the fight is fresh - the
-   *  referee makes a fighter no player has struck for WILD_REF.mendMs whole again. */
+  /** THE ZONE'S HUD - my last foe's count as the referee says it, on the battles' readout (ui/siegeHud.js, with nothing to
+   *  leave) while the fight is fresh (WILD_REF.mendMs). SHARED-HEALTH: my own count is my health, on my bar. */
   let _wildHud = null;
-  let _wildVit = null;   // { mine: [hp, max] | null, foe: { id, hp, max } | null, at }
+  const healthMirror = createPlayerHealthMirror(playerEntity, () => online);   // SHARED-HEALTH: my health reported to the referee that holds a fight of mine, and its count set on it
+  let _wildVit = null;   // { foe: { id, hp, max } | null, at }
   const wildHudSay = () => {
     if (!_wildVit) { _wildHud?.hide(); return; }
     _wildHud ??= createSiegeHud(document);
     const f = _wildVit.foe, name = f ? (peerName(f.id) ?? 'another player') : '';
-    _wildHud.update({ bar: [WILD_NAME, f ? `${name}: ${f.hp} / ${f.max}` : ''], sides: '', self: _wildVit.mine ? [`Your vitality: ${_wildVit.mine[0]} / ${_wildVit.mine[1]}`] : [], works: '', arms: null, card: null });
+    _wildHud.update({ bar: [WILD_NAME, f ? `${name}: ${f.hp} / ${f.max}` : ''], sides: '', self: [], works: '', arms: null, card: null });   // SHARED-HEALTH: my own is my health bar
   };
   const wildHudFrame = () => { if (_wildVit && (Date.now() - _wildVit.at > WILD_REF.mendMs || !wildHere())) { _wildVit = null; wildHudSay(); } };
   /** A BLOW OR A CAST LANDED (`wref` `hp`): the HUD's vitality; a blow of mine - the HUD's number (HN1's seam), and for a
@@ -22996,9 +22044,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildHpIn = (g) => {
     const me = online?.id ?? '';
     if (g.by !== me && g.to !== me) return;
+    noteWildBlow();   // AUDIT PVP-EASE L2-1: a blow landed, mine or on me - storing locked (wildZone.js WILD_STORE_LOCK_MS)
     const foeId = g.by === me ? g.to : g.by;
-    const mine = g.h.find((x) => x[0] === me), theirs = g.h.find((x) => x[0] === foeId);
-    _wildVit = { mine: mine ? [mine[1], mine[2]] : (_wildVit?.mine ?? null), foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };
+    const theirs = g.h.find((x) => x[0] === foeId);
+    _wildVit = { foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };   // SHARED-HEALTH: my own count is my health, on my bar
     wildHudSay();
     if (g.by === me) {
       reportPlayerAttack({ hit: true, damage: g.d, critical: false, backstab: false, ineffective: false });
@@ -23044,7 +22093,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  to carry first, mine to carry once its grace has gone by with no remains of theirs in the room (wildFallGraceS: none
    *  when it was signed with them gone - WILD-REJOIN). */
   const wildRcIn = (g, room) => {
-    const c = readWildReceipt(g.rc), me = social?.acct ?? null;
+    const c = readWildReceipt(g.rc), me = wildSelf(social, appStorage());   // WILD-HUBLESS: a game the hub has not seated still knows its own fall
     if (!c || c.r !== g.r || !me) return;
     if (c.f === me) { wildTakeDrop(g.rc, room); return; }
     if (c.k !== me || _wildSeize.has(c.r)) return;
@@ -23063,6 +22112,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     else if (g.k === 'fell') wildFellIn(g, room);
     else if (g.k === 'down') wildDownIn(g, room);
     else if (g.k === 'rc') wildRcIn(g, room);
+    else if (g.k === 'grace') wildGrace.heard(g);   // ZONE-GRACE: safe passage, the referee's word
     else seaVentures.wref(g, room);   // SHIP-PVP: the open sea's guns - a shot landed, a wreck (its room boarded), a wreck signed
   };
 
@@ -23140,44 +22190,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     } catch (e) { console.error('[wild] the death checkpoint failed', e); return false; } finally { playerEntity.health = hp; }
   };
   const _wildTaking = new Set();   // the falls whose drop this tab has asked for (a receipt said twice is one act)
-  /**
-   * INT9: MY DROP, TAKEN OFF MY RECORD BY THE ACCOUNT SERVICE (server-account/src/wild.js) - against the fall the relay
-   * signed (`rc`; FOE-KEEPS: a death to a foe drops nothing, and asks none). The record's own act (systems/realmSaves.js
-   * realmGoldAct): checkpointed as it will rise, the service asked - naming the room my remains will lie in - and on its answer EXACTLY
-   * WHAT IT TOOK taken out of my pack (systems/wild/wildDropLaw.js wildTakeTook - AUDIT INT9: this game ran the law again
-   * without the ledger's word, and took what the service kept), the room given the service's records on its order
-   * (wildDeposit). The answer is needed: a landed act whose answer was lost ends the session, and the join reads the record.
-   */
-  const wildTakeDrop = (rc, room) => {
-    const key = readWildReceipt(rc)?.r;
-    const body = _wildBody;
-    const lay = room ?? body?.room ?? null;
-    if (!key || !realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;
-    _wildTaking.add(key);
-    if (_wildTaking.size > 32) _wildTaking.delete(_wildTaking.values().next().value);
-    realmGoldAct({
-      session: realmSession,
-      checkpoint: () => wildDeathCheckpoint(),
-      needsAnswer: true,
-      call: (at) => wildAccount.fall({ receipt: rc, realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),   // MAC (2026-10-14): my killer's piece into escrow where its room signs the collect; CART-AWAY (Mac, 2026-10-15): my wagon's word - parked off the zone, stabled or none, the cart keeps its cargo (systems/wild/wildCart.js); COMPANION-DROP (AUDIT FB1019f B2): and that my game reads my companions' packs, without which the service hands me no take of them (systems/wild/wildDeath.js wildFallWords)
-      apply: (a) => wildDropTaken(a?.data ?? null, body, lay),
-    }).catch((e) => console.warn('[wild] the drop failed', e?.message ?? e));
-  };
-  /** The service's answer to my drop: what it took off my record goes out of my pack (a worn piece unequipped), the death
-   *  screen says what fell - or, risen since, a line says it - and the records go to the room on the service's order. */
-  const wildDropTaken = (d, body, room) => {
-    if (!d) return;
-    const out = wildTakeTook(playerEntity, d.took, d.gold, (it) => { if (isEquipped(it)) unequipItem(playerEntity, it); }, wildPacks(naval?.companions?.party, revenantsWithYou()));   // COMPANION-DROP: and out of my companions' packs at my side, as the service took them
-    const n = Array.isArray(d.items) ? d.items.length : 0;
-    const dd = wildDeath();
-    const claimed = d.wi === 0 && out.length && d.took?.[0] ? itemLongName(out[0]) : null;
-    // MAC (2026-10-14, the two-phase handoff): the piece my killer claimed is in the service's escrow until they collect it
-    const held = d.wi === 0 && !!d.escrow?.r;
-    if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop said, and the letters by their worth
-    else if (wildTookAny(out, d.gold)) townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));   // AUDIT SEA VENTURES C7: in the words of the ground the fall was on   // AUDIT INT9: a receipt that found me risen - AUDIT FB1019f B5: a companion's coin alone said too (systems/wild/wildDeath.js wildTookAny)
-    if (held) wildEscrow.held(d.escrow, { killer: dd?.killer ?? null, name: claimed });
-    if (d.order && n && body) wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });
-  };
+  const { wildTakeDrop } = createWildDropHost({   // HOST-SPLIT: src/scenes/wildDropHost.js
+    _wildTaking, realmSession, townTalk, wildAccount, wildDeathCheckpoint, wildInsure,
+    get _wildBody() { return _wildBody; },
+    get naval() { return naval; },
+    get online() { return online; },
+    get wildDeposit() { return wildDeposit; },
+    get wildEscrow() { return wildEscrow; },
+  });
   // PVP-ESCROW's two sides (scenes/wildEscrowHost.js - HOST-SPLIT, FIELD BUGS 2026-10-15c)
   const wildEscrow = createWildEscrowHost({ townTalk, session: realmSession, modes: () => modes, wildAccount, checkpoint: () => onlineCheckpoint() });
   /** THE DEPOSIT - the service's records to the room, chunk by chunk on the wild frames' own pace, each chunk carrying its
@@ -23236,7 +22256,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // has gone (its fall is signed at once), or a moment - a ghost there held the room's world as its host
     _wildGhostEndAt = isCellRoom(online.room) ? null : Date.now() + WILD_GHOST_HOLD_MS;
     if (fell) {
-      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];
+      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];   // AUDIT PVP-EASE L2-2: an insured piece offered as any - a pick of one lands on nothing, its policy spent
       if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));
     }
     return true;
@@ -23260,7 +22280,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (etherSea && inEther(px.x, px.y)) return etherRiseSite(px.x, px.y);   // ETHER-WILD: the nearest freeport (AUDIT CAPTAIN'S SEA P4's), an isle's ruin's death too - the sea has no outside near enough
     // PVPDUNGEONS (the owner: "Dying in a dungeon respawns you in city near the dungeon"): a death in a hall rises in the
     // town nearest the hall - in the mountains too - so the way back to the remains is a run, not a journey
-    for (const pick of wildRisePicks(wildMaskOf(maps), px, { inDungeon, kill })) { const at = nearestSafeLocationAnywhere(maps, px, pick); if (at) return at; }
+    for (const pick of wildRisePicks(cyrodiilMask(), px, { inDungeon, kill })) { const at = nearestTownOf(px, pick); if (at) return at; }   // AUDIT TESA II P3/Z3: the world's towns (scenes/tamrielPlacesHost.js nearestTownOf) - Cyrodiil's own, in the ring and in the zone, where MAPS.BSA's rows alone put every rise at a Bay town 900 pixels and more away
     return null;
   };
   /** "make sure it doesnt stuck the player when he spawns and other players": stood clear of every other body here and
@@ -23287,15 +22307,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _wildRingWas = 0;   // WILD2: the ring last said
   const WILD_LINE_HOLD_MS = 7000;
   let _wildLineHold = null;   // WILD-LINE-HOLD: { line, until }
+  /** A crossing's line: on the screen's middle, in the talk, and held (WILD-LINE-HOLD, below). */
+  const wildSay = (line) => { setMidScreenText(line); townTalk.say(line); _wildLineHold = { line, until: Date.now() + WILD_LINE_HOLD_MS }; };
   /** Every frame (onlineFrame, the dead's too): the zone under my feet and its crossing said, the fights' clocks, my
    *  victims' bodies, the room's remains in this host's pool, my remains' time. */
   const wildFrame = () => {
-    if (!wildMask() && maps) setWildMask(wildMaskOf(maps));
+    setWildMask(cyrodiilMask());   // WW-C2: Cyrodiil's, kept while the picture stands (built again when the trace or the fit moves)
     try { wdunFrame(); } catch (e) { console.warn('[wdun]', e?.message ?? e); }   // PVPDUNGEONS: the hub's word, the heartbeat, the day's halls
     const seaRing = _onlineWorldSession() && !!online?.wildOk && etherSea && playerSpawned ? etherWildRingAt(playerTravelPixel()?.x, playerTravelPixel()?.y) : 0;   // ETHER-WILD: the sea past Veilhaven's peace, its band the ring
-    const here = seaRing > 0 || (_onlineWorldSession() && !!online?.wildOk && isWildRegion(_questRegionIndex()) && playerSpawned && (() => { const px = playerTravelPixel(); return !!px && wildRingAt(px.x, px.y) > 0; })());   // the cut zone, not the whole region
-    if (false) void 0;   // WILD2: the rings' mask, for the hosts with no map of their own
+    const here = seaRing > 0 || (_onlineWorldSession() && !!online?.wildOk && playerSpawned && (() => { const px = playerTravelPixel(); return !!px && wildRingAt(px.x, px.y) > 0; })());   // WW-C2: Cyrodiil's mask (the Wrothgarian cut retired)
     if (_wildTruce.frame(social?.partyPeers?.() ?? new Set(), Date.now()).length && here) townTalk.say(zoneWord('truce'));   // PARTY-TRUCE
+    wildGrace.frame(here);   // ZONE-GRACE: my safe passage run out, said - out of the zone, forgotten (AUDIT PVP-EASE L3-7)
     if (playerEntity.health > 0 && !modes?.deathUp?.()) {
       // WILD2: the ring under my feet (a building's or a dungeon's: its door's pixel) - 1 the outer, 4 the heart
       let ring = 0;
@@ -23307,16 +22329,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         _wildRingWas = ring;
         const line = here ? `${zoneWord('enter')} ${zoneWord('ring')(ring)}` : zoneWord(left === ETHER_KIND && !etherInPeace(playerTravelPixel()?.x, playerTravelPixel()?.y) ? 'quiet' : 'leave', left || undefined);   // AUDIT SEA VENTURES C7: "Veilhaven's peace" only where it is
         if (here) noteFirstUse('wild-zone');   // TUT1: the first step into the open zone
-        setMidScreenText(line);
-        townTalk.say(line);
-        _wildLineHold = { line, until: Date.now() + WILD_LINE_HOLD_MS };   // WILD-LINE-HOLD
+        wildSay(line);
       } else if (here && ring !== _wildRingWas) {
         const deeper = ring > _wildRingWas;
         _wildRingWas = ring;
-        setMidScreenText(zoneWord('ringCross')(ring, deeper));
-        townTalk.say(zoneWord('ringCross')(ring, deeper));
-        _wildLineHold = { line: zoneWord('ringCross')(ring, deeper), until: Date.now() + WILD_LINE_HOLD_MS };
+        wildSay(zoneWord('ringCross')(ring, deeper));
       }
+      // ZONE-SAFE (systems/wild/zoneSafe.js): a settlement's streets crossed in the zone, said - in a building the word I had
+      zoneSafeFrame(here, here && wildOutdoors() && settledAt(campToWire(player.feetAt()), locationIndex), wildSay, modes?.mode === 'interior');
     }
     // WILD-LINE-HOLD (2026-10-08, the owner: "the warning message for the zone doesnt stay long enough right now only a
     // part of a second"): the label counts GAME seconds (ui/midScreenText.js tick, at the time scale), and the zone is
@@ -23335,6 +22355,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
     online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
+    healthMirror.frame(wildCan() || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
     wildDepositFrame(); wildSeizeFrame(); wildHudFrame();   // INT9: a drop's deposit, a fall to seize, the referee's readout
     wildEscrow.frame();   // MAC (2026-10-14, the two-phase handoff): my piece in escrow asked back, my collect carried
     wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);   // HALO-REMAINS: my room and the halo's
@@ -23413,8 +22434,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const unstuckOutdoors = () => {
     if (playerEntity.health <= 0 || _teleporting || worldMoveBusy()) return false;
     const px = playerTravelPixel();
-    const _zm = wildMaskOf(maps);
-    const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestSafeLocationAnywhere(maps, px, (hit) => hit.kind === 'city' && !(_zm && wildNear(_zm, hit.mapPixel.x, hit.mapPixel.y)));   // PVPDUNGEONS: never into the zone - ETHER-WILD: past the Veil the nearest freeport (wildRiseSite's sea), never a Bay town across it (AUDIT CAPTAIN'S SEA P6)
+    const _zm = cyrodiilMask();
+    const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestTownOf(px, (hit) => hit.kind === 'city' && !(_zm && wildNear(_zm, hit.mapPixel.x, hit.mapPixel.y)));   // PVPDUNGEONS: never into the zone - ETHER-WILD: past the Veil the nearest freeport (wildRiseSite's sea), never a Bay town across it (AUDIT CAPTAIN'S SEA P6) - AUDIT TESA II P2: the world's towns (scenes/tamrielPlacesHost.js nearestTownOf): past the Bay MAPS.BSA's rows alone sent the player to a Bay city a continent away
     if (!town) return false;
     _teleporting = true;
     (async () => {
@@ -23479,7 +22500,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (party || kin === 'guild' || !_onlineWorldSession()) return false;
     const mine = wildHere() || (wildOutdoors() && wildAtWire(campToWire(player.feetAt()), true));
     if (mine) return true;
-    if (pixel) { const m = wildMaskOf(maps); return (etherSea && inEther(pixel.x, pixel.y)) || (!!m && wildNear(m, pixel.x, pixel.y)); }   // a map's row: its map pixel (ETHER-WILD: anywhere past the Veil)
+    if (pixel) { const m = cyrodiilMask(); return (etherSea && inEther(pixel.x, pixel.y)) || (!!m && wildNear(m, pixel.x, pixel.y)); }   // a map's row: its map pixel (ETHER-WILD: anywhere past the Veil)
     return wildAtWire(wire, true);
   };
   /** WILD3: MAY THIS FAST JOURNEY GO (systems/wild/wildZone.js wildJourney) - from where I stand to map pixel `to`, the
@@ -23507,13 +22528,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (m && etherSea && (etherWildRingAt(playerTravelPixel()?.x, playerTravelPixel()?.y) > 0 || (to && etherWildRingAt(to.x, to.y) > 0))) { townTalk.say(ETHER_WILD_TEXT.teleport()); return true; }   // ETHER-WILD: nor about the open sea
     if (!m) return false;
     const from = playerTravelPixel();
-    if (!(from && wildInside(m, from.x, from.y)) && !(to && wildInside(m, to.x, to.y))) return false;
-    townTalk.say('You cannot teleport into or out of the Wrothgarian Mountains. Use the mountain roads between its heights.');
+    if (zonePortFree(m, from, to, wildOutdoors() ? campToWire(player.feetAt()) : null, modes?.mode, locationIndex, _locationToBuild)) return false;   // WILD-CITY-PORT: a settlement's end is free (systems/wild/zoneSafe.js)
+    townTalk.say(`In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
     return true;
   };
-  const wildTravelGate = (to, spoken = 0) => {
+  /** `law` the verdict past the Bay: a journey's (pastBayJourney, TESA-NO-FAST), or a teleport's (PORTAL-BAY:
+   *  pastBayTravel.js teleportJourney - teleportTo and a stone's pick and step, scenes/portalStoneHost.js). */
+  const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {
     if (TEST_GODMODE && staffPowers().god) return { ok: true, fee: 0 };   // TESTBUILD: god mode travels anywhere, free
-    const j = wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken });
+    const j = law(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // AUDIT TESA II P4: never a journey INTO the land past the Bay (systems/travel/pastBayTravel.js - TESA-NO-FAST's law at the gate every journey passes: a party's to its leader, a rider's), the zone's own journeys its own
     if (!j.ok) townTalk.say(j.text);
     return j;
   };
@@ -23536,7 +22559,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     pool: () => (wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null)),
     toScene: (p) => onlineToScene({ x: p[0], y: p[1], z: p[2] }),
     canTake: (rec) => rec.mine || !(rec.oid && (social?.isPartyPeer(rec.oid) || sameGuild((online?.drawable?.() ?? []).find((d) => d.id === rec.oid)?.gt, myGuildTag()))),   // PVPDUNGEONS: party and guild members cannot take a fallen friend's pile
-    mine: (rec) => (!!rec.os && rec.os === (social?.acct ?? null)) || (!!rec.oid && rec.oid === online?.id) || rec.r === _wildMine?.r,
+    mine: (rec) => remainsMine(rec, wildSelf(social, appStorage()), online?.id ?? null, _wildMine?.r ?? null),   // WILD-REMAINS-LOSS: by the fallen's account, never by who carried the deposit
     pack: () => (playerEntity.items ??= []),
     mint: (list) => validLootList(list),
     addItem: (list, item) => (isGoldPieces(item) ? addGoldPieces(playerEntity, item.stackCount ?? 1) : addItem(list, item)),   // WILD GOLD: coin goes to the purse
@@ -23546,10 +22569,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     say: (l) => townTalk.say(l),
     now: () => performance.now(),
     nameOf: (item) => itemLongName(item),
-    me: () => social?.acct ?? null,   // INT9: the killer's piece, mine alone
+    me: () => wildSelf(social, appStorage()),   // INT9: the killer's piece, mine alone (WILD-HUBLESS: hub or no hub)
     collect: (cr, at) => wildEscrow.collectHeard(cr, at),   // MAC (2026-10-14): the room's collect of my piece in escrow, carried to the service
   });
-  setHudZone(() => (wildHere() ? { name: `${WILD_TEXT.chip} - ${zoneRingName(wildRing())}, ${wildRingBonus(wildRing())}`, foot: `${wildRing()}/${WILD_RINGS}` } : null));   // WILD1: the HUD's glyph, on the enhanced skin...
+  setHudZone(() => (wildHere() ? { name: `${zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip} - ${zoneRingName(wildRing())}, ${wildRingBonus(wildRing())}`, foot: `${wildRing()}/${WILD_RINGS}` } : null));   // WILD1: the HUD's glyph, on the enhanced skin...
   setHudPauseAt((at) => { if (!modes?.openPauseAt?.(at)) hudCtx.togglePause({ at }); });   // FIRM-STARS: a pause page by name, wherever the player stands (the /mail door's)
   setZoneEntity(playerEntity);   // ...and on the classic row
   /** The duel's rows on a peer (ui/socialMenu.js): 'Accept duel' + 'Decline duel' while their challenge waits, 'Yield the
@@ -23655,11 +22678,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  scan has finished, and the kill is claimed as before. */
   const gateSeatWord = (r) => {
     const c = readReceipt(r);
-    let site = null;
-    try { site = c && _gateScan ? findGateSite(c.d, _gateScan) : null; } catch { site = null; }
+    let region = null;
+    try { region = c ? gateSeatRegion(c.d, _gateScan) : null; } catch { region = null; }   // WW-GATES-EVERYWHERE (A2b): the Bay's lane's off its scan, a lane past the Bay's its own province's (scenes/gate/gateSeat.js)
     const character = characterIdOf(playerEntity);
     // SILVER-WAYS: the claiming character always - its guild's deed asks it, where the scan has not found the region
-    return site ? { region: site.region, character } : character ? { character } : null;
+    return region != null ? { region, character } : character ? { character } : null;
   };
   /** CHAP2b (Chapters-Arc 3.3, 4): a receipt the service credited to the character's chapters moved its Roll on the
    *  service - the tab asks the Roll's word at once (npcRollTracker.js refresh) and the guilds' memory is said. */
@@ -23690,13 +22713,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  claim goes as before, with no region. */
   const GATE_SCAN_WAIT_MS = 90_000;
   const _gateClaimsFrom = Date.now();
-  const gateClaimReady = () => {
-    if (_gateScan || Date.now() - _gateClaimsFrom >= GATE_SCAN_WAIT_MS) return true;
+  const gateClaimReady = (r) => {
+    if (!gateClaimWaits(readReceipt(r)?.d, _gateScan) || Date.now() - _gateClaimsFrom >= GATE_SCAN_WAIT_MS) return true;   // WW-GATES-EVERYWHERE (A2b): a lane past the Bay's waits on no scan
     warmGateScan();
     return false;
   };
   const gateClaims = params.has('online') ? createGateClaims({
-    claim: (r) => (gateClaimReady() ? _accountGates.claim(r, gateSeatWord(r)).then(rollHeard) : Promise.resolve({ ok: false, error: 'offline' })),
+    claim: (r) => (gateClaimReady(r) ? _accountGates.claim(r, gateSeatWord(r)).then(rollHeard) : Promise.resolve({ ok: false, error: 'offline' })),
     me: _accountGates.me,
     nowS: relayNowS,
     store: _spoilsStore,
@@ -23850,7 +22873,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
-    onFell: (day, f) => { const site = gateOmen?.current?.()?.site; eventNotice('gate', (f.c != null ? courtFellLine : fellLine)({ ...f, near: site?.day === day ? site.near : null, boss: gateBossOf(day).name })); },   // WB13b: no place found - "in the wilds"
+    onFell: (day, f) => { const site = gateOmen?.siteOf?.(day); eventNotice('gate', (f.c != null ? courtFellLine : fellLine)({ ...f, near: site?.day === day ? site.near : null, boss: gateBossOf(day).name }), gateLineId(day)); },   // WB13b: no place found - "in the wilds"; AUDIT WW F5: on its own gate's card; GATE-COURTS: a court's fall its own line
     onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },   // WB5b: to the account service, kept until it is counted; AUDIT WB A2: and its spoils, when no court's floor will give them
     onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(gateRefusalText(why)); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court; GATE-RELOAD: in what its word means (an outdated game is told to reload, never that an open gate is closed)
     place: bossPlace, watches: () => !!online?.courtWatchOk,   // AUDIT WBX F3: his fall frozen where he fell, as the court draws him; AUDIT PLAN-1000 G3: a watcher only on a relay that says `me`
@@ -24044,7 +23067,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  Enhanced Sounds, over DFU's ambience and never instead of it. */
   const soundscape = createSoundscapeHost({
     audio, music, boat: csaBoatUnderMe, aboard: () => !!naval?.aboard?.(), bow: boatForward, csa: csaRuntime, fight: () => !!naval?.battle?.(), pixel: playerTravelPixel,   // AUDIT SOUNDSCAPE S2, S3: any ship's deck is the sea's, her bow off her own rotation; M2: the fight the watch knows
-    seaPixel: openSea, dw: dwPlayer, inTown: _isPlayerInTownStrict, towns: livingTownsIndex, doors: buildingDoors, doorAt: shiftedDoor,   // AUDIT SOUNDSCAPE W1, W8: a town by PlayerGPS's own test, the open sea never a lake
+    seaPixel: openSea, dw: dwPlayer, inTown: _isPlayerInTownStrict, townAt: livingTownAt, doors: buildingDoors, doorAt: shiftedDoor,   // AUDIT SOUNDSCAPE W1, W8: a town by PlayerGPS's own test, the open sea never a lake
   });
   const sdAir = createSdAir(audio);   // SD14b: the Shattered Hour's air, on the sky's own clock
   /** AUDIT WB D10: what the court's passes are handed every frame, made once - its sea's and its centre's place, its
@@ -24252,6 +23275,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   egClient?.claimKeys();   // the Weir Key's use is this screen's open
   // KETCH (bible/11-Multiplayer/Sky-Ketch.md): THE SKY-KETCH ON THIS SCREEN (scenes/ketch/ketchClient.js - HOST-SPLIT: the module
   // owns its state and its frame; these are its reads) - online alone, as every crew's ship is the relay's
+  const sdCopy = createSdCopy({ social: () => social, store: _spoilsStore, relay: () => online?.url });   // SD-SOLO: alone, the relay's walk finds the shared Hour   // SD-PARTY: which party's Hour the Rift takes me to
   const ketch = params.has('online') ? createKetchClient({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, online: () => online, modes: () => modes, social: () => social,
     account: accountKetch({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), entity: playerEntity, player, cam, now: egNow,
@@ -24310,21 +23334,32 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** AUDIT EG III (lane4 #10): the Spire's lights a frame - one list, refilled. */
   const _egLightList = [], NO_EG_LIGHTS = Object.freeze([]);
   let _omenClockAt = null;   // AUDIT WB C4: when the relay's clock was first read this session (the omen's fallback wait)
-  const gateOmen = params.has('online') ? createGateOmen({
-    now: () => Date.now() + _sharedOffsetMs,
-    site: (day) => {
+  // WW2 (bible/03-World/World-Wide.md): A GATE A GAME DAY IN EVERY THEATRE (scenes/gate/gateLanes.js) - the Bay's lane the
+  // gate it always was, off the Bay's own scan; a theatre past the Bay's off the world's registry, its ground the
+  // composed continent's whatever the land switch says (every client finds the same site)
+  let _gateGround = null;
+  const theatreGates = params.has('online') ? createTheatreGateScans({
+    places: worldPlaces, spawnSalt: _spawnSalt, land: tamrielLandVersion,
+    wet: (x, y) => gateSeaPixel(tamrielClimateAt(x, y), (woods.isTamrielGround ? woods : (_gateGround ??= groundWoods(woods))).getHeightMapValue(x, y)),
+  }) : null;
+  const gateOmen = params.has('online') ? createGateLanes({
+    omen: {
+      now: () => Date.now() + _sharedOffsetMs,
+      say: (text, n) => eventNotice('gate', text, gateLineId(n)),   // EVENTS1: in the event board's news - every screen's, as the chat's every tab was; WW2: each lane's lines on its own gate's card
+      localTime: eventLocalTime,
+      fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill
+      // AUDIT WB C4: nothing said and no gate stood before the relay's clock is read and the hub has welcomed this player
+      // (its word of a kill comes just behind) - or, a hub that never answers, eight seconds on the relay's clock alone
+      ready: () => { if (!online?.clockRead) { _omenClockAt = null; return false; } if (_omenClockAt == null) { _omenClockAt = performance.now(); warmGateScan(); } return !!socialLink()?.clockRead || performance.now() - _omenClockAt > 8000; },
+      settleMs: OMEN_SETTLE_MS,
+      riteBroken: (day, s) => !!riteHost?.isBroken(day, s?.px, s?.py),   // AUDIT WB12d (C8): the hub's word came first - its order is no order
+      riteReady: () => !!online?.riteOk,   // AUDIT WB12d (L5): a relay that keeps the rite
+    },
+    bayGateSite: (day) => {
       if (!maps) return null;
       try { const scan = gateScanOf(); return scan ? findGateSite(day, scan) : null; } catch (e) { console.warn('[gate] no site', e?.message ?? e); return null; }
     },
-    say: (text) => eventNotice('gate', text),   // EVENTS1: in the event board's news - every screen's, as the chat's every tab was
-    localTime: eventLocalTime,
-    fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill
-    // AUDIT WB C4: nothing said and no gate stood before the relay's clock is read and the hub has welcomed this player
-    // (its word of a kill comes just behind) - or, a hub that never answers, eight seconds on the relay's clock alone
-    ready: () => { if (!online?.clockRead) { _omenClockAt = null; return false; } if (_omenClockAt == null) { _omenClockAt = performance.now(); warmGateScan(); } return !!socialLink()?.clockRead || performance.now() - _omenClockAt > 8000; },
-    settleMs: OMEN_SETTLE_MS,
-    riteBroken: (day, s) => !!riteHost?.isBroken(day, s?.px, s?.py),   // AUDIT WB12d (C8): the hub's word came first - its order is no order
-    riteReady: () => !!online?.riteOk,   // AUDIT WB12d (L5): a relay that keeps the rite
+    scans: theatreGates, lanesOk: () => !!online?.gateLanesOk && !!socialLink()?.gateLanesOk, here: () => playerTravelPixel(),
   }) : null;
   /** GATE-CLEAR: THE CLEARING World of Daggerfall keeps its rock off (world/gate/gateClearance.js, the streamer's sweep far
    *  above) - the site of the gate the clock is about (net/gate/gateLaw.js gateAt: from the last gate's collapse to this
@@ -24352,6 +23387,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const reportGateSite = () => {
     const s = _gateClearNow() ? _gateClearOf.site : null;
     if (s) socialLink()?.sendGateSite?.(s.day, s.px, s.py, s.place);
+    // WW2: and each lane's past the Bay, from its omen on - the hub's herald posts such a gate only where accounts agree on it
+    for (const { lane, c } of gateOmen?.currents() ?? []) if (lane && c.site) socialLink()?.sendGateSite?.(c.site.day, c.site.px, c.site.py, c.site.place);
   };
   /** AUDIT SD II (L5 F4): THE SPENT WORDS A POOL STILL OWES THE HUB (scenes/spoilsPool.js `resendSpent`) - said again
    *  every few seconds while the hub's link stands: a word that could not go (the link between sockets, its bucket spent)
@@ -24438,13 +23475,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }) : null;
   const serpentOmen = serpentLink ? createSerpentOmen({
     now: () => Date.now() + _sharedOffsetMs,
-    // the day's site off the packet lanes - every client's the same lanes, the same ways, the same open sea; none before
-    // the map's data has come (asked again - systems/serpent/serpentOmen.js SITE_RETRY_MS)
+    // the day's site off the packet lanes - WW7-12: every lane of the world, the same lanes, ways and open sea on every
+    // game standing the land past the Bay whole; a game without it the hub's word of the site the accounts agree on; none
+    // before the map's data has come (asked again - systems/serpent/serpentOmen.js SITE_RETRY_MS)
     site: (day) => {
       if (!maps || !mapDict) return null;
       try {
-        const wayOf = (lane) => { let way = _laneWays.get(lane.key); if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); } return way; };
-        return findSerpentSite(day, { lanes: laneNet(), wayOf, open: laneOpen });
+        return worldSerpentSite(day, worldLanes, serpentLink.toldAt);   // WW7-12: every lane of the world, standing them whole; else the hub's word of the agreed site
       } catch (e) { console.warn('[serpent] no site', e?.message ?? e); return null; }
     },
     say: (text) => eventNotice('serpent', text),   // EVENTS1
@@ -24504,7 +23541,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try { serpentOmen?.frame(); } catch (e) { console.warn('[serpent] omen', e?.message ?? e); }
     // SERPENT2: where the serpent lies, to the hub (once a socket and day - net/online.js sendSerpentSite): its Discord
     // herald names the place from the bells on, and posts the kill at the site the most accounts agree on
-    try { const a = serpentOmen?.ahead?.(); if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }
+    try { const a = serpentOmen?.ahead?.(); if (a && !a.site.told) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }   // WW7-12: a site the hub told is no word of this game's
     serpentClaims?.tick();
     sdClaims?.tick();   // SD9b: what the account service has not counted yet, offered again on its own clock
     iliacClaims?.tick();   // CARDS10: and the ranked Iliac games', on theirs
@@ -24582,7 +23619,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!_hourScoreMade) { _hourScoreMade = true; for (const song of Object.values(sdScoreSongs())) music.registerSong(song.name, song); }
     _hourScoreHeld = true;
     const slot = modes?.dungeonLocation?.sdSlot ?? modes?.sdRealmSlot?.() ?? null;
-    const now = sdFightLink?.now?.() ?? Date.now() + _sharedOffsetMs, rec = sdHost?.record?.() ?? null;
+    const now = sdFightLink?.now?.() ?? Date.now() + _sharedOffsetMs, rec = sdHost?.record?.(slot) ?? null;   // WW5: the slot's own lane's
     const collapsing = rec != null && rec.s === slot && sdPhase(rec, now) === 'fell';
     const want = !(playerEntity.health > 0) ? SD_SCORE_SILENCE : _hourScore.want(place, place === 'hollow' ? null : sdFightLink?.state?.() ?? null, now, collapsing);   // A5: no war over the dead
     if (want === SD_SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);
@@ -24630,7 +23667,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _gateKernel = null, _gateKernelAt = '';
   const gateGroundAt = (px, py, x, z) => {
     if (!woods) return -Infinity;
-    const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0}`;   // LANDFORM1-3: and kept again once the network lands - the pixel is cut along it
+    const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0},${beyondSites.generation()}`;   // LANDFORM1-3: and kept again once the network lands - the pixel is cut along it; BAY-LEFT-GROUND: and the sites past the Bay are made again
     if (key !== _gateKernelAt) { _gateKernelAt = key; _gateKernel = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere()); }
     const t = state.pixelTranslation(px, py);
     const lx = x - t[0], lz = z - t[2];
@@ -24661,7 +23698,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     collider: () => collider,   // AUDIT WB12d (G4): its altar, casket and braziers stand in the world
     onBare: (x0, z0, x1, z1) => labGrassField?.invalidate(x0, z0, x1, z1),   // AUDIT WB12d (G2): the grass placed again round its burned earth
     now: () => Date.now() + _sharedOffsetMs,
-    omen: () => gateOmen.current(),
+    omen: () => gateOmen.nearCurrent(),   // WW2: the nearest gate's - its circle stands where the player is
     fellAt: (day) => gateLink?.fellAt(day) ?? null,   // AUDIT WB12d (R7): an early kill's collapse ends the circle too
     pixelTranslation: (px, py, out) => state.pixelTranslation(px, py, out),
     groundAt: (x, z) => surfaceAt(x, z),   // the drawn triangles' height - what a placed thing stands on
@@ -24688,7 +23725,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     unsprang: (site) => wodUnsprang(site),
     struckAt: (f) => renownStruckAt(f),
     send: (w, cell) => !!online?.sendRite?.(w, cell),
-    say: (text) => eventNotice('gate', text),   // AUDIT EVENTS1 C6: the rite broken - the gate's, in the event board's news as its omen line is
+    say: (text, n) => eventNotice('gate', text, gateLineId(n)),   // AUDIT EVENTS1 C6: the rite broken - the gate's, in the event board's news as its omen line is (AUDIT WW F5: on its own gate's card)
     sayNear: (text) => setMidScreenText(text),
     loot: { seed: (items, feet, pixelKey) => droppedLoot.seedPile(items, feet, { archive: RANDOM_TREASURE_ARCHIVE, record: 0 }, null, pixelKey, { unsaved: true, drawn: false }), keyOf: (p) => `droppedLoot:${p.id}` },   // the casket is its picture, and its name
     level: () => playerEntity.level ?? 1,
@@ -24719,8 +23756,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  slices): unbudgeted, the first frame after the hub's word paid the whole scan's remainder, and the warm never ran. A
    *  row an ask still gets there on a page with no idle callback (warmGateScan asks for one). */
   const _sdScanRow = () => false;
-  const sdHost = params.has('online') ? createSdHost({
-    now: () => Date.now() + _sharedOffsetMs,
+  const sdHost = params.has('online') ? createSdLanes({
+    now: () => Date.now() + _sharedOffsetMs, here: () => playerTravelPixel(),   // WW5: my map pixel - the nearest lane's Hollow is the one in focus
     scan: () => gateScanOf(_sdScanRow),
     warmScan: () => warmGateScan(),
     ground: (px, py) => _spawnGround(px, py),   // AUDIT SD IV (F37): a Hollow on dry ground, as every spawn (SPAWN-SHORE)
@@ -24822,7 +23859,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (_sdOut || !online?.terminal || !(playerEntity.health > 0) || modes?.deathUp?.()) return;
     _sdOut = true;
     gateVeil?.flash('hourCast');   // AUDIT SD II (L6 F8): out of the Hour in its own veil - SD-LOOK: forced, its face shattered
-    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
+    if (modes?.unstuck?.()) sdSay(/\bHour\b/.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);   // SD-PARTY: the copies' refusals name the Hour too
   };
   /** SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): no companion stands in the
    *  Shattered Hour (companionPlace answers none there, as in a gate's court - GATE-ALONE), and a player who steps
@@ -24831,9 +23868,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _sdAloneSaid = false;
   const sdAloneFrame = () => {
     if (modes?.sdRealmSlot?.() == null) { _sdAloneSaid = false; return; }
-    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;
+    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;   // SD-SOLO: once the Hour has welcomed me - its count is known
     _sdAloneSaid = true;
     if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);
+    const line = sdCopyLine(modes?.roomIdentity?.()?.o, (online?.peers?.size ?? 0) + 1); if (line) sdSay(line);   // SD-SOLO: whose Hour this is, or how many share it
   };
   /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
@@ -24853,8 +23891,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const hourRezOpen = () => _sdFallen.mayRise(modes?.sdRealmSlot?.());
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
-    const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
-    const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };
+    const rec = sdHost.record(s), now = Date.now() + _sharedOffsetMs;   // WW5: the slot's own lane's
+    const seen = { entered: _sdEntered.has(s), fallen: false };   // SD-BACK (2026-10-28): a death no longer shuts my Rift - the realm says which Hour takes me back
     return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record; SD-THROUGH: and whether one has gone through (the Way Through stands)
   };
   /** AUDIT SD V (P1): the Rift's look alone, every frame it is drawn - none of the word, the count or the step's door
@@ -24862,8 +23900,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _sdSeen = { entered: false, fallen: false };
   const sdRiftLookOf = (s) => {
     if (!sdHost) return null;
-    _sdSeen.entered = _sdEntered.has(s); _sdSeen.fallen = _sdFallen.has(s);
-    return riftLook(sdHost.record(), s, Date.now() + _sharedOffsetMs, _sdSeen);
+    _sdSeen.entered = _sdEntered.has(s);   // SD-BACK: never fallen - the realm's word
+    return riftLook(sdHost.record(s), s, Date.now() + _sharedOffsetMs, _sdSeen);   // WW5: the slot's own lane's
   };
   /** SD-LOOK (Super-Dungeons-Look.md section 3): WHERE THE HOUR'S VEIL CLOSES - the Rift's window (or the Return's)
    *  on the screen each frame it is drawn, in screen radii (the corners at 1 - render/superDungeon/sdVeil.js uCentre), handed to the
@@ -24888,7 +23926,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  is under way (the way back's landing, still under its veil): not refused, not yet. The step refused it in silence,
    *  and its walk-in was spent. */
   function sdEnterRealm(s) {
-    const h = sdHost?.hollow();
+    const h = sdHost?.hollow(s);   // WW5: the slot's own lane's
     if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;   // AUDIT SD II (L1): a Hollow known by another slot's memo carries no site
     if (modes?.stepping) return null;   // audit24 wave37's law: guarded on the object (this runs above `var modes`)
     const hollow = { key: h.key, px: h.site.px, py: h.site.py, name: h.loc.name };
@@ -24903,7 +23941,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT SD II (L1 F3): its word asked again after the walk - the end may have overtaken the step (outside, before its door)
       const late = sdRiftOf(s)?.word;
       if (late) { sdSay(late); return false; }
-      if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
+      if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse; SD-PARTY: into my party's own Hour (scenes/superDungeon/sdCopy.js)
       sdSay(SD_REALM_TEXT.lost);   // the realm would not build: outside, before the Hollow's door
       return false;
     }, 'hourIn');   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift
@@ -24974,7 +24012,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       modes?.forceExitToExterior();
       if (!back) return true;
       await _teleportToPixel(back.px, back.py);
-      if (sdHost?.hollow()?.key !== back.key) return true;   // its end overtook the step: outside, where it stood
+      if (sdHost?.hollow(loc.sdRealm)?.key !== back.key) return true;   // its end overtook the step: outside, where it stood (WW5: the realm's own lane's Hollow)
       if (!(await modes?.startInDungeon?.())) { standBeforeHollowDoor(back.key); return true; }   // AUDIT SD IV (F40): before its door
       const at = modes?.dungeonCtx?.sdRiftLanding?.();
       if (at) modes?.setPlayerLocalPosition?.(at);
@@ -25422,7 +24460,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // stood on its pixel while the streamer holds it built: on the drawn ground, its colliders riding the pixel's floating
   // translation (one provider a pixel, as the streamed buckets'), drawn with the world and, translucent, after the water
   const _poiRides = new Map();
-  poiFeed = createPoiFeed({ base: () => serviceBase(appStorage()), cache: browserPoiCache() });
+  poiFeed = createPoiFeed({ base: () => serviceBase(appStorage()), cache: pagePoiCache() });
   poiFeed.start().catch((e) => console.warn('[poi] the kept feed', e?.message ?? e));
   poiHost = createPoiHost({
     renderer, feed: poiFeed, decodeImage: decodePoiImageSteps,   // AUDIT POI R8, R9: its readback a band a step, under the host's budget
@@ -25431,7 +24469,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     groundAt: (x, z) => surfaceAt(x, z),   // the drawn ground, as the monument stands on (no ground: its pixel not built)
     collider: () => collider,
     riding: (px, py) => {
-      const k = py * 1000 + px;
+      const k = poiPixelKey(px, py);   // AUDIT RELEASE R2-8: `py * 1000 + px` gave two pixels past the Bay one riding frame
       let ride = _poiRides.get(k);
       if (!ride) { const o = [0, 0, 0]; ride = onFloatingFrame(state, () => state.pixelTranslation(px, py, o)); _poiRides.set(k, ride); }
       return ride;
@@ -25733,7 +24771,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // GUIDE5: a quest target's place to its map pixel (the held map's own goto law) - AUDIT GUIDE O3: through the host's
   // one memo, which the look's map question shares, so the compass (every street frame) and the held map's poll never
   // re-read a region (MapsFile keeps one in memory)
-  const questPixel = (find) => questPlacePixel(maps, find?.regionName ?? '', find?.locationName ?? '');
+  // START3: a place past the Bay by its own pixel (systems/quest/place.js siteWorldPixel) - MAPS.BSA names none there
+  const questPixel = (find) => find?.worldPixel ?? questPlacePixel(maps, find?.regionName ?? '', find?.locationName ?? '');
   /** HOME-VENDOR: THE TRADER'S WAYPOINT ON THE COMPASS - its town's pixel, from the street, until the player stands in it
    *  (there the town map names the house); null with none set. */
   const vendorCompassMark = () => {
@@ -25782,7 +24821,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const gateCompassMark = () => {
     const g = gateOmen?.standing();
-    const mark = g ? gateOmen.mapMark() : null;
+    const mark = g ? gateOmen.markOf(g.day) : null;   // WW2: the standing gate's own ring - the nearest's, whatever its lane
     if (!g || !mark || (modes?.mode ?? 'exterior') !== 'exterior') return null;
     const p = playerTravelPixel();
     return insideGateRing(mark, p.x, p.y) ? gateSceneXZ(g, state.pixelTranslation(g.px, g.py)) : null;
@@ -25911,6 +24950,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       px: px.x, py: px.y,
       in: mode === 'dungeon' ? 1 : mode === 'interior' ? 2 : 0,
       ...(online?.layer ? { ly: online.layer } : {}),   // SCALE5d: the layer of the place I stand in, so a mate who comes asks for it
+      // AUDIT-TESA A1-1 kept an Arena place's name off the wire (it was the player's own file's); TESA12: the places are the
+      // port's own, every client's the same, so a town past the Bay is named like any
       ...(online?.room ? { rk: online.room } : {}),   // STAFF-PANEL5-FOLLOW: the room I stand in - a cell's or a world room's alone (net/wire.js validPartyPose), the staff's to read, never fanned
       loc: ident?.kind === 'dungeon' ? (ident.name ?? '') : (loc?.name ?? ''),
       // AUDIT SOC B5: fatigue in the DIGITS a sheet shows (ui/charsheet.js: the stored pool is x FATIGUE_MULTIPLIER) - a
@@ -26998,7 +26039,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ...travelFareDeps(),
       getPlayerPixel: playerTravelOrigin,
       getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
-      locationSummary: () => travelLocationSummaryAt(mapDict, to.x, to.y),
+      locationSummary: () => (onTheBay(to.x, to.y) ? travelLocationSummaryAt(mapDict, to.x, to.y) : null),   // AUDIT-TESA A2-3
     });
     pop.speedCautious = !!opts?.speedCautious; pop.sleepModeInn = !!opts?.sleepModeInn; pop.travelShip = !!opts?.travelShip;
     pop.enforceShipRestriction();
@@ -27089,23 +26130,22 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     entity: () => playerEntity,
     townName: (px, py) => String(locationIndex.get(`${px},${py}`)?.name ?? ''),
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),   // REP4: the board's region, for the law's thanks
+    wildAt: bountyLandWild(maps),   // QUARRY-WORLD: the board's beasts the land's own wild (systems/bounty/bountyQuarry.js)
     // the ground a pack may stand on: land (the height bytes say where the sea is, as the gate's scan reads them), no
     // location of the game's own on the pixel, no spawned dungeon - every client's map files answer alike
-    siteOk: (x, y) => x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y)
+    // LAIR-WORLD: past the Bay, no place the build stands there (scenes/tamrielPlacesHost.js placeOnPixel); SPAWN-WORLD: nor,
+    // now they stand there, a spawned dungeon's pixel
+    siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))
       && !gateSeaPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y))
       && maps.getClimateIndex(x, y) !== TV_MOUNTAIN_CLIMATE,   // BOUNTY-GROUND: never a mountain pixel - the Overworld cannot walk there
-    dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || null,
-    graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`),
+    dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.name || null,   // LAIR-WORLD: and the lairs past the Bay (TESA8)
+    graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.type === LOCATION_TYPES.Graveyard,
+    placesVersion: provinceQuestPlaces.version,   // LAIR-WORLD: what the places past the Bay stand on - a town's ground and dungeons kept under it
     playerPixel: () => ((modes?.mode ?? 'exterior') === 'exterior' ? playerTravelPixel() : null),
     // underground the streamer's pixel is frozen at the entrance - the dungeon's own pixel (playerTravelPixel's A10 note)
     // the dungeon's OWN pixel - its location's map-table position - rather than the streamer's last pixel (which is
     // where the player crossed in from, not necessarily the dungeon's)
-    dungeonPixel: () => {
-      if ((modes?.mode ?? 'exterior') !== 'dungeon') return null;
-      const mt = modes?.dungeonLocation?.mapTableData;
-      if (mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)) return longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
-      return playerTravelPixel();
-    },
+    dungeonPixel: () => bountyDungeonPixel(modes, playerTravelPixel),   // HOST-SPLIT (LAIR-WORLD): the board's own question, scenes/bountyHost.js
     canStandDungeon: () => (modes?.mode ?? 'exterior') === 'dungeon' && !!modes?.dungeonCtx && !gamePaused() && !playerEntity.isResting,
     standDungeonPack: (o) => _standBountyDungeonPack(o),
     canStand: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && !gamePaused() && !playerEntity.isResting
@@ -27159,7 +26199,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // (AUDIT LANDFORMS C1) on the ground it was measured on (TERRAIN-SCALE1), as the Recall anchor keeps its own.
       // AUDIT FB1013d B2: asked by the death alone (`height`) - the lift is a field's kernel pass on the first pixel the
       // main thread asks it of, and the slow tick asks where the one played stands every second
-      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,
+      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,
     };
   };
   /** LEGACY4 + AUDIT LEGACY H1: whether `h` (legacyHere) stands in the dungeon a remains' `place` names - by its location
@@ -27214,7 +26254,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const [x, z] = state.localFromWorld(place.world.x, place.world.z);
     const ground = heightAt(x, z);
     if (!Number.isFinite(ground)) return null;   // its pixel not built yet - stood once it is
-    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)
+    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height
     return floorLanding(collider, [x, Math.max(y, ground) + 0.5, z]);
   };
   /** FB1013d REMAINS-STAND: the house's fallen, seen where they lie - a body in the street's pool, or the building's or the
@@ -27243,18 +26283,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // (legacyHost.js takeDeeds). Offline it is Daggerfall's bank deed and the house as its owner left it - out of the
   // fallen's own newest save, the one record of what they kept there; online the account service's home (homes.js
   // inheritHome) and its cupboards, out of the fallen's realm record.
-  /** Daggerfall's deed into the one played's bank slot of its region - DaggerfallBankManager's one house a region, so a
-   *  slot holding another house 'waits' - and the house's scene as the fallen left it (`scenes()`, their scene cache's
+  /** Daggerfall's deed into the one played's bank slots of its region - HOUSES-3: three a region (banking.js), so a region
+   *  holding three others 'waits' - and the house's scene as the fallen left it (`scenes()`, their scene cache's
    *  snapshot) grafted in, permanent (sceneCache.js graftPermanentScene). */
   const legacyInheritDeed = (row, scenes) => {
     const region = row.regionIndex | 0;
     if (!playerEntity.houses?.length) playerEntity.houses = createHouses(BANK_REGION_COUNT);
-    const slot = playerEntity.houses[region];
-    if (!slot) return null;
-    if ((slot.buildingKey | 0) > 0) return (slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';
-    allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
+    if (!playerEntity.houses[region]) return null;
+    if (regionDeedOf(playerEntity.houses, region, row.mapId, row.buildingKey)) return 'given';
+    if (regionHousesFull(playerEntity.houses, region)) return 'waits';
+    const slot = allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
       // the building named "<heir>'s residence" in its own town's discovery (`<regionIndex>:<name>`, discoveryLocationId's key)
-      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(`${region}:${row.location}`, { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },
+      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(townBookId(region, row.location, row.mapId), { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },   // BAY-LEFT-MAPS (C7 = E2): its own town's book, past the Bay by its map id
       addPermanentScene: () => {},   // the graft below makes the scene permanent, with what it held
       addNote: (text) => questBridge?.notebook?.addNote?.(text),
       playerName: playerEntity.name ?? '', regionName: REGION_NAMES[region] ?? '',
@@ -27280,10 +26320,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const mine = all.data.homes.find((h) => same(h) && h.character === me) ?? null;
       const theirs = all.data.homes.find((h) => same(h) && h.character === from) ?? null;
       if (!mine && !theirs) return 'gone';   // sold after their last save reached the line
-      // a deed the realm holds (KNIGHT-HOUSE: a Knightly Order's house) is Daggerfall's bank deed as well - one a region
+      // a deed the realm holds (KNIGHT-HOUSE: a Knightly Order's house) is Daggerfall's bank deed as well - three a region
+      // (HOUSES-3): it waits while the region holds three others
       const deed = (mine ?? theirs).deed === true;
-      const slot = playerEntity.houses?.[row.regionIndex | 0];
-      if (deed && (slot?.buildingKey | 0) > 0 && !((slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0))) return 'waits';
+      if (deed && !regionDeedOf(playerEntity.houses, row.regionIndex | 0, row.mapId, row.buildingKey) && regionHousesFull(playerEntity.houses, row.regionIndex | 0)) return 'waits';
       if (!mine) {
         const r = await homesApi.inherit({ mapId: row.mapId >>> 0, buildingKey: row.buildingKey | 0, character: me, from });
         if (!r?.ok) { if (r?.error === 'no-home') return 'gone'; throw new Error(r?.error ?? 'offline'); }
@@ -27329,8 +26369,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     town: (h) => (h && h.mode !== 'dungeon' && h.loc && isTownEntry({ locationType: h.locationType }) ? { region: h.region, loc: h.loc, ...(h.mapId != null ? { mapId: h.mapId } : {}) } : null),
     nearestTown: (h) => {
       if (!h) return null;
-      const hit = nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(maps, REGION_NAMES, h.pixel);
-      return hit ? { region: hit.region, loc: hit.loc } : null;
+      // BAY-LEFT-B: the region's own nearest town, else the WORLD's (the registry - its map id the birth's `seat`)
+      return nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(nearestTownOf, REGION_NAMES, h.pixel);
     },
     gold: () => legacyGold(playerEntity),
     say: (line) => townTalk.say(line),
@@ -27374,7 +26414,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return true;
     },
     // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
-    heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h))),   // LEGACY7 part five: online, the account's online homes (null until read)
+    heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : allDeeds(playerEntity.houses).filter(deedStands)),   // HOUSES-3: every region's three; LEGACY7 part five: online, the account's online homes (null until read)
     heldHousesWhole: () => isOnlinePage(),   // ACCOUNT-HOMES: online they are the line's whole - every member owns each, and one sold leaves
     inheritHouse: legacyInheritHouse,   // PERMADEATH-HOUSES: a house of the line's dead, the one played's
     // LEGACY6: what the world remembers - the town's regard of the one played and its day, the towns' minute for the
@@ -27467,7 +26507,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // was opened again) - the market's own read says whether it is this account's (`market-closed`)
     const market = marketBook && profBook && profBook.state.open !== false && marksBook?.state?.open !== false && Number.isInteger(region) ? {
       book: marketBook, stores: () => profBook.state.stores, region, regionName: REGION_NAMES[region] ?? 'the region',
-      regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs, name: (k) => materialLabel(k), countName: materialCountLabel,
+      regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs(), name: (k) => materialLabel(k), countName: materialCountLabel,
       picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake, box) => itemPicture(it, { onReady: wake, box }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture
       board: [town.px, town.py],   // SEAT1d (Seats-Arc 7.2): the board's town - the seat whose bailiwick takes the Tithe
       tithe: () => (seatBook?.open === true ? boardTithePct(seatBook.data?.seats ?? [], region, [town.px, town.py]) : null),   // AUDIT SEATS-3 D3: its rate as the seats' list says it (null: not read)
@@ -27576,8 +26616,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const noticeSdCard = () => sdNoticeCard(sdHost?.mapMark() ?? null, sdHost?.hollow()?.site?.cityName ?? '');
   /** NOTICE1: the server's word on the Oblivion Gate while it stands - the map's own mark (WB1), under the red seal. */
   const noticeGateCard = () => {
-    const mark = gateOmen?.mapMark?.();
-    const near = gateOmen?.current?.()?.site?.near;
+    const c = gateOmen?.nearCurrent?.();   // WW2: the nearest gate's - a board past the Bay tells of its own province's
+    const mark = c?.t ? gateOmen.markOf(c.t.day) : null;
+    const near = c?.site?.near;
     if (!mark || !near) return null;
     // WB13b: where, then the countdown's state ("Near Copperham. Opens in 4:07.") - the subject is the name
     const state = String(mark.label ?? '').replace(/^Dagon's Breach(?: - )?/, '');
@@ -28028,7 +27069,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const link = chatLinks?.get('region');
     if (!link || !chatLinks.get('world')?.chanOk) return;
     const index = _questRegionIndex();
-    const room = nextRegionRoom(_regionHold, chatRegionRoom(index), chatLog.tab('region').room, now);
+    const room = nextRegionRoom(_regionHold, chatRegionRoom(index, !!chatLinks.get('world')?.provinceRegionsOk), chatLog.tab('region').room, now);   // WW-R: a province's channel where the relay opens it
     if (!room) return;
     const place = maps.getRegionName(index) || 'this region';
     chatLog.setRoom('region', room, place);
@@ -28661,6 +27702,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wagonRiders?.clear();   // WAGONS2 (FINAL AUDIT): offline, nobody rides with me nor I with anyone - my riders' seats were kept for the gone, my companions walking at heel and every journey waiting GO_LEAD_MS on them
     caravanVisitLink.close();   // WAGONS2-VISIT: and the visited caravan's listener goes with the seat
     seatLock?.release();
+    checkpointClock.seatLost();   // a realm character saved at once: a lease another device took is heard now, not a period later
     console.info('[online] another tab, window or device has the seat - this one is offline');
   };
   /** ONE-SEAT: the word that the seat is gone - the hub's close, the browser's, a room's - acted on as it arrives. */
@@ -28720,7 +27762,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         setMidScreenText(SEAT_MID_TEXT);
       }
       // out of the seat a realm character still saves as it plays: the service's lease, not the seat, decides whose save lands
-      checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());
+      checkpointClock.frame(now);
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;
     }
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
@@ -28756,7 +27798,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;   // PEERLIGHT2: and no candle hangs over the dead; AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
-    checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());   // SCALE2b: the periodic one may be answered by the save the service holds (realmSaves.js idle)   // REALM P0.5: every ONLINE_CHECKPOINT_MS (five real minutes, CHECKPOINT-5), alive and in the seat (the first such frame persists the join's call-in)
+    checkpointClock.frame(now);   // SCALE2b: the periodic one may be answered by the save the service holds (realmSaves.js idle)   // REALM P0.5: every ONLINE_CHECKPOINT_MS (five real minutes, CHECKPOINT-5), alive and in the seat (the first such frame persists the join's call-in)
     if (instanceDoor.refused(online)) modes?.forceExitToExterior?.();   // INSTANCES (the audit): alive, an instance's door shut on me (not of its owner's party - a kick, a lapse) - out, as the realm's door does, never left inside it alone
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const cabin = modes?.sailingCabin;
@@ -28766,7 +27808,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = siegeSession?.room() ?? royalSession?.room() ?? roomKeyFor({ host: 'world', mode: 'exterior', mapPixel: mp });   // SEAT2a part four: a battle entered stands in its own room (CROWN1 part two: a Royal Tourney too)
     else if (modes?.roomIdentity?.()?.kind === 'gate') key = (gateLink?.room ?? gateRoomKey)(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own - GATE-COURTS: the court the night's book seats me in
-    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);   // SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
+    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s, modes?.roomIdentity?.()?.o);   // SD-PARTY: my party's own Hour; SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
     else if (modes?.roomIdentity?.()?.kind === 'eg') key = egRoomKey(modes?.roomIdentity?.()?.b);   // EG-PLAY: an Elite Breach's room is the relay's breach (its hello asks the company's law)
     else if (modes?.roomIdentity?.()?.kind === 'kt') key = modes?.roomIdentity?.()?.key;   // KETCH: a crew's ship's room is the relay's `kt:<voyage>.<captain>` (its hello asks the crew's law)
     else if (modes?.roomIdentity?.()?.kind === 'arena') key = arenaFloorRoomOf(modes?.roomIdentity?.()?.o);   // ARENA4: a relay's bout's floor is its room (ARENA4b: the hour's exhibition's, `x<hour>`, its own)
@@ -29236,7 +28278,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // INSTANCES (bible/11-Multiplayer/Instances.md): THE DOOR - public or an instance, at a dungeon or a building a quest of
   // mine names, at Privateer's Hold, where a partner stands an instance; built once, asked by the modes host - a player's
   // door its popup, every other way in its rule (scenes/instanceDoor.js). The room's key reads what the place was entered as
+  const seatHalls = createSeatHallHost({ seatHere, guild: () => guildBook?.guild ?? null });   // HOST-SPLIT (DOMAIN2): a seat's halls, out of this scope
   const instanceDoor = createInstanceDoor({ online: () => onlineOn, instanceOk: () => !!(online?.instanceOk || chatLinks?.get('world')?.instanceOk), account: () => social?.acct ?? null, character: () => realmSession?.id ?? null,
+    castle: (site) => (online?.guildInstanceOk || chatLinks?.get('world')?.guildInstanceOk ? seatHalls.castleAt(site.mapId) : null),   // DOMAIN2: my guild's castle there, where the relay admits a guild (AUDIT DOMAINS R3: the world link's word too, as the instances' own)
     members: () => social?.others() ?? [], questMachine: () => questBridge?.machine ?? null, openOverlay: (w, onClosed) => townTalk.pushOverlay(w, onClosed), say: (l) => townTalk.say(l), wild: () => { const m = wildMapMask(), p = playerTravelPixel(); return (!!m && wildInside(m, p.x, p.y)) || seaVentures.openSeaAt(p); },   // `wild`: inside the open zone nothing keeps an instance - its dungeons sealed, its halls the relay's to refuse; SEA-VAULTS: the open sea's too
     remains: () => legacyHost?.remainsWhere() ?? [] });   // HEIR-WHOLE: where the line's remains lie - a dungeon they lie in whole is the death quest's place
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL IN THE STREETS (scenes/witchesHost.js) - the town
@@ -29252,6 +28296,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     climbFeel: staffFollow.indoors(climbFeel, player, cam),   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step; FOLLOW-INDOORS: and a follow's camera before it (scenes/staffFollowHost.js)
     outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
     instanceDoor,   // INSTANCES: public or an instance, at the door (scenes/instanceDoor.js)
+    provinceBank: () => provinceBankHere(),   // AUDIT-TESA A2-5: past the Bay a building's people are the province's (TESA3's bank)
     grabLook: () => { setCursorActive(false); requestLook(canvas); },   // DECOR: the decorator asks this host for the look; the click delay stays armed here
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     cardOnline: { ok: () => !!online?.holdemOk, send: (w) => !!online?.sendHoldem(w), id: () => online?.id ?? null, welcomes: () => online?.holdemWelcomes ?? 0, room: () => online?.room ?? null },   // CARDS5: the relay that deals - a word to the room's card table, and who I am at it; CARDS6: the room a stake names
@@ -29472,7 +28517,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildHallRing: () => wildHallHere()?.ring ?? 0,   // PVPDUNGEONS: its tier
     wildHallEpoch: () => { const h = wildHallHere(); return h ? (_wdunEpoch.get(h.key) ?? 0) : 0; },   // PVPDUNGEONS: its reset's epoch
     wildNoBank: () => { if (!wildHere()) return false; townTalk.say('There are no banks in the mountains.'); return true; },
-    wildNoHouse: () => { if (!wildHere()) return false; townTalk.say('No house is for sale in the Wrothgarian Mountains.'); return true; },   // PVPDUNGEONS   // PVPDUNGEONS: no banks, so no houses either
     onDungeonLeave: () => { if (_wdunInside) wdunLeft(false); const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); doorToken.leaving(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay   // DOOR-TOKEN: the cell outside's token, if the walk to the door did not mint it
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
@@ -29782,25 +28826,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // stands in it - `{ key, name, member, keeper }` (the holder's guild's name; whether this character is of it, and one
     // of its keepers - hallLaw.js HALL_POWERS.decorate), or null: no seat here, a crown's (its castle is its hall), none
     // held, or the seats shut to this account
-    seatHall: {
-      here: (mapId) => {
-        const seat = seatHere(mapId);
-        const g = seat?.tier === 'palace' ? seat.holder?.guild ?? null : null;
-        if (!g?.id) return null;
-        const mine = guildBook?.guild ?? null;
-        const member = seatHallOf(seat, mine?.id ?? null);
-        return { key: seat.key, name: g.name ?? '', member, keeper: member && hallMay(Number(mine?.rank), 'decorate') };
-      },
-      // CROWN-HALL (7.2: "Crown: the castle is the hall"): a crown seat's castle, as its visitor stands in it - `{ key,
-      // name, member, heraldry }` (the holder's guild's name; whether this character is of it; its banner), or null: no
-      // crown here, none held, or the seats shut to this account
-      crown: (mapId) => {
-        const seat = seatHere(mapId);
-        const g = seat?.tier === 'crown' ? seat.holder?.guild ?? null : null;
-        if (!g?.id) return null;
-        return { key: seat.key, name: g.name ?? '', member: seatHallOf(seat, guildBook?.guild?.id ?? null), heraldry: seatBannerOf(seat) };
-      },
-    },
+    seatHall: seatHalls,   // SEAT-HALL, CROWN-HALL: a palace's Charter Room, a crown's throne room (scenes/seatHallHost.js - DOMAIN2: and the guild's own castle)
     homeVendor: { open: (o) => openHomeVendorWindow(o) },   // HOME-VENDOR: a trader pressed in its home (worldModes.js openHomeVendor)
     guildHall: {
       info: () => {
@@ -29841,12 +28867,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // worldQuickLoad does (initAtGameStart must not re-run over a
     // restored machine).
     talkSave: { mill: rumorMill, tree: topicTree, session: npcSession },
-    onQuestRestored: () => { _questStarted = true; },
+    onQuestRestored: () => { _questStarted = starts.restored(); },   // AUDIT STARTS W5: a story never begun is handed its commission
     layoutPinsLoaded: (extras) => applyLayoutPins(extras).catch((e) => console.warn('[layout] pins on a dungeon load:', e?.message ?? e)),   // WD3: a same-dungeon load holds its own save's towns too
     // R1: the discovery store's location key - the SAME string the
     // quest bridge's discoverBuilding uses, so the exterior lockpick
     // anti-grind record and the talk reveals share one namespace.
-    discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+    discoveryLocationId: () => townBookOf(_questLoc()),   // BAY-LEFT-MAPS (C7 = E2): the one key-maker (systems/discovery.js townBookId) - past the Bay a town's own book
     questBuildingSource,   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override pair (PlayerGPS.cs:945-959)
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
@@ -29905,7 +28931,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE2: the journal's two world questions for the hosts that cannot answer them - is a place on the player's map,
     // and which town is the player in - delegated into the interior's pause and the dungeon's journal the same way.
     // The way there is not delegated: the map opens on the street alone.
-    questCanFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    questCanFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     questLocationName: () => _questLoc()?.name ?? '',
     useMagicItem: (item) => useMagicItem(item),   // UI1: MagicItemPicker's use, through the world host's one seam
     // TR5: the interior hosts dismount through the world host, which
@@ -30009,7 +29035,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     gateArenaSite: (g) => {
       const ci = maps.getClimateIndex(g.px, g.py);
       const climateType = getWorldClimateSettings(ci).climateType;
-      const site = gateOmen?.current?.()?.site;
+      const site = gateOmen?.siteOf?.(g.day);   // WW2: the gate's own, whatever its lane
       const mine = site?.day === g.day;
       return { climateBase: climateType, season: INTERIOR_SEASON, climate: { worldClimate: ci, climateType }, regionIndex: mine ? site.region : -1, regionName: mine ? site.regionName : '' };
     },
@@ -30173,7 +29199,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         position: [m[12] - p.locOrigin[0], m[13] - p.locOrigin[1], m[14] - p.locOrigin[2]],
       }, { locationIndex: dfLoc.locationIndex ?? 0 });
       if (!d) return null;
-      return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, townBlocks: homeTownBlocks(dfLoc), name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };   // HOME1: the town the DOOR is in keys its home, not the one under the player; HOME-PRICE: and its size prices it
+      return { ...d, regionIndex: dfLoc.regionIndex, townMapId: (dfLoc.mapTableData?.mapId ?? 0) >>> 0, townBlocks: homeTownBlocks(dfLoc), ...townTalk.doorTownOf(dfLoc, d) };   // HOME1: the town the DOOR is in keys its home, not the one under the player; HOME-PRICE: and its size prices it; IC-PROPS: and its own name, its book and its town's name - the door's town's, never the player's (a neighbouring slice of the Imperial City)
     },
   });
   wireOwnerClock([exteriorFoes, cityGuards], modes, () => online?.status === 'open' && online.othersHere > 0);   // OWNER-CLOCK (scenes/ownerCatchUp.js): while anyone else is in my room (on the street the 16-pixel cell, wider than the 3 pixels my foes frames are fanned across) the street's foes take my clamped frame in FOE-CATCHUP's steps - my player's pace, never past it - and every step of mine is marked on the clock my foes frames carry; HOST-CLOCK: the watch with them (its brains already ran on the street's clock), the mode machine's frames the catch-up's, and a building's and a dungeon's foes through the same page's catch-up from their own hosts
@@ -30223,6 +29249,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // their save was to start a new game and press F11. A load is not a
   // new game, so it takes the classic start's place rather than
   // running after it.
+  // TESA2: a save made in a town past the Bay loads into it - the places stand once the trace has landed, so a load waits
+  // for it, ARENA_LOAD_WAIT_MS at most (a trace that never lands costs that and no more)
+  // AUDIT-TESA A7-1: every place past the Bay moves with the trace - a town, a capital, the countryside's, a lair - so
+  // with any of them standing a load waits for it
+  if ((_arenaTemplates || _countryTemplates || _capitalBase) && params.has('load')) await Promise.race([arenaTraced, new Promise((r) => setTimeout(r, ARENA_LOAD_WAIT_MS))]);
   let _loadedGame = false;   // EOTB-IL: which of StartGameBehaviour's two events this boot is
   if (params.has('classicload') && peekPendingClassicSave()) {
     // SAV3: the classic import takes the load's place in the boot walk
@@ -30554,7 +29585,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   };
   const travelViewWhere = () => {
     const px = playerTravelPixel();
-    const region = (etherSea && inEther(px.x, px.y) ? ETHER_SEA_NAME : maps.getRegionName(maps.getRegionIndexAt(px.x, px.y))) || '';   // ETHER-SEA: the sea's own name past the Veil
+    const region = provinceAt(px.x, px.y)?.name || (etherSea && inEther(px.x, px.y) ? ETHER_SEA_NAME : maps.getRegionName(maps.getRegionIndexAt(px.x, px.y))) || '';   // ETHER-SEA: the sea's own name past the Veil; TESA3: a province's past the Bay
     const loc = locationIndex.get(`${px.x},${px.y}`);
     const inside = loc?.name && _inAnyLocationRect(walkMode ? player.pos : cam.pos);
     return travelViewLine({ place: inside ? loc.name : null, near: !inside && loc?.name ? loc.name : null, region });
@@ -30581,15 +29612,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const [x, z] = state.localFromWorld(nx, nz);
     const h = heightAt(x, z);
     if (Number.isFinite(h)) return [x, h + lift, z];
-    // TV3: past the built grid, the far ring's own macro height for the pixel (render/farRing.js ringHeight) - the
-    // ground the view shows out there - under the grid's current compensation
+    // TV3: past the built grid, the far ring's own ground for the pixel (render/farRing.js ringGroundAt, RELIEF-PEAKS: the
+    // kernel's mean ground at its centre, where the ring's vertex stands) - the ground the view shows out there - under the
+    // grid's current compensation
     const px = worldCoordToMapPixel(nx, nz);
     // AUDIT CAPTAIN'S SEA G5: past the map the ground the ring reads there (the continent's, the Eltheric Ocean's) - an isle's
     // plate stood at the sea's height under its silhouette
     const ground = (px.x >= 0 && px.y >= 0 && px.x < 1000 && px.y < 500) || !!woods.isTamrielGround || !!woods.etherLaw?.(px.x, px.y);
-    const byte = ground ? woods.getHeightMapValue(px.x, px.y) : 0;
-    const fade = landform && ground ? cliffFadeAt((bx, by) => woods.getHeightMapValue(bx, by), px.x, px.y) : 1;   // AUDIT LANDFORMS II I1: faded beside the sea, as the ring is
-    return [x, ringHeight(byte, !!landform, fade) + state.pixelTranslation(px.x, px.y)[1] + lift, z];   // LANDFORM1: the raised massif
+    return [x, ringGroundAt(px.x, px.y, ground ? (bx, by) => woods.getHeightMapValue(bx, by) : () => 0, !!landform) + state.pixelTranslation(px.x, px.y)[1] + lift, z];   // LANDFORM1: the raised massif; BREATHTAKER2: and the continent's lift; AUDIT LANDFORMS II I1: faded beside the sea - as the ring stands it
   };
   /** TV4 (AUDIT TV D3): the land's height at a scene point - the built grid's, the far ring's past it. */
   // AUDIT DEEP R-4: on the SEA, its surface (and the margin with it - the sea is flat and known): the seabed Deep Waters
@@ -30604,46 +29634,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // but the seabed lies under the sea, and land over it cuts the veil by its own depth
     return Math.max(g, tvSeaY() + CURTAIN_FOOT_MARGIN_M);
   };
-  /** OW-HUBS (FIELD BUGS 2026-10-04e): a town with a carriage at its gate, by its map id - while Immersive Travel is
-   *  loaded (online it is always). Kept per id until the location index moves (a spawn stood or taken back). */
-  const _carriageOf = new Map();
-  let _carriageGen = -1;
-  const carriageTown = (mapId) => {
-    if (!immersiveTravelLoaded() || !Number.isFinite(mapId)) return false;
-    if (_carriageGen !== _locIndexGen) { _carriageOf.clear(); _carriageGen = _locIndexGen; }
-    const id = mapId & 0xfffff;
-    let on = _carriageOf.get(id);
-    if (on === undefined) { on = hasCarriageGate(locationIndex.get(`${id % 1000},${Math.floor(id / 1000)}`)); _carriageOf.set(id, on); }
-    return on;
-  };
-  // ETHER-OW (2026-10-13, the owner: "Also allow the player to zoom out into the overworld like in the Iliac Bay for easy
-  // travel"): THE ISLES' PLACES ON THE OVERWORLD. Past the Veil no place is a row of the Bay's dictionary - an isle's town
-  // or ruin is its own (world/etherPlaces.js), the index's once its pixel has built, else its clone, marked and never
-  // stood (etherPlaceClone). KNOWN as the Eltheric knows a place: its isle on the captain's charts (etherHost.js `sight`
-  // within three pixels, a harbourmaster's chart, a corsair's papers - the chart's own isles), or the place found.
-  const tvEtherPlace = (px, py) => { const isle = etherPlaceIsle(px, py); return isle ? (locationIndex.get(`${px},${py}`) ?? etherPlaceClone(isle)) : null; };
-  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether) || hasDiscoveredLocationId(loc.mapTableData.mapId);
-  /** AUDIT ETHER-OW C2-2: WHAT IS KNOWN, as the Overworld's lists key it - DFU's finds and the captain's charts: an isle
-   *  charted by sight, a harbourmaster's chart or a corsair's papers is a plate at once, never a pixel later. */
-  const tvKnownGen = () => `${discoveryGeneration()}:${captainLedger.chartedCount()}`;
-  const tvPlaceSummary = (px, py) => {
-    // ETHER-OW: past the Veil, an isle's place - known, it is its own summary (HALL-JOURNEY's way), its region the isles'
-    if (etherSea && inEther(px, py)) {
-      const loc = tvEtherPlace(px, py);
-      return loc && tvEtherKnown(loc) ? { pixel: { x: px, y: py }, name: loc.name, mapId: loc.mapTableData.mapId, regionIndex: loc.regionIndex, locationIndex: loc.locationIndex, loc } : null;
-    }
-    // HALL-JOURNEY (2026-10-08, the owner: "when i want to travel there with begin journey nothing happens"): a zone hall
-    // is no row of the map's dictionary (it is spawned, by the day) - it is its own summary, always known, so the
-    // Overworld walks to its door as to any place's
-    const hall = wildHallAt(wildActiveNow(), px, py) ? wildHallStand(px, py) : null;
-    if (hall) return { pixel: { x: px, y: py }, name: hall.name, mapId: spawnedHallMapId(px, py), regionIndex: maps.getRegionIndexAt(px, py), locationIndex: -1, loc: hall };
-    const loc = locationIndex.get(`${px},${py}`);
-    const row = loc?.name ? travelLocationSummaryAt(mapDict, px, py) : null;
-    if (!row || !travelCheckDiscovered(row)) return null;   // DFU's own law: an undiscovered place has no name to go to
-    return { pixel: { x: px, y: py }, name: loc.name, mapId: row.mapID, regionIndex: row.regionIndex, locationIndex: row.mapIndex, loc };
-  };
+  const { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt } = createMapPlaces({   // HOST-SPLIT: src/scenes/mapPlacesHost.js
+    captainLedger, etherPlaceClone, etherSea, locationIndex, mapDict, wildActiveNow, wildHallStand,
+    provinceQuestPlaces, worldPlaces,   // BAY-LEFT-MAPS: a place past the Bay stood where it was found; TV5's near query
+    get _locIndexGen() { return _locIndexGen; },
+  });
   const tvPlaceRect = (summary) => {
-    const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);
+    const r = summary.lightRect?.() ?? locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);   // BAY-LEFT-MAPS: a place past the Bay not standing yet - its row's grid (scenes/mapPlacesHost.js pendingSummary)
     return { minX: r.minX - TV_PLACE_GROW, maxX: r.maxX + TV_PLACE_GROW, minZ: r.minZ - TV_PLACE_GROW, maxZ: r.maxZ + TV_PLACE_GROW, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2 };
   };
   // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
@@ -30656,6 +29653,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  at the port, travelRoute.js VOYAGE_LANDFALL_PX), and `voyage` - a booked passage's - refuses a plan that never sails
    *  (`noWay` says so): a coast road was the cheaper way and the passenger was set ashore at the quay they paid to leave. */
   function travelViewRouteTo(summary, { roads = false, voyage = false, noWay = null } = {}) {
+    return planJourney(() => {   // PLAN-SLICES: its plans a slice of cells at a time - it goes on when they land
     const from = playerTravelPixel();
     // AUDIT DEEP T2-7: Hazelnut's bytes or none - the port's own generated network (Basic Roads off) is not his mod's, as
     // the follow key and the static's paths already hold (`source`): with none, the journey goes across country
@@ -30686,6 +29684,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvTrip.end = { x: rect.cx, z: rect.cz, label: summary.name, kind: 'dest' };
     tvTrip.line = travelTripLine({ name: summary.name, share: roadShare(plan.kinds), sea: crossesWater(plan.kinds) });
     return true;
+    });
   }
   /** A leg's pixel middle, native - the drawn route's point for a leg with no join of its own (routeDrawPoints). */
   const tvLegMid = (p) => { const o = mapPixelToWorldCoords(p.x, p.y); return [o.x + 16384, o.z + 16384]; };
@@ -30728,7 +29727,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     (_tvRouteGround ??= routeGround(
       (x, y) => (tvWildFree(x, y) && woods.getHeightMapValue(x, y) > WATER_BYTE ? 0 : maps.getClimateIndex(x, y)),
       (x, y) => { const h = woods.getHeightMapValue(x, y); return tvWildFree(x, y) && h > WATER_BYTE ? WATER_BYTE + 8 : h; },   // inside the zone: flat dry ground, water still water
-      WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y))).setRocks(tvWodRocks());   // TV-BEYOND: the land past the Bay walked, as the view shows it
+      WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y), undefined, rumareSeaPixel)).setRocks(tvWodRocks());   // TV-BEYOND: the land past the Bay walked, as the view shows it; RUMARE-WATER: the Imperial City's lake sailed
     return _tvRouteGround;
   };
   /** OW-ROADSIDE (2026-09-28, Mac: routes "appear traveling alongside" the road): a route whose first step is a road's (or
@@ -30783,6 +29782,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   /** OW-TOWN-ROUND: `outside` - a click on the ground: a spot in a town (not its middle, pickNearPlaceMiddle) is put out
    *  on the town's ring unless the traveller stands in the town already (travelOptions.js spotOffTownFor). */
   function travelViewWalkTo(point, pix, { door = null, water = false, roads = false, outside = false } = {}) {
+    return planJourney(() => {   // PLAN-SLICES: as travelViewRouteTo's
     let n = outside && !water ? spotOffTownFor(state.worldCoords(point), tvTownRects(pix.x, pix.y), state.worldCoords(player.pos)) : state.worldCoords(point);
     if (!door && !water && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too
     // OW-MOUNTAINS: to the spot's pixel round the peaks (the roads where they help), then to the spot itself
@@ -30819,6 +29819,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvTrip.end = { x: n.x, z: n.z, label: '', kind: 'target' };
     tvTrip.line = travelTripLine({ spot: true, sea: !!plan && crossesWater(plan.kinds) });
     return true;
+    });
   }
   /** OW-ONLY: a Travel Options journey on the enhanced interface is the Overworld's - raised, silently, the frame nothing
    *  forbids it (no window, no foe, the view's own gate), whoever began it (the map, its resume, the follow key). */
@@ -30883,19 +29884,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     return tvSeaParts() ? { start: 'land', again: true, boat: null, how: 'parts' } : null;
   }
-  /** AUDIT OW5 S3 (the audit before the merge): A MOORED BOAT IS TAKEN ONLY WHERE THE ROUTE PUTS TO SEA. A boat moored in
-   *  reach starts the search afloat (`start: 'sea'`), so a trip with no water on the way was begun at its helm - boarded,
-   *  landed at once and packed (a crewed ship left moored), the bar saying "by sea" - before the walk began. A plan whose
-   *  steps never sail is planned again on land (`replan`), and that one taken when there is one: the boat left where it
-   *  lies. Null: keep the plan as it is. */
-  function tvMooredDry(means, plan, replan) {
-    if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;
-    return replan();
-  }
-  /** The planner's ask: where the traveller starts, whether a landfall packs the boat, where the journey ends - and
-   *  PASSAGE: whether it is a booked ship's voyage (ashore at its port, never packed); the means' other fields ride
-   *  along unread (travelRoute.js planRoute reads `start`, `again`, `goal` and `voyage`). */
-  const tvSeaAsk = (means, goal) => (means ? { ...means, again: means.again && !means.voyage, goal } : null);
+  // OWS2's two asks of the planner, tvMooredDry and tvSeaAsk: systems/travel/seaAsk.js (PLAN-SLICES, out of the host)
   /**
    * SHIP-SAIL (2026-09-28, Mac, of the Overworld taking the map's ship passage itself: "Shouldn't it already function
    * as such?"). The Overworld sails the player's own boats (OWS2); the map sells Daggerfall's passage. A PLACE across
@@ -31265,8 +30254,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (key.startsWith('wp:')) { travelViewWaypointWalk(key.slice(3)); return; }   // WAYPOINTS: a flag - a walk to it
     if (key === 'dest') { const summary = tvTripLive() ? tvTrip.plan?.summary : null; if (summary && travelViewCanGo()) travelViewRouteTo(summary); return; }
     if (key.startsWith('spawn:')) { travelViewSpawnWalk(key); return; }   // AUDIT OW3 D1: a spawn's plate - a walk to its door
-    const qp = /^quest:(\d+),(\d+)$/.exec(key);   // OW-QUEST: a quest's diamond - its place, by the roads, wherever on the map it lies
-    const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2])) } : tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
+    const qp = /^quest:(-?\d+),(-?\d+)$/.exec(key);   // OW-QUEST: a quest's diamond - its place, by the roads, wherever on the map it lies (BAY-LEFT-MAPS: west and north of the Bay's corner too, the place the quest names)
+    const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2]), true) } : tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
     if (plate?.summary && travelViewCanGo()) travelViewRouteTo(plate.summary);
   }
   /** The known places whose pixels lie in the view's reach (the grid's own radius), rebuilt when the traveller's pixel
@@ -31291,15 +30280,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // TV5 (2026-09-28, Mac: "Edge markers"; systems/travel/travelFarPlaces.js): THE FAR PLACES - the discovered settlements past
   // the grid, nearest first, rebuilt when the traveller's pixel (or the grid's reach) changes; each a plate held at the
   // screen's edge, its distance under its name, a click a journey there by the roads.
-  let _tvSettlements = null;   // the world's settlements, gathered once, the first time the view asks
   function travelViewFarPlaces() {
     const at = playerTravelPixel();
     const near = Math.max(1, state.terrainDistance ?? 3);
     const dg = tvKnownGen();   // AUDIT DEEP2 B-3: and a far one found (a quest, a map) stands at the edge at once (AUDIT ETHER-OW C2-2: or charted)
     if (tvFar.at && tvFar.at.x === at.x && tvFar.at.y === at.y && tvFar.near === near && tvFar.dg === dg) return tvFar.list;
-    // ETHER-OW: the map's settlements (gathered once - never an isle's, which the index holds only once built), and past the
-    // Veil the port isles within the edge's range
-    const settlements = (_tvSettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether));
+    // ETHER-OW: the map's settlements (never an isle's, which the index holds only once built), and past the Veil the port
+    // isles within the edge's range. BAY-LEFT-MAPS: the Bay's gathered once, and past the Bay a near query - the registry's
+    // towns and the countryside's the roads laid (scenes/mapPlacesHost.js tvFarSettlements; it was one snapshot of the index)
+    const settlements = tvFarSettlements(at);
     const list = farPlaces({ at, near, settlements: etherSea && inEther(at.x, at.y) ? [...settlements, ...etherPlaceRows(at, TV_FAR_RANGE, 'port')] : settlements, summaryOf: tvPlaceSummary })
       .map((f) => { const rect = tvPlaceRect(f.summary); return { key: f.key, summary: f.summary, x: rect.cx, z: rect.cz }; });
     tvFar = { at, near, dg, list };
@@ -31312,45 +30301,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // live index (streaming and the spawns change it: a spawn in it at the first ask stood for good, a later one never
   // did); the index is read afresh for each list, and the list is filtered before its twelve are taken (nearDungeons)
   let _tvDungeonRows = null;
-  /** ETHER-OW: THE DUNGEONS TV6's law reads about the traveller - the map's rows, and past the Veil the ruin isles within
-   *  `range` (their places' own rows, world/etherPlaces.js etherPlaceRows) - and what stands on a row's pixel: the
-   *  index's, else past the Veil the isle's place (tvEtherPlace: marked, never built). */
-  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {
-    const bay = (_tvDungeonRows ??= dungeonRows(mapDict));
-    return etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;
-  };
-  const tvDungeonAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (etherSea && inEther(x, y) ? tvEtherPlace(x, y) : null);
-  /** AUDIT OW3 D1: what the spawned feature has told the player of a spawn - its pixel's line (announceNearbySpawns, this
-   *  session), or the pixel entry's filing in the store (syncTopics' discoverLocation, the same crossing, saved): the
-   *  store's is its name too. Nothing else - a spawn not yet said is not marked (that feature never says one next door). */
-  const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId);
-  const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);
-  /** AUDIT OW4 D4: the found spawns within the far range that the index does not hold (filedSpawns) - online alone, as
-   *  the spawns are (spawnedDungeonAt's own gate). The store files a spawn under its pixel's id (spawnedMapId). */
-  const tvFiledSpawns = (at) => (params.has('online') ? filedSpawns({ at, rolls: (x, y) => spawnsDungeon(_spawnSalt, x, y),
-    filed: (x, y) => hasDiscoveredLocationId(spawnedMapId(_spawnSalt, x, y)), indexed: (x, y) => locationIndex.has(`${x},${y}`), stand: tvSpawnAt }) : []);
-  function travelViewDungeons() {
-    if (typeof _tvListsReady !== 'undefined' && !_tvListsReady) return [];   // BOOT-TDZ II (typeof: a slice lifted without the flag reads as standing)
-    const at = playerTravelPixel();
-    const dg = tvKnownGen();   // AUDIT ETHER-OW C2-2: the finds and the charts
-    // AUDIT OW3 D1/D3: and the grid's reach (what TV2 plates), and the index's churn - a spawn comes as its pixel streams
-    // and goes when its time runs out or a road takes it back, on a pixel the traveller has not left (AUDIT OW4 D5: its
-    // generation - the size missed one spawn gone and another come in the same window)
-    const grid = Math.max(1, state.terrainDistance ?? 3), n = _locIndexGen;
-    // AUDIT OW4 D2: and time - a kept spawn whose clock has run out since is dropped now, asked of the kept list each time
-    if (tvDng.list.some((g) => g.spawn && tvSpawnGone(g.px, g.py))) tvDng.at = null;
-    if (tvDng.at && tvDng.at.x === at.x && tvDng.at.y === at.y && tvDng.dg === dg && tvDng.grid === grid && tvDng.n === n) return tvDng.list;
-    const dungeons = tvDungeonRowsAt(at), locAt = tvDungeonAt, isFound = (x, y) => !!tvPlaceSummary(x, y);
-    const placed = (g) => {
-      const r = locationWorldRect(g.loc, g.x, g.y);
-      return { key: g.key, row: g.row, loc: g.loc, found: g.found, spawn: g.spawn, summary: g.found && !g.spawn ? tvPlaceSummary(g.x, g.y) : null,
-        px: g.x, py: g.y, x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2, rect: r };
-    };
-    const list = nearDungeons({ at, grid, dungeons, locAt, isFound, spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)], spawnKnown: tvSpawnKnown,
-      spawnFound: tvSpawnFound, spawnGone: (s) => tvSpawnGone(s.x, s.y) }).map(placed);
-    tvDng = { at, dg, grid, n, list };
-    return list;
-  }
+  const { travelViewDungeons, tvDungeonAt, tvDungeonFound, tvDungeonRowsAt, tvFiledSpawns, tvSpawnFound, tvSpawnKnown } = createTravelViewDungeons({   // HOST-SPLIT: src/scenes/travelViewDungeonsHost.js
+    _announcedSpawnPixels, _spawnSalt, etherSea, locationIndex, mapDict, params, playerTravelPixel, state,
+    tvEtherPlace, tvKnownGen, tvPlaceSummary, tvSpawnAt, tvSpawnGone,
+    provinceQuestPlaces,   // TVD-WORLD: the lairs past the Bay on the Overworld (systems/travel/travelLairs.js)
+    get _locIndexGen() { return _locIndexGen; },
+    get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; },
+    get _tvListsReady() { return _tvListsReady; },
+    get tvDng() { return tvDng; }, set tvDng(v) { tvDng = v; },
+  });
   const { drawTvDungeonModels, dropTvDungeonModels } = createTravelViewDungeonModels({   // HOST-SPLIT: src/scenes/travelViewDungeonModels.js
     _tvDngModel, arch, archAabb, blocks, built, cpuModels, locationIndex, maps, pipeline, playerTravelPixel,
     renderer, state, tileSide, tvDungeonAt, tvDungeonRowsAt, tvFiledSpawns, tvGroundAt, tvGroundGenNow, tvKnownGen,
@@ -31369,10 +30328,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  the Overworld for such a keep is travelDungeons.js nearDungeons' own). */
   function travelViewFindList() {
     if (typeof _tvListsReady !== 'undefined' && !_tvListsReady) return [];   // BOOT-TDZ II (typeof: a slice lifted without the flag reads as standing)
-    const at = playerTravelPixel(), dg = tvKnownGen(), n = _locIndexGen;   // AUDIT ETHER-OW C2-2: the finds and the charts
+    const at = playerTravelPixel(), dg = tvKnownGen(), n = `${_locIndexGen}:${tvDungeonRowsAt.gen()}`;   // AUDIT ETHER-OW C2-2: the finds and the charts; TVD-WORLD: and the lairs past the Bay still owed
     if (tvFind.at && tvFind.at.x === at.x && tvFind.at.y === at.y && tvFind.dg === dg && tvFind.n === n) return tvFind.list;
     const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),
-      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {
+      locAt: tvDungeonAt, isFound: tvDungeonFound }).filter((g) => !g.found).map((g) => {   // TVD-WORLD: a lair past the Bay found by its own id
       const r = locationWorldRect(g.loc, g.x, g.y);
       return { key: g.key, row: g.row, loc: g.loc, found: false, spawn: false, x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2 };
     });
@@ -31513,10 +30472,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const bandNight = (ms) => { const m = ((online ? skyClassicMinutes(ms) : skyMinutes()) % 1440 + 1440) % 1440; return m < 360 || m > 1080; };   // TIME1: the sky's night at the instant given (the life's middle) - a pure function of the relay's ms, the same for every player
   /** The land a band may stand on: a map pixel with no water and no place in it (native units). ETHER-OW (2026-10-13, the
    *  owner: "Enemies should show on the world map just like in the bay"): the Bay's map or the Eltheric Ocean's box
-   *  (ethericSea.js onBayOrEther, the nodes' own ground) - an isle's land, never its town's or its ruin's pixel. */
+   *  (ethericSea.js onBayOrEther, the nodes' own ground) - an isle's land, never its town's or its ruin's pixel. AUDIT TESA
+   *  II F6: and the land past the Bay (systems/tamrielFauna.js bandGroundPastBay - its zone's wild, off its places). */
   const bandOk = (x, z) => {
     const px = Math.floor(x / 32768), py = 499 - Math.floor(z / 32768);
-    return onBayOrEther(px, py) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2
+    return (onBayOrEther(px, py) || (tamrielLand && bandGroundPastBay(px, py, tamrielPlaceName))) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2; AUDIT TESA II F6: and the land past the Bay, off its places
   };
   function travelViewBands() {
     const at = bandPixelOf(playerTravelPixel()), ms = bandNowMs(), life = Math.floor(ms / BAND_LIFE_MS);   // AUDIT OW4 B1: the bands' own rows
@@ -31538,14 +30498,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   }
   /** A band's make, once: the themed group its seed rolls from its birthplace's table (the climate x day/night). */
   /** PVPDUNGEONS: was this pixel in the open zone (the mask every client builds alike - a band's size is the same everywhere)? */
-  function wildBornHere(px, py) { const m = wildMaskOf(maps); return (!!m && wildInside(m, px, py)) || (etherSea && _onlineWorldSession() && etherWildRingAt(px, py) > 0); }   // ETHER-WILD: the open sea's packs too, online
+  function wildBornHere(px, py) { const m = cyrodiilMask(); return (!!m && wildInside(m, px, py)) || (etherSea && _onlineWorldSession() && etherWildRingAt(px, py) > 0); }   // ETHER-WILD: the open sea's packs too, online
   function bandMake(b) {
     if (_bandMake.has(b.id)) return _bandMake.get(b.id);
     const px = Math.floor(b.born.x / 32768), py = 499 - Math.floor(b.born.z / 32768);
     // OW6 (the player: "Enemies should spawn in varying numbers"; "Everything needs that persistence between players in the
     // overworld"): its NUMBER its own roll (one to six), and online its tables read at the BAND's own level - every player
     // the same band, the same kind and number over it (each viewer's own level made two players read two bands)
-    const hit = rollGroupComposition({ climateIndex: maps.getClimateIndex(px, py), playerLevel: online ? bandLevelOf(b) : playerEntity.level, inLocationRect: false,
+    const hit = rollGroupComposition({ climateIndex: maps.getClimateIndex(px, py), fauna: maps.getFaunaBand?.(px, py), playerLevel: online ? bandLevelOf(b) : playerEntity.level, inLocationRect: false,
       gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, seededRng(bandMakeSeed(b)));   // PVPDUNGEONS: a pack born in the zone is four times as many   // AUDIT OW3 T7-4: its own stream; T7-8: its life's night
     const mk = hit?.mobileTypes?.length ? { mobileTypes: hit.mobileTypes, name: enemyDisplayName(hit.mobileTypes[0]) } : null;
     _bandMake.set(b.id, mk);
@@ -31821,7 +30781,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  and a column off it read the PAK's first for its climate: a raider was born a pixel past the map's edge. AUDIT
    *  ETHER-OW C2-3: past the Veil only where the sea fight stands her as a ship - the mod's raid boards the Bay's. */
   const tvRaidOpen = (px, py) => {
-    if (!onBayOrEther(px, py) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;
+    if (!onWorldSea(px, py, tamrielLand) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;   // WW3: and the sea past the Bay where its land stands (scenes/naval/worldLanes.js onWorldSea)
     if (inEther(px, py) && !navalRaidersOn()) return false;   // AUDIT ETHER-OW C2-3
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!tvWater(px + dx, py + dy)) return false;
     return true;
@@ -31832,7 +30792,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  it all was water: a raider sailed off the world). */
   const tvRaidSea = (x, z) => {
     const px = Math.floor(x / RAID_NATIVE_PIXEL), py = 499 - Math.floor(z / RAID_NATIVE_PIXEL);
-    return onBayOrEther(px, py) && tvWater(px, py);
+    return onWorldSea(px, py, tamrielLand) && tvWater(px, py);   // WW3
   };
   /** The raiders about the traveller at the shared clock, read again each TV_RAID_LIST_MS. */
   function travelViewRaiders() {
@@ -31966,9 +30926,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // knows each ship by her seeds wherever her clock puts her - one fallen behind her place, as the wind leaves a ship
   // short of her schedule's way, was let go beside the player once the place left a list of the near ones); it stands
   // and steers them (scenes/naval/navalHost.js liners).
-  const LANE_LIST_MS = 2000, LANE_NEAR_PX = 4;
-  let _laneAt = -Infinity, _laneNet = null;
-  const _laneWays = new Map();
+  const LANE_LIST_MS = 2000;
+  let _laneAt = -Infinity;
   /** A map pixel of the lanes' water - the Ocean climate's at the shore's byte - the lanes' and the roadsteads' water.
    *  NOT the open sea (FIELD BUGS 2026-10-14 INLAND-PORTS measured it): 331 pixels of the map's lakes carry the Ocean
    *  climate, so the towns on a lake run their packets on it - the lake harbours' own traffic, which stays (Mac,
@@ -31976,21 +30935,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  (none in 3,650 days); a reader that means the open sea asks `openSea`. */
   const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py) && maps.getClimateIndex(px, py) === CLIMATES.Ocean;
   const laneOpenNative = (x, z) => { if (!(x >= 0 && z >= 0 && x < 1000 * RAID_NATIVE_PIXEL && z < 500 * RAID_NATIVE_PIXEL)) return false; const p = pixelOfNative(x, z); return laneOpen(p.x, p.y); };
+  // WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S LANES (scenes/naval/worldLanes.js) - the Bay's, between its ports
+  // over its water, as they always were; and the sea's past it, between the world's ports (world/worldWide/worldPorts.js)
+  // over the continent's sea where its land stands - one book of both, each lane's way kept once
+  const worldLanes = createWorldLanes({ mapDict: () => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => tamrielLand });
   _lanesReady = true;   // BOOT-TDZ II: every binding the lanes read stands from here (raidNowMs above it)
-  /** The lanes of the whole map - every client's the same - made once. */
-  function laneNet() {
-    if (!_laneNet) {
-      const ports = [];
-      for (const id of new Set(PORT_LOCATION_IDS)) {
-        const summary = mapDict?.get(id & 0x000fffff);
-        if (!summary) continue;
-        const at = getPixelFromPixelID(summary.id);
-        ports.push({ id: summary.id, name: maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null, px: at.x, py: at.y, region: summary.regionIndex });   // AUDIT BAY A8: her names her home port's region's
-      }
-      _laneNet = laneNetwork(ports, laneOpen);
-    }
-    return _laneNet;
-  }
+  /** The lanes of the whole world - every client's the same: the Bay's, then the ones past it. */
+  function laneNet() { return worldLanes.all(); }
   function laneShips() {
     const t = performance.now();
     if (t - _laneAt < LANE_LIST_MS || !naval?.enabled || !mapDict) return;
@@ -31999,18 +30950,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const list = [];
     const portOf = (p) => (p ? { key: `port:${p.id}`, name: p.name } : null);   // her harbour's key, as navalHarbourNear's
     for (const lane of laneNet()) {
-      // every point of a way lies within half its longest of one of its ports: a ship on it within reach of the player
-      // has a port within this
-      const near = (p) => Math.hypot(p.road.x - here.x, p.road.y - here.y) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;
-      if (!near(lane.a) && !near(lane.b)) continue;
-      let way = _laneWays.get(lane.key);
-      if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); }
+      // a ship on a lane within reach of the player: its ports near enough (scenes/naval/worldLanes.js near - AUDIT TESA II
+      // P7: past the Bay its own law, its ways hundreds of pixels long)
+      if (!worldLanes.near(lane, here)) continue;
+      const way = worldLanes.way(lane);
       if (!way) continue;
       const out = way.pts.map((q) => state.localFromWorld(q.x, q.z)), home = [...out].reverse();   // her legs in the scene (AUDIT BAY A6)
       for (const p of packetsAt(lane, way, ms)) {
         const [x, z] = state.localFromWorld(p.at.x, p.at.z);
         const [dx, dz] = state.localFromWorld(p.at.x + p.dir.x, p.at.z + p.dir.z);
-        list.push({ id: p.id, seed: p.seed, seeds: p.seeds, classId: p.cls.id, region: p.region, phase: p.phase, pos: [x, 0, z], yaw: Math.atan2(dx - x, dz - z),
+        list.push({ id: p.id, seed: p.seed, seeds: p.seeds, classId: p.cls.id, region: p.region, area: lane.a.area ?? -1, phase: p.phase, pos: [x, 0, z], yaw: Math.atan2(dx - x, dz - z),
           leg: p.leg === way.pts ? out : home, port: portOf(p.port), to: portOf(p.to), from: portOf(p.from) });
       }
     }
@@ -32057,14 +31006,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const j = travelOptions.route?.join, sw = travelOptions.route?.street?.pts.slice(travelOptions.state?.autopilot?.seg ?? 0) ?? [];
     let at = me;
     for (const q of j ? [...sw, j] : sw) { leg(at.x, at.z, q.x, q.z, pts); at = q; }
-    leg(at.x, at.z, n[start][0], n[start][1], pts);   // the traveller's own leg moves with them
+    drawOwnRun(at, n[start], j || travelOptions.route?.street ? 0 : travelOptions.state?.autopilot?.seg, leg, pts);   // the traveller's own leg moves with them (ROAD-FOLLOW: on the road's curves still ahead)
     // PERF-TV: the legs past it are the same every frame - kept while the ground and the leg being walked hold (a long
     // road re-read hundreds of terrain points a frame)
     const gen = tvGroundGenNow(), kept = tvTrip._tail;
     let tail = kept && kept.gen === gen && kept.start === start && kept.n === n ? kept.pts : null;
     if (!tail) {
       tail = [];
-      for (let i = start + 1; i < n.length; i++) leg(n[i - 1][0], n[i - 1][1], n[i][0], n[i][1], tail);
+      drawRouteRuns(n, start, leg, tail);   // ROAD-FOLLOW: each leg along the painted road (systems/travel/roadLine.js)
       tvTrip._tail = { gen, start, n, pts: tail };
     }
     for (const p of tail) pts.push(p);
@@ -32228,7 +31177,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const want = journey ? travelAsked : walk;   // AUDIT TV A2: what the mod asked - its ground's rate under its own cap (RATE-LAW); TV-WASD: or the keys' travel
     const load = travelGovernor.step(dt, { unbuilt, requested: want, owed: uc.owed, feet: unbuilt ? state.worldCoords(player.feetAt()) : null, speedMps: travellerPace(player, csaBoatUnderMe()) });   // OW-LEAD: held by how near the nearest owed pixel is, at the traveller's own pace - PASSAGE-PACE: a boat's at her helm
     const foeCap = foes.strangerRate ? Math.min(foeRate(foes, want), foes.strangerRate) : foeRate(foes, want);   // ENEMY-PACE: the enemies' cap, never under the near-enemy pace (RATE-LAW: fixed)
-    const town = tvInTown() ? TOWN_PACE_MAX : Infinity;   // OW-TOWN-WALK: in a town, a town's pace - a journey's own streets ask it already, the keys' travel is held to it
+    const town = tvTownPace() ?? Infinity;   // OW-TOWN-WALK: in a town, its pace - a journey's own streets ask it already, the keys' travel is held to it
     const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower
     if (worldTimeScale() !== rate) setWorldTimeScale(rate);
     tvHeld = rate < want ? rate : null;
@@ -33660,6 +32609,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const chunkCampHits = rollCampEncountersOnChunkLoad({
           inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),   // DISC19-F: the pixel just entered, not the one syncTopics last resolved
           climateIndex: maps.getClimateIndex(r.current.x, r.current.y),
+          fauna: maps.getFaunaBand?.(r.current.x, r.current.y),   // TESA-BIOME: past the Bay its zone's wild
           playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2
           // CAMP-SEA (2026-09-26, SquidKamer: "I jumped in last night and it summoned an army of everything"): the deep's
           // own suppression and the lone roll's swim gate, asked HERE - the frame's flag is written after this crossing and
@@ -33797,6 +32747,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_wodLate.size && !building) sweepWodLate();   // WOD6: a late region's pixels, the same way
     if (!building) sweepGateClear();   // GATE-CLEAR: the gate the clock is about turned - its clearing in, the last one's rock back
     if (_sdLate.size && !building) sweepSdLate();   // SD2b: the Hollow's pixel, the same way
+    if (_tamrielRoads) _tamrielRoads.frame(state.current);   // TESA14: the roads past the Bay, as the places that stand move
+    if (_arenaTemplates && !building) sweepArenaPixels();   // TESA2: Arena's places landed or changed - their pixels, the same way
+    if (_capitalBase && !building) sweepCapitalPixels();   // TESA10: the fit or the land moved - the capitals' pixels, the same way
+    if (!building) beyondSites.refresh();   // BAY-LEFT-GROUND (D1): the places past the Bay moved - their sites, and the pixels they reach built again
+    if (_arenaRoadsStale.size && !building) sweepArenaRoads();   // TESA4: and their roads
     if (seasonsActive) seasons.tick();   // SIB1: RefreshSeasonAfterLoad's second half, the frame after a load
     refreshHomeLooks();   // HOME-LOOK: a look landed or changed repaints the home where it stands
     // W1/S41: the DRAIN ticks on the exterior frame, which is
@@ -33805,6 +32760,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // lands on the first frame back out. The ROLL is the entity tick's
     // day block, and runs wherever the player is. A pinned ?weather
     // never ticks.
+    const frameWeatherDrain = () => {   // PERF-V8
     if (!weatherOverride) {
       const _pp = playerTravelPixel();
       const drained = tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(_pp.x, _pp.y));
@@ -33814,6 +32770,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // this host's derived lets - re-derive whenever they disagree
       if (weatherStale()) applyWeather(shownWeather());
     }
+    };
+    frameWeatherDrain();
     const frameSnowCover = () => {   // PERF-V8 (at the merge of main into SEA VENTURES: the frame back under three quarters of the ceiling)
     { const _sp = playerTravelPixel(); snowCover.tick({ px: _sp.x, py: _sp.y, dt, arriving: !playerSpawned }); renderer.setSnowFrame(snowCover.frame()); }   // PRECIP4: the snow the ground keeps, about the player - its window integrated, its lines eased, the standing pixels swept
     };
@@ -33965,11 +32923,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const etherAirW = etherPx && inEther(etherPx.x, etherPx.y) ? 1 : 0;
     // AUDIT CAPTAIN'S SEA G14: and the third, Masser's key, leaned as the sun's (it lit land, sea and hulls past the Veil in
     // the Bay's colour) - the moon as it is under no lean, nothing made
-    renderer.setMoonlight(moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow);
+    renderer.setMoonlight(canopyMoon(moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow, jungle?.canopy));   // VALENWOOD-CANOPY: under the leaves the moon's key with the sun's
     const frameLighting = () => {   // PERF-V8
     renderer.setLighting(
-      etherLight(sdBrassLight(sunbabyLight(dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW), etherAirW), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * skyDreadW),   // EVENT1: the land under the dread's light; SUNBABY1: lifted toward noon's under the sun baby (SUNBABY2: reddened under its wrath)   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
-      etherLight(sdBrassLight(sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW), etherAirW, ETHER_KEY_TINT));   // SUNBABY2: the key reddened under the wrath; SD19: brass near a Hollow
+      canopyLight(etherLight(sdBrassLight(sunbabyLight(dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW), etherAirW), jungle?.canopy), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * skyDreadW) * canopyKey(jungle?.canopy),   // VALENWOOD-CANOPY: under a closed canopy the ambient dimmed and greened, the key taken   // EVENT1: the land under the dread's light; SUNBABY1: lifted toward noon's under the sun baby (SUNBABY2: reddened under its wrath)   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
+      canopyLight(etherLight(sdBrassLight(sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW), etherAirW, ETHER_KEY_TINT), jungle?.canopy, 0));   // VALENWOOD-CANOPY: the key leaned green through the leaves (its strength is the scale's)   // SUNBABY2: the key reddened under the wrath; SD19: brass near a Hollow
     };
     frameLighting();
     // DW-C: the distance fog's own "under" (UnderwaterDistanceFog.TryGetUnderwaterPresentation) - the surfaces'
@@ -34585,7 +33543,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (rrEnabled()) {
           const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
           const armRec = arm ? (topicTree.listBuildings ?? []).find((b) => b.buildingKey === arm.buildingKey) : null;
-          if (arm && armRec) discoverBuilding(`${_musicLoc.regionIndex}:${_musicLoc.name}`, armRec, arm.name);   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
+          if (arm && armRec) discoverBuilding(townBookOf(_musicLoc), armRec, arm.name);   // BAY-LEFT-MAPS (C7 = E2): the one key-maker   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
         }
         // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
         // .PlayerGPS_OnEnterLocationRect primes the holiday text
@@ -34808,11 +33766,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const drawFalling = () => {
       wxEye32[0] = wxEye[0]; wxEye32[1] = wxEye[1]; wxEye32[2] = wxEye[2];   // RAIN-LEAK: filled here, not in the frame - PERF-V8's bytecode ceiling
       const precipShown = enhancedFront ? fx.shown : precipMode;
-      if (precipShown === 'sand') {
-        // WEATHER2d: THE SANDSTORM'S SAND - the wisps' program in the sand's look, the front's intensity its
-        // strength, on the one wind's rate and travel; the rain program never draws it
-        if (sand && !_dwPrecipOff) {
-          sand.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step, gust: wd.gust }, proj, view, wxEye32, now / 1000);
+      if (isDryFall(precipShown)) {
+        // WEATHER2d, ASHFALL1: THE DRY FALLS - the sand and the ash (render/dryFall.js) by the fall's kind, the front's
+        // intensity their strength, the one wind; Travel Options' weather off stands them down as it does the rain
+        if (dryFall && !_dwPrecipOff && (!_travelWeatherOff || tvf)) {
+          dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000, renderer.worldViewportPx?.[3]);
           renderer.markForeignPass();
         }
       } else if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up
@@ -34960,9 +33918,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // 0.25-0.72, so this is correctness rather than a fix anyone
         // would see; it is also the exact law a GPU-placed field has to
         // run, where there is no baked height to fall back on.
-        // `p._stride` is the ring class this pixel is drawn at, and the
-        // grass only stands on the stride-1 ring anyway.
-        const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);
+        // The grass only stands on the stride-1 ring, so its drawn ground
+        // is the ground's one law (FLORA-GROUND: the walker's and every
+        // plant's, terrainSurface.js walkGroundAt).
+        const h = walkGroundAt(p.samples, lx, lz);
         if (h <= sea) return null;
         if (snowCover.on && snowCover.buries(p, lx, lz, h + t[1])) return null;   // PRECIP4: no blade through the snow the ground shows there (AUDIT PRECIP HOST-9: at the blade's own height)
         return h + t[1];
@@ -35467,7 +34426,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3: the main cell's hand switch
           grip: player.gripShown,   // CLIMB2: the enhanced climb's grip - both HUDs draw it
           steed: _mode() === 'exterior' ? upkeep.bar(player.transportMode) : null,   // STEED1: the ridden horse's breath, in the grip's place
-          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),   // DUEL-BAR (FIELD BUGS 2026-10-19f, the owner: "Bar shows duel vitality"): the referee's vitality on both skins' bar while my duel is live, the save's at its end - display only
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
       csaDrawWindWidget();   // CSA-E: over the HUD
     }

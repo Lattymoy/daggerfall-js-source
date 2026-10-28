@@ -447,7 +447,8 @@
     "new": "  if (!seaBountyGoldOk(gold))",
     "tests": [
       "test/systems/sea/seabounty.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "SEA-BOUNTY-post-any-gold",
@@ -546,7 +547,8 @@
     "new": "  if (!regionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
     "tests": [
       "test/systems/sea/seabounty.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "SEA-BOUNTY-collect-paid-again",
@@ -893,8 +895,8 @@
   {
     "name": "SEA-BOUNTY-fall-no-kill",
     "file": "server-account/src/wild.js",
-    "old": "    ...seaKillSteps(ctx.db, sea, ctx.nowS),\n",
-    "new": "",
+    "old": "    // batch that writes the fall, or neither lands\n    ...seaKillSteps(ctx.db, sea, ctx.nowS),\n",
+    "new": "    // batch that writes the fall, or neither lands\n",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

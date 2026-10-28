@@ -20,7 +20,7 @@
   {
     "name": "SEAT-SAVES-seat-frame-never-checkpoints",
     "file": "src/scenes/world.js",
-    "old": "      checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());\n      peerBodies.destroy();",
+    "old": "      checkpointClock.frame(now);\n      peerBodies.destroy();",
     "new": "      peerBodies.destroy();",
     "tests": [
       "test/net/oneseat.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "SAVES-SAID-one-failure-said",
     "file": "src/systems/online/realmUnsavedNotice.js",
-    "old": "    if (at - failingSince < REALM_UNSAVED_SAY_AFTER_MS) return;",
-    "new": "",
+    "old": "    if (unsavedFor < REALM_UNSAVED_SAY_AFTER_MS) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/online/realmUnsavedNotice.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "SAVES-SAID-host-not-wired",
     "file": "src/scenes/world.js",
-    "old": "  if (realmSession) watchRealmUnsaved(realmSession, { say: (text) => townTalk.say(text) });",
-    "new": "",
+    "old": "say: (text) => townTalk.say(text), stands: () => _bootLoaded });\n  /** AUDIT PRE-MERGE 1003 O10",
+    "new": "say: () => {}, stands: () => _bootLoaded });\n  /** AUDIT PRE-MERGE 1003 O10",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

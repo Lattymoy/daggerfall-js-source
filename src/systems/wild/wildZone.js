@@ -7,25 +7,33 @@
 // better loot. Same goes for dungeons." - and, asked what "100% better" is: "twice gold and twice the dropchance for
 // rarity items and double drops".
 //
-// WHAT THE ZONE IS: every map pixel the POLITIC map gives to the Wrothgarian Mountains (MapsFile.getRegionIndexAt -
-// region 16, its known bad byte 105 folded in), and every place in it - its towns' streets and buildings, and its
-// dungeons. NEAR it: within WILD_NEAR_PX map pixels of its edge (the maps' hiding reaches that far, so a player cannot
-// be watched from just over the line).
+// WHAT THE ZONE IS: WW-C2 (2026-10-24, bible/03-World/World-Wide.md WW-C; the owner: "Cyrodil becomes the new open PvP
+// area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources
+// and everything else from the wrothgarian zone") - CYRODIIL, the Imperial Province past the Bay: every map pixel of its
+// land (systems/wild/cyrodiilZone.js, the province's own picture), and every place in it. It was the Wrothgarian
+// Mountains (region 16 of the Bay, the owner's cut, Wrothgaria kept out) from WILD1 to WW-C2: that zone is retired, the
+// mountains Daggerfall's own again. NEAR it: within WILD_NEAR_PX map pixels of its edge (the maps' hiding reaches that
+// far, so a player cannot be watched from just over the line).
 //
 // ONLINE ALONE: offline there is no other player, so no fight between players, no remains and no one to hide from -
-// and the zone's harder foes and richer loot are the price and the prize of that danger, so offline the mountains are
-// Daggerfall's own (the death penalty's law, systems/deathPenalty.js: "online mode only").
+// and the zone's harder foes and richer loot are the price and the prize of that danger, so offline the province is
+// the world's own (the death penalty's law, systems/deathPenalty.js: "online mode only").
 //
 // THIS FILE IS A LEAF: the region test, the mask the maps paint and hide by, the numbers, and the one live flag the
 // pools read at a spawn (`wildHere`, set by the world host each frame). It imports nothing but the text core (itself a
-// leaf - MAC, 2026-10-14: the escrow's words are the player's language's, L10N4), so every pool can read it.
+// leaf - MAC, 2026-10-14: the escrow's words are the player's language's, L10N4) and the region table (formats/, a leaf),
+// so every pool can read it. The province's own mask is cyrodiilZone.js's (the picture's law is not a leaf's).
 // ═══════════════════════════════════════════════════════════════════
 import { t } from '../textManager.js';
 import { isLetterOfCredit } from '../peerWord.js';   // BURNT-SAID: the letters a death took, by their worth
+import { CYRODIIL_REGION } from '../../formats/mapsTables.js';   // WW-C2: the zone's region, one home
+import { WILD_STORE_LOCK_MS, noteWildBlow, wildStoreRefusal, storeLockedText } from './wildStoreLock.js';   // AUDIT PVP-EASE L2-1: the combat lock
 
-/** The Wrothgarian Mountains - MapsFile's region index (mapsTables.js REGION_NAMES[16]). */
-export const WILD_REGION = 16;
-export const WILD_NAME = 'Wrothgarian Mountains';
+/** WW-C2: Cyrodiil - the Imperial Province's region past the Bay (formats/mapsTables.js CYRODIIL_REGION); the
+ *  Wrothgarian Mountains' 16 retired. */
+export const WILD_REGION = CYRODIIL_REGION;
+/** The zone's name as a sentence says it - a name of its own, no article ("You enter Cyrodiil"). */
+export const WILD_NAME = 'Cyrodiil';
 /** The owner's four: a foe's health and its blows. Elites and champions are built first and then this, so theirs too. */
 export const WILD_FOE_HEALTH_MULT = 4;
 export const WILD_FOE_DAMAGE_MULT = 4;
@@ -45,7 +53,7 @@ export const WILD_RING_LOOT = Object.freeze([1.25, 1.5, 1.75, 2]);
 /** A ring's loot multiplier (1-4; anything else the heart's - a caller that cannot say is never paid less). */
 export const wildRingLoot = (ring) => WILD_RING_LOOT[(ring | 0) - 1] ?? WILD_RING_LOOT[WILD_RINGS - 1];
 /** A ring's word for the maps and the HUD. */
-export const wildRingName = (ring) => ['The Foothills', 'The Passes', 'The High Crags', 'The Heart'][(ring | 0) - 1] ?? 'The Heart';
+export const wildRingName = (ring) => ['The Borderlands', 'The Wilds', 'The Heartlands', 'The Heart'][(ring | 0) - 1] ?? 'The Heart';   // WW-C2: Cyrodiil's, its border to the Imperial heart (the mountains' Foothills to High Crags retired)
 export const wildRingBonus = (ring) => `+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;
 /** "has to wait 2mins till respawn" - and a killer's body lies as long. */
 export const WILD_DEATH_HOLD_S = 120;
@@ -98,23 +106,6 @@ export const WILD_STRANGER_SEE_M = 1500;
 export const WILD_STRANGER_SLOW_M = 200;
 export const WILD_STRANGER_RGBA = Object.freeze([1, 0.23, 0.18, 1]);
 
-/**
- * The owner's cut (2026-10-07, drawn in red over the zone map): the zone is only the part of the Wrothgarian Mountains
- * inside this polygon, in fractions (u, v) of the region's own bounding box (0,0 = its top-left, 1,1 = bottom-right).
- */
-// ZONE-CUT2 (2026-10-08, the owner: "thats what the borders form should be normaly try to not use this bump"): the same cut
-// snapped onto the roads it was drawn along (traced off the owner's own map), with the south edge's bump - the road's climb
-// north of the heart - taken straight across.
-export const WILD_CUT = Object.freeze([[0.4103,0.0],[0.4097,0.0375],[0.4166,0.0778],[0.4103,0.1056],[0.4007,0.1278],[0.3952,0.1736],[0.3924,0.1764],[0.3924,0.1903],[0.4007,0.2083],[0.3862,0.2278],[0.3848,0.25],[0.3972,0.3014],[0.3993,0.3403],[0.4048,0.3681],[0.4055,0.4292],[0.4124,0.4639],[0.4193,0.4792],[0.42,0.4986],[0.4379,0.4736],[0.4641,0.4542],[0.5828,0.4458],[0.5897,0.4653],[0.5952,0.4625],[0.6159,0.4792],[0.6421,0.4819],[0.66,0.5056],[0.6938,0.5139],[0.7152,0.5417],[0.7331,0.5444],[0.7131,0.4833],[0.7138,0.4514],[0.7359,0.4042],[0.7503,0.3833],[0.7545,0.3472],[0.8103,0.2361],[0.8103,0.2236],[0.8,0.2083],[0.7614,0.2069],[0.7352,0.1819],[0.731,0.1875],[0.7338,0.1764],[0.7276,0.1597],[0.7241,0.1153],[0.7117,0.0569],[0.7179,0.0417],[0.7324,0.0389],[0.7414,0.0]]);
-const inCut = (cut, u, v) => {
-  let c = false;
-  for (let i = 0, j = cut.length - 1; i < cut.length; j = i++) {
-    const [xi, yi] = cut[i], [xj, yj] = cut[j];
-    if ((yi > v) !== (yj > v) && u < ((xj - xi) * (v - yi)) / (yj - yi) + xi) c = !c;
-  }
-  return c;
-};
-
 /** Is this region the zone? */
 export const isWildRegion = (regionIndex) => regionIndex === WILD_REGION;
 
@@ -123,23 +114,27 @@ let _here = false;
 let _ring = 0;
 let _kind = null;
 /** The world host's word each frame: the player stands in the zone, online (scenes/world.js) - and in which ring, and on
- *  which ground (ETHER-WILD, 2026-10-21: `kind` - 'wroth' the Wrothgarian Mountains, 'ether' the Eltheric Ocean past
+ *  which ground (ETHER-WILD, 2026-10-21: `kind` - 'cyrodiil' (WW-C2; the Wrothgarian Mountains' 'wroth' before it), 'ether' the Eltheric Ocean past
  *  Veilhaven's peace, systems/wild/etherWild.js). Every law of the zone reads the flag alike; only its words read the kind. */
 export function setWildHere(on, ring = 0, kind = WILD_KIND) {
   _here = !!on; _ring = _here ? Math.max(1, Math.min(WILD_RINGS, ring | 0 || WILD_RINGS)) : 0; _kind = _here ? (kind || WILD_KIND) : null;
 }
 /** Does the player stand in the zone now? (The foe pools ask at a spawn, the loot rolls at a death.) */
 export const wildHere = () => _here;
+
+// AUDIT PVP-EASE L2-1: THE COMBAT LOCK on storing - a leaf of its own (wildStoreLock.js: the inventory's law asks it, and
+// the account Worker bundles that law), re-exported here for the zone's readers.
+export { WILD_STORE_LOCK_MS, noteWildBlow, wildStoreRefusal };
 /** The ring the player stands in (1 the outer, 4 the heart), 0 outside. */
 export const wildRing = () => _ring;
 /** ETHER-WILD: the ground of the zone the player stands in - 'wroth' or 'ether' - or null outside every zone. */
 export const wildZoneKind = () => _kind;
 
 // ── ETHER-WILD: THE ZONE'S WORDS BY ITS GROUND ───────────────────────────────────────────────────────────────────────
-// The mountains' words are WILD_TEXT's. Another ground registers its own (systems/wild/etherWild.js, the Eltheric Ocean's)
-// so this leaf imports nothing of it, and a word it does not name is the mountains'.
-/** The Wrothgarian Mountains' kind (setWildHere's default). */
-export const WILD_KIND = 'wroth';
+// Cyrodiil's words are WILD_TEXT's (WW-C2; the mountains' before it). Another ground registers its own (systems/wild/etherWild.js, the Eltheric Ocean's)
+// so this leaf imports nothing of it, and a word it does not name is Cyrodiil's.
+/** Cyrodiil's kind (setWildHere's default) - WW-C2: the Wrothgarian Mountains' 'wroth' retired. */
+export const WILD_KIND = 'cyrodiil';
 /** @type {Map<string, Record<string, any>>} */
 const _kindWords = new Map();
 /** A ground's own words: `name` (the zone's name in a sentence), `ringName(ring)`, and any WILD_TEXT key it says its own
@@ -147,7 +142,7 @@ const _kindWords = new Map();
 export function registerZoneWords(kind, words) { _kindWords.set(kind, words); }   // kept as given: a getter reads its words in the language of the moment
 /** A word of the zone - its ground's own, else the mountains' (WILD_TEXT's). `kind` defaults to where the player stands. */
 export const zoneWord = (key, kind = _kind) => (kind ? _kindWords.get(kind)?.[key] : undefined) ?? WILD_TEXT[key];
-/** The zone's name in a sentence ("the Wrothgarian Mountains" is WILD_NAME's own, as WILD_TEXT says it). */
+/** The zone's name in a sentence, with its own article where it takes one (WW-C2: "Cyrodiil" none, "the Eltheric Ocean"). */
 export const zoneName = (kind = _kind) => (kind ? _kindWords.get(kind)?.name : undefined) ?? WILD_NAME;
 /** A ring's name on the zone's ground (the mountains': wildRingName). */
 export const zoneRingName = (ring, kind = _kind) => ((kind ? _kindWords.get(kind)?.ringName : undefined) ?? wildRingName)(ring);
@@ -157,77 +152,193 @@ let _mask = null;
 export function setWildMask(mask) { _mask = mask ?? null; }
 export const wildMask = () => _mask;
 
-// ── the mask: the zone's pixels and the band around them ──────────────────────────────────────────────────────────────
+// ── the mask: the zone's cells and the band around them ──────────────────────────────────────────────────────────────
+// WW-C2: A MASK IS A GRID OF CELLS over the world's map pixels - `cell` pixels a side from its origin (`ox`, `oy`, a world
+// map pixel) - so a zone a province wide (Cyrodiil's two million pixels, systems/wild/cyrodiilZone.js) is laid on a grid
+// its laws can walk. Every law that takes or answers a place takes and answers WORLD map pixels (fractions allowed): only
+// the grid's own arrays and its box are its cells. A mask of cell 1 at (0, 0) is a map's own pixels, one for one.
+
+/** The cell of world map pixel (x, y) on `mask`'s grid, [cx, cy] - off the grid where the pixel is. */
+export const maskCellOf = (mask, x, y) => {
+  const c = mask?.cell ?? 1;
+  return [Math.floor((x - (mask?.ox ?? 0)) / c), Math.floor((y - (mask?.oy ?? 0)) / c)];
+};
+/** The world point of grid point (cx, cy): a cell's corner - its middle at + 0.5 a side. */
+export const maskWorld = (mask, cx, cy) => {
+  const c = mask?.cell ?? 1;
+  return [(mask?.ox ?? 0) + cx * c, (mask?.oy ?? 0) + cy * c];
+};
+const onGrid = (mask, cx, cy) => cx >= 0 && cy >= 0 && cx < mask.width && cy < mask.height;
+/** The zone's box on the world, map pixels `{ x0, y0, x1, y1 }` (inclusive) - its cells' box laid on the world; null for
+ *  a mask with no zone. */
+export function maskWorldBox(mask) {
+  if (!mask?.box) return null;
+  const c = mask.cell ?? 1, [x0, y0] = maskWorld(mask, mask.box.x0, mask.box.y0);
+  return { x0, y0, x1: x0 + (mask.box.x1 - mask.box.x0 + 1) * c - 1, y1: y0 + (mask.box.y1 - mask.box.y0 + 1) * c - 1 };
+}
+/** The ring a cell of depth `d` stands in - 1 (the outer quarter of the zone's depth) to 4 (its heart); 0 for none. */
+export const ringOfDepth = (mask, d) => (d && mask?.maxDepth ? Math.max(1, Math.min(WILD_RINGS, Math.ceil((d / mask.maxDepth) * WILD_RINGS))) : 0);
+/** A cell's ring by its depth (ringOfDepth); 0 outside the zone. */
+export function ringOfCell(mask, cx, cy) {
+  if (!mask?.depth || !onGrid(mask, cx, cy)) return 0;
+  return ringOfDepth(mask, mask.depth[cy * mask.width + cx]);
+}
+
 /**
- * The zone over a `width` x `height` map: `inside` and `near` (inside, or within `nearPx` of an inside pixel) as one
- * byte a pixel, and the inside's bounding box. `regionAt(x, y)` answers a pixel's region (MapsFile.getRegionIndexAt).
- * Built once a map (`wildMaskOf` caches it).
+ * AUDIT TESA II Z4: WHAT A ZONE ENCLOSES IS THE ZONE'S - every cell outside it that no run of outside cells joins to the
+ * grid's edge, taken inside, in place. Cyrodiil's own picture holds water within the province (the painting's Lake Rumare
+ * round the Imperial City's isle, and the Niben - test/ui/tamriel4.test.js's enclosed waters): as holes they were EDGES -
+ * the depth ran from them, so the Imperial City stood in The Borderlands where the owner's rings run "from the outerside
+ * to the inside" (WILD2) - and DOORS: a lake's pixel was out of the zone, so a journey from it or to it crossed no line
+ * (wildJourney) and its water was nobody's fight. The outside reaches through a cell's sides alone: the zone's cells meet
+ * at their corners (the depth's chamfer reads all eight neighbours), so a corner is no way out.
+ * @param {Uint8Array} inside @param {number} width @param {number} height
  */
-export function buildWildMask({ width, height, regionAt, nearPx = WILD_NEAR_PX, keepOut = [], cut = WILD_CUT }) {   // cut: null - the whole region (the laws over a plain shape)
-  const inside = new Uint8Array(width * height);
-  const region = new Uint8Array(width * height);   // the whole region 16 (road-only walking outside the cut)
-  let rx0 = width, ry0 = height, rx1 = -1, ry1 = -1;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (regionAt(x, y) !== WILD_REGION) continue;
-      region[y * width + x] = 1;
-      if (x < rx0) rx0 = x; if (x > rx1) rx1 = x; if (y < ry0) ry0 = y; if (y > ry1) ry1 = y;
-    }
+export function fillEnclosed(inside, width, height) {
+  const reached = new Uint8Array(width * height);
+  /** @type {number[]} */ const stack = [];
+  const seed = (/** @type {number} */ i) => { if (!inside[i] && !reached[i]) { reached[i] = 1; stack.push(i); } };
+  for (let x = 0; x < width; x++) { seed(x); seed((height - 1) * width + x); }
+  for (let y = 0; y < height; y++) { seed(y * width); seed(y * width + width - 1); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % width;
+    if (x > 0) seed(i - 1);
+    if (x < width - 1) seed(i + 1);
+    if (i >= width) seed(i - width);
+    if (i < (height - 1) * width) seed(i + width);
   }
-  let x0 = width, y0 = height, x1 = -1, y1 = -1;
-  for (let y = ry0; y <= ry1; y++) {
-    for (let x = rx0; x <= rx1; x++) {
-      if (!region[y * width + x]) continue;
-      if (cut && !inCut(cut, (x + 0.5 - rx0) / (rx1 - rx0 + 1), (y + 0.5 - ry0) / (ry1 - ry0 + 1))) continue;
-      inside[y * width + x] = 1;
-    }
-  }
-  // WILD-KEEPOUT2 (the owner: "can you move the exact borders to right so wrothgaria is out"): THE WEST BORDER MOVED EAST -
-  // never a notch. Each zone pixel's run of zone pixels to its west (itself counted) is read; the border moves east by the
-  // longest run found on a kept-out town's ground (the town's pixel and WILD_KEEPOUT_PX about it), the same distance all
-  // along the west - so the town falls just outside, and the border keeps its shape (the east, the top and the south as cut)
-  if (keepOut.length) {
-    const run = new Uint16Array(width * height);
-    for (let y = ry0; y <= ry1; y++) for (let x = rx0, n = 0; x <= rx1; x++) { const i = y * width + x; n = inside[i] ? n + 1 : 0; run[i] = n; }
-    let shift = 0;
-    for (const k of keepOut) {
-      for (let y = k.y - WILD_KEEPOUT_PX; y <= k.y + WILD_KEEPOUT_PX; y++) {
-        for (let x = k.x - WILD_KEEPOUT_PX; x <= k.x + WILD_KEEPOUT_PX; x++) {
-          if (x >= 0 && y >= 0 && x < width && y < height) shift = Math.max(shift, run[y * width + x]);
-        }
+  for (let i = 0; i < inside.length; i++) if (!inside[i] && !reached[i]) inside[i] = 1;
+}
+
+/** ZONE-LINE: the most map pixels a side a cell keeps as bits (sixteen bits a cell, buildWildMask's `bits`). */
+export const PIXEL_CELL_MAX = 4;
+
+/**
+ * ZONE-LINE (2026-10-26, the owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it doesnt"): THE
+ * PIXEL'S OWN LAW ON THE CELLS' GRID. `pixelIn(x, y)` answers a whole world map pixel; each cell keeps its pixels as
+ * bits (bit `sy * cell + sx`), so the zone is its law's to the pixel and every ask is one bit. A cell of four had stood
+ * whole where its middle pixel stood - a 3.3 km staircase about the province's own line, 9,012 pixels of the two apart.
+ * THE COARSE PRE-TEST: the law is asked at every cell's middle, and a cell whose eight neighbours' middles all answer as
+ * its own is that answer whole; every pixel of any other cell is asked. Exact for a law constant over squares wider
+ * than two cells - the traced picture's, every picture pixel fifteen map pixels and more a side (world/tamriel/
+ * tamrielLand.js FIT_PPUS): a picture edge through a cell lies between its middle and a neighbour's, and a picture corner
+ * in it is some neighbour's middle. THE ENCLOSED, AT THE PIXEL (AUDIT TESA II Z4's law): the outside is walked from the
+ * grid's edge through a pixel's four sides alone, a uniform outside cell walked whole; what it never reaches is the
+ * zone's. Answers `{ bits, band }` (band: the cells asked a pixel at a time).
+ * @param {{ width: number, height: number, ox: number, oy: number, cell: number, pixelIn: (x: number, y: number) => boolean }} p
+ */
+function pixelBits({ width, height, ox, oy, cell, pixelIn }) {
+  const n = width * height, full = (1 << (cell * cell)) - 1, m = Math.floor(cell / 2), S = cell * cell;
+  const mid = new Uint8Array(n), bits = new Uint16Array(n), band = new Uint8Array(n);
+  for (let cy = 0; cy < height; cy++) for (let cx = 0; cx < width; cx++) mid[cy * width + cx] = pixelIn(ox + cx * cell + m, oy + cy * cell + m) ? 1 : 0;
+  // the band: both cells of every two neighbours (eight ways) whose middles differ, and an inside cell on the grid's edge
+  for (let cy = 0; cy < height; cy++) {
+    for (let cx = 0; cx < width; cx++) {
+      const i = cy * width + cx, v = mid[i];
+      if (v && (cx === 0 || cy === 0 || cx === width - 1 || cy === height - 1)) band[i] = 1;
+      if (cx + 1 < width && mid[i + 1] !== v) band[i] = band[i + 1] = 1;
+      if (cy + 1 < height) {
+        const j = i + width;
+        if (mid[j] !== v) band[i] = band[j] = 1;
+        if (cx + 1 < width && mid[j + 1] !== v) band[i] = band[j + 1] = 1;
+        if (cx > 0 && mid[j - 1] !== v) band[i] = band[j - 1] = 1;
       }
     }
-    if (shift > 0) for (let i = 0; i < run.length; i++) if (inside[i] && run[i] <= shift) inside[i] = 0;
   }
-  for (let y = ry0; y <= ry1; y++) {
-    for (let x = rx0; x <= rx1; x++) {
-      if (!inside[y * width + x]) continue;
+  for (let cy = 0; cy < height; cy++) {
+    for (let cx = 0; cx < width; cx++) {
+      const i = cy * width + cx;
+      if (!band[i]) { bits[i] = mid[i] ? full : 0; continue; }
+      let b = 0;
+      for (let sy = 0; sy < cell; sy++) for (let sx = 0; sx < cell; sx++) if (pixelIn(ox + cx * cell + sx, oy + cy * cell + sy)) b |= 1 << (sy * cell + sx);
+      bits[i] = b;
+    }
+  }
+  // the outside, walked from the grid's edge: `reached` its pixels as bits, a uniform outside cell all at once
+  const reached = new Uint16Array(n);
+  /** @type {number[]} */ const units = [];
+  /** @type {number[]} */ const pix = [];
+  const enter = (cx, cy, sx, sy) => {
+    if (cx < 0 || cy < 0 || cx >= width || cy >= height) return;
+    const i = cy * width + cx, b = 1 << (sy * cell + sx);
+    if ((bits[i] | reached[i]) & b) return;
+    if (!band[i]) { reached[i] = full; units.push(i); return; }
+    reached[i] |= b; pix.push(i * S + sy * cell + sx);
+  };
+  /** A neighbour's side met whole (`sx` or `sy` the side's own column or row, the other -1): a uniform cell in one step. */
+  const side = (cx, cy, sx, sy) => {
+    if (cx < 0 || cy < 0 || cx >= width || cy >= height) return;
+    const i = cy * width + cx;
+    if (!band[i]) { if (!bits[i] && !reached[i]) { reached[i] = full; units.push(i); } return; }
+    for (let s = 0; s < cell; s++) enter(cx, cy, sx < 0 ? s : sx, sy < 0 ? s : sy);
+  };
+  for (let cx = 0; cx < width; cx++) { side(cx, 0, -1, 0); side(cx, height - 1, -1, cell - 1); }
+  for (let cy = 0; cy < height; cy++) { side(0, cy, 0, -1); side(width - 1, cy, cell - 1, -1); }
+  while (units.length || pix.length) {
+    if (units.length) {
+      const i = /** @type {number} */ (units.pop()), cx = i % width, cy = (i - cx) / width;
+      side(cx - 1, cy, cell - 1, -1); side(cx + 1, cy, 0, -1); side(cx, cy - 1, -1, cell - 1); side(cx, cy + 1, -1, 0);
+      continue;
+    }
+    const k = /** @type {number} */ (pix.pop()), i = Math.floor(k / S), j = k - i * S, sx = j % cell, sy = (j - sx) / cell, cx = i % width, cy = (i - cx) / width;
+    if (sx > 0) enter(cx, cy, sx - 1, sy); else enter(cx - 1, cy, cell - 1, sy);
+    if (sx < cell - 1) enter(cx, cy, sx + 1, sy); else enter(cx + 1, cy, 0, sy);
+    if (sy > 0) enter(cx, cy, sx, sy - 1); else enter(cx, cy - 1, sx, cell - 1);
+    if (sy < cell - 1) enter(cx, cy, sx, sy + 1); else enter(cx, cy + 1, sx, 0);
+  }
+  for (let i = 0; i < n; i++) bits[i] = full & (bits[i] | ~reached[i]);
+  return { bits, band };
+}
+
+/**
+ * The zone over a `width` x `height` grid of cells: `inside` and `near` (inside, or within `nearPx` map pixels of an
+ * inside cell - a cell at the least) as one byte a cell, each inside cell's depth, and the inside's box (cells). `inZone`
+ * answers a cell; what the zone encloses is inside too (fillEnclosed - AUDIT TESA II Z4). Built once a zone
+ * (systems/wild/cyrodiilZone.js cyrodiilMask keeps it). ZONE-LINE: with `pixelIn` (a whole world map pixel's law, cells
+ * of PIXEL_CELL_MAX or less) the zone is that law's to the pixel - `bits`, each cell's pixels (pixelBits); a cell is
+ * `inside` where its middle pixel is, the depth and the rings run on those cells as before, `near` and the box take every
+ * cell the zone touches, and every ask of a place reads its own pixel's bit.
+ * @param {{ width: number, height: number, inZone?: (cx: number, cy: number) => boolean, ox?: number, oy?: number, cell?: number, nearPx?: number, pixelIn?: ((x: number, y: number) => boolean)|null }} p
+ */
+export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1, nearPx = WILD_NEAR_PX, pixelIn = null }) {
+  const exact = pixelIn && cell <= PIXEL_CELL_MAX ? pixelBits({ width, height, ox, oy, cell, pixelIn }) : null;
+  const m = Math.floor(cell / 2), midBit = m * cell + m;
+  const at = exact ? (x, y) => ((exact.bits[y * width + x] >> midBit) & 1) === 1 : /** @type {(x: number, y: number) => boolean} */ (inZone);
+  const inside = new Uint8Array(width * height);
+  let x0 = width, y0 = height, x1 = -1, y1 = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (!(exact ? exact.bits[y * width + x] : at(x, y))) continue;   // ZONE-LINE: the box every cell the zone touches
+      if (at(x, y)) inside[y * width + x] = 1;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
   }
+  if (x1 >= 0 && !exact) fillEnclosed(inside, width, height);   // AUDIT TESA II Z4: an enclosed cell lies within the box the zone's own make (ZONE-LINE: the bits filled at the pixel)
+  const band = Math.max(1, Math.ceil(nearPx / cell));   // WW-C2: the hiding band in cells
   const near = new Uint8Array(width * height);
+  const seed = exact ? exact.bits : inside;   // ZONE-LINE: the band from every cell the zone touches
   if (x1 >= 0) {
-    // a separable square dilation (two passes over the box widened by the band) - a pixel within nearPx on both axes
-    const bx0 = Math.max(0, x0 - nearPx), bx1 = Math.min(width - 1, x1 + nearPx);
-    const by0 = Math.max(0, y0 - nearPx), by1 = Math.min(height - 1, y1 + nearPx);
+    // a separable square dilation (two passes over the box widened by the band) - a cell within the band on both axes
+    const bx0 = Math.max(0, x0 - band), bx1 = Math.min(width - 1, x1 + band);
+    const by0 = Math.max(0, y0 - band), by1 = Math.min(height - 1, y1 + band);
     const row = new Uint8Array(width * height);
     for (let y = y0; y <= y1; y++) {
       for (let x = bx0; x <= bx1; x++) {
         let hit = 0;
-        for (let k = Math.max(0, x - nearPx); k <= Math.min(width - 1, x + nearPx) && !hit; k++) hit = inside[y * width + k];
+        for (let k = Math.max(0, x - band); k <= Math.min(width - 1, x + band) && !hit; k++) hit = seed[y * width + k] ? 1 : 0;
         row[y * width + x] = hit;
       }
     }
     for (let y = by0; y <= by1; y++) {
       for (let x = bx0; x <= bx1; x++) {
         let hit = 0;
-        for (let k = Math.max(0, y - nearPx); k <= Math.min(height - 1, y + nearPx) && !hit; k++) hit = row[k * width + x];
+        for (let k = Math.max(0, y - band); k <= Math.min(height - 1, y + band) && !hit; k++) hit = row[k * width + x];
         near[y * width + x] = hit;
       }
     }
   }
-  // WILD2: THE DEPTH - each inside pixel's chamfer distance (3 a side, 4 a corner) from the nearest outside pixel, by
-  // the two-pass sweep over the box; the rings read it over the deepest
+  // WILD2: THE DEPTH - each inside cell's chamfer distance (3 a side, 4 a corner) from the nearest outside cell, by the
+  // two-pass sweep over the box; the rings read it over the deepest
   const depth = new Uint16Array(width * height);
   let maxDepth = 0;
   if (x1 >= 0) {
@@ -250,117 +361,85 @@ export function buildWildMask({ width, height, regionAt, nearPx = WILD_NEAR_PX, 
       }
     }
   }
-  return {
-    width, height, inside, region, near, depth, maxDepth, box: x1 >= 0 ? { x0, y0, x1, y1 } : null,
-    regionBox: rx1 >= 0 ? { x0: rx0, y0: ry0, x1: rx1, y1: ry1 } : null,   // CLASSIC-CUT: the whole region's box (wildPictureZone)
-  };
+  return { width, height, ox, oy, cell, inside, near, depth, maxDepth, box: x1 >= 0 ? { x0, y0, x1, y1 } : null, bits: exact?.bits ?? null };
 }
 
 /**
- * CLASSIC-CUT: THE ZONE ON A PICTURE OF THE REGION - the classic province map's picker bitmap, whose region 16 is the
- * Wrothgarian Mountains drawn small and in its own shape. A picture pixel `isRegion` answers for is the zone's when the
- * map pixel at the same place in the region's box is: the pixel read as a fraction of the picture's own box of the
- * region, laid over the mask's (`regionBox`) - so the owner's cut and the keep-out read on the picture as on the map,
- * never the whole region. Answers a predicate `(x, y) => boolean`; never the zone without a mask.
- * @param {any} mask
- * @param {(x: number, y: number) => boolean} isRegion
- * @param {number} width
- * @param {number} height
- */
-export function wildPictureZone(mask, isRegion, width, height) {
-  const rb = mask?.regionBox;
-  if (!rb) return () => false;
-  let x0 = width, y0 = height, x1 = -1, y1 = -1;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (!isRegion(x, y)) continue;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-    }
-  }
-  if (x1 < 0) return () => false;
-  const sx = (rb.x1 - rb.x0 + 1) / (x1 - x0 + 1), sy = (rb.y1 - rb.y0 + 1) / (y1 - y0 + 1);
-  return (x, y) => isRegion(x, y) && wildInside(mask, rb.x0 + (x - x0 + 0.5) * sx, rb.y0 + (y - y0 + 0.5) * sy);
-}
-
-/**
- * WILD2: THE RING of map pixel (x, y) - 1 (the outer quarter of the zone's depth) to 4 (its heart) - or 0 outside the
- * zone (or with no mask). The mask defaults to the registered one (setWildMask).
+ * WILD2: THE RING of world map pixel (x, y) - 1 (the outer quarter of the zone's depth) to 4 (its heart) - or 0 outside
+ * the zone (or with no mask). The mask defaults to the registered one (setWildMask).
  */
 export function wildRingAt(x, y, mask = _mask) {
-  if (!mask?.depth || !mask.maxDepth) return wildInside(mask, x, y) ? WILD_RINGS : 0;
-  const px = Math.floor(x), py = Math.floor(y);
-  if (!(px >= 0 && py >= 0 && px < mask.width && py < mask.height)) return 0;
-  const d = mask.depth[py * mask.width + px];
-  if (!d) return 0;
-  return Math.max(1, Math.min(WILD_RINGS, Math.ceil((d / mask.maxDepth) * WILD_RINGS)));
-}
-
-const _masks = new WeakMap();
-/** The zone's mask over a MapsFile (its own `getRegionIndexAt`), built at the first ask and kept. Null without one. */
-/** WILD-KEEPOUT (2026-10-08, the owner: "can we place the zone still in the mountain region but keep wrothgaria out of
- *  it?", then "move the exact borders to right so wrothgaria is out"): the towns of the region the zone never takes -
- *  its west border moved east until each, and WILD_KEEPOUT_PX of ground about it, lies outside (buildWildMask). */
-export const WILD_KEEPOUT_TOWNS = Object.freeze(['Wrothgaria']);
-export const WILD_KEEPOUT_PX = 2;
-export function wildMaskOf(maps, width = 1000, height = 500) {
-  if (!maps || typeof maps.getRegionIndexAt !== 'function') return null;
-  const had = _masks.get(maps);
-  if (had) return had;
-  // WILD-KEEPOUT: the towns kept out, each a square of WILD_KEEPOUT_PX about its pixel - read off the map files every
-  // client holds, so every client cuts the same zone
-  const keep = [];
-  for (const name of WILD_KEEPOUT_TOWNS) {
-    try {
-      const loc = maps.getLocationByName?.(WILD_NAME, name);
-      const t = loc?.mapTableData;
-      if (t && Number.isFinite(t.longitude) && Number.isFinite(t.latitude)) keep.push({ x: Math.trunc(t.longitude / 128), y: 499 - Math.trunc(t.latitude / 128) });   // formats/mapsFile.js longitudeLatitudeToMapPixel
-    } catch { /* a map file without it: nothing kept out */ }
-  }
-  const m = buildWildMask({ width, height, regionAt: (x, y) => maps.getRegionIndexAt(x, y), keepOut: keep });
-  _masks.set(maps, m);
-  return m;
+  if (!mask) return 0;
+  if (!mask.depth || !mask.maxDepth) return wildInside(mask, x, y) ? WILD_RINGS : 0;
+  if (mask.bits && !wildInside(mask, x, y)) return 0;   // ZONE-LINE: the pixel's own law first
+  const [cx, cy] = maskCellOf(mask, x, y);
+  return mask.bits ? Math.max(1, ringOfCell(mask, cx, cy)) : ringOfCell(mask, cx, cy);   // a zone pixel of a cell whose middle is out: the edge's ring
 }
 const at = (mask, field, x, y) => {
   if (!mask) return false;
-  const px = Math.floor(x), py = Math.floor(y);
-  if (!(px >= 0 && py >= 0 && px < mask.width && py < mask.height)) return false;
-  return mask[field][py * mask.width + px] === 1;
+  const [cx, cy] = maskCellOf(mask, x, y);
+  return onGrid(mask, cx, cy) && mask[field][cy * mask.width + cx] === 1;
 };
-/** Is map pixel (x, y) - fractions allowed - inside the zone? */
-export const wildInside = (mask, x, y) => at(mask, 'inside', x, y);
+/** ZONE-LINE: a pixel's bit on a mask that keeps them (buildWildMask's `bits`) - world map pixel (x, y), fractions floored. */
+const pixelBit = (mask, x, y) => {
+  const [cx, cy] = maskCellOf(mask, x, y);
+  if (!onGrid(mask, cx, cy)) return false;
+  const c = mask.cell ?? 1, sx = Math.floor(x - (mask.ox ?? 0)) - cx * c, sy = Math.floor(y - (mask.oy ?? 0)) - cy * c;
+  return ((mask.bits[cy * mask.width + cx] >> (sy * c + sx)) & 1) === 1;
+};
+/** Is world map pixel (x, y) - fractions allowed - inside the zone? ZONE-LINE: its own pixel's law where the mask keeps
+ *  the pixels (Cyrodiil's: the province's own line, to the pixel), else its cell's. */
+export const wildInside = (mask, x, y) => (mask?.bits ? pixelBit(mask, x, y) : at(mask, 'inside', x, y));
 /** Is it in the zone or within its band? */
 export const wildNear = (mask, x, y) => at(mask, 'near', x, y);
 
 /**
- * THE ZONE'S EDGE as chains of map-pixel corners, for the maps' red line: every edge between an inside pixel and an
- * outside one, joined end to end where they meet. Each chain is `[{x, y}, ...]` in pixel-corner units. WILD2: with
- * `within`, the edge of that set instead (a ring's inner line: `wildRingChains`).
+ * THE ZONE'S EDGE as chains of world map points, for the maps' red line: every edge between an inside cell and an
+ * outside one, joined end to end where they meet, each chain `[{x, y}, ...]` (WW-C2: the grid's cell corners laid on
+ * the world). WILD2: with `within(cx, cy)` - a set of cells inside the zone - the edge of that set instead (a ring's
+ * inner line: `wildRingChains`).
  */
 export function wildEdgeChains(mask, within = null) {
   if (!mask?.box) return [];
+  if (mask.bits && !within) return pixelEdgeChains(mask);   // ZONE-LINE: the zone's own edge, a pixel's sides
   const { width, inside } = mask;
-  // WILD2: `within(x, y)` - a set inside the zone to edge instead of the zone (a ring and every ring deeper)
   const isIn = within
-    ? (x, y) => x >= 0 && y >= 0 && x < mask.width && y < mask.height && inside[y * width + x] === 1 && within(x, y)
-    : (x, y) => x >= 0 && y >= 0 && x < mask.width && y < mask.height && inside[y * width + x] === 1;
+    ? (x, y) => onGrid(mask, x, y) && inside[y * width + x] === 1 && within(x, y)
+    : (x, y) => onGrid(mask, x, y) && inside[y * width + x] === 1;
+  const { x0, y0, x1, y1 } = mask.box;
+  return linkEdges((add) => {
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        if (!isIn(x, y)) continue;
+        // clockwise around the cell, so every chain runs one way
+        if (!isIn(x, y - 1)) add(x, y, x + 1, y);
+        if (!isIn(x + 1, y)) add(x + 1, y, x + 1, y + 1);
+        if (!isIn(x, y + 1)) add(x + 1, y + 1, x, y + 1);
+        if (!isIn(x - 1, y)) add(x, y + 1, x, y);
+      }
+    }
+  }, (x, y) => maskWorld(mask, x, y));
+}
+
+/**
+ * EDGES TO CHAINS: `each(add)` lays directed unit edges `add(ax, ay, bx, by)` on a lattice; they are joined end to end
+ * where they meet, a straight run one segment, each chain `[{x, y}, ...]` laid on the world by `toWorld(x, y)`. A closed
+ * set of edges (clockwise round a set of squares) gives closed chains, their first point their last; ZONE-LINE: an open
+ * run's walk begins at its head (a point no edge reaches), so a run is one chain.
+ * @param {(add: (ax: number, ay: number, bx: number, by: number) => void) => void} each
+ * @param {(x: number, y: number) => number[]} toWorld
+ */
+export function linkEdges(each, toWorld) {
   /** @type {Map<string, Array<[number, number]>>} */
   const from = new Map();
-  const add = (ax, ay, bx, by) => {
-    const k = `${ax},${ay}`;
+  /** @type {Map<string, number>} */
+  const into = new Map();
+  each((ax, ay, bx, by) => {
+    const k = `${ax},${ay}`, t = `${bx},${by}`;
     const list = from.get(k);
     if (list) list.push([bx, by]); else from.set(k, [[bx, by]]);
-  };
-  const { x0, y0, x1, y1 } = mask.box;
-  for (let y = y0; y <= y1; y++) {
-    for (let x = x0; x <= x1; x++) {
-      if (!isIn(x, y)) continue;
-      // clockwise around the pixel, so every chain runs one way
-      if (!isIn(x, y - 1)) add(x, y, x + 1, y);
-      if (!isIn(x + 1, y)) add(x + 1, y, x + 1, y + 1);
-      if (!isIn(x, y + 1)) add(x + 1, y + 1, x, y + 1);
-      if (!isIn(x - 1, y)) add(x, y + 1, x, y);
-    }
-  }
+    into.set(t, (into.get(t) ?? 0) + 1);
+  });
   const chains = [];
   const take = (k) => {
     const list = from.get(k);
@@ -369,8 +448,11 @@ export function wildEdgeChains(mask, within = null) {
     if (!list.length) from.delete(k);
     return next;
   };
+  const heads = [...from.keys()].filter((k) => !into.get(k));
   while (from.size) {
-    const startKey = from.keys().next().value;
+    let startKey = heads.shift();
+    while (startKey !== undefined && !from.has(startKey)) startKey = heads.shift();
+    if (startKey === undefined) startKey = /** @type {string} */ (from.keys().next().value);
     const [sx, sy] = startKey.split(',').map(Number);
     const chain = [{ x: sx, y: sy }];
     let k = startKey;
@@ -384,24 +466,60 @@ export function wildEdgeChains(mask, within = null) {
       k = `${n[0]},${n[1]}`;
       if (k === startKey) break;
     }
-    if (chain.length > 1) chains.push(chain);
+    if (chain.length > 1) chains.push(chain.map((p) => { const [wx, wy] = toWorld(p.x, p.y); return { x: wx, y: wy }; }));
   }
   return chains;
 }
 
-/** WILD2: the line where ring `ring` (2-4) begins - the edge of every pixel at that ring or deeper. */
-export const wildRingChains = (mask, ring) => wildEdgeChains(mask, (x, y) => wildRingAt(x, y, mask) >= ring);
+/** ZONE-LINE: THE ZONE'S EDGE TO THE PIXEL - every side between a zone pixel and another (buildWildMask's `bits`),
+ *  clockwise, on the world's own pixel corners. A whole cell among whole cells has none and is passed over. */
+function pixelEdgeChains(mask) {
+  const { width, height, bits } = mask, c = mask.cell ?? 1, full = (1 << (c * c)) - 1;
+  const isIn = (gx, gy) => {
+    if (gx < 0 || gy < 0) return false;
+    const cx = Math.floor(gx / c), cy = Math.floor(gy / c);
+    return cx < width && cy < height && ((bits[cy * width + cx] >> ((gy - cy * c) * c + (gx - cx * c))) & 1) === 1;
+  };
+  const whole = (cx, cy) => onGrid(mask, cx, cy) && bits[cy * width + cx] === full;
+  const { x0, y0, x1, y1 } = mask.box;
+  return linkEdges((add) => {
+    for (let cy = y0; cy <= y1; cy++) {
+      for (let cx = x0; cx <= x1; cx++) {
+        const b = bits[cy * width + cx];
+        if (!b || (b === full && whole(cx - 1, cy) && whole(cx + 1, cy) && whole(cx, cy - 1) && whole(cx, cy + 1))) continue;
+        for (let sy = 0; sy < c; sy++) {
+          for (let sx = 0; sx < c; sx++) {
+            if (!((b >> (sy * c + sx)) & 1)) continue;
+            const x = cx * c + sx, y = cy * c + sy;
+            if (!isIn(x, y - 1)) add(x, y, x + 1, y);
+            if (!isIn(x + 1, y)) add(x + 1, y, x + 1, y + 1);
+            if (!isIn(x, y + 1)) add(x + 1, y + 1, x, y + 1);
+            if (!isIn(x - 1, y)) add(x, y + 1, x, y);
+          }
+        }
+      }
+    }
+  }, (x, y) => [(mask.ox ?? 0) + x, (mask.oy ?? 0) + y]);
+}
+
+/** ZONE-LINE: THE ZONE'S DRAWN EDGE - the line its law hands the mask (`mask.line`: Cyrodiil's, the province's own
+ *  outline off the traced picture - systems/wild/cyrodiilZone.js), else its own edge (wildEdgeChains). The maps' red line,
+ *  the fog's cut and the zone map's ring and wash are this one line. */
+export const wildOutline = (mask) => mask?.line?.chains ?? wildEdgeChains(mask);
+
+/** WILD2: the line where ring `ring` (2-4) begins - the edge of every cell at that ring or deeper. */
+export const wildRingChains = (mask, ring) => wildEdgeChains(mask, (cx, cy) => ringOfCell(mask, cx, cy) >= ring);
 
 /**
- * WILD2: WHERE EACH RING IS NAMED on a map - map-pixel points `{ ring, x, y }`: the heart at the middle of its deepest
- * pixels, and each outer ring on the line north from it, at the middle of that ring's run (so the four read as a
- * column, the outer at the top). A ring the line misses is named at its own pixels' middle.
+ * WILD2: WHERE EACH RING IS NAMED on a map - world map points `{ ring, x, y }`: the heart at the middle of its deepest
+ * cells, and each outer ring on the line north from it, at the middle of that ring's run (so the four read as a column,
+ * the outer at the top). A ring the line misses is named at its own cells' middle.
  */
 export function wildRingAnchors(mask) {
   if (!mask?.box || !mask.maxDepth) return [];
   const { x0, y0, x1, y1 } = mask.box;
   const sum = Array.from({ length: WILD_RINGS + 1 }, () => ({ x: 0, y: 0, n: 0 }));
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const r = wildRingAt(x, y, mask); if (r) { sum[r].x += x + 0.5; sum[r].y += y + 0.5; sum[r].n++; } }
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const r = ringOfCell(mask, x, y); if (r) { sum[r].x += x + 0.5; sum[r].y += y + 0.5; sum[r].n++; } }
   const heart = sum[WILD_RINGS].n ? { x: sum[WILD_RINGS].x / sum[WILD_RINGS].n, y: sum[WILD_RINGS].y / sum[WILD_RINGS].n } : null;
   const out = [];
   if (heart) out.push({ ring: WILD_RINGS, x: heart.x, y: heart.y });
@@ -410,13 +528,13 @@ export function wildRingAnchors(mask) {
     if (heart) {
       const cx = Math.floor(heart.x);
       let a = -1, b = -1;
-      for (let y = Math.floor(heart.y); y >= y0; y--) { if (wildRingAt(cx, y, mask) === r) { if (b < 0) b = y; a = y; } else if (b >= 0) break; }
+      for (let y = Math.floor(heart.y); y >= y0; y--) { if (ringOfCell(mask, cx, y) === r) { if (b < 0) b = y; a = y; } else if (b >= 0) break; }
       if (b >= 0) at = { x: cx + 0.5, y: (a + b + 1) / 2 };
     }
     if (!at && sum[r].n) at = { x: sum[r].x / sum[r].n, y: sum[r].y / sum[r].n };
     if (at) out.push({ ring: r, ...at });
   }
-  return out;
+  return out.map((p) => { const [wx, wy] = maskWorld(mask, p.x, p.y); return { ring: p.ring, x: wx, y: wy }; });
 }
 
 /**
@@ -470,9 +588,10 @@ export function createPartyTruce(ms = WILD_PARTY_TRUCE_MS) {
 export const WILD_TEXT = Object.freeze({
   // FOE-KEEPS (2026-10-24, the owner: "I dont want people to lose everything they have"): only another player's kill drops
   // what you carry (a foe's takes the usual tenth of the purse) - said so where the zone is entered, on its chip and at a
-  // foe's death; through the text core (L10N4), read when they are said (a getter: a string where the callers read one)
-  get enter() { return t('wild.zone.enter', 'You enter the {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },
-  leave: `You leave the ${WILD_NAME}.`,
+  // foe's death; through the text core (L10N4), read when they are said (a getter: a string where the callers read one).
+  // WW-C2: the zone is Cyrodiil's - a name, said with no article
+  get enter() { return t('wild.zone.enter', 'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },
+  leave: `You leave ${WILD_NAME}.`,
   chip: 'Open PvP',
   get chipTip() { return t('wild.zone.chipTip', '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },
   mapKey: 'Open PvP zone',
@@ -503,7 +622,7 @@ export const WILD_TEXT = Object.freeze({
     : t('wild.escrow.heldTakenAnon', 'Your killer collected your {item}.', { item: item || t('wild.escrow.gear', 'gear') })),
   collected: (item) => t('wild.escrow.collected', 'You take {item}.', { item }),
   collectLate: () => t('wild.escrow.collectLate', 'That piece was no longer held for you.'),
-  deathHold: 'In the mountains the dead wait two minutes.',
+  deathHold: `In ${WILD_NAME} the dead wait two minutes.`,
   remainsName: (name) => (name ? `${name}'s remains` : 'Remains'),
   mine: 'Your remains',
   taken: 'Someone took that first.',
@@ -511,32 +630,43 @@ export const WILD_TEXT = Object.freeze({
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
   chosen: (name, item) => `You choose ${item} from ${name || 'the body'}. It comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
-  dropLate: 'What you dropped when you died in the mountains has left your pack. It lies where you fell.',   // INT9 (AUDIT): a receipt that found the fallen risen
-  burntLate: () => t('wild.death.burntLate', 'What you dropped when you died in the mountains has left your pack. This character\'s trading is frozen, so it was lost.'),   // BURNT-SAID: the same, for a held record
+  dropLate: `What you dropped when you died in ${WILD_NAME} has left your pack. It lies where you fell.`,   // INT9 (AUDIT): a receipt that found the fallen risen
+  burntLate: () => t('wild.death.burntLate', 'What you dropped when you died in Cyrodiil has left your pack. This character\'s trading is frozen, so it was lost.'),   // BURNT-SAID: the same, for a held record
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
-  truce: `No longer in your party. In the ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
-  walkInto: `It leads into the ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,
+  truce: `No longer in your party. In ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
+  walkInto: `It leads into ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,
   // AUDIT SEA VENTURES C6, C7: two more of the zone's own, so a ground of its own says them its way (zoneWord) - through
   // the text core (L10N4), read when they are said (a getter: a string where the callers read one)
-  get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in the mountains.'); },
-  get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in the Wrothgarian Mountains.'); },
+  get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.'); },
+  get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in Cyrodiil.'); },
   // WILD3: the strangers
   stranger: 'Stranger',
   strangerNear: (m) => `A stranger is near - ${Math.max(10, Math.round(m / 10) * 10)} m.`,
   // WILD3: the journeys
-  travelIn: `No fast travel into the ${WILD_NAME}. Cross its edge on foot or on horseback (the Overworld map).`,
-  travelOut: `No fast travel out of the ${WILD_NAME}. Walk or ride out (the Overworld map).`,
-  travelWait: (min) => `The mountain carriages run every ten minutes. The next leaves in ${min} minute${min === 1 ? '' : 's'}.`,
-  travelPoor: (fee) => `A journey inside the ${WILD_NAME} costs ${fee.toLocaleString('en-US')} gold here.`,
-  travelPaid: (fee) => `You pay ${fee.toLocaleString('en-US')} gold for the mountain road.`,
-  // COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner: "Bag drops; no send-off in zone"): a companion at my side drops his
-  // pack with mine, so none is sent off from inside the zone (the teleport's own refusal, said of a companion), nothing of
-  // mine reaches one waiting outside it, and one carried off knocked out leaves what it carries with me - through the
-  // text core (L10N4), read when they are said
-  companionStays: (name) => t('wild.companion.stays', '{name} stays at your side until you leave the {zone}.', { zone: zoneName(), name: name || t('wild.companion.yours', 'your companion') }),
-  companionAway: (name) => t('wild.companion.away', '{name} is waiting outside the {zone}. Come out to hand over gear.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion') }),
-  companionLeft: (name, n) => t('wild.companion.left', '{name} hands you {n, plural, one {# item} other {# items}} before leaving.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion'), n }),
+  travelIn: `No fast travel into ${WILD_NAME}. Cross its edge on foot or on horseback (the Overworld map).`,
+  travelOut: `No fast travel out of ${WILD_NAME}. Walk or ride out (the Overworld map).`,
+  travelWait: (min) => `The carriages of ${WILD_NAME} run every ten minutes. The next leaves in ${min} minute${min === 1 ? '' : 's'}.`,
+  travelPoor: (fee) => `A journey inside ${WILD_NAME} costs ${fee.toLocaleString('en-US')} gold here.`,
+  travelPaid: (fee) => `You pay ${fee.toLocaleString('en-US')} gold for the Imperial road.`,
+  // WILD-INSURE (2026-10-26, the owner: "being able to insure gear on death"; asked, "Kept, policy spent" at "20% of
+  // worth" - systems/wild/wildInsureLaw.js): the pack's card and menu (net/wild/wildInsureBook.js) and the death screen -
+  // through the text core (L10N4), read when they are said
+  insureAct: (gold) => t('wild.insure.act', 'Insure ({gold} gold)', { gold: Number(gold).toLocaleString('en-US') }),
+  insuredLine: () => t('wild.insure.line', 'Insured. A player\'s kill in an open PvP zone will not take it, and the policy is spent when it saves this piece.'),
+  insuredSoon: (min) => t('wild.insure.soon', 'Insured. The policy takes effect in {min, plural, one {# minute} other {# minutes}}.', { min }),
+  insureDone: (gold) => t('wild.insure.done', 'Insured for {gold} gold. The policy takes effect in two minutes.', { gold: Number(gold).toLocaleString('en-US') }),
+  insureInZone: () => t('wild.insure.inZone', 'No one writes insurance inside an open PvP zone. Insure your gear before you go in.'),
+  insureOffline: () => t('wild.insure.offline', 'Insurance is written online, for a realm character.'),
+  deathInsured: (n) => (n > 0 ? t('wild.death.insured', 'Insurance kept {n, plural, one {# piece} other {# pieces}} of your gear. Each policy that saved a piece is spent.', { n }) : ''),
+  // REPEAT-SHIELD (2026-10-26, the owner chose "Repeat-kill shield"): a kill by the same hand inside half an hour takes nothing
+  deathShield: () => t('wild.death.shield', 'The same player killed you less than half an hour ago, so nothing was taken.'),
+  // ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace" - systems/wild/wildGrace.js): safe passage, begun, ended, and
+  // a blow of mine it kept off
+  graceOn: (s) => t('wild.grace.on', 'Safe passage: no player can harm you for {s, plural, one {# second} other {# seconds}}, or until you attack one.', { s }),
+  graceOff: () => t('wild.grace.off', 'Your safe passage has ended. Other players can attack you.'),
+  storeLocked: (s) => storeLockedText(s),   // AUDIT PVP-EASE L2-1 (wildStoreLock.js)
+  graceKept: (s) => t('wild.grace.kept', 'That player is under safe passage for {s, plural, one {# more second} other {# more seconds}}.', { s }),
   // WILD2: the rings
   ring: (r) => `${wildRingName(r)}: ${wildRingBonus(r)}.`,
   ringCross: (r, deeper) => `${deeper ? 'Deeper' : 'Back out'} - ${wildRingName(r)}: ${wildRingBonus(r)}.`,
@@ -603,7 +733,8 @@ let _killed = false;
 /** My fall, the referee's word (`wref` `fell`): `{ r, by, room, at }` - kept here beside the kill it makes (it was the world
  *  host's `_wildFell`), until the death ends. */
 let _fell = null;
-/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters }` (the killer's name or
+/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters, insured, shield }` (the
+ *  last two: WILD-INSURE's count of pieces my policies kept, and REPEAT-SHIELD's word that nothing was taken) (the killer's name or
  *  null, how many things were left where the body fell, the worn piece the killer took - `held`: MAC (2026-10-14), held in
  *  escrow until they collect it - BURNT-SAID: how many were taken and laid nowhere, a held record's, and `letters` the
  *  pieces the death took out of the pack, of which the letters of credit are counted, and `served` the seconds it lay
@@ -616,7 +747,7 @@ export function setWildDeath(d) {
   if (!d) { _killed = false; _fell = null; }
   else if (d.kill === true || (typeof d.killer === 'string' && d.killer)) _killed = true;
   _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, kill: _killed, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
-    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words
+    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), insured: Math.max(0, d.insured | 0), shield: d.shield === true, kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words; WILD-INSURE and REPEAT-SHIELD: what kept
   if (_death) _death.served = served;
 }
 /** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. AUDIT FOE-KEEPS LETTERS-TENTH:
@@ -632,6 +763,7 @@ export const wildDeath = () => _death;
 export function wildDeathAtHand(/** @type {any} */ fell, /** @type {string | null | undefined} */ name) {
   _fell = fell ?? _fell;
   _killed = true;
+  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS);   // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first
   if (_death) _death = { ..._death, kill: true, killer: _death.killer ?? (typeof name === 'string' && name ? name : null) };
 }
 /** AUDIT FOE-KEEPS H1: whether this death was a kill (the rise pays the usual tenth only when it was not). */
@@ -641,6 +773,8 @@ export const wildFallHeard = () => _fell;
 /** The death screen's lines for a death in the zone (empty for any other). */
 export function wildDeathLines(d = _death) {
   if (!d) return [];
-  return [d.killer || d.kill ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : WILD_TEXT.deathKept(), WILD_TEXT.deathDrop(d.dropped),
+  const head = d.shield ? WILD_TEXT.deathShield()   // REPEAT-SHIELD: no claim, no drop - said in their place
+    : d.killer || d.kill ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : WILD_TEXT.deathKept();
+  return [head, WILD_TEXT.deathDrop(d.dropped), WILD_TEXT.deathInsured(d.insured ?? 0),
     WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0), zoneWord('deathHold', d.kind ?? WILD_KIND)].filter(Boolean);
 }

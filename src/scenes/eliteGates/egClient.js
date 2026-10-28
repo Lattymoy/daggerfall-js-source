@@ -717,7 +717,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     const M = modes(), E = link.state(), f = keyFacts?.() ?? null;
     const callHeld = !!E.call && egPhase({ openedAt: E.call.op }, now()) !== 'ended' && E.call.co.some((r) => r[0] === me());
     return egKeyRefusal({ ...(f ?? {}), online: !!online(), guest: !me() || !!account?.guest?.(), exterior: (M?.mode ?? 'exterior') === 'exterior' && !inSpire(),
-      held: inSpire() || callHeld, opening: !!opening, shut: !hub()?.egOk, nearArch: !!arches?.near?.(feet()), room: f ? !!f.site : true });
+      held: inSpire() || callHeld, opening: !!opening, shut: !hub()?.egOk, nearArch: !!arches?.near?.(feet()), room: f ? !!f.site && (hub()?.egSiteOk?.(f.site) ?? true) : true });   // AUDIT RELEASE R2-2: and a site this relay reads, asked before the key is staked
   }
   /** THE OPEN: a key staked (or the Rehearsal taken) and its order handed to the hub. EG-F: from the start window's
    *  choice - its start Redoubt `ew` and its Wager `wg` - and the arch's site where it will stand (the host's facts). */

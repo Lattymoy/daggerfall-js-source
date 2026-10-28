@@ -86,14 +86,14 @@ const home = (extra = {}) => ({ mapId: 1291010263, buildingKey: 0x10203, region:
 /** AUDIT REALM2 S2: the record a realm character buys with - rich enough for every house a pin claims. */
 const RICH = (name) => ({ name, level: 9, goldPieces: 10_000_000, items: [], bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
 
-test('HOME1 the law: a home is a town\'s unsigned map id and a building key inside the key\'s widest value, a region 0..61, a whole price inside the online range (HOME-PRICE); three a character; private until the owner says party or public; the owner always walks in, anyone when public, the owner\'s party when party (matched on the relay\'s handle, any case), nobody else (mutants: the cap, a bound, the party matched on nothing, private open)', () => {
+test('HOME1 the law: a home is a town\'s unsigned map id and a building key inside the key\'s widest value, a region 0..70 (WW7-5: the provinces\' too), a whole price inside the online range (HOME-PRICE); three a character; private until the owner says party or public; the owner always walks in, anyone when public, the owner\'s party when party (matched on the relay\'s handle, any case), nobody else (mutants: the cap, a bound, the party matched on nothing, private open)', () => {
   assert.equal(HOME_CAP, 3);
   assert.deepEqual(HOME_ENTRIES, ['private', 'party', 'public', 'guild']);   // GUILD1d (re-aimed by content): the owner's guild
   assert.equal(HOME_ENTRY_DEFAULT, 'private');
   assert.deepEqual([homeMapIdOk(1), homeMapIdOk(0xffffffff), homeMapIdOk(0), homeMapIdOk(-5), homeMapIdOk(2 ** 32), homeMapIdOk(1.5), homeMapIdOk('1')], [true, true, false, false, false, false, false]);
   assert.deepEqual([homeBuildingKeyOk(1), homeBuildingKeyOk(HOME_KEY_MAX), homeBuildingKeyOk(0), homeBuildingKeyOk(HOME_KEY_MAX + 1)], [true, true, false, false]);
   assert.equal(HOME_KEY_MAX, 1 << 24, 'talkTopics makeBuildingKey spells key 0 as 1<<24');
-  assert.deepEqual([homeRegionOk(0), homeRegionOk(61), homeRegionOk(62), homeRegionOk(-1)], [true, true, false, false]);
+  assert.deepEqual([homeRegionOk(0), homeRegionOk(61), homeRegionOk(62), homeRegionOk(70), homeRegionOk(71), homeRegionOk(-1)], [true, true, true, true, false, false]);   // PIN MOVED (WW7-5)
   // HOME-PRICE (PIN MOVED): the range a home costs online, its floor and its top - never 1 gold, never ten million
   assert.deepEqual([homePriceOk(HOME_PRICE_MIN), homePriceOk(HOME_PRICE_MAX), homePriceOk(HOME_PRICE_MIN - 1), homePriceOk(HOME_PRICE_MAX + 1), homePriceOk(0), homePriceOk(5000.5)], [true, true, false, false, false, false]);
   assert.deepEqual([homeEntryOk('party'), homeEntryOk('friends'), homeEntryOk(null)], [true, false, false], 'an entry the law does not know');   // GUILD1d (re-aimed by content): `guild` is an entry now
@@ -171,8 +171,18 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   const fourth = await buy(aldric, A, { buildingKey: 4 });
   assert.deepEqual([fourth.status, fourth.body.error], [409, 'home-cap']);
   assert.equal((await buy(aldric, A2, { buildingKey: 4 })).status, 200, 'another character has its own three');
+  // HOUSES-3 (2026-10-27, the owner: "Up the house ownership limit to 3 houses per region"): three a REGION - the fourth
+  // in another region lands, and its region has three of its own
+  for (const k of [5, 6, 7]) assert.equal((await buy(aldric, A, { mapId: 1291010264, buildingKey: k, region: 18 })).status, 200, 'another region\'s three');
+  const eighth = await buy(aldric, A, { mapId: 1291010264, buildingKey: 8, region: 18 });
+  assert.deepEqual([eighth.status, eighth.body.error], [409, 'home-cap'], 'and no fourth there');
+  // a town three players witnessed is held to its own region: a claim naming another (to pass its region's cap) is refused
+  raw.prepare('INSERT INTO town_econ_towns (map, px, py, region, location, at) VALUES (?, 263, 1291, 18, 4, ?)').run(1291010265, T0);
+  const forged = await buy(aldric, A, { mapId: 1291010265, buildingKey: 9, region: 19 });
+  assert.deepEqual([forged.status, forged.body.error], [400, 'bad-home'], 'a witnessed town\'s region, never the claim\'s word');
+  assert.deepEqual([(await buy(aldric, A, { mapId: 1291010265, buildingKey: 9, region: 18 })).body.error], ['home-cap'], 'its own region, and its cap');
   const mine = (await call('POST', '/v1/homes/mine', {}, aldric)).body;
-  assert.equal(mine.homes.length, 4);
+  assert.equal(mine.homes.length, 7);
   assert.equal(mine.cap, 3);
   // entry: the owner's to set
   const e1 = await call('POST', '/v1/homes/entry', { mapId: home().mapId, buildingKey: home().buildingKey, entry: 'party' }, mara);
@@ -191,14 +201,14 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   // shapes
   assert.equal((await call('POST', '/v1/homes/claim', home({ buildingKey: 0 }), aldric)).body.error, 'bad-home');
   assert.equal((await call('POST', '/v1/homes/claim', home({ price: 0 }), aldric)).body.error, 'bad-home');
-  assert.equal((await call('POST', '/v1/homes/claim', home({ region: 62 }), aldric)).body.error, 'bad-home');
+  assert.equal((await call('POST', '/v1/homes/claim', home({ region: 71 }), aldric)).body.error, 'bad-home');   // PIN MOVED (WW7-5): past the world's regions
   assert.equal((await call('POST', '/v1/homes/claim', home({ character: 'no spaces!' }), aldric)).body.error, 'home-character');
   assert.equal((await call('POST', '/v1/homes/town', { mapId: -1 }, aldric)).body.error, 'bad-home');
   // an account deleted takes its homes (the buildings stand free)
   const db = env.DB._raw;
   const before = db.prepare('SELECT COUNT(*) AS n FROM homes').get().n;
   db.prepare("DELETE FROM players WHERE handle = 'Aldric'").run();
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM homes').get().n, before - 3, 'CASCADE');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM homes').get().n, before - 6, 'CASCADE');   // HOUSES-3: and the three of another region
 });
 
 test('HOME1 the claim\'s rate: an account makes at most twenty claims an hour, answered home-rate - a cap stops a hoard, this stops a claim-and-release churn (mutants: the rate unread)', async (t) => {
@@ -479,15 +489,19 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.match(m, /\+ \(!_intShared\.home && Array\.isArray\(data\.l\) \? applyInteriorLoot\(/, 'no peer\'s word on one');
   assert.match(m, /addPermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'a bought home\'s scene is kept');
   assert.match(m, /removePermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'a sold one\'s is not');
-  assert.match(m, /displayName: home \? homeDoorTitle\(home, questSiteHere\(bd\) && db\.isOverrideName \? db\.displayName : null\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs\),/, 'the hover names it');   // EMPIRE-BANK: a bank's name now (discovery.js shownBuildingName); FIELD BUGS 2026-09-30b HOME-PLAQUE (PIN MOVED); QUEST-RESIDENCE: and a quest's home its quest's name (PIN MOVED)
+  assert.match(m, /displayName: home \? homeDoorTitle\(home, questSiteHere\(bd\) && db\.isOverrideName \? db\.displayName : null\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs, bd\.buildingType\),/, 'the hover names it');   // EMPIRE-BANK: a bank's name now (discovery.js shownBuildingName); FIELD BUGS 2026-09-30b HOME-PLAQUE (PIN MOVED); QUEST-RESIDENCE: and a quest's home its quest's name (PIN MOVED); IC-PROPS (PIN MOVED): a house by its type, a nameless building by its place
   assert.match(m, /onlineHomeLines: \(\) => \(host\.onlineHomes \? HOME_BANK_LINES : null\),/);
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (TESA's merge): the quest world's isPlayerHome is scenes/questWorld.js's - the host read whole
   // PIN MOVED (BOOT-OVERLAP, 2026-10-12): the door stands above the data's read (WD3's ask goes out beside it), the
   // registry where it stood - both online alone, both before any quest can ask
   const homesAt = w.indexOf("const homesApi = params.has('online') ? accountHomes(");
   assert.ok(homesAt > 0 && homesAt < w.indexOf("  status('loading data');") && homesAt < w.indexOf('const onlineHomes = homesApi ? createOnlineHomes('), 'online alone, and built before any quest can ask');   // HOME-RENT: the service's door kept for a home's rooms too
   // PIN MOVED (FIELD BUGS 2026-10-14 QUEST-HOME, test/net/fb1014_questhome.test.js): every town's homes, the boot's read beside the towns asked
-  assert.ok(w.indexOf('const onlineHomes = ') < w.indexOf('isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,'));
+  // AUDIT TESA-BIOME P5: in one file - the quest world (scenes/questWorld.js) is handed onlineHomes by value at its
+  // construction, so the host declares it before it builds the quest world; the read itself stands in the quest world
+  const host = src('src/scenes/world.js');
+  assert.ok(host.indexOf('const onlineHomes = ') > 0 && host.indexOf('const onlineHomes = ') < host.indexOf('const { questWorld } = createQuestWorld({'), 'declared before the quest world is built');
+  assert.ok(src('src/scenes/questWorld.js').includes('isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,'));
   assert.match(w, /townMapId: \(dfLoc\.mapTableData\?\.mapId \?\? 0\) >>> 0,/, 'the door\'s own town');
   assert.match(w, /onlineHomes\?\.ensure\(_musicLoc\?\.mapTableData\?\.mapId\);/, 'the town asked on arrival');
   assert.match(w, /partyNames: \(\) => \(social\?\.others\?\.\(\) \?\? \[\]\)\.map\(\(m\) => m\.name\)/);

@@ -39,6 +39,7 @@
 // (GALLEON).
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { dfLook, lookSeed } from '../dfLook.js';
+import { keptStandIn } from './standInsKept.js';   // FIRST-VISIT: the painted pictures kept across launches
 
 /** The galleon's pseudo-archive: past the gate's 38101, the court's 38111 and the spoils' 38121. */
 export const GALLEON_ARCHIVE = 38131;
@@ -521,9 +522,11 @@ export const galleonCut = (record) => Object.hasOwn(GALLEON_NIGHT, record);
  * A ship's pictures as STAND-INS on the texture door (`addVendorTextures`), built when the archive is first asked for:
  * each record `art(record)` paints, a see-through record (`night`'s keys) its glass cut out (`cutGlass` by `glow`), and
  * each night twin its day record's picture whole - every one in Daggerfall's colours (world/dfLook.js), a twin with its
- * day record's grain.
+ * day record's grain. FIRST-VISIT: `kept` - the pictures are the build's own painting and the player's palette alone,
+ * so each is kept across launches in the player's store (standInsKept.js); a ship's art that reads anything else (the
+ * studio's) is not.
  */
-export function shipStandIns({ archive, name, records, art, night, glow }) {
+export function shipStandIns({ archive, name, records, art, night, glow, kept = false }) {
   const dayOf = new Map(Object.entries(night).map(([day, twin]) => [twin, Number(day)]));
   const built = (record) => {
     if (dayOf.has(record)) return art(dayOf.get(record));
@@ -532,7 +535,10 @@ export function shipStandIns({ archive, name, records, art, night, glow }) {
   };
   return [...records, ...dayOf.keys()].map((record) => ({
     archive, record, frame: 0, standIn: true, fileName: `${name}-${archive}_${record}`,
-    build: async () => { const p = built(record); return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record)); },
+    build: async () => {
+      const paint = () => { const p = built(record); return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record)); };
+      return kept ? keptStandIn(`${name}-${archive}_${record}`, paint) : paint();
+    },
   }));
 }
 
@@ -551,7 +557,7 @@ export function registerGalleonArt(addVendorTextures) {
   _registered = true;
   const made = new Map();
   const art = (record) => { if (!made.size) for (const [r, p] of galleonArt()) made.set(r, p); return made.get(record) ?? null; };
-  return addVendorTextures(shipStandIns({ archive: GALLEON_ARCHIVE, name: 'galleon', records: Object.values(TEX), art, night: GALLEON_NIGHT, glow: galleonGlow }));
+  return addVendorTextures(shipStandIns({ archive: GALLEON_ARCHIVE, name: 'galleon', records: Object.values(TEX), art, night: GALLEON_NIGHT, glow: galleonGlow, kept: true }));
 }
 /** Test seam: unregistered, her glow uncut (AUDIT GN2-PF3). */
 export function _resetGalleonArt() { _registered = false; _glow = null; }

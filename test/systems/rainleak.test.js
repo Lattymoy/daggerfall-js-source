@@ -132,7 +132,7 @@ test('RAIN-LEAK: both exterior hosts hand the falling weather (the sand, the rai
     const i = s.indexOf(from), j = s.indexOf(to, i);
     assert.ok(i > 0 && j > i, `${host}: the falling weather's block`);
     const block = s.slice(i, j);
-    for (const call of ['sand.draw(', 'precip.drawFall(', 'wisps.draw(']) {   // PRECIP1: the fall at the air's snow share
+    for (const call of ['dryFall.draw(', 'precip.drawFall(', 'wisps.draw(']) {   // PRECIP1: the fall at the air's snow share   // PIN MOVED (ASHFALL1, 2026-10-27): the sand's renderer is the dry falls' (render/dryFall.js), the ash's with it
       const line = block.includes(call) ? block.slice(block.indexOf(call)).split('\n')[0] : '';
       assert.ok(line.includes(`, ${scratch}, `) && !line.includes('new Float32Array('), `${host}: ${call} takes ${scratch}, and mints no array`);
     }

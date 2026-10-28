@@ -211,7 +211,7 @@ test('AUDIT 26 F106: a new character is born with the region-condition store (Pl
   applyCreationExtras(e, { careerIndex: 0, isCustom: false }, null, { rolls: () => 0 });
   assert.ok(Array.isArray(e.regionConditions), 'the store exists before any load');
   assert.equal(e.regionConditions.length, REGION_COUNT);
-  assert.equal(REGION_COUNT, 62);
+  assert.equal(REGION_COUNT, 71);   // PIN MOVED (WW-R, bible/03-World/World-Wide.md): the Bay's 62 and the provinces' nine past it
   const r = e.regionConditions[0];
   // THE THREE WIDTHS (:1575-1585): Values 29, Flags 29, Flags2 14.
   assert.equal(r.values.length, 29);

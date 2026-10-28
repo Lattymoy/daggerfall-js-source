@@ -170,10 +170,11 @@ test('SEAT1c THE HOSTS BY SOURCE: the service settles the Turning before any sea
   const idx = rd('server-account/src/index.js');
   // PIN MOVED (SEASON1): the Turnings due read the Season counted
   // PIN MOVED (SEAT-LEASE): one settler at a time - the Turnings due settled under the lease, an act told to ask again while another holds it
-  assert.match(idx, /if \(seatsOpenFor\(who\.player, env\) && \(await settleDueOnce\(ctx\.db, nowS, seasonZeroOf\(env\.SEASON_ZERO_WEEK\)\)\)\.pending && !SEAT_READS\.has\(path\)\) return no\('seats-settling', 503, origin\);[^\n]*\n\s*const act = \{/);
+  assert.match(idx, /if \(seatsOpenFor\(who\.player, env\) && \(await settleDueOnce\(ctx\.db, nowS, seasonZeroOf\(env\.SEASON_ZERO_WEEK\), domainsWeekOf\(env\.DOMAINS_WEEK\)\)\)\.pending && !SEAT_READS\.has\(path\)\) return no\('seats-settling', 503, origin\);[^\n]*\n\s*const act = \{/);
   // PIN MOVED (CROWN2): the list carries the server's red lines too; PIN MOVED (SEAT-BATCH): the holders, battles, Edicts,
   // works and red lines in one batch (seatTurning.js seatsBoard answers `{ seats, red }`)
-  assert.match(idx, /return 'error' in r \? r : \{ \.\.\.r, \.\.\.\(await seatsBoard\(ctx\.db, r\.seats, nowS\)\), zero: seasonZeroOf\(env\.SEASON_ZERO_WEEK\) \};/);   // CROWN2: the red lines; SEASON1 part two: Season 0's week
+  // PIN MOVED (DOMAIN3): the board read once, its seats marked under the region law, the law's own word beside Season 0's
+  assert.match(idx, /if \('error' in r\) return r;[^\n]*\n[^\n]*\n\s*const board = await seatsBoard\(ctx\.db, r\.seats, nowS\);\n\s*return \{ \.\.\.r, \.\.\.board, \.\.\.\(domains\?\.rule \? \{ seats: chartersMarked\(board\.seats, domains\.seats\) \} : \{\}\), zero: seasonZeroOf\(env\.SEASON_ZERO_WEEK\), \.\.\.\(domains \? \{ domains \} : \{\}\) \};/);   // CROWN2: the red lines; SEASON1 part two: Season 0's week
   assert.match(idx, /'\/v1\/seats\/relinquish': \(\) => relinquishSeat\(ctx, who\.player, env, body\),/);
   assert.ok(rd('server-account/src/service.js').includes("'/v1/seats/relinquish',"));
   const gu = rd('server-account/src/guilds.js');

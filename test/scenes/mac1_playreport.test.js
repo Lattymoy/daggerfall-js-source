@@ -70,7 +70,7 @@ test('MAC1 A: the boot door counts the Morrowind store itself and repaints when 
   // Inside mount, after the hooks land and before any pane renders: the
   // count is kicked when nothing has counted (`_mwCount`'s -1) and the
   // SAME host repaints.
-  assert.match(menu, /hooks = h \?\? \{\};[\s\S]{0,1800}if \(!morrowindDataCounted\(\)\) \{\s*countMorrowindArchives\(\)\.then\(\(\) => \{ if \(app === host && host\.isConnected\) render\(\); \}\)\.catch\(\(\) => \{\}\);/,
+  assert.match(menu, /hooks = h \?\? \{\};[\s\S]{0,1950}if \(!morrowindDataCounted\(\)\) \{\s*countMorrowindArchives\(\)\.then\(\(\) => \{ if \(app === host && host\.isConnected\) render\(\); \}\)\.catch\(\(\) => \{\}\);/,
     'mount counts an uncounted store and repaints the mounted host, never a torn-down one');
   // The hosts still count on boot (scenes/shared.js) - this is a second
   // caller, not a move - and the FULL pass, sizes and fingerprint, is

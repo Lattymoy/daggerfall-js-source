@@ -257,8 +257,8 @@
   {
     "name": "PORTAL1-wire-off-the-map",
     "file": "src/systems/portalStone.js",
-    "old": "  if (r.d[0] < 0 || r.d[0] >= MAX_MAP_PIXEL_X || r.d[1] < 0 || r.d[1] >= MAX_MAP_PIXEL_Y) return null;",
-    "new": "  if (r.d[0] < 0 || r.d[0] >= MAX_MAP_PIXEL_X || r.d[1] >= MAX_MAP_PIXEL_Y) return null;",
+    "old": "  if (!worldPixelOk(r.d[0]) || !worldPixelOk(r.d[1])) return null;",
+    "new": "  if (!worldPixelOk(r.d[0])) return null;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -635,8 +635,8 @@
   },
   {
     "name": "PORTAL1-door-forgets-the-siege",
-    "file": "src/scenes/world.js",
-    "old": "    duel: duelEnemyNear(), siege: inSiegeRoom(),",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    duel: duelEnemyNear(), siege: host.inSiegeRoom(),",
     "new": "    duel: duelEnemyNear(), siege: false,",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -644,8 +644,8 @@
   },
   {
     "name": "PORTAL1-door-forgets-the-journey",
-    "file": "src/scenes/world.js",
-    "old": "    journey: !!travelOptions?.isTravelActive || travelView.state !== 'off',",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    journey: !!host.travelOptions?.isTravelActive || host.travelView.state !== 'off',",
     "new": "    journey: false,",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -653,7 +653,7 @@
   },
   {
     "name": "PORTAL1-door-in-the-water",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "    if (player.isPlayerSwimming) return PORTAL_TEXT.water;\n",
     "new": "",
     "tests": [
@@ -662,7 +662,7 @@
   },
   {
     "name": "PORTAL1-door-on-a-boat",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "    if (csaBoatUnderMe() || isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel())) return PORTAL_TEXT.aboard;\n",
     "new": "",
     "tests": [
@@ -671,7 +671,7 @@
   },
   {
     "name": "PORTAL1-pick-asks-nothing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "    const why = portalDoorRefusal();\n    if (why) { townTalk.say(why); return; }\n",
     "new": "",
     "tests": [
@@ -680,7 +680,7 @@
   },
   {
     "name": "PORTAL1-map-in-travel-mode",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "    win.activateTeleportationTravel();\n    townTalk.showOverlay(win);\n    return true;",
     "new": "    townTalk.showOverlay(win);\n    return true;",
     "tests": [
@@ -689,7 +689,7 @@
   },
   {
     "name": "PORTAL1-held-map-flashes",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "    if (hudFade.backgroundColor[3] > 0 && !hudFade.fadeInProgress) hudFade.fadeHUDFromBlack();",
     "new": "    hudFade.fadeHUDFromBlack();",
     "tests": [
@@ -698,8 +698,8 @@
   },
   {
     "name": "PORTAL1-frame-not-owed",
-    "file": "src/scenes/world.js",
-    "old": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });\n    _foesFullAt = -Infinity;",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });\n    host._foesFullAt = -Infinity;",
     "new": "    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });",
     "tests": [
       "test/systems/portal1_stone.test.js"
@@ -707,25 +707,27 @@
   },
   {
     "name": "PORTAL1-arrival-inside-the-frame",
-    "file": "src/scenes/world.js",
-    "old": "    Promise.resolve().then(async () => {\n      if (worldMoveBusy() || _teleporting) { hudFade.clearFade(); return; }",
-    "new": "    (async () => {\n      if (worldMoveBusy() || _teleporting) { hudFade.clearFade(); return; }",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    Promise.resolve().then(async () => {\n      if (worldMoveBusy() || host._teleporting) { hudFade.clearFade(); return; }",
+    "new": "    (async () => {\n      if (worldMoveBusy() || host._teleporting) { hudFade.clearFade(); return; }",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the microtask's first line lost the zone's read (asked before the black now)"
   },
   {
     "name": "PORTAL1-arrival-forgets-the-team",
-    "file": "src/scenes/world.js",
-    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { await teleportTo(g.dest); }",
-    "new": "      try { await teleportTo(g.dest); }",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest))) hudFade.clearFade(); }",
+    "new": "      try { if (!(await teleportTo(g.dest))) hudFade.clearFade(); }",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the arrival reads teleportTo's answer"
   },
   {
     "name": "PORTAL1-arrival-failure-stays-black",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "    }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); hudFade.clearFade(); });",
     "new": "    }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); });",
     "tests": [

@@ -35,7 +35,7 @@ import { templateByIndex } from '../../../src/systems/item/itemTemplates.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { rmbBlock, town, worldOf, mark, SPAWN } from '../../fb1004dTowns.mjs';
 import { mapPixelToWorldCoord, mapPixelToLongitudeLatitude } from '../../../src/formats/mapsFile.js';
-import { wildMaskOf, wildInside, WILD_REGION } from '../../../src/systems/wild/wildZone.js';
+import { setWildMask, buildWildMask, wildMask, wildInside, WILD_REGION } from '../../../src/systems/wild/wildZone.js';
 import { linkSiteOf } from '../../../src/systems/quest/machine.js';
 import { createArenaOnline, CLIMB_WAIT_MS } from '../../../src/scenes/arena/arenaOnline.js';
 import { ARENA_TEXT } from '../../../src/systems/arena/arenaText.js';
@@ -413,12 +413,18 @@ function zoneWorld(found = []) {
     discoverLocation: (_r, location) => { found.push(location); }, addNote: () => {},
   };
 }
+/** WW-C2 (the fourth merge of main into #1184): the open zone the host's own mask (wildZone.js setWildMask - Cyrodiil's in
+ *  the game), here the fixture's cut of its zone region: x 142..179, y 50..95. */
+const zoneMask = () => buildWildMask({ width: 1000, height: 500, inZone: (x, y) => zoneRegionAt(x, y) === WILD_REGION && x >= 142 && x < 180 && y < 96 });
 const zoneQuest = (lines) => ['Quest: __ZN', 'QRC:', 'Message:  1011', ' x', '', 'QBN:', ...lines, '', 'variable _pad_'];
 const zoneRolls = (seed) => { let s = seed * 7919; return () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; }; };
 
-test('QUEST-ZONE: online a quest\'s remote dungeon is never one the open zone seals - forty draws, the stronghold inside the cut never drawn, the one outside always; offline DFU\'s draw takes either (mutants: the seal unread; read offline too)', () => {
+test('QUEST-ZONE: online a quest\'s remote dungeon is never one the open zone seals - forty draws, the stronghold inside the cut never drawn, the one outside always; offline DFU\'s draw takes either (mutants: the seal unread; read offline too)', (t) => {
+  t.after(() => setWildMask(null));   // the host's zone left as it was
   const world = zoneWorld();
-  const mask = wildMaskOf(world.maps);
+  // PIN MOVED (the fourth merge of main into #1184 - WW-C2): the zone the host's (wildMask), stood here over the fixture's cut
+  setWildMask(zoneMask());
+  const mask = wildMask();
   assert.equal(wildInside(mask, 145, 70), true, 'the setup: inside the zone');
   assert.equal(wildInside(mask, 130, 70), false, 'and outside it');
   const draws = (online) => {
@@ -434,9 +440,11 @@ test('QUEST-ZONE: online a quest\'s remote dungeon is never one the open zone se
   assert.deepEqual(draws(false), ['dungeon130', 'dungeon145'], 'offline: the mountains are Daggerfall\'s own');
 });
 
-test('QUEST-ZONE: a save whose remote dungeon the zone seals has it drawn again online at the load\'s re-seat (KVAR-HOLD\'s law): the foe carried, the link following, the reveal made again; offline it stays (mutants: the re-seat unwidened)', () => {
+test('QUEST-ZONE: a save whose remote dungeon the zone seals has it drawn again online at the load\'s re-seat (KVAR-HOLD\'s law): the foe carried, the link following, the reveal made again; offline it stays (mutants: the re-seat unwidened)', (t) => {
+  t.after(() => setWildMask(null));   // the host's zone left as it was
   const found = [];
   const world = zoneWorld(found);
+  setWildMask(zoneMask());   // PIN MOVED (WW-C2): the host's zone
   const build = (online) => {
     const m = new QuestMachine({ nowSeconds: () => 0, world, playerLevel: () => 1, sharedClock: () => online });
     const q = quiet(() => m.scheduleQuest(zoneQuest(['Place _lair_ remote dungeon2', '', 'Foe _vamp_ is Vampire', '', ' reveal _lair_', ' place foe _vamp_ at _lair_']), 0, { rolls: zoneRolls(3) }));

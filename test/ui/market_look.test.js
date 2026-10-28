@@ -55,7 +55,7 @@ function rig(rows, { goods = null } = {}) {
 }
 const row = (id, kind, extra) => ({ id, kind, region: 17, price: 400, units: 1, road: { courier: 0, seconds: 0, road: 0 }, currency: kind === 'item' ? 'gold' : 'marks', ...extra });
 
-test('MARKET-LOOK a crafted piece offered: minted from its record at its wear - the one mint the collect puts into the pack (world.js marketMint reads it); none for no record or one this client cannot mint (mutants: the wear unread; the collect\'s own mint)', () => {
+test('MARKET-LOOK a crafted piece offered: minted from its record at its wear - the one mint the collect puts into the pack (marketPiecesHost.js marketMint reads it); none for no record or one this client cannot mint (mutants: the wear unread; the collect\'s own mint)', () => {
   const rec = masterwork();
   const it = mintMarketPiece(rec);
   const whole = mintPiece(rec, rec.provenance);
@@ -66,7 +66,7 @@ test('MARKET-LOOK a crafted piece offered: minted from its record at its wear - 
   assert.equal(mintMarketPiece(null), null);
   assert.equal(mintMarketPiece({ ...rec, provenance: undefined }), null);
   assert.equal(mintMarketPiece(masterwork({ recipe: 'no:such' })), null);
-  assert.match(src('src/scenes/world.js'), /const it = mintMarketPiece\(piece\);/, 'the collect mints what the look shows');
+  assert.match(src('src/scenes/marketPiecesHost.js'), /const it = mintMarketPiece\(piece\);/, 'the collect mints what the look shows');
 });
 
 test('MARKET-LOOK the Crafted view: the picked row opens its piece\'s card over its bar - the look panel\'s rows and its magic, the row\'s name; an unpicked row none; a row this client cannot mint keeps its bar alone (mutants: the look never drawn; the look of the wrong piece)', async () => {

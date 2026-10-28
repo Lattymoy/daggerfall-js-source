@@ -11,7 +11,7 @@ const approx = (a, b, eps = 1e-9) =>
 
 test('weather: verbatim tables and SetWeather mapping', () => {
   assert.deepEqual(WEATHER_TYPES,
-    ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow', 'sandstorm']);   // WEATHER2d: the port's own eighth, appended - DFU's seven keep their enum values
+    ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall']);   // WEATHER2d: the port's own eighth, appended - DFU's seven keep their enum values   // PIN MOVED (ASHFALL1, 2026-10-27): and its ninth
   assert.deepEqual(WEATHER_TYPES.slice(0, 7), ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'], 'WeatherType, verbatim');
 
   // FogSettings verbatim (WeatherManager defaults).

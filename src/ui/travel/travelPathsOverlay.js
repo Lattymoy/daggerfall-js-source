@@ -26,6 +26,7 @@
 // texels back.
 
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';   // a leaf of its own: the enum alone
+import { inWorldGrid } from '../../world/worldWide/worldGrid.js';   // BAY-LEFT-MAPS: the junction map's pixels are the world's
 
 /** :38-39 and :57-58 - the four path colours, the mod's own. Roads are
  *  near-black, tracks a dirt brown, rivers and streams two blues. The
@@ -154,7 +155,11 @@ export function junctionDirectionIndex(direction) {
  *  `width` and `height` are in MAP PIXELS; the buffer is `width * 5` by
  *  `height * 5`. `originX`/`originY` are the map pixel at the buffer's
  *  top-left. Off-map columns and rows are skipped, which leaves them
- *  transparent.
+ *  transparent - BAY-LEFT-MAPS: off the WORLD's grid (world/worldWide/
+ *  worldGrid.js inWorldGrid; `mapWidth`/`mapHeight` were the Bay's 1000
+ *  x 500, and a section past the Bay's edge was blank). `pathsAt` says
+ *  what each pixel holds, past the Bay the roads past it (world/road/
+ *  pathData.js dataPoint).
  *
  *  CIRCULAR (:795-796) crops to a disc when the section is square: a
  *  texel is dropped when its distance from the centre - measured
@@ -169,7 +174,7 @@ export function junctionDirectionIndex(direction) {
  *  `deps`: { pathsAt(x, y, type) -> byte, locationAt(x, y) -> null |
  *  { locationType, mapId, discovered }, colorOf(locationType) -> packed
  *  colour or null, onlyLargeDots, markedMapId, markColor, showPaths }. */
-export function drawMapSection(buf, { originX, originY, width, height, circular = false, mapWidth = 1000, mapHeight = 500 }, deps) {
+export function drawMapSection(buf, { originX, originY, width, height, circular = false }, deps) {
   const {
     pathsAt, locationAt, colorOf, onlyLargeDots = false, markedMapId = -1, markColor = null,
     showPaths = [true, true, false, false],
@@ -179,10 +184,9 @@ export function drawMapSection(buf, { originX, originY, width, height, circular 
   const trackPx = packColor(TRACK_COLOR), roadPx = packColor(ROAD_COLOR);
   for (let y = 0; y < height; y++) {
     const mpY = originY + y;
-    if (mpY < 0 || mpY >= mapHeight) continue;
     for (let x = 0; x < width; x++) {
       const mpX = originX + x;
-      if (mpX < 0 || mpX >= mapWidth) continue;
+      if (!inWorldGrid(mpX, mpY)) continue;
       if (circular && height === width
         && Math.sqrt(Math.abs(x - Math.trunc(width / 2) + 0.5) ** 2 + Math.abs(y - Math.trunc(height / 2) + 0.5) ** 2) >= (height + 1.5) / 2) continue;
       const offset = ((height - y - 1) * width) + x;

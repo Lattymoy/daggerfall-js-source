@@ -90,10 +90,10 @@ test('SCALE4d every other route stays on the binding - no session opened (mutant
   // PIN MOVED (DISPLAY-REPLICA, 2026-10-13): the realm's lines ride a session now (test/server/display_replica.test.js); PIN MOVED
   // (YARDS-REPLICA, 2026-10-16): and a town's yards, which an isolate keeps for every caller, ride ONE session of their
   // own - any instance's, the route itself on the binding (test/yards_replica.test.js holds the rest)
-  const yards = await S.fetch('https://accounts.invalid/v1/homes/yards', { method: 'POST', headers: { authorization: `Bearer ${who.secret}`, 'content-type': 'application/json' }, body: '{"mapId":1}' });
+  const yards = await S.fetch('https://accounts.invalid/v1/homes/yards/cells', { method: 'POST', headers: { authorization: `Bearer ${who.secret}`, 'content-type': 'application/json' }, body: '{"mapId":1,"cells":[[0,0]]}' });
   assert.equal(yards.status, 200, 'a town\'s yards answered');
   assert.deepEqual(raw._sessions.map((x) => x.constraint), ['first-unconstrained'], 'the yards\' read on a session of its own');
-  assert.match(raw._sessions[0].statements.join('\n'), /LEFT JOIN home_yards_ver v ON v\.map_id = q\.m LEFT JOIN home_yards y/);   // PIN MOVED (YARD-SNAP; AUDIT LEAN-READS 2 B3): the town's version and built row
+  assert.match(raw._sessions[0].statements.join('\n'), /LEFT JOIN home_yard_cell_ver v ON v\.map_id = \?1/);   // PIN MOVED (YARD-CELL): the asked cells' versions and built rows
 });
 
 test('SCALE4d the claims a session mints are the claims the binding mints - byte for byte, the same token (mutant: none; the oracle is the binding)', async () => {

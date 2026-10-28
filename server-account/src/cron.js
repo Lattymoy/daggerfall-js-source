@@ -70,6 +70,7 @@ import { countedDb } from './metrics.js';
 import { maintaining } from './service.js';
 import { WRIT_SETTLE_MAX } from '../../src/net/writLaw.js';
 import { seatsSwitchOf, seasonZeroOf } from '../../src/net/townSeatLaw.js';
+import { domainsWeekOf } from '../../src/net/domainLaw.js';   // DOMAIN3: the region law's first week, the Turning's
 import { profSwitchOf } from '../../src/net/professionLaw.js';
 import { GUILD_INVITE_TTL_S } from '../../src/net/guild/guildLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
@@ -79,7 +80,7 @@ import { WILD_FALLS_KEEP_S } from './wild.js';   // INT9: a death's drop's keepi
 import { settleHolds, REZ_SETTLE_MAX } from './legacy.js';   // REZ-BLOODLINE AUDIT R1: a held fall's window closed
 import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's clock
 import { TOWN_ECON_SWEEPS, TOWN_ECON_SEEN_SWEEP, townEconKeptFrom, townEconSeenFrom, keepTownShares, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: a town's acts past the days kept; AUDIT TOWN-ECON 2 SVC-3: the shares kept once
-import { settleStaleYards } from './decor.js';   // YARD-SNAP: a town's yards built again where a write left them stale
+import { settleStaleYardCells } from './yardCells.js';   // YARD-CELL: a town's yard cells built again where a cascade left them stale
 import { STAFF_AUDIT_KEEP_S } from './staff.js';   // STAFF-PANEL1: the audit log's month
 import { censusDay, censusBackfill } from './staffCensus.js';   // STAFF-PANEL4-CENSUS: the census's day and its one backfill, off peak
 import { STAFF_MESSAGE_KEEP_S } from './staffMessage.js';   // STAFF-PANEL5-MESSAGE: a staff message's month
@@ -139,11 +140,11 @@ export const _resetCronForTests = () => { lodesPicked = -1; };
 
 /** @type {readonly CronJob[]} */
 export const MINUTE_JOBS = Object.freeze([
-  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX, ctx.budget)],
+  ['auctions', (ctx, env) => rounds(() => closeAuctions(ctx, null, env), SETTLE_MAX, ctx.budget)],   // DOMAIN3: the region law's Tithe
   ['guild-writs', (ctx) => rounds(() => closeGuildWrits(ctx), WRIT_SETTLE_MAX, ctx.budget)],
   ['contracts', (ctx) => rounds(() => closeContracts(ctx), WRIT_SETTLE_MAX, ctx.budget)],
   // a seat's Turning while the seats are open to everyone - behind `dev` they are a developer's, settled by their reads
-  ['seats', async (ctx, env) => (seatsSwitchOf(env?.SEATS_OPEN) === 'on' ? (await settleDueOnce(ctx.db, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).settled : 0)],
+  ['seats', async (ctx, env) => (seatsSwitchOf(env?.SEATS_OPEN) === 'on' ? (await settleDueOnce(ctx.db, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))).settled : 0)],
   // SEAT-FACTS (townSeats.js keepSeatFacts): the seats' facts counted once for the whole service while the seats are open
   // to anyone (`dev` too: a developer's player reads them) - one read of the rows and one row kept, where every isolate
   // read the rows each minute
@@ -151,9 +152,9 @@ export const MINUTE_JOBS = Object.freeze([
   // AUDIT TOWN-ECON 2 SVC-3 (townEcon.js keepTownShares): the towns' shares counted once for the whole service each keeping,
   // into the one row every isolate reads - where every isolate read every town's days on the primary
   ['town-shares', async (ctx, env) => (townsOpen(env) ? keepTownShares(ctx.db, ctx.nowS) : 0)],
-  // YARD-SNAP (decor.js settleStaleYards): a town's yards built again where a write no decor route made left them stale -
-  // a home released, an account gone, a sweep; until then the town's yards are read from its rows, as before
-  ['yard-snap', (ctx) => settleStaleYards(ctx.db)],
+  // YARD-CELL (yardCells.js settleStaleYardCells): a town's yard cells built again where a write no decor route made left
+  // them stale - a home released, an account gone, a sweep; until then such a cell is read from its rows, as before
+  ['yard-cells', (ctx) => settleStaleYardCells(ctx.db)],
   // the season's #1, counted before a reader would count it (arena.js championNow, STORM-SHED 2's kept word). AUDIT SCALE
   // A4: COUNTED ONLY WHEN A BOUT HAS COME SINCE - the board moves through a bout alone (claimArena counts it at once; no
   // route deletes an account), so a kept word no bout is newer than is stamped again rather than counted: the count

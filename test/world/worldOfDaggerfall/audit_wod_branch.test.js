@@ -28,6 +28,7 @@ import { CELL_PUPPETS_MAX } from '../../../src/net/wire.js';
 import { isPeerTarget } from '../../../src/characters/enemy/enemyTargets.js';
 import { readWorldOfDaggerfallBundle } from '../../../tools/worldOfDaggerfallAssets.mjs';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { createSwapBehind } from '../../../src/scenes/swapBehind.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => hostText(p);
@@ -354,10 +355,11 @@ const WORLD = hostText('src/scenes/world.js');
 function sliceWorld() {
   const cut = (a, b) => { const i = WORLD.indexOf(a); const j = WORLD.indexOf(b, i); assert.ok(i >= 0 && j > i, `slice ${a}`); return WORLD.slice(i, j); };
   const wodCode = cut('  const wodCarry = new Map();', '  const tickCityGates = ');
-  const dpStart = WORLD.indexOf('  function destroyPixel(px, py, { collectLoose = true } = {}) {');
+  const dpStart = WORLD.indexOf('  function destroyPixel(px, py, { collectLoose = true, carried = false, carryOnly = false } = {}) {');   // PIN MOVED (IC-SWAP-BEHIND): its carry's two doors
   const dpEnd = WORLD.indexOf('\n  }\n', dpStart) + 4;
-  const pubA = WORLD.match(/    const wodKept = adoptWodCarry\(key, wodSpawners, privateersHold\);\n    const wodLife = wodKept\.life \?\? \{\};/);
-  const pubB = WORLD.match(/    for \(const pile of wodKept\.piles \?\? \[\]\) standWodPile\(key, wodLife, pile\);/);
+  // PIN MOVED (IC-SWAP-BEHIND): under the pixel's own key (`pkey`; `key` the build's, behind a standing view)
+  const pubA = WORLD.match(/    const wodKept = adoptWodCarry\(pkey, wodSpawners, privateersHold\);\n    const wodLife = wodKept\.life \?\? \{\};/);
+  const pubB = WORLD.match(/    for \(const pile of wodKept\.piles \?\? \[\]\) standWodPile\(pkey, wodLife, pile\);/);
   assert.ok(pubA && pubB, 'the publish lines stand where the rig reads them');
   return { wodCode, dpCode: WORLD.slice(dpStart, dpEnd), pubA: pubA[0], pubB: pubB[0] };
 }
@@ -393,7 +395,7 @@ function host({ online = null, removeSiteFoes = () => {} } = {}) {
   const names = Object.keys(env);
   const body = `${SLICE.wodCode}\n${SLICE.dpCode}\n
     function publish(px, py, centres, { wodSite = null } = {}) {
-      const key = px + ',' + py;
+      const key = px + ',' + py, pkey = key;   // built as ever: under the pixel's own key
       const wodSpawners = centres.map((centre, i) => ({ spawner: new __WodSpawner({ spawnType: __LOOT }), centre, flat: null, restand: false, oid: i + 1 }));
       const privateersHold = null;
 ${SLICE.pubA}
@@ -613,20 +615,38 @@ test('WOD7: a marker a peer sprang never springs here - its camp is theirs, and 
 
 test('WOD6: the pixels a late region names are built again on the list in its order - those standing now, nearest first; one still building once it stands; the player\'s own under the season hold', () => {
   const i = WORLD.indexOf('  const _wodLate = new Set();');
-  const j = WORLD.indexOf('  // LocationLoader.cs:146-151', i);
+  const loader = WORLD.indexOf('  // LocationLoader.cs:146-151', i), sweeps = WORLD.indexOf('  const { swap, _arenaRoadsStale', i);   // PIN MOVED (IC-SWAP-BEHIND): the swap first among what it hands back
+  const j = sweeps > i && sweeps < loader ? sweeps : loader;   // TESA's merge: the sweeps past the Bay (scenes/tamrielSweepsHost.js) are constructed after it, before the loader's
   assert.ok(i > 0 && j > i);
-  const wod = {};
-  const built = new Map([['5,5', { px: 5, py: 5 }], ['7,5', { px: 7, py: 5 }], ['6,6', { px: 6, py: 6 }]]);
-  const inFlight = new Map([['9,9', {}]]);
-  const destroyed = [], queue = [], logs = [];
-  const h = new Function('wod', 'built', 'inFlight', 'state', 'walkMode', 'playerSpawned', 'destroyPixel', 'queue', 'console', 'nearestFirstFrom',
-    `let _seasonHoldKey = null;\n${WORLD.slice(i, j)}\nreturn { sweepWodLate, late: _wodLate, hold: () => _seasonHoldKey };`)(
-    wod, built, inFlight, { current: { x: 5, y: 5 } }, true, true, (px, py, o) => destroyed.push(`${px},${py}:${JSON.stringify(o)}`), queue, { log: (m) => logs.push(m) }, nearestFirstFrom);   // AUDIT 68 S22: the load list's one order
+  // PIN MOVED (IC-SWAP-BEHIND): the sweep builds them again through the swap (scenes/swapBehind.js) - with its switch off as it
+  // always did, torn down and held; on, behind their standing views
+  const rig = (off) => {
+    const wod = {};
+    const built = new Map([['5,5', { px: 5, py: 5 }], ['7,5', { px: 7, py: 5 }], ['6,6', { px: 6, py: 6 }]]);
+    const inFlight = new Map([['9,9', {}]]);
+    const destroyed = [], queue = [], logs = [], state = { current: { x: 5, y: 5 } };
+    let hold = null;
+    const destroyPixel = (px, py, o) => destroyed.push(`${px},${py}:${JSON.stringify(o)}`);
+    const swap = createSwapBehind({ built, destroyPixel, collider: { hold() {} }, buildingDoors: [], doorsMoved() {}, queue, nearestFirst: nearestFirstFrom, state,
+      walkMode: () => true, playerSpawned: () => true, seasonHold: (k) => { hold = k; }, off: () => off });   // AUDIT 68 S22: the load list's one order
+    const h = new Function('wod', 'built', 'inFlight', 'state', 'walkMode', 'playerSpawned', 'destroyPixel', 'queue', 'console', 'nearestFirstFrom', 'swap',
+      `let _seasonHoldKey = null;\n${WORLD.slice(i, j)}\nreturn { sweepWodLate, late: _wodLate };`)(
+      wod, built, inFlight, state, true, true, destroyPixel, queue, { log: (m) => logs.push(m) }, nearestFirstFrom, swap);
+    return { h, wod, built, inFlight, destroyed, queue, logs, swap, hold: () => hold };
+  };
+  const on = rig(false);
+  on.wod.onLate(16, new Set(['7,5', '5,5', '9,9', '40,40']));
+  on.h.sweepWodLate();
+  assert.deepEqual(on.destroyed.sort(), ['5,5:{"collectLoose":false,"carryOnly":true}', '7,5:{"collectLoose":false,"carryOnly":true}'], 'behind their views: the carry alone taken - it keeps the markers');
+  assert.equal(on.swap.owed, 2);
+  assert.deepEqual(on.queue, [{ px: 5, py: 5 }, { px: 7, py: 5 }], 'queued nearest first');
+  assert.equal(on.hold(), null, 'the player\'s own pixel stands while it builds behind: nothing held');
+  const { h, wod, built, inFlight, destroyed, queue, logs, hold } = rig(true);
   wod.onLate(16, new Set(['7,5', '5,5', '9,9', '40,40']));
   h.sweepWodLate();
   assert.deepEqual(destroyed.sort(), ['5,5:{"collectLoose":false}', '7,5:{"collectLoose":false}'], 'torn down with their loose piles kept - the carry keeps the markers');
   assert.deepEqual(queue, [{ px: 5, py: 5 }, { px: 7, py: 5 }], 'queued nearest first');
-  assert.equal(h.hold(), '5,5', 'the player\'s own pixel rebuilds under the season hold');
+  assert.equal(hold(), '5,5', 'the player\'s own pixel rebuilds under the season hold');
   assert.deepEqual([...h.late], ['9,9'], 'one still building waits until it stands; one neither standing nor building builds on the list as it is');
   built.set('9,9', { px: 9, py: 9 }); inFlight.delete('9,9');
   h.sweepWodLate();
@@ -645,7 +665,9 @@ test('AUDIT BRANCH (WoD) m4: a sweep while a rebuild is in flight is heard - the
   h.sweep(100, 100);   // a load at the same spot, the rebuild still in flight
   assert.equal(h.publish(100, 100, [[10, 5, 10]]).wodSpawners[0].spawner.active, true, 'fresh, as ClearStreamingWorld re-promotes');
   assert.doesNotMatch(WORLD, /const carried = wodCarry\.get\(key\) \?\? null;   \/\/ WOD3\/WOD4: what a rebuild/, 'no build reads the carry at its start');
-  assert.match(WORLD, /    const wodKept = adoptWodCarry\(key, wodSpawners, privateersHold\);\n    const wodLife = wodKept\.life \?\? \{\};[^\n]*\n    if \(!wodKept\.life\) wodForgetPeerSites\(key\);[^\n]*\n    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    built\.set\(key, \{/, 'nothing awaited between the adoption and built.set (BUILD-FAIL1\'s hand-over and WOD7\'s forget are the lines between)');
+  // PIN MOVED (MID-RING, found at IC-GRAND's merge of the streams' head): the pixel's fade stamped between, as synchronous
+  // PIN MOVED (IC-SWAP-BEHIND): the carry under the pixel's own key, the fade a fresh pixel's alone, published through the swap
+  assert.match(WORLD, /    const wodKept = adoptWodCarry\(pkey, wodSpawners, privateersHold\);\n    const wodLife = wodKept\.life \?\? \{\};[^\n]*\n    if \(!wodKept\.life\) wodForgetPeerSites\(pkey\);[^\n]*\n(?:    if \(key === pkey && isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\([^\n]*\n)?    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    swap\.publish\(px, py, key, made, \{/, 'nothing awaited between the adoption and built.set (BUILD-FAIL1\'s hand-over, WOD7\'s forget and MID-RING\'s fade are the lines between)');
 });
 
 test('AUDIT BRANCH (WoD) m2: a rebuild of a pixel that had a site re-reads its grass - Basic Roads can forbid a site stood before its data landed', () => {

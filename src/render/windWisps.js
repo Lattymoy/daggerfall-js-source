@@ -144,7 +144,8 @@ export const WISP_LOOK = Object.freeze({ color: Object.freeze([0.86, 0.89, 0.94]
 export const SAND_LOOK = Object.freeze({ color: Object.freeze([0.80, 0.64, 0.40]), alpha: Object.freeze([0.28, 0.30]), len: Object.freeze([0.8, 1.2]), count: 7000, floor: 0, box: 70 });
 
 /** How many wisps a wind of `strength01` draws: the floor plus the rest
- *  over a smoothstep of the strength. Pure. */
+ *  over a smoothstep of the strength. Pure.
+ *  @param {number} strength01 @param {WispLook} [look] */
 export function wispCount(strength01, look = WISP_LOOK) {
   const s = Math.max(0, Math.min(1, strength01));
   const u = Math.max(0, Math.min(1, (s - 0.05) / 0.85));
@@ -167,9 +168,14 @@ function mat4Multiply(out, a, b) {
   return out;
 }
 
+/** A look (WEATHER2d): the program's dress - its colour, alpha (base, per strength), streak length (base, spread), count,
+ *  calm floor and box.
+ *  @typedef {{ color: ReadonlyArray<number>, alpha: ReadonlyArray<number>, len: ReadonlyArray<number>, count: number, floor: number, box: number }} WispLook */
+
 export class WindWispsRenderer {
   /** Built by the enhanced lane at boot, so a shader fault is a
-   *  constructor fault the boot probe sees (the rain's law). */
+   *  constructor fault the boot probe sees (the rain's law).
+   *  @param {any} gl @param {WispLook} [look] - the wisps' own, or the sand's (ASHFALL1: render/dryFall.js builds it) */
   constructor(gl, look = WISP_LOOK) {
     this.gl = gl;
     this.look = look;   // WEATHER2d

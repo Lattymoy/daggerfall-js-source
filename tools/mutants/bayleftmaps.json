@@ -1,0 +1,1050 @@
+[
+  {
+    "name": "BLM-C1-the-party-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const marks = readPartyMarksIn(this.deps.party, sheet);",
+    "new": "    const marks = readPartyMarksIn(this.deps.party, { x0: 0, y0: 0, w: this._size.width, h: this._size.height });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-travellers-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const trav = readTravellerMarksIn(this.deps.travellers, sheet)",
+    "new": "    const trav = readTravellerMarksIn(this.deps.travellers, { x0: 0, y0: 0, w: 1000, h: 500 })",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-coin-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const vendor = readVendorMarkIn(this.deps.vendor, sheet);",
+    "new": "    const vendor = readVendorMarkIn(this.deps.vendor, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-serpent-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const serpent = readGateMarkIn(this.deps.serpent, sheet);",
+    "new": "    const serpent = readGateMarkIn(this.deps.serpent, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-ketch-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "const v = this.deps.ketch?.(); return Array.isArray(v) ? v : v ? [v] : []; }, sheet);",
+    "new": "const v = this.deps.ketch?.(); return Array.isArray(v) ? v : v ? [v] : []; }, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT BAY-LEFT, its packages merged): KETCH-EVERYWHERE's stations are a list, read over the sheet's box."
+  },
+  {
+    "name": "BLM-C1-the-lodes-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const lodes = readBountyMarksIn(this.deps.lodes, sheet, LODE_LEGEND_TEXT);",
+    "new": "    const lodes = readBountyMarksIn(this.deps.lodes, { x0: 0, y0: 0, w: 1000, h: 500 }, LODE_LEGEND_TEXT);",
+    "tests": [
+      "test/ui/bayleft_marks.test.js",
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-pois-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const pois = readBountyMarksIn(this.deps.pois, sheet, poiLegendText(), POI_MARKS_MAX);",
+    "new": "    const pois = readBountyMarksIn(this.deps.pois, { x0: 0, y0: 0, w: 1000, h: 500 }, poiLegendText(), POI_MARKS_MAX);",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-raids-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const raids = readRaidMarksIn(this.deps.raids, sheet);",
+    "new": "    const raids = readRaidMarksIn(this.deps.raids, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-box-the-continent-with-it-off",
+    "file": "src/ui/heldMap.js",
+    "old": "    return this._tamriel || this._zoneMap ? tamrielFrameInBay() : { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "new": "    return tamrielFrameInBay();",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-party-box-far-edge-in",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "new": "    if (px < box.x0 || py < box.y0 || px > box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "tests": [
+      "test/ui/bayleft_marks.test.js",
+      "test/ui/soc6_partymap.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-party-box-west-the-bay's",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "new": "    if (px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-ring-box-west-the-bay's",
+    "file": "src/ui/gate/gateMapMark.js",
+    "old": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;",
+    "new": "  if (cx + r < 0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-ring-box-east-unshifted",
+    "file": "src/ui/gate/gateMapMark.js",
+    "old": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;",
+    "new": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.w || cy - r > box.y0 + box.h) return null;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-coin-box-west-the-bay's",
+    "file": "src/ui/vendor/vendorMapMark.js",
+    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w",
+    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-travellers-box-west-the-bay's",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-raids-box-west-the-bay's",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-the-flags-held-to-the-bay",
+    "file": "src/systems/map/mapWaypoints.js",
+    "old": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "new": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && mx >= 0 && my >= 0 && mx < 1000 && my < 500;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js",
+      "test/systems/map/waypoints.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-the-world's-edge-a-pixel-short",
+    "file": "src/systems/map/mapWaypoints.js",
+    "old": "worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "new": "worldPixelOk(Math.ceil(mx)) && worldPixelOk(Math.floor(my));",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-the-menu-held-to-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const box = this._marksBox();\n    if (!(mx >= box.x0",
+    "new": "    const box = { x0: 0, y0: 0, w: this._size.width, h: this._size.height };\n    if (!(mx >= box.x0",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-travel-here-past-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "onTravel: this._coordsAllowedHere() && inBay(Math.floor(w.mx), Math.floor(w.my)) ?",
+    "new": "onTravel: this._coordsAllowedHere() ?",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-past-the-table-0-as-before",
+    "file": "src/world/road/pathData.js",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "  if (!onTable(mapPixelX, mapPixelY)) return 0;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-tracks-read-as-the-roads",
+    "file": "src/world/road/pathData.js",
+    "old": "roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "roadsPastTable('roads', mapPixelX, mapPixelY) & 0xff : 0;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-rivers-read-as-the-roads",
+    "file": "src/world/road/pathData.js",
+    "old": "return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "new": "return roadsPastTable(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-layer-read-on-the-table",
+    "file": "src/world/road/pathData.js",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType ===",
+    "new": "  if (true) return pathType ===",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-jungle-reads-the-layer",
+    "file": "src/world/road/pathData.js",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return 0;\n  return pathsDataPoint(net, mapPixelX, mapPixelY);",
+    "new": "  return pathsDataPoint(net, mapPixelX, mapPixelY);",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-section-held-to-the-bay",
+    "file": "src/ui/travel/travelPathsOverlay.js",
+    "old": "      if (!inWorldGrid(mpX, mpY)) continue;",
+    "new": "      if (mpX < 0 || mpY < 0 || mpX >= 1000 || mpY >= 500) continue;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js",
+      "test/systems/travel/to1_travelOptions.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-host-reads-its-row-again",
+    "file": "src/scenes/world.js",
+    "old": "        return net?.source === 'basic-roads' ? dataPoint(net, type, x, y) : 0;",
+    "new": "        return net?.source === 'basic-roads' ? (([net.roads, net.tracks, net.rivers, net.streams][type]?.[y * 1000 + x] ?? 0) & 0xff) : 0;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-index-alone-as-before",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;",
+    "new": "      return null;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a place past the Bay is a summary only once its pixel has built (a booked passage there never resumes after a load, a port found in an earlier session leaves its masters' lists, a far plate and a quest's diamond are nothing); OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the row's summary line, its kind read now"
+  },
+  {
+    "name": "BLM-C3-stood-to-answer",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    let stood = null;\n    const rect = locationWorldRect(",
+    "new": "    let stood = provinceQuestPlaces?.standAt(px, py) ?? null;\n    const rect = locationWorldRect(",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a list's every summary stands its location - the build's 24-152 ms a place"
+  },
+  {
+    "name": "BLM-C3-the-location-stood-every-read",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      get loc() { return (stood ??= locationIndex.get(key) ?? provinceQuestPlaces?.standAt(px, py) ?? null); },",
+    "new": "      get loc() { return provinceQuestPlaces?.standAt(px, py) ?? null; },",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-found-law-skipped",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
+    "new": "knownByKind(row.mapId >>> 0, row.type) || true)",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "every pixel of a list reads its row (the countryside's roll) to learn it was never found; OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the ids-alone precheck is gone (a list reads each row for its kind); the found law is a dungeon's, so skipped it knows every lair"
+  },
+  {
+    "name": "BLM-C3-the-row's-own-find-unchecked",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId)) ? pendingSummary",
+    "new": "      return row?.name ? pendingSummary",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "another place the pixel could hold found names the one the build stands there; OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the row's line reads its kind too; unchecked, a lair the pixel holds is known whoever's id was found"
+  },
+  {
+    "name": "BLM-C3-named-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type)",
+    "new": "      return row?.name && (knownByKind(row.mapId >>> 0, row.type)",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - `named` is read on the row's line now"
+  },
+  {
+    "name": "BLM-C3-the-index-arm's-named-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "return loc.name && id && (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ?",
+    "new": "return loc.name && id && (knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ?",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a quest's site past the Bay, standing and unfound, is no journey; OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the standing arm reads its kind too; a quest's lair, standing and unfound, is the pin"
+  },
+  {
+    "name": "BLM-C3-the-key's-minus-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const qp = /^quest:(-?\\d+),(-?\\d+)$/.exec(key);",
+    "new": "    const qp = /^quest:(\\d+),(\\d+)$/.exec(key);",
+    "tests": [
+      "test/scenes/bayleft_places.test.js",
+      "test/ui/travel/owquest.test.js"
+    ],
+    "note": "a quest's diamond west or north of the Bay's corner presses nothing"
+  },
+  {
+    "name": "BLM-C3-a-plate-reads-the-location",
+    "file": "src/scenes/world.js",
+    "old": "    const r = summary.lightRect?.() ?? locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);",
+    "new": "    const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a far plate over a place not standing stands it"
+  },
+  {
+    "name": "BLM-C3-the-snapshot-back",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    const out = [...bay];\n    if (worldPlaces) {",
+    "new": "    return bay;\n    const out = [...bay];\n    if (worldPlaces) {",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "TV5's edge speaks for the Bay's towns alone"
+  },
+  {
+    "name": "BLM-C3-the-bay's-gathered-with-what-stood-past-it",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "settlementPixels(locationIndex).filter((t) => !t.loc.ether && onTheBay(t.x, t.y))",
+    "new": "settlementPixels(locationIndex).filter((t) => !t.loc.ether)",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-capital's-every-slice",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": " && (!isCapitalPlaceId(p.mapId) || (p.mapId & 0x7ffff) < 16)).map((p) => ({ x: p.px, y: p.py }));",
+    "new": ").map((p) => ({ x: p.px, y: p.py }));",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "the Imperial City's 625 slices are 625 far towns"
+  },
+  {
+    "name": "BLM-C3-the-countryside-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    for (const p of pastBayPlacesIn(at.x - range, at.y - range, at.x + range + 1, at.y + range + 1))",
+    "new": "    for (const p of [])",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-registry-read-once-for-good",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "      if (gen !== _pastBayTowns.gen) {",
+    "new": "      if (_pastBayTowns.gen < 0) {",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C3-the-edge's-circle-held-to-the-bay",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    if (onTheBay(at.x, at.y) && at.x >= range && at.y >= range && at.x < MAX_MAP_PIXEL_X - range && at.y < MAX_MAP_PIXEL_Y - range) return bay;",
+    "new": "    if (onTheBay(at.x, at.y)) return bay;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a town just past the Bay's edge never stands at the edge of a view on the Bay's side"
+  },
+  {
+    "name": "BLM-C11-every-id-the-bay's-pixel-id",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    const id = discoveryKeyOf(mapId);",
+    "new": "    const id = mapId & 0xfffff;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js",
+      "test/ui/fb1004e_overworld.test.js"
+    ],
+    "note": "a walled city past the Bay never shows its carriage wheel"
+  },
+  {
+    "name": "BLM-C11-a-bay-key-read-off-the-registry",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    if (key < BAY_PIXEL_IDS) return locationIndex.get(",
+    "new": "    if (false) return locationIndex.get(",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-stood-place's-id-unchecked",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    return (loc?.mapTableData?.mapId ?? -1) >>> 0 === key ? loc : null;",
+    "new": "    return loc;",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ],
+    "note": "a stale registry pixel names another place's gate"
+  },
+  {
+    "name": "BLM-C10-the-dots-past-the-bay-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    const s = tvPlaceSummary(x, y);\n    return s ? { locationType:",
+    "new": "    const s = null;\n    return s ? { locationType:",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-host's-dots-held-to-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "      locationAt: (x, y) => junctionPlaceAt(x, y),",
+    "new": "      locationAt: (x, y) => (onTheBay(x, y) ? junctionPlaceAt(x, y) : null),",
+    "tests": [
+      "test/scenes/bayleft_places.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C9-the-rows-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "    for (const row of tamrielFindRows(ink)) {",
+    "new": "    for (const row of []) {",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "the find box finds no place past the Bay (lane C's p1: 296 of 296 names never found)"
+  },
+  {
+    "name": "BLM-C9-the-index-kept-for-good",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._searchIndex && this._searchIndex.ink === ink) return this._searchIndex;",
+    "new": "    if (this._searchIndex) return this._searchIndex;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "the index made before the continent came on (or before its places stood) is kept"
+  },
+  {
+    "name": "BLM-C9-the-continent-off-read",
+    "file": "src/ui/heldMap.js",
+    "old": "    const ink = this._tamriel ? tamrielInkFor(this._model) : null;",
+    "new": "    const ink = tamrielInkFor(this._model);",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "a place past the Bay found while the sheet shows the Bay alone"
+  },
+  {
+    "name": "BLM-C9-the-pick-the-bay's",
+    "file": "src/ui/heldMap.js",
+    "old": "    const pick = entry.pastBay ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)",
+    "new": "    const pick = false ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "a place past the Bay picked as a Bay city with no summary - a journey offered past the Bay (TESA-NO-FAST)"
+  },
+  {
+    "name": "BLM-C9-the-filter-unread-past-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "        if (entry.pastBay ? this.portsFilter && !entry.port : !this._discovered(entry.summary)) continue;",
+    "new": "        if (entry.pastBay ? false : !this._discovered(entry.summary)) continue;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C9-every-place-past-the-bay-hidden",
+    "file": "src/ui/heldMap.js",
+    "old": "        if (entry.pastBay ? this.portsFilter && !entry.port : !this._discovered(entry.summary)) continue;",
+    "new": "        if (entry.pastBay ? this.portsFilter : !this._discovered(entry.summary)) continue;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C9-the-ink-point-where-a-pixel-stands",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    const x = c.pixel ? c.pixel.x : Math.floor(c.x), y = c.pixel ? c.pixel.y : Math.floor(c.y);",
+    "new": "    const x = Math.floor(c.x), y = Math.floor(c.y);",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C9-the-slice-furthest",
+    "file": "src/ui/tamrielInk.js",
+    "old": ".sort((a, b) => a.d - b.d || a.s - b.s);",
+    "new": ".sort((a, b) => b.d - a.d || a.s - b.s);",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C9-a-name-twice",
+    "file": "src/ui/tamrielInk.js",
+    "old": "      if (!name || seen.has(name)) continue;",
+    "new": "      if (!name) continue;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "the Imperial City's 625 slices 625 rows"
+  },
+  {
+    "name": "BLM-C9-the-harbour's-slice-not-its-name's",
+    "file": "src/ui/tamrielInk.js",
+    "old": "d: s === harbour ? -1 : Math.hypot(p.x - x, p.y - y) }))",
+    "new": "d: Math.hypot(p.x - x, p.y - y) }))",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C9-the-harbour's-port-lost",
+    "file": "src/ui/tamrielInk.js",
+    "old": "      out.push({ name, regionName, x: p.x, y: p.y, port: s === harbour && !!c.port });",
+    "new": "      out.push({ name, regionName, x: p.x, y: p.y, port: false });",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C9-no-slices",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    const k = c.capital && c.pixel ? CAPITALS.findIndex((cap) => cap.name === c.name && cap.province === c.province) : -1;",
+    "new": "    const k = -1;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "a capital's slices (Market District, the Waterfront) never found"
+  },
+  {
+    "name": "BLM-C9-the-painting's-province-name",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    const regionName = REGION_NAMES[regionOfTheatre(THEATRE_KEYS.indexOf(c.province))] ?? provinceByKey(c.province)?.name ?? '';",
+    "new": "    const regionName = provinceByKey(c.province)?.name ?? '';",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "the Imperial City's region the painting's 'Imperial Province', where every map names it Cyrodiil"
+  },
+  {
+    "name": "BLM-C11-no-anchor",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  for (const m of marks) if (m.port) paintHarbour(ctx, m.x, m.y, true);",
+    "new": "",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "no port past the Bay carries its anchor"
+  },
+  {
+    "name": "BLM-C11-the-anchor-on-the-continent",
+    "file": "src/ui/tamrielInk.js",
+    "old": "x, y, port: all && !!c.port });",
+    "new": "x, y, port: !!c.port });",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-filter-unread-by-the-ink",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    if (opts.portsOnly && !c.port) continue;\n",
+    "new": "",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-countryside-under-the-filter",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (!placesIn || band === 'far' || opts.portsOnly) return [];",
+    "new": "  if (!placesIn || band === 'far') return [];",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-press-past-the-filter",
+    "file": "src/ui/tamrielInk.js",
+    "old": "tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;",
+    "new": "tamrielCityBucket(c, filters) < 0) continue;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-hover-unhanded",
+    "file": "src/ui/tamrielInk.js",
+    "old": "continent: !!marks?.continent, portsOnly: !!marks?.portsOnly });",
+    "new": "continent: !!marks?.continent });",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-port-lost",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    const port = (st ? st.port : !!p.port) || (k >= 0 && capitalCanalOpen(k));",
+    "new": "    const port = false;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-lore's-port",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    const port = (st ? st.port : !!p.port) || (k >= 0 && capitalCanalOpen(k));",
+    "new": "    const port = !!p.port || (k >= 0 && capitalCanalOpen(k));",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "a lore port with no shore in reach (TESA6) anchored where the registry stands no port"
+  },
+  {
+    "name": "BLM-C11-the-canal-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    const port = (st ? st.port : !!p.port) || (k >= 0 && capitalCanalOpen(k));",
+    "new": "    const port = st ? st.port : !!p.port;",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "the Imperial City's harbour up its canal (NIBEN-SEA) no port on the map"
+  },
+  {
+    "name": "BLM-C11-the-window-unhanded",
+    "file": "src/ui/heldMap.js",
+    "old": "          portsOnly: this.portsFilter,   // BAY-LEFT-MAPS (C11)",
+    "new": "          // BAY-LEFT-MAPS (C11)",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-tiles-blind-to-the-filter",
+    "file": "src/ui/tamrielInk.js",
+    "old": "|${JSON.stringify(past.inks)}|${past.portsOnly ? 1 : 0}`",
+    "new": "|${JSON.stringify(past.inks)}`",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-tiles'-marks-unfiltered",
+    "file": "src/ui/tamrielInk.js",
+    "old": "band, filters, portsOnly: !!opts.portsOnly, frame: opts.frame ?? null });",
+    "new": "band, filters, frame: opts.frame ?? null });",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-paint-unhanded",
+    "file": "src/ui/tamrielInk.js",
+    "old": "frame: ink.frame, portsOnly: !!opts.portsOnly };",
+    "new": "frame: ink.frame };",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C11-the-card's-count-the-bay's",
+    "file": "src/ui/heldMap.js",
+    "old": "    return (region >= 0 && region < REGION_NAMES.length) ? (REGION_NAMES[region] ?? '') : '';",
+    "new": "    return (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '';",
+    "tests": [
+      "test/ui/bayleft_find.test.js"
+    ],
+    "note": "the teleport card names no province past the Bay"
+  },
+  {
+    "name": "BLM-C7-the-id-never-read",
+    "file": "src/systems/discovery.js",
+    "old": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;",
+    "new": "  return book;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "every place of a name in a province one book (907 places on 296)"
+  },
+  {
+    "name": "BLM-C7-the-id-read-on-the-bay",
+    "file": "src/systems/discovery.js",
+    "old": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;",
+    "new": "  return `${book}#${id >>> 0}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "every Bay save's books unread"
+  },
+  {
+    "name": "BLM-C7-a-whole-id-masked",
+    "file": "src/systems/discovery.js",
+    "old": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;",
+    "new": "  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id & 0xfffff}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-no-location-a-book",
+    "file": "src/systems/discovery.js",
+    "old": "export const townBookOf = (loc) => townBookId(loc?.regionIndex ?? -1, loc?.name ?? '', loc?.mapTableData?.mapId ?? 0);",
+    "new": "export const townBookOf = (loc) => townBookId(loc?.regionIndex ?? 0, loc?.name ?? '', loc?.mapTableData?.mapId ?? 0);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-old-books-kept",
+    "file": "src/systems/discovery.js",
+    "old": "    const old = pastBayBookOfOld(locId);",
+    "new": "    const old = null;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "a save from before keeps its shared books past the Bay, unread for good"
+  },
+  {
+    "name": "BLM-C7-a-bay-book-let-go",
+    "file": "src/systems/discovery.js",
+    "old": "  return m && isProvinceRegion(Number(m[1])) ? { region: Number(m[1]), name: m[2] } : null;",
+    "new": "  return m ? { region: Number(m[1]), name: m[2] } : null;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "every Bay book of a save let go on load"
+  },
+  {
+    "name": "BLM-C7-a-new-book-let-go",
+    "file": "src/systems/discovery.js",
+    "old": "  const m = /^(\\d+):([^#]*)$/.exec(locId);",
+    "new": "  const m = /^(\\d+):(.*)$/.exec(locId);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-deed's-record-lost",
+    "file": "src/systems/discovery.js",
+    "old": "  const deeds = (Array.isArray(houses) ? houses : []).filter(",
+    "new": "  const deeds = [].filter(",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "a house past the Bay loses its residence's plate on a load"
+  },
+  {
+    "name": "BLM-C7-the-deed-carried-by-another-name",
+    "file": "src/systems/discovery.js",
+    "old": "      const rec = h.location === old.name ? recs.get(h.buildingKey | 0) : null;",
+    "new": "      const rec = recs.get(h.buildingKey | 0);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-a-carried-one-over-its-own",
+    "file": "src/systems/discovery.js",
+    "old": "      if (!_discovered.get(to).has(rec.buildingKey)) _discovered.get(to).set(rec.buildingKey, rec);",
+    "new": "      _discovered.get(to).set(rec.buildingKey, rec);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-a-carried-one-dropped-by-its-book",
+    "file": "src/systems/discovery.js",
+    "old": "    if (!old) { const had = _discovered.get(locId); if (had) for (const [k, r] of recs) had.set(k, r); else _discovered.set(locId, recs); continue; }",
+    "new": "    if (!old) { _discovered.set(locId, recs); continue; }",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-save-hands-no-deeds",
+    "file": "src/systems/save/save.js",
+    "old": "  restoreDiscovery(snap.discovery, { houses: allDeeds(entity.houses) });",
+    "new": "  restoreDiscovery(snap.discovery);",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-door's-key-back",
+    "file": "src/scenes/world.js",
+    "old": "    discoveryLocationId: () => townBookOf(_questLoc()),",
+    "new": "    discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ],
+    "note": "a door's plaque, a lock's bar and a deed past the Bay in every town of the name"
+  },
+  {
+    "name": "BLM-C7-the-town-map's-key-back",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "    const locId = townBookOf(dfLoc);",
+    "new": "    const locId = `${dfLoc.regionIndex}:${dfLoc.name}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-talk's-reveal-back",
+    "file": "src/scenes/townTalk.js",
+    "old": "discoverBuilding(townBookId(regionNow(), cityName(), topics?.mapId), building, null, questBuildingSource);",
+    "new": "discoverBuilding(`${regionNow()}:${cityName()}`, building, null, questBuildingSource);",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-guild-halls'-key-back",
+    "file": "src/scenes/world.js",
+    "old": "    const locationId = townBookOf(dfLoc);",
+    "new": "    const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C7-the-moved-site's-key-back",
+    "file": "src/scenes/world.js",
+    "old": "    const town = townBookId(was?.regionIndex ?? -1, was?.locationName ?? '', was?.mapId);",
+    "new": "    const town = `${was?.regionIndex ?? -1}:${was?.locationName ?? ''}`;",
+    "tests": [
+      "test/systems/bayleft_disckey.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-bay's-sheet-everywhere",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  if (!Number.isFinite(x) || !Number.isFinite(y) || inBay(x, y)) return null;",
+    "new": "  if (true) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ],
+    "note": "a boat past the Bay has no cross on the reading (AUDIT LEFT IN THE BAY C12)"
+  },
+  {
+    "name": "BLM-C12-the-frame-unread",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  return x >= fr.x0 && y >= fr.y0 && x < fr.x0 + fr.w && y < fr.y0 + fr.h ? MAP_SHEET_TAMRIEL : null;",
+    "new": "  return MAP_SHEET_TAMRIEL;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ],
+    "note": "the Eltheric Ocean's box read onto a painting that does not hold it"
+  },
+  {
+    "name": "BLM-C12-the-painting's-rect-the-mod's",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  if (sheet !== MAP_SHEET_TAMRIEL) return r;",
+    "new": "  return r;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-its-rect-off-centre",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  return { x: f(r.x + f(f(r.w - w) / 2)), y: f(r.y + f(f(r.h - h) / 2)), w, h };",
+    "new": "  return { x: r.x, y: r.y, w, h };",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-cross-on-the-bay's-scale",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "    const [cx, cy] = sheet ? tamrielCrossAt(o.pixel, r) : [",
+    "new": "    const [cx, cy] = false ? tamrielCrossAt(o.pixel, r) : [",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-markers-of-every-sheet",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet);",
+    "new": "  const shown = o.markers;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting's-quad-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  quad(sheet ?? 'map', r.x, r.y, r.w, r.h, COLOR_WHITE);",
+    "new": "  quad('map', r.x, r.y, r.w, r.h, COLOR_WHITE);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting-off-its-indices",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "    const c = colorOf(bitmap.data[i]);",
+    "new": "    const c = colorOf(bitmap.data[0]);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-sheet-not-kept",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "(sheet ? { position, label, color, sheet } : { position, label, color });",
+    "new": "({ position, label, color });",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-marked-across-sheets",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "export const markerOn = (m, pos, sheet = null) => (m.sheet ?? null) === (sheet ?? null) && m.position[0]",
+    "new": "export const markerOn = (m, pos, sheet = null) => m.position[0]",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-distance-across-sheets",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "((m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity);",
+    "new": "vector2IntDistance(m.position, pos);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-save-drops-the-sheet",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "color: m.color, ...(m.sheet ? { sheet: m.sheet } : {}) });",
+    "new": "color: m.color });",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-load-drops-the-sheet",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "m.color, m.label, m.sheet ?? null);",
+    "new": "m.color, m.label);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-mouse-over-the-bay's-rect",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const r = sheetRect(sr, screenScaleOf(sr), sheetOfPixel(deps.currentMapPixel()));",
+    "new": "    const r = sheetRect(sr, screenScaleOf(sr), null);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-a-click-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "{ ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] }, sheetOfPixel(deps.currentMapPixel())));",
+    "new": "{ ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] }, null));",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-marked-on-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  const IsPositionMarked = (pos, sheet = sheetOfPixel(deps.currentMapPixel())) =>",
+    "new": "  const IsPositionMarked = (pos, sheet = null) =>",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-a-load-across-sheets",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!state.mapMarkers.some((m) => markerOn(m, mapPixel, sheet))) state.mapMarkers.push(",
+    "new": "    if (!state.mapMarkers.some((m) => markerOn(m, mapPixel, m.sheet))) state.mapMarkers.push(",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-right-button-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      const num3 = markerDistance(state.mapMarkers[num6], val3, sheetOfPixel(deps.currentMapPixel()));",
+    "new": "      const num3 = markerDistance(state.mapMarkers[num6], val3, null);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting-drawn-on-the-bay's-picture",
+    "file": "src/scenes/csaMapHost.js",
+    "old": "        const tex = d.tex === 'line' ? pics?.line : d.tex === 'tamriel' ? pics?.tamriel : pics?.map;",
+    "new": "        const tex = d.tex === 'line' ? pics?.line : pics?.map;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting-never-built",
+    "file": "src/scenes/csaMapHost.js",
+    "old": "      _csaPics.tamriel = renderer.uploadTexture(",
+    "new": "      _csaPics.painting = renderer.uploadTexture(",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C10-the-layer-never-handed-in",
+    "file": "src/world/arenaRoads.js",
+    "old": "setRoadsPastTable(arenaRoadByte);",
+    "new": "void setRoadsPastTable;",
+    "tests": [
+      "test/systems/travel/bayleft_paths.test.js"
+    ]
+  }
+]

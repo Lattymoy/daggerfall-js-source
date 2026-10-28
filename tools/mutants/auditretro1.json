@@ -460,7 +460,7 @@
   {
     "name": "AUDITRETRO1-E7-no-warm-step",
     "file": "src/render/renderer.js",
-    "old": "      ...(this._retroSource || this._scaleSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program\n",
+    "old": "      ...(this._retroSource || this._scaleSource ? [{ start: () => startPrograms(this.gl, [[RETRO_VS, RETRO_FS]]), run: () => this._warmRetro(), need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program\n",
     "new": "",
     "tests": [
       "test/render/auditretro1.test.js"

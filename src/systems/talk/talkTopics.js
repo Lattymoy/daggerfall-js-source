@@ -34,7 +34,7 @@ import { RMB_SIDE } from '../../world/locationLayout.js';
 import { directionHintString } from './talk.js';   // wave 27: one compass law
 import { staticNpcData, isChildNPCData } from '../../characters/staticNpc.js';   // QP1: the one SetLayoutData law
 import { collectInteriorPeople } from '../../characters/interiorPeople.js';   // QP1: the one people mapper
-import { hasInteriorModels } from '../../world/interior/interiorLayout.js';   // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale
+import { hasInteriorModels, interiorCast } from '../../world/interior/interiorLayout.js';   // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale; IC-INTERIORS: a made room's cast
 import { buildingSummaries } from '../../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
 import { localizedTable } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
@@ -170,6 +170,11 @@ export function drawNamedBuildings(exteriorBuildings, blocks, { locationIndex = 
   const out = new Map();   // block -> merged buildingDataList copy
   for (const b of blocks) {
     const list = b.dfBlock.rmbBlock.fldHeader.buildingDataList.map((d) => ({ ...d }));
+    // BLD (bible/03-World/Arena-Provinces.md IC-GRAND, BLD; Port-Ledger section A, IC-GRAND): A BLOCK THAT NAMES ITS OWN
+    // BUILDINGS - the Imperial City's fabric (world/imperialFabricBuildings.js withFabricBuildings) - keeps its records and
+    // draws none of the location's list: the outcome that list would give carrying them in grid order, and a classic
+    // block's draw after it untouched
+    if (b.dfBlock.ownNamedBuildings) { out.set(b, list); continue; }
     // AUDIT 2026-08-17c: DFU scans SubRecords.Length entries, NOT the
     // full 32-slot header - garbage entries past the subrecord count
     // must never steal pool draws (they misalign every later name).
@@ -245,6 +250,7 @@ function blockInstanceOf(blocks, d) {
     d.position[2] >= b.originZ - 1 && d.position[2] < b.originZ + RMB_SIDE + 1) ?? cands[0];
 }
 
+const footprintOf = (sub) => (sub?.footprintM2 > 0 ? { footprintM2: sub.footprintM2 } : {});   // IC-HOMES: the Imperial City's fabric building - one model, its door - carries its ground for its home price
 /** E2: one exterior door -> its MERGED building data + buildingKey
  *  (the interior host's shop identity: type/quality/seed/faction).
  *  HOME1: and the building's MODEL (`modelIdNum`, locationBuildings'
@@ -262,7 +268,7 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door, { locationI
   const sub = inst.dfBlock?.rmbBlock?.subRecords?.[door.recordIndex];
   const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
   // FIELD BUGS 2026-10-05 CRYPT-SALE: whether the room can be laid out at all - a graveyard's crypt cannot
-  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub) };
+  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };
 }
 
 /**
@@ -309,6 +315,7 @@ export function locationBuildings(exteriorBuildings, blocks, { locationIndex = 0
         modelId: model?.modelId ?? null,
         modelIdNum: model?.modelIdNum ?? null,
         hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE
+        ...footprintOf(sub),
       });
     }
   }
@@ -351,7 +358,9 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
       if (!data) continue;
       const buildingKey = makeBuildingKey(b.x ?? 0, b.y ?? 0, i);
       const sub = b.dfBlock.rmbBlock.subRecords?.[i];
-      const npcs = (sub?.interior?.blockPeopleRecords ? collectInteriorPeople(sub) : []).map((p) => {
+      // IC-INTERIORS: a made interior's people as its cast's record holds them (their names the same - interiorCast)
+      const cast = interiorCast(sub);
+      const npcs = (cast?.blockPeopleRecords ? collectInteriorPeople({ interior: cast }) : []).map((p) => {
         const d = staticNpcData(p, {
           mapId, locationIndex, buildingKey, getFaction, raceOfCurrentRegion,
         });

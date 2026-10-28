@@ -71,7 +71,7 @@ const fnOf = (name) => fnIn(W, name);
 const constOf = (name) => { const at = W.indexOf(`\n  const ${name} = `); assert.ok(at > 0, name); return W.slice(at + 1, W.indexOf('\n  };\n', at) + 5); };
 /** A property of world.js's Hollow host (createSdHost's own arguments), its arrow's text - one line, or a block. */
 function hostProp(name) {
-  const from = W.indexOf('const sdHost = params.has(\'online\') ? createSdHost({');
+  const from = W.indexOf('const sdHost = params.has(\'online\') ? createSdLanes({');   // PIN MOVED (WW5): the Hollow host a lane at a time (scenes/superDungeon/sdLanes.js) - the Bay's lane's host takes these same arguments
   assert.ok(from > 0, 'the Hollow host');
   const at = W.indexOf(`\n    ${name}: `, from);
   assert.ok(at > 0, name);
@@ -267,6 +267,7 @@ function riftHost({ rec, hollow, storage = memStorage(), entered = true } = {}) 
     INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     _teleportToPixel: async () => { log.push('pixel'); if (h.onWalk) h.rec = h.onWalk; },
     sdVeilCentre: () => null, standBeforeHollowDoor: () => true,   // SD-LOOK S5: the veil's centre; AUDIT SD IV (F40): before its door
+    sdCopy: { ownerFor: async () => '0123456789abcdef' },   // SD-PARTY (PIN MOVED): my party's own Hour
   };
   const body = `${constOf('sdRiftOf')}\n${fnOf('sdEnterRealm')}\nreturn { sdRiftOf, sdEnterRealm };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
@@ -614,7 +615,7 @@ test('SD11c THE WORLD HOST\'S FIGHT, RUN FROM ITS OWN TEXT (L8 G3, L5 F5): in th
 // ── L6 F4, F14: the Hour's death, the floor's last words ──────────────
 
 test('SD11c A DEATH IN THE HOUR IS THE HOUR\'S, AND THE FLOOR\'S LAST WORDS GO TO THE CHAT (L6 F4, F14): the respawn reads the Hour before it leaves it, and wakes under the veil with the Hour\'s own words (it woke with a plain dungeon\'s); what the floor still held, gathered as I leave, is said in the chat - over the screen it took the place of the way home\'s line or the cast-out\'s a frame after (mutants: read after the exit; the dungeon\'s words; the gathered line over the screen)', () => {
-  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.');   // SD-ONELIFE (PIN MOVED): one life; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
+  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out. You wake before the Abyss Dungeon\'s door.');   // PIN MOVED (SD-BACK, 2026-10-28): no longer for good - its Rift takes you back to your own Hour; SD-ONELIFE (PIN MOVED): one life; AUDIT SD III (T15, PIN MOVED): the player's word for it, Abyss Dungeon
   const w = strip(W);
   const at = w.indexOf("const diedInHour = madeRuleHere('death') === 'final';");   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): a death in the Hour is final for its Hollow
   const go = w.indexOf('Promise.resolve().then(async () => {', at);

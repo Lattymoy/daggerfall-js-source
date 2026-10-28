@@ -92,7 +92,7 @@
   },
   {
     "name": "AUDIT-REALM2-C2-world-says-saved-before-the-answer",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "sayRealmSave(said, (t) => townTalk.say(t))",
     "new": "sayRealmSave({ ok: true }, (t) => townTalk.say(t))",
     "tests": [
@@ -301,9 +301,18 @@
   },
   {
     "name": "AUDIT-REALM2-M5-the-quiet-checkpoint-says-the-refusal",
+    "file": "src/scenes/worldQuickSave.js",
+    "old": "if (host.ohAbyss?.entering) { if (!quiet) townTalk.say('You cannot save now.'); return false; }",
+    "new": "if (host.ohAbyss?.entering) { townTalk.say('You cannot save now.'); return false; }",
+    "tests": [
+      "test/systems/auditrealm2_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOSE-SAVE-host-leaves-without-the-save",
     "file": "src/scenes/world.js",
-    "old": "if (ohAbyss?.entering) { if (!quiet) townTalk.say('You cannot save now.'); return false; }",
-    "new": "if (ohAbyss?.entering) { townTalk.say('You cannot save now.'); return false; }",
+    "old": "whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); }, realmSession);",
+    "new": "whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });",
     "tests": [
       "test/systems/auditrealm2_client.test.js"
     ]

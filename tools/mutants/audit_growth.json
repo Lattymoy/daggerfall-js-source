@@ -627,8 +627,8 @@
   {
     "name": "AUDIT-GROWTH-L5-4-ascended-face-kept",
     "file": "src/ui/growth/growthTab.js",
-    "old": "entity, embed: true, onExit: () => { dropStage(); ctx.render(); } })",
-    "new": "entity, embed: true, onExit: () => {} })",
+    "old": "entity, embed: true, owner: ctx.owner, onExit: () => { dropStage(); ctx.render(); } })",
+    "new": "entity, embed: true, owner: ctx.owner, onExit: () => {} })",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],

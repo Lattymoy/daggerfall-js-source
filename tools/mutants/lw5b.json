@@ -83,7 +83,7 @@
   {
     "name": "LW5b-fit",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    if (backT1 > cycleEnd) continue;",
+    "old": "    if (backT1 > cycleEnd + (c - 1) * len * DAY_MIN) continue;",
     "new": "    void cycleEnd;",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "LW5b-dock-away",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));",
-    "new": "exit: exitToward(this.places, w.yaw), armed: w.armed }));",
+    "old": "exit: w.dock ? (this.dockSpot() ?? exitToward(P, w.yaw)) : exitToward(P, w.yaw), armed: w.armed }));",
+    "new": "exit: exitToward(P, w.yaw), armed: w.armed }));",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "LW5b-dock-visit",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        const exit = visit.dock ? (this.dockSpot() ?? exitToward(this.places, visit.yaw)) : exitToward(this.places, visit.yaw);",
-    "new": "        const exit = exitToward(this.places, visit.yaw);",
+    "old": "        const exit = visit.dock ? (this.dockSpot() ?? exitToward(this._placesFor(this._lodging(res)), visit.yaw)) : exitToward(this._placesFor(this._lodging(res)), visit.yaw);",
+    "new": "        const exit = exitToward(this._placesFor(this._lodging(res)), visit.yaw);",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]
@@ -271,9 +271,9 @@
   },
   {
     "name": "LW5b-host-far",
-    "file": "src/scenes/world.js",
-    "old": "to = livingTownOfPort(l.a.id === id ? l.b.id : l.a.id);",
-    "new": "to = livingTownOfPort(id);",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "to = townOfPort(l.a.id === id ? l.b.id : l.a.id);",
+    "new": "to = townOfPort(id);",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]

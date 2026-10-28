@@ -354,11 +354,13 @@
   {
     "name": "AUDIT-SEA-F1-carry-unput",
     "file": "server/src/index.js",
-    "old": "    if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now));",
-    "new": "",
+    "old": "    if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // F1/A1",
+    "new": "    // F1/A1",
     "tests": [
       "test/systems/sea/auditsea.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT PVP-EASE L3-1: every fighter's socket that goes from a room now puts its carry at the hub (server/src/index.js _wildLeaveCarry, _zoneCarry - its ship's bar with it), so a ship battered and sailed into the next cell carries her bar by her leave as well as by the shot's put; the pin sees the bar arrive either way. The shot's put stays for a room that never hears her socket close (a crashed object), and is recorded rather than dropped so the next reader knows the leave holds it too."
   },
   {
     "name": "AUDIT-SEA-F1-carry-unread",
@@ -372,8 +374,8 @@
   {
     "name": "AUDIT-SEA-F1-hub-drops-the-ship",
     "file": "src/net/wild/wildRef.js",
-    "old": "at: v.at, ...(sea ? { sea } : {}) };",
-    "new": "at: v.at };",
+    "old": "at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...grace, ...pass, ...(sea ? { sea } : {}) };",
+    "new": "at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...grace, ...pass };",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -713,15 +715,6 @@
     ]
   },
   {
-    "name": "AUDIT-SEA-C4-sea-cart-away",
-    "file": "src/systems/wild/wildCart.js",
-    "old": "return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);",
-    "new": "return !wildInside(mask, p.x, p.y);",
-    "tests": [
-      "test/systems/sea/auditsea.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-SEA-C5-first-reach-alone",
     "file": "src/systems/wild/etherWild.js",
     "old": "    if (r > far) return h;",
@@ -768,7 +761,7 @@
   },
   {
     "name": "AUDIT-SEA-C7-drop-the-hills",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/wildDropHost.js",
     "old": "zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));",
     "new": "zoneWord('dropLate', null));",
     "tests": [
@@ -805,20 +798,22 @@
   {
     "name": "AUDIT-SEA-C6-unstuck-hills-english",
     "file": "src/systems/wild/wildZone.js",
-    "old": "get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in the mountains.'); },",
-    "new": "get unstuckOut() { return '/unstuck does not work outdoors in the mountains.'; },",
+    "old": "get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.'); },",
+    "new": "get unstuckOut() { return '/unstuck does not work outdoors in Cyrodiil.'; },",
     "tests": [
       "test/systems/sea/auditsea.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's words Cyrodiil's."
   },
   {
     "name": "AUDIT-SEA-C7-revenant-hills-english",
     "file": "src/systems/wild/wildZone.js",
-    "old": "get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in the Wrothgarian Mountains.'); },",
-    "new": "revenantOne: 'Only one revenant may walk at your side in the Wrothgarian Mountains.',",
+    "old": "get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in Cyrodiil.'); },",
+    "new": "revenantOne: 'Only one revenant may walk at your side in Cyrodiil.',",
     "tests": [
       "test/systems/sea/auditsea.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's words Cyrodiil's."
   },
   {
     "name": "AUDIT-SEA-F5-board-window-longer",

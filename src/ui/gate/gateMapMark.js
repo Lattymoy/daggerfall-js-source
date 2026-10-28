@@ -26,14 +26,45 @@ export const GATE_LEGEND_TEXT = 'Dagon\'s Breach';   // WB12a
  * @param {{width:number, height:number}} size the map, in pixels
  */
 export function readGateMark(fn, size) {
+  return readGateMarkIn(fn, { x0: 0, y0: 0, w: size.width, h: size.height });
+}
+
+/** BAY-LEFT-MAPS (bible/10-UI/Held-Map-Arc.md): ONE RING over a BOX of map pixels (`box` {x0, y0, w, h} - the held map's
+ *  sheet: the continent's frame while it is shown, world/tamriel/tamrielFrame.js tamrielFrameInBay; the Bay's own
+ *  rectangle else), as each of WW2's rings is read (readGateMarks). The held map read the serpent's ring, a Super dungeon's,
+ *  an arch's and the Ketch's against the Bay's 1000 x 500 (readGateMark), so a ring past the Bay was never drawn; the
+ *  Bay's own box is readGateMark's, to the pixel.
+ *  @param {(() => any) | undefined} fn @param {{x0:number, y0:number, w:number, h:number}} box */
+export function readGateMarkIn(fn, box) {
   let m = null;
   try { m = typeof fn === 'function' ? fn() : null; } catch { return null; }
   if (!m || typeof m !== 'object') return null;
   const { cx, cy, r } = m;
   if (![cx, cy, r].every(Number.isFinite) || !(r > 0)) return null;
-  if (cx + r < 0 || cy + r < 0 || cx - r > size.width || cy - r > size.height) return null;
+  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;
   return { day: Number.isFinite(m.day) ? m.day : 0, cx, cy, r, label: String(m.label ?? GATE_LEGEND_TEXT).slice(0, 80), phase: String(m.phase ?? ''), tip: readTip(m.tip) };
 }
+
+/** WW2 (bible/03-World/World-Wide.md): THE RINGS OF THE GATES PAST THE BAY - the host's `gates` (scenes/gate/gateLanes.js
+ *  mapMarks: a ring a lane, the Bay's own is `gate`), each read as one ring is (readGateMark), over the box the sheet
+ *  pans (`box` {x0, y0, w, h} - the continent's frame, TAMRIEL1's, the Bay's own rectangle while it is not shown), and
+ *  at most GATE_MARKS_MAX of them.
+ *  @param {(() => any) | undefined} fn @param {{x0:number, y0:number, w:number, h:number}} box */
+export function readGateMarks(fn, box) {
+  let list = null;
+  try { list = typeof fn === 'function' ? fn() : null; } catch { return []; }
+  if (!Array.isArray(list)) return [];
+  const out = [];
+  for (const m of list.slice(0, GATE_MARKS_MAX)) {
+    const g = readGateMark(() => (m && typeof m === 'object' ? { ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 } : null), { width: box.w, height: box.h });
+    if (g) out.push({ ...g, cx: g.cx + box.x0, cy: g.cy + box.y0 });
+  }
+  return out;
+}
+/** WW2: the most rings past the Bay a sheet reads - every lane's but the Bay's. */
+export const GATE_MARKS_MAX = 9;
+/** WW2: what the held map repaints on for the rings past the Bay - each ring's own key. */
+export const gateMarksKey = (list) => list.map(gateMarkKey).join(';');
 
 /** What the held map repaints on: the ring AND its words (the countdown ticks each second) - its card's too (AUDIT KETCH
  *  L3-10: a card whose countdown is its tip's line, the Ketch's, kept the one it was opened on). */

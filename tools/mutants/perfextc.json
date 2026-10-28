@@ -496,8 +496,8 @@
   {
     "name": "PERF-EXT24-the-budget-is-asked-once-and-never-again",
     "file": "src/systems/buildBreather.js",
-    "old": "      sliceStart = now();\n      sliceFrame = framesNow();\n      sliceBudget = budget ? budget() : sliceMs;",
-    "new": "      sliceStart = now();\n      sliceFrame = framesNow();",
+    "old": "          sliceStart = now();\n          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for\n          sliceBudget = budget ? budget() : sliceMs;",
+    "new": "          sliceStart = now();\n          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "PERF-EXT24-no-slice-is-reported",
     "file": "src/systems/buildBreather.js",
-    "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside",
-    "new": "      void spent;",
+    "old": "if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "void spent;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -786,11 +786,12 @@
   {
     "name": "PERF-EXT26-the-worker-builds-a-different-grid",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
-    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates, stride: 4 });",
+    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates });",
+    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates, stride: 4 });",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "PERF-EXT26-the-client-routes-a-grid-reply-into-the-FIFO",
@@ -813,29 +814,32 @@
   {
     "name": "PERF-EXT26-a-failed-grid-is-left-unbuilt",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));\n      return;",
+    "old": "      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...g.job }));\n      return;",
     "new": "      g.resolve(null);\n      return;",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "PERF-EXT26-a-dead-worker-strands-its-grids",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));",
+    "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...g.job }));",
     "new": "    void grids;",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "PERF-EXT26-every-grid-shares-one-id",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "    const id = ++this._gridId;",
-    "new": "    const id = this._gridId;",
+    "old": "\n    const id = ++this._gridId;",
+    "new": "\n    const id = this._gridId;",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MID-RING): the middle ring's and the far field's bands draw their ids off the same count, a line indented deeper - the grid's line by its own indent."
   },
   {
     "name": "PERF-EXT26-the-grid-law-drops-the-ghost-rows",
@@ -886,8 +890,8 @@
   {
     "name": "PERF-EXT24-review-the-resume-never-reads-the-count",
     "file": "src/systems/buildBreather.js",
-    "old": "      sliceFrame = framesNow();\n",
-    "new": "      sliceFrame = -1;\n",
+    "old": "          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
+    "new": "          sliceFrame = resumedBy === TURNED ? null : -1;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]

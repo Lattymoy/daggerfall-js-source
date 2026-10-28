@@ -13,7 +13,8 @@
 // one is the trail's edge, a corner of dirt the floor grows over) - the mask the road painter keeps (GRASS-PATH1) and every
 // layer that keeps off a track already reads (the jungle's trees, palms and floor, Real forests, the meadow's grass and
 // the jungle floor's carpet, the home yards). Only where the jungle is whole (JUNGLE_EDGE.in deep): the ground at its
-// edge is the pixel's own layout's too, and DFU's scatter reads no mask. Never in a location's rect. A jungle tree keeps
+// edge is the pixel's own layout's too, and DFU's scatter reads no mask. Never on a town's clearing (cornerCleared: TS6's
+// natureCleared, its outline and four tiles round it, as its trees keep; a rect without an outline its rect). A jungle tree keeps
 // its foot off a trail as VERGE1 keeps it off a road (jungleNature.js withJungle, trailClear). The heights are never
 // moved: a trail is worn into the ground, not cut, so the room's ground is the ground it was.
 // bible/03-World/Bantha-Jungle.md "The trails".
@@ -21,6 +22,7 @@ import { ecoHash } from '../ecotone.js';
 import { jungleDepthAt, JUNGLE_EDGE, JUNGLE_WANDER_MAX } from './jungleRegion.js';
 import { TERRAIN_SIZE } from '../terrain/terrainSampler.js';
 import { WORLD_MAP_TILE_DIM, WATER, DIRT } from '../terrain/terrainTiles.js';
+import { natureCleared } from '../terrain/terrainNature.js';   // E1-5: a town's clearing its outline's, as its trees'
 
 /** The trails' numbers, in one place. Tiles are DFU's (6.4 m), on the world's lattice (x east, z north). */
 export const JUNGLE_TRAILS = Object.freeze({
@@ -156,14 +158,32 @@ export function trailsReach(nine) {
 }
 
 /**
+ * AUDIT TESA III E1-5 (TS6, bible/03-World/Town-Shapes.md section 8): WHETHER A CORNER (0..128 a side) IS A TOWN'S - a
+ * corner of any tile of its clearing (natureCleared: within NATURE_CLEARANCE of its outline), so a trail stops where its
+ * trees stop, round the town's own ground, and never wears a tile of the clearing; a rect without an outline (a capital,
+ * a World of Daggerfall site) its own bounds, corners inclusive, as before. The rect's square had cut a trail short among
+ * the trees of a town's open ground, and let it run on over the outline's margin past the square (measured on the
+ * freeware: 10,891 corners of 442 jungle towns' clearings dirt, 3,603 of them corners of the outline's own tiles).
+ * @param {{xMin:number,xMax:number,yMin:number,yMax:number,shape?:Uint8Array}} rect @param {number} x @param {number} y
+ */
+export function cornerCleared(rect, x, y) {
+  if (!rect.shape) return x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax;
+  const T = WORLD_MAP_TILE_DIM;
+  for (let ty = Math.max(0, y - 1); ty <= Math.min(T - 1, y); ty++) {
+    for (let tx = Math.max(0, x - 1); tx <= Math.min(T - 1, x); tx++) if (natureCleared(rect, tx, ty)) return true;
+  }
+  return false;
+}
+
+/**
  * THE TRAILS INTO A PIXEL'S TILE DATA (129 x 129 corners, generateTileData's: x + y * 129) - before the marching squares
- * run (terrainTiles.js assignTiles). A corner on a trail - within JUNGLE_TRAILS.half of its line, on land, out of the
- * location's rect, where the jungle is whole - is dirt; every tile no painter wrote (the tilemap's 0) with two such
+ * run (terrainTiles.js assignTiles). A corner on a trail - within JUNGLE_TRAILS.half of its line, on land, off the
+ * location's clearing (cornerCleared), where the jungle is whole - is dirt; every tile no painter wrote (the tilemap's 0) with two such
  * corners - half dirt by its marching square's art and more - goes into `paths`. Answers the paths mask: the one handed, or a new one where a trail ran and none was (the kernel's
  * `paths` stays null where no network and no trail ran).
  * @param {Uint8Array} tileData @param {Uint8Array} tilemap the pixel's 128 x 128 (y * 128 + x) @param {?Uint8Array} paths
  * @param {{ px: number, py: number, nine: ArrayLike<number>, whole?: boolean,
- *   rect?: ?{ xMin: number, xMax: number, yMin: number, yMax: number } }} at
+ *   rect?: ?{ xMin: number, xMax: number, yMin: number, yMax: number, shape?: Uint8Array } }} at
  *   `whole` - the jungle owns every corner (jungleNature.js jungleWhole), its depth unread
  */
 export function paintJungleTrails(tileData, tilemap, paths, { px, py, nine, whole = false, rect = null }) {
@@ -182,10 +202,10 @@ export function paintJungleTrails(tileData, tilemap, paths, { px, py, nine, whol
         for (let x = bx; x < (bx + B === T ? D : bx + B); x++) {
           const i = x + y * D;
           if (tileData[i] === WATER) continue;
-          if (rect && x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax) continue;   // the town's own ground, to its edge
           let d = Infinity;
           for (const fam of near) d = Math.min(d, familyDistance(ox + x, oz + y, fam));
           if (d > JUNGLE_TRAILS.half) continue;
+          if (rect && cornerCleared(rect, x, y)) continue;   // the town's own ground and its clearing (E1-5: its outline's)
           if (!whole && jungleDepthAt(px, py, nine, x * scale, y * scale) < JUNGLE_EDGE.in) continue;
           on[i] = 1;
           tileData[i] = DIRT;

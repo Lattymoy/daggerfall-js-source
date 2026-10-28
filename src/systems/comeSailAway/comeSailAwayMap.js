@@ -13,10 +13,21 @@
 // so every red line, marker and backdrop is its colour times that grey (kept). The host draws the texture itself.
 //
 // Everything here is the arithmetic of the draw; the runtime (systems/comeSailAway/comeSailAway.js) owns the state it reads.
+//
+// BAY-LEFT-MAPS (2026-10-27, the owner after AUDIT LEFT IN THE BAY: "Every single thing here needs to be addressed. No
+// exceptions." - its C12, the low one, built with the rest; bible/03-World/Come-Sail-Away.md BAY-LEFT-MAPS): THE READING PAST
+// THE BAY. The mod's picture is the Bay's, so a boat past it had no cross - the reading's red lines ran off the rect. Past
+// the Bay's map the reading is drawn on Daggerfall's own painting of Tamriel (TMAP00I0.IMG - the picture the continent's
+// trace is read off, ui/tamrielTrace.js - rebuilt from the player's own file as record 3 is), its own 320 x 200 at the
+// map's height, centred on the mod's rect (the `tamriel` sheet), the cross where the frame's fit puts the pixel on it. The
+// markers are the sheet's they were placed on (a marker's `sheet`, kept in the save; none, the Bay's, for every marker
+// before and every one another mod adds). On the Bay every draw is the mod's own, unchanged. A departure: Come Sail Away
+// knows the Bay alone (Port-Ledger A, BAY-LEFT-MAPS).
 
 import { roundToInt } from '../mathf.js';   // Mathf.RoundToInt's one home
 import { MAP_WIDTH, MAP_HEIGHT } from '../../formats/woodsFile.js';   // the world map's 1000x500: one texel a map pixel
 import { REGION_PANEL_OFFSET } from '../../ui/travel/travelMapWindow.js';   // DaggerfallTravelMapWindow.regionPanelOffset's one home
+import { inBay, bayToPicture, tamrielFrameInBay, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS: the painting's grid and the frame's fit
 
 const f = Math.fround;
 
@@ -72,6 +83,55 @@ export function travelMapPicture(bitmap, colorOf, width = MAP_WIDTH, height = MA
   }
   return { width, height, data };
 }
+
+/** BAY-LEFT-MAPS (C12): the painting of Tamriel the reading is drawn on past the Bay - Daggerfall's own TMAP00I0.IMG, read
+ *  on its palette (MAP.PAL, ImgFile's paletteName), as the trace reads it. */
+export const TAMRIEL_MAP_IMG = 'TMAP00I0.IMG';
+/** The sheet a reading past the Bay is drawn on (a marker's `sheet`); the Bay's is none. */
+export const MAP_SHEET_TAMRIEL = 'tamriel';
+/** The painting's screen pixels a picture pixel at scale 1: its 200 rows over the map's 500 (so 800 x 500). */
+export const TAMRIEL_SHEET_PX = 2.5;
+/**
+ * The painting rebuilt: TMAP00I0.IMG whole, a texel a picture pixel, `colorOf(index)` its palette's { r, g, b }. RGBA,
+ * rows top down as GUI draws (travelMapPicture's shape).
+ */
+export function tamrielMapPicture(bitmap, colorOf) {
+  const { width, height } = bitmap;
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
+    const c = colorOf(bitmap.data[i]);
+    data[i * 4] = c.r; data[i * 4 + 1] = c.g; data[i * 4 + 2] = c.b; data[i * 4 + 3] = 255;
+  }
+  return { width, height, data };
+}
+/** The sheet a reading at a map pixel [x, y] is drawn on: none (the mod's own picture) while the pixel is on the Bay's
+ *  map; the painting's past it, where the continent's frame holds the pixel; none past both (the Eltheric Ocean's box
+ *  lies north of the painting). */
+export function mapSheetAt(pixel) {
+  const x = pixel?.[0], y = pixel?.[1];
+  if (!Number.isFinite(x) || !Number.isFinite(y) || inBay(x, y)) return null;
+  const fr = tamrielFrameInBay();
+  return x >= fr.x0 && y >= fr.y0 && x < fr.x0 + fr.w && y < fr.y0 + fr.h ? MAP_SHEET_TAMRIEL : null;
+}
+/** mapSheetAt over PlayerGPS.CurrentMapPixel's { X, Y } (the runtime's reads). */
+export const sheetOfPixel = (p) => mapSheetAt([p?.X, p?.Y]);
+/** The sheet's rect: the mod's own (mapRect) for the Bay's; the painting's - TAMRIEL_SHEET_PX a picture pixel at the
+ *  map's scale, the map's height - centred on the mod's rect. */
+export function sheetRect(screenRect, scale, sheet = null) {
+  const r = mapRect(screenRect, scale);
+  if (sheet !== MAP_SHEET_TAMRIEL) return r;
+  const w = f(f(PICTURE_W * TAMRIEL_SHEET_PX) * scale[0]), h = f(f(PICTURE_H * TAMRIEL_SHEET_PX) * scale[1]);
+  return { x: f(r.x + f(f(r.w - w) / 2)), y: f(r.y + f(f(r.h - h) / 2)), w, h };
+}
+/** A marker placed (LeftClickOnMap, AddMapMarker) - its sheet beside it past the Bay, none on the Bay's (the record every
+ *  marker before carries). */
+export const placedMarker = (position, label, color, sheet = null) => (sheet ? { position, label, color, sheet } : { position, label, color });
+/** IsPositionMarked's test: a marker on this pixel of this sheet. */
+export const markerOn = (m, pos, sheet = null) => (m.sheet ?? null) === (sheet ?? null) && m.position[0] === pos[0] && m.position[1] === pos[1];
+/** RightClickOnMap's distance: a marker's on the shown sheet, none to one of another (Infinity: never the nearest). */
+export const markerDistance = (m, pos, sheet = null) => ((m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity);
+/** The save's record of a marker (placedMapMarkers' shape) - its sheet where it has one. */
+export const savedMarker = (m) => ({ position: { x: m.position[0], y: m.position[1] }, label: m.label, color: m.color, ...(m.sheet ? { sheet: m.sheet } : {}) });
 
 /** Unity's Rect.Contains(Vector2) over a GUI rect { x, y, w, h }: the min edges in, the max edges out. */
 export const guiRectContains = (r, p) => p[0] >= r.x && p[0] < f(r.x + r.w) && p[1] >= r.y && p[1] < f(r.y + r.h);
@@ -130,6 +190,13 @@ export function csFloatString(v) {
   return sign + (fixed.includes('.') ? fixed.replace(/\.?0+$/, '') : fixed);
 }
 
+/** BAY-LEFT-MAPS (C12): where a map pixel's cross stands on the painting's rect `r`, off the rect's corner - the frame's fit
+ *  (world/tamriel/tamrielFrame.js bayToPicture) at the rect's own scale. */
+export function tamrielCrossAt(pixel, r) {
+  const [px, py] = bayToPicture(pixel[0], pixel[1]);
+  return [f(f(px) * f(r.w / PICTURE_W)), f(f(py) * f(r.h / PICTURE_H))];
+}
+
 /**
  * OnGUI's map (4113-4170), as the draws it makes in order: the backdrop over the whole screen (the setting's
  * opacity of black, blended), the picture stretched over its rect, the position's two red lines while a reading was
@@ -148,25 +215,29 @@ export function mapOverlayDraws(o) {
   const text = (str, pos, scale, color, shadowPos) => draws.push({ kind: 'text', text: str, x: f(pos[0]), y: f(pos[1]), scale, color, shadow: COLOR_BLACK, shadowPos });
   // the backdrop: `new Rect(0, 0, Screen.width, Screen.height)`, black at mapBackdropOpacity
   quad('line', 0, 0, o.screen[0], o.screen[1], { ...COLOR_BLACK, a: f(o.opacity) });
-  const r = mapRect(o.screenRect, o.scale);
+  // BAY-LEFT-MAPS (C12): past the Bay the painting of Tamriel, its rect and the cross on it; on the Bay the mod's own
+  const sheet = mapSheetAt(o.pixel);
+  const r = sheetRect(o.screenRect, o.scale, sheet);
   const num2 = r.w, num3 = r.h;
-  quad('map', r.x, r.y, r.w, r.h, COLOR_WHITE);
+  quad(sheet ?? 'map', r.x, r.y, r.w, r.h, COLOR_WHITE);
   const val4 = mapPixelUnder(r, o.mouse);
   if (o.showingPosition && f(Math.sin(f(f(o.unscaledTime) * 5))) > 0) {
     const t = o.lineThickness;
-    quad('line', f(r.x + f(f(f(o.pixel[0]) * o.scale[0]) - t)), r.y, 1 + t * 2, num3, COLOR_RED);
-    quad('line', r.x, f(f(r.y + f(f(o.pixel[1]) * o.scale[1])) - t), num2, 1 + t * 2, COLOR_RED);
+    const [cx, cy] = sheet ? tamrielCrossAt(o.pixel, r) : [f(f(o.pixel[0]) * o.scale[0]), f(f(o.pixel[1]) * o.scale[1])];
+    quad('line', f(r.x + f(cx - t)), r.y, 1 + t * 2, num3, COLOR_RED);
+    quad('line', r.x, f(f(r.y + cy) - t), num2, 1 + t * 2, COLOR_RED);
   }
   const shadow3 = [DAGGERFALL_DEFAULT_SHADOW_POS[0] * 3, DAGGERFALL_DEFAULT_SHADOW_POS[1] * 3];
   MAP_HELP_LINES.forEach((line, i) => text(line, [0, 20 * i], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3));
   text(`Current marker color is ${MAP_MARKER_MODE_LABELS[o.markerMode]}`, [0, f(o.screen[1] - 20)], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3);
-  for (const m of o.markers) {
+  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet);   // BAY-LEFT-MAPS: the sheet's own markers
+  for (const m of shown) {
     const t = o.markerThickness, ot = o.outlineThickness;
     const x = f(f(r.x + m.position[0]) - t), y = f(f(r.y - t) + m.position[1]), w = 1 + t * 2, h = 1 + t * 2;
     if (ot !== 0) quad('line', f(x - ot), f(y - ot), w + ot * 2, h + ot * 2, COLOR_BLACK);
     quad('line', x, y, w, h, m.color);
   }
-  for (const m of o.markers) {
+  for (const m of shown) {
     // the label's rect takes mapMarkerThickness itself, not the Final one Left Shift zeroes (kept)
     const t = o.markerThicknessRaw;
     const x = f(f(r.x + m.position[0]) - t), y = f(f(r.y - t) + m.position[1]);

@@ -299,5 +299,5 @@ test('SUNBABY2 host: the sky controller hands the face to the pass, and world.js
   assert.match(world, /const sunbabyGround = \(x, z\) => \{ const h = heightAt\(x, z\); return Number\.isFinite\(h\) \? h : player\.pos\[1\]; \};/);
   const told = world.indexOf('sky.setSunbabyFace(sunbabyFace.evil, sunbabyFace.todd);');
   assert.ok(told > world.indexOf('sky.setSunbaby(sunbabyW, sunbaby.on);') && told < world.indexOf('sky.use(('), 'before the sky\'s frame');
-  assert.match(world, /sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW, ETHER_KEY_TINT\)\);/);   // SD19 moved it: the key leaning brass near a Hollow (PIN MOVED); ETHER-LIGHT (PIN MOVED): its own tint past the Veil
+  assert.match(world, /sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW, ETHER_KEY_TINT\), jungle\?\.canopy, 0\)\);/);   // VALENWOOD-CANOPY (PIN MOVED): leaned under a closed canopy last; SD19 moved it: the key leaning brass near a Hollow (PIN MOVED); ETHER-LIGHT (PIN MOVED): its own tint past the Veil
 });

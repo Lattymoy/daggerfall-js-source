@@ -65,8 +65,9 @@
   {
     "name": "TOWN-MARKS-another-towns-house-marked",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "  const bought = slot?.buildingKey > 0 && Number.isFinite(Number(slot.mapId)) && (Number(slot.mapId) >>> 0) === id ? slot.buildingKey : 0;",
-    "new": "  const bought = slot?.buildingKey > 0 ? slot.buildingKey : 0;",
+    "old": ".filter((d) => Number.isFinite(Number(d.mapId)) && (Number(d.mapId) >>> 0) === id)",
+    "new": ".filter(() => true)",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]
@@ -74,8 +75,9 @@
   {
     "name": "TOWN-MARKS-the-signed-map-id-unmatched",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "(Number(slot.mapId) >>> 0) === id ? slot.buildingKey",
-    "new": "Number(slot.mapId) === id ? slot.buildingKey",
+    "old": "(Number(d.mapId) >>> 0) === id).map(",
+    "new": "Number(d.mapId) === id).map(",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]
@@ -92,8 +94,9 @@
   {
     "name": "TOWN-MARKS-the-bank-house-marked-twice",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "    else if (key === bought) out.push(",
-    "new": "    if (key === bought) out.push(",
+    "old": "    else if (bought.has(key)) out.push(",
+    "new": "    if (bought.has(key)) out.push(",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ]

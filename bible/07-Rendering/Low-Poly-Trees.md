@@ -107,10 +107,11 @@ uMesh`), after the opaque flats, the last flat's own state put back first
 under either lane. Each submesh brings its material: its atlas, its
 `_Color`, its cut (its alpha brought to the flats' 0.5 - `uMeshAlpha`)
 and its faces (a front-only material culls its backs as the world's
-meshes do). A face is lit by the far picture's own law turned to the eye,
-crossfaded to the sun's by its share of the day (`LPT_SUN_FULL`) - so at
+meshes do). A face is lit by the far picture's own law - the sky's light
+from straight above (`LPT_IMPOSTOR_LIGHT`), which no viewer turns -
+crossfaded to the sun's by its share of the day (`LPT_SUN_FULL`), so at
 night and across the band the tree and its picture are one picture
-(AUDIT LPT A2).
+(AUDIT LPT A2; FLORA-GROUND, below).
 
 **Far: the same tree's own picture.** Each prototype is drawn once from
 the side with its own painted atlases (`renderImpostor`,
@@ -250,3 +251,27 @@ the far picture texel for texel, the shader's mesh mode, light, sway and
 handover run in the GLSL evaluator, the draw on a recording GL, the door
 with its ownership and its seasons, the hosts' wiring); TACT1's cover
 sites; `tools/mutants/lpt1_trees.json`. The audit: `01-Overview/audits/Audit-Low-Poly-Trees.md`.
+
+## FLORA-GROUND - a tree's faces matte (FIELD BUGS 2026-10-27)
+
+What the player saw (the owner, 2026-10-27): "reflective flora can be seen off the ground in first person".
+
+The cause. A 3D tree's faces were lit by the far picture's light, and that light was `[0, 0.6, -0.8]`: from the
+viewer's side and above. BB_VS turned it to face the EYE for every tree (`faceEye`). So the faces toward the player
+were lit whole and the faces away at half, and the bright side followed the player round every tree, bush and stump.
+That is a reflection, not a matte surface. It showed whole at night, and as a share at dusk, at dawn and under a
+storm's dim sun (the sun's share is `sunScale / LPT_SUN_FULL`). Daggerfall Unity's nature batch is matte:
+`DaggerfallBillboardBatch.shader` is `#pragma surface surf Lambert`, with no specular and no view term in its albedo.
+DFU turns the billboard's own normal by the view matrix, but the port's flats take no normal at all. They are lit by
+the ambient and half the sun, which is matte by construction.
+
+The fix, at the light. `LPT_IMPOSTOR_LIGHT` is the sky's light now, `[0, 1, 0]`, from straight above. BB_VS takes it
+unturned (`faceSky = 0.72 + 0.28 n.l`, clamped to 0.5..1), and still crossfades to the sun's by its share. The far
+picture is drawn under the same light, so the handover still joins: at night the two are one picture from every side.
+By day the far picture is now nearer the noon tree than it was (its sides 0.72, as a high sun leaves a 3D tree's
+sides). The eye's position no longer enters a face's light anywhere in the program.
+
+Pins: `test/systems/lpt1_lowpolytrees.test.js` (PIN MOVED: AUDIT LPT A2's test now holds each face to the picture's
+law from four eyes round the tree, the sides alike, up whole, down at the floor). Mutants: `tools/mutants/lpt1_trees.json`
+`LPT1-A2-the-sun-alone` (re-aimed by content) and `LPT1-A2-FLORA-GROUND-the-light-turned-to-the-eye-again` (the eye's
+law put back), both dead. The ground half of FLORA-GROUND is `03-World/World-Arc.md` (Milestone 8).

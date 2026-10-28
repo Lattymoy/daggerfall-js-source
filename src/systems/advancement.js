@@ -109,7 +109,7 @@ export function alreadyMasteredASkill(entity) {
 }
 
 /** SOFTCAP1: the uses a raise FROM `skillValue` needs - DFU's number,
- *  times the softcap's ladder (4x / 8x / 16x past 100). May exceed the
+ *  times the softcap's ladder (1.5x / 2x / 4x past 100). May exceed the
  *  20000 tally clamp; raiseSkills spends such a cost as progress. */
 export function softcapUsesForAdvancement(skillValue, skillMult, careerAdvMult, level) {
   return skillUsesForAdvancement(skillValue, skillMult, careerAdvMult, level) * softcapCostMultiplier(skillValue);
@@ -413,5 +413,6 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
   entity.readyToLevelUp = false;
   entity.pendingLevel = null;
   entity.pendingBonusPool = null;   // the level is spent, so its pool is not pending either
+  if (entity._online === true) checkForLevelUp(entity);   // LEVEL-OWED: online the next owed level is offered now, not a rest later
   return true;
 }

@@ -121,7 +121,7 @@ export function registerLargeBoatArt(addVendorTextures) {
   _registered = true;
   const made = new Map();
   const art = (record) => { if (!made.size) for (const [r, p] of largeBoatArt()) made.set(r, p); return made.get(record) ?? null; };
-  return addVendorTextures(shipStandIns({ archive: LARGE_BOAT_ARCHIVE, name: 'largeboat', records: Object.values(TEX), art, night: {}, glow: () => null }));
+  return addVendorTextures(shipStandIns({ archive: LARGE_BOAT_ARCHIVE, name: 'largeboat', records: Object.values(TEX), art, night: {}, glow: () => null, kept: true }));
 }
 /** Test seam: unregistered. */
 export function _resetLargeBoatArt() { _registered = false; }

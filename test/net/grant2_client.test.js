@@ -64,7 +64,7 @@ test('GRANT2 THE SESSION: a cell\'s welcome from world218 says its law (GRANT4: 
 
 test('GRANT2-GRANT3 THE HOST WIRED: world.js makes one grants\' host, hands it to the pool\'s net and its session\'s answers; a wanderer stands on an encounter\'s grant (a revenant on its own kind), a chunk\'s camp on a camp\'s, a band on a band\'s, a bounty\'s pack on a bounty\'s - each named on the line its stand already had (mutants: the camp\'s kind dropped; the wanderer\'s kind dropped)', () => {
   const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(W, /const grants = createGrantHost\(\{ session: \(\) => online, climateAt: \(x, y\) => maps\.getClimateIndex\(x, y\) \}\);/);
+  assert.match(W, /const grants = createGrantHost\(\{ session: \(\) => online, climateAt: \(x, y\) => maps\.getClimateIndex\(x, y\), faunaAt: \(x, y\) => maps\.getFaunaBand\?\.\(x, y\) \?\? null \}\);/);   // PIN MOVED (TESA-BIOME): and past the Bay its zone's band, for the species law
   assert.match(W, /online\.onGrant = \(g\) => grants\.answer\(g\);/);
   assert.match(W, /\n\s+grants,\s+\/\/ GRANT3: my stands' grants/);
   assert.match(W, /yaw: Math\.atan2\(feet\[0\] - spot\.x, feet\[2\] - spot\.z\), grantKind: hit\.revenant \? 'rev' : 'enc',/);

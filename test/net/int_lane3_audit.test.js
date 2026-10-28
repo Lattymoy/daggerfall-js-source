@@ -27,6 +27,9 @@ import { mintReceipt } from '../../src/net/gate/gateReceipt.js';
 import { bodiesMeasure, measure } from '../../server-account/src/review.js';
 import { OnlineSession } from '../../src/net/online.js';
 import { fakeSocketClass } from '../fakeSocket.mjs';
+import { sdTestKey, sdOneParty } from './superDungeon/sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
@@ -144,7 +147,7 @@ test('AUDIT INT15 THE CLIENT\'S WORD: a body\'s `vt` leaves on its own bucket - 
     {
       const { FakeWS, sockets } = fakeSocketClass();
       const s = new OnlineSession({ url: 'wss://relay.test', name: 'a', id: 'aaaa-0001', secret: 'secret-of-aaaa-0001', WebSocketImpl: FakeWS, now: () => 1000 });
-      s.join(sdRoomKey(3), null);
+      s.join(sdTestKey(3), null);
       sockets[0].open();
       sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION });
       let vt = 0, hits = 0;

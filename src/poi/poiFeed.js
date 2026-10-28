@@ -25,7 +25,8 @@
 //     fresh approval back down. A kept copy sets no such floor: the service's answer beats last session's copy.
 // ═══════════════════════════════════════════════════════════════════
 
-import { poiDocProblems, poiPixelId, POI_SHA_RE } from './poiLaw.js';
+import { poiDocProblems, poiPixelId, poiPixelKey, POI_SHA_RE } from './poiLaw.js';
+import { idbStore } from '../world/roadsCache.js';
 
 /** How often a playing game asks whether the approved set moved. */
 export const POI_FEED_POLL_MS = 60_000;
@@ -176,7 +177,7 @@ export function createPoiFeed({ base, fetch = (u, i) => globalThis.fetch(u, i), 
       return asking.then(() => asking ?? tick());
     },
     /** The POIs standing on a map pixel - live, with this screen's drafts over them. */
-    atPixel(/** @type {number} */ px, /** @type {number} */ py) { return byPixel.get(py * 1000 + px) ?? NONE; },
+    atPixel(/** @type {number} */ px, /** @type {number} */ py) { return byPixel.get(poiPixelKey(px, py)) ?? NONE; },   // AUDIT RELEASE R2-8: the world's pixel
     /** Every standing POI. */
     all() { return [...byPixel.values()].flat(); },
     /** The live set alone, by id. */
@@ -233,4 +234,24 @@ export function browserPoiCache(caches = globalThis.caches) {
     async get(key) { const r = await (await box()).match(url(key)); return r ? new Uint8Array(await r.arrayBuffer()) : null; },
     async put(key, bytes) { await (await box()).put(url(key), new Response(bytes)); },
   };
+}
+
+/** The kept copy over IndexedDB (database `dagger-poi`) - or null where there is none. The roads' store
+ *  (roadsCache.js idbStore), so a failure reads as nothing kept, never an error. */
+export function idbPoiCache(indexedDBRef = globalThis.indexedDB) {
+  const store = idbStore(indexedDBRef, { db: 'dagger-poi', store: 'kept' });
+  if (!store) return null;
+  return {
+    get: (key) => store.get(key),
+    async put(key, bytes) { await store.set(key, bytes); },
+  };
+}
+
+/** The page's kept copy. POI-KEPT (2026-10-27): the desktop app serves the game over `dagger://` (app/main.cjs), and
+ *  Electron 42's Chromium opens no CacheStorage there whatever the scheme's privileges (`caches.open` rejects with
+ *  "Unexpected internal error"; standard, secure, corsEnabled, allowServiceWorkers, bypassCSP and codeCache were each
+ *  tried) - IndexedDB opens there, so the desktop app keeps the feed in it. Every other page (the browser, the desktop
+ *  app's dev shell over http) keeps the Cache API. */
+export function pagePoiCache(protocol = globalThis.location?.protocol) {
+  return protocol === 'dagger:' ? idbPoiCache() : browserPoiCache();
 }

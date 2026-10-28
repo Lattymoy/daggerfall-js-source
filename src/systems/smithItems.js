@@ -260,7 +260,7 @@ export function mintPiece({ recipe, quality, seed, maker = null, marked = false,
 /**
  * MARKET-LOOK (2026-10-27, the owner: "on the market/notice board do offered items there show stats? enchantments etc?"):
  * A MARKET PIECE AS IT WILL BE HELD - minted from the service's record (server-account/src/market.js pieceOf) at its wear
- * (net/marketLaw.js wearCondition). The ONE mint of a market piece: the host's collect (scenes/world.js marketMint) and
+ * (net/marketLaw.js wearCondition). The ONE mint of a market piece: the host's collect (scenes/marketPiecesHost.js marketMint) and
  * the board's look (ui/marketTab.js) both read it, so the look is what arrives. Null for a record this client cannot mint.
  * @param {any} piece
  */

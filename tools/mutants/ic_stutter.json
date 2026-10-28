@@ -1,0 +1,472 @@
+[
+  {
+    "name": "ICS-ahead-unread",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) => (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
+    "new": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) => false;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The heading never read: the slices ahead are wanted far, their near pieces made only once the stream queues them."
+  },
+  {
+    "name": "ICS-ahead-the-whole-ring",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
+    "new": "Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING + 1;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "Every slice of the outer ring wanted near, behind the traveller too: the workers make sixteen slices' near pieces a crossing."
+  },
+  {
+    "name": "ICS-ahead-last-in-its-ring",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "    here.sort((a, b) => Number(b.near) - Number(a.near) || a.d - b.d || a.s - b.s);",
+    "new": "    here.sort((a, b) => a.d - b.d || a.s - b.s);",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The slices ahead made in the ring's own order, after the far ones nearer the traveller's pixel."
+  },
+  {
+    "name": "ICS-heading-never-kept",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "    if (cur && was && (cur.x !== was.x || cur.y !== was.y)) heading = [Math.sign(cur.x - was.x), Math.sign(cur.y - was.y)];   // IC-STUTTER",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The sweep never learns the way the traveller is going: nothing is wanted ahead."
+  },
+  {
+    "name": "ICS-owed-never-asked",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "    if (holes.length || behind.length) client.need([...holes, ...behind]);",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A build waits on pieces no worker was asked for: the city stands far until the wanted list happens to reach them."
+  },
+  {
+    "name": "ICS-holes-asked-last",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "client.need([...holes, ...behind]);",
+    "new": "client.need([...behind, ...holes]);",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A view built again behind the one standing is made before a hole in the land - the governor's hold (OW-LEAD) meets the hole sooner."
+  },
+  {
+    "name": "ICS-view-distance-unread",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "const near = capitalNear(px, py, host.state?.current), id",
+    "new": "const near = true, id",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "Every slice gated on its near pieces: a far slice at the stream's edge waits on fabric it never stands."
+  },
+  {
+    "name": "ICS-page-own-unread",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "  const had = (/** @type {string} */ k) => client.has(k) || pageHas(k);",
+    "new": "  const had = (/** @type {string} */ k) => client.has(k);",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A piece the page already made and keeps asked of a worker again, the build held for it."
+  },
+  {
+    "name": "ICS-city-always-ready",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "    if (!on?.cap?.family) return null;\n",
+    "new": "    return null;\n",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The gate opens for every pixel: the build makes the city's pieces on the page whenever the workers are behind (the stutter)."
+  },
+  {
+    "name": "ICS-head-left",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "    if (first > 0) queue.unshift(...queue.splice(first, 1));",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The ready pixel is found and left where it stands: the pump builds the queue's head, owed pieces and all."
+  },
+  {
+    "name": "ICS-whole-queue-asked",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "      if (++owing > NEED_AHEAD) continue;   // asked when the pump comes nearer it",
+    "new": "      ++owing;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "Every queued pixel's pieces asked at once: more than the client holds, the head's let go for the tail's."
+  },
+  {
+    "name": "ICS-pump-ungated",
+    "file": "src/scenes/world.js",
+    "old": " || !capitalPrebuild.firstReady(queue)) return;",
+    "new": ") return;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The host's pump never asks the gate: the build meets the city's pieces unmade and makes them on the page."
+  },
+  {
+    "name": "ICS-need-after-the-list",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "      const need = needs.shift(), w = need ?? queue.shift();",
+    "new": "      const q = queue.shift(), need = q ? undefined : needs.shift(), w = q ?? need;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A piece a build waits on made only once the whole wanted list is."
+  },
+  {
+    "name": "ICS-need-made-before-skipped",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "          done.delete(keyOf(w));   // made before and let go by the page: made again\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A piece made before and let go by the page is never made again: the build behind it waits for ever."
+  },
+  {
+    "name": "ICS-need-dropped-by-a-list",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "      if (msg?.t === 'want') { queue =",
+    "new": "      if (msg?.t === 'want') { needs = []; queue =",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A new wanted list (every crossing) drops the pieces the stream's builds wait on."
+  },
+  {
+    "name": "ICS-made-need-kept",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": " needs = needs.filter((w) => keyOf(w) !== msg.key); }",
+    "new": " }",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A piece the page made itself is made on the worker too."
+  },
+  {
+    "name": "ICS-pool-cores-unread",
+    "file": "src/world/imperialPrebuildClient.js",
+    "old": "  return Math.max(1, Math.min(PREBUILD_POOL_MAX, Math.floor(Number(cores) || 2) - 2));",
+    "new": "  return 1;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "One worker on every machine: at x60 three to five slices come near a crossing, more than one makes."
+  },
+  {
+    "name": "ICS-pool-one-owner",
+    "file": "src/world/imperialPrebuildClient.js",
+    "old": "  const ownerOf = (s) => pool[(((s | 0) % pool.length) + pool.length) % pool.length];",
+    "new": "  const ownerOf = (s) => pool[0];",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "Every slice the first worker's: the pool stands idle but one."
+  },
+  {
+    "name": "ICS-need-asked-every-frame",
+    "file": "src/world/imperialPrebuildClient.js",
+    "old": "        if (held.has(k) || failed.has(k) || asked.has(k)) continue;",
+    "new": "        if (held.has(k) || failed.has(k)) continue;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The pump's every frame asks the same pieces again."
+  },
+  {
+    "name": "ICS-failure-waited-on",
+    "file": "src/world/imperialPrebuildClient.js",
+    "old": "else if (m?.t === 'error' && m.key) { asked.delete(m.key); failed.add(m.key); }",
+    "new": "else if (m?.t === 'error' && m.key) { asked.delete(m.key); }",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A piece a worker could not make is waited on for ever - the slice never builds."
+  },
+  {
+    "name": "ICS-yards-ground-rows-unbroken",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "    if (gy && gy % YARD_ROWS_A_STEP === 0) yield;\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The yards' ground filled in one step."
+  },
+  {
+    "name": "ICS-yards-search-rows-unbroken",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "      if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A yard's search of every cell and turn in one step (44-170 ms on a near slice of the Imperial City)."
+  },
+  {
+    "name": "ICS-yards-measures-in-one",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "  for (const b of yl?.blocks ?? []) {\n    yield;\n",
+    "new": "  for (const b of yl?.blocks ?? []) {\n",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "Two thousand placed models' boxes measured in one step."
+  },
+  {
+    "name": "ICS-places-rows-unbroken",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "    if (y && y % PLACES_ROWS_A_STEP === 0) yield;\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The square's sums over the grid in one step."
+  },
+  {
+    "name": "ICS-places-flood-in-one",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      if (++flooded % PLACES_CELLS_A_STEP === 0) yield;\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The street net's flood of a slice's grid in one step."
+  },
+  {
+    "name": "ICS-places-doors-in-one",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "  let net = streets.label;\n  yield;\n",
+    "new": "  let net = streets.label;\n",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The street net's last band and the doors' net in one step."
+  },
+  {
+    "name": "ICS-places-quarters-whole",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q] }));",
+    "new": "  for (let q = 0; q < quarterIds.length; q++) each.push(townPlaces(nav, byQ[q], buildings, { streets, netId: quarterIds[q] }));",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "Each quarter's places made in one step."
+  },
+  {
+    "name": "ICS-pieces-flood-in-one",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "      if (++seen % PIECES_CELLS_A_STEP === 0) yield;\n      const c = stack[--top]",
+    "new": "      const c = stack[--top]",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The town walk's pieces flooded in one step past the cells the outer read counts."
+  },
+  {
+    "name": "ICS-living-places-unhanded",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.places = o.places ?? townPlaces(",
+    "new": "    this.places = townPlaces(",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The living town made its places itself again, the build's stepped ones thrown away: the one task back."
+  },
+  {
+    "name": "ICS-build-places-in-one",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The build hands the living town no places: it makes them in one task."
+  },
+  {
+    "name": "ICS-build-pieces-unflooded",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        await stepsBreathing(componentsSteps(nav), () => breather.breathe());\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The town walk's pieces flooded whole by the traveller's first frame in the town."
+  },
+  {
+    "name": "ICS-host-measures-in-one",
+    "file": "src/scenes/world.js",
+    "old": "        ...await stepsBreathing(yardMeasuresSteps(yl, {",
+    "new": "        ...stepsDone(yardMeasuresSteps(yl, {",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The host's town places measure the yards' way whole, one task (stepsDone is not imported in world.js, so the mutant also fails to run - either way the pin's regex fails it)."
+  },
+  {
+    "name": "ICS-way-search-whole",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "    const got = search.step(WAY_CELLS_A_STEP);",
+    "new": "    const got = search.step(Infinity);",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A journey's search over a slice's grid in one step (10-200 ms on the Imperial City's)."
+  },
+  {
+    "name": "ICS-way-shared-scratch",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "searchSteps(townPathSearch(g, p, q, { ...opts, scratchKey }))",
+    "new": "searchSteps(townPathSearch(g, p, q, { ...opts }))",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The journey's search on the grid's own scratch: every residents' search between its steps begins it again, and it is never found."
+  },
+  {
+    "name": "ICS-host-way-steps-unbounded",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "for (let n = 1; !got.done && n < WAY_STEPS_AN_ASK; n++)",
+    "new": "for (let n = 1; !got.done; n++)",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The host walks the whole search in one ask: the one task back."
+  },
+  {
+    "name": "ICS-journey-never-asks-again",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (st.autopilot && st.route?.streetWait && !st.route.street) { st.route.streetWait = false; startRouteLeg(); applyRate(); }\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A way still in the making is never asked for again: the journey walks the town's leg straight, into its walls."
+  },
+  {
+    "name": "ICS-journey-pending-taken-for-none",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (way?.pending) { r.streetFor = null; r.streetWait = true; return null; }",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A way in the making read as no way: the leg and town never asked again."
+  },
+  {
+    "name": "ICS-layout-in-one",
+    "file": "src/world/locationLayout.js",
+    "old": "        originZ: y * RMB_SIDE,\n      });\n      yield;\n",
+    "new": "        originZ: y * RMB_SIDE,\n      });\n",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A town's sixty-four blocks laid out in one step."
+  },
+  {
+    "name": "ICS-build-layout-whole",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());",
+    "new": "stepsDone(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }));",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The build lays its town out in one task (stepsDone unimported here: the pin's regex fails it either way)."
+  },
+  {
+    "name": "ICS-build-grid-in-one",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          await breather.breathe();   // IC-STUTTER: a block of the walkers' grid a breath (a city's sixty-four were one task)\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The walkers' grid of a city's sixty-four blocks laid in one task."
+  },
+  {
+    "name": "ICS-look-begun-again",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "    while (look.at < look.keys.length && had(look.keys[look.at])) look.at++;",
+    "new": "    look.at = 0;\n    while (look.at < look.keys.length && had(look.keys[look.at])) look.at++;",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "Every pixel's view looked at from its first key every frame: a queue of the city's pixels looked at whole while the pump waits."
+  },
+  {
+    "name": "ICS-looks-unkept",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "      looks.set(id, look);\n",
+    "new": "",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "No look kept: each frame looks at every view from its first key."
+  },
+  {
+    "name": "ICS-look-word-taken",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "(look.at >= look.keys.length && (first >= 0 || whole(look)))",
+    "new": "(look.at >= look.keys.length && (first >= 0 || true))",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The pixel chosen built on its look's word: a piece let go since it was looked at made on the page."
+  },
+  {
+    "name": "ICS-looks-kept-past-drop",
+    "file": "src/scenes/capitalPrebuild.js",
+    "old": "client = null; looks.clear(); };",
+    "new": "client = null; };",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "The looks kept when the worker is let go: a new worker's pieces taken for made."
+  },
+  {
+    "name": "ICS-family-cache-unread",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "_blockFamilies.some((f) => f.cache.has(name));",
+    "new": "_blockFamilies.some((f) => f.indexOf(name) >= 0);",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A family's block taken for the page's before it is ever read: the gate lets a build make it on the page."
+  },
+  {
+    "name": "ICS-model-built-unread",
+    "file": "src/world/customModels.js",
+    "old": "  if (m) return m.cached != null || !m.isOn();",
+    "new": "  if (m) return !m.isOn();",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A registered model never the page's though built: the gate waits on it."
+  },
+  {
+    "name": "ICS-family-model-unread",
+    "file": "src/world/customModels.js",
+    "old": "  return !!familyOf(Number(id))?.cache.has(Number(id));",
+    "new": "  return !!familyOf(Number(id));",
+    "tests": [
+      "test/world/ic_stutter.test.js"
+    ],
+    "note": "A family's model taken for the page's before it is built."
+  }
+]

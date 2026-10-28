@@ -173,8 +173,8 @@
   {
     "name": "KTR-a-spent-receipt-handed-again",
     "file": "server/src/index.js",
-    "old": "    if (v.spent === true) return;\n    this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));",
-    "new": "    this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));",
+    "old": "      if (v.spent === true) continue;\n      this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));",
+    "new": "      this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));",
     "tests": [
       "test/net/ketch/ketch_relay.test.js"
     ]

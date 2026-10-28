@@ -85,7 +85,7 @@ Pinned by `test/systems/fb1015_kickair.test.js` (`tools/mutants/fb1015_kickair.j
 ## CART-AWAY: a wagon away from a death in the zone keeps its cargo (6)
 
 `src/systems/wild/wildDropLaw.js` takeWildDeath, wildDropCandidates, takeWildGold (`cart`), wildCartMayBeAway;
-`src/systems/wild/wildCart.js`; `server-account/src/wild.js` wildFall; `src/scenes/world.js` wildTakeDrop.
+`src/systems/wild/wildCart.js` (DELETED by STORE-KEEPS, 2026-10-26 - `11-Multiplayer/Wild-Zone.md` section 4); `server-account/src/wild.js` wildFall; `src/scenes/world.js` wildTakeDrop.
 
 THE ASK. Mac, asked "If parked outside of the pvp zone in the wrothgarian mountains, can it be lost?": "Yeah, if its
 parked outside the zone nothing should be lost."
@@ -101,7 +101,7 @@ holds no map files, honours it only where the stored record's mode agrees. A sei
 none; a repeat ask answers the first take. THE LIMIT: the wagon record is the client's own (Wild-Zone.md section 22).
 THE FOUR HOSTS: world.js WIRED (one existing line); dungeonContext.js and worldModes.js reach it through world.js;
 exterior.js NOT WIRED (online only). No migration; the account service's version moves (acct138). Pinned by
-`test/systems/fb1015_cartaway.test.js` (`tools/mutants/fb1015_cartaway.json`, 20, dead); PINS MOVED: int9_wild_ref,
+`test/systems/fb1015_cartaway.test.js` (`tools/mutants/fb1015_cartaway.json` - DELETED by STORE-KEEPS, 2026-10-26: 20, dead); PINS MOVED: int9_wild_ref,
 fb1014_pvpescrow; re-aimed: INT9-AUDIT-SVC-THE-FITTED-FEW-ASKED, ESCROW-the-escrow-asked-of-any-room.
 
 ## The right arm: asked of the player (4)

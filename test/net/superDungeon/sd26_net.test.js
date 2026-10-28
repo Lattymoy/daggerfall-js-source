@@ -17,6 +17,9 @@ import { sdRoomKey } from '../../../src/net/superDungeon/sdLaw.js';
 import { SD_ARENA, realmToDungeon } from '../../../src/net/superDungeon/sdBrain.js';
 import { createSdFightLink, SD_OWED_MAX, SD_FIGHT_HEARD_MS, SD_IN_RETRY_MS } from '../../../src/net/superDungeon/sdFightLink.js';
 import { createSdRemnantBlows, sdBlowsInFlight } from '../../../src/scenes/superDungeon/sdRemnantBlows.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const T0 = 1_800_000_000_000;
 const LOOK = { race: 'Nord', gender: 'male', faceIndex: 2, items: [] };
@@ -291,7 +294,7 @@ async function withRealm(fn) {
       const cell = world.room(worldRoom(PX, PY));
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
       const hello = async (id, pose) => { const ws = realm.connect(); await realm.hello(ws, id, pose, { name: id.replace('peer-', '') }); return ws; };

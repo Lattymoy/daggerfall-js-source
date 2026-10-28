@@ -50,6 +50,7 @@ test('SD26 NO MARK IN A HOLLOW (AUDIT SD IV F2): a Mark set in an Abyss Dungeon 
       walkMode: true, playerSpawned: true, player: { pos: [1, 2, 3] }, cam: { pos: [0, 0, 0], yaw: 0, pitch: 0 }, WORLD_CONTEXT: { Exterior: 'Exterior', Dungeon: 'Dungeon' },
       state: { current: { x: 300, y: 200 }, compensation: [0, 0, 0], worldCoords: () => ({ x: 0, z: 0 }) }, playerTravelPixel: () => ({ x: 300, y: 200 }),
       mapPixelToWorldCoords: () => ({ x: 0, z: 0 }), groundFrameHeight: (y) => y, STREAMING_TERRAIN_SCALE: 1,
+      RECORD_GROUND_STAMP: { terrainScale: 1, groundFrame: 2 },   // PIN MOVED (BAY-LEFT-GROUND, D5): the anchor stamps its frame's law beside its scale
       playerEntity: {}, makeAnchor: (a) => { set += 1; return a; },
     };
     // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the door asks the law where the world host says the player stands, and its own madeSay says it
@@ -345,7 +346,8 @@ test('SD26 A HOLLOW STANDS ON DRY GROUND (AUDIT SD IV F37): every spawned dungeo
   assert.equal(findSdSite({ s: 3, r: 0 }, scan2, [city], () => false), null, 'none dry: no site');
   // the world host hands the spawns' own test through
   assert.match(W, /\n {4}ground: \(px, py\) => _spawnGround\(px, py\),/);
-  assert.match(read('src/scenes/superDungeon/sdHost.js'), /findSdSite\(at, sc, near, ground\)/);   // PIN MOVED (SD-SEA): the record's region, or the great cities for one with no town (fb1020b_sdsea.test.js)
+  assert.match(read('src/scenes/superDungeon/sdHost.js'), /findSite\(at, sc, near, ground\)/);   // PIN MOVED (WW5): by its lane's own site law, the Bay's findSdSite by default
+  assert.match(read('src/scenes/superDungeon/sdHost.js'), /ground = \(\) => true, findSite = findSdSite, province = '', rescan = false \}\) \{/);   // PIN MOVED (WW5): the Bay's site law by default, a lane's own `rescan` beside it; PIN MOVED (SD-SEA): the record's region, or the great cities for one with no town (fb1020b_sdsea.test.js)
 });
 
 // ── F38: the end out of the water ─────────────────────────────────────
@@ -383,7 +385,7 @@ test('SD26 THE END STANDS OUT OF THE WATER (AUDIT SD IV F38): a random marker un
 
 /** A property of world.js's Hollow host (createSdHost's own arguments), its one line's arrow. */
 function hostProp(name) {
-  const from = W.indexOf('const sdHost = params.has(\'online\') ? createSdHost({');
+  const from = W.indexOf('const sdHost = params.has(\'online\') ? createSdLanes({');   // PIN MOVED (WW5): the Hollow host a lane at a time (scenes/superDungeon/sdLanes.js) - the Bay's lane's host takes these same arguments
   assert.ok(from > 0, 'the Hollow host');
   const at = W.indexOf(`\n    ${name}: `, from);
   assert.ok(at > 0, name);
@@ -446,6 +448,7 @@ test('SD26 THE STEP OUT TO THE HOUR STANDS BEFORE THE HOLLOW\'S DOOR (AUDIT SD I
       sdHost: { hollow: () => hollow }, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, SD_REALM_TEXT, isSdRealm: (loc) => loc?.sdRealm != null,
       sdRiftOf: () => ({ word: asked++ === 0 ? word : late }), sdSay: (t) => log.push(['said', t]), _sdEntered: new Set(), sdVeilCentre: () => null,
       _teleportToPixel: async (x, y) => log.push(['pixel', x, y]),
+      sdCopy: { ownerFor: async () => '0123456789abcdef' },   // SD-PARTY (PIN MOVED): my party's own Hour
     };
     const body = `${sd[1]}\n${hd[1]}\n${fnIn(W, 'standBeforeHollowDoor')}\n${fnIn(W, 'sdEnterRealm')}\n${fnIn(W, 'sdWayBack')}\nreturn { sdEnterRealm, sdWayBack, cam };`;
     return { ...new Function(...Object.keys(env), body)(...Object.values(env)), log, run: () => step?.() };

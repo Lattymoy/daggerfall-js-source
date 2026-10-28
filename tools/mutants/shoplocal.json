@@ -1,0 +1,119 @@
+[
+  {
+    "name": "SL-the-ask-dropped",
+    "file": "server-account/src/shop.js",
+    "old": "    'adaptive_pricing[enabled]': 'true',   // SHOP-LOCAL",
+    "new": "    // SHOP-LOCAL",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-line-dropped",
+    "file": "server-account/src/shop.js",
+    "old": "      'Stripe can show the price in your own currency, with your country\\'s ways to pay.',\n",
+    "new": "",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-no-second-ask",
+    "file": "server-account/src/shop.js",
+    "old": "if (res.status === 400 && 'adaptive_pricing[enabled]' in fields) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-second-ask-still-localised",
+    "file": "server-account/src/shop.js",
+    "old": "      delete plain['adaptive_pricing[enabled]'];\n",
+    "new": "",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-same-key",
+    "file": "server-account/src/shop.js",
+    "old": "res = await ask(plain, `shop-${fields.client_reference_id}-usd`);",
+    "new": "res = await ask(plain, `shop-${fields.client_reference_id}`);",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-presentment-read",
+    "file": "server-account/src/shop.js",
+    "old": "{ intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total, currency: o.currency });   // the price before any tax Stripe adds",
+    "new": "{ intent: o.payment_intent, amount: o.presentment_details?.presentment_amount ?? o.amount_subtotal ?? o.amount_total, currency: o.presentment_details?.presentment_currency ?? o.currency });   // the price before any tax Stripe adds",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-every-method-asked-again",
+    "file": "tools/stripeMethods.mjs",
+    "old": "if (!cfg[m] || cfg[m].display_preference?.preference === 'on') continue;",
+    "new": "if (!cfg[m]) continue;",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-a-refusal-stops-the-rest",
+    "file": "tools/stripeMethods.mjs",
+    "old": "if (r.ok) turned.add(m); else refused.set(m, said(r.body));",
+    "new": "if (r.ok) turned.add(m); else { refused.set(m, said(r.body)); break; }",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-child-configured",
+    "file": "tools/stripeMethods.mjs",
+    "old": "c?.is_default === true && !c.application && !c.parent",
+    "new": "c?.is_default === true",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-step-red-as-shipped",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          if out=$(node tools/stripeMethods.mjs 2> \"$err\"); then code=0; else code=$?; fi\n",
+    "new": "          out=$(node tools/stripeMethods.mjs 2> \"$err\")\n          code=$?\n",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-tool-unlisted",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "      - \"tools/stripeMethods.mjs\"\n",
+    "new": "",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-echoed-key-said",
+    "file": "tools/stripeMethods.mjs",
+    "old": ".replace(/\\b(?:sk|rk|pk)_(?:live|test)_\\S*/g, '[the key]')",
+    "new": "",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-turn-unsaid",
+    "file": "tools/stripeMethods.mjs",
+    "old": "if (r.ok) turned.add(m); else refused.set(m, said(r.body));",
+    "new": "if (!r.ok) refused.set(m, said(r.body));",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  }
+]

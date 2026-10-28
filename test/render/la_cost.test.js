@@ -384,7 +384,8 @@ test('LA-COST1: THE LAW, READ OFF THE SOURCE - every field the four gated frame 
     '_bbTintOn',   // ARENA5: a batch's wash (the arena crowd's half in a banner's colours), the same kind of GL-state shadow
     '_bbGlintOn',   // TELL2: a wind-up's glint, the same kind of GL-state shadow
     '_bbLptCutOn',   // LPT1: a far picture's handover to its 3D tree, the same kind of GL-state shadow
-    '_tSnowOn'];   // PRECIP4: the snow's switch, the same kind of GL-state shadow
+    '_tSnowOn',   // PRECIP4: the snow's switch, the same kind of GL-state shadow
+    '_tFade'];   // MID-RING: the just-built pixel's tint as last uploaded (render/pixelFade.js) - a draw's own uniform, the block forgets it (-1), the same kind of GL-state shadow
   const { canvas } = stateGl();
   const r = new Renderer(canvas);
   for (const lane of [null, EL_LANE]) {

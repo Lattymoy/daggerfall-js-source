@@ -182,13 +182,13 @@
   },
   {
     "name": "GATE-WAY-host-pick-unasked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/portalStoneHost.js",
     "old": "    const place = portalStonePlace(feet, cam.yaw, {",
     "new": "    const place = portalPlace(feet, cam.yaw, {",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],
-    "note": "the world host's pick asks the place law alone"
+    "note": "the world host's pick asks the place law alone Re-aimed by content at the fourth merge of main into #1184 (2026-10-27)."
   },
   {
     "name": "GATE-WAY-peer-word-believed",

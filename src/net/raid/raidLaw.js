@@ -32,8 +32,12 @@
 
 /** A raid's key - RaidEnemyName's bracket [IL_13cc]: `region:location:day` (systems/raidingParties.js raidKey).
  *  AUDIT RAID R5: CANONICAL - no leading zero (`3:07:0600` was forty spellings of one raid, at the relay and at the
- *  account service's primary key alike). */
-export const RAID_KEY_RE = /^(?:0|[1-9]\d?):(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,6})$/;
+ *  account service's primary key alike). WW6 (bible/03-World/World-Wide.md WW6): EVERY REGION OF THE WORLD, 0..70 - a Bay
+ *  region (0..61) with its town's MAPS.BSA location (0..9999, as it always was), a province's region past the Bay (62..70,
+ *  WW-R) with its town's OWN location index, negative (world/arenaLocations.js arenaLocationIndex,
+ *  world/tamrielCapitals.js capitalLocationIndex - no MAPS.BSA row holds a place past the Bay; the town economy's
+ *  `region:location` reads a town past the Bay so, net/townEconLaw.js townReportOf). */
+export const RAID_KEY_RE = /^(?:(?:0|[1-5]?\d|6[01]):(?:0|[1-9]\d{0,3})|(?:6[2-9]|70):-[1-9]\d{0,7}):(?:0|[1-9]\d{0,6})$/;
 /** A game day, classic minutes. */
 export const RAID_DAY_MINUTES = 1440;
 /** A raid's window, classic minutes (systems/raidingParties.js RAID_DURATION_MINUTES - pinned equal). */
@@ -86,7 +90,7 @@ export const RAID_TOP_MAX = 3;
  * @param {{st: number, tg: number, ty: number, px: number, py: number}} w
  */
 export const raidSig = (w) => `${w.st}.${w.tg}.${w.ty}.${w.px}.${w.py}`;
-export const RAID_SIG_RE = /^\d{1,11}\.\d{1,2}\.\d\.\d{1,3}\.\d{1,3}$/;   // the start reaches eleven digits at the key's last day
+export const RAID_SIG_RE = /^\d{1,11}\.\d{1,2}\.\d\.-?\d{1,4}\.-?\d{1,4}$/;   // the start reaches eleven digits at the key's last day; WW6: the town's pixel the world's (RAID_PIXEL_BOUND - four digits, either side of the Bay's corner)
 /** A ledger's identity in its cell: the raid's key and its signature. */
 export const raidLedgerId = (w) => `${w.key}|${raidSig(w)}`;
 
@@ -109,10 +113,11 @@ export function raidWordFits(w, g) {
   return g >= w.st - RAID_SLACK_MINUTES && g < w.st + RAID_WINDOW_MINUTES + RAID_SLACK_MINUTES;
 }
 /** AUDIT RAID R6: is a word a raid the day COULD roll - its start inside its key's own day? A word that is not is no
- *  honest machine's (junk, struck); one that is and is merely out of its time is dropped (a clock at the window's edge). */
+ *  honest machine's (junk, struck); one that is and is merely out of its time is dropped (a clock at the window's edge).
+ *  WW6: and its town on its own side of the Bay's edge, in a lane that stands raids (raidSideOk). */
 export function raidWordSane(w) {
   const day = raidDayOfKey(w?.key);
-  if (day === null || !Number.isSafeInteger(w.st)) return false;
+  if (day === null || !Number.isSafeInteger(w.st) || !raidSideOk(w)) return false;
   const first = day * RAID_DAY_MINUTES;
   return w.st >= first && w.st <= first + RAID_START_LAST;
 }
@@ -220,14 +225,18 @@ export const raidLedgerState = (led) => ({ k: 'st', key: led.key, n: led.n, tg: 
 /** The raids' salt and the world's day seed - systems/worldTick.js DAY_SALT.raids and SHARED_DAY_SEED, pinned equal. */
 export const RAID_DAY_SALT = 5;
 const RAID_DAY_SEED = 0x44415953;   // 'DAYS'
+/** WW6: a lane's own stir of the day's seed - the Bay's lane 0 stirs nothing, so its generator is worldTick's to the bit. */
+export const RAID_LANE_SALT = 0x85ebca6b;
 /**
  * THE DAY'S GENERATOR FOR ITS RAIDS - worldTick.js dayRng(day * 1440, DAY_SALT.raids): mulberry32 (systems/wind/wind.js
  * seededRng) off the day, the world's day seed and the raids' salt. ONE copy for the relay and the client alike
- * (systems/raidingParties.js raidsForDay rolls off this one since RAID-ROLL); pinned equal to worldTick's.
- * @param {number} day @returns {() => number}
+ * (systems/raidingParties.js raidsForDay rolls off this one since RAID-ROLL); pinned equal to worldTick's. WW6: a LANE's
+ * (a theatre past the Bay - its own roll, its own draws) stirred by RAID_LANE_SALT times its lane; the Bay's lane 0 is
+ * the generator it always was.
+ * @param {number} day @param {number} [lane] @returns {() => number}
  */
-export function raidDayRandom(day) {
-  let a = ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1)) >>> 0;
+export function raidDayRandom(day, lane = 0) {
+  let a = ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1) ^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;
   return () => {
     a = (a + 0x6D2B79F5) >>> 0;
     let t = a;
@@ -245,20 +254,88 @@ const RAID_REGION_HOURS = 4, RAID_GAME_DAY_HOURS = 2;
 export const raidsPerDay = (regionCount) => Math.round((Math.max(0, regionCount | 0) * RAID_GAME_DAY_HOURS) / RAID_REGION_HOURS);
 /** The most regions a towns table names - MAPS.BSA holds 62, and a picker pixel names 128 + its region. */
 export const RAID_REGIONS_MAX = 64;
-/** The most raids any day rolls, whatever a client's table - the slots the relay reads a word against. */
+/** The most raids any day rolls, whatever a client's table - the slots the relay reads a word against. WW6: a lane's
+ *  too - a province's towns stand in some thirty districts (the freeware's 28 to 34), never past the Bay's 62 regions. */
 export const RAID_SLOTS_MAX = raidsPerDay(RAID_REGIONS_MAX);
+/** WW6: the raids a lane's day rolls off its groups (the Bay's regions, a province's areas) - the pace, never past the
+ *  slots the relay reads. @param {number} groups */
+export const raidLaneCount = (groups) => Math.min(RAID_SLOTS_MAX, raidsPerDay(groups));
+
+// ═══ WW6 (2026-10-27, bible/03-World/World-Wide.md WW6 - the owner's call taken: "Every single thing here needs to be
+// addressed. No exceptions."): THE RAIDS PAST THE BAY - A LANE A THEATRE. ═══
+//
+// The Bay's raids are lane 0, the roll they always were, to the byte. Each province past the Bay is a lane of its own (its
+// theatre, world/worldWide/worldGrid.js - its region 61 + its theatre, formats/mapsTables.js regionOfTheatre): its own day's
+// generator (raidDayRandom's lane), its towns the world's registry's grouped by AREA (the province's districts - what a
+// region was to the raids' draw, World-Wide decision 4), its parties the ones its own fauna stands (RAID_LANE_PARTIES). The
+// relay reads a lane's word against that lane's slots; the open zone's lane stands no raid.
+/** Every region a raid's key names: the Bay's 62, then the provinces' past the Bay (formats/mapsTables.js REGION_NAMES -
+ *  pinned equal; this file imports nothing). */
+export const RAID_REGION_COUNT = 71;
+/** The Bay's regions (formats/mapsTables.js BAY_REGION_COUNT - pinned equal). */
+export const RAID_BAY_REGIONS = 62;
+/** The lanes: the Bay's, then the nine provinces' (world/worldWide/worldGrid.js THEATRE_COUNT - pinned equal). */
+export const RAID_LANES = 10;
+/** The open zone's lane - Cyrodiil (systems/wild/wildZone.js WILD_REGION 70, its theatre 9): it stands no raid, the gates'
+ *  recorded law (the open zone stands no site-bound world event - PVPDUNGEONS, the owner: "Do not spawn world events in the
+ *  PVP zone!"). */
+export const RAID_ZONE_LANE = 9;
+/** A region's lane: 0 for a Bay region, a province's theatre past it, -1 for none. @param {unknown} r */
+export const raidLaneOfRegion = (r) => {
+  if (!Number.isInteger(r)) return -1;
+  const n = /** @type {number} */ (r);
+  return n < 0 || n >= RAID_REGION_COUNT ? -1 : n < RAID_BAY_REGIONS ? 0 : n - (RAID_BAY_REGIONS - 1);
+};
+/** A key's lane, or -1. @param {unknown} key */
+export const raidLaneOfKey = (key) => (typeof key === 'string' && RAID_KEY_RE.test(key) ? raidLaneOfRegion(Number(key.slice(0, key.indexOf(':')))) : -1);
+/** Does a lane stand raids - the Bay's, and every province's but the open zone's? @param {unknown} lane */
+export const raidLaneOpen = (lane) => Number.isInteger(lane) && /** @type {number} */ (lane) >= 0 && /** @type {number} */ (lane) < RAID_LANES && lane !== RAID_ZONE_LANE;
+/** The lanes past the Bay that stand raids, ascending. */
+export const RAID_LANES_BEYOND = Object.freeze(Array.from({ length: RAID_LANES - 1 }, (_, i) => i + 1).filter(raidLaneOpen));
+/** WW6: the world's pixel, as the wire bounds it (net/wire.js WORLD_PIXEL_BOUND - pinned equal). */
+export const RAID_PIXEL_BOUND = 8192;
+/** Is a pixel on the Bay's own map (MapsFile's 1000 x 500)? @param {unknown} px @param {unknown} py */
+const onBayMap = (px, py) => Number.isInteger(px) && Number.isInteger(py) && /** @type {number} */ (px) >= 0 && /** @type {number} */ (px) < 1000 && /** @type {number} */ (py) >= 0 && /** @type {number} */ (py) < 500;
+/** Is a number a pixel of the world's grid? @param {unknown} v */
+const worldPixel = (v) => Number.isInteger(v) && Math.abs(/** @type {number} */ (v)) < RAID_PIXEL_BOUND;
+/**
+ * WW6: IS A RAID ON ITS OWN SIDE OF THE BAY'S EDGE - a Bay key's town on the Bay's own map, a province key's town on the
+ * world's grid off it, in a lane that stands raids? A word that is not is no honest machine's: the day's roll never crosses
+ * the edge (the Bay's lane rolls MAPS.BSA's towns, a province's the registry's places past the Bay).
+ * @param {{key: string, px: number, py: number}} w
+ */
+export function raidSideOk(w) {
+  const lane = raidLaneOfKey(w?.key);
+  if (!raidLaneOpen(lane)) return false;
+  return lane === 0 ? onBayMap(w.px, w.py) : worldPixel(w.px) && worldPixel(w.py) && !onBayMap(w.px, w.py);
+}
+/**
+ * WW6: THE PARTIES A LANE'S DAY DRAWS - the mod's three (0 knights, 1 bandits, 2 orcs) on the Bay, as it always was; past it
+ * those its province's OWN FAUNA stands (TESA-BIOME, bible/03-World/Tamriel-Biomes.md): a party whose kinds - the Knight;
+ * the Rogue, the Thief or the Burglar; an orc - some roster of the province names, by day, by night or in its towns
+ * (systems/tamrielFauna.js ROSTERS and TOWN_ROSTERS - pinned equal). Black Marsh stands no orc (its Recorded choice 4), so no
+ * orc war band raids it; the Wrothgarian Mountains' Orsinium and Malabal Tor's Wood Orcs do. The relay draws a lane's slots
+ * by the same table, with no game data. By lane: the Bay, High Rock, Hammerfell, Skyrim, Morrowind, Summerset, Valenwood,
+ * Elsweyr, Black Marsh, Cyrodiil (the open zone: none).
+ */
+export const RAID_LANE_PARTIES = Object.freeze([[0, 1, 2], [0, 1, 2], [1], [1], [0, 1], [0, 1], [1, 2], [1], [1], []].map((l) => Object.freeze(l)));
+/** A lane's parties ([] for none). @param {number} lane */
+export const raidLaneParties = (lane) => RAID_LANE_PARTIES[lane] ?? RAID_LANE_PARTIES[RAID_ZONE_LANE];
 
 /**
  * SelectRaids' roll [IL_0cda-IL_0dc5] - the ONE copy (systems/raidingParties.js rollRaids speaks it): `count` raids,
  * each a region evenly among those with a town left, a town evenly in it and struck off (a region with none left is
  * struck off too), a start, a party and a kill target - in the IL's draw order (region, town, start, party, target).
+ * WW6: a lane past the Bay's groups are its AREAS (each `area` beside its province's `region`, handed on with the raid),
+ * and its party is drawn among `parties` (RAID_LANE_PARTIES) - one draw, as the Bay's three are, so every slot stands where
+ * it stood.
  * @template {{index: number, px: number, py: number}} T
- * @param {number} day @param {ReadonlyArray<{region: number, towns: ReadonlyArray<T>}>|null} regions
- * @param {number} count @param {() => number} random
- * @returns {Array<{region: number, town: T, st: number, ty: number, tg: number}>}
+ * @param {number} day @param {ReadonlyArray<{region: number, area?: number, towns: ReadonlyArray<T>}>|null} regions
+ * @param {number} count @param {() => number} random @param {ReadonlyArray<number>} [parties]
+ * @returns {Array<{region: number, area?: number, town: T, st: number, ty: number, tg: number}>}
  */
-export function rollRaidTowns(day, regions, count, random) {
-  const lists = (regions ?? []).map((g) => ({ region: g.region, towns: [...g.towns] }));
+export function rollRaidTowns(day, regions, count, random, parties = RAID_LANE_PARTIES[0]) {
+  const lists = (regions ?? []).map((g) => ({ region: g.region, area: g.area, towns: [...g.towns] }));
   const out = [];
   for (let l = 0; l < count && lists.length > 0; l++) {
     const i = rangeInt(0, lists.length, random);
@@ -268,9 +345,9 @@ export function rollRaidTowns(day, regions, count, random) {
     g.towns.splice(j, 1);
     if (g.towns.length === 0) lists.splice(i, 1);
     const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);
-    const ty = rangeInt(0, RAID_TYPES, random);
+    const ty = parties[rangeInt(0, parties.length, random)];   // WW6: the lane's parties - the Bay's three are rangeInt(0, RAID_TYPES)'s own draw
     const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);
-    out.push({ region: g.region, town, st, ty, tg });
+    out.push(Number.isInteger(g.area) ? { region: g.region, area: g.area, town, st, ty, tg } : { region: g.region, town, st, ty, tg });
   }
   return out;
 }
@@ -278,15 +355,16 @@ export function rollRaidTowns(day, regions, count, random) {
 /**
  * RAID-ROLL: THE DAY'S SLOTS, as the relay reads them with no game data - each raid's start, target and party (the
  * draws after its region's and town's, which are always one each while a town is left), `st.tg.ty`, for as many
- * raids as any table rolls.
- * @param {number} day @returns {Set<string>}
+ * raids as any table rolls. WW6: a lane's - its own generator and its own parties (a lane that stands no raid, none).
+ * @param {number} day @param {number} [lane] @returns {Set<string>}
  */
-export function raidDaySlots(day) {
-  const random = raidDayRandom(day), out = new Set();
+export function raidDaySlots(day, lane = 0) {
+  const random = raidDayRandom(day, lane), parties = raidLaneParties(lane), out = new Set();
+  if (!raidLaneOpen(lane) || !parties.length) return out;
   for (let l = 0; l < RAID_SLOTS_MAX; l++) {
     random(); random();   // its region and its town - the towns table's
     const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);
-    const ty = rangeInt(0, RAID_TYPES, random);
+    const ty = parties[rangeInt(0, parties.length, random)];
     const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);
     out.add(`${st}.${tg}.${ty}`);
   }

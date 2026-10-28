@@ -83,8 +83,8 @@
   {
     "name": "BOT-the-counter-keeps-its-keys-under-a-box",
     "file": "src/ui/tradeDoor.js",
-    "old": "  hooks.covered = () => windowCovered(overlay);",
-    "new": "  hooks.covered = () => false;",
+    "old": "  hooks.owner = overlay;",
+    "new": "  hooks.owner = null;",
     "tests": [
       "test/ui/boxontop.test.js"
     ]

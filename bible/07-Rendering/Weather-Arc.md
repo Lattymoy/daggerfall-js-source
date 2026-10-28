@@ -44,6 +44,10 @@ ONLY throughout - the classic lane keeps DFU's word, 1:1.
   scale, a sand precipitation profile, a ground-hugging cloud profile
   and a tint - so the wall stands on the horizon in the field, the fog
   thickens as it is entered, and the wind blows sand.
+- **E - The ashfall (ASHFALL1, 2026-10-27, later).** The ninth word, the
+  volcano's: born over Red Mountain, the Ashlands and Stonefalls, a
+  brown-grey pall with its veil, grey ash falling and tiny embers
+  glowing among it. Below, at the page's end.
 
 ## A - NO RAIN OVER SNOW (WEATHER2a, 2026-09-14)
 
@@ -1239,4 +1243,289 @@ WET-FALL (2026-10-15, a Discord report: "Player is getting wet despite it not ra
 the rain?"): RAIN-HEART's level reached the drops, the look and the ear, and not the skin - the survival soak read the
 sim's word at the downpour's rate. It reads what falls now (`weatherSim.js` fallingWeather, the street's word and level
 as the ear's), `01-Overview/bugs/Field-Bugs-2026-10-15f.md`; `06-Systems/Climates-Calories.md` WET-FALL.
+
+## NIGHT-FOG - the fog is lit by the light the land is lit by (2026-10-26)
+
+The owner, 2026-10-25: "In foggy biomes, when its dark, you can barely see anything."
+
+**What it was.** A fog's colour is the light its droplets send to the eye, which is the light that reaches them: the
+light the land stands in. The port took it from the sky. Under Dynamic Skies (`07-Rendering/Dynamic-Skies.md`, the
+enhanced lane's sky by default since MO1) it is the mod's own RenderSettings.fogColor - its preset's FogDayColor walked to
+black on the sun's height (`systems/dynamicSkies/dynamicSkies.js` fogColorNow; the mod ignores its own FogNightColor,
+carried verbatim). Measured off the vendored presets, every weather's fog was exactly black from 18:00 to 06:00, 0.04
+at 06:30 and 17:30, and a third of its day colour at 07:00 and 17:00. Meanwhile the mod's own light curve lit the land at
+four fifths of noon from 06:36 to 17:24 (still three quarters at 17:30). Everything that takes the fog's colour took it
+with it: the jungle's haze (`world/jungle/jungleHaze.js` hazeColorOf leans the weather's
+colour, so its haze was black too, at 0.007 a metre by night), the closed canopy's dimming of it, the far ring, the
+water and the sky's haze. The mod's own rows at its default density (`fogSettingsFromPresets`, each preset over ten) are
+the heavy fog's exp 0.005, so a thing 200 m off sends 37% of its light, and the rain's, overcast's and snow's exp2
+0.00075, which close past a kilometre. So from dusk to dawn the heavy fog closed into black across the first few hundred
+metres, and the jungle's haze closed into black by 100 m (half a thing's light is gone there). That is darkness drawn
+as fog, round land that the night's ambient and the moons still lit. On the dome, DFU's own rows stand (heavy exp 0.05
+in DFU's grey, rain exp 0.003); its clear nights fogged to the night sky's horizon (0.04 to 0.09), and the jungle's haze
+leaned off that.
+
+**DFU, the reference.** DaggerfallSky.SetSkyFogColor (DaggerfallSky.cs:310-330) fogs to Color.gray for anything denser
+than the rain at every hour, so DFU's heavy fog and snow glow a 50% grey at midnight. For the rest it fogs to the
+camera's clear colour, the sky's horizon, which at night is the night sky's. WeatherManager.SetFog's interior and
+dungeon branch (WeatherManager.cs:185) sets black.
+
+**The law** (`systems/weather/nightFog.js`, through the sky's controller, `scenes/shared.js` fogColorFor). On the
+enhanced lane a fog is never darker than AIR: NIGHT_AIR.albedo (0.5) of the open air's light, leaned cool
+(NIGHT_AIR.tint, its luminance kept). The open air's light (`airLight`) is the exterior ambient
+(`world/worldClock.js` exteriorAmbient: PlayerAmbientLight's ExteriorNightAmbientLight 0.25 at night, times the player's
+Night Brightness, rising to its noon over the daylight curve and the weather's sunlight scale) plus the moons
+(`render/enhancedSky.js` moonlightTerm: Secunda's lift, and half of Masser's key, because a droplet is lit from every
+side and a face from one). The rule is on luminance (`litFog`): what a fog lacks of the air's is made up in the air's own
+colour, so a fog keeps its hue where it has one (the dome's night blue, a dusk's) and a black fog becomes the air. A
+fog already as bright comes back as itself, the same array, so a day's fog reaches the renderer exactly as before. The
+controller reads the hour and the sun scale its use() was handed, and Night Brightness off the settings. The colour
+it answers is the one every host hands the renderer, the jungle's haze, the canopy, the far ring, the water and the
+sky's haze, so they all close into the same lit air. Moonless, the night air is (0.11, 0.13, 0.15); under a full Masser
+it is up to about (0.17, 0.18, 0.21).
+
+**DEPARTURE** (Port-Ledger A, NIGHT-FOG). The port departs from SetSkyFogColor's sky colour at night, and from
+Dynamic Skies' setFogColor black, on the enhanced lane alone. DFU's Color.gray stands: it is brighter than the night
+air, so the rule leaves it. The day stands: from 10:00 to 14:00 every weather on both skies and both light curves,
+winter or not, comes back as itself. The nearest case is the mod's thunder at noon, 0.149 over air of 0.145, so an
+albedo past 0.51 would start lifting storms by day. What moves is the night, the dusk and dawn the mod darkened ahead of
+its own light, and a thunderstorm's shoulders, the mod's 0.149 walked darker on the sun's height before 10:00 and after
+14:00. Those become their air, a storm no darker than the light it stands in. The classic panorama keeps
+SetSkyFogColor verbatim: the 1:1 lane keeps DFU's night, as it keeps its hard-off moonlight (EV5). Indoors nothing
+changes, because interiors and dungeons set DFU's own black SetFog (`scenes/worldModes.js`, `scenes/interior.js`,
+`scenes/dungeon.js`) and never ask the sky's colour. A player who sets Night Brightness to none keeps a black night: the
+air has no light to scatter but the moons'. Dynamic Skies' skybox keeps its own colours; it takes no host fog (MODS
+AUDIT). `?nightfog=off` is the door back, read at every ask off the page's query (`systems/pageQuery.js`), so a probe
+photographs one frame both ways.
+
+**The cases.**
+- *Weather fog in the Bay, and its swamps (Tigonus).* The Bay's swamp climate has no haze of its own, so its fog is the
+  weather's. Each fog keeps its density, so it closes the view where it does by day. What changed is that it closes
+  into lit grey-blue air and not into black.
+- *Black Marsh.* The Hist swamps and the Shadowfen are Swamp, so their fog is the weather's, as above. Murkmire and
+  Blackwood stand the jungle and its haze.
+- *The jungle* (Bantha's, Cyrodiil's ring, Blackwood). The haze's colour leans the weather's, so at night it is the lit
+  air leaned humid (`03-World/Bantha-Jungle.md`, Its colour).
+- *Valenwood.* Under the closed canopy the fog's colour is dimmed 35% (`world/jungle/jungleCanopy.js` canopyFog) after
+  this law, so the air under the leaves stays darker than the open air's (about 0.08). That is the canopy's own law
+  (`03-World/Tamriel-Biomes.md`), left as it stands.
+- *Rain at night.* On the mod's sky it was black. On the dome it was already lit grey, about 0.2, which is brighter than
+  the air, so the rule leaves it.
+
+**Pins.** `test/systems/weather/nightfog.test.js` (8): the air's numbers and its light, its colour, the lift and the
+identity it keeps; the day left alone in every weather on both skies and both curves; the night lit in every weather,
+the moons, the dome's blue kept, its rain and DFU's grey left, and Night Brightness at none; dusk and dawn minute by
+minute (never darker than the air, and the air adding less than 0.02 a minute to the sky's own step); and the
+controller (the lane, the door read at every ask, the hour, the sun, the moon and the Night Brightness it reads, the
+classic panorama verbatim, indoors untouched). PIN MOVED (NIGHT-FOG): `test/scenes/audit18_hosts_outer.test.js`'s
+controller pin (the sky's colour through the lit air first), `test/render/moonlight.test.js`'s seam (the term's body
+is the controller's `moonNow`, which the lit fog asks too). `tools/mutants/nightfog.json`: 30, all dead.
+
+**Seen in the running game** (2026-10-26, the freeware's data, headless Chromium on SwiftShader, 640 x 400, the land view
+at 1, Dynamic Skies as it ships, a scratch probe that flips `?nightfog=off` with replaceState between two frames of one
+boot, frame-synced on `__frame`; the pictures are game data and stay outside the tree). *Satakalaam's jungle* (Bantha,
+`?world`, clear, 23:00, the haze at 0.0065 a metre): before, the frame was black but for a few stars and the nearest
+crowns' edges (mean 0.5 of 255; the top two thirds 0.1 to 0.2); after, the canopy stands as crowns layered into grey-green
+air, the far ones fading into the haze, with stars above the haze's band (mean 15.8; the top two thirds 23 and 19). *Gyselah, a
+Tigonus swamp village* (`?exterior`, the mod's heavy fog at exp 0.005, 23:00): the fog's colour went from black to
+(0.114, 0.126, 0.151), and the street's far houses lifted from 30 to 34 of 255. At a village's distances the mod's heavy fog
+is thin, so the change there is the far air's, not the street's. *The same village in the rain at 23:00* (the mod's exp2
+0.00075): the street, its lit windows and the houses 60 m off were readable before and are the same after (a frame's mean
+22.5 to 23.6); the rain's fog only reaches the far land. *The same village at 17:45 in heavy fog*: the mod's fog colour was
+0.003 under a land ambient of 0.333, the dusk the mod darkens ahead of its own light; the law answers that hour's air,
+(0.15, 0.17, 0.20). The page died to the shared memory cgroup before the second frame, so this pair is measured on the
+law, not photographed. *The same village at noon in heavy fog* (480 x 300): the renderer's fog was (0.502, 0.502, 0.502),
+exp 0.005, in both frames. The two
+pictures differ by 2.5 of 255 on the mean, the same lift in every band with the HUD unmoved: that is the lighting lane's
+eye adaptation still easing between two frames taken seconds apart, not the fog.
+
+**Not photographed.** Valenwood and Black Marsh stand past the Bay (`?tamrielland` on). That boot and the jungle's dusk
+were killed by the container's shared memory cgroup on every attempt this session (five other streams' probes ran
+beside it), so they are measured on the law alone. They run the same seam. Black Marsh's Hist swamps and
+Shadowfen fog with the weather (the village's case above). Murkmire and Blackwood stand the jungle's haze (Satakalaam's
+case). Valenwood stands the haze under the canopy's 35% dimming.
+
+**Left as it was.** The lanterns' glow in the air (the lighting lane's in-scatter, `render/renderer.js` `_scatterGain`, and
+the air pass's march) integrates the weather's fog alone, not the jungle's haze. On a clear jungle night a lantern lights
+its haze no more than it lights open air. That would be a slice of its own, in the renderer, if the owner wants it.
+
+## BAY-LEFT-SEA - weather born at sea past the Bay is the sea's (2026-10-27)
+
+**What stood.** A weather system is born where the field puts it, and its climate is the map's there
+(`systems/weather/weatherMap.js` climateOfField). Past the map's edge it read the climate the host's composed map answers
+(AUDIT TESA-BIOME Z8: the continent's zones past the Bay), but never the Ocean: an Ocean answer fell back to the nearest
+pixel of the Bay's edge (WEATHER3g's rule, from when everything past the edge read as sea and carried the sea's weather
+onto the mountains). So a storm born over the Sea of Ghosts, the Topal Bay or the Padomaic took the nearest Bay edge's
+climate - Mountain, along the north - and a winter's births at sea snowed a third of the time (AUDIT BAY-LEFT item 22,
+D4). The player's own roll was right: it reads the pixel's climate itself.
+
+**Now.** Past the edge the composed map's own climate is taken, the Ocean too. A map with nothing past the Bay (the land
+row off, `?tamrielland=off`: MapsFile answers -1 off its PAKs) reads the edge, as ever. With the land row on the composed
+map always has a continent past the edge - the trace's, or the authored rings' before it lands - so the land north and
+east of the edge reads land, and WEATHER3g's case does not come back. Nothing changes on the Bay.
+
+**On the freeware** (the composed maps; a winter's 400 words at each sea pixel, the old law beside the new):
+
+| Sea | snow | fog | sunny | cloudy | overcast |
+|---|---|---|---|---|---|
+| Sea of Ghosts (1900, -620) | 142 -> 62 | 6 -> 93 | 86 -> 54 | 57 -> 78 | 109 -> 113 |
+| Topal Bay (2100, 1900) | 110 -> 46 | 10 -> 83 | 79 -> 108 | 77 -> 67 | 124 -> 96 |
+| Padomaic (3600, 1600) | 189 -> 64 | 10 -> 64 | 40 -> 39 | 79 -> 122 | 82 -> 111 |
+
+**Not DFU**: DFU's weather is the region's climate roll alone; the systems on a field are the port's (WEATHER3, Port-Ledger
+section A).
+
+**The four hosts.** `scenes/world.js` reads the weather map as before - no wiring changed; `scenes/worldModes.js`,
+`scenes/dungeonContext.js` and `scenes/exterior.js` FLAGGED, unchanged: indoors and in the fixed city the weather is the
+same map's.
+
+**Pins.** `test/systems/weather/bayleftsea_seaweather.test.js` (the freeware's three seas, before and after). PIN MOVED:
+`test/systems/weather/weather3a_weathermap.test.js` (the sea off the map its own - 9 of 200 summer births rain at sea
+where the desert edge's never do; a map with -1 off it reads the edge). Mutants: `tools/mutants/bayleftsea.json`
+BLS-weather-land-off-read; `tools/mutants/tesabiome.json` TESA-BIOME-28-weather-clamped re-aimed by content and
+TESA-BIOME-29-weather-sea turned with the law (the mutant now the old law) - all dead.
+
+## E - THE ASHFALL (ASHFALL1, 2026-10-27)
+
+The owner: "I think with the volcanic isles we could do an ashfall sort of weather with tiny lava flakes. If that makes
+sense" - "I also definitely want to develop the new weather I mentioned".
+
+**The lore.** TES III's Vvardenfell has its own weather beside DFU's seven: the ash storm. Its Ashlands region rolls Ash
+30% of its weather (at each change: Clear 10, Cloudy 25, Foggy 10, Overcast 25 - UESP, Morrowind:Ashlands), and Molag
+Amur rolls it too (20%, Morrowind:Molag_Amur). Red Mountain stands a Blight storm every hour of the main quest; the port's 3E 405 is before the Blight's
+worst, so its volcano gets the ash, at the most. ESO's Stonefalls loading screen: "the ashfall from the
+volcanoes of the Velothi Mountains and from great Ash Mountain itself is Stonefalls' bane and benefit, fertilizing the
+soil" - it names the ashfall and gives no share, so Stonefalls' 15% is the port's, the least of the three. The owner's
+flakes are the embers such a fall carries.
+
+**The word.** The port's own NINTH word, `ashfall`, APPENDED after the sandstorm (enum 8: DFU's seven and the sandstorm
+keep theirs - a save's byte, the classic array's mask, the Chronicles' columns, none touched). It is never rolled: on the
+enhanced lane the world weather map births it. Off the map's lane (`?wxmap=off`) WEATHER2b's field stands it.
+
+**Where - the volcano's country.** A zone past the Bay names its `ash` (`world/tamriel/tamrielBiomes.js`): the share of
+its sky's HOURS under the ash - Red Mountain 0.5, the Ashlands 0.3 (TES III's own), Stonefalls 0.15. No other zone names
+any. The map's law (`systems/weather/weatherMap.js` targetShares) takes that share out of the clear air and the dry
+words (cloud, the deck, fog, the desert's sand) in proportion, never out of what falls: the climate table's rain, storms
+and snow keep their hours, and the ash is the lore's share, all the dry sky at most. Each [climate, ash] the zones name
+is its own birth law (birthLaw's `ash`, `ASH_COUNTRY`), solved once, its ceilings among the map's.
+
+**Its birthplace.** A birthplace reads its ash through `systems/weather/weatherField.js` ashAtPixel - the zone's `ash` where the host's map wears that zone there
+(its climate the zone's ground's). So the Bay, the sea and a map with nothing past the Bay read none, and the field and
+the map read the volcano one way. The second audit: a birthplace asks the zones only where its climate can carry ash
+(`ASH_CLIMATES`, the climates ASH_COUNTRY is laid on - `lawAt`) and never on the Bay (ashAtPixel answers none there
+before it asks): every candidate of every type had asked them, filling their cache tenfold.
+
+**The ceilings.** Every candidate of a type is drawn at its ceiling - the most any law asks of it - and thinned to the
+law at its birthplace, so moving a ceiling by a bit redraws every birth of the type the world over. The ash takes the dry
+words' share of the free air, and the winter mountains' cloud asks the same weight with ash as without, to the last
+bits of a double (3.972145394231093 against ...087): the ash's laws had raised the cloud's ceiling by that noise and
+redrawn the whole world's cloud. An ash law now raises a ceiling only where it asks more than the climates' laws past
+`ASH_CEILING_SLACK` (a billionth - `typeCeilings`, `seasonCeilings`): every type but the ash is drawn at the climates'
+ceiling to the bit, and the ash's own at the volcano's most.
+
+**The system.** A plume's pall - a core 15 to 28 km in radius, 30 to 56 across (WEATHER3g's law: every system born on the land is
+regional), the overcast its skirt (0.8 of a core's area, thinned to fit where the table leaves less), living six to
+sixteen hours, riding the wind at 20 m a game minute (a fall of ash drifts downwind of its mountain onto the
+neighbouring land), born at every hour (the volcano keeps none), from a dusting at its heart to the heavy fall
+(`STRENGTH` 0.35 to 1). Priority between the sandstorm and fog: rain, a storm and snow are worn over it.
+
+**Measured** (the map with the continent round the Bay, at each zone's middle pixel, 4,000 minutes 1,051 apart - eight
+years): Red Mountain 0.50 of the hours under ash (its law 0.5), the Ashlands 0.31 (0.3), Stonefalls 0.15 (0.15); the
+Grazelands, the Velothi wall, Deshaan and the Bay none. The test's own window (`ashfall1.test.js`, 300 of those minutes,
+219 days) reads 0.47, 0.24 and 0.18 - a season's sample of an eight-year mean; the record had first given 0.49, 0.26
+and 0.14, which no run of either window reads (the second audit, lane E). Off the volcano's
+country the map is the map it was, birth for birth (2,827 births over 720 nodes of every type compared against the
+code before the slice, none differing), and a warm query costs within a tenth of what it did.
+
+**THE BIRTHS FOLLOW THE LAND.** A node's births were memoised per climate lookup alone. Past the Bay the climates (and
+now the ash) are the zones', and the zones move once the trace lands after the boot or a fit is installed
+(`tamrielBiomes.js` biomeStamp). A node drawn over the authored rings kept their zones' weather after the provinces had
+moved. The memo is dropped when the stamp moves, as the air's tiles are (AUDIT TESA-BIOME Z5) - and the sim's systems
+found about the eye are found again with it (`weatherSim.js` `_mapNearStamp`, the second audit: a minute's systems had
+been kept over a moved land until the minute or the place moved).
+
+**Every seam a word reaches.**
+- The fog row: `FOG_SETTINGS.ashfall`, exp 0.006, about half a kilometre to the fog's colour, the sky not in it (the
+  pall is seen); a mod's five settings have none, so the snow's stands in.
+- The sun at 0.4, a shade under a rain's deck.
+- An OVERCAST to every flag's reader (`weatherFlags` - Ambient Text hears "Cloudy", as for the sandstorm,
+  `06-Systems/Ambient-Text.md`), neither rain nor snow - and to the music (`songManager.js` outdoorPlaylist: the
+  overcast's songs) and Dynamic Skies' presets (the overcast's sky; the fog the snow's, as `fogForWeather` stands it -
+  the sandstorm the fog's sky and the heavy fog's), the second audit's: DFU's arm for a word it never knew is the sunny
+  day's, and a sunny tune had played under the pall.
+- The sky row: a brown-grey lid, cover 0.96, a breeze a shade under an overcast's ([0.012, 0.004] to its [0.014, 0.004]).
+- The cloud profile (`VC_PROFILE`): base 450 m, top 3,400, dark 0.6 - low, deep and dark.
+- The cell's tint (`CELL_TINT`, a brown-grey).
+- A VEIL under the pall (`CURTAIN_FALL` 0.9, the rain's kind) in its cell's tint: a tinted cell's veil is its own grey
+  times the tint (the sky's curtain shader; the travel view's `render/rainCurtains.js` curtainsOf's `tint`, mixColor),
+  white for every other word, none changed (`weather2d_sandstorm` holds CELL_TINT to the two). The second audit: the
+  rain veil's own dark grey times a brown-grey had stood near black. The ash's column is seen falling from three
+  leagues off.
+- Off the map's lane (WEATHER2b's field), where cells overlap the cell worn is the strongest word's, the nearest of it
+  (`wornCellOf`: thunder, rain, snow, the sandstorm, the ash) - the nearest of any had worn an ash cell's dusting over
+  the rain cell it lay in.
+- Cirrus 0.15.
+- The wind's violence 0.3 (the ash drifts, it is not driven); Windfall reads it as an Overcast.
+- The grass dim 0.58; the jungle haze's factor an overcast's.
+- The body's air -5 (`WEATHER_TEMP`: dry, its pall shading the sun as a fog's does - nothing wet in it to chill a body),
+  named "Ashfall".
+- The front's own kind `ash`: peak 0.1 to 1, skew 1.3, never the wet fall the rain and the snow share. Its edge's haze is
+  thinned and its sun lifted as a sprinkle's are (`fallTerms`).
+- The ear hears a cloudy day: DFU's ambience has no ash, and it falls without a sound.
+- The forecast says it ("Ashfall", "ashfall"; every language drafted).
+
+**The fall** (`render/dryFall.js`). The dry falls - the sand and the ash - are one renderer the hosts hold
+(`DryFallRenderer`): the sand's wisps built at boot as they were, and the ash's program started beside them and built
+the first time the ash falls (SHADER-STALL's `compiledPass`: its compile runs while the world loads; a fault in it is
+the ash's alone, warned and never drawn). Two instance sets on one program, in a 40 m box that follows the eye and
+wraps by the lab's law:
+- THE ASH. 12,000 grey flakes (1.8 to 4.8 cm) at a full fall, falling 0.6 to 1.3 m/s - slower than the lab's snow and as
+  light, the one wind's travel carrying them - and tumbling as they go, wider in a stronger wind. Alpha-blended, dull
+  and unlit, as the lab's snow is.
+- THE EMBERS. 320 tiny flakes (0.8 to 2 cm) still glowing from the vents, falling 0.3 to 0.7 m/s. Each is kindled,
+  white-hot for a breath, then reddens and goes out over a four- to ten-second life, flickering 4.25 to 6.5 times a
+  second as it cools. They are ADDED to the frame (blend one, one), so they glow against the pall and in the night.
+- Both are faced to the screen and held at 1.5 of the world image's pixels at least (`renderer.worldViewportPx` - the
+  second audit: the canvas's had been read, and at a render scale under one a far flake stood under a pixel of the image
+  it is drawn in), their light thinned by what the hold added, so a far flake never vanishes between pixels. A flake
+  fades out in the last 0.3 to 1 m before the eye (the second audit: one at the eye had filled the screen). Both take
+  the front's intensity as the share of their counts.
+- THE CLOCK is the wisps' law: every rate is a whole number of cycles over 400 s and every flake's fall a whole number of
+  boxes, so the wrapped clock moves no flake; the travel wraps at the box times the gust's denominator.
+The hosts' one branch draws every dry fall, handing it its kind (`isDryFall`, `world/weather.js`); the rain program is
+never built for the ash, at boot or after (the second audit: a world booted under a dry fall had built it). Travel
+Options' weather off stands the dry falls down on a journey as it does the rain (the second audit: the ash and the sand
+had fallen through it).
+
+**The four hosts.** `scenes/world.js` WIRED and `scenes/exterior.js` WIRED - the same lines, respelled: the renderer
+built at boot, the rain program's gate, the branch, the kind handed. No host function grew a logical line (HOST-SPLIT's ceiling
+counts statements and entries: the one renderer stands where the sand's stood, and its import sits on the wind wisps'
+line). The two
+indoor hosts, `scenes/worldModes.js` and `scenes/dungeonContext.js`, are FLAGGED and unchanged: nothing falls indoors,
+and the ear hears the map's word there as a cloudy day.
+
+**Not seen.** The look - the pall's colour, the flakes' grey and count, the embers' glow - goes to the owner's eyes. The
+owner had asked for no more probes, so none was run. `?weather=ashfall` stands it anywhere for a look, and the volcano's
+country has it a third of the time and more.
+
+**Not DFU**: DFU has seven weathers and no ash; the word, its law and its fall are the port's (Port-Ledger section A,
+THE ASHFALL).
+
+**Pins.** `test/systems/weather/ashfall1.test.js`. PIN MOVED: weather2d_sandstorm (the ninth word after it, the tint
+table, the hosts' renderer and branch), weather.test.js and weather2b_weatherfield (the word lists), labGrass, tv1 and
+tv4 (the dim, the camera's floor under the pall, the veil), fb1001_rainsprinkle, rainhours, vc7c_curtains, precip1_air,
+ow_forecast (the front's skew, the strength, the curtain, the fall's spelling and the tinted veil, the forecast), the
+hosts' spelling in weatherfront, weathersim, fb1001_overworld, fb1001_puddlerain (the travel gate) and rainleak (the
+dry falls' one renderer), and relayversion (the relay's graph re-hashed for the ninth word). `l10n4_hardcoded`: the
+ash's shader. Mutants: `tools/mutants/ashfall1.json` (55, all dead); records re-aimed by content where the slice and its
+audit moved their text (fb1001_puddlerain, fb1001_rainsprinkle, ow_forecast, precip1, rainhours x2, time1, weather3a,
+windfall1; audit_precip x2 and perfextc for the ceilings and the breather).
+
+**The second audit (2026-10-27, five lanes).** Fixed and pinned: the zones asked only where the climate carries ash and
+never on the Bay; the ceilings to the bit off the volcano; the sim's systems found again over a moved land; the ash an
+overcast to the music and to Dynamic Skies; the field's strongest cell worn; the least size the world image's pixel; the
+dry falls under Travel Options' weather off; the veil its grey times its tint; no rain program at boot for a dry fall; a
+flake gone before it fills the screen; the front's wet fall never the ash's on the air's law (`ashfall1`'s "the front and
+the ear" reads `rain` and `flakes` with the law on - off it they are null, and the test had read nothing); the shares
+measured again (above).
 

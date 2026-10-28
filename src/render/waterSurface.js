@@ -41,6 +41,8 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog every world pass takes, one home
 import { SEA_LOOK_GLSL, SEA_HAZE_BAND } from './horizonHaze.js';   // FAR-SEA1: the sea takes the far ring's haze; AUDIT FAR-SEA1 C12: and the open sea's light is one text with the ring's sea
 import { pageParam } from '../systems/pageQuery.js';
+import { EDGE_NOISE_GLSL } from './roadEdgeGlsl.js';   // COAST-LOOK: the edges' lattice noise, its one text
+import { groundWanderGlsl, groundKindsGlsl } from './groundEdgeGlsl.js';   // COAST-LOOK: the shore's wander and the transitions' table, the ground's own (the sheet, the sand and the silt on one line)
 import { RIPPLE_CELLS, RIPPLE_SCALE } from '../world/water/waterRipples.js';
 import { NO_BED_DEPTH, SHELF_SHEET_DEPTH } from '../world/water/waterCorners.js';   // AUDIT WATER-NEXT H2: its one home, the water's leaf (the kernel's worker writes it)   // WATER-NEXT 4: the ripple field the shader reads   // PERF-URL: the page's query, parsed once a search
 
@@ -392,6 +394,9 @@ uniform vec3 uSkyHorizon;
 uniform vec3 uTint;
 uniform float uF0;
 uniform float uShoreSoft;
+${EDGE_NOISE_GLSL}
+${groundWanderGlsl()}
+${groundKindsGlsl()}
 uniform vec3 uAbsorb;
 uniform int uSceneOn;          // WATER-NEXT 2: the frame's colour and depth, copied before the water (Renderer.captureUnderWater)
 uniform sampler2D uScene;
@@ -483,7 +488,7 @@ void main() {
     uint corners = waterCorners(data);
     if (corners == 0u) discard;
     vec2 f = fract(unwrapped);
-    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f));
+    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f) - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));   // COAST-LOOK: a shore the ground blends on the ground's own line (the water the land's complement)
     // WATER-PUDDLE: a puddle record keeps only the texels its own art paints water (world/puddleMask.js)
     uint rec = data >> 2u;
     if (isPuddleRecord(rec)) {

@@ -319,7 +319,8 @@ test('ETHER-DEEP: the client builds the Eltheric\'s bake beside the Bay\'s on th
   await loadDeepWatersBake({ woods: ground, woodsBytes: new Uint8Array(4), rects: [], ether: { towns: [], havens: [], ruins: [] }, workerFactory: listening, store });
   assert.deepEqual(said.ether, { towns: [], havens: [], ruins: [] }, 'the worker\'s build carries the places\' rects');
   const worker = src('src/world/deepWater/deepWatersWorker.js');
-  assert.match(worker, /bake = worldBakes\(new DeepWatersBake\(\{ woods, global: g, locationRectAt \}\), \{ woods: m\.ether \? etherWoods\(woods\) : woods, ether: m\.ether \?\? null \}\);/, 'the worker composes the sea over its own reader');
+  // PIN MOVED (TAMRIEL-DEEP): the build's word of the continent beside the sea's
+  assert.match(worker, /bake = worldBakes\(new DeepWatersBake\(\{ woods, global: g, locationRectAt \}\), \{ woods: m\.ether \? etherWoods\(woods\) : woods, ether: m\.ether \?\? null, continent: !!m\.continent \}\);/, 'the worker composes the sea over its own reader');
 });
 
 test('ETHER-DEEP: the host carves the Eltheric by every arm, and holds the continent past the map (PIN MOVED from ETHER-HOLD: the box was held with the rest)', async () => {
@@ -340,7 +341,7 @@ test('ETHER-DEEP: the host carves the Eltheric by every arm, and holds the conti
   assert.ok(!asked.some((a) => a.startsWith('-5,250')), 'the continent past the map held');
   assert.ok(asked.filter((a) => !a.startsWith('500,')).every((a) => a.endsWith(':77')), 'the climates read in the box\'s own frame - never the Bay\'s clamp to row 0');
   assert.ok(asked.some((a) => a === '500,250:223'), 'the Bay\'s pixel as ever');
-  assert.match(src('src/scenes/deepWater/deepWatersHost.js'), /const dw = client \?\? openDeepWaters\(\{ woods, woodsBytes, rects: deepWatersLocationRects\(woods, locations, maps, blocks\), ether \}\);/, 'the host hands the client the sea');
+  assert.match(src('src/scenes/deepWater/deepWatersHost.js'), /const dw = client \?\? openDeepWaters\(\{ woods, woodsBytes, rects: deepWatersLocationRects\(woods, locations, maps, blocks\), ether, continent \}\);/, 'the host hands the client the sea')   // PIN MOVED (TAMRIEL-DEEP): and the continent's word;
   // AUDIT ETHER-OW C1-3: the dry check reads only the sea bits this thread holds - a fresh Eltheric cell is the trip's to
   // answer, never flooded here first (it was, 1-8 ms on the main thread at a landfall, then again on the worker)
   const real = worldBakes(new DeepWatersBake({ woods: GROUND, global: { state: new Uint8Array(500000), classes: new Uint8Array(500000), partialIndex: new Int32Array(0), partialBits: new Uint8Array(0) } }), { woods: GROUND, ether: true });

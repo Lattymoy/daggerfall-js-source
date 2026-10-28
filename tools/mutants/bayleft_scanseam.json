@@ -1,0 +1,47 @@
+[
+  {
+    "name": "BAYLEFT-SEAM-the-drain-makes-it-whole",
+    "file": "src/scenes/eventTheatres.js",
+    "old": "      const sc = S.wholeScan ? S.wholeScan(t) : S.scanOf(t);\n",
+    "new": "      const sc = S.scanOf(t);\n",
+    "tests": [
+      "test/world/worldWide/bayleft_scanseam.test.js"
+    ]
+  },
+  {
+    "name": "BAYLEFT-SEAM-the-owed-dropped-unwhole",
+    "file": "src/scenes/eventTheatres.js",
+    "old": "      if (sc) { owed.delete(t); warm.set(t, stampOf(S)); }\n",
+    "new": "      owed.delete(t); if (sc) warm.set(t, stampOf(S));\n",
+    "tests": [
+      "test/world/worldWide/bayleft_scanseam.test.js"
+    ]
+  },
+  {
+    "name": "BAYLEFT-SEAM-whole-in-the-ask",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "if (!wanted().includes(t)) return scanOf(t); warm(); return null; },",
+    "new": "return scanOf(t); },",
+    "tests": [
+      "test/world/worldWide/bayleft_scanseam.test.js"
+    ]
+  },
+  {
+    "name": "BAYLEFT-SEAM-no-idle-answered-none",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "if (s || !idle) return s ?? scanOf(t);",
+    "new": "if (s) return s;",
+    "tests": [
+      "test/world/worldWide/bayleft_scanseam.test.js"
+    ]
+  },
+  {
+    "name": "BAYLEFT-SEAM-a-shut-lane-never-made",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "if (!wanted().includes(t)) return scanOf(t); warm(); return null; },",
+    "new": "warm(); return null; },",
+    "tests": [
+      "test/world/worldWide/bayleft_scanseam.test.js"
+    ]
+  }
+]

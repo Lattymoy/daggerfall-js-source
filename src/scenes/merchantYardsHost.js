@@ -48,7 +48,7 @@ import { buildYardModel, signBoxOf, yardPoints } from '../world/merchantYards/me
 import { yardArt, YARD_ARCHIVE } from '../world/merchantYards/merchantYardArt.js';
 import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the yards' pictures in Daggerfall's colours
 import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the yards' are)
-import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobile/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS, spriteRaceOf } from '../characters/mobile/mobilePerson.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';   // AUDIT MW-NPC II P1: a keeper's body, in the outfit their picture wears
 import { personActor } from '../characters/peopleBodies.js';   // AUDIT MW-NPC II P1: and turned to the eye as a standing person is
@@ -190,7 +190,7 @@ export function createMerchantYards({
     return null;
   }
   const keeperArchive = (site) => {
-    const T = PERSON_TEXTURES[site.race] ?? PERSON_TEXTURES.Breton;
+    const T = PERSON_TEXTURES[spriteRaceOf(site.keeper?.race, site.race)] ?? PERSON_TEXTURES.Breton;   // PROVINCE-FOLK: the keeper's own race's picture where Daggerfall draws one
     const set = T[site.keeper?.sex === 'female' ? 'female' : 'male'];
     return set[(site.keeper?.variant ?? 0) % set.length];
   };
@@ -387,7 +387,7 @@ export function createMerchantYards({
       for (const y of yards.values()) {
         const b = y.keeperBatch;
         if (!y.at || !b) continue;
-        const archive = keeperArchive(y.site), race = y.site.race ?? 'Breton', key = `${archive}|${race}`;
+        const archive = keeperArchive(y.site), race = y.site.keeper?.race ?? y.site.race ?? 'Breton', key = `${archive}|${race}`;   // PROVINCE-FOLK: past the Bay the keeper's own
         if (y._mwLookKey !== key) {
           y._mwLookKey = key;
           y._mwLook = folkLookOf({ archive, personFaceRecordId: 0, gender: y.site.keeper?.sex === 'female' ? GENDERS.Female : GENDERS.Male, guard: false }, race, textSeed(String(y.key)));

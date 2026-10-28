@@ -205,22 +205,22 @@
   {
     "name": "DECOROUTDOOR-rebuild-unheld",
     "file": "src/scenes/homeYards.js",
-    "old": "          y.pool.set(holding ? y.pool.list() : pieces ?? y.pool.list());",
-    "new": "          y.pool.set(pieces ?? y.pool.list());",
+    "old": "    y.pool.set(holding ? y.pool.list() : pieces ?? y.pool.list());",
+    "new": "    y.pool.set(pieces ?? y.pool.list());",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ],
-    "note": "AUDIT 05b A4: a rebuild under the open decorator stood the town's answer"
+    "note": "AUDIT 05b A4: a rebuild under the open decorator stood the town's answer Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "DECOROUTDOOR-rebuild-sig-taken",
     "file": "src/scenes/homeYards.js",
-    "old": "          if (!holding) y.sig = sig;",
-    "new": "          y.sig = sig;",
+    "old": "    if (!holding) y.sig = sig;",
+    "new": "    y.sig = sig;",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ],
-    "note": "AUDIT 05b A4: the town's answer held back is taken as read - it never stands"
+    "note": "AUDIT 05b A4: the town's answer held back is taken as read - it never stands Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "DECOROUTDOOR-ghost-climateless",

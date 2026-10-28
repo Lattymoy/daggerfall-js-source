@@ -398,26 +398,29 @@ const cloakOver = (body, rf) => {
 /**
  * Fetch and compose a worn-armour key's picture, top row first - the decoders (eotbBody decodeSprite, peerRiders
  * decodeUrl) turn it to the world's row order as they do any PNG. `decodePng` is theirs (systems/textureReplacement.js).
- * A cloak's strip that cannot be had is left off: the body draws without it.
+ * A cloak's strip that cannot be had is left off: the body draws without it. FIRST-VISIT: `picture(url)` fetches and
+ * decodes one strip - this thread's fetch and `decodePng` unless one is handed in (eotbBody's decode worker).
  * @param {string} key  @param {(bytes:Uint8Array)=>Promise<{width:number,height:number,data:Uint8Array}>} decodePng
  */
-export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u), urlOf = (k) => STRIPS[k], cloakUrlOf = (k) => CLOAK_STRIPS[k], hoodFixUrlOf = (k) => HOODFIX_STRIPS[k] } = {}) {
+export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u), urlOf = (k) => STRIPS[k], cloakUrlOf = (k) => CLOAK_STRIPS[k], hoodFixUrlOf = (k) => HOODFIX_STRIPS[k], picture = null } = {}) {
   const [, body, combo, rf, code] = key.split(':');
   const url = urlOf(`${body}/${combo}/${rf}`);
   if (!url) throw new Error(`${key}: no art`);
-  const res = await fetchUrl(url);
-  if (!res.ok) throw new Error(`${url}: ${res.status}`);
-  const strip = await decodePng(new Uint8Array(await res.arrayBuffer()));
+  const pictureOf = picture ?? (async (u) => {
+    const res = await fetchUrl(u);
+    if (!res?.ok) throw new Error(`${u}: ${res?.status}`);
+    return decodePng(new Uint8Array(await res.arrayBuffer()));
+  });
+  const strip = await pictureOf(url);
   let cloak = null;
   if (outfitPieces(code)?.cloak != null) {
     const cu = cloakUrlOf(`${body}/${rf}`);
     try {
-      const cr = cu ? await fetchUrl(cu) : null;
-      if (cr?.ok) cloak = { strip: await decodePng(new Uint8Array(await cr.arrayBuffer())), over: cloakOver(body, rf), noSlivers: cloakManifest[body]?.noSlivers === true, fix: null };
+      if (cu) cloak = { strip: await pictureOf(cu), over: cloakOver(body, rf), noSlivers: cloakManifest[body]?.noSlivers === true, fix: null };
     } catch { cloak = null; }
     const fu = cloak ? hoodFixUrlOf(`${body}/${combo}/${rf}`) : null;   // a hood fix that cannot be had is left off
     if (fu) {
-      try { const fr = await fetchUrl(fu); if (fr?.ok) cloak.fix = await decodePng(new Uint8Array(await fr.arrayBuffer())); } catch { /* no fix */ }
+      try { cloak.fix = await pictureOf(fu); } catch { /* no fix */ }
     }
   }
   return composeStrip(strip, code, cloak);

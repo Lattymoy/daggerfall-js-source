@@ -15,6 +15,7 @@ import { REFUSALS } from '../../net/accountClient.js';
 import { placeBeside } from './enhancedTimers.js';
 import { reportPane, reportPaneKey } from './enhancedReport.js';   // PRIVATE-REPORT
 import { t } from '../../systems/textManager.js';
+import { shopWareTag, injectShopStyle } from './enhancedShop.js';   // SHOP: a receipt's ware, in its own paint
 
 /** How often the mark's count and the open window look at the box's version, ms. */
 export const POST_TICK_MS = 500;
@@ -128,6 +129,7 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     b.addEventListener('click', fn);
     return b;
   };
+  injectShopStyle(doc);   // SHOP: a receipt's ware tag is the shop's sheet's
   const win = el('div', 'px-win px-postwin');
   win.setAttribute('role', 'dialog');
   win.setAttribute('aria-modal', 'true');
@@ -244,6 +246,9 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
         if (rar) name.setAttribute('data-rarity', rar);
         chip.append(name, el('span', 'pm-state', p.claimed ? 'Claimed' : 'Waiting'));
         row.append(chip);
+      } else if (p.ware) {   // SHOP: a receipt - its ware is on the account already, nothing to claim
+        const tag = shopWareTag(doc, p.ware);
+        if (tag) { const chip = el('span', 'pm-chip'); chip.append(tag, el('span', 'pm-state', t('post.wareHeld', 'On your account'))); row.append(chip); }
       }
       row.addEventListener('click', () => openOne(p.id));
       list.append(row);
@@ -275,6 +280,13 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
         card.append(claim);
       }
       piece.append(card);
+    } else if (head.ware) {   // SHOP: the receipt's ware, and where it is worn
+      const tag = shopWareTag(doc, head.ware);
+      if (tag) {
+        const card = el('div', 'pm-item');
+        card.append(tag, el('span', 'pm-state', t('post.wareWear', 'Wear it from your profile.')));
+        piece.append(card);
+      }
     }
     const foot = el('div', 'pm-foot');
     foot.append(back);

@@ -58,6 +58,10 @@ export const UNDERCROFT_MAP_ID = 211207;
 export const inArenaCell = (buildingKey) => buildingKey > 0 && (buildingKey >> 16) === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) === ARENA_CELL[1];
 /** Whether a location is Daggerfall city. */
 export const isArenaCity = (loc) => loc?.regionIndex === ARENA_REGION && loc?.locationIndex === ARENA_LOCATION;
+/** IC-GRAND (bible/11-Multiplayer/Arena.md "IC-GRAND"): whether a location stands the arena - Daggerfall city, or a place
+ *  whose grid lays the arena's block itself (the Imperial City's Arena District, world/imperialCity.js's ARENA cell):
+ *  its 43600 stair the undercroft's door there too. */
+export const standsArena = (loc) => isArenaCity(loc) || !!loc?.exterior?.exteriorData?.blockNames?.includes(ARENA_BLOCK);
 
 /**
  * THE GATE'S PEOPLE (ARENA1's placeholder for ARENA2/3): flats in Daggerfall's person archives (world/rdbLayout.js

@@ -24,8 +24,9 @@ import { FOG_GLSL, FOCUS_GLSL } from '../../src/render/fogGlsl.js';
 import { SHADOW_GLSL } from '../../src/render/shadowPass.js';
 import { VC_PROFILE } from '../../src/render/volumetricClouds.js';
 import { ACTIONS, DEFAULT_BINDINGS, PORT_ACTIONS, ACTION_GROUPS } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';
 
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 const deg = (d) => (d * Math.PI) / 180;
 
@@ -39,7 +40,7 @@ test('TV1 camera: Mac\'s band - 150 to 450 m over the traveller, 15 to 75 degree
   // the deck, per the weather the clouds are drawn for (render/volumetricClouds.js VC_PROFILE) - the view reads the
   // same table the sky does, so the camera is under the very clouds the player sees
   const ceilings = Object.fromEntries(Object.entries(VC_PROFILE).map(([w, r]) => [w, ceilingFor(r.base)]));
-  assert.deepEqual(ceilings, { sunny: 450, cloudy: 450, overcast: 450, fog: 90, rain: 450, snow: 450, thunder: 440, sandstorm: 40 });
+  assert.deepEqual(ceilings, { sunny: 450, cloudy: 450, overcast: 450, fog: 90, rain: 450, snow: 450, thunder: 440, sandstorm: 40, ashfall: 390 });   // PIN MOVED (ASHFALL1, 2026-10-27): the ash's pall, base 450
   assert.equal(ceilingFor(null), 450, 'no deck: the band\'s top');
   assert.equal(ceilingFor(Number.NaN), 450);
   assert.deepEqual(heightBand(450), [150, 450]);

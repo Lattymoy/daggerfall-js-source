@@ -140,11 +140,12 @@
   {
     "name": "MINE-PERKS-ore-card-table-held",
     "file": "src/ui/oreMapTip.js",
-    "old": "...(surveyed ? [] : table.filter(",
-    "new": "...(false ? [] : table.filter(",
+    "old": "(!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
+    "new": "(!false && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
     "tests": [
       "test/ui/mineperks.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the card's table held from a Surveyor too - its filter beside a province's metals now."
   },
   {
     "name": "MINE-PERKS-sensed-a-finder",
@@ -194,8 +195,8 @@
   {
     "name": "MINE-PERKS-held-map-unread",
     "file": "src/ui/heldMap.js",
-    "old": "const lodes = readBountyMarks(this.deps.lodes, this._size, LODE_LEGEND_TEXT);",
-    "new": "const lodes = readBountyMarks(null, this._size, LODE_LEGEND_TEXT);",
+    "old": "const lodes = readBountyMarksIn(this.deps.lodes, sheet, LODE_LEGEND_TEXT);",
+    "new": "const lodes = readBountyMarksIn(null, sheet, LODE_LEGEND_TEXT);",
     "tests": [
       "test/ui/mineperks.test.js"
     ]

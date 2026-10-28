@@ -27,7 +27,8 @@ import {
 import { ANY_LOCATION_KEY } from '../../src/systems/worldDataVariants.js';
 import { SHIP_TYPES } from '../../src/systems/banking.js';
 import { TRAVEL_VIEW_TEXT } from '../../src/scenes/travelView.js';
-import { onBayOrEther, inEther } from '../../src/world/ethericSea.js';   // ETHER-OW: the raiders' ground, the host's own (AUDIT ETHER-OW C2-3: and the box, where a raider is the sea fight's alone)
+import { onBayOrEther, inEther } from '../../src/world/ethericSea.js';
+import { onWorldSea } from '../../src/scenes/naval/worldLanes.js';   // WW3: the sea's ground - the Bay's, the box's, and past the Bay where its land stands   // ETHER-OW: the raiders' ground, the host's own (AUDIT ETHER-OW C2-3: and the box, where a raider is the sea fight's alone)
 
 // PIN MOVED (AUDIT OW5 G2): the Overworld's own lines are said through tvSay - held at the scale they are said at
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -215,7 +216,9 @@ test('OWS3 host wiring by source: the open sea a raider is born on, the shared c
   // PIN MOVED (ETHER-OW, 2026-10-13): the raiders' ground is the Bay's map or the Eltheric Ocean's box (ethericSea.js
   // onBayOrEther) - the Bay's bounds as they were, the box beside them (test/systems/travel/ether_ow.test.js)
   // PIN MOVED (AUDIT ETHER-OW C2-3): past the Veil a raider is the sea fight's ship alone (test/systems/travel/ether_ow.test.js)
-  assert.match(w, /if \(!onBayOrEther\(px, py\) \|\| maps\.getClimateIndex\(px, py\) !== CLIMATES\.Ocean\) return false;\n\s*if \(inEther\(px, py\) && !navalRaidersOn\(\)\) return false;[^\n]*\n\s*for \(let dy = -1; dy <= 1; dy\+\+\) for \(let dx = -1; dx <= 1; dx\+\+\) if \(!tvWater\(px \+ dx, py \+ dy\)\) return false;/, 'the open sea: the ocean\'s, every pixel about it water');
+  // PIN MOVED (WW3, bible/03-World/World-Wide.md): the sea's ground is the world's (scenes/naval/worldLanes.js onWorldSea) - the Bay's and the box's as
+  // they were, and the sea past the Bay where its land stands
+  assert.match(w, /if \(!onWorldSea\(px, py, tamrielLand\) \|\| maps\.getClimateIndex\(px, py\) !== CLIMATES\.Ocean\) return false;[^\n]*\n\s*if \(inEther\(px, py\) && !navalRaidersOn\(\)\) return false;[^\n]*\n\s*for \(let dy = -1; dy <= 1; dy\+\+\) for \(let dx = -1; dx <= 1; dx\+\+\) if \(!tvWater\(px \+ dx, py \+ dy\)\) return false;/, 'the open sea: the ocean\'s, every pixel about it water');
   assert.match(w, /const raidNowMs = \(\) => Date\.now\(\) \+ _sharedOffsetMs;/);
   assert.match(w, /const ms = raidNowMs\(\), life = Math\.floor\(ms \/ RAIDER_LIFE_MS\);\n\s*if \(life !== tvRaid\.life\) \{\n\s*tvRaid\.life = life; for \(const id of tvRaid\.spent\) if \(!tvRaid\.chase\.has\(id\)\) tvRaid\.spent\.delete\(id\);[^\n]*\n[\s\S]{0,500}?\n\s*\}\n\s*tvRaid\.list = raidersNear\(\{ at: playerTravelPixel\(\), ms, open: tvRaidOpen, sea: tvRaidSea \}\);/, 'AUDIT OWS A3: a new life forgets the last life\'s spent sails (a chase still running kept)');
   // PIN MOVED (AUDIT OW5 R1): a window or a death HOLDS the chase above the gate - it read as ashore (test/player/eyeOfTheBeholder/ow5_audit.test.js
@@ -273,7 +276,7 @@ const seaHost = (over = {}) => {
     worldTimeScale: () => 1, travelView: { active: true }, feet: { x: 500.5 * NATIVE_PIXEL, z: 250.5 * NATIVE_PIXEL },
     state: { worldCoords: () => d.feet, terrainDistance: 3 }, player: { pos: [0, 0, 0] }, RAID_NATIVE_PIXEL: NATIVE_PIXEL, raiderSight, isNight: () => false,
     minuteNow: () => 720, list: [], travelViewRaiders: () => d.list, raiderChaseStep: chaseStep, RAIDER_CONTACT_M, RAIDER_CONTACT_PLAY_M,
-    pixelOfNative, onBayOrEther, inEther, tvWater: () => true, maps: { getClimateIndex: () => 'Ocean' }, CLIMATES: { Ocean: 'Ocean' },   // ETHER-OW: the ground law the host reads
+    pixelOfNative, onBayOrEther, onWorldSea, tamrielLand: false, inEther, tvWater: () => true, maps: { getClimateIndex: () => 'Ocean' }, CLIMATES: { Ocean: 'Ocean' },   // ETHER-OW: the ground law the host reads
     sailing: true, csaRuntime: { isSailing: () => d.sailing, StopSailing: () => { order.push('stop'); d.sailing = false; } }, csaCall: (f) => f(),
     playerEntity: { activeEffects: [] }, isBoatEffectBundle: (n) => n === "I'm On A Boat",
     refusal: null, warmAshesRaidRefusal: () => d.refusal, warmAshesRaidAtSea: () => { order.push('raid'); return 'raid'; },
@@ -374,6 +377,11 @@ test('AUDIT OW5b S5 host run: THE RAIDERS\' SEA IS ON THE MAP - never born a pix
   assert.equal(h.tvRaidSea(1000 * PX + 1, 10 * PX), false);
   assert.equal(h.tvRaidSea(10 * PX, 500 * PX + 1), false);
   assert.equal(h.tvRaidSea(10.5 * PX, 10.5 * PX), true, 'on the map: the water\'s byte');
+  // WW3: where the land past the Bay stands, its sea is the raiders' too - its climate and its water the composed
+  // continent's; off the world's grid nothing
+  const w = seaHost({ tamrielLand: true });
+  assert.deepEqual([w.tvRaidOpen(-1, 10), w.tvRaidOpen(10, 500), w.tvRaidOpen(-9000, 10)], [true, true, false]);
+  assert.deepEqual([w.tvRaidSea(-100, 10 * PX), w.tvRaidSea(1000 * PX + 1, 10 * PX), w.tvRaidSea(-8193 * PX, 10 * PX)], [true, true, false]);
 });
 
 test('AUDIT OW5b S4 law: A RAIDER\'S LEG IS CHOSEN BY THE WHOLE LEG - through an archipelago, sampled every quarter second of its life, a raider never moves faster than it sails and is never over land', () => {

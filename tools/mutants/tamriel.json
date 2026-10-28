@@ -204,8 +204,8 @@
   {
     "name": "TAMRIEL1-the-hover-names-the-bay-too",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (inBay(mx, my)) return null;\n  if (ink) {",
-    "new": "if (ink) {",
+    "old": "  if (inBay(mx, my)) return null;\n  const [px, py] = bayToPicture(mx, my);\n  const key = provinceKeyAt(px, py);\n  if (key) return { on: 'land'",
+    "new": "  const [px, py] = bayToPicture(mx, my);\n  const key = provinceKeyAt(px, py);\n  if (key) return { on: 'land'",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "TAMRIEL1-hover-reach-in-map-pixels",
     "file": "src/ui/tamrielInk.js",
-    "old": "const reach = CITY_HIT_PX / view.scale;",
-    "new": "const reach = CITY_HIT_PX;",
+    "old": "  const reach = CITY_HIT_PX / view.scale;\n  if (!ink || farInBay(mx, my, reach)) return null;",
+    "new": "  const reach = CITY_HIT_PX;\n  if (!ink || farInBay(mx, my, reach)) return null;",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "TAMRIEL1-one-model-a-call",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (!ink || ink.version !== v) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
-    "new": "ink = buildTamrielInk({ bayCoast: key });",
+    "old": "if (stale(ink)) { ink = { ...buildTamrielInk({ bayCoast: key }), bayCapitals: bayCapitals(bayModel) }; _inks.set(key, ink); }",
+    "new": "ink = { ...buildTamrielInk({ bayCoast: key }), bayCapitals: bayCapitals(bayModel) };",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -333,10 +333,11 @@
   {
     "name": "TAMRIEL1-window-hover-silent-beyond-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "return place ? { label: place, cursor: '' } : null;",
+    "old": "return { label: past.label, cursor: (this.teleportationTravel ? past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py)) : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : '', ...(tip ? { tip } : {}) };",
     "new": "return null;",
     "tests": [
       "test/ui/heldmap.test.js"
-    ]
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
   }
 ]
