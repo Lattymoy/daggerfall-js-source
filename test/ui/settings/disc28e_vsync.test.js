@@ -223,7 +223,7 @@ test('FPS-VSYNC: the pacer stands in front of the page\'s rAF only where the she
   // ...told by the shell what THIS launch runs with, not what the setting says now (the settings screen's "next start").
   const main = read('app/main.cjs');
   const from = main.indexOf("\nif (process.env.DAGGER_USER_DATA) app.setPath('userData'"), to = main.indexOf('\napp.whenReady()');
-  codeHasOnce(main.slice(from, to), /\nconst FRAME_SWITCHES = frameRateSwitches\(app\.getPath\('userData'\)\);\nfor \(const s of FRAME_SWITCHES\) app\.commandLine\.appendSwitch\(s\);/);
+  codeHasOnce(main.slice(from, to), /\nconst FRAME_SWITCHES = holdsVSync\(BACKEND_LAUNCH\) \? \[\] : frameRateSwitches\(app\.getPath\('userData'\)\);\nfor \(const s of FRAME_SWITCHES\) app\.commandLine\.appendSwitch\(s\);/);
   codeHasOnce(main.slice(from), /ipcMain\.on\('dagger:frames-lifted', \(e\) => \{ e\.returnValue = FRAME_SWITCHES\.length > 0; \}\);/);
   codeHasOnce(read('app/preload.cjs'), /framesLifted: ipcRenderer\.sendSync\('dagger:frames-lifted'\) === true,/);
   const boot = read('src/main.js');

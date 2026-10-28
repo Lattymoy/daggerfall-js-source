@@ -2610,8 +2610,8 @@ function prefRow(key, name, note, { onChange = null, home = false } = {}) {
 // honesty, once the thing has a record elsewhere (About, the Ledger).
 
 /** A choice row: the button names the CURRENT tier and a click steps
- *  to the next, wrapping (PERF1). */
-function choiceRow(key, name, note, tiers, { home = false, read = null, write = null } = {}) {
+ *  to the next, wrapping (PERF1). `tier` is its dot: 'restart' for a key the shell reads at launch (GPU-BACKEND). */
+function choiceRow(key, name, note, tiers, { home = false, read = null, write = null, tier = 'live' } = {}) {
   if (!home) { const moved = featureForControl('prefs', key); if (moved) return movedRow(moved); }   // FT2
   // FT2: a condensed row reads the lane's live value and writes both stores
   const cur = String(read ? read() : getPref(key));
@@ -2628,7 +2628,7 @@ function choiceRow(key, name, note, tiers, { home = false, read = null, write = 
   const b = el('button', 'act rowact', tiers[at][1]);
   b.onclick = step;
   if (onlineForcedPref(key) !== undefined) { lockOnline(b, main); b.textContent = t('menu.online.lockedTier', '{tier} (online)', { tier: tiers[at][1] }); }   // OL1: the outdoors row reads the lane's forced answer and names its tier under the lock
-  ctl.append(b, el('span', 'tier live'));
+  ctl.append(b, el('span', `tier ${tier}`));
   row.append(ctl);
   return row;
 }
@@ -3110,11 +3110,24 @@ function portRowsInterface({ pause = false } = {}) {
     row.append(ctl);
     out.push(row);
   }
+  out.push(graphicsBackendRow());   // GPU-BACKEND: the app on Windows only
   out.push(prefRow('showFps', t('menu.hud.fps', 'FPS counter'),
     t('menu.hud.fpsNote', 'Frame rate in the top-right corner.')));
   if (!pause) out.push(prefRow('skipStartVideo', skipStartVideoName(), skipStartVideoNote()));   // UXB1-A: read at launch, so the front door's alone - as the skin's
   out.push(...spireAccessRows());   // EG-G1: Settings > Accessibility lists them (ui/settings/settingsMap.js)
   return out.filter(Boolean);   // FT13
+}
+
+/** GPU-BACKEND (2026-10-26): the desktop app's graphics backend on Windows, read by the shell at its next launch
+ *  (app/lib/graphicsBackend.cjs, which falls back to Direct3D 11 by itself when Vulkan does not start). A browser
+ *  chooses its own backend, so the row is drawn in the app on Windows only. */
+function graphicsBackendRow() {
+  if (globalThis.daggerShell?.platform !== 'win32') return null;
+  const row = choiceRow('graphicsBackend', t('menu.video.backend', 'Graphics backend'),
+    `${t('menu.video.backendNote', 'Vulkan prepares the graphics faster at the first start after an update, but runs a little slower in play. Wait For Screen Refresh stays on with it. If it cannot start, the app goes back to Direct3D 11.')} ${TIER_TEXT.restart}`,
+    [['default', t('menu.video.backendDefault', 'Direct3D 11')], ['vulkan', t('menu.video.backendVulkan', 'Vulkan')]], { tier: 'restart' });
+  row.dataset.opt = 'graphicsBackend'; row.dataset.pref = 'graphicsBackend';   // ORG2
+  return row;
 }
 
 /** EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 25.7): THE SPIRE'S ACCESSIBILITY ROWS (ui/eliteGates/egAccess.js) - reduced
