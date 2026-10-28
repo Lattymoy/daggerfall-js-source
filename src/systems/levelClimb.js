@@ -4,7 +4,7 @@
 // the six-skill top (800) is shared out, so every start reaches 45 on its last point:
 //     level = floor((28 + 647 * climbed / (800 - start)) / 15)        647 = 45 x 15 - 28
 // A DEPARTURE from FormulaHelper.CalculatePlayerLevel. levelCap.js is the cap's leaf and offline's law; this reads it.
-// onlineLevelConvert reads every realm character's level again at its join - the one place a level comes down.
+// onlineLevelConvert reads every realm character's level again at its join and sets it to the level its skills earn.
 
 import { EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from './skillSoftcap.js';
 import { PRIMARY_SKILL_MIN, MAJOR_SKILL_MIN, MINOR_SKILL_MIN, BONUS_POOL_PER_SKILL_GROUP } from './chargen.js';
@@ -117,6 +117,14 @@ export function onlineLevelConvert(snap) {
     const floor = evenHpFloor({ career: snap.career, level: earned }, snap.stats?.endurance ?? NaN);
     if (floor > 0 && Number.isFinite(snap.maxHealth) && snap.maxHealth > floor) snap.maxHealth = floor;
     if (Number.isFinite(snap.health) && Number.isFinite(snap.maxHealth) && snap.health > snap.maxHealth) snap.health = snap.maxHealth;
+    moved = true;
+  } else if (level < earned) {   // LEVEL-OWED (mob: "just readjust these players"): a level the skills earned is given at the join
+    snap.level = earned;
+    snap.readyToLevelUp = false;
+    snap.pendingLevel = null;
+    snap.pendingBonusPool = null;
+    const floor = evenHpFloor({ career: snap.career, level: earned }, snap.stats?.endurance ?? NaN);
+    if (floor > 0 && Number.isFinite(snap.maxHealth) && snap.maxHealth < floor) snap.maxHealth = floor;
     moved = true;
   }
   return moved;

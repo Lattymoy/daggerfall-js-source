@@ -413,5 +413,6 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
   entity.readyToLevelUp = false;
   entity.pendingLevel = null;
   entity.pendingBonusPool = null;   // the level is spent, so its pool is not pending either
+  if (entity._online === true) checkForLevelUp(entity);   // LEVEL-OWED: online the next owed level is offered now, not a rest later
   return true;
 }

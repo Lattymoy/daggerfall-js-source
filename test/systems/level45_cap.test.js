@@ -8,7 +8,7 @@ import {
   ONLINE_LEVEL_CAP, LEVEL_SUM_TOP, ROLLED_START_MIN, ROLLED_START_AVERAGE,
   onlineLevelFor, onlineLevelFraction, onlineLevelConvert, onlineLevelPoints, onlineLevelRawPoints, RAW_PER_POINT_PAST,
 } from '../../src/systems/levelClimb.js';
-import { calculatePlayerLevel, checkForLevelUp } from '../../src/systems/advancement.js';
+import { calculatePlayerLevel, checkForLevelUp, applyLevelUp } from '../../src/systems/advancement.js';
 import { evenHpFloor } from '../../src/systems/levelEven.js';
 import { LEVEL_CAP } from '../../src/systems/levelCap.js';
 import { crossLeveling } from '../../src/systems/realmCustoms.js';
@@ -114,15 +114,34 @@ test('LEVEL-45: the conversion - a level 113 with every counted skill maxed come
   assert.equal(mid.level, onlineLevelFor(150, 500));
 });
 
-test('LEVEL-45: the conversion never gives a level - one earned and not taken stays owed for the level-up screen, its health untouched', () => {
+test('LEVEL-OWED: the conversion gives the level the skills earn - health raised to the even floor there, never lowered (mob: "just readjust these players")', () => {
+  // PIN MOVED: LEVEL-OWED (2026-10-28, mob) - the conversion left an earned level owed; a held level waited on a rest
+  const earned = onlineLevelFor(150, 500);
   const owed = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
-  assert.equal(onlineLevelConvert(owed), false);
-  assert.equal(owed.level, 10);
-  assert.equal(owed.readyToLevelUp, true);
-  assert.equal(owed.maxHealth, 400);
-  const lucky = save({ level: onlineLevelFor(150, 500), start: 150, current: 500, maxHealth: 9_000 });
-  onlineLevelConvert(lucky);
+  assert.equal(onlineLevelConvert(owed), true);
+  assert.equal(owed.level, earned);
+  assert.equal(owed.readyToLevelUp, false, 'nothing left owed');
+  assert.equal(owed.pendingLevel, null);
+  assert.equal(owed.maxHealth, evenHpFloor({ career: owed.career, level: earned }, 100), 'the even floor at the level given');
+  const strong = save({ level: 10, start: 150, current: 500, maxHealth: 9_000 });
+  onlineLevelConvert(strong);
+  assert.equal(strong.maxHealth, 9_000, 'health above the floor kept');
+  const lucky = save({ level: earned, start: 150, current: 500, maxHealth: 9_000 });
+  assert.equal(onlineLevelConvert(lucky), false, 'a level that stands is left alone');
   assert.equal(lucky.maxHealth, 9_000, 'a level that stands keeps its rolls (LEVEL-EVEN)');
+});
+
+test('LEVEL-OWED: online a level taken offers the next one owed at once; offline Daggerfall waits for its next skill check', () => {
+  const hero = (online) => ({ _online: online, level: 40, startingLevelUpSkillSum: 154, currentLevelUpSkillSum: 800, readyToLevelUp: true, pendingLevel: 41,
+    maxHealth: 900, health: 900, career: { hitPointsPerLevel: 30 }, stats: { endurance: 100, strength: 50 } });
+  const on = hero(true);
+  assert.equal(applyLevelUp(on, () => {}, () => 0.5, 5), true);
+  assert.equal(on.level, 41);
+  assert.equal(on.readyToLevelUp, true, 'online: 42 offered now');
+  assert.equal(on.pendingLevel, 42);
+  const off = hero(false);
+  applyLevelUp(off, () => {}, () => 0.5, 5);
+  assert.equal(off.readyToLevelUp, false, 'offline: DFU\'s RaiseSkills re-offers on its next pass');
 });
 
 test('LEVEL-45: the conversion keeps the sum the level stands on (SWAP-CYCLE) and rides LEVEL-ONLINE\'s switch at every join', () => {
@@ -199,8 +218,7 @@ test('LEVEL-TOP: a character maxed under five masteries - five at 200, the sixth
   }
   const lowered = save({ level: 42, start: ROLLED_START_AVERAGE, current: 800 });
   onlineLevelConvert(lowered);
-  assert.equal(lowered.level, 42, 'the conversion never raises a level');
-  assert.equal(checkForLevelUp({ ...lowered, _online: true }), true, 'the three lost are owed again, for the level-up window to give');
+  assert.equal(lowered.level, 45, 'LEVEL-OWED: the three lost are given back at the join');   // PIN MOVED: LEVEL-OWED, stayed 42 and owed
 });
 
 test('LEVEL-RAW: the bar reads the skill sheet\'s own points - 1 a counted point to 100, 2.5 past it, so ~38 a level at the masteries (mob: "show raw point to each level")', async () => {
