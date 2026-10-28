@@ -224,7 +224,7 @@ export function sdNameOf(s, city = '') {
 // player instance"): owner `p<n>`, a shared Hour of SD_PUB_SEATS, the next opened when it is full or won.
 const SD_ROOM = /^sd:([1-9]\d{0,8})\.([0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
 const SD_OWNER = /^(?:[0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
-export const SD_PUB_SEATS = 8;
+export const SD_PUB_SEATS = 40;   // SD-SOLO-40 (2026-10-28, the owner: "lets up the amount in a non party to 40")
 export const SD_PUB_MAX = 64;
 /** SD-SOLO: the shared Hour `n`'s owner, or null. @param {number} n */
 export const sdPubOwner = (n) => (Number.isSafeInteger(n) && n >= 0 && n < SD_PUB_MAX ? `p${n}` : null);
