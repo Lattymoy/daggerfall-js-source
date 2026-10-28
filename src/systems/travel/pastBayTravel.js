@@ -29,7 +29,7 @@ export function pastBayJourney(_from, _to, _mask, zone) {
  * (scenes/portalStoneHost.js, which steps into teleportTo) and Recall's - so the road TESA-NO-FAST names past the Bay
  * ("reached through a Portal Stone") was refused as fast travel, after the stone was spent and the screen blacked. A
  * teleport's verdict past the Bay is the zone's alone: its into-and-out-of law is PVPDUNGEONS' (world.js
- * wildTeleportRefused), the Veil's is the Veil's (veilRefused). The journeys keep pastBayJourney's.
+ * wildTeleportRefused), the Veil's is the Veil's (veilRefused). The journeys keep the zone's journey law (TRAVEL-EVERYWHERE).
  * @param {{ x: number, y: number }|null} _from @param {{ x: number, y: number }|null} _to @param {any} _mask
  * @param {{ ok: boolean, text?: string, fee?: number }} _zone
  * @returns {{ ok: boolean, text?: string, fee?: number }}

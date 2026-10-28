@@ -274,7 +274,7 @@ Bay jumped; 1800,600 said the refusal, jumped nowhere and left the screen at ful
 zone's own verdict (its into-and-out-of law stays PVPDUNGEONS', `wildTeleportRefused`; the Veil's stays the Veil's), and
 `wildTravelGate` takes the law as its third argument - a journey's (`pastBayJourney`) unless the caller is a teleport.
 teleportTo and Recall hand `teleportJourney`; fast travel, a party's journey to its leader, a rider's in a wagon and the
-Overworld keep TESA-NO-FAST's refusal unchanged. The stone's host asks ONE gate (`portalStoneHost.js` teleportRefused -
+Overworld pass since TRAVEL-EVERYWHERE. The stone's host asks ONE gate (`portalStoneHost.js` teleportRefused -
 teleportTo's own three, in its order) where a refusal still costs nothing: at the pick, before a stone is spent, and at
 the step, BEFORE the black - said, and the screen never blacked. teleportTo answers whether it arrived, and an arrival
 that does not come (the world moved on between the step and the teleport) lifts the black. A stone's portal to a city past

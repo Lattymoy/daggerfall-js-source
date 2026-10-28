@@ -64,28 +64,19 @@
     ]
   },
   {
-    "name": "TE-the-capital-lost",
-    "file": "src/ui/heldMap.js",
-    "old": "capital: end !== past && !!end.capital }",
-    "new": "capital: false }",
-    "tests": [
-      "test/ui/travel_everywhere.test.js"
-    ]
-  },
-  {
-    "name": "TE-the-marks-type-unread",
-    "file": "src/ui/heldMap.js",
-    "old": "locationType: end === past ? past.type : tamrielCityType(end),",
-    "new": "locationType: tamrielCityType(end),",
-    "tests": [
-      "test/ui/travel_everywhere.test.js"
-    ]
-  },
-  {
     "name": "TE-the-bill-walked",
     "file": "src/ui/heldMap.js",
     "old": "    if (s && ((sel.coords && !sel.place) || isPlayerControlledTravel(s, st.opts))) {",
     "new": "    if (s && (sel.coords || isPlayerControlledTravel(s, st.opts))) {",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-bill-never-walked",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (s && ((sel.coords && !sel.place) || isPlayerControlledTravel(s, st.opts))) {",
+    "new": "    if (s && sel.coords && !sel.place) {",
     "tests": [
       "test/ui/travel_everywhere.test.js"
     ]
@@ -96,7 +87,8 @@
     "old": "      if (pick.place) this._openPanel('travel');",
     "new": "",
     "tests": [
-      "test/systems/starts/start3_pastbay_marks.test.js"
+      "test/systems/starts/start3_pastbay_marks.test.js",
+      "test/ui/travel_everywhere.test.js"
     ]
   },
   {
@@ -111,7 +103,7 @@
   {
     "name": "TE-the-mark-no-portal",
     "file": "src/ui/heldMap.js",
-    "old": "const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) ? past : null;",
+    "old": "const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) && this._pastBayTownAt(past.pixel.x, past.pixel.y) ? past : null;",
     "new": "const mark = null;",
     "tests": [
       "test/ui/travel_everywhere.test.js",
@@ -119,30 +111,131 @@
     ]
   },
   {
-    "name": "TE-a-named-place-bare",
+    "name": "TE-the-unknown-mark-a-portal",
     "file": "src/ui/heldMap.js",
-    "old": "town = this._pastBayTownAt(px, py) ?? PLACE_UNKNOWN) {",
-    "new": "town = this._pastBayTownAt(px, py)) {",
+    "old": "const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) && this._pastBayTownAt(past.pixel.x, past.pixel.y) ? past : null;",
+    "new": "const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) ? past : null;",
     "tests": [
       "test/ui/travel_everywhere.test.js",
-      "test/systems/starts/start3_pastbay_marks.test.js",
-      "test/systems/starts/auditstarts.test.js"
+      "test/tesa2_arena.test.js"
     ]
   },
   {
-    "name": "TE-the-inked-city-unread",
+    "name": "TE-the-law-unasked",
     "file": "src/ui/heldMap.js",
-    "old": "    if (city) return { locationType: tamrielCityType(city), capital: !!city.capital };",
+    "old": "const s = (this.deps.pastBayPlace ?? pastBayPlaceSummary)(px, py, named);",
+    "new": "const s = { locationType: null };",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-host-law-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "const s = (this.deps.pastBayPlace ?? pastBayPlaceSummary)(px, py, named);",
+    "new": "const s = (this.deps.pastBayPlace ?? (() => null))(px, py, named);",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-capital-lost",
+    "file": "src/ui/heldMap.js",
+    "old": "capital: !!capitalOnPixel(px, py), named }",
+    "new": "capital: false, named }",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-type-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "locationType: s.locationType ?? null,",
+    "new": "locationType: null,",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-quest-unnamed",
+    "file": "src/ui/heldMap.js",
+    "old": "this._pastBayPick(q.px, q.py, q.placeName, this._pastBayTownAt(q.px, q.py, true));",
+    "new": "this._pastBayPick(q.px, q.py, q.placeName);",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js",
+      "test/systems/starts/auditstarts.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-goto-unnamed",
+    "file": "src/ui/heldMap.js",
+    "old": "this._pastBayTownAt(site.worldPixel.x, site.worldPixel.y, true));",
+    "new": "this._pastBayTownAt(site.worldPixel.x, site.worldPixel.y));",
+    "tests": [
+      "test/ui/travel_everywhere.test.js",
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-pick-unnamed",
+    "file": "src/ui/heldMap.js",
+    "old": ", ...(selected.town?.named ? { named: true } : {}) };",
+    "new": " };",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-an-unknown-place-picked",
+    "file": "src/ui/heldMap.js",
+    "old": "    return pick && (pick.place || pick.walk) ? pick : null;",
+    "new": "    return pick;",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-heres-capital-unread",
+    "file": "src/systems/immersiveTravel.js",
+    "old": " || (Number.isInteger(here.x) && Number.isInteger(here.y) && !inBay(here.x, here.y) && !!capitalOnPixel(here.x, here.y));",
+    "new": ";",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-dests-capital-unread",
+    "file": "src/systems/immersiveTravel.js",
+    "old": "(dest.capital ?? isCapital(dest.mapId))",
+    "new": "isCapital(dest.mapId)",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-law-unpublished",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "  setPastBayPlaceLaw(tvPlaceSummary);",
     "new": "",
     "tests": [
       "test/ui/travel_everywhere.test.js"
     ]
   },
   {
-    "name": "TE-the-laid-place-unread",
-    "file": "src/ui/heldMap.js",
-    "old": "    return p ? { locationType: p.type, capital: false } : null;",
-    "new": "    return null;",
+    "name": "TE-the-route-unnamed",
+    "file": "src/scenes/world.js",
+    "old": "        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.named);",
+    "new": "        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y);",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-travel-options-by-the-pick",
+    "file": "src/scenes/world.js",
+    "old": "} : tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.named) ?? pick, !!opts?.speedCautious, estimateMinutes);",
+    "new": "} : pick, !!opts?.speedCautious, estimateMinutes);",
     "tests": [
       "test/ui/travel_everywhere.test.js"
     ]

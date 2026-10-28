@@ -140,12 +140,13 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, tamrielCityType, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
 import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands (AUDIT TESA II M9: the tick's word)
-import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';
+import { pastBayPlacesVersion, pastBayPlaceSummary } from '../world/pastBayPlaces.js';   // TRAVEL-EVERYWHERE: the world's law of a place a journey goes to
+import { capitalOnPixel } from '../world/tamrielCapitals.js';
 import { portalLandAt } from '../systems/travel/pastBayTravel.js';   // PORTAL-ANYWHERE: the land a Portal Stone's portal reaches past the Bay   // TESA15: and the places the roads' regions laid
 import { createTamrielTiles } from './tamrielTiles.js';   // TESA15: the land past the Bay's paint, kept a tile at a time
 import { pageHas } from '../systems/pageQuery.js';   // MAP-WHOLE: the load probe's door behind the shot gate
@@ -484,9 +485,6 @@ export function heldStageRect(vw, vh) {
  *  why that margin is smaller than it first looks. */
 export const CUFF_BAND = 0.827;   // MAP-FIELD8: the fourth painting's silhouette columns end by 0.8158 and its cut cuffs begin at 0.8379 (tools/heldMapArtProbe.mjs) - a 24-row gap, the band in its middle with eleven rows either side
 
-/** TRAVEL-EVERYWHERE: a named place past the Bay of no type the sheet can read (a quest's lair): travelled to on the
- *  player's map as any place; a carriage driver takes no such type. */
-const PLACE_UNKNOWN = Object.freeze({ locationType: null, capital: false });
 
 // ── THE CLOCKS (skin) ────────────────────────────────────────────
 /** MAP-FIELD7 (2026-09-19, Mac: "when you open or close your map, I
@@ -2737,7 +2735,7 @@ export class HeldMapWindow {
    *  shows (the player pointed at the quest's diamond, which every band draws), else - its kind hidden by the key - the
    *  place's own record, the journal goto's way (_consumeGotoPlace). Null for a place the player has not found. */
   _questPlace(q) {
-    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName);   // START3: past the Bay, the quest's own place
+    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName, this._pastBayTownAt(q.px, q.py, true));   // START3: past the Bay, the quest's own place - TRAVEL-EVERYWHERE: named, so known
     const hit = (this._ensureWorldModel()?.marks ?? []).find((k) => Math.floor(k.x) === q.px && Math.floor(k.y) === q.py);
     if (hit) return hit;
     const summary = locationSummaryAt(this.deps.mapDict, q.px, q.py);
@@ -3099,7 +3097,7 @@ export class HeldMapWindow {
   /** The classic wrapper's own pick shape, verbatim - and for a bare
    *  pixel (MAP2), the coordinates popup's own {pixel, name}. */
   _pickOf(selected) {
-    if (selected.coords) return { pixel: { x: Math.floor(selected.x), y: Math.floor(selected.y) }, name: selected.name };
+    if (selected.coords) return { pixel: { x: Math.floor(selected.x), y: Math.floor(selected.y) }, name: selected.name, ...(selected.town?.named ? { named: true } : {}) };   // TRAVEL-EVERYWHERE: a quest's place past the Bay, known by its naming
     const { summary } = selected;
     const pos = summaryPixel(summary);   // WW-C2: a zone hall's own pixel past the Bay
     return {
@@ -3444,7 +3442,7 @@ export class HeldMapWindow {
     const site = this._gotoPlace?.siteDetails ?? this._gotoPlace ?? {};
     // START3: a site past the Bay by its own pixel (systems/quest/place.js siteWorldPixel) - MAPS.BSA names none there
     if (site.worldPixel) {
-      const pick = this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName);
+      const pick = this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName, this._pastBayTownAt(site.worldPixel.x, site.worldPixel.y, true));
       if (!pick) return;
       this._focusOn(pick.x, pick.y);
       this._select(pick);
@@ -3467,23 +3465,32 @@ export class HeldMapWindow {
   /** START3: a pixel past the Bay picked: its name, no record of MAPS.BSA's under it (`pastBay`). TRAVEL-EVERYWHERE: a
    *  place there (`town`) is travelled to as a Bay place is (`place`) and is a teleport's end (`portal`); bare land is
    *  OW-PAST-BAY's walk (`walk`), and a Portal Stone's end (PORTAL-ANYWHERE). Null while the sheet shows no land past the Bay. */
-  _pastBayPick(px, py, name, town = this._pastBayTownAt(px, py) ?? PLACE_UNKNOWN) {
+  _pastBayPick(px, py, name, town = this._pastBayTownAt(px, py)) {
     if (!this._tamriel || !Number.isInteger(px) || !Number.isInteger(py)) return null;
     const portal = !!town || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));   // PORTAL-ANYWHERE: on the stone's map any land - TRAVEL-EVERYWHERE: any place
     const place = !!town && this._travelsPastBay();   // TRAVEL-EVERYWHERE: a place, travelled to as a Bay place is
     return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true, pastBay: true, portal, walk: !place && this._walksPastBay(), place, town };
   }
-  /** TRAVEL-EVERYWHERE: the place on a pixel past the Bay - a city the sheet inks, else a place the roads' regions laid -
-   *  as `{ locationType, capital }`, or null. A named place it cannot read (a quest's lair) is PLACE_UNKNOWN. */
-  _pastBayTownAt(px, py) {
-    const city = tamrielInkFor(this._model)?.cities?.find((c) => c.pixel?.x === px && c.pixel?.y === py);
-    if (city) return { locationType: tamrielCityType(city), capital: !!city.capital };
-    const p = this.deps.tamrielPlacesIn?.(px, py, px + 1, py + 1)?.[0];
-    return p ? { locationType: p.type, capital: false } : null;
+  /** TRAVEL-EVERYWHERE: the place on a pixel past the Bay a journey goes to, by the world's one law (world/pastBayPlaces.js
+   *  pastBayPlaceSummary - known by its kind, found, or `named` by a quest, as the Bay's map asks discovery) - its type,
+   *  whether it is a capital, and `named` for the host's own ask - or null. */
+  _pastBayTownAt(px, py, named = false) {
+    const s = (this.deps.pastBayPlace ?? pastBayPlaceSummary)(px, py, named);
+    return s ? { locationType: s.locationType ?? null, capital: !!capitalOnPixel(px, py), named } : null;
   }
 
   /** OW-PAST-BAY: does the travel map walk to bare land past the Bay? Travel Options' coordinates journey - the
    *  Overworld's on the enhanced interface (scenes/world.js beginAcceleratedTravel). */
+  /** What a press past the Bay picks on the travel map, or null - a city's or a mark's place (TRAVEL-EVERYWHERE: a place
+   *  where the world knows it, else OW-PAST-BAY's walk to it), or bare land where the mod allows a bare pixel. */
+  _pastBayPressPick(mx, my) {
+    const px = Math.floor(mx), py = Math.floor(my);
+    const past = this._pastBayHover(mx, my);
+    const end = past?.city?.pixel ? past.city : past?.on === 'mark' ? past : null;
+    const pick = end && !inBay(end.pixel.x, end.pixel.y) ? this._pastBayPick(end.pixel.x, end.pixel.y, end.name)
+      : past?.on === 'land' && !inBay(px, py) && this._coordsAllowedHere() ? this._pastBayPick(px, py, toFormat(TO_TEXT.MsgTargetCoords, px, py), null) : null;
+    return pick && (pick.place || pick.walk) ? pick : null;
+  }
   _walksPastBay() { return !!this._tamriel && !this._zoneMap && !this.teleportationTravel && !this._it && !!this._to; }
   /** TRAVEL-EVERYWHERE (2026-10-28, the owner: "Like how it works in the bay should be how it works everywhere"): does a
    *  place past the Bay travel as a Bay place does? The player's own map and a carriage driver's - a captain's docks are
@@ -4098,7 +4105,7 @@ export class HeldMapWindow {
       // WW7-6: a seat past the Bay answers with its card, as the Bay's (SEAT-TIP)
       const seat = past.city?.mapId != null ? this.deps.seatAt?.({ mapId: past.city.mapId }) ?? null : null;
       const tip = seat ? readTip(seatTipOf(seat), { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : ore;
-      return { label: past.label, cursor: (this.teleportationTravel ? past.city?.pixel || past.on === 'mark' || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() && past.on !== 'sea') || (this._travelsPastBay() && (past.on === 'city' || past.on === 'mark'))) ? 'pointer' : '', ...(tip ? { tip } : {}) };   // PORTAL-ANYWHERE: and on the stone's map its land   // TESA2: a place the stone's portal reaches points; OW-PAST-BAY: and on the travel map where a press walks
+      return { label: past.label, cursor: (this.teleportationTravel ? past.city?.pixel || (past.on === 'mark' && this._pastBayTownAt(past.pixel.x, past.pixel.y)) || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() || this._travelsPastBay()) && this._pastBayPressPick(mx, my)) ? 'pointer' : '', ...(tip ? { tip } : {}) };   // PORTAL-ANYWHERE: and on the stone's map its land   // TESA2: a place the stone's portal reaches points; OW-PAST-BAY: and on the travel map where a press walks
     }
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing
@@ -4154,7 +4161,7 @@ export class HeldMapWindow {
       // PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner: "Anywhere on land"): on the Portal Stone's map
       // (`portalLandPastBay`) bare land past the Bay is a portal's end too, named by its province - the guild's keeps TESA13's
       const past = this._pastBayHover(mx, my);   // TRAVEL-EVERYWHERE: a mark's place too, as the Bay's teleport reaches any place
-      const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) ? past : null;
+      const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) && this._pastBayTownAt(past.pixel.x, past.pixel.y) ? past : null;
       const end = this._portalCityAt(sx, sy) ?? mark ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);
       if (end) {
         this._select({ coords: true, x: end.pixel.x + 0.5, y: end.pixel.y + 0.5, colorIndex: -1, kind: 'coords', name: end.name, summary: null, mapId: null, arena: true });
@@ -4167,11 +4174,7 @@ export class HeldMapWindow {
     if (this._walksPastBay() || this._travelsPastBay()) {
       const [mx, my] = toMap(this._view, sx, sy);
       const px = Math.floor(mx), py = Math.floor(my);
-      const past = this._pastBayHover(mx, my);
-      const end = past?.city?.pixel ? past.city : past?.on === 'mark' ? past : null;
-      const town = end ? { locationType: end === past ? past.type : tamrielCityType(end), capital: end !== past && !!end.capital } : null;
-      const pick = end && !inBay(end.pixel.x, end.pixel.y) ? this._pastBayPick(end.pixel.x, end.pixel.y, end.name, town)
-        : past?.on === 'land' && !inBay(px, py) && this._coordsAllowedHere() ? this._pastBayPick(px, py, toFormat(TO_TEXT.MsgTargetCoords, px, py), null) : null;
+      const pick = this._pastBayPressPick(mx, my);
       if (pick) { this._select(pick); this._openPanel('travel'); return; }
     }
     // WILD2 (the owner: "when clicking on this zone it opens its own ... map"): a press on the open zone's bare ground

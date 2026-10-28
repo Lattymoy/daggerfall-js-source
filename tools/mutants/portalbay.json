@@ -131,12 +131,12 @@
   {
     "name": "PORTALANY-the-hover-points-not",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || past.on === 'mark' || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() && past.on !== 'sea') || (this._travelsPastBay() && (past.on === 'city' || past.on === 'mark'))) ? 'pointer' : ''",
-    "new": "cursor: (this.teleportationTravel ? past.city?.pixel || past.on === 'mark' : (this._walksPastBay() && past.on !== 'sea') || (this._travelsPastBay() && (past.on === 'city' || past.on === 'mark'))) ? 'pointer' : ''",
+    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || (past.on === 'mark' && this._pastBayTownAt(past.pixel.x, past.pixel.y)) || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() || this._travelsPastBay()) && this._pastBayPressPick(mx, my)) ? 'pointer' : ''",
+    "new": "cursor: (this.teleportationTravel ? past.city?.pixel || (past.on === 'mark' && this._pastBayTownAt(past.pixel.x, past.pixel.y)) : (this._walksPastBay() || this._travelsPastBay()) && this._pastBayPressPick(mx, my)) ? 'pointer' : ''",
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ],
-    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
+    "note": "AUDIT TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay where the world knows it, the press's pick one method"
   },
   {
     "name": "PORTALANY-the-quest-place-a-city-alone",

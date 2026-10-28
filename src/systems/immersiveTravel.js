@@ -28,6 +28,8 @@ import { CAPITAL_MAP_IDS, LARGE_DOCK_MAP_IDS, DOCK_PIXEL_IDS } from './immersive
 import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id masks to no Bay pixel
 import { setFlatFaceOverride } from '../characters/staticNpc.js';   // DRIVER-FACE: FLATS.CFG's dictionary, as Roleplay & Realism writes it
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { inBay } from '../world/tamriel/tamrielFrame.js';   // TRAVEL-EVERYWHERE: a capital past the Bay is no row of the table
+import { capitalOnPixel } from '../world/tamrielCapitals.js';
 
 export { CAPITAL_MAP_IDS, LARGE_DOCK_MAP_IDS, DOCK_PIXEL_IDS };
 
@@ -158,12 +160,13 @@ export const isCapital = (mapId) => CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK)
 /** CarriageMap.CreatePopUpWindow's NPC arm (IL_0886-0a49): whether the driver takes the player to the place on the
  *  map - null for a trip (ImmersiveTravelPopUp is pushed), or the refusal's key in IT_TEXT. `here` is PlayerGPS: the
  *  pixel the player stands on (CurrentMapPixel) and the current location's MapId (CurrentMapID); `dest` the map's
- *  locationSummary. TRAVEL-EVERYWHERE: a town past the Bay is no row of the capitals' table - its `capital` says. */
+ *  locationSummary. TRAVEL-EVERYWHERE: a town past the Bay is no row of the capitals' table - its `capital` says, and
+ *  where the player stands past the Bay its capital's pixels. */
 export function carriageRefusal(settings, { here, dest, politicAt }) {
   if (!isDestinationValid(dest.locationType, settings.allowed)) return 'wrongType';
   if (!settings.regionLockedCarriages) return null;
   const border = borderingRegionIndex(here.x, here.y, politicAt);
-  const fromCapital = isCapital(here.mapId ?? 0);
+  const fromCapital = isCapital(here.mapId ?? 0) || (Number.isInteger(here.x) && Number.isInteger(here.y) && !inBay(here.x, here.y) && !!capitalOnPixel(here.x, here.y));   // TRAVEL-EVERYWHERE: a capital past the Bay
   if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null;   // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word
   if (border === dest.regionIndex) return null;            // IL_0960-096c
   return fromCapital ? 'capitalOnly' : 'regionLocked';      // IL_097e-09a3

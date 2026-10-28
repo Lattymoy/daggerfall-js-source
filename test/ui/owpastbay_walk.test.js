@@ -1,8 +1,9 @@
 // OW-PAST-BAY (2026-10-28, the player: "Youre not able to click on the map outside of the bay and travel to locations" -
 // "Im talking about clicking on the map to overworld travel"; bible/03-World/Arena-Provinces.md OW-PAST-BAY): on the
 // travel map a press past the Bay is a WALK there - Travel Options' coordinates journey, the Overworld's on the enhanced
-// interface - never fast travel (TESA-NO-FAST). The teleport map keeps its portals, and a sheet without Travel Options
-// or the continent walks nowhere.
+// interface. TRAVEL-EVERYWHERE (test/ui/travel_everywhere.test.js): a place the world knows is a place's journey, so the
+// walk is bare land's and an unknown place's. The teleport map keeps its portals; a sheet without Travel Options or the
+// continent walks nowhere.
 import '../modsOff.js';
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -75,7 +76,10 @@ test('OW-PAST-BAY the press: on the travel map bare land past the Bay is a walk 
 
   const city = heldMap();
   pressAt(city, { x: PAST.x + 0.3, y: PAST.y }, { on: 'city', label: 'Solitude', city: { name: 'Solitude', pixel: { x: 1210, y: -90 } } });
-  assert.deepEqual([city._selected?.name, city._selected?.x, city._panel, city._selected?.place], ['Solitude', 1210.5, 'travel', true], 'a city: its pixel, its name, a place');
+  assert.deepEqual([city._selected?.name, city._selected?.x, city._panel, city._selected?.walk], ['Solitude', 1210.5, 'travel', true], 'a city the world does not know: a walk to its pixel, by its name');
+  city.deps.pastBayPlace = () => ({ locationType: 0 });   // the world's law knows it (a city, LOCATION_TYPES 0): TRAVEL-EVERYWHERE's place
+  pressAt(city, { x: PAST.x + 0.3, y: PAST.y }, { on: 'city', label: 'Solitude', city: { name: 'Solitude', pixel: { x: 1210, y: -90 } } });
+  assert.deepEqual([city._selected?.place, city._panel], [true, 'travel'], 'a city it knows: a place');
   // the hover's own mark answer carries the pixel the press walks to (ui/tamrielInk.js tamrielHoverAt)
   const placesIn = () => [{ x: 1190, y: -80, type: 8, name: 'Ilinalta Deep' }];
   const at = tamrielHoverAt(1190.5, -79.5, { ox: 0, oy: 0, scale: 8 }, null, { placesIn, band: 'near', filters: {} });

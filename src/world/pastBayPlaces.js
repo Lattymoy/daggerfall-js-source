@@ -36,6 +36,14 @@ export function addPastBayPlaces(places) {
     bin.v = _version;
   }
 }
+/** TRAVEL-EVERYWHERE: the world's one law of a place past the Bay a journey may go to (scenes/mapPlacesHost.js
+ *  tvPlaceSummary: known by its kind, found, or `named` by a quest), set by the host that keeps the places; the held map
+ *  asks it as the Bay's map asks discovery. Null with no host. */
+let _placeLaw = null;
+/** @param {((px: number, py: number, named?: boolean) => any) | null} law */
+export const setPastBayPlaceLaw = (law) => { _placeLaw = typeof law === 'function' ? law : null; };
+/** The summary a journey to the place on a pixel past the Bay goes by, or null. @param {number} px @param {number} py */
+export const pastBayPlaceSummary = (px, py, named = false) => _placeLaw?.(px, py, named) ?? null;
 /** Moves on every reset and add. */
 export const pastBayPlacesVersion = () => _version;
 /** The add that last moved a bin (0: it holds none). */

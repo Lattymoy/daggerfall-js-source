@@ -139,8 +139,11 @@ test('AUDIT STARTS U1/U2 the held map, PIN MOVED (TRAVEL-EVERYWHERE, TESA-NO-FAS
   setCapitalsStanding(true);
   try {
     // the travel map: picked, named, its journey offered
-    let win = heldMap();
-    const lair = win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'The Haunt of Baringon');
+    // the world's one law of a place past the Bay (scenes/mapPlacesHost.js tvPlaceSummary): the lair known by the quest's naming
+    const law = (px, py, named) => (named ? { locationType: LOCATION_TYPES.DungeonLabyrinth } : null);
+    const quest = { px: LAIR_PX.x, py: LAIR_PX.y, placeName: 'The Haunt of Baringon' };
+    let win = heldMap({ pastBayPlace: law });
+    const lair = win._questPlace(quest);
     assert.deepEqual([lair.pastBay, lair.portal, lair.place], [true, true, true], 'a lair: a place');
     win._select(lair);
     assert.equal(win._selected?.name, 'The Haunt of Baringon');
@@ -150,18 +153,18 @@ test('AUDIT STARTS U1/U2 the held map, PIN MOVED (TRAVEL-EVERYWHERE, TESA-NO-FAS
     win.dispose?.();
     // the teleport map: the lair a portal's end, bare land none on the guild's map
     const ported = [];
-    win = heldMap({ onTeleport: (p) => ported.push(p) });
+    win = heldMap({ onTeleport: (p) => ported.push(p), pastBayPlace: law });
     win.activateTeleportationTravel();
-    win._select(win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'The Haunt of Baringon'));
+    win._select(win._questPlace(quest));
     assert.equal(win._panel, 'teleport', 'its confirm opens itself');
     win._confirmTeleport(true);
     for (let i = 0; i < 200 && !win.done; i++) win.tick(0.05);
     assert.deepEqual(ported.map((p) => p.pixel), [LAIR_PX], 'and the portal goes');
     win.dispose?.();
     ported.length = 0;
-    win = heldMap({ onTeleport: (p) => ported.push(p) });
+    win = heldMap({ onTeleport: (p) => ported.push(p), pastBayPlace: law });
     win.activateTeleportationTravel();
-    const bare = win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'x', null);
+    const bare = win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'x');
     assert.equal(bare.portal, false, 'bare land: no portal\'s end on the guild\'s map');
     win._select(bare);
     assert.equal(win._panel ?? null, null, 'no confirm opens on it');
@@ -174,7 +177,7 @@ test('AUDIT STARTS U1/U2 the held map, PIN MOVED (TRAVEL-EVERYWHERE, TESA-NO-FAS
     // a city's pixel past the Bay is TESA2's portal end, as its own press picks it
     const city = tamrielInkFor(null).cities.find((c) => c.pixel);
     assert.ok(city, 'a capital the world stands');
-    win = heldMap({ onTeleport: (p) => ported.push(p) });
+    win = heldMap({ onTeleport: (p) => ported.push(p), pastBayPlace: () => ({ locationType: LOCATION_TYPES.TownCity }) });   // the world knows a city by its kind (OW-BEYOND-KNOWN)
     win.activateTeleportationTravel();
     const at = win._pastBayPick(city.pixel.x, city.pixel.y, city.name);
     assert.equal(at.portal, true, `${city.name}: a portal's end`);

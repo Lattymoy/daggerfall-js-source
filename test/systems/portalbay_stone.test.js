@@ -442,13 +442,15 @@ test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its
   // a quest's place past the Bay (START3's pick): a portal's end on both maps (TRAVEL-EVERYWHERE); bare land on the stone's alone
   const stoneMap = heldMap({ portalLandPastBay: true });
   stoneMap.activateTeleportationTravel();
-  assert.equal(stoneMap._pastBayPick(LAND[0].x, LAND[0].y, 'The Haunt').portal, true, 'the stone\'s map: the place a portal\'s end');
-  assert.equal(stoneMap._pastBayPick(LAND[0].x, LAND[0].y, 'x', null).portal, true, 'and its bare land');
-  assert.equal(stoneMap._pastBayPick(SEA.x, SEA.y, 'x', null).portal, false, 'never the sea');
-  const guildMap = heldMap({});
+  const haunt = { px: LAND[0].x, py: LAND[0].y, placeName: 'The Haunt' };
+  const law = (px, py, named) => (named ? { locationType: 4 } : null);   // the world's law: an unfound labyrinth (LOCATION_TYPES 4), named by its quest
+  assert.equal(stoneMap._questPlace(haunt).portal, true, 'the stone\'s map: the place a portal\'s end');
+  assert.equal(stoneMap._pastBayPick(LAND[0].x, LAND[0].y, 'x').portal, true, 'and its bare land');
+  assert.equal(stoneMap._pastBayPick(SEA.x, SEA.y, 'x').portal, false, 'never the sea');
+  const guildMap = heldMap({ pastBayPlace: law });
   guildMap.activateTeleportationTravel();
-  assert.equal(guildMap._pastBayPick(LAND[0].x, LAND[0].y, 'The Haunt').portal, true, 'the guild\'s: the place, as a Bay place');
-  assert.equal(guildMap._pastBayPick(LAND[0].x, LAND[0].y, 'x', null).portal, false, 'the guild\'s: no bare land');
+  assert.equal(guildMap._questPlace(haunt).portal, true, 'the guild\'s: the quest\'s place, as a Bay place');
+  assert.equal(guildMap._pastBayPick(LAND[0].x, LAND[0].y, 'x').portal, false, 'the guild\'s: no bare land');
   stoneMap.dispose?.(); guildMap.dispose?.();
   // online, the zone's land: refused at the pick, said, nothing spent
   const imperial = LAND[1];

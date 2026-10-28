@@ -88,11 +88,8 @@ export const ARENA_KIND_WORDS = Object.freeze({ 'city-state': 'city-state', town
  *  M7: the kind's location type, the Bay's own - its classic bucket is its glyph, its filter and its hue (travelMapWindow
  *  getPixelColorIndex, inkMap markKind); the map's filters hid the Bay's towns and the countryside's past it, and not these. */
 export const ARENA_KIND_TYPES = Object.freeze({ 'city-state': LOCATION_TYPES.TownCity, town: LOCATION_TYPES.TownHamlet, village: LOCATION_TYPES.TownVillage });
-/** A city's location type: a capital the city's, an authored city of no kind the hamlet's. TRAVEL-EVERYWHERE: the type a
- *  driver's map asks of it (systems/immersiveTravel.js isDestinationValid). */
-export const tamrielCityType = (c) => (c.capital ? LOCATION_TYPES.TownCity : ARENA_KIND_TYPES[/** @type {keyof typeof ARENA_KIND_TYPES} */ (c.kind)] ?? LOCATION_TYPES.TownHamlet);
-/** A city of the ink's bucket under the map's filters (-1: hidden), by its type. */
-export const tamrielCityBucket = (c, filters = {}) => getPixelColorIndex(tamrielCityType(c), filters);
+/** A city of the ink's bucket under the map's filters (-1: hidden) - an authored city of no kind the hamlet's, as it was. */
+export const tamrielCityBucket = (c, filters = {}) => getPixelColorIndex(c.capital ? LOCATION_TYPES.TownCity : ARENA_KIND_TYPES[/** @type {keyof typeof ARENA_KIND_TYPES} */ (c.kind)] ?? LOCATION_TYPES.TownHamlet, filters);
 /** The glyph each kind is drawn with - its bucket's (markKind). */
 export const ARENA_KIND_GLYPHS = Object.freeze(Object.fromEntries(Object.entries(ARENA_KIND_TYPES).map(([k, type]) => [k, markKind(getPixelColorIndex(type))])));
 /** REGION-LINES: THE PROVINCES' LINE - a solid stroke in the shore's own ink on a halo of the parchment (paper px), over the
@@ -494,7 +491,7 @@ export function placeCity(city) {
  *  rectangle (the Bay's own are Daggerfall's, inked by the Bay's painter), each a capital where TAMRIEL1 named it one, by
  *  name in its province. TESA2: where a host stands the places
  *  (arenaStanding), each carries the Bay pixel it stands on (`pixel`, world/arenaPlaces.js standArenaPixels) - a portal's
- *  end on the teleport map (TESA-NO-FAST: never a journey); else `pixel` is null and a press picks nothing, as TESA1's did.
+ *  end on the teleport map and a place's journey on the travel map (TRAVEL-EVERYWHERE); else `pixel` is null and a press picks nothing, as TESA1's did.
  *  @param {NonNullable<ReturnType<typeof arenaPlaces>>} model */
 export function arenaInkCities(model) {
   const capital = new Set(CITIES.filter((c) => c.capital).map((c) => `${c.province}|${c.name}`));
@@ -797,7 +794,7 @@ export function tamrielMarkAt(mx, my, view, placesIn, opts = {}) {
   return best;
 }
 
-/** TESA10d: the pixel a city of a capital's name and province stands on - a portal's end there (TESA-NO-FAST) - the capital's, where a host stands the
+/** TESA10d: the pixel a city of a capital's name and province stands on - a portal's end there and a journey's (TRAVEL-EVERYWHERE) - the capital's, where a host stands the
  *  capitals (world/tamrielCapitals.js capitalsStanding) - or null. */
 function capitalStandsAt(city) {
   const at = capitalsStanding() ? capitalPin(city) : null;
@@ -861,7 +858,7 @@ export function buildTamrielInk({ bayCoast = [] } = {}) {
   // TESA1: the places past the Bay where the trace stands them (TESA12: the port's own); TAMRIEL1's authored cities else
   const arena = traced ? arenaPlaces() : null;
   const cities = arena ? arenaInkCities(arena) : CITIES.map((c) => {
-    const pixel = capitalStandsAt(c);   // TESA10d: a capital the world stands is inked on its pixel - on the teleport map a portal's end (TESA-NO-FAST)
+    const pixel = capitalStandsAt(c);   // TESA10d: a capital the world stands is inked on its pixel - on the teleport map a portal's end, on the travel map a journey's (TRAVEL-EVERYWHERE)
     if (pixel) return { name: c.name, province: c.province, capital: !!c.capital, kind: null, x: pixel.x + 0.5, y: pixel.y + 0.5, pixel };
     const at = placeCity(c); if (!at) return null; const [x, y] = pictureToBay(at[0], at[1]); return { name: c.name, province: c.province, capital: !!c.capital, kind: null, x, y };
   })
@@ -1328,7 +1325,7 @@ export function tamrielHoverAt(mx, my, view, ink = null, marks = null) {
   if (mark) {
     const mk = provinceKeyAt(...bayToPicture(mark.x, mark.y));
     const name = mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '';
-    return { on: 'mark', label: TAMRIEL_TEXT.city(provinceByKey(mk)?.name ?? TAMRIEL_TEXT.beyond, name, locationTypeName(mark.place.type)), name, pixel: { x: mark.place.x, y: mark.place.y }, type: mark.place.type };   // OW-PAST-BAY: the pixel a press walks to - TRAVEL-EVERYWHERE: its type a driver asks
+    return { on: 'mark', label: TAMRIEL_TEXT.city(provinceByKey(mk)?.name ?? TAMRIEL_TEXT.beyond, name, locationTypeName(mark.place.type)), name, pixel: { x: mark.place.x, y: mark.place.y } };   // OW-PAST-BAY: the pixel a press walks to
   }
   if (inBay(mx, my)) return null;
   const [px, py] = bayToPicture(mx, my);

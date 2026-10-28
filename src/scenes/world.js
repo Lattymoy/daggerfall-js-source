@@ -1923,7 +1923,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // rows, before they go. The land past the Bay streamed, `?capitals` open; online too.
   const _capitalBase = tamrielLand && capitalsOn() ? capitalBase(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
   const _capitalNames = _capitalBase ? cityBlockNames(_classicRows ?? _hubRows.map(classicRow).filter(Boolean)) : null;
-  setCapitalsStanding(!!_capitalBase);   // TESA10d: a capital on the map (a portal's end there - TESA-NO-FAST), Arena attached or not
+  setCapitalsStanding(!!_capitalBase);   // TESA10d: a capital on the map (a portal's end there, and a journey's - TRAVEL-EVERYWHERE), Arena attached or not
   // TESA2 (world/arenaLocations.js): THE PLACES' TEMPLATES - the cities, hamlets and villages a place past the Bay may
   // clone, off the same rows (the game's own, as MAPS.BSA holds them), kept before the rows go
   const _arenaTemplates = arenaStands ? arenaTemplates(_classicRows ?? _hubRows.map(classicRow).filter(Boolean), isMainStoryDungeon) : null;
@@ -16033,7 +16033,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!why.ok) { if (why.why) tvSay(why.why); return false; }
       if (!travelViewCanGo()) return false;
       if (!coords) {
-        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y);
+        const summary = tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.named);   // TRAVEL-EVERYWHERE: a quest's place past the Bay, known by its naming
         return summary ? travelViewRouteTo(summary, { roads: tvMapForcesRoads() }) : false;   // TO-ROADS x OW-PATH
       }
       const o = mapPixelToWorldCoords(pick.pixel.x, pick.pixel.y);
@@ -16052,10 +16052,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (wagonRiders?.seated()) { tvSay(TRAVEL_VIEW_TEXT.rider); return true; }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
-      travelOptions.beginTravel({
+      travelOptions.beginTravel(pick.mapId != null ? {
         pixel: pick.pixel, name: pick.name, mapId: pick.mapId,
         regionIndex: pick.regionIndex, locationIndex: pick.locationIndex,
-      }, !!opts?.speedCautious, estimateMinutes);
+      } : tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.named) ?? pick, !!opts?.speedCautious, estimateMinutes);   // TRAVEL-EVERYWHERE: a place past the Bay (no MAPS.BSA id) by its own summary, which stands it (locationWorldRect)
     }
     return true;
   }
