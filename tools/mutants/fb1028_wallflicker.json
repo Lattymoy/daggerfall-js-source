@@ -83,7 +83,9 @@
     "new": "    if (false) return body;",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1028: as FB1028-mitre-gone - mitreEnds has already cut every face of the part, level or not, on the tower's middle line, so the far-side box holds nothing to cut. It survived with ARENA2 too, and neither mutant changes any of the Bay's 410 wall models."
   },
   {
     "name": "FB1028-far-side-flipped",
