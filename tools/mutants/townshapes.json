@@ -74,11 +74,12 @@
  {
   "name": "TS-the-sea-lifted",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
-  "new": "        const t = Math.max(0.05, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
+  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+  "new": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0.05, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
   "tests": [
    "test/world/terrain/townshapes.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the cone over the level alone): the ease never quite the sea's. Re-aimed by content (AUDIT FB1028 A2-A3): the ease never quite the land's."
  },
  {
   "name": "TS-the-pixel-s-mean",
