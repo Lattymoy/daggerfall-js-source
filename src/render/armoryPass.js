@@ -174,7 +174,7 @@ vec3 cardLight() {
     return ramp(0.55 + 0.2 * beat) * g * (0.18 + 0.22 * beat) * uFace;
   }
   float e = pow(max(1.0 - d, 0.0), 2.0) * vS.z;
-  if (uPiece == 2) return mix(vec3(0.1, 0.09, 0.085), fireRamp(0.62), smoothstep(0.75, 0.2, vS.x)) * e * 0.8;   // ash: an ember greying as it falls
+  if (uPiece == 2) return mix(vec3(0.1, 0.09, 0.085), fireRamp(0.62), (1.0 - smoothstep(0.2, 0.75, vS.x))) * e * 0.8;   // ash: an ember greying as it falls
   if (vS.y > 1.5) return fireRamp(0.85 - 0.55 * vS.x) * e * (0.85 + 0.15 * sin(TAU * (uTime * 2.0 + vS.x))) * 0.9;   // a footfall ember burning out
   return ramp(0.95 - 0.55 * vS.x) * e * (uPiece == 1 ? uFace : 1.0);
 }
@@ -183,15 +183,15 @@ vec3 crownLight() {
   float u = vP.x, v = vP.y;
   float n = fbmP(vec2(u * 28.0, v * 2.5 - uTime * 2.4), vec2(28.0, 288.0));
   if (uPart == 0) {
-    float band = smoothstep(0.0, 0.3, v) * smoothstep(1.0, 0.7, v);
+    float band = smoothstep(0.0, 0.3, v) * (1.0 - smoothstep(0.7, 1.0, v));
     float stud = pow(max(cos(TAU * 7.0 * u), 0.0), 18.0);
     return fireRamp(0.38 + 0.35 * n + 0.3 * stud) * band * (0.5 + 0.5 * (1.0 - abs(vS.x))) * 0.75;
   }
   float du = abs(fract(u * 7.0 + 0.5 + (n - 0.5) * 0.35 * v) - 0.5) / 7.0;   // the nearest horn, wavering as it climbs
   float hornH = 0.78 + 0.22 * vnoiseP(vec2(floor(u * 7.0 + 0.5), uTime * 1.5), vec2(7.0, 180.0));
   float width = 0.034 * pow(max(1.0 - v / hornH, 0.0), 0.75) + 0.002;
-  float horn = smoothstep(width, width * 0.25, du) * step(v, hornH);
-  float low = smoothstep(0.32, 0.0, v) * (0.35 + 0.65 * n);   // the low fire between the horns
+  float horn = (1.0 - smoothstep(width * 0.25, width, du)) * step(v, hornH);
+  float low = (1.0 - smoothstep(0.0, 0.32, v)) * (0.35 + 0.65 * n);   // the low fire between the horns
   float heat = max(horn * (0.88 - 0.7 * v / hornH) * (0.75 + 0.3 * n), low * 0.6);
   return fireRamp(clamp(heat, 0.0, 1.0)) * smoothstep(0.02, 0.15, heat) * 0.8;
 }
@@ -200,9 +200,9 @@ vec3 heartLight() {
   float r = length(vP), a = atan(vP.y, vP.x) / TAU + 0.5;
   float beat = heartBeat();
   float grain = vnoiseP(vec2(a * 24.0, r * 6.0), vec2(24.0, 64.0));
-  float coal = smoothstep(0.34, 0.05, r);
+  float coal = (1.0 - smoothstep(0.05, 0.34, r));
   float ridge = 1.0 - abs(2.0 * vnoiseP(vec2(a * 9.0, r * 4.0 + 3.0), vec2(9.0, 64.0)) - 1.0);
-  float veins = pow(ridge, 9.0) * smoothstep(0.98, 0.25, r) * smoothstep(0.12, 0.3, r);
+  float veins = pow(ridge, 9.0) * (1.0 - smoothstep(0.25, 0.98, r)) * smoothstep(0.12, 0.3, r);
   float wave = 0.5 + 0.5 * cos(TAU * (r * 1.6 - uTime ${hz(ARMORY_HZ.beat)} - uSeed));
   float heat = max(coal * (0.5 + 0.35 * beat + 0.15 * grain), veins * (0.32 + 0.4 * wave + 0.25 * beat));
   return fireRamp(heat) * smoothstep(0.03, 0.12, heat) * uFace * 0.9;
@@ -214,8 +214,8 @@ vec3 chainLight() {
   float ph = u * 2.0 + v * turns;
   float across = abs(fract(ph) - 0.5);
   float along = fract(v * turns * 3.0 + u * 6.0);
-  float ring = smoothstep(0.16, 0.1, across) * smoothstep(0.06, 0.1, across) * (0.5 + 0.5 * smoothstep(0.5, 0.3, abs(along - 0.5)));   // a link's two sides
-  float bar = smoothstep(0.1, 0.0, across) * smoothstep(0.16, 0.06, abs(along - 0.5));   // and the next link through it
+  float ring = (1.0 - smoothstep(0.1, 0.16, across)) * smoothstep(0.06, 0.1, across) * (0.5 + 0.5 * (1.0 - smoothstep(0.3, 0.5, abs(along - 0.5))));   // a link's two sides
+  float bar = (1.0 - smoothstep(0.0, 0.1, across)) * (1.0 - smoothstep(0.06, 0.16, abs(along - 0.5)));   // and the next link through it
   float n = vnoiseP(vec2(u * 16.0, v * 8.0 - uTime * 1.5), vec2(16.0, 180.0));
   float chain = max(ring, bar);
   float heat = chain * (0.55 + 0.4 * n) + 0.06 * n;
@@ -230,8 +230,8 @@ vec3 legLight() {
   float h = (uPiece == 8 ? 0.95 : 0.72) * (0.42 + 0.5 * tongues * n + 0.3 * n);
   float edge = h - v;
   float flame = smoothstep(0.0, 0.12, edge) * smoothstep(0.0, 0.14, v);   // none of it where the leg meets the ground
-  float heat = clamp(edge / max(h, 0.05) * (uPiece == 8 ? 0.8 : 1.05) + 0.15 * n, 0.0, uPiece == 8 ? 0.8 : 0.92);
-  return ramp(heat) * flame * 0.8;
+  float heat = clamp(edge / max(h, 0.05) * (uPiece == 8 ? 0.8 : 1.05) + 0.15 * n, 0.0, uPiece == 8 ? 0.68 : 0.92);   // AUDIT ARMORY: the greaves short of the Eternal's white core - its near and far sides add
+  return ramp(heat) * flame * (uPiece == 8 ? 0.6 : 0.8);
 }
 // ETERNAL HALO, ETERNAL ARMLETS: a ring of blue-violet fire with a light running round it
 vec3 ringLight() {
@@ -239,7 +239,7 @@ vec3 ringLight() {
   float n = fbmP(vec2(u * 40.0, v * 2.0 - uTime * 2.4), vec2(40.0, 288.0));
   float dd = abs(fract(u - uTime ${hz(ARMORY_HZ.halo)} + 0.5) - 0.5);
   float run = exp(-dd * dd * 180.0);
-  float flick = uPiece == 5 ? 1.0 : smoothstep(0.0, 0.25, v) * smoothstep(0.55 + 0.45 * n, 0.3, v);   // an armlet's flames licking up off its band
+  float flick = uPiece == 5 ? 1.0 : smoothstep(0.0, 0.25, v) * (1.0 - smoothstep(0.3, 0.55 + 0.45 * n, v));   // an armlet's flames licking up off its band
   float heat = 0.3 + 0.32 * n + 0.42 * run;
   return eternalRamp(heat) * flick * (0.45 + 0.55 * (1.0 - abs(vS.x))) * (uPiece == 5 ? 0.85 : 0.6);
 }
@@ -250,7 +250,7 @@ vec3 sigilLight() {
   float ticks = exp(-pow((r - 0.82) / 0.03, 2.0)) * pow(max(cos(TAU * 12.0 * a), 0.0), 24.0);
   float dd = abs(fract(a - uTime ${hz(ARMORY_HZ.sigil)} + 0.5) - 0.5);
   float run = exp(-dd * dd * 120.0);
-  float star = max(exp(-abs(vP.x) * 16.0 - abs(vP.y) * 3.5), exp(-abs(vP.y) * 16.0 - abs(vP.x) * 3.5)) * smoothstep(0.5, 0.0, r);
+  float star = max(exp(-abs(vP.x) * 16.0 - abs(vP.y) * 3.5), exp(-abs(vP.y) * 16.0 - abs(vP.x) * 3.5)) * (1.0 - smoothstep(0.0, 0.5, r));
   float heat = ring * (0.5 + 0.5 * run) + ticks * 0.6 + star * (0.75 + 0.25 * sin(TAU * uTime ${hz(ARMORY_HZ.spark)}));
   return eternalRamp(0.3 + 0.7 * heat) * min(heat, 1.2) * uFace * 0.85;
 }
@@ -358,7 +358,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
     decal(0, chest, fwd, (key === 'emberheart' ? 0.14 : 0.12) * s, f);
     cards(1, 1, chest, chest, UP, [0, 0], (key === 'emberheart' ? 0.3 : 0.2) * s, f, 1, true);
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
-    else { const back = add(chest, fwd, -(pose.card ? 0.24 : 0.2) * s), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }
+    else { const back = add(chest, fwd, -(pose.card ? 0.24 : 0.27) * s), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const side of ['L', 'R']) {
       const sh = pt(`sh${side}`), el = pt(`el${side}`), wa = pt(`wa${side}`);

@@ -343,8 +343,12 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   };
 }
 
-/** An aura's stage, its module loaded on the first ask. */
-const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null) => import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura, { kit }));
+/** An aura's stage, its module loaded on the first ask - ARMORY: a weapon piece alone on the blade's (weapon glow law 7). */
+const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null) => (aura || !kit ? Promise.resolve(null) : import('../../systems/weaponGlow.js')).then((g) => {
+  const look = g?.armoryWeaponStage(kit);
+  if (g && look) return import('../../render/weaponPiecePreview.js').then((m) => m.startWeaponPiecePreview(canvas, g.glowSpec(look, g.ARMORY_LEVEL)));
+  return import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura, { kit }));
+});
 
 /** The gem, painted as the row's other marks are: twelve pixels, crisp - a cut stone in the Genesis fire's colours. */
 const GEM_ROWS = Object.freeze([

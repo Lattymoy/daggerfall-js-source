@@ -384,6 +384,11 @@
   "tr": "0f3f05b19d9a",
   "by": "claude-in-session"
  },
+ "account.flow.armoryRemoved": {
+  "en": "81786d0509ff",
+  "tr": "50f280fffb72",
+  "by": "claude-in-session"
+ },
  "account.flow.auraRemoved": {
   "en": "8464269d38b7",
   "tr": "77a2728c52c2",
@@ -682,6 +687,11 @@
  "account.refusal.ambiguous": {
   "en": "44b323ac36bf",
   "tr": "84f9081bef32",
+  "by": "claude-in-session"
+ },
+ "account.refusal.armoryNotHeld": {
+  "en": "5f9d3c7f969a",
+  "tr": "b1134713d463",
   "by": "claude-in-session"
  },
  "account.refusal.auctionBidStanding": {
@@ -2554,6 +2564,11 @@
   "tr": "536c39c3fdeb",
   "by": "claude-in-session"
  },
+ "account.refusal.noPiece": {
+  "en": "b73e4480c947",
+  "tr": "085799d3e848",
+  "by": "claude-in-session"
+ },
  "account.refusal.noPlayer": {
   "en": "a844ef80805e",
   "tr": "daa7aea38664",
@@ -3874,6 +3889,11 @@
   "tr": "9cc7f410bc5f",
   "by": "claude-in-session"
  },
+ "account.wear.armory": {
+  "en": "b8314b7db1da",
+  "tr": "bbbf1c58b215",
+  "by": "claude-in-session"
+ },
  "account.wear.aura": {
   "en": "af0854de67de",
   "tr": "af0854de67de",
@@ -3912,6 +3932,136 @@
  "account.wear.worn": {
   "en": "109ed08cf9d2",
   "tr": "76e7c3060f30",
+  "by": "claude-in-session"
+ },
+ "armory.found": {
+  "en": "8337bdc32b9e",
+  "tr": "b0342d541463",
+  "by": "claude-in-session"
+ },
+ "armory.look.ashbound": {
+  "en": "6b15d4fbde74",
+  "tr": "be1d7d23c3b3",
+  "by": "claude-in-session"
+ },
+ "armory.look.breachbrand": {
+  "en": "8965503a483e",
+  "tr": "1044afbbf2a5",
+  "by": "claude-in-session"
+ },
+ "armory.look.burningcrown": {
+  "en": "85b8f687a69d",
+  "tr": "e88ca0e80d94",
+  "by": "claude-in-session"
+ },
+ "armory.look.cinderstride": {
+  "en": "affc9933e002",
+  "tr": "a2a36cc7f63f",
+  "by": "claude-in-session"
+ },
+ "armory.look.emberheart": {
+  "en": "e5f5e9eb3609",
+  "tr": "9d395612eaca",
+  "by": "claude-in-session"
+ },
+ "armory.look.eternalarmlets": {
+  "en": "b8258b8c74a7",
+  "tr": "63d2c1c1c57e",
+  "by": "claude-in-session"
+ },
+ "armory.look.eternaledge": {
+  "en": "d4a27fc7b46e",
+  "tr": "8ef982590787",
+  "by": "claude-in-session"
+ },
+ "armory.look.eternalgreaves": {
+  "en": "8d3b8e90aa23",
+  "tr": "4685d26669b4",
+  "by": "claude-in-session"
+ },
+ "armory.look.eternalhalo": {
+  "en": "845dd181f975",
+  "tr": "6835a64ac0a7",
+  "by": "claude-in-session"
+ },
+ "armory.look.eternalsigil": {
+  "en": "24529ed1646a",
+  "tr": "fbfce3fb36ce",
+  "by": "claude-in-session"
+ },
+ "armory.name.ashbound": {
+  "en": "25d488947d3c",
+  "tr": "c3cd93036565",
+  "by": "claude-in-session"
+ },
+ "armory.name.breachbrand": {
+  "en": "c3000a97e975",
+  "tr": "fba8f9c27ab4",
+  "by": "claude-in-session"
+ },
+ "armory.name.burningcrown": {
+  "en": "3d73734d5fb2",
+  "tr": "bc175fbc97cc",
+  "by": "claude-in-session"
+ },
+ "armory.name.cinderstride": {
+  "en": "a73731c381db",
+  "tr": "d30f45ec9912",
+  "by": "claude-in-session"
+ },
+ "armory.name.emberheart": {
+  "en": "921aff4081b6",
+  "tr": "58ebd3592730",
+  "by": "claude-in-session"
+ },
+ "armory.name.eternalarmlets": {
+  "en": "677c16483455",
+  "tr": "11daeabdc702",
+  "by": "claude-in-session"
+ },
+ "armory.name.eternaledge": {
+  "en": "71f52ee203bd",
+  "tr": "ebdaf24a0417",
+  "by": "claude-in-session"
+ },
+ "armory.name.eternalgreaves": {
+  "en": "50674dfce6dc",
+  "tr": "9e5dcdfd19ea",
+  "by": "claude-in-session"
+ },
+ "armory.name.eternalhalo": {
+  "en": "099548f26f07",
+  "tr": "af92b3f41957",
+  "by": "claude-in-session"
+ },
+ "armory.name.eternalsigil": {
+  "en": "1299a1690a58",
+  "tr": "974f66c83c8a",
+  "by": "claude-in-session"
+ },
+ "armory.slot.arms": {
+  "en": "047072f53ca8",
+  "tr": "e2ab09685c9c",
+  "by": "claude-in-session"
+ },
+ "armory.slot.head": {
+  "en": "e5ffd15be706",
+  "tr": "589cd3ac0d80",
+  "by": "claude-in-session"
+ },
+ "armory.slot.legs": {
+  "en": "29518d0452d7",
+  "tr": "c09960c31283",
+  "by": "claude-in-session"
+ },
+ "armory.slot.torso": {
+  "en": "0ca5e454100d",
+  "tr": "ebe97e5f61ed",
+  "by": "claude-in-session"
+ },
+ "armory.slot.weapon": {
+  "en": "ead533685e26",
+  "tr": "5c31be9f2a5c",
   "by": "claude-in-session"
  },
  "bank.houseOffer": {
@@ -8599,6 +8749,11 @@
   "tr": "51f677d44bdb",
   "by": "claude-in-session"
  },
+ "coll.how.breach": {
+  "en": "cbe4d2377c78",
+  "tr": "0286a30f4357",
+  "by": "claude-in-session"
+ },
  "coll.how.broker": {
   "en": "410ed6aff3d4",
   "tr": "906f95e7bb23",
@@ -8819,6 +8974,11 @@
   "tr": "fae5d588f74f",
   "by": "claude-in-session"
  },
+ "coll.kind.armory": {
+  "en": "b8314b7db1da",
+  "tr": "bbbf1c58b215",
+  "by": "claude-in-session"
+ },
  "coll.kind.aura": {
   "en": "af0854de67de",
   "tr": "af0854de67de",
@@ -8989,6 +9149,11 @@
   "tr": "9444cebd6784",
   "by": "claude-in-session"
  },
+ "coll.part.armory": {
+  "en": "b8314b7db1da",
+  "tr": "bbbf1c58b215",
+  "by": "claude-in-session"
+ },
  "coll.part.auras": {
   "en": "0b5c4206710a",
   "tr": "af0854de67de",
@@ -9047,6 +9212,11 @@
  "coll.src.bestowed": {
   "en": "2a5741c7d758",
   "tr": "e3d60240b81c",
+  "by": "claude-in-session"
+ },
+ "coll.src.breach": {
+  "en": "15a8f2e3d944",
+  "tr": "df74a0cdc27c",
   "by": "claude-in-session"
  },
  "coll.src.broker": {
@@ -11082,6 +11252,31 @@
  "faction.ruler.highQueen": {
   "en": "7b51fe50f158",
   "tr": "6a8ce4164c74",
+  "by": "claude-in-session"
+ },
+ "features.armoryOthers.all": {
+  "en": "6a72085653e4",
+  "tr": "42c76592cdc1",
+  "by": "claude-in-session"
+ },
+ "features.armoryOthers.near": {
+  "en": "fcc451567343",
+  "tr": "38c316e00d78",
+  "by": "claude-in-session"
+ },
+ "features.armoryOthers.none": {
+  "en": "6eef6648406c",
+  "tr": "0e70f7fa4e26",
+  "by": "claude-in-session"
+ },
+ "features.armoryOthers.note": {
+  "en": "7b8405033423",
+  "tr": "f5b6f79aec98",
+  "by": "claude-in-session"
+ },
+ "features.armoryOthers.title": {
+  "en": "07eb4dd2ac44",
+  "tr": "eea8a0c2ba3d",
   "by": "claude-in-session"
  },
  "features.banthaJungle.note": {
@@ -36764,6 +36959,11 @@
   "tr": "83348738793e",
   "by": "claude-in-session"
  },
+ "shop.cat.armory": {
+  "en": "b8314b7db1da",
+  "tr": "bbbf1c58b215",
+  "by": "claude-in-session"
+ },
  "shop.cat.auras": {
   "en": "0b5c4206710a",
   "tr": "af0854de67de",
@@ -36799,6 +36999,11 @@
   "tr": "3876f66fa880",
   "by": "claude-in-session"
  },
+ "shop.kind.armory": {
+  "en": "b8314b7db1da",
+  "tr": "bbbf1c58b215",
+  "by": "claude-in-session"
+ },
  "shop.kind.aura": {
   "en": "af0854de67de",
   "tr": "af0854de67de",
@@ -36832,6 +37037,11 @@
  "shop.noPreview": {
   "en": "dc119ce5c13d",
   "tr": "d9fc6948a7c4",
+  "by": "claude-in-session"
+ },
+ "shop.noPreviewArmory": {
+  "en": "3fc80f8fd977",
+  "tr": "c7739662bab7",
   "by": "claude-in-session"
  },
  "shop.phase": {

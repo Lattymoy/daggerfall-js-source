@@ -255,5 +255,59 @@
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
+  },
+  {
+    "name": "ARMORY-a-peers-morrowind-bones-unread",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (body && poseFromBones(body.bones, w.pose)) {",
+    "new": "if (body && poseFromBones(body, w.pose)) {",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-peers-body-stood-where-the-pose-is",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (body.feet && Number.isFinite(body.yaw)) { w.at[0] = body.feet[0];",
+    "new": "if (false) { w.at[0] = body.feet[0];",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-sigils-back-inside-the-torso",
+    "file": "src/render/armoryPass.js",
+    "old": "-(pose.card ? 0.24 : 0.27) * s)",
+    "new": "-(pose.card ? 0.24 : 0.2) * s)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-band-under-the-blade",
+    "file": "src/render/weaponPiecePreview.js",
+    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n",
+    "new": "",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-body-kit-on-the-blades-stage",
+    "file": "src/systems/weaponGlow.js",
+    "old": ".every(([s, k]) => s === 'weapon' || !k)",
+    "new": ".every(() => true)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-arrival-in-english",
+    "file": "src/ui/accountFlow.js",
+    "old": "String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : ",
+    "new": "",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
   }
 ]

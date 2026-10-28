@@ -366,7 +366,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
     self.shop = shopCardOf(d.shop);
     // SHOP: back from paying, the ware the read says is held now - said once, where the player looks
     if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held)) {
-      self.note = t('account.flow.shopArrived', '{name} is on your account. A receipt is in your mailbox.', { name: SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (self.shopWaiting)] ?? self.shopWaiting });
+      self.note = t('account.flow.shopArrived', '{name} is on your account. A receipt is in your mailbox.', { name: String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (self.shopWaiting)] ?? self.shopWaiting });   // ARMORY: a piece in the player's language
       self.shopWaiting = null;
     }
     if (self.patreonWaiting && self.patreon?.linked && (!was?.linked || String(was.titles) !== String(self.patreon.titles))) {

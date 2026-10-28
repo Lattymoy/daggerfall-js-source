@@ -18,7 +18,14 @@ import {
   ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer,
 } from '../../src/render/armoryPass.js';
 import { createAuraHost, armoryOthersOf, ARMORY_NEAR_M } from '../../src/scenes/auraHost.js';
+import { weaponPieceArt, weaponPieceLayout, startWeaponPiecePreview, BLADE_W, BLADE_H, BLADE_FILL } from '../../src/render/weaponPiecePreview.js';
+import { glowSpec, ARMORY_LEVEL, armoryWeaponStage } from '../../src/systems/weaponGlow.js';
 import { SESSION_KEY } from '../../src/net/accountClient.js';
+import { parseNif } from '../../src/formats/morrowind/mwNifFile.js';
+import { buildSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../src/formats/morrowind/mwSkin.js';
+import { armBonesInBody } from '../../src/combat/fpArm.js';
+import { retailSkeleton } from '../fixtures/mw/retailRig.mjs';
+import { ARMORY_BONES } from '../../src/render/armoryPose.js';
 
 const rd = (/** @type {string} */ p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -164,6 +171,28 @@ test('ARMORY the pass: a program a body piece with its piece a constant, the rat
   assert.deepEqual([...walker.vel], [0, 0, 0]);
 });
 
+test('ARMORY on the Morrowind body: every bone the pose reads stands on retail\'s own skeleton, read by the game\'s own reader (fpArm armBonesInBody, what thirdBones and a peer\'s bonesOf answer) - and the pieces land on its parts (mutants: a bone misnamed; the chest on the spine, not its face; the forearm left off the rig; the Sigil\'s back inside the torso)', () => {
+  const sk = buildSkeleton(parseNif(retailSkeleton()));
+  const bones = armBonesInBody({ skeleton: sk, mats: skeletonSpaceMatrices(sk, new Map(), GRAPH_ROOT) }, ARMORY_BONES);
+  assert.deepEqual(ARMORY_BONES.filter((n) => !bones[n]), [], 'every bone found on the retail skeleton');
+  const pose = newPose();
+  assert.equal(poseFromBones(bones, pose), true);
+  const y = (/** @type {string} */ n) => pose.pts[P[n] + 1];
+  assert.ok(y('crown') > y('head') && y('head') > y('neck') && y('neck') > y('chest') && y('chest') > y('pelvis') && y('pelvis') > y('knL') && y('knL') > y('ftL'), 'crown over head over neck over chest over pelvis over knee over foot');
+  assert.ok(y('head') > 1.7 && y('head') < 1.9 && y('ftL') < 0.15, `a 1.83 m body stood on its feet (head ${y('head').toFixed(2)})`);
+  assert.ok(pose.pts[P.shL] < 0 && pose.pts[P.shR] > 0 && pose.pts[P.elL] < 0 && pose.pts[P.waR] > 0, 'its left on the left, its right on the right');
+  assert.ok(pose.pts[P.chest + 2] > bones['bip01 spine2'][2] + 0.1, 'the chest\'s face, a hand forward of the spine');
+  const w = { at: [0, 0, 0], yaw: 0, pose, vel: [0, 0, 0] }, eye = [0, 1.5, 3];
+  assert.ok(armoryDraws('burningcrown', w, eye, true).every((d) => d.A[1] > y('head') - 0.01), 'the crown round the head');
+  const heart = armoryDraws('emberheart', w, eye, true).find((d) => d.mesh === 2);
+  assert.ok(heart && Math.abs(heart.A[1] - y('chest')) < 1e-6 && heart.A[2] > 0.1, 'the heart on the chest\'s face');
+  assert.equal(armoryDraws('ashbound', w, eye, true).filter((d) => d.mesh === 0).length, 4, 'a rig\'s forearms drawn too');
+  const sigilBack = armoryDraws('eternalsigil', w, [0, 1.5, -3], true).filter((d) => d.mesh === 2).find((d) => d.N[2] < 0);
+  assert.ok(sigilBack && sigilBack.A[2] < bones['bip01 spine2'][2] - 0.12, 'the Sigil\'s back ring behind the back, never inside the torso (AUDIT ARMORY)');
+  const shins = armoryDraws('cinderstride', w, eye, true).filter((d) => d.mesh === 0);
+  assert.ok(shins.length === 2 && shins.every((d) => d.A[1] < 0.1 && d.B[1] > 0.6), 'the shins, foot to knee');
+});
+
 /** A GL that answers every call and keeps its log - enough for the pass's own choices, never its pixels (the GPU's are
  *  tools/armoryProbe.mjs's). */
 function logGl() {
@@ -190,14 +219,47 @@ test('ARMORY the pass draws a worn piece and nothing over my own eyes, a torn be
   assert.deepEqual(log.find((c) => c[0] === 'depthMask' && c[1] === true)?.[1], true);
 });
 
+test('ARMORY a weapon piece\'s own stage: a longsword of Daggerfall\'s pixels, point up, laid at whole pixels a cell; its outline the classic hand\'s shaders, the field baked once and the band drawn over the blade each frame; a weapon piece alone takes it, any other kit the figure\'s (mutants: the field baked every frame; the band drawn under the blade; a kit with a body piece on the blade\'s stage)', () => {
+  const art = weaponPieceArt();
+  assert.deepEqual([art.w, art.h, art.px.length], [BLADE_W, BLADE_H, BLADE_W * BLADE_H * 4]);
+  const solid = (/** @type {number} */ x, /** @type {number} */ y) => art.px[(y * BLADE_W + x) * 4 + 3] === 255;
+  const runOf = (/** @type {number} */ y) => Array.from({ length: BLADE_W }, (_, x) => solid(x, y)).filter(Boolean).length;
+  assert.deepEqual([runOf(0), runOf(20), runOf(44), runOf(50), runOf(BLADE_H - 1)], [1, 5, 15, 3, 3], 'the point, the blade, the guard, the grip, the pommel');
+  assert.ok(Array.from({ length: BLADE_H }, (_, y) => runOf(y)).every((n) => n > 0), 'one piece, top to bottom');
+  assert.ok(solid(7, 0) && !solid(6, 0), 'the point on the middle column');
+  const L = weaponPieceLayout(300, 400, 3);
+  assert.ok(Number.isInteger(L.cell) && L.cell >= 1 && L.w === BLADE_W * L.cell && L.h === BLADE_H * L.cell, 'whole pixels a cell');
+  assert.ok(L.h <= 400 * BLADE_FILL && Math.abs(L.x + L.w / 2 - 150) <= 1 && Math.abs(L.y + L.h / 2 - 200) <= 1, 'centred, inside the stage');
+  assert.equal(weaponPieceLayout(1, 1).cell, 1, 'never under a pixel');
+  assert.deepEqual([armoryWeaponStage('0000b'), armoryWeaponStage('0000a'), armoryWeaponStage('b000b'), armoryWeaponStage('b0000'), armoryWeaponStage(null)], ['edge', 'brand', null, null, null]);
+  const { gl, log, count } = logGl();
+  const canvas = { getContext: () => gl, clientWidth: 300, clientHeight: 400, width: 0, height: 0, isConnected: true };
+  assert.equal(startWeaponPiecePreview(/** @type {any} */ (canvas), null), null, 'no look, no stage');
+  const stage = startWeaponPiecePreview(/** @type {any} */ (canvas), glowSpec('edge', ARMORY_LEVEL), { now: () => 12 });
+  assert.ok(stage);
+  assert.deepEqual([count('createProgram'), count('framebufferTexture2D'), count('drawArrays')], [3, 1, 1], 'three programs; the field baked, once');
+  log.length = 0;
+  stage.step(); stage.step();
+  assert.equal(count('drawArrays'), 4, 'the blade and its outline, a frame');
+  const calls = log.map((c) => c[0]);
+  const blend = calls.indexOf('blendFunc'), draws = calls.flatMap((c, i) => (c === 'drawArrays' ? [i] : []));
+  assert.ok(draws[0] < blend && blend < draws[1], 'the band blended over the blade');
+  assert.deepEqual(log[blend].slice(1), [1, 1], 'premultiplied - ONE, ONE_MINUS_SRC_ALPHA (the logging GL answers 1 for every constant)');
+  assert.equal(count('framebufferTexture2D'), 0, 'never baked again');
+  assert.deepEqual([canvas.width, canvas.height], [300, 400]);
+  stage.stop();
+});
+
 /** A storage of the session's shape (localStorage's). */
 function memStorage() {
   const m = new Map();
   return { _m: m, getItem: (/** @type {string} */ k) => m.get(k) ?? null, setItem: (/** @type {string} */ k, /** @type {string} */ v) => m.set(k, String(v)), removeItem: (/** @type {string} */ k) => m.delete(k), key: (/** @type {number} */ i) => [...m.keys()][i] ?? null, get length() { return m.size; } };
 }
 
-test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the relay\'s badge, a concealed peer none, a kit the room did not hear said again, and a Breach\'s find said in the chat (mutants: a veiled peer\'s pieces gathered; the rehello never asked; the find unsaid)', () => {
+test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the relay\'s badge - a peer in a Morrowind body posed off its bones where it is drawn - a concealed peer none, a kit the room did not hear said again, and a Breach\'s find said in the chat (mutants: a peer\'s Morrowind bones read as no bones; a veiled peer\'s pieces gathered; the rehello never asked; the find unsaid)', () => {
   const was = globalThis.localStorage;
+  const sk = buildSkeleton(parseNif(retailSkeleton()));
+  const mwBones = armBonesInBody({ skeleton: sk, mats: skeletonSpaceMatrices(sk, new Map(), GRAPH_ROOT) }, ARMORY_BONES);   // a peer standing in a Morrowind body
   const st = memStorage();
   st.setItem(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b0a00' }));
   globalThis.localStorage = /** @type {any} */ (st);
@@ -209,11 +271,15 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
       renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: (id) => id === 'p3', toScene: (s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => null, notice: (l) => notes.push(l),
+      walkers: () => null, riders: () => null, bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) }), notice: (l) => notes.push(l),
     });
     host.issued({ armory: null });
     host.frame([{ id: 'p2', shown: { at: [5, 0, 5] } }, { id: 'p3', shown: { at: [6, 0, 6] } }, { id: 'p4', shown: { at: [7, 0, 7] } }]);
     assert.equal(host.counts().armory, 2, 'mine and p2\'s - p3 veiled, p4 bare');
+    const p2 = host.armoryWearersNow().find((w) => w.id === 'p2');
+    assert.deepEqual([...p2.at, p2.yaw], [5.1, 0, 5.2, 1], 'a peer\'s Morrowind body stands its pieces where the body is drawn (peerBodies.bonesOf\'s feet and facing)');
+    assert.deepEqual([p2.pose.card, p2.pose.limbs], [false, 'full'], 'posed off its bones - never the rest pose');
+    assert.deepEqual(Array.from(p2.pose.pts.slice(P.elR, P.elR + 3)), Array.from(new Float32Array(mwBones['bip01 r forearm'])), 'its elbow its forearm\'s joint');
     assert.equal(rehellos, 1, 'the token said no kit, I wear one: said again');
     host.frame([]);
     assert.equal(rehellos, 1, 'heard now - once');

@@ -131,11 +131,11 @@ test('PEER-ART one cache, two stores: a texture the other store let go under the
   const [s] = sprites('lll');
   const key = `${s.archive}_${s.rec}`;
   assert.equal(art.ensure(s), null); await flush();
-  assert.deepEqual(art.ensure(s), { w: 4, h: 4 }, 'up');
+  assert.deepEqual(art.ensure(s), { w: 4, h: 4, marks: null }, 'up');   // PIN MOVED (ARMORY): and where the body stands in the picture - none in a blank one
   textures.delete(key);   // my own body's store let its look go: the renderer's one cache no longer holds it
   assert.equal(art.ensure(s), null, 'not drawn from nothing');
   await flush();
-  assert.deepEqual(art.ensure(s), { w: 4, h: 4 });
+  assert.deepEqual(art.ensure(s), { w: 4, h: 4, marks: null });
   assert.deepEqual(uploads, [key, key], 'uploaded again');
   assert.equal(decodes, 1, 'from the pictures it kept');
   // AUDIT FB1022d D3: and a rider's horse look the same (COATS1's dyed pictures, keyed by archive and record alone)

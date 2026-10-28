@@ -4,6 +4,9 @@
 // stands one. Every piece's program must link; each must light its own part and not another's (the crown over the head,
 // the heart on the chest from the front and none of it from behind, the legs' fire at the shins); nothing before it has
 // kindled; no jump at the clock's wrap; and on the sprite, nothing of the chest from behind the card (THE CARD LAW).
+// AUDIT ARMORY: and THE MORROWIND BODY - retail's own skeleton (test/fixtures/mw/retailRig.mjs) read by the game's own
+// reader (fpArm armBonesInBody, what thirdBones and a peer's bonesOf answer), a mannequin on its bones for the eye, the
+// pieces on its pose. Its mesh is Bethesda's and never ships; the bones are what the pieces hang on.
 //
 //     node tools/armoryProbe.mjs [--shots <dir>]
 import { chromium } from 'playwright';
@@ -13,18 +16,26 @@ import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARMORY_PIECES } from '../src/net/armoryLaw.js';
 import { AURA_CLOCK_PERIOD } from '../src/render/auraRing.js';
-import { REST_POINTS, P } from '../src/render/armoryPose.js';
+import { REST_POINTS, P, newPose, poseFromBones } from '../src/render/armoryPose.js';
+import { glowSpec, ARMORY_LEVEL, armoryWeaponStage as weaponStageOf } from '../src/systems/weaponGlow.js';
+import { parseNif } from '../src/formats/morrowind/mwNifFile.js';
+import { buildSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../src/formats/morrowind/mwSkin.js';
+import { armBonesInBody } from '../src/combat/fpArm.js';
+import { retailSkeleton } from '../test/fixtures/mw/retailRig.mjs';
+import { ARMORY_BONES } from '../src/render/armoryPose.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 if (shotsAt) mkdirSync(shotsAt, { recursive: true });
 const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
 const SPRITE = '/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png';
+const MW_SK = buildSkeleton(parseNif(retailSkeleton()));
+const MW_BONES = armBonesInBody({ skeleton: MW_SK, mats: skeletonSpaceMatrices(MW_SK, new Map(), GRAPH_ROOT) }, ARMORY_BONES);
 const BACK = '/vendor/eye-of-the-beholder/Textures/112364/112364_4-0.png';
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=480 height=640></canvas><script type=module>
 import { ArmoryRenderer, armoryMotionStep, armoryPrograms } from '/src/render/armoryPass.js';
-import { newPose, poseAtRest, poseFromFigure, spriteMarks } from '/src/render/armoryPose.js';
+import { newPose, poseAtRest, poseFromFigure, poseFromBones, spriteMarks, P as PT } from '/src/render/armoryPose.js';
 import { previewMesh } from '/src/render/auraPreview.js';
 import { ARMORY_PIECES } from '/src/net/armoryLaw.js';
 const W = 480, H = 640;
@@ -50,6 +61,35 @@ gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 
 const marksOf = (im) => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); const d = x.getImageData(0, 0, im.width, im.height).data; const u = new Uint32Array(im.width * im.height); for (let r = 0; r < im.height; r++) for (let q = 0; q < im.width; q++) { const i = ((im.height - 1 - r) * im.width + q) * 4; u[r * im.width + q] = (d[i] | (d[i + 1] << 8) | (d[i + 2] << 16) | (d[i + 3] << 24)) >>> 0; } return spriteMarks(u, im.width, im.height); };
 const load = (src) => new Promise((res) => { const im = new Image(); im.onload = () => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); res({ t, w: im.width, h: im.height, marks: marksOf(im) }); }; im.src = src; });
 const sprites = { front: await load('${SPRITE}'), back: await load('${BACK}') };
+// THE MORROWIND BODY: retail's skeleton's bones as the game reads them, and a mannequin of boxes on them for the eye
+const MW_BONES = ${JSON.stringify(MW_BONES)};
+const mwPose = newPose(); poseFromBones(MW_BONES, mwPose);
+const mwMesh = (() => {
+  const q = (n) => [mwPose.pts[PT[n]], mwPose.pts[PT[n] + 1], mwPose.pts[PT[n] + 2]];
+  const sub = (a, b) => a.map((v, i) => v - b[i]), add = (a, b, k = 1) => a.map((v, i) => v + b[i] * k), nrm = (a) => { const l = Math.hypot(...a) || 1; return a.map((v) => v / l); };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const out = [];
+  const box = (a, b, rx, rz) => {
+    const u = nrm(sub(b, a)), s = nrm(cross(u, Math.abs(u[1]) > 0.9 ? [0, 0, 1] : [0, 1, 0])), t = cross(u, s);
+    const c = (e, i, j) => add(add(e, s, i * rx), t, j * rz), A = [a, b];
+    const quad = (p0, p1, p2, p3, n) => { for (const p of [p0, p1, p2, p0, p2, p3]) out.push(...p, ...n); };
+    for (const [i, j, k, l, n] of [[[0, -1, -1], [1, -1, -1], [1, 1, -1], [0, 1, -1], t.map((v) => -v)], [[0, -1, 1], [1, -1, 1], [1, 1, 1], [0, 1, 1], t], [[0, -1, -1], [1, -1, -1], [1, -1, 1], [0, -1, 1], s.map((v) => -v)], [[0, 1, -1], [1, 1, -1], [1, 1, 1], [0, 1, 1], s]])
+      quad(c(A[i[0]], i[1], i[2]), c(A[j[0]], j[1], j[2]), c(A[k[0]], k[1], k[2]), c(A[l[0]], l[1], l[2]), n);
+    quad(c(a, -1, -1), c(a, 1, -1), c(a, 1, 1), c(a, -1, 1), u.map((v) => -v)); quad(c(b, -1, -1), c(b, 1, -1), c(b, 1, 1), c(b, -1, 1), u);
+  };
+  const head = q('head'), neck = q('neck');
+  box(add(head, [0, -0.1, 0]), add(head, [0, 0.11, 0]), 0.085, 0.1);   // the head
+  box(neck, add(head, [0, -0.08, 0]), 0.05, 0.05);
+  box(q('pelvis'), add(neck, [0, -0.02, 0]), 0.16, 0.1);   // the trunk
+  for (const s of ['L', 'R']) {
+    box(q('sh' + s), q('el' + s), 0.052, 0.052); box(q('el' + s), q('wa' + s), 0.042, 0.042); box(q('wa' + s), add(q('wa' + s), [0, -0.1, 0.01]), 0.035, 0.045);
+    box(q('hip' + s), q('kn' + s), 0.07, 0.07); box(q('kn' + s), add(q('ft' + s), [0, 0.02, 0]), 0.055, 0.055); box(add(q('ft' + s), [0, 0.03, -0.04]), add(q('ft' + s), [0, 0.03, 0.17]), 0.045, 0.03);
+  }
+  return new Float32Array(out);
+})();
+const mvao = gl.createVertexArray(); gl.bindVertexArray(mvao);
+const mb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, mb); gl.bufferData(gl.ARRAY_BUFFER, mwMesh, gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12); gl.bindVertexArray(null);
 let pass = null, err = null;
 try { pass = new ArmoryRenderer(gl); } catch (e) { err = String(e.message ?? e); }
 const logOf = (i) => { const [[vs, fs]] = armoryPrograms(i); const lg = []; for (const [t, s] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) lg.push(gl.getShaderInfoLog(x)); } if (!lg.length) { const pp = gl.createProgram(); for (const [t, s] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); gl.attachShader(pp, x); } gl.linkProgram(pp); if (!gl.getProgramParameter(pp, gl.LINK_STATUS)) lg.push(gl.getProgramInfoLog(pp)); } return lg.join(' / ') || 'no log'; };
@@ -57,14 +97,18 @@ const linked = pass ? ARMORY_PIECES.map((_, i) => { try { const P = pass.program
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };
 const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1], e[2] - c[2]]; let l = Math.hypot(...z); z.forEach((v, i) => { z[i] = v / l; }); const x = [u[1] * z[2] - u[2] * z[1], u[2] * z[0] - u[0] * z[2], u[0] * z[1] - u[1] * z[0]]; l = Math.hypot(...x); x.forEach((v, i) => { x[i] = v / l; }); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]; return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); };
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
-/** Draw a body - 'rig' (the stand-in, at rest) or 'sprite' (its picture on a card, 'front' or 'back') - wearing \`kit\` from
+/** Draw a body - 'mw' (retail's Morrowind skeleton, a mannequin on its bones), 'rig' (the stand-in, at rest) or 'sprite' (its picture on a card, 'front' or 'back') - wearing \`kit\` from
  *  \`eye\` at \`t\`, kindled \`kindle\`; read back \`pts\` (world) and the frame's brightest pixels in \`box\` rows. */
 window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0, side = 'front', at = [0, 1.0, 0], torn = -1, walk = 0, plain = false }) => {
   const proj = persp(0.8, W / H, 0.05, 100), view = look(eye, at), vp = mul(proj, view);
   gl.viewport(0, 0, W, H); gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
   gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   const pose = newPose();
-  if (body === 'rig') {
+  if (body === 'mw') {
+    gl.useProgram(boxes); gl.uniformMatrix4fv(gl.getUniformLocation(boxes, 'vp'), false, vp); gl.uniform1f(gl.getUniformLocation(boxes, 'yaw'), yaw);
+    gl.bindVertexArray(mvao); gl.drawArrays(gl.TRIANGLES, 0, mwMesh.length / 6);
+    poseFromBones(MW_BONES, pose);
+  } else if (body === 'rig') {
     gl.useProgram(boxes); gl.uniformMatrix4fv(gl.getUniformLocation(boxes, 'vp'), false, vp); gl.uniform1f(gl.getUniformLocation(boxes, 'yaw'), yaw);
     gl.bindVertexArray(vao); gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
     poseAtRest(pose);
@@ -97,10 +141,28 @@ window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0,
 window.probe = { err, linked };
 window.ready = true;
 </script></body></html>`;
+/** The weapon piece's stage alone (render/weaponPiecePreview.js): a canvas the size the shop gives it, read at the blade's
+ *  middle, a hair beside its edge and far off it. */
+const STAGE_PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=s style="width:300px;height:400px;display:block"></canvas><script type=module>
+import { startWeaponPiecePreview, weaponPieceLayout } from '/src/render/weaponPiecePreview.js';
+window.stageOf = (spec) => {
+  const c = document.getElementById('s');
+  window.live?.stop();
+  const fresh = c.cloneNode(); c.replaceWith(fresh);
+  const s = startWeaponPiecePreview(fresh, spec, { now: () => 1.5 });
+  if (!s) return { ok: false };
+  window.live = s; s.step();
+  const gl = fresh.getContext('webgl2'), W = fresh.width, H = fresh.height, L = weaponPieceLayout(W, H, Math.max(...spec.win));
+  const px = (x, y) => { const o = new Uint8Array(4); gl.readPixels(Math.round(x), Math.round(H - 1 - y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, o); return Array.from(o.slice(0, 3)); };
+  const mid = L.y + L.h * 0.4, edgeX = L.x + 10 * L.cell + L.cell * 0.5;
+  return { ok: true, error: gl.getError(), blade: px(L.x + 7.5 * L.cell, mid), beside: px(edgeX, mid), far: [...px(4, 4), ...px(W - 5, H - 5)] };
+};
+</script></body></html>`;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/stage/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(STAGE_PAGE); return; }
   const f = join(ROOT, url);
   if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : extname(f) === '.png' ? 'image/png' : 'application/octet-stream' });
@@ -110,6 +172,7 @@ await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const port = server.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const at = (name) => { const i = P[name]; return [REST_POINTS[i], REST_POINTS[i + 1], REST_POINTS[i + 2]]; };
+const MW_POSE = newPose(); poseFromBones(MW_BONES, MW_POSE);
 try {
   const page = await browser.newPage({ viewport: { width: 480, height: 640 } });
   const errs = []; page.on('pageerror', (e) => errs.push(e.message)); page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errs.push(m.text()); });
@@ -177,10 +240,51 @@ try {
   await shot('sprite_dagonfire_threequarter');
   await draw({ body: 'sprite', kit: 'bbbb0', eye: [1.9, 1.3, 1.9], pts: [], plain: true });
   await shot('sprite_eternal_threequarter');
+  // THE MORROWIND BODY: the pieces on retail's skeleton as the game reads it
+  const mw = (n) => { const i = P[n]; return [MW_POSE.pts[i], MW_POSE.pts[i + 1], MW_POSE.pts[i + 2]]; };
+  const mwBare = await draw({ body: 'mw', kit: '00000', eye: FRONT, at: [0, 1.0, 0], pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]] });
+  const mwD = await draw({ body: 'mw', kit: 'aaaa0', eye: FRONT, at: [0, 1.0, 0], pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]] });
+  await shot('mw_dagonfire_front');
+  check('the Morrowind body in Dagonfire: posed off its bones, drawn without a GL error', mwD.error === 0 && mwD.drawn === 4, `error ${mwD.error}, drawn ${mwD.drawn}`);
+  check('on the Morrowind body: the crown over its head, the heart on its chest, the fire at its shins', mwD.px.every((v, i) => v > mwBare.px[i] + 60), `${mwD.px} against ${mwBare.px}`);
+  const mwE = await draw({ body: 'mw', kit: 'bbbb0', eye: FRONT, at: [0, 1.0, 0], pts: [mw('chest')] });
+  const backAt = [mw('chest')[0], mw('chest')[1], mw('chest')[2] - 0.27];
+  const mwBackBare = await draw({ body: 'mw', kit: '00000', eye: BEHIND, at: [0, 1.0, 0], pts: [backAt] });
+  const mwBack = await draw({ body: 'mw', kit: '0b000', eye: BEHIND, at: [0, 1.0, 0], pts: [backAt] });
+  check('the Eternal Sigil burns on the Morrowind body\'s back, clear of its torso (AUDIT ARMORY)', mwBack.px[0] > mwBackBare.px[0] + 60, `${mwBack.px[0]} against ${mwBackBare.px[0]}`);
+  await shot('mw_eternal_front');
+  check('the Morrowind body in Eternal: drawn', mwE.error === 0 && mwE.drawn === 4 && mwE.lit > 300, `${mwE.lit}`);
+  for (const [kit, name] of [['aaaa0', 'dagonfire'], ['bbbb0', 'eternal']]) {
+    await draw({ body: 'mw', kit, eye: [0, 1.3, 3.1], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_framed`);
+    await draw({ body: 'mw', kit, eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_threequarter`);
+    await draw({ body: 'mw', kit, eye: [0, 1.3, -3.1], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_behind`);
+    await draw({ body: 'mw', kit, eye: [0.5, 1.85, 1.1], at: [0, 1.7, 0], pts: [] }); await shot(`mw_${name}_head`);
+    await draw({ body: 'sprite', kit, eye: [0, 1.3, 3.1], at: [0, 1.1, 0], pts: [], plain: true }); await shot(`sprite_${name}_framed`);
+  }
+  await draw({ body: 'mw', kit: 'baab0', eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] }); await shot('mw_mixed_threequarter');
+  // each body piece alone on the Morrowind body, three-quarters on (the weapon's on its stage, below)
+  for (const pc of ARMORY_PIECES.filter((x) => x.slot !== 'weapon')) {
+    const kit = ['head', 'torso', 'arms', 'legs', 'weapon'].map((sl) => (sl === pc.slot ? pc.code : '0')).join('');
+    await draw({ body: 'mw', kit, eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] }); await shot(`piece_${pc.key}`);
+  }
   // the walk: a Cinderstride's footfall embers on the ground behind
   const walk = await draw({ kit: '000a0', eye: [0, 1.6, 2.6], walk: 1, pts: [] });
   await shot('rig_cinderstride_walk');
   check('the Cinderstride walking: drawn', walk.error === 0 && walk.lit > 100, `${walk.lit}`);
+  // THE WEAPON PIECE'S STAGE (render/weaponPiecePreview.js): the blade and the classic hand's own outline round it
+  const stage = await browser.newPage({ viewport: { width: 320, height: 420 } });
+  stage.on('pageerror', (x) => errs.push(x.message));
+  await stage.goto(`http://127.0.0.1:${port}/stage/`);
+  for (const [key, look] of [['eternaledge', 'edge'], ['breachbrand', 'brand']]) {
+    const s = await stage.evaluate((spec) => window.stageOf(spec), glowSpec(look, ARMORY_LEVEL));
+    if (shotsAt) await stage.locator('#s').screenshot({ path: join(shotsAt, `stage_${key}.png`) });
+    check(`${key}: its stage starts and draws without a GL error`, s.ok && s.error === 0, JSON.stringify(s).slice(0, 200));
+    check(`${key}: the blade stands in the middle, steel`, s.blade[0] > 90 && Math.abs(s.blade[0] - s.blade[2]) < 60, s.blade.join(', '));
+    const [r, , b] = s.beside;
+    check(`${key}: its light beside the blade, in its own colours`, look === 'edge' ? b > 150 && b > r : r > 150 && r > b, s.beside.join(', '));
+    check(`${key}: nothing far from the blade`, s.far.every((v) => v < 30), s.far.join(', '));
+  }
+  check('an Eternal Edge kit alone takes the weapon\'s stage, any other kit the figure\'s', weaponStageOf('0000b') === 'edge' && weaponStageOf('b000b') === null && weaponStageOf(null) === null);
   const real = errs.filter((x) => !/GPU stall|fallback to software WebGL|404 \(Not Found\)/.test(x));   // the driver's own notes, and the page's missing favicon
   check('no page error', real.length === 0, real.join(' | ').slice(0, 600));
 } finally {

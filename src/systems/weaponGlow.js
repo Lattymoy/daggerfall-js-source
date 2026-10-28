@@ -104,6 +104,9 @@ export function armoryWeaponLook(kit = ownArmory()) {
   const key = armoryKitPieces(kit).weapon;
   return key ? ARMORY_GLOW[/** @type {keyof typeof ARMORY_GLOW} */ (key)] ?? null : null;
 }
+/** The look of a kit whose ONLY piece is a weapon's - the shop's stage for it is the blade's (render/weaponPiecePreview.js),
+ *  since the body pass draws no weapon piece; null for any other kit. Pure. */
+export const armoryWeaponStage = (/** @type {unknown} */ kit) => (Object.entries(armoryKitPieces(kit)).every(([s, k]) => s === 'weapon' || !k) ? armoryWeaponLook(kit) : null);
 /** Law 5's one strength: the enchanted look has no band to read. */
 export const ARCANE_LEVEL = 2;
 

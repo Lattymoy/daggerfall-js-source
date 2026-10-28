@@ -93,7 +93,8 @@ and draws both passes: the aura code moved out of bootWorld with the armory besi
 pelvis, shoulders, elbows, wrists, hips, knees, feet). On a rig they are its bones' origins - a bone's origin is its
 joint. On a sprite they are rows of the sets' frames, and the picture's own marks move them across: where the head,
 chest and pelvis stand in that picture, read off its alpha once at upload (`spriteMarks`), since a painting with its
-sword arm out is not centred on its feet. With no body to read, the rest pose, crouched or in the saddle.
+sword arm out is not centred on its feet. A peer's Morrowind body stands the wearer at its own drawn feet and facing
+(`peerBodies.bonesOf`), as the cape does. With no body to read, the rest pose, crouched or in the saddle.
 
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
@@ -103,7 +104,7 @@ the boot's idle (`src/render/playPrograms.js`). Every rate is whole over the aur
 
 THE CARD LAW: on a sprite every point is lifted toward the eye (`ARMORY_LIFT_M`), so a piece lies on the card's near
 side and what stands behind the body is hidden by the card's own depth. A chest piece weighs how squarely it faces the
-eye; the Eternal Sigil also burns on the back.
+eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
 
 **A sprite's forearm is not drawn.** A painting has no elbow or wrist to measure past the shoulder, so on a sprite an
 arm piece is drawn on the upper arm alone; the forearm draws on a rig. The legs draw from the knee down on both.
@@ -123,6 +124,9 @@ On the classic hand the piece's outline is drawn on the plain sheet, so an encha
 while the piece is worn. A sprite in third person shows no weapon piece: its weapon is painted into the picture, with
 nothing to measure.
 
+**In the shop** a weapon piece stands on a stage of its own (`src/render/weaponPiecePreview.js`): a longsword of
+Daggerfall's pixels, outlined by the classic hand's own shaders - the field baked once, the band drawn each frame.
+
 ## 9. The budget and the setting
 
 At most 24 wearers draw, nearest first, within 60 m. Past 25 m a wearer's embers and motes stop and the glows stay.
@@ -136,7 +140,9 @@ within 20 m, or none. My own kit always draws.
 - `test/server/armory_service.test.js` - the held and worn law, the roll and its pity end to end, the wear door.
 - `test/net/armorylive.test.js` - a kit through the session's memory and the real relay.
 - `test/systems/weaponglow1.test.js` law 7 - the weapon piece's place among the looks.
-- `tools/armoryProbe.mjs` - the pass on a real GPU (Chromium): placement, the card law, the clock's wrap.
+- `tools/armoryProbe.mjs` - the pass on a real GPU (Chromium): on the stand-in, the sprite and retail's Morrowind
+  skeleton; placement, the card law, the clock's wrap, and the weapon pieces' stages.
+- `01-Overview/audits/Audit-Armory.md` - the audit and what it fixed.
 - `tools/mutants/armory.json` - every law above, mutated.
 
 ## 11. Decided while building

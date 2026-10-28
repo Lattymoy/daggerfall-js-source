@@ -56,11 +56,16 @@ export function createAuraHost(deps) {
     if (poseFromFigure(mwViewSpriteFigure(), pose)) return;
     poseAtRest(pose, player.height / CAPSULE_HEIGHT, !!player.riding);
   }
-  /** A peer's pose as drawn - its Morrowind body's bones, its sprite's figure, or the rest pose (a rider's on the saddle). */
-  function peerPose(/** @type {string} */ id, /** @type {any} */ pose, /** @type {boolean} */ mounted) {
-    if (poseFromBones(deps.bodies()?.bonesOf?.(id, ARMORY_BONES), pose)) return;
-    if (poseFromFigure(deps.walkers()?.figureOf?.(id) ?? deps.riders()?.figureOf?.(id), pose)) return;
-    poseAtRest(pose, 1, mounted);
+  /** A peer's pose as drawn - its Morrowind body's bones (peerBodies.bonesOf answers `{ feet, yaw, bones }`: the body stands
+   *  the wearer where it is drawn, as the cape's auraCapeStep does), its sprite's figure, or the rest pose (a rider's saddled). */
+  function peerPose(/** @type {string} */ id, /** @type {any} */ w) {
+    const body = deps.bodies()?.bonesOf?.(id, ARMORY_BONES);
+    if (body && poseFromBones(body.bones, w.pose)) {
+      if (body.feet && Number.isFinite(body.yaw)) { w.at[0] = body.feet[0]; w.at[1] = body.feet[1]; w.at[2] = body.feet[2]; w.yaw = body.yaw; }
+      return;
+    }
+    if (poseFromFigure(deps.walkers()?.figureOf?.(id) ?? deps.riders()?.figureOf?.(id), w.pose)) return;
+    poseAtRest(w.pose, 1, w.mounted);
   }
   /** Whether a peer's pieces are drawn at all, by the player's "Others' armory" choice. */
   const othersShown = (/** @type {number[]} */ at, /** @type {number[]} */ eye) => {
@@ -121,7 +126,7 @@ export function createAuraHost(deps) {
           if (!w || w.kit !== ak) { w = { id: d.id, at: [0, 0, 0], kit: ak, seed: auraSeedOf(d.id), kindle: 0, since: t, pose: newPose(), torn: -1 }; armoryPool.set(d.id, w); }
           w.at[0] = p[0]; w.at[1] = p[1]; w.at[2] = p[2]; w.yaw = face; w.mounted = !!d.shown.rd; w.torn = d.shown.wb ? 1 : -1;
           w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t;
-          peerPose(d.id, w.pose, w.mounted); armoryMotionStep(w, t);
+          peerPose(d.id, w); armoryMotionStep(w, t);
           armoryList.push(w);
         }
       }
@@ -163,5 +168,7 @@ export function createAuraHost(deps) {
     },
     /** For the tests and the stats: how many wearers this frame holds of each. */
     counts: () => ({ auras: auraList.length, armory: armoryList.length, near: ARMORY_DETAIL_M }),
+    /** For the tests: the armory's wearers this frame, as gathered - a copy, never the list itself. */
+    armoryWearersNow: () => armoryList.slice(),
   };
 }

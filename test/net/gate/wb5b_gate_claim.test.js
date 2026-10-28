@@ -137,7 +137,10 @@ test('WB5b the worker: /v1/gate/claim behind a session and never open - the sess
   assert.deepEqual((await call('POST', '/v1/gate/claim', { receipt: r }, me.secret)).body, { recorded: false, why: 'guest', closed: 0 });
   assert.equal((await call('POST', '/v1/auth/register', { handle: 'GateCloser', password: 'correct horse battery', ...ACCEPTED }, me.secret)).status, 200);
   assert.equal((await call('POST', '/v1/gate/claim', { receipt: r })).status, 401, 'a stranger claims nothing');
-  assert.deepEqual((await call('POST', '/v1/gate/claim', { receipt: r, account: them.id }, me.secret)).body, { recorded: true, stones: 1, closed: 1, weir: { found: true, keys: 1 }, armory: { found: null, held: [] }, marks: null });   // PIN MOVED (ARMORY): and the Aura Armory's roll, a miss here; MARKS1: `marks` null - the switch is off here (test/net/marks1.test.js strikes them); EG-PLAY: `weir` - the account's first breach closed rolls its Weir Key, certain (server-account/src/eg.js rollWeirKey)
+  // PIN MOVED (ARMORY): and the Aura Armory's roll beside the key's - the service's own die, so its piece is read apart (marks1's way)
+  const { armory, ...claimed } = (await call('POST', '/v1/gate/claim', { receipt: r, account: them.id }, me.secret)).body;
+  assert.ok(armory && Array.isArray(armory.held) && (armory.found === null ? armory.held.length === 0 : armory.held.length === 1 && armory.held[0] === armory.found), 'the armory\'s roll said');
+  assert.deepEqual(claimed, { recorded: true, stones: 1, closed: 1, weir: { found: true, keys: 1 }, marks: null });   // MARKS1: `marks` null - the switch is off here (test/net/marks1.test.js strikes them); EG-PLAY: `weir` - the account's first breach closed rolls its Weir Key, certain (server-account/src/eg.js rollWeirKey)
   assert.equal((await call('POST', '/v1/gate/claim', { receipt: r }, them.secret)).status, 403, 'another\'s receipt');
   assert.equal((await call('POST', '/v1/gate/claim', { receipt: 'r1.x.y' }, me.secret)).status, 400);
   // AUDIT WB A5: a refused receipt says which rung refused it - a signature the service's half does not verify is one

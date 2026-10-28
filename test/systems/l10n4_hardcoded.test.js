@@ -71,6 +71,7 @@ const HARDCODED = {
   'src/net/accountClient.js': 14,
   'src/net/arena/arenaBrain.js': 2,
   'src/net/arena/arenaLaw.js': 28,
+  'src/net/armoryLaw.js': 9,   // ARMORY: ARMORY_NAME - the pieces' names in the service's English (the shop's receipt, the account's letters); the client says them through ui/armoryText.js, a pin holding the two equal
   'src/net/bagLaw.js': 26,
   'src/net/boardLaw.js': 4,
   'src/net/card/cardLaw.js': 6,
@@ -158,6 +159,7 @@ const HARDCODED = {
   'src/net/serpent/serpentLaw.js': 7,
   'src/net/serpent/serpentLink.js': 6,
   'src/net/serverPost.js': 5,
+  'src/net/shopLaw.js': 1,   // ARMORY: SHOP_KIND_NAME's 'Aura Armory piece' - the receipt's word for the ware's kind, the service's English (the shop's window says it through ui/enhanced/enhancedShop.js)
   'src/net/siege/siegeLink.js': 27,
   'src/net/siege/siegeRef.js': 4,
   'src/net/siege/siegeSession.js': 19,
@@ -181,6 +183,7 @@ const HARDCODED = {
   'src/player/parkour.js': 1,
   'src/player/socialPick.js': 1,
   'src/render/airPass.js': 11,
+  'src/render/armoryPass.js': 1,   // ARMORY: ARMORY_VS - GLSL the scan reads as prose (`in vec2`), weaponGlowGlsl.js's same line
   'src/render/auraRing.js': 3,
   'src/render/bannerPass.js': 2,
   'src/render/cardFaces.js': 14,
@@ -249,6 +252,7 @@ const HARDCODED = {
   'src/render/waterBedGlsl.js': 1,
   'src/render/waterSurface.js': 1,
   'src/render/weaponGlowGlsl.js': 1,   // AUDIT WEAPON-GLOW SPR-1: GLOW_FIELD_VS, the field bake's vertex shader - GLSL the scan reads as prose (`in vec2`), gateVeil.js's same line
+  'src/render/weaponPiecePreview.js': 1,   // ARMORY: BLADE_FS, the blade's fragment shader - GLSL the scan reads as prose, weaponGlowGlsl.js's same line
   'src/render/windWisps.js': 2,
   'src/render/windfallParticles.js': 2,
   'src/scenes/arena/arenaOnline.js': 1,
@@ -621,7 +625,7 @@ const HARDCODED = {
   'src/ui/eliteGates/egHud.js': 32,   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: -1, the Gauntlet's line routed (eg.progress.gauntlet). AUDIT EG V (a1): +2, the rest's beacon - *The next circle bears: ...* and *The next Court: ...* (egNextCircleText) - the arc's English, owed its localization wave with the rest; EG-PLUS: -6, the panel's heads, the asks' lines and its foot through the text core
   'src/ui/eliteGates/egSpireHud.js': 15,   // AUDIT EG IV (the lords' group): +1, an errand's numerals' markup (egSigilHtml's `given` - a template the scan counts; its words are the company's numerals and names)
   'src/ui/eliteGates/egStartWindow.js': 5,
-  'src/ui/enhanced/enhancedAccount.js': 8,
+  'src/ui/enhanced/enhancedAccount.js': 9,   // ARMORY: a piece's button's class names, the aura's line beside it
   'src/ui/enhanced/enhancedBook.js': 1,
   'src/ui/enhanced/enhancedCharSheet.js': 1,
   'src/ui/enhanced/enhancedChargen.js': 108,
