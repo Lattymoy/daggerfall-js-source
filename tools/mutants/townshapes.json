@@ -92,8 +92,9 @@
  {
   "name": "TS-the-edge-moved",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "        s = Math.min(t * t * (3 - 2 * t), e / (e + d));",
-  "new": "        s = t * t * (3 - 2 * t);",
+  "old": "      if (e === 0) continue;   // the pixel's edge the land's own",
+  "new": "      // the pixel's edge the land's own",
+  "note": "Re-aimed (AUDIT FB1028): FB1028-the-edge-share-unread holds the ease's edge share; this one the pixel's edge left the land's.",
   "tests": [
    "test/world/terrain/townshapes.test.js",
    "test/world/terrain/fb1028_townground.test.js"

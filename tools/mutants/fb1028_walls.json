@@ -315,5 +315,23 @@
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-FB1028-YARDS-the-walkers-shut-not-carried",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "dfLocation), walkShut, dfLocation) : null;",
+    "new": "dfLocation), null, dfLocation) : null;",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1028-YARDS-the-yards-shut-read-as-now",
+    "file": "src/scenes/world.js",
+    "old": "keptTownSitesSteps(yl, measures, shut.now,",
+    "new": "keptTownSitesSteps(yl, measures, shut,",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
   }
 ]

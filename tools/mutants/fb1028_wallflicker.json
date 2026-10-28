@@ -72,7 +72,9 @@
     "new": "    return body;",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1028: townWallModel hands clearOfTowers a part mitreEnds already cut on each tower's middle line (mitrePlanes: the plane through the tower's at, normal its own along), and wallPieces ends every length and gate at its towers' middles, so nothing of a part lies in the box past that middle for this branch to cut. Kept as belt-and-braces for a part handed uncut."
   },
   {
     "name": "FB1028-mitre-every-face",
@@ -109,9 +111,16 @@
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
     ],
-    "equivalent": true,
-    "why": "Its only reader left is the first filter of the towers by the part's own box, and a length or a gate ends in its towers' middles, so its box holds them at any reach; the per-triangle reach reads the tower frame's own boxes.",
-    "note": "Re-aimed by content at the merge with the Bay's walls (FB1028): the reach takes the grown towers' `thick` (T)."
+    "note": "Re-aimed by content at the merge with the Bay's walls (FB1028): the reach takes the grown towers' `thick` (T). AUDIT FB1028: it dies, so not equivalent; the synthetic bends' towers grown as wallPieces mints them."
+  },
+  {
+    "name": "AUDIT-FB1028-across-ungrown",
+    "file": "src/world/townWalls.js",
+    "old": "  const across = (tw) => half * (tw.thick ?? 1), T",
+    "new": "  const across = (tw) => half, T",
+    "tests": [
+      "test/world/fb1028_wallflicker.test.js"
+    ]
   },
   {
     "name": "FB1028-a-side-unread",

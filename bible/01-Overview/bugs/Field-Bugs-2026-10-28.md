@@ -30,9 +30,13 @@ and the sea: 769 at Westhead Moor, 706 at Aldwall Rock, up to 47 m up.
 
 FIXED. The ease runs as far as its grade needs (SHAPE_GRADE, 0.6 m a metre), the sea it needs lifted and the sea past it
 kept; a margin keeps off the band it needs to meet the pixel's edge; a field's every tile is the town's. Over the Bay's
-3,444 town pixels, towns with a step over 10 m fall from 57 to 3 (DFU's own blend has 7), and flats off their plane from
-5,902 to none. Westhead Moor's worst step is 7.3 m, Aldwall Rock's 7.7 m. Of 106 ports, the ground past a jetty's end
-rose over its deck by more than 6 m at 92 (the worst 102 m); now at 5, none over 12 m.
+3,444 town pixels, towns with a step over 10 m fall from 57 to 3, and flats off their plane from 5,902 to none. Of the 86
+that hold sea, TS2 stood 53 over 10 m and DFU's own blend stands 7. Westhead Moor's worst step is 7.3 m, Aldwall Rock's
+7.7 m. Of 106 ports, the ground past a jetty's end rose over its deck by more than 6 m at 92 (the worst 102 m); now at 5,
+none over 12 m.
+
+NOT THE BAY ALONE. The blend is every shaped town's, so a town past the Bay moved too: `portships_real.test.js`'s pins
+moved for Sunhold and Woodhearth, whose banks were TS2's cliffs.
 
 AT THE MERGE. Two copies of the outline left the crops out, and each is fixed and pinned: the Eltheric isles' Deep Waters
 bake, which packed a template's basis without them (`etherWatersBake.js` etherPlaceRects), and main's FIRST-VISIT record
@@ -64,11 +68,12 @@ over the 407 templates past it. Past the Bay the town's paving also lay at a gat
 FIXED. Each length and gate leaves out what lies in a tower's body, cuts a face along a side 5 cm past it, and mitres
 its walk at the tower's middle; the paving lays nothing where the wall stands. Two faces within 4 cm: none on any wall of
 either set, and none of the paving's. Rays from both sides see the same open ends as before, so nothing opens. Riften's
-probe at the game's depth: 13,556 tower pixels changed when the eye moved 1 cm, now 112, their edges. The model is about
-5 per cent larger and seven times as long to make (11 against 79 ms a city), so it is made 16 pieces a breath.
+probe at the game's depth: 13,556 tower pixels changed when the eye moved 1 cm, now 112, their edges. With BAY-WALLS'
+mitres and grown towers, the model of every fifth Bay city holds 10.6 per cent more triangles (886,446 to 980,640) and
+takes about seven times as long to make (37 against 5 ms a city, on a loaded machine), so it is made 16 pieces a breath.
 
-Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2). Mutants `tools/mutants/fb1028_wallflicker.json` (22:
-20 dead, 2 recorded equivalent with why).
+Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2). Mutants `tools/mutants/fb1028_wallflicker.json` (23:
+21 dead, 2 recorded equivalent with why).
 
 ## BAY-WALLS: Daggerfall's walls, kept and fixed (7)
 
@@ -78,7 +83,8 @@ yardRoads), `src/world/merchantYards/merchantYardSites.js` (keptSitesSteps). The
 
 FOUND. Daggerfall stands walled on its outline online because a home bought before WD3 holds it in its own layout.
 - **Doors in walls:** the doors are the wall pieces' own (a length has one, a gate two), and they open into nothing.
-  16,329 of 32,779 stood inside a tower.
+  Of the 32,779 on #1184's walls, 7,169 stood inside a tower's body and 11,191 inside it or on its side's plane
+  (Daggerfall 21 and 34 of 106).
 - **Clipping:** a bend's tower was only the wall's width, so its two lengths ran through each other: 24,619 of 31,266.
 - **Roads to nowhere:** GATE-ROADS slid each gate onto a street and left the road's arm running into the wall, at 369
   of the 410 walls. In 34 cities a street of the town's own ran into the wall where Daggerfall's ring had its gate.
@@ -91,15 +97,24 @@ gate gets its own gate. Now no wall has a door or a piece in another. 8 pieces o
 (1,645 before), none of them Daggerfall's, which keeps its 5 gates.
 
 THE YARDS. The owner's rule: a yard keeps its #1184 place unless the place is broken. The new roads moved 310, so a yard
-now reads the roads and the wall as #1184 laid them, and one whose place no longer fits is placed again. 1,183 of the
-1,258 stand where they stood, and none is broken. Of the 75 moved, 52 lay on a gate's new road, 2 in the new wall and 19
-against a grown tower. Town-Shapes section 16 lists them all. Westhead Moor's shipyard is not among them.
+now reads the roads and the wall as #1184 laid them, and one whose place no longer fits is placed again. At the merge
+1,183 of the 1,258 stood where they stood. Of the 75 moved, 50 lay on a gate's new road, 2 in the new wall and 19 against
+a grown tower; 4 stables moved but were not broken (below). Since the audit's B5 and B2 (`0be4199e9`), the 19 and
+Puweyn's stable stand on their #1184 cells: 1,203 stand, and 55 moved. Town-Shapes section 16 lists them all. Westhead
+Moor's shipyard is not among them.
 
-OPEN. Four stables are not broken but moved 1 to 4 cells, because the gate furniture now steps clear of the grown towers
-and the yard law reads it: Knightsgate, Issaqumbaa, Syra-Kom and Puweyn. Holding them needs a second layout of that
-furniture for the yards. Past the Bay, the same slide leaves road arms at walls, and its yards are not measured.
+OPEN.
+- Three stables are not broken but moved 1 to 4 cells, because the gate furniture now steps clear of the grown towers
+  and the yard measures read it: Knightsgate, Issaqumbaa and Syra-Kom. Holding them needs a second layout of that
+  furniture for the yards.
+- Past the Bay, the same slide leaves road arms at walls. The new town-ground mask moved yards there too: 11 of 306
+  sampled. Not fixed: to match #1184 the ring would be painted twice.
+- Three street gates have no road out: Naresa (460.9, 700.8), Akhahanu (358.7, 496.5) and Menakat (255.9, 598.9).
+- Two ground findings wait, because a fix moves the ground again: a seam drop in the edge band at Sentinel with the
+  Landforms row off, and an ease that is not monotone beside tall relief.
 
 AT THE MERGE. WALL-FLICKER cut a length clear of a tower's body as the wall's width, and the grown towers left a turned
 length's face 1 to 3 cm under the tower's (Berbaaqnia, 72 m2). The cut reads the grown body now, and none is left.
 
-Tests `test/world/fb1028_walls.test.js` (two on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (32).
+Tests `test/world/fb1028_walls.test.js` (15, four on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (37, every one
+dead without ARENA2: the yard law and the host's wiring run on synthetic towns).
