@@ -862,8 +862,8 @@ export const affixWord = (a, tier) => (validAffix(a) ? AFFIX_KINDS[a.id].word(BA
  *  mintPiece): each pick even over the KINDS, and a Rare's last pick held
  *  to whichever name slot its lines left empty - so a record made before
  *  mints the piece it always did. */
-export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, lean: leans = true, fists = true } = {}) {   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN; JEWEL-KIN: `fists` false a record's old lean (skillKin)
-  const lean = leans && byLines ? armorLean(item) : null;
+export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, lean: leans = true, fists = true, flat = false } = {}) {   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN; JEWEL-KIN: `fists` false a record's old lean (skillKin); PRESS-FLAT: `flat` no lean at all
+  const lean = leans && byLines && !flat ? armorLean(item) : null;
   const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].groups.includes(item.group) && !AFFIX_KINDS[id].proc);   // LOOT4: the numbers alone - a door's last pass adds a kind that does something
   const [min, max] = AFFIX_COUNTS[tier] ?? [0, 0];
   const count = rangeInt(min, max, rolls);
@@ -875,8 +875,8 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, l
     const value = rangeInt(lo, hi, rolls);
     if (!k.params) { taken.add(id); return { id, value }; }
     const free = kindParams(id, item).filter((p) => !taken.has(`${id}:${p}`));   // LOOT14: a garment's attribute is Personality alone
-    if (id === 'standing') { const g = pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }   // LOOT14: a garment's standing leans to its dress
-    const param = id === 'skill' ? pickSkill(item, free, rolls, fists) : leanedParam(lean, id, free, rolls);   // LOOT1: a skill leans to the item's own; ARMOR-LEAN: a stat or resistance to armour's family
+    if (id === 'standing') { const g = flat ? pick(free, rolls) : pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }   // LOOT14: a garment's standing leans to its dress
+    const param = id === 'skill' && !flat ? pickSkill(item, free, rolls, fists) : leanedParam(lean, id, free, rolls);   // LOOT1: a skill leans to the item's own; ARMOR-LEAN: a stat or resistance to armour's family
     taken.add(`${id}:${param}`);
     return { id, param, value };
   };
@@ -892,7 +892,7 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, l
       if (need) { const p = pool.filter((id) => AFFIX_KINDS[id].slot === need); if (p.length) pool = p; }
     }
     const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));   // AFFIX-LINES: over the lines
-    const id = i === 0 && own && pool.includes(own) && rolls() < (lean?.own ?? 0.5) ? own : draw();   // ARMOR-LEAN: the family's share
+    const id = i === 0 && own && !flat && pool.includes(own) && rolls() < (lean?.own ?? 0.5) ? own : draw();   // ARMOR-LEAN: the family's share
     out.push(mint(id));
   }
   return out;
@@ -1469,7 +1469,7 @@ export const affixesWorth = (affixes, item = null) => Math.round((affixes ?? [])
  *  enchantment. Common leaves the item as DFU minted it; so does any
  *  tier the ladder does not roll (SET6: an Aetheric piece is a fixed
  *  record, minted whole by systems/aetheric.js - never a roll). */
-export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null, byLines = true, lean = true, fists = true } = {}) {   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN   // AFFIX-LINES: `byLines` false a product record's old law (rollAffixes); JEWEL-KIN: `fists` false its old lean
+export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null, byLines = true, lean = true, fists = true, flat = false } = {}) {   // PRESS-FLAT: `flat` the Imbue's roll, no lean   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN   // AFFIX-LINES: `byLines` false a product record's old law (rollAffixes); JEWEL-KIN: `fists` false its old lean
   if (!item || !ROLLED_TIERS.includes(tier)) return item;
   let affixes;
   let enchantment = null;
@@ -1482,7 +1482,7 @@ export function applyRarity(item, tier, rolls = Math.random, legendaryPool = nul
     item.legendary = rec.id;
     item.name = rec.name;
   } else {
-    affixes = rollAffixes(item, tier, rolls, { byLines, lean, fists });
+    affixes = rollAffixes(item, tier, rolls, { byLines, lean, fists, flat });
     item.name = rarityName(item, tier, affixes);
     if (tier === 'rare') enchantment = rareFlavour(RARE_FLAVOURS[item.group] ?? RARE_FLAVOURS.Jewellery, rolls, fits);
   }
@@ -2217,12 +2217,13 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const tier = item.rarity;
   const old = item.affixes[index];
   const { ids: pool, others, freeParams } = reforgePool(item, index);
-  const id = pickByLines(pool, (k) => drawWeight(k, item, others), rolls);
+  // PRESS-FLAT (2026-10-28, the owner: "no lean at all", "it need to reroll as well"): a reforge's kind and param are
+  // drawn with no lean - no skill to the item's own, no armour family's weight, no garment's dress
+  const id = pickByLines(pool, (k) => drawWeight(k, item, others, null), rolls);
   const k = AFFIX_KINDS[id];
   const [lo, hi] = AFFIX_RANGES[id][tier];
   const value = rangeInt(tier === 'legendary' ? Math.ceil((lo + hi) / 2) : lo, hi, rolls);
-  const leaned = id === 'skill' ? pickSkill : id === 'standing' ? pickStanding : null;   // LOOT1's lean, LOOT14's
-  const line = k.params ? { id, param: leaned ? leaned(item, freeParams(id), rolls) : leanedParam(armorLean(item), id, freeParams(id), rolls), value } : { id, value };   // ARMOR-LEAN: armour's stat or resistance on its family
+  const line = k.params ? { id, param: pick(freeParams(id), rolls), value } : { id, value };
   const count = Math.min(REFORGES_MAX, reforgeCount(item) + 1);
   item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
   item.reforges = count;
