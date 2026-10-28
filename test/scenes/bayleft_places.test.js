@@ -8,7 +8,7 @@
 // were a snapshot of the index at the view's first ask - no countryside, no province not built yet; a quest's diamond
 // past the Bay did nothing (its key's pixel unread west and north of the Bay's corner, and its place unfound). Now a
 // place found there is its row's summary - the registry's list, the countryside's roll, a lair's, the rolls the build
-// stands (scenes/tamrielPlacesHost.js rowAt) - known by the ids the pixel could hold before it stands (idsOnPixel), its
+// stands (scenes/tamrielPlacesHost.js rowAt) - known by its kind or found before it stands (OW-BEYOND-KNOWN), its
 // location stood the first time a journey reads it (`loc`), never for a list. C11: the carriage towns keyed by the
 // place's own id (it read every map id as the Bay's `y * 1000 + x`). C10: the junction map's dots past the Bay.
 import '../modsOff.js';
@@ -24,6 +24,7 @@ import { LOCATION_TYPES as T, mapPixelToLongitudeLatitude } from '../../src/form
 import { locationWorldRect } from '../../src/world/streamingWorld.js';
 import { capitalPlaceId } from '../../src/world/tamrielCapitals.js';
 import { countryPlaceId } from '../../src/world/tamrielCountry.js';
+import { lairPlaceId } from '../../src/world/tamrielDungeons.js';   // OW-BEYOND-KNOWN: a kind the Bay never bakes found
 import { hostText } from '../hostText.mjs';
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 
@@ -36,7 +37,6 @@ function placesOf(rows) {
   const at = new Map(rows.map((r) => [`${r.px},${r.py}`, r]));
   const index = new Map(), stands = [], rowsAsked = [];
   const pq = {
-    idsOnPixel: (px, py) => (at.has(`${px},${py}`) ? [at.get(`${px},${py}`).mapId] : []),
     rowAt: (px, py) => { rowsAsked.push(`${px},${py}`); return at.get(`${px},${py}`) ?? null; },
     standAt: (px, py) => { stands.push(`${px},${py}`); const r = at.get(`${px},${py}`); if (!r) return null; const loc = stoodLoc(r); index.set(`${px},${py}`, loc); return loc; },
   };
@@ -46,31 +46,33 @@ const host = (o) => ({ captainLedger: { isCharted: () => false, chartedCount: ()
   wildActiveNow: () => null, wildHallStand: () => null, provinceQuestPlaces: o.pq ?? null, worldPlaces: o.worldPlaces ?? null, _locIndexGen: o.gen ?? 0 });
 const TOWN = { mapId: countryPlaceId(1234), name: 'Ingmik', px: 1600, py: -420, type: T.TownHamlet, region: 64, location: -900, w: 2, h: 2 };
 const PORT = { mapId: 0x24180123 >>> 0, name: 'Dawnstar', px: 1700, py: -600, type: T.TownCity, region: 64, location: -800, w: 4, h: 4, port: true };
+/** PIN MOVED (OW-BEYOND-KNOWN, bible/06-Systems/Travel-View.md): a town past the Bay is known by its kind now, as MAPS.BSA bakes
+ *  every town of the Bay found - the found law is a lair's (a kind no Bay row bakes found). */
+const LAIR = { mapId: lairPlaceId(1234), name: 'Ingmik Barrow', px: 1600, py: -420, type: T.DungeonRuin, region: 64, location: -900, w: 2, h: 2 };
 
 test('BAY-LEFT-MAPS C3 A PLACE FOUND, NOT STANDING YET: its summary is its row\'s - id, name, region, location, type - known by the ids the pixel could hold, nothing stood to answer it; its location is stood the first time a journey reads it, once; its rect its grid\'s until then (mutants: the index alone as before; stood to answer; the location stood every read; the found law skipped; the row\'s own find unchecked)', () => {
-  const p = placesOf([TOWN, PORT]);
+  const p = placesOf([LAIR, PORT]);
   const mp = createMapPlaces(host(p));
-  assert.equal(mp.tvPlaceSummary(TOWN.px, TOWN.py), null, 'never found: no summary');
-  assert.deepEqual(p.rowsAsked, [], 'and no row read for it - a list of pixels costs the ids alone');
-  discoverLocation(TOWN.mapId, { locationName: TOWN.name });
-  const s = mp.tvPlaceSummary(TOWN.px, TOWN.py);
+  assert.equal(mp.tvPlaceSummary(LAIR.px, LAIR.py), null, 'never found: no summary');
+  assert.deepEqual([p.rowsAsked, p.stands], [['1600,-420'], []], 'PIN MOVED (OW-BEYOND-KNOWN): its row read for its kind - a roll, kept a pixel - and nothing stood');
+  discoverLocation(LAIR.mapId, { locationName: LAIR.name });
+  const s = mp.tvPlaceSummary(LAIR.px, LAIR.py);
   assert.deepEqual({ pixel: s.pixel, name: s.name, mapId: s.mapId, regionIndex: s.regionIndex, locationIndex: s.locationIndex, locationType: s.locationType },
-    { pixel: { x: TOWN.px, y: TOWN.py }, name: 'Ingmik', mapId: TOWN.mapId, regionIndex: 64, locationIndex: -900, locationType: T.TownHamlet });
+    { pixel: { x: LAIR.px, y: LAIR.py }, name: 'Ingmik Barrow', mapId: LAIR.mapId, regionIndex: 64, locationIndex: -900, locationType: T.DungeonRuin });
   assert.deepEqual(p.stands, [], 'nothing stood to answer it');
-  assert.deepEqual(s.lightRect(), locationWorldRect(stoodLoc(TOWN), TOWN.px, TOWN.py), 'its plate over its grid');
+  assert.deepEqual(s.lightRect(), locationWorldRect(stoodLoc(LAIR), LAIR.px, LAIR.py), 'its plate over its grid');
   const loc = s.loc;
   assert.deepEqual(p.stands, ['1600,-420'], 'read: stood, the build\'s own order');
   assert.equal(s.loc, loc);
   assert.equal(p.stands.length, 1, 'once');
   assert.equal(s.lightRect(), null, 'stood: its own rect');
-  const again = mp.tvPlaceSummary(TOWN.px, TOWN.py);
+  const again = mp.tvPlaceSummary(LAIR.px, LAIR.py);
   assert.equal(again.loc, loc, 'and the index\'s from then on');
-  assert.equal(again.locationType, T.TownHamlet);
+  assert.equal(again.locationType, T.DungeonRuin);
   // the pixel could hold two places (an Arena place under a capital's slice, say) and the one found is not the one the build
   // stands there: no summary - the row's own id is the one that must be found
-  const OTHER = { ...TOWN, mapId: countryPlaceId(4321), px: 1610, py: -420, name: 'Elsewhere' };
+  const OTHER = { ...LAIR, mapId: lairPlaceId(4321), px: 1610, py: -420, name: 'Elsewhere' };
   const q = placesOf([OTHER]);
-  q.pq.idsOnPixel = (px, py) => (px === OTHER.px && py === OTHER.py ? [OTHER.mapId, countryPlaceId(9999)] : []);
   discoverLocation(countryPlaceId(9999), {});
   assert.equal(createMapPlaces(host(q)).tvPlaceSummary(OTHER.px, OTHER.py), null, 'another id of the pixel found: not this place');
   discoverLocation(OTHER.mapId, {});
@@ -78,10 +80,10 @@ test('BAY-LEFT-MAPS C3 A PLACE FOUND, NOT STANDING YET: its summary is its row\'
 });
 
 test('BAY-LEFT-MAPS C3 A QUEST\'S DIAMOND: a place a quest names past the Bay is its summary found or not (`named`), and the press reads its key west and north of the Bay\'s corner - the host\'s and the marks\' (mutants: named unread; the index arm\'s named unread; the key\'s minus unread; a plate over a pending place reads its location)', () => {
-  const p = placesOf([{ ...TOWN, px: -150, py: -40 }]);
+  const p = placesOf([{ ...LAIR, px: -150, py: -40 }]);   // PIN MOVED (OW-BEYOND-KNOWN): a lair - a town is known by its kind
   const mp = createMapPlaces(host(p));
   assert.equal(mp.tvPlaceSummary(-150, -40), null, 'unfound');
-  assert.equal(mp.tvPlaceSummary(-150, -40, true)?.name, 'Ingmik', 'named by the quest');
+  assert.equal(mp.tvPlaceSummary(-150, -40, true)?.name, 'Ingmik Barrow', 'named by the quest');
   const loc = mp.tvPlaceSummary(-150, -40, true).loc;   // a journey reads it: it stands
   assert.ok(loc && p.index.get('-150,-40') === loc, 'read, it stands');
   assert.equal(mp.tvPlaceSummary(-150, -40), null, 'standing, still unfound');
@@ -143,11 +145,13 @@ test('BAY-LEFT-MAPS C11 THE CARRIAGE TOWNS BY THEIR OWN KEY: a Bay town by its p
 });
 
 test('BAY-LEFT-MAPS C10 THE JUNCTION MAP\'S DOTS: on the Bay its row and DFU\'s discovery law, as it read; past the Bay a place found there - its dot drawn, its type its row\'s, nothing stood (mutants: the dots past the Bay unread; the host\'s read held to the Bay)', () => {
-  const p = placesOf([TOWN]);
+  const p = placesOf([LAIR, { ...TOWN, px: 1620 }]);
   const mp = createMapPlaces(host(p));
-  assert.equal(mp.junctionPlaceAt(TOWN.px, TOWN.py), null, 'never found');
-  discoverLocation(TOWN.mapId, {});
-  assert.deepEqual(mp.junctionPlaceAt(TOWN.px, TOWN.py), { locationType: T.TownHamlet, mapId: TOWN.mapId, discovered: true });
+  assert.equal(mp.junctionPlaceAt(LAIR.px, LAIR.py), null, 'never found');
+  discoverLocation(LAIR.mapId, {});
+  assert.deepEqual(mp.junctionPlaceAt(LAIR.px, LAIR.py), { locationType: T.DungeonRuin, mapId: LAIR.mapId, discovered: true });
+  // PIN MOVED (OW-BEYOND-KNOWN): a hamlet's dot drawn unfound - known by its kind, as the Bay's hamlets are
+  assert.deepEqual(mp.junctionPlaceAt(1620, TOWN.py), { locationType: T.TownHamlet, mapId: TOWN.mapId, discovered: true });
   assert.deepEqual(p.stands, [], 'nothing stood for a dot');
   assert.equal(mp.junctionPlaceAt(500, 250), null, 'the Bay: its row\'s (none in this dictionary)');
   assert.match(hostText('src/scenes/world.js'), /locationAt: \(x, y\) => junctionPlaceAt\(x, y\),/);
@@ -169,14 +173,14 @@ test('BAY-LEFT-MAPS C3 on the player\'s data: a place found past the Bay, not st
   const { isCapitalPlaceId } = await import('../../src/world/capitalLane.js');
   const listed = world.worldPlaces.all().filter((r) => !inBay(r.px, r.py));
   const arena = listed.find((r) => !isCapitalPlaceId(r.mapId) && r.type === T.TownVillage && !world.locationIndex.has(`${r.px},${r.py}`));
-  const capital = listed.find((r) => r.name === 'Solitude');
+  const capital = listed.find((r) => r.mapId >>> 0 === capitalPlaceId(1, 0));   // Solitude's centre - the capital's own (IC-GRAND: a capital is one town)
   const hamlet = pq.countryNear(1600, -400, 12, 1)[0];
   assert.ok(arena && capital && hamlet, 'an Arena village, Solitude and a hamlet of Skyrim');
   const mp = mapPlacesOver(world);
   for (const r of [arena, capital, hamlet]) {
-    assert.equal(mp.tvPlaceSummary(r.px, r.py), null, `${r.name}: unfound`);
-    discoverLocation(r.mapId, {});
+    // PIN MOVED (OW-BEYOND-KNOWN): a village, a capital's centre and a hamlet are known by their kinds, never found
     const s = mp.tvPlaceSummary(r.px, r.py);
+    assert.ok(s, `${r.name}: known by its kind, unfound`);
     assert.equal(world.locationIndex.has(`${r.px},${r.py}`), false, `${r.name}: nothing stood to answer`);
     const want = { name: s.name, mapId: s.mapId, regionIndex: s.regionIndex, locationIndex: s.locationIndex, locationType: s.locationType };
     const loc = s.loc;

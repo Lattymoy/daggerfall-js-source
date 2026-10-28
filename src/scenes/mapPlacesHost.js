@@ -10,7 +10,8 @@
 // near query (tvFarSettlements) where they were a snapshot of the index at the view's first ask; the junction map's dots
 // past the Bay (junctionPlaceAt); and the carriage towns keyed by the place's own id (carriageTown - it read a map id as
 // the Bay's pixel id, `y * 1000 + x`).
-import { discoveryGeneration, hasDiscoveredLocationId, discoveryKeyOf } from '../systems/discovery.js';
+import { discoveryGeneration, hasDiscoveredLocationId, discoveryKeyOf, BAKED_KNOWN_TYPES } from '../systems/discovery.js';
+import { capitalStreet } from './livingWorld/livingIndex.js';   // OW-BEYOND-KNOWN: a capital is one town (IC-GRAND)
 import { etherPlaceIsle } from '../world/etherPlaces.js';
 import { hasCarriageGate } from '../world/immersiveTravelGates.js';
 import { immersiveTravelLoaded } from '../systems/immersiveTravel.js';
@@ -71,6 +72,9 @@ export function createMapPlaces(host) {
   /** The summary of the place on a pixel the Overworld (and the passages, the junction map) may journey to - known, as DFU
    *  knows a place: found. BAY-LEFT-MAPS: `named` - a place a quest names (its diamond pressed: OW-QUEST): past the Bay a
    *  quest's site is on the map whether or not it was found (START3), and its place is answered as found. */
+  /** OW-BEYOND-KNOWN (bible/06-Systems/Travel-View.md): past the Bay a place is known by its kind, as MAPS.BSA bakes the
+   *  Bay's (systems/discovery.js BAKED_KNOWN_TYPES) - a capital by its centre alone, its other slices its streets. */
+  const knownByKind = (mapId, type) => BAKED_KNOWN_TYPES.has(type) && !capitalStreet({ mapId });
   const tvPlaceSummary = (px, py, named = false) => {
     // ETHER-OW: past the Veil, an isle's place - known, it is its own summary (HALL-JOURNEY's way), its region the isles'
     if (etherSea && inEther(px, py)) {
@@ -85,18 +89,17 @@ export function createMapPlaces(host) {
     const loc = locationIndex.get(`${px},${py}`);
     // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row - the place the world stands there is its own summary,
     // known once discovered (entering it discovers it), so the Overworld walks to its door as to a Bay place's
-    // BAY-LEFT-MAPS (C3): and the index holds it only once its pixel has built - so where none stands yet, the place found
-    // there (one of the ids the pixel could hold found: scenes/tamrielPlacesHost.js idsOnPixel, no roll) or the quest names
-    // is its registry row's (pendingSummary): a booked passage to a port past the Bay resumes after a load, a port found in
-    // an earlier session is on its masters' lists, a far town stands at the view's edge, a quest's diamond is a journey
+    // BAY-LEFT-MAPS (C3): and the index holds it only once its pixel has built - so where none stands yet, the place known
+    // there (OW-BEYOND-KNOWN: by its kind, or found) or the quest names is its registry row's (pendingSummary): a booked
+    // passage to a port past the Bay resumes after a load, a port found in an earlier session is on its masters' lists, a
+    // far town stands at the view's edge, a quest's diamond is a journey
     if (!onTheBay(px, py)) {
       if (loc) {
         const id = (loc.mapTableData?.mapId ?? 0) >>> 0;
-        return loc.name && id && (named || hasDiscoveredLocationId(id)) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id, regionIndex: loc.regionIndex, locationIndex: loc.locationIndex, locationType: loc.mapTableData?.locationType, loc } : null;
+        return loc.name && id && (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id, regionIndex: loc.regionIndex, locationIndex: loc.locationIndex, locationType: loc.mapTableData?.locationType, loc } : null;
       }
-      const known = named || !!provinceQuestPlaces?.idsOnPixel(px, py).some((id) => hasDiscoveredLocationId(id));
-      const row = known ? provinceQuestPlaces?.rowAt(px, py) ?? null : null;
-      return row?.name && (named || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;
+      const row = provinceQuestPlaces?.rowAt(px, py) ?? null;   // OW-BEYOND-KNOWN: read for its kind - a roll, kept a pixel; nothing stood
+      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;
     }
     const row = loc?.name ? travelLocationSummaryAt(mapDict, px, py) : null;
     if (!row || !travelCheckDiscovered(row)) return null;   // DFU's own law: an undiscovered place has no name to go to

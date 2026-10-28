@@ -250,12 +250,12 @@
   {
     "name": "BLM-C3-the-index-alone-as-before",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      return row?.name && (named || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;",
     "new": "      return null;",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
-    "note": "a place past the Bay is a summary only once its pixel has built (a booked passage there never resumes after a load, a port found in an earlier session leaves its masters' lists, a far plate and a quest's diamond are nothing)"
+    "note": "a place past the Bay is a summary only once its pixel has built (a booked passage there never resumes after a load, a port found in an earlier session leaves its masters' lists, a far plate and a quest's diamond are nothing); OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the row's summary line, its kind read now"
   },
   {
     "name": "BLM-C3-stood-to-answer",
@@ -279,41 +279,42 @@
   {
     "name": "BLM-C3-the-found-law-skipped",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      const known = named || !!provinceQuestPlaces?.idsOnPixel(px, py).some((id) => hasDiscoveredLocationId(id));",
-    "new": "      const known = true;",
+    "old": "knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
+    "new": "knownByKind(row.mapId >>> 0, row.type) || true)",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
-    "note": "every pixel of a list reads its row (the countryside's roll) to learn it was never found"
+    "note": "every pixel of a list reads its row (the countryside's roll) to learn it was never found; OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the ids-alone precheck is gone (a list reads each row for its kind); the found law is a dungeon's, so skipped it knows every lair"
   },
   {
     "name": "BLM-C3-the-row's-own-find-unchecked",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      return row?.name && (named || hasDiscoveredLocationId(row.mapId)) ? pendingSummary",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId)) ? pendingSummary",
     "new": "      return row?.name ? pendingSummary",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
-    "note": "another place the pixel could hold found names the one the build stands there"
+    "note": "another place the pixel could hold found names the one the build stands there; OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the row's line reads its kind too; unchecked, a lair the pixel holds is known whoever's id was found"
   },
   {
     "name": "BLM-C3-named-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      const known = named || !!provinceQuestPlaces",
-    "new": "      const known = !!provinceQuestPlaces",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type)",
+    "new": "      return row?.name && (knownByKind(row.mapId >>> 0, row.type)",
     "tests": [
       "test/scenes/bayleft_places.test.js"
-    ]
+    ],
+    "note": "OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - `named` is read on the row's line now"
   },
   {
     "name": "BLM-C3-the-index-arm's-named-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "return loc.name && id && (named || hasDiscoveredLocationId(id)) ?",
-    "new": "return loc.name && id && hasDiscoveredLocationId(id) ?",
+    "old": "return loc.name && id && (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ?",
+    "new": "return loc.name && id && (knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ?",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
-    "note": "a quest's site past the Bay, standing and unfound, is no journey"
+    "note": "a quest's site past the Bay, standing and unfound, is no journey; OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - the standing arm reads its kind too; a quest's lair, standing and unfound, is the pin"
   },
   {
     "name": "BLM-C3-the-key's-minus-unread",

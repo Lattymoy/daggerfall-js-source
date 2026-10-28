@@ -17,6 +17,7 @@
 import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
 import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
 import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
+import { LOCATION_TYPES } from '../formats/mapsFile.js';   // OW-BEYOND-KNOWN: the kinds the Bay's rows bake found
 import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-MAPS: a province's region
 import { BAY_PIXEL_IDS } from '../world/placeIds.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
 
@@ -316,6 +317,15 @@ export function discoverLocation(mapId, info = {}) {
 export function hasDiscoveredLocationId(mapId) {
   return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId));   // AUDIT TESA II P6
 }
+
+/** OW-BEYOND-KNOWN (2026-10-28, the field: "travel nodes dont exist outside the bay in overworld"): THE KINDS MAPS.BSA BAKES
+ *  DISCOVERED ON EVERY ROW (its MapTable Discovered bit; the freeware's 15,251 rows) - every city, town, village, farm,
+ *  manor, poor home, inn, temple, cult and ship. No labyrinth, ruin, keep or coven is, and 191 of 774 graveyards. A place
+ *  past the Bay is no row of it, so it is known by its kind's. */
+export const BAKED_KNOWN_TYPES = Object.freeze(new Set([
+  LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms, LOCATION_TYPES.HomeWealthy,
+  LOCATION_TYPES.HomePoor, LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple, LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips,
+]));
 
 /** DiscoverRandomLocation (PlayerGPS.cs:892-910), the pure law:
  *  candidates are the CURRENT region's rows with the BAKED MapTable
