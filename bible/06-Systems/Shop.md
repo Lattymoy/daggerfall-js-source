@@ -122,11 +122,25 @@ payment method, so Stripe offers the account's, but it charged in dollars and iD
   the account deploy runs (`account-deploy.yml`, "Turn on the shop's ways to pay"). One ask a method, only where off; the
   summary says which Stripe has active, refused or does not offer the account. Never red: cards are taken either way.
 - **Left out:** SEPA Debit (it confirms days later and can be pulled back for weeks) and Klarna (credit, for a $2 glyph).
-  A method taken off the list stays as the Dashboard has it.
+- **The list is the law, as Discord's commands are.** A listed method the Dashboard turns off is turned on again by the
+  next deploy, and its line says "turned on by this deploy". To drop one, take it off the list, then turn it off in the
+  Dashboard. The configuration is the Stripe account's default, so a Payment Link on the account offers the same.
 - **The owner's:** iDEAL's scheme asks a seller outside the Netherlands to show its business registration number on its
   site.
 
 Pins: `test/server/shoplocal.test.js`. Mutants: `tools/mutants/shoplocal.json`.
+
+**AUDIT SHOP-LOCAL** (2026-10-28, the owner: "You need to audit this"; an independent read of the merged change):
+
+1. The step went red on its first deploy and every later step was skipped. The job's shell is `bash -e`, so a bare
+   `out=$(...)` that failed ended the step with its reason unsaid. The exit is now read in an `if`, as Discord's step
+   reads it. The pin runs the step's own bash as GitHub does, with a stand-in `node`.
+2. Stripe echoes a bad key masked to its last four ("sk_live_****1234"); `said` takes it out before the log.
+3. A method the deploy turned on is said so (above).
+4. A thrown fetch is one line ("Stripe could not be reached"), not a stack.
+5. Checked and kept: the webhook's USD check (Stripe's docs), the 400 retry (a refused request saves no idempotent
+   result), the Connect-child filter, the eight methods' confirmation, the 13 translations. Dutch and Polish stay
+   drafting, offered only by a pack; Stripe's own page follows the browser's language.
 
 ## 6. The faces
 

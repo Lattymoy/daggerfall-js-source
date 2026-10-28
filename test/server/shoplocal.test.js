@@ -6,7 +6,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, chmodSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 
 import { standService } from '../accountDb.mjs';
 import { checkoutFields, stripeCheckout, shopConfirmPage, STRIPE_API, STRIPE_PMC_API, SHOP_PAY_METHODS } from '../../server-account/src/shop.js';
@@ -85,7 +88,7 @@ function fakeStripe({ cfg, refuse = {}, listStatus = 200, activates = true } = {
   const fetch = async (url, init = {}) => {
     const u = String(url);
     asked.push({ url: u, method: init.method ?? 'GET', body: init.body ?? null, auth: init.headers?.authorization });
-    if (u === `${STRIPE_PMC_API}?limit=100`) return Response.json(listStatus === 200 ? { object: 'list', data: [child, state] } : { error: { message: 'Invalid API Key provided' } }, { status: listStatus });
+    if (u === `${STRIPE_PMC_API}?limit=100`) return Response.json(listStatus === 200 ? { object: 'list', data: [child, state] } : { error: { message: 'Invalid API Key provided: sk_live_****************said' } }, { status: listStatus });
     if (u === `${STRIPE_PMC_API}/${state.id}` && (init.method ?? 'GET') === 'GET') return Response.json(state);
     if (u === `${STRIPE_PMC_API}/${state.id}` && init.method === 'POST') {
       const [, m] = /^([a-z0-9_]+)%5Bdisplay_preference%5D%5Bpreference%5D=on$/.exec(init.body) ?? [];
@@ -115,34 +118,34 @@ test('SHOP-LOCAL THE WAYS TO PAY (tools/stripeMethods.mjs): iDEAL, Wero, Bancont
   assert.ok(posts.every((a) => a.url === `${STRIPE_PMC_API}/pmc_root`), 'the account\'s own default, never the platform\'s child');
   assert.ok(st.asked.every((a) => a.auth === `Bearer ${KEY}`));
   assert.deepEqual(r.lines, [
-    '- iDEAL: on',
+    '- iDEAL: turned on by this deploy',
     '- Wero: not offered to this Stripe account',
     '- Bancontact: on',
-    '- EPS: on',
+    '- EPS: turned on by this deploy',
     '- BLIK: not turned on - Stripe: BLIK is not available in your country.',
-    '- Przelewy24: on',
+    '- Przelewy24: turned on by this deploy',
     '- PayPal: not offered to this Stripe account',
-    '- Revolut Pay: on',
-  ]);
+    '- Revolut Pay: turned on by this deploy',
+  ], 'AUDIT SHOP-LOCAL 3: a method the deploy turned on is said so - one the Dashboard had off is never put back unsaid');
   assert.ok(!r.lines.join('\n').includes(KEY), 'the key never said');
   // a second deploy asks nothing more
   const again = await stripeMethods(st.fetch, KEY);
   assert.equal(again.ok, true);
+  assert.equal(again.lines[0], '- iDEAL: on', 'on the next deploy, already on');
   assert.equal(st.asked.filter((a) => a.method === 'POST').length, 6, 'only BLIK, refused before, is asked again');
   // on and not yet active: said so, with where to look
   const wait = fakeStripe({ cfg: { ...cfg, ideal: off }, activates: false });
-  assert.equal((await stripeMethods(wait.fetch, KEY, ['ideal'])).lines[0], '- iDEAL: on, waiting for Stripe to activate it (Dashboard: Settings, Payment methods)');
+  assert.equal((await stripeMethods(wait.fetch, KEY, ['ideal'])).lines[0], '- iDEAL: turned on by this deploy, waiting for Stripe to activate it (Dashboard: Settings, Payment methods)');
   assert.equal(methodState(off), 'off');
   // nothing to read: said, nothing asked of it
   const bad = fakeStripe({ cfg, listStatus: 401 });
   const no = await stripeMethods(bad.fetch, KEY);
   assert.deepEqual([no.ok, no.lines], [false, []]);
-  assert.match(no.problem, /Stripe refused the configurations' list: Invalid API Key provided/);
-  assert.ok(!no.problem.includes(KEY));
+  assert.equal(no.problem, 'Stripe refused the configurations\' list: Invalid API Key provided: [the key]', 'not even the masked key Stripe echoes, whose last four are the key\'s');
   assert.equal(bad.asked.length, 1);
 });
 
-test('SHOP-LOCAL the deploy runs it on every account deploy, after the Stripe secrets and before Discord\'s last step: the key an env var from the repository\'s secrets, never an argument; never red (cards are taken either way) - a failure a warning and the summary\'s line; skipped, said, with no key; and the deploy\'s path filter holds the tool\'s own import graph (mutants: the step red; the tool unlisted)', () => {
+test('SHOP-LOCAL the deploy runs it on every account deploy, after the Stripe secrets and before Discord\'s last step: the key an env var from the repository\'s secrets, never an argument; never red (cards are taken either way) - a failure a warning and the summary\'s line; skipped, said, with no key; and the deploy\'s path filter holds the tool\'s own import graph (mutants: the step red - as it first shipped; the tool unlisted)', () => {
   const wf = rd('.github/workflows/account-deploy.yml');
   const steps = wf.split(/\n      - name: /).slice(1);
   const at = steps.findIndex((s) => s.startsWith('Turn on the shop\'s ways to pay, where the repository has the Stripe key\n'));
@@ -153,10 +156,29 @@ test('SHOP-LOCAL the deploy runs it on every account deploy, after the Stripe se
   assert.match(step, /STRIPE_SECRET_KEY: \$\{\{ secrets\.STRIPE_SECRET_KEY \}\}/);
   assert.match(step, /node tools\/stripeMethods\.mjs 2> "\$err"/);
   assert.doesNotMatch(step, /\$\{?STRIPE_SECRET_KEY\}? *[^"\s]*\s*node|--key|echo "\$\{?STRIPE_SECRET_KEY/, 'the key is never an argument nor echoed');
-  assert.doesNotMatch(step, /exit 1/, 'never red');
-  assert.match(step, /set -uo pipefail/, 'no -e: the tool\'s failure is read, not fatal');
-  assert.match(step, /::warning::/);
-  assert.match(step, /exit 0/, 'no key: skipped, said');
+  // AUDIT SHOP-LOCAL 1 (the first deploy: red, its reason unsaid, every later step skipped): the step's own bash RUN as
+  // GitHub runs it - the job's `shell: bash` is bash -e -o pipefail - with a stand-in node
+  assert.match(wf, /\n    defaults:\n      run:\n        shell: bash\n/, 'the job\'s shell, which -e comes with');
+  const script = step.split('\n        run: |\n')[1].split('\n').filter((l) => l === '' || l.startsWith('          ')).map((l) => l.slice(10)).join('\n');
+  const run = (exit, key = 'sk_test_stand_in') => {
+    const dir = mkdtempSync(join(tmpdir(), 'waystopay-'));
+    writeFileSync(join(dir, 'node'), `#!/bin/sh\necho "- iDEAL: on"\n${exit ? 'echo "Stripe refused the configurations\' list: [the key]" >&2\n' : ''}exit ${exit}\n`);
+    chmodSync(join(dir, 'node'), 0o755);
+    const summary = join(dir, 'summary.md');
+    writeFileSync(summary, '');
+    const r = spawnSync('bash', ['--noprofile', '--norc', '-e', '-o', 'pipefail', '-c', script], { encoding: 'utf8', env: { PATH: `${dir}:${process.env.PATH}`, STRIPE_SECRET_KEY: key, RUNNER_TEMP: dir, GITHUB_STEP_SUMMARY: summary } });
+    return { status: r.status, out: r.stdout, summary: readFileSync(summary, 'utf8') };
+  };
+  const failed = run(1);
+  assert.equal(failed.status, 0, `never red - cards are taken either way (${failed.out})`);
+  assert.match(failed.out, /::warning::the shop's ways to pay were not set - Stripe refused the configurations' list: \[the key\]/, 'the reason said');
+  assert.match(failed.summary, /#### The ways to pay[^]*\*\*Not set:\*\* Stripe refused/, 'and in the summary');
+  const done = run(0);
+  assert.equal(done.status, 0);
+  assert.match(done.summary, /#### The ways to pay\n\n- iDEAL: on\n/);
+  assert.doesNotMatch(done.out, /::warning::/);
+  const none = run(0, '');
+  assert.deepEqual([none.status, none.out.trim(), none.summary], [0, 'STRIPE_SECRET_KEY is not set - the ways to pay are left as they are', ''], 'no key: skipped, said');
   const listed = (wf.split('\n    paths:\n')[1] ?? '').split('\n').filter((l) => /^      - "/.test(l)).map((l) => l.slice(9, -1));
   const outside = graph('tools/stripeMethods.mjs').filter((f) => !f.startsWith('server-account/'));
   assert.ok(outside.includes('tools/stripeMethods.mjs') && outside.includes('tools/lib/isMain.mjs'));

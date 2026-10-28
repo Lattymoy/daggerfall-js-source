@@ -65,8 +65,8 @@
   {
     "name": "SL-a-refusal-stops-the-rest",
     "file": "tools/stripeMethods.mjs",
-    "old": "if (!r.ok) refused.set(m, said(r.body));",
-    "new": "if (!r.ok) { refused.set(m, said(r.body)); break; }",
+    "old": "if (r.ok) turned.add(m); else refused.set(m, said(r.body));",
+    "new": "if (r.ok) turned.add(m); else { refused.set(m, said(r.body)); break; }",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -81,10 +81,10 @@
     ]
   },
   {
-    "name": "SL-the-step-red",
+    "name": "SL-the-step-red-as-shipped",
     "file": ".github/workflows/account-deploy.yml",
-    "old": "            echo \"::warning::the shop's ways to pay were not set - $(head -c 300 \"$err\")\"\n",
-    "new": "            echo \"::warning::the shop's ways to pay were not set - $(head -c 300 \"$err\")\"\n            exit 1\n",
+    "old": "          if out=$(node tools/stripeMethods.mjs 2> \"$err\"); then code=0; else code=$?; fi\n",
+    "new": "          out=$(node tools/stripeMethods.mjs 2> \"$err\")\n          code=$?\n",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -94,6 +94,24 @@
     "file": ".github/workflows/account-deploy.yml",
     "old": "      - \"tools/stripeMethods.mjs\"\n",
     "new": "",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-echoed-key-said",
+    "file": "tools/stripeMethods.mjs",
+    "old": ".replace(/\\b(?:sk|rk|pk)_(?:live|test)_\\S*/g, '[the key]')",
+    "new": "",
+    "tests": [
+      "test/server/shoplocal.test.js"
+    ]
+  },
+  {
+    "name": "SL-the-turn-unsaid",
+    "file": "tools/stripeMethods.mjs",
+    "old": "if (r.ok) turned.add(m); else refused.set(m, said(r.body));",
+    "new": "if (!r.ok) refused.set(m, said(r.body));",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
