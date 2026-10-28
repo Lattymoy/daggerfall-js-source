@@ -90,6 +90,10 @@ it waiting on shader links) starts every program the boot builds together, as so
 driver compiles them beside the boot's own work. It does not move the picture. Its section is the last before For the
 owner.
 
+COMPILE-QUEUE (2026-10-27, players on the desktop app: "A good 10-15 sec lockup shortly after first login") starts the
+programs the boot's idle starts early one at a time, so a build that reads its link no longer waits behind all of them.
+Its section is after FIRST-USE's.
+
 ## How the pass was run
 
 NOT IN THE REAL GAME. The frame probe (`tools/frameProbe.mjs`, PERF-NEXT's recipe) needs the freeware ARENA2, and its
@@ -1558,7 +1562,7 @@ p95 0.9 ms, worst 1.9 ms (0.7 ms and 1.2 ms with nothing compiling).
 **Not measured.** The live game with a crowd: the link between the report and this build is the code path and the
 timings above. Other GPUs and drivers. A machine with fewer cores, where the background compile shares the CPU with
 the frames, and where ANGLE's compile threads are few: a pass a fight asks as needed (`get(true)`) inside the aura's
-compile could wait behind it. A player who never goes online still pays the background compile at a boot the shader
+compile could wait behind it. COMPILE-QUEUE (below) measured that wait, behind every program the boot started, and took it. A player who never goes online still pays the background compile at a boot the shader
 cache misses; starting it at the first welcome instead is left for a measurement that shows the cost.
 
 Pins: `test/render/shaderstall.test.js` (AURA-STALL, and the auras in the list-and-constructor pin). Pins moved:
@@ -1727,6 +1731,68 @@ Pins: `test/render/firstuse.test.js` (3). Pin moved: `egz_tells.test.js` (the gh
 starts the look's six programs beside the ghosts'). Mutants: `tools/mutants/firstuse.json`, 14, all dead;
 `egz_stair.json`'s EGZ-the-lights-pass-rebuilt and `wb12d.json`'s AUDIT-WB12d-the-smoke-built-in-the-draw re-aimed by
 content, both dead.
+
+## COMPILE-QUEUE — the passes play meets are started one at a time
+
+*FIELD BUGS 2026-10-27b (`01-Overview/bugs/Field-Bugs-2026-10-27b.md`), the desktop app: "hitch 13000ms", "A good 10-15
+sec lockup shortly after first login".*
+
+**Found.** The renderer's idle warm (`renderer.js lazyWarmSteps`) started every program of `render/playPrograms.js` at
+once: 26 programs and 1.8 MB of GLSL, 1.7 MB of it the auras' fifteen looks. ANGLE compiles them on worker threads, and
+Chromium gives a WebGL context max(4, cores / 2) of them (`khr_parallel_shader_compile.cc`). ANGLE posts each link to
+that pool, and a LINK_STATUS read waits for its own link's event (`Program::resolveLinkImpl`). So a build that read a
+link after the start waited behind nearly all 26. The warm's next steps are such builds: the foes' telegraph, the windows'
+background, the weapon glow's two programs, then the rain. Each runs in an idle callback, which no frame sample holds, so
+the player's counter showed an ordinary frame before a 13-second gap.
+
+**The fix.** `glProgram.js startProgramsInTurn` starts a list one program at a time. The next starts once the driver says
+the last is done, asked at each idle; `startPlayPrograms` starts the passes play meets through it. Every pair is queued
+at once:
+- a door that asks for a queued pair moves it to the front (a wearer's look, the nodes' glint), and its `ready()` says
+  not yet until it is done;
+- a build that wants a queued pair compiles it at once, out of its turn, and the queue never starts it again;
+- a pass whose build threw lets its queued pairs go, with nothing to free;
+- a queue that ends early (its wait failed, its context lost) leaves no pair queued, so a door starts its own.
+
+Where the driver cannot say when a compile is done, nothing is queued, as before. Nothing drawn changes. A look met
+early waits its turn, so the auras can stand a little later than before where many are met at once.
+
+**Measured.** `tools/compileStallProbe.mjs queue`: ANGLE over SwiftShader with its parallel compile on, four compile
+threads, every source salted so no cache answered, two runs an arm on an idle machine. The build timed is the foes'
+telegraph, the warm's step after the start.
+
+| The play programs | Built at the start | Built 150 ms into their compile | All 26 done |
+|---|---|---|---|
+| none started | 6-7 ms | | |
+| all at once (before) | 342-361 ms | 454-734 ms | 0.4-0.9 s |
+| in turn (COMPILE-QUEUE) | 9-10 ms | 10-17 ms | 1.3-1.6 s |
+
+Again on the tree merged with main (28 programs, two runs an arm): 7 ms alone; at the start 460-462 ms against 8-9 ms;
+150 ms in, 492-623 ms against 11-12 ms; all done in 0.5-0.8 s against 1.5-2.0 s.
+
+These are SwiftShader's milliseconds. On D3D11 the auras' fourteen looks took 4.1 s one after another on AURA-SPLIT's
+machine, before the fifteenth was added.
+
+**Not measured.** A player's Windows machine. A build in play while a look compiles: where the driver compiles side by
+side it waits for its own program, and where it compiles one at a time, for the look in hand as well. The warm's own
+builds come right after the start, while the queue holds the gate's programs, among the smallest.
+
+**With BOOT-COMPILE** (merged the day after; its section is below). Its P2 made the renderer's warm steps
+`{ start, run, need }` steps, so the foes' telegraph, the windows' background and the weapon glow no longer read a link
+at idle. The play programs' start stayed a bare step, and it is this queue. What still reads a link at once waits behind
+one play program at most: the rain's warm step, the nodes' glow at idle, Deep Waters' and the ocean holes' warms, and
+any pass built in play. The boot's programs are started at page load, before the queue is filled; the queue skips a
+pair already started and never waits on it. AUDIT RED-MOUNTAIN F5 added the volcano's fire and the fence's glow to the
+list, so it holds 28 programs.
+
+THE FOUR HOSTS: none is wired. `scenes/world.js` and `scenes/exterior.js` start the queue through the renderer's warm,
+unchanged; `scenes/worldModes.js` and `scenes/dungeonContext.js` start none of these programs.
+
+Pins: `test/render/compilequeue.test.js` (8). Pins moved: `auditshaderstall.test.js` (the passes play meets, started in
+turn) and `shaderstall.test.js` (AURA-SPLIT: a look asked for waits its turn). `shaderstall.test.js`'s veil test now
+destroys its veil however it ends: failed under two of its mutants, it left the veil's warm polling, and the file never
+exited, on main as here. Mutants: `tools/mutants/compilequeue.json`, 11, all dead; `shaderstall.json`'s four records on
+`glProgram.js` re-aimed by content, its 17 dead; `audit_perfpass`, `aurastall` and `egaudit5_e`, all dead.
 
 ## HORSE-VIEW — a 3D horse is posed where it is seen
 
