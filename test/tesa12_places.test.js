@@ -200,7 +200,7 @@ test('TESA12 no Arena: no reader, no card, no store read - the boot empties the 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'MAP.PAL', 'ART_PAL.COL'].every((f) => existsSync(join(ARENA2, f)));
 
-test('TESA12 with ARENA2: on the player\'s own trace every one of TAMRIEL1\'s 67 cities stands (none lost, Thorn the farthest snapped), and every province has its eight towns and sixteen villages - 283 places, 28 of them ports (Anvil and Leyawiin inland on this picture)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('TESA12 with ARENA2: on the player\'s own trace every one of TAMRIEL1\'s 67 cities stands (none lost, Thorn the farthest snapped), and every province has its eight towns and sixteen villages - 283 places, 35 of them ports (Anvil and Leyawiin inland on this picture)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const fetchBytes = async (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
@@ -217,6 +217,6 @@ test('TESA12 with ARENA2: on the player\'s own trace every one of TAMRIEL1\'s 67
     assert.deepEqual([mine.filter((p) => p.kind === 'town').length, mine.filter((p) => p.kind === 'village').length], [8, 16], key);
   }
   const px = arenaPixels();
-  assert.deepEqual([m.places.length, px.stood.length, px.unstood.length, px.stood.filter((p) => p.port).length], [283, 283, 0, 28]);
+  assert.deepEqual([m.places.length, px.stood.length, px.unstood.length, px.stood.filter((p) => p.port).length], [283, 283, 0, 35]);   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): 28, and the seven places the sea bears on
   assert.deepEqual(px.stood.filter((p) => !p.port && CITIES.some((c) => c.port && c.name === p.name)).map((p) => p.name), ['Anvil', 'Leyawiin'], 'no shore within SHORE_REACH: no port');
 });

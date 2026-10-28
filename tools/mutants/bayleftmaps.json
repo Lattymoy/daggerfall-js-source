@@ -177,8 +177,9 @@
   {
     "name": "BLM-C2-travel-here-past-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "onTravel: this._coordsAllowedHere() && inBay(Math.floor(w.mx), Math.floor(w.my)) ?",
-    "new": "onTravel: this._coordsAllowedHere() ?",
+    "old": "return this._coordsAllowedHere() && (inBay(px, py) || (this._walksPastBay() && !!portalLandAt(px, py)));",
+    "new": "return this._coordsAllowedHere() && inBay(px, py);",
+    "note": "Re-aimed by OW-PLACE-WALK (2026-10-28): the mutant is the retired law now - Travel here held to the Bay.",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
@@ -475,8 +476,8 @@
   {
     "name": "BLM-C9-the-pick-the-bay's",
     "file": "src/ui/heldMap.js",
-    "old": "    const pick = entry.pastBay ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)",
-    "new": "    const pick = false ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)",
+    "old": "    const pick = entry.pastBay ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name, true)",
+    "new": "    const pick = false ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name, true)",
     "tests": [
       "test/ui/bayleft_find.test.js"
     ],

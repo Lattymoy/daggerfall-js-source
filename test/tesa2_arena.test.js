@@ -204,7 +204,7 @@ test('TESA2 the map: where a host stands the places, each inked place carries th
   assert.match(held, /  _portalCityAt\(sx, sy\) \{\n\s+if \(!this\._tamriel \|\| this\._zoneMap \|\| !this\.teleportationTravel\) return null;\n[^\n]+\n\s+const city = tamrielCityAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), [^\n]+\n\s+return city\?\.pixel \? city : null;\n/);
   assert.match(pick, /const end = this\._portalCityAt\(sx, sy\) \?\? \(this\.deps\.portalLandPastBay \? portalLandAt\(Math\.floor\(mx\), Math\.floor\(my\)\) : null\);\n\s+if \(end\) \{\n\s+this\._select\(\{ coords: true, x: end\.pixel\.x \+ 0\.5, y: end\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: end\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
   assert.ok(pick.indexOf('// TESA2') < pick.indexOf('// WILD2'), 'before the zone\'s and the coordinates\' own arms');
-  assert.match(held, /if \(selected\.coords\) return \{ pixel: \{ x: Math\.floor\(selected\.x\), y: Math\.floor\(selected\.y\) \}, name: selected\.name \};/, 'the journey is to its pixel, by its name');
+  assert.match(held, /if \(selected\.coords\) return \{ pixel: \{ x: Math\.floor\(selected\.x\), y: Math\.floor\(selected\.y\) \}, name: selected\.name, \.\.\.\(selected\.place \? \{ place: true \} : \{\}\) \};/, 'the journey is to its pixel, by its name');   // PIN MOVED (OW-PLACE-WALK, test/ui/owplacewalk.test.js): and a place says it is one
   // PIN MOVED (AUDIT TESA II M7, M14): the cursor off the city the press would take (_pastBayHover: tamrielCityAt as the sheet inks)
   assert.match(held, /cursor: \(this\.teleportationTravel \? past\.city\?\.pixel \|\| \(this\.deps\.portalLandPastBay && portalLandAt\(px, py\)\) : this\._walksPastBay\(\) && past\.on !== 'sea'\) \? 'pointer' : ''/);   // PIN MOVED (PORTAL-ANYWHERE): and on the stone's map its land; PIN MOVED (OW-PAST-BAY, test/ui/owpastbay_walk.test.js): and on the travel map where a press walks
   // PIN MOVED (BAY-LEFT-MAPS C11, test/ui/bayleft_find.test.js): and the Ports filter
@@ -268,10 +268,11 @@ test('TESA2 with ARENA2: on the player\'s own trace all 283 places past the Bay 
   // on its own province's land - else (its point by a coast or a border the smooth law moved off the picture's pixel
   // corners) on the nearest pixel of its own land, a few pixels off
   const { provinceKeyBeyondBay } = await import('../src/world/tamriel/tamrielLand.js');
+  const { CITIES } = await import('../src/world/tamriel/tamrielGeography.js');
   let off = 0;
   for (const p of px.stood) {
     if (p.pinned) { const at = capitalPin(p); assert.ok(at && CAPITALS.some((c) => c.name === p.name), p.name); assert.deepEqual([p.bx, p.by], [at.px, at.py], p.name); continue; }
-    if (p.port) continue;
+    if (p.port && CITIES.some((c) => c.port && c.name === p.name)) continue;   // PIN MOVED (FIELD BUGS 2026-10-28b COAST-PORT): a lore port on its shore - a coast port stands where any place does
     const [x, y] = pictureToBay(p.px, p.py), fx = Math.floor(x), fy = Math.floor(y);
     assert.equal(provinceKeyBeyondBay(p.bx, p.by), p.province, `${p.name} on its own land`);
     if (provinceKeyBeyondBay(fx, fy) === p.province) { assert.deepEqual([p.bx, p.by], [fx, fy], p.name); continue; }

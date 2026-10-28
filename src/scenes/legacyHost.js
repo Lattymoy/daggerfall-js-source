@@ -1484,7 +1484,7 @@ export function createLegacyHost(deps) {
       const k = `${family.id}:${s.id}`;
       const was = residentOfKept.get(k);
       if (was?.sig === sig) { out.push({ res: was.res, sig }); continue; }
-      const res = { ...census, name: fullNameOf(s.given, s.surname), home, household: `F${family.id}`, legacy: { familyId: family.id, personId: s.id } };
+      const res = { ...census, race: s.race || census.race, name: fullNameOf(s.given, s.surname), home, household: `F${family.id}`, legacy: { familyId: family.id, personId: s.id } };   // AUDIT PROVINCE-FOLK A4: the line's race, as its record and its children have it
       residentOfKept.set(k, { sig, res });
       out.push({ res, sig });
     }

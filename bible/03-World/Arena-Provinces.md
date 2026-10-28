@@ -220,6 +220,19 @@ into, a dungeon to go down - and the held map takes the player there.
   map keeps TESA2's and PORTAL-ANYWHERE's portals. PIN MOVED: `test/tesa2_arena.test.js`'s cursor,
   `start3_pastbay_marks`' pick (`walk`). Pins `test/ui/owpastbay_walk.test.js` (3); mutants `tools/mutants/owpastbay.json`
   (9, all dead), six records re-aimed by content.
+- **OW-PLACE-WALK** (2026-10-28, the owner: "ensure travel when clicking a point on the held map properly makes you
+  travel"): in the game on the freeware, Begin on Solitude said "You cannot walk out onto the water." - OW-PAST-BAY
+  handed a city as a bare pixel, and Solitude's pixel is the sea's byte. A city, a countryside mark, a quest's, a found
+  or the journal's place past the Bay is now handed as a place (`ui/heldMap.js` `_pastBayPick`'s `place`), and Begin
+  walks to its door as the Overworld does (`scenes/world.js` beginAcceleratedTravel: `tvPlaceSummary`,
+  `travelViewRouteTo`); a place the Overworld does not know is walked to as a spot. "Travel here" on a flag on land past
+  the Bay is the walk a press there is (`_flagTravels`), never on the sea. PIN MOVED: BAY-LEFT-MAPS C2, START3's pick,
+  OW-ONLY's and TESA2's source pins. Pins `test/ui/owplacewalk.test.js` (3); mutants `tools/mutants/owplacewalk.json`
+  (13, all dead), four records re-aimed by content.
+- **OPEN (OW-PLACE-WALK)**: from Daggerfall the Imperial City's journey says "There is no way there by land." The way is
+  there - Kvatch to the city plans in 3,171 cells - but on the freeware's ground with no roads past the Bay landed, the
+  plan from Daggerfall spends ROAD-BEYOND's whole count (100,001 cells), where Bruma takes 52,257 and Solitude 38,596.
+  It is the Overworld planner's spend, its own click's too, not the map's.
 - **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.
@@ -897,6 +910,9 @@ player's Daggerfall files, the same Tamriel on every client, online and off.
   sand, where the Bay's own ports do so 7 times in 155; five moved 1 or 2 pixels, Solitude's pin keeps its pixel); one with no shore in
   reach stands as any place and is none - on the freeware's picture Anvil and Leyawiin (no Gold Coast and no Topal Bay
   there), so 28 ports. A.EXE's coastal list is not read.
+- **COAST-PORT** (`01-Overview/bugs/Field-Bugs-2026-10-28b.md`): a place the open sea bears on, within SEA_RING and its lakes
+  left out, is a port too, whatever the lore says: Farrun, Shornhelm, Blacklight, Tear, Thorn, Elden Root and Silinorin.
+  35 places are ports.
 - **The towns and villages** (made): eight towns and sixteen villages a province (PLACE_COUNTS: Arena's shape of a
   province - a count, no data), each a quarter inside a cell of its province's land off the Bay's rectangle and
   BAY_MARGIN, the farthest of PLACE_TRIES (24) draws off the province's hash from every place before it; named by the

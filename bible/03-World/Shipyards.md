@@ -128,6 +128,10 @@ town's map id and the place's own salt (`portKeeper` - the yards' one draw, `sys
 the shipyard and the crew hall are named for them ("Voss's Shipyard", "Wayrest's Crew Hall"); the lighthouse and the
 docks for the town ("The Sentinel Light", "Sentinel Docks" - `portPlaceName`).
 
+AMENDED BY PROVINCE-FOLK (`World-Wide.md`; AUDIT PROVINCE-FOLK C15): past the Bay each of them is one of the place's
+people - a keeper's race and name from their own people's bank, a hand's race off the place's key - and wears their own
+race's picture where Daggerfall draws it, the town's (`walkerRace`) where it does not.
+
 ## The shipmaster's window
 
 On the shipmaster, the SHIPS board or the hull on the stocks: the plaque names the shipyard, its shipmaster and its

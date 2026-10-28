@@ -435,6 +435,7 @@ function memberOf(r) {
   m.rank = r.rank;
   m.personality = r.personality;
   m.person = revenantPerson(r);   // FB1012d ALLY-RACE: the one person it was born as - the layer stands every body of it so (crewAshore.js companionPerson)
+  m.folk = r.race ?? null;   // AUDIT PROVINCE-FOLK A1: and the race it was born in
   return m;
 }
 /**

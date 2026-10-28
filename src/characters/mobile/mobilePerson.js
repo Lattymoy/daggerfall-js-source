@@ -70,6 +70,10 @@ export const redguardRegion = (region) => Number.isInteger(region) && areaRace(/
  *  yard keepers wear it too (scenes/world.js merchantYardSitesFor).
  *  @param {number|undefined|null} people @param {number|undefined|null} region */
 export const walkerRace = (people, region) => (redguardRegion(region) ? 'Redguard' : raceOfPeople(people));
+/** PROVINCE-FOLK (bible/03-World/World-Wide.md): the picture a person of `race` wears far off - their own where Daggerfall
+ *  draws one (PERSON_TEXTURES' three), else `fallback`, the town's (walkerRace). A Dark Elf's body is Morrowind's alone.
+ *  @param {string|null|undefined} race @param {string} fallback */
+export const spriteRaceOf = (race, fallback) => (race && Object.hasOwn(PERSON_TEXTURES, race) ? race : fallback);
 
 // ---- MobilePersonMotor.Update's POLITENESS GATE (:216-230) ----------
 
