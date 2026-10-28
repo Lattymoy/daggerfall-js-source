@@ -533,12 +533,13 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-instance",
     "file": "server/src/index.js",
-    "old": "staff: isStaff(who?.glyphs) || !!who?.hid, kin });",
-    "new": "staff: isStaff(who?.glyphs), kin });",
+    "old": "staff: isStaff(who?.glyphs) || !!who?.hid, kin, guild: who?.gi ?? null });",
+    "new": "staff: isStaff(who?.glyphs), kin, guild: who?.gi ?? null });",
     "why": "an instance refuses it",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the door is handed the token's guild too (a castle's arm)."
   },
   {
     "name": "STAFF-PANEL5-HIDDEN-breach",
@@ -604,8 +605,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-kind",
     "file": "src/net/identityToken.js",
-    "old": "'staffcut', 'hide', 'freeze', 'staffline', 'sevent']);",
-    "new": "'staffcut', 'freeze', 'staffline', 'sevent']);",
+    "old": "'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "new": "'staffcut', 'freeze', 'staffline', 'sevent', 'yard']);",
     "why": "no hide kind",
     "tests": [
       "test/server/staffpanel5hidden.test.js"

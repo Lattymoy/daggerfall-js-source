@@ -1,0 +1,65 @@
+[
+  {
+    "name": "STONEHEAPS-the-heap-unstood",
+    "file": "src/scenes/mineHost.js",
+    "old": "    } else if (!fields) {",
+    "new": "    } else if (!fields && false) {",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-a-heap-unspaced",
+    "file": "src/scenes/mineHost.js",
+    "old": "const at = onStone(b.u, b.v, MINE_MARKS.boulder.w / 2, spaced);",
+    "new": "const at = onStone(b.u, b.v, MINE_MARKS.boulder.w / 2);",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-a-heaps-foot-untaken",
+    "file": "src/scenes/mineHost.js",
+    "old": "if (at) { local = [at.x, at.y, at.z]; taken.push([at.x, at.z]); }",
+    "new": "if (at) { local = [at.x, at.y, at.z]; }",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-a-vein-unspaced",
+    "file": "src/scenes/mineHost.js",
+    "old": "const at = (fields ? null : onStone(v.u, v.v, half, spaced)) ?? onStone(v.u, v.v, half);",
+    "new": "const at = onStone(v.u, v.v, half);",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-a-vein-lost-to-the-spacing",
+    "file": "src/scenes/mineHost.js",
+    "old": "const at = (fields ? null : onStone(v.u, v.v, half, spaced)) ?? onStone(v.u, v.v, half);",
+    "new": "const at = fields ? onStone(v.u, v.v, half) : onStone(v.u, v.v, half, spaced);",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-a-veins-foot-untaken",
+    "file": "src/scenes/mineHost.js",
+    "old": "        if (at && !fields) taken.push([at.x, at.z]);",
+    "new": "",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-the-bays-rule-everywhere",
+    "file": "src/scenes/mineHost.js",
+    "old": "const fields = inBay(px, py);",
+    "new": "const fields = true;",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-the-bays-pixel-heaped",
+    "file": "src/scenes/mineHost.js",
+    "old": "const fields = inBay(px, py);",
+    "new": "const fields = false;",
+    "tests": ["test/scenes/stoneheaps.test.js"]
+  },
+  {
+    "name": "STONEHEAPS-the-heaps-default-off-the-bay",
+    "file": "src/scenes/mineHost.js",
+    "old": "verge = null, beach = null, fields = true }) {",
+    "new": "verge = null, beach = null, fields = false }) {",
+    "tests": ["test/scenes/stoneheaps.test.js", "test/net/prof2_client.test.js", "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js", "test/world/terrain/fb1009b_rocknear.test.js", "test/scenes/fb1001_mining.test.js"]
+  }
+]

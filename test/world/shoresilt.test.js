@@ -85,11 +85,12 @@ test('SHORE-SILT: a paletted mod\'s set (Vanilla Enhanced) reads its shores by i
 });
 
 test('SHORE-SILT: the silt takes a shore\'s painted water past the corner table\'s line - its alpha read only on a part-water tile - on both terrain programs, its fringe past the sheet wet mud (mutants: the gate, the read, the fringe)', () => {
-  assert.match(WATER_BED_GLSL, /vec2 bedCover\(uint data, vec2 f, vec3 tl, vec2 gx, vec2 gy, float snowC\)/);   // AUDIT PRECIP GROUND-5 (PIN MOVED): and the ground's snow
-  // AUDIT PRECIP GROUND-5 (PIN MOVED): the art's mask walked to the winter record's by the ground's cover
-  assert.match(WATER_BED_GLSL, /float art = 0\.0;\n\s+if \(m != 15u && k < 1\.0\) \{\n\s+float a = textureGrad\(uTileArr, tl, gx, gy\)\.a;\n\s+if \(snowC > 0\.0\) a = mix\(a, textureGrad\(uTileArr, vec3\(tl\.xy, tl\.z \+ float\(uSnowArr\.x\)\), gx, gy\)\.a, snowC\);\n\s+art = smoothstep\(0\.3, 0\.7, a\);\n\s+\}\n\s+return vec2\(max\(k, art\), max\(art - k, 0\.0\)\);/);
+  assert.match(WATER_BED_GLSL, /vec2 bedCover\(uint data, vec2 f, vec2 p, vec3 tl, vec2 gx, vec2 gy, float snowC, bool blended\)/);   // AUDIT PRECIP GROUND-5 (PIN MOVED): and the ground's snow; PIN MOVED (COAST-LOOK): the point the wander is read at, and a blended transition's
+  // AUDIT PRECIP GROUND-5 (PIN MOVED): the art's mask walked to the winter record's by the ground's cover; PIN MOVED
+  // (COAST-LOOK): a transition the ground drew as its two kinds wears no art, so its painted water is no fringe
+  assert.match(WATER_BED_GLSL, /float art = 0\.0;\n\s+if \(m != 15u && k < 1\.0 && !blended\) \{\n\s+float a = textureGrad\(uTileArr, tl, gx, gy\)\.a;\n\s+if \(snowC > 0\.0\) a = mix\(a, textureGrad\(uTileArr, vec3\(tl\.xy, tl\.z \+ float\(uSnowArr\.x\)\), gx, gy\)\.a, snowC\);\n\s+art = smoothstep\(0\.3, 0\.7, a\);\n\s+\}\n\s+return vec2\(max\(k, art\), max\(art - k, 0\.0\)\);/);
   assert.ok(WATER_BED_GLSL.indexOf('if (m == 0u) return vec2(0.0);') < WATER_BED_GLSL.indexOf('textureGrad(uTileArr, tl'), 'no water corner, no read');
-  assert.match(waterBedMix(), /vec2 bedK = bedCover\(data, tileUV, vec3\(tuv, float\(layer\)\), gx, gy, snowC\);/);
+  assert.match(waterBedMix(), /vec2 bedK = bedCover\(data, tileUV, unwrapped, vec3\(tuv, float\(layer\)\), gx, gy, snowC, ge\);/);
   assert.equal(WET_MUD, 0.62); assert.equal(WET_MUD_SHARE, 0.8);
   assert.match(waterBedMix(), /silt = mix\(silt, vec3\(dot\(silt, vec3\(0\.299, 0\.587, 0\.114\)\)\) \* 0\.62, 0\.80 \* bedK\.y\);[^\n]*\n\s+tex = mix\(tex, silt, bedK\.x\);/, 'the fringe wet mud, the silt under the water as it was');
 });

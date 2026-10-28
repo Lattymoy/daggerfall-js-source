@@ -78,6 +78,9 @@ from her own port's roadstead her master's resume runs her in (`passage.js` voya
 over every journey; under First Person Travel it is sailed from her helm. Her hands are aboard (a fresh crew state,
 every hand), so a raider met on the way is met as any ship of mine meets one. Time passes as the journey's does.
 
+SEA-SQUARE (`01-Overview/bugs/Field-Bugs-2026-10-28b.md`): past the Bay a sailed leg is aimed about its pixel's byte, its
+square's south-east corner (`seaMark.js` seaLegWindow) - the square's middle put 31 of 70 voyages' runs on land there.
+
 A voyage stopped with the player still aboard - a foe near, a raider's chase, a load that put them back at her helm -
 is SAILED ON by her master (`passageHost.js` frame), for as long as they stand aboard: each PASSAGE_RESUME_S (20 s),
 and after PASSAGE_FIRST_S the first time a host meets her boat - a load, a boot (AUDIT PASSAGE A4: the clock is her
@@ -132,6 +135,23 @@ she fades or keeps a copy of her, whoever stood her and whoever booked her. Befo
 alone: the next player to stand the port stood her at her berth again, bookable a second time. A player who never
 hears a word that says her (the booker gone from the room before they came, and nobody since who heard it) may still
 stand her - as a spent packet (AUDIT BAY A18).
+
+## The writ
+
+START2 (2026-10-24, `06-Systems/Alternate-Starts-Arc.md` section 10): A PROVINCE'S COMMISSION IS THE CROWN'S WRIT OF
+PASSAGE TO DAGGERFALL. The commission a province's start ends with sends its bearer to the city of Daggerfall from as far
+as Black Marsh, and TESA-NO-FAST leaves a journey past the Bay walked or sailed; its letter says the rest: "This letter is
+Our writ of passage. Any master in a harbor of the Empire will carry you to Daggerfall at Our expense." Her master's list
+(`passageHost.js` offer) asks the world's `writ(port)` (`scenes/startsHost.js` writ) of each port: the city of Daggerfall
+- by its name and its region, never a namesake - while a start's quest runs with its seal broken (AUDIT STARTS: the seal
+read by the task's name the machine files it under, Q1 - it had never sailed; an ended start's writ spent though its
+tombstone keeps a week, V2; and only a commission that is a writ - not the Bay's letter, "to be opened in the Iliac Bay and
+nowhere else", V3). That port is listed
+"Daggerfall - west, by writ" at no fare; the question asks nothing of the purse ("The Emperor's writ of passage
+pays your fare."); the booking pays nothing and her record says so; "Her master reads the Emperor's writ and bows."
+Every other port keeps its fare. The voyage is the passage's own - sailed, never jumped - and from a port past the Bay
+it is planned by the sea lanes (`06-Systems/Travel-View.md` LONG-VOYAGE): the box planner could not leave the map's
+bounds, and nineteen of the twenty-eight ports past the Bay had no water way to Daggerfall inside them.
 
 ## Clear of other ships (FERRY-CLEAR, 2026-10-24)
 

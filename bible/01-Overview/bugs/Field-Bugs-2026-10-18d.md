@@ -65,11 +65,11 @@ Mutants: `tools/mutants/fb1018d_crafthowto.json` (30, all dead).
 
 NOT PROVEN. Measured in Node over the real modules, on a 4-core container one and a half to two times slower than a
 gaming desktop (scripts, not committed):
-- the online realm checkpoint, every 120 s (`world.js:"checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());   // SCALE2b"`): at 4.37 MB (the
+- the online realm checkpoint, every 120 s (`world.js:"checkpointClock.frame(now);   // SCALE2b"`): at 4.37 MB (the
   size of the largest field save we hold) about 48 ms in one frame and another 33 ms in a later task once the put
   lands; about 9 ms at a typical 600 KB. A known hitch that grows with the save (Performance-Next.md), but its cadence
   is fixed, and the report's is not;
-- the checkpoint's landform lift fields (`world.js:"const LIFT_FIELDS_KEPT = 32;"`): about 37 ms a town pixel the
+- the checkpoint's landform lift fields (`groundFrameHost.js:"const LIFT_FIELDS_KEPT = 32;"`): about 37 ms a town pixel the
   memo misses, on synthetic bytes;
 - an offline save, 13.6 ms at 4.37 MB, only when the player saves;
 - the desktop file store's atomic write, 9-28 ms for a 4.3 MB save on this disk (Windows under antivirus is

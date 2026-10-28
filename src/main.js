@@ -62,6 +62,12 @@ async function boot() {
     ? await import('./render/gpuTrail.js').then((m) => m.gpuTrailOn(canvas, globalThis.daggerShell.gpuTrail)).catch(() => null) : null;
   const renderer = new Renderer(canvas);
   onPageGone(() => { pageGoing = true; loseGlContext(renderer.gl); });   // GL-LEAK: the game's own context, let go as the page goes
+  // VULKAN-FLIP (ui/vulkanBackdrop.js): the app on Vulkan drops the windows' backdrop blur, which it drew upside down.
+  // Behind a door, as the shell's other doors are: a tab has no shell and loads nothing.
+  if (globalThis.daggerShell) import('./ui/vulkanBackdrop.js').then((m) => m.guardBackdrops(document, renderer.gpuName, globalThis.daggerShell)).catch(() => {});
+  // The boot's programs start compiling now, on the driver's threads, while the boot does its own work; each pass's
+  // build then reads a link made meanwhile (render/bootPrograms.js). Behind a door: BOOT2's ceiling on the entry's graph.
+  import('./render/bootPrograms.js').then((m) => m.startBootPrograms(renderer, location.search)).catch((err) => console.warn('[boot] the programs could not be started early:', err?.message ?? err));
   import('./render/portraitRenderer.js').then(({ setPortraitRenderer }) => setPortraitRenderer(renderer)).catch(() => {});   // PORTRAIT3D: the faces' renderer, for the menu's wells that hold none (behind a door: BOOT2's ceiling)
   renderer.setRetroSource(retroFrameConfig);   // RETRO1: DFU's retro mode - asked once per world frame, so the settings screen's change lands on the next
   renderer.setRenderScaleSource(renderScaleSetting);   // PERF-SCALE: the world's share of the window's pixels - asked once per world frame, and retro wins
@@ -253,7 +259,11 @@ async function boot() {
       params.set('legacyborn', String(legacyBirth.personId));
       params.set('region', legacyBirth.region);
       params.set('loc', legacyBirth.loc);
-    } else { params.delete('legacyborn'); params.delete('region'); params.delete('loc'); }
+      // BAY-LEFT-B: and the seat's map id - a seat past the Bay is in no MAPS.BSA table, and the world host stands it by
+      // its id (scenes/bootStartHost.js); a seat that never learnt its id is found by its names
+      if (Number.isInteger(legacyBirth.mapId)) params.set('seat', String(legacyBirth.mapId >>> 0));
+      else params.delete('seat');
+    } else { params.delete('legacyborn'); params.delete('region'); params.delete('loc'); params.delete('seat'); }
     // TR3: the Test Room door - the pane answers 'test:<preset>' and
     // the world host seeds the character and the armory off the same
     // testRoom home the pane showed. The param family follows F12's
@@ -261,6 +271,9 @@ async function boot() {
     // that once entered the room would re-enter it on New Game.
     if (typeof choice === 'string' && choice.startsWith('test:')) params.set('test', choice.slice(5));
     else params.delete('test');
+    // AUDIT STARTS W8: `?start=` is a headless boot's dev door (scenes/startsHost.js) - no menu door is one, so a URL that
+    // once carried it never moves a later new character into a province (F12's law: DELETED on every door)
+    params.delete('start');
     // TSR4b (Mac: "it either places me in the dungeon or places me in
     // the ground"): the classic start is Privateer's Hold - a map cell
     // out of settings, and StartInDungeon puts a new character INSIDE
@@ -350,6 +363,7 @@ async function boot() {
   // non-classicload action either.
   if (action === 'classicload') params.set('classicload', '1');
   else params.delete('classicload');
+  params.delete('start');   // AUDIT STARTS W8: the dev door's start rides no menu's door
   // U31: THE CLASSIC START IS THE WORLD, not the standalone dungeon
   // scene. scenes/dungeon.js has no exit path at all - its only
   // activation arm is ctx.actions.activate - so booting it left

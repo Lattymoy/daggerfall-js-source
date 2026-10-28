@@ -29,6 +29,7 @@ import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL } from './navalShips.js';
 import { nativeOfPixel, NATIVE_PIXEL } from '../seaRaiders.js';
+import { worldPixelKey, worldPixelOfKey, inWorldGrid } from '../../world/worldWide/worldGrid.js';   // WW3: a lane's pixels the world's
 
 /** How far from its town a port's roadstead may lie (map pixels), and how many ports a port runs packets to, within how
  *  far of it (map pixels between roadsteads: about 25 km). */
@@ -60,11 +61,12 @@ export const LANE_LINEAGE = 24;
 const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
 
 /** The water's way between two map pixels, 8 neighbours with no corner cut past land, or null (none within LANE_SEARCH,
- *  or longer than LANE_PATH_PX). `water(px, py)` the map's own. */
+ *  or longer than LANE_PATH_PX). `water(px, py)` the lane's own - WW3 (bible/03-World/World-Wide.md): on the world's
+ *  grid, keyed by the world's key (world/worldWide/worldGrid.js), so a lane past the Bay's map is walked as the Bay's
+ *  are; a Bay lane's water is the Bay's alone (scenes/naval/worldLanes.js), so its way is the one it always was. */
 export function lanePixels(from, to, water) {
-  const W = 1000, H = 500;
   if (!water(from.x, from.y) || !water(to.x, to.y)) return null;
-  const key = (x, y) => y * W + x;
+  const key = worldPixelKey;
   const g = new Map([[key(from.x, from.y), 0]]), came = new Map(), shut = new Set();
   const h = (x, y) => Math.hypot(x - to.x, y - to.y);
   // the open list a binary heap on f: [f, x, y]
@@ -95,7 +97,7 @@ export function lanePixels(from, to, water) {
     const gk = g.get(k);
     if (x === to.x && y === to.y) {
       const path = [{ x, y }];
-      for (let c = came.get(k); c != null; c = came.get(c)) path.push({ x: c % W, y: Math.floor(c / W) });
+      for (let c = came.get(k); c != null; c = came.get(c)) { const [cx, cy] = worldPixelOfKey(c); path.push({ x: cx, y: cy }); }
       return path.reverse();
     }
     expanded++;
@@ -103,7 +105,7 @@ export function lanePixels(from, to, water) {
       for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = x + dx, ny = y + dy;
-        if (nx < 0 || ny < 0 || nx >= W || ny >= H || !water(nx, ny)) continue;
+        if (!inWorldGrid(nx, ny) || !water(nx, ny)) continue;
         if (dx && dy && (!water(x + dx, y) || !water(x, y + dy))) continue;   // no corner cut past land
         const ng = gk + (dx && dy ? Math.SQRT2 : 1);
         const nk = key(nx, ny);
@@ -142,17 +144,19 @@ export function straighten(pixels, waterNative) {
 /**
  * A port's roadstead: the nearest map pixel within ROADSTEAD_PX of its town that is open sea (`open(px, py)`), ring by
  * ring, the first found in a ring by its own order (deterministic) - or null: an inland "port", or a coast too shallow.
+ * SEA-SQUARE: `roomy` (the lanes past the Bay) - of a ring's pixels the one with the most open sea about it first.
  */
-export function roadsteadOf(port, open) {
+export function roadsteadOf(port, open, roomy = false) {
+  const room = (/** @type {number} */ x, /** @type {number} */ y) => { let n = 0; for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if ((i || j) && open(x + i, y + j)) n++; return n; };
   for (let r = 1; r <= ROADSTEAD_PX; r++) {
-    let best = null, bd = Infinity;
+    let best = null, bd = Infinity, br = -1;
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
         const x = port.px + dx, y = port.py + dy;
         if (!open(x, y)) continue;
-        const d = dx * dx + dy * dy;
-        if (d < bd) { bd = d; best = { x, y }; }
+        const d = dx * dx + dy * dy, n = roomy ? room(x, y) : 0;
+        if (n > br || (n === br && d < bd)) { br = n; bd = d; best = { x, y }; }
       }
     }
     if (best) return best;
@@ -163,14 +167,18 @@ export function roadsteadOf(port, open) {
 /**
  * THE LANES between `ports` (`[{ id, name, px, py, region }]`, every port of the map): each port with a roadstead to
  * its LANE_NEIGHBOURS nearest within LANE_MAX_PX, each pair once (the lower id first). Answers `[{ key, a, b }]`, `a`
- * and `b` `{ id, name, px, py, region, road }` - the same list on every client, whatever port it stands by.
+ * and `b` `{ id, name, px, py, region, road }` - the same list on every client, whatever port it stands by. AUDIT TESA
+ * II P7: `maxPx` the reach - the Bay's LANE_MAX_PX by default; the lanes past the Bay have their own
+ * (scenes/naval/worldLanes.js BEYOND_LANE_MAX_PX: their ports stand hundreds of pixels apart); NIBEN-SEA: a port's own
+ * `reach` where it is farther (a harbour up a canal, world/worldWide/worldPorts.js CANAL_PORT_REACH_PX). `roomy` roadsteadOf's.
  */
-export function laneNetwork(ports, open) {
-  const sea = [...ports].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, open) })).filter((p) => p.road);
+export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false) {
+  const sea = [...ports].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) })).filter((p) => p.road);   // SEA-SQUARE: past the Bay the roomiest roadstead
   const pairs = new Map();
   for (const p of sea) {
+    const reach = Math.max(maxPx, p.reach ?? 0);   // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)
     const near = sea.filter((q) => q !== p).map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) }))
-      .filter((x) => x.d > 0 && x.d <= LANE_MAX_PX).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);
+      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);   // RUMARE-WATER: a canal harbour's own count
     for (const { q } of near) {
       const [a, b] = p.id < q.id ? [p, q] : [q, p];
       const key = `${a.id}-${b.id}`;

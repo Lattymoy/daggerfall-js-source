@@ -92,8 +92,8 @@
   {
     "name": "RAINFPS-the-old-fixed-sweep",
     "file": "src/render/volumetricClouds.js",
-    "old": "      const rows = Math.ceil(q.height / this.pace);",
-    "new": "      const rows = Math.ceil(q.height / SWEEP_FRAMES);",
+    "old": "      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);",
+    "new": "      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / SWEEP_FRAMES);",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"

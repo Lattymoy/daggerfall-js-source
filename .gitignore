@@ -1,4 +1,6 @@
 node_modules/
+# FIRST-VISIT: each kept answer's computation pin, generated at install and build (scripts/firstVisitPins.mjs)
+src/firstVisitPins.js
 dist/
 # the gun lab's own build (vite.config.gun.js)
 dist-gun/
@@ -14,6 +16,13 @@ DAGGER.SND
 *.SND
 test-harness/
 back-drafts/
+
+# TESA1 / AUDIT-TESA A1-3: The Elder Scrolls: Arena's files - freeware, no more redistributable than ARENA2
+# (Port-Doctrine). The player's own ARENA folder at the root, its city data and its executables. NEVER commit.
+/ARENA/
+CITYDATA.*
+A.EXE
+ACD.EXE
 
 # Disposable agent worktrees (nested checkouts) - never commit.
 .claude/worktrees/

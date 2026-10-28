@@ -40,7 +40,7 @@ WeatherType), five fog presets, a light curve, and a lightning script.
 | `Update` | the day-part machine, `ChangeLunarPhases` -> `ApplyOrbitCalculations`, `UpdateWorldTime`, `setFogColor` every real second, `ApplyPendingWeatherSettings` | `DynamicSkies.tick`, called from the controller's `use()` on the sim's word |
 | `OnWeatherChange` (event) | the new preset, applied next frame; the lightning listener for Thunder | `onWeatherChange` / `applyPendingWeatherSettings`; the sim's word changing is the event |
 | `SaveLoadManager_OnLoad` | force the saved weather through | `weatherJump`; the FIRST word the sky sees is a load (below) |
-| `setFogColor` | RenderSettings.fogColor = FogDayColor toward black on the sun's height | `fogColorNow`; the hosts take `sky.fogColorFor(fogNow)`, which answers the mod's colour under the mod and SetSkyFogColor's law under any other sky |
+| `setFogColor` | RenderSettings.fogColor = FogDayColor toward black on the sun's height | `fogColorNow`; the hosts take `sky.fogColorFor(fogNow)`, which answers the mod's colour under the mod (NIGHT-FOG, 2026-10-26: never darker on the land than the lit air, `systems/weather/nightFog.js` - its black night was the owner's "you can barely see anything"; the mod's skybox keeps its own, `07-Rendering/Weather-Arc.md`) and SetSkyFogColor's law under any other sky |
 | `LightningFlash` + `LightningFlashListener` | a point light over the player on `AmbientEffectsPlayer.OnPlayEffect` under Thunder: 50% roll, 33% double, colour 0.8..1, intensity 0.5..1.5, range 500..1000, 0.2 s | `LightningFlash`; `systems/ambientEffects.js` grew `onPlayEffect` (raised where DFU raises it); the hosts hand the light to `renderer.setFlashLight`, which composes it FIRST on the point-light channel under the cap of sixteen |
 | `InitSnow` | PixelSnow material, no rotation, min/maxParticleSize (viewport fractions) | `render/precipitation.js` PIXEL_SNOW program over the lab's own flakes (the lab's shaders are pinned byte for byte and stay so) |
 | the shader | Unity's procedural scattering, sun disc (HQ), two textured cloud layers with normals, textured stars with a twinkle mask, two moons on elliptical orbits with phase lighting, REDUCE_COLOR posterise | `render/dynamicSkiesRenderer.js` - GLSL ES 3.00, line for line, the property names as uniform names |
@@ -542,7 +542,7 @@ same `dynamicMoonState` the world's moonlight has taken since DS1,
 moved into the bridge with it so the sky lab can import both without
 the whole controller), and ITS fog colour as the horizon the clouds
 fade into. The ground's deck under the mod takes the clouds' shadow
-map (`Object.assign(dynamicDeck, clouds.shadow)`) - "the mod casts
+map (`Object.assign(dynamicDeck, cloudsShown.shadow)`) - "the mod casts
 none" in the seam section above is no longer the whole story: the mod
 casts none, and the port's clouds over it cast theirs. The composite
 lands after the mod's REDUCE_COLOR posterise and its sRGB encode, over

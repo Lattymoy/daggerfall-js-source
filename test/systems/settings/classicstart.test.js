@@ -52,7 +52,8 @@ test('U31: the classic start boots the WORLD host, not the exitless dungeon scen
 });
 
 test('U31: the start cell comes from settings, and starting inside is gated the way DFU gates it', () => {
-  const world = src('scenes/world.js');
+  // PIN MOVED (BAY-LEFT-B): the start's lookup is scenes/bootStartHost.js now (HOST-SPLIT) - read with its host
+  const world = src('scenes/world.js') + src('scenes/bootStartHost.js');
   // StartGameBehaviour.cs:371 reads the cell out of settings rather
   // than resolving a location by name.
   assert.match(world, /getInt\('Startup', 'StartCellX'\)/, "the start cell's X must come from the store");

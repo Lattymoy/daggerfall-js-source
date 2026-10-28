@@ -1,4 +1,4 @@
-// COMPILE-QUEUE (FIELD BUGS 2026-10-27, the desktop app: "hitch 13064 ms" shortly after login): the boot's idle started
+// COMPILE-QUEUE (FIELD BUGS 2026-10-27b, the desktop app: "hitch 13064 ms" shortly after login): the boot's idle started
 // every program play meets at once, and the next build that read a link waited until the driver's few compile threads
 // had done them all. render/glProgram.js startProgramsInTurn starts them one at a time; a door's ask moves a pair to the
 // front, a build takes it out of turn, and a pair taken or let go is never started (bible/07-Rendering/

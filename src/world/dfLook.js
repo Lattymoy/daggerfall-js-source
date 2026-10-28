@@ -46,6 +46,9 @@ export function setDfLookPalette(/** @type {any} */ palette) {
 }
 /** Whether a palette is set (the look is laid on). */
 export const dfLookOn = () => _palette != null;
+/** FIRST-VISIT: the palette's 256 colours, flat (null with none) - what a kept picture's stamp is taken over
+ *  (world/ships/standInsKept.js). */
+export const dfLookPaletteRgb = () => _rgb;
 
 /** A colour in OKLab (Ottosson's: L its lightness, a and b its hue and chroma, each step about as far to the eye). */
 export function oklab(r, g, b) {

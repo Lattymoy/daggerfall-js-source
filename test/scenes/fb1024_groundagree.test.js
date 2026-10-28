@@ -20,7 +20,7 @@ import { wodSiteClear } from '../../src/world/road/roadClearance.js';
 import { createSpawnGroundPlace } from '../../src/world/spawnGroundPlace.js';
 import { spawnsDungeon, WORLD_SALT } from '../../src/world/spawnedDungeons.js';
 import { ETHER_BOX } from '../../src/world/ethericSea.js';
-import { wildMaskOf, wildInside, WILD_REGION } from '../../src/systems/wild/wildZone.js';
+import { buildWildMask, wildInside } from '../../src/systems/wild/wildZone.js';
 import { syntheticWoodsBytes } from '../landformWorld.mjs';
 import { hostText } from '../hostText.mjs';
 
@@ -82,16 +82,21 @@ test('GROUND-AGREE the ground\'s place (world/spawnGroundPlace.js): what stands,
   const [ex, ey] = rolledPixel(ETHER_BOX.x0 + 10, ETHER_BOX.y0 + 10);
   ({ law } = makeLaw());
   assert.equal(law.groundLocationAt(ex, ey, null), null, 'past the Veil the isles stand their own places');
+  // PIN MOVED (SPAWN-HOLE, then SPAWN-WORLD): past the Bay a spawn's id is the world's spawn lane's, so with no Eltheric
+  // Ocean the box stands the roll's spawn again, as it did before SPAWN-HOLE's stop-gap guard
   ({ law } = makeLaw({ etherSea: false }));
   assert.deepEqual(law.groundLocationAt(ex, ey, null), { name: `Spawn ${ex},${ey}` }, 'with no Eltheric Ocean that box is no isle\'s');
 
-  // the whole fake map is the zone's region; the zone is the cut of it the mask keeps
-  const zoneMaps = { getClimateIndex: () => CLIMATES.Woodlands, getRegionIndexAt: () => WILD_REGION };
-  const mask = wildMaskOf(zoneMaps);
+  // PIN MOVED (AUDIT RELEASE R3-7, the merge of main into TESA): the open zone is Cyrodiil's (WW-C2), its mask the host's
+  // (zoneMask - scenes/world.js hands systems/wild/cyrodiilZone.js cyrodiilMask); here a zone over the whole fake map
+  const zoneMaps = { getClimateIndex: () => CLIMATES.Woodlands };
+  const mask = buildWildMask({ width: 1000, height: 500, inZone: () => true });
   let zoned = null;
   for (let y = 0; y < 500 && !zoned; y++) for (let x = 0; x < 1000 && !zoned; x++) if (wildInside(mask, x, y) && spawnsDungeon(WORLD_SALT, x, y)) zoned = [x, y];
   assert.ok(zoned, 'a spawn pixel in the open zone');
   ({ law } = makeLaw({ maps: zoneMaps }));
+  assert.deepEqual(law.groundLocationAt(zoned[0], zoned[1], null), { name: `Spawn ${zoned[0]},${zoned[1]}` }, 'no zone handed in: the roll stands');
+  ({ law } = makeLaw({ maps: zoneMaps, zoneMask: () => mask }));
   assert.equal(law.groundLocationAt(zoned[0], zoned[1], null), null, 'in the open zone only a hall stands, and a hall is `stood`');
 });
 
@@ -112,15 +117,19 @@ test('GROUND-AGREE the spawn the roll stands (world/spawnGroundPlace.js spawnAt)
 
 test('GROUND-AGREE by source: the pixel build shapes its ground - the blend, the tiles, World of Daggerfall\'s pick, the woods\' and the jungle\'s clearings - for the ground\'s place, and stands only what stands; the lift reads the same place (mutants: the build shapes the stood; the rect the stood\'s; the pick the stood\'s)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const dfLocation = _locationToBuild\(px, py\) \|\| null;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const groundLocation = spawnGroundPlace\.groundLocationAt\(px, py, dfLocation\);/, 'asked once, beside what stands');
+  // PIN MOVED (AUDIT RELEASE R3, the merge of main into TESA): what stands is IC-GRAND's view of it (a slice of the
+  // Imperial City far from the player its far view, world/tamrielCapitals.js capitalBuildView), its far-view flag beside it
+  assert.match(w, /const dfLocation = capitalBuildView\(_locationToBuild\(px, py\), px, py, host\.state\.current\) \|\| null;[^\n]*\n(?:\s*const farView = [^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s*const groundLocation = spawnGroundPlace\.groundLocationAt\(px, py, dfLocation\);/, 'asked once, beside what stands');
   assert.match(w, /if \(groundLocation\) locationRect = setLocationTiles\(groundLocation, maps, blocks, seedTilemap\);/, 'the rect and the tiles');
   assert.equal(w.match(/hasLocation: !!groundLocation/g)?.length, 2, 'World of Daggerfall\'s pick and the kernel\'s blend');
   assert.doesNotMatch(w, /hasLocation: !!dfLocation/, 'nothing shapes ground by what stands alone');
-  assert.equal(w.match(/FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\)/g)?.length, 2, 'the woods\' and the jungle\'s clearings');
+  // PIN MOVED (TESA-LANDS): and the lands' past the Bay - a zone's own flats close round the same places
+  assert.equal(w.match(/FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\)/g)?.length, 3, 'the woods\', the jungle\'s and the lands\' clearings');
   assert.match(w, /location: dfLocation \? dfLocation\.name : null,/, 'what stands is still the clocks\' (tvSpawnGone reads it)');
   assert.match(w, /const spawnGroundPlace = createSpawnGroundPlace\(\{/, 'the host makes the law once');
   assert.match(w, /_livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway,/, 'and hands the build its ground\'s place');
-  assert.match(w, /const _liftLocationAt = \(x, y\) => spawnGroundPlace\.groundLocationAt\(x, y, locationIndex\.get\(`\$\{x\},\$\{y\}`\)\);/, 'and the lift reads it for a pixel not built yet');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): on the Bay; past it the lift reads the build's own place (no spawn stands past the Bay)
+  assert.match(w, /const _liftLocationAt = \(x, y\) => \(onTheBay\(x, y\) \? spawnGroundPlace\.groundLocationAt\(x, y, locationIndex\.get\(`\$\{x\},\$\{y\}`\)\) : _locationToBuild\(x, y\)\);/, 'and the lift reads it for a pixel not built yet');
   assert.match(w, /const tvSpawnAt = spawnGroundPlace\.spawnAt;/, 'and the Overworld\'s far found spawn is the same law, the clocks asked');
 });
 

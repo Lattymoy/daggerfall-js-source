@@ -1,0 +1,558 @@
+[
+  {
+    "name": "AUDIT-STARTS-U1-card-offers-a-journey",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._selected.pastBay && !(armed ? this._selected.portal : this._selected.walk)) return;   // OW-PAST-BAY: a walk there\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
+  },
+  {
+    "name": "AUDIT-STARTS-U1-panel-ungated",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._selected.pastBay && !(this._zoneMap ? kind === 'travel' : kind === 'teleport' ? this._selected.portal : this._selected.walk)) return;   // OW-PAST-BAY: the travel map's a walk\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
+  },
+  {
+    "name": "AUDIT-STARTS-U2-confirm-ungated",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._selected?.pastBay && !this._selected.portal) { this._closePanel(); return; }",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U2-every-place-a-portal",
+    "file": "src/ui/heldMap.js",
+    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
+    "new": "const portal = true;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - a quest's place is a portal's end at a city, or (the stone's map) on the land"
+  },
+  {
+    "name": "AUDIT-STARTS-U2-no-city-a-portal",
+    "file": "src/ui/heldMap.js",
+    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
+    "new": "const portal = false;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - a quest's place is a portal's end at a city, or (the stone's map) on the land"
+  },
+  {
+    "name": "AUDIT-STARTS-U4-zone-press-picks-alone",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (place && this._zoneMap && wildInside(this.deps.wildMask?.() ?? null, place.x, place.y)) { this._zoneTravelTo(place); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U4-zone-unbounded",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (place && this._zoneMap && wildInside(this.deps.wildMask?.() ?? null, place.x, place.y)) { this._zoneTravelTo(place); return; }",
+    "new": "    if (place && this._zoneMap) { this._zoneTravelTo(place); return; }",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P9-goto-no-glide",
+    "file": "src/ui/heldMap.js",
+    "old": "      this._focusOn(pick.x, pick.y);\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U5-here-by-the-map-alone",
+    "file": "src/ui/quest/questLens.js",
+    "old": "const here = hereByName && (onMap !== false || !!site.worldPixel);",
+    "new": "const here = hereByName && onMap !== false;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U5-the-bay-note-past-it",
+    "file": "src/ui/quest/questLens.js",
+    "old": "(target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap)",
+    "new": "WHERE_TEXT.offMap",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U5-note-where-here",
+    "file": "src/ui/quest/questLens.js",
+    "old": "target.onMap === false && !target.here ?",
+    "new": "target.onMap === false ?",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U3-a-press-answers-unseen",
+    "file": "src/ui/startChoice.js",
+    "old": "    if (i === this._shown) return this.pickIndex(i);\n",
+    "new": "    return this.pickIndex(i);\n",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U3-canvas-press-picks",
+    "file": "src/ui/startChoice.js",
+    "old": "    return i >= 0 ? this.pressIndex(i) : false;",
+    "new": "    return i >= 0 ? this.pickIndex(i) : false;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U3-classic-story-unmarked",
+    "file": "src/ui/startChoice.js",
+    "old": "    centre(START_CHOICE_TEXT.hint(this.options.length), 190, dim);\n    this._shown = this.cursor;\n",
+    "new": "    centre(START_CHOICE_TEXT.hint(this.options.length), 190, dim);\n",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js",
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U3-plus-story-unmarked",
+    "file": "src/ui/startChoice.js",
+    "old": "this._faced = true; this._shown = this.cursor; return;",
+    "new": "this._faced = true; return;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P8-up-is-down",
+    "file": "src/ui/startChoice.js",
+    "old": "const n = this.options.length, step = move === 'up' ? n - 1 : 1;",
+    "new": "const n = this.options.length, step = 1;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P8-hover-rests-on-a-shut-start",
+    "file": "src/ui/startChoice.js",
+    "old": "    if (this.options[i] && !this.options[i].locked) this.cursor = i;",
+    "new": "    if (this.options[i]) this.cursor = i;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U3-plus-row-picks",
+    "file": "src/ui/enhanced/enhancedStartChoice.js",
+    "old": "    node.onclick = () => owner.pressIndex(i);",
+    "new": "    node.onclick = () => owner.pickIndex(i);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P3-plus-row-presses-the-cursor",
+    "file": "src/ui/enhanced/enhancedStartChoice.js",
+    "old": "    node.onclick = () => owner.pressIndex(i);",
+    "new": "    node.onclick = () => owner.pressIndex(owner.cursor);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P3-plus-face-kept-for-a-new-page",
+    "file": "src/ui/enhanced/enhancedStartChoice.js",
+    "old": "  if (face && face.owner !== owner) releaseStartChoiceFace(face.owner);\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P4-chargen-race-unread",
+    "file": "src/systems/chargenSession.js",
+    "old": "race: made?.race ?? null",
+    "new": "race: null",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P4-start-page-asked-first",
+    "file": "src/systems/chargenSession.js",
+    "old": "    asks.push((answer, made) => new StartChoiceScreen(",
+    "new": "    asks.unshift((answer, made) => new StartChoiceScreen(",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W2-the-zone-offered-online",
+    "file": "src/scenes/startsHost.js",
+    "old": "const open = (start) => start === BAY_START || (!!pastBay && !!start?.province && !zoneShut(start));",
+    "new": "const open = (start) => start === BAY_START || (!!pastBay && !!start?.province);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W2-shut-without-why",
+    "file": "src/scenes/startsHost.js",
+    "old": "const why = (start) => (zoneShut(start) ? STARTS_TEXT.openZone : null);",
+    "new": "const why = () => null;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W3-any-pixel",
+    "file": "src/scenes/startsHost.js",
+    "old": "if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "new": "if (at && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W3-commission-found-still-inside",
+    "file": "src/scenes/startsHost.js",
+    "old": "if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "new": "if (at && at.x === px.x && at.y === px.y) return true;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W3-any-quest",
+    "file": "src/scenes/startsHost.js",
+    "old": " || !PROVINCE_QUESTS.has(String(q.questName).toUpperCase())) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W5-never-healed",
+    "file": "src/scenes/startsHost.js",
+    "old": "    if (!begun) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W5-a-begun-story-healed",
+    "file": "src/scenes/startsHost.js",
+    "old": "const begun = !m || m.storyLegacy || (m.storyStarted?.size ?? 0) > 0",
+    "new": "const begun = !m || m.storyLegacy",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-Q1-writ-by-the-raw-name",
+    "file": "src/scenes/startsHost.js",
+    "old": "const OPENED = new QuestSymbol('_opened_');",
+    "new": "const OPENED = { name: '_opened_' };",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-V2-an-ended-start-a-writ",
+    "file": "src/scenes/startsHost.js",
+    "old": "if (!q || q.questComplete || q.questTombstoned || !carriesWrit(q.questName)) continue;",
+    "new": "if (!q || !carriesWrit(q.questName)) continue;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-Q5-begun-over-a-load",
+    "file": "src/scenes/startsHost.js",
+    "old": "      if (!live()) return;\n      const loc = landed",
+    "new": "      const loc = landed",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-Q6-an-unlanded-trace-asked",
+    "file": "src/scenes/startsHost.js",
+    "old": "const loc = landed ? quests()?.startSiteOfId?.(startSiteId(start)) ?? null : null;",
+    "new": "const loc = quests()?.startSiteOfId?.(startSiteId(start)) ?? null;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-Q6-a-refused-start-left",
+    "file": "src/scenes/startsHost.js",
+    "old": "        if (!running(moved ? start.quest : HAND_START_QUEST)) machine?.()?.startQuestByName?.(HAND_START_QUEST);\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W4-the-start-after-a-failed-move",
+    "file": "src/scenes/startsHost.js",
+    "old": "        then(moved ? start.quest : HAND_START_QUEST);",
+    "new": "        then(start.quest);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W6-the-door-at-the-pixel",
+    "file": "src/scenes/startsHost.js",
+    "old": "await teleport(p.x, p.y, null, { reposition: REPOSITION.RandomStartMarker });",
+    "new": "await teleport(p.x, p.y);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W5-the-move-unlatched",
+    "file": "src/scenes/startsHost.js",
+    "old": "await quests().respawnLatched(loc);",
+    "new": "await quests().respawnAtSite?.(loc);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-V3-the-bay-letter-a-writ",
+    "file": "src/systems/starts/starts.js",
+    "old": "export const carriesWrit = (questName) => isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();",
+    "new": "export const carriesWrit = (questName) => isStartQuestName(questName);",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W3-the-wake-unasked",
+    "file": "src/scenes/world.js",
+    "old": " && !starts.resumesAt(pixel)) {   // AUDIT STARTS W3",
+    "new": ") {   // AUDIT STARTS W3",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W3-the-entry-recorded",
+    "file": "src/scenes/world.js",
+    "old": "recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {}",
+    "new": "recorded: extras.dungeon ?? {}",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W5-a-load-door-unasked",
+    "file": "src/scenes/world.js",
+    "old": "onQuestRestored: () => { _questStarted = starts.restored(); }",
+    "new": "onQuestRestored: () => { _questStarted = true; }",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W8-online-keeps-start",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "'region', 'loc', 'seat', 'start']);",
+    "new": "'region', 'loc', 'seat']);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W8-a-birth-keeps-start",
+    "file": "src/systems/legacy/places.js",
+    "old": "'legacyborn', 'seat', 'start']) p.delete(k);",
+    "new": "'legacyborn', 'seat']) p.delete(k);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P2-bridge-ignores-the-start",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "      for (const name of gameStartQuests(start)) machine.startQuestByName(name);",
+    "new": "      for (const name of gameStartQuests()) machine.startQuestByName(name);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P7-layer-skips-the-bay-alone",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "!isStartQuestName(quest?.questName)",
+    "new": "quest?.questName !== '_STARTIB'",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P10-doorstep-1",
+    "file": "src/systems/starts/startSite.js",
+    "old": "export const START_SITE_MIN = 3;",
+    "new": "export const START_SITE_MIN = 1;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P11-a-non-start-id-answered",
+    "file": "src/scenes/questWorld.js",
+    "old": "      const start = startOfSiteId(id);",
+    "new": "      const start = startOfSiteId(id) ?? startOfSiteId(0x5a7001);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W5-unlatched",
+    "file": "src/scenes/questWorld.js",
+    "old": "respawnLatched: async (loc) => { host._respawning = true;",
+    "new": "respawnLatched: async (loc) => { host._respawning = false;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W5-latch-kept",
+    "file": "src/scenes/questWorld.js",
+    "old": "finally { host._respawning = false; } },",
+    "new": "finally { } },",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-Q5-restores-uncounted",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this.restores = (this.restores ?? 0) + 1;",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-Q2-the-cave-escape-back",
+    "file": "src/systems/questlines/sheets/mainQuest.json",
+    "old": "{\"quest\":\"_BRISIEN\",\"objectives\":[{\"id\":\"wait\",",
+    "new": "{\"quest\":\"_BRISIEN\",\"objectives\":[{\"id\":\"escape\",\"text\":\"Find a way out of the cave you washed up in\",\"done\":{\"not\":{\"task\":\"_exitstarter_\"}}},{\"id\":\"wait\",",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js",
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-Q3-the-letter-at-sea",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "    { old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n', new: ' most appreciative.\\n', count: 1 },\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U9-the-welcome-finds-them",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "When you hold them, open them from your pack: they name the city where the main story begins.",
+    "new": "Find them, and open them from your pack when you are ready. The main story begins when you do.",
+    "tests": [
+      "test/systems/starts/start1_bay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-U8-the-crowns-writ-row",
+    "file": "src/systems/naval/passage.js",
+    "old": "t('passage.rowWrit', '{port} - {wind}, by writ'",
+    "new": "t('passage.rowWrit', \"{port} - {wind}, the Crown's writ\"",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-P5-lanes-through-a-corner",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const sails = (ax, ay, bx, by) => isWater(bx, by) && !(ax !== bx && ay !== by && !isWater(bx, ay) && !isWater(ax, by));",
+    "new": "const sails = (ax, ay, bx, by) => isWater(bx, by);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-V6-the-voyage-alone-sails-the-lanes",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {",
+    "new": "if (lanes && sea?.voyage && (offTable(from) || offTable(to))) {",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-V4-the-ladder-after-a-voyage",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (sailed || sea.voyage) return sailed;",
+    "new": "    if (sailed) return sailed;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-V5-no-wider-box",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const sailed = (yield* planSeaLanesSteps(from, to, opts)) ?? (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));",
+    "new": "const sailed = (yield* planSeaLanesSteps(from, to, opts));",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-V4-the-port-pixel-alone",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const goals = isWater(to.x, to.y) ? [to, nearestDry(to, isWater)].filter(Boolean) : [to];",
+    "new": "const goals = [to];",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-V4-the-end-unpadded",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "endPad: VOYAGE_LANDFALL_PX * 2 });",
+    "new": "endPad: 0 });",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STARTS-W8-the-menu-door-keeps-start",
+    "file": "src/main.js",
+    "old": "    params.delete('start');\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js",
+      "test/systems/macn_bugs.test.js"
+    ]
+  }
+]

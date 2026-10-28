@@ -61,9 +61,9 @@ test('IS1: the interior bag rides the envelope verbatim (opaque, like world), an
 });
 
 test('IS1: the world host resolves the interior half BEFORE the snapshot reads the cache', () => {
-  const src = read('src/scenes/world.js');
-  const body = src.slice(src.indexOf('function worldQuickSave'), src.indexOf('let _loading'));
-  const atInterior = body.indexOf("const interior = modes?.interiorSaveData?.() ?? null;");
+  const src = read('src/scenes/worldQuickSave.js');   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the save is scenes/worldQuickSave.js's, the mode host read live through host
+  const body = src.slice(src.indexOf('function worldQuickSave'));
+  const atInterior = body.indexOf("const interior = host.modes?.interiorSaveData?.() ?? null;");
   const atSnap = body.indexOf('snapshotPlayer(playerEntity, {');
   assert.ok(atInterior > -1, 'the composer asks the mode host');
   assert.ok(atSnap > atInterior,

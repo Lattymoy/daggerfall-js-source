@@ -1,34 +1,65 @@
-# FIELD BUGS 2026-10-27 - a freeze of 10-15 seconds shortly after login, on the desktop app
+# FIELD BUGS 2026-10-27 - "Sailing Vessels Sometimes Have No Propulsion", read again
 
-One thread from the Discord's #general, handed over as two phone screenshots. Artkin, with a screenshot of the game:
-"top right 13000ms of freeze happens whenever I start the game recently ... "hitch 13000ms"". Asked "Desktop client?":
-"yep". Then "our game freeze for 30s at a time". AustinHale: "I get similar ... A good 10-15 sec lockup shortly after
-first login". Read on main's `66d40e084`, with the freeware's data (`tools/fetch-data.sh`). The pins are
-`test/render/compilequeue.test.js`, the mutants `tools/mutants/compilequeue.json` (11, all dead).
+The Discord's #bug-reports thread from Dûmorîkh (2026-10-21), handed over again as a screenshot with no word beside it,
+the thread still marked Unsolved. Read on main's `e1486b07c` with the freeware's data (`tools/fetch-data.sh`). The pin is
+`fb1027_helmsight.test.js`, the mutants `tools/mutants/fb1027_helmsight.json`. AUDIT HELM-SIGHT read this record and its
+change cold (`../audits/Audit-Helm-Sight.md`); its corrections are made below.
 
 | | Report | What it was | Done |
 |---|---|---|---|
-| 1 | "13000ms of freeze happens whenever I start the game recently"; "A good 10-15 sec lockup shortly after first login" | The renderer's idle warm started all 26 programs play meets at once, 1.7 MB of their 1.8 MB of GLSL the auras' fifteen looks. The warm's next step, a build that reads its link, waited until the driver's few compile threads had done them all. It ran in an idle callback, outside every frame | COMPILE-QUEUE |
+| 1 | Dûmorîkh: "Sailing Vessels Sometimes Have No Propulsion" - "This is only with sails." | The report's own cause, the indoors' wind brought outdoors by a load, was fixed by SAIL-WIND the day it was posted (#1106). One more way to the same stop was found: a helm held across a party's jump. Its landing, when it succeeds, left an unpacked ship with the landing's pixel | ALREADY FIXED (SAIL-WIND); HELM-SIGHT |
 
-## COMPILE-QUEUE (1) - `07-Rendering/Performance-Priority.md` COMPILE-QUEUE
+## The report: already fixed by SAIL-WIND (1)
 
-WHAT THE COUNTER SAYS. The screenshot's FPS counter (FB1018D HITCH-KEEP) reads "hitch 13064 ms 4 s ago 4 a minute",
-and under it "script 8 frame 6 before 2 stream 0": the frame before the gap was an ordinary 8 ms one. So the 13 seconds
-were spent between two frames, in work no host stamps: a timer, an idle callback, a promise's continuation, or the GPU
-process. Its GPU line names a GeForce RTX 3060 Ti under ANGLE's Direct3D 11, whose compiler took seconds over single
-passes before (SHADER-STALL, AURA-STALL). "Shortly after first login" is when the renderer's idle warm runs, and
-"recently" fits the warm's queue: the auras' look programs joined it on 2026-10-22 (AURA-SPLIT) and the fifteenth, the
-Sage's Smoke, on 2026-10-26 (NIRNROOT-SAGE).
+`Field-Bugs-2026-10-21b.md` SAIL-WIND read this thread to its root and merged in #1106 on 2026-10-21: a save made below
+ground kept the indoors' wind of nought, and a load that landed outdoors laid it on the open sea. Re-read here on main:
+`fb1021b_sailwind.test.js` passes, and the screenshots are that record's measure - "Stow sails" on both panels, a Small
+Ship at 0.1 knots and a Large Boat at 0.0. The in-game chat's tip in the second screenshot, "the local map to travel a
+bit", worked because travel passes the hour and OnNewHour lays a new wind.
 
-WHAT WAS DONE. The passes play meets are started one at a time, the next once the driver says the last is done. A build
-that reads its link now waits behind one of them at most. Measured on ANGLE here: the warm's next build took 342-734 ms
-behind the old start and 9-17 ms behind the new one, against 6-7 ms alone. The section in
-`07-Rendering/Performance-Priority.md` has the mechanism and the measurements.
+## HELM-SIGHT: a held helm's boat stays in sight across a jump (1)
 
-NOT MEASURED. A player's Windows machine, before or after. Whether the freeze comes back at every launch because
-Chromium's program cache misses (each update that touches an aura look changes all fifteen of its programs) is not known
-here.
+`src/systems/comeSailAway/comeSailAway.js` (OnWorldReanchored).
 
-THE FOUR HOSTS: none is wired. `scenes/world.js` and `scenes/exterior.js` start the queue through the renderer's idle
-warm (`render/renderer.js` lazyWarmSteps), unchanged. `scenes/worldModes.js` and `scenes/dungeonContext.js` start none
-of these programs.
+FOUND. To find any other way to the same stop, a seeded random drive of the real runtime over `test/csaScene.mjs` (the
+helm taken and left, the ladder, End, doors, hours, weather, saves and loads, recentres, jumps, deaths, a load's start, a
+magic round) asked every state with her sails up, a wind and the player outdoors to make way within 12 seconds. Under
+the Responsive helm one path failed: the world re-anchored while the helm was held. The drive was committed at the audit
+as `tools/sailDrive.mjs` (`--seed`, `--runs`, `--classic`); its counts are the audit's.
+
+Every jump lets the helm go before it - a load at its start, a fast travel before it pays, any other jump in
+`_teleportToPixel` (HELM-JUMP, `world.js:"if (modEvent == null && !resolveArrival) csaPreJump();"`) - but a party's
+journey, which holds it until its landing is sure. OnWorldReanchored then showed or hid every
+boat for the new pixel, the helm's own too. Her map pixel was the departure's, so the far landing hid her. A landing that
+fails sends the player back to the departure and to the helm, and that jump showed her again.
+
+An Animator switched off and on starts over with its parameters at their defaults (`world/unityAnimator.js`), so every
+sail read Stowed while the helm still read them set. Her canvas counts only sails not stowed: she made no way, the panel
+said "Stow sails" at 0.00 knots, and W said "All sail is set." Measured: a Large Boat 5.16 knots before the jump and 0.00
+after, a Small Ship 15.47 and 0.00, a Large Galley 7.73 and 0.00, a Carrack 18.56 and 0.00. Her sails showed furled, so
+this is not the report's own case, and End twice set them again.
+
+A landing that succeeds had a fault of its own in the same place. It lets the helm go from the landing (StopSailing on
+her deck, else OnPreFastTravel), and the let-go stamped the player's pixel on her, the landing's. A boat it does not pack
+(a ship without her deed in the pack, her parts too heavy to carry) stays at the departure, so the next visibility check showed her
+there, out of sight but heard: a boat's loop never falls below half its volume (`logarithmicRolloff`, its floor past
+twice its least distance). Her save carried the landing's pixel with the departure's place.
+
+THE LAW NOW. A re-anchor carries every boat and shows or hides each but the one whose helm is held
+(`comeSailAway.js:"if (boat !== state.CurrentBoat || state.disembarking != null) UpdateBoatVisibilityOf(boat);"`), and
+notes whether the player now stands on another pixel than hers (`helmAfar`). Her Animators keep their state. A helm let
+go from afar leaves her own pixel on her and shows or hides her for it (`stopSailingHead`), and the world host plays no
+loop of hers while it holds. The same jump after: 6.63, 19.89, 9.94 and 23.87 knots, where End twice had been the way
+out. FIELD-CSA1's row in Port-Ledger A says so.
+
+NOT THE CAUSE, the drive's other stops, all under the Classic helm (a player's own choice) and each the mod's model: the
+square-sail assist stowing all of a square-rigged hull's canvas with the wind ahead of her beam (SAIL-WIND's NOT THE
+CAUSE; the audit's B1 found the band it leaves unsaid), and the Carrack with no hold, which HELM-WAY records making no
+way under oars or sail.
+
+`test/systems/comeSailAway/fb1027_helmsight.test.js` (5): a Small Ship, a Large Boat and a Carrack under sail with the
+helm held across a jump away and back keep their sails set and make way; a landing that succeeds leaves a ship it does
+not pack (built as the game mints her - the audit's C1) at her own pixel, hidden and silent; a boat nobody holds is still
+hidden and shown. The audit's pins are its own (`audit_helmsight*.test.js`). FIELD-CSA1's pin in
+`csa_placing.test.js` moved: a held helm's boat stands beside the one it hides. `tools/mutants/fb1027_helmsight.json` (5,
+5 dead); `field_csa1.json`'s reanchor-no-visibility record re-aimed (14, 14 dead).

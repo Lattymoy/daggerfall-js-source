@@ -21,7 +21,7 @@
 
 /** Programs started and not yet taken, per context: `${vs}\0${fs}` -> the program and its two stages. */
 const STARTED = new WeakMap();
-// COMPILE-QUEUE (FIELD BUGS 2026-10-27): a pair startProgramsInTurn holds for its turn, no program made yet - `wanted`
+// COMPILE-QUEUE (FIELD BUGS 2026-10-27b): a pair startProgramsInTurn holds for its turn, no program made yet - `wanted`
 // once a door asks for it, which brings it to the front.
 const queued = () => ({ prog: null, wanted: false });
 /** Each context's KHR_parallel_shader_compile, or null. */
@@ -74,7 +74,7 @@ export function startPrograms(gl, pairs) {
   };
 }
 
-/** COMPILE-QUEUE (FIELD BUGS 2026-10-27): start `pairs` one at a time, the next once the driver says the last is done
+/** COMPILE-QUEUE (FIELD BUGS 2026-10-27b): start `pairs` one at a time, the next once the driver says the last is done
  *  (asked after each `wait`), so a build that reads a link waits behind one of them at most, never the whole list.
  *  Every pair is queued at once: a door that asks for one first brings it to the front, a build that wants one first
  *  takes it, and a pair a build took is never started. Resolves when the last is done, or the context is lost; at once

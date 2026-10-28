@@ -22,12 +22,12 @@
   {
     "name": "CRYPTSALE-door-unstamped",
     "file": "src/systems/talk/talkTopics.js",
-    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub) };",
-    "new": ", modelIdNum: model?.modelIdNum ?? null };",
+    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };",
+    "new": ", modelIdNum: model?.modelIdNum ?? null, ...footprintOf(sub) };",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
-    "note": "the door's own record (the plaque, the click) never says the room is empty"
+    "note": "the door's own record (the plaque, the click) never says the room is empty; IC-HOMES (PIN MOVED): re-aimed by content - the door's record carries a fabric building's ground after it"
   },
   {
     "name": "CRYPTSALE-list-unstamped",
@@ -42,12 +42,12 @@
   {
     "name": "CRYPTSALE-law-unknown-empty",
     "file": "src/world/interior/interiorLayout.js",
-    "old": "export const hasInteriorModels = (sub) => sub?.interior?.header?.num3dObjectRecords !== 0;",
-    "new": "export const hasInteriorModels = (sub) => (sub?.interior?.header?.num3dObjectRecords ?? 0) !== 0;",
+    "old": "export const hasInteriorModels = (sub) => sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;",
+    "new": "export const hasInteriorModels = (sub) => sub?.interior?.made === true || (sub?.interior?.header?.num3dObjectRecords ?? 0) !== 0;",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
-    "note": "a subrecord with no header read as empty"
+    "note": "a subrecord with no header read as empty - re-aimed (IC-INTERIORS): the law's line holds a made interior first"
   },
   {
     "name": "CRYPTSALE-candidate-gated",

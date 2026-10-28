@@ -48,9 +48,13 @@
 import { openDeepWaters, deepWatersLocationRects } from '../../world/deepWater/deepWatersClient.js';
 import { inFrame } from '../../world/deepWater/deepWatersBake.js';
 import { waterFrameOf } from '../../world/etherWatersBake.js';   // ETHER-DEEP: a pixel's frame - the Bay's map, or the Eltheric Ocean's box
+import { tamrielWaterFrame } from '../../world/tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's frame
+import { tamrielTrace, tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';
+import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { modSetting, modSettingsGeneration, MOD_SETTINGS } from '../../systems/modSettings.js';
 import { DeepWaterTileData } from '../../world/deepWater/deepWaterTileData.js';
-import { sampleMeshLocalY, HOLES_RESOLUTION, TILE_WORLD_SIZE } from '../../world/deepWater/deepWaterFloor.js';
+import { sampleMeshLocalY, TILE_WORLD_SIZE, carvedFloorLocalY } from '../../world/deepWater/deepWaterFloor.js';   // SNOW-THREAD: its home beside the floor it reads, so the snow's build worker reads it without this host
+export { carvedFloorLocalY };
 import { heightGridFromPositions } from '../../world/oceanHoles.js';   // OH-B: CommitExternalMeshChanges' grid read-back
 import { DW_OCEAN_LOCAL_Y } from '../../world/deepWater/deepWatersPixel.js';
 import { mapDataHasWater, isLocalPointWater } from '../../world/deepWater/deepWaterClassification.js';
@@ -60,10 +64,8 @@ import { POPULATE_RADIUS } from './deepWatersEncounters.js';   // DEEP-SHARE: th
 import { amGroupRollOwner } from '../../systems/campEncounters.js';   // DEEP-SHARE: the camps' election
 import { onFloatingFrame } from '../../player/collider.js';   // PERF-COL2 (AUDIT): the walls' bucket rides the floating origin
 
-export const DEEP_WATERS_VENDOR = 'iliac-puddle-no-more';
-
-/** The mod's switch (the port's Enabled). */
-export function deepWatersOn() { return modSetting(DEEP_WATERS_VENDOR, 'Enabled') === true; }
+import { DEEP_WATERS_VENDOR, deepWatersOn } from './deepWatersSwitch.js';   // BOOT-COMPILE: the key and the switch, a leaf the boot asks
+export { DEEP_WATERS_VENDOR, deepWatersOn };
 
 /** DeepWaterFloorBuilder.SyncBuildChebyshevRadius: built as promoted within this of the player's pixel. */
 export const SYNC_BUILD_CHEBYSHEV_RADIUS = 1;
@@ -160,20 +162,6 @@ export function deepWatersGeometrySettings() {
 }
 
 /**
- * The seafloor's pixel-local height in a carved cell, on the triangle the
- * floor draws there - null where the cell keeps its ground (the terrain's
- * own floor stands) or the pixel has no floor.
- */
-export function carvedFloorLocalY(dw, lx, lz) {
-  if (!dw || !dw.holes || !dw.floor) return null;
-  const n = HOLES_RESOLUTION;
-  const cx = Math.floor(lx / (TILE_WORLD_SIZE / n)), cz = Math.floor(lz / (TILE_WORLD_SIZE / n));
-  if (cx < 0 || cz < 0 || cx >= n || cz >= n) return null;
-  if (dw.holes[cz * n + cx]) return null;
-  return sampleMeshLocalY(dw.floor, lx, lz);
-}
-
-/**
  * The walls' triangles, one face each: AppendHoleEdgeWalls writes every
  * segment's quad twice (both windings, the mod's cull-off look); a
  * collider needs the surface once.
@@ -215,7 +203,8 @@ export function wallColliderIndices(floor) {
  */
 export function createDeepWatersHost({ woods, woodsBytes = null, locations = [], maps = null, blocks = null, built, climateAt, currentPixel, collider = null, pixelTranslation = null, floatingFrame = null, gpu = null, client = null,
   canRunHeavy = () => true, onFloorRefreshed = null, onSeafloorBuilt = null, canMutateTerrainData = () => true, clock = () => performance.now(), ether = null }) {
-  const dw = client ?? openDeepWaters({ woods, woodsBytes, rects: deepWatersLocationRects(woods, locations, maps, blocks), ether });
+  const continent = !!woods?.isTamrielGround;   // TAMRIEL-DEEP: the land past the Bay streams - its sea is carved by its own bake
+  const dw = client ?? openDeepWaters({ woods, woodsBytes, rects: deepWatersLocationRects(woods, locations, maps, blocks), ether, continent });
   let bake = null;
   let disposed = false;
   const deferred = new Map();   // key -> entry, promoted when its turn comes
@@ -234,8 +223,20 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
 
   const keyOf = (e) => `${e.px},${e.py}`;
   const isCurrent = (e) => built.get(keyOf(e)) === e;
-  /** ETHER-DEEP: the climate read clamped to the map the pixel (px, py) is answered in - the Bay's, or the Eltheric's box. */
-  const climateIn = (px, py) => { const f = waterFrameOf(px, py, ether); return (x, y) => climateAt(clampInt(x, f.x0, f.x0 + f.w - 1), clampInt(y, f.y0, f.y0 + f.h - 1)); };
+  /** TAMRIEL-DEEP: the continent's frame its bake answers (world/tamrielWatersBake.js) - set on both threads when the trace
+   *  lands or moves (the trace's version, the fit), asked at every promote: nothing in the world host waits on it. */
+  let continentFrame = null, continentOf = null;
+  function syncContinent() {
+    if (!continent) return;
+    const trace = tamrielTrace(), fit = tamrielFit(), key = trace ? `${tamrielLandVersion()}|${fit.ox}|${fit.oy}|${fit.ppu}` : null;
+    if (key === continentOf) return;
+    continentOf = key;
+    continentFrame = trace ? tamrielWaterFrame() : null;
+    dw.setTamriel?.({ trace, fit });
+  }
+  /** ETHER-DEEP: the climate read clamped to the map the pixel (px, py) is answered in - the Bay's, or the Eltheric's box
+   *  (TAMRIEL-DEEP: or the continent's frame). */
+  const climateIn = (px, py) => { const f = waterFrameOf(px, py, ether, continentFrame); return (x, y) => climateAt(clampInt(x, f.x0, f.x0 + f.w - 1), clampInt(y, f.y0, f.y0 + f.h - 1)); };
 
   function jobFor({ px, py, samples, tilemap, tilemapBytes }) {
     const climates = new Array(9);
@@ -260,12 +261,14 @@ export function createDeepWatersHost({ woods, woodsBytes = null, locations = [],
   }
 
   /** The promote, on the worker - or its answer at once for a dry pixel, and for a pixel no bake answers (TAMRIEL2's
-   *  continent past the map): nothing is carved there and the kernel's water stands and swims. Every arm - the near
+   *  continent past the map before its trace lands, TAMRIEL-DEEP's own frame after): nothing is carved there and the
+   *  kernel's water stands and swims. Every arm - the near
    *  promote, the pump's deferred builds, a refresh - comes through here (ETHER-HOLD: the deferred arm carved the sea
    *  past the Veil against the Bay's clamped corner, and a player stood on it, unable to swim). ETHER-DEEP: the
    *  Eltheric Ocean's box is a bake's own frame (etherWatersBake.js) - carved as the Bay is, by its own coastline. */
   function promote(pixel) {
-    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);
+    syncContinent();
+    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);
     return dw.buildPixel(jobFor(pixel), centre());
   }
 

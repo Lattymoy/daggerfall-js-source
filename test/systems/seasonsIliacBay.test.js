@@ -616,7 +616,7 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   // (older install AND a batch on an archive the mod has ever managed,
   // AUDIT 62 F4) lives in world/seasonReskin.js, where it is executed
   // by the pins rather than matched as text.
-  assert.match(world, /if \(seasons && seasonsGen !== seasons\.generation\) _reskin\.mark\(key\);/, 'AUDIT 61: a pixel published across an install asks for its own re-skin - ROAD-H H3: for its key alone');
+  assert.match(world, /if \(seasons && seasonsGen !== seasons\.generation\) _reskin\.mark\(pkey\);/, 'AUDIT 61: a pixel published across an install asks for its own re-skin - ROAD-H H3: for its key alone');   // PIN MOVED (IC-SWAP-BEHIND): the pixel's key, never the build's behind it
   assert.match(world, /refresh: \(\) => _reskin\.markStale\(seasons, built\),/,
     'AUDIT 62 F4 / ROAD-H H3: refresh marks only what stands on an older install AND carries a batch on an archive the mod manages');
   // the pick and the boot registration

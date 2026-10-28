@@ -19,6 +19,7 @@ import {
 } from '../../../src/systems/roleplayRealism/rrQuestLine.js';
 import { installRoleplayRealism } from '../../../src/systems/roleplayRealism/rrInstall.js';
 import { registerCustomFaction, customFactions, _resetCustomFactions, FactionFile, SOCIAL_GROUPS } from '../../../src/formats/factionFile.js';
+import { PROVINCE_FACTION_IDS } from '../../../src/systems/faction/provinceFactions.js';
 import { addCustomFactions, createFactionRep } from '../../../src/systems/faction/factionRep.js';
 import { loadQuestTables, addIntoQuestTables, placesTable, factionsTable, _resetExtraQuestRows, resetQuestTables } from '../../../src/systems/quest/tables.js';
 import { getIndividualFactionID } from '../../../src/systems/quest/person.js';
@@ -93,7 +94,7 @@ test('RR3 the three factions: the registry, the records verbatim, the dictionary
   const dict = new Map([[0, { id: 0, name: 'root', parent: 0, children: null }]]);
   const nameToId = new Map();
   assert.equal(addCustomFactions(dict, nameToId), true, 'a parented faction asks the relink');
-  assert.equal(dict.size, 4);
+  assert.equal(dict.size, 4 + PROVINCE_FACTION_IDS.length);   // PIN MOVED (PROVINCE-COURTS): the door adds the provinces' own courts and people first (systems/faction/provinceFactions.js)
   // DFU's quirk, kept: RelinkChildren (FactionFile.cs:879-893) ADDS to every children list without clearing it, so the
   // lord's own [1021] gains the relinked 1021 - and every parented faction in the dictionary is listed under its parent
   // twice after a custom faction with a parent lands. The port's relinkChildren is the same walk.
@@ -279,7 +280,8 @@ test('RR3 the fort\'s tracks and the armorer\'s discovery: nine pixels, the comp
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(rrEnabled\(\)\) \{ const _px = playerTravelPixel\(\); for \(const line of rrFortProximityLines\(_px\.x, _px\.y\)\) townTalk\.say\(line, 5\); \}/, 'OnMapPixelChanged: AddHUDText(text, 5)');
   assert.match(w, /if \(dfLocation\) setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);/);
-  assert.match(w, /const arm = rrMasterArmorerDiscovery\(_musicLoc, getBuildingVariant\);\s*const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s*if \(arm && armRec\) discoverBuilding\(`\$\{_musicLoc\.regionIndex\}:\$\{_musicLoc\.name\}`, armRec, arm\.name\);/, 'OnEnterLocationRect: DiscoverBuilding(key, name) - and nothing without the directory\'s record (AUDIT-RR F36, PlayerGPS.cs:932-933)');
+  // PIN MOVED (BAY-LEFT-MAPS C7 = E2, test/systems/bayleft_disckey.test.js): the town's book by the one key-maker
+  assert.match(w, /const arm = rrMasterArmorerDiscovery\(_musicLoc, getBuildingVariant\);\s*const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s*if \(arm && armRec\) discoverBuilding\(townBookOf\(_musicLoc\), armRec, arm\.name\);/, 'OnEnterLocationRect: DiscoverBuilding(key, name) - and nothing without the directory\'s record (AUDIT-RR F36, PlayerGPS.cs:932-933)');
 });
 
 // ---- CustomArmorService (:414-484) ------------------------------------------------

@@ -58,7 +58,7 @@ import { questBlockOnOwnClock } from '../quest/questStamps.js';   // TIME3: an o
 import { alignSurvival, ALIGN_GRACE_MINUTES, savedNotes } from '../survival/needs.js';   // SURV7: the needs' markers on the load arm; AUDIT SURV-BOONS C3: the boons said; AUDIT C&C N6: and the stages
 import { saneSaveClock } from '../offlineCopy.js';   // AUDIT LIVED1b F3: the envelope's clocks, read once - the doors' law too
 import { isMembershipStore } from '../guild/guilds.js';   // V2e: the two-book membership store rides the save whole
-import { createBankAccounts, createHouses, LOAN_AMNESTY } from '../banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
+import { createBankAccounts, createHouses, LOAN_AMNESTY, padRegionTable, blankAccount, blankHouse, allDeeds, copyHouseSlot } from '../banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
 import { setItemFields } from '../item/itemTemplates.js';   // JAN1: an item saved before MAC-N1 (no value) is set on the way in, so the trade strip never sums NaN
 import { restoreKnightlyOrderFlags } from '../knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../../formats/factionFile.js';   // the membership book's key IS the guild group
@@ -67,7 +67,7 @@ import { normalTribute } from '../../world/lefayMonument.js';   // LEFAY1: the f
 import { normalPracticeHeld } from '../masterSkills.js';   // AUDIT RPT1026 F1: the practice Master Skills switched off holds aside
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from '../characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from '../online/onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
-import { STREAMING_TERRAIN_SCALE } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
+import { STREAMING_TERRAIN_SCALE, GROUND_FRAME_LAW } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on; BAY-LEFT-GROUND: and its frame's law
 import { reviveForPlay } from '../deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from '../lightSource.js';   // DISC7: the light in hand's one door
 import { renownHpOf, onlineMpOf, offlineVitals } from '../renownLayer.js';   // RENOWN1: the online layer never reaches a save (EG15: nor the folds' magicka)
@@ -320,7 +320,9 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // stands on ground drawn at this terrain scale. A save without the stamp was written on the prefab's 1.5, and the
   // world host re-stands its heights on today's ground as it lands them (world.js restandHeight). Additive: SAVE_VERSION
   // does not move, and an older build ignores the field.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE };
+  // BAY-LEFT-GROUND (bible/03-World/Landforms.md, D5): and the law of their frame (`groundFrame`, terrainSampler.js
+  // GROUND_FRAME_LAW) - DFU's frame past the Bay too; a save without it stood the shaped ground there. Additive, as the scale's.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };
   // LIVED1: `classicMinutes` is the CHARACTER's clock - the hosts hand their own (worldTick.ownMinutes): offline the
   // one clock, online theirs, and every marker the envelope holds is on it. Online the WORLD's minute rides beside it,
   // the minute the character left the world at, which is what the arrival's one arm for an absence measures (AUDIT
@@ -420,7 +422,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // Without these a quicksave/load cleared every account and every
   // outstanding loan, which is a rather generous bug.
   snap.bankAccounts = (entity.bankAccounts ?? []).map((a) => ({ ...a }));
-  snap.houses = (entity.houses ?? []).map((h) => ({ ...h }));
+  snap.houses = (entity.houses ?? []).map(copyHouseSlot);   // HOUSES-3: a slot's own deed and the ones beside it (`more`)
   snap.ownedShip = entity.ownedShip ?? -1;
   snap.boatCabinLink = readBankCabinLink(entity.boatCabinLink);
   if (entity.shipCrossed === true) snap.shipCrossed = true;   // RESTORE: a ship that came through customs, which the realm's bank never buys back (banking.js)
@@ -878,6 +880,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     && (arcMirror.path === null || (isPathId(arcMirror.path) && !pathFindings({ arcanePath: arcMirror.path, masteredSkills: snap.masteredSkills }).length));
   if (arcMirrored) { entity.arcanePath = arcMirror.path; entity.pathPrompted = arcMirror.prompted === true; }
   entity._mentor = null;   // SOFTCAP1: recomputed by the party frame, never restored
+  entity._pupil = null;   // MENTOR2: the pupil's side too
+  entity._pupilFrac = null;
   entity.career = snap.career ? { ...snap.career } : entity.career;
   if (snap.career) { delete entity.career.martialMirror; delete entity.career.arcaneMirror; }   // AUDIT MARTIAL L3 F1: a mirror is the save's, never the live career's
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)
@@ -909,9 +913,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
   // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank
   // reader threw by DFU's own ValidateRegion law. No accounts saved is no accounts opened: the full table, as a new game.
-  entity.bankAccounts = snap.bankAccounts?.length ? snap.bankAccounts.map((a) => ({ ...a })) : createBankAccounts();   // B1
+  entity.bankAccounts = snap.bankAccounts?.length ? padRegionTable(snap.bankAccounts.map((a) => ({ ...a })), blankAccount) : createBankAccounts();   // B1; WW-R: a save's 62 padded to the provinces' regions
   entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
-  entity.houses = snap.houses?.length ? snap.houses.map((h) => ({ ...h })) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
+  entity.houses = snap.houses?.length ? padRegionTable(snap.houses.map(copyHouseSlot), blankHouse) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.boatCabinLink = readBankCabinLink(snap.boatCabinLink);
   if (snap.shipCrossed === true) entity.shipCrossed = true; else delete entity.shipCrossed;   // RESTORE: its customs mark, or none
@@ -1189,7 +1193,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   repairLostCurses(entity, { now: Math.floor(snap.classicMinutes ?? 0) });
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
-  restoreDiscovery(snap.discovery);
+  // BAY-LEFT-MAPS (C7 = E2): with the deeds restored above - a house past the Bay keeps its residence in its own town's book
+  restoreDiscovery(snap.discovery, { houses: allDeeds(entity.houses) });   // HOUSES-3: every region's three
   // RR3b: WorldDataVariants.RestoreWorldVariationData (SaveLoadManager.cs:1465-1466); a save without the field restores nothing, as the C#'s null does
   clearWorldDataVariants();
   restoreWorldVariationData(snap.worldVariation ?? null);
@@ -1267,7 +1272,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): the quest block on the character's clock - an online save taken
   // before TIME3 kept its countdowns on the world's, and they move onto the character's once, by the distance at the
   // save (quest/questStamps.js questBlockOnOwnClock); a TIME3 save and any offline one are there already.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5; BAY-LEFT-GROUND: null - before the frame's law moved
 }
 
 /** AUDIT LIVED1 F (K3/S4): A SAVE FROM BEFORE LIVED1 CAN HOLD A MARKER AHEAD OF ITS OWN CLOCK. RESTX2's online rest ran

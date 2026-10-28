@@ -205,6 +205,10 @@ export const PREF_DEFAULTS = Object.freeze({
   // on for a probe; this is the player's own switch on the Enhanced
   // pane. Off by default - a number over the game is a diagnostic.
   showFps: false,
+  // GPU-BACKEND (2026-10-26): the desktop app's graphics backend on Windows - 'default' (Chromium's own, Direct3D 11) or
+  // 'vulkan'. Read by the shell at launch (app/lib/graphicsBackend.cjs), never by the page; the row is drawn only in the
+  // app on Windows (ui/enhanced/enhancedMenu.js graphicsBackendRow).
+  graphicsBackend: 'default',
   // TUT1 (2026-10-11, Mac: "our own custom tutorial ... popups for whenever you are interacting with a new system"): the
   // tutorial's popups (on unless turned off, from the menu's Tutorials tab) and the pages read - ids of
   // systems/tutorialCatalogue.js, in its order; null is none read. The player's, not the character's

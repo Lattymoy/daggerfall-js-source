@@ -83,8 +83,8 @@
   {
     "name": "DISCORD-GATES-the-omen-posted-again",
     "file": "src/net/gate/gateHerald.js",
-    "old": "if (!isGateDay(d) || d <= posted) continue;",
-    "new": "if (!isGateDay(d)) continue;",
+    "old": "    if (!isGateDay(n) || d <= posted) continue;",
+    "new": "    if (!isGateDay(n)) continue;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DISCORD-GATES-the-omen-instant-ignored",
     "file": "src/net/gate/gateHerald.js",
-    "old": "return { day: d, at: Math.max(nowMs, t.omenAt) };",
-    "new": "return { day: d, at: nowMs };",
+    "old": "    return { day: n, at: Math.max(nowMs, t.omenAt) };",
+    "new": "    return { day: n, at: nowMs };",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DISCORD-GATES-a-day-not-come-trusted",
     "file": "src/net/gate/gateHerald.js",
-    "old": "const posted = Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1;",
-    "new": "const posted = postedDay;",
+    "old": "  const posted = was <= today ? was : -1;   // a day not yet come is no post made",
+    "new": "  const posted = was;   // a day not yet come is no post made",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "DISCORD-GATES-a-site-for-any-day",
     "file": "src/net/gate/gateHerald.js",
-    "old": "(day === gateAt(nowMs).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS).day)",
+    "old": "(day === gateAt(nowMs, gateLaneOf(day)).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS, gateLaneOf(day)).day)",
     "new": "day >= 0",
     "tests": [
       "test/net/gate/discordgates.test.js"
@@ -191,7 +191,7 @@
   {
     "name": "DISCORD-GATES-the-pixel-unbounded",
     "file": "src/net/wire.js",
-    "old": "!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || typeof m.pl !== 'string'",
+    "old": "!gatePixelOk(m.d, m.px, m.py) || typeof m.pl !== 'string'",
     "new": "typeof m.pl !== 'string'",
     "tests": [
       "test/net/gate/discordgates.test.js"
@@ -264,8 +264,8 @@
   {
     "name": "DISCORD-GATES-the-owe-lost-on-a-refusal",
     "file": "server/src/index.js",
-    "old": "        else retry = now + HERALD_RETRY_MS;\n      }\n      const due = heraldOmenDue(now, st.omen);",
-    "new": "        else { retry = now + HERALD_RETRY_MS; st.owe = null; }\n      }\n      const due = heraldOmenDue(now, st.omen);",
+    "old": "        else retry = now + HERALD_RETRY_MS;\n      }\n      const due = heraldOmenDue(now, st.omen, lane);",
+    "new": "        else { retry = now + HERALD_RETRY_MS; st.owe = null; }\n      }\n      const due = heraldOmenDue(now, st.omen, lane);",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "DISCORD-GATES-the-omen-missed-at-its-instant",
     "file": "server/src/index.js",
-    "old": "if (due && due.at <= now) {\n        const site = agreedGateSite(",
-    "new": "if (due && due.at < now) {\n        const site = agreedGateSite(",
+    "old": "      if (due && due.at <= now && (!lane || dueSite)) {",
+    "new": "      if (due && due.at < now && (!lane || dueSite)) {",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "DISCORD-GATES-a-refusal-never-retried",
     "file": "server/src/index.js",
-    "old": "const owed = st.owe || st.riteOwe ? null : heraldOmenDue(now, st.omen);\n      const next = [retry, owed && owed.at > now ? owed.at : null]",
-    "new": "const owed = st.owe || st.riteOwe ? null : heraldOmenDue(now, st.omen);\n      const next = [owed && owed.at > now ? owed.at : null]",
+    "old": "      const next = [retry, owed != null && owed > now ? owed : null].filter((x) => x != null);",
+    "new": "      const next = [owed != null && owed > now ? owed : null].filter((x) => x != null);",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -336,7 +336,7 @@
   {
     "name": "DISCORD-GATES-said-every-frame",
     "file": "src/net/online.js",
-    "old": "    if (this._gateSiteSaid && this._gateSiteSaid.ws === this._ws && this._gateSiteSaid.d === day) return true;\n",
+    "old": "    if (said.has(day)) return true;\n",
     "new": "",
     "tests": [
       "test/net/gate/discordgates.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "DISCORD-GATES-said-to-world122",
     "file": "src/net/online.js",
-    "old": "if (primary) this.gateSiteOk = relaySupportsGateSite(relayV);",
-    "new": "if (primary) this.gateSiteOk = true;",
+    "old": "if (primary) { this.gateSiteOk = relaySupportsGateSite(relayV); this.gateLanesOk = relaySupportsGateLanes(relayV); }",
+    "new": "if (primary) { this.gateSiteOk = true; this.gateLanesOk = relaySupportsGateLanes(relayV); }",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]

@@ -131,11 +131,15 @@ const CATALOGUE = {
   'aura:witchfire': 'festival seasonal', 'aura:seraphwings': 'staff staff', 'aura:oblivionward': 'bestowed bestowed', 'aura:radiance': 'bestowed bestowed',
   'aura:shadowcloak': 'bestowed bestowed', 'aura:resonance': 'bestowed bestowed', 'aura:lilacwarren': 'bestowed bestowed', 'aura:sagesmoke': 'bestowed bestowed' /* NIRNROOT-SAGE (PIN MOVED) */, 'icon:tallowskull': 'festival seasonal',
   'icon:twinmoons': 'festival seasonal', 'icon:wyrdcauldron': 'festival seasonal', 'icon:soulcake': 'festival seasonal', 'glyph:tower': 'seats open character',
-  'glyph:crownDF': 'seats open character', 'glyph:crownWR': 'seats open character', 'glyph:crownSN': 'seats open character', 'glyph:laurel': 'ranked ranked',
+  'glyph:crownDF': 'seats open character', 'glyph:crownWR': 'seats open character', 'glyph:crownSN': 'seats open character',
+  'glyph:crownSK': 'seats open character', 'glyph:crownMW': 'seats open character', 'glyph:crownSU': 'seats open character', 'glyph:crownVW': 'seats open character',
+  'glyph:crownEW': 'seats open character', 'glyph:crownBM': 'seats open character', 'glyph:crownCY': 'seats open character',   // PIN MOVED (WW7-3): the provinces' crowns
+  'glyph:laurel': 'ranked ranked',
   'glyph:sprout': 'account auto', 'glyph:disciple': 'patrons patron', 'glyph:apostle': 'patrons dormant', 'glyph:hierophant': 'patrons patron',
   'glyph:herald': 'patrons patron', 'glyph:dev': 'staff staff', 'glyph:mod': 'staff staff', 'glyph:dm': 'staff staff',
   'glyph:shadowfang': 'bestowed bestowed', 'glyph:penitent': 'bestowed bestowed', 'glyph:aegis': 'bestowed bestowed', 'glyph:primarch': 'bestowed bestowed',
   'glyph:crystalfist': 'bestowed bestowed', 'glyph:wikimaid': 'bestowed bestowed', 'glyph:nirnrootsage': 'bestowed bestowed' /* NIRNROOT-SAGE (PIN MOVED) */,
+  'title:genesis': 'shop shop', 'glyph:origin': 'shop shop', 'aura:eternal': 'shop shop' /* SHOP (PIN MOVED): sold in the shop during the pre-alpha */,
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -146,7 +150,7 @@ test('COLLECTIONS-II THE CATALOGUE IS WHOLE AND AS RECORDED: every title, aura, 
   const got = {};
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) got[`${kind}:${e.key}`] = [e.src, e.avail, ...(e.scope ? [e.scope] : [])].join(' ');
   assert.deepEqual(got, CATALOGUE);
-  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'seats', 'chapters', 'ranked', 'world', 'account', 'patrons', 'staff', 'bestowed'], 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
+  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'seats', 'chapters', 'ranked', 'world', 'account', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (SHOP): the shop before the patrons */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) {
     const how = e.how();
     assert.ok(typeof how === 'string' && how.length > 12, `${kind}:${e.key} says how`);
@@ -269,12 +273,12 @@ test('COLLECTIONS-II HELD, WORN AND COUNTED off the wardrobe the service mints (
   // a seat's glyph: the character's
   const seated = wardrobeOf({ handle: 'g', registered_at: 1, created_at: 1, seatTitles: ['warden', 'protector'] }, {}, 2e9);
   assert.ok(seated.titles.includes('warden'), 'the account holds the seat\'s title');
-  assert.deepEqual(seated.glyphs.filter((g) => ['tower', 'crownDF', 'crownWR', 'crownSN'].includes(g)), [], 'and none of its glyphs - they are minted on the character');
-  for (const g of ['tower', 'crownDF', 'crownWR', 'crownSN']) {
+  assert.deepEqual(seated.glyphs.filter((g) => ['tower', 'crownDF', 'crownWR', 'crownSN', 'crownSK', 'crownMW', 'crownSU', 'crownVW', 'crownEW', 'crownBM', 'crownCY'].includes(g)), [], 'and none of its glyphs - they are minted on the character');   // PIN MOVED (WW7-3): the provinces' crowns too
+  for (const g of ['tower', 'crownDF', 'crownWR', 'crownSN', 'crownSK', 'crownMW', 'crownSU', 'crownVW', 'crownEW', 'crownBM', 'crownCY']) {
     const e = { ...W.wardrobeEntry('glyph', g), kind: 'glyph', key: g };
     assert.deepEqual([W.wardrobeKnown(e), W.wardrobeCounted(e), W.wardrobeHeld('glyph', g, { glyphs: [g] })], [false, false, false], g);
   }
-  assert.deepEqual(W.wardrobeCount('glyph', null), { held: 0, total: GLYPHS.length - 4 });
+  assert.deepEqual(W.wardrobeCount('glyph', null), { held: 0, total: GLYPHS.length - 11 });   // PIN MOVED (WW7-3): a seat's eleven glyphs (the tower, ten crowns) the character's, uncounted
   assert.equal(W.wardrobeHeld('icon', 'twinmoons', { titles: ['founder'] }), false, 'a wardrobe from before icons holds none');
 });
 

@@ -329,5 +329,35 @@
       "test/net/serverpost_client.test.js"
     ],
     "note": "AUDIT SERVER-POST: /mail underground would open the overworld's pause over the dungeon."
+  },
+  {
+    "name": "TAMRIEL-POST-a-guest-sent-it",
+    "file": "tools/sendServerPost.mjs",
+    "old": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)\nFROM players p WHERE p.handle IS NOT NULL;`;",
+    "new": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)\nFROM players p;`;",
+    "tests": [
+      "test/tooling/serverpost_send.test.js"
+    ],
+    "note": "TAMRIEL-POST: the letter to every account, guests too"
+  },
+  {
+    "name": "TAMRIEL-POST-the-stones-not-ten",
+    "file": "tools/sendServerPost.mjs",
+    "old": "\"currentCondition\":1000,\"stackCount\":10}';",
+    "new": "\"currentCondition\":1000,\"stackCount\":1}';",
+    "tests": [
+      "test/tooling/serverpost_send.test.js"
+    ],
+    "note": "TAMRIEL-POST: one stone, not ten"
+  },
+  {
+    "name": "TAMRIEL-POST-the-send-not-once",
+    "file": "tools/sendServerPost.mjs",
+    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "tests": [
+      "test/tooling/serverpost_send.test.js"
+    ],
+    "note": "TAMRIEL-POST: applied again, it would send again (the batch index refuses the copy - the statement must not fail)"
   }
 ]

@@ -448,8 +448,8 @@ test('EE5 / VC4: the ground reads the slab\u2019s own shadow map through one blo
   assert.match(sky, /soft: Math\.max\(1e-3, state\.cloudSoft \?\? 0\.25\),/, 'a zero softness would divide by nothing');
   assert.match(sky, /time: state\.seconds \?\? 0,/);
   const sharedSrc = read('src/scenes/shared.js');
-  assert.match(sharedSrc, /if \(clouds\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow, \{ far: farCoverSun\(\) \}\);/, 'the deck carries the map and its square');   // PIN MOVED (OW-HORIZON, 2026-10-20): and the far law past it
-  assert.match(sharedSrc, /if \(clouds\) return 1;   \/\/ VC4/, 'no global dim on top of the per-surface shadow');
+  assert.match(sharedSrc, /if \(cloudsShown\?\.shadow\) Object\.assign\(enhancedSky\.cloudShadow, cloudsShown\.shadow, \{ far: farCoverSun\(\) \}\);/, 'the deck carries the map and its square');   // PIN MOVED (OW-HORIZON, 2026-10-20): and the far law past it
+  assert.match(sharedSrc, /if \(cloudsShown\) return 1;   \/\/ VC4/, 'no global dim on top of the per-surface shadow');
   // both hosts hand it over immediately before the terrain draw, and
   // hand over NOTHING when there is no enhanced sky
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {

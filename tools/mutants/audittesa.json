@@ -1,0 +1,470 @@
+[
+  {
+    "name": "AUDIT-TESA-A1-1-key-names",
+    "file": "src/systems/automap/automap.js",
+    "old": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (loc?.arena && !loc.capital",
+    "new": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (false",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A1-2-discovery-names",
+    "file": "src/scenes/world.js",
+    "old": "locationName: dfLocation.arena && !dfLocation.capital ? '' : dfLocation.name,",
+    "new": "locationName: dfLocation.name,",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A1-2-reveal-names",
+    "file": "src/scenes/questWorld.js",
+    "old": "locationName: loc.arena && !loc.capital ? '' : loc.name });",
+    "new": "locationName: loc.name });",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-1-no-arena-site",
+    "file": "src/scenes/world.js",
+    "old": "?? [...locationIndex.values()].find((l) => (l?.ether || l?.arena || l?.country || l?.capital) && l.name",
+    "new": "?? [...locationIndex.values()].find((l) => (l?.ether || l?.country || l?.capital) && l.name",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-1-respawn-bay-only",
+    "file": "src/scenes/questWorld.js",
+    "old": "      const loc = placeByName(sd.regionName, sd.locationName);",
+    "new": "      const loc = maps.getLocationByName(sd.regionName, sd.locationName);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-1-marker-z-north",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "capitalSliceMarkers(cap, s).map(([dx, dz, h = 0]) => startMarkerAt(at[0] + dx, at[1] - dz, h))",
+    "new": "capitalSliceMarkers(cap, s).map(([dx, dz, h = 0]) => startMarkerAt(at[0] + dx, at[1] + dz, h))",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-1-marker-unshifted",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "XPos: Math.round(x / 0.025), YPos: h ? -Math.round(h / 0.025) : 0, ZPos: Math.round(z / 0.025) - RMB_UNITS,",
+    "new": "XPos: Math.round(x / 0.025), YPos: h ? -Math.round(h / 0.025) : 0, ZPos: Math.round(z / 0.025),",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A3-1-shore-unrouted",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    water[(n.y - gy) * MAP_W + (n.x - gx)] = 0;\n",
+    "new": "",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-5-streets-region",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),",
+    "new": "nameBank: getNameBankOfRegion(dfLocation.regionIndex),",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-5-host-untold",
+    "file": "src/scenes/world.js",
+    "old": "    provinceBank: () => provinceBankHere(),",
+    "new": "    provinceBank: () => null,",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-5-regulars-region",
+    "file": "src/scenes/worldModes.js",
+    "old": "bank = host.provinceBank?.() ?? getNameBankOfRegion(b?.regionIndex ?? 0);",
+    "new": "bank = getNameBankOfRegion(b?.regionIndex ?? 0);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-shared-garden",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "else if (cell === 'G') out.push(CAPITALS[k] ? capitalGardenName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.garden);",
+    "new": "else if (cell === 'G') out.push(CAPITAL_BLOCKS.garden);",
+    "tests": [
+      "test/audit_tesa.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-own-law-alone",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "return own.closed(dx, dz) || !!under?.(dx, dz); },",
+    "new": "return own.closed(dx, dz); },",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-trees-in-walls",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) || tile(x, z) !== 2 ? -1 : gardenTree(x, z)), closed:",
+    "new": "tree: (x, z) => (tile(x, z) !== 2 ? -1 : gardenTree(x, z)), closed:",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-garden-open",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "closed: (x, z) => on(x, z) || shut(x, z) }));",
+    "new": "closed: (x, z) => shut(x, z) }));",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-realm-index",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const CAPITAL_BLOCK_INDEX = 901000;",
+    "new": "export const CAPITAL_BLOCK_INDEX = 900200;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-rebuilt-each-read",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const lazy = (name, index, make) => { let json = null; out.push({ name, index, make, get json() { return (json ??= make()); } }); };",
+    "new": "  const lazy = (name, index, make) => { out.push({ name, index, make, get json() { return make(); } }); };",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-footprint-each-block",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const standsOf = (cap) => { if (!stands.has(cap.key)) stands.set(cap.key, footprint?.(cap) ?? null); return stands.get(cap.key); };",
+    "new": "  const standsOf = (cap) => footprint?.(cap) ?? null;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-eager-door",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "  const json = typeof b.json === 'function' ? b.json() : b.json;",
+    "new": "  const json = b.json;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-install-no-footprint",
+    "file": "src/world/capitalModels.js",
+    "old": "for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
+    "new": "for (const b of capitalPortBlocks()) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-slopes-walls",
+    "file": "src/world/capitalModels.js",
+    "old": "if (!(n > 0) || Math.abs(ny) > 0.7 * n) continue;",
+    "new": "if (!(n > 0)) continue;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-overhead-only",
+    "file": "src/world/capitalModels.js",
+    "old": "const BODY_PLANES = Object.freeze([0.5, 1.0, 1.6]);",
+    "new": "const BODY_PLANES = Object.freeze([2.5]);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-z-north",
+    "file": "src/world/capitalModels.js",
+    "old": "cut.push([p[q] + (p[r] - p[q]) * f, -(p[q + 2] + (p[r + 2] - p[q + 2]) * f)]);",
+    "new": "cut.push([p[q] + (p[r] - p[q]) * f, p[q + 2] + (p[r + 2] - p[q + 2]) * f]);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-2-diagonal-slips",
+    "file": "src/world/capitalModels.js",
+    "old": "if (cells.has(key(i + 1, j + dj)) && !cells.has(key(i + 1, j)) && !cells.has(key(i, j + dj))) cells.add(key(i + 1, j));",
+    "new": "if (false) cells.add(key(i + 1, j));",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A7-1-no-wait",
+    "file": "src/scenes/world.js",
+    "old": "if ((_arenaTemplates || _countryTemplates || _capitalBase) && params.has('load'))",
+    "new": "if (false && params.has('load'))",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A7-1-ground-kept",
+    "file": "src/world/tamrielCountry.js",
+    "old": "if (fit !== tamrielFit() || land !== tamrielLandVersion()) { dry.clear();",
+    "new": "if (false) { dry.clear();",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-4-farthest",
+    "file": "src/systems/deathRespawn.js",
+    "old": "      if (d2 >= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
+    "new": "      if (bestDist !== Infinity && d2 <= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
+    "tests": [
+      "test/audit_tesa.test.js",
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-4-a-dungeon-a-town",
+    "file": "src/systems/deathRespawn.js",
+    "old": "      const found = SAFE_KINDS.find((t) => t.match(e));\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
+    "new": "      const found = SAFE_KINDS.find((t) => t.match(e)) ?? SAFE_KINDS[0];\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
+    "tests": [
+      "test/audit_tesa.test.js",
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-4-rise-in-alikr",
+    "file": "src/scenes/world.js",
+    "old": "        const town = nearestTownOf(px);\n        if (town) land = town.mapPixel;",
+    "new": "        const town = null;\n        if (town) land = town.mapPixel;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A4-F2-capital-cloned-over",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (had?.capital) return capitalLocationAt(px, py);",
+    "new": "    if (false) return capitalLocationAt(px, py);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A4-F2-harbour-arena-first",
+    "file": "src/scenes/harbourHost.js",
+    "old": "const aloc = aq ? capitalLocationAt(aq.bx, aq.by) || arenaLocationAt(aq.bx, aq.by) : null;",
+    "new": "const aloc = aq ? arenaLocationAt(aq.bx, aq.by) : null;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-2-dest-province-only",
+    "file": "src/scenes/world.js",
+    "old": "return here?.name ? { pixel: { x, y }, name: here.name } : province ?",
+    "new": "return province ?",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A2-3-living-alias",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const livingTown = livingTownAt(px, py) ?? {",
+    "new": "const livingTown = livingTownAt(px % 1000, py % 500) ?? {",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129). The living towns are WW1's world-keyed index now: the mutant brings the Bay row's alias back."
+  },
+  {
+    "name": "AUDIT-TESA-A2-3-port-alias",
+    "file": "src/systems/map/mapDirectory.js",
+    "old": "  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;",
+    "new": "  return mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null;",
+    "tests": [
+      "test/audit_tesa.test.js",
+      "test/world/worldWide/ww3_sea.test.js"
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129). The harbour's loop leans on WW3's directory bound (mapDirectory.js locationSummaryAt) for the Bay's rows alone."
+  },
+  {
+    "name": "AUDIT-TESA-A2-3-summary-undiscovered",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "return loc.name && id && (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
+    "new": "return loc.name && id ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ],
+    "note": "OW-BEYOND-KNOWN (PIN MOVED): re-aimed by content - a standing place past the Bay is known by its kind or its find, never by standing"
+  },
+  {
+    "name": "AUDIT-TESA-A1-3-arena-tracked",
+    "file": ".gitignore",
+    "old": "/ARENA/\nCITYDATA.*\n",
+    "new": "/ARENA/\n",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A7-8-capitals-shut-online",
+    "file": "src/scenes/shared.js",
+    "old": "  return pageParam('capitals', search) !== 'off' || isOnlinePage(search);",
+    "new": "  return pageParam('capitals', search) !== 'off';",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A7-8-country-shut-online",
+    "file": "src/scenes/shared.js",
+    "old": "  return pageParam('country', search) !== 'off' || isOnlinePage(search);",
+    "new": "  return pageParam('country', search) !== 'off';",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A4-F4-travel-options-list",
+    "file": "src/scenes/world.js",
+    "old": "loc.arena || loc.capital ? (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0 : modSetting('travel-options', 'Enabled')",
+    "new": "modSetting('travel-options', 'Enabled')",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): past the Bay the place's own port byte answers first (an Arena place's TESA6 word, a capital harbour's) - the mutant still drops that arm."
+  },
+  {
+    "name": "AUDIT-TESA-A5-F3-deed-past-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },",
+    "new": "return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey); },",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A4-F5-ring-sides-skipped",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      for (let dx = -r; dx <= r; dx += Math.abs(dy) === r ? 1 : 2 * r) {",
+    "new": "      for (let dx = -r; dx <= r; dx += Math.abs(dy) === r ? 1 : 2 * r + 1) {",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A4-F5-ring-one-side",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      for (let dx = -r; dx <= r; dx += Math.abs(dy) === r ? 1 : 2 * r) {",
+    "new": "      for (let dx = -r; dx <= r; dx += Math.abs(dy) === r ? 1 : 4 * r) {",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-3-solitude-north-in-houses",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "    west: -7, north: -108, east: 530, south: 416, thick: 5,",
+    "new": "    west: -7, north: -106, east: 530, south: 416, thick: 5,",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-3-solitude-south-in-houses",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "    west: -7, north: -108, east: 530, south: 416, thick: 5,",
+    "new": "    west: -7, north: -108, east: 530, south: 413, thick: 5,",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-3-solitude-west-in-houses",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "    west: -7, north: -108, east: 530, south: 416, thick: 5,",
+    "new": "    west: -4, north: -108, east: 530, south: 416, thick: 5,",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-3-walks-in-houses",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "len = C.z1 - C.z0 + 1, zc",
+    "new": "len = C.z1 - C.z0 + 8, zc",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-4-canals-inland",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "capitalBlockNames(plan, k, cap.shore ? ctx.names : dryKinds(ctx.names, ctx.blockOf), (cell) => ownBlockOf(cap, cell),",
+    "new": "capitalBlockNames(plan, k, ctx.names, (cell) => ownBlockOf(cap, cell),",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): the own blocks a law of a code (ownBlockOf) where they were cap.blocks."
+  },
+  {
+    "name": "AUDIT-TESA-A6-4-puddle-a-canal",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "const WET_TILES = 8;",
+    "new": "const WET_TILES = 7;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-4-all-wet-none",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "    if (dry.length) out.set(kind, dry);",
+    "new": "    out.set(kind, dry);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A6-5-shop-byte",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const CAPITAL_CLOSED_BYTE = 0xfe;",
+    "new": "export const CAPITAL_CLOSED_BYTE = 1;",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-A7-4-ink-at-point",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const on = pixel && (st?.pinned || !st) ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];",
+    "new": "const on = [x, y];",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  }
+]

@@ -24,7 +24,7 @@
 // the quest system's LocationId -> MapId link, which costs a
 // readLocationIdFast per location (~25ms in DFU's own note).
 
-import { getMapPixelID } from '../../formats/mapsFile.js';
+import { getMapPixelID, MAX_MAP_PIXEL_X as MAP_W, MAX_MAP_PIXEL_Y as MAP_H } from '../../formats/mapsFile.js';
 
 /** ContentReader.EnumerateMaps (:318-356). Returns Map<pixelId,
  *  MapSummary>. */
@@ -59,13 +59,18 @@ export function buildMapDict(maps) {
   return mapDict;
 }
 
+/** WW3 (bible/03-World/World-Wide.md WW3): a map pixel of the Bay's map, whose MapsFile pixel id is its own - off it
+ *  `y * 1000 + x` names ANOTHER pixel's id ((1003, 10) is (3, 11)'s, (-2, 10) is (998, 9)'s), and a ship past the Bay
+ *  was told it lay by a Bay port. DFU asks the directory of its own map alone; the port asks it of the world's. */
+const onMap = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;
+
 /** ContentReader.HasLocation(x, y, out summary) (:212-230) - the
- *  summary, or null. */
+ *  summary, or null (WW3: null off the Bay's map). */
 export function locationSummaryAt(mapDict, mapPixelX, mapPixelY) {
-  return mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null;
+  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;
 }
 
-/** ContentReader.HasLocation(x, y) (:238-252). */
+/** ContentReader.HasLocation(x, y) (:238-252) - WW3: none off the Bay's map. */
 export function hasLocation(mapDict, mapPixelX, mapPixelY) {
-  return !!mapDict?.has(getMapPixelID(mapPixelX, mapPixelY));
+  return onMap(mapPixelX, mapPixelY) && !!mapDict?.has(getMapPixelID(mapPixelX, mapPixelY));
 }

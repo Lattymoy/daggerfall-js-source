@@ -138,9 +138,11 @@ test('CROWN-HALL the hosts by source: the throne room stood at the dungeon\'s mo
   const open = m.slice(m.indexOf('  function openCrownPiece(key) {'), m.indexOf('  /** DECOR1d: WHERE THE PLAYER MAY DECORATE'));
   assert.match(open, /if \(!c\.member\) \{ say\(hallBoardShutLine\(c\.name\)\); return; \}\n      if \(!host\.guildHall\?\.openBoard\?\.\(c\.name\)\) say\(HALL_BOARD_COLD\);/);
   assert.match(open, /if \(!c\.member\) \{ say\(CROWN_HALL_TEXT\.chestShut\(c\.name\)\); return; \}\n    openHallChest\(\);/);
-  const w = src('src/scenes/world.js');
-  const crown = w.slice(w.indexOf('      crown: (mapId) => {'), w.indexOf('    guildHall: {'));
+  // PIN MOVED (DOMAIN2, HOST-SPLIT): the throne room's dressing moved out of bootWorld, into the seat halls' own host
+  // (scenes/seatHallHost.js), and reads the room's instance (a castle's)
+  const w = src('src/scenes/seatHallHost.js');
+  const crown = w.slice(w.indexOf('    crown(mapId, instance = null) {'), w.indexOf('    castleAt: castleOf,'));
   assert.match(crown, /const g = seat\?\.tier === 'crown' \? seat\.holder\?\.guild \?\? null : null;/);
-  assert.match(crown, /member: seatHallOf\(seat, guildBook\?\.guild\?\.id \?\? null\), heraldry: seatBannerOf\(seat\)/);
-  assert.match(w, /drawDungeonBanners: \(\{ banners, proj, view, eye \}\) => \{\n      if \(banners\?\.length && bannerPass\?\.draw\(banners, proj, view, new Float32Array\(eye\), performance\.now\(\) \/ 1000, \{/);
+  assert.match(crown, /member: seatHallOf\(seat, guild\(\)\?\.id \?\? null\), heraldry: seatBannerOf\(seat\)/);
+  assert.match(src('src/scenes/world.js'), /drawDungeonBanners: \(\{ banners, proj, view, eye \}\) => \{\n      if \(banners\?\.length && bannerPass\?\.draw\(banners, proj, view, new Float32Array\(eye\), performance\.now\(\) \/ 1000, \{/);
 });

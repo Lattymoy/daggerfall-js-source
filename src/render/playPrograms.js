@@ -22,12 +22,14 @@ import { GATE_FX_PROGRAMS } from './gate/gateFx.js';
 import { CRYSTAL_PROGRAMS } from './courtCrystals.js';
 import { NODE_GLINT_PROGRAMS } from './nodeGlint.js';
 import { AURA_PROGRAMS } from './auraRing.js';
+import { FIRE_PROGRAMS } from './redMountainFire.js';
+import { GLOW_PROGRAMS } from './ghostfenceGlow.js';
 
 /** The programs started early: a gate's fire (the world's gates, the Elite arches, the court's way in and way home),
  *  the court's and the Spire's telegraphs, his blows' sparks, the crystals, the nodes' glint (NODE-GLINT's, the outline's
  *  before it), and the auras' - one program a look (AURA-SPLIT), the first wearer in range having waited 8.5-11 s on
- *  D3D11 for the one program they had been (AURA-STALL). */
-export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS];
+ *  D3D11 for the one program they had been (AURA-STALL); the volcano's fire and the fence's glow (AUDIT RED-MOUNTAIN F5). */
+export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];
 
 /** The queue's wait between turns: the browser's next idle, or a quarter second at the most (a timer where it has none,
  *  one that never keeps a test's process alive). */
@@ -37,7 +39,7 @@ const idleTurn = () => new Promise((resolve) => {
 });
 
 /** Start them on `gl` where its driver compiles beside the frames; answers whether it did. COMPILE-QUEUE (FIELD BUGS
- *  2026-10-27, "hitch 13064 ms" on the desktop app after login): one at a time (glProgram.js startProgramsInTurn). All
+ *  2026-10-27b, "hitch 13064 ms" on the desktop app after login): one at a time (glProgram.js startProgramsInTurn). All
  *  at once filled the driver's few compile threads, and the warm's next build that read a link waited for nearly all of
  *  them, in an idle callback no frame sample holds (tools/compileStallProbe.mjs queue measures both). */
 export function startPlayPrograms(gl, wait = idleTurn) {

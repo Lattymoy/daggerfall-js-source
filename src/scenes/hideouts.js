@@ -75,7 +75,7 @@ const asMinted = (pile, minted) => { const items = pile?.items ?? []; return ite
  * HIDEOUTS_ASK_MS (a trouble read meanwhile pays a look-up, never its legs again); and its first bands after waiting are
  * told (`resolved`) - the host's books of troubles made band-less meanwhile are made again. Kept for the session, they
  * left one reader's caravan held up by the Black Hand where another's, its roads planned a few frames later, fought orcs.
- * @param {{ of: (region: number) => (any[] | undefined), generation: () => number, resolved?: (region: number) => void, now?: () => number }} deps
+ * @param {{ of: (region: number) => (any[] | undefined), generation: () => number | string, resolved?: (region: number) => void, now?: () => number }} deps
  * @returns {(region: number) => any[]}
  */
 export function createHideoutBook(deps) {
@@ -83,7 +83,7 @@ export function createHideoutBook(deps) {
   const kept = new Map();
   /** @type {Map<number, number>} the regions waiting, by when (real ms) each was last asked */
   const waiting = new Map();
-  let gen = /** @type {number | null} */ (null);
+  let gen = /** @type {number | string | null} */ (null);
   const now = deps.now ?? (() => performance.now());
   return (region) => {
     if (region == null || !Number.isFinite(region)) return [];
@@ -153,8 +153,10 @@ export function* bandChest(band, t, deps) {
  *   chest: (band: any, t: number) => Iterator<void, { items: any[], robbed: any[] }>, dropPile: (items: any[], feet: number[]) => any,
  *   removePile: (pile: any) => void, engaged?: (rec: any) => boolean, now?: () => number, renderer?: any, meshes?: any,
  *   getTexture?: (archive: number) => any, uploadRecordFrame?: (archive: number, record: number, frame: number) => void,
+ *   routed?: (h: any) => void,
  * }} deps - `chest` the band's chest worked a step a `next()` (`bandChest`); `engaged(rec)` whether one of its people
- *   draws on this player (AUDIT LW-II-2 C14); `now` real ms (the chest's slice)
+ *   draws on this player (AUDIT LW-II-2 C14); `now` real ms (the chest's slice); BAY-LEFT-SEA: `routed(h)` its hideout
+ *   routed (a Bounty's den past the Bay - systems/seatEdicts.js hideoutRouted)
  */
 export function createHideouts(deps) {
   /** The hideout stood, or null. */
@@ -311,6 +313,7 @@ export function createHideouts(deps) {
     const r = rel();
     const day = Math.floor((t - 240) / DAY_MIN);
     r?.turn?.('routed', `${s.h.key}@${s.band.gen}.${s.band.heir}`, { t, who: s.band.name });
+    deps.routed?.(s.h);   // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)
     const thanked = new Set();
     for (const tr of s.robbed) for (const m of tr.party ?? []) if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }
     deps.say(`You have routed ${s.band.name}.`);

@@ -246,11 +246,12 @@
   {
     "name": "SHIP-host-names",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown });",
-    "new": "    const names = shipNames(cls, spec.seed, { regionIndex: region, crown });",
+    "old": "    const area = namesArea(spec, w), names = ether ? etherShipNames(cls, spec.seed) : watersShipNames(cls, spec.seed, region, crown, area);",
+    "new": "    const area = namesArea(spec, w), names = watersShipNames(cls, spec.seed, region, crown, area);",
     "tests": [
       "test/systems/naval/ethership.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground. Re-aimed again (AUDIT TESA II K7): the names built by the module's watersShipNames. Re-aimed again (WW7-8): the area named first, kept on her entry for the wire."
   },
   {
     "name": "SHIP-host-flag",

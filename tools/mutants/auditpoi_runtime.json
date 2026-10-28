@@ -291,8 +291,8 @@
   {
     "name": "AUDITPOI-R12-an-array-a-pixel",
     "file": "src/poi/poiFeed.js",
-    "old": "return byPixel.get(py * 1000 + px) ?? NONE;",
-    "new": "return byPixel.get(py * 1000 + px) ?? [];",
+    "old": "return byPixel.get(poiPixelKey(px, py)) ?? NONE;",
+    "new": "return byPixel.get(poiPixelKey(px, py)) ?? [];",
     "tests": [
       "test/poi/auditpoi_runtime.test.js"
     ]

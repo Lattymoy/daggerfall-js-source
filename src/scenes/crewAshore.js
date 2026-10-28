@@ -218,6 +218,7 @@ export function createCrewAshore(deps) {
         if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) { place.remove(rec); return; }   // the place changed under the stand, or he went back
         rec.companion = k;
         rec.person = companionPerson(c);   // FB1012d ALLY-RACE: his own person in every place - never the stand's draw
+        rec.folk = c.folk ?? null;   // AUDIT PROVINCE-FOLK A1: a sworn one's race as it was born (foeBodies.js ownRace)
         rec.shipmate = true;
         if (rec.entity) {
           rec.entity.name = /** @type {any} */ (c).title ?? c.name;   // REVENANT-COMPANION: a sworn one's own name

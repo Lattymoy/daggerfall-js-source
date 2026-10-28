@@ -880,8 +880,8 @@
   {
     "name": "AUDIT-PRECIP-DOC-7-the-season-s-ceiling-without-its-hours",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "c[t][season] *= 1 + Math.abs((d[season] ?? d.other)[0]);",
-    "new": "c[t][season] *= 1;",
+    "old": "c[t][season] = s[t] * (1 + Math.abs((d[season] ?? d.other)[0]));",
+    "new": "c[t][season] = s[t];",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]
@@ -889,8 +889,8 @@
   {
     "name": "AUDIT-PRECIP-DOC-7-the-ceiling-one-climate-s",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "if (law) for (const t of PRIORITY) c[t][season] = Math.max(c[t][season], law.weight[t]);",
-    "new": "if (law) for (const t of PRIORITY) c[t][season] = law.weight[t];",
+    "old": "if (law) for (const t of PRIORITY) into[t] = Math.max(into[t], law.weight[t]);",
+    "new": "if (law) for (const t of PRIORITY) into[t] = law.weight[t];",
     "tests": [
       "test/systems/weather/precip3_snowpack.test.js"
     ]

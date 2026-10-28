@@ -57,6 +57,11 @@ test('HUNTERS-MARK THE LAW: a board clear inside the event clock\'s window, a ma
   assert.deepEqual(huntClearOf(huntMarkId(week - 2, 300, 200, 16), now), { why: 'late' });
   assert.deepEqual(huntClearOf(huntMarkId(week + 1, 300, 200, 16), now), { why: 'early' });
   assert.deepEqual(huntClearOf('7.300.200.1', now), { why: 'id' });
+  // SHIP AUDIT (2026-10-27): a board past the Bay posts its mark too - its town the world's pixel (the Imperial City's,
+  // Lillandril's west of the Bay), as a board notice's (LAIR-WORLD); a pixel past the world's bound is no mark
+  assert.equal(huntClearOf(huntMarkId(week, 2069, 658, 16), now).kind, 'mark', 'past the Bay');
+  assert.equal(huntClearOf(huntMarkId(week, -27, 1322, 16), now).kind, 'mark', 'west of the Bay');
+  assert.deepEqual(huntClearOf(`m.${week}.12000.658.16`, now), { why: 'id' }, 'past the world');
   assert.equal(huntTierFits(12, 10), true, 'two levels past the trusted one');
   assert.equal(huntTierFits(13, 10), false);
   assert.equal(huntTierFits(6, 15), false, 'two tiers below');

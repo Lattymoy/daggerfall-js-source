@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { newWildRef, wildZone, wildBlow, wildCredit, WILD_REF } from '../../src/net/wild/wildRef.js';
+import { newWildRef, wildZone, wildBlow, wildCredit, WILD_REF, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M, SIEGE_HIT } from '../../src/net/siege/siegeRef.js';
 import { readWildReceipt } from '../../src/net/wild/wildReceipt.js';
 import { WILD_KILL_CREDIT_MS } from '../../src/systems/wild/wildZone.js';
@@ -25,8 +25,8 @@ test('AUDIT FOE-KEEPS E2 THE LAW (wildRef.js wildCredit): a death the referee di
   assert.equal(WILD_REF.creditMs, WILD_KILL_CREDIT_MS, 'one number at both ends');
   const stand = () => {
     const st = newWildRef();
-    wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: 'r-a' }, true, at(-1), 0);
-    wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: 'r-b' }, true, at(1), 0);
+    wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: 'r-a' }, true, at(-1), -WILD_GRACE.ms);   // PIN MOVED (ZONE-GRACE): entered a whole safe passage before the fight
+    wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: 'r-b' }, true, at(1), -WILD_GRACE.ms);
     return st;
   };
   const hit = (st, now, o = {}) => wildBlow(st, 'acct-a', 'acct-b', { d: 999, r: SIEGE_HIT.Melee, held: { w: -1, m: 0 }, rid: 'aaaaaaaaaaaa', room: 'world:400,120', ...o }, now);
@@ -90,7 +90,7 @@ test('AUDIT FOE-KEEPS E2 THE RELAY: a player\'s blow, then my word that I left t
       const join = async (id, x, ci) => { const ws = r.connect(); await r.hello(ws, id, P(x), { lv: 10, look: LOOK, rc: 1, ci }); return ws; };
       const a = await join('peer-0001', -1, 'r00000000000000000a02'), b = await join('peer-0002', 1, 'r00000000000000000a01'), c = await join('peer-0003', 30, 'r00000000000000000a03');
       for (const ws of [a, b]) await say(ws, { k: 'zone', z: 1 });
-      clock += 300;
+      clock += 300 + WILD_GRACE.ms;   // PIN MOVED (ZONE-GRACE): past the safe passage both took at their entry
       await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 999 });
       assert.equal(refs(b, 'hp').length, 1, 'the blow landed');
       assert.equal(refs(b, 'fell').length, 0, 'and felled nobody');

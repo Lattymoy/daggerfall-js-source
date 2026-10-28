@@ -248,24 +248,24 @@
   {
     "name": "RIBBON-wi-token-bound",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,864}\\.",
+    "old": "[A-Za-z0-9_-]{1,896}\\.",
     "new": "[A-Za-z0-9_-]{1,512}\\.",
     "tests": [
       "test/ui/shadowfang.test.js",
       "test/net/acc1dclient.test.js"
     ],
-    "note": "WIKIMAID (re-aimed by content): the bound is 864."
+    "note": "WIKIMAID (re-aimed by content): the bound is 864; SHOP (re-aimed by content): 896."
   },
   {
     "name": "RIBBON-wi-token-bound-wide",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,864}\\.",
-    "new": "[A-Za-z0-9_-]{1,900}\\.",
+    "old": "[A-Za-z0-9_-]{1,896}\\.",
+    "new": "[A-Za-z0-9_-]{1,960}\\.",
     "tests": [
       "test/ui/shadowfang.test.js",
       "test/net/acc1dclient.test.js"
     ],
-    "note": "WIKIMAID (re-aimed by content): the bound is 864."
+    "note": "WIKIMAID (re-aimed by content): the bound is 864; SHOP (re-aimed by content): 896."
   },
   {
     "name": "RIBBON-rl-named",

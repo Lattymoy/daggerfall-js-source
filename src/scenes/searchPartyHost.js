@@ -41,8 +41,11 @@ export const GRAVE_OWED_KEEP_MS = 10 * 60 * 1000;
  *  searcher's rows (net/wire.js OW_GRAVE_ACCT_ROWS_MAX - pinned equal; AUDIT GRAVE-PARTY G3). */
 export const GRAVE_OWED_MAX = 32;
 export const GRAVE_BOOK_MAX = 256;
-/** A stone's place - `g<px>,<py>`, world.js graveTargets' `loc` - read back to its map pixel. */
-const GRAVE_LOC_RE = /^g(\d{1,3}),(\d{1,3})$/;
+/** A stone's place - `g<px>,<py>`, world.js graveTargets' `loc` - read back to its map pixel. AUDIT RELEASE R2-3
+ *  (bible/01-Overview/audits/Audit-Release-R2.md): the world's pixel (net/wire.js WORLD_PIXEL_BOUND, four digits and a
+ *  sign) - a lair's graveyard past the Bay stands at `g-150,1912`, and its stones were owed to no cell, so a partymate
+ *  searched one again (GRAVE-PARTY's own field bug, past the Bay). */
+export const GRAVE_LOC_RE = /^g(-?\d{1,4}),(-?\d{1,4})$/;
 
 /** @param {any} host */
 export function createSearchParty(host) {

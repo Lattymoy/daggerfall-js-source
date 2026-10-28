@@ -232,8 +232,8 @@
   {
     "name": "SD-THROUGH-inside-message",
     "file": "server/src/index.js",
-    "old": "        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked');",
-    "new": "        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked'); void this._sdInBeat(now);",
+    "old": "        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked', isStaff(who.glyphs));",
+    "new": "        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked', isStaff(who.glyphs)); void this._sdInBeat(now);",
     "tests": [
       "test/net/superDungeon/sdthrough_relay.test.js"
     ],

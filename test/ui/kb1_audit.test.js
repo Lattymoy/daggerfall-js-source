@@ -269,9 +269,15 @@ function withDom(fn) {
   const prevDoc = globalThis.document; const prevWin = globalThis.window;
   globalThis.document = { createElement: mkEl, createTextNode: (t) => ({ text: t }), getElementById: () => null, head: mkEl('head'), body: mkEl('body'), fonts: { add() {} }, addEventListener() {}, removeEventListener() {}, pointerLockElement: null };
   globalThis.window = { addEventListener: (t, f) => wl.push({ t, f }), removeEventListener() {} };
+  // COVERED-KEYS: a window's keys are laid through ui/windowStack.js listenWindowKeys, on the global itself
+  const prevAdd = globalThis.addEventListener; const prevRemove = globalThis.removeEventListener;
+  globalThis.addEventListener = globalThis.window.addEventListener;
+  globalThis.removeEventListener = globalThis.window.removeEventListener;
   return Promise.resolve(fn(wl)).finally(() => {
     if (prevDoc === undefined) delete globalThis.document; else globalThis.document = prevDoc;
     if (prevWin === undefined) delete globalThis.window; else globalThis.window = prevWin;
+    if (prevAdd === undefined) delete globalThis.addEventListener; else globalThis.addEventListener = prevAdd;
+    if (prevRemove === undefined) delete globalThis.removeEventListener; else globalThis.removeEventListener = prevRemove;
   });
 }
 const keyEv = (code, extra = {}) => ({ code, key: code, repeat: false, target: { tagName: 'CANVAS' }, preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; }, stopImmediatePropagation() { this.stopped = true; }, ...extra });

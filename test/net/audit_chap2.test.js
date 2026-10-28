@@ -443,7 +443,7 @@ test('AUDIT CHAP2 E1/S4: the halls\' moderation - a developer reads a region\'s 
   const again = await s.witness({ key: 4242, region: ANTICLERE, factions: [40] });
   assert.deepEqual([again.r.status, again.r.body.error], [409, 'hall-struck']);
   assert.deepEqual(await strikeHall({ db: s.env.DB, nowS: _now }, { handle: 'Mac' }, { DEVELOPER_HANDLES: 'Devra' }, { key: 1 }), { error: 'not-developer' });
-  assert.deepEqual(await listHalls({ db: s.env.DB, nowS: _now }, { handle: 'Devra' }, { DEVELOPER_HANDLES: 'Devra' }, { region: 62 }), { error: 'bad-region' });
+  assert.deepEqual(await listHalls({ db: s.env.DB, nowS: _now }, { handle: 'Devra' }, { DEVELOPER_HANDLES: 'Devra' }, { region: 71 }), { error: 'bad-region' });   // PIN MOVED (WW7-5): past the world's regions
 });
 
 test('AUDIT CHAP2 E1: an account whose answers three times in a week stand alone against confirmed towns is ignored - its reports count for nothing, and its own report is answered so (mutants: the ignored set unread)', async () => {

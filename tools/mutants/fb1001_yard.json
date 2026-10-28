@@ -196,39 +196,43 @@
   },
   {
     "name": "YARD-STALE-the-write-unrecorded",
-    "file": "src/scenes/homeYards.js",
-    "old": "    writes.get(y.mapId).set(y.bk, { n: ++wrote, at: now(), list });   // FB1001 YARD-STALE",
-    "new": "    writes.get(y.mapId).set(y.bk, { n: wrote, at: now(), list });   // FB1001 YARD-STALE",
+    "file": "src/scenes/yardCellSync.js",
+    "old": "{ turn: ++turn, at: now(), list }",
+    "new": "{ turn, at: now(), list }",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": " Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "YARD-STALE-the-old-answer-believed",
-    "file": "src/scenes/homeYards.js",
-    "old": "      for (const [bk, w] of writes.get(mapId) ?? []) if (w.n > asked || now() - w.at < YARD_WRITE_HOLD_MS) byKey.set(bk, w.list);   // YARD-STALE: written since it was asked - or (PRIMARY-TRIPS audit) within YARD_WRITE_HOLD_MS of it\n",
+    "file": "src/scenes/yardCellSync.js",
+    "old": "      if (write && writeStands(write, held)) return write.list;\n",
     "new": "",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": " Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "YARD-STALE-every-answer-after-a-write-overruled",
-    "file": "src/scenes/homeYards.js",
-    "old": "if (w.n > asked || now()",
-    "new": "if (w.n >= asked || now()",
+    "file": "src/scenes/yardCellSync.js",
+    "old": "write.turn > held.askedTurn",
+    "new": "write.turn >= held.askedTurn",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": " Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "YARD-STALE-the-answers-turn",
-    "file": "src/scenes/homeYards.js",
-    "old": "if (w.n > asked || now()",
-    "new": "if (w.n > wrote || now()",
+    "file": "src/scenes/yardCellSync.js",
+    "old": "write.turn > held.askedTurn",
+    "new": "write.turn > turn",
     "tests": [
       "test/scenes/fb1001_yard.test.js"
-    ]
+    ],
+    "note": " Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "YARD-RECENTRE-the-hosts-call-dropped",

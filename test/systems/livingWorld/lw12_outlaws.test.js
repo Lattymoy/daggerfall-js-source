@@ -276,7 +276,7 @@ test('LW12 heard of and told: the road\'s news of a hold-up names the band; a to
   assert.equal(back.turns().routed.get('O17.0@3.0').who, 'the Black Hand');
   assert.ok(back.turns().heard.has('O17.0~3') && back.turns().looted.has('O17.0~3'));
   const lt = readFileSync(new URL('../../../src/systems/livingWorld/livingTown.js', import.meta.url), 'utf8');
-  assert.match(lt, /const region = `O\$\{\(town\.region \?\? -1\) >>> 0\}\.`;/);   // PIN MOVED (LW16): any town's deeds (the word a visitor carries)
+  assert.match(lt, /const region = `O\$\{\(town\.area \?\? town\.region \?\? -1\) >>> 0\}\.`;/);   // PIN MOVED (LW16): any town's deeds (the word a visitor carries); PIN MOVED (WW1): its AREA, the region on the Bay
   assert.match(lt, /if \(!key\.startsWith\(region\) \|\| known > t \|\| t - known >= NEWS_DAYS \* DAY_MIN \|\| !h\.who\) continue;\n\s*out\.push\(\{ kind: 'routed',/);
 });
 
@@ -447,11 +447,13 @@ test('LW12 a caravan the outlaws held up: its purse theirs (a sale refused), hal
 
 test('LW12 the host\'s wiring: the trouble world\'s bands over the trip\'s two regions and the character\'s routs, a region\'s towns, the hideouts kept by the network\'s generation, the host stood in the open world and let go under the Overworld or with the living world off (AUDIT LW-II-2 H10: indoors the open world waits as it stood), its tents drawn, its rumoured marks, the news by the band\'s name (mutants: each wire)', () => {
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /bandAt: \(trip, px, py, t\) => bandTrouble\(trip, px, py, t, \[\.\.\.livingHideoutsOf\(trip\.from\?\.region\), \.\.\.\(trip\.to\?\.region != null && trip\.to\.region !== trip\.from\?\.region \? livingHideoutsOf\(trip\.to\.region\) : \[\]\)\], livingRouts\(\)\),/);
-  assert.match(w, /townsIn: \(region\) => livingTownsOfRegion\(region\),/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the trip's two AREAS (its regions on the Bay), and an area's towns the
+  // living world's index's (scenes/livingWorld/livingIndex.js townsIn, off the world's registry)
+  assert.match(w, /bandAt: \(trip, px, py, t\) => bandTrouble\(trip, px, py, t, \[\.\.\.livingHideoutsOf\(trip\.from\?\.area\), \.\.\.\(trip\.to\?\.area != null && trip\.to\.area !== trip\.from\?\.area \? livingHideoutsOf\(trip\.to\.area\) : \[\]\)\], livingRouts\(\)\),/);
+  assert.match(readFileSync(new URL('../../../src/scenes/livingWorld/livingTrips.js', import.meta.url), 'utf8'), /townsIn: index\.townsIn, marketBandOf,/);   // PIN MOVED (WW7-7): the trips' world scenes/livingWorld/livingTrips.js's
   // PIN MOVED (AUDIT LW-II C8): the hideouts kept by hideouts.js createHideoutBook - by the network's generation, a
   // region waiting asked again now and then, the troubles read band-less made again once its bands are found
-  assert.match(w, /const livingHideoutsOf = createHideoutBook\(\{\n\s*of: \(region\) => hideoutsOf\(region, livingTripWorld\),\n\s*generation: \(\) => livingWays\.generation,\n\s*resolved: \(\) => \{ _livingFates\.clear\(\); _livingTripMemo\.clear\(\); [^\n]*\},\n\s*\}\);/);   // PIN MOVED (AUDIT LW-II-2 H3): and LW16's kept word (test/systems/livingWorld/auditlwii2_outlaws.test.js runs it)
+  assert.match(w, /const livingHideoutsOf = createHideoutBook\(\{\n\s*of: \(area\) => hideoutsOf\(area, livingTripWorld\),\n\s*generation: \(\) => `\$\{livingWays\.generation\}\|\$\{livingIndex\.generation\(\)\}`,[^\n]*\n\s*resolved: \(\) => \{ _livingFates\.clear\(\); _livingTripMemo\.clear\(\); [^\n]*\},\n\s*\}\);/);   // PIN MOVED (AUDIT LW-II-2 H3): and LW16's kept word (test/systems/livingWorld/auditlwii2_outlaws.test.js runs it)
   assert.match(w, /const livingRouts = \(\) => livingRelations\.turns\(\)\.routed;/);
   assert.match(w, /if \(livingWorldOn\(\) && _mode\(\) === 'exterior' && !tvf\) \{ livingHideoutsHostOf\(\)\.frame\(dt\); livePersonBatches\.push\(\.\.\.livingHideoutsHostOf\(\)\.batches\(\)\); \}/);
   assert.match(w, /\n\s*else _livingHideoutsHost\?\.clear\(\);/);

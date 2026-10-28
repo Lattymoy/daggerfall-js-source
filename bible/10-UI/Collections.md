@@ -80,7 +80,7 @@ is had, and holds every entry's source and availability to a literal map of this
 
 **Sources**, in the page's order - what play earns first, what no play can earn last: the Elite Breach, the Abyss
 Dungeons, the Sea Serpent, the Sigil Broker, Questlines, the Witches' Festival, the Seats, the Guild Chapters, the Arena
-and the Card Tables, Around the Bay (I Love Lamp), Your Account (Founder, the sprout), Patrons, the Game's Staff,
+and the Card Tables, Around the Bay (I Love Lamp), Your Account (Founder, the sprout), the Shop (SHOP), Patrons, the Game's Staff,
 Bestowed by Name.
 
 **Availabilities** - the owner's "even if they arent currently able to be obtained", said on every row:
@@ -98,6 +98,7 @@ Bestowed by Name.
 | bestowed | Bestowed | the titles made for one player and their auras and glyphs (Shadow Fang, Penitent, Aegis of Oblivion, Primarch, Crystal Fist, WikiMaid, Nirnroot Sage - NIRNROOT-SAGE, 2026-10-26) |
 | closed | Closed | Founder - every registered account that first played by noon UTC on 25 September 2026 (`FOUNDER_UNTIL`), or granted it by name; a guest from before then earns it by registering, and a character from before then brought onto the account counts too (`founderLink.js`) |
 | retired | No longer obtainable | Hour's First and The First Hour, First of the Spire and Firstlight |
+| shop | In the shop | Genesis, the Origin and Eternal while `SHOP_ON_SALE` names them, pre-alpha only (`06-Systems/Shop.md`) - a pin holds each to that list, so a sale ended fails the suite until its row says No longer obtainable |
 
 **The seats' glyphs are a character's** (`scope: 'character'`): the tower and the three crowns are signed onto each
 member's token at sign-in (`server-account/src/seatTurning.js`, from `townSeatLaw.js` seatGlyphsOf), never into the account's wardrobe - so their rows

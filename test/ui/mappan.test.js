@@ -99,7 +99,8 @@ test('MAP-PAN: the sheet blits the layer in place of the mark walk, and the worl
   assert.match(sheet, /syncMarksLayer\(this\._marksLayer/);
   assert.match(sheet, /contentKey: \[env\.view\.scale, env\.band, env\.dpr, env\.paperW, env\.paperH, sheet\.staticKey\(\)\]/);
   assert.doesNotMatch(sheet, /contentKey: \[[^\]]*env\.view\.ox/);
-  assert.match(sheet, /marksLayer: synced\.layer/);
+  assert.match(sheet, /marksLayer: synced\?\.layer \?\? null,/);   // PIN MOVED (ZOOM-FAST): no bake while the scale settles - inked on the paper
+  assert.match(sheet, /const synced = settling \? null : syncMarksLayer\(this\._marksLayer, \{/);
   assert.match(read('src/ui/ink/inkMap.js'), /export function syncMarksLayer\(prev, spec\)/);
 
   // the inline path and the bake call the same painter

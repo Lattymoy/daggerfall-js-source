@@ -43,7 +43,7 @@ test('DISPLAY-REPLICA: the display reads and the arena\'s board are replica rout
     assert.equal(raw._sessions.at(-1).constraint, ANY_REPLICA_ROUTES.get(path) === method ? 'first-unconstrained' : 'first-primary', `${path} with no bookmark: the primary first - the caller's own writes read - or, polled, any instance`);
   }
   const fake = { withSession: () => { throw new Error('opened'); } };
-  for (const path of ['/v1/homes/yards', '/v1/homes/layouts', '/v1/seats/list']) {
+  for (const path of ['/v1/homes/yards/cells', '/v1/homes/layouts', '/v1/seats/list']) {
     assert.equal(routeDb(fake, path, 'POST', d1Position(raw)), fake, `${path}: the binding - an isolate keeps its answer for every caller`);
   }
 });

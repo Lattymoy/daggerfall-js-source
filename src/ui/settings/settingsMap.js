@@ -33,7 +33,7 @@ export const CATEGORIES = Object.freeze([
     sec("quality", "Quality", [
       "preset:graphics"]),
     sec("display", "Display", [
-      "Video/FieldOfView", "feat:render-scale", "Video/TargetFrameRate", "Video/VSync", "port:showFps", "Video/Fullscreen",
+      "Video/FieldOfView", "feat:render-scale", "Video/TargetFrameRate", "Video/VSync", "port:graphicsBackend", "port:showFps", "Video/Fullscreen",
       "Video/ExclusiveFullscreen", "Video/ResolutionWidth", "Video/ResolutionHeight", "Video/QualityLevel", "Video/RunInBackground"]),
     sec("distance", "View distance & detail", [
       "feat:land-view-distance", "Experimental/TerrainDistance", "feat:ground-sharpness", "feat:cloud-quality", "feat:real-windows",
@@ -107,7 +107,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("world", "World", [
     sec("land", "Land", [
-      "feat:tamriel-land", "feat:landforms", "feat:real-forests", "feat:bantha-jungle", "feat:climate-blend", "feat:road-verges", "feat:mod-roads-hazelnut"]),
+      "feat:tamriel-land", "feat:landforms", "feat:real-forests", "feat:bantha-jungle", "feat:tamriel-lands", "feat:climate-blend", "feat:road-verges", "feat:mod-roads-hazelnut"]),
     sec("weather", "Weather & ambience", [
       "feat:weather-events", "feat:mod-better-ambience"]),
     sec("towns", "Towns & people", [

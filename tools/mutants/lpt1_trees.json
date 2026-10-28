@@ -155,17 +155,19 @@
   {
     "name": "LPT1-A2-the-sun-alone",
     "file": "src/render/renderer.js",
-    "old": "vShade = uMeshColor * mix(faceEye, faceSun, uLptSun.w);",
+    "old": "vShade = uMeshColor * mix(faceSky, faceSun, uLptSun.w);",
     "new": "vShade = uMeshColor * faceSun;",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the night's face light is the sky's (faceSky), no longer the eye's.",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
-    "name": "LPT1-A2-the-eye-not-turned-to",
+    "name": "LPT1-A2-FLORA-GROUND-the-light-turned-to-the-eye-again",
     "file": "src/render/renderer.js",
-    "old": "vec2 fe = length(toEye) > 1e-4 ? normalize(toEye) * 0.8 : vec2(0.0, 0.8);",
-    "new": "vec2 fe = vec2(0.0, -0.8);",
+    "old": "float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(${LPT_IMPOSTOR_LIGHT.map((v) => v.toFixed(4)).join(', ')})), 0.5, 1.0);",
+    "new": "vec2 fe = length(uLptCut.xz - aInst.xz) > 1e-4 ? normalize(uLptCut.xz - aInst.xz) * 0.8 : vec2(0.0, 0.8); float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(fe.x, 0.6, fe.y)), 0.5, 1.0);",
+    "note": "FLORA-GROUND (PIN MOVED): this record held the eye's turn (AUDIT LPT A2's 'the eye not turned to'); the light is the sky's now and no eye turns it, so the mutant is the eye's law put back - the reflective sheen the owner saw.",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

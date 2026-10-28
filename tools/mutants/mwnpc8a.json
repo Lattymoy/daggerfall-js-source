@@ -182,8 +182,8 @@
  {
   "name": "MWNPC8a-host-before-table",
   "file": "src/scenes/worldModes.js",
-  "old": "    if (!dict) return null;\n    return personLook(",
-  "new": "    return personLook(",
+  "old": "    if (!dict) return null;\n    return standingPersonLook(",
+  "new": "    return standingPersonLook(",
   "tests": [
    "test/systems/mwnpc8_people.test.js"
   ]

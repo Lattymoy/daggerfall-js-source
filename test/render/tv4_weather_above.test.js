@@ -30,7 +30,7 @@ test('TV4 curtains: the cells that FALL stand a veil - rain, the storm\'s heavie
   const cells = ['rain', 'thunder', 'snow', 'fog', 'cloudy', 'overcast', 'sandstorm', 'sunny'].map((w, i) => cellOf(w, 1000 + i * 10, 2000, 800));
   const got = curtainsOf(cells.filter(Boolean), at);
   assert.equal(got.length, 3, 'rain, thunder, snow');
-  assert.deepEqual(Object.keys(CURTAIN_FALL).sort(), ['rain', 'snow', 'thunder']);
+  assert.deepEqual(Object.keys(CURTAIN_FALL).sort(), ['ashfall', 'rain', 'snow', 'thunder']);   // PIN MOVED (ASHFALL1, 2026-10-27): the ash falls too
   const [r] = got.filter((c) => c.kind === 0).slice(0, 1);
   assert.equal(r.radius, 800 * CURTAIN_SHARE, 'the fall comes out of the core');
   assert.equal(r.depth, CURTAIN_EXT * CURTAIN_FALL.rain[0]);
@@ -281,5 +281,5 @@ test('AUDIT DEEP2 D1/D3/D5 curtains: the veil stands in its storm\'s own outline
   assert.ok(!nine.some((c) => c.centre[0] === 1000), 'the one over the massif is not among them');
   // D3: the host
   const shared = readFileSync(new URL('../../src/scenes/shared.js', import.meta.url), 'utf8');
-  assert.match(shared, /drawnCells: \(\) => clouds\?\.cells \?\? null,/);
+  assert.match(shared, /drawnCells: \(\) => cloudsShown\?\.cells \?\? null,/);
 });

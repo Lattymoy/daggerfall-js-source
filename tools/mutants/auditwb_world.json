@@ -31,11 +31,12 @@
   {
     "name": "AUDWB-C1-the-coast-value-a-province",
     "file": "src/systems/gate/gateSite.js",
-    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105;",
-    "new": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105 || pol === 64;",
+    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105;",
+    "new": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105 || pol === 64;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "AUDWB-C3-the-town-named-with-the-gates-province",

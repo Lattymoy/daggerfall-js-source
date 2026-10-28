@@ -23,6 +23,7 @@ import { SOCIAL_ROOM, chatRegionRoom } from '../../../src/net/wire.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
 
 const SEA = 31;
+const BAY_REGIONS = 62;   // WW5: the Bay's lane's regions, MAPS.BSA's (wire.js CHAT_BAY_REGIONS)
 const counts = (o) => Object.assign(new Array(SD_REGION_COUNT).fill(0), o);
 const quiet = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
 
@@ -180,12 +181,12 @@ test('SD-SEA on the freeware\'s map: the list is exactly the regions MAPS.BSA gi
   const { maps, cityRows, templates, scan, ground } = real();
   const regionNameOf = (i) => maps.getRegionName(i);
   const townless = [];
-  for (let r = 0; r < SD_REGION_COUNT; r++) if (!sdCities(cityRows, r, { regionNameOf }).length) townless.push(r);
+  for (let r = 0; r < BAY_REGIONS; r++) if (!sdCities(cityRows, r, { regionNameOf }).length) townless.push(r);
   assert.deepEqual(townless, [...SD_TOWNLESS_REGIONS], 'the regions with no town, MAPS.BSA\'s own');
   let water = 0;
   for (let y = 0; y < 500; y++) for (let x = 0; x < 1000; x++) if (maps.getPoliticIndex(x, y) === 64) { water++; assert.equal(maps.getRegionIndexAt(x, y), SEA, `pixel ${x},${y}`); }
   assert.ok(water > 100_000, `the sea is the map's widest region (${water} pixels)`);
-  for (let r = -1; r < SD_REGION_COUNT; r++) {
+  for (let r = -1; r < BAY_REGIONS; r++) {   // PIN MOVED (WW5): the Bay's lane's regions (the census counts every region now - each lane its own)
     if (SD_TOWNLESS_REGIONS.includes(r)) continue;
     for (let s = 1; s <= 3; s++) {
       const rec = { s, r };

@@ -132,11 +132,11 @@ function worldOf(w) {
   const names = ['playerTravelPixel', 'maps', 'locationIndex', 'modes', 'walkMode', 'playerSpawned', 'player', 'cam', 'REGION_NAMES', 'state',
     'heightAt', 'floorLanding', 'collider', 'LEGACY_REMAINS_NEAR_DUNGEON', 'LEGACY_REMAINS_NEAR', 'createRemainsStand', 'droppedLoot', 'REMAINS_FLAT',
     'areEnemiesNearby', 'exteriorFoePool', 'exteriorFoes', 'cityGuards', 'groundFrameHeight', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', 'LEGACY_TEXT',
-    'builtDungeonSize', 'duelEnemyNear', 'navalHostileNear'];
+    'builtDungeonSize', 'duelEnemyNear', 'navalHostileNear', 'RECORD_GROUND_STAMP'];   // PIN MOVED (BAY-LEFT-GROUND, D5): the scale and the frame's law, stamped together
   const vals = [() => ({ ...w.pixel }), maps, locationIndex, modes, true, true, player, { pos: [0, 0, 0] }, REGION_NAMES, state,
     heightAt, floorLanding, collider, 6, 2400, createRemainsStand, w.streetPool, REMAINS_FLAT,
     areEnemiesNearby, exteriorFoePool, exteriorFoes, cityGuards, groundFrameHeight, restandHeight, scaleOf, SCALE, LEGACY_TEXT,
-    builtDungeonSize, () => !!w.duel, () => !!w.ship];   // a duel or the one played's own bout (duelEnemyNear); a hostile ship in reach (navalHostileNear)
+    builtDungeonSize, () => !!w.duel, () => !!w.ship, { terrainScale: SCALE, groundFrame: 2 }];   // a duel or the one played's own bout (duelEnemyNear); a hostile ship in reach (navalHostileNear)
   const body = `${HERE}\n${IN_DUNGEON}\n${AT_PLACE}\n${ANCHOR}\n${FEET}\n${STAND}\nconst inFight = ${FIGHT};\nconst letGoRemains = ${LET_GO};\nreturn { legacyHere, legacyAtPlace, legacyRemainsFeet, legacyRemainsStand, inFight, letGoRemains };`;
   return new Function(...names, body)(...vals);
 }
@@ -547,7 +547,8 @@ test('REMAINS-STAND: in the open - the body stands at the native spot where she 
   assert.equal(t.w.lifts, 0, 'no lift asked');
   const row = fallAndHeir(t);
   assert.equal(row.place.mode, 'exterior');
-  assert.deepEqual(row.place.world, { x: 5 * 40 + 1000, z: 7 * 40 + 2000, y: 9 - 3 - liftAt(5, 7), terrainScale: SCALE }, 'the death\'s place: the native spot and the height she stood at - a record\'s: in DFU\'s frame (the spot\'s own lift off), on the ground it was measured on');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): and its frame's law, stamped beside the scale
+  assert.deepEqual(row.place.world, { x: 5 * 40 + 1000, z: 7 * 40 + 2000, y: 9 - 3 - liftAt(5, 7), terrainScale: SCALE, groundFrame: 2 }, 'the death\'s place: the native spot and the height she stood at - a record\'s: in DFU\'s frame (the spot\'s own lift off), on the ground it was measured on');
   assert.equal(t.w.lifts, 1, 'the death asked it, once');
   // the heir comes back on the pixel: the body stands on the roof she fell from
   t.w.pos = [60, 1, 60];

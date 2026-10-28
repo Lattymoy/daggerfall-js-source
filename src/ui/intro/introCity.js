@@ -9,11 +9,13 @@
 // (IMPERIAL_CITY_PLAN) lays one of Daggerfall's blocks by its trade, the film stands houses of that trade's size on that
 // cell; where it lays a garden, trees. The ground is the city's own tile law (imperialTile) and its trees its own
 // (imperialTree). Pure: built in the intro's worker (introBuildWorker.js), or here on a page without one.
-import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from '../../world/imperialCity.js';
+// The merge of main into TESA (2026-10-27): the city the film was shot on, kept as shot (./set/ - the game's grew to
+// IC-GRAND's twenty-five pixels and retired the Colosseum)
+import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from './set/imperialCity.js';
 import {
   buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne,
   buildTalosStatue, buildNineDivines, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge,
-} from '../../world/capitalImperial.js';
+} from './set/capitalImperial.js';
 import { BLOCK_M, hash32 } from '../../world/spawnedDungeons.js';
 
 /** The landmarks, in the order the film's mesh carries them. */

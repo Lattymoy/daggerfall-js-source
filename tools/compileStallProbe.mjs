@@ -135,7 +135,7 @@ const PASSES = `async (started) => {
   return out;
 }`;
 
-/** COMPILE-QUEUE (FIELD BUGS 2026-10-27): one build that reads its link - the foes' telegraph, the idle warm's step after
+/** COMPILE-QUEUE (FIELD BUGS 2026-10-27b): one build that reads its link - the foes' telegraph, the idle warm's step after
  *  the start - timed alone, and beside the passes play meets started all at once (the start before the fix) and in turn
  *  (startPlayPrograms), at once and `delayMs` into their compile; with how long they all took to be done. */
 const QUEUE = `async ([arm, delayMs]) => {

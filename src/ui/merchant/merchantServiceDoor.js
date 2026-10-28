@@ -68,6 +68,7 @@ function enhancedMerchantServiceOverlay(hooks) {
           { label: 'Exit', onClick: close },
         ],
         onExit: close,
+        owner: overlay,   // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)
       });
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'merchant-service',

@@ -44,8 +44,8 @@
   {
     "name": "MOUNTAINS-WALKABLE-ground-refuses",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const openBlocked = () => false;   // MOUNTAINS WALKABLE",
-    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && climateOf(bx, by) === TV_MOUNTAIN_CLIMATE;",
+    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);",
+    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => ghostfenceShuts(bx, by) || (!leaving && climateOf(bx, by) === TV_MOUNTAIN_CLIMATE);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js",
       "test/systems/travel/tv6_dungeons.test.js",

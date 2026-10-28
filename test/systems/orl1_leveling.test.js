@@ -1114,7 +1114,7 @@ test('ORL1: a wizard torn down mid-question still hands its host an answer', () 
 
 test('ORL1: the choice rides the ONE chargen door, and every apply path answers it', () => {
   const cs = rd('src/systems/chargenSession.js');
-  assert.match(cs, /return withLevelingChoice\(flow, \{ onDone, onCancel, hudScale \}\);/,
+  assert.match(cs, /return withLevelingChoice\(flow, \{ onDone, onCancel, hudScale, startChoice \}\);/,   // PIN MOVED (START2): and the host's start page
     'createChargenWindow wraps the wizard rather than each host wiring a prompt');
   assert.match(cs, /initVirtueLeveling\(playerEntity, newCharacterLevelingSystem\(result\.levelingSystem \?\? LEVELING_CLASSIC, \{ online: isOnlinePage\(\) \}\)\);/,
     'finishChargen sets the answer beside the DFU level anchor (LEVEL-ONLINE: through the one law for a new character)');

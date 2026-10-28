@@ -39,7 +39,7 @@
   {
     "name": "AUDWBX2-M3-the-mark-handed-over",
     "file": "server/src/index.js",
-    "old": "    if (kept.spent) return;   // AUDIT WBX2 M3: its account's word that it is spent, kept in its place\n",
+    "old": "      if (kept.spent) continue;   // AUDIT WBX2 M3: its account's word that it is spent, kept in its place\n",
     "new": "",
     "tests": [
       "test/net/gate/auditwbx2.test.js"
@@ -76,7 +76,7 @@
   {
     "name": "AUDWBX2-M4-the-hold-never-read",
     "file": "server/src/index.js",
-    "old": "    if (Number.isFinite(kept.hold) && now < kept.hold) return;   // AUDIT WBX2 M4: its fighter's own court spends it first\n",
+    "old": "      if (Number.isFinite(kept.hold) && now < kept.hold) continue;   // AUDIT WBX2 M4: its fighter's own court spends it first\n",
     "new": "",
     "tests": [
       "test/net/gate/auditwbx2.test.js"

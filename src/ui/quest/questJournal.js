@@ -553,7 +553,7 @@ export class QuestJournalWindow {
     if (!site?.locationName) return false;
     if (site.locationName === this.deps.currentLocationName()) return false;
     if (!this.deps.gotoPlace) return false;
-    if (!this.deps.canFindPlace(site.regionName, site.locationName)) return false;
+    if (!this.deps.canFindPlace(site.regionName, site.locationName, site)) return false;   // START3: the site, for its pixel past the Bay
     this.findPlace = place;
     // :455-456 - the workaround for saves written before SiteDetails   (AUDIT GUIDE D4: the cite corrected)
     // carried a regionIndex, and the region NAME the dialog shows comes

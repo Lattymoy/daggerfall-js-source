@@ -207,7 +207,7 @@ test('SD2b one Hollow at a time: an older slot\'s word is no word; the next slot
 test('SD2b the world host by source: the hub\'s link hears the record; the host made online alone, framed every frame; the Hollow stood into the index and its pixel built again between builds; the spawn ledger never notes or clears it; the find through the session (mutants: each seam removed)', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onSd = \(w\) => sdHost\?\.heard\(w\);/);
-  assert.match(w, /const sdHost = params\.has\('online'\) \? createSdHost\(\{/);
+  assert.match(w, /const sdHost = params\.has\('online'\) \? createSdLanes\(\{/);   // PIN MOVED (WW5): a Hollow a lane, the Bay's lane's host as it was (scenes/superDungeon/sdLanes.js)
   assert.match(w, /try \{ sdHost\?\.frame\(\); \} catch \(e\) \{ console\.warn\('\[sd\] host', e\?\.message \?\? e\); \}/);
   assert.match(w, /if \(!building\) sweepGateClear\(\);[^\n]*\n\s*if \(_sdLate\.size && !building\) sweepSdLate\(\);/, 'between builds, after the gate\'s clearing');
   assert.match(w, /function _spawnSeen\(key\) \{\n\s*if \(locationIndex\.get\(key\)\?\.superTier\) return;/, 'a first sight never notes a Hollow - the dungeon\'s door and the roll\'s alike');

@@ -52,6 +52,7 @@ import {
 } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
+import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { equipTableOf } from '../../systems/equip.js';   // WORN-ARMOUR: what they wear
@@ -212,12 +213,11 @@ export function bodyState(s = {}) {
  * EOTB-FLIP: the decode is the DROPPED TORCH's door - `decodePng`, then
  * the one row-order converter - and not a canvas of its own. A decode
  * that fails answers a rejection, as the Image's onerror did.
+ * FIRST-VISIT: decodeServedPng (vanillaEnhancedPack.js) fetches and decodes.
  */
 export async function decodeSprite(url) {
-  if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng), { owned: true });   // WORN-ARMOUR: composed from its strip
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${url}: ${res.status}`);
-  return worldOrderColors(await decodePng(new Uint8Array(await res.arrayBuffer())), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
+  if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng, { picture: decodeServedPng }), { owned: true });   // WORN-ARMOUR: composed from its strip
+  return worldOrderColors(await decodeServedPng(url), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
 }
 
 const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / l, 0, v[2] / l] : [0, 0, 0]; };

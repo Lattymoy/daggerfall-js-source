@@ -14,9 +14,10 @@ import {
 } from '../../src/scenes/homeYards.js';
 import { standService, T0 } from '../accountDb.mjs';
 import { decorWhyNot } from '../../src/ui/decorPanel.js';
-import { toolRig, fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle } from '../decorFakes.mjs';
+import { toolRig, fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle, townCellsApi } from '../decorFakes.mjs';
 import { DECOR_LOT_MARKS } from '../../src/scenes/decor/decorTool.js';   // FB1001 ROAD-LOT (PIN MOVED): the lot's edge is marked in as many bands as it has sides
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards, read through its cells
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const piece = (over = {}) => ({ id: 'yard1', model: 41000, flat: null, pos: [8, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120, ...over });
@@ -79,7 +80,7 @@ test('HOME-YARD the service: a yard\'s piece placed with `yard`, under its own c
   const room = await svc.call('/v1/homes/decor', { mapId: 7, buildingKey: 300 }, owner.secret);
   assert.deepEqual(room.body.pieces.map((p) => p.id), ['room1'], 'the room\'s own list');
   const g = await svc.guest();
-  const yards = await svc.call('/v1/homes/yards', { mapId: 7 }, g.secret);
+  const yards = await townYards(svc.call, 7, g.secret);
   assert.equal(yards.status, 200);
   assert.deepEqual(yards.body.yards.map((x) => [x.buildingKey, x.pieces.map((p) => p.id)]), [[300, ['yard1']]], 'the town\'s yards, a guest too');
   const moved = await svc.call('/v1/homes/decor/move', { mapId: 7, buildingKey: 300, character: o.character, id: 'yard1', place: { pos: [9, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: true, paid: 120 } }, owner.secret);
@@ -105,7 +106,7 @@ function world({ own = true, pieces = [piece()] } = {}) {
   const puts = [];
   const writes = [];
   const api = {
-    yards: async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces }] } }),
+    yardCells: townCellsApi(async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces }] } })),
     place: async (b) => { writes.push(['place', b]); return { ok: true, data: { piece: b.piece } }; },
     move: async (b) => { writes.push(['move', b]); return { ok: true, data: {} }; },
     remove: async (b) => { writes.push(['remove', b]); return { ok: true, data: {} }; },
@@ -247,7 +248,7 @@ test('HOME-YARD the world host by source: each building\'s own place and footpri
   assert.match(w, /if \(modes\?\.decorFlying\?\.\(\) \|\| yards\?\.flying\(\)\) return;/);
   assert.match(w, /if \(yards\?\.flying\(\)\) \{ swipeHeld = false; return; \}/);
   const y = src('src/scenes/homeYards.js');
-  assert.match(y, /place: \(a\) => deps\.api\.place\(\{ \.\.\.a, yard: true \}\),/);
+  assert.match(y, /place: async \(a\) => wrote\(a, await deps\.api\.place\(\{ \.\.\.a, yard: true \}\)\),/);   // PIN MOVED (YARD-CELL YC2): the answer's version handed to the sync
   assert.match(src('src/world/rmbLayout.js'), /recordAt: \[subRecordMatrix\[12\], subRecordMatrix\[13\], subRecordMatrix\[14\]\],/);
-  assert.match(src('src/net/accountClient.js'), /yards: \(mapId\) => waited\('\/v1\/homes\/yards', \{ mapId \}\),/);
+  assert.match(src('src/net/accountClient.js'), /yardCells: \(mapId, cells\) => waited\('\/v1\/homes\/yards\/cells', \{ mapId, cells \}\),/);   // PIN MOVED (YARD-CELL): a town's yards asked by cell
 });

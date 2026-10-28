@@ -108,7 +108,8 @@ test('AUDIT PRE-MERGE 0929 W2-2: the marks are found once an array, not re-read 
   const tip = gateTip({ site: { place: 'Daggerfall' }, phase: 'omen', t: { day: 3 } }, null);
   const words = gateModsWords(gateModsOf(3));
   assert.ok(tip.lines.includes(`${words.charAt(0).toUpperCase()}${words.slice(1)}`));
-  assert.match(read('src/systems/gate/gateOmen.js'), /if \(day !== _marksDay\) \{/, 'the card words its marks once a day');
+  // PIN MOVED (WW2, bible/03-World/World-Wide.md): once a GATE - the lanes' cards are asked each frame, a line kept each
+  assert.match(read('src/systems/gate/gateOmen.js'), /let line = _marksLines\.get\(day\);\n\s*if \(line === undefined\) \{/, 'the card words its marks once a gate');
   assert.doesNotMatch(read('src/ui/gate/gateBossBar.js'), /trials\.map\(/, 'the bar joins no trials a frame');
   assert.equal(GATE_FEEDS_MAX, 5);
 });

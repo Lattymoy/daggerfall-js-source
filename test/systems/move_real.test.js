@@ -229,14 +229,14 @@ test('MOVE-REAL: running constantly, the climb from 100 takes the hours the note
     }
     return s / 3600;
   };
-  const table = { 20: [35, 120, 540], 30: [50, 175, 800] };
+  const table = { 20: [13, 34, 140], 30: [19, 50, 207] };   // PIN MOVED: LADDER-CUT (2026-10-28: "1.5 2 4"), was 35/120/540 and 50/175/800
   for (const [level, [a, b, c]] of Object.entries(table)) {
     const t125 = hoursTo(100, 125, +level), t150 = t125 + hoursTo(125, 150, +level), t200 = t150 + hoursTo(150, 200, +level);
     for (const [got, want] of [[t125, a], [t150, b], [t200, c]]) {
       assert.ok(Math.abs(got - want) / want < 0.06, `level ${level}: ${got.toFixed(0)} h against the notes' ~${want} h`);
     }
   }
-  assert.deepEqual(SOFTCAP_TIERS.map((t) => t.mult), [4, 8, 16], 'the ladder the estimate stands on');
+  assert.deepEqual(SOFTCAP_TIERS.map((t) => t.mult), [1.5, 2, 4], 'the ladder the estimate stands on');
 });
 
 // ---- MASTER-DOOR ------------------------------------------------------------------------------------------------------

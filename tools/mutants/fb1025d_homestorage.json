@@ -2,8 +2,8 @@
   {
     "name": "FB1025D-HOME-POUR-REVERTED",
     "file": "server-account/src/decorAccess.js",
-    "old": "      const name = homeSceneName(mapId, buildingKey);",
-    "new": "      const name = `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;",
+    "old": "  const name = homeSceneName(mapId, buildingKey);",
+    "new": "  const name = `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;",
     "tests": ["test/server/fb1025d_homepour.test.js"],
     "why": "the field bug itself: a chest set back to private poured its goods into the building's scene, which the owner's client never reads for its home"
   },

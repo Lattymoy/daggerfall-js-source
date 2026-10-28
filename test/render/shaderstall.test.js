@@ -280,7 +280,7 @@ test('AURA-SPLIT the auras\' looks: one program a look - the whole source with `
   r.draw(two, I, I, [0, 0, 0], 1);
   assert.equal(r.drawn, 0, 'compiling: no wearer drawn this frame');
   assert.equal(f.count('link?'), 0, 'and no read that waits');
-  // PIN MOVED (COMPILE-QUEUE, FIELD BUGS 2026-10-27): the boot's start is a queue - a look asked for waits its turn
+  // PIN MOVED (COMPILE-QUEUE, FIELD BUGS 2026-10-27b): the boot's start is a queue - a look asked for waits its turn
   assert.equal(f.count('createProgram'), 1, 'never started beside the queue');
   while (turns.length) { f.finish(); turns.shift()(); await new Promise((res) => setImmediate(res)); }
   const started = f.count('createProgram');

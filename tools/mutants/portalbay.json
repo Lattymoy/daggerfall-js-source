@@ -1,0 +1,231 @@
+[
+  {
+    "name": "PORTALBAY-teleport-law-the-journeys",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "export function teleportJourney(_from, _to, _mask, _zone) {\n  return { ok: true, fee: 0 };",
+    "new": "export function teleportJourney(_from, _to, _mask, _zone) {\n  return pastBayJourney(_from, _to, _mask, _zone);",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ],
+    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - a teleport answers no journey's verdict at all, the zone's included"
+  },
+  {
+    "name": "PORTALBAY-teleportTo-asks-the-journeys-law",
+    "file": "src/scenes/world.js",
+    "old": "const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);",
+    "new": "const wildTrip = wildTravelGate(pick.pixel);",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-recall-asks-the-journeys-law",
+    "file": "src/scenes/world.js",
+    "old": ": wildTravelGate(plan.anchor.pixel, 0, teleportJourney);",
+    "new": ": wildTravelGate(plan.anchor.pixel);",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-the-gate-ignores-its-law",
+    "file": "src/scenes/world.js",
+    "old": "    const j = law(playerTravelPixel(),",
+    "new": "    const j = pastBayJourney(playerTravelPixel(),",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-pick-and-step-ask-the-journeys-law",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "!host.wildTravelGate(to, 0, teleportJourney).ok;",
+    "new": "!host.wildTravelGate(to).ok;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-the-pick-unasked",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    if (teleportRefused(pick.pixel)) return;",
+    "new": "    void teleportRefused;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-the-step-asked-after-the-black",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    if (teleportRefused(g.dest?.pixel ?? null)) return;",
+    "new": "    void teleportRefused;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-the-arrivals-answer-unread",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "      try { if (!(await teleportTo(g.dest))) hudFade.clearFade(); }",
+    "new": "      try { await teleportTo(g.dest); }",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-teleportTo-never-says-it-arrived",
+    "file": "src/scenes/world.js",
+    "old": "      townTalk.say(`You arrive at ${getLocalizedLocationName(pick.mapId, pick.name)}.`);   // L10N3e: the place as shown, by its MapId - the pick keeps the canonical name the journey is keyed by\n      return true;",
+    "new": "      townTalk.say(`You arrive at ${getLocalizedLocationName(pick.mapId, pick.name)}.`);   // L10N3e: the place as shown, by its MapId - the pick keeps the canonical name the journey is keyed by",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-teleportTo-refusal-unanswered",
+    "file": "src/scenes/world.js",
+    "old": "    if (worldMoveBusy()) return false;   // AUDIT 68 S22\n    if (_teleporting) return false;",
+    "new": "    if (worldMoveBusy()) return;   // AUDIT 68 S22\n    if (_teleporting) return false;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALBAY-the-gate-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "    get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY",
+    "new": "    // PORTAL-BAY",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-sea-a-portals-end",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "  return province ? { pixel: { x: px, y: py }, name: province.name } : null;",
+    "new": "  return { pixel: { x: px, y: py }, name: province?.name ?? '' };",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-press-reads-no-land",
+    "file": "src/ui/heldMap.js",
+    "old": "const end = this._portalCityAt(sx, sy) ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
+    "new": "const end = this._portalCityAt(sx, sy) ?? null;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ],
+    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - the press's city is one method now (heldMap.js _portalCityAt), asked by ZONE-ZOOM too"
+  },
+  {
+    "name": "PORTALANY-the-guilds-map-given-the-land",
+    "file": "src/ui/heldMap.js",
+    "old": "const end = this._portalCityAt(sx, sy) ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
+    "new": "const end = this._portalCityAt(sx, sy) ?? portalLandAt(Math.floor(mx), Math.floor(my));",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ],
+    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - the press's city is one method now (heldMap.js _portalCityAt), asked by ZONE-ZOOM too"
+  },
+  {
+    "name": "PORTALANY-the-hover-points-not",
+    "file": "src/ui/heldMap.js",
+    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py)) : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : ''",
+    "new": "cursor: (this.teleportationTravel ? past.city?.pixel : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : ''",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
+  },
+  {
+    "name": "PORTALANY-the-quest-place-a-city-alone",
+    "file": "src/ui/heldMap.js",
+    "old": " || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));   // PORTAL-ANYWHERE",
+    "new": ";   // PORTAL-ANYWHERE",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-stones-map-does-not-ask",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "      portalLandPastBay: true,",
+    "new": "      portalLandPastBay: false,",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-safe-question-unasked",
+    "file": "src/scenes/world.js",
+    "old": "(reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "new": "(reposition === REPOSITION.RandomStartMarker && !landing && false)",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-asked-of-a-place",
+    "file": "src/scenes/world.js",
+    "old": "(reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "new": "(reposition === REPOSITION.RandomStartMarker && !safeGroundAt(collider, pos, tvSeaY()))",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-asked-of-every-arrival",
+    "file": "src/scenes/world.js",
+    "old": "(reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "new": "(!landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-search-not-level",
+    "file": "src/scenes/world.js",
+    "old": "const open = reposition === REPOSITION.RandomStartMarker && !landing ? safeGroundNear(collider, pos[0], pos[2], tvSeaY()) : openGroundNear(",
+    "new": "const open = false ? safeGroundNear(collider, pos[0], pos[2], tvSeaY()) : openGroundNear(",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-level-law-off",
+    "file": "src/player/enterExit.js",
+    "old": "    if (!Number.isFinite(h) || Math.abs(h - floor) > LANDING_STEEP) return false;",
+    "new": "    if (!Number.isFinite(h)) return false;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-dry-law-off",
+    "file": "src/player/enterExit.js",
+    "old": "  if (!(feet[1] >= seaY)) return false;",
+    "new": "  void seaY;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-rings-read-no-level",
+    "file": "src/player/enterExit.js",
+    "old": "      if (level && !levelGroundAt(collider, px, pz, h)) continue;",
+    "new": "      void level;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-safe-search-not-level",
+    "file": "src/player/enterExit.js",
+    "old": "  return openGroundNear(collider, x, z, { dry: (floor) => floor >= seaY, level: true });",
+    "new": "  return openGroundNear(collider, x, z, { dry: (floor) => floor >= seaY });",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  }
+]

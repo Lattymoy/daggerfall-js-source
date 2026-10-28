@@ -124,7 +124,7 @@
   {
     "name": "PASSAGE-IN-mark-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const read = leg.kind === 'sea' ? seaLegMark(o, deps.seaWaterAt) : null;",
+    "old": "    const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;",
     "new": "    const read = null;",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -364,7 +364,7 @@
   {
     "name": "PASSAGE-IN-unbuilt-read-as-dry",
     "file": "src/systems/travel/seaMark.js",
-    "old": "  if (waterAt(centre.x, centre.z) === null) return SEA_LEG_UNBUILT;\n",
+    "old": "  if (!seaLegBuiltAt(origin, waterAt)) return SEA_LEG_UNBUILT;\n",
     "new": "",
     "why": "a pixel not built yet passed as dry",
     "tests": [

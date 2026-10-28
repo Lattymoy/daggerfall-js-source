@@ -19,6 +19,8 @@ import { GATE_FX_PROGRAMS } from '../../src/render/gate/gateFx.js';
 import { CRYSTAL_PROGRAMS } from '../../src/render/courtCrystals.js';
 import { NODE_GLINT_PROGRAMS } from '../../src/render/nodeGlint.js';
 import { AURA_PROGRAMS } from '../../src/render/auraRing.js';   // AURA-STALL: the auras' program, started with them
+import { FIRE_PROGRAMS } from '../../src/render/redMountainFire.js';   // AUDIT RED-MOUNTAIN F5: the volcano's fire
+import { GLOW_PROGRAMS } from '../../src/render/ghostfenceGlow.js';   // and the Ghostfence's glow
 import { GATE_VEIL_PROGRAMS } from '../../src/render/gate/gateVeil.js';
 import { createGateCourt } from '../../src/scenes/gate/gateCourt.js';
 import { createGateVeil } from '../../src/ui/gate/gateVeil.js';
@@ -114,13 +116,14 @@ test('AUDIT SHADER-STALL a warm whose pass the draw built meanwhile stands down 
 });
 
 test('AUDIT SHADER-STALL the passes play meets are started at the boot\'s idle where the driver compiles beside the frames - every one a fight or a gate or a node draws, and the auras\' (AURA-STALL) - and nothing is started where it cannot (mutants: started without the extension; a pass left out)', async () => {
-  // PIN MOVED (AURA-STALL, #1137): and the auras' program - the first wearer in range waited its whole compile
-  const want = [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS];
+  // PIN MOVED (AURA-STALL, #1137): and the auras' program - the first wearer in range waited its whole compile; PIN MOVED
+  // (AUDIT RED-MOUNTAIN F5): and the volcano's fire and the fence's glow, drawn wherever the horizon holds them
+  const want = [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];
   assert.deepEqual(playPrograms(), want);
   const on = fakeGl();
   const turns = [];
   assert.equal(startPlayPrograms(on.gl, () => new Promise((r) => turns.push(r))), true);
-  // PIN MOVED (COMPILE-QUEUE, FIELD BUGS 2026-10-27): started in turn, the next once the driver says the last is done
+  // PIN MOVED (COMPILE-QUEUE, FIELD BUGS 2026-10-27b): started in turn, the next once the driver says the last is done
   assert.equal(on.count('createProgram'), 1, 'one started, the rest queued');
   while (turns.length) { on.finish(); turns.shift()(); await new Promise((r) => setImmediate(r)); }
   assert.equal(on.count('createProgram'), want.length, 'each started, once');

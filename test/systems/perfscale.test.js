@@ -221,12 +221,12 @@ test('PERF-SCALE S2: a docked strip - the image is the STRIP x the scale, presen
     const { canvas } = stateGl(1280, 720);
     const r = new Renderer(canvas);
     r.setRenderScaleSource(() => 0.75);
-    for (const step of r.warmSteps()) step();
+    for (const step of r.warmSteps()) step.run();
     assert.ok(r.retro?.P, 'the present program is built before the first scaled frame');
     const { canvas: c2 } = stateGl(1280, 720);
     const r2 = new Renderer(c2);
     r2.setRenderScaleSource(() => 1);
-    for (const step of r2.warmSteps()) step();
+    for (const step of r2.warmSteps()) step.run();
     assert.equal(r2.retro, null, 'and at 100% nothing is built');
   }
   // the pass without its program: a LINEAR blit for the scale, retro's NEAREST otherwise
@@ -624,7 +624,7 @@ test('PERF-SCALE S7 (the review): ONE reading of "the scale is on" - a source an
     const { canvas } = stateGl(1280, 720);
     const r = new Renderer(canvas);
     r.setRenderScaleSource(() => v);
-    for (const step of r.warmSteps()) step();
+    for (const step of r.warmSteps()) step.run();
     assert.equal(r.retro, null, `a source answering ${String(v)} warms no present`);
     try { r.beginFrame(I, I, L, WORLD_FRAME); assert.equal(r.retroFrame, null); r.drawScreenQuad(null, Q); } finally { setFrameTarget(null); }
   }
@@ -632,7 +632,7 @@ test('PERF-SCALE S7 (the review): ONE reading of "the scale is on" - a source an
     const { canvas } = stateGl(1280, 720);
     const r = new Renderer(canvas);
     r.setRenderScaleSource(() => v);
-    for (const step of r.warmSteps()) step();
+    for (const step of r.warmSteps()) step.run();
     assert.ok(r.retro?.P, `${v}: warmed`);
   }
 });

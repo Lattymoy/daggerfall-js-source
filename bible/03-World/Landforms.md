@@ -663,7 +663,8 @@ deck, the recall anchor, a dungeon save's camps left outside - is written in
 DFU's frame: the landforms' lift at the record's own spot (`landformLiftAt`)
 taken off as it is written (`groundFrameHeight`, `groundFrameNative`,
 `campToRecord`) and put back on as it is read (`restandHeight`), whatever the
-row says. A record says nothing of the row - no stamp, SAVE_VERSION 1 - and a
+row says. A record says nothing of the row - no stamp of it, SAVE_VERSION 1 (BAY-LEFT-GROUND stamps its frame's LAW
+beside its scale, `groundFrame`, never the row) - and a
 build without the row (a desktop copy that has not updated, the site after a
 revert) reads a landforms save as it always read one, every height over its own
 ground. The slice's first cut stamped `landforms: true` on lifted heights, and
@@ -877,9 +878,10 @@ Roads network, in scratch, with the slice's own functions:
   ground is held to a print recorded under that law
   (`test/net/fb1017f_groundgate.test.js`, `tools/groundPrint.mjs`), so a
   slice that moves the ground moves GROUND_LAW and RELAY_VERSION with it. The
-  print reads the kernel's shaped ground over the synthetic world; a ground
-  that moves only on the real data (a World of Daggerfall site, a location's
-  blend) is outside it, and its slice names the bump itself. The room's
+  print reads the shaped ground over the synthetic world, two continent pixels
+  (BAY-LEFT-GROUND) and a town on a hillside (FB1028: TS2's ease moves it 8.9
+  m); a ground moved only on the real data (a World of Daggerfall site) is
+  outside it, and its slice names the bump. The room's
   memory (WORLD1) holds dungeon and building places only, no exterior height.
 - TWO BELIEFS IN ONE ROOM (GROUND-AGREE and GATE-AGREE, 2026-10-24,
   `01-Overview/bugs/Field-Bugs-2026-10-24b.md`). One build, two grounds: a pixel
@@ -987,6 +989,148 @@ this page, each above where it lives:
   and its edge row (I4, J1), the retry's window (G3), the read side (H1), the
   snow deck (I6) and a road's bench on DFU's own cliff (I1) - RESIDUES; the
   real data re-measured with every fix in - ON THE REAL WOODS.WLD.
+
+## PAST THE BAY (BREATHTAKER, 2026-10-26)
+
+Everything above stands on the Bay, and the Bay keeps it to the bit (LANDFORM4's sites and THE SAVES' frame stand past
+it too: BAY-LEFT-GROUND, below). Past the Bay's seam (SEAM_PX) the land is the continent's (`03-World/Tamriel.md` BREATHTAKER):
+
+- The lift goes on past the 7-bit top (continentLift), under LANDFORM_CEILING by construction (CONTINENT_CEILING).
+- The climate hills give way to the continent's own landforms (`world/tamriel/tamrielLandforms.js`), over a ramp of 8
+  pixels past the seam. Both ease beside the roads (LANDFORM7) and carve into the painted water's valleys (AUDIT
+  LANDFORMS III C1) as the hills do.
+- Cyrodiil's rivers and lakes are carved into it (`world/tamriel/tamrielWaters.js`, the shaper's last step: the
+  channel level at its surface, never raising the land).
+- RELIEF-PEAKS (`03-World/Tamriel.md`, 2026-10-27): the kernel's large map past the Bay is WOODS.WLD's own law of the
+  small byte, where it was a swell; the continent's ranges and Red Mountain's cone are laid in the shaper under its
+  landforms (`world/tamriel/tamrielRanges.js`), never in the bytes; and the landforms' oriented frames ease into a fixed
+  frame where their direction is weak, so no family hands one field to another inside a sample (the "canyons"). A
+  site's level past the Bay counts the ranges.
+
+The shaper's samples stay one function of world position, every seam one number from both pixels.
+
+## BAY-LEFT-GROUND - A TOWN PAST THE BAY STANDS IN ITS LAND, AND A RECORD'S HEIGHT IS DFU'S FRAME THERE TOO (2026-10-26)
+
+The audit "no system left behind in the Bay" (2026-10-26, `01-Overview/audits/Audit-Left-In-The-Bay.md`), its items 28
+(D1, the landforms' sites) and 36 (D5,
+`landformLiftAt`). The owner, after the audit: *"Every single thing here needs to be addressed. No exceptions."* -
+every item built, and the owner's call on this one taken: the landforms' sites past the Bay come from places every
+client stands (GROUND-AGREE).
+
+WHAT STOOD (D1). LANDFORM4's sites are MAPS.BSA's 1000 x 500 table, so no place past the Bay was a site: every town
+there stood in its own levelling wall, DFU's blend taking the whole rise between the town and its land inside its
+pixel. Lane D's measure (a town's rise from its pixel's edge to its level: the worst edge sample off the mean of its
+middle half), on the freeware's trace with the landforms on: TESA's cities and towns past the Bay (the audit's sample,
+every third, 47 pixels) a median 39.1 m, 104.0 m at the 90th percentile, 218.7 m at the worst; the Bay's own towns
+(every seventh, 80) 7.6 m and 37.7 m.
+
+THE SITES PAST THE BAY (D1). A second table beside LANDFORM4's (`world/landforms.js` landformSitesBeyond): for each
+place past the Bay every client with the land stands alike (`world/pastBayRows.js` pastBaySites), its footprint rect's
+four bytes (SITE_BIAS over its tiles, as the Bay's) packed in one number, keyed by its world key (`worldPixelKey`) - a
+Map, so it crosses to the worker whole. The places: every place of TESA12's model stood on its pixel with a template
+(the game's own row, as MAPS.BSA holds it - no town pack's grid, AUDIT LANDFORMS III B1's law), and a capital levelled
+as a town is (one pixel, inland, its canal shut: Mournhold, Falinesti, Helstrom - no `flattenAt`, its ground its own
+pixel's mean). A capital over several pixels (every slice flattened to its centre's ground, TESA11 and IC-GRAND) or at
+the sea (its sea's floor, AUDIT TESA II C2 and RUMARE-WATER) keeps its own law: a site pulls toward its own pixel's
+level, which is not the level such a city stands at. Not sites: the countryside and the lairs (TESA7, TESA8) - a
+pixel's roll, a block or two in the middle of their pixel, which DFU's own blend levels inside it. sitesAbout reads the
+table off the Bay's in the same one order, so every seam, the Bay's edge's too, is one number from both pixels;
+siteLevel's book keys by the world's key (the Bay's `sy * 1000 + sx` is two pixels' past the Bay); and a site's level
+past the seam is its land as the continent's shaper stands it there - the lift's continuation and the continent's own
+landforms over the ramp (PAST THE BAY, above) - the Bay's level unchanged. Every kernel takes it: the job, a
+promotion's grid, the middle ring and the flora band on the worker (its `landform-beyond` message, the horizon's books
+let go with it), the client's own (`TerrainGenClient.setLandformBeyond`), and TESA11's flatten book keyed by it.
+
+MADE AGAIN WHEN THE PLACES MOVE (`scenes/landformSitesHost.js` createLandformSites). The places past the Bay stand on the
+trace and the fit, which land after the world mounts. The table is made as the world mounts and handed to both kernels
+before the first job, asked on the frame after the places' own sweeps, and made again when the model, the fit, the land
+or the capitals move; every standing pixel within SITE_REACH_PIXELS (2: the 5x5 sitesAbout reads) of a moved site is
+built again behind its view (`scenes/swapBehind.js`), one in flight once it publishes (the roads' own shape). Its
+generation keys this thread's gate kernel and a record's lift field (below).
+
+GROUND-AGREE ACROSS THE LAND - THE OWNER'S CALL, PROVED. The table's inputs - the places, the capitals, the trace, the
+countryside - are each the land's own online (`scenes/shared.js` arenaPlacesOn, capitalsOn, tamrielTraceOn,
+countrysideOn: their doors offline alone), and their templates the game's own rows, so every client with the land makes
+one table. The land itself is the player's own Features row online too (`tamrielLandOn`), and a client without it stands
+the Bay alone with no table past it - so NO PLACE WITHIN A SITE'S REACH OF THE BAY IS A SITE PAST IT (`landformSitesBeyond`:
+`bayEdgeDistance <= SITE_REACH_PIXELS` left out): a site there would pull a Bay pixel, and the two clients would stand
+two grounds on it. TESA's places stand a picture pixel clear of the Bay (`world/tamrielPlaces.js` BAY_MARGIN); on the
+freeware's trace the nearest of the 279 sites past the Bay stands 21 pixels off it, so none is left out today - the law
+holds whatever trace stands them. Proved: the land's client (the continent composed round the Bay, the Bay's table and
+the table past it) and the land-less one (DFU's own WOODS.WLD, the Bay's table alone) stand every Bay pixel about sites
+one, two and three pixels off the Bay's edge sample for sample (the synthetic world); on the freeware's trace the same at
+the Bay's four corners and beside the six sites past the Bay nearest it, the two clients' climates the same table; and a
+client whose places land after it mounts makes the very table of one that had them at its mount, and builds again the
+pixels they reach.
+
+AFTER (D1, the same measure). The audit's sample past the Bay: a median 15.1 m, 37.0 m at the 90th percentile, 82.5 m at
+the worst; the 63 cities past the Bay that are sites a median 45.0 -> 9.5 m, the 90th percentile 69.8 -> 44.6 m; the
+Bay's 80 towns the same, sample for sample, to the bit (7.6 m and 37.7 m). NOT SEEN IN THE RUNNING GAME (the headless
+game crashes past the Bay, #1184's J6).
+
+THE GROUND MOVED, SO ITS LAW MOVED (GROUND_LAW 2). D1 moves the ground beside every town past the Bay, so a copy on
+the old ground draws a peer there floating or sunk (RESIDUES, the version skew): `net/wire.js` GROUND_LAW 1 -> 2 - the
+relay refuses a ground room's hello under it while `groundGate` is on, a relay change folded into the undeployed relay
+world270. The print (`tools/groundPrint.mjs`) read the Bay's synthetic pixels alone; it reads two pixels past the Bay
+too (GROUND_PRINT_BEYOND: a town by its site and its pulled neighbour, on the continent composed round the synthetic
+world, the authored shape), so the next move past the Bay fails `test/net/fb1017f_groundgate.test.js` until the law
+moves. Recorded under law 2: the Bay's twenty cells the same to the decimetre, two new.
+
+WHAT STOOD (D5). `landformLiftAt` (THE SAVES) answered 0 off the Bay's 1000 x 500, so a height a record wrote past the
+Bay was in the shaped frame, not DFU's, and a save, a scene cache, a deck, an anchor or a remains' place loaded with the
+Landforms row off kept the lift there - AUDIT LANDFORMS C1/B4's own case, a fall billing over 100 HP.
+
+THE LIFT ON THE WORLD'S GRID, AND THE FRAME'S LAW STAMPED (D5). The record's frame left `bootWorld` first, verbatim
+(`scenes/groundFrameHost.js` createGroundFrame, by `tools/hostMove.mjs`; its law `recordFrame`, run whole by the pins).
+The lift answers on every pixel of the world's grid (`inWorldGrid`), through the place its build stands
+(`_liftLocationAt`: on the Bay the ground's place, GROUND-AGREE's spawn law; past it the build's own `_locationToBuild`,
+where no spawn stands), its field kept by the sites past the Bay's generation. And a record carries THE LAW OF ITS
+FRAME beside its scale: `groundFrame` (`world/terrain/terrainSampler.js` GROUND_FRAME_LAW 2, written with the scale as
+RECORD_GROUND_STAMP by the save, the exterior scene cache, the ship's deck, the Recall anchor and a remains' place; the
+save, the cache and the anchor keep it, a remains' place is read whole). It says nothing of the row (AUDIT LANDFORMS
+C1's law). A record without it, past the Bay, was written under the old law - its height the shaped ground of its day
+plus its own `off` - so, read with the row on, it is put into DFU's frame by its own day's lift first (`before`: this
+thread's landforms with the Bay's table alone, `landformsHere({ before: true })`) and then stood again as any record
+is: the lift goes on once, its `off` exact. On the Bay a record was DFU's frame already, stamped or not; with the row off
+a record lands as it always came. THE CROSS-ROW CASE, NAMED: an old record past the Bay carries no word of the row it
+was written under, so one written with the row off and read with it on stands under its ground by its old lift (the
+collider lifts a body: the side away from a fall), and one written with it on and read with it off keeps that lift, as
+it always did. Online the row is the room's and always on, so an online record is read in the frame it was written in;
+a record written from now on is DFU's frame both ways, on either side of the row.
+
+THE FRAME'S LAW 3 (RELIEF-PEAKS, 2026-10-27, `03-World/Tamriel.md`). DFU's own ground past the Bay moved: its large map
+is WOODS.WLD's law of the small byte, where it stood a swell. A record written past the Bay before GROUND_FRAME_LAW 3
+rides its ground's own move there (`groundMovedAt`: `world/landforms.js` groundMovedField, today's reader against the
+one with the swell, `tamrielGround.js` groundBefore; over a town's rect the move of DFU's blend, its level's mean), with
+the row on or off: the large map is the kernel's own term. The lift a record before LIFT_FRAME_LAW (2, D5's law) takes
+off is the old law's without the ranges (`landformsHere({ before: true })`), which it never stood on. On the Bay nothing
+moved.
+
+THE FOUR HOSTS. `scenes/world.js` WIRED - the one host that streams the ground past the Bay: the sites' host, the
+kernels' tables, the lift on the world's grid, the stamp on every writer and the law on every reader.
+`scenes/exterior.js` FLAGGED - the Bay's fixed city: LANDFORM4's own table and no ground past the Bay; its flat ground
+stamps its scale alone, and a record without the frame's law on the Bay is DFU's frame already. `scenes/worldModes.js`
+FLAGGED - no shaped ground; its interior cache is in its building's frame, and a legacy cache (written before
+TERRAIN-SCALE1 carried the frame) predates the land past the Bay, so it is the Bay's. `scenes/dungeonContext.js`
+FLAGGED - its camps left outside reach its save through the world host's `outerCampsSave` and are read back by the
+save's own frame's law.
+
+Pins: `test/world/terrain/bayleftground_sites.test.js` (9: the table; the kernel's pull, its seams, its twins and the Bay
+to the bit; every kernel and the client; the places; GROUND-AGREE across the land; the host; its wiring; with ARENA2 the
+audit's sample and GROUND-AGREE on the freeware's trace), `test/world/terrain/bayleftground_frame.test.js` (6: the
+frame's law run whole, the lift on the world's grid and by the old law, its field by the sites' generation, a record out
+and back over the real lift, every store keeping the stamp, the host's wiring), `test/net/fb1017f_groundgate.test.js`
+(the print past the Bay under law 2). PIN MOVED: `landform`, `roads`, `audit_waternext`, `auditlandforms` (the gate
+harness, the lift's harness), `distantland`, `landform45`, `restrideworker`, `terrainworker`, `wod2_loader`,
+`terrainscale1` (the frame's law run whole, the stamps), `fb1013d_remains` - the lines that carry the table past the Bay
+and the frame's law. Mutants: `tools/mutants/bayleftground.json`'s D1 (40: 39 dead, one recorded equivalent - a capital over several pixels
+left out by its size, which every such capital the port authors today is by the sea or its plan too), GROUND_LAW (2)
+and D5 (29), the rest all dead; and
+the 68 records of other lists the moves out of bootWorld and these laws moved - retargeted by `tools/hostMove.mjs` or
+re-aimed by content onto the lines that now hold their laws, each run: `auditlandforms.json` (30), `terrainscale1.json`
+(12), `fb1013d_remains.json` (9), `landform.json` (4), `perfextc.json` (3), `auditlandforms3.json` (2), `ttl1.json` (2)
+and one each in `hostsplit.json`, `landform45.json`, `landform6.json`, `lw6.json`, `snowfall1.json` and `tesa11.json` -
+66 dead, 2 equivalent as recorded (AUDIT-LANDFORMS-D-restand-ratio-unguarded, AUDIT-LANDFORMS-III-C4-sites-of-the-3x3).
 
 ## Pins
 
