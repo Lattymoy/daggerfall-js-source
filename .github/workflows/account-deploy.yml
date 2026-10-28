@@ -995,8 +995,9 @@ jobs:
             exit 0
           fi
           err="$RUNNER_TEMP/stripe-methods.err"
-          out=$(node tools/stripeMethods.mjs 2> "$err")
-          code=$?
+          # AUDIT SHOP-LOCAL 1: the job's shell is bash -e, so a bare out=$(...) that fails ends the step red, its reason
+          # unsaid - read the exit in an if, as Discord's step does
+          if out=$(node tools/stripeMethods.mjs 2> "$err"); then code=0; else code=$?; fi
           echo "$out"
           { echo ""; echo "#### The ways to pay"; echo ""; echo "$out"; } >> "$GITHUB_STEP_SUMMARY"
           if [ "$code" -ne 0 ]; then
