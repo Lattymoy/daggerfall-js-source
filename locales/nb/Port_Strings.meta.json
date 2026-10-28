@@ -389,6 +389,11 @@
   "tr": "ad9b2a195726",
   "by": "claude-in-session"
  },
+ "account.flow.armoryRemovedAll": {
+  "en": "0eb12e6c6d41",
+  "tr": "243b3da056ca",
+  "by": "claude-in-session"
+ },
  "account.flow.auraRemoved": {
   "en": "8464269d38b7",
   "tr": "5d71818a6ed9",
@@ -467,6 +472,11 @@
  "account.flow.wearing": {
   "en": "3607fc1268c8",
   "tr": "2bd9d44d650e",
+  "by": "claude-in-session"
+ },
+ "account.flow.wearingSet": {
+  "en": "2a76f03fab48",
+  "tr": "6da0c22db7b4",
   "by": "claude-in-session"
  },
  "account.glyph.aegis": {
@@ -3934,11 +3944,6 @@
   "tr": "74eb7e3d193b",
   "by": "claude-in-session"
  },
- "armory.found": {
-  "en": "8337bdc32b9e",
-  "tr": "9d5530b21af5",
-  "by": "claude-in-session"
- },
  "armory.look.ashbound": {
   "en": "6b15d4fbde74",
   "tr": "7f4bd0375524",
@@ -3982,6 +3987,11 @@
  "armory.look.eternalhalo": {
   "en": "845dd181f975",
   "tr": "2f367b137366",
+  "by": "claude-in-session"
+ },
+ "armory.look.eternalset": {
+  "en": "54972ef90c59",
+  "tr": "afcfe4f56c71",
   "by": "claude-in-session"
  },
  "armory.look.eternalsigil": {
@@ -4032,6 +4042,11 @@
  "armory.name.eternalhalo": {
   "en": "099548f26f07",
   "tr": "462a15a46a21",
+  "by": "claude-in-session"
+ },
+ "armory.name.eternalset": {
+  "en": "c82694fba11d",
+  "tr": "cd8e57bd50df",
   "by": "claude-in-session"
  },
  "armory.name.eternalsigil": {
@@ -4532,6 +4547,16 @@
  "bounty.foes.zombies": {
   "en": "4711f7565028",
   "tr": "461e8f6e72f1",
+  "by": "claude-in-session"
+ },
+ "broker.armory.kept": {
+  "en": "c643b2e5cead",
+  "tr": "52fc56fcc3f5",
+  "by": "claude-in-session"
+ },
+ "broker.armory.line": {
+  "en": "a8dfcf81ad54",
+  "tr": "a6a83af2ae32",
   "by": "claude-in-session"
  },
  "broker.owed": {
@@ -8749,11 +8774,6 @@
   "tr": "a318d9cbabab",
   "by": "claude-in-session"
  },
- "coll.how.breach": {
-  "en": "cbe4d2377c78",
-  "tr": "dc521d95cd42",
-  "by": "claude-in-session"
- },
  "coll.how.broker": {
   "en": "410ed6aff3d4",
   "tr": "16c7bf3a6319",
@@ -8932,6 +8952,11 @@
  "coll.how.shop": {
   "en": "f1b1c526cb50",
   "tr": "4ed01e29c42c",
+  "by": "claude-in-session"
+ },
+ "coll.how.shopPiece": {
+  "en": "ab3993d64af9",
+  "tr": "087e312a064e",
   "by": "claude-in-session"
  },
  "coll.how.soulcake": {
@@ -9212,11 +9237,6 @@
  "coll.src.bestowed": {
   "en": "2a5741c7d758",
   "tr": "161e29017042",
-  "by": "claude-in-session"
- },
- "coll.src.breach": {
-  "en": "15a8f2e3d944",
-  "tr": "c54e92d42a1a",
   "by": "claude-in-session"
  },
  "coll.src.broker": {
@@ -36947,6 +36967,11 @@
  "settings.pack.replace": {
   "en": "64ca199c859e",
   "tr": "326ea2489fa5",
+  "by": "claude-in-session"
+ },
+ "shop.armory.setOf": {
+  "en": "82dc9593c7e3",
+  "tr": "3f0048372b55",
   "by": "claude-in-session"
  },
  "shop.buy": {

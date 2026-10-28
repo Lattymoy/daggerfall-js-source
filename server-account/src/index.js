@@ -45,7 +45,7 @@
 //
 // ACC3, the wardrobe. A player HOLDS titles by derivation and WEARS at
 // most one, which is the only part of it that is a choice:
-//   POST /v1/account/title { title }      -> { ok, titles[], title, glyphs[] }   (ARMORY: /v1/account/armory { slot, piece|null } the same, a piece a slot)
+//   POST /v1/account/title { title }      -> { ok, titles[], title, glyphs[] }   (ARMORY: /v1/account/armory { slot, piece|null } or { kit|null } the same)
 // NAME-AS, which name the room reads - the account's, or the realm character's the mint is for; the token's answer
 // says both (`name` the room's, `accountName` the account's), the choice (`nameAs`) and, where the character's could
 // not be worn, why (`nameWhy`, `nameWord`):
@@ -234,7 +234,7 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
-  accountWardrobe, equipTitle, equipAura, equipArmory, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
+  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
@@ -280,7 +280,6 @@ import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: th
 import { claimStar, starRecordOf } from './stars.js';   // STAR7: the fallen stars held
 import { claimSd, sdRecordOf } from './sds.js';   // SD9b: the Hours broken
 import { claimKetch, ketchRecordOf } from './ketch.js';   // KETCH: the Ketchmaster's hold, once a voyage - and the voyages sailed, on the cards
-import { armoryGateRoll, armoryGateAnswer } from './armory.js';   // ARMORY: the Aura Armory's roll at a recorded Breach kill
 import { egKeysOf, openEg, admitEg, claimEg, rollWeirKey, findEg, egFirstSay, egGateWeir, egGateWeirAnswer } from './eg.js';   // EG-PLAY: the Elite Breach - the Weir Keys, the open, the admission, the claim; EG-E3: a dungeon elite's find
 import { egBoardOf, withEgHonours } from './egHonours.js';   // EG-E2: the Elite Breach's boards, and Spire Champion on the row
 import { egSink } from './egEconomy.js';   // EG-E1: the Broker's Panoply sink
@@ -1479,7 +1478,6 @@ const service = {
           strike: (d) => gateStrikeStatement(ctx, who.player, env, d), region: body.region ?? null,
           deeds: (d) => deedStatements(ctx, who.player, env, { kind: 'gate', event: deedEvent('gate', d), character, guard: [d] }),
           weir: egGateWeir(ctx, who.player),   // AUDIT EG IV (lane3 #16): the Weir Key's roll in the claim's own batch (eg.js)
-          armory: armoryGateRoll(ctx, who.player),   // ARMORY: the Aura Armory's roll, after the key's in the same batch (armory.js)
         });
         // AUDIT WB A5: a refused receipt says WHICH rung refused it - the client keeps one the service can mend (its key
         // not the relay's pair, a clock) and lets go of one it cannot
@@ -1489,7 +1487,7 @@ const service = {
         // (marks.js gateStrikeStatement: 50 under SILVER-WAYS' day's combat cap with the raids', the gate's own day its
         // line's id); `marks` null where Marks are not this account's
         const answer = { ...r };
-        delete answer.day; delete answer.struck; delete answer.deedStruck; delete answer.armoryRow; delete answer.weirRow; delete answer.portent;   // the service's own: the line's day and whether the batch struck (AUDIT EG IV: and the key's row; AUDIT WB14: the receipt's portents, the fill's)
+        delete answer.day; delete answer.struck; delete answer.deedStruck; delete answer.weirRow; delete answer.portent;   // the service's own: the line's day and whether the batch struck (AUDIT EG IV: and the key's row; AUDIT WB14: the receipt's portents, the fill's)
         if (r.recorded && !r.rite && r.deedStruck !== undefined) answer.deed = await deedAnswer(db, who.player, deedEvent('gate', r.day), r.deedStruck);   // SILVER-WAYS: where a deed was this claim's to try
         // SEAT1b (Seats-Arc 4.2): a kill recorded now is influence for the account's war-guild where it pledged in the
         // region the claim named (`seat` the answer: counted, or why not - the kill stands either way). WB12d: the rite
@@ -1501,7 +1499,6 @@ const service = {
         // EG-PLAY: a recorded breach closed rolls a Weir Key - the service's own die; AUDIT EG IV (lane3 #16): in the claim's
         // own batch, the first decided by the row it wrote (eg.js egGateWeir), its row said here
         if (r.recorded && !r.rite) answer.weir = egGateWeirAnswer(r.weirRow);
-        if (r.recorded && !r.rite && r.armoryRow !== undefined) answer.armory = armoryGateAnswer(r.armoryRow);   // ARMORY: the piece this kill found, if any (armory.js)
         return json(r.recorded && !r.rite ? { ...answer, marks: await gateStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : answer, 200, origin);   // AUDIT WB12d (A2): the rite alone strikes no Drakes, and says none
       }
 
@@ -2280,7 +2277,9 @@ const service = {
       if (path === '/v1/account/armory' && request.method === 'POST') {
         // ARMORY: WEAR ONE PIECE IN ITS SLOT, OR EMPTY IT - the aura's door, a slot at a time. 403 for a piece not held, as
         // the aura's; 400 for a slot or piece the service does not know.
-        const r = await equipArmory(ctx, await withSeatTitles(ctx, who.player, env), env, body.slot, body.piece ?? null);
+        // A whole kit at once (`kit`: the Eternal set's Wear) or one slot (`slot`, `piece`)
+        const p = await withSeatTitles(ctx, who.player, env);
+        const r = body.kit !== undefined ? await equipArmoryKit(ctx, p, env, body.kit) : await equipArmory(ctx, p, env, body.slot, body.piece ?? null);
         return r.error ? no(r.error, r.error === 'armory-not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 

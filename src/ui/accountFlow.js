@@ -43,7 +43,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipArmory, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
+  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipArmory, equipArmoryKit, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
   newRecoveryCodes,   // RECOVERY-SET: a new set of recovery codes, from the profile
   chooseNameAs,   // NAME-AS: which name the room reads
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
@@ -516,18 +516,17 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
    * it off. The stored session learns the kit (adoptIdentity), so my own body shows it at once, and the room at once
    * (scenes/auraHost.js says hello again on a kit the room's token did not carry).
    */
-  self.wearArmory = async (slot, piece) => {
+  const armoryWore = async (/** @type {() => Promise<any>} */ call, /** @type {string} */ note) => {
     if (self.busy || self.stage !== 'in') return false;
-    const want = armoryKitPieces(self.wardrobe?.armory)[slot] === piece ? null : (piece ?? null);
     const asked = secret();
     self.busy = true; self.error = ''; self.note = ''; changed();
     try {
-      const r = await ask(() => equipArmory(door(), slot, want));
+      const r = await ask(call);
       if (!r) return false;
       if (!r.ok) return refuse(accountRefusalText(r.error));
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
       self.busy = false;
-      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: armoryPieceName(want) }) : t('account.flow.armoryRemoved', 'Piece removed.');
+      self.note = note;
       adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });
       changed();
       return true;
@@ -535,6 +534,12 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       return refuse(accountRefusalText('offline'));
     }
   };
+  self.wearArmory = (/** @type {string} */ slot, /** @type {string|null} */ piece) => {
+    const want = armoryKitPieces(self.wardrobe?.armory)[slot] === piece ? null : (piece ?? null);
+    return armoryWore(() => equipArmory(door(), slot, want), want ? t('account.flow.wearing', 'Wearing {what}.', { what: armoryPieceName(want) }) : t('account.flow.armoryRemoved', 'Piece removed.'));
+  };
+  /** ARMORY: A WHOLE KIT AT ONCE - the Eternal set's Wear - or `null`, every piece off. */
+  self.wearArmoryKit = (/** @type {string|null} */ kit) => armoryWore(() => equipArmoryKit(door(), kit), kit ? t('account.flow.wearingSet', 'Wearing the whole set.') : t('account.flow.armoryRemovedAll', 'Every piece removed.'));
 
   /**
    * WITCH1 (bible/06-Systems/Witches-Festival.md) - WEAR ONE PROFILE ICON, OR NONE: the aura's law, in the portrait well.

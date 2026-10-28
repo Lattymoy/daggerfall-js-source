@@ -11,8 +11,8 @@ import { TERMS_URL } from '../../net/legalLaw.js';
 import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_TEXT, AURA_TEXT, AURA_PAINT } from '../playerBadge.js';
 import { GLYPH_LABEL } from './enhancedAccount.js';
 import { t, intlLocale } from '../../systems/textManager.js';
-import { armoryPieceOf, armoryKitPieces, armoryKitOf } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces, sold in a section of their own
-import { ARMORY_LOOK, armoryPieceName, armorySlotName } from '../armoryText.js';
+import { armoryPieceOf, armoryKitPieces, armoryKitOf, armoryLineKit, armoryWarePieces, ARMORY_SETS } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces, sold in a section of their own
+import { ARMORY_LOOK, ARMORY_SET_LOOK, armoryPieceName, armorySlotName } from '../armoryText.js';
 
 /** Each category's tab, in the player's language. */
 export const SHOP_CATEGORY_TEXT = Object.freeze({
@@ -23,15 +23,17 @@ export const SHOP_CATEGORY_TEXT = Object.freeze({
 });
 /** Each kind's word on its panel. */
 const KIND_TEXT = Object.freeze({ title: () => t('shop.kind.title', 'Title'), glyph: () => t('shop.kind.glyph', 'Glyph'), aura: () => t('shop.kind.aura', 'Aura'), armory: () => t('shop.kind.armory', 'Aura Armory') });
-/** A ware's kind as its panel says it - an armory piece's with its slot. */
-const kindText = (/** @type {{ kind: string, key: string }} */ w) => (w.kind === 'armory' ? `${KIND_TEXT.armory()} · ${armorySlotName(armoryPieceOf(w.key)?.slot ?? '')}` : KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (w.kind)]());
+/** ARMORY: the line a set ware gives whole, or null for any other ware. */
+const setOf = (/** @type {{ kind: string, key: string }} */ w) => (w.kind === 'armory' ? ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (w.key)] ?? null : null);
+/** A ware's kind as its panel says it - an armory piece's with its slot, a set's with its count. */
+const kindText = (/** @type {{ kind: string, key: string }} */ w) => (w.kind === 'armory' ? `${KIND_TEXT.armory()} · ${setOf(w) ? t('shop.armory.setOf', 'a set of {n}', { n: armoryWarePieces(w.key).length }) : armorySlotName(armoryPieceOf(w.key)?.slot ?? '')}` : KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (w.kind)]());
 /** Each ware in a sentence: what it looks like. */
 export const SHOP_LOOK = Object.freeze({
   'title:genesis': () => t('shop.look.genesis', 'A title set on a plate of blue-violet fire that burns behind its letters, over your name.'),
   'glyph:origin': () => t('shop.look.origin', 'A dragon coiled round on itself, biting its tail, a spark burning at its heart. Light runs round its scales.'),
   'aura:eternal': () => t('shop.look.eternal', 'A cape of blue-violet fire on your back. It flows as you move, and wisps of flame trail behind you.'),
   // ARMORY: a piece's own words (ui/armoryText.js), one home for every face that says them
-  ...Object.fromEntries(Object.entries(ARMORY_LOOK).map(([k, f]) => [`armory:${k}`, f])),
+  ...Object.fromEntries(Object.entries({ ...ARMORY_LOOK, ...ARMORY_SET_LOOK }).map(([k, f]) => [`armory:${k}`, f])),
 });
 /** A ware's name, as every face says it (the title's and the aura's English, the glyph's label). */
 export const shopWareName = (/** @type {{ kind: string, key: string }} */ w) =>
@@ -77,7 +79,7 @@ export function shopWorn(/** @type {any} */ flow, /** @type {{ kind: string, key
   const wd = flow?.wardrobe;
   if (!wd) return false;
   if (w.kind === 'glyph') return Array.isArray(wd.glyphs) && wd.glyphs.includes(w.key) && !(Array.isArray(wd.glyphsOff) && wd.glyphsOff.includes(w.key));
-  if (w.kind === 'armory') { const p = armoryPieceOf(w.key); return !!p && armoryKitPieces(wd.armory)[p.slot] === w.key; }   // ARMORY: worn in its slot
+  if (w.kind === 'armory') { const kit = armoryKitPieces(wd.armory); return armoryWarePieces(w.key).every((k) => kit[armoryPieceOf(k)?.slot ?? ''] === k); }   // ARMORY: worn in its slot - a set, every piece of it
   return wd[w.kind] === w.key;
 }
 /** The line under the panels: who a purchase is for, or why nothing can be bought. Pure. */
@@ -209,7 +211,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       const armory = w.kind === 'armory';   // ARMORY: a piece on the stand-in, worn alone
       globalThis.requestAnimationFrame?.(() => {   // once the canvas has its size in the page
         if (!canvas.isConnected || gen !== liveGen) return;
-        preview(canvas, armory ? null : w.key, armory ? armoryKitOf([w.key]) : null).catch(() => null).then((p) => {
+        preview(canvas, armory ? null : w.key, armory ? armoryKitOf(armoryWarePieces(w.key)) : null).catch(() => null).then((p) => {
           if (p && gen === liveGen) { live.push(p); return; }
           p?.stop();
           if (!p && gen === liveGen) stage.append(el('p', 'sh-nogl', armory ? t('shop.noPreviewArmory', 'This device cannot show the piece here.') : t('shop.noPreview', 'This device cannot show the aura here.')));
@@ -271,6 +273,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     if (!fl || fl.busy) return;
     if (w.kind === 'title') fl.equip?.(w.key);
     else if (w.kind === 'aura') fl.wearAura?.(w.key);
+    else if (w.kind === 'armory' && setOf(w)) fl.wearArmoryKit?.(shopWorn(fl, w) ? null : armoryLineKit(setOf(w)));   // ARMORY: a set, all its pieces at once
     else if (w.kind === 'armory') fl.wearArmory?.(armoryPieceOf(w.key)?.slot, w.key);   // ARMORY: in its slot
     else fl.toggleGlyph?.(w.key);
   };
@@ -344,7 +347,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
 }
 
 /** An aura's stage, its module loaded on the first ask - ARMORY: a weapon piece alone on the blade's (weapon glow law 7). */
-const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null) => (aura || !kit ? Promise.resolve(null) : import('../../systems/weaponGlow.js')).then((g) => {
+export const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null) => (aura || !kit ? Promise.resolve(null) : import('../../systems/weaponGlow.js')).then((g) => {
   const look = g?.armoryWeaponStage(kit);
   if (g && look) return import('../../render/weaponPiecePreview.js').then((m) => m.startWeaponPiecePreview(canvas, g.glowSpec(look, g.ARMORY_LEVEL)));
   return import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura, { kit }));

@@ -17,8 +17,6 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { t } from '../systems/textManager.js';
-import { armoryPieceName } from '../ui/armoryText.js';
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -33,7 +31,7 @@ export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; fo
  * @param {{
  *   renderer: any, online: () => any, travelActive: () => boolean, quiet: () => boolean, player: () => any, camYaw: () => number,
  *   spawned: () => boolean, beast: () => boolean, veiled: (id: string) => boolean, toScene: (shown: any) => number[],
- *   walkers: () => any, riders: () => any, bodies: () => any, notice: (line: string) => void,
+ *   walkers: () => any, riders: () => any, bodies: () => any,
  * }} deps
  */
 export function createAuraHost(deps) {
@@ -160,12 +158,6 @@ export function createAuraHost(deps) {
     },
     /** SERAPH-WINGS: the gold of the nearest wings, for every host's light list. */
     wingLights: (/** @type {number[]} */ eye) => auraWingLights(auraList, eye, auraLights),
-    /** ARMORY: a gate claim's answer (server-account/src/armory.js armoryGateAnswer) - a piece found is said in the chat. */
-    heard(/** @type {any} */ a) {
-      const found = a?.ok ? a.data?.armory?.found : null;
-      if (typeof found === 'string' && found) deps.notice(t('armory.found', 'Dagon\'s Breach gives you an Aura Armory piece: {name}. Wear it from your profile.', { name: armoryPieceName(found) }));
-      return a;
-    },
     /** For the tests and the stats: how many wearers this frame holds of each. */
     counts: () => ({ auras: auraList.length, armory: armoryList.length, near: ARMORY_DETAIL_M }),
     /** For the tests: the armory's wearers this frame, as gathered - a copy, never the list itself. */

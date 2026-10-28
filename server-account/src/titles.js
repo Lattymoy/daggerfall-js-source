@@ -108,7 +108,7 @@ import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src
 import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles
 import { shopKeysOf } from '../../src/net/shopLaw.js';   // SHOP: a ware bought, its bit on the row
-import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryBreachHeldOf, armoryKitHeld } from '../../src/net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
+import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryKitHeld } from '../../src/net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -475,11 +475,11 @@ export function auraWorn(player, env) {
   return aurasHeld(player, env).includes(a) ? a : undefined;
 }
 /** ARMORY (bible/04-Characters/Aura-Armory.md): THE AURA ARMORY PIECES THIS PLAYER HOLDS, in the catalogue's order - the
- *  Breach's off `armory_held` (armory.js), the shop's off `shop_wares` (shop.js). A registered account's alone, as the
- *  Spire's auras are. */
+ *  Sigil Broker's off `insignia` (insignia.js, the Dagonfire line), the shop's off `shop_wares` (shop.js - a set its every
+ *  piece). A registered account's alone, as the Spire's auras are. */
 export function armoryHeld(/** @type {any} */ player) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
-  const own = new Set([...armoryBreachHeldOf(player?.armory_held), ...shopKeys(player, 'armory')]);
+  const own = new Set([...insigniaKeys(player?.insignia, 'armory'), ...shopKeys(player, 'armory')]);
   return ARMORY_PIECES.filter((p) => own.has(p.key)).map((p) => p.key);
 }
 /** ARMORY: the kit this player WEARS - the stored one, less any piece no longer held (a refund), or undefined for none

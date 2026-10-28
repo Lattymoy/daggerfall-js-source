@@ -5,12 +5,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  ARMORY_SLOTS, ARMORY_PIECES, ARMORY_KEYS, ARMORY_BREACH_PIECES, ARMORY_BREACH_BITS, ARMORY_NAME, armoryKitOk, armoryKitPieces,
-  armoryKitOf, armoryKitWith, armoryKitHeld, armoryBreachHeldOf, armoryPieceAt,
+  ARMORY_SLOTS, ARMORY_PIECES, ARMORY_KEYS, ARMORY_NAME, ARMORY_SETS, armoryKitOk, armoryKitPieces, armoryLinePieces, armoryLineKit, armoryWarePieces,
+  armoryKitOf, armoryKitWith, armoryKitHeld, armoryPieceAt,
 } from '../../src/net/armoryLaw.js';
 import { ARMORY_TEXT, ARMORY_LOOK, ARMORY_SLOT_TEXT, armoryPieceName } from '../../src/ui/armoryText.js';
-import { ARMORY_ODDS } from '../../src/ui/collections/wardrobeCatalogue.js';
-import { ARMORY_BREACH_ODDS, ARMORY_BREACH_ODDS_RITE, ARMORY_BREACH_PITY } from '../../server-account/src/armory.js';
+import { INSIGNIA, ARMORY_BROKER_PRICE } from '../../src/net/insignia.js';
+import { SHOP_WARES, shopKeysOf, shopOwns } from '../../src/net/shopLaw.js';
+import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
 import { P, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks } from '../../src/render/armoryPose.js';
 import {
@@ -26,6 +27,7 @@ import { buildSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../../src/form
 import { armBonesInBody } from '../../src/combat/fpArm.js';
 import { retailSkeleton } from '../fixtures/mw/retailRig.mjs';
 import { ARMORY_BONES } from '../../src/render/armoryPose.js';
+import { insigniaRowOf, insigniaEquip } from '../../src/scenes/brokerInsignia.js';
 
 const rd = (/** @type {string} */ p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -34,8 +36,10 @@ test('ARMORY the kit: five slot letters, each a piece of its slot or empty, neve
   assert.equal(ARMORY_PIECES.length, 10, 'two lines of five');
   assert.equal(new Set(ARMORY_KEYS).size, 10, 'a key each');
   for (const s of ARMORY_SLOTS) assert.equal(new Set(ARMORY_PIECES.filter((p) => p.slot === s).map((p) => p.code)).size, 2, `${s}: its codes its own`);
-  assert.deepEqual(ARMORY_BREACH_PIECES.map((p) => p.key), ['burningcrown', 'emberheart', 'ashbound', 'cinderstride', 'breachbrand']);
-  assert.equal(ARMORY_BREACH_BITS, 31, 'a bit each, never shared');
+  assert.deepEqual(armoryLinePieces('dagonfire').map((p) => [p.key, p.source]), [['burningcrown', 'broker'], ['emberheart', 'broker'], ['ashbound', 'broker'], ['cinderstride', 'broker'], ['breachbrand', 'broker']], 'the Dagonfire line, the Sigil Broker\'s');
+  assert.ok(armoryLinePieces('eternal').every((p) => p.source === 'shop'), 'the Eternal line, the shop\'s');
+  assert.deepEqual([armoryLineKit('eternal'), armoryLineKit('dagonfire'), armoryLineKit('none')], ['bbbbb', 'aaaaa', null]);
+  assert.deepEqual([armoryWarePieces('eternalset'), armoryWarePieces('emberheart'), armoryWarePieces('nonsuch')], [['eternalhalo', 'eternalsigil', 'eternalarmlets', 'eternalgreaves', 'eternaledge'], ['emberheart'], []]);
   for (const k of ['a0000', '0b000', 'aaaaa', 'bbbbb', 'ab0ba', '0000b']) assert.equal(armoryKitOk(k), true, k);
   for (const k of ['00000', 'c0000', 'a000', 'a00000', 'A0000', '', null, 12345, undefined]) assert.equal(armoryKitOk(k), false, String(k));
   assert.equal(armoryPieceAt('head', 'a')?.key, 'burningcrown');
@@ -54,9 +58,19 @@ test('ARMORY the kit: five slot letters, each a piece of its slot or empty, neve
   assert.equal(armoryKitWith('00a00', 'tail', 'ashbound'), '00a00', 'no such slot changes nothing');
   assert.equal(armoryKitHeld('aa0bb', ['burningcrown', 'eternaledge']), 'a000b', 'a piece no longer held is not signed');
   assert.equal(armoryKitHeld('aa000', []), null);
-  assert.deepEqual(armoryBreachHeldOf(5), ['burningcrown', 'ashbound']);
-  assert.deepEqual(armoryBreachHeldOf(64), [], 'a bit no piece has');
-  for (const b of [0, -1, 'x', null, 2 ** 60]) assert.deepEqual(armoryBreachHeldOf(b), [], String(b));
+});
+
+test('ARMORY the economy (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer", "The store set should be $20"): the Sigil Broker sells each Dagonfire piece for 75 of the account\'s embers; the shop sells each Eternal piece for $6 and the five together for $20, the set held whole when its five are and its five held when it is (mutants: the Broker\'s price; a set\'s pieces never given; the set sold over five singles)', () => {
+  assert.equal(ARMORY_BROKER_PRICE, 75);
+  assert.deepEqual(INSIGNIA.filter((o) => o.kind === 'armory').map((o) => [o.id, o.price]), armoryLinePieces('dagonfire').map((p) => [`armory:${p.key}`, 75]));
+  const set = SHOP_WARES.find((w) => w.id === 'armory:eternalset');
+  assert.deepEqual([set?.cents, set?.category], [2000, 'armory']);
+  assert.deepEqual(SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').map((w) => w.cents), [600, 600, 600, 600, 600]);
+  assert.deepEqual(shopKeysOf(set?.bit, 'armory'), armoryWarePieces('eternalset'), 'the set gives its five');
+  const singles = SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').reduce((a, w) => a | w.bit, 0);
+  assert.equal(shopOwns(singles, 'armory:eternalset'), true, 'five singles: the set is not sold again');
+  assert.equal(shopOwns(singles & ~8, 'armory:eternalset'), false, 'four: it is');
+  assert.equal(shopOwns(set?.bit, 'armory:eternalhalo'), true, 'the set held: no single sold again');
 });
 
 test('ARMORY the wire: a peer\'s kit badged only when it is a kit, and read back the same (mutants: any string badged; the badge dropped)', () => {
@@ -68,7 +82,27 @@ test('ARMORY the wire: a peer\'s kit badged only when it is a kit, and read back
   assert.equal(readArmory(null), null);
 });
 
-test('ARMORY the words: the client\'s English each piece\'s service name, a name and a look for every piece, a name for every slot - and the Breach\'s odds as the service rolls them (mutants: a name drifted; the odds one side only)', () => {
+test('ARMORY the Broker\'s rows: a Dagonfire piece named in the player\'s words, owned off the held ids, worn off the kit in its own slot; worn and taken off through the armory\'s own door in that slot, a title and an aura through theirs (mutants: a piece\'s wear read off another slot; a piece sent to the aura\'s door)', async () => {
+  const ins = { held: ['armory:emberheart', 'aura:dagonfire'], title: null, aura: 'dagonfire', armory: '0a000' };
+  const rows = INSIGNIA.map((o) => insigniaRowOf(o, ins));
+  const heart = rows.find((r) => r.id === 'armory:emberheart'), crown = rows.find((r) => r.id === 'armory:burningcrown');
+  assert.deepEqual([heart?.name, heart?.owned, heart?.worn, heart?.slot, heart?.line, heart?.price], ['Ember Heart', true, true, 'torso', 'dagonfire', 75]);
+  assert.deepEqual([crown?.owned, crown?.worn, crown?.slot], [false, false, 'head']);
+  assert.deepEqual(rows.filter((r) => r.worn).map((r) => r.id), ['aura:dagonfire', 'armory:emberheart'], 'the kit\'s torso, and the aura worn');
+  assert.equal(insigniaRowOf(INSIGNIA[0], ins).slot, undefined, 'a title has no slot');
+  /** @type {Array<[string, any]>} */ const asked = [];
+  const io = { base: 'https://accounts.invalid', secret: 's', fetch: async (/** @type {string} */ u, /** @type {any} */ i) => { asked.push([new URL(u).pathname, JSON.parse(i.body)]); return new Response('{"ok":true}', { status: 200, headers: { 'content-type': 'application/json' } }); } };
+  await insigniaEquip(io, heart, null);
+  await insigniaEquip(io, crown, 'burningcrown');
+  await insigniaEquip(io, INSIGNIA[1], 'dagonfire');
+  await insigniaEquip(io, INSIGNIA[0], null);
+  assert.deepEqual(asked, [
+    ['/v1/account/armory', { slot: 'torso', piece: null }], ['/v1/account/armory', { slot: 'head', piece: 'burningcrown' }],
+    ['/v1/account/aura', { aura: 'dagonfire' }], ['/v1/account/title', { title: null }],
+  ]);
+});
+
+test('ARMORY the words: the client\'s English each piece\'s service name and each set\'s, a name and a look for every piece, a name for every slot (mutants: a name drifted)', () => {
   assert.deepEqual(Object.keys(ARMORY_TEXT), [...ARMORY_KEYS]);
   assert.deepEqual(Object.keys(ARMORY_LOOK), [...ARMORY_KEYS]);
   assert.deepEqual(Object.keys(ARMORY_SLOT_TEXT), [...ARMORY_SLOTS]);
@@ -78,9 +112,7 @@ test('ARMORY the words: the client\'s English each piece\'s service name, a name
     assert.ok(look.split(/\s+/).length <= 40, `${k}: PLAIN-TEXT - a look in 40 words at most`);
   }
   assert.equal(armoryPieceName('nonsuch'), 'nonsuch');
-  assert.equal(1 / ARMORY_ODDS.plain, ARMORY_BREACH_ODDS);
-  assert.equal(1 / ARMORY_ODDS.rite, ARMORY_BREACH_ODDS_RITE);
-  assert.equal(ARMORY_ODDS.pity, ARMORY_BREACH_PITY);
+  for (const k of Object.keys(ARMORY_SETS)) assert.equal(ARMORY_SET_TEXT[/** @type {keyof typeof ARMORY_SET_TEXT} */ (k)](), ARMORY_NAME[/** @type {keyof typeof ARMORY_NAME} */ (k)], `${k}: one name`);
 });
 
 test('ARMORY the pose: a rig\'s bones its joints, a sprite\'s figure its card and its upper limbs, the rest pose crouched and saddled, a point turned with the body (mutants: a sprite\'s forearm called measured; the yaw unturned; the picture\'s marks ignored)', () => {
@@ -256,7 +288,7 @@ function memStorage() {
   return { _m: m, getItem: (/** @type {string} */ k) => m.get(k) ?? null, setItem: (/** @type {string} */ k, /** @type {string} */ v) => m.set(k, String(v)), removeItem: (/** @type {string} */ k) => m.delete(k), key: (/** @type {number} */ i) => [...m.keys()][i] ?? null, get length() { return m.size; } };
 }
 
-test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the relay\'s badge - a peer in a Morrowind body posed off its bones where it is drawn - a concealed peer none, a kit the room did not hear said again, and a Breach\'s find said in the chat (mutants: a peer\'s Morrowind bones read as no bones; a veiled peer\'s pieces gathered; the rehello never asked; the find unsaid)', () => {
+test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the relay\'s badge - a peer in a Morrowind body posed off its bones where it is drawn - a concealed peer none, a kit the room did not hear said again, (mutants: a peer\'s Morrowind bones read as no bones; a veiled peer\'s pieces gathered; the rehello never asked)', () => {
   const was = globalThis.localStorage;
   const sk = buildSkeleton(parseNif(retailSkeleton()));
   const mwBones = armBonesInBody({ skeleton: sk, mats: skeletonSpaceMatrices(sk, new Map(), GRAPH_ROOT) }, ARMORY_BONES);   // a peer standing in a Morrowind body
@@ -265,13 +297,12 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
   globalThis.localStorage = /** @type {any} */ (st);
   try {
     let rehellos = 0;
-    const notes = [];
     const online = { rehello: () => { rehellos++; return true; }, auraOf: () => null, armoryOf: (/** @type {string} */ id) => (id === 'p2' || id === 'p3' ? '000b0' : null) };
     const host = createAuraHost({
       renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: (id) => id === 'p3', toScene: (s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) }), notice: (l) => notes.push(l),
+      walkers: () => null, riders: () => null, bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) })
     });
     host.issued({ armory: null });
     host.frame([{ id: 'p2', shown: { at: [5, 0, 5] } }, { id: 'p3', shown: { at: [6, 0, 6] } }, { id: 'p4', shown: { at: [7, 0, 7] } }]);
@@ -285,9 +316,6 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
     assert.equal(rehellos, 1, 'heard now - once');
     host.draw();
     assert.equal(host.counts().armory, 0, 'a frame\'s, drawn once');
-    host.heard({ ok: true, data: { armory: { found: 'emberheart' } } });
-    host.heard({ ok: true, data: { armory: { found: null } } });
-    assert.deepEqual(notes, ['Dagon\'s Breach gives you an Aura Armory piece: Ember Heart. Wear it from your profile.']);
     assert.deepEqual([armoryOthersOf('near'), armoryOthersOf('none'), armoryOthersOf('x'), ARMORY_NEAR_M], ['near', 'none', 'all', 20]);
   } finally {
     if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
@@ -298,6 +326,6 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   const w = rd('src/scenes/world.js');
   assert.match(w, /\n  const auraHost = createAuraHost\(\{/);
   assert.match(w, /auraHost\.frame\(seen\);/);
-  assert.match(w, /auraHost\.heard\(a\);/);
+  assert.match(w, /const insigniaRows = \(\) => INSIGNIA\.map\(\(o\) => insigniaRowOf\(o, _insignia\)\);/, 'the Broker\'s rows, every kind\'s, the module\'s too');
   assert.ok(!/new ArmoryRenderer|armoryWearers\(/.test(w), 'the armory\'s pass is the module\'s alone');
 });

@@ -46,7 +46,10 @@ const memStorage = () => { const m = new Map(); return { getItem: (k) => (m.has(
 // ── THE LAW (net/insignia.js) ───────────────────────────────────────
 
 test('WB9g the insignia\'s law: two pieces, the Gatebreaker title at 30 Deadlands Embers and Dagon\'s Fire at 50 - dearer than anything the day\'s stock sells (the Regalia is 12) - each key in the token\'s vocabulary; the column read as the ids it holds, once each, in their order (a stranger\'s word, a repeat and an over-long column hold nothing); a sale appends; the keys of a kind; the side\'s own refusals (mutants: a price cut; a repeat held twice; the column unbounded; an owned piece sold again; an offline sale; a short purse served)', () => {
-  assert.deepEqual(INSIGNIA.map((r) => [r.id, r.kind, r.key, r.price]), [['title:gatebreaker', 'title', 'gatebreaker', 30], ['aura:dagonfire', 'aura', 'dagonfire', 50]]);
+  // PIN MOVED (ARMORY, the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer"): the
+  // Aura Armory's Dagonfire line after them, 75 each (test/server/armory_service.test.js)
+  const DAGONFIRE = ['burningcrown', 'emberheart', 'ashbound', 'cinderstride', 'breachbrand'];
+  assert.deepEqual(INSIGNIA.map((r) => [r.id, r.kind, r.key, r.price]), [['title:gatebreaker', 'title', 'gatebreaker', 30], ['aura:dagonfire', 'aura', 'dagonfire', 50], ...DAGONFIRE.map((k) => [`armory:${k}`, 'armory', k, 75])]);
   assert.ok(Object.isFrozen(INSIGNIA) && INSIGNIA.every(Object.isFrozen), 'the law is not a table a caller can edit');
   const dearest = Math.max(...Object.values(BROKER_PRICES));
   assert.equal(dearest, 12, 'the Regalia, the day\'s dearest');
@@ -63,7 +66,7 @@ test('WB9g the insignia\'s law: two pieces, the Gatebreaker title at 30 Deadland
   assert.deepEqual(insigniaHeld('aura:dagonfire title:gatebreaker'), ['aura:dagonfire', 'title:gatebreaker'], 'in the order bought');
   assert.deepEqual(insigniaHeld('aura:dagonfire aura:dagonfire'), ['aura:dagonfire'], 'a repeat is one piece');
   assert.deepEqual(insigniaHeld('title:founder aura:dagonfire'), ['aura:dagonfire'], 'a word that is no offer\'s id is not held');
-  assert.equal(INSIGNIA_COLUMN_MAX, 'title:gatebreaker aura:dagonfire'.length);
+  assert.equal(INSIGNIA_COLUMN_MAX, ['title:gatebreaker', 'aura:dagonfire', ...DAGONFIRE.map((k) => `armory:${k}`)].join(' ').length);   // PIN MOVED (ARMORY): every offer once
   assert.deepEqual(insigniaHeld(`aura:dagonfire ${'x'.repeat(INSIGNIA_COLUMN_MAX)}`), [], 'a longer column is not one this law wrote');
   assert.equal(insigniaWith(null, 'aura:dagonfire'), 'aura:dagonfire');
   assert.equal(insigniaWith('aura:dagonfire', 'title:gatebreaker'), 'aura:dagonfire title:gatebreaker');
@@ -679,10 +682,11 @@ test('WB9g the world host, by source: the auras gathered with the peers each fra
   assert.ok(!/spendStones/.test(buy), 'the pack paid through the sale alone, never beside it');
   assert.ok(buy.indexOf('if (!r.ok) return') > buy.indexOf('await brokerOwed.insignia('), 'a refused sale adopts nothing');
   const wear = w.slice(w.indexOf('async function insigniaWear(offer) {'), w.indexOf('const openBroker = () => {'));
-  assert.match(wear, /offer\.kind === 'title' \? await equipTitle\(io, want\) : await equipAura\(io, want\)/);
+  // PIN MOVED (ARMORY): each kind through its own door, a Dagonfire piece in its slot (scenes/brokerInsignia.js, test/render/armory.test.js)
+  assert.match(wear, /const r = await insigniaEquip\(io, offer, want\);/);
   assert.match(wear, /insigniaSelf\(r\.data, io\.secret\);/);
-  assert.match(w, /online\?\.adoptIdentity\?\.\(\{ title: _insignia\.title, glyphs: online\.glyphs, level: online\.lv, aura: _insignia\.aura \}\);/);
-  assert.match(w, /adoptSessionIdentity\(appStorage\(\), \{ glyphs: answer\?\.glyphs, glyphsOff: answer\?\.glyphsOff, aura: _insignia\.aura, secret \}\);/);
+  assert.match(w, /online\?\.adoptIdentity\?\.\(\{ title: _insignia\.title, glyphs: online\.glyphs, level: online\.lv, aura: _insignia\.aura, armory: _insignia\.armory \}\);/);   // PIN MOVED (ARMORY): and the kit
+  assert.match(w, /adoptSessionIdentity\(appStorage\(\), \{ glyphs: answer\?\.glyphs, glyphsOff: answer\?\.glyphsOff, aura: _insignia\.aura, armory: _insignia\.armory, secret \}\);/);
   assert.match(w, /insignia: insigniaRows, insigniaLoad, buyInsignia: insigniaBuy, wearInsignia: insigniaWear, insigniaBusy: \(\) => _insignia\.busy,/);
   // the service's side: the routes behind the door, the version moved, the deploy watching the law
   const svc = rd('server-account/src/service.js');

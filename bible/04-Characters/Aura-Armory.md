@@ -19,6 +19,10 @@ The owner's answers to the four questions put to them, then: *"Can you please le
 | When does the weapon slot ship? | Last |
 | The name "Aura Armory" | Approved |
 
+Then, of the built sets (2026-10-28): *"The dagon breach set should be very expensive from the dagon breach shop dealer"*
+and *"The store set should be $20"*. Asked how, the owner chose the Sigil Broker alone, with no Breach drop, at 75
+Deadlands Embers a piece; and the Eternal set whole at $20 beside each piece at $6.
+
 ## 2. What a piece is
 
 An armory piece is an effect drawn ON one part of the body: a crown of flame over the brow, a coal burning in the chest,
@@ -36,7 +40,7 @@ Wardrobe drew. The two never read each other.
 
 `src/net/armoryLaw.js` holds it, pure and importing nothing, so the relay's and the account worker's bundles stay flat.
 
-| Slot | Dagonfire (Dagon's Breach) | Eternal (the shop, $6) |
+| Slot | Dagonfire (the Sigil Broker, 75 embers) | Eternal (the shop, $6, or $20 the set) |
 | --- | --- | --- |
 | Head | Crown of the Burning Door | Eternal Halo |
 | Torso | Ember Heart | Eternal Sigil |
@@ -54,20 +58,23 @@ A piece is the ACCOUNT's, as an aura is: every character on the account may wear
 account. What is held is read off the account's row at every ask (`server-account/src/titles.js` armoryHeld). A guest
 holds none.
 
-**Dagon's Breach.** A recorded Breach kill (`/v1/gate/claim`, `server-account/src/accounts.js` claimGate) rolls in the
-claim's own batch beside the Weir Key, with the service's own die (`server-account/src/armory.js`). The roll draws
-among the Dagonfire pieces the account does not hold, so it never gives a duplicate, and none is rolled once all are
-held. The odds are one in twelve, one in eight for a fighter who broke the faithful's rite or on a portent night, and a
-piece is certain after ten recorded kills in a row with none (`armory_miss`). A claim asked again rolls nothing. A find
-is said in the chat.
+**The Sigil Broker.** The Dagonfire pieces are her insignia (`src/net/insignia.js` INSIGNIA, ids `armory:<piece>`),
+sold beside the Gatebreaker title and Dagon's Fire aura through their one door (`/v1/account/insignia`,
+`server-account/src/accounts.js` buyInsignia). Each is 75 Deadlands Embers, half again her aura's 50, so the five are
+375: some 375 Breaches closed, fewer for the rite broken, a serpent slain or a Redoubt taken (EMBERS_EARNED_SQL). Her
+window draws each piece on its own stage, as the shop does (`src/ui/brokerWindow.js`, `src/scenes/brokerInsignia.js`).
+Daggerfall Unity has no such sale; this is the WB9g Broker's law, extended.
 
 **The shop.** The Eternal pieces are wares of the kind `armory`, a section of their own in the window
-(`src/net/shopLaw.js`), each on sale while `SHOP_ON_SALE` names it.
+(`src/net/shopLaw.js`): **The Eternal Set** at $20 (`armory:eternalset`, bit 256) gives all five, and each piece is $6
+alone. A ware already had is not sold again (`shopOwns`): a piece the set gave, or the set once the five singles are held.
+Each is on sale while `SHOP_ON_SALE` names it.
 
-**Wearing.** `POST /v1/account/armory` takes a slot and a piece, or `null` to bare the slot. The service refuses a piece
-not held (`armory-not-held`, 403) or not of the slot (`no-piece`, 400). The account card's **Aura Armory** row lists
-each slot with the pieces held for it, where the aura's choice is. The Collections page lists every piece by slot,
-held or not, and how it is had.
+**Wearing.** `POST /v1/account/armory` takes a slot and a piece, or `null` to bare the slot - or a whole `kit`, as the
+set's **Wear** sends it, or `null` to bare all five. The service refuses a piece not held (`armory-not-held`, 403) or
+not of its slot (`no-piece`, 400); a kit with one such piece is refused whole. The account card's **Aura Armory** row
+lists each slot with the pieces held for it. The Collections page lists every piece by slot, held or not, and how it is
+had.
 
 ## 5. Online
 
@@ -79,9 +86,9 @@ is dressed at once.
 **A change reaches the room at once.** The world host compares the kit the last token said with the kit stored now,
 and says hello again on a fresh token when they differ (`net/online.js` rehello, AURA-LIVE's way).
 
-**The service's row.** Migration 0191: `players.armory_held` (a Breach piece's bit), `players.armory_miss` (the pity's
-count) and `players.armory` (the kit worn, read against what is held at every ask, so a refunded piece is signed for no
-more). A shop piece is its ware's bit on `shop_wares`.
+**The service's row.** Migration 0191: `players.armory`, the kit worn, read against what is held at every ask, so a
+refunded piece is signed for no more. What is held has no column of its own: a Broker piece is its id on `insignia`, a
+shop piece or the set its ware's bit on `shop_wares`.
 
 ## 6. How it is drawn
 
@@ -137,7 +144,7 @@ within 20 m, or none. My own kit always draws.
 
 - `test/render/armory.test.js` - the kit's law, the wire, the words, the pose, the marks, each piece's draws, the pass
   against a logging GL, the world host's gather.
-- `test/server/armory_service.test.js` - the held and worn law, the roll and its pity end to end, the wear door.
+- `test/server/armory_service.test.js` - the held and worn law, the Broker's sale and the shop's set, the wear door.
 - `test/net/armorylive.test.js` - a kit through the session's memory and the real relay.
 - `test/systems/weaponglow1.test.js` law 7 - the weapon piece's place among the looks.
 - `tools/armoryProbe.mjs` - the pass on a real GPU (Chromium): on the stand-in, the sprite and retail's Morrowind
@@ -149,8 +156,8 @@ within 20 m, or none. My own kit always draws.
 
 The owner asked for the system built without further questions. These were chosen and are the owner's to change:
 
-- The Eternal pieces' price, $6 each, and putting them on sale (`SHOP_ON_SALE`).
-- The Breach odds and the pity (section 4).
+- Putting the Eternal set and pieces on sale (`SHOP_ON_SALE`). The set is $20 whatever singles are held: no price for
+  the rest of a set.
 - The kit per account, as the aura is.
 - The sprite's forearm and third-person weapon left undrawn (sections 7 and 8), rather than drawn where the art has no
   measure for them.

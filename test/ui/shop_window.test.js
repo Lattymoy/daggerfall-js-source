@@ -138,7 +138,7 @@ test('SHOP: the window - a tab a category with its count, a panel a ware with it
   flow.shopOpened = (id) => { opened = id; };
   const keep = {};
   const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null });
-  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Titles1', 'Glyphs1', 'Auras1', 'Aura Armory5']);   // PIN MOVED (ARMORY): the Eternal line's five, a tab of their own, last
+  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Titles1', 'Glyphs1', 'Auras1', 'Aura Armory6']);   // PIN MOVED (ARMORY): the Eternal set and its five pieces, a tab of their own, last
   assert.equal(all(w.root, 'sh-tab')[0].attrs['aria-selected'], 'true');
   assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$5.00']);
   const buy = all(w.root, 'sh-buy')[0];
@@ -164,6 +164,29 @@ test('SHOP: the window - a tab a category with its count, a panel a ware with it
   const again = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null });
   assert.equal(all(again.root, 'sh-tab')[2].attrs['aria-selected'], 'true');
   w.stop(); again.stop();
+});
+
+test('SHOP: The Eternal Set - its own panel first in the Aura Armory tab at $20, a set of five; held, Wear puts every piece on at once and, every piece worn, takes them all off - one piece off, the set is not worn (mutants: the set worn a piece at a time; the set worn with a piece off)', () => {
+  const doc = fakeDoc();
+  const ETERNAL = ['armory:eternalset', 'armory:eternalhalo', 'armory:eternalsigil', 'armory:eternalarmlets', 'armory:eternalgreaves', 'armory:eternaledge'];
+  const flow = flowIn(card(Object.fromEntries(ETERNAL.map((id) => [id, { held: true, buy: null }]))), { wardrobe: { titles: [], glyphs: [], auras: [], armory: null } });
+  /** @type {unknown[]} */ const asked = [];
+  flow.wearArmoryKit = (/** @type {unknown} */ kit) => { asked.push(kit); };
+  const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep: { cat: 'armory' }, focus: false, preview: async () => null });
+  assert.deepEqual(all(w.root, 'sh-name').map((n) => n.textContent), ['The Eternal Set', 'Eternal Halo', 'Eternal Sigil', 'Eternal Armlets', 'Eternal Greaves', 'Eternal Edge']);
+  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$20.00', '$6.00', '$6.00', '$6.00', '$6.00', '$6.00']);
+  assert.equal(all(w.root, 'sh-kind')[0].textContent, 'Aura Armory · a set of 5');
+  const set = SHOP_WARES.find((x) => x.id === 'armory:eternalset');
+  all(w.root, 'sh-wear')[0].click();
+  assert.deepEqual(asked, ['bbbbb'], 'every piece on at once');
+  flow.wardrobe.armory = 'bbbbb';
+  assert.equal(shopWareState(flow, set).worn, true);
+  w.draw();
+  all(w.root, 'sh-wear')[0].click();
+  assert.deepEqual(asked, ['bbbbb', null], 'worn whole, every piece off');
+  flow.wardrobe.armory = 'bbbb0';
+  assert.equal(shopWareState(flow, set).worn, false, 'the Edge off: the set is not worn');
+  w.stop();
 });
 
 test('SHOP: the tab strip by keys - an arrow steps to the next category and wraps, Home and End the ends, the focus with it; only the open tab is in the Tab order (mutants: no keys on the strip; the arrows unwrapped)', () => {
@@ -267,9 +290,12 @@ test('SHOP: a receipt\'s head keeps its ware - one of the shop\'s, nothing else 
 test('SHOP: Collections says how each ware is had - from the Shop, at its price, the proceeds\' line - and each is In the shop exactly while the service\'s SHOP_ON_SALE names it, else No longer obtainable (mutants: a sale ended and the catalogue still selling; the shop not Obtainable)', () => {
   const toml = rd('server-account/wrangler.toml');
   const onSale = shopOnSaleOf(/^SHOP_ON_SALE = "([^"]*)"$/m.exec(toml)?.[1]);
-  for (const w of SHOP_WARES) {
+  // ARMORY: a set is no entry of its own - its pieces are, each naming the set and its price
+  const set = SHOP_WARES.find((w) => w.id === 'armory:eternalset');
+  for (const w of SHOP_WARES.filter((x) => x !== set)) {
     const e = wardrobeEntry(w.kind, w.key);
     assert.equal(e.src, 'shop', w.id);
+    if (w.kind === 'armory') assert.match(e.how(), /The Eternal Set for \$20\.00/, `${w.id}: the set beside it`);
     assert.equal(e.avail, onSale.includes(w.id) ? 'shop' : 'retired', `${w.id}: its availability follows the sale list`);
     assert.match(e.how(), new RegExp(`\\$${(w.cents / 100).toFixed(2).replace('.', '\\.')}`), `${w.id}: its price`);
     assert.match(e.how(), /All proceeds go to the costs of developing DFO Online\./);

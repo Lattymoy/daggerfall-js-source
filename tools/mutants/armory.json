@@ -59,33 +59,6 @@
     ]
   },
   {
-    "name": "ARMORY-the-odds-one-side-only",
-    "file": "server-account/src/armory.js",
-    "old": "export const ARMORY_BREACH_ODDS = 1 / 12;",
-    "new": "export const ARMORY_BREACH_ODDS = 1 / 10;",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
-    "name": "ARMORY-the-pity-never-certain",
-    "file": "server-account/src/armory.js",
-    "old": "'((?2 = 1 OR armory_miss >= ?3) AND (armory_held & ?4) = 0)'",
-    "new": "'((?2 = 1) AND (armory_held & ?4) = 0)'",
-    "tests": [
-      "test/server/armory_service.test.js"
-    ]
-  },
-  {
-    "name": "ARMORY-a-held-piece-picked",
-    "file": "server-account/src/armory.js",
-    "old": "ARMORY_BREACH_PIECES.filter((p) => !held.includes(p.key));",
-    "new": "ARMORY_BREACH_PIECES.filter(() => true);",
-    "tests": [
-      "test/server/armory_service.test.js"
-    ]
-  },
-  {
     "name": "ARMORY-a-piece-not-held-worn",
     "file": "server-account/src/titles.js",
     "old": "return armoryHeld(player).includes(p.key) ? null : 'armory-not-held';",
@@ -212,15 +185,6 @@
     ]
   },
   {
-    "name": "ARMORY-the-find-unsaid",
-    "file": "src/scenes/auraHost.js",
-    "old": "if (typeof found === 'string' && found) deps.notice(",
-    "new": "if (false) deps.notice(",
-    "tests": [
-      "test/render/armory.test.js"
-    ]
-  },
-  {
     "name": "ARMORY-the-piece-over-the-element",
     "file": "src/systems/weaponGlow.js",
     "old": "  if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));\n  const worn = armoryWeaponLook();",
@@ -306,6 +270,138 @@
     "file": "src/ui/accountFlow.js",
     "old": "String(self.shopWaiting).startsWith('armory:') ? armoryPieceName(String(self.shopWaiting).slice(7)) : ",
     "new": "",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-broker-price-cut",
+    "file": "src/net/insignia.js",
+    "old": "export const ARMORY_BROKER_PRICE = 75;",
+    "new": "export const ARMORY_BROKER_PRICE = 25;",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-an-eternal-piece-at-the-broker",
+    "file": "src/net/insignia.js",
+    "old": "...ARMORY_PIECES.filter((p) => p.source === 'broker').map(",
+    "new": "...ARMORY_PIECES.map(",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-broker-piece-never-held",
+    "file": "server-account/src/titles.js",
+    "old": "insigniaKeys(player?.insignia, 'armory')",
+    "new": "insigniaKeys(player?.insignia, 'aura')",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-priced-as-the-singles",
+    "file": "src/net/shopLaw.js",
+    "old": "ware('armory', 'eternalset', 2000, 256)",
+    "new": "ware('armory', 'eternalset', 3000, 256)",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-set-giving-one-piece",
+    "file": "src/net/armoryLaw.js",
+    "old": "(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).map((p) => p.key)",
+    "new": "(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).slice(0, 1).map((p) => p.key)",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-holding-nothing",
+    "file": "src/net/shopLaw.js",
+    "old": "(kind === 'armory' ? armoryWarePieces(w.key) : [w.key])",
+    "new": "[w.key]",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-single-sold-over-the-set",
+    "file": "src/net/shopLaw.js",
+    "old": "return gives.length > 0 && gives.every(",
+    "new": "return gives.length > 1 && gives.every(",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-four-singles-the-set",
+    "file": "src/net/shopLaw.js",
+    "old": "gives.every((k) => shopKeysOf(bits, 'armory').includes(k))",
+    "new": "gives.some((k) => shopKeysOf(bits, 'armory').includes(k))",
+    "tests": [
+      "test/server/armory_service.test.js",
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-kit-worn-with-a-piece-not-held",
+    "file": "server-account/src/accounts.js",
+    "old": "const why = key ? armoryRefusal(slot, key, player) : null;",
+    "new": "const why = key && slot === 'head' ? armoryRefusal(slot, key, player) : null;",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-kit-of-no-piece-worn",
+    "file": "server-account/src/accounts.js",
+    "old": "if (kit !== null && !armoryKitOk(kit)) return { error: 'no-piece' };",
+    "new": "",
+    "tests": [
+      "test/server/armory_service.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-broker-piece-worn-off-another-slot",
+    "file": "src/scenes/brokerInsignia.js",
+    "old": "armoryKitPieces(ins.armory)[piece.slot] === o.key",
+    "new": "armoryKitPieces(ins.armory).head === o.key",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-a-broker-piece-sent-to-the-auras-door",
+    "file": "src/scenes/brokerInsignia.js",
+    "old": ": offer.kind === 'armory' ? equipArmory(io, armoryPieceOf(offer.key)?.slot, want) : equipAura(io, want));",
+    "new": ": equipAura(io, want));",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-worn-a-piece-at-a-time",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "else if (w.kind === 'armory' && setOf(w)) fl.wearArmoryKit?.(",
+    "new": "else if (false) fl.wearArmoryKit?.(",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-the-set-worn-with-a-piece-off",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "return armoryWarePieces(w.key).every((k) => kit[",
+    "new": "return armoryWarePieces(w.key).some((k) => kit[",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

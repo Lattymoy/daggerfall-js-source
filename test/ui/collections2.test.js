@@ -141,9 +141,9 @@ const CATALOGUE = {
   'glyph:shadowfang': 'bestowed bestowed', 'glyph:penitent': 'bestowed bestowed', 'glyph:aegis': 'bestowed bestowed', 'glyph:primarch': 'bestowed bestowed',
   'glyph:crystalfist': 'bestowed bestowed', 'glyph:wikimaid': 'bestowed bestowed', 'glyph:nirnrootsage': 'bestowed bestowed' /* NIRNROOT-SAGE (PIN MOVED) */,
   'title:genesis': 'shop shop', 'glyph:origin': 'shop shop', 'aura:eternal': 'shop shop' /* SHOP (PIN MOVED): sold in the shop during the pre-alpha */,
-  /* ARMORY (PIN MOVED): the Aura Armory - the Dagonfire line Dagon's Breach's roll, the Eternal line the shop's */
-  'armory:burningcrown': 'breach chance', 'armory:emberheart': 'breach chance', 'armory:ashbound': 'breach chance', 'armory:cinderstride': 'breach chance',
-  'armory:breachbrand': 'breach chance', 'armory:eternalhalo': 'shop shop', 'armory:eternalsigil': 'shop shop', 'armory:eternalarmlets': 'shop shop',
+  /* ARMORY (PIN MOVED): the Aura Armory - the Dagonfire line the Sigil Broker's, the Eternal line the shop's */
+  'armory:burningcrown': 'broker open', 'armory:emberheart': 'broker open', 'armory:ashbound': 'broker open', 'armory:cinderstride': 'broker open',
+  'armory:breachbrand': 'broker open', 'armory:eternalhalo': 'shop shop', 'armory:eternalsigil': 'shop shop', 'armory:eternalarmlets': 'shop shop',
   'armory:eternalgreaves': 'shop shop', 'armory:eternaledge': 'shop shop',
 };
 
@@ -155,7 +155,7 @@ test('COLLECTIONS-II THE CATALOGUE IS WHOLE AND AS RECORDED: every title, aura, 
   const got = {};
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) got[`${kind}:${e.key}`] = [e.src, e.avail, ...(e.scope ? [e.scope] : [])].join(' ');
   assert.deepEqual(got, CATALOGUE);
-  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['breach', 'spire', 'abyss', 'serpent', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'seats', 'chapters', 'ranked', 'world', 'account', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (SHOP): the shop before the patrons; PIN MOVED (ARMORY): Dagon's Breach first */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
+  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'seats', 'chapters', 'ranked', 'world', 'account', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (SHOP): the shop before the patrons */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) {
     const how = e.how();
     assert.ok(typeof how === 'string' && how.length > 12, `${kind}:${e.key} says how`);

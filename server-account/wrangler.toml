@@ -463,7 +463,7 @@ PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 # deploy has put STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET from the
 # repository's own secrets (.github/workflows/account-deploy.yml).
 # ARMORY (2026-10-28, bible/04-Characters/Aura-Armory.md): and the Aura Armory's Eternal line, a piece a slot.
-SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge"
+SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge"
 
 [[d1_databases]]
 binding = "DB"

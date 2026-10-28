@@ -26,7 +26,7 @@ stand on it, and the probe draws both sets on a mannequin over those bones.
 | A4 | MEDIUM | The shop's stage for a weapon piece showed a bare figure: the body pass draws no weapon piece. | FIXED: the weapon's own stage, a pixel longsword outlined by the classic hand's shaders (`src/render/weaponPiecePreview.js`). |
 | A5 | LOW | The Eternal Greaves burned white at the ankle: their heat reached the ramp's white core, and a tube's near and far sides add. | FIXED: their heat stops short of the core, their gain lower. |
 | A6 | LOW | A piece bought was named in the service's English when it landed ("... is on your account"). | FIXED: the client's own name, in the player's language. |
-| A7 | LOW | A claim pin held the armory roll to a miss; the service's die finds one in twelve, so it failed one run in twelve. | FIXED: the roll read apart, marks1's way. |
+| A7 | LOW | A claim pin held the armory roll to a miss; the service's die finds one in twelve, so it failed one run in twelve. | GONE: the owner then moved the Dagonfire line to the Sigil Broker, so no claim rolls a piece and the pins are main's again. |
 | A8 | LOW | The 42 new strings were missing from the thirteen complete languages. | FIXED: drafted in-session, recorded as the machine's. |
 
 ## Not changed

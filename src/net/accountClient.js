@@ -1297,6 +1297,8 @@ export const equipAura = (io, aura) => call(io, '/v1/account/aura', { aura: aura
 /** ARMORY: wear one Aura Armory piece in its slot, or empty the slot (`piece` null) - the wardrobe after the write. The
  *  service refuses `not-held` for a piece this account does not hold, and `no-piece` for one that is not of the slot. */
 export const equipArmory = (io, slot, piece) => call(io, '/v1/account/armory', { slot, piece: piece ?? null });
+/** ARMORY: a whole kit at once (the Eternal set's Wear), or `null` to bare every slot - the same door. */
+export const equipArmoryKit = (io, kit) => call(io, '/v1/account/armory', { kit: kit ?? null });
 /** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
  *  `not-held` for an icon this account does not hold. */
 export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });

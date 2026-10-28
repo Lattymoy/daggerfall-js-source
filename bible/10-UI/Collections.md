@@ -275,8 +275,7 @@ and boards, named (`06-Systems/Bounty-Boards.md` 12.10).
 ## 11. The Aura Armory (ARMORY, 2026-10-28)
 
 The Aura Armory's part (`04-Characters/Aura-Armory.md`) stands after Auras: every piece of `net/armoryLaw.js`
-ARMORY_PIECES, grouped by where it comes from - Dagon's Breach for the Dagonfire line, the shop for the Eternal line. A
-row is the piece's name in its line's colour, its slot, its look in a sentence and how it is had: the Breach's odds as
-the service rolls them (`ARMORY_ODDS`, held equal to `server-account/src/armory.js` by `test/render/armory.test.js`), or
-the shop's price. Held, signed in, its press is **Wear / Take off** in the piece's own slot (`wardrobePart.js`, the
-flow's `wearArmory`).
+ARMORY_PIECES, grouped by where it comes from - the Sigil Broker for the Dagonfire line, the shop for the Eternal line.
+A row is the piece's name in its line's colour, its slot, its look in a sentence and how it is had: the Broker's price
+in embers (`insigniaById`, as her title's and aura's), or the shop's price beside the set's. Held, signed in, its press
+is **Wear / Take off** in the piece's own slot (`wardrobePart.js`, the flow's `wearArmory`).

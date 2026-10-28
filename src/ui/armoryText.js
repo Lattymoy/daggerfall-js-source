@@ -40,8 +40,13 @@ export const ARMORY_LOOK = Object.freeze({
   eternalgreaves: () => t('armory.look.eternalgreaves', 'Blue-violet fire wraps the legs from the knee to the foot. Sparks rise as you walk.'),
   eternaledge: () => t('armory.look.eternaledge', 'A blade of blue-violet light runs along the weapon\'s edge. Sparks trail from it when you swing.'),
 });
-/** A piece's name by its key, or the key for one that is no piece. */
-export const armoryPieceName = (/** @type {string} */ key) => ARMORY_TEXT[/** @type {keyof typeof ARMORY_TEXT} */ (key)]?.() ?? key;
+/** A SET's name and look (the shop's Eternal Set, its five pieces at once). */
+export const ARMORY_SET_TEXT = Object.freeze({ eternalset: () => t('armory.name.eternalset', 'The Eternal Set') });
+export const ARMORY_SET_LOOK = Object.freeze({
+  eternalset: () => t('armory.look.eternalset', 'All five Eternal pieces at once: the Halo, the Sigil, the Armlets, the Greaves and the Edge.'),
+});
+/** A piece's name - or a set's - by its key, or the key for one that is neither. */
+export const armoryPieceName = (/** @type {string} */ key) => (ARMORY_TEXT[/** @type {keyof typeof ARMORY_TEXT} */ (key)] ?? ARMORY_SET_TEXT[/** @type {keyof typeof ARMORY_SET_TEXT} */ (key)])?.() ?? key;
 /** A slot's name by its key. */
 export const armorySlotName = (/** @type {string} */ slot) => ARMORY_SLOT_TEXT[/** @type {keyof typeof ARMORY_SLOT_TEXT} */ (slot)]?.() ?? slot;
 /** A piece's slot's name, or ''. */
