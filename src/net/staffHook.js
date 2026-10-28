@@ -53,7 +53,8 @@ import { SOCIAL_ROOM, cellRoomOfWire, isCellRoom, isChatRoom, isSocialRoom } fro
 import { ID_RE, TOKEN_MAX_CHARS } from './identityToken.js';
 import { noteRoom } from './staffFollow.js';
 import { notePlace } from './staffTeleport.js';
-import { staffPlaces, staffHere } from './staffPlaces.js';   // STAFF-EVENT: the Events page's place picker
+import { staffPlaces, staffHere } from './staffPlaces.js';
+import { t } from '../systems/textManager.js';   // STAFF-PULL: Bring to me's fallback line   // STAFF-EVENT: the Events page's place picker
 
 /** The hook's version - the panel reads it and refuses a build it does not know. */
 export const STAFF_HOOK_VERSION = 1;
@@ -271,7 +272,7 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
       // what happened in words; a hook before it says nothing
       const sub = m.sub;
       seen = true;
-      pull(sub).then((line) => post({ dfoStaff: 'pulled', sub, ok: true, line }), (e) => post({ dfoStaff: 'pulled', sub, ok: false, line: String(e?.message ?? 'The player could not be brought.') }));
+      pull(sub).then((line) => post({ dfoStaff: 'pulled', sub, ok: true, line }), (e) => post({ dfoStaff: 'pulled', sub, ok: false, line: String(e?.message ?? t('net.staffPull.failed', 'The player could not be brought.')) }));
     }
   });
   /** @param {string} sub @param {string} room @returns {Promise<string|null>} */

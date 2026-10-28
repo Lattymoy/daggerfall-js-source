@@ -254,7 +254,7 @@ export const STAFF_TP_ERROR_TEXT = Object.freeze({
   battle: 'That player is in a battle instance. Use its authorized entry.',
   unavailable: 'The target location is unavailable or their client needs updating.',
   denied: 'The server did not authorize this staff teleport.',
-  frozen: 'That player is frozen. Lift the freeze first.',
+  get frozen() { return t('net.staffPull.frozen', 'That player is frozen. Lift the freeze first.'); },   // STAFF-PULL
 });
 
 /** STAFF-PULL: the line a finished pull says to staff, and the one the player sees on landing. */
