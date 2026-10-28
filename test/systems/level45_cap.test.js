@@ -114,8 +114,8 @@ test('LEVEL-45: the conversion - a level 113 with every counted skill maxed come
   assert.equal(mid.level, onlineLevelFor(150, 500));
 });
 
-test('LEVEL-OWED: a level the skills earned is offered at the join, for the window and its points - or given there to attributes already at their maximum (the owner: "give the atribuit point")', () => {
-  // PIN MOVED: LEVEL-OWED (2026-10-28, the owner) - an owed level not flagged waited on a six-hour skill check
+test('LEVEL-OWED: a level the skills earned is offered at the join, for the window and its points - or given there to attributes already at their maximum ("give the atribuit point")', () => {
+  // PIN MOVED: LEVEL-OWED (2026-10-28) - an owed level not flagged waited on a six-hour skill check
   const owed = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
   owed.readyToLevelUp = false; owed.pendingLevel = null;
   assert.equal(onlineLevelConvert(owed), true);
@@ -128,7 +128,7 @@ test('LEVEL-OWED: a level the skills earned is offered at the join, for the wind
   capped.readyToLevelUp = false;
   capped.stats = Object.fromEntries(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck'].map((k) => [k, 100]));
   assert.equal(onlineLevelConvert(capped), true);
-  assert.equal(capped.level, earned, 'every attribute at its natural maximum: no point to place, the level given (the owner: "not to those that are capped out")');
+  assert.equal(capped.level, earned, 'every attribute at its natural maximum: no point to place, the level given ("not to those that are capped out")');
   assert.equal(capped.readyToLevelUp, false);
   assert.equal(capped.maxHealth, evenHpFloor({ career: capped.career, level: earned }, 100), 'health to the even floor there');
   const strong = save({ level: 10, start: 150, current: 500, maxHealth: 9_000 });
@@ -236,7 +236,7 @@ test('LEVEL-TOP: a character maxed under five masteries - five at 200, the sixth
   assert.equal(maxed.level, 45, 'an example character at sum 800 and level 42, its attributes at 100: 45 at the join');
 });
 
-test('LEVEL-RAW: the bar reads the skill sheet\'s own points - 1 a counted point to 100, 2.5 past it, so ~38 a level at the masteries (the owner: "show raw point to each level")', async () => {
+test('LEVEL-RAW: the bar reads the skill sheet\'s own points - 1 a counted point to 100, 2.5 past it, so ~38 a level at the masteries ("show raw point to each level")', async () => {
   assert.equal(RAW_PER_POINT_PAST, 2.5, '100 points past 100 climb 40');
   const career = { primarySkills: [0, 1, 2], majorSkills: [3, 4, 5], minorSkills: [6, 7, 8, 9, 10, 11] };
   const hero = (vals, mastered = []) => ({
