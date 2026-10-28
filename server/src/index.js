@@ -198,7 +198,8 @@ import { judgeVoyage } from '../../src/net/ketch/ketchJudge.js';   // KETCH: its
 import { KETCH_SEAM } from '../../src/net/ketch/ketchWarden.js';   // KETCH: the Tonal Warden on the boss seam
 import { mintKetchReceipt, readKetchReceipt, KT_RECEIPT_TTL_S } from '../../src/net/ketch/ketchReceipt.js';   // KETCH: the y1 receipt
 import { dungeonToDeck } from '../../src/net/ketch/ketchDeck.js';   // KETCH: a pose of the dungeon's frame in the deck's
-import { instanceOwnerOf } from '../../src/net/instanceRoom.js';   // KETCH: a captain's digest, INSTANCES' own
+import { instanceOwnerOf } from '../../src/net/instanceRoom.js';
+import { sdCopyRight, sdNewcomerWord, sdAcctTell, sdAcctInternal, SD_INTERNAL_ACCT, sdSeatsInternal, SD_INTERNAL_SEATS, sdOpenDoor, SD_OPEN_PATH } from './sdCopy.js';   // SD-PARTY: a party's own Hour - its door, one life and one win a Hollow   // KETCH: a captain's digest, INSTANCES' own
 import { validKetchIn, ketchRelayGate, KT_BRAIN_MIN, KT_VOYAGE_KEY, KT_RC_PREFIX, ketchReceiptKey, KT_INTERNAL_RC, KT_TELL_RETRY_MS, validKtRcTell } from '../../src/net/wire.js';   // KETCH: its words, their bucket, its brain's number, its record's key; AUDIT KETCH L1-2: the hub's keeping of its receipts
 import { RELAY_CFG_TTL_MS, RELAY_INTERNAL_CFG, mayRelayCfg, relayCfgValue } from '../../src/net/relayCfg.js';   // SCALE5b: the relay's settings, at run time
 import { leaseKeyOf, mintLease, readLease, leaseRoom, LEASE_FRAME_MIN_MS, LEASE_OLD_REASON } from '../../src/net/roomLease.js';   // LEASE1: the hub's word on every socket, in every room
@@ -368,7 +369,7 @@ import { newRemains, foldFall, takeFrom, remainsNamedFor, collectAsk, remainsWor
 import { wildGate, wildDirected, WILD_HZ_MAX, WDUN_HZ_MAX, WDUN_HERE_MS, WDUN_INTERNAL_RESET, WDUN_INTERNAL_KIN, WDUN_INTERNAL_GONE, WILD_INTERNAL_VIT, wdunRoomKey, wdunHall, wdunHallOfRoom, seaRoomCell, DUNGEON_ROOM_TAGS, WILD_REMAINS_MS as WDUN_PILE_MS } from './relay.js';
 import { WDUN_KEY, wdunOf, wdunPrune, wdunEnter, wdunHere, wdunLeave, wdunDie, wdunGone, wdunState, wdunCrows, wdunBound, wdunGiantDie, wdunGiants, wdunFleetSunk, wdunFleets } from '../../src/net/wild/wildLaw.js';   // PVPDUNGEONS: the zone's halls, kept by the hub
 import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_INTERNAL_IN, validSdInTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
-import { sdFirst, sdRise, sdFind, sdEnter, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN, sdDownWord, sdMayRaise, SD_REZ_MS } from '../../src/net/superDungeon/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
+import { sdFirst, sdRise, sdFind, sdEnter, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, sdDownWord, sdMayRaise, SD_REZ_MS, SD_PUB_SEATS, isSdPubOwner, sdOwnerOfRoom, SD_COLLAPSE_MS } from '../../src/net/superDungeon/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 // SD-HERALD (2026-10-09, the owner: "We need to add discord integration to abyss dungeons"): TWO FILES JOIN THE BUNDLE -
 // net/superDungeon/sdHerald.js (the Abyss Dungeon's Discord posts and when they are owed, pure law - it imports sdLaw.js and
 // gateHerald.js, both here) and formats/mapsTables.js (MapsFile's verbatim tables, which import nothing - the region a
@@ -486,6 +487,7 @@ const relayCfgRefusal = (k, v) => {
   if (k === 'grantDoor') return v === 'on' || v === 'off' ? null : 'grantDoor is on (a foes room refuses a build that does not stand on spawn grants) or off';   // GRANT-DOOR (Spawn-Grants.md section 20)
   if (k === 'cellSeed') return cellSeedOf(v) === undefined ? 'cellSeed is off (the cell tree fixed at L0) or the level the directory seeds it at, 1 to 4 (2: 64-pixel cells)' : null;   // COST-2 part two (net/cellTree.js)
   if (k === 'leaseDoor') return v === 'on' || v === 'off' ? null : 'leaseDoor is on (a lease room refuses a build that hands on no lease, and hears a socket in nothing but its ping while it holds no live lease) or off';   // LEASE1 (net/roomLease.js)
+  if (k === 'sdCollapse') return v === 'on' || v === 'off' ? null : 'sdCollapse is on (the first party to break the Hour collapses the Abyss Dungeon for all) or off';   // SD-PARTY
   if (k === 'lootDoor') return v === 'on' || v === 'off' ? null : 'lootDoor is on (a loot room refuses a build that reads less loot than this relay) or off';   // LOOT-DOOR (AUDIT HORIZONTAL B7)
   if (Object.values(HERALD_FAMILIES).some((f) => f.thread === k)) return heraldThread(v) === null ? `${k} is a Discord thread's id, 15 to 21 digits - not its name or its link` : null;   // HERALD-CARDS
   if (k !== 'bossBody') return heraldRole(v) === null ? `${k} is a Discord role's id, 15 to 21 digits - not its name or its mention` : null;
@@ -675,6 +677,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/health') return json({ ok: true, service: 'daggerfall-online', version: RELAY_VERSION, t: Date.now() });
+    if (url.pathname === SD_OPEN_PATH) return sdOpenDoor(env, url);   // SD-SOLO: which shared Hour a player in no party goes to
     if (url.pathname === EG_LIVE_PATH) return egLiveAsk(env.ROOMS);   // EG-H2: the Spire's live breaches, for the deploy's hold and drain
     if (url.pathname === SAFE_LAW_PATH) return lawDoor(request, env);   // SAFE4: a mute or ban the account service pushed, for the hub
     const key = roomOf(url.pathname);
@@ -1094,6 +1097,8 @@ export class Room {
     if (path === SD_INTERNAL_LIVE) return this._sdLiveInternal();   // SD3: the Worker or a realm asking the hub its record
     if (path === SD_INTERNAL_FELL) return this._sdFellInternal(request);   // SD8b: a realm telling the hub its Remnant fell
     if (path === KT_INTERNAL_RC) return this._ktRcInternal(request);   // AUDIT KETCH L1-2: a ship telling the hub its fall's receipts
+    if (path === SD_INTERNAL_ACCT) return sdAcctInternal(this, request);
+    if (path === SD_INTERNAL_SEATS) return sdSeatsInternal(this, request);   // SD-SOLO: a shared Hour's room, asked by the Worker's walk   // SD-PARTY: a realm asking or telling the hub of an account's life and win
     if (path === SD_INTERNAL_IN) return this._sdInInternal(request);   // SD-THROUGH: a realm telling the hub its first soul stepped through
     if (path === EG_INTERNAL_OPEN) return this._egOpenInternal(request);   // EG-PLAY: the hub opening a breach's room
     if (path === EG_INTERNAL_HERALD) return this._egHeraldInternal(request);   // EG-E3: a breach's room telling the hub its news, for the herald
@@ -3762,7 +3767,7 @@ export class Room {
         const known = !!who.subject && (await this._sdRealmOf(sdSlotOfRoom(a.key))).in.includes(who.subject);
         gate = await this._battleHelloGate(who.subject ?? m.id, known ? 'fighter' : 'watch', now);   // AUDIT SD II (L7 M1)
         if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }
-        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked');   // AUDIT SD II (L7 M3): a guest is counted as one
+        const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked', isStaff(who.glyphs));   // AUDIT SD II (L7 M3): a guest is counted as one; SD-PARTY: staff stand in any party's Hour
         if (no === SD_NO_BUSY) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }   // AUDIT SD: the hub not answering - busy, tried again
         if (no) { this._refuse(ws, no); return; }
       }
@@ -8865,19 +8870,23 @@ export class Room {
   /** Why a hello into a realm is refused, or null to admit it: the Hour closed (the slot gone, or another's), a newcomer
    *  after the kill (the hub's record, or SD8b the realm's own fight), the realm full. A newcomer admitted is kept - it may
    *  come back until the Hollow is gone. `guest` - the token's account has no handle. */
-  async _sdAdmit(key, sub, now, guest = false) {
+  async _sdAdmit(key, sub, now, guest = false, staff = false) {
     const s = sdSlotOfRoom(key);
     const rec = await this._sdLiveOf(s, now);
     if (rec === undefined) return SD_NO_BUSY;   // AUDIT SD: no answer - try again
     if (!rec || rec.s !== s || !sdHolds(rec, now)) return SD_NO_CLOSED;
+    const right = await sdCopyRight(key, sub, staff, (x, o) => this._instanceKinOf(x, o, now));   // SD-PARTY: the owner, staff and the owner's party alone
+    if (right) return right === 'busy' ? SD_NO_BUSY : right;
+    this._sdKey = key;
     const realm = await this._sdRealmOf(s);
-    const lies = sub ? sdDownWord(realm, sub, now) : null;   // SD-REZ: down inside its window and raised is a rise; past it, the Hollow's for good
-    if (lies === 'down') return SD_NO_BUSY;   // AUDIT WORLD-EVENTS L1-1: lying, and no friend's Resurrect recorded - not yet (its page asks again: the raise's word may be a moment behind it); past the window, for good
-    if (lies === 'fallen' && !realm.dead.includes(sub)) await this._sdBury(realm, sub);
-    if (sub && (lies === 'fallen' || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;   // SD-ONELIFE: one life a Hollow; AUDIT SD III (R2): past the list, its own key
-    if (sub && realm.in.includes(sub)) { if (lies === 'rise') await this._sdRose(realm, sub, now); this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH; AUDIT WORLD-EVENTS L1-8: a rise off the lying once it is let in, never before a refusal
-    if (!sdAdmits(rec, now)) return SD_NO_CLOSED;
     const f = await this._sdFightOf();
+    // SD-BACK (2026-10-28, the owner: "let them go back in if they die to that partys instance"): a death in this copy
+    // bars no return to it - a hello is a rise, a new life on the count. SD-WON (the owner: "the party after killing the
+    // boss closes for them"): once its kill's collapse has run, the copy takes nobody back
+    const lies = sub ? sdDownWord(realm, sub, now) : null;
+    const back = !!sub && (lies != null || realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null));
+    if (sub && realm.in.includes(sub)) { if (f?.fell && now - f.fell.at > SD_COLLAPSE_MS) return SD_NO_CLOSED; if (back) await this._sdRose(realm, sub, now); this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH; AUDIT WORLD-EVENTS L1-8: a rise once it is let in, never before a refusal
+    if (!sdAdmits(rec, now)) return SD_NO_CLOSED;
     if (f?.fell) return SD_NO_CLOSED;   // SD8b: the realm knows its own kill before the hub's word comes round
     // AUDIT SD: THE SEATS FREE THEMSELVES (the gate's AUDIT WB A1 law): a full realm frees one held by an account with no
     // socket here and no seat in its fight - a hello alone (a guest's, a watcher's) no longer holds a seat for the
@@ -8896,9 +8905,11 @@ export class Room {
     // AUDIT SD II (L7 M3): GUESTS HOLD AT MOST SD_GUEST_SEATS - an idle socket's seat is never freed (its owner is here),
     // and guests cost a click each: 256 of them held the Hour full for as long as they cared to
     if (sub && guest && realm.in.filter((x) => guests.has(x)).length >= SD_GUEST_SEATS && !free((x) => guests.has(x))) return SD_NO_FULL;
-    if (realm.in.length >= SD_FIGHTERS_MAX && !free(() => true)) return SD_NO_FULL;
+    if (isSdPubOwner(sdOwnerOfRoom(key)) ? realm.in.length >= SD_PUB_SEATS : realm.in.length >= SD_FIGHTERS_MAX && !free(() => true)) return SD_NO_FULL;   // SD-SOLO: a shared Hour's seats are its first eight's, never freed
+    const elsewhere = sub && !staff && !realm.in.includes(sub) ? await sdNewcomerWord(this.env, s, sub, sdOwnerOfRoom(key) ?? '') : null;   // SD-PARTY: one win a Hollow, whichever copy; SD-BACK: a death keeps its own copy alone
+    if (elsewhere) return elsewhere;
     if (sub && !realm.in.includes(sub)) { realm.in.push(sub); if (guest) realm.gu.push(sub); await this.state.storage.put(SD_REALM_KEY, realm); }
-    if (lies === 'rise') await this._sdRose(realm, sub, now);   // AUDIT WORLD-EVENTS L1-8: let in - the rise is kept
+    if (back) await this._sdRose(realm, sub, now);   // AUDIT WORLD-EVENTS L1-8: let in - the rise is kept
     this._sdTellIn(s, rec, now);   // SD-THROUGH: one went through - the hub hears it, and every Hollow's Way Through stands
     return null;
   }
@@ -8908,7 +8919,9 @@ export class Room {
   async _sdRose(realm, sub, now) {
     realm.down = realm.down.filter(([x]) => x !== sub);
     realm.raised = (realm.raised ?? []).filter(([x]) => x !== sub);
+    realm.dead = realm.dead.filter((x) => x !== sub);   // SD-BACK: and off the dead - its copy takes it back
     await this.state.storage.put(SD_REALM_KEY, realm);
+    await this.state.storage.delete(sdDeadKey(sub));
     const f = await this._sdFightOf();
     if (f?.players?.[sub]) { bodyLife(f.players[sub], now, this._bodyLine().body); await this._sdFightSave(f, now, true); }
   }
@@ -8963,10 +8976,9 @@ export class Room {
     this._sdTellIn(s, rec, now);
   }
   /** SD-ONELIFE (Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to prove your
-   *  worth"): the account whose dying pose (PCORPSE1's `dd`) came through a realm is kept as dead there - every hello of
-   *  its after is refused (SD_NO_FALLEN), whatever its page says. SD-REZ (EVENT-RULES, the owner: "Resurrect allowed"):
-   *  kept DOWN first - a hello inside SD_REZ_MS is the body a friend raised (net/superDungeon/sdLaw.js sdDownWord), and
-   *  past it the death is the Hollow's for good. */
+   *  worth"): the account whose dying pose (PCORPSE1's `dd`) came through a realm is kept as dead there. SD-BACK
+   *  (2026-10-28): its own copy takes it back (_sdAdmit's rise); the hub's mark keeps every other copy shut to it. SD-REZ:
+   *  kept DOWN first - a friend's Resurrect inside SD_REZ_MS raises it where it fell (sdLaw.js sdDownWord). */
   async _sdMarkFallen(key, sub, p = null) { return this._sdMarkFallenAt(sdSlotOfRoom(key), sub, Date.now(), p && Number.isFinite(p.x) && Number.isFinite(p.z) ? dungeonToRealm(p.x, p.y ?? 0, p.z) : null); }   // AUDIT WORLD-EVENTS L1-1: and where it fell, for its raiser's reach
   /** INT12: the same, by the realm's slot - a fall by the relay's count (enforced) is the one life's, as a `dd` is. */
   async _sdMarkFallenAt(s, sub, now = Date.now(), at = null) {
@@ -8978,6 +8990,8 @@ export class Room {
     realm.down = lying.slice(-SD_FIGHTERS_MAX);
     realm.raised = (realm.raised ?? []).filter(([x]) => x !== sub);   // a raise of an earlier death is not this one's
     await this.state.storage.put(SD_REALM_KEY, realm);
+    const key = this._sdKey ?? [...this._all()].map(([, b]) => b.key).find((k) => isSdRoom(k));
+    if (key) sdAcctTell(this, key, sub);   // SD-PARTY: and the hub marks it with this copy, so no other takes it
   }
   /** SD-REZ: a death the Hollow's for good - off the lying, into its dead (past the list, one key an account: AUDIT SD III
    *  R2 - never forgotten). `keep` false: the caller writes the realm. */
@@ -10192,7 +10206,7 @@ export class Room {
     const c = validSdFellTell(body);
     if (!c) return json({ ok: false }, 400);
     const rec = await this._sdOf();
-    if (rec && rec.s === c.s) {
+    if (rec && rec.s === c.s && relayCfgValue(await this._relayCfgOf(), this.env, 'sdCollapse') === 'on') {   // SD-PARTY: off, a party's win closes its own Hour alone - the Hollow stands for the rest
       // AUDIT SD II (L3 F4): a kill landed inside the Hour and told after the hub had already said the fade (its tells
       // retried past SD_FADE_GRACE_MS) is the kill it was - the faded record is the found one it was at the kill's instant
       const was = rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && c.at < rec.until ? { ...rec, ph: 'found' } : rec;

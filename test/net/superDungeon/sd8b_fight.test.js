@@ -24,6 +24,9 @@ import { dpsRef, POSE_SLACK, HIT_KINDS } from '../../../src/net/gate/gateBrain.j
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
 import { OnlineSession } from '../../../src/net/online.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
@@ -41,7 +44,7 @@ async function withRealm(fn) {
   const realNow = Date.now;
   let clock = T0;
   Date.now = () => clock;
-  const world = fakeRooms({ now: () => clock });
+  const world = fakeRooms({ now: () => clock, vars: { SD_COLLAPSE: 'on' } });   // SD-PARTY (PIN MOVED): the first kill's collapse for all, the hub's setting on
   const hub = world.room(SOCIAL_ROOM);
   try {
     await quiet(async () => {
@@ -56,7 +59,7 @@ async function withRealm(fn) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }   // AUDIT SD: past the Orrery, kept as a realm keeps it - the fight's door asks its Concord (PIN MOVED)
       /** Beat the realm's alarm while it is armed, up to `ms` of the clock. */
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
@@ -307,7 +310,7 @@ function rig(room, relayV = RELAY_VERSION) {
 }
 
 test('SD8b THE PAGE: an `in` and a blow go down my own socket in the realm at a relay that keeps it, on the fight\'s bucket, the brain said; the fight is heard from my own realm alone - never a hub\'s or a cell\'s (mutants: no brain said; the fight heard from anywhere)', () => {
-  const realmKey = sdRoomKey(4);
+  const realmKey = sdTestKey(4);
   assert.equal(rig(worldRoom(PX, PY)).s.sendSdIn(33), false, 'never from a cell');
   const old = rig(realmKey, 'world174');
   assert.equal(old.s.sendSdIn(33), false, 'never at a relay that would close the socket on it');
