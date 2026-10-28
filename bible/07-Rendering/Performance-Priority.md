@@ -2695,11 +2695,12 @@ real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RT
   `FOE_TELEGRAPH_PROGRAMS`). The renderer and the air pass name theirs in functions beside the builds
   (`worldSetPrograms`, `airPassPrograms`). What installing the lane builds is listed by `render/bootPrograms.js`
   `laneBootPrograms`, a plain function over the renderer's state rather than a Renderer method, so the class does not
-  grow (the owner's extract-what-you-touch rule; the class is a knot `01-Overview/Host-Split.md` names).
-  `worldSetPrograms` and the classic set's source stay in `renderer.js`: the constructor's own start needs them, and
+  grow (the owner's extract-what-you-touch rule; the class is a knot `01-Overview/Host-Split.md` names). `worldSetPrograms` and the classic set's source stay in `renderer.js`: the constructor's own start needs them, and
   `renderer.js` importing `bootPrograms.js` would put 118 modules on the entry's static graph (BOOT2's ceiling), while a
   leaf of its own reading the renderer's shaders would be an import cycle. `render/bootPrograms.js` starts them all
-  through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
+  through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling).
+
+  It
   starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
   passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or
   `?dungeon`. The cloud march goes first: it is the longest single compile (6.6 s alone). The constructor starts its
@@ -2762,7 +2763,9 @@ while the player is at the intro and the menu. A player who then starts in a dun
 the grass for nothing, and those programs stay started for the session; so does a pass whose switch the player turns
 off in the menu (and the clip is left out where an online room later turns Deep Waters on: it compiles at its build,
 as before). `render/glProgram.js releasePrograms` could let the outdoor starts go when the first host mounts indoors;
-that is left until a measurement shows the cost. The intro draws on a context of its own; whether its frames wait
+that is left until a measurement shows the cost.
+
+The intro draws on a context of its own; whether its frames wait
 behind these compiles is measured below.
 
 **Trade-off: starting at page load** (2026-10-26, the owner: "Is it risky to start all of those shaders at page load? I
@@ -2894,9 +2897,10 @@ compiles beside the page (the boot started them already; a sky whose switches th
 there), and nothing where it cannot. The controller asks it once a frame in `use`, before the frame's state is handed
 to the clouds; the build restores the rect the sky last drew in. Until the clouds are built, the sky stands as it does
 with `?clouds=off`: the dome's own decks (`cloudsExternal` false), the dome's occlusion on the key light (`sunFactor`),
-the ground's deck without a shadow map, the curtains on the field's cells (`drawnCells` null). A recenter before the
-build is summed and handed to the clouds, so their field is sampled where a build at the boot would have sampled it.
-HOST-SPLIT: no host is touched.
+the ground's deck without a shadow map, the curtains on the field's cells (`drawnCells` null).
+
+A recenter before the
+build is summed and handed to the clouds, so their field is sampled where a build at the boot would have sampled it. HOST-SPLIT: no host is touched.
 
 **A compile that beat the boot costs nothing.** When the programs are done at the sky's first frame - every launch
 measured here - the clouds are built on that first ask and take the sky over at once, frame for frame as the base's
@@ -2951,7 +2955,9 @@ The whole sweep costs about 0.6 ms of GPU more than a stripe, once, in a boot fr
 that frame's length. The `?perf=zones` windows (120 frames each) put the sky at 0.46 (A) and 0.63 ms (D) in the first
 window, but the same windows' totals swing between 0.7 and 6.1 ms from run to run on this GPU's clocks, so they cannot
 resolve a difference this small; the per-draw timer can. Once both have swept, the pictures agree: the settled
-screenshots differ in 0.01% of pixels by more than 8 of 255 (mean channel difference 0.04 cold, 0.02 warm). Not
+screenshots differ in 0.01% of pixels by more than 8 of 255 (mean channel difference 0.04 cold, 0.02 warm).
+
+Not
 measured: a slow GPU (the whole sweep scales with the GPU's speed; a part twenty times slower would spend some 15 ms on
 it, still inside the boot's long frame), and a storm's sky (a 32-frame pace under cells, more march steps a texel).
 
@@ -2981,7 +2987,9 @@ the clouds are built: started at the renderer (3.9-5.7 s), done at 13.2-14.7 s q
 where the base's build read its link at 21.5 s and 24.4 s - 8.3 s and 5.2 s to spare (polled every 100 ms). On the head
 the clouds were built 0.4-0.5 s before the first world frame, at the sky's first draw (the build is about 3 ms of the
 main thread; its frame is the town's population), and stood 1.1-1.3 s after the first world frame, a sweep's frames
-over the boot's long first frames; the base marches the same stripes in the same frames (above). The settled pictures agree
+over the boot's long first frames; the base marches the same stripes in the same frames (above).
+
+The settled pictures agree
 (0.01% of pixels past 8 of 255, the clouds' drift between the runs). A 16-thread burner and a second Edge compiling one
 program at a time moved nothing either.
 
