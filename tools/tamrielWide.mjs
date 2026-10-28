@@ -21,18 +21,28 @@ export const BAY_OWN = 'BAY-OWN:';
 export const IDIOMS = Object.freeze([
   {
     id: 'pixel-id',
-    re: /\b[\w.]*[yY]\w*\s*\*\s*1000\s*\+\s*[\w.]*[xX]\w*/,
+    re: /\b[\w.]*[yY]\w*\s*\*\s*1000\s*\+\s*[\w.]*[xX]\w*|\b[\w.]*[xX]\w*\s*\+\s*[\w.]*[yY]\w*\s*\*\s*1000\b|\b1000\s*\*\s*[\w.]*[yY]\w*\s*\+/,
     use: 'worldPixelKey (world/worldWide/worldGrid.js): MapsFile\'s y * 1000 + x is unique on the Bay alone',
   },
   {
-    id: 'region-walk',
-    re: /for\s*\([^)]*\bregionCount\b/,
+    id: 'pixel-mask',
+    re: /&\s*0x[fF]{5}\b(?!f)/,
+    use: 'discoveryKeyOf (systems/discovery.js): a MapId\'s low 20 bits name one place on the Bay alone',
+  },
+  {
+    id: 'region-count',
+    re: /(?:<|>=|<=|>)\s*\(?\s*[\w.?]*\bregionCount\b/,
     use: 'the places registry (world/worldWide/worldPlaces.js): MAPS.BSA\'s regions hold no place past the Bay',
   },
   {
     id: 'bay-bound',
-    re: /\b(?:px|py|mapX|mapY|mapPixelX|mapPixelY|pixelX|pixelY)\s*(?:<|>=|<=|>)\s*(?:1000|999|500|499)\b/,
+    re: /\b(?:p?[xy]\d?|m[xy]|b[xy]|[nq][xy]|mapX|mapY|mapPixelX|mapPixelY|pixelX|pixelY|[a-z]+\.p?[xy])\s*(?:<|>=|<=|>)\s*(?:1000|999|500|499)\b/,
     use: 'worldPixelOk (net/wire.js) for a bound, inBay (world/tamriel/tamrielFrame.js) for the Bay\'s own data',
+  },
+  {
+    id: 'bay-clamp',
+    re: /Math\.(?:min|max)\(\s*(?:999|499|(?:MAP_W|MAP_H|MAP_WIDTH|MAP_HEIGHT|BAY_W|BAY_H)\s*-\s*1)\b|Math\.min\([^)]*(?:MAP_W|MAP_WIDTH|BAY_W)\s*-\s*1\s*-\s*p?x/,
+    use: 'the world grid (world/worldWide/worldGrid.js inWorldGrid): a pixel clamped into the Bay is a wrong pixel past it',
   },
   {
     id: 'region-62',

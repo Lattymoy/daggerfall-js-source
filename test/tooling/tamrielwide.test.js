@@ -12,17 +12,20 @@ const ids = IDIOMS.map((d) => d.id);
 const none = Object.fromEntries(ids.map((id) => [id, {}]));
 
 test('TAMRIEL-WIDE each idiom is caught in the shapes the tree writes it, and the world\'s own answer is not (mutants: an idiom\'s pattern loosened or dropped)', () => {
-  assert.deepEqual(ids, ['pixel-id', 'region-walk', 'bay-bound', 'region-62']);
+  assert.deepEqual(ids, ['pixel-id', 'pixel-mask', 'region-count', 'bay-bound', 'bay-clamp', 'region-62']);
   const caught = {
-    'pixel-id': ['const key = py * 1000 + px;', 'return mapPixelY * 1000 + mapPixelX;', 'm.get(loc.y * 1000 + loc.x)'],
-    'region-walk': ['for (let r = 0; r < maps.regionCount; r++) {', 'for (let r = 0; r < (maps?.regionCount ?? 0); r++) {'],
-    'bay-bound': ['if (px < 0 || px >= 1000) return;', 'py > 499', 'mapPixelX <= 999'],
-    'region-62': ['for (let regionIndex = 0; regionIndex < 62; regionIndex++) {', 'if (region >= 62) return null;'],
+    'pixel-id': ['const key = py * 1000 + px;', 'return mapPixelY * 1000 + mapPixelX;', 'm.get(loc.y * 1000 + loc.x)', 'const id = x + y * 1000;'],
+    'pixel-mask': ['const id = loc.mapTableData.mapId & 0xfffff;', 'return (id >>> 0) & 0xFFFFF;'],
+    'region-count': ['for (let r = 0; r < maps.regionCount; r++) {', 'if (region >= regionCount) return null;', 'r < (maps?.regionCount ?? 0)'],
+    'bay-bound': ['if (px < 0 || px >= 1000) return;', 'py > 499', 'mapPixelX <= 999', 'x >= 1000 || y >= 500', 'p.x < 1000'],
+    'bay-clamp': ['const x = Math.min(999, px);', 'Math.max(0, Math.min(MAP_W - 1 - px, ix))', 'Math.min(MAP_H - 1, y)'],
+    'region-62': ['if (region >= 62) return null;', 'regionIndex > 61'],
   };
-  for (const [id, lines] of Object.entries(caught)) for (const line of lines) assert.deepEqual(countIn(line), { [id]: 1 }, line);
+  for (const [id, lines] of Object.entries(caught)) for (const line of lines) assert.equal(countIn(line)[id], 1, `${id}: ${line}`);
   const world = [
     'const key = worldPixelKey(px, py);', 'if (!worldPixelOk(px)) return;', 'for (const p of places.inArea(area)) {',
     'if (region < BAY_REGION_COUNT) return bayRow(region);', 'const w = 1000 * scale + x;', 'if (count >= 1000) break;',
+    'const k = discoveryKeyOf(mapId);', 'const v = bits & 0xffff;', 'Math.min(width - 1, x)',
   ];
   for (const line of world) assert.deepEqual(countIn(line), {}, line);
 });
@@ -40,7 +43,7 @@ test('TAMRIEL-WIDE a comment is not code, and a BAY-OWN: line - on the line or t
 test('TAMRIEL-WIDE the verdict: a file not in the baseline is over at its first idiom; a baseline higher than today is stale until lowered, and lowering never raises (mutants: an unlisted file let through; a lower count unread)', () => {
   assert.deepEqual(verdict({ ...none, 'pixel-id': { 'src/a.js': 1 } }, none), { over: ['pixel-id src/a.js: 1 (allowed 0)'], stale: [] });
   assert.deepEqual(verdict({ ...none, 'pixel-id': { 'src/a.js': 3 } }, { ...none, 'pixel-id': { 'src/a.js': 2 } }).over, ['pixel-id src/a.js: 3 (allowed 2)']);
-  assert.deepEqual(verdict(none, { ...none, 'region-walk': { 'src/b.js': 1 } }), { over: [], stale: ['region-walk src/b.js: 0 (baseline 1)'] });
+  assert.deepEqual(verdict(none, { ...none, 'region-count': { 'src/b.js': 1 } }), { over: [], stale: ['region-count src/b.js: 0 (baseline 1)'] });
   assert.deepEqual(verdict({ ...none, 'bay-bound': { 'src/c.js': 2 } }, { ...none, 'bay-bound': { 'src/c.js': 2 } }), { over: [], stale: [] });
   const low = lowered({ ...none, 'pixel-id': { 'src/a.js': 2, 'src/b.js': 1 } }, { ...none, 'pixel-id': { 'src/a.js': 5 } });
   assert.deepEqual(low['pixel-id'], { 'src/a.js': 2 }, 'a.js kept at its baseline, b.js dropped at zero');

@@ -2,33 +2,71 @@
   {
     "name": "TAMRIEL-WIDE-1-pixel-id-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /\\b[\\w.]*[yY]\\w*\\s*\\*\\s*1000\\s*\\+\\s*[\\w.]*[xX]\\w*/,",
-    "new": "re: /(?!)/,",
-    "tests": ["test/tooling/tamrielwide.test.js"],
-    "note": "A new MapsFile pixel id used as a key would pass unseen."
+    "old": "re: /\\b[\\w.]*[yY]\\w*\\s*\\*\\s*1000\\s*\\+\\s*[\\w.]*[xX]\\w*|",
+    "new": "re: /(?!)|",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A new MapsFile pixel id written y-first would pass unseen."
   },
   {
-    "name": "TAMRIEL-WIDE-2-region-walk-unread",
+    "name": "TAMRIEL-WIDE-11-pixel-mask-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /for\\s*\\([^)]*\\bregionCount\\b/,",
+    "old": "re: /&\\s*0x[fF]{5}\\b(?!f)/,",
     "new": "re: /(?!)/,",
-    "tests": ["test/tooling/tamrielwide.test.js"],
-    "note": "A new loop over MAPS.BSA's regions as the world's places would pass unseen."
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A MapId's low 20 bits used as an identity would pass unseen (C3, C4)."
+  },
+  {
+    "name": "TAMRIEL-WIDE-2-region-count-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "re: /(?:<|>=|<=|>)\\s*\\(?\\s*[\\w.?]*\\bregionCount\\b/,",
+    "new": "re: /(?!)/,",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A new bound by MAPS.BSA's region count would pass unseen."
   },
   {
     "name": "TAMRIEL-WIDE-3-bay-bound-999-499-unread",
     "file": "tools/tamrielWide.mjs",
     "old": "(?:<|>=|<=|>)\\s*(?:1000|999|500|499)\\b/,",
     "new": "(?:<|>=|<=|>)\\s*(?:1000|500)\\b/,",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "A bound written as > 499 or <= 999 would pass unseen."
+  },
+  {
+    "name": "TAMRIEL-WIDE-12-bay-clamp-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "re: /Math\\.(?:min|max)\\(\\s*(?:999|499|(?:MAP_W|MAP_H|MAP_WIDTH|MAP_HEIGHT|BAY_W|BAY_H)\\s*-\\s*1)\\b|",
+    "new": "re: /(?!)|",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A pixel clamped into the Bay would pass unseen."
+  },
+  {
+    "name": "TAMRIEL-WIDE-13-bay-bound-bare-xy-unread",
+    "file": "tools/tamrielWide.mjs",
+    "old": "re: /\\b(?:p?[xy]\\d?|m[xy]|",
+    "new": "re: /\\b(?:p[xy]\\d?|m[xy]|",
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
+    "note": "A bound on a bare x or y (x >= 1000) would pass unseen (C5)."
   },
   {
     "name": "TAMRIEL-WIDE-4-region-62-unread",
     "file": "tools/tamrielWide.mjs",
     "old": "re: /\\bregion\\w*\\s*(?:<|>=|<=|>)\\s*6[12]\\b/i,",
     "new": "re: /(?!)/,",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "A region bounded to the Bay's 62 would pass unseen."
   },
   {
@@ -36,7 +74,9 @@
     "file": "tools/tamrielWide.mjs",
     "old": "if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) return '';",
     "new": "if (false) return '';",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "A comment that names the Bay's id would count as code."
   },
   {
@@ -44,7 +84,9 @@
     "file": "tools/tamrielWide.mjs",
     "old": "return at >= 0 && !/:\\s*$/.test(line.slice(0, at)) ? line.slice(0, at) : line;",
     "new": "return at >= 0 ? line.slice(0, at) : line;",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "The rest of a line after a URL's slashes would be dropped as a comment."
   },
   {
@@ -52,7 +94,9 @@
     "file": "tools/tamrielWide.mjs",
     "old": "lines[i].includes(BAY_OWN) || (i > 0 && lines[i - 1].includes(BAY_OWN));",
     "new": "lines[i].includes(BAY_OWN);",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "A BAY-OWN: comment on the line above would not take the line out."
   },
   {
@@ -60,7 +104,9 @@
     "file": "tools/tamrielWide.mjs",
     "old": "if (n > (b[f] ?? 0)) over.push",
     "new": "if (n > (b[f] ?? Infinity)) over.push",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "A file not in the baseline could add any number of idioms."
   },
   {
@@ -68,7 +114,9 @@
     "file": "tools/tamrielWide.mjs",
     "old": "if ((n0[f] ?? 0) < n) stale.push",
     "new": "if (false) stale.push",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "A fix that removed an idiom would leave room for a new one."
   },
   {
@@ -76,7 +124,9 @@
     "file": "tools/tamrielWide.mjs",
     "old": ".map(([f, n]) => [f, Math.min(n, now[id]?.[f] ?? 0)])",
     "new": ".map(([f, n]) => [f, Math.max(n, now[id]?.[f] ?? 0)])",
-    "tests": ["test/tooling/tamrielwide.test.js"],
+    "tests": [
+      "test/tooling/tamrielwide.test.js"
+    ],
     "note": "--lower would raise a baseline to today's count."
   }
 ]

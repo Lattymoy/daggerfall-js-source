@@ -2,29 +2,55 @@
  "pixel-id": {
   "src/formats/mapsFile.js": 1,
   "src/net/townEconLaw.js": 2,
+  "src/scenes/snowfallHost.js": 1,
   "src/systems/naval/harbourBook.js": 1,
   "src/world/deepWater/deepWatersBakeCache.js": 1,
   "src/world/deepWater/deepWatersClient.js": 1,
   "src/world/spawnedDungeons.js": 1,
   "src/world/townWalls.js": 1
  },
- "region-walk": {
-  "src/formats/mapsFile.js": 1,
+ "pixel-mask": {
+  "src/net/wire.js": 1,
+  "src/scenes/dungeonContext.js": 1,
+  "src/systems/classicSave.js": 1,
+  "src/systems/discovery.js": 1,
+  "src/systems/gate/gateSite.js": 1,
+  "src/systems/superDungeon/sdSite.js": 1,
+  "src/world/arenaLocations.js": 1,
+  "src/world/etherPlaces.js": 2,
+  "src/world/oceanHoles.js": 2,
+  "src/world/placeIds.js": 1,
+  "src/world/townWalls.js": 3
+ },
+ "region-count": {
+  "src/formats/mapsFile.js": 4,
   "src/scenes/world.js": 1,
   "src/systems/deathRespawn.js": 1,
   "src/systems/gate/gateSite.js": 1,
   "src/systems/map/mapDirectory.js": 1,
   "src/systems/quest/place.js": 3,
-  "src/ui/ink/inkMap.js": 1,
+  "src/ui/heldMap.js": 2,
+  "src/ui/ink/inkMap.js": 2,
+  "src/ui/paperDoll.js": 1,
+  "src/ui/travel/travelMapWindow.js": 3,
   "src/world/oceanHoles.js": 1,
   "src/world/roadsProducer.js": 1,
   "src/world/worldWide/worldCemetery.js": 1
  },
  "bay-bound": {
+  "src/net/arena/arenaBrain.js": 1,
+  "src/net/eliteGates/egAscent.js": 1,
+  "src/net/townSeatLaw.js": 2,
   "src/scenes/snowfallHost.js": 1,
-  "src/scenes/world.js": 2,
+  "src/scenes/world.js": 5,
   "src/systems/naval/harbourBook.js": 1,
   "src/world/spawnedDungeons.js": 1
+ },
+ "bay-clamp": {
+  "src/scenes/staffFlatMapHost.js": 1,
+  "src/scenes/world.js": 2,
+  "src/world/road/roadClearance.js": 1,
+  "src/world/road/roadNetwork.js": 4
  },
  "region-62": {
   "src/formats/save/saveGames.js": 1
