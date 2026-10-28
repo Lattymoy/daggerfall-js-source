@@ -275,9 +275,13 @@ const portTip = (/** @type {string} */ key) => (key === 'Video/TargetFrameRate'
  *  string when it did not - the screen then shows the status line
  *  alone rather than inventing a sentence (RPT1026-CLIENT: but for a
  *  row whose behaviour is the port's own, portTip). */
+function ownHelpOf(key) {
+  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? portTip(key);
+}
+
+/** The row's explanation, and on the VSync row the one line the Vulkan backend adds. */
 export function helpOf(key) {
-  const own = SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? portTip(key);
-  return key === 'Video/VSync' ? withVulkanNote(own) : own;
+  return key === 'Video/VSync' ? withVulkanNote(ownHelpOf(key)) : ownHelpOf(key);
 }
 
 /** GPU-BACKEND: the desktop app on Windows keeps VSync on while the graphics backend is Vulkan (app/lib/graphicsBackend.cjs
