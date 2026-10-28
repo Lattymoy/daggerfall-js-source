@@ -229,6 +229,10 @@ into, a dungeon to go down - and the held map takes the player there.
   the Bay is the walk a press there is (`_flagTravels`), never on the sea. PIN MOVED: BAY-LEFT-MAPS C2, START3's pick,
   OW-ONLY's and TESA2's source pins. Pins `test/ui/owplacewalk.test.js` (3); mutants `tools/mutants/owplacewalk.json`
   (13, all dead), four records re-aimed by content.
+- **OPEN (OW-PLACE-WALK)**: from Daggerfall the Imperial City's journey says "There is no way there by land." The way is
+  there - Kvatch to the city plans in 3,171 cells - but on the freeware's ground with no roads past the Bay landed, the
+  plan from Daggerfall spends ROAD-BEYOND's whole count (100,001 cells), where Bruma takes 52,257 and Solitude 38,596.
+  It is the Overworld planner's spend, its own click's too, not the map's.
 - **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.
