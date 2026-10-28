@@ -132,23 +132,27 @@ step between two samples 6.4 m apart, less the step the same pixel has built wit
 
 Of 177,754 sea samples in DFU's own ground. Westhead Moor's worst is 7.3 m now and Aldwall Rock's 7.7 m, every crop and
 model on its ground. The three still over 10 m (Tunmont 18.6 m, Kalunnunu 14.4 m, Naresa 13.9 m) stand their blocks 7-8
-tiles from a pixel edge 100-120 m under them; DFU's blend steps 25, 15 and 17 m there. Every twentieth Bay town (173):
-TS2 three over 10 m (16.9 m) and 864 flats off in one; none now (8.0 m).
+tiles from a pixel edge 100-120 m under them; DFU's blend steps 25, 15 and 17 m there. Over all the Bay's 3,444 town
+pixels: TS2 57 towns over 10 m (28 over 20 m) and 5,902 flats off in 37; now the same three, no flat or model off. The
+ports (106, their 619 quays planned on this ground): past a jetty's end the ground rose over its deck by more than 6 m at
+92 of them (83 over 12 m, Westhead Moor's 44 m, Aldwall Rock's 31.5 m, the worst 102 m); now at 5, none over 12 m.
 
 **The smaller departure.** A town that stands over its sea cannot meet it without a step unless the sea gives room. The
 ease takes the least room its grade needs, 77 m at the least, where DFU lifts the whole rect's sea. A least of four
-samples kept 143,128 sea samples but stood 17 towns over 10 m at the shore's own steps.
+samples kept 143,128 sea samples but stood 7 towns over 10 m at the shore's own steps.
 
 **The copies.** Each blend reads its reach on DFU's own samples, so the stream, its classic pass, the landforms' lift and
 the Deep Waters bake ease alike: the bake's sea is the stream's at every sample of both towns (BAKE_GENERATOR_VERSION 3).
-A town's level moved at 35 of the 86 (the edge band takes margin off its mean: 2.6 m at the 90th percentile, 5.2 m the
-most). THE GROUND MOVED: its shores and outskirts by tens of metres, so GROUND_LAW (`net/wire.js`) moves with the release
-that carries this - the print reads no real town (`03-World/Landforms.md` GROUND-GATE).
+A town's level moved at 103 of the 3,444 (the edge band takes margin off its mean; 5.2 m the most). THE GROUND MOVED:
+its shores and outskirts by tens of metres, so GROUND_LAW (`net/wire.js`) moves with the release that carries this - the
+print reads no real town (`03-World/Landforms.md` GROUND-GATE).
 
 Tests `test/world/terrain/fb1028_townground.test.js` (5) and `test/world/terrain/fb1028_townground_real.test.js` (ARENA2).
 Mutants `tools/mutants/fb1028_townground.json` (17, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
-(Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3); re-aimed by
-content: TS-the-sea-lifted, TS-the-edge-moved, TW-the-round-unread, E1-4-the-version-unmoved.
+(Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3),
+`test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water alone no ship stands on a
+bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's cliffs); re-aimed by content:
+TS-the-sea-lifted, TS-the-edge-moved, TW-the-round-unread, E1-4-the-version-unmoved.
 
 ## 5. TS3 - a town past the Bay is its own outline of blocks (BUILT)
 
