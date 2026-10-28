@@ -1147,6 +1147,14 @@ export function paveOnGrid(nav, paths, tilePos) {
  *  none). Its `key` says what it reads, for a memo of what was placed on it (scenes/world.js townPlacesFor): a pixel built
  *  again once the roads land places its yards again. FB1028 YARDS: `yards` shuts the wall as #1184 stood it
  *  (townWallYardCellsOf). @param {any} dfLocation @param {?Uint8Array} ground @param {?Uint8Array} [paths] @param {boolean} [yards] */
+/** FB1028 YARDS: the yards' shut (#1184's, `was`) carrying the town's shut as it stands now (`now` - keptSitesSteps'
+ *  ground); its key both. @param {any} was @param {any} now */
+export const yardWalkShut = (was, now) => {
+  const f = (nav) => was(nav);
+  Object.defineProperty(f, 'now', { value: now });
+  Object.defineProperty(f, 'key', { get: () => `${was.key}|now ${now?.key}` });
+  return f;
+};
 export const townWalkShut = (dfLocation, ground, paths = null, yards = false) => {
   const relief = reliefOf(dfLocation);
   const shut = (nav) => {

@@ -344,7 +344,7 @@ import { createWardenShows } from './wagon/wagonWardenShow.js';   // WARDEN1: th
 import { createWagonWarden, wardenTownIn, wardenTownOfPixel } from './wagon/wagonWardenHost.js';   // WARDEN1: the town watch - my wagon's stamp, the cell's words, the offline clock; AUDIT WARDEN1 D3: the town under a point, one pure home
 import { createWildEscrowHost } from './wildEscrowHost.js';   // PVP-ESCROW: the two-phase handoff's two sides, out of bootWorld (HOST-SPLIT)
 import { WARDEN_VENDOR } from '../systems/wagon/wagonWarden.js';   // WARDEN1: the stamp's save slot, and the towns a watch keeps
-import { townGroundSteps, yardSitesSteps, craftYardSitesSteps, MONUMENT_KEEP_M, yardMeasuresSteps, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them; IC-STUTTER: each pass a step at a time
+import { townGroundSteps, yardSitesSteps, craftYardSitesSteps, keptTownSitesSteps, MONUMENT_KEEP_M, yardMeasuresSteps, placedModelBox } from '../world/merchantYards/merchantYardSites.js';   // MERCHANT-YARDS: where they stand off the town's layout, and the people's navgrid carved round them; IC-STUTTER: each pass a step at a time
 import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner - a town's places through the build's breather
 import { townYardsOf } from '../world/merchantYards/townYards.js';   // IC-PROPS: what a town tells its yards' law - its fabric's ways, a capital's own yards
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
@@ -4039,7 +4039,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           ports = portSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
         }
         if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
-        memo = { sig, sites, ports };
+        memo = { sig, sites: g && shut?.now ? await stepsBreathing(keptTownSitesSteps(yl, measures, shut.now, townYardsOf(dfLocation), sites, ports), breathe) : sites, ports };   // FB1028 YARDS: #1184's places, a broken one placed again on the town as it stands
         _yardMemo.delete(mapId);
         _yardMemo.set(mapId, memo);
         while (_yardMemo.size > 8) _yardMemo.delete(_yardMemo.keys().next().value);

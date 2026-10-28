@@ -39,7 +39,7 @@ import { landGroundSet } from '../world/tamriel/tamrielLands.js';   // TESA-LAND
 import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // TESA-LANDS: and its landmarks stood, its flats off their feet
 import { climateNeighbourIn } from '../world/tamriel/tamrielGround.js';
 import { getLocationTerrainTileOrigin, setLocationTiles, WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
-import { townWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
+import { townWalkShut, yardWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
 import { townGateRoads } from '../world/townGates.js';   // GATE-ROADS: a walled town's gates for their roads
 import { townFabricFor, fabricWalkShut } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
@@ -323,7 +323,7 @@ export function createPixelBuild(host) {
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
     const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
-    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, yardPaths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges } = await terrainGen.generate({
+    const { yardPaths, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!groundLocation, climateType: climateBase,
       flattenAt: dfLocation?.capital?.flattenAt ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
@@ -341,7 +341,7 @@ export function createPixelBuild(host) {
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
     const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;
-    const yardShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, yardPaths ?? paths, true), dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls
+    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, townGround, yardPaths ?? paths, true), dfLocation), walkShut) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
     // promoted now, on the Deep Waters worker while this build lays out, and
     // published with its seafloor (awaited below); every other one is

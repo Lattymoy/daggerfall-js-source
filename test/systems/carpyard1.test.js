@@ -89,7 +89,7 @@ test('CARP-YARD THE PLACE: the joinery placed on what the two yards (and a port 
   assert.ok(at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];') > 0);
   assert.ok(at('ports = portSitesOn(g, seaField(') > at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];'));
   assert.ok(at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));') > at('ports = portSitesOn(g, seaField('), 'placed after the port\'s places');
-  assert.ok(at('memo = { sig, sites, ports };') > at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));'));
+  assert.ok(at('memo = { sig, sites: g && shut?.now ? ') > at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));'));   // PIN MOVED (FB1028): the kept yards, a broken one placed again
 });
 
 test('CARP-YARD THE TIMBER: the joinery the port\'s own geometry inside its ground, its logs\' and its block\'s faces out, in the yards\' pictures - its board, its shavings, its bark and its end grain; the board over a walker\'s head; the gate\'s way in open to a walker; the carpenter\'s place and the workbench clear of every face (mutants: a face wound in, the sign low, the way in blocked)', () => {
