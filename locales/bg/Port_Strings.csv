@@ -7225,6 +7225,8 @@ spellbook.effect.duration,"Продължителност: {base} + {plus} на 
 spellbook.effect.magnitude,"Сила: {baseMin} - {baseMax} + {plusMin} - {plusMax} на {per} ниво(а)"
 spoils.lost.back,"Онова, което оставихте на пода, не можа да бъде изпратено в пощата ви, затова е в багажа ви."
 spoils.lost.mailed,"Онова, което оставихте на пода, ще ви чака в пощата до пясъчния часовник в менюто за пауза."
+staff.pilot.bar.health,"Здраве {hp} / {max}"
+staff.pilot.bar.title,"Твоят мини бос"
 staffEvent.attackArea,"Областта {place} е нападната!"
 staffEvent.attackCity,"Градът {place} е нападнат!"
 staffEvent.board,"Най-добрите бойци: {list}"

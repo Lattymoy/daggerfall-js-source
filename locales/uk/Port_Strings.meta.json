@@ -3819,6 +3819,16 @@
   "tr": "4814ba476b53",
   "by": "claude-in-session"
  },
+ "staff.pilot.bar.health": {
+  "en": "b1462cbdd74f",
+  "tr": "cd553cf28482",
+  "by": "claude-in-session"
+ },
+ "staff.pilot.bar.title": {
+  "en": "e85fd1b6e6c9",
+  "tr": "089da8fc2736",
+  "by": "claude-in-session"
+ },
  "staffEvent.attackArea": {
   "en": "ea6594b7f8f5",
   "tr": "2f965a36088c",

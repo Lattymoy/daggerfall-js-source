@@ -7225,6 +7225,8 @@ spellbook.effect.duration,"Длительность: {base} + {plus} за {per} 
 spellbook.effect.magnitude,"Сила: {baseMin} - {baseMax} + {plusMin} - {plusMax} за {per} ур."
 spoils.lost.back,"То, что вы оставили на полу, не удалось отправить в ваш почтовый ящик, поэтому оно в вашем инвентаре."
 spoils.lost.mailed,"То, что вы оставили на полу, будет ждать вас в почтовом ящике рядом с песочными часами в меню паузы."
+staff.pilot.bar.health,"Здоровье {hp} / {max}"
+staff.pilot.bar.title,"Твой мини-босс"
 staffEvent.attackArea,"Область {place} подверглась нападению!"
 staffEvent.attackCity,"Город {place} подвергся нападению!"
 staffEvent.board,"Лучшие бойцы: {list}"

@@ -721,7 +721,7 @@ test('PILOT-BAR (mob 2026-10-28: "let me see the bosses bar so i know when im hu
   host.frame();
   const m = drawn.at(-1);
   assert.equal(m.frac, 0.3);
-  assert.equal(m.title, PILOT_BAR_TEXT.title);
+  assert.equal(m.title, PILOT_BAR_TEXT.title());
   assert.equal(m.fightersLine, 'Health 1500 / 5000');
   assert.deepEqual(m.spent, [true, false], 'past half, not yet a quarter');
   boss.entity.health = 500;
