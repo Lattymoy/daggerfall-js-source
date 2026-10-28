@@ -1132,7 +1132,7 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
   `vulkan`. Settings > Graphics > Display draws it after VSync, in the app on Windows only, with the restart tier's dot
   and words (`enhancedMenu.js` graphicsBackendRow). A browser chooses its own backend.
 - **The switches.** `lib/graphicsBackend.cjs` backendLaunch reads the pref before the app is ready (one file, through
-  `fileStorage.cjs` readPref, as FPS-VSYNC reads VSync) and answers `use-gl=angle` and `use-angle=vulkan`. `main.cjs`
+  `fileStorage.cjs` readPref, as FPS-VSYNC reads VSync) and answers `use-gl=angle`, `use-angle=vulkan` and `disable-gpu-sandbox` (see "The GPU sandbox" below). `main.cjs`
   appends them beside FPS-VSYNC's. A failure on record in `config.json` (`graphicsBackendFailure`) holds the launch on
   the default. The module reads `config.json` itself: `main.cjs` defines CONFIG_FILE after the switches are appended.
 - **The guard.** watchBackend, on a launch that took the switches. Each of these four checks fails the launch:
@@ -1202,7 +1202,8 @@ Off drew on `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5
   changes the programs.
 - **Warm, the backends are level.** About 1.6 to 1.9 s worst frame and 6 s over 50 ms on both; the rest of the boot's
   long frames are not shader compiles.
-- **Standing frame rate did not separate them.** Every arm's spread overlaps the others' (p50 8.3 ms on all).
+- **Standing frame rate did not separate them at that size.** Every arm's spread overlaps the others' (p50 8.3 ms on all).
+  That was a window of about 1280x800 on the GPU-sandboxed Vulkan, which hides the cost below.
 
 Every frame gap is in each run's `boot-gaps.json` and `settled-gaps.json`. Runs, load logs and screenshots:
 `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/interleaved-2026-10-27/`.
@@ -1210,6 +1211,34 @@ Every frame gap is in each run's `boot-gaps.json` and `settled-gaps.json`. Runs,
 Superseded: the first in-app numbers (2026-10-26, head `1af08cb134`, two cold launches per arm, not interleaved and not
 load-gated): off 16.1 s / 24.1 s worst frame, on 2.1 s / 1.8 s, standing 120 / 120 against 89 / 118 fps. The 24.1 s and
 the 89 fps did not come again on a quiet machine.
+
+### The GPU sandbox, and the frame rate at 2560x1440 (2026-10-28)
+
+With Chromium's GPU sandbox on, ANGLE's Vulkan path has no GPU compositor on Windows: `gpu_compositing` reads
+`disabled_software` and `webgl` `enabled_readback`, so each frame's WebGL canvas is read back and composited on the CPU.
+The cost grows with the window's pixels: about 2 ms at 735p, about 11 ms at 1440p. At 2560x1440 fullscreen the
+sandboxed Vulkan held 64 to 66 fps against D3D11's 120 (the cap) or 274 to 294 uncapped
+(`dfo-verify/tools/perf/vulkan-half-2026-10-28/notes.md`). The earlier A/Bs, at 1280x720 and in Edge under Playwright's
+`--no-sandbox`, hid it. Electron 45 and 46-alpha behave as 42 does.
+
+Vulkan's switch list now carries `disable-gpu-sandbox`, and only Vulkan's: D3D11 keeps its sandbox. The trade: a
+compromised GPU process is no longer contained (the renderers stay sandboxed). The risk in this app is smaller than a
+browser's, because the game window's renderer already runs with `sandbox: false` (`app/main.cjs` webPreferences, for
+the preload's file IO), fenced to `dagger://` by its navigation handlers. Lifting the GPU sandbox adds only what reaches
+the driver through WebGL: the game's own shaders and its own or installed textures. Pins: `test/tooling/gpubackend.test.js`.
+
+Measured on commit `2997be5e07` (the `app/` dir unpackaged over its own `dist/`, not the installed exe; the owner's
+Video settings; 2560x1440 fullscreen; CPU under 15% at each launch; interleaved; runs and `gpuinfo.json` in
+`dfo-verify/tools/perf/vulkan-half-2026-10-28/branch-1440p/`). Every Vulkan run reads `gpu_compositing: enabled`.
+
+| Case | D3D11 | Vulkan, GPU sandbox off |
+|---|---|---|
+| Cap 120 | 120.0 / 120.1 fps (p50 8.3 ms) | 120.0 / 120.0 fps (p50 8.4 ms) |
+| Cap off | 238.9 / 238.6 / 188.8 fps, mean 222.1 | 225.8 / 171.2 / 204.2 / 194.6 fps, mean 199.0 |
+
+At the cap the two are the same. Uncapped, Vulkan is about 10% lower on the mean, and the ranges overlap: this machine's
+run-to-run spread is large on both. So Vulkan's case is the cold compile, and it costs a little in play. Superseded
+for 1440p: the sandboxed Vulkan's 64 to 66 fps.
 
 The guard in the app (2026-10-27, head `0765a2564a`, the same machine and shell, one launch each, fresh userData; the
 notice answered with Enter; `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/webgl2-check/`):
