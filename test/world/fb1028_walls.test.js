@@ -17,6 +17,9 @@ import { TOWN_OUTLINE_BLOCK, townOutlineBlockJson } from '../../src/world/townOu
 import { DIR } from '../../src/world/road/roadNetwork.js';
 import * as walls from '../../src/world/townWalls.js';   // AUDIT FB1028
 import * as ys from '../../src/world/merchantYards/merchantYardSites.js';   // AUDIT FB1028 B5
+import { stepsBreathing } from '../../src/world/puddleMask.js';
+import { yardRoads } from '../../src/world/road/gateRoads.js';
+import { hostText } from '../hostText.mjs';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !['BLOCKS.BSA', 'MAPS.BSA', 'ARCH3D.BSA', 'WOODS.WLD'].every((f) => existsSync(join(ARENA2 ?? '', f))) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
@@ -196,20 +199,24 @@ test('FB1028 ROADS a street into the wall: each run of the line over the town\'s
   const near = [102.4 + 90 * Math.cos((GATE_ARMS_MERGE * 0.8) / 90), 102.4 + 90 * Math.sin((GATE_ARMS_MERGE * 0.8) / 90)];
   assert.deepEqual(streetGates(pts, town, [/** @type {[number, number]} */ (near)]), []);
   assert.deepEqual(streetGates(pts, { ...town, streets: new Uint8Array(W * H) }, []), [], 'no paving, no gate');
-  // a city's wall stands it: a house in its middle block, a street running south out of it across the line, a road from
-  // the north - a gate where the road comes in (no street within GATE_WAY.reach of it), and one on the street
+  // a city's wall stands it: a gate where the road comes in (no street within GATE_WAY.reach of it), and one on the street
+  const { wall } = streetCity();
+  assert.equal(wall.streetWays.length, 1, 'the street\'s gate');
+  const [s] = wall.streetWays, open = wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening);
+  assert.ok(Math.abs(s[0] - (102.4 + 8 * 6.4)) < 6.4 && s[1] < 102.4 + 6 * 6.4, `on the street, south (${s.map((v) => v.toFixed(1))})`);
+  assert.ok(open.some((g) => Math.hypot(g.at[0] - s[0], g.at[1] - s[1]) < 1) && open.length === 2, 'a gate\'s opening on it, beside the road\'s');
+});
+
+/** A city's wall: a house in its middle block, a street running south out of it across the line, a road from the north. */
+function streetCity() {
   const houses = new Uint8Array(4096);
   for (let r = 8; r < 40; r++) for (let c = 8; c < 56; c++) houses[r * 64 + c] = 5;
   const groundTiles = Array.from({ length: 16 }, (_, tx) => Array.from({ length: 16 }, (__, r) => ({ textureRecord: (tx === 7 || tx === 8) && r >= 10 ? 46 : 2 })));
   const middle = { fldHeader: { autoMapData: houses, groundData: { groundTiles } }, misc3dObjectRecords: [], miscFlatObjectRecords: [], subRecords: [] };
   const names = [townWallBlockName(7), TOWN_OUTLINE_BLOCK, TOWN_OUTLINE_BLOCK, TOWN_OUTLINE_BLOCK, 'H.RMB', TOWN_OUTLINE_BLOCK, TOWN_OUTLINE_BLOCK, TOWN_OUTLINE_BLOCK, TOWN_OUTLINE_BLOCK];
   const loc = { mapTableData: { mapId: 7 }, exterior: { exteriorData: { width: 3, height: 3, blockNames: names } }, outline: { walled: true, bay: true } };
-  const wall = townWall(loc, names, (n) => (n === 'H.RMB' ? middle : null), { roads: DIR.N, tracks: 0, curved: false });
-  assert.equal(wall.streetWays.length, 1, 'the street\'s gate');
-  const [s] = wall.streetWays, open = wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening);
-  assert.ok(Math.abs(s[0] - (102.4 + 8 * 6.4)) < 6.4 && s[1] < 102.4 + 6 * 6.4, `on the street, south (${s.map((v) => v.toFixed(1))})`);
-  assert.ok(open.some((g) => Math.hypot(g.at[0] - s[0], g.at[1] - s[1]) < 1) && open.length === 2, 'a gate\'s opening on it, beside the road\'s');
-});
+  return { loc, wall: townWall(loc, names, (n) => (n === 'H.RMB' ? middle : null), { roads: DIR.N, tracks: 0, curved: false }) };
+}
 
 /** The synthetic walled city of GATE-ROADS' own pin (test/world/gateroads.test.js): a house filling its middle block. */
 function walledCity(serial, px, bay) {
@@ -419,9 +426,7 @@ test('FB1028 YARDS with ARENA2: every yard where #1184 stood it - placed on the 
   }
   assert.equal(n, 8, 'every city of the sample');
   assert.ok(differ > 0, `the yards' wall is not the walkers' (${differ} of ${n})`);
-  const host = readFileSync(new URL('../../src/scenes/pixelBuild.js', import.meta.url), 'utf8');
-  assert.ok(host.includes('townWalkShut(dfLocation, townGround, yardPaths ?? paths, true)'), 'the host shuts the yards\' ground as #1184 stood it');
-  assert.ok(host.includes('climate?.people, loc, yardShut,'), 'and hands the yards that');
+  // PIN MOVED (AUDIT FB1028 YARDS): the host's wiring is read in the unskipped "the host" test below
 });
 
 test('FB1028 YARDS with ARENA2: a yard broken by the new wall and roads placed again - Chesterbeth\'s Wagon Yard on a gate\'s new road (the bare law\'s; Knightsmore\'s and Akhahanu\'s break only with the game\'s measures) stands again by its law clear of the new roads and wall and of its town\'s other yards, which keep a779c9c29\'s cells (mutant: a broken yard kept)', { skip: skipReal, timeout: 1_800_000 }, async () => {
@@ -473,5 +478,92 @@ test('AUDIT FB1028 B5: a kept yard\'s pad may touch a cell only the wall\'s grow
   assert.equal(ys.siteFits(g, s, gained), false, 'its own ground the wall\'s: broken');
   g.blocked[7 * W + 7] = 0; gained[7 * W + 7] = 0; g.blocked[9 * W + 6] = 1;   // a pad cell a house closed
   assert.equal(ys.siteFits(g, s, gained), false, 'a pad cell closed by anything else: broken');
+});
+
+// ── AUDIT FB1028 YARDS without ARENA2: the yard law and its host wiring on synthetic towns ──────────────────────────
+/** A town of `n` x `n` blocks of grass, a street along each block's middle row of tiles. */
+function grassTown(n = 3) {
+  const tiles = Array.from({ length: 16 }, () => Array.from({ length: 16 }, (_, ty) => ({ textureRecord: ty === 8 ? 46 : 2 })));
+  const blocks = [];
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) blocks.push({ x, y, blockName: 'X.RMB', dfBlock: { rmbBlock: { fldHeader: { autoMapData: new Uint8Array(4096), groundData: { groundTiles: tiles } } } } });
+  return { width: n, height: n, blocks };
+}
+/** A walk shut closing a site's own cells (a new road or wall across it). */
+const shutOver = (s) => Object.assign((nav) => { for (let y = s.gy; y < s.gy + s.nz; y++) for (let x = s.gx; x < s.gx + s.nx; x++) nav.grid[y * nav.width + x] = 0; }, { key: `over ${s.gx} ${s.gy}` });
+const siteStr = (q) => `${q.kind} ${q.gx} ${q.gy} ${q.turn}`;
+const apart = (a, b) => a.gx + a.nx <= b.gx || b.gx + b.nx <= a.gx || a.gy + a.nz <= b.gy || b.gy + b.nz <= a.gy;
+const runAll = (gen) => { let r; while (!(r = gen.next()).done); return r.value; };
+/** A host's function or lines run on stubs: `src` an expression of its text, `env` the names it reads. */
+const runIn = (src, env) => new Function('env', `with (env) { return (${src}); }`)(new Proxy(env, { has: (t, k) => k in t }));
+
+test('AUDIT FB1028 YARDS the law: on the ground as it stands now a yard whose place still fits keeps it, the same site, and a broken one is placed again by its law, clear of the kept ones; nothing broken, the sites as they were (mutant: a broken yard kept)', () => {
+  const yl = grassTown(), was = ys.townGroundOf(yl, {}), sites = [...ys.yardSitesOn(was), ...ys.craftYardSitesOn(was)];
+  assert.deepEqual(sites.map((q) => q.kind), ['stable', 'transport', 'carpenter'], 'three yards on the grass');
+  assert.equal(runAll(ys.keptSitesSteps(ys.townGroundOf(yl, {}), sites, [])), sites, 'nothing broken: the sites as they were');
+  const now = () => ys.townGroundOf(yl, {}, shutOver(sites[0])), g = now();
+  assert.ok(!ys.siteFits(g, sites[0]) && ys.siteFits(g, sites[1]) && ys.siteFits(g, sites[2]), 'the stable broken, the others not');
+  const kept = runAll(ys.keptSitesSteps(now(), sites, []));
+  assert.equal(kept[1], sites[1], 'the wagon yard kept');
+  assert.equal(kept[2], sites[2], 'the carpenter kept');
+  assert.equal(kept[0].kind, 'stable');
+  assert.notEqual(siteStr(kept[0]), siteStr(sites[0]), 'the stable placed again');
+  assert.ok(kept.every((s) => ys.siteFits(g, s)), 'every yard fits the ground as it stands');
+  for (const [i, a] of kept.entries()) for (const b of kept.slice(i + 1)) assert.ok(apart(a, b), `${a.kind} clear of ${b.kind}`);
+});
+
+test('AUDIT FB1028 YARDS the host: the pixel\'s build hands townPlacesFor the yards\' shut carrying the walkers\' as its `now`; townPlacesFor places the yards on #1184\'s ground and moves only the one the town as it stands breaks - the host\'s own lines run on a synthetic town (mutants: the walkers\' shut not carried; the yards\' shut read as now)', async () => {
+  const pb = hostText('src/scenes/pixelBuild.js'), w = hostText('src/scenes/world.js');
+  const l0 = pb.indexOf('    const walkShut = dfLocation ?'), l1 = pb.indexOf('\n', pb.indexOf('    const yardShut = dfLocation ?', l0));
+  const f0 = w.indexOf('  async function townPlacesFor('), f1 = w.indexOf('\n  }\n', f0);
+  assert.ok(l0 > 0 && l1 > l0 && f0 > 0 && f1 > f0, 'the host\'s lines found');
+  const yl = grassTown(), first = ys.townGroundOf(yl, {}), sites = [...ys.yardSitesOn(first), ...ys.craftYardSitesOn(first)];
+  const was = Object.assign(() => {}, { key: 'was' }), now = shutOver(sites[0]);
+  const { walkShut, yardShut } = runIn(`(() => { ${pb.slice(l0, l1)}\nreturn { walkShut, yardShut }; })()`, {
+    dfLocation: { mapTableData: { mapId: 9 } }, townGround: null, paths: null, yardPaths: null, fabricWalkShut: (s) => s,
+    townWalkShut: (loc, ground, paths, yards) => (yards ? was : now), yardWalkShut: walls.yardWalkShut,
+  });
+  assert.equal(walkShut, now, 'the walkers\' shut the town as it stands');
+  const warned = [], townPlacesFor = runIn(w.slice(f0, f1 + 4), {
+    isEnhanced: () => true, windmillsOn: () => true, stepsBreathing, yardMeasuresSteps: function* () { return {}; },
+    walkerRace: () => 'breton', isYardTown: () => true, isPortTown: () => false, portOnSea: () => false, _yardMemo: new Map(),
+    townGroundSteps: ys.townGroundSteps, townYardsOf: () => null, yardSitesSteps: ys.yardSitesSteps, craftYardSitesSteps: ys.craftYardSitesSteps,
+    keptTownSitesSteps: ys.keptTownSitesSteps, ALL_YARD_KINDS: ['stable', 'transport', 'carpenter'], PORT_SITE_ORDER: [], MONUMENT_KEEP_M: 8,
+    portKeeper: () => ({ name: 'k' }), yardKeeper: () => ({ name: 'k' }), portPlaceName: () => 'p', console: { log: () => {}, warn: (...a) => warned.push(a.join(' ')) },
+  });
+  const placed = await townPlacesFor({ name: 'Grass', mapTableData: { mapId: 9 } }, null, null, yl, yardShut);
+  assert.deepEqual(warned, [], 'placed');
+  assert.deepEqual(placed.yards.slice(1).map(siteStr), sites.slice(1).map(siteStr), 'the yards #1184\'s ground placed, kept');
+  assert.notEqual(siteStr(placed.yards[0]), siteStr(sites[0]), 'the stable the town as it stands breaks placed again');
+  assert.ok(ys.siteFits(ys.townGroundOf(yl, {}, now), placed.yards[0]), 'where it fits now');
+  // the host's other two wires: the yards' shut on #1184's paths and wall, and the yards' paths laid by #1184's gates
+  assert.ok(pb.includes('townWalkShut(dfLocation, townGround, yardPaths ?? paths, true)'), 'the host shuts the yards\' ground as #1184 stood it');
+  assert.ok(pb.includes('climate?.people, loc, yardShut,'), 'and hands the yards that');
+  assert.ok(readFileSync(new URL('../../src/world/terrain/terrainGen.js', import.meta.url), 'utf8').includes('if (hasLocation && locationRect?.gateRoads) yardPaths = yardRoads(tilemap, paths, tileData, locationRect.gateRoads);'), 'the kernel lays the yards\' paths');
+});
+
+test('AUDIT FB1028 YARDS #1184\'s roads and wall: yardRoads lays the paths by #1184\'s gates on copies, no arm taken up; a wall\'s yardPieces stand no tower grown and no street\'s gate; the yards\' walk shut is shut on those pieces\' cells, not the wall\'s (mutants: the new gates\' roads; the towers grown; the street gates kept; the yards on the new wall)', () => {
+  const g = walledPixel([[64, 46]]), yard = { gates: [{ x: 40.5, y: 50.5, ox: -1, oy: 0, half: GATE_OPENING.half / 6.4 }], blocked: g.town.blocked };
+  const tm = Uint8Array.from(g.tilemap), paths = Uint8Array.from(g.paths), town = { ...g.town, yard };
+  const yp = yardRoads(g.tilemap, g.paths, g.tileData, town);
+  assert.deepEqual([g.tilemap, g.paths], [tm, paths], 'the pixel\'s own untouched');
+  const lay = (t) => { const p = Uint8Array.from(paths); layGateRoads(Uint8Array.from(tm), p, g.tileData, t); return p; };
+  assert.deepEqual(yp, lay(yard), 'laid by #1184\'s gates');
+  assert.notDeepEqual(yp, lay({ ...g.town, inside: undefined }), 'not by the new ones');
+  for (let x = 30; x < 64; x++) assert.equal(yp[x + 64 * D], 1, `no arm taken up at (${x}, 64)`);
+  assert.equal(yardRoads(g.tilemap, g.paths, g.tileData, g.town), null, 'no yard handed: none');
+  // a city's wall with a street's gate: its yards' pieces #1184's
+  const wall = streetCity().wall, towers = wall.pieces.filter((p) => p.model === WALL_MODELS.tower);
+  assert.ok(wall.streetWays.length === 1 && towers.every((p) => p.thick > 1), 'a street\'s gate, every tower grown');
+  assert.ok(wall.yardPieces.every((p) => p.thick === 1), 'no tower grown');
+  const gatesOf = (ps) => ps.filter((p) => p.model === WALL_MODELS.gate).length;
+  assert.equal(gatesOf(wall.yardPieces), gatesOf(wall.pieces) - 1, 'no street\'s gate');
+  try {
+    setTownWallPaths(() => ({ roads: DIR.E | DIR.W, tracks: 0, curved: false }));
+    const c = walledCity(610103, 212, true), stood = standTownWall(c.loc, c.template, (n) => c.served[n] ?? null, townOutlineBlockJson);
+    const nav = (yards) => { const m = { width: 192, height: 192, grid: new Uint8Array(192 * 192).fill(0xf0) }; townWalkShut(c.loc, null, null, yards)(m); return m.grid; };
+    const cells = townWallCells({ pieces: stood.yardPieces }, 3, 3), a = nav(true);
+    assert.deepEqual(Array.from(a, (v) => (v ? 0 : 1)), Array.from(cells), 'the yards\' shut on #1184\'s cells');
+    assert.notDeepEqual(a, nav(false), 'not the walkers\'');
+  } finally { setTownWallPaths(null); }
 });
 

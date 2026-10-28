@@ -164,14 +164,18 @@ RELIEF_FRAME_LAW 3.
 twice. A record stamped before 4 is moved only when it stands nearer the old ground than today's (`groundFrameHost.js`
 townMove); with the ground there not yet loaded it is moved, as one written before #1371.
 
+**Not a Bay town's ground alone.** The blend is every shaped town's, so towns past the Bay moved too (Sunhold's and
+Woodhearth's banks, below).
+
 Tests `test/world/terrain/fb1028_townground.test.js` (7), `fb1028_townground_real.test.js` (ARENA2) and
-`fb1028_townground_frame.test.js` (5). Mutants `tools/mutants/fb1028_townground.json` (37, all dead). PINS MOVED:
+`fb1028_townground_frame.test.js` (6). Mutants `tools/mutants/fb1028_townground.json` (38, all dead). PINS MOVED:
 `test/world/reliefpeaks.test.js` and `bayleftground_frame.test.js` (the stamp 4), the ground's print (a town's cell),
-`test/world/terrain/townshapes.test.js`
-(Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3),
-`test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water alone no ship stands on a
-bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's cliffs); re-aimed by content:
-TS-the-sea-lifted, TS-the-edge-moved, TW-the-round-unread, E1-4-the-version-unmoved, RELIEF-PEAKS-record-move-on-stamped, -on-the-bay and -unhanded.
+`test/world/terrain/townshapes.test.js` (Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js`
+(the bake's version 3), `test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water
+alone no ship stands on a bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's
+cliffs); re-aimed by content: TS-the-sea-lifted, TW-the-round-unread, E1-4-the-version-unmoved,
+RELIEF-PEAKS-record-move-on-stamped, -on-the-bay and -unhanded; TS-the-edge-moved at the pixel's edge kept the land's (AUDIT FB1028: its first aim
+was FB1028-the-edge-share-unread's).
 
 ## 5. TS3 - a town past the Bay is its own outline of blocks (BUILT)
 
@@ -746,8 +750,9 @@ wall's, within 4 cm): 88 towns, 1,853 m2. The fabric now lays nothing on a cell 
 
 **Measured after**: no two faces within 1 mm on any wall of either set, nor within 4 cm (822,943 and 495,846 m2 before),
 two that only meet along an edge aside; the same open ends seen at the towers as before, by level rays from both sides
-at 22 walls. The model holds 5 per cent more triangles on the Bay and 7 per cent more past it, and takes about seven
-times as long to make (11 against 79 ms a city, on a loaded machine). So the model door makes it a breath at a time,
+at 22 walls. With section 16's mitres and grown towers, the model of every fifth Bay city holds 10.6 per cent more
+triangles than its pieces made alone (886,446 to 980,640), 12.0 per cent on the test's sample of both sets, and takes
+about seven times as long to make (37 against 5 ms a city, on a loaded machine). So the model door makes it a breath at a time,
 WALL_PIECES_A_BREATH (16) pieces between two (townWallModelSliced), as it makes the town's fabric.
 
 **The probe.** Riften's gate drawn at the game's depth (24 bits, 0.2 to 6,000 m), each piece in its own colour, from its
@@ -763,8 +768,11 @@ within 4 cm of each other. The Bay's towns have no fabric.
   ring.
 - The hosts: none grows - the wall is `world/townWalls.js`'s, the paving `world/urban/townFabricStand.js`'s.
 - Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2: every twentieth walled city on the Bay and past it,
-  Riften, five towns whose fabric lay in their wall's faces). Mutants `tools/mutants/fb1028_wallflicker.json` (22: 20
-  dead, 2 recorded equivalent with why). Re-aimed by content: `townboards.json` TB-the-stands-ground-dropped (dead).
+  Riften, five towns whose fabric lay in their wall's faces). PINS MOVED (AUDIT FB1028): its bends' towers grown as
+  wallPieces mints them, so the open ends are read against the pieces made alone as grown and the body as grown; a
+  three-degree bend added. Mutants `tools/mutants/fb1028_wallflicker.json` (23: 19 dead, 4 recorded equivalent with why
+  - two of them the mitre's branch, which cuts on mitreEnds' own plane; three die only on ARENA2). Re-aimed by content: `townboards.json`
+  TB-the-stands-ground-dropped (dead).
 
 ## 16. FB1028 - the Bay's walls: no door, no bend run through, no road into the wall (BUILT)
 
@@ -781,8 +789,9 @@ Daggerfall is one: it stands as every Bay city does with the packs off. Every co
 
 - **The doors are the wall's own.** Daggerfall's length (ARCH3D 445) carries a door on its inner face a metre from its
   end, its gate (446) two: a Town23 building's doors into the ring block's "City Walls". A wall on its outline is one
-  model of the town's own and opens into nothing; at every chord's end a length's door stood inside its tower - 16,329
-  of the 32,779 doors on the 410 walls (44 of Daggerfall's 106). No building stands within 2 m of any wall (159,004
+  model of the town's own and opens into nothing; at a chord's end a length's door stood in its tower - of the 32,779
+  doors on #1184's 410 walls, 7,169 inside a tower's body and 11,191 inside it or on its side's plane, within 1 cm (21 and
+  34 of Daggerfall's 106). No building stands within 2 m of any wall (159,004
   building models; Daggerfall's nearest 6.45 m): TS7's pin read the wall's own cells, so it could not have seen one.
 - **Parts clipping into itself are the bends.** A bend's tower is the wall's own thickness (TS8), so at a bend its two
   lengths ran on through each other and out of its faces: on the bend's inner side their faces and parapets crossed in
@@ -832,23 +841,23 @@ yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
 **A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = [], gained = null) {"`). A
 yard keeps its #1184 place unless the place no longer fits the town as it stands (siteFits: its cells on no road and
 nothing shut, its pad clear of the wall and every closed cell). One that does not is placed again by its kind's law on
-the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `yardWalkShut`).
+the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `world/townWalls.js`
+yardWalkShut). AUDIT FB1028 B5: a kept yard's pad may touch a cell only the wall's growth since #1184 closed (a tower
+grown, a street's gate), never its own ground.
 
-Measured over all 410: 1,183 of the 1,258 yards stand on #1184's cells; none broken after (none in, against or on
-the wall, on a road, off its ground or out of reach), none over another. The 75 moved:
+Measured over all 410 at the merge: 1,183 of the 1,258 yards stood on #1184's cells; 50 moved on a gate's new road, 2 in
+the new wall, 19 against a grown tower, and 4 stables by the gate dressing. B5 and B2 (a road's gate keeps its things)
+put back the 19 and Puweyn's stable. Now 1,203 stand; none broken (none in, against or on the wall, on a road, off its
+ground or out of reach), none over another. The 55 moved:
 
 | city | yard | why |
 | --- | --- | --- |
 | Akhahanu | Stable | on a gate's new road |
 | Akhahanu | Wagon Yard | on a gate's new road |
 | Akhera-Korom | joinery | on a gate's new road |
-| Aldhope | Stable | against a grown tower |
-| Aldingborne Commons | joinery | against a grown tower |
 | Aldleigh | Wagon Yard | on a gate's new road |
 | Atrohala | joinery | on a gate's new road |
-| Baelhead | Stable | against a grown tower |
 | Baelwall | Wagon Yard | on a gate's new road |
-| Baelway | Stable | against a grown tower |
 | Baelwood | Stable | on a gate's new road |
 | Bhoriane | joinery | on a gate's new road |
 | Blackley | joinery | on a gate's new road |
@@ -857,22 +866,15 @@ the wall, on a road, off its ground or out of reach), none over another. The 75 
 | Burgwold | joinery | on a gate's new road |
 | Ceranda-Kom | Wagon Yard | on a gate's new road |
 | Charbeth | Wagon Yard | on a gate's new road |
-| Charenwall | joinery | against a grown tower |
 | Charenworth | Stable | on a gate's new road |
-| Charenworth | Wagon Yard | against a grown tower |
 | Chesterbeth | joinery | on a gate's new road |
 | Chesterbeth | Wagon Yard | on a gate's new road |
-| Cromtry | Stable | against a grown tower |
 | Cromwark Hamlet | Stable | on a gate's new road |
-| Crosswych Wood | joinery | against a grown tower |
-| Deerbridge Hollow | Stable | against a grown tower |
 | Eastcastle | Stable | on a gate's new road |
 | Elotunia | joinery | on a gate's new road |
 | Fontbeth | Wagon Yard | on a gate's new road |
 | Fontfort | Stable | on a gate's new road |
 | Gothwark | Stable | on a gate's new road |
-| Graybrone Court | Wagon Yard | against a grown tower |
-| Graybury | Wagon Yard | against a grown tower |
 | Gyselah | Wagon Yard | on a gate's new road |
 | Holway | Stable | on a gate's new road |
 | Issaqumbaa | Stable | the gate dressing moved (not fixed) |
@@ -881,7 +883,6 @@ the wall, on a road, off its ground or out of reach), none over another. The 75 
 | Knightsgate | joinery | on a gate's new road |
 | Knightsgate | Stable | the gate dressing moved (not fixed) |
 | Knightsmore | Stable | in the new wall |
-| Longbeth | Stable | against a grown tower |
 | Longhope End | Stable | on a gate's new road |
 | Merborne | joinery | on a gate's new road |
 | Mesajer | Wagon Yard | on a gate's new road |
@@ -890,34 +891,27 @@ the wall, on a road, off its ground or out of reach), none over another. The 75 
 | Newmarket | joinery | on a gate's new road |
 | Newvale | Wagon Yard | on a gate's new road |
 | Osenabu | Wagon Yard | on a gate's new road |
-| Oxfort | Stable | against a grown tower |
 | Oxway | joinery | on a gate's new road |
-| Penbrugh | Wagon Yard | against a grown tower |
 | Penwood | Wagon Yard | on a gate's new road |
 | Pothago | Stable | on a gate's new road |
-| Puweyn | Stable | the gate dressing moved (not fixed) |
 | Pythinis | Stable | on a gate's new road |
-| Reycastle | Stable | against a grown tower |
-| Ripmarket | joinery | against a grown tower |
 | Singcroft | Wagon Yard | on a gate's new road |
 | Singham | Wagon Yard | on a gate's new road |
 | Syra-Kom | Stable | the gate dressing moved (not fixed) |
 | Syrunnuweyn | Wagon Yard | on a gate's new road |
 | Tasoparet | Wagon Yard | on a gate's new road |
 | Tigonus | joinery | in the new wall |
-| Tsetetturia | joinery | against a grown tower |
 | Tsetissiara | Stable | on a gate's new road |
-| Tulaelius | Wagon Yard | against a grown tower |
 | Tunborne | joinery | on a gate's new road |
 | Tuntale | Wagon Yard | on a gate's new road |
 | Umberadax | Wagon Yard | on a gate's new road |
 | Whitewark | Stable | on a gate's new road |
-| Wrothgaria | joinery | against a grown tower |
 | Zenirijet | Stable | on a gate's new road |
 
-The four by the gate dressing: TS7 steps a gate's boards and carriage clear of the wall's cells, the grown towers'
-now, so they stand up to 0.8 m over (Knightsgate's two, measured), and a yard's measures read them. Their places fit
-the town; the yards' measures still read the new dressing.
+The three by the gate dressing (OPEN): TS7 steps a gate's boards and carriage clear of the wall's cells, the grown
+towers' now, so they stand up to 0.8 m over (Knightsgate's two, measured), and a yard's measures read them. Their
+places fit the town, but they moved 1 to 4 cells without being broken; holding them needs a second layout of that
+furniture for the yards.
 
 **Not changed, and why.** The wall is one model, so its pixel's build stands its 14,600 triangles in one step: 30 to 94 ms
 on the collider, and as much again with the player in town (the late solids' gate, `player/lateSolid.js`, builds a probe of
@@ -927,7 +921,8 @@ inside crosses the town's open cells as its fabric's road, and is left for its o
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from Daggerfall's wall pieces - no door where the wall is a model of
 the town's own, a length cut at a bend and its tower grown across; from Basic Roads' tiles on a Bay wall's ground. Tests
-`test/world/fb1028_walls.test.js` (10, four on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (32, all dead). PINS
+`test/world/fb1028_walls.test.js` (15, four on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (37, all dead without
+ARENA2: AUDIT FB1028 runs the yard law, yardRoads, yardPieces and the host's own lines on synthetic towns). PINS
 MOVED: `test/world/gateroads.test.js` (the kernel handed the town's ground), `test/world/townbends.test.js` (a tower's
 footprint as wide as it stands); `baywalls`, `ic_stutter`, `merchantyards1`, `shipyards1_found` (the host hands the
 places the yards' shut), `carpyard1` (the kept yards), `road/roads` (the yards' paths); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,
