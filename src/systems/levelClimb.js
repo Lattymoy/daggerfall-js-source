@@ -4,7 +4,8 @@
 // the six-skill top (800) is shared out, so every start reaches 45 on its last point:
 //     level = floor((28 + 647 * climbed / (800 - start)) / 15)        647 = 45 x 15 - 28
 // A DEPARTURE from FormulaHelper.CalculatePlayerLevel. levelCap.js is the cap's leaf and offline's law; this reads it.
-// onlineLevelConvert reads every realm character's level again at its join and sets it to the level its skills earn.
+// onlineLevelConvert reads every realm character's level again at its join - the one place a level comes down; one owed
+// is offered there through the level-up window and its points, or given whole to attributes already at their maximum.
 
 import { EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from './skillSoftcap.js';
 import { PRIMARY_SKILL_MIN, MAJOR_SKILL_MIN, MINOR_SKILL_MIN, BONUS_POOL_PER_SKILL_GROUP } from './chargen.js';
@@ -12,6 +13,7 @@ import { levelUpSkillSum } from './skills.js';
 import { masterCappedSkill, skillCanPassCap } from './masterSkills.js';
 import { evenHpFloor } from './levelEven.js';
 import { LEVEL_CAP } from './levelCap.js';
+import { STAT_KEYS_ORDER, MAX_STAT_VALUE } from './statMods.js';
 
 /** LEVEL-45: the highest level an online character reaches - the cap's own (levelCap.js). */
 export const ONLINE_LEVEL_CAP = LEVEL_CAP;
@@ -118,13 +120,18 @@ export function onlineLevelConvert(snap) {
     if (floor > 0 && Number.isFinite(snap.maxHealth) && snap.maxHealth > floor) snap.maxHealth = floor;
     if (Number.isFinite(snap.health) && Number.isFinite(snap.maxHealth) && snap.health > snap.maxHealth) snap.health = snap.maxHealth;
     moved = true;
-  } else if (level < earned) {   // LEVEL-OWED (mob: "just readjust these players"): a level the skills earned is given at the join
+  } else if (level < earned && STAT_KEYS_ORDER.every((k) => (snap.stats?.[k] ?? 0) >= MAX_STAT_VALUE)) {
+    // LEVEL-OWED (mob: "not to those that are capped out naturaliy"): no point left to place, so the level is given here
     snap.level = earned;
     snap.readyToLevelUp = false;
     snap.pendingLevel = null;
     snap.pendingBonusPool = null;
-    const floor = evenHpFloor({ career: snap.career, level: earned }, snap.stats?.endurance ?? NaN);
+    const floor = evenHpFloor({ career: snap.career, level: earned }, snap.stats.endurance);
     if (floor > 0 && Number.isFinite(snap.maxHealth) && snap.maxHealth < floor) snap.maxHealth = floor;
+    moved = true;
+  } else if (level < earned && snap.readyToLevelUp !== true) {   // LEVEL-OWED (mob: "give the atribuit point"): the window offers it at the join
+    snap.readyToLevelUp = true;
+    snap.pendingLevel = level + 1;
     moved = true;
   }
   return moved;

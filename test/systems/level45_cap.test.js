@@ -114,20 +114,31 @@ test('LEVEL-45: the conversion - a level 113 with every counted skill maxed come
   assert.equal(mid.level, onlineLevelFor(150, 500));
 });
 
-test('LEVEL-OWED: the conversion gives the level the skills earn - health raised to the even floor there, never lowered (mob: "just readjust these players")', () => {
-  // PIN MOVED: LEVEL-OWED (2026-10-28, mob) - the conversion left an earned level owed; a held level waited on a rest
-  const earned = onlineLevelFor(150, 500);
+test('LEVEL-OWED: a level the skills earned is offered at the join, for the window and its points - or given there to attributes already at their maximum (mob: "give the atribuit point")', () => {
+  // PIN MOVED: LEVEL-OWED (2026-10-28, mob) - an owed level not flagged waited on a six-hour skill check
   const owed = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
+  owed.readyToLevelUp = false; owed.pendingLevel = null;
   assert.equal(onlineLevelConvert(owed), true);
-  assert.equal(owed.level, earned);
-  assert.equal(owed.readyToLevelUp, false, 'nothing left owed');
-  assert.equal(owed.pendingLevel, null);
-  assert.equal(owed.maxHealth, evenHpFloor({ career: owed.career, level: earned }, 100), 'the even floor at the level given');
+  assert.equal(owed.level, 10, 'with points to place, the level is the window\'s to give');
+  assert.equal(owed.readyToLevelUp, true, 'offered at the join');
+  assert.equal(owed.pendingLevel, 11);
+  assert.equal(owed.maxHealth, 400, 'health is the window\'s roll');
+  const earned = onlineLevelFor(150, 500);
+  const capped = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
+  capped.readyToLevelUp = false;
+  capped.stats = Object.fromEntries(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck'].map((k) => [k, 100]));
+  assert.equal(onlineLevelConvert(capped), true);
+  assert.equal(capped.level, earned, 'every attribute at its natural maximum: no point to place, the level given (mob: "not to those that are capped out")');
+  assert.equal(capped.readyToLevelUp, false);
+  assert.equal(capped.maxHealth, evenHpFloor({ career: capped.career, level: earned }, 100), 'health to the even floor there');
   const strong = save({ level: 10, start: 150, current: 500, maxHealth: 9_000 });
+  strong.stats = capped.stats;
   onlineLevelConvert(strong);
-  assert.equal(strong.maxHealth, 9_000, 'health above the floor kept');
-  const lucky = save({ level: earned, start: 150, current: 500, maxHealth: 9_000 });
-  assert.equal(onlineLevelConvert(lucky), false, 'a level that stands is left alone');
+  assert.equal(strong.maxHealth, 9_000, 'never lowered');
+  const flagged = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
+  assert.equal(onlineLevelConvert(flagged), false, 'one already offered is left as it is');
+  const lucky = save({ level: onlineLevelFor(150, 500), start: 150, current: 500, maxHealth: 9_000 });
+  onlineLevelConvert(lucky);
   assert.equal(lucky.maxHealth, 9_000, 'a level that stands keeps its rolls (LEVEL-EVEN)');
 });
 
@@ -218,7 +229,11 @@ test('LEVEL-TOP: a character maxed under five masteries - five at 200, the sixth
   }
   const lowered = save({ level: 42, start: ROLLED_START_AVERAGE, current: 800 });
   onlineLevelConvert(lowered);
-  assert.equal(lowered.level, 45, 'LEVEL-OWED: the three lost are given back at the join');   // PIN MOVED: LEVEL-OWED, stayed 42 and owed
+  assert.equal(lowered.readyToLevelUp, true, 'LEVEL-OWED: the three lost are offered at the join, one window after another');
+  const maxed = save({ level: 42, start: ROLLED_START_AVERAGE, current: 800 });
+  maxed.stats = Object.fromEntries(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck'].map((k) => [k, 100]));
+  onlineLevelConvert(maxed);
+  assert.equal(maxed.level, 45, 'Sir McMobdon, his attributes at 100: 45 at the join');
 });
 
 test('LEVEL-RAW: the bar reads the skill sheet\'s own points - 1 a counted point to 100, 2.5 past it, so ~38 a level at the masteries (mob: "show raw point to each level")', async () => {
