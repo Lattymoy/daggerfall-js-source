@@ -21,6 +21,7 @@ const HARDCODED = {
   'src/characters/clothing.js': 12,
   'src/characters/creatureBodies.js': 8,
   'src/characters/daedra.js': 4,
+  'src/characters/dwarvenDragon.js': 2,   // DWARVEN-DRAGON: its career's English (the save's and the staff list's - a player reads t()'s) and its census miss, never shown
   'src/characters/enemy/enemyBasics.js': 19,
   'src/characters/foeBodies.js': 1,
   'src/characters/humanClasses.js': 11,
