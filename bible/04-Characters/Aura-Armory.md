@@ -107,6 +107,18 @@ sword arm out is not centred on its feet. A peer's Morrowind body stands the wea
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
 the boot's idle (`src/render/playPrograms.js`). Every rate is whole over the auras' clock, so nothing jumps at its wrap.
 
+**The detail** (the owner, 2026-10-28: *"We need to push the detail of these further"*). The Dagonfire line: the Crown is
+a circlet of molten iron with two rims and rivets, tall and short horns of flame by turns, and the Door at the brow - a
+pointed arch of white fire with the Deadlands swirling in it. The Ember Heart's coal is crusted in plates, molten in their
+cracks; its veins carry a pulse each beat, with fine capillaries and the ribs lit as it passes. The Ashbound Bracers are
+a real chain, its links by turns flat and edge-on, a few gone to dull coal. Cinderstride has a ring of cracked coal at
+each ankle under two sheets of flame.
+
+The Eternal line: the Halo is a band between two rims with the Origin's runes round it and a comet of light. The Sigil
+is the Origin's ouroboros - a dragon of light in scales biting its tail, its eye bright - with runes inside and slow rays
+off the spark. The Armlets are engraved bands, flames licking off their rims. The Greaves carry a lattice of light and a
+band at the knee with the Origin's spark.
+
 ## 7. The card law and the body's states
 
 THE CARD LAW: on a sprite every point is lifted toward the eye (`ARMORY_LIFT_M`), so a piece lies on the card's near
@@ -124,7 +136,8 @@ horse's. **Sunk to the neck**, only the head piece draws. **My own first person*
 A weapon piece is not drawn by the pass. It is the weapon glow's (`bible/05-Combat/Weapon-Glow.md` law 7): every weapon
 in my hand wears it - the classic hand's sheet as an outline, the Morrowind hands' blades, both hands when dual
 wielding - and the word rides my look, so peers' Morrowind bodies show it too (`brand2`, `edge2`). The Brand of the
-Breach is molten fire running down the blade; the Eternal Edge a blue-violet line with a light running along it.
+Breach is molten fire running down the blade, a gout of it falling down each column in turn and sparks caught in it;
+the Eternal Edge a blue-violet line with a light running along it, a fainter one running back, and glints.
 
 **What wins.** An element shows first, because it is the blow's truth. The armory piece shows before the arcane look.
 On the classic hand the piece's outline is drawn on the plain sheet, so an enchanted weapon's own sheet gives way to it

@@ -160,14 +160,17 @@ float gwReach(int look, vec2 c, float t, float lv) {
     float surge = step(0.8, gwHash(vec2(floor(t * 3.0), 7.0)));
     return 1.6 + 0.3 * lv + smoothstep(0.55, 0.85, arc) * (2.0 + 1.5 * lv) + surge;
   }
-  if (look == 5) {   // ARMORY: the Brand of the Breach - molten fire running DOWN the weapon, drips hanging off it
+  if (look == 5) {   // ARMORY: the Brand of the Breach - molten fire running DOWN the weapon, drips hanging off it, a gout
+    // of it falling down each column in turn
     float n = gwNoise(vec2(c.x * 0.5, c.y * 0.35 + t * 2.0), 480.0);
     float drip = step(0.82, gwHash(vec2(floor(c.x * 0.5), 3.0))) * (0.5 + 0.5 * gwNoise(vec2(c.x, c.y * 0.2 + t * 1.0), 240.0));
-    return (1.0 + 0.7 * lv) * (0.6 + 0.8 * max(n, drip));
+    float fall = pow(fract(c.y * 0.05 + t * 0.5 + gwHash(vec2(floor(c.x * 0.33), 5.0))), 6.0);
+    return (1.0 + 0.7 * lv) * (0.6 + 0.8 * max(max(n, drip), fall));
   }
-  if (look == 6) {   // ARMORY: the Eternal Edge - a crisp line round the blade, a light running along it
+  if (look == 6) {   // ARMORY: the Eternal Edge - a crisp line round the blade, a light running along it and a fainter one back
     float run = pow(0.5 + 0.5 * sin(t * 1.5707963 - (c.x + c.y) * 0.18), 8.0);
-    return 1.0 + 0.4 * lv + 1.6 * run;
+    float back = pow(0.5 + 0.5 * sin(t * 1.0471976 + (c.x + c.y) * 0.11), 12.0);
+    return 1.0 + 0.4 * lv + 1.6 * max(run, 0.6 * back);
   }
   float w = 0.5 + 0.5 * sin(t * 1.5707963 + c.x * 0.15 + c.y * 0.1);
   return 1.6 + 0.6 * lv * (0.7 + 0.3 * w);
@@ -180,6 +183,7 @@ vec4 gwShade(int look, float h, vec2 c, float t, float lv) {
   if (look == 2 && gwHash(floor(c) + floor(t * 5.0) * 7.31) > 0.972) { col = uRamp[3]; a = 1.0; }
   if (look == 3 && gwHash(floor(c * 0.5) + floor(t * 12.0) * 13.0) < 0.18) return vec4(0.0);
   if (look == 6 && h > 0.7) { col = uRamp[3]; a = 1.0; }   // ARMORY: the Edge's line white-hot at the blade
+  if ((look == 5 || look == 6) && gwHash(floor(c) + floor(t * 6.0) * 3.17) > 0.982) { col = uRamp[3]; a = 1.0; }   // ARMORY: a spark caught in the band
   return vec4(col, a * (0.75 + 0.083 * lv));
 }
 // an ember over a flame: rising a cell a step, six steps a second
@@ -208,8 +212,8 @@ float gwSurface(int look, vec2 uv, vec2 c, float t) {
     float s = floor(t * 12.0);
     return 1.0 - smoothstep(0.0, 0.07, abs(gwNoise(c * 0.6 + vec2(s * 5.1, s * 2.3), 4096.0) - 0.5));
   }
-  if (look == 5) return smoothstep(0.45, 0.95, gwNoise(vec2(c.x * 0.5, c.y * 0.35 + t * 2.0), 480.0));   // ARMORY: the Brand's fire runs down
-  if (look == 6) return pow(0.5 + 0.5 * sin(t * 1.5707963 - uv.y * 12.0), 10.0);   // ARMORY: a light sweeping the Edge's length
+  if (look == 5) return max(smoothstep(0.45, 0.95, gwNoise(vec2(c.x * 0.5, c.y * 0.35 + t * 2.0), 480.0)), 0.6 * (1.0 - smoothstep(0.0, 0.05, abs(gwNoise(c * 0.4 + 9.0, 4096.0) - 0.5))));   // ARMORY: the Brand's fire runs down its cracks
+  if (look == 6) return max(pow(0.5 + 0.5 * sin(t * 1.5707963 - uv.y * 12.0), 10.0), step(0.985, gwHash(floor(uv * 32.0) + floor(t * 4.0) * 5.71)));   // ARMORY: a light sweeping the Edge's length, a glint here and there
   float a = t * 0.2617994;
   return gwNoise(uv * 8.0 + vec2(sin(a), cos(a)) * 2.0, 4096.0);
 }
