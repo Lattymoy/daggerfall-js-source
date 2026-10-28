@@ -1,6 +1,7 @@
 # YARD-CELL - a town's yards kept, synced and stood by block (2026-10-26)
 
-**Status: YC1 BUILT (section 10), the owner's final approval given 2026-10-26; YC2, YC3 and YC4 to come.** The plan was
+**Status: YC1 BUILT (section 10), the owner's final approval given 2026-10-26; YC5 BUILT (section 12); YC2, YC3 and
+YC4 to come.** The plan was
 revised with the owner's answers before it was approved. The plan replaces the whole-town yard snapshot that YARD-SNAP (`Scale-Arc.md`) built and
 YARD-TOWN (`06-Systems/Online-Arc.md`, merged as #1276) bounded at 6,500 pieces a town.
 
@@ -462,6 +463,7 @@ by version, the same shape as the yards', is a slice of its own after the yards 
 | YC2 | The push: the YARD ORDER (service), the hub's yard arm and welcome field (relay, RELAY_VERSION), the client's carrier and listener; the slow poll and its doubling | the relay and the service before the site; one release |
 | YC3 | `home_yards`, `home_yards_ver` and their triggers dropped | account service alone, after YC1 has been live without a rollback |
 | YC4 | The town's homes answer by cell and by version (section 6) | its own slice, after YC2 |
+| YC5 | Strangers' yards merged and drawn per block; merges on a time budget; yards kept across a visit indoors (if they are torn down now) - section 12 | the site alone, no service or relay change; after YC1, and independent of YC2 |
 
 Each slice is its own pull request, opened as a draft and made ready only after its in-game check.
 
@@ -573,3 +575,42 @@ and relay in local workerd.
   said, also while an overlay hides the chat. A notice that lands under a menu the player keeps open for longer is not
   peeked; it waits in the chat log for the next time the chat is opened. The notice's code (SRV-N,
   `net/updateNotice.js`) is unchanged by YC1.
+
+## 12. YC5 - built (2026-10-28): strangers' yards drawn a block at a time
+
+Section 11 is YC2's (#1341, on its own branch). YC5 changes only how the page draws strangers' yards. Nothing on the wire
+moves: no service, no relay and no migration.
+
+**Why.** The owner's report, online in Daggerfall's city: the yards at the default 300 m cost about 870 draw calls and
+6 ms a frame, and switching them off restored about 110 fps. YARD-MERGE (`07-Rendering/Performance-Priority.md`) made
+each yard one draw a texture, but a full city holds about 500 strangers' yards in range, so the yards still cost
+hundreds of draws.
+
+**What was built.**
+
+- `src/scenes/yardBlockMerge.js`, wired by `homeYards.js`: the yards of one block (YARD-CELL's cell, in one pixel) that
+  are within the yard range share one merge - one mesh a texture and one billboard batch a picture.
+- `decorRoom.js` lends a pool's mergeable pieces (`mergeParts`) and takes a block's door as its `merge`
+  (`{ now, changed, letGo }`, no `take`). The stand of a merge is one function both paths use (`standDecorMerge`).
+- A merged piece going lets its block's merge go at once, as YARD-MERGE does for a yard.
+- Merges are made nearest block first while the frame's merging time is under `YARD_BLOCK_MERGE_BUDGET_MS` (2 ms),
+  and always one.
+- The owner's own yard, and a hall keeper's, still merge alone (`YARD_MERGES_A_FRAME`): their owner writes into them.
+
+**Departures.**
+
+1. **The range is kept to within a merge's wait.** When a yard crosses the range, the block's old merge is drawn until
+   the new one is made, so a yard can be drawn a frame or two past the range, or missing a frame or two inside it.
+   YARD-RANGE's distances and `YARD_MIN_ANGLE` are unchanged.
+2. **A merge's box is the block's.** As with YARD-MERGE, a piece off screen is drawn when its merge's box is in view,
+   and a piece too small to see is drawn with its merge.
+3. **No change for a visit indoors.** The plan asked to keep yards across a visit if they were torn down. They are not:
+   in the check below, 536 yards and 4,285 pieces stood inside a shop and after leaving it, at 300 m, with no cell asked
+   again. The one long frame on leaving (96-129 ms) comes at Off too, so it is the street's own return, not the yards'.
+
+**Measured** - see the pull request for the A/B. The numbers below are provisional (a headed run stopped before its
+last arm) and are replaced by the clean run.
+
+**Tests.** `test/scenes/yardblock.test.js` runs real pools on a block's door: one merge a block, a piece going and
+landing, the range's crossings, the budget and its order, the cull and the recentre, the flats and a yard leaving.
+`tools/mutants/yardblock.json` (14) and `yardmerge.json` (53, 8 re-aimed at the moved code): all dead.

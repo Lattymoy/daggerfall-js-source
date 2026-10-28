@@ -236,7 +236,8 @@ pieces never were. YARD-RANGE's "Left" named the lever.
 **The fix.** A pool its host lets merge (`createDecorRoom`'s `merge` - the town's yards; a room's host gives none) merges
 once it has stood unchanged `DECOR_MERGE_SETTLE_MS` (500 ms: a town's yards stand piece by piece as their models land -
 one merge, not one a landing) and its host's budget allows (`homeYards.js` `YARD_MERGES_A_FRAME`, one a frame: a town
-streaming in stands every yard at once).
+streaming in stands every yard at once). Since YARD-BLOCK (YC5, `11-Multiplayer/Yard-Cells.md` section 12) this is
+the kept yards' path; strangers' yards merge a block at a time.
 
 - **The models.** PERF4's `StaticBatchBuilder` over every model piece standing (`decorMergeable`: its triangles,
   normals and texture coordinates in hand, no door, standing from the pool's origin) - each piece's own matrix less the
