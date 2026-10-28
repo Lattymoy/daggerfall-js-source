@@ -54,7 +54,7 @@ import { HOME_LOOK_BUILD_WAIT_MS, homeLookRemap } from '../world/homeLook.js';
 import { homeLookSig } from '../net/homeLaw.js';
 import { insideRocks, rockFootprint } from '../world/terrain/terrainNature.js';
 import { isClimateFreeModel, NO_CLIMATE_REMAP, isSolidModel } from '../world/customModels.js';   // IC-GRAND: a far skyline is drawn, never solid
-import { capitalBuildView, capitalViewOf } from '../world/tamrielCapitals.js';   // IC-GRAND: the Imperial City's slices near and far
+import { capitalBuildView, capitalViewOf, capitalBlockLift } from '../world/tamrielCapitals.js';   // IC-GRAND: the Imperial City's slices near and far; SOLITUDE-RELIEF: a block's tier
 import { cityHomesOf } from '../world/imperialHomes.js';   // IC-GRAND x THE LIVING WORLD: the fabric's homes in its living town
 import { isDrySourceFlat, isWaterSourceFlat, WATER_SOURCE_MODELS } from '../systems/survival/items.js';
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -73,7 +73,7 @@ import { isWodShrub, rockSeatDrop, WOD_ROCK_SITES, wodLightPosition, wodLightPro
 import { isYardTown } from '../systems/merchantYards.js';
 import { keyResolver, StaticBatchBuilder } from '../render/staticBatch.js';
 import { knownCriminal } from '../systems/standing.js';
-import { layoutLocationSteps } from '../world/locationLayout.js';   // IC-STUTTER: a town laid out a block a step
+import { layoutLocationSteps, RMB_SIDE } from '../world/locationLayout.js';   // IC-STUTTER: a town laid out a block a step; SOLITUDE-RELIEF: a block's side
 import { legalRepOf } from '../systems/court.js';
 import { LivingTown, livingTownPlaces } from '../systems/livingWorld/livingTown.js';   // IC-STUTTER: its places a step at a time
 import { componentsSteps } from '../systems/travel/townWalk.js';   // IC-STUTTER: the town walk's pieces, flooded a step at a time
@@ -527,8 +527,11 @@ export function createPixelBuild(host) {
         homeLookRead = onlineHomes.version() * 1024 + host._lookPreviewGen;
       }
       for (const b of loc.blocks) {
+        // SOLITUDE-RELIEF (world/tamrielCapitals.js capitalBlockLift): a block on a capital's upper tier stands its tier's
+        // height over the location's flatten - its models, doors, flats, people and lights with it (0 everywhere else)
+        const blockY = locLocal[1] + capitalBlockLift(dfLocation, b.x, b.y);
         const originMatrix = trs(
-          locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
+          locLocal[0] + b.originX, blockY, locLocal[2] + b.originZ, 0, 0, 0);
         if (wod && b.blockName === PRIVATEERS_HOLD_BLOCK) holdBlocks.push(originMatrix);   // WOD4
         if (b.blockName === ARENA_BLOCK) arenaOrigin = [originMatrix[12], originMatrix[13], originMatrix[14]];   // ARENA2
         // AUDIT 64 F11: DFU's `firstModel` is a LOCAL, reset once per
@@ -586,7 +589,7 @@ export function createPixelBuild(host) {
           if (homeKey != null) {
             pixelBuildingKeys.add(homeKey);
             // its own place (rmbLayout.js recordAt) and the box round its models: its yard's frame and footprint
-            const at = Array.isArray(placed.recordAt) ? [locLocal[0] + b.originX + placed.recordAt[0], locLocal[1] + placed.recordAt[1], locLocal[2] + b.originZ + placed.recordAt[2]] : null;
+            const at = Array.isArray(placed.recordAt) ? [locLocal[0] + b.originX + placed.recordAt[0], blockY + placed.recordAt[1], locLocal[2] + b.originZ + placed.recordAt[2]] : null;
             const bd = b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[placed.recordIndex] ?? null;   // YARD-LINE: whether it could hold a lot of its own
             const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
             const f = pixelHomeFrames.get(homeKey);
@@ -713,7 +716,7 @@ export function createPixelBuild(host) {
           pixelNpcFlats.push({
             ...npc,
             x: locLocal[0] + b.originX + npc.x,
-            y: locLocal[1] + npc.y,
+            y: blockY + npc.y,
             z: locLocal[2] + b.originZ + npc.z,
           });
         }
@@ -724,13 +727,13 @@ export function createPixelBuild(host) {
           // what the NPC pass takes over below.
           if (flat.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[flat.record] != null) {
             pixelAnimals.push({
-              pos: [locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z],
+              pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y, locLocal[2] + b.originZ + flat.z],
               sound: ANIMAL_SOUND_BY_RECORD[flat.record],
             });
           }
           // SURV3: a fountain or a well is a water source (the mod's RegisterCustomActivation list); the dry one only says so
           if (isWaterSourceFlat(flat.archive, flat.record) || isDrySourceFlat(flat.archive, flat.record)) {
-            pixelSprings.push({ pos: [locLocal[0] + b.originX + flat.x, locLocal[1] + flat.y, locLocal[2] + b.originZ + flat.z], dry: isDrySourceFlat(flat.archive, flat.record) });
+            pixelSprings.push({ pos: [locLocal[0] + b.originX + flat.x, blockY + flat.y, locLocal[2] + b.originZ + flat.z], dry: isDrySourceFlat(flat.archive, flat.record) });
           }
           // E3: an exterior StaticNPC's BILLBOARD is stood by
           // standPixelNpcs, not batched here - RMBLayout hands the same
@@ -755,23 +758,27 @@ export function createPixelBuild(host) {
           // StaticNPC holds (a flat of a person's archive with no faction) stand in batches of their own
           // (standPixelFlats, below), so a 3D horse or a Morrowind body can take one's place. Neither was ever cover
           // (201 is NOT_COVER's; a person never is - AUDIT TACT B3).
-          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: locLocal[1] + flat.y, z: fz }); continue; }
+          if (isStandFlat(flat.archive, flat.record)) { pixelStandFlats.push({ archive: flat.archive, record: flat.record, x: fx, y: blockY + flat.y, z: fz }); continue; }
           // NATURE-GROUND (2026-09-26, Ilvi: "a lot of floating sprites across Illiac Bay"): the block's ground scenery and nature
           // flats stand on the DRAWN ground - the plane holds only inside the flattened rect, the band past it is only eased toward
           // it (DFU's too: AddNatureFlats reads no terrain); inside the rect the lift is exactly 0. A lamp, a sign, an animal keep the
           // plane. TREES-SEATED (Rissa: "Floating trees in Tamhope"): in a block whose hills the port draws as its stand-ins, a flat
           // of the nature range (the 504 trees stood on the pack's bigger hills) stands on the higher of the ground and the mounds.
-          const lift = flat.archive === natureArchive ? groundOffPlane(samples, avg, fx, fz) : 0;
-          addFlat(flat.archive, flat.record, fx, locLocal[1] + (hillSeat && isNatureArchive(flat.archive) ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz)) : flat.y + lift), fz, { block, n });
+          // SOLITUDE-RELIEF: a nature flat stands on the drawn ground (its offset off the plane holds the block's tier), a seated
+          // one on its block's own hills (FLORA-GROUND's hill ground read off its block's tier), every other flat on its block -
+          // all one law where the block stands on the plane
+          const off = flat.archive === natureArchive || (hillSeat && isNatureArchive(flat.archive)) ? groundOffPlane(samples, avg, fx, fz) : 0;
+          const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;
+          const fy = hillY !== null ? blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY) : flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y;
+          addFlat(flat.archive, flat.record, fx, fy, fz, { block, n });
           // FLORA-GROUND, THE RINGS (scenes/floraSeat.js): a nature flat stood on the ground - the climate's, the plane's
           // band under it; a hill block's where no mound raised it - is drawn on the ground its pixel draws at every ring
-          const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz) : null;
           if (hillY !== null ? seatNatureFlat(hillSeat, flat.x, flat.z, hillY) === hillY : flat.archive === natureArchive) standsOnGround(flatLog[flatLog.length - 1].c);
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
           const lp = [
             locLocal[0] + b.originX + light.x,
-            locLocal[1] + light.y,
+            blockY + light.y,
             locLocal[2] + b.originZ + light.z,
           ];
           pixelLights.push(lp);
@@ -781,7 +788,7 @@ export function createPixelBuild(host) {
           // is the one place that has it.
           // FIX-D: and the sprite under the flame - base y, width,
           // height - pixel-local like the rest, for the eye's box.
-          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], locLocal[1] + light.foot, light.w, light.h]);
+          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], blockY + light.foot, light.w, light.h]);
         }
       }
       // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): the monument's spot, its blocks stood - beside the Hold's way out (DFU's exit landing over
@@ -1231,6 +1238,7 @@ export function createPixelBuild(host) {
     const witchDress = witchFloor != null && locBlocks ? await witchesDressingBreathing({
       frames: pixelHomeFrames, taverns: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern), temples: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Temple),
       mapId: dfLocation?.mapTableData?.mapId ?? 0, climateIndex: maps.getClimateIndex(px, py), region: dfLocation?.regionIndex ?? null, floorY: witchFloor,
+      floorAt: dfLocation?.capital && locOrigin ? (x, z) => witchFloor + capitalBlockLift(dfLocation, Math.floor((x - locOrigin[0]) / RMB_SIDE), Math.floor((z - locOrigin[2]) / RMB_SIDE)) : null,   // SOLITUDE-RELIEF: a block's tier
       blocked: colliderBlocked(collider, host.state, px, py), ground: dryGround(locBlocks, locOrigin), taken: [...flatLog.map((f) => f.c), ...[...pixelNpcFlats, ...pixelStandFlats].map((n) => [n.x, n.y, n.z])],
     }, () => breather.breathe()) : null;   // PERF7: a city's rays breathe
     for (const f of witchDress?.flats ?? []) {

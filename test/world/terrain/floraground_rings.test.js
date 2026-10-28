@@ -246,7 +246,9 @@ test('FLORA-GROUND THE RINGS the hosts seat the plants wherever the ground they 
   assert.ok(skin.indexOf('seatFlora(p, renderer);') > skin.indexOf('for (let i = 0; i < 6; i++) p._box[i] = flats.box[i];'), 'a re-skin seats its new pictures, after its box is laid');
   assert.match(B, /flatLog\.push\(\{ archive, record, c, \.\.\.skin \}\);\n\s+if \(skin\?\.wild != null\) standsOnGround\(c\);/, 'the wild\'s flats marked as they are logged');
   assert.match(B, /for \(const \[gk, g\] of jungleGroups\) \{\n\s+await breather\.breathe\(\);\n\s+g\.centers\.forEach\(standsOnGround\);/, 'the jungle\'s trees and pairs');
-  assert.match(B, /const hillY = hillSeat && isNatureArchive\(flat\.archive\) \? NATURE_FLATS_Y \+ groundOffPlane\(samples, avg, fx, fz\) : null;\n\s+if \(hillY !== null \? seatNatureFlat\(hillSeat, flat\.x, flat\.z, hillY\) === hillY : flat\.archive === natureArchive\) standsOnGround\(flatLog\[flatLog\.length - 1\]\.c\);/, 'a town\'s nature flat on its ground, a mound\'s not');
+  // PIN MOVED (SOLITUDE-RELIEF, bible/03-World/Arena-Provinces.md): the hill ground read off its block's tier, its flat stood off it
+  assert.match(B, /const hillY = hillSeat && isNatureArchive\(flat\.archive\) \? NATURE_FLATS_Y \+ off - \(blockY - locLocal\[1\]\) : null;/);
+  assert.match(B, /\n\s+if \(hillY !== null \? seatNatureFlat\(hillSeat, flat\.x, flat\.z, hillY\) === hillY : flat\.archive === natureArchive\) standsOnGround\(flatLog\[flatLog\.length - 1\]\.c\);/, 'a town\'s nature flat on its ground, a mound\'s not');
   assert.match(src('src/scenes/grahtHost.js'), /const y0 = lift \? tr\[i \+ 1\] \+ lift\[i \/ GRAHT_TREE_FLOATS\] : tr\[i \+ 1\];/, 'the graht-oaks framed at their lift');
 });
 

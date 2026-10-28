@@ -144,7 +144,8 @@ test('LW-WALLS the game\'s own walled cities are read here as the streaming host
   // PIN MOVED (IC-STUTTER, bible/03-World/Arena-Provinces.md): the town laid out a block a step through the build's breather -
   // its answer layoutLocation's whole (test/world/ic_stutter.test.js), so the replay's layoutLocation is the host's
   assert.match(w, /const loc = await stepsBreathing\(layoutLocationSteps\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\), \(\) => breather\.breathe\(\)\);/);
-  assert.match(w, /const originMatrix = trs\(\n\s+locLocal\[0\] \+ b\.originX, locLocal\[1\], locLocal\[2\] \+ b\.originZ, 0, 0, 0\);/);
+  // PIN MOVED (SOLITUDE-RELIEF, bible/03-World/Arena-Provinces.md): the block stands at its tier's lift - 0 for every Bay town
+  assert.match(w, /const blockY = locLocal\[1\] \+ capitalBlockLift\(dfLocation, b\.x, b\.y\);\n\s+const originMatrix = trs\(\n\s+locLocal\[0\] \+ b\.originX, blockY, locLocal\[2\] \+ b\.originZ, 0, 0, 0\);/);
   assert.match(w, /const local = multiply\(originMatrix, placed\.matrix\);/);
   assert.match(w, /const staticDoors = getStaticDoors\(cpu, b\.dfBlock\.index, placed\.recordIndex, local\);/);
   assert.match(w, /nav\.setBlockData\(b\.x, b\.y, b\.dfBlock\.rmbBlock\.fldHeader\.autoMapData,\n\s+\(tx, ty\) => srcTiles\[tx\]\[ty\]\.textureRecord, \{ enhancedWater: waterSwitchOn\(\) \}\);/);

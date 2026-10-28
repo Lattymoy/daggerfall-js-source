@@ -14,7 +14,7 @@
 // tiles of the road's own surface (world/road/roadPainter.js TILE.road) from the arm's end straight in, and - for a gate
 // to one side - along the wall's foot APPROACH_SKIRT outside it, and in to the gate. Its ground is laid by the capital's
 // own blocks (capitalPortBlocks' laws, over its rim too). Pure: the plan's gates (`gateAt`, its anchor's metres) and the
-// capital's span (`dims`, capitalDims') are handed in.
+// capital's span (`dims`, capitalDims') are handed in - or (SOLITUDE-RELIEF) the capital's own line, `approach`.
 // ═══════════════════════════════════════════════════════════════════
 
 import { BLOCK_M } from './blockHash.js';
@@ -83,6 +83,7 @@ const _onWay = new WeakMap();
  *  span. @param {any} cap @param {{ w: number, h: number, mx: number, my: number }} D
  *  @returns {(x: number, z: number) => boolean} */
 export function onCapitalApproach(cap, D) {
+  if (cap.approach) return cap.approach;   // SOLITUDE-RELIEF: a capital whose road on to its gate is a line of its own (Solitude's Gate Road)
   let k = _onWay.get(cap);
   if (!k || k.D !== D) {
     const ways = capitalApproaches(cap, D);
@@ -99,6 +100,16 @@ export function onCapitalApproach(cap, D) {
  *  @param {{ w: number, h: number, mx: number, my: number }} D @returns {Array<[number, number]>} */
 export function capitalApproachCells(cap, D) {
   const out = new Map(), on = onCapitalApproach(cap, D), [ax, ar] = cap.anchor;
+  if (cap.approach) {   // SOLITUDE-RELIEF: its own line - every tile of the plan asked
+    for (let x = -ax * BLOCK_M + T / 2; x < (8 * D.w - ax) * BLOCK_M; x += T) {
+      for (let z = -ar * BLOCK_M + T / 2; z < (8 * D.h - ar) * BLOCK_M; z += T) {
+        if (!on(x, z)) continue;
+        const r = Math.floor(z / BLOCK_M + ar), c = Math.floor(x / BLOCK_M + ax);
+        out.set(`${r},${c}`, [r, c]);
+      }
+    }
+    return [...out.values()];
+  }
   for (const { side, edge, rects } of capitalApproaches(cap, D)) {
     for (const [u0, v0, u1, v1] of rects) {
       // the rectangle's corners back in the plan's metres, and every tile centre between them asked

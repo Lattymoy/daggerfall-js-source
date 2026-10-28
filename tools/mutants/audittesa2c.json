@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-TESA-II-C1-no-west-rim",
     "file": "src/world/tamrielCapitals.js",
-    "old": "export const inCapitalRim = (cap, x, z) => x < CAPITAL_RIM_M || z < CAPITAL_RIM_M ||",
-    "new": "export const inCapitalRim = (cap, x, z) => z < CAPITAL_RIM_M ||",
+    "old": "  return x < m || z < m ||",
+    "new": "  return z < m ||",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "AUDIT-TESA-II-C1-ring-lake-shared",
     "file": "src/world/tamrielCapitals.js",
-    "old": "out.push(CAPITALS[k] && onCapitalRing(CAPITALS[k], x0 + x, r0 + r) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);",
+    "old": "out.push(CAPITALS[k] && (onCapitalRing(CAPITALS[k], x0 + x, r0 + r) || CAPITALS[k].ground) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);",
     "new": "out.push(CAPITAL_BLOCKS.lake);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js",
@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-TESA-II-C2-no-sea-flag",
     "file": "src/world/tamrielCapitals.js",
-    "old": "...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}) }) : null;",
-    "new": "}) : null;",
+    "old": "...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}), ...(cap.relief ? { relief: cap.relief } : {}) }) : null;",
+    "new": "...(cap.relief ? { relief: cap.relief } : {}) }) : null;",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -122,7 +122,7 @@
   {
     "name": "AUDIT-TESA-II-C2-one-pixel-shore-unflattened",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  const flattenAt = many || cap.shore ? Object.freeze(",
+    "old": "  const flattenAt = many || cap.shore || cap.relief ? Object.freeze(",
     "new": "  const flattenAt = many ? Object.freeze(",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
@@ -371,9 +371,9 @@
   },
   {
     "name": "AUDIT-TESA-II-C10-solitude-gate-on-the-tavern",
-    "file": "src/world/tamrielCapitals.js",
-    "old": "northGate: 250, southGate: 318.4,",
-    "new": "northGate: 250, southGate: 300,",
+    "file": "src/world/solitudeRelief.js",
+    "old": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4,",
+    "new": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 300,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]

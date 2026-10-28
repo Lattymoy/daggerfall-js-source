@@ -8,7 +8,8 @@ import { urbanPictures, installUrbanArt, _resetUrbanArt } from '../../../src/wor
 import { URBAN_ARCHIVE, URBAN_KINDS, URBAN_ART, URBAN_STYLES, URBAN_STYLE_KEYS, PROVINCE_STYLE, styleOf, styleArt, urbanArt } from '../../../src/world/urban/urbanRecords.js';
 import { CAPITAL_ARCHIVE } from '../../../src/world/capitalShapes.js';
 import { PROVINCE_OF_ID } from '../../../src/world/tamriel/tamrielLand.js';
-import { buildCastleDour, buildSolitudeDocks, WAREHOUSE_PLINTH } from '../../../src/world/capitalSolitude.js';
+import { buildCastleDour, buildSolitudeDocks, WAREHOUSE_PLINTH, levelY } from '../../../src/world/capitalSolitude.js';
+import { SOLITUDE_LEVELS } from '../../../src/world/solitudeRelief.js';
 import { buildMournholdPalace } from '../../../src/world/capitalMournhold.js';
 import { buildAlinorPalace } from '../../../src/world/capitalAlinor.js';
 import { buildManeEstate } from '../../../src/world/capitalTorval.js';
@@ -89,11 +90,12 @@ test('URBANIZER U2 the capitals\' own buildings in cut stone, brick and half-tim
   assert.ok(wears(buildCastleDour()).has(key(urbanArt('ashlar'))));
   const docks = buildSolitudeDocks();
   assert.ok(wears(docks).has(key(urbanArt('halfTimber'))));
-  // the warehouse's framing above its stone storey: every half-timber face over WAREHOUSE_PLINTH
+  // the warehouse's framing above its stone storey: every half-timber face over WAREHOUSE_PLINTH (PIN MOVED, SOLITUDE-RELIEF:
+  // over the quay it stands on, at the water under the city's rock)
   const ht = docks.subMeshes.find((s) => s.textureArchive === URBAN_ARCHIVE && s.textureRecord === URBAN_ART.halfTimber);
   let low = Infinity;
   for (let t = ht.startIndex; t < ht.startIndex + ht.primitiveCount * 3; t++) low = Math.min(low, docks.positions[docks.indices[t] * 3 + 1]);
-  assert.equal(low, WAREHOUSE_PLINTH);
+  assert.ok(Math.abs(low - (levelY(SOLITUDE_LEVELS.quay) + WAREHOUSE_PLINTH)) < 1e-4, `its framing from ${low}`);
   assert.ok(WAREHOUSE_PLINTH < SOLITUDE.docks.warehouse.h);
   assert.ok(wears(buildMournholdPalace()).has(key(urbanArt('ochreAshlar'))));
   assert.ok(wears(buildAlinorPalace()).has(key(urbanArt('whiteAshlar'))));

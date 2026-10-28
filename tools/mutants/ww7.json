@@ -210,7 +210,7 @@
  {
   "name": "WW7-4-no-door",
   "file": "src/world/capitalSolitude.js",
-  "old": "doors: [entranceDoor(B.wing.x + B.wing.w / 2, B.wing.z, 4, 6.5, [1, 0], y)]",
+  "old": "doors: [entranceDoor(ex, Hh.z, 4, 6.5, [1, 0], y)]",
   "new": "doors: []",
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"

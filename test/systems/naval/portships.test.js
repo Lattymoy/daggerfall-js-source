@@ -12,7 +12,8 @@ import {
   BERTH_DRY_M, BOW_TAPER, STERN_TAPER, SHORE_STEP,
 } from '../../../src/systems/naval/shipLife.js';
 import { createHarbourBook } from '../../../src/systems/naval/harbourBook.js';
-import { harbourKeep, CAPITAL_KEEPS, CAPITAL_WALLS, inCapitalWalls, townKeepField, KEEP_SPARE, TOWN_WALL_KEEP } from '../../../src/systems/naval/harbourKeep.js';
+import { harbourKeep, CAPITAL_KEEPS, CAPITAL_WALLS, inCapitalWalls, townKeepField, KEEP_SPARE, TOWN_WALL_KEEP, ARCH_FOOT, STACK_FOOT } from '../../../src/systems/naval/harbourKeep.js';
+import { SOLITUDE_DOCKS } from '../../../src/world/solitudeRelief.js';
 import { SOLITUDE, CAPITALS } from '../../../src/world/tamrielCapitals.js';
 import { ALINOR, TORVAL } from '../../../src/world/capitalPlans.js';
 import { IMPERIAL, polar, bridgeLine } from '../../../src/world/imperialCity.js';
@@ -141,25 +142,34 @@ const K = Object.fromEntries(CAPITALS.map((c, k) => [c.key, k]));
 /** A capital's slice's location and footprint, its anchor's scene point. */
 const capitalPort = (key, s = 0, rect = { minX: 1000, maxX: 1819.2, minZ: -5000, maxZ: -4180.8 }) => ({ loc: { capital: { key, k: K[key], s } }, rect });
 
-test('PORT-SHIPS SOLITUDE\'S KEEP: inside its walls and their band (its towers\' half), its two piers, its sea stack and its arch - never its docks\' water nor the Karth past the wall; the scene\'s point to the anchor\'s metres off its slice (mutants: the walls\' band; a pier; the stack; the arch; the anchor)', () => {
+test('PORT-SHIPS SOLITUDE\'S KEEP: inside its walls and their band (its towers\' half), its two piers, its sea stack and its arch, and (SOLITUDE-RELIEF) its rock to its cliffs\' feet - never its docks\' water, their quay and its sea edge\'s row, nor the Karth below the cliff; the scene\'s point to the anchor\'s metres off its slice (mutants: the walls\' band; a pier; the stack; the arch; the rock; the quay\'s row; the anchor)', () => {
   const S = SOLITUDE, W = S.wall, law = CAPITAL_KEEPS.solitude;
   assert.equal(CAPITAL_WALLS.solitude.band, W.tower / 2 + KEEP_SPARE);
   assert.equal(law(200, 100), true, 'the city');
   assert.equal(law(W.west - W.tower / 2, 100), true, 'the west wall in the Karth');
-  assert.equal(law(W.west - W.tower / 2 - KEEP_SPARE - 1, 100), false, 'the Karth past it');
-  assert.equal(law(250, W.north - W.tower / 2 - KEEP_SPARE - 1), false, 'the quay outside the north wall');
+  // PIN MOVED (SOLITUDE-RELIEF, bible/03-World/Arena-Provinces.md): the walls stand on its rock - past their band the
+  // cliff to its foot, a tile of land the water meets (world/solitudeRelief.js onSolitudeRock), the Karth and the quay below
+  assert.equal(law(W.west - W.tower / 2 - KEEP_SPARE - 1, 100), true, 'its cliff past it');
+  assert.equal(law(-38, 100), true, 'the cliff\'s foot - the sea\'s own ground, on a tile of the land');
+  assert.equal(law(-46, 100), false, 'the Karth below it');
+  assert.equal(law(200, 600), false, 'the country past its pixel');
+  assert.equal(law(250, W.north - W.tower / 2 - KEEP_SPARE - 1), true, 'the north gate\'s landing outside the wall');
+  assert.equal(law(250, -150), false, 'the quay below it');
+  assert.equal(law(250, SOLITUDE_DOCKS.edge - 6), false, 'the quay\'s sea edge\'s row');
+  assert.equal(law(SOLITUDE_DOCKS.x0 - 1, -130), true, 'the cliff past the quay\'s end');
   assert.equal(law(300, -180), false, 'the docks\' water');
   for (const p of S.docks.piers) { assert.equal(law(p, -200), true, `the pier at ${p}`); assert.equal(law(p + S.docks.pierW / 2 + KEEP_SPARE + 0.5, -200), false); }
   assert.equal(law(S.docks.piers[0], S.docks.pierTo - KEEP_SPARE - 1), false, 'past its head');
-  assert.equal(law(S.stack.x, S.stack.z + S.stack.r + 11), true, 'the stack\'s foot, off the arch');
-  assert.equal(law(S.stack.x, S.stack.z + S.stack.r + 11 + KEEP_SPARE + 1), false, 'past it');
+  assert.deepEqual([ARCH_FOOT, STACK_FOOT], [S.arch.w / 2 + 16, S.stack.foot + 19], 'the arch\'s and the stack\'s feet at the water (capitalSolitude.js buildSolitudeArch)');
+  assert.equal(law(S.stack.x, S.stack.z + STACK_FOOT), true, 'the stack\'s foot, off the arch');
+  assert.equal(law(S.stack.x, S.stack.z + STACK_FOOT + KEEP_SPARE + 1), false, 'past it');
   assert.equal(law(-60, 0), true, 'under the arch');
-  assert.equal(law(-60, S.arch.w / 2 + 4 + KEEP_SPARE + 1), false, 'beside it');
+  assert.equal(law(-60, ARCH_FOOT + KEEP_SPARE + 1), false, 'beside it');
   const { loc, rect } = capitalPort('solitude'), keep = harbourKeep(loc, rect);
   const ax = rect.minX + 2 * 102.4, az = rect.maxZ - 3 * 102.4;
   assert.equal(keep(ax + 200, az - 100), true);
   assert.equal(keep(ax + 300, az + 180), false, 'the docks, north');
-  assert.equal(keep(ax + 140, az + 200), true, 'a pier');
+  assert.equal(keep(ax + S.docks.piers[0], az + 200), true, 'a pier');
 });
 
 test('PORT-SHIPS ALINOR\'S AND TORVAL\'S KEEPS: inside their three landward walls - the river through Alinor\'s middle with them - and their band, the open side to the quay with its two end towers; their four piers; never the quay\'s water between them (mutants: the open side closed; its towers; a pier)', () => {

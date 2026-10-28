@@ -101,8 +101,8 @@
  {
   "name": "U2-the-warehouse-framed-to-its-foot",
   "file": "src/world/capitalSolitude.js",
-  "old": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, WAREHOUSE_PLINTH, H.h);",
-  "new": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, -1, H.h);",
+  "old": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, q + WAREHOUSE_PLINTH, q + H.h);",
+  "new": "  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, q - 1, q + H.h);",
   "tests": [
    "test/world/urban/urban2_art.test.js"
   ]
@@ -345,8 +345,8 @@
  {
   "name": "U3M-the-gate-fenced",
   "file": "src/world/urban/townFabricModel.js",
-  "old": "  for (const run of edgeRuns({ W }, plan.fences)) {\n    if (++laid",
-  "new": "  for (const run of edgeRuns({ W }, [...plan.fences, ...plan.gates])) {\n    if (++laid",
+  "old": "  for (const run of runsOf(plan.fences)) {\n    if (++laid",
+  "new": "  for (const run of runsOf([...plan.fences, ...plan.gates])) {\n    if (++laid",
   "tests": [
    "test/world/urban/urban3_model.test.js"
   ]
