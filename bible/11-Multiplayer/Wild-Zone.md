@@ -857,11 +857,9 @@ half health", "everyone in the zone should see the same ... that the big giant i
 
 ## 16. The zone's other laws (PVPDUNGEONS)
 
-- NO BANKS, NO HOUSES (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door says "There
-  are no banks in the mountains." (`wildNoBank`, `world.js:"wildNoBank: () =>"`;
-  `worldModes.js:"if (host.wildNoBank?.())"`) and a home's purchase is refused (`wildNoHouse`,
-  `world.js:"wildNoHouse: () =>"`; `worldModes.js:"if (host.wildNoHouse?.())"`) - outside a settlement's streets
-  alone since ZONE-HOMES (section 29).
+- NO BANKS (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door says "There are no banks
+  in the mountains." (`wildNoBank`, `world.js:"wildNoBank: () =>"`; `worldModes.js:"if (host.wildNoBank?.())"`). The
+  houses' half is retired: ZONE-HOMES (section 29) sells a house anywhere in the zone.
 - NO WORLD EVENTS (the owner: "Do not spawn world events in the PVP zone!"): the Oblivion Gate never takes region 16
   (`gateRegions`, `gateSite.js:"export const gateRegions"`) and every client drops its towns from the day's raids
   alike (`raidingParties.js:"state.raids = raidsForDay"`) - the whole region, cut or not.
@@ -1402,33 +1400,23 @@ Pins: `test/systems/wild/wildcityport.test.js` (the law over every kind of place
 MOVED: the refusal's words (`portal1_stone.test.js`, `portalbay_stone.test.js`), the press's source (`tesa2_arena.test.js`);
 mutant records re-aimed by content: `portalbay.json` (3), `audittesa2m.json` (1), `tesa2.json` (1), all dead.
 
-## 29. Houses in the settlements (ZONE-HOMES, 2026-10-28)
+## 29. Houses for sale in the zone (ZONE-HOMES, 2026-10-28)
 
 The owner: "Imperial City houses still cannot be purchased". IC-HOMES (`06-Systems/Economy-Arc.md`) gave the city's
-houses a price, but PVPDUNGEONS refused every house in the zone, and the zone is Cyrodiil whole, the Imperial City in
-The Heart. The door offered **Buy it** and the press answered "No house is for sale in Cyrodiil".
+houses a price, but PVPDUNGEONS refused every house in the zone - Cyrodiil whole, the Imperial City in The Heart - so the
+door offered **Buy it** and the press refused it. A first pass sold a settlement's house alone and an audit refused every
+isle town's; the owner: "You made it where you cant buy a house in the ocean or in the open country. Why?" - "I did not
+ask for that".
 
-- THE LAW (`zoneSafe.js:"export const zoneHouseFree"`): outside the zone every house; in it, a door in a settlement's
-  streets (section 26's `settledAt` where I stand, outdoors). A house in the open country - a farmstead's, a manor's, an
-  inn's, a temple's - stays refused, in words that say where houses are sold (`ZONE_SAFE_TEXT.noHouse`, through the
-  text core). WHY THE SETTLEMENTS: ZONE-SAFE made their streets peace and WILD-CITY-PORT opened their teleports, so a
-  house there stands where no player fights. Banks stay refused in the whole zone; a house is paid from the purse and
-  the region's account, as everywhere. Measured on the freeware: every one of the city's 625 slices is a settlement to
-  its pixel's edge, and 7,026 fabric houses of 258 sampled cells pass every other gate of the door.
-- THE SEA (the audit): the zone is also the sea past Veilhaven's peace (ETHER-WILD), and an isle's port town is a
-  settlement there, so the law opened its houses, which `03-World/Eltheric-Ocean.md` P9 never sells. The online buy law
-  refuses an isle town's house now (`onlineHomes.js:"export const homePurchasable"`) - in the peace too, where the door
-  had offered one all along.
-- KNOWN GAPS, older than this record and FLAGGED: a guildmaster's hall is bought (`buyHallAt`) without asking the zone,
-  so a hall can be bought in its open country; the door offers **Buy it** there and only the press refuses, with the
-  words; the account service checks neither the zone nor an isle (`homes.js:"export async function claimHome"`).
-  Each is the owner's call.
-- THE FOUR HOSTS: `scenes/world.js` WIRED (the seam's one line, bootWorld's length unchanged); `scenes/worldModes.js`:
-  its house buy reads the seam, its hall buy does not (FLAGGED above); `scenes/dungeonContext.js` NOT WIRED - no house
-  door underground; `scenes/exterior.js`, offline, stands no zone.
+- THE LAW: the zone refuses no house. The `wildNoHouse` seam is gone from `world.js` and the buy
+  (`worldModes.js:"async function buyHomeAt(bd, price) {"`) asks nothing of the zone - in Cyrodiil's cities and its open
+  country, and on the sea past Veilhaven's peace alike. Banks stay refused in the zone (section 16).
+- THE ISLES: an isle town's house is for sale online as any town's (`onlineHomes.js:"export const homePurchasable"`). The
+  bank's list still names none and a Betony deed still owns none (`03-World/Eltheric-Ocean.md` P9).
+- THE FOUR HOSTS: `scenes/world.js` (the seam removed) and `scenes/worldModes.js` (the buy's line removed) WIRED;
+  `scenes/dungeonContext.js` has no house door; `scenes/exterior.js`, offline, stands no zone.
 
-Pins: `test/systems/wild/zonehomes.test.js` (the law over every kind of place, the open country, indoors; both hosts'
-lines; an isle town's house) - `tools/mutants/zonehomes.json` (5, all dead).
+Pins: `test/systems/wild/zonehomes.test.js` - `tools/mutants/zonehomes.json` (2, all dead).
 
 ## Pins
 

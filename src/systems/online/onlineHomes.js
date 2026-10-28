@@ -45,7 +45,6 @@ import {
   homeDeedOf,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deed a save holds to a building, as the service's hold reads it
   regionDeedsOf,   // HOUSES-3: a region's three deeds
 } from '../../net/homeLaw.js';
-import { isEtherPlaceId } from '../../world/etherPlaces.js';   // ZONE-HOMES: an isle town's houses are never for sale
 import { homeSceneName } from '../../net/homeScene.js';   // HOME-POUR: the home's scene, one name for the client and the service
 import { ARENA_TEXT } from '../arena/arenaText.js';   // ARENA4b: the bank's letter for a home the arena displaced
 import { RENT_VERB, rentRowLabel, rentTenantLabel } from '../homeRent.js';   // HOME-RENT: the door's rows for a room to rent
@@ -109,7 +108,7 @@ export function homeCandidate(bd) {
  *  (talkTopics.js); a record without the stamp is not refused. Not in homeCandidate: a crypt already bought stays its
  *  owner's home, plaque and "Sell it" row with it. */
 export const homePurchasable = (bd, { isActiveQuestBuilding = null } = {}) =>
-  homeCandidate(bd) && bd.hasInterior !== false && !isEtherPlaceId(bd.townMapId ?? 0) && !(isActiveQuestBuilding?.(bd) ?? false);   // ZONE-HOMES: never an isle town's (Eltheric-Ocean.md P9)
+  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);
 
 export { homeSceneName };   // the header's scene (net/homeScene.js, so the service names it too)
 const HOME_SCENE_RE = /^OnlineHome \[MapID=(\d+), BuildingKey=(\d+)\]$/;

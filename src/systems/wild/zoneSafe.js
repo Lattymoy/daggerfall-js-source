@@ -31,7 +31,7 @@
 import { t } from '../textManager.js';
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { worldCoordToMapPixel, locationWorldRect, isInLocationRect } from '../../world/streamingWorld.js';
-import { wildInside, WILD_NAME } from './wildZone.js';   // WILD-CITY-PORT: the zone's own pixels; ZONE-HOMES: its name
+import { wildInside } from './wildZone.js';   // WILD-CITY-PORT: the zone's own pixels
 
 /** The settlements' kinds: a city, a town, a village (MapsFile LocationTypes 0-2). */
 export const SETTLEMENT_TYPES = Object.freeze(new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]));
@@ -69,12 +69,6 @@ export function zonePortFree(mask, from, to, feet, mode, index, locAt) {
   return here && (!inZone(to) || isSettlement(locAt(to.x, to.y)));
 }
 
-/** ZONE-HOMES (2026-10-28, the owner: "Imperial City houses still cannot be purchased"): MAY A HOUSE BE BOUGHT HERE.
- *  Outside the zone, yes; in it, only at a door in a settlement's streets (`feet`, settledAt's frame over `index`; null
- *  indoors or underground). PVPDUNGEONS' "no houses" stays the open country's: ZONE-SAFE made the settlements peace.
- *  @param {boolean} inZone @param {ArrayLike<number>|null} feet @param {{ get(key: string): any }} index @returns {boolean} */
-export const zoneHouseFree = (inZone, feet, index) => !inZone || (!!feet && settledAt(feet, index));
-
 // ── the frame's word: am I in the streets of one now ──
 let _safe = false;
 /**
@@ -104,5 +98,4 @@ export const ZONE_SAFE_TEXT = Object.freeze({
   get enter() { return t('wild.safe.enter', 'You are in the streets of a city, town or village: a safe zone. Other players cannot attack you here, and you cannot attack them.'); },
   get leave() { return t('wild.safe.leave', 'You leave the safe streets. Other players may attack you again.'); },
   get rule() { return t('wild.safe.rule', 'Cities, towns and villages are safe zones: no player can attack another in their streets.'); },
-  get noHouse() { return t('wild.safe.noHouse', 'In {zone}, houses are for sale only in cities, towns and villages.', { zone: WILD_NAME }); },
 });

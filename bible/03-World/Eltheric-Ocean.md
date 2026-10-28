@@ -88,7 +88,7 @@ thousand leagues:
 THE FOUR HOSTS (Home.md; AUDIT CAPTAIN'S SEA H12 - the slices named none): the sea, its ships, the crossing, the chart
 and the light are `scenes/world.js`'s - the streaming exterior's, where the sea is. `scenes/exterior.js` (the bench)
 stands no sea: FLAGGED, nothing wired. `scenes/worldModes.js` (an isle town's buildings) is wired where an isle's place
-reaches it - its houses never for sale nor owned by a Betony deed (`houseOwnedAt`, `currentHousesForSale` - P9) - and
+reaches it - its houses never on the bank's list nor owned by a Betony deed (`houseOwnedAt`, `currentHousesForSale` - P9) - and
 otherwise FLAGGED. `scenes/dungeonContext.js` (an isle ruin's halls) builds the cloned dungeon as any spawn's, its elite
 foes its own (`elite`): wired; the light is the exterior's alone there - FLAGGED.
 
@@ -216,8 +216,8 @@ the game's own places (the spawned dungeons' law, `world/spawnedDungeons.js`), w
   a marker, each twice as hard).
 - never `spawned`: no clock, no expiry, no nearby announcement - an isle's place stands for ever - and never a spawn's
   template (`!l.ether` - P3: a session that stood ruins past the Veil first cloned other templates than its party).
-- its houses no deed's: never for sale, never owned by a house of the same key in Betony (`houseOwnedAt` - P9); online
-  never for sale either (`onlineHomes.js:"export const homePurchasable"`, ZONE-HOMES' audit: the door had offered one).
+- its houses no deed's: never on the bank's list, never owned by a house of the same key in Betony (`houseOwnedAt` -
+  P9). Online each is for sale at its door, as any town's (ZONE-HOMES, `11-Multiplayer/Wild-Zone.md` section 29).
 
 **THE TEMPLATES** (`etherTemplates`, kept at boot off the classic rows - HUB1's law, the game's own rows as MAPS.BSA
 holds them, so a client's town pack never moves what an isle stands; read before the rows are let go): towns -
