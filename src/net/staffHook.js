@@ -237,9 +237,9 @@ export function validTags(m) {
  *  links would knock for nothing). Messages from another window or origin are not the panel's.
  *  STAFF-MAP: and `map?` and `regions?` for the region map (`mapOf()`, net/staffMap.js), whose answers go out by `post`.
  *  STAFF-EVENT: and `places?` and `here?` for the Events page, off `placesOf()` - the game's maps and my map pixel.
- *  STAFF-PILOT: and `pilot`, handed to `pilot(m)` (scenes/staffFollowHost.js).
- *  @param {any} win @param {() => any} hookOf @param {{ setTimer?: typeof setTimeout, clearTimer?: typeof clearTimeout, relink?: (() => void) | null, now?: () => number, mapOf?: () => any, placesOf?: () => any, pilot?: ((m: any) => void) | null }} [t] */
-export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer = clearTimeout, relink = null, now = () => Date.now(), mapOf = () => null, placesOf = () => null, pilot = null } = {}) {
+ *  STAFF-PILOT: and `pilot`, handed to `pilot(m)` (scenes/staffFollowHost.js). STAFF-PULL: and `pull`, to `pull(sub)`.
+ *  @param {any} win @param {() => any} hookOf @param {{ setTimer?: typeof setTimeout, clearTimer?: typeof clearTimeout, relink?: (() => void) | null, now?: () => number, mapOf?: () => any, placesOf?: () => any, pilot?: ((m: any) => void) | null, pull?: ((sub: string) => Promise<string>) | null }} [t] */
+export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer = clearTimeout, relink = null, now = () => Date.now(), mapOf = () => null, placesOf = () => null, pilot = null, pull = null } = {}) {
   /** @type {Map<string, (tok: string|null) => void>} */
   const waiting = new Map();
   let seen = false;
@@ -264,7 +264,15 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
     else if (m.dfoStaff === 'regions?') post({ dfoStaff: 'regions', names: mapOf()?.regions() ?? [] });
     else if (m.dfoStaff === 'places?') post(staffPlaces(placesOf()?.maps, m.region));   // STAFF-EVENT: a region's places
     else if (m.dfoStaff === 'here?') post(staffHere(placesOf()?.maps, placesOf()?.pixel ?? null));   // STAFF-EVENT: where I stand
-    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && pilot) { seen = true; pilot(m); }   // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10)
+    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && pilot) { seen = true; pilot(m); }
+    else if (m.dfoStaff === 'pull' && pull && typeof m.sub === 'string' && ID_RE.test(m.sub)) {
+      // STAFF-PULL (2026-10-28, mob: "tpa player so tp them to us"; scenes/staffPullHost.js), no version bump:
+      // { dfoStaff: 'pull', sub } -> { dfoStaff: 'pulled', sub, ok, line } - that account's player brought to me, `line`
+      // what happened in words; a hook before it says nothing
+      const sub = m.sub;
+      seen = true;
+      pull(sub).then((line) => post({ dfoStaff: 'pulled', sub, ok: true, line }), (e) => post({ dfoStaff: 'pulled', sub, ok: false, line: String(e?.message ?? 'The player could not be brought.') }));
+    }   // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10)
   });
   /** @param {string} sub @param {string} room @returns {Promise<string|null>} */
   const askToken = (sub, room) => new Promise((resolve) => {
