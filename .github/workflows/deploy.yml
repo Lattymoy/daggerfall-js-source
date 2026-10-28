@@ -170,6 +170,17 @@ jobs:
           mkdir -p site/preview/pistol-lab
           cp -a production/dist-pistol/. site/preview/pistol-lab/
 
+      # THE SPEAR LAB, the same shape (bible/05-Combat/Spear-Lab.md):
+      # its own config (vite.config.spear.js), mounted at /preview/spear-lab/.
+      - name: Build spear lab
+        run: npx vite build --config vite.config.spear.js
+        working-directory: production
+
+      - name: Mount the spear lab under production site
+        run: |
+          mkdir -p site/preview/spear-lab
+          cp -a production/dist-spear/. site/preview/spear-lab/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

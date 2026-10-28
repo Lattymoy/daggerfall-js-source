@@ -262,6 +262,9 @@ export default defineConfig({
         // hand. Our own art (public/art/pistol-frames.png); nothing the
         // game runs imports src/tools/pistolLab.js.
         pistolProto: 'pistol-proto.html',
+        // THE SPEAR LAB (2026-10-27): the spear's left sweep, right sweep and thrust, from the owner's five frames
+        // (public/art/spear/spear-frames.png); nothing the game runs imports src/tools/spearLab.js.
+        spearProto: 'spear-proto.html',
         // LV1: THE ASCENSION LAB - the enhanced level-up window over a
         // made-up character, so the screen a player sees once a level
         // can be opened on demand, at any size, with no ARENA2 on disk.

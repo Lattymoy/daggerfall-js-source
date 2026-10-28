@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFO Online &mdash; new weapon prototype (spear)</title>
+<link rel="icon" href="data:,">
+<!--
+  THE SPEAR LAB (the owner, 2026-10-27): the next weapon, a spear, with a left sweep, a right sweep and a thrust drawn
+  from the owner's five frames. NOTHING HERE TOUCHES THE GAME: its own page over its own art (public/art/spear/spear-frames.png);
+  src/tools/spearLab.js is the only module it loads and nothing the game runs imports that. Record:
+  bible/05-Combat/Spear-Lab.md.
+
+  Controls: drag with a button held to swing (the game's drag: left, right, up or down). 1, 2, 3 play the left sweep, the
+  right sweep and the thrust; Space is a click attack. Arrows scrub the chosen strike's frames while idle. W walks, A and
+  D strafe, Shift runs, C crouches, S stops. G shows the boxes, T the point's path, Tab hides the panels.
+-->
+<style>
+  html,body { margin:0; height:100%; background:#0d0f12; color:#cdc4a8;
+    font:13px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow:hidden; }
+  canvas { display:block; width:100vw; height:100vh; cursor:crosshair; image-rendering:pixelated; touch-action:none; }
+  .hud { position:fixed; left:12px; top:12px; background:rgba(10,12,16,.82);
+    border:1px solid #55503f; padding:10px 12px; width:min(330px,44vw);
+    max-height:calc(100vh - 40px); overflow:auto; }
+  .hud h1 { margin:0 0 6px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#e0d5ad; }
+  .hud h2 { margin:10px 0 4px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#9c9378; border-top:1px solid #33302a; padding-top:8px; }
+  .hud label { display:flex; align-items:center; gap:8px; margin:2px 0; }
+  .hud label > span:first-child { width:96px; color:#a89e80; flex:none; }
+  .hud input[type=range] { flex:1; min-width:60px; }
+  .hud select { flex:1; background:#15181d; color:#cdc4a8; border:1px solid #454033; }
+  .hud .v { width:46px; text-align:right; color:#c08a3e; flex:none; }
+  .hud p { margin:6px 0 0; color:#8d836c; font-size:12px; }
+  .hud .row { display:flex; gap:6px; margin:4px 0; }
+  .hud button { flex:1; background:#1b1f25; color:#e0d5ad; border:1px solid #55503f; padding:5px 0; font:inherit; cursor:pointer; }
+  .hud button:hover { background:#262b33; }
+  /* never over the panel: at a phone's width the lines wrap in the room the panel leaves */
+  .stat { position:fixed; right:12px; top:12px; background:rgba(10,12,16,.82); max-width:calc(100vw - min(330px,44vw) - 84px);
+    border:1px solid #55503f; padding:8px 10px; color:#9c9378; white-space:pre-wrap; overflow-wrap:anywhere; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <h1>New weapon &mdash; spear</h1>
+
+  <h2>Strikes</h2>
+  <div class="row"><button id="goLeft">&larr; left (1)</button><button id="goRight">right &rarr; (2)</button><button id="goThrust">&uarr; thrust (3)</button></div>
+  <label><span>strike</span><select id="strike">
+    <option value="left">left sweep</option>
+    <option value="right">right sweep</option>
+    <option value="thrust">thrust</option>
+  </select></label>
+  <label><span>loop</span><input id="loop" type="checkbox"><span class="v">repeat</span></label>
+  <label><span>slow motion</span><input id="slow" type="range" min="0.05" max="1" step="0.05" value="1"><span class="v" id="vslow"></span></label>
+  <label><span>smear</span><input id="smear" type="checkbox" checked><span class="v">on</span></label>
+  <label><span>point's path</span><input id="trail" type="checkbox"><span class="v">T</span></label>
+  <label><span>sound</span><input id="sfxOn" type="checkbox" checked><span class="v"></span></label>
+  <label><span>volume</span><input id="sfxVol" type="range" min="0" max="1" step="0.02" value="0.7"><span class="v" id="vsfxVol"></span></label>
+
+  <h2>Swing law &mdash; the game's</h2>
+  <label><span>Speed</span><input id="speed" type="range" min="10" max="100" step="1" value="50"><span class="v" id="vspeed"></span></label>
+  <label><span>Strength</span><input id="strength" type="range" min="10" max="100" step="1" value="50"><span class="v" id="vstrength"></span></label>
+  <p id="law"></p>
+
+  <h2>Placement &mdash; FPSWeapon</h2>
+  <label><span>size &times;native</span><input id="scale" type="range" min="0.5" max="2" step="0.05" value="1"><span class="v" id="vscale"></span></label>
+  <label><span>offset</span><input id="offset" type="range" min="0" max="0.3" step="0.005" value="0"><span class="v" id="voffset"></span></label>
+  <label><span>raise</span><input id="raise" type="range" min="-40" max="40" step="1" value="0"><span class="v" id="vraise"></span></label>
+
+  <h2>Weapon Widget</h2>
+  <label><span>Modules.Bob</span><input id="modBob" type="checkbox" checked><span class="v"></span></label>
+  <label><span>Modules.Inertia</span><input id="modInertia" type="checkbox" checked><span class="v"></span></label>
+
+  <h2>Movement</h2>
+  <label><span>walking</span><input id="walk" type="checkbox"><span class="v">W/S</span></label>
+  <label><span>strafe</span><input id="strafe" type="range" min="-1" max="1" step="1" value="0"><span class="v" id="vstrafe"></span></label>
+  <label><span>running</span><input id="run" type="checkbox"><span class="v">Shift</span></label>
+  <label><span>crouching</span><input id="crouch" type="checkbox"><span class="v">C</span></label>
+
+  <h2>Room</h2>
+  <label><span>light</span><input id="room" type="range" min="0.15" max="1.2" step="0.01" value="0.62"><span class="v" id="vroom"></span></label>
+  <label><span>boxes</span><input id="grid" type="checkbox"><span class="v">G</span></label>
+  <p id="note">loading art&hellip;</p>
+</div>
+<div class="stat" id="stat"></div>
+
+<script type="module">
+import {
+  SPEAR_STRIP, SPEAR_STRIKES, SPEAR_STRIKE_OF, SPEAR_AIM, SPEAR_NUM_FRAMES, CLICK_ATTACK_DIRECTIONS, DIRECTION_TO_STRIKE,
+  spearFrameSet, drawSpearFrames, createSpearMachine, spearAttack, spearStep, spearFrameOf, spearFrameSeconds,
+  createSpearGesture, spearGestureStep, spearPageRect, spearPageState, spearScrubFrame, spearScreenPoint,
+  createGunRig, gunRigStep, gunMotion, gunWidgetSettings, createSfxPlayer, SPEAR_SWING_SFX, spearReleaseFrame,
+} from '/src/tools/spearLab.js';
+import { lookScale } from '/src/ui/lookSettings.js';   // the game's own mouse look, for the Inertia
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const $ = (id) => document.getElementById(id);
+
+// ── the panel: `state` is the lab module's opening, the markup a copy of it ──
+const state = spearPageState();
+const NUM = { slow: 1, speed: 1, strength: 1, scale: 1, offset: 1, raise: 1, strafe: 1, room: 1, sfxVol: 1 };
+const CONTROLS = ['strike', 'loop', 'slow', 'smear', 'trail', 'sfxOn', 'sfxVol', 'speed', 'strength', 'scale', 'offset', 'raise',
+  'modBob', 'modInertia', 'walk', 'strafe', 'run', 'crouch', 'room', 'grid'];
+for (const id of CONTROLS) {
+  const el = $(id), out = $('v' + id);
+  if (el.type === 'checkbox') el.checked = !!state[id]; else el.value = String(state[id]);
+  const read = () => {
+    state[id] = el.type === 'checkbox' ? el.checked : NUM[id] ? parseFloat(el.value) : el.value;
+    if (out) out.textContent = el.type === 'checkbox' ? '' : el.value;
+  };
+  el.addEventListener('input', read);
+  read();
+}
+const setTick = (id, v) => { state[id] = v; $(id).checked = v; };
+const setPick = (id, v) => { state[id] = v; $(id).value = String(v); };
+
+// ── the art: the five cut to 1 bit, carried past their cut, and every strike frame drawn from them (the game's own
+// functions, combat/spearStrip.js, combat/spearStrikes.js). Drawn once at load: each pose's 8x picture is the costly part.
+let art = null;
+const stripImg = new Image();
+function canvasOf(img) {
+  const cv = document.createElement('canvas');
+  cv.width = img.width; cv.height = img.height;
+  const c = cv.getContext('2d');
+  const out = c.createImageData(img.width, img.height);
+  out.data.set(img.data);
+  c.putImageData(out, 0, 0);
+  return cv;
+}
+function compose() {
+  const cv = document.createElement('canvas');
+  cv.width = stripImg.naturalWidth; cv.height = stripImg.naturalHeight;
+  const c = cv.getContext('2d', { willReadFrequently: true });
+  c.drawImage(stripImg, 0, 0);
+  const t0 = performance.now();
+  const set = spearFrameSet(c.getImageData(0, 0, cv.width, cv.height));
+  const drawn = drawSpearFrames(set);
+  const pic = (f) => ({ ...f, img: canvasOf(f.img), smeared: f.smeared && canvasOf(f.smeared) });
+  art = { set, idle: pic(drawn.idle), ...Object.fromEntries(Object.keys(SPEAR_STRIKES).map((k) => [k, drawn[k].map(pic)])) };
+  art.composeMs = Math.round(performance.now() - t0);
+  $('note').textContent = `strip ${cv.width}x${cv.height}: ${SPEAR_STRIP.frames} frames of ${SPEAR_STRIP.cellW}x${SPEAR_STRIP.cellH}. ` +
+    `Strikes drawn in ${art.composeMs} ms: left ${art.left.length}, right ${art.right.length}, thrust ${art.thrust.length} frames.`;
+}
+stripImg.onload = () => { $('note').textContent = 'drawing the strikes…'; setTimeout(compose, 30); };
+stripImg.onerror = () => { $('note').textContent = `art/${SPEAR_STRIP.file} did not load`; };
+stripImg.src = new URL(`art/${SPEAR_STRIP.file}`, document.baseURI).href;
+
+// ── the machine, the drag, the rig ──
+const machine = createSpearMachine();
+const gesture = createSpearGesture();
+const rig = createGunRig();
+const STATE_OF = { left: 'StrikeLeft', right: 'StrikeRight', thrust: 'StrikeUp' };
+const sfx = createSfxPlayer();
+for (const name of SPEAR_SWING_SFX) sfx.load(name).catch(() => {});
+let swings = 0;
+const log = [];   // every frame the machine shows and every hit, as drawn - what the probe reads (no sleeps)
+let shownKey = '';
+let scrub = -1, hitFlash = 0, hits = 0, lastHit = null, lastStrike = null, idleFor = 0;
+let held = false, look = [0, 0], drag = [0, 0];
+const trail = [];
+const attack = (strikeState) => {
+  if (!art || !spearAttack(machine, strikeState)) return false;
+  scrub = -1; lastStrike = strikeState; trail.length = 0;
+  return true;
+};
+$('goLeft').onclick = () => attack('StrikeLeft');
+$('goRight').onclick = () => attack('StrikeRight');
+$('goThrust').onclick = () => attack('StrikeUp');
+// WeaponManager.cs:343: a click attack rolls one of six directions (weaponStates.js CLICK_ATTACK_DIRECTIONS)
+const clickAttack = () => attack(DIRECTION_TO_STRIKE[CLICK_ATTACK_DIRECTIONS[Math.floor(Math.random() * CLICK_ATTACK_DIRECTIONS.length)]]);
+
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('pointerdown', (e) => { held = true; canvas.setPointerCapture?.(e.pointerId); });
+addEventListener('pointerup', () => { held = false; });
+addEventListener('pointermove', (e) => {
+  if (held) drag = [drag[0] + e.movementX, drag[1] + e.movementY];
+  else if (document.pointerLockElement === canvas) { const k = lookScale(); look = [look[0] + e.movementX * k, look[1] - e.movementY * k]; }
+});
+canvas.addEventListener('dblclick', () => canvas.requestPointerLock?.());
+addEventListener('keydown', (e) => {
+  const strike = { Digit1: 'StrikeLeft', Digit2: 'StrikeRight', Digit3: 'StrikeUp' }[e.code];
+  if (strike) attack(strike);
+  if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) clickAttack(); }
+  if (e.code === 'KeyW') setTick('walk', true);
+  if (e.code === 'KeyS') { setTick('walk', false); setPick('strafe', 0); }
+  if (e.code === 'KeyA') setPick('strafe', state.strafe === -1 ? 0 : -1);
+  if (e.code === 'KeyD') setPick('strafe', state.strafe === 1 ? 0 : 1);
+  if (e.code === 'KeyC') setTick('crouch', !state.crouch);
+  if (e.key === 'Shift') setTick('run', true);
+  if (e.code === 'KeyG') setTick('grid', !state.grid);
+  if (e.code === 'KeyT') setTick('trail', !state.trail);
+  if (e.code === 'Tab') { e.preventDefault(); for (const el of document.querySelectorAll('.hud,.stat')) el.style.display = el.style.display === 'none' ? '' : 'none'; }
+  const n = SPEAR_NUM_FRAMES[STATE_OF[state.strike]];
+  if (machine.state === 'Idle' && e.code === 'ArrowRight') scrub = (scrub + 1) % n;
+  if (machine.state === 'Idle' && e.code === 'ArrowLeft') scrub = (scrub - 1 + n) % n;
+  if (e.code === 'Escape') scrub = -1;
+});
+addEventListener('keyup', (e) => { if (e.key === 'Shift') setTick('run', false); });
+
+// ── the room (the guns' labs': a plain lit corridor and a post at the aim, nothing of the game's) ──
+function drawRoom(lit) {
+  const { width: w, height: h } = canvas, horizon = h * 0.56;
+  const g = ctx.createLinearGradient(0, 0, 0, horizon);
+  g.addColorStop(0, `rgb(${18 * lit | 0},${17 * lit | 0},${20 * lit | 0})`);
+  g.addColorStop(1, `rgb(${74 * lit | 0},${66 * lit | 0},${54 * lit | 0})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, horizon);
+  const f = ctx.createLinearGradient(0, horizon, 0, h);
+  f.addColorStop(0, `rgb(${58 * lit | 0},${50 * lit | 0},${40 * lit | 0})`);
+  f.addColorStop(1, `rgb(${22 * lit | 0},${19 * lit | 0},${16 * lit | 0})`);
+  ctx.fillStyle = f; ctx.fillRect(0, horizon, w, h - horizon);
+  ctx.strokeStyle = `rgba(${12 * lit | 0},${11 * lit | 0},${9 * lit | 0},0.85)`;
+  ctx.lineWidth = Math.max(1, w / 640);
+  for (let i = 1; i < 7; i++) { const y = horizon * (i / 7) ** 1.6; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  for (let i = -6; i <= 6; i++) { ctx.beginPath(); ctx.moveTo(w / 2 + i * w * 0.09, horizon); ctx.lineTo(w / 2 + i * w * 0.42, h); ctx.stroke(); }
+  const tw = w * 0.055, th = tw * 2.6, x = w / 2 - tw / 2, y = horizon - th * 0.86;
+  ctx.fillStyle = hitFlash > 0 ? `rgba(190,60,44,${0.35 + 0.65 * hitFlash})` : `rgb(${52 * lit | 0},${46 * lit | 0},${42 * lit | 0})`;
+  ctx.fillRect(x, y, tw, th);
+}
+function drawCrosshair() {
+  const { width: w, height: h } = canvas, r = Math.max(4, w * 0.006);
+  ctx.strokeStyle = 'rgba(220,208,170,0.55)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - r * 2, h / 2); ctx.lineTo(w / 2 - r, h / 2); ctx.moveTo(w / 2 + r, h / 2); ctx.lineTo(w / 2 + r * 2, h / 2);
+  ctx.moveTo(w / 2, h / 2 - r * 2); ctx.lineTo(w / 2, h / 2 - r); ctx.moveTo(w / 2, h / 2 + r); ctx.lineTo(w / 2, h / 2 + r * 2);
+  ctx.stroke();
+}
+
+// ── the frame ──
+let last = performance.now();
+function frame(now) {
+  const real = Math.min(0.1, (now - last) / 1000); last = now;
+  const dt = real * state.slow;
+  const w = innerWidth, h = innerHeight;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+
+  // the drag, then the machine on the spear's clock (the game's law at this Speed and Strength)
+  const struck = spearGestureStep(gesture, drag[0], drag[1], real, held, Math.max(w, h));
+  drag = [0, 0];
+  if (struck) attack(struck);
+  if (machine.state === 'Idle' && art && state.loop) {
+    idleFor += real;
+    if (idleFor > 0.4) { attack(STATE_OF[state.strike]); idleFor = 0; }
+  } else idleFor = 0;
+  const frameBefore = machine.frame;
+  const stateBefore = machine.state;
+  for (const ev of spearStep(machine, dt, { speed: state.speed, strength: state.strength })) {
+    if (ev === 'hit') { hits++; hitFlash = 1; lastHit = { strike: lastStrike, frame: machine.frame }; log.push({ hit: lastStrike, frame: machine.frame, t: now }); }
+  }
+  // the swing's voice at its release, slowed with the blow
+  if (machine.state !== 'Idle' && machine.state === stateBefore && machine.frame !== frameBefore
+    && machine.frame === spearReleaseFrame(SPEAR_STRIKE_OF[machine.state])) {
+    sfx.enabled = state.sfxOn; sfx.volume = state.sfxVol;
+    sfx.play(SPEAR_SWING_SFX[swings++ % SPEAR_SWING_SFX.length]);
+  }
+  hitFlash = Math.max(0, hitFlash - real * 3);
+
+  // Weapon Widget's Offset, Bob and Inertia, the game's (gunViewmodel.js) - still while a blow is in the air, as the mod is
+  const s = gunWidgetSettings({ 'Modules.Offset': false, 'Modules.Bob': state.modBob, 'Modules.Inertia': state.modInertia });
+  gunRigStep(rig, s, dt, {
+    screenRect: { width: w, height: h }, look, idle: machine.state === 'Idle', liveSpeed: state.speed,
+    motion: gunMotion({ walking: state.walk, strafe: state.strafe, running: state.run, crouching: state.crouch, liveSpeed: state.speed }),
+    cursorActive: document.pointerLockElement !== canvas,
+  });
+  look = [0, 0];
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  drawRoom(state.room);
+  drawCrosshair();
+
+  let shown = null;
+  if (art) {
+    const f = scrub >= 0 && machine.state === 'Idle' ? spearScrubFrame(art, state.strike, scrub, state.smear) : spearFrameOf(art, machine, state.smear);
+    const { rect, anchorRect } = spearPageRect(rig, art.set, canvas, state);
+    ctx.drawImage(f.img, rect.x, rect.y, rect.w, rect.h);
+    const tipPx = spearScreenPoint(rect, f.tip);
+    if (machine.state !== 'Idle') { trail.push(tipPx); if (trail.length > 64) trail.shift(); }
+    if (state.trail && trail.length > 1) {
+      ctx.strokeStyle = 'rgba(255,90,200,0.85)'; ctx.lineWidth = 2; ctx.beginPath();
+      trail.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
+    }
+    if (state.grid) {
+      ctx.strokeStyle = 'rgba(192,138,62,0.9)'; ctx.lineWidth = 1; ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      ctx.strokeStyle = 'rgba(120,200,140,0.9)'; ctx.strokeRect(anchorRect.x, anchorRect.y, anchorRect.w, anchorRect.h);
+      ctx.fillStyle = 'rgba(255,90,200,0.9)'; ctx.fillRect(tipPx[0] - 2, tipPx[1] - 2, 5, 5);
+    }
+    shown = { rect, anchorRect, tip: f.tip, tipPx };
+    const key = `${machine.state}:${machine.frame}:${scrub}`;
+    if (key !== shownKey) {
+      shownKey = key;
+      log.push({ state: machine.state, frame: machine.frame, scrub, t: now, tip: f.tip, tipPx, rect: { ...rect } });
+      if (log.length > 600) log.splice(0, log.length - 600);
+    }
+  }
+
+  // the probe's window on the frame (tools/spearProtoProbe.mjs)
+  globalThis.__spearLab = {
+    ready: !!art, log, state: machine.state, frame: machine.frame, frameBefore, hits, lastHit, lastStrike, scrub,
+    rect: shown?.rect ?? null, anchorRect: shown?.anchorRect ?? null, tip: shown?.tip ?? null,
+    frames: art && { left: art.left.length, right: art.right.length, thrust: art.thrust.length }, composeMs: art?.composeMs,
+    channels: { position: [...rig.position], scale: [...rig.scale] },
+  };
+
+  const st = STATE_OF[state.strike];
+  const ms = (sec) => (sec * 1000).toFixed(0);
+  $('law').textContent = `a frame ${ms(spearFrameSeconds(st, state))} ms, the blow ${ms(spearFrameSeconds(st, state) * SPEAR_NUM_FRAMES[st])} ms, ` +
+    `the hit at frame ${SPEAR_STRIKES[state.strike].hit + 1} of ${SPEAR_NUM_FRAMES[st]}`;
+  const playing = machine.state === 'Idle' ? (scrub >= 0 ? `scrub ${state.strike} ${scrub + 1}/${SPEAR_NUM_FRAMES[st]}` : 'Idle')
+    : `${machine.state} (${SPEAR_STRIKE_OF[machine.state]}) ${machine.frame + 1}/${SPEAR_NUM_FRAMES[machine.state]}`;
+  $('stat').textContent = `${playing}\nhits ${hits}${lastHit ? `  last on ${lastHit.strike} frame ${lastHit.frame + 1}` : ''}\n` +
+    `point ${shown ? shown.tip.map((v) => v.toFixed(0)).join(', ') : '-'} on 320x200 (aim ${SPEAR_AIM.join(', ')})\n` +
+    `slow motion x${state.slow}`;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -125,9 +125,9 @@ export function bleedArm(img, lean, bleed = PISTOL_BLEED) {
 }
 
 /** Cell `i` of a decoded strip (`{ width, height, data }`), copied out and hardened at `cut` (hardenAlpha):
- *  `{ width, height, data, soft }` - `soft` the texels the cut cleared. */
-export function cutCell(strip, i, cut = 128) {
-  const r = stripCellRect(i);
+ *  `{ width, height, data, soft }` - `soft` the texels the cut cleared. `layout` is the strip's cells (the spear's too). */
+export function cutCell(strip, i, cut = 128, layout = PISTOL_STRIP) {
+  const r = stripCellRect(i, layout);
   const data = new Uint8ClampedArray(r.w * r.h * 4);
   for (let y = 0; y < r.h; y++) {
     const src = ((y + r.y) * strip.width + r.x) * 4;

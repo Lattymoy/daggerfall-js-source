@@ -936,6 +936,8 @@ const ENVIRONS_DERIVED = "Port-Doctrine's second exception (Mac, 2026-10-08): Da
 const LAYERED_DERIVED = "Port-Doctrine's third exception (the owner, 2026-10-19): the Layered Gearing look's armor, drawn for the game from Daggerfall's own class and enemy sprites, carried on the owner's approval";
 /** DEX0: the fourth exception's mark (the third on its branch, renumbered past LAYERED-GEAR's at the merge) - Daggerfall's own enemy and class sprites under the authors' paint, its own approval. */
 const DEX_DERIVED = "Port-Doctrine's fourth exception (Mac, 2026-10-19): Daggerfall's own enemy and enemy-class sprites, repainted by the mods' authors, carried on Mac's approval";
+/** SPEAR-LAB: the fifth exception's mark - the spear's frames, whose front arm is drawn over Daggerfall's bare-hand sprite. */
+const SPEAR_DERIVED = "Port-Doctrine's fifth exception (the owner, 2026-10-27): the spear's first-person frames, their front arm drawn over Daggerfall's WEAPON10.CIF bare hand, carried on the owner's approval";
 const BUNDLE_ART = new Map([
   // FORAGE1 (2026-09-28): Foraging's seven pictures - the author's own
   // pixel art (tools, a wood bundle, an egg), no Daggerfall record - taken
@@ -1079,6 +1081,11 @@ const BUNDLE_ART = new Map([
   ['public/art/daggerfall-enemy-expansion-repainted/',
     { manifest: 'vendor/daggerfall-enemy-expansion/repainted.files.json', derived: DEX_DERIVED,
       why: "THIRD-PARTY - Daggerfall Enemy Expansion 1.3.4 (Kamer & Kab), carried on Mac's word of the authors' permission; Daggerfall's own sprites under the authors' paint - the Bounty Hunter, the Royal Knight, the Druid, the Necromancer Acolyte, the Rogue Druid, the four riders' new sets and King Lysandus - byte for byte from the bundle (see vendor/daggerfall-enemy-expansion/README.md)" }],
+  // SPEAR-LAB (2026-10-27, the owner: "Approve an exception"): THE FIFTH EXCEPTION - the owner's spear frames, the front
+  // arm of three drawn over WEAPON10.CIF's bare hand; the folder answers to its listing (each file and its sha256).
+  ['public/art/spear/',
+    { manifest: 'public/art/spear/spear.files.json', derived: SPEAR_DERIVED,
+      why: "OURS - the owner's five first-person spear frames for the spear lab, pixels unchanged, carried under the owner's fifth exception; the front arm of frames 1-3 is Daggerfall's WEAPON10.CIF record 2 frame 1, mirrored, its glove repainted (bible/05-Combat/Spear-Lab.md)" }],
   // WINDFALL1: the mod's own three pictures - leaves and a snowflake, the author's pixels (no Daggerfall record).
   ['vendor/windfall/Textures/',
     { manifest: 'vendor/windfall/windfall.files.json',
@@ -1178,13 +1185,15 @@ function exceptionDirs() {
   // ALIKR1/SNOWFALL1: every exception paragraph's line - THE ONE EXCEPTION (Vanilla Enhanced) and THE SECOND EXCEPTION;
   // LAYERED-GEAR: and THE THIRD, whose art sits under vendor/ (the build reaches it through a glob, as Eye of the Beholder's)
   // DEX0: and THE FOURTH, whose class skins live under vendor/ (the player body's sprite index reads them there)
-  const lines = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').filter((l) => /^\s+\*\*THE (?:ONE|SECOND|THIRD|FOURTH) EXCEPTION\b/.test(l));
+  // SPEAR-LAB: and THE FIFTH, the spear's frames
+  const lines = readFileSync(join(root, DOCTRINE), 'utf8').split('\n').filter((l) => /^\s+\*\*THE (?:ONE|SECOND|THIRD|FOURTH|FIFTH) EXCEPTION\b/.test(l));
   return lines.flatMap((line) => [...line.matchAll(/`((?:public|vendor)\/[^`]+\/)`/g)].map((m) => m[1]));
 }
 /** The mark each directory's approval gave it: Vanilla Enhanced's rows the first exception's, the environment packs' the
  *  second's, Layered Gearing's the third's, the enemies' and the class skins' the fourth's - a row in one exception
  *  wearing another's mark is a row approved by the wrong approval. */
 const markFor = (dir) => (dir.startsWith('public/art/vanilla-enhanced/') ? VE4_DERIVED
+  : dir.startsWith('public/art/spear/') ? SPEAR_DERIVED
   : dir.startsWith('vendor/layered-armor/') ? LAYERED_DERIVED
   : dir.startsWith('public/art/daggerfall-enemy-expansion-repainted/') || dir.startsWith('vendor/class-skins/') ? DEX_DERIVED : ENVIRONS_DERIVED);
 /** The derived rows standing outside every directory the exception names. */
@@ -1192,7 +1201,7 @@ const derivedOutside = (rows, dirs) => [...rows].filter(([dir, r]) => r.derived 
 
 test('doctrine VE4: a derived row stands inside the exception Port-Doctrine records, and every row inside it says it is derived', () => {
   const dirs = exceptionDirs();
-  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/', 'vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/', 'vendor/class-skins/Textures/'], 'the doctrine names six directories, under four approvals');
+  assert.deepEqual(dirs, ['public/art/vanilla-enhanced/', 'public/art/sands-of-the-alikr/', 'public/art/snowfall/', 'vendor/layered-armor/', 'public/art/daggerfall-enemy-expansion-repainted/', 'vendor/class-skins/Textures/', 'public/art/spear/'], 'the doctrine names seven directories, under five approvals');
   assert.deepEqual(derivedOutside(BUNDLE_ART, dirs), [], 'repainted game data outside the approved directory');
   for (const d of dirs) assert.ok([...BUNDLE_ART].some(([dir, r]) => r.derived && dir.startsWith(d)), `${d} is approved and no row carries it`);
   // and inside it nothing passes as the port's own: every row there says what it is

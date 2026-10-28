@@ -1,0 +1,263 @@
+[
+  {
+    "name": "SL-rear-lean-never-its-own",
+    "file": "src/combat/spearStrip.js",
+    "old": "export const rearLean = (read) => (read && read[0] / read[1] >= REAR_LEAN[0] / REAR_LEAN[1] ? read : REAR_LEAN);",
+    "new": "export const rearLean = (read) => (read && read[0] / read[1] <= REAR_LEAN[0] / REAR_LEAN[1] ? read : REAR_LEAN);",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-every-run-the-front-arm",
+    "file": "src/combat/spearStrip.js",
+    "old": "  const front = runs.filter((r) => r[1] < w - 1 - REAR_REACH);",
+    "new": "  const front = runs.filter((r) => r[1] < w - 1 + REAR_REACH);",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-lean-the-wrong-way-out",
+    "file": "src/combat/spearStrip.js",
+    "old": "    return den > 0 ? -num / den : null;   // per line IN from the edge, negated: per texel OUT",
+    "new": "    return den > 0 ? num / den : null;   // per line IN from the edge, negated: per texel OUT",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-owner-pixels-not-restored",
+    "file": "src/combat/spearStrip.js",
+    "old": "  for (let y = 0; y < h; y++) out.set(data.subarray(y * w * 4, (y + 1) * w * 4), (y * W + L) * 4);   // the owner's pixels, whole\n",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-front-arm-not-carried",
+    "file": "src/combat/spearStrip.js",
+    "old": "      for (let x = run[0]; x <= run[1]; x++) if (opaque(data, ((h - 1) * w + x) * 4)) put(L + x + dx, h - 1 + t, ((h - 1) * w + x) * 4);",
+    "new": "      for (let x = run[0]; x <= run[1]; x++) if (opaque(data, ((h - 1) * w + x) * 4)) put(L + x + dx, h - 1, ((h - 1) * w + x) * 4);",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-tip-off-the-diagonal",
+    "file": "src/combat/spearStrip.js",
+    "old": "      if (x + y < score) { score = x + y; best = [x, y]; }",
+    "new": "      if (x - y < score) { score = x - y; best = [x, y]; }",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-anchor-the-full-frame",
+    "file": "src/combat/spearStrip.js",
+    "old": "  const anchor = boxes[SPEAR_POSE.rest];",
+    "new": "  const anchor = boxes[SPEAR_POSE.full];",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-cell-on-the-pistol-layout",
+    "file": "src/combat/spearStrip.js",
+    "old": "  const cells = Array.from({ length: SPEAR_STRIP.frames }, (_, i) => cutCell(strip, i, cut, SPEAR_STRIP));",
+    "new": "  const cells = Array.from({ length: SPEAR_STRIP.frames }, (_, i) => cutCell(strip, i, cut));",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-rest-place-by-height",
+    "file": "src/combat/spearStrikes.js",
+    "old": "export const SPEAR_REST_AT = Object.freeze([320 - SPEAR_STRIP.cellW, 200 - SPEAR_STRIP.cellH]);",
+    "new": "export const SPEAR_REST_AT = Object.freeze([320 - SPEAR_STRIP.cellH, 200 - SPEAR_STRIP.cellH]);",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-thrust-not-turned-onto-the-aim",
+    "file": "src/combat/spearStrikes.js",
+    "old": "      F('full', 8, [0, 14], { scale: 0.97, smear: true }),   // on the aim, fully out: the hit",
+    "new": "      F('full', 0, [0, 14], { scale: 0.97, smear: true }),   // on the aim, fully out: the hit",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-left-sweep-the-wrong-way",
+    "file": "src/combat/spearStrikes.js",
+    "old": "      F('full', 24, [-24, 3], SMEAR),",
+    "new": "      F('full', -24, [24, 3], SMEAR),",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-down-sweeps-left",
+    "file": "src/combat/spearStrikes.js",
+    "old": "  StrikeUp: 'thrust', StrikeDown: 'thrust',",
+    "new": "  StrikeUp: 'thrust', StrikeDown: 'left',",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-surface-off-the-stage",
+    "file": "src/combat/spearStrikes.js",
+    "old": "  return [p[0] - stage.x, p[1] - stage.y];",
+    "new": "  return [p[0] + stage.x, p[1] - stage.y];",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-smear-the-hands",
+    "file": "src/combat/spearStrikes.js",
+    "old": "  return (X, Y, qx, qy) => ((X + Y) & 1) === 0 && (qx - ox - tx) + (qy - oy - ty) < HEAD_REACH;",
+    "new": "  return (X, Y, qx, qy) => ((X + Y) & 1) === 0 && (qx - ox - tx) + (qy - oy - ty) > HEAD_REACH;",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-smear-solid",
+    "file": "src/combat/spearStrikes.js",
+    "old": "  return (X, Y, qx, qy) => ((X + Y) & 1) === 0 && (qx - ox - tx) + (qy - oy - ty) < HEAD_REACH;",
+    "new": "  return (X, Y, qx, qy) => (qx - ox - tx) + (qy - oy - ty) < HEAD_REACH;",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-smear-over-the-frame",
+    "file": "src/combat/spearStrikes.js",
+    "old": "        drawTurned(smeared, up, stagePose(frame, pivot, bled, stage));\n",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-turn-sampled-backwards",
+    "file": "src/formats/rotSprite.js",
+    "old": "      const qx = (ux * c - uy * s) / scale + pivot[0] - origin[0], qy = (ux * s + uy * c) / scale + pivot[1] - origin[1];",
+    "new": "      const qx = (ux * c + uy * s) / scale + pivot[0] - origin[0], qy = (-ux * s + uy * c) / scale + pivot[1] - origin[1];",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-turn-keeps-soft-texels",
+    "file": "src/formats/rotSprite.js",
+    "old": "      if (src[si + 3] < 128 || (keep && !keep(X, Y, qx, qy))) continue;",
+    "new": "      if (src[si + 3] < 1 || (keep && !keep(X, Y, qx, qy))) continue;",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-frame-time-not-shared",
+    "file": "src/tools/spearLab.js",
+    "old": "  return classic * MELEE_NUM_FRAMES.StrikeDown / SPEAR_NUM_FRAMES[state];",
+    "new": "  return classic;",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-one-handed-heft",
+    "file": "src/tools/spearLab.js",
+    "old": "    heft: swingHeft(SPEAR_ITEM.weightKg, strength), handling: swingHandling(SPEAR_HANDLING_OF, SPEAR_ITEM.twoHanded),",
+    "new": "    heft: swingHeft(SPEAR_ITEM.weightKg, strength), handling: swingHandling(SPEAR_HANDLING_OF, false),",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-hit-on-the-classic-frame",
+    "file": "src/tools/spearLab.js",
+    "old": "  m.hitFrame = SPEAR_STRIKES[SPEAR_STRIKE_OF[state]].hit;\n",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-classic-frame-counts",
+    "file": "src/tools/spearLab.js",
+    "old": "  m.frames = SPEAR_NUM_FRAMES;\n",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-drag-upside-down",
+    "file": "src/tools/spearLab.js",
+    "old": "  const strike = DIRECTION_TO_STRIKE[gestureDirection(Math.atan2(-g.y, g.x) * 180 / Math.PI)];",
+    "new": "  const strike = DIRECTION_TO_STRIKE[gestureDirection(Math.atan2(g.y, g.x) * 180 / Math.PI)];",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-drag-on-the-sum",
+    "file": "src/tools/spearLab.js",
+    "old": "  if (g.travel / longestDim < threshold) return null;",
+    "new": "  if (Math.hypot(g.x, g.y) / longestDim < threshold) return null;",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-anchor-off-the-canvas-box",
+    "file": "src/tools/spearLab.js",
+    "old": "  x: stage.x + SPEAR_REST_AT[0] + set.anchor.x, y: stage.y + SPEAR_REST_AT[1] + set.anchor.y, w: set.anchor.w, h: set.anchor.h,",
+    "new": "  x: stage.x + SPEAR_REST_AT[0], y: stage.y + SPEAR_REST_AT[1] + set.anchor.y, w: set.anchor.w, h: set.anchor.h,",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL-scrub-unsmeared",
+    "file": "src/tools/spearLab.js",
+    "old": "  return { ...f, img: smear && f.smeared ? f.smeared : f.img };",
+    "new": "  return { ...f, img: f.img };",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL2-opening-smear-on",
+    "file": "src/tools/spearLab.js",
+    "old": "export const SPEAR_OPENING = Object.freeze({ scale: 0.95, offset: 0, raise: -12, speed: 52, strength: 100, smear: false });",
+    "new": "export const SPEAR_OPENING = Object.freeze({ scale: 0.95, offset: 0, raise: -12, speed: 52, strength: 100, smear: true });",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL2-sound-left-to-the-markup",
+    "file": "src/tools/spearLab.js",
+    "old": "    strike: 'left', loop: false, slow: 1, trail: false, grid: false, sfxOn: true, sfxVol: 0.7,",
+    "new": "    strike: 'left', loop: false, slow: 1, trail: false, grid: false,",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL2-opening-not-laid",
+    "file": "src/tools/spearLab.js",
+    "old": "    ...SPEAR_OPENING,\n",
+    "new": "    scale: 1, offset: 0, raise: 0, speed: 50, strength: 50, smear: true,\n",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  }
+]

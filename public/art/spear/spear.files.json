@@ -1,0 +1,12 @@
+{
+  "Title": "The spear's first-person frames",
+  "Author": "the owner",
+  "Note": "Every file under public/art/spear/, with each file's sha256 but this one's. The owner's five frames for the spear lab (SPEAR-LAB, 2026-10-27), pixels unchanged; the front arm of frames 1-3 is drawn over Daggerfall's WEAPON10.CIF record 2, so they are carried under Port-Doctrine's fifth exception. Changing the art changes this listing (test/combat/weapon/spearLab.test.js).",
+  "Files": [
+    "spear-frames.png",
+    "spear.files.json"
+  ],
+  "Sha256": {
+    "spear-frames.png": "58e2241eac01f90971ffb4f4c901cb54b742b8e964f82985e52cbdc751e96487"
+  }
+}
