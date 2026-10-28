@@ -9,12 +9,21 @@ import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // AUDIT GATE-COURTS C
 import { t } from '../systems/textManager.js';   // STAFF-PANEL5-FOLLOW-FIX: a finished /tp's line in the player's language (L10N4)
 export const STAFF_TP_RELAY_MIN = 159;   // world156 now belongs to upstream's arena; unpublished local candidates through 158 are superseded by the combined law.
 export const STAFF_TP_TIMEOUT_MS = 8000;
-export const STAFF_TP_ERRORS = Object.freeze(['offline', 'ambiguous', 'busy', 'private', 'battle', 'unavailable', 'denied']);
+export const STAFF_TP_ERRORS = Object.freeze(['offline', 'ambiguous', 'busy', 'private', 'battle', 'unavailable', 'denied', 'frozen']);
 export const staffTeleportSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_TP_RELAY_MIN;
+/** STAFF-PULL (2026-10-28, mob: "tpa player so tp them to us"): the first relay that carries a pull. An older one
+ *  closes a socket on a `stp` kind it does not know, so a pull is never sent to it. */
+export const STAFF_PULL_RELAY_MIN = 276;
+export const staffPullSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_PULL_RELAY_MIN;
+/** How long a pull waits for the player's game to land: it loads the staff member's place first. */
+export const STAFF_PULL_TIMEOUT_MS = 30000;
 /** STAFF-PANEL5-FOLLOW (design doc "DFO Staff Panel: design", weak spot "TP is visible...": "keep it Admin and Shadow Fang
  *  only"): who the hub answers from the target's where note, never asking the target's game - an Admin (`dev`) or the
  *  Shadow Fang. A Dungeon Master's /tp @player stays today's capture. */
 export const quietTeleportAllowed = (glyphs) => Array.isArray(glyphs) && (glyphs.includes('dev') || glyphs.includes('shadowfang'));
+/** STAFF-PULL: who may bring a player to them - the same Admin and Shadow Fang. It moves another player, so a Dungeon
+ *  Master (no moderation) may not. */
+export const staffPullAllowed = quietTeleportAllowed;
 /** Why the target's game was asked after all: no fresh where note at the hub, or one the asker's game could not place. */
 export const STAFF_TP_FALLBACKS = Object.freeze(['missing', 'mismatch']);
 const token = (v) => typeof v === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(v);
@@ -104,8 +113,22 @@ export function validStaffDestination(d) {
 }
 
 /** Client -> hub. Replies cannot choose a recipient: only a hub ticket. STAFF-PANEL5-FOLLOW: an ask may say it reads a
- *  where note (`nt`), and, by id, that the note it was given does not match (`cap`: ask their game). */
+ *  where note (`nt`), and, by id, that the note it was given does not match (`cap`: ask their game).
+ *  STAFF-PULL: `pull` names a player (by peer id, account or name) and where the staff member stands (`dest`); `landed`
+ *  is that player's game's answer to its ticket - done, or why not (`no`). */
 export function validStaffTeleportIn(m) {
+  if (m?.k === 'pull' && token(m.nonce)) {
+    const dest = validStaffDestination(m.dest);
+    const named = [m.id, m.acct, m.name].filter((v) => v != null).length === 1;
+    if (dest && named && token(m.id)) return { k: 'pull', nonce: m.nonce, id: m.id, dest };
+    if (dest && named && token(m.acct)) return { k: 'pull', nonce: m.nonce, acct: m.acct, dest };
+    if (dest && named && label(m.name)) return { k: 'pull', nonce: m.nonce, name: m.name.trim(), dest };
+    return null;
+  }
+  if (m?.k === 'landed' && token(m.ticket)) {   // why not in `no`: a parsed frame's `error` is the relay's own refusal
+    if (STAFF_TP_ERRORS.includes(m.no)) return { k: 'landed', ticket: m.ticket, no: m.no };
+    return m.no == null ? { k: 'landed', ticket: m.ticket } : null;
+  }
   if (m?.k === 'ask' && token(m.nonce)) {
     const nt = m.nt === 1 ? { nt: 1 } : {};
     if (token(m.id) && m.name == null) return { k: 'ask', nonce: m.nonce, id: m.id, ...nt, ...(m.cap === 1 ? { cap: 1 } : {}) };
@@ -124,10 +147,15 @@ export function validStaffTeleportIn(m) {
  *  or their game's answer - flagged `fb` when it was asked only because the note was missing or did not match. */
 export function validStaffTeleportOut(m) {
   if (m?.k === 'capture' && token(m.ticket)) return { k: 'capture', ticket: m.ticket };
+  if (m?.k === 'pull' && token(m.ticket)) {   // STAFF-PULL: staff bring me to them
+    const dest = validStaffDestination(m.dest);
+    return dest ? { k: 'pull', ticket: m.ticket, dest } : null;
+  }
   if (m?.k !== 'result' || !token(m.nonce)) return null;
   if (STAFF_TP_ERRORS.includes(m.error)) return { k: 'result', nonce: m.nonce, error: m.error };
   if (!token(m.id) || !label(m.name)) return null;
   const who = { k: 'result', nonce: m.nonce, id: m.id, name: m.name, ...(token(m.acct) ? { acct: m.acct } : {}) };
+  if (m.pulled === 1) return { ...who, pulled: 1 };   // STAFF-PULL: the player landed by me
   if (m.via === 'note') {
     const note = validPartyPose(m.note);
     return note ? { ...who, via: 'note', note, ag: Number.isSafeInteger(m.ag) && m.ag >= 0 ? m.ag : 0 } : null;
@@ -226,11 +254,33 @@ export const STAFF_TP_ERROR_TEXT = Object.freeze({
   battle: 'That player is in a battle instance. Use its authorized entry.',
   unavailable: 'The target location is unavailable or their client needs updating.',
   denied: 'The server did not authorize this staff teleport.',
+  frozen: 'That player is frozen. Lift the freeze first.',
 });
 
-/** The request lifetime belongs to the hub connection, not the chat tab. */
-export function createStaffTeleportClient({ send, capture, setTimer = setTimeout, clearTimer = clearTimeout }) {
-  let pending = null, serial = 0;
+/** STAFF-PULL: the line a finished pull says to staff, and the one the player sees on landing. */
+export const staffPullLine = (/** @type {{ name: string }} */ who) => t('net.staffPull.done', '{name} was brought to you (the player can see this).', { name: who.name });
+export const staffPulledLine = () => t('net.staffPull.landed', 'A staff member brought you here.');
+
+/** The request lifetime belongs to the hub connection, not the chat tab. STAFF-PULL: `pull(target, dest)` asks the hub
+ *  to bring a player to `dest`, and `pulled(dest)` is this game landing where staff stand - it resolves to `{}` or
+ *  `{ error }`, which goes back to the hub. Without `pulled` a pull is refused `unavailable`. */
+export function createStaffTeleportClient({ send, capture, pulled = null, setTimer = setTimeout, clearTimer = clearTimeout }) {
+  let pending = null, serial = 0, landing = false;
+  const request = (frame, ms, nonce) => new Promise((resolve, reject) => {
+    if (pending) { reject(new Error('A player lookup is already in progress.')); return; }
+    const timer = setTimer(() => { if (pending?.nonce === nonce) { pending = null; reject(new Error('The player did not answer. They may be offline or need a client update.')); } }, ms);
+    pending = { nonce, resolve, reject, timer };
+    if (!send({ ...frame, nonce })) {
+      pending = null; clearTimer(timer); reject(new Error('Exact player teleport requires an updated, connected server.'));
+    }
+  });
+  async function land(m) {
+    if (landing || !pulled) { send({ k: 'landed', ticket: m.ticket, no: landing ? 'busy' : 'unavailable' }); return; }
+    landing = true;
+    let out;
+    try { out = await pulled(m.dest); } catch { out = { error: 'unavailable' }; } finally { landing = false; }
+    send({ k: 'landed', ticket: m.ticket, ...(STAFF_TP_ERRORS.includes(out?.error) ? { no: out.error } : {}) });
+  }
   function cancel() {
     if (!pending) return;
     const p = pending; pending = null; clearTimer(p.timer);
@@ -238,17 +288,9 @@ export function createStaffTeleportClient({ send, capture, setTimer = setTimeout
   }
   return {
     cancel,
-    ask(target) {
-      if (pending) return Promise.reject(new Error('A player lookup is already in progress.'));
-      const nonce = `tp-${++serial}`;
-      return new Promise((resolve, reject) => {
-        const timer = setTimer(() => { if (pending?.nonce === nonce) { pending = null; reject(new Error('The player did not answer. They may be offline or need a client update.')); } }, STAFF_TP_TIMEOUT_MS);
-        pending = { nonce, resolve, reject, timer };
-        if (!send({ k: 'ask', nonce, ...target })) {
-          pending = null; clearTimer(timer); reject(new Error('Exact player teleport requires an updated, connected server.'));
-        }
-      });
-    },
+    ask(target) { return request({ k: 'ask', ...target }, STAFF_TP_TIMEOUT_MS, `tp-${++serial}`); },
+    /** STAFF-PULL: `target` is `{ id }`, `{ acct }` or `{ name }`. */
+    pull(target, dest) { return request({ k: 'pull', ...target, dest }, STAFF_PULL_TIMEOUT_MS, `tp-${++serial}`); },
     receive(raw) {
       const m = validStaffTeleportOut(raw);
       if (!m) return;
@@ -256,7 +298,8 @@ export function createStaffTeleportClient({ send, capture, setTimer = setTimeout
         let result;
         try { result = capture(); } catch { result = { error: 'unavailable' }; }
         send({ k: 'answer', ticket: m.ticket, ...result });
-      } else if (pending?.nonce === m.nonce) {
+      } else if (m.k === 'pull') void land(m);
+      else if (pending?.nonce === m.nonce) {
         const p = pending; pending = null; clearTimer(p.timer);
         if ('error' in m) p.reject(new Error(STAFF_TP_ERROR_TEXT[m.error])); else p.resolve(m);
       }
