@@ -1018,8 +1018,7 @@ export function createComeSailAwayRuntime(deps) {
     state.lastWeight = 0;
     helmHanded = null;   // AUDIT NAV2 F14: the next helm takes the Ship handling as it stands then
     // HELM-SIGHT: let go from a jump's landing (OnWorldReanchored), she keeps her own pixel and is shown or hidden for it
-    const afar = !!boat.helmAfar;
-    boat.helmAfar = false;
+    const afar = !!boat.helmAfar;   // cleared where the player is let go (stopSailingTail, or the delayed stop's unparent)
     if (!afar) boat.MapPixel = deps.currentMapPixel();
     ResetTimeScale();
     boat.ActiveObject?.setActive(false);
@@ -1051,12 +1050,16 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** StopSailing past its head: the player set down at the helm, the freeze lifted, OnUpdateSailing(false). */
   function stopSailingTail(currentBoat) {
+    // HELM-SIGHT (its fold into #1184): let go from afar, the player stays where the jump set them - set down at her far
+    // helm, as the C# sets a helmsman down, the A1 let-go took them back to the departure all the same
+    const afar = !!currentBoat.helmAfar;
+    currentBoat.helmAfar = false;
     state.CurrentBoat = null;
     currentBoat.way = 0;   // PASSAGE-PACE - AUDIT HORIZONTAL C9: off her helm she makes none, and the leads read none
     state.gale = null;   // SERPENT4: off her helm, no gale is hers
     state.oarThrottle = 0;   // HELM-LADDER: the oars shipped with the helm left
     unparentPlayer();
-    deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);
+    if (!afar) deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);
     deps.helm.freeze(0);
     raise('OnUpdateSailing', false);
   }
@@ -1073,6 +1076,7 @@ export function createComeSailAwayRuntime(deps) {
   function resumeStopSailing(co) {
     if (state.disembarking !== co) return false;   // AUDIT PRE-MERGE 0928 S1: ended already - a load's start ended it (EndDisembark)
     if (co.phase === 'unparent') {
+      co.boatlast.helmAfar = false;   // HELM-SIGHT: the helm let go
       state.CurrentBoat = null;
       state.gale = null;   // SERPENT4
       unparentPlayer();
@@ -1685,6 +1689,10 @@ export function createComeSailAwayRuntime(deps) {
     if (state.wasPaused && f(deps.timeScale?.() ?? 1) !== 1 && !state.isTravelling) ResetTimeScale();
     state.wasPaused = false;
     recoverLostBoats();   // FIELD BUGS 29h (LOST-BOAT): the port's own
+    // AUDIT HELM-SIGHT A1: a helm still held from another pixel when the frame runs again is one no landing let go - a
+    // party's journey to a pixel this client does not stream (world.js _streamedLanding takes the landing's word away).
+    // It pinned the player back at the departure helm; it is let go from there, as a fast travel lets it go.
+    if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();
     if (isSailing() && state.CurrentBoat != null) updateSailing();
     if (!waveOn() || animatedWaterWaves()) return;   // (4769) `!wave || waveObject == null || (AnimatedWater != null && AWVertexWaves)`
     const step = stepWaveFrame(state.waveFrameIndex, state.waveFrameTimer, waveFrameTimeOf(setting('Waves.Speed', 100)), dt(), WAVE_FRAME_COUNT, isDayHour(deps.hour?.() ?? 12));

@@ -15,7 +15,7 @@ runtime, a test that fails at the head, or quoted lines and their order - before
 Twelve found, two of them twice (A2 is C3, A4 is C4). Every defect is fixed or its record corrected. Each fix in code
 carries an `AUDIT HELM-SIGHT <id>` comment and is pinned by a test that fails on the code as it stood
 (`test/systems/comeSailAway/audit_helmsight.test.js`, `test/scenes/audit_helmsight_world.test.js`), with mutants the
-pins kill in `tools/mutants/audit_helmsight.json` (7, all dead). The commit's own lists were re-aimed and run again:
+pins kill in `tools/mutants/audit_helmsight.json` (11, all dead, after the fold below). The commit's own lists were re-aimed and run again:
 `fb1027_helmsight.json` 5 of 5 dead, `field_csa1.json` 14 of 14. Lane C's four survivors, re-aimed, die (3, 1, 6 and 4
 failing).
 
@@ -32,12 +32,21 @@ The leader stands where the follower's world does not stream (TAMRIEL2's land is
 `_teleportToPixel` takes the landing's word away there
 (`world.js:"if (unstreamed) { px = unstreamed.px; py = unstreamed.py; localPos = null; resolveArrival = null; }"`) - the
 only place a party's journey lets go. The fare was paid, and when the arrival's hold lifted the helm pinned the player
-back at the departure. Fixed in `fastTravelTo`'s party arm, after the jump and before anything awaits
-(`world.js:"if (csaRuntime?.isSailing()) csaCall(() => csaRuntime.OnPreFastTravel());"`); the teleport core's one
-`csaPreJump` and its pins stand.
+back at the departure. The teleport core's one `csaPreJump` and its pins stand. The fix stands in the runtime (below,
+THE FOLD).
 
-Pinned on the production `fastTravelTo` itself (`partyArrivalTransaction.test.js`, whose stub runtime now holds a helm as
-the runtime does) and by its place in it (`audit_helmsight_world.test.js`).
+THE FOLD (into #1184, 2026-10-28). The audit first let the helm go in `fastTravelTo`'s party arm, after the jump. Folded
+into the Tamriel branch, whose bootWorld had no room for it, the fix moved, and moving it found it had fixed nothing:
+StopSailing sets the player down at her helm, as the C# sets a helmsman down, so a let-go after the landing took them
+back to the departure all the same, no longer sailing. Its pins could not see it - the transaction stub's StopSailing
+moves no one, and the runtime pin stood the player at the landing after the let-go.
+
+Now the runtime lets go: a helm still held from another pixel when the mod's frame runs again is one no landing let go
+(`comeSailAway.js:"if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();"`), and a let-go from afar leaves the
+player where the jump set them (`stopSailingTail`). World.js holds the mod's frame through a party's wait, so a landing
+still to come lets go first. Pinned with the player measured after the frame (`audit_helmsight.test.js`), the frame held
+through the wait (`audit_helmsight_world.test.js`), and the journey ending with the helm held and the frame free
+(`partyArrivalTransaction.test.js`, whose stub runtime now holds a helm).
 
 **A2 (minor; at the base too - C3). A landing one pixel off stamped the landing's pixel on her.** `helmAfar` took the
 sight radius (`> 1`); the wrong stamp needs only another pixel. Her save carried it, and she stood or hid by the wrong
@@ -51,7 +60,8 @@ Disembark key reaches it. A disembark in flight is a helm let go now (`state.dis
 **A4 (head against base - C4). The held boat was heard from the departure while the landing was pending.** In sight for
 her sails, her loops played at the rolloff's floor through the arrival's build and its wait (`PARTY_ARRIVAL_WAIT_MS`); the
 loops' frame has no pause gate. The world host plays no loop of a boat whose helm is held from another pixel
-(`csaAudioFrame`, `boat.helmAfar`); home again or let go, the flag clears.
+(`csaAudioFrame`, `boat.helmAfar` - in `src/scenes/csaAudio.js` on the Tamriel branch, where HOST-SPLIT moved the loops'
+frame); home again or let go, the flag clears.
 
 ## Lane B - the report
 

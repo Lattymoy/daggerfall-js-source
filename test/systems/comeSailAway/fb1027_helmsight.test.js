@@ -27,7 +27,8 @@ function jumpedAndBack(hull) {
   px.X = FAR_PIXEL;
   s.rt.OnWorldReanchored([0, 0, 0]);
   const shownAway = boat.GameObject.activeSelf;
-  for (let i = 0; i < 4; i++) s.frame();
+  // the party's wait: world.js holds the mod's frame (`_partyArrivalPending`), and its Animators still step
+  for (let i = 0; i < 4; i++) { s.rt.endOfFrame(); s.rt.fixedUpdate({ paused: true }); s.rt.update({ paused: true }); s.rt.lateUpdate({ paused: true }); }
   px.X = 10;
   s.rt.OnWorldReanchored([0, 0, 0]);
   for (let t = 0; t < 15; t += 0.25) s.frame();

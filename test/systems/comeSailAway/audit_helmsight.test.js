@@ -77,13 +77,28 @@ test('AUDIT HELM-SIGHT A4: held from another pixel she is marked so (the world h
   assert.equal(s.rt.isSailing(), true);
 });
 
-test('AUDIT HELM-SIGHT A1 (the runtime half): the let-go world.js now makes after a party\'s jump to a pixel it does not stream leaves nothing pinning the player to her helm', () => {
+test('AUDIT HELM-SIGHT A1: a helm still held from another pixel when the frame runs again - a party\'s jump to a pixel this client does not stream, no landing to let it go - is let go there, never pinning the player back at the departure', () => {
   const { s, boat, px } = underWay();
   jump(s, px, { X: 40, Y: 20 });   // the core took the landing's word away: nothing let go there
-  s.rt.OnPreFastTravel();   // fastTravelTo's party arm, after the jump
   s.player.position = [400, 30, 400];   // stood at the landing
-  s.frame();
+  s.frame();   // the journey over, world.js lets the mod's frame run
   assert.equal(s.rt.isSailing(), false);
   assert.deepEqual(s.player.position, [400, 30, 400], 'not pinned back at the departure helm');
   assert.deepEqual([boat.MapPixel, boat.GameObject.activeSelf], [{ X: 10, Y: 20 }, false]);
+});
+
+test('AUDIT HELM-SIGHT A1: through the party\'s wait (the mod\'s frame held) the helm stays held - only the frame that runs again lets it go', () => {
+  const { s, px } = underWay();
+  jump(s, px, { X: 40, Y: 20 });
+  for (let i = 0; i < 4; i++) { s.rt.endOfFrame(); s.rt.fixedUpdate({ paused: true }); s.rt.update({ paused: true }); s.rt.lateUpdate({ paused: true }); }
+  assert.equal(s.rt.isSailing(), true, 'a landing still to come may yet let it go itself, or bring her back aboard');
+});
+
+test('AUDIT HELM-SIGHT C5 (the fold): a disembark begun while the helm is held from another pixel clears the flag as it lets go - her loops are heard again', () => {
+  const { s, boat, px } = underWay();
+  jump(s, px, { X: 40, Y: 20 });
+  assert.equal(boat.helmAfar, true);
+  s.rt.StopSailingDelayed();
+  s.rt.endOfFrame();   // the stop's unparent, at the frame's end
+  assert.equal(boat.helmAfar, false);
 });

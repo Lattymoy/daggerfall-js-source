@@ -218,11 +218,10 @@ test('PARTY-FOLLOW besideLeaderLanding: the leader\'s feet into this scene\'s fr
   assert.deepEqual(second.pos.map((v) => Math.round(v * 1000) / 1000), [10 + BESIDE_OFFSETS[1][0], leaderY, 20 + BESIDE_OFFSETS[1][1]].map((v) => Math.round(v * 1000) / 1000), 'seat 1 starts at the ring\'s second spot');
 });
 
-test('AUDIT HELM-SIGHT A1: a follower at her helm sent to a pixel this client does not stream lets it go once the jump is made - never pinned back at the departure', async () => {
+test('AUDIT HELM-SIGHT A1: a follower at her helm sent to a pixel this client does not stream - the journey ends with the helm held and the mod\'s frame free, so the runtime lets it go at its next frame (audit_helmsight.test.js)', async () => {
   const h = host({ boat: true, unstreamed: true });
   assert.equal(h.helmHeld(), true, 'at her helm as the journey begins');
   assert.equal(await h.run(h.pick, {}, fare), true);
-  assert.equal(h.helmHeld(), false, 'let go from afar');
-  assert.equal(h.events.filter((e) => e === 'pack').length, 1, 'once - OnPreFastTravel, as any fast travel lets it go');
-  assert.ok(h.events.indexOf('pack') > h.events.indexOf('build:300'), 'after the jump: the landing is sure');
+  assert.equal(h.helmHeld(), true, 'no landing let it go');
+  assert.equal(h.flags()[1], false, 'the arrival\'s hold lifted: the mod\'s frame runs again');
 });

@@ -14615,9 +14615,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       }
       if (partyArrival) {
         payFare();
-        // AUDIT HELM-SIGHT A1: a pixel this client does not stream took the landing's word away (_streamedLanding), so
-        // nothing let the helm go - it pinned the player back at the departure. Let go here, from afar.
-        if (csaRuntime?.isSailing()) csaCall(() => csaRuntime.OnPreFastTravel());
         const boat = [...csa.peerBoats, ...csa.boats].find((b) => typeof beside?.groundKey === 'string'
           && beside.groundKey.startsWith(`csaBoat:${csaBoatId(b)}:`));
         if (boat) csaAboard.board(boat, CSA_ABOARD_GRACE);

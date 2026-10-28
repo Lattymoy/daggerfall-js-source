@@ -791,7 +791,8 @@ HELM-SIGHT (2026-10-27, `01-Overview/bugs/Field-Bugs-2026-10-27.md`, read cold b
 `01-Overview/audits/Audit-Helm-Sight.md`) departs from StopSailing for a helm let
 go from another pixel than hers: a party's journey lets it go from its landing.
 Her own pixel stays on her, where the C# stamps the player's, and her visibility
-is asked for it (`stopSailingHead`).
+is asked for it (`stopSailingHead`); the player stays where the jump set them,
+where the C# sets the helmsman down at the helm (`stopSailingTail`).
 
 ### The collision and the beach
 
