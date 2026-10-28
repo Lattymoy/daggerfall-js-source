@@ -1,0 +1,69 @@
+[
+  {
+    "name": "WCP-the-city-end-refused",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "  return here && (!inZone(to) || isSettlement(locAt(to.x, to.y)));",
+    "new": "  return here && !inZone(to);",
+    "tests": [
+      "test/systems/wild/wildcityport.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "WCP-the-end-i-stand-at-refused",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "  const here = !inZone(from) || (feet ? settledAt(feet, index) : mode === 'interior' && isSettlement(locAt(from.x, from.y)));",
+    "new": "  const here = !inZone(from);",
+    "tests": [
+      "test/systems/wild/wildcityport.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "WCP-a-dungeon-free",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": ": mode === 'interior' && isSettlement(locAt(from.x, from.y)));",
+    "new": ": isSettlement(locAt(from.x, from.y)));",
+    "tests": [
+      "test/systems/wild/wildcityport.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "WCP-the-streets-a-pixel",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "(feet ? settledAt(feet, index) :",
+    "new": "(feet ? isSettlement(locAt(from.x, from.y)) :",
+    "tests": [
+      "test/systems/wild/wildcityport.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "WCP-the-old-law",
+    "file": "src/scenes/world.js",
+    "old": "    if (zonePortFree(m, from, to, wildOutdoors() ? campToWire(player.feetAt()) : null, modes?.mode, locationIndex, _locationToBuild)) return false;",
+    "new": "    if (!(from && wildInside(m, from.x, from.y)) && !(to && wildInside(m, to.x, to.y))) return false;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "WCP-the-teleport-the-journeys",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "  return { ok: true, fee: 0 };   // WILD-CITY-PORT: nor the zone's journey law",
+    "new": "  return _zone;   // WILD-CITY-PORT: nor the zone's journey law",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "WCP-the-press-city-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "if (!this._zoneMap && this._zoneLaws() && !this._portalCityAt(sx, sy)) {",
+    "new": "if (!this._zoneMap && this._zoneLaws()) {",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  }
+]
