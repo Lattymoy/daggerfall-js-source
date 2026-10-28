@@ -432,6 +432,7 @@ on:
       - "vendor/iliac-puddle-no-more/ItemTemplates.json"
       - ".github/workflows/account-deploy.yml"
       - "tools/discordModCommands.mjs"
+      - "tools/stripeMethods.mjs"
       - "tools/lib/isMain.mjs"
       - "src/systems/legacy/revived.js"
       - "src/poi/poiLaw.js"
@@ -978,6 +979,31 @@ jobs:
             echo "- Stripe webhook secret: $([ -n "${STRIPE_WEBHOOK_SECRET}" ] && echo put || echo 'not set - the shop is closed')"
             echo "- the Stripe webhook endpoint's URL: \`$base/v1/shop/webhook\` (events: checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created, charge.dispute.closed)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # SHOP-LOCAL (bible/06-Systems/Shop.md): THE SHOP'S WAYS TO PAY, SET BY THE DEPLOY - iDEAL, Wero, Bancontact, EPS,
+      # BLIK, Przelewy24, PayPal and Revolut Pay turned on in the Stripe account's default payment method configuration
+      # (tools/stripeMethods.mjs; the list is shop.js SHOP_PAY_METHODS), and the summary says which Stripe has active.
+      # Every deploy; a method already on is not asked again. Never red: cards are taken either way, so a refusal is a
+      # warning and its line. Skipped, said, with no key. The key is an env var, never an argument and never echoed.
+      - name: Turn on the shop's ways to pay, where the repository has the Stripe key
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          set -uo pipefail
+          if [ -z "${STRIPE_SECRET_KEY}" ]; then
+            echo "STRIPE_SECRET_KEY is not set - the ways to pay are left as they are"
+            exit 0
+          fi
+          err="$RUNNER_TEMP/stripe-methods.err"
+          out=$(node tools/stripeMethods.mjs 2> "$err")
+          code=$?
+          echo "$out"
+          { echo ""; echo "#### The ways to pay"; echo ""; echo "$out"; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -ne 0 ]; then
+            cat "$err"
+            { echo ""; echo "**Not set:** $(head -c 300 "$err")"; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::the shop's ways to pay were not set - $(head -c 300 "$err")"
+          fi
 
       # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's
       # ANTHROPIC_API_KEY (server-account/src/modAi.js) and the Discord bot's DISCORD_BOT_TOKEN (discord.js), each put

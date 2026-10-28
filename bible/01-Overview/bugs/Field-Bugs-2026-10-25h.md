@@ -105,7 +105,7 @@ and the Iliac table's (`server/src/index.js:"async _iliacVouch(a, m, now, refuse
 way. The game's own `canTake` still reads the remains' `oid` as the fallen's peer (a seizure's carrier is its killer),
 so the killer's party and guild see no pile of a remains the room would let them take.
 
-DEPLOY: the account service `acct207` (acct193 to acct206 on its branch, renumbered past COPY-LIFT, NIRNROOT-SAGE, LOCKPICK, WOVEN-PAYS, JEWEL-KIN, FIELD BUGS 2026-10-26r, MASTER-ART, SEA-OPEN, APPEARANCES, HUNTERS-MARK, LEVEL-45 and SHOP at the merges) first (its order's `wnm` - an older relay ignores the field), then the relay
+DEPLOY: the account service `acct208` (acct193 to acct207 on its branch, renumbered past COPY-LIFT, NIRNROOT-SAGE, LOCKPICK, WOVEN-PAYS, JEWEL-KIN, FIELD BUGS 2026-10-26r, MASTER-ART, SEA-OPEN, APPEARANCES, HUNTERS-MARK, LEVEL-45, SHOP and SHOP-LOCAL at the merges) first (its order's `wnm` - an older relay ignores the field), then the relay
 `world277` (world265 to world276 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, FIELD BUGS 2026-10-26r, APPEARANCES and HUNTERS-MARK, LADDER-CUT, SD-PARTY and TESA and SHOP at the merges), then the site.
 
 LIMITS (`11-Multiplayer/Wild-Zone.md` section 22): a page that comes back outside the zone, or inside one of its
