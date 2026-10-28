@@ -88,6 +88,7 @@ import { createMwMagicFx } from './mwMagicFx.js';   // MW-SPELLFX1: Morrowind's 
 import { egAllyLook } from '../ui/eliteGates/egAccess.js';   // EG-ZG (Elite-Gates.md section 25.4): THE QUIET COMPANY - another player's spell effects in a Spire trial
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // EG-ZG: an ally's flat drawn translucent, as a revealed foe's is (alpha alone)
 import { fpsSpellCasting } from '../combat/fpsSpellCasting.js';   // CAST-SPEED: the ONE pair of hands, whose motion gates the click
+import { reportPlayerAttack } from '../combat/formulas.js';   // SPELL-NUMBERS: my spell's landing pops its number, as a blow's does
 import { spellHandUp, spellHandBusy, tellCastPending, CAST_PRESS } from '../combat/twoHands/spellHand.js';   // SPELL-HAND: a spell in the free hand beside a weapon - the swing is the weapon's
 export { CAST_PRESS };   // SPELL-HAND: the cast's own press, handed on - the hosts ask the magic door for it, never a two-hands module (TWO-HANDS, THE FOUR HOSTS)
 
@@ -808,9 +809,11 @@ export function createPlayerMagic({
     // a school's next uses learn by that foe, as a weapon's do; only a blow ever said so, and a fireball at an Ancient
     // Lich counted as a light cast in an empty room (the quarter, UNCHALLENGED_MAGIC_WEIGHT)
     if (mine && foe?.entity && foe.entity.team !== 'PlayerAlly') noteSkillChallenge(playerEntity, foe.entity);
+    let dealt = 0;   // SPELL-NUMBERS: what MY landing struck off the foe, for the damage numbers
     const landing = sinks?.hurt ? { ...sinks, hurt: (n, o) => {
       const d = o?.whole || o?.round ? n : blowTaken(n, striker, foe.entity, null, { kind: 'spell', element: spell?.element ?? null });
       if (mine && !o?.round) noteFeudHarm(foe.entity, elementFeudClass(spell?.element), d);
+      if (mine && !o?.round && Number.isFinite(d) && d > 0) dealt += d;   // SPELL-NUMBERS
       return sinks.hurt(d, { ...(o ?? {}), element: spell?.element ?? null });   // RVN3: the element rides to the door (its weakness's weight)
     } } : sinks;
     const healthBefore = foe?.entity?.health;
@@ -821,6 +824,9 @@ export function createPlayerMagic({
     if (caster?.entity === playerEntity && foe?.entity && r) {
       tellSpellLanded({ caster: playerEntity, target: foe.entity, foe, spell, r, self: false, took: tookOf(r, healthBefore), cast: caster.cast ?? null });
     }
+    // SPELL-NUMBERS (2026-10-28, a player: "they only show on the boss"): MY spell's landing on any foe pops its number
+    // as a blow's does (ui/hitNumbers.js, the enhanced HUD's) - only the court's boss and the relay's stand-ins said one
+    if (dealt > 0) reportPlayerAttack({ hit: true, damage: Math.round(dealt), target: foe.entity });
     if (foe?.ai?.feet && !(r?.saved || r?.chanceFailed || r?.reflected)) mwFx.hit(spell, foe.ai.feet, { body: { height: foe.ai.height ?? CAPSULE_HEIGHT, radius: foe.ai.radius ?? PLAYER_BODY_RADIUS } });
     // STRIKE-SHARED (2026-09-29): ANOTHER PLAYER'S strike spell, landed here on the foe I own (`ctx.peerCaster` its id).
     // The trap's line is its caster's and not mine to speak, and a new trap is marked with whose it is - its soul goes
