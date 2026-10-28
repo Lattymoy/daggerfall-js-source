@@ -402,7 +402,8 @@ test('TESA-LANDS THE WIRING: the kernel lays the landmarks past the Bay and keep
   assert.match(read('src/world/terrain/terrainGenWorker.js'), /if \(out\.landProps\?\.length\) transfer\.push\(out\.landProps\.buffer\);/);
   const pb = read('src/scenes/pixelBuild.js');
   assert.match(pb, /nature, withRoads, paths, landProps, wodAverages,/);
-  assert.match(pb, /const landStood = lands \? standLandProps\(px, py, landProps, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) : null;\n\s+const offLand = landFeetOff\(landStood\?\.set\.props, TERRAIN_SIZE \/ WORLD_MAP_TILE_DIM\);\n\s+for \(const f of nature\) \{/, 'stood before the flats, which keep off the kept ones\' feet');
+  // PIN MOVED (LAVA-CLEAR): the landmarks stood off the fire's clearing first (scenes/ghostfenceBuild.js clearedLandProps)
+  assert.match(pb, /const landStood = lands \? standLandProps\(px, py, fire \? clearedLandProps\(fire, landProps\) : landProps, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) : null;\n\s+const offLand = landFeetOff\(landStood\?\.set\.props, TERRAIN_SIZE \/ WORLD_MAP_TILE_DIM\);\n\s+for \(const f of nature\) \{/, 'stood before the flats, which keep off the kept ones\' feet');
   assert.match(pb, /\n\s+if \(offLand\?\.\(f\.x, f\.z\)\) continue;/);
   assert.match(pb, /\n\s+if \(landStood\) coverItems\.push\(\.\.\.landStood\.bodies\);/);
   assert.match(pb, /landProps: landStood\?\.set \?\? null,/);
