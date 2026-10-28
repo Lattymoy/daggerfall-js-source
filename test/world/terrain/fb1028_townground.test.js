@@ -47,6 +47,8 @@ const ground = (f) => { const g = new Float32Array(H * H); for (let x = 0; x < H
 const blend = (g, shape) => { const s = Float32Array.from(g); const target = blendLocationTerrain(s, 0.5, { xMin: 0, xMax: 127, yMin: 0, yMax: 127, shape }, H, Float32Array.from(g)); return { s, target }; };
 /** Every sample a tile of the town's ground touches. */
 const insideOf = (mask) => { const out = []; for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) if (mask[x + y * D]) for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) out.push((x + a) * H + y + b); return out; };
+/** AUDIT FB1028 A2: every sample a tile of the town's ground within a tile of a building's touches (a model overhangs). */
+const stoodOf = (shape, mask) => insideOf(mask.map((v, i) => (v && shapeFieldDistance(shape[i]) <= 1 ? 1 : 0)));
 
 test('FB1028 the shore: a town over its sea meets it on a slope no steeper than SHAPE_GRADE allows - the sea it needs lifted, the sea past it kept; TS2 kept the sea a sample off its ground and stood a cliff there (mutants: the sea never lifted; the grade unread)', () => {
   // the sea west of x = 40, the land rising a metre a sample from 36 m; a town's buildings from x 42, its margin over the sea
@@ -102,9 +104,55 @@ test('FB1028 the pixel\'s edge: a town\'s margin keeps off the band its ease nee
   assert.equal(level[60 + SHAPE_EDGE_TILES * D], 1, 'level land: the margin to the band\'s least');
   assert.equal(level[60 + (SHAPE_EDGE_TILES - 1) * D], 0);
   // a town whose own buildings stand in the band: its ground flat under them to the last sample but the edge's
+  // PIN MOVED (AUDIT FB1028 A2): every sample a building stands on, not every sample of its ground - the margin's in the
+  // band eases with the seam
   const near = shapeOf(20, 100, 1, 100, 4), n2 = blend(g, near), m2 = townGroundMask(near, Float32Array.from(g));
-  for (const i of insideOf(m2)) if (i % H !== 0) assert.equal(n2.s[i], Math.fround(n2.target), 'its buildings\' ground at its level');
+  for (const i of stoodOf(near, m2)) if (i % H !== 0) assert.equal(n2.s[i], Math.fround(n2.target), 'its buildings\' ground at its level');
   for (let x = 0; x < H; x++) assert.equal(n2.s[0 + x * H], g[0 + x * H], 'the edge the land\'s own under its buildings too');
+});
+
+test('AUDIT FB1028 A2 the seam: where a town\'s own ground reaches the band its seam needs, the run eases from its last stood sample out to the edge - FB1028 kept the margin at the town\'s level to the edge\'s last sample but one, a cliff there (mutants: the band\'s run unread; the stood samples unread)', () => {
+  // the land level at 100 m, rising 6 m a sample over the last 8 to the south edge (148 m there); buildings from y 3, x 30
+  const g = ground((x, y) => norm(100 + 6 * Math.max(0, 8 - y)));
+  const shape = shapeOf(30, 90, 3, 100, 6), { s, target } = blend(g, shape), mask = townGroundMask(shape, Float32Array.from(g));
+  assert.equal(mask[60 + 2 * D], 1, 'the margin\'s tile beside the buildings is the town\'s ground in the band');
+  for (const i of stoodOf(shape, mask)) assert.equal(s[i], Math.fround(target), 'every sample a building stands on at the level');
+  for (let x = 0; x < H; x++) assert.equal(s[0 + x * H], g[0 + x * H], 'the edge the land\'s own');
+  // the core's corner tile (29, 2), a tile and a half off the buildings, is the town's ground no model reaches: it
+  // eases with the seam, FB1028 held it at the level
+  assert.ok(shapeFieldDistance(shape[29 + 2 * D]) > 1 && mask[29 + 2 * D] === 1, 'the corner\'s tile the town\'s, past a tile');
+  const corner = s[2 + 29 * H];
+  assert.ok(corner > target + norm(1) && corner < g[2 + 29 * H], `the corner eased toward the edge (${((corner - target) * M).toFixed(2)} m over the level)`);
+  // buildings on the edge row itself: the edge still the land's (mutant: the edge row blended)
+  const onEdge = blend(g, shapeOf(30, 90, 0, 100, 6)).s;
+  for (let x = 0; x < H; x++) assert.equal(onEdge[0 + x * H], g[0 + x * H], 'the edge the land\'s own under buildings on it');
+});
+
+test('AUDIT FB1028 A3 tall relief: the departure the ease keeps never falls as the land stands further off its town at the same distance, so a hill beside a town keeps its order - FB1028 read each sample\'s reach off its own height and dug a pit on the flank (mutants: the cone unread; the smoothstep alone)', () => {
+  // a town at 200 m; east of it the land climbs 10 m a sample northward, 0 to 280 m over the town's level
+  const g = ground((x, y) => norm(200 + (x > 78 ? 10 * Math.max(0, Math.min(28, y - 50)) : 0)));
+  const shape = shapeOf(54, 70, 54, 70, 3), { s, target } = blend(g, shape);
+  assert.ok(Math.abs(target * M - 200) < 0.5, 'the town at its land\'s level');
+  for (const x of [80, 84, 90, 100, 110]) {
+    let last = -Infinity;
+    for (let y = 54; y <= 70; y++) {
+      const off = (s[y + x * H] - target) * M;
+      assert.ok(off >= last - 1e-3, `x ${x}, y ${y}: the eased ground ${off.toFixed(2)} m over the town, under ${last.toFixed(2)} m beside land lower`);
+      last = off;
+    }
+  }
+  assert.ok((s[70 + 90 * H] - target) * M > 40, 'the hill kept as far over the town as the cone allows');
+});
+
+test('AUDIT FB1028 A3 a port\'s sea: the sea and its shore\'s first 10 m ease as FB1028 did, their reach off their own depth - the cone kept a raised port\'s sea low further out and stood the ground past a jetty\'s end over its deck (the 90th percentile 0.11 to 1.14 m) (mutant: the cone in the sea)', () => {
+  // a town at 200 m; east of x 76 the sea
+  const g = ground((x) => (x > 76 ? SEA : norm(200))), { s, target } = blend(g, shapeOf(54, 70, 54, 70, 3));
+  assert.ok(Math.abs(target * M - 200) < 0.01);
+  const sea = SEA * M, drop = 200 - sea;
+  const x = 84, y = 64, d = x - 74, e = Math.min(x, y, D - x, D - y), reach = Math.max(SHAPE_BLEND_TILES, drop / (SHAPE_GRADE * SAMPLE));
+  const t = Math.max(0, 1 - d / reach), share = Math.min(t * t * (3 - 2 * t), e / (e + d));
+  const want = sea + drop * share, got = s[y + x * H] * M;
+  assert.ok(Math.abs(got - want) < 0.05, `${d} samples out the ground stands ${got.toFixed(2)} m, FB1028's ${want.toFixed(2)} m (the cone: ${(200 - SHAPE_GRADE * SAMPLE * d).toFixed(2)} m)`);
 });
 
 test('FB1028 every blend of a pixel eases alike: the shaped samples less DFU\'s own are the landforms\' lift blended (its reach read on DFU\'s ground alone), so a record\'s lift, the tiles and the Deep Waters bake read the ground the stream lays; the bake\'s key moved (mutants: the reach read off the blended field)', () => {
@@ -121,7 +169,7 @@ test('FB1028 every blend of a pixel eases alike: the shaped samples less DFU\'s 
   let worst = 0;
   for (let i = 0; i < field.length; i++) worst = Math.max(worst, Math.abs((a[i] - b[i]) - field[i]) * M);
   assert.ok(worst < 0.01, `the lift blended is the blends' difference to ${worst.toFixed(4)} m`);
-  assert.equal(BAKE_GENERATOR_VERSION, 3, 'the bake\'s rules moved: the sea a town\'s ease needs lifted (was 2)');
+  assert.equal(BAKE_GENERATOR_VERSION, 4, 'PIN MOVED (AUDIT FB1028 A2-A3): the ease at the seam and beside tall relief (was 3); the sea a town\'s ease needs lifted (was 2)');
 });
 
 test('FB1028 CROP-GROUND: a field of flats is the town\'s ground under every plant it sows - its record\'s tile alone left the rest over the land\'s slope and the sea (mutants: the fields unread; the field\'s half-range unread)', () => {
