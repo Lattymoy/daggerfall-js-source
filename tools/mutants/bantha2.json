@@ -281,7 +281,7 @@
  {
   "name": "BANTHA2-FLOOR-the-3x3-kept-across-pixels",
   "file": "src/scenes/jungleHost.js",
-  "old": "if (w.px !== _floor.px || w.py !== _floor.py) {",
+  "old": "if (w.px !== _floor.px || w.py !== _floor.py || f !== _floor.field) {",
   "new": "if (_floor.px !== _floor.px) {",
   "tests": [
    "test/world/bantha2_floor.test.js"

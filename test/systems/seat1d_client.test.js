@@ -267,12 +267,13 @@ test('SEAT1d THE HOSTS BY SOURCE: the service\'s routes and the Turning\'s write
   // PIN MOVED (SEASON1): the plan reckoned, then Season 0's end stripping what it sets up for the next
   assert.match(tu, /const reckonedPlan = turningPlan\(\{ week, seats, treasuries: new Map\(purses\.map\(\(p\) => \[p\.guild_id, Number\(p\.balance\)\]\)\), active: await activeIn\(db, week\) \}\);/);
   const mk = rd('server-account/src/market.js');
-  assert.match(mk, /at \? null : titheAt\(db, nowS, from, rowBoard\(l\)\),/);   // PIN MOVED (MARKET-SPEED): a buy asks its Tithes beside its hubs
-  assert.match(mk, /at \|\| from === region \? null : titheAt\(db, nowS, region, boardOf\(board\)\),/);
-  assert.match(mk, /const ct = road\.courier > 0 \? await titheAt\(db, nowS, region, boardOf\(board\)\) : null;/);
-  assert.match(mk, /const tt = high == null \? null : await titheAt\(db, nowS, Number\(a\.region\), rowBoard\(a\)\);/);
+  // PIN MOVED (DOMAIN3): each Tithe handed the region law's week (`env`), its bailiwick read among the Charters
+  assert.match(mk, /at \? null : titheAt\(db, nowS, from, rowBoard\(l\), env\),/);   // PIN MOVED (MARKET-SPEED): a buy asks its Tithes beside its hubs
+  assert.match(mk, /at \|\| from === region \? null : titheAt\(db, nowS, region, boardOf\(board\), env\),/);
+  assert.match(mk, /const ct = road\.courier > 0 \? await titheAt\(db, nowS, region, boardOf\(board\), env\) : null;/);
+  assert.match(mk, /const tt = high == null \? null : await titheAt\(db, nowS, Number\(a\.region\), rowBoard\(a\), env\);/);
   const pr = rd('server-account/src/professions.js');
-  assert.match(pr, /!deep && !isBody && seatsOpenFor\(player, env\) \? levyAt\(db, nowS, region, \[n\.x, n\.y\]\) : null,/);   // PIN MOVED (GATHER-SPEED): asked beside the ground and the track, at once
+  assert.match(pr, /!deep && !isBody && seatsOpenFor\(player, env\) \? levyAt\(db, nowS, region, \[n\.x, n\.y\], env\) : null,/);   // PIN MOVED (GATHER-SPEED): asked beside the ground and the track, at once
   assert.match(pr, /\.bind\(player\.id, rid, nonce, character, key2, day, node, kind, profession, kept, ROOM,/);   // PIN MOVED (BAG1): the bound is the Stores' or the bag's carried count's (ROOM)
   const w = rd('src/scenes/world.js');
   assert.match(w, /else if \(hub\) townTalk\.say\(hubArrivalLine\(hub\), 5\);\n\s*if \(seat\) seatEdicts\.arrived\(seat\);/);
@@ -281,7 +282,7 @@ test('SEAT1d THE HOSTS BY SOURCE: the service\'s routes and the Turning\'s write
   assert.match(w, /setCrimeRepFactor\(\(\) => seatEdicts\.crimeFactor\(\)\);/);
   assert.match(w, /levelBonus: \(\) => seatEdicts\.guardLevelBonus\(Math\.floor\(skyMinutes\(\)\)\),/);   // PIN MOVED (AUDIT SEATS-3 E1): the sky's night
   assert.match(w, /if \(seatEdicts\.bountyAt\(p\.px, p\.py\)\) items\.push\(\.\.\.generateLootItems\(lootKey,/);
-  assert.match(w, /sigilDrinks\(xp\); seatEdicts\.campCleared\(foe\?\.site\)\.catch\(\(\) => \{\}\); \}\);/);
+  assert.match(w, /sigilDrinks\(xp\); seatEdicts\.campCleared\(foe\?\.site \?\? lairDenOf\(modes\?\.mode === 'dungeon' \? modes\?\.dungeonLocation : null\)\)\.catch\(\(\) => \{\}\); \}\);/);   // PIN MOVED (AUDIT BAY-LEFT, its packages merged: the mode read guarded on its object, audit24_wave37). PIN MOVED (BAY-LEFT-SEA): a foe of no camp in a lair past the Bay - its den's (seatEdicts.js lairDenOf)
   assert.match(w, /minutes: \(\) => worldMinutes\(\),\n\s*regionAt: \(px, py\) => maps\.getRegionIndexAt\(px, py\),/);   // PIN MOVED (AUDIT SEATS-3 F5): the edicts' own, not REP4's
   assert.match(w, /board: \[town\.px, town\.py\],/);
   const wm = rd('src/scenes/worldModes.js');

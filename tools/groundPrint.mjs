@@ -8,13 +8,21 @@
 // test/net/fb1017f_groundgate.test.js holds the ground to the print recorded under the law this tree names: a move past
 // GROUND_PRINT_TOLERANCE_M anywhere is a new ground, and the law moves with it. Inside it is a float's noise.
 //
+// BAY-LEFT-GROUND (bible/03-World/Landforms.md "BAY-LEFT-GROUND"): AND PAST THE BAY - the print read the Bay's synthetic
+// pixels alone, so a ground that moved past the Bay (its towns' sites, D1) moved under GROUND_LAW unseen. It reads two
+// pixels of the continent composed round the synthetic world too (world/tamriel/tamrielGround.js groundWoods on the
+// authored shape - no trace, no game data): a town past the Bay by its site, and its neighbour the site pulls.
+//
 //   node tools/groundPrint.mjs --write    records the print under GROUND_LAW (test/fixtures/groundPrint.json)
 import { writeFileSync } from 'node:fs';
 import { isMain } from './lib/isMain.mjs';
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../src/world/terrain/terrainSampler.js';
-import { landformSites } from '../src/world/landforms.js';
+import { landformSites, landformSitesBeyond } from '../src/world/landforms.js';
+import { groundWoods, dropGroundCache } from '../src/world/tamriel/tamrielGround.js';   // BAY-LEFT-GROUND: the continent round the synthetic world
+import { tamrielTrace, setTamrielTrace } from '../src/world/tamriel/tamrielLand.js';
+import { tamrielFit, setTamrielFit } from '../src/world/tamriel/tamrielFrame.js';
 import { CLIMATES } from '../src/formats/mapsTables.js';
 import { GROUND_LAW } from '../src/net/wire.js';
 import { syntheticWoodsBytes, network } from '../test/landformWorld.mjs';
@@ -26,6 +34,9 @@ export const GROUND_PRINT_STEP = 8;
 export const GROUND_PRINT_TOLERANCE_M = 0.5;
 /** The pixels read in each land: by the network's road, track and river; on the mountain's flank by its site. */
 export const GROUND_PRINT_PIXELS = Object.freeze([[300, 250], [399, 250]]);
+/** BAY-LEFT-GROUND: the pixels read past the Bay - a town's (its site past the Bay, 6 x 6 blocks) and its east
+ *  neighbour's - on the continent the authored shape stands east of the Bay (Morrowind's land). */
+export const GROUND_PRINT_BEYOND = Object.freeze([[3840, 759], [3841, 759]]);
 /** The recorded print's home. */
 export const GROUND_PRINT_FILE = new URL('../test/fixtures/groundPrint.json', import.meta.url);
 
@@ -47,6 +58,20 @@ export function groundPrint() {
       cells[`${land}@${px},${py}`] = out;
     }
   }
+  // BAY-LEFT-GROUND: past the Bay, on the authored shape whatever the caller has landed (the trace and the fit put back)
+  const trace = tamrielTrace(), fit = tamrielFit();
+  setTamrielTrace(null); setTamrielFit(null); dropGroundCache();
+  try {
+    const continent = groundWoods(woods);
+    const [tx, ty] = GROUND_PRINT_BEYOND[0];
+    const beyond = landformSitesBeyond([{ px: tx, py: ty, loc: { exterior: { exteriorData: { width: 6, height: 6, blockNames: ['X'] } }, mapTableData: { locationType: 2 } } }]);
+    for (const [px, py] of GROUND_PRINT_BEYOND) {
+      const { samples } = generatePixelTerrain({ woods: continent, px, py, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: CLIMATES.Woodlands, roads, sites, beyond, climates: null, landform: true });
+      const out = [];
+      for (let y = 0; y < HEIGHTMAP_DIMENSION; y += GROUND_PRINT_STEP) for (let x = 0; x < HEIGHTMAP_DIMENSION; x += GROUND_PRINT_STEP) out.push(Math.round(samples[y * HEIGHTMAP_DIMENSION + x] * metres * 10));
+      cells[`Beyond@${px},${py}`] = out;
+    }
+  } finally { setTamrielTrace(trace); setTamrielFit(fit); dropGroundCache(); }
   return { law: GROUND_LAW, step: GROUND_PRINT_STEP, cells };
 }
 

@@ -85,10 +85,11 @@ test('CARP-YARD THE PLACE: the joinery placed on what the two yards (and a port 
   // the host: the joinery after the port's places, on the same ground
   const w = read('src/scenes/world.js');
   const at = (t) => w.indexOf(t);
-  assert.ok(at('const sites = g && yardTown ? yardSitesOn(g) : [];') > 0);
-  assert.ok(at('ports = portSitesOn(g, seaField(') > at('const sites = g && yardTown ? yardSitesOn(g) : [];'));
-  assert.ok(at('if (g && yardTown) sites.push(...craftYardSitesOn(g));') > at('ports = portSitesOn(g, seaField('), 'placed after the port\'s places');
-  assert.ok(at('memo = { sig, sites, ports };') > at('if (g && yardTown) sites.push(...craftYardSitesOn(g));'));
+  // PIN MOVED (IC-STUTTER): each pass walked through the build's breather (merchantYardSites.js ...Steps)
+  assert.ok(at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];') > 0);
+  assert.ok(at('ports = portSitesOn(g, seaField(') > at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];'));
+  assert.ok(at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));') > at('ports = portSitesOn(g, seaField('), 'placed after the port\'s places');
+  assert.ok(at('memo = { sig, sites, ports };') > at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));'));
 });
 
 test('CARP-YARD THE TIMBER: the joinery the port\'s own geometry inside its ground, its logs\' and its block\'s faces out, in the yards\' pictures - its board, its shavings, its bark and its end grain; the board over a walker\'s head; the gate\'s way in open to a walker; the carpenter\'s place and the workbench clear of every face (mutants: a face wound in, the sign low, the way in blocked)', () => {

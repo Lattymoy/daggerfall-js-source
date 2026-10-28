@@ -100,7 +100,7 @@ test('ARMOR-LEAN: off, the even law - a piece of armour with no family, and only
   assert.ok(armorLean(piece(ARMOR_MATERIAL.Ebony, 112)), 'a shield leans by its family too');
 });
 
-test('ARMOR-LEAN: the Reforge re-rolls a line on the family\'s lean - a leather piece\'s new attribute leans to Agility and Speed', () => {
+test('PRESS-FLAT: the Reforge re-rolls a line on no lean - a leather piece\'s new attribute is as likely Strength and Endurance as Agility and Speed', () => {
   let nimble = 0, mighty = 0, n = 0;
   for (let i = 0; i < 3000; i++) {
     const it = applyRarity(piece(ARMOR_MATERIAL.Leather), 'rare', seededRng(90_000 + i));
@@ -111,7 +111,7 @@ test('ARMOR-LEAN: the Reforge re-rolls a line on the family\'s lean - a leather 
     if (line?.id !== 'stat') continue;
     n++; if (['agility', 'speed'].includes(line.param)) nimble++; if (['strength', 'endurance'].includes(line.param)) mighty++;
   }
-  assert.ok(n > 50 && nimble > 2 * mighty, `${nimble} nimble, ${mighty} mighty of ${n}`);
+  assert.ok(n > 50 && nimble < 1.5 * mighty && mighty < 1.5 * nimble, `${nimble} nimble, ${mighty} mighty of ${n}`);
 });
 
 test('ARMOR-LEAN: the weighted pick takes one roll and spreads it over the weights', () => {

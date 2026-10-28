@@ -1948,8 +1948,8 @@ busy time standing and 17% moving; the middle ring's rebuild was 8% alone, and o
   it reads. The main thread posts a build where it would begin one and takes the finished arrays the first
   frame they are in (`snowBuildClient.js`); the arrays they replace go back. A pixel's ground crosses once a version of
   it, copied (`snowGroundLaw.js` `snowGroundSnapshot`), keyed by the arrays it was taken from. The drawn
-  ground's laws moved out of `world.js`'s snow adapter into `snowGroundLaw.js`, which both threads call (`bootWorld`
-  36,237 -> 36,233 logical lines); `carvedFloorLocalY` moved beside the floor it reads (`world/deepWater/deepWaterFloor.js`)
+  ground's laws moved out of the `snowGround.js` adapter into `snowGroundLaw.js`, which both threads call (main moved that
+  adapter from `bootWorld`); `carvedFloorLocalY` moved beside the floor it reads (`world/deepWater/deepWaterFloor.js`)
   and the base64 pair to `systems/save/base64Bytes.js`, so the worker loads 36 modules, not the 820 that
   `save/saveTransfer.js` pulled in.
 - **The fallback is the old path**: `?snowthread=off`, no `Worker`, a worker that faults or falls silent for 10 s with a

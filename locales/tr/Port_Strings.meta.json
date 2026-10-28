@@ -1724,6 +1724,36 @@
   "tr": "cbeb423db161",
   "by": "claude-in-session"
  },
+ "faction.province.court": {
+  "en": "98410ffe452a",
+  "tr": "a568315661b5",
+  "by": "claude-in-session"
+ },
+ "faction.province.people": {
+  "en": "1fe50d111e13",
+  "tr": "e59fcc945d0c",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.emperor": {
+  "en": "c3e50305720d",
+  "tr": "4865c224ed35",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.empress": {
+  "en": "f69a52bb1f2a",
+  "tr": "5d1bdd22027c",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.highKing": {
+  "en": "f87c0c714a80",
+  "tr": "9f7153921c72",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.highQueen": {
+  "en": "7b51fe50f158",
+  "tr": "b9a33e71c182",
+  "by": "claude-in-session"
+ },
  "features.banthaJungle.note": {
   "en": "717babf84b80",
   "tr": "d8493cfb573c",
@@ -1884,6 +1914,16 @@
   "tr": "14c5b34646d4",
   "by": "claude-in-session"
  },
+ "features.tamrielLands.note": {
+  "en": "dc37f2698218",
+  "tr": "a9e1fe9d72f9",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLands.title": {
+  "en": "1e8a962cf274",
+  "tr": "8adadb4d5887",
+  "by": "claude-in-session"
+ },
  "features.wagonUpkeep.boons": {
   "en": "b0e0ff22a34e",
   "tr": "973ba1ac9ffb",
@@ -2039,6 +2079,11 @@
   "tr": "fe136e926c53",
   "by": "claude-in-session"
  },
+ "forecast.turn.ashfall": {
+  "en": "5961a1411167",
+  "tr": "ca3270bb2e44",
+  "by": "claude-in-session"
+ },
  "forecast.turn.fog": {
   "en": "dfebbda7af18",
   "tr": "51a3d642c59e",
@@ -2062,6 +2107,11 @@
  "forecast.turn.thunder": {
   "en": "f35ce8f01a65",
   "tr": "09de9c07518e",
+  "by": "claude-in-session"
+ },
+ "forecast.word.ashfall": {
+  "en": "71656606aa5c",
+  "tr": "276abd07006d",
   "by": "claude-in-session"
  },
  "forecast.word.fog": {
@@ -2142,6 +2192,11 @@
  "ketch.arrived": {
   "en": "7b8020e70f2d",
   "tr": "866a0f04c4bb",
+  "by": "claude-in-session"
+ },
+ "ketch.arrivedAt": {
+  "en": "5a91649260fe",
+  "tr": "fe2ec69c5bff",
   "by": "claude-in-session"
  },
  "ketch.bar.endsIn": {
@@ -2262,6 +2317,11 @@
  "ketch.client.away": {
   "en": "66a9751a1766",
   "tr": "674dfdb7159e",
+  "by": "claude-in-session"
+ },
+ "ketch.client.awayAt": {
+  "en": "5e7c51653190",
+  "tr": "8ba6d5929855",
   "by": "claude-in-session"
  },
  "ketch.client.cell": {
@@ -2549,6 +2609,11 @@
   "tr": "094290b987d3",
   "by": "claude-in-session"
  },
+ "ketch.left.dockedAt": {
+  "en": "814a7ac81159",
+  "tr": "6e27bf1fb361",
+  "by": "claude-in-session"
+ },
  "ketch.left.sighted": {
   "en": "3ac248d06a71",
   "tr": "d45354994634",
@@ -2724,6 +2789,11 @@
   "tr": "f0b8e651ae86",
   "by": "claude-in-session"
  },
+ "ketch.loweredAt": {
+  "en": "7c0ab0c5e3c4",
+  "tr": "10397d3bb49e",
+  "by": "claude-in-session"
+ },
  "ketch.name": {
   "en": "1ef6cf3bd938",
   "tr": "2ba4a16d5d8a",
@@ -2784,6 +2854,11 @@
   "tr": "56defc9578b8",
   "by": "claude-in-session"
  },
+ "ketch.refuse.awayAt": {
+  "en": "250974de0d78",
+  "tr": "f89d62b78bdd",
+  "by": "claude-in-session"
+ },
  "ketch.refuse.busy": {
   "en": "7dda41422090",
   "tr": "d3a0bc2ea783",
@@ -2817,6 +2892,11 @@
  "ketch.sighted": {
   "en": "eef2aa8bfa5a",
   "tr": "e9ed5c7d90a9",
+  "by": "claude-in-session"
+ },
+ "ketch.sightedAt": {
+  "en": "fc1ab67eff41",
+  "tr": "7a651344fca2",
   "by": "claude-in-session"
  },
  "ketch.sky.departing": {
@@ -2937,6 +3017,11 @@
  "ketch.timers.where": {
   "en": "1a31ab704829",
   "tr": "7b9ce6c82137",
+  "by": "claude-in-session"
+ },
+ "ketch.timers.whereAt": {
+  "en": "39a08fa1c893",
+  "tr": "88feec3ff912",
   "by": "claude-in-session"
  },
  "ketch.when.days": {
@@ -4129,6 +4214,16 @@
   "tr": "2722c0f40297",
   "by": "claude-in-session"
  },
+ "sd.copy.party": {
+  "en": "2222e5dd4375",
+  "tr": "57c4e1102d76",
+  "by": "claude-in-session"
+ },
+ "sd.copy.shared": {
+  "en": "0c86e06ab1ec",
+  "tr": "ce072e5d32ba",
+  "by": "claude-in-session"
+ },
  "sd.hall.lastBy": {
   "en": "ba380c5a8929",
   "tr": "9b35c1d4b321",
@@ -4959,6 +5054,16 @@
   "tr": "99d83571bcb4",
   "by": "claude-in-session"
  },
+ "travel.pastBay.refused": {
+  "en": "8466408ee8fe",
+  "tr": "d2613931a12a",
+  "by": "claude-in-session"
+ },
+ "travelView.planning": {
+  "en": "b08b975bf551",
+  "tr": "498ae4c13436",
+  "by": "claude-in-session"
+ },
  "travelView.tip.weather": {
   "en": "faa142757647",
   "tr": "022a8af9f484",
@@ -4985,13 +5090,13 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body1": {
-  "en": "5160bd8ee6d8",
-  "tr": "795e0dd410d2",
+  "en": "2e428dbee71a",
+  "tr": "b1300c6b39a5",
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "3c759d3b73f2",
-  "tr": "17337eecda1f",
+  "en": "5c2566aaad07",
+  "tr": "8f96f8aa9e77",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {
@@ -5064,13 +5169,33 @@
   "tr": "fcb9ab91207f",
   "by": "claude-in-session"
  },
+ "wild.safe.chip": {
+  "en": "3441354558b8",
+  "tr": "c4cf7ad422f0",
+  "by": "claude-in-session"
+ },
+ "wild.safe.enter": {
+  "en": "ad383c8c5831",
+  "tr": "c186ba4f99df",
+  "by": "claude-in-session"
+ },
+ "wild.safe.leave": {
+  "en": "3d94f5cb8c29",
+  "tr": "dc1995d27e13",
+  "by": "claude-in-session"
+ },
+ "wild.safe.rule": {
+  "en": "8c3fdb0b18fb",
+  "tr": "e80fdaedb3fb",
+  "by": "claude-in-session"
+ },
  "wild.zone.chipTip": {
   "en": "fda83308207b",
   "tr": "c5d479d00dd7",
   "by": "claude-in-session"
  },
  "wild.zone.enter": {
-  "en": "7211df45b4d5",
+  "en": "006e183d3d6a",
   "tr": "3d2adbff4836",
   "by": "claude-in-session"
  }

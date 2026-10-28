@@ -335,5 +335,6 @@ test('ETHER-LIGHT the light past the Veil: cold and violet - the ambient leaned 
   const src = read('src/scenes/world.js');
   assert.match(src, /const etherAirW = etherPx && inEther\(etherPx\.x, etherPx\.y\) \? 1 : 0;/);
   assert.match(src, /etherLight\(sdBrassLight\(sunbabyLight\(/, 'the ambient');
-  assert.match(src, /etherLight\(sdBrassLight\(sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW, ETHER_KEY_TINT\)\);/, 'the sun');
+  // PIN MOVED (VALENWOOD-CANOPY): the key leaned green under the leaves after the sea's lean (world/jungle/jungleCanopy.js canopyLight)
+  assert.match(src, /etherLight\(sdBrassLight\(sunbabyKey\(dreadLight\(SUN_RIG_COLOR, skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), etherAirW, ETHER_KEY_TINT\), jungle\?\.canopy, 0\)\);/, 'the sun');
 });

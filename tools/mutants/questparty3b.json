@@ -155,9 +155,9 @@
   },
   {
     "name": "QP3B-wave-indoors-any-relay",
-    "file": "src/scenes/world.js",
-    "old": "if ((m === 'interior' || m === 'dungeon') && online?.ownOk && isWorldRoom(online.room) && partnerStandsQuestFoes({",
-    "new": "if ((m === 'interior' || m === 'dungeon') && isWorldRoom(online?.room) && partnerStandsQuestFoes({",
+    "file": "src/scenes/questWorld.js",
+    "old": "if ((m === 'interior' || m === 'dungeon') && host.online?.ownOk && isWorldRoom(host.online.room) && partnerStandsQuestFoes({",
+    "new": "if ((m === 'interior' || m === 'dungeon') && isWorldRoom(host.online?.room) && partnerStandsQuestFoes({",
     "tests": ["test/scenes/questparty3b.test.js"]
   }
 ]

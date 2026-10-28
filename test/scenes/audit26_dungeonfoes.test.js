@@ -486,7 +486,8 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // that one caller. F212's law is unweakened - the default is still
   // "collect", and every real unload takes both pools with it - so the
   // pin follows the signature and now also pins the DEFAULT.
-  const i = WORLD.indexOf('function destroyPixel(px, py, { collectLoose = true } = {})');
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): `carried` and `carryOnly` beside it - a rebuild behind its view takes its carry at the mark and not again at the swap; the default still collects
+  const i = WORLD.indexOf('function destroyPixel(px, py, { collectLoose = true, carried = false, carryOnly = false } = {})');
   const fn = WORLD.slice(i, WORLD.indexOf('\n  }\n', i));
   assert.ok(i > 0);
   assert.ok(fn.includes('if (collectLoose) droppedLoot.collectPixel(key);'), 'the pile half, which the port already had');

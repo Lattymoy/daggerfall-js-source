@@ -112,8 +112,8 @@
   {
     "name": "AUDITLWII2-P5-LW12P-wire-hideouts-near",
     "file": "src/scenes/world.js",
-    "old": "    const regions = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.region | 0));",
-    "new": "    const regions = new Set(livingTripWorld.townsNear(px, py, 1).map((t) => t.region | 0));",
+    "old": "    const areas = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.area | 0));",
+    "new": "    const areas = new Set(livingTripWorld.townsNear(px, py, 1).map((t) => t.area | 0));",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],

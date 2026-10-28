@@ -1,0 +1,338 @@
+[
+  {
+    "name": "SWAP-BEHIND-torn-down-at-the-mark",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      host.destroyPixel(px, py, { collectLoose: false, carryOnly: true });",
+    "new": "      host.destroyPixel(px, py, { collectLoose: false });",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-carried-twice",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      host.destroyPixel(px, py, { collectLoose: false, carried: true });",
+    "new": "      host.destroyPixel(px, py, { collectLoose: false });",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-old-view-left",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      host.destroyPixel(px, py, { collectLoose: false, carried: true });",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-wake-skipped",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      host.collider.wake(rkey, key);",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-doors-left-behind",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      if (doors.length) { host.buildingDoors.push(...doors); host.doorsMoved(); }",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-again-forgotten",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      if (o?.again) { api.mark(px, py); host.queue.unshift({ px, py }); }",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-switch-unread",
+    "file": "src/scenes/swapBehind.js",
+    "old": "    stands: (key) => !off() && host.built.has(key),",
+    "new": "    stands: (key) => host.built.has(key),",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-build-under-the-pixels-key",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      const b = behindKeyOf(key);\n      host.collider.hold(b);\n      return b;",
+    "new": "      return key;",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-failed-left-held",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      host.collider.unhold(b);   // its bucket and its gates', their cover",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-collider-held-queried",
+    "file": "src/player/collider.js",
+    "old": "    const held = this._isHeld(bucketKey);   // IC-SWAP-BEHIND: laid aside, answering nothing until it wakes",
+    "new": "    const held = false;",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-collider-gates-not-held",
+    "file": "src/player/collider.js",
+    "old": "    for (const h of this._holding) if (typeof bucketKey === 'string' && bucketKey.startsWith(`${h}:`)) return true;",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-collider-wake-unrenamed",
+    "file": "src/player/collider.js",
+    "old": "      bucket.key = as;\n      this._buckets.set(as, bucket);",
+    "new": "      this._buckets.set(k, bucket);",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-collider-wake-over-a-standing-view",
+    "file": "src/player/collider.js",
+    "old": "      if (this._buckets.has(as)) throw new Error(`collider: ${as} stands - its view goes before the one behind it wakes`);",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-cover-live",
+    "file": "src/ai/cover.js",
+    "old": "  const setsOf = (/** @type {any} */ key) => (holding.has(key) ? held : sets);",
+    "new": "  const setsOf = (/** @type {any} */ key) => sets;",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-late-parts-left",
+    "file": "src/player/lateSolid.js",
+    "old": "        held.delete(k);\n        held.set(as, [...(held.get(as) ?? []), ...parts]);",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-owed-never-built",
+    "file": "src/scenes/world.js",
+    "old": "    if (built.has(key) && !swap.owes(key)) return built.get(key);",
+    "new": "    if (built.has(key)) return built.get(key);",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-a-sweep-tearing-down",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    swap.rebuild(far);",
+    "new": "    for (const k of far) destroyPixel(k.px, k.py, { collectLoose: false }); host.queue.push(...far);",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-pixel-build-under-its-own-key",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const pkey = `${px},${py}`, key = swap.keyFor(px, py),",
+    "new": "const pkey = `${px},${py}`, key = pkey,",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-doors-live-while-building",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "(key === pkey ? buildingDoors : (made.doors ??= [])).push({",
+    "new": "buildingDoors.push({",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-carry-not-first",
+    "file": "src/scenes/world.js",
+    "old": "    if (carryOnly) return;",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-held-behind-a-standing-view",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      if (host.walkMode() && host.playerSpawned() && !api.stands(under) && again.some(",
+    "new": "      if (host.walkMode() && host.playerSpawned() && again.some(",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-swaps-uncounted",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      swaps += 1;\n",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-lod-owed-asked-again",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "      if (!p.capitalLod || swap.owes(k)) continue;",
+    "new": "      if (!p.capitalLod) continue;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-lod-swaps-unread",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": " && swap.swaps === _lod.swaps) return;",
+    "new": ") return;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-kill-switch-unwired",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    off: () => swapOff,\n",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-a-swap-fades-in",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(",
+    "new": "if (isEnhanced() && !midRingDisabled()) stampPixelFade(",
+    "tests": [
+      "test/render/midring.test.js",
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-reskin-under-the-build-key",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "_reskin.mark(pkey);",
+    "new": "_reskin.mark(key);",
+    "tests": [
+      "test/systems/seasonsIliacBay.test.js",
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-restride-under-the-build-key",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "host.restridePending.set(pkey, entry);",
+    "new": "host.restridePending.set(key, entry);",
+    "tests": [
+      "test/world/terrain/stream1_restride.test.js",
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-ground-ride-unheld-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);",
+    "new": "      host.rideGround?.(t, pkey, moved, false);",
+    "tests": [
+      "test/world/terrain/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-ground-ride-unheld-unread",
+    "file": "src/scenes/world.js",
+    "old": "    if ((_seasonHoldKey === key || (behind && key === `${state.current.x},${state.current.y}`)) && walkMode",
+    "new": "    if ((_seasonHoldKey === key) && walkMode",
+    "tests": [
+      "test/world/terrain/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-ground-ride-under-the-build-key",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    const groundWas = _groundBefore.get(pkey);",
+    "new": "    const groundWas = _groundBefore.get(key);",
+    "tests": [
+      "test/world/terrain/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-failed-behind-left-for-the-view",
+    "file": "src/scenes/world.js",
+    "old": "releaseFailedBuild(swap.failed(px, py) ?? key)",
+    "new": "releaseFailedBuild(key)",
+    "tests": [
+      "test/world/terrain/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-place-hold-left-behind",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      entry.placeHold?.rekey?.(key);",
+    "new": "",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-place-rekey-inert",
+    "file": "src/scenes/placeHolds.js",
+    "old": "      rekey(to) { if (h.state === 'live') h.key = to; },",
+    "new": "      rekey(to) { },",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-place-settled-under-its-first-key",
+    "file": "src/scenes/placeHolds.js",
+    "old": "        const older = shelf?.get(h.key);",
+    "new": "        const older = shelf?.get(key);",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-place-kept-under-its-first-key",
+    "file": "src/scenes/placeHolds.js",
+    "old": "        const older = shelf.get(h.key);\n        if (older) { shelf.delete(h.key); drop(older); }\n        shelf.set(h.key, h);",
+    "new": "        const older = shelf.get(key);\n        if (older) { shelf.delete(key); drop(older); }\n        shelf.set(key, h);",
+    "tests": [
+      "test/scenes/swapbehind.test.js"
+    ]
+  },
+  {
+    "name": "SWAP-BEHIND-pipeline-rekey-unhanded",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "      rekey: (to) => h.rekey(to),",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1004d_placelru.test.js"
+    ]
+  }
+]

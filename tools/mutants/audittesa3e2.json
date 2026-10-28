@@ -1,0 +1,202 @@
+[
+  {
+    "name": "E2-1-gate-never-kept",
+    "file": "server/src/index.js",
+    "old": "if (kept) { await this.state.storage.put(GRANT_GATE_KEY, kept); G.kept = true; }",
+    "new": "if (kept) { G.kept = true; }",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "the gate never written: a sleep forgets it, as before the fix"
+  },
+  {
+    "name": "E2-1-gate-never-read",
+    "file": "server/src/index.js",
+    "old": "try { raw = await this.state.storage.get(GRANT_GATE_KEY); } catch { raw = undefined; }",
+    "new": "raw = undefined;",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a woken cell never reads its kept gate"
+  },
+  {
+    "name": "E2-1-buckets-not-laid-back",
+    "file": "server/src/index.js",
+    "old": "buckets: kept.buckets, ",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "the accounts' buckets left full after a wake"
+  },
+  {
+    "name": "E2-1-live-not-laid-back",
+    "file": "server/src/index.js",
+    "old": "live: kept.live, liveN: kept.liveN, ",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "the ceiling emptied and the live grants forgotten after a wake"
+  },
+  {
+    "name": "E2-1-strip-never-reads",
+    "file": "server/src/index.js",
+    "old": "if (!this._grantGateRead) void this._grantGateLoad(a.key, now);",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a woken cell's strip never reads its kept gate: every granted record stripped until its owner asks"
+  },
+  {
+    "name": "E2-1-key-never-let-go",
+    "file": "server/src/index.js",
+    "old": "else if (G.kept) { await this.state.storage.delete(GRANT_GATE_KEY); G.kept = false; }",
+    "new": "else if (false) { G.kept = false; }",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a key nothing binds kept for good"
+  },
+  {
+    "name": "E2-1-stale-key-kept-at-read",
+    "file": "server/src/index.js",
+    "old": "if (raw !== undefined && !grantGateKept(G, now))",
+    "new": "if (false)",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a woken cell keeps a stale gate's key"
+  },
+  {
+    "name": "E2-1-the-timer-back",
+    "file": "server/src/index.js",
+    "old": "const kept = grantGateKept(G, now);",
+    "new": "const kept = grantGateKept(G, now); setTimeout(() => {}, 600_000);",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a timer that holds the cell awake, which the fix must not need"
+  },
+  {
+    "name": "E2-1-idle-bucket-kept",
+    "file": "src/net/grantLaw.js",
+    "old": "filter(([k, v]) => !grantBucketIdle(",
+    "new": "filter(([k, v]) => true || !grantBucketIdle(",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a full bucket kept: storage held for nothing"
+  },
+  {
+    "name": "E2-1-expired-grant-kept",
+    "file": "src/net/grantLaw.js",
+    "old": "filter(([, v]) => v.x > nowMs)",
+    "new": "filter(([, v]) => true)",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "an expired grant kept"
+  },
+  {
+    "name": "E2-1-version-unread",
+    "file": "src/net/grantLaw.js",
+    "old": "v.v !== GRANT_GATE_V || ",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a stored shape of another version read as this one"
+  },
+  {
+    "name": "E2-1-members-not-counted",
+    "file": "src/net/grantLaw.js",
+    "old": "    liveN += e[1];",
+    "new": "    liveN += 0;",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "the live grants read back count nothing against the ceiling"
+  },
+  {
+    "name": "E2-1-expired-read-back",
+    "file": "src/net/grantLaw.js",
+    "old": "!(Number.isFinite(e[2]) && e[2] > nowMs)",
+    "new": "!Number.isFinite(e[2])",
+    "tests": [
+      "test/net/audittesa3e2_grantgate.test.js"
+    ],
+    "note": "a grant past its expiry read back live"
+  },
+  {
+    "name": "E2-2-castle-city-the-kingdom-id",
+    "file": "src/net/castleLaw.js",
+    "old": "(castleRegionOk(r) ? kingdomSeatName(CROWN_SEAT_REGIONS[r]) : null)",
+    "new": "(castleRegionOk(r) ? CROWN_SEAT_REGIONS[r] : null)",
+    "tests": [
+      "test/net/audittesa3e2_castles.test.js"
+    ],
+    "note": "a castle named by its kingdom's id, not its seat"
+  },
+  {
+    "name": "E2-2-castle-named-by-region",
+    "file": "src/ui/socialPanel.js",
+    "old": "const city = castleCityOf(c.region) ?? REGION_NAMES[c.region] ?? '';",
+    "new": "const city = REGION_NAMES[c.region] ?? '';",
+    "tests": [
+      "test/net/audittesa3e2_castles.test.js"
+    ],
+    "note": "WW7-4's castle named for its province: Castle Skyrim"
+  },
+  {
+    "name": "E2-2-offer-named-by-region",
+    "file": "src/ui/socialPanel.js",
+    "old": "const city = castleCityOf(o.region) ?? REGION_NAMES[o.region] ?? '', has",
+    "new": "const city = REGION_NAMES[o.region] ?? '', has",
+    "tests": [
+      "test/net/audittesa3e2_castles.test.js"
+    ],
+    "note": "an offer named for its province"
+  },
+  {
+    "name": "E2-2-the-old-window-words",
+    "file": "src/ui/socialPanel.js",
+    "old": "Daggerfall, Wayrest, Sentinel or a province's capital, but the Imperial City - may buy its castle",
+    "new": "Daggerfall, Wayrest or Sentinel - may buy its castle",
+    "tests": [
+      "test/net/audittesa3e2_castles.test.js"
+    ],
+    "note": "the window's line naming the Bay's three alone"
+  },
+  {
+    "name": "E2-2-the-old-refusal",
+    "file": "src/net/accountClient.js",
+    "old": "Only a crown's city keeps one - Daggerfall, Wayrest, Sentinel and each province's capital but the Imperial City.",
+    "new": "Only the crowns - Daggerfall, Wayrest and Sentinel - keep one.",
+    "tests": [
+      "test/net/audittesa3e2_castles.test.js"
+    ],
+    "note": "castle-none naming the Bay's three alone"
+  },
+  {
+    "name": "E2-4-row-renumbered-literal-left",
+    "file": "test/net/relayversion.test.js",
+    "old": "  world260: '",
+    "new": "  world264: '",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ],
+    "note": "a merge's renumber of the row that names DOMAIN2, the castle's gate left on 260 (main's THE FOLD, no guild arm)"
+  },
+  {
+    "name": "E2-4-gate-behind-its-row",
+    "file": "src/net/instanceRoom.js",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276;",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 275;",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ],
+    "note": "Re-aimed by content (the merge of main into #1184, 2026-10-27): the gate moved to world270 with its LAW row, past BOW-TOPS's world269 (main's). the castle offered to the relay before the one that admits a guild The eighth merge of main (re-aimed by content): the gate is 276, past main's live world275; the mutant lets world275 in."
+  }
+]

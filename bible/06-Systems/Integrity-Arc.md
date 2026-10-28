@@ -791,15 +791,14 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   room that restarted, and a full room's oldest is signed, never forgotten.
 - **The drop.** `/v1/wild/fall` takes it off the fallen's JUDGED record by ONE law (`systems/wild/wildDropLaw.js`
   takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then a tenth of
-  the purse and of the cart's coin (FOE-KEEPS, 2026-10-24: it was half), then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
-  the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
-  from; the record's lit light follows its piece. CART-AWAY (FIELD BUGS 2026-10-15d; Mac, 2026-10-15: "if its parked
-  outside the zone nothing should be lost" - `11-Multiplayer/Wild-Zone.md` section 4): the cart's coin and its drop only
-  while the wagon is with the fallen. The zone's mask is the client's, so the fallen's own tab says its wagon is away
-  (`cart` 0 - `systems/wild/wildCart.js` wildCartAway), and the service takes the word only where the record it keeps says
-  the wagon is parked, stabled or none by its mode (`wildDropLaw.js:"export function wildCartMayBeAway"`) - never a
-  record that drives it, leads it or stands it beside them; a seizure takes no word, and a tab that says none drops the
-  cart as before. The service answers what it took as the game finds it again (`took`,
+  the purse (FOE-KEEPS, 2026-10-24: it was half), then the bag's drop BY WORTH (a bag of junk ahead of them kept the gold
+  and the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
+  from; the record's lit light follows its piece. STORE-KEEPS (2026-10-26, `11-Multiplayer/Wild-Zone.md` section 4): the
+  cart and the companions' packs are storage no death takes - CART-AWAY's word (FIELD BUGS 2026-10-15d: the cart's coin
+  and its drop while the wagon was with the fallen, on the fallen tab's word held to its record's mode) and
+  COMPANION-DROP's packs retired with it. WILD-INSURE (Wild-Zone.md section 4b): a piece under a policy the service wrote
+  against its premium (`wild_insurance`), in force at the fall's signing, is kept as a piece the ledger bars is, and the
+  fall spends it; REPEAT-SHIELD (4c): a fall by the same killer inside half an hour takes nothing. The service answers what it took as the game finds it again (`took`,
   `gold` - wildTookOf), and the fallen's game takes out EXACTLY that (`wildTakeTook` - it ran the law again without the
   ledger's word, and took what the service kept). The fallen's own act at its tab's `at` (`realmGoldAct`, its answer
   needed: checkpointed as it will rise, the service asked, the room named), or its killer's SEIZURE once
@@ -988,9 +987,9 @@ real drawHud on both skins); `tools/mutants/duel_bar.json`.
 - A crafted piece the fallen takes back from its own remains is written down as its copy: it wears it, and never trades
   it (the craft's key cannot be minted afresh as an id is).
 - A pick at a piece the fallen no longer wears (it changed between the offer and the receipt) takes none.
-- Where a parked wagon stands (CART-AWAY) is the fallen's word, held to its record's mode alone: the wagon's record is
-  the player's own, so a client that writes its wagon parked off the zone keeps a cart it drove in, and rises with that
-  record. A seizure, its carrier holding neither the record nor the mask, takes the cart wherever it stood.
+- CART-AWAY's limit (the fallen's word on where its wagon stood) retired with STORE-KEEPS: no death takes the cart.
+- A policy (WILD-INSURE) is the service's and never the record's, so no client can write one it did not pay for; one in
+  force only past `WILD_INSURE_SETTLE_S`, against the relay's own signing, so none is written on the death screen.
 - A relay before world185 knows no `wref`, no `zone` and no `dref`: a client meets it fighting nobody and duelling
   nobody. A client from before world185 still open in a tab sends the zone's retired words (WILD1's `result` and
   `gave`) and the duel's own resolve, which the new relay refuses - it is closed for them until it reloads. The deploy

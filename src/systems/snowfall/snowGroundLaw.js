@@ -4,11 +4,8 @@
 // drawn surface, terrainSurface.js), p.groundNormals, p._bed.depths (WATER-NEXT 2) and p.deepWaters (DW-B: the carved
 // sea's floor, no snow on it). `floors` is the host's Deep Waters switch: off, a carved entry reads as the terrain's own.
 
-import { surfaceHeightAt, surfaceNormalAt, surfaceNormalFromSamples, gridValueAt } from '../../world/terrain/terrainSurface.js';
-import { TERRAIN_SIZE } from '../../world/terrain/terrainSampler.js';
+import { drawnGroundAt, surfaceNormalAt, surfaceNormalFromSamples } from '../../world/terrain/terrainSurface.js';
 import { carvedFloorLocalY } from '../../world/deepWater/deepWaterFloor.js';
-
-const TILE_SIDE = TERRAIN_SIZE / 128;
 
 /** The drawn ground's y in a pixel's frame. */
 export function snowGroundHeight(p, floors, lx, lz) {
@@ -16,11 +13,7 @@ export function snowGroundHeight(p, floors, lx, lz) {
     const f = carvedFloorLocalY(p.deepWaters, lx, lz);
     if (f != null) return f;
   }
-  const stride = p._stride ?? 1;
-  const h = surfaceHeightAt(p.samples, lx, lz, stride);
-  const d = p._bed?.depths;
-  const g = 128 / stride + 1;
-  return d ? h - gridValueAt(d, g, g, TILE_SIDE * stride, lx, lz) : h;   // WATER-NEXT 2: and the bed carved under a shore
+  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);   // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)
 }
 
 /** The drawn ground's unit normal there, into `out`. */

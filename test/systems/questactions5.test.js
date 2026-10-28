@@ -15,6 +15,7 @@ import { SKILLS } from '../../src/systems/skills.js';
 import { SKILL_ADVANCEMENT_MULTIPLIER } from '../../src/systems/advancement.js';
 import { CRIMES } from '../../src/systems/court.js';
 import { FATIGUE_LOSS } from '../../src/systems/statMods.js';
+import { hostText } from '../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'vendor', 'dfu-quests');
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
@@ -334,7 +335,7 @@ test('Q5: SpawnCityGuards and Enemies fire their host doors, flags intact', () =
 });
 
 test('Q5: the world host mounts every new door', () => {
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   for (const door of ['setPlayerCrime: (crime) => setCrimeCommitted(playerEntity, crime)',
     'getGoldPieces: () => goldAmount(playerEntity)',
     'deductGoldPieces: (n) => deductGoldPieces(playerEntity, n)',
@@ -356,7 +357,7 @@ test('Q5: the world host mounts every new door', () => {
     'currentWeatherKey: () => weatherOverride ?? currentWeather()', 'currentClimateIndex: () => maps.getClimateIndex(',
     // AUDIT 39: the two seams this wave mounted - JournalNote's TOKEN
     // overload and PayMoney's GetGoldAmount gate.
-    'addNoteTokens: (tokens) => questBridge?.notebook?.addNoteTokens(tokens)',
+    'addNoteTokens: (tokens) => host.questBridge?.notebook?.addNoteTokens(tokens)',   // PIN MOVED (TESA's merge): scenes/questWorld.js's, `questBridge` its live name
     'getTotalGold: () => totalGoldAmount(playerEntity)']) {
     assert.ok(w.includes(door), `world.js mounts ${door.split(':')[0]}`);
   }

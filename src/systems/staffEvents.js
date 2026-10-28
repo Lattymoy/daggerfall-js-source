@@ -8,6 +8,7 @@
 //
 // Nothing here is saved: an event is the hub's, said again at every hello.
 import { validStaffEvent, staffEventKey, staffEventIdOf, isAreaEvent, STAFF_EVENTS_MAX } from '../net/staffEvent/staffEventLaw.js';
+import { raidTownIs } from '../world/raidShared.js';   // WW6: a town's event's town - the Bay's by region and location, past the Bay by its own index
 
 /**
  * A staff event held as a raid: the fields systems/raidingParties.js reads off a raid, and the event's own.
@@ -96,13 +97,14 @@ export const staffRaidOfKey = (key) => { const id = staffEventIdOf(key); return 
 
 /**
  * THE EVENT I STAND IN, or null: a town's while I stand in its town (the host's `townHere` - outdoors, in the rect, the
- * raid's own test); an area's while I stand outdoors on its pixel.
+ * raid's own test - WW6: a town past the Bay by its own location index, world/raidShared.js raidTownIs); an area's while
+ * I stand outdoors on its pixel.
  * @param {{regionIndex: number, locationIndex: number}|null} town @param {{x: number, y: number}|null} px @param {boolean} outdoors
  */
 export function staffRaidHere(town, px, outdoors) {
   for (const r of _raids.values()) {
     if (r.cleansed) continue;
-    if (isAreaEvent(r.staff) ? outdoors && !!px && px.x === r.px && px.y === r.py : !!town && town.regionIndex === r.regionIndex && town.locationIndex === r.locationIndex) return r;
+    if (isAreaEvent(r.staff) ? outdoors && !!px && px.x === r.px && px.y === r.py : raidTownIs(r, town)) return r;
   }
   return null;
 }

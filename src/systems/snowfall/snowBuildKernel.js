@@ -10,6 +10,7 @@
 import { SnowfallRuntime } from '../snowfallRuntime.js';
 import { SnowCoverage, BasicRoadsTerrain } from '../snowfall.js';
 import { snowGroundHeight, snowGroundNormal, snowGroundBare, snowPixelX, snowPixelY, snowGlobalOf } from './snowGroundLaw.js';
+import { worldPixelKey, inWorldGrid } from '../../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the main thread's pixel key (scenes/snowGround.js pixelOn)
 
 /** The runtime's builds alone: a commit is the build's own half - the tracks' half is the main thread's. */
 class SnowBuildRuntime extends SnowfallRuntime {
@@ -60,7 +61,7 @@ export class SnowBuildKernel {
     /** byteLength -> ArrayBuffer[] */
     this.pool = new Map();
     this.frame = [0, 0, 0, 0, 1];
-    /** px * 1000 + py -> SnowTerrain, this job's */
+    /** worldPixelKey -> SnowTerrain, this job's */
     this.pixels = new Map();
     /** the job whose window the runtime's local arrays are (0: none) */
     this.localDone = 0;
@@ -68,7 +69,9 @@ export class SnowBuildKernel {
     this.world = {
       terrainAt: (x, z) => {
         const f = this.frame;
-        return this.pixels.get(snowPixelX(f[0], f[2], f[4], x) * 1000 + snowPixelY(f[1], f[3], f[4], z)) ?? null;
+        const px = snowPixelX(f[0], f[2], f[4], x);
+        const py = snowPixelY(f[1], f[3], f[4], z);
+        return inWorldGrid(px, py) ? this.pixels.get(worldPixelKey(px, py)) ?? null : null;
       },
       toGlobal: (x, z) => {
         const f = this.frame;
@@ -132,7 +135,7 @@ export class SnowBuildKernel {
       t._o[0] = ox;
       t._o[1] = oy;
       t._o[2] = oz;
-      this.pixels.set(px * 1000 + py, t);
+      this.pixels.set(worldPixelKey(px, py), t);
     }
     return 0;
   }

@@ -36,8 +36,7 @@ import { LOOT_STACK_MAX } from './loot/loot.js';   // PORTAL-BULK: the most one 
 import { t } from './textManager.js';
 import { eventGroundAt } from './eventGround.js';   // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
 import { registerItemUseHandler } from './item/itemTemplates.js';
-import { POSE_BOUND, POSE_Y_BOUND } from '../net/wire.js';
-import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';
+import { POSE_BOUND, POSE_Y_BOUND, worldPixelOk } from '../net/wire.js';
 
 export { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, isPortalStone };
 
@@ -235,7 +234,9 @@ export function validPortalRecord(r) {
   if (!Array.isArray(r.p) || r.p.length !== 3 || !r.p.every(Number.isFinite)) return null;
   if (Math.abs(r.p[0]) > POSE_BOUND || Math.abs(r.p[2]) > POSE_BOUND || Math.abs(r.p[1]) > POSE_Y_BOUND) return null;
   if (!Array.isArray(r.d) || r.d.length !== 2 || !r.d.every(Number.isInteger)) return null;
-  if (r.d[0] < 0 || r.d[0] >= MAX_MAP_PIXEL_X || r.d[1] < 0 || r.d[1] >= MAX_MAP_PIXEL_Y) return null;
+  // AUDIT-TESA A2-2: a portal's end is a pixel of the world - the land past the Bay a stone reaches too (TESA-NO-FAST:
+  // its one road there), within the wire's own bound
+  if (!worldPixelOk(r.d[0]) || !worldPixelOk(r.d[1])) return null;
   if (!Number.isFinite(r.r) || r.r <= 0 || r.r > PORTAL_OPEN_MS) return null;
   return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r };
 }

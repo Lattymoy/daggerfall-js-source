@@ -1,0 +1,133 @@
+-- START2 (2026-10-24; bible/06-Systems/Alternate-Starts-Arc.md section 9): THE EMPEROR'S COMMISSION, Skyrim's start - a
+-- haunted hall near Solitude (systems/starts/starts.js STARTS: the nearest of the kinds its story wants, a quest item's
+-- marker in it; StartSiteSkyrim's row names it to the world, quest/place.js). Under the contract every start keeps: the
+-- commission is opened when the player chooses, and _BRISIEN begins in the city of Daggerfall. Its tie to the main
+-- story is the Underking's. A `say` ends its task's tick (Quest.cs QuestBreak), so each task's popup is its last word.
+Quest: _STARTSK
+DisplayName: The Emperor's Commission
+-- Message panels
+QRC:
+
+RumorsDuringQuest:  [1005]
+A courier in Imperial colors asked the way to __lair_ before the snow came. Nobody has seen him since.
+<--->
+The dead do not rest in __lair_. Everyone in Solitude knows it, and nobody goes in.
+<--->
+The snows came early this year. The old women say the Underking is restless.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Emperor's courier sheltered from a blizzard
+ in an old hall near Solitude, where the dead are
+ said to walk. He carried sealed orders for me,
+ and he never came out. If the orders are
+ anywhere, they are in
+ __lair_.
+
+Message:  1011
+%qdt:
+ I found the Emperor's sealed commission in
+ __lair_,
+ still in his courier's frozen hand. Its seal is
+ unbroken. I can break it whenever I am ready.
+
+Message:  1012
+%qdt:
+ I broke the Emperor's seal. He charges me to lay
+ the shade of King Lysandus to rest, and to learn
+ what became of a letter he sent to the Queen of
+ Daggerfall. I am to make for the city of
+ Daggerfall in the Iliac Bay, where his agent will
+ find me. His writ pays my passage on any ship
+ bound there.
+
+Message:  1020
+<ce>          The snow has not stopped for three days.
+<ce>         The Emperor's courier came this way before
+<ce>        the storm, bound for you with sealed orders,
+<ce>          and the last anyone saw of him, he was
+<ce>          making for the shelter of this old hall.
+<ce>
+<ce>        The dead are said to walk here. He did not
+<ce>         come out. Whatever he carried for you is
+<ce>                     still inside.
+
+Message:  1022
+<ce>         You find the courier where the cold took
+<ce>          him, the oilskin case still in his hand.
+<ce>          The commission inside is dry, its seal
+<ce>                       unbroken.
+<ce>
+<ce>         Scratched into the wall above him, in a
+<ce>         hand far older than his, are the words:
+<ce>       "The Underking sleeps. His heart does not."
+<ce>
+<ce>           When you break the seal is yours to
+<ce>                        choose.
+
+Message:  1023
+<ce>         You have reached Daggerfall, as the
+<ce>        Emperor's orders bade you, and as they
+<ce>       also bade you, you burn them. His agent
+<ce>                here will find you.
+
+Message:  1030
+<ce>            By the Hand of Uriel Septim VII
+ 
+%pcn,
+ 
+     The shade of King Lysandus walks the streets
+ of Daggerfall by night. Learn what torments him,
+ and lay his spirit to rest. Learn also whether
+ Our letter to the Queen of Daggerfall reached
+ her, and what became of it.
+ 
+     The Iliac Bay is rife with rebels against Our
+ throne. Speak of this to no one. Make for the
+ city of Daggerfall, and burn this letter there.
+ Our agent will find you.
+ 
+     This letter is Our writ of passage. Any master
+ in a harbor of the Empire will carry you to
+ Daggerfall at Our expense.
+ 
+<ce>                    Uriel Septim VII
+
+-- Symbols used in the QRC file:
+--
+--              %pcn occurs 1 time.
+--              %qdt occurs 3 times.
+--            __lair_ occurs 4 times.
+
+QBN:
+Item _commission_ letter used 1030
+
+Place _lair_ permanent StartSiteSkyrim
+Place _daggerfall_ permanent DaggerfallCity1
+
+--	Quest start-up:
+	place item _commission_ at _lair_
+	reveal _lair_
+	pc at _daggerfall_ set _incity_
+	_commission_ used do _opened_
+	log 1010 step 0
+	say 1020
+
+_found_ task:
+	clicked item _commission_
+	log 1011 step 1
+	remove log step 0
+	say 1022
+
+_opened_ task:
+	log 1012 step 2
+	remove log step 0
+	remove log step 1
+	reveal _daggerfall_
+
+variable _incity_
+
+_reported_ task:
+	when _opened_ and _incity_
+	start quest _BRISIEN
+	end quest saying 1023

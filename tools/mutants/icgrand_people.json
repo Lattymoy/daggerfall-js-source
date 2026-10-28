@@ -1,0 +1,110 @@
+[
+  {
+    "name": "IC-HOMES-door-onto-shut-ground",
+    "file": "src/world/imperialHomes.js",
+    "old": "    if (open(DOOR_OUT) && open(DOOR_OUT + 1.6)) return",
+    "new": "    if (true) return",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-HOMES-keys-in-daggerfall-range",
+    "file": "src/world/imperialHomes.js",
+    "old": "|| key < FABRIC_HOME_KEY_MIN || seen.has(key)) continue;",
+    "new": "|| seen.has(key)) continue;",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-HOMES-door-off-the-slice",
+    "file": "src/world/imperialHomes.js",
+    "old": "    if (door && door[0] - ox > NAV_EDGE && door[0] - ox < 8 * B - NAV_EDGE && oz - door[1] > NAV_EDGE && oz - door[1] < 8 * B - NAV_EDGE) chosen.push",
+    "new": "    if (door) chosen.push",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-HOMES-buildings-unwired",
+    "file": "src/scenes/pixelBuild.js",
+    "old": ".concat(cityHomesOf(dfLocation).buildings),",
+    "new": ",",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-HOMES-doors-unwired",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          }).concat(cityHomesOf(dfLocation).doors),",
+    "new": "          }),",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-HOMES-any-capital",
+    "file": "src/world/imperialHomes.js",
+    "old": "(loc?.capital && CAPITALS[loc.capital.k]?.family ?",
+    "new": "(loc?.capital ?",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-QUARTERS-none",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "{ quarters: isCapitalPlaceId(o.town.mapId) }",
+    "new": "{ quarters: false }",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-QUARTERS-every-town",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "{ quarters: isCapitalPlaceId(o.town.mapId) }",
+    "new": "{ quarters: true }",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-QUARTERS-one-census",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "this.residents = this.places.quarters ? quarterCensus(",
+    "new": "this.residents = false ? quarterCensus(",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-QUARTERS-town-places-every-day",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return Q && spot?.cell ? Q[",
+    "new": "    return this.places; return Q && spot?.cell ? Q[",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-QUARTERS-slots-shared",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "quarter * QUARTER_SLOTS + slot, p.job",
+    "new": "slot, p.job",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-QUARTERS-min-unread",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "id !== main && keys.size >= QUARTER_MIN)",
+    "new": "id !== main && keys.size >= 1000)",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  }
+]

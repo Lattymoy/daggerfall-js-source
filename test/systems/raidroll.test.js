@@ -326,5 +326,7 @@ test('RAID-ROLL client: this world\'s table is handed only when it hashes to the
   assert.match(tool, /const regions = raidRegions\(maps, picker\.getDFBitmap\(\)\.data\) \?\? \[\];\n\s*const text = raidTownsCanon\(regions\);/, 'the game\'s own reading of the same files');
   assert.match(rd('server/wrangler.toml'), /^RAID_TOWNS_SHA256 = "(?:[0-9a-f]{64})?"$/m, 'the relay\'s pin - empty a legal state');
   const idx = rd('server/src/index.js');
-  assert.match(idx, /if \(!raidWordFits\(m, sharedClassicMinutes\(now\)\)\) return;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const day = raidDayOfKey\(m\.key\);\n\s*if \(!raidOnSlot\(m, this\._raidSlotsOf\(day\)\)\) return;\n\s*const rolled = await this\._raidDayIdsOf\(day, now\);\n\s*if \(rolled && !rolled\.has\(raidLedgerId\(m\)\)\) return;\n\s*const id = raidLedgerId\(m\);/, 'read before the ledger - and before any storage read');
+  // PIN MOVED (WW6): the slots are the word's LANE's (a raid past the Bay its province's own), and the hub's whole roll -
+  // the operator's pinned towns table, MAPS.BSA's - the Bay's lane's alone
+  assert.match(idx, /if \(!raidWordFits\(m, sharedClassicMinutes\(now\)\)\) return;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const day = raidDayOfKey\(m\.key\), lane = raidLaneOfKey\(m\.key\);\n\s*if \(!raidOnSlot\(m, this\._raidSlotsOf\(day, lane\)\)\) return;\n\s*const rolled = lane === 0 \? await this\._raidDayIdsOf\(day, now\) : null;\n\s*if \(rolled && !rolled\.has\(raidLedgerId\(m\)\)\) return;\n\s*const id = raidLedgerId\(m\);/, 'read before the ledger - and before any storage read');
 });

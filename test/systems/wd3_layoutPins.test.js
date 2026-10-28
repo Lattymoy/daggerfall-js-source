@@ -30,6 +30,7 @@ import { leaveForRepair } from '../../src/systems/repairService.js';
 import { makeAnchor, WORLD_CONTEXT } from '../../src/systems/teleportAnchor.js';
 import { discoverBuilding, discoveredBuildings, snapshotDiscovery, restoreDiscovery, pruneDiscoveryLayouts } from '../../src/systems/discovery.js';
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache, addPermanentScene, removePermanentScene, layoutSceneName } from '../../src/systems/sceneCache.js';
+import { hostText } from '../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const BV = 'beautiful-villages', BC = 'beautiful-cities';
@@ -218,7 +219,7 @@ test('WD3 every record is stamped where it is made: the deed, the room, the repa
   assert.match(src('src/systems/quest/place.js'), /if \(sd\?\.siteType === SITE_TYPES\.Building && sd\.buildingKey > 0\) stampLayout\(sd, layoutStampOfMapId\(sd\.mapId\)\);/);
   assert.match(src('src/systems/online/onlineHomes.js'), /const stamp = layoutStampOfMapId\(mapId\);\n {2}return stamp && stamp !== CLASSIC_LAYOUT \? stamp : null;/);   // AUDIT PRE-MERGE 1003 WD1: homeClaimLayout, a hall's too
   assert.match(src('src/systems/online/onlineHomes.js'), /const layout = homeClaimLayout\(mapId\);/);
-  assert.match(src('src/scenes/world.js'), /if \(interior\) \{ const at = playerTravelPixel\(\); stampLayout\(interior, layoutStampOfPixel\(at\.x, at\.y\)\); \}/);
+  assert.match(hostText('src/scenes/world.js'), /if \(interior\) \{ const at = playerTravelPixel\(\); stampLayout\(interior, layoutStampOfPixel\(at\.x, at\.y\)\); \}/);
   assert.match(src('src/scenes/worldModes.js'), /if \(_visitLayout !== null\) stampLayout\(state, _visitLayout\);/);
 });
 
@@ -246,7 +247,8 @@ test('WD3 an interior\'s cached scene carries its town\'s layout through the sav
   // the held scene is never written over by the visit's own leaving; the visit is kept beside it (AUDIT WD3 S1/R1)
   assert.match(W, /if \(_sceneHeldForLayout === name\) \{\n {6}const alt = layoutSceneName\(name, _visitLayout\);\n {6}cacheScene\(sceneCache\(\), alt, state\);\n {6}addPermanentScene\(sceneCache\(\), alt\);\n {6}return;\n {4}\}/);
   // nor furnished there: the deed sleeps where its town stands in another layout (banking.js deedStands, AUDIT WD3 H1)
-  assert.match(src('src/systems/banking.js'), /return ownedHouseKey\(houses, regionIndex\) === buildingKey && deedStands\(houses\?\.\[regionIndex\]\);/);
+  // PIN MOVED (HOUSES-3): any of the region's three deeds, each standing and held in the town asking
+  assert.match(src('src/systems/banking.js'), /return regionDeeds\(houses, regionIndex\)\.some\(\(d\) => d\.buildingKey === buildingKey && deedStands\(d\) && deedHeldIn\(d, mapId\)\);/);
   // AUDIT WD3 R4: stamped with the layout the visit began in
   assert.match(W, /_visitLayout = visitLayoutNow\(\);/);
   assert.match(W, /const visitLayoutNow = \(\) => \{ const k = layoutLocationKeyOfMapId\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0\); return k != null \? layoutStampAt\(k\) : null; \};/);
@@ -277,17 +279,20 @@ test('WD3 the discoveries: a town\'s found buildings carry the layout they were 
 });
 
 test('WD3 the load: the save\'s towns in the layouts its things were made in, before its place is built - online only the service\'s homes pin, a pack a pin lets in is on the door first, each changed town read again and rebuilt where it stands, and discoveries pruned', () => {
-  const W = src('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   const at = W.indexOf('async function applyLayoutPins(extras = null) {');
   assert.ok(at > 0);
   const body = W.slice(at, W.indexOf('\n  async function worldQuickLoad', at));
-  assert.match(body, /const records = homeLayoutsOnline \? \(_serverLayoutRecords \?\? \[\]\) : layoutRecordsOf\(\{\n {6}houses: playerEntity\.houses, rooms: playerEntity\.rentedRooms,/);
+  // PIN MOVED (HOUSES-3): every deed's town pinned, the region's three (banking.js allDeeds)
+  assert.match(body, /const records = homeLayoutsOnline \? \(_serverLayoutRecords \?\? \[\]\) : layoutRecordsOf\(\{\n {6}houses: allDeeds\(playerEntity\.houses\), rooms: playerEntity\.rentedRooms,/);
   assert.match(body, /repairs: \(playerEntity\.otherItems \?\? \[\]\)\.map\(\(it\) => it\?\.repairData\)\.filter\(Boolean\),\n {6}anchor: playerEntity\.anchorPosition,/);
   // PIN MOVED (QUEST-AUDIT II PIN-SLEEP): and the town is held back - its records sleep (test/systems/quest/qa2_layouts.test.js)
   // AUDIT QA2: the loop is layoutPins' admitPinnedPacks, run in test/systems/quest/qa2_layouts.test.js
   assert.ok(body.includes('const { dropped, heldBack } = await admitPinnedPacks(pins, ensureWorldDataPack);'));
   assert.ok(body.includes('const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });'));
-  assert.match(body, /if \(built\.has\(pixelKey\)\) \{[\s\S]{0,120}destroyPixel\(px, py, \{ collectLoose: false \}\);\n {8}queue\.push\(\{ px, py \}\);/);
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): a changed town standing is built again behind its view and swapped
+  // in whole, where it was torn down first (destroyPixel) and stood bare until its build landed
+  assert.match(body, /if \(built\.has\(pixelKey\)\) \{\n {8}const \[px, py\] = pixelKey\.split\(','\)\.map\(Number\);\n {8}swap\.mark\(px, py\);[^\n]*\n {8}queue\.push\(\{ px, py \}\);/);
   assert.match(body, /const forgotten = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : pruneDiscoveryLayouts\(\);/);
   assert.match(W, /await applyLayoutPins\(extras\);   \/\/ WD3: the save's towns in the layouts its things were made in, before its place is built/);
   assert.match(src('src/scenes/dungeonContext.js'), /if \(session\) opts\.layoutPinsLoaded\?\.\(extras\);/);
@@ -312,7 +317,7 @@ test('WD3 a questor met indoors is stamped with their town\'s layout (AUDIT WD3 
   assert.match(P, /questorData: \{ \.\.\.this\.questorData \},/, 'saved with the struct');
   assert.match(P, /this\.questorData = \{ \.\.\.ZERO_NPC_DATA, \.\.\.\(dataIn\.questorData \?\? \{\}\) \};/, 'and restored with it');
   assert.match(src('src/systems/quest/machine.js'), /if \(resource\.isPerson && resource\.isQuestor && resource\.questorData\?\.buildingKey > 0\) out\.push\(resource\.questorData\);/);
-  assert.match(src('src/scenes/world.js'), /questors: questBridge\?\.machine\?\.getAllActiveQuestors\?\.\(\) \?\? \[\],/);
+  assert.match(hostText('src/scenes/world.js'), /questors: questBridge\?\.machine\?\.getAllActiveQuestors\?\.\(\) \?\? \[\],/);
 });
 
 test('WD3 a deed SLEEPS where its town stands in another layout (AUDIT WD3 H1) - no building is the player\'s by its key there (door, cupboards, bed, furniture, the bank\'s sale) until the town stands in its layout again; one whose town the host cannot place stands as Daggerfall read it; and the market never sells a house with no model of its own (H2)', async () => {
@@ -329,7 +334,9 @@ test('WD3 a deed SLEEPS where its town stands in another layout (AUDIT WD3 H1) -
   assert.equal(deedStands({ mapId: 424242, buildingKey: 5, layout: BV + '@1.4.2' }), true, 'a town the host cannot place');
   assert.equal(deedStands({ buildingKey: 5 }), true, 'a deed naming no town');
   const src2 = src('src/scenes/worldModes.js');
-  assert.match(src2, /if \(!deedStands\(playerEntity\.houses\?\.\[bankRegion\(\)\]\)\) return null;/, 'the bank prices and sells no sleeping deed');
+  // PIN MOVED (HOUSES-3): the bank's resolver over the region's three (banking.js townDeeds)
+  assert.match(src('src/systems/banking.js'), /\.filter\(\(deed\) => deedStands\(deed\) && deedHeldIn\(deed, dir\.mapId\)\)/, 'the bank prices and sells no sleeping deed');
+  assert.match(src2, /const townHouses = \(\) => townDeeds\(playerEntity\.houses \?\? \[\], bankRegion\(\), buildingDirectory\?\.\(\)\);/);
   // H2: the market's candidates - a house standing on no model is skipped, every other as before
   const { BUILDING_TYPES } = await import('../../src/world/buildingNames.js');
   const b = (k, t, m = 1) => ({ buildingKey: k, buildingType: t, modelIdNum: m });
@@ -389,7 +396,7 @@ test('WD3 a record whose town stands in another layout is honoured, never misrea
   const M = src('src/scenes/worldModes.js');
   assert.match(M, /if \(!cabin && layoutLocationKeyOfMapId\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0\) != null && !layoutsMatch\(saved\.layout, visitLayoutNow\(\)\)\) \{\n {8}console\.warn\('\[layout\] the building was left in another layout of this town - standing outside'\);\n {8}return false;/);
   assert.match(M, /room: findRentedRoom\(playerEntity\.rentedRooms \?\? \[\], mapId, buildingKey, b\?\.buildingType === BUILDING_TYPES\.Tavern\),/);
-  assert.match(src('src/scenes/world.js'), /restoreInterior\?\.\(a\.interior \? \{ \.\.\.a\.interior, layout: a\.layout \} : a\.interior, anchorLanding\(a\)\)/, 'an anchor carries the layout it was set in');
+  assert.match(hostText('src/scenes/world.js'), /restoreInterior\?\.\(a\.interior \? \{ \.\.\.a\.interior, layout: a\.layout \} : a\.interior, anchorLanding\(a\)\)/, 'an anchor carries the layout it was set in');
 });
 
 test('WD3 a quest\'s building site whose town stands in another layout is chosen AGAIN in it (AUDIT WD3 S5) - by the place\'s own law (its P2/P3), keeping what was assigned to it, stamped anew, its site link following; a site standing in its layout, a town site and one with no building of its kind are left as they are', async () => {
@@ -427,7 +434,7 @@ test('WD3 a quest\'s building site whose town stands in another layout is chosen
   assert.equal('layout' in place.siteDetails, false, 'stamped in the layout it stands in now (Daggerfall\'s own)');
   assert.equal(m.siteLinks.find((l) => l.questUID === quest.uid).buildingKey, 0x20101, 'its site link follows');
   assert.equal(m.reseatMovedSites(w), 0, 'and stands');
-  assert.match(src('src/scenes/world.js'), /const reseated = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : \(questBridge\?\.machine\?\.reseatMovedSites\?\.\(\) \?\? 0\);/);
+  assert.match(hostText('src/scenes/world.js'), /const reseated = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : \(questBridge\?\.machine\?\.reseatMovedSites\?\.\(\) \?\? 0\);/);
 });
 
 test('WD3 the versions every stamp was made against (AUDIT WD3 B5) - two stamps are one layout whatever versions they name while each mod ships one; a vendored pack of another version may move buildings under every stamped record, so it is held to LAYOUT_MOD_VERSIONS until a layout migration is written', async () => {

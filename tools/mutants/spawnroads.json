@@ -1,7 +1,7 @@
 [
   {
     "name": "SPAWN-ROADS-the-host-never-asks-the-network",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "      if (net && !pathFreePixel(net, px, py)) return null;\n",
     "new": "",
     "tests": ["test/world/spawnroads.test.js"]
@@ -22,7 +22,7 @@
   },
   {
     "name": "SPAWN-ROADS-a-pre-network-ruin-is-final",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "      if (!net) _spawnUnroaded.add(key);",
     "new": "",
     "tests": ["test/world/spawnroads.test.js"]

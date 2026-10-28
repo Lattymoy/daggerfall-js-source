@@ -182,11 +182,12 @@
   {
     "name": "MAP-KEEP-load-fresh",
     "file": "src/scenes/world.js",
-    "old": "{ locationKey: extras.locationKey, fromLoad: true, recorded: extras.dungeon ?? {} }",
-    "new": "{ locationKey: extras.locationKey, fromLoad: false, recorded: extras.dungeon ?? {} }",
+    "old": "{ locationKey: extras.locationKey, fromLoad: true, recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {} }",
+    "new": "{ locationKey: extras.locationKey, fromLoad: false, recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {} }",
     "tests": [
       "test/systems/automap/mapkeep.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS W3): a start's dungeon through the quest's own entry."
   },
   {
     "name": "MAP-KEEP-transition-drops-arm",

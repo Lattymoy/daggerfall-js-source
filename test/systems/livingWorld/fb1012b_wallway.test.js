@@ -56,10 +56,17 @@ test('WALL-WAY the trims of a way: each its town\'s exit; held to 0.4 of the way
   assert.deepEqual(wayTrims(city, null, diag), [townExit(city, diag), 0], 'the wild end is no town\'s');
 });
 
-test('WALL-WAY every trip kind trims by wayTrims and the host gives a town its grid\'s shape (mutants: one trip left on the radius; the shape unwritten)', () => {
+test('WALL-WAY every trip kind trims by wayTrims and the host gives a town its grid\'s shape (mutants: one trip left on the radius; the shape unwritten)', async () => {
   const trips = readFileSync(new URL('../../../src/systems/livingWorld/trips.js', import.meta.url), 'utf8');
   assert.equal((trips.match(/Math\.min\(townTrim\(/g) ?? []).length, 0, 'no trip on the radius');
   assert.equal((trips.match(/const \[trim0, trim1\] = wayTrims\(home, /g) ?? []).length, 5, 'the market, the hunt, the trip, the pilgrimage, the dive');
-  const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(world, /w: Math\.max\(1, ed\?\.width \?\? 1\), h: Math\.max\(1, ed\?\.height \?\? 1\),/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the town's record is the living world's index's off the world's
+  // registry (scenes/livingWorld/livingIndex.js), the Bay's rows its first provider - the producer's own record, made
+  const { createWorldPlaces } = await import('../../../src/world/worldWide/worldPlaces.js');
+  const { bayPlaceRows } = await import('../../../src/world/worldWide/bayPlaces.js');
+  const { createLivingIndex } = await import('../../../src/scenes/livingWorld/livingIndex.js');
+  const places = createWorldPlaces();
+  places.register('bay', bayPlaceRows([{ name: 'Wallham', regionIndex: 17, mapTableData: { mapId: 4242, locationType: 0, longitude: 300 * 128, latitude: (499 - 200) * 128 }, exterior: { exteriorData: { width: 3, height: 2 } } }]));
+  const town = createLivingIndex({ places, populated: () => true, peopleAt: () => 3 }).townAt(300, 200);
+  assert.deepEqual([town.w, town.h, town.blocks], [3, 2, 6], 'its grid\'s own width east and height north');
 });

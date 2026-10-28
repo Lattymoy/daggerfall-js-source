@@ -20,11 +20,12 @@
   {
     "name": "SC-hire-name-reused",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "name: handName(seed, hires++, gender, regionIndex)",
-    "new": "name: handName(seed, i, gender, regionIndex)",
+    "old": "name: handName(seed, hires++, gender, regionIndex, bank)",
+    "new": "name: handName(seed, i, gender, regionIndex, bank)",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
   },
   {
     "name": "SC-loss-uncapped",

@@ -15,6 +15,7 @@ export function memoryIdb() {
           db = {
             stores,
             objectStoreNames: { contains: (n) => stores.has(n) },
+            close() {},   // AUDIT TESA II R10: world/roadsCache.js idbStore closes each connection it opens
             createObjectStore: (n) => { stores.set(n, new Map()); },
             transaction(names) {
               const tx = { pending: 0 };
@@ -25,7 +26,8 @@ export function memoryIdb() {
                 return {
                   get: (k) => request(() => map.get(k)),
                   put: (v, k) => request(() => { map.set(k, structuredClone(v)); }),
-                  delete: (k) => request(() => { map.delete(k); }),
+                  // AUDIT TESA II R10: a key, or a key range as IDBKeyRange.bound makes one ({ lower, upper }, both in)
+                  delete: (k) => request(() => { if (k && typeof k === 'object' && 'lower' in k) { for (const key of [...map.keys()]) if (key >= k.lower && key <= k.upper) map.delete(key); } else map.delete(k); }),
                   getAll: () => request(() => [...map.values()]),
                   getAllKeys: () => request(() => [...map.keys()]),
                 };

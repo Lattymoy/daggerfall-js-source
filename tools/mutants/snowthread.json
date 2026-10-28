@@ -18,10 +18,10 @@
     ]
   },
   {
-    "name": "SNOW-THREAD-ground-bed-added",
+    "name": "SNOW-THREAD-ground-bed-dropped",
     "file": "src/systems/snowfall/snowGroundLaw.js",
-    "old": "  return d ? h - gridValueAt(d, g, g, TILE_SIDE * stride, lx, lz) : h;",
-    "new": "  return d ? h + gridValueAt(d, g, g, TILE_SIDE * stride, lx, lz) : h;",
+    "old": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);",
+    "new": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, null);",
     "tests": [
       "test/systems/snowthread.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SNOW-THREAD-ground-stride-dropped",
     "file": "src/systems/snowfall/snowGroundLaw.js",
-    "old": "  const stride = p._stride ?? 1;\n  const h = surfaceHeightAt(p.samples, lx, lz, stride);",
-    "new": "  const stride = 1;\n  const h = surfaceHeightAt(p.samples, lx, lz, stride);",
+    "old": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);",
+    "new": "  return drawnGroundAt(p.samples, lx, lz, 1, p._bed?.depths ?? null);",
     "tests": [
       "test/systems/snowthread.test.js"
     ]

@@ -605,8 +605,8 @@
   {
     "name": "WITCH1-AUDIT-G1-no-look-down",
     "file": "src/world/witchesDecor.js",
-    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floorY + S.downFrom, z], [x, floorY + S.lip, z])) return false;",
-    "new": "    for (const [x, z] of []) if (blocked([x, floorY + S.downFrom, z], [x, floorY + S.lip, z])) return false;",
+    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
+    "new": "    for (const [x, z] of []) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],

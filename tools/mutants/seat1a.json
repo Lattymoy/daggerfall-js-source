@@ -21,7 +21,7 @@
   {
     "name": "SEAT1a-crown-any-name",
     "file": "src/net/townSeatLaw.js",
-    "old": " || name !== KINGDOMS[CROWN_SEAT_REGIONS[region]]?.name))",
+    "old": " || name !== kingdomSeatName(CROWN_SEAT_REGIONS[region])))",
     "new": "))",
     "tests": [
       "test/net/seat1a_client.test.js",

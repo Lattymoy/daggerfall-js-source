@@ -177,12 +177,18 @@ test('A1: the streaming host re-skins what already stands, without unloading it'
   // change, so its loose piles and corpses do not either
   // (CollectLooseObjects is the unload's, StreamingWorld.cs:1040-1052).
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /function destroyPixel\(px, py, \{ collectLoose = true \} = \{\}\) \{/,
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): `carried` and `carryOnly` beside it - a rebuild behind its view takes its carry at the mark and not again at the swap; the default still collects
+  assert.match(world, /function destroyPixel\(px, py, \{ collectLoose = true, carried = false, carryOnly = false \} = \{\}\) \{/,
     'destroyPixel lost the re-skin door');
   assert.match(world, /if \(collectLoose\) droppedLoot\.collectPixel\(key\);/);
   assert.match(world, /if \(collectLoose\) \{ cityGuards\.collectPixel\(key\); exteriorFoes\.collectPixel\(key\); \}/);
-  assert.match(world, /destroyPixel\(bx, by, \{ collectLoose: false \}\);/,
+  // PIN MOVED (IC-SWAP-BEHIND): the season's rebuild goes through the swap (scenes/swapBehind.js), whose teardown - the view
+  // behind which it builds, or the pixel itself with the switch off - is a rebuild's, never an unload's
+  const SW = readFileSync(new URL('../../src/scenes/swapBehind.js', import.meta.url), 'utf8');
+  assert.match(SW, /host\.destroyPixel\(px, py, \{ collectLoose: false \}\); return false;/,
     'the season rebuild must not sweep loose objects');
+  assert.match(SW, /host\.destroyPixel\(px, py, \{ collectLoose: false, carryOnly: true \}\);/);
+  assert.match(SW, /host\.destroyPixel\(px, py, \{ collectLoose: false, carried: true \}\);/);
   // The pixels stay in state.loaded ("built or building") - releasing
   // them would let the next crossing list them a second time.
   // ROAD-H H3: the window is the whole function (it grew with the
@@ -190,7 +196,8 @@ test('A1: the streaming host re-skins what already stands, without unloading it'
   // the assertions below.
   const tick = world.slice(world.indexOf('function tickSeason()'), world.indexOf('\n  }\n', world.indexOf('function tickSeason()')));
   assert.doesNotMatch(tick, /state\.release/, 'the re-skin released the pixels it is about to rebuild');
-  assert.match(tick, /queue\.push\(\.\.\.rebuild\)/, 'the torn-down pixels must be queued back');
+  assert.match(tick, /swap\.rebuild\(keys\.map\(/, 'PIN MOVED (IC-SWAP-BEHIND): the torn-down pixels must be queued back - through the swap');
+  assert.match(SW, /if \(front\) host\.queue\.unshift\(\.\.\.sorted\); else host\.queue\.push\(\.\.\.sorted\);/);
   // ...and it waits for a build in flight: buildPixel publishes only at
   // its very end, so tearing down a key that has no entry yet frees
   // nothing and orphans everything the finished build made (the hazard
@@ -301,9 +308,14 @@ test('ROAD-Ar R0: the streaming host arms the hold before the teardown and relea
   // the ground goes), the release (on the player's own pixel, with
   // the re-anchoring spawn), and the gate on the motor itself.
   const world = hostText('src/scenes/world.js');
+  // PIN MOVED (IC-SWAP-BEHIND): the arm and the teardown are the swap's rebuild (scenes/swapBehind.js), the season's tail as
+  // every sweep's - and armed only where the ground goes: behind its standing view the player's pixel never goes
   const tick = world.slice(world.indexOf('function tickSeason()'));
-  const arm = tick.indexOf('_seasonHoldKey = `${state.current.x},${state.current.y}`');
-  const teardown = tick.indexOf('destroyPixel(bx, by, { collectLoose: false });');
+  assert.match(tick, /swap\.rebuild\(keys\.map\(/);
+  const SW = readFileSync(new URL('../../src/scenes/swapBehind.js', import.meta.url), 'utf8');
+  const reb = SW.slice(SW.indexOf('    rebuild(again, '));
+  const arm = reb.indexOf('host.seasonHold(under);');
+  const teardown = reb.indexOf('for (const k of again) api.mark(k.px, k.py);');
   assert.ok(arm > 0 && arm < teardown,
     'the hold must be armed while the player still has a pixel to name');
   // ROAD-H H3: and armed only when the player's OWN pixel is one of the
@@ -313,8 +325,8 @@ test('ROAD-Ar R0: the streaming host arms the hold before the teardown and relea
   // swallowed landing for nothing. (The whole-key condition, not just
   // the assignment: matching the assignment alone let the guard be
   // deleted with the suite green.)
-  assert.match(tick.slice(0, teardown),
-    /if \(walkMode && playerSpawned && keys\.includes\(`\$\{state\.current\.x\},\$\{state\.current\.y\}`\)\) _seasonHoldKey =/,
+  assert.match(reb.slice(0, teardown),
+    /if \(host\.walkMode\(\) && host\.playerSpawned\(\) && !api\.stands\(under\) && again\.some\(\(k\) => `\$\{k\.px\},\$\{k\.py\}` === under\)\) host\.seasonHold\(under\);/,
     'the hold is armed only when the player\'s own key is among the keys going down');
   // FALL-KEPT (FIELD BUGS 2026-09-30, PIN MOVED): the re-anchor keeps a fall under way when the hold began - the held
   // motor moved not at all, so the fall is the player's (fb0930_fallkept.test.js runs the release).

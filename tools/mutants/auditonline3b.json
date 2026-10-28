@@ -11,11 +11,12 @@
   {
     "name": "C1-a-halo-keeps-no-grave-word",
     "file": "src/net/online.js",
-    "old": "h.owOk = relaySupportsOverworld(relayV); h.owGraveOk = relaySupportsOwGraves(relayV); }",
-    "new": "h.owOk = relaySupportsOverworld(relayV); }",
+    "old": "h.owOk = relaySupportsOverworld(relayV); h.owGraveOk = relaySupportsOwGraves(relayV); h.owWorldOk",
+    "new": "h.owOk = relaySupportsOverworld(relayV); h.owWorldOk",
     "tests": [
       "test/net/auditonline3b.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the halo says a third word after it (owWorldOk)."
   },
   {
     "name": "A7-the-hello-forgets-the-death",

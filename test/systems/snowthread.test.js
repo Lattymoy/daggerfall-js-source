@@ -2,7 +2,7 @@
 // run on systems/snowfall/snowBuildWorker.js over a copy of the ground (snowBuildKernel.js); the main thread posts them
 // and takes the finished arrays (snowBuildClient.js). The claim pinned here is the one the change rests on: for the same
 // inputs the worker makes the very bytes the main thread's own build makes. The world is snowfallHost.js's own adapter
-// over a ground whose laws are systems/snowfall/snowGroundLaw.js's (world.js's): rolling samples, a pixel at stride 2,
+// over a ground whose laws are systems/snowfall/snowGroundLaw.js's (scenes/snowGround.js's): rolling samples, a pixel at stride 2,
 // a shore's carved bed, a carved sea with its floor, Basic Roads' tracks classified for real, a town. The worker is the
 // kernel in this process behind a structured clone each way - what crosses must be data, and a transferred array is gone
 // from the side that sent it.
@@ -22,7 +22,7 @@ const MASKS = [103, 303, 403].map((a) => new Uint8Array(readFileSync(new URL(`..
 const SIZE = 819.2;
 const bytesOf = (a) => Buffer.from(a.buffer, a.byteOffset, a.byteLength);
 
-/** A built pixel entry as world.js keeps one - the fields snowGroundLaw.js reads, and a TileMap with Basic Roads'
+/** A built pixel entry as world.js builds one - the fields snowGroundLaw.js reads, and a TileMap with Basic Roads'
  *  tracks painted where the network's north-south and east-west tracks run (so they classify as tracks). */
 function entry(px, py) {
   const stride = px === 501 && py === 249 ? 2 : 1;
@@ -58,7 +58,7 @@ function entry(px, py) {
 }
 
 /** The streaming world's frame (world.js state.mapOrigin and compensation) and a SnowGround over the entries, in
- *  world.js's shape: its laws snowGroundLaw.js's, its `data` their snapshot, its `frame` toGlobal's inputs. */
+ *  scenes/snowGround.js's shape: its laws snowGroundLaw.js's, its `data` their snapshot, its `frame` toGlobal's inputs. */
 function streamedWorld() {
   const F = { mx: 500, my: 250, cx: 0, cy: 0, cz: 0 };
   const entries = new Map();

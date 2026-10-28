@@ -70,9 +70,11 @@ test('JAN1 (2): a save with no bank accounts restores the FULL table (and the ho
   const snap = snapshotPlayer(played, {});
   const again = fresh();
   restorePlayer(again, snap);
-  assert.equal(again.bankAccounts.length, 3); assert.equal(again.bankAccounts[2].accountGold, 777, 'restored as saved');
+  // PIN MOVED (WW-R, bible/03-World/World-Wide.md): a short table is padded to the world's regions, the rows it held kept as they were
+  assert.equal(again.bankAccounts.length, BANK_REGION_COUNT); assert.equal(again.bankAccounts[2].accountGold, 777, 'restored as saved');
+  assert.deepEqual(again.bankAccounts[17], { regionIndex: 17, accountGold: 0, loanTotal: 0, loanDueDate: 0, hasDefaulted: false }, 'a region it lacked opened empty');
   assert.notEqual(again.bankAccounts[2], played.bankAccounts[2], 'a copy');
-  assert.equal(validateRegion(again.bankAccounts, 17), false, 'DFU\'s law still refuses a region past the table (the wilderness\'s -1, or a short table)');
+  assert.equal(validateRegion(again.bankAccounts, BANK_REGION_COUNT), false, 'DFU\'s law still refuses a region past the table (the wilderness\'s -1, or past every region)');
 });
 
 test('JAN1 (3): the trade window prices an item with no finite value at its base price, never NaN - Sell, SellMagic, Repair and Buy through the one value read; a save\'s items are set on the way in; a minted value is kept', () => {

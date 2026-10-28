@@ -329,30 +329,32 @@
   {
     "name": "SEAT1c-list-undressed",
     "file": "server-account/src/index.js",
-    "old": "            return 'error' in r ? r : { ...r, ...(await seatsBoard(ctx.db, r.seats, nowS)), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };",
-    "new": "            return r;",
+    "old": "            return { ...r, ...board, ...(domains?.rule",
+    "new": "            return { ...r, ...(domains?.rule",
     "tests": [
       "test/net/seat1c_service.test.js"
     ],
-    "note": "PRIMARY-TRIPS (re-aimed by content): the list's line is seatsBoard's"
+    "note": "Re-aimed by content (DOMAIN3): the list's board read once, and marked for the region law. PRIMARY-TRIPS (re-aimed by content): the list's line is seatsBoard's"
   },
   {
     "name": "SEAT1c-no-settle-on-read",
     "file": "server-account/src/index.js",
-    "old": "        if (seatsOpenFor(who.player, env) && (await settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).pending && !SEAT_READS.has(path)) return no('seats-settling', 503, origin);   // SEASON1: a Season's end at its Turning\n",
+    "old": "        if (seatsOpenFor(who.player, env) && (await settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))).pending && !SEAT_READS.has(path)) return no('seats-settling', 503, origin);   // SEASON1: a Season's end at its Turning\n",
     "new": "",
     "tests": [
       "test/net/seat1c_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the Turning is handed the region law's first week beside Season 0's."
   },
   {
     "name": "SEAT1c-book-undressed",
     "file": "src/net/townSeatBook.js",
-    "old": "    dressed: (seat) => (seat ? { ...seat, holder: dress.get(seat.key)?.holder ?? null, battle: dress.get(seat.key)?.battle ?? null, forts:",
-    "new": "    dressed: (seat) => (seat ? { ...seat, holder: null, battle: null, forts:",
+    "old": "      const out = { ...seat, holder: d?.holder ?? null, battle: d?.battle ?? null, forts: d?.forts ?? null };",
+    "new": "      const out = { ...seat, holder: null, battle: null, forts: d?.forts ?? null };",
     "tests": [
       "test/ui/seat1c_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the dress is a function of its own now, a holding dressed in its Charter after."
   },
   {
     "name": "SEAT1c-tab-relinquish-unarmed",

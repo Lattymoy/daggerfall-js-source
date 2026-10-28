@@ -49,7 +49,7 @@ export function createVendorHost(host) {
   };
   /** A trader's piece BOUGHT at its stall: off the purse at its own price, its delivery collected into the pack at once. */
   const vendorBuy = async (vendor, row) => {
-    const hub = marketHubs[row.region];
+    const hub = marketHubs()[row.region];   // BAY-LEFT-SEA: the hubs as they stand now (systems/region/marketHubs.js)
     const r = await marketBook.buy({ region: row.region, listing: row.id, units: 1, max: row.price, hubs: hub ? { [row.region]: hub } : {}, currency: 'gold', vendor }, marketMint);
     if (r?.ok && r.data?.delivery?.id && !(await collectedAtPress(r.data.delivery.id))) {
       return { ok: true, text: t('vendor.buy.onWay', 'Bought {name} for {price}. It is on its way to your pack and will reach it on its own.', { name: vendorNameOf(row.item), price: vendorGoldText(row.price) }) };

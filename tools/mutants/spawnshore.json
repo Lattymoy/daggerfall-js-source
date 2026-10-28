@@ -2,8 +2,8 @@
   {
     "name": "SHORE-law-byte-only",
     "file": "src/world/spawnedDungeons.js",
-    "old": "if (d === undefined) dry.set(key, d = spawnGroundDry(woods, px, py));",
-    "new": "if (d === undefined) dry.set(key, d = woods.getHeightMapValue(px, py) * 8 > 27.2);",
+    "old": "if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(woods, px, py));",
+    "new": "if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && woods.getHeightMapValue(px, py) * 8 > 27.2);",
     "tests": [
       "test/world/terrain/spawnshore.test.js"
     ],
@@ -21,7 +21,7 @@
   },
   {
     "name": "SHORE-build-ungated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;",
     "new": "maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;",
     "tests": [

@@ -35,7 +35,7 @@ export const TIDE_LANDS = Object.freeze(['daggerfall', 'wayrest', 'sentinel', 'm
 export const tideLandName = (land) => (KINGDOMS[land] ? `the Kingdom of ${KINGDOMS[land].name}` : land === 'marches' ? 'the Marches' : land === 'free' ? 'the Free Lands' : null);
 /** The land a region's Tide is: its crown's kingdom, the Marches, the Free Lands - or null (the sea, a region no crown
  *  holds), which is always Calm. */
-export const tideLandOf = (region) => kingdomOf(region) ?? (isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null);
+export const tideLandOf = (region) => { const k = kingdomOf(region); return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null; };   // WW7-3: a province's crown is no Tide's land - the Tides are the Bay's
 /** THE TIDE of `land` in seat week `week` (9.3) - a Tide's id; Calm for no land. Only the roll: a caller asks whether a
  *  Season is counted (tideAt). */
 export function tideOf(week, land) {

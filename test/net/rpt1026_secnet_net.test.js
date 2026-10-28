@@ -191,7 +191,9 @@ test('RPT1026-SECNET A STALLED LINE\'S FOES WAIT TOO, AND ITS POSE TO ONE A HEAR
   quiet(() => s.join('world:3,12', POSE));
   const ws = sockets[0];
   ws.open();
-  quiet(() => ws.receive({ t: 'welcome', id: 'host-0001', peers: [], host: 'host-0001', world: null, v: RELAY_VERSION }));
+  // PIN MOVED (the merge of main into #1184): a peer in the cell - alone, LONE-SLEEP (net/loneSleep.js) says a pose a
+  // LONE_POSE_MS, never a HEARTBEAT_MS, and the heartbeat this pins is the cell's own
+  quiet(() => ws.receive({ t: 'welcome', id: 'host-0001', peers: [{ id: 'peer-0002', name: 'Bran', p: { x: 2, y: 0, z: 1, yaw: 0 } }], host: 'host-0001', world: null, v: RELAY_VERSION }));
   const foes = { n: 1, f: [] };
   assert.equal(s.sendFoes(foes), true, 'a live line');
   assert.equal(s.sendPose({ ...POSE, x: POSE.x + 1 }), true);
