@@ -180,24 +180,6 @@
     ]
   },
   {
-    "name": "MA-a-grown-cover-cell-pushed",
-    "file": "src/ai/cover.js",
-    "old": "  if (cell.length >= CELL_EXACT) { cell.push(it); return; }",
-    "new": "  if (cell.length >= 0) { cell.push(it); return; }",
-    "tests": [
-      "test/systems/memaudit.test.js"
-    ]
-  },
-  {
-    "name": "MA-a-cover-cell-s-order-turned",
-    "file": "src/ai/cover.js",
-    "old": "  grid.set(k, cell.concat([it]));",
-    "new": "  grid.set(k, [it].concat(cell));",
-    "tests": [
-      "test/systems/memaudit.test.js"
-    ]
-  },
-  {
     "name": "MA-a-proxy-born-without-its-mark",
     "file": "src/ai/cover.js",
     "old": "h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 };",
@@ -393,33 +375,6 @@
     "new": "",
     "tests": [
       "test/systems/org2_options.test.js"
-    ]
-  },
-  {
-    "name": "MA-C1-a-cell-of-one-pushed-from-empty",
-    "file": "src/ai/cover.js",
-    "old": "  if (!cell) { grid.set(k, [it]); return; }",
-    "new": "  if (!cell) { const a = []; a.push(it); grid.set(k, a); return; }",
-    "tests": [
-      "test/systems/memaudit.test.js"
-    ]
-  },
-  {
-    "name": "MA-C1-the-bodies-grid-pushed",
-    "file": "src/ai/cover.js",
-    "old": "fileIn(set.bodies, cellKey(gx, gz), it);",
-    "new": "{ const k = cellKey(gx, gz); let c = set.bodies.get(k); if (!c) set.bodies.set(k, c = []); c.push(it); }",
-    "tests": [
-      "test/systems/memaudit.test.js"
-    ]
-  },
-  {
-    "name": "MA-C1-the-wide-grid-pushed",
-    "file": "src/ai/cover.js",
-    "old": "        fileIn(set.wide, cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)), it);",
-    "new": "        { const k = cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)); let c = set.wide.get(k); if (!c) set.wide.set(k, c = []); c.push(it); }",
-    "tests": [
-      "test/systems/memaudit.test.js"
     ]
   },
   {

@@ -10,7 +10,8 @@ import { readFileSync } from 'node:fs';
 import { DECOR_YARD_HIGH } from '../../src/net/decorLaw.js';
 import { createHomeYards } from '../../src/scenes/homeYards.js';
 import { standService, T0 } from '../accountDb.mjs';
-import { fakeDoc, fakeWin, settle } from '../decorFakes.mjs';
+import { fakeDoc, fakeWin, settle, townCellsApi } from '../decorFakes.mjs';
+import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards, read through its cells
 
 const SWEEP = readFileSync(new URL('../../server-account/migrations/0109_yard_height_sweep.sql', import.meta.url), 'utf8');
 const piece = (id, y) => ({ id, model: 41000, flat: null, pos: [8, y, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120 });
@@ -31,7 +32,7 @@ async function towered(t) {
   const pl = JSON.parse(row.place);
   pl.pos[1] = DECOR_YARD_HIGH + 5;
   raw.prepare('UPDATE home_decor SET place = ? WHERE id = ?').run(JSON.stringify(pl), 'tower');
-  const yards = async () => (await svc.call('/v1/homes/yards', { mapId: 7 })).body.yards;
+  const yards = async () => (await townYards(svc.call, 7)).body.yards;
   const ids = () => raw.prepare('SELECT id FROM home_decor ORDER BY id').all().map((r) => r.id);
   return { svc, raw, yards, ids };
 }
@@ -57,7 +58,7 @@ test('YARD-SWEEP the client: a tower\'s piece an older service still answers is 
   const homeFrames = new Map([[300, { at: [10, 0, 10], box: [6, 0, 7, 14, 6, 13] }]]);
   const built = new Map([['0,0', { px: 0, py: 0, homeTown: 7, homeFrames, homeRegion: 17 }]]);
   const yards = createHomeYards({
-    api: { yards: async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: [piece('low', 0), piece('top', DECOR_YARD_HIGH), piece('tower', DECOR_YARD_HIGH + 5)] }] } }) },
+    api: { yardCells: townCellsApi(async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: [piece('low', 0), piece('top', DECOR_YARD_HIGH), piece('tower', DECOR_YARD_HIGH + 5)] }] } })) },
     homes: { homeAt: (m, k) => (k === 300 ? { owner: 'Tomas', own: false } : null) },
     built: () => built, translation: () => [0, 0, 0], feet: () => [18, 0, 10], outside: () => true, eye: () => [18, 1.6, 10],
     collider: () => ({ addMesh() {}, removeBucket() {}, surfaceHit: () => null }),

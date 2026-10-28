@@ -538,19 +538,25 @@ export function townRoadRing(mask) {
  * @param {object} mapsFile @param {object} blocksFile @param {object|null} [as]
  * @returns {(dfLocation: object) => {xMin: number, xMax: number, yMin: number, yMax: number}}
  */
+let keptGroundTiles = (_walk, _index, read) => read();   // FIRST-VISIT: `(walk, index, read) => the block parts the rect reads`, installed by groundTilesKept.js so no worker reaches the store
+export function setGroundTilesKeeper(fn) { keptGroundTiles = typeof fn === 'function' ? fn : (_walk, _index, read) => read(); }
 export function locationRectReader(mapsFile, blocksFile, as = null) {
   /** @type {Map<number, object|null>} block index -> its ground tiles, as getBlock serves them */
   const ground = new Map();
+  const walk = as ? JSON.stringify(as) : '';   // FIRST-VISIT: the walk's name in the kept record
   const shared = {
     checkName: (name) => blocksFile.checkName(name),
     getBlockIndex: (name) => blocksFile.getBlockIndex(name),
     getBlock: (index) => {
       let b = ground.get(index);
       if (b === undefined) {
-        const block = blocksFile.getBlock(index);
-        const rmb = block?.rmbBlock, groundTiles = rmb?.fldHeader?.groundData?.groundTiles;
-        // TOWN-SHAPES: and what the outline reads - the town-map bytes, the misc models' and flats' places
-        b = groundTiles ? { rmbBlock: { fldHeader: { groundData: { groundTiles }, autoMapData: rmb.fldHeader.autoMapData }, misc3dObjectRecords: rmb.misc3dObjectRecords, miscFlatObjectRecords: rmb.miscFlatObjectRecords } } : block;   // a block with none fails SetLocationTiles as it did
+        // TOWN-SHAPES: the outline reads the town-map bytes and the misc models' and flats' places beside the ground tiles.
+        // FIRST-VISIT: all four are kept across launches by the block's NAME, not index (a pack's added block takes its index in meeting order)
+        const part = keptGroundTiles(walk, blocksFile.getBlockName?.(index) ?? index, () => {
+          const rmb = blocksFile.getBlock(index)?.rmbBlock, groundTiles = rmb?.fldHeader?.groundData?.groundTiles;
+          return groundTiles ? { groundTiles, autoMapData: rmb.fldHeader.autoMapData, misc3dObjectRecords: rmb.misc3dObjectRecords, miscFlatObjectRecords: rmb.miscFlatObjectRecords } : null;
+        });
+        b = part ? { rmbBlock: { fldHeader: { groundData: { groundTiles: part.groundTiles }, autoMapData: part.autoMapData }, misc3dObjectRecords: part.misc3dObjectRecords, miscFlatObjectRecords: part.miscFlatObjectRecords } } : blocksFile.getBlock(index);   // a block with none fails SetLocationTiles as it did
         ground.set(index, b);
       }
       return b;

@@ -79,6 +79,7 @@ import { questTransferRefused, TABS, tabAccepts } from '../native/nativeInventor
 import { initialTradeTab, stealSuccessText, stealFailureText } from '../native/nativeTrade.js';
 import { expandGuildMacros } from '../../systems/guild/guildServiceActions.js';
 import { firstName } from '../../systems/talk/talkSession.js';   // MACRO-4: %pct's shop arm
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { t } from '../../systems/textManager.js';   // L10N4: MENU-ORDER's own words in the player's language
 
 const el = (tag, cls, text) => {
@@ -158,7 +159,7 @@ let releaseHeld = () => {};   // RPT1026-ITEMS HELD-OUT: this counter's hold on 
 // stays accurate regardless of how long the render in between took.
 let lastRowClick = { item: null, time: 0 };
 const DOUBLE_CLICK_MS = 500;
-let keyHandler = null;
+let unlistenKeys = null;
 /** UXB1-K: the repair counter's estimates, one scheduler pass per paint (repairEstimatesNow). */
 let repairEst = null;
 
@@ -1101,7 +1102,6 @@ function render() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (deps.covered?.()) return;   // BOX-ON-TOP: a box stands over the counter (ui/tradeDoor.js)
   if (box) {
     if (box.buttons === 'YesNo') {
       if (e.code === 'KeyY') { e.preventDefault(); dismissBox(true); }
@@ -1141,8 +1141,8 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   // sale's - is in every save written while it stands; a Buy's basket (the shop's) is `basket`, never `staged`
   releaseHeld = holdOut(hooks.entity, () => staged);
   render();
-  keyHandler = onKey;
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(hooks.owner, onKey);   // COVERED-KEYS: hooks.owner, the counter's window (ui/tradeDoor.js)
   globalThis.addEventListener?.('resize', onResize);   // TRADE-VIRT
   return {
     repaint: render,
@@ -1151,8 +1151,8 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
       // (the QuickDial's key, a death, a building left, a load: ui/tradeDoor.js dispose) comes straight here, past this
       // view's close(), and the staged goods - a sale's, an identify's, a basket's - went with the view
       if (host) clear();
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
-      keyHandler = null;
+      unlistenKeys?.();
+      unlistenKeys = null;
       globalThis.removeEventListener?.('resize', onResize);
       dropLists();   // TRADE-VIRT: the windows' scroll listeners, and the tiles that will never be drawn into
       tiles.clear();

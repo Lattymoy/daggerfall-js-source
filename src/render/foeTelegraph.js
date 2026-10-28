@@ -177,10 +177,14 @@ const NO_FOG_RANGE3 = new Float32Array([0, 0, 0]);
 const NO_FOCUS = new Float32Array([0, 0, 0, 0]);
 const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 
+/** BOOT-COMPILE: the pass's one program, as its constructor builds it - what the renderer's idle warm starts ahead of the
+ *  build (render/renderer.js lazyWarmSteps). */
+export const FOE_TELEGRAPH_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, FS]]));
+
 export class FoeTelegraphPass {
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, VS, FS, 'foeTelegraph');
+    this.program = buildProgram(gl, ...FOE_TELEGRAPH_PROGRAMS[0], 'foeTelegraph');
     this.u = {};
     for (const n of ['uVP', 'uOrigin', 'uYaw', 'uHalf', 'uLift', 'uKind', 'uT', 'uFlash', 'uColor', 'uP', 'uSlope', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uNow', 'uNearFloor', 'uIron', 'uCut', 'uContrast', 'uShatter']) this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();

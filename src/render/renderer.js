@@ -787,7 +787,7 @@ export function gpuNameOf(gl) {
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
-import { RetroPass } from './retroPass.js';   // RETRO1: DFU's retro mode - the world's small image, its effect and its present (a leaf, the air pass's kind)
+import { RetroPass, RETRO_VS, RETRO_FS } from './retroPass.js';   // RETRO1: DFU's retro mode - the world's small image, its effect and its present (a leaf, the air pass's kind)
 import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/blood/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
 import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/blood/bloodArt.js';
 import { glslFloat } from './airPass.js';   // AUDIT BLOOD3 F9: a dial at a whole number is an INT literal in GLSL, and vec3 * int does not compile   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
@@ -1675,6 +1675,18 @@ export function buildWireIndices(triIndices, subMeshes) {
   return { indices, ranges };
 }
 
+/** BOOT-COMPILE: the shaders render/bootPrograms.js laneBootPrograms names beside the world set's own. */
+export { VS as MESH_VS, BB_VS, TERRAIN_VS, TERRAIN_FS };
+
+/** EL1: the classic set's source - the world programs a classic page compiles, built by the constructor. */
+const CLASSIC_SET = Object.freeze({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
+
+/** BOOT-COMPILE (2026-10-25): a world set's five programs for a lane's source (EL1's shape), in the order
+ *  _buildWorldSet builds them - what a build takes when they were started ahead of it (render/glProgram.js
+ *  startPrograms). test/render/bootcompile.test.js holds the list to the builds.
+ *  @param {{ meshFs: string, charFs: string, bbVs?: { head: string, main: string }|null, bbFs: string, terrainFs: string, decalFs?: string }} src
+ *  @returns {Array<[string, string]>} */
+export const worldSetPrograms = (src) => [[VS, src.meshFs], [CHAR_SKIN_VS, skinFaceFs(src.charFs)], [bbVertexShader(src.bbVs), src.bbFs], [TERRAIN_VS, src.terrainFs], [DECAL_VS, src.decalFs ?? DECAL_FS]];
 
 export class Renderer {
   // HARD3: two fields this class mints LAZILY, with `??=` at their point
@@ -1755,7 +1767,11 @@ export class Renderer {
     this._csMost = 0;   // MW-DETAIL: the most it may grow to - read off the GPU at the first growth
     /** @type {WebGLTexture|null} */ this._skinIdentity = null;    // MWNPC1: the identity palette (_skinIdentityTex) - before the first set is built, which makes it
     /** @type {WebGLTexture|null} */ this._skinUnitHolds = null;   // MWNPC1: what SKIN_PALETTE_UNIT holds, by our own binds
-    this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
+    // BOOT-COMPILE (2026-10-25): the constructor's programs STARTED together before the first is read. The driver
+    // compiles them side by side (KHR_parallel_shader_compile), so the reads below wait for the slowest program, not
+    // for the sum (bible/07-Rendering/Performance-Priority.md BOOT-COMPILE). Where it cannot, each build waits as before.
+    if (parallelCompile(gl)) startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);
+    this._classicSet = this._buildWorldSet(CLASSIC_SET);
     this._installWorldSet(this._classicSet);
     this._ambientTri = null;
 
@@ -3355,13 +3371,14 @@ export class Renderer {
    *  render/precipitation.js owns and only the enhanced lane compiles
    *  (AUDIT 58 - warming them here would undo that). */
   warmSteps() {
+    const built = () => true;   // a builder asked to start a program it has already built has nothing to start
     return [
-      () => this._ensureScreenQuadProgram(),
-      () => this._ensureScreenQuadRunProgram(),
-      () => this._ensureCharQuadProgram(),
-      () => this._ensureParticleProgram(),
-      () => this._ensureOverlayProgram(),
-      ...(this._retroSource || this._scaleSource ? [() => this._warmRetro()] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program
+      { start: () => this._ensureScreenQuadProgram({ start: true }) ?? built, run: () => this._ensureScreenQuadProgram(), need: () => !this.screenQuadProgram },
+      { start: () => this._ensureScreenQuadRunProgram({ start: true }) ?? built, run: () => this._ensureScreenQuadRunProgram(), need: () => !this.screenQuadRunProgram },
+      { start: () => this._ensureCharQuadProgram({ start: true }) ?? built, run: () => this._ensureCharQuadProgram(), need: () => !this.charQuadProgram },
+      { start: () => startPrograms(this.gl, [[PARTICLE_VS, PARTICLE_FS]]), run: () => this._ensureParticleProgram(), need: () => !this.particleProgram },
+      { start: () => this._ensureOverlayProgram({ start: true }) ?? built, run: () => this._ensureOverlayProgram(), need: () => !this.overlayProgram },
+      ...(this._retroSource || this._scaleSource ? [{ start: () => startPrograms(this.gl, [[RETRO_VS, RETRO_FS]]), run: () => this._warmRetro(), need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }] : []),   // AUDIT RETRO1 E7; PERF-SCALE: the scale's present is the same program
     ];
   }
 
@@ -3381,11 +3398,29 @@ export class Renderer {
   lazyWarmSteps() {
     return [
       () => { if (parallelCompile(this.gl)) { void import('./playPrograms.js').then((m) => m.startPlayPrograms(this.gl)).catch(() => {}); this.startTerrainSnow(); } },
-      () => { this._loadFoeTelegraph(); },
-      () => { this._rwBg ??= this._rwBgProgram(); },
-      () => this._ensureWeaponGlowMeshProgram(),   // AUDIT WEAPON-GLOW MW-6: the glow's two, before the first glowing weapon
-      () => this._ensureWeaponGlowQuadProgram(),
+      { start: () => this._startFoeTelegraph(), run: () => { this._loadFoeTelegraph(); }, need: () => !this._foeTelegraph },
+      { start: () => startPrograms(this.gl, [[VIEW_BG_VS, VIEW_BG_FS]]), run: () => { this._rwBg ??= this._rwBgProgram(); }, need: () => !this._rwBg },
+      { start: () => startPrograms(this.gl, [[glowMeshVs(CHAR_SKIN_VS), GLOW_MESH_FS]]), run: () => this._ensureWeaponGlowMeshProgram(), need: () => !this.weaponGlowMeshProgram },   // AUDIT WEAPON-GLOW MW-6: the glow's two, before the first glowing weapon
+      { start: () => startPrograms(this.gl, [[GLOW_SPRITE_VS, GLOW_SPRITE_FS], [GLOW_FIELD_VS, GLOW_FIELD_FS]]), run: () => this._ensureWeaponGlowQuadProgram(), need: () => !this.weaponGlowQuadProgram },
     ];
+  }
+
+  /** BOOT-COMPILE: the foes' telegraph program STARTED, its module loaded first (off the boot graph, as _loadFoeTelegraph
+   *  loads it) - answers whether the driver is done; false until the module is in. A module that will not load answers
+   *  done, and the step's build then warns as the draw's own would. */
+  _startFoeTelegraph() {
+    let ready = /** @type {(() => boolean) | null} */ (null);
+    const done = () => true;
+    import('./foeTelegraph.js')
+      .then((m) => {
+        // Where the driver cannot compile beside the page, the build compiles and reads in one go, as it did before the
+        // warm had a start: a compile issued here would hold the frames until the build's read. A draw that built the
+        // pass first left nothing to start, and a start now would never be taken.
+        const startNow = parallelCompile(this.gl) && !this._foeTelegraph;
+        ready = startNow ? startPrograms(this.gl, m.FOE_TELEGRAPH_PROGRAMS) : done;
+      })
+      .catch(() => { ready = done; });
+    return () => (ready ? ready() : false);
   }
 
   /** AUDIT RETRO1 E7: the retro present's program, built by the warm when retro mode is on at load rather than inside
@@ -4410,7 +4445,7 @@ export class Renderer {
   /** PERF-WARM: build the character-sprite quad's program and VAO -
    *  the block that stood at the head of drawCharacterSpriteQuad,
    *  unchanged, so the first classic sprite does not compile it. */
-  _ensureCharQuadProgram() {
+  _ensureCharQuadProgram({ start = false } = {}) {
     const gl = this.gl;
     if (!this.charQuadProgram) {
       const vs = `#version 300 es
@@ -4550,6 +4585,7 @@ void main() {
   if (edge > 0.0) rgb = mix(rgb, uDissolve.yzw * 1.6, edge);   // MWNPC5: the edge blazes (dissolveLit)
   outColor = vec4(dwWaterFog(mix(uFogColor, rgb, fogFactorAt(vWorld)), vWorld), uConceal.x > 0.0 ? t.a * uConceal.y : 1.0);   // DW-C
 }`;
+      if (start) return startPrograms(gl, [[vs, fs]]);   // BOOT-COMPILE: the warm's start (warmSteps) - compiled, never waited on
       this.charQuadProgram = this._buildProgram(vs, fs);
       const P = this.charQuadProgram;
       this._charQuad = {
@@ -5085,7 +5121,7 @@ void main() {
   /** PERF-WARM: build the screen-quad program, its sampler binding and
    *  its VAO - the block that stood at the head of drawScreenQuad,
    *  unchanged. This is the 2D blit every UI surface goes through. */
-  _ensureScreenQuadProgram() {
+  _ensureScreenQuadProgram({ start = false } = {}) {
     const gl = this.gl;
     if (!this.screenQuadProgram) {
       const vs = `#version 300 es
@@ -5136,6 +5172,7 @@ void main() {
   }
   else outColor = uColor;
 }`;
+      if (start) return startPrograms(gl, [[vs, fs]]);   // BOOT-COMPILE: the warm's start (warmSteps) - compiled, never waited on
       this.screenQuadProgram = this._buildProgram(vs, fs);
       this._screenQuad = {
         dst: gl.getUniformLocation(this.screenQuadProgram, 'uDst'),
@@ -5203,7 +5240,7 @@ void main() {
   /** PERF-WARM: build the instanced screen-quad program and its two
    *  VAO streams - the block that stood at the head of
    *  drawScreenQuadRun, unchanged. */
-  _ensureScreenQuadRunProgram() {
+  _ensureScreenQuadRunProgram({ start = false } = {}) {
     const gl = this.gl;
     if (!this.screenQuadRunProgram) {
       const vs = `#version 300 es
@@ -5233,6 +5270,7 @@ void main() {
   if (t.a < 0.5) discard;
   outColor = vec4(t.rgb, 1.0) * uColor;
 }`;
+      if (start) return startPrograms(gl, [[vs, fs]]);   // BOOT-COMPILE: the warm's start (warmSteps) - compiled, never waited on
       this.screenQuadRunProgram = this._buildProgram(vs, fs);
       this._screenQuadRun = {
         canvas: gl.getUniformLocation(this.screenQuadRunProgram, 'uCanvas'),
@@ -5296,7 +5334,7 @@ void main() {
   /** PERF-WARM: build the full-screen overlay program and its VAO -
    *  the block that stood at the head of drawScreenOverlayQuad,
    *  unchanged. */
-  _ensureOverlayProgram() {
+  _ensureOverlayProgram({ start = false } = {}) {
     const gl = this.gl;
     if (!this.overlayProgram) {
       const vs = `#version 300 es
@@ -5310,6 +5348,7 @@ in vec2 vUV;
 uniform sampler2D uTex;
 out vec4 outColor;
 void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = vec4(t.rgb, 1.0); }`;
+      if (start) return startPrograms(gl, [[vs, fs]]);   // BOOT-COMPILE: the warm's start (warmSteps) - compiled, never waited on
       this.overlayProgram = this._buildProgram(vs, fs);
       this._overlay = {
         tex: gl.getUniformLocation(this.overlayProgram, 'uTex'),

@@ -168,12 +168,12 @@
   {
     "name": "ACCOUNT-HOMES-delete-yards-kept",
     "file": "server-account/src/index.js",
-    "old": "        for (const { mapId } of deleted?.moved ?? []) forgetYards(mapId);\n",
+    "old": "        for (const { mapId } of deleted?.moved ?? []) forgetYardTown(mapId);\n",
     "new": "",
     "tests": [
       "test/server/account_homes.test.js"
     ],
-    "note": "a deleted character's homes' yards standing in the isolate's kept answer. Re-aimed at the merge of main: the towns are QUEST-HOME's `moved`, the delete's own answer."
+    "note": "a deleted character's homes' yards standing in the isolate's kept answer. Re-aimed at the merge of main: the towns are QUEST-HOME's `moved`, the delete's own answer. Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "ACCOUNT-HOMES-migration-shape-unread",

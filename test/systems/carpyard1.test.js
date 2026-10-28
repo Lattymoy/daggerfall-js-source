@@ -87,8 +87,8 @@ test('CARP-YARD THE PLACE: the joinery placed on what the two yards (and a port 
   const at = (t) => w.indexOf(t);
   // PIN MOVED (IC-STUTTER): each pass walked through the build's breather (merchantYardSites.js ...Steps)
   assert.ok(at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];') > 0);
-  assert.ok(at('ports = portSitesOn(g, seaField(') > at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];'));
-  assert.ok(at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));') > at('ports = portSitesOn(g, seaField('), 'placed after the port\'s places');
+  assert.ok(at('ports = keptPortSitesOn(g, seaField(') > at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];'));
+  assert.ok(at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));') > at('ports = keptPortSitesOn(g, seaField('), 'placed after the port\'s places');
   assert.ok(at('memo = { sig, sites, ports };') > at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));'));
 });
 

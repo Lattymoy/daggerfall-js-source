@@ -123,6 +123,10 @@ void main() {
 import { createVolume, withVolumeLayer, finishVolume } from './renderTarget.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
+/** BOOT-COMPILE: the noise's three programs - the shape volume's, the detail volume's and the lab's slice - as its
+ *  constructor builds them: what the boot starts ahead of the build (render/bootPrograms.js). */
+export const CLOUD_NOISE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[NOISE_VS, SHAPE_FS], [NOISE_VS, DETAIL_FS], [NOISE_VS, SLICE_FS]]));
+
 export class CloudNoise {
   /** Builds both volumes at once - a DRAW path. `viewport` is the
    *  caller's [x, y, w, h] to restore; the caller marks the pass
@@ -137,9 +141,10 @@ export class CloudNoise {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    this.shapeProgram = buildProgram(gl, NOISE_VS, SHAPE_FS);
-    this.detailProgram = buildProgram(gl, NOISE_VS, DETAIL_FS);
-    this.sliceProgram = buildProgram(gl, NOISE_VS, SLICE_FS);
+    const [shape, detail, slice] = CLOUD_NOISE_PROGRAMS;
+    this.shapeProgram = buildProgram(gl, ...shape);
+    this.detailProgram = buildProgram(gl, ...detail);
+    this.sliceProgram = buildProgram(gl, ...slice);
     this.su = { uZ: gl.getUniformLocation(this.shapeProgram, 'uZ'), uSize: gl.getUniformLocation(this.shapeProgram, 'uSize') };
     this.du = { uZ: gl.getUniformLocation(this.detailProgram, 'uZ'), uSize: gl.getUniformLocation(this.detailProgram, 'uSize') };
     this.lu = {};

@@ -10,7 +10,7 @@ import { ActionTextBox } from '../../src/ui/actionText.js';
 import { TutorialBox, INPUT_GRACE_MS, _setTutorialDepsForTests } from '../../src/ui/tutorialPopup.js';
 import { BOX_CLICK_CATCHER_CLASS, BOX_CLICK_CATCHER_Z } from '../../src/ui/boxClickCatcher.js';
 import { registerOverlay } from '../../src/ui/enhanced/enhancedOverlays.js';
-import { makeWindowStack } from '../../src/ui/windowStack.js';
+import { makeWindowStack, windowCovered } from '../../src/ui/windowStack.js';
 import { destroyEnhancedNotice } from '../../src/ui/enhanced/enhancedNotice.js';
 import { createTradeWindow } from '../../src/ui/tradeDoor.js';
 import { _frameForTests, DRAW_FRAMES_UNDRAWN } from '../../src/ui/drawWatchdog.js';
@@ -169,12 +169,12 @@ test('BOX-ON-TOP: the enhanced counter knows when a box stands over it, so its k
     try {
       const stack = makeWindowStack();
       stack.pushWindow(counter);
-      assert.equal(hooks.covered(), false, 'the counter alone keeps its keys');
+      assert.equal(windowCovered(hooks.owner), false, 'the counter alone keeps its keys');
       const refusal = new ActionTextBox(['You do not have enough spell points left.']);
       stack.pushWindow(refusal);
-      assert.equal(hooks.covered(), true, 'under the box, Enter ran the counter\'s action again and Escape closed it');
+      assert.equal(windowCovered(hooks.owner), true, 'under the box, Enter ran the counter\'s action again and Escape closed it');
       stack.popWindow();
-      assert.equal(hooks.covered(), false, 'the box gone, the keys are the counter\'s again');
+      assert.equal(windowCovered(hooks.owner), false, 'the box gone, the keys are the counter\'s again');
     } finally {
       counter.dispose();
     }

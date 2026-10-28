@@ -46,9 +46,10 @@ export function createPlayerTradeWindow(session, deps) {
     draw() { /* the DOM is the picture */ },
     dispose() { if (session.phase === 'open') session.cancel(); close(); },
   };
+  // COVERED-KEYS: `owner` is the window the trade's keys are gated on (ui/windowStack.js listenWindowKeys).
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedPlayerTrade.js'),
-    mount: ({ mountEnhancedPlayerTrade }) => { view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close } }); },
+    mount: ({ mountEnhancedPlayerTrade }) => { view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close, owner: overlay } }); },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'player trade',
   });
   return overlay;

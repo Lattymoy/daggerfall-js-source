@@ -262,8 +262,8 @@
   {
     "name": "SHIPS2-L-the-warning-dropped",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "      if (!answer.ok) { log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error); return; }",
-    "new": "      if (!answer.ok) return;",
+    "old": "      if (!answer.ok) { log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error); continue; }",
+    "new": "      if (!answer.ok) continue;",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],

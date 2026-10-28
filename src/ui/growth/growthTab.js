@@ -147,7 +147,7 @@ function levelPage(detail, ctx) {
   if (!entity) { dropStage(); detail.append(divider(t('growth.level.title', 'Level')), el('p', 'px-note', t('growth.level.none', 'Your level isn\'t available here.'))); return; }
   detail.append(divider(t('growth.level.title', 'Level')));
   drawStage(detail, `level:${owed ? 'owed' : 'view'}:${entity.level ?? 0}`, (host) => import('../enhanced/enhancedLevelUp.js').then(({ mountEnhancedLevelUp, viewOnlyScreen }) =>
-    mountEnhancedLevelUp(host, { screen: (owed && open()) || viewOnlyScreen(entity, usesVirtueLeveling(entity)), entity, embed: true, onExit: () => { dropStage(); ctx.render(); } })), {
+    mountEnhancedLevelUp(host, { screen: (owed && open()) || viewOnlyScreen(entity, usesVirtueLeveling(entity)), entity, embed: true, owner: ctx.owner, onExit: () => { dropStage(); ctx.render(); } })), {
     el, ...stageWords(),
     door: levelDoor(),
     badge: String(entity.level ?? 1),

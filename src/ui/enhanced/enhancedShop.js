@@ -155,7 +155,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   const who = el('span', 'sh-who');
   const terms = /** @type {HTMLAnchorElement} */ (el('a', 'sh-terms', t('shop.terms', 'Terms of Service')));
   terms.href = TERMS_URL; terms.target = '_blank'; terms.rel = 'noopener';
-  const paid = el('span', 'sh-paid', t('shop.stripe', 'Payments are taken by Stripe, in US dollars. No card details reach the game.'));
+  const paid = el('span', 'sh-paid', t('shop.stripe', 'Payments are taken by Stripe. Prices are in US dollars, and Stripe can show your own currency and ways to pay. No card details reach the game.'));
   foot.append(who, paid, terms);
   body.append(head, proceeds, tabs, panels, say, foot);
   win.append(body);

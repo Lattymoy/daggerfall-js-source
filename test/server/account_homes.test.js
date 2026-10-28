@@ -20,6 +20,7 @@ import { seededRng } from '../../src/systems/wind/wind.js';
 import { homeSceneName, homeSceneOf, homesGoneFrom, homesGoneLine } from '../../src/systems/online/onlineHomes.js';
 import { createSceneCache, cacheScene, addPermanentScene, layoutSceneName } from '../../src/systems/sceneCache.js';
 import { createHomesBoot } from '../../src/scenes/homesBootHost.js';
+import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards, read through its cells
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const RICH = (name, extra = {}) => ({ name, level: 9, goldPieces: 2_000_000, items: [], bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })), ...extra });
@@ -152,7 +153,7 @@ test('ACCOUNT-HOMES the trader and the delete: the other character stocks the tr
   // a yard piece, read into the isolate's kept yards
   const yardPlaced = await call('/v1/homes/decor/place', { mapId: MAP, buildingKey: 3, character: A2.id, realm: await at(A2), yard: true, piece: piece({ id: 'y1', pos: [8, 0, 2], rot: [0, 0, 0], paid: 120 }) }, aldric.secret);
   assert.equal(yardPlaced.status, 200, JSON.stringify(yardPlaced.body));
-  assert.equal((await call('/v1/homes/yards', { mapId: MAP })).body.yards.length, 1, 'the yard read - and kept');
+  assert.equal((await townYards(call, MAP)).body.yards.length, 1, 'the yard read - and kept');
   // the buyer's delete waits for what the other character has standing at the trader
   const waits = await call('/v1/realm/delete', { id: A.id }, aldric.secret);
   assert.deepEqual([waits.status, waits.body.error], [409, 'home-vendor-stocked']);
@@ -162,7 +163,7 @@ test('ACCOUNT-HOMES the trader and the delete: the other character stocks the tr
   assert.equal(gone.status, 200, JSON.stringify(gone.body));
   assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM homes').get().n, 0, 'the homes it bought go with it - every character of the account loses them');
   assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 0, 'and what the other character placed in them');
-  assert.deepEqual((await call('/v1/homes/yards', { mapId: MAP })).body.yards, [], 'its town\'s kept yards let go - never thirty seconds of a yard gone');
+  assert.deepEqual((await townYards(call, MAP)).body.yards, [], 'its town\'s kept yards let go - never thirty seconds of a yard gone');
   assert.ok(raw.prepare('SELECT 1 FROM realm_characters WHERE id = ?').get(A2.id), 'the other character stands');
 });
 

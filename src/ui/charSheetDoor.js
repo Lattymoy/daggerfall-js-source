@@ -51,6 +51,7 @@ import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 import { releaseCapLatch } from '../systems/levelCap.js';   // AUDIT FB1026d C1: F5 at the cap opens the sheet, never a level-up with no level
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { listenWindowKeys } from './windowStack.js';   // COVERED-KEYS: the sheet's own keys, gated while a box covers it
 
 export { charSheetArtLoaded };
 
@@ -246,6 +247,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   let view = null;
   let seams = null;   // F5-QUESTS: the enhanced menu module, once it lands - the Save and Load panes' picks (SLOTS1)
   let unregister = () => {};   // PX28
+  let unlistenSheetKeys = () => {};   // MAC-C: the sheet key's listener, laid once the window exists (below)
   const host = document.createElement('div');
   host.id = 'enhanced-sheetpage';
   // z-index 13, the pause door's depth: they are peers, never stacked.
@@ -271,7 +273,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     // outlives the DOM it was raised for unless this line runs, and an
     // orphan capture listener that swallows F5 for the life of the page
     // is the hazard this file's own siblings warn about.
-    globalThis.removeEventListener?.('keydown', onSheetKey, true);
+    unlistenSheetKeys();
     unregister();
   };
   // PX28: AFTER `close` exists - a const is not hoisted, and the
@@ -354,6 +356,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
       at: 'stats',
       onAction: pauseMenuAct(menuHooks, close),
       hooks: menuHooks,
+      owner: overlay,   // COVERED-KEYS: the window the page's keys are gated on
       ...(landing === 'stats' ? {} : { at: landing }),   // RVN-STARS: back on the Companions page a sworn one's stars were opened from
     };
   }
@@ -368,11 +371,6 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     });
   }
 
-  // `globalThis` and OPTIONAL, for the reason this file's own forks
-  // give: node drives these hosts headless and has no listener target,
-  // so a bare `addEventListener` is a ReferenceError at mount rather
-  // than a feature that is off. (Caught by the pins on the first run.)
-  globalThis.addEventListener?.('keydown', onSheetKey, true);
   // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js). This door
   // had NO catch at all - a deploy that moved `enhancedMenu` left an
   // unhandled rejection and a dial arm that did nothing.
@@ -381,7 +379,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     alive: () => !fired, host, onDismiss: close, label: 'charsheet',
     mount: (mod) => { seams = mod; view = mod.mountEnhancedMenu(host, pageOpts()); },
   });
-  return {
+  const overlay = {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
     // `onKey`. The hosts dereference these unguarded and the DOM view
     // only claims the keys it uses, so a missing arm is a TypeError
@@ -401,6 +399,10 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     dispose: close,
     destroy: close,
   };
+  // MAC-C: the sheet's own key (F5, and F6 across to the pack), laid on the window's one key door once the window
+  // exists - COVERED-KEYS: under a box it is the box's
+  unlistenSheetKeys = listenWindowKeys(overlay, onSheetKey);
+  return overlay;
 }
 
 /**
@@ -503,7 +505,8 @@ function enhancedLevelUpOverlay(screen, entity) {
     alive: () => !fired, host, onDismiss: close, label: 'levelup',
     mount: ({ mountEnhancedLevelUp }) => {
       stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down
-      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close });
+      // COVERED-KEYS: `owner` is the window the Ascension's keys are gated on (ui/windowStack.js listenWindowKeys).
+      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close, owner: overlay });
     },
     // ...and the NOTICE is the other successor. Without this arm a
     // failed chunk left the wait underneath it saying "You have
@@ -511,7 +514,7 @@ function enhancedLevelUpOverlay(screen, entity) {
     // loaded - two answers to one event.
     notice: (h, o) => { stopWaiting(); return paintChunkNotice(h, o); },
   });
-  return {
+  const overlay = {
     /** The duck type the font-less escape asks for, in this file's own
      *  idiom (`isVirtueLevelUp`, `isRestWindow`): a scene must not
      *  import a UI class for a type test. */
@@ -550,6 +553,7 @@ function enhancedLevelUpOverlay(screen, entity) {
     dispose: close,
     destroy: close,
   };
+  return overlay;
 }
 
 /* PX27: THE ENHANCED SHEET OVERLAY IS RETIRED.

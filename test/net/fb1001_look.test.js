@@ -26,7 +26,7 @@ import { createHomeYards } from '../../src/scenes/homeYards.js';
 import { accountHomes, SESSION_KEY, REFUSALS } from '../../src/net/accountClient.js';
 import { homeLookOf } from '../../src/net/homeLaw.js';
 import { standService, T0, sessionStorageOf } from '../accountDb.mjs';
-import { toolRig, fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle, all, chipNamed } from '../decorFakes.mjs';
+import { toolRig, fakeDoc, fakeWin, fakeBlocks, rmb, TOWN, settle, all, chipNamed, townCellsApi } from '../decorFakes.mjs';
 
 // ── the decorator's sheet, cascaded ─────────────────────────────────
 /** A compound selector's parts: its tag, classes, attributes ([name, value|undefined]), :not()s and pseudo-classes. */
@@ -174,7 +174,7 @@ async function paintRig(t) {
   const homeFrames = new Map([[300, { at: [10, 0, 10], box: [6, 0, 7, 14, 6, 13] }]]);
   const built = new Map([['0,0', { px: 0, py: 0, homeTown: 7, homeFrames, homeRegion: 17 }]]);
   const yards = createHomeYards({
-    api: { yards: async () => ({ ok: true, data: { yards: [] } }) }, homes, built: () => built, translation: () => [0, 0, 0],
+    api: { yardCells: townCellsApi(async () => ({ ok: true, data: { yards: [] } })) }, homes, built: () => built, translation: () => [0, 0, 0],
     feet: () => [18, 0, 10], outside: () => true, eye: () => [18, 1.6, 10],
     collider: () => ({ addMesh() {}, removeBucket() {}, surfaceHit: () => null }),
     meshes: { getGpuMesh: async (id) => id, cpuModels: new Map() }, renderer: { drawMesh() {}, createBillboardBatch: () => ({}), destroyBillboardBatch() {} },

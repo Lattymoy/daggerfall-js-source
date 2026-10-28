@@ -53,7 +53,8 @@ import { tamrielTrace, tamrielLandVersion } from '../../world/tamriel/tamrielLan
 import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { modSetting, modSettingsGeneration, MOD_SETTINGS } from '../../systems/modSettings.js';
 import { DeepWaterTileData } from '../../world/deepWater/deepWaterTileData.js';
-import { sampleMeshLocalY, HOLES_RESOLUTION, TILE_WORLD_SIZE } from '../../world/deepWater/deepWaterFloor.js';
+import { sampleMeshLocalY, TILE_WORLD_SIZE, carvedFloorLocalY } from '../../world/deepWater/deepWaterFloor.js';   // SNOW-THREAD: its home beside the floor it reads, so the snow's build worker reads it without this host
+export { carvedFloorLocalY };
 import { heightGridFromPositions } from '../../world/oceanHoles.js';   // OH-B: CommitExternalMeshChanges' grid read-back
 import { DW_OCEAN_LOCAL_Y } from '../../world/deepWater/deepWatersPixel.js';
 import { mapDataHasWater, isLocalPointWater } from '../../world/deepWater/deepWaterClassification.js';
@@ -63,10 +64,8 @@ import { POPULATE_RADIUS } from './deepWatersEncounters.js';   // DEEP-SHARE: th
 import { amGroupRollOwner } from '../../systems/campEncounters.js';   // DEEP-SHARE: the camps' election
 import { onFloatingFrame } from '../../player/collider.js';   // PERF-COL2 (AUDIT): the walls' bucket rides the floating origin
 
-export const DEEP_WATERS_VENDOR = 'iliac-puddle-no-more';
-
-/** The mod's switch (the port's Enabled). */
-export function deepWatersOn() { return modSetting(DEEP_WATERS_VENDOR, 'Enabled') === true; }
+import { DEEP_WATERS_VENDOR, deepWatersOn } from './deepWatersSwitch.js';   // BOOT-COMPILE: the key and the switch, a leaf the boot asks
+export { DEEP_WATERS_VENDOR, deepWatersOn };
 
 /** DeepWaterFloorBuilder.SyncBuildChebyshevRadius: built as promoted within this of the player's pixel. */
 export const SYNC_BUILD_CHEBYSHEV_RADIUS = 1;
@@ -160,20 +159,6 @@ export function deepWatersGeometrySettings() {
     waterDepth: Number(modSetting(DEEP_WATERS_VENDOR, 'General.WaterDepth')),
     spawnSurfaces: modSetting(DEEP_WATERS_VENDOR, 'General.SpawnWaterSurfaces') === true,
   };
-}
-
-/**
- * The seafloor's pixel-local height in a carved cell, on the triangle the
- * floor draws there - null where the cell keeps its ground (the terrain's
- * own floor stands) or the pixel has no floor.
- */
-export function carvedFloorLocalY(dw, lx, lz) {
-  if (!dw || !dw.holes || !dw.floor) return null;
-  const n = HOLES_RESOLUTION;
-  const cx = Math.floor(lx / (TILE_WORLD_SIZE / n)), cz = Math.floor(lz / (TILE_WORLD_SIZE / n));
-  if (cx < 0 || cz < 0 || cx >= n || cz >= n) return null;
-  if (dw.holes[cz * n + cx]) return null;
-  return sampleMeshLocalY(dw.floor, lx, lz);
 }
 
 /**

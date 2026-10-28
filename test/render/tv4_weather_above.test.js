@@ -281,5 +281,5 @@ test('AUDIT DEEP2 D1/D3/D5 curtains: the veil stands in its storm\'s own outline
   assert.ok(!nine.some((c) => c.centre[0] === 1000), 'the one over the massif is not among them');
   // D3: the host
   const shared = readFileSync(new URL('../../src/scenes/shared.js', import.meta.url), 'utf8');
-  assert.match(shared, /drawnCells: \(\) => clouds\?\.cells \?\? null,/);
+  assert.match(shared, /drawnCells: \(\) => cloudsShown\?\.cells \?\? null,/);
 });

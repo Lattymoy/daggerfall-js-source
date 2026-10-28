@@ -14,7 +14,7 @@ import { createHomeYards, YARD_MIN_ANGLE, YARD_DRAW_M } from '../../src/scenes/h
 import { YARD_RANGE_TIERS, YARD_RANGE_DEFAULT, yardRangeOf } from '../../src/net/yardRange.js';
 import { decorPieceSeen, decorBoxSeen } from '../../src/scenes/decor/decorRoom.js';
 import { PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
-import { fakeDoc, fakeWin, settle } from '../decorFakes.mjs';
+import { fakeDoc, fakeWin, settle, townCellsApi } from '../decorFakes.mjs';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const box = (x0, y0, z0, x1, y1, z1) => ({ positions: new Float32Array([x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, x0, y0, z1, x1, y0, z1, x1, y1, z1, x0, y1, z1]), indices: new Uint32Array([0, 1, 2]) });
@@ -34,7 +34,7 @@ function town({ range = () => undefined, eye = [0, 1.6, 10] } = {}) {
   const cpuModels = new Map([[CRATE, box(-0.5, 0, -0.5, 0.5, 1, 0.5)], [CUP, box(-0.05, 0, -0.05, 0.05, 0.1, 0.05)], [BARN, box(-4, 0, -4, 4, 6, 4)]]);
   const tex = { recordCount: 6, getSize: () => ({ width: 64, height: 64 }), getScale: () => ({ width: 0, height: 0 }) };
   const yards = createHomeYards({
-    api: { yards: async () => answer },
+    api: { yardCells: townCellsApi(async () => answer) },
     homes: { homeAt: (m, k) => (k === 300 ? { owner: 'Olga', own: true, mine: true } : { owner: 'Tomas', own: false }) },
     built: () => built, translation: () => [0, 0, 0], feet: () => [0, 0, 30], outside: () => true, eye: () => eye,
     range,

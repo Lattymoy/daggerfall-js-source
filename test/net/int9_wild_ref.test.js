@@ -95,17 +95,19 @@ test('INT9 THE REFEREE\'S LAW, WHO FIGHTS: a blow lands only between two fighter
   assert.equal(WILD_REF.pickMs, WILD_BODY_MS, 'the body\'s window, the referee\'s pick');
 });
 
-test('INT9 THE REFEREE\'S LAW, A FALL: a strike clipped to the weapon the look holds and the arms the token signs, a cast to SIEGE_CASTS; the fall at none left, its killer the striker; the killer picks ONE worn piece once inside WILD_REF.pickMs, else it is signed with none; a fighter unstruck WILD_REF.mendMs is whole again; a fallen rises whole on its word that it stands in the zone once WILD_REF.riseMs has gone by (mutants: the arms unread; the cast unclipped; a second pick; a stranger\'s pick; the mend unread; the rise unread; AUDIT INT9: the rise at once)', () => {
+test('INT9 THE REFEREE\'S LAW, A FALL: a strike clipped to the weapon the look holds and the arms the token signs, a cast to SIEGE_CASTS; the fall at none left, its killer the striker; the killer picks ONE worn piece once inside WILD_REF.pickMs, else it is signed with none; SHARED-HEALTH: a fighter unstruck WILD_REF.mendMs is NOT whole again (its count is its health - only its own report heals it); a fallen rises whole on its word that it stands in the zone once WILD_REF.riseMs has gone by (mutants: the arms unread; the cast unclipped; a second pick; a stranger\'s pick; the old mend restored; the rise unread; AUDIT INT9: the rise at once)', () => {
   const st = zone();
   let t = 10_000;
   const r = wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: { w: 123, m: 9 }, wa: [16, 0], rid: 'aaaaaaaaaaaa' }, t += 300);
   assert.equal(r.dealt, siegeBlowMax(123, 9, [16, 0]), 'the Dai-Katana its look holds, clipped to the Longsword its pack does');
   const c = wildBlow(st, 'acct-a', 'acct-b', { d: 999, r: SIEGE_HIT.Spell, rid: 'aaaaaaaaaaab' }, t += 300);
   assert.equal(c.dealt, SIEGE_CASTS.damageMax, 'a cast to its harm\'s most');
-  // the mend: unstruck for mendMs, whole
+  // SHARED-HEALTH: unstruck for mendMs, still hurt - the count is the player's health, healed by its own report alone
+  st.fighters.get('acct-b').f.share.heard = true;   // a client that reported: its count is its health, and mends by its own report alone
+  const hurt = wildVitals(st, 'acct-a', 'acct-b')[1][1];
   t += WILD_REF.mendMs;
   wildBlow(st, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'aaaaaaaaaaac' }, t);
-  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], siegeVitality(10), 'whole again');
+  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], hurt, 'no refill by itself');
   // fists until B falls
   let fall = null;
   for (let k = 0; k < 400 && !fall; k++) fall = wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: `bbbbbbbbb${String(k).padStart(3, '0')}` }, t += 300).fall;
@@ -157,30 +159,39 @@ test('INT9 THE REFEREE\'S LAW, REACH: a blow\'s reach is from the fighters\' bel
   assert.equal(wildPose(st, 'acct-c', at(0), 10_700), false, 'no fighter, no pose');
 });
 
-test('INT9 (AUDIT) THE REFEREE\'S LAW, NO FREE BAR: a word off and on keeps the bar (whole again only away WILD_REF.riseMs, or unstruck WILD_REF.mendMs after it stood in the zone as long); a fighter takes the bar it carries from another room (the hub\'s word, newer than when it left this one); a fallen carried is down until its rise; a socket gone is out of the zone and its place a newcomer\'s; a full room\'s oldest fall is handed back to be signed; a building\'s fall signed at once; the pick signs what the offer showed (mutants: a word off and on a heal; the carry unread; the eviction unsigned; the gone socket still fighting)', () => {
+test('INT9 (AUDIT) THE REFEREE\'S LAW, NO FREE BAR: a word off and on keeps the bar (whole again only away WILD_REF.riseMs - SHARED-HEALTH: then waiting for the player\'s report, and never unstruck WILD_REF.mendMs); a fighter takes the bar it carries from another room (the hub\'s word, newer than when it left this one); a fallen carried is down until its rise; a socket gone is out of the zone and its place a newcomer\'s; a full room\'s oldest fall is handed back to be signed; a building\'s fall signed at once; the pick signs what the offer showed (mutants: a word off and on a heal; the carry unread; the eviction unsigned; the gone socket still fighting)', () => {
   const whole = siegeVitality(10);
   // off and on: no heal
   let st = zone();
   wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: 'eeeeeeeeeee1' }, 10_300);
   const hit = wildVitals(st, 'acct-a', 'acct-b')[1][1];
   assert.ok(hit < whole);
+  st.fighters.get('acct-b').f.share.heard = true;
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), 10_400);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 10_500);
   assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], hit, 'a word off and on: the bar kept');
   wildBlow(st, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'eeeeeeeeeee2' }, 10_300 + WILD_REF.mendMs + 1);
   assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], hit, 'unstruck the mend, but in the zone again less than it: not yet');
   wildBlow(st, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'eeeeeeeeeee3' }, 10_500 + WILD_REF.mendMs + 600);
-  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], whole, 'and then whole');
+  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], hit, 'SHARED-HEALTH: and still not - no pool refills by itself');
   st = zone();
   wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: 'eeeeeeeeeee4' }, 10_300);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), 10_400);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 10_400 + WILD_REF.riseMs);
   assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], whole, 'away the rise: whole');
+  assert.equal(st.fighters.get('acct-b').f.share.heard, false, 'SHARED-HEALTH: and waiting for the player\'s report of its own health');
   // the carry
   st = zone();
   wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: 'eeeeeeeeeee5' }, 10_300);
   const c = wildCarry(st, 'acct-b', 10_300);
   assert.deepEqual(wildCarryOf(JSON.parse(JSON.stringify(c))), c, 'the hub\'s word, as the room wrote it');
+  st.fighters.get('acct-b').f.share.heard = true;
+  const anchored = wildCarry(st, 'acct-b', 10_300);
+  assert.equal(anchored.heard, true, 'SHARED-HEALTH: an anchored count says so');
+  const anchoredThere = newWildRef();
+  wildZone(anchoredThere, 'acct-b', { id: 'peer-b', lv: 10, carry: anchored }, true, at(1), 11_000);
+  assert.equal(anchoredThere.fighters.get('acct-b').f.share.heard, true, 'SHARED-HEALTH: and stays anchored in the next room - its report cannot lift it back to whole');
+  assert.equal(anchoredThere.fighters.get('acct-b').f.share.playerBlowAt, 10_300, 'SHARED-HEALTH: and keeps its no-heal window - a step into another cell is no way out of a fight');
   const next = newWildRef();
   wildZone(next, 'acct-b', { id: 'peer-b', lv: 10, carry: c }, true, at(1), 11_000);
   assert.equal(next.fighters.get('acct-b').f.hp, hit, 'a step into another cell keeps the bar');
@@ -799,3 +810,85 @@ test('INT9 (AUDIT) THE CLIENT\'S LINK: my zone word on MY OWN CELL\'S socket alo
     assert.deepEqual(refs, [['no', 'world:2,12']], 'the referee\'s word on a halo, with its room');
   });
 });
+
+const vits = (ws, k) => ws.sent.filter((m) => m.t === 'vit' && (!k || m.k === k));
+test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its health; its report anchors the count at its share, told back; a player\'s blow is said on the struck player\'s own health; a foe\'s blow reported while that blow was in flight lands on top of it; a heal mid-PvP is refused and one after the window taken whole; a stranger\'s report reaches no pool (mutants: no ask; the blow unsaid; the in-flight blow undone; the window unread)', () => withZone(async ({ r, say, join, step }) => {
+  const a = await join('peer-0001', -1), b = await join('peer-0002', 1, { rc: 1, ci: RC });
+  const whole = siegeVitality(10), fist = Math.min(20, siegeBlowMax(-1, 0));
+  await say(a, { k: 'zone', z: 1 });
+  await say(b, { k: 'zone', z: 1 });
+  assert.equal(vits(b, 'ask').length, 1, 'the pool made waits for the player\'s health');
+  step(WILD_GRACE.ms + 300);   // PIN MOVED (TRAVIS-ALL: SHARED-HEALTH met main's ZONE-GRACE): past the safe passage both took at their entry, as INT9's fight test
+  await say(a, { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: W(-1), d: 20 });
+  assert.equal(vits(b, 'h').length, 0, 'an unanchored count is told to nobody');
+  // half its own health: the pool anchored there, less the blow dealt before the report
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 1, s: 5000, seen: [] }));
+  const anchored = vits(b, 'h').at(-1);
+  assert.equal(anchored.h, whole / 2 - fist);
+  assert.equal(anchored.n, 1, 'the report the count includes');
+  // a player's blow, told on b's own health
+  step(300);
+  await say(a, { k: 'strike', to: 'peer-0002', n: 2, by: 'melee', p: W(-1), d: 20 });
+  const struck = vits(b, 'h').at(-1);
+  assert.equal(struck.h, whole / 2 - 2 * fist);
+  assert.ok(struck.w > anchored.w);
+  // a foe's blow, reported against the word before the player's (the client fell from its anchored share to 40%): both land
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 2, s: 4000, seen: [[anchored.e, anchored.w]] }));
+  assert.equal(vits(b, 'h').at(-1).h, Math.round(whole * 0.4) - fist, 'the share the client saw after the anchor, less the blow it had not');
+  // a potion mid-fight: refused, the count told back unmoved; once no player has struck for the window, taken whole
+  const before = vits(b, 'h').at(-1);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 10000, seen: [[before.e, before.w]] }));
+  assert.equal(vits(b, 'h').at(-1).h, before.h, 'no heal mid-PvP');
+  step(WILD_REF.mendMs);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[before.e, before.w]] }));
+  assert.equal(vits(b, 'h').at(-1).h, whole, 'the fight over: healed whole');
+  // a socket with no fighter here: nothing
+  const c = await join('peer-0003', 30);
+  await r.raw(c, JSON.stringify({ t: 'vit', n: 1, s: 1, seen: [] }));
+  assert.equal(vits(c).length, 0);
+}));
+
+test('SHARED-HEALTH (review): a client before world271 never reports, so its count stays unheard and keeps the zone\'s old mend - whole again unstruck WILD_REF.mendMs; a count a report anchored never mends by itself (mutants: the fallback dropped; the fallback applied to an anchored count)', () => {
+  const unheard = zone();
+  wildBlow(unheard, 'acct-a', 'acct-b', { d: 20, held: FIST, rid: 'ffffffffff01' }, 10_300);
+  const hurt = wildVitals(unheard, 'acct-a', 'acct-b')[1][1];
+  assert.ok(hurt < siegeVitality(10));
+  wildBlow(unheard, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'ffffffffff02' }, 10_300 + WILD_REF.mendMs + 1);
+  assert.equal(wildVitals(unheard, 'acct-a', 'acct-b')[1][1], siegeVitality(10), 'an old client\'s struck player is whole again');
+  const anchored = zone();
+  anchored.fighters.get('acct-b').f.share.heard = true;
+  wildBlow(anchored, 'acct-a', 'acct-b', { d: 20, held: FIST, rid: 'ffffffffff03' }, 10_300);
+  const kept = wildVitals(anchored, 'acct-a', 'acct-b')[1][1];
+  wildBlow(anchored, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'ffffffffff04' }, 10_300 + WILD_REF.mendMs + 1);
+  assert.equal(wildVitals(anchored, 'acct-a', 'acct-b')[1][1], kept, 'an anchored count mends by its own report alone');
+});
+
+test('SHARED-HEALTH (review): a carried count keeps the last report number it took, so the client\'s first word in the next cell keeps what its health did since (mutant: the number dropped)', () => {
+  const st = zone();
+  const b = st.fighters.get('acct-b').f.share;
+  b.heard = true; b.report = 7;
+  wildBlow(st, 'acct-a', 'acct-b', { d: 20, held: FIST, rid: 'ffffffffff05' }, 10_300);
+  const c = wildCarry(st, 'acct-b', 10_400);
+  assert.equal(c.rep, 7);
+  assert.equal(wildCarryOf(JSON.parse(JSON.stringify(c))).rep, 7);
+  const next = newWildRef();
+  wildZone(next, 'acct-b', { id: 'peer-b', lv: 10, carry: c }, true, at(1), 10_500);
+  assert.equal(next.fighters.get('acct-b').f.share.report, 7);
+});
+
+test('SHARED-HEALTH (review) THE HUB IS TOLD ONLY WHAT MOVED: a report that changes nothing in the zone count costs no fetch to the hub; one that lowers it does (mutant: the hub told on every report)', () => withZone(async ({ r, say, join, step }) => {
+  const b = await join('peer-0002', 1, { rc: 1, ci: RC });
+  await say(b, { k: 'zone', z: 1 });
+  step(300);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 1, s: 5000, seen: [] }));   // anchors the count at half: moves it
+  let puts = 0;
+  const put = r.room._wildCarryPut.bind(r.room);
+  r.room._wildCarryPut = (...args) => { puts++; return put(...args); };
+  const word = vits(b, 'h').at(-1);
+  step(300);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 2, s: 5000, seen: [[word.e, word.w]] }));
+  assert.equal(puts, 0, 'a report that moved nothing keeps nothing');
+  step(300);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 4000, seen: [[word.e, word.w]] }));
+  assert.equal(puts, 1, 'a loss is kept at the hub');
+}));

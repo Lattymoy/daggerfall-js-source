@@ -29,7 +29,7 @@ test('ACCT-RATE-MEM an authenticated read writes nothing: a town\'s yards, the a
   const g = await s.guest();
   s.log.writes.length = 0; s.log.all = 0;
   for (let i = 0; i < 5; i++) {
-    assert.equal((await s.call('/v1/homes/yards', { mapId: 1234 }, g.secret)).status, 200, 'the yards answered');
+    assert.equal((await s.call('/v1/homes/yards/cells', { mapId: 1234, cells: [[0, 0]] }, g.secret)).status, 200, 'the yards answered');
     const acct = await s.fetch('https://accounts.invalid/v1/account', { method: 'GET', headers: { authorization: `Bearer ${g.secret}` } });
     assert.equal(acct.status, 200, 'the account answered');
   }

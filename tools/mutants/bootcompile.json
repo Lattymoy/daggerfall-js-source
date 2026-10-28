@@ -1,0 +1,209 @@
+[
+  {
+    "name": "BC-constructor-reads-before-it-starts",
+    "file": "src/render/renderer.js",
+    "old": "    if (parallelCompile(gl)) startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);",
+    "new": "    void CLASSIC_SET;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-constructor-starts-without-the-extension",
+    "file": "src/render/renderer.js",
+    "old": "    if (parallelCompile(gl)) startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);",
+    "new": "    startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-world-set-list-drifts",
+    "file": "src/render/renderer.js",
+    "old": "export const worldSetPrograms = (src) => [[VS, src.meshFs],",
+    "new": "export const worldSetPrograms = (src) => [[VS, `${src.meshFs}\\n`],",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-lane-water-left-out",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (lane?.shadows && !renderer.waterSurfaceProgramLane) programs.push(",
+    "new": "  if (lane?.shadows && !renderer.waterSurfaceProgramLane) void (",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-lane-air-left-out",
+    "file": "src/render/bootPrograms.js",
+    "old": "    programs.push(...airPassPrograms(airOptions, airVolLinear(renderer.gl)));",
+    "new": "    void airOptions;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-air-list-drifts",
+    "file": "src/render/airPass.js",
+    "old": "    quad(resolveFs(0, 0)), quad(resolveFs(0, 1)), quad(resolveFs(1, 0)), quad(resolveFs(1, 1)),",
+    "new": "    quad(resolveFs(0, 0)), quad(resolveFs(0, 1)), quad(resolveFs(1, 0)), quad(resolveFs(1, 0)),",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-lane-clip-left-out",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (clip && !clipSet?.terrainClip) programs.push(",
+    "new": "  if (clip && !clipSet?.terrainClip) void (",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-lane-set-listed-twice",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (lane && !laneSetBuilt) programs.push(...worldSetPrograms(lane));",
+    "new": "  if (lane) programs.push(...worldSetPrograms(lane));",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-cloud-march-off-its-list",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    this.marchProgram = buildProgram(gl, ...march);",
+    "new": "    this.marchProgram = buildProgram(gl, march[0], `${march[1]}\\n`);",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-grass-off-its-list",
+    "file": "src/render/labGrass.js",
+    "old": "    const prog = buildProgram(gl, ...labGrassPrograms(stages)[0]);",
+    "new": "    const prog = buildProgram(gl, GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs);",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-an-indoor-door-starts-the-sky",
+    "file": "src/render/bootPrograms.js",
+    "old": "  const indoorDoor = pageHas('interior', search) || pageHas('dungeon', search);",
+    "new": "  const indoorDoor = pageHas('interior', search);",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-warm-start-drifts",
+    "file": "src/render/renderer.js",
+    "old": "      { start: () => startPrograms(this.gl, [[VIEW_BG_VS, VIEW_BG_FS]]),",
+    "new": "      { start: () => startPrograms(this.gl, [[VIEW_BG_VS, `${VIEW_BG_FS}\\n`]]),",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-warm-builder-start-builds",
+    "file": "src/render/renderer.js",
+    "old": "      if (start) return startPrograms(gl, [[vs, fs]]);   // BOOT-COMPILE: the warm's start (warmSteps) - compiled, never waited on\n      this.charQuadProgram = this._buildProgram(vs, fs);",
+    "new": "      if (start) startPrograms(gl, [[vs, `${fs}\\n`]]);\n      this.charQuadProgram = this._buildProgram(vs, fs);",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-warm-step-never-stands-down",
+    "file": "src/render/renderer.js",
+    "old": "run: () => this._ensureCharQuadProgram(), need: () => !this.charQuadProgram },",
+    "new": "run: () => this._ensureCharQuadProgram(), need: () => true },",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-boot-starts-without-the-extension",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (!parallelCompile(renderer.gl)) return false;",
+    "new": "  if (!renderer.gl) return false;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-retro-step-always-needed",
+    "file": "src/render/renderer.js",
+    "old": "need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }",
+    "new": "need: () => !this._retro?.P }",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-telegraph-starts-without-the-extension",
+    "file": "src/render/renderer.js",
+    "old": "        const startNow = parallelCompile(this.gl) && !this._foeTelegraph;",
+    "new": "        const startNow = !this._foeTelegraph;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-telegraph-started-after-the-fight-built-it",
+    "file": "src/render/renderer.js",
+    "old": "        const startNow = parallelCompile(this.gl) && !this._foeTelegraph;",
+    "new": "        const startNow = parallelCompile(this.gl);",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-air-door-ignored",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (lane?.shadows && lane.air && air && !renderer._airPass) {",
+    "new": "  if (lane?.shadows && lane.air && !renderer._airPass) {",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-clouds-door-ignored",
+    "file": "src/render/bootPrograms.js",
+    "old": "  const clouds = enhancedSky && pageParam('clouds', search) !== 'off';",
+    "new": "  const clouds = enhancedSky;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-dynamic-sky-door-ignored",
+    "file": "src/render/bootPrograms.js",
+    "old": "  const dynamicSky = enhancedSky && (skyDoor === 'dynamic' || (skyDoor === null && !!modSetting('dynamic-skies', 'Enabled')));",
+    "new": "  const dynamicSky = enhancedSky && skyDoor === null && !!modSetting('dynamic-skies', 'Enabled');",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-environments-switch-ignored-by-the-sky",
+    "file": "src/render/bootPrograms.js",
+    "old": "  const enhancedSky = isEnhanced() && skyDoor !== 'classic' && !!getPref('enhancedEnvironments');",
+    "new": "  const enhancedSky = isEnhanced() && skyDoor !== 'classic';",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-grass-density-ignored",
+    "file": "src/render/bootPrograms.js",
+    "old": "!!getPref('enhancedEnvironments') && Number(getPref('grassDensity')) > 0 && pageParam('grass', search) !== 'off';",
+    "new": "!!getPref('enhancedEnvironments') && pageParam('grass', search) !== 'off';",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  }
+]

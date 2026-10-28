@@ -1,0 +1,304 @@
+[
+  {
+    "name": "SHARED-HEALTH-the-unseen-blow-uncounted",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  for (const [word, change] of share.log) if (word > seenWord) sum += change;",
+    "new": "  for (const [word, change] of share.log) if (word > seenWord) sum += 0;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A player's blow the client had not yet seen would vanish from the count when its report arrived."
+  },
+  {
+    "name": "SHARED-HEALTH-the-seen-word-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  const seenWord = pair ? pair[1] : 0;",
+    "new": "  const seenWord = 0;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A blow the client had already applied would be counted twice."
+  },
+  {
+    "name": "SHARED-HEALTH-the-pvp-window-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "const healRefused = (share, now, healsBlocked) => healsBlocked || now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
+    "new": "const healRefused = (share, now, healsBlocked) => healsBlocked;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js",
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "A potion mid-fight would heal a player another player is striking - the heal the zone never had."
+  },
+  {
+    "name": "SHARED-HEALTH-the-duels-block-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "const healRefused = (share, now, healsBlocked) => healsBlocked || now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
+    "new": "const healRefused = (share, now, healsBlocked) => now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js",
+      "test/ui/fb1019f_duelbar.test.js"
+    ],
+    "note": "A duellist could heal once 30 s had passed since the last blow - a duel never healed anyone."
+  },
+  {
+    "name": "SHARED-HEALTH-a-foe-opens-the-window",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (byPlayer) share.playerBlowAt = now;",
+    "new": "  share.playerBlowAt = now;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A siege guard's blow or a rise would refuse heals as a player's blow does."
+  },
+  {
+    "name": "SHARED-HEALTH-the-heal-clipped",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "    fighter.hp = Math.min(fighter.max, Math.round(target));",
+    "new": "    fighter.hp = Math.min(fighter.max, fighter.hp + 1);",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A heal outside a fight between players would land as a single point."
+  },
+  {
+    "name": "SHARED-HEALTH-the-blow-opens-no-window",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
+    "new": "  if (got > 0) noteRefereeChange(to, -got, now);",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A player's blow would leave the struck free to heal at once."
+  },
+  {
+    "name": "SHARED-HEALTH-the-duel-pool-unblocked",
+    "file": "server/src/index.js",
+    "old": "healsBlocked: true, kept: async () => {} });",
+    "new": "healsBlocked: false, kept: async () => {} });",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ],
+    "note": "The relay would let a duellist heal once the window passed."
+  },
+  {
+    "name": "SHARED-HEALTH-the-carry-drops-the-window",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;",
+    "new": "",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "A step into another cell would end the no-heal window mid-fight."
+  },
+  {
+    "name": "SHARED-HEALTH-the-loss-fells",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "    fighter.hp = Math.max(1, Math.round(target));",
+    "new": "    fighter.hp = Math.max(0, Math.round(target));",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A reported loss could leave the referee's count at none without a fall."
+  },
+  {
+    "name": "SHARED-HEALTH-a-fallen-reported-into",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (!fighter || fighter.down) return false;",
+    "new": "  if (!fighter) return false;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A fallen fighter's count could move on its own reports."
+  },
+  {
+    "name": "SHARED-HEALTH-an-unheard-pool-told",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (!share || !share.heard) return null;",
+    "new": "  if (!share) return null;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A fresh pool's whole count would heal the client to full before its first report."
+  },
+  {
+    "name": "SHARED-HEALTH-the-reset-keeps-the-log",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  share.log = [];\n  share.heard = false;",
+    "new": "  share.heard = false;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A count started again would take off a blow from before the reset a second time."
+  },
+  {
+    "name": "SHARED-HEALTH-the-blow-unlogged",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
+    "new": "",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A player's blow before the client's report would be lost when the report anchors the count."
+  },
+  {
+    "name": "SHARED-HEALTH-the-mirror-forgets-its-own-movement",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "      const sinceIncluded = included === undefined ? 0 : ownMovement - included;",
+    "new": "      const sinceIncluded = 0;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A foe's blow taken after a report would be undone by the next player's blow."
+  },
+  {
+    "name": "SHARED-HEALTH-the-mirror-reports-its-rounded-health",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "    return base.share + ((health - base.health) / maxHealth) * HEALTH_SHARE_WHOLE;",
+    "new": "    return (health / maxHealth) * HEALTH_SHARE_WHOLE;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "The integer health's rounding would wear the referee's count down over a long fight."
+  },
+  {
+    "name": "SHARED-HEALTH-the-mirror-unthrottled",
+    "file": "src/net/siege/refereeHealthMirror.js",
+    "old": "      if (now() - lastSentAt < HEALTH_REPORT_MS) return;",
+    "new": "",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "Reports would leave every frame and spend the relay's gate."
+  },
+  {
+    "name": "SHARED-HEALTH-the-zone-unasked",
+    "file": "server/src/index.js",
+    "old": "    if (x && z === 1 && !x.down) this._vitAsk(a.sub, x.f);",
+    "new": "    if (false) this._vitAsk(a.sub, x.f);",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "A zone fighter's count would wait for a report the client was never asked for."
+  },
+  {
+    "name": "SHARED-HEALTH-the-zone-blow-unsaid",
+    "file": "server/src/index.js",
+    "old": "    this._vitSay(tb.sub, ft.f);   // SHARED-HEALTH: the blow on the struck player's own health",
+    "new": "",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "The reported bug: a player's blow in the zone would never reach the struck player's own health."
+  },
+  {
+    "name": "SHARED-HEALTH-the-duel-unasked",
+    "file": "server/src/index.js",
+    "old": "      if (bout) this._duelSay(bout, { t: 'vit', k: 'ask' });",
+    "new": "",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ],
+    "note": "A duel's counts would never anchor at the fighters' own health."
+  },
+  {
+    "name": "SHARED-HEALTH-the-duel-blow-unsaid",
+    "file": "server/src/index.js",
+    "old": "    this._vitSay(struck.sub, struck.f);   // SHARED-HEALTH: the blow on the struck player's own health",
+    "new": "",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ],
+    "note": "A duel's blow would never reach the struck player's own health."
+  },
+  {
+    "name": "SHARED-HEALTH-the-siege-unasked",
+    "file": "server/src/index.js",
+    "old": "        if (b?.kind !== 'royal') this._vitAsk(a.sub, s.fighters[a.sub]);",
+    "new": "",
+    "tests": [
+      "test/net/siege/pvpref_relay.test.js"
+    ],
+    "note": "A siege fighter's count would never anchor at its own health."
+  },
+  {
+    "name": "SHARED-HEALTH-the-siege-blow-unsaid",
+    "file": "server/src/index.js",
+    "old": "    if (b?.kind !== 'royal') this._vitSay(target.sub, to);",
+    "new": "",
+    "tests": [
+      "test/net/siege/pvpref_relay.test.js"
+    ],
+    "note": "A siege's blow would never reach the struck player's own health."
+  },
+  {
+    "name": "SHARED-HEALTH-the-siege-rise-unsaid",
+    "file": "server/src/index.js",
+    "old": "        this._vitSay(sub, f);   // SHARED-HEALTH: the rise heals the player's own health whole",
+    "new": "",
+    "tests": [
+      "test/net/siege/pvpref_relay.test.js"
+    ],
+    "note": "A siege fighter would rise at its wave with its own health still at none."
+  },
+  {
+    "name": "SHARED-HEALTH-the-zone-refill-restored",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)",
+    "new": "  if (now - a.struckAt >= WILD_REF.mendMs) a.f.hp = a.f.max;\n  if (now - t.struckAt >= WILD_REF.mendMs) t.f.hp = t.f.max;\n  const res = r === SIEGE_HIT.Spell\n    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "The zone's free 30 s refill would come back - a second health pool beside the player's own."
+  },
+  {
+    "name": "SHARED-HEALTH-the-siege-pool-unblocked",
+    "file": "server/src/index.js",
+    "old": "healsBlocked: true, kept: () => this._siegeSave(now, false) });",
+    "new": "healsBlocked: false, kept: () => this._siegeSave(now, false) });",
+    "tests": [
+      "test/net/siege/pvpref_relay.test.js"
+    ],
+    "note": "A modified client could heal a siege fighter whole by report after a guard's blow."
+  },
+  {
+    "name": "SHARED-HEALTH-the-hub-told-on-every-report",
+    "file": "server/src/index.js",
+    "old": "      if (pool.fighter.hp !== hpBefore || wasUnheard) await pool.kept();",
+    "new": "      await pool.kept();",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "Every report would cost the hub a fetch, even one that moved nothing."
+  },
+  {
+    "name": "SHARED-HEALTH-the-old-client-mend-dropped",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.down || x.f.share?.heard) return;",
+    "new": "  return;",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "A struck player on a client before world271 would never be whole again."
+  },
+  {
+    "name": "SHARED-HEALTH-the-mend-on-an-anchored-count",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.down || x.f.share?.heard) return;",
+    "new": "  if (x.down) return;",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "An anchored count would refill by itself - the second health pool again."
+  },
+  {
+    "name": "SHARED-HEALTH-the-carry-drops-the-report-number",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.f.share) x.f.share.report = carry.rep;",
+    "new": "",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "The first word in the next cell would overwrite what the player's health did since its last report."
+  }
+]

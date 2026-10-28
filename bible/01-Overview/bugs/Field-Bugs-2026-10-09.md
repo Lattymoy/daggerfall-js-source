@@ -111,25 +111,33 @@ stack") - a re-cast renews its incumbent now (`systems/effects.js` renewRounds; 
 Not a port bug. No location is named Knightspire; the snowy candidates are Knightscester (Wrothgarian Mountains), and,
 with Beautiful Villages worn, Knightswych and Knightswood. Read with the port's own readers over the freeware ARENA2:
 block `TVRNAM00.RMB` record 0 is tavern model 249 with the tavern interior `DTAVR001.HS2` and tavern sign 43727 2.4 m
-from its door - and its building list types it 18, House2, a residence. The block's real tavern is record 6, 54 m
-off, with its own sign. `ARMRAM01.RMB` record 10 is the same (sign 43746). Beautiful Villages retypes TVRNAM00 record 0
-as a tavern but leaves the same mismatch in its own `TVRNAS04` record 6, `TVRNAS06` record 5 (the block it rebuilt as
-houses, `03-World/Beautiful-Towns.md`) and `TVRNAS07` record 8 - the author's bytes, checked by sha256. The port reads
-a building's type from the block's list and a door's key from its record, as DFU does (`world/rmbLayout.js`,
-`systems/talk/talkTopics.js`), and stands a shop sign as an ordinary scene model tied to no building, as DFU does. Of
-BLOCKS.BSA's 249 tavern signs, 244 hang at a tavern's door. Making that house a tavern would be a departure from DFU,
-and would get no name: the town's MAPS.BSA list names one tavern per tavern record. Nothing changed. The call came
-on 2026-10-25: HOUSE-SIGN (the owner: "remove the shop signs outside of buildings when the building is actually a
-house and not a shop"). A shop's sign now belongs to the building whose door is nearest it within 8 m, and a
+from its door - and its building list types it 18, House2, a residence. The block's real tavern is record 6, 54 m off,
+with its own sign. `ARMRAM01.RMB` record 10 is the same (sign 43746). Beautiful Villages retypes TVRNAM00 record 0 as a
+tavern but leaves the same mismatch in its own `TVRNAS04` record 6, `TVRNAS06` record 5 (the block it rebuilt as houses,
+`03-World/Beautiful-Towns.md`) and `TVRNAS07` record 8 - the author's bytes, checked by sha256.
+
+The port reads a building's type from the block's list and a door's key from its record, as DFU does
+(`world/rmbLayout.js`, `systems/talk/talkTopics.js`), and stands a shop sign as an ordinary scene model tied to no
+building, as DFU does. Of BLOCKS.BSA's 249 tavern signs, 244 hang at a tavern's door. Making that house a tavern would
+be a departure from DFU, and would get no name: the town's MAPS.BSA list names one tavern per tavern record. Nothing
+changed.
+
+The call came on 2026-10-25: HOUSE-SIGN (the owner: "remove the shop signs outside of buildings when the building is
+actually a house and not a shop"). A shop's sign now belongs to the building whose door is nearest it within 8 m, and a
 house's sign (House1-House4, or a house for sale) does not stand (`world/houseSigns.js`, asked by both town hosts:
 `scenes/pixelBuild.js` for the world, `scenes/exterior.js`; an interior or a dungeon stands no shop's sign). Of
 BLOCKS.BSA's 668 signs, six come down, all at a House2's door: TVRNAM00 record 0 (43727), ARMRAM01 record 10 (43746),
-ARMRAM03 record 14 (43736), BANKAS01 record 0 (43708), BOOKAL01 record 18 (43754) and FURNAL03 record 1 (43731); the
-box round each house's models names the same house. The door ties, not the box: wherever the two disagree, the door's
-building is the one of the sign's own trade. A sign past 8 m from every door stands - the two on a big tavern's side
-wall 19 m from its door (GENRAS02, CLOTAM01), and MAGEAA13's, 14.8 m from a house. A world-data block is asked by the
-same rule, since the served block carries the mod's type; Beautiful Villages' TVRNAS04, TVRNAS06 and TVRNAS07 were not
-measured. Both skins. `test/world/housesign.test.js` (5); `tools/mutants/housesign.json` (8, all dead); Port-Ledger A.
+ARMRAM03 record 14 (43736), BANKAS01 record 0 (43708), BOOKAL01 record 18 (43754) and FURNAL03 record 1 (43731); the box
+round each house's models names the same house.
+
+The door ties, not the box: wherever the two disagree, the door's building is the one of the sign's own trade. A sign
+past 8 m from every door stands - the two on a big tavern's side wall 19 m from its door (GENRAS02, CLOTAM01), and
+MAGEAA13's, 14.8 m from a house. A world-data block is asked by the same rule, since the served block carries the mod's
+type. Measured 2026-10-26 with Beautiful Villages and Beautiful Cities on as they ship: of their blocks' 482 signs,
+seven come down, all at a House2's door - DABOOKBL01 record 1 (43727), GEMSAL02 record 18 (43726), MARKAB01 record 7
+(43736), TVRNAS00 record 5, TVRNAS04 record 6, TVRNAS06 record 5 and TVRNAS07 record 8 (43727). With the mods on,
+Knightscester's tavern-sign house is TVRNAS00's; checked in-game. Both skins. `test/world/housesign.test.js` (6);
+`tools/mutants/housesign.json` (8, all dead); Port-Ledger A.
 
 ## PEEK-WORD: a peer's boat that her word no longer names (7)
 

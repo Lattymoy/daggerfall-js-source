@@ -92,6 +92,9 @@ jobs:
       - name: Install dependencies
         if: steps.deps.outputs.cache-hit != 'true'
         run: npm ci
+      - name: FIRST-VISIT pins
+        # src/firstVisitPins.js is generated and gitignored; npm ci's postinstall writes it, which a cache hit skips
+        run: node scripts/firstVisitPins.mjs
       - name: Lint
         run: npm run lint
       - name: Type-check
@@ -140,6 +143,9 @@ jobs:
       - name: Install dependencies
         if: steps.deps.outputs.cache-hit != 'true'
         run: npm ci
+      - name: FIRST-VISIT pins
+        # src/firstVisitPins.js is generated and gitignored; npm ci's postinstall writes it, which a cache hit skips
+        run: node scripts/firstVisitPins.mjs
       - name: The times the shards split by
         if: needs.times.outputs.key != ''
         uses: actions/cache/restore@v4
@@ -187,5 +193,8 @@ jobs:
       - name: Install dependencies
         if: steps.deps.outputs.cache-hit != 'true'
         run: npm ci
+      - name: FIRST-VISIT pins
+        # src/firstVisitPins.js is generated and gitignored; npm ci's postinstall writes it, which a cache hit skips
+        run: node scripts/firstVisitPins.mjs
       - name: Build
         run: npm run build
