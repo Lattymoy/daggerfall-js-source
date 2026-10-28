@@ -84,3 +84,21 @@ home, TS-the-edge-moved's aim and audittesa3e1's pin corrected.
 Each fix carries an `AUDIT FB1028 <id>` comment and is pinned by a test that fails on the code as it stood, with mutants in
 `tools/mutants/fb1028_walls.json` and `tools/mutants/fb1028_townground.json`. They ship in their own pull request, after
 #1371 deployed.
+
+## The rest fixed, after #1376
+
+The owner asked for every finding left open to be fixed. Two lanes worked from #1376's head; their numbers are over the
+Bay's 3,444 town pixels with the freeware's data.
+
+**A3 fixed.** GROUND_LAW 3 to 4, relay `world279` (`03-World/Town-Shapes.md` TS2 at FB1028). Land keeps the least of
+its eased departure and a cone of 4/3 the grade, so the ease never falls as the land stands further off: the synthetic
+hill's 13 m pit is gone. The sea and its shore's first 10 m ease as before. A first law ran the cone into the sea too
+and raised the ground past one jetty end in ten by over a metre; it was not kept, and the ports measure as before. Steps
+over 6 m on land fall from 6,333 to 3,996, at a pixel's edge from 1,222 to 1,184. Slope reversals rise from 19,065 to
+19,867, the cone climbing on a hill's far side; the worst stays 11.0 m.
+
+**A2 as far as one pixel reaches.** The seam eases from the town's last stood sample, a tile from anything standing:
+edge rows the blend steepens over 5 m (row off) 56 to 52. The three towns over 10 m (Tunmont 18.6 m, Kalunnunu 14.4 m,
+Naresa 13.8 m) are buildings filling the edge band. Only an ease past the edge meets them, and it would raise land
+130 m and 109 m into open sea at the first two and cut into Naresa's neighbour's hillside; every producer of a pixel's
+ground would read its neighbours' built ground. Not built; Town-Shapes "Across the edge". DFU's blend leaves seven.
