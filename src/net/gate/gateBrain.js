@@ -778,6 +778,11 @@ export function applyHit(f, sub, d, r, pose, now, seq = null, o = {}) {
   const P = half === HALF.flame ? flameProfileOf(f) : profileOf(f);
   const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - P.bossR;   // WB8b: his body's own size (Colossal's is larger)
   if (r === HIT_KINDS.Melee && gap > MELEE_REACH + POSE_SLACK) return 0;
+  // RPT1026-FIGHTS (RETIRED-BLOW, the Brass Remnant's law - net/superDungeon/sdRemnant.js sighted): A BLOW IS A SIGHTING. A
+  // fighter whose share was retired (no socket of it in the court ABSENT_RETIRE_MS) and whose first blow from a new one
+  // came before the beat saw it struck him with its share out of his health - its share back first, at the fraction he
+  // stands at (a return never heals him), as the beat would have brought it
+  p.seenAt = now; restoreShare(f, p);
   // the damage: WB8b's Unyielding lightens it, then it is capped a blow, then the bucket
   const ref = dpsRef(p.lv);
   p.bucket = Math.min(BUCKET_DEPTH_X * ref, p.bucket + (Math.max(0, now - p.bucketAt) / 1000) * BUCKET_RATE_X * ref);

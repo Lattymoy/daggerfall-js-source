@@ -170,8 +170,8 @@
   {
     "name": "BOSS-DOT-the-host-door-unmarked",
     "file": "src/scenes/dungeonContext.js",
-    "old": "!!opts.onHostHit?.({ i: hb.host, d: damage, r, tick });",
-    "new": "!!opts.onHostHit?.({ i: hb.host, d: damage, r });",
+    "old": "!!opts.onHostHit?.({ i: hb.host, d: damage, r, tick }));",
+    "new": "!!opts.onHostHit?.({ i: hb.host, d: damage, r }));",
     "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
     "why": "the host door drops a round's mark on its way to an Elite Breach"
   },

@@ -164,7 +164,8 @@ route began where the traveller never stood. And the planner's ground (`routeGro
 the sea, so nothing past the Bay could be walked to, and its land pieces (`apart`) said "no way by land" for every
 pick there. Now the box's bounds are the map AND the two ends; `routeGround` takes the host's `beyond` (whether a pixel
 past its table is dry ground, asked once a pixel and kept, `BEYOND_CACHE_MAX`); `apart` leaves an end past the table to
-the search; and a step past the table reads no road's byte (a column west of the map read the row above's last bytes,
+the search; and a step past the table reads no road's byte of the Bay's table (VOYAGER2.1, 2026-10-26: it reads the
+roads past the Bay's own layer since, `06-Systems/Travel-View.md`) (a column west of the map read the row above's last bytes,
 a road a whole map away). The host's water law (`scenes/world.js` `tvWater`) is the ground's own where TAMRIEL2
 composed the reader (`woods.isTamrielGround`), and the sea off the map where it did not - DFU's empty edge, the classic
 skin and the switch off exactly as before - and the planner is handed it.

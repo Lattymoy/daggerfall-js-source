@@ -210,7 +210,13 @@ the voice page was; `test/systems/questlines/qlvoice.test.js` holds them to it).
   machine's own state; nothing the layer keeps decides what a player sees but its LATCHES (below).
 - **The latches** (`qlLaw.js` observe). What the machine showed once stays shown: an objective opened stays open, one
   done stays done though its script clears its task, a branch's first choice stands, the outcome settles once. A
-  script that clears a task to re-arm it never takes back a line the player has read.
+  script that clears a task to re-arm it never takes back a line the player has read. A BINDING MENDED READS ITS LINE
+  AGAIN, ONCE (FIELD BUGS 2026-10-25i HEART-TAKEN, AUDIT FB1025i B4): a slice that rebinds an objective a player may
+  already hold latched names a mend on it (`reread`, an id the sheet law checks), and a state that has not taken that
+  mend - an older save, a party copy from an older build - forgets that objective's latch at its first read (`qlLaw.js`
+  observe; the journal reads it unlatched before then) and takes the mend (`qlState.js` `reread`), so the mended binding
+  decides it; a fresh state takes every mend at its first read. Q0C4XY04, N0B00Y06, R0C20Y07 and S0000503 carry
+  `fb1025i`: their lines had been struck on DFU's `clicked item`, which a look at a body's row fires.
 - **The text** names resources with the script's own symbols (`_house_`, `__house_`, `=monster_`), read through the
   machine's macros quietly (`src/ui/quest/questLens.js` quietText), in the player's language where a pack has it.
 - **Shape.** `optional`; `group`; `any` (alternatives, joined by "or"); `mark` (the place the objective is about - the
@@ -822,9 +828,12 @@ A window redesigned on purpose: it cites this page, not DFU (SCOPE1). The rail, 
   as the machine opened them: done struck, failed crossed, optional marked, alternatives joined by "or"), YOUR
   CHOICES, HOW IT ENDED, and what finishing it pays (the tier's floor in words, read off TIER_FLOORS - only where the
   row's `gear` says the quest can pay a choice of gear: AUDIT QUESTLINES UI-4). A stamped quest whose objectives stand
-  before its first journal entry is a row too (`unloggedRail`), with no Track, no Hide and no Abandon - the HUD's card and
-  the rail read entries, and abandoned it was lost (AUDIT QUESTLINES UI-8); on a phone a row pressed brings its page into
-  view (UI-14).
+  before its first journal entry is a row too (`unloggedRail`), with no Track and no Hide - the HUD's card and the rail
+  read entries (AUDIT QUESTLINES UI-8) - and with its Abandon: set aside, it is an Abandoned row with its Reclaim, and
+  DFU's own quest that holds its questor's door with nothing written is a row of its own (RPT1026-QUESTS ABANDON-ALWAYS,
+  the batch's Field-Bugs page: UI-8 had kept Abandon off such a row while one set aside was no row at all, and The Lost
+  Artifact's knight, whose `remove log step 0` empties the journal, shut the Order's door with no way to give the quest
+  up); on a phone a row pressed brings its page into view (UI-14).
 - **Questlines** - every line begun or on offer, the ones under way first, then those waiting, those on offer, the
   finished last; QL-OFFERED: a line its gate shuts is no row (UI-Calm's law - nothing drawn that cannot be taken; QL0
   drew all fifteen, locked ones "Not begun"), so offline a line that can only begin online is not drawn, and one begun

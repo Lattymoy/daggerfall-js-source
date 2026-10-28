@@ -327,11 +327,12 @@
   {
     "name": "SD11c-L5F4-resaid-into-a-closed-link",
     "file": "src/scenes/world.js",
-    "old": "    if (socialLink()?.status !== 'open') return;\n    try { spoilsPool.resendSpent();",
-    "new": "    try { spoilsPool.resendSpent();",
+    "old": "    if (socialLink()?.status !== 'open') return;\n    try { for (const pool of [spoilsPool, sdSpoilsPool, ketch?.spoils]) pool?.resendSpent?.();",
+    "new": "    try { for (const pool of [spoilsPool, sdSpoilsPool, ketch?.spoils]) pool?.resendSpent?.();",
     "tests": [
       "test/systems/sd11c_page.test.js"
-    ]
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content): the pools resent in one loop, the Ketch's with them."
   },
   {
     "name": "SD11c-L5F4-never-resaid-by-the-host",
@@ -546,8 +547,9 @@
   {
     "name": "SD11c-G13-no-Hollow-no-region",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "const near = h?.site?.cityName || '', region = regionName(o.rec.r) || '';",
-    "new": "const near = h?.site?.cityName || '', region = '';",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';",
+    "new": "const near = h?.site?.cityName || '', region = province ? '' : '';",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]

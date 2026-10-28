@@ -51,8 +51,19 @@ test('INT1: every item every honest producer mints carries no finding - in the s
   assert.deepEqual(honestItemsSkipped, [], 'every producer ran headless');
   const sources = new Set(SWEEP.map((s) => s.source));
   // PIN MOVED (its audit): the producers counted exactly - a producer dropped from the sweep is a hole, never a pass
-  assert.equal(sources.size, 89, `the sweep's producers: ${sources.size}`);   // PIN MOVED (STAFF-EVENT THE REWARD): + staffEventSpoils.staffSpoilsList; PIN MOVED (AUDIT QUESTLINES REWARD-9): + qlRewards.rollRewardChoice; PIN MOVED (KEY-LAW): + the Weir Key; PIN MOVED (TECH1): + lootRarity.addTechniqueLine and what may follow it; PIN MOVED (AUDIT CAPTAIN'S SEA B12): + the exchange's goods and the treasure chart
+  assert.equal(sources.size, 91, `the sweep's producers: ${sources.size}`);   // PIN MOVED (AUDIT MAKER-RARE A1): + the temple's lift after the maker; PIN MOVED (MAKER-RARE): + the item maker over an identified Rare; PIN MOVED (STAFF-EVENT THE REWARD): + staffEventSpoils.staffSpoilsList; PIN MOVED (AUDIT QUESTLINES REWARD-9): + qlRewards.rollRewardChoice; PIN MOVED (KEY-LAW): + the Weir Key; PIN MOVED (TECH1): + lootRarity.addTechniqueLine and what may follow it; PIN MOVED (AUDIT CAPTAIN'S SEA B12): + the exchange's goods and the treasure chart
   assert.ok(SWEEP.length >= 30_000, `the sweep's items: ${SWEEP.length}`);
+  // AUDIT MAKER-RARE C3: the item maker's Rare run is held to what it is for - every group a Rare rolls on, found and
+  // crafted, and every cursed Rare the doors minted, each lifted at the temple after (A1: a bound soul's forced row of the
+  // drawback's kind once took the lift's place) - a run that shrank to one jewel, or lost its curses, was green before
+  const rareRun = SWEEP.filter((s) => s.source.startsWith('enchanting.applyEnchantments (an identified Rare'));
+  const liftRun = SWEEP.filter((s) => s.source.startsWith('lootCurse.liftCurse (a cursed Rare the item maker'));
+  for (const group of ['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']) {
+    for (const crafted of [true, false]) assert.ok(rareRun.some((s) => s.item.group === group && !!s.item.provenance === crafted), `${group}, ${crafted ? 'crafted' : 'found'}`);
+  }
+  const cursedMade = rareRun.filter((s) => s.item.cursed).length;
+  assert.ok(cursedMade >= 40 && liftRun.length === cursedMade, `the Rare run's cursed ${cursedMade}, lifted ${liftRun.length}`);
+  assert.ok(liftRun.filter((s) => s.item.enchantments.some((e) => typeof e.parentEnchantment === 'string')).length >= 10, 'lifted beside a bound soul\'s forced rows');
   for (const wire of [false, true]) {
     const bad = (wire ? honestItems({ seeds: 4, wire: true }) : SWEEP).map(({ source, item }) => ({ source, f: itemFindings(item), item })).filter((x) => x.f.length);
     assert.deepEqual(bad.slice(0, 5).map((b) => `${b.source}: ${b.f.join(',')} ${JSON.stringify(b.item).slice(0, 200)}`), [], `${wire ? 'wire' : 'save'}: ${bad.length} honest items with findings`);

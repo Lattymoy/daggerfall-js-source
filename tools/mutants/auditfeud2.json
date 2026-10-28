@@ -137,11 +137,12 @@
   {
     "name": "AF2-W5-abyss-lairable",
     "file": "src/scenes/dungeonContext.js",
-    "old": " || (Number(dfLocation?.mapTableData?.mapId) >>> 0) >= 0x60000000); }",
+    "old": " || isAbyssMapId(dfLocation?.mapTableData?.mapId)); }",
     "new": "); }",
     "tests": [
       "test/systems/auditfeud2.test.js"
-    ]
+    ],
+    "note": "PITS-WORLD re-aimed by content: the abyss is known by world/oceanHoles.js isAbyssMapId."
   },
   {
     "name": "AF2-W5-street-bow-dropped",

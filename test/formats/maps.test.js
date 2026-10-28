@@ -47,9 +47,11 @@ const EMPTY_REGIONS = [2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29,
 // ---------------------------------------------------------------------------
 
 test('maps: FALL.EXE tables intact', () => {
-  assert.equal(REGION_NAMES.length, 62);
-  assert.equal(REGION_RACES.length, 62);
-  assert.equal(REGION_TEMPLES.length, 62);
+  // PIN MOVED (WW-R, bible/03-World/World-Wide.md): the Bay's 62 rows FALL.EXE's, the nine provinces' after them
+  assert.equal(REGION_NAMES.length, 71);
+  assert.equal(REGION_RACES.length, 71);
+  assert.equal(REGION_TEMPLES.length, 71);
+  assert.deepEqual(REGION_TEMPLES.slice(62), Array(9).fill(0), 'no temple FALL.EXE names past the Bay');
   assert.equal(RMB_BLOCK_PREFIXES.length, 45);
   assert.equal(REGION_NAMES[17], 'Daggerfall');
   assert.equal(REGION_NAMES[20], 'Sentinel');

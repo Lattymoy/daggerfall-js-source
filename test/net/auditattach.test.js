@@ -46,12 +46,19 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
   // this; storing the glyphs as their places in GLYPHS rather than their words would buy back some 170 bytes if the
   // half is to be held again.
   // PIN MOVED (HIBERNATE): 1136, from 1080 - the id's secret (`sc`) rides the attachment, so a wake can ask it without a storage read
-  assert.ok(bytes <= 1136, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
+  // PIN MOVED (WW7-3): the provinces' seven crowns in "every glyph" (+70 bytes) - 1148, still 900 under the runtime's 2048
+  // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1206 measured - the seven crowns (+70) and the secret (+56)
+  // PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage's glyph word ('nirnrootsage', its quotes and comma) - the second merge measures all three: 1221
+  // PIN MOVED (SHOP, its fold into #1184): the Origin's glyph word beside the crowns, every glyph at once - 1230, 818 under the runtime's 2048
+  assert.ok(bytes <= 1230, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
   assert.ok(bytes > 500, `and it is the wide one: ${bytes} bytes`);
 }));
 
 test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET - its key at its widest, its attachment SEAT-LIVE\'s two stamps beside every field a building\'s carries, and still about half the runtime\'s 2048', () => withClock(async (tick) => {
-  const { me } = await widestPlace(tick, 'dungeon:m4294967295.i0123456789abcdef.0000000a');
+  // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the widest key that is no zone hall's - the halls' lane is the
+  // high four bits' 0xF (net/wire.js WDUN_WORLD_LANE), every id from 4,026,531,840 a hall's room, which keeps no instance;
+  // the widest instance key below it is as wide (ten digits)
+  const { me } = await widestPlace(tick, 'dungeon:m4026531839.i0123456789abcdef.0000000a');
   assert.equal(me.closed, null);
   const fields = Object.keys(me.att), want = [...PLACE_ATTACH_FIELDS, ...SEAT_ATTACH_FIELDS];
   assert.deepEqual(want.filter((k) => !fields.includes(k)), [], 'every field a wake needs is written, the seat\'s stamps too');
@@ -60,7 +67,11 @@ test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET -
   // SEAT-LIVE's stamps (two thirteen-digit times) and the instance's longer key: 1086 at its widest, past the building's
   // 1056 - a dungeon instance's ceiling of its own, still about half. PIN MOVED (LEASE1): 1135, from 1100 - the lease's three numbers
   // PIN MOVED (HIBERNATE): 1191, from 1135 - the same secret on a dungeon instance's wider key
-  assert.ok(bytes <= 1191, `the widest dungeon instance attachment is ${bytes} bytes`);
+  // PIN MOVED (WW7-3): the seven crowns' 70 bytes - 1203, 845 under the runtime's 2048
+  // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1261 measured - the crowns and the secret on the wider key
+  // PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage's glyph word, every glyph at once - the second merge measures all three: 1276
+  // PIN MOVED (SHOP, its fold into #1184): the Origin's glyph word on the dungeon's wider key - 1285
+  assert.ok(bytes <= 1285, `the widest dungeon instance attachment is ${bytes} bytes`);
 }));
 
 // Each arm's flood, at one instant: `passes` frames through the bucket, then a strike a frame (`key`), closed past `max`.

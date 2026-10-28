@@ -1,0 +1,223 @@
+[
+  {
+    "name": "ROAD-SPARE-unasked",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the bug: the road's travellers never asked the street's law - the swing in the fight struck the merchant down"
+  },
+  {
+    "name": "ROAD-SPARE-spared-as-nobody",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "return ROAD_SPARED;   // ROAD-SPARE",
+    "new": "return false;   // ROAD-SPARE",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "a spared traveller read as nobody: the swing goes on to the door behind them (AUDIT 29g)"
+  },
+  {
+    "name": "ROAD-SPARE-every-blow-spared",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;",
+    "new": "    if (near) return ROAD_SPARED;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "no fight: a blow at a traveller is meant, DFU's rule"
+  },
+  {
+    "name": "ROAD-SPARE-struck-answer",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    return ROAD_STRUCK;",
+    "new": "    return true;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the struck answer the host's tail reads"
+  },
+  {
+    "name": "ROAD-SPARE-fight-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
+    "new": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && true));",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "PROTECT-FIGHT's fight unread: every traveller spared under the protection, the meant blow too"
+  },
+  {
+    "name": "ROAD-SPARE-protection-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
+    "new": "    return !!person && (!!raidHere() || !!fightHere());",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the protection off still spares: the measured bounty's swing never lands"
+  },
+  {
+    "name": "ROAD-SPARE-struck-unsurfaced",
+    "file": "src/scenes/world.js",
+    "old": "            if (r?.crime || r?.struck) surfacePlayer();",
+    "new": "            if (r?.crime) surfacePlayer();",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "a traveller struck down: the swing met someone (no door bashed), the HUD surfaced"
+  },
+  {
+    "name": "ROAD-SPARE-open-world-unasked",
+    "file": "src/scenes/world.js",
+    "old": "open: () => livingWorldOn() && _mode() === 'exterior', collider, cityGuards",
+    "new": "open: () => livingWorldOn(), collider, cityGuards",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the road is the open world's alone (its blood the street's pool)"
+  },
+  {
+    "name": "ROAD-SPARE-host-pool",
+    "file": "src/scenes/world.js",
+    "old": "open: () => livingWorldOn() && _mode() === 'exterior', collider, cityGuards, hitEffects",
+    "new": "open: () => livingWorldOn() && _mode() === 'exterior', collider, cityGuards: { playerSparesPerson: () => false }, hitEffects",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the host hands the strike a law of its own, not the street pool's"
+  },
+  {
+    "name": "AUDIT-FB1025i-D2-killer-unrecorded",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      f.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the death door names no hand: no kill is the player's, so a stood traveller the player cut down is no slaying"
+  },
+  {
+    "name": "AUDIT-FB1025i-D2-peer-as-mine",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      f.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';",
+    "new": "      f.killedBy = fromPlayer ? 'player' : 'other';",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "a peer's blow (fromPlayer, peer) read as mine: their kill my Murder"
+  },
+  {
+    "name": "AUDIT-FB1025i-D2-any-death-slain",
+    "file": "src/scenes/roadStands.js",
+    "old": "if (s.kind === 'foe' && s.rec.killedBy === 'player') {",
+    "new": "if (s.kind === 'foe') {",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the finding: whoever struck, the stands slay - the road's Murder report"
+  },
+  {
+    "name": "AUDIT-FB1025i-D2-other-unsaid",
+    "file": "src/scenes/roadStands.js",
+    "old": "} else if (s.kind === 'foe') deps.killed(s.res, t);",
+    "new": "} else if (s.kind === 'foe') void 0;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "another hand's kill unsaid: the dead traveller walks again with their party"
+  },
+  {
+    "name": "AUDIT-FB1025i-D2-host-killed-unwired",
+    "file": "src/scenes/world.js",
+    "old": "slay: livingRoadSlay, killed: livingKilled, died: livingDied,",
+    "new": "slay: livingRoadSlay, killed: () => {}, died: livingDied,",
+    "tests": [
+      "test/scenes/lw7b_beyond.test.js",
+      "test/systems/livingWorld/lwfix4_turns.test.js"
+    ],
+    "note": "the host hands the stands no hand death for another's kill"
+  },
+  {
+    "name": "AUDIT-FB1025i-D3-puppet-unread",
+    "file": "src/systems/encounters.js",
+    "old": "    if (wouldBeSpawnedInClassic(Math.hypot(dx, dy, dz), dy, false, 0, false)) return true;",
+    "new": "    if (false) return true;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the finding: the fight is the rest gate's - a peer's foe on my partner is no fight of mine"
+  },
+  {
+    "name": "AUDIT-FB1025i-D3-band-unread",
+    "file": "src/systems/encounters.js",
+    "old": "    if (wouldBeSpawnedInClassic(Math.hypot(dx, dy, dz), dy, false, 0, false)) return true;",
+    "new": "    if (true) return true;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "any hostile foe anywhere a fight"
+  },
+  {
+    "name": "AUDIT-FB1025i-D3-hostility-unread",
+    "file": "src/systems/encounters.js",
+    "old": "    if (!foeHostile(f) || f.ai.unreachable || !f.ai.feet) continue;",
+    "new": "    if (f.ai.unreachable || !f.ai.feet) continue;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "a pacified foe or the player's ally a fight"
+  },
+  {
+    "name": "AUDIT-FB1025i-D3-unreachable-unread",
+    "file": "src/systems/encounters.js",
+    "old": "    if (!foeHostile(f) || f.ai.unreachable || !f.ai.feet) continue;",
+    "new": "    if (!foeHostile(f) || !f.ai.feet) continue;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "a foe in the water while the player is aboard a fight (the rest gate's own skip)"
+  },
+  {
+    "name": "AUDIT-FB1025i-D3-rest-answer-unread",
+    "file": "src/systems/encounters.js",
+    "old": "  if (areEnemiesNearby(foes)) return true;",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the rest gate's answer no longer a fight - my own foe at the band's edge, or seeing me past it"
+  },
+  {
+    "name": "AUDIT-FB1025i-D3-world-host-rest-gate",
+    "file": "src/scenes/world.js",
+    "old": "fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),",
+    "new": "fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ],
+    "note": "the world host asks the rest gate again"
+  },
+  {
+    "name": "AUDIT-FB1025i-D3-city-host-rest-gate",
+    "file": "src/scenes/exterior.js",
+    "old": "fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),",
+    "new": "fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),",
+    "tests": [
+      "test/scenes/fb0930_protectfight.test.js"
+    ],
+    "note": "the fixed-city host asks the rest gate again"
+  },
+  {
+    "name": "AUDIT-FB1025i-D4-open-unasked",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    if (!layer || !open()) return false;",
+    "new": "    if (!layer) return false;",
+    "tests": [
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "the survivor: off the open world the road still takes a swing"
+  }
+]

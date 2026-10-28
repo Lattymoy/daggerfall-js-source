@@ -68,7 +68,9 @@ test('REGIONAL-FOLK: Roleplay & Realism\'s house residents follow the street - a
 test('REGIONAL-FOLK: every population asks the one rule - both street hosts, the census, the interior host\'s R&R swap; the table is written once', () => {
   assert.match(hostText('src/scenes/world.js'), /race: walkerRace\(climate\?\.people, dfLocation\.regionIndex\),/);
   assert.match(read('src/scenes/exterior.js'), /const populationRace = walkerRace\(dfLocation\.climate\?\.people, dfLocation\.regionIndex\);/);
-  assert.match(read('src/systems/livingWorld/census.js'), /const race = walkerRace\(town\.people, town\.region\);/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the census asks by the town's AREA - its region on the Bay, its
+  // province's district past it (Hammerfell's beyond the Bay as Redguard as its regions on it)
+  assert.match(read('src/systems/livingWorld/census.js'), /const race = walkerRace\(town\.people, town\.area \?\? town\.region\);/);
   assert.match(read('src/scenes/worldModes.js'), /region: hit\.dfLocation\?\.regionIndex \?\? null,/);
   const literal = /\{ 0: 'Nord', 2: 'Redguard', 3: 'Breton' \}/;
   const holders = [];

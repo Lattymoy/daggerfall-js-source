@@ -1,0 +1,42 @@
+[
+  {
+    "name": "ANY-GOODS-witness-asked-again",
+    "file": "server-account/src/craftWrits.js",
+    "old": "AND potion = ${potion}), 0)",
+    "new": "AND potion = ${potion} AND witnessed = 1), 0)",
+    "tests": [
+      "test/net/fb1026_anygoods.test.js"
+    ],
+    "note": "a brew of the pack's goods fills nothing again - the report's \"0 brewed by you\""
+  },
+  {
+    "name": "ANY-GOODS-goods-wall-refused-again",
+    "file": "server-account/src/craftWrits.js",
+    "old": "AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND",
+    "new": "AND pk.bought_with IS NOT 'gold' AND",
+    "tests": [
+      "test/net/fb1026_anygoods.test.js"
+    ],
+    "note": "a dish cooked of the pack's goods fills nothing again"
+  },
+  {
+    "name": "ANY-GOODS-every-gold-wall-lifted",
+    "file": "server-account/src/craftWrits.js",
+    "old": "AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND",
+    "new": "AND",
+    "tests": [
+      "test/net/fb1026_anygoods.test.js"
+    ],
+    "note": "a piece bought back with gold on the market fills a writ"
+  },
+  {
+    "name": "ANY-GOODS-station-unsaid",
+    "file": "src/net/craftWritLaw.js",
+    "old": "'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count'",
+    "new": "'Brew {n, number} more yourself - found or bought bottles do not count'",
+    "tests": [
+      "test/net/fb1026_anygoods.test.js"
+    ],
+    "note": "the brew asked with no word of where - a potion maker away from a station is the client's mix"
+  }
+]

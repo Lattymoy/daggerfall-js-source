@@ -12,13 +12,12 @@
 //     clock (`seaSwellAt`: three long waves summed, 5 to 13 s, so no two swells are alike); the WASH, the water running
 //     past her hull, rising with her way and riding the swell a beat behind; the RIGGING, the wind moaning in the
 //     lines, only in a strong wind or a storm, breathing with its gusts.
-//   THE EVENTS (one-shots of the port's own, systems/soundscape/soundscapeSfx.js): a wave SLAPPING the hull as a swell
-//     crests, port or starboard, a second behind it in a heavy sea; the TIMBERS working and the ROPES creaking in
-//     their blocks, more often as the sea gets up (the ropes only with sail set); the canvas LUFFING when she lies
-//     head to wind or her sails are set and she carries no way; SPRAY over the bow when she drives into a crest at
-//     speed; GULLS by day in fair weather while land is near; and the WATCH BELLS each half hour of the world's
-//     clock, struck in pairs - one bell at the half hour after a watch begins, eight at its end (`watchBells`) - on
-//     Daggerfall's own bell (DAGGER.SND 107).
+//   THE EVENTS: GULLS by day in fair weather while land is near (systems/soundscape/soundscapeSfx.js); and the WATCH
+//     BELLS each half hour of the world's clock, struck in pairs - one bell at the half hour after a watch begins,
+//     eight at its end (`watchBells`) - on Daggerfall's own bell (DAGGER.SND 107).
+//   DECK-QUIET (2026-10-26, the owner: "Remove all deck at sea"): the deck's own one-shots - a wave slapping the hull,
+//     the timbers and the ropes creaking, the canvas luffing, the spray over the bow - are gone, and their clips with
+//     them.
 //
 // Every event aboard is played `far` (systems/audio.js play3d): its offset from the ear held while it sounds, so it rides
 // with the deck as she moves. The laws are pure (the clock, the sea and the dice in, levels and events out); the driver
@@ -46,8 +45,6 @@ export const SEA_FAR = 'seaAir';
 
 /** The swell's three long waves: [period s, share, phase] - their sum's shares are 1. */
 export const SWELL_WAVES = Object.freeze([Object.freeze([8.3, 0.55, 0]), Object.freeze([12.7, 0.3, 1.3]), Object.freeze([5.1, 0.15, 0.4])]);
-/** A swell CRESTS as `seaSwellAt` rises through this - a slap's moment. */
-export const SWELL_CREST = 0.72;
 
 /** What the weather adds to the sea a wind makes: a rain's squalls and a storm's seas. */
 export const SEA_WEATHER = Object.freeze({ rain: 0.12, thunder: 0.35, snow: 0.06 });
@@ -93,33 +90,12 @@ export function riggingBed(wind, gust, weather) {
   return { volume: max * smooth(from, 1, w) * (0.6 + 0.4 * clamp01(gust)), pitch: 0.92 + 0.2 * w + 0.06 * (clamp01(gust) - 0.5) };
 }
 
-/** THE EVENTS' RATES (a mean gap, seconds, the dice drawing each gap exponentially about it): the timbers from a long
- *  calm's to a storm's, the ropes in their blocks with sail set (AUDIT SOUNDSCAPE S10: and only then - a furled ship's
- *  ropes were a gap never heard, and the first creak after the sails went up waited on it). */
-export const CREAK_GAP_S = Object.freeze({ calm: 16, storm: 3.2 });
-export const ROPE_GAP_S = Object.freeze({ calm: 12, gale: 3.5 });
-/** The luff's flaps: a gap drawn between these while she luffs. */
-export const LUFF_GAP_S = Object.freeze([1.2, 3.5]);
 /** A gull's call: a gap drawn between these while land is near by day in fair weather; a second call follows so often. */
 export const GULL_GAP_S = Object.freeze([7, 26]);
 export const GULL_PAIR = 0.3;
-/** A luff: sails set with less way than this in more wind than that, or head to wind. */
-export const LUFF_WAY = 0.8;
-export const LUFF_WIND = 0.25;
-/** Spray: at more way than this through a sea over that, a crest may throw it over the bow. */
-export const SPRAY_WAY = 2.5;
-export const SPRAY_STATE = 0.3;
 
-/** The mean gap between the timbers' creaks for a sea of `state`. Pure. */
-export const creakGap = (state) => CREAK_GAP_S.calm + (CREAK_GAP_S.storm - CREAK_GAP_S.calm) * clamp01(state);
-/** The mean gap between the ropes' creaks with sail set, from a breeze's to a gale's. Pure. */
-export const ropeGap = (wind) => ROPE_GAP_S.calm + (ROPE_GAP_S.gale - ROPE_GAP_S.calm) * clamp01(wind);
-/** Whether her canvas luffs: sails set, and head to wind, or no way on her with a wind to shake them. Pure. */
-export const luffs = ({ sailsUp, inIrons, way, wind }) => !!sailsUp && (!!inIrons || ((Number(way) || 0) < LUFF_WAY && clamp01(wind) > LUFF_WIND));
 /** Whether the gulls are about: land near, by day, out of rain, storm and snow. Pure. */
 export const gullsAbout = ({ nearLand, night, weather }) => !!nearLand && !night && weather !== 'rain' && weather !== 'thunder' && weather !== 'snow';
-/** The chance a crest throws spray over the bow, for `way` through a sea of `state`. Pure. */
-export const sprayChance = (way, state) => ((Number(way) || 0) > SPRAY_WAY && clamp01(state) > SPRAY_STATE ? Math.min(1, ((Number(way) || 0) - SPRAY_WAY) / 6) * clamp01(state) : 0);
 
 /** THE WATCH BELLS (a ship's clock): the bells struck at `minuteOfDay` (0..1439) - one at the half hour after a watch
  *  begins (the watches turning at 0, 4, 8, 12, 16 and 20 o'clock), one more each half hour, eight as it ends. Pure. */
@@ -147,35 +123,29 @@ export const BELL_PACE_TAU_S = 3;
 export const BELL_CLIP = 107;
 export const BELL_PITCH = 1.22;
 
-/** The listener's right on the ground, for a forward `fwd` (the port's handedness: screen-right is (cos, 0, -sin) for a
- *  forward (sin, ., cos) - world.js). */
-const rightOf = (fwd) => { const l = Math.hypot(fwd[0], fwd[2]) || 1; return [fwd[2] / l, 0, -fwd[0] / l]; };
 const flatOf = (fwd) => { const l = Math.hypot(fwd[0], fwd[2]) || 1; return [fwd[0] / l, 0, fwd[2] / l]; };
 const at = (ear, ...parts) => { const p = [...ear]; for (const [v, k] of parts) { p[0] += v[0] * k; p[1] += v[1] * k; p[2] += v[2] * k; } return p; };
 const UP = [0, 1, 0];
 /** @param {() => number} rand @param {number} a @param {number} b */
 const between = (rand, a, b) => a + (b - a) * rand();
-/** An exponential gap about `mean`, never under a tenth of it. @param {() => number} rand @param {number} mean */
-const expGap = (rand, mean) => Math.max(mean * 0.1, -Math.log(1 - Math.min(0.999, rand())) * mean);
 /** @template T @param {() => number} rand @param {ReadonlyArray<T>} list @returns {T} */
 const pick = (rand, list) => list[Math.min(list.length - 1, Math.floor(rand() * list.length))];
 
 /**
- * @typedef {{ ear: number[], fwd: number[], bow?: number[] | null, way: number, sailsUp: boolean, inIrons: boolean, wind: number,
- *   gust: number, weather: string, night: boolean, nearLand: boolean, minute: number, paused: boolean }} SeaFrame
+ * @typedef {{ ear: number[], fwd: number[], bow?: number[] | null, way: number, wind: number, gust: number, weather: string,
+ *   night: boolean, nearLand: boolean, minute: number, paused: boolean }} SeaFrame
  */
 
 /**
  * The deck's air on the engine: `frame(dt, sea)` once a frame while I stand on a deck in the open (dt real seconds;
- * `sea` a SeaFrame: the ear and its forward, her bow - her heading on the water, flat (AUDIT SOUNDSCAPE S3: the spray, the
- * sides and the bell are hers, never the camera's; the ear's forward where she gives none) - her way m/s, her sails and
- * whether she lies in irons, the wind and its gust 0..1, the weather's word, night, land near, the world's minute and the
- * pause); `stop()` on every other frame - the beds faded, the deck's shots let go, the clocks forgotten.
+ * `sea` a SeaFrame: the ear and its forward, her bow - her heading on the water, flat (AUDIT SOUNDSCAPE S3: the bell is
+ * hers, never the camera's; the ear's forward where she gives none) - her way m/s, the wind and its gust 0..1, the
+ * weather's word, night, land near, the world's minute and the pause); `stop()` on every other frame - the beds faded,
+ * the deck's shots let go, the clocks forgotten.
  * @param {{ engine?: any, rand?: () => number }} [opts]
  */
 export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {}) {
-  let t = 0, on = false, lastSwell = null, lastMinute = null, lastBellT = -Infinity, pace = NORMAL_PACE;
-  let creakIn = 0, ropeIn = 0, luffIn = 0, gullIn = 0, lastLuffT = -Infinity, sailsWere = false;
+  let t = 0, on = false, lastMinute = null, lastBellT = -Infinity, pace = NORMAL_PACE, gullIn = 0;
   /** strokes and shots due later: [{ at, play(frame) }] - played where the ear is when they fall due */
   /** @type {Array<{ at: number, play: (s: SeaFrame) => void }>} */
   let due = [];
@@ -186,17 +156,10 @@ export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {})
     if (!ensureBed(engine, spec.bed)) return;
     try { engine.setBed(spec.name, v.volume > 0.002 ? spec.bed : null, v); } catch { /* nothing to play it on yet */ }
   };
-  const reset = () => { lastSwell = null; lastMinute = null; due = []; creakIn = ropeIn = luffIn = gullIn = 0; lastLuffT = -Infinity; sailsWere = false; pace = NORMAL_PACE; };
-  /** The clocks as I step aboard: every event a gap away, none of them all at once on the first frame. @param {SeaFrame} s */
-  const seed = (s) => {
-    const state = seaState(s.wind, s.weather);
-    creakIn = expGap(rand, creakGap(state));
-    ropeIn = expGap(rand, ropeGap(s.wind));
-    sailsWere = !!s.sailsUp;
-    luffIn = between(rand, 0, LUFF_GAP_S[1]);
-    gullIn = between(rand, 2, GULL_GAP_S[0]);
-  };
-  /** Her heading and her starboard: the bow given, else the ear's forward. @param {SeaFrame} c */
+  const reset = () => { lastMinute = null; due = []; gullIn = 0; pace = NORMAL_PACE; };
+  /** The gulls' clock as I step aboard: a gap away, never on the first frame. */
+  const seed = () => { gullIn = between(rand, 2, GULL_GAP_S[0]); };
+  /** Her heading: the bow given, else the ear's forward. @param {SeaFrame} c */
   const headingOf = (c) => flatOf(c.bow ?? c.fwd ?? [0, 0, 1]);
   return {
     get on() { return on; },
@@ -207,43 +170,13 @@ export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {})
       // AUDIT SOUNDSCAPE S1: the events' clock stands with the game - a pause held the queue but ran the clock, and every
       // bell stroke that fell due under it rang on the unpause frame at once (six strokes, 15 dB over one)
       if (!s.paused) t += step;
-      if (!on) seed(s);
+      if (!on) seed();
       on = true;
       const state = seaState(s.wind, s.weather);
       bed(SEA_BEDS.swell, swellBed(state, t));
       bed(SEA_BEDS.wash, washBed(s.way, state, t));
       bed(SEA_BEDS.rigging, riggingBed(s.wind, s.gust, s.weather));
       if (s.paused || step === 0) return;
-      const bow = headingOf(s), starboard = rightOf(bow);
-      // a swell cresting: a slap port or starboard, a second in a heavy sea, and spray over the bow at speed
-      const sw = seaSwellAt(t);
-      if (lastSwell != null && lastSwell < SWELL_CREST && sw >= SWELL_CREST) {
-        const side = rand() < 0.5 ? -1 : 1;
-        play(pick(rand, SCAPE_SFX.seaSlap), at(s.ear, [starboard, side * between(rand, 2.5, 4)], [UP, -1.6]), 0.25 + 0.5 * state, { pitch: between(rand, 0.9, 1.1), ref: 3, max: 60 });
-        if (rand() < state) due.push({ at: t + between(rand, 0.15, 0.4), play: (c) => play(pick(rand, SCAPE_SFX.seaSlap), at(c.ear, [rightOf(headingOf(c)), -side * between(rand, 2.5, 4)], [UP, -1.6]), 0.2 + 0.4 * state, { pitch: between(rand, 0.9, 1.1), ref: 3, max: 60 }) });
-        if (rand() < sprayChance(s.way, state)) play(pick(rand, SCAPE_SFX.seaSpray), at(s.ear, [bow, 5], [UP, -1]), 0.3 + 0.4 * state, { pitch: between(rand, 0.92, 1.08), ref: 4, max: 80 });
-      }
-      lastSwell = sw;
-      // the timbers, and the ropes in their blocks while sail is set (S10: re-armed as it goes up)
-      if ((creakIn -= step) <= 0) {
-        play(pick(rand, SCAPE_SFX.seaCreak), at(s.ear, [starboard, between(rand, -5, 5)], [bow, between(rand, -5, 5)], [UP, between(rand, -1, 1)]), 0.2 + 0.35 * state, { pitch: between(rand, 0.88, 1.12), ref: 2.5, max: 40 });
-        creakIn = expGap(rand, creakGap(state));
-      }
-      if (s.sailsUp && !sailsWere) ropeIn = expGap(rand, ropeGap(s.wind));
-      sailsWere = !!s.sailsUp;
-      if (s.sailsUp && (ropeIn -= step) <= 0) {
-        play(pick(rand, SCAPE_SFX.seaRope), at(s.ear, [starboard, between(rand, -3, 3)], [bow, between(rand, -4, 4)], [UP, between(rand, 2, 6)]), 0.18 + 0.3 * clamp01(s.wind), { pitch: between(rand, 0.9, 1.15), ref: 2.5, max: 40 });
-        ropeIn = expGap(rand, ropeGap(s.wind));
-      }
-      // the canvas shaking - never sooner than the shortest gap after the last flap (AUDIT SOUNDSCAPE S8: a law that
-      // flickered on and off flapped at once at each return, a burst where a luff is a flap every second or three)
-      if (luffs(s)) {
-        if ((luffIn -= step) <= 0) {
-          play(pick(rand, SCAPE_SFX.seaLuff), at(s.ear, [bow, between(rand, -2, 3)], [UP, between(rand, 4, 7)]), 0.3 + 0.4 * clamp01(s.wind), { pitch: between(rand, 0.9, 1.1), ref: 4, max: 80 });
-          lastLuffT = t;
-          luffIn = between(rand, LUFF_GAP_S[0], LUFF_GAP_S[1]);
-        }
-      } else luffIn = Math.max(0, LUFF_GAP_S[0] - (t - lastLuffT));
       // the gulls
       if (gullsAbout(s)) {
         if ((gullIn -= step) <= 0) {

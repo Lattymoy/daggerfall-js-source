@@ -1,0 +1,377 @@
+[
+  {
+    "name": "AUDITTESA2M-M1-the-cap-the-count-alone",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "while (tiles.size > Math.max(kept, want.length)) {",
+    "new": "while (tiles.size > kept) {",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js",
+      "test/tesa15_mapfidelity.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M1-a-drawn-tile-not-to-the-back",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "if (t) { tiles.delete(id); tiles.set(id, t); }",
+    "new": "if (t && t.word === word && !t.job) { tiles.delete(id); tiles.set(id, t); }",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js",
+      "test/tesa15_mapfidelity.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M3-the-stand-in-level-a-float",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "const t = tiles.get(idOf(key, n + k, dpr, tx, ty));",
+    "new": "const t = tiles.get(idOf(key, Math.log2(2 ** (n / LEVEL_STEPS) * 2 ** (k / LEVEL_STEPS)) * LEVEL_STEPS, dpr, tx, ty));",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M10-the-steps-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const step = job ? PAST_BAY_STEP : Infinity;",
+    "new": "const step = Infinity;",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M10-the-budget-between-tiles-alone",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "while (!t.job.done && may()) {",
+    "new": "while (!t.job.done) {",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M10-the-pass-laid-straight-on",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (!job) return { target: ctx, style, alpha: 1 };",
+    "new": "  if (job || !job) return { target: ctx, style, alpha: 1 };",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M10-the-partial-tile-shown",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "        if (t?.canvas) place(ctx, view, dpr, t);",
+    "new": "        if (t?.canvas || t?.job) place(ctx, view, dpr, t.canvas ? t : { ...t, canvas: t.job.canvas });",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M10-the-walk-uncounted",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (batch.length + _walked - walked >= step) {",
+    "new": "if (batch.length >= step) {",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M11-the-chains-unbounded",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  while (_roadInk.size > ROAD_INK_KEPT) _roadInk.delete(",
+    "new": "  while (false && _roadInk.size > ROAD_INK_KEPT) _roadInk.delete(",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M11-the-empties-kept",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (!keys.size) return NO_STEPS;\n",
+    "new": "",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M11-dropped-whole",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const keep = (m, k, v, cap) => { m.set(k, v); while (m.size > cap) m.delete(/** @type {number} */ (m.keys().next().value)); return v; };",
+    "new": "const keep = (m, k, v, cap) => { if (m.size >= cap) m.clear(); m.set(k, v); return v; };",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M11-the-release-a-no-op",
+    "file": "src/ui/tamrielInk.js",
+    "old": "export function releasePastBayInk() { _roadInk.clear(); _steps.clear(); _dots.clear(); _keptFor = -1; }",
+    "new": "export function releasePastBayInk() { }",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js",
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M11-the-release-unwired",
+    "file": "src/ui/heldMap.js",
+    "old": "    releasePastBayInk();   // AUDIT TESA II M11",
+    "new": "    void 0;   // AUDIT TESA II M11",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M11-the-parts-always-made",
+    "file": "src/ui/heldMap.js",
+    "old": "const subs = continentOn && viewLeavesBay(env.view, env.paperW, env.paperH) ? this._sheetLayers(ctx) : null;",
+    "new": "const subs = this._sheetLayers(ctx);",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M12-the-run-unbounded",
+    "file": "src/ui/tamrielInk.js",
+    "old": "while (home(x + n * dx, y + n * dy) && (layer[kind].get(",
+    "new": "while ((layer[kind].get(",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M12-no-run-starts-at-the-edge",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (home(x - dx, y - dy) && (layer[kind].get(beyondKey(x - dx, y - dy)) ?? 0) & bit) continue;",
+    "new": "if ((layer[kind].get(beyondKey(x - dx, y - dy)) ?? 0) & bit) continue;",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M7-the-filter-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const bucket = tamrielCityBucket(c, opts.filters ?? {});",
+    "new": "const bucket = tamrielCityBucket(c, {});",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M7-the-hue-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);",
+    "new": "paintGlyph(ctx, m.kind, m.x, m.y, false);",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M7-the-hover-past-the-filter",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;",
+    "new": "if ((continent && !c.capital) || (portsOnly && !c.port)) continue;",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M7-the-continent-every-city",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;",
+    "new": "if (tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M7-the-zone-names-unfiltered",
+    "file": "src/ui/heldMap.js",
+    "old": "wildInside(mask, c.x, c.y) && tamrielCityBucket(c, this.filters) >= 0)",
+    "new": "wildInside(mask, c.x, c.y))",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js",
+      "test/ui/regionlines.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M6-the-option-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (!opts.nameless?.(c)) named.push([c, x, y]);",
+    "new": "named.push([c, x, y]);",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js",
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M6-the-zone-map-unasked",
+    "file": "src/ui/heldMap.js",
+    "old": "nameless: zoneMask ? (c) => wildInside(zoneMask, c.x, c.y) : null });",
+    "new": "nameless: null });",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M14-the-seam-shut",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const farInBay = (x, y, reach) => inBay(x, y) && Math.min(x, BAY_W - x, y, BAY_H - y) >= reach;",
+    "new": "const farInBay = (x, y, reach) => inBay(x, y);",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M2-the-face-landing-the-key-alone",
+    "file": "src/ui/heldMap.js",
+    "old": "const landed = () => { if (!this.done) this._inkAgain(); };",
+    "new": "const landed = () => { if (!this.done) { this._staticKey = ''; this._dirty = true; } };",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M2-the-parts-kept",
+    "file": "src/ui/heldMap.js",
+    "old": "_inkAgain() { this._staticKey = ''; this._sheetLayersKey = ''; this._dirty = true; }",
+    "new": "_inkAgain() { this._staticKey = ''; this._dirty = true; }",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M4-the-halls-left-in-the-bake",
+    "file": "src/ui/heldMap.js",
+    "old": "const bay = halls.length ? { ...model, marks: marks.filter((m) => m.kind !== 'hall') } : model;",
+    "new": "const bay = model;",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M4-the-halls-under-the-fog",
+    "file": "src/ui/heldMap.js",
+    "old": "            if (split.halls.length) paintInkMarks(ctx, { marks: split.halls }, env.view,",
+    "new": "            if (false) paintInkMarks(ctx, { marks: split.halls }, env.view,",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-key-ungated",
+    "file": "src/ui/heldMap.js",
+    "old": "item.title = this._zoneLaws() ? `${WILD_TEXT.chipTip} ${ZONE_SAFE_TEXT.rule}` : ZONE_MAP_TEXT.chipTipOffline();",
+    "new": "item.title = `${WILD_TEXT.chipTip} ${ZONE_SAFE_TEXT.rule}`;",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-door-ungated",
+    "file": "src/ui/heldMap.js",
+    "old": "open.title = this._zoneLaws() ? ZONE_MAP_TEXT.door() : ZONE_MAP_TEXT.doorOffline();",
+    "new": "open.title = ZONE_MAP_TEXT.door();",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-zone-zoom-ungated",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!this._zoneMap && this._zoneLaws()) {\n      const mask = this.deps.wildMask?.() ?? null;\n      const [zx, zy] = toMap(this._view, sx, sy);\n      if (mask && wildInside(mask, zx, zy) && this._openZoneMap()) return;\n    }\n    const m = this._markerAt(sx, sy);",
+    "new": "    if (!this._zoneMap) {\n      const mask = this.deps.wildMask?.() ?? null;\n      const [zx, zy] = toMap(this._view, sx, sy);\n      if (mask && wildInside(mask, zx, zy) && this._openZoneMap()) return;\n    }\n    const m = this._markerAt(sx, sy);",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-bare-ground-ungated",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!this._zoneMap && this._zoneLaws()) {   // AUDIT TESA II M5: online, as ZONE-ZOOM's above",
+    "new": "    if (!this._zoneMap) {   // AUDIT TESA II M5: online, as ZONE-ZOOM's above",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-legend-laws-always",
+    "file": "src/ui/heldMap.js",
+    "old": "buildZoneLegend(document, { ring, laws, canBegin",
+    "new": "buildZoneLegend(document, { ring, laws: true, canBegin",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-laws-the-mask",
+    "file": "src/ui/heldMap.js",
+    "old": "return typeof halls === 'function' ? halls() != null : !!this.deps.wildMask?.();",
+    "new": "return !!this.deps.wildMask?.();",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-carriages-back",
+    "file": "src/ui/wild/wildZoneMap.js",
+    "old": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
+    "new": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1), 'Carriages run inside the zone every 10 minutes, at higher prices.'] : [ZONE_MAP_TEXT.offline()];",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M5-the-loot-said-offline",
+    "file": "src/ui/wild/wildZoneMap.js",
+    "old": "el('span', 'hmwild-bonus', laws ? wildRingBonus(r) : '')",
+    "new": "el('span', 'hmwild-bonus', wildRingBonus(r))",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M8-the-card-unasked-past-the-Bay",
+    "file": "src/ui/heldMap.js",
+    "old": "const ore = past.on === 'land' ? readTip(this.deps.oreAt?.(px, py, () => this._refreshTip()) ?? null) : null;",
+    "new": "const ore = null;",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M9-the-versions-in-the-static-key",
+    "file": "src/ui/heldMap.js",
+    "old": "        arenaPlacesVersion(),   // TESA1: and the places past the Bay, their standing moved while it stands\n",
+    "new": "        arenaPlacesVersion(), arenaRoadsVersion(), pastBayPlacesVersion(),   // TESA1: and the places past the Bay, their standing moved while it stands\n",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js",
+      "test/tesa15_mapfidelity.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M9-the-landing-unheard",
+    "file": "src/ui/heldMap.js",
+    "old": "if (pastBay !== this._pastBayWord) { this._pastBayWord = pastBay; this._staticKey = ''; this._dirty = true; }",
+    "new": "if (false) { this._pastBayWord = pastBay; this._staticKey = ''; this._dirty = true; }",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-K5-ZONE-NAMES-kinds-flattened",
+    "file": "src/ui/heldMap.js",
+    "old": "const kindOf = (c) => (c.capital ? 'city' : ARENA_KIND_GLYPHS[c.kind] ?? 'hamlet');",
+    "new": "const kindOf = () => 'hamlet';",
+    "tests": [
+      "test/ui/audittesa2m_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2M-M11-the-runs-the-dots-count",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  return keep(_steps, k, out, ROAD_RUNS_KEPT);",
+    "new": "  return keep(_steps, k, out, ROAD_KEPT_TILES);",
+    "tests": [
+      "test/ui/audittesa2m_tiles.test.js"
+    ]
+  }
+]

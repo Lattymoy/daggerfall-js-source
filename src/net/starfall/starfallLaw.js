@@ -19,7 +19,7 @@
 // PURE, and the relay's too: it imports the wire's and the gate's law (both already the relay's) and the festival's
 // calendar (net/festivalLaw.js, a leaf but for the holiday tables). An edit here is an
 // edit to the relay's law (test/net/relayversion.test.js). Not a DFU member. Ledger A (STARFALL).
-import { PIXEL_UNITS, STAR_LEDGERS_MAX, STAR_LEDGERS_BY_MAX, STAR_IDLE_MS, STAR_WAVE_SIZE_OLD_MAX } from '../wire.js';
+import { PIXEL_UNITS, STAR_LEDGERS_MAX, STAR_LEDGERS_BY_MAX, STAR_IDLE_MS, STAR_WAVE_SIZE_OLD_MAX, siteEventLaneOpen, siteEventPixelOk } from '../wire.js';
 import { gateHash, PIXEL_M, GATE_SPOT_SPREAD_M } from '../gate/gateLaw.js';
 import { festivalOpen } from '../festivalLaw.js';   // the festival's one calendar (a leaf beside the holiday tables)
 
@@ -53,8 +53,24 @@ export const STAR_AFTER_MS = 120_000;
 /** The night an instant stands in: the one whose midnight is the nearest hour at or after it, while its last star stands
  *  (its midnight plus STAR_LIFE_MS) - so the hour's first quarter is the night before's dawn. */
 export const starNightAt = (nowMs) => Math.ceil((nowMs - STAR_LIFE_MS - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS);
-/** Whether night `n` and star `k` name a star the law can fall (a whole night, a star of its three). */
-export const starOk = (n, k) => Number.isSafeInteger(n) && n > 0 && Number.isInteger(k) && k >= 0 && k < STAR_PER_NIGHT;
+/**
+ * WW5 (bible/03-World/World-Wide.md WW5): A COVEN NIGHT IN EVERY THEATRE - the Bay's, and each province's past it that
+ * stands (net/wire.js SITE_EVENT_LANES: Cyrodiil's open zone none). One sky turns over the whole of Tamriel, so every
+ * theatre's night is the same hour and its three stars fall at the same instants (the gates' stagger would put a star in
+ * daylight); each theatre's coven, sites and stars are its own. A star's NUMBER `k` names its lane and its place in the
+ * night: lane `t`'s three are `t * STAR_PER_NIGHT + 0..2` - so the Bay's are the 0, 1 and 2 they always were, and every
+ * ledger, receipt, row and key the Bay's stars ever made keeps its shape.
+ */
+export const STAR_LANES = 10;   // THEATRE_COUNT (world/worldWide/worldGrid.js), restated - this law's graph is the relay's (net/wire.js STAR_LANES_WIRE, pinned equal)
+/** WW5: the lane (theatre) star number `k` is on. */
+export const starLaneOf = (k) => Math.floor(k / STAR_PER_NIGHT);
+/** WW5: star `k`'s place in its night, 0..STAR_PER_NIGHT - 1 - what its fall's instant, its master and the Heart-Star read. */
+export const starIndexOf = (k) => k - starLaneOf(k) * STAR_PER_NIGHT;
+/** WW5: the number of lane `lane`'s star `j` (0..STAR_PER_NIGHT - 1). */
+export const starOfLane = (lane, j) => lane * STAR_PER_NIGHT + j;
+/** Whether night `n` and star `k` name a star the law can fall (a whole night, a star of its three) - WW5: on a lane that
+ *  stands (net/wire.js SITE_EVENT_LANES). */
+export const starOk = (n, k) => Number.isSafeInteger(n) && n > 0 && Number.isInteger(k) && k >= 0 && k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));
 
 /**
  * A star's instants, relay ms: the omen's start, the streak's, the landing, the deadline, and the moment it is gone (its
@@ -62,7 +78,7 @@ export const starOk = (n, k) => Number.isSafeInteger(n) && n > 0 && Number.isInt
  * @param {number} n the night @param {number} k the star
  */
 export function starTimes(n, k) {
-  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[k];
+  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[starIndexOf(k)];   // WW5: every lane's star its place's instant
   return { omenAt: fallAt - STAR_OMEN_MS, streakAt: fallAt - STAR_STREAK_MS, fallAt, endAt: fallAt + STAR_LIFE_MS, goneAt: fallAt + STAR_LIFE_MS + STAR_AFTER_MS };
 }
 /** Whether a star of night `n` falls inside the window: its landing is the window's. */
@@ -233,7 +249,7 @@ export function newStarLedger(w, nowMs, by = '') {
 }
 /** Whether a stored value is a ledger this law made (a cell's storage read back): its star, its pixel, its phase, its
  *  accounts and receipts. */
-export const starLedgerSane = (v) => !!v && typeof v === 'object' && starOk(v.n, v.k) && Number.isInteger(v.px) && Number.isInteger(v.py)
+export const starLedgerSane = (v) => !!v && typeof v === 'object' && starOk(v.n, v.k) && Number.isInteger(v.px) && Number.isInteger(v.py) && siteEventPixelOk(starLaneOf(v.k), v.px, v.py)   // WW5: on its own lane's pixel, as its word was (net/wire.js starWireOk)
   && Number.isInteger(v.p) && v.p >= P_FALLEN && v.p <= P_LOST && !!v.a && typeof v.a === 'object' && !!v.rc && typeof v.rc === 'object';
 /** A ledger's identity in its cell: the star and its pixel (a forged pixel is a ledger of its own - section 10). */
 export const starLedgerId = (w) => `${w.n}.${w.k}@${w.px},${w.py}`;
@@ -385,6 +401,11 @@ export const starLedgerState = (led, acct) => ({
 export const starHeldWord = (led) => ({ k: 'hd', n: led.n, s: led.k, px: led.px, py: led.py, at: led.hd, top: led.top, c: led.hn });
 /** When the last of night `n`'s stars is gone: the hub keeps a night's held stars until then. */
 export const starNightGoneAt = (n) => starTimes(n, STAR_PER_NIGHT - 1).goneAt;
+/** WW5: THE HUB'S HELD STARS IN THE ORDER IT SAYS THEM (`[n, s, px, py, at]` - net/wire.js STAR_HELD_MAX): the Bay's lane
+ *  first, each lane in the order its holds came. An older client reads the list's first twelve (its STAR_HELD_MAX) and
+ *  drops a province's as junk, so the Bay's - six at the most, a night's and the night before's - are always among them.
+ *  Pure: a new list, the input untouched. */
+export const starHeldOrder = (list) => [...list].map((e, i) => [e, i]).sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1]).map(([e]) => e);
 
 // ═══ THE CELL'S PLACES ════════════════════════════════════════════════════════════════════════════════════════════════
 /** Whether a ledger holds a place in its cell: not over, and short of its deadline - past it, it only hears its last

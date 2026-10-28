@@ -29,6 +29,8 @@
 // encounters.js passiveGuardSpawns) has no caller since REP1 (AUDIT REP F6).
 
 /** PlayerEntity.RegionDataFlags (:1588-1619), all thirty. */
+import { REGION_NAMES } from '../../formats/mapsTables.js';   // WW-R: the Bay's regions and the provinces'
+
 export const REGION_FLAGS = Object.freeze({
   WarBeginning: 0, WarOngoing: 1, WarWon: 2, WarLost: 3,
   PlagueBeginning: 4, PlagueOngoing: 5, PlagueEnding: 6,
@@ -80,8 +82,10 @@ export const CONDITION_VALUE_MAX = Object.freeze([
   0x14, 0x14, 0x01, 0x01, 0x01, 0x64, 0x14, 0x14, 0x01, 0x01, 0x01, 0x1E, 0x01,
 ]);
 
-/** PlayerEntity.regionData.Length (:99) - one record per region. */
-export const REGION_COUNT = 62;
+/** PlayerEntity.regionData.Length (:99) - one record per region. WW-R (bible/03-World/World-Wide.md WW-R): and the
+ *  provinces' past the Bay after the Bay's 62 (formats/mapsTables.js REGION_NAMES) - DFU's array is the Bay's; a save's
+ *  shorter store is padded on its restore (restoreRegionConditions). */
+export const REGION_COUNT = REGION_NAMES.length;
 
 /** One RegionDataRecord's CONDITION half (:1575-1585, :2192-2211). */
 const blankRegion = () => ({

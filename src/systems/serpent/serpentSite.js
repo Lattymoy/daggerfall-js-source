@@ -2,8 +2,8 @@
 // SERPENT1 (2026-10-04, Mac: "a large scale sea serpent in the ocean"): WHERE SETHRAKUL RISES - the client's half of
 // the site, over the world's own data. Design: bible/11-Multiplayer/Sea-Serpent.md section 3.
 //
-// IT HUNTS THE PACKET LANES. Its waters are always on one of the Bay's packet lanes (systems/naval/seaLanes.js - the
-// lanes between the map's ports, the same list on every client, made from the map files every client holds): a lane
+// IT HUNTS THE PACKET LANES. Its waters are always on one of the world's packet lanes (WW7-12, below - the Bay's
+// (systems/naval/seaLanes.js, made from the map files every client holds), the ones past it and across its edge): a lane
 // rolled by the day (net/serpent/serpentLaw.js serpentLaneOf), a place along its way's middle stretch rolled by the day
 // (serpentAlongOf), kept only where the sea is OPEN round it - every map pixel within SITE_CLEAR_PX of the site's is open
 // sea (the lanes' own `open` law: the ocean's water, never a lake's) - so its waters are never a strait a carrack cannot
@@ -13,8 +13,16 @@
 // NAMES. The port its site lies nearer names it in the chat ("off Sentinel"), with the port's province on the omen's
 // first line; both ports the lane joins are said on the map's card.
 //
-// PURE: the lanes, a lane's way and the open law are handed in (scenes/world.js's laneNet, laneWay and laneOpen - the
-// packets' own), so the pins drive it over a made sea. Not a DFU member. Ledger A (SERPENT1).
+// PURE: the lanes, a lane's way and the open law are handed in (scenes/naval/worldLanes.js's `all`, `way` and `open`
+// through scenes/world.js - the packets' own), so the pins drive it over a made sea. Not a DFU member. Ledger A (SERPENT1).
+//
+// WW7-12 (2026-10-26, bible/03-World/World-Wide.md WW7-12; the owner on the serpent staying on the Bay's lanes: "Fucking
+// do it"): THE WORLD'S LANES. Its lanes are every lane of the world now (scenes/naval/worldLanes.js `all`: the Bay's, the
+// ones past it, the ones across its edge - one list in one order on every game that stands the land past the Bay, once
+// its picture and its fit stand: `whole`), the open law the world's lane water (`open`). A game without them (the land
+// past the Bay off, or its picture still coming) cannot roll the site: it takes the HUB'S word of where the accounts that
+// rolled it agree it lies (`told` - net/serpent/serpentLink.js toldAt, the relay's `at`: serpentHerald.js serpentAtWord),
+// and names none till then (worldSerpentSite) - so every game online rises the one serpent at the one site.
 import { serpentLaneOf, serpentAlongOf, serpentRing, SERPENT_LANE_TRIES } from '../../net/serpent/serpentLaw.js';
 import { PIXEL_M } from '../../net/gate/gateLaw.js';
 import { PIXEL_UNITS } from '../../net/wire.js';   // native units a map pixel (world/streamingWorld.js NATIVE_PIXEL's)
@@ -28,7 +36,7 @@ export const SITE_SLIDE = 0.16;
 export const SITE_SLIDE_STEP = 0.04;
 
 /** The map pixel a native point stands in (wire.js mapPixelOfWire's arithmetic). */
-export const sitePixelOfNative = (x, z) => [Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS)];
+export const sitePixelOfNative = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];   // WW-C2: floored, as mapPixelOfWire
 /** Is every pixel within `r` of (px, py) open sea? */
 export function openAround(px, py, open, r = SITE_CLEAR_PX) {
   for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (!open(px + dx, py + dy)) return false;
@@ -87,4 +95,27 @@ export function findSerpentSite(day, { lanes, wayOf, open }) {
     }
   }
   return null;
+}
+
+/** WW7-12: THE SITE THE HUB TOLD, as findSerpentSite names one: its pixel and native point, the port it lies off (no
+ *  province, no lane - the hub says neither), its ring; `told` - this game rolled none (net/online.js says it no word back).
+ *  @param {number} day @param {{sx: number, sz: number, pl: string}} at */
+export function siteOfWord(day, { sx, sz, pl }) {
+  const [px, py] = sitePixelOfNative(sx, sz);
+  return Object.freeze({ day, lane: null, px, py, sx, sz, near: pl, region: '', place: pl, between: [null, null], ring: serpentRing(day, sx, sz), told: true });
+}
+
+/**
+ * WW7-12: THE DAY'S SITE OVER THE WORLD'S LANES, or null - rolled over every lane of the world where this game stands
+ * them whole (the lanes' book, scenes/naval/worldLanes.js: `whole()`, then findSerpentSite over `all()` by its `way` and
+ * its `open`), else the hub's word of the agreed site (`told(day)`: siteOfWord), else none (asked again - serpentOmen.js
+ * SITE_RETRY_MS).
+ * @param {number} day
+ * @param {{whole: () => boolean, all: () => ReadonlyArray<any>, way: (lane: any) => any, open: (px: number, py: number) => boolean}} lanes
+ * @param {(day: number) => ({sx: number, sz: number, pl: string}|null)} told
+ */
+export function worldSerpentSite(day, lanes, told) {
+  if (lanes.whole()) return findSerpentSite(day, { lanes: lanes.all(), wayOf: lanes.way, open: lanes.open });
+  const at = told(day);
+  return at ? siteOfWord(day, at) : null;
 }

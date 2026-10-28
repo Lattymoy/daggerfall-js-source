@@ -183,7 +183,8 @@ test('AUDIT-SEATS L10 THE LAW\'S DRIFT: a NaN is no count; a negative sale pays 
   assert.equal(SIEGE_STANDING.held, STANDING_CHANGES.siegeHeld);
   const hex = (k) => HERALDRY_COLOURS.find((c) => c.key === k).hex;
   assert.deepEqual([SEAT_RING_UNHELD, FREE_LAND_RING], [hex('ash'), hex('vert')]);
-  assert.deepEqual({ ...KINGDOM_METALS }, { daggerfall: hex('azure'), wayrest: hex('crimson'), sentinel: hex('gold') });
+  assert.deepEqual({ ...KINGDOM_METALS }, { daggerfall: hex('azure'), wayrest: hex('crimson'), sentinel: hex('gold'),
+    skyrim: hex('argent'), morrowind: hex('sanguine'), summerset: hex('celeste'), valenwood: hex('teal'), elsweyr: hex('tenne'), blackmarsh: hex('umber'), cyrodiil: hex('purpure') });   // PIN MOVED (WW7-3): the provinces' crowns' metals
   assert.deepEqual([SEAT_RING_UNHELD, KINGDOM_METALS.daggerfall], ['#8a8a8a', '#3b6fd8'], 'the same hex as before');
 });
 

@@ -15,8 +15,8 @@
 //     arcanePowers.js does, so a balance pass moves one number;
 //   - WHO may choose (`pathChoices`: Master Skills in force, two or more schools mastered, no path yet) and the choice
 //     (`choosePath`: undone only by SPEC-RESET's paid reset, systems/specReset.js - nothing here undoes it);
-//   - when a path ACTS (`pathAwake`: my own entity, Master Skills in force, both its schools mastered, not mentoring -
-//     and the powers add the refereed fight's word, sigil.js sigilDueling, the one every loot and set power sleeps on:
+//   - when a path ACTS (`pathAwake`: my own entity, Master Skills in force, both its schools mastered; MENTOR2: mentoring
+//     too, its numbers at the mentor's share in arcanePowers.js - and the powers add the refereed fight's word, sigil.js sigilDueling, the one every loot and set power sleeps on:
 //     importing it here would hang the price's graph on sigil.js's, which reaches back into spellcost.js);
 //   - THE SCHOOLS A SIGNATURE SPELL IS CAST IN (`pathCastSchool`): its path's two, so a Necromancer's Siphon Life is
 //     priced, taught and strengthened by Restoration and Mysticism, never by a Destruction they did not choose;
@@ -379,10 +379,11 @@ export function pathAboutRows(p) {
 // ── awake ───────────────────────────────────────────────────────────
 
 /** Does the path ACT for this entity now? My own player entity (never a peer's stand-in), Master Skills in force, both
- *  its schools mastered, not mentoring. Answers the path, or null. (A refereed fight is the powers' word to add -
- *  systems/arcanePowers.js; the price reads none, and a duel's opponent takes the plain bundle whatever it cost.) */
+ *  its schools mastered. Answers the path, or null. (A refereed fight is the powers' word to add - systems/arcanePowers.js;
+ *  the price reads none, and a duel's opponent takes the plain bundle whatever it cost.) MENTOR2: mentoring no longer
+ *  puts it to sleep - arcanePowers.js scales its numbers by mentorMode.js mentorPowerScale. */
 export function pathAwake(entity) {
-  return entity?._mentor ? null : pathHeld(entity);
+  return pathHeld(entity);
 }
 /** The path this entity HOLDS now, mentoring or not - my own player entity, Master Skills in force, both its schools
  *  mastered. What a signature spell is cast in and the shelf read (AUDIT SCHOOLS L2 F5: through pathAwake, a mentored

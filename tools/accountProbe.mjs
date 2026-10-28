@@ -60,6 +60,7 @@ import { writeFileSync, mkdtempSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { wranglerCommand, devSpawnOptions, killTree } from './lib/wranglerLaunch.mjs';
 import { verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
 import { PBKDF2_ITERS } from '../server-account/src/password.js';
 import { ACCOUNT_VERSION, SHOT_MAX_BYTES } from '../server-account/src/service.js';
@@ -78,7 +79,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 // calls it twice. Set WRANGLER_BIN to an already-installed wrangler
 // (`node_modules/.bin/wrangler`) to skip all of that.
 const WRANGLER_BIN = process.env.WRANGLER_BIN || '';
-const cmd = (args) => (WRANGLER_BIN ? [WRANGLER_BIN, args] : ['npx', ['--yes', 'wrangler@4', ...args]]);
+const cmd = (args) => wranglerCommand(args, { bin: WRANGLER_BIN });
 
 let checks = 0; let bad = 0;
 const ok = (name, pass, detail = '') => {
@@ -222,12 +223,14 @@ try {
   }
 
   console.log('== booting the Worker in workerd');
-  // DETACHED, so the kill below takes the whole process group. `npx` is
+  // SPAWNED WHOLE, so the kill below takes the whole tree (its own
+  // process group off Windows, taskkill's /T on it -
+  // tools/lib/wranglerLaunch.mjs). `npx` is
   // a wrapper around `wrangler`, which is a wrapper around `workerd`;
   // killing the pid this call returns leaves the grandchild running,
   // holding the port, and every later run of this probe hangs on it.
   const [devBin, devArgs] = cmd(['dev', '--local', '--persist-to', STATE, '--port', String(PORT), '--ip', '127.0.0.1', '--env-file', envFile]);
-  dev = spawn(devBin, devArgs, { cwd: acct, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+  dev = spawn(devBin, devArgs, devSpawnOptions({ cwd: acct, stdio: ['ignore', 'pipe', 'pipe'] }));
   let log = '';
   dev.stdout.on('data', (d) => { log += d; });
   dev.stderr.on('data', (d) => { log += d; });
@@ -457,11 +460,12 @@ try {
   bad++;
   console.log(` FAIL  the probe could not finish - ${e?.message ?? e}`);
 } finally {
-  // THE WHOLE GROUP, not just npx: negative pid is the group. Without
+  // THE WHOLE TREE, not just npx (killTree: the group off Windows,
+  // the tree by parent links on it). Without
   // this the workerd grandchild outlives the probe and holds the port.
   if (dev?.pid) {
     for (const sig of ['SIGTERM', 'SIGKILL']) {
-      try { process.kill(-dev.pid, sig); } catch { /* already gone */ }
+      try { killTree(dev.pid, sig); } catch { /* already gone */ }
       await sleep(500);
     }
   }

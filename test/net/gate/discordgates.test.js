@@ -174,6 +174,7 @@ async function withHerald(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD
   // with a rise ten years off, so this harness's alarms are the sweep's and the heralds' alone (the director's own are
   // sd3_relay.test.js's)
   r.store.set(SD_KEY, { s: 0, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });
+  for (let lane = 1; lane <= 8; lane++) r.store.set(`${SD_KEY}:${lane}`, { s: lane * 10_000_000, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });   // PIN MOVED (WW5): and every province lane's Hollow resting with it
   const posts = [];
   const discord = { answer: () => ({ ok: true, status: 204 }), during: null };
   Date.now = () => clock;
@@ -330,7 +331,8 @@ test('DISCORD-GATES client: the game says where it found the gate to the hub - o
   assert.equal(off.sites().length, 0);
   // the scene: the clearing's own site, off the gate's frame
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const reportGateSite = \(\) => \{\n\s*const s = _gateClearNow\(\) \? _gateClearOf\.site : null;\n\s*if \(s\) socialLink\(\)\?\.sendGateSite\?\.\(s\.day, s\.px, s\.py, s\.place\);\n\s*\};/);
+  // PIN MOVED (WW2, bible/03-World/World-Wide.md): and each lane's past the Bay, from its omen on
+  assert.match(w, /const reportGateSite = \(\) => \{\n\s*const s = _gateClearNow\(\) \? _gateClearOf\.site : null;\n\s*if \(s\) socialLink\(\)\?\.sendGateSite\?\.\(s\.day, s\.px, s\.py, s\.place\);\n[^\n]*\n\s*for \(const \{ lane, c \} of gateOmen\?\.currents\(\) \?\? \[\]\) if \(lane && c\.site\) socialLink\(\)\?\.sendGateSite\?\.\(c\.site\.day, c\.site\.px, c\.site\.py, c\.site\.place\);\n\s*\};/);
   assert.match(w, /gateClaims\?\.tick\(\);[^\n]*\n\s*if \(gateOmen\) reportGateSite\(\);/, 'on the gate\'s frame, online');
 });
 

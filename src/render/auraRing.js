@@ -182,11 +182,26 @@
 // Every rate whole over the clock (warrenRatesWhole); the gait, its laps and its binkies whole over it too, so the ring
 // meets itself at the wrap. No host changed.
 //
+// NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer: "a cloud of billowing smoke with nirnroots circling
+// around me" - "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet"): SAGE'S
+// SMOKE, the fifteenth look, in the Nirnroot Sage's own colours (ui/playerBadge.js NIRN_*), drawn premultiplied (AURA_LOOK
+// `shade`): the smoke COVERS what is behind it, the runes' light and the nirnroots' glow are added:
+//   - THE GROUND: SAGE_RUNES small runes in the ward's alphabet (runeD) round the feet, glowing green, turning slowly and lit
+//     in turn, framed by two fine lines of the glow; under them the shade the smoke lays, rolling, gone past the runes.
+//   - THE WALL, the strip at the runes: low smoke rolling round the boots, thick where the eye looks along it and thin
+//     across them, gone by the knee; the runes' light rising off the ring.
+//   - THE THIRD DRAW: SAGE_PUFFS puffs of smoke billowing up about the body past the crown - each rising off a place round
+//     the feet, curling round the body, drifting out and growing as it climbs, lit from above - and SAGE_ROOTS nirnroots
+//     circling the waist, the badge's own sprig (GLYPH_PATH.nirnrootsage and its details, cut by glyphEdges), bobbing and
+//     swaying. Every card's place, size and kind is node's law (sageCardsInto), handed over farthest first (`uSage`,
+//     `uSageLook`); a puff near the eye is not drawn, so the wearer's own first person is never smoked out.
+// Every rate whole over the clock (sageRatesWhole), every puff's life too. No host changed.
+//
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
-import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM, WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET, HEARTH_TALLOW } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
+import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM, WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET, HEARTH_TALLOW, NIRN_LEAF, NIRN_GLOW, NIRN_HAZE, NIRN_DEEP, NIRN_SMOKE, GENESIS_DEEP, GENESIS_ROOT, GENESIS_BLUE, GENESIS_VIOLET, GENESIS_HEART, GENESIS_CORE } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
 
 /** The ring's radius about the feet (m), the ground quad's half-width, the flames' height, and the ground's lift. */
 export const AURA_RING_R = 0.85;
@@ -802,6 +817,151 @@ export function warrenPrintsInto(out, t) {
   return out;
 }
 
+// NIRNROOT-SAGE (2026-10-26, for Blob-Marley: "billowing smoke, circling nirn roots around midsection, small glowing green
+// runes encircling feet"): SAGE'S SMOKE's measures.
+export const SAGE_RUNE_R = 0.6;           // the ring of runes round the feet, m - clear of the boots, inside the fire's
+export const SAGE_RUNES = 10;             // the runes round it
+export const SAGE_RUNE_SCALE = 0.65;      // a rune's size against the Oblivion Ward's (runeD): about 0.18 m along the ring - small
+export const SAGE_BAND_M = 0.1;           // the two fine lines framing the runes' band, out and in from its middle, m
+export const SAGE_WALL_H = 0.5;           // the wall: the runes' light rising and the smoke rolling, gone by the knee
+/** The runes' script: each a rune's strokes, the Oblivion Ward's alphabet (runeD's bits) in the Sage's own words. */
+export const SAGE_SCRIPT = Object.freeze([37, 22, 49, 14, 58, 27, 41, 9, 54, 30]);
+/** THE NIRNROOTS: SAGE_ROOTS of them circling the midsection - their orbit's radius (clear of the arms), its height (the
+ *  waist of the 1.8 m walking body, player/motor.js), a nirnroot's card a side (the sprig on it about 0.24 m tall), its bob up and down, how far it sways
+ *  about its stem either way (radians) and how far it tilts as it bobs. They come up one after another as it kindles. */
+export const SAGE_ROOTS = 5;
+export const SAGE_ROOT_R = 0.55;
+export const SAGE_ROOT_Y = 1.0;
+export const SAGE_ROOT_M = 0.3;
+/** How much wider a nirnroot's card is than its sprig (the badge's 16-unit box): room about it for its glow. */
+export const SAGE_ROOT_PAD = 1.25;
+export const SAGE_ROOT_BOB = 0.06;
+export const SAGE_ROOT_SWAY = 0.6;
+export const SAGE_ROOT_TILT = 0.15;
+export const SAGE_EMERGE = 0.5;
+export const SAGE_EMERGE_STEP = 0.1;
+/** THE SMOKE: SAGE_PUFFS puffs billowing up about the body, each rising for its life (by its number) and then rising again
+ *  somewhere else round the feet; its size as it begins and as it thins away; how high it climbs (past the crown); how
+ *  far out from the body's axis it starts, and how much further it drifts out as it climbs; how far it curls round the
+ *  body as it climbs (radians); its cover at its thickest; and how near an eye it may be - none nearer than the first,
+ *  whole past the second (m), so the wearer's own first person is never smoked out. */
+export const SAGE_PUFFS = 16;
+export const SAGE_PUFF_LIFE = Object.freeze([4, 5, 6]);
+export const SAGE_PUFF_M = Object.freeze([0.3, 1.05]);
+export const SAGE_SMOKE_H = 2.1;
+export const SAGE_PUFF_R = Object.freeze([0.2, 0.5]);
+export const SAGE_PUFF_DRIFT = 0.35;
+export const SAGE_PUFF_CURL = 0.8;
+export const SAGE_PUFF_A = 0.62;
+export const SAGE_NEAR = Object.freeze([0.6, 1.6]);
+/** The third draw's cards: every puff and every nirnroot. */
+export const SAGE_CARDS = SAGE_PUFFS + SAGE_ROOTS;
+/** Its rates: the nirnroots' orbit, their bob, their sway; the runes' turn, the light passing round them, the glow's
+ *  breath; and the smoke's roll over the ground and up the wall, in lattice cells a second (AURA_FLOW's measure). */
+export const SAGE_HZ = Object.freeze({ orbit: 1 / 10, bob: 1 / 4, sway: 1 / 6, runes: 1 / 40, pulse: 1 / 3, breath: 1 / 5 });
+export const SAGE_FLOW = Object.freeze({ ground: 0.25, rise: 0.5 });
+/** Every rate whole over the clock, and every puff's life a whole number of times over it, so the smoke meets itself at
+ *  the wrap. Pure. */
+export const sageRatesWhole = () => [...Object.values(SAGE_HZ), ...Object.values(SAGE_FLOW), ...SAGE_PUFF_LIFE.map((l) => 1 / l)]
+  .every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** The Nirnroot Sage's colours (ui/playerBadge.js NIRN_*), RGB 0..1: the leaf, the glow, the haze, the deep green and the
+ *  smoke. */
+export const SAGE_RGB = Object.freeze({
+  leaf: Object.freeze(NIRN_LEAF.slice(0, 3)), glow: Object.freeze(NIRN_GLOW.slice(0, 3)), haze: Object.freeze(NIRN_HAZE.slice(0, 3)),
+  deep: Object.freeze(NIRN_DEEP.slice(0, 3)), smoke: Object.freeze(NIRN_SMOKE.slice(0, 3)),
+});
+/** A share 0..1 off two numbers - node's alone (the AUDIT A2 law: the GPU is handed what this says, never asked it). */
+const sageHash = (a, b) => { const x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return x - Math.floor(x); };
+/** NIRNROOT-SAGE: PUFF m AT THE CLOCK `t` - where it is about the feet (`x`, `y`, `z`, m), its size (m), its `age` (0 rising
+ *  off the ground .. 1 thinned away) and its `seed` (0..1: its billows' own, and which way it turns). Each flight lasts the
+ *  puff's life and the next begins where it ends, off another place round the feet; which flight it is wraps with the
+ *  clock (the lives divide its period), so the wrap is whole. It rises fast and slows, curls round the body, drifts out
+ *  and grows as it climbs. Pure. */
+export function sagePuff(m, t) {
+  const life = SAGE_PUFF_LIFE[m % SAGE_PUFF_LIFE.length], flights = AURA_CLOCK_PERIOD / life;
+  const u = t / life + sageHash(m, 0.5), n = Math.floor(u), age = u - n;
+  const flight = ((n % flights) + flights) % flights;
+  const a = sageHash(m, flight + 1) * Math.PI * 2 + SAGE_PUFF_CURL * age * (sageHash(m + 31, flight) < 0.5 ? 1 : -1);
+  const r = SAGE_PUFF_R[0] + (SAGE_PUFF_R[1] - SAGE_PUFF_R[0]) * sageHash(m + 17, flight) + SAGE_PUFF_DRIFT * age;
+  const y = 0.05 + SAGE_SMOKE_H * age * (1.4 - 0.4 * age);
+  const size = SAGE_PUFF_M[0] + (SAGE_PUFF_M[1] - SAGE_PUFF_M[0]) * Math.pow(age, 0.7);
+  return { x: Math.cos(a) * r, y, z: Math.sin(a) * r, size, age, seed: sageHash(m + 53, flight) };
+}
+/** NIRNROOT-SAGE: NIRNROOT k AT THE CLOCK `t`, kindled `kindle` 0..1 - where it is about the feet (`x`, `y`, `z`, m) on its
+ *  orbit round the waist, bobbing; its size (m - none until it has come up, then grown to SAGE_ROOT_M); its `turn`, the
+ *  width it shows as it sways about its stem; its `tilt` (radians). Pure. */
+export function sageRoot(k, t, kindle = 1) {
+  const a = (k / SAGE_ROOTS) * Math.PI * 2 + Math.PI * 2 * SAGE_HZ.orbit * t;
+  const bob = Math.PI * 2 * (SAGE_HZ.bob * t + k / SAGE_ROOTS);
+  const up = Math.max(0, Math.min(1, (kindle - k * SAGE_EMERGE_STEP) / SAGE_EMERGE));
+  return {
+    x: Math.cos(a) * SAGE_ROOT_R, y: SAGE_ROOT_Y + SAGE_ROOT_BOB * Math.sin(bob), z: Math.sin(a) * SAGE_ROOT_R,
+    size: SAGE_ROOT_M * up, turn: Math.cos(SAGE_ROOT_SWAY * Math.sin(Math.PI * 2 * SAGE_HZ.sway * t + k * 1.3)), tilt: SAGE_ROOT_TILT * Math.cos(bob),
+  };
+}
+/** The wearer's own clock - the frame's, offset by its seed (resonanceClock's law). Pure. */
+export const sageClock = (seconds, seed) => resonanceClock(seconds, seed);
+/** NIRNROOT-SAGE: EVERY CARD AT ONCE, FARTHEST FIRST from `eye` (the wearer's feet at `at`) - what the draw hands the
+ *  shader, so the third draw lays a near card over a far one (none writes the depth): into `cards` (4 x SAGE_CARDS) each
+ *  one's place about the feet and its size, and into `looks` (4 x SAGE_CARDS) what it is - a puff (0, its age, its cover
+ *  - the kindle's, and none near the eye, SAGE_NEAR - and its seed) or a nirnroot (1, its turn, its tilt, 0). Pure but
+ *  for `cards` and `looks`. */
+export function sageCardsInto(cards, looks, t, kindle, at, eye) {
+  const rows = [];
+  const k1 = Math.max(0, Math.min(1, kindle));
+  for (let m = 0; m < SAGE_PUFFS; m++) {
+    const p = sagePuff(m, t), d = Math.hypot(at[0] + p.x - eye[0], at[1] + p.y - eye[1], at[2] + p.z - eye[2]);
+    const near = Math.max(0, Math.min(1, (d - SAGE_NEAR[0]) / (SAGE_NEAR[1] - SAGE_NEAR[0])));
+    rows.push([d, p.x, p.y, p.z, p.size, 0, p.age, k1 * near * near * (3 - 2 * near), p.seed]);
+  }
+  for (let k = 0; k < SAGE_ROOTS; k++) {
+    const r = sageRoot(k, t, k1);
+    rows.push([Math.hypot(at[0] + r.x - eye[0], at[1] + r.y - eye[1], at[2] + r.z - eye[2]), r.x, r.y, r.z, r.size, 1, r.turn, r.tilt, 0]);
+  }
+  rows.sort((a, b) => b[0] - a[0]);   // farthest first: the third draw lays the nearer card over the farther
+  rows.forEach((r, i) => { for (let j = 0; j < 4; j++) { cards[i * 4 + j] = r[1 + j]; looks[i * 4 + j] = r[5 + j]; } });
+  return cards;
+}
+
+/** SHOP (2026-10-28, the owner: "Eternal ... an extremely detailed flaming cape aura that attachs and flows on the back of
+ *  your character"; bible/06-Systems/Shop.md): ETERNAL, the sixteenth look - A CAPE OF FIRE in the Genesis fire's colours
+ *  (ui/playerBadge.js GENESIS_*). Its cloth is the Holo Shadow Cloak's (cloakPoint: hung from the posed shoulders, swung
+ *  by how its wearer moves, pressed by the knees), cut to a cape across the back with no hood, a wave flowing down it. A
+ *  dark mantle at the shoulders burns to blue-violet fire at the hem; flames run up through it in veins; its sides and
+ *  hem burn ragged; the Origin's ring and spark burn between the shoulder blades. The third draw: wisps of flame peeling
+ *  off the hem and trailing as its wearer moves, and embers. A glow on the ground. Premultiplied, as the cloak is. */
+export const ETERNAL_TOP = 1.54;   // the mesh's top, m: over the shoulders to the collar, short of the cloak's hood
+export const ETERNAL_SPAN = Object.freeze({ hem: 0.47, shoulder: 0.5, collar: 0.64 });   // its width round the body, in turns - behind the arms
+export const ETERNAL_HEM_Y = Object.freeze({ back: 0.14, edge: 0.34 });   // the hem's height down the back and at its sides, m
+export const ETERNAL_FIRE_M = 0.85;   // how far up the cloth from the hem the fire burns through it, m
+export const ETERNAL_FLOW_M = 0.09;   // the flowing wave's reach at the hem, m
+/** How far out behind the hem stands with its wearer still (m), and how much further than the cloak's it swings with them. */
+export const ETERNAL_FLARE_M = 0.12;
+export const ETERNAL_SWING = 1.4;
+export const ETERNAL_SIGIL = Object.freeze({ y: 1.0, r: 0.12 });   // the ring and spark on the back: its middle's height and radius, m
+export const ETERNAL_WISPS = 16;
+export const ETERNAL_EMBERS = 20;
+export const ETERNAL_CARDS = ETERNAL_WISPS + ETERNAL_EMBERS;
+/** A wisp's and an ember's lives (s), each dividing AURA_CLOCK_PERIOD so their flights wrap whole with the clock; a
+ *  wisp's size (m), how high a wisp and an ember climb, and how far behind its wearer a wisp trails over its life (m). */
+export const ETERNAL_WISP_LIFE = Object.freeze([1.5, 2, 2.4]);
+export const ETERNAL_EMBER_LIFE = Object.freeze([2, 3, 4]);
+export const ETERNAL_WISP_M = Object.freeze([0.1, 0.24]);
+export const ETERNAL_RISE = Object.freeze({ wisp: 0.38, ember: 1.25 });
+export const ETERNAL_TRAIL = 0.12;
+export const ETERNAL_POOL_R = 0.95;
+/** Its rates (Hz) - the wave down the cape, the fire's breath, the sigil's - and its flows in lattice cells a second (the
+ *  fire's rise through the cloth, the veins', the hem's tongues'), each whole over the clock. */
+export const ETERNAL_HZ = Object.freeze({ wave: 1 / 2, pulse: 1 / 4, sigil: 1 / 6 });
+export const ETERNAL_FLOW = Object.freeze({ rise: 1.5, veins: 0.75, hem: 2.5 });
+export const eternalRatesWhole = () => [...Object.values(ETERNAL_HZ), ...Object.values(ETERNAL_FLOW), ...ETERNAL_WISP_LIFE.map((l) => 1 / l), ...ETERNAL_EMBER_LIFE.map((l) => 1 / l)]
+  .every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** Its light, RGB 0..1, the Genesis fire's six. */
+export const ETERNAL_RGB = Object.freeze({
+  deep: Object.freeze(GENESIS_DEEP.slice(0, 3)), root: Object.freeze(GENESIS_ROOT.slice(0, 3)), blue: Object.freeze(GENESIS_BLUE.slice(0, 3)),
+  violet: Object.freeze(GENESIS_VIOLET.slice(0, 3)), heart: Object.freeze(GENESIS_HEART.slice(0, 3)), core: Object.freeze(GENESIS_CORE.slice(0, 3)),
+});
+
 /** AEGIS: HOW EACH AURA IS DRAWN - its kind in the shader (`uAura`), its ring's radius, its wall's height and how many
  *  symbols float off it (the third draw - none for the fire). A pin walks AURAS and requires one each. SHADOW-CLOAK: and,
  *  for the cloak alone, the mesh its wall is (`mesh` - the shaped cloth, not the strip) and that it SHADES: it darkens
@@ -820,7 +980,9 @@ export const AURA_LOOK = Object.freeze({
   burningstair: Object.freeze({ kind: 10, ringR: STAIR_R, flameH: STAIR_H, glyphs: 0 }),   // EG-E2: the stair at the feet, its embers falling on the strip
   firstlight: Object.freeze({ kind: 11, ringR: DAWN_R, flameH: DAWN_H, glyphs: 0 }),   // EG-E2: the dawn's ring at the feet, its veil on the strip
   lilacwarren: Object.freeze({ kind: 12, ringR: WARREN_R, flameH: WARREN_H, glyphs: WARREN_BUNNIES, shade: true }),
-  witchfire: Object.freeze({ kind: 13, ringR: WITCHFIRE_R, flameH: WITCHFIRE_H, glyphs: 0 }),   // WITCH1: the green fire and its candles at the feet, its tongues and violet motes on the strip   // WIKIMAID: the ring and the tracks at the feet, the sparkles on the strip, the rabbits the third draw - premultiplied, so a rabbit stays lilac
+  witchfire: Object.freeze({ kind: 13, ringR: WITCHFIRE_R, flameH: WITCHFIRE_H, glyphs: 0 }),
+  eternal: Object.freeze({ kind: 15, ringR: ETERNAL_POOL_R, flameH: ETERNAL_TOP, glyphs: ETERNAL_CARDS, mesh: 'cape', shade: true }),   // SHOP: the cape of fire on the cloak's mesh, its wisps and embers the third draw - premultiplied, so its mantle covers
+  sagesmoke: Object.freeze({ kind: 14, ringR: SAGE_RUNE_R, flameH: SAGE_WALL_H, glyphs: SAGE_CARDS, shade: true }),   // NIRNROOT-SAGE: the runes and the smoke's shade at the feet, the runes' light and the low smoke on the strip, the smoke's puffs and the nirnroots the third draw - premultiplied, so the smoke covers   // WITCH1: the green fire and its candles at the feet, its tongues and violet motes on the strip   // WIKIMAID: the ring and the tracks at the feet, the sparkles on the strip, the rabbits the third draw - premultiplied, so a rabbit stays lilac
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -1763,6 +1925,155 @@ vec4 cloakShredFlight(float j, float since) {
   return vec4(d.x, y, d.y, since * CLOAK_TAU * (1.0 + floor(cloakHash(vec2(j, 4.4)) * 2.0)) ${hzGlsl(CLOAK_SHRED_HZ.spin)} + j);
 }
 `;
+/** SHOP: ETERNAL'S SHAPE, both halves' - the cape's bearing round the body for its mesh's `u` (0 its right side .. 1 its
+ *  left) at a height: a span of the turn about the back, widest at the collar, narrowest at the hem. */
+const ETERNAL_SHAPE_GLSL = `
+float eternalSpan(float y) {
+  return y > ${g3(CLOAK_SHOULDER_Y)} ? mix(${g3(ETERNAL_SPAN.shoulder)}, ${g3(ETERNAL_SPAN.collar)}, smoothstep(${g3(CLOAK_SHOULDER_Y)}, ${g3(ETERNAL_TOP)}, y))
+    : mix(${g3(ETERNAL_SPAN.hem)}, ${g3(ETERNAL_SPAN.shoulder)}, smoothstep(0.0, ${g3(CLOAK_SHOULDER_Y)}, y));
+}
+float eternalBearing(float u, float y) { return 0.5 + (u - 0.5) * eternalSpan(y); }
+float eternalHemY(float ub) { return mix(${g3(ETERNAL_HEM_Y.edge)}, ${g3(ETERNAL_HEM_Y.back)}, cloakBackOf(ub)); }
+`;
+/** SHOP: ETERNAL'S VERTEX HALF - the cape where the cloak's cloth would hang, a wave flowing down it; and each card's
+ *  flight: a wisp off the hem, rising and trailing behind (and further behind as its wearer moves), an ember off the cloth. */
+const ETERNAL_VS_GLSL = `
+vec3 eternalPoint(vec2 q, float t) {
+  float y = q.y * uFlameH, ub = eternalBearing(q.x, y), h = cloakHangOf(y);
+  vec2 b = cloakBearing(ub + cloakTwistAt(y));
+  float wave = ${g3(ETERNAL_FLOW_M)} * h * h * (0.7 * sin(CLOAK_TAU * (ub * 2.0 + y * 1.6) - t * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.wave)}) + 0.3 * sin(CLOAK_TAU * (ub * 5.0 - y * 3.0) - t * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.wave * 2)}));
+  float flare = ${g3(ETERNAL_FLARE_M)} * pow(h, 1.5) * cloakBackOf(ub);   // standing out behind, as a cape of fire would
+  vec2 more = cloakWorldXZ(uSwing.xy) * ${g3(ETERNAL_SWING - 1)} * pow(h, 1.6);   // and trailing further than the cloak's cloth
+  return cloakPoint(vec2(ub, q.y), t) + vec3(b.x, 0.0, b.y) * (wave + flare) + vec3(more.x, 0.0, more.y);
+}
+float eternalLife(float k) {
+  float m = mod(k, 3.0);
+  return k < ${g1(ETERNAL_WISPS)} ? (m < 0.5 ? ${g3(ETERNAL_WISP_LIFE[0])} : m < 1.5 ? ${g3(ETERNAL_WISP_LIFE[1])} : ${g3(ETERNAL_WISP_LIFE[2])})
+    : (m < 0.5 ? ${g3(ETERNAL_EMBER_LIFE[0])} : m < 1.5 ? ${g3(ETERNAL_EMBER_LIFE[1])} : ${g3(ETERNAL_EMBER_LIFE[2])});
+}
+// card k at the clock t: its middle in the scene (xyz) and its age (w, 0 born .. 1 gone); each flight starts somewhere
+// else on the cape - a wisp on its hem, an ember anywhere on its cloth
+vec4 eternalFlight(float k, float t) {
+  float life = eternalLife(k), off = fract(k * 0.618034);
+  float age = fract(t / life + off), n = mod(floor(t / life + off), ${g1(AURA_CLOCK_PERIOD)} / life);
+  float u = 0.18 + 0.64 * cloakHash(vec2(k * 13.0 + n, 2.3));
+  bool wisp = k < ${g1(ETERNAL_WISPS)};
+  float ub = eternalBearing(u, 0.3);
+  float y0 = wisp ? eternalHemY(ub) + 0.02 + 0.14 * cloakHash(vec2(k * 3.0 + n, 1.7)) : 0.25 + 0.95 * cloakHash(vec2(k * 7.0 + n, 5.9));
+  vec3 p = eternalPoint(vec2(u, y0 / uFlameH), t) + vec3(cloakBearing(ub).x, 0.0, cloakBearing(ub).y) * 0.03;   // on the cloth's outside
+  float rise = wisp ? ${g3(ETERNAL_RISE.wisp)} : ${g3(ETERNAL_RISE.ember)};
+  vec2 trail = -cloakFwd() * ${g3(ETERNAL_TRAIL)} * age + cloakWorldXZ(uSwing.xy) * age * (wisp ? 2.5 : 1.5);   // swept back as its wearer moves
+  vec2 side = cloakBearing(ub) * 0.025 * sin(CLOAK_TAU * (age * 2.0 + off));
+  return vec4(p + vec3(trail.x + side.x, (1.0 - (1.0 - age) * (1.0 - age)) * rise, trail.y + side.y), age);
+}
+`;
+/** SHOP: ETERNAL'S FRAGMENT HALF - its cloth, its ground and its cards. Each answers premultiplied: the light it gives
+ *  (rgb) and how much of what is behind it its mantle covers (a) - the fire gives far more light than it covers. */
+const ETERNAL_FS_GLSL = `
+const vec3 ET_DEEP = ${v3(ETERNAL_RGB.deep)};
+const vec3 ET_ROOT = ${v3(ETERNAL_RGB.root)};
+const vec3 ET_BLUE = ${v3(ETERNAL_RGB.blue)};
+const vec3 ET_VIOLET = ${v3(ETERNAL_RGB.violet)};
+const vec3 ET_HEART = ${v3(ETERNAL_RGB.heart)};
+const vec3 ET_CORE = ${v3(ETERNAL_RGB.core)};
+float eternalBreath() { return 0.88 + 0.12 * sin(uTime * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.pulse)}); }
+// the fire by its heat (0 cold .. 1 white): the deep into its blue or its violet - \`up\` 0 a flame's root, 1 its tip -
+// into the heart, white at the core
+vec3 eternalFire(float heat, float up) {
+  vec3 body = mix(ET_BLUE, ET_VIOLET, clamp(up, 0.0, 1.0));
+  vec3 c = mix(ET_DEEP, body, smoothstep(0.08, 0.45, heat));
+  c = mix(c, mix(ET_ROOT, ET_HEART, clamp(up, 0.0, 1.0)), smoothstep(0.5, 0.82, heat));
+  return mix(c, ET_CORE, smoothstep(0.86, 1.0, heat));
+}
+// THE ORIGIN'S MARK at p (the sigil's radius 1): a ring and a four-pointed spark, the glyph's - its light, 0..1
+float eternalSigil(vec2 p) {
+  float ring = exp(-cloakSq(length(p) - 1.0) / 0.006);
+  float star = sqrt(abs(p.x)) + sqrt(abs(p.y));
+  return ring + (1.0 - smoothstep(0.5, 0.62, star)) * 0.9 + exp(-dot(p, p) * 9.0) * 0.6;
+}
+vec4 eternalWall(vec2 q) {
+  float u = q.x, v = q.y, y = v * uFlameH, t = uTime;
+  // KINDLED from the collar down, fire along the line it has reached; TURNED BEAST, burned away from the hem up
+  float grown = uKindle * 1.25 - 0.1 - (1.0 - v) - (vnoiseP(vec2(u * 12.0, y * 5.0), vec2(12.0, 64.0)) - 0.5) * 0.2;
+  float rip = cloakRipOf();
+  if (grown < 0.0 || v < rip * 1.15) discard;
+  float ub = eternalBearing(u, y), r = max(cloakRadius(ub, y), 0.04);
+  float circ = CLOAK_TAU * r * eternalSpan(y), sideM = min(u, 1.0 - u) * circ;
+  // THE FIRE rising through the cloth, its cells round the cape's width; the hem's tongues faster
+  float n = fbmP(vec2(u * 10.0, y * 3.0 - t * ${g3(ETERNAL_FLOW.rise)}), vec2(10.0, ${g1(ETERNAL_FLOW.rise * AURA_CLOCK_PERIOD)}));
+  float tongue = fbmP(vec2(u * 16.0, y * 5.0 - t * ${g3(ETERNAL_FLOW.hem)}), vec2(16.0, ${g1(ETERNAL_FLOW.hem * AURA_CLOCK_PERIOD)}));
+  float hemM = y - eternalHemY(ub);
+  float edge = hemM + (tongue - 0.55) * 0.3 + (n - 0.5) * 0.08;   // the hem ragged with tongues
+  float sideEdge = sideM - (tongue - 0.5) * 0.05;
+  if (edge < 0.0 || sideEdge < 0.0) discard;
+  float near = 1.0 - clamp(hemM / ${g3(ETERNAL_FIRE_M)}, 0.0, 1.0);
+  float sideBurn = 1.0 - smoothstep(0.0, 0.08, sideEdge);
+  // THE TONGUES: tall noise rising up the cloth, thresholded by height - the hem engulfed, only the strongest climbing
+  // toward the back, the cloth dark between them
+  float tn = fbmP(vec2(u * 18.0, y * 2.4 - t * ${g3(ETERNAL_FLOW.rise)}), vec2(18.0, ${g1(ETERNAL_FLOW.rise * AURA_CLOCK_PERIOD)}));
+  float th = 0.64 - 0.52 * pow(near, 0.8);
+  float lick = max(smoothstep(th, th + 0.1, tn), sideBurn * 0.7);
+  float heat = clamp(lick * (0.3 + 0.5 * smoothstep(th, th + 0.42, tn)) + n * 0.12 + (1.0 - smoothstep(0.0, 0.05, edge)) * 0.06, 0.0, 1.0);
+  float fire = lick;
+  // VEINS of flame through the mantle's dark, flowing up it
+  float vn = fbmP(vec2(u * 14.0 + 3.0, y * 4.0 - t * ${g3(ETERNAL_FLOW.veins)}), vec2(14.0, ${g1(ETERNAL_FLOW.veins * AURA_CLOCK_PERIOD)}));
+  float vein = pow(1.0 - abs(vn * 2.0 - 1.0), 10.0);
+  // the cloth's facing against the eye (the cloak's way): lit where it faces, a rim where it turns away
+  vec2 bn = cloakBearing(ub + cloakTwistAt(y));
+  float lean = (cloakRadius(ub, y + 0.01) - cloakRadius(ub, y - 0.01)) * 50.0;
+  vec3 e = uCamPos - vWorld;
+  float toward = dot(normalize(vec3(bn.x, -lean, bn.y)), dot(e, e) > 1e-8 ? normalize(e) : vec3(bn.x, 0.0, bn.y));
+  float lit = abs(toward), rim = pow(max(0.0, 1.0 - lit), 3.0);
+  vec2 hx = cloakWorldXZ(uCapeH.xz);
+  float seen = smoothstep(${g3(CLOAK_INSIDE_M)}, ${g3(CLOAK_INSIDE_M + 0.15)}, distance(uCamPos, uAt + vec3(hx.x, uCapeH.y, hx.y)));   // as the cloak's: none from inside the collar
+  float breath = eternalBreath();
+  vec3 cloth = ET_DEEP * (0.45 + 0.55 * lit) * (uSide == 1 ? 1.0 : 0.7);
+  vec3 col = mix(cloth, eternalFire(heat, 1.0 - near), fire) * (uSide == 1 ? 1.0 : 0.75);
+  col += ET_VIOLET * vein * (1.0 - fire) * 0.55 * breath + ET_VIOLET * rim * 0.35 * breath;
+  float shade = mix(0.84, 0.42, fire) * (0.6 + 0.4 * smoothstep(0.0, 0.05, edge));
+  // THE COLLAR's burning band at the cape's top, and the sides' flame
+  col += eternalFire(0.75, 0.6) * exp(-cloakSq(y - ${g3(ETERNAL_TOP - 0.025)}) / 0.0004) * 0.6 * breath;
+  // THE ORIGIN'S MARK between the shoulder blades, burning through the outside (seen from behind: x the eye's right)
+  if (uSide == 1) {
+    vec2 sp = vec2((0.5 - ub) * CLOAK_TAU * r, y - ${g3(ETERNAL_SIGIL.y)}) / ${g3(ETERNAL_SIGIL.r)};
+    if (dot(sp, sp) < 2.0) col += mix(ET_HEART, ET_CORE, 0.4) * eternalSigil(sp) * (0.75 + 0.25 * sin(t * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.sigil)})) * 0.8;
+  }
+  // kindling, fire along the line it has reached
+  col += eternalFire(0.9, 0.5) * exp(-grown * grown / 0.0006) * (1.0 - smoothstep(0.9, 1.0, uKindle));
+  return vec4(col * breath * seen, clamp(shade, 0.0, 0.92) * seen);
+}
+vec4 eternalGround(vec2 p) {
+  float r = length(p);
+  if (r > ${g3(ETERNAL_POOL_R)}) discard;
+  // THE GLOW the fire throws on the ground, brightest behind its wearer where the cape hangs, wavering
+  float behind = r > 1e-4 ? max(0.0, dot(p / r, -cloakFwd())) : 0.0;
+  float a = r > 1e-6 ? atan(p.y, p.x) : 0.0;
+  float flick = vnoiseP(vec2(fract(a / CLOAK_TAU) * 12.0, uTime * ${g3(ETERNAL_FLOW.hem)}), vec2(12.0, ${g1(ETERNAL_FLOW.hem * AURA_CLOCK_PERIOD)}));
+  float pool = cloakSq(1.0 - smoothstep(0.1, ${g3(ETERNAL_POOL_R)}, r)) * (0.45 + 0.55 * behind) * (0.75 + 0.5 * flick);
+  float vis = 1.0 - smoothstep(uKindle * 1.4 - 0.1, uKindle * 1.4, r);
+  return vec4(mix(ET_BLUE, ET_VIOLET, behind) * pool * 0.16 * eternalBreath() * vis, 0.0);
+}
+// A CARD (uv its card's 0..1, s its age, its kind - 0 a wisp, 1 an ember - and its number): a wisp a tongue of flame,
+// hot at its root and violet at its tip, guttering out; an ember a spark
+vec4 eternalCard(vec2 uv, vec3 s) {
+  float gate = smoothstep(0.8, 1.0, uKindle) * (1.0 - cloakRipOf());
+  if (gate <= 0.0) return vec4(0.0);
+  vec2 p = uv * 2.0 - 1.0;
+  float fade = smoothstep(0.0, 0.12, s.x) * (1.0 - smoothstep(0.55, 1.0, s.x));
+  if (s.y > 0.5) {
+    float g = exp(-dot(p, p) * 10.0) * fade;
+    return vec4(mix(ET_HEART, ET_CORE, 0.6) * g * 1.4 * gate, 0.0);
+  }
+  float up = uv.y;   // 0 its root .. 1 its tip
+  float wobble = (vnoiseP(vec2(uv.x * 3.0 + s.z * 5.0, uv.y * 4.0 - uTime * 3.0), vec2(64.0)) - 0.5) * 0.5;
+  float width = pow(1.0 - up, 1.3) * (0.35 + 0.65 * sin(3.14159265 * min(up * 1.8, 1.0)));
+  float body = width - abs(p.x + wobble * up);
+  if (body <= 0.0) return vec4(0.0);
+  float heat = clamp(body * 1.6 * (1.0 - up * 0.7) * (1.0 - s.x * 0.6), 0.0, 1.0);
+  vec3 col = eternalFire(heat, up) * smoothstep(0.0, 0.12, body) * fade;
+  return vec4(col * 1.2 * gate, smoothstep(0.0, 0.2, body) * 0.12 * fade * gate);
+}
+`;
 /** SERAPH-WINGS: what both halves share - the beat: every WING_HZ.beat a slow stroke, down and forward fast and back up
  *  slow, its tips after its roots (`t` how far out, 0 .. 1). */
 const WING_SHARED_GLSL = `
@@ -1952,6 +2263,118 @@ vec3 witchWall(vec2 q) {
 }
 `;
 
+const SAGE_EDGES = glyphEdges(GLYPH_PATH.nirnrootsage), SAGE_VEIN_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[0].path), SAGE_BUD_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[1].path);
+/** NIRNROOT-SAGE: a shape's distance in its box, named, over its edges - negative inside, filled even-odd (warrenD's law). */
+const edgeDGlsl = (fn, name, edges) => `${glyphEdgesGlsl(name, edges)}
+float ${fn}(vec2 g) {
+  float d = 1e9, n = 0.0;
+  for (int i = 0; i < ${edges.length}; i++) { d = min(d, cloakSeg2(g, ${name}[i])); n += cloakCross(g, ${name}[i]); }
+  return (mod(n, 2.0) > 0.5 ? -1.0 : 1.0) * sqrt(d);
+}`;
+/** NIRNROOT-SAGE: SAGE'S SMOKE - a ground (`p` metres about the feet), a wall (the strip: `q` = (u round, v up)) and a card
+ *  (a puff of the smoke or a nirnroot: `uv` its card's 0..1, `s` what vS says of it), each answered PREMULTIPLIED: the
+ *  smoke and the nirnroots COVER what is behind them, the runes' light and the nirnroots' glow are added (no cover). */
+const SAGE_GLSL = `
+const vec3 SG_LEAF = ${v3(SAGE_RGB.leaf)};
+const vec3 SG_GLOW = ${v3(SAGE_RGB.glow)};
+const vec3 SG_HAZE = ${v3(SAGE_RGB.haze)};
+const vec3 SG_DEEP = ${v3(SAGE_RGB.deep)};
+const vec3 SG_SMOKE = ${v3(SAGE_RGB.smoke)};
+const int SAGE_SCRIPT[${SAGE_RUNES}] = int[${SAGE_RUNES}](${SAGE_SCRIPT.join(', ')});
+${edgeDGlsl('sageRootD', 'SAGE_EDGES', SAGE_EDGES)}
+${edgeDGlsl('sageVeinD', 'SAGE_VEIN_EDGES', SAGE_VEIN_EDGES)}
+${edgeDGlsl('sageBudD', 'SAGE_BUD_EDGES', SAGE_BUD_EDGES)}
+float sageBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(SAGE_HZ.breath)}); }
+// a rune's stroke lit - the ward's inked, in the nirnroot's greens: a pale heart, the glow's body, a leaf-green halo
+vec3 sageInked(float d, float w) {
+  float heart = 1.0 - smoothstep(w * 0.35, w * 0.7, d);
+  float body = 1.0 - smoothstep(w * 0.5, w * 1.15, d);
+  float glow = exp(-d * d / (w * w * 9.0));
+  return SG_HAZE * heart * 0.85 + SG_GLOW * body * 0.9 + SG_LEAF * glow * 0.6;
+}
+vec4 sageGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float breath = sageBreath();
+  // THE SHADE the smoke lays at the feet, covering - the deep green, rolling across the ground, thickest at the feet and
+  // thinning out past the runes (the lattice in metres, never the angle's, which would pinch to spokes at the middle)
+  float roll = fbmP(vec2(p.x * 3.0 + uTime * ${g3(SAGE_FLOW.ground)}, p.y * 3.0), vec2(${g1(SAGE_FLOW.ground * AURA_CLOCK_PERIOD)}, 64.0));
+  float shade = exp(-r * r / 0.35) * (0.35 + 0.65 * roll) * 0.5 * uKindle;
+  vec4 c = vec4(SG_DEEP * 0.6 * shade, shade);
+  // THE GLOW the runes throw on the ground about them, added
+  float dr = r - uRingR;
+  vec3 light = SG_GLOW * exp(-dr * dr / 0.012) * 0.16 * breath;
+  // never the angle at the middle, where atan(0, 0) is no number - nothing below reaches it
+  if (r > 0.05) {
+    float a = atan(p.y, p.x), px = turnPixel();
+    // THE BAND: a fine line of the glow out from the runes and one in from them
+    float lines = max(turnBand(r, uRingR + ${g3(SAGE_BAND_M - 0.006)}, uRingR + ${g3(SAGE_BAND_M + 0.006)}, px), turnBand(r, uRingR - ${g3(SAGE_BAND_M + 0.006)}, uRingR - ${g3(SAGE_BAND_M - 0.006)}, px));
+    light += SG_GLOW * lines * 0.55 * breath;
+    // THE RUNES: small, the ward's script in the Sage's words, round the feet and turning slowly; the light passing round
+    // them lights each in turn
+    float cu = (a - uTime * TAU ${hzGlsl(SAGE_HZ.runes)}) / TAU * ${g1(SAGE_RUNES)};
+    float k = mod(floor(cu), ${g1(SAGE_RUNES)});
+    vec2 q = vec2((fract(cu) - 0.5) * TAU / ${g1(SAGE_RUNES)} * r, r - uRingR);
+    float d = runeD(q / ${g3(SAGE_RUNE_SCALE)}, SAGE_SCRIPT[int(k)]) * ${g3(SAGE_RUNE_SCALE)};
+    float lit = 0.45 + 0.55 * pow(0.5 + 0.5 * cos(uTime * TAU ${hzGlsl(SAGE_HZ.pulse)} - k / ${g1(SAGE_RUNES)} * TAU), 3.0);
+    light += sageInked(d, 0.009) * lit * breath;
+    // drawn round from behind the wearer as it kindles, as the ward is
+    light *= wardDrawn(fract(a / TAU + 0.5));
+  }
+  c.rgb += light;
+  return c * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
+}
+vec4 sageWall(vec2 q) {
+  float u = q.x, v = q.y;
+  // faint where the eye looks through the strip (across the boots), thickest where it looks along it - the radiance's shell
+  float an = u * TAU;
+  vec2 e = uCamPos.xz - vWorld.xz;
+  float facing = dot(e, e) > 1e-8 ? abs(dot(vec2(cos(an), sin(an)), normalize(e))) : 1.0;
+  float rim = 0.3 + 0.7 * pow(1.0 - facing, 2.0);
+  // THE LOW SMOKE rolling round the feet and up off the runes, covering - the runes' green on its foot, the smoke's grey
+  // above, gone by the knee
+  float n = fbmP(vec2(u * 24.0, v * 2.0 - uTime * ${g3(SAGE_FLOW.rise)}), vec2(24.0, ${g1(SAGE_FLOW.rise * AURA_CLOCK_PERIOD)}));
+  float smoke = smoothstep(0.3, 0.8, n + 0.35 * (1.0 - v)) * pow(1.0 - v, 1.6) * 0.38 * rim;
+  vec3 col = mix(SG_GLOW * 0.45, SG_SMOKE * 0.8, smoothstep(0.0, 0.5, v));
+  vec4 c = vec4(col * smoke, smoke);
+  // THE RUNES' LIGHT rising off the ring, added: a veil gone by the shin
+  c.rgb += SG_GLOW * exp(-v * 7.0) * 0.16 * sageBreath();
+  // kindled UP, from the feet
+  return c * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);
+}
+// A CARD (s: a puff's seed's half, its age and its cover - or 1 for a nirnroot)
+vec4 sageCard(vec2 uv, vec3 s) {
+  if (s.x < 0.75) {
+    // A PUFF: a round billow of smoke, lumpy at its edge, lit from above - the haze on its crown, the smoke's grey under it;
+    // young, the runes' green on its belly; thinning away as it climbs
+    float seed = s.x * 2.0, age = s.y;
+    float d = length(uv - 0.5) * 2.0;
+    if (d >= 1.0) return vec4(0.0);
+    float n = fbmP(uv * 3.0 + vec2(seed * 17.0, seed * 29.0 - age * 1.5), vec2(64.0));
+    float body = (1.0 - smoothstep(0.3, 1.0, d + (n - 0.5) * 0.7)) * (1.0 - smoothstep(0.7, 1.0, d));   // and gone at its card's round, never cut there
+    float thin = smoothstep(0.0, 0.12, age) * pow(1.0 - age, 1.3);
+    float a = clamp(body * (0.5 + 0.7 * n), 0.0, 1.0) * thin * ${g3(SAGE_PUFF_A)} * s.z;
+    vec3 col = mix(SG_SMOKE * 0.85, SG_HAZE, smoothstep(0.15, 0.85, uv.y + (n - 0.5) * 0.35));
+    col = mix(col, SG_GLOW * 0.75, (1.0 - age) * (1.0 - age) * (1.0 - uv.y) * 0.5);
+    return vec4(col * a, a);
+  }
+  // A NIRNROOT: the badge's own sprig (GLYPH_PATH.nirnrootsage, in its box with room about it, SAGE_ROOT_PAD) - leaf green at
+  // its foot into its glow at the bulb, its veins the deep green, the bulb's heart the haze; its glow about it, added
+  vec2 g = (vec2(uv.x, 1.0 - uv.y) - 0.5) * ${g3(16 * SAGE_ROOT_PAD)} + 8.0;
+  float px = turnPixel() * ${g3((16 * SAGE_ROOT_PAD) / SAGE_ROOT_M)};   // a pixel, in the box's units
+  float d = sageRootD(g);
+  float body = clamp(0.5 - d / px, 0.0, 1.0);
+  float out1 = max(d, 0.0);
+  float edge = smoothstep(0.0, 0.08, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
+  vec3 halo = SG_GLOW * exp(-out1 * out1 / 2.5) * 0.35 * sageBreath() * edge;
+  if (body <= 0.0) return vec4(halo, 0.0);
+  vec3 col = mix(SG_LEAF, SG_GLOW, 1.0 - smoothstep(4.0, 15.0, g.y));
+  col = mix(col, SG_DEEP, clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));
+  col = mix(col, SG_HAZE, clamp(0.5 - sageBudD(g) / px, 0.0, 1.0));
+  return vec4(col * body + halo * (1.0 - body), body);
+}
+`;
+
 const WARREN_GLSL = `
 const vec3 WR_AMETHYST = ${v3(WARREN_RGB.amethyst)};
 const vec3 WR_LILAC = ${v3(WARREN_RGB.lilac)};
@@ -2086,11 +2509,13 @@ uniform vec3 uKneeL, uKneeR;   // SHADOW-CLOAK: the knees, in the same frame
 uniform vec3 uTorsoU, uTorsoF;   // SERAPH-WINGS: the torso's up (along its spine) and forward (out of its chest) in the same frame (auraCapePose) - the back the wings grow from
 uniform float uWingBack;   // WINGS-FIT: how much further back the wings root (m) - a sprite's flat card (WING_SPRITE_BACK), else 0
 uniform vec4 uWarren[${WARREN_BUNNIES}];   // WIKIMAID: each rabbit - its angle, its feet's height, its stretch, its facing times how far it has come up (warrenBunniesInto, farthest first)
+uniform vec4 uSage[${SAGE_CARDS}];   // NIRNROOT-SAGE: each card - its place about the feet and its size (sageCardsInto, farthest first)
+uniform vec4 uSageLook[${SAGE_CARDS}];   // NIRNROOT-SAGE: what each is - a puff (0, its age, its cover, its seed) or a nirnroot (1, its turn, its tilt, 0)
 uniform vec3 uCamPos;   // AEGIS: the eye a symbol faces
 out vec2 vP;            // the ground: metres about the feet; the flames: (the angle's share, the height's); a symbol: its card's uv
 out vec3 vWorld;
 out vec3 vS;            // AEGIS: a symbol's age, its rune's place in the script and its number
-${WARD_FLIGHT_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_VS_GLSL}${WING_SHARED_GLSL}${WING_VS_GLSL}
+${WARD_FLIGHT_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_VS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_VS_GLSL}${WING_SHARED_GLSL}${WING_VS_GLSL}
 void main() {
   vec3 w;
   vS = vec3(0.0);
@@ -2101,6 +2526,10 @@ void main() {
     // SHADOW-CLOAK: the cloak's cloth, (u round from the front, v up) on its own mesh
     vP = aP;
     w = cloakPoint(aP, uTime);
+  } else if (uKind == 1 && uAura == 15) {
+    // SHOP: Eternal's cape, (u across its width, v up) on the cloak's mesh
+    vP = aP;
+    w = eternalPoint(aP, uTime);
   } else if (uKind == 1 && uAura == 4) {
     // SERAPH-WINGS: A STRAND, (its number * 2 + across 0..1, along 0..1) - laid along its curve, turned to the eye along
     // its length, its width growing out of the back and narrowing to the tip
@@ -2147,6 +2576,23 @@ void main() {
     // the card's x the eye's own right as the frame shows it (world/mat4.js HANDEDNESS: world +x on screen right), so
     // the glyph faces the way the badge's does
     w = c + vec3(-toEye.y, 0.0, toEye.x) * o.x + vec3(0.0, o.y, 0.0);
+  } else if (uAura == 15) {
+    // SHOP: ETERNAL'S CARD - a wisp or an ember at its flight's place, square to the eye, a wisp's card taller than wide
+    // and growing as it climbs
+    float k = floor(aP.x * 0.5);
+    vP = vec2(aP.x - k * 2.0, aP.y);
+    vec4 f = eternalFlight(k, uTime);
+    bool wisp = k < ${g1(ETERNAL_WISPS)};
+    float size = wisp ? mix(${g3(ETERNAL_WISP_M[0])}, ${g3(ETERNAL_WISP_M[1])}, cloakHash(vec2(k, 8.8))) * (0.6 + 0.6 * f.w) : 0.035;
+    vec3 e = uCamPos - f.xyz;
+    float el = length(e);
+    e = el > 1e-6 ? e / el : vec3(0.0, 0.0, 1.0);
+    vec3 r = cross(vec3(0.0, 1.0, 0.0), e);
+    float rl = length(r);
+    r = rl > 1e-6 ? r / rl : vec3(1.0, 0.0, 0.0);
+    vec2 o = (vP - vec2(0.5, wisp ? 0.12 : 0.5)) * size * vec2(wisp ? 0.45 : 1.0, wisp ? 1.3 : 1.0);
+    w = f.xyz + r * o.x + cross(e, r) * o.y;
+    vS = vec3(f.w, wisp ? 0.0 : 1.0, k);
   } else if (uAura == 4) {
     // SERAPH-WINGS: A SPARK - a streak of light riding a strand out, its length along its way as the eye sees it; past
     // the sparks, THE BACKLIGHT - one card of radiance behind the upper back, square to the eye
@@ -2196,6 +2642,36 @@ void main() {
     float lean = ${g3(WARREN_LEAN)} * atan(max(uCamPos.y - c.y, 0.0), max(length(uCamPos.xz - c.xz), 1e-4));
     w = c + vec3(right.x, 0.0, right.y) * o.x + (vec3(0.0, cos(lean), 0.0) + vec3(toEye.x, 0.0, toEye.y) * sin(lean)) * o.y;
     vS = vec3(sign(b.w) * (dot(vec2(-sin(b.x), cos(b.x)), right) >= 0.0 ? 1.0 : -1.0), k, 0.0);
+  } else if (uAura == 14) {
+    // NIRNROOT-SAGE: A PUFF of the smoke or A NIRNROOT - its card where node's law has it (uSage, farthest first), about its
+    // middle
+    float k = floor(aP.x * 0.5);
+    vP = vec2(aP.x - k * 2.0, aP.y);
+    vec4 c = uSage[int(k)], l = uSageLook[int(k)];
+    vec3 at = uAt + c.xyz;
+    vec2 o = (vP - 0.5) * c.w;
+    if (l.x < 0.5) {
+      // a puff: square to the eye, turned in its own plane as it billows - one way or the other by its seed
+      vec3 e = uCamPos - at;
+      float el = length(e);
+      e = el > 1e-6 ? e / el : vec3(0.0, 0.0, 1.0);
+      vec3 r = cross(vec3(0.0, 1.0, 0.0), e);
+      float rl = length(r);
+      r = rl > 1e-6 ? r / rl : vec3(1.0, 0.0, 0.0);
+      float turn = l.w * 6.283185307179586 + l.y * (l.w > 0.5 ? 1.2 : -1.2);
+      o = vec2(o.x * cos(turn) - o.y * sin(turn), o.x * sin(turn) + o.y * cos(turn));
+      w = at + r * o.x + cross(e, r) * o.y;
+      vS = vec3(l.w * 0.5, l.y, l.z);
+    } else {
+      // a nirnroot: upright and square to the eye about the vertical - its x the eye's own right, as the warren's rabbits'
+      // - swaying about its stem (its width its turn) and tilting as it bobs
+      vec2 toEye = uCamPos.xz - at.xz;
+      toEye = dot(toEye, toEye) > 1e-8 ? normalize(toEye) : vec2(0.0, 1.0);
+      o.x *= l.y;
+      o = vec2(o.x * cos(l.z) - o.y * sin(l.z), o.x * sin(l.z) + o.y * cos(l.z));
+      w = at + vec3(-toEye.y, 0.0, toEye.x) * o.x + vec3(0.0, o.y, 0.0);
+      vS = vec3(1.0, 0.0, 0.0);
+    }
   } else {
     // AEGIS: A FLOATING SYMBOL - its card at its flight's place, upright and turned round the vertical to face the eye,
     // tilting a little as it climbs and growing as it fades
@@ -2218,7 +2694,7 @@ export const AURA_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 in vec3 vS;             // AEGIS: a floating symbol's age, rune and number
 uniform int uKind;
-uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5), 9 Beaconlight, 10 The Burning Stair, 11 Firstlight (EG-E2), 12 the Lilac Warren (WIKIMAID)
+uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5), 9 Beaconlight, 10 The Burning Stair, 11 Firstlight (EG-E2), 12 the Lilac Warren (WIKIMAID), 13 Witchfire (WITCH1), 14 Sage's Smoke (NIRNROOT-SAGE), 15 Eternal (SHOP)
 uniform vec3 uAt;       // PRIMARCH: the feet - the axis the radiance's column stands on
 uniform float uYaw;     // SHADOW-CLOAK: the wearer's facing - the cloak's opening is at their front
 uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays - 0 its lining (front faces culled), 1 its outside (back faces culled)
@@ -2235,8 +2711,10 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}
 void main() {
+  if (uAura == 15) { vec4 c = uKind == 0 ? eternalGround(vP) : uKind == 1 ? eternalWall(vP) : eternalCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // SHOP: Eternal, premultiplied (AURA_LOOK shade), kindled within
+  if (uAura == 14) { vec4 c = uKind == 0 ? sageGround(vP) : uKind == 1 ? sageWall(vP) : sageCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // NIRNROOT-SAGE: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the shade and the runes fade in, the low smoke rises, the puffs and the nirnroots by node's law)
   if (uAura == 13) { vec3 c = uKind == 0 ? witchGround(vP) : witchWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // WITCH1: Witchfire, added whole, kindled within
   if (uAura == 12) { vec4 c = uKind == 0 ? warrenGround(vP) : uKind == 1 ? warrenWall(vP) : warrenBunny(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // WIKIMAID: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the ground fades in, the sparkles rise, the rabbits come up - node's law)
   if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
@@ -2552,7 +3030,7 @@ export function auraBeastStep(w, beast, t) {
 /** AURA-SPLIT (#1143, bible/07-Rendering/Performance-Priority.md): every look's kind, once each. */
 export const AURA_KINDS = Object.freeze([...new Set(Object.values(AURA_LOOK).map((l) => l.kind))]);
 /** AURA-SPLIT: the uniforms a look's program is handed (`uAura` is its constant, not one of them). */
-const AURA_UNIFORMS = Object.freeze(['uVP', 'uKind', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uWarren', 'uWarrenPrint']);
+const AURA_UNIFORMS = Object.freeze(['uVP', 'uKind', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uWarren', 'uWarrenPrint', 'uSage', 'uSageLook']);
 const _lookPrograms = new Map();
 /** AURA-SPLIT (#1143): ONE PROGRAM A LOOK - AURA_VS and AURA_FS with `uAura` declared a constant, so the compiler drops
  *  every other look's code. The whole source (every look, 81 KB of fragment shader) compiled 8.5-11 s on D3D11; a look
@@ -2570,6 +3048,14 @@ export function auraPrograms(kind) {
 /** AURA-STALL, AURA-SPLIT: every look's program - what the boot's idle starts (render/playPrograms.js), each built at its
  *  own door the first time its look is drawn (AuraRingRenderer programOf). */
 export const AURA_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze(AURA_KINDS.flatMap((k) => auraPrograms(k))));
+
+/** SHOP: whether `eye` stands at a wearer's head - within CLOAK_INSIDE_M of its middle as the body is posed (`w.cape`) -
+ *  so a cape on the back is not laid over its own wearer's first person. Pure. */
+export function auraEyeAtHead(/** @type {any} */ w, /** @type {number[]} */ eye) {
+  const yaw = Number.isFinite(w.yaw) ? w.yaw : 0, hd = (w.cape ?? CLOAK_REST_POSE).head, c = Math.cos(yaw), sn = Math.sin(yaw);
+  const dx = eye[0] - w.at[0], dz = eye[2] - w.at[2];
+  return Math.hypot(dx - c * hd[0] - sn * hd[2], eye[1] - w.at[1] - hd[1], dz + sn * hd[0] - c * hd[2]) < CLOAK_INSIDE_M;
+}
 
 export class AuraRingRenderer {
   constructor(gl) {
@@ -2607,6 +3093,8 @@ export class AuraRingRenderer {
     this._resLit = new Float32Array(RESONANCE_COLUMNS);   // CRYSTAL-FIST AUDIT: one list, refilled per wearer
     this._warren = new Float32Array(WARREN_BUNNIES * 4);   // WIKIMAID: the rabbits, and their tracks - refilled per wearer
     this._warrenPrints = new Float32Array(WARREN_BUNNIES * WARREN_PRINTS * 2);
+    this._sage = new Float32Array(SAGE_CARDS * 4);   // NIRNROOT-SAGE: the smoke's puffs and the nirnroots - refilled per wearer
+    this._sageLook = new Float32Array(SAGE_CARDS * 4);
     /** how many auras the last draw burned, for the stats and the tests */
     this.drawn = 0;
   }
@@ -2709,6 +3197,11 @@ export class AuraRingRenderer {
           gl.uniform4fv(U.uWarren, warrenDepthOrder(warrenBunniesInto(this._warren, t, Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1))), w.at, camAt));
           gl.uniform2fv(U.uWarrenPrint, warrenPrintsInto(this._warrenPrints, t));
         }
+        // NIRNROOT-SAGE: the smoke's puffs and the nirnroots, node's law on the wearer's own clock - farthest first
+        if (look === AURA_LOOK.sagesmoke) {
+          sageCardsInto(this._sage, this._sageLook, sageClock(seconds, w.seed), Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)), w.at, camAt);
+          gl.uniform4fv(U.uSage, this._sage); gl.uniform4fv(U.uSageLook, this._sageLook);
+        }
         // SHADOW-CLOAK: a look that SHADES is drawn premultiplied - its light added, what is behind it covered by its
         // alpha - and every other look as it always was, its light added whole
         if (look.shade) gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -2716,6 +3209,7 @@ export class AuraRingRenderer {
         gl.bindVertexArray(this.quadVao);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         if (look.mesh === 'cloak') this._drawCloak(w, look, torn, camAt, U);   // SHADOW-CLOAK: the cloak's cloth, not the strip
+        else if (look.mesh === 'cape') this._drawCape(w, look, torn, camAt, U);   // SHOP: Eternal's cape on the cloak's mesh
         else {
           const wings = look.mesh === 'wings', closed = wings && pose.sunk === true;   // SERAPH-WINGS: the strands, not the strip - and, as the cloak's, none of it with the ground's depth offset; AUDIT 3: closed on a body sunk to its neck
           if (wings) gl.disable(gl.POLYGON_OFFSET_FILL);
@@ -2743,6 +3237,27 @@ export class AuraRingRenderer {
     }
   }
 
+  /** SHOP: ETERNAL'S CAPE AND ITS CARDS, after its ground - its two sides two draws of the cloak's mesh, as the cloak's
+   *  are; none of it on a rider, a body sunk to its neck or a beast once burned away, and no cloth with the eye at its
+   *  wearer's head (their own first person). Its wisps and embers after the cloth: added light, in any order. */
+  _drawCape(w, look, torn, eye, U) {
+    const gl = this.gl, offset = gl.POLYGON_OFFSET_FILL;
+    if (w.mounted === true || w.cape?.sunk === true || torn >= CLOAK_RIP_S) return;
+    gl.disable(offset);
+    if (!auraEyeAtHead(w, eye)) {
+      gl.uniform1i(U.uKind, 1);
+      gl.bindVertexArray(this.cloakVao);
+      gl.enable(gl.CULL_FACE);
+      for (const side of [0, 1]) { gl.uniform1i(U.uSide, side); gl.cullFace(side ? gl.BACK : gl.FRONT); gl.drawArrays(gl.TRIANGLES, 0, CLOAK_ROUND * CLOAK_ROWS * 6); }
+      gl.disable(gl.CULL_FACE);
+      gl.cullFace(gl.BACK);
+    }
+    gl.uniform1i(U.uKind, 2);
+    gl.bindVertexArray(this.glyphVao);
+    gl.drawArrays(gl.TRIANGLES, 0, look.glyphs * 6);
+    gl.enable(offset);
+  }
+
   /** SHADOW-CLOAK: THE CLOAK'S CLOTH AND ITS CARDS, after its ground - `eye` the frame's camera. The cloth's two sides are
    *  two draws of its mesh, its lining (`uSide` 0, the faces turned from the eye - front faces culled) and then its
    *  outside (1, back faces culled), so the bent mesh's own winding names each side (the frame's front face is the
@@ -2754,11 +3269,11 @@ export class AuraRingRenderer {
   _drawCloak(w, look, torn, eye, U) {
     const gl = this.gl;
     const folded = w.mounted === true || w.cape?.sunk === true;   // AUDIT 3: and on a body sunk to its neck (auraSpriteBones)
-    const dx = eye[0] - w.at[0], dz = eye[2] - w.at[2], yaw = Number.isFinite(w.yaw) ? w.yaw : 0, hd = (w.cape ?? CLOAK_REST_POSE).head, c = Math.cos(yaw), sn = Math.sin(yaw);
+    const dx = eye[0] - w.at[0], dz = eye[2] - w.at[2], yaw = Number.isFinite(w.yaw) ? w.yaw : 0, c = Math.cos(yaw), sn = Math.sin(yaw);
     const front = dx * sn + dz * c > 0, emblemsFirst = !folded && front && torn < CLOAK_RIP_S;
     gl.disable(gl.POLYGON_OFFSET_FILL);   // the ground's offset is the ground's
     if (emblemsFirst) { gl.uniform1i(U.uKind, 2); gl.bindVertexArray(this.glyphVao); gl.drawArrays(gl.TRIANGLES, 0, look.glyphs * 6); }
-    if (torn < CLOAK_RIP_S && !folded && Math.hypot(dx - c * hd[0] - sn * hd[2], eye[1] - w.at[1] - hd[1], dz + sn * hd[0] - c * hd[2]) >= CLOAK_INSIDE_M) {   // the eye inside the hood (the wearer's own first person) - by the hood's own middle, so a camera over or beside them never is (AUDIT 2)
+    if (torn < CLOAK_RIP_S && !folded && !auraEyeAtHead(w, eye)) {   // the eye inside the hood (the wearer's own first person) - by the hood's own middle, so a camera over or beside them never is (AUDIT 2)
       gl.uniform1i(U.uKind, 1);
       gl.bindVertexArray(this.cloakVao);
       gl.enable(gl.CULL_FACE);

@@ -246,7 +246,7 @@ test('SET2 the door and the duel: the running host publishes its door every fram
   const hm = strip(read('src/scenes/hostMagic.js'));
   assert.match(hm, /function update\(dt, playerFeet[^)]*\) \{\s*_doorFeet = playerFeet \?\? null;\s*setPlayerDoor\(_door\);/, 'published first thing each frame');
   assert.match(hm, /hurtFoe: \(t, n\) => \{ if \(t && !t\.dead && n > 0\) foeSinks\(t, true\)\?\.hurt\?\.\(Math\.round\(n\), \{ fromPlayer: true \}\); \}/, 'a hurt is mine, through the foe\'s own sinks');
-  assert.match(hm, /castOnPlayer: \(bundle, \{ power = false \} = \{\}\) => \{ if \(bundle\) applySpellToPlayer\(bundle, effectiveLevel\(playerEntity\) \?\? 1, null, \{ bypassSavingThrows: true, bypassChance: true, \.\.\.\(power \? \{ powerCast: true \} : \{\}\) \}\); \}/);   // PIN MOVED (AUDIT SCHOOLS L1 M1): and a power's word - a path's rider merges taking the larger pool or chance (effects.js powerCast)
+  assert.match(hm, /castOnPlayer: \(bundle, \{ power = false \} = \{\}\) => \{ if \(bundle\) applySpellToPlayer\(bundle, castingLevel\(playerEntity\) \?\? 1, null, \{ bypassSavingThrows: true, bypassChance: true, \.\.\.\(power \? \{ powerCast: true \} : \{\}\) \}\); \}/);   // PIN MOVED (AUDIT SCHOOLS L1 M1): and a power's word - a path's rider merges taking the larger pool or chance (effects.js powerCast)
   assert.match(hm, /foes: \(\) => playerTargets\(\)\.filter/, 'the foes MY harm may reach - the defenders passed by');
   // PIN MOVED (AUDIT 625 P2): and a live bout between players on a relay's sand is a duel too
   // PIN MOVED (INT8, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): the frame offers a bout's unsettled receipt

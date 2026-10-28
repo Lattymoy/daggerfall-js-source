@@ -428,7 +428,7 @@ structure ours.
 - Offline: real gold, the purse's (Mac's "Real gold", `Tavern-Cards.md` section 9 Q3): the tier's least x 1, x 2 or x 5,
   taken at the deal and held by the table; a win pays twice it; a loss and a forfeit - every road off the seat while a game
   is under way - leave it. The save waits while a stake is down, at both of `scenes/world.js`'s doors that already hold
-  Hold'em's chips and Iliac Hand's card (`world.js:"if (modes?.iliacStaked?.()) { if (!quiet) townTalk.say("` in
+  Hold'em's chips and Iliac Hand's card (`worldQuickSave.js:"if (host.modes?.iliacStaked?.()) { if (!quiet) townTalk.say("` in
   worldQuickSave, and the pause's savingPrevented); a load's road settles nothing (the save predates the deal).
 - DECIDED, a departure: a regular's purse is a night's, as Hold'em's regulars' are (`Tavern-Cards.md` section 16, AUDIT
   CARDS-2 H2's book): a regular who has paid a night's purse plays for fun until tomorrow. The mod's innkeeper pays

@@ -32,8 +32,8 @@
   {
     "name": "GATE-COLLAPSE-the-seal-line-at-the-seal's-time",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "say(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) }));",
-    "new": "say(sealTimeLine({ ...words, at: at(t.day, GATE_SEAL_MINUTE) }));",
+    "old": "sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) }));",
+    "new": "sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_SEAL_MINUTE) }));",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"

@@ -112,7 +112,7 @@
   {
     "name": "data-point-unchecked",
     "file": "src/world/road/pathData.js",
-    "old": "  if (mapPixelX < 0 || mapPixelY < 0 || mapPixelX >= MAP_W || mapPixelY >= MAP_H) return 0;",
+    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
     "new": "  if (false) return 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -864,7 +864,7 @@
   {
     "name": "i6-discovery-by-map-id-again",
     "file": "src/scenes/world.js",
-    "old": "        return loc?.name ? discoveredBuildings(`${summary.regionIndex}:${loc.name}`) : [];",
+    "old": "        return loc?.name ? discoveredBuildings(townBookOf(loc)) : [];   // BAY-LEFT-MAPS (C7 = E2): the one key-maker",
     "new": "        return discoveredBuildings(summary.mapID ?? -1);",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -917,9 +917,9 @@
   },
   {
     "name": "b3-encounter-hook-unwired",
-    "file": "src/scenes/world.js",
-    "old": "    raiseOnEncounterEvent: () => { travelOptions?.onEncounter(); modes?.raiseOnEncounterEvent?.(); },",
-    "new": "    raiseOnEncounterEvent: () => { modes?.raiseOnEncounterEvent?.(); },",
+    "file": "src/scenes/questWorld.js",
+    "old": "    raiseOnEncounterEvent: () => { host.travelOptions?.onEncounter(); host.modes?.raiseOnEncounterEvent?.(); },",
+    "new": "    raiseOnEncounterEvent: () => { host.modes?.raiseOnEncounterEvent?.(); },",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

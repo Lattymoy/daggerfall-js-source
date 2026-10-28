@@ -52,7 +52,7 @@ const NAMES = Object.freeze({
   c_long: () => t('captain.star.cLong', 'Long Shot'), c_harm2: () => t('captain.star.cHarm2', 'Between Wind and Water'),
   c_shot1: () => t('captain.star.cShot1', 'The Shot Locker'), c_grape: () => t('captain.star.cGrape', 'Canister and Grape'),
   c_chain: () => t('captain.star.cChain', 'Bar and Chain'), c_hot: () => t('captain.star.cHot', 'Hot Shot Furnace'),
-  c_board1: () => t('captain.star.cBoard1', 'Boarding Pikes'), c_ram1: () => t('captain.star.cRam1', 'Iron Beak'),
+  c_board1: () => t('captain.star.cBoard1', 'Boarding Pikes'), c_ram1: () => t('captain.star.cLines', 'Long Lines'),   // BOARD-MAGNET: the ram's star, its id the save's
   c_irons: () => t('captain.star.cIrons', 'Grappling Irons'), c_board2: () => t('captain.star.cBoard2', 'Cutlass Drill'),
   c_creed: () => t('captain.star.cCreed', 'Boarders Away'),
 });
@@ -75,13 +75,13 @@ const LABELS = Object.freeze({
   reload: () => t('captain.stat.reload', 'Gun reload speed'), aim: () => t('captain.stat.aim', 'Gun accuracy'),
   grape: () => t('captain.stat.grape', 'Grapeshot crew damage'), chain: () => t('captain.stat.chain', 'Chain shot sail damage'),
   heated: () => t('captain.stat.heated', 'Heated shot fire chance'), boarders: () => t('captain.stat.boarders', 'Boarding party size'),
-  ram: () => t('captain.stat.ram', 'Ram damage'), foul: () => t('captain.stat.foul', 'Time a rammed ship stays fouled'),
+  reach: () => t('captain.stat.reach', 'Grapple reach'),
 });
-/** A stat's line: "Way under sail +6%" - hands a count, the foul seconds, the reload quicker (a share off it). */
+/** A stat's line: "Way under sail +6%" - hands a count, the reload quicker (a share off it). */
 export function starStatWords(key, v) {
   const sign = v > 0 ? '+' : v < 0 ? '-' : '';
   const a = Math.abs(v);
-  const n = key === 'boarders' ? `${sign}${Math.round(a)}` : key === 'foul' ? `${sign}${Math.round(a)} s` : `${sign}${Math.round(a * 100)}%`;
+  const n = key === 'boarders' ? `${sign}${Math.round(a)}` : `${sign}${Math.round(a * 100)}%`;
   if (key === 'reload') return v >= 0 ? t('captain.stat.reloadQuick', 'Guns reload {n} faster', { n: `${Math.round(a * 100)}%` }) : t('captain.stat.reloadSlow', 'Guns reload {n} slower', { n: `${Math.round(a * 100)}%` });
   return `${LABELS[key]?.() ?? key} ${n}`;
 }
@@ -161,7 +161,7 @@ export function mountCaptainTreeWindow(host, { ledger, changed = () => {}, onExi
       for (const l of lines) ul.append(el('li', l.neg ? 'neg' : null, l.text));
       parts.push(ul);
       parts.push(el('h3', null, t('captain.half.master', 'The Master')), el('p', 'fmt-sign', t('captain.sky.masterLore', 'Seamanship: sails, oars, steering, cargo, trade and repairs.')));
-      parts.push(el('h3', null, t('captain.half.commander', 'The Commander')), el('p', 'fmt-sign', t('captain.sky.commanderLore', 'Combat: gun reload and accuracy, grapeshot, chain shot and heated shot, boarding and ramming.')));
+      parts.push(el('h3', null, t('captain.half.commander', 'The Commander')), el('p', 'fmt-sign', t('captain.sky.commanderLore', 'Combat: gun reload and accuracy, grapeshot, chain shot and heated shot, and boarding.')));
       parts.push(el('p', 'fmt-note', t('captain.sky.note', 'Stars apply to all of your ships. Removing or changing stars is free.')));
       if (c.level < 3) parts.push(el('p', 'fmt-note', t('captain.sky.oreNote', 'From level 3, shipwrights can refit a ship past grade III with Steel. Each later metal, up to Daedric, needs a higher level.')));
       return parts;

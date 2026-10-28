@@ -31,8 +31,8 @@
   {
     "name": "NET-three-neighbours",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .filter((x) => x.d > 0 && x.d <= LANE_MAX_PX).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);",
-    "new": "      .filter((x) => x.d > 0 && x.d <= LANE_MAX_PX).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS + 1);",
+    "old": "      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
+    "new": "      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, (p.neighbours ?? LANE_NEIGHBOURS) + 1);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "NET-reach-short",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .filter((x) => x.d > 0 && x.d <= LANE_MAX_PX).sort(",
-    "new": "      .filter((x) => x.d > 0 && x.d < LANE_MAX_PX).sort(",
+    "old": "      .filter((x) => x.d > 0 && x.d <= reach).sort(",
+    "new": "      .filter((x) => x.d > 0 && x.d < reach).sort(",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -587,20 +587,21 @@
   {
     "name": "FEED-every-lane",
     "file": "src/scenes/world.js",
-    "old": "      if (!near(lane.a) && !near(lane.b)) continue;",
-    "new": "      if (false && !near(lane.a) && !near(lane.b)) continue;",
+    "old": "      if (!worldLanes.near(lane, here)) continue;",
+    "new": "      if (false && !worldLanes.near(lane, here)) continue;",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "FEED-way-sounded-again",
-    "file": "src/scenes/world.js",
-    "old": "      if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); }",
-    "new": "      way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way);",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (way === undefined) { way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way); }",
+    "new": "      way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): moved to src/scenes/naval/worldLanes.js."
   },
   {
     "name": "FEED-lake-a-sea",
@@ -649,12 +650,12 @@
   },
   {
     "name": "FEED-harbour-unnamed",
-    "file": "src/scenes/world.js",
-    "old": "    return { key: `port:${t.id}`, name: t.name, rect, ready, reach };",
-    "new": "    return { key: `port:${t.id}`, rect, ready, reach };",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach };",
+    "new": "  return { key: `port:${t.id}`, rect, ready, reach };",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
-    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
+    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same. PORT-SHIPS: its town's keep beside it now (scenes/harbourHost.js). RPT1026-WORLD FAR-QUAY: re-aimed by content - the line moved to harbourBook.js harbourOf."
   }
 ]

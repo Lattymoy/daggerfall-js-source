@@ -36,6 +36,19 @@ import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bounty/bountyJ
 import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
 import { sharedClockOn } from '../systems/worldTick.js';   // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
 import { festivalBountyPaid } from '../systems/festival/festivalClient.js';   // WITCH1: a bounty paid asks a find
+import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { createHuntersMark } from './huntersMark.js';   // HUNTERS-MARK: the hunter's rank and the week's named mark
+
+/** THE PIXEL OF THE DUNGEON I AM IN, for a hunt underground (the host's `dungeonPixel`): the dungeon's OWN pixel - its
+ *  location's map-table position - rather than the streamer's last pixel (frozen at the entrance underground, which is
+ *  where the player crossed in from, not necessarily the dungeon's); with no position, the streamer's; out of a dungeon,
+ *  null. HOST-SPLIT (LAIR-WORLD): out of bootWorld, verbatim. @param {any} modes @param {() => any} travelPixel */
+export function bountyDungeonPixel(modes, travelPixel) {
+  if ((modes?.mode ?? 'exterior') !== 'dungeon') return null;
+  const mt = modes?.dungeonLocation?.mapTableData;
+  if (mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)) return longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
+  return travelPixel();
+}
 
 /** How often the host looks at the world, seconds. */
 export const BOUNTY_TICK_S = 0.5;
@@ -81,6 +94,8 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   siteOk: (x:number, y:number) => boolean, // may a pack stand on this map pixel
  *   dungeonAt?: (x:number, y:number) => (string|null),   // the game's own dungeon on this pixel, by name
  *   graveyardAt?: (x:number, y:number) => (string|null),   // GRAVEYARD-BOUNTY: the graveyard on this pixel, by name - its hunt stands outside it
+ *   placesVersion?: () => string,   // LAIR-WORLD: the stamp of what the places past the Bay stand on - a town's ground and dungeons kept under it
+ *   wildAt?: (px:number, py:number) => (Array<[number, number]>|null),   // QUARRY-WORLD: the land's own wild about a town (bountyQuarry.js bountyLandWild)
  *   playerPixel: () => ({x:number, y:number} | null),     // outdoors: my pixel; elsewhere null
  *   dungeonPixel?: () => ({x:number, y:number} | null),   // in a dungeon: its entrance's pixel; elsewhere null
  *   canStand: () => boolean,                 // outdoors, awake, not on a journey, not in the water
@@ -95,8 +110,8 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   social?: () => ({ acct:string|null, inParty:boolean, mates:Array<{acct:string, name:string, p:any, online?:boolean}> } | null),
  *   posePixel?: () => ({x:number, y:number} | null),   // the pixel my party pose says I stand on (AUDIT 28 B8)
  *   rolls?: () => number,
- * }} deps `standPack` answers `far` when the group waits at its spot (the farm, the second group's): the host names
- *   the way and asks again as the hunter closes in
+ *   hunt?: { door: any, storage?: any, character: () => (string|null), saved?: () => void } | null,   // HUNTERS-MARK: the hunt's ledger, online
+ * }} deps `standPack` answers `far` while the group waits at its spot: the host names the way and asks again
  */
 export function createBountyHost(deps) {
   const rolls = deps.rolls ?? Math.random;
@@ -120,8 +135,11 @@ export function createBountyHost(deps) {
   /** AUDIT 28 B2: a pack whose bounty was given up, by its notice - taken again, its live beasts are the hunt's again */
   const orphans = new Map();
 
+  /** LAIR-WORLD: a town's ground and dungeons are kept under what the places past the Bay stand on (the host's
+   *  `placesVersion`): a board past the Bay read before the land landed is read again after it. */
+  const keyOf = (px, py) => `${px},${py}|${deps.placesVersion?.() ?? ''}`;
   const sitesFor = (px, py) => {
-    const k = `${px},${py}`;
+    const k = keyOf(px, py);
     let s = sitesCache.get(k);
     if (!s) sitesCache.set(k, s = bountySites(px, py, deps.siteOk));
     return s;
@@ -129,18 +147,23 @@ export function createBountyHost(deps) {
   /** the dungeons in each town's reach, by "px,py" - the game's own, so the same on every client */
   const dungeonsCache = new Map();
   const dungeonsFor = (px, py) => {
-    const k = `${px},${py}`;
+    const k = keyOf(px, py);
     let d = dungeonsCache.get(k);
     if (!d) dungeonsCache.set(k, d = bountyDungeons(px, py, deps.dungeonAt, deps.graveyardAt));
     return d;
   };
+  /** QUARRY-WORLD: the land's own wild about a town (systems/bounty/bountyQuarry.js, the host's `wildAt` - kept there), the
+   *  beasts its board hunts; none handed, the ladder's. */
+  const wildFor = (px, py) => { try { return deps.wildAt?.(px, py) ?? null; } catch { return null; } };
   const postingOf = (id) => {
     const b = parseBountyId(id);
     if (!b) return null;
-    return postingFromId(id, { name: deps.townName(b.px, b.py), sites: sitesFor(b.px, b.py), dungeons: dungeonsFor(b.px, b.py) });
+    return postingFromId(id, { name: deps.townName(b.px, b.py), sites: sitesFor(b.px, b.py), dungeons: dungeonsFor(b.px, b.py), wild: wildFor(b.px, b.py) });
   };
   const social = () => { try { return deps.social?.() ?? null; } catch { return null; } };
   const repaint = () => { try { boardView?.repaint?.(); } catch { /* the window's own problem */ } };
+  // HUNTERS-MARK (Bounty-Boards.md 12): the rank and the named mark - their own module, its clears reported from `pay`
+  const hunt = createHuntersMark({ ...deps, sitesFor, repaint, notice: (n) => notices.push(n) });
 
   // ── save ──────────────────────────────────────────────────────────
   const reset = (rec) => {
@@ -166,7 +189,7 @@ export function createBountyHost(deps) {
 
   // ── the journal (Mac: "i also dont see the bounty in my questlog means i cant abandon it?") ──
   setBountyJournal({
-    abandon: (id) => drop(id).ok,
+    abandon: (id) => (hunt.isMark(id) ? hunt.drop(id) : drop(id)).ok,   // HUNTERS-MARK: a named mark's from its own module
     share: (id) => share(id).ok,
     canShare: (id) => !!social()?.inParty && ledger.held.some((h) => h.id === id && !h.shared),
   });
@@ -182,16 +205,21 @@ export function createBountyHost(deps) {
         ? `Where: ${p.place}, ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`
         : `Where: ${p.far} ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`;
       const lines = [p.tierLabel, p.story, '', `Slain: ${h.killed} of ${p.count} ${p.foes}.`, where, `Reward: ${p.gold} gold pieces and a piece of kit.`];
-      // BOUNTY-TRAIL: where the hunt stands in its two groups, and the last way named
+      // BOUNTY-TRAIL: where the hunt stands in its two groups
       const groups = bountyGroups(p);
+      const stage = bountyStage(p, h.killed);
       if (groups.length > 1) {
-        const stage = bountyStage(p, h.killed);
         lines.push(stage === 0
           ? `They move in two groups: ${groups[0]} first, then ${groups[1]} more.`
           : `The first group is dead. ${p.count - h.killed} ${p.foes} fled. Follow their trail.`);
-        const clue = clues.get(`${h.id}:${stage}`);
-        if (clue) lines.push(clue);
       }
+      // RPT1026-QUESTS BOUNTY-WAY (a private report: a farm hunt whose rats never showed): and the last way named, for
+      // EVERY hunt whose group waits at its spot - a farm's first group as a split hunt's second. A farm stands in the
+      // middle half of its pixel (330 to 350 metres from where the hunter came onto it, in the real game) and its rats
+      // stand within 150 metres of the hunter; the way, said once on the screen among the arrival's own lines, was kept for
+      // a split hunt alone, so a hunter of one group who missed it had nothing to go on
+      const clue = clues.get(`${h.id}:${stage}`);
+      if (clue) lines.push(clue);
       if (h.from) lines.push(`Shared with you by ${h.from}.`);
       return {
         id: `${BOUNTY_QUEST_PREFIX}${h.id}`, name: `Bounty: ${p.title}`, questName: 'BOUNTY', bounty: true,
@@ -224,7 +252,7 @@ export function createBountyHost(deps) {
   function boardRows(town) {
     const now = deps.now();
     const day = bountyDay(now);
-    const posts = boardPostings({ day, px: town.px, py: town.py, name: town.name, level: deps.level(), sites: sitesFor(town.px, town.py), dungeons: dungeonsFor(town.px, town.py) });
+    const posts = boardPostings({ day, px: town.px, py: town.py, name: town.name, level: deps.level(), sites: sitesFor(town.px, town.py), dungeons: dungeonsFor(town.px, town.py), wild: wildFor(town.px, town.py) });
     const mates = matesOnBoard();
     return posts.map((p) => {
       const held = ledger.held.find((h) => parseBountyId(h.id)?.slotKey === p.slotKey) ?? null;
@@ -322,6 +350,8 @@ export function createBountyHost(deps) {
       nextDayIn: () => MINUTES_PER_DAY - (deps.now() % MINUTES_PER_DAY),
       inParty: () => !!social()?.inParty,
       take, drop, share,
+      // HUNTERS-MARK: the board's header (the rank) and its named mark - each read as the window draws
+      hunt: () => ({ rank: hunt.boardRank(t), mark: hunt.boardMark(t), takeMark: (id) => hunt.take(id), dropMark: (id) => hunt.drop(id) }),
       attach: (view) => { boardView = view; },
       detach: () => { boardView = null; },
     });
@@ -353,6 +383,7 @@ export function createBountyHost(deps) {
     });
     deps.say(`Bounty fulfilled: ${posting.title}. +${posting.gold} gold, ${reward.item}.`);
     festivalBountyPaid();   // WITCH1: a Witches' Festival find (nothing while it is not live)
+    hunt.cleared(id, Number.isInteger(region) ? region : null);   // HUNTERS-MARK: reported to the hunt's ledger, kept until answered
     repaint();
     return true;
   }
@@ -511,6 +542,7 @@ export function createBountyHost(deps) {
     for (const [k, id] of paidIds) if (!ledger.paid.includes(k)) paidIds.delete(k);
     partyTick(now);
     packTick(now);
+    hunt.tick(BOUNTY_TICK_S);   // HUNTERS-MARK: the book's beat and the named mark's stand
     showNextNotice();
   }
 
@@ -521,14 +553,14 @@ export function createBountyHost(deps) {
 
   return {
     openBoard, tick, take, drop, share,
-    /** The black circles, for both maps. */
-    mapMarks: () => ledger.held.map((h) => {
+    /** The black circles, for both maps - HUNTERS-MARK: the named mark's beside them. */
+    mapMarks: () => [...hunt.mapMarks(), ...ledger.held.map((h) => {
       const p = postingOf(h.id);
       return p ? { cx: p.target.px + 0.5, cy: p.target.py + 0.5, r: BOUNTY_RING_R, label: p.place ? `${p.foes} - ${p.place}` : p.foes, id: h.id,
         place: p.kind === 'dungeon', farmKey: p.farm ? p.slotKey : null } : null;   // BOUNTY-SNAP: what the Overworld's click walks to
-    }).filter(Boolean),
-    /** The quest log's rows for my bounties (the world host folds them into questBridge.questLog). */
-    questLogEntries,
+    }).filter(Boolean)],
+    /** The quest log's rows for my bounties (the world host folds them into questBridge.questLog) - and the named mark's. */
+    questLogEntries: () => [...hunt.questLogEntries(), ...questLogEntries()],
     /** BOUNTY-FARM: the farm bounties I hold - their farms stand while I do (scenes/bountyFarms.js). */
     // BOUNTY-TIER: and my party's - a helper who cannot hold a bounty of another tier still sees the farm they hunt at
     farmsWanted: () => {
@@ -550,6 +582,7 @@ export function createBountyHost(deps) {
     _ledger: () => ledger,
     _packs: () => packs,
     _reset: reset,
+    hunt,   // HUNTERS-MARK: the rank and the named mark (a test's seam, the pages' book)
   };
 }
 

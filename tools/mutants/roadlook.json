@@ -1,0 +1,563 @@
+[
+  {
+    "name": "ROAD-LOOK-a-record-dropped",
+    "file": "src/world/road/roadEdge.js",
+    "old": "export const ROAD_RECORDS = Object.freeze([46, 47, 55]);",
+    "new": "export const ROAD_RECORDS = Object.freeze([46, 47]);",
+    "tests": [
+      "test/world/road/roadlook.test.js",
+      "test/world/urban/urban3_fabric.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-wet-word-unread",
+    "file": "src/world/road/roadEdge.js",
+    "old": "return r < GROUND_RECORD_LIMIT && ((ROAD_EDGE_WET[r >> 5] >>> (r & 31)) & 1) === 0;",
+    "new": "return r < GROUND_RECORD_LIMIT;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-mirror-dropped",
+    "file": "src/world/road/roadEdge.js",
+    "old": "const m = (l) => (l < 0 ? -l : l > 1 ? 2 - l : l);",
+    "new": "const m = (l) => l;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-nearest-weight-the-wrong-way",
+    "file": "src/world/road/roadEdge.js",
+    "old": "return (w * w) / Math.max(d * d, 1e-6); }",
+    "new": "return (d * d) / Math.max(w * w, 1e-6); }",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-bilinear-corner-the-wrong-cell",
+    "file": "src/world/road/roadEdge.js",
+    "old": "const kx = Math.floor(x + 0.5), ky = Math.floor(y + 0.5)",
+    "new": "const kx = Math.floor(x), ky = Math.floor(y)",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-a-wet-neighbour-lending",
+    "file": "src/world/road/roadEdge.js",
+    "old": "const gb = rb !== ra && takesRoadEdge(db) ? nearWeight(u) : 0;",
+    "new": "const gb = rb !== ra ? nearWeight(u) : 0;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-rim-half-width",
+    "file": "src/world/road/roadEdge.js",
+    "old": "  soft: 0.07,",
+    "new": "  soft: 0.2,",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-wander-amplitude",
+    "file": "src/world/road/roadEdge.js",
+    "old": "Object.freeze({ cells: 32, amp: 0.12 })",
+    "new": "Object.freeze({ cells: 32, amp: 0.3 })",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-early-answer-diagonal-unasked",
+    "file": "src/world/road/roadEdge.js",
+    "old": "if (ra === rb && ra === rc && ra === rd) return whole;",
+    "new": "if (ra === rb && ra === rc) return whole;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-other-kind-unnormalised",
+    "file": "src/world/road/roadEdge.js",
+    "old": "if (gb > 0) draw.push([bx, by, ((1 - mine) * gb) / gs]);",
+    "new": "if (gb > 0) draw.push([bx, by, (1 - mine) * gb]);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-hash-salt",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "(salt * 0xcb1ab31fu)",
+    "new": "(salt * 0xcb1ab31eu)",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-noise-unwrapped",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "highp ivec2 i0 = i % n, i1 = (i + 1) % n;",
+    "new": "highp ivec2 i0 = i, i1 = i + 1;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-wander-uncentred",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "(2.0 * reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u) - 1.0)",
+    "new": "(reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u))",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-near-weight",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "float reNear(float d) { float w = max(0.5 - d, 0.0); return w * w / max(d * d, 1e-6); }",
+    "new": "float reNear(float d) { float w = max(0.5 - d, 0.0); return w / max(d, 1e-6); }",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-switch-unread",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "if (uRoadEdge <= 0.0 || !reTakes(data)) return own;",
+    "new": "if (!reTakes(data)) return own;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-mirror-dropped",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "  l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-gradient-unturned",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;",
+    "new": "vec2 dux = gx, duy = gy;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-bilinear-x-weight",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "float wxa = float(c.x) == k.x ? s.x : 1.0 - s.x",
+    "new": "float wxa = float(c.x) == k.x ? 1.0 - s.x : s.x",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-wet-neighbour-lending",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "float gc = (rc != ra && reTakes(dc)) ? reNear(v) : 0.0;",
+    "new": "float gc = (rc != ra) ? reNear(v) : 0.0;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-glsl-the-other-kind-unnormalised",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "return mix(o / gs, own, mine);",
+    "new": "return mix(o, own, mine);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-classic-call-dropped",
+    "file": "src/render/renderer.js",
+    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js",
+      "test/systems/ecotone1.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-lane-call-dropped",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js",
+      "test/systems/ecotone1.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-lane-neighbour-undecoded",
+    "file": "src/render/enhancedLighting.js",
+    "old": "${roadEdgeGlsl('elDecode')}",
+    "new": "${roadEdgeGlsl()}",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-switch-never-uploaded",
+    "file": "src/render/renderer.js",
+    "old": "      gl.uniform1f(this.tURoadEdge, this.roadEdges ? 1 : 0);",
+    "new": "      void this.tURoadEdge;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-renderer-never-taking-it",
+    "file": "src/render/renderer.js",
+    "old": "  roadEdges = roadEdgesOn();",
+    "new": "  roadEdges = false;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-classic-skin-blended",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "  return pageParam('roadedges', search) !== 'off' && isEnhanced(search);",
+    "new": "  return pageParam('roadedges', search) !== 'off';",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-kill-door-unread",
+    "file": "src/render/roadEdgeGlsl.js",
+    "old": "  return pageParam('roadedges', search) !== 'off' && isEnhanced(search);",
+    "new": "  return isEnhanced(search);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-owner-test",
+    "file": "src/world/road/roadBridges.js",
+    "old": "            if (Math.floor(x) !== px || Math.floor(y) !== py) continue;",
+    "new": "            if (false) continue;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-half-open-ends",
+    "file": "src/world/road/roadBridges.js",
+    "old": "if (t < 0 || t > 1 || u < 0 || u >= 1) continue;",
+    "new": "if (t < 0 || t >= 1 || u < 0 || u >= 1) continue;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-merge",
+    "file": "src/world/road/roadBridges.js",
+    "old": "      if (!out.some(meets)) out.push(c);",
+    "new": "      out.push(c);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-track-kept",
+    "file": "src/world/road/roadBridges.js",
+    "old": "(o.kind === c.kind || o.kind === 'road')",
+    "new": "(o.kind === c.kind)",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-ford-width",
+    "file": "src/world/road/roadBridges.js",
+    "old": "  fordMax: 4 * 6.4,",
+    "new": "  fordMax: 2 * 6.4,",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-sine-unread",
+    "file": "src/world/road/roadBridges.js",
+    "old": "const half = c.width / Math.max(BRIDGE.minSine, c.sin) / 2;",
+    "new": "const half = c.width / 2;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-floor-on-the-sine",
+    "file": "src/world/road/roadBridges.js",
+    "old": "const half = c.width / Math.max(BRIDGE.minSine, c.sin) / 2;",
+    "new": "const half = c.width / c.sin / 2;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-ramp-run",
+    "file": "src/world/road/roadBridges.js",
+    "old": "reach: half + k.bank + (deck - c.level) * k.ramp };",
+    "new": "reach: half + k.bank + (deck - c.level) * 2 };",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-deck-height",
+    "file": "src/world/road/roadBridges.js",
+    "old": "const deck = c.level + k.clearance + k.deck;",
+    "new": "const deck = c.level + k.clearance;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-memo-by-the-bytes-alone",
+    "file": "src/world/road/roadBridges.js",
+    "old": "if (hit && hit.law === law && hit.key === key) return hit.list;",
+    "new": "if (hit && hit.key === key) return hit.list;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-channel-unasked",
+    "file": "src/world/road/roadBridges.js",
+    "old": "            if (!wet) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-deck-width",
+    "file": "src/world/road/roadBridges.js",
+    "old": "across = k.width / 2 + TILE_M",
+    "new": "across = k.width + TILE_M",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-neighbours-unread",
+    "file": "src/world/road/roadBridges.js",
+    "old": "    for (let dx = -1; dx <= 1; dx++) {",
+    "new": "    for (let dx = 0; dx <= 0; dx++) {",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-path-left-set",
+    "file": "src/world/road/roadBridges.js",
+    "old": "tilemap[t] = 0; paths[t] = 0; n++;",
+    "new": "tilemap[t] = 0; n++;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-mesh-deck-height",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "      face(STONE, P(s0, -w, deckTop(b, s0)), P(s1, -w, deckTop(b, s1)), P(s1, w, deckTop(b, s1)), P(s0, w, deckTop(b, s0)), up);",
+    "new": "      face(STONE, P(s0, -w, deckTop(b, s0) + 0.3), P(s1, -w, deckTop(b, s1) + 0.3), P(s1, w, deckTop(b, s1) + 0.3), P(s0, w, deckTop(b, s0) + 0.3), up);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-mesh-ramp-run",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "return b.deck - (a - b.abut) / k.ramp;",
+    "new": "return b.deck - (a - b.abut) / (2 * k.ramp);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-a-parapet-dropped",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "    for (const side of [-1, 1]) {\n      for (let i = 0; i + 1 < S.length; i++) {",
+    "new": "    for (const side of [1]) {\n      for (let i = 0; i + 1 < S.length; i++) {",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-mid-rail-dropped",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "for (const h of [k.parapet, k.parapet / 2])",
+    "new": "for (const h of [k.parapet])",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-openings-count",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "const n = Math.max(1, Math.ceil((L + k.pier) / (k.span + k.pier)))",
+    "new": "const n = Math.max(1, Math.floor((L + k.pier) / (k.span + k.pier)))",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-arch-crown",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "const crown = b.level + k.clearance, spring = b.level + SPRING;",
+    "new": "const crown = b.level + k.clearance - 1, spring = b.level + SPRING;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-art",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "const STONE = art(CAPITAL_ART.bridgeStone), TIMBER = art(CAPITAL_ART.timber);",
+    "new": "const STONE = art(CAPITAL_ART.timber), TIMBER = art(CAPITAL_ART.timber);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-stand-unsolid",
+    "file": "src/world/road/bridgeModels.js",
+    "old": "    addStatic(mesh, PIXEL_FRAME); solid(mesh, PIXEL_FRAME); grow(box);",
+    "new": "    addStatic(mesh, PIXEL_FRAME); grow(box);",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-unpave-dropped",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "if (arena && landforms) { unpaveBridges(tilemap, paths, px, py, arenaRoadByte); bridges = bridgesOf(px, py, arenaRoadByte); }",
+    "new": "if (arena && landforms) { bridges = bridgesOf(px, py, arenaRoadByte); }",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-bridges-unreturned",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    bridges,   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js bridgesOf) - null on the Bay, or with the rivers uncarved\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-host-never-standing-them",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    standBridges(bridges, px, py, { addStatic: (m, at) => addStatic(m, at, true), solid: (m, at) => late.add(key, m.positions, m.indices, at, { translation: bridgeBucket }), grow: unionBox });\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-still-mask-unread",
+    "file": "src/world/road/roadLand.js",
+    "old": "if (!wet(x, y) || (still && still[i])) continue;",
+    "new": "if (!wet(x, y)) continue;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-lakes-unmarked",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  for (let i = 0; i < still.length; i++) if (still[i] && !bay[i]) water[i] = 1;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-lake-margin",
+    "file": "src/world/tamrielRoads.js",
+    "old": "export const LAKE_MARGIN = 0.25;",
+    "new": "export const LAKE_MARGIN = 0;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-margin-unread",
+    "file": "src/world/tamriel/tamrielWaters.js",
+    "old": "if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < margin) out[v * w + u] = 1;",
+    "new": "if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < 0) out[v * w + u] = 1;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-ink-law-index",
+    "file": "src/world/road/roadBridges.js",
+    "old": "const k = x * 65536 + y, a = index.get(k) ?? [];",
+    "new": "const k = y * 65536 + x, a = index.get(k) ?? [];",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-map-filter-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "      if (filters[b.kind === 'road' ? 'roads' : 'tracks']) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-map-near-band-unasked",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (band === 'near' && waters) paintBridges(",
+    "new": "if (false && waters) paintBridges(",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-map-key-row-read-down",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const px = Math.round(k / 65536), py = k - px * 65536;",
+    "new": "const px = Math.floor(k / 65536), py = k - px * 65536;",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-map-cull",
+    "file": "src/ui/tamrielInk.js",
+    "old": "    if (px < view.ox - 1 || px > x1 || py < view.oy - 1 || py > y1) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-LOOK-the-map-width",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const L = Math.max(b.half / PIXEL_M, BRIDGE_MARK.least / view.scale)",
+    "new": "const L = (BRIDGE_MARK.least / view.scale)",
+    "tests": [
+      "test/world/road/roadlook.test.js"
+    ]
+  }
+]

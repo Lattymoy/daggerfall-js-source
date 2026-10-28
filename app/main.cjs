@@ -477,20 +477,25 @@ const { goneAsk, restarts, hangAsk, restartsHung, createStopCount, goneLine, log
 /** RENDERER-GONE: crash.log beside the saves - a process gone, when and why (its oldest lines dropped past its most). */
 const CRASH_LOG = () => path.join(app.getPath('userData'), 'crash.log');
 const { trailFrom, trailLines } = require('./lib/rendererGone.cjs');   // GPU-TRAIL
+const { createGpuGoneWait } = require('./lib/rendererGone.cjs');   // GPU-TRAIL-LOST
 /** GPU-TRAIL: the game page's newest GPU samples (dagger:gpu-trail), written under a process gone's line - and let go
  *  with a page that stopped, so the page after it never writes the dead one's as its own. */
 let gpuTrail = null;
-function logGone(what, details) {
+function logGone(what, details, at = Date.now()) {
+  if (what === 'renderer') gpuGone.flush();   // GPU-TRAIL-LOST: a GPU entry still held is written first, in its order
   try {
     const file = CRASH_LOG();
     const had = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-    fs.writeFileSync(file, logWith(had, goneLine(what, details, Date.now()) + trailLines(gpuTrail)));
+    fs.writeFileSync(file, logWith(had, goneLine(what, details, at) + trailLines(gpuTrail)));
   } catch { /* a log that cannot be written is no reason to stop */ }
   if (what === 'renderer') gpuTrail = null;
 }
 // RENDERER-GONE: the GPU's process gone is logged too - Chromium starts it again, and the page says the graphics stopped
-// itself (main.js webglcontextlost: tap to reload)
-app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') logGone('gpu', details); });
+// itself (main.js webglcontextlost: tap to reload). GPU-TRAIL-LOST: its entry waits for the page's lost sample
+// (lib/rendererGone.cjs createGpuGoneWait), and a quit writes one still held.
+const gpuGone = createGpuGoneWait({ write: (details, at) => logGone('gpu', details, at) });
+app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') gpuGone.gone(details, Date.now()); });
+app.on('will-quit', () => gpuGone.flush());
 const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
@@ -1852,7 +1857,9 @@ ipcMain.on('dagger:game-up', (e) => {
 // each one so a page that stops between them has already said its last - kept from the game's window only, read field
 // by field, and written by logGone.
 ipcMain.on('dagger:gpu-trail', (e, trail) => {
-  if (gameWindow && !gameWindow.isDestroyed() && e.sender === gameWindow.webContents) gpuTrail = trailFrom(trail);
+  if (!gameWindow || gameWindow.isDestroyed() || e.sender !== gameWindow.webContents) return;
+  gpuTrail = trailFrom(trail);
+  gpuGone.heard(gpuTrail);   // GPU-TRAIL-LOST: the lost sample landed - a GPU entry held for it is written now
 });
 
 // The preload asks for its storage root synchronously at page boot -

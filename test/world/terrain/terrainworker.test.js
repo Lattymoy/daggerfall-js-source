@@ -244,8 +244,17 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   // when the API is absent, and nothing else in its closure is a global.
   // PIN MOVED (ETHER-SEA, bible/03-World/Eltheric-Ocean.md): and the Eltheric Ocean's ground (world/ethericSea.js - pure: it
   // imports formats/ alone)
+  // PIN MOVED (TESA4, bible/03-World/Arena-Provinces.md): and Arena's roads past the Bay (world/arenaRoads.js - pure: the
+  // road generator, the frame, the land and the cache's key law)
   // PIN MOVED (AUDIT BANTHA1 PERF-2): and the nature's wire (world/terrain/natureWire.js - pure: it imports nothing)
-  assert.deepEqual(imports, ['../../formats/woodsFile.js', '../ethericSea.js', '../roadsCache.js', '../roadsProducer.js', '../tamriel/tamrielFrame.js', '../tamriel/tamrielGround.js', '../tamriel/tamrielLand.js', './natureWire.js', './terrainGen.js'],
+  // PIN MOVED (MID-RING, bible/06-Systems/Travel-View.md MID-RING and FAR-FIELD): and the horizon's grounds
+  // (world/terrain/midRingGrid.js - pure: the kernel's sampler alone) with the landforms they shape the middle ring by
+  // (world/landforms.js - the kernel's own, already in terrainGen.js's closure), and a far cell's climate
+  // (world/terrain/farClimate.js - pure: the continent's ground, its land and frame, the Eltheric Ocean's box); MAP-WATERS:
+  // and the held map's copy of the waters the kernel carves (world/tamriel/watersInk.js - pure: the waters' own law)
+  // PIN MOVED (FAR-FLORA, bible/06-Systems/Travel-View.md FAR-FLORA): and the near law's woods at the middle ring's samples
+  // (world/terrain/floraCover.js - pure: the nature's layout and the tiles' classes, both already in terrainGen.js's closure)
+  assert.deepEqual(imports, ['../../formats/woodsFile.js', '../arenaRoads.js', '../ethericSea.js', '../landforms.js', '../roadsCache.js', '../roadsProducer.js', '../tamriel/tamrielFrame.js', '../tamriel/tamrielGround.js', '../tamriel/tamrielLand.js', '../tamriel/watersInk.js', './farClimate.js', './floraCover.js', './midRingGrid.js', './natureWire.js', './terrainGen.js'],
     'the import graph is exactly the reader, the road cache, the producer, the kernel, the continent\'s ground (TAMRIEL2 - pure: the authored geography and the frame), the Eltheric Ocean\'s and the nature\'s wire');
   const code = shell.replace(/\/\/[^\n]*/g, '').replace(/\/\*[^]*?\*\//g, '');
   assert.ok(!/\bdocument\b/.test(code) && !/new Worker/.test(code), 'no DOM, no nested workers');
@@ -255,7 +264,8 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   // every test green
   // ROADS 3: `roads` joined `woods` as worker-owned state that rides
   // beside the spread - the job itself still crosses WHOLE.
-  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods, roads, sites, climates })'), 'the job forwards whole');   // LANDFORM4/6: the worker's sites and climates beside its network
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
+  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods, roads, sites, beyond, climates })'), 'the job forwards whole');   // LANDFORM4/6: the worker's sites and climates beside its network
   // the client spells the constructor the way Vite's static analysis
   // bundles (eslint.config.js's RA1 note: never globalThis.Worker)
   const client = readFileSync('src/world/terrain/terrainGenClient.js', 'utf8');
@@ -278,7 +288,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   const seam = door.indexOf('  const { buildPixelNow } = createPixelBuild(');
   assert.ok(seam > 0, 'the build is constructed between its door and the restride');
   const bp = door.slice(0, seam) + hostText('src/scenes/pixelBuild.js') + door.slice(seam);
-  assert.ok(bp.lastIndexOf('built.set(key,') > bp.lastIndexOf('collider.addMesh'), 'publish follows the collider');
+  assert.ok(bp.lastIndexOf('swap.publish(px, py, key, made,') > bp.lastIndexOf('collider.addMesh'), 'publish follows the collider');   // PIN MOVED (IC-SWAP-BEHIND): published through the swap
   assert.ok(bp.includes('renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals'), 'GL consumes the reply on this thread');   // PIN MOVED (WATER-NEXT 2): the reply's grid, carved under the water for the eye - AUDIT WATER-NEXT P1: carved by the kernel, on the worker
   // AUDIT EV F-SIM1: one build per pixel, ever in flight - the cache
   // answers a finished pixel, the in-flight map answers a flying one
@@ -286,7 +296,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   // a leave-and-return crossing) can never double-build and overwrite
   // a published entry's GL objects
   assert.ok(world.includes('const inFlight = new Map();'), 'the in-flight map exists');
-  assert.ok(bp.includes('if (built.has(key)) return built.get(key);'), 'a finished pixel answers from the cache');
+  assert.ok(bp.includes('if (built.has(key) && !swap.owes(key)) return built.get(key);'), 'a finished pixel answers from the cache');   // PIN MOVED (IC-SWAP-BEHIND): unless it is owed a build behind its view
   assert.ok(bp.includes('.finally(() => inFlight.delete(key))'), 'and a settled build leaves the map');
   // AUDIT EV F-SIM2: the ring class re-checks at publish - the
   // pixelChanged restride sweep cannot see an unpublished pixel
@@ -297,7 +307,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   // until its turn comes.
   assert.ok(bp.includes('if (wantStride !== entry._stride) {'),
     'a crossing during the round trip cannot leave a wrong-class chunk');
-  assert.ok(bp.includes('if (wantStride === 1) host.restridePending.set(key, entry);'), 'the dear direction queues');
+  assert.ok(bp.includes('if (wantStride === 1) host.restridePending.set(pkey, entry);'), 'the dear direction queues');   // PIN MOVED (IC-SWAP-BEHIND): the pixel's own key
   assert.ok(bp.includes('else restrideTerrain(entry, wantStride);'), 'and the cheap one settles at once');
   // AUDIT EV F-SIM6: the probe's idle truth covers teleport builds too
   assert.ok(world.includes('queue.length === 0 && !building && inFlight.size === 0'),

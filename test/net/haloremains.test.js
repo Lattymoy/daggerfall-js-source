@@ -62,7 +62,8 @@ test('HALO-REMAINS: the session delivers a halo\'s room word, sends a take to th
   const s = Object.create(OnlineSession.prototype);
   const out = { own: [], halo: [] };
   const own = { send: (x) => out.own.push(JSON.parse(x).data) }, halo = { send: (x) => out.halo.push(JSON.parse(x).data) };
-  Object.assign(s, { id: 'me-0001', room: HERE, status: 'open', wildOk: true, _ws: own, _wildBucket: null, _now: () => 0, stats: { sent: 0 }, _halo: new Map([[NEXT, { ws: halo, status: 'open', wildOk: true }], ['cell:9,9', { ws: null, status: 'connecting' }]]) });
+  // PIN MOVED (RPT1026-SECNET): both sockets welcomed - a room's word never goes ahead of its socket's welcome (sendWild)
+  Object.assign(s, { id: 'me-0001', room: HERE, status: 'open', wildOk: true, _ws: own, _wildBucket: null, _now: () => 0, stats: { sent: 0 }, _welcomed: new WeakSet([own, halo]), _halo: new Map([[NEXT, { ws: halo, status: 'open', wildOk: true }], ['cell:9,9', { ws: null, status: 'connecting' }]]) });
   const take = { k: 'take', r: '0123456789ab', i: 0, n: 1 };
   assert.equal(s.sendWild(take, { room: NEXT }), true);
   assert.equal(out.halo.length, 1, 'a halo\'s room: its socket');

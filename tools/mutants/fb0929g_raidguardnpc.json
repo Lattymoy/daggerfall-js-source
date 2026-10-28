@@ -82,11 +82,11 @@
   {
     "name": "AUDIT29g-spared-surfaces",
     "file": "src/scenes/world.js",
-    "old": "            if (r?.crime) surfacePlayer();",
+    "old": "            if (r?.crime || r?.struck) surfacePlayer();",
     "new": "            if (r) surfacePlayer();",
     "tests": [
       "test/scenes/fb0929_raidguards.test.js"
     ],
-    "note": "A stopped swing surfaces the HUD and skips the whoosh."
+    "note": "A stopped swing surfaces the HUD and skips the whoosh. FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the line reads the road's struck answer too."
   }
 ]

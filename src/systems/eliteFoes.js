@@ -218,12 +218,26 @@ export function eliteLoot(level = 1, rolls = Math.random) {
   return out;
 }
 
+/** The pieces each foe's elite roll laid on it, so they can be told from its kind's own. */
+const _eliteLaid = new WeakMap();
 /** Give an elite its drop (once). */
 export function grantEliteLoot(entity, level, rolls = Math.random) {
   if (!entity?.eliteFoe || entity._eliteLoot) return;
   entity._eliteLoot = true;
   entity.items = entity.items ?? [];
-  entity.items.push(...eliteLoot(level ?? entity.level, rolls));
+  const laid = eliteLoot(level ?? entity.level, rolls);
+  _eliteLaid.set(entity, laid);
+  entity.items.push(...laid);
+}
+/** HUNTERS-MARK-II: the elite roll's pieces taken off a foe again - a named mark's drop is its kind's own, never kit
+ *  (bible/06-Systems/Bounty-Boards.md 12.4). Answers how many went. */
+export function withdrawEliteLoot(entity) {
+  const laid = _eliteLaid.get(entity);
+  if (!laid || !Array.isArray(entity?.items)) return 0;
+  _eliteLaid.delete(entity);
+  const before = entity.items.length;
+  entity.items = entity.items.filter((it) => !laid.includes(it));
+  return before - entity.items.length;
 }
 
 /** THE GLOW: a slow pulse, 0.55..1, phased per foe so a pack does not breathe in step. 0 for anything not elite.

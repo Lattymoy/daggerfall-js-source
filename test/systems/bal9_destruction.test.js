@@ -16,6 +16,7 @@
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import * as LR from '../../src/systems/loot/lootRarity.js';
 import * as LP from '../../src/systems/loot/lootPowers.js';
@@ -149,8 +150,9 @@ test('BAL9b THE SCHOOL PAST 100 IS ITS POTENCY: online, 1% a point of Destructio
   assert.equal(page(true, () => skillValue(capped, D)), 165);
   assert.equal(page(true, () => lands(BOLT(100), capped)), 140, 'x1.4, whatever is worn');
   off();
-  // mentoring reads none, as the edge reads none
-  assert.equal(page(true, () => SP.schoolPotency({ ...mage(200), _mentor: { level: 5 } })), 1);
+  // MENTOR2: mentoring reads the MENTORED climb (spell/spellPower.js fightingClimb) - none beside a level 5, where the edge reads none
+  const m200 = mage(200);
+  assert.equal(page(true, () => SP.schoolPotency({ ...m200, _mentor: mentorProfile(m200, [5]) })), 1);
 });
 
 test('BAL9c THE LINES: potency and wellspring - a caster\'s, banded, worth focus\'s, worded, never past their ceilings; the last pass lands them on their groups alone, lawful on the wire and to the law (mutants: wellspring on a blade)', () => {

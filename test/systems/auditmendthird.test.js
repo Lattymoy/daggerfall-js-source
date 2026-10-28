@@ -47,7 +47,7 @@ const quote = (mode, item, { quality = 10, priceAdjustment = 1000, skills = { me
 const found = (piece, r) => randomConditionLootItems([piece], at(r))[0];
 const worn = (it) => it && (it.group === 'Weapons' || it.group === 'Armor' || it.group === 'Books') && it.name !== 'Arrow' && (it.maxCondition ?? 0) > 0 && (it.currentCondition ?? 0) < it.maxCondition;
 
-test('AUDIT MEND-THIRD L3-1: online a found piece fences as it sells - enchanted at the item maker for one side effect at no gold, a Daedric cuirass found at 47% fenced, unmended, at its whole 47,553 where it sold for 22,350; offline, and an unmarked piece, fence as DFU\'s (mutants: the fence reads no mark; reads it offline)', () => {
+test('AUDIT MEND-THIRD L3-1: online a found piece fences as it sells - enchanted at the item maker for one side effect at no gold, a Daedric cuirass found at 47% fenced, unmended, at its whole 47,553 where it sold for 22,350 (23,776 and 11,175 since DAEDRIC-SALE); offline, and an unmarked piece, fence as DFU\'s (mutants: the fence reads no mark; reads it offline)', () => {
   const plate = found(armorOfMaterial(CUIRASS, ARMOR_MATERIAL.Daedric), 0.5);
   const side = sideEffectTypes().flatMap((t) => enchantmentParamValues(t).map((p) => enchantmentSettings(t, p))).filter(Boolean)
     .find((se) => { const d = enchantDecision(structuredClone(plate), [], [se], { gold: 0 }); return d.kind === 'enchant' && d.goldCost === 0; });
@@ -56,11 +56,11 @@ test('AUDIT MEND-THIRD L3-1: online a found piece fences as it sells - enchanted
   assert.ok(isEnchanted(plate) && plate.foundCondition === 15564 && plate.currentCondition === 15564);
   online(() => {
     assert.equal(quote('SellMagic', plate), quote('Sell', plate), 'fenced as it sells');
-    assert.equal(quote('SellMagic', plate), 22350);
-    assert.equal(quote('SellMagic', { ...plate, foundCondition: undefined }), 47553, 'unmarked: DFU\'s whole fence');
+    assert.equal(quote('SellMagic', plate), 11175);   // PIN MOVED (DAEDRIC-SALE): 22,350 - a counter pays half for Daedric now
+    assert.equal(quote('SellMagic', { ...plate, foundCondition: undefined }), 23776, 'unmarked: DFU\'s whole fence');   // PIN MOVED (DAEDRIC-SALE): 47,553
   });
   assert.equal(quote('SellMagic', plate), quote('SellMagic', { ...plate, foundCondition: undefined }), 'offline: the mark unread');
-  assert.equal(quote('SellMagic', plate), 134400, 'offline: DFU\'s whole fence, its haggle uncapped');
+  assert.equal(quote('SellMagic', plate), 67200, 'offline: DFU\'s whole fence, its haggle uncapped');   // PIN MOVED (DAEDRIC-SALE): 134,400
 });
 
 test('AUDIT MEND-THIRD L3-2: a foe\'s worn kit is marked as it is worn - PLAIN-LOOT\'s rejects, and PARTY-LOOT\'s personal bonus cloned from them, hand nothing over worn and unmarked over 1,600 class bodies (it was 133 rejects and 43 bonus pieces of 3,200; mutant: the kit\'s mark dropped)', () => {

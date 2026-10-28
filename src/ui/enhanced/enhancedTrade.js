@@ -37,7 +37,7 @@
 // letters when that picture is unavailable, and never blocks on it.
 
 import { BAG_WORDS } from '../../net/bagLaw.js';   // BAG1
-import { itemLine, linePicture, markItemFrame, wearBar, showItemHover, hideItemHover } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
+import { itemLine, linePicture, markItemFrame, wearBar, showItemHover, hideItemHover, questWord } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
 import { SLOT_BOX } from '../iconFit.js';   // UI1: the row's picture box
 import { fittedImg } from '../textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -66,6 +66,7 @@ import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '..
 import { isFurnishing } from '../../systems/decor/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
 import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // LOCK1: a locked piece is not for sale
 import { isJunk } from '../../systems/item/itemJunk.js';   // LOOT18: Sell junk
+import { holdOut } from '../../systems/item/heldOut.js';   // RPT1026-ITEMS HELD-OUT: the staged lot rides every save while the counter stands
 import { isBound, boundText } from '../../systems/item/itemBound.js';   // SS4: nor a bound one - a Sigil Stone, the Broker's wares
 import { getBool } from '../../systems/settings/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
 import { dateFromClassicMinutes, dateString } from '../../systems/gameDate.js';
@@ -131,6 +132,7 @@ let selected = null;   // { item, side: 'local'|'remote' } - a single click's to
 // making a purchase"): the tooltip's HOW MANY field - the item it was opened on, and its live text
 let qty = { item: null, text: '' };
 let unregisterOutside = () => {};
+let releaseHeld = () => {};   // RPT1026-ITEMS HELD-OUT: this counter's hold on the player's staged goods
 // A manual double-click tracker. render() below tears down and rebuilds
 // EVERY row on EVERY click (even a plain single click, just to draw the
 // tooltip) - so the row a first click lands on is already a different
@@ -819,7 +821,7 @@ function itemRow(item, from) {
   row.append(tile);
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-  const sub = [line.material, line.word].filter(Boolean).join(' · ');
+  const sub = [line.material, line.word, line.quest != null ? questWord() : null].filter(Boolean).join(' · ');   // QUEST-MARK (AUDIT FB1025i B6): a quest's item says so, as the pack's row does
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
@@ -951,6 +953,7 @@ function detailStrip() {
   const bits = [line.material, line.word, `${line.weight.toFixed(2)} kg`];
   if (line.damage != null) bits.push(`Damage ${line.damage}`);
   if (line.armour != null) bits.push(`Armour ${line.armour}`);
+  if (line.armorType != null) bits.push(`${line.armorType} armor`);   // ARMOR-TYPE (Voice.md rule 8: American spelling)
   if (line.hands != null) bits.push(line.hands);
   for (const t of line.survival ?? []) bits.push(t);
   info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
@@ -1098,6 +1101,7 @@ function render() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (deps.covered?.()) return;   // BOX-ON-TOP: a box stands over the counter (ui/tradeDoor.js)
   if (box) {
     if (box.buttons === 'YesNo') {
       if (e.code === 'KeyY') { e.preventDefault(); dismissBox(true); }
@@ -1132,6 +1136,10 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   selected = null;
   qty = { item: null, text: '' };
   onExit = hooks.onExit ?? (() => {});
+  releaseHeld();
+  // RPT1026-ITEMS HELD-OUT (systems/item/heldOut.js): what this counter stages out of the pack - an Identify's lot, a
+  // sale's - is in every save written while it stands; a Buy's basket (the shop's) is `basket`, never `staged`
+  releaseHeld = holdOut(hooks.entity, () => staged);
   render();
   keyHandler = onKey;
   globalThis.addEventListener('keydown', keyHandler, { capture: true });
@@ -1151,6 +1159,8 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
       hoverRow = null;
       unregisterOutside();
       unregisterOutside = () => {};
+      releaseHeld();   // RPT1026-ITEMS HELD-OUT: after the clear above put the lot back
+      releaseHeld = () => {};
       host = null;
       deps = {};
       basket = [];

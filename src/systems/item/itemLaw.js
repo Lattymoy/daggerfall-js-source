@@ -60,7 +60,8 @@ import { isStackable, ARROW_TEMPLATE, GOLD_TEMPLATE, GLASS_BOTTLE_TEMPLATE, LETT
 import { setItemLaw, LOOT_STACK_MAX, ITEM_GROUP_NAME_BY_CLASS } from '../loot/loot.js';
 import { CREATE_ITEM_ROWS, MENS_PLAIN_ROBES, WOMENS_PLAIN_ROBES } from '../createItemRows.js';
 import { cardById } from '../../net/iliac/iliacCards.js';
-import { PROVENANCE_RE, REPAIR_KIT_TEMPLATE } from '../../net/recipeLaw.js';
+import { PROVENANCE_RE, REPAIR_KIT_TEMPLATE, MASTERWORK } from '../../net/recipeLaw.js';
+import { isMasterWork, MASTER_LINES, MASTER_PROCS_MAX } from '../../net/masterLaw.js';   // MASTER-ART: a Master's work's shape
 import { ILIAC_CARD_TEMPLATE, CARD_BINDER_TEMPLATE, BINDER_DECKS_MAX } from '../iliac/iliacItems.js';
 import { POTENT } from '../../net/alchemyLaw.js';
 import { RRI_TEMPLATES } from '../roleplayRealismItems/rriItems.js';
@@ -71,6 +72,7 @@ import { DEEP_WATERS_FISH_TEMPLATES } from '../deepWater/deepWatersFishRows.js';
 import { WEIR_KEY_LAW_ROW } from '../eliteGates/weirKeyRow.js';   // KEY-LAW: the Weir Key's home pulls the Spire's law and its picture in
 import { SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW } from '../festival/festivalRows.js';   // WITCH1: the festival's home pulls its pictures and the texture door in
 import { STARGLASS_LAW_ROW } from '../starfall/starglassRow.js';   // STAR7: Starglass's home pulls its picture in - the Weir Key's way
+import { LOCKPICK_LAW_ROW } from '../lockpick/lockpickRow.js';   // LOCKPICK: the Lockpick's home pulls its picture and the loot law in - the Weir Key's way
 import { DEX_ENEMY_IDS } from '../enemyExpansion/dexIds.js';   // SOUL-LAW: the mod's fifty, whose souls a gem holds - read from its tables, no install
 // THE PORT'S OWN TEMPLATES register as their homes load (itemTemplates.js registerCustomTemplates). A headless reader -
 // the account service - loads none of the game, so the homes that register at import are imported here for exactly
@@ -78,7 +80,8 @@ import { DEX_ENEMY_IDS } from '../enemyExpansion/dexIds.js';   // SOUL-LAW: the 
 // their rows from leaves instead, read beside the registry (lawTemplate) and never put into it - so a client with the
 // mod switched off does not start knowing its items. The Weir Key's (KEY-LAW, FIELD BUGS 2026-10-17) is read beside
 // it too: its home (systems/eliteGates/weirKey.js) pulls the Spire's law and its picture in - and Starglass's (STAR7), whose
-// home (systems/starfall/starglass.js) pulls its picture in.
+// home (systems/starfall/starglass.js) pulls its picture in, and the Lockpick's (LOCKPICK), whose home
+// (systems/lockpick/lockpickItem.js) pulls its picture, the loot law and the foes' table in.
 import '../professions/profTemplates.js';
 import '../survival/items.js';
 import '../thunderlock.js';
@@ -122,13 +125,15 @@ import '../naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
  *  it on, so a finding a law of 12 made against either is a finding to ask again. AFFIX-LINES and REFORGE-REPLACE moved it
  *  to 14 (2026-10-25): the Reforge's count (`reforges`, systems/loot/lootRarity.js reforgeCount) is a mark of the tiers
  *  the Reforge takes alone - on a Legendary no Exalted, or a piece of no tier, a finding from it on (a law of 13 knew no
- *  such field). Nothing a law of 13 found is lawful now. */
+ *  such field). Nothing a law of 13 found is lawful now. MASTER-ART left it at 14: a Master's work (net/masterLaw.js) is a
+ *  shape no earlier law met honestly - none was made before the service that makes it, whose judge is this law - so no
+ *  finding of 14 is one to ask again. */
 export const ITEM_LAW_VERSION = 14;
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));
 /** The templates whose homes cannot load headless, by index - their rows, as the homes register them. */
-const LAW_ONLY = new Map(/** @type {any[]} */ ([...RRI_TEMPLATES, ...FORAGING_TEMPLATES, ...REST_ITEM_ROWS, ...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map((t) => [t.index, t]));
+const LAW_ONLY = new Map(/** @type {any[]} */ ([...RRI_TEMPLATES, ...FORAGING_TEMPLATES, ...REST_ITEM_ROWS, ...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW, LOCKPICK_LAW_ROW]).map((t) => [t.index, t]));
 /** A template the port knows: the live registry's row, or a law-only row. */
 export const lawTemplate = (/** @type {unknown} */ i) => (Number.isInteger(i) ? templateByIndex(i) ?? LAW_ONLY.get(/** @type {number} */ (i)) ?? null : null);
 
@@ -369,6 +374,8 @@ function tierFindings(/** @type {any} */ item) {
     }
     return out;
   }
+  // MASTER-ART (Professions-Arc 57): a Master's work - no record; its chosen lines, a Masterwork, nothing laid on after
+  if (isMasterWork(item)) return [...out, ...masterFindings(item, body, procs, techs, gems)];
   // a Legendary: its record, its record's lines, then one Exalted line or one curse line, then a gem's
   const rec = legendaryById(item.legendary);
   if (!rec || !legendariesFor(item).some((l) => l.id === rec.id)) return [...out, 'legendary'];
@@ -401,6 +408,23 @@ function tierFindings(/** @type {any} */ item) {
   if (has(item, 'honed') && item.exalted !== true) out.push('honed');
   const first = firstOwnRow(item);
   if (!first || first.type !== rec.enchantment?.type || first.param !== rec.enchantment?.param) out.push('enchantments');
+  return out;
+}
+
+/** MASTER-ART: A MASTER'S WORK'S SHAPE (net/masterLaw.js) - a Masterwork; its three chosen lines, one that does something
+ *  at most, each in the Legendary band; no technique, gem, Exalted line, curse, reforge or hone; no enchantment (the item
+ *  maker refuses a Legendary - enchanting.js keptEnchantments). Its lines against its record are the judge's
+ *  (server-account/src/judge.js judgeProducts). @param {any} item @param {any[]} body @param {any[]} procs @param {any[]} techs @param {any[]} gems */
+function masterFindings(item, body, procs, techs, gems) {
+  /** @type {string[]} */
+  const out = [];
+  if (item.quality !== MASTERWORK || body.length !== MASTER_LINES || procs.length > MASTER_PROCS_MAX || techs.length || gems.length) out.push('legendary');
+  for (const a of body) {
+    const band = AFFIX_RANGES[a?.id]?.legendary;
+    if (!band || !(a.value >= band[0] && a.value <= band[1])) out.push('affixes');
+  }
+  if (item.exalted === true || isCursed(item) || has(item, 'reforged') || has(item, 'reforges') || has(item, 'honed')) out.push('legendary');
+  if (Array.isArray(item.enchantments) && item.enchantments.length) out.push('enchantments');
   return out;
 }
 

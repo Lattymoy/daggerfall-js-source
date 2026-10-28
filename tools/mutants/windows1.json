@@ -376,8 +376,8 @@
   {
     "name": "RW1-window-flag-lost",
     "file": "src/scenes/dataPipeline.js",
-    "old": "{ replacement, window: true });",
-    "new": "{ replacement });",
+    "old": "t.getWindowColors32(bitmap), { replacement, window: true });",
+    "new": "t.getWindowColors32(bitmap), { replacement });",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]

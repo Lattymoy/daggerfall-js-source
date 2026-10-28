@@ -344,8 +344,8 @@
   {
     "name": "SEA-VAULTS-world-gate-open",
     "file": "src/scenes/world.js",
-    "old": "    if (!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) return true;",
-    "new": "    if (!wildInside(mask, p.x, p.y)) return true;",
+    "old": "    if ((!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) || hit?.dfLocation?.capital) return true;",
+    "new": "    if ((!wildInside(mask, p.x, p.y)) || hit?.dfLocation?.capital) return true;",
     "tests": [
       "test/systems/sea/seavaults.test.js"
     ]

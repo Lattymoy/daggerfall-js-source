@@ -65,11 +65,12 @@
   {
     "name": "PENITENT-edge-off-the-badge",
     "file": "src/ui/playerBadge.js",
-    "old": ", edge: TITLE_EDGE[key] ?? null };",
-    "new": " };",
+    "old": ", edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) };",
+    "new": ", flame: Object.hasOwn(TITLE_FLAME, key) };",
     "tests": [
       "test/net/penitent.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "PENITENT-classic-edge-in-the-gold",
@@ -174,12 +175,12 @@
   {
     "name": "PENITENT-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
-    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
     "tests": [
       "test/net/penitent.test.js"
     ],
-    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
+    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "PENITENT-granted-to-another-account",

@@ -181,6 +181,9 @@ export function dungeonSizeFor(dfLocation, { questMachine = null,
   // Master's ring and the Keeper's Hall stand by their distance out from the stair over Kamer's 32 blocks, and a five-
   // block plus of random ones drawn from his list would stand the pit in a cellar and the Hall nowhere. Main story's rule.
   if (isArenaUndercroft(dfLocation)) return 'full';
+  // WW7-4 (World-Wide.md WW7-4): A CAPITAL'S CASTLE NEVER SHRINKS. Its halls are a Bay palace's (world/capitalCastles.js), and
+  // the Bay's castles are main story's - whole, the guild's instance the public room's own layout. Main story's rule.
+  if (dfLocation.capital) return 'full';
   // AUDIT SD (Super-Dungeons.md section 5): A HOLLOW IS LAID WHOLE - its feat is the longest walk its template has, the
   // world's sizes are for the Bay's own dungeons; online, offline, whatever a setting or a quest says.
   if (dungeonTier(dfLocation) === 'super') return 'full';

@@ -88,10 +88,12 @@ test('GPU-TRAIL a sample: the counts, the fps counter\'s second rounded, the hea
   assert.deepEqual(gpuSample({ at: 1_000, upMs: 1_234_567, live, frame, heap: 512 * 1048576 + 1, hidden: false, lost: true }), {
     at: 1_000, upS: 1235, textures: 812, buffers: 2300, vaos: 1100, framebuffers: 24, programs: 140,
     fps: 59, frameMs: 16.9, worstMs: 33, hitchMs: 122, draws: 431, binds: 900, viewDraws: 0, shadowDraws: 120, heapMB: 512, hidden: false, lost: true,
+    restored: false,   // PIN MOVED (GPU-TRAIL-LOST, 2026-10-25): the sample taken as the context comes back says so
   });
   const none = gpuSample({ at: 2_000, upMs: 0, live, frame: null, heap: null, hidden: true, lost: false });
   assert.deepEqual([none.fps, none.frameMs, none.worstMs, none.hitchMs, none.draws, none.heapMB, none.hidden], [null, null, null, null, null, null, true]);
-  assert.equal(gpuSample({ at: 0, upMs: 0, live, frame: { fps: 60, hitch: null }, heap: null, hidden: false, lost: false }).hitchMs, null, 'no hitch in the minute');
+  // PIN MOVED (GPU-TRAIL-LOST): a minute with no hitch is a number the counter has - 0, not '-' in crash.log
+  assert.equal(gpuSample({ at: 0, upMs: 0, live, frame: { fps: 60, hitch: null }, heap: null, hidden: false, lost: false }).hitchMs, 0, 'no hitch in the minute');
 });
 
 test('GPU-TRAIL running: the first sample soon, then one every GPU_TRAIL_MS and one at a lost context, each sent with the samples before it; a second the counter has not moved past is no frame; a send that throws costs nothing; stop lets go (mutants: the first sample at the period; the lost context unheard; the stale second written as live)', () => {
@@ -117,16 +119,22 @@ test('GPU-TRAIL running: the first sample soon, then one every GPU_TRAIL_MS and 
   live.textures = 9; lost = true;
   canvas.dispatchEvent(new Event('webglcontextlost'));
   assert.deepEqual(sent[2].samples.map((s) => [s.textures, s.lost]), [[3, false], [3, false], [9, true]], 'the loss sampled at once, with the trail before it');
+  // GPU-TRAIL-LOST (2026-10-25): the context given back is sampled at once and says so; no other sample does
+  lost = false;
+  canvas.dispatchEvent(new Event('webglcontextrestored'));
+  assert.deepEqual(sent[3].samples.map((s) => [s.lost, s.restored]), [[false, false], [false, false], [true, false], [false, true]], 'the restore sampled at once, marked restored');
   refuse = true;
   assert.doesNotThrow(() => timers.every[0][0]());
   refuse = false;
   second = { fps: 30 };
   trail.sample();
-  assert.equal(sent[3].samples.length, 5, 'a refused send kept its sample');
+  assert.equal(sent[4].samples.length, 6, 'a refused send kept its sample');
+  assert.deepEqual(sent[4].samples.slice(-2).map((s) => s.restored), [false, false], 'a timer\'s sample after the restore is a plain one');
   trail.stop();
   assert.deepEqual(timers.cleared, [1, 2]);
   canvas.dispatchEvent(new Event('webglcontextlost'));
-  assert.equal(sent.length, 4, 'stopped: the canvas no longer heard');
+  canvas.dispatchEvent(new Event('webglcontextrestored'));
+  assert.equal(sent.length, 5, 'stopped: the canvas no longer heard');
 });
 
 test('GPU-TRAIL the fps counter hands its last second, a new object each second - the trail tells a stalled counter by it (mutant: the accessor answering a copy every call)', () => {

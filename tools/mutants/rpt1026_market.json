@@ -1,0 +1,365 @@
+[
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-road-read-before-the-settle",
+    "file": "server-account/src/market.js",
+    "old": "  const touched = await settle(ctx, player);\n  const [loads, pieces, goods, [bal] = []]",
+    "new": "  const touched = new Set();\n  const [loads, pieces, goods, [bal] = []]",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-route-unanswered",
+    "file": "server-account/src/index.js",
+    "old": "          '/v1/market/road': () => marketRoad(ctx, who.player, env, body),",
+    "new": "",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-road-s-third-read-dropped",
+    "file": "server-account/src/market.js",
+    "old": "  return { ok: true, road: roadFrom([loads, pieces, goods], nowS), balance:",
+    "new": "  return { ok: true, road: roadFrom([loads, pieces, []], nowS), balance:",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-road-unheard",
+    "file": "src/net/marketBook.js",
+    "old": "      return heard(await ask(() => door.road(character()))) ?? { ok: false, error: 'server' };",
+    "new": "      return (await ask(() => door.road(character()))) ?? { ok: false, error: 'server' };",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-sweep-never-reading-the-road",
+    "file": "src/net/marketArrivals.js",
+    "old": "        road = typeof book?.road === 'function' ? await book.road() : { ok: true };",
+    "new": "        road = { ok: true };",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-gate-unread",
+    "file": "src/net/marketArrivals.js",
+    "old": "    if (!go) { schedule(ARRIVALS_FIRST_MS); return; }",
+    "new": "    if (false) { schedule(ARRIVALS_FIRST_MS); return; }",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-tries-unbounded",
+    "file": "src/net/marketArrivals.js",
+    "old": "      if (++tries <= ARRIVALS_TRIES) { schedule(ARRIVALS_AGAIN_MS); return; }",
+    "new": "      if (++tries <= Infinity) { schedule(ARRIVALS_AGAIN_MS); return; }",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-courier-never-waited-for",
+    "file": "src/net/marketArrivals.js",
+    "old": "    if (due.length && tries <= ARRIVALS_TRIES) schedule(",
+    "new": "    if (false && due.length && tries <= ARRIVALS_TRIES) schedule(",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-a-shut-market-asked-again",
+    "file": "src/net/marketArrivals.js",
+    "old": "    if (words.some((w) => SHUT.includes(w))) { shut = true; return; }",
+    "new": "    if (words.some((w) => SHUT.includes(w))) { return; }",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-soon-left-uncounted",
+    "file": "src/net/marketArrivals.js",
+    "old": "    soon() { tries = 0; if (sweeping) poked = true;",
+    "new": "    soon() { if (sweeping) poked = true;",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-clock-an-earlier-sweep-s",
+    "file": "src/net/marketArrivals.js",
+    "old": "  function after(/** @type {any} */ road, /** @type {any} */ s) {\n    cancel?.();\n    cancel = null;",
+    "new": "  function after(/** @type {any} */ road, /** @type {any} */ s) {",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-delivery-s-word-lost",
+    "file": "src/net/marketBook.js",
+    "old": "          const r = await collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought');",
+    "new": "          const r = await collectGood(d.id);",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-returned-word-lost",
+    "file": "src/net/marketBook.js",
+    "old": "collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought');",
+    "new": "collectGood(d.id, 'bought');",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-pack-says-nothing-came",
+    "file": "src/systems/tradePack.js",
+    "old": "      say(why === 'bought' ? marketArrivedText(name) : why === 'returned' ? marketBackText(name) : `${name} is in your pack.`);",
+    "new": "      say(`${name} is in your pack.`);",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-soon-never-asked",
+    "file": "src/scenes/vendorHost.js",
+    "old": "    if (c?.ok || c?.error === 'market-gone') return true;\n    arrivals.soon();",
+    "new": "    if (c?.ok || c?.error === 'market-gone') return true;",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-market-gone-said-as-on-the-way",
+    "file": "src/scenes/vendorHost.js",
+    "old": "    if (c?.ok || c?.error === 'market-gone') return true;",
+    "new": "    if (c?.ok) return true;",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-press-s-word-unchanged",
+    "file": "src/scenes/vendorHost.js",
+    "old": "    if (r?.ok && r.data?.delivery?.id && !(await collectedAtPress(r.data.delivery.id))) {\n      return { ok: true, text: t('vendor.buy.onWay'",
+    "new": "    if (false) {\n      return { ok: true, text: t('vendor.buy.onWay'",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-stall-settling-unread",
+    "file": "src/scenes/vendorHost.js",
+    "old": "        settle: () => arrivals.sweep(),",
+    "new": "        settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop),",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js",
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-no-clock-started",
+    "file": "src/scenes/vendorHost.js",
+    "old": "  if (marketBook && typeof checkpointGateOpen === 'function') arrivals.start();",
+    "new": "",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-ARRIVE-the-delete-s-way-out-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": " Settle it first. Play it online once and goods waiting for it come to its pack on their own; takings are collected on the Vendor page.'),",
+    "new": " Settle it first.'),",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-the-collect-looked-up-after-the-record",
+    "file": "server-account/src/market.js",
+    "old": "  const oneOn = landed && side.error === 'seq' && side.seq === Number(realm?.seq) + 1 ? side.seq : null;",
+    "new": "  const oneOn = null;",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-landed-unread",
+    "file": "server-account/src/market.js",
+    "old": "  const oneOn = landed && side.error === 'seq'",
+    "new": "  const oneOn = side.error === 'seq'",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-one-on-taken-for-any-move",
+    "file": "server-account/src/market.js",
+    "old": "side.error === 'seq' && side.seq === Number(realm?.seq) + 1 ? side.seq : null;",
+    "new": "side.error === 'seq' && side.seq > Number(realm?.seq) ? side.seq : null;",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-the-repeat-without-the-record-s-sequence",
+    "file": "server-account/src/market.js",
+    "old": "  if (prior) return answer(prior, { repeat: true, ...(oneOn ? { realm: { seq: oneOn } } : {}) });\n  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no collect of this id",
+    "new": "  if (prior) return answer(prior, { repeat: true });\n  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no collect of this id",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js",
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-one-on-with-no-collect-collected",
+    "file": "server-account/src/market.js",
+    "old": "  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no collect of this id: a move this tab never made",
+    "new": "",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-the-batch-s-catch-answering-seq",
+    "file": "server-account/src/market.js",
+    "old": "    // again) - that collect, as VENDOR-LOST answers a buy's\n    const first = landed &&",
+    "new": "    // again) - that collect, as VENDOR-LOST answers a buy's\n    const first = false &&",
+    "tests": [
+      "test/server/rpt1026_market_road.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-landed-never-sent",
+    "file": "src/net/marketBook.js",
+    "old": "door.collect(me, delivery, rid, at, { landed: true }),",
+    "new": "door.collect(me, delivery, rid, at),",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-a-landed-repeat-abandoned",
+    "file": "src/net/marketBook.js",
+    "old": "        const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);",
+    "new": "        const mine = !a?.data?.repeat;",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-COLLECT-LANDED-every-repeat-received",
+    "file": "src/net/marketBook.js",
+    "old": "        const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);",
+    "new": "        const mine = true;",
+    "tests": [
+      "test/net/rpt1026_market_arrive.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-HOLD-SAID-staff-s-contact-dropped",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": " To ask why, send them a private report with /bug, or ask on the game\\'s Discord.'); },",
+    "new": "'); },",
+    "tests": [
+      "test/systems/rpt1026_market_held.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-HOLD-SAID-a-notice-back-to-trading-alone",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "const HELD_LAW = 'The realm is reviewing this character: it carries an item the game could not have made. Its trading, gathering and crafting are frozen until it is gone.';",
+    "new": "const HELD_LAW = 'The realm is reviewing this character: it carries an item the game could not have made. Trading is frozen until it is gone.';",
+    "tests": [
+      "test/systems/rpt1026_market_held.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-HOLD-SAID-the-timed-one-s-three-dropped",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "  : t('realm.held.until', 'This character has been held 3 times. Its trading, gathering and crafting are frozen until {date}, then reopen on their own.'",
+    "new": "  : t('realm.held.until', 'This character has been held 3 times. Its trading is frozen until {date}, then reopens on its own.'",
+    "tests": [
+      "test/systems/rpt1026_market_held.test.js",
+      "test/server/autohold.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-HOLD-SAID-the-refusal-s-generic-words-alone",
+    "file": "src/net/accountClient.js",
+    "old": "  'trade-held': () => tradeHeldSaid() ?? t('account.refusal.tradeHeld',",
+    "new": "  'trade-held': () => t('account.refusal.tradeHeld',",
+    "tests": [
+      "test/systems/rpt1026_market_held.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-HOLD-SAID-the-provider-never-wired",
+    "file": "src/scenes/realmHoldHost.js",
+    "old": "  setTradeHeldSaid(session ? () => tradeHeldNotice(null, session.tradeHeld, session.tradeHeldWhy) : null);",
+    "new": "",
+    "tests": [
+      "test/systems/rpt1026_market_held.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-HOLD-SAID-the-provider-kept-past-the-session",
+    "file": "src/scenes/realmHoldHost.js",
+    "old": "  setTradeHeldSaid(session ? () => tradeHeldNotice(null, session.tradeHeld, session.tradeHeldWhy) : null);",
+    "new": "  if (session) setTradeHeldSaid(() => tradeHeldNotice(null, session.tradeHeld, session.tradeHeldWhy));",
+    "tests": [
+      "test/systems/rpt1026_market_held.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-STORES-SAID-loose-units-unsaid",
+    "file": "src/ui/storesWalled.js",
+    "old": "(currency === 'gold' ? (s.bought | 0) : (s.gold | 0)) + (s[LOOSE_ORIGIN] | 0) : 0);",
+    "new": "(currency === 'gold' ? (s.bought | 0) : (s.gold | 0)) : 0);",
+    "tests": [
+      "test/ui/rpt1026_market_walled.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-STORES-SAID-gold-s-units-let-through-the-silver-line",
+    "file": "src/ui/storesWalled.js",
+    "old": "(currency === 'gold' ? (s.bought | 0) : (s.gold | 0))",
+    "new": "(currency === 'gold' ? (s.bought | 0) : 0)",
+    "tests": [
+      "test/ui/rpt1026_market_walled.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-STORES-SAID-the-guild-said-as-a-sale",
+    "file": "src/ui/storesWalled.js",
+    "old": "  if (whose === 'guild') return t('market.list.walledGuild',",
+    "new": "  if (whose === 'nobody') return t('market.list.walledGuild',",
+    "tests": [
+      "test/ui/rpt1026_market_walled.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-STORES-SAID-the-List-form-s-note-dropped",
+    "file": "src/ui/marketTab.js",
+    "old": "      if (walled) notes.append(el('p', 'notice-tip market-refused', walled));",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_market_walled.test.js"
+    ]
+  },
+  {
+    "name": "RPT1026-MARKET-STORES-SAID-the-guild-s-dropped",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (walled) form.append(el('p', 'dfsocial-note', walled));",
+    "new": "",
+    "tests": [
+      "test/ui/rpt1026_market_walled.test.js"
+    ]
+  }
+]

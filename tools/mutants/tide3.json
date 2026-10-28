@@ -20,8 +20,8 @@
   {
     "name": "TIDE3-law-sum",
     "file": "src/net/townSeatLaw.js",
-    "old": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o);",
-    "new": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m);",
+    "old": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o + b);",
+    "new": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + b);",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -191,13 +191,13 @@
   {
     "name": "TIDE3-ix-zero",
     "file": "server-account/src/index.js",
-    "old": "...(await seatsBoard(ctx.db, r.seats, nowS)), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };",
-    "new": "...(await seatsBoard(ctx.db, r.seats, nowS)) };",
+    "old": "...(domains?.rule ? { seats: chartersMarked(board.seats, domains.seats) } : {}), zero: seasonZeroOf(env.SEASON_ZERO_WEEK),",
+    "new": "...(domains?.rule ? { seats: chartersMarked(board.seats, domains.seats) } : {}),",
     "tests": [
       "test/net/tide_orcs.test.js",
       "test/ui/seat1c_client.test.js"
     ],
-    "note": "PRIMARY-TRIPS (re-aimed by content): the zero beside seatsBoard's answer"
+    "note": "Re-aimed by content (DOMAIN3): the list's board read once, and marked for the region law. PRIMARY-TRIPS (re-aimed by content): the zero beside seatsBoard's answer"
   },
   {
     "name": "TIDE3-ac-path",
@@ -283,11 +283,12 @@
   {
     "name": "TIDE3-ed-claim-gate",
     "file": "src/systems/seatEdicts.js",
-    "old": "      if ((host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {",
-    "new": "      if (host.orcCamp) {",
+    "old": "    if (camp && (host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {",
+    "new": "    if (camp && host.orcCamp) {",
     "tests": [
       "test/net/tide_orcs.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the claim is a closure (an Orc Raid counts a camp alone, never a den past the Bay); the mutant still drops the Tide's gate."
   },
   {
     "name": "TIDE3-ed-said",

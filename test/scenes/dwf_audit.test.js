@@ -98,7 +98,8 @@ test('AUDIT DW-F E5-1/E5-4: the view the loot and the guards test is the one the
 test('AUDIT DW-F E5-5: the port\'s own rebuilds keep the rubble where it lay; an unload and a sweep take it (pins)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(collectLoose\) for \(const r of \[\.\.\.\(_dwRubble\.get\(p\) \?\? \[\]\)\]\) dwFreeRubble\(r\);[^\n]*\n\s+else if \(_dwRubble\.has\(p\)\) \{ _dwRubbleCarry\.set\(key, _dwRubble\.get\(p\)\); _dwRubble\.delete\(p\); \}/);
-  assert.match(w, /const dwRubbleKept = _dwRubbleCarry\.get\(key\);[^\n]*\n\s+if \(dwRubbleKept\) \{ _dwRubbleCarry\.delete\(key\); const e = built\.get\(key\); for \(const r of dwRubbleKept\) r\.entry = e; _dwRubble\.set\(e, dwRubbleKept\); \}/, 'adopted by the entry that stands next');
+  // PIN MOVED (IC-SWAP-BEHIND): the pixel's own key (`pkey`) - the carry the swap's teardown took, adopted by the entry it stood in
+  assert.match(w, /const dwRubbleKept = _dwRubbleCarry\.get\(pkey\);[^\n]*\n\s+if \(dwRubbleKept\) \{ _dwRubbleCarry\.delete\(pkey\); const e = built\.get\(pkey\); for \(const r of dwRubbleKept\) r\.entry = e; _dwRubble\.set\(e, dwRubbleKept\); \}/, 'adopted by the entry that stands next');
   assert.match(w, /for \(const list of _dwRubbleCarry\.values\(\)\) for \(const r of list\) dwFreeRubble\(r\);[^\n]*\n\s+_dwRubbleCarry\.clear\(\);/, 'a sweep carries nothing');
 });
 

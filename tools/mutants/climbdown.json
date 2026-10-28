@@ -47,8 +47,8 @@
   {
     "name": "CLIMBDOWN-45-degree-eave-refused",
     "file": "src/player/parkour.js",
-    "old": "  if (!Number.isFinite(top.dist) || !top.normal || top.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) return null;",
-    "new": "  if (!Number.isFinite(top.dist) || !top.normal || top.normal[1] < PARKOUR_TOP_MIN_NY) return null;",
+    "old": "  const flat = Number.isFinite(top.dist) && top.normal && top.normal[1] >= PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER;",
+    "new": "  const flat = Number.isFinite(top.dist) && top.normal && top.normal[1] >= PARKOUR_TOP_MIN_NY;",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -347,8 +347,8 @@
   {
     "name": "CLIMBDOWN-45-degree-ledge-refused",
     "file": "src/player/parkour.js",
-    "old": "  if (!down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) return { ok: false, why: 'steep-top' };",
-    "new": "  if (!down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY) return { ok: false, why: 'steep-top' };",
+    "old": "  if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) {",
+    "new": "  if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY) {",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",

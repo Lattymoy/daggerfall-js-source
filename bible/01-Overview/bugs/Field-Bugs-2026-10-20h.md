@@ -280,7 +280,7 @@ The Place is resolved at the parse (`scheduleQuest`), and that is when the templ
 A temple is named for its god's first child and a guild hall for its own faction
 (`buildingNames.js:"      a = shownTempleName?.(factionId) ?? templeName?.(factionId) ?? '';   // L10N3e: FormulaHelper.cs:3036, as shown"`),
 and only the bag holds those resolvers. The world host's bag comes from the town host
-(`world.js:"    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},"`), and that bag answered null whenever no town's
+(`questWorld.js:"    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},"`), and that bag answered null whenever no town's
 topics stood. The world host clears the topics on every map pixel without a location
 (`world.js:"    if (!cur || !dfLocation || !cur.locBlocks) { _talkPlayerPos = () => null; townTalk.setTopics(null); return; }"`).
 So on the road, in the wilds or at sea, a temple or guild hall drawn then got `a = ''`, which a singleton name returns
@@ -792,8 +792,8 @@ Enemy Expansion's 282, a line of the mod's own MonsterBase table. DEX1 merged as
 by default (`modSettings.js:"  'daggerfall-enemy-expansion': Object.freeze({"`); its fifty enemies are 256-290 (monsters)
 and 384-398 (people), joined to the bestiary at the game's load (`dexInstall.js:"  registerEnemyRows(rows);"`). The soul
 trap's kill door hands the foe's own mobile id to the trap
-(`exteriorFoes.js:"const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());"`,
-`dungeonContext.js:"const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());"`),
+(`exteriorFoes.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());"`,
+`dungeonContext.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());"`),
 and the gem takes it (`mysticism.js:"  trap.trappedSoulType = soulType;"`) - DFU's own law: EnemyEntity.cs:217 hands
 `SoulTrap.FillEmptyTrapItem((MobileTypes)mobileEnemy.ID)` and SoulTrap.cs:158 writes it. With the mod installed DFU's
 EnemyBasics holds the custom id, and ItemHelper.cs:352-368 names the gem "Soul Trap (Ogre)", as the port does

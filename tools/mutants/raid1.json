@@ -44,8 +44,8 @@
   {
     "name": "RAID1-roll-two-parties",
     "file": "src/net/raid/raidLaw.js",
-    "old": "    const ty = rangeInt(0, RAID_TYPES, random);\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.push(",
-    "new": "    const ty = rangeInt(0, RAID_TYPES - 1, random);\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.push(",
+    "old": "    const ty = parties[rangeInt(0, parties.length, random)];   // WW6: the lane's parties - the Bay's three are rangeInt(0, RAID_TYPES)'s own draw\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.push(",
+    "new": "    const ty = parties[rangeInt(0, parties.length - 1, random)];   // WW6: the lane's parties - the Bay's three are rangeInt(0, RAID_TYPES)'s own draw\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.push(",
     "tests": ["test/systems/raid1_raidingParties.test.js", "test/systems/raidroll.test.js"]
   },
   {
@@ -198,22 +198,22 @@
   {
     "name": "RAID1-fix9-old-day-thrown-away-first",
     "file": "src/systems/raidingParties.js",
-    "old": "    expire(now, region);\n    for (const r of state.raids) routRaid(r);",
+    "old": "    expire(now, home);\n    for (const r of state.raids) routRaid(r);",
     "new": "    for (const r of state.raids) routRaid(r);",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix2-withdrawn-untold",
     "file": "src/systems/raidingParties.js",
-    "old": "if (!r.cleansed && r.announced && region >= 0 && r.regionIndex === region)",
-    "new": "if (!r.cleansed && region >= 0 && r.regionIndex === region)",
+    "old": "if (!r.cleansed && r.announced && home >= 0 && raidHome(r) === home)",
+    "new": "if (!r.cleansed && home >= 0 && raidHome(r) === home)",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix3-announced-again",
     "file": "src/systems/raidingParties.js",
-    "old": "if (!raidActive(r, now) || r.regionIndex !== region || r.announced) continue;",
-    "new": "if (!raidActive(r, now) || r.regionIndex !== region) continue;",
+    "old": "if (!raidActive(r, now) || raidHome(r) !== home || r.announced) continue;",
+    "new": "if (!raidActive(r, now) || raidHome(r) !== home) continue;",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
@@ -225,16 +225,16 @@
   },
   {
     "name": "RAID1-current-raid-any-town-of-the-region",
-    "file": "src/systems/raidingParties.js",
-    "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null);",
-    "new": "r.regionIndex === town.regionIndex) : null);",
+    "file": "src/world/raidShared.js",
+    "old": "export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
+    "new": "export const raidTownIs = (r, town) => !!town && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-current-raid-any-region",
-    "file": "src/systems/raidingParties.js",
-    "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null);",
-    "new": "r.locationIndex === town.locationIndex) : null);",
+    "file": "src/world/raidShared.js",
+    "old": "export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
+    "new": "export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex;",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
@@ -408,8 +408,8 @@
   {
     "name": "RAID1-watch-kept-up-after-the-raid",
     "file": "src/systems/raidingParties.js",
-    "old": "return state.raids.some((r) => raidActive(r, now) && r.regionIndex === town.regionIndex",
-    "new": "return state.raids.some((r) => r.regionIndex === town.regionIndex",
+    "old": "return state.raids.some((r) => raidActive(r, now) && raidTownIs(r, town));",
+    "new": "return state.raids.some((r) => raidTownIs(r, town));",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
@@ -428,7 +428,7 @@
   },
   {
     "name": "RAID1-host-raiders-saved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/raidHost.js",
     "old": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, transient: true }),",
     "new": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true }),",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
@@ -449,15 +449,15 @@
   },
   {
     "name": "RAID1-host-fix8-the-sea-a-province",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/raidHost.js",
     "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(maps.getPoliticIndex(px.x, px.y)) ? _questRegionIndex() : -1;",
     "new": "return !(etherSea && inEther(px.x, px.y)) ? _questRegionIndex() : -1;",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-host-indoors-is-the-street",
-    "file": "src/scenes/world.js",
-    "old": "townHere: (outdoors) => ((modes?.mode ?? 'exterior') !== 'exterior' ? null :",
+    "file": "src/scenes/raidHost.js",
+    "old": "townHere: (outdoors) => ((host.modes?.mode ?? 'exterior') !== 'exterior' ? null :",
     "new": "townHere: (outdoors) => (false ? null :",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },

@@ -76,7 +76,9 @@ import { getPref } from '../uiPrefs.js';
 import { armorBodyParts, equipTableOf, wearableItem } from '../equip.js';   // LR4: the parts a piece covers, the foe's worn table; RARITY-WEAR: whether any slot takes it
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from '../entityMods.js';   // RF1: the fold is one of the entity's, read once per channel
 import { templateByIndex, itemBaseValue, isAmmunition } from '../item/itemTemplates.js';   // AUDIT 68 S27-ammo-arrow-only: the ammunition registry's home
-import { rriVariantWord } from '../roleplayRealismItems/rriItems.js';   // DISC29-B: the word Roleplay & Realism: Items' mint put before the template's name
+import { rriVariantWord, rriNativeMaterialValue } from '../roleplayRealismItems/rriItems.js';   // DISC29-B: the word Roleplay & Realism: Items' mint put before the template's name; ARMOR-LEAN: and the class's NativeMaterialValue, the family a piece of armour belongs to
+import { familyOfNative, MATERIAL_FAMILY } from '../armorMaterials.js';   // ARMOR-LEAN: leather, chain or plate
+import { recipeById, MASTERWORK } from '../../net/recipeLaw.js';   // NAME-KEPT: a crafted piece's base - a jewel's recipe name, a Masterwork's mark (the Worker's law too; it imports no loot)
 import { STAT_KEYS_ORDER } from '../statMods.js';
 import { SKILL_NAMES, SKILL_COUNT, SKILLS, MAGIC_SKILLS } from '../skills.js';
 import { weaponSkillUsed } from '../../characters/weapons.js';   // LOOT1: a weapon's skill affix leans to the skill that swings it
@@ -680,13 +682,17 @@ export function kindLines(id, item, held = []) {
 /** AFFIX-LINES: a kind's weight in a line's draw - a number kind's lines (kindLines); a kind that DOES something (LOOT4)
  *  one while it has a line to give, its params one power's flavours (an elemental's fire or frost, a slayer's foe), so
  *  the proc pass's even draw over its kinds (addProcLine) is this draw too. */
-export const drawWeight = (id, item, held = []) => { const n = kindLines(id, item, held); return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n; };
+export const drawWeight = (id, item, held = [], lean = armorLean(item)) => {
+  const n = kindLines(id, item, held);
+  return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n * (lean?.kinds[id] ?? 1);   // ARMOR-LEAN: a family's weight on a number kind
+};
 
 /** LOOT1 (the Loot arc, bible/06-Systems/Loot-Arc.md - AUDIT-LR's second note: "a warhammer can roll +20 Impish ... a
  *  weighting toward the group's own combat skills would be a tuning slice"): A SKILL AFFIX LEANS TO THE ITEM'S OWN
  *  SKILLS. A weapon's to the hand that swings it - half the time its own weapon skill, then the strike's kin (Critical
  *  Strike, Backstabbing, Dodging); a piece of armour's to the body (the seven ways of fighting and the five of moving);
- *  jewellery's to the mind (the six schools and the skills of talk and the shadows) - in all, 85 times in a hundred.
+ *  jewellery's to the mind (the six schools and the skills of talk and the shadows) and, JEWEL-KIN below, the bare hand's
+ *  two (Hand-to-Hand, Critical Strike) - in all, 85 times in a hundred.
  *  The rest of the time any skill at all, the languages among them (a skill affix was a language 9 times in 35; now
  *  about 1 in 30) - a weighting, never a fence: an amulet of tongues is still a find. */
 export const SKILL_OWN_SHARE = 0.5;
@@ -697,14 +703,86 @@ const BODY_KIN = Object.freeze([S.ShortBlade, S.LongBlade, S.HandToHand, S.Axe, 
   S.Dodging, S.Running, S.Jumping, S.Climbing, S.Swimming]);
 const MIND_KIN = Object.freeze([...MAGIC_SKILLS, S.Etiquette, S.Streetwise, S.Mercantile, S.Lockpicking, S.Pickpocket,
   S.Stealth, S.Medical]);
+/** JEWEL-KIN (2026-10-26, Discord #feature-feedback "jewelcrafting, roll chances not equal (h2h, critical)": "i crafted
+ *  around 100 rare rings ... and h2h or critical not roll on them"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md):
+ *  JEWELLERY'S LEAN IS THE MIND'S THIRTEEN AND THE BARE HAND'S TWO - Hand-to-Hand and Critical Strike. Hand-to-Hand is
+ *  no weapon's own and leaned on armour's twelve alone, Critical Strike on a weapon's strike and armour's (AUDIT FB1026d
+ *  II D5); on a ring each was one of the open share's thirty-five, about 0.43% of its skill lines against a mind skill's
+ *  7%, and a hundred Rare rings held no Hand-to-Hand line a third of the time. Each of the fifteen now takes its even
+ *  share of the 85. A crafted piece's record before MINT_V_JEWEL_KIN
+ *  (net/productRecord.js) mints on the mind's alone (`fists` false), so a ring already made keeps its lines. */
+const JEWEL_KIN = Object.freeze([...MIND_KIN, S.HandToHand, S.CriticalStrike]);
 /** LOOT14: a garment's - the street's seven, and the feet's five for what is worn on them. */
 const STREET_KIN = Object.freeze([S.Etiquette, S.Streetwise, S.Mercantile, S.Stealth, S.Pickpocket, S.Lockpicking, S.Medical]);
 const FEET_KIN = Object.freeze([S.Running, S.Jumping, S.Climbing, S.Swimming, S.Stealth]);
-/** The skills an item leans to: `{ own, kin }` - a weapon's own skill (null for one with none) and its kin. */
-export function skillKin(item) {
+// ── ARMOR-LEAN: each armour family rolls its own kind of lines ────────
+/** ARMOR-LEAN (2026-10-26, a player: "can we make differences regarding stat distribution for all types when stats are
+ *  rolled on them"): LEATHER, CHAIN AND PLATE DRAW DIFFERENT LINES. The bands (AFFIX_RANGES) are every piece's - a Rare
+ *  is a Rare - but WHICH lines a piece of armour rolls leans to its family:
+ *   - LEATHER, the light hide: the first line is its armour a third of the time (not half), carrying capacity and the
+ *     attributes come up more, and those lean to Agility and Speed (Luck a little); its resistances to Poison and Frost.
+ *   - CHAIN, the ward: armour first half the time, as before; resistances twice as often, leaning to Magic, Fire and
+ *     Frost and away from Shock (the rings carry it); attributes to Endurance, Agility and Willpower.
+ *   - PLATE, the wall: armour first two times in three and three times the weight after; carrying capacity twice (the
+ *     plate is heavy), attributes to Strength and Endurance and away from Agility and Speed; resistances rarer, to Fire
+ *     and Frost.
+ *  SKILLS ARE EVERY FAMILY'S ALIKE (the player, 2026-10-26: "plate shouldnt have weapon skills more often keep that for
+ *  every type"): how often a skill line comes up, and which skill it is (LOOT1's body kin), lean to no family.
+ *  A WEIGHTING, NEVER A FENCE: every line any piece of armour could roll, every family still can.
+ *
+ *  ONE ROLL, AS EVERY DRAW IT LEANS TOOK (LOOT1's law, pickByLines, pickSkill): a family's weights move WHERE a roll
+ *  lands, never how many a draw takes, and a piece rolls as many lines as its seed gave it. A line that lands on another
+ *  kind draws what that kind draws after it (a param, or none), so a seeded hoard holding a piece of armour may roll on
+ *  from a moved stream - as AFFIX-LINES' and CAST-SPEED's moves did. A crafted piece leans from MINT_V_ARMOR_LEAN on
+ *  (net/productRecord.js) - a record made before mints the piece it always minted (rollAffixes `lean`).
+ *
+ *  Weights multiply: `kinds` a kind's lines in a line's draw (drawWeight), `stat`/`resist` one param against the rest
+ *  (absent 1), `own` the first line's chance to be the armour (rollAffixes). */
+export const ARMOR_LEAN = Object.freeze({
+  [MATERIAL_FAMILY.Leather]: Object.freeze({
+    own: 0.35,
+    kinds: Object.freeze({ armor: 0.5, weight: 2, stat: 1.5, resist: 0.75 }),
+    stat: Object.freeze({ agility: 3, speed: 3, luck: 1.5, strength: 0.5, endurance: 0.5 }),
+    resist: Object.freeze({ poison: 2, frost: 1.5 }) }),
+  [MATERIAL_FAMILY.Chain]: Object.freeze({
+    own: 0.5,
+    kinds: Object.freeze({ resist: 2 }),
+    stat: Object.freeze({ endurance: 2, agility: 1.5, willpower: 1.5 }),
+    resist: Object.freeze({ magic: 2, fire: 1.5, frost: 1.5, shock: 0.5 }) }),
+  [MATERIAL_FAMILY.Plate]: Object.freeze({
+    own: 0.65,
+    kinds: Object.freeze({ armor: 3, weight: 2, stat: 1.25, resist: 0.75 }),
+    stat: Object.freeze({ strength: 3, endurance: 3, agility: 0.4, speed: 0.4 }),
+    resist: Object.freeze({ fire: 2, frost: 1.5, shock: 0.5, magic: 0.75 }) }),
+});
+/** ARMOR-LEAN: a piece of armour's lean (ARMOR_LEAN), by the class's NativeMaterialValue - the family the equip gate and
+ *  the card's Type row read (itemInfo.js itemArmorTypeLine); null for anything not armour. */
+export function armorLean(item) {
+  if (item?.group !== 'Armor') return null;
+  return ARMOR_LEAN[familyOfNative(rriNativeMaterialValue(item))] ?? null;
+}
+/** ARMOR-LEAN: one of `list` by weight - ONE roll, as `pick` takes, its place in [0, 1) spread over the weights. */
+function pickWeighted(list, weightOf, rolls) {
+  const r = rolls();
+  const w = list.map((x) => Math.max(0, weightOf(x)));
+  const sum = w.reduce((n, x) => n + x, 0);
+  if (!(sum > 0)) return list[Math.floor(r * list.length)];
+  let at = r * sum;
+  for (let i = 0; i < list.length; i++) { if (at < w[i]) return list[i]; at -= w[i]; }
+  return list[list.length - 1];
+}
+/** ARMOR-LEAN: a stat's or a resistance's param on a family's lean; any other kind, or no lean, the even `pick`. */
+const leanedParam = (lean, id, free, rolls) => (lean?.[id] && (id === 'stat' || id === 'resist')
+  ? pickWeighted(free, (p) => lean[id][p] ?? 1, rolls) : pick(free, rolls));
+/** Tests only. */
+export const _pickWeightedForTests = pickWeighted;
+
+/** The skills an item leans to: `{ own, kin }` - a weapon's own skill (null for one with none) and its kin. `fists` false:
+ *  jewellery's lean before JEWEL-KIN, a crafted record's old law (applyRarity). */
+export function skillKin(item, { fists = true } = {}) {
   if (item?.group === 'Weapons') return { own: weaponSkillUsed(item.templateIndex), kin: STRIKE_KIN };
   if (item?.group === 'Armor') return { own: null, kin: BODY_KIN };
-  if (item?.group === 'Jewellery') return { own: null, kin: MIND_KIN };
+  if (item?.group === 'Jewellery') return { own: null, kin: fists ? JEWEL_KIN : MIND_KIN };   // JEWEL-KIN
   if (isGarment(item)) return { own: null, kin: garmentOnFeet(item) ? FEET_KIN : STREET_KIN };   // LOOT14
   return { own: null, kin: Object.freeze([]) };
 }
@@ -731,9 +809,9 @@ export const _pickStandingForTests = pickStanding;
  *  skill within it, each step's interval spread evenly over its list. Every seeded mint - the gate's spoils, a town's
  *  thanks, the Sigil Broker's day, a Masterwork's roll - draws exactly as many rolls as it did, so what it mints after
  *  a skill affix (the next piece, the Regalia's roll, the gold) is still its seed's; only the skill itself moved. */
-function pickSkill(item, free, rolls) {
+function pickSkill(item, free, rolls, fists = true) {
   const r = rolls();
-  const { own, kin } = skillKin(item);
+  const { own, kin } = skillKin(item, { fists });
   const ownFree = own != null && free.includes(own);
   if (ownFree && r < SKILL_OWN_SHARE) return own;
   const near = kin.filter((s) => free.includes(s));
@@ -748,7 +826,7 @@ export const _pickSkillForTests = pickSkill;
  *  rolled lines take (a skill to the item's own and its kin, a garment's to the street's; a standing to its dress), one
  *  roll as `pick` takes, so the draws after it stand where they were. An even draw over every skill put "+17 Mysticism"
  *  on a Formal Cloak. */
-const lineParam = (item, id, free, rolls) => (id === 'skill' ? pickSkill(item, free, rolls) : id === 'standing' ? pickStanding(item, free, rolls) : pick(free, rolls));
+const lineParam = (item, id, free, rolls) => (id === 'skill' ? pickSkill(item, free, rolls) : id === 'standing' ? pickStanding(item, free, rolls) : leanedParam(armorLean(item), id, free, rolls));   // ARMOR-LEAN: a stat or resistance on armour's family
 
 /** LR4 (the audit): ONE AFFIX RECORD, VALID - a known kind, a param the
  *  kind names (and none for a kind without), an integer value from 1 to
@@ -784,7 +862,8 @@ export const affixWord = (a, tier) => (validAffix(a) ? AFFIX_KINDS[a.id].word(BA
  *  mintPiece): each pick even over the KINDS, and a Rare's last pick held
  *  to whichever name slot its lines left empty - so a record made before
  *  mints the piece it always did. */
-export function rollAffixes(item, tier, rolls = Math.random, { byLines = true } = {}) {
+export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, lean: leans = true, fists = true, flat = false } = {}) {   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN; JEWEL-KIN: `fists` false a record's old lean (skillKin); PRESS-FLAT: `flat` no lean at all
+  const lean = leans && byLines && !flat ? armorLean(item) : null;
   const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].groups.includes(item.group) && !AFFIX_KINDS[id].proc);   // LOOT4: the numbers alone - a door's last pass adds a kind that does something
   const [min, max] = AFFIX_COUNTS[tier] ?? [0, 0];
   const count = rangeInt(min, max, rolls);
@@ -796,8 +875,8 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true } 
     const value = rangeInt(lo, hi, rolls);
     if (!k.params) { taken.add(id); return { id, value }; }
     const free = kindParams(id, item).filter((p) => !taken.has(`${id}:${p}`));   // LOOT14: a garment's attribute is Personality alone
-    if (id === 'standing') { const g = pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }   // LOOT14: a garment's standing leans to its dress
-    const param = id === 'skill' ? pickSkill(item, free, rolls) : pick(free, rolls);   // LOOT1: a skill leans to the item's own
+    if (id === 'standing') { const g = flat ? pick(free, rolls) : pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }   // LOOT14: a garment's standing leans to its dress
+    const param = id === 'skill' && !flat ? pickSkill(item, free, rolls, fists) : leanedParam(lean, id, free, rolls);   // LOOT1: a skill leans to the item's own; ARMOR-LEAN: a stat or resistance to armour's family
     taken.add(`${id}:${param}`);
     return { id, param, value };
   };
@@ -812,8 +891,8 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true } 
       const need = !has('prefix') ? 'prefix' : !has('suffix') ? 'suffix' : null;
       if (need) { const p = pool.filter((id) => AFFIX_KINDS[id].slot === need); if (p.length) pool = p; }
     }
-    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));   // AFFIX-LINES: over the lines
-    const id = i === 0 && own && pool.includes(own) && rolls() < 0.5 ? own : draw();
+    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));   // AFFIX-LINES: over the lines
+    const id = i === 0 && own && !flat && pool.includes(own) && rolls() < (lean?.own ?? 0.5) ? own : draw();   // ARMOR-LEAN: the family's share
     out.push(mint(id));
   }
   return out;
@@ -1254,6 +1333,76 @@ const nameAround = (base, tier, affixes) => {
   if (suf) parts.push(affixWord(suf, tier));
   return parts.join(' ');
 };
+/** FIELD BUGS 2026-10-25i NAME-KEPT (SaberGGaming: "if you've renamed your item it will revert it back into its original
+ *  name"): A NAME IS THE LADDER'S, OR THE PIECE'S OWN. The ladder's is its words around its BASE, read off the piece -
+ *  never off its name (AUDIT FB1025i A1-A5: a name parsed by the lines it had kept a curse's or an unset gem's word
+ *  stale, and a name an older reforge had broken broken). The base a piece's name is built around now: a crafted jewel's
+ *  recipe name (smithItems.js setJewel - "Silver Ruby Ring"), a Masterwork's bare template (mintPiece - its maker's mark
+ *  names it), else the Roleplay & Realism: Items word and the template (rarityName's). */
+const markNamed = (item) => item?.quality === MASTERWORK && typeof item.maker === 'string' && item.maker !== '' && !!recipeById(item.recipe);
+function ladderBase(item) {
+  const template = templateByIndex(item?.templateIndex)?.name;
+  const r = recipeById(item?.recipe);
+  if (r?.kind === 'jewel') return r.name;
+  if (template == null) return null;
+  return markNamed(item) ? template : rriVariantWord(item) + template;
+}
+/** NAME-KEPT: every word a line of `tier` may put on the `slot` side of a name (a line that does something never names a
+ *  piece - LOOT4), kept by tier and side. */
+const _slotWords = new Map();
+function slotWords(tier, slot) {
+  const key = `${tier}:${slot}`;
+  let words = _slotWords.get(key);
+  if (!words) {
+    words = new Set();
+    for (const id of AFFIX_IDS) {
+      const k = AFFIX_KINDS[id];
+      if (k.slot === slot && !k.proc) for (const p of k.params ?? [null]) words.add(k.word(BAND[tier] ?? 0, p));
+    }
+    _slotWords.set(key, words);
+  }
+  return words;
+}
+/** NAME-KEPT: whether `name` is one the ladder built for `item` at `tier` - its base now, or the bare template an older
+ *  save's or an older reforge's name stood on (DISC29-B; the reforge before NAME-KEPT built even a jewel's on it), with
+ *  at most one of the tier's prefix words before it and one of its suffix words after - whichever lines gave them. */
+function ladderBuilt(item, tier, name) {
+  if (typeof name !== 'string') return false;
+  for (const base of new Set([ladderBase(item), templateByIndex(item?.templateIndex)?.name])) {
+    const at = typeof base === 'string' && base ? name.indexOf(base) : -1;
+    if (at < 0) continue;
+    const pre = name.slice(0, at), suf = name.slice(at + base.length);
+    if ((pre === '' || (pre.endsWith(' ') && slotWords(tier, 'prefix').has(pre.slice(0, -1))))
+      && (suf === '' || (suf.startsWith(' ') && slotWords(tier, 'suffix').has(suf.slice(1))))) return true;
+  }
+  return false;
+}
+/** NAME-KEPT: the name the ladder gives `item` at `tier` now - a Masterwork's its base alone, every other piece its own
+ *  lines' words around its base (never a set gem's - AUDIT GEM). */
+const ladderName = (item, tier) => (markNamed(item) ? ladderBase(item) : nameAround(ladderBase(item) ?? '', tier, item.affixes.filter((a) => a?.gem == null)));
+/** NAME-KEPT: THE NAME A PIECE TAKES WHEN ITS LINES CHANGE (a reforge, an Imbue): the ladder's, where the name it had
+ *  (`was`'s - the piece itself, or as it stood before the change) was one the ladder built; else the name it had, its
+ *  own - one the Item Maker wrote (RenameItem), a questline's named reward. */
+export function linesName(item, tier, was = item) {
+  return ladderBuilt(was, was?.rarity, was?.name) ? ladderName(item, tier) : was?.name;
+}
+/** NAME-KEPT (AUDIT FB1025i A3): THE CRAFTED NAMES A SAVE KEPT. The reforge before NAME-KEPT built a crafted piece's name
+ *  on its bare template - a jewel lost its metal and gem ("Silver Ring" to "Ring"), a Masterwork took the ladder's words
+ *  its mark withholds ("Saber's Mule's Ring of Skill"). On load a Magic or Rare crafted piece whose name is a ladder build
+ *  other than the one its base gives now takes the ladder's; a name of its own is left as it came, and a second load
+ *  finds nothing to do. Never a found piece: a curse's line was added after its name (cursePiece), by design. In place;
+ *  answers how many were renamed. */
+export function repairCraftedNames(items) {
+  let n = 0;
+  for (const it of Array.isArray(items) ? items : []) {
+    if (!it || typeof it !== 'object' || (it.rarity !== 'magic' && it.rarity !== 'rare') || !Array.isArray(it.affixes) || !recipeById(it.recipe) || !Object.isExtensible(it)) continue;
+    const name = linesName(it, it.rarity);
+    if (name === it.name) continue;
+    it.name = name;
+    n++;
+  }
+  return n;
+}
 
 /** DISC29-B: THE NAMES A SAVE KEPT. A Magic or Rare piece of Roleplay & Realism: Items armour rolled before the fix
  *  carries the name built from the bare template; on load it is given the word its mint wrote ("Sentinel's Helmet of
@@ -1320,20 +1469,20 @@ export const affixesWorth = (affixes, item = null) => Math.round((affixes ?? [])
  *  enchantment. Common leaves the item as DFU minted it; so does any
  *  tier the ladder does not roll (SET6: an Aetheric piece is a fixed
  *  record, minted whole by systems/aetheric.js - never a roll). */
-export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null, byLines = true } = {}) {   // AFFIX-LINES: `byLines` false a product record's old law (rollAffixes)
+export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null, byLines = true, lean = true, fists = true, flat = false } = {}) {   // PRESS-FLAT: `flat` the Imbue's roll, no lean   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN   // AFFIX-LINES: `byLines` false a product record's old law (rollAffixes); JEWEL-KIN: `fists` false its old lean
   if (!item || !ROLLED_TIERS.includes(tier)) return item;
   let affixes;
   let enchantment = null;
   if (tier === 'legendary') {
     const pool = legendaryPool ?? legendariesFor(item);
-    if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines });   // no record for this item: the tier below
+    if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines, lean, fists });   // no record for this item: the tier below
     const rec = pickLegendary(pool, family, rolls);   // LOOT6: a source's family weighs its own records
     affixes = rec.affixes.map((a) => ({ ...a }));
     enchantment = rec.enchantment;
     item.legendary = rec.id;
     item.name = rec.name;
   } else {
-    affixes = rollAffixes(item, tier, rolls, { byLines });
+    affixes = rollAffixes(item, tier, rolls, { byLines, lean, fists, flat });
     item.name = rarityName(item, tier, affixes);
     if (tier === 'rare') enchantment = rareFlavour(RARE_FLAVOURS[item.group] ?? RARE_FLAVOURS.Jewellery, rolls, fits);
   }
@@ -1628,7 +1777,7 @@ export function exaltLegendary(item, rolls = Math.random) {
   const free = carried.has(id) ? freeParams(id) : kindParams(id, item);
   // AUDIT LOOT II A7: a garment's on the wardrobe's leans (LOOT14); a weapon's, armour's or jewel's the even draw it always
   // was - the seeded spoils exalt those through lastPass, and their seeds stand
-  const line = k.params ? { id, param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls), value } : { id, value };
+  const line = k.params ? { id, param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls), value } : { id, value };   // ARMOR-LEAN: armour's Exalted line keeps A7's even draw (its line's kind still weighs by its family - drawWeight)
   item.affixes = withLine(item.affixes, line);   // TECH1: before a technique's line
   item.exalted = true;
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + exaltedWorth(item) + affixesWorth([line], item);   // LOOT14: a garment's at half
@@ -2059,7 +2208,8 @@ export const reforgeCount = (item) => (Number.isInteger(item?.reforges) && item.
  *  lines as the roll draws (AFFIX-LINES, pickByLines), its value from its tier's band - an Exalted Legendary's line from
  *  the top half of the Legendary band, as its exalting rolled it - and its param on the roll's own leans (a skill to the
  *  item's own, LOOT1; a garment's standing to its dress, LOOT14). The name (a Magic's or a Rare's, which may gain or lose
- *  a part as the line crosses a slot - a Legendary keeps its record's) and the price follow, and the piece counts the
+ *  a part as the line crosses a slot - a Legendary keeps its record's; NAME-KEPT: a name of the piece's own stands -
+ *  linesName) and the price follow, and the piece counts the
  *  reforge (`reforges` - what the next costs; an old piece's `reforged` mark folded into it). Answers the new line, or
  *  null (a line the Reforge may not take; nothing changed). */
 export function reforgeAffix(item, index, rolls = Math.random) {
@@ -2067,17 +2217,18 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const tier = item.rarity;
   const old = item.affixes[index];
   const { ids: pool, others, freeParams } = reforgePool(item, index);
-  const id = pickByLines(pool, (k) => drawWeight(k, item, others), rolls);
+  // PRESS-FLAT (2026-10-28, the owner: "no lean at all", "it need to reroll as well"): a reforge's kind and param are
+  // drawn with no lean - no skill to the item's own, no armour family's weight, no garment's dress
+  const id = pickByLines(pool, (k) => drawWeight(k, item, others, null), rolls);
   const k = AFFIX_KINDS[id];
   const [lo, hi] = AFFIX_RANGES[id][tier];
   const value = rangeInt(tier === 'legendary' ? Math.ceil((lo + hi) / 2) : lo, hi, rolls);
-  const leaned = id === 'skill' ? pickSkill : id === 'standing' ? pickStanding : null;   // LOOT1's lean, LOOT14's
-  const line = k.params ? { id, param: leaned ? leaned(item, freeParams(id), rolls) : pick(freeParams(id), rolls), value } : { id, value };
+  const line = k.params ? { id, param: pick(freeParams(id), rolls), value } : { id, value };
   const count = Math.min(REFORGES_MAX, reforgeCount(item) + 1);
   item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
   item.reforges = count;
   delete item.reforged;   // the old law's lock, counted now (reforgeCount)
-  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));   // AUDIT GEM: named by the piece's own lines - never a set gem's word ("Soldier's" off a Diamond), which outlived the gem's unsetting
+  if (tier !== 'legendary') item.name = linesName(item, tier);   // NAME-KEPT: the ladder's name again, or the piece's own
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);
   return line;
 }

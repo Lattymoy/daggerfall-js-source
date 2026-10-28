@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { addQuestResourceObjects, markerScenePosition } from '../../../src/systems/quest/sceneMount.js';
 import { SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { GENDERS } from '../../../src/characters/nameHelper.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -65,7 +66,7 @@ test('B2: the walk stands a dungeon marker foe through standFoe, spanning RDB bl
 
 test('B2 seam gate: the dungeon adapter, mount, teardown and PcAt arm are wired', () => {
   const modes = read('src/scenes/worldModes.js');
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // the mount runs on the dungeon transition and on the hot-place callback
   assert.match(modes, /questBridge\.mountScene\(dungeonQuestAdapter, SITE_TYPES\.Dungeon, 0\)/);
   assert.match(modes, /mountQuestResources\(\);\s+\/\/ B2: AddQuestResourceObjects\(SiteTypes\.Dungeon\) on the transition/);
@@ -80,5 +81,5 @@ test('B2 seam gate: the dungeon adapter, mount, teardown and PcAt arm are wired'
   // the dungeon flat behaviours drive per frame (foes drive in drawFoes)
   assert.match(modes, /for \(const s of \[\.\.\.dungeonQuestFlats\]\) s\.behaviour\?\.update\(\)/);
   // PcAt's dungeon arm: playerInside answers { dungeon } in dungeon mode
-  assert.match(world, /return \{ dungeon: \{ name: modes\?\.dungeonLocation\?\.name \?\? '' \} \};/);
+  assert.match(world, /return \{ dungeon: \{ name: (?:host\.)?modes\?\.dungeonLocation\?\.name \?\? '' \} \};/);
 });

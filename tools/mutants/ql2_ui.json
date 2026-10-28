@@ -101,15 +101,6 @@
     ]
   },
   {
-    "name": "AUDIT-QL-UI-8-abandon-on-an-entryless-row",
-    "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "      } else if (sel.entries?.length && sel.id != null && clean.abandon",
-    "new": "      } else if (sel.entries && sel.id != null && clean.abandon",
-    "tests": [
-      "test/ui/questlines/ql2_pause.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-QL-UI-8-hide-on-an-entryless-row",
     "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "      if (sel.entries?.length && sel.id != null && !isShelvedRow) {",
@@ -196,7 +187,7 @@
   {
     "name": "AUDIT-QL-UI-13-game-start-pops-the-page",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      if (sheetFor(quest?.questName) && !['S0000977', '_BRISIEN'].includes(quest?.questName) && meta?.scope !== 'init') noteFirstUse('questlines');",
+    "old": "      if (sheetFor(quest?.questName) && !['S0000977', '_BRISIEN'].includes(quest?.questName) && !isStartQuestName(quest?.questName) && meta?.scope !== 'init') noteFirstUse('questlines');",
     "new": "      if (sheetFor(quest?.questName)) noteFirstUse('questlines');",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js"

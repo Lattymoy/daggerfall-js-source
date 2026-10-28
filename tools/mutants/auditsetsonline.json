@@ -182,12 +182,12 @@
   {
     "name": "SETS-M2-dungeon-opens-it",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }   // AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)\n",
+    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(roomUnreadableText(lootKeyOf(_u))); return 0; } }   // RPT1026-ITEMS LOOT-SKEW: another build's base said as one (roomLootHost.js); AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)\n",
     "new": "",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ],
-    "note": "PIN MOVED BACK (AUDIT GRAVE-PARTY G2): GRAVE-PARTY's personal arm (roomPersonal) is gone and the line is M2's refusal again, its comment saying so - re-aimed by content; deleting it still opens what no word says may open."
+    "note": "PIN MOVED BACK (AUDIT GRAVE-PARTY G2): GRAVE-PARTY's personal arm (roomPersonal) is gone and the line is M2's refusal again, its comment saying so - re-aimed by content; deleting it still opens what no word says may open. PIN MOVED (RPT1026-ITEMS LOOT-SKEW): the refusal says roomUnreadableText's line (another build's base said as one) - re-aimed by content; deleting the line still opens it."
   },
   {
     "name": "SETS-L6-values-unchecked",

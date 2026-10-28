@@ -56,8 +56,8 @@
   {
     "name": "HOLD-stores-landing-on-stats",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }",
-    "new": "  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; holdSec = at; }",
+    "old": "  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }\n  else if (FAMILY_PAGE_SECTIONS",
+    "new": "  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; holdSec = at; }\n  else if (FAMILY_PAGE_SECTIONS",
     "tests": [
       "test/systems/horse/holdings.test.js"
     ]

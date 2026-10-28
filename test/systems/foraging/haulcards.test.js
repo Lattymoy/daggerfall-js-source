@@ -363,7 +363,7 @@ test('HAUL-CARDS the seams by source: the world host hands the gathering host th
   assert.match(w, /onMarks: \(marks, data\) => \{ showHaul\(claimHauls\(data \?\? \{ marks \}, 'gate'\)\); return marksBook\?\.claimLines\(data \?\? \{ marks \}, 'gate'\) \?\? null; \},/);
   const g = rd('src/scenes/gatherHost.js');
   assert.match(g, /hauled = live && deps\.haul\?\.\(harvestHauls\(d, \{ name: k\?\.haulName\?\.\(d\) \?\? null, note \}\)\) === true;/);   // AUDIT HAUL-CARDS A3 (PIN MOVED): on a live world
-  assert.match(g, /try \{ k\?\.answered\?\.\(d, \(t\) => hud\.toast\(t\), \{ hauled \}\); \}/);
+  assert.match(g, /try \{ k\?\.answered\?\.\(d, \(t\) => hud\.toast\(t\), \{ hauled, entity: deps\.entity\?\.\(\) \?\? null \}\); \}/);   // PIN MOVED (HUNTERS-MARK): and the gather host's entity, a Trophy Hunter's trophy's pack
   assert.match(rd('src/ui/pickupFeed.js'), /const box = line\.lode \? LODE_ICON_BOX : line\.haul \? HAUL_ICON_BOX : PICKUP_ICON_BOX;/);
   assert.ok(materialImage('metal:iron') === null || Number.isInteger(materialImage('metal:iron').archive), 'an address or none');
 });

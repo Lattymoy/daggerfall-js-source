@@ -144,6 +144,11 @@ bytes, 31 over the 3/4 line - main's growth and the Aether Storm's words in the 
 (SEA-EVENTS). The snow ground's line (PRECIP4: its tick about the player, its frame handed to the renderer) runs as a
 closure of its own, `frameSnowCover`, its line as it was: 45,950 bytes.
 
+TESA14 (2026-10-24, `03-World/Arena-Provinces.md` TESA14): the frame stood at 46,119 bytes against the 3/4 tripwire's
+46,080 (the roads past the Bay's one line, `_tamrielRoads.frame(state.current)`, the host reading what stands itself);
+the weather's drain - the `!weatherOverride` block - is the twenty-third closure (`frameWeatherDrain`), lines inserted
+only, and the frame is 45,242.
+
 Pins: `test/scenes/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
 ceiling and under three quarters of it (the tripwire: move the next statement out before the cliff, not after); over
 the parse, the closures by name in order (26 since `frameSnowCover`), each made in the frame and called once - a plain call, the statement after
@@ -919,7 +924,12 @@ only the first open froze - and the zone's halls ask the same question as the wo
 sample is in [0, 1] (sampleKernel's clamp01), so the running sum never falls - nor does a float sum of non-negatives,
 nor the division and the product by positive constants - so once a column's running average is over the line, the
 whole one is. A pixel that never gets there is answered by the very sum `spawnPlateauFloor` makes, in its order.
-`createSpawnGround` asks it; `spawnPlateauFloor` stands as it was for its other readers.
+`createSpawnGround` asks it; `spawnPlateauFloor` stands as it was for its other readers. AUDIT TESA II Z9 (2026-10-25):
+the open zone's halls (`scenes/zoneHallsHost.js`, Cyrodiil's since WW-C2) ask `plateauDry` - the same answer to the bit,
+read until it is certain either way (spawnGroundDry stops only once the plateau is dry, and a wet one read its whole
+kernel) - kept a pixel a session, and a neighbour's place by its roll's pick and the beach line alone (Z7's rolls, no
+plateau summed): the day's 28 picks on the freeware's world 1,077-1,085 ms -> 407-521 ms, with the places past the Bay
+and the countryside's and the lairs' rolls asked beside the Bay's rows.
 
 **Measured.** Over the real zone (the player's ARENA2): the 12,564 pixels 17.9 s -> 1.0 s (17x), every answer the same.
 On the live client, the map's first open in a fresh session, the old and the new in two sessions:
@@ -2624,6 +2634,53 @@ machine's own GPU:
 - **An A/B:** the base and the head one after the other, on the same scene, with nothing else running the game. Name
   the run's GPU and driver beside its numbers.
 
+## OW-STREAM — the Overworld's frames on a fixed route, the held map's time to whole, and what the horizon's layers cost
+
+*The owner (2026-10-26): "The held map still struggles to load everything at once, the overworld experiences hitching
+and we need to find a way to expand the overworld view distance without killing performance. Currently tiles visibly
+load in with distance".*
+
+Two slices answer it where their systems live - the held map whole from its first frames (`03-World/Arena-Provinces.md`
+MAP-WHOLE) and the horizon in layers past the streamed grid (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD). This
+record is their measure, and the hitching's.
+
+**The probes, in the tree** (OW-HITCH's and MEM-AUDIT's drivers lived in a session's scratch, and nothing could make
+their figures again):
+- `tools/owHitchProbe.mjs` - OW-HITCH's journey as a tool: Knightstale at 15:00, no foes, the stream settled, the
+  Overworld raised and W held for SECONDS (`WALK=1`: the same route on foot). Every frame timed in the page - `cb` the
+  frame callback's own time (requestAnimationFrame wrapped before the page's scripts), `gap` start to start (what a
+  player waits through: a worker's answer handled, an idle callback, the collector) - beside the browser's long tasks;
+  the draws stubbed by default (SwiftShader's raster is the machine's CPU, no GPU's), so what is left is the main
+  thread's own. `TREE=` serves another worktree (the A/B, one command an arm); `LAND=` and `HEAP_MB=` size the page.
+- `tools/heldMapLoadProbe.mjs` - the held map's views (the continent, far, mid, near, home and a wheel's zoom out and
+  in) set as a zoom or a pan sets them (`__heldMapLoad`, behind the shot gate), every frame after read: the paint's
+  milliseconds and the tiles' own count - painted, stood in for, HOLES - to the first frame nothing is owed.
+- `tools/horizonProbe.mjs` - the Overworld's view photographed with the horizon's layers and with their doors shut.
+
+**What the new layers ask of a frame** - the figures in Travel-View's record: every height, cell and far climate on the
+terrain worker, a band at a time between the stream's own jobs; on this thread the landed grounds laid under
+HORIZON_BUDGET_MS (2 ms a frame) in steps whose p95 measured 0.04-0.16 ms on the freeware's ground, an order written a
+pixel or a cell crossed (1.6-7.9 ms, 2.2-2.5 ms), a rebuild's uploads (2.4 MB every three pixels, 0.6 MB every two
+cells). Measuring it on the real ground found the one long task the layers had brought: a first far field's tints read
+the continent's biomes on this thread (some 150 ms the first read, a step to 196 ms) - they are the worker's now.
+
+**NOT MEASURED HERE - the frames in the real game.** Every arm of the A/B (the base and this tree, the Overworld's and
+the held map's) was started twenty times between 01:00 and 04:40 on this container and none finished: the world page grows to
+1.8-3.3 GB as it boots, the memory group it shares with six other agents' pages and test runs stood at its 14.3 GB
+limit, and the kernel's OOM killer takes the largest Chromium renderer first (Chromium's own +300). The probes and
+their figures are the A/B's tools; the A/B is the owner's to run (For the owner). What WAS seen: the three layers drawn
+by the game's own modules over the freeware's ground in a scratch page (not the game's frame - the far ring's pass
+alone, from a raised eye), with and without their doors: the middle ring's hills where the far ring was facets, the far
+field's land on past the old 28 km rim to the horizon, no hole and no seam between the layers.
+
+**What is left** (OW-HITCH's and MEM-AUDIT's, unchanged by this pass): the collector's pauses over the standing world's
+live heap - 1,459 MB after a forced collection at the boot's end in Daggerfall itself at Land View 1, measured here,
+the largest the sampling profile named the city's replacement blocks (`worldDataReplacement.js`), the colliders, the
+MAPS records and the deep waters' location rects, as MEM-AUDIT found at Knightstale - and the pixel builds' own
+allocations.
+
+## For the owner
+
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
   with `TREE=` the base, then this branch (`node tools/frameAb.mjs` reads the two) - the frame's own script time
   is what PERF-V8 moves, and a crowded town with yards is where PERF-YARD, PERF-INST and PERF-COL2 show.
@@ -2634,4 +2691,8 @@ machine's own GPU:
   machine with a GPU - the frame after the view comes down, the first blow, a climate's edge.
 - **MEM-AUDIT's A/B on a GPU**: OW-HITCH's journey online (where the fishing host streamed) and offline, on the base
   and on this branch - the live heap after a collection, and the longest frames, which are the major GC's.
+- **OW-STREAM's A/B** (this container could not hold a world page through a boot): `ARENA2_PATH=... node
+  tools/owHitchProbe.mjs` with `TREE=` the base, then this branch (OUT= one file; p50, p95, max and the frames over 33 ms
+  of `gap`, the long tasks); `tools/heldMapLoadProbe.mjs` the same two ways (the frames to whole and the holes at each
+  view); `tools/horizonProbe.mjs` for the picture. On a GPU the far plane's fragments are the cost to watch.
 - **The picture's levers** above (1, 4, 6b, 7) are yours - and 5's distance is the Other players card's now (PEER-RANGE): each trades a little of what is seen for frame time.

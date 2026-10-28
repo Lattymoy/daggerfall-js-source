@@ -218,7 +218,7 @@
   {
     "name": "RVN7c-held-unread",
     "file": "src/ui/heldMap.js",
-    "old": "    const lairs = readBountyMarks(this.deps.revenants, this._size, REVENANT_LEGEND_TEXT);",
+    "old": "    const lairs = readBountyMarksIn(this.deps.revenants, sheet, REVENANT_LEGEND_TEXT);",
     "new": "    const lairs = [];",
     "tests": [
       "test/systems/rvn7c_map.test.js"

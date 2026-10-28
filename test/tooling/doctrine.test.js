@@ -54,7 +54,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/intro/interkarma.webp', 'U65 credit artwork identifying Interkarma / Daggerfall Unity; recovered unchanged'],
   ['src/assets/intro/nexus.webp', 'U65 credit artwork identifying Nexus Mods; recovered unchanged'],
   ['src/assets/intro/theme.mp3', 'U65 original theme recording; recovered unchanged at Mac\'s request'],
-  ['src/assets/branding/dfo-online.png', 'BR5: Mac\'s supplied DFO Online logo, 2026-10-11, his own file with alpha, cut to its painted bounds with every pixel inside unchanged; no ARENA2 data'],
+  ['src/assets/branding/dfo-online.png', 'BR6: Mac\'s supplied DFO Online dragon logo, 2026-10-26 (BR5\'s mark before it), his own file with alpha, cut to its painted bounds and scaled to 1232 x 1034 at his word; no ARENA2 data'],
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
   // (Mac, 2026-08-31): the landing page carries no raster at all now -
   // landing.test.js pins <img> absent - so the three menu screens,
@@ -169,6 +169,13 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/sfx/gather-clean.wav', 'OURS - GATHER-FEEL: synthesised from noise and sine by tools/gatherSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/gather-haul.wav', 'OURS - GATHER-FEEL: synthesised from noise and sine by tools/gatherSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/gather-rank.wav', 'OURS - GATHER-FEEL: synthesised from noise and sine by tools/gatherSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/lock-tick-1.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/lock-tick-2.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/lock-spring.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/lock-set.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/lock-false.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/lock-slip.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
+  ['public/sfx/lock-snap.wav', 'OURS - LOCKPICK: synthesised from noise and sine by tools/lockSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-grab-1.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-grab-2.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/climb-catch.wav', 'OURS - CLIMB4: synthesised from noise and sine by tools/climbSfx.mjs, deterministically; no recording in it at all'],
@@ -195,17 +202,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/sfx/horse-snow-fast.wav', 'OURS - HORSE-VOICE: synthesised from noise and sine by tools/horseSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/horse-water-slow.wav', 'OURS - HORSE-VOICE: synthesised from noise and sine by tools/horseSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/horse-water-fast.wav', 'OURS - HORSE-VOICE: synthesised from noise and sine by tools/horseSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-slap-1.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-slap-2.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-slap-3.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-creak-1.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-creak-2.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-rope-1.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-rope-2.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-luff-1.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-luff-2.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-spray-1.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
-  ['public/sfx/sea-spray-2.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/shore-crash-1.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/shore-crash-2.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
   ['public/sfx/wild-owl-1.wav', 'OURS - SOUNDSCAPE: synthesised from noise and sine by tools/soundscapeSfx.mjs, deterministically; no recording in it at all'],
@@ -820,6 +816,7 @@ const PUBLIC_ALLOWLIST = new Map([
   // MEADOW'S FIVE SPRITES, supplied by Mac as indexed PNGs and committed as he supplied them. Nothing ships them:
   // tools/bakeMeadow.mjs bakes them into render/meadowArt.js, and test/render/grassmeadow.test.js holds that module to
   // them texel for texel. Their colours are not looked up in any palette at runtime - the sprites carry their own.
+  ['src/assets/tamriel/source/tamriel-heightmap.png', "SUPPLIED - the owner's heightmap of the whole continent (TAMRIEL-RELIEF, 2026-10-24: 'Heres the entire tamriel height map btw', then 'This is the heightmap. Use it'), as he sent it - a phone's screenshot, its map cropped to 930x705 and saved as PNG; its own source not stated - its licence the owner's permission (AUDIT TESA II G9, the owner 2026-10-25: 'We have permission'; bible/03-World/Tamriel.md TAMRIEL-RELIEF). Greys only, no ARENA2 pixel in it; the PNG ships nowhere, and its derivative does: tools/bakeTamrielRelief.mjs lays it on the trace into src/world/tamriel/tamrielReliefData.js, a chunk of the build - a height every cell, the sea's too, so nothing of the trace ships in it (AUDIT TESA II G1)"],
   ['src/assets/grass/source/tuft-tall.png', "SUPPLIED - Mac's tall grass tuft for the meadow grass (MEADOW1, 2026-10-06), 32x32 indexed, his own PNG bytes - his own pixel art, no ARENA2 pixel in it (his word, AUDIT MEADOW1 2026-10-06)"],
   ['src/assets/grass/source/tuft-short.png', "SUPPLIED - Mac's short grass tuft for the meadow grass (MEADOW1, 2026-10-06), 32x32 indexed, his own PNG bytes - his own pixel art, no ARENA2 pixel in it (his word, AUDIT MEADOW1 2026-10-06)"],
   ['src/assets/grass/source/flowers.png', "SUPPLIED - Mac's flower tuft for the meadow grass (MEADOW1, 2026-10-06), 32x32 indexed, his own PNG bytes - his own pixel art, no ARENA2 pixel in it (his word, AUDIT MEADOW1 2026-10-06)"],

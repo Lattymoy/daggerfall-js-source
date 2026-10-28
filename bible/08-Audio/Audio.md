@@ -985,17 +985,11 @@ hull loops and its oars, never instead of them:
   a full gale, breathing with the gust. AUDIT SOUNDSCAPE S6: the first cut's levels, a third of these, sat 16 to 24 dB
   under the mod's own hull loops on the same bus, under 500 Hz where both live; now a moderate sea reads about -38 dBFS
   at the ear and a gale about -34, beside DFU's rain loop's -40, still well under the mod's loops (-24 at the helm).
-- **Her way and her sails**: my helm's word at my helm; a boat I ride and do not steer - another player's - says them
-  by her own going (her root's speed, eased over 0.6 s, a step past 40 m/s a recentre or a snap, never her way) and her
-  masts' Animators (S4: a passenger heard her lying still and furled at six knots); a deck off any helm lies still.
-- **The events**: a wave SLAPPING her hull as a swell crests (0.72 rising), on her port or starboard side 2.5 to 4 m
-  off and under the rail, and in a heavy sea a second on her other side on its heels; the TIMBERS working (a mean gap
-  of 16 s in a calm to 3.2 s in a storm, drawn exponentially) and the ROPES in their blocks only with sail set (12 s in
-  a breeze to 3.5 in a gale; re-armed as the sails go up - S10); the canvas LUFFING aloft every 1.2 to 3.5 s while she
-  lies head to wind or has sail set and no way (under 0.8 m/s in more than a 0.25 wind), never sooner than 1.2 s after
-  the last flap however the law flickers (S8); SPRAY over her bow at a crest past 2.5 m/s through a sea over 0.3; GULLS
-  by day out of rain, storm and snow while land is within two map pixels, one every 7 to 26 s 25 to 70 m off over the
-  water, three calls in ten followed by a second; and THE WATCH BELLS (`watchBells`): each half hour of the world's
+- **Her way**: my helm's word at my helm; a boat I ride and do not steer - another player's - says it by her own going
+  (her root's speed, eased over 0.6 s, a step past 40 m/s a recentre or a snap, never her way - S4: a passenger heard
+  her lying still at six knots); a deck off any helm lies still.
+- **The events**: GULLS by day out of rain, storm and snow while land is within two map pixels, one every 7 to 26 s 25
+  to 70 m off over the water, three calls in ten followed by a second; and THE WATCH BELLS (`watchBells`): each half hour of the world's
   clock crossed at its own pace, one bell at the half hour after a watch begins (the watches turning at 0, 4, 8, 12, 16
   and 20 o'clock), one more each half hour, eight as it ends, struck in pairs (0.42 s within a pair, 1.15 s between) on
   Daggerfall's own bell (DAGGER.SND 107, the arena's call and the naval host's struck colours) at 1.22, on her deck 3 m
@@ -1003,8 +997,12 @@ hull loops and its oars, never instead of them:
   a dial (S9: online a crossing's dial moves no shared clock, and its bells fell silent at a pace the clock never ran):
   none past 0.5 (two and a half times DFU's 12 to 1, so Come Sail Away's x5 rings none), none for a jump of the clock (a
   load, a rest, a journey), never twice within a minute of real time, and midnight's eight across the minute's wrap.
-- Her bow, her sides and her bell are HERS, off her heading, never the camera's (S3: looking astern put the spray
-  astern, and the bell turned with the head); with no heading to be had, the ear's forward. Every event aboard is played
+- **DECK-QUIET** (2026-10-26, the owner: "Remove all deck at sea"): the deck's own one-shots are gone - a wave slapping
+  her hull at a crest, the timbers working, the ropes in their blocks, the canvas luffing and the spray over her bow -
+  with their eleven clips and the laws that timed them (S8's luff gap and S10's ropes with them). The beds, the gulls
+  and the bells stay; Come Sail Away's own loops and oars are untouched.
+- Her bell is HERS, off her heading, never the camera's (S3: the bell turned with the head); with no heading to be had,
+  the ear's forward. Every event aboard is played
   `far` (`audio.js` play3d), its offset from the ear held while it sounds, so it rides with the deck. The first frame
   aboard plays nothing: every clock is seeded a gap away. A pause holds every clock - the bells' strokes due across one
   fall at their own spacing after it, where the first cut rang them all on the unpause frame, 15 dB over one (S1).
@@ -1040,9 +1038,9 @@ the Alik'r as in a Wrothgarian pass), never instead of them:
   reach.
 - A pause holds every clock - the wild's voices, the waves, the smith's bouts and every call queued (W7).
 
-THE CLIPS. Seventeen of the port's own (`tools/soundscapeSfx.mjs` -> `public/sfx/{sea,shore,wild}-*.wav`: the hull's
-slaps, the timbers' and the ropes' creaks, the canvas, the spray, a wave breaking, two owls, two wolves - the
-gathering's pieces moved into the shared kit for them, `tools/sfxSynth.mjs`, the gathering's thirty-six clips byte for
+THE CLIPS. Six of the port's own (`tools/soundscapeSfx.mjs` -> `public/sfx/{shore,wild}-*.wav`: a wave breaking, two
+owls, two wolves - eleven more, the deck's, went with DECK-QUIET - the gathering's pieces moved into the shared kit for
+them, `tools/sfxSynth.mjs`, the gathering's thirty-six clips byte for
 byte as before); and thirteen CC0 recordings from OpenGameArt baked by `tools/soundscapeSfxInstall.mjs` (six gulls by
 Rango Mango, a crow by fvcalderan, four frogs by EZduzziteh - each croak, cut out of its take mid-sound, eased in over
 4 ms and out over 15 so neither edge clicks (W12, `tools/sndify.mjs` bake `edges`) - two anvils by VishwaJai and
@@ -1054,7 +1052,7 @@ again; asked every frame with nothing to do it makes nothing (S7, H2, H6). Level
 peaks, the laws' gains, the levels measured through the engine); none of these sounds has been heard by ear.
 
 Pins: `test/systems/soundscape/seaair.test.js` (10), `soundbeds.test.js` (3), `soundjobs.test.js` (5),
-`worldair.test.js` (10), `test/scenes/soundscapehost.test.js` (10); `tools/mutants/soundscape.json` (135, all dead).
+`worldair.test.js` (10), `test/scenes/soundscapehost.test.js` (10); `tools/mutants/soundscape.json` (126, all dead).
 The audit: `01-Overview/audits/Audit-Soundscape.md`.
 
 ## SEA-SCORE (2026-10-24): a helm heard - the sea's own songs
@@ -1118,7 +1116,9 @@ Pins: `test/systems/horse/horsevoice.test.js` (13); `tools/mutants/horsevoice.js
 ## INTRO3 (2026-10-14): the main theme, written as notes - the film's and the menu's
 
 **Reverted 2026-10-25 (INTRO-REVERT, `10-UI/UI-Arc.md`).** The film and the menu play the recording again
-(`src/assets/intro/theme.mp3`). The score below is no longer heard.
+(`src/assets/intro/theme.mp3`). The score below is no longer heard. INTRO-REVERT II (2026-10-26) puts the theme's session
+back as INTRO2 left it; INTRO4 (the same day) cuts the new film to five more of the recording's downbeats, the recording
+unchanged - its 19 s beat, which the score's impact bar is tied to, is the film's crest now (`CREST_TIME`).
 
 The owner: "With the main menu music, is there anyway to recreate it using the sound system daggerfall's music uses",
 then "you do it and it's for both". The front door's theme was a recording decoded by a session of its own; it is now
@@ -1234,3 +1234,51 @@ Pins: `test/systems/volume_sliders.test.js` (8: the readers; the animal flats; m
 the port's own; a peer's; the Warden's heave; the rows; the live master), and
 `test/systems/comeSailAway/csa_time_audio.test.js` (the stroke at both volumes; the loops after a Sound Volume change).
 `tools/mutants/volume_sliders.json`: 15 dead.
+
+## VOICE-CAP (2026-10-26): the real voices - at most thirty-two one-shots at once, the quietest let go
+
+A private report from a crowded Dagon's Breach: with that many players about, the sound failed and stayed silent long
+after the event was over.
+
+**What DFU does.** DFU plays through Unity, which sounds at most `m_RealVoiceCount` sources at once (32 in DFU's own
+`ProjectSettings/AudioManager.asset`, with 512 virtual) and makes the rest virtual, the least audible first.
+
+**What the port did.** It had no bound. Every blow, step, cast and cry of forty players near was a source, a gain and an
+HRTF panner of its own, all sounding together. A one-shot's chain was never let go when it ended: the RAIN-LEAK law
+(`releaseNodes`) held for the loops alone, so the bus carried thousands of finished chains until the page's collector
+reached them. The context fell behind, and every sound stopped until it caught up.
+
+**Now** (`audio.js:"export function voiceRoom("`): a one-shot, flat or positional (`playOneShot`, `play3d`,
+`play3dVoice`), takes one of `REAL_VOICES` (32). Under the bound it plays. At the bound a positional shot plays only if
+it reaches the ear as loud as the quietest positional one sounding, or louder, and that one (the oldest of the quietest)
+is faded out over `VOICE_FADE_S` for it; a quieter shot does not start. A flat shot always plays (AUDIT RPT1026 I2,
+below). A positional shot's level is what reaches the ear
+(`audio.js:"export function distanceGain("` - the Web Audio spec's distance models), so a blow at arm's length takes
+the voice of one across the court, never the other way. Every one-shot's chain is let go as it ends (`_voiceKeep`:
+`onended`, its own or a steal's stop) and its voice freed. Loops and beds are not counted: they are few and long, and a
+count would cut an ambience.
+
+**The departure.** Unity's count is DFU's, and the number is the same. The law is not Unity's: Unity virtualizes a
+voice (it keeps its place, silent, and can come back), while a one-shot here is short and is let go, and a shot that
+finds no voice never starts. No DFU volume moves. Ledger A (VOICE-CAP).
+
+The other half of the same report, that the crowd hid the boss, is the Other players card's **Players shown at once**
+(GATE-CROWD, CROWD-WIDE - `11-Multiplayer/World-Bosses.md` section 21) and GATE-COURTS' courts of fifty (section 29); the
+numbers a player's own blows raise are drawn for them alone.
+
+Pins: `test/systems/rpt1026_events_audio.test.js` (3: the law and the distance models; a crowd of forty round my ear -
+at most thirty-two sounding, the stolen faded and stopped, a far one past the bound refused, a flat shot at the crowd's
+own level finding a voice; the chains let go and the voices freed as they end). The sixty-two audio pins that were there stand
+(886 tests). `tools/mutants/rpt1026_events.json` (VOICE-CAP, 6).
+
+**AUDIT RPT1026 I2 (2026-10-27): the page's own first.** The pins above said a flat shot always finds a voice; their crowd
+was built by hand at the flat shot's own volume. The crowd's own producer (`net/remotePlayers.js` `_syncAttackSound`)
+plays a peer's swing at 1.1 through `PEER_SOUND_PROFILE`, whole inside six metres - louder at the ear than the blow that
+lands on me (`PLAYER_HIT_VOLUME`, 1), my cry (1) and my steps (`FOOTSTEP_VOLUME`, 0.7). Thirty-two peers swinging about me
+refused every one of mine, and a near swing stole any that did sound. Now the law has two ranks
+(`audio.js:"export function voiceRoom("`): a flat one-shot (`playOneShot` - the page's own, at the ear) always plays, the
+quietest positional voice stolen for it (the quietest flat one only when every voice is flat), and a positional shot never
+steals a flat voice. Unity ranks its voices by each source's priority before their audibility; the two ranks stand in for
+that. Pinned by `test/systems/audit_rpt1026_events_audio.test.js` (2: forty peers' swings from their own producer, and the
+hit, the cry and the step each sounding, a crowd's swing stolen for each and never one of mine; the law's two ranks);
+`tools/mutants/audit_rpt1026_events.json` (I2, 6).

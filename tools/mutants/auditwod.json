@@ -299,18 +299,18 @@
   },
   {
     "name": "WOD6-rebuild-collects-piles",
-    "file": "src/scenes/world.js",
-    "old": "for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // a rebuild the reference never makes",
-    "new": "for (const k of again) destroyPixel(k.px, k.py);   // a rebuild the reference never makes",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      if (!api.stands(key)) { host.destroyPixel(px, py, { collectLoose: false }); return false; }",
+    "new": "      if (!api.stands(key)) { host.destroyPixel(px, py); return false; }",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
   },
   {
     "name": "WOD6-no-season-hold",
-    "file": "src/scenes/world.js",
-    "old": "    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;\n    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // a rebuild the reference never makes",
-    "new": "    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // a rebuild the reference never makes",
+    "file": "src/scenes/swapBehind.js",
+    "old": "      if (host.walkMode() && host.playerSpawned() && !api.stands(under) && again.some((k) => `${k.px},${k.py}` === under)) host.seasonHold(under);\n",
+    "new": "",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]

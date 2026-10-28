@@ -104,11 +104,12 @@
   {
     "name": "a-freed-cursor-is-taken-back-by-a-passing-gesture",
     "file": "src/player/pointerLock.js",
-    "old": "  if (_cursorActive || _cursorHolds.size) return;\n  _lastRequestAt = nowMs();",
-    "new": "  if (_cursorHolds.size) return;\n  _lastRequestAt = nowMs();",
+    "old": "  if (_cursorActive || _cursorHolds.size) return;\n  // RPT1026-MISC TOUCH-NO-LOCK",
+    "new": "  if (_cursorHolds.size) return;\n  // RPT1026-MISC TOUCH-NO-LOCK",
     "tests": [
       "test/systems/freemouse.test.js",
       "test/scenes/menu_pointer_relock.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (RPT1026-MISC): re-aimed by content - TOUCH-NO-LOCK put its touch gate between the cursor test and the request."
   }
 ]

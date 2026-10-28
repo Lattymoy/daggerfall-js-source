@@ -207,8 +207,8 @@
   {
     "name": "LEASE1-a-halo-skipped",
     "file": "src/net/online.js",
-    "old": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}${of}`), room); } catch {",
-    "new": "    try { ws = new this._WS(`${this.url}/room/${room}`); } catch {",
+    "old": "    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}${of}`), room), room); } catch {",
+    "new": "    try { ws = loneAhead(this, new this._WS(`${this.url}/room/${room}`), room); } catch {",
     "why": "a halo never handed the lease",
     "tests": [
       "test/net/lease1.test.js"
@@ -721,10 +721,10 @@
   },
   {
     "name": "HIBERNATE-halo-peer-heartbeat-dropped",
-    "file": "src/net/online.js",
-    "old": "this.othersHere === 0 && this.peers.size === 0 &&",
-    "new": "this.othersHere === 0 &&",
-    "why": "alone in my cell beside a cell with a player, standing still sends no heartbeat and that player loses me",
+    "file": "src/net/loneSleep.js",
+    "old": "s.others === 0 && s.peers === 0 &&",
+    "new": "s.others === 0 &&",
+    "why": "alone in my cell beside a cell with a player, standing still sends no heartbeat and that player loses me (re-aimed by content at the merge with LONE-SLEEP: alone is net/loneSleep.js aloneNow)",
     "tests": [
       "test/net/halothin.test.js"
     ]

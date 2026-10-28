@@ -186,6 +186,29 @@ export function keepsQuestItem(entity, res) {
     .some((l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid && it.questSymbol?.name === name));
 }
 
+/**
+ * FIELD BUGS 2026-10-25i HEART-KEPT (AUDIT FB1025i B1): WHERE A QUEST'S OWN RECORD `dfItem` STANDS IN `items` - the
+ * host's playerHasItem and removeItemFromPlayer (scenes/world.js). DFU looks it up by its UID
+ * (ItemCollection.Contains(DaggerfallUnityItem) and RemoveItem, ItemCollection.cs:157-163 and :278-287), and the port's
+ * item IS its UID: the record itself. A load restores the pack's copy and the resource's record apart (AUDIT 24), so a
+ * copy of the same quest and symbol stands for it - but never a FOE'S CLONE (`questClone`, quest/foe.js
+ * getClonedItemQueue), which CloneAll gave a UID of its own. Q0C4XY04 gives its heart to each of four kinds as it is
+ * hurt (GiveItem.cs:117-121 takes the quest's own record from the pack): read by quest and symbol alone, the heart the
+ * player had taken off the first body was pulled out of the pack onto the second kind, and the witches had nothing to
+ * take. `clones` widens the match to a clone when no own copy stands - Item.Dispose's sweep, the port's (a quest that
+ * ends takes back what its foes gave as well; DFU's RemoveItem leaves a clone to the load's orphan sweep). -1 for none.
+ * @param {any[]} items @param {any} dfItem @param {{ clones?: boolean }} [opts]
+ */
+export function heldQuestRecordIndex(items, dfItem, { clones = false } = {}) {
+  const list = Array.isArray(items) ? items : [];
+  const direct = list.indexOf(dfItem);
+  if (direct >= 0) return direct;
+  if (!dfItem?.questItem) return -1;
+  const same = (it) => !!it?.questItem && it.questUID === dfItem.questUID && it.questSymbol?.name === dfItem.questSymbol?.name;
+  const own = list.findIndex((it) => same(it) && !it.questClone);
+  return own >= 0 || !clones ? own : list.findIndex(same);
+}
+
 /** MakePermanent over the pack's copies of a quest's item `sym` (item.js's sync) - the host's `makeHeldQuestItemsPermanent`,
  *  out of bootWorld (HOST-SPLIT) beside its quest-item kin. */
 export function makeHeldQuestItemsPermanent(entity, uid, sym) {
@@ -267,8 +290,9 @@ const packRefuses = (capacity, item, units, remote) => !!capacity.gone || canHol
  * @returns {{ok:true, amount:number, notice:string|null}
  *          |{ok:false, refusal:object, notice:string|null}}
  */
-export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], shared = isRoomCarried(remote), groundRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
+export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], shared = isRoomCarried(remote), groundRefusal = null, storeRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
   if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };   // HOUSE-DROP: gold on a floor that refuses it
+  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal }, notice: null };   // AUDIT PVP-EASE L2-1: the combat lock (inventorySession.js storeRefusalOf)
   // A numeric field of 8 opening on "0": anything that is not a run of
   // digits is not a number, and 0 fails the range below.
   const asked = /^[0-9]+$/.test(String(text)) ? Number(text) : 0;
@@ -316,13 +340,16 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
  * @returns {{ok:false, refusal:object}|{ok:true, amount:number, sound:'click'}}
  */
 export function planStore(item, {
-  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, capacity = null, bagLoaded = false, wagonKg = WAGON_KG_LIMIT,
+  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, storeRefusal = null, capacity = null, bagLoaded = false, wagonKg = WAGON_KG_LIMIT,
 } = {}) {
   if (!item) return { ok: false, refusal: REFUSAL.missing };
   if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded };   // BAG1
   // HOUSE-DROP (2026-09-27): the ground itself refuses - the window hands the host's word (inventorySession
   // groundRefusalOf) only when the destination IS the ground, so a wagon, a chest and a trade are untouched
   if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal } };
+  // AUDIT PVP-EASE L2-1 (the owner chose "Combat lock"): storage no zone death takes refuses a fighter fresh from a fight -
+  // the window hands it (inventorySession.js storeRefusalOf) only when the destination IS such storage
+  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal } };
   if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };
   if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };   // KEEP-SPELLBOOK: the own wagon takes it, nothing else
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };
@@ -544,11 +571,17 @@ export function clearLightSourceOnLeave(item, entity, fromLocal) {
  * nothing to follow (LOOT-BULK's bulkMove, the quick door and the trade windows already ask `from.includes(item)`). Every
  * caller in src/ hands the list the piece is in (swept: the windows' own, quick loot, Physical Items, the naval plunder's
  * one-piece source, a decor take).
+ *
+ * RPT1026-CHESTGOLD (a private report): A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`from.pileCoins`, the
+ * shared chest's - systems/decor/decorGrants.js openSharedChest). The gold arm spent the pile into the purse at the click,
+ * every checkpoint after carried the purse, and a settle the service refused left the pile in the chest as well: gold
+ * twice. From such a list the pile lands in the window's pack as itself, and the purse takes it when the settle lands -
+ * in both windows, which both end their takes here. A departure from DoTransferItem's gold interception, Ledger A.
  */
 export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false, toPlayer = false, rolls = Math.random, stolenFrom = null, returnTo = null } = {}) {
   if (Array.isArray(from) && !from.includes(item)) return null;
   clearLightSourceOnLeave(item, entity, fromLocal);
-  if (toPlayer && isGoldPieces(item)) {
+  if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {
     const coin = _splitOff(item, plan, from, rolls);
     const at = from.indexOf(coin);
     if (at >= 0) from.splice(at, 1);

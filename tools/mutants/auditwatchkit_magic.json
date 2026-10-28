@@ -236,7 +236,7 @@
   {
     "name": "LD-HM-gift-level-one",
     "file": "src/scenes/hostMagic.js",
-    "old": "applySpellToFoe(gift, effectiveLevel(playerEntity), rec,",
+    "old": "applySpellToFoe(gift, castingLevel(playerEntity), rec,",
     "new": "applySpellToFoe(gift, 1, rec,",
     "tests": [
       "test/systems/auditwatchkit_magic.test.js"

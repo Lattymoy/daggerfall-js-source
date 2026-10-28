@@ -149,7 +149,7 @@ test('STRIKE-SHARED: a peer\'s SOUL TRAP is its caster\'s - the owner marks it, 
   assert.equal(pup._trapSent, false, 'spent');
   const e = rd('src/scenes/exteriorFoes.js');
   assert.match(e, /if \(!f\._trapSent \|\| r\.j !== \(_net\?\.selfId\?\.\(\) \?\? null\)\) return;/, 'only a puppet I trapped, only my name');
-  assert.match(e, /const trap = peer \|\| _peerTrap \? \{ allowDeath: true \} : attemptSoulTrap\(/, 'the owner reads no gem for a peer\'s trap');
+  assert.match(e, /const trap = _peerTrap \? \{ allowDeath: true \} : attemptSoulTrap\(/, 'the owner reads no gem for a peer\'s trap');   // PIN MOVED (RPT1026-FIGHTS TRAP-TO-OWNER): its OWN trap is read whoever struck - test/scenes/rpt1026_fights_trap.test.js
 });
 
 test('STRIKE-SHARED: a puppet I did NOT trap fills no gem of mine on the owner\'s word', async () => {
@@ -185,7 +185,7 @@ test('STRIKE-SHARED: the dungeon twin and the hosts, by source - the same field 
   assert.equal((d.match(/\.\.\.\(spell \?\? \{\}\),   \/\/ STRIKE-SHARED/g) ?? []).length, 2, 'both diverts (the room\'s foe, a party member\'s own) carry the spell');
   assert.match(d, /if \(pi < 0 \|\| !\(f\._ownFrom != null \|\| \(!_authority && isRoomFoe\(f, pi\)\)\)\) return false;/, 'only a foe another player runs');
   assert.match(d, /const hs = f\.dead \? null : hitSpellOf\(data\);\n\s*if \(hs\) \{\n\s*magic\.applySpellToFoe\(hs\.spell, hs\.level, f, \{ entity: \{ level: hs\.level \} \}, \{ peerCaster: id \}, \{\n\s*\.\.\.foeSinks\(f\),\n\s*hurt: \(n, o\) => damageFoe\(f, bossStrikeAt\(f\.entity, n, 'spell', null, o\?\.element \?\? null, !!o\?\.whole, null\), null, null, \{ fromPlayer: true, peer: true, peerId: id, kind: 'spell', whole: !!o\?\.whole, element: o\?\.element \?\? null \}\),/, 'landPeerBlow lands it with the striker\'s provenance');   // PIN MOVED (AUDIT WORLD-EVENTS L2-1): and its element, resisted at the owner for the peer
-  assert.match(d, /const trap = peer \|\| _peerTrap \? \{ allowDeath: true \} : attemptSoulTrap\(foe\.entity/);
+  assert.match(d, /const trap = _peerTrap \? \{ allowDeath: true \} : attemptSoulTrap\(foe\.entity/);   // PIN MOVED (RPT1026-FIGHTS TRAP-TO-OWNER): the runner's own trap read whoever struck
   assert.match(d, /r\.j = f\._trapBy; r\.q = f\._trapQ \| 0;/);
   assert.match(d, /if \(r\.d === 1 && !f\.dead && r\.j !== undefined && f\._trapSent && r\.j === \(opts\.selfId\?\.\(\) \?\? null\)\) \{/);
   assert.match(d, /spellToOwner: \(f, record, level\) => spellToOwner\(f, record, level\),/, 'the standalone host\'s enchant ctx');

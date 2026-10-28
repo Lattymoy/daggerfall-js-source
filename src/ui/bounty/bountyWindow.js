@@ -23,6 +23,9 @@ import { frameCss } from '../enhanced/enhancedFrame.js';
 import { isEnhancedPlus } from '../../systems/uiSkin.js';
 import { scopeRules } from '../brokerWindow.js';
 import { bountyTimeText, BOUNTY_ACTIVE_MAX } from '../../systems/bounty/bountyBoard.js';
+import { rankLine } from './huntRank.js';   // HUNTERS-MARK: the hunter's rank in the board's header
+import { BOSS_TRAIT_WORDS } from '../../systems/bossTraits.js';   // HUNTERS-MARK: a named mark's traits, named on its card
+import { t, intlLocale } from '../../systems/textManager.js';
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -50,6 +53,9 @@ export function stateWord(row) {
   if (row.state === 'full') return 'Hands full';
   return row.mates?.length ? `${row.mates[0]} is hunting` : 'Open';
 }
+/** HUNTERS-MARK: where the hunter stands with the week's named mark, in a word. */
+export const markStateWord = (/** @type {string} */ state) => (state === 'held' ? t('hunt.mark.stateHeld', 'Hunting')
+  : state === 'paid' ? t('hunt.mark.statePaid', 'Slain') : t('hunt.mark.stateOpen', 'Open'));
 /** SPAM-TAKE (FIELD BUGS 2026-10-10, the Discord's "Bounty Board: Click order"): the notice the card moves on to after a
  *  take - the next open one below `from`, around to the top, or `from` itself when none is open. */
 export function nextOpenNotice(rows, from) {
@@ -101,8 +107,8 @@ function shellOf(host, label, exit) {
  * The board.
  * @param {HTMLElement} host
  * @param {{ town:{name:string}, rows:() => any[], held:() => any[], nextDayIn:() => number, inParty:() => boolean,
- *   take:(id:string) => {ok:boolean, text?:string}, drop:(id:string) => {ok:boolean},
- *   share:(id:string) => {ok:boolean, shut?:Array<{name:string, lv:number, low:boolean}>},
+ *   take:(id:string) => {ok:boolean, text?:string}, drop:(id:string) => {ok:boolean}, share:(id:string) => {ok:boolean, shut?:Array<{name:string, lv:number, low:boolean}>},
+ *   hunt?: () => ({ rank: any, mark: any, takeMark: (id:string) => {ok:boolean, text?:string}, dropMark: (id:string) => {ok:boolean} } | null),
  *   onExit?: (() => void) | null }} deps
  */
 export function mountBountyBoard(host, deps) {
@@ -113,7 +119,8 @@ export function mountBountyBoard(host, deps) {
   const sub = el('p', 'bounty-sub');
   const note = el('p', 'bounty-note');
   note.setAttribute('aria-live', 'polite');
-  title.append(el('h2', null, `Bounty Board of ${deps.town.name}`), sub, note);
+  const rankBox = el('div', 'bounty-rankbox');   // HUNTERS-MARK: the hunter's rank, redrawn with the list
+  title.append(el('h2', null, `Bounty Board of ${deps.town.name}`), sub, rankBox, note);
   head.append(title, button('bounty-close', 'Close', exit));
   const body = el('div', 'bounty-body');
   const side = el('div', 'bounty-side');
@@ -124,7 +131,7 @@ export function mountBountyBoard(host, deps) {
   side.append(list, heldHead, heldList);
   body.append(side);
   win.append(head, body);
-  let picked = 0;
+  let picked = /** @type {number|'mark'} */ (0);
   let card = null;
   let word = null;
   let armed = null;   // SPAM-TAKE: the held bounty whose Give up was pressed once - the second press gives it up
@@ -133,7 +140,7 @@ export function mountBountyBoard(host, deps) {
 
   /** AUDIT 28 B11: the key the focus sits on (a notice's row, the card's act), kept through a repaint - every five
    *  seconds the list is rebuilt, and a keyboard's place in it was dropped to the page. */
-  const FOCUS_RE = /\b(bounty-post-i\d+|bounty-take|bounty-share|bounty-drop)\b/;
+  const FOCUS_RE = /\b(bounty-post-i(?:\d+|mark)|bounty-take|bounty-share|bounty-drop)\b/;   // HUNTERS-MARK: the named mark's row too
   const focusKey = () => { const m = FOCUS_RE.exec(String(globalThis.document?.activeElement?.className ?? '')); return m ? m[1] : null; };
   const render = (keep = focusKey()) => {
     draw();
@@ -147,6 +154,14 @@ export function mountBountyBoard(host, deps) {
     note.textContent = word?.text ?? '';
     note.className = `bounty-note${word?.ok ? ' ok' : ''}`;
     for (const c of [...list.children]) c.remove();
+    // HUNTERS-MARK (Bounty-Boards.md 12.3-12.4): the rank under the title, and the week's named mark first in the list
+    const hv = deps.hunt?.() ?? null;
+    for (const c of [...rankBox.children]) c.remove();
+    const rl = rankLine(el, hv?.rank ?? null);
+    if (rl) rankBox.append(rl);
+    const mk = hv?.mark ?? null;
+    if (picked === 'mark' && !mk) picked = 0;
+    if (mk) list.append(markRow(mk));
     if (!rows.length) list.append(el('li', 'bounty-empty', 'No bounties are posted here today.'));
     rows.forEach((r, i) => {
       const p = r.posting;
@@ -172,7 +187,8 @@ export function mountBountyBoard(host, deps) {
     }
     card?.remove();
     card = null;
-    const r = rows[picked] ?? rows[0];
+    if (picked === 'mark' && mk) { card = markCard(mk, hv); body.append(card); return; }
+    const r = rows[/** @type {number} */ (picked)] ?? rows[0];
     if (!r) return;
     const p = r.posting;
     // AUDIT FB1010 A3: the notice reads in its own scrolling page and the presses stand under it, at the card's foot -
@@ -200,7 +216,7 @@ export function mountBountyBoard(host, deps) {
         // SPAM-TAKE: the card moves on to the next open notice, so Take stands where it stood - a run of presses takes
         // the notices in order, where the card used to stay and turn Take into Give up under the cursor. AUDIT FB1010
         // A1: with none open to move to, the card stays on the one taken and asks a pick before it offers a press
-        if (done.ok) { const next = nextOpenNotice(deps.rows(), picked); landed = next === picked ? p.slotKey : null; picked = next; }
+        if (done.ok) { const at = /** @type {number} */ (picked); const next = nextOpenNotice(deps.rows(), at); landed = next === at ? p.slotKey : null; picked = next; }
         armed = null;
         render(keep);
       }));
@@ -232,6 +248,59 @@ export function mountBountyBoard(host, deps) {
     card.append(acts);
     body.append(card);
   };
+  /** HUNTERS-MARK: the named mark's row - its title, tier, purse and trophy, and where the hunter stands with it. */
+  function markRow(/** @type {any} */ mk) {
+    const p = mk.posting;
+    const li = el('li', ['bounty-post', 'bounty-mark', 'bounty-post-imark', picked === 'mark' ? 'on' : '', `st-${mk.state}`].filter(Boolean).join(' '));
+    li.setAttribute('role', 'button');
+    li.setAttribute('tabindex', '0');
+    li.setAttribute('aria-pressed', picked === 'mark' ? 'true' : 'false');
+    const main = el('div', 'bounty-post-body');
+    main.append(el('span', 'bounty-post-title', p.title), el('span', 'bounty-post-meta', t('hunt.mark.meta', 'Named beast · Tier {tier} · {gold} gold · a trophy', { tier: p.tier, gold: p.gold })));
+    li.append(main, el('span', ['bounty-state', `st-${mk.state}`].join(' '), markStateWord(mk.state)));
+    const pick = () => { picked = 'mark'; word = null; armed = null; landed = null; render(); };
+    li.onclick = pick;
+    li.onkeydown = (e) => { if (e.target === li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault?.(); pick(); } };
+    return li;
+  }
+  /** AUDIT HORIZONTAL G6: the traits are names (boss-title words), listed in the reader's language, never glued with an
+   *  English " and " into an adjective's sentence. */
+  const traitList = (/** @type {string[]} */ names) => {
+    try { return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(names); } catch { return names.join(', '); }
+  };
+  /** HUNTERS-MARK: the named mark's card - its notice, its traits, its purse and trophy, Take or Give up (twice). */
+  function markCard(/** @type {any} */ mk, /** @type {any} */ hv) {
+    const p = mk.posting;
+    const c = el('div', 'bounty-card bounty-markcard');
+    const page = el('div', 'bounty-cardpage');
+    page.append(el('h3', null, p.title), el('p', 'bounty-tier', p.tierLabel), el('p', 'bounty-story', p.story));
+    const traits = (p.traits ?? []).map((id) => BOSS_TRAIT_WORDS[/** @type {keyof typeof BOSS_TRAIT_WORDS} */ (id)]?.() ?? id);
+    if (traits.length) page.append(el('p', 'bounty-marktraits', t('hunt.mark.traitsList', 'Its traits: {traits}.', { traits: traitList(traits) })));
+    page.append(el('p', 'bounty-poster', `- ${t('hunt.mark.postedBy', 'posted by {poster}', { poster: p.poster })}`), el('p', 'bounty-mapline', p.mapLine));
+    const reward = el('div', 'bounty-reward');
+    reward.append(el('span', 'bounty-reward-head', t('hunt.mark.rewardHead', 'Reward')), el('span', 'bounty-gold', t('hunt.mark.gold', '{gold} gold pieces', { gold: p.gold })), el('span', 'bounty-itemhint', t('hunt.mark.rewardHint', 'a mounted trophy of the beast, to hang in your home')));
+    page.append(reward);
+    c.append(page);
+    const acts = el('div', 'bounty-acts');
+    if (mk.state === 'open') {
+      acts.append(button('primary bounty-take', t('hunt.mark.take', 'Take bounty'), () => {
+        const done = hv?.takeMark?.(p.id) ?? { ok: false };
+        word = done.ok ? { ok: true, text: t('hunt.mark.tookLine', 'Taken: {title}. Look for the black circle on your map.', { title: p.title }) } : { ok: false, text: done.text ?? t('hunt.mark.cannot', 'You cannot take that.') };
+        armed = null;
+        render();
+      }));
+    } else if (mk.state === 'held') {
+      acts.append(button('bounty-drop', armed === p.id ? t('hunt.mark.dropArmed', 'Click again to give up') : t('hunt.mark.drop', 'Give up'), () => {
+        if (armed !== p.id) { armed = p.id; render(); return; }
+        armed = null;
+        hv?.dropMark?.(p.id);
+        word = { ok: false, text: t('hunt.mark.gaveUp', 'You gave up the hunt for {title}.', { title: p.title }) };
+        render('bounty-take');
+      }));
+    } else acts.append(el('p', 'bounty-why', t('hunt.mark.slainWeek', 'You have slain this week\'s named beast. A new one is posted at the Turning.')));
+    c.append(acts);
+    return c;
+  }
   render();
   const tick = setInterval(render, BOUNTY_REPAINT_MS);
   /** @type {any} */ (tick)?.unref?.();

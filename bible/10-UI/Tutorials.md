@@ -14,8 +14,14 @@ the old game on its first page.
 
 It is no longer started. What it did besides its pages is kept: every way out of it - finished, or No on any page - ran
 its `_no_` task, `start quest 977 977`, the curse on the old capital's streets (a world quest, `scenes/quest/questFoeHost.js`
-WORLD_QUESTS). So GAME_START_QUESTS is now `['S0000977', '_BRISIEN']`: the curse starts where the tutorial stood, as it
-did for a player who said No to its first page. A save from before TUT1 still inside `_TUTOR__` leaves it at the load
+WORLD_QUESTS). So GAME_START_QUESTS became `['S0000977', '_BRISIEN']`: the curse starts where the tutorial stood, as it
+did for a player who said No to its first page.
+
+(START1, 2026-10-24: `_BRISIEN`'s place is now the Bay's start quest's,
+whose commission begins the main quest - `06-Systems/Alternate-Starts-Arc.md` - and the welcome page says so, of every
+start (START2; AUDIT STARTS U9): "Your story begins with the Emperor's sealed orders, your commission. When you hold
+them, open them from your pack: they name the city where the main story begins.") A save from before TUT1 still inside
+`_TUTOR__` leaves it at the load
 (`retireDfuTutorial`, called after the machine is restored): the quest is removed - no notebook entry, it had nothing to
 file - and the curse starts unless the save already holds it. The vendored file stays: it is DFU's data, and the
 curse's pins (`test/systems/quest/cursesync.test.js`) read its `_no_` task. Port-Ledger section A carries the departure.
@@ -40,7 +46,7 @@ curse's pins (`test/systems/quest/cursesync.test.js`) read its `_no_` task. Port
   holds every page to the limits.
   CRAFT-HOWTO (FIELD BUGS 2026-10-18d; MoonGeneral, the Discord's #bug-reports: "Write a bit more detailed piece about
   crafting in the tutorial ... something that helps new players know where to look") added a **Crafting** page to
-  Professions & Survival, after Professions: crafting is done at a station, worked from the Stores page - {Professions}, then Holdings > Stores (AUDIT FB1018D L1-6: "Menu > Holdings" is the Enhanced menu's alone);
+  Professions & Survival, after Professions: crafting is done at a station, worked from the Crafting page - {Professions} pressed at the station lands on it (CRAFT-HALL, `06-Systems/Professions-Arc.md` 56; it was {Professions}, then Holdings > Stores - AUDIT FB1018D L1-6: "Menu > Holdings" is the Enhanced menu's alone);
   each station's shops as the interior host's station questions answer them (a forge at Weaponsmiths and Armorers, a
   loom at Clothing Stores, a workbench at Furniture Stores and joineries, a jeweller's bench at Pawn Shops and Gem
   Stores, a mason's bench at General Stores, Alchemy at Alchemists, Enchanting at Mages Guild halls), a home's own
@@ -76,7 +82,8 @@ classic parchment); no host was handed a new seam.
   (`boundKeyName`: the Controls page's own names), `[unbound]` when nothing is.
 - **The welcome tour.** `startTutorialTour()` - one box of the tour's unread pages (`TUTORIAL_TOUR`: welcome,
   movement, using things, the HUD, the menu and saving), each dismissal turning the page (`addNext`). The two
-  new-game seams call it right after `questBridge.initAtGameStart()`: `world.js:"    startTutorialTour();"` and its
+  new-game seams call it right after `questBridge.initAtGameStart()`: `world.js:"starts.begin((start) => { questBridge.initAtGameStart(start); startTutorialTour(); }, startKey);"`
+  (START2: once the character stands where their story begins, `06-Systems/Alternate-Starts-Arc.md` section 8) and its
   twin in `exterior.js`, where `_TUTOR__` used to speak its first page.
 
 THE FOUR HOSTS: `world.js` and `exterior.js` import `startTutorialTour`; `worldModes.js` and `dungeonContext.js` import

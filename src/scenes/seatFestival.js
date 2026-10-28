@@ -79,7 +79,7 @@ export function createFestivalStage({ seatAt, now = () => Date.now(), version = 
     const v = version(), t = now();
     if (v !== seen || t - at >= BANNER_REFRESH_MS) { rules.clear(); seen = v; at = t; }
     let r = rules.get(mapId);
-    if (r === undefined) { r = mapId != null && festivalRules(seatAt(mapId)); rules.set(mapId, r); }
+    if (r === undefined) { const town = mapId != null ? seatAt(mapId) : null; r = mapId != null && festivalRules(town?.charterSeat ?? town); rules.set(mapId, r); }   // DOMAIN3: a holding keeps its Charter's Festival
     return r;
   };
   return {

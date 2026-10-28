@@ -213,7 +213,7 @@ test('AUDIT SETS M2: A ROOM\'S WORD THIS BUILD CANNOT READ - a newer game\'s ite
   assert.match(wm, /if \(_intShared\?\.unreadable\?\.has\(key\)\) \{ setMidScreenText\(LOOT_NEWER_TEXT\); return true; \}/, 'the press says the newer-version line and opens nothing');
   assert.match(dun, /if \(!items\) \{ if \(lootHolder\(canon\) && !respawnDue\(rec\.t, _wallNow\(\)\)\) \{ _lootSeen\.add\(canon\); _lootUnreadable\.add\(canon\); \} continue; \}/, 'a word due back (WORLD8) locks nothing');
   assert.match(dun, /if \(_lootUnreadable\.has\(canon\)\) return false;   \/\/ AUDIT SETS M2/, 'never claimed or closed over in a dungeon');
-  assert.match(dun, /if \(_u && _lootUnreadable\.has\(lootKeyOf\(_u\)\)\) \{ setMidScreenText\(LOOT_NEWER_TEXT\); return 0; \}/, 'nor opened');   // PIN MOVED BACK (AUDIT GRAVE-PARTY G2): GRAVE-PARTY opened a room container as the player's own here - an online pile is built empty, so it opened empty, or its base unclaimed; M2's refusal stands for every container again (test/systems/fb1016b_graveparty.test.js)
+  assert.match(dun, /if \(_u && _lootUnreadable\.has\(lootKeyOf\(_u\)\)\) \{ setMidScreenText\(roomUnreadableText\(lootKeyOf\(_u\)\)\); return 0; \}/, 'nor opened');   // PIN MOVED (RPT1026-ITEMS LOOT-SKEW): the line the room module chooses - M2's for a piece this build cannot read, another build's base said as one   // PIN MOVED BACK (AUDIT GRAVE-PARTY G2): GRAVE-PARTY opened a room container as the player's own here - an online pile is built empty, so it opened empty, or its base unclaimed; M2's refusal stands for every container again (test/systems/fb1016b_graveparty.test.js)
   assert.match(LOOT_NEWER_TEXT, /newer version of the game/);
 });
 

@@ -217,6 +217,13 @@ to the band's top (never lower, and never the same - a paid press always moves i
 first 1 shard and 50 gold, a Rare's 2 and 150, an Exalted's line 4 and 500. A line at its top is not honed. Perfect
 Rare (LOOT2) becomes a chase with a price.
 
+PRESS-FLAT (2026-10-28, the owner: "no lean at all", "it need to reroll as well", "remove the lean on reforge"): the
+Imbue (`reforge.js` imbuePiece, `applyRarity`'s `flat`) and the Reforge, the guild's and the Essence's
+(`lootRarity.js` reforgeAffix), draw a line with no lean: no skill to the weapon's own or its strike kin, no damage
+or armour as the first line, no armour family's weight, no garment's dress. A bought Katana had rolled damage, Long
+Blade and Critical Strike together one time in eight; now about one in 2,500. A found or made piece keeps LOOT1's
+lean. Pinned: `test/systems/loot/pressflat.test.js`; mutants `tools/mutants/pressflat.json`.
+
 ## 10. LOOT18 - seen: the line compare, the junk and the filter
 
 - **The card compares lines.** Beside AC-COMPARE's armour numbers, every line of a picked piece reads against the piece

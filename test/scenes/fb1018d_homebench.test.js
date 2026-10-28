@@ -23,7 +23,7 @@ import { accountHomes, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createOnlineHomes, homeDoorAnswer, homeBelongsLine, homeStationsServe } from '../../src/systems/online/onlineHomes.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { FORGE_FEE, WORKBENCH_FEE, LOOM_FEE, MASON_FEE, JEWEL_FEE, ALCHEMY_FEE, ENCHANT_FEE } from '../../src/net/professionLaw.js';
-import { PROF_STATIONS, STORES_ACT_STATIONS, stationColdLine } from '../../src/ui/professions/profPages.js';
+import { PROF_STATIONS, STORES_ACT_STATIONS, stationColdLine, stationDoorAt } from '../../src/ui/professions/profPages.js';   // CRAFT-HALL: a station's door lands on the Crafting page
 import { VENDOR_STATION } from '../../src/net/vendorLaw.js';
 import { GUILD_GROUPS } from '../../src/formats/factionFile.js';
 import { isCaravanRoom } from '../../src/systems/caravanRoom.js';
@@ -70,7 +70,7 @@ function room(home, { privateVisitRoom = null } = {}) {
     interiorHome: home, interiorCabin: null, interiorSeatHall: null, privateVisitRoom, privateVisitOwner: null, playerEntity: { houses: [] },
     interiorDecor: { list: () => pieces, pieceOf: (id) => pieces.find((p) => p.id === id) ?? null, itemsOf: () => [] },
     BUILDING_TYPES, FORGE_FEE, WORKBENCH_FEE, LOOM_FEE, MASON_FEE, JEWEL_FEE, ALCHEMY_FEE, ENCHANT_FEE, GUILD_GROUPS, VENDOR_STATION,
-    PROF_STATIONS, STORES_ACT_STATIONS, stationColdLine, homeBelongsLine, homeStationsServe, isCaravanRoom,
+    PROF_STATIONS, STORES_ACT_STATIONS, stationColdLine, stationDoorAt, homeBelongsLine, homeStationsServe, isCaravanRoom,
     ownsShip: () => false, houseOwnedAt: () => false, guildGroupOfFaction: () => null, townTalk: null,
     say: (t) => log.said.push(t), forgeOffered: () => true,
     interiorKeyCtx: { togglePause: (o) => log.opened.push(['page', o.at]) },
@@ -144,7 +144,7 @@ test('FB1018D HOME-BENCH THE HOST\'S GATE: the host\'s own functions over the se
     gate.press({ station: 'enchant' });
     gate.press({ station: 'forge' });
     assert.deepEqual(log.said, [], `${who} is told nothing`);
-    assert.deepEqual(log.opened, [['chooser', 'enchant'], ['page', 'stores']], `${who}: the enchanting station's chooser (the item maker, Disenchant), the forge's Stores page`);
+    assert.deepEqual(log.opened, [['chooser', 'enchant'], ['page', 'crafting']], `${who}: the enchanting station's chooser (the item maker, Disenchant), the forge's Crafting page`);   // PIN MOVED (CRAFT-HALL): a station's door lands on the Crafting page
     gate.activate('cupboard');
     // PIN MOVED (ACCOUNT-HOMES): every character of the account owns the home, so the cupboard is each one's own storage -
     // its things in that character's own save (HOME1's scene, kept per save)

@@ -123,7 +123,7 @@ test('TV2 route: a step is ON the road only when both ends carry the edge - two 
   assert.deepEqual(ROUTE_COST, { road: 1, track: 1.6, open: 3.5 });
 });
 
-test('TV2 route: along a road the route IS the road; round a hill it takes the road\'s long way when that is cheaper than the open; a short hop across a field stays across the field', () => {
+test('TV2 route: along a road the route IS the road; round a hill it takes the road\'s long way when that is cheaper than the open; ROAD-FOLLOW: a road round a field that joins the two ends is walked round it (TV2\'s cost law, `costLaw`, hops the field)', () => {
   const g = grid();
   lay(g.roads, row(5, 1, 20));
   const along = planRoute({ x: 1, y: 5 }, { x: 20, y: 5 }, { ...g, width: W, height: H });
@@ -133,9 +133,15 @@ test('TV2 route: along a road the route IS the road; round a hill it takes the r
   // a U-shaped road: 2..14 on row 2, down col 14 to row 8, back along row 8 - from (2,2) to (2,8)
   const u = grid();
   lay(u.roads, [...row(2, 2, 14), ...Array.from({ length: 6 }, (_, i) => [14, 3 + i]), ...row(8, 2, 14).reverse().slice(1)]);
+  // PIN MOVED (ROAD-FOLLOW, 06-Systems/Travel-View.md ROAD-FOLLOW): the road joins the two ends, so the way is the road
+  // round - TV2's cost law took six pixels across the field (21 open) over thirty on the road, and the owner's "Road
+  // travel is not following roads properly in overworld travel" was that cut
   const around = planRoute({ x: 2, y: 2 }, { x: 2, y: 8 }, { ...u, width: W, height: H });
-  assert.ok(around.kinds.includes('open'), 'six pixels across the field (21 open) beat thirty on the road');
-  assert.ok(around.cost <= 6 * ROUTE_COST.open + 1e-9);
+  assert.ok(around.kinds.every((k) => k === 'road'), 'the road round, never across the field');
+  assert.ok(near(around.cost, 30));
+  const hop = planRoute({ x: 2, y: 2 }, { x: 2, y: 8 }, { ...u, width: W, height: H, costLaw: true });
+  assert.ok(hop.kinds.includes('open'), 'TV2\'s cost law (the plan\'s own where no road joins the ends): six pixels across the field');
+  assert.ok(hop.cost <= 6 * ROUTE_COST.open + 1e-9);
   // ...but a long way round is taken when the field is wide
   const v = grid();
   lay(v.roads, [...row(2, 2, 4), [5, 3], [6, 4], [7, 5], [8, 6], [9, 7], ...row(8, 10, 12)]);
@@ -144,6 +150,21 @@ test('TV2 route: along a road the route IS the road; round a hill it takes the r
   assert.equal(roadShare(diag.kinds), 1);
   assert.equal(roadShare([]), 0);
   assert.equal(roadShare(['road', 'open']), 0.5);
+});
+
+test('ROAD-FOLLOW route: two towns on one road three pixels apart across a field go by the road round it - an end on the road has no leg of open ground; a spot in the field walks out to the road first, then by it to the end (mutants: an end on the road a leg; the legs everywhere; the floods never meet)', () => {
+  const u = grid();
+  // the road east along row 2 from column 2 to 12, down to row 5, back west to column 2: its two ends three pixels apart
+  lay(u.roads, [...row(2, 2, 12), [12, 3], [12, 4], ...row(5, 2, 12).reverse()]);
+  const r = planRoute({ x: 2, y: 2 }, { x: 2, y: 5 }, { ...u, width: W, height: H });
+  assert.ok(r.kinds.every((k) => k === 'road'), 'the road round, never the three pixels of field');
+  assert.ok(near(r.cost, 23));
+  // a spot three pixels below the road's south row: open ground out to the road (its leg: the ring of its nearest road
+  // and two past), then the road the rest of the way
+  const s = planRoute({ x: 7, y: 8 }, { x: 12, y: 2 }, { ...u, width: W, height: H });
+  const first = s.kinds.indexOf('road');
+  assert.ok(first > 0 && s.kinds.slice(0, first).every((k) => k === 'open') && s.kinds.slice(first).every((k) => k === 'road'), s.kinds.join(' '));
+  assert.ok(first <= 5, `out to the road within its leg (${first} steps)`);
 });
 
 test('AUDIT DEEP2 B-6 route: a road just past the first search box beats open ground inside it - the box widens until no route outside it could be cheaper', () => {
@@ -529,7 +550,8 @@ test('TV2 host wiring: the click is a ray from the VIEW\'s eye through this fram
   assert.match(w, /const tvLegMid = \(p\) => \{ const o = mapPixelToWorldCoords\(p\.x, p\.y\); return \[o\.x \+ 16384, o\.z \+ 16384\]; \};/, 'a leg\'s pixel middle');
   assert.match(w, /const start = Math\.min\(n\.length - 1, from \+ 1\);/);
   // PIN MOVED (OW-TOWN-WALK, 2026-10-19): the traveller's own leg leaves from the last of a town's streets and the join (`at`)
-  assert.match(w, /leg\(at\.x, at\.z, n\[start\]\[0\], n\[start\]\[1\], pts\);[^\n]*\n(\s*\/\/[^\n]*\n)*\s*const gen = tvGroundGenNow\(\), kept = tvTrip\._tail;\n\s*let tail = kept && kept\.gen === gen && kept\.start === start && kept\.n === n \? kept\.pts : null;/, 'PERF-TV: the legs past the traveller\'s own kept while the ground and the leg hold');
+  // PIN MOVED (ROAD-FOLLOW): the traveller's own leg and the legs past it drawn along the painted road (systems/travel/roadLine.js)
+  assert.match(w, /drawOwnRun\(at, n\[start\], j \|\| travelOptions\.route\?\.street \? 0 : travelOptions\.state\?\.autopilot\?\.seg, leg, pts\);[^\n]*\n(\s*\/\/[^\n]*\n)*\s*const gen = tvGroundGenNow\(\), kept = tvTrip\._tail;\n\s*let tail = kept && kept\.gen === gen && kept\.start === start && kept\.n === n \? kept\.pts : null;\n\s*if \(!tail\) \{\n\s*tail = \[\];\n\s*drawRouteRuns\(n, start, leg, tail\);/, 'PERF-TV: the legs past the traveller\'s own kept while the ground and the leg hold');
   // AUDIT TV A5: a town's grown rect asked across the 3x3 about the hit
   assert.match(w, /for \(let dy = -1; dy <= 1; dy\+\+\) \{\n\s*for \(let dx = -1; dx <= 1; dx\+\+\) \{\n\s*const summary = tvPlaceSummary\(pix\.x \+ dx, pix\.y \+ dy\);/);
   // PIN MOVED (AUDIT OW5 S4): an own-pixel sea spot is given its one sea leg first; AUDIT OW5b D3: the walk carries its door
@@ -549,7 +571,7 @@ test('TV2 host wiring: THE CAP - governed before the frame reads the travel scal
   assert.match(w, /const rate = csaHoldsTimeScale\(\) \? null : \(foes\.strangerRate \? Math\.min\(foeRate\(foes, travelAsked\), foes\.strangerRate\) : foeRate\(foes, travelAsked\)\);\n\s*if \(rate != null && worldTimeScale\(\) !== rate\) setWorldTimeScale\(rate\);\n\s*tvHeld = rate != null && rate < travelAsked \? rate : null;/, 'the mod\'s own ask back');
   // PIN MOVED (OW-LEAD, test/systems/travel/ow_lead.test.js): the land's cap is how near the nearest owed pixel is, at the traveller's pace
   // PIN MOVED (OW-TOWN-WALK, 2026-10-19): a town's pace may stand between the enemies' cap and the rate
-  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want, owed: uc\.owed, feet: unbuilt \? state\.worldCoords\(player\.feetAt\(\)\) : null, speedMps: player\?\.speed \?\? 0 \}\);[^\n]*\n\s*const foeCap = foes\.strangerRate \? Math\.min\(foeRate\(foes, want\), foes\.strangerRate\) : foeRate\(foes, want\);[^\n]*\n(?:\s*const town = [^\n]*\n)?\s*const rate = Math\.min\(load, foeCap(?:, town)?\);/);
+  assert.match(w, /const load = travelGovernor\.step\(dt, \{ unbuilt, requested: want, owed: uc\.owed, feet: unbuilt \? state\.worldCoords\(player\.feetAt\(\)\) : null, speedMps: travellerPace\(player, csaBoatUnderMe\(\)\) \}\);[^\n]*\n\s*const foeCap = foes\.strangerRate \? Math\.min\(foeRate\(foes, want\), foes\.strangerRate\) : foeRate\(foes, want\);[^\n]*\n(?:\s*const town = [^\n]*\n)?\s*const rate = Math\.min\(load, foeCap(?:, town)?\);/);   // PIN MOVED (PASSAGE-PACE): the traveller's own pace, a boat's way at her helm
   // AUDIT TV A2: the ASK is the mod's - its ground's rate (RATE-LAW; it was the spinner) and its own caps (the ring walk's
   // x15, an interrupt's x1), recorded where the mod sets the clock - so the governor never lifts a journey past the mod's
   assert.doesNotMatch(w, /onTimeAccelerationChanged/, 'RATE-LAW: no spinner to tell the host');
@@ -711,8 +733,9 @@ test('AUDIT OW3 J5 (AUDIT OW4 J1), then MOUNTAINS WALKABLE (the owner, the Wroth
   // AUDIT OW4 J3: the law bound to the world's own climate and heightmap, read once (routeGround: its behaviour pinned below)
   // PIN MOVED (WILD1): the open zone's pixels read as flat dry ground (the sea still the sea), the tables read again as
   // the zone comes or goes - and outside it the world's own climate and heightmap, as before. PIN MOVED (TV-BEYOND): and
-  // the land past the Bay, as the view's own water law reads it
-  assert.match(w, /const tvRouteGround = \(\) => \{\n\s*const wildOn = !!wildMapMask\(\);\n\s*if \(wildOn !== _tvGroundWild\) \{ _tvGroundWild = wildOn; _tvRouteGround = null; \}[^\n]*\n\s*\(_tvRouteGround \?\?= routeGround\(\n\s*\(x, y\) => \(tvWildFree\(x, y\) && woods\.getHeightMapValue\(x, y\) > WATER_BYTE \? 0 : maps\.getClimateIndex\(x, y\)\),\n\s*\(x, y\) => \{ const h = woods\.getHeightMapValue\(x, y\); return tvWildFree\(x, y\) && h > WATER_BYTE \? WATER_BYTE \+ 8 : h; \},[^\n]*\n\s*WATER_BYTE, 1000, 500, \(x, y\) => !tvWater\(x, y\)\)\)\.setRocks\(tvWodRocks\(\)\);[^\n]*\n\s*return _tvRouteGround;\n\s*\};/, 'AUDIT OW3 J8: the law bound to the world\'s own climate and heightmap (OW-WOD-PATH: and the World of Daggerfall massifs)');
+  // the land past the Bay, as the view's own water law reads it. PIN MOVED (RUMARE-WATER): and its voyages' sea the
+  // Imperial City's lake too (world/rumareWaters.js rumareSeaPixel)
+  assert.match(w, /const tvRouteGround = \(\) => \{\n\s*const wildOn = !!wildMapMask\(\);\n\s*if \(wildOn !== _tvGroundWild\) \{ _tvGroundWild = wildOn; _tvRouteGround = null; \}[^\n]*\n\s*\(_tvRouteGround \?\?= routeGround\(\n\s*\(x, y\) => \(tvWildFree\(x, y\) && woods\.getHeightMapValue\(x, y\) > WATER_BYTE \? 0 : maps\.getClimateIndex\(x, y\)\),\n\s*\(x, y\) => \{ const h = woods\.getHeightMapValue\(x, y\); return tvWildFree\(x, y\) && h > WATER_BYTE \? WATER_BYTE \+ 8 : h; \},[^\n]*\n\s*WATER_BYTE, 1000, 500, \(x, y\) => !tvWater\(x, y\), undefined, rumareSeaPixel\)\)\.setRocks\(tvWodRocks\(\)\);[^\n]*\n\s*return _tvRouteGround;\n\s*\};/, 'AUDIT OW3 J8: the law bound to the world\'s own climate and heightmap (OW-WOD-PATH: and the World of Daggerfall massifs)');
 });
 
 test('AUDIT OW3 J3: a resumed road journey REJOINS the road - from the start pixel the join is made again from where the traveller stands, knocked off the road mid-run it walks back to the run\'s nearest point, the join\'s own pixel aimed; then the leg; open ground has nothing to rejoin', () => {
@@ -767,7 +790,8 @@ test('AUDIT OW3 J3: a resumed road journey REJOINS the road - from the start pix
   assert.equal(g.to.route.join, null, 'across country: straight on - no line to keep to');
   // the view's line goes where the walk does
   // PIN MOVED (OW-TOWN-WALK, 2026-10-19): a town's streets drawn before the join, the traveller's own leg from the last of them
-  assert.match(hostText('src/scenes/world.js'), /const j = travelOptions\.route\?\.join, sw = [^\n]*;\n\s*let at = me;\n\s*for \(const q of j \? \[\.\.\.sw, j\] : sw\) \{ leg\(at\.x, at\.z, q\.x, q\.z, pts\); at = q; \}\n\s*leg\(at\.x, at\.z, n\[start\]\[0\], n\[start\]\[1\], pts\);/);
+  // PIN MOVED (ROAD-FOLLOW): the traveller's own leg along the painted road's points still ahead (systems/travel/roadLine.js drawOwnRun)
+  assert.match(hostText('src/scenes/world.js'), /const j = travelOptions\.route\?\.join, sw = [^\n]*;\n\s*let at = me;\n\s*for \(const q of j \? \[\.\.\.sw, j\] : sw\) \{ leg\(at\.x, at\.z, q\.x, q\.z, pts\); at = q; \}\n\s*drawOwnRun\(at, n\[start\], j \|\| travelOptions\.route\?\.street \? 0 : travelOptions\.state\?\.autopilot\?\.seg, leg, pts\);/);
 });
 
 test('AUDIT OW3 J1: a journey is stopped through its PANEL (the mod\'s Camp: pauseTravel) - the panel down, so it reads stopped, the destination kept for the map\'s Resume; a bare interrupt left the panel up and the journey "active"', () => {
@@ -881,7 +905,8 @@ test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea off
   assert.equal(asked([1000, 2000, 5000]), asked([1000]), 'the same box, searched once');
   // THE LAND'S PIECES - MOUNTAINS WALKABLE: a Mountain wall the map's height parts nothing now (one piece, walked across);
   // a STRAIT of sea the map's height does - a pick across it answered at once; bound for a harbour town IN it, or standing
-  // in it (a pixel no step enters), the search answers; a road laid over it joins nothing (the sea is never walked)
+  // in it (a pixel no step enters), the search answers; a road laid over it joins the two (RPT1026-WORLD CAUSEWAY, PIN
+  // MOVED: his road paves the water it crosses, travelRoute.js pavedStep - it joined nothing, the sea never walked)
   const PW = 60, PH = 40;
   const peaks = routeGround((x) => (x === 30 ? TV_MOUNTAIN_CLIMATE : 231), () => 20, 3, PW, PH);
   assert.equal(peaks.apart({ x: 20, y: 20 }, { x: 40, y: 20 }), false, 'MOUNTAINS WALKABLE: a Mountain wall the map\'s height parts no land');
@@ -910,8 +935,8 @@ test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea off
   assert.ok(planRoute({ x: 30, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, ...g2 }), '...and wades out');
   const pass = new Uint8Array(PW * PH);
   for (let x = 25; x < 35; x++) { pass[20 * PW + x] |= DIR.E; pass[20 * PW + x + 1] |= DIR.W; }
-  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 40, y: 20 }, { roads: pass }), true, 'a road laid over the strait joins nothing (folded again for its network: the same answer)');
-  assert.equal(planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, roads: pass, ...g2 }), null, '...and no way');
+  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 40, y: 20 }, { roads: pass }), false, 'a road laid over the strait joins the two (folded again for its network)');
+  assert.ok(planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, roads: pass, ...g2 })?.pixels.some((p) => p.x === 30 && p.y === 20), '...and the way is the road over it');
   // NEVER A FALSE "NO WAY": on seeded rough ground - a strait two pixels thick the map's height, a sound across the east,
   // scattered pools, peaks (walked - MOUNTAINS WALKABLE) and cliffs, a few roads in the west - every pick the pieces refuse
   // has no route in an unbounded search of the whole map, a place's or a spot's

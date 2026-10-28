@@ -23,6 +23,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - questWorld is scenes/questWorld.js's
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -221,7 +222,7 @@ function calledSeams() {
 
 /** The keys the host actually mounts on questWorld. */
 function mountedSeams() {
-  const src = read('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   const i = src.indexOf('const questWorld = {');
   assert.ok(i > 0, 'questWorld is where the host answers the contract');
   let depth = 0;
@@ -433,9 +434,10 @@ test('audit24: a NEW CHARACTER starts the two hard-coded quests, main quest incl
   const { readFileSync, readdirSync, existsSync } = await import('node:fs');
 
   // TUT1 (2026-10-11): DFO's own tutorial replaced _TUTOR__; the curse its close started (`start quest 977 977`)
-  // stands in its place, so the main quest still comes second, as in C#.
-  assert.deepEqual([...GAME_START_QUESTS], ['S0000977', '_BRISIEN'],
-    'the tutorial\'s curse in its place - _BRISIEN is the main quest\'s first quest');
+  // stands in its place. START1 (2026-10-24): the Bay's start quest stands in _BRISIEN's - its commission, opened,
+  // starts the main quest in the city of Daggerfall (test/systems/starts/start1_bay.test.js)
+  assert.deepEqual([...GAME_START_QUESTS], ['S0000977', '_STARTIB'],
+    'the tutorial\'s curse in its place, and the Bay\'s start in the main quest\'s');
 
   const QUESTS = join(ROOT, 'vendor/dfu-quests/Quests');
   const TABLES = join(ROOT, 'vendor/dfu-quests/Tables');
@@ -446,8 +448,11 @@ test('audit24: a NEW CHARACTER starts the two hard-coded quests, main quest incl
   }
   loadQuestTables(sources);
 
+  // START1: the start's quest is the port's own script, beside DFU's pack (scenes/quest/questData.js reads both)
+  const STARTS = join(ROOT, 'src/systems/starts/quests');
+  const sourceOf = (n) => [join(QUESTS, `${n}.txt`), join(STARTS, `${n}.txt`)].find((f) => existsSync(f)) ?? null;
   for (const name of GAME_START_QUESTS) {
-    assert.ok(existsSync(join(QUESTS, `${name}.txt`)), `${name}.txt is vendored`);
+    assert.ok(sourceOf(name), `${name}.txt is in the pack`);
   }
 
   const started = [];
@@ -455,8 +460,8 @@ test('audit24: a NEW CHARACTER starts the two hard-coded quests, main quest incl
     data: {
       readListTable: (n) => (existsSync(join(TABLES, `${n}.txt`)) ? readFileSync(join(TABLES, `${n}.txt`), 'utf8') : ''),
       getQuestSourceLines: (n) => {
-        const f = join(QUESTS, `${n}.txt`);
-        return existsSync(f) ? readFileSync(f, 'utf8').replace(/^﻿/, '').split(/\r?\n/) : null;
+        const f = sourceOf(n);
+        return f ? readFileSync(f, 'utf8').replace(/^﻿/, '').split(/\r?\n/) : null;
       },
     },
     world: null,
@@ -465,7 +470,7 @@ test('audit24: a NEW CHARACTER starts the two hard-coded quests, main quest incl
     onQuestStarted: (q) => started.push(q.questName),
   });
   bridge.initAtGameStart();
-  assert.deepEqual(started.slice(0, 2), ['S0000977', '_BRISIEN'],
+  assert.deepEqual(started.slice(0, 2), ['S0000977', '_STARTIB'],
     'both hard-coded quests really start, in order');
   assert.equal(bridge.machine.quests.size >= 2, true, 'and they are LIVE in the machine');
 });

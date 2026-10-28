@@ -65,7 +65,7 @@ test('ROAD-B: the swing\'s reach is the WEAPON\'s, which is inside the door acti
 // ---------------------------------------------------------------
 
 test('ROAD-B: ActivateStaticDoor is one member with two callers, as C# has it', () => {
-  assert.match(WM, /async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false, verb = null, listed = plaqueListing\(\) && worldPlaqueOn\(\) \} = \{\}\) \{/);   // PIN MOVED (AUDIT HOME-VOTE II B4, D1): and whether the plaque listed - and drew - rows, read as the press lands; HOME1 re-aim: the press that comes back from a home's box is the click's own, going on past the box (home1.test.js); HOME2: and the verb the door's plaque lit (home2.test.js)
+  assert.match(WM, /async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false, verb = null, listed = plaqueListing\(\) && worldPlaqueOn\(\), picked = false \} = \{\}\) \{/);   // PIN MOVED (LOCKPICK): and `picked` - the door activated again once the lock's tumblers opened it   // PIN MOVED (AUDIT HOME-VOTE II B4, D1): and whether the plaque listed - and drew - rows, read as the press lands; HOME1 re-aim: the press that comes back from a home's box is the click's own, going on past the box (home1.test.js); HOME2: and the verb the door's plaque lit (home2.test.js)
   assert.match(WM, /return activateStaticDoor\(entries\[key\], entries, false, \{ verb: plaqueActionFor\(key\) \}\);/, 'the click, isBash false');   // HOME2 re-aim: carrying the plaque's lit verb
   assert.match(WM, /activateStaticDoor\(hit, entries, true\)\.catch/, 'the swing, isBash true');
   // :507-509 - the bash sound, before the type routing, every door but
@@ -88,9 +88,14 @@ test('ROAD-B: a bash skips the Open spell, the mode ladder and the Lockpicking t
   // refusal / steal-pick ladder, so a swing trains nothing and never
   // touches the anti-grind record.
   assert.match(ARM, /if \(!opened && !isBash\) \{\n\s*const lockpick = skillValue\(playerEntity, SKILLS\.Lockpicking\);/);
-  const tally = ARM.indexOf('tallySkill(playerEntity, SKILLS.Lockpicking, 1);');
+  // PIN MOVED (LOCKPICK, bible/06-Systems/Lockpicking.md): the tally is the lock's window's now (scenes/lockpickHost.js -
+  // a snap or an open), and the window is opened only from inside the ladder the bash skips
+  // PIN MOVED (AUDIT LOCKPICK A1, bible/01-Overview/audits/Audit-Lockpick.md): the host is `lockHost` - the ladder's own
+  // `lockpick` (the skill) shadowed it, and every front-door pick threw
+  const pick = ARM.indexOf('if (!picked) return lockHost.frontDoor({');
   const ladder = ARM.indexOf('if (!opened && !isBash) {\n          const lockpick');
-  assert.ok(ladder > 0 && tally > ladder, 'the tally is inside the ladder the bash skips');
+  assert.ok(ladder > 0 && pick > ladder, 'the pick is inside the ladder the bash skips');
+  assert.equal(ARM.includes('tallySkill(playerEntity, SKILLS.Lockpicking'), false, 'no roll\'s tally is left beside the window\'s');
 });
 
 test('ROAD-B: the failed bash consumes the swing and only 10% of them are noticed', () => {

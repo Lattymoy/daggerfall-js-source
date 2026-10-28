@@ -123,7 +123,7 @@ test('BOOT-RECTS the door says a town is pinned where a pin turns a mod in or aw
 test('BOOT-RECTS both of the boot\'s walks read through the reader - Deep Waters\' coastal towns and the isles\' templates as their clones (by source)', () => {
   const client = src('src/world/deepWater/deepWatersClient.js');
   assert.match(client, /const rectOf = locationRectReader\(maps, blocks\);/);
-  assert.match(client, /const r = rectOf\(loc\);\n\s+rows\.push\(\[py \* 1000 \+ px, r\.xMin, r\.xMax, r\.yMin, r\.yMax\]\);/);
+  assert.match(client, /const r = rectOf\(loc\);\n(\s+\/\/[^\n]*\n)*\s+rows\.push\(\[py \* 1000 \+ px, r\.xMin, r\.xMax, r\.yMin, r\.yMax, \.\.\.\(r\.shape \? \[r\.shape\] : \[\]\)\]\);/);   // PIN MOVED (AUDIT TESA III E1-4): and the town's outline
   assert.doesNotMatch(client, /setLocationTiles\(/, 'no walk of its own past the reader');
   assert.match(src('src/scenes/world.js'), /ether: etherSea \? etherPlaceRects\(_etherTemplates, locationRectReader\(maps, blocks, \{ regionIndex: ETHER_REGION, locationIndex: -1000 \}\)\) : null,/);
 });

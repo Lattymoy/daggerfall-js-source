@@ -110,9 +110,9 @@ export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
         h.state = 'kept';
         let shelf = shelves.get(kind);
         if (!shelf) shelves.set(kind, (shelf = new Map()));
-        const older = shelf.get(key);
-        if (older) { shelf.delete(key); drop(older); }
-        shelf.set(key, h);
+        const older = shelf.get(h.key);
+        if (older) { shelf.delete(h.key); drop(older); }
+        shelf.set(h.key, h);
         trim(kind);
         sweep();
       },
@@ -121,12 +121,15 @@ export function createPlaceHolds({ free, kept = PLACES_KEPT }) {
        *  build's cache warm. */
       settle() {
         const shelf = shelves.get(kind);
-        const older = shelf?.get(key);
+        const older = shelf?.get(h.key);
         if (!older || older === h) return;
-        shelf.delete(key);
+        shelf.delete(h.key);
         drop(older);
         sweep();
       },
+      /** IC-SWAP-BEHIND (scenes/swapBehind.js): a live place built under a second key (a pixel's view built behind the one
+       *  that stands) is its place's from now - kept, and settled, as that place. @param {any} to */
+      rekey(to) { if (h.state === 'live') h.key = to; },
     };
     return h;
   }

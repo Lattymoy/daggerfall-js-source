@@ -136,7 +136,7 @@
 //   NAV-H x AUDIT NAV1 (the helm), the sea fight's seams (optional; the mod has no hurt):
 //   wayScale(underSail) -> 0..1                   the share of her way her hurts leave (moveSpeed)
 //   sailRefused() -> text | null                  why no sail will set (RaiseSails refuses with it)
-//   brake() -> m/s^2 | 0                          a heave-to's brake: her way comes off at this, whatever her own rate
+//   brake() -> m/s^2 | 0                          the grapples' haul brake (BOARD-MAGNET): her way comes off at this, whatever her own rate
 //   drift(boat) -> [x, 0, z] | null               SERPENT1: a world m/s carried on the sea's current under her (the sea
 //                                                serpent's maelstrom pulling her in, a blow's throw) - the port's own
 //   gale(boat) -> { wind, turn } | null           SERPENT4: a gale about her (the sea serpent's waters): under the
@@ -161,11 +161,12 @@ import { invertAffine } from '../../world/prefabColliders.js';
 import { buildWaveMesh, stepWaveFrame, waveFrameTimeOf, isDayHour, WAVE_FRAME_COUNT, WAVE_SCALE } from './comeSailAwayWaves.js';
 import { monthNames } from '../gameDate.js';   // CSA-I: WorldTime.Now.MonthName, a marker's label (L10N3d: in the player's language, as DFU's GetMonthName reads it)
 import { HELM_WAY, CARGO_HOLD_MISSING, steerage, isResponsive, pointOfSail, seaWind, SAIL_FREE, sailFreeGain, WIND_RATED } from '../helmWay.js';   // HELM-WAY: the responsive helm; SAIL-FREE: her way under sail
-import { MAP_MARKER_MODE_COLORS, mapRect, guiMouse, mapPixelUnder, guiRectContains, vector2IntDistance, markerLabel, dayOfMonthWithSuffix, mapOverlayDraws, csFloatString, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, DAGGERFALL_DEFAULT_SHADOW_POS } from './comeSailAwayMap.js';   // CSA-I: the position reading
+import { MAP_MARKER_MODE_COLORS, guiMouse, mapPixelUnder, guiRectContains, markerLabel, dayOfMonthWithSuffix, mapOverlayDraws, csFloatString, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, DAGGERFALL_DEFAULT_SHADOW_POS, sheetOfPixel, sheetRect, placedMarker, markerOn, markerDistance, savedMarker } from './comeSailAwayMap.js';   // CSA-I: the position reading; BAY-LEFT-MAPS (C12): its sheet past the Bay, the painting of Tamriel
 import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { BOAT_ACTIONS } from './comeSailAwayActions.js';   // HUD-HELM: the helm keys' table, a leaf the HUD's helm panel reads
 import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fight
 import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOAT-OWN: her Animators and particle systems by her range, the far law
+import { deckPressed } from '../../scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d II E2: the deck a ladder set me on
 import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
@@ -315,8 +316,9 @@ export const PLACE_RAISED_TEXT = 'This water is above sea level. Place the ship 
 export const IRONS_TELL_DEG = 40;
 export const IRONS_TELL_WAY = 0.4;
 /** AUDIT NAV1/AUDIT 2 XA5 (2026-10-06): the most the port's `brake` seam takes her way off at (m/s^2) - the one bound the
- *  sea fight's heave-to sizes its own brake by (scenes/naval/navalHost.js heaveToDecel), where the runtime capped it at 20 and the
- *  heave-to asked up to 47 in a storm, and its ship ran past the one she hove to beside. */
+ *  sea fight sizes its own brake by (BOARD-MAGNET: the grapples' haul, systems/naval/navalBoarding.js haulBrake; it was the
+ *  heave-to's, which asked up to 47 in a storm where the runtime capped it at 20, and its ship ran past the one she hove to
+ *  beside). */
 export const CSA_BRAKE_MAX = 20;
 export const IRONS_TELL_S = 2;
 export const IRONS_TEXT = 'In irons: the wind is dead ahead. Strike sail and row to turn.';
@@ -716,9 +718,9 @@ export function createComeSailAwayRuntime(deps) {
   // kept for good, no sail, oar or rudder to take them off.
   let helmHanded = null;
   const responsive = () => helmHanded ?? handed();
-  /** moveAccel: the rate below - or, while the sea fight brakes her (AUDIT NAV1, the helm: a heave-to), its own
-   *  `brake` (m/s^2, the port's seam; the mod has none), whatever her own rate, CSA_BRAKE_MAX at the most: a heave-to's
-   *  brake is the sea fight's number, not a multiple of a rate the Ship handling choice moves. */
+  /** moveAccel: the rate below - or, while the sea fight brakes her (BOARD-MAGNET: the grapples' haul; AUDIT NAV1's
+   *  heave-to before it), its own `brake` (m/s^2, the port's seam; the mod has none), whatever her own rate, CSA_BRAKE_MAX
+   *  at the most: the sea fight's number, not a multiple of a rate the Ship handling choice moves. */
   function moveAccel() {
     const brake = Number(deps.brake?.() ?? 0);
     return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();
@@ -1015,13 +1017,16 @@ export function createComeSailAwayRuntime(deps) {
     state.TurnTarget = 0;
     state.lastWeight = 0;
     helmHanded = null;   // AUDIT NAV2 F14: the next helm takes the Ship handling as it stands then
-    boat.MapPixel = deps.currentMapPixel();
+    // HELM-SIGHT: let go from a jump's landing (OnWorldReanchored), she keeps her own pixel and is shown or hidden for it
+    const afar = !!boat.helmAfar;   // cleared where the player is let go (stopSailingTail, or the delayed stop's unparent)
+    if (!afar) boat.MapPixel = deps.currentMapPixel();
     ResetTimeScale();
     boat.ActiveObject?.setActive(false);
     boat.IdleObject?.setActive(true);
     deps.helm.footsteps?.(true);
     rudderOf(boat)?.CrossFade('Disembarked', 1);
     if (boat.RudderEmitters.length > 0) for (const rudderEmitter of boat.RudderEmitters) rudderEmitter.stop();
+    if (afar) UpdateBoatVisibilityOf(boat);
     return boat;
   }
   /** The head's lent-ship arm (IL_b0e7-IL_b121): the borrowed ship's two permanent scenes removed (the LARGE ship's -
@@ -1045,11 +1050,16 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** StopSailing past its head: the player set down at the helm, the freeze lifted, OnUpdateSailing(false). */
   function stopSailingTail(currentBoat) {
+    // HELM-SIGHT (its fold into #1184): let go from afar, the player stays where the jump set them - set down at her far
+    // helm, as the C# sets a helmsman down, the A1 let-go took them back to the departure all the same
+    const afar = !!currentBoat.helmAfar;
+    currentBoat.helmAfar = false;
     state.CurrentBoat = null;
+    currentBoat.way = 0;   // PASSAGE-PACE - AUDIT HORIZONTAL C9: off her helm she makes none, and the leads read none
     state.gale = null;   // SERPENT4: off her helm, no gale is hers
     state.oarThrottle = 0;   // HELM-LADDER: the oars shipped with the helm left
     unparentPlayer();
-    deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);
+    if (!afar) deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);
     deps.helm.freeze(0);
     raise('OnUpdateSailing', false);
   }
@@ -1066,6 +1076,7 @@ export function createComeSailAwayRuntime(deps) {
   function resumeStopSailing(co) {
     if (state.disembarking !== co) return false;   // AUDIT PRE-MERGE 0928 S1: ended already - a load's start ended it (EndDisembark)
     if (co.phase === 'unparent') {
+      co.boatlast.helmAfar = false;   // HELM-SIGHT: the helm let go
       state.CurrentBoat = null;
       state.gale = null;   // SERPENT4
       unparentPlayer();
@@ -1612,6 +1623,7 @@ export function createComeSailAwayRuntime(deps) {
       UpdateBoatNodes(boat);
       if (!IsBeached(boat)) CheckCollision(boat);
     }
+    boat.way = 0;   // PASSAGE-PACE: none of her own unless laid below - warped, or (AUDIT HORIZONTAL C9) beached
     if (!IsBeached(boat)) {
       // QUAYS (the port's own - systems/naval/quays.js; the mod has no quays): her hands warping her in alongside a
       // harbour's quay - her sails struck and no oar pulling - take her way off and lay her this step where the host
@@ -1640,6 +1652,7 @@ export function createComeSailAwayRuntime(deps) {
         if (vDot(val, state.CollisionVector) < 0) val = vProjectOnPlane(val, state.CollisionVector);
       }
       state.velocityCurrent = vAdd(state.MoveVectorCurrent, val);
+      boat.way = vMagnitude(state.velocityCurrent);   // PASSAGE-PACE (the port's own): her way, laid on her for the journey's leads (travelGovernor.js travellerPace)
       const before = t.worldMatrix();
       // Transform.Translate(velocityCurrent * dt) in the boat's own space, then Rotate(up * TurnCurrent * dt)
       const step = vScale(state.velocityCurrent, dt());
@@ -1676,6 +1689,10 @@ export function createComeSailAwayRuntime(deps) {
     if (state.wasPaused && f(deps.timeScale?.() ?? 1) !== 1 && !state.isTravelling) ResetTimeScale();
     state.wasPaused = false;
     recoverLostBoats();   // FIELD BUGS 29h (LOST-BOAT): the port's own
+    // AUDIT HELM-SIGHT A1: a helm still held from another pixel when the frame runs again is one no landing let go - a
+    // party's journey to a pixel this client does not stream (world.js _streamedLanding takes the landing's word away).
+    // It pinned the player back at the departure helm; it is let go from there, as a fast travel lets it go.
+    if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();
     if (isSailing() && state.CurrentBoat != null) updateSailing();
     if (!waveOn() || animatedWaterWaves()) return;   // (4769) `!wave || waveObject == null || (AnimatedWater != null && AWVertexWaves)`
     const step = stepWaveFrame(state.waveFrameIndex, state.waveFrameTimer, waveFrameTimeOf(setting('Waves.Speed', 100)), dt(), WAVE_FRAME_COUNT, isDayHour(deps.hour?.() ?? 12));
@@ -1876,6 +1893,7 @@ export function createComeSailAwayRuntime(deps) {
     deps.helm.setFacing(at.yaw, 0);   // SetHorizontalFacing(child.forward)
     deps.helm.alignToGround?.(3);   // GameObjectHelper.AlignControllerToGround(controller, 3f)
     deps.helm.finishBoarding?.();   // The ladder must not carry incoming fall or air momentum onto the deck.
+    deckPressed(boat);   // AUDIT FB1026d II E2 (the port's own - the mod has no other players' hulls): the deck I stand on now, whatever deck I stood on before (scenes/comeSailAway/peerHulls.js)
   }
   /** TriggerDoor (5542-5572): the door the trigger hangs under, its Animator's Opened turned over. */
   function TriggerDoor(hit) {
@@ -2175,11 +2193,11 @@ export function createComeSailAwayRuntime(deps) {
     }
   }
   /** IsPositionMarked (5681-5693): a marker on the pixel already. */
-  const IsPositionMarked = (pos) => state.mapMarkers.some((m) => m.position[0] === pos[0] && m.position[1] === pos[1]);
+  const IsPositionMarked = (pos, sheet = sheetOfPixel(deps.currentMapPixel())) => state.mapMarkers.some((m) => markerOn(m, pos, sheet));   // BAY-LEFT-MAPS (C12): on the sheet shown
   /** The map's rect and the mouse over it, as LeftClickOnMap and RightClickOnMap both take them (5708-5714, 5740-5746). */
   function mapUnderMouse() {
     const sr = deps.screenRect();
-    const r = mapRect(sr, screenScaleOf(sr));
+    const r = sheetRect(sr, screenScaleOf(sr), sheetOfPixel(deps.currentMapPixel()));   // BAY-LEFT-MAPS (C12): the painting's rect past the Bay
     const val2 = guiMouse(sr, deps.mousePosition());
     return guiRectContains(r, val2) ? mapPixelUnder(r, val2) : null;
   }
@@ -2192,7 +2210,7 @@ export function createComeSailAwayRuntime(deps) {
     if (!IsPositionMarked(val3)) {
       const d = deps.date();
       const newLabel = markerLabel(val3, dayOfMonthWithSuffix(d.day), monthNames()[d.month]);
-      state.mapMarkers.push({ position: val3, label: newLabel, color: { ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] } });
+      state.mapMarkers.push(placedMarker(val3, newLabel, { ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] }, sheetOfPixel(deps.currentMapPixel())));   // BAY-LEFT-MAPS (C12): the sheet it was placed on
     }
   }
   /** RightClickOnMap (5738-5776): over the map, the nearest marker within the click range removed - walked from the
@@ -2204,7 +2222,7 @@ export function createComeSailAwayRuntime(deps) {
     let num4 = Infinity;
     let num5 = -1;
     for (let num6 = state.mapMarkers.length - 1; num6 > -1; num6--) {
-      const num3 = vector2IntDistance(state.mapMarkers[num6].position, val3);
+      const num3 = markerDistance(state.mapMarkers[num6], val3, sheetOfPixel(deps.currentMapPixel()));   // BAY-LEFT-MAPS (C12): the shown sheet's markers alone
       if (num3 <= mapMarkerClickRange() && num3 < num4) { num4 = num3; num5 = num6; }
     }
     if (num5 !== -1) state.mapMarkers.splice(num5, 1);
@@ -2359,13 +2377,20 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** GameObject.SetActive on a boat's root, with what Unity does to the two loops on it (CSA-G): an AudioSource stops as
    *  its object goes inactive, and one left at AddComponent's playOnAwake (true - SpawnBoat never clears it) plays again
-   *  as the object comes back, at the volume it last had (kept: the fast loop's may be its first, 1). */
+   *  as the object comes back, at the volume it last had.
+   *  RPT1026-WORLD LOOP-AWAKE (a private report: every volume at 10%, a building or a caravan entered by the boats at a
+   *  port and left - and the boats roared over the sliders): A LOOP COMES BACK AS IT WENT. Unity woke BOTH - the fast loop too,
+   *  which a moored boat never plays, at its AddComponent volume of 1: a plain AudioSource's volume, which the bus hands
+   *  over with Sound Volume divided out (audio.js plainSourceGain), so every moored boat in earshot ran her wake's loop at
+   *  full volume whatever the sliders said, for as long as she stood. A departure from the mod's playOnAwake (Port-Ledger
+   *  A, LOOP-AWAKE): each loop plays again only if it played as its object went (`awake`), at the volume it had then; a
+   *  boat never put away this way wakes her slow loop alone, the one every placement starts (PlaySlow). */
   function setBoatActive(boat, on) {
     boat.GameObject.setActive(on);
     for (const src of [boat.AudioSourceSlow, boat.AudioSourceFast]) {
       if (!src) continue;
-      if (on) { if (src.playOnAwake !== false && src.clip != null) audioPlay(src); }
-      else if (src.isPlaying) audioStop(src);
+      if (on) { if (src.playOnAwake !== false && (src.awake ?? src === boat.AudioSourceSlow) && src.clip != null) audioPlay(src); }
+      else { src.awake = src.isPlaying; if (src.isPlaying) audioStop(src); }
     }
   }
 
@@ -2764,15 +2789,20 @@ export function createComeSailAwayRuntime(deps) {
    * forever after respawning"): THE WORLD RE-ANCHORED. A teleport - the respawn at a temple, a fast travel, a load's
    * landing - starts a new scene frame with no recentre offset to ride (world.js _teleportToPixel, StreamingWorld's
    * InitWorld), and every boat kept the old frame's numbers: the one just placed at sea stood by the temple, under its
-   * ground, and was never where it was left again. The frame's own move carries every boat, then each is shown or hidden
-   * for the new pixel. The helm is not asked: a teleported player goes where the teleport sends them. A dungeon's boat
-   * out of sight stays in its dungeon's frame (`ridesTheWorld`).
+   * ground, and was never where it was left again. The frame's own move carries every boat, then each but a held helm's
+   * is shown or hidden for the new pixel. The helm is not asked: a teleported player goes where the teleport sends them.
+   * A dungeon's boat out of sight stays in its dungeon's frame (`ridesTheWorld`).
    */
   function OnWorldReanchored(offset) {
     if (state.AllBoats.length < 1) return;
     for (const boat of state.AllBoats) {
       if (ridesTheWorld(boat)) shiftBoat(boat, offset);
-      UpdateBoatVisibilityOf(boat);
+      // HELM-SIGHT (FIELD BUGS 2026-10-27): a party's journey holds the helm until its landing is sure. Hidden and shown
+      // again, her sails' Animators started over stowed under a helm that read them set, and she made no way under sail.
+      // She stays in sight; a helm let go from afar asks her sight then (stopSailingHead). AUDIT HELM-SIGHT A3: a disembark in
+      // flight is a helm let go. A2: afar is any pixel but hers - one off, the let-go had stamped the landing's on her.
+      if (boat !== state.CurrentBoat || state.disembarking != null) UpdateBoatVisibilityOf(boat);
+      else boat.helmAfar = boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 0;
     }
   }
   /** OnPositionUpdateBoat (2012-2064): the boat's root moved by the offset, the wake stopped and its living particles
@@ -3116,7 +3146,7 @@ export function createComeSailAwayRuntime(deps) {
     }
     if (state.mapMarkers.length > 0) {
       log('COME SAIL AWAY - SAVING MAP MARKERS!');
-      for (const m of state.mapMarkers) data.placedMapMarkers.push({ position: { x: m.position[0], y: m.position[1] }, label: m.label, color: m.color });
+      for (const m of state.mapMarkers) data.placedMapMarkers.push(savedMarker(m));   // BAY-LEFT-MAPS (C12): and a marker's sheet past the Bay
     }
     data.currentBoat = num;
     data.TemporaryShip = state.TemporaryShip;
@@ -3167,7 +3197,7 @@ export function createComeSailAwayRuntime(deps) {
     if (data.placedMapMarkers.length > 0) {
       log('COME SAIL AWAY - LOADED SAVE HAS MAP MARKERS!');
       for (const m of data.placedMapMarkers) {
-        AddMapMarker([roundToInt(m.position.x), roundToInt(m.position.y)], m.color, m.label);
+        AddMapMarker([roundToInt(m.position.x), roundToInt(m.position.y)], m.color, m.label, m.sheet ?? null);   // BAY-LEFT-MAPS (C12): its sheet
       }
     }
     if (state.AllBoats.length > 0 && data.currentBoat !== -1) {
@@ -3192,8 +3222,8 @@ export function createComeSailAwayRuntime(deps) {
     state.currentVectorPrevious = [0, 0, 0];
   }
   /** AddMapMarker (5695-5701): a marker, once per pixel. */
-  function AddMapMarker(mapPixel, color, label = '') {
-    if (!state.mapMarkers.some((m) => m.position[0] === mapPixel[0] && m.position[1] === mapPixel[1])) state.mapMarkers.push({ position: mapPixel, label, color });
+  function AddMapMarker(mapPixel, color, label = '', sheet = null) {   // BAY-LEFT-MAPS (C12): `sheet` a save's marker past the Bay's (none: the Bay's)
+    if (!state.mapMarkers.some((m) => markerOn(m, mapPixel, sheet))) state.mapMarkers.push(placedMarker(mapPixel, label, color, sheet));
   }
 
   /** A frame: a held restore lands the first frame the models are in, then OnLoad's visibility runs for it. */

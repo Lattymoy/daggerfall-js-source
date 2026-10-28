@@ -47,7 +47,7 @@ test('MAP-KEEP: at "remember 0 dungeons" the store a load restored survives the 
 });
 
 test('MAP-KEEP / THE HOSTS: the world host\'s load enters the saved dungeon on the load arm, through the door build', () => {
-  assert.match(rd('src/scenes/world.js'), /modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: extras\.dungeon \?\? \{\} \}\)/);   // PIN MOVED (INSTANCES' audit): and the save's word for its room
+  assert.match(rd('src/scenes/world.js'), /modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/);   // PIN MOVED (INSTANCES' audit): and the save's word for its room. PIN MOVED (AUDIT STARTS W3): a start's own dungeon through the quest's entry
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /async function startInDungeon\(\{ locationKey = null, fromLoad = false, holdOpen = false, recorded = undefined \} = \{\}\) \{/);   // PIN MOVED (HOLD-ONCE): `holdOpen` beside it   // PIN MOVED (INSTANCES' audit): and what was recorded of the place
   assert.match(m, /return tryEnterDungeon\(hit, entries, \{ preferEnterMarker: true, fromLoad, holdOpen, recorded \}\);/);   // PIN MOVED (INSTANCES' audit): and what was recorded
