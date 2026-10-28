@@ -109,16 +109,16 @@
   },
   {
     "name": "PROF-SAVE-a-market-mint-unsaved",
-    "file": "src/scenes/world.js",
-    "old": "    townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n    saveSoon.changed();\n",
-    "new": "    townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n",
+    "file": "src/scenes/marketPiecesHost.js",
+    "old": "    host.townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n    saveSoon.changed();\n",
+    "new": "    host.townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\\'s things' : 'in your pack'}.`);\n",
     "tests": [
       "test/systems/online/profsave.test.js"
     ]
   },
   {
     "name": "PROF-SAVE-a-listing-unsaved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": "    list.splice(i, 1);\n    saveSoon.changed();\n    return true;",
     "new": "    list.splice(i, 1);\n    return true;",
     "tests": [
@@ -127,7 +127,7 @@
   },
   {
     "name": "PROF-SAVE-a-settled-drop-unsaved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": "      list.splice(i, 1);\n      saveSoon.changed();\n    }",
     "new": "      list.splice(i, 1);\n    }",
     "tests": [
@@ -136,7 +136,7 @@
   },
   {
     "name": "PROF-SAVE-a-put-back-unsaved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/marketPiecesHost.js",
     "old": "addItem((playerEntity.items ??= []), item, 'back');\n    saveSoon.changed();\n  };",
     "new": "addItem((playerEntity.items ??= []), item, 'back');\n  };",
     "tests": [

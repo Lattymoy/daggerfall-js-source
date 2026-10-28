@@ -2,7 +2,7 @@
   {
     "name": "FAR-CLIP1-the-discard-dropped",
     "file": "src/render/renderer.js",
-    "old": "  return `${fs.slice(0, cut)}  if (data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater)\\n${fs.slice(cut)}`;",
+    "old": "  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\\n${fs.slice(cut)}`;",
     "new": "  return `${fs.slice(0, cut)}${fs.slice(cut)}`;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "FAR-CLIP1-the-byte-compared-wrong",
     "file": "src/render/renderer.js",
-    "old": "if (data == ${CLIP_SENTINEL}u) discard;",
-    "new": "if (data == ${CLIP_SENTINEL - 1}u) discard;",
+    "old": ": data == ${CLIP_SENTINEL}u) discard;",
+    "new": ": data == ${CLIP_SENTINEL - 1}u) discard;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FAR-CLIP1-the-byte-compared-inverted",
     "file": "src/render/renderer.js",
-    "old": "if (data == ${CLIP_SENTINEL}u) discard;",
-    "new": "if (data != ${CLIP_SENTINEL}u) discard;",
+    "old": ": data == ${CLIP_SENTINEL}u) discard;",
+    "new": ": data != ${CLIP_SENTINEL}u) discard;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]

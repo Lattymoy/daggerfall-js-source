@@ -176,6 +176,7 @@ export class GuildBook {
     this.busy = false;
     /** @type {Promise<any>|null} */ this._looking = null;
     /** @type {{key: string, rid: string}|null} GUILD1d: the heraldry change asked, and its one request id */ this._heraldryAsk = null;
+    /** @type {{ask: string, rid: string}|null} DOMAIN2: a castle bought or given up, and its one request id */ this._castleAsk = null;
   }
 
   _changed() { this.version++; }
@@ -454,6 +455,26 @@ export class GuildBook {
     const at = Number.isSafeInteger(mapId) && Number.isSafeInteger(buildingKey) ? { mapId, buildingKey } : null;
     const town = at ? at.mapId : this.guild?.hall?.mapId ?? null;
     return this._hallTold(town, await this._act((c) => (at ? this.door.hallSell(c, at) : this.door.hallSell(c))));
+  }
+  /** DOMAIN2 (bible/11-Multiplayer/Domains.md 6): BUY THE CASTLE of `region`, whose crown the guild holds - the Guildmaster's,
+   *  in silver from the treasury. ONE REQUEST ID A PURCHASE: the same region asked again after an answer that never came
+   *  carries the same id, and the service answers it `repeat` rather than burning twice. */
+  async buyCastle(region) {
+    if (this._castleAsk?.ask !== `buy:${region}`) this._castleAsk = { ask: `buy:${region}`, rid: mintMarksRid() };
+    const id = this._castleAsk.rid;
+    const r = await this._act((c) => this.door.castleBuy(c, region, id));
+    const err = r?.ok ? null : /** @type {any} */ (r)?.error;
+    if (r?.ok || (err && !['offline', 'server', 'timeout'].includes(err))) { if (this._castleAsk?.rid === id) this._castleAsk = null; }
+    return r;
+  }
+  /** DOMAIN2: GIVE THE CASTLE of `region` UP - the Guildmaster's, its sale share home; one request id a sale, as a purchase. */
+  async sellCastle(region) {
+    if (this._castleAsk?.ask !== `sell:${region}`) this._castleAsk = { ask: `sell:${region}`, rid: mintMarksRid() };
+    const id = this._castleAsk.rid;
+    const r = await this._act((c) => this.door.castleSell(c, region, id));
+    const err = r?.ok ? null : /** @type {any} */ (r)?.error;
+    if (r?.ok || (err && !['offline', 'server', 'timeout'].includes(err))) { if (this._castleAsk?.rid === id) this._castleAsk = null; }
+    return r;
   }
   /** WHO MAY WALK INTO THE HALL - its members or anyone. */
   async setHallEntry(entry) {

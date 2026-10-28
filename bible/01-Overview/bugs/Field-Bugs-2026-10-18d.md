@@ -69,7 +69,7 @@ gaming desktop (scripts, not committed):
   size of the largest field save we hold) about 48 ms in one frame and another 33 ms in a later task once the put
   lands; about 9 ms at a typical 600 KB. A known hitch that grows with the save (Performance-Next.md), but its cadence
   is fixed, and the report's is not;
-- the checkpoint's landform lift fields (`world.js:"const LIFT_FIELDS_KEPT = 32;"`): about 37 ms a town pixel the
+- the checkpoint's landform lift fields (`groundFrameHost.js:"const LIFT_FIELDS_KEPT = 32;"`): about 37 ms a town pixel the
   memo misses, on synthetic bytes;
 - an offline save, 13.6 ms at 4.37 MB, only when the player saves;
 - the desktop file store's atomic write, 9-28 ms for a 4.3 MB save on this disk (Windows under antivirus is

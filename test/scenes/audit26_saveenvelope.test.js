@@ -10,9 +10,10 @@ import { snapshotPlayer, restorePlayer, copyEffectEntry } from '../../src/system
 import { applyWeaponPose } from '../../src/combat/playerWeapon.js';   // HARD2c: the :420-421 inversion, called rather than quoted
 import { ActionSystem } from '../../src/world/actionSystem.js';
 import { Collider } from '../../src/player/collider.js';
+import { hostText } from '../hostText.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const rd = (p) => readFileSync(join(root, p), 'utf8');
+const rd = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 
 const mkEntity = (over = {}) => ({
   name: 'T', level: 3, health: 20, maxHealth: 30, fatigue: 100, magicka: 10, maxMagicka: 40,
@@ -74,7 +75,7 @@ test('audit26 F222: both hosts write the pose and land it on load', () => {
   // and the law itself is CALLED below rather than quoted.
   // FALL-KEPT (FIELD BUGS 2026-09-30, PIN MOVED): the fall joined the bag's tail (fb0930_fallkept.test.js runs it).
   assert.match(w, /pose: \{ yaw: cam\.yaw, pitch: cam\.pitch, crouching: !!player\.crouching, \.\.\.mergeWeaponPose\(wp, weaponPoseOf\(weaponRig\.playerWeapon\)\), camera: mwViewSaveCamera\(\), transport: player\.transportMode, fall: player\.fallSnapshot\(\) \}/);
-  assert.match(w, /const wp = modes\?\.weaponPose\?\.\(\) \?\? null;/, 'and `wp` is the mode host\'s answer, null outside interior mode');
+  assert.match(w, /const wp = (?:host\.)?modes\?\.weaponPose\?\.\(\) \?\? null;/, 'and `wp` is the mode host\'s answer, null outside interior mode');
   // SAV3 moved the landing into the ONE pose-apply (quickload + the
   // classic import share it); HARD2c moved the inversion one step
   // further, into the law both hosts now call - so run it.

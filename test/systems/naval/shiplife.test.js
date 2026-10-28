@@ -20,6 +20,7 @@ import { sea } from '../../navalSea.mjs';
 import { room } from '../../navalRoom.mjs';
 
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+import { hostText } from '../../hostText.mjs';   // PORT-SHIPS: a host's whole, its moved modules with it
 /** The coast: land north of z = 200, and a headland x 300-400 reaching south to z = -300. */
 const coast = (x, z) => !(z > 200 || (x > 300 && x < 400 && z > -300));
 const TOWN = { minX: -100, maxX: 100, minZ: 220, maxZ: 420 };
@@ -343,11 +344,13 @@ test('SHIP-LIFE A SHIP TAKEN OVER: her errand never rides the word - the heir wh
   assert.equal(new Set(seeds).size, seeds.length, 'no twin stood beside her');
 });
 
-test('SHIP-LIFE the world\'s wiring by source: the host is handed the port near the player, its footprint in the scene from its native rect through the floating origin, asked once a pixel', () => {
-  assert.match(WORLD, /harbourNear: navalHarbourNear,/);
+test('SHIP-LIFE the world\'s wiring by source: the host is handed the port near the player, its footprint in the scene from its native rect through the floating origin, asked once a pixel. PIN MOVED (PORT-SHIPS): the port near the player and its book moved whole to scenes/harbourHost.js (HOST-SPLIT) - the host read whole, its memo a holder written in place', () => {
+  const WHOLE = hostText('src/scenes/world.js');
+  assert.match(WHOLE, /harbourNear: navalHarbourNear,/);
   // PIN MOVED (RPT1026-WORLD FAR-QUAY): the footprint is made in systems/naval/harbourBook.js harbourOf, which the host
   // maps over every port town near the player
   assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\), \[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
-  assert.match(WORLD, /harbourOf\(t, \{ state, built: csaPixelAt, woods \}\)/);
-  assert.match(WORLD, /if \(_navalHarbourAt\?\.key !== key\) \{/);
+  assert.match(WHOLE, /harbourOf\(t, \{ state, built: csaPixelAt, woods: host\.woods \}\)/);
+  assert.match(WHOLE, /if \(_navalHarbourAt\.key !== key\) \{/);
+  assert.match(WHOLE, /Object\.assign\(_navalHarbourAt, \{ key, towns \}\);/);
 });

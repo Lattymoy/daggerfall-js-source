@@ -338,7 +338,7 @@ test('AUDIT TUT1: a page waits out the loading screen; a scene\'s page is asked 
   const pop = read('src/ui/tutorialPopup.js');
   assert.match(pop, /held: \(\) => pauseFlowShowing\(\) \|\| loadingHeld\(\),/);
   const dc = read('src/scenes/dungeonContext.js');
-  assert.match(dc, /\(Number\(dfLocation\?\.mapTableData\?\.mapId\) >>> 0\) >= 0x60000000 \? 'ocean-holes'/, 'the Ocean Hole\'s page is the build\'s');
+  assert.match(dc, /: isAbyssMapId\(dfLocation\?\.mapTableData\?\.mapId\) \? 'ocean-holes'/, 'the Ocean Hole\'s page is the build\'s');   // PIN MOVED (PITS-WORLD, 2026-10-27): the abyss by its own law (world/oceanHoles.js isAbyssMapId), the Bay's and past it - a zone hall's id from 0xf0000000 had opened this page
   assert.doesNotMatch(read('src/scenes/worldModes.js'), /noteFirstUse\('ocean-holes'/, 'and its door asks for none');
   // another player's team is theirs: only my own horse and wagon keys pop a page
   assert.match(read('src/scenes/horseCartPool.js'), /if \(key === KEY_WAGON \|\| key === KEY_FOLLOWING_WAGON\) noteFirstUse\('wagon'\); else if \(key === KEY_HORSE\) noteFirstUse\('horse'\);/);
@@ -474,7 +474,8 @@ test('TUT1: the four hosts register the popups\' handler (THE FOUR HOSTS RULE); 
   }
   assert.match(read('src/ui/tutorialPopup.js'), /^setTutorialHandler\(tutorialFirstUse\);$/m, 'the module registers itself');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(host), /questBridge\.initAtGameStart\(\);\n\s+startTutorialTour\(\);/, `${host}: the tour where _TUTOR__ spoke`);
+    // PIN MOVED (START2): the start's quest named - the world's once its character stands where the story begins (scenes/startsHost.js), the bench's the commission in hand
+    assert.match(read(host), /questBridge\.initAtGameStart\((?:start|HAND_START_QUEST)\);(?:[^\n]*\n\s+| )startTutorialTour\(\);/, `${host}: the tour where _TUTOR__ spoke`);
   }
 });
 
@@ -502,8 +503,8 @@ test('TUT1: the pane\'s search keeps the pages whose title or words hold every w
 
 // ── THE DFU TUTORIAL, RETIRED ──────────────────────────────────
 
-test('TUT1: a new character starts the curse _TUTOR__\'s close started, and the main quest - not DFU\'s tutorial', () => {
-  assert.deepEqual([...GAME_START_QUESTS], ['S0000977', '_BRISIEN']);
+test('TUT1: a new character starts the curse _TUTOR__\'s close started, and (START1) the Bay\'s start quest, whose commission starts the main quest - not DFU\'s tutorial', () => {
+  assert.deepEqual([...GAME_START_QUESTS], ['S0000977', '_STARTIB']);
   assert.match(read('vendor/dfu-quests/Quests/_TUTOR__.txt'), /_no_ task:\n\tstart quest 977 977/, 'what the tutorial did besides its pages');
 });
 

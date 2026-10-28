@@ -147,8 +147,8 @@
   {
     "name": "CHAP5B-BAND-HANDED",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day) });",
-    "new": "watch: this._watchSize, ...this._patronsFor(res, day) });",
+    "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day, P) });",
+    "new": "watch: this._watchSize, ...this._patronsFor(res, day, P) });",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ],

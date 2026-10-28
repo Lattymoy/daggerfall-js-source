@@ -19,7 +19,8 @@ import { TRAVEL_VIEW_BUTTON } from '../../../src/scenes/travelView.js';
 import { TRAVEL_VIEW_BUTTON as HELD_MAP_BUTTON } from '../../../src/ui/heldMap.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
 import { unbuiltAround, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
-import { farPlaces, settlementPixels, TV_FAR_RANGE } from '../../../src/systems/travel/travelFarPlaces.js';
+import { farPlaces, settlementPixels, TV_FAR_RANGE, TV_FAR_TYPES } from '../../../src/systems/travel/travelFarPlaces.js';
+import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS: the lifted near query's own
 import { nearDungeons, dungeonRows, spawnedPixels } from '../../../src/systems/travel/travelDungeons.js';
 import { dungeonModelSet } from '../../../src/systems/travel/travelDungeonModels.js';
 import { bandsNear, validBandWord, BAND_LIFE_MS } from '../../../src/systems/travel/travelBands.js';
@@ -28,6 +29,7 @@ import { createCaptainLedger } from '../../../src/systems/naval/captainLedger.js
 import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { CLIMATES, REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { LOCATION_TYPES, getWorldClimateSettings } from '../../../src/formats/mapsFile.js';
+import { onWorldSea } from '../../../src/scenes/naval/worldLanes.js';
 
 const W = hostText('src/scenes/world.js');   // HOST-SPLIT (OW-DUNGEON-SIZE): the dungeons' models list lives in scenes/travelViewDungeonModels.js
 /** A block of world.js lifted whole: its first line, to the line at its own indent that closes it. */
@@ -137,12 +139,13 @@ function placesHost({ charted = [], found = [] } = {}) {
     etherTemplateOf, _etherTemplates: { towns: [TOWN], havens: [TOWN], ruins: [RUIN] }, synthesizeEtherLocation, ETHER_REGION, REGION_NAMES, ETHER_REGION_NAME, getWorldClimateSettings,
     wildHallAt: () => false, wildActiveNow: () => null, wildHallStand: () => null, spawnedHallMapId: () => 0, maps,
     travelLocationSummaryAt: () => null, mapDict: new Map(), travelCheckDiscovered: () => false,
+    provinceQuestPlaces: null, pendingSummary: () => null, onTheBay: inBay,   // BAY-LEFT-MAPS: the arm past the Bay's reads (none here: the isles' arm answers first)
   };
   const body = `${lift('  function etherPlaceClone(isle) {')}
     ${liftLine('  const tvEtherPlace = ')}
     ${liftLine('  const tvEtherKnown = ')}
-    ${lift('  const tvPlaceSummary = (px, py) => {', '\n  };\n')}
-    return { tvPlaceSummary, tvEtherPlace };`;
+    ${lift('  const tvPlaceSummary = (px, py, named = false) => {', '\n  };\n')}
+    return { tvPlaceSummary, tvEtherPlace };`;   // PIN MOVED (BAY-LEFT-MAPS): `named`, a quest's place - the isles' arm unmoved
   return { ...run(env, body), env, ledger, discovered };
 }
 const RUIN_ISLE = ES.islesNear(H.px, H.py, 40).find((i) => i.kind === 'ruin');
@@ -188,15 +191,22 @@ test('ETHER-OW, the far places and the dungeons: a charted port past the grid is
   const env = {
     ...h.env, tvPlaceSummary: h.tvPlaceSummary, tvEtherPlace: h.tvEtherPlace, playerTravelPixel: () => at, state: { terrainDistance: 3 }, discoveryGeneration: () => 0,
     farPlaces, settlementPixels, etherPlaceRows, TV_FAR_RANGE, tvPlaceRect: (s) => ({ cx: s.pixel.x, cz: s.pixel.y }),
+    onTheBay: inBay, MAX_MAP_PIXEL_X: 1000, MAX_MAP_PIXEL_Y: 500, worldPlaces: null, pastBayPlacesIn: () => [], TV_FAR_TYPES, isCapitalPlaceId: () => false,   // PIN MOVED (BAY-LEFT-MAPS): TV5's settlements the module's near query (scenes/mapPlacesHost.js tvFarSettlements)
     nearDungeons, dungeonRows, spawnedPixels, tvFiledSpawns: () => [], tvSpawnKnown: () => false, tvSpawnFound: () => false, tvSpawnGone: () => false,
     locationWorldRect: (l, x, y) => ({ minX: x, maxX: x + 1, minZ: y, maxZ: y + 1 }),
   };
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the dungeons' rows, stand and list left world.js for
+  // scenes/travelViewDungeonsHost.js - its live names read through `host`
   const body = `let tvFar = { at: null, near: -1, list: [] }, _tvSettlements = null, tvDng = { at: null, dg: -1, list: [] }, _tvDungeonRows = null, _locIndexGen = 0;
     const _tvListsReady = true;
+    const host = { get tvDng() { return tvDng; }, set tvDng(v) { tvDng = v; }, get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; }, get _locIndexGen() { return _locIndexGen; }, _tvListsReady };
     ${liftLine('  const tvKnownGen = ')}
+    ${liftLine('  let _baySettlements = ')}
+    ${liftLine('  const _pastBayTowns = ')}
+    ${lift('  function tvFarSettlements(at, range = TV_FAR_RANGE) {')}
     ${lift('  function travelViewFarPlaces() {')}
-    ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', '\n  };\n')}
-    ${liftLine('  const tvDungeonAt = ')}
+    const tvLairs = null;   // PIN MOVED (TVD-WORLD, 2026-10-27): no places host here - the Veil's and the Bay's rows alone; PIN MOVED (AUDIT BAY-LEFT, its packages merged): onTheBay is BAY-LEFT-MAPS' env's (inBay) - with no lairs the dungeons' rows never ask it
+    ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', 'const tvDungeonFound = (x, y) => !!tvDungeonSummary(x, y);\n')}
     ${lift('  function travelViewDungeons() {')}
     return { travelViewFarPlaces, travelViewDungeons };`;
   const v = run(env, body);
@@ -209,7 +219,7 @@ test('ETHER-OW, the far places and the dungeons: a charted port past the grid is
   assert.equal(h.env.locationIndex.size, 0, 'neither stood');
   // the Bay's settlements are gathered once from the index - never an isle's place the index happened to hold
   const index = new Map([['10,20', { name: 'Ripwych', mapTableData: { locationType: LOCATION_TYPES.TownHamlet } }], [`${H.px},${H.py}`, { name: H.name, ether: H.key, mapTableData: { locationType: LOCATION_TYPES.TownHamlet } }]]);
-  const gathered = run({ settlementPixels, locationIndex: index }, `return ${/_tvSettlements \?\?= (settlementPixels\(locationIndex\)\.filter\(\(t\) => !t\.loc\.ether\))/.exec(W)[1]};`);
+  const gathered = run({ settlementPixels, locationIndex: index, onTheBay: inBay }, `return ${/_baySettlements \?\?= (settlementPixels\(locationIndex\)\.filter\(\(t\) => !t\.loc\.ether && onTheBay\(t\.x, t\.y\)\))/.exec(W)[1]};`);   // PIN MOVED (BAY-LEFT-MAPS): the Bay's alone (past it the near query)
   assert.deepEqual(gathered.map((s) => s.loc.name), ['Ripwych']);
 });
 
@@ -222,10 +232,10 @@ test('ETHER-OW, the find and the models: past the Veil an uncharted ruin within 
     tvFiledSpawns: () => [], tvSpawnKnown: () => false, tvSpawnFound: () => false, tvSpawnGone: () => false,
   };
   const v = run(env, `let tvFind = { at: null, dg: -1, n: -1, list: [] }, tvDngModels = { at: null, dg: -1, n: -1, list: [] }, _tvDungeonRows = null, _locIndexGen = 0;
-    const host = { get tvDngModels() { return tvDngModels; }, set tvDngModels(v) { tvDngModels = v; }, get _locIndexGen() { return _locIndexGen; } };
+    const host = { get tvDngModels() { return tvDngModels; }, set tvDngModels(v) { tvDngModels = v; }, get _locIndexGen() { return _locIndexGen; }, get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; } };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): the rows' cache through \`host\`
     ${liftLine('  const tvKnownGen = ')}
-    ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', '\n  };\n')}
-    ${liftLine('  const tvDungeonAt = ')}
+    const tvLairs = null;   // PIN MOVED (TVD-WORLD, 2026-10-27): no places host here - the Veil's and the Bay's rows alone; PIN MOVED (AUDIT BAY-LEFT, its packages merged): onTheBay is BAY-LEFT-MAPS' env's (inBay) - with no lairs the dungeons' rows never ask it
+    ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', 'const tvDungeonFound = (x, y) => !!tvDungeonSummary(x, y);\n')}
     ${lift('  function travelViewFindList() {')}
     ${lift('  function tvDungeonModelList() {')}
     return { travelViewFindList, tvDungeonModelList };`);
@@ -235,10 +245,14 @@ test('ETHER-OW, the find and the models: past the Veil an uncharted ruin within 
   assert.equal(h.env.locationIndex.size, 0, 'neither stood');
 });
 
-/** The bands' land and the raiders' sea, lifted - the host's own lines over the sea's ground. */
-const bandOk = run({ onBayOrEther: ES.onBayOrEther, tvWater, _bandPlacePixels: new Set(['5,5']), etherPlaceIsle }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
+/** The bands' land and the raiders' sea, lifted - the host's own lines over the sea's ground. PIN MOVED (AUDIT TESA II F6,
+ *  test/systems/audittesa2g_bands.test.js): the host's bandOk admits the land past the Bay too, behind the land switch -
+ *  held off here (PAST_BAY_OFF), so these are the Bay's and the Eltheric Ocean's alone, as they were. */
+const PAST_BAY_OFF = { tamrielLand: false, bandGroundPastBay: () => false, tamrielPlaceName: () => '' };
+const bandOk = run({ onBayOrEther: ES.onBayOrEther, tvWater, _bandPlacePixels: new Set(['5,5']), etherPlaceIsle, ...PAST_BAY_OFF }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
 let seaFight = true;   // AUDIT ETHER-OW C2-3: past the Veil a raider is the sea fight's ship alone
-const { tvRaidOpen, tvRaidSea } = run({ onBayOrEther: ES.onBayOrEther, inEther: ES.inEther, navalRaidersOn: () => seaFight, tvWater, maps, CLIMATES, RAID_NATIVE_PIXEL: NATIVE_PIXEL },
+const { tvRaidOpen, tvRaidSea } = run({ onBayOrEther: ES.onBayOrEther, onWorldSea, tamrielLand: false, inEther: ES.inEther,   // PIN MOVED (WW3): the sea's ground the world's, the land past the Bay off
+  navalRaidersOn: () => seaFight, tvWater, maps, CLIMATES, RAID_NATIVE_PIXEL: NATIVE_PIXEL },
   `${lift('  const tvRaidOpen = (px, py) => {', '\n  };\n')}\n${lift('  const tvRaidSea = (x, z) => {', '\n  };\n')}\nreturn { tvRaidOpen, tvRaidSea };`);
 const native = (px, py) => [(px + 0.5) * NATIVE_PIXEL, (499 - py + 0.5) * NATIVE_PIXEL];
 
@@ -265,7 +279,7 @@ test('ETHER-OW, the bands: an isle\'s land is a band\'s ground - its town\'s and
   // water law reads as land west of the box and off the map, a band stands on neither
   const tamriel = ES.etherWoods({ isTamrielGround: true, getHeightMapValue: () => 60, getLargeMapData: () => [] });
   const landWater = run({ woods: tamriel, WATER_BYTE }, `${liftLine('  const tvWater = (px, py) =>')}\nreturn tvWater;`);
-  const landOk = run({ onBayOrEther: ES.onBayOrEther, tvWater: landWater, _bandPlacePixels: new Set(), etherPlaceIsle }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
+  const landOk = run({ onBayOrEther: ES.onBayOrEther, tvWater: landWater, _bandPlacePixels: new Set(), etherPlaceIsle, ...PAST_BAY_OFF }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
   assert.deepEqual([landWater(-5, 250), landWater(ES.ETHER_BOX.x0 - 70, H.py)], [false, false], 'land there');
   assert.deepEqual([landOk(...native(-5, 250)), landOk(...native(ES.ETHER_BOX.x0 - 70, H.py)), landOk(...native(500, 250))], [false, false, true]);
   // the bands about a captain at Veilhaven, life by life: some there are, each on an isle's land
@@ -312,7 +326,7 @@ test('ETHER-OW, the raiders: the Eltheric Ocean\'s open sea is the raiders\' - b
   assert.equal(tvRaidOpen(ES.ETHER_BOX.x0 - 2, H.py), false);
   // the Bay's own edge stands as AUDIT OW5b S5 left it - the strip past the west and south edges floored off the map
   // (AUDIT ETHER-OW T-13: over a world all water, so the floor alone refuses it)
-  const wet = run({ onBayOrEther: ES.onBayOrEther, inEther: ES.inEther, navalRaidersOn: () => true, tvWater: () => true, maps, CLIMATES, RAID_NATIVE_PIXEL: NATIVE_PIXEL },
+  const wet = run({ onBayOrEther: ES.onBayOrEther, onWorldSea, tamrielLand: false, inEther: ES.inEther, navalRaidersOn: () => true, tvWater: () => true, maps, CLIMATES, RAID_NATIVE_PIXEL: NATIVE_PIXEL },
     `${lift('  const tvRaidSea = (x, z) => {', '\n  };\n')}\nreturn tvRaidSea;`);
   assert.deepEqual([wet(0, 250 * NATIVE_PIXEL), wet(5 * NATIVE_PIXEL, 0)], [true, true], 'the Bay\'s own edge water');
   assert.equal(wet(-1, 250 * NATIVE_PIXEL), false, 'a native unit west of the Bay');

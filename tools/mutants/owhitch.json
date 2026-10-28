@@ -164,8 +164,8 @@
   {
     "name": "OW-HITCH-near-key-folds-reach",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "export const livingNearKey = (px, py, r) => (r * 1024 + (py + 256)) * 2048 + (px + 512);",
-    "new": "export const livingNearKey = (px, py, r) => (r * 2 + (py + 256)) * 2048 + (px + 512);",
+    "old": "export const livingNearKey = (px, py, r) => r * WORLD_PIXEL_KEYS + worldPixelKey(px, py);",
+    "new": "export const livingNearKey = (px, py, r) => r * 2 + worldPixelKey(px, py);",
     "tests": [
       "test/render/owhitch.test.js"
     ]

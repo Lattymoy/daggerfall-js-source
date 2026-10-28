@@ -340,9 +340,11 @@ test('AUDIT QUESTLINES UI-13: the Tutorials\' Questlines page pops at the first 
   setTutorialHandler((id) => { popped.push(id); markTutorialSeen(id); return true; });
   try {
     const layer = createQuestlines({ machine: { quests: new Map() } });
-    assert.deepEqual(GAME_START_QUESTS, ['S0000977', '_BRISIEN'], 'the bridge\'s list - the layer skips these two');
+    assert.deepEqual(GAME_START_QUESTS, ['S0000977', '_STARTIB'], 'the bridge\'s list - the layer skips these two (START1: the Bay\'s start quest in _BRISIEN\'s place)');
     for (const questName of GAME_START_QUESTS) layer.stamp({ questName });   // what initAtGameStart's two starts ask
     assert.deepEqual(popped, [], 'nothing at character creation');
+    layer.stamp({ questName: '_BRISIEN' });   // START1: the main quest's opener, which the start's commission starts
+    assert.deepEqual(popped, [], 'nor at the main quest\'s opener, the story\'s own');
     layer.stamp({ questName: 'M0B00Y06' });
     assert.deepEqual(popped, ['questlines'], 'the first quest taken');
   } finally { _resetTutorialTriggerForTests(); forgetTutorialsSeen(); }

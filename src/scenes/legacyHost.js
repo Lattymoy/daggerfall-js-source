@@ -61,6 +61,7 @@ import {
 import { deedsFor, deedLabel, deedQuestion, deedRefusal, deedRegard, deedAffection, deedTally, DEED_TEXT, GIFT_GOLD } from '../systems/legacy/courtDeeds.js';   // COURT-DEEDS
 import { deductGold, totalGoldAmount } from '../systems/court.js';   // COURT-DEEDS: a gift's gold, coin then letters
 import { memberStanding, inheritStanding, inheritRegards, noteNews, newsFor as houseNewsFor, hearNews } from '../systems/legacy/influence.js';
+import { HOUSES_PER_REGION } from '../systems/banking.js';   // HOUSES-3: the bank's three a region, said where an heir's house waits
 
 /** The reflexes a born member starts with - the wizard's own default (ui/chargenArt.js PLAYER_REFLEXES.Average). */
 export const BORN_REFLEXES = 2;
@@ -89,9 +90,10 @@ export const LEGACY_TEXT = Object.freeze({
   notSaved: 'Your game could not be saved here right now.',
   estate: (n) => `The estate left you a letter of credit for ${n} gold.`,
   bequest: (item) => `Your elder's bequest is yours: ${item}.`,
-  // PERMADEATH-HOUSES: a house of the line's dead, taken up by whoever carries the line - or waiting on a bank's one deed a region
+  // PERMADEATH-HOUSES: a house of the line's dead, taken up by whoever carries the line - or waiting on a bank's three deeds
+  // a region (HOUSES-3, systems/banking.js HOUSES_PER_REGION)
   deed: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} passes to you. Its deed is yours now.`,
-  deedWaits: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} is waiting for you, but you already own a house in that region and the bank allows one per region. Sell yours there to take it.`,
+  deedWaits: (loc, given) => `${given}'s house${loc ? ` in ${loc}` : ''} is waiting for you, but you already own ${HOUSES_PER_REGION} houses in that region, as many as the bank allows. Sell one there to take it.`,
   remainsName: (name) => `The remains of ${name}`,   // FB1013d: their own name - the map's ring and the body's plaque, one home
   remainsFound: (name) => `You have found the remains of ${name}.`,
   remainsTaken: (name) => `You carry the remains of ${name}. Lay them to rest at a temple, or at the family's seat.`,

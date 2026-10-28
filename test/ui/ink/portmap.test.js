@@ -62,7 +62,7 @@ test('PORT-MAP the anchor reads: a parchment halo under it (HARBOUR_HALO) and th
 
 test('PORT-MAP the held map always asks for its ports - whatever Travel Options says of where a ship may sail from (the Ports filter and the P key still the mod\'s, _portsShown)', () => {
   const src = readFileSync(new URL('../../../src/ui/heldMap.js', import.meta.url), 'utf8');
-  const at = src.indexOf('paintInkStatic(ctx, env.model, env.view, {');
+  const at = src.indexOf('paintInkStatic(ctx, split.bay, env.view, {');   // PIN MOVED (AUDIT TESA II M4): the world model's marks less the zone's halls, inked over its fog
   assert.ok(at >= 0, 'the static paint found');
   const call = src.slice(at, src.indexOf('});', at));
   assert.match(call, /\n\s+ports: true,\n/);

@@ -34,7 +34,7 @@ import { chaptersOpenFor } from './npcRoll.js';
 import { meritStatement, meritOfAct } from './npcMerit.js';   // CHAP3a: a receipt's Merit
 import { regionChapters } from './npcHalls.js';
 import { REALM_ID_RE } from './realm.js';
-import { regionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { utcDay } from '../../src/net/marksLaw.js';
 import { gateTimes } from '../../src/net/gate/gateLaw.js';   // AUDIT CHAP3 E1: the week a gate rose in
 import { MAX_REPUTATION } from '../../src/systems/guild/guildFactions.js';

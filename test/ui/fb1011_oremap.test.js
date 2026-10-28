@@ -14,7 +14,8 @@ import { readTip, TIP_LINES_MAX, TIP_TEXT_MAX } from '../../src/ui/eventMapMarks
 import { VEIN_TABLES, veins, regionSignature, UNCONFIRMED_VEIN_TIER } from '../../src/net/nodeLaw.js';
 import { minedMaterial } from '../../src/net/professionLaw.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
-import { REGION_NAMES } from '../../src/formats/mapsTables.js';
+import { REGION_NAMES, CYRODIIL_REGION } from '../../src/formats/mapsTables.js';
+import { richness } from '../../src/net/provinceNodes.js';
 import { createGatherHost } from '../../src/scenes/gatherHost.js';
 import { mineKind } from '../../src/scenes/mineHost.js';
 import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
@@ -56,7 +57,11 @@ test('ORE-MAP: the card is the vein law\'s own - over every climate a vein stand
         assert.ok(card.lines.length <= TIP_LINES_MAX && card.lines.every((l) => l.length <= TIP_TEXT_MAX));
         assert.equal(card.lines[0], `Veins: ${table.map(oreWord).join(', ')}`);
         const sig = regionSignature(region);
-        assert.equal(card.lines.some((l) => l.endsWith(`'s own ore: ${sig ? oreWord(sig.ore) : ''}`)), !!sig, `region ${region}'s own ore`);
+        // PIN MOVED (WW-C1, bible/03-World/World-Wide.md WW-C): a province's line says its richness after its own ore, and
+        // Cyrodiil's every province's ores and metals (net/provinceNodes.js)
+        const times = richness(region, 'vein') > 1 ? ` (${richness(region, 'vein')}x the veins)` : '';
+        if (region === CYRODIIL_REGION) assert.ok(card.lines.includes(`Cyrodiil holds every province's ores and metals${times}`), 'Cyrodiil: every province\'s');
+        else assert.equal(card.lines.some((l) => l.endsWith(`'s own ore: ${sig ? oreWord(sig.ore) : ''}${times}`)), !!sig, `region ${region}'s own ore`);
       }
     }
     // the law: an unwitnessed pixel's veins over thirty days hold none of what the card holds back

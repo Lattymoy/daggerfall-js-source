@@ -21,8 +21,22 @@
 // once of a crew is of it for the voyage (a reload, a death and the anchor-lift again) - until a full ship frees the
 // place of one gone from the captain's party, unseen a while, with no part in the fight (ketchBrain.js idlePlaces).
 //
+// KETCH-EVERYWHERE (2026-10-26, the owner after the audit "no system left behind in the Bay": "Every single thing here
+// needs to be addressed. No exceptions."; bible/11-Multiplayer/Sky-Ketch.md section 22): A STATION IN EVERY PROVINCE, AT
+// ITS CROWN CAPITAL (the owner's call taken). Each station (KT_THEATRES) is a crown's (KT_STATION_CROWNS) and keeps its
+// own Ketch over the fields outside the crown's seat (KT_STATION_CITIES - net/kingdomLaw.js kingdomSeatName): High Rock's
+// over Daggerfall, the Bay's as she always was; Hammerfell's over Sentinel (those two provinces' crowns are the Bay's -
+// WW7-3); each province's past the Bay with a crown of its own over its seat; Cyrodiil's none (the open zone stands no
+// site-bound world event - the owner's call, the gates' own law). A station's lane is its province's theatre (world/
+// worldWide/worldGrid.js THEATRE_KEYS) - High Rock's the Bay's 0, its numbers the ones they always were. On the same
+// round, each station's voyages KT_THEATRE_STAGGER_MS behind the one before's so they are never two at once, and numbered
+// as the gates number a lane (net/gate/gateLaw.js gateNumber): voyage k of lane t is k + t * KT_THEATRE_SPAN, so no
+// station's ever meets another's. The room's key is unchanged (eight hex hold every lane's for 100,000,000 voyages);
+// everything that reads a voyage's number reads its lane off it.
+//
 // Not a DFU member: Daggerfall has no other players and no airship. Ledger A (KETCH).
 import { INSTANCE_OWNER_HEX } from '../instanceRoom.js';
+import { kingdomSeatName } from '../kingdomLaw.js';   // KETCH-EVERYWHERE: a station's city its crown's seat
 
 /** KETCH-EVERY: her round - a voyage every ten hours, ms. */
 export const KT_EVERY_MS = 10 * 3600 * 1000;
@@ -43,36 +57,67 @@ export const KT_OWNER_HEX = INSTANCE_OWNER_HEX;
 /** The voyage's phases, in order. 'away' - between voyages. */
 export const KT_PHASES = Object.freeze(['away', 'sighted', 'docked', 'departing']);
 
+/** KETCH-EVERYWHERE: THE STATIONS, ONE A PROVINCE AT ITS CROWN CAPITAL - each lane's crown (net/kingdomLaw.js KINGDOMS), the
+ *  lane its province's theatre (world/worldWide/worldGrid.js THEATRE_KEYS): High Rock's (0 - the Bay's own lane: Daggerfall,
+ *  High Rock's crown capital, is where she always kept station), Hammerfell's (2 - Sentinel, its crown capital, the Bay's:
+ *  WW7-3), Skyrim's, Morrowind's, Sumurset's, Valenwood's, Elsweyr's and Black Marsh's (3 to 8, each its own crown's).
+ *  No station on lane 1 (High Rock past the Bay - High Rock's is Daggerfall's) nor 9 (Cyrodiil, the open zone). */
+export const KT_STATION_CROWNS = Object.freeze({ 0: 'daggerfall', 2: 'sentinel', 3: 'skyrim', 4: 'morrowind', 5: 'summerset', 6: 'valenwood', 7: 'elsweyr', 8: 'blackmarsh' });
+/** KETCH-EVERYWHERE: THE LANES A KETCH KEEPS STATION ON, ascending - KT_STATION_CROWNS' own. */
+export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8]);
+/** KETCH-EVERYWHERE: THE CITY EACH STATION KEEPS OVER, by lane - its crown's seat (net/kingdomLaw.js kingdomSeatName: a
+ *  province's capital, the Bay's crowns' their own city), her fields KT_STATION off its middle (world/ketch/ketchModel.js);
+ *  null on a lane with no station. Each one's lift on its own province's dry land, clear of every place, on the freeware
+ *  (test/net/ketch/ketch_everywhere.test.js). */
+export const KT_STATION_CITIES = Object.freeze(Array.from({ length: 9 }, (_, t) => (KT_STATION_CROWNS[t] ? kingdomSeatName(KT_STATION_CROWNS[t]) : null)));
+/** KETCH-EVERYWHERE: a theatre's voyage numbers start this far past the last's - the gates' lane span (net/gate/gateLaw.js
+ *  GATE_LANE_SPAN, pinned equal), a hundred million voyages of ten hours a theatre. */
+export const KT_THEATRE_SPAN = 100_000_000;
+/** KETCH-EVERYWHERE: each station's voyage arrives this long after the station before it's - an eighth of her round, so the
+ *  eight stations' arrivals walk round the ten hours an hour and a quarter apart, never two at once. */
+export const KT_THEATRE_STAGGER_MS = KT_EVERY_MS / KT_THEATRES.length;
+/** KETCH-EVERYWHERE: a lane's place in the round - its station's order (0 the Bay's, 7 Black Marsh's); a lane with no
+ *  station the Bay's place (its numbers name no ship - ketchBoards, ketchHolds). */
+export const ketchStationSlot = (theatre) => Math.max(0, KT_THEATRES.indexOf(theatre));
+/** KETCH-EVERYWHERE: the theatre a voyage's number names, and voyage `k` of theatre `theatre`'s number. */
+export const ketchTheatreOf = (n) => Math.floor(Math.max(0, Math.floor(Number(n) || 0)) / KT_THEATRE_SPAN);
+export const ketchVoyageNumber = (k, theatre = 0) => k + theatre * KT_THEATRE_SPAN;
+/** KETCH-EVERYWHERE: does a theatre keep a station. */
+export const ketchStationOk = (theatre) => KT_THEATRES.includes(theatre);
+
 /**
  * Voyage `n`'s times (relay ms): `sightAt` (first seen), `at` (arrives - boarding opens), `departAt` (weighs anchor -
- * boarding closes), `endAt` (gone: every ship's room shut).
+ * boarding closes), `endAt` (gone: every ship's room shut). KETCH-EVERYWHERE: its lane's (ketchTheatreOf), that
+ * station's place in the round in them (ketchStationSlot) - the Bay's the times they always were.
  * @param {number} n
  */
 export function ketchVoyageOf(n) {
-  const k = Math.max(0, Math.floor(Number(n) || 0)), at = KT_EPOCH_MS + k * KT_EVERY_MS;
-  return { n: k, sightAt: at - KT_SIGHT_MS, at, departAt: at + KT_STATION_MS, endAt: at + KT_STATION_MS + KT_LAST_MS };
+  const m = Math.max(0, Math.floor(Number(n) || 0)), th = Math.floor(m / KT_THEATRE_SPAN), k = m - th * KT_THEATRE_SPAN;
+  const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;
+  return { n: m, sightAt: at - KT_SIGHT_MS, at, departAt: at + KT_STATION_MS, endAt: at + KT_STATION_MS + KT_LAST_MS };
 }
 
 /**
  * THE VOYAGE AT `now`: the one in hand - its number, times and phase - or, between voyages ('away'), the next one's.
- * Pure.
- * @param {number} now relay ms
+ * KETCH-EVERYWHERE: theatre `theatre`'s (the Bay's by default). Pure.
+ * @param {number} now relay ms @param {number} [theatre]
  * @returns {{ n: number, sightAt: number, at: number, departAt: number, endAt: number, phase: 'away'|'sighted'|'docked'|'departing' }}
  */
-export function ketchVoyageAt(now) {
-  const t = Number(now);
-  if (!Number.isFinite(t)) return { ...ketchVoyageOf(0), phase: 'away' };
-  const n = Math.floor((t - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);
-  if (n < 0) return { ...ketchVoyageOf(0), phase: 'away' };
-  const v = ketchVoyageOf(n);
-  if (t >= v.endAt) return { ...ketchVoyageOf(n + 1), phase: 'away' };
+export function ketchVoyageAt(now, theatre = 0) {
+  const t = Number(now), base = ketchVoyageNumber(0, theatre);
+  if (!Number.isFinite(t)) return { ...ketchVoyageOf(base), phase: 'away' };
+  const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);
+  if (n < 0) return { ...ketchVoyageOf(base), phase: 'away' };
+  const v = ketchVoyageOf(base + n);
+  if (t >= v.endAt) return { ...ketchVoyageOf(base + n + 1), phase: 'away' };
   const phase = t < v.at ? 'sighted' : t < v.departAt ? 'docked' : 'departing';
   return { ...v, phase };
 }
-/** May a crew board voyage `n` at `now` - its anchor-lift lowered? */
-export const ketchBoards = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.departAt; };
-/** Does voyage `n`'s ship still hold its crews at `now` - arrived, and not yet gone? */
-export const ketchHolds = (n, now) => { const v = ketchVoyageOf(n); return now >= v.at && now < v.endAt; };
+/** May a crew board voyage `n` at `now` - its anchor-lift lowered? KETCH-EVERYWHERE: and its theatre keeps a station. */
+export const ketchBoards = (n, now) => { const v = ketchVoyageOf(n); return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt; };
+/** Does voyage `n`'s ship still hold its crews at `now` - arrived, and not yet gone? KETCH-EVERYWHERE: and its theatre
+ *  keeps a station (the open zone's numbers name no ship). */
+export const ketchHolds = (n, now) => { const v = ketchVoyageOf(n); return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };
 
 const ROOM_RE = new RegExp(`^kt:([0-9a-f]{${KT_VOYAGE_HEX}})\\.([0-9a-f]{${KT_OWNER_HEX}})$`);
 const OWNER_RE = new RegExp(`^[0-9a-f]{${KT_OWNER_HEX}}$`);

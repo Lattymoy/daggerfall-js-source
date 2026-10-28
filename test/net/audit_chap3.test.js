@@ -309,7 +309,8 @@ test('AUDIT CHAP3 C7/C8: a Take refused no-writ reads the list again; a member\'
 test('AUDIT CHAP3 C3/C4/C5/C9: the hosts\' wiring - a kept gate claim waits for the scan, a raid\'s line on its fighter\'s page, a late writ said in the chat, a stale build\'s stop said (mutants: each seam)', () => {
   const world = src('src/scenes/world.js');
   assert.match(world, /const GATE_SCAN_WAIT_MS = 90_000;/);
-  assert.match(world, /if \(_gateScan \|\| Date\.now\(\) - _gateClaimsFrom >= GATE_SCAN_WAIT_MS\) return true;\n\s+warmGateScan\(\);\n\s+return false;/);
+  // PIN MOVED (WW-GATES-EVERYWHERE A2b): the wait the Bay's lane's alone - a lane past the Bay's region is its number's, no scan's
+  assert.match(world, /if \(!gateClaimWaits\(readReceipt\(r\)\?\.d, _gateScan\) \|\| Date\.now\(\) - _gateClaimsFrom >= GATE_SCAN_WAIT_MS\) return true;[^\n]*\n\s+warmGateScan\(\);\n\s+return false;/);
   assert.match(world, /sayLate: \(text\) => chatNotice\(text\),/);
   assert.match(world, /onStop: \(error\) => sayRollStop\(error, chatNotice\),/);   // the words themselves: test/net/rollUnheard.test.js
 });

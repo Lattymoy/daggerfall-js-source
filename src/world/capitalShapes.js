@@ -12,7 +12,35 @@ export const CAPITAL_ART = Object.freeze({
   rock: 6, blueSlate: 7, timber: 8, nordStone: 9,
   ochre: 10, bronze: 11, cloth: 12, bark: 14, leaves: 15, sandstone: 16, terracotta: 17, mossStone: 18,   // AUDIT TESA II (lane K's K15): 13, the Crystal Tower's crystal, retired with it - no model wore it
   hide: 19, cane: 20,   // TESA-LORE: Falinesti's hide houses, Torval's sugarcane
+  // IC-GRAND: the Imperial City's street walls, a storey each (world/imperialArt.js - vanilla's 64 x 128 wall)
+  facadeOchre: 21, facadeBrick: 22, facadeWhite: 23, facadeStone: 24, facadeTimber: 25, groundShop: 26, groundArcade: 27,
+  water: 28,   // IC-GRAND: the palace gardens' fountains' water
+  // CAPITAL-TREES: the capitals' trees (world/capitalTreeArt.js) - Falinesti's Great Graht-Oak's bark, leaves and spray,
+  // Mournhold's garden trees' and the bed of their planters; from 40, clear of the Imperial City's run
+  grahtBark: 40, grahtLeaves: 41, grahtSpray: 42, mhBark: 43, mhLeaves: 44, mhSpray: 45, planterBed: 46,
 });
+/** CAPITAL-TREES: THE PICTURES A TREE HANGS AS FLATS - each cut by its alpha (a texel under half of it a hole: the
+ *  renderer's cutout, render/renderer.js uploadTexture `{ cutout: true }`, asked by the picture's own registration -
+ *  systems/textureReplacement.js vendorCutout) and laid on its cards by their own texture coordinates, never
+ *  vanillaTexels' box (world/capitalModels.js), so a card shows its spray whole. */
+export const CAPITAL_CUT_RECORDS = Object.freeze([CAPITAL_ART.grahtSpray, CAPITAL_ART.mhSpray]);
+/** Whether a capital picture is one a tree hangs as a flat (CAPITAL_CUT_RECORDS). @param {number} record */
+export const isCapitalCut = (record) => /** @type {ReadonlyArray<number>} */ (CAPITAL_CUT_RECORDS).includes(record);
+/**
+ * CAPITAL-TREES: A MODEL'S FLATS - a mark a triangle (1 where its sub-mesh wears a picture a tree hangs as a flat: a leaf
+ * spray's card, a liana), or null for a model with none. Two readers: world/capitalModels.js vanillaTexels lays every
+ * other face again by the box and leaves these on their own coordinates (the spray whole on its card), and
+ * world/signSolid.js sightMarksOf hands them to the collider as a sign's hung board is - met by every ray, by no body
+ * (Daggerfall's trees' flats stop nobody).
+ * @param {{ indices: ArrayLike<number>, subMeshes?: ReadonlyArray<any> }} m
+ */
+export function flatTriangles(m) {
+  const cut = (sm) => sm.textureArchive === CAPITAL_ARCHIVE && isCapitalCut(sm.textureRecord);
+  if (!m.subMeshes?.some(cut)) return null;
+  const marks = new Uint8Array(Math.floor(m.indices.length / 3));
+  for (const sm of m.subMeshes) if (cut(sm)) marks.fill(1, sm.startIndex / 3, sm.startIndex / 3 + sm.primitiveCount);
+  return marks;
+}
 /** A picture's [archive, record]. */
 export const art = (record) => [CAPITAL_ARCHIVE, record];
 const STONE = art(CAPITAL_ART.wallStone), ROOF = art(CAPITAL_ART.roof);
@@ -87,13 +115,13 @@ export function merlons(mb, tex, p, q, thick, h, w = 1.6, pitch = 3.6, mh = 1.6)
   }
 }
 /** A wall's run with a gap: from p to q, broken `gate` wide about the point `at` metres along it, a lintel over the gap
- *  from `gateH` to the wall's top. */
-export function gatedRun(mb, tex, p, q, thick, h, at, gate, gateH) {
+ *  from `gateH` to the wall's top; its foot sunk `sink` (SOLITUDE-RELIEF: a wall on a cliff's edge sunk into the rock). */
+export function gatedRun(mb, tex, p, q, thick, h, at, gate, gateH, sink = 3) {
   const len = Math.hypot(q[0] - p[0], q[1] - p[1]), ux = (q[0] - p[0]) / len, uz = (q[1] - p[1]) / len;
   const P = (s) => [p[0] + ux * s, p[1] + uz * s];
   const a = P(at - gate / 2), b = P(at + gate / 2);
-  wallRun(mb, tex, p, a, thick, h); merlons(mb, tex, p, a, thick, h);
-  wallRun(mb, tex, b, q, thick, h); merlons(mb, tex, b, q, thick, h);
+  wallRun(mb, tex, p, a, thick, h, sink); merlons(mb, tex, p, a, thick, h);
+  wallRun(mb, tex, b, q, thick, h, sink); merlons(mb, tex, b, q, thick, h);
   translated(mb, 0, gateH, 0, () => wallRun(mb, tex, a, b, thick, h - gateH, 0));
 }
 /** A round tower at (x, z): its drum, its crenel band, its conical roof. */
@@ -141,10 +169,10 @@ export function crenels(mb, tex, cx, cz, w, d, y, { pitch = 2.6, mw = 1.3, mh = 
     }
   }
 }
-/** A square tower at (x, z), side `s`: its shaft from below the ground to h, its crenels, and a pyramid roof (none at
- *  roofH 0). */
-export function squareTower(mb, x, z, s, h, { roofH = s * 0.9, wall = STONE, roof = ROOF } = {}) {
-  hall(mb, wall, x, z, s, s, -3, h);
+/** A square tower at (x, z), side `s`: its shaft from below the ground (`foot`) to h, its crenels, and a pyramid roof
+ *  (none at roofH 0). */
+export function squareTower(mb, x, z, s, h, { roofH = s * 0.9, wall = STONE, roof = ROOF, foot = -3 } = {}) {
+  hall(mb, wall, x, z, s, s, foot, h);
   crenels(mb, wall, x, z, s, s, h);
   if (roofH > 0) pyramid(mb, roof, x, z, s + 0.8, s + 0.8, h + 1.4, roofH);
 }

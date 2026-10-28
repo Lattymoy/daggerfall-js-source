@@ -36,7 +36,7 @@ const f32 = Math.fround;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 /** HeatHazeEligibility.GetWeatherStrength: Sunny 1, Cloudy 0.5, every other weather 0. `weather` is DFU's WeatherType
- *  number or the port's word ('sunny'...; the port's eighth, 'sandstorm', is no sunny sky). */
+ *  number or the port's word ('sunny'...; the port's eighth, 'sandstorm', and ninth, 'ashfall', are no sunny sky). */
 export function weatherStrength(weather) {
   if (weather === 0 || weather === 'sunny') return 1;
   if (weather === 1 || weather === 'cloudy') return 0.5;

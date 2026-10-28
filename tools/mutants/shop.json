@@ -1,0 +1,380 @@
+[
+  {
+    "name": "SHOP-price-moved",
+    "file": "src/net/shopLaw.js",
+    "old": "  ware('title', 'genesis', 500, 1),",
+    "new": "  ware('title', 'genesis', 400, 1),",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-two-bits-shared",
+    "file": "src/net/shopLaw.js",
+    "old": "  ware('aura', 'eternal', 2000, 4),",
+    "new": "  ware('aura', 'eternal', 2000, 2),",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-kind-read-as-another",
+    "file": "src/net/shopLaw.js",
+    "old": "return SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).map((w) => w.key);",
+    "new": "return SHOP_WARES.filter((w) => held.includes(w.id)).map((w) => w.key);",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-client-card-buy-held",
+    "file": "src/net/shopLaw.js",
+    "old": "buy: card.on && r.sale === true && r.held !== true ? buy : null",
+    "new": "buy: card.on && r.sale === true ? buy : null",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-client-card-http-kept",
+    "file": "src/net/shopLaw.js",
+    "old": "r.buy.startsWith('https://')",
+    "new": "r.buy.startsWith('http')",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-handle-guard-dropped",
+    "file": "server-account/src/titles.js",
+    "old": "(typeof player?.handle === 'string' && player.handle ? shopKeysOf(player?.shop_wares, kind) : [])",
+    "new": "shopKeysOf(player?.shop_wares, kind)",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-one-secret-enough",
+    "file": "server-account/src/shop.js",
+    "old": "typeof env?.STRIPE_SECRET_KEY === 'string' && !!env.STRIPE_SECRET_KEY && typeof env?.STRIPE_WEBHOOK_SECRET === 'string' && !!env.STRIPE_WEBHOOK_SECRET;",
+    "new": "typeof env?.STRIPE_SECRET_KEY === 'string' && !!env.STRIPE_SECRET_KEY;",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-time-unchecked",
+    "file": "server-account/src/shop.js",
+    "old": "if (!sig || Math.abs(nowS - sig.t) > SHOP_HOOK_TOLERANCE_S) return false;",
+    "new": "if (!sig) return false;",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-sale-unchecked-at-press",
+    "file": "server-account/src/shop.js",
+    "old": "  if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };\n",
+    "new": "",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-held-unchecked-at-press",
+    "file": "server-account/src/shop.js",
+    "old": "  if (shopHeldOf(player.shop_wares).includes(ware.id)) return { page: 'held' };\n",
+    "new": "",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-second-order",
+    "file": "server-account/src/shop.js",
+    "old": "  if (open?.stripe_url) return { url: open.stripe_url };\n",
+    "new": "",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-amount-unchecked",
+    "file": "server-account/src/shop.js",
+    "old": "  if (Number(amount) !== order.cents || String(currency).toLowerCase() !== order.currency) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-grant-guard-dropped",
+    "file": "server-account/src/shop.js",
+    "old": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\").bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n      mustChange(db),\n",
+    "new": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\").bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-delayed-payment-granted",
+    "file": "server-account/src/shop.js",
+    "old": "      if (o.payment_status !== 'paid') return { ok: true, applied: 0 };",
+    "new": "      if (o.payment_status === 'refused') return { ok: true, applied: 0 };",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-part-refund-revokes",
+    "file": "server-account/src/shop.js",
+    "old": "return o.refunded === true ? revokeOrder(",
+    "new": "return o.amount_refunded > 0 ? revokeOrder(",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-other-order-ware-taken",
+    "file": "server-account/src/shop.js",
+    "old": "        AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`).bind(order.player, w.bit, w.id, order.id),",
+    "new": "        AND ?3 = ?3 AND ?4 = ?4`).bind(order.player, w.bit, w.id, order.id),",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-dispute-lost-restores",
+    "file": "server-account/src/shop.js",
+    "old": "return o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(",
+    "new": "return o.status ? restoreOrder(",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-disclaimer-after-panels",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  body.append(head, proceeds, tabs, panels, say, foot);",
+    "new": "  body.append(head, tabs, panels, proceeds, say, foot);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-buy-to-a-guest",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null };\n",
+    "new": "",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-buy-off-sale",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (row && !row.sale) return { state: 'gone', buy: null };\n",
+    "new": "",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-landing-never-said",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held)) {",
+    "new": "    if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held && w.sale === 'never')) {",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-flame-gutter-filled",
+    "file": "src/ui/titleFlame.js",
+    "old": "  const GUTTER = 2;",
+    "new": "  const GUTTER = 0;",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-origin-edge-thick",
+    "file": "src/ui/playerBadge.js",
+    "old": "export const GLYPH_EDGE_OF = Object.freeze({ origin: 0.32 });",
+    "new": "export const GLYPH_EDGE_OF = Object.freeze({ origin: 0.6 });",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-origin-moves-for-less-motion",
+    "file": "src/ui/playerBadge.js",
+    "old": "  const motion = stillness() ? null : GLYPH_MOTION",
+    "new": "  const motion = GLYPH_MOTION",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-eternal-rate-off-clock",
+    "file": "src/render/auraRing.js",
+    "old": "export const ETERNAL_HZ = Object.freeze({ wave: 1 / 2, pulse: 1 / 4, sigil: 1 / 6 });",
+    "new": "export const ETERNAL_HZ = Object.freeze({ wave: 1 / 2, pulse: 1 / 4, sigil: 1 / 7 });",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-cape-one-side",
+    "file": "src/render/auraRing.js",
+    "old": "      for (const side of [0, 1]) { gl.uniform1i(U.uSide, side);",
+    "new": "      for (const side of [1]) { gl.uniform1i(U.uSide, side);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-cape-over-own-view",
+    "file": "src/render/auraRing.js",
+    "old": "    gl.disable(offset);\n    if (!auraEyeAtHead(w, eye)) {",
+    "new": "    gl.disable(offset);\n    if (eye) {",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-rider-cape-drawn",
+    "file": "src/render/auraRing.js",
+    "old": "    if (w.mounted === true || w.cape?.sunk === true || torn >= CLOAK_RIP_S) return;\n    gl.disable(offset);",
+    "new": "    if (w.cape?.sunk === true || torn >= CLOAK_RIP_S) return;\n    gl.disable(offset);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-stroll-never-stops",
+    "file": "src/render/auraPreview.js",
+    "old": "  return { pace: s.pace * Math.max(0, walk) ** 0.6,",
+    "new": "  return { pace: s.pace * (0.5 + 0.5 * Math.abs(walk)),",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-gem-left-out-of-chain",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);",
+    "new": "  shopAnchor = anchorSeason(gem, [], home.querySelector?.('.px-profile'), home);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-failed-grant-told-done",
+    "file": "server-account/src/shop.js",
+    "old": "    throw e;   // the grant never written: a 5xx, and Stripe tells it again",
+    "new": "    return { ok: true, applied: 0 };",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-revoke-letter-draws-the-ware",
+    "file": "server-account/src/shop.js",
+    "old": "revokePost(order, why), null, nowS)",
+    "new": "revokePost(order, why), w.id, nowS)",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-one-letter-for-every-reason",
+    "file": "server-account/src/shop.js",
+    "old": "batch: `${shopReceiptBatch(order.id)}-${why === 'disputed' ? 'disputed' : 'refunded'}`,",
+    "new": "batch: `${shopReceiptBatch(order.id)}-r`,",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-restore-unsaid",
+    "file": "server-account/src/shop.js",
+    "old": "      postStatement(db, order.player, restorePost(order), w.id, nowS),\n",
+    "new": "",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-inquiry-closed-keeps-the-ware",
+    "file": "server-account/src/shop.js",
+    "old": "o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(",
+    "new": "o.status === 'won' ? restoreOrder(",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-tax-read-as-the-price",
+    "file": "server-account/src/shop.js",
+    "old": "    case 'checkout.session.completed':\n      if (o.payment_status !== 'paid') return { ok: true, applied: 0 };   // a delayed method: its own event follows\n      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total,",
+    "new": "    case 'checkout.session.completed':\n      if (o.payment_status !== 'paid') return { ok: true, applied: 0 };   // a delayed method: its own event follows\n      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_total,",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-every-order-being-confirmed",
+    "file": "server-account/src/shop.js",
+    "old": "  if (order.status === 'open') return { heading: 'Thank you', lines: ['Your payment is being confirmed.',",
+    "new": "  return { heading: 'Thank you', lines: ['Your payment is being confirmed.',",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-a-key-a-ticket",
+    "file": "server-account/src/shop.js",
+    "old": "key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
+    "new": "key = await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-tabs-without-keys",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  tabs.addEventListener?.('keydown', (",
+    "new": "  tabs.addEventListener?.('keyup-never', (",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-tabs-unwrapped",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "e.key === 'ArrowRight' ? (i + 1) % n :",
+    "new": "e.key === 'ArrowRight' ? Math.min(i + 1, n - 1) :",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-flame-sheet-at-once",
+    "file": "src/ui/titleFlame.js",
+    "old": "  for (let f = 0; f < spec.frames; f++) { await idle(); flameFramePixels(spec, f, data); }",
+    "new": "  await idle(); for (let f = 0; f < spec.frames; f++) flameFramePixels(spec, f, data);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-flame-laid-twice",
+    "file": "src/ui/titleFlame.js",
+    "old": "doc.getElementById?.(FLAME_STYLE_ID) || laying) return laying;",
+    "new": "doc.getElementById?.(FLAME_STYLE_ID)) return laying;",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  }
+]

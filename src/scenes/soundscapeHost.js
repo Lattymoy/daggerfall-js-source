@@ -26,7 +26,9 @@
 //                                                   elsewhere: the shore's edge is found by it, from either side
 //     inTown() -> I stand in a town                 PlayerGPS.IsPlayerInTown(true, true) (world.js _isPlayerInTownStrict -
 //                                                   AUDIT SOUNDSCAPE W1: never a dungeon's, a graveyard's or a coven's rect)
-//     towns() -> the living towns' index (y * 1000 + x -> { blocks })
+//     townAt(x, y) -> the living town on a pixel ({ blocks }) or null - the world's registry's (scenes/livingWorld/
+//                                                   livingIndex.js townAt, WW1: keyed by the world, so a pixel past
+//                                                   the Bay never reads a Bay row)
 //     doors -> the host's building doors            each { door, pixelKey, dfBlock, recordIndex }; doorAt(entry) -> its
 //                                                   door in the scene's frame (world.js shiftedDoor: its building's
 //                                                   placement, its centre and normal in the model's own space)
@@ -131,7 +133,7 @@ export const winterIn = (climate, winter) => !!winter && climate !== CLIMATES.De
 
 /**
  * @param {{ audio: any, music: any, boat: () => any, aboard?: () => boolean, bow?: (boat: any, yaw: number) => number[], csa: any, fight: () => boolean, pixel: () => ({ x: number, y: number } | null),
- *   seaPixel: (x: number, y: number) => boolean, dw: any, inTown: () => boolean, towns: () => Map<number, { blocks?: number }>,
+ *   seaPixel: (x: number, y: number) => boolean, dw: any, inTown: () => boolean, townAt: (x: number, y: number) => ({ blocks?: number } | null),
  *   doors: any[], doorAt: (entry: any) => any, rand?: () => number }} deps
  */
 export function createSoundscapeHost(deps) {
@@ -167,7 +169,7 @@ export function createSoundscapeHost(deps) {
       land = !!p && landNear(p.x, p.y, deps.seaPixel);
       coast = !!p && seaBeside(p.x, p.y, deps.seaPixel);
       try { port = !!deps.csa?.IsNearPort?.(3); } catch { port = false; }
-      try { blocks = p ? deps.towns?.()?.get(p.y * 1000 + p.x)?.blocks ?? 1 : 1; } catch { blocks = 1; }
+      try { blocks = p ? deps.townAt?.(p.x, p.y)?.blocks ?? 1 : 1; } catch { blocks = 1; }
     }
     shore = columnAt ? shoreEdge(ear, columnAt) : coast ? { dist: SHORE_FAR_M, dir: null } : null;
     smithies = []; taverns = [];

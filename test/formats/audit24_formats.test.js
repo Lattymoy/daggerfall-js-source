@@ -61,8 +61,13 @@ test('audit24 formats: MapsFile.getRegionIndex is PlayerGPS\'s politic derivatio
   assert.equal(m.getRegionIndexAt(0, 0), 16, 'the known bad value patches to Wrothgarian Mountains');
   politic = 0;
   assert.equal(m.getRegionIndexAt(0, 0), 0, 'below the band clamps to 0');
+  // PIN MOVED (WW-R, bible/03-World/World-Wide.md): a province's region past the Bay is in range (formats/mapsTables.js REGION_NAMES 62..70), and past the table clamps
   politic = 128 + 62;
-  assert.equal(m.getRegionIndexAt(0, 0), 0, 'and >= 62 clamps to 0');
+  assert.equal(m.getRegionIndexAt(0, 0), 62, 'High Rock beyond the Bay, the first province');
+  politic = 128 + 70;
+  assert.equal(m.getRegionIndexAt(0, 0), 70, 'Cyrodiil');
+  politic = 128 + 71;
+  assert.equal(m.getRegionIndexAt(0, 0), 0, 'and >= 71 clamps to 0');
   politic = 128 + 61;
   assert.equal(m.getRegionIndexAt(0, 0), 61, '61 is the last real one');
   // NEVER -1: the derivation cannot answer "no region", which is the
@@ -70,7 +75,7 @@ test('audit24 formats: MapsFile.getRegionIndex is PlayerGPS\'s politic derivatio
   for (let p = 0; p < 256; p++) {
     politic = p;
     const r = m.getRegionIndexAt(0, 0);
-    assert.ok(r >= 0 && r < 62, `politic ${p} -> ${r} stays in range`);
+    assert.ok(r >= 0 && r < 71, `politic ${p} -> ${r} stays in range`);   // PIN MOVED (WW-R): the Bay's 62 and the provinces' nine
   }
 });
 

@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { glslFunctions } from '../glsl.mjs';
+import { climateNeighbourIn } from '../../src/world/tamriel/tamrielGround.js';
+import { tamrielFrameInBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { ECOTONE, ECOTONE_REACH, ecoHash, ecoNoise, ecoShare, ecoOrigin, ecotoneShares, ecotoneOwner } from '../../src/world/ecotone.js';
 import { ecotoneGlsl, ECO_UNITS } from '../../src/render/ecotoneGlsl.js';
 import * as RENDER from '../../src/render/renderer.js';
@@ -171,8 +173,14 @@ test('ECOTONE1: both terrain programs sample their neighbours right after their 
   const classic = r.slice(r.indexOf('const TERRAIN_FS = `'), r.indexOf('}`;', r.indexOf('const TERRAIN_FS = `')));
   assert.match(classic, /\$\{ecotoneGlsl\(\)\}/);
   // AUDIT PRECIP GROUND-6 (PIN MOVED): the weights asked once, the blend by them - the snow crosses the border by the same
-  assert.match(classic, /vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
-  assert.match(EL_TERRAIN_FS, /vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
+  // PIN MOVED (ROAD-LOOK): a road's edge blends into its ground on the own tile first (render/roadEdgeGlsl.js), so the
+  // neighbours' weights follow that one line - the road's edge then crosses a climate's border as any ground does
+  // PIN MOVED (COAST-LOOK, render/groundEdgeGlsl.js): a transition is drawn as its two kinds' base records, and each
+  // takes its neighbours' share by its own record before they meet; every other tile as before - its road's edge, then
+  // the neighbours' share
+  const ECO_AFTER = String.raw`(?: {2}(?:\/\/|highp uint geA, geB;|bool ge = groundMix\(|vec2 dux = )[^\n]*\n)+ {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}if \(ge\) tex = mix\(ecotone\(geBase\(geA, tileUV, dux, duy\), ew, vec3\(tileUV, float\(geA\)\), dux, duy\), ecotone\(geBase\(geB, tileUV, dux, duy\), ew, vec3\(tileUV, float\(geB\)\), dux, duy\), geS\);\n {2}tex = roadEdge\(tex, data, unwrapped, gx, gy, t\);[^\n]*\n {2}if \(!ge\) tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);`;
+  assert.match(classic, new RegExp(String.raw`vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n${ECO_AFTER}`));
+  assert.match(EL_TERRAIN_FS, new RegExp(String.raw`vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n${ECO_AFTER}`));
   assert.match(EL_TERRAIN_FS, /c \+= w\.y \* elDecode\(textureGrad\(uEcoArr1, tl, gx, gy\)\.rgb\);/, 'the lane blends in its own linear light');
   assert.match(ecotoneGlsl(''), /c \+= w\.y \* \(textureGrad\(uEcoArr1, tl, gx, gy\)\.rgb\);/, 'the classic program in its display values');
   // a phone's mediump int is sixteen bits: the origin runs to 128,000 and the hash wraps at 2^32, so every integer of the
@@ -335,11 +343,20 @@ test('ECOTONE1: the world host - the 3x3 read once a build; the kernel handed th
   // AUDIT PRECIP GROUND-2 (PIN MOVED): on the snow lane the set held and drawn is its twin
   // PIN MOVED (OW-HITCH): the one home is scenes/groundSets.js, the world host's module (HOST-SPLIT)
   assert.match(read('src/scenes/groundSets.js'), /const loadGroundSet = async \(groundArchive, hold, winter = null\) => \{\n(?:\s+\/\/[^\n]*\n)*\s+const key = winter == null \? groundArchive : twinKey\(groundArchive\);\n\s+hold\.tileArray\(key\); const groundTex = await getTexture\(groundArchive\);/, 'the one home, held for the pixel');
-  assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
-  assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(a, pipeline, /);
+  // PIN MOVED (TESA-LANDS, AUDIT): the pixel's set and its neighbours' loaded together, all awaited before the draw
+  assert.match(read('src/scenes/pixelBuild.js'), /const ownSet = loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
+  assert.match(read('src/scenes/pixelBuild.js'), /await Promise\.all\(\[ownSet, \.\.\.archives\.map\(\(a\) => loadGroundSet\(a, pipeline, /);
   assert.match(w, /side: Int32Array\.of\(slot\(3\), slot\(5\), slot\(1\), slot\(7\)\),/, 'W, E, S, N of the 3x3 indexed (dz + 1) * 3 + (dx + 1)');
   assert.match(w, /corner: Int32Array\.of\(slot\(0\), slot\(2\), slot\(6\), slot\(8\)\),/, 'SW, SE, NW, NE');
-  assert.match(w, /out\[\(dz \+ 1\) \* 3 \+ dx \+ 1\] = \(dx === 0 && dz === 0\) \|\| x < 0 \|\| y < 0 \|\| x >= MAP_W \|\| y >= MAP_H \? own : getWorldClimateSettings\(maps\.getClimateIndex\(x, y\)\);/, 'north is the row above: y = py - dz');
+  // PIN MOVED (AUDIT TESA-BIOME Z4): the neighbour a pixel reads - the Bay's map for a Bay pixel, the continent's frame past it
+  assert.match(w, /out\[\(dz \+ 1\) \* 3 \+ dx \+ 1\] = \(dx === 0 && dz === 0\) \|\| !climateNeighbourIn\(px, py, x, y\) \? own : getWorldClimateSettings\(maps\.getClimateIndex\(x, y\)\);/, 'north is the row above: y = py - dz');
+  assert.equal(climateNeighbourIn(0, 10, -1, 10), false, 'a Bay pixel never reads past the Bay\'s map');
+  assert.equal(climateNeighbourIn(999, 499, 1000, 499), false);
+  assert.equal(climateNeighbourIn(500, 250, 501, 250), true);
+  assert.equal(climateNeighbourIn(-5, 10, -6, 10), true, 'a pixel past the Bay reads the continent round it');
+  assert.equal(climateNeighbourIn(-5, 10, -4, 10), true, 'and the Bay beside it');
+  const f = tamrielFrameInBay();
+  assert.equal(climateNeighbourIn(f.x0, 10, f.x0 - 1, 10), false, 'nothing past the continent\'s frame');
   assert.match(w, /const y = py - dz|x = px \+ dx, y = py - dz/);
   assert.match(w, /const ga = p\.ecoGround \? borderGround\(p, lx, lz\) : p\.groundArchive;/, 'the grass by the border');
   assert.match(w, /return groundMeanColour\.get\(p\.ecoGround \? borderGround\(p, lx, lz\) : p\.groundArchive\)\?\.\[rec\] \?\? null;/);

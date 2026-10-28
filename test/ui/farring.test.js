@@ -17,6 +17,7 @@ import {
 } from '../../src/render/farRing.js';
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { overworldTint, overworldHeight, BASE_HEIGHT_SCALE } from '../../src/ui/overworldModel.js';
+import { largeOfByte } from '../../src/world/tamriel/tamrielGround.js';   // RELIEF-PEAKS: the large map's law of the small
 
 const flatWorld = (byte) => ({
   heightBytes: new Uint8Array(1000 * 500).fill(byte),
@@ -26,7 +27,11 @@ const flatWorld = (byte) => ({
 
 test('EV8: the height law is the streamed terrain\'s own, not the travel map\'s skin', () => {
   assert.equal(ringHeight(0), SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE, 'the flat sea at 34.0');
-  assert.equal(ringHeight(100), 100 * BASE_HEIGHT_SCALE * STREAMING_TERRAIN_SCALE, 'land is byte*8*1.25 world units - the game scene\'s TerrainScale (TERRAIN-SCALE1)');
+  // PIN MOVED (RELIEF-PEAKS): land is the kernel's two terms at the byte's node - byte*8 and the large map, by its law of the
+  // byte (WOODS.WLD's own, about 1.18 x the byte), *4 - times 1.25, the game scene's TerrainScale (TERRAIN-SCALE1). The
+  // ring stood byte*8*1.25 alone: a third under the ground it hands over to
+  assert.equal(ringHeight(100), (100 * BASE_HEIGHT_SCALE + largeOfByte(100) * 4) * STREAMING_TERRAIN_SCALE, 'land is the kernel\'s two terms at the byte\'s node, world units');
+  assert.ok(ringHeight(100) > 100 * BASE_HEIGHT_SCALE * STREAMING_TERRAIN_SCALE * 1.4, 'the large map\'s share of it');
   assert.equal(ringHeight(2), ringHeight(0), 'the ocean floor clamps like the sampler');
   // the travel map's overworldHeight carries a documented x24 relief
   // exaggeration in map-pixel units - deliberately NOT this law
@@ -168,7 +173,7 @@ test('EV8: the pass stands up, builds, re-punches and draws under the Proxy-GL s
 
 test('EV8: the wiring - enhanced-gated, weather-gated, inside the sky\'s foreign span, one origin', () => {
   const world = readFileSync('src/scenes/world.js', 'utf8');
-  assert.ok(world.includes('const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl, { renderer }) : null'),   // EL1: the ring takes the lighting lane (PIN MOVED (OW-HORIZON, 2026-10-20): off the renderer it is handed)
+  assert.ok(world.includes('const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl, { renderer, mid: terrainGen }) : null'),   // EL1: the ring takes the lighting lane (PIN MOVED (OW-HORIZON, 2026-10-20): off the renderer it is handed; PIN MOVED (MID-RING): and the terrain's client, the middle ring's heights)
     'the 1:1 lane keeps the fog horizon DFU draws');
   // the draw sits between the sky and the one existing seam mark - no
   // third markForeignPass (glstate.test.js counts exactly two)

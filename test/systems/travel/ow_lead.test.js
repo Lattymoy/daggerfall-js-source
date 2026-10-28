@@ -49,6 +49,7 @@ function rideHost(W, { buildS, mps, boatWay = null }) {
   const player = { pos: at, speed: mps, isPlayerSwimming: false, feetAt: () => [...player.pos] };
   const boat = boatWay == null ? null : { way: boatWay };   // PASSAGE-PACE: a boat at the traveller's helm, her way Come Sail Away's
   const scope = {
+    capitalPrebuild: { firstReady: () => true },   // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers - none here
     travelControlUI: { isShowing: true }, travelOptions: { state: { autopilot: {} } },
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,
     worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, travellerPace, MAX_TIME_SCALE,
@@ -64,7 +65,7 @@ function rideHost(W, { buildS, mps, boatWay = null }) {
     raiderSight: () => 1000, isNight: () => false, minuteNow: () => 0, travelViewRaiders: () => [], tvRaid: { spent: new Set(), chase: new Map() },
     navalRaidersOn: () => false, naval: null, seaRaidPeerChase: () => null, RAIDER_CONTACT_M: 60, RAIDER_CHASE_MPS: 4.2,
     exteriorFoes: { foes: [] }, foeHostile, foeAlerted, foeCampKey: () => null, SIGHT_RADIUS: 102.4,
-    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, _travelDrive: { yaw: 90 }, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */
+    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, _travelDrive: { yaw: 90 }, tvTownPace: () => null,   /* OW-TOWN-WALK: out of town */
     tvSay: () => {}, TRAVEL_VIEW_TEXT, performance: { now: () => d.t * 1000 },
     travelWalkRate, TV_MOVE_ACTIONS, held: () => false, keys: new Set(), csaBoatUnderMe: () => boat, gamePaused: () => false,
     travellerOnRoad: () => true, csaHoldsTimeScale: () => false,

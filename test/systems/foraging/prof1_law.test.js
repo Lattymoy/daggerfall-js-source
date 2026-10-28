@@ -156,7 +156,8 @@ test('PROF1 law: how many nodes a pixel holds a day, by climate (PROF0 6); the t
   const id = nodeKey({ kind: 'herb', x: 412, y: 188, day: 20724, slot: 2 });
   assert.equal(id, 'herb:412:188:20724:2');
   assert.deepEqual(parseNodeKey(id), { kind: 'herb', x: 412, y: 188, day: 20724, slot: 2 });
-  assert.deepEqual(['herb:1000:1:1:0', 'herb:1:500:1:0', 'rock:1:1:1:0', 'herb:1:1:1', 7].map(parseNodeKey), [null, null, null, null, null]);
+  assert.deepEqual(['herb:8192:1:1:0', 'herb:1:8192:1:0', 'rock:1:1:1:0', 'herb:1:1:1', 7].map(parseNodeKey), [null, null, null, null, null]);   // PIN MOVED (WW-C1, bible/03-World/World-Wide.md WW-C): past the world's grid, where the Bay's map's edge was
+  assert.deepEqual(parseNodeKey('herb:1000:1:1:0'), { kind: 'herb', x: 1000, y: 1, day: 1, slot: 0 }, 'WW-C1: a province\'s pixel past the Bay\'s map is ground');
 });
 
 test('PROF1 law: a pixel\'s patches are the clock\'s - the same for every asker; held to tier 2 unconfirmed; a bare first draw draws again at that tier or below; a Seasonal Eye keeps it, off-season', () => {

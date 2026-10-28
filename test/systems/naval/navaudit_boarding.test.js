@@ -24,10 +24,11 @@ import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { Place } from '../../../src/systems/quest/place.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const root = new URL('../../../', import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), 'utf8');
-const WORLD = read('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 const questFile = (name) => read(`vendor/warm-ashes-ships/Quests/${name}.txt`);
 /** A function declaration of world.js's, lifted whole (the suites' own way - test/systems/ows3_raiders.test.js). */
 const lift = (name) => {
@@ -429,7 +430,7 @@ test('AUDIT NAV1 (B14) NO SAVE MID-FIGHT: a boarding under way, or the player on
   assert.equal(h.host.saveRefused(), false, 'away from her');
   h.host.setEnabled(false);
   assert.equal(h.host.saveRefused(), false, 'no sea');
-  assert.match(WORLD, /if \(naval\?\.saveRefused\?\.\(\)\) \{ if \(!quiet\) townTalk\.say\('You cannot save now\.'\); return false; \}/, 'F9 and the checkpoints');
+  assert.match(WORLD, /if \((?:host\.)?naval\?\.saveRefused\?\.\(\)\) \{ if \(!quiet\) townTalk\.say\('You cannot save now\.'\); return false; \}/, 'F9 and the checkpoints');
   assert.match(WORLD, /savingPrevented: \(\) => !!naval\?\.saveRefused\?\.\(\)( \|\| [^,\n]+)?,/, 'the pause window greys its Save');   // AUDIT CARDS-2 H1: a later refusal may join it (chips on a card table)
 });
 
@@ -469,7 +470,7 @@ test('AUDIT NAV1 (B10) THE DECK DEALT: a raid\'s waves take the boarded deck\'s 
   const { h: b } = await boarding();
   const spots = b.log.foes.map((f) => f.pos.join(','));
   assert.equal(new Set(spots).size, spots.length, 'her muster and my hands apart');
-  assert.match(WORLD, /const _deck = naval\?\.placeQuestFoe\(handle\.foe\?\.parentQuest \?\? null, \(s\) => !_held\(/);
+  assert.match(WORLD, /const _deck = (?:host\.)?naval\?\.placeQuestFoe\(handle\.foe\?\.parentQuest \?\? null, \(s\) => !_held\(/);
   assert.match(WORLD, /if \(_deck === false\) return false;/);
   assert.match(WORLD, /holdSpotWhile\(collider, \{ x: _deck\[0\]\[0\], y: _deck\[0\]\[1\] \+ 0\.9, z: _deck\[0\]\[2\] \}, \(\) => exteriorFoes\.spawnFoe\(/);
 });

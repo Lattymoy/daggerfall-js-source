@@ -666,30 +666,33 @@
   {
     "name": "BAY-A8-region-unread-under-way",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "      e = launch({ seed, classId: cls.id, region: l.region, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });",
-    "new": "      e = launch({ seed, classId: cls.id, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });",
+    "old": "      e = launch({ seed, classId: cls.id, region: l.region, area: l.area, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });",
+    "new": "      e = launch({ seed, classId: cls.id, area: l.area, pos: [l.pos[0], deps.seaY(), l.pos[2]], yaw: l.yaw });",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
   },
   {
     "name": "BAY-A8-region-unread-at-berth",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "        e = launch({ seed, classId: cls.id, region: l.region, pos: [at[0], deps.seaY(), at[1]],",
-    "new": "        e = launch({ seed, classId: cls.id, pos: [at[0], deps.seaY(), at[1]],",
+    "old": "        e = launch({ seed, classId: cls.id, region: l.region, area: l.area, pos: [at[0], deps.seaY(), at[1]],",
+    "new": "        e = launch({ seed, classId: cls.id, area: l.area, pos: [at[0], deps.seaY(), at[1]],",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the line carries the waters' area / the world's sea ground."
   },
   {
     "name": "BAY-A8-feed-region-unsaid",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/naval/worldLanes.js",
     "old": "px: at.x, py: at.y, region: summary.regionIndex });",
     "new": "px: at.x, py: at.y });",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js",
       "test/systems/naval/sealanes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): the Bay's lane ports moved to scenes/naval/worldLanes.js bayLanePorts."
   },
   {
     "name": "BAY-A11-answer-bound",
@@ -869,9 +872,9 @@
   },
   {
     "name": "BAY-A19-lane-margin-dropped",
-    "file": "src/scenes/world.js",
-    "old": "      const near = (p) => Math.hypot(p.road.x - here.x, p.road.y - here.y) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
-    "new": "      const near = (p) => Math.hypot(p.road.x - here.x, p.road.y - here.y) <= LANE_PATH_PX / 2;",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
+    "new": "return Math.min(da, db) <= LANE_PATH_PX / 2;",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
     ]

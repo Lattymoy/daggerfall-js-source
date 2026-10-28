@@ -1,0 +1,165 @@
+[
+  {
+    "name": "TESA12-a-shorter-snap",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "export const SNAP_REACH = 24;",
+    "new": "export const SNAP_REACH = 23;",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-no-inset",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "export const SNAP_INSET = 0.1;",
+    "new": "export const SNAP_INSET = 0;",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-cities-reversed",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "    CITIES.filter((c) => c.province === key).forEach((c, id) => {",
+    "new": "    CITIES.filter((c) => c.province === key).reverse().forEach((c, id) => {",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-lore-port-dropped",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "name: c.name, ...(c.port ? { port: true } : {}) };",
+    "new": "name: c.name };",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-lore-word-kept",
+    "file": "src/world/arenaPlaces.js",
+    "old": "    const placed = { ...rest, bx: at[0], by: at[1], ...(onShore ? { port: true } : {}) };",
+    "new": "    const placed = { ...p, bx: at[0], by: at[1], ...(onShore ? { port: true } : {}) };",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-seven-towns",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "export const PLACE_COUNTS = Object.freeze({ town: 8, village: 16 });",
+    "new": "export const PLACE_COUNTS = Object.freeze({ town: 7, village: 16 });",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-no-margin",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "const inBay = x + 1 > bay.x0 - BAY_MARGIN && x < bay.x1 + BAY_MARGIN && y + 1 > bay.y0 - BAY_MARGIN && y < bay.y1 + BAY_MARGIN;",
+    "new": "const inBay = x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1;",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-on-the-bay",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "      if (!inBay) cells.push([x, y]);",
+    "new": "      cells.push([x, y]);",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-first-draw-always",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "    if (d > bd) { bd = d; best = { x, y }; }",
+    "new": "    if (bd < 0) { bd = d; best = { x, y }; }",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-cell-edge",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "const x = cx + 0.25 + 0.5 * ((h & 0xffff) / 0x10000)",
+    "new": "const x = cx + 0.5 * ((h & 0xffff) / 0x10000)",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-a-name-twice",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "    if (name && !used.has(name)) return name;",
+    "new": "    if (name) return name;",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-name-not-kept",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "        used.add(name);\n",
+    "new": "",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-wrong-bank",
+    "file": "src/world/tamrielPlaces.js",
+    "old": "    const bank = provinceNameBank(key);",
+    "new": "    const bank = provinceNameBank('Imperial');",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-no-trace-gate",
+    "file": "src/world/arenaPlaces.js",
+    "old": "  if (!trace) return null;\n  const land = tamrielLandVersion(), fit = tamrielFit();",
+    "new": "  const land = tamrielLandVersion(), fit = tamrielFit();",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-store-kept",
+    "file": "src/scenes/world.js",
+    "old": "  clearRetiredArena();\n  // TESA2: the trace's landing",
+    "new": "  // TESA2: the trace's landing",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-door-online",
+    "file": "src/scenes/shared.js",
+    "old": "  return pageParam('arenaplaces', search) !== 'off' || isOnlinePage(search);",
+    "new": "  return pageParam('arenaplaces', search) !== 'off';",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-the-wire-silent",
+    "file": "src/scenes/world.js",
+    "old": "      loc: ident?.kind === 'dungeon' ? (ident.name ?? '') : (loc?.name ?? ''),",
+    "new": "      loc: loc?.arena && !loc.capital ? '' : ident?.kind === 'dungeon' ? (ident.name ?? '') : (loc?.name ?? ''),",
+    "tests": [
+      "test/tesa12_places.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "TESA12-windhelm-inland",
+    "file": "src/world/tamriel/tamrielGeography.js",
+    "old": "{ name: 'Windhelm', province: 'Skyrim', at: [186, 26], port: true }",
+    "new": "{ name: 'Windhelm', province: 'Skyrim', at: [186, 26] }",
+    "tests": [
+      "test/tesa12_places.test.js"
+    ]
+  }
+]

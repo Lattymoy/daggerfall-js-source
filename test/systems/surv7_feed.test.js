@@ -143,8 +143,10 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
     assert.doesNotMatch(src, /resting: true \}\n?\s*: survivalEnvNow/, `${name}: and no arm sits the traveller down`);
     assert.match(src, /survivalEnv: \(\) => survivalEnvNow\(\),/, `${name}: the host bag's reader`);
   }
-  assert.match(world, /climateIndex: maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'world: the pixel\'s climate');
-  assert.match(ext, /climateIndex: locClimateIndex,\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'exterior: the location\'s climate');
+  // PIN MOVED (TESA-LANDS' audit): the climate the body feels - past the Bay a zone's air (world/tamriel/tamrielGround.js
+  // feltClimateIndex), the hosts' map's elsewhere
+  assert.match(world, /climateIndex: feltClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y, maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\)\),[^\n]*\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'world: the pixel\'s climate');
+  assert.match(ext, /climateIndex: feltClimateIndex\(_locPixel\.x, _locPixel\.y, locClimateIndex\),[^\n]*\n\s+month: dateFromClassicMinutes\(wm\)\.month/, 'exterior: the location\'s climate');
   assert.match(world, /alignSurvival\(playerEntity, Math\.floor\(ownMinutes\(\)\), Math\.floor\(ownMinutes\(\)\)\);/, 'world: the arrival (LIVED1: against the character\'s own clock)');
   // HEARTH1 (2026-09-19): the interior's `byFire` was a hard FALSE, and
   // this pin held it that way. It was right while the only fire the law

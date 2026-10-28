@@ -373,5 +373,17 @@
  "Gentle work": "Лека работа",
  "Lockpicking": "Разбиване на ключалки",
  "Glint": "Блясък",
- "Outline": "Контур"
+ "Outline": "Контур",
+ "Shop (the real-money shop)": "Магазин",
+ "Pre-alpha": "пре-алфа (в пре-алфата)",
+ "proceeds": "приходи",
+ "cosmetic": "козметичен",
+ "Owned (shop state)": "Притежавано",
+ "receipt": "разписка",
+ "mailbox": "поща",
+ "profile": "профил",
+ "username": "потребителско име",
+ "gem (the shop's button on the pause menu)": "скъпоценният камък",
+ "Origin (the ouroboros glyph)": "Произход",
+ "Terms of Service": "Условия за ползване"
 }

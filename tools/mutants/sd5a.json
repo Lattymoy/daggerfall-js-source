@@ -128,7 +128,7 @@
   {
     "name": "SD5A-the-room-a-dungeon's",
     "file": "src/scenes/worldModes.js",
-    "old": " isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } :",
+    "old": " isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm, o: dungeonLoc.sdOwner } :",
     "new": "",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
@@ -173,11 +173,12 @@
   {
     "name": "SD5A-left-in-a-room-that-refused-me",
     "file": "src/scenes/world.js",
-    "old": "    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);",
+    "old": "    if (modes?.unstuck?.()) sdSay(/\\bHour\\b/.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);",
     "new": "    void SD_REALM_TEXT;",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
   },
   {
     "name": "SD5A-the-edge-lost",
@@ -209,8 +210,8 @@
   {
     "name": "SD5A-the-world-room-a-dungeon's",
     "file": "src/scenes/world.js",
-    "old": "    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);",
-    "new": "    else if (false) key = sdRoomKey(modes?.roomIdentity?.()?.s);",
+    "old": "    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s, modes?.roomIdentity?.()?.o);",
+    "new": "    else if (false) key = sdRoomKey(modes?.roomIdentity?.()?.s, modes?.roomIdentity?.()?.o);",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]

@@ -11,11 +11,12 @@
   {
     "name": "SEAT1b-pledge-unconfirmed-seat",
     "file": "server-account/src/seatInfluence.js",
-    "old": "  if (!seat) return { error: 'seat-unconfirmed' };\n  // SEAT1c: a guild holding a seat",
-    "new": "  // SEAT1c: a guild holding a seat",
+    "old": "  if (!seat) return { error: 'seat-unconfirmed' };\n  // DOMAIN3 (Domains law 1)",
+    "new": "  // DOMAIN3 (Domains law 1)",
     "tests": [
       "test/net/seat1b_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the region law's check follows the confirmed seat's."
   },
   {
     "name": "SEAT1b-pledge-reach-off-by-one",
@@ -65,11 +66,12 @@
   {
     "name": "SEAT1b-watch-any-pixel",
     "file": "server-account/src/seatInfluence.js",
-    "old": "    const seat = byPixel.get(`${c.x},${c.y}`);",
-    "new": "    const seat = byPixel.get(`${c.x},${c.y}`) ?? [...seats.values()][0];",
+    "old": "    const town = byPixel.get(`${c.x},${c.y}`);",
+    "new": "    const town = byPixel.get(`${c.x},${c.y}`) ?? [...seats.values()][0];",
     "tests": [
       "test/net/seat1b_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the tick's seat is the town, its Charter read after it."
   },
   {
     "name": "SEAT1b-watch-day-cap-off-by-one",
@@ -138,7 +140,7 @@
   {
     "name": "SEAT1b-gate-region-not-stored",
     "file": "server-account/src/accounts.js",
-    "old": "nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
+    "old": "nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
     "new": "nowS, null, embers, c.m",
     "tests": [
       "test/net/seat1b_service.test.js"
@@ -202,11 +204,12 @@
   {
     "name": "SEAT1b-homes-new-members",
     "file": "server-account/src/seatInfluence.js",
-    "old": "AND m.joined_at <= ?`, [seat.key], [nowS - SEAT_MEMBER_WAIT_S]);",
-    "new": "AND m.joined_at <= ?`, [seat.key], [nowS]);",
+    "old": "AND m.joined_at <= ?`, [region ? seat.region : seat.key], [nowS - SEAT_MEMBER_WAIT_S]);",
+    "new": "AND m.joined_at <= ?`, [region ? seat.region : seat.key], [nowS]);",
     "tests": [
       "test/net/seat1b_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN3): the homes read by region where the region law rules."
   },
   {
     "name": "SEAT1b-tribute-any-rank",

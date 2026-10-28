@@ -442,9 +442,19 @@ test('LW3 the ways: the living world\'s own book - a pair of towns asked once, t
 
 test('LW3 the streaming host: the trips\' world is the game\'s own populated rows (blocks, people, region, port) and Hazelnut\'s roads asked one way a pair, a few a frame; a town\'s LivingTown takes its trips and the armed walk\'s sprite; the roads\' layer runs in the open world after the town\'s people and is freed indoors; the road\'s people beside the town\'s for the talk ray and the hover alone; their words through the one layer; the Overworld\'s marks; a caught hand on the road calls no watch (mutants: each seam)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /for \(const loc of _hubRows\) \{\n\s*const md = loc\.mapTableData;\n\s*if \(!md \|\| !populatesWanderingNpcs\(md\.locationType\)\) continue;/);
-  assert.match(w, /const livingWays = createWayBook\(\{\n\s*roads: \(\) => terrainGen\.roads\(\),\n\s*ground: \(\) => \(_livingGround \?\?= routeGround\(\(px, py\) => maps\.getClimateIndex\(px, py\), \(px, py\) => woods\.getHeightMapValue\(px, py\), WATER_BYTE\)\),\n\s*\}\);/, 'the ways: the living world\'s own book, on the drawn roads and the game\'s own ground (no player\'s massifs)');
-  assert.match(w, /const livingRouteOf = \(a, b\) => livingWays\.wayOf\(a, b\);/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the towns are the living world's index's, off the world's registry -
+  // the game's own rows its first provider (world/worldWide/bayPlaces.js) - and a town a place of a populated type
+  assert.match(w, /worldPlaces\.register\(BAY_SOURCE, bayPlaceRows\(_hubRows, \{ hasPort \}\)\);/);
+  // PIN MOVED (WW7-7): the index, its ways and the trips' world scenes/livingWorld/livingTrips.js's, the host handing them in
+  assert.match(w, /createLivingTrips\(\{ places: worldPlaces, populated: populatesWanderingNpcs,\n\s*peopleAt: \(px, py\) => getWorldClimateSettings\(maps\.getClimateIndex\(px, py\)\)\?\.people, maps, woods, roads: \(\) => terrainGen\.roads\(\), /);
+  const lt = readFileSync(new URL('../../../src/scenes/livingWorld/livingTrips.js', import.meta.url), 'utf8');
+  assert.match(lt, /const index = createLivingIndex\(\{ places, populated, peopleAt, beyond: /);
+  assert.match(readFileSync(new URL('../../../src/scenes/livingWorld/livingIndex.js', import.meta.url), 'utf8'), /const townOf = [^\n]*\n\s*if \(!p \|\| !populated\(p\.type\)\) return null;/);
+  // PIN MOVED (WW7-7, bible/03-World/World-Wide.md): the Bay's pairs on the Bay's table, a pair past the Bay the window
+  // planner's (WW7-2's walk past the table retired with it). PIN MOVED (WW7-9): the table made once for both - the way
+  // book's ground and a pair's across the edge (its Bay pixels the table's)
+  assert.match(lt, /const groundOf = \(\) => \(ground \?\?= routeGround\(\(px, py\) => maps\.getClimateIndex\(px, py\), \(px, py\) => woods\.getHeightMapValue\(px, py\), WATER_BYTE, 1000, 500\)\);[\s\S]*?const ways = createWayBook\(\{\n\s*roads,\n\s*ground: groundOf,\n\s*beyond: /, 'the ways: the living world\'s own book, on the drawn roads and the game\'s own ground (no player\'s massifs)');
+  assert.match(lt, /routeOf: \(\/\*\* @type \{any\} \*\/ a, \/\*\* @type \{any\} \*\/ b\) => ways\.wayOf\(a, b\),/);
   assert.match(w, /tripsOf: \(day\) => livingTripsOf\(livingTown, day\), armOf: livingArmOf,/);
   assert.match(w, /livingWays\.frame\(\); livingMemoFresh\(\);[^\n]*\n(?:\s*livingTurnsFresh\(\);[^\n]*\n)?\s*if \(livingWorldOn\(\) && _mode\(\) === 'exterior'\) \{\n\s*livingRoadsOf\(\)\.frame\(townTalk\.overlayActive \? 0 : dt, cam\.pos, \{ overworld: tvf \? \{ grow: tvf\.grow, blend: tvf\.blend \} : null \}\);\n\s*livePersonBatches\.push\(\.\.\.livingRoads\.batches\(\)\);\n(?:\s*livingRoads\.drawBodies\([^\n]*\n)?\s*\} else if \(livingRoads\) livingRoads\.clear\(\);/);   // PIN MOVED (MWNPC10c, Morrowind-NPCs.md section 15c): the road's bodies drawn after their batches join the flats
   assert.match(w, /indoorRainSource: betterAmbience\.rainPlaying\(\) \}\);\n\s*if \(livingRoads\) livingRoads\.clear\(\);/, 'indoors, underground: the road\'s bodies freed (the modal arm)');

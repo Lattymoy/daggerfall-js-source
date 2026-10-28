@@ -40,6 +40,7 @@ import { shareQuestGold, GivePc } from '../../src/systems/quest/actions.js';
 import { QuestMachine } from '../../src/systems/quest/machine.js';
 import { tradeRefusal, createTradePack } from '../../src/systems/tradePack.js';
 import { ONLINE_CHECKPOINT_MS, checkpointAllowed, checkpointDue, checkpointWhenDue, checkpointedTradePack } from '../../src/systems/online/onlineCheckpoint.js';
+import { hostText } from '../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - its save is scenes/worldQuickSave.js's
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** Runs `fn` as if the page were `search`, then restores the page. */
@@ -64,7 +65,7 @@ test('REALM P0.1: an online boot drops every power flag before anything reads it
 });
 
 test('REALM P0.1 by source: the world host drops them beside the Test Room refusal - before the start location, the probe seams and the walk mode read them', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const drop = w.indexOf('if (refuseOnlinePowerFlags(params).length) publishBootParams(params);');
   assert.ok(drop > 0, 'the drop is at the boot, and it is published');
   assert.ok(drop > w.indexOf("if (testRoomOffline) { params.delete('online'); publishBootParams(params); }"), 'after the Test Room refusal (which may take `online` itself away)');
@@ -252,7 +253,7 @@ test('REALM P0.3: a character joining online has the debt past the Empire\'s one
 });
 
 test('REALM P0.3 by source: the join calls the debt in after the markers are aligned to the world\'s clock', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /onlineArrival\(\); empireJoin\(\{ entity: playerEntity, nowMinutes: ownMinutes\(\), say: \(l, d\) => townTalk\.say\(l, d\) \}\);/);   // LIVED1: the loans run on the character's own clock
   assert.ok(w.indexOf('empireJoin({') > w.indexOf('const onlineArrival = () => { alignEntityClocks(playerEntity, worldMinutes());'), 'the loan due dates ride the shift first');
 });
@@ -426,7 +427,7 @@ test('REALM P0.5: a trade\'s every change to the pack is checkpointed - the good
 });
 
 test('REALM P0.5 by source: the host checkpoints every slot the exit save writes, quietly, each online frame it is due and through the trade pack', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const frame = w.slice(w.indexOf('const onlineFrame = (now, dt) => {'));
   // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES): the periodic line is onlineCheckpoint.js checkpointWhenDue, run here and in the seat's branch
   // through systems/online/onlineCheckpointClock.js (its own test: test/systems/online/onlineCheckpointClock.test.js)

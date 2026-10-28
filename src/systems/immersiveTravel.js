@@ -25,6 +25,7 @@ import { registerCustomFaction } from '../formats/factionFile.js';
 import { registerMerchantService } from './guild/guildServices.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { CAPITAL_MAP_IDS, LARGE_DOCK_MAP_IDS, DOCK_PIXEL_IDS } from './immersiveTravelTables.js';
+import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id masks to no Bay pixel
 import { setFlatFaceOverride } from '../characters/staticNpc.js';   // DRIVER-FACE: FLATS.CFG's dictionary, as Roleplay & Realism writes it
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -147,9 +148,12 @@ export function borderingRegionIndex(x, y, politicAt) {
 
 /** MapsFile's pixel-id mask, the mod's `& 1048575` (IL_14d0, IL_1fc8). */
 const PIXEL_MASK = 0xfffff;
+/** The Bay pixel id a map id masks to - AUDIT WW F1: none (-1) for a zone hall's, whose low bits are a world pixel key's
+ *  (net/wire.js isHallMapId): no capital, no dock, no large dock's. */
+const pixelIdOf = (mapId) => (isHallMapId(Number(mapId)) ? -1 : (mapId | 0) & PIXEL_MASK);
 /** CarriageMap.isCapital(mapID) (IL_14bc-14f1, the lambda IL_1fc7-1fd6): a capital table entry whose pixel id is the
  *  map id's. */
-export const isCapital = (mapId) => CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === ((mapId | 0) & PIXEL_MASK));
+export const isCapital = (mapId) => CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === pixelIdOf(mapId));
 
 /** CarriageMap.CreatePopUpWindow's NPC arm (IL_0886-0a49): whether the driver takes the player to the place on the
  *  map - null for a trip (ImmersiveTravelPopUp is pushed), or the refusal's key in IT_TEXT. `here` is PlayerGPS: the
@@ -201,11 +205,11 @@ export function carriageTripCost(minutes, oceanPixels, { sleepModeInn = false, h
 const DOCKS = new Set(DOCK_PIXEL_IDS);
 /** SeafarersMap.HasDock(mapID) (IL_1818-184d): the masked id among the dock pixels - which are compared UNMASKED, so a
  *  table entry is a pixel id (y * 1000 + x). */
-export const hasDock = (mapId) => DOCKS.has((mapId | 0) & PIXEL_MASK);
+export const hasDock = (mapId) => DOCKS.has(pixelIdOf(mapId));
 /** SeafarersMap.NearDock(mapID) (IL_185c-189d): a dock on the place's pixel or one of its four neighbours, asked in
  *  the mod's order (the pixel, -1000 a row up, +1, +1000, -1). */
 export function nearDock(mapId) {
-  const id = (mapId | 0) & PIXEL_MASK;
+  const id = pixelIdOf(mapId);
   return hasDock(id) || hasDock(id - 1000) || hasDock(id + 1) || hasDock(id + 1000) || hasDock(id - 1);
 }
 /** SeafarersMap.IsPlayerInTown(gps) (IL_18ac-18fd): standing in a city or a hamlet, in one of the fifteen large docks,
@@ -213,7 +217,7 @@ export function nearDock(mapId) {
  *  CurrentMapID and CurrentRegionIndex. */
 export function isPlayerInTownForShips(gps) {
   if (gps.locationType === T.TownCity || gps.locationType === T.TownHamlet) return true;
-  const here = (gps.mapId | 0) & PIXEL_MASK;
+  const here = pixelIdOf(gps.mapId);
   if (LARGE_DOCK_MAP_IDS.some((d) => (d & PIXEL_MASK) === here)) return true;
   return gps.regionIndex === 31;
 }

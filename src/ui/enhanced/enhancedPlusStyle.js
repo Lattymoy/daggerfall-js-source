@@ -333,6 +333,38 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   .lvl-opt { min-height: 44px; padding: 12px 12px 10px; gap: 8px; } .lvl-opts { gap: 10px; } .lvl-lead { margin-bottom: 12px; } .lvl-hint { margin-top: 10px; }
 }
 
+/* START2: THE START-CHOICE PAGE (ui/enhanced/enhancedStartChoice.js) - the leveling question's shell and heading, the
+   eight starts as a sunk list down the left (the chosen one risen in brass, a homeland tagged, a shut one dimmed with
+   its reason) and the chosen start's story on the right with its Begin here; stacked on a phone. Tints and bevels
+   only, as the leveling tiles. */
+.lvl-shell .px-win.stc-win { width: min(940px, 100%); }
+.stc-grid { display: grid; grid-template-columns: minmax(250px, 2fr) 3fr; gap: 16px; align-items: stretch; }
+.stc-list { display: flex; flex-direction: column; gap: 6px; }
+.stc-opt { font: inherit; text-align: left; color: #d8cfae; cursor: pointer; display: flex; align-items: baseline; gap: 10px;
+  padding: 8px 12px; background: rgba(0,0,0,0.32); border: 2px solid;
+  border-color: ${FRAME_TONES.stoneDark} ${FRAME_TONES.stoneMid} ${FRAME_TONES.stoneLit} ${FRAME_TONES.stoneDim};
+  box-shadow: 0 0 0 1px #050608, inset 0 2px 0 rgba(0,0,0,0.45); transition: none; }
+.stc-opt.is-on, .stc-opt:focus-visible { outline: none; background: rgba(192,138,62,0.12);
+  border-color: ${FRAME_TONES.brassHi} ${FRAME_TONES.brassLo} #5c3f1a ${FRAME_TONES.brass};
+  box-shadow: 0 0 0 1px #050608, 0 0 14px rgba(243,207,134,0.18), inset 0 1px 0 rgba(255,244,210,0.18); }
+.stc-opt.is-on .lvl-key { color: rgb(243,239,44); border-color: ${FRAME_TONES.brass}; }
+.stc-opt-title { font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
+.stc-opt.is-on .stc-opt-title { color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+.stc-opt:disabled { cursor: default; opacity: 0.55; }
+.stc-detail { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(0,0,0,0.32); border: 2px solid;
+  border-color: ${FRAME_TONES.stoneDark} ${FRAME_TONES.stoneMid} ${FRAME_TONES.stoneLit} ${FRAME_TONES.stoneDim};
+  box-shadow: 0 0 0 1px #050608, inset 0 2px 0 rgba(0,0,0,0.45); }
+.stc-detail-title { font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
+.stc-detail-where { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: ${FRAME_TONES.brass}; text-shadow: 1px 1px 0 #050608; }
+.stc-pick { font: inherit; margin-top: auto; align-self: flex-end; cursor: pointer; padding: 8px 18px; font-size: 13px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); background: rgba(192,138,62,0.12); border: 2px solid;
+  border-color: ${FRAME_TONES.brassHi} ${FRAME_TONES.brassLo} #5c3f1a ${FRAME_TONES.brass}; box-shadow: 0 0 0 1px #050608; }
+@media (max-width: 720px) {
+  .stc-grid { grid-template-columns: 1fr; }
+  .stc-opt { min-height: 44px; }
+  .stc-pick { min-height: 44px; align-self: stretch; }
+}
+
 /* PLUS6: THE REST WINDOW WHILE RESTING (ui/enhanced/enhancedRest.js restingCard) - a title, a readout, a meter and a clear
    space before Stop. The vitals line sat on the button; now the rest reads top to bottom as a card: the mode as the
    window's heading, the hours in a large brass readout, a sunk meter with a banded brass fill, the vitals as three
@@ -1382,6 +1414,12 @@ export const NOTICE_CSS = `/* ── NOTICE1: THE NOTICE BOARD ── */
   text-transform: uppercase; color: #f3cf86; }
 .notice-seat-works-line, .notice-seat-works-stock { margin: 0 0 6px; }
 .notice-seat-works .act { margin: 0 0 8px; }
+.notice-seat-gifts { margin-top: 10px; }
+.notice-seat-gift { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 8px; }
+.notice-seat-gift-what { flex: 1 1 220px; min-width: 0; }
+.notice-seat-gift-n { width: 84px; }
+.notice-seat-gifts .notice-seat-gift .act { margin: 0; }
+.notice-seat-gift-recent { margin: 0 0 4px; color: #cdbf9f; font-size: 13px; }
 @media (max-width: 720px) {
   .notice-shell { padding: 8px; }
   .notice-cork { padding: 10px; }
@@ -2380,6 +2418,9 @@ ${ARENA_WINDOW_CSS}
    words, in the lock's line style without the padlock, muted. */
 .pack-shell [data-junk] .tile > *, .trade-shell [data-junk] .tile > *, .ptrade-shell [data-junk] .tile > * { opacity: 0.5; filter: grayscale(0.7); }
 .card .junkline, .pack-shell .card p.junkline { color: #a89f88; }
+/* WILD-INSURE (net/wild/wildInsureBook.js): an insured piece's card says so in the lock's line style, in the green the
+   comparison block reads as better */
+.card .insuredline, .pack-shell .card p.insuredline { color: #74d9a0; }
 `;
 
 /** AUDIT MERGE-PLUS D3: the lane's words on Stone's light grey (ONLINE_DRESS_CSS, last) - each 4.5:1 or better over

@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ketchShipChoice, ketchShipKept, KT_SHIP_KEY, ketchPressSpot, ketchPressFar, KT_PRESS_REACH, ketchCarryStep, KT_LET_GO_MS, ketchShipUnheard, KT_DOOR_MS } from '../../src/scenes/ketch/ketchClient.js';
 import { KT_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_BRIDGE_CRADLES, KT_REACH } from '../../src/net/ketch/ketchDeck.js';
+import { ketchVoyageNumber } from '../../src/net/ketch/ketchLaw.js';   // KETCH-EVERYWHERE: another station's voyage
 
 const AT = { n: 3, owner: 'aaaaaaaaaaaaaaaa', key: 'kt:00000003.aaaaaaaaaaaaaaaa' };
 
@@ -27,6 +28,10 @@ test('KETCH THE SHIP I RIDE UP TO: the one I was taken into, though the lead has
   assert.deepEqual(ketchShipChoice(3, 'acct-b', 'acct-y', kept, 'party-2'), { captain: 'acct-y' }, 'into another party: its leader\'s');
   assert.deepEqual(ketchShipChoice(3, 'acct-b', null, { ...kept, p: null }, null), { owner: AT.owner }, 'alone still: the ship kept');
   assert.deepEqual(ketchShipChoice(4, 'acct-b', 'acct-c', kept), { captain: 'acct-c' }, 'next voyage: the leader\'s');
+  // KETCH-EVERYWHERE: in the same party too - the next voyage's, and another station's voyage of the round (Sentinel's
+  // voyage 3, lane 2), are never the ship kept (KTC-another-voyages-ship-ridden-to: the party's own test had hidden it)
+  assert.deepEqual(ketchShipChoice(4, 'acct-b', 'acct-c', kept, 'party-1'), { captain: 'acct-c' }, 'next voyage, same party: the leader\'s');
+  assert.deepEqual(ketchShipChoice(ketchVoyageNumber(3, 2), 'acct-b', 'acct-c', kept, 'party-1'), { captain: 'acct-c' }, 'another station\'s voyage: the leader\'s');
   assert.deepEqual(ketchShipChoice(3, 'acct-d', 'acct-c', kept), { captain: 'acct-c' }, 'another account signed in');
   assert.deepEqual(ketchShipChoice(3, 'acct-b', null, null), { captain: 'acct-b' }, 'alone: my own');
   assert.deepEqual(ketchShipChoice(3, 'acct-b', 'acct-a', { ...kept, o: '' }), { captain: 'acct-a' });

@@ -208,3 +208,30 @@ test('PERF-EXT24 (the review): a build something waits on says so - the boot and
   assert.match(tp, /queue\.push\(\.\.\.state\.init\(px, py\)\);[\s\S]*\n    _streamSince = null;/, 'a teleport\'s sweep ends the stream it emptied');
 });
 
+
+test('TESA-LANDS\' second audit (lane C): ONE SLICE A FRAME, HOWEVER MANY WAIT - four chains on one breather (a pixel\'s own set and its neighbours\', scenes/pixelBuild.js) share the frame\'s slice, each its own step past it at most, and wait on one frame between them; every waiter\'s resume began the slice again and a frame ran four (mutants: a waiter\'s resume begins the slice; a frame each waiter)', async () => {
+  let t = 0;
+  const queue = [], heard = [];
+  const b = BB.createBreather({ now: () => t, raf: (fn) => queue.push(fn), sliceMs: 6, onSlice: (ms) => heard.push(ms), frames: () => frames });
+  let frameWork = 0, worst = 0, frames = 0, mostAsked = 0;
+  async function chain() { for (let i = 0; i < 30; i++) { t += 1; frameWork++; await b.breathe(); } }
+  let done = false;
+  Promise.all([chain(), chain(), chain(), chain()]).then(() => { done = true; });
+  await new Promise((r) => setTimeout(r, 0));
+  while (!done && frames < 1000) {
+    worst = Math.max(worst, frameWork); frameWork = 0; frames++;
+    mostAsked = Math.max(mostAsked, queue.length);
+    for (const fn of queue.splice(0)) { fn(); await new Promise((r) => setTimeout(r, 0)); }   // a browser drains the microtasks after each frame callback
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  worst = Math.max(worst, frameWork);
+  assert.ok(done, 'the four chains finished');
+  assert.ok(worst <= 6 + 4, `a frame ran ${worst} ms of the four chains' steps - one slice, each chain's own step past it at most`);
+  assert.equal(mostAsked, 1, 'one frame asked for every waiter');
+  assert.ok(frames >= 120 / 10, `the work took its frames (${frames})`);
+  // a raf that runs at once (a test's, a host's in a hurry) still begins the slice and wakes the one waiter
+  let u = 0;
+  const now = BB.createBreather({ now: () => u, raf: (fn) => fn(), sliceMs: 2 });
+  for (let i = 0; i < 10; i++) { u += 1; await now.breathe(); }
+  assert.ok(now.yields >= 4 && now.left() > 0, 'a raf at once: each spent slice begun again');
+});

@@ -41,7 +41,7 @@ import { marksOpenFor, guildBalanceOf } from './marks.js';
 import { CHAR_ID_RE } from './service.js';
 import { heraldryOfRow } from './halls.js';
 import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
-import { regionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { MARKET_TAX_PCT } from '../../src/net/marketLaw.js';   // AUDIT SILVER-WAYS B1: a deed's tax reckoned in the batch (deedTaxSql - saleTaxOn's law)
 import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import {
