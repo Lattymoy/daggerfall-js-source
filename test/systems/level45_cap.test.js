@@ -6,9 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ONLINE_LEVEL_CAP, LEVEL_SUM_TOP, ROLLED_START_MIN, ROLLED_START_AVERAGE,
-  onlineLevelFor, onlineLevelFraction, onlineLevelConvert, onlineLevelPoints,
+  onlineLevelFor, onlineLevelFraction, onlineLevelConvert, onlineLevelPoints, onlineLevelRawPoints, RAW_PER_POINT_PAST,
 } from '../../src/systems/levelClimb.js';
-import { calculatePlayerLevel, checkForLevelUp } from '../../src/systems/advancement.js';
+import { calculatePlayerLevel, checkForLevelUp, applyLevelUp } from '../../src/systems/advancement.js';
 import { evenHpFloor } from '../../src/systems/levelEven.js';
 import { LEVEL_CAP } from '../../src/systems/levelCap.js';
 import { crossLeveling } from '../../src/systems/realmCustoms.js';
@@ -114,15 +114,45 @@ test('LEVEL-45: the conversion - a level 113 with every counted skill maxed come
   assert.equal(mid.level, onlineLevelFor(150, 500));
 });
 
-test('LEVEL-45: the conversion never gives a level - one earned and not taken stays owed for the level-up screen, its health untouched', () => {
+test('LEVEL-OWED: a level the skills earned is offered at the join, for the window and its points - or given there to attributes already at their maximum ("give the atribuit point")', () => {
+  // PIN MOVED: LEVEL-OWED (2026-10-28) - an owed level not flagged waited on a six-hour skill check
   const owed = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
-  assert.equal(onlineLevelConvert(owed), false);
-  assert.equal(owed.level, 10);
-  assert.equal(owed.readyToLevelUp, true);
-  assert.equal(owed.maxHealth, 400);
+  owed.readyToLevelUp = false; owed.pendingLevel = null;
+  assert.equal(onlineLevelConvert(owed), true);
+  assert.equal(owed.level, 10, 'with points to place, the level is the window\'s to give');
+  assert.equal(owed.readyToLevelUp, true, 'offered at the join');
+  assert.equal(owed.pendingLevel, 11);
+  assert.equal(owed.maxHealth, 400, 'health is the window\'s roll');
+  const earned = onlineLevelFor(150, 500);
+  const capped = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
+  capped.readyToLevelUp = false;
+  capped.stats = Object.fromEntries(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck'].map((k) => [k, 100]));
+  assert.equal(onlineLevelConvert(capped), true);
+  assert.equal(capped.level, earned, 'every attribute at its natural maximum: no point to place, the level given ("not to those that are capped out")');
+  assert.equal(capped.readyToLevelUp, false);
+  assert.equal(capped.maxHealth, evenHpFloor({ career: capped.career, level: earned }, 100), 'health to the even floor there');
+  const strong = save({ level: 10, start: 150, current: 500, maxHealth: 9_000 });
+  strong.stats = capped.stats;
+  onlineLevelConvert(strong);
+  assert.equal(strong.maxHealth, 9_000, 'never lowered');
+  const flagged = save({ level: 10, start: 150, current: 500, maxHealth: 400 });
+  assert.equal(onlineLevelConvert(flagged), false, 'one already offered is left as it is');
   const lucky = save({ level: onlineLevelFor(150, 500), start: 150, current: 500, maxHealth: 9_000 });
   onlineLevelConvert(lucky);
   assert.equal(lucky.maxHealth, 9_000, 'a level that stands keeps its rolls (LEVEL-EVEN)');
+});
+
+test('LEVEL-OWED: online a level taken offers the next one owed at once; offline Daggerfall waits for its next skill check', () => {
+  const hero = (online) => ({ _online: online, level: 40, startingLevelUpSkillSum: 154, currentLevelUpSkillSum: 800, readyToLevelUp: true, pendingLevel: 41,
+    maxHealth: 900, health: 900, career: { hitPointsPerLevel: 30 }, stats: { endurance: 100, strength: 50 } });
+  const on = hero(true);
+  assert.equal(applyLevelUp(on, () => {}, () => 0.5, 5), true);
+  assert.equal(on.level, 41);
+  assert.equal(on.readyToLevelUp, true, 'online: 42 offered now');
+  assert.equal(on.pendingLevel, 42);
+  const off = hero(false);
+  applyLevelUp(off, () => {}, () => 0.5, 5);
+  assert.equal(off.readyToLevelUp, false, 'offline: DFU\'s RaiseSkills re-offers on its next pass');
 });
 
 test('LEVEL-45: the conversion keeps the sum the level stands on (SWAP-CYCLE) and rides LEVEL-ONLINE\'s switch at every join', () => {
@@ -199,6 +229,35 @@ test('LEVEL-TOP: a character maxed under five masteries - five at 200, the sixth
   }
   const lowered = save({ level: 42, start: ROLLED_START_AVERAGE, current: 800 });
   onlineLevelConvert(lowered);
-  assert.equal(lowered.level, 42, 'the conversion never raises a level');
-  assert.equal(checkForLevelUp({ ...lowered, _online: true }), true, 'the three lost are owed again, for the level-up window to give');
+  assert.equal(lowered.readyToLevelUp, true, 'LEVEL-OWED: the three lost are offered at the join, one window after another');
+  const maxed = save({ level: 42, start: ROLLED_START_AVERAGE, current: 800 });
+  maxed.stats = Object.fromEntries(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck'].map((k) => [k, 100]));
+  onlineLevelConvert(maxed);
+  assert.equal(maxed.level, 45, 'an example character at sum 800 and level 42, its attributes at 100: 45 at the join');
+});
+
+test('LEVEL-RAW: the bar reads the skill sheet\'s own points - 1 a counted point to 100, 2.5 past it, so ~38 a level at the masteries ("show raw point to each level")', async () => {
+  assert.equal(RAW_PER_POINT_PAST, 2.5, '100 points past 100 climb 40');
+  const career = { primarySkills: [0, 1, 2], majorSkills: [3, 4, 5], minorSkills: [6, 7, 8, 9, 10, 11] };
+  const hero = (vals, mastered = []) => ({
+    isPlayer: true, _online: true, level: 30, career, masteredSkills: mastered,
+    skills: Object.fromEntries(vals.map((v, i) => [i, v])),
+    startingLevelUpSkillSum: ROLLED_START_AVERAGE, currentLevelUpSkillSum: 600,
+  });
+  const counted = onlineLevelPoints(ROLLED_START_AVERAGE, 600);
+  const low = onlineLevelRawPoints(hero([60, 60, 60, 60, 60, 20, 60, 10, 10, 10, 10, 10]));
+  assert.deepEqual(low, counted, 'under 100 a sheet point is a counted point');
+  const all = [0, 1, 2, 3, 4, 6];
+  const high = onlineLevelRawPoints(hero([150, 150, 150, 150, 150, 20, 150, 10, 10, 10, 10, 10], all));
+  assert.deepEqual(high, { now: Math.round(counted.now * 2.5), max: Math.round(counted.max * 2.5) }, 'past 100, 2.5 a point');
+  assert.ok(high.max >= 37 && high.max <= 38, `~38 a level at the masteries: ${high.max}`);
+  const mixed = onlineLevelRawPoints(hero([150, 150, 150, 60, 60, 20, 60, 10, 10, 10, 10, 10], [0, 1, 2]));
+  assert.equal(mixed.max, Math.round(counted.max * 1.75), 'the six counted skills\' mean cost');
+  const held = onlineLevelRawPoints(hero([100, 100, 100, 100, 100, 20, 100, 10, 10, 10, 10, 10]));
+  assert.equal(held.max, Math.round(counted.max * 2.5), 'six at 100 waiting for their masteries cost the mastery\'s');
+  const done = onlineLevelRawPoints(hero([150, 150, 150, 150, 150, 20, 200, 10, 10, 10, 10, 10], all));
+  assert.equal(done.max, Math.round(counted.max * 2.5), 'a skill at 200 climbs no more and is not counted');
+  const { levelProgress } = await import('../../src/ui/levelUp/levelUpView.js');
+  const bar = levelProgress(hero([150, 150, 150, 150, 150, 20, 150, 10, 10, 10, 10, 10], all), 'classic');
+  assert.deepEqual([bar.now, bar.max], [high.now, high.max], 'the window reads it');
 });

@@ -3670,6 +3670,6 @@ and the Remnant are each copy's own, drawn from the slot's seed as before.
 across the copies, one win, the hub's word, the page's choice, the kill's two laws. `tools/mutants/sdparty.json` (7,
 all dead). PIN MOVED: the realm pins play their fighters as one party (`test/net/superDungeon/sdParty.mjs`); the
 kill's collapse pins (`sd8b_fight`, `sd10b_audit`, `sd11b_relay`, `sdherald`) run with `sdCollapse` on.
-**The relay changed:** RELAY_VERSION world274, `server/src/sdCopy.js` joins the bundle. THE FOUR HOSTS:
+**The relay changed:** RELAY_VERSION world275 (world274 on its branch, renumbered past LADDER-CUT at the merge), `server/src/sdCopy.js` joins the bundle. THE FOUR HOSTS:
 `scenes/world.js` WIRED (one line builds the chooser, two existing lines carry the owner); `createWorldModes` no longer;
 the relay's `_message` one existing line.
