@@ -1017,13 +1017,16 @@ export function createComeSailAwayRuntime(deps) {
     state.TurnTarget = 0;
     state.lastWeight = 0;
     helmHanded = null;   // AUDIT NAV2 F14: the next helm takes the Ship handling as it stands then
-    boat.MapPixel = deps.currentMapPixel();
+    // HELM-SIGHT: let go from a jump's landing (OnWorldReanchored), she keeps her own pixel and is shown or hidden for it
+    const afar = !!boat.helmAfar;   // cleared where the player is let go (stopSailingTail, or the delayed stop's unparent)
+    if (!afar) boat.MapPixel = deps.currentMapPixel();
     ResetTimeScale();
     boat.ActiveObject?.setActive(false);
     boat.IdleObject?.setActive(true);
     deps.helm.footsteps?.(true);
     rudderOf(boat)?.CrossFade('Disembarked', 1);
     if (boat.RudderEmitters.length > 0) for (const rudderEmitter of boat.RudderEmitters) rudderEmitter.stop();
+    if (afar) UpdateBoatVisibilityOf(boat);
     return boat;
   }
   /** The head's lent-ship arm (IL_b0e7-IL_b121): the borrowed ship's two permanent scenes removed (the LARGE ship's -
@@ -1047,12 +1050,16 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** StopSailing past its head: the player set down at the helm, the freeze lifted, OnUpdateSailing(false). */
   function stopSailingTail(currentBoat) {
+    // HELM-SIGHT (its fold into #1184): let go from afar, the player stays where the jump set them - set down at her far
+    // helm, as the C# sets a helmsman down, the A1 let-go took them back to the departure all the same
+    const afar = !!currentBoat.helmAfar;
+    currentBoat.helmAfar = false;
     state.CurrentBoat = null;
     currentBoat.way = 0;   // PASSAGE-PACE - AUDIT HORIZONTAL C9: off her helm she makes none, and the leads read none
     state.gale = null;   // SERPENT4: off her helm, no gale is hers
     state.oarThrottle = 0;   // HELM-LADDER: the oars shipped with the helm left
     unparentPlayer();
-    deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);
+    if (!afar) deps.helm.setPlayerPosition(currentBoat.DrivePosition.position);
     deps.helm.freeze(0);
     raise('OnUpdateSailing', false);
   }
@@ -1069,6 +1076,7 @@ export function createComeSailAwayRuntime(deps) {
   function resumeStopSailing(co) {
     if (state.disembarking !== co) return false;   // AUDIT PRE-MERGE 0928 S1: ended already - a load's start ended it (EndDisembark)
     if (co.phase === 'unparent') {
+      co.boatlast.helmAfar = false;   // HELM-SIGHT: the helm let go
       state.CurrentBoat = null;
       state.gale = null;   // SERPENT4
       unparentPlayer();
@@ -1681,6 +1689,10 @@ export function createComeSailAwayRuntime(deps) {
     if (state.wasPaused && f(deps.timeScale?.() ?? 1) !== 1 && !state.isTravelling) ResetTimeScale();
     state.wasPaused = false;
     recoverLostBoats();   // FIELD BUGS 29h (LOST-BOAT): the port's own
+    // AUDIT HELM-SIGHT A1: a helm still held from another pixel when the frame runs again is one no landing let go - a
+    // party's journey to a pixel this client does not stream (world.js _streamedLanding takes the landing's word away).
+    // It pinned the player back at the departure helm; it is let go from there, as a fast travel lets it go.
+    if (state.CurrentBoat?.helmAfar && isSailing()) OnPreFastTravel();
     if (isSailing() && state.CurrentBoat != null) updateSailing();
     if (!waveOn() || animatedWaterWaves()) return;   // (4769) `!wave || waveObject == null || (AnimatedWater != null && AWVertexWaves)`
     const step = stepWaveFrame(state.waveFrameIndex, state.waveFrameTimer, waveFrameTimeOf(setting('Waves.Speed', 100)), dt(), WAVE_FRAME_COUNT, isDayHour(deps.hour?.() ?? 12));
@@ -2777,15 +2789,20 @@ export function createComeSailAwayRuntime(deps) {
    * forever after respawning"): THE WORLD RE-ANCHORED. A teleport - the respawn at a temple, a fast travel, a load's
    * landing - starts a new scene frame with no recentre offset to ride (world.js _teleportToPixel, StreamingWorld's
    * InitWorld), and every boat kept the old frame's numbers: the one just placed at sea stood by the temple, under its
-   * ground, and was never where it was left again. The frame's own move carries every boat, then each is shown or hidden
-   * for the new pixel. The helm is not asked: a teleported player goes where the teleport sends them. A dungeon's boat
-   * out of sight stays in its dungeon's frame (`ridesTheWorld`).
+   * ground, and was never where it was left again. The frame's own move carries every boat, then each but a held helm's
+   * is shown or hidden for the new pixel. The helm is not asked: a teleported player goes where the teleport sends them.
+   * A dungeon's boat out of sight stays in its dungeon's frame (`ridesTheWorld`).
    */
   function OnWorldReanchored(offset) {
     if (state.AllBoats.length < 1) return;
     for (const boat of state.AllBoats) {
       if (ridesTheWorld(boat)) shiftBoat(boat, offset);
-      UpdateBoatVisibilityOf(boat);
+      // HELM-SIGHT (FIELD BUGS 2026-10-27): a party's journey holds the helm until its landing is sure. Hidden and shown
+      // again, her sails' Animators started over stowed under a helm that read them set, and she made no way under sail.
+      // She stays in sight; a helm let go from afar asks her sight then (stopSailingHead). AUDIT HELM-SIGHT A3: a disembark in
+      // flight is a helm let go. A2: afar is any pixel but hers - one off, the let-go had stamped the landing's on her.
+      if (boat !== state.CurrentBoat || state.disembarking != null) UpdateBoatVisibilityOf(boat);
+      else boat.helmAfar = boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 0;
     }
   }
   /** OnPositionUpdateBoat (2012-2064): the boat's root moved by the offset, the wake stopped and its living particles

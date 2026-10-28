@@ -139,8 +139,8 @@
   {
     "name": "VERGE1-vein-reach-the-lode's",
     "file": "src/scenes/mineHost.js",
-    "old": "const clear = verge ? (x, z) => verge(x, z, MINE_MARKS.vein.w / 2) : null;   // VERGE1",
-    "new": "const clear = verge ? (x, z) => verge(x, z, MOTHERLODE_MARK.w / 2) : null;   // VERGE1",
+    "old": "const half = MINE_MARKS.vein.w / 2;",
+    "new": "const half = MOTHERLODE_MARK.w / 2;",
     "tests": [
       "test/world/road/verge1.test.js"
     ]

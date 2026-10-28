@@ -663,16 +663,17 @@ PersistentDungeonBoats keeps it; a near one stands and reads its nodes.
 The one-boat form never destroys and reads the nodes whatever it
 decided. It runs on OnTransition (the four doors, the Respawner's outside
 arm too) and on OnLoad; on FloatingOrigin's recentre EVERY boat moves by
-the offset and then asks its own visibility (FIELD-CSA1: the C# moved one
+the offset and asks its own visibility (FIELD-CSA1: the C# moved one
 only when it was active before or after that check, and the port
 recentres at every map pixel crossed, so a boat left out of sight stood
 wherever the old origins had it when its player came back by another
 pixel) - all but a dungeon's boat out of sight (Persistent Dungeon Boats),
-which stands in its dungeon's own frame, and which the C# never moved either. A teleport's new frame (`scenes/world.js` `_teleportToPixel`:
+in its dungeon's frame, which the C# never moved either. A teleport's new frame (`scenes/world.js` `_teleportToPixel`:
 InitWorld, no offset to ride - the respawn at a temple, a fast travel, a
 load's landing) carries every boat by the frame's own move, then shows or
-hides each for the new pixel, the helm not asked (`OnWorldReanchored`,
-the port's own; the C# left each at the old frame's numbers).
+hides each but a held helm's for the new pixel, the helm not asked
+(`OnWorldReanchored`, the port's own; the C# left each at the old frame's
+numbers; HELM-SIGHT).
 Inside a dungeon a boat is drawn, lit and baked by the dungeon's own
 frame (`host.drawModeMeshes`, `modeLights`, `extraBillboards`), and the
 runtime's Update and LateUpdate and the pool's LateUpdate run in every mode.
@@ -785,6 +786,13 @@ lifted, OnUpdateSailing(false) once; DECLARED (39)), and a disembark whose
 boat is gone ends at its next turn raising nothing, as Unity's destroyed
 transform ends the coroutine (AUDIT PRE-MERGE 0928 S1). The lantern key
 lights or douses the lanterns.
+
+HELM-SIGHT (2026-10-27, `01-Overview/bugs/Field-Bugs-2026-10-27.md`, read cold by
+`01-Overview/audits/Audit-Helm-Sight.md`) departs from StopSailing for a helm let
+go from another pixel than hers: a party's journey lets it go from its landing.
+Her own pixel stays on her, where the C# stamps the player's, and her visibility
+is asked for it (`stopSailingHead`); the player stays where the jump set them,
+where the C# sets the helmsman down at the helm (`stopSailingTail`).
 
 ### The collision and the beach
 
