@@ -3198,7 +3198,9 @@ climate past the Bay is read there (`world/terrain/farClimate.js`) as the main t
 Bay and in the Eltheric Ocean's box FAR_CLIMATE_ASK, the main thread's own map): measured on the freeware's ground, the
 continent's first climate read works its biomes out in some 150 ms and a cold centre costs some 16 microseconds after,
 so a first far field read on this thread ran a step of its build to 196 ms. One ask at a time per layer; the ask stands
-until its ground is laid, and an answer for a base let go is dropped. On this thread a landed ground's vertices are laid
+until its ground is laid, and an answer for a base let go is dropped.
+
+On this thread a landed ground's vertices are laid
 a step at a time (the middle ring MID_ROWS_A_STEP 12 rows, its tints a row of 31 pixel centres; the far field
 FAR_CELLS_A_STEP 32 cells, its normals FAR_NORMAL_ROWS 8 rows) under HORIZON_BUDGET_MS (2 ms a frame, one step at the
 least), and the painter's order is written once a pixel (the middle ring) or a cell (the far field) the traveller
@@ -3531,6 +3533,7 @@ flat tree pictures beside the 3D trees.
 
 The cause. The band's pixels (`bandPixels`) were read at each pixel the traveller crossed. A grid pixel the stream built
 after that read kept its band trees until the next crossing, and after a load or a teleport that was the whole grid.
+
 The band is drawn at the far plane, so the built ground and its own flats covered a band tree wherever they stood in
 front of it, but not where the band tree stood against the sky. The band's layout keeps no town clearing, road or World
 of Daggerfall site (above), so a crown stood over each of them. A band tree is also a flat sprite of the classic record,
@@ -3703,6 +3706,7 @@ here.
   nodeGroundAt): the far ring's vertex is the kernel's mean ground at its pixel's centre - the small term's cubic over
   the pixel's window, the large map by its law (`tamrielGround.js` largeOfByte), the lift faded by its nodes' fades,
   the continent's share, the ranges. Its grid reads the bytes once into a padded grid and the nodes' fades once a node.
+
   The far field's vertex stands on the node its cell's centre is (`world/terrain/midRingGrid.js` farFieldCell's
   `ground`): worked out on the terrain worker under the Landforms row, kept by the cell, transferred and assembled a
   band at a time. The travel view past the grid (`scenes/world.js` tvSceneOf) reads the ring's ground. Measured: within
@@ -3751,6 +3755,7 @@ faults, both past the Bay; the Bay's plans were 100% on the road and are unchang
   both sides (the roads round them 3.3 to 133.5 times the field's length), every one within 24 pixels of an end. TV2's
   law did the same on the Bay's ladder (a field's hop taken over a road round it more than three and a half times
   longer), and past the Bay it asked the ladder whenever the roads were dearer than the straight walk and kept its cut.
+
   The 2 stretches left were gaps: Adavi's and Tiberdes' roads (14 and 22 pixels) join no other road. Bemitor to Saurtja
   (the Bay to Hammerfell's south) walked 413 pixels across country - the roads' search ran out its spend against the
   Taneth network's gap, and the ladder too.
@@ -3776,7 +3781,9 @@ faults, both past the Bay; the Bay's plans were 100% on the road and are unchang
   - **the roads' pieces**: the roads are flooded from both legs at once, ROAD_PIECE_CAP (8,192) pixels a side at most. A
     side whose flood runs out first, never meeting the other's, holds roads that join none of the other's - **a gap**: the
     narrowest crossing of the land from them to a road they do not hold (the shortest walk, a diagonal sqrt 2, out to
-    BY_ROAD_SEEK) is the plan's to walk (`bridges`), and the flood goes on from its far side. Measured: the roads past
+    BY_ROAD_SEEK) is the plan's to walk (`bridges`), and the flood goes on from its far side.
+
+    Measured: the roads past
     the Bay are 801,136 pixels in 1,820 pieces - the land's network 671,973, the islands' own (Summerset's 58,286,
     Vvardenfell's 24,016, Auridon's 10,046), Taneth's network (4,399, Taneth, Rihad, Saurtja and Tlarpka) and Necrom's
     (3,911) joined to no other; 28 places' roads join no other road, their narrowest crossing 2 to 9 pixels (Taneth's 4,

@@ -212,7 +212,7 @@
   {
     "name": "RELIEF-PEAKS-far-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "return beyond > 0 ? land + beyond * rangeAt(gx, gy, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them\n}\n/** RELIEF-PEAKS: the far views",
+    "old": "return beyond > 0 ? land + beyond * tamrielRangeAt(gx, gy, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them\n}\n/** RELIEF-PEAKS: the far views",
     "new": "return land;\n}\n/** RELIEF-PEAKS: the far views",
     "tests": [
       "test/world/reliefpeaks.test.js"
@@ -221,7 +221,7 @@
   {
     "name": "RELIEF-PEAKS-far-node-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "return beyond > 0 ? land + beyond * rangeAt((x + 1) * 128, (MAP_H - y) * 128, land) : land;",
+    "old": "return beyond > 0 ? land + beyond * tamrielRangeAt((x + 1) * 128, (MAP_H - y) * 128, land) : land;",
     "new": "return land;",
     "tests": [
       "test/world/reliefpeaks.test.js"
@@ -230,7 +230,7 @@
   {
     "name": "RELIEF-PEAKS-mean-ground-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "return (share > 0 ? land + share * rangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
+    "old": "return (share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
     "new": "return land + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
     "tests": [
       "test/world/reliefpeaks.test.js"

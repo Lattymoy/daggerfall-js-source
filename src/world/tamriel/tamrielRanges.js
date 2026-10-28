@@ -19,7 +19,7 @@
 //     stood as a plaid of pixel-wide bands in the hill-shade (measured on the first cut of this slice). The shaper's ground
 //     is Perlin's, smooth at every sample.
 //
-//   - RIDGES AND VALLEYS (`ridges`, `rangeAt`): a ridged field, its crests a network and its valleys between - four octaves
+//   - RIDGES AND VALLEYS (`ridges`, `tamrielRangeAt`): a ridged field, its crests a network and its valleys between - four octaves
 //     from 11.5 km to 1.1 km, the finer riding the coarser's crests. Its swing grows with the land's height (`foot` to
 //     `full`), so the plains, the coasts and the low country stand as they stood and the high ground is mountains. Where
 //     the land has room under the ceiling the field is centred on it (its mean is the relief's own height); toward the
@@ -185,10 +185,10 @@ export function waterDistance(x, y) {
  * @param {number} gx @param {number} gy @param {number} h
  * @returns {number}
  */
-export function rangeAt(gx, gy, h) {
+export function tamrielRangeAt(gx, gy, h) {
   return reliefStands() ? rangeOn(gx, gy, h, true) : 0;
 }
-/** THE RANGES FOR ONE PIXEL's samples (the shaper's): rangeAt, with what the pixel can meet asked once - the waters'
+/** THE RANGES FOR ONE PIXEL's samples (the shaper's): tamrielRangeAt, with what the pixel can meet asked once - the waters'
  *  valleys - or null where no relief stands. */
 export function rangeShaper(px, py) {
   if (!reliefStands()) return null;

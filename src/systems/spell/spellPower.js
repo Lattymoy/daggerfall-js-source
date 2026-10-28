@@ -9,7 +9,7 @@
 //   health. CLIMB-PAST's law, for the school whose formula stops paying at 100: each effective point past it is 1% more
 //   damage, to the effective cap (x1.4 at 140). The CLIMB alone (skillSoftcap.js climbedSkill) - what the foes' edge
 //   reads, so the climb that raises them is the climb that pays: a worn Destruction line already pays in price (the
-//   live value SPELL-COST-PAST reads) and strikes no harder. None while mentoring, as the edge is none. Offline
+//   live value SPELL-COST-PAST reads) and strikes no harder. Mentoring: the mentored climb (MENTOR2). Offline
 //   Daggerfall's price term stands (to nothing at 110), and so does Daggerfall's damage.
 //
 //   THE PORT'S MODIFIERS. Named registries, as SET2's spell-cost modifiers (systems/spellcost.js registerSpellCostMod)
@@ -33,7 +33,9 @@
 // file or systems/effects.js back, so effects.js reads it with no cycle.
 
 import { SKILLS } from '../skills.js';
-import { SKILL_SOFT_CAP, climbedSkill } from '../skillSoftcap.js';
+import { SKILL_SOFT_CAP, effectiveSkill } from '../skillSoftcap.js';
+import { masterCappedSkill } from '../masterSkills.js';
+import { mentoredSkill } from '../mentorMode.js';   // MENTOR2: kept out of skillSoftcap.js, which the relay reads
 import { isOnlinePage } from '../online/onlineLane.js';
 import { sigilDueling } from '../sigil/sigil.js';   // SCHOOLS2: a self perk sleeps in a refereed fight, as every loot and set power does
 
@@ -47,11 +49,16 @@ export const ownSpellAt = (caster, target) => !!caster?.isPlayer && !caster.peer
 /** SCHOOLS2: MY spell on MYSELF - my own player entity, its own caster, and no refereed fight in progress. */
 export const ownSpellOnSelf = (caster, target) => !!caster?.isPlayer && !caster.peer && caster === target && !sigilDueling();
 
+/** MENTOR2: the climb a character FIGHTS with - the mentored value while mentoring (mentorMode.js mentoredSkill), else
+ *  skillSoftcap.js climbedSkill's. What a school's potency and a weapon past 100 pay on; the foes' edge reads the real
+ *  climb, and none while mentoring (combatEdge). */
+export const fightingClimb = (entity, id) => effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));
+
 /** The school past 100: 1 to 100, then 1% a point of the school's CLIMB (effective 140 at most: x1.4) - Destruction's
- *  unless `school` names another (SCHOOLS2). Online alone, and none while mentoring. */
+ *  unless `school` names another (SCHOOLS2). Online alone; MENTOR2: while mentoring, the mentored climb. */
 export function schoolPotency(caster, { online = isOnlinePage(), school = SKILLS.Destruction } = {}) {
-  if (!online || !caster?.isPlayer || caster._mentor) return 1;
-  const climbed = climbedSkill(caster, school);
+  if (!online || !caster?.isPlayer) return 1;
+  const climbed = fightingClimb(caster, school);
   return climbed > SKILL_SOFT_CAP ? 1 + (climbed - SKILL_SOFT_CAP) * SCHOOL_POTENCY_PER_POINT : 1;
 }
 

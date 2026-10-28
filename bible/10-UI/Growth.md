@@ -116,8 +116,9 @@ spell, the martial law's weapons and technique, one shape). Pure model (`specGui
   order, and within a state the nearest first - the points its pair still owes 100 - then the laws' order.
 - **The state's line** names the skill when only one still needs it ("Raise Axe to 100 and master it", "Master
   Alteration on the Master Skills page"), "both" only when both do (LANE1-12); with Master Skills off, a pair with nothing
-  left to climb says to turn it on (LANE1-2). The chosen path says when its powers are off - Master Skills off,
-  mentoring, a refereed duel, the beast for a martial path (`pathAwake`, `martialAwake` and the powers' gates; LANE1-3).
+  left to climb says to turn it on (LANE1-2). The chosen path says when its powers are off - Master Skills off, a
+  refereed duel, the beast for a martial path (`pathAwake`, `martialAwake` and the powers' gates; LANE1-3) - and, while
+  mentoring, the share they act at (MENTOR2, `ui/growth/specGuide.js` chosenLine).
   A skill past 100 shows the value the game reads (`masterCappedSkill`: 100 while Master Skills is off).
 - **What opens it** (the detail's Requirements): each skill of the pair in its own words (`skillStandText`) - mastered,
   ready to master in Master Skills, its climb ("76 of 100, then master it"), no mastery slots left in its group, or not

@@ -298,6 +298,7 @@ Either death, at the first dead frame, while the room is still the player's (`wi
     to a tab that did not say `packs` 1 went with it: no take of a pack is made. The lists at the side stay named
     (`wildPacks`, `WILD_PACK`) for the one reader left: a fall taken before STORE-KEEPS and asked again is answered its
     first take, and the fallen's game takes a pack's piece out of that pack alone (`wildTakeTook`).
+
   The two doors COMPANION-DROP left open for the owner close with it: a piece stowed in a ship's hold from inside the
   zone (CARGO-ANYWHERE) and a boat's hold on the zone's water are storage too.
   THE COMBAT LOCK (AUDIT PVP-EASE L2-1, the owner chose "Combat lock"): storage no death takes, open from anywhere in the

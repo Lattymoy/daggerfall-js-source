@@ -33,7 +33,7 @@
   {
     "name": "AUDIT-UPDATE-L4-the-corpse-door-names-no-level",
     "file": "src/scenes/hostCombat.js",
-    "old": ", level: effectiveLevel(player) });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4",
+    "old": ", level: lootGateLevel(player) });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4",
     "new": " });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4",
     "tests": [
       "test/systems/audit_update_loot.test.js"
@@ -397,7 +397,7 @@
   {
     "name": "AUDIT-UPDATE-P3-the-registry-never-set",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? effectiveLevel(me) : null; });",
+    "old": "registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? lootGateLevel(me) : null; });",
     "new": "registerRollerLevel(null);",
     "tests": [
       "test/systems/audit_update_gate.test.js"
@@ -405,14 +405,14 @@
     "why": "no gate in the running game"
   },
   {
-    "name": "AUDIT-UPDATE-P3-the-mentors-level-unread",
+    "name": "AUDIT-UPDATE-P3-MENTOR2-the-mentored-level-read",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "return me ? effectiveLevel(me) : null; });",
-    "new": "return me ? me.level : null; });",
+    "old": "return me ? lootGateLevel(me) : null; });",
+    "new": "return me ? (me._mentor?.worldLevel ?? me.level) : null; });",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
-    "why": "a mentored character gated at its own level"
+    "why": "MENTOR2: a mentor gated at the world's lowered level - the gate holds back a young character, and a mentor is none"
   },
   {
     "name": "AUDIT-UPDATE-P3-rollRarity-reads-no-registry",

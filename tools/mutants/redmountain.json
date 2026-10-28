@@ -138,8 +138,8 @@
   {
     "name": "RED-MOUNTAIN-the-air-ground-without-it",
     "file": "src/world/landforms.js",
-    "old": "return (share > 0 ? land + share * rangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
-    "new": "return share > 0 ? land + share * rangeAt(ox + x, oy + y, land) : land;",
+    "old": "return (share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
+    "new": "return share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land;",
     "tests": [
       "test/world/redmountain.test.js"
     ],

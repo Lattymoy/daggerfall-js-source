@@ -380,6 +380,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
 | `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |
+| `src/ui/intro/set/` | The film's set (INTRO4, `10-UI/UI-Arc.md`): the Imperial City as the intro was shot on it - the city's plan (`imperialCity.js`), its landmarks (`capitalImperial.js`) and the shapes they are built of (`capitalShapes.js`), kept as shot, never the game's grown city. |
 | `src/ui/item/` | Items on screen: the icons, the item maker and the scroller. |
 | `src/ui/ketch/` | The Sky-Ketch on the screen (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the voyage's tracker, the Tonal Warden's bar, her ring on the held map. |
 | `src/ui/legacy/` | Project Legacy: heirs and the realm line (`06-Systems/Legacy-Arc.md`) - its windows. |

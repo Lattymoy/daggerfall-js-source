@@ -541,7 +541,7 @@ test('GRAHT1: the wiring - the jungle host builds it on the canopy\'s zones (?gr
   const trees = read('src/scenes/treesHost.js');
   assert.match(trees, /frame\(pixels, eye, planes\) \{\n\s+jungle\?\.graht\?\.frame\(pixels, eye, planes\);[^\n]*\n\s+if \(!lowPolyTrees && !jungleDoor\) return;/);
   const pb = read('src/scenes/pixelBuild.js');
-  assert.match(pb, /wodAverages, graht, beach, roadside, townGround, arenaRoads \} = await terrainGen\.generate\(/);
+  assert.match(pb, /wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges \} = await terrainGen\.generate\(/);   // PIN MOVED (ROAD-LOOK): the pixel's bridges answered beside its roads
   assert.match(pb, /const grahtStood = jungle\?\.graht\?\.stand\(px, py, graht, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) \?\? null;\n\s+if \(grahtStood\) coverItems\.push\(\.\.\.grahtStood\.bodies\);/);
   assert.ok(pb.indexOf('if (grahtStood) coverItems.push(...grahtStood.bodies);') < pb.indexOf('collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);'), 'filed with the pixel\'s cover');
   assert.match(pb, /grahtOaks: grahtStood\?\.set \?\? null,/);

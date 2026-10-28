@@ -314,7 +314,7 @@ sun) is owed to a data-bearing session.
 FLORA-GROUND, THE RINGS (2026-10-27): the far ring's plants. "Models,
 flats ... all stay" now means their PLACES stay. Each plant of the ground
 is drawn on the ground the far ring draws (`terrainSurface.js`
-ringGroundAt, `scenes/floraSeat.js` seatFlora) and back on the walk floor
+drawnGroundAt, `scenes/floraSeat.js` seatFlora) and back on the walk floor
 when its pixel is promoted. The stride-4 cut had parted from the walk
 floor by more than 25 cm under 18.8% of the Bay's plants, 6.6 m at worst.
 The record is `03-World/World-Arc.md` FLORA-GROUND, THE RINGS.

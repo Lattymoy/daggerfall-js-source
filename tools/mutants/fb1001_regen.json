@@ -83,8 +83,8 @@
   {
     "name": "AREA-CASTER-given-it-saved",
     "file": "src/scenes/hostMagic.js",
-    "old": "    const r = applySpellToPlayer({ ...sp, rangeType: 0 }, effectiveLevel(playerEntity), playerCaster(cast));",
-    "new": "    const r = applySpellToPlayer(sp, effectiveLevel(playerEntity), playerCaster(cast));",
+    "old": "    const r = applySpellToPlayer({ ...sp, rangeType: 0 }, castingLevel(playerEntity), playerCaster(cast));",
+    "new": "    const r = applySpellToPlayer(sp, castingLevel(playerEntity), playerCaster(cast));",
     "tests": [
       "test/systems/fb1001_regen.test.js"
     ]

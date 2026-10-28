@@ -6,14 +6,14 @@
 // the Colosseum for Daggerfall's arena, so the film keeps its own copy of the city it was shot on, never the game's.
 // Unchanged but for this header, its imports' paths and its exports, listed at the end (the names stay the module's
 // own: test/systems/talk/audit24_onehome.test.js counts declarations, and this set's are the film's, not the game's).
-// Re-shooting the film on the grand city is its own slice.
+// Re-shooting the film on the grand city is its own slice. Its pictures' archive number is the game's (below).
 // TESA10 (bible/03-World/Arena-Provinces.md TESA10) - THE CAPITALS' SHAPES: the pictures' pseudo-archive and the shapes
 // every capital's landmarks are built of (world/capitalModels.js the Imperial City's, world/capitalSolitude.js
 // Solitude's), in metres, y up, on the port's MeshBuilder (world/detStandIns.js). No game data.
 import { DOOR_TYPE } from '../../../world/meshReader.js';   // WW7-4: a castle's door
-
-/** The pictures' pseudo-archive, past every classic one and the port's other art (LeFay's 38211, the galleon's 38131). */
-const CAPITAL_ARCHIVE = 38400;
+// The pictures' pseudo-archive is the game's (world/capitalModels.js registers the pictures the film paints with), never a
+// number of the set's own: the registry (world/eliteGates/pseudoArchives.js) holds one owner to a number.
+import { CAPITAL_ARCHIVE } from '../../../world/capitalShapes.js';
 /** The pictures, by record (world/capitalModels.js capitalArt paints them). */
 const CAPITAL_ART = Object.freeze({
   marble: 0, gold: 1, wallStone: 2, roof: 3, bridgeStone: 4, dark: 5,
@@ -269,7 +269,6 @@ function robedFigure(mb, tex, x, z, y, h, face, pose) {
 }
 
 export {
-  CAPITAL_ARCHIVE,
   CAPITAL_ART,
   art,
   corner,

@@ -262,7 +262,9 @@ import { ambushNight } from '../systems/rest/restAct.js';   // AUDIT REST-PARTY 
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
 import { troubleFoesOf } from './livingWorld/troubleFoes.js';   // LW4/LW6: the road's trouble's foes - BAY-LEFT-GROUND: on the land's own wild past the Bay
 import { skillValue } from '../systems/skills.js';   // TO1: the avoid-encounter roll's live Stealth; WILD-ALERT: the notice's
-import { refreshMentor, mentorStatusText, effectiveLevel } from '../systems/mentorMode.js';
+import { effectiveLevel, castingLevel } from '../systems/mentorMode.js';
+import { mentorStatusText, pupilStatusText, mentorPartyNote } from '../systems/mentorText.js';   // MENTOR2: mentoring's words
+import { createMentorHost } from './mentorHost.js';   // MENTOR2: mentoring beside the party, steadied
 import { setMasterSkillsGate, MASTER_SKILLS_DUNGEON_TEXT } from '../systems/masterSkills.js';   // SOFTCAP3
 import { isOnlinePage, ONLINE_LAND_TRAVEL_REFUSAL } from '../systems/online/onlineLane.js';   // SOFTCAP3: Master Skills is online only; AUDIT TRAVEL-ONLINE T7: the map's floor
 import { readImmersiveTravelSettings, immersiveTravelLoaded, IT_POPUP } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel - a driver's map and its fast travel; AUDIT IT1 W4: the mod loaded for the game
@@ -854,7 +856,7 @@ import { readAccount, buyInsignia, settleBrokerSale, equipTitle, equipAura, adop
 import { ownAura, ownNameAsAt } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session; NAME-AS: and when this device last chose the name its player wears
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
 import { createFirmamentBook, setFirmamentBook } from '../net/firmament/firmamentBook.js';   // FIRM1: the Firmament - this device's tree and purses
-import { setFirmamentTree, setFirmamentOnline, setFirmamentMentoring } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
+import { setFirmamentTree, setFirmamentOnline } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
 import { starsFor } from '../net/firmament/firmamentLaw.js';   // FIRM1: the Stars a Renown level brings, said with it
 import { withoutFirmament } from '../systems/firmamentPowers.js';   // FIRM1: a strike or a spell at a player - a duel's, a siege's, the Wrothgarian zone's - is rolled with the sky off
 import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountWild, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds, accountLamp, accountFirmament, nameWhyText } from '../net/accountClient.js';   // NAME-AS: nameWhyText, why my character's name stood aside   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
@@ -2719,7 +2721,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get built() { return built; },
     get deepWaters() { return deepWaters; },
     get state() { return state; },
-    get tileSide() { return tileSide; },
   });
   const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: snowGround });
   /** SNOWFALL1: who walks the snow - the player (the fly camera: the tiers round the eye, no tracks), the street's foes
@@ -5305,6 +5306,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const LOD_NEAR = 3;   // chebyshev distance where the far ring starts
   const lodOn = isEnhanced();
   const TERRAIN_INDICES_LOD = lodOn ? buildTerrainIndices(LOD_STRIDE) : null;   // AUDIT EV: the 1:1 lane never pays for the strided twin
+  const lodStride = lodOn ? LOD_STRIDE : 1;   // FLORA-GROUND, THE RINGS: the far ring's class, its plants' lifts made ahead in a near pixel's build
   const strideFor = (px, py) => ((lodOn
     && Math.max(Math.abs(px - state.current.x), Math.abs(py - state.current.y)) >= LOD_NEAR)
     ? LOD_STRIDE : 1);
@@ -5466,8 +5468,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     jungle, lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
-    worldHeight,
-    lodStride: lodOn ? LOD_STRIDE : 1,   // FLORA-GROUND, THE RINGS: the far ring's class, its plants' lifts made ahead in a near pixel's build
+    worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
@@ -20657,10 +20658,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // expires PARTY_READY_TIMEOUT_MS after it was cast (checked every
         // frame in partyRestFollowTick, which already runs unconditionally),
         // so the next rest always needs its own fresh round of /ready.
-        // SOFTCAP1: `/mentor` - what mentoring is doing right now. There is no switch: a party well below my level
-        // makes me its mentor automatically (systems/mentorMode.js)
+        // SOFTCAP1: `/mentor` - what mentoring is doing right now. There is no switch: a party member far below my level
+        // beside me makes me their mentor automatically (systems/mentorMode.js); MENTOR2: and a pupil's bonus, beside one
         if (/^\/mentor$/i.test(text.trim())) {
-          chatLog.push(tabId, { text: mentorStatusText(playerEntity), system: true });
+          chatLog.push(tabId, { text: [mentorStatusText(playerEntity), pupilStatusText(playerEntity)].filter(Boolean).join(' '), system: true });
           return true;
         }
         if (/^\/ready$/i.test(text.trim())) {
@@ -20935,6 +20936,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       onOpen: () => surfaceOpen('social'),   // AUDIT SOC B6: counted with the chat's and the F-menu's - the first up frees the mouse, the last down takes it back
       onClose: () => surfaceClose('social'),
       above: () => !!(socialMenu?.isOpen?.() || profileWin?.isOpen?.() || pageWin?.isOpen?.()),   // AUDIT SOC C2/C14: the F-menu stands over the panel - its Escape is the menu's; INSPECT1: and the profile opened from it; JOURNAL1: and a page read from it
+      mentorNote: () => mentorPartyNote(playerEntity),   // MENTOR2: what mentoring does for me now, on the Party tab
     });
     // AUDIT SOC B14/D11: `hudCtx.openSocial` stood here as a second door to the panel; nothing dispatched through it
     // (SOC5's key reaches the panel through socialInteract's nobody-in-front arm), and a door nothing opens is a
@@ -23253,7 +23255,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // save spent in a breach held to that breach's next Redoubt (scenes/eliteGates/egClient.js `redoubt`)
   setSetPowersAllies({
     near: (m) => { const f = player.feetAt(); return (allyMarksNear() ?? []).filter((p) => p.mate && p.feet && Math.hypot(p.feet[0] - f[0], p.feet[1] - f[1], p.feet[2] - f[2]) <= m); },
-    shield: (a, sp) => castAtAllyDoor(a.id, allyCastFrame(sp, effectiveLevel(playerEntity), a.id)),
+    shield: (a, sp) => castAtAllyDoor(a.id, allyCastFrame(sp, castingLevel(playerEntity), a.id)),   // MENTOR2: a mentor casts at the level they fight at
   });
   setSpireRecovery(() => modes?.egHallBreach?.() ?? null);
   // EG-E3 (Elite-Gates.md section 5, THE DUNGEON'S FIND): an elite foe's death in a dungeon online asks the account service
@@ -26824,8 +26826,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (f && socialLink()?.shareAutomap(f.k, f.r)) _partyMapSender.commit(f, nowMs);
   };
   // SOFTCAP1: the other members' levels off their poses (`cl`; a relay from before world131 strips it), none at all
-  // when I am in no party - ONE HOME for MENTOR MODE's partners and PARTY-LOOT's party level (a room container's base
-  // is minted at the group's reference level, systems/roomLoot.js roomBaseLevel)
+  // when I am in no party - PARTY-LOOT's party level (a room container's base is minted at the group's reference level,
+  // systems/roomLoot.js roomBaseLevel). MENTOR2: mentoring reads the members beside me instead (scenes/mentorHost.js)
   const partyMateLevels = () => (social?.party ? social.others().filter((m) => m.online !== false && Number.isInteger(m.p?.cl)).map((m) => m.p.cl) : []);
   partyPing = createWorldPartyPing({
     now: () => social?.now?.() ?? Date.now(),
@@ -26855,16 +26857,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     author: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : ''),
     mateName: (acct) => social?.party?.members?.find((m) => m.acct === acct)?.name ?? '',
   });
+  // MENTOR2 (bible/06-Systems/Mentor-Mode.md): mentoring beside the party members drawn in my room, steadied
+  const mentorHost = createMentorHost({
+    player: () => playerEntity, social: () => social, near: () => partyNear(),
+    outdoors: () => _mode() === 'exterior', feet: () => player.feetAt?.() ?? player.pos,
+    fighting: () => areEnemiesNearby(enchantFoes()), chat: () => chatLog,
+  });
   const partyFrame = (nowMs) => {
     playerEntity._online = isOnlinePage();   // SOFTCAP3: Master Skills is in force only online (systems/masterSkills.js)
-    // SOFTCAP1: MENTOR MODE follows the party every frame - so leaving the group hands my real character back the same frame.
-    const mentorLevels = partyMateLevels();
-    const mentorWord = refreshMentor(playerEntity, mentorLevels);
-    setFirmamentMentoring(!!playerEntity._mentor);   // AUDIT UICALM-FIRM1 L1 L2: the sky sleeps the frame mentoring starts, and wakes the frame it ends
-    if (mentorWord) {
-      const text = mentorWord === 'on' ? mentorStatusText(playerEntity) : 'Mentoring ended. Your real level, skills, attributes and gear are back.';
-      try { chatLog.push(chatLog.active, { text, system: true }); } catch { /* no chat yet: the sheet says it too */ }
-    }
+    mentorHost.frame(nowMs);   // MENTOR2: the partners beside me, every frame - leaving the party hands my real character back the same frame
     if (!social) return;
     // AUDIT SOC B7: the HUB LINK's clock - its welcome carries the relay's `now` (AUDIT SOC B7, server side), and it is
     // the link whose stamps (last seen, an invite's lapse) the picture reads; the presence session's stands in for a
