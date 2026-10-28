@@ -517,12 +517,12 @@ function blendShapedTerrain(heightmapData, shape, ground, hDim, diff) {
   }
   return target;
 }
-/** AUDIT FB1028 A2: the samples a building, a model, a flat or a crop stands on - the corners of the town's tiles its
- *  outline holds at distance 0 - kept at the town's level. Index y * hDim + x. */
+/** AUDIT FB1028 A2: the samples a building, a model, a flat or a crop stands on - the corners of the town's tiles within
+ *  a tile of one (a model's foot overhangs its own: Aldwall Rock's 323 by a tile) - kept at the level. Index y * hDim + x. */
 function stoodSamples(shape, mask, hDim) {
   const D = WORLD_MAP_TILE_DIM, out = new Uint8Array(hDim * hDim);
   for (let ty = 0; ty < D; ty++) for (let tx = 0; tx < D; tx++) {
-    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) !== 0) continue;
+    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;
     for (let dy = 0; dy <= 1; dy++) for (let dx = 0; dx <= 1; dx++) if (ty + dy < hDim && tx + dx < hDim) out[(ty + dy) * hDim + tx + dx] = 1;
   }
   return out;

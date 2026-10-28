@@ -248,12 +248,22 @@
  {
   "name": "AUDIT-FB1028-A2-the-stood-unread",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) !== 0) continue;",
+  "old": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;",
   "new": "    if (!mask[tx + ty * D]) continue;",
   "tests": [
    "test/world/terrain/fb1028_townground.test.js"
   ],
   "note": "every sample of the town's ground taken for stood: the run starts at its last one."
+ },
+ {
+  "name": "AUDIT-FB1028-A2-the-overhang-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 1) continue;",
+  "new": "    if (!mask[tx + ty * D] || shapeFieldDistance(shape[tx + ty * D]) > 0) continue;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ],
+  "note": "a building's own tiles alone stood: a model's foot a tile over (Aldwall Rock's 323) eased under it."
  },
  {
   "name": "AUDIT-FB1028-A2-the-run-to-the-band",

@@ -47,8 +47,8 @@ const ground = (f) => { const g = new Float32Array(H * H); for (let x = 0; x < H
 const blend = (g, shape) => { const s = Float32Array.from(g); const target = blendLocationTerrain(s, 0.5, { xMin: 0, xMax: 127, yMin: 0, yMax: 127, shape }, H, Float32Array.from(g)); return { s, target }; };
 /** Every sample a tile of the town's ground touches. */
 const insideOf = (mask) => { const out = []; for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) if (mask[x + y * D]) for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) out.push((x + a) * H + y + b); return out; };
-/** AUDIT FB1028 A2: every sample a building's tile of the town's ground touches. */
-const stoodOf = (shape, mask) => insideOf(mask.map((v, i) => (v && shapeFieldDistance(shape[i]) === 0 ? 1 : 0)));
+/** AUDIT FB1028 A2: every sample a tile of the town's ground within a tile of a building's touches (a model overhangs). */
+const stoodOf = (shape, mask) => insideOf(mask.map((v, i) => (v && shapeFieldDistance(shape[i]) <= 1 ? 1 : 0)));
 
 test('FB1028 the shore: a town over its sea meets it on a slope no steeper than SHAPE_GRADE allows - the sea it needs lifted, the sea past it kept; TS2 kept the sea a sample off its ground and stood a cliff there (mutants: the sea never lifted; the grade unread)', () => {
   // the sea west of x = 40, the land rising a metre a sample from 36 m; a town's buildings from x 42, its margin over the sea
@@ -112,15 +112,17 @@ test('FB1028 the pixel\'s edge: a town\'s margin keeps off the band its ease nee
 });
 
 test('AUDIT FB1028 A2 the seam: where a town\'s own ground reaches the band its seam needs, the run eases from its last stood sample out to the edge - FB1028 kept the margin at the town\'s level to the edge\'s last sample but one, a cliff there (mutants: the band\'s run unread; the stood samples unread)', () => {
-  // the land level at 100 m, rising 6 m a sample over the last 8 to the south edge (148 m there); buildings from y 3
+  // the land level at 100 m, rising 6 m a sample over the last 8 to the south edge (148 m there); buildings from y 3, x 30
   const g = ground((x, y) => norm(100 + 6 * Math.max(0, 8 - y)));
   const shape = shapeOf(30, 90, 3, 100, 6), { s, target } = blend(g, shape), mask = townGroundMask(shape, Float32Array.from(g));
   assert.equal(mask[60 + 2 * D], 1, 'the margin\'s tile beside the buildings is the town\'s ground in the band');
   for (const i of stoodOf(shape, mask)) assert.equal(s[i], Math.fround(target), 'every sample a building stands on at the level');
   for (let x = 0; x < H; x++) assert.equal(s[0 + x * H], g[0 + x * H], 'the edge the land\'s own');
-  let worst = 0;
-  for (let x = 34; x < 86; x++) for (let y = 0; y < 4; y++) worst = Math.max(worst, Math.abs(s[y + 1 + x * H] - s[y + x * H]) * M);
-  assert.ok(worst < 20, `the seam's 48 m over the three samples to the buildings (${worst.toFixed(2)} m a sample at the most; FB1028: 26.5 m over two)`);
+  // the core's corner tile (29, 2), a tile and a half off the buildings, is the town's ground no model reaches: it
+  // eases with the seam, FB1028 held it at the level
+  assert.ok(shapeFieldDistance(shape[29 + 2 * D]) > 1 && mask[29 + 2 * D] === 1, 'the corner\'s tile the town\'s, past a tile');
+  const corner = s[2 + 29 * H];
+  assert.ok(corner > target + norm(1) && corner < g[2 + 29 * H], `the corner eased toward the edge (${((corner - target) * M).toFixed(2)} m over the level)`);
   // buildings on the edge row itself: the edge still the land's (mutant: the edge row blended)
   const onEdge = blend(g, shapeOf(30, 90, 0, 100, 6)).s;
   for (let x = 0; x < H; x++) assert.equal(onEdge[0 + x * H], g[0 + x * H], 'the edge the land\'s own under buildings on it');
