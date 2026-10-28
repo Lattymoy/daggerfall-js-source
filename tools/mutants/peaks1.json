@@ -164,8 +164,8 @@
   {
     "name": "PEAKS1-the-host-s-merge",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "    mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap);",
-    "new": "    snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n);",
+    "old": "    bareLine(mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap), l.ash, BARE_LINE[0]);",
+    "new": "    bareLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.ash, BARE_LINE[0]);",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PEAKS1-the-host-s-build-merge",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "    mergeCapLine(snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n), l.cap);",
-    "new": "    snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n);",
+    "old": "    bareLine(mergeCapLine(snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n), l.cap), l.ash, BARE_LINE[0]);",
+    "new": "    bareLine(snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n), l.ash, BARE_LINE[0]);",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]

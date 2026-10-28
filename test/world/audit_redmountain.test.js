@@ -10,8 +10,8 @@ import { glslFunctions } from '../glsl.mjs';
 import {
   FIRE, LAVA_FS, PLUME_FS, PLUME_VS, FIRE_PROGRAMS, fireUniforms, fireCrown, setFireCommon, RedMountainFire, coneIn, fireCone,
 } from '../../src/render/redMountainFire.js';
-import { GhostfenceGlow, GLOW_PROGRAMS, FENCE_CURTAIN_FS } from '../../src/render/ghostfenceGlow.js';
-import { RED_MOUNTAIN_DIALS as D, dirOf, redMountainCrown } from '../../src/world/tamriel/redMountain.js';
+import { GhostfenceGlow, GLOW_PROGRAMS, FENCE_CURTAIN_FS, GLOW } from '../../src/render/ghostfenceGlow.js';
+import { RED_MOUNTAIN_DIALS as D, dirOf, redMountainCrown, coneProfile } from '../../src/world/tamriel/redMountain.js';
 import { RING_SEA_GLSL, SUMMIT_HAZE } from '../../src/render/horizonHaze.js';
 import { FarRingRenderer, builtCore, summitFromOf } from '../../src/render/farRing.js';
 import { playPrograms } from '../../src/render/playPrograms.js';
@@ -53,6 +53,10 @@ test('AUDIT RED-MOUNTAIN F1: the far draw hides the crater from a far eye - the 
   assert.equal(hide(low, [0, LAKE_Y, 0]), true, 'the lake from low land 60 km off');
   assert.equal(hide(low, [0, LAKE_Y + 300, 0], FIRE.margin.plume), true, 'the plume\'s foot under the rim, from there');
   assert.equal(hide(low, [0, D.lift + 2000, 0], FIRE.margin.plume), false, 'the plume over the rim, from there');
+  // a ray past the summit cone's side, 4 km from its centre and under its flank there, crossing no rim: the flank's own
+  // steps hide it, the eye's slack none by then
+  const q = [0, 3000, 4000], past = [low[0] + 1.2 * (q[0] - low[0]), low[1] + 1.2 * (q[1] - low[1]), 1.2 * q[2]];
+  assert.equal(hide(low, past, FIRE.margin.plume), true, 'behind the flank, the slack tapered to the rim');
   assert.equal(FIRE.stop, 300);
 });
 
@@ -310,7 +314,7 @@ test('AUDIT RED-MOUNTAIN L1: the snow never lies on Red Mountain\'s ash - each l
 const A = process.env.ARENA2_PATH;
 const HAVE = !!A && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((n) => existsSync(join(A, n)));
 
-test('AUDIT RED-MOUNTAIN L5 with ARENA2: no carved water within the volcano\'s reach on the freeware\'s trace - a lake or a river the waters\' law carved there would cut the cone away (none does today; the pin holds it so) (mutant: the volcano\'s centre moved onto a lake)', { skip: HAVE ? false : 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
+test('AUDIT RED-MOUNTAIN L5 with ARENA2: no carved water within the volcano\'s reach on the freeware\'s trace - a lake or a river the waters\' law carved there would cut the cone away (none does today; the pin holds it so)', { skip: HAVE ? false : 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
   const bytes = (n) => new Uint8Array(readFileSync(join(A, n)));
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../src/ui/tamrielTrace.js');
@@ -333,4 +337,65 @@ test('AUDIT RED-MOUNTAIN L5 with ARENA2: no carved water within the volcano\'s r
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (tamrielWatersShaper(cx + dx, cy + dy, 128)) wet.push(`${cx + dx},${cy + dy}`);
     assert.deepEqual(wet.slice(0, 5), [], `${wet.length} carved pixels within the reach`);
   } finally { setTamrielTrace(null); setTamrielFit(null); G.dropGroundCache(); }
+});
+
+// ── THE RECORD (R) ────────────────────────────────────────────────
+
+test('AUDIT RED-MOUNTAIN R1: the plume\'s look and the glow\'s run on their own sources - its puffs thin at the column\'s edge and none under their noise\'s floor, its body faded in over its foot and out to its top, lit by the frame with its sunward side brighter, the fire in its foot falling with height and outshone by day, its billows the same about its foot wherever the world stands it; the curtain\'s strands thickest low and gone at its foot and top, the glow\'s night and its fade (the billows\' check asked nothing: it moved a foot the function never read) (mutants: the puff\'s floor; the edge; the body; the sun\'s side; the ember\'s fall; the day; the curtain\'s body; the fade)', () => {
+  const fs = glslFunctions(PLUME_FS, { ...fireUniforms(), uTime: 0, uLight: 1, uLightDir: [0, 1, 0], uFoot: [0, 0, 0], vUV: [0, 0], vWorld: [0, 0, 0], vNormal: [1, 0, 0], uFace: 1 });
+  const n = (v) => Number(v);
+  assert.equal(n(fs.puffOf(0.3, 1)), 0, 'under the noise\'s floor, no puff');
+  assert.equal(n(fs.puffOf(0.7, 1)), 1);
+  assert.ok(n(fs.puffOf(0.5, 1)) > 0 && n(fs.puffOf(0.5, 1)) < 1 && n(fs.puffOf(0.45, 1)) < n(fs.puffOf(0.55, 1)), 'growing with its noise');
+  assert.equal(n(fs.puffOf(0.7, 0)), 0, 'none at the column\'s edge');
+  assert.equal(n(fs.bodyOf(0)), 0); assert.equal(n(fs.bodyOf(1)), 0); assert.equal(n(fs.bodyOf(0.3)), 1);
+  assert.ok(n(fs.bodyOf(FIRE.plume.foot / FIRE.plume.height / 2)) < 1, 'faded in over its foot');
+  assert.ok(Math.abs(n(fs.litOf(0, 1)) - FIRE.lightMin) < 1e-9, 'at night its least');
+  assert.ok(Math.abs(n(fs.litOf(1, -1)) - FIRE.shade) < 1e-9 && n(fs.litOf(1, 1)) === 1, 'its side from the sun the darker');
+  const ember = (h, light) => fs.emberOf(h, 1, 1, light).map(Number)[0];
+  assert.ok(Math.abs(ember(0.3, 0) / ember(0.1, 0) - Math.exp(-0.2 * FIRE.plume.height / FIRE.emberM)) < 1e-6, 'falling with height');
+  assert.ok(Math.abs(ember(0.1, 1) / ember(0.1, 0) - FIRE.dayGlow) < 1e-6, 'a day leaves dayGlow of it');
+  // the billows about the foot: the column the same wherever its foot stands
+  const pv = glslFunctions(PLUME_VS, { uFoot: [100, 2000, -300], uEye: [100, 2000, 60000], uTime: 0.3, uVP: Array(16).fill(0), aUV: [0, 0] });
+  const rel = (uv) => { const p = pv.placeAt(uv).map(Number), f = pv.globals.uFoot; return [p[0] - f[0], p[1] - f[1], p[2] - f[2]]; };
+  const here = [[0.1, 0.2], [0.6, 0.5], [0.9, 0.9]].map(rel);
+  pv.globals.uFoot = [5100, 2600, 4700]; pv.globals.uEye = [5100, 2600, 65000];
+  [[0.1, 0.2], [0.6, 0.5], [0.9, 0.9]].map(rel).forEach((p, i) => p.forEach((v, k) => assert.ok(Math.abs(v - here[i][k]) < 1e-6, 'the same about its foot')));
+  // the curtain
+  const cf = glslFunctions(FENCE_CURTAIN_FS, { ...fireUniforms(), uTime: 0, uLight: 0, vWorld: [0, 0, 0], vSide: [0, 0] });
+  assert.equal(n(cf.curtainOf([10, 0], 0.9)), 0, 'none at its foot'); assert.equal(n(cf.curtainOf([10, 1], 0.9)), 0, 'none at its top');
+  assert.ok(n(cf.curtainOf([10, 0.4], 0.9)) > n(cf.curtainOf([10, 0.85], 0.9)), 'thickest low');
+  assert.ok(n(cf.curtainOf([10, 0.4], 0.9)) > n(cf.curtainOf([10, 0.4], 0.1)), 'brighter where its flow rises');
+  assert.equal(n(cf.nightOf(0)), 1); assert.ok(Math.abs(n(cf.nightOf(1)) - GLOW.dayGlow) < 1e-9);
+  const lightAt = (d) => { Object.assign(cf.globals, { uEye: [d, 0, 0], vWorld: [0, 0, 0], vSide: [10, 0.4] }); try { cf.main(); return Number(cf.globals.o[1]); } catch (e) { if (e.name === 'GlslDiscard') return 0; throw e; } };
+  assert.ok(lightAt(GLOW.fade[0] / 2) > 0 && lightAt((GLOW.fade[0] + GLOW.fade[1]) / 2) < lightAt(GLOW.fade[0] / 2), 'faded with the distance');
+  assert.equal(lightAt(GLOW.fade[1] + 1), 0, 'none past its fade');
+});
+
+test('AUDIT RED-MOUNTAIN R5: the gullies down the flank - none at the rim\'s lip, cut and ridged within their depth (0.8 of it under the smooth cone, 1.2 over) and varied round the mountain past it, none past their reach - on the law itself, away from the foyada (they were unpinned) (mutants: the lip\'s ease; the depth; the reach)', async () => {
+  const { setTamrielFit } = await import('../../src/world/tamriel/tamrielFrame.js');
+  setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
+  const { redMountainFrame, redMountainGround, redMountainLand, redMountainSmooth } = await import('../../src/world/tamriel/redMountain.js');
+  const { STREAMING_TERRAIN_SCALE: UNIT } = await import('../../src/world/terrain/terrainSampler.js');
+  const f = redMountainFrame(), ground = redMountainGround(() => 0, {}), M = TERRAIN_SIZE / 128;
+  const nearFoyada = (gx, gy) => f.foyada.some((l) => { for (let i = 0; i < l.pts.length; i += 2) if (((l.pts[i] - gx) * M) ** 2 + ((l.pts[i + 1] - gy) * M) ** 2 < 700 * 700) return true; return false; });
+  const gullyAt = (d, turn) => {
+    const [ux, uy] = dirOf(turn), r = D.rim + d, gx = f.cx + (ux * r) / M, gy = f.cy + (uy * r) / M;
+    if (nearFoyada(gx, gy)) return null;
+    return (redMountainLand(gx, gy, 0, 0, ground) - redMountainSmooth(gx, gy)) * UNIT;
+  };
+  const ring = (d) => Array.from({ length: 180 }, (_, k) => gullyAt(d, k / 180)).filter((v) => v !== null);
+  assert.ok(ring(2).every((g) => Math.abs(g) < 0.5), 'none at the rim\'s lip');
+  const mid = ring(3000);
+  assert.ok(mid.every((g) => g >= -0.8 * D.gully.depth - 1e-6 && g <= 1.2 * D.gully.depth + 1e-6), 'within their depth');
+  assert.ok(Math.max(...mid) - Math.min(...mid) > D.gully.depth, `cut and ridged round the mountain: ${Math.min(...mid).toFixed(1)}..${Math.max(...mid).toFixed(1)} m`);
+  assert.ok(ring(D.gully.reach + 200).every((g) => Math.abs(g) < 1e-6), 'none past their reach');
+});
+
+test('AUDIT RED-MOUNTAIN R2: the rim\'s crest asked on its own - an eye 20 km out, 300 m over the flank, its ray to the plume over the crater\'s far side passing under the crowned crest between the profile\'s samples: the crest hides it, the steps alone would not (the record marked it equivalent; 198 of 2,640 rays round the mountain turn on it) (mutant: the crest unasked)', () => {
+  const crown = fireCrown(), { fns, hide } = lavaAt();
+  fns.globals.uEye = [0, 0, 0];
+  const eye = [20000, coneProfile(20000 - D.rim) * crown[0] + 300, 0];
+  assert.equal(hide(eye, [-300, 4900, 0], FIRE.margin.plume), true, 'under the crest');
+  assert.equal(hide(eye, [-300, 9000, 0], FIRE.margin.plume), false, 'control: the plume high over it, seen');
 });

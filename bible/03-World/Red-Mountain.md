@@ -16,9 +16,10 @@ They had not. The heightmap (TAMRIEL-RELIEF, `Tamriel.md`) stands Red Mountain a
 2. **Where.** Red Mountain's summit on the relief, the point the zones about it already stand on (`tamrielBiomes.js`
    heartsAnchor: `namedSummit` where the relief stands, the authored spine's middle else). On the freeware's trace that is
    picture (234.75, 53.75), Bay pixel (3049.6, -50.4).
-3. **How big.** A stratovolcano's shape at the scale of this world's Vvardenfell, about 400 km across: the summit 6.9 km
-   over the sea, twice the next highest ground on the continent; the crater 5.2 km across and 840 m deep; its flanks about
-   29 degrees under the rim, 10 at 7 km out, 1 at 30 km, and nothing past 97 km.
+3. **How big.** A stratovolcano's shape at the scale of this world's Vvardenfell, about 400 km across: the summit about
+   7.3 km over the sea, twice the next highest ground on the continent; the crater 5.2 km across and 700 to 840 m deep;
+   its flanks about 29 degrees under the rim, 12 at 7 km past it, 3 at the Ghostfence, under 2 by 30 km, and nothing
+   past 97 km (AUDIT RED-MOUNTAIN L3: the figures re-measured).
 4. **One law of world position, in the kernel.** The cone is the land the player walks, the far views stand and every
    reader of the ground asks - not a picture on the horizon.
 
@@ -64,26 +65,31 @@ the same module (TAMRIEL2-WORKER: world/ alone).
 - **The ceiling.** The land past the Bay stood under LANDFORM_CEILING (3,644 m). The volcano alone stands over it; the
   kernel's shaped samples have no ceiling, and nothing else past the Bay moves.
 
-On the freeware's ground: the crater floor 6,047 m, the summit 6,885 m on its west rim, 4,400 m at 8 km, 3,600 m at
-12 km, 2,900 to 3,200 m at 20 km. No place past the Bay stands on its summit cone; its whole reach is Morrowind's land.
+On the freeware's ground, on the base's large map (its land stands about 450 m higher than this page first measured): the
+crater floor 6,508 m, the summit 7,333 m on its west rim, about 4,800 m at 8 km, 4,050 m at 12 km, 3,250 to 3,850 m at
+20 km. No town, farm or Arena place stands on its summit cone; eight lairs do, within 12.6 km of its centre - Dagoth Ur's
+strongholds, as the lore has them (AUDIT RED-MOUNTAIN R3: this page said no place). Its whole reach is Morrowind's land.
 
 ## Its fire and the weather
 
-The lore's ash is never snow (`Peaks.md`: "none - its ash is warm"), and a 6.9 km summit would be.
+The lore's ash is never snow (`Peaks.md`: "none - its ash is warm"), and a 7.3 km summit would be.
 
 - **The snow line rides its cone** (`world/peaks/snowcap.js` capLineOfPixel): a zone's line over the cone's lift there,
   so the Ashlands and the Grazelands on its foot stay as bare as their plateau.
 - **The air takes its heat** (`systems/weather/airGround.js` heatAt, read by airParamsAt): as much as its cone's height
   cools it down the lapse. Its ash is the plateau's air at any height - no pack lies on it, and nobody freezes on it.
-- **The snowpack's levels reach 8,000 m** (`SNOWPACK.levels.count` 44, was 23 to 3,800 m): a place whose ground stood
+- **The snowpack's levels reach 8,200 m** (`SNOWPACK.levels.count` 45, was 23 to 3,800 m): a place whose ground stood
   over every held level read white over the last.
+- **No pack lies on its ash** (`snowcap.js` ashShareAt, `scenes/snowCoverHost.js`): each lattice point's lines are lifted
+  to bare ground by the share of Red Mountain's zone about it. AUDIT RED-MOUNTAIN L1: the heat cancelled only the cone's
+  own height, the plateau under it froze, and on the coldest day the crater, the rim and the flank lay white.
 
 ## The horizon
 
-`render/farRing.js` `ringHeightAt` adds `redMountainLiftAt` with the Landforms row - the far ring, the middle ring's eased
-rim and the travel view stand the smooth cone at a pixel's centre. The far field asks the cone's highest in its 6.5 km
-cell (`half` FAR_CELL / 2), as its byte is its highest. The middle ring runs the kernel itself. So the summit stands on
-the horizon to the far field's rim (361 km).
+`render/farRing.js` `ringGroundAt` adds `redMountainLiftAt` with the Landforms row - the far ring, the middle ring's eased
+rim and the travel view stand the smooth cone at a pixel's centre. The far field stands it at each vertex's own node
+(`redMountainNodeLift`, a pixel corner: RELIEF-PEAKS's node ground). The middle ring runs the kernel itself. So the
+summit stands on the horizon to the far field's rim (361 km).
 
 **Its colour.** The far views paint a pixel by the overworld's tint, which reads a byte over 104 as a snowfield, so
 the relief's swell stood white on the horizon. The cone's own colour is laid over it by how far the cone lifts the land
@@ -93,23 +99,31 @@ dark ash on its flanks, red-brown rock up its summit cone.
 **The haze lies under the summits** (`render/horizonHaze.js` SUMMIT_HAZE, `summitHold` in both lanes' far ring). The
 far ring held every distant hill at 85% of the fog's colour, and the cone 60 km off was a faint shape in a tan band
 (seen in the game). Ground over 3,700 m - the land's old ceiling, so the cone alone - eases that hold down to 30% of
-itself by 6,500 m: the summit stands clear over the haze, and the rim still closes it into the sky.
+itself by 6,500 m: the summit stands clear over the haze, and the rim still closes it into the sky. AUDIT RED-MOUNTAIN
+F6: the thinner air comes in over 8 km past the streamed grid's edge (`uSummitFrom`), so beside the grid the cone is
+hazed as the streamed ground is, and no seam stands where the grid ends.
 
 ## The fire (`render/redMountainFire.js`)
 
 - **The lava lake** on the crater's floor, a fan of 1.2 km, and **the lava** down the upper 70% of each foyada on its
   floor - a crust and its melt churning, hottest at the breach, its own light.
-- **The ash plume** from the lake: 8.5 km tall, 1.5 km in radius at its foot and 9 km at its top, leaning
-  east-north-east. Its billows are noise in the world's own space, rising through it, so it is a column of ash and
+- **The ash plume** from the lake: 8.5 km tall, 850 m in radius at its foot (inside the crater's floor) swelling from
+  the rim to 9 km at its top, leaning east-north-east. It is drawn its far side first, its near side over it. Its billows are noise in the world's own space, rising through it, so it is a column of ash and
   never a funnel. The sun lights its sunward side, and the crater's fire is a glow in its foot, muted by day.
-- **Drawn last of the far ring's pass**, twice: by the world's lens nearer than its far plane, against the world's depth,
-  and past it by its own lens at the far plane. The far pass has no depth, so there the cone hides the fire
-  analytically (`hidden`): the eye's ray stepped against the cone's profile within 22.6 km of its centre, and tested
-  at the rim's crest where it crosses it. The profile stands on the land at the centre, and the land falls away from
-  the plateau, so its error at the eye's own ground is given back - the first photograph from 60 km showed no fire,
-  every ray starting "inside" the model. A river is never thinner than a few pixels: a line of fire at night.
+- **Drawn in the far ring's pass**, after the land, twice: by the world's lens nearer than its far plane, and past it by
+  its own lens at the far plane - one haze law in both, the far ring's own, and nothing drawn twice (the far draw drops
+  what is nearer than the world's far plane).
+- **Hidden by the cone where no depth stands** - past the far plane, and past the streamed grid's built pixels
+  (`hidden`): the eye's ray stepped against the cone's profile and its crown (the rim's wander, 64 samples round)
+  within 22.6 km of its centre, tested at the rim's crest where it crosses it, and asked to 300 m short of the point.
+  The profile stands on the land at the centre, and the land falls away from the plateau, so its error at the eye's
+  own ground is given back at the eye, none by the rim.
+- AUDIT RED-MOUNTAIN F1: the ray stopped at 97% of the way, so from 100 km the crater wall lay in the 3 km never asked,
+  and the eye's slack was given back the whole ray - from low land far off, the lake showed through the summit. A river
+  is never thinner than a few pixels: a line of fire at night.
 - **Its door** is `?redfire=off`. It stands with the Landforms row, and where the far ring is drawn - in a clear day's
-  linear fog, not in rain or snow.
+  linear fog, not in rain or snow. Its programs are started at the boot's idle and its pass built through a door that
+  never waits on their compile (AUDIT RED-MOUNTAIN F5).
 
 ## The Ghostfence (GHOSTFENCE)
 
@@ -117,7 +131,8 @@ Opened 2026-10-27, the owner: *"Im really wanting to push this beyond limits and
 accurate."* UESP: the Tribunal raised the Ghostfence round Red Mountain after the Battle of Red Mountain to hold Dagoth
 Ur and the Blight within it, a ring of pylons the ancestors' spirits hold up; no body passes it but at Ghostgate, the
 fortress in its south, its Tower of Dawn and Tower of Dusk either side of the gate. In 3E 417 it stands, and nobody
-lives past it.
+lives past it. No one walks or rides past it but at Ghostgate; one who levitates may fly over it, as in the lore (AUDIT
+RED-MOUNTAIN R10).
 
 - **The ring** (`world/tamriel/ghostfence.js`): 14 km from the volcano's centre, wandering 5% either way - past the
   summit cone, where the flank eases to 3 degrees, every foyada's end within it. A pylon every 48 m (1,833), each on
@@ -126,28 +141,42 @@ lives past it.
   countryside keeps off every pixel whose centre lies within the fence or a pixel past it (`insideGhostfence`, read by
   countryPick - the world host's roll, the held map's, the roads' worker's); no lair stands on its line
   (`onGhostfence`, lairStandsAt and lairMayStandAt); and the roads' build routes round it, Ghostgate's pixels open
-  (`ghostfenceRoadBlocks`, tamrielRoads.js). The lairs within it stand - the mountain's own strongholds and ruins.
-  GROUND_ROLL_VERSION 6 lays every client's roads past the Bay again.
-- **On the freeware's trace** the line lies on Morrowind's land in Red Mountain's zone and the Ashlands'; it kept off
-  21 places of the countryside (farms, inns and temples up to 6 km high on the summit cone) and 2 lairs on its line. No
-  Arena place stands within it.
+  (`ghostfenceRoadBlocks`, tamrielRoads.js). The lairs within it stand - the mountain's own strongholds and ruins. No
+  spawned ruin stands on its line (`createSpawnGround`), and the Overworld's route planner crosses it only at Ghostgate
+  (`ghostfenceShuts`, travelRoute.js routeGround) - AUDIT RED-MOUNTAIN G1 and G2. GROUND_ROLL_VERSION 6 lays every
+  client's roads past the Bay again; its fingerprint reads the line and the gate (G3).
+- **On the freeware's trace** the line lies on Morrowind's land in Red Mountain's zone; it kept off 21 places of the
+  countryside (3 villages, a hamlet, farms, inns and temples, up to 6 km high on the summit cone) and 2 lairs on its
+  line. No Arena place stands within it (AUDIT RED-MOUNTAIN G4: the count and the zone re-read).
 
 **Stood in a pixel's build** (`scenes/ghostfenceBuild.js`, called by `scenes/pixelBuild.js` past the Bay, before the
-bucket settles - no host grows). Each pylon is seated on the lowest ground under its plinth and turned to the fence
-(`ghostfenceModel.js` PYLON): a basalt plinth, an eight-sided shaft banded at its middle, a collar, four horns curling
-in, and the orb they hold, 28.6 m over its foot. Ghostgate (GHOSTGATE) is its two towers 40 m tall and the lintel over
-the passage, an orb on each. Both go in the pixel's batch on GHOSTFENCE_ARCHIVE's own pictures - the stone in
-Daggerfall's colours (`dfLook`), the orb its own light (an emission map). Solid through the world's one gate
-(player/lateSolid.js): each pylon's plinth and shaft, the towers and the lintel, and the curtain between each pylon and
-the next from under the ground to the collars. The passage under the lintel is open.
+bucket settles - no host grows). Each pylon stands on the ground at its centre, turned to the fence, a footing carried
+down to the lowest ground under its plinth on a slope (`ghostfenceModel.js` PYLON, pylonFooting): a basalt plinth, an
+eight-sided shaft banded at its middle, a collar, four horns curling in to 28.6 m, and the orb they hold at 24.8 m.
+Ghostgate (GHOSTGATE) is its two towers 37 m tall and the lintel over the passage, an orb on each. Both go in the
+pixel's batch on GHOSTFENCE_ARCHIVE's own pictures - the stone in Daggerfall's colours (`dfLook`), the orb its own
+light (an emission map).
+
+AUDIT RED-MOUNTAIN N4 and R11: seated on its lowest ground, a pylon was buried uphill to 24 m; the page had the orb at
+the horns' tip and the towers 3 m too tall.
+
+**Solid** through the world's one gate (player/lateSolid.js): each pylon's plinth and shaft, its footing, the towers and
+the lintel, and the curtain between the pylons in pieces of 6.4 m at most, cut at every pixel's edge
+(`ghostfenceRunCuts`). The pixel holding a piece's middle builds it, from 4 m under its lowest ground to the collars over
+its highest, read exactly on the drawn triangles (`groundAlong`), one solid a run. The passage under the lintel is open.
+AUDIT RED-MOUNTAIN N1: a run was one flat quad on its two feet - gullies opened under it and ridges buried its top, and a
+body walked through at 22 runs.
 
 **Its ghost-light** (`render/ghostfenceGlow.js`): the curtain between the pylons, strands of light climbing it, and a
-halo about each orb, never under a few pixels. It is drawn by the far ring after the fire, in the fire's two lenses,
-and hidden past the world's far plane by the cone (`hidden`, a margin of 250 m: the profile stands on the land at the
-centre, the fence's own ground under it). Each foot stands on the ground its layer draws: a built pixel's own seat
-(`noteFenceFeet`), the middle ring's kernel heights eased onto the far ring as that ring eases, the far ring's centres:
-the kernel stands up to 97 m off the far views' smooth ground there. By day it keeps 30% of its night's light; the
-curtain fades out by 12 km, the halos by 45 km. Its door is `?fenceglow=off`.
+halo about each orb, never under a few pixels. It is drawn after the water and the flats (the renderer's `afterFlats`,
+armed by the far ring: it writes no depth, and drawn before them it was painted over - N2), in the fire's two lenses,
+hidden by the cone where no depth stands (a margin of 250 m), even with the fire off; with no cone it has no far draw.
+
+The curtain stands point by point (8 a run, `ghostfenceCurtainPoint`) on the ground its layer draws: a built pixel's own
+(`noteFenceFeet`, the build's, for its frame alone - N6), the middle ring's kernel eased onto the far ring as that ring
+eases, the far ring's - each read on its ring's own triangles, a point on no ring dropped (N5). The kernel stands up to
+about 130 m off the far views' smooth ground there. By day it keeps 30% of its night's light; the curtain fades out by
+12 km, the halos by 45 km. Its door is `?fenceglow=off`.
 
 ## Recorded departures and readings
 
@@ -171,15 +200,18 @@ curtain fades out by 12 km, the halos by 45 km. Its door is `?fenceglow=off`.
   centre's bytes, the seams, groundTopOf, a site on the flank); by source and the A8 law; its fire and its horizon (the
   cap line, the air's heat, the levels, the ring and the field, the mean ground); the fire (its profile, its mesh, the
   shader's hiding run on its own source, the far ring's wiring and door); and on the freeware's trace the rim over
-  6.5 km, 3 km over its plateau, its reach on land, no place on its cone.
-- **Mutants** `tools/mutants/redmountain.json` (37: 36 dead, 1 equivalent as recorded - the rim's crest, which the
-  profile's crowded steps already catch).
+  6.5 km, 3 km over its plateau, its reach on land, the zone at its centre Red Mountain's, no Arena place on its cone.
+- **Mutants** `tools/mutants/redmountain.json` (37, all dead - the rim's crest no longer marked equivalent: AUDIT
+  RED-MOUNTAIN R2 found the eye it matters to, 20 km out on the flank).
+- **`test/world/audit_redmountain.test.js` (15, one gated on ARENA2)** and **`tools/mutants/audit_redmountain.json`
+  (51)**: every finding of AUDIT RED-MOUNTAIN pinned where it was fixed (`01-Overview/audits/Audit-Red-Mountain.md`).
 - **`test/world/ghostfence.test.js` (8, one gated on ARENA2):** the ring (its radius, wander, spacing, tangents,
   Ghostgate due south, the line closed against an 8-step walk, the gate's pixels the only open ones); the places and
   the roads (the countryside's keep pixel by pixel, a lair's site on the line, the blocks, GROUND_ROLL_VERSION); the
   real roads' builder joining two towns round it; the models wound out of their solids, the passage open; the build
-  (each seat the lowest under its plinth, the solids, the curtain, the feet, Ghostgate, a pixel off it); the glow (the
-  feet on each layer, the meshes, the ease and the hiding run on their own sources, the far ring's wiring and door); by
+  (each seat its centre's ground and a footing on a slope, the solids, the curtain's pieces over their exact ground, the
+  feet and the curtain points, Ghostgate, a pixel off it); the glow (the feet on each layer's triangles, a stale note
+  unread, the meshes, the ease and the hiding run on their own sources, the far ring's wiring and door); by
   source and the A8 law; and on the freeware's trace no countryside within it. **Mutants**
   `tools/mutants/ghostfence.json`.
 - **PIN MOVED (GHOSTFENCE):** `test/world/road/river_fords.test.js` and `test/world/rumarewater.test.js`
@@ -190,4 +222,14 @@ curtain fades out by 12 km, the halos by 45 km. Its door is `?fenceglow=off`.
   fire's shader sources, 3; the range's key `RED_MOUNTAIN` exported from `tamrielBiomes.js`). Re-aimed by content:
   `tools/mutants/audit_farsea1.json` (the pass's depth range put back after the fire) and `tools/mutants/farlandmark.json`
   (the far field's law asks the cell's highest), `tools/mutants/eldistance.json` (the lane's ring line, `summitHold`).
+- **PIN MOVED (AUDIT RED-MOUNTAIN):** `test/world/ghostfence.test.js` (the build: N1 and N4; the glow: N1, N5, N6; the
+  wiring: F5, F9), `test/world/redmountain.test.js` (the fire's wiring: F5; `summitHold` by the distance: F6; R4's two
+  checks of a law against itself), `test/world/audittesa2r_roads.test.js` (6's print with the fence's line, G3). Re-aimed
+  by content: `audit_farsea1.json`, `audit_perfpass.json`, `aurastall.json`, `eldistance.json`, `ow4j.json`,
+  `owwod.json`, `peaks1.json`, `spawnshore.json`, `tamrielrelief.json`, `wilddry.json`, and `ghostfence.json`'s seat
+  (its mutant now the old lowest seat).
+- **PIN MOVED (the merge with #1184, one Red Mountain):** `test/world/reliefpeaks.test.js` (RELIEF-PEAKS's cone retired),
+  `test/render/precip4_snowground.test.js` (the levels' count 45), `test/scenes/perfcol2.test.js`,
+  `test/combat/blood1_decals.test.js`, `test/world/road/river_fords.test.js`, `test/systems/l10n4_hardcoded.test.js`
+  (`tamrielRanges.js` holds no English). Re-aimed: `reliefpeaks.json` (5 cone records gone), `farlandmark.json`.
 - **The probe** `tools/redMountainProbe.mjs` photographs it in the real game from stations about it, day and night.

@@ -61,11 +61,10 @@ function footprint(x, z, tx, tz, along, across) {
 }
 
 /**
- * STAND THE FENCE in Bay pixel (px, py) where it crosses it: each pylon whose foot is in it (Ghostgate in its place) - a
- * pylon on the ground at its centre, a footing down to the lowest under its plinth; Ghostgate on the lowest under its own -
- * in the batch on its own pictures and solid with the pixel's `translation`; and each piece of the curtain's solid whose
- * middle is in it, from under its lowest ground to the collars over its highest, one solid a run. Answers how many pylons.
- * @param {{ px: number, py: number, pkey: string, key: string, samples: Float32Array, renderer: any,
+ * STAND THE FENCE in Bay pixel (px, py): each pylon whose foot is in it on the ground at its centre, a footing to the
+ * lowest under its plinth (Ghostgate on the lowest under its own), in the batch and solid with the pixel's `translation`;
+ * and each piece of the curtain's solid whose middle is in it, under its lowest ground to the collars over its highest,
+ * one solid a run. Answers how many pylons. @param {{ px: number, py: number, pkey: string, key: string, samples: Float32Array, renderer: any,
  *   addStatic: (cpu: any, local: Float32Array, own: boolean) => void, unionBox: (b: number[]) => void,
  *   late: { add: Function }, translation: any }} o
  */

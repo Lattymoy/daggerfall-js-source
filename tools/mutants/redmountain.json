@@ -177,8 +177,8 @@
   {
     "name": "RED-MOUNTAIN-the-fire-undrawn",
     "file": "src/render/farRing.js",
-    "old": "const fire = eye && worldProj ? this._fireNow() : null;",
-    "new": "const fire = null;",
+    "old": "const cone = eye && worldProj ? this._coneNow() : null, fire = cone ? this._fireNow(cone) : null,",
+    "new": "const cone = eye && worldProj ? this._coneNow() : null, fire = null,",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "RED-MOUNTAIN-the-fire-without-the-lift",
     "file": "src/render/farRing.js",
-    "old": "if (!inputs?.relief || this._fireOff) return null;",
-    "new": "if (this._fireOff) return null;",
+    "old": "    if (!inputs?.relief) return null;\n    const frame = redMountainFrame();\n    if (!frame) return null;\n    const ground = redMountainGround(",
+    "new": "    const frame = redMountainFrame();\n    if (!frame) return null;\n    const ground = redMountainGround(",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "RED-MOUNTAIN-the-eye's-ground-not-given-back",
     "file": "src/render/redMountainFire.js",
-    "old": "  float m = margin + max(0.0, coneAt(uEye.xz) - uEye.y);",
-    "new": "  float m = margin;",
+    "old": "  float slack = max(0.0, coneAt(uEye.xz) - uEye.y);",
+    "new": "  float slack = 0.0;",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -268,13 +268,13 @@
   {
     "name": "RED-MOUNTAIN-the-rim's-crest-unasked",
     "file": "src/render/redMountainFire.js",
-    "old": "  float crest = uCone.z + ${f1(D.lift)} - m;",
-    "new": "  float crest = -1e9;",
+    "old": "  return (ta > 0.0 && ta < stop && crestAt(p, ta, margin) < 0.0) || (tb > 0.0 && tb < stop && crestAt(p, tb, margin) < 0.0);",
+    "new": "  return false;",
     "tests": [
+      "test/world/audit_redmountain.test.js",
       "test/world/redmountain.test.js"
     ],
-    "equivalent": true,
-    "why": "Belt and braces: with the profile crowded at the crater (profileR) the ray's steps within the cone's disc land within a few hundred metres of the rim in every case the pins draw, and catch the crest themselves; the crest's own test is kept for a ray whose steps straddle it."
+    "note": "AUDIT RED-MOUNTAIN R2: not equivalent - the crest's own test decides 198 of 2,640 rays round the mountain; an eye 20 km out, 300 m over the flank, its ray to the plume passing under the crowned crest between the profile's samples (test/world/audit_redmountain.test.js R2)"
   },
   {
     "name": "RED-MOUNTAIN-the-profile-even",
@@ -288,8 +288,8 @@
   {
     "name": "RED-MOUNTAIN-the-summits-in-the-haze",
     "file": "src/render/horizonHaze.js",
-    "old": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7 });",
-    "new": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0 });",
+    "old": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7, ease: 8000 });",
+    "new": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0, ease: 8000 });",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -297,7 +297,7 @@
   {
     "name": "RED-MOUNTAIN-the-lane's-ring-in-the-haze",
     "file": "src/render/enhancedLighting.js",
-    "old": "uRimStart, uRimEnd, summitHold(uHazeHold))));",
+    "old": "uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
     "new": "uRimStart, uRimEnd, uHazeHold)));",
     "tests": [
       "test/world/redmountain.test.js"

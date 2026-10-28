@@ -49,12 +49,9 @@ export const cellHeight = (h00, h10, h01, h11, u, v) => (u >= v ? h00 + u * (h10
 
 /**
  * WHERE THE GLOW STANDS on the ground the views draw (world units), for each pylon and each curtain point (`pylons`,
- * `points`): `fine` a built pixel's noted ground, else the middle ring's kernel (`kind` 1: eased onto `coarse` as that ring
- * eases), else the far ring's; `coarse` the far ring's; `kind` 2 where no ring stands under it (the shader drops it).
- * Pure.
- * @param {import('../world/tamriel/ghostfence.js').GhostfenceFrame} frame
- * @param {{ feet?: { map: Map<string, { frame: object, idx: number[], seats: ArrayLike<number>, points: number[], heights: ArrayLike<number> }> } | null,
- *   built?: { has(k: string): boolean } | null,
+ * `points`): `fine` a built pixel's noted ground, else the middle ring's (`kind` 1: eased onto `coarse` as it eases), else
+ * the far ring's; `coarse` the far ring's; `kind` 2 where no ring stands under it (dropped). Pure.
+ * @param {import('../world/tamriel/ghostfence.js').GhostfenceFrame} frame @param {{ feet?: { map: Map<string, any> } | null, built?: { has(k: string): boolean } | null,
  *   mid?: { heights: ArrayLike<number>, baseX: number, baseY: number, radius: number, sub: number } | null,
  *   ring?: { baseX: number, baseY: number, radius: number, side: number, positions: ArrayLike<number>, ground?: ArrayLike<number> | null } | null }} layers
  */

@@ -296,7 +296,8 @@ test('GHOSTFENCE the build: a pixel the fence crosses stands each pylon on the g
   assert.equal(feet.frame, f);
   assert.deepEqual(feet.idx, here);
   assert.deepEqual(Array.from(feet.seats), r.statics.map((s) => Math.fround(s.m[13])));
-  assert.ok(feet.points.length > 0);
+  const allIn = []; for (let p = 0; p < f.n * (CURTAIN_STEPS + 1); p++) if (sampleToPixel(...ghostfenceCurtainPoint(f, Math.floor(p / (CURTAIN_STEPS + 1)), p % (CURTAIN_STEPS + 1))).join() === k0) allIn.push(p);
+  assert.deepEqual([...feet.points].sort((a, b) => a - b), allIn, 'every curtain point in the pixel noted (a run touching it by a point alone too)');
   feet.points.forEach((p, j) => {
     const [gx, gy] = ghostfenceCurtainPoint(f, Math.floor(p / (CURTAIN_STEPS + 1)), p % (CURTAIN_STEPS + 1));
     assert.equal(sampleToPixel(gx, gy).join(), k0);
@@ -438,7 +439,7 @@ test('GHOSTFENCE by source: the law pure and one float in every engine (no Math.
   assert.match(read('src/world/tamrielCountry.js'), /if \(!steps \|\| insideGhostfence\(px, py\)\) return null;/);
 });
 
-test('GHOSTFENCE with ARENA2: on the freeware\'s trace the fence closes round Red Mountain on Morrowind\'s land, no countryside stands within it, no lair on its line, no Arena place within it', { skip: HAVE ? false : 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
+test('GHOSTFENCE with ARENA2: on the freeware\'s trace the fence closes round Red Mountain on Morrowind\'s land in its zone, no countryside stands within it, no lair on its line, no Arena place within it', { skip: HAVE ? false : 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
   const { ww5World } = await import('./worldWide/ww5World.mjs');
   const { tamrielHeightByte } = await import('../../src/world/tamriel/tamrielGround.js');
   const { tamrielBiomeAt } = await import('../../src/world/tamriel/tamrielBiomes.js');
@@ -447,7 +448,7 @@ test('GHOSTFENCE with ARENA2: on the freeware\'s trace the fence closes round Re
   for (const k of f.band) {
     const [x, y] = k.split(',').map(Number);
     assert.ok(tamrielHeightByte(x, y) > 0, `the line on land at (${x}, ${y})`);
-    assert.ok(['morrowindRedMountain', 'morrowindAshlands', 'morrowindGrazelands'].includes(tamrielBiomeAt(x, y)?.key), `in Red Mountain's country at (${x}, ${y})`);
+    assert.equal(tamrielBiomeAt(x, y)?.key, 'morrowindRedMountain', `in Red Mountain's zone at (${x}, ${y})`);   // AUDIT RED-MOUNTAIN G4: its zone alone, as the record says
   }
   const near = w.places.near(cpx, cpy, 30);
   const inside = near.filter((p) => insideGhostfence(p.px, p.py) && p.source !== 'tesa-lairs');

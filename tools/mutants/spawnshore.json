@@ -2,8 +2,8 @@
   {
     "name": "SHORE-law-byte-only",
     "file": "src/world/spawnedDungeons.js",
-    "old": "if (d === undefined) dry.set(key, d = spawnGroundDry(woods, px, py));",
-    "new": "if (d === undefined) dry.set(key, d = woods.getHeightMapValue(px, py) * 8 > 27.2);",
+    "old": "if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && spawnGroundDry(woods, px, py));",
+    "new": "if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && woods.getHeightMapValue(px, py) * 8 > 27.2);",
     "tests": [
       "test/world/terrain/spawnshore.test.js"
     ],

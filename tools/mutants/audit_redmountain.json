@@ -1,0 +1,468 @@
+[
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F1-the-stop-at-97-percent",
+    "file": "src/render/redMountainFire.js",
+    "old": "float stop = 1.0 - ${f1(FIRE.stop)} / sqrt(a), far",
+    "new": "float stop = 0.97, far",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F1-the-slack-untapered",
+    "file": "src/render/redMountainFire.js",
+    "old": "if (under(q, margin + slack * clamp((length(q.xz - uCone.xy) - ${f1(D.rim)}) / far, 0.0, 1.0))) return true;",
+    "new": "if (under(q, margin + slack)) return true;",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F1-the-crown-unread",
+    "file": "src/render/redMountainFire.js",
+    "old": "c = r > 1.0 ? crownAt(v) : 1.0;",
+    "new": "c = 1.0;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F1-the-crest-uncrowned",
+    "file": "src/render/redMountainFire.js",
+    "old": "(uCone.z + ${f1(D.lift)} * crownAt(mix(uEye.xz, p.xz, t) - uCone.xy) - m)",
+    "new": "(uCone.z + ${f1(D.lift)} - m)",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F2-the-depth-box-unread",
+    "file": "src/render/redMountainFire.js",
+    "old": "if (uCone.w < 0.5 || (p.x > uDepth.x && p.x < uDepth.z && p.z > uDepth.y && p.z < uDepth.w)) return false;",
+    "new": "if (uCone.w < 0.5) return false;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F2-the-near-draw's-box-empty",
+    "file": "src/render/redMountainFire.js",
+    "old": "const box = !isFar && pass.depth ? pass.depth : NO_DEPTH;",
+    "new": "const box = NO_DEPTH;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F2-the-core's-ring-unasked",
+    "file": "src/render/farRing.js",
+    "old": "if ((Math.abs(i) === r || Math.abs(j) === r) && !built.has(`${holeX + i},${holeY + j}`)) return r - 1;",
+    "new": "if (i === 0 && j === 0 && !built.has(`${holeX + i},${holeY + j}`)) return r - 1;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F4-the-fire's-haze-unheld",
+    "file": "src/render/redMountainFire.js",
+    "old": "summitHoldAt(uHold.x, y - uHold.y, d, uHold.z)",
+    "new": "uHold.x",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F4-the-split-unasked",
+    "file": "src/render/redMountainFire.js",
+    "old": "bool nearDrawn() { return 1.0 / gl_FragCoord.w < uSplit; }",
+    "new": "bool nearDrawn() { return false; }",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F4-the-far-draw's-split-unset",
+    "file": "src/render/redMountainFire.js",
+    "old": "gl.uniform1f(U.uSplit, isFar ? pass.worldFar : 0);",
+    "new": "gl.uniform1f(U.uSplit, 0);",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F6-the-summit's-air-at-the-grid",
+    "file": "src/render/horizonHaze.js",
+    "old": " * smoothstep(from, from + ${SUMMIT_HAZE.ease.toFixed(1)}, d));",
+    "new": ");",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F6-the-grid's-edge-unhanded",
+    "file": "src/render/farRing.js",
+    "old": "gl.uniform1f(this.u.uSummitFrom, summitFromOf(this._floraRadius));",
+    "new": "gl.uniform1f(this.u.uSummitFrom, 0);",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F3-the-side-unasked",
+    "file": "src/render/redMountainFire.js",
+    "old": "if (dot(N, uEye - vWorld) * uFace < 0.0 || nearDrawn()",
+    "new": "if (nearDrawn()",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F3-the-near-side-first",
+    "file": "src/render/redMountainFire.js",
+    "old": "for (const face of [-1, 1])",
+    "new": "for (const face of [1, -1])",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F3-the-reach-uncut",
+    "file": "src/render/redMountainFire.js",
+    "old": "    if (Math.hypot(eye[0] - foot[0], eye[2] - foot[2]) - PLUME_SPREAD > far) return;   // nothing of it inside the far lens\n",
+    "new": "",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F5-the-programs-not-started",
+    "file": "src/render/playPrograms.js",
+    "old": ", ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];",
+    "new": "];",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F9-the-cone-off-with-the-fire",
+    "file": "src/render/farRing.js",
+    "old": "    if (!inputs?.relief) return null;\n    const frame = redMountainFrame();\n    if (!frame) return null;\n    const ground = redMountainGround(",
+    "new": "    if (!inputs?.relief || this._fireOff) return null;\n    const frame = redMountainFrame();\n    if (!frame) return null;\n    const ground = redMountainGround(",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F9-the-far-draw-without-a-cone",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "for (const isFar of cone ? [true, false] : [false])",
+    "new": "for (const isFar of [true, false])",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F7-the-rim's-close",
+    "file": "src/render/redMountainFire.js",
+    "old": " * (1.0 - smoothstep(uHaze.z, uHaze.w, dist));   // closed by the rim",
+    "new": ";   // closed by the rim",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F8-the-clock's-turns",
+    "file": "src/render/redMountainFire.js",
+    "old": "vec2(0.0, 3.0), uTime * 2.0);",
+    "new": "vec2(0.0, 3.0), uTime * 1.6);",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F10-the-swell-from-the-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "float up = clamp((h - ${f1(D.depth / FIRE.plume.height)}) / ${f1(1 - D.depth / FIRE.plume.height)}, 0.0, 1.0);",
+    "new": "float up = h;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-F10-the-foot-over-the-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "footR: 850,",
+    "new": "footR: 1500,",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N1-the-pieces-a-run-each",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "m = Math.max(1, Math.ceil((t1 - t0) * len - 1e-9));",
+    "new": "m = 1;",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N1-the-pixel-edges-uncut",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "    for (let k = Math.ceil(lo / 128); k * 128 <= hi; k++) { const t = (k * 128 - a) / d; if (t > 0 && t < 1) ts.push(t); }\n",
+    "new": "",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N1-the-ground-at-the-ends-alone",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "  cross(ax, dx); cross(az, dz); cross(az - ax, dz - dx);\n",
+    "new": "",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N1-the-solid-on-its-ground",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "quads.push(ax, lo + CURTAIN.from, az,",
+    "new": "quads.push(ax, lo, az,",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N1-a-run's-curtain-points-unfiled",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "    for (let k = 0; k <= CURTAIN_STEPS; k++) { const [x, y] = ghostfenceCurtainPoint(part, i, k); add(x, y, i); }\n",
+    "new": "",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N2-the-slot-unrun",
+    "file": "src/render/renderer.js",
+    "old": "    if (after) { this._afterFlats = null; after(); this.markForeignPass(); this._use(this.program); }",
+    "new": "",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N2-the-frame's-slot-kept",
+    "file": "src/render/renderer.js",
+    "old": "    this._afterFlats = null;   // AUDIT RED-MOUNTAIN N2: an armed draw is its frame's\n",
+    "new": "",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N2-the-glow-in-the-ring's-pass",
+    "file": "src/render/farRing.js",
+    "old": "if (fence && this.renderer?.afterFlats) this.renderer.afterFlats(() => fence.draw(pass));",
+    "new": "if (false) this.renderer.afterFlats(() => fence.draw(pass));",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N4-the-footing-unstood",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "    if (y - low > FOOTING_FROM) { const foot = pylonFooting(y - low); stand(foot.model, foot.solid, m); }\n",
+    "new": "",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N5-the-feet-bilinear",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "(u >= v ? h00 + u * (h10 - h00) + v * (h11 - h10) : h00 + v * (h01 - h00) + u * (h11 - h01))",
+    "new": "((h00 * (1 - u) + h10 * u) * (1 - v) + (h01 * (1 - u) + h11 * u) * v)",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N5-a-foot-on-no-ring-at-0",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "      else kind[i] = 2;",
+    "new": "      else fine[i] = 0;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-N6-another-frame's-note-read",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "      if (v.frame !== frame || !built.has(k)) continue;",
+    "new": "      if (!built.has(k)) continue;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-G1-a-ruin-on-the-line",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "d = !onGhostfence(px, py) && spawnGroundDry(woods, px, py));",
+    "new": "d = spawnGroundDry(woods, px, py));",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-G2-the-planner-across-the-line",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);",
+    "new": "const openBlocked = (_ax, _ay, bx, by) => false;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-G2-the-gate-shut-too",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "return onGhostfence(px, py) && !(/** @type {GhostfenceFrame} */ (_frame)).open.has(keyOf(px, py));",
+    "new": "return onGhostfence(px, py);",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-L1-the-ash's-zone",
+    "file": "src/world/peaks/snowcap.js",
+    "old": "tamrielBiomeAt(x, y)?.key === 'morrowindRedMountain') n++;",
+    "new": "tamrielBiomeAt(x, y)?.key === 'morrowindAshlands') n++;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-L1-the-lines-unlifted",
+    "file": "src/world/peaks/snowcap.js",
+    "old": "  if (share > 0) for (let k = 0; k < 3; k++) line[k] += share * (bare - line[k]);\n",
+    "new": "",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-L1-the-host's-ash-none",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "ash: ashOf(pt.i * S, pt.j * S)",
+    "new": "ash: 0",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-puffs'-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "smoothstep(0.32, 0.62, n)",
+    "new": "smoothstep(0.0, 0.62, n)",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-column's-edge",
+    "file": "src/render/redMountainFire.js",
+    "old": " * smoothstep(0.0, 0.5, facing); }",
+    "new": "; }",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-body's-top",
+    "file": "src/render/redMountainFire.js",
+    "old": " * (1.0 - smoothstep(0.6, 1.0, h)); }",
+    "new": "; }",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-sun's-side",
+    "file": "src/render/redMountainFire.js",
+    "old": "mix(${f1(FIRE.shade)}, 1.0, max(sunward, 0.0))",
+    "new": "1.0",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-ember's-fall",
+    "file": "src/render/redMountainFire.js",
+    "old": "exp(-h * ${f1(FIRE.plume.height / FIRE.emberM)})",
+    "new": "1.0",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-day-unfelt",
+    "file": "src/render/redMountainFire.js",
+    "old": "  float night = 1.0 - ${f1(1 - FIRE.dayGlow)} * clamp(light, 0.0, 1.0);",
+    "new": "  float night = 1.0;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-billows-about-the-world",
+    "file": "src/render/redMountainFire.js",
+    "old": "billows(c - uFoot + dir * r0, h, uTime)",
+    "new": "billows(c + dir * r0, h, uTime)",
+    "tests": [
+      "test/world/audit_redmountain.test.js",
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-curtain's-body",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "  float body = smoothstep(0.08, 0.35, side.y) * (1.0 - smoothstep(0.7, 1.0, side.y));",
+    "new": "  float body = 1.0;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R1-the-curtain's-fade",
+    "file": "src/render/ghostfenceGlow.js",
+    "old": "fade = 1.0 - smoothstep(${f1(GLOW.fade[0])}, ${f1(GLOW.fade[1])}, d);",
+    "new": "fade = 1.0;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R5-the-gullies-at-the-lip",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": " * reach * smooth01(d / 400) * still;",
+    "new": " * reach * still;",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RED-MOUNTAIN-R5-the-gullies-twice-as-deep",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "lift += D.gully.depth * (2 * (v < 0 ? -v : v) - 0.8)",
+    "new": "lift += 2 * D.gully.depth * (2 * (v < 0 ? -v : v) - 0.8)",
+    "tests": [
+      "test/world/audit_redmountain.test.js"
+    ]
+  }
+]

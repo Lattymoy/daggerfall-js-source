@@ -162,19 +162,20 @@
     ]
   },
   {
-    "name": "GHOSTFENCE-the-seat-its-centre",
+    "name": "GHOSTFENCE-the-seat-its-lowest",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "    const y = lowestGroundUnder(samples, box);",
-    "new": "    const y = surfaceHeightAt(samples, x, z);",
+    "old": "    const y = groundAt(x, z), low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));",
+    "new": "    const low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0])), y = low;",
     "tests": [
       "test/world/ghostfence.test.js"
-    ]
+    ],
+    "note": "AUDIT RED-MOUNTAIN N4: the seat is the ground at the pylon's centre (it was the lowest under its plinth, burying it uphill to 24 m); the mutant seats it on the lowest again"
   },
   {
     "name": "GHOSTFENCE-the-pylon-solid-its-model",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "    else stand(pylonModel(), pylonSolid(), m);",
-    "new": "    else stand(pylonModel(), pylonModel(), m);",
+    "old": "    stand(pylonModel(), pylonSolid(), m);",
+    "new": "    stand(pylonModel(), pylonModel(), m);",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -182,8 +183,8 @@
   {
     "name": "GHOSTFENCE-the-curtain-short",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "lax, ya + CURTAIN_SOLID_TOP, laz);",
-    "new": "lax, ya + CURTAIN.to, laz);",
+    "old": "ax, hi + CURTAIN_SOLID_TOP, az);",
+    "new": "ax, hi + CURTAIN.to, az);",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -191,8 +192,8 @@
   {
     "name": "GHOSTFENCE-the-feet-by-the-build-key",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "  noteFenceFeet(pkey, here.slice(), Float32Array.from(seats));",
-    "new": "  noteFenceFeet(key, here.slice(), Float32Array.from(seats));",
+    "old": "  noteFenceFeet(pkey, { frame: f,",
+    "new": "  noteFenceFeet(key, { frame: f,",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

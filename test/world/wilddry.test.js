@@ -65,5 +65,5 @@ test('WILD-DRY: a dry pixel stops reading early, a wet one reads the whole kerne
 
 test('WILD-DRY: the spawns\' ground keeps its answer per pixel by it (createSpawnGround)', () => {
   const src = readFileSync(new URL('../../src/world/spawnedDungeons.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(d === undefined\) dry\.set\(key, d = spawnGroundDry\(woods, px, py\)\);/);
+  assert.match(src, /if \(d === undefined\) dry\.set\(key, d = !onGhostfence\(px, py\) && spawnGroundDry\(woods, px, py\)\);/);   // PIN MOVED (AUDIT RED-MOUNTAIN G1): and never on the Ghostfence's line
 });

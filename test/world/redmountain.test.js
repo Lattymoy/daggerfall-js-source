@@ -259,6 +259,9 @@ test('RED-MOUNTAIN its fire and its horizon: the cap line rides the cone (a zone
     assert.equal(redMountainNodeLift(x, y), redMountainSmooth(x * 128, (MAP_HEIGHT + 1 - y) * 128), 'a node a pixel corner');
   }
   assert.ok(Math.abs(redMountainNodeLift(cx + 6, cy) - redMountainLiftAt(cx + 6, cy)) * UNIT > 50, 'the node, not the pixel\'s centre');
+  // AUDIT RED-MOUNTAIN R9 (the merge moved its pin off the crater): the far views' crater - the centre's pixel on its floor
+  const rmf = redMountainFrame(), ccx = Math.floor(rmf.bx), ccy = Math.floor(rmf.by);
+  assert.ok(Math.abs(redMountainLiftAt(ccx, ccy) * UNIT - (D.lift - D.depth)) < 1, `the crater's floor on the horizon: ${(redMountainLiftAt(ccx, ccy) * UNIT).toFixed(0)} m`);
   assert.match(read('src/render/farRing.js'), /heightOf: \(byte, x, y, v\) => answer\.ground\[v\] \+ \(inputs\.relief \? redMountainNodeLift\(x, y\) \* STREAMING_TERRAIN_SCALE : 0\),/, 'the far field stands the cone at its vertex');
   // the air's mean ground: the smooth cone over the land
   const g = groundWoods(new StubWoods());
@@ -396,7 +399,7 @@ test('RED-MOUNTAIN its fire: the profile the far draw hides behind the cone\'s o
 const A = process.env.ARENA2_PATH;
 const HAVE = !!A && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((n) => existsSync(join(A, n)));
 
-test('RED-MOUNTAIN with ARENA2: on the freeware\'s trace the volcano stands at Red Mountain\'s summit on the relief - its rim over 6.5 km, the highest ground of Tamriel by 3 km\'s margin over its plateau, the land about it Red Mountain\'s zone and the Ashlands\', no place past the Bay on its cone, its reach on Morrowind\'s land', { skip: HAVE ? false : 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
+test('RED-MOUNTAIN with ARENA2: on the freeware\'s trace the volcano stands at Red Mountain\'s summit on the relief - its rim over 6.5 km, the highest ground of Tamriel by 3 km\'s margin over its plateau, the zone at its centre Red Mountain\'s, no Arena place on its summit cone (its lairs stand: Dagoth Ur\'s strongholds), its reach on Morrowind\'s land (AUDIT RED-MOUNTAIN R3/R8: the title claimed a zone about it and no place at all)', { skip: HAVE ? false : 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
   const bytes = (n) => new Uint8Array(readFileSync(join(A, n)));
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../src/ui/tamrielTrace.js');
@@ -434,6 +437,6 @@ test('RED-MOUNTAIN with ARENA2: on the freeware\'s trace the volcano stands at R
     }
     const cone = (D.rim + D.tiers[0].reach) / 819.2;
     const near = (arenaPixels()?.stood ?? []).filter((a) => Math.hypot(a.bx + 0.5 - f.bx, a.by + 0.5 - f.by) < cone);
-    assert.deepEqual(near.map((a) => a.name), [], 'no place on the summit cone');
+    assert.deepEqual(near.map((a) => a.name), [], 'no Arena place on the summit cone');
   } finally { setTamrielTrace(null); setTamrielFit(null); G.dropGroundCache(); }
 });

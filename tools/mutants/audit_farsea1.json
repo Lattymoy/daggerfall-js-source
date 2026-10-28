@@ -73,8 +73,8 @@
   {
     "name": "AUDIT-FAR-SEA1-P1-the-range-left-at-the-far-plane",
     "file": "src/render/farRing.js",
-    "old": "start: MID_MORPH_START, end: MID_MORPH_END } });\n    }\n    gl.depthRange(0, 1);",
-    "new": "start: MID_MORPH_START, end: MID_MORPH_END } });\n    }",
+    "old": "      else fence?.draw(pass);\n    }\n    gl.depthRange(0, 1);",
+    "new": "      else fence?.draw(pass);\n    }",
     "tests": [
       "test/render/audit_farsea1.test.js",
       "test/render/farsea1.test.js"
