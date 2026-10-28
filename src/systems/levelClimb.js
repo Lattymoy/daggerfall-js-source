@@ -72,7 +72,7 @@ export function onlineLevelPoints(startingSum, currentSum) {
 /** LEVEL-RAW: the skill sheet's points one counted point costs past 100 (2.5: 100 points climb 40). */
 export const RAW_PER_POINT_PAST = (2 * SKILL_SOFT_CAP - SKILL_SOFT_CAP) / (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP);
 
-/** LEVEL-RAW (mob: "show raw point to each level"): the bar in the sheet's own points - the counted span times the
+/** LEVEL-RAW (the owner: "show raw point to each level"): the bar in the sheet's own points - the counted span times the
  *  mean cost of the six counted skills still climbing (1 to 100, 2.5 past it), so ~38 a level at the masteries. */
 export function onlineLevelRawPoints(entity) {
   const { now, max } = onlineLevelPoints(entity.startingLevelUpSkillSum ?? 0, entity.currentLevelUpSkillSum ?? 0);
@@ -121,7 +121,7 @@ export function onlineLevelConvert(snap) {
     if (Number.isFinite(snap.health) && Number.isFinite(snap.maxHealth) && snap.health > snap.maxHealth) snap.health = snap.maxHealth;
     moved = true;
   } else if (level < earned && STAT_KEYS_ORDER.every((k) => (snap.stats?.[k] ?? 0) >= MAX_STAT_VALUE)) {
-    // LEVEL-OWED (mob: "not to those that are capped out naturaliy"): no point left to place, so the level is given here
+    // LEVEL-OWED (the owner: "not to those that are capped out naturaliy"): no point left to place, so the level is given here
     snap.level = earned;
     snap.readyToLevelUp = false;
     snap.pendingLevel = null;
@@ -129,7 +129,7 @@ export function onlineLevelConvert(snap) {
     const floor = evenHpFloor({ career: snap.career, level: earned }, snap.stats.endurance);
     if (floor > 0 && Number.isFinite(snap.maxHealth) && snap.maxHealth < floor) snap.maxHealth = floor;
     moved = true;
-  } else if (level < earned && snap.readyToLevelUp !== true) {   // LEVEL-OWED (mob: "give the atribuit point"): the window offers it at the join
+  } else if (level < earned && snap.readyToLevelUp !== true) {   // LEVEL-OWED (the owner: "give the atribuit point"): the window offers it at the join
     snap.readyToLevelUp = true;
     snap.pendingLevel = level + 1;
     moved = true;

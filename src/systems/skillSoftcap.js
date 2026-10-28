@@ -6,7 +6,7 @@
 // THE FOUR NUMBERS A PLAYER IS TOLD, AND WHERE EACH LIVES
 //
 //   1..100    exactly DFU's law (advancement.js, untouched below 100)
-//   100..125  a point costs 1.5x the uses         SOFTCAP_TIERS (mob, 2026-10-28: 1.5 / 2 / 4, was 4 / 8 / 16)
+//   100..125  a point costs 1.5x the uses         SOFTCAP_TIERS (the owner, 2026-10-28: 1.5 / 2 / 4, was 4 / 8 / 16)
 //   125..150  a point costs  2x the uses
 //   150..200  a point costs  4x the uses          SKILL_HARD_CAP = 200
 //
@@ -47,7 +47,7 @@ export const SKILL_HARD_CAP = 200;
 export const OVERCAP_POINT_WEIGHT = 0.25;
 
 /** The cost ladder: the uses a raise needs, multiplied, by the value the
- *  skill is LEAVING (100 -> 101 is the first 1.5x point). LADDER-CUT (mob: "1.5 2 4"). */
+ *  skill is LEAVING (100 -> 101 is the first 1.5x point). LADDER-CUT (the owner: "1.5 2 4"). */
 export const SOFTCAP_TIERS = Object.freeze([
   Object.freeze({ from: 100, to: 125, mult: 1.5 }),
   Object.freeze({ from: 125, to: 150, mult: 2 }),

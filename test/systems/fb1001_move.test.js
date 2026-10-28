@@ -68,7 +68,7 @@ function realRun() {
 }
 
 test('MOVE-BANK: a level-30 master runs 100 minutes and rests - the pass banks the whole run, not the 20000 bucket', () => {
-  const p = runner(30, 150);   // PIN MOVED: LADDER-CUT (2026-10-28, mob: "1.5 2 4") - at 100's 1.5x the run lands a point; 150's 4x keeps it a bank
+  const p = runner(30, 150);   // PIN MOVED: LADDER-CUT (2026-10-28, the owner: "1.5 2 4") - at 100's 1.5x the run lands a point; 150's 4x keeps it a bank
   const { odometer, speed } = realRun();
   assert.ok(speed > 8, `the real run covers ${speed.toFixed(2)} m/s`);
   let cm = p.lastSkillCheckTime;
