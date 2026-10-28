@@ -155,11 +155,12 @@
   {
     "name": "TESA13-hover-no-word",
     "file": "src/ui/tamrielInk.js",
-    "old": "mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '', locationTypeName(mark.place.type)) };",
-    "new": "mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '', null) };",
+    "old": "return { on: 'mark', label: TAMRIEL_TEXT.city(provinceByKey(mk)?.name ?? TAMRIEL_TEXT.beyond, name, locationTypeName(mark.place.type)), name,",
+    "new": "return { on: 'mark', label: TAMRIEL_TEXT.city(provinceByKey(mk)?.name ?? TAMRIEL_TEXT.beyond, name, null), name,",
     "tests": [
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
   },
   {
     "name": "TESA13-atlas-asks-the-bay",

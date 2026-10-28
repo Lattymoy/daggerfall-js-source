@@ -2,20 +2,22 @@
   {
     "name": "AUDIT-STARTS-U1-card-offers-a-journey",
     "file": "src/ui/heldMap.js",
-    "old": "    if (this._selected.pastBay && !(armed && this._selected.portal)) return;\n",
+    "old": "    if (this._selected.pastBay && !(armed ? this._selected.portal : this._selected.walk)) return;   // OW-PAST-BAY: a walk there\n",
     "new": "",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
-    ]
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
   },
   {
     "name": "AUDIT-STARTS-U1-panel-ungated",
     "file": "src/ui/heldMap.js",
-    "old": "    if (this._selected.pastBay && !(this._zoneMap ? kind === 'travel' : kind === 'teleport' && this._selected.portal)) return;\n",
+    "old": "    if (this._selected.pastBay && !(this._zoneMap ? kind === 'travel' : kind === 'teleport' ? this._selected.portal : this._selected.walk)) return;   // OW-PAST-BAY: the travel map's a walk\n",
     "new": "",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
-    ]
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
   },
   {
     "name": "AUDIT-STARTS-U2-confirm-ungated",

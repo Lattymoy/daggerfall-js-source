@@ -211,6 +211,15 @@ into, a dungeon to go down - and the held map takes the player there.
   The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
   ways; the recommendation is to refuse that leg too (the same law, its `from` asked as its `to` is - the zone's
   journeys excepted), so the land past the Bay is left as it is reached: walked, sailed, or through a stone.
+- **OW-PAST-BAY** (2026-10-28, the player: "Youre not able to click on the map outside of the bay and travel to
+  locations" - "Im talking about clicking on the map to overworld travel"): on the travel map a press past the Bay is a
+  WALK there (`ui/heldMap.js` `_pickAt`, `_walksPastBay`) - a city's or a countryside mark's pixel by its name, or bare
+  land where Travel Options allows a bare pixel; never the sea. The panel bills the walked trip, no fare, and Begin is
+  the coordinates journey (`scenes/world.js` beginAcceleratedTravel): the Overworld's walk on the enhanced interface,
+  which asks no gate past the Bay. TESA-NO-FAST holds - this is the walk its words name, not fast travel; the teleport
+  map keeps TESA2's and PORTAL-ANYWHERE's portals. PIN MOVED: `test/tesa2_arena.test.js`'s cursor,
+  `start3_pastbay_marks`' pick (`walk`). Pins `test/ui/owpastbay_walk.test.js` (3); mutants `tools/mutants/owpastbay.json`
+  (9, all dead), six records re-aimed by content.
 - **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.

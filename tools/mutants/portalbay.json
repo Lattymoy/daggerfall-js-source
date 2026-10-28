@@ -131,11 +131,12 @@
   {
     "name": "PORTALANY-the-hover-points-not",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: this.teleportationTravel && (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : ''",
-    "new": "cursor: this.teleportationTravel && past.city?.pixel ? 'pointer' : ''",
+    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py)) : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : ''",
+    "new": "cursor: (this.teleportationTravel ? past.city?.pixel : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : ''",
     "tests": [
       "test/systems/portalbay_stone.test.js"
-    ]
+    ],
+    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
   },
   {
     "name": "PORTALANY-the-quest-place-a-city-alone",
