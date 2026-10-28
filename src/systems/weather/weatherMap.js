@@ -8,7 +8,7 @@
 // DFU's weather is a climate zone's word, rolled once a day
 // (weatherSim.js, the classic lane, 1:1). The enhanced lane's world
 // instead carries WEATHER SYSTEMS - a thunderstorm, a rain band, a snow
-// squall, a sandstorm, a fog bank, an overcast deck, a cloud field -
+// squall, a sandstorm, an ashfall, a fog bank, an overcast deck, a cloud field -
 // each born somewhere at some minute, drifting on the wind, growing,
 // holding and dying. Where a system stands, its word is the sky; where
 // none does, the air is clear. Nothing is rolled per day or per zone,
@@ -51,20 +51,21 @@
 // pixel is TERRAIN_SIZE on a side, x east, z north), time is absolute
 // classic minutes (the save's clock offline, the shared clock online).
 // `climateAt(px, py)` answers the map's climate index (the hosts pass
-// MapsFile's); a pixel off the map is the sea.
+// MapsFile's); a pixel off the map is the sea. ASHFALL1: past the Bay a zone's ASH too (`ashOfField`).
 
 import { CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from '../gameDate.js';
 import { skyMinuteOfEvent, skyCalendarOn } from '../skyCalendar.js';   // TIME1: a system lives on the event clock; it is born to the sky's season and hour
 import { WEATHER_TABLE, weatherTableFor } from './weatherTable.js';
-import { pixelOfField } from './weatherField.js';
+import { pixelOfField, ashAtPixel } from './weatherField.js';
 import { seededRng, seededFirst, VIOLENCE } from '../wind/wind.js';
+import { biomeStamp, ASH_COUNTRY } from '../../world/tamriel/tamrielBiomes.js';   // ASHFALL1: the volcano's country's laws, and the zones' version its births follow
 
 const WORLD_SEED = 0x57584D50;   // 'WXMP'
 
 /** The priority where systems overlap: the worn word is the first
  *  present (the others still stand in the sky). */
-export const PRIORITY = Object.freeze(['thunder', 'rain', 'snow', 'sandstorm', 'fog', 'overcast', 'cloudy']);
+export const PRIORITY = Object.freeze(['thunder', 'rain', 'snow', 'sandstorm', 'ashfall', 'fog', 'overcast', 'cloudy']);
 const RANK = Object.freeze(Object.fromEntries(PRIORITY.map((w, i) => [w, i])));
 
 /**
@@ -116,6 +117,12 @@ export const SYSTEM_TYPES = Object.freeze({
     core: [15000, 30000], rings: [['cloudy', 1]], life: [240, 600], speed: 40, grow: 0.2, decay: 0.3,
     node: [80000, 720], diurnal: { other: [0.4, 15] },   // the desert wind rises with the day's heat
   }),
+  // ASHFALL1: the volcano's ash - a plume's pall, the overcast its skirt, riding the wind off the vents slower than a
+  // front (a fall of ash drifts downwind of its mountain), and born at every hour (the volcano keeps none)
+  ashfall: Object.freeze({
+    core: [15000, 28000], rings: [['overcast', 0.8]], life: [360, 960], speed: 20, grow: 0.2, decay: 0.3,
+    node: [80000, 720], diurnal: { other: [0, 0] },
+  }),
   fog: Object.freeze({
     core: [15000, 35000], rings: [], life: [240, 600], speed: 5, grow: 0.25, decay: 0.3,
     node: [80000, 720], diurnal: { other: [0.8, 4] },   // born in the small hours; a bank born at 04:00 is gone by early afternoon
@@ -137,7 +144,7 @@ export const CELL_OF = Object.freeze(Object.fromEntries(PRIORITY.filter((t) => S
 for (const [front, cell] of Object.entries(CELL_OF)) {
   for (const t of PRIORITY) for (const [word] of SYSTEM_TYPES[t].rings) if (word === front || word === cell) throw new Error(`weatherMap: ${t}'s ring paints ${word}, a front's or a cell's word`);
 }
-const TYPE_SALT = Object.freeze({ thunder: 1, rain: 2, snow: 3, sandstorm: 4, fog: 5, overcast: 6, cloudy: 7 });
+const TYPE_SALT = Object.freeze({ thunder: 1, rain: 2, snow: 3, sandstorm: 4, fog: 5, overcast: 6, cloudy: 7, ashfall: 8 });
 
 /**
  * THE SHAPE (WEATHER3h, Mac: "they look too much like blobs and blots" -
@@ -155,7 +162,7 @@ const TYPE_SALT = Object.freeze({ thunder: 1, rain: 2, snow: 3, sandstorm: 4, fo
  */
 export const SHAPE_AMPS = Object.freeze({
   thunder: [0.25, 0.15, 0.1], rain: [0.45, 0.2, 0.12], snow: [0.45, 0.2, 0.12], sandstorm: [0.35, 0.15, 0.1],
-  fog: [0.3, 0.2, 0.15], overcast: [0.4, 0.2, 0.12], cloudy: [0.35, 0.2, 0.15],
+  fog: [0.3, 0.2, 0.15], overcast: [0.4, 0.2, 0.12], cloudy: [0.35, 0.2, 0.15], ashfall: [0.4, 0.15, 0.1],   // ASHFALL1: a plume drawn out downwind
 });
 /** The largest m(theta) a type's shape can reach: a search's reach. */
 export const shapeMax = (type) => 1 + SHAPE_AMPS[type].reduce((a, b) => a + b, 0);
@@ -238,17 +245,25 @@ const DRY_WORDS = Object.freeze(['cloudy', 'overcast', 'fog', 'sandstorm']);
 
 /** The table's row (compiled order [Sunny, Cloudy, Overcast, Fog, Rain,
  *  Snow, Thunder], per cent) as the target share of each worn word - the
- *  falling words worn for their WET_HOURS (RAIN-HOURS). */
-export function targetShares(table, season) {
+ *  falling words worn for their WET_HOURS (RAIN-HOURS).
+ *
+ *  ASHFALL1: the Chronicles have no ash either - it is the volcano's. Where a zone names its `ash` (world/tamriel/
+ *  tamrielBiomes.js: Red Mountain, the Ashlands, Stonefalls) that share of the sky's HOURS is ashfall, taken from its
+ *  clear air and its dry words (cloud, the deck, fog, the desert's sand) in proportion and never from what falls: the
+ *  table's rain, storms and snow keep their hours, and the ash is the share the lore gives it (all the dry sky at most). */
+export function targetShares(table, season, ash = 0) {
   const row = table?.[season];
   if (!row) return null;
-  const t = { thunder: row[6] / 100, rain: row[4] / 100, snow: row[5] / 100, sandstorm: 0, fog: row[3] / 100, overcast: row[2] / 100, cloudy: row[1] / 100 };
+  const t = { thunder: row[6] / 100, rain: row[4] / 100, snow: row[5] / 100, sandstorm: 0, ashfall: 0, fog: row[3] / 100, overcast: row[2] / 100, cloudy: row[1] / 100 };
   if (table === WEATHER_TABLE.desert) { t.sandstorm = t.cloudy * SAND_SHARE_OF_CLOUDY; t.cloudy -= t.sandstorm; }
   // RAIN-HOURS: the falling words give up the hours they no longer fall, and the dry words share them by their odds
   let freed = 0;
   for (const [w, k] of Object.entries(WET_HOURS)) { freed += t[w] * (1 - k); t[w] *= k; }
   const dry = row[0] / 100 + DRY_WORDS.reduce((sum, w) => sum + t[w], 0);
   if (dry > 0) for (const w of DRY_WORDS) t[w] *= 1 + freed / dry;
+  // ASHFALL1: the ash's hours out of the dry sky's, the clear air's among them (the share no system paints shrinks with them)
+  const sky = dry + freed;
+  if (ash > 0 && sky > 0) { t.ashfall = Math.min(ash, sky); for (const w of DRY_WORDS) t[w] *= 1 - t.ashfall / sky; }
   return t;
 }
 
@@ -378,16 +393,17 @@ const _laws = new Map();   // table -> season -> law, solved once
  * flat solve's day-averaged shares fall short of the table (a summer
  * storm's afternoon peak costs its climate two points of weather). The
  * solve is re-aimed by the shortfall until the day's shares ARE the
- * table's. A climate with no table (an unknown index) births nothing.
+ * table's. A climate with no table (an unknown index) births nothing. ASHFALL1: `ash` the place's ash share, its own law.
  */
-export function birthLaw(climateIndex, season) {
+export function birthLaw(climateIndex, season, ash = 0) {
   const table = tableOf(climateIndex);
   if (!table) return null;
   let bySeason = _laws.get(table);
   if (!bySeason) _laws.set(table, bySeason = new Map());
-  let law = bySeason.get(season);
+  const key = ash > 0 ? `${season}:${ash}` : season;
+  let law = bySeason.get(key);
   if (law) return law;
-  const targets = targetShares(table, season);
+  const targets = targetShares(table, season, ash);
   if (!targets) return null;
   const aim = { ...targets };
   let flat = solveFlat(aim);
@@ -401,7 +417,7 @@ export function birthLaw(climateIndex, season) {
   const weight = Object.fromEntries(PRIORITY.map((t) => [t, flat.core[t] * (SYSTEM_TYPES[t].parent ? 1 : nodeVolume(t)) / coreVolume(t)]));
   const rings = Object.fromEntries(PRIORITY.map((t) => [t, Object.freeze(flat.rings[t].map((r) => Object.freeze(r)))]));
   law = Object.freeze({ weight: Object.freeze(weight), rings: Object.freeze(rings) });
-  bySeason.set(season, law);
+  bySeason.set(key, law);
   return law;
 }
 
@@ -421,36 +437,56 @@ export function diurnal(type, hour, season) {
 }
 const maxDiurnal = (type) => Math.max(...Object.values(SYSTEM_TYPES[type].diurnal).map(([amp]) => 1 + amp));
 
+/** ASHFALL1: the climates the volcano's country is laid on - a birth reads its ash only where its climate is one. */
+const ASH_CLIMATES = new Set(ASH_COUNTRY.map(([climate]) => climate));
+/** ASHFALL1 (the second audit, lane A): AN ASH LAW RAISES A CEILING ONLY WHERE IT ASKS MORE than the climates' laws do,
+ *  past this share - so the volcano's country never redraws the world's births. A ceiling is the rate every candidate of
+ *  a type is drawn at, the world over, and moving it by a bit redraws them all; the ash takes the dry words' share of the
+ *  free air, so the winter mountains' cloud asks the same weight with ash as without to the last bits of a double
+ *  (3.972145394231093 against ...087), and a laws-wide max let that noise through. Within the slack the keep is a
+ *  billionth short of its law, there alone. */
+export const ASH_CEILING_SLACK = 1e-9;
+/** `into[t]` raised to every climate's law's weight for the type in `season`. */
+function raiseTo(into, season) {
+  for (const climate of KNOWN) {
+    const law = birthLaw(climate, season);
+    if (law) for (const t of PRIORITY) into[t] = Math.max(into[t], law.weight[t]);
+  }
+  return into;
+}
+/** ...and to the volcano's country's laws' (ASH_COUNTRY), only past ASH_CEILING_SLACK. */
+function raiseToAsh(into, season) {
+  for (const [climate, ash] of ASH_COUNTRY) {
+    const law = birthLaw(climate, season, ash);
+    if (law) for (const t of PRIORITY) if (law.weight[t] > into[t] * (1 + ASH_CEILING_SLACK)) into[t] = law.weight[t];
+  }
+  return into;
+}
 /** Every type's ceiling: the largest weight any climate and season asks
  *  of it, times its largest diurnal factor - the rate the candidates are
- *  drawn at before thinning. */
+ *  drawn at before thinning. ASHFALL1: the volcano's country's laws past
+ *  the climates' alone where they ask more (ASH_CEILING_SLACK). */
 let _ceilings = null;
-function ceilings() {
+export function typeCeilings() {
   if (_ceilings) return _ceilings;
   const c = Object.fromEntries(PRIORITY.map((t) => [t, 0]));
-  for (const climate of KNOWN) {
-    for (const season of Object.values(SEASONS)) {
-      const law = birthLaw(climate, season);
-      if (law) for (const t of PRIORITY) c[t] = Math.max(c[t], law.weight[t]);
-    }
-  }
+  for (const season of Object.values(SEASONS)) raiseTo(c, season);
+  for (const season of Object.values(SEASONS)) raiseToAsh(c, season);
   for (const t of PRIORITY) c[t] *= maxDiurnal(t);
   return (_ceilings = Object.freeze(c));
 }
+const ceilings = typeCeilings;
 /** AUDIT PRECIP DOC-7: each type's ceiling IN A SEASON - the largest weight any climate asks of it then, times its largest
  *  diurnal factor then: a candidate whose draw no climate's law could keep in its season is thinned before its place is
- *  read (drawCells). Every law is a climate's in KNOWN (tableOf), so it bounds every keep. */
+ *  read (drawCells). Every law a birth can read is a climate's in KNOWN (tableOf) or the volcano's country's
+ *  (ASH_COUNTRY), so it bounds every keep. */
 let _seasonCeilings = null;
 export function seasonCeilings() {
   if (_seasonCeilings) return _seasonCeilings;
   const c = Object.fromEntries(PRIORITY.map((t) => [t, {}]));
   for (const season of Object.values(SEASONS)) {
-    for (const t of PRIORITY) c[t][season] = 0;
-    for (const climate of KNOWN) {
-      const law = birthLaw(climate, season);
-      if (law) for (const t of PRIORITY) c[t][season] = Math.max(c[t][season], law.weight[t]);
-    }
-    for (const t of PRIORITY) { const d = SYSTEM_TYPES[t].diurnal; c[t][season] *= 1 + Math.abs((d[season] ?? d.other)[0]); }
+    const s = raiseToAsh(raiseTo(Object.fromEntries(PRIORITY.map((t) => [t, 0])), season), season);
+    for (const t of PRIORITY) { const d = SYSTEM_TYPES[t].diurnal; c[t][season] = s[t] * (1 + Math.abs((d[season] ?? d.other)[0])); }
   }
   return (_seasonCeilings = c);
 }
@@ -534,6 +570,19 @@ function climateOfField(climateAt, x, z) {
   }
   return climateAt(Math.min(MAX_MAP_PIXEL_X - 1, Math.max(0, p.x)), Math.min(MAX_MAP_PIXEL_Y - 1, Math.max(0, p.y)));
 }
+/** ASHFALL1: THE ASH under a field position - its pixel's (weatherField.js ashAtPixel: a zone's `ash` where the host's
+ *  map wears the zone), so the volcano's country is the continent's the host stands. */
+function ashOfField(climateAt, x, z) {
+  const p = pixelOfField(x, z);
+  return ashAtPixel(climateAt, p.x, p.y);
+}
+/** THE BIRTH LAW AT A FIELD POSITION in a season: its climate's (climateOfField), the volcano's over it where the zone
+ *  names its ash - read only where the climate can carry ash (ASH_CLIMATES: the second audit's, every candidate of every
+ *  type had asked the zones). */
+function lawAt(climateAt, x, z, season) {
+  const climate = climateOfField(climateAt, x, z);
+  return birthLaw(climate, season, ASH_CLIMATES.has(climate) ? ashOfField(climateAt, x, z) : 0);
+}
 
 /** A Poisson draw by Knuth's product, a mean over POISSON_CHUNK taken as
  *  a sum of chunks (a sum of Poissons is Poisson; the product's limit
@@ -568,6 +617,11 @@ function memoised(key, climateAt, draw) {
   // TIME1: a node's births are drawn to the season and hour of the calendar that stood when they were drawn, so the
   // key carries which one - births drawn on the sky's are never served under the event clock's, or the reverse
   key = `${skyCalendarOn() ? 'sky' : 'one'}|${key}`;
+  // ASHFALL1: and to the land past the Bay as it stood - its zones' climates and ash (world/tamriel/tamrielBiomes.js
+  // biomeStamp: the trace landing after the boot, a fit) moving drops them all, as the air's tiles drop: a node drawn
+  // over the authored rings kept their zones' weather once the trace had moved the provinces
+  const stamp = biomeStamp();
+  if (stamp !== _bornStamp) { _births = new WeakMap(); _bornStamp = stamp; }
   let memo = _births.get(climateAt);
   if (!memo) _births.set(climateAt, memo = new Map());
   let out = memo.get(key);
@@ -582,6 +636,7 @@ function memoised(key, climateAt, draw) {
 /** The births cache, per climate lookup (a host's lookup is one function
  *  for the session; a test's each its own). */
 let _births = new WeakMap();
+let _bornStamp = -1;   // ASHFALL1: the zones' stamp the births were drawn on
 export const BIRTHS_MEMO = 40000;
 
 /** A system's id as a seed (FNV-1a over its characters): a front's cells are drawn from it, and a system's strength
@@ -607,7 +662,7 @@ function drawBirths(type, gx, gz, gt, climateAt) {
     const keep = r(), rc = r(), rl = r(), u1 = r(), u2 = r(), u3 = r(), u4 = r(), u5 = r(), u6 = r();
     const skyBorn = skyMinuteOfEvent(bornAt);   // TIME1: the sky's season and hour at the birth
     const season = seasonValue(dateFromClassicMinutes(skyBorn));
-    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
+    const law = lawAt(climateAt, bornX, bornZ, season);   // ASHFALL1: the volcano's law over its climate's
     const hour = (((skyBorn % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
     const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);
@@ -654,7 +709,7 @@ function drawCells(front, climateAt) {
     const ox = rad * Math.cos(ang), oz = rad * Math.sin(ang);
     const [px, pz] = pathWith(fh, front.bornAt, bornAt);   // FLOW2: the front's own headings, read once for all its cells
     const bornX = front.bornX + px * fspec.speed + ox, bornZ = front.bornZ + pz * fspec.speed + oz;
-    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
+    const law = lawAt(climateAt, bornX, bornZ, season);
     const hour = (((skyBorn % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
     const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);
@@ -859,9 +914,9 @@ export const EDGE_INTENSITY = 0.2;
  * and a sprinkle was only ever a front's edge. A rain front's heart now falls anywhere from the heaviest front's edge
  * (EDGE_INTENSITY: the weakest is a drizzle from heart to edge) to the downpour. A type with no range falls whole: a
  * snow front, the sandstorm ("never thin", WEATHER2d) and the storm - a storm cell is born in its front (CELL_OF), not
- * on the lattice where a strength is drawn, and a storm never sprinkles (weatherFront.js PRECIP_PEAK).
+ * on the lattice where a strength is drawn, and a storm never sprinkles (weatherFront.js PRECIP_PEAK). ASHFALL1: a dusting to the heavy fall.
  */
-export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]) });
+export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]), ashfall: Object.freeze([0.35, 1]) });
 for (const t of Object.keys(STRENGTH)) if (!SYSTEM_TYPES[t] || SYSTEM_TYPES[t].parent) throw new Error(`weatherMap: a strength for ${t}, which is not born on the lattice`);
 const STRENGTH_SEED = 0x53545247;   // 'STRG'
 /** A system's strength: its type's range (STRENGTH) placed by its id's own draw; 1 for a type with none. */
@@ -894,7 +949,7 @@ export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.cl
 /** AUDIT PRECIP AIR-9: HOW MUCH OF THE SKY a system's cloud covers over a place - its type's own deck (a front's or a
  *  storm's whole, a fair-weather field's broken), as grown as the system, thinning to nothing over the outer COVER_EDGE
  *  of its outline - so the cover under a deck's edge walks, never steps at a band's. */
-export const CLOUD_COVER = Object.freeze({ thunder: 1, rain: 1, snow: 1, overcast: 1, sandstorm: 0.6, fog: 0.5, cloudy: 0.4 });
+export const CLOUD_COVER = Object.freeze({ thunder: 1, rain: 1, snow: 1, overcast: 1, sandstorm: 0.6, ashfall: 1, fog: 0.5, cloudy: 0.4 });   // ASHFALL1: the pall a whole deck
 export const COVER_EDGE = 0.25;
 const WET = new Set(['rain', 'thunder', 'snow']);
 /** Whether a word falls (rain, a storm, snow). */
@@ -997,7 +1052,7 @@ export function weatherAt(x, z, minutes, climateAt, { ground = null, alt = null 
 /** How much each word's cloud matters to the eye, for the few slots the
  *  sky has: a storm's tower first, a fog bank's low smear last but one,
  *  a fair-weather field last. */
-export const SKY_WEIGHT = Object.freeze({ thunder: 1, sandstorm: 0.95, rain: 0.9, snow: 0.85, overcast: 0.7, fog: 0.6, cloudy: 0.5 });
+export const SKY_WEIGHT = Object.freeze({ thunder: 1, sandstorm: 0.95, rain: 0.9, ashfall: 0.9, snow: 0.85, overcast: 0.7, fog: 0.6, cloudy: 0.5 });   // ASHFALL1: the pall as a rain's deck
 
 /**
  * THE SKY'S CELLS: every system's bands as nested discs - the skirt's

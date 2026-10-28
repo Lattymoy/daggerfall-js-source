@@ -164,8 +164,8 @@
   {
     "name": "WINDFALL1-sandstorm-sunny",
     "file": "src/systems/windfall.js",
-    "old": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder });",
-    "new": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.sunny });",
+    "old": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder, ashfall: WEATHER.overcast });",
+    "new": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.sunny, ashfall: WEATHER.overcast });",
     "tests": [
       "test/systems/windfall1_model.test.js"
     ]

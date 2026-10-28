@@ -190,6 +190,7 @@ const HARDCODED = {
   'src/render/courtCrystals.js': 3,
   'src/render/deadlands.js': 4,
   'src/render/deepWatersRender.js': 13,
+  'src/render/dryFall.js': 1,   // ASHFALL1: the ash's fragment stage (GLSL, never a player's text - as windWisps.js's)
   'src/render/duelWall.js': 1,
   'src/render/dynamicSkiesRenderer.js': 1,
   'src/render/eliteGates/egLightPass.js': 1,
@@ -811,6 +812,7 @@ const HARDCODED = {
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,
   'src/world/sunbabySky.js': 3,
+  'src/world/tamriel/tamrielLands.js': 33,   // TESA-LANDS: each zone's land in a line of the lore its sources give it - a data table's English, not shown a player
   'src/world/tamriel/tamrielBiomes.js': 80,   // TESA-BIOME (AUDIT TESA-BIOME: forty-three zones): each zone's name and the lore its sources give it - a data table's English, not yet shown a player; AUDIT TESA II G6: +2, the Grazelands' name and lore (forty-four), the range's key one constant (RED_MOUNTAIN) where its zone had held it
   'src/world/tamriel/tamrielGeography.js': 25,
   // TESA (the Arena arc, written on its branch before L10N4's ratchet reached it; recorded at its merge with main): the
@@ -824,6 +826,7 @@ const HARDCODED = {
   'src/world/imperialCity.js': 23,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'; IC-GRAND: 'Palace District' and the districts' names its laws read - proper names; IC-PROPS (28 -> 23): the old district-trade tables gone, the trades the yards' and the fabric's own
   'src/world/imperialFabric.js': 7,   // IC-GRAND: the districts' names its styles and its neighbourhoods read - proper names; IC-GRAND's courts: the Elven Gardens' orchards keyed by the district's name; IC-PROPS: the Arcane University's grounds by its district's name
   'src/world/imperialYards.js': 1,   // IC-PROPS: the yards' trades stand on City Isle - the district's proper name, as imperialBlocks.js's
+  'src/world/tamriel/groundDressClient.js': 5,   // TESA-LANDS (AUDIT): the dress's worker's warnings (no worker, a worker that failed, a dress it could not be handed - the second audit) and the two reasons a failed one is given (an answer unreadable, none in time) - console lines through the client's injected logger, as imperialPrebuildClient.js's
   'src/world/imperialPrebuildClient.js': 2,   // IC-GRAND's city worker: its two warnings (no worker, a worker that failed) - console lines through the client's injected logger, as tamrielRoadsClient.js's
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,

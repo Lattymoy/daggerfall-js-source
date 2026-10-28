@@ -314,20 +314,22 @@ export class TerrainGenClient {
    * buildMidRingHeights), ON THE WORKER ALONE - a ring is some 100 ms of kernel, and with no worker (node, a test,
    * `?terrainthread=off`, a dead one) there is no middle ring: null, and the far ring stands as it always did. Never on
    * this thread, never a reject.
-   * @param {{ baseX: number, baseY: number, radius: number, sub: number, landform?: boolean, flora?: boolean }} job
-   * @returns {Promise<?{ heights: Float32Array, wet?: ?Uint8Array, flora?: ?Uint32Array }>}
+   * @param {{ baseX: number, baseY: number, radius: number, sub: number, landform?: boolean, flora?: boolean, lands?: boolean }} job
+   * @returns {Promise<?{ heights: Float32Array, wet?: ?Uint8Array, flora?: ?Uint32Array, cover?: ?Uint8Array }>}
    */
   midRing(job) {
     if (!this._worker) return Promise.resolve(null);
     const n = 2 * job.radius + 1, side = midRingSide(job.radius, job.sub), heights = new Float32Array(side * side);
     let wet = null;   // MAP-WATERS: stream G's rivers and lakes in the ring, where a band had any
     let flora = null;   // FAR-FLORA: the near law's woods at each sample (world/terrain/floraCover.js), where the job asks them
+    let cover = null;   // TESA-LANDS: the forest field's own value at each sample, with the lands' row
     return this._bands('midring', job, n, HORIZON_BAND_ROWS.mid, (m, pj0, pj1) => {
       if (!m?.heights) return false;
       heights.set(m.heights, pj0 * job.sub * side);
       if (m.wet) (wet ??= new Uint8Array(side * side)).set(m.wet, pj0 * job.sub * side);
       if (m.flora) (flora ??= new Uint32Array(side * side)).set(m.flora, pj0 * job.sub * side);
-      return pj1 === n ? { heights, wet, flora } : true;
+      if (m.cover) (cover ??= new Uint8Array(side * side)).set(m.cover, pj0 * job.sub * side);
+      return pj1 === n ? { heights, wet, flora, cover } : true;
     });
   }
 
@@ -335,7 +337,8 @@ export class TerrainGenClient {
    * FAR-TREES (render/farTrees.js): the band's trees for `job.pixels` ([px, py, nature archive, climate type] four a pixel)
    * - ON THE WORKER ALONE, BAND_PIXELS_AN_ASK pixels an ask (the next posted as the last lands, so the stream's own jobs run
    * between them): an array of each pixel's `[x, y, z, record]` trees, in order; null with no worker or on an error.
-   * @param {{ pixels: Int32Array, forests: boolean, landform: boolean }} job
+   * TESA-LANDS: `lands` the row - a zone's own trees past the Bay (world/terrain/floraCover.js bandTreesPixel).
+   * @param {{ pixels: Int32Array, forests: boolean, landform: boolean, lands?: boolean }} job
    * @returns {Promise<?Float32Array[]>}
    */
   floraBand(job) {
@@ -345,7 +348,7 @@ export class TerrainGenClient {
       if (!this._worker) { resolve(null); return; }
       const id = ++this._gridId;
       this._mids.set(id, resolve);
-      this._worker.postMessage({ t: 'floraband', id, forests: job.forests, landform: job.landform, pixels: job.pixels.slice(p0 * 4, Math.min(n, p0 + BAND_PIXELS_AN_ASK) * 4) });
+      this._worker.postMessage({ t: 'floraband', id, forests: job.forests, landform: job.landform, lands: !!job.lands, pixels: job.pixels.slice(p0 * 4, Math.min(n, p0 + BAND_PIXELS_AN_ASK) * 4) });
     });
     const next = (p0) => (p0 >= n ? Promise.resolve(out) : ask(p0).then((m) => {
       if (!m?.trees) return null;
@@ -393,7 +396,7 @@ export class TerrainGenClient {
     if (!resolve) return;
     this._mids.delete(m.id);
     if (m.t === 'midError' || m.t === 'farError' || m.t === 'bandError') console.warn('[terrain] worker horizon failed -', m.message);
-    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground } : null);
+    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null, cover: m.cover ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground } : null);
   }
 
   _gridAnswer(m) {

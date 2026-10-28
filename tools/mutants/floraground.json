@@ -460,7 +460,7 @@
   {
     "name": "FLORA-GROUND-RINGS-the-build-unseated",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, renderer);",
+    "old": "    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, renderer);",
     "new": "    void seatFlora;",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
@@ -514,7 +514,7 @@
   {
     "name": "FLORA-GROUND-RINGS-the-builds-warm-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, lodStride); }\n",
+    "old": "    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, lodStride); }\n",
     "new": "",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"

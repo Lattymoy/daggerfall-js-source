@@ -499,7 +499,8 @@ test('WATER1: a sea clamped to the ocean elevation is WATER through generateTile
   const nature = readFileSync(new URL('../../../src/world/terrain/terrainNature.js', import.meta.url), 'utf8');
   // PIN MOVED (AUDIT LANDFORMS II H2): the beach line asked of DFU's own blend where the terrain job hands one (a location's
   // pixel with the Landforms row on, `beach`), the samples' own else - the same four reads through the one home
-  assert.equal((nature.match(/sampleHeight\(\((?:opts\.)?beach \?\? heightmapData\)\[hy \+ hx \* hDim\]\)/g) || []).length, 4, 'the scatter reads the sample\'s height as the tile job does (ECOTONE1: and the border tile\'s DFU law, dfuTiles, the fourth)');
+  // PIN MOVED (TESA-LANDS): and the lands' flats' and landmarks' one test (underBeach), the fifth
+  assert.equal((nature.match(/sampleHeight\(\((?:opts\.)?beach \?\? heightmapData\)\[hy \+ hx \* hDim\]\)/g) || []).length, 5, 'the scatter reads the sample\'s height as the tile job does (ECOTONE1: and the border tile\'s DFU law, dfuTiles, the fourth)');
   assert.doesNotMatch(nature, /Math\.fround\([^;]*\* MAX_TERRAIN_HEIGHT\)/, 'and writes the product out nowhere itself');
   assert.equal(SCALED_OCEAN_ELEVATION, Math.fround(27.2), 'which the shared constant IS (WATER-AUDIT: 3.4f * 8 in C#)');
   assert.match(src, /if \(height <= Math\.fround\(SCALED_BEACH_ELEVATION \+ jitter\)\) return DIRT;/, 'and the beach the same');   // PIN MOVED (AUDIT WATER-NEXT F2): tileDataAt's

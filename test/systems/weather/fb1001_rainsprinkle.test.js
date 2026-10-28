@@ -43,7 +43,7 @@ test('RAIN-SPRINKLE: over a rain system\'s core a third of the ground sprinkles 
   // the ranges and their skews
   assert.deepEqual(PRECIP_PEAK.rain, [0.05, 1.0]);
   assert.deepEqual(PRECIP_PEAK.snow, [0.05, 0.85]);
-  assert.deepEqual(PRECIP_SKEW, { rain: 2, snow: 1.5, storm: 1, sand: 1 });
+  assert.deepEqual(PRECIP_SKEW, { rain: 2, snow: 1.5, storm: 1, sand: 1, ash: 1.3 });   // PIN MOVED (ASHFALL1, 2026-10-27)
   for (let u = 0; u <= 1; u += 0.05) assert.ok(rollPeak('storm', u) >= 0.6, 'a storm is never thin');
   assert.ok(Math.abs(rollPeak('rain', 0.5) - (0.05 + 0.95 * 0.25)) < 1e-12, 'u^2 placed in the range');
 });

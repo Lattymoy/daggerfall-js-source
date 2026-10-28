@@ -88,6 +88,7 @@ import { CLIMATES } from '../formats/mapsFile.js';   // FAR-FIELD: a cell's cent
 import { pageHas } from '../systems/pageQuery.js';
 import { expectedTrees, standsTrees, FLORA } from '../world/terrain/floraCover.js';   // FAR-FLORA: the near law's woods, where the field is past the vertices' reach
 import { createFloraArt, floraDisabled, FLORA_MIN_LAND_VIEW } from './farFlora.js';   // FAR-FLORA: the trees' own art
+import { tamrielLandsOn } from '../systems/landsSwitch.js';   // TESA-LANDS: the lands' row - the far woods and ground a zone's own
 import { FarTreesBand, farTreesDisabled } from './farTrees.js';   // FAR-TREES: the near trees carried past the grid
 import { capLineOfPixel, capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow on the horizon   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
 /** MID-RING: the band (metres, Chebyshev from the traveller) over which the middle ring's ground eases onto the far
@@ -155,10 +156,10 @@ const RING_SEA_Y = ringHeight(0);
  *   own pixel; null: every pixel past the map it is handed
  * @param {?((x: number, y: number) => number)} [o.snowAt] - PEAKS1: a pixel's cap line (m above the sea - ringSnowAt), or
  *   null for no cap: a vertex over it whitened by its height and its slope (world/peaks/snowcap.js capShare)
- * @param {?((climate: number) => ?{ spec: any, art: any, ground: any })} [o.floraOf] - FAR-FLORA: a climate's flora (render/farFlora.js
+ * @param {?((climate: number, px?: number, py?: number) => ?{ spec: any, art: any, ground: any })} [o.floraOf] - FAR-FLORA: a climate's flora (render/farFlora.js
  *   floraOf), or null for none: a land vertex's woods the near law's expectation (floraCover.js expectedTrees - the field's
  *   waves are under its 819 m), in the trees' art and raised to their height; `flora` its cover (0-255) and `ground` the
- *   heights under the canopy
+ *   heights under the canopy. TESA-LANDS: asked at the vertex's map pixel (px, py) - past the Bay a zone's own
  */
 export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, baseX, baseY, radius = RING_RADIUS, relief = false, byteAt: byteAtPast = null, climatePast = null, pastOwn = null, snowAt = null, floraOf = null }) {
   const side = radius * 2 + 1;
@@ -211,7 +212,7 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
       if (isWaterPixel(climate, byte) && Math.abs(positions[o + 1] - RING_SEA_Y) < 1e-3) sea[o / 3] = 255;
       else {
         if (floraOf && standsTrees(normals[o + 1], byte * BASE_HEIGHT_SCALE)) {   // FAR-FLORA: the near law's beach line and face
-          const f = floraOf(climate);
+          const f = floraOf(climate, px, py);   // TESA-LANDS: at its pixel - a zone's own past the Bay
           if (f) {
             layGround(colors, o, f.ground, FLORA.ground[1], FLORA.ground[2], FLORA.ground[3]);   // the near ground's own tiles, by the law's mean shares
             positions[o + 1] += plantCanopy(flora, o / 3, expectedTrees(f.spec, byte), f.art);
@@ -566,7 +567,7 @@ export class FarRingRenderer {
     this._now = opts.now ?? (() => performance.now());
     // FAR-FLORA: the trees' art (render/farFlora.js) - `opts.flora` a book of one's own (a test's), null for none; by
     // default the pipeline's, unless `?farflora=off`. The woods stand at Land View FLORA_MIN_LAND_VIEW and up (the knob).
-    this._flora = opts.flora !== undefined ? opts.flora : (floraDisabled() ? null : createFloraArt());
+    this._flora = opts.flora !== undefined ? opts.flora : (floraDisabled() ? null : createFloraArt({ lands: tamrielLandsOn() }));   // TESA-LANDS: a zone's own past the Bay, with the row
     this._floraRadius = 0;      // the streamed radius the woods were last judged by (punchHole's)
     this._floraVersion = -1;    // the book's version this ring's grid was built with
     // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
@@ -688,7 +689,7 @@ export class FarRingRenderer {
     this._farFrame(curX, curY);   // FAR-FIELD: the land past this ring, its own turn
     if (this._band && this._inputs && this._floraOf()) {   // FAR-TREES: the band's turn - with the woods, the knob's Land View
       this._readers ??= ringReaders(this._inputs);
-      this._band.frame({ curX, curY, radius: this._floraRadius, built, climateOf: this._readers.climateOf, forests: /** @type {any} */ (this._flora).forests ?? true, landform: !!this._inputs.relief, work: this._work });
+      this._band.frame({ curX, curY, radius: this._floraRadius, built, climateOf: this._readers.climateOf, forests: /** @type {any} */ (this._flora).forests ?? true, landform: !!this._inputs.relief, lands: !!(/** @type {any} */ (this._flora).lands), work: this._work });   // TESA-LANDS: and the zones' own trees
     }
     if (!this._midSource || !this._inputs) return null;
     const mid = this._mid;
@@ -704,7 +705,7 @@ export class FarRingRenderer {
    *  `?farflora=off`, Land View FLORA_MIN_LAND_VIEW and up), else null. */
   _floraOf() {
     const book = this._flora;
-    return book && this._floraRadius >= FLORA_MIN_LAND_VIEW ? (climate) => book.floraOf(climate) : null;
+    return book && this._floraRadius >= FLORA_MIN_LAND_VIEW ? (climate, x, y) => book.floraOf(climate, x, y) : null;   // TESA-LANDS: at the map pixel
   }
 
   /** FAR-FLORA: whether a layer built with the book at `layer.floraVersion` is owed a build with the art landed since (or
@@ -768,7 +769,7 @@ export class FarRingRenderer {
         oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
         snowAt: inputs.relief ? (x, y, v) => capLineOfPixel(x, y, () => climAt(x, y, v)) : null,   // PEAKS1: a range white 300 km off
-        floraAt: floraOf ? (x, y, byte, v) => floraOf(climAt(x, y, v)) : null,   // FAR-FLORA: the woods' expectation in the trees' art
+        floraAt: floraOf ? (x, y, byte, v) => floraOf(climAt(x, y, v), x, y) : null,   // FAR-FLORA: the woods' expectation in the trees' art; TESA-LANDS: a zone's
       });
       // one ask at a time and it stands until laid, so no newer ask can come while this is laid; a dispose drops the work
       this._work.push({ it, done: (v) => {
@@ -784,7 +785,7 @@ export class FarRingRenderer {
     const gen = ++this._midGen, inputs = this._inputs, floraOf = this._floraOf();
     const floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
     this._midAsk = `${baseX},${baseY}`;
-    const job = { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, landform: !!inputs.relief, flora: !!floraOf };   // FAR-FLORA: the near law's woods beside the heights
+    const job = { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, landform: !!inputs.relief, flora: !!floraOf, lands: !!floraOf && !!(/** @type {any} */ (this._flora).lands) };   // TESA-LANDS: and the field's own value   // FAR-FLORA: the near law's woods beside the heights
     const groundEpoch = this._midSource.groundEpoch ?? 0;   // FLORA-GROUND: the ground this ask is laid on
     Promise.resolve(this._midSource.midRing?.(job) ?? null).then((answer) => {
       if (gen !== this._midGen) return;   // a newer ask, or the renderer disposed
@@ -796,8 +797,8 @@ export class FarRingRenderer {
         const i = x - g.baseX + g.radius, j = y - g.baseY + g.radius;
         return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : RING_SEA_Y;
       };
-      const floraAt = floraOf ? (x, y) => ({ ...floraOf(climateOf(x, y)), byte: byteAt(x, y) }) : null;   // FAR-FLORA: the climate's woods and the WOODS byte
-      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null, snowAt: ringSnowAt(inputs), flora: answer.flora ?? null, floraAt });   // PEAKS1: and its summits' snow   // MAP-WATERS: G's rivers as water
+      const floraAt = floraOf ? (x, y) => ({ ...floraOf(climateOf(x, y), x, y), byte: byteAt(x, y) }) : null;   // FAR-FLORA: the climate's woods and the WOODS byte; TESA-LANDS: a zone's
+      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null, snowAt: ringSnowAt(inputs), flora: answer.flora ?? null, cover: answer.cover ?? null, floraAt });   // PEAKS1: and its summits' snow   // MAP-WATERS: G's rivers as water
       this._work.push({ it, done: (v) => {   // as the far field's: one ask, standing until laid; a dispose drops the work
         this._midAsk = null;
         (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });
