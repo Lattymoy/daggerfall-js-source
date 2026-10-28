@@ -209,7 +209,7 @@ import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Seaso
 import { HEALTH_SHARE_WHOLE } from './siege/refereeHealthShare.js';   // SHARED-HEALTH: a report's share is in its parts - refereeHealthShare.js imports nothing, so the worker's graph stays flat
 import { GUILD_TAG_RE } from './guild/guildLaw.js';   // GUILD1c: a guild's tag is badged beside the name - guildLaw.js imports nothing, so the worker's graph stays flat
 import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX } from './homeLaw.js';   // QUEST-HOME: a home word's town and buildings, the homes' own shapes - homeLaw.js imports nothing, so the worker's graph stays flat
-import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX } from './raid/raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
+import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX, RAID_SLOTS_MAX, RAID_LANES_BEYOND } from './raid/raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
 import { SIEGE_HAND_SLOTS, SIEGE_HIT, SIEGE_WORK_IDS, SIEGE_RAMS_MAX, SIEGE_WORK_TIER_MAX, siegeGateVitality, siegeRamVitality, isSiegeNpcId, SIEGE_NPC_MAX, SIEGE_NPC_KINDS, isBattleRoom } from './siege/siegeRef.js';   // PVP-REF: a siege's blow kinds - siegeRef.js imports nothing, so the worker's graph stays flat; SEAT2b part two (b): the works a blow may name; part two (c): the relay's own fighters
 import { INSTANCE_TAG_SOURCE, isInstanceRoom } from './instanceRoom.js';   // INSTANCES: an instance's room is a world room (WORLD_ROOM) with a memory of its own length (worldTtlMsFor) - instanceRoom.js imports privateInterior.js alone, which the relay walks already
 import { privateInteriorOf } from './privateInterior.js';   // SLIM-FRAME: an owned interior's poses are MapsFile's (nativePoseRoom) - privateInterior.js imports nothing, and the relay walks it already
@@ -5759,8 +5759,10 @@ export function validRaidTownsIn(d) {
   if (typeof d.c !== 'string' || !d.c.length || d.c.length > RAID_TOWNS_CHUNK) return null;
   return { h: d.h, n: d.n, i: d.i, c: d.c };
 }
-/** The cleanses the hub keeps for a hello (today's and yesterday's - two dozen raids a game day), and says in one `cls`. */
-export const RAID_CLEANS_MAX = 64;
+/** The cleanses the hub keeps for a hello (today's and yesterday's), and says in one `cls`. AUDIT TAMRIEL-WIDE B5: two days
+ *  of every lane's slots (raidLaw.js: the Bay's lane and each province's, RAID_SLOTS_MAX a day at most) - 64 held the
+ *  Bay's two days alone, WW6's lanes roll 286 to 334, and a joiner read the older cleanses as raids still standing. */
+export const RAID_CLEANS_MAX = 2 * RAID_SLOTS_MAX * (1 + RAID_LANES_BEYOND.length);
 /** A cell's storage keys for its raids' ledgers - AUDIT RAID R1: under the ledger's identity (raidLaw.js raidLedgerId:
  *  the key and the signature), so a word naming another tuple never finds, nor takes, the honest raid's. */
 export const RAID_LEDGER_PREFIX = 'raid:';
