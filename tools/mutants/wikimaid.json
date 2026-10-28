@@ -67,17 +67,17 @@
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The rabbit drawn as an outline of strokes, not filled. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
+    "note": "The rabbit drawn as an outline of strokes, not filled. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "WIKIMAID-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
-    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
+    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The warren's button in the Aegis's violets. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
+    "note": "The warren's button in the Aegis's violets. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "WIKIMAID-title-word",
@@ -175,12 +175,12 @@
   {
     "name": "WIKIMAID-svg-first-detail",
     "file": "src/ui/playerBadge.js",
-    "old": "  for (const det of glyphDetails(g.detail)) {   // WIKIMAID",
-    "new": "  for (const det of glyphDetails(g.detail).slice(0, 1)) {   // WIKIMAID",
+    "old": "  glyphDetails(g.detail).forEach((det, i) => {   // WIKIMAID",
+    "new": "  glyphDetails(g.detail).slice(0, 1).forEach((det, i) => {   // WIKIMAID",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The DOM faces draw the ears alone."
+    "note": "The DOM faces draw the ears alone. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "WIKIMAID-travel-first-detail",
@@ -245,12 +245,12 @@
   {
     "name": "WIKIMAID-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
-    "new": "'burningstair', 'firstlight', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
+    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "new": "'burningstair', 'firstlight', 'witchfire', 'sagesmoke', 'eternal']);",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "A token signing the warren refused whole. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
+    "note": "A token signing the warren refused whole. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "WIKIMAID-kind",
@@ -585,7 +585,7 @@
   {
     "name": "WIKIMAID-body-bound-unraised",
     "file": "src/net/identityToken.js",
-    "old": "export const TOKEN_BODY_MAX = 864;",
+    "old": "export const TOKEN_BODY_MAX = 896;",
     "new": "export const TOKEN_BODY_MAX = 800;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"

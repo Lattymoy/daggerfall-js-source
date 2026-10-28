@@ -247,6 +247,9 @@ const REFUSAL_WORDS = {
   'patreon-down': () => t('account.refusal.patreonDown', 'Patreon did not answer. Try linking again in a minute.'),
   'patreon-needs-account': () => t('account.refusal.patreonNeedsAccount', 'Linking Patreon needs a username and a password. Give this account one first.'),
   signature: () => t('account.refusal.signature', 'The account service could not check who sent that request.'),
+  // SHOP (server-account/src/shop.js): the shop's doors are pages in a browser and Stripe's webhook, met by no screen here
+  'shop-closed': () => t('account.refusal.shopClosed', 'The shop does not take payments yet.'),
+  'stripe-down': () => t('account.refusal.stripeDown', 'Stripe did not answer. Try again in a minute.'),
   // MOD1, moderation. A moderator reads these in chat, beside the
   // command they just typed.
   'not-moderator': () => t('account.refusal.notModerator', 'Only moderators can do that.'),

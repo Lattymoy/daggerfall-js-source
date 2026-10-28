@@ -67,17 +67,17 @@
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The sprig drawn as an outline - its filled leaves a scribble at 13 px."
+    "note": "The sprig drawn as an outline - its filled leaves a scribble at 13 px. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "NIRNROOT-SAGE-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "sagesmoke: 'nirnrootsage' });",
-    "new": "sagesmoke: 'witchwarden' });",
+    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "new": "sagesmoke: 'witchwarden', eternal: 'genesis' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The smoke's button in the Witchwarden's paint."
+    "note": "The smoke's button in the Witchwarden's paint. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "NIRNROOT-SAGE-title-word",
@@ -197,27 +197,27 @@
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The glyph the service signs is a word the relay refuses - every token of his refused whole."
+    "note": "The glyph the service signs is a word the relay refuses - every token of his refused whole. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "NIRNROOT-SAGE-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'witchfire', 'sagesmoke']);",
-    "new": "'witchfire']);",
+    "old": "'witchfire', 'sagesmoke', 'eternal']);",
+    "new": "'witchfire', 'eternal']);",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The aura the service signs is a word the relay refuses."
+    "note": "The aura the service signs is a word the relay refuses. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world275';",
+    "old": "export const RELAY_VERSION = 'world276';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named."
+    "note": "MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named. SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "NIRNROOT-SAGE-the-kind",

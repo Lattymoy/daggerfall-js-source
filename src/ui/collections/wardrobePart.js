@@ -157,7 +157,7 @@ function paintedWord(el, /** @type {string} */ kind, /** @type {string} */ key, 
   const word = el('span', 'coll-word', wardrobeName(kind, key));
   const paintKey = kind === 'title' ? key : kind === 'aura' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)] : null;
   if (paintKey && word.style) {
-    paintTitle(word, titleBadge({ title: paintKey }));
+    paintTitle(word, titleBadge({ title: paintKey }), kind === 'title');   // SHOP: a title's flame plate, never an aura's word
     if (globalThis.document?.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS) inkPaint(word);
   }
   plate.append(word);

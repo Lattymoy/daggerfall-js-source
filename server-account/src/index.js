@@ -376,6 +376,7 @@ import {
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
   PATREON_PAGES, PATREON_TICKET_S, PATREON_HOOK_MAX_BYTES, PATREON_CALLBACK_PATH,
 } from './patreon.js';   // PATREON-LINK: a patron's own Patreon, linked
+import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -929,6 +930,21 @@ const service = {
         return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env) }));
       }
 
+      // SHOP (shop.js): THE SHOP'S DOORS, no session - each proven by what it carries, answered before the JSON ladder as
+      // Patreon's. /v1/account carries `shop: { on, wares }`, each ware's `buy` the confirm page with a sealed ticket:
+      //   GET  /v1/shop/buy ?t              -> the ware, its price and the account, and the press on to pay
+      //   POST /v1/shop/checkout ticket=... -> 303 to Stripe's checkout page (an order, and its session)
+      //   POST /v1/shop/webhook <event>     -> { ok, applied }   (Stripe-Signature: HMAC-SHA256 under the endpoint's secret)
+      //   GET  /v1/shop/done ?o, /v1/shop/cancel -> the pages Stripe sends the buyer back to
+      if (SHOP_OPEN_ROUTES.has(path)) {
+        const bytes = request.method === 'POST' ? await readCapped(request, path === SHOP_WEBHOOK_PATH ? SHOP_HOOK_MAX_BYTES : MAX_BODY_BYTES) : null;
+        const r = await shopDoor(ctx, env, path, {
+          method: request.method, url, bytes: bytes ? new Uint8Array(bytes) : null, signature: request.headers.get('stripe-signature'),
+          fetch: (u, init) => globalThis.fetch(u, init), limited: () => overRate(ctx, `ip:${request.headers.get('cf-connecting-ip') || 'unknown'}`, 60),
+        });
+        return r instanceof Response ? r : 'error' in r.json ? no(r.json.error, r.status, origin) : json(r.json, r.status, origin);
+      }
+
       // GRANT2 (bible/11-Multiplayer/Spawn-Grants.md section 12): THE SPAWN GRANTS' MEASURE - a cell's window of asks,
       // posted by the relay and proven by its signature over the exact bytes (the chat feed's kind of door, grants.js)
       if (path === GRANT_FEED_PATH) {
@@ -1343,6 +1359,7 @@ const service = {
           // PATREON-LINK: the card's Patreon row - whether linking is on, whether this account is linked, the titles its
           // pledge holds, and the link to follow (a state sealed for this account, under the origin that served this)
           patreon: await patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
+          shop: await shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),   // SHOP: the wares, what is held, and a Buy link each
         }, 200, origin);
       }
 
