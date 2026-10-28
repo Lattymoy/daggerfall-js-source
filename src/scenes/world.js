@@ -356,7 +356,8 @@ import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faith
 import { createSdHost } from './superDungeon/sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBannerText, SD_BANNER_M } from '../systems/superDungeon/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/superDungeon/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
-import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/superDungeon/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
+import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/superDungeon/sdLaw.js';
+import { createSdCopy, sdCopyLine } from './superDungeon/sdCopy.js';   // SD-PARTY: a party's own Hour   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
 import { egRoomKey, EG_TEXT } from '../net/eliteGates/egLaw.js';   // EG-PLAY: an Elite Breach's room, and its words
 import { createEgClient } from './eliteGates/egClient.js';   // EG-PLAY: the breach on this screen - the key, the call, the halls, the receipts
 import { createEgArchPool, egArchPlace, egArchSite, EG_ARCH_GATE_NEAR_M } from './eliteGates/egArch.js';   // EG-F: the Elite Breach's arch - its pool, its place, its site; a Dagon's Breach near
@@ -24257,6 +24258,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   egClient?.claimKeys();   // the Weir Key's use is this screen's open
   // KETCH (bible/11-Multiplayer/Sky-Ketch.md): THE SKY-KETCH ON THIS SCREEN (scenes/ketch/ketchClient.js - HOST-SPLIT: the module
   // owns its state and its frame; these are its reads) - online alone, as every crew's ship is the relay's
+  const sdCopy = createSdCopy({ social: () => social, store: _spoilsStore, relay: () => online?.url });   // SD-SOLO: alone, the relay's walk finds the shared Hour   // SD-PARTY: which party's Hour the Rift takes me to
   const ketch = params.has('online') ? createKetchClient({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, online: () => online, modes: () => modes, social: () => social,
     account: accountKetch({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), entity: playerEntity, player, cam, now: egNow,
@@ -24827,7 +24829,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (_sdOut || !online?.terminal || !(playerEntity.health > 0) || modes?.deathUp?.()) return;
     _sdOut = true;
     gateVeil?.flash('hourCast');   // AUDIT SD II (L6 F8): out of the Hour in its own veil - SD-LOOK: forced, its face shattered
-    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
+    if (modes?.unstuck?.()) sdSay(/\bHour\b/.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);   // SD-PARTY: the copies' refusals name the Hour too
   };
   /** SD-ALONE (2026-10-08, Mac: "We need to make sure companions dont enter the rift"): no companion stands in the
    *  Shattered Hour (companionPlace answers none there, as in a gate's court - GATE-ALONE), and a player who steps
@@ -24836,9 +24838,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _sdAloneSaid = false;
   const sdAloneFrame = () => {
     if (modes?.sdRealmSlot?.() == null) { _sdAloneSaid = false; return; }
-    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;
+    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;   // SD-SOLO: once the Hour has welcomed me - its count is known
     _sdAloneSaid = true;
     if (companionsWithYou() > 0) sdSay(SD_REALM_TEXT.noCompanions);
+    const line = sdCopyLine(modes?.roomIdentity?.()?.o, (online?.peers?.size ?? 0) + 1); if (line) sdSay(line);   // SD-SOLO: whose Hour this is, or how many share it
   };
   /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
@@ -24859,7 +24862,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
-    const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };
+    const seen = { entered: _sdEntered.has(s), fallen: false };   // SD-BACK (2026-10-28): a death no longer shuts my Rift - the realm says which Hour takes me back
     return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record; SD-THROUGH: and whether one has gone through (the Way Through stands)
   };
   /** AUDIT SD V (P1): the Rift's look alone, every frame it is drawn - none of the word, the count or the step's door
@@ -24867,7 +24870,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _sdSeen = { entered: false, fallen: false };
   const sdRiftLookOf = (s) => {
     if (!sdHost) return null;
-    _sdSeen.entered = _sdEntered.has(s); _sdSeen.fallen = _sdFallen.has(s);
+    _sdSeen.entered = _sdEntered.has(s);   // SD-BACK: never fallen - the realm's word
     return riftLook(sdHost.record(), s, Date.now() + _sharedOffsetMs, _sdSeen);
   };
   /** SD-LOOK (Super-Dungeons-Look.md section 3): WHERE THE HOUR'S VEIL CLOSES - the Rift's window (or the Return's)
@@ -24908,7 +24911,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT SD II (L1 F3): its word asked again after the walk - the end may have overtaken the step (outside, before its door)
       const late = sdRiftOf(s)?.word;
       if (late) { sdSay(late); return false; }
-      if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
+      if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse; SD-PARTY: into my party's own Hour (scenes/superDungeon/sdCopy.js)
       sdSay(SD_REALM_TEXT.lost);   // the realm would not build: outside, before the Hollow's door
       return false;
     }, 'hourIn');   // AUDIT SD II (L6 F8): through the Hour's own veil - SD-LOOK: its blades closing on the Rift
@@ -28771,7 +28774,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = siegeSession?.room() ?? royalSession?.room() ?? roomKeyFor({ host: 'world', mode: 'exterior', mapPixel: mp });   // SEAT2a part four: a battle entered stands in its own room (CROWN1 part two: a Royal Tourney too)
     else if (modes?.roomIdentity?.()?.kind === 'gate') key = (gateLink?.room ?? gateRoomKey)(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own - GATE-COURTS: the court the night's book seats me in
-    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);   // SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
+    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s, modes?.roomIdentity?.()?.o);   // SD-PARTY: my party's own Hour; SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
     else if (modes?.roomIdentity?.()?.kind === 'eg') key = egRoomKey(modes?.roomIdentity?.()?.b);   // EG-PLAY: an Elite Breach's room is the relay's breach (its hello asks the company's law)
     else if (modes?.roomIdentity?.()?.kind === 'kt') key = modes?.roomIdentity?.()?.key;   // KETCH: a crew's ship's room is the relay's `kt:<voyage>.<captain>` (its hello asks the crew's law)
     else if (modes?.roomIdentity?.()?.kind === 'arena') key = arenaFloorRoomOf(modes?.roomIdentity?.()?.o);   // ARENA4: a relay's bout's floor is its room (ARENA4b: the hour's exhibition's, `x<hour>`, its own)
