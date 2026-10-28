@@ -1,0 +1,10 @@
+[
+  {
+    "name": "CAKE-WEIGHT-old-weight",
+    "file": "src/systems/festival/festivalRows.js",
+    "old": "index: 2000, baseWeight: 0,",
+    "new": "index: 2000, baseWeight: 0.05,",
+    "tests": ["test/systems/festival/cake_weight.test.js"],
+    "note": "the Soul Cake weighs 0.05 kg again"
+  }
+]

@@ -38,8 +38,8 @@
   {
     "name": "TESA12-the-lore-word-kept",
     "file": "src/world/arenaPlaces.js",
-    "old": "    const placed = { ...rest, bx: at[0], by: at[1], ...(onShore ? { port: true } : {}) };",
-    "new": "    const placed = { ...p, bx: at[0], by: at[1], ...(onShore ? { port: true } : {}) };",
+    "old": "    const placed = { ...rest, bx: at[0], by: at[1], ...(onShore || seaBears(at[0], at[1], openSea) ? { port: true } : {}) };",
+    "new": "    const placed = { ...p, bx: at[0], by: at[1], ...(onShore || seaBears(at[0], at[1], openSea) ? { port: true } : {}) };",
     "tests": [
       "test/tesa6_ports.test.js"
     ]

@@ -394,7 +394,9 @@ test('WW7-10 THE BAY\'S MOUTHS AND ITS SEAWARD WATER: an edge pixel of the Bay\'
   assert.deepEqual(on(999, 250), [], 'east: the Bay\'s land');
   assert.deepEqual(on(350, 0), [], 'nor where the Bay\'s water is not');
   const count = (f) => mouths.filter(f).length;
-  assert.deepEqual([count((m) => m.out[1] < 0), count((m) => m.out[1] > 499), count((m) => m.out[0] < 0), count((m) => m.out[0] > 999)], [300 - 62 - 11, 300, 500 - 21, 0], 'north, south, west (but the headland) and east');
+  // PIN MOVED (FIELD BUGS 2026-10-28b SEA-SQUARE): the sandbar's eleven bytes shut twelve squares - the one east of them has two
+  // of its corners on it
+  assert.deepEqual([count((m) => m.out[1] < 0), count((m) => m.out[1] > 499), count((m) => m.out[0] < 0), count((m) => m.out[0] > 999)], [300 - 62 - 12, 300, 500 - 21, 0], 'north, south, west (but the headland) and east');
   const sea = baySeaward(s.bayOpen, mouths);
   assert.equal(sea[250 * 1000 + 299], 1, 'the Bay\'s open water');
   assert.equal(sea[150 * 1000 + 300], 1, 'a cove joined');
