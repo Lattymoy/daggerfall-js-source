@@ -177,11 +177,12 @@
   {
     "name": "BLM-C2-travel-here-past-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "onTravel: this._coordsAllowedHere() && inBay(Math.floor(w.mx), Math.floor(w.my)) ?",
-    "new": "onTravel: this._coordsAllowedHere() ?",
+    "old": "onTravel: this._coordsAllowedHere() ? (wp) => this._waypointTravel(wp) : null });",
+    "new": "onTravel: this._coordsAllowedHere() && inBay(Math.floor(w.mx), Math.floor(w.my)) ? (wp) => this._waypointTravel(wp) : null });",
     "tests": [
       "test/ui/bayleft_marks.test.js"
-    ]
+    ],
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   },
   {
     "name": "BLM-C10-past-the-table-0-as-before",

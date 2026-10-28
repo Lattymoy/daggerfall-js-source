@@ -133,26 +133,37 @@ function heldMap(deps = {}) {
   return win;
 }
 
-test('AUDIT STARTS U1/U2 the held map: a quest\'s place past the Bay offers no journey on the travel map - no Travel here, and no panel by any door (TESA-NO-FAST); on the teleport map it is a portal\'s end only where it is a city\'s (TESA13), else picked and named alone, and no confirm sends the portal there (mutants: the card\'s button, the panel\'s gate, the confirm\'s gate, the city test)', () => {
+test('AUDIT STARTS U1/U2 the held map, PIN MOVED (TRAVEL-EVERYWHERE, TESA-NO-FAST retired): a quest\'s place past the Bay is travelled to as a Bay place is - Travel here on its card, its panel by every door; on the teleport map it is a portal\'s end, as a Bay place is, and bare land a portal\'s end on the stone\'s map alone - picked and named alone on the guild\'s, and no confirm sends the portal there (mutants: the card\'s button, the panel\'s gate, the confirm\'s gate, the portal test)', () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);
   try {
-    // the travel map: picked, named, no journey
+    // the travel map: picked, named, its journey offered
     let win = heldMap();
     const lair = win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'The Haunt of Baringon');
-    assert.deepEqual([lair.pastBay, lair.portal], [true, false], 'a lair: no city stands on it');
+    assert.deepEqual([lair.pastBay, lair.portal, lair.place], [true, true, true], 'a lair: a place');
     win._select(lair);
     assert.equal(win._selected?.name, 'The Haunt of Baringon');
-    assert.deepEqual(buttonsOf(win), [], 'no Travel here on its card');
+    assert.deepEqual(buttonsOf(win), ['Travel here'], 'Travel here on its card');
     win._openPanel('travel');
-    assert.equal(win._panel ?? null, null, 'nor a journey by any other door');
+    assert.equal(win._panel, 'travel', 'and its journey');
     win.dispose?.();
-    // the teleport map: a lair is picked, never a portal's end
+    // the teleport map: the lair a portal's end, bare land none on the guild's map
     const ported = [];
     win = heldMap({ onTeleport: (p) => ported.push(p) });
     win.activateTeleportationTravel();
     win._select(win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'The Haunt of Baringon'));
+    assert.equal(win._panel, 'teleport', 'its confirm opens itself');
+    win._confirmTeleport(true);
+    for (let i = 0; i < 200 && !win.done; i++) win.tick(0.05);
+    assert.deepEqual(ported.map((p) => p.pixel), [LAIR_PX], 'and the portal goes');
+    win.dispose?.();
+    ported.length = 0;
+    win = heldMap({ onTeleport: (p) => ported.push(p) });
+    win.activateTeleportationTravel();
+    const bare = win._pastBayPick(LAIR_PX.x, LAIR_PX.y, 'x', null);
+    assert.equal(bare.portal, false, 'bare land: no portal\'s end on the guild\'s map');
+    win._select(bare);
     assert.equal(win._panel ?? null, null, 'no confirm opens on it');
     assert.deepEqual(buttonsOf(win), [], 'and its card offers none');
     win._openPanel('teleport');

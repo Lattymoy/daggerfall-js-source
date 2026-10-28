@@ -206,11 +206,7 @@ into, a dungeon to go down - and the held map takes the player there.
   the Bay: "Anywhere on land"): A DEPARTURE FROM TESA-NO-FAST FOR THE PORTAL STONE ALONE - on its map any land past the Bay
   is a portal's end (`pastBayTravel.js` portalLandAt), landed on safe ground (`06-Systems/Portal-Stone.md`); the guild's
   teleport map keeps the cities, and the travel map and every journey keep TESA-NO-FAST.
-  OWNER (recorded, not built): a journey FROM past the Bay TO the Bay is still DFU's fast travel - the travel map opens
-  past the Bay (and Immersive Travel's driver's and captain's maps in a town past the Bay) and journeys to any Bay place.
-  The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
-  ways; the recommendation is to refuse that leg too (the same law, its `from` asked as its `to` is - the zone's
-  journeys excepted), so the land past the Bay is left as it is reached: walked, sailed, or through a stone.
+  RETIRED 2026-10-28 by TRAVEL-EVERYWHERE, below: every journey past the Bay is a Bay journey again.
 - **OW-PAST-BAY** (2026-10-28, the player: "Youre not able to click on the map outside of the bay and travel to
   locations" - "Im talking about clicking on the map to overworld travel"): on the travel map a press past the Bay is a
   WALK there (`ui/heldMap.js` `_pickAt`, `_walksPastBay`) - a city's or a countryside mark's pixel by its name, or bare
@@ -220,6 +216,32 @@ into, a dungeon to go down - and the held map takes the player there.
   map keeps TESA2's and PORTAL-ANYWHERE's portals. PIN MOVED: `test/tesa2_arena.test.js`'s cursor,
   `start3_pastbay_marks`' pick (`walk`). Pins `test/ui/owpastbay_walk.test.js` (3); mutants `tools/mutants/owpastbay.json`
   (9, all dead), six records re-aimed by content.
+- **TRAVEL-EVERYWHERE** (2026-10-28, the owner: *"the travel services won't take you to other provinces"*, then *"Like
+  how it works in the bay should be how it works everywhere. These tests are outdated"*): TESA-NO-FAST IS RETIRED. A place
+  past the Bay is travelled to as a Bay place is. The journey's law past the Bay (`systems/travel/pastBayTravel.js`
+  pastBayJourney) is the open zone's verdict alone, so the travel map's fast travel, a carriage driver's trip, a party's
+  journey to its leader and a rider's in a wagon all go there. Cyrodiil's zone still refuses a journey into or out of it
+  (WILD3), and online a trip over land is Travel Options' walk, as on the Bay (TRAVEL-ONLINE).
+- **TRAVEL-EVERYWHERE, the maps** (`ui/heldMap.js`): a press on a city or a countryside place past the Bay is a place
+  (`_pastBayPick`'s `place`; `_pastBayTownAt` reads its type and whether it is a capital), on the player's own map and on
+  a carriage driver's. Its panel bills it as a Bay place (DFU's trip, Travel Options' fork, the driver's fare), Begin is
+  the place's journey (world.js onTravel: the Overworld's route on the enhanced interface, fastTravelTo else), and Disable
+  Normal Travel's refusal is asked of it. Bare land stays OW-PAST-BAY's walk. On the teleport map a countryside place is a
+  portal's end, as a Bay place is; bare land is the Portal Stone's alone. A quest's place, a find and a flag past the Bay
+  offer their journeys. A captain's map keeps the Bay's docks: the mod's tables are the Bay's 382 dock pixels.
+- **TRAVEL-EVERYWHERE, the carriage** (`systems/immersiveTravel.js` itMapRefusal): the driver's laws read a town past the
+  Bay as a Bay town - its type (cities, hamlets and villages as shipped) and, with RegionLockedCarriages, its province's
+  region (WW-R) and whether it is a capital (the ink's word: the capitals' table is the Bay's 40). A departure:
+  `06-Systems/Immersive-Travel.md` TRAVEL-EVERYWHERE, `01-Overview/Port-Ledger.md` A. Ship passage already sailed to the
+  ports past the Bay (WW3's ports in her master's list, LONG-VOYAGE's lanes; `test/scenes/bayleft_places.test.js`).
+- **TRAVEL-EVERYWHERE, the pins.** `test/ui/travel_everywhere.test.js` (3). PINS MOVED: `test/systems/audittesa2p_laws.test.js`
+  (P4's), `test/systems/portalbay_stone.test.js`, `test/systems/starts/auditstarts.test.js` (U1/U2),
+  `test/systems/starts/start3_pastbay_marks.test.js`, `test/tesa2_arena.test.js`, `test/ui/bayleft_marks.test.js` (C2),
+  `test/ui/owpastbay_walk.test.js`, `test/ui/tamriel.test.js`. Mutants `tools/mutants/travel_everywhere.json` (16, all
+  dead); P4's six records retired with its law (`audittesa2p.json`), fourteen re-aimed by content. The refusal's words
+  (`travel.pastBay.refused`) left every language's catalog. THE FOUR HOSTS: `scenes/world.js`'s gate keeps its shape;
+  `scenes/exterior.js` and `scenes/dungeonContext.js` open no travel map; `scenes/worldModes.js` opens a driver's map
+  through world.js openImmersiveMap. Nothing crosses the wire.
 - **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.

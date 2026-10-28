@@ -199,7 +199,7 @@ test('BAY-LEFT-MAPS C2 WILD-WAYPOINT IN CYRODIIL: a death in the open zone by th
   fresh();
 });
 
-test('BAY-LEFT-MAPS C2 THE HELD MAP\'S RIGHT CLICK: the add menu opens on a point past the Bay while the continent is shown, and on the Bay\'s sheet alone while it is not; "Travel here" is offered on a flag on the Bay and never on one past it (TESA-NO-FAST) (mutants: the menu held to the Bay; Travel here past the Bay)', async () => {
+test('BAY-LEFT-MAPS C2 THE HELD MAP\'S RIGHT CLICK: the add menu opens on a point past the Bay while the continent is shown, and on the Bay\'s sheet alone while it is not; "Travel here" is offered on a flag on the Bay and, PIN MOVED (TRAVEL-EVERYWHERE), on one past it as well - the walk OW-PAST-BAY gives bare land there (mutants: the menu held to the Bay; Travel here held to the Bay)', async () => {
   _resetForTests();
   setTamrielFit(null);
   fresh();
@@ -224,7 +224,10 @@ test('BAY-LEFT-MAPS C2 THE HELD MAP\'S RIGHT CLICK: the add menu opens on a poin
     globalThis.document.body.children.length = 0;
     win._waypointContext(0, 0);
     const said = texts(globalThis.document.body);
-    assert.ok(said.includes('Follow') && !said.includes('Travel here'), 'a flag past the Bay: followed and walked to on the Overworld, never travelled to here');
+    assert.ok(said.includes('Follow') && said.includes('Travel here'), 'a flag past the Bay: followed, and travelled to as a flag on the Bay is');
+    win._tamriel = true;
+    win._waypointTravel(far);
+    assert.deepEqual([win._selected?.pastBay, win._selected?.walk, win._selected?.x, win._panel], [true, true, 1569.5, 'travel'], 'its journey: the walk to its pixel');
     menu.closeWaypointMenu();
     win.dispose();
     setPref('tamrielMap', false);

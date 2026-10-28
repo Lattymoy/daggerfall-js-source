@@ -1,42 +1,24 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// AUDIT TESA II P4 (2026-10-25, bible/03-World/Arena-Provinces.md TESA-NO-FAST) - NO JOURNEY INTO THE LAND PAST THE BAY.
-//
-// The owner, 2026-10-13: "fast travel shouldnt be a thing since we use portal stones online or the player can traverse
-// using the overworld". TESA-NO-FAST kept the travel map's press past the Bay from picking a journey (ui/heldMap.js) -
-// one door of several: a party's journey to its leader (PARTY-TRAVEL) and a rider's in its owner's wagon (WAGONS2) set
-// out for a pixel past the Bay by the same fast travel, the map never asked. This is the journey's own law, asked by the
-// one gate every journey passes (scenes/world.js fastTravelTo's wildTravelGate): a journey whose end lies past the Bay
-// - the land TAMRIEL2 streams, its places TESA's - is refused, in words that say the two ways there are. The open
-// zone's own journeys (Cyrodiil's, PVPJOURNEY: from inside it to inside it, its fee and its wait) stay its own (the
-// zone's verdict decides them first). The Eltheric Ocean's side of the Veil is the Veil's (veilRefused).
-//
-// Pure: the journey's two ends and the zone's verdict in, a verdict out. Not a DFU member: DFU's map stops at the Bay.
+// THE JOURNEY'S LAW PAST THE BAY. TRAVEL-EVERYWHERE (2026-10-28, the owner: "Like how it works in the bay should be how
+// it works everywhere") retired TESA-NO-FAST (AUDIT TESA II P4), which refused every journey that ended past the Bay. A
+// journey there is a Bay journey: the travel map's, a carriage driver's, a party's, a rider's. Only the open zone
+// (PVPJOURNEY, WILD3) and the Veil (veilRefused) refuse one.
+// Pure. Not a DFU member: DFU's map stops at the Bay.
 // ═══════════════════════════════════════════════════════════════════
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 import { inEther } from '../../world/ethericSea.js';
-import { wildInside } from '../wild/wildZone.js';
-import { t } from '../textManager.js';
 import { provinceKeyBeyondBay } from '../../world/tamriel/tamrielLand.js';   // PORTAL-ANYWHERE: the land's own law (SMOOTH-LAND)
 import { provinceByKey } from '../../world/tamriel/tamrielGeography.js';
 
-/** What the refusal says (the text core's: L10N4). */
-export const PAST_BAY_TRAVEL_TEXT = Object.freeze({
-  get refused() { return t('travel.pastBay.refused', 'No road the Bay knows leads there. The land past the Iliac Bay is walked, or reached through a Portal Stone.'); },
-});
-
 /**
- * A journey's verdict past the Bay: the zone's own (`zone` - systems/wild/wildZone.js wildJourney's) where it refuses, or
- * where the journey runs inside the open zone from end to end; else a refusal where its end lies past the Bay (not the
- * Bay's map, not past the Veil); else the zone's.
- * @param {{ x: number, y: number }|null} from @param {{ x: number, y: number }|null} to @param {any} mask the open zone's
- *   mask (online; null without it) @param {{ ok: boolean, text?: string, fee?: number }} zone
+ * A journey's verdict past the Bay: the zone's (`zone` - systems/wild/wildZone.js wildJourney's), as on the Bay.
+ * @param {{ x: number, y: number }|null} _from @param {{ x: number, y: number }|null} _to @param {any} _mask
+ * @param {{ ok: boolean, text?: string, fee?: number }} zone
  * @returns {{ ok: boolean, text?: string, fee?: number }}
  */
-export function pastBayJourney(from, to, mask, zone) {
-  if (!zone.ok || !to || inBay(to.x, to.y) || inEther(to.x, to.y)) return zone;
-  if (mask && from && wildInside(mask, from.x, from.y) && wildInside(mask, to.x, to.y)) return zone;   // PVPJOURNEY: the zone's own
-  return { ok: false, text: PAST_BAY_TRAVEL_TEXT.refused };
+export function pastBayJourney(_from, _to, _mask, zone) {
+  return zone;
 }
 
 /**

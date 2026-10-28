@@ -57,7 +57,7 @@ function pressAt(win, at, past) {
   win._pickAt(0.5, 0.5);
 }
 
-test('OW-PAST-BAY the press: on the travel map bare land past the Bay is a walk to its pixel, a city or a mark a walk to its own pixel by its name; the panel opens a walked trip with no fare, and Begin hands the host a coordinates journey (mutants: the press dropped; the mark unpicked or pixel-less; the pick never walks)', () => {
+test('OW-PAST-BAY the press: on the travel map bare land past the Bay is a walk to its pixel, a city or a mark its own pixel by its name (PIN MOVED, TRAVEL-EVERYWHERE: a place\'s journey, test/ui/travel_everywhere.test.js); the panel opens a walked trip with no fare, and Begin hands the host a coordinates journey (mutants: the press dropped; the mark unpicked or pixel-less; the pick never walks)', () => {
   const win = heldMap();
   let commit = null;
   win._beginClose = (c) => { commit = c; };
@@ -75,7 +75,7 @@ test('OW-PAST-BAY the press: on the travel map bare land past the Bay is a walk 
 
   const city = heldMap();
   pressAt(city, { x: PAST.x + 0.3, y: PAST.y }, { on: 'city', label: 'Solitude', city: { name: 'Solitude', pixel: { x: 1210, y: -90 } } });
-  assert.deepEqual([city._selected?.name, city._selected?.x, city._panel], ['Solitude', 1210.5, 'travel'], 'a city: its pixel, its name');
+  assert.deepEqual([city._selected?.name, city._selected?.x, city._panel, city._selected?.place], ['Solitude', 1210.5, 'travel', true], 'a city: its pixel, its name, a place');
   // the hover's own mark answer carries the pixel the press walks to (ui/tamrielInk.js tamrielHoverAt)
   const placesIn = () => [{ x: 1190, y: -80, type: 8, name: 'Ilinalta Deep' }];
   const at = tamrielHoverAt(1190.5, -79.5, { ox: 0, oy: 0, scale: 8 }, null, { placesIn, band: 'near', filters: {} });
@@ -85,11 +85,11 @@ test('OW-PAST-BAY the press: on the travel map bare land past the Bay is a walk 
   assert.deepEqual([mark._selected?.name, mark._selected?.y, mark._panel], ['Ilinalta Deep', -79.5, 'travel'], 'a mark: its pixel, its name');
 });
 
-test('OW-PAST-BAY what walks nowhere: the sea; bare land where the mod allows no bare pixel (a city still walks); a sheet without Travel Options; the teleport map (its portals TESA2\'s); a sheet without the continent (mutants: the sea walked; the coordinates law skipped; the teleport map walked)', () => {
+test('OW-PAST-BAY what walks nowhere: the sea; bare land where the mod allows no bare pixel (a city still walks); a sheet without Travel Options (bare land); the teleport map (its portals TESA2\'s); a sheet without the continent (mutants: the sea walked; the coordinates law skipped; the teleport map walked)', () => {
   const sea = heldMap();
   pressAt(sea, PAST, { on: 'sea', label: 'the Sea of Ghosts', city: null });
   assert.equal(sea._selected ?? null, null, 'the sea is no walk');
-  assert.equal(sea._pastBayPick(PAST.x, PAST.y, 'x').walk, true);
+  assert.equal(sea._pastBayPick(PAST.x, PAST.y, 'x', null).walk, true, 'bare land walks');
 
   const noCoords = heldMap({ coords: false });
   pressAt(noCoords, PAST, { on: 'land', label: 'Skyrim', city: null });
@@ -98,8 +98,8 @@ test('OW-PAST-BAY what walks nowhere: the sea; bare land where the mod allows no
   assert.equal(noCoords._panel, 'travel', 'a place still walks');
 
   const noMod = heldMap({ to: false });
-  assert.equal(noMod._pastBayPick(PAST.x, PAST.y, 'x').walk, false, 'no Travel Options: nothing walks it');
-  noMod._select(noMod._pastBayPick(PAST.x, PAST.y, 'x'));
+  assert.equal(noMod._pastBayPick(PAST.x, PAST.y, 'x', null).walk, false, 'no Travel Options: nothing walks bare land, as on the Bay');
+  noMod._select(noMod._pastBayPick(PAST.x, PAST.y, 'x', null));
   noMod._openPanel('travel');
   assert.equal(noMod._panel ?? null, null, 'and the panel stays shut');
 
@@ -112,7 +112,7 @@ test('OW-PAST-BAY what walks nowhere: the sea; bare land where the mod allows no
   assert.equal(flat._walksPastBay(), false, 'no continent on the sheet');
 });
 
-test('OW-PAST-BAY the host walks it: a coordinates pick on the enhanced interface is the Overworld\'s walk (travelViewWalkTo), and the walk asks no gate past the Bay - pastBayJourney is the fast journeys\' (fastTravelTo) alone', () => {
+test('OW-PAST-BAY the host walks it: a coordinates pick on the enhanced interface is the Overworld\'s walk (travelViewWalkTo), and the walk asks no gate past the Bay - the gate is the fast journeys\' (fastTravelTo) alone', () => {
   const W = rd('src/scenes/world.js');
   const fn = W.slice(W.indexOf('  function beginAcceleratedTravel('), W.indexOf('\n  }\n', W.indexOf('  function beginAcceleratedTravel(')));
   assert.match(fn, /return travelViewWalkTo\(at, pick\.pixel, \{ roads: tvMapForcesRoads\(\) \}\);/);

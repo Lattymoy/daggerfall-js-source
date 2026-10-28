@@ -171,20 +171,20 @@ const heldMap = () => new HeldMapWindow({
   gold: () => 0, goldPieces: () => 0, hasHorse: false, hasCart: false, hasShip: false, diseaseCount: () => 0, poisonCount: () => 0,
 });
 
-test('START3 the held map: a press on a quest\'s diamond past the Bay picks the quest\'s place, named, as a press picks one there (TESA2\'s: no journey on the travel map); the journal\'s find glides to it and picks it; a sheet without the continent picks nothing (mutants: the press\'s place unpicked; the goto by name alone)', () => {
+test('START3 the held map: a press on a quest\'s diamond past the Bay picks the quest\'s place, named, as a press picks one there (PIN MOVED, TRAVEL-EVERYWHERE: a place, travelled to and a teleport\'s end as a Bay place is); the journal\'s find glides to it, picks it and opens its journey as the Bay\'s find does; a sheet without the continent picks nothing (mutants: the press\'s place unpicked; the goto by name alone)', () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   try {
     const win = heldMap();
     win._tamriel = true;
     const pick = win._questPlace({ px: LAIR_PX.x, py: LAIR_PX.y, placeName: 'The Haunt of Baringon' });
-    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true, pastBay: true, portal: false, walk: false });   // PIN MOVED (OW-PAST-BAY): no Travel Options here, so no walk (test/ui/owpastbay_walk.test.js)
+    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true, pastBay: true, portal: true, walk: false, place: true, town: { locationType: null, capital: false } });   // PIN MOVED (TRAVEL-EVERYWHERE): a place, its type unread here
     win.gotoPlace({ siteDetails: { regionIndex: 64, regionName: 'Skyrim', locationName: 'The Haunt of Baringon', worldPixel: LAIR_PX } });
     win._consumeGotoPlace();
     assert.equal(win._selected?.name, 'The Haunt of Baringon', 'the find picks it');
     assert.equal(win._selected?.x, LAIR_PX.x + 0.5);
     assert.equal(win._selected?.summary, null, 'no record of MAPS.BSA\'s under it');
-    assert.equal(win._panel ?? null, null, 'no journey offered (TESA-NO-FAST)');
+    assert.equal(win._panel, 'travel', 'its journey offered, as a Bay place\'s (TRAVEL-EVERYWHERE)');
     win._tamriel = false;
     assert.equal(win._questPlace({ px: LAIR_PX.x, py: LAIR_PX.y, placeName: 'x' }), null, 'no continent on the sheet: nothing to pick');
     win.dispose?.();

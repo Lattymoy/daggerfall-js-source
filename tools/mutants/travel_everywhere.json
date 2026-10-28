@@ -1,0 +1,150 @@
+[
+  {
+    "name": "TE-a-refusal-past-the-bay-kept",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return zone;\n}",
+    "new": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return _to && !inBay(_to.x, _to.y) ? { ok: false, text: 'No road leads there.' } : zone;\n}",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-zones-verdict-replaced",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return zone;\n}",
+    "new": "export function pastBayJourney(_from, _to, _mask, zone) {\n  return { ok: true, fee: 0 };\n}",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "TE-no-place-travels",
+    "file": "src/ui/heldMap.js",
+    "old": "_travelsPastBay() { return !!this._tamriel && ",
+    "new": "_travelsPastBay() { return false && !!this._tamriel && ",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-captain-travels-past-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "(!this._it || this._it.kind === IT_POPUP.carriage); }",
+    "new": "true; }",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-commit-the-coordinates",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._selected.coords && !this._selected.place) {",
+    "new": "    if (this._selected.coords) {",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-refusal-unasked",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (sel?.place && sel.town) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-region-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "regionIndex: (politicAt(Math.floor(sel.x), Math.floor(sel.y)) | 0) - 128 };",
+    "new": "regionIndex: 17 };",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-capital-lost",
+    "file": "src/ui/heldMap.js",
+    "old": "capital: end !== past && !!end.capital }",
+    "new": "capital: false }",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-marks-type-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "locationType: end === past ? past.type : tamrielCityType(end),",
+    "new": "locationType: tamrielCityType(end),",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-bill-walked",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (s && ((sel.coords && !sel.place) || isPlayerControlledTravel(s, st.opts))) {",
+    "new": "    if (s && (sel.coords || isPlayerControlledTravel(s, st.opts))) {",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-goto-opens-nothing",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (pick.place) this._openPanel('travel');",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-flag-past-the-bay-unpicked",
+    "file": "src/ui/heldMap.js",
+    "old": "const past = !inBay(px, py) ? this._pastBayPick(px, py, name, null) : null;",
+    "new": "const past = null;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-mark-no-portal",
+    "file": "src/ui/heldMap.js",
+    "old": "const mark = past?.on === 'mark' && !inBay(past.pixel.x, past.pixel.y) ? past : null;",
+    "new": "const mark = null;",
+    "tests": [
+      "test/ui/travel_everywhere.test.js",
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TE-a-named-place-bare",
+    "file": "src/ui/heldMap.js",
+    "old": "town = this._pastBayTownAt(px, py) ?? PLACE_UNKNOWN) {",
+    "new": "town = this._pastBayTownAt(px, py)) {",
+    "tests": [
+      "test/ui/travel_everywhere.test.js",
+      "test/systems/starts/start3_pastbay_marks.test.js",
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-inked-city-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (city) return { locationType: tamrielCityType(city), capital: !!city.capital };",
+    "new": "",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "TE-the-laid-place-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "    return p ? { locationType: p.type, capital: false } : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/ui/travel_everywhere.test.js"
+    ]
+  }
+]

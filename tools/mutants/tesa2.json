@@ -247,11 +247,11 @@
   {
     "name": "TESA-NO-FAST-the-cursor-points-anyway",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py)) : this._walksPastBay() && past.on !== 'sea') ? 'pointer' : ''",
-    "new": "cursor: (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py)) || (this._walksPastBay() && past.on !== 'sea')) ? 'pointer' : ''",
+    "old": "cursor: (this.teleportationTravel ? past.city?.pixel || past.on === 'mark' || (this.deps.portalLandPastBay && portalLandAt(px, py)) : (this._walksPastBay() && past.on !== 'sea') || (this._travelsPastBay() && (past.on === 'city' || past.on === 'mark'))) ? 'pointer' : ''",
+    "new": "cursor: (past.city?.pixel || past.on === 'mark' || (this.deps.portalLandPastBay && portalLandAt(px, py)) || (this._walksPastBay() && past.on !== 'sea')) ? 'pointer' : ''",
     "tests": [
       "test/tesa2_arena.test.js"
     ],
-    "note": "OW-PAST-BAY (PIN MOVED): re-aimed by content - the travel map walks past the Bay"
+    "note": "TRAVEL-EVERYWHERE (PIN MOVED): re-aimed by content - a place past the Bay is travelled to as a Bay place is"
   }
 ]
