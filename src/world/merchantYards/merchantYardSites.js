@@ -366,11 +366,13 @@ export function* yardSitesSteps(g) {
 
 /** FB1028 YARDS: a yard's place still good on a ground - its own cells on no road, no way and nothing shut, and its pad
  *  round it (YARD_PAD_M) clear of every closed cell: the wall's, a house's, the ground's edge. @param {any} g @param {any} s */
-export function siteFits(g, s) {
+export function siteFits(g, s, gained = null) {
   const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9), W = g.width;
   for (let y = s.gy - pad; y < s.gy + s.nz + pad; y++) for (let x = s.gx - pad; x < s.gx + s.nx + pad; x++) {
-    if (x < 0 || y < 0 || x >= W || y >= g.height || g.blocked[y * W + x]) return false;
-    if (x >= s.gx && y >= s.gy && x < s.gx + s.nx && y < s.gy + s.nz && (g.road[y * W + x] || g.shut?.[y * W + x])) return false;
+    const own = x >= s.gx && y >= s.gy && x < s.gx + s.nx && y < s.gy + s.nz;
+    // AUDIT FB1028 B5: a cell only the wall's growth since #1184 closed (`gained`) breaks its own ground, not its pad
+    if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x]))) return false;
+    if (own && (g.road[y * W + x] || g.shut?.[y * W + x])) return false;
   }
   return true;
 }
@@ -382,8 +384,8 @@ export function siteFits(g, s) {
  * `ports`' ground closed first - so none overlaps another. A port's place is kept as it is. @param {any} g
  * @param {any[]} sites @param {any[]} ports @returns {Generator<void, any[], void>}
  */
-export function* keptSitesSteps(g, sites, ports = []) {
-  const broken = sites.filter((s) => YARD_FOOT[s.kind] && !siteFits(g, s));
+export function* keptSitesSteps(g, sites, ports = [], gained = null) {
+  const broken = sites.filter((s) => YARD_FOOT[s.kind] && !siteFits(g, s, gained));
   if (!broken.length) return sites;
   for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);
   const out = [];
@@ -399,7 +401,7 @@ export function* keptSitesSteps(g, sites, ports = []) {
  *  @param {any} yl @param {any} measures @param {any} now @param {any} ways @param {any[]} sites @param {any[]} ports */
 export function* keptTownSitesSteps(yl, measures, now, ways, sites, ports) {
   const g = yield* townGroundSteps(yl, measures, now, ways);
-  return g ? yield* keptSitesSteps(g, sites, ports) : sites;
+  return g ? yield* keptSitesSteps(g, sites, ports, now?.gained?.() ?? null) : sites;
 }
 
 /** CARP-YARD: THE PROFESSIONS' YARDS on a ground, in CRAFT_YARD_ORDER, each on what the last left - placed by the host

@@ -282,8 +282,36 @@
   {
     "name": "FB1028-a-broken-yard-kept",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "  const broken = sites.filter((s) => YARD_FOOT[s.kind] && !siteFits(g, s));",
+    "old": "  const broken = sites.filter((s) => YARD_FOOT[s.kind] && !siteFits(g, s, gained));",
     "new": "  const broken = [];",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028): the line names the street's gates (B2) / the wall's growth (B5)."
+  },
+  {
+    "name": "AUDIT-FB1028-B2-the-street-gate-unread",
+    "file": "src/world/townWalls.js",
+    "old": "pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);",
+    "new": "pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1028-B5-the-growth-unread",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "(g.blocked[y * W + x] && (own || !gained?.[y * W + x]))",
+    "new": "g.blocked[y * W + x]",
+    "tests": [
+      "test/world/fb1028_walls.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-FB1028-B5-the-growth-under-its-own",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "(g.blocked[y * W + x] && (own || !gained?.[y * W + x]))",
+    "new": "(g.blocked[y * W + x] && !gained?.[y * W + x])",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]

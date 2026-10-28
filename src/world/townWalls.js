@@ -594,7 +594,9 @@ export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocke
   const bearing = ([x, z]) => Math.atan2(z - c[1], x - c[0]);
   const pairs = [];
   gp.forEach((p, i) => frames.forEach((f, j) => pairs.push([Math.abs(Math.atan2(Math.sin(bearing(p.at) - bearing(f.at)), Math.cos(bearing(p.at) - bearing(f.at)))), i, j])));
-  pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  // AUDIT FB1028 B2: a road's gate takes its template gate's things first, a street's gate (streetGates) what is left
+  const street = (i) => (wall?.streetWays ?? []).some((q) => Math.hypot(q[0] - gp[i].at[0], q[1] - gp[i].at[1]) < TOWN_WALL.piece / 2) ? 1 : 0;
+  pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
   const usedP = new Set(), usedF = new Set();
   for (const [, i, j] of pairs) {
     if (usedP.has(i) || usedF.has(j)) continue;
@@ -1284,9 +1286,13 @@ export function paveOnGrid(nav, paths, tilePos) {
  *  (townWallYardCellsOf). @param {any} dfLocation @param {?Uint8Array} ground @param {?Uint8Array} [paths] @param {boolean} [yards] */
 /** FB1028 YARDS: the yards' shut (#1184's, `was`) carrying the town's shut as it stands now (`now` - keptSitesSteps'
  *  ground); its key both. @param {any} was @param {any} now */
-export const yardWalkShut = (was, now) => {
+export const yardWalkShut = (was, now, dfLocation = null) => {
   const f = (nav) => was(nav);
-  Object.defineProperty(f, 'now', { value: now });
+  // AUDIT FB1028 B5: and the cells the wall gained since #1184 (a tower grown, a street's gate) - a kept yard's pad may
+  // touch them, never its own ground (keptSitesSteps)
+  const gained = () => { const a = townWallCellsOf(dfLocation), b = townWallYardCellsOf(dfLocation); return a && b && a !== b ? a.map((v, i) => (v && !b[i] ? 1 : 0)) : null; };
+  const nowF = Object.assign((nav) => now(nav), { key: now?.key, gained: dfLocation ? gained : () => null });
+  Object.defineProperty(f, 'now', { value: now ? nowF : now });
   Object.defineProperty(f, 'key', { get: () => `${was.key}|now ${now?.key}` });
   return f;
 };

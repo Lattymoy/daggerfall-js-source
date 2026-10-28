@@ -15,6 +15,8 @@ import { layGateRoads, takeUpArms, GATE_BLOCK } from '../../src/world/road/gateR
 import { townGateRoads } from '../../src/world/townGates.js';
 import { TOWN_OUTLINE_BLOCK, townOutlineBlockJson } from '../../src/world/townOutline.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
+import * as walls from '../../src/world/townWalls.js';   // AUDIT FB1028
+import * as ys from '../../src/world/merchantYards/merchantYardSites.js';   // AUDIT FB1028 B5
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !['BLOCKS.BSA', 'MAPS.BSA', 'ARCH3D.BSA', 'WOODS.WLD'].every((f) => existsSync(join(ARENA2 ?? '', f))) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
@@ -446,3 +448,30 @@ test('FB1028 YARDS with ARENA2: a yard broken by the new wall and roads placed a
   const t = kept[1];
   for (const q of [kept[0], kept[2]]) assert.ok(t.gx + t.nx <= q.gx || q.gx + q.nx <= t.gx || t.gy + t.nz <= q.gy || q.gy + q.nz <= t.gy, `clear of its ${q.kind}`);
 });
+
+test('AUDIT FB1028 B2: a road\'s gate keeps its template gate\'s things - a street\'s gate nearer that gate\'s bearing takes only what is left, so no road\'s gate stands bare (Naresa, Menakat: two records each went to a street gate with no road out) (mutant: the street\'s gate unread)', () => {
+  const boardOf = { rmbBlock: { misc3dObjectRecords: [{ modelId: '41739', modelIdNum: 41739, objectType: 0, xPos: 97 / 0.025, yPos: 0, zPos: 0 / 0.025 - 4096, xRotation: 0, yRotation: 0, zRotation: 0 }], miscFlatObjectRecords: [] } };
+  // one frame east; the street's gate on its bearing, the road's 20 degrees off it
+  const wall = { middle: [0, 0], frames: [{ name: 'A', block: [0, 0], at: [100, 0], out: [1, 0] }], streetWays: [[100, 2]],
+    pieces: [{ model: walls.WALL_MODELS.gate, at: [100, 2], out: [1, 0], stretch: 1 }, { model: walls.WALL_MODELS.gate, at: [94, 34], out: [0.94, 0.34], stretch: 1 }] };
+  const [m] = walls.gateFurniture(wall, () => boardOf, () => null).models;
+  const x = m.XPos * 0.025, z = (m.ZPos + 4096) * 0.025;
+  assert.ok(Math.hypot(x - 94, z - 34) < Math.hypot(x - 100, z - 2), `the road's gate's: (${x.toFixed(1)}, ${z.toFixed(1)})`);
+  // with no street's gate the nearest by bearing, as TS7 pairs them
+  const [n] = walls.gateFurniture({ ...wall, streetWays: [] }, () => boardOf, () => null).models;
+  assert.ok(Math.hypot(n.XPos * 0.025 - 100, (n.ZPos + 4096) * 0.025 - 2) < 10, 'no street\'s gate: the nearest');
+});
+
+test('AUDIT FB1028 B5: a kept yard\'s pad may touch a cell only the wall\'s growth since #1184 closed (a tower grown 0.1 m, a street\'s gate) - its own ground never; anything else closed breaks it as before (mutants: the growth unread; the growth let under its own ground)', () => {
+  const W = 20, n = W * W, g = { width: W, height: W, blocked: new Uint8Array(n), road: new Uint8Array(n), shut: new Uint8Array(n) };
+  const s = { kind: 'stable', gx: 6, gy: 6, nx: 3, nz: 3 }, gained = new Uint8Array(n);
+  assert.equal(ys.siteFits(g, s), true, 'clear ground');
+  g.blocked[6 * W + 5] = 1; gained[6 * W + 5] = 1;   // its pad's cell, the wall grown into it
+  assert.equal(ys.siteFits(g, s, gained), true, 'a pad cell the growth closed: kept');
+  assert.equal(ys.siteFits(g, s), false, 'read as any closed cell: broken');
+  g.blocked[7 * W + 7] = 1; gained[7 * W + 7] = 1;   // its own cell
+  assert.equal(ys.siteFits(g, s, gained), false, 'its own ground the wall\'s: broken');
+  g.blocked[7 * W + 7] = 0; gained[7 * W + 7] = 0; g.blocked[9 * W + 6] = 1;   // a pad cell a house closed
+  assert.equal(ys.siteFits(g, s, gained), false, 'a pad cell closed by anything else: broken');
+});
+
