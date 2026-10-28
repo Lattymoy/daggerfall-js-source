@@ -144,6 +144,17 @@ test('AUDIT FB1028 A3 tall relief: the departure the ease keeps never falls as t
   assert.ok((s[70 + 90 * H] - target) * M > 40, 'the hill kept as far over the town as the cone allows');
 });
 
+test('AUDIT FB1028 A3 a port\'s sea: the sea and its shore\'s first 10 m ease as FB1028 did, their reach off their own depth - the cone kept a raised port\'s sea low further out and stood the ground past a jetty\'s end over its deck (the 90th percentile 0.11 to 1.14 m) (mutant: the cone in the sea)', () => {
+  // a town at 200 m; east of x 76 the sea
+  const g = ground((x) => (x > 76 ? SEA : norm(200))), { s, target } = blend(g, shapeOf(54, 70, 54, 70, 3));
+  assert.ok(Math.abs(target * M - 200) < 0.01);
+  const sea = SEA * M, drop = 200 - sea;
+  const x = 84, y = 64, d = x - 74, e = Math.min(x, y, D - x, D - y), reach = Math.max(SHAPE_BLEND_TILES, drop / (SHAPE_GRADE * SAMPLE));
+  const t = Math.max(0, 1 - d / reach), share = Math.min(t * t * (3 - 2 * t), e / (e + d));
+  const want = sea + drop * share, got = s[y + x * H] * M;
+  assert.ok(Math.abs(got - want) < 0.05, `${d} samples out the ground stands ${got.toFixed(2)} m, FB1028's ${want.toFixed(2)} m (the cone: ${(200 - SHAPE_GRADE * SAMPLE * d).toFixed(2)} m)`);
+});
+
 test('FB1028 every blend of a pixel eases alike: the shaped samples less DFU\'s own are the landforms\' lift blended (its reach read on DFU\'s ground alone), so a record\'s lift, the tiles and the Deep Waters bake read the ground the stream lays; the bake\'s key moved (mutants: the reach read off the blended field)', () => {
   const classic = ground((x, y) => (x < 30 ? SEA : norm(40 + (x - 30) * 1.2 + 10 * Math.sin(y / 9))));
   const shaped = ground((x, y) => (x < 30 ? SEA : classic[y + x * H] + norm(15 + 8 * Math.cos(x / 11))));

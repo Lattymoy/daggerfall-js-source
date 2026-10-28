@@ -11,32 +11,32 @@
  {
   "name": "FB1028-the-grade-unread",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
-  "new": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), 1);",
+  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+  "new": "      const kept = smooth(Math.min(1, d / SHAPE_BLEND_TILES));",
   "tests": [
    "test/world/terrain/fb1028_townground.test.js"
   ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the ease its twelve samples alone. Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
  },
  {
   "name": "FB1028-the-least-unread",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
-  "new": "      const off = Math.abs(level - ground[idx]), kept = Math.min(1, off > 0 ? easeCone(d) * grade / off : 1);",
+  "old": "      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
+  "new": "      const cone = Math.min(1, off > 0 ? easeCone(d) * grade / off : 1);",
   "tests": [
    "test/world/terrain/fb1028_townground.test.js"
   ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the smoothstep unread - the cone alone, no twelve samples at the least."
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the smoothstep unread on the land. Re-aimed by content (AUDIT FB1028 A2-A3): the smoothstep unread - the cone alone, no twelve samples at the least."
  },
  {
   "name": "FB1028-the-reach-off-the-blended",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
-  "new": "      const off = Math.abs(target - heightmapData[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
+  "old": "      const off = Math.abs(level - ground[idx]);",
+  "new": "      const off = Math.abs(target - heightmapData[idx]);",
   "tests": [
    "test/world/terrain/fb1028_townground.test.js"
   ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the departure read off the blended samples."
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the departure off the blended samples. Re-aimed by content (AUDIT FB1028 A2-A3): the departure read off the blended samples."
  },
  {
   "name": "FB1028-the-edge-share-unread",
@@ -228,12 +228,32 @@
  {
   "name": "AUDIT-FB1028-A3-each-reach-its-own",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
-  "new": "      const off = Math.abs(level - ground[idx]), kept = 1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade)));",
+  "old": "      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
+  "new": "      const cone = 1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade)));",
   "tests": [
    "test/world/terrain/fb1028_townground.test.js"
   ],
-  "note": "FB1028's law: each sample's reach off its own height, the pit on the hill's flank."
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): FB1028's law on the land too. FB1028's law: each sample's reach off its own height, the pit on the hill's flank."
+ },
+ {
+  "name": "AUDIT-FB1028-A3-the-cone-in-the-sea",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "      const shore = Math.min(1, Math.max(0, (sampleHeight(ground[idx]) - SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE / SHAPE_SHORE_M));",
+  "new": "      const shore = 1;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): round 1's law: the cone in a port's sea. round 1's law: the cone under the level kept a port's sea low further out, the ground past a jetty's end over its deck."
+ },
+ {
+  "name": "AUDIT-FB1028-A3-the-depth-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+  "new": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / SHAPE_BLEND_TILES)));",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the sea's ease its twelve samples alone, whatever its depth. under the level the ease its twelve samples alone, whatever the depth."
  },
  {
   "name": "AUDIT-FB1028-A2-the-band-run-unread",
@@ -391,12 +411,12 @@
  {
   "name": "FB1028-print-the-ease-twelve-samples",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);",
-  "new": "      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), 1);",
+  "old": "      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));",
+  "new": "      const kept = smooth(Math.min(1, d / SHAPE_BLEND_TILES));",
   "tests": [
    "test/net/fb1017f_groundgate.test.js"
   ],
-  "note": "Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
+  "note": "Re-aimed by content (AUDIT FB1028 A2-A3 round 2: the sea and its shore ease as FB1028 did): the ease its twelve samples alone. Re-aimed by content (AUDIT FB1028 A2-A3): the cone unread - the ease its twelve samples alone."
  },
  {
   "name": "FB1028-print-the-edge-share-unread",

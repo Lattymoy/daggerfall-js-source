@@ -464,6 +464,9 @@ const smooth = (t) => t * t * (3 - 2 * t);
 /** AUDIT FB1028 A3: the most the ease keeps of the land's departure `d` samples out, in grades - a smooth cone: 32/3 of
  *  the smoothstep to nine samples (4/3 of the grade at its steepest), then one grade a sample. */
 const easeCone = (d) => (d < 9 ? (32 / 3) * smooth(d / SHAPE_BLEND_TILES) : d);
+/** AUDIT FB1028 A3 (round 2): the metres over the sea a sample under its town fades from FB1028's ease into the cone -
+ *  the cone in a port's sea kept it low further out, and the ground past a jetty's end stood over its deck. */
+const SHAPE_SHORE_M = 10;
 /** TOWN-SHAPES: the least a town stands at - a step over the beach, so a shore town's ground is dry land. */
 const SHAPE_FLOOR = Math.fround((SCALED_BEACH_ELEVATION + 1) / MAX_TERRAIN_HEIGHT);
 
@@ -503,9 +506,13 @@ function blendShapedTerrain(heightmapData, shape, ground, hDim, diff) {
     for (let x = 0; x < hDim; x++) {
       const idx = y + x * hDim, d = dist[y * hDim + x], e = Math.min(x, y, hDim - 1 - x, hDim - 1 - y);
       if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it
-      // AUDIT FB1028 A3: the departure kept is the least of the land's off the level x the smoothstep and the cone, so
-      // it never falls as the land stands further off
-      const off = Math.abs(level - ground[idx]), kept = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);
+      // AUDIT FB1028 A3: the land keeps the least of its departure x the smoothstep and the cone, which never falls as it
+      // stands further off; the sea and its shore's first SHAPE_SHORE_M fade to FB1028's reach off its own depth, so a sea
+      // rises to its quay as before. The two agree to 41 m
+      const off = Math.abs(level - ground[idx]);
+      const cone = Math.min(smooth(Math.min(1, d / SHAPE_BLEND_TILES)), off > 0 ? easeCone(d) * grade / off : 1);
+      const shore = Math.min(1, Math.max(0, (sampleHeight(ground[idx]) - SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE / SHAPE_SHORE_M));
+      const kept = cone * shore + (1 - shore) * (1 - smooth(Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, off / grade))));
       // its share of the way to the edge - AUDIT FB1028 A2: in the band the seam needs, from the town's last stood sample
       // (across the core's margin at the most), so the seam's run eases its margin there too
       const side = e === x ? ground[y] : e === hDim - 1 - x ? ground[y + (hDim - 1) * hDim] : e === y ? ground[x * hDim] : ground[hDim - 1 + x * hDim];
