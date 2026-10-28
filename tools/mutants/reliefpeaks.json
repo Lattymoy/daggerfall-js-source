@@ -278,39 +278,43 @@
   {
     "name": "RELIEF-PEAKS-record-move-dropped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "y += moved;   // RELIEF-PEAKS",
+    "old": "y += relief;   // RELIEF-PEAKS",
     "new": "y += 0;   // RELIEF-PEAKS",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/terrain/bayleftground_frame.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
   },
   {
     "name": "RELIEF-PEAKS-record-move-row-off",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "&& !landform) return y + moved;",
-    "new": "&& !landform) return y;",
+    "old": "&& !landform) return y + relief + town(y + relief);",
+    "new": "&& !landform) return y + town(y);",
     "tests": [
       "test/world/reliefpeaks.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
   },
   {
     "name": "RELIEF-PEAKS-record-move-on-stamped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0)",
-    "new": "!bayAt(x, z) ? movedAt(x, z) : 0)",
+    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
+    "new": "!bayAt(x, z) ? movedAt(x, z) : 0;",
     "tests": [
       "test/world/reliefpeaks.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
   },
   {
     "name": "RELIEF-PEAKS-record-move-on-the-bay",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0)",
-    "new": "!(frame >= RELIEF_FRAME_LAW) ? movedAt(x, z) : 0)",
+    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
+    "new": "!(frame >= RELIEF_FRAME_LAW) ? movedAt(x, z) : 0;",
     "tests": [
       "test/world/reliefpeaks.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
   },
   {
     "name": "RELIEF-PEAKS-old-lift-by-the-new-law",

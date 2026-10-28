@@ -230,20 +230,22 @@
  {
   "name": "FB1028-frame-town-move-by-law-3",
   "file": "src/scenes/groundFrameHost.js",
-  "old": "      + (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) ? townMovedAt(x, z) : 0);",
-  "new": "      + (townMovedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) ? townMovedAt(x, z) : 0);",
+  "old": "!(frame >= GROUND_FRAME_LAW) ? townMove(yy, x, z) : 0)",
+  "new": "!(frame >= RELIEF_FRAME_LAW) ? townMove(yy, x, z) : 0)",
   "tests": [
    "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
  },
  {
   "name": "FB1028-frame-town-move-past-the-bay-alone",
   "file": "src/scenes/groundFrameHost.js",
-  "old": "      + (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) ? townMovedAt(x, z) : 0);",
-  "new": "      + (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z) ? townMovedAt(x, z) : 0);",
+  "old": "!(frame >= GROUND_FRAME_LAW) ? townMove(yy, x, z) : 0)",
+  "new": "!(frame >= GROUND_FRAME_LAW) && !bayAt(x, z) ? townMove(yy, x, z) : 0)",
   "tests": [
    "test/world/terrain/fb1028_townground_frame.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (AUDIT FB1028 A1): restandHeight's moves as `relief` and `town(yy)`."
  },
  {
   "name": "FB1028-frame-town-move-unhanded",
