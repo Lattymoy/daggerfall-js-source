@@ -1,27 +1,11 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// SOLITUDE-RELIEF (2026-10-27, the owner, with Skyrim's Solitude over the Karth: "I really want to transform solitude to
-// match this as close to 1:1 as possible", then "when it comes to cities they are all flat and solitude is the first city
-// where I want to really explore varied depths of terrain"; bible/03-World/Arena-Provinces.md SOLITUDE-RELIEF) - SOLITUDE
-// ON ITS ROCK. AUDIT TESA II C2 stood every shore capital a metre over the sea (world/terrain/capitalSea.js), so the city
-// whose look is its height - a walled town on a headland over the Sea of Ghosts, the Blue Palace on the arch's tip above
-// the Karth's mouth, the docks far below at the water - stood level with its own piers. This module is its ground: metres
-// over the sea at any point of its pixel, in the anchor's metres (world/tamrielCapitals.js SOLITUDE: x east, z south).
-//   - THE PLATEAU, in two tiers: the Well District inside the main gate and the gate's lane at `city`, the rest - the
-//     Avenues, the palace's terrace, Castle Dour's grounds, the Temple - at `upper`, a retaining wall between them
-//     (world/capitalSolitude.js buildSolitudeTerraces) with its stairs, the lane's stair up to Castle Dour's north court,
-//     and a ramp inside Castle Dour's west gate from the lane to its yard; Daggerfall's own blocks of the upper tier lifted
-//     to it (solitudeBlockLift);
-//   - THE CLIFFS: the headland's edges west (the Karth), north (the sea) and north-east fall to the water, each a sheer
-//     face to a talus at its foot, their lines worn by noise and kept clear of the walls on their tops;
-//   - THE DOCKS: a shelf at `quay` under the north cliff, and the Docks Way down to it from the north gate - a ledge
-//     west along the cliff, a landing, a causeway back east to the quay - each deck flat across between two rows of the
-//     terrain's samples, so the ground under a deck is the deck;
-//   - THE SOUTH: the land below the main gate falling to the country's own, the Gate Road switchbacking up it.
-// Daggerfall's own blocks stand on the plateau (the location's flatten, world/terrain/terrainGen.js); the port's landmarks
-// stand at these heights (world/capitalSolitude.js); the pixel's outer samples are the land's own, eased in over
-// SOLITUDE_EDGE_BAND (world/terrain/capitalRelief.js). Pure and worker-safe: the terrain worker asks it a vertex at a time.
-// ═══════════════════════════════════════════════════════════════════
+// SOLITUDE-RELIEF (2026-10-27, the owner: "transform solitude to match this as close to 1:1 as possible", "solitude is the
+// first city where I want to really explore varied depths of terrain"; bible/03-World/Arena-Provinces.md) - Solitude's
+// ground: metres over the sea at any point of its pixel, the anchor's metres (x east, z south). Two tiers on the headland,
+// cliffs to the sea west and north and to the country east, the docks' shelf and the Docks Way under the north cliff, the
+// south slope and the Gate Road. Daggerfall's blocks stand on its tiers (capitalBlockLift), the landmarks at its heights
+// (capitalSolitude.js), the pixel's edge band eased to the land's own (terrain/capitalRelief.js). Pure and worker-safe:
+// the terrain worker asks it a vertex at a time.
 import { perlinNoise } from './perlin.js';
 import { BLOCK_M } from './blockHash.js';
 
@@ -74,15 +58,11 @@ export const SOLITUDE_DOCKS = Object.freeze({
  *  `southGate` and `south` - AUDIT TESA II C10: between the tavern's block and Castle Dour's west curtain). */
 export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4, z: 416 });
 /**
- * THE GATE ROAD, the country's road on to the main gate. The roads past the Bay end at the pixel's south edge's middle -
- * the gate pixel's step north (world/tamrielRoads.js), and the city's own step south, painted through its rim
- * (world/tamrielCapitals.js SOLITUDE `rimTiles`) - and the road runs on from there: north, then east along the foot of
- * the slope, climbing under the walls to a bend below the wall's south-east, north up to the gate's level, west along
- * under the wall, and north onto the gate's own line - its last straight run square into the gate, the gate's width, on
- * through its passage to the lane.
- * `corners` its line, each bend an arc of `bend` metres' radius (gateRoadLine); its heights the slope's own along it,
- * never falling toward the gate, never steeper than `grade` (cut into the slope where the slope runs ahead of it), the
- * gate's level at the most (gateRoadPoints); `half` its half-width and `shoulder` the bank over which the slope meets it.
+ * THE GATE ROAD: the country's road on from the pixel's south edge's middle (world/tamrielRoads.js; painted through the
+ * rim, SOLITUDE `rimTiles`) - north, east along the slope's foot, up under the walls in a switchback, and onto the gate's
+ * own line, square into the gate at its width. `corners` its line, each bend an arc of `bend` m (gateRoadLine); its
+ * heights the slope's, never falling, never steeper than `grade`, the gate's at the most (gateRoadPoints); `half` its
+ * half-width, `shoulder` the bank where the slope meets it.
  */
 export const SOLITUDE_GATE_ROAD = Object.freeze({
   corners: Object.freeze([[204.8, 512], [204.8, 480], [470, 480], [470, 444], [SOLITUDE_MAIN_GATE.x, 444], [SOLITUDE_MAIN_GATE.x, SOLITUDE_MAIN_GATE.z - 3]].map((p) => Object.freeze(p))),
@@ -104,14 +84,11 @@ export const SOLITUDE_CRAG = Object.freeze({ x: 4 * BLOCK_M, z: 3 * BLOCK_M, hal
  *  level, to its stair (`stairFoot` to `stairTop`, z south) up to the upper tier at Castle Dour's north court. */
 export const SOLITUDE_LANE = Object.freeze({ x0: 3 * BLOCK_M, x1: 327.6, stairTop: 81 * CELL - 3 * BLOCK_M, stairFoot: 84 * CELL - 3 * BLOCK_M, south: 416 });
 /** THE TERRACES' WORKS (world/capitalSolitude.js buildSolitudeTerraces): the retaining wall between the tiers - its face on
- *  the Well District's north edge (`line`, z south, from x0 to x1: the west wall's inner face to the lane), its body the
- *  upper blocks' edge cell (`depth`, the terrain's cell - where the ground steps) - and its stairs up its face, each
- *  `stairW` wide from its foot (x0, on the Well District's street) east to its head (x1, at the wall's top), in the
- *  Daggerfall blocks' street clear of their houses there with room before its foot to step on, and its head onto the
- *  upper blocks' edge clear of theirs (measured on the freeware's automaps: the north strips of a residence block, the
- *  Fighters Guild's and the pawnbroker's, the south strips of the graveyard's, the bookseller's and the armourer's -
- *  test/world/solitude_relief.test.js's ARENA2 pin); the spur of it south from Castle Dour's south-west corner to the city
- *  wall (`spur`, its middle line x, z0 to z1, its half-width), where the lane meets the castle's raised south yard. */
+ *  the Well District's north edge (`line`, from the west wall's inner face to the lane), its body the upper blocks' edge
+ *  cell (`depth`) - and its stairs up its face, each `stairW` wide from its foot (x0, on the street) east to its head (x1):
+ *  each in a Daggerfall block's street clear of its houses, room before its foot, its head clear of the upper block's
+ *  houses (measured on the freeware's automaps - test/world/solitude_relief.test.js's ARENA2 pin); and the spur south
+ *  from Castle Dour's south-west corner to the city wall (`spur`), where the lane meets the castle's raised south yard. */
 export const SOLITUDE_TERRACES = Object.freeze({
   line: Object.freeze({ z: 2 * BLOCK_M, x0: -4.5, x1: 3 * BLOCK_M, depth: CELL }),
   stairs: Object.freeze([[49.4, 62.8], [130, 150], [236, 256]].map((s) => Object.freeze(s))),
@@ -164,16 +141,21 @@ export function plateauHeight(x, z) {
  *  (metres) - its tier's. */
 export const solitudeBlockLift = (c, r) => (LOWER.has(r * 8 + c) ? 0 : SOLITUDE_LEVELS.upper - SOLITUDE_LEVELS.city);
 
+/** A sample line on a dock's edge is on it: a vertex's metres (capitalRelief.js reliefVertexAt) miss the edge's own
+ *  number by float's error, either way. */
+const ON = 1e-6;
+/** Is v from a to b, its ends' sample lines in. */
+const within = (v, a, b) => v >= a - ON && v <= b + ON;
 /** Is a point in the docks' square (the quay's x, from its sea edge to the cliff's top). */
-export const inDocks = (x, z) => x >= SOLITUDE_DOCKS.x0 && x <= SOLITUDE_DOCKS.x1 && z >= SOLITUDE_DOCKS.edge && z < SOLITUDE_DOCKS.top;
+export const inDocks = (x, z) => within(x, SOLITUDE_DOCKS.x0, SOLITUDE_DOCKS.x1) && z >= SOLITUDE_DOCKS.edge - ON && z < SOLITUDE_DOCKS.top;
 /** The docks' height at a point of their decks, landings and shelf, or null off them. */
 export function docksHeight(x, z) {
   const D = SOLITUDE_DOCKS, G = D.gate, U = D.upper, P = D.hairpin, W = D.lower, A = D.arrival;
-  if (x >= G.x0 && x <= G.x1 && z >= G.z0 && z <= G.z1) return SOLITUDE_LEVELS.upper;
-  if (z >= U.z0 && z <= U.z1 && x >= U.x0 && x <= U.x1) return lerp(U.h0, U.h1, (x - U.x0) / (U.x1 - U.x0));
-  if (x >= P.x0 && x <= P.x1 && z >= P.z0 && z <= P.z1) return P.h;
-  if (z >= W.z0 && z <= W.z1 && x >= W.x0 && x <= W.x1) return lerp(W.h0, W.h1, (x - W.x0) / (W.x1 - W.x0));
-  if (x >= D.x0 && x <= D.x1 && z >= D.edge && (z <= D.back || (x >= A.x0 && x <= A.x1 && z <= A.z1))) return SOLITUDE_LEVELS.quay;
+  if (within(x, G.x0, G.x1) && within(z, G.z0, G.z1)) return SOLITUDE_LEVELS.upper;
+  if (within(z, U.z0, U.z1) && within(x, U.x0, U.x1)) return lerp(U.h0, U.h1, clamp01((x - U.x0) / (U.x1 - U.x0)));
+  if (within(x, P.x0, P.x1) && within(z, P.z0, P.z1)) return P.h;
+  if (within(z, W.z0, W.z1) && within(x, W.x0, W.x1)) return lerp(W.h0, W.h1, clamp01((x - W.x0) / (W.x1 - W.x0)));
+  if (within(x, D.x0, D.x1) && z >= D.edge - ON && (z <= D.back + ON || (within(x, A.x0, A.x1) && z <= A.z1 + ON))) return SOLITUDE_LEVELS.quay;
   return null;
 }
 
@@ -280,6 +262,19 @@ export function solitudeGroundTile(x, z, land = SOLITUDE_TILES.stone) {
   const h = CELL / 2, c = [solitudeHeight(x - h, z - h), solitudeHeight(x + h, z - h), solitudeHeight(x - h, z + h), solitudeHeight(x + h, z + h)];
   if (c.every((v) => v <= 1e-3)) return SOLITUDE_TILES.water;
   return Math.max(...c) - Math.min(...c) > STEEP ? SOLITUDE_TILES.rock : land;
+}
+
+/**
+ * SOLITUDE-RELIEF: ITS ROCK, WHERE NO SHIP'S JETTY LANDS (systems/naval/harbourKeep.js): a tile of its pixel's land as the
+ * game draws it (solitudeGroundTile's: its corners not all the sea's) - but the docks' quay and the tile row on its sea
+ * edge. So a ship lies at the docks, never at a cliff's foot. Anchor metres.
+ * @param {number} x @param {number} z
+ */
+export function onSolitudeRock(x, z) {
+  const P = SOLITUDE_PIXEL, D = SOLITUDE_DOCKS, i = Math.floor((x - P.x0) / CELL), j = Math.floor((z - P.z0) / CELL), n = P.side / CELL;
+  if (i < 0 || j < 0 || i >= n || j >= n) return false;
+  if (docksHeight(x, z < D.edge && z >= D.edge - CELL ? D.edge : z) === SOLITUDE_LEVELS.quay) return false;
+  return solitudeGroundTile(P.x0 + (i + 0.5) * CELL, P.z0 + (j + 0.5) * CELL) !== SOLITUDE_TILES.water;
 }
 
 /**

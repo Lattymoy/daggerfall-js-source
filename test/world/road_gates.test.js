@@ -214,7 +214,7 @@ test('ROAD-FOLLOW a capital\'s gates: each walled capital\'s plan names the midd
   // the walls are cut at the same measures
   assert.match(rd('src/world/capitalAlinor.js'), /brokenRun\(mb, ne, nw, W, \[\[W\.east - W\.northGate, W\.gate, W\.gateH\]\]\);/);
   assert.match(rd('src/world/capitalTorval.js'), /gatedRun\(mb, SAND, ne, nw, W\.thick, W\.h, W\.east - W\.northGate, W\.gate, W\.gateH\);/);
-  assert.match(rd('src/world/capitalSolitude.js'), /gatedRun\(mb, NORD, sw, se, W\.thick, W\.h, W\.southGate - W\.west, W\.gate, W\.gateH\);/);
+  assert.match(rd('src/world/capitalSolitude.js'), /gatedRun\(mb, NORD, sw, stepS, W\.thick, W\.h, W\.southGate - W\.west, W\.gate, W\.gateH\);/);   // PIN MOVED (SOLITUDE-RELIEF): its south run to the terraces' step tower
 });
 
 test('ROAD-FOLLOW a capital\'s approaches: the road on from the gate pixel\'s arm - its end the middle of the pixel\'s side - to the plan\'s gate, two tiles of the road\'s own surface: straight in to a gate on its line, in to APPROACH_SKIRT short of the wall, along it and in to a gate off it; every metre of the way on it, over gardens and open ground alone (mutants: the arrival\'s slice, the skirt, the gate\'s depth, the side\'s frame)', () => {
@@ -237,8 +237,11 @@ test('ROAD-FOLLOW a capital\'s approaches: the road on from the gate pixel\'s ar
       const T = BLOCK_M / 16, ug = Math.round(gate[lat] / T) * T;
       const turn = [end[0] + n[0] * (depth - APPROACH_SKIRT), end[1] + n[1] * (depth - APPROACH_SKIRT)];
       const pts = Math.abs(ug - end[lat]) < T ? [end, gate] : [end, turn, lat === 0 ? [ug, turn[1]] : [turn[0], ug], lat === 0 ? [ug, gate[1]] : [gate[0], ug]];
-      for (let i = 1; i < pts.length; i++) assert.ok(keepsTo(on, pts[i - 1], pts[i]), `${cap.key} ${g.side}: the way from ${pts[i - 1]} to ${pts[i]}`);
       assert.ok(!on(end[0] - n[0] * 3, end[1] - n[1] * 3), `${cap.key} ${g.side}: none past the span's edge`);
+      // PIN MOVED (SOLITUDE-RELIEF): a capital on its own line (`approach`, Solitude's Gate Road up its slope) - from the arm's
+      // end to its gate; test/world/solitude_relief.test.js walks the line
+      if (cap.approach) { assert.ok(on(end[0] + n[0], end[1] + n[1]) && on(gate[0], gate[1]), `${cap.key} ${g.side}: its own line, end to gate`); continue; }
+      for (let i = 1; i < pts.length; i++) assert.ok(keepsTo(on, pts[i - 1], pts[i]), `${cap.key} ${g.side}: the way from ${pts[i - 1]} to ${pts[i]}`);
       assert.ok(!on(end[0] + n[0] * 30 + (lat === 0 ? 3 * T : 0), end[1] + n[1] * 30 + (lat === 1 ? 3 * T : 0)), `${cap.key} ${g.side}: two tiles wide`);
     }
     // the cells it crosses: gardens, and the open ground past the Imperial City's lake - never its water, never a block of its own

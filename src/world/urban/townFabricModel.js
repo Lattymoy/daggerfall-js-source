@@ -160,8 +160,7 @@ export const FABRIC_RUNS_A_BREATH = 64;
  * @param {string} style an URBAN_STYLES key
  * @param {{ cobbles?: boolean, classicModel?: (id: number) => any, lift?: ?((bx: number, by: number) => number) }} [o] `cobbles`
  *   whether its side streets are laid (a city's), `classicModel` Daggerfall's pieces (the model door's - null where it has
- *   none: the port's own alone), `lift` (SOLITUDE-RELIEF) the metres a block of its grid stands over the town's ground
- *   (world/tamrielCapitals.js capitalBlockLift) - every piece cut at a block's edge and stood on its block
+ *   none: the port's own alone), `lift` (SOLITUDE-RELIEF) a block's metres over the ground (capitalBlockLift), cut by block
  */
 export function townFabricModel(plan, style, o = {}) {
   const steps = townFabricSteps(plan, style, o);

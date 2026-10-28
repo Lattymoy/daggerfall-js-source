@@ -22,7 +22,7 @@ const STATIONS = [
   ['arch-under', -60, 150, 4, -20, 22],
   ['docks-sea', 560, -330, 22, -120, -4],
   ['docks-quay', 260, -150, 4.2, 75, 6],
-  ['docks-way', 120, -125, 34, 80, -8],
+  ['docks-way', 100, -131.2, 34, 80, -8],   // on the causeway, down it to the quay
   ['gate-road', 330, 560, 60, 0, -8],
   ['gate-front', 318.4, 470, 62, 0, -12],   // the main gate from its road
   ['gate-air', 300, 455, 260, 0, -89],

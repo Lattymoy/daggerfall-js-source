@@ -36,8 +36,6 @@
 // inside the city's west wall - the palace at the arch's tip, above the Karth, where the Avenues end; Castle Dour and the
 // Emperor's Tower just within the main gate in the city's south-east, the Temple of the Divines on its grounds
 // (TESA-LORE); the docks on the quay below the north wall - and round them its districts, Daggerfall's city blocks again.
-// SOLITUDE-RELIEF: on its rock (world/solitudeRelief.js) - two tiers over cliffs to the sea, the docks at the water far
-// below, its upper tier's blocks lifted to it (capitalBlockLift), every lake cell its own block on the relief (`ground`).
 //
 // A PLAN READS AS A MAP: its first row the north. Daggerfall's block rows run from the south (DFU lays a location's
 // block row y at Unity +z, north; the port keeps +z north), so the grid's row y is the plan's row (height - 1 - y)
@@ -145,10 +143,7 @@ const ARENA_OWN = Object.freeze({ name: ARENA_BLOCK, external: true });
  *  the Emperor's Tower, the quay and the docks. AUDIT-TESA A6-3: the walls and their towers clear of the city's blocks (they
  *  stood up to 2 m into a house's block on the north, south and west). TESA-LORE: Castle Dour "just within the city's main
  *  gate" (UESP's Solitude) - its square on the four blocks east of the south gate's lane, a gate to that lane (west) and
- *  one to the city (north), where it stood in the east, 200 m from any gate. SOLITUDE-RELIEF: its heights are metres over
- *  the sea (world/solitudeRelief.js SOLITUDE_LEVELS: the streets at 46) - the stack's top the palace's floor, the arch's
- *  deck from it to the terrace, its crown the opening's height over the water; the docks on the quay's shelf
- *  (SOLITUDE_DOCKS), the warehouse against the causeway's wall, the piers out from the quay's edge. */
+ *  one to the city (north), where it stood in the east, 200 m from any gate. SOLITUDE-RELIEF: heights over the sea. */
 export const SOLITUDE = Object.freeze({
   stack: Object.freeze({ x: -160, z: 0, r: 44, foot: 58, top: SOLITUDE_LEVELS.stack }),
   arch: Object.freeze({ from: -116, to: -4, w: 30, springW: -112, springE: -20, crown: 42, parapet: 1.5, gate: Object.freeze({ s: 8, h: 15, gateH: 7 }) }),
@@ -173,7 +168,7 @@ export const SOLITUDE = Object.freeze({
   keep: Object.freeze({ dx: 26, dz: 24, w: 36, d: 44, h: 28, roof: 11 }),
   emperorsTower: Object.freeze({ dx: -30, dz: -30, s: 12, h: 56, roof: 14 }),
   quay: Object.freeze({ x0: SOLITUDE_DOCKS.x0, x1: SOLITUDE_DOCKS.x1 }),
-  docks: Object.freeze({ edge: SOLITUDE_DOCKS.edge, piers: Object.freeze([270, 340]), pierTo: -238, pierW: 7, deck: 1.4, warehouse: Object.freeze({ x: 190, z: -153, w: 80, d: 22, h: 11, roof: 7 }) }),
+  docks: Object.freeze({ edge: SOLITUDE_DOCKS.edge, piers: Object.freeze([256, 335]), pierTo: -238, pierW: 7, deck: 1.4, warehouse: Object.freeze({ x: 190, z: -153, w: 80, d: 22, h: 11, roof: 7 }) }),
 });
 /** Solitude's closed cells: the terrace and its stair, the north wall's band (its gate open), the warehouse, Castle
  *  Dour's curtain (its gates open - TESA-LORE: west and north), its towers, its keep and the Emperor's Tower, and the east

@@ -190,8 +190,8 @@ export function townAt(port, rect) {
     const piers = (Q) => (dx, dz) => dz >= Math.min(Q.edge, Q.pierTo) && dz <= Math.max(Q.edge, Q.pierTo) && Q.piers.some((p) => Math.abs(dx - p) <= Q.pierW / 2);
     const laws = {
       solitude: [['walls', rectWalls(SOLITUDE.wall, false)], ['pier', piers(SOLITUDE.docks)],
-        ['stack', (dx, dz) => Math.hypot(dx - SOLITUDE.stack.x, dz - SOLITUDE.stack.z) <= SOLITUDE.stack.r + 11],
-        ['arch', (dx, dz) => dx >= SOLITUDE.stack.x && dx <= SOLITUDE.arch.to && Math.abs(dz) <= SOLITUDE.arch.w / 2 + 4]],
+        ['stack', (dx, dz) => Math.hypot(dx - SOLITUDE.stack.x, dz - SOLITUDE.stack.z) <= SOLITUDE.stack.foot + 19],   // SOLITUDE-RELIEF: its feet at the water (capitalSolitude.js buildSolitudeArch)
+        ['arch', (dx, dz) => dx >= SOLITUDE.stack.x && dx <= SOLITUDE.arch.to && Math.abs(dz) <= SOLITUDE.arch.w / 2 + 16]],
       alinor: [['walls', rectWalls(ALINOR.wall, true)], ['pier', piers(ALINOR.quay)]],
       torval: [['walls', rectWalls(TORVAL.wall, true)], ['pier', piers(TORVAL.quay)]],
       'imperial-city': [['walls', (dx, dz) => Math.hypot(dx, dz) <= IMPERIAL.cityWall.r + IMPERIAL.cityWall.thick / 2],

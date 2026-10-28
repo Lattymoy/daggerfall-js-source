@@ -1,15 +1,11 @@
 // @ts-check
 // TESA10 (bible/03-World/Arena-Provinces.md TESA10) - SOLITUDE'S LANDMARKS: the port's own models of the city's
-// signatures (world/tamrielCapitals.js SOLITUDE says where each stands) - the sea stack in the Karth's mouth with the Blue
-// Palace on it, the great arch from the stack to the city's west terrace, the city's walls of square towers, Castle Dour
-// and the Emperor's Tower just within the main gate (TESA-LORE), and the docks below the north wall - in metres, every
-// model's origin Solitude's anchor on its ground. Shapes of the port's own in the spirit of the city's look - never another
-// game's mesh. No game data.
-// SOLITUDE-RELIEF (bible/03-World/Arena-Provinces.md SOLITUDE-RELIEF): the city stands on its rock (world/solitudeRelief.js)
-// and its landmarks at its heights - the streets 46 m over the sea (every model's y 0), the arch a natural one of rock
-// from the stack's top to the palace terrace with the sea under its opening, the palace the highest floor, the walls
-// sunk into the cliffs they stand on, Castle Dour on its crag, the docks at the water under the Docks Way, the Gate Road
-// up the slope below the main gate - and the cliffs' rock over every steep cell of the ground.
+// signatures (world/tamrielCapitals.js SOLITUDE says where each stands) - the sea stack and the Blue Palace on it, the
+// great arch, the walls, Castle Dour and the Emperor's Tower (TESA-LORE), the docks - every model's origin Solitude's
+// anchor. Shapes of the port's own in the spirit of the city's look - never another game's mesh. No game data.
+// SOLITUDE-RELIEF: the landmarks at its rock's heights (world/solitudeRelief.js; the streets at 46 m, every model's y 0) -
+// the arch of rock over the sea, the walls sunk into their cliffs, Castle Dour on its crag, the docks at the water, the
+// Gate Road up the slope, and the cliffs' rock over every steep cell of the ground.
 import { MeshBuilder } from './detStandIns.js';
 import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own cut stone and half-timbering
 import {
@@ -366,9 +362,11 @@ export function buildCastleDour(S = SOLITUDE) {
  */
 export function buildSolitudeDocks(S = SOLITUDE) {
   const mb = new MeshBuilder(), D = S.docks, Q = S.quay, R = SOLITUDE_DOCKS, q = levelY(SOLITUDE_LEVELS.quay), sea = levelY(0);
-  hall(mb, NORD, (Q.x0 + Q.x1) / 2, D.edge + 0.6, Q.x1 - Q.x0, 1.2, sea - 4, q + 0.4, 0.5);
-  hall(mb, NORD, Q.x0 + 0.6, (D.edge + R.back) / 2, 1.2, R.back - D.edge, sea - 4, q + 0.4, 0.5);
-  hall(mb, NORD, Q.x1 - 0.6, (D.edge + R.arrival.z1) / 2, 1.2, R.arrival.z1 - D.edge, sea - 4, q + 0.4, 0.5);
+  // the kerb a cell out over the sea's side: the ground falls from the quay's edge to the sea across that cell
+  const c = SOLITUDE_PIXEL.side / 128, n = D.edge - c;
+  hall(mb, NORD, (Q.x0 + Q.x1) / 2, (n + D.edge + 1.2) / 2, Q.x1 - Q.x0 + 2 * c, c + 1.2, sea - 4, q + 0.4, 0.5);
+  hall(mb, NORD, Q.x0 + (1.2 - c) / 2, (n + R.back) / 2, c + 1.2, R.back - n, sea - 4, q + 0.4, 0.5);
+  hall(mb, NORD, Q.x1 - (1.2 - c) / 2, (n + R.arrival.z1) / 2, c + 1.2, R.arrival.z1 - n, sea - 4, q + 0.4, 0.5);
   for (const x of D.piers) {
     const len = D.edge - D.pierTo, zc = (D.edge + D.pierTo) / 2;
     hall(mb, TIMBER, x, zc, D.pierW, len, q + D.deck - 0.4, q + D.deck, 0.5);
@@ -455,14 +453,11 @@ export const CLIFF_STEEP = 3.2;
 export const CLIFF_SKIN = Object.freeze({ least: 0.15, bulge: 1.5, masonry: 0.25, sub: 4, under: 6 });
 
 /**
- * THE CLIFFS (SOLITUDE-RELIEF): the rock over every steep cell of Solitude's ground - every cell of the terrain's own grid
- * (world/terrain/capitalRelief.js stands each vertex on world/solitudeRelief.js solitudeHeight) whose corners climb more
- * than CLIFF_STEEP, clear of the pixel's edge band (the land's own heights there) - drawn on the terrain's own triangles
- * (each cell cut south-west to north-east, world/terrain/terrainSurface.js surfaceHeightAt), CLIFF_SKIN.sub a side, and
- * stood off them along the ground's own smooth normal: its least everywhere, its strata's bulge where every cell round a
- * vertex is the cliff's (the bulge eased across a cell, so two cells of rock meet without a crack and the rock meets the
- * level ground at its lip). Where its foot is the sea it plunges CLIFF_SKIN.under metres under the water. Inside the
- * docks' square it is the Docks Way's battered masonry, a hand's breadth proud.
+ * THE CLIFFS (SOLITUDE-RELIEF): the rock over every steep cell of the terrain's own grid (corners climbing more than
+ * CLIFF_STEEP), clear of the pixel's edge band - drawn on the terrain's own triangles (terrainSurface.js surfaceHeightAt),
+ * CLIFF_SKIN.sub a side, stood off along the ground's smooth normal: its least everywhere, its strata's bulge where every
+ * cell round a vertex is the cliff's, eased so two cells meet without a crack. Its foot plunges CLIFF_SKIN.under metres
+ * under the sea; inside the docks' square it is the Docks Way's battered masonry.
  */
 export function buildSolitudeCliffs() {
   const mb = new MeshBuilder(), P = SOLITUDE_PIXEL, band = SOLITUDE_EDGE_BAND, K = CLIFF_SKIN.sub, { N, Hd, cell, H } = solitudeDrawn();

@@ -2,8 +2,8 @@
   {
     "name": "TREES-world-no-seat",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const fy = hillSeat && isNatureArchive(flat.archive) ? blockY + seatNatureFlat(",
-    "new": "const fy = false && isNatureArchive(flat.archive) ? blockY + seatNatureFlat(",
+    "old": "const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off",
+    "new": "const hillY = false && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + off",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TREES-world-gate-narrowed",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const fy = hillSeat && isNatureArchive(flat.archive) ?",
-    "new": "const fy = hillSeat && flat.archive === natureArchive ?",
+    "old": "const hillY = hillSeat && isNatureArchive(flat.archive) ?",
+    "new": "const hillY = hillSeat && flat.archive === natureArchive ?",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TREES-world-ground-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "NATURE_FLATS_Y + off - (blockY - locLocal[1]))",
-    "new": "NATURE_FLATS_Y - (blockY - locLocal[1]))",
+    "old": "NATURE_FLATS_Y + off - (blockY - locLocal[1]) : null;",
+    "new": "NATURE_FLATS_Y - (blockY - locLocal[1]) : null;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]

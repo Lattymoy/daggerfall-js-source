@@ -1,20 +1,11 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// SOLITUDE-RELIEF (2026-10-27, bible/03-World/Arena-Provinces.md SOLITUDE-RELIEF; a departure from DFU's
-// BlendLocationTerrain, as RUMARE-WATER's world/terrain/capitalSea.js is) - A CAPITAL ON A RELIEF OF ITS OWN. A location
-// stands on one flat ground - DFU planes its rect to the pixel's mean and blends the rest - and a capital at the sea on
-// the sea's own (capitalSea.js). A capital with a relief (CAPITAL_RELIEFS, by its key: Solitude's world/solitudeRelief.js)
-// stands its city's blocks on its streets' level (`flat`, the flatten world/terrain/terrainGen.js takes) and every
-// vertex of its pixel on the relief's height there:
-//   - a vertex is the sea's where the relief is at the sea - its own blocks lay their water there and only there (world/
-//     solitudeRelief.js solitudeGroundTile: a tile is the water's when its four corners are), so the sheet drawn on it is
-//     level and the Deep Waters carve takes it. A pond or a stream of one of Daggerfall's blocks stays its block's, on its
-//     tier, as in any town (read as the sea it sank a pit 46 m deep into the Well District, on the freeware);
-//   - every other vertex the relief's height over the sea;
-//   - the pixel's outer samples the land's own, eased in over the relief's `band` samples, so no seam opens with the
-//     pixels round it.
-// Pure and worker-safe: the terrain worker and this thread read the same law.
-// ═══════════════════════════════════════════════════════════════════
+// SOLITUDE-RELIEF (2026-10-27, bible/03-World/Arena-Provinces.md; a departure from DFU's BlendLocationTerrain, as
+// RUMARE-WATER's capitalSea.js is) - A CAPITAL ON A RELIEF OF ITS OWN (CAPITAL_RELIEFS: Solitude's world/solitudeRelief.js).
+// Its blocks stand on its streets' level (`flat`, terrainGen.js's flatten) and every vertex of its pixel on the relief:
+// the sea's where the relief is at the sea - its blocks lay their water there alone (solitudeGroundTile), a Daggerfall
+// block's pond stays on its tier (read as the sea, it sank a 46 m pit into the Well District) - else the relief's height;
+// the outer `band` samples eased to the land's own, so no seam opens with the pixels round it. Pure and worker-safe: the
+// terrain worker and this thread read the same law.
 import { SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE } from './terrainSampler.js';
 import { solitudeHeight, solitudeWalkShut, SOLITUDE_LEVELS, SOLITUDE_PIXEL, SOLITUDE_EDGE_BAND } from '../solitudeRelief.js';
 

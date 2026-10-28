@@ -85,9 +85,7 @@ import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOO
  *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level. AUDIT TESA II
  *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
  *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
- *   too, where its canal stands; `seaEdges` its sides shared with its sea slice. SOLITUDE-RELIEF: `relief` a capital on a
- *   relief of its own (world/terrain/capitalRelief.js CAPITAL_RELIEFS' key) - flattened to its streets' level, every vertex
- *   then the relief's (capitalReliefGround).
+ *   too, where its canal stands; `seaEdges` its sides shared with its sea slice; `relief` (SOLITUDE-RELIEF) capitalRelief.js's key.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,

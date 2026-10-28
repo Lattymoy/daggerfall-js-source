@@ -85,15 +85,21 @@ test('SOLITUDE-RELIEF the city on its rock: the Well District inside the main ga
   assert.equal(R.solitudeHeight(250, -115.2), L.upper, 'the north gate\'s landing on the upper tier');
   assert.equal(R.solitudeHeight(D.hairpin.x0 + 4, -125), D.hairpin.h);
   assert.equal(R.solitudeHeight(D.lower.x1, -130), L.quay, 'the causeway comes down to the quay');
-  // each deck flat across: its two rows are the terrain's sample lines, the same height on both
+  // each deck flat across: its two rows are the terrain's sample lines, the same height on both - the deck's - read at the
+  // vertices' own metres (capitalRelief.js reliefVertexAt), float's error and all; the quay's from its sea edge to the decks
+  const vAt = (x, z) => R.solitudeHeight(...reliefVertexAt(CAPITAL_RELIEFS.solitude, Math.round((x - P.x0) / CELL), 128 - Math.round((z - P.z0) / CELL)));
+  for (let x = D.x0; x <= D.x1 + 1e-9; x += CELL) for (const z of [D.edge, D.back - CELL]) assert.equal(vAt(x, z), L.quay, `the quay's vertex at ${x.toFixed(1)},${z}`);
   for (const deck of [D.upper, D.lower]) {
     for (const z of [deck.z0, deck.z1]) assert.ok(near((z - P.z0) / CELL, Math.round((z - P.z0) / CELL), 1e-9), `a deck's edge ${z} on a sample row`);
-    for (let x = deck.x0; x <= deck.x1; x += CELL) assert.equal(R.solitudeHeight(x, deck.z0), R.solitudeHeight(x, deck.z1));
+    for (let x = deck.x0; x <= deck.x1 + 1e-9; x += CELL) {
+      assert.equal(R.solitudeHeight(x, deck.z0), R.solitudeHeight(x, deck.z1));
+      assert.ok(near(vAt(x, deck.z0), R.docksHeight(x, (deck.z0 + deck.z1) / 2), 1e-9) && near(vAt(x, deck.z1), vAt(x, deck.z0), 1e-9), `the deck's vertices at ${x.toFixed(1)}`);
+    }
     const grade = Math.abs(deck.h1 - deck.h0) / (deck.x1 - deck.x0);
     assert.ok(grade <= 0.135, `its grade ${grade.toFixed(3)} a road's`);
   }
-  // inside the docks' square no ground is the sea's
-  for (let x = D.x0; x <= D.x1; x += CELL) for (let z = D.edge; z < D.top; z += CELL) assert.ok(R.solitudeHeight(x, z) >= L.quay, `the docks at ${x},${z}`);
+  // inside the docks' square no ground is the sea's - between the samples too, where the models read it
+  for (let x = D.x0; x <= D.x1; x += CELL / 4) for (let z = D.edge; z < D.top; z += CELL / 4) assert.ok(R.solitudeHeight(x, z) >= L.quay, `the docks at ${x},${z}`);
   // the cliffs: the Karth west of the city and the sea north of it the water's, the city's edges on its tiers
   assert.equal(R.solitudeHeight(-80, 0), 0, 'the Karth under the arch');
   assert.equal(R.solitudeHeight(40, -200), 0, 'the sea north of the city');
@@ -152,19 +158,24 @@ test('SOLITUDE-RELIEF the Gate Road and the slope below the walls: the road runs
 
 test('SOLITUDE-RELIEF the country\'s road reaches the city\'s own ground: its approach (ROAD-FOLLOW, world/capitalApproaches.js) the Gate Road\'s own line - the road\'s surface from where the country\'s road ends at the pixel\'s edge, over its rim, to the main gate\'s passage, no tree on it, never a block of its own; its rim no more than its relief\'s edge band; the paving on the ground the terrain draws', async () => {
   const { LOCATION_TYPES: T } = await import('../../src/formats/mapsFile.js');
-  const { capitalRimTiles, inCapitalRim, CAPITAL_RIM_TILES, capitalDims, capitalArrival, capitalGates, planCell } = await import('../../src/world/tamrielCapitals.js');
-  const { onCapitalApproach, capitalApproachCells, APPROACH_TILE } = await import('../../src/world/capitalApproaches.js');
-  const k = CAPITALS.indexOf(sol), D = capitalDims(sol), on = onCapitalApproach(sol, D), W = SOLITUDE.wall;
+  const { capitalRimTiles, inCapitalRim, CAPITAL_RIM_TILES, capitalDims, capitalGates, planCell } = await import('../../src/world/tamrielCapitals.js');
+  const { onCapitalApproach, capitalApproachCells, capitalArrival, APPROACH_TILE } = await import('../../src/world/capitalApproaches.js');
+  const k = CAPITALS.indexOf(sol), dims = capitalDims(sol), on = onCapitalApproach(sol, dims), W = SOLITUDE.wall;
   // where the road's arm ends (world/tamrielRoads.js: the gate pixel's step north, at its side's middle) its approach begins
   assert.deepEqual(capitalGates(k, { walkable: () => true }).map((g) => g.side), ['S']);
-  const end = capitalArrival(sol, D, 'S'), [ax, ar] = sol.anchor, start = [end[0] - ax * BLOCK_M, end[1] - ar * BLOCK_M];
+  const start = capitalArrival(sol, dims, 'S');   // its anchor's metres
   assert.deepEqual(start, R.gateRoadLine[0].slice(), 'the Gate Road from the arm\'s end');
   // the approach the Gate Road's line, every metre of it from the edge to the gate's passage, and none past either
   for (const [x, z] of R.gateRoadLine) assert.equal(on(x, z), z >= W.south - W.thick / 2 - 0.5, `on its line at ${x.toFixed(1)},${z.toFixed(1)}`);
   assert.ok(!on(start[0], start[1] + 3), 'none past the span\'s edge');
   assert.ok(!on(W.southGate, W.south - W.thick), 'none past the gate\'s passage - the city\'s own street');
   assert.ok(!on(W.southGate - 30, W.south + 30) && !on(140, 480), 'none off its line');
-  for (const [r, c] of capitalApproachCells(sol, D)) assert.equal(planCell(sol, r, c), 'G', `the approach over gardens alone (${r},${c})`);
+  const cells = capitalApproachCells(sol, dims), [ax, ar] = sol.anchor;
+  for (const [r, c] of cells) assert.equal(planCell(sol, r, c), 'G', `the approach over gardens alone (${r},${c})`);
+  // every cell its line crosses - the switchback's too, off a straight approach's rectangle
+  const crossed = new Set(R.gateRoadLine.filter(([x, z]) => on(x, z) && z < P.z0 + P.side).map(([x, z]) => `${Math.floor(z / BLOCK_M + ar)},${Math.floor(x / BLOCK_M + ax)}`));
+  const got = new Set(cells.map(([r, c]) => `${r},${c}`));
+  assert.ok(crossed.size >= 2 && [...crossed].every((c) => got.has(c)), `the cells its line crosses: ${[...crossed]} of ${[...got]}`);
   assert.equal(APPROACH_TILE, 46, 'the road\'s own surface');
   // its rim its relief's band and a tile: the country's road painted on the land's own tiles there, the city's own past it
   assert.equal(capitalRimTiles(sol), R.SOLITUDE_EDGE_BAND + 1);

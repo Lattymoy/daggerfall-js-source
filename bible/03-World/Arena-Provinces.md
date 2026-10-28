@@ -2391,53 +2391,54 @@ the sea at any point of its pixel, in its anchor's metres - x east, z south):
 - **The docks** (`SOLITUDE_DOCKS`): a shelf at 2.4 m under the north cliff, and the Docks Way down to it from the north
   gate - a ledge west along the cliff face from the gate's landing (52 m to 34 m), a hairpin landing, and a causeway back
   east to the quay's east end (34 m to 2.4 m, a road's grade). Each deck lies between two rows of the terrain's samples,
-  so the ground under a deck is the deck.
+  so the ground under a deck is the deck. An edge takes its sample line though the vertex's metres miss the edge's number
+  by float's error (`ON`): until this was measured, every deck's north row and the quay's sea edge read the cliff or the
+  sea.
 - **The south** (`southSlope`): the land below the main gate falls to the country's own height (`SOLITUDE_SOUTH_EDGE`,
   measured).
 - **The Gate Road** (`SOLITUDE_GATE_ROAD`, `gateRoadLine`, `gateRoadPoints`): the country's road on to the main gate
-  (`SOLITUDE_MAIN_GATE`, the one home of the gate's place - `SOLITUDE.wall.southGate` reads it). The roads past the Bay
-  end at the pixel's south edge's middle: the gate pixel's step north (`world/tamrielRoads.js`), and now the city's own
-  step south too (`capitalGates`' `inside`, for a capital on a relief whose gate is its neighbour), so the country's road
-  is painted on through the city's rim. Solitude's rim is its relief's band and a tile (`rimTiles`, 4 tiles, where
-  Daggerfall's is 11): the land's own tiles and the country's road there, the city's own ground past it - no tree of the
-  land's stands on its road or its cliffs. From there the Gate Road runs on north as the road came, out past the band,
-  bends east along the foot of the slope and climbs under the walls, north below the wall's south-east up to the gate's
-  level, west under the wall, and north onto the gate's own line: its last straight run square into the gate, the
-  gate's width (10 m), on through its passage. Each bend an arc of 10 m radius; its heights the slope's own, never
-  falling, never steeper than 0.16 (cut up to 3.7 m into the slope where the slope runs ahead of it), the gate's level
-  at the most - the last run a raised approach up to 6.6 m over the slope, its parapet along it. Flat across over its
-  width, the slope meeting it over a 12 m bank.
-  WHAT STOOD before (the owner, 2026-10-27: *"Im noticing in your probe the gate doesnt line up with the road. I thought
-  this was fixed"*): the road came along the wall to the gate aslant, the cliffs' rock stood on its cut banks as ridges in
-  front of the gate, its paving lay on the relief's own heights (under the drawn ground where the terrain's cells crease),
-  and 25 m of grass lay between the country's road's end and the paving's start.
+  (`SOLITUDE_MAIN_GATE`, the one home of the gate's place - `SOLITUDE.wall.southGate` and ROAD-FOLLOW's `gateAt` read
+  it). From the pixel's south edge's middle, where the roads past the Bay end (`world/tamrielRoads.js`), it runs north as
+  the road came, east along the slope's foot, up under the walls in a switchback, and onto the gate's own line: its last
+  run square into the gate at the gate's width (10 m). Each bend is an arc of 10 m. Its heights are the slope's, never
+  falling, never steeper than 0.16 (cut up to 3.7 m into the slope), the gate's level at the most - the last run raised
+  up to 6.6 m over the slope, a parapet along it. Flat across, the slope meets it over a 12 m bank.
+- **The road on it** (ROAD-FOLLOW, `03-World/Town-Shapes.md`, `world/capitalApproaches.js`): the road's own surface
+  (`APPROACH_TILE`) along the Gate Road's line (`approach`, asked first by `onCapitalApproach` and
+  `capitalApproachCells`), under its paving and over the rim to the gate's passage, no tree on it. ROAD-FOLLOW's straight
+  run in and along the wall would have climbed the slope at 47%. Solitude's rim is its relief's band and a tile
+  (`rimTiles`, 4 tiles, where Daggerfall's is 11): the land's own tiles there but the road's.
+- **What stood before** (the owner, 2026-10-27: *"Im noticing in your probe the gate doesnt line up with the road. I
+  thought this was fixed"*): the road came along the wall to the gate aslant, the cliffs' rock stood on its cut banks as
+  ridges in front of the gate, its paving lay under the drawn ground where the terrain's cells crease, and 25 m of grass
+  lay between the country's road's end and the paving's start.
 - **Castle Dour's crag** (`SOLITUDE_CRAG`): its yard on the upper tier, a ramp inside its west gate from the lane up to it.
   **The lane's stair** (`SOLITUDE_LANE`) climbs from the gate's lane to Castle Dour's north court; its ends lie on the
   terrain's sample rows, so the drawn ground under it is a straight ramp and every tread stands on it.
 
 **The ground** (`world/terrain/capitalRelief.js`, a departure from DFU's BlendLocationTerrain as RUMARE-WATER's is).
-A capital with a relief (`CAPITAL_RELIEFS`, by its key; the location's `flattenAt.relief`) is flattened to its streets'
-level (`reliefFlat`), and then every vertex of its pixel is the relief's height (`capitalReliefGround`, run by
-`world/terrain/terrainGen.js` after the blend). A vertex is the sea's exactly where the relief is at the sea - Solitude's
-own blocks lay their water there and only there (`solitudeGroundTile`: a tile is the water's when all four of its corners
-are), so the sheet drawn on it is level, the Deep Waters carve takes it and the hull sails it. A pond or a stream of one of
-Daggerfall's blocks stays its block's, on its tier - read as the sea, as a capital at the sea reads a stamped water tile,
-it sank a pit 46 m deep into the Well District (the freeware's RESIAL08 and GRVEAL31, found by the ARENA2 pin). The
-pixel's outer three samples (`SOLITUDE_EDGE_BAND`) are eased to the land's own, so no seam opens.
+A capital with a relief (`CAPITAL_RELIEFS`; the location's `flattenAt.relief`) is flattened to its streets' level
+(`reliefFlat`), then every vertex of its pixel takes the relief's height (`capitalReliefGround`, run by
+`world/terrain/terrainGen.js` after the blend). A vertex is the sea's exactly where the relief is - Solitude's own blocks
+lay their water there alone (`solitudeGroundTile`: a tile is water when all four corners are), so the sheet is level and
+the Deep Waters carve takes it. A Daggerfall block's pond or stream stays on its tier: read as the sea, it sank a 46 m pit
+into the Well District (RESIAL08 and GRVEAL31, found by the ARENA2 pin). The pixel's outer three samples
+(`SOLITUDE_EDGE_BAND`) ease to the land's own, so no seam opens.
 
 **Its blocks on their tiers** (`world/tamrielCapitals.js` `capitalBlockLift`, the capital's `lift`:
-`solitudeBlockLift`). Every one of Daggerfall's blocks on the upper tier is built 6 m over the location's flatten
-(`scenes/pixelBuild.js`, `blockY`): its models, doors, people, lights, hearths, springs and flats. A nature flat stands
-on the drawn ground. The fabric's streets, kerbs, fences, walls and props are cut at the blocks' edges and stood on each
-block's tier (`world/urban/townFabricModel.js` `lift`, from `world/urban/townFabricStand.js`); the Witches' Festival
-dresses each block at its tier (`world/witchesDecor.js` `floorAt`). The town's walkers read the terrain under them, so
-they keep to their tiers; the walk grid is shut on the retaining wall, its stairs, the lane's stair and the spur
-(`solitudeWalkShut`, `world/townWalls.js` `shutRelief`), since the grid has no height to climb. Its own blocks, its
-gardens and its water are never lifted: their ground and their models are the relief's. Every lake cell of the plan is
-now a block of Solitude's own (`TESL...`), laid on the relief: the sea where it is, the cliff's rock where its corners
-climb, closed but on the docks' paving. A garden's grass is the rock where it climbs, a tree only on grass. The start
-markers carry their street's height (`startMarkerAt`'s `h`, the record's YPos), because the arrival refuses a floor more
-than 3 m over its marker.
+`solitudeBlockLift`). Every Daggerfall block on the upper tier is built 6 m over the location's flatten
+(`scenes/pixelBuild.js`, `blockY`): its models, doors, people, lights, hearths, springs and flats; a nature flat stands on
+the drawn ground. The fabric's pieces are cut at the blocks' edges and stood on each block's tier
+(`world/urban/townFabricModel.js` `lift`, from `world/urban/townFabricStand.js`); the Witches' Festival dresses each
+block at its tier (`world/witchesDecor.js` `floorAt`). The walkers read the terrain under them; the walk grid, which has
+no height to climb, is shut on the retaining wall, its stairs, the lane's stair and the spur (`solitudeWalkShut`,
+`world/townWalls.js` `shutRelief`).
+
+Its own blocks, gardens and water are never lifted: their ground and models are the relief's. Every lake cell of the plan
+is a block of Solitude's own (`TESL...`) on the relief: the sea where it is, the cliff's rock where its corners climb,
+closed but on the docks' paving. A garden's grass is the rock where it climbs, a tree only on grass. The start markers
+carry their street's height (`startMarkerAt`'s `h`, the record's YPos), because the arrival refuses a floor more than 3 m
+over its marker.
 
 **Every landmark at its height** (`world/capitalSolitude.js`):
 - **The sea stack and the arch**: the stack a column of strata from under the water to 64 m, boulders round its foot
@@ -2457,7 +2458,8 @@ than 3 m over its marker.
   than a man's height below its edge.
 - **Castle Dour** on the upper tier: its west gate at the lane's level with the ramp inside, its north gate level with the
   upper tier's court, a plinth and a walk inside its west curtain.
-- **The docks**: a kerb along the quay's edge, two piers out over the sea with posts and bollards, the East Empire
+- **The docks**: a kerb a cell wide along the quay's three sea edges, over the cell where the ground falls to the sea,
+  two piers out over the sea with posts and bollards (at 256 and 335 m, a ship's room between them), the East Empire
   Company's warehouse - timber framing over plaster on a stone storey (URBANIZER U2) - with crates and barrels, and the
   Docks Way's parapets following its decks down.
 - **The terraces' works** (`buildSolitudeTerraces`, a new model 910116): the retaining wall between the tiers - its body
@@ -2475,6 +2477,12 @@ than 3 m over its marker.
 water under the north cliff, the west end of the docks' shelf - every corner of their footprints at 2.4 m on the
 freeware. They stood on the plateau's north-west corner, which is the cliff's rock and the sea now, closed.
 
+**Its ships** (PORT-SHIPS, `systems/naval/harbourKeep.js`). Solitude's keep is its rock too (`onSolitudeRock`): a tile of
+its pixel's land as the game draws it, but the docks' quay and the tile row on its sea edge. Off the water alone, five
+ships lay at the west cliff's foot in the Karth, their jetties on its talus. Now five lie at the docks, one between the
+piers, and the sixth on the sea past the east wall. The keep's arch and stack read the new models' feet at the water
+(`ARCH_FOOT`, `STACK_FOOT`).
+
 **Measured** (the freeware, its trace, the fit (38, 57) x15.5; node, the stand-in view `tools/solitudeView.mjs`, the
 game `tools/solitudeProbe.mjs`): the pixel's streets at 46.00 and 52.00 m, the quay at 2.40 m, the Karth under the
 arch at the sea's own height (sailed, carved), 2,747 water tiles of its own blocks all on the relief's sea, the
@@ -2482,28 +2490,35 @@ Daggerfall blocks' ponds on their tiers; the thirteen upper blocks (ALCH, ARMR, 
 MAGE, RESI x2, TEMP, TVRN) lifted; seams to the neighbours 0.00 m. The composition from the picture's own view - the city
 on its rock to the left, the arch and the palace on its stack to the right over the Karth, the sea behind - matches.
 
-Pins: `test/world/solitude_relief.test.js` (19: the relief's tiers, cliffs, docks and decks; the Gate Road from the
-country's road's end square into the gate, and the south slope; the country's road's step into the city and its rim,
-the paving on the drawn ground across its width, the road's banks no rock; the pixel's ground from the relief and the terrain job laying it; its tiles and its lake blocks; its blocks'
-lifts; its markers' heights; the arch, the stack and the palace; the walls on their tiers and their gates; Castle Dour;
-the docks; the terraces' stairs walkable; the cliffs' rock over the drawn ground and never inside the walls; the walk
-grid shut on the works; the fabric's lift; the festival's floor; the hosts' wiring; and with ARENA2 the city on the
-freeware - its streets, quay and the Karth at their heights, its own water on the relief's sea, Daggerfall's ponds on
-their tiers, the terraces' stairs and heads clear of every block's houses, its thirteen blocks lifted). Mutants
-`tools/mutants/solituderelief.json` (45, all dead); the 29 records this change's lines moved re-aimed by content and all
-dead again (`audittesa.json`, `audittesa2c.json`, `fb1003b_trees.json`, `hearth1.json`, `natureground.json`, `tesa10.json`,
-`tesalore.json`, `townfollow.json`, `urban.json`, `witch1.json`, `ww7.json`). Two of them found the parapets of the
-terraces and of the palace terrace built from the ground, their faces doubled on the walls' (they stand on the tops now).
-PIN MOVED: `test/tesa10_capitals.test.js` (its tiles, the warehouse's
-block, the arch's and the palace's measures, the walls' gates on their tiers), `test/tesa10c_capitals.test.js` (every
-lake cell of a capital on its own ground its own block), `test/audit_tesa.test.js` (A6-2: a garden on a capital's own
-ground its ground's; A6-3: the terraces' works in its blocks' edge strips), `test/world/audittesa2c_capitals.test.js`
-(C1: its lakes, its models clear of the relief's edge band rather than the rim; C2: its flatten names its relief, its
-streets at 46 m), `test/world/urban/urban2_art.test.js` (U2: the warehouse's framing over the quay),
-`test/world/worldWide/bayleftsea_capitals.test.js` (its shipyard and lighthouse on the quay; by a landmark's box, none),
+Pins: `test/world/solitude_relief.test.js` (19: the relief's tiers, cliffs, docks and decks; the Gate Road square into
+the gate, the south slope, ROAD-FOLLOW's approach on its line and its rim, the paving on the drawn ground, its banks no
+rock; the pixel's ground and the terrain job laying it; its tiles and lake blocks; its blocks' lifts; its markers'
+heights; the arch, the stack and the palace; the walls and their gates; Castle Dour; the docks; the terraces' stairs;
+the cliffs' rock over the drawn ground, never inside the walls; the walk grid shut on the works; the fabric's lift; the
+festival's floor; the hosts' wiring; and with ARENA2 the city on the freeware - its heights, its water on the relief's
+sea, Daggerfall's ponds on their tiers, the stairs clear of every block's houses, its thirteen blocks lifted).
+
+Mutants: `tools/mutants/solituderelief.json` (45 then, all dead); the 29 records this change's lines moved, re-aimed by
+content and all dead again (`audittesa.json`, `audittesa2c.json`, `fb1003b_trees.json`, `hearth1.json`,
+`natureground.json`, `tesa10.json`, `tesalore.json`, `townfollow.json`, `urban.json`, `witch1.json`, `ww7.json`). Two
+found the parapets of the terraces and of the palace terrace built from the ground, their faces doubled on the walls'
+(they stand on the tops now).
+
+PIN MOVED: `test/tesa10_capitals.test.js` (its tiles, the warehouse's block, the arch's and the palace's measures, the
+walls' gates), `test/tesa10c_capitals.test.js` (every lake cell of a capital on its own ground its own block),
+`test/audit_tesa.test.js` (A6-2: a garden on a capital's own ground; A6-3: the terraces' works in the edge strips),
+`test/world/audittesa2c_capitals.test.js` (C1: its lakes, its models clear of the edge band; C2: its flatten names its
+relief, its streets at 46 m), `test/world/urban/urban2_art.test.js` (the warehouse over the quay),
+`test/world/worldWide/bayleftsea_capitals.test.js` (its shipyard and lighthouse on the quay),
 `test/world/fb1003b_trees.test.js`, `test/world/terrain/natureground.test.js` and
-`test/systems/survival/hearth1_worldfires.test.js` (the pixel build's flats and hearths on their block's tier - the same
-law, to the byte, where no block is lifted).
+`test/systems/survival/hearth1_worldfires.test.js` (flats and hearths on their block's tier - the same law, to the byte,
+where no block is lifted).
+
+PIN MOVED at the merge of ROAD-FOLLOW and PORT-SHIPS: `test/systems/naval/portships.test.js` and
+`portships_real.test.js` with `test/portShipsWorld.mjs` (the keep on its rock, the feet, the berths at the docks),
+`test/systems/livingWorld/lwwalls_city.test.js` (the block's origin at its lift), `test/world/road_gates.test.js` (its
+own line, its south run), and the flats' lines in `fb1003b_trees`, `natureground` and `floraground_rings`. Mutants: seven
+more in `solituderelief.json` (52), and `portships.json` all dead on the new measures.
 
 THE FOUR HOSTS: `scenes/world.js` builds Solitude's pixel through `scenes/pixelBuild.js` and its terrain job (both
 wired). `scenes/exterior.js` (the bench) builds no capital, and `scenes/worldModes.js` (interiors) and

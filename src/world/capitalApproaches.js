@@ -14,9 +14,7 @@
 // tiles of the road's own surface (world/road/roadPainter.js TILE.road) from the arm's end straight in, and - for a gate
 // to one side - along the wall's foot APPROACH_SKIRT outside it, and in to the gate. Its ground is laid by the capital's
 // own blocks (capitalPortBlocks' laws, over its rim too). Pure: the plan's gates (`gateAt`, its anchor's metres) and the
-// capital's span (`dims`, capitalDims') are handed in. SOLITUDE-RELIEF: a capital on a relief of its own carries its road
-// on its own line (`approach`, its anchor's metres - world/tamrielCapitals.js Solitude's: the Gate Road up its slope,
-// world/solitudeRelief.js), laid by the same law: its road's tiles, over its rim too, no tree on it.
+// capital's span (`dims`, capitalDims') are handed in - or (SOLITUDE-RELIEF) the capital's own line, `approach`.
 // ═══════════════════════════════════════════════════════════════════
 
 import { BLOCK_M } from './blockHash.js';

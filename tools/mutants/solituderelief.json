@@ -369,5 +369,104 @@
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
+  },
+  {
+    "name": "SR-APPROACH-the-straight-run-up-the-slope",
+    "file": "src/world/capitalApproaches.js",
+    "old": "  if (cap.approach) return cap.approach;   // SOLITUDE-RELIEF",
+    "new": "  if (false) return cap.approach;   // SOLITUDE-RELIEF",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-APPROACH-cells-off-its-line",
+    "file": "src/world/capitalApproaches.js",
+    "old": "  if (cap.approach) {   // SOLITUDE-RELIEF: its own line - every tile of the plan asked",
+    "new": "  if (false) {   // SOLITUDE-RELIEF: its own line - every tile of the plan asked",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-APPROACH-into-the-city",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "dz >= SOLITUDE_MAIN_GATE.z - 3 && gateRoadAt(dx, dz).d",
+    "new": "dz >= -Infinity && gateRoadAt(dx, dz).d",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-APPROACH-narrower-than-its-road",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "gateRoadAt(dx, dz).d <= SOLITUDE_GATE_ROAD.half + TILE_M / 2;",
+    "new": "gateRoadAt(dx, dz).d <= TILE_M / 2;",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-KEEP-rock-unkept",
+    "file": "src/systems/naval/harbourKeep.js",
+    "old": "    if (onSolitudeRock(dx, dz)) return true;",
+    "new": "    if (false) return true;",
+    "tests": [
+      "test/systems/naval/portships.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROCK-quay-row-kept",
+    "file": "src/world/solitudeRelief.js",
+    "old": "  if (docksHeight(x, z < D.edge && z >= D.edge - CELL ? D.edge : z) === SOLITUDE_LEVELS.quay) return false;",
+    "new": "  if (docksHeight(x, z) === SOLITUDE_LEVELS.quay) return false;",
+    "tests": [
+      "test/systems/naval/portships.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROCK-quay-kept",
+    "file": "src/world/solitudeRelief.js",
+    "old": "  if (docksHeight(x, z < D.edge && z >= D.edge - CELL ? D.edge : z) === SOLITUDE_LEVELS.quay) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/systems/naval/portships.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROCK-point-not-tile",
+    "file": "src/world/solitudeRelief.js",
+    "old": "  return solitudeGroundTile(P.x0 + (i + 0.5) * CELL, P.z0 + (j + 0.5) * CELL) !== SOLITUDE_TILES.water;",
+    "new": "  return !solitudeSeaAt(x, z);",
+    "tests": [
+      "test/systems/naval/portships.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROCK-past-the-pixel",
+    "file": "src/world/solitudeRelief.js",
+    "old": "  if (i < 0 || j < 0 || i >= n || j >= n) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/systems/naval/portships.test.js"
+    ]
+  },
+  {
+    "name": "SR-KEEP-arch-foot-flat",
+    "file": "src/systems/naval/harbourKeep.js",
+    "old": "export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 16, STACK_FOOT = SOLITUDE.stack.foot + 19;",
+    "new": "export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 4, STACK_FOOT = SOLITUDE.stack.r + 11;",
+    "tests": [
+      "test/systems/naval/portships.test.js"
+    ]
+  },
+  {
+    "name": "SR-DOCKS-edges-exact",
+    "file": "src/world/solitudeRelief.js",
+    "old": "const ON = 1e-6;",
+    "new": "const ON = 0;",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
   }
 ]
