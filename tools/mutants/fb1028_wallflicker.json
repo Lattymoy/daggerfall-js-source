@@ -104,13 +104,14 @@
   {
     "name": "FB1028-reach-short",
     "file": "src/world/townWalls.js",
-    "old": "half = (CORNER_TOWER.body[1] - CORNER_TOWER.body[0]) / 2, r = 2 * Math.SQRT2 * half;",
-    "new": "half = (CORNER_TOWER.body[1] - CORNER_TOWER.body[0]) / 2, r = half;",
+    "old": "r = 2 * Math.SQRT2 * half * T;",
+    "new": "r = half;",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
     ],
     "equivalent": true,
-    "why": "Its only reader left is the first filter of the towers by the part's own box, and a length or a gate ends in its towers' middles, so its box holds them at any reach; the per-triangle reach reads the tower frame's own boxes."
+    "why": "Its only reader left is the first filter of the towers by the part's own box, and a length or a gate ends in its towers' middles, so its box holds them at any reach; the per-triangle reach reads the tower frame's own boxes.",
+    "note": "Re-aimed by content at the merge with the Bay's walls (FB1028): the reach takes the grown towers' `thick` (T)."
   },
   {
     "name": "FB1028-a-side-unread",

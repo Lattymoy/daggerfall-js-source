@@ -851,9 +851,8 @@ export function clearOfTowers(part, towers) {
  * THE WALL'S MODEL: each piece's classic model (`classicModel(id)`, dfMeshToModel's shape - metres, its inside its local -z)
  * turned so its local +z is the piece's outward normal and its +x along the line, stretched along its length, set at its
  * centre (x east, z north, the carrier's metres) - all of them one model, a submesh a picture (composeArenaModel). TS8: a
- * tower the corner tower's body alone (bendTower). FB1028: no piece with a door (wallDoorless); a tower grown across by its
- * `thick`; a length or a gate cut at each tower it ends in, on the tower's middle line (mitreEnds), and WALL-FLICKER clear
- * of the towers' bodies (clearOfTowers).
+ * tower the corner tower's body alone (bendTower). FB1028: no door (wallDoorless); a tower grown across by `thick`; a
+ * length or a gate cut on its towers' middle lines (mitreEnds) and clear of their bodies (WALL-FLICKER, clearOfTowers).
  * @param {ReturnType<typeof wallPieces>} pieces @param {(id: number) => any} classicModel
  */
 export function townWallModel(pieces, classicModel) {
