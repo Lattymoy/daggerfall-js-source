@@ -2,10 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SPECIES, SPECIES_BY_KEY, CANDIDATE_SPECIES } from '../../../src/systems/pve/pveSpecies.js';
-import { CATEGORIES, REFERENCE_PLAYER, NORMAL_BLOWS, PLAYER_EDGE, referencePlayer, categoryStats } from '../../../src/systems/pve/pveCategories.js';
+import { PVE_CATEGORIES, REFERENCE_PLAYER, NORMAL_BLOWS, PLAYER_EDGE, referencePlayer, categoryStats } from '../../../src/systems/pve/pveCategories.js';
 import { COMBAT_ROLE_KEYS, roleProblem, roleShares } from '../../../src/systems/pve/pveRoles.js';
 import { ABILITY_KEYS, abilityProblem } from '../../../src/systems/pve/pveAbilities.js';
-import { TEMPLATES, GROUPS, TEMPLATE_BY_KEY, templateProblems, groupProblems, templateStats, groupWeight } from '../../../src/systems/pve/pveTemplates.js';
+import { MOB_TEMPLATES, GROUP_TEMPLATES, TEMPLATE_BY_KEY, templateProblems, groupProblems, templateStats, groupWeight } from '../../../src/systems/pve/pveTemplates.js';
 import { fixedPveOn } from '../../../src/systems/pve/pveSwitch.js';
 
 test('FIXED-PVE the switch is off: nothing in the game reads a template yet', () => {
@@ -25,14 +25,14 @@ test('FIXED-PVE species: every vanilla body once, by what it can draw; candidate
 });
 
 test('FIXED-PVE every shipped template and group stands', () => {
-  for (const t of TEMPLATES) assert.deepEqual(templateProblems(t), [], t.key);
-  for (const g of GROUPS) assert.deepEqual(groupProblems(g), [], g.key);
+  for (const t of MOB_TEMPLATES) assert.deepEqual(templateProblems(t), [], t.key);
+  for (const g of GROUP_TEMPLATES) assert.deepEqual(groupProblems(g), [], g.key);
   for (const k of ABILITY_KEYS) assert.equal(abilityProblem(k), null, k);
-  assert.equal(TEMPLATE_BY_KEY.size, TEMPLATES.length, 'a key twice');
+  assert.equal(TEMPLATE_BY_KEY.size, MOB_TEMPLATES.length, 'a key twice');
 });
 
 test('FIXED-PVE one body, many foes: the orc sprite carries four templates that fight apart', () => {
-  const orcs = TEMPLATES.filter((t) => t.species === 'orc');
+  const orcs = MOB_TEMPLATES.filter((t) => t.species === 'orc');
   assert.ok(orcs.length >= 4);
   assert.ok(new Set(orcs.map((t) => t.roles.join('+'))).size >= 3);
   assert.ok(new Set(orcs.map((t) => t.disposition)).size >= 3, 'hostile, neutral and friendly orcs');
@@ -59,8 +59,8 @@ test('FIXED-PVE a Normal foe falls in NORMAL_BLOWS and needs the edge more to fe
 test('FIXED-PVE categories climb, and an Elite takes the edge away', () => {
   const order = ['normal', 'strong', 'elite', 'champion', 'boss', 'raidBoss'];
   for (let i = 1; i < order.length; i++) {
-    assert.ok(CATEGORIES[order[i]].health > CATEGORIES[order[i - 1]].health);
-    assert.ok(CATEGORIES[order[i]].damage >= CATEGORIES[order[i - 1]].damage);
+    assert.ok(PVE_CATEGORIES[order[i]].health > PVE_CATEGORIES[order[i - 1]].health);
+    assert.ok(PVE_CATEGORIES[order[i]].damage >= PVE_CATEGORIES[order[i - 1]].damage);
   }
   const ref = referencePlayer(30), e = categoryStats(30, 'elite');
   assert.ok(ref.health / ((e.damage[0] + e.damage[1]) / 2) < NORMAL_BLOWS, 'an Elite fells the reference player faster than they fell a Normal');
@@ -88,6 +88,6 @@ test('FIXED-PVE the validator refuses what the body cannot draw and what the dat
 
 test('FIXED-PVE a group weighs its members: N Normal fighters weigh N', () => {
   assert.equal(groupWeight({ key: 'g', members: [['orc-grunt', 4]] }), 4);
-  const w = groupWeight(GROUPS.find((g) => g.key === 'orc-warband'));
+  const w = groupWeight(GROUP_TEMPLATES.find((g) => g.key === 'orc-warband'));
   assert.ok(w > 3.5 && w < 4.5, `the spec's warband of four weighs about four (${w})`);
 });

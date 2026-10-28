@@ -5,7 +5,7 @@
 // players meet the same foe. A group template is an encounter: members that fight as one. Ledger A (FIXED-PVE).
 
 import { SPECIES_BY_KEY } from './pveSpecies.js';
-import { CATEGORIES, LEVEL_MIN, LEVEL_MAX, categoryStats } from './pveCategories.js';
+import { PVE_CATEGORIES, LEVEL_MIN, LEVEL_MAX, categoryStats } from './pveCategories.js';
 import { COMBAT_ROLES, NONCOMBAT_ROLES, roleProblem, roleShares } from './pveRoles.js';
 import { abilityProblem } from './pveAbilities.js';
 import { DISPOSITIONS, WILDLIFE, INTERACTIONS } from './pveDisposition.js';
@@ -21,7 +21,7 @@ export const KIT_METALS = Object.freeze(['iron', 'steel', 'silver', 'elven', 'dw
 const T = (o) => Object.freeze({ noncombat: [], abilities: [], interact: [], faction: null, protected: false, kit: null, ...o });
 
 /** @type {ReadonlyArray<MobTemplate>} */
-export const TEMPLATES = Object.freeze([
+export const MOB_TEMPLATES = Object.freeze([
   // an orc stronghold: seven ways to be an orc on three bodies
   T({ key: 'orc-grunt', name: 'Orc Grunt', species: 'orc', level: 24, category: 'normal', roles: ['fighter'], abilities: ['cleave'], disposition: 'hostile', faction: 'orc-clans', kit: 'orcish' }),
   T({ key: 'orc-defender', name: 'Orc Defender', species: 'orc', level: 26, category: 'normal', roles: ['tank'], abilities: ['shieldWall', 'guardAlly'], disposition: 'hostile', faction: 'orc-clans', kit: 'orcish' }),
@@ -52,14 +52,14 @@ export const TEMPLATES = Object.freeze([
 /** @typedef {{ key: string, name: string, members: Array<[string, number]>, leader?: string }} GroupTemplate */
 
 /** @type {ReadonlyArray<GroupTemplate>} */
-export const GROUPS = Object.freeze(/** @type {GroupTemplate[]} */ ([
+export const GROUP_TEMPLATES = Object.freeze(/** @type {GroupTemplate[]} */ ([
   Object.freeze({ key: 'orc-warband', name: 'Orc Warband', members: [['orc-grunt', 2], ['orc-defender', 1], ['orc-shaman', 1]] }),
   Object.freeze({ key: 'orc-war-party', name: 'Orc War Party', members: [['orc-grunt', 2], ['orc-defender', 1], ['orc-shaman', 1], ['orc-warlord', 1]], leader: 'orc-warlord' }),
   Object.freeze({ key: 'bandit-camp', name: 'Bandit Camp', members: [['bandit-cutthroat', 2], ['bandit-archer', 2], ['bandit-hedge-healer', 1], ['bandit-chief', 1]], leader: 'bandit-chief' }),
   Object.freeze({ key: 'crypt-patrol', name: 'Crypt Patrol', members: [['crypt-skeleton', 3], ['crypt-guardian', 1]] }),
 ]));
 
-export const TEMPLATE_BY_KEY = new Map(TEMPLATES.map((t) => [t.key, t]));
+export const TEMPLATE_BY_KEY = new Map(MOB_TEMPLATES.map((t) => [t.key, t]));
 
 /** Every reason `t` cannot stand (empty when it can). @param {MobTemplate} t */
 export function templateProblems(t) {
@@ -68,7 +68,7 @@ export function templateProblems(t) {
   if (!t?.key || !t?.name) out.push('no key or name');
   if (!sp) out.push(`unknown species ${t?.species}`);
   if (!Number.isInteger(t?.level) || t.level < LEVEL_MIN || t.level > LEVEL_MAX) out.push(`level ${t?.level} outside ${LEVEL_MIN}-${LEVEL_MAX}`);
-  if (!CATEGORIES[t?.category]) out.push(`unknown category ${t?.category}`);
+  if (!PVE_CATEGORIES[t?.category]) out.push(`unknown category ${t?.category}`);
   const rp = roleProblem(t?.roles); if (rp) out.push(rp);
   for (const r of t?.roles ?? []) {
     const need = COMBAT_ROLES[r]?.needs;
@@ -113,7 +113,7 @@ export function groupWeight(g, byKey = TEMPLATE_BY_KEY) {
   let w = 0;
   for (const [k, n] of g.members) {
     const t = byKey.get(k); if (!t) continue;
-    const c = CATEGORIES[t.category], s = roleShares(t.roles);
+    const c = PVE_CATEGORIES[t.category], s = roleShares(t.roles);
     w += n * Math.sqrt(c.health * s.health * c.damage * s.damage);
   }
   return w;

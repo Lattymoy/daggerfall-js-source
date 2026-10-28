@@ -844,6 +844,13 @@ const HARDCODED = {
   'src/world/road/cyrodiilRoads.js': 8,   // VOYAGER-CYRODIIL: the named roads (the Red Ring Road, the Gold Road...)
   'src/world/tamriel/tamrielWaters.js': 20,   // CYRODIIL-WATERS: the rivers', lakes' and named waters' names, and the reference's credit (WATERS_SOURCE)
   'src/world/urban/townLook.js': 15,   // URBANIZER U1: why each province's towns wear their building set - the table's own notes, read by no screen
+  // FIXED-PVE stage 2 (2026-10-28): the templates' and species' proper names and the validator's reasons (a
+  // developer's) - the switch is off and no screen shows them; routing them through t() is the stage that shows a name.
+  'src/systems/pve/pveAbilities.js': 4,
+  'src/systems/pve/pveCategories.js': 1,
+  'src/systems/pve/pveRoles.js': 4,
+  'src/systems/pve/pveSpecies.js': 8,
+  'src/systems/pve/pveTemplates.js': 34,
 };
 
 test('L10N4 the ratchet: no file holds more hard-coded English than it did - route a new sentence through t(key, en, args); when a count falls, write the map down again', () => {

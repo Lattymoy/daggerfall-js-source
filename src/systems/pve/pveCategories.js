@@ -20,7 +20,7 @@ export const PLAYER_EDGE = Object.freeze({ min: 0.1, mid: 0.2, max: 0.3 });
 export const DAMAGE_SPREAD = 0.4;
 
 /** Health and blow factors over a Normal foe, and who the category is made for. */
-export const CATEGORIES = Object.freeze({
+export const PVE_CATEGORIES = Object.freeze({
   normal: Object.freeze({ health: 1, damage: 1, party: 1, label: 'Normal' }),
   strong: Object.freeze({ health: 1.6, damage: 1.25, party: 1, label: 'Strong' }),
   elite: Object.freeze({ health: 8, damage: 2, party: 2, label: 'Elite' }),
@@ -28,7 +28,7 @@ export const CATEGORIES = Object.freeze({
   boss: Object.freeze({ health: 400, damage: 3, party: 5, label: 'Boss' }),
   raidBoss: Object.freeze({ health: 1000, damage: 4, party: 10, label: 'Raid Boss' }),
 });
-export const CATEGORY_KEYS = Object.freeze(Object.keys(CATEGORIES));
+export const CATEGORY_KEYS = Object.freeze(Object.keys(PVE_CATEGORIES));
 
 const clampLevel = (l) => Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, Math.round(Number(l) || LEVEL_MIN)));
 
@@ -46,10 +46,10 @@ export function referencePlayer(level) {
  * @param {number} level @param {string} [category] @param {number} [edge]
  */
 export function categoryStats(level, category = 'normal', edge = PLAYER_EDGE.mid) {
-  const c = CATEGORIES[category] ?? CATEGORIES.normal;
+  const c = PVE_CATEGORIES[category] ?? PVE_CATEGORIES.normal;
   const ref = referencePlayer(level);
   const health = Math.max(1, Math.round(ref.blow * NORMAL_BLOWS * c.health));
   const mean = (ref.health / (NORMAL_BLOWS * (1 + edge))) * c.damage;
-  return { level: ref.level, category: CATEGORIES[category] ? category : 'normal', health,
+  return { level: ref.level, category: PVE_CATEGORIES[category] ? category : 'normal', health,
     damage: [Math.max(1, Math.round(mean * (1 - DAMAGE_SPREAD))), Math.max(1, Math.round(mean * (1 + DAMAGE_SPREAD)))] };
 }

@@ -45,5 +45,5 @@ export const CANDIDATE_SPECIES = Object.freeze([
   'Riekr', 'Echatere', 'Durzog', 'Duneripper', 'Assassin Beetle', 'Draugr', 'Falmer', 'Chaurus', 'Frost Troll',
   'Ice Wraith', 'Horker', 'Mammoth', 'Hagraven', 'Minotaur', 'Goblin', 'Ogre', 'Will-o-the-Wisp', 'Nix-Hound', 'Guar',
   'Kagouti', 'Alit', 'Netch', 'Kwama', 'Shalk', 'Ash Hopper', 'Dwemer Construct', 'Wamasu', 'Voriplasm', 'Haj Mota',
-  'Crocodile', 'Senche', 'Terror Bird', 'Strangler', 'Hoarvor', 'Lurcher', 'Gryphon', 'Indrik', 'Yaghra', 'Nixad',
+  'Crocodile', 'Senche', 'Terror Bird', 'Strangle Vine', 'Hoarvor', 'Lurcher', 'Gryphon', 'Indrik', 'Yaghra', 'Nixad',
 ].map((name) => Object.freeze({ key: speciesKey(name), name, body: null, status: 'candidate' })));
