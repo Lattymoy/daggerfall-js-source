@@ -41,9 +41,20 @@ import { curvesOf, curvePolyline, CURVE_STEPS } from './road/roadCurves.js';   /
 import { DIR_DELTA } from './road/roadNetwork.js';
 import { arenaRoadByte, arenaJoinByte } from './arenaRoads.js';   // ROAD-FOLLOW: the roads past the Bay, and a crossing's join on the Bay
 import { inBay } from './tamriel/tamrielFrame.js';
+import { ROAD_RECORDS } from './road/roadEdge.js';   // GATE-ROADS: Daggerfall's paving, a town's streets
 
 /** Daggerfall's wall pieces (ARCH3D): a tower, a length of wall (25.6 m, 9.6 m thick, its inside its local -z), a gate. */
 export const WALL_MODELS = Object.freeze({ tower: 444, wall: 445, gate: 446 });
+/** GATE-ROADS: THE GATE'S OPENING - the gate model's way through is its floor face, x -8.05 to 1.68 m of its own frame
+ *  (ARCH3D 446): its middle `along` the model's +x from its origin - a piece's (out[1], -out[0]), so its start marker stands
+ *  that side (TOWN_WALL.marker) - and `half` its half width, in metres. */
+export const GATE_OPENING = Object.freeze({ along: -3.185, half: 4.865 });
+/** A gate piece's opening (GATE_OPENING): its middle and its outward normal, in the piece's metres.
+ *  @param {{ at: [number, number], out: [number, number], stretch?: number }} p */
+export function gateOpening(p) {
+  const s = GATE_OPENING.along * (p.stretch ?? 1);
+  return { at: /** @type {[number, number]} */ ([p.at[0] + s * p.out[1], p.at[1] - s * p.out[0]]), out: p.out };
+}
 /** A gate block's name (WALLAA08-11: north, east, south, west). */
 export const isGateBlock = (name) => /^WALLAA(08|09|10|11)/i.test(String(name ?? ''));
 /** A ground tile's side and a block's, in metres. */
@@ -201,10 +212,11 @@ function startAt(pts, i, s) {
 export function wallPieces(pts, c, gates, o = {}) {
   const L = o.piece ?? TOWN_WALL.piece, run = o.run ?? TOWN_WALL.run;
   if (pts.length < 3) return [];
-  // ROAD-FOLLOW (`o.onLine`): the gates are points ON the line - where the roads cross it - each gate centred on its own
-  // (its length runs from half a length before it), and two gates a length of wall apart at the least
+  // ROAD-FOLLOW (`o.onLine`): the gates are points ON the line - where the roads cross it - each gate's opening centred on
+  // its own (GATE-ROADS: its length runs from half a length and GATE_OPENING.along before it - the opening lies that far on
+  // round from the length's middle), and two gates a length of wall apart at the least
   const onLine = !!o.onLine;
-  const hits = (gates.length ? gates : [[c[0], c[1] - 1]]).map((g) => (onLine ? lineHit(pts, g, -L / 2) : rayHit(pts, c, [g[0] - c[0], g[1] - c[1]]))).filter(Boolean);
+  const hits = (gates.length ? gates : [[c[0], c[1] - 1]]).map((g) => (onLine ? lineHit(pts, g, -L / 2 + GATE_OPENING.along) : rayHit(pts, c, [g[0] - c[0], g[1] - c[1]]))).filter(Boolean);
   if (!hits.length) return [];
   hits.sort((a, b) => a.i + a.s - (b.i + b.s));
   const closed = startAt(pts, hits[0].i, hits[0].s);
@@ -319,10 +331,111 @@ export function townWall(dfLocation, templateNames, rmbOf, paths = null) {
     }
   });
   const roads = paths ? roadGatePoints(pts, getLocationTerrainTileOrigin(dfLocation), paths) : [];   // ROAD-FOLLOW
-  const pieces = roads.length ? wallPieces(pts, c, roads, { onLine: true }) : wallPieces(pts, c, gates);
+  // GATE-ROADS: each gate moved along the wall from its road's crossing to where it opens onto one of the town's streets
+  const blockAt = (bx, by) => rmbOf(ed.blockNames[by * w + bx]);
+  const ways = roads.length ? gatesOnStreets(pts, roads, { W: w * T, H: h * T, houses: townHouses(w, h, blockAt), streets: townStreets(w, h, blockAt) }) : [];
+  const pieces = roads.length ? wallPieces(pts, c, ways, { onLine: true }) : wallPieces(pts, c, gates);
   const [outM, alongM] = TOWN_WALL.marker;
   const markers = pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
-  return { line: pts, gates, frames, middle: c, pieces, markers, roads };
+  return { line: pts, gates, frames, middle: c, pieces, markers, roads, ways };
+}
+
+// ---------------------------------------------------------------- GATE-ROADS: a gate opens onto a street
+
+/** GATE-ROADS: how far along its wall a gate may move from its road's crossing (`reach`, metres), the way in it looks down
+ *  from its opening's middle (`half` its half width - a cart's, inside the opening, so a lane one tile wide is a street;
+ *  `depth` how far in), and how much of that way must be the town's paving (`paved`) before any house - a gate on a street,
+ *  never at a row of houses. */
+export const GATE_WAY = Object.freeze({ reach: 3 * TOWN_WALL.piece, half: 2, depth: 48, paved: 2 * TILE_M });
+
+/** A town's streets - the tiles its blocks pave with Daggerfall's road records (ROAD_RECORDS), (w*16) x (h*16), row-major
+ *  from the south-west as townTiles' (a block's ground tile (tx, 15 - ty)). `rmbAt(bx, by)` a block's RMB half, or null.
+ *  @param {number} w @param {number} h @param {(bx: number, by: number) => any} rmbAt @returns {Uint8Array} */
+export function townStreets(w, h, rmbAt) {
+  const T = SHAPE_TILES_PER_BLOCK, W = w * T, out = new Uint8Array(W * h * T);
+  for (let by = 0; by < h; by++) for (let bx = 0; bx < w; bx++) {
+    const gt = rmbAt(bx, by)?.fldHeader?.groundData?.groundTiles;
+    if (!gt) continue;
+    for (let ty = 0; ty < T; ty++) for (let tx = 0; tx < T; tx++) if (ROAD_RECORDS.includes(gt[tx]?.[T - 1 - ty]?.textureRecord)) out[(by * T + ty) * W + bx * T + tx] = 1;
+  }
+  return out;
+}
+
+/** A town's houses on its town map's cells (1.6 m, 64 a block side): a byte not 0 - a building's or a wall's, Daggerfall's
+ *  ground flats (0xfb) aside - (w*64) x (h*64), row-major from the south-west (townBlockedCells' frame).
+ *  @param {number} w @param {number} h @param {(bx: number, by: number) => any} rmbAt @returns {Uint8Array} */
+export function townHouses(w, h, rmbAt) {
+  const S = SHAPE_AUTOMAP_SIDE, W = w * S, out = new Uint8Array(W * h * S);
+  for (let by = 0; by < h; by++) for (let bx = 0; bx < w; bx++) {
+    const a = rmbAt(bx, by)?.fldHeader?.autoMapData;
+    if (a) for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (a[y * S + x] && a[y * S + x] !== 0xfb) out[(by * S + S - 1 - y) * W + bx * S + x] = 1;
+  }
+  return out;
+}
+
+/** Whether the way straight in from `p` (the town's metres) along `n` runs onto a street: GATE_WAY.paved of paving under its
+ *  middle before any house under its width. `town`: its `houses` (townHouses' cells) and `streets` (townStreets' tiles),
+ *  `W` x `H` tiles. */
+export function opensOntoStreet(p, n, town) {
+  const { W, H, houses, streets } = town, C = BLOCK_M / SHAPE_AUTOMAP_SIDE, CW = W * (TILE_M / C), CH = H * (TILE_M / C);
+  const at = (x, z) => { const tx = Math.floor(x / TILE_M), ty = Math.floor(z / TILE_M); return tx >= 0 && ty >= 0 && tx < W && ty < H ? ty * W + tx : -1; };
+  const house = (x, z) => { const cx = Math.floor(x / C), cy = Math.floor(z / C); return cx >= 0 && cy >= 0 && cx < CW && cy < CH && houses[cy * CW + cx] === 1; };
+  const STEP = 0.8, half = Math.round(GATE_WAY.half / STEP), need = Math.round(GATE_WAY.paved / STEP);   // whole steps: no sum drifts
+  for (let k = 0, paved = 0; k * STEP <= GATE_WAY.depth; k++) {
+    const d = k * STEP;
+    for (let j = -half; j <= half; j++) if (house(p[0] + n[0] * d - n[1] * j * STEP, p[1] + n[1] * d + n[0] * j * STEP)) return false;
+    const i = at(p[0] + n[0] * d, p[1] + n[1] * d);
+    if (i >= 0 && streets[i] && ++paved >= need) return true;
+  }
+  return false;
+}
+
+/**
+ * GATE-ROADS: EACH ROAD'S GATE WHERE IT OPENS ONTO A STREET - its crossing (roadGatePoints') moved along the line `pts`
+ * (counter-clockwise, the town's metres) to the nearest point within GATE_WAY.reach whose gate, as wallPieces stands it
+ * there (its length's chord, its opening on it and facing in - gateOpening), opens onto one (opensOntoStreet); a crossing
+ * with none near kept, two that come to one street one gate (the first). Its road on is the terrain's (road/gateRoads.js).
+ * @param {Array<[number, number]>} pts @param {Array<[number, number]>} crossings
+ * @param {{ W: number, H: number, houses: Uint8Array, streets: Uint8Array }} town townHouses' and townStreets', `W` x `H` tiles
+ * @returns {Array<[number, number]>} */
+export function gatesOnStreets(pts, crossings, town) {
+  const n = pts.length, cum = [0];
+  for (let i = 0; i < n; i++) cum.push(cum[i] + Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]));
+  const P = cum[n];
+  const at = (u) => {
+    u = ((u % P) + P) % P;
+    let i = 0;
+    while (i < n - 1 && cum[i + 1] < u) i++;
+    const a = pts[i], b = pts[(i + 1) % n], len = Math.max(1e-9, cum[i + 1] - cum[i]), f = (u - cum[i]) / len;
+    return { p: /** @type {[number, number]} */ ([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]), n: /** @type {[number, number]} */ ([-(b[1] - a[1]) / len, (b[0] - a[0]) / len]) };
+  };
+  const arcOf = (q) => {
+    let best = Infinity, arc = 0;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i], b = pts[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], ll = dx * dx + dy * dy;
+      const t = ll ? Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / ll)) : 0;
+      const d = Math.hypot(a[0] + dx * t - q[0], a[1] + dy * t - q[1]);
+      if (d < best) { best = d; arc = cum[i] + t * Math.sqrt(ll); }
+    }
+    return arc;
+  };
+  // the gate wallPieces stands with its opening at arc u: its length the chord from half a length and the opening's offset
+  // before u, its opening on that chord (gateOpening) and facing in off it
+  const L = TOWN_WALL.piece;
+  const gateAt = (u) => {
+    const a = at(u - L / 2 + GATE_OPENING.along).p, b = at(u + L / 2 + GATE_OPENING.along).p, len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, d = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+    const m = gateOpening({ at: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], out: [d[1], -d[0]], stretch: len / L });
+    return { p: m.at, n: /** @type {[number, number]} */ ([-d[1], d[0]]) };
+  };
+  const out = [];
+  for (const q of crossings) {
+    const a0 = arcOf(q);
+    let way = null;
+    for (let s = 0; s <= GATE_WAY.reach && !way; s += 0.8) for (const sg of s ? [1, -1] : [1]) { const c = gateAt(a0 + sg * s); if (!way && opensOntoStreet(c.p, c.n, town)) way = { q: at(a0 + sg * s).p, a: a0 + sg * s }; }
+    way ??= { q, a: a0 };
+    if (!out.some((o) => Math.abs(((o.a - way.a + P / 2) % P + P) % P - P / 2) < GATE_ARMS_MERGE)) out.push(way);
+  }
+  return out.map((o) => o.q);
 }
 
 // ---------------------------------------------------------------- ROAD-FOLLOW: the gates where the roads come in
@@ -788,13 +901,13 @@ export function townWallOf(dfLocation) {
 }
 
 /** URBANIZER U3 (world/urban/townFabricStand.js fabricEnds): a city's wall's gates as its wall was registered this session -
- *  each gate piece's middle and its outward normal (`at`, `out`: the carrier's metres, the location's - its carrier is the
- *  south-west cell) - or null for a town with no wall of its own. @param {any} dfLocation */
+ *  each gate's opening's middle (GATE-ROADS: gateOpening) and its outward normal (`at`, `out`: the carrier's metres, the
+ *  location's - its carrier is the south-west cell) - or null for a town with no wall of its own. @param {any} dfLocation */
 export function townWallGatesOf(dfLocation) {
   const held = _walls.get((dfLocation?.mapTableData?.mapId ?? -1) >>> 0);
   if (!held || !dfLocation.outline?.walled) return null;
   const wall = held.of();
-  return wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze({ at: p.at, out: p.out })) : null;
+  return wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze(gateOpening(p))) : null;
 }
 
 /**

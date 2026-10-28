@@ -39,6 +39,7 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
 import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
 import { landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: the zones' own flats past the Bay
 import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
+import { layGateRoads } from '../road/gateRoads.js';   // GATE-ROADS: a walled town's gates on their roads
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -190,6 +191,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // worker needs no settings access.
     if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
     if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
+    // GATE-ROADS (world/road/gateRoads.js): a walled town's gates on their roads - after the painter and its smoothing, so
+    // Basic Roads' tiles and the ground's heights are their own
+    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads);
   }
   // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
   // a location's own rect) - their shore laid by assignTiles, their sheet on the level ground (world/tamriel/tamrielWaters.js)

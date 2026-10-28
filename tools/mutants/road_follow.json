@@ -266,7 +266,7 @@
   {
     "name": "RF-the-gate-begun-at-the-crossing",
     "file": "src/world/townWalls.js",
-    "old": "lineHit(pts, g, -L / 2)",
+    "old": "lineHit(pts, g, -L / 2 + GATE_OPENING.along)",
     "new": "lineHit(pts, g, 0)",
     "tests": [
       "test/world/road_gates.test.js"

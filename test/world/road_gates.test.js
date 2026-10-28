@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { wallPieces, townWall, townWallBlockJson, standTownWall, townWallBlockName, townWallModelId, armLines, roadGatePoints, townWallPathsReader, setTownWallPaths, townWallWaits, townWallReadyAt, townWallGatesOf, townWallCellsOf, WALL_MODELS, TOWN_WALL, GATE_ARMS_MERGE } from '../../src/world/townWalls.js';
+import { wallPieces, townWall, townWallBlockJson, standTownWall, townWallBlockName, townWallModelId, armLines, roadGatePoints, townWallPathsReader, setTownWallPaths, townWallWaits, townWallReadyAt, townWallGatesOf, townWallCellsOf, gateOpening, WALL_MODELS, TOWN_WALL, GATE_ARMS_MERGE } from '../../src/world/townWalls.js';
 import { townOutlineBlockJson, TOWN_OUTLINE_BLOCK } from '../../src/world/townOutline.js';
 import { getDFBlockReplacementData, registerPortBlock } from '../../src/formats/worldData/worldDataReplacement.js';
 import { hasCustomModel } from '../../src/world/customModels.js';
@@ -74,19 +74,19 @@ test('ROAD-FOLLOW where the roads come in: each arm walked in from its pixel\'s 
   assert.ok(near(folded[0], [204.8, 354.8], 0.01), `the outermost crossing (${folded[0].map((v) => v.toFixed(1))})`);
 });
 
-test('ROAD-FOLLOW the gates on the line: a gate centred on its road\'s crossing (its length from half a length before it), two a length of wall apart at the least, every piece out from the middle; the template\'s bearings as before where none is handed (mutants: the gate begun at the crossing; the old spacing)', () => {
+test('ROAD-FOLLOW the gates on the line: a gate\'s opening centred on its road\'s crossing (its length from half a length and the opening\'s offset before it - GATE-ROADS, PIN MOVED), two a length of wall apart at the least, every piece out from the middle; the template\'s bearings as before where none is handed (mutants: the gate begun at the crossing; the old spacing)', () => {
   const pts = ring(150), cross = [[0, 150], [150 * Math.cos(1.0), 150 * Math.sin(1.0)]];
   const gp = wallPieces(pts, [0, 0], cross, { onLine: true }).filter((p) => p.model === WALL_MODELS.gate);
   assert.equal(gp.length, 2);
-  for (const q of cross) assert.ok(gp.some((p) => near(p.at, q, 1)), `a gate on its crossing ${q.map((v) => v.toFixed(1))}`);
+  for (const q of cross) assert.ok(gp.some((p) => near(gateOpening(p).at, q, 1)), `a gate on its crossing ${q.map((v) => v.toFixed(1))}`);
   // two crossings two lengths apart along the line: both stand, each on its own (the template's spacing slid the second on)
   const a = 0.6, b = a + (2 * TOWN_WALL.piece + 1) / 150;
   const close = [[150 * Math.cos(a), 150 * Math.sin(a)], [150 * Math.cos(b), 150 * Math.sin(b)]];
   const cp = wallPieces(pts, [0, 0], close, { onLine: true }).filter((p) => p.model === WALL_MODELS.gate);
   assert.equal(cp.length, 2);
-  for (const q of close) assert.ok(cp.some((p) => near(p.at, q, 1)), 'each on its own crossing');
+  for (const q of close) assert.ok(cp.some((p) => near(gateOpening(p).at, q, 1)), 'each on its own crossing');
   const old = wallPieces(pts, [0, 0], close).filter((p) => p.model === WALL_MODELS.gate);
-  assert.ok(!close.every((q) => old.some((p) => near(p.at, q, 1))), 'the bearings\' law would have slid one along');
+  assert.ok(!close.every((q) => old.some((p) => near(gateOpening(p).at, q, 1))), 'the bearings\' law would have slid one along');
 });
 
 /** The synthetic walled city of test/world/townwalls.test.js: one block of houses in the middle of a 3 x 3 ring, its
@@ -111,7 +111,7 @@ test('ROAD-FOLLOW a city\'s wall on its roads: roads east and west stand its gat
   const wall = townWall(c.loc, c.template, c.rmbOf, { roads: DIR.E | DIR.W, tracks: 0, curved: false });
   const gp = gatesOf(wall);
   assert.equal(gp.length, 2);
-  for (const g of gp) assert.ok(Math.abs(g.at[1] - 153.6) < 0.5 && Math.abs(Math.abs(g.at[0] - 153.6) - Math.abs(wall.line.reduce((m, q) => Math.max(m, q[0]), 0) - 153.6)) < 3, `a gate where a road comes in: ${g.at.map((v) => v.toFixed(1))}`);
+  for (const g of gp.map(gateOpening)) assert.ok(Math.abs(g.at[1] - 153.6) < 0.5 && Math.abs(Math.abs(g.at[0] - 153.6) - Math.abs(wall.line.reduce((m, q) => Math.max(m, q[0]), 0) - 153.6)) < 3, `a gate where a road comes in: ${g.at.map((v) => v.toFixed(1))}`);
   assert.equal(wall.markers.length, 2, 'a start marker outside each');
   assert.deepEqual(gatesOf(townWall(c.loc, c.template, c.rmbOf, { roads: 0, tracks: 0, curved: false })).map((g) => g.at), gatesOf(before).map((g) => g.at), 'no road: the template\'s');
 });

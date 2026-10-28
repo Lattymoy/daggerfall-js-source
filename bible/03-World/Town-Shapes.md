@@ -544,3 +544,90 @@ road comes in through a gate and each gate has its road.
   `tools/mutants/road_follow.json` (the walls' and the capitals' records among its 52); re-aimed by content:
   AUDIT-TESA-II-C1-rim-laid-ground, AUDIT-TESA-II-C1-rim-wooded, IS-the-open-cell-unnamed, TESA14-the-gate-on-the-span,
   TESA5-the-bay-never-stale, AUDIT-TESA-A6-2-eager-door, WW7-4-made-unbound, WW7-4-made-each-read.
+
+## 14. GATE-ROADS - every gate on its road, opening onto a street (BUILT, a port departure)
+
+The owner, 2026-10-28: *"With cities, roads still do not like up properly with gates and pathways in the town. Gates can
+lead to a bunch of buildings and it just doesnt make any sense"*; and *"No band aids or half assed work"*.
+
+**Why ROAD-FOLLOW did not reach it.** It measured the Bay's cities walled on their outline (TS7) with the town packs off.
+Online both packs are on for every room (`systems/online/onlineLane.js`, WD3), and Beautiful Cities rebuilds every Bay
+city's ring (its wall-and-farm and wall-and-tavern composites): `wallBayCity` keeps a ring a mod rebuilt, so all 410 keep
+the mod's ring and its gates. The road painter brings each arm to the middle of the pixel's side and rings the town's
+ground (TS9); the mod's gates stand on its inner wall 60 to 100 m in, across its ring blocks' farms. Nothing joined them:
+ROAD-FOLLOW counted a painted road within 48 m of a gate's front as its road, and the town's apron lay between.
+
+**Where a wall stands on the outline** (past the Bay always, the Bay with the packs off) ROAD-FOLLOW stood each gate where a
+road's arm crosses the wall's line - a bearing, which reads none of the town's streets: most faced a row of houses 16 m in
+(the wall's line is WALL_ROUND.line from the nearest building).
+
+**And a gate's opening is not its model's middle.** Daggerfall's gate (ARCH3D 446) is a length of wall whose way through,
+its floor face, runs from x -8.05 to 1.68 m of its frame: 9.73 m wide, its middle 3.185 m off the model's origin -
+Daggerfall's start marker stands that side of it (TOWN_WALL.marker's -3 m). Everything read the origin as the middle:
+ROAD-FOLLOW's gate "centred on its crossing" stood its opening 3.2 m along, and on Beautiful Cities' north gates the
+origin's tile column is the tower's, the mod's road one tile west of it.
+
+**Measured first** (the freeware, Daggerfall's own data; a gate is on the road where a road's tile - paving, or a tile a
+road holds - just outside its opening, across its width, joins by road tiles to the painter's own; a gate opens onto a
+street where its opening's way in runs two tiles of the town's paving before any house, `opensOntoStreet`; past the Bay
+main's walls):
+
+| | cities | gates | on the road | onto a street |
+| --- | --- | --- | --- | --- |
+| the Bay online (Beautiful Cities' rings), every second | 205 | 820 | 270 | the mod's |
+| the Bay walled on its outline (the packs off) | 410 | 1,513 | - | 269 |
+| past the Bay, every third city template, a road every way | 136 | 1,084 | 1,081 | 217 |
+
+**The law.**
+
+- **The opening** (`townWalls.js:"export const GATE_OPENING = Object.freeze({ along: -3.185, half: 4.865 });"`): a gate
+  piece's opening is its model's floor face (`gateOpening`: its middle `along` the model's +x, `(out[1], -out[0])`). A wall
+  on its outline stands each gate's opening on its point, its length begun half a length and the opening's offset before
+  it (`wallPieces`); the town's fabric past the Bay plans its main streets off the openings (`townWallGatesOf`, URBANIZER
+  U3).
+- **A gate on a street** (`townWalls.js:"export function gatesOnStreets(pts, crossings, town) {"`): each road's gate moves
+  from its crossing along the wall, within GATE_WAY.reach (three lengths), to the nearest point where the gate as it will
+  stand - its length's chord, its opening on it and facing in off it - opens onto a street (`opensOntoStreet`: a cart's way,
+  GATE_WAY.half to either side, clear of every house - `townHouses`, the town map's bytes, its ground flats aside - until
+  two tiles of the town's paving, ROAD_RECORDS, under its middle). A road with no street near keeps its crossing; two that
+  come to one street are one gate.
+- **Every gate on its road** (`gateRoads.js:"export function layGateRoads(tilemap, paths, tileData, town) {"`): the terrain
+  kernel lays each gate's road after the painter and its smoothing. Its passage runs across the opening's width (its
+  middle's line and half its half width to either side - an opening on a tile's edge opens onto both tiles) from the
+  middle out to the first open tile past the wall's half thickness, through the wall and its towers, never over water.
+  From there it lays the cheapest way within GATE_ROAD.reach (40 tiles) out to the nearest road the painter laid and in to
+  the town's nearest paving: along the town's paving where it leads, round a block's model or flat where the way round is
+  short, never over a house, the wall or water, straight where it can, two tiles wide where there is room.
+- **What it lays.** A tile already a road - the painter's, the town's paving - is kept as it lies; every tile laid is the
+  road's record and the paths hold it (GRASS-PATH1: the grass, the woods and a town's yards keep off it; its walkers take it
+  as a road, TS10).
+- **The gates handed on** (`townGates.js:"export function townGateRoads(dfLocation, mapsFile, blocksFile) {"`): the
+  pixel's build gives the kernel each gate's opening in the pixel's tiles with its outward normal and its half width, and
+  the tiles a road may not cross - a wall on its outline its own gates and cells, a kept ring its blocks' gate models
+  (WALL_MODELS.gate, turned by their subrecord and their own turn). A capital lays its own approaches (ROAD-FOLLOW); a wall
+  still waiting for its roads hands none, its pixel built again when they land.
+
+**What does not move.** Basic Roads' painter and its tiles to the byte (ROADS 23's oracle); the ground's heights (laid
+after the smoothing - GROUND_LAW's print is unchanged); a kept ring's own gates and streets, which are the mod's; a gate's
+start marker and TS7's dressing, which stand off the model as Daggerfall's do. Nothing crosses the wire: each client lays
+the same roads off the same data.
+
+**Measured after**, the same count:
+
+| | cities | gates | on the road | onto a street |
+| --- | --- | --- | --- | --- |
+| the Bay online (Beautiful Cities' rings), every second | 205 | 820 | 820 | the mod's |
+| the Bay walled on its outline (the packs off) | 410 | 1,513 | - | 1,363 |
+| past the Bay, every third city template, a road every way | 136 | 1,080 | 1,080 | 1,039 |
+
+Every gate is on its road. The 150 gates of the packs-off Bay and the 41 past it that open onto no street have none within
+three lengths of their road's crossing, or were slid apart (two gates a length of wall apart at the least); the kernel
+still lays each one's road in from its opening to the town's nearest paving, where one lies within the reach.
+
+- **The hosts**: none grows - `scenes/pixelBuild.js` hands the gates in one statement beside the rect it makes; the kernel
+  calls the road once.
+- **The departure** (Port-Ledger A, GATE-ROADS): DFU paints Basic Roads to a location's rect and stands Daggerfall's gate
+  blocks where the template has them; ours joins each gate to the road, and moves a wall of our own onto a street.
+- Pins `test/world/gateroads.test.js` (10, one on the freeware: the gate model's floor, the Bay as online stands it, past
+  the Bay, the packs off). Mutants `tools/mutants/gateroads.json` (39, all dead); re-aimed by content:
+  RF-the-gate-begun-at-the-crossing, U3S-the-gates-a-walls.

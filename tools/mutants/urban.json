@@ -471,8 +471,8 @@
  {
   "name": "U3S-the-gates-a-walls",
   "file": "src/world/townWalls.js",
-  "old": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze({ at: p.at, out: p.out }))",
-  "new": "wall.pieces.filter((p) => p.model === WALL_MODELS.wall).map((p) => Object.freeze({ at: p.at, out: p.out }))",
+  "old": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze(gateOpening(p)))",
+  "new": "wall.pieces.filter((p) => p.model === WALL_MODELS.wall).map((p) => Object.freeze(gateOpening(p)))",
   "tests": [
    "test/world/urban/urban3_stand.test.js"
   ]

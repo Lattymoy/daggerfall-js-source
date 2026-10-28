@@ -40,6 +40,7 @@ import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // 
 import { climateNeighbourIn } from '../world/tamriel/tamrielGround.js';
 import { getLocationTerrainTileOrigin, setLocationTiles, WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
 import { townWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
+import { townGateRoads } from '../world/townGates.js';   // GATE-ROADS: a walled town's gates for their roads
 import { townFabricFor, fabricWalkShut } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
@@ -275,6 +276,7 @@ export function createPixelBuild(host) {
     // setLocationTiles reads its sixty-four in one task (1.1-1.8 s of one frame in the game, measured)
     if (capitalViewOf(dfLocation)) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }
     if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);
+    if (locationRect) locationRect.gateRoads = townGateRoads(groundLocation, maps, blocks);   // GATE-ROADS: its gates for the kernel to lay their roads (world/townGates.js)
     // WOD2: LocationLoader.AddLocation's DECISION (LocationLoader.cs:101-172),
     // taken here because it reads only the map data and the kernel needs
     // its rects. The region under the player is announced first

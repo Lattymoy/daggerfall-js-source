@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { fabricTown, fabricEnds, fabricBlockOf, townFabricFor, townFabricOf, shutTownFabric, fabricWalkShut, isPortCell, _resetTownFabrics, TOWN_FABRIC_KEEP, TOWN_FABRIC_MODEL_BASE, GATE_IN_M } from '../../../src/world/urban/townFabricStand.js';
 import { hasCustomModel, customModelNeeds, customModelBuilt } from '../../../src/world/customModels.js';
 import { townFabricModel } from '../../../src/world/urban/townFabricModel.js';
-import { registerTownWall, WALL_MODELS } from '../../../src/world/townWalls.js';
+import { registerTownWall, WALL_MODELS, GATE_OPENING } from '../../../src/world/townWalls.js';
 import { CAPITALS, BLOCK_M } from '../../../src/world/tamrielCapitals.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { FABRIC_CELLS } from '../../../src/world/urban/townFabric.js';
@@ -27,7 +27,7 @@ test('URBANIZER U3 which towns: Arena\'s places and the countryside\'s towns pas
   for (const n of ['RESIAM04.RMB', 'TEMPAAD0.RMB', 'TVRNAM04.RMB']) assert.equal(isPortCell(n), false, n);
 });
 
-test('URBANIZER U3 where the main streets run: a walled city from each gate GATE_IN_M in; a capital from the sides its gates face to its anchor; a city from its four sides\' middles, a hamlet from the ends of its longer axis; a village none (mutants: the gate\'s way in reversed; a capital\'s anchor read from the south; a hamlet crossed)', () => {
+test('URBANIZER U3 where the main streets run: a walled city from each gate\'s opening GATE_IN_M in; a capital from the sides its gates face to its anchor; a city from its four sides\' middles, a hamlet from the ends of its longer axis; a village none (mutants: the gate\'s way in reversed; a capital\'s anchor read from the south; a hamlet crossed)', () => {
   const W = 3 * FABRIC_CELLS, H = 2 * FABRIC_CELLS;
   assert.deepEqual(fabricEnds(loc(), W, H), { mains: true, ends: [[W / 2, H], [W / 2, 0], [W, H / 2], [0, H / 2]], centre: [W / 2, H / 2] });
   assert.deepEqual(fabricEnds(loc({ type: LOCATION_TYPES.TownHamlet }), W, H).ends, [[0, H / 2], [W, H / 2]], 'along its longer axis');
@@ -39,10 +39,11 @@ test('URBANIZER U3 where the main streets run: a walled city from each gate GATE
   const e = fabricEnds(loc({ extra: { capital: { k: so } } }), S, S);
   assert.deepEqual(e.ends, [[S / 2, 0]]);
   assert.deepEqual(e.centre, [(2 * BLOCK_M) / 1.6, ((8 - 3) * BLOCK_M) / 1.6]);
-  // a walled city: its wall's gates as it registered them
+  // a walled city: its wall's gates as it registered them - each its opening's middle (GATE-ROADS: PIN MOVED, the model's
+  // way through stands GATE_OPENING.along on its +x, (out[1], -out[0]), from the piece's middle)
   const walled = loc({ mapId: 0xa7012345, extra: { outline: { walled: true } } });
   registerTownWall(walled, walled.exterior.exteriorData.blockNames, () => null, () => ({ RmbBlock: {} }), { pieces: [{ model: WALL_MODELS.gate, at: [100, 10], out: [0, -1] }, { model: WALL_MODELS.wall, at: [50, 10], out: [0, -1] }, { model: WALL_MODELS.gate, at: [10, 60], out: [-1, 0] }], markers: [] });
-  assert.deepEqual(fabricEnds(walled, W, H).ends, [[100 / 1.6, (10 + GATE_IN_M) / 1.6], [(10 + GATE_IN_M) / 1.6, 60 / 1.6]]);
+  assert.deepEqual(fabricEnds(walled, W, H).ends, [[(100 - GATE_OPENING.along) / 1.6, (10 + GATE_IN_M) / 1.6], [(10 + GATE_IN_M) / 1.6, (60 + GATE_OPENING.along) / 1.6]]);
 });
 
 /** A laid-out block of our own: houses on its town map, its ground dirt but a road along tile row 8 and grass on rows 0-9. */

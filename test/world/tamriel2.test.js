@@ -311,6 +311,8 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // ground (world/terrain/capitalSea.js), all pure
   // PIN MOVED (the folds into #1184, 2026-10-28): 70 - TESA-LANDS' lands (world/tamriel/tamrielLands.js, world/lands/landProps.js,
   // world/lands/landPropMesh.js), RED-MOUNTAIN's cone (world/tamriel/redMountain.js) and SOLITUDE-RELIEF's rock
-  // (world/solitudeRelief.js, world/terrain/capitalRelief.js), each fold under the ceiling alone and the three at it - all pure
-  assert.ok(seen.size > 20 && seen.size < 71, `${seen.size} modules`);
+  // (world/solitudeRelief.js, world/terrain/capitalRelief.js), each fold under the ceiling alone and the three at it - all pure.
+  // PIN MOVED (GATE-ROADS): 72 - a gate's road (world/road/gateRoads.js) and Daggerfall's paving records' one home it reads
+  // (world/road/roadEdge.js), both pure
+  assert.ok(seen.size > 20 && seen.size < 73, `${seen.size} modules`);
 });
