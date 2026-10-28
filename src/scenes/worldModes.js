@@ -4683,7 +4683,7 @@ export function createWorldModes(host) {
    *  the radius) - 0 for a model the reader cannot resolve. */
   function houseFootprintM2(building) {
     const id = building?.modelIdNum;
-    if (id == null) return 0;
+    if (id == null || building.footprintM2 > 0) return building?.footprintM2 > 0 ? building.footprintM2 : 0;   // IC-HOMES: a fabric building's own ground (talkTopics.js footprintOf)
     try {
       const rec = arch?.getRecordIndex?.(id);
       if (rec == null || rec < 0) return 0;

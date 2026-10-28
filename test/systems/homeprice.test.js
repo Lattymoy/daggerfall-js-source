@@ -181,6 +181,19 @@ test('HOME-PRICE the door\'s chain, run (AUDIT HOME-PRICE D5): worldModes\' hous
   assert.match(src('src/scenes/exterior.js'), /regionIndex: dfLocation\.regionIndex, townBlocks: homeTownBlocks\(dfLocation\),/);
 });
 
+test('IC-HOMES the door\'s chain over a building the port made (the owner: "Are buildings in IC not purchaseable?"): the Imperial City\'s fabric building has one model, its door (world/imperialFabricBuildings.js fabricDoorModelId, no ARCH3D record), so it carries its plot\'s ground (`footprintM2`) and is priced by it; with none it is not for sale, and an ARCH3D house is measured as ever (mutant: the ground unread)', () => {
+  const m = src('src/scenes/worldModes.js');
+  const chain = `${lift(m, '  function houseFootprintM2(building) {', '\n  }')}\n${lift(m, '  function homeListPrice(bd) {', '\n  }')}\nreturn { houseFootprintM2, homeListPrice };`;
+  const arch = { getRecordIndex: (id) => (id === 456 ? 3 : -1), getMesh: (rec) => (rec === 3 ? { radius: 400, size: { x: 400, y: 300, z: 480 } } : null) };
+  const door = new Function('arch', 'homeFootprintM2', 'GLOBAL_SCALE', 'homeOnlinePrice', 'homePriceOk', chain)(arch, homeFootprintM2, GLOBAL_SCALE, homeOnlinePrice, homePriceOk);
+  const FABRIC_DOOR = 7_200_000;
+  assert.equal(door.houseFootprintM2({ modelIdNum: FABRIC_DOOR, footprintM2: 150 }), 150, 'its plot\'s ground');
+  assert.equal(door.homeListPrice({ modelIdNum: FABRIC_DOOR, footprintM2: 150, townBlocks: 64 }), homeOnlinePrice(150, 64), 'priced as any house of that ground in a city that size');
+  assert.ok(homePriceOk(door.homeListPrice({ modelIdNum: FABRIC_DOOR, footprintM2: 150, townBlocks: 64 })));
+  assert.deepEqual([door.houseFootprintM2({ modelIdNum: FABRIC_DOOR }), door.homeListPrice({ modelIdNum: FABRIC_DOOR, townBlocks: 64 })], [0, 0], 'its door measured alone: no sale');
+  assert.deepEqual([door.houseFootprintM2({ modelIdNum: 456 }), door.houseFootprintM2({ modelIdNum: 456, footprintM2: 0 })], [120, 120], 'an ARCH3D house as ever');
+});
+
 test('HOME-PRICE a knightly order\'s free house, online (AUDIT HOME-PRICE C1): the bank buys its deed back at the deed share of the ONLINE price - never Daggerfall\'s radius x 1280, up to a million - and Daggerfall\'s offline; the grant skips a building that is a player\'s home, and waits for the town\'s homes (mutants: the radius online; the online price offline; the town unread; the grant over a home; the town unasked)', () => {
   // the bank's sale takes the price its host names
   const accounts = createBankAccounts(62), houses = createHouses(62);

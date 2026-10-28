@@ -478,6 +478,7 @@ function withDonors(block, recs, blocksFile) {
   block.rmbBlock.subRecords.forEach((sub, i) => {
     const b = recs[i];
     Object.defineProperty(sub, 'interior', { get: () => fabricBuildingInterior(b, blocksFile), enumerable: true, configurable: true });
+    sub.footprintM2 = areaOf(b.plot.q);   // IC-HOMES: its ground, m2 - its one model a door, which measures no house (onlineHomes.js)
   });
   block.ownNamedBuildings = true;
   return block;
