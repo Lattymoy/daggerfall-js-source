@@ -67,6 +67,8 @@
     "file": "src/systems/travel/travelRoute.js",
     "old": "if (closed.has(n) || (!(here & STEP_BIT[d]) && !near(nx, ny))) continue;",
     "new": "if (closed.has(n)) continue;",
+    "equivalent": true,
+    "why": "ROAD-FOLLOW's endLeg check (travelRoute.js endLegOf) rejects every step this test does, and more: an open step off a road's edge is kept only when both its pixels are on an end's leg or a gap's crossing, where this test asks only of the pixel stepped to. Kept as the cheaper early out, before stepKind (GREEDY-BEYOND's mutants' sweep).",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]

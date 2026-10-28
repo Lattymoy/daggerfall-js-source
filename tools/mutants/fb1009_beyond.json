@@ -4,6 +4,8 @@
     "file": "src/systems/travel/travelRoute.js",
     "old": "const bounds = { x0: Math.min(0, from.x - padOf(from), to.x - padOf(to)), x1: Math.max(width - 1, from.x + padOf(from), to.x + padOf(to)), y0: Math.min(0, from.y - padOf(from), to.y - padOf(to)), y1: Math.max(height - 1, from.y + padOf(from), to.y + padOf(to)) };",
     "new": "const bounds = { x0: 0, x1: width - 1, y0: 0, y1: height - 1 };",
+    "equivalent": true,
+    "why": "ROAD-BEYOND's reachOf makes every rung's box the bounding box of these bounds and each end past the table grown by the rung's margin (6 at the least), which holds every end and the land between them and the map, padded or not; and the whole map's rung is never cut short past the table, where BEYOND_MAX_EXPANSIONS bounds the count. Pinned where it is held: fb1009_beyond's walk from the table to a spot far past it (GREEDY-BEYOND's mutants' sweep).",
     "tests": [
       "test/systems/travel/fb1009_beyond.test.js"
     ],
@@ -14,6 +16,8 @@
     "file": "src/systems/travel/travelRoute.js",
     "old": "y0: Math.min(0, from.y - padOf(from), to.y - padOf(to)), y1: Math.max(height - 1, from.y + padOf(from), to.y + padOf(to)) };",
     "new": "y0: 0, y1: height - 1 };",
+    "equivalent": true,
+    "why": "ROAD-BEYOND's reachOf makes every rung's box the bounding box of these bounds and each end past the table grown by the rung's margin (6 at the least), which holds every end and the land between them and the map, padded or not; and the whole map's rung is never cut short past the table, where BEYOND_MAX_EXPANSIONS bounds the count. Pinned where it is held: fb1009_beyond's walk from the table to a spot far past it (GREEDY-BEYOND's mutants' sweep).",
     "tests": [
       "test/systems/travel/fb1009_beyond.test.js"
     ],
