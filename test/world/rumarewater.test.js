@@ -380,7 +380,7 @@ test('RUMARE-WATER (ARENA2): on the player\'s own files the Imperial City stands
   const ports = createWorldPorts({ places, openSea: (x, y) => (water(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y) }).list();
   const ic = /** @type {any} */ (ports.find((p) => p.name === 'Imperial City'));
   assert.deepEqual([ic?.px, ic?.py], [2069, 668], 'the Waterfront');
-  const lanes = laneNetwork(ports, lw.open, BEYOND_LANE_MAX_PX).filter((l) => [l.a.id, l.b.id].includes(ic.id) && beyondLaneWay(l, lw.openNative));
+  const lanes = laneNetwork(ports, lw.open, BEYOND_LANE_MAX_PX, true).filter((l) => [l.a.id, l.b.id].includes(ic.id) && beyondLaneWay(l, lw.openNative));   // PIN MOVED (FIELD BUGS 2026-10-28b SEA-SQUARE): the host's roomiest roadstead
   assert.deepEqual(lanes.map((l) => (l.a.id === ic.id ? l.b.name : l.a.name)).sort(), ['Senchal', 'Torval']);
   const sea = (x, y) => ground.getHeightMapValue(x, y) <= WATER_BYTE || rumareSeaPixel(x, y);
   const voyage = planSeaLanes({ x: 2350, y: 1470 }, { x: 2069, y: 668 }, { isWater: (x, y) => ground.getHeightMapValue(x, y) <= WATER_BYTE, seaWater: sea, sea: { start: 'sea', voyage: true } });

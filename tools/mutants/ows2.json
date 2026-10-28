@@ -345,8 +345,8 @@
   {
     "name": "OWS2-sea-leg-road-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(o.x + SEA_LEG_LO",
-    "new": "      : false ? rectOf(o.x + SEA_LEG_LO",
+    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO",
+    "new": "      : false ? rectOf(w.x + SEA_LEG_LO",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

@@ -26,6 +26,7 @@ import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMAR
 import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
+import { townGroundMaskBefore } from './townBlendBefore.js';   // FB1028 YARDS Y2: the yards' ground as #1184 drew it
 import { layoutNature, layoutLandProps } from './terrainNature.js';
 import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
 import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
@@ -127,6 +128,8 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const classic = landforms && hasLocation ? new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION) : null;
   const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic);
   let avg = 0;
+  /** @type {?Uint8Array} FB1028 YARDS Y2: the town's ground as #1184 drew it (TS2's mask over the outline before its crops) */
+  let yardGround = null;
   if (hasLocation) {
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
     const flat = flattenAt ? (flattenAt.relief ? reliefFlat(flattenAt.relief) : (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, beyond, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null))) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor; SOLITUDE-RELIEF: one on a relief of its own at its streets' level
@@ -145,6 +148,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
       const mask = townGroundMask(locationRect.shape, ground);
       unstampOffShape(tilemap, locationRect.shape, mask);   // its tiles over the sea the sea's
       locationRect = { ...locationRect, mask, ring: townRoadRing(mask) };   // the road's ring round its outline (roadPainter.js)
+      yardGround = townGroundMaskBefore(locationRect.shapeWas ?? locationRect.shape, ground, HEIGHTMAP_DIMENSION);   // FB1028 YARDS Y2
     }
   }
   // ROADS 2: the one seam. Ground classified, squares not yet run, so a
@@ -196,6 +200,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // Basic Roads' tiles and the ground's heights are their own
     if (hasLocation && locationRect?.gateRoads) yardPaths = yardRoads(tilemap, paths, tileData, locationRect.gateRoads);   // FB1028 YARDS: #1184's roads
     if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);   // FB1028: on its ground
+    if (yardGround && locationRect?.ring) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);   // FB1028 YARDS Y2
   }
   // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
   // a location's own rect) - their shore laid by assignTiles, their sheet on the level ground (world/tamriel/tamrielWaters.js)
@@ -271,7 +276,8 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     arenaRoads: arenaPainted,   // TESA4: Arena's roads reached its paint - painted again when their layer moves
     wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
     beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line
-    yardPaths,   // FB1028 YARDS: the paths as #1184 laid them, the yards' alone (gateRoads.js yardRoads) - null with no wall of its own
+    yardPaths,   // FB1028 YARDS: the paths as #1184 laid them, the yards' alone (gateRoads.js yardRoads; Y2 its ring) - null with none
+    yardGround,   // FB1028 YARDS Y2: the town's ground as #1184 drew it, the yards' alone - null with no outline
     townGround: locationRect?.mask ?? null,   // TS6: the town's ground (townGroundMask) - its walkers' (world/townShape.js shutOffGround)
     bridges,   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js bridgesOf) - null on the Bay, or with the rivers uncarved
   };
@@ -312,4 +318,14 @@ export function restrideGrid({ woods, px, py, stride = 1, samples, landform = fa
 export function gridBed(grid, bytes, stride = 1, halo = null) {
   const carved = waterBedOf(grid, bytes, { stride, halo });
   return carved ? { depths: carved.depths, sheetDepths: carved.sheetDepths, positions: carved.ground.positions, normals: carved.ground.normals, halo } : null;
+}
+
+/** FB1028 YARDS Y2 (the owner: every yard where #1184 stood it): the painted paths with the ring as #1184 painted it on
+ *  the yards' ground - a tile today's ring (`ring`, townRoadRing over today's mask) paved there is none, as #1184's ring
+ *  ran off that ground (townRoadRing over `yardGround`). Off it, the yards' shut closes every cell. A copy.
+ *  @param {Uint8Array} paths @param {Uint8Array} ring @param {Uint8Array} yardGround */
+export function ringAsWas(paths, ring, yardGround) {
+  const out = Uint8Array.from(paths);
+  for (let i = 0; i < out.length; i++) if (ring[i] && yardGround[i]) out[i] = 0;
+  return out;
 }

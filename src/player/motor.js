@@ -84,6 +84,17 @@ export function runSpeedMult() {
   for (const fn of _runMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a Vestige is not the step's problem */ } }
   return k;
 }
+// DRAGON-RIDE (2026-10-28, bible/11-Multiplayer/Staff-Events.md section 12): a named registry of modifiers on the
+// levitating pace alone (systems/staffDragon.js: ten times while an Admin rides the Dwarven Dragon). None registered, or
+// each answering 1 (or no number), is DFU's levitateMoveSpeed exactly.
+const _flyMods = new Map();
+export function registerFlySpeedMod(name, fn) { if (typeof fn === 'function') _flyMods.set(name, fn); else _flyMods.delete(name); }
+/** The levitating pace's multiplier now - the product of every modifier's positive number (one that throws is none). */
+export function flySpeedMult() {
+  let k = 1;
+  for (const fn of _flyMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a ride is not the flight's problem */ } }
+  return k;
+}
 // KETCH (2026-10-24, bible/11-Multiplayer/Sky-Ketch.md section 6; a departure from DFU, Ledger A): THE BURDEN - a named
 // registry of modifiers on EVERY pace on foot (the walk, the run, the crouch, the sneak - never a mount's), read every step:
 // an aether cell carried in both hands slows its carrier whatever its pace. None registered, or each answering 1 (or no
@@ -3173,7 +3184,7 @@ export class PlayerMotor {
         speed = this.swimSpeedNow();
       } else {
         // neither swim arm: the field's resting value, levitateMoveSpeed
-        speed = LEVITATE_MOVE_SPEED;
+        speed = LEVITATE_MOVE_SPEED * flySpeedMult();   // DRAGON-RIDE: the dragon's pace (1 off it)
       }
       // IsMovingLessThanHalfSpeed while swimming/levitating: DFU's
       // FixedUpdate zeroes moveDirection and RETURNS at :322-326,

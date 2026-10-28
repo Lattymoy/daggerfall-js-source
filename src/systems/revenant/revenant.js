@@ -84,6 +84,7 @@ import { WILD_NEVER_GROUPS } from '../wild/wildLeaf.js';   // STEED-KEPT: nor wh
 import { BOAT_TEMPLATES } from '../../net/realm/realmTradeLaw.js';   // STEED-KEPT: nor a ship's deed or parts
 import { DECOR_OWN_KEPT_BACK } from '../../net/decorLaw.js';   // STEED-KEPT: nor a deed as Daggerfall files one, nor the spellbook
 import { hudTextWhenShown } from '../notify.js';   // STEED-KEPT: a piece home again, said once the world can say it
+import { isCasual } from '../legacy/casual.js';   // CASUAL-LIFE
 import { isLetterOfCredit } from '../peerWord.js';   // LETTERS-HOME: nor a letter of credit - its worth is gold
 import { itemLongName } from '../item/itemInfo.js';   // RVN8: the piece by the name the pack shows
 import { itemValueOf } from '../item/itemTemplates.js';   // RVN8: the most valuable
@@ -979,7 +980,7 @@ export function pickTaken(id, kills, weapon, items) {
 export function revenantTakes(player, { online = false } = {}) {
   const s = _lastSlew;
   _lastSlew = null;
-  if (!online || !s || !revenantOn() || !player) return null;
+  if (!online || !s || !revenantOn() || !player || isCasual(player)) return null;   // CASUAL-LIFE: a Casual death loses no piece
   const r = revenantById(s.id);
   if (!r || r.defeated || r.sworn) return null;
   if ((r.took?.length ?? 0) >= TOOK_MAX) return { r, item: null, line: null };

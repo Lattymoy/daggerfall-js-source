@@ -576,7 +576,7 @@ export const familyTabShown = (prov = _provider) => !!prov?.on?.() && !!(prov.fa
  *  question was put there (or copied in), play without a house for good - a new character founds one. */
 export const noFamilyLine = (prov) => (!prov ? 'Open this from a game to see your family.'
   : !prov.on?.() ? `Turn on Project Legacy (${optionPath('feat:mod-project-legacy')}) to found a family and carry your line on.`   // ORG2
-    : prov.choice?.() === NO_LINEAGE ? 'This character chose to live without a house. Make a new character to found one.'
+    : prov.choice?.() === NO_LINEAGE ? 'This character plays Casual, with no family line. Make a new character to found one.'   // CASUAL-LIFE
       : prov.online?.() ? 'This character has no house. Online, a house is founded only when a character is made. Make a new character to found one.'
         : 'Your family is founded when your character is made, or the first time an older character is loaded.');
 

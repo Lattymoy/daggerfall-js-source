@@ -314,5 +314,6 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // (world/solitudeRelief.js, world/terrain/capitalRelief.js), each fold under the ceiling alone and the three at it - all pure.
   // PIN MOVED (GATE-ROADS): 72 - a gate's road (world/road/gateRoads.js) and Daggerfall's paving records' one home it reads
   // (world/road/roadEdge.js), both pure
-  assert.ok(seen.size > 20 && seen.size < 73, `${seen.size} modules`);
+  // PIN MOVED (AUDIT FB1028 A1): 73 - TS2's blend as it stood, kept for the town move (world/terrain/townBlendBefore.js), pure
+  assert.ok(seen.size > 20 && seen.size < 74, `${seen.size} modules`);
 });

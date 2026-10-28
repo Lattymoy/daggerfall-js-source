@@ -1,0 +1,120 @@
+[
+  {
+    "name": "OPW-the-city-a-spot-again",
+    "file": "src/ui/heldMap.js",
+    "old": "this._pastBayPick(end.pixel.x, end.pixel.y, end.name, true)",
+    "new": "this._pastBayPick(end.pixel.x, end.pixel.y, end.name)",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-pick's-word-dropped",
+    "file": "src/ui/heldMap.js",
+    "old": "name: selected.name, ...(selected.place ? { place: true } : {}) };",
+    "new": "name: selected.name };",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-a-spot-made-a-place",
+    "file": "src/ui/heldMap.js",
+    "old": "walk: this._walksPastBay(), place };",
+    "new": "walk: this._walksPastBay(), place: true };",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-quest's-place-a-spot",
+    "file": "src/ui/heldMap.js",
+    "old": "return this._pastBayPick(q.px, q.py, q.placeName, true);",
+    "new": "return this._pastBayPick(q.px, q.py, q.placeName);",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-found-place-a-spot",
+    "file": "src/ui/heldMap.js",
+    "old": "this._pastBayPick(entry.pos.x, entry.pos.y, entry.name, true)",
+    "new": "this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-journal's-place-a-spot",
+    "file": "src/ui/heldMap.js",
+    "old": "this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName, true);",
+    "new": "this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName);",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-sea-flag-walked",
+    "file": "src/ui/heldMap.js",
+    "old": "(this._walksPastBay() && !!portalLandAt(px, py))",
+    "new": "this._walksPastBay()",
+    "tests": [
+      "test/ui/owplacewalk.test.js",
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-flag's-walk-never-picked",
+    "file": "src/ui/heldMap.js",
+    "old": "const pick = !inBay(px, py) ? this._pastBayPick(px, py, name)",
+    "new": "const pick = !inBay(px, py) ? null",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-menu-asks-the-bay's-law",
+    "file": "src/ui/heldMap.js",
+    "old": "onTravel: this._flagTravels(w) ?",
+    "new": "onTravel: this._coordsAllowedHere() ?",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-place-a-spot-again",
+    "file": "src/scenes/world.js",
+    "old": "const summary = !coords || pick.place ? tvPlaceSummary(",
+    "new": "const summary = !coords ? tvPlaceSummary(",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-sheet's-name-unasked",
+    "file": "src/scenes/world.js",
+    "old": "tvPlaceSummary(pick.pixel.x, pick.pixel.y, !!pick.place)",
+    "new": "tvPlaceSummary(pick.pixel.x, pick.pixel.y)",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-a-known-place-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      if (!coords || summary) {\n",
+    "new": "      if (!coords) {\n",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  },
+  {
+    "name": "OPW-the-unknown-place-refused",
+    "file": "src/scenes/world.js",
+    "old": "      if (!coords || summary) {\n",
+    "new": "      if (!coords || pick.place) {\n",
+    "tests": [
+      "test/ui/owplacewalk.test.js"
+    ]
+  }
+]

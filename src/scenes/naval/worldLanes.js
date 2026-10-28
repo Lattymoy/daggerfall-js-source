@@ -32,6 +32,7 @@ import { inWorldGrid } from '../../world/worldWide/worldGrid.js';
 import { inEther, onBayOrEther } from '../../world/ethericSea.js';
 import { NATIVE_PIXEL } from '../../systems/seaRaiders.js';
 import { rumareSeaPixel } from '../../world/rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake the sea's
+import { squareCornersAll } from '../../world/terrain/terrainSampler.js';   // SEA-SQUARE: a square's water is its four corners'
 
 /**
  * The Bay's ports as its lanes read them - Travel Options' list (`portIds`, the host's: systems/travel/travelPorts.js
@@ -51,17 +52,17 @@ export function bayLanePorts(mapDict, maps, portIds) {
 }
 
 /**
- * The world's lane water: the Bay's own (`bayOpen`) on the Bay, and past it the continent's sea - the Ocean climate on
- * water (`water`, `climateAt`: the host's composed readers) where the land past the Bay stands (`beyond()`), never the
- * Eltheric Ocean's box (its isles keep their own ports); RUMARE-WATER: and the Imperial City's lake and its mouth, where its
- * canal stands (world/rumareWaters.js rumareSeaPixel - its harbour's packets sail up to its Waterfront). Its native twin
- * reads a point's pixel FLOORED (a pixel west of the map's edge is its own - the map pixel law truncates, seaRaiders.js
- * tvRaidSea's own reading).
+ * The world's lane water: the Bay's own (`bayOpen`) on the Bay; past it, where the land past the Bay stands (`beyond()`),
+ * the Ocean climate on water (`water`, `climateAt`) outside the Eltheric Ocean's box, and RUMARE-WATER's Imperial City's
+ * lake (world/rumareWaters.js rumareSeaPixel). SEA-SQUARE (FIELD BUGS 2026-10-28b): a pixel past the Bay is that water where
+ * its four corner bytes are (world/terrain/terrainSampler.js squareCornersAll: a byte is its square's south-east corner).
+ * Its native twin reads a point's pixel FLOORED (seaRaiders.js tvRaidSea's own reading).
  * @param {{ bayOpen: (x: number, y: number) => boolean, water: (x: number, y: number) => boolean, climateAt: (x: number, y: number) => number, beyond: () => boolean }} o
  */
 export function worldLaneWater({ bayOpen, water, climateAt, beyond }) {
+  const sea = (/** @type {number} */ px, /** @type {number} */ py) => (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);
   const open = (/** @type {number} */ px, /** @type {number} */ py) => (inBay(px, py) ? bayOpen(px, py)
-    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && ((water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py)));
+    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py)));
   return { open, openNative: (/** @type {number} */ x, /** @type {number} */ z) => open(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(z / NATIVE_PIXEL)) };
 }
 
@@ -300,7 +301,7 @@ export function crossLanes(far, bay, open, bayOpen, seaward, maxPx = BEYOND_LANE
   const ours = [...bay].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, bayOpen) })).filter((p) => p.road && seaward[p.road.y * BAY_W + p.road.x]);
   const pairs = new Map();
   for (const f of [...far].sort((p, q) => p.id - q.id)) {
-    const road = roadsteadOf(f, open);
+    const road = roadsteadOf(f, open, true);   // SEA-SQUARE: the roomiest, as the lanes past the Bay's
     if (!road) continue;
     const p = { ...f, road };
     const near = ours.map((q) => ({ q, d: Math.hypot(q.road.x - road.x, q.road.y - road.y) })).filter((x) => x.d <= maxPx)
@@ -410,7 +411,7 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
   };
   const beyondNet = () => {
     const v = ports.version();
-    if (v !== beyondOf) { beyondOf = v; beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX); beyondWays.clear(); }   // AUDIT TESA II P7: their own reach
+    if (v !== beyondOf) { beyondOf = v; beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true); beyondWays.clear(); }   // AUDIT TESA II P7: their own reach; SEA-SQUARE: the roomiest roadstead
     return beyondList;
   };
   /** WW7-10: the lanes across the Bay's edge - made again when the world's ports or the picture move, none before the

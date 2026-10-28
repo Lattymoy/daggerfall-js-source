@@ -222,8 +222,8 @@
   {
     "name": "ICS-yards-measures-in-one",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "  for (const b of yl?.blocks ?? []) {\n    yield;\n",
-    "new": "  for (const b of yl?.blocks ?? []) {\n",
+    "old": "  for (const b of yl?.blocks ?? []) { yield; was.push(one(b)); }",
+    "new": "  for (const b of yl?.blocks ?? []) { was.push(one(b)); }",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "ICS-host-measures-in-one",
     "file": "src/scenes/world.js",
-    "old": "        ...await stepsBreathing(yardMeasuresSteps(yl, {",
-    "new": "        ...stepsDone(yardMeasuresSteps(yl, {",
+    "old": "        ...await stepsBreathing(yardMeasuresSteps(shut?.yardLayout?.(yl) ?? yl, {",
+    "new": "        ...stepsDone(yardMeasuresSteps(shut?.yardLayout?.(yl) ?? yl, {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

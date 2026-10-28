@@ -890,3 +890,16 @@ test('STAFF-HIDE-TOGGLE page: the door\'s relink is the host\'s - and the host h
   assert.ok(worldSource.includes("relink: () => relinkGame(identityMinter, online, chatLinks?.values())"), 'world.js hands the page its minter, presence session and chat links');
   assert.match(worldSource, /else if \(key !== online\.room\) \{ if \(!online\.room \|\| /, 'and the world frame joins a presence session in no room at once');
 });
+
+test('PILOT-ECHO (2026-10-28: "it refresh conastanly after terying to take comnstolr", "cant cancel"): the door hands the panel\'s pilot ask to the game once, and never its own answer, which comes back on the same window - { on, ev, boss } and { on: false, ev, why } are answers (mutants: either check dropped)', () => {
+  const listeners = [], heard = [];
+  const win = { location: { origin: 'https://game.test' }, addEventListener: (_k, f) => listeners.push(f), postMessage: (m) => { for (const f of [...listeners]) f({ source: win, origin: 'https://game.test', data: m }); } };
+  let n = 0;
+  const door = staffHookDoor(win, () => null, { pilot: (m) => { heard.push(m); if (++n > 50) throw new Error('the answer was heard as an ask'); door.post(m.on ? { dfoStaff: 'pilot', on: true, ev: m.ev, boss: false } : { dfoStaff: 'pilot', on: false, ev: 'e1', why: 'left' }); } });
+  win.postMessage({ dfoStaff: 'pilot', on: true, ev: 'e1' });
+  assert.deepEqual(heard, [{ dfoStaff: 'pilot', on: true, ev: 'e1' }], 'Play as boss: one ask, its answer not taken again');
+  win.postMessage({ dfoStaff: 'pilot', on: false });
+  assert.deepEqual(heard.at(-1), { dfoStaff: 'pilot', on: false }, 'Leave boss reaches the game');
+  assert.equal(heard.length, 2, 'and its answer is not an ask');
+  assert.equal(door.panel(), true);
+});

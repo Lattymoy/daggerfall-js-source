@@ -13,11 +13,18 @@
 // pixels of the continent composed round the synthetic world too (world/tamriel/tamrielGround.js groundWoods on the
 // authored shape - no trace, no game data): a town past the Bay by its site, and its neighbour the site pulls.
 //
+// FB1028 TOWN-GROUND (bible/03-World/Town-Shapes.md "TS2 at FB1028"): AND A TOWN'S GROUND - every pixel read stood with
+// no location, so the print held the same cells under GROUND_LAW 2 and 3 while a town's blend moved its ground by up to
+// 292 m. It reads a town too: a 4 x 4 grid of blocks, its outline drawn by the game's own law (world/terrain/terrainTiles.js
+// locationShapeField), on a hillside the synthetic world's own ground is too gentle to hold (20 bytes a pixel, about 375 m
+// across it), flattened and eased as the stream lays it. TS2's 12-sample ease moves its print by 7.9 m.
+//
 //   node tools/groundPrint.mjs --write    records the print under GROUND_LAW (test/fixtures/groundPrint.json)
 import { writeFileSync } from 'node:fs';
 import { isMain } from './lib/isMain.mjs';
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
+import { locationShapeField } from '../src/world/terrain/terrainTiles.js';   // FB1028: a town's outline
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../src/world/terrain/terrainSampler.js';
 import { landformSites, landformSitesBeyond } from '../src/world/landforms.js';
 import { groundWoods, dropGroundCache } from '../src/world/tamriel/tamrielGround.js';   // BAY-LEFT-GROUND: the continent round the synthetic world
@@ -37,8 +44,21 @@ export const GROUND_PRINT_PIXELS = Object.freeze([[300, 250], [399, 250]]);
 /** BAY-LEFT-GROUND: the pixels read past the Bay - a town's (its site past the Bay, 6 x 6 blocks) and its east
  *  neighbour's - on the continent the authored shape stands east of the Bay (Morrowind's land). */
 export const GROUND_PRINT_BEYOND = Object.freeze([[3840, 759], [3841, 759]]);
+/** FB1028: the town read, its outline a 4 x 4 grid of blocks, its ground a hillside rising 20 bytes a pixel east. */
+export const GROUND_PRINT_TOWN = Object.freeze([420, 270]);
 /** The recorded print's home. */
 export const GROUND_PRINT_FILE = new URL('../test/fixtures/groundPrint.json', import.meta.url);
+
+/** FB1028: the town's rect and outline - a house on each block's middle, its tiles stamped (the 4 x 4 grid's tiles 32-95,
+ *  DFU's clearance of 2 round them). */
+function printTownRect() {
+  const groundTiles = Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ textureRecord: 2, tileBitfield: 2 })));
+  const am = new Uint8Array(64 * 64);
+  for (let r = 16; r < 48; r++) for (let c = 16; c < 48; c++) am[r * 64 + c] = 5;
+  const rmb = { fldHeader: { autoMapData: am, groundData: { groundTiles } }, misc3dObjectRecords: [], miscFlatObjectRecords: [] };
+  const loc = { exterior: { exteriorData: { width: 4, height: 4, blockNames: Array(16).fill('T.RMB') } }, mapTableData: { mapId: 270420, locationType: 2 } };
+  return { xMin: 30, xMax: 97, yMin: 30, yMax: 97, shape: locationShapeField(loc, () => rmb) };
+}
 
 /** The print of the ground this tree stands: `{ law, step, cells: { '<land>@<px>,<py>': decimetres[] } }`. */
 export function groundPrint() {
@@ -58,6 +78,14 @@ export function groundPrint() {
       cells[`${land}@${px},${py}`] = out;
     }
   }
+  // FB1028: a town's ground, in the woodlands, on its own copy of the world with the hillside stamped
+  const [tx, ty] = GROUND_PRINT_TOWN, hill = new WoodsFile();
+  hill.load(syntheticWoodsBytes());
+  for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) hill.heightMapBuffer[(ty + dy) * MAP_WIDTH + tx + dx] = 60 + 20 * dx;
+  const town = generatePixelTerrain({ woods: hill, px: tx, py: ty, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: CLIMATES.Woodlands, roads, sites, climates: new Uint8Array(MAP_WIDTH * MAP_HEIGHT).fill(CLIMATES.Woodlands), landform: true, locationRect: printTownRect(), hasLocation: true });
+  const at = [];
+  for (let y = 0; y < HEIGHTMAP_DIMENSION; y += GROUND_PRINT_STEP) for (let x = 0; x < HEIGHTMAP_DIMENSION; x += GROUND_PRINT_STEP) at.push(Math.round(town.samples[y * HEIGHTMAP_DIMENSION + x] * metres * 10));
+  cells[`Town@${tx},${ty}`] = at;
   // BAY-LEFT-GROUND: past the Bay, on the authored shape whatever the caller has landed (the trace and the fit put back)
   const trace = tamrielTrace(), fit = tamrielFit();
   setTamrielTrace(null); setTamrielFit(null); dropGroundCache();

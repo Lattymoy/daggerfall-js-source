@@ -878,10 +878,10 @@ Roads network, in scratch, with the slice's own functions:
   ground is held to a print recorded under that law
   (`test/net/fb1017f_groundgate.test.js`, `tools/groundPrint.mjs`), so a
   slice that moves the ground moves GROUND_LAW and RELAY_VERSION with it. The
-  print reads the kernel's shaped ground over the synthetic world (and, since
-  BAY-LEFT-GROUND's GROUND_LAW 2, two pixels of the continent composed round it); a ground
-  that moves only on the real data (a World of Daggerfall site, a location's
-  blend) is outside it, and its slice names the bump itself. The room's
+  print reads the shaped ground over the synthetic world, two continent pixels
+  (BAY-LEFT-GROUND) and a town on a hillside (FB1028: TS2's ease moves it 8.9
+  m); a ground moved only on the real data (a World of Daggerfall site) is
+  outside it, and its slice names the bump. The room's
   memory (WORLD1) holds dungeon and building places only, no exterior height.
 - TWO BELIEFS IN ONE ROOM (GROUND-AGREE and GATE-AGREE, 2026-10-24,
   `01-Overview/bugs/Field-Bugs-2026-10-24b.md`). One build, two grounds: a pixel

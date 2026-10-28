@@ -3873,3 +3873,50 @@ not; on the player's data a village of Skyrim's grid and edge with nothing found
 `tools/mutants/owbeyondknown.json` (5, all dead). PINS MOVED: `test/scenes/bayleft_places.test.js` (the found law a lair's;
 the real village, Solitude's centre and hamlet known by their kinds), `test/audit_tesa.test.js` (A2-3's source); records
 re-aimed by content: `bayleftmaps.json` (5), `audittesa.json` (1), all dead.
+
+## GREEDY-BEYOND - a long walk past the Bay leans on its goal when its count runs out (2026-10-28, the owner)
+
+The owner, of the Imperial City refused from Daggerfall (OW-PLACE-WALK's OPEN, `03-World/Arena-Provinces.md`): *"Yes fix
+that"*.
+
+**What stood.** An all-open plan past the Bay is A* at the field's price, and on open ground every monotone path costs the
+same: the cells between the two ends form a parallelogram of equal estimates. When a detour near the goal makes the true
+cost even a little dearer, A* must expand all of it. Daggerfall to the Imperial City, round Lake Rumare's west arm, costs
+7,574 and needs 529,694 cells; the count past the Bay is 100,000 (ROAD-BEYOND), so it said "There is no way there by
+land." On the freeware's ground with no roads past the Bay landed, 105 trips between the cities: 76 refused, 21 of them
+truly (no land joins them, by a flood under the planner's step law), about 55 falsely.
+
+**What it is now.** A plan past the Bay with no boat that spent its whole count asks once more, as a weighted A*
+(`travelRoute.js:"export const BEYOND_GREED = 3;"`), with its own count, in the widest rung's box. A plan that finds its
+way inside the count is the same plan at the same count; a box that held no way is not searched again. Measured: Daggerfall
+to the Imperial City 7,900 (the cheapest 7,574), Bruma, Solitude, Windhelm and Leyawiin to it as well; of the 105 trips, 42
+false refusals answered and 13 left, where a lean of 2 left 25. On 40 random trips over land, whose cheapest was measured
+uncapped, the worst detour was 9.7 per cent; on a wall across the goal's own row, open 200 pixels above it, 18 (the
+pin's wall, open 80 above, 7.3).
+
+- **OPEN**: the 13 left are the box's, not the count's: their only way runs more than BEYOND_MARGIN (240 pixels) outside
+  both ends - Anvil to Bravil and Torval to Leyawiin round the Niben's water, uncapped no way inside the box. Widening it
+  is the owner's call (a wider rung is a dearer refusal).
+- The hosts: none changes; the planner is the Overworld's, the held map's journey and its own click alike.
+- Pins `test/systems/travel/greedy_beyond.test.js` (4, the last with ARENA2); mutants `tools/mutants/greedybeyond.json`
+  (7, all dead). PIN MOVED: ROAD-BEYOND's spend (`road_beyond.test.js`): a no-way plan's count adds the lean's.
+
+## FAR-RINGS - a far route rung by the footprints past the Bay, never their stamps (2026-10-28, the owner)
+
+The owner: *"when planning a really far away route, the game comes to a halt and really lags"*. Measured in the game on
+the freeware (a CPU profile of Daggerfall to the Imperial City): one task of 17.7 s as the plan landed, 14.5 s of it in
+`routeLegs` asking every pixel of the route for its town's ring (OW-TOWN-RING) - `tvTownRects` stamped each place's tiles to
+read its rect, and past the Bay a place not built yet has its blocks generated to be stamped (the Imperial City's slices,
+its districts and fabric, 11.9 s).
+
+Past the Bay a place not built is now rung by its footprint (`terrainTiles.js:"export function locationFootprintRect(dfLocation) {"`,
+LANDFORM4's: the block grid and the clearance, off the map table), which holds every tile the stamp could. The Bay's places
+keep their stamped rect (their blocks are BLOCKS.BSA's, and the painted ring roads follow it), a built pixel its build's.
+`bootWorld` does not grow. Pin `test/scenes/far_rings.test.js`. PIN MOVED: OW-TOWN-RING's host rect (`ow_wod.test.js`) - the
+merge missed it, and main's deploy failed on it.
+
+GREEDY-BEYOND's mutants' sweep (its fallback asked of the planner's 126 records): one record its own (no-walk-across-country,
+killed by the lean asked of an all-open plan alone); two old ones killed by new pins (ROAD-BEYOND-no-greed on a road lattice,
+-no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
+step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
+of Infinity loops), so it is no verdict; its record wants a finite mutant.

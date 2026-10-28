@@ -31,7 +31,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { townTiles, townRound, isWallCarrier, shutOffGround, SHAPE_TILES_PER_BLOCK, SHAPE_AUTOMAP_SIDE, WALL_ROUND } from './townShape.js';
 import { composeArenaModel } from './arena/arenaModel.js';
-import { registerPortBlock } from '../formats/worldData/worldDataReplacement.js';
+import { registerPortBlock, blockFromJson } from '../formats/worldData/worldDataReplacement.js';
+import { layoutRmbBlock } from './rmbLayout.js';   // FB1028 YARDS Y1: the carrier as #1184 laid it, for the yards' measures
 import { registerCustomModel } from './customModels.js';
 import { carriageRecordsOf } from './immersiveTravelGates.js';   // TS7: Immersive Travel's carriages, at the new gates
 import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';   // TS7: a town's walk shut to its ground
@@ -348,10 +349,13 @@ export function townWall(dfLocation, templateNames, rmbOf, paths = null) {
   const pieces = roads.length ? wallPieces(pts, c, ways, { onLine: true }) : wallPieces(pts, c, gates);
   // FB1028 YARDS (the owner: every yard where #1184 stood it): the pieces as #1184 stood them - no street's gate, no tower grown
   const was = streetWays.length ? wallPieces(pts, c, onStreets, { onLine: true }) : pieces, yardPieces = was.map((p) => ({ ...p, thick: 1 }));
-  const [outM, alongM] = TOWN_WALL.marker;
-  const markers = pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
-  return { line: pts, gates, frames, middle: c, pieces, markers, roads, ways, streetWays, yardPieces };
+  return { line: pts, gates, frames, middle: c, pieces, markers: gateMarkers(pieces), roads, ways, streetWays, yardPieces };
 }
+/** A wall's start markers: outside each gate, Daggerfall's offset (TOWN_WALL.marker). @param {any[]} pieces */
+const gateMarkers = (pieces) => {
+  const [outM, alongM] = TOWN_WALL.marker;
+  return pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
+};
 
 /**
  * FB1028 ROADS (the owner's staff: "a cobbled road running straight into a blank stretch of the wall"): WHERE THE TOWN'S
@@ -594,7 +598,9 @@ export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocke
   const bearing = ([x, z]) => Math.atan2(z - c[1], x - c[0]);
   const pairs = [];
   gp.forEach((p, i) => frames.forEach((f, j) => pairs.push([Math.abs(Math.atan2(Math.sin(bearing(p.at) - bearing(f.at)), Math.cos(bearing(p.at) - bearing(f.at)))), i, j])));
-  pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  // AUDIT FB1028 B2: a road's gate takes its template gate's things first, a street's gate (streetGates) what is left
+  const street = (i) => (wall?.streetWays ?? []).some((q) => Math.hypot(q[0] - gp[i].at[0], q[1] - gp[i].at[1]) < TOWN_WALL.piece / 2) ? 1 : 0;
+  pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
   const usedP = new Set(), usedF = new Set();
   for (const [, i, j] of pairs) {
     if (usedP.has(i) || usedF.has(j)) continue;
@@ -1090,6 +1096,7 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
   const mapId = (dfLocation?.mapTableData?.mapId ?? 0) >>> 0, name = townWallBlockName(mapId), { servedOf, classicOf } = ioOf(io);
   if (_stood.has(name)) return false;
   _stood.add(name);
+  /** @type {any} */
   const kept = { wall: made, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null, of: () => null, dfLocation };
   const modelId = townWallModelId(mapId);
   const rmbOf = (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null);
@@ -1109,6 +1116,18 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
     return kept.wall;
   };
   if (made !== undefined) model();
+  // FB1028 YARDS Y1: the carrier as #1184 laid it - its gates' things stood clear of that wall (yardPieces), no street's
+  // gate - or null where it lays them as today's does. The yards' measures alone read it (townWallYardLayout).
+  kept.yardCarrier = () => {
+    const wall = kept.of();
+    if (!wall?.yardPieces) return null;
+    if (kept.yardBlock !== undefined) return kept.yardBlock;
+    const was = { ...wall, pieces: wall.yardPieces, streetWays: [] }, markers = gateMarkers(was.pieces);
+    const then = gateFurniture(was, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, was, rmbOf));
+    const now = gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf));
+    const same = JSON.stringify([then, markers]) === JSON.stringify([now, wall.markers]);
+    return (kept.yardBlock = same ? null : blockFromJson(townWallBlockJson(name, modelId, markers, open, then), townWallBlockIndex(mapId)));
+  };
   _walls.set(mapId, kept);   // TS6: its town map's and its walkers'
   // ROAD-FOLLOW: a carrier laid while its wall waits is provisional, and its pixel is owed a build once its roads land
   // (`_waiting`, townWallReadyAt); the carrier laid with its wall pays that debt
@@ -1186,6 +1205,18 @@ export function townWallCellsOf(dfLocation) {
 export function townWallYardCellsOf(dfLocation) {
   const cells = townWallCellsOf(dfLocation), held = cells ? _walls.get((dfLocation.mapTableData.mapId ?? -1) >>> 0) : null, wall = held?.of();
   return wall?.yardPieces ? (held.yardCells ??= townWallCells({ pieces: wall.yardPieces }, held.w, held.h)) : cells;
+}
+
+/** FB1028 YARDS Y1 (the owner: every yard where #1184 stood it): a laid-out town (layoutLocation's) with its wall's
+ *  carrier as #1184 laid it (registerTownWall's yardCarrier) and today's layout as `now` - yardMeasuresSteps measures
+ *  both, the yards' ground the first. `yl` itself where the two lay the same. @param {any} yl @param {any} dfLocation */
+export function townWallYardLayout(yl, dfLocation) {
+  const mapId = (dfLocation?.mapTableData?.mapId ?? -1) >>> 0, held = _walls.get(mapId);
+  const dfBlock = held && dfLocation.outline?.walled && yl?.blocks ? held.yardCarrier?.() : null;
+  if (!dfBlock) return yl;
+  const name = townWallBlockName(mapId).toUpperCase();
+  const blocks = yl.blocks.map((b) => (String(b.blockName ?? '').toUpperCase() === name ? { ...b, dfBlock, layout: layoutRmbBlock(dfBlock, { enhanced: true, windmills: true }) } : b));
+  return { ...yl, blocks, now: yl };
 }
 
 /** PORT-SHIPS (systems/naval/harbourKeep.js): a city's wall as it was registered this session - townWall's (its line, its
@@ -1284,9 +1315,14 @@ export function paveOnGrid(nav, paths, tilePos) {
  *  (townWallYardCellsOf). @param {any} dfLocation @param {?Uint8Array} ground @param {?Uint8Array} [paths] @param {boolean} [yards] */
 /** FB1028 YARDS: the yards' shut (#1184's, `was`) carrying the town's shut as it stands now (`now` - keptSitesSteps'
  *  ground); its key both. @param {any} was @param {any} now */
-export const yardWalkShut = (was, now) => {
+export const yardWalkShut = (was, now, dfLocation = null) => {
   const f = (nav) => was(nav);
-  Object.defineProperty(f, 'now', { value: now });
+  // AUDIT FB1028 B5: and the cells the wall gained since #1184 (a tower grown, a street's gate) - a kept yard's pad may
+  // touch them, never its own ground (keptSitesSteps)
+  const gained = () => { const a = townWallCellsOf(dfLocation), b = townWallYardCellsOf(dfLocation); return a && b && a !== b ? a.map((v, i) => (v && !b[i] ? 1 : 0)) : null; };
+  const nowF = Object.assign((nav) => now(nav), { key: now?.key, gained: dfLocation ? gained : () => null });
+  Object.defineProperty(f, 'now', { value: now ? nowF : now });
+  Object.defineProperty(f, 'yardLayout', { value: (/** @type {any} */ yl) => (dfLocation ? townWallYardLayout(yl, dfLocation) : yl) });   // FB1028 YARDS Y1
   Object.defineProperty(f, 'key', { get: () => `${was.key}|now ${now?.key}` });
   return f;
 };
