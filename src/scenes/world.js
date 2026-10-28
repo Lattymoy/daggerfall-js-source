@@ -837,7 +837,7 @@ import { spaceAcross, clearDoorways, doorSpotsNear, spacingSkips } from '../char
 import { Collider } from '../player/collider.js';
 import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2: a streamed pixel's buckets ride the floating origin
 import { createPoiHost } from './poiHost.js';   // POI-2: the approved POIs, standing in the streamed world
-import { createPoiFeed, browserPoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
+import { createPoiFeed, pagePoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
 import { poiPixelKey } from '../poi/poiLaw.js';   // AUDIT RELEASE R2-8: a pixel's one id, the Bay's and past it
 import { decodePoiImage, decodePoiImageSteps } from '../poi/poiImageDecode.js';   // POI-2: a POI's picture, decoded by the browser (AUDIT POI R8: the host's in steps)
 import { poiMapMarks } from '../ui/poi/poiMapMark.js';   // POI-2: their marks on both world maps
@@ -24458,7 +24458,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // stood on its pixel while the streamer holds it built: on the drawn ground, its colliders riding the pixel's floating
   // translation (one provider a pixel, as the streamed buckets'), drawn with the world and, translucent, after the water
   const _poiRides = new Map();
-  poiFeed = createPoiFeed({ base: () => serviceBase(appStorage()), cache: browserPoiCache() });
+  poiFeed = createPoiFeed({ base: () => serviceBase(appStorage()), cache: pagePoiCache() });
   poiFeed.start().catch((e) => console.warn('[poi] the kept feed', e?.message ?? e));
   poiHost = createPoiHost({
     renderer, feed: poiFeed, decodeImage: decodePoiImageSteps,   // AUDIT POI R8, R9: its readback a band a step, under the host's budget
