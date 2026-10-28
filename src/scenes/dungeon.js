@@ -63,6 +63,7 @@ import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk/talk.js';   // GetRandomText(8999)
 import { hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // AUDIT-WH H4: the plaque's hide door, for the overlay branch that returns above drawFoes
 import { quickLootWheel, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the plaque owns the wheel while it lists, and the two keys arm what the next activate means
+import { loopFrame as requestAnimationFrame } from './frameLoop.js';   // LOOP-ALIVE: a frame that throws never ends the loop
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, parkourDeps, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { standFromVoid, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-19f VOID-DUNGEON: the failsafe and its line
 import { isTextEntryTarget, keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, routeKey, routeKeyUp, held, moveHeld, anyMove, actionsOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';

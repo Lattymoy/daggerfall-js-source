@@ -1,0 +1,58 @@
+[
+  {
+    "name": "LOOP-ALIVE-the-catch-never-re-arms",
+    "file": "src/scenes/frameLoop.js",
+    "old": "    if (!armed) loopFrame(cb);",
+    "new": "    if (!armed && false) loopFrame(cb);",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  },
+  {
+    "name": "LOOP-ALIVE-armed-whether-or-not-the-frame-did",
+    "file": "src/scenes/frameLoop.js",
+    "old": "    if (!armed) loopFrame(cb);",
+    "new": "    loopFrame(cb);",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  },
+  {
+    "name": "LOOP-ALIVE-said-every-frame",
+    "file": "src/scenes/frameLoop.js",
+    "old": "  if (said.has(key)) return;",
+    "new": "  if (said.has(key) && false) return;",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  },
+  {
+    "name": "LOOP-ALIVE-every-callbacks-throw-kept",
+    "file": "src/scenes/frameLoop.js",
+    "old": "    if (!loops.has(cb)) throw e;",
+    "new": "    if (!loops.has(cb) && false) throw e;",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  },
+  {
+    "name": "LOOP-ALIVE-world-on-the-bare-frame-request",
+    "file": "src/scenes/world.js",
+    "old": "import { loopFrame as requestAnimationFrame } from './frameLoop.js';",
+    "new": "import { loopFrame as _loopFrame } from './frameLoop.js';",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  },
+  {
+    "name": "LOOP-ALIVE-the-faulted-act-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (act && act === faulted) dropFaulted();",
+    "new": "      if (act && act === faulted && false) dropFaulted();",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  },
+  {
+    "name": "LOOP-ALIVE-the-mark-never-cleared",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        faulted = null;   // LOOP-ALIVE: the act's frame ran to its end",
+    "new": "",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  },
+  {
+    "name": "LOOP-ALIVE-a-kinds-frame-unguarded",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        catch (e) { console.warn(`[gather] ${k.id}'s frame`, e); }",
+    "new": "        catch (e) { throw e; }",
+    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+  }
+]

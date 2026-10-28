@@ -242,6 +242,7 @@ import { startInfection, liveInfection } from '../systems/infection.js';   // V1
 import { diseaseCount } from '../systems/diseases.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';
 import { spellRecordOfIndex } from '../systems/loot/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry) - world.js:"import { FOUND_NOTHING_VALUABLE_TEXT_ID }"'s import
+import { loopFrame as requestAnimationFrame } from './frameLoop.js';   // LOOP-ALIVE: a frame that throws never ends the loop
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, parkourDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost, liveCastEngine } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,

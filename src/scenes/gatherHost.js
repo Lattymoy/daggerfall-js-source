@@ -343,6 +343,7 @@ export function createGatherHost(deps) {
   let struck = null, strikeHeld = false;   // ACT-TOUCH: the act a finger's or a pad's press struck, for the next frame
   let clickHeld = false;      // CLICK-LIFT: the activation's button went down while an act played, and is not yet up
   let pointerAct = null, pointerOff = null;   // HERB-CURSOR: the act the mouse was last set for, and its release
+  let faulted = null;         // LOOP-ALIVE: the act whose frame this tick has not yet run to its end
   let standSpecs = undefined; // SEASONAL-EYE: the specs that change what stands, as the pixels were last stood
   let chipLeft = 0;
   let chipProfession = /** @type {string|null} */ (null);
@@ -865,6 +866,19 @@ export function createGatherHost(deps) {
     const want = act ? actPointer(act.act?.state) : null;
     if (want) pointerOff = deps.pointer?.(want) ?? null;
   }
+  /** LOOP-ALIVE (FIELD BUGS 2026-10-28): an act whose frame threw ends. The host's catch kept it playing, never stepped
+   *  and never walked off, so every press, click and swing stayed the act's - the character locked up. Emptied first
+   *  (THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD). */
+  function dropFaulted() {
+    const a = act;
+    act = null;
+    faulted = null;
+    console.warn('[gather] an act\'s frame threw - the act ends');
+    try { letGo(a); a.act.cancel(); } catch (e) { console.warn('[gather] letting a faulted act go', e); }
+    syncPointer();
+    hud.setMeter(null);
+    hud.toast(ACT_STOPPED_LINE);
+  }
   function finish(a) {
     const report = a.act.report();
     act = null;
@@ -1221,6 +1235,8 @@ export function createGatherHost(deps) {
     /** Every frame the host is in the streaming world. */
     tick(dt) {
       syncPointer();   // AUDIT HERB-CURSOR A3/B1: before anything of the frame can throw
+      if (act && act === faulted) dropFaulted();   // LOOP-ALIVE: the last tick threw before this act's frame ended
+      faulted = act;
       const now = deps.nowMs();
       // the state: read on arrival, at a new character and at the UTC day's turn; kept withdrawals settled on every good
       // read (AUDIT 29 C4: once a session, a withdrawal kept mid-session waited for a reload)
@@ -1275,7 +1291,10 @@ export function createGatherHost(deps) {
       book.pump((h, r, before) => answered(null, r, before ?? rank(r?.data?.track?.profession ?? 'herbalism'), h?.node));
       // PROF4: the kinds' own frame - a felled tree's fall, the logs at its foot
       const feetNow = deps.feet();
-      for (const k of kinds) k.frame?.(dt, { feet: feetNow, translation: (e) => (stood.get(pixelKey(e.px, e.py))?.entry === e ? deps.pixelTranslation(e.px, e.py, [0, 0, 0]) : null), say: sayKind });   // GATHER-FEEL: `say` - a kind's own beat (the logs taken)
+      for (const k of kinds) {
+        try { k.frame?.(dt, { feet: feetNow, translation: (e) => (stood.get(pixelKey(e.px, e.py))?.entry === e ? deps.pixelTranslation(e.px, e.py, [0, 0, 0]) : null), say: sayKind }); }   // GATHER-FEEL: `say` - a kind's own beat (the logs taken)
+        catch (e) { console.warn(`[gather] ${k.id}'s frame`, e); }   // LOOP-ALIVE: one kind's fault never stops the act's frame below
+      }
       // GATHER-FEEL: the last blows in the air land - their nodes go - and the tool that struck one is put away as its
       // swing runs out. AUDIT GATHER-FEEL LANDING: every last swing, the hand's or not, through stepAct - the one clock
       if (swings.length) {
@@ -1308,6 +1327,7 @@ export function createGatherHost(deps) {
         else if (act.act.state.done) { hud.setMeter(act.act, act.label ?? '', { byUse: act.heldByUse === true }); finish(act); }   // PROF-SCENES: the last frame drawn (its blow's cue) before the marks go
         else hud.setMeter(act.act, act.label ?? '', { byUse: act.heldByUse === true });   // TOUCH-HOLD: a Use's hold says no key
         hud.setPrompt(null);
+        faulted = null;   // LOOP-ALIVE: the act's frame ran to its end
       } else {
         ear.frame(dt, null);   // GATHER-FEEL: a finished act's last blow still lands, its chime still rings
         target = live() ? findTarget() : null;
