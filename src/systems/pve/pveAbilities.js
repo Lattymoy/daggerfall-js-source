@@ -38,7 +38,7 @@ export const ABILITIES = Object.freeze({
   daedraSpells: Object.freeze({ kind: 'active', uses: 'spells:list', body: 31, cooldown: 5, trigger: 'inCombat', tell: 1 }),
   interrupt: Object.freeze({ kind: 'active', uses: 'blow:interrupt', cooldown: 12, trigger: 'targetCasting', tell: 0.3 }),
   // passives
-  rage: Object.freeze({ kind: 'passive', uses: 'self:rage', below: 0.35, value: 0.5 }),
+  rage: Object.freeze({ kind: 'passive', uses: 'self:rage', below: 0.35, value: 0.25 }),
   ...Object.fromEntries(BOSS_TRAITS.map((t) => [t, Object.freeze({ kind: 'passive', uses: `bossTrait:${t}` })])),
 });
 export const ABILITY_KEYS = Object.freeze(Object.keys(ABILITIES));

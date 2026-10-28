@@ -10,14 +10,14 @@
 /** @type {Readonly<Record<string, CombatRole>>} */
 export const COMBAT_ROLES = Object.freeze({
   fighter: Object.freeze({ health: 1, damage: 1, stance: 'melee', target: 'threat' }),
-  tank: Object.freeze({ health: 1.5, damage: 0.75, stance: 'front', target: 'nearestToAlly' }),
+  tank: Object.freeze({ health: 1.25, damage: 0.7, stance: 'front', target: 'nearestToAlly' }),
   archer: Object.freeze({ health: 0.8, damage: 1.1, stance: 'standOff', target: 'threat', needs: 'shoots' }),
   mage: Object.freeze({ health: 0.75, damage: 1.25, stance: 'standOff', target: 'lowestWard', needs: 'casts' }),
   healer: Object.freeze({ health: 0.85, damage: 0.6, stance: 'back', target: 'hurtAlly', needs: 'casts', complex: true }),
   assassin: Object.freeze({ health: 0.8, damage: 1.35, stance: 'flank', target: 'weakest' }),
   berserker: Object.freeze({ health: 1.1, damage: 1, stance: 'press', target: 'nearest' }),
   summoner: Object.freeze({ health: 0.8, damage: 0.7, stance: 'back', target: 'threat', needs: 'casts', complex: true }),
-  commander: Object.freeze({ health: 1.25, damage: 0.9, stance: 'centre', target: 'threat', complex: true }),
+  commander: Object.freeze({ health: 1.1, damage: 0.85, stance: 'centre', target: 'threat', complex: true }),
 });
 export const COMBAT_ROLE_KEYS = Object.freeze(Object.keys(COMBAT_ROLES));
 

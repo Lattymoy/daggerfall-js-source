@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SPECIES, SPECIES_BY_KEY, CANDIDATE_SPECIES } from '../../../src/systems/pve/pveSpecies.js';
-import { PVE_CATEGORIES, REFERENCE_PLAYER, NORMAL_BLOWS, PLAYER_EDGE, referencePlayer, categoryStats } from '../../../src/systems/pve/pveCategories.js';
+import { PVE_CATEGORIES, REFERENCE_PLAYER, NORMAL_BLOWS, PLAYER_EDGE, referencePlayer, categoryStats, FOE_BLOW_S } from '../../../src/systems/pve/pveCategories.js';
 import { COMBAT_ROLE_KEYS, roleProblem, roleShares } from '../../../src/systems/pve/pveRoles.js';
 import { ABILITY_KEYS, abilityProblem } from '../../../src/systems/pve/pveAbilities.js';
 import { MOB_TEMPLATES, GROUP_TEMPLATES, TEMPLATE_BY_KEY, templateProblems, groupProblems, templateStats, groupWeight } from '../../../src/systems/pve/pveTemplates.js';
@@ -50,20 +50,19 @@ test('FIXED-PVE a Normal foe falls in NORMAL_BLOWS and needs the edge more to fe
     const ref = referencePlayer(L), s = categoryStats(L, 'normal');
     assert.ok(Math.abs(s.health / ref.blow - NORMAL_BLOWS) < 0.2, `L${L} health ${s.health}`);
     const mean = (s.damage[0] + s.damage[1]) / 2;
-    const edge = ref.health / mean / NORMAL_BLOWS - 1;
+    const edge = (ref.health / mean) * FOE_BLOW_S / (NORMAL_BLOWS * ref.swingS) - 1;   // its time to fell them over theirs
     assert.ok(edge >= PLAYER_EDGE.min - 0.02 && edge <= PLAYER_EDGE.max + 0.02, `L${L} edge ${edge}`);
   }
   assert.ok(referencePlayer(45).blow > referencePlayer(30).blow * 3, 'gear compounds at the top');
 });
 
-test('FIXED-PVE categories climb, and an Elite takes the edge away', () => {
+test('FIXED-PVE categories climb in health and in the party they are made for', () => {
   const order = ['normal', 'strong', 'elite', 'champion', 'boss', 'raidBoss'];
   for (let i = 1; i < order.length; i++) {
     assert.ok(PVE_CATEGORIES[order[i]].health > PVE_CATEGORIES[order[i - 1]].health);
-    assert.ok(PVE_CATEGORIES[order[i]].damage >= PVE_CATEGORIES[order[i - 1]].damage);
+    assert.ok(PVE_CATEGORIES[order[i]].party >= PVE_CATEGORIES[order[i - 1]].party);
   }
-  const ref = referencePlayer(30), e = categoryStats(30, 'elite');
-  assert.ok(ref.health / ((e.damage[0] + e.damage[1]) / 2) < NORMAL_BLOWS, 'an Elite fells the reference player faster than they fell a Normal');
+  assert.ok(PVE_CATEGORIES.strong.margin < 1, 'a Strong foe is a hard fight alone');
 });
 
 test('FIXED-PVE roles: at most two, never a clash, never two complex; combined shares are means', () => {
@@ -74,7 +73,7 @@ test('FIXED-PVE roles: at most two, never a clash, never two complex; combined s
   assert.match(roleProblem(['wizard']), /unknown/);
   assert.equal(COMBAT_ROLE_KEYS.length, 9);
   const s = roleShares(['tank', 'mage']);
-  assert.ok(Math.abs(s.health - 1.125) < 1e-9 && Math.abs(s.damage - 1) < 1e-9);
+  assert.ok(Math.abs(s.health - (1.25 + 0.75) / 2) < 1e-9 && Math.abs(s.damage - (0.7 + 1.25) / 2) < 1e-9);
 });
 
 test('FIXED-PVE the validator refuses what the body cannot draw and what the data does not know', () => {
