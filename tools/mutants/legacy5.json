@@ -101,8 +101,8 @@
   {
     "name": "LEGACY5-spouse-not-in-household",
     "file": "src/scenes/legacyHost.js",
-    "old": "      const res = { ...census, name: fullNameOf(s.given, s.surname), home, household: `F${family.id}`, legacy: { familyId: family.id, personId: s.id } };",
-    "new": "      const res = { ...census, name: fullNameOf(s.given, s.surname), home, legacy: { familyId: family.id, personId: s.id } };",
+    "old": "      const res = { ...census, race: s.race || census.race, name: fullNameOf(s.given, s.surname), home, household: `F${family.id}`, legacy: { familyId: family.id, personId: s.id } };",
+    "new": "      const res = { ...census, race: s.race || census.race, name: fullNameOf(s.given, s.surname), home, legacy: { familyId: family.id, personId: s.id } };",
     "tests": [
       "test/systems/legacy/legacy5_marriage.test.js"
     ]

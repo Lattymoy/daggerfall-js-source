@@ -211,7 +211,7 @@
   {
     "name": "WW1-census-bank",
     "file": "src/systems/livingWorld/census.js",
-    "old": "nameBankOfArea(town.area ?? town.region ?? -1)",
+    "old": "people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1)",
     "new": "nameBankOfArea(town.region ?? -1)",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"

@@ -1361,6 +1361,28 @@ same driver was driven only as the relaunch itself; the unit test holds the rest
 (before/after screenshots, base `284f59cefa`). Pins: `test/tooling/gpubackend.test.js`, and the row in
 `test/systems/org2_options.test.js`.
 
+### The backdrop blur is off on Vulkan (VULKAN-FLIP, 2026-10-28)
+
+A player in #bug-reports, on the Vulkan option's first day: "Screen flips when opening an inventory UI while using the
+Vulkan". The pack (`.pack-shell.on`) and the dial (`.px-dial.on`) blur the world behind them with CSS
+`backdrop-filter`. Chromium's compositor draws that backdrop from the WebGL canvas, and on Vulkan with the GPU sandbox
+off the compositor is the GPU's (`gpu_compositing: enabled`, above). The game's own frame is the same WebGL on both
+backends: a flipped frame would show with no window open. The pack's 3D figure is a `readPixels` of the game's own
+target (`fpArm.js` figure), the same on both backends too. So the backdrop is the one draw the pack adds that the
+backend can change.
+
+`src/ui/vulkanBackdrop.js` guardBackdrops: in the desktop shell, a page whose own WebGL renderer names Vulkan
+(`renderer.gpuName`) gets one style that sets `backdrop-filter: none !important` on every element and pseudo-element.
+Each window keeps its own dim. `src/main.js` runs it behind the shell's door just after the renderer is made, off the
+entry's static graph (BOOT2). It reads the page's renderer, not a shell flag, so a game-only update (DA13) reaches an
+installed app. D3D11 and every browser keep the blur.
+
+Checked in Playwright's Chromium: the rule takes the pack's, the dial's, an inline and a pseudo-element's backdrop
+filter to `none`, and a pack opened after it never blurs, its arrival transition included. Not verified: the flip and
+its end on a Vulkan GPU. On Linux, Chromium composites SwiftShader's Vulkan in software, and the backdrop stood upright
+there with and without Vulkan's switches, headless and under Xvfb. The check on a Windows GPU: open the pack on a
+Vulkan launch, and the world behind it stands upright, unblurred. Pins: `test/ui/vulkanflip.test.js`.
+
 ## The compiled scripts are kept (CODE-CACHE, 2026-10-27)
 
 A player reported that the app loaded worse than the browser. Chrome keeps V8's code cache for an https site. Electron
