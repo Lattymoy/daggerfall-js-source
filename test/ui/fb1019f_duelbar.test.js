@@ -16,6 +16,8 @@ import { fakeRoom } from '../fakeRoom.mjs';
 import { fakePage } from '../hudPage.mjs';
 import { createDuelManager } from '../../src/net/duel/duelSession.js';
 import { duelVitality } from '../../src/net/duel/duelBar.js';
+import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
+import { validVitOut } from '../../src/net/wire.js';
 import { validDuelData, validDuelRefOut } from '../../src/net/wire.js';
 import { ROYAL_RING, SIEGE_UNITS_PER_M, siegeVitality } from '../../src/net/siege/siegeRef.js';
 import { drawHud } from '../../src/ui/hud/hud.js';
@@ -62,7 +64,7 @@ async function withRelayDuel(fn) {
         }
       }
     };
-    await fn({ mgr, a, b, say, pump, step: (ms) => { clock += ms; } });
+    await fn({ mgr, a, b, say, pump, step: (ms) => { clock += ms; }, r, now: () => clock });
   } finally { Date.now = realNow; }
 }
 /** The bout set on the real relay: my ask, their yes, my start - answered by the Room's `bout`. */
@@ -222,21 +224,54 @@ test('DUEL-BAR THE ENHANCED HUD: the health bar\'s fill and figure read the refe
   }
 }));
 
-test('DUEL-BAR THE HOST: the world host hands drawHud my vitality off the duel manager\'s live duel - one entry, in its one drawHud call, by my own peer id; the duel\'s readout keeps its line; the law is a leaf of the client\'s, never in the relay\'s bundle (net/duel/duelSession.js, which the relay\'s arena reaches, untouched); no host and no HUD module writes the referee\'s word into the save\'s health (mutants: the entry dropped; the duel held after its end read; the vitality written to the save)', () => {
+test('DUEL-BAR THE HOST, RETIRED BY SHARED-HEALTH (2026-10-26, Integrity-Arc.md section 5): the duel\'s count IS the player\'s health now (net/siege/refereeHealthMirror.js sets it), so the world host hands drawHud no referee\'s pair - the bar reads the health it always read - and neither readout prints a second "Your vitality"; the law stays a leaf of the client\'s, never in the relay\'s bundle (mutant: the entry restored)', () => {
   const world = rd('src/scenes/world.js');
   const call = world.slice(world.indexOf('drawHud(renderer, canvas, hudArt, playerEntity,'), world.indexOf('weaponSheathed: !!weaponRig.playerWeapon.sheathed });'));
-  assert.match(call, /\n\s*healthBar: duelVitality\(duelMgr\.live, online\?\.id \?\? ''\),/);
-  assert.equal(world.match(/healthBar:/g).length, 1, 'one wiring line');
-  assert.match(world, /^import \{ duelVitality \} from '\.\.\/net\/duel\/duelBar\.js';/m);
-  assert.match(world, /const me = online\?\.id \?\? '', h = d\.h \?\? \[\];/, 'the readout\'s own "me", the same id');
-  assert.match(world, /self: mine \? \[`Your vitality: \$\{mine\[1\]\} \/ \$\{mine\[2\]\}`\] : \[\]/, 'the readout\'s own line stands');
+  assert.ok(call.length > 0, 'the drawHud call is where it was');
+  assert.equal(call.includes('healthBar'), false, 'no referee\'s pair handed in');
+  assert.equal(world.includes('Your vitality'), false, 'no second number for my own health');
   assert.equal(rd('src/net/duel/duelSession.js').includes('duelBar'), false, 'the relay\'s duel law knows nothing of the bar');
   assert.equal(rd('server/src/index.js').includes('duelBar'), false);
-  for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/scenes/exterior.js', 'src/ui/hud/hud.js', 'src/ui/hud/hudVitals.js', 'src/ui/enhanced/enhancedHud.js', 'src/net/duel/duelBar.js']) {
-    assert.equal(/\.health\s*=[^=][^;]*vitality/.test(rd(f)), false, `${f}: no write of the referee's vitality to a health`);
-  }
-  // the four hosts (Home.md): a duel is outdoors alone - the street's host wires it; a building, a dungeon and the offline
-  // city never hold a live duel (duelCan's 'outdoors'), and hand drawHud no bar
-  for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/scenes/exterior.js']) assert.equal(rd(f).includes('healthBar'), false, f);
-  assert.match(world, /if \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) return 'outdoors';/);
+  for (const h of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/scenes/exterior.js']) assert.equal(rd(h).includes('healthBar'), false, h);
 });
+
+test('SHARED-HEALTH THE DUEL ON THE REAL RELAY: the bout asks both fighters for their health; my report anchors my count at my own share; a blow on me lands on my own health as its share; the bout over, my health stays where the fight left it - a duel\'s fall is a loss, never a heal (mutants: no ask at the bout; the blow unsaid to the struck)', () => withRelayDuel(async (w) => {
+  const { a, b, say, pump, step, r, now } = w;
+  const player = { health: 500, maxHealth: 1000 };   // a large health, so a fist's blow moves it by whole points
+  const mirror = createRefereeHealthMirror({ read: () => player, write: (h) => { player.health = h; }, send: (rep) => { r.raw(a, JSON.stringify({ t: 'vit', ...rep })); return true; }, now });
+  let read = 0;
+  const vitPump = async () => {
+    await pump();
+    for (let moved = true; moved;) {
+      moved = false;
+      mirror.frame(true);
+      await new Promise((done) => setImmediate(done));
+      while (read < a.sent.length) { const g = validVitOut(a.sent[read++]); if (g) { moved = true; mirror.onVit(g); } }
+    }
+  };
+  const s = await boutSet(w);
+  await vitPump();
+  assert.ok(a.sent.some((m) => m.t === 'vit' && m.k === 'ask'), 'the bout asks for my health');
+  const anchored = a.sent.filter((m) => m.t === 'vit' && m.k === 'h').at(-1);
+  assert.equal(anchored.h, WHOLE / 2, 'my count anchored at my own half');
+  step(ROYAL_RING.countdownMs + 1);
+  const wordsBefore = a.sent.filter((m) => m.t === 'vit' && m.k === 'h').length;
+  await say(b, { to: 'peer-0001', s, k: 'strike', n: 1, by: 'melee', p: [P(2).x, 0, P(2).z], d: 999 });
+  const told = a.sent.filter((m) => m.t === 'vit' && m.k === 'h').slice(wordsBefore);
+  assert.equal(told.length, 1, 'the blow is said on my health at once - not first at my next report');
+  assert.equal(told[0].n, anchored.n, 'a word of the referee\'s own, answering no new report');
+  await vitPump();
+  const hp = a.sent.filter((m) => m.t === 'dref' && m.k === 'hp').at(-1);
+  assert.ok(hp.d > 0, 'a blow landed');
+  assert.equal(player.health, Math.round(1000 * ((WHOLE / 2 - hp.d) / WHOLE)), 'its share off my own health');
+  assert.ok(player.health < 500);
+  const after = player.health;
+  // a potion mid-duel, long after the blow: a duel heals nobody, and my health is pulled back
+  step(10 * 30_000);
+  player.health = 1000;
+  await vitPump();
+  assert.equal(player.health, after, 'no heal for the duel\'s whole length');
+  await say(b, { to: 'peer-0001', s, k: 'end', why: 'yield' });
+  await vitPump();
+  assert.equal(player.health, after, 'the bout over: my health is where the fight left it');
+}));

@@ -982,7 +982,7 @@ import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileRecordLines } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duel/duelSession.js';   // DUEL1: the duel's state machine (pure)
-import { duelVitality } from '../net/duel/duelBar.js';   // DUEL-BAR: my vitality as the referee says it, the HUD's health bar's for the duel's length
+import { createPlayerHealthMirror } from '../net/siege/refereeHealthMirror.js';   // SHARED-HEALTH: one health pool under the referee
 // WILD1 (2026-10-07, bible/11-Multiplayer/Wild-Zone.md): THE OPEN ZONE - the Wrothgarian Mountains: its law (a leaf), a
 // death's drop and its one piece, the fights between players, the room's remains as piles, and the HUD's two glyphs
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
@@ -20239,6 +20239,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onDuelRef = (g, room) => { if (g.k === 'bout') _duelRoom = room ?? null; duelMgr.onRef(g); };   // INT8: the referee's word on my bout - AUDIT INT8: and its room, where its frames go
     online.onWild = (id, d, sub = null) => { wildFight.onFrame(id, d, sub); };   // WILD1: a fallen's offer at me (INT9: the one frame the zone routes) - the zone's law decides (net/wild/wildFight.js)
     online.onWildRef = (g, room) => wildRefIn(g, room);   // INT9: the zone referee's word - a blow landed, a fall, a fall signed
+    online.onVit = healthMirror.onVit;   // SHARED-HEALTH: a referee's ask for my health, or its count set on it
     // WILD1: my room's word on its remains (net/wild/wildRemains.js). WILD-SEEN (2026-10-09, the owner: "when i die i dont see my
     // own pile"): the book is told the room FIRST - the frame told it a frame late, and a near relay's hello answered inside
     // that frame, so the room's remains were heard and then cleared as "another room's" by the frame's setRoom
@@ -21254,16 +21255,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     for (const p of wedMgr.peers()) if (!online?.reachesPeer(p)) wedMgr.gone(p);
     if (performance.now() - _unionsAt > UNIONS_READ_MS) legacyUnionsRead();
   };
-  /** INT8: THE DUEL'S HUD - the referee's vitality (net/duel/duelRef.js: the Royal Tourney's, never my save's health), mine
-   *  over theirs, drawn on the battles' readout (ui/siegeHud.js) for the duel's life; its Leave is my yield. */
+  /** INT8: THE DUEL'S HUD - my opponent's count as the referee says it (net/duel/duelRef.js), drawn on the battles' readout
+   *  (ui/siegeHud.js) for the duel's life; its Leave is my yield. SHARED-HEALTH: my own count is my health, on my bar. */
   let _duelHud = null;
   const duelHudSay = (d) => {
     if (!d) { _duelHud?.hide(); return; }
     _duelHud ??= createSiegeHud(document, { onLeave: () => duelMgr.yieldDuel() });
     const me = online?.id ?? '', h = d.h ?? [];
-    const mine = h.find((x) => x[0] === me), theirs = h.find((x) => x[0] !== me);
+    const theirs = h.find((x) => x[0] !== me);
     const name = peerName(d.peer) ?? 'your opponent';
-    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: mine ? [`Your vitality: ${mine[1]} / ${mine[2]}`] : [], works: '', arms: null, card: null });
+    _duelHud.update({ bar: [`Duel with ${name}`, theirs ? `${name}: ${theirs[1]} / ${theirs[2]}` : 'The referee sets the bout...'], sides: '', self: [], works: '', arms: null, card: null });   // SHARED-HEALTH: my own is my health bar
   };
   /** THE ATTACKER: my blow out - INT8: rolled on my own sheet against the neutral stand-in (AUDIT C&C H5: a body of my
    *  own sheet cancelled every attribute I brought and charged me for my own luck; the target's sheet is not mine to
@@ -22021,16 +22022,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return bodies.length ? bodies.map((b) => ({ ...b, name: peerName(b.id) ?? 'another player' })) : null;
   };
   // ── INT9: THE REFEREE'S WORD (net/wild/wildRef.js - the relay holds the zone's fights) ──
-  /** THE ZONE'S HUD - the referee's vitality (the Royal Tourney's, never my save's health: that is the foes' alone), mine
-   *  and my last foe's, on the battles' readout (ui/siegeHud.js, with nothing to leave) while the fight is fresh - the
-   *  referee makes a fighter no player has struck for WILD_REF.mendMs whole again. */
+  /** THE ZONE'S HUD - my last foe's count as the referee says it, on the battles' readout (ui/siegeHud.js, with nothing to
+   *  leave) while the fight is fresh (WILD_REF.mendMs). SHARED-HEALTH: my own count is my health, on my bar. */
   let _wildHud = null;
-  let _wildVit = null;   // { mine: [hp, max] | null, foe: { id, hp, max } | null, at }
+  const healthMirror = createPlayerHealthMirror(playerEntity, () => online);   // SHARED-HEALTH: my health reported to the referee that holds a fight of mine, and its count set on it
+  let _wildVit = null;   // { foe: { id, hp, max } | null, at }
   const wildHudSay = () => {
     if (!_wildVit) { _wildHud?.hide(); return; }
     _wildHud ??= createSiegeHud(document);
     const f = _wildVit.foe, name = f ? (peerName(f.id) ?? 'another player') : '';
-    _wildHud.update({ bar: [WILD_NAME, f ? `${name}: ${f.hp} / ${f.max}` : ''], sides: '', self: _wildVit.mine ? [`Your vitality: ${_wildVit.mine[0]} / ${_wildVit.mine[1]}`] : [], works: '', arms: null, card: null });
+    _wildHud.update({ bar: [WILD_NAME, f ? `${name}: ${f.hp} / ${f.max}` : ''], sides: '', self: [], works: '', arms: null, card: null });   // SHARED-HEALTH: my own is my health bar
   };
   const wildHudFrame = () => { if (_wildVit && (Date.now() - _wildVit.at > WILD_REF.mendMs || !wildHere())) { _wildVit = null; wildHudSay(); } };
   /** A BLOW OR A CAST LANDED (`wref` `hp`): the HUD's vitality; a blow of mine - the HUD's number (HN1's seam), and for a
@@ -22041,8 +22042,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (g.by !== me && g.to !== me) return;
     noteWildBlow();   // AUDIT PVP-EASE L2-1: a blow landed, mine or on me - storing locked (wildZone.js WILD_STORE_LOCK_MS)
     const foeId = g.by === me ? g.to : g.by;
-    const mine = g.h.find((x) => x[0] === me), theirs = g.h.find((x) => x[0] === foeId);
-    _wildVit = { mine: mine ? [mine[1], mine[2]] : (_wildVit?.mine ?? null), foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };
+    const theirs = g.h.find((x) => x[0] === foeId);
+    _wildVit = { foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };   // SHARED-HEALTH: my own count is my health, on my bar
     wildHudSay();
     if (g.by === me) {
       reportPlayerAttack({ hit: true, damage: g.d, critical: false, backstab: false, ineffective: false });
@@ -22350,6 +22351,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildFight.tick();
     for (const peer of [..._wildBodies.keys()]) if (!wildFight.body(peer)) wildBodyGone(peer);
     online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);   // INT9: my word on the zone, for its referee - standing in it, alive, where it fights (AUDIT FOE-KEEPS E2: and left dying, its kill credit)
+    healthMirror.frame(wildCan() || !!duelMgr.live || inSiegeRoom());   // SHARED-HEALTH: my health to whichever referee holds my fight
     wildDepositFrame(); wildSeizeFrame(); wildHudFrame();   // INT9: a drop's deposit, a fall to seize, the referee's readout
     wildEscrow.frame();   // MAC (2026-10-14, the two-phase handoff): my piece in escrow asked back, my collect carried
     wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);   // HALO-REMAINS: my room and the halo's
@@ -34421,7 +34423,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           quickUse: (n) => quickUse(n), quickSwap: () => quickSwap(), quickOffHand: () => quickOffHand(), quickSpell: () => quickSpell(), quickSwitchHand: () => quickSwitchHand(),   // QS6   // MAC-R3: the main cell's hand switch
           grip: player.gripShown,   // CLIMB2: the enhanced climb's grip - both HUDs draw it
           steed: _mode() === 'exterior' ? upkeep.bar(player.transportMode) : null,   // STEED1: the ridden horse's breath, in the grip's place
-          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),   // DUEL-BAR (FIELD BUGS 2026-10-19f, the owner: "Bar shows duel vitality"): the referee's vitality on both skins' bar while my duel is live, the save's at its end - display only
           weaponSheathed: !!weaponRig.playerWeapon.sheathed });   // AUDIT 28 W2: the arrow counter's drawn-bow gate   // U38 + X4 + U43
       csaDrawWindWidget();   // CSA-E: over the HUD
     }

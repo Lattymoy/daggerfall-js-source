@@ -18,24 +18,6 @@
     ]
   },
   {
-    "name": "DUEL-BAR-a-duel-over-still-read",
-    "file": "src/scenes/world.js",
-    "old": "          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),",
-    "new": "          healthBar: duelVitality(duelMgr.duel, online?.id ?? ''),",
-    "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
-    ]
-  },
-  {
-    "name": "DUEL-BAR-another-id-for-mine",
-    "file": "src/scenes/world.js",
-    "old": "          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),",
-    "new": "          healthBar: duelVitality(duelMgr.live, duelMgr.opponent ?? ''),",
-    "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
-    ]
-  },
-  {
     "name": "DUEL-BAR-the-referees-maximum-unread",
     "file": "src/ui/hud/hudVitals.js",
     "old": "  return bar ? { health: bar.health ?? 0, maxHealth: bar.maxHealth, from: 'referee' }",
@@ -134,15 +116,6 @@
     "tests": [
       "test/ui/fb1019f_duelbar.test.js",
       "test/ui/partybuffs.test.js"
-    ]
-  },
-  {
-    "name": "DUEL-BAR-the-host-unwired",
-    "file": "src/scenes/world.js",
-    "old": "          healthBar: duelVitality(duelMgr.live, online?.id ?? ''),   // DUEL-BAR (FIELD BUGS 2026-10-19f, the owner: \"Bar shows duel vitality\"): the referee's vitality on both skins' bar while my duel is live, the save's at its end - display only\n",
-    "new": "",
-    "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
     ]
   }
 ]
