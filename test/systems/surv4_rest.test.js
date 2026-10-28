@@ -155,7 +155,7 @@ test('SURV4: by source - the four hosts name their kind, the three rolls carry t
   assert.match(w, /restKind: \(\) => \(_restFromBed \? 'bed' : camps\.fireNear\(walkMode && playerSpawned \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);   // AUDIT REST-PARTY A3: a pressed bed first
   assert.match(x, /restKind: \(\) => \(camps\.fireNear\(walkMode \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
   assert.match(dc, /restKind: \(\) => \(_restFromBed \|\| bedInReach\(dungeonBeds, _fpFeet\) \? 'bed' : _fpFeet && camps\.fireNear\(_fpFeet\) \? 'camp' : 'rough'\),/);   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: a bed first
-  assert.match(wm, /restKind: \(\) => \{ const p = interiorRestPlaceHere\(\); return p\.houseOwned \|\| p\.isShip \|\| !!p\.room \? 'bed' : interiorCamps\.fireNear\(player\.pos\) \? 'camp' : 'rough'; \},/);
+  assert.match(wm, /restKind: \(\) => interiorRestSpot\(interiorRestPlaceHere\(\), \{ pressedBed: _restFromBed, fireNear: interiorCamps\.fireNear\(player\.pos\) \}\)\.kind,/);   // PIN MOVED (RPT1026-MISC BED-PRESS-INDOOR): the place's law in restSession.js interiorRestSpot (rpt1026_misc_rest.test.js pins its arms)
   // SURV-TIERS: the three rolls hand the rest's asks, its kind priced by the player's tier at the open (scenes/shared.js)
   assert.match(w, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
   assert.match(x, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
@@ -164,7 +164,8 @@ test('SURV4: by source - the four hosts name their kind, the three rolls carry t
   assert.match(sh, /restKind = \(\) => REST_KIND\.Rough,[\s\S]{0,400}?restPoint = null, \.\.\.rest/, 'a host that says nothing sleeps rough');
   // PARTY-REST4b/10 (the party-rest drop): the override slot and the rough-carry reset both live inside this same `if (b)` arm now - narrowed to the one invariant this test holds
   // SURV-TIERS: the tier is read at the open beside the place - null (the mod off) prices it as DFU's bed
-  assert.match(sh, /_rules = survivalRules\(\);[^\n]*\n\s*_place = \(_restKindOverride \?\? restKind\)\(\);\n\s*_kind = _rules \? _place : REST_KIND\.Bed; _roughHours = 0;/, 'read at the open, DFU\'s bed with the mod off');
+  // PIN MOVED (AUDIT RPT1026 L3): the place a window a bed's press opened is the bed (ui/restDoor.js `bedPressed`)
+  assert.match(sh, /_rules = survivalRules\(\);[^\n]*\n\s*_place = \(_restKindOverride \?\? \(out\.bedPressed \? pressedBedKind : restKind\)\)\(\);[^\n]*\n\s*_kind = _rules \? _place : REST_KIND\.Bed; _roughHours = 0;/, 'read at the open, DFU\'s bed with the mod off');
   assert.match(sh, /entity\.restKind = b \? _place : null;/, 'the entity carries the place');
   const law = read('src/systems/survival/rest.js');
   assert.doesNotMatch(law, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|from '\.\.\/worldTick|document\.|window\./);

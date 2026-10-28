@@ -15,6 +15,7 @@ import { ITEM_UID_RE, lawfulItem } from '../../src/systems/item/itemLaw.js';
 import { absorbStack, stacksWith } from '../../src/systems/inventory.js';
 import { mintItemId } from '../../src/systems/item/itemIds.js';
 import { GUILD_RANK_RECRUIT, guildRankOk } from '../../src/net/guild/guildLaw.js';
+import { creditSave } from '../../src/net/realm/realmGoldLaw.js';
 
 const KINDS = new Set(['storage', 'station']);
 const MODES = new Set(['private', 'guild', 'friends', 'party', 'chosen_friends']);
@@ -37,10 +38,14 @@ async function pieceKind(db, mapId, buildingKey, id, kind) {
   return place;
 }
 
-// shortcut: a chest left open past this can be opened by someone else; refresh the hold from the window when a sort runs longer
+// RPT1026-CHESTGOLD (a private report): the hold's life from the window's last word. A window in use keeps it (`op: 'hold'`,
+// keepHold), and a hold that lapsed is never that window's again - someone else may have opened the chest since, so its
+// settle is refused ('decor-lapsed') and moves nothing.
 const HOLD_S = 180;
 const holdRow = (db, mapId, buildingKey, id) => db.prepare('SELECT player, char_id, until FROM decor_hold WHERE map_id = ? AND building_key = ? AND piece_id = ?').bind(mapId, buildingKey, id).first();
 const heldByOther = (row, player, character, nowS) => !!(row && row.until > nowS && !(row.player === player.id && row.char_id === character));
+/** A gold pile (inventory.js isGoldPieces). Its count is a purse's. */
+const isCoin = (it) => it?.group === 'Currency' && it?.templateIndex === 276;
 
 async function takeHold(db, player, character, mapId, buildingKey, id, nowS) {
   // One statement: a live hold is not replaced. Two opens that both saw an empty row cannot both succeed.
@@ -54,6 +59,20 @@ async function takeHold(db, player, character, mapId, buildingKey, id, nowS) {
 async function ourHold(db, player, character, mapId, buildingKey, id, nowS) {
   const row = await holdRow(db, mapId, buildingKey, id);
   return !!(row && row.until > nowS && row.player === player.id && row.char_id === character);
+}
+
+/** RPT1026-CHESTGOLD: why a window holds the chest no more - its own hold ran out ('decor-lapsed'), or it is gone or
+ *  another's ('decor-busy'). */
+async function holdLost(db, player, character, mapId, buildingKey, id) {
+  const row = await holdRow(db, mapId, buildingKey, id);
+  return row && row.player === player.id && row.char_id === character ? 'decor-lapsed' : 'decor-busy';
+}
+
+/** RPT1026-CHESTGOLD: an open window's hold kept another HOLD_S - only while it still stands and is this window's. */
+async function keepHold(db, player, character, mapId, buildingKey, id, nowS) {
+  const wrote = await db.prepare('UPDATE decor_hold SET until = ? WHERE map_id = ? AND building_key = ? AND piece_id = ? AND player = ? AND char_id = ? AND until > ?')
+    .bind(nowS + HOLD_S, mapId, buildingKey, id, player.id, character, nowS).run();
+  return wrote?.meta?.changes ? { ok: true } : { error: await holdLost(db, player, character, mapId, buildingKey, id) };
 }
 
 function uidList(raw) {
@@ -193,6 +212,12 @@ function accessStep(db, mapId, buildingKey, id, kind, kept, ids) {
 /** A personal chest's goods and its access move together. A good with no uid is marked here, and is not left behind. */
 async function moveChest(ctx, player, { mapId, buildingKey, character, id, kind, kept, ids, realm, at }) {
   const { db } = ctx;
+  // AUDIT RPT1026 B2: THE OWNER ALWAYS MAY, a guest's open window or not. RPT1026-CHESTGOLD refused the change while
+  // another held the chest, and a held chest's keeper keeps it (`op: 'hold'`) as long as it asks: a guest who asked every
+  // three minutes shut the owner out of their own chest's access, its window and its removal for good. What the refusal
+  // guarded is held without it - the guest's window pays its purse only with a landed settle, a settle the change shut is
+  // refused (decorMay), and the pour below takes only the bin it read. An older window's click paid its purse, and its
+  // refused close keeps that gold as its run-out did (Field-Bugs-2026-10-26r, LEFT AS IT IS).
   const blob = await getRealmBlob(ctx, player.id, character);
   if (!blob.ok) return blob;
   let save = null;
@@ -245,14 +270,22 @@ async function moveChest(ctx, player, { mapId, buildingKey, character, id, kind,
   const steps = [
     ...prep.steps,
     accessStep(db, mapId, buildingKey, id, kind, kept, ids),
-    ...(kept === 'private' ? [db.prepare('DELETE FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ?').bind(mapId, buildingKey, id)] : []),
+    // RPT1026-CHESTGOLD: the bin poured is the bin read - each row as it was read, and none since. A settle that landed
+    // between the read and this batch (a take, a put, a cut) leaves it as it stands, and the pour is refused.
+    ...(kept === 'private' ? [
+      ...held.flatMap((row) => [
+        db.prepare('DELETE FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ? AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),
+        mustChange(db),
+      ]),
+      db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT 0, 1 WHERE EXISTS (SELECT 1 FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ?)').bind(mapId, buildingKey, id),
+    ] : []),
     ...moving.map((item) => db.prepare('INSERT OR IGNORE INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (?, ?, ?, ?, ?)').bind(mapId, buildingKey, id, item.uid, JSON.stringify(item))),
   ];
   const answer = { ok: true, mode: kept, names, at, realm: { seq: prep.seq }, ...(moving.length ? { moved: true } : {}), ...(back.length ? { restored: back } : {}) };
   try { await db.batch(steps); } catch {
     const landed = await dropIfUnnamed(db, ctx.bucket, player.id, side.at.id, prep.key);
     if (landed) return answer;
-    return (await recordMovedOf(db, player.id, side.at)) ?? { error: 'decor-held' };
+    return (await recordMovedOf(db, player.id, side.at)) ?? { error: 'decor-busy' };   // RPT1026-CHESTGOLD: the bin moved under it
   }
   await dropObjects(ctx.bucket, [prep.prev]);
   return answer;
@@ -405,15 +438,27 @@ async function decorWithdraw(ctx, player, body) {
 
 /** The window's moves, one write: uids into the chest and uids out of it. The items are the save's and the bin's. */
 async function decorSettle(ctx, player, body) {
+  // AUDIT RPT1026 B3: THE RECORD, ASKED FIRST (realmActFirst, AUDIT REALM L1-F2) - a settle moves the record's gold now
+  // (`purse`). Its hold went with the batch that landed, so a settle sent again after a lost answer was told 'decor-busy',
+  // read as nothing moved: the window said someone else was using the chest, its purse unpaid, and the next checkpoint
+  // found the record one on and ended the session. One on, it is this settle, landed.
+  const first = await realmActFirst(ctx.db, player.id, body?.character, body?.realm);
+  if (first.error) return first;
   const gate = await decorMay(ctx, player, { ...body, kind: 'storage' });
   if (gate.error) return gate;
   const { db, bucket } = ctx;
   const { mapId, buildingKey, character, id, realm } = body;
-  if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS))) return { error: 'decor-busy' };
+  if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS))) return { error: await holdLost(db, player, character, mapId, buildingKey, id) };
   const put = uidList(body.put);
   const take = uidList(body.take);
   const cuts = cutList(body.cut);
+  // RPT1026-CHESTGOLD (a private report): `purse` - the coins the window saw leave the chest. The service pays them into the
+  // record here, in the settle's own batch, and the window pays its purse only once the settle lands: a click had paid it,
+  // every checkpoint since carried it, and a settle refused left the pile in the chest too. Unsaid, the window is one of
+  // before, whose click paid the purse - its coins are not paid twice.
+  const purse = body.purse;
   const release = db.prepare('DELETE FROM decor_hold WHERE map_id = ? AND building_key = ? AND piece_id = ? AND player = ? AND char_id = ?').bind(mapId, buildingKey, id, player.id, character);
+  if (purse !== undefined && (!Number.isSafeInteger(purse) || purse < 0)) { await release.run(); return { error: 'bad-item' }; }
   if (!put || !take || !cuts || put.some((u) => take.includes(u) || cuts.some((c) => c.uid === u)) || take.some((u) => cuts.some((c) => c.uid === u))) { await release.run(); return { error: 'bad-item' }; }
   if (!put.length && !take.length && !cuts.length) { await release.run(); return { ok: true }; }
   const { results = [] } = await db.prepare('SELECT uid, item FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ?').bind(mapId, buildingKey, id).all();
@@ -432,6 +477,11 @@ async function decorSettle(ctx, player, body) {
     if (!item || stack <= cut.leave) { await release.run(); return { error: 'no-item' }; }
     portions.push({ cut, item, raw: raw.get(cut.uid), give: { ...item, uid: mintItemId(), stackCount: stack - cut.leave } });
   }
+  // RPT1026-CHESTGOLD: the coins leaving, counted from the bin as it stands - and the window must have seen the same
+  let coin = 0;
+  for (const uid of take) if (isCoin(bin.get(uid))) coin += bin.get(uid).stackCount ?? 1;
+  for (const part of portions) if (isCoin(part.give)) coin += part.give.stackCount;
+  if (purse !== undefined && coin !== purse) { await release.run(); return { error: 'no-item' }; }
   const side = realmSideOf(character, realm);
   if (side.error) { await release.run(); return side; }
   const carried = new Map();
@@ -446,17 +496,18 @@ async function decorSettle(ctx, player, body) {
     }
     for (const uid of take) {
       const incoming = bin.get(uid);
-      // The window already counted a gold pile into the purse. The row leaves; a second pile would pay it twice.
-      if (incoming?.group === 'Currency' && incoming?.templateIndex === 276) continue;
+      // A gold pile's count goes into the purse (below), never the pack as a pile - or an older window already paid it.
+      if (isCoin(incoming)) continue;
       // Already in this save: a close that landed in the pack and not the bin. Drop the chest's row, do not grant a second.
       if (list.some((it) => it?.uid === uid)) continue;
       list.push(incoming);
     }
     for (const part of portions) {
-      if (part.give?.group === 'Currency' && part.give?.templateIndex === 276) continue;
+      if (isCoin(part.give)) continue;
       if (list.some((it) => it?.uid === part.give.uid)) return 'decor-held';
       list.push(part.give);
     }
+    if (purse !== undefined && coin > 0 && !creditSave(live, coin)) return 'no-data';
     return null;
   });
   if (prep.error) { await release.run(); return prep; }
@@ -510,7 +561,7 @@ async function decorVault(ctx, player, body) {
   if (gate.error) return gate;
   const { db, nowS } = ctx;
   const { mapId, buildingKey, character, id } = body;
-  if (!(await ourHold(db, player, character, mapId, buildingKey, id, nowS))) return { error: 'decor-busy' };
+  if (!(await ourHold(db, player, character, mapId, buildingKey, id, nowS))) return { error: await holdLost(db, player, character, mapId, buildingKey, id) };
   const home = await homeOf(db, mapId, buildingKey);
   if (!home?.guild_id) return { error: 'decor-shut' };
   const member = await db.prepare('SELECT rank FROM guild_members WHERE guild_id = ? AND player = ? AND char_id = ?').bind(home.guild_id, player.id, character).first();
@@ -546,7 +597,7 @@ async function decorVault(ctx, player, body) {
   return { ok: true, items: moved.map((m) => m.item) };
 }
 
-/** One door. `op` is set, grants, open, deposit, withdraw, settle, vault or craft. */
+/** One door. `op` is set, grants, open, deposit, withdraw, settle, vault, craft, list, hold or release. */
 export async function decorUse(ctx, player, body = {}) {
   if (body.op === 'set') return setDecorAccess(ctx, player, body);
   if (body.op === 'grants') return decorGrants(ctx, player, body);
@@ -554,6 +605,11 @@ export async function decorUse(ctx, player, body = {}) {
   if (body.op === 'withdraw') return decorWithdraw(ctx, player, body);
   if (body.op === 'settle') return decorSettle(ctx, player, body);
   if (body.op === 'vault') return decorVault(ctx, player, body);
+  if (body.op === 'hold') {   // RPT1026-CHESTGOLD: the open window's hold, kept while it is used
+    const gate = await decorMay(ctx, player, { ...body, kind: 'storage' });
+    if (gate.error) return gate;
+    return keepHold(ctx.db, player, body.character, body.mapId, body.buildingKey, body.id, ctx.nowS);
+  }
   if (body.op === 'release') {
     const { mapId, buildingKey, character, id } = body;
     if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || typeof id !== 'string' || !DECOR_ID_RE.test(id)) return { error: 'bad-decor' };

@@ -16,6 +16,7 @@ import {
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { curtainsOf, CURTAINS_MAX, CURTAIN_FOOT_SAMPLES, CURTAIN_MEMO_M } from '../../../src/render/rainCurtains.js';
 import { cellOf } from '../../../src/render/volumetricClouds.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the host whole
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
@@ -63,19 +64,20 @@ test('TV5 law: the far places start where the grid ends and stop at the range, d
 });
 
 test('TV5 host wiring: the far places are rebuilt on a pixel (or a reach) change from the world\'s settlements gathered once; each a pickable plate held at the edge, its distance under its name; a click on one is the same journey as a place\'s; a load forgets them', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // HOST-SPLIT 2: the host whole
   assert.match(w, /let tvFar = \{ at: null, near: -1, list: \[\] \};/);
   assert.ok(((i, j) => i >= 0 && j >= 0 && i < j)(w.indexOf('let tvFar = { at: null, near: -1, list: [] };'), w.indexOf('tvFar = { at: null, near: -1, list: [] };   // TV5: nor the far places')), 'BOOT-TDZ: declared above the load that clears it');
   assert.match(w, /if \(tvFar\.at && tvFar\.at\.x === at\.x && tvFar\.at\.y === at\.y && tvFar\.near === near && tvFar\.dg === dg\) return tvFar\.list;/);
   // PIN MOVED (ETHER-OW, test/systems/travel/ether_ow.test.js): the map's settlements gathered once (never an isle's), and past the Veil the
   // port isles within the edge's range beside them
-  assert.match(w, /const settlements = \(_tvSettlements \?\?= settlementPixels\(locationIndex\)\.filter\(\(t\) => !t\.loc\.ether\)\);\n\s*const list = farPlaces\(\{ at, near, settlements: etherSea && inEther\(at\.x, at\.y\) \? \[\.\.\.settlements, \.\.\.etherPlaceRows\(at, TV_FAR_RANGE, 'port'\)\] : settlements, summaryOf: tvPlaceSummary \}\)/);
+  // PIN MOVED (BAY-LEFT-MAPS, test/scenes/bayleft_places.test.js): the Bay's gathered once, past the Bay a near query (scenes/mapPlacesHost.js)
+  assert.match(w, /const settlements = tvFarSettlements\(at\);\n\s*const list = farPlaces\(\{ at, near, settlements: etherSea && inEther\(at\.x, at\.y\) \? \[\.\.\.settlements, \.\.\.etherPlaceRows\(at, TV_FAR_RANGE, 'port'\)\] : settlements, summaryOf: tvPlaceSummary \}\)/);
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js
   const tvm = rd('src/scenes/travelViewMarks.js');
   assert.match(tvm, /marks\.push\(\{ key: f\.key, at: tvSceneKept\(f, f\.x, f\.z, TV_PLACE_LIFT\), label: f\.summary\.name, sub: farDistanceText\(km\), kind: 'far', pick: true, edge: true, hub: carriageTown\(f\.summary\.mapId\), tip: placeTip\(townEcon\.tipFnAt\(f\.summary\.mapId\), f\.summary\.name, f\.x, f\.z\) \}\);/);   // PIN MOVED (FIELD BUGS 2026-10-04e OW-HUBS, SEAT-TIP; TOWN-ECON TE1: every town's card; OW-FORECAST: its weather on it)
   assert.match(tvm, /const farEnd = endKey \? `far:\$\{tvTrip\.plan\.summary\.mapId\}` : null;/, 'the journey\'s own end is the flag\'s, not a plate at the edge');
   assert.match(tvm, /for \(const f of travelViewFarPlaces\(\)\) \{\n\s*if \(f\.key === farEnd\) continue;/);
-  assert.match(w, /const plate = (?:qp \? \{ summary: tvPlaceSummary\(Number\(qp\[1\]\), Number\(qp\[2\]\)\) \} : )?tvPlates\.list\.find\(\(p\) => p\.key === key\) \?\? tvFar\.list\.find\(\(p\) => p\.key === key\)( \?\? tvDng\.list\.find\(\(p\) => p\.key === key && p\.summary\))?;/);   // TV6: and a found dungeon's; PIN MOVED (OW-QUEST, 2026-10-19): a quest's mark first, its place's summary
+  assert.match(w, /const plate = (?:qp \? \{ summary: tvPlaceSummary\(Number\(qp\[1\]\), Number\(qp\[2\]\), true\) \} : )?tvPlates\.list\.find\(\(p\) => p\.key === key\) \?\? tvFar\.list\.find\(\(p\) => p\.key === key\)( \?\? tvDng\.list\.find\(\(p\) => p\.key === key && p\.summary\))?;/);   // TV6: and a found dungeon's; PIN MOVED (OW-QUEST, 2026-10-19): a quest's mark first, its place's summary
   // PIN MOVED (AUDIT OW5 D1): the find's own list emptied beside the dungeons'
   assert.match(w, /tvFar = \{ at: null, near: -1, list: \[\] \};   \/\/ TV5: nor the far places\n\s*(tvDng = \{ at: null, dg: -1, list: \[\] \};   \/\/ TV6: nor the dungeons\n\s*tvFind = \{ at: null, dg: -1, n: -1, list: \[\] \};[^\n]*\n\s*)?(tvBandSeen = [^\n]*\n\s*)?travelView\?\.exit\('load', true\);/);
 });

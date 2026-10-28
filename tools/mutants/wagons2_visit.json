@@ -591,8 +591,8 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-the-door-carried",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'acquired', 'wagonEntry', 'horseBond', 'horseFed']);",
-    "new": "'acquired', 'horseBond', 'horseFed']);",
+    "old": "'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'appearance']);",
+    "new": "'acquired', 'horseBond', 'horseFed', 'appearance']);",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]

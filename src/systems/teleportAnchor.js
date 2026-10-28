@@ -112,7 +112,7 @@ export const ANCHOR_MUST_BE_SET = 4001;
  */
 export function makeAnchor({
   worldContext = WORLD_CONTEXT.Exterior, pixel, nativeX, nativeZ, y = 0,
-  local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0, terrainScale = null, dungeon = null,
+  local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0, terrainScale = null, groundFrame = null, dungeon = null,
 } = {}) {
   const insideBuilding = worldContext === WORLD_CONTEXT.Interior;
   const insideDungeon = worldContext === WORLD_CONTEXT.Dungeon;
@@ -125,6 +125,9 @@ export function makeAnchor({
     nativeX, nativeZ, y,
     // TERRAIN-SCALE1: the terrain scale `y` stood on; null on an anchor from before the stamp (the prefab's 1.5)
     terrainScale: terrainScale > 0 ? terrainScale : null,
+    // BAY-LEFT-GROUND (bible/03-World/Landforms.md, D5): the law of `y`'s frame (terrainSampler.js GROUND_FRAME_LAW); null on an
+    // anchor from before it, which past the Bay stood the shaped ground
+    groundFrame: groundFrame > 0 ? groundFrame : null,
     local: local ? [...local] : null,
     yaw, pitch,
     insideBuilding, insideDungeon,

@@ -47,8 +47,9 @@
   {
     "name": "AWD3-CUSTOMS-LAYOUT-LOST",
     "file": "src/systems/realmCustoms.js",
-    "old": "    if (typeof slot.layout === 'string' && slot.layout) houses[region].layout = slot.layout;",
+    "old": "      if (typeof slot.layout === 'string' && slot.layout) deed.layout = slot.layout;\n",
     "new": "",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -159,8 +160,9 @@
   {
     "name": "AWD3-DEED-NEVER-SLEEPS",
     "file": "src/systems/banking.js",
-    "old": "  return ownedHouseKey(houses, regionIndex) === buildingKey && deedStands(houses?.[regionIndex]);",
-    "new": "  return ownedHouseKey(houses, regionIndex) === buildingKey;",
+    "old": "d.buildingKey === buildingKey && deedStands(d) && deedHeldIn(d, mapId)",
+    "new": "d.buildingKey === buildingKey && deedHeldIn(d, mapId)",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]

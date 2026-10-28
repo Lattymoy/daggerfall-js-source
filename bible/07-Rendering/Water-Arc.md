@@ -1329,3 +1329,61 @@ longer carved at all - its sheet still reads the bed's depth, so it is tinted as
 swell's growth; the re-carve's fields). Mutants: `tools/mutants/bankflush.json` (6, all dead);
 `tools/mutants/audit_waternext.json`'s AUDIT-WATER-NEXT-H2-swell-on-uncarved-ground re-aimed at the new line.
 
+
+## COAST-LOOK - THE SHORE'S KINDS BLENDED, THE SEA CUT ON A WANDERING LINE (2026-10-28, a port departure)
+
+The owner, 2026-10-28: *"Coastlines arent texture blended properly. They have hard edges"*; asked which edge, *"Both
+edges"* - the water's and the beach's. And: *"No band aids or half assed work"*.
+
+**Why.** The ground's corners are classified right: over the Bay and past it (every 23rd pixel, landforms on) no shore
+cell puts the sea against grass or stone. The hard edges are the drawing's:
+
+- **A transition tile is one picture to its edge.** The marching squares write a water-dirt, dirt-grass or grass-stone
+  record (`terrainTiles.js:"export function marchTile(b0, b1, b2, b3) {"`), its line between the kinds painted straight
+  or on a diagonal. A coast is a staircase of them, sand to water and sand to grass.
+- **The sheet's shore is the corners' bilinear**: straight lines along the same tiles.
+- **Deep Waters cuts the sea a whole tile at a time.** Iliac Puddle No More is on by default. Its clip discards a clipped
+  tile and DW-C's cull leaves its quad out, so the land ends on squares over the mod's floor.
+
+**The law** (`world/terrain/groundEdge.js`, its GLSL twin `render/groundEdgeGlsl.js`):
+
+- **A transition tile is its two kinds' own ground.** Its corners are read back off its byte
+  (`groundEdge.js:"export function buildGroundKindTable() {"`, from the march's own table; the river painter's shore
+  twins by the water-dirt column; a saddle half turned as itself). The second kind's share is the corners' bilinear, moved by a wander of three
+  octaves of ROAD-LOOK's lattice noise on its own salt (32, 128 and 512 cells a pixel at 0.16, 0.08 and 0.04) and drawn
+  across a rim 0.08 wide each way. The point draws the two kinds' base records (0-3, the pure tiles' pictures) at their
+  shares. Corners are shared, so the line runs on across every seam; past 0.36 of the line a point is one kind whole, so
+  a transition meets a pure tile without a seam.
+- **Each kind takes its border and its snow.** In both terrain programs
+  (`renderer.js:"bool ge = groundMix(data, tileUV, unwrapped, geA, geB, geS);"` and the lane's, which decodes the kinds
+  as its own), each kind takes ECOTONE1's neighbours by its own record and PRECIP4's winter twin by the same. Every
+  other tile is drawn as before.
+- **The water's edge is the same line.** The sheet's shore is the coverage less the same wander where the ground blends
+  (`waterSurface.js:"coverage(corners, f) - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0)"`); the sheet's water is
+  the land's share's complement. The silt takes it too, and a blended tile's painted water is no fringe (SHORE-SILT): its
+  art is not drawn. A record whose art reads as water (WATER-DRAW2's corners, the docks) keeps the art's line.
+- **Deep Waters' cut is a field** (`groundEdge.js:"export function coastCutAt(cutAt, x, y) {"`). A clipped tile's point
+  is cut where the share of clipped cells about it (the dual square's bilinear) plus the wander passes 0.875. A kept
+  point draws the nearest kept tile's picture, mirrored about its own square: the beach runs out under the sea. A kept
+  tile's seam reads at most 0.75 and a quadrant of clipped tiles 1, so the wander is carried at 0.12 either way and the
+  line stays inside (0.75, 1): never into a kept tile, never along its seam, never a notch.
+- **The cull keeps the coast's ring for it.** `clippedTerrainIndices` (`deepWaterCap.js:"function wholeCut(bytes, dim) {"`) drops a clipped quad only when it and the eight tiles about it are clipped; the clip program cuts the rest
+  (`renderer.js:"if (uGroundEdge > 0.0 ? coastCut("`). The streaming host passes the renderer's switch, its one line.
+
+**What does not move.** The player swims and the town walks by DFU's corner table (`WATER_MASK_TABLE`). The shadow pass
+draws the ring's quads whole, and the mod's floor takes no shadow. A clipped tile at a pixel's edge reads its own byte
+past it, as the program does, so the line meets a pixel's seam there. Daggerfall has no art for a dirt-against-stone
+cell or a three-kind one; both are drawn as the one picture the march gives (on the six coastal pixels the test reads,
+under one in a hundred of the two-kind cells).
+
+**The switch.** The renderer's `coastEdges`, taken as it is made from coastEdgesOn: the enhanced skin; `?coastedges=off`
+the kill door; the classic skin keeps DFU's tiles and the mod's whole-tile cut. No Features row, no new string.
+
+**What it costs.** A pure tile reads one constant; a transition samples two base records and their border's sets. The
+coast's ring of clipped quads runs through the clip program, which discards most of it.
+
+**Pinned** in `test/render/coastlook.test.js` (8, one on the freeware's coasts). PIN MOVED: `roadlook.test.js`,
+`ecotone1.test.js`, `precip4_snowground.test.js`, `midring.test.js`, `shoresilt.test.js`, `water.test.js`,
+`farclip1.test.js`, `dwf_farsea.test.js` and BOOT2's ceiling (92: the two modules). Mutants: `tools/mutants/coastlook.json`
+(43, all dead); `farclip1.json`, `ecotone1.json` and `precip1.json` re-aimed by content. The departure: Port-Ledger A,
+COAST-LOOK.

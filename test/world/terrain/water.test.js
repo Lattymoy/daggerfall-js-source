@@ -160,7 +160,7 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   assert.match(fs, /uint word = j == 0u \? v\.x : \(j == 1u \? v\.y : \(j == 2u \? v\.z : v\.w\)\);/, 'the component by compare, never a dynamic index');
   assert.match(fs, /if \(corners == 0u\) discard;/, 'no water, no blend');
   assert.match(fs, /float edge = 1\.0;/, 'PIN MOVED (WATER-NEXT 2): the open sea\'s edge is the whole sheet');
-  assert.match(fs, /\n\s*edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\)\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*uint rec = data >> 2u;\n\s*if \(isPuddleRecord\(rec\)\) \{\n(?:[^\n]*\n){8}\s*\}\n\s*if \(edge <= 0\.002\) discard;/, 'the feather (WATER-PUDDLE: a puddle record\'s own art multiplied in), then nothing past it');   // AUDIT PRECIP GROUND-5 (PIN MOVED): its winter art's under the snow, five lines
+  assert.match(fs, /\n\s*edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, coverage\(corners, f\) - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*uint rec = data >> 2u;\n\s*if \(isPuddleRecord\(rec\)\) \{\n(?:[^\n]*\n){8}\s*\}\n\s*if \(edge <= 0\.002\) discard;/, 'the feather (WATER-PUDDLE: a puddle record\'s own art multiplied in), then nothing past it');   // AUDIT PRECIP GROUND-5 (PIN MOVED): its winter art's under the snow, five lines; PIN MOVED (COAST-LOOK): the coverage less the ground's wander
   assert.match(fs, /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/, 'the ground\'s sun term, shadowed by the deck');
   // PIN MOVED (WATER-NEXT 2): the body is the water's colour, lit by TERRAIN_FS's terms (the sun's softened - light
   // goes into water, it does not bounce off it like dirt); Schlick capped higher; the alpha is the shore's and, without
@@ -273,8 +273,8 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   assert.match(rd('src/systems/features.js'), /key: 'enhancedWater', initial: true, online: 'player'/, 'on by default like the other enhanced visuals (RF4: declared on its row; the shelf derives it) - WATER-OFF: the player\'s online too');
   assert.ok(!/prefRow\('enhancedWater'/.test(rd('src/ui/enhanced/enhancedMenu.js')), 'FT6: the row is the Features home\'s (systems/features.js)');
   const shared = rd('src/scenes/shared.js');
-  assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return dreaded\(\{ zenith: enhancedSky\.state\.zenith, horizon: enhancedSky\.state\.horizon \}\);/, 'the dome\'s own state');
-  assert.match(shared, /const h = dynamic\?\.fogColor \?\? dynamicSky\.clearColor;\s*\n\s*return dreaded\(\{ zenith: \[h\[0\] \* 0\.55, h\[1\] \* 0\.65, h\[2\] \* 0\.85\], horizon: h \}\);/, 'the mod\'s one colour, with a zenith derived from it (WATER-AUDIT L3: the mod\'s fill IS its clear IS its fog - a copy made the reflection flat)');
+  assert.match(shared, /waterSky\(\) \{\s*\n\s*if \(enhancedSky\?\.state\) return leaved\(dreaded\(\{ zenith: enhancedSky\.state\.zenith, horizon: enhancedSky\.state\.horizon \}\)\);/, 'the dome\'s own state');   // VALENWOOD-CANOPY (PIN MOVED): the leaves' under a closed canopy
+  assert.match(shared, /const h = dynamic\?\.fogColor \?\? dynamicSky\.clearColor;\s*\n\s*return leaved\(dreaded\(\{ zenith: \[h\[0\] \* 0\.55, h\[1\] \* 0\.65, h\[2\] \* 0\.85\], horizon: h \}\)\);/, 'the mod\'s one colour, with a zenith derived from it (WATER-AUDIT L3: the mod\'s fill IS its clear IS its fog - a copy made the reflection flat)');
   assert.match(shared, /return null;\s*\n\s*\},\s*\n/, 'null under the classic sky');
   const lab = rd('src/tools/waterLab.js');
   assert.match(lab, /mirrorProjectionX\(perspective\(/, 'HANDEDNESS: the lab draws under the hosts\' mirrored projection (unmirrored, every ground face is culled - the lab\'s first day)');

@@ -60,7 +60,7 @@ test('RING-WARN: a law hold\'s notice says each hold counts and the third is tim
   const named = tradeHeldNotice(null, 'law', { code: 'crafted', t: 135 });
   assert.equal(named, tradeHeldLawNotice('Ring'));
   for (const text of [named, TRADE_HELD_NOTICES.law]) {
-    assert.match(text, /until it is gone\. Holds add up: from the third, trading stays frozen for a week even after it is gone, and for a month each time after that\.$/);   // PIN MOVED (AUDIT AUTO-HOLD): "then opens on its own" was false with the piece still carried
+    assert.match(text, /until it is gone\. Holds add up: from the third, the freeze stays for a week even after it is gone, and for a month each time after that\.$/);   // PIN MOVED (AUDIT AUTO-HOLD): "then opens on its own" was false with the piece still carried; PIN MOVED (RPT1026-MARKET HOLD-SAID): the freeze, never "trading" alone
   }
   assert.match(tradeHeldUntilNotice(1_800_000_000), /held 3 times/);
   assert.deepEqual(Object.keys(TRADE_HELD_NOTICES).sort(), ['budget', 'law', 'staff'], 'AUTO-HOLD: no notice says a copy holds the character, or a review');

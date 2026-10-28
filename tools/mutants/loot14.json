@@ -57,8 +57,8 @@
   {
     "name": "LOOT14-the-standing-two-rolls",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    if (id === 'standing') { const g = pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }",
-    "new": "    if (id === 'standing') { rolls(); const g = pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }",
+    "old": "    if (id === 'standing') { const g = flat ? pick(free, rolls) : pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }",
+    "new": "    if (id === 'standing') { rolls(); const g = flat ? pick(free, rolls) : pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]

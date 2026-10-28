@@ -146,7 +146,7 @@ test('WM3: the Windmills row is a real switch the mill draw reads', () => {
   // other half of the gate (a switch cannot put a departure on classic)
   assert.match(read('src/world/rmbLayout.js'), /if \(mills\.length && enhanced && windmills\) \{/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(host), /layoutLocation\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\)/,
+    assert.match(read(host), /layoutLocation(?:Steps)?\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\)/,   // PIN MOVED (IC-STUTTER): the streaming host's a block a step
       `${host}: the host passes the switch (THE FOUR HOSTS - both exterior hosts lay out a location)`);
   }
   assert.match(read('src/world/locationLayout.js'), /layoutRmbBlock\(dfBlock, \{ enhanced, windmills \}\)/, 'and it rides through the location layout');

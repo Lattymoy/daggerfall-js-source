@@ -963,7 +963,7 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
     'the three above-ground arms that take it - the building exit, the city wall and (AUDIT-WH M7) the dungeon entrance');
   assert.match(wm, /staticDoorName\('buildingExit', \{ locationName: currentLocationName\(\) \}\)/, 'the building exit, from inside');
   assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\), tier: label\?\.tier \?\? null, size: label\?\.size \?\? null \}\)/, 'the dungeon entrance, from outside (PIN MOVED, TIER1: with its tier and size online)');
-  assert.match(wm, /locationName: currentLocationName\(\),\n\s+buildingType: bd\.buildingType,/, 'and the shopfront the city wall arm reads');
+  assert.match(wm, /locationName: bd\.townName \?\? currentLocationName\(\),[^\n]*\n\s+buildingType: bd\.buildingType,/, 'and the shopfront the city wall arm reads');   // PIN MOVED (IC-PROPS): the door's own town's name where the host's record carries it (a neighbouring slice's door), the player's where it does not
   // ...and the DUNGEON exit names the dungeon it is in, not the
   // location under the player, so it reads its own record - in the
   // same spelling.
@@ -1753,7 +1753,8 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   // lives, and `hideHudText` already rode that exact line for this
   // exact reason. The record claimed the scheduling accident had been
   // replaced "by law"; it had not.
-  assert.match(wm, /if \(dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  assert.match(wm, /if \(windowHoldsDungeon\(dungeonCtx\.uiOverlayActive, aliveUnder\(\)\)\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
     'the world-hosted dungeon hides it on the overlay branch');
   assert.match(dj, /ctx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
     'and so does the standalone ?dungeon door');

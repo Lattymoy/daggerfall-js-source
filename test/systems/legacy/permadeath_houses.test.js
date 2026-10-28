@@ -341,7 +341,9 @@ test('PERMADEATH-HOUSES: online a fallen realm character\'s home is taken up by 
 test('PERMADEATH-HOUSES: the world host hands the house on - offline the bank\'s deed (one a region) and the fallen\'s own newest save\'s scene, online the service\'s home and the fallen\'s realm record\'s cupboards', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /inheritHouse: legacyInheritHouse,/);
-  assert.match(w, /if \(\(slot\.buildingKey \| 0\) > 0\) return \(slot\.mapId >>> 0\) === \(row\.mapId >>> 0\) && \(slot\.buildingKey \| 0\) === \(row\.buildingKey \| 0\) \? 'given' : 'waits';/);
+  // PIN MOVED (HOUSES-3): the deed held among the region's three is given; a region holding three others waits
+  assert.match(w, /if \(regionDeedOf\(playerEntity\.houses, region, row\.mapId, row\.buildingKey\)\) return 'given';\n\s*if \(regionHousesFull\(playerEntity\.houses, region\)\) return 'waits';/);
+  assert.match(w, /if \(deed && !regionDeedOf\(playerEntity\.houses, row\.regionIndex \| 0, row\.mapId, row\.buildingKey\) && regionHousesFull\(playerEntity\.houses, row\.regionIndex \| 0\)\) return 'waits';/);
   assert.match(w, /graftPermanentScene\(playerEntity\.sceneCache \?\?= createSceneCache\(\), scenes\(\), interiorSceneName\(row\.mapId, row\.buildingKey \| 0\)\);/);
   assert.match(w, /return legacyInheritDeed\(row, \(\) => \(at >= 0 \? loadSlot\(at\)\?\.sceneCache \?\? null : null\)\);/);
   assert.match(w, /const r = await homesApi\.inherit\(\{ mapId: row\.mapId >>> 0, buildingKey: row\.buildingKey \| 0, character: me, from \}\);/);

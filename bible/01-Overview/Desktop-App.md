@@ -301,24 +301,32 @@ industry writes its maintenance manuals in for that reader: a dictionary in
 which each approved word has one meaning and one part of speech, and
 writing rules that keep a sentence short and on one topic. The
 specification is the ASD's (asd-ste100.org, free on request); its
-dictionary is never copied into the tree. What binds the notes:
+dictionary is never copied into the tree.
+
+What binds the notes:
+
 - Words: STE's approved words only, in their approved meanings and parts of
   speech. The game's own names - an item, a skill, a place, a setting, a
   window, a control - are technical names, which STE permits; write a
   control or an item as the game shows it, and mark it **bold**. One thing
   has one name: the name the game shows.
+
 - Verbs: the simple present, the simple past and the future, with the past
   participle only as an adjective. No -ing form of a verb outside a
   technical name, and no helping verb that makes a complex verb ("has
   been", "have fixed"). The active voice wherever it can be used.
+
 - Sentences: one topic. 25 words at most; an instruction 20 at most, one to
   a sentence, in the imperative, with its condition first. An article or
   "this" before a noun where it fits, no noun cluster past three words, and
   no word left out to make a sentence short.
+
 - Paragraphs: one topic, six sentences at most; a list for steps or
   choices, after a colon.
+
 - Punctuation: no semicolons, no contractions ("does not", never
   "doesn't").
+
 `scripts/steNotes.mjs` holds the part a machine can read: it reads the
 notes as the release does (`patchNotesOf`) and reports each sentence and
 paragraph past its length, each semicolon, -ing form, contraction and
@@ -327,12 +335,16 @@ name in **bold**, `code` or quotes as one word each. Its -ing rule is
 stricter than STE in one place, said out loud: a lowercase word that ends
 in -ing is a verb form unless it is on `NOT_A_VERB` (`thing`, `setting`,
 `during`), so an -ing word the dictionary approves goes on that list with
-its reason. `.github/workflows/ste-notes.yml` runs it on a pull request
+its reason.
+
+`.github/workflows/ste-notes.yml` runs it on a pull request
 when it opens, each time its description is edited and on every push -
 `pull_request`, a read-only token, the description handed over through the
 environment - and a description with no notes passes. The notes are not in
 the tree, so `verify` cannot read them; making `ste-notes` a required
-check is a branch rule, a person's setting. A clean run is not proof: the
+check is a branch rule, a person's setting.
+
+A clean run is not proof: the
 dictionary, one topic, the articles, the noun clusters and the voice are
 the writer's and the reviewer's. Draft first - write the description to a
 file and run `node scripts/steNotes.mjs <file>`. Unchanged: REL6 (the notes

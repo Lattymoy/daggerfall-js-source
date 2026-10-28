@@ -20,7 +20,8 @@
   {
     "name": "SD2D-cast-out-while-it-stands",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (stood && (!h || h.s !== stood.s)) {\n      if (!inside(stood.loc))",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "    if (stood && (!h || h.s !== stood.s || h.key !== stood.key)) {   // WW5: or the same slot's Hollow found again elsewhere (a province's ground made anew - rescan)\n      if (!inside(stood.loc))",
     "new": "    if (stood) {\n      if (!inside(stood.loc))",
     "tests": [
       "test/systems/superDungeon/sd2d_castout.test.js"

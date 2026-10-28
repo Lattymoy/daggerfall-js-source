@@ -221,7 +221,7 @@ test('DICE1 at the chat: /roll and /dice take the dice\'s grammar - a d20 with n
 
 test('DICE1 host by source: /roll is the parser\'s after the host\'s own, said on the active tab through that tab\'s own door (its session, an older relay said in words, a party that is not there), a roll lands where a line would - and Local\'s within earshot; the panel draws a roll in its own colour (mutants: a roll on the wrong tab; Local\'s rolls heard from anywhere)', () => {
   const w = rd('src/scenes/world.js');
-  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
+  const onSend = /onSend: \(tabId, text, opts = \{\}\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
   assert.match(onSend, /if \(cmd\.kind === 'badroll'\) \{ note\(badRollText\(cmd\.name\)\); return false; \}/);
   assert.match(onSend, /if \(cmd\.kind === 'roll'\) return chatRoll\(tabId, cmd\.spec\);/);
   const door = w.slice(w.indexOf('const chatRoll = '), w.indexOf('const _regionHold'));

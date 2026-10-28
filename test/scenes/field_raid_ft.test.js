@@ -9,12 +9,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const WORLD = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-const lineOf = (head) => { const i = WORLD.indexOf(head); assert.ok(i >= 0, head); return WORLD.slice(i, WORLD.indexOf('\n', i)); };
+// PIN MOVED (WW6): the raid host's seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT), where the
+// host's live names are read as `host.<name>`
+const RAID_HOST = readFileSync(new URL('../../src/scenes/raidHost.js', import.meta.url), 'utf8');
+const lineOf = (head) => { const i = RAID_HOST.indexOf(head); assert.ok(i >= 0, head); return RAID_HOST.slice(i, RAID_HOST.indexOf('\n', i)); };
 
 test('FIELD-RAID-FT: with no room open (a fast travel between rooms) the raid\'s peersInTown is nobody, not a crash; with one open, the peers in the town\'s rect', () => {
   assert.match(WORLD, /const peersNear = \(\{ presenceOnly = false \} = \{\}\) => \{\n\s*if \(!online \|\| !online\.room \|\| online\.status !== 'open'\) return null;/, 'peersNear answers null between rooms');
   const seam = lineOf('    peersInTown: () =>').trim().replace(/,\s*\/\/.*$/, '').replace(/,$/, '');
-  const make = (peers) => new Function('peersNear', '_foeInTownRect', `return ({ ${seam} }).peersInTown;`)(() => peers, (f) => f.ai.feet[0] < 10);
+  const make = (peers) => new Function('host', '_foeInTownRect', `return ({ ${seam} }).peersInTown;`)({ peersNear: () => peers }, (f) => f.ai.feet[0] < 10);
   assert.deepEqual(make(null)(), [], 'the room closed: nobody in town');
   assert.deepEqual(make([{ id: 'a', feet: [1, 0, 0] }, { id: 'b', feet: [50, 0, 0] }])(), ['a'], 'the room open: the peers in the rect');
 });

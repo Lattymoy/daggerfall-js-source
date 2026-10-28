@@ -47,8 +47,8 @@
   {
     "name": "tracks-dropped",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  return { roads: soften(net.roads), tracks: soften(net.tracks) };",
-    "new": "  return { roads: soften(net.roads), tracks: [] };",
+    "old": "  return { roads: pathChains(net.roads, width, height), tracks: pathChains(net.tracks, width, height) };",
+    "new": "  return { roads: pathChains(net.roads, width, height), tracks: [] };",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -155,19 +155,22 @@
   {
     "name": "roads-flag-ignored",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
-    "new": "  stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);",
+    "old": "    if (filters[kind]) continue;\n    const pen = pathPen(kind, band);",
+    "new": "    if (filters[kind] && kind !== 'roads') continue;\n    const pen = pathPen(kind, band);",
     "tests": [
-      "test/ui/heldmap.test.js"
+      "test/ui/heldmap.test.js",
+      "test/ui/audittesa2m_tiles.test.js"
     ]
   },
   {
     "name": "tracks-at-far",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
-    "new": "  if (!opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);",
+    "old": "    stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);",
+    "new": "    if (kind === 'roads' || band !== 'far') stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);",
     "tests": [
-      "test/ui/heldmap.test.js"
+      "test/ui/heldmap.test.js",
+      "test/tesa13_mapink.test.js",
+      "test/ui/audittesa2m_tiles.test.js"
     ]
   },
   {
@@ -372,8 +375,8 @@
   {
     "name": "search-no-focus",
     "file": "src/ui/heldMap.js",
-    "old": "    this._focusOn(entry.pos.x + 0.5, entry.pos.y + 0.5);\n    this._select(",
-    "new": "    this._select(",
+    "old": "    if (pick) { this._focusOn(pick.x, pick.y); this._select(pick); }",
+    "new": "    if (pick) { this._select(pick); }",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

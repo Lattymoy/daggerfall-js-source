@@ -1,20 +1,24 @@
 // FIRM-STATUS (2026-10-25; bible/06-Systems/Firmament.md section 7) - WHETHER MY STARS ACT NOW, AND WHY NOT
 // (src/systems/firmamentLive.js firmamentStatus), the word the Firmament window's side panel says above its sums. Driven
-// through the flags the world host sets: online or out of the seat, the tree the book heard, mentoring (the live word
-// and the entity's own, set together by the host's partyFrame), a duel. Each status is checked against what the stars
+// through the flags the world host sets: online or out of the seat, the tree the book heard, mentoring (the live share
+// and the entity's own profile, set together by scenes/mentorHost.js - MENTOR2), a duel. Each status is checked against what the stars
 // then fold onto my character, so the line can never say "active" over a sky that sleeps.
 import '../modsOff.js';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { setFirmamentTree, setFirmamentOnline, setFirmamentMentoring, firmamentStatus, _resetFirmamentLiveForTests } from '../../src/systems/firmamentLive.js';
+import { setFirmamentTree, setFirmamentOnline, setFirmamentMentorScale, firmamentStatus, _resetFirmamentLiveForTests } from '../../src/systems/firmamentLive.js';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { firmamentFold } from '../../src/systems/firmamentPowers.js';
 import { setSigilDueling, sigilDueling, _resetSigilForTests } from '../../src/systems/sigil/sigil.js';
 
 // The Warrior's sign (+1 Strength, a combat channel) and the Crossing beside it (+2% carry, a life channel).
 const WARRIOR = { start: 'wr.start', keys: ['st.bt'] };
 let mentoring = false;
-const me = () => ({ isPlayer: true, stats: { strength: 50, endurance: 50 }, ...(mentoring ? { _mentor: { level: 3 } } : {}) });
+const STATS = { strength: 50, endurance: 50 };
+/** A level 30 beside a level 5: its share of its powers (mentorMode.js powerScale). */
+const PROFILE = mentorProfile({ level: 30, stats: STATS }, [5]);
+const me = () => ({ isPlayer: true, level: 30, stats: STATS, ...(mentoring ? { _mentor: PROFILE } : {}) });
 /** What the stars fold onto my character now: the Strength (combat) and the carry (life). */
 const folded = () => {
   const mods = firmamentFold(me());
@@ -22,10 +26,10 @@ const folded = () => {
 };
 /** The window's question, as it asks it. */
 const status = (read) => firmamentStatus({ read, dueling: sigilDueling() });
-/** The host's partyFrame: the live word and the entity's own, together. */
+/** The mentor host: the live share and the entity's own profile, together. */
 const mentor = (on) => {
   mentoring = on;
-  setFirmamentMentoring(on);
+  setFirmamentMentorScale(on ? PROFILE.powerScale : 1);
 };
 
 beforeEach(() => {
@@ -57,13 +61,16 @@ test('FIRM-STATUS: unread before the service answered, no-sign after it answered
   assert.equal(status(false), 'active', 'a tree already in force acts, whatever the last read said');
 });
 
-test('FIRM-STATUS: mentoring - the whole sky sleeps, and it outranks a duel', () => {
+test('FIRM-STATUS, MENTOR2: mentoring - the combat stars act at the mentor\'s share and the life stars whole (it had slept the whole sky); a duel outranks it, since a duel puts the combat stars to sleep (mutants: the duel under mentoring; the sky asleep)', () => {
   setFirmamentOnline(true);
   setFirmamentTree(WARRIOR);
   mentor(true);
-  setSigilDueling(true);
+  assert.ok(PROFILE.powerScale > 0.5 && PROFILE.powerScale < 1);
   assert.equal(status(true), 'mentoring');
-  assert.deepEqual(folded(), { strength: 0, carry: 0 });
+  assert.deepEqual(folded(), { strength: Math.round(1 * PROFILE.powerScale), carry: 2 });
+  setSigilDueling(true);
+  assert.equal(status(true), 'duel');
+  assert.deepEqual(folded(), { strength: 0, carry: 2 });
   mentor(false);
   assert.equal(status(true), 'duel');
 });

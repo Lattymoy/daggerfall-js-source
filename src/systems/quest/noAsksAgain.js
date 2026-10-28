@@ -49,6 +49,8 @@
 // copy (receiveSharedQuest, updateSharedQuest) and a reclaimed quest (reclaimQuest), which all restore through it.
 import { TaskType } from './task.js';
 import { getInnerSymbolName } from './symbol.js';
+import { QL_STAMP } from '../questlines/qlState.js';   // AUDIT RPT1026 H1: a stamped quest's sheet reads its answers
+import { sheetFor } from '../questlines/qlSheets.js';
 
 /** The triggers that read a player's click - ClickedNpc.cs, ClickedItem.cs, ClickedFoe.cs, TotingItemAndClickedNpc.cs,
  *  each a HasPlayerClicked read. */
@@ -117,6 +119,58 @@ export function clearingNo(quest, task, prompt) {
 }
 
 /**
+ * RPT1026-QUESTS NO-GIVES-BACK (a private report, M0B11Y18: Sentinel's queen, handed the letter and answered No, would
+ * not speak again after): the prompt's No task when its every action hands back what
+ * the asking took - a `get item` of an item the asking task's own `toting X and Y clicked` totes (TotingItemAndClickedNpc
+ * releases the item it reads: ReleaseQuestItemForReoffer, actions.js) - at least one, and nothing but this prompt naming
+ * it (AUDIT RPT1026 H1: nor the stamped quest's questlines sheet - sheetReadTasks); else null. K'avar Part I's queen: `_S.16_ task: toting _I.03_ and _ruler_ clicked` / `prompt 1050 yes _S.18_ no
+ * _S.20_`, and `_S.20_ task: get item _I.03_` - the letter back in the pack, and the queen never asked again: her clicks
+ * are the quest's (`_S.30_ task: clicked npc _ruler_`), so no talk window opens, and the loyal road is shut for good
+ * (`_S.16_` stopped `_patsy_`, the quest's other way to its end). A No that does anything more (K'avar's own `_S.19_`
+ * moves him to his stronghold) is DFU's road, untouched.
+ * @param {any} quest
+ * @param {any} task the asking task
+ * @param {any} prompt a Prompt action
+ */
+export function givesBackNo(quest, task, prompt) {
+  const no = quest.getTask(prompt.noTaskSymbol);
+  if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length || !no.actions.length) return null;
+  const toted = new Set(task.actions.filter((/** @type {any} */ a) => a.typeName === 'TotingItemAndClickedNpc').map((/** @type {any} */ a) => a.itemSymbol?.name));
+  if (!no.actions.every((/** @type {any} */ a) => a.typeName === 'GetItem' && toted.has(a.itemSymbol?.name))) return null;
+  // AUDIT RPT1026 H1: and nothing the questlines' sheet reads - a No the sheet takes as the player's answer is a choice,
+  // not a soft-lock, and forgetting it rewrote how the quest ended (N0B00Y09 settled `loyal` for `refused` and lost the
+  // standing the refusal moves; $CUREWER's `spared` became `failed`)
+  if (sheetReadTasks(quest).has(no.symbol.name)) return null;
+  return timesNamed(quest, no.symbol.name) === 1 ? no : null;
+}
+
+/**
+ * AUDIT RPT1026 H1 (NO-GIVES-BACK read again): THE TASKS A STAMPED QUEST'S QUESTLINES SHEET READS - every branch choice's
+ * `sets` and every task an objective (`open`, `done`, `fail`) or an outcome (`on`) binds (systems/questlines/qlLaw.js
+ * holds) - by inner name; none for DFU's quest (unstamped, or no sheet). The sheet is the port's own record of what a
+ * quest's answers mean: N0B00Y09's `_nononono_` is its "Keep it for the Guild" and its `refused` ending (the Mages
+ * Guild +3, the Dark Brotherhood -3), $CUREWER's `_S.15_` its `spared` ending, 80C0XY00's `_school_` its kept secret.
+ * @param {any} quest
+ * @returns {Set<string>}
+ */
+export function sheetReadTasks(quest) {
+  const out = new Set();
+  if (quest?.ql?.stamp !== QL_STAMP) return out;
+  const sheet = sheetFor(quest.questName);
+  if (!sheet) return out;
+  const walk = (/** @type {any} */ b) => {
+    if (!b || typeof b !== 'object') return;
+    for (const k of ['all', 'any']) if (Array.isArray(b[k])) for (const x of b[k]) walk(x);
+    if (b.not) walk(b.not);
+    if (b.task != null) out.add(getInnerSymbolName(String(b.task)));
+  };
+  for (const o of sheet.objectives ?? []) { walk(o.open); walk(o.done); walk(o.fail); }
+  for (const o of sheet.outcomes ?? []) walk(o.on);
+  for (const b of sheet.branches ?? []) for (const c of b.choices ?? []) if (c?.sets) out.add(getInnerSymbolName(String(c.sets)));
+  return out;
+}
+
+/**
  * Does this task ask on a click alone - a plain `_x_ task:`, every trigger of it a click (at least one), and nothing in
  * the quest naming it (but `named` times - the clears of a No that clears its asking, clearingNo)?
  * @param {any} quest
@@ -136,11 +190,13 @@ const verdicts = new WeakMap();
 /** @param {any} quest @param {any} task @param {any} prompt */
 function lawFor(quest, task, prompt) {
   if (!verdicts.has(prompt)) {
-    const inert = asksOnAClick(quest, task) ? inertNo(quest, prompt) : null;
+    const onClick = asksOnAClick(quest, task);
+    const inert = onClick ? inertNo(quest, prompt) : null;
     const clearer = inert ? null : clearingNo(quest, task, prompt);
     // the No's own clears are the only names of the asking it allows
     const clears = clearer && asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0)) ? clearer : null;
-    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : null);
+    const gives = !inert && !clears && onClick ? givesBackNo(quest, task, prompt) : null;   // RPT1026-QUESTS NO-GIVES-BACK
+    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : gives ? { no: gives, clears: false, gives: true } : null);
   }
   return verdicts.get(prompt);
 }
@@ -186,9 +242,10 @@ export function askAgain(quest) {
       }
       if (!task.getTriggerValue()) continue;
       if (!no.getTriggerValue()) continue;   // not answered No (yet)
+      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue;   // NO-GIVES-BACK: its item back in the pack first
       task.clear();                 // its click listens again (Task.Clear - its other actions rearm as a `clear` rearms them)
       prompt.isComplete = false;    // the one action the departure re-arms (Prompt.cs: allowRearm = false)
-      no.clear();                   // the No forgotten - nothing reads it
+      no.clear();                   // the No forgotten - nothing reads it (NO-GIVES-BACK: its `get item` rearms, for a second No)
       asked++;
     }
   }

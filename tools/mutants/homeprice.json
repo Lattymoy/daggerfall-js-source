@@ -370,8 +370,9 @@
   {
     "name": "AUDIT-HOME-PRICE-C1-the-bank-price-unsaid",
     "file": "src/scenes/worldModes.js",
-    "old": "houseSellPrice: () => deedSellPrice(ownedHouseSummary()),",
-    "new": "houseSellPrice: () => houseSellPrice(houseMeshRadius(ownedHouseSummary())),",
+    "old": "price: deedSellPrice(summary),",
+    "new": "price: houseSellPrice(houseMeshRadius(summary)),",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -379,8 +380,9 @@
   {
     "name": "AUDIT-HOME-PRICE-C1-the-sale-unpriced",
     "file": "src/scenes/worldModes.js",
-    "old": "found: owned !== null, price: deedSellPrice(owned) }",
-    "new": "found: owned !== null }",
+    "old": "found: owned !== null, price: deedSellPrice(owned), deed: offered?.deed ?? null }",
+    "new": "found: owned !== null, deed: offered?.deed ?? null }",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -388,8 +390,9 @@
   {
     "name": "AUDIT-HOME-PRICE-C1-the-bank-ignores-the-price",
     "file": "src/systems/banking.js",
-    "old": "online = isOnlinePage(), price = houseSellPrice(meshRadius) } = {}, {",
-    "new": "online = isOnlinePage() } = {}, {\n  price = houseSellPrice(meshRadius),",
+    "old": "online = isOnlinePage(), price = houseSellPrice(meshRadius), deed = null } = {}, {",
+    "new": "online = isOnlinePage(), deed = null } = {}, {\n  price = houseSellPrice(meshRadius),",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/homeprice.test.js"
     ]

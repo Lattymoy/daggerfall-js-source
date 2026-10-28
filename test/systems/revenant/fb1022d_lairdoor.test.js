@@ -144,7 +144,7 @@ test('LAIR-DOOR the mend: a living revenant holding a lair no one can enter move
 
 test('LAIR-DOOR by source: the world host\'s door is scenes/lairHost.js over its own index, asked of my pixel or the one asked; every reader of a lair mends first (mutants: unwired)', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /lairHere: createLairDoor\(\{ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel \}\),/);
+  assert.match(w, /lairHere: createLairDoor\(\{ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel, pastBay: provinceQuestPlaces \}\),/);   // PIN MOVED (LAIR-WORLD): and the lairs past the Bay (scenes/tamrielPlacesHost.js provinceQuestPlaces)
   assert.match(w, /import \{ createLairDoor \} from '\.\/lairHost\.js';/);
   const rv = read('src/systems/revenant/revenant.js');
   for (const fn of ['revenantRumor', 'revenantMapMarks', 'revenantHuntEntries']) {

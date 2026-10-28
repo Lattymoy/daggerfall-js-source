@@ -11,6 +11,7 @@
 //
 // THE FOES are the land's own: the climate's encounter table at the place it falls, day or night, the campers' themed
 // group (campEncounters.js rollGroupComposition - the host's `foesOf`), at the party's level, sized to the party.
+// BAY-LEFT-GROUND (D2): past the Bay the place's own zone's wild (TESA-BIOME), as every other encounter path rolls it.
 //
 // THE END. A fated encounter ends as the lives say: the fated fall, and the party - the leader among the fallen - FELL
 // (the rest turn home), or else WON at that cost. Any other is the party's strength against the foes' (`strengthOf`,
@@ -54,7 +55,7 @@ export const foeStrength = (level) => 1 + 0.6 * Math.max(1, level);
 
 /**
  * @typedef {{ climateAt: (px: number, py: number) => number,
- *   foesOf: (q: { climateIndex: number, dungeonType?: number, minute: number, level: number, size: number, rolls: () => number }) => (number[] | null),
+ *   foesOf: (q: { climateIndex: number, px?: number, py?: number, dungeonType?: number, minute: number, level: number, size: number, rolls: () => number }) => (number[] | null),
  *   foeLevel?: (type: number, level: number) => number, dies?: (res: any, trip: any) => boolean, diced?: (res: any, trip: any) => boolean,
  *   turnOf?: (encId: string) => ('won'|'lost'|null), covered?: (trip: any) => boolean,
  *   bandAt?: (trip: any, px: number, py: number, t: number) => ({ band: any, foes: number[], level: number } | null) }} TroubleWorld - `turnOf` the
@@ -65,7 +66,8 @@ export const foeStrength = (level) => 1 + 0.6 * Math.max(1, level);
 
 /**
  * THE TROUBLE a trip meets - null for none. `world`: `climateAt(px, py)` the climate index of a map pixel; `foesOf(q)`
- * the land's group there (`{ climateIndex, minute, level, size, rolls }` -> mobile types, or null); `foeLevel(type,
+ * the land's group there (`{ climateIndex, px, py, minute, level, size, rolls }` -> mobile types, or null - BAY-LEFT-GROUND:
+ * the pixel too, whose zone's wild the host rolls past the Bay, scenes/livingWorld/troubleFoes.js); `foeLevel(type,
  * level)` a foe's level; `dies(res, trip)` whether the lives take this member on this trip.
  * @param {import('./trips.js').Trip} trip
  * @param {TroubleWorld} world
@@ -136,7 +138,7 @@ export function troubleOf(trip, world) {
   const level = Math.max(1, ...armed.map((m) => m.level ?? 1), 2);
   const size = fated.length ? Math.min(FOES_MAX, trip.party.length + 2) : Math.min(FOES_MAX, 1 + Math.floor(rng() * (trip.party.length + 1)));
   const outlaws = world.bandAt?.(trip, px, py, t0) ?? null;   // LW12: a band's own trouble, its people
-  const foes = outlaws ? outlaws.foes : world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng }) ?? [];
+  const foes = outlaws ? outlaws.foes : world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng }) ?? [];   // BAY-LEFT-GROUND (D2): and the place, so the group is the land's own wild there - past the Bay its zone's
   const foeLv = outlaws ? outlaws.level : level;
   if (!foes.length && !fated.length && !dead.length) return null;   // the sea, a climate with no table: nothing out there
   /** @type {'driven'|'won'|'fled'|'fell'|'robbed'} the dice's - the halt and the fight's length */

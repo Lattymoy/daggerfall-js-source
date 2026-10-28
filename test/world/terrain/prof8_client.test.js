@@ -316,7 +316,7 @@ test('PROF8 answers: the goods\' line the kind\'s (the species named), and a tro
   // the host hooks read them
   const gh = src('src/scenes/gatherHost.js');
   assert.match(gh, /hud\.toast\(k\?\.storesLine \? k\.storesLine\(d\) : storesLine\(d\), \{ keep: true \}\);/);
-  assert.match(gh, /try \{ k\?\.answered\?\.\(d, \(t\) => hud\.toast\(t\), \{ hauled \}\); \}/);   // HAUL-CARDS (PIN MOVED): whether its card said the goods
+  assert.match(gh, /try \{ k\?\.answered\?\.\(d, \(t\) => hud\.toast\(t\), \{ hauled, entity: deps\.entity\?\.\(\) \?\? null \}\); \}/);   // HAUL-CARDS (PIN MOVED): whether its card said the goods; PIN MOVED (HUNTERS-MARK): and whose pack a trophy goes to
   assert.match(gh, /if \(!n \|\| n\.kind === 'body' \|\| n\.kind === 'haul'\) return;/);
 });
 

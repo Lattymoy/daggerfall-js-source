@@ -77,8 +77,8 @@
 // title with them, and one pledge never dresses two accounts.
 // ═══════════════════════════════════════════════════════════════════
 
-import { _b64url } from '../../src/net/identityToken.js';
 import { timingSafeEqual } from './password.js';
+import { sealWith, openWith } from './sealed.js';   // SHOP: the sealing lifted out, one copy for both doors
 
 /** The titles a Patreon tier may grant - TITLE-N's three and HERALD's, lowest first. A mapping in PATREON_TIERS to
  *  anything else (the Dungeon Master, a one-player title) is not read: those are granted by name, never by a pledge. */
@@ -171,39 +171,16 @@ export function patreonTitlesOf(player, env) {
 // token to the confirm, and a state names an account: neither is anybody's to read on the way past, Patreon's logs and
 // a browser's history included.
 
-const SEAL_IV_BYTES = 12;
-
-async function sealKey(/** @type {SubtleCrypto} */ subtle, /** @type {any} */ env, /** @type {string} */ kind) {
-  const base = await subtle.importKey('raw', enc.encode(String(env.PATREON_CLIENT_SECRET)), 'HKDF', false, ['deriveKey']);
-  return subtle.deriveKey(
-    { name: 'HKDF', hash: 'SHA-256', salt: enc.encode('daggerfall-accounts patreon-link'), info: enc.encode(kind) },
-    base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'],
-  );
-}
+const PATREON_SEAL_SALT = 'daggerfall-accounts patreon-link';
 
 /** Seal `claims` (an object with `p`, the account, and `x`, its expiry in seconds) for `kind`, as one base64url run. */
-export async function sealPatreon(/** @type {'state'|'ticket'} */ kind, /** @type {object} */ claims, /** @type {any} */ env, { subtle, rand }) {
-  const iv = rand(new Uint8Array(SEAL_IV_BYTES));
-  const box = new Uint8Array(await subtle.encrypt({ name: 'AES-GCM', iv }, await sealKey(subtle, env, kind), enc.encode(JSON.stringify(claims))));
-  const out = new Uint8Array(iv.length + box.length);
-  out.set(iv);
-  out.set(box, iv.length);
-  return _b64url.encode(out);
-}
+export const sealPatreon = (/** @type {'state'|'ticket'} */ kind, /** @type {object} */ claims, /** @type {any} */ env, /** @type {any} */ io) =>
+  sealWith(String(env.PATREON_CLIENT_SECRET), PATREON_SEAL_SALT, kind, claims, io);
 
 /** The claims a sealed value carries, or null: not this service's, not this kind, changed, malformed, or past its expiry. */
-export async function openPatreon(/** @type {'state'|'ticket'} */ kind, /** @type {any} */ sealed, /** @type {any} */ env, { subtle, nowS }) {
-  if (!patreonLinkOn(env) || typeof sealed !== 'string' || sealed.length > 4096) return null;
-  const bytes = _b64url.decode(sealed);
-  if (!bytes || bytes.length <= SEAL_IV_BYTES + 16) return null;
-  let claims;
-  try {
-    const plain = await subtle.decrypt({ name: 'AES-GCM', iv: bytes.subarray(0, SEAL_IV_BYTES) }, await sealKey(subtle, env, kind), bytes.subarray(SEAL_IV_BYTES));
-    claims = JSON.parse(dec.decode(plain));
-  } catch { return null; }   // another key, another kind, or a byte changed: GCM's tag refuses all three
-  if (!claims || typeof claims !== 'object' || !Number.isSafeInteger(claims.x) || claims.x < nowS) return null;
-  if (typeof claims.p !== 'string' || !claims.p) return null;
-  return claims;
+export async function openPatreon(/** @type {'state'|'ticket'} */ kind, /** @type {any} */ sealed, /** @type {any} */ env, /** @type {any} */ io) {
+  if (!patreonLinkOn(env)) return null;
+  return openWith(String(env.PATREON_CLIENT_SECRET), PATREON_SEAL_SALT, kind, sealed, io);
 }
 
 /** The authorize URL a player follows, for the account the state names. `identity` is the one scope asked: the user and
@@ -436,14 +413,16 @@ export const PATREON_TITLE_TEXT = Object.freeze({ disciple: 'Disciple', apostle:
 const titlesText = (/** @type {string[]} */ ts) => ts.map((t) => /** @type {any} */ (PATREON_TITLE_TEXT)[t] ?? t).join(', ');
 
 /**
- * One page. `lines` are sentences; `form`, when there is one, is the yes - a POST of the ticket to /v1/patreon/confirm.
- * @param {{ heading: string, lines?: string[], form?: { ticket: string, label: string } | null }} page
+ * One page. `lines` are sentences; `form`, when there is one, is the yes - a POST of the ticket to its `action`
+ * (/v1/patreon/confirm unless it says another of this service's: SHOP's checkout).
+ * @param {{ heading: string, lines?: string[], form?: { ticket: string, label: string, action?: string } | null }} page
  */
 export function patreonPage({ heading, lines = [], form = null }) {
+  const action = form?.action && /^\/v1\/[a-z/]+$/.test(form.action) ? form.action : '/v1/patreon/confirm';
   const body = [
     `<h1>${esc(heading)}</h1>`,
     ...lines.map((l) => `<p>${esc(l)}</p>`),
-    form ? `<form method="post" action="/v1/patreon/confirm"><input type="hidden" name="ticket" value="${esc(form.ticket)}"><button type="submit">${esc(form.label)}</button></form>` : '',
+    form ? `<form method="post" action="${action}"><input type="hidden" name="ticket" value="${esc(form.ticket)}"><button type="submit">${esc(form.label)}</button></form>` : '',
   ].join('');
   return '<!doctype html><html lang="en"><head><meta charset="utf-8">'
     + '<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">'
@@ -456,14 +435,16 @@ export function patreonPage({ heading, lines = [], form = null }) {
     + `</style></head><body><main>${body}</main></body></html>`;
 }
 
-/** A page as a Response: HTML, never cached, never framed, sending no Referer, its one form posting only here. */
-export function patreonHtml(/** @type {string} */ html, status = 200) {
+/** A page as a Response: HTML, never cached, never framed, sending no Referer, its one form posting only here - SHOP:
+ *  and on to `formTo` (Stripe's checkout), where the form's answer sends the browser, which form-action also governs. */
+export function patreonHtml(/** @type {string} */ html, status = 200, formTo = '') {
+  const to = /^https:\/\/[a-z0-9.-]+$/.test(formTo) ? ` ${formTo}` : '';
   return new Response(html, {
     status,
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+      'content-security-policy': `default-src 'none'; style-src 'unsafe-inline'; form-action 'self'${to}; frame-ancestors 'none'; base-uri 'none'`,
       'x-frame-options': 'DENY',
       'referrer-policy': 'no-referrer',
     },

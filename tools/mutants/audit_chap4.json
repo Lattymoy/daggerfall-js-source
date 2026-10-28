@@ -632,7 +632,8 @@
     "new": "|| !regionOk(region)) return { error: 'body' };",
     "tests": [
       "test/net/audit_chap4.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "AUDIT-CHAP4-C-FOCUS-LATE",

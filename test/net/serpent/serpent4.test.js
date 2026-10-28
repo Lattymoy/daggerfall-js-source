@@ -5,7 +5,7 @@
 // larger invisible box aura", "Rewards based on party or individual damage should be given on death"): THE SERPENT
 // REWORKED (bible/11-Multiplayer/Sea-Serpent.md section 16). Its waters open until it dives; a sixth off its health; its
 // throws and the canvas they tear halved; its girth SERPENT_GIRTH times; a part dealt earns, a quarter of the fight
-// stood earns, and a party shares a dealer's kill; its gale; the ships' bumpers; a hand's own weapons on its hide. Each
+// stood earns, and a party shares a dealer's kill; its gale; the ships' bumpers (retired by HULL-PASS - the pin below); a hand's own weapons on its hide. Each
 // pin failed on the build before it. tools/mutants/serpent4.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -21,7 +21,6 @@ import { serpentTimes, serpentAdmits, serpentCountdown, serpentPhase, SERPENT_BR
 import { shoveOf, shipHurt, crushHurt, SERPENT_THROW_X, SERPENT_CANVAS_X } from '../../../src/systems/serpent/serpentStrike.js';
 import { createSerpentLink } from '../../../src/net/serpent/serpentLink.js';
 import { createSerpentHost, SERPENT_GALE, SERPENT_NEAR_M, GALE_LINE } from '../../../src/scenes/serpentHost.js';
-import { bumperDrift, flatHull, BUMPER_M, BUMPER_GAIN, BUMPER_V_MAX } from '../../../src/scenes/naval/navalHost.js';
 import { ArrowFlight } from '../../../src/combat/arrowFlight.js';
 import { mintSerpentReceipt, readSerpentReceipt } from '../../../src/net/serpent/serpentReceipt.js';
 import { validSerpentIn, validSerpentOut, SOCIAL_ROOM, SERPENT_RC_PREFIX } from '../../../src/net/wire.js';
@@ -201,22 +200,10 @@ test('SERPENT4 its gale ("make the wind go crazy where the serpent stands so we 
 
 // ═══ THE SHIPS' BUMPERS ═══════════════════════════════════════════════════════════════════════════
 
-test('SERPENT4 the ships\' bumpers ("ships need some kind of larger invisible box aura around them while this fight is in effect so they bounce off each other"): two hulls whose bumpers (BUMPER_M out on every side) meet push my ship off along the shallowest way out at BUMPER_GAIN a second of how deep they meet, BUMPER_V_MAX at most; apart, nothing; the naval host adds them to the drift seam in its waters alone (mutants: the bumper the hull\'s own size; the push into her; no cap; bumpers everywhere)', () => {
-  assert.deepEqual([BUMPER_M, BUMPER_GAIN, BUMPER_V_MAX], [10, 1.5, 30]);
-  const b = hullBuild(HULL.SmallShip), beam = 2 * b.halfWidth;
-  const me = flatHull([0, 0, 0], 0, HULL.SmallShip);
-  // abeam of her, her side 10 m clear of mine: the hulls apart, the bumpers 10 m into each other
-  const gap = 10, other = flatHull([beam + gap, 0, 0], 0, HULL.SmallShip);
-  const v = bumperDrift(me, [other]);
-  assert.ok(v, 'the bumpers meet with clear water between the hulls');
-  near(v[0], -(2 * BUMPER_M - gap) * BUMPER_GAIN, 1e-9, 'pushed off her, away');
-  near(v[2], 0, 1e-9);
-  assert.equal(bumperDrift(me, [flatHull([beam + 2 * BUMPER_M + 1, 0, 0], 0, HULL.SmallShip)]), null, 'apart: nothing');
-  const deep = bumperDrift(me, [flatHull([0.5, 0, 0], 0, HULL.SmallShip), flatHull([1, 0, 0], 0, HULL.SmallShip)]);
-  near(Math.hypot(deep[0], deep[2]), BUMPER_V_MAX, 1e-9, 'never past its cap');
+test('SERPENT4\'s bumpers RETIRED by HULL-PASS (Field-Bugs-2026-10-26d, "too many people out there bumping into each other ruining their shots"): the naval host adds nothing to the serpent\'s own drift and no bumper is left in its code - the source read, as these laws are (AUDIT FB1026d E11: that the serpent\'s waters, on the Bay\'s packet lanes, are never a PvP zone is Sea-Serpent.md\'s word, run against the world\'s lanes nowhere here)', () => {
   const naval = src('scenes/naval/navalHost.js');
-  assert.ok(naval.includes('drift: (boat) => (enabled ? withBumpers(boat, deps.serpent?.drift?.(boat) ?? null) : null)'));
-  assert.ok(/function withBumpers\(boat, d\) \{\n {4}if \(!deps\.serpent\?\.near\?\.\(\)\) return d;/.test(naval), 'in its waters alone');
+  assert.ok(naval.includes('drift: (boat) => (enabled ? deps.serpent?.drift?.(boat) ?? null : null),'), 'the serpent\'s drift alone');
+  assert.equal(/withBumpers|bumperDrift|BUMPER_GAIN/.test(naval.replace(/\/\*[\s\S]*?\*\//g, '')), false, 'no bumper in the code');
 });
 
 // ═══ A HAND'S OWN WEAPONS ═════════════════════════════════════════════════════════════════════════

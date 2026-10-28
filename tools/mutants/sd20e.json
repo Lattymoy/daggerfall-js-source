@@ -344,8 +344,9 @@
   {
     "name": "SD20E-T19-the-region-after-near",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "region ? `in the ${region} region` : 'near the Iliac Bay'",
-    "new": "region ? `near ${region}` : 'near the Iliac Bay'",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
+    "new": "region ? `near ${region}` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -353,7 +354,8 @@
   {
     "name": "SD20E-T19-the-hour-unwhere",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "${sdWhere(near, region)} will fade within the hour.",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "${sdWhere(near, region, province)} will fade within the hour.",
     "new": "near ${near || 'the Iliac Bay'} will fade within the hour.",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
@@ -362,8 +364,9 @@
   {
     "name": "SD20E-T19-the-host-unregioned",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "near: hh?.site?.cityName || '', region: regionName(rec.r) || '' }",
-    "new": "near: hh?.site?.cityName || '' }",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province }",
+    "new": "near: hh?.site?.cityName || '', province }",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "ports-filter-skips-search",
     "file": "src/ui/heldMap.js",
-    "old": "        if (!this._discovered(entry.summary)) continue;",
-    "new": "        if (!checkLocationDiscovered(entry.summary)) continue;",
+    "old": "        if (entry.pastBay ? this.portsFilter && !entry.port : !this._discovered(entry.summary)) continue;",
+    "new": "        if (entry.pastBay ? this.portsFilter && !entry.port : !checkLocationDiscovered(entry.summary)) continue;",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

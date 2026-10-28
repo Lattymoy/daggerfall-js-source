@@ -23,6 +23,7 @@
 import { t } from '../../systems/textManager.js';   // L10N4: the words through the text core
 import { createUvEdit } from '../../poi/uv/uvEdit.js';
 import { isTextEntryTarget } from '../input.js';   // AUDIT POI U6: a key typed into the dialog's own fields is the field's
+import { capturePointer } from '../pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const POI_UV_STYLE_ID = 'dfpoi-uv-style';
 export const POI_UV_CSS = `
@@ -218,7 +219,7 @@ export function createPoiUvPanel({ doc = document, mesh, sub = 0, materials, tit
   };
   const reach = () => view.uvOfPx(6);
   canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture?.(e.pointerId);
+    capturePointer(canvas, e.pointerId);
     const [x, y] = at(e);
     if (e.button === 1 || e.altKey) { pan = { x, y }; return; }
     if (e.button !== 0) return;

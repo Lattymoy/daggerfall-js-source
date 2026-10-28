@@ -305,15 +305,15 @@ enhanced plus UI feature."
   (Call - refused, and saying why, while the slots are full or it is still hurt; its rest), **Release** asked twice.
 - **Its words**: as it arrives when called, as it is sent away or released, when it falls, now and then as it goes into
   a fight or over a kill (a minute between each one's, twenty seconds between any) - all in its voice.
-- **In the open zone (COMPANION-DROP, FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in
-  zone")**: the one at my side there - `swornAtYourSide`, the first walking with me as the record lists it, the one the
-  zone stands (PVPDUNGEONS; the rest wait outside the zone) - carries its pack and its kit at stake with mine: a death
-  there drops them as it drops my bag (`11-Multiplayer/Wild-Zone.md` section 4,
-  `wildDropLaw.js:"export function wildPacks"`). So it is never sent away nor on an errand from my side there
-  (`revenantCompanions.js:"export const leaveRefusal = (r) =>"` - the roster says it, and the slots' hold sends
-  another), nothing of mine is given as kit to one waiting outside the zone, and knocked out there it hands me its pack
-  and its kit before it goes, said once (`revenantCompanions.js:"function leftWithYou(r)"`; one carrying nothing hands
-  nothing and says nothing - AUDIT FB1019f B4): nothing it carries leaves the zone but at my side.
+- **In the open zone**: the one at my side there - `swornAtYourSide`, the first walking with me as the record lists it,
+  the one the zone stands (PVPDUNGEONS; the rest wait outside the zone). COMPANION-DROP (FIELD BUGS 2026-10-19f; the
+  owner, 2026-10-19: "Bag drops; no send-off in zone") put its pack and its kit at stake with mine there, and so kept it
+  at my side: never sent away nor on an errand, nothing given as kit to one waiting outside, and knocked out it handed me
+  what it carried. STORE-KEEPS (2026-10-26; the owner: "Make it where you cant lose your wagon/horse or anything stored on
+  death") made its pack and kit storage no death takes (`11-Multiplayer/Wild-Zone.md` section 4), and those rules went
+  with the drop they served: in the zone it comes and goes, and rests with its pack and kit, as anywhere - save that
+  nothing is given into its pack or kit for a minute after a player's blow (AUDIT PVP-EASE's combat lock, Wild-Zone.md
+  section 4: storage open from anywhere had made the drop optional).
 
 ## 14. The portals and the dissolve (COMPANION-PORTAL, DISSOLVE)
 
@@ -489,7 +489,9 @@ dungeon four to ten map pixels from where it happened - the one nearest a direct
 town boards' bounties use - only one the player can go down into (LAIR-DOOR, FIELD BUGS 2026-10-22d: 28 graveyards
 place no door). With none in reach it roams. A deed underground makes that dungeon its lair, and a lair a deed moves is
 one the player must hear of again. A lair already held in a place nobody can enter moves to the enterable dungeon
-nearest it within twenty map pixels, and stays known as it was. The page says what the player knows of it.
+nearest it within twenty map pixels, and stays known as it was. The page says what the player knows of it. Past the Bay
+the lairs are the land's own (TESA8), and a revenant goes to ground in them as on the Bay - LAIR-WORLD (2026-10-26):
+until it, a deed past the Bay found no dungeon in its ring and the revenant roamed (`12-Enhanced-AI/Feud-Arc.md` 18.1).
 
 **The rumour (RVN7b).** Ask a townsperson for news within twenty map pixels of a living revenant's lair, or in its
 lair's region, and one time in three or so the answer is of it - its kind, its name, its lair, how far and which way -
@@ -809,9 +811,8 @@ A sworn revenant wears what the player gives it. `systems/revenant/revenantGear.
   itself moves gold and letters, never a piece) and the realm's own (`systems/item/possessedItems.js`) - a release hands
   it back with its pack, and a deserter or a betrayer weighs it with its pack (`splitPack` - it keeps the more valuable
   half). Abroad, its kit goes with it: nothing is given or taken back (AUDIT RVN F10). COMPANION-DROP (FIELD BUGS
-  2026-10-19f, section 13): in the open zone the kit of the one at my side drops with my bag at a death there, as its pack
-  does - DECIDED there, named: its pieces are mine, given from the pack and taken back at will, worn by it and never by me,
-  so my own worn law is not theirs - and nothing of mine is given to one waiting outside the zone.
+  2026-10-19f, section 13) had the kit of the one at my side in the open zone drop with my bag at a death there, as its
+  pack did; STORE-KEEPS (2026-10-26) made both storage no death takes.
 - **Its weight abroad** (`gearPower`, section 42): a twentieth of a point a piece worn, and its tier's share more (Magic
   0.1, Rare 0.2, Legendary 0.35), at most two (AUDIT RVN G8 - ten Common pieces weighed what three Legendaries did).
 - **The page**: the Companions page's **Gear** opens a sheet under its card - a well a slot it may fill (a beast's the
@@ -1752,3 +1753,12 @@ named lines this audit moved and were re-aimed by content (`unquiet.json` 22, `u
 dead; five whose law went with U11 or became redundant were dropped. Every
 revenant list was swept on the audited law (42 lists, 1,755 records): 1,749 dead, the two equivalents as recorded, and the
 four survivors above, each answered and dead or gone.
+
+## 50. Another player's revenants and the crowd's count (RPT1026-EVENTS CROWD-KIN, 2026-10-26)
+
+A private report: the Players shown at once count hid other players and left their revenants standing. Another player's
+revenant is a puppet on my screen, stood by theirs and named by their word
+(`nm`). When the Other players card's **Players shown at once** count leaves its owner undrawn, it goes with them: it,
+its band and the owner's sworn companions draw nothing here and offer the ray nothing, unless it is on me
+(`net/gate/gateCrowd.js` `crowdKinHidden`; `11-Multiplayer/World-Bosses.md` section 21, CROWD-KIN). My own revenants
+are never hidden: they hunt me.

@@ -290,8 +290,9 @@ const packRefuses = (capacity, item, units, remote) => !!capacity.gone || canHol
  * @returns {{ok:true, amount:number, notice:string|null}
  *          |{ok:false, refusal:object, notice:string|null}}
  */
-export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], shared = isRoomCarried(remote), groundRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
+export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], shared = isRoomCarried(remote), groundRefusal = null, storeRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
   if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };   // HOUSE-DROP: gold on a floor that refuses it
+  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal }, notice: null };   // AUDIT PVP-EASE L2-1: the combat lock (inventorySession.js storeRefusalOf)
   // A numeric field of 8 opening on "0": anything that is not a run of
   // digits is not a number, and 0 fails the range below.
   const asked = /^[0-9]+$/.test(String(text)) ? Number(text) : 0;
@@ -339,13 +340,16 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
  * @returns {{ok:false, refusal:object}|{ok:true, amount:number, sound:'click'}}
  */
 export function planStore(item, {
-  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, capacity = null, bagLoaded = false, wagonKg = WAGON_KG_LIMIT,
+  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, storeRefusal = null, capacity = null, bagLoaded = false, wagonKg = WAGON_KG_LIMIT,
 } = {}) {
   if (!item) return { ok: false, refusal: REFUSAL.missing };
   if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded };   // BAG1
   // HOUSE-DROP (2026-09-27): the ground itself refuses - the window hands the host's word (inventorySession
   // groundRefusalOf) only when the destination IS the ground, so a wagon, a chest and a trade are untouched
   if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal } };
+  // AUDIT PVP-EASE L2-1 (the owner chose "Combat lock"): storage no zone death takes refuses a fighter fresh from a fight -
+  // the window hands it (inventorySession.js storeRefusalOf) only when the destination IS such storage
+  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal } };
   if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };
   if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };   // KEEP-SPELLBOOK: the own wagon takes it, nothing else
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };
@@ -567,11 +571,17 @@ export function clearLightSourceOnLeave(item, entity, fromLocal) {
  * nothing to follow (LOOT-BULK's bulkMove, the quick door and the trade windows already ask `from.includes(item)`). Every
  * caller in src/ hands the list the piece is in (swept: the windows' own, quick loot, Physical Items, the naval plunder's
  * one-piece source, a decor take).
+ *
+ * RPT1026-CHESTGOLD (a private report): A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`from.pileCoins`, the
+ * shared chest's - systems/decor/decorGrants.js openSharedChest). The gold arm spent the pile into the purse at the click,
+ * every checkpoint after carried the purse, and a settle the service refused left the pile in the chest as well: gold
+ * twice. From such a list the pile lands in the window's pack as itself, and the purse takes it when the settle lands -
+ * in both windows, which both end their takes here. A departure from DoTransferItem's gold interception, Ledger A.
  */
 export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false, toPlayer = false, rolls = Math.random, stolenFrom = null, returnTo = null } = {}) {
   if (Array.isArray(from) && !from.includes(item)) return null;
   clearLightSourceOnLeave(item, entity, fromLocal);
-  if (toPlayer && isGoldPieces(item)) {
+  if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {
     const coin = _splitOff(item, plan, from, rolls);
     const at = from.indexOf(coin);
     if (at >= 0) from.splice(at, 1);

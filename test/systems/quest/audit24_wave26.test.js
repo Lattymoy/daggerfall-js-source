@@ -8,6 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const VENDOR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'vendor', 'dfu-quests');
 const sources = {};
@@ -158,7 +159,7 @@ test('audit24 wave26: FindFactionByTypeAndRegion - exact first, partial LAST', a
   // in that case the exact-match `return` fires either way.
 
   // and the mount delegates here rather than rolling its own
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /return s \? findFactionByTypeAndRegion\(s\.dict, type, regionIndex\) : null;/);
 });
 

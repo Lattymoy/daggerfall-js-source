@@ -401,8 +401,8 @@
   {
     "name": "PROF3-piece-rarity-random",
     "file": "src/systems/smithItems.js",
-    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version)",
-    "new": "      applyRarity(item, eff.rarity, Math.random, null, { fits, byLines: Number.isSafeInteger(version)",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES)",
+    "new": "      applyRarity(item, eff.rarity, Math.random, null, { fits, byLines: at(MINT_V_LINES)",
     "tests": [
       "test/systems/prof3_client.test.js"
     ],

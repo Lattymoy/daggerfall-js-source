@@ -1075,6 +1075,14 @@ only for another entity's spell and agrees trivially for a self-cast.
 GetEffectCastingCost carries the target multiplier and DFU's floor of
 5, which DFU spells out as the guard that stops an absorb from
 DRAINING the pool it is meant to fill.
+AUDIT RPT1026 F3 (2026-10-27, a private report: after a rest a
+player's own blast was never absorbed): since the port prices a
+player's cast with its cost modifiers (spellcost.js calculateCastCost)
+the two no longer agree - at a full pool a discounted cast made room
+for what it paid and the absorb asked room for the undiscounted price,
+so a rested absorber died to their own blast. A self-cast now asks
+room for, and drinks, no more than its release spent (tryAbsorption's
+`paid`); another entity's spell keeps DFU's price. Port-Ledger A.
 
 The target must have ROOM: `cost > (max - current)` refuses
 (:1180-1184). This is the throttle on the whole trait - an absorber at
@@ -3682,6 +3690,33 @@ predicate are exercised by their pins and by nothing in `src/` yet,
 which is a gap this arc closes in its next slice and not a defect to be
 discovered later.
 
+## PROVINCE-COURTS - the faction store past the Bay (2026-10-27)
+
+The record is `03-World/World-Wide.md` PROVINCE-COURTS; this is what it did to the faction system S25, S43 and S44
+built. FACTION.TXT gives each Bay region a Province, a Court and a People and the provinces past the Bay (regions 62..70,
+WW-R) none, so every reader of a region's court or people found nothing there. The port's own -
+`src/systems/faction/provinceFactions.js` - are four a province (the Province 6000 + region, its ruler 6100 +, its
+Court 6200 +, its People 6300 +), shaped on FACTION.TXT's crowns' rows, and ride every dictionary through S25's door:
+
+- **`factionRep.js` addCustomFactions** (PersistentFactionData.AddCustomFactions, the door DFU gives a faction not in
+  FACTION.TXT) adds them first, then the registry's. The store's Reset (`createFactionRep`) and the talk host's reader
+  (`scenes/townTalk.js`) both call it, so the player's store and the reader hold them alike; `zeroAllReputations`
+  refills from the reader, so they come back at their default with FACTION.TXT's. They bring their own children, so the
+  relink is not asked for them and no FACTION.TXT record moves (pinned to the byte on the freeware).
+- **S43's walk** (`region/regionPower.js`) walks nine more Provinces - power, alliances, rivalries, famine, plague,
+  crime waves - with no new ruler (they are RulerImmune: a named ruler stands) and no persecuted temple or witch
+  burning (a province holds neither). Every faction of the walk now draws its partners from a dictionary 36 longer, so
+  the Bay's own politics may now take a province for an ally or a rival - the world's politics, as the rumour mill
+  tells them.
+- **S44's border law** (`faction/factionRelations.js` isEnemyStatePermanentUntilWarOver): DFU's table is the Bay's 62
+  rows; a pair with a province in it reads `PROVINCE_BORDERS` (the politic map's: the provinces' land with each other,
+  and across the Bay's edge), and only for two Provinces - FACTION.TXT's vampire clans carry regions 62..70 too. Every
+  Bay pair is DFU's table's answer as before.
+- **The save** (S25's envelope, AUDIT 20/39): snapshotFactionRep carries them with every other faction; an old save
+  restores FACTION.TXT's and leaves them at their default.
+
+Pins: `test/world/worldWide/provincecourts.test.js`; mutants `tools/mutants/provincecourts.json`.
+
 ## AUDIO AUDIT - the music "just seemed off", and it was (2026-08-25)
 
 Reported by ear, confirmed by measurement, and all three findings were
@@ -4133,6 +4168,38 @@ beside the racial one. The Rose and the Skull gate on an enemy inside
 12 and speak the fail line; their ALLIED summon door
 (spawnAlliedFoe) is FLAGGED unmounted - the port has no ally/team
 combat - so the arm idles loudly until the team system exists.
+(MT-ii mounted it since, `scenes/hostEnchant.js` createEnchantCtx, and
+SD1 placed it.) RPT1026-PROGRESS (2026-10-26, a private report: the Skull's copies
+were looted like any foe): DFU's CreateFoe gives the allied copy its
+kind's whole loot (SetEnemyCareer's table and kit) and its corpse is
+looted like any foe's, so a Skull that never breaks (Repairs Objects)
+farmed a Daedra's drop from every copy it set on the original. A
+summon's body is a puppet's now: the door marks the foe it stood
+(`systems/foeLootCap.js` summonedBody - its carried list emptied, its
+hand and worn kit still fight) and the last word every body door asks
+empties whatever the death laid on it (capFoeLoot). Port-Ledger A.
+Pinned by `test/scenes/rpt1026_progress_summon.test.js` (the real Skull
+off MAGIC.DEF, a real street pool on the freeware's MONSTER.BSA). AND
+EVERY OTHER PLAYER'S COPY OF IT (RPT1026-PROGRESS, the same day): in a
+dungeon online the room's other players stand the copy as a loose
+stand's puppet (SUMMON-SYNC), built on their own machine - and that build
+rolled its kind's loot there, its death there its kit, food and card, so
+the farm stood open to a second player. The owner's own frame names its
+summons now (`sm`, beside `lf` - `systems/foeLootCap.js` summonedWord), a
+reader flags the record (summonedRecord) and marks the puppet it stands
+(markSummoned, in `scenes/dungeonContext.js` applyOwnRecord) - bare alive,
+its death's finds emptied by capFoeLoot; the mark rides the entity (no
+summon is handed to an heir - both `heirOf`s refuse a PlayerAlly; AUDIT
+RPT1026 F5). AUDIT RPT1026 F4: and a summon the street or a building
+saved alive is loaded one - the save carries the mark (`foeLootCap.js`
+savedSummon, restoredSummon), where a loaded copy had died with its
+finds on it. Each way at once: my summon
+on a friend's machine, theirs on mine. The street's and a building's
+lane needed nothing: a puppet there carries no loot (exteriorFoes.js
+WORLD6b B14). Pinned through the real lane by
+`test/scenes/rpt1026_progress_peersummon.test.js`. Left, for the owner: a
+summon restored from a save is stood again with its empty list, its
+`summoned` mark not saved.
 
 AND THE ENUM WENT HOME. ENCHANTMENT_TYPES is FallExe's
 (ItemsFile.cs:111-141); it moved to formats/magicDef.js - the file
@@ -6465,8 +6532,9 @@ instead (`null` means "do not ask", which is every non-maker caller).
 its mirror, carrying DFU's own asymmetry verbatim: an ordinary trap
 counts only when its soul is `!= None && < 43` (`:115`), while a
 filled Azura's Star is counted with no bound at all (`:121-125`).
-`ui/item/itemMakerWindow.js` enumerates ONCE, in its constructor, and both
-picker seams read that snapshot - see the review round below for why.
+`ui/item/itemMakerWindow.js` enumerated ONCE, in its constructor, and both
+picker seams read that snapshot - see the review round below for why, and
+RPT1026-PROGRESS beneath it for why it reads the pack every time now.
 
 That makes a comment in `enchantmentCatalogue.js` false and it is
 rewritten with the law. The singleton shortcut
@@ -6537,6 +6605,17 @@ finds nothing), where the port dropped the row. The enumeration now
 happens once, in the constructor - which IS DFU's `Setup`+`OnPush`,
 since `scenes/worldModes.js`'s `guildServiceItemMaker` mounts a fresh
 window per open - and both picker seams read the frozen field.
+
+**RPT1026-PROGRESS (2026-10-26, a private report: one filled gem bound several items) - THE FREEZE IS GONE.** That second item
+was the exploit: a bound soul's costs are negative, so the soul DFU still offers after its gem is spent gave a second
+item the whole SoulBound budget from a gem that was no longer there, and a single gem paid for item after item while
+that window stayed open. The window reads the pack's souls every time it asks (`itemMakerWindow.js` `get _souls`), and the law
+refuses a bound soul the pack no longer holds whatever list the row came from (`enchanting.js` enchantDecision's
+`souls`: "That soul is no longer in your pack.", nothing paid). A departure from `EnumerateEnchantments`' once-a-window
+read and from `RemoveFilledTrap`'s silent miss (`SoulBound.cs:129-155`), Port-Ledger A. The account service's item law
+cannot tell such a piece: it reads one item (`itemLaw.js` makerFindings holds a SoulBound row to its forced set, not to a
+gem the save gave up). Pinned by `test/ui/rpt1026_progress_ui.test.js`; PIN MOVED in `audit63_effects.test.js` (the
+spent soul is no longer offered).
 
 ## AUDIT 63 F15 - A VAMPIRE CAUGHT THE PLAGUE FROM A QUEST (2026-09-08)
 
@@ -8090,6 +8169,27 @@ says so. `test/scenes/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
 review pin, the interior-foes pin and ROAD-B's indoor-watch pin
 re-aimed. **QUEST-POPUP-PAUSE (2026-09-26, Mac: "Pause them offline"):** offline, a quest's message box on top holds the pools again, as DFU's does; every other window keeps this law, and online nothing is held (`01-Overview/bugs/Field-Bugs-2026-09-26c.md`).
 
+**RPT1026-FIGHTS WINDOW-ONLINE (2026-10-26): the dungeon, online.** Two private
+reports: the room's host opening the inventory or the pause menu froze every foe of
+the shared dungeon while its party member killed them freely, and a paralysed player
+waited the paralysis out in the inventory. Both dungeon hosts returned before
+`drawFoes` under any pausing window, so WINFOE1 had never reached the dungeon: offline
+that is DFU's pause, whole; online the character's own clock runs with the world's
+(LIVED1) and was walked whole in one frame once the window shut, while the foes -
+the room's one simulation, stepped by its host (WORLD2) - stood frozen and took the
+party's blows. Online a window now holds no dungeon while the player lives under it
+(`scenes/windowWorld.js` windowHoldsDungeon, read by `worldModes.js`'s dungeon arm and
+`world.js`'s tactics clock): the frame runs and the window is drawn last over it; the
+motor, the input, the collision triggers, the breath and a pending cast stay held - and
+the weapon technique's key, by its door's `blocked` as on the street (AUDIT RPT1026 E1:
+the dungeon's door had none, and the key fired a technique from under the pack).
+Offline the dungeon pauses as before, and the death screen holds it in both. THE FOUR
+HOSTS: `scenes/worldModes.js` (the world-hosted dungeon) WIRED; `scenes/world.js` WIRED
+(the tactics clock); `scenes/dungeonContext.js` WIRED (the breath and the pending cast
+under its own window); `scenes/dungeon.js` and `scenes/exterior.js` FLAGGED - offline
+hosts, no shared clock: DFU's pause stands. Ledger A, WINDOW-ONLINE. Pins:
+`test/scenes/rpt1026_fights_window.test.js` (3).
+
 **JAIL-HIT (2026-09-27): the trial is the one window the watch waits
 out.** Discord: *"Guards will still chase you down and kill you, even
 if you have already been to prison for the crime committed."* The
@@ -8303,6 +8403,77 @@ clocks never asked (`spawnAt(px, py, { clocks: false })` - the sea, a wet platea
 the Veil or in the open zone), and the pixel build shapes the blend, the tiles, World of Daggerfall's pick and the
 woods' clearings for it. What stands - the ruin, its door, its plate, its foes - is still the clocks'. A dead spawn
 leaves its level clearing and the ruin's ground tiles until it stands again. `01-Overview/bugs/Field-Bugs-2026-10-24b.md`.
+
+### SPAWN-HOLE - NO HOLE IN THE GROUND PAST THE BAY (2026-10-26)
+
+The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26), item 1 (A1, HIGH). Online with the land past the Bay, every pixel build asks
+`spawnGroundPlace.groundLocationAt` (`scenes/pixelBuild.js:"const groundLocation = spawnGroundPlace.groundLocationAt(px, py, dfLocation);"`),
+and where the roll stood a spawn on dry, empty land the host cloned it (`scenes/spawnGroundHost.js:"function _spawnCloneAt(px, py) {"`)
+- whose id, `world/spawnedDungeons.js:"export function spawnedMapId(salt, px, py) {"`, threw `RangeError: pixel X,Y` for
+any pixel past the Bay. The pump destroyed the pixel and BUILD-RETRY asked for it again, for good: no terrain and no
+collider. A 40 x 20 box of Skyrim (about Windhelm's row): 800 pixels asked, 39 threw; the same box on the Bay, none. The
+party walk's far spawn (`tvLocationAt`, through `spawnAt`) threw the same way, with no try about it.
+
+What stood then: `spawnAt` answered none past the Bay (its first gate `inBay`), so the clone was never asked there; the
+Bay to the byte. It was the first commit of the fix, a guard SPAWN-WORLD (below) replaced with the spawn's own law past the
+Bay - the spawner's id in the world's spawn lane, and past the Bay a place first
+(`world/spawnGroundPlace.js:"if (!inBay(px, py) && placeAt(px, py)) return null;"`). Pins: `test/world/spawnhole.test.js` (the host's clone over the real
+producer, and with ARENA2 the audit's own box: 0 threw, the Bay's 14 spawns as they stood). Mutants:
+`tools/mutants/spawnhole.json`. PIN MOVED: `test/scenes/fb1024_groundagree.test.js` (the Eltheric box with no Eltheric
+Ocean is past the Bay).
+
+### SPAWN-WORLD - THE SPAWNED DUNGEONS AND THEIR ELITE TIER PAST THE BAY (2026-10-27)
+
+The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26), item 25 (A3). On the Bay about 29% of empty land stands an online
+spawn of the world roll, a quarter of them Elite; past the Bay only TESA8's lairs stood (some 1-2% of the land), none of
+them Elite - the spawn's id (`world/spawnedDungeons.js:"export function spawnedMapId(salt, px, py) {"`) was a Bay pixel's,
+so the build never asked for one there, and where it did (the ground's place, SPAWN-HOLE above) it threw. The owner's call
+taken ("Every single thing here needs to be addressed. No exceptions.", 2026-10-26): the spawns past the Bay stand in a
+world id lane (`03-World/World-Wide.md` WORLD-LANES).
+
+What stands now, online, past the Bay:
+- **The same roll, density and Elite tier** as the Bay's (`spawnsDungeon`, `isEliteSpawn`), their template the game's, their
+  region and climate their province's (the host's clone, `scenes/spawnGroundHost.js` `_spawnCloneAt`), their id the world's
+  spawn lane over the pixel's world key (`world/worldWide/worldLanes.js` `SPAWN_WORLD_LANE`, the world salt's alone).
+- **Never on a place.** A capital, an Arena place, the countryside's or a lair stands first: the build asks them before the
+  spawner (`scenes/spawnStandHost.js:"function spawnPastBayAt(px, py) {"`, the last of `_locationToBuild`'s arm past the
+  Bay), and the spawner and the ground's law ask `placeOnPixel` themselves (`spawnedDungeonAt`; `world/spawnGroundPlace.js`
+  `placeAt`, the host's `scenes/tamrielPlacesHost.js` placeOnPixel) - so the ground, the Overworld's far reads and the build
+  agree.
+- **Never on a road past the Bay**: `pathFreePixel` past the Bay reads TESA's layer (`world/arenaRoads.js` arenaPathsAt -
+  the roads and tracks the regions laid), where the Bay's arrays answered nothing; a spawn stood before its region's layer
+  landed that a road crosses now is taken back as the Bay's sweep takes one back, its clocks with it, unless the player
+  stands in it (`spawnPastBayAt`; the layer's landing builds the pixels it reaches again).
+- **Its clocks the Bay's** (TTL1, SPAWN-REBIRTH): kept in the index, gone past its time with nobody in it, its row kept.
+- **Its clocks its cell's** (OW6L): the spawn ledger says a world pixel's row (`createSpawnLedger` `wireRow`, the pixel's one
+  spelling on the world's grid), the relay's law reads one (`net/wire.js` owWireRow, `worldPixelOk`; the relay's copy of the
+  roll agrees pixel for pixel past the Bay), and a client says one only to a relay that reads it (`net/online.js` owWorldOk,
+  `relaySupportsOwWorld`, `OW_WORLD_RELAY_MIN` 270 - an older relay refuses the whole word and closes the socket).
+- **The far reads keep out of the Veil's sea and the open zone** (`spawnGroundPlace.js` spawnAt): those two gates were the
+  ground's alone, so once spawns stood past the Bay the Overworld's far reads (tvSpawnAt, tvLocationAt) would have cloned a
+  spawn in Cyrodiil's halls' zone. The zone stands its tier's halls and no spawn (PVPDUNGEONS; the owner's call on site-bound
+  events in the open zone holds for it).
+- **A board's pack** keeps off a spawn's pixel past the Bay as on it (`scenes/world.js` siteOk).
+- **Entered**, a spawn past the Bay is a world room the relay keeps (public and instanced), filed by its whole id when found,
+  and no dock of Immersive Travel's.
+
+Measured over the freeware (the player's own maps, trace and woods): 3,000 dry empty land pixels past the Bay (Skyrim and
+Hammerfell) stood 0 spawns before - 894 of the asks threw - and stand 894 now (29.8%, 23.3% of them Elite); the Bay's 3,000
+stand 869 (29.0%, 25.1% Elite), as before. The audit's Skyrim box: 39 threw, now 0 with 39 spawns standing.
+
+THE FOUR HOSTS (Home.md): `scenes/world.js` wires it (the stand and the ground through their modules, the boards' ground);
+`scenes/worldModes.js` and `scenes/dungeonContext.js` - nothing new (a spawn past the Bay is entered and run as the Bay's,
+by its id); `scenes/exterior.js` - FLAGGED: the Bay's fixed scene, no spawn past the Bay.
+
+Pins: `test/world/spawnworld.test.js` (8, the ARENA2 half the density and the Elite share), `test/world/spawnhole.test.js`
+(moved), `test/world/spawneddungeons.test.js` (the id past the Bay). Mutants: `tools/mutants/spawnworld.json` (29, dead),
+`tools/mutants/spawnhole.json` (1, dead). PIN MOVED: `fb1024_groundagree.test.js` (the Eltheric box with no Eltheric Ocean
+stands its spawn again), `spawneddungeons.test.js`, `spawnhole.test.js`, `ow6_ledger.test.js` (a row past the Bay is a row),
+`tv6_dungeons.test.js` (the harnesses' Bay), `tesa2_arena.test.js`, `tesa7_country.test.js`, `tesa8_lairs.test.js`,
+`tesa10_capitals.test.js`, `tesa13_mapink.test.js` (the order ends in the spawner), `lairworld.test.js` (the boards' ground).
+Re-aimed by content, all dead: `audittesa2p` P1-hall-after-the-places, `tesa2` TESA2-no-arm, `tesa7` TESA7-host-arena-last
+and TESA7-host-no-country, `tesa8` TESA8-host-no-lairs, `auditonline3b` C1-a-halo-keeps-no-grave-word, `lairworld`
+LW-host-boards-ground-held-to-the-bay.
 
 ### DISC29-F - a mode change stops the riding loop, as UpdateMode does (2026-09-28, Skibbster)
 

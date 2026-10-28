@@ -711,9 +711,9 @@
   },
   {
     "name": "OWHUBS-carriages-without-the-mod",
-    "file": "src/scenes/world.js",
-    "old": "    if (!immersiveTravelLoaded() || !Number.isFinite(mapId)) return false;",
-    "new": "    if (!Number.isFinite(mapId)) return false;",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    if (!immersiveTravelLoaded() || !Number.isFinite(mapId) || isHallMapId(mapId)) return false;",
+    "new": "    if (!Number.isFinite(mapId) || isHallMapId(mapId)) return false;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],

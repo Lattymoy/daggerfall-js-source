@@ -2,20 +2,22 @@
   {
     "name": "WF-deepest-without-free",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "if (ring_.some((p) => p.bd === lv && isFree(p)))",
-    "new": "if (ring_.some((p) => p.bd === lv))",
+    "old": "thin(ring_.filter((p) => p.bd === lv), poolMax, sift).some(isFree)",
+    "new": "thin(ring_.filter((p) => p.bd === lv), poolMax, sift).length",
     "tests": [
       "test/systems/wild/wildfree.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the level thinned by the day (a province's pool) before free is asked."
   },
   {
     "name": "WF-band-unasked",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "const freeFrom = (min) => ring_.filter((p) => p.bd >= min && isFree(p));",
-    "new": "const freeFrom = (min) => ring_.filter((p) => p.bd >= min);",
+    "old": "const freeFrom = (min) => thin(ring_.filter((p) => p.bd >= min), poolMax, sift).filter(isFree);",
+    "new": "const freeFrom = (min) => thin(ring_.filter((p) => p.bd >= min), poolMax, sift);",
     "tests": [
       "test/systems/wild/wildfree.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the band thinned by the day (a province's pool) before free is asked."
   },
   {
     "name": "WF-ring-for-the-two-pixel-band",
@@ -42,11 +44,12 @@
   {
     "name": "WF-asked-again",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "(p.free ??= !!free(p.x, p.y))",
-    "new": "(p.free = !!free(p.x, p.y))",
+    "old": "return (p.free ??= !!free(x, y)); };",
+    "new": "return (p.free = !!free(x, y)); };",
     "tests": [
       "test/systems/wild/wildfree.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): free asked of a cell's middle pixel."
   },
   {
     "name": "WF-asked-first",

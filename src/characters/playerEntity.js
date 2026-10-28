@@ -20,6 +20,7 @@
 import { SKILL_COUNT, SKILLS_RECENTLY_RAISED_WORDS } from '../systems/skills.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 65 SL-4: PlayerEntity.cs:128's socialGroupCount = 11
 import { pageHas } from '../systems/pageQuery.js';   // AUDIT ANTICHEAT A1: the probe gate's one parse a search
+import { openGuardCeiling, closeGuardCeiling } from '../systems/powerCeiling.js';   // POWER-CEILING: the guards composed, held to one share kept
 
 export const playerEntity = {
   isPlayer: true,
@@ -334,12 +335,16 @@ function playerBlowEvaded(entity) {
   for (const fn of _evasions.values()) { try { if (fn(entity) === true) return true; } catch { /* as below */ } }
   return false;
 }
-/** The damage through every registered modifier, in registration order - a modifier that throws is skipped. */
+/** The damage through every registered modifier, in registration order - a modifier that throws is skipped. POWER-CEILING:
+ *  inside one share (powerCeiling.js) - each guard asks guardRoom, so together they keep GUARD_LEAST of the hurt. */
 export function playerDamageMods(entity, dmg) {
   let d = dmg;
-  for (const fn of _damageMods.values()) {
-    try { const n = fn(entity, d); if (Number.isFinite(n)) d = Math.max(0, n); } catch { /* a set is not the blow's problem */ }
-  }
+  const was = openGuardCeiling();
+  try {
+    for (const fn of _damageMods.values()) {
+      try { const n = fn(entity, d); if (Number.isFinite(n)) d = Math.max(0, n); } catch { /* a set is not the blow's problem */ }
+    }
+  } finally { closeGuardCeiling(was); }
   return d;
 }
 /** Does any registered death save take this blow? The first that answers true, in registration order. */

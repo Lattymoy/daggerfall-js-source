@@ -471,7 +471,7 @@ test('EE13: the Enhanced pane offers a season/weather test that spawns in a rand
     'it navigates through the world\u2019s own doors, archive and day both');
   assert.ok(!/setPref\(.*season|setPref\(.*weather/.test(pane), 'a test door stores nothing');
   // and the world honours the door: any town, named in the console
-  const w = read('src/scenes/world.js');
+  const w = read('src/scenes/bootStartHost.js');   // PIN MOVED (BAY-LEFT-B): the boot's start, out of world.js (HOST-SPLIT)
   assert.match(w, /if \(!startLoc && params\.get\('spawn'\) === 'random'\) \{/);
   assert.match(w, /\[0, 1, 2\]\.includes\(l\.mapTableData\?\.locationType\)/, 'a city, a hamlet or a village - a place with ground and people');
   assert.match(w, /console\.info\(`\[world\] random spawn: /, 'the town is named, so a good one can be found again');

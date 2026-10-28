@@ -514,10 +514,11 @@ test('AUDIT CAPTAIN\'S SEA G4/G5/G6/G7/G8/G9/G14: the ring\'s climate past the m
   assert.equal(sea(8068, -5185), false, 'an isle past the map is land - the continent switched off');
   assert.equal(sea(8100, -5185), true, 'its sea the sea');
   assert.equal(tvWaterOf({ getHeightMapValue: () => 60 })(-1, 5), true, 'past the Bay with nothing composed: the sea, as ever');
-  assert.match(w, /const ground = \(px\.x >= 0 && px\.y >= 0 && px\.x < 1000 && px\.y < 500\) \|\| !!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px\.x, px\.y\);\n\s+const byte = ground \? woods\.getHeightMapValue\(px\.x, px\.y\) : 0;/);
+  // PIN MOVED (RELIEF-PEAKS): the ring's ground at the pixel's centre reads the bytes about it, the ground's or none
+  assert.match(w, /const ground = \(px\.x >= 0 && px\.y >= 0 && px\.x < 1000 && px\.y < 500\) \|\| !!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px\.x, px\.y\);\n\s+return \[x, ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/);
   assert.match(w, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && politicClaimed\(/);
   assert.match(w, /if \(wod && onTheBay\(px, py\) && await wodOpened\) \{/);
-  assert.match(w, /renderer\.setMoonlight\(moonNow && etherAirW \? \{ scale: moonNow\.scale, dir: moonNow\.dir, color: etherLight\(moonNow\.color, etherAirW, ETHER_KEY_TINT\) \} : moonNow\);/);
+  assert.match(w, /renderer\.setMoonlight\(canopyMoon\(moonNow && etherAirW \? \{ scale: moonNow\.scale, dir: moonNow\.dir, color: etherLight\(moonNow\.color, etherAirW, ETHER_KEY_TINT\) \} : moonNow, jungle\?\.canopy\)\);/);   // PIN MOVED (VALENWOOD-CANOPY): under a closed canopy the moon's key leaned with the sun's
   // the ring's own-pixel fade: an isle node past the map faded by its own shore, never the clamped corner's
   const { buildFarRingGrid, RING_RADIUS } = await import('../../../src/render/farRing.js');
   const E = await import('../../../src/world/ethericSea.js');
@@ -526,9 +527,11 @@ test('AUDIT CAPTAIN\'S SEA G4/G5/G6/G7/G8/G9/G14: the ring\'s climate past the m
   const opts = { heightBytes: new Uint8Array(1000 * 500).fill(200), mapWidth: 1000, mapHeight: 500, climateAt: () => CLIMATES.Mountain, baseX: h.px, baseY: h.py, radius: 4, relief: true, byteAt: (x, y) => E.etherHeightByte(x, y) };
   const own = buildFarRingGrid({ ...opts, pastOwn: E.inEtherLaw }), clamped = buildFarRingGrid({ ...opts, pastOwn: () => false });
   const mid = (g) => g.positions[(4 * g.side + 4) * 3 + 1];
-  const { ringHeight } = await import('../../../src/render/farRing.js');
+  const { ringGroundAt } = await import('../../../src/render/farRing.js');
   const { cliffFadeAt } = await import('../../../src/world/landforms.js');
-  const want = ringHeight(E.etherHeightByte(h.px, h.py), true, cliffFadeAt((x, y) => E.etherHeightByte(x, y), h.px, h.py));
+  // PIN MOVED (RELIEF-PEAKS): the vertex the kernel's ground at the pixel's centre - its nodes' fades each its own shore's
+  const isle = (x, y) => E.etherHeightByte(x, y);
+  const want = ringGroundAt(h.px, h.py, isle, true, (x, y) => cliffFadeAt(isle, x, y));
   assert.equal(mid(own), Math.fround(want), 'faded by its own shore');
   assert.notEqual(mid(clamped), mid(own), 'the clamped pixel\'s fade is another');
   void RING_RADIUS;
@@ -577,13 +580,15 @@ test('AUDIT CAPTAIN\'S SEA H1/P2: every port isle has a harbour - its town whole
   }
   assert.equal(findHarbour({ rect: rectOf(E.veilhaven(), 4, 3), isWater }), null, 'the Bay\'s reach falls short of it - the isle\'s own is asked');
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /town = \{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \};/);
+  // PIN MOVED (RPT1026-WORLD FAR-QUAY): the host names every port town near the player - an isle's among them
+  assert.match(w, /add\(\{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \}\);/);   // PIN MOVED (the fourth merge of main): each town once (scenes/harbourHost.js)
   // PIN MOVED (FB1020c HARBOUR-REACH): the book sounds the reach it is handed (its own, HARBOUR_REACH without one), and an
-  // isle's own reach asks no farther (the port law's ring is a Bay port's - test/systems/naval/fb1020c_harbourreach.test.js)
+  // isle's own reach asks no farther (the port law's ring is a Bay port's - test/systems/naval/fb1020c_harbourreach.test.js).
+  // PIN MOVED (ALDBRUGH-QUAY): the sounding names its shape too - round by default, the ring's square only past it
   const book = rd('src/systems/naval/harbourBook.js');
-  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach \}\);/);
+  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own, square = false\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach, square, keep: near\.keep \?\? null, ground: deps\.ground \?\? null \}\);/);   // PIN MOVED (PORT-SHIPS): the town's keep and the ground beside the reach
   assert.match(book, /far = own === HARBOUR_REACH \? portRingReach\(near\.rect\) : 0;/);
-  assert.match(w, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');
+  assert.match(book, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');   // PIN MOVED (RPT1026-WORLD FAR-QUAY): harbourBook.js harbourOf
 });
 
 test('AUDIT CAPTAIN\'S SEA P1 (the game\'s rows): Veilhaven\'s havens are the game\'s hamlets of six to twelve blocks - never none (MAPS.BSA\'s villages are 2 or 4 blocks, its cities 30 and more) (mutants: the types, the range)', { skip: !process.env.ARENA2_PATH && 'ARENA2_PATH not set' }, async () => {
@@ -639,14 +644,16 @@ test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the n
   assert.equal(veilRefused({ x: 8068, y: -5185 }), true, 'out to the sea from the Bay');
   assert.equal(veilRefused(), false, 'a teleport map in the Bay');
   assert.equal(said.length, 3);
-  for (const door of ["wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)", 'wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)', 'wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)', 'if (veilRefused()) return null;', 'if (veilRefused()) return false;', 'if (veilRefused(pick.pixel)) return;']) assert.ok(w.includes(door), door);
-  assert.match(w, /\?\? \(etherSea \? \[\.\.\.locationIndex\.values\(\)\]\.find\(\(l\) => l\?\.ether && l\.name === locationName && l\.regionName === regionName\) \?\? null : null\);/);
+  for (const door of ["wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)", 'wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS', 'wildTeleportRefused(pick.pixel ?? null) || (!pick.veil && veilRefused(pick.pixel ?? null))', 'if (veilRefused()) return null;', 'if (host.wildTeleportRefused() || host.veilRefused()) return false;', 'const teleportRefused = (to) => host.wildTeleportRefused(to) || host.veilRefused(to) || ', "if (teleportRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5"]) assert.ok(w.includes(door), door);   // PIN MOVED (PORTAL-BAY, bible/06-Systems/Portal-Stone.md): teleportTo answers false for a refusal; the stone's door and pick moved to scenes/portalStoneHost.js (its live reads `host.<name>`), the pick asking the teleport's one gate (teleportRefused - the zone's, the Veil's, the zone's journey)   // PIN MOVED (AUDIT TESA II Z5): the stone's door and pick ask the open zone's teleport law beside the Veil's - the guild's line and the stone's alike now, each read by its own words
+  // PIN MOVED (AUDIT-TESA A2-1): the isles' with every place the world stands past the Bay (an isle's is in the index only
+  // where the Etheric Sea stands)
+  assert.match(w, /\?\? \[\.\.\.locationIndex\.values\(\)\]\.find\(\(l\) => \(l\?\.ether \|\| l\?\.arena \|\| l\?\.country \|\| l\?\.capital\) && l\.name === locationName && l\.regionName === regionName\) \?\? null;/);
   assert.match(w, /regionName: REGION_NAMES\[ETHER_REGION\] \?\? ETHER_REGION_NAME/);
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key\);/);
+  assert.match(m, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\);/);   // PIN MOVED (BAY-LEFT-B): an Arena town's and a country place's read - held to its own town (banking.js deedHeldIn); the Veil's guard stands   // PIN MOVED (AUDIT RELEASE R2-9): the town asking named; PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): nor an Arena town's - each answers the clamp's region, so a deed's key would own the same key in all of them; PIN MOVED (TESA7): nor a country place's, the same way
   assert.equal((m.match(/isHouseOwned\(playerEntity\.houses \?\? \[\]/g) ?? []).length, 1, 'every town building through it');
-  assert.match(m, /if \(isEtherPlaceId\(dir\.mapId\)\) return \[\];/);
-  assert.match(w, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : modSetting\('travel-options', 'Enabled'\) === true/);
+  assert.match(m, /if \(isEtherPlaceId\(dir\.mapId\)\) return \[\];/);   // PIN MOVED (at the merge of main into TESA): one guard with the Arena town's and the country place's; PIN MOVED (BAY-LEFT-B): the Veil's alone - past the Bay houses are sold
+  assert.match(w, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? \(loc\.exterior\?\.exteriorData\?\.portTownAndUnknown \?\? 0\) !== 0 : modSetting\('travel-options', 'Enabled'\) === true/);   // PIN MOVED (BAY-LEFT-SEA): a place past the Bay by its own port byte, a capital's harbour's too; PIN MOVED (AUDIT-TESA A4-F4): a place past the Bay by its Arena place's port
 });
 
 test('AUDIT CAPTAIN\'S SEA P5: the Fleet never carries a ship across the Veil - no Summon to the far side, no Send away from it; laid up she keeps her side; past the Veil the nearest port is the sea\'s (mutants: the summon\'s, the away\'s, the side kept, the near port)', async () => {
@@ -704,6 +711,7 @@ async function crossingWorld(over = {}) {
     gamePaused: () => w.paused, get _loading() { return w.loading; }, townTalk, modes: { get transitioning() { return w.transitioning; } }, _mode: () => w.mode,
     worldMoveBusy: () => w.busy, get _partyArrivalPending() { return w.arriving; },
     playerTravelPixel: () => ({ x: w.px, y: w.py }), crossingWayAt: EC.crossingWayAt, CROSS_X: ES.CROSS_X, inEther: ES.inEther,
+    veilParty: { kin: () => false },   // PIN MOVED (VEIL-PARTY): the crossing's count leaves her party out - none here
     navalHostileNear: () => w.hostile, CROSS_REFUSED: EC.CROSS_REFUSED, CROSS_STALE: EC.CROSS_STALE, CROSS_FAILED: EC.CROSS_FAILED, csaPassengersOn: () => w.passengers, YesNoBoxWindow,
     crossingRows: EC.crossingRows, captainLedger: ledger, crossingTarget: EC.crossingTarget, CROSS_DAYS: EC.CROSS_DAYS,
     _onlineWorldSession: () => !!w.online, get online() { return w.online ?? null; },   // ETHER-WILD: the question's warning is online's (offline here, as these pins were written)
@@ -759,7 +767,7 @@ test('AUDIT CAPTAIN\'S SEA X2/X9: Yes is the question as it stands NOW (a load, 
   c.w.px = 150; c.w.py = 300; c.step();
   assert.equal(c.log.at(-1), 'asked', 'asked afresh in its own waters');
   c.w.passengers = 1; c.w.overlay.answer(true);
-  assert.match(c.log.at(-1), /Passengers can't cross the Veil/, 'a guest aboard since: refused');
+  assert.match(c.log.at(-1), /Only your party can cross the Veil/, 'a guest aboard since: refused');   // PIN MOVED (VEIL-PARTY): the refusal a stranger's
   c.w.passengers = 0;
   // another helm, no helm, the world moving, a party's arrival: each a stale question
   const { CROSS_STALE } = await import('../../../src/systems/naval/etherCrossing.js');
@@ -1566,7 +1574,9 @@ test('AUDIT CAPTAIN\'S SEA B6/B8/B10: a chart\'s port drawn again till one has o
   // B10's edge - past the map only where the land beyond the Bay stands - is the open sea's own (run by
   // test/systems/naval/fb1014_inlandports.test.js)
   assert.match(rd('src/scenes/world.js'), /\n {4}seaAt: openSea, {3}\/\//);
-  assert.match(rd('src/scenes/world.js'), /\n {4}if \(!\(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT\)\) return tamrielLand && seaPixel\(x, y\);\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);/);
+  // PIN MOVED (AUDIT TESA II P12): past the map's edge the continent's sea leaves the picture's lakes out (world/arenaPlaces.js pastBayLakeAt);
+  // PIN MOVED (RUMARE-WATER): and takes the Imperial City's lake (world/rumareWaters.js rumareSeaPixel)
+  assert.match(rd('src/scenes/world.js'), /\n {4}if \(!\(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT\)\) return tamrielLand && \(\(seaPixel\(x, y\) && !pastBayLakeAt\(x, y\)\) \|\| rumareSeaPixel\(x, y\)\);[^\n]*\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in an overladen pack (they went down unsaid); the exchange caps a purchase at her room before she would lie dead in the water, and says the room; "1 hour left" (mutants: the force, the room\'s cap, the lede, the noun)', async () => {

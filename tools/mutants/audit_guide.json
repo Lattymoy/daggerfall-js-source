@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-GUIDE-O3-the-street-unmemoised",
     "file": "src/scenes/world.js",
-    "old": "canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName:",
-    "new": "canFindPlace(maps, mapDict, regionName, name), currentLocationName:",
+    "old": "canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName:",
+    "new": "canFindPlace(maps, mapDict, regionName, name, undefined, site), currentLocationName:",
     "tests": [
       "test/ui/quest/audit_guide.test.js",
       "test/ui/quest/guide4_tracker.test.js"
@@ -452,13 +452,14 @@
   {
     "name": "AUDIT-GUIDE-W2-the-claim-on-the-name",
     "file": "src/ui/quest/questLens.js",
-    "old": "  const here = hereByName && onMap !== false;",
+    "old": "  const here = hereByName && (onMap !== false || !!site.worldPixel);",
     "new": "  const here = hereByName;",
     "tests": [
       "test/ui/quest/audit_guide.test.js",
       "test/ui/quest/guide1_questLens.test.js",
       "test/ui/enhanced/guide2_wayThere.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS U5): past the Bay a site with its own pixel is here by its name."
   },
   {
     "name": "AUDIT-GUIDE-W3-the-classic-skin-way",
@@ -537,11 +538,12 @@
   {
     "name": "AUDIT-GUIDE-K1-the-diamond-not-asked",
     "file": "src/ui/heldMap.js",
-    "old": "    const quest = this._questAt(sx, sy);\n    const place = quest ? this._questPlace(quest) : null;\n    if (place) { this._select(place); return; }\n",
+    "old": "    const quest = this._questAt(sx, sy);\n    const place = quest ? this._questPlace(quest) : null;\n    // AUDIT STARTS U4: on the zone map its card is down - a quest's place inside the zone is the zone's own journey, as a\n    // hall is (PVPJOURNEY); on the armed map the panel's gate opens none there (no portal into the zone)\n    if (place && this._zoneMap && wildInside(this.deps.wildMask?.() ?? null, place.x, place.y)) { this._zoneTravelTo(place); return; }\n    if (place) { this._select(place); return; }\n",
     "new": "",
     "tests": [
       "test/ui/quest/audit_guide.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS U4): the zone map's journey beside the pick."
   },
   {
     "name": "AUDIT-GUIDE-K4-the-hidden-place-unpicked",

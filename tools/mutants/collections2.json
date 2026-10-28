@@ -92,11 +92,12 @@
   {
     "name": "C2-retired-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'retired']);",
+    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);",
+    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'retired']);",
     "tests": [
       "test/ui/collections2.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "C2-the-read-inside-the-draw",
@@ -347,11 +348,12 @@
   {
     "name": "C2A-closed-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'closed']);",
+    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);",
+    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'closed']);",
     "tests": [
       "test/ui/collections2.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "C2A-the-champions-own-line-lost",
@@ -482,8 +484,8 @@
   {
     "name": "C2A-the-sheet-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -554,8 +556,8 @@
   {
     "name": "C2A-the-stone-theme-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${LOOKS_PART_CSS}`;",
     "tests": [
       "test/ui/collections2.test.js"
     ]

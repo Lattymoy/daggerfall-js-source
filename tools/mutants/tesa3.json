@@ -1,0 +1,120 @@
+[
+  {
+    "name": "TESA3-the-bay-a-province",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "  if (inBay(px, py)) return null;\n  return provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5));",
+    "new": "  return provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5));",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-edge-decides",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "  return provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5));",
+    "new": "  return provinceKeyAt(...bayToPicture(px + 1, py + 0.5));",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-imperials-breton",
+    "file": "src/world/tamrielPeople.js",
+    "old": "  return p.race ? getNameBank(p.race) : BANK_TYPES.Imperial;",
+    "new": "  return getNameBank(p.race);",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-coin-turned",
+    "file": "src/characters/nameHelper.js",
+    "old": "export function getRandomFullNameOfBank(bank) {\n  const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;",
+    "new": "export function getRandomFullNameOfBank(bank) {\n  const gender = randomRangeInclusive(0, 1) === 0 ? GENDERS.Female : GENDERS.Male;",
+    "tests": [
+      "test/tesa3_provinces.test.js",
+      "test/systems/audit58_magic.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-unstreamed-land-a-province",
+    "file": "src/scenes/world.js",
+    "old": "    if (!tamrielLand || onTheBay(x, y) || (etherSea && inEther(x, y))) return null;\n    return provinceByKey(",
+    "new": "    if (onTheBay(x, y) || (etherSea && inEther(x, y))) return null;\n    return provinceByKey(",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-a-raid-names-by-province",
+    "file": "src/scenes/world.js",
+    "old": "  const provinceBankHere = () => (_questRegionPin == null ? provinceNameBank(provinceHere()?.key) : null);",
+    "new": "  const provinceBankHere = () => provinceNameBank(provinceHere()?.key);",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-loading-screen-the-clamp-s",
+    "file": "src/scenes/world.js",
+    "old": "    return locationIndex.get(key)?.name || provinceAt(px, py)?.name || (etherSea",
+    "new": "    return locationIndex.get(key)?.name || (etherSea",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-overworld-the-clamp-s",
+    "file": "src/scenes/world.js",
+    "old": "    const region = provinceAt(px.x, px.y)?.name || (etherSea",
+    "new": "    const region = (etherSea",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-new-region-the-clamp-s",
+    "file": "src/scenes/world.js",
+    "old": "    regionName: () => provinceHere()?.name ?? maps.getRegionName(_questRegionIndex()),",
+    "new": "    regionName: () => maps.getRegionName(_questRegionIndex()),",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-no-province-edge",
+    "file": "src/scenes/world.js",
+    "old": "      const _region = `${_questRegionIndex()}|${provinceHere()?.key ?? ''}`;",
+    "new": "      const _region = _questRegionIndex();",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-quest-people-the-region-s",
+    "file": "src/scenes/world.js",
+    "old": "    nameBankOfCurrentRegion: () => nameBankHere(),",
+    "new": "    nameBankOfCurrentRegion: () => getNameBankOfRegion(_questRegionIndex()),",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-talk-untold",
+    "file": "src/scenes/world.js",
+    "old": "    nameBank: () => provinceBankHere(),   // TESA3",
+    "new": "    nameBank: null,   // TESA3",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  },
+  {
+    "name": "TESA3-the-buildings-the-region-s",
+    "file": "src/scenes/townTalk.js",
+    "old": "      nameBank: provinceBank() ?? getNameBankOfRegion(region),",
+    "new": "      nameBank: getNameBankOfRegion(region),",
+    "tests": [
+      "test/tesa3_provinces.test.js"
+    ]
+  }
+]

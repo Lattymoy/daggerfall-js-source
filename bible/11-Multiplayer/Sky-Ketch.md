@@ -77,7 +77,8 @@ her arrival to her going (`ketchHolds`).
 **In the sky** (`scenes/ketch/ketchSky.js`), on the clock alone so every screen sees one ship in one place: sighted,
 she comes in from the east six kilometres out and ninety metres over her station, slowing, bow west, and turns to her
 station's heading (bow south) over the sighting's last share; at station she hangs still **700 m east and 140 m south of
-Daggerfall's centre, 260 m over the fields** (`world/ketch/ketchModel.js` KT_STATION, KT_GROUND), and lets her
+Daggerfall's centre, 260 m over the fields** (`world/ketch/ketchModel.js` KT_STATION, KT_GROUND - KETCH-EVERYWHERE:
+and a station at every other province's crown capital, section 22), and lets her
 anchor-lift down on its chain over forty seconds; weighing anchor, she draws it up, turns west over a minute, and goes,
 gaining way and height, over the city and out of sight. Her mesh is the made level's own, drawn in the exterior's world
 pass; she stands to the world's collider while she keeps station (a body levitated up finds her hull), never while she
@@ -152,6 +153,9 @@ keeps its range - a bolt, a volley at three), **the Dwarven Spider** (the hold's
 knocks a cell loose), **the Hammer Warden** (a hammer ahead, a sweep, a steam lane), **the Watch-Captain** (a stomp and the
 Tonal Wave rolling out of it - jumped - a cleave, a steam lane). Every blow a full shape stamp (`egBlowOf`) held at the
 wind-up floor. Health: `hpS` seconds of the crew's mean reference damage, the Wardens and the Captain a share a member.
+(RPT1026-FIGHTS RETIRED-BLOW, 2026-10-26: the Tonal Warden's shares are the Hour's law - a member away from the bridge
+`ABSENT_RETIRE_MS` takes its out, and its blow on the Warden or a fork brings it back first, `ketchWarden.js` sighted; the
+relay judges a word aboard from a pose no older than `KT_POSE_FRESH_MS`, the census's own.)
 A body walks round what stands on its floor (the waist's cover, the mast-lift's tower and the main mast). A blow on one
 is believed only risen, by the hand, from its storey, and a swing within reach; a sleeping Warden struck wakes.
 
@@ -319,7 +323,8 @@ her helm; the charm's hum is Imrah's tale and the hammer's metal the roll's; the
 
 ## 14. The herald
 
-`net/ketch/ketchHerald.js`: three cards a voyage on the clock alone - **sighted** (pinging the Ketch's role, else the
+`net/ketch/ketchHerald.js`: three cards a voyage on the clock alone (KETCH-EVERYWHERE: a station's, each naming its own
+city - section 22) - **sighted** (pinging the Ketch's role, else the
 gate's), **arrived** and **weighing anchor** (quiet) - each owed once in its window and let go past it, in her family's
 card (`net/herald/heraldCard.js` `ketch`, her blue) and her own thread when the operator names one (`KT_DISCORD_ROLE`,
 `KT_DISCORD_THREAD`, `server/wrangler.toml`). The hub's alarm beats it (`_ktHeraldBeat`).
@@ -633,3 +638,145 @@ above.
 
 PIN MOVED: `ketch_hud` (the clock's words), `l10n4_hardcoded` (the books' count, 57 -> 56), and every `RELAY_VERSION`
 pin (world267).
+
+## 22. KETCH-EVERYWHERE - a station in every province, at its crown capital (2026-10-26)
+
+The owner, after the audit "no system left behind in the Bay" (item 34, A4: one station, over Daggerfall's fields):
+*"Every single thing here needs to be addressed. No exceptions."* (2026-10-26). **The owner's calls, taken:** one
+Sky-Ketch station per province, at its crown capital; and no site-bound world event in the open zone, so Cyrodiil keeps
+none. The record beside the gates' is `03-World/World-Wide.md` WW-GATES-EVERYWHERE.
+
+**The stations** (`net/ketch/ketchLaw.js` KT_STATION_CROWNS, KT_THEATRES, KT_STATION_CITIES): each station is a crown's
+(`net/kingdomLaw.js` KINGDOMS), and its city is that crown's seat (`kingdomSeatName`). A station's lane is its province's
+theatre (`world/worldWide/worldGrid.js` THEATRE_KEYS), except High Rock's, which is the Bay's own lane 0:
+
+| Lane | Province | Crown capital | Why |
+|---|---|---|---|
+| 0 | High Rock | Daggerfall | High Rock's crown capital, where she always kept station; the Bay's numbers as they always were |
+| 2 | Hammerfell | Sentinel | Hammerfell's crown is the Bay's (WW7-3); Sentinel, on the Bay, is its capital |
+| 3 | Skyrim | Solitude | its crown seat (`world/tamrielCapitals.js` CAPITALS, KINGDOMS `seat`) |
+| 4 | Morrowind | Mournhold | its crown seat |
+| 5 | Sumurset Isle | Alinor | its crown seat |
+| 6 | Valenwood | Falinesti | its crown seat |
+| 7 | Elsweyr | Torval | its crown seat |
+| 8 | Black Marsh | Helstrom | its crown seat |
+
+No station stands on lane 1 (High Rock past the Bay: High Rock's station is Daggerfall's) or on lane 9 (Cyrodiil, the
+open zone). Wayrest, High Rock's second crown, keeps none: one station a province.
+
+**Where.** A Bay crown's station is its city's own MAPS.BSA row (`scenes/ketch/ketchStations.js` KT_BAY_STATION_ROWS):
+Daggerfall's is the arena city's row (17:1231, pixel 207, 213), as it always was, and Sentinel's is 20:6 at (397, 343). The
+client reads each row for its centre, which was Daggerfall's law. A province's station past the Bay is the place of its
+seat's name in its province among TESA's places (`ketchStationPixel`, `world/arenaPlaces.js` arenaPixels - every client
+finds the same pixel on the room's trace and fit). Her middle is the pixel's middle (every location is centred in its
+pixel - `world/terrain/terrainTiles.js` getLocationTerrainTileOrigin), and she keeps station KT_STATION off it, which is
+Daggerfall's own law. On the freeware every station's anchor-lift comes down on the pixel east of its city: dry land of its
+own province with no place on it, and on the Bay under its own crown (`test/net/ketch/ketch_everywhere.test.js`).
+
+**The round** (`ketchLaw.js`): every station keeps Daggerfall's cadence: ten hours, sighted an hour, seven at station and
+forty-five minutes more. Each station comes KT_THEATRE_STAGGER_MS (an eighth of the round, 4,500,000 ms: an hour and a
+quarter) after the one before it, in the stations' order (`ketchStationSlot`: Daggerfall, Sentinel, Solitude, Mournhold,
+Alinor, Falinesti, Torval, Helstrom). So the eight arrivals walk evenly round the ten hours, never two at once. A lane
+with no station takes the Bay's place, and its numbers name no ship.
+
+**The numbers** (`ketchLaw.js` ketchVoyageNumber, ketchTheatreOf): as the gates number a lane, voyage k of lane t is
+k + t x KT_THEATRE_SPAN (100,000,000, the gates' GATE_LANE_SPAN, pinned equal). So the Bay's numbers are the ones they
+always were, and no station's numbers meet another's. Everything that reads a voyage's number reads its lane off it:
+`ketchVoyageOf` its times, `ketchBoards`/`ketchHolds` refuse a lane with no station, `ketchVoyageAt(now, lane)` a
+station's voyage. **The room's key is unchanged**: `kt:<voyage in eight hex>.<captain>` holds every station's numbers.
+The Bay's law is pinned to the millisecond over every edge against the old one, written out.
+
+**The relay** (folded into world270, undeployed): the Worker mints a station's ship while its voyage holds, and never one
+on lane 1 or lane 9. The hub keeps an earner's receipt A STATION (`net/wire.js` ketchReceiptKey - the Bay's own
+`ktrc:<account>` as it always was, every other station's `ktrc:<account>.<lane>`). A station's numbers are in their own
+order, so one never stands over another's. The hub hands every station's at a hello, and spends a station's own on its
+`spent` word, none past its own clock's voyage and none of a lane with no station. **The herald**
+(`net/ketch/ketchHerald.js`): every station's three cards, each naming its own city (the Bay's word for word as they
+were), and each station's moments owed on its own state (`ketchHeraldKey` - `ktherald` the Bay's, `ktherald:<lane>` every
+other's). A client stands a station other than the Bay's own only on a relay that keeps its ships (`net/wire.js`
+relaySupportsKetchTheatres, the world-wide relay's number; `net/online.js` ktTheatresOk). An older relay reads its number
+as a voyage a hundred thousand years on and mints none.
+
+**The account** (`server-account/src/ketch.js`, unchanged): a station's voyage is its own share, one row a (voyage,
+account), as each gate lane is its own gate_kills row. The hold's rates and the budget's fill are unchanged.
+
+**The page** (`scenes/ketch/ketchClient.js`): a sky a station (`scenes/ketch/ketchSky.js` createKetchSky's `theatre`).
+Her meshes are made once for every sky (createKetchSkyArt), and her collider is a bucket a station (`ketchSkyBucket`). The
+Bay's own sky is framed as it always was. Every other station's sky is framed while I stand within KT_STATION_REACH_PX (17
+pixels - as far as she flies from her station, and one more) of its city. Her words are said while I stand in her
+province (`scenes/ketch/ketchStanding.js` ketchStationHere): past the Bay by the theatre's province, and on the Bay by the
+crown the region is under. On the Bay the client reads the politic map (`formats/mapsFile.js` getPoliticIndex, a region
+in the +128 band): Sentinel's regions are Hammerfell's (Sentinel's station); Daggerfall's and Wayrest's are High Rock's,
+which is Daggerfall's and every screen's own; a March, a Free Land and the sea have none. Her ring is on the held map and
+the ink map for every station (`ui/heldMap.js` `ketch` a list, the Bay's rectangle while the continent is not shown). Her
+Timers rows for the province I stand in are listed beside the Bay's (`systems/eventTimers.js`: eight more would bury the
+Bay's). Her anchor-lift boards her own station's voyage. The `/ketch board` default is the station of my province on a
+relay that keeps its ships, else the Bay's. The way down and the voyage's end are said in her own city's fields. A
+province's ship is laid in its province (`scenes/ketch/ketchDeckHost.js` ketchShipHit - the site's region's name, where
+every ship was 'Daggerfall').
+
+**Every line in the player's language** (L10N4): the seven lines that name her city each have a station's twin with
+`{city}` (`ketch.sightedAt`, `ketch.arrivedAt`, `ketch.loweredAt`, `ketch.refuse.awayAt`, `ketch.left.dockedAt`,
+`ketch.timers.whereAt`, `ketch.client.awayAt`), drafted in every language from the Bay's own. The Bay's keys and words are
+unchanged.
+
+**Decisions taken.**
+- The owner's call: a station per province at its crown capital. The first draft stood one a theatre, with High Rock and
+  Hammerfell past the Bay over Shornhelm and Hegathe (the lore's cities there). That draft was refused: neither city is a
+  crown capital, and Sentinel, Hammerfell's crown capital, stood none. Those two provinces' crowns are the Bay's three
+  (WW7-3), so their stations are the Bay's crown capitals: Daggerfall for High Rock (the Ketch's own) and Sentinel for
+  Hammerfell.
+- The stagger is by station order, not by lane, so the eight arrivals are evenly spaced with no gap for lane 1.
+- The made level is one ship's plan, every station's. The tracker names her the Sky-Ketch Mzunthar wherever she keeps
+  station, and her two books stay the Bay's account of her (Imrah Bel-Tavir of Sentinel watches the Bay's skies). The city
+  off the starboard beam of the made level stays the generic city it draws (`world/ketch/ketchModel.js` KT_CITY).
+- Each station's sighting pings the herald's role, as each gate lane's omen pings the gate's.
+
+**The four hosts** (Home.md): `scenes/world.js` wired in place - the held map's `ketch` reads `mapMarks()` (one entry,
+no line added). `scenes/exterior.js` FLAGGED - the Bay's fixed scene draws the Bay's own Ketch alone, as before (Sentinel's
+station rides the world host's client). `scenes/worldModes.js` FLAGGED - its `enterKetch` lays the made level from the
+client's record (`ketchShipHit`). `scenes/dungeonContext.js` FLAGGED - the made level is the dungeon arm's, unchanged.
+
+**Pins:** `test/net/ketch/ketch_everywhere.test.js` (8: the stations and their crowns; the voyages, the Bay's to the
+millisecond; the herald and the hub's beat; the relay, lane 1's and lane 9's doors shut; the account; the Timers and the
+words, the station of my province by crown; the maps - the held map reading every station's ring and the ink map painting each; ARENA2 the Bay's two rows and the provinces' seats, each lift, and the page at
+Solitude and at Sentinel). **Mutants:** `tools/mutants/ketch_everywhere.json` (50, all dead). The Bay's every pin stands
+unmoved. PIN MOVED: `test/ui/fb1004e_overworld.test.js` OW-WHO's hand-built held map carries `_ketches`, the rings
+now a list. Mutant records re-aimed by content: `ketch_law.json` (the sighting late, the voyage gone, boarding
+through the last minutes, holding before the arrival - the law's lines a station's now) and `ketch_relay.json` (a spent
+receipt handed again - the hello's walk a station each).
+
+Run again at the finish, the Ketch's lists on the files this
+changed: `ketch_law.json` (16), `ketch_sky.json` (12), `ketch_client.json` (11), `ketch_words.json` (7),
+`ketch_herald.json` (8), and the records of `ketch_relay.json`, `ketch_audit2.json`, `auditwe_down.json` and
+`ketch_lines.json` on those files (13) - all dead. One of them had lived since AUDIT SHIP 1:
+KTC-another-voyages-ship-ridden-to, because the party's own test hid the voyage's. `test/scenes/ketch_client.test.js` now
+asks for the next voyage and another station's voyage in the same party (two assertions added). Every test is bounded: a mutant that numbered every
+voyage the Bay's put the clock past the year 340,000, where the Timers' walk of the gate's days never ends, so each test
+asks the round's own clock first.
+
+## 22. RPT1026-EVENTS KETCH-OWED - a whole bridge's blow lands once (2026-10-26)
+
+A private report, from the Tonal Warden's fight: in its resonator phase a crew took more than a whole health bar at once,
+and every death-saving piece they wore was spent.
+
+**What it was.** The Warden's whole-bridge blows - the Discord (a quarter of everyone's health), the Keel-Song and the
+turn west - are owed to every screen in the fight, so a hidden tab still pays them (`net/ketch/ketchLink.js` `owed`,
+section 10). The page pays each as it lands and calls `paid(i)` (`scenes/ketch/ketchFight.js`). But a blow stays in the
+fight's list a breath past its landing (`ktBlowDone`: its landing, its spell and 1.5 s more), and the room's walks and
+health words come several a second. Each word folded in that breath found the blow in the list, not in `owed`, and owed
+it again. So one Discord landed once for every word heard after it: on the real voyage, a crew of eight took it six or
+seven times over, more than a full health bar. A piece that saves its wearer from death answered each one.
+
+**The fix.** The link keeps the blows it has paid, by fight and number (`paidKeys`, `fi:i`), and never owes one of them
+again. The keys go with the fight (a new fight number clears them) and with `leave()`, and the newest 64 are kept
+(twice `KT_OWED_MAX`). Nothing else moved: the room says the same words, and the blow's damage and its law are as they
+were (a share of the struck player's maximum health, `gateStrike`).
+
+**Not a DFU member:** Daggerfall has no raid, no airship and no blow owed to a screen. Ledger A (KETCH).
+
+**Pins:** `test/net/ketch/rpt1026_events_ketch.test.js` (2): the real voyage (`test/net/ketch/ketchSim.mjs`) heard by the
+real link and judged by the real fight, my feet on the bridge - each Discord lands once, at a quarter of the health; a
+blow paid and then heard again is owed no more, and `leave()` empties the list. `tools/mutants/rpt1026_events.json`
+(KETCH-OWED, 3: two dead, one recorded equivalent - the clear at a new fight only bounds the set, since the keys carry
+their fight's number). The relay is not touched.

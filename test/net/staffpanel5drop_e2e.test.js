@@ -15,6 +15,7 @@ import { reconnectWave } from '../../src/net/reconnectWave.js';
 import { SOCIAL_ROOM, PIXEL_UNITS, isSocialRoom } from '../../src/net/wire.js';
 import * as H from '../../src/net/hubShards.js';
 import { createStaffHook } from '../../src/net/staffHook.js';
+import { LONE_POSE_MS } from '../../src/net/loneSleep.js';
 import { relinkGame } from '../../src/scenes/staffFollowHost.js';
 import { mintToken, mintFreezeOrder } from '../../src/net/identityToken.js';
 import worker from '../../server/src/index.js';
@@ -127,7 +128,13 @@ for (const leaves of [false, true]) for (const hide of ['shown', 'hidden', 'reli
     const st = (s) => `${s.room}/${s.status}/${s.error ?? ''}`;
     assert.deepEqual(closes, [], `the staff game is never put offline: room ${st(smain)}, World ${st(shub)}`);
     assert.equal(hook.locked(), true, 'the follow holds');
-    assert.ok(Math.abs(hook.view()?.x - pose.x) <= 2, `and draws the target where they stand, a frame behind at most: ${hook.view()?.x} vs ${pose.x}`);
+    // PIN MOVED (LONE-SLEEP): a target with nobody near but hidden watchers is LONE - the hidden law has no side channel, so
+    // its own cell hears it once a minute (net/loneSleep.js LONE_POSE_MS, the owner's accepted cost) and the follow draws it
+    // where its last pose put it; with the staff game standing in its cell, shown, where it stands, a frame behind at most
+    assert.equal(main._loneWas, leaves || hidden, 'lone exactly when no shown player stands near it');
+    const said = main._loneWas ? main._lastSent.x : pose.x;
+    assert.ok(Math.abs(hook.view()?.x - said) <= 2, `and draws the target where its last pose put it, a frame behind at most: ${hook.view()?.x} vs ${said}`);
+    assert.ok(pose.x - hook.view()?.x <= LONE_POSE_MS / 100 + 2, 'never more than a lone minute\'s walk behind');
     assert.ok(shub.status === 'open' && isSocialRoom(shub.room), `hub link up: ${st(shub)}`);
     if (!leaves) assert.ok(smain.status === 'open' && smain.room === cell, `room link up: ${st(smain)}`);
   });

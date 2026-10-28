@@ -141,14 +141,23 @@ test('LW-WALLS the watch lives where a door opens onto the street: a palace wall
 
 test('LW-WALLS the game\'s own walled cities are read here as the streaming host reads them - its location laid out, its navgrid, its doors\' law into the location frame and its buildings (test/lwRealTown.mjs\'s replay, scenes/world.js\'s population block, word for word)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const loc = layoutLocation\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\);/);
-  assert.match(w, /const originMatrix = trs\(\n\s+locLocal\[0\] \+ b\.originX, locLocal\[1\], locLocal\[2\] \+ b\.originZ, 0, 0, 0\);/);
+  // PIN MOVED (IC-STUTTER, bible/03-World/Arena-Provinces.md): the town laid out a block a step through the build's breather -
+  // its answer layoutLocation's whole (test/world/ic_stutter.test.js), so the replay's layoutLocation is the host's
+  assert.match(w, /const loc = await stepsBreathing\(layoutLocationSteps\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\), \(\) => breather\.breathe\(\)\);/);
+  // PIN MOVED (SOLITUDE-RELIEF, bible/03-World/Arena-Provinces.md): the block stands at its tier's lift - 0 for every Bay town
+  assert.match(w, /const blockY = locLocal\[1\] \+ capitalBlockLift\(dfLocation, b\.x, b\.y\);\n\s+const originMatrix = trs\(\n\s+locLocal\[0\] \+ b\.originX, blockY, locLocal\[2\] \+ b\.originZ, 0, 0, 0\);/);
   assert.match(w, /const local = multiply\(originMatrix, placed\.matrix\);/);
   assert.match(w, /const staticDoors = getStaticDoors\(cpu, b\.dfBlock\.index, placed\.recordIndex, local\);/);
   assert.match(w, /nav\.setBlockData\(b\.x, b\.y, b\.dfBlock\.rmbBlock\.fldHeader\.autoMapData,\n\s+\(tx, ty\) => srcTiles\[tx\]\[ty\]\.textureRecord, \{ enhancedWater: waterSwitchOn\(\) \}\);/);
   assert.match(w, /key: makeBuildingKey\(d\.blockX, d\.blockY, d\.recordIndex\),\n\s+x: m\[0\] \* c\.x \+ m\[4\] \* c\.y \+ m\[8\] \* c\.z \+ m\[12\] - locOrigin\[0\], z: m\[2\] \* c\.x \+ m\[6\] \* c\.y \+ m\[10\] \* c\.z \+ m\[14\] - locOrigin\[2\],\n\s+nx: m\[0\] \* n\.x \+ m\[4\] \* n\.y \+ m\[8\] \* n\.z, nz: m\[2\] \* n\.x \+ m\[6\] \* n\.y \+ m\[10\] \* n\.z,/);
-  assert.match(w, /buildings: buildingSummaries\(dfLocation\.exterior\?\.buildings \?\? \[\], loc\.blocks, \{ locationIndex: dfLocation\.locationIndex \?\? 0, locationName: dfLocation\.name \}\)\n\s+\.map\(\(b\) => \(\{ key: b\.buildingKey, type: b\.buildingType, quality: b\.quality, factionId: b\.factionId \}\)\),/);
-  assert.match(w, /people: getWorldClimateSettings\(maps\.getClimateIndex\(p\.x, p\.y\)\)\?\.people, blocks: Math\.max\(1, \(ed\?\.width \?\? 1\) \* \(ed\?\.height \?\? 1\)\),\n\s+w: Math\.max\(1, ed\?\.width \?\? 1\), h: Math\.max\(1, ed\?\.height \?\? 1\),[^\n]*\n\s+port: hasPort\(md\.mapId\),/);   // PIN MOVED (WALL-WAY): and its grid's own shape
+  assert.match(w, /buildings: buildingSummaries\(dfLocation\.exterior\?\.buildings \?\? \[\], loc\.blocks, \{ locationIndex: dfLocation\.locationIndex \?\? 0, locationName: dfLocation\.name \}\)\n\s+\.map\(\(b\) => \(\{ key: b\.buildingKey, type: b\.buildingType, quality: b\.quality, factionId: b\.factionId \}\)\)\.concat\(cityHomesOf\(dfLocation\)\.buildings\),/);   // PIN MOVED (IC-GRAND, the fabric's homes): a capital slice's fabric's beside them (world/imperialHomes.js - none for a Bay town)
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the town's record is the living world's index's, off the world's registry
+  // (scenes/livingWorld/livingIndex.js townOf, the Bay's rows through world/worldWide/bayPlaces.js) - read there, word for word
+  // PIN MOVED (WW7-7, bible/03-World/World-Wide.md): handed to scenes/livingWorld/livingTrips.js with the rest of the living world's ground
+  assert.match(w, /peopleAt: \(px, py\) => getWorldClimateSettings\(maps\.getClimateIndex\(px, py\)\)\?\.people, maps, woods,/);
+  assert.match(rd('src/scenes/livingWorld/livingIndex.js'), /people: peopleAt\(p\.px, p\.py\), blocks: p\.blocks,\n\s+w: p\.w, h: p\.h,[^\n]*\n\s+port: p\.port,/);
+  assert.match(rd('src/world/worldWide/bayPlaces.js'), /w: Math\.max\(1, ed\?\.width \?\? 1\), h: Math\.max\(1, ed\?\.height \?\? 1\), port: !!hasPort\(md\.mapId\),/);
+  assert.match(rd('src/world/worldWide/worldPlaces.js'), /const w = Math\.max\(1, row\.w \?\? 1\), h = Math\.max\(1, row\.h \?\? 1\);[\s\S]*?w, h, blocks: w \* h, port: !!row\.port,/);  // PIN MOVED (WALL-WAY): and its grid's own shape
 });
 
 test('LW-WALLS the game\'s own cities (ARENA2): Ripmarket, the report\'s - its fields larger than its streets, every building with a door its spot on its streets, an exit at each of its four gates, and its street at midday full to DFU\'s cap, every one on it inside the walls; and every one of the game\'s 410 cities, 407 of them with fields the larger: nearly every building with a door its spot (99%), most of its people homed on its street, and the whole watch (mutants: the largest kept, the vote on the largest, the census unwired)', { skip: skipReal }, () => {

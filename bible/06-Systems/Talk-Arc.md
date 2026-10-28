@@ -1714,3 +1714,45 @@ table row before the file in the file's own byte shape, so the answer
 pipeline, townTalk's mobile chain and every other TEXT.RSC reader see
 one kind of record. Record: `01-Overview/bugs/Mac-Bugs-U.md`. Pinned by
 `test/systems/talk/macu_directions.test.js` (5), `tools/mutants/macu.json` (7 dead).
+
+## BAY-LEFT-B - "Where is" past the Bay, and a location's key from its buildings (2026-10-27)
+
+The audit "no system left behind in the Bay" (B4; the owner: *"Every single thing here needs to be addressed. No
+exceptions."*, 2026-10-26). WHAT STOOD: the talk's Regional rows ("Any tavern", the guilds, the temples, the ten
+knightly orders - GetLocationWithRegionalBuilding, TalkManager.cs:1891-1918) count the CURRENT region's MapTable keys,
+and the world host handed the pipeline the raw MAPS.BSA region (`currentRegion: () => maps.getRegion(...)`), null for a
+province's region (62..70): every Regional row past the Bay answered record 11, "not found".
+
+WHAT IT IS NOW:
+
+- **The quest layer's table** (`world.js:"currentRegion: () => questWorld.maps.getRegion(_questRegionIndex()) ?? null,"`;
+  a province's location its table's, `questWorld.provinceSites.getLocation` - the Bay's still MapFileReader.GetLocation):
+  the places past the Bay (`06-Systems/Quest-Arc.md` R2-5, BAY-LEFT-B).
+- **Each row carries its location's KEY** (`scenes/quest/questProvinceSites.js` provinceRow's `key`), read without
+  standing it (`scenes/tamrielPlacesHost.js` tableKeyAt): a stood location's own; an Arena place's, a country place's and
+  a lair's template's (the clone keeps it - all 276 Arena places past the Bay on the freeware, stood, carry exactly it); a
+  capital's slice its own once it stands (the province's warm stands them in idle time, R2-5d), none before.
+- **THE KEY IS THE LOCATION'S BUILDINGS' DIRECTORY** (`world/locationKey.js:"export function locationKeyOf(buildings) {"`).
+  DFU reads MapTable.Key (CheckLocationKeyForRegionalBuilding, :1920-1990, `systems/answerPipeline.js`) and never writes
+  it. Measured on the freeware's MAPS.BSA, all 15,251 rows (7,351 with a key) carry exactly the key their own building
+  lists make: byte 0 a temple of each of the eight divines (the building's faction, or its temple order's - FACTION.TXT's
+  eight orders, the Akatosh Chantry 92 for every Akatosh temple), byte 1 the tavern and the seven shops the reader asks,
+  byte 2 the library, a knightly order's hall (all ten one bit), the Mages Guild, the Fighters Guild, a pawn shop and a
+  palace, bit 24 a general store (every town holds one; the reader asks none of byte 3). So a capital - a city of its own
+  blocks on a borrowed shape (`world/tamrielCapitals.js` synthesizeCapitalLocation's base) - carries its own buildings'
+  key, and the Imperial City's fabric's (`world/imperialFabricBuildings.js` fabricSliceSites), set where its clone is made
+  (`tamrielPlacesHost.js` capitalCloneOf). It had carried its base city's: Solitude and all 257 of the Imperial City's
+  sited slices read 23138624 - a Market District slice with no building claimed a tavern, a bank and three guilds.
+
+So the answer pipeline names a town of the province that holds the building: on the freeware, from Solitude, a town of
+Skyrim for every Regional row Skyrim's table holds a building of (pinned: each named place's own buildings hold it).
+A departure (Port-Ledger A, BAY-LEFT-B): DFU has no province, and never computes the key. THE FOUR HOSTS: `scenes/world.js`
+wired (the pipeline is its); `scenes/worldModes.js` and `scenes/dungeonContext.js` talk through the world host's
+pipeline; `scenes/exterior.js` (the bench) reads MAPS.BSA alone, the Bay's - FLAGGED, as Arena-Provinces.md records.
+
+Pins: `test/systems/quest/bayleftb_quest.test.js` (the keys, the pipeline, the wiring), `test/world/locationkey.test.js`
+(3: every MAPS.BSA row's key its buildings'; FACTION.TXT's orders; each bit the reader reads back). Mutants:
+`tools/mutants/bayleftb.json` (BAY-LEFT-B-B4-*, BAY-LEFT-B-KEY-*). PIN MOVED: `test/tesa10_capitals.test.js`'s host harness hands the capital's
+clone the key's three leaves (`locationKeyOf`, `CAPITALS`, `fabricSliceSites`) - it ran `capitalCloneOf`'s text over
+names that harness did not hold; `test/scenes/audit39_worldlegaltalk.test.js` (#111) reads the pipeline's region over
+the quest layer's maps and its location reader's province arm, a Bay location still MapFileReader's own.

@@ -39,6 +39,7 @@
 export const VIOLENCE = Object.freeze({
   sunny: 0.10, cloudy: 0.25, overcast: 0.30, fog: 0.08, rain: 0.55, snow: 0.45, thunder: 1.0,
   sandstorm: 0.95,   // WEATHER2d: a gale, a shade under the storm's
+  ashfall: 0.3,   // ASHFALL1: an overcast's breeze - the ash drifts, it is not driven
 });
 
 /** A front's shape, in GAME MINUTES: the wind rises over the lead,

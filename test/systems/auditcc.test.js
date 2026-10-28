@@ -529,9 +529,9 @@ test('AUDIT C&C (lens T): THE STANDALONE EXTERIOR READS THE REPAIRED CLIMATE - S
 
 test('AUDIT C&C (lens H): NO SAVE INSIDE A JOURNEY - DFU\'s fast travel is one frame (TeleportToCoordinates, then RaiseTime), and here the teleport is awaited with frames running before the clock moves: a save between them wrote the arrival\'s place with the departure\'s clock and needs; the save refuses while the journey stands, and the journey\'s flag stands from before the teleport to after the clock, and falls whatever happens (mutant: no refusal)', () => {
   const w = read('src/scenes/world.js');
-  const at = w.indexOf('function worldQuickSave(');
-  const save = w.slice(at, w.indexOf('const pf = walkMode && playerSpawned ? player.pos : cam.pos;', at));
-  assert.match(save, /\n {4}if \(_traveling\) \{ if \(!quiet\) townTalk\.say\('You cannot save now\.'\); return false; \}/, 'refused, said to a save pressed');
+  const qs = read('src/scenes/worldQuickSave.js'), at = qs.indexOf('function worldQuickSave(');   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the save is scenes/worldQuickSave.js's, the host's live names read through host
+  const save = qs.slice(at, qs.indexOf('const pf = walkMode && host.playerSpawned ? player.pos : cam.pos;', at));
+  assert.match(save, /\n {4}if \(host\._traveling\) \{ if \(!quiet\) townTalk\.say\('You cannot save now\.'\); return false; \}/, 'refused, said to a save pressed');
   const rise = w.indexOf('      _traveling = true;\n'), teleport = w.indexOf('await _teleportToPixel(pick.pixel.x, pick.pixel.y', rise);
   const clock = w.indexOf('playerTicker.advance(computed.minutes);', teleport), fall = w.indexOf('        _traveling = false;\n', clock);
   assert.ok(rise > 0 && rise < teleport && teleport < clock && clock < fall, 'the flag over the teleport and the clock');

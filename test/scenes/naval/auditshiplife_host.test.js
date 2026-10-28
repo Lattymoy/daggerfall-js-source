@@ -79,7 +79,7 @@ test('AUDIT SHIP-LIFE B4 / B5: THE PORT\'S ROLLER IS ELECTED NEAR ITS MOUTH, AND
   assert.equal(all(z.get('b').s).filter((e) => !e.owner).length, 0, 'b beside it rolled none of its own');
   QA.present = false;
   q.run(OWNER_SWEEP_S + 1);
-  const mine = () => all(QB.s).filter((e) => !e.owner);
+  const mine = () => all(QB.s).filter((e) => !e.owner && !e.ship.cls.fisher);   // PIN MOVED (FISH-BOATS): the moored ships; the fishing boats' heir is fishboats.test.js's pin
   assert.ok(mine().length > 0 && mine().every((e) => e.fromHarbour === PORT.key), 'taken over, the harbour\'s');
   QB.s.view.feet = [0, 0, 300 + HARBOUR_LEAVE + 800];
   q.run(5);

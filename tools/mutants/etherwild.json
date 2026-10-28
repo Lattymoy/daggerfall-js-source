@@ -56,8 +56,8 @@
   {
     "name": "ETHER-WILD-place-by-mask",
     "file": "src/systems/wild/etherWild.js",
-    "old": "  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py);",
-    "new": "  return wildRingAt(px, py);",
+    "old": "  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py, mask);",
+    "new": "  return wildRingAt(px, py, mask);",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]
@@ -74,11 +74,12 @@
   {
     "name": "ETHER-WILD-name-with-article",
     "file": "src/systems/wild/etherWild.js",
-    "old": "  name: `${ETHER_WORD} Ocean`,",
-    "new": "  name: `the ${ETHER_WORD} Ocean`,",
+    "old": "  name: ETHER_SEA_NAME,",
+    "new": "  name: `${ETHER_WORD} Ocean`,",
     "tests": [
       "test/systems/wild/etherwild.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the sea's name now carries its article (the zone's sentences bring none) - the mutation drops it."
   },
   {
     "name": "ETHER-WILD-band-names-swapped",
@@ -112,15 +113,6 @@
     "file": "src/systems/wild/wildZone.js",
     "old": "export const zoneWord = (key, kind = _kind) => (kind ? _kindWords.get(kind)?.[key] : undefined) ?? WILD_TEXT[key];",
     "new": "export const zoneWord = (key, kind = _kind) => WILD_TEXT[key];",
-    "tests": [
-      "test/systems/wild/etherwild.test.js"
-    ]
-  },
-  {
-    "name": "ETHER-WILD-companion-says-mountains",
-    "file": "src/systems/wild/wildZone.js",
-    "old": "until you leave the {zone}.', { zone: zoneName(),",
-    "new": "until you leave the {zone}.', { zone: WILD_NAME,",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]
@@ -173,8 +165,8 @@
   {
     "name": "ETHER-WILD-ruin-not-the-zone",
     "file": "src/scenes/dungeonContext.js",
-    "old": "(isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether) ? wildRingAtPlace(dfLocation) : 0;",
-    "new": "isWildRegion(dfLocation?.regionIndex ?? -1) ? wildRingAtPlace(dfLocation) : 0;",
+    "old": "(isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether) ? wildRingAtPlace(dfLocation, wildMask() ?? cyrodiilMask()) : 0;",
+    "new": "isWildRegion(dfLocation?.regionIndex ?? -1) ? wildRingAtPlace(dfLocation, wildMask() ?? cyrodiilMask()) : 0;",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]
@@ -198,24 +190,6 @@
     ]
   },
   {
-    "name": "ETHER-WILD-hand-held-at-sea",
-    "file": "src/systems/naval/crewCompanions.js",
-    "old": "  if (!wildHere() || wildZoneKind() === ETHER_KIND) return false;",
-    "new": "  if (!wildHere()) return false;",
-    "tests": [
-      "test/systems/wild/etherwild.test.js"
-    ]
-  },
-  {
-    "name": "ETHER-WILD-pack-ashore-at-sea",
-    "file": "src/systems/naval/crewCompanions.js",
-    "old": "export const packStaysAshore = () => wildHere() && wildZoneKind() !== ETHER_KIND;",
-    "new": "export const packStaysAshore = () => wildHere();",
-    "tests": [
-      "test/systems/wild/etherwild.test.js"
-    ]
-  },
-  {
     "name": "ETHER-WILD-bounds-mountains-only",
     "file": "src/scenes/grantHost.js",
     "old": "    if (inEther(px, py)) return true;",
@@ -227,8 +201,8 @@
   {
     "name": "ETHER-WILD-unstuck-to-the-bay",
     "file": "src/scenes/world.js",
-    "old": "const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestSafeLocationAnywhere(",
-    "new": "const town = nearestSafeLocationAnywhere(",
+    "old": "const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestTownOf(",
+    "new": "const town = nearestTownOf(",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]

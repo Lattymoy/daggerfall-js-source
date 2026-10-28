@@ -290,8 +290,8 @@
   {
     "name": "SHIP-PVP-shot-reach",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM) return no('reach');",
-    "new": "  if (!a.pose || !x.pose) return no('reach');",
+    "old": "  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM) return { ...no('reach'), graceEnded };",
+    "new": "  if (!a.pose || !x.pose) return { ...no('reach'), graceEnded };",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -299,7 +299,7 @@
   {
     "name": "SHIP-PVP-shot-guns",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!(ref > 0)) return no('guns');\n",
+    "old": "  if (!(ref > 0)) return { ...no('guns'), graceEnded };\n",
     "new": "",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -308,7 +308,7 @@
   {
     "name": "SHIP-PVP-shot-rate",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!spendWord(me, now)) return no('rate');\n",
+    "old": "  if (!spendWord(me, now)) return { ...no('rate'), graceEnded };\n",
     "new": "",
     "tests": [
       "test/systems/sea/shippvp.test.js"

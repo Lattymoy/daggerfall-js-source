@@ -19,13 +19,16 @@ import { expandRowValues, getMacroValue } from '../../src/systems/quest/questMac
 import { useItem, MAP_TEXT_ID } from '../../src/systems/useItem.js';
 import { useResultAction } from '../../src/ui/enhanced/enhancedInventory.js';
 import { expandGuildMacros, expandGuildRows } from '../../src/systems/guild/guildServiceActions.js';
+import { hostText } from '../hostText.mjs';
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 
 test('X1 MENU-EXIT1: the enhanced menu\'s repaint answers nothing once the screen is destroyed - the confirm card\'s yes runs the action FIRST and repaints after (mutant: the guard removed, which is the crash on every exit through the confirm)', () => {
   const src = rd('src/ui/enhanced/enhancedMenu.js');
   assert.match(src, /function render\(\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(!app\) return;\s*repaintKeepingScroll\(app, \(\) => renderInto\(\)(?:, \{[^}]*\})?\);(?:[ \t]*\/\/[^\n]*)?\s*\}/, 'render() guards on the screen before it paints');
-  assert.match(src, /onClick: \(\) => \{ const f = confirming\.onYes; confirming = null; f\(\); render\(\); \}/, 'and the confirm card still runs the action before the repaint - the order DFU\'s yes-button has, which is why the guard is where it is');
+  // PIN MOVED (RPT1026-MISC CONFIRM-SHEET): the card is let go through `answered()` (it also shuts the sheet the ask
+  // raised) where it was `confirming = null` - the action still runs before the repaint
+  assert.match(src, /onClick: \(\) => \{ const f = confirming\.onYes; answered\(\); f\(\); render\(\); \}/, 'and the confirm card still runs the action before the repaint - the order DFU\'s yes-button has, which is why the guard is where it is');
   assert.match(src, /host\.innerHTML = '';\s*app = null;/, 'destroy() nulls the screen the guard reads');
 });
 
@@ -58,9 +61,9 @@ test('X2 MACROS1: a map read carries its revealed name as the record\'s macro, t
   // the quest table's own %map
   assert.equal(getMacroValue('%map', null, { world: { locationRevealedByMapItem: () => 'Privateers Hold' } }), 'Privateers Hold');
   assert.equal(getMacroValue('%map', null, { world: {} }), '%map[nullMCP]', 'unanswered, the table says so - which is what every quest %map printed before the hook existed');
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (TESA's merge): the quest world is scenes/questWorld.js's - the host read whole
   assert.match(w, /_locationRevealedByMapItem = shown;/, 'the reveal sets PlayerGPS\'s field');
-  assert.match(w, /locationRevealedByMapItem: \(\) => _locationRevealedByMapItem,/, 'and the quest world hook answers it');
+  assert.match(w, /locationRevealedByMapItem: \(\) => (?:host\.)?_locationRevealedByMapItem,/, 'and the quest world hook answers it');   // its live name there
 });
 
 test('X3 MACROS1: the guild window\'s every record goes through the guild\'s context - %pcn/%pcf the player, %fon and %kno the faction\'s name - so the knightly order\'s invitation reads as one (mutants: `fon`/`kno` dropped from expandGuildMacros; the join flow\'s rows handed over verbatim, as they were)', () => {

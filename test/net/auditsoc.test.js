@@ -32,6 +32,7 @@ async function withHub(fn, key = SOCIAL_ROOM) {
   // with a rise ten years off, so this harness's alarms are the sweep's and the heralds' alone (the director's own are
   // sd3_relay.test.js's)
   if (key === SOCIAL_ROOM) r.store.set(SD_KEY, { s: 0, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });
+  if (key === SOCIAL_ROOM) for (let lane = 1; lane <= 8; lane++) r.store.set(`${SD_KEY}:${lane}`, { s: lane * 10_000_000, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });   // PIN MOVED (WW5): and every province lane's Hollow resting with it
   const tick = (ms = 600) => { clock += ms; };
   const act = (ws, o) => r.raw(ws, JSON.stringify({ t: 'social', ...o }));
   const pose = (ws, p = P) => r.raw(ws, JSON.stringify({ t: 'party', p }));

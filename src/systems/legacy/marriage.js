@@ -125,6 +125,25 @@ export function court(member, res, o) {
   return { gained, affection: c.affection, again: false, cooled: gain < 0 };
 }
 
+/** COURT-DEEDS (systems/legacy/courtDeeds.js): a deed's affection added to a courtship begun and not yet betrothed, held
+ *  to AFFECTION_MAX. Answers `{ warmed, affection }`, or null for no such courtship. Not a day's Courtship: that keeps its
+ *  own day (court). AUDIT FB1026d B1: the deed's `day` (the regard's own day) is stamped on the courtship it warmed, as
+ *  court's is - the affection rides the house's record, and a load that hands the regard's day back must not hand the
+ *  affection again (deedDoneOn). @param {any} member @param {string} residentId @param {number} n
+ *  @param {{ deed?: string | null, day?: number | null }} [o] */
+export function warmCourtship(member, residentId, n, { deed = null, day = null } = {}) {
+  const c = member?.courting?.[residentId];
+  if (!c || c.betrothed) return null;
+  const warmed = Math.max(0, Math.min(AFFECTION_MAX - c.affection, Math.trunc(Number(n) || 0)));
+  c.affection += warmed;
+  if (warmed > 0 && deed && Number.isInteger(day)) c.deeds = { ...c.deeds, [deed]: day };
+  return { warmed, affection: c.affection };
+}
+
+/** COURT-DEEDS: whether `kind` warmed this courtship on `day` or later (warmCourtship's stamp). @param {any} courtship
+ *  @param {string} kind @param {number} day */
+export const deedDoneOn = (courtship, kind, day) => Number.isInteger(courtship?.deeds?.[kind]) && courtship.deeds[kind] >= day;
+
 /** A PROPOSAL, heard at full affection: the two are betrothed. Answers whether it was taken. */
 export function propose(member, residentId) {
   const c = member?.courting?.[residentId];

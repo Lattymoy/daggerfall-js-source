@@ -16,6 +16,7 @@
 // head, a mesh not in hand).
 import { portraitRenderer } from '../render/portraitRenderer.js';
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';
+import { drawnPiece } from '../net/appearanceLaw.js';   // APPEARANCES: a worn helm's look
 import { getPref } from '../systems/uiPrefs.js';
 
 /** The shape a door that draws a head at its record's own size draws it at (the party's plate, the family's and the
@@ -44,7 +45,7 @@ export function headDataStamp() {
 export function playerHeadKey(entity) {
   const stamp = headDataStamp();
   if (!stamp) return '0';
-  const helm = entity?.equip ? equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null : null;
+  const helm = drawnPiece(entity?.equip ? equipTableOf(entity)?.[EQUIP_SLOTS.Head] ?? null : null);   // APPEARANCES: the helm as it is drawn - a look worn over it is a new face
   return `${stamp}|${helm ? `${helm.templateIndex}/${helm.material ?? 0}/${getPref('mwSteelHelm')}/${getPref('mwBeastHelm')}` : '-'}`;
 }
 

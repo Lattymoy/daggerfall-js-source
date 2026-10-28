@@ -1734,6 +1734,89 @@ reached by the page that starts it. NOT SEEN: the film on a hardware GPU - every
 here was SwiftShader's, which draws one in 3 to 7 s at 1280 x 720 (INTRO2's in about 0.45 s); the probes wait for it
 accordingly (three minutes a wait).
 
+THE SET (the merge of main into #1184, 2026-10-27). INTRO4 brought TESA's city to main as it stood at 4d8200b01, the
+Imperial City at seven pixels a side, and shot the film on it: the camera's path, the fog, the lake and the dive past the
+Colosseum. TESA's IC-GRAND has since made the game's city twenty-five pixels a side (its wall 6,900 m out where it was
+1,950 m) and gave the Colosseum's ground to Daggerfall's arena (`03-World/Arena-Provinces.md` IC-GRAND).
+
+The two met at
+the merge: the game's `world/imperialCity.js`, `capitalImperial.js` and `capitalShapes.js` are IC-GRAND's, and the film
+reads its own copy of the city it was shot on, `ui/intro/set/` (the three modules as main had them, their imports'
+paths and an export list the only changes), so every frame of the film stays the one pinned above
+(`ui/intro/introCity.js:"import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from './set/imperialCity.js';"`). PIN MOVED:
+`test/ui/intro4_film.test.js` reads the landmarks off the set. The set's 23 proper names stand on the L10N4 ratchet
+where world/imperialCity.js's did (`test/systems/l10n4_hardcoded.test.js`). STILL OPEN: re-shooting the film on the
+grand city - a new camera path over a city 3.5 times as wide, without the Colosseum - is its own slice; until then the
+film's city is not the one the player walks into.
+
+#### TITLE-DOOR (2026-10-27): the held title is the front door
+
+The owner: *"People really love the start game intro screen. I think instead.of this leading to the online/offline
+options. We use the intro title screen as the landing pad itself with these options"*. The film's last frame - the map
+of Tamriel with its words, the mark at rest - said Tap to continue and led to the menu's home on its own pixel sky.
+Now the menu's home stands ON the held title, and Tap to continue is retired (its node, its rules and its catalog key,
+`menu.intro.tapContinue`, dropped from every language by `tools/l10nInSession.mjs`). DFU's own start is its title and
+then DaggerfallStartWindow (Load, Start, Exit); this door was already the port's own design (FD1, UI-CALM), and this
+record is the design record the native-window rule asks of it.
+
+THE LANDING (`ui/intro/introScreen.js:"const land = (how) => {"`). When the mark comes to rest the film lands: it
+holds its title (the frame at `TITLE_HELD_TIME`, the mark's impact spent), steps under the menu (`#intro.intro-landed`
+at z 11, the menu's host at 12), marks the page (`<html data-intro-title="held">`, `ui/intro/titleHeld.js` - one small
+module so the menu, which a running game mounts too, never imports the film), and mounts the menu over itself. The menu
+is inert while it fades in (650 ms, the retired prompt's own fade), then its first door takes the focus the prompt had.
+The film draws only when something changes its picture - a resize, its map arriving - never every frame while the player
+looks (`ui/intro/introScreen.js:"function requestDraw() {"`). It is let go with the menu: the front door's `release` runs
+before the scene boots, so the world never shares the GPU with it (`ui/intro/introScreen.js:"release?.();"`).
+
+THE MENU ON IT (`ui/enhanced/enhancedMenu.js:"const onTitle = () =>"`). The boot home on a held title draws no sky
+and no masthead - the map is the ground, the film's mark is the wordmark - and its host goes see-through there
+(`#enhanced-menu[data-over-title]`); every section keeps its own opaque ground over the held film, and its way home is
+the title again. The pause face never wears it. The doors stand in a row in the band between the mark and the foot,
+where Tap to continue stood (`ui/enhanced/enhancedStyle.js` TITLE-DOOR): Online and Offline side by side, the offline
+level's four games and the way back in one row. The landed mark rises a little and narrows to make that band (41% of
+the height, at most 37vw, 535px or 64% of the height; on a short screen, a phone and a short phone their own values),
+and the band starts at the mark's foot - its centre plus half its height, .42 of its width for the 1232 x 1034 file
+(`--intro-doors-top`, held to the PNG's own IHDR by the test). On a phone the two questions stand one over the other and
+the games two to a row; on a short screen the offline word and line are left to the rail and the diamonds put away, so
+the five fit one row. DFO Grimoire stands neither its desk nor its book on the title: the doors are its one page held up
+over the map, as its map backdrop holds them (`ui/grimoireDress.js` TITLE-DOOR), the games and the way back one size.
+
+THE SCORE. A title the film carried in keeps the score at its own level while the player looks; the first press on the
+menu takes it down to the menu's (MENU_THEME_GAIN), as the retired tap did. SKIP INTRO AND ESCAPE LAND ON THE TITLE, not
+past it: the title held at once, the score unlocked in the press and started at the menu's level (the old Skip's audio).
+Skipped at the gate, before the map was built, the title stands on the film's own ground and the map fades in under it
+when it is drawn (`introLandscape.js`'s `mapReady`: the programs and the continent, not the city). The player's SKIP
+START VIDEO (UXB1-A) opens on the title too - no gate, no film, nothing asked of the score until the front door's first
+gesture starts it at the menu's level. A score that cannot load lands the title with its message, now at the top under
+the corner marks. `?nointro` (the probes') builds no film and the menu stands on its own sky, as it always has; a film
+that breaks before it lands is let go and the menu opens on its sky the same way.
+
+PINS: `test/ui/titledoor.test.js` (7: the band from the logo file's own size and the film under the menu once landed;
+the home on the title, a section over it and home to it, the pause face and an unheld page without it; Skip start video
+on the title at once; Skip intro and Escape landing on it; the carried title's duck at the first press and its draws
+only on a change; a broken film let go; the front door letting the title go with the menu), on `test/introDom.mjs` (a
+page small enough to hold the film, its frames and timers turned by hand). Moved, as deliberate changes edit their pins:
+`test/systems/uxb1a_startvideo.test.js` (the pref lands on the title), `test/ui/audit_font3.test.js` (the prompt's phone
+size retired), `test/ui/grim1_dress.test.js` (the desk's rule names the title's home it leaves). Mutants:
+`tools/mutants/titledoor.json` (14, all dead). `tools/introProbe.mjs` reads it live: the landing, the held title
+drawing nothing while it waits, the duck at the first press, a section and home again, a game letting the title go, the
+mark and the doors fitting their band at every size for both questions and the offline row, the missing score, Skip at
+the gate with the map fading in, and Skip start video. Its resume check (INTRO2's: the score continues, it does not jump
+by wall time) is read against the wall time since the resume's own press, not a fixed second - a software GPU draws a
+frame in 2 to 9 s, and the frame-polled wait let more than a second of score pass before the read (it failed so on
+INTRO4's run and on this PR's first). `tools/introCapture.mjs` shoots each frame past the landing as the title stands (a
+seek past it draws nothing). NOT SEEN: a hardware GPU (SwiftShader, as INTRO4).
+
+MAIN'S RED, MENDED AT THE MERGE (the owner: "Every single deploy has been red so far"). From CHAT-POST (#1342) on, every
+deploy of main stopped at its tests: the change re-wrote the chat's send (`world.js` chatSend's `{ me, item, items }`,
+onSend's `opts`) and the pack's bag, and left pins and mutant records on the old text. Mended here, none of it the title's:
+the four chat-send pins re-aimed (`chatchan`, `guild1c`, `mod1`, `partytravel`, each marked PIN MOVED); MAC-C's sheet
+door read from its pack's own `createInventoryWindow({`, not a 1600-character window the longer line pushed it out of;
+the suggest list's Worn tag up to the FONT3 floor (`chatPanel.js` `.dfchat-suggest-worn`, 10px to 11px); twelve mutant
+records re-aimed by content (`chat_find`, `chatchan`, `emote1`, `mod1`, `staff-chat-red` - 12 dead); and the hosts'
+ceilings raised to the hosts CHAT-POST left (bootWorld 36,240, createWorldModes 11,027, `hostsplit.json` with them) -
+the pull-request gate the deploy does not run.
+
 ## U65 THE INTRO (2026-08-30) - HISTORICAL REMOVAL
 
 Built through five versions in one day (U65, c, d, e: generated Iliac
@@ -18866,6 +18949,20 @@ the dungeon's arms pass `!f.yielded` (the street's `!f._pupYield` too) and its "
 
 The classic skin has none of it, byte for byte.
 
+**IC-PROPS (2026-10-27, the owner: "Some doors in Imperial city can be entered but dont show the tooltip", then "a world
+wide issue").** The law above broke at two doors. A house with no name of its own had a plaque only where it listed verbs
+(online, for sale): offline and everywhere else the door entered and said nothing - 6,325 of the 8,295 building doors
+with a room over the freeware's blocks and both town packs.
+
+DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
+and the mod prints it (.cs:719-728), so the port does now, whatever the verbs
+(`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`), and a nameless building of no
+house type (a ship's deck) says its place. And a door of a NEIGHBOURING location (the Imperial City's next slice, a town
+across a pixel's edge) was named and discovered in the player's own town's book: the host's record now carries the
+door's own town (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`), and the plaque, the press
+and the activation read it - so the plaque names what the press enters. The record: `03-World/Arena-Provinces.md`
+IC-PROPS; pins `test/systems/icprops_doors.test.js`.
+
 ## CHARGEN-REFLEX — the Continue button was covered, not dead (2026-09-22)
 
 Fay on Discord, desktop build 0.1.3612: *"Just downloaded the latest
@@ -19730,6 +19827,13 @@ capture phase, and a loss within `TOUCH_UNLOCK_MS` (500 ms) of one is the finger
 touch near is the player's Escape as before, so a mouse and a keyboard are untouched (and a Firefox touchscreen laptop,
 the layer off, is covered too). Not proven on a device. Pinned in `test/player/fb1009c_touchunlock.test.js` (2);
 `tools/mutants/fb1009c_touchunlock.json` (4, all dead; `esc_lock.json`'s relock record re-aimed by content).
+
+**A FOURTH - A TOUCH SCREEN NEVER ASKS (TOUCH-NO-LOCK, RPT1026-MISC, 2026-10-26).** A private report from a phone:
+Chrome's pointer-lock banner (how to get a cursor back) came up with every menu. "A finger never holds a lock" held for the canvas's click net only: every RELOCK door - a window's close, the
+look gate's close edge, a dial's goodbye - asked for the lock on a phone too, Chrome on Android granted it to the tap
+that closed the window, and its banner said how to give back a cursor the phone does not have. `requestLook`
+(`player/pointerLock.js`), the one door the others go through, returns on a touch device (`isTouchDevice`); the look
+there is the touch layer's drag. Pinned in `test/player/rpt1026_misc_lock.test.js` (1).
 
 ## CARD-FIT - the item card fits its window and says what a glance needs (2026-09-28)
 
@@ -20639,6 +20743,42 @@ At 390x844 (a touch screen) the bar is two lines of 44px buttons, the Boards 46p
 sideways; at 844x390 the bar is one line and the list 216px. Not seen: the live pause face online. Pins:
 `test/ui/enhanced/timers2.test.js` (8: the law, the layout, the window, the bar, the sheet, and the audit's three);
 `test/ui/enhanced/timers1.test.js`'s window pin moved to the groups; `tools/mutants/timers2.json` (28), all dead.
+
+## RPT1026-MISC - the private reports' screens (2026-10-26)
+
+The batch's other screen faults, each read to its root in a private report and pinned by a test that fails without it
+(mutants in `tools/mutants/rpt1026_misc.json`, all dead):
+
+- **TAB-REPEAT** - a held Tab put the dial away. The overlay stack's Tab listener (`ui/enhanced/enhancedOverlays.js`
+  onTab) closed the top overlay on the key's auto-repeat as on a press; a repeat is ignored now, as the listener's own
+  comment said it was. `test/ui/enhanced/rpt1026_misc_tab.test.js` (1).
+- **TOAST-STALL** - HUD lines stuck on screen when several came close together, on a phone for many seconds. The HUD
+  text keeps PopupText's one timer, the FRONT row's; a repeat of the BACK row refreshed it, so a line said
+  again and again held every row up for as long as it repeated. A repeat behind other rows is dropped now - its row is
+  on screen, with its own dwell to come (`ui/hud/hudText.js` add). `test/ui/hud/rpt1026_misc_toasts.test.js` (2).
+- **CONFIRM-SHEET** - Remove data on the Morrowind card seemed to do nothing, and said nothing. Every
+  destructive press on the Settings screen asks first (the Morrowind card's Remove data, a pack's remove, All off, Reset
+  everything, Restore defaults), its question a card in the detail pane - and in the pause menu's Settings, and on a
+  narrow or touch screen, that pane is a sheet below the screen until opened. The ask set the card without opening it.
+  It opens the sheet now, and shuts it again when answered if it opened it (`ui/enhanced/enhancedMenu.js` ask,
+  `answered`). `test/ui/enhanced/rpt1026_misc_confirm.test.js` (1).
+- **TOUCH-FIELD** - on a phone the Bank's amount could not be typed, while the map's name field could. The
+  enhanced port draws a classic window's typed field as words (`ui/enhanced/enhancedPort.js` 'field'); the touch layer's
+  own entry (TI2's "abc") is opened by a press on a live field now, with the number pad for an amount
+  (`ui/touch/touch.js` openTouchEntry; the bank's field marked `numeric` in `enhancedPorts.js`).
+  `test/ui/enhanced/rpt1026_misc_field.test.js` (1). AUDIT RPT1026 L1: the entry was the layer's child, under every DOM
+  window (the layer is one stacking context at z-index 5, the port's host 13), so the amount typed stood hidden behind the
+  Bank until Enter; it is the page's own now, at `TOUCH_ENTRY_Z` (39) over the window that raised it
+  (`test/ui/audit_rpt1026_l.test.js`).
+- **TALK-SIDEWAYS** - on a phone the talk panel ran off the screen and could not be used.
+  Measured in Chromium at 844 x 390 before the fix: the panel 52dvh, 203 pixels, its topic list 12 pixels tall and drawn
+  under the foot; at 740 x 360 the category buttons under it. On a screen 500 pixels high or less the panel stands the
+  height less a margin and keeps its two columns (`ui/enhanced/enhancedStyle.js`, after the talk's phone rule): the list
+  166 pixels at 844 x 390, upright and desktop untouched. `test/ui/enhanced/rpt1026_misc_talk.test.js` (1, the sheet's
+  cascade read at each size). AUDIT RPT1026 L2: and narrower than 720 pixels (640 x 360, 667 x 375, 568 x 320) the phone
+  rule had still stacked the head and the foot, the list 66 pixels at 640 x 360 and 26 at 568 x 320, Work cut off; on a
+  short screen the head and the foot are one row each and the categories shrink to their strip - the list 152, 167 and
+  112 pixels (`test/ui/audit_rpt1026_l.test.js`).
 
 ## ARMOR-TYPE - A PIECE OF ARMOUR SAYS ITS FAMILY (2026-10-26, a player: "can we add an info to every item what TYPE of armor it is (chain leather or plate)")
 

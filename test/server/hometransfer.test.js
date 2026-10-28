@@ -100,6 +100,24 @@ test('HOME-TRANSFER a free gift and a paid sale each land once, and a second ans
   assert.equal((await call('POST', '/v1/homes/transfer', { op: 'offer', ...HOME, character: A.id, to: 'Mara', price: 0, keepDecor: true, keepItems: false }, aldric)).body?.error, 'no-home');
 });
 
+test('HOUSES-3 HOME-TRANSFER: the cap is the buyer\'s homes in the offered home\'s region (net/homeLaw.js HOME_CAP) - three in another region leave room for it (mutants: the cap counted over every region, at the read and in the write)', async () => {
+  const { env, call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  const A = await seatRealm(env, aldric, 'Aldric', RICH('Aldric'));
+  const M = await seatRealm(env, mara, 'Mara', RICH('Mara'));
+  assert.equal((await call('POST', '/v1/homes/claim', home({ character: A.id, realm: A.at() }), aldric)).status, 200);
+  for (const key of [0x10204, 0x10205, 0x10206]) {
+    const claimed = await call('POST', '/v1/homes/claim', home({ mapId: 1291010264, buildingKey: key, region: 18, character: M.id, realm: realmAt(env, M.id) }), mara);
+    assert.equal(claimed.status, 200, JSON.stringify(claimed.body));
+  }
+  const offer = await call('POST', '/v1/homes/transfer', { op: 'offer', ...HOME, character: A.id, to: 'Mara', price: 0, keepDecor: true, keepItems: false }, aldric);
+  assert.equal(offer.status, 200, JSON.stringify(offer.body));
+  const took = await call('POST', '/v1/homes/transfer', { op: 'accept', id: offer.body.id, character: M.id, realm: realmAt(env, M.id) }, mara);
+  assert.equal(took.status, 200, JSON.stringify(took.body));
+  assert.equal(ownerOf(env).char_id, M.id, 'her fourth home, the first in its region');
+});
+
 test('HOME-TRANSFER refuses a buyer who cannot pay, a full character, a house that is not empty, and a stale offer', async () => {
   const { env, call, registered } = await stand();
   const aldric = await registered('Aldric');

@@ -133,7 +133,7 @@ test('HARBOUR-BOOK THE PIER ACROSS THE SHELF: on Deep Waters\' shore-fitted shel
 
 test('HARBOUR-BOOK THE WORLD\'S WIRING: one book made off the port near the player and the sea\'s water law; the naval host handed it; sounded each exterior frame before the quays stand; moved with the floating origin before the sea and the quays; emptied with the sea at a transition, a jump and a load; the quays stand off it whatever runs on the water - THE FOUR HOSTS: the street alone (a building\'s and a dungeon\'s frames have no sea, the standalone street no harbour)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const harbourBook = createHarbourBook\(\{\n    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n  \}\);/);
+  assert.match(w, /const harbourBook = createHarbourBook\(\{\n    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n    ground: \(x, z\) => surfaceAt\(x, z\) - tvSeaY\(\),[^\n]*\n  \}\);/);   // PIN MOVED (PORT-SHIPS): the world hands the book its ground too (a berth's ship stands afloat)
   assert.equal((w.match(/createHarbourBook\(/g) ?? []).length, 1, 'one book');
   assert.match(w, /\n    harbourBook,   \/\/ SHIP-LIFE, HARBOUR-BOOK/);
   assert.ok(!/harbourNear: navalHarbourNear,   \/\/ SHIP-LIFE/.test(w), 'the host sounds none of its own');

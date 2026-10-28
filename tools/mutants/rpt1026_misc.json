@@ -1,0 +1,312 @@
+[
+  {
+    "name": "rpt1026-misc-tab-repeat-closes",
+    "file": "src/ui/enhanced/enhancedOverlays.js",
+    "old": "  if (e.repeat) return;\n  closeTopOverlay();",
+    "new": "  closeTopOverlay();",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_tab.test.js"
+    ],
+    "note": "TAB-REPEAT: the auto-repeat of the held Tab puts the dial away again"
+  },
+  {
+    "name": "rpt1026-misc-toast-repeat-refreshes-front",
+    "file": "src/ui/hud/hudText.js",
+    "old": "      if (this.lines.length > 1) return;\n",
+    "new": "",
+    "tests": [
+      "test/ui/hud/rpt1026_misc_toasts.test.js"
+    ],
+    "note": "TOAST-STALL: a repeat behind other rows puts the front row's timer back again - every row held while it repeats"
+  },
+  {
+    "name": "rpt1026-misc-rumor-orphan-kept",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this.deps.removeProgressRumors?.(quest.uid);\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/systems/quest/rpt1026_misc_rumor.test.js"
+    ],
+    "note": "RUMOR-ORPHAN: the removed quest's post-quest rumor stays in the mill, told raw"
+  },
+  {
+    "name": "rpt1026-misc-face-gone-drawn",
+    "file": "src/ui/hud/hudEscortFaces.js",
+    "old": " && !_questGone(_faces[i]?.questUID));",
+    "new": ");",
+    "tests": [
+      "test/systems/quest/rpt1026_misc_faces.test.js"
+    ],
+    "note": "FACE-ORPHAN: a face whose quest is gone is drawn again"
+  },
+  {
+    "name": "rpt1026-misc-face-gone-saved",
+    "file": "src/ui/hud/hudEscortFaces.js",
+    "old": "  return _faces.filter((f) => !_questGone(f.questUID)).map((f) => ({ ...f }));",
+    "new": "  return _faces.map((f) => ({ ...f }));",
+    "tests": [
+      "test/systems/quest/rpt1026_misc_faces.test.js"
+    ],
+    "note": "FACE-ORPHAN: the orphan rides every save for good"
+  },
+  {
+    "name": "rpt1026-misc-face-gone-unwired",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "  setEscortQuestGone((uid) => !machine.getQuest(uid));",
+    "new": "  setEscortQuestGone(null);",
+    "tests": [
+      "test/systems/quest/rpt1026_misc_faces.test.js"
+    ],
+    "note": "FACE-ORPHAN: the bridge never tells the panel which quests are gone"
+  },
+  {
+    "name": "rpt1026-misc-bed-press-ignored",
+    "file": "src/systems/rest/restSession.js",
+    "old": "  if (pressedBed || place?.houseOwned || place?.isShip || place?.room) return { kind: 'bed', where: null };",
+    "new": "  if (place?.houseOwned || place?.isShip || place?.room) return { kind: 'bed', where: null };",
+    "tests": [
+      "test/systems/rest/rpt1026_misc_rest.test.js"
+    ],
+    "note": "BED-PRESS-INDOOR: a bed pressed in a hall prices as its boards again"
+  },
+  {
+    "name": "rpt1026-misc-bed-press-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "{ pressedBed: _restFromBed, fireNear: interiorCamps.fireNear(player.pos) }).kind,",
+    "new": "{ pressedBed: false, fireNear: interiorCamps.fireNear(player.pos) }).kind,",
+    "tests": [
+      "test/systems/rest/rpt1026_misc_rest.test.js"
+    ],
+    "note": "BED-PRESS-INDOOR: the interior host never hands the press to the kind"
+  },
+  {
+    "name": "rpt1026-misc-touch-lock-asked",
+    "file": "src/player/pointerLock.js",
+    "old": "  if (isTouchDevice()) return;\n  _lastRequestAt = nowMs();",
+    "new": "  _lastRequestAt = nowMs();",
+    "tests": [
+      "test/player/rpt1026_misc_lock.test.js"
+    ],
+    "note": "TOUCH-NO-LOCK: a phone asks for the pointer lock again, and Chrome's banner says so at every window"
+  },
+  {
+    "name": "rpt1026-misc-confirm-sheet-shut",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "askOpenedSheet = !sheetOpen; sheetOpen = true; render(); };",
+    "new": "askOpenedSheet = !sheetOpen; render(); };",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_confirm.test.js"
+    ],
+    "note": "CONFIRM-SHEET: the ask draws its card into a shut sheet again - Remove data does nothing anyone sees"
+  },
+  {
+    "name": "rpt1026-misc-confirm-sheet-stays",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "function answered() { confirming = null; if (askOpenedSheet) sheetOpen = false; askOpenedSheet = false; }",
+    "new": "function answered() { confirming = null; askOpenedSheet = false; }",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_confirm.test.js"
+    ],
+    "note": "CONFIRM-SHEET: answered, the sheet the ask raised stays up over the list"
+  },
+  {
+    "name": "rpt1026-misc-trample-on-journey",
+    "file": "src/scenes/world.js",
+    "old": "if (rrRidingOn() && player.riding && player.isRunning && !rideOnTheRoad()) rrRidingContacts();",
+    "new": "if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();",
+    "tests": [
+      "test/scenes/rpt1026_misc_trample.test.js"
+    ],
+    "note": "JOURNEY-TRAMPLE: a journey galloping through a town tramples its people and charges Assault again"
+  },
+  {
+    "name": "rpt1026-misc-heir-newborn-unoffered",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "    if (heirs.length || newborn) out.push({ family, fallen, heirs, newborn });",
+    "new": "    if (heirs.length) out.push({ family, fallen, heirs, newborn });",
+    "tests": [
+      "test/systems/legacy/rpt1026_misc_heir.test.js"
+    ],
+    "note": "HEIR-WAITS: a fall with no living kin has no card again - the line waits with nothing to press"
+  },
+  {
+    "name": "rpt1026-misc-heir-newborn-refused",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "  if (newborn) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/systems/legacy/rpt1026_misc_heir.test.js"
+    ],
+    "note": "HEIR-WAITS: the newborn's press makes nobody and is refused"
+  },
+  {
+    "name": "rpt1026-misc-heir-newborn-born-now",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "    const at = family.pending.at ?? 0;",
+    "new": "    const at = 0;",
+    "tests": [
+      "test/systems/legacy/rpt1026_misc_heir.test.js"
+    ],
+    "note": "HEIR-WAITS: the newborn is born at no minute of the fall's"
+  },
+  {
+    "name": "rpt1026-misc-touch-field-unmarked",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "value: w.value, active: true, numeric: true } : null,",
+    "new": "value: w.value, active: true } : null,",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_field.test.js"
+    ],
+    "note": "TOUCH-FIELD: the Bank's amount is no number - a phone raises the letters"
+  },
+  {
+    "name": "rpt1026-misc-touch-entry-unhooked",
+    "file": "src/ui/touch/touch.js",
+    "old": "  _openEntry = openEntry;",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_field.test.js"
+    ],
+    "note": "TOUCH-FIELD: a window's field can raise no entry - a finger on it raises no keyboard"
+  },
+  {
+    "name": "rpt1026-misc-touch-field-press-unread",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "      if (typed && openTouchEntry({ numeric: typed.dataset.entry === 'numeric' })) { e.stopPropagation(); return; }",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_field.test.js"
+    ],
+    "note": "TOUCH-FIELD: the port's press on its field asks no entry"
+  },
+  {
+    "name": "rpt1026-misc-giant-rock-unasked",
+    "file": "src/scenes/world.js",
+    "old": "if (slope > 1.6 || crest > 4 || giantGroundBlocked(collider, x, h, z)) continue;",
+    "new": "if (slope > 1.6 || crest > 4) continue;",
+    "tests": [
+      "test/systems/wild/rpt1026_misc_giants.test.js"
+    ],
+    "note": "GIANT-ROCK: the Greater Giant's field is the height map's alone again - stood inside a rock"
+  },
+  {
+    "name": "rpt1026-misc-giant-rock-inside-unseen",
+    "file": "src/systems/wild/wildGiants.js",
+    "old": "  return !!(collider.sphereOverlaps?.(c, GIANT_CLEAR_R) || collider.insideSolid?.(c));",
+    "new": "  return !!collider.sphereOverlaps?.(c, GIANT_CLEAR_R);",
+    "tests": [
+      "test/systems/wild/rpt1026_misc_giants.test.js"
+    ],
+    "note": "GIANT-ROCK: a body inside a big rock, no face near, reads clear"
+  },
+  {
+    "name": "rpt1026-misc-giant-rock-face-unseen",
+    "file": "src/systems/wild/wildGiants.js",
+    "old": "  return !!(collider.sphereOverlaps?.(c, GIANT_CLEAR_R) || collider.insideSolid?.(c));",
+    "new": "  return !!collider.insideSolid?.(c);",
+    "tests": [
+      "test/systems/wild/rpt1026_misc_giants.test.js"
+    ],
+    "note": "GIANT-ROCK: a rock's face at the giant's side reads clear"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-unfit",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }",
+    "new": "      if (lead > 0) { castPaced = true; }",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the Morrowind arm plays its section at the rate again - its release lands its own lead in, later than the classic hands'"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-unsaid",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }",
+    "new": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); }",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the pace is made and never said - the rig holds a paced cast for its key"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-rateless",
+    "file": "src/combat/fpsSpellCasting.js",
+    "old": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD) / validCastRate(rate);",
+    "new": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD);",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the spell's moment ignores the cast's rate - a quick caster's Morrowind arm lets go after the classic hands"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-unasked",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "fpArm.castSpell(rangeType, rate, castReleaseS(rate))",
+    "new": "fpArm.castSpell(rangeType, rate)",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the rig hands the arm no moment to pace its cast to"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-held",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      const armHolds = armCasts && !fpArm.castPaced?.();",
+    "new": "      const armHolds = armCasts;",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: a paced arm's spell is held for the key again - a frame late, and on a key that does not come, the whole section"
+  },
+  {
+    "name": "rpt1026-misc-spell-short-unscaled",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "export const EOTB_RECORD_SCALE = Object.freeze({ 112374: Object.freeze({ from: 45, to: 59, scale: 80 / 110 }) });",
+    "new": "export const EOTB_RECORD_SCALE = Object.freeze({});",
+    "tests": [
+      "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
+    ],
+    "note": "SPELL-SHORT: set 10's spell sheets sized as the XML has them - the Fighter Mage (female) shrinks as a spell comes up"
+  },
+  {
+    "name": "rpt1026-misc-spell-short-unread",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  const s = k * eotbRecordScale(archive, record);",
+    "new": "  const s = k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
+    ],
+    "note": "SPELL-SHORT: the door every caller sizes a sprite through never reads the mod's record scale"
+  },
+  {
+    "name": "rpt1026-misc-spell-short-xml-lost",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  return s === 1 ? xml : { ...xml, scale: xml.scale * s };",
+    "new": "  return s === 1 ? xml : { scale: xml.scale * s, x: 0, y: 0 };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
+    ],
+    "note": "SPELL-SHORT: the scaled record loses the mod's XML offset - the figure stands off its feet"
+  },
+  {
+    "name": "rpt1026-misc-talk-sideways-short",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-shell .talk-panel { height: calc(100dvh - 12px); bottom: 6px; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_talk.test.js"
+    ],
+    "note": "TALK-SIDEWAYS: a phone on its side gets the 52dvh panel again - the topic list has no height"
+  },
+  {
+    "name": "rpt1026-misc-talk-sideways-stacked",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-main { grid-template-columns: 1fr minmax(200px, 40%); grid-template-rows: minmax(0, 1fr); }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_talk.test.js"
+    ],
+    "note": "TALK-SIDEWAYS: a narrow phone on its side stacks the columns - the strips outgrow the topics' half"
+  }
+]

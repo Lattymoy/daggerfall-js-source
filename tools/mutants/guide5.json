@@ -47,8 +47,8 @@
   {
     "name": "GUIDE5-off-bay-kept",
     "file": "src/ui/quest/questMarks.js",
-    "old": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < 0 || py < 0 || px >= size.width || py >= size.height) continue;",
-    "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < 0 || py < 0) continue;",
+    "old": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0) continue;",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]

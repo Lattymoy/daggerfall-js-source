@@ -415,7 +415,10 @@ test('MARKET-ANY client: the pack side offers what may go and says why the rest 
 });
 
 test('MARKET-ANY client: a collected piece this game will not hold - or an answer that is a repeat - ends the session (a join reads the record), never a second piece (mutants: received regardless; the repeat received)', async () => {
-  for (const answer of [{ ok: true, status: 200, data: { item: { ...sigilStone() }, realm: { seq: 2 } } }, { ok: true, status: 200, data: { repeat: true, item: { templateIndex: 113, group: 'Weapons', name: 'Dagger' }, realm: { seq: 2 } } }]) {
+  // PIN MOVED (RPT1026-MARKET COLLECT-LANDED): a repeat that names the record's sequence is this ask's own collect, its
+  // first answer lost, and is received (test/net/rpt1026_market_arrive.test.js) - the repeat the service answers a collect
+  // made before this ask names none, and still ends the session
+  for (const answer of [{ ok: true, status: 200, data: { item: { ...sigilStone() }, realm: { seq: 2 } } }, { ok: true, status: 200, data: { repeat: true, item: { templateIndex: 113, group: 'Weapons', name: 'Dagger' } } }]) {
     const pack = { items: [] };
     const goods = createMarketGoods(pack);
     let abandoned = null;
@@ -557,10 +560,10 @@ test('MARKET-ANY service: a listing the decision cannot write - the thirtieth pl
 });
 
 test('MARKET-ANY wiring: the host builds the pack side over the live player (a piece another book keeps left out), hands the tab its goods, a piece\'s listing and a record\'s name, and the book the realm act\'s abandon and the collect\'s receive; the service routes the list and the collect with the realm\'s records (mutants: the keeper unasked; the tab\'s goods unwired; the routes without R2)', () => {
-  const w = src('src/scenes/world.js');
-  assert.match(w, /const marketGoods = createMarketGoods\(playerEntity, \{ kept: \(pv\) => pieceKept\(pv\), say: \(t\) => townTalk\.say\(t\) \}\);/);
+  const w = src('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
+  assert.match(w, /const marketGoods = createMarketGoods\(playerEntity, \{ kept: \(pv\) => pieceKept\(pv\), say: \(t\) => host\.townTalk\.say\(t\) \}\);/);   // PIN MOVED (BAY-LEFT-SEA): the moved module reads the HUD's talk live, as the host did
   assert.match(w, /drop: marketDrop, goods: \(\) => marketGoods\.goods\(\), good: \(it\) => marketGoods\.good\(it\), goodName: \(rec\) => marketGoods\.goodName\(rec\),/);
-  assert.match(w, /abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec\) => marketGoods\.receive\(rec\) \} : null,/);
+  assert.match(w, /abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec, why\) => marketGoods\.receive\(rec, why\) \} : null,/);   // PIN MOVED (RPT1026-MARKET ARRIVE): the road's word handed through
   const index = src('server-account/src/index.js');
   assert.match(index, /'\/v1\/market\/list': \(\) => marketList\(mctx, who\.player, env, body\),/);
   assert.match(index, /'\/v1\/market\/collect': \(\) => marketCollect\(mctx, who\.player, env, body\),/);

@@ -34,12 +34,18 @@ import {
 } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';   // AUDIT LW-DRY: the sample's height, one home (WATER1's float)
 import { ecotoneOwner, ECOTONE_REACH } from '../ecotone.js';   // ECOTONE1: which climate owns a tile at a border
+import { tileDistance } from '../townShape.js';   // TS6: a town's clearing round its own outline
+import { forestQuantile } from '../tamriel/tamrielLands.js';   // TESA-LANDS: a recipe's woods on the field's own quantiles
+import { landSites } from '../lands/landProps.js';   // TESA-LANDS: the lands' landmarks, beside the flats
+import { walkGroundAt } from './terrainSurface.js';   // FLORA-GROUND: a plant stands on the ground the player walks on - one law
 
-const MAX_STEEPNESS = 50;
+export const MAX_STEEPNESS = 50;   // FAR-FLORA: and the far views' woods (world/terrain/floraCover.js) - one home
 export const SLOPE_SINK_RATIO = 70;   // BANTHA1: and the jungle's (world/terrain/jungleNature.js)
-const BASE_CHANCE_ON_DIRT = 0.2;
-const BASE_CHANCE_ON_GRASS = 0.9;
-const BASE_CHANCE_ON_STONE = 0.05;
+export const BASE_CHANCE_ON_DIRT = 0.2;
+export const BASE_CHANCE_ON_GRASS = 0.9;
+export const BASE_CHANCE_ON_STONE = 0.05;
+/** DefaultTerrainNature's desert scale on every chance (FAR-FLORA reads it too). */
+export const DESERT_NATURE_SCALE = 0.25;
 export const NATURE_CLEARANCE = 4;   // BANTHA1: and the jungle's
 const CLIMATE_TYPE_DESERT = 0; // DFLocation.ClimateBaseType.Desert
 
@@ -58,11 +64,32 @@ export const TREE_RECORDS = Object.freeze({
 });
 export const isTreeRecord = (baseArchive, record) => !!TREE_RECORDS[baseArchive]?.includes(record);
 
+const outlineDistances = new WeakMap();
+/** TS6 (bible/03-World/Town-Shapes.md): how far each of a pixel's tiles lies from a town's outline (a rect's `shape`,
+ *  terrainTiles.js locationShapeField's), in tiles - 0 on it; once a shape. */
+export function outlineDistance(shape) {
+  let d = outlineDistances.get(shape);
+  if (!d) outlineDistances.set(shape, (d = tileDistance(shape, WORLD_MAP_TILE_DIM, WORLD_MAP_TILE_DIM)));
+  return d;
+}
+/**
+ * TS6: WHETHER A LOCATION KEEPS NATURE OFF A TILE. DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES) from
+ * DefaultTerrainNature's rect: a town whose rect carries its outline keeps the tiles within NATURE_CLEARANCE of it - its
+ * trees round its own ground, never a square cut about it; a rect without one (a capital, a World of Daggerfall site)
+ * keeps its rect widened by the clearance, as DFU does (Rect.Contains: min-inclusive, max-exclusive).
+ * @param {{xMin:number,xMax:number,yMin:number,yMax:number,shape?:Uint8Array}} rect @param {number} x @param {number} y
+ */
+export function natureCleared(rect, x, y) {
+  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;
+  return x >= rect.xMin - NATURE_CLEARANCE && x < rect.xMax + NATURE_CLEARANCE && y >= rect.yMin - NATURE_CLEARANCE && y < rect.yMax + NATURE_CLEARANCE;
+}
+
 /**
  * PROF1 (bible/06-Systems/Professions-Arc.md 22): WHERE DFU'S OWN NATURE WOULD STAND, asked of ONE tile - the rules
  * layoutNature below applies, without its dice: not steeper than MAX_STEEPNESS, not on water under the beach line, on a
- * tile nature grows on (dirt, grass or stone), and never inside the location's rect widened by the nature clearance
- * (always tested here - an herb patch never stands in a town, where layoutNature's NT2 quirk may let a tree). Answers
+ * tile nature grows on (dirt, grass or stone), and never inside the location's rect widened by the nature clearance - TS6:
+ * a town's clearing round its outline (natureCleared) - (always tested here - an herb patch never stands in a town, where
+ * layoutNature's NT2 quirk may let a tree). Answers
  * the pixel-local base position the loop would give a flat on that tile, or null.
  * VERGE1: `clear`, when handed, is the road's question for the stand (`(x, z) => boolean`, pixel-local metres - a
  * gathering node's verge, world/road/roadVerge.js): a stand it refuses is no stand.
@@ -79,8 +106,7 @@ export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y, c
   const heightScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // layoutNature's terrainScale, as it reads it
   const cell = TERRAIN_SIZE / (hDim - 1);
   const at = (a, b) => heightmapData[a * hDim + b] * heightScale;
-  if (locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE
-    && y >= locationRect.yMin - NATURE_CLEARANCE && y < locationRect.yMax + NATURE_CLEARANCE) return null;
+  if (locationRect && natureCleared(locationRect, x, y)) return null;   // TS6: a town's clearing its outline's
   const tile = tilemapData[y * tDim + x] & 0x3f;
   if (tile !== 1 && tile !== 2 && tile !== 3) return null;
   const hl = at(Math.max(0, x - 1), y), hr = at(Math.min(hDim - 1, x + 1), y);
@@ -92,7 +118,7 @@ export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y, c
   if (sampleHeight((beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2
   const scale = TERRAIN_SIZE / tDim;
   if (clear && !clear(x * scale, y * scale)) return null;   // VERGE1
-  return { x: x * scale, y: at(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };
+  return { x: x * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };   // FLORA-GROUND: the walk law at the tile's corner
 }
 
 /** AUDIT 29 C11: whether (x, z) stands inside a rock piece's footprint (`rocks` a pixel's World of Daggerfall rock boxes,
@@ -176,19 +202,25 @@ export function makeTerrainKey(mapPixelX, mapPixelY) {
  *   desert, or an archive with no Tree table), DFU's scatter below, byte for byte.
  * @param {?Float32Array} [opts.beach] AUDIT LANDFORMS II H2: the samples the beach line is asked of - DFU's own blend in a
  *   location's pixel with the Landforms row on (the terrain job's `classic`); null, the heights' own
+ * @param {?{nine: ReadonlyArray<any>, blend?: boolean, archive?: number, pois?: Array<any>, paths?: ?Uint8Array, climateType?: number}} [opts.lands] TESA-LANDS: the 3x3 of zones' lands (landsNine) - the pixel's recipe lays its flats (layoutLands)
  * @param {?{nature:ArrayLike<number>, type:ArrayLike<number>}} [opts.ecotone] ECOTONE1: the 3x3 of pixels' climates
  *   about this one - each one's summer nature archive and ClimateBaseType, indexed (dz + 1) * 3 + (dx + 1), dx east and
  *   dz north (the pixel's own at 4). Absent, or every neighbour this pixel's own, the layout is the pixel's alone.
- * @returns {Array<{record:number,x:number,y:number,z:number,archive?:number}>} base
- *   positions in pixel-local world units; a flat a neighbour's climate stood at a border carries that climate's
- *   summer nature archive (`archive`), every other is the pixel's own.
+ * @returns {Array<{record:number,x:number,y:number,z:number,archive?:number}>} base positions in pixel-local world units; a
+ *   flat a neighbour's climate (or zone) stood at a border carries its summer nature archive (`archive`).
  */
 export function layoutNature(heightmapData, tilemapData, opts) {
-  const own = forestsFor(opts.forests, opts.forests?.archive, opts.climateType)
-    ? layoutForests(heightmapData, tilemapData, opts)
-    : dfuScatter(heightmapData, tilemapData, opts);
-  return opts.ecotone ? withEcotone(own, heightmapData, tilemapData, opts) : own;
+  const recipe = opts.lands?.nine?.[4]?.flora ?? null;   // TESA-LANDS: the zone's own recipe past the Bay
+  const own = recipe ? layoutLands(heightmapData, tilemapData, opts, recipe)
+    : forestsFor(opts.forests, opts.forests?.archive, opts.climateType)
+      ? layoutForests(heightmapData, tilemapData, opts)
+      : dfuScatter(heightmapData, tilemapData, opts);
+  return opts.ecotone || landsBorder(opts.lands) ? withEcotone(own, heightmapData, tilemapData, opts) : own;
 }
+
+/** TESA-LANDS: whether a pixel's 3x3 of lands has a border its flats blend across - the Blended climates row on, and a
+ *  neighbour whose recipe is not the pixel's own (a zone's, or none against one). */
+const landsBorder = (lands) => !!lands?.blend && !!lands.nine && lands.nine.some((l, k) => k !== 4 && (l?.flora ?? null) !== (lands.nine[4]?.flora ?? null));
 
 /** FOREST1: whether a climate's tiles are laid as woods - the switch, not a desert base, an archive with a Tree table. */
 const forestsFor = (forests, archive, climateType) => !!forests && climateType !== CLIMATE_TYPE_DESERT && !!TREE_RECORDS[archive];
@@ -204,13 +236,59 @@ const forestsFor = (forests, archive, climateType) => !!forests && climateType !
  * law with the tile's own dice (dfuTiles). Those flats carry the climate's summer archive.
  */
 function withEcotone(own, heightmapData, tilemapData, opts) {
-  const { nature, type } = opts.ecotone;
-  const keys = Array.from({ length: 9 }, (_, k) => `${nature[k]}:${type[k]}`);
-  if (keys.every((k) => k === keys[4])) return own;
+  const { nature, type } = borderOf(opts);
+  const nine = opts.lands?.nine ?? null, recipeOf = (k) => nine?.[k]?.flora ?? null;
   const tDim = WORLD_MAP_TILE_DIM, scale = TERRAIN_SIZE / tDim;
-  const px = opts.mapPixelX, py = opts.mapPixelY;
+  const owner = borderOwners(opts);
+  if (!owner) return own;
+  // the pixel's own flats on its own tiles - DFU's at their tile's corner, the woods' (and TESA-LANDS a recipe's) inside
+  // their tile
+  const ownWoods = !!recipeOf(4) || forestsFor(opts.forests, opts.forests?.archive, opts.climateType);
+  const tileOf = ownWoods
+    ? (f) => Math.min(tDim - 1, Math.floor(f.z / scale)) * tDim + Math.min(tDim - 1, Math.floor(f.x / scale))
+    : (f) => Math.round(f.z / scale) * tDim + Math.round(f.x / scale);
+  const out = own.filter((f) => owner[tileOf(f)] === 4);
+  // the neighbours' tiles, each by its owner's own rule
+  const woods = opts.forests ? forestTiles(heightmapData, tilemapData, opts) : null;
+  const scatter = dfuTiles(heightmapData, tilemapData, opts);
+  const landsTile = nine ? landsTiles(heightmapData, tilemapData, opts) : null;
+  for (let i = 0; i < owner.length; i++) {
+    const k = owner[i];
+    if (k === 4) continue;
+    const x = i % tDim, y = (i - x) / tDim, archive = nature[k], recipe = recipeOf(k);
+    if (recipe) { const f = /** @type {NonNullable<typeof landsTile>} */ (landsTile)(x, y, recipe); if (f) out.push(f); continue; }   // TESA-LANDS: its own archive on each flat
+    const f = forestsFor(opts.forests, archive, type[k])
+      ? woods(x, y, TREE_RECORDS[archive], coverOf(archive))
+      : scatter(x, y, type[k]);
+    if (f) out.push({ ...f, archive });
+  }
+  return out;
+}
+
+/** ECOTONE1's 3x3 as the border reads it - TESA-LANDS: a 3x3 whose climates are one (no `ecotone` handed) wears the
+ *  pixel's own climate all round; a neighbour whose zone has a recipe is owned by its recipe, keyed by it. */
+function borderOf(opts) {
+  const { nature, type } = opts.ecotone ?? { nature: new Array(9).fill(opts.lands?.archive), type: new Array(9).fill(opts.climateType) };
+  const nine = opts.lands?.nine ?? null;
+  const keys = Array.from({ length: 9 }, (_, k) => (nine?.[k]?.flora ? `lands:${nine[k]?.key}` : `${nature[k]}:${type[k]}`));
+  return { nature, type, keys };
+}
+/** TESA-LANDS (AUDIT): the last pixel's border, kept - its flats' (withEcotone) and its landmarks' (layoutLandProps) are
+ *  asked of the same pixel back to back, and each had walked the ecotone itself (the landmarks' keyed apart: two of the
+ *  Bay's climates beside a zone were one to them, and their border could fall a tile from the flats'). */
+let _border = null;
+/**
+ * ECOTONE1: THE TILES A NEIGHBOUR OWNS - each tile's owner (4 the pixel's own, else its neighbour's 3x3 index), only
+ * those within the ecotone's reach of an edge asked; null where every tile is the pixel's own.
+ * @returns {Int8Array|null}
+ */
+function borderOwners(opts) {
+  const { keys } = borderOf(opts);
+  if (keys.every((k) => k === keys[4])) return null;
+  const px = opts.mapPixelX, py = opts.mapPixelY, memo = `${px},${py}|${keys.join('|')}`;
+  if (_border?.memo === memo) return _border.owner;
+  const tDim = WORLD_MAP_TILE_DIM, scale = TERRAIN_SIZE / tDim;
   const keyAt = (dx, dz) => keys[(dz + 1) * 3 + (dx + 1)];
-  // the tiles a neighbour's climate owns: only those within the ecotone's reach of an edge are asked
   const owner = new Int8Array(tDim * tDim).fill(4);
   const reach = Math.ceil(ECOTONE_REACH / scale) + 1;
   let any = false;
@@ -224,26 +302,8 @@ function withEcotone(own, heightmapData, tilemapData, opts) {
       any = true;
     }
   }
-  if (!any) return own;
-  // the pixel's own flats on its own tiles - DFU's at their tile's corner, the woods' inside their tile
-  const ownWoods = forestsFor(opts.forests, opts.forests?.archive, opts.climateType);
-  const tileOf = ownWoods
-    ? (f) => Math.min(tDim - 1, Math.floor(f.z / scale)) * tDim + Math.min(tDim - 1, Math.floor(f.x / scale))
-    : (f) => Math.round(f.z / scale) * tDim + Math.round(f.x / scale);
-  const out = own.filter((f) => owner[tileOf(f)] === 4);
-  // the neighbours' tiles, each by its owner's own rule
-  const woods = opts.forests ? forestTiles(heightmapData, tilemapData, opts) : null;
-  const scatter = dfuTiles(heightmapData, tilemapData, opts);
-  for (let i = 0; i < owner.length; i++) {
-    const k = owner[i];
-    if (k === 4) continue;
-    const x = i % tDim, y = (i - x) / tDim, archive = nature[k];
-    const f = forestsFor(opts.forests, archive, type[k])
-      ? woods(x, y, TREE_RECORDS[archive], coverOf(archive))
-      : scatter(x, y, type[k]);
-    if (f) out.push({ ...f, archive });
-  }
-  return out;
+  _border = { memo, owner: any ? owner : null };
+  return _border.owner;
 }
 
 /**
@@ -270,7 +330,7 @@ function dfuTiles(heightmapData, tilemapData, opts) {
     const hd = heightAt(x, Math.max(0, y - 1)), hu = heightAt(x, Math.min(hDim - 1, y + 1));
     const steepness = Math.atan(Math.hypot((hr - hl) / (2 * cell), (hu - hd) / (2 * cell))) * (180 / Math.PI);
     if (steepness > MAX_STEEPNESS) return null;
-    if (grown && grown.xMin > 0 && grown.yMin > 0 && x >= grown.xMin && x < grown.xMax && y >= grown.yMin && y < grown.yMax) return null;   // NT2's guard on the grown rect, as dfuScatter's
+    if (loc?.shape ? natureCleared(loc, x, y) : grown && grown.xMin > 0 && grown.yMin > 0 && x >= grown.xMin && x < grown.xMax && y >= grown.yMin && y < grown.yMax) return null;   // TS6: a town's clearing its outline's; else NT2's guard on the grown rect, as dfuScatter's
     const tile = tilemapData[y * tDim + x] & 0x3f;
     const base = tile === 1 ? BASE_CHANCE_ON_DIRT : tile === 2 ? BASE_CHANCE_ON_GRASS : tile === 3 ? BASE_CHANCE_ON_STONE : 0;
     if (!base) return null;
@@ -280,7 +340,7 @@ function dfuTiles(heightmapData, tilemapData, opts) {
     const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
     const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
     if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2
-    return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };
+    return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };   // FLORA-GROUND: the walk law
   };
 }
 
@@ -306,7 +366,7 @@ function dfuScatter(heightmapData, tilemapData, opts) {
 
   let elevationScale = opts.rawWorldHeight / 128;
   elevationScale = Math.min(1.0, Math.max(0.4, elevationScale));
-  const climateScale = opts.climateType === CLIMATE_TYPE_DESERT ? 0.25 : 1.0;
+  const climateScale = opts.climateType === CLIMATE_TYPE_DESERT ? DESERT_NATURE_SCALE : 1.0;
   const chanceOnDirt = BASE_CHANCE_ON_DIRT * elevationScale * climateScale;
   const chanceOnGrass = BASE_CHANCE_ON_GRASS * elevationScale * climateScale;
   const chanceOnStone = BASE_CHANCE_ON_STONE * elevationScale * climateScale;
@@ -329,6 +389,10 @@ function dfuScatter(heightmapData, tilemapData, opts) {
     return Math.atan(Math.hypot(dx, dz)) * (180 / Math.PI);
   };
 
+  // TS6: a town whose rect carries its outline - its square off its clearing is the land's, laid on each tile's own dice
+  const town = opts.locationRect?.shape ? opts.locationRect : null;
+  const ownTile = town ? dfuTiles(heightmapData, tilemapData, opts) : null;
+
   const flats = [];
   for (let y = 0; y < tDim; y++) {
     for (let x = 0; x < tDim; x++) {
@@ -343,7 +407,13 @@ function dfuScatter(heightmapData, tilemapData, opts) {
       // places, verbatim. The port used to test containment
       // unconditionally and suppressed those billboards.
       if (rect && rect.xMin > 0 && rect.yMin > 0
-        && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;
+        && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) {
+        // TS6: a tile of the square off the town's clearing stands what DFU's law would there, on the tile's own dice
+        // (dfuTiles) - DFU's stream walks no tile of the square, so every flat it stands past the square is DFU's
+        const own = town && ownTile?.(x, y, opts.climateType);
+        if (own) flats.push(own);
+        continue;
+      }
 
       const tile = tilemapData[y * tDim + x] & 0x3f;
       if (tile === 1) {
@@ -364,10 +434,11 @@ function dfuScatter(heightmapData, tilemapData, opts) {
       if (height < beachLine) continue;
 
       const record = rng.nextIntRange(1, 32);
+      if (town && natureCleared(town, x, y)) continue;   // TS6: the town's ground past its square (its outline's margin) clear - after the draws, the stream DFU's
       flats.push({
         record,
         x: x * scale,
-        y: at(x, y) - steepness / SLOPE_SINK_RATIO,
+        y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO,   // FLORA-GROUND: the ground the player walks on, at the corner sample
         z: y * scale,
       });
     }
@@ -498,10 +569,15 @@ export const forestAt = (tx, tz) => smoothstep(FOREST.edge[0], FOREST.edge[1], f
  * @param {number} mapPixelX @param {number} mapPixelY
  */
 export function forestField(mapPixelX, mapPixelY) {
+  return latticeField(forestAt, mapPixelX, mapPixelY);
+}
+/** A world field `sample(tx, tz)` on FOREST.lattice's lattice about a pixel, read bilinearly - forestField's law, and
+ *  TESA-LANDS' forestCoverField's on the field's own value (one law: AUDIT, a copy of it could fall out of step). */
+function latticeField(sample, mapPixelX, mapPixelY) {
   const L = FOREST.lattice, n = WORLD_MAP_TILE_DIM / L + 1;
   const ox = mapPixelX * WORLD_MAP_TILE_DIM, oz = -mapPixelY * WORLD_MAP_TILE_DIM;
   const g = new Float64Array(n * n);
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) g[j * n + i] = forestAt(ox + i * L, oz + j * L);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) g[j * n + i] = sample(ox + i * L, oz + j * L);
   return (x, y) => {
     const fx = x / L, fy = y / L;
     const i = Math.min(n - 2, Math.floor(fx)), j = Math.min(n - 2, Math.floor(fy));
@@ -531,7 +607,8 @@ export function placesPull(pois, x, y) {
   for (const p of pois) {
     const dx = Math.max(p.xMin - x, 0, x - (p.xMax - 1)), dy = Math.max(p.yMin - y, 0, y - (p.yMax - 1));
     const ring = p.hide ? FOREST.hide : FOREST.clear;
-    const k = (1 - smoothstep(ring.near, ring.far, Math.sqrt(dx * dx + dy * dy))) * ring.pull;
+    const far = p.shape ? outlineDistance(p.shape)[y * WORLD_MAP_TILE_DIM + x] : Math.sqrt(dx * dx + dy * dy);   // TS6: a town's from its outline
+    const k = (1 - smoothstep(ring.near, ring.far, far)) * ring.pull;
     pull += p.hide ? k : -k;
   }
   return pull * fade;
@@ -574,10 +651,9 @@ function forestTiles(heightmapData, tilemapData, opts) {
   const scale = TERRAIN_SIZE / tDim;
   const pois = opts.forests.pois ?? [];
   const paths = opts.forests.paths ?? null;
-  // the clearings: the location's rect and every place's footprint, widened by DFU's clearance
-  const clear = [opts.locationRect, ...pois].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin).map((r) => ({
-    xMin: r.xMin - NATURE_CLEARANCE, xMax: r.xMax + NATURE_CLEARANCE, yMin: r.yMin - NATURE_CLEARANCE, yMax: r.yMax + NATURE_CLEARANCE,
-  }));
+  // the clearings: the location's rect and every place's footprint, widened by DFU's clearance - TS6: a town's round its
+  // outline (natureCleared)
+  const clear = [opts.locationRect, ...pois].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin);
   const woodAt = forestField(opts.mapPixelX, opts.mapPixelY);
   const ox = opts.mapPixelX * tDim, oz = -opts.mapPixelY * tDim;
   const [in0, in1] = FOREST.inset;
@@ -586,7 +662,7 @@ function forestTiles(heightmapData, tilemapData, opts) {
     const ti = y * tDim + x;
     const ground = FOREST.ground[tilemapData[ti] & 0x3f];
     if (!ground || paths?.[ti]) return null;
-    if (clear.some((r) => x >= r.xMin && x < r.xMax && y >= r.yMin && y < r.yMax)) return null;
+    if (clear.some((r) => natureCleared(r, x, y))) return null;
     const hl = at(Math.max(0, x - 1), y), hr = at(Math.min(hDim - 1, x + 1), y);
     const hd = at(x, Math.max(0, y - 1)), hu = at(x, Math.min(hDim - 1, y + 1));
     const gx = (hr - hl) / (2 * cell), gz = (hu - hd) / (2 * cell);
@@ -607,6 +683,152 @@ function forestTiles(heightmapData, tilemapData, opts) {
     const mx = (x + in0 + (in1 - in0) * tileDraw(wx, wz, 2)) * scale;
     const mz = (y + in0 + (in1 - in0) * tileDraw(wx, wz, 3)) * scale;
     const steepness = Math.atan(Math.sqrt(g2)) * (180 / Math.PI);
-    return { record, x: mx, y: groundAt(heightmapData, mx, mz) - steepness / SLOPE_SINK_RATIO, z: mz, wood };
+    return { record, x: mx, y: walkGroundAt(heightmapData, mx, mz) - steepness / SLOPE_SINK_RATIO, z: mz, wood };   // FLORA-GROUND: on the ground the player walks on
   };
+}
+
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md, "The growth"): A ZONE'S OWN FLATS - LANDS' `flora` laid by FOREST1's law
+// (DFU's tests on the tile, the woods' field, the places' pull, each tile's own dice) with the zone's numbers: its woods'
+// edge at the field's (1 - woods) quantile, a wood's tile one of its `trees` and a plain's one of its `cover` (any
+// climate's, each flat carrying its archive - ECOTONE1's seam), its rates and its ground's shares. Compiled once a recipe.
+
+/** A pool of [archive, record, weight] picks compiled: its archives, records and cumulative weights (0..1). */
+function compilePool(picks) {
+  const total = picks.reduce((a, p) => a + p[2], 0), cum = new Float64Array(picks.length);
+  let run = 0;
+  picks.forEach((p, i) => { run += p[2]; cum[i] = total > 0 ? run / total : (i + 1) / picks.length; });
+  return { archives: picks.map((p) => p[0]), records: picks.map((p) => p[1]), cum };
+}
+/** The pick a draw (0..1) lands on - the first whose cumulative weight passes it. */
+const pickOf = (pool, u) => { let i = 0; while (i < pool.cum.length - 1 && u >= pool.cum[i]) i++; return i; };
+const _recipes = new WeakMap();
+/** A recipe compiled: its woods' edge (the field's values), its pools, its rates and its ground's shares. */
+export function compileRecipe(recipe) {
+  let c = _recipes.get(recipe);
+  if (!c) {
+    const half = (FOREST.edge[1] - FOREST.edge[0]) / 2, mid = forestQuantile(1 - recipe.woods);
+    c = {
+      edge: [mid - half, mid + half], trees: compilePool(recipe.trees ?? []), cover: compilePool(recipe.cover ?? []),
+      treeRate: recipe.treeRate ?? 1, coverRate: recipe.coverRate ?? 1, ground: { ...FOREST.ground, ...(recipe.ground ?? {}) },
+    };
+    _recipes.set(recipe, c);
+  }
+  return c;
+}
+
+/** THE FOREST FIELD'S OWN VALUE about a pixel (forestCover, not its woods' share): forestField's lattice on the field's
+ *  value, so a recipe's edge is drawn on the same field FOREST1's is. */
+export function forestCoverField(mapPixelX, mapPixelY) {
+  if (_cover?.px === mapPixelX && _cover.py === mapPixelY) return _cover.at;   // AUDIT: the flats' and the landmarks' the same pixel's
+  _cover = { px: mapPixelX, py: mapPixelY, at: latticeField(forestCover, mapPixelX, mapPixelY) };
+  return _cover.at;
+}
+/** The last pixel's forest field (forestCoverField's), kept: a pixel's flats, its border's and its landmarks' read it. */
+let _cover = null;
+
+/** A recipe's woods' share at a field value (0 a plain, 1 the woods) - its edge, FOREST1's smoothstep. */
+export const recipeWood = (c, cover) => smoothstep(c.edge[0], c.edge[1], cover);
+
+/** TESA-LANDS: DFU's slope at tile (x, y), its gradient squared - the central differences of the heights about it, a
+ *  heightmap cell apart (forestTiles' and natureStandsAt's law) - one home for the lands' flats and landmarks. */
+function tileSlopeSq(heightmapData, x, y) {
+  const hDim = HEIGHTMAP_DIMENSION, yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, cell = TERRAIN_SIZE / (hDim - 1);
+  const hAt = (i, j) => heightmapData[i * hDim + j] * yScale;
+  const sx = (hAt(Math.min(hDim - 1, x + 1), y) - hAt(Math.max(0, x - 1), y)) / (2 * cell);
+  const sz = (hAt(x, Math.min(hDim - 1, y + 1)) - hAt(x, Math.max(0, y - 1))) / (2 * cell);
+  return sx * sx + sz * sz;
+}
+
+/** TESA-LANDS: whether tile (x, y) stands under the beach line - DFU's test, the scatter's own (the beach asked of DFU's
+ *  own blend where the job hands one, `beach` - AUDIT LANDFORMS II H2), one home for the lands' flats and landmarks. */
+function underBeach(heightmapData, beach, x, y) {
+  const hDim = HEIGHTMAP_DIMENSION, tDim = WORLD_MAP_TILE_DIM;
+  const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
+  const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
+  return sampleHeight((beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION;
+}
+
+/** TESA-LANDS' layoutNature: the recipe's flats over the pixel's tiles, a tile at a time (landsTiles). */
+function layoutLands(heightmapData, tilemapData, opts, recipe) {
+  const tile = landsTiles(heightmapData, tilemapData, opts);
+  const flats = [];
+  for (let y = 0; y < WORLD_MAP_TILE_DIM; y++) {
+    for (let x = 0; x < WORLD_MAP_TILE_DIM; x++) {
+      const f = tile(x, y, recipe);
+      if (f) flats.push(f);
+    }
+  }
+  return flats;
+}
+
+/** A RECIPE'S TILE, as a kit (forestTiles' shape): the pixel's set-up once, and `(x, y, recipe) => flat | null` - DFU's
+ *  tests on the tile and FOREST1's places, the recipe's woods and flats; a flat carries its `archive` and its `wood`. */
+function landsTiles(heightmapData, tilemapData, opts) {
+  const tDim = WORLD_MAP_TILE_DIM;
+  const scale = TERRAIN_SIZE / tDim;
+  const pois = opts.forests?.pois ?? opts.lands?.pois ?? [];
+  const paths = opts.forests?.paths ?? opts.lands?.paths ?? null;
+  const cleared = [opts.locationRect, ...pois].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin);   // FOREST1's places
+  const coverAt = forestCoverField(opts.mapPixelX, opts.mapPixelY);
+  const [in0, in1] = FOREST.inset;
+  return (x, y, recipe) => {
+    const c = compileRecipe(recipe);
+    const ti = y * tDim + x;
+    const share = c.ground[tilemapData[ti] & 0x3f];   // the ground's share of the chances (DFU's tile record)
+    if (!share || paths?.[ti]) return null;
+    if (cleared.some((r) => natureCleared(r, x, y))) return null;
+    // DFU's slope test, and its beach line
+    const slopeSq = tileSlopeSq(heightmapData, x, y);
+    if (slopeSq > TAN_MAX_STEEP_SQ || underBeach(heightmapData, opts.beach, x, y)) return null;
+    const wood = Math.min(1, Math.max(0, recipeWood(c, coverAt(x, y)) + placesPull(pois, x, y)));
+    const tree = c.trees.cum.length ? (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wood) * share * c.treeRate : 0;
+    const under = c.cover.cum.length ? (FOREST.plainCover + (FOREST.undergrowth - FOREST.plainCover) * wood) * share * c.coverRate : 0;
+    // the world tile's own dice (FOREST1's: 0 the roll, 1 the pick, 2 and 3 its place in the tile)
+    const tx = opts.mapPixelX * tDim + x, tz = -opts.mapPixelY * tDim + y;
+    const u = tileDraw(tx, tz, 0);
+    if (u >= tree + under) return null;
+    const pool = u < tree ? c.trees : c.cover, i = pickOf(pool, tileDraw(tx, tz, 1));
+    const mx = (x + in0 + (in1 - in0) * tileDraw(tx, tz, 2)) * scale, mz = (y + in0 + (in1 - in0) * tileDraw(tx, tz, 3)) * scale;
+    const slope = Math.atan(Math.sqrt(slopeSq)) * (180 / Math.PI);
+    return { record: pool.records[i], x: mx, y: walkGroundAt(heightmapData, mx, mz) - slope / SLOPE_SINK_RATIO, z: mz, wood, archive: pool.archives[i] };   // FLORA-GROUND: on the ground the player walks on, as FOREST1's
+  };
+}
+
+/**
+ * TESA-LANDS: A PIXEL'S LANDMARKS (world/lands/landProps.js landSites - LAND_PROP_FLOATS each, pixel-local; empty where
+ * none stands), its zone's `props` on its own tiles and, with the Blended climates row, its neighbours' on the tiles the
+ * ecotone gives them (ECOTONE1's border, the flats' own - withEcotone): each site's woods its owner's recipe's (the field
+ * the owner's flats are laid by), its tests DFU's and FOREST1's (the places, the tracks, the beach, the slope).
+ * @param {Float32Array} heightmapData @param {Uint8Array} tilemapData @param {any} opts layoutNature's
+ * @returns {Float32Array}
+ */
+export function layoutLandProps(heightmapData, tilemapData, opts) {
+  const nine = opts.lands?.nine;
+  if (!nine || !nine.some((l) => l?.props?.length)) return new Float32Array(0);
+  const hDim = HEIGHTMAP_DIMENSION, tDim = WORLD_MAP_TILE_DIM, scale = TERRAIN_SIZE / tDim;
+  const yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, cell = TERRAIN_SIZE / (hDim - 1);
+  const at = (x, y) => heightmapData[x * hDim + y] * yScale;
+  const px = opts.mapPixelX, py = opts.mapPixelY;
+  const pois = opts.lands.pois ?? [], paths = opts.lands.paths ?? null;
+  const clearRects = [opts.locationRect, ...pois].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin);
+  // the owners: the pixel's own zone's, or where the row blends the flats' own border's (borderOwners - one walk of the
+  // ecotone, the same tile a flat's and a landmark's)
+  const owner = opts.lands.blend ? borderOwners(opts) : null;
+  const ownerOf = (ti) => (owner ? owner[ti] : 4);
+  const coverAt = forestCoverField(px, py);
+  return landSites({
+    ox: px * tDim, oz: -py * tDim, tiles: tDim, tileM: scale,
+    owners: (ti) => nine[ownerOf(ti)]?.props ?? null,
+    wood: (x, y, ti) => {
+      const flora = nine[ownerOf(ti)]?.flora;
+      return Math.min(1, Math.max(0, (flora ? recipeWood(compileRecipe(flora), coverAt(x, y)) : 0.5) + placesPull(pois, x, y)));
+    },
+    tile: (ti) => tilemapData[ti],
+    clear: (ti) => !!paths?.[ti] || clearRects.some((r) => natureCleared(r, ti % tDim, Math.floor(ti / tDim))),
+    steep: (ti) => Math.atan(Math.sqrt(tileSlopeSq(heightmapData, ti % tDim, Math.floor(ti / tDim)))) * (180 / Math.PI),
+    beach: (ti) => underBeach(heightmapData, opts.beach, ti % tDim, Math.floor(ti / tDim)),
+    named: new Set(nine.flatMap((l) => l?.props?.map((p) => p.kind) ?? [])),
+    ground: (mx, mz) => walkGroundAt(heightmapData, Math.min(TERRAIN_SIZE, Math.max(0, mx)), Math.min(TERRAIN_SIZE, Math.max(0, mz))),   // FLORA-GROUND: the walk floor's one law
+    draw: tileDraw,
+  });
 }

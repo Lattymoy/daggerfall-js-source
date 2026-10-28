@@ -80,7 +80,7 @@ function rig({ boat = null, helm = null, depth = null, inTown = false, doors = [
     audio, music, boat: () => state.boat, aboard: () => state.aboard, bow: bow ?? undefined,
     csa: { helmPanelState: () => state.helm, IsNearPort: () => state.port }, fight: () => state.fight,
     pixel: () => ({ x: 100, y: 100 }), seaPixel: (x, y) => state.sea(x, y), dw: depth ? { rawColumnAt: (x, z) => depth(x, z) } : null,
-    inTown: () => state.inTown, towns: () => new Map([[100 * 1000 + 100, { blocks: 9 }]]), doors, doorAt: (e) => e.door, rand,
+    inTown: () => state.inTown, townAt: (x, y) => (x === 100 && y === 100 ? { blocks: 9 } : null), doors, doorAt: (e) => e.door, rand,
   });
   return { host, calls, state, music };
 }
@@ -245,7 +245,8 @@ test('SOUNDSCAPE THE WORLD HOST: constructed once beside the Deadlands\' air wit
   assert.ok(made > W.indexOf('const deadlandsAir = createDeadlandsAir(audio);'));
   assert.equal(W.split('createSoundscapeHost(').length - 1, 1, 'once');
   assert.ok(W.includes('audio, music, boat: csaBoatUnderMe, aboard: () => !!naval?.aboard?.(), bow: boatForward, csa: csaRuntime, fight: () => !!naval?.battle?.(), pixel: playerTravelPixel,'));
-  assert.ok(W.includes('seaPixel: openSea, dw: dwPlayer, inTown: _isPlayerInTownStrict, towns: livingTownsIndex, doors: buildingDoors, doorAt: shiftedDoor,'));
+  // PIN MOVED (TESA x MAIN, the merge after WORLD-WIDE's fold): a town's size off the world's registry (WW1 livingTownAt), never the Bay's y * 1000 + x
+  assert.ok(W.includes('seaPixel: openSea, dw: dwPlayer, inTown: _isPlayerInTownStrict, townAt: livingTownAt, doors: buildingDoors, doorAt: shiftedDoor,'));
   const listener = W.indexOf('audio.setListener(cam.pos, tvf ? [viewFwd[0], 0, viewFwd[2]] : fwd);');
   const frame = W.indexOf('soundscape.frame(dt, {');
   assert.ok(listener > 0 && frame > listener && frame - W.indexOf('windAudio.update(wd, dt, windSoundOn());') < 1200, 'after the listener, beside the wind');

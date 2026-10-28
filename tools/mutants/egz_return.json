@@ -137,8 +137,8 @@
   {
     "name": "EGZ-return-never-rebuilds",
     "file": "src/scenes/eliteGates/egClient.js",
-    "old": "{ if (E.sg === 'arrive' || returning === E.b) swapTo(E, c); return; }",
-    "new": "{ if (E.sg === 'arrive') swapTo(E, c); return; }",
+    "old": "{ if (E.sg !== 'rest' || returning === E.b) swapTo(E, c); return; }",
+    "new": "{ if (E.sg !== 'rest' && returning !== E.b) swapTo(E, c); return; }",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]

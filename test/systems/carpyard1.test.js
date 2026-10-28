@@ -85,10 +85,11 @@ test('CARP-YARD THE PLACE: the joinery placed on what the two yards (and a port 
   // the host: the joinery after the port's places, on the same ground
   const w = read('src/scenes/world.js');
   const at = (t) => w.indexOf(t);
-  assert.ok(at('const sites = g && yardTown ? yardSitesOn(g) : [];') > 0);
-  assert.ok(at('ports = portSitesOn(g, seaField(') > at('const sites = g && yardTown ? yardSitesOn(g) : [];'));
-  assert.ok(at('if (g && yardTown) sites.push(...craftYardSitesOn(g));') > at('ports = portSitesOn(g, seaField('), 'placed after the port\'s places');
-  assert.ok(at('memo = { sig, sites, ports };') > at('if (g && yardTown) sites.push(...craftYardSitesOn(g));'));
+  // PIN MOVED (IC-STUTTER): each pass walked through the build's breather (merchantYardSites.js ...Steps)
+  assert.ok(at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];') > 0);
+  assert.ok(at('ports = portSitesOn(g, seaField(') > at('const sites = g && yardTown ? await stepsBreathing(yardSitesSteps(g), breathe) : [];'));
+  assert.ok(at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));') > at('ports = portSitesOn(g, seaField('), 'placed after the port\'s places');
+  assert.ok(at('memo = { sig, sites, ports };') > at('if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));'));
 });
 
 test('CARP-YARD THE TIMBER: the joinery the port\'s own geometry inside its ground, its logs\' and its block\'s faces out, in the yards\' pictures - its board, its shavings, its bark and its end grain; the board over a walker\'s head; the gate\'s way in open to a walker; the carpenter\'s place and the workbench clear of every face (mutants: a face wound in, the sign low, the way in blocked)', () => {
@@ -282,7 +283,7 @@ test('CARP-YARD THE HOSTS: the street\'s workbench is the host\'s own question -
   assert.match(w, /workbench: \(\) => workbenchHere\(\),/);
   assert.match(w, /: bench \? workbenchHere\(\) : modes\?\.forgeHere\?\.\(\)\) \?\? null;/);
   assert.match(w, /bench: \(\) => openYardBench\(\),/);
-  assert.match(w, /function openYardBench\(\) \{\n\s+if \(!forgeOffered\(\)\) \{ townTalk\.say\(stationColdLine\('workbench'\)\); return true; \}[^\n]*\n\s+focusStoresStation\('workbench'\);\n\s+hudCtx\.togglePause\(\{ at: 'stores' \}\);/);
+  assert.match(w, /function openYardBench\(\) \{\n\s+if \(!forgeOffered\(\)\) \{ townTalk\.say\(stationColdLine\('workbench'\)\); return true; \}[^\n]*\n\s+hudCtx\.togglePause\(\{ at: stationDoorAt\('workbench'\) \}\);/);   // PIN MOVED (CRAFT-HALL): the Crafting page at the bench, its focus handed by stationDoorAt
   assert.match(w, /`The \$\{f\.who \?\? st\.who\} asks \$\{f\.fee\} gold for the use of the \$\{st\.noun\}\.`/);
   assert.match(w, /bench \? \(f\.who \?\? 'furnisher'\) : 'smith'/);
   const pp = read('src/ui/professions/profPages.js');

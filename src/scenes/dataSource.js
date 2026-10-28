@@ -57,9 +57,17 @@ const MW_STORE = 'morrowind';
  *  stale) became exactly the derived artifact this contract was kept
  *  for. Said out loud here so nobody reads the roads as living here. */
 const DERIVED_STORE = 'derived';
+/** TESA1 (bible/03-World/Arena-Provinces.md): the store that held the
+ *  player's own copy of The Elder Scrolls: Arena (CITYDATA.65 and A.EXE).
+ *  TESA12 retired the attachment - the places past the Bay are the
+ *  port's own - and nothing reads it now. It stays in the schema (the
+ *  upgrade's arms are additive: version 6 made it) and among the asset
+ *  stores so a wipe still sweeps it, and the world's boot empties it once
+ *  (clearRetiredArena): no copy of Arena's files stays in a browser. */
+const ARENA_STORE = 'arena';
 /** Every injected-asset store, so the upgrade and the helpers below
  *  cannot drift from each other - adding a domain is one entry. */
-const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE];
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE, ARENA_STORE];
 const mem = new Map(); // NAME -> Uint8Array
 /** AUDIT MEM-AUDIT M1: the names whose bytes came from IndexedDB or the network, so can be read again (forgetBytes) - a
  *  memory-only session's picked set (the ingest's no-IDB arm, a quota's refusal too) is its only copy, and forgetting it
@@ -159,7 +167,8 @@ function openDb() {
     // 5 (R6): the derived store. The upgrade is ADDITIVE and every arm
     // below is guarded by `contains`, so a player arriving at any older
     // version gains the new store and keeps every byte of the old ones.
-    const req = indexedDB.open(DB_NAME, 5);
+    // 6 (TESA1): the Arena store, the same additive arm.
+    const req = indexedDB.open(DB_NAME, 6);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
@@ -930,6 +939,14 @@ export async function registerMorrowindData() {
   return _mwCount;
 }
 
+// ---- TESA12: Arena's store, retired --------------------------------------
+
+/** TESA12: empty the store a copy of Arena was attached to (TESA1 to TESA6) - nothing reads it since the places past the
+ *  Bay became the port's own. The world's boot asks it once; no IndexedDB (private mode), nothing to clear. */
+export async function clearRetiredArena() {
+  try { await clearAssets(ARENA_STORE); } catch { /* no IndexedDB: nothing stored */ }
+}
+
 export async function pickMorrowindFiles() {
   return pickAssetFolder({
     title: 'Your Morrowind data',
@@ -1051,7 +1068,7 @@ async function pickAssetFolder({ title, blurb, store, register, zip = null, dire
         await store(files, (t) => { msg.textContent = t; });   // DFMOD1: a store may report as it goes
         msg.textContent = 'registering...';
         count = await register();
-        msg.textContent = doneText ?? (count ? `${count} files will be used` : 'nothing usable in that folder');   // IIL3: a picker that is not counting files says its own
+        msg.textContent = (typeof doneText === 'function' ? doneText(count) : doneText) ?? (count ? `${count} files will be used` : 'nothing usable in that folder');   // IIL3: a picker that is not counting files says its own (TESA1: or says it by the count)
       } catch (err) {
         // NEVER TRAPS: a storage failure costs the pack, not the game.
         msg.textContent = `could not store that: ${err?.message ?? err}`;

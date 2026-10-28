@@ -46,6 +46,7 @@ import { GUILD_GROUPS, FACTION_TYPES, FACTION_FLAGS } from '../../formats/factio
 import { customFactions, relinkChildren } from '../../formats/factionFile.js';   // RR3: AddCustomFactions' registry and the relink
 import { restoreFactionRep } from '../save/save.js';   // AUDIT 23 C1: the stashed-load replay
 import { MIN_REPUTATION, MAX_REPUTATION } from '../guild/guildFactions.js';   // CHAP1: the bounds' one home, the leaf the Roll reads
+import { addProvinceFactions } from './provinceFactions.js';   // PROVINCE-COURTS: the provinces' own courts and people
 
 /** Mathf.Clamp bounds (:32-35) - the reputation's two live in the leaf guildFactions.js (CHAP1) and are handed on here. */
 export { MIN_REPUTATION, MAX_REPUTATION };
@@ -92,6 +93,10 @@ const half = (n) => Math.trunc(n / 2);
  *  C#'s struct), and the children are relinked when one names a parent.
  *  `nameToId` is factionNameToIDDict where the caller keeps one. */
 export function addCustomFactions(dict, nameToId = null) {
+  // PROVINCE-COURTS (bible/03-World/World-Wide.md): THE PORT'S OWN FIRST - each province's Province, ruler, Court and
+  // People (provinceFactions.js), on every dictionary this door fills (the store's Reset, the talk host's reader), so a
+  // region past the Bay has its court and its people wherever FACTION.TXT's regions have theirs; then the registry's
+  addProvinceFactions(dict, nameToId);
   let relink = false;
   for (const [id, f] of customFactions()) {
     if (dict.has(id)) continue;

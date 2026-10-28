@@ -188,7 +188,7 @@ test('GRAVE-PARTY law: a search\'s hours carry WHO searched - mine says SEARCHED
   // THE WIRE
   assert.deepEqual(OW_KINDS, ['sp', 'dg', 'gr']);
   assert.deepEqual(validOwIn({ k: 'gr', rows: [[101, 207, 3], [101, 207, 3]] }), { k: 'gr', rows: [[101, 207, 3]] });
-  for (const bad of [{ k: 'gr', rows: [] }, { k: 'gr', rows: [[101, 207]] }, { k: 'gr', rows: [[1000, 207, 3]] }, { k: 'gr', rows: [[101, 207, -1]] }, { k: 'gr', rows: [[101, 207, 3, M, 'acct-ann']] }]) assert.equal(validOwIn(bad), null, JSON.stringify(bad));
+  for (const bad of [{ k: 'gr', rows: [] }, { k: 'gr', rows: [[101, 207]] }, { k: 'gr', rows: [[8192, 207, 3]] }, { k: 'gr', rows: [[101, 207, -1]] }, { k: 'gr', rows: [[101, 207, 3, M, 'acct-ann']] }]) assert.equal(validOwIn(bad), null, JSON.stringify(bad));   // PIN MOVED (AUDIT RELEASE R2-3): a stone's pixel is the world's grid - (1000, 207) is land past the Bay now, (8192, 207) past the wire's
   assert.deepEqual(parseClient(JSON.stringify({ t: 'ow', k: 'gr', rows: [[101, 207, 3]] }), { hasHello: true }), { t: 'ow', k: 'gr', rows: [[101, 207, 3]] });
   assert.deepEqual(validOwOut({ k: 'gr', rows: [[101, 207, 3, M, 'acct-ann', 'Ann'], [101, 207, 3], 'x', [101, 207, 3, -1, 'acct-ann', 'Ann'], [101, 207, 3, M, '', 'Ann'], [101, 207, 3, M, 'acct-ann'], [101, 207, 3, M, 'acct-ann', 7], [101, 207, 3, M, 'acct-ann', 'x'.repeat(NAME_MAX + 1)], [101, 207, 4, M, 'acct-ann', '']] }),
     { k: 'gr', rows: [[101, 207, 3, M, 'acct-ann', 'Ann'], [101, 207, 4, M, 'acct-ann', '']] }, 'a row names its account and its character (or none) - nothing else is a row');
@@ -581,7 +581,7 @@ test('GRAVE-PARTY + AUDIT G2: a PARTY-LOOT pile whose room word this build canno
     ${fnSrc('lootableBody')}
     ${fnSrc('lootHolder')}
     ${fnSrc('roomLootKey')}
-    const { _roomState, _roomMine, isRoomBaseContainer, landRoomWord, roomClaimTick, roomRecordOf, roomSayNow, roomSettle, roomUnborn, settleRoomBonus, holderList, roomBaseHolder, composeRoomContainer, mintUnbornRoom } = createRoomLoot(${handles});
+    const { _roomState, _roomMine, isRoomBaseContainer, landRoomWord, roomClaimTick, roomRecordOf, roomSayNow, roomSettle, roomUnborn, roomUnreadableText, settleRoomBonus, holderList, roomBaseHolder, composeRoomContainer, mintUnbornRoom } = createRoomLoot(${handles});   // PIN MOVED (RPT1026-ITEMS LOOT-SKEW): the press asks the module which line
     ${fnSrc('lootRecords')}
     ${fnSrc('publishLoot')}
     ${fnSrc('sayRoomWord')}

@@ -160,3 +160,35 @@ test('COVER-COMPACT: the columns answer as the proxy objects did - every hit, ev
   }
   assert.ok(proxies.some(([it]) => it.r > COVER_CELL), 'wide crowns among them');
 });
+
+test('COVER-COMPACT x IC-SWAP-BEHIND: a held set is in no query until it wakes, and answers there as it would filled in the open; an unheld one is gone', () => {
+  const rnd = seeded(77);
+  const { items } = setFixture(rnd, [400, 0, 400], 60);
+  const open = createCoverIndex({ enabled: () => true });
+  open.add('px', items);
+  const behind = createCoverIndex({ enabled: () => true });
+  behind.hold('px#b');
+  behind.add('px#b', items.slice(0, 40));
+  behind.fill(behind.staged(), []);
+  behind.add('px#b', items.slice(40));
+  const o = [400, 3, 300];
+  let hits = 0;
+  assert.equal(behind.hit(o, [0, 0, 1], 300), Infinity, 'held: in no query');
+  assert.equal(behind.size(), 0);
+  behind.wake('px#b', 'px');
+  assert.equal(behind.size(), open.size());
+  for (let i = 0; i < 400; i++) {
+    const ray = [rnd() * 2 - 1, (rnd() - 0.5) * 0.2, rnd() * 2 - 1];
+    const len = Math.hypot(...ray);
+    const dir = ray.map((v) => v / len);
+    const want = open.hit(o, dir, 300);
+    if (want !== Infinity) hits++;
+    assert.equal(behind.hit(o, dir, 300), want);
+  }
+  assert.ok(hits > 20, `the rays met cover (${hits})`);
+  behind.hold('px#c');
+  behind.add('px#c', items);
+  behind.unhold('px#c');
+  behind.wake('px#c', 'px2');
+  assert.equal(behind.size(), open.size(), 'an unheld set wakes as nothing');
+});

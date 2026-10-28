@@ -133,7 +133,7 @@ test('CARDS6 the hosts: a realm character online sits at a gold table with the s
   assert.match(wm, /const r = await host\.cardStakes\.stake\(\{ room: host\.cardOnline\.room\(\), table: cardSeat\.table, bb: g\.stakes\.bb, amount, place: cardPlaceName\(\) \}\);/);   // CARDS6b: where it was staked (PIN MOVED)
   assert.match(wm, /\.\.\.\(g\.stakeWord \? \{ stake: g\.stakeWord \} : \{\}\) \}\);   \/\/ CARDS6/);
   assert.match(wm, /if \(r\.confirmed && g\.stakeId && !g\.stakeSeated\) \{ g\.stakeSeated = true; host\.cardStakes\?\.seated\(g\.stakeId\); \}/);
-  assert.match(wm, /if \(typeof f\?\.cashout === 'string'\) \{\n\s*const j = host\.cardStakes\?\.receive\(f\.cashout\);\n\s*if \(j\) \{ host\.cardOnline\?\.send\(\{ op: 'ack', table: f\.table, j \}\); host\.cardStakes\.claim\(\); \}/);
+  assert.match(wm, /if \(typeof f\?\.cashout === 'string'\) \{\n\s*const j = host\.cardStakes\?\.receive\(f\.cashout\);\n\s*if \(j\) \{ host\.cardOnline\?\.send\(\{ op: 'ack', table: f\.table, j \}\); host\.cardStakes\.claim\(say\); \}/);   // RPT1026-CARDBANK (PIN MOVED): the claim says where the gold went
   assert.match(wm, /for \(const v of host\.cardStakes\.voidable\(room\)\) \{ if \(!host\.cardOnline\.send\(\{ op: 'void', table: v\.table, stake: v\.order \}\)\) break; host\.cardStakes\.voiding\(v\.id\); \}/);
   assert.match(w, /const cardStakes = params\.has\('online'\) && realmSession\n\s*\? createCardStakes\(/);
   assert.match(w, /room: \(\) => online\?\.room \?\? null \},[^\n]*\n\s*cardStakes,/);
