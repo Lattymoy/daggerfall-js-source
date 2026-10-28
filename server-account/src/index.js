@@ -325,7 +325,8 @@ const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsO
 const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => withMasteryMarks(ctx, chapterTitlesOpenFor(player, env)
   ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
 import { huntState, huntClear, withMasteryMarks, HUNT_STATUS } from './hunts.js';   // HUNTERS-MARK: the hunt's ledger; MARKS-OF-MASTERY: the titles read off it
-import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards, settleYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
+import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase } from './decor.js';
+import { yardCellsKept, forgetYardCell, forgetYardTown, settleYardCell } from './yardCells.js';   // YARD-CELL: a town's yards kept and read a block at a time   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { commitDecorBatch } from './decorBatch.js';   // DECOR-BATCH: one Confirm for a home's draft
 import { decorUse } from './decorAccess.js';   // DECOR-ACCESS: who may use a container or a station
 import { DECOR_BATCH_BYTES } from '../../src/net/decorLaw.js';
@@ -1056,15 +1057,19 @@ const service = {
       if (body === undefined && path === '/v1/homes/decor/batch') return no('too-large', 413, origin);   // DECOR-BATCH: past 128 KiB, before a session is read
       if (!body) return no('body', 400, origin);
       // YARD-SHED (2026-10-06, the service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S YARDS NEED
-      // NO SESSION. Its answer is every caller's alike, any guest's to read (decor.js yardsKept), and the two reads a
-      // session costs were most of the database's day - so it is answered here, from the isolate's kept answer, bounded
-      // per address in this isolate's memory as a session's door is per account (no write to count it).
-      if (path === '/v1/homes/yards' && request.method === 'POST') {
+      // NO SESSION. Their answer is every caller's alike, any guest's to read, and the two reads a session costs were most
+      // of the database's day - so they are answered here, from the isolate's kept cells (yardCells.js yardCellsKept),
+      // bounded per address in this isolate's memory as a session's door is per account (no write to count it).
+      if (path === '/v1/homes/yards/cells' && request.method === 'POST') {
         const ip = request.headers.get('cf-connecting-ip') || 'unknown';
         if (overAccountRate(`yards:${ip}`, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) return no('rate', 429, origin);
-        const r = await yardsKept(ctx, body.mapId, nowS);
+        const r = await yardCellsKept(ctx, body, nowS);
         return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
       }
+      // YARD-CELL: the whole town's yards, which a build from before the cells asks, are refused - a town is read by its
+      // cells now, and the old answer was cut at 6,500 pieces. Such a build reads any answer but `ok` as a failed ask and
+      // backs off without a word; the site's build notice (net/updateNotice.js) tells it to reload.
+      if (path === '/v1/homes/yards' && request.method === 'POST') return no('client-update', 410, origin);
       // POI-1: THE LIVE FEED AND A LIVE ASSET NEED NO SESSION - what every approved POI is, and the bytes it names, are
       // every player's to read, the game's included (poi.js). Bounded per address in this isolate's memory, as the yards
       // are; the feed kept in the isolate and answered 304 to a game that already holds its version; an asset by its
@@ -1808,8 +1813,8 @@ const service = {
                   : path === '/v1/homes/decor/use' ? await decorUse(hctx, who.player, body)   // DECOR-ACCESS
                     : await removeDecor(hctx, who.player, body);
           if (path !== '/v1/homes/decor/use') {   // a chest's list, settle or release moves no yard
-            forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
-            await settleYards(ctx.db, body?.mapId).catch((e) => console.warn('[yards] the town not built', e?.message ?? e));   // YARD-SNAP: and built again (the clock builds one this misses)
+            forgetYardCell(body?.mapId, body?.buildingKey);   // YARD-CELL: the cell's kept answer let go, whatever the write did
+            await settleYardCell(ctx.db, body?.mapId, body?.buildingKey).catch((e) => console.warn('[yards] the cell not built', e?.message ?? e));   // and built again (the clock builds one this misses)
           }
           if (!('error' in r)) return json(r, 200, origin);
           const said = realmNo(r);
@@ -2742,9 +2747,9 @@ const service = {
         if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner, partnerChar: body.partnerChar, withdraw: body.withdraw === true }));
         if (path === '/v1/realm/unions') return json({ unions: await listUnions(rctx, me) }, 200, origin);
         // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete. ACCOUNT-HOMES: the homes it
-        // bought go with it (QUEST-HOME's `moved`), and their towns' kept yards are let go as a decor write lets them go (YARD-SHED)
+        // bought go with it (QUEST-HOME's `moved`), and their towns' kept yard cells are let go as a decor write lets one go
         const deleted = await deleteRealm(rctx, me, body.id);
-        for (const { mapId } of deleted?.moved ?? []) forgetYards(mapId);
+        for (const { mapId } of deleted?.moved ?? []) forgetYardTown(mapId);
         return answer(await homeOrdersOf(deleted, me, env, subtle, nowS));   // QUEST-HOME: its homes a house again to every page online
       }
 

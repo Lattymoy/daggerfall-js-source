@@ -80,6 +80,7 @@ on:
       - "src/net/homeLaw.js"
       - "src/net/homeScene.js"
       - "src/net/decorLaw.js"
+      - "src/net/yardCellLaw.js"
       - "src/world/npcFlatArchives.js"
       - "src/net/homeVoteLaw.js"
       - "src/net/guild/guildLaw.js"
@@ -1352,7 +1353,7 @@ jobs:
             echo "::error::/v1/homes/decor/place did not refuse a guest as homes-need-account ($code)"; cat /tmp/place.json || true; exit 1
           fi
           # LEAN-READS (AUDIT LEAN-READS D7): THE KEPT BOARDS ARE LIVE, on D1
-          # itself - a town's yards (home_yards and home_yards_ver, read by anyone) and the
+          # itself - a town's yard cells (YARD-CELL: home_yard_cells and home_yard_cell_ver, read by anyone) and the
           # arena's board (arena_board_ver and arena_boards: read and
           # counted). A 500 is a migration that did not apply, or a read
           # D1 refuses that node:sqlite ran. AND KEPT (audit two, C3): a
@@ -1362,21 +1363,35 @@ jobs:
           # (`kept`): a board at its version, in a shape. A write landing
           # between the read and the ask is asked again, three times.
           kept() { timeout 60 $WRANGLER d1 execute "$DB_NAME" --remote --command "$1" --json 2>/dev/null | jq -r '.[0].results[0].n // 0' 2>/dev/null || echo 0; }
-          n=$(kept "SELECT (SELECT COUNT(*) FROM home_yards_ver) = 0 OR EXISTS (SELECT 1 FROM home_yards y JOIN home_yards_ver v ON v.map_id = y.map_id WHERE y.built = v.ver AND y.shape IS NOT NULL) AS n")
+          n=$(kept "SELECT (SELECT COUNT(*) FROM home_yard_cell_ver) = 0 OR EXISTS (SELECT 1 FROM home_yard_cells c JOIN home_yard_cell_ver v ON v.map_id = c.map_id AND v.cell = c.cell WHERE c.built = v.ver AND c.shape IS NOT NULL) AS n")
           if [ "$n" != "1" ]; then
-            echo "::error::no town's yards stand built in a shape on D1 - migration 0136's build did not run there"; exit 1
+            echo "::error::no town's yard cells stand built in a shape on D1 - migration 0190's build did not run there"; exit 1
           fi
-          # AUDIT LEAN-READS 2 D5: a town that stands yards, so the read answers off a row D1 itself built (a town with
+          # AUDIT LEAN-READS 2 D5: a cell that stands yards, so the read answers off a row D1 itself built (a cell with
           # none answers before it reads any)
-          map=$(kept "SELECT y.map_id AS n FROM home_yards y JOIN home_yards_ver v ON v.map_id = y.map_id WHERE y.built = v.ver AND y.rows IS NOT NULL AND y.rows != '[]' LIMIT 1")
+          map=$(kept "SELECT c.map_id AS n FROM home_yard_cells c JOIN home_yard_cell_ver v ON v.map_id = c.map_id AND v.cell = c.cell WHERE c.built = v.ver AND c.rows IS NOT NULL AND c.rows != '[]' LIMIT 1")
+          cell=$(kept "SELECT c.cell AS n FROM home_yard_cells c JOIN home_yard_cell_ver v ON v.map_id = c.map_id AND v.cell = c.cell WHERE c.map_id = ${map:-0} AND c.built = v.ver AND c.rows IS NOT NULL AND c.rows != '[]' LIMIT 1")
           [ "$map" -gt 0 ] 2>/dev/null || map=1
-          code=$(post /tmp/yards.json "$base/v1/homes/yards" "{\"secret\":\"$secret\",\"mapId\":$map}")
-          echo "homes/yards (town $map) -> $code"
-          if shed "$code" /v1/homes/yards; then :
-          elif [ "$code" != "200" ] || ! grep -q '"yards":\[' /tmp/yards.json; then
-            echo "::error::/v1/homes/yards did not answer a town's yards ($code)"; cat /tmp/yards.json || true; exit 1
+          [ "$cell" -ge 0 ] 2>/dev/null || cell=1
+          code=$(post /tmp/yards.json "$base/v1/homes/yards/cells" "{\"secret\":\"$secret\",\"mapId\":$map,\"cells\":[[$cell,0]]}")
+          echo "homes/yards/cells (town $map, cell $cell) -> $code"
+          if shed "$code" /v1/homes/yards/cells; then :
+          elif [ "$code" != "200" ] || ! grep -q '"cells":\[' /tmp/yards.json; then
+            echo "::error::/v1/homes/yards/cells did not answer a town's cells ($code)"; cat /tmp/yards.json || true; exit 1
           elif [ "$map" != "1" ] && ! grep -q '"yards":\[{' /tmp/yards.json; then
-            echo "::warning::town $map's built yards answered none - every piece the law's to hide?"
+            echo "::warning::town $map cell $cell's built yards answered none - every piece the law's to hide?"
+          fi
+          # YARD-CELL: the whole town's old route is refused - a build from before the cells is told by the build notice.
+          # An instance of the deploy before still answers it mid-rollout (HOME2's reason for the retry), so it is asked
+          # again until this deploy's answer comes, as a 404 is
+          for i in $(seq 1 7); do
+            code=$(post /tmp/oldyards.json "$base/v1/homes/yards" "{\"secret\":\"$secret\",\"mapId\":$map}")
+            [ "$code" = "410" ] && break
+            sleep 5
+          done
+          echo "homes/yards (the old route) -> $code"
+          if [ "$code" != "410" ] || ! grep -q '"client-update"' /tmp/oldyards.json; then
+            echo "::error::/v1/homes/yards did not refuse the old whole-town read as client-update ($code)"; cat /tmp/oldyards.json || true; exit 1
           fi
           code=$(post /tmp/arena.json "$base/v1/arena/board" "{\"secret\":\"$secret\"}")
           echo "arena/board -> $code"

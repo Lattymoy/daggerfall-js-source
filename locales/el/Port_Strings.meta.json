@@ -624,6 +624,11 @@
   "tr": "b29f271f98ea",
   "by": "claude-in-session"
  },
+ "account.refusal.badCells": {
+  "en": "2d3ef2cb9a95",
+  "tr": "8dc0eca8c072",
+  "by": "claude-in-session"
+ },
  "account.refusal.badCode": {
   "en": "cca3778d98a6",
   "tr": "ae3fe2899167",
@@ -1012,6 +1017,11 @@
  "account.refusal.chaptersClosed": {
   "en": "94444e3460c5",
   "tr": "7807dd048a81",
+  "by": "claude-in-session"
+ },
+ "account.refusal.clientUpdate": {
+  "en": "03342c4f637c",
+  "tr": "92a11c4b274c",
   "by": "claude-in-session"
  },
  "account.refusal.closed": {
@@ -2982,11 +2992,6 @@
  "account.refusal.yardCap": {
   "en": "2c2ab7f7a382",
   "tr": "ac73f1be1e7e",
-  "by": "claude-in-session"
- },
- "account.refusal.yardTownFull": {
-  "en": "0f069e781d8b",
-  "tr": "88d9f4dd7f27",
   "by": "claude-in-session"
  },
  "account.wear.aura": {

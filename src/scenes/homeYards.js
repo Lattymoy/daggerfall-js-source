@@ -24,9 +24,9 @@
 // the road cuts in). The service's own bound is the lot's widest
 // (DECOR_YARD_POS_MAX).
 //
-// THE TOWN'S YARDS are read with the town (one answer for every home in it -
-// server-account/src/decor.js yardsOf), believed a minute as the homes are
-// (systems/online/onlineHomes.js), and each yard stood in its pixel as a room's
+// THE TOWN'S YARDS are read a block at a time (YARD-CELL - scenes/yardCellSync.js,
+// server-account/src/yardCells.js): the blocks within reach, nearest first, and
+// after the first answer only the blocks that moved; each yard stood in its pixel as a room's
 // pieces stand in its room (scenes/decor/decorRoom.js, one pool a yard): its own
 // collider buckets on the world's collider, drawn in the world's passes, and
 // stood again where it stands when the world recentres (the pool places in
@@ -64,10 +64,12 @@ import { pickActivatableHit } from '../player/activate.js';
 import { plaqueActionFor } from '../systems/quickLoot.js';
 import { YARD_RANGE_TIERS, YARD_RANGE_DEFAULT, yardRangeOf, YARD_DRAW_M } from '../net/yardRange.js';   // YARD-RANGE: how far a stranger's yard is drawn
 import { createDecorTool } from './decor/decorTool.js';
-import { decorYardPieceOf, DECOR_YARD_CAP, decorYardHighOk, DECOR_YARD_HIGH_WHY } from '../net/decorLaw.js';   // YARD-HEIGHT: how high a piece stands, and its words
+import { DECOR_YARD_CAP, decorYardHighOk, DECOR_YARD_HIGH_WHY } from '../net/decorLaw.js';   // YARD-HEIGHT: how high a piece stands, and its words
 import { homeLookRecords } from '../world/homeLook.js';   // HOME-LOOK (AUDIT): the styles a roof's or a door's family holds
 import { onPathTile } from '../player/exteriorSurface.js';   // FB1001 ROAD-LOT: PlayerMotor.OnPathTile - Daggerfall's own road tiles
 import { RMB_TILE_SIDE } from '../world/locationEntrance.js';   // FB1001 ROAD-LOT: RMBLayout.RMBTileSide, a ground tile's side
+import { createYardCellSync, YARD_ASK_M, YARD_KEEP_MARGIN_M } from './yardCellSync.js';   // YARD-CELL: the yards asked and held a block at a time
+import { yardCellOf } from '../net/yardCellLaw.js';
 import { TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
 import { homeOutsideKept, homeYardWhere, homeCandidate } from '../systems/online/onlineHomes.js';   // GUILD-YARD: a hall's keepers keep its outside
 import { homeDecorShown } from '../net/homeVoteLaw.js';   // HOME-VOTE: a shunned home's yard stands for its insiders alone
@@ -175,40 +177,21 @@ export const YARD_NEAR = 2;
 const YARD_NEAR_ONLY = 1e6;
 /** How high the lot's marked edge stands. */
 export const YARD_MARK_HIGH = 1;
-/** A town's yards, believed this long; an unanswered ask waits this long before the next. */
-export const YARD_TOWN_TTL_MS = 60_000;
-export const YARD_RETRY_MS = 10_000;
-/** PRIMARY-TRIPS audit (2026-10-16): how long the owner's own write stands over ANY answer of its town, asked after it
- *  too - the service keeps a town's answer YARDS_KEPT_S (30 s) an isolate and reads it off a replica (YARDS-REPLICA,
- *  server-account/src/decor.js), so an answer asked after the write can still be one from before it, kept, or a replica
- *  behind. FB1001 YARD-STALE held a write over an answer asked before it alone. */
-export const YARD_WRITE_HOLD_MS = 60_000;
-/**
- * YARD-SHED (2026-10-06, the account service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S
- * YARDS ARE ASKED ONLY WITHIN REACH, AND A FAILED ASK BACKS OFF. Every built pixel's town was asked every minute - the
- * whole streaming grid's, where a yard is drawn only within YARD_DRAW_M of the eye - and a failed ask again every
- * YARD_RETRY_MS, so a database too slow to answer was asked six times as often: 3.0 million asks a day, 577 of the 930
- * requests the service saw in 45 s of the outage. Now a town is asked while one of its homes stands within YARD_ASK_M of
- * the player's feet (its yards drawn before they are in sight), and each failure in a row doubles the wait, to
- * YARD_RETRY_MAX_MS.
- */
-export const YARD_ASK_M = YARD_DRAW_M + 200;
-export const YARD_RETRY_MAX_MS = 300_000;
-/** The wait before a town's next ask after `n` failures in a row (ms). */
-export const yardRetryMs = (n) => Math.min(YARD_RETRY_MAX_MS, YARD_RETRY_MS * 2 ** Math.max(0, n - 1));
+// YARD-SHED's reach and back-off, the poll's interval and the owner's write hold live with the cells they time
+// (scenes/yardCellSync.js); named here too, where the yards' tests and the bible have always read them.
+export { YARD_TOWN_TTL_MS, YARD_RETRY_MS, YARD_RETRY_MAX_MS, yardRetryMs, YARD_WRITE_HOLD_MS, YARD_ASK_M } from './yardCellSync.js';
 /** How often the yards are brought in line with the town, seconds. */
 export const YARD_SYNC_S = 0.5;
 /** YARD-MERGE: how many yards' models are merged in one frame (decorRoom.js DECOR_MERGE_SETTLE_MS) - a town streaming in
  *  stands every yard at once, and its merges are spread a frame each. */
 export const YARD_MERGES_A_FRAME = 1;
 /**
- * YARD-TOWN (2026-10-25, measured in Daggerfall's city on a local build): HOW MANY STRANGERS' YARDS ARE STOOD IN ONE
- * FRAME. A town's answer landing stood every yard in it in one sync - the city's 2,000 pieces one frame of 108 to 138 ms,
- * a city of 4,000 one of 142 to 208, whatever the Yard decorations range (it gates the draw, never the stand). Now a sync
- * stands this many and the next frame syncs again until the town is stood; the owner's own yard, and the one the decorator
- * stands in, never wait.
+ * HOW LONG ONE FRAME SPENDS STANDING STRANGERS' YARDS, milliseconds. YARD-TOWN (2026-10-25) measured a town's answer
+ * stood in one sync at a frame of 108 to 208 ms. YARD-CELL stands them NEAREST FIRST while the frame's standing time is
+ * under this budget - always one a frame - and the next frame goes on until all stand. The owner's own yard, and the one
+ * the decorator stands in, never wait. 3 ms was the best measured (bible/11-Multiplayer/Yard-Cells.md section 10, check 1).
  */
-export const YARD_STANDS_A_FRAME = 4;
+export const YARD_STAND_BUDGET_MS = 3;
 /** What the decorator says of a piece off the lot, in the house, or on another building's ground. */
 export const YARD_OFF_LOT = 'Outside your lot. Keep it within the marked edge.';
 export const YARD_IN_HOUSE = 'That is inside your house. Place it in the yard around it.';
@@ -505,7 +488,8 @@ export function yardLotQuads(lot, origin, high = YARD_MARK_HIGH, roads = []) {
 
 /**
  * THE TOWN'S YARDS, AND THE OWNER'S DECORATOR OUTSIDE. `deps` (the world host's - scenes/world.js):
- *   api          - net/accountClient.js accountDecor: yards(mapId), place (with `yard`), move, remove
+ *   api          - net/accountClient.js accountDecor: yardCells(mapId, cells), place (with `yard`), move, remove
+ *   polling(), standClock() - YARD-CELL: whether the cells in reach may be polled now; the stand budget's clock (ms)
  *   homes        - systems/online/onlineHomes.js: homeAt(mapId, key) - whose a home is, and whether it is the character's own
  *   built()      - the world's built pixels (each `{ px, py, homeTown, homeFrames }` - homeFrames: key -> { at, box,
  *                  rects }, pixel-local; FB1009 HOME-FOOT: `rects` the ground its models' faces cover, footRectsAt's)
@@ -541,11 +525,18 @@ export function createHomeYards(deps) {
   /** YARD-RANGE: the host's view test after the size's (a piece too small to see is skipped before the planes are asked). */
   const seenCull = (box) => (_eye && !decorBoxSeen(box, _eye, YARD_MIN_ANGLE) ? DECOR_SKIP : deps.cull ? deps.cull(box) : DECOR_DRAW);
   const _batches = [];
-  /** @type {Map<number, {at: number, byKey: Map<number, any[]>}>} */
-  const towns = new Map();
-  const asking = new Map();
-  /** @type {Map<number, {at: number, n: number}>} YARD-SHED: each town's last failure and the failures in a row */
-  const failed = new Map();
+  // YARD-CELL: the town's yards, a block at a time - polled only while they can be seen: the player on foot in the street
+  // (`outside` - never indoors, in a dungeon or on the travel map), no window over it, the tab shown. A cell coming into
+  // reach is asked whatever this says.
+  let overlayUpNow = false;
+  const pollingNow = () => {
+    if (deps.polling) return deps.polling();
+    const outside = deps.outside ? !!deps.outside() : true;
+    return outside && !overlayUpNow && !deps.doc?.hidden;
+  };
+  const cells = createYardCellSync({ api: deps.api, now, polling: pollingNow });
+  /** What a frame's standing time is read on - the host's clock for its tests, else the page's. */
+  const standClock = () => deps.standClock?.() ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
   /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, src: any[] | null, srcSig: string, kept: boolean, lot: any, frame: any, entry: any, skin: number, trees: Map<string, any>, treeSet: any}>} */
   const yards = new Map();
   const yardFigs = [];   // MWNPC18 (AUDIT MWNPC16-18 D4): figures()'s one list
@@ -554,34 +545,6 @@ export function createHomeYards(deps) {
   let syncIn = 0;
   /** @type {any} the owner's own yard the decorator stands in, or null */
   let cur = null;
-  // FB1001 YARD-STALE: the owner's own writes - each one's turn, and the yard it left, by town and building - so a town's
-  // answer READ BEFORE a write and landing after it never stands the yard as it was (the piece placed gone, the piece
-  // moved back, the piece removed standing again, for the minute until the next read)
-  let wrote = 0;
-  /** @type {Map<number, Map<number, {n: number, at: number, list: any[]}>>} */
-  const writes = new Map();
-
-  function ensure(mapId) {
-    if (deps.heard?.() === false) return;   // WD3 (AUDIT WD3 R6): a yard is laid out on its town's layout - none asked before it is heard
-    const had = towns.get(mapId);
-    if (had && now() - had.at < YARD_TOWN_TTL_MS) return;
-    const f = failed.get(mapId);
-    if (asking.has(mapId) || (f && now() - f.at < yardRetryMs(f.n))) return;   // YARD-SHED: each failure in a row doubles the wait
-    const asked = wrote;
-    const p = Promise.resolve().then(() => deps.api?.yards?.(mapId)).then((r) => {
-      const list = r?.ok ? r.data?.yards : null;
-      if (!Array.isArray(list)) { failed.set(mapId, { at: now(), n: (failed.get(mapId)?.n ?? 0) + 1 }); return; }
-      const byKey = new Map();
-      for (const y of list) {
-        if (!Number.isSafeInteger(y?.buildingKey) || !Array.isArray(y.pieces)) continue;
-        byKey.set(y.buildingKey, y.pieces.map(decorYardPieceOf).filter((p) => p && decorYardHighOk(p)));   // YARD-SWEEP: nor a tower's piece from before YARD-HEIGHT
-      }
-      for (const [bk, w] of writes.get(mapId) ?? []) if (w.n > asked || now() - w.at < YARD_WRITE_HOLD_MS) byKey.set(bk, w.list);   // YARD-STALE: written since it was asked - or (PRIMARY-TRIPS audit) within YARD_WRITE_HOLD_MS of it
-      towns.set(mapId, { at: now(), byKey });
-      failed.delete(mapId);
-    }, () => { failed.set(mapId, { at: now(), n: (failed.get(mapId)?.n ?? 0) + 1 }); }).finally(() => { asking.delete(mapId); });
-    asking.set(mapId, p);
-  }
 
   /** DECOR-OUTDOOR: the built pixel a yard stands in, now (a season's turn builds it again). */
   const entryOf = (y) => deps.built?.()?.get?.(`${y.px},${y.py}`) ?? null;
@@ -638,40 +601,52 @@ export function createHomeYards(deps) {
     return y;
   }
 
-  /** THE YARDS BROUGHT IN LINE with the town: each home's pieces stood in its pixel (again where the town's answer
-   *  changed, or the world recentred), a pixel gone taken down with its yards. */
-  /** YARD-SHED: whether one of a town pixel's homes stands within YARD_ASK_M of the player's feet - a host that says no
-   *  feet asks as before. */
-  function withinReach(p, feet) {
-    if (!feet) return true;
-    const t = deps.translation(p.px, p.py);
-    for (const [, frame] of p.homeFrames) {
-      if (!frame?.at) return true;   // a frame without its place: asked, as before
-      if (Math.hypot(t[0] + frame.at[0] - feet[0], t[2] + frame.at[2] - feet[2]) <= YARD_ASK_M) return true;
-    }
-    return false;
+  /** How far a home stands from the player's feet, metres on the ground - 0 where the host says no feet, or the frame
+   *  has no place (YARD-SHED: such a home is asked, and stood, as before - first). */
+  function homeDistance(t, frame, feet) {
+    if (!feet || !frame?.at) return 0;
+    return Math.hypot(t[0] + frame.at[0] - feet[0], t[2] + frame.at[2] - feet[2]);
   }
-  /** Answers whether a yard still waits to be stood (YARD-TOWN: past this sync's YARD_STANDS_A_FRAME). */
+  /** A yard stood again in its pixel now: `holding` keeps the pieces standing (the owner's decorator is up). */
+  function stand(y, p, t, pieces, sig, holding) {
+    y.t = [...t];
+    y.entry = p;
+    y.skin = p._skinGen ?? 0;
+    if (!holding) y.sig = sig;
+    y.pool.set(holding ? y.pool.list() : pieces ?? y.pool.list());
+  }
+  /** THE YARDS BROUGHT IN LINE with the town: the cells within reach asked (YARD-CELL), each home's pieces stood in its
+   *  pixel (again where its cell's answer changed, or the world recentred) nearest first on the frame's budget, and a
+   *  pixel gone taken down with its yards. Answers whether a yard still waits to be stood. */
   function sync() {
     const live = new Set();
     const feet = deps.feet?.() ?? null;
-    let stands = YARD_STANDS_A_FRAME;
+    const heard = deps.heard?.() !== false;   // WD3 (AUDIT WD3 R6): a yard is laid out on its town's layout - none asked before it is heard
+    /** @type {Map<string, import('./yardCellSync.js').CellWish>} each cell wanted, at its nearest listed home */
+    const wishes = new Map();
+    /** @type {Array<{ y: any, p: any, t: number[], pieces: any[] | null, sig: string, holding: boolean, distance: number }>} */
+    const waiting = [];
     let behind = false;
     for (const [pk, p] of deps.built?.() ?? []) {
       if (!p?.homeTown || !p.homeFrames) continue;
-      if (withinReach(p, feet)) ensure(p.homeTown);
-      const town = towns.get(p.homeTown);
+      const t = deps.translation(p.px, p.py);
       for (const [bk, frame] of p.homeFrames) {
         const home = deps.homes?.homeAt?.(p.homeTown, bk) ?? null;
+        const distance = homeDistance(t, frame, feet);
+        if (home && heard && distance <= YARD_ASK_M + YARD_KEEP_MARGIN_M) {
+          const cell = yardCellOf(bk);
+          const wishKey = `${p.homeTown}:${cell}`;
+          const had = wishes.get(wishKey);
+          if (!had || distance < had.distance) wishes.set(wishKey, { mapId: p.homeTown, cell, distance });
+        }
         // HOME-VOTE: a home the town voted below zero stands no yard but for its insiders (net/homeVoteLaw.js) - its
         // pieces taken down where they stood, and stood again the moment its votes climb
-        const pieces = homeDecorShown(home) ? town?.byKey.get(bk) ?? null : null;
+        const pieces = homeDecorShown(home) ? cells.piecesOf(p.homeTown, bk) : null;
         if (!home || (!pieces?.length && !homeOutsideKept(home))) continue;   // a yard stands for a home with pieces, or for its owner (GUILD-YARD: a hall's keeper)
         if (!homeOutsideKept(home) && range() === 0) continue;   // YARD-RANGE: none of a stranger's - taken down where it stood
         const key = `${pk}:${bk}`;
         live.add(key);
         const y = yards.get(key) ?? makeYard(key, p, bk, frame);
-        const t = deps.translation(p.px, p.py);
         const moved = t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2];
         // YARD-RANGE: the town's answer written out again only when it is another answer - every half second, for every
         // home of every built town, it was two thousand pieces stringified to learn nothing had changed (the town's lists
@@ -689,18 +664,25 @@ export function createHomeYards(deps) {
         // was holding back, a piece being moved gone from under it.
         const holding = cur?.yard === y && busyWriting();
         if (moved || rebuilt || (sig !== y.sig && !holding)) {
-          // YARD-TOWN: a stranger's yard past this frame's stands waits, as it was, for the next frame's sync
-          if (stands <= 0 && !y.kept && cur?.yard !== y) { behind = true; continue; }
-          stands--;
-          y.t = [...t];
-          y.entry = p;
-          y.skin = p._skinGen ?? 0;
-          if (!holding) y.sig = sig;
-          y.pool.set(holding ? y.pool.list() : pieces ?? y.pool.list());
+          if (y.kept || cur?.yard === y) stand(y, p, t, pieces, sig, holding);
+          else waiting.push({ y, p, t, pieces, sig, holding, distance });   // a stranger's: in the frame's nearest-first turn below
         }
       }
     }
+    cells.update([...wishes.values()]);
     for (const [key, y] of yards) if (!live.has(key)) { y.pool.destroyAll(); yards.delete(key); }
+    // a stranger's yard past this frame's budget waits, as it was, for the next frame's sync
+    waiting.sort((a, b) => a.distance - b.distance);
+    const started = standClock();
+    let stood = 0;
+    for (const w of waiting) {
+      if (stood > 0 && standClock() - started >= YARD_STAND_BUDGET_MS) {
+        behind = true;
+        break;
+      }
+      stand(w.y, w.p, w.t, w.pieces, w.sig, w.holding);
+      stood++;
+    }
     return behind;
   }
   const busyWriting = () => !!tool.flying() || !!tool.panelOpen();
@@ -756,12 +738,9 @@ export function createHomeYards(deps) {
   function keep() {
     const y = cur?.yard;
     if (!y) return;
-    const town = towns.get(y.mapId);
     const list = y.pool.list();
-    if (town) town.byKey.set(y.bk, list);
+    cells.hold(y.mapId, y.bk, list);   // FB1001 YARD-STALE: and over the answers that follow it
     y.sig = JSON.stringify(list);
-    if (!writes.has(y.mapId)) writes.set(y.mapId, new Map());
-    writes.get(y.mapId).set(y.bk, { n: ++wrote, at: now(), list });   // FB1001 YARD-STALE
   }
   const homeDecor = deps.api ? {
     place: (a) => deps.api.place({ ...a, yard: true }),
@@ -847,6 +826,7 @@ export function createHomeYards(deps) {
    * @param {{ dt: number, cam: any, overlayUp: boolean }} f
    */
   function frame({ dt, cam, overlayUp }) {
+    overlayUpNow = !!overlayUp;
     syncIn -= dt > 0 ? dt : 0;
     // AUDIT: the world recentred - every yard stood again this frame, never half a second in the old place; DECOR-OUTDOOR:
     // nor half a second out of its rebuilt pixel's climate and season (AUDIT PRECIP HOST-7: nor its re-skinned one's)

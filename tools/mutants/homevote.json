@@ -442,12 +442,12 @@
   {
     "name": "HOME-VOTE-yard-unasked",
     "file": "src/scenes/homeYards.js",
-    "old": "        const pieces = homeDecorShown(home) ? town?.byKey.get(bk) ?? null : null;",
-    "new": "        const pieces = town?.byKey.get(bk) ?? null;",
+    "old": "        const pieces = homeDecorShown(home) ? cells.piecesOf(p.homeTown, bk) : null;",
+    "new": "        const pieces = cells.piecesOf(p.homeTown, bk);",
     "tests": [
       "test/net/homevote.test.js"
     ],
-    "note": "a shunned home's yard stands for everyone"
+    "note": "a shunned home's yard stands for everyone Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "HOME-VOTE-room-stood",

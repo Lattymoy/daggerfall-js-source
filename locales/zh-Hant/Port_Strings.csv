@@ -22,7 +22,6 @@ account.refusal.townUnwalked,"請先走過一座城鎮的街道，再回報它�
 account.refusal.townsClosed,"城鎮經濟暫時關閉。"
 account.refusal.townsNeedAccount,"只有註冊帳戶才能回報城鎮及到訪情況。"
 account.refusal.townsRate,"你這一小時回報了太多城鎮。請稍後再試。"
-account.refusal.yardTownFull,"這座城鎮的庭院總共最多容納 {max} 件物品。請移除一件你自己的物品，再放置新的。"
 body.beast.feet,"{id} - 獸族的腳保持赤裸"
 body.beast.helm,"{id} 遮住頭部 - 獸族不戴封閉式頭盔"
 body.beast.noFootwear,"{id} - 獸族不穿鞋"

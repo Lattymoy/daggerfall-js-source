@@ -10909,18 +10909,19 @@ than half of Daggerfall city cannot place outdoor decorations due to bug with ya
   yard frame (86 yards, 1,538 pieces stood). Their owners placed them online, where the town's layout gave them one; the
   measured costs are a quarter low for it. What the frame of up to 63 ms left in the landing holds (the answer read, the
   models' builds or the merges) was not profiled.
-- **Next, if the city outgrows 6,500.** Reading and standing yards by block (`cell = building_key >> 8`; a block holds at
-  most 32 buildings in BLOCKS.BSA, so 1,920 pieces) bounds the answer by the blocks within reach instead of the town.
-  Not built: the bound and the spread are what the measurements asked for.
+- **Replaced: YARD-CELL (2026-10-26).** The owner and a maintainer judged the town-wide bound a band-aid: it is the
+  size of a D1 row, not a game rule. `11-Multiplayer/Yard-Cells.md` replaces it - the yards kept, synced by version and
+  stood by block (`cell = building_key >> 8`), with no town-wide cap - and fits it to the rest of Tamriel (#1184). YC1
+  built it (acct207, migration 0190): DECOR_YARDS_TOWN_MAX, `yard-town-full` and YARD_STANDS_A_FRAME are gone.
 - **The four hosts.** Yards stand in `scenes/world.js` alone (unchanged); `scenes/exterior.js`, `scenes/worldModes.js`
   (interiors) and `scenes/dungeonContext.js` stand none. No relay change. acct191 (acct177 and migration 0163 on its branch, renumbered past main's acct177-acct190
   and 0163-0174 at its merges).
-- **Pinned**: `test/server/yard_town.test.js` (2) - over the real Worker, the town's last piece placed and the next refused
+- **Pinned** (all DELETED by YARD-CELL YC1, `11-Multiplayer/Yard-Cells.md` section 10): `test/server/yard_town.test.js` (2) - over the real Worker, the town's last piece placed and the next refused
   as `yard-town-full`, paid or free, another town never counted, a room's piece never refused, one taken away making room,
   the client's sentence naming the bound; a town at the bound, every row as wide as the law allows, kept in its built row.
-  `test/scenes/yardtown.test.js` (1) - over the real yards and pools, four strangers' yards a frame, frame after frame, the
-  owner's own in the first. `test/server/yard_snap.test.js` - 0136's backfill in its own shape at its 2,000 bound, 0175's
-  in the code's at DECOR_YARDS_TOWN_MAX. `tools/mutants/yard_town.json` (15, all killed).
+  `test/scenes/yardtown.test.js` (1, DELETED by YARD-CELL) - over the real yards and pools, four strangers' yards a frame, frame after frame, the
+  owner's own in the first. `test/server/yard_snap.test.js` (DELETED by YARD-CELL) - 0136's backfill in its own shape at its 2,000 bound, 0175's
+  in the code's at DECOR_YARDS_TOWN_MAX. `tools/mutants/yard_town.json` (15, all killed; DELETED by YARD-CELL).
 
 ### STALL-SHAPE's re-seat - a yard's saved stalls and boulders, put back where their owners put them (2026-10-16)
 
@@ -10987,7 +10988,7 @@ The fix, at both ends:
   as a session is (ACCOUNT_MAX a minute) - no write to count it. acct85.
 - **The client** (`scenes/homeYards.js`) asks a town only while one of its homes is within YARD_ASK_M (500 m) of the
   player's feet, and each failure in a row doubles the wait, from YARD_RETRY_MS to YARD_RETRY_MAX_MS (5 minutes).
-- Pinned in `test/server/yardshed.test.js` (4); `tools/mutants/yardshed.json` 9 of 9 dead.
+- Pinned in `test/server/yardshed.test.js` (4); `tools/mutants/yardshed.json` 9 of 9 dead. Both DELETED by YARD-CELL YC1: its laws are held a cell at a time by `test/server/yard_cells.test.js` and `test/scenes/yardcellsync.test.js`.
 
 ### KNIGHT-HOUSE - a house a Knightly Order gives is its knight's on every door (FIELD BUGS 2026-10-04d)
 
@@ -11059,9 +11060,10 @@ early price and offer checks, which the write's own guards repeat).
   ground a piece covers (its turned box), not its middle; yards stand again the frame the world recentres; far yards
   are not drawn (`YARD_DRAW_M`); yard pieces take their pixel's climate swaps; a full yard says so (`yard-cap`); the
   painter offers only the styles a roof's or a door's family holds.
-- Known limits kept: a town's yards hold at most DECOR_YARDS_TOWN_MAX pieces between them (YARD-TOWN, above: a piece
-  past it is refused, `yard-town-full`); a tenancy's end is read on the client's clock; a refused rent's reserve
-  comes back to the region's account, as a refused home purchase's does.
+- Known limits kept: a yard holds DECOR_YARD_CAP pieces, and a town's yards have no cap of their own since YARD-CELL
+  (`11-Multiplayer/Yard-Cells.md` YC1 - YARD-TOWN's DECOR_YARDS_TOWN_MAX and `yard-town-full` are gone); a
+  tenancy's end is read on the client's clock; a refused rent's reserve comes back to the region's account, as a
+  refused home purchase's does.
 
 Pinned: `test/scenes/decor/homedoors.test.js` (14), `test/server/homerent.test.js` (10), `test/net/homelook.test.js` (7),
 `test/scenes/homeyard.test.js` (7); re-aimed by content in `test/server/decor1.test.js` (the kinds' count, the host's pool),

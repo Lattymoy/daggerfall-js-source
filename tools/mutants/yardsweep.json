@@ -31,22 +31,22 @@
   },
   {
     "name": "YARD-SWEEP-read-unfiltered",
-    "file": "server-account/src/decor.js",
-    "old": "    if (!p || !decorYardPieceOf(p) || !decorYardHighOk(p)) continue;",
-    "new": "    if (!p || !decorYardPieceOf(p)) continue;",
+    "file": "server-account/src/yardCells.js",
+    "old": "    if (!piece || !decorYardPieceOf(piece) || !decorYardHighOk(piece)) continue;",
+    "new": "    if (!piece || !decorYardPieceOf(piece)) continue;",
     "tests": [
       "test/server/yardsweep.test.js"
     ],
-    "note": "the service serves a tower's piece"
+    "note": "the service serves a tower's piece Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   },
   {
     "name": "YARD-SWEEP-client-unfiltered",
-    "file": "src/scenes/homeYards.js",
-    "old": "y.pieces.map(decorYardPieceOf).filter((p) => p && decorYardHighOk(p))",
-    "new": "y.pieces.map(decorYardPieceOf).filter(Boolean)",
+    "file": "src/scenes/yardCellSync.js",
+    "old": "yard.pieces.map(decorYardPieceOf).filter((piece) => piece && decorYardHighOk(piece))",
+    "new": "yard.pieces.map(decorYardPieceOf).filter(Boolean)",
     "tests": [
       "test/server/yardsweep.test.js"
     ],
-    "note": "the client stands a tower's piece an older service answers"
+    "note": "the client stands a tower's piece an older service answers Re-aimed (YARD-CELL, bible/11-Multiplayer/Yard-Cells.md YC1): the same law, a cell at a time."
   }
 ]
