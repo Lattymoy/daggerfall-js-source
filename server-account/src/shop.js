@@ -37,6 +37,13 @@ export const SHOP_HOOK_TOLERANCE_S = 300;
 export const SHOP_HOOK_MAX_BYTES = 256 * 1024;
 export const STRIPE_API = 'https://api.stripe.com/v1/checkout/sessions';
 export const STRIPE_CHECKOUT_ORIGIN = 'https://checkout.stripe.com';
+/** SHOP-LOCAL (2026-10-28, a player: "Allow for iDeal payment options (or better ones)"; the owner: "Do it"): the ways
+ *  to pay beside card, Apple Pay, Google Pay and Link. The checkout lists none, so Stripe offers what the account's
+ *  default configuration has on; the account deploy turns these on there (tools/stripeMethods.mjs). Each needs the
+ *  buyer's own currency, which Adaptive Pricing shows (checkoutFields). One taken off the list stays as the Dashboard
+ *  has it. */
+export const SHOP_PAY_METHODS = Object.freeze(['ideal', 'wero', 'bancontact', 'eps', 'blik', 'p24', 'paypal', 'revolut_pay']);
+export const STRIPE_PMC_API = 'https://api.stripe.com/v1/payment_method_configurations';
 const SEAL_SALT = 'daggerfall-accounts shop';
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -107,6 +114,7 @@ export function shopConfirmPage({ handle, ware, ticket }) {
     lines: [
       `Game account: ${handle}`,
       `Price: ${shopPriceText(ware.cents)} (USD), paid once.`,
+      'Stripe can show the price in your own currency, with your country\'s ways to pay.',
       'A pre-alpha item: it is sold only during the pre-alpha.',
       SHOP_COSMETIC,
       SHOP_PROCEEDS,
@@ -149,17 +157,26 @@ export function checkoutFields(/** @type {{ id: string, player: string, handle: 
     success_url: `${o.origin}${SHOP_DONE_PATH}?o=${o.id}`,
     cancel_url: `${o.origin}${SHOP_CANCEL_PATH}?o=${o.id}`,
     expires_at: o.expiresAt,
+    'adaptive_pricing[enabled]': 'true',   // SHOP-LOCAL: the buyer's own currency where Stripe can - the session and its events still read USD
   };
 }
 /** Ask Stripe for the session: `{ id, url }`, or `{ error: 'stripe-down' }`. The order is the idempotency key, so a call
- *  asked twice is one page. */
+ *  asked twice is one page. SHOP-LOCAL: a session Stripe refuses (400) for its Adaptive Pricing is asked again without
+ *  it, in dollars, under a key of its own - an account Stripe will not localise still sells. */
 export async function stripeCheckout(/** @type {typeof fetch} */ fetch, /** @type {any} */ env, /** @type {Record<string, string|number>} */ fields) {
+  const ask = (/** @type {Record<string, string|number>} */ f, /** @type {string} */ key) => fetch(STRIPE_API, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'content-type': 'application/x-www-form-urlencoded', 'idempotency-key': key },
+    body: stripeForm(f),
+  });
   try {
-    const res = await fetch(STRIPE_API, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'content-type': 'application/x-www-form-urlencoded', 'idempotency-key': `shop-${fields.client_reference_id}` },
-      body: stripeForm(fields),
-    });
+    let res = await ask(fields, `shop-${fields.client_reference_id}`);
+    if (res.status === 400 && 'adaptive_pricing[enabled]' in fields) {
+      console.error('[shop] Stripe refused the session; asked again in dollars:', (await res.json().catch(() => null))?.error?.message);
+      const plain = { ...fields };
+      delete plain['adaptive_pricing[enabled]'];
+      res = await ask(plain, `shop-${fields.client_reference_id}-usd`);
+    }
     const data = res.ok ? await res.json() : null;
     return typeof data?.id === 'string' && typeof data?.url === 'string' && data.url.startsWith(`${STRIPE_CHECKOUT_ORIGIN}/`) ? { id: data.id, url: data.url } : { error: 'stripe-down' };
   } catch {
