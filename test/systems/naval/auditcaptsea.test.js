@@ -516,7 +516,7 @@ test('AUDIT CAPTAIN\'S SEA G4/G5/G6/G7/G8/G9/G14: the ring\'s climate past the m
   assert.equal(tvWaterOf({ getHeightMapValue: () => 60 })(-1, 5), true, 'past the Bay with nothing composed: the sea, as ever');
   // PIN MOVED (RELIEF-PEAKS): the ring's ground at the pixel's centre reads the bytes about it, the ground's or none
   assert.match(w, /const ground = \(px\.x >= 0 && px\.y >= 0 && px\.x < 1000 && px\.y < 500\) \|\| !!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px\.x, px\.y\);\n\s+return \[x, ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/);
-  assert.match(w, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && politicClaimed\(/);
+  assert.match(w, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\), pol = maps\.getPoliticIndex\(px\.x, px\.y\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && \(politicClaimed\(pol\)/);   // PIN MOVED (AUDIT TAMRIEL-WIDE C1)
   assert.match(w, /if \(wod && onTheBay\(px, py\) && await wodOpened\) \{/);
   assert.match(w, /renderer\.setMoonlight\(canopyMoon\(moonNow && etherAirW \? \{ scale: moonNow\.scale, dir: moonNow\.dir, color: etherLight\(moonNow\.color, etherAirW, ETHER_KEY_TINT\) \} : moonNow, jungle\?\.canopy\)\);/);   // PIN MOVED (VALENWOOD-CANOPY): under a closed canopy the moon's key leaned with the sun's
   // the ring's own-pixel fade: an isle node past the map faded by its own shore, never the clamped corner's

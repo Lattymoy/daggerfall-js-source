@@ -418,7 +418,7 @@ test('AUDIT DEEP T2-1: a road journey RESUMES on the leg it was aiming at, or a 
   d.state.pixel = { x: 503, y: 252 };
   d.to.resumeTravel();
   assert.equal(d.to.route.i, 3, 'no sea: the nearest leg ahead');
-  assert.match(hostText('src/scenes/world.js'), /isWater: \(x, y\) => x < 0 \|\| y < 0 \|\| x >= 1000 \|\| y >= 500 \|\| woods\.getHeightMapValue\(x, y\) <= WATER_BYTE,/);
+  assert.match(hostText('src/scenes/world.js'), /isWater: \(x, y\) => tvWater\(x, y\),/);   // PIN MOVED (AUDIT TAMRIEL-WIDE C5): the host's own sea, which reads the land past the Bay
 });
 
 test('TV2 journey: the mod\'s stops still stop it (a foe near: boxed); interrupted, it RESUMES on its road from the nearest leg ahead; a journey of the mod\'s replaces it', () => {

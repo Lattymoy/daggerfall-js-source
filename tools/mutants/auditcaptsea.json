@@ -1099,8 +1099,8 @@
   {
     "name": "ACS-G7-raids",
     "file": "src/scenes/raidHost.js",
-    "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(",
-    "new": "return politicClaimed(",
+    "old": "return !(etherSea && inEther(px.x, px.y)) && (politicClaimed(pol)",
+    "new": "return (politicClaimed(pol)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

@@ -1,0 +1,52 @@
+[
+  {
+    "name": "AUDIT-TW-C1-province-politic-unread",
+    "file": "src/scenes/raidHost.js",
+    "old": "(politicClaimed(pol) || isProvinceRegion(pol - 128))",
+    "new": "politicClaimed(pol)",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "Past the Bay the raid host's region is -1 again: no raid told, no row home."
+  },
+  {
+    "name": "AUDIT-TW-C2-the-bay-clamp-past-it",
+    "file": "src/world/road/roadBand.js",
+    "old": "  return roadRoom(net, px, py, x / UNITS_PER_METRE, z / UNITS_PER_METRE, reach) < reach;",
+    "new": "  return pointNearPath(net, px, py, x, z, radius);",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "Past the Bay the Bay's clamped walk answers again: a camp stands on the road."
+  },
+  {
+    "name": "AUDIT-TW-C4-the-mapid-read-again",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "(Number.isInteger(city?.px) && Number.isInteger(city?.py) ? { px: city.px, py: city.py } : pixelOfLoc(city))",
+    "new": "pixelOfLoc(city)",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "A province's Hollow is rumoured at (0,0) again."
+  },
+  {
+    "name": "AUDIT-TW-C6-a-province-the-race-in-town",
+    "file": "src/ui/paperDoll.js",
+    "old": "  if (!bay && !isProvinceRegion(region)) return raceBackground;",
+    "new": "  if (!bay) return raceBackground;",
+    "tests": [
+      "test/ui/ui3_geobackgrounds.test.js"
+    ],
+    "note": "A town past the Bay shows the race's backdrop again."
+  },
+  {
+    "name": "AUDIT-TW-C6-a-province-a-region-char",
+    "file": "src/ui/paperDoll.js",
+    "old": "  return bay ? `SCBG0${REGION_BACKGROUND_CHARS[region]}I0.IMG` : raceBackground;",
+    "new": "  return `SCBG0${REGION_BACKGROUND_CHARS[region]}I0.IMG`;",
+    "tests": [
+      "test/ui/ui3_geobackgrounds.test.js"
+    ],
+    "note": "A province's open road reads past the region table."
+  }
+]

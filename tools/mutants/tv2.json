@@ -292,7 +292,7 @@
   {
     "name": "AUDIT-DEEP-T2-1-host-no-sea",
     "file": "src/scenes/world.js",
-    "old": "    isWater: (x, y) => x < 0 || y < 0 || x >= 1000 || y >= 500 || woods.getHeightMapValue(x, y) <= WATER_BYTE,   // AUDIT DEEP T2-1",
+    "old": "    isWater: (x, y) => tvWater(x, y),   // AUDIT DEEP T2-1",
     "new": "    // AUDIT DEEP T2-1",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
