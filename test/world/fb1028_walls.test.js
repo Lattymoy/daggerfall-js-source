@@ -530,7 +530,7 @@ test('AUDIT FB1028 YARDS the host: the pixel\'s build hands townPlacesFor the ya
   assert.equal(walkShut, now, 'the walkers\' shut the town as it stands');
   const warned = [], townPlacesFor = runIn(w.slice(f0, f1 + 4), {
     isEnhanced: () => true, windmillsOn: () => true, stepsBreathing, yardMeasuresSteps: function* () { return {}; },
-    walkerRace: () => 'breton', isYardTown: () => true, isPortTown: () => false, portOnSea: () => false, _yardMemo: new Map(),
+    walkerRace: () => 'breton', folkOfLocation: () => null, isYardTown: () => true, isPortTown: () => false, portOnSea: () => false, _yardMemo: new Map(),
     townGroundSteps: ys.townGroundSteps, townYardsOf: () => null, yardSitesSteps: ys.yardSitesSteps, craftYardSitesSteps: ys.craftYardSitesSteps,
     keptTownSitesSteps: ys.keptTownSitesSteps, ALL_YARD_KINDS: ['stable', 'transport', 'carpenter'], PORT_SITE_ORDER: [], MONUMENT_KEEP_M: 8,
     portKeeper: () => ({ name: 'k' }), yardKeeper: () => ({ name: 'k' }), portPlaceName: () => 'p', console: { log: () => {}, warn: (...a) => warned.push(a.join(' ')) },
@@ -599,7 +599,7 @@ test('FB1028 YARDS Y1 the host: townPlacesFor measures the layout the yards\' sh
   const w = hostText('src/scenes/world.js'), f0 = w.indexOf('  async function townPlacesFor('), f1 = w.indexOf('\n  }\n', f0), seen = [], marker = { blocks: [] };
   const townPlacesFor = runIn(w.slice(f0, f1 + 4), {
     isEnhanced: () => true, windmillsOn: () => true, stepsBreathing, yardMeasuresSteps: function* (l) { seen.push(l); return {}; },
-    walkerRace: () => 'breton', isYardTown: () => true, isPortTown: () => false, portOnSea: () => false, _yardMemo: new Map(),
+    walkerRace: () => 'breton', folkOfLocation: () => null, isYardTown: () => true, isPortTown: () => false, portOnSea: () => false, _yardMemo: new Map(),
     townGroundSteps: ys.townGroundSteps, townYardsOf: () => null, yardSitesSteps: ys.yardSitesSteps, craftYardSitesSteps: ys.craftYardSitesSteps,
     keptTownSitesSteps: ys.keptTownSitesSteps, ALL_YARD_KINDS: [], PORT_SITE_ORDER: [], MONUMENT_KEEP_M: 8,
     portKeeper: () => ({ name: 'k' }), yardKeeper: () => ({ name: 'k' }), portPlaceName: () => 'p', console: { log: () => {}, warn: () => {} },
