@@ -31,6 +31,7 @@
 import { t } from '../textManager.js';
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { worldCoordToMapPixel, locationWorldRect, isInLocationRect } from '../../world/streamingWorld.js';
+import { wildInside } from './wildZone.js';   // WILD-CITY-PORT: the zone's own pixels
 
 /** The settlements' kinds: a city, a town, a village (MapsFile LocationTypes 0-2). */
 export const SETTLEMENT_TYPES = Object.freeze(new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]));
@@ -52,6 +53,20 @@ export function settledAt(p, index) {
   const px = worldCoordToMapPixel(p[0], p[2]);
   const loc = index.get(`${px.x},${px.y}`);
   return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));
+}
+
+/**
+ * WILD-CITY-PORT (2026-10-28, the owner: "Even with the open pvp, players should be able to teleport in and out of the
+ * cities"): MAY A TELEPORT PASS THE ZONE. Each end is none (the door, asked where I stand), outside `mask`, or a
+ * settlement's. The end it lands at: the place `locAt` stands on its pixel. Where I stand: outdoors in a settlement's
+ * streets (`feet`, settledAt's frame over `index`), else in a building of one (`mode` 'interior'). A dungeon is the zone's.
+ * @param {any} mask @param {{ x: number, y: number }|null} from @param {{ x: number, y: number }|null} to @param {ArrayLike<number>|null} feet
+ * @param {string|undefined} mode @param {{ get(key: string): any }} index @param {(px: number, py: number) => any} locAt @returns {boolean}
+ */
+export function zonePortFree(mask, from, to, feet, mode, index, locAt) {
+  const inZone = (at) => !!at && wildInside(mask, at.x, at.y);
+  const here = !inZone(from) || (feet ? settledAt(feet, index) : mode === 'interior' && isSettlement(locAt(from.x, from.y)));
+  return here && (!inZone(to) || isSettlement(locAt(to.x, to.y)));
 }
 
 // ── the frame's word: am I in the streets of one now ──

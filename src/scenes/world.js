@@ -986,7 +986,7 @@ import { duelVitality } from '../net/duel/duelBar.js';   // DUEL-BAR: my vitalit
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
 import { setWildHere, wildHere, isWildRegion, WILD_REGION, wildInside, wildNear, setWildDeath, wildDeath, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
 import { createPartyTruce } from '../systems/wild/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
-import { settledAt, zoneSafe, zoneSafeFrame, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
+import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT, noteWildBlow } from '../systems/wild/wildZone.js';   // GREATER-GIANT; AUDIT PVP-EASE L2-1: the combat lock's blow
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
 import { etherWildRingAt, etherRisePort, etherRiseSite, etherInPeace, ETHER_KIND, ETHER_WILD_TEXT } from '../systems/wild/etherWild.js';   // ETHER-WILD: the Eltheric Ocean past Veilhaven's peace, an open PvP zone
@@ -22524,8 +22524,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (m && etherSea && (etherWildRingAt(playerTravelPixel()?.x, playerTravelPixel()?.y) > 0 || (to && etherWildRingAt(to.x, to.y) > 0))) { townTalk.say(ETHER_WILD_TEXT.teleport()); return true; }   // ETHER-WILD: nor about the open sea
     if (!m) return false;
     const from = playerTravelPixel();
-    if (!(from && wildInside(m, from.x, from.y)) && !(to && wildInside(m, to.x, to.y))) return false;
-    townTalk.say(`You cannot teleport into or out of ${WILD_NAME}. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
+    if (zonePortFree(m, from, to, wildOutdoors() ? campToWire(player.feetAt()) : null, modes?.mode, locationIndex, _locationToBuild)) return false;   // WILD-CITY-PORT: a settlement's end is free (systems/wild/zoneSafe.js)
+    townTalk.say(`In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
     return true;
   };
   /** `law` the verdict past the Bay: a journey's (pastBayJourney, TESA-NO-FAST), or a teleport's (PORTAL-BAY:

@@ -625,9 +625,10 @@ fast door - the travel map's journey and the carriage drivers' and the ships' an
 
 - NO TELEPORT (PVPDUNGEONS, the owner: "Teleport to leader etc and of any kind into, in the zone should not be
   possible (except the carriage inside of tiers ofc)"): Recall (but to an anchor in the same interior), the guild's
-  teleport and the party's teleport to its leader neither leave from, land in nor go about inside the zone
-  (`wildTeleportRefused`, `world.js:"const wildTeleportRefused"`); the zone's own roads between its tiers (the journey
-  above) are the one way about it. WILD3 had let a teleport that started and ended inside go for the fee.
+  teleport and the party's teleport to its leader neither leave from, land in nor go about inside the zone but at a
+  settlement (WILD-CITY-PORT, section 28) (`wildTeleportRefused`, `world.js:"const wildTeleportRefused"`); the zone's own
+  roads between its tiers (the journey above) are the one way about the rest. WILD3 had let a teleport that started and
+  ended inside go for the fee.
 - PVPJOURNEY (AUDIT STARTS U4: a press on a quest's diamond inside the zone is a destination too, as a hall's is - the
   zone map's card is down, and its pick had shown nothing): a journey picked on the zone map is always Cautiously, by land, at inns - no choices (`_forceZoneOpts`,
   `heldMap.js:"_forceZoneOpts(o)"`); a press on the zone map's ground or on a place is a destination, and the legend's
@@ -1231,7 +1232,7 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   rite again (thirteen covens - `starfallCovens.js`).
 - NO TELEPORT ACROSS ITS LINE (AUDIT TESA II Z5): a Portal Stone's portal is a teleport like the guild's and Recall
   (PVPDUNGEONS' "of any kind") - never opened in the zone, never to a place in it, never stepped through into, out of or
-  inside it (`06-Systems/Portal-Stone.md`, The holds).
+  inside it, but at a settlement (section 28; `06-Systems/Portal-Stone.md`, The holds).
 - KNOWN LIMITS (recorded on main; AUDIT TESA II re-read it on TESA's branch, 2026-10-25): on main Cyrodiil held no
   towns, dungeons or roads. Folded into TESA it stands its own (TESA's cities, towns, villages, the countryside, the
   lairs and the roads past the Bay) - and two sentences here were false there. "Every hall, rise and map read here takes
@@ -1364,6 +1365,41 @@ zoneline.json` (28, all dead; SMOOTH-LAND re-aimed eight and retired two - 26). 
 the edge on the pixels' corners, a ring's line on the cells'), `test/world/tamriel3.test.js` (the ink's coast: the
 continent's in two pieces ending on the Imperial Province's corners, and the zone's two shores - seven chains, four
 before). Mutant records re-aimed by content: `wwc2.json` (2), `audittesa2z.json` (1), `tamriel3.json` (2), all dead.
+
+## 28. Teleports at the settlements (WILD-CITY-PORT, 2026-10-28)
+
+The field, after TESA's release: players could not teleport to the Imperial City. The owner: "Even with the open pvp,
+players should be able to teleport in and out of the cities". Three doors refused it: the zone's teleport law, the
+journey's law a teleport also passed, and the teleport map's press.
+
+- THE LAW, ZONE-SAFE'S HOME (`zoneSafe.js:"export function zonePortFree"`): a teleport passes the zone where each end is
+  none, outside it, or a settlement's - section 26's every settlement (`zoneSafe.js:"export const isSettlement"`). The
+  end it lands at is the place the world host stands on its pixel
+  (`spawnStandHost.js:"function _locationToBuild(px, py)"`): a capital's slice, a TESA city, town or village, a
+  countryside hamlet. Where I stand: outdoors, a settlement's
+  streets (settledAt, so a hamlet's own pixel past its streets is the open country); indoors, a building of one; in a
+  dungeon, never - it stays the zone's. The rest of the zone keeps PVPDUNGEONS' law, said in words that name the open
+  ends ("In Cyrodiil you can teleport only to or from a city, town or village. Walk or ride its roads.").
+- EVERY TELEPORT TAKES IT: the guild's (`teleportTo`), Recall, a Portal Stone's door, pick and step, a party's journey to
+  its leader and the linked bank cabin all ask `world.js:"const wildTeleportRefused"`. A teleport is no journey
+  (`pastBayTravel.js:"export function teleportJourney"`): the zone's journey law - its in and out, its ten minutes, its
+  fare - is the journeys' alone, so a teleport between two settlements in the zone costs nothing more.
+- THE MAP: online, ZONE-ZOOM opened the zone map at any press inside the zone, the teleport map's too, so the guild's map
+  and a stone's never picked a city there. On the teleport map a city in the zone is a portal's end now
+  (`heldMap.js:"_portalCityAt(sx, sy) {"`); its bare land still opens the zone map.
+- WHY THE SETTLEMENTS: a teleport into the zone lands in streets no player fights in, so an arrival is never a kill
+  (section 21b's report), and one out of it leaves from where no fight reaches - no more of an escape than the run to a
+  town's gate section 26 allows. Past the Veil nothing moves: the Veil refuses every teleport across it.
+- THE FOUR HOSTS: `scenes/world.js` WIRED (the law asked where the zone's refusal stood; bootWorld's length unchanged);
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` NOT WIRED - a building's and a dungeon's teleports are the world
+  host's own; `scenes/exterior.js`, offline, stands no zone.
+- KNOWN LIMIT: the refusal's words are English alone, as they were (`test/systems/l10n4_hardcoded.test.js` counts them).
+
+Pins: `test/systems/wild/wildcityport.test.js` (the law over every kind of place, the streets, a building, a dungeon),
+`test/systems/portalbay_stone.test.js` (WILD-CITY-PORT: every teleport over the Imperial City's own slices),
+`test/ui/audittesa2m_window.test.js` (the teleport map's press) - `tools/mutants/wildcityport.json` (7, all dead). PINS
+MOVED: the refusal's words (`portal1_stone.test.js`, `portalbay_stone.test.js`), the press's source (`tesa2_arena.test.js`);
+mutant records re-aimed by content: `portalbay.json` (3), `audittesa2m.json` (1), `tesa2.json` (1), all dead.
 
 ## Pins
 
