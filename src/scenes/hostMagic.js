@@ -57,6 +57,7 @@ import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's In
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { potentEffect } from '../net/alchemyLaw.js';   // PROF12: a Potent potion's magnitudes
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
+import { ridingDragon, dragonFire, dragonBolt, dragonVolley, DRAGON_BOLT_SPEED, DRAGON_BOLT_DAMAGE } from '../systems/staffDragon.js';   // DRAGON-RIDE: the dragon's shoulder cannons
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
 import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, allyCastCasterLineMany, allyCastSpell, PERSON_RADIUS, ALLY_TOUCH_REACH, ALLY_ARM_RADIUS, ALLY_ARMED_LINE, COMPANION_ARMED_LINE, companionCastable, createGiftLineGate } from '../systems/allyCast.js'; import { shownSpellName } from '../systems/loot/loot.js';   // SPELL-GIFT: the arm near a mate, the line it says, and the area's one line; AUDIT WK-M4: what my companion can use; L10N3e: the caster's line names the spell as the book shows it (the frame keeps the canonical name)
@@ -1400,6 +1401,14 @@ export function createPlayerMagic({
   const allyConceal = (q) => (q ? { mode: CONCEAL_MODE.reveal, alpha: q.alpha, t: 0, phase: 0 } : null);
   /** MW-SPELLFX1: a missile's Morrowind bolt (scenes/mwMagicFx.js) - placed now, moved with the flight, ended with it. EG-ZG:
    *  an ally's (`m.quiet`) at the quiet share. */
+  /** DRAGON-RIDE (systems/staffDragon.js): both shoulder cannons down the live look - shock balls that meet monsters
+   *  alone (no mate, duel, boss or player: those doors stay shut), never paid for, on the cannons' own clock. */
+  function fireDragon() {
+    if (!lastAim || !dragonFire(performance.now())) return;
+    const spell = dragonBolt();
+    for (const v of dragonVolley(lastAim.eye, lastAim.dir)) missiles.push(withBolt({ spell, cast: newCast(0), pos: v.pos, dir: v.dir, age: 0, batch: null, fromPlayer: true, ally: false, duel: false, boss: false, dragon: true, speed: DRAGON_BOLT_SPEED }));
+    audio.playOneShotId(SPELL_CAST_SOUND[3], 1);
+  }
   function withBolt(m) {
     m.mwBolt = mwFx.bolt(m.spell, m.quiet ? { alpha: m.quiet.alpha } : undefined);
     m.mwBolt.at(m.pos, m.dir);
@@ -1478,7 +1487,7 @@ export function createPlayerMagic({
       ensureMissileBatch(m);
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
-      const step = MISSILE_SPEED * dt;
+      const step = (m.speed ?? MISSILE_SPEED) * dt;   // DRAGON-RIDE: a shock ball flies faster
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
@@ -1591,6 +1600,7 @@ export function createPlayerMagic({
         if (f.dead) continue;
         if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
           if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, castingLevel(playerEntity), playerFeet, playerCaster(m.cast ?? null), { playerHeight, allies: !!m.ally, duel: !!m.duel, boss: m.boss ?? !!m.duel });   // ROAD-H H2
+          else if (m.dragon) foeSinks(f, true)?.hurt?.(DRAGON_BOLT_DAMAGE, { fromPlayer: true });   // DRAGON-RIDE: no save, no resist
           else applySpellToFoe(m.spell, castingLevel(playerEntity), f, playerCaster(m.cast ?? null));
           showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
@@ -1600,7 +1610,7 @@ export function createPlayerMagic({
       // DEX5 (bible/04-Characters/Enemy-Expansion.md section 11): ...and a body a mod's corpse prefab stands (corpseMarker.js
       // registerCorpsePrefab - the troll's trigger sphere): DaggerfallMissile's cast meets the trigger and the bundle goes to
       // the body's own entity; an AreaAtRange one bursts there too (its OverlapSphere ignores triggers - no other body)
-      const hitBody = m.dead ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);
+      const hitBody = m.dead || m.dragon ? null : corpsePrefabStruck(m.pos, foes(), MISSILE_COLLIDER_RADIUS);
       if (hitBody) {
         hitBody.corpsePrefab.struck(m.spell, castingLevel(playerEntity), playerCaster(m.cast ?? null));
         if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, castingLevel(playerEntity), playerFeet, playerCaster(m.cast ?? null), { playerHeight, allies: !!m.ally, duel: !!m.duel, boss: m.boss ?? !!m.duel });
@@ -1702,6 +1712,7 @@ export function createPlayerMagic({
      *  (EntityEffectManager's), the hotbar's - and not the swing button's. With a spell in the free hand beside a drawn
      *  weapon the swing button is the WEAPON's: only a cast's own press fires the spell. */
     interceptAttack(held, { cast = false } = {}) {
+      if (held && ridingDragon()) { fireDragon(); return true; }   // DRAGON-RIDE: in the saddle every press is the cannons'
       if (!cast && spellHandUp()) return false;
       if (held && readiedSpell != null && !pendingClickCast) { setPending(true); return true; }
       return false;

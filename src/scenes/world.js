@@ -576,6 +576,8 @@ import { createUseMagicItemWindow, noItemToActivateText } from '../ui/useMagicIt
 import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
+import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
+import { parseDragonCommand, DRAGON_HELP_LINE } from '../systems/staffDragon.js';   // DRAGON-RIDE: /dragon's grammar and its /staff line
 import { createMountRig } from '../player/mountRig.js';   // MAC-K3: the mount surface, one home for this host and the fixed-city one
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -6853,6 +6855,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     surfaceKind: () => _lastFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),
   });
   // RR2: the seams EnhancedRiding's component reads off the scene - in a town (PlayerGPS.IsPlayerInTown(true)), the transport mode
+  const staffDragon = createStaffDragonHost({ renderer, canvas, glyphs: () => _staffGlyphs, paused: () => gamePaused() });   // DRAGON-RIDE: /dragon, the flight's pace and the saddle (its cannons are the cast engine's)
   setRrHostSeams({ inTown: () => _isPlayerInTownStrict(), transportMode: () => player.transportMode, riding: () => player.riding });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
@@ -20759,7 +20762,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function runStaffCommand(tabId, c) {
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
-    if (c.cmd === 'staff') { for (const line of STAFF_HELP_LINES) say(line); return; }
+    if (c.cmd === 'staff') { for (const line of [...STAFF_HELP_LINES, DRAGON_HELP_LINE]) say(line); return; }
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
       if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\'s settings.'); return; }
@@ -20768,6 +20771,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!relayCfgLink?.sendRelayCfg({ k: c.k, v: c.v })) say('The relay\'s settings need the hub online, on a relay that takes them.');
       return;
     }
+    if (c.cmd === 'dragon') { staffDragon.command(c, say); return; }   // DRAGON-RIDE
     if (c.cmd === 'god' || c.cmd === 'fly') {
       setStaffPowers({ [c.cmd]: c.on });
       say(`${c.cmd === 'god' ? 'God mode' : 'Flying'} ${c.on ? 'on' : 'off'}.`);
@@ -21495,7 +21499,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
         // admin commands"): /tp /god /fly /heal /pos /staff (net/staffCommands.js) - asked only of a player whose own
         // glyphs are staff's, so to anyone else each is the chat's own "no such command". Each acts on the typer alone.
-        const staffCmd = isStaffT(staffGlyphs()) ? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers()) : null;   // TESTBUILD: /godmode = /god
+        const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers())) : null;   // DRAGON-RIDE: /dragon, its own grammar   // TESTBUILD: /godmode = /god
         if (staffCmd) { runStaffCommand(tabId, staffCmd); return 'error' in staffCmd ? false : true; }
         // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
         // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the
@@ -35357,6 +35361,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // host now mounts, so the mount cannot behave differently in a
         // town than it does on the road.
         mountRig.frame(dt);
+        staffDragon.frame();   // DRAGON-RIDE: the saddle, where the mount is drawn
         // RR2: EnhancedRiding.OnTriggerEnter / OnControllerColliderHit (:157-215)
         // - a galloping rider tramples the townsperson under the hooves and
         // charges down the foe in the way, once each

@@ -51,7 +51,7 @@ const IRON_ATRONACH = 36;
 /** Its English, the game's own (the save, the log, the staff's list). */
 export const DWARVEN_DRAGON_NAME = 'Dwarven Dragon';
 
-const artUrl = (name) => new URL(`${DWARVEN_DRAGON_ART}${name}.png`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const dwarvenDragonArtUrl = (name) => new URL(`${DWARVEN_DRAGON_ART}${name}.png`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 async function fetchPng(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`[DWARVEN-DRAGON] ${url}: ${r.status}`);
@@ -64,7 +64,7 @@ export function dwarvenDragonSpriteEntries({ fetchBytes = fetchPng } = {}) {
   DWARVEN_DRAGON_FRAMES.forEach((n, record) => {
     for (let frame = 0; frame < n; frame++) {
       const name = `${DWARVEN_DRAGON_ARCHIVE}_${record}-${frame}`;
-      out.push({ archive: DWARVEN_DRAGON_ARCHIVE, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: name, load: () => fetchBytes(artUrl(name)) });
+      out.push({ archive: DWARVEN_DRAGON_ARCHIVE, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: name, load: () => fetchBytes(dwarvenDragonArtUrl(name)) });
     }
   });
   return out;
