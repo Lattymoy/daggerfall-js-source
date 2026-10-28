@@ -5,7 +5,7 @@ the bay is missing and that we are finally ready to ship. This needs to be perfe
 suite. Just lead straight into the audit"*.
 
 **Tree audited:** #1184's head with the eleven field fixes of 2026-10-27 merged and main merged a fourth time
-(`f7920ec8ba`), then a fifth (`afb333f6dc`, pushed). The last audit of the same question is
+(`f7920ec8ba`), then a fifth (`afb333f6dc`) and a sixth (`1f9dcfdf79`, pushed). The last audit of the same question is
 `01-Overview/audits/Audit-Left-In-The-Bay.md` (AUDIT BAY-LEFT, 38 findings, every one built); this one asks whether
 that still holds after a day of changes, whether anything added since left the Bay's bounds in, and whether the release
 is in a state to ship.
@@ -44,7 +44,9 @@ Every finding below is fixed, pinned and recorded where its system lives.
 - **S4 - ROAD-FOLLOW's types** (the head's own gate). Six `npm run types` errors the road-travel branch carried in (the
   ends' bridges, the legs' line, the reader's shape, a capital's anchor as a pair) - JSDoc corrected, no code changed.
 - **S5 - CI had not run on the pull request's head.** #1184 conflicted with main (main moved twice in the day), and a
-  pull request that conflicts runs no workflow. The fifth merge brought main in; the head is pushed and CI runs on it.
+  pull request that conflicts runs no workflow. The fifth merge brought main in; main moved again in the night
+  (MENTOR2, LEVEL-BAR, LEVEL-TOP, GEAR-ADDS) and the sixth brought it in. A Ledger cite both sides moved is moved by
+  both. The head is pushed and CI runs on it.
 - **S6 - the merge tool's sweep on a relay that did not move.** At the fifth merge `tools/mergeMain.mjs --sweep` wrote
   a history clause renumbering world274 past itself into 47 relay pins, and moved one raids pin's refused version onto
   the accepted one (`ww6_raids.test.js`). Taken back by hand; the account's move (acct204 -> acct205) kept. The tool
@@ -53,7 +55,9 @@ Every finding below is fixed, pinned and recorded where its system lives.
   world274's row lost the release's history at the fourth merge; main's RPT1026 pins read code the host split had
   moved; ROAD-LOOK, FLORA-GROUND and TESA4's bridges; HOST-SPLIT's seam; four new duplicate exports (audit24's
   ratchet), named apart; IC-PROPS' "Residence" among the routed words. And the nine field fixes' code claimed Ledger
-  rows no one wrote: rowed (`Port-Ledger.md` section A, the tally 363 rows, 348 standing).
+  rows no one wrote: rowed (`Port-Ledger.md` section A, the tally 363 rows, 348 standing). They had gone in past the
+  table's closing blank line, outside it, and the sixth merge closes the table after them (364 rows, 349 standing, with
+  main's MENTOR2).
 - **S8 - PLAIN-TEXT at the fourth merge** (lane 4). Main's law (`tools/plainText.mjs`, `Home.md` SAY IT ONCE, PLAINLY)
   came in at the fourth merge, and the merge never ran its `--seed` for a base without the law, so 360 of this branch's
   own entries read as grown. Seeded from the branch's two tips without it (`9fe573f43f`, before the fourth merge, and
@@ -91,6 +95,9 @@ Three lines held a pixel to the Bay. One is S3. `systems/naval/harbourBook.js` d
 ground as before. `systems/naval/navalWire.js`'s `BAY_REGION_COUNT` is WW-R's own word (the Bay's regions on `s`, a
 province's on `r`). Every other region read added since resolves past the Bay (`REGION_NAMES` carries the nine
 provinces; `mapDict` lookups fall back to the world's registry).
+
+The sixth merge's code (MENTOR2, LEVEL-BAR, LEVEL-TOP, GEAR-ADDS) holds no pixel, key or region to the Bay. MENTOR2's
+partners are read off the room's peers beside me (`world.js` partyNear), which a room past the Bay keeps as the Bay's.
 
 ## Lane 3 - the running game past the Bay
 
