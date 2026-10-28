@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { readPng } from '../../../tools/pngIO.mjs';
 import {
   SPEAR_STRIP, SPEAR_POSE, SPEAR_BLEED, SPEAR_STRIKES, SPEAR_STRIKE_OF, SPEAR_STAGE, SPEAR_REST_AT, SPEAR_AIM, SPEAR_IDLE,
-  SPEAR_ITEM, SPEAR_HANDLING_OF, SPEAR_NUM_FRAMES, SPEAR_SWING_SFX, spearFrameSet, drawSpearFrames, spearFrameSeconds,
+  SPEAR_ITEM, SPEAR_HANDLING_OF, SPEAR_NUM_FRAMES, SPEAR_SWING_SFX, SPEAR_OPENING, spearFrameSet, drawSpearFrames, spearFrameSeconds,
   createSpearMachine, spearAttack, spearStep, spearFrameOf, spearScrubFrame, spearScreenPoint, spearReleaseFrame,
   createSpearGesture, spearGestureStep, spearPageRect, spearPageState, stageAnchor, createGunRig, gunRigStep, gunMotion,
   gunWidgetSettings, DIRECTION_TO_STRIKE, CLICK_ATTACK_DIRECTIONS, createSfxPlayer,
@@ -282,7 +282,19 @@ test('SPEAR-LAB placement: the owner\'s rest frame at FPSWeapon\'s rect, native 
   assert.deepEqual(spearScreenPoint(rect, SPEAR_AIM).map((v) => Math.round(v)), [640, 400], 'the aim at the view\'s middle');
   const big = spearPageRect(createGunRig(), set, canvas, { scale: 1.5 });
   assert.ok(Math.abs(big.anchorRect.w - 149 * 6) < 1e-9 && Math.abs(big.anchorRect.x + big.anchorRect.w - 1280) < 1e-9, 'size scales about the corner');
-  assert.equal(spearPageState().scale, 1);
+});
+
+test('SPEAR-LAB 2 the panel opens on the owner\'s numbers, and every control on the page has an opening value', () => {
+  assert.deepEqual(SPEAR_OPENING, { scale: 0.95, offset: 0, raise: -12, speed: 52, strength: 100, smear: false });
+  const state = spearPageState();
+  for (const [k, v] of Object.entries(SPEAR_OPENING)) assert.equal(state[k], v, k);
+  const controls = JSON.parse(page().match(/const CONTROLS = (\[[^\]]*\])/)[1].replace(/'/g, '"'));
+  assert.ok(controls.length > 15);
+  for (const id of controls) {
+    assert.ok(id in state, `the page's ${id} has no opening value - it would open at the markup's guess`);
+    assert.match(page(), new RegExp(`id="${id}"`), `the page has a control ${id}`);
+  }
+  assert.deepEqual([state.sfxOn, state.sfxVol], [true, 0.7], 'the swing is heard');
 });
 
 test('SPEAR-LAB a scrubbed frame and a played one are the same picture; the swing\'s voice is ours', () => {

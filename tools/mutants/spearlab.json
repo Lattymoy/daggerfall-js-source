@@ -232,5 +232,32 @@
     "tests": [
       "test/combat/weapon/spearLab.test.js"
     ]
+  },
+  {
+    "name": "SL2-opening-smear-on",
+    "file": "src/tools/spearLab.js",
+    "old": "export const SPEAR_OPENING = Object.freeze({ scale: 0.95, offset: 0, raise: -12, speed: 52, strength: 100, smear: false });",
+    "new": "export const SPEAR_OPENING = Object.freeze({ scale: 0.95, offset: 0, raise: -12, speed: 52, strength: 100, smear: true });",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL2-sound-left-to-the-markup",
+    "file": "src/tools/spearLab.js",
+    "old": "    strike: 'left', loop: false, slow: 1, trail: false, grid: false, sfxOn: true, sfxVol: 0.7,",
+    "new": "    strike: 'left', loop: false, slow: 1, trail: false, grid: false,",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
+  },
+  {
+    "name": "SL2-opening-not-laid",
+    "file": "src/tools/spearLab.js",
+    "old": "    ...SPEAR_OPENING,\n",
+    "new": "    scale: 1, offset: 0, raise: 0, speed: 50, strength: 50, smear: true,\n",
+    "tests": [
+      "test/combat/weapon/spearLab.test.js"
+    ]
   }
 ]

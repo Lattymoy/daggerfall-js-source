@@ -125,11 +125,17 @@ export function spearPageRect(rig, set, canvas, { scale = 1, offset = 0, raise =
   });
 }
 
-/** The panel the page opens on. */
+/** SPEAR-LAB 2 (the owner, 2026-10-28, a screenshot of the panel: "Heres the new values with smear off"): the size,
+ *  the raise, Speed and Strength and the smear the lab opens on. The game takes its row from here when the spear
+ *  graduates, as the Pistolet took PISTOLET_FEEL from its lab. */
+export const SPEAR_OPENING = Object.freeze({ scale: 0.95, offset: 0, raise: -12, speed: 52, strength: 100, smear: false });
+
+/** The panel the page opens on: the owner's numbers (SPEAR_OPENING), then the lab's own switches. Every control on the
+ *  page has a value here - one with none opened at the markup's guess (the sound read as off). */
 export function spearPageState() {
   return {
-    strike: 'left', loop: false, slow: 1, smear: true, trail: false, grid: false,
-    scale: 1, offset: 0, raise: 0, speed: 50, strength: 50,
+    strike: 'left', loop: false, slow: 1, trail: false, grid: false, sfxOn: true, sfxVol: 0.7,
+    ...SPEAR_OPENING,
     modBob: true, modInertia: true, walk: false, strafe: 0, run: false, crouch: false,
     room: 0.62,
   };

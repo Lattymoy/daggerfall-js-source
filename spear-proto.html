@@ -33,8 +33,9 @@
   .hud .row { display:flex; gap:6px; margin:4px 0; }
   .hud button { flex:1; background:#1b1f25; color:#e0d5ad; border:1px solid #55503f; padding:5px 0; font:inherit; cursor:pointer; }
   .hud button:hover { background:#262b33; }
-  .stat { position:fixed; right:12px; top:12px; background:rgba(10,12,16,.82);
-    border:1px solid #55503f; padding:8px 10px; color:#9c9378; white-space:pre; }
+  /* never over the panel: at a phone's width the lines wrap in the room the panel leaves */
+  .stat { position:fixed; right:12px; top:12px; background:rgba(10,12,16,.82); max-width:calc(100vw - min(330px,44vw) - 84px);
+    border:1px solid #55503f; padding:8px 10px; color:#9c9378; white-space:pre-wrap; overflow-wrap:anywhere; }
 </style>
 </head>
 <body>

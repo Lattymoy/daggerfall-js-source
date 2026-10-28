@@ -108,6 +108,19 @@ the point's path, Speed and Strength, size and raise, Bob and Inertia, and walki
 general `drawTurned`. The doll tool re-exports them, and `pistolet.test.js` re-runs the Pistolet's doll layers against
 the shipped files, byte for byte.
 
+## SPEAR-LAB 2 (2026-10-28): the owner's numbers
+
+The owner, over a screenshot of the panel on a phone: *"Heres the new values with smear off"*. The lab opens on them
+(`SPEAR_OPENING`): size 0.95, raise -12, Speed 52, Strength 100, the smear off. The game will take its row from here,
+as the Pistolet took its feel from its lab. At this size and raise the thrust's point lands about 12 texels right of
+the crosshair and 15 below it; the strikes are aimed at the native placement.
+
+The same screenshot showed two faults of the page's, both fixed:
+- **The sound opened off**, at volume 0.5. The page sets every control from the opening state, and the state had no
+  sound values, so the box read as unticked and the slider sat at its middle. The state names them now (on, 0.7), and a
+  pin holds every control on the page to a value in it.
+- **The readout covered the thrust button** at a phone's width. It now wraps in the room the panel leaves.
+
 ## Departures (Port-Ledger section A, SPEAR-LAB)
 
 - **A strike of 11 or 12 frames in the time of five** (`WeaponBasics` five-frame strikes, `FPSWeapon.AnimateWeapon`).
@@ -117,11 +130,11 @@ the shipped files, byte for byte.
 
 ## Pins
 
-`test/combat/weapon/spearLab.test.js` (19): the lab is a lab; what it borrows by identity; RotSprite's one home; the
+`test/combat/weapon/spearLab.test.js` (20): the lab is a lab; what it borrows by identity; RotSprite's one home; the
 exception's listing; the strip; the arms past the cut, and THE CUT NEVER SHOWS on any strike frame; the idle is the rest frame texel for texel;
 no new colour; the strikes' shapes; the smear; three blows for six; the law's time; the machine plays each strike; the
-drag agrees with PlayerWeapon's; placement; the picture and its point agree. `tools/mutants/spearlab.json`: 26 dead.
-`tools/spearProtoProbe.mjs` (`npm run spearproto`, 23 checks) drives the page in Chromium. Deployed at
+drag agrees with PlayerWeapon's; placement; the picture and its point agree. `tools/mutants/spearlab.json`: 29 dead.
+`tools/spearProtoProbe.mjs` (`npm run spearproto`, 24 checks) drives the page in Chromium. Deployed at
 `/preview/spear-lab/`.
 
 ## What graduation owes

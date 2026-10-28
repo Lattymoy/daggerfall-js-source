@@ -12,7 +12,9 @@
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
-import { SPEAR_STRIKES, SPEAR_NUM_FRAMES, spearFrameSeconds } from '../src/tools/spearLab.js';
+import { SPEAR_STRIKES, SPEAR_NUM_FRAMES, SPEAR_OPENING, spearFrameSeconds } from '../src/tools/spearLab.js';
+
+const SPEAR_OPENING_PANEL = { scale: SPEAR_OPENING.scale, offset: SPEAR_OPENING.offset, raise: SPEAR_OPENING.raise, speed: SPEAR_OPENING.speed, strength: SPEAR_OPENING.strength, smear: SPEAR_OPENING.smear };
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const shots = process.argv[2] || 'scratch/spear-proto';
@@ -53,11 +55,16 @@ const strikeLog = async (from) => {
   }, from, { timeout: 30000 });
   return (await read()).log.slice(from);
 };
-const STILL = { modBob: false, modInertia: false, walk: false, loop: false, slow: 1, sfxOn: false };
+// the native law (size 1, raise 0) for the placement and the aim; the owner's opening is checked on its own below
+const STILL = { modBob: false, modInertia: false, walk: false, loop: false, slow: 1, sfxOn: false, scale: 1, raise: 0 };
 const near = (a, b, eps = 1.5) => Math.abs(a - b) <= eps;
 
 await page.goto('http://127.0.0.1:5198/spear-proto.html', { waitUntil: 'load' });
 await page.waitForFunction(() => globalThis.__spearLab?.ready, null, { timeout: 60000 });
+const opened = await page.evaluate(() => Object.fromEntries(['scale', 'offset', 'raise', 'speed', 'strength', 'smear', 'sfxOn', 'sfxVol']
+  .map((id) => { const el = document.getElementById(id); return [id, el.type === 'checkbox' ? el.checked : Number(el.value)]; })));
+check('the panel opens on the owner\'s numbers, the sound on', JSON.stringify(opened)
+  === JSON.stringify({ ...SPEAR_OPENING_PANEL, sfxOn: true, sfxVol: 0.7 }), JSON.stringify(opened));
 await set(STILL);
 await page.keyboard.press('Tab');   // the panels come off for the shots
 await idle();
@@ -87,7 +94,7 @@ for (const name of ['left', 'right', 'thrust']) {
   const hit = log.find((e) => e.hit);
   check(`${name}: the blow lands on the table's hit frame`, hit?.frame === SPEAR_STRIKES[name].hit, `hit on frame ${hit?.frame}`);
   const start = log.find((e) => e.state === STATE[name]), end = log.find((e) => e.state === 'Idle' && e.t > start.t);
-  const took = (end.t - start.t) / 1000 * 0.25, law = spearFrameSeconds(STATE[name]) * n;
+  const took = (end.t - start.t) / 1000 * 0.25, law = spearFrameSeconds(STATE[name], { speed: SPEAR_OPENING.speed, strength: SPEAR_OPENING.strength }) * n;   // the panel's own Speed and Strength
   check(`${name}: the blow takes the swing law's time (five classic frames)`, Math.abs(took - law) < 0.06, `${took.toFixed(3)} s, the law ${law.toFixed(3)} s`);
   const atHit = log.filter((e) => e.state === STATE[name] && e.frame === SPEAR_STRIKES[name].hit)[0];
   if (name === 'thrust') {
