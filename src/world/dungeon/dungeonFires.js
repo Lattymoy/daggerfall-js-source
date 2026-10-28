@@ -62,6 +62,8 @@ export const DFIRE = Object.freeze({
 const WATER_NONE = 10000;
 
 export const isBorderBlock = (name) => /^B/i.test(String(name ?? ''));
+/** A block's water plane's y in the dungeon's frame, or -Infinity for a dry block (DELVE II's site law reads it too). */
+export const blockWaterY = (lay) => (Number.isFinite(lay?.waterLevel) && lay.waterLevel !== WATER_NONE ? -lay.waterLevel * GLOBAL_SCALE : -Infinity);
 
 /** How many fires a dungeon of `blocks` non-border blocks stands: clamp(round(blocks / 3), 2, 7) - an elite half, at least one. */
 export function dungeonFireCount(blocks, elite = false) {
@@ -84,7 +86,7 @@ export function fireCandidates(blocks) {
   (blocks ?? []).forEach((b, bi) => {
     const lay = b?.layout;
     if (!lay || lay.castleBlock) return;   // AUDIT REST: a palace's block is a court, never a camp
-    const water = Number.isFinite(lay.waterLevel) && lay.waterLevel !== WATER_NONE ? -lay.waterLevel * GLOBAL_SCALE : -Infinity;
+    const water = blockWaterY(lay);
     for (const m of lay.markers ?? []) {
       if (!isFireMarker(m)) continue;
       out.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], block: bi, start: !!b.isStartingBlock, water, marker: true });

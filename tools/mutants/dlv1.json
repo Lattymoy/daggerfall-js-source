@@ -1,0 +1,884 @@
+[
+  {
+    "name": "DLV1-hold-id-moved",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "hold: Object.freeze({ id: 1, family: 'wave' })",
+    "new": "hold: Object.freeze({ id: 3, family: 'wave' })",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-family-swapped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "litany: Object.freeze({ id: 2, family: 'puzzle' })",
+    "new": "litany: Object.freeze({ id: 2, family: 'wave' })",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-nine-members",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "export const DELVE_PARTY_MAX = 8;",
+    "new": "export const DELVE_PARTY_MAX = 9;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-pace-of-a-stronger-runner",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "((30 + 150) / 39.5) * (1.35 + 5 / 200)",
+    "new": "((30 + 150) / 39.5) * (1.35 + 50 / 200)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-errand-margin-dropped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "/ DELVE_PACE_MPS + 1.5)",
+    "new": "/ DELVE_PACE_MPS + 0)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-present-lengthened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "DELVE_PRESENT_MS = 15_000",
+    "new": "DELVE_PRESENT_MS = 20_000",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-leave-lengthened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "DELVE_LEAVE_MS = 30_000",
+    "new": "DELVE_LEAVE_MS = 45_000",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-let-go-lengthened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "DELVE_LET_GO_MS = 60_000",
+    "new": "DELVE_LET_GO_MS = 90_000",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-earn-window-doubled",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "DELVE_EARN_MS = 15_000",
+    "new": "DELVE_EARN_MS = 30_000",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-orphan-window-doubled",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "DELVE_ORPHAN_MS = 10_000",
+    "new": "DELVE_ORPHAN_MS = 20_000",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-four-waves",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "HOLD_WAVES = 3;",
+    "new": "HOLD_WAVES = 4;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-gathering-skipped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "HOLD_GATHER_MS = 4_000;",
+    "new": "HOLD_GATHER_MS = 0;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-breath-shortened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "HOLD_BREATH_MS = 5_000;",
+    "new": "HOLD_BREATH_MS = 3_000;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-wave-runs-longer",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "HOLD_WAVE_MAX_MS = 90_000;",
+    "new": "HOLD_WAVE_MAX_MS = 120_000;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-wave-cap-lifted",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "export const HOLD_WAVE_MAX = 12;",
+    "new": "export const HOLD_WAVE_MAX = 16;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-member-counted-three",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "3 + 2 * (delveParty(n) - 1)",
+    "new": "3 + 3 * (delveParty(n) - 1)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-wave-step-dropped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "+ Math.max(0, (w | 0) - 1))",
+    "new": "+ 0)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-captain-believed-early",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "HOLD_CAPTAIN_MIN_MS = 20_000;",
+    "new": "HOLD_CAPTAIN_MIN_MS = 10_000;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-abyss-captain-a-regular",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "holdCaptainTraits = (tier) => (tier === 'elite' || tier === 'super' ? 2 : 1);",
+    "new": "holdCaptainTraits = (tier) => (tier === 'elite' ? 2 : 1);",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-five-plates-everywhere",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "(tier === 'elite' || tier === 'super' ? 5 : 4)",
+    "new": "(tier === 'elite' || tier === 'super' ? 5 : 5)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-held-step-dropped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "(k + 1) * LITANY_SHOW_STEP_MS",
+    "new": "k * LITANY_SHOW_STEP_MS",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-ring-widened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "LITANY_RING_M = 2.5;",
+    "new": "LITANY_RING_M = 3;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-plate-reach-widened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "LITANY_STAND_M = 1.2;",
+    "new": "LITANY_STAND_M = 1.5;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-three-woken",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "LITANY_WAKE = 2;",
+    "new": "LITANY_WAKE = 3;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-bearing-turned",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "[[0, 1], [1, 0], [0, -1], [-1, 0]]",
+    "new": "[[1, 0], [0, 1], [0, -1], [-1, 0]]",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-five-bearing-off",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "[0.587785, -0.809017], [-0.587785",
+    "new": "[0.587785, -0.709017], [-0.587785",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-order-salt",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "const LITANY_SALT = 0x4c54;",
+    "new": "const LITANY_SALT = 0x4c55;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-order-site-left-out",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "gateHash(seed >>> 0, i, j, LITANY_SALT)",
+    "new": "gateHash(seed >>> 0, 0, j, LITANY_SALT)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-order-swap-one-short",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "% (j + 1);",
+    "new": "% j;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-gates-on-the-rim",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "const g = site.r - 0.5;",
+    "new": "const g = site.r;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-ward-pad-dropped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "DELVE_WARD_PAD_M = 2;",
+    "new": "DELVE_WARD_PAD_M = 0;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-ward-storey-widened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "Math.abs(y - site.y) <= 3;",
+    "new": "Math.abs(y - site.y) <= 4;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-plate-reach-unsquared",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "<= LITANY_STAND_M * LITANY_STAND_M",
+    "new": "<= LITANY_STAND_M",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-hash-vault-left-out",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "Math.round(v[0] * 100), Math.round(v[1] * 100), Math.round(v[2] * 100)",
+    "new": "0, 0, 0",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-hash-y-left-out",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "Math.round(s.y * 100), ",
+    "new": "0, ",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-stranger-counted",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (led.p === DP.won || !ctx.party || !w",
+    "new": "if (led.p === DP.won || !w",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-corridor-counted",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (!ctx.inWard) return ev;",
+    "new": "if (false) return ev;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-clock-runs-through-absence",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "to = Math.min(nowMs, led.nearAt + DELVE_PRESENT_MS);",
+    "new": "to = nowMs;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-clear-before-its-floor",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "led.ec - led.ws >= starClearFloorMs(led.wz, nd)",
+    "new": "led.ec - led.ws >= 0",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-second-owner-believed",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "(!delveFoeOwner(led, nowMs) || led.fo === acct)",
+    "new": "(true)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-orphan-edge",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "nowMs - led.foAt <= DELVE_ORPHAN_MS",
+    "new": "nowMs - led.foAt < DELVE_ORPHAN_MS",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-captain-least-time-skipped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "led.ec - led.cs >= HOLD_CAPTAIN_MIN_MS",
+    "new": "led.ec - led.cs >= 0",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-earn-edge-widened",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "nowMs - led.a[acct].inAt <= DELVE_EARN_MS",
+    "new": "nowMs - led.a[acct].inAt <= DELVE_EARN_MS + 1",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-in-ward-from-every-word",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "filter((acct) => nowMs - led.a[acct].inAt <= DELVE_PRESENT_MS)",
+    "new": "filter((acct) => nowMs - led.a[acct].last <= DELVE_PRESENT_MS)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-lit-plate-punished",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (led.order.slice(0, led.next).includes(plate)) return ev;",
+    "new": "if (false) return ev;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-plate-said-not-stood",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "w.st !== plate || ",
+    "new": "",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-last-plate-not-winning",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (led.next >= led.k) win(",
+    "new": "if (led.next > led.k) win(",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-wake-everywhere",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (led.tier === 'elite' || led.tier === 'super') ev.push({ k: 'wake'",
+    "new": "if (true) ev.push({ k: 'wake'",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-let-go-keeps-lit-plates",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "foAt: 0, next: 0, sh: 0 });",
+    "new": "foAt: 0, sh: 0 });",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-show-skipped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "led.ec >= led.sh + litanyShowMs(led.k)) { led.p = DP.work;",
+    "new": "led.ec >= led.sh) { led.p = DP.work;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-leave-edge",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "nowMs - led.inAt >= DELVE_LEAVE_MS",
+    "new": "nowMs - led.inAt > DELVE_LEAVE_MS",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-litany-fails-for-leaving",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (led.kind === 'hold' && nowMs - led.inAt",
+    "new": "if (nowMs - led.inAt",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-account-cap-raised",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "< DELVE_PARTY_MAX * 2",
+    "new": "< DELVE_PARTY_MAX * 3",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-level-unclamped",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "Math.min(99, w.lv | 0)",
+    "new": "Math.min(999, w.lv | 0)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-state-names-the-owner",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "fo: delveFoeOwner(led, nowMs) ? 1 : 0",
+    "new": "fo: delveFoeOwner(led, nowMs)",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-wave-sized-for-one",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "led.n = delveParty(delveInWard(led, nowMs).length);",
+    "new": "led.n = 1;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-a-non-owner-kills",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "if (led.fo !== acct) return ev;",
+    "new": "if (false) return ev;",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-another-waves-deaths",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "w.kw === led.w && w.kn > led.kn",
+    "new": "w.kn > led.kn",
+    "tests": [
+      "test/net/delve/dlv1_law.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-one-site-for-three",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "perBlocks: 2, max: 3,",
+    "new": "perBlocks: 3, max: 3,",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-site-cap-lifted",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "perBlocks: 2, max: 3,",
+    "new": "perBlocks: 2, max: 4,",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-none-in-a-small-dungeon",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "return Math.max(1, Math.min(DSITE.max",
+    "new": "return Math.max(0, Math.min(DSITE.max",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-grid-off-centre",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "pad = (RDB_SIDE - (n - 1) * gridM) / 2;",
+    "new": "pad = (RDB_SIDE - n * gridM) / 2;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-storey-band-widened",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": ">= DSITE.storeyM) storeys.push(y);",
+    "new": ">= 7) storeys.push(y);",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-castle-stood-in",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (!lay || lay.castleBlock || isBorderBlock(b.name)) return;",
+    "new": "if (!lay || isBorderBlock(b.name)) return;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-door-edge",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "d2(d, pos) < SQ(law.doorM)",
+    "new": "d2(d, pos) <= SQ(law.doorM)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-marker-edge",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "flat2(q, pos) >= SQ(m)",
+    "new": "flat2(q, pos) > SQ(m)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-marker-storey-edge",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "Math.abs(q[1] - pos[1]) >= law.storeyM",
+    "new": "Math.abs(q[1] - pos[1]) > law.storeyM",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-way-in-shortened",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "d2(start, pos) < SQ(law.startM)",
+    "new": "d2(start, pos) < SQ(law.startM - 0.1)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-fire-edge",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "d2(q, pos) < SQ(law.fireM)",
+    "new": "d2(q, pos) <= SQ(law.fireM)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-water-edge",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "pos[1] < c.water + law.dryM",
+    "new": "pos[1] <= c.water + law.dryM",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-level-loosened",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "levelM: 0.25,",
+    "new": "levelM: 0.3,",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-level-against-the-grid",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "levelDisc(probe, pos, law.rings)",
+    "new": "levelDisc(probe, at, law.rings)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-ring-dropped",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "rings: Object.freeze([1.5, 3, 4]),",
+    "new": "rings: Object.freeze([1.5, 3]),",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-room-not-told-the-disc",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "probe?.room?.(pos, law.r)",
+    "new": "probe?.room?.(pos)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-wall-check-the-large-disc",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "walls.some((d) => d < r)",
+    "new": "walls.some((d) => d < DSITE.r)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-wall-at-the-edge-refused",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "walls.some((d) => d < r)",
+    "new": "walls.some((d) => d <= r)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-roof-reach-shortened",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "[0, 1, 0], DSITE.ceilingM, ONLY_DUNGEON",
+    "new": "[0, 1, 0], 11, ONLY_DUNGEON",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-rays-count-raised",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": ".length < DSITE.enclosedRays",
+    "new": ".length < 6",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-walls-reach-lengthened",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "[dx, 0, dz], DSITE.enclosedM, ONLY_DUNGEON",
+    "new": "[dx, 0, dz], 45, ONLY_DUNGEON",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-height-counted-once",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "y = 2 * (a[1] - b[1])",
+    "new": "y = (a[1] - b[1])",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-spacing-edge",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "d2(q, c.pos) >= SQ(DSITE.spacingM)",
+    "new": "d2(q, c.pos) > SQ(DSITE.spacingM)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-no-storey-served-first",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const unserved = open.filter((c) => !lit.has(band(c.pos)));",
+    "new": "const unserved = open;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-tie-unbroken",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "sa !== sb ? sa > sb : a.tie < b.tie",
+    "new": "sa !== sb ? sa > sb : false",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-site-salt",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const SITE_SALT = 0x5d17;",
+    "new": "const SITE_SALT = 0x5d18;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-deepest-over-a-taken-site",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (!taken.length) take(",
+    "new": "take(",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-taken-spot-ignored",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const near = [...taken, ...chosen.map((q) => q.pos)];",
+    "new": "const near = chosen.map((q) => q.pos);",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-second-family-drawn-too",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (i === 1 && fam.length > 1)",
+    "new": "if (false)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-kind-salt",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "hash32(seed >>> 0, i, SITE_SALT + 1)",
+    "new": "hash32(seed >>> 0, i, SITE_SALT + 2)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-vault-toward-the-farthest-wall",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (walls[k] < walls[j]) j = k;",
+    "new": "if (walls[k] > walls[j]) j = k;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-vault-tie-the-last-bearing",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (walls[k] < walls[j]) j = k;",
+    "new": "if (walls[k] <= walls[j]) j = k;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-vault-reach",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const g = r - 0.6;",
+    "new": "const g = r - 0.5;",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-the-plan-ignoring-none",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "const count = none ? 0 : delveSiteCount(blocks);",
+    "new": "const count = delveSiteCount(blocks);",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-small-pass-never-run",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (large.length < count) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-small-pass-run-always",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "if (large.length < count) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-small-pass-crowding",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "taken: large.map(({ c }) => c.pos)",
+    "new": "taken: []",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-small-site-the-large-disc",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": ".map((c) => ({ c, r: DSITE_SMALL.r }))",
+    "new": ".map((c) => ({ c, r: DSITE.r }))",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-small-door-widened",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "gridM: 2, doorM: 3.5,",
+    "new": "gridM: 2, doorM: 4.5,",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  },
+  {
+    "name": "DLV1-small-grid-coarse",
+    "file": "src/world/dungeon/delveSites.js",
+    "old": "siteCandidates(blocks, DSITE_SMALL.gridM)",
+    "new": "siteCandidates(blocks)",
+    "tests": [
+      "test/world/dlv1_sites.test.js"
+    ]
+  }
+]

@@ -80,22 +80,31 @@ puzzle".
 ## 4. The site law (DLV1, `world/dungeon/delveSites.js`)
 
 A site is a disc of floor in a room: a wave's arena or a puzzle's floor, its pieces stood on it by the kind's own
-spots. The law is `dungeonFirePlan`'s shape, its rules widened to a room's size.
+spots. The law is `dungeonFirePlan`'s shape, its rules widened to a room's size. Every value below was measured by the
+census (DLV1, `tools/delveSiteProbe.mjs`) before it was kept.
 
 | Rule | Value | Why |
 |---|---|---|
-| Candidates | every non-border block's centre and a 2 m ring round each start, treasure and quest marker, in layout order | the fire law's set: a block's heart, and the rooms the layout already marks |
-| Floor | a face that looks up within 4 m below, level to 0.25 m on rings at 1.5, 3 and the disc's radius | a room's floor, never a stair, a ramp or a tabletop |
-| The disc | radius 5 m (a wave), 4 m (a puzzle); eight chest-height rays clear that far; a ceiling within 12 m; walls on at least four rays within 30 m | room to fight or work, inside a room, never on its roof |
-| Clear of | doors 4 m, enemy markers 6 m, start, treasure and quest markers 6 m, the start 30 m, every fire 20 m, water | law 2 |
-| How many | non-border blocks / 5, at least 1, at most 3 | about one a fire and a half; a small dungeon one |
+| Candidates | a 4 m grid over every non-border block, centred, at each storey its markers stand on (heights 6 m apart) | the markers and block centres the fire law asks found a room in one dungeon of three; the grid finds the rooms between them |
+| Floor | a face that looks up within 4 m below, level to 0.25 m on rings at 1.5, 3 and 4 m (the outer ring asked first) | a room's floor, never a stair, a ramp or a tabletop |
+| The disc | radius 4 m; the eight chest-height rays clear past it; a ceiling within 12 m; walls on at least four rays within 30 m; the body fits | room to fight or work, inside a room, never on its roof or in an open hall |
+| Clear of | doors 4.5 m; an enemy marker's own spot 2 m; start, treasure and quest markers 4 m (both on their storey); the way in 20 m; every fire 12 m; water by 0.5 m | law 2. The halls the foes stand in are the rooms a site wants, so a foe's marker refuses only its own spot |
+| The small room | where the large rooms leave the count short: a 3 m disc on a 2 m grid, rings at 1.5 and 3 m, doors 3.5 m, items 3 m, the way in 12 m, fires 8 m, 60 m from the sites already stood | a small dungeon's rooms |
+| How many | non-border blocks / 2, at least 1, at most 3 | 4,221 of the 4,232 dungeons have one to four inner blocks: a four-block dungeon stands a wave and a puzzle |
 | None in | a palace (`isPalaceLayout`), Privateer's Hold, the made levels (court, Hour, Spire, Ketch, arenas), the Abyss Hollow | a court is no dungeon; the Hold is the tutorial; the made levels have their own law |
-| Choice | the deepest first, then farthest-point 60 m apart, ties by `hash32(seed, i)` | spread through the dungeon, the same everywhere |
-| Kind | seeded by the dungeon's id and the site's index; two or more sites hold at least one wave and one puzzle | variety in one dungeon, the same for every visitor |
+| Choice | the deepest first (height counted twice), then farthest-point 60 m apart, a storey with none first, ties by `hash32(seed, i)` | spread through the dungeon, the same everywhere |
+| Kind | seeded by the dungeon's id and the site's index; the second site takes the family the first did not | variety in one dungeon, the same for every visitor |
+| Vault | toward the nearest of the eight walls, the disc's radius less 0.6 m out | against a wall, out of the fight |
 
-DLV1's census probe will stand the law over all 4,232 of Daggerfall's dungeons (the freeware's data) and report
-the census: sites a dungeon, a dungeon with none, every rule each candidate failed. The numbers above are the starting
-values; the census measures them before DLV2 stands one.
+**THE CENSUS** (2026-10-28, all 4,232 dungeons, four shards of about 40 s). 4,228 want sites; the three palaces and
+Privateer's Hold want none. 3,838 (90.8%) stand at least one, and 1,382 stand two or three, each with a wave and a
+puzzle. 390 stand none: their rooms are corridors and stairs. Of 5,698 sites wanted, 5,226 stand, 1,194 of them in a
+small room; 2,645 are Holds and 2,581 Litanies. A refused spot's first broken rule is most often no floor (a grid point
+in rock or void), then a floor not level, then a door. One site for five blocks stood one in every dungeon, and the
+large rooms alone a site in 73 dungeons of a hundred: the count and the small room are the census's.
+
+**THE COST.** The plan runs once, in the dungeon's load beside the fire plan: 6 ms at the median, 42 ms at the 95th
+percentile, 76 ms at worst (Node, one core, the probe's own clock).
 
 ## 5. The kinds
 
@@ -106,25 +115,27 @@ level and tier, so a cave's waves are a cave's and an Elite's are an Elite's (BA
 ### 5.1 Waves
 
 - **THE HOLD.** Survive three waves inside the ward. A wave is `3 + 2(n - 1) + (w - 1)` foes, at most 12 (one grant,
-  section 7). A five-second breath between waves (STAR-TUNE's lesson: "The time between waves is too long"). A wave
-  that runs 90 s gives way to the next. The last is a captain: an elite of the table with one boss trait, two in an
-  Elite dungeon (BOSS-TRAITS).
+  section 7). The ward rises for 4 s before the first. A five-second breath between waves (STAR-TUNE's lesson: "The
+  time between waves is too long"). A wave that runs 90 s gives way to the next. The last is a captain: an elite of
+  the table with one boss trait, two in an Elite or Abyss dungeon (BOSS-TRAITS), its fall believed no sooner than 20 s.
 - **THE WELLSPRINGS.** Two to four sources - a cracked tomb, a pool, a broken altar, by the dungeon's type - each
   pouring a foe every 12 s, three of its own alive at most. Break every source, then the captain. A source's health is
   sized to the party (the Spire's `egHpTeam` rule, `net/eliteGates/egBodies.js`).
 - **THE VIGIL.** A relic at the disc's heart with 100 light; foes go for it before the party (`huntsStar`'s rule).
   Three waves as the Hold's; the light lost, the vigil fails and can be tried again after the respawn breath (60 s).
 
-A wave's foes are held to the ward (leashed to the disc and a margin): they never chase a player through the dungeon,
-and a player who leaves the ward leaves the fight. Every member of the party out of the ward for 30 s ends the attempt:
-its foes crumble, nothing is earned, the site can be tried again.
+A wave's foes are held to the ward (the disc and 2 m round it, 3 m up or down): they never chase a player through the
+dungeon, and a player who leaves the ward leaves the fight. The encounter clock runs only while a member was in the
+ward within 15 s. Every member out of the ward for 30 s ends the attempt: its foes crumble, nothing is earned, the
+site can be tried again.
 
 ### 5.2 Puzzles
 
-- **THE LITANY** (runes in order - the Examination's law). Four plates in a ring round the disc's heart, five in an
-  Elite dungeon. They light one at a time, each with its numeral and a chime, then go dark. Step on each in that order
-  (within 1.2 m). A wrong plate darkens all and the order plays again. Untimed; in an Elite dungeon a wrong plate also
-  wakes two foes of the table.
+- **THE LITANY** (runes in order - the Examination's law). Four plates 2.5 m round the disc's heart, five in an
+  Elite or Abyss dungeon. They light one at a time, a second each, with a numeral and a chime, then go dark. Step on
+  each in that order (within 1.2 m). A lit plate may be stood on again; a wrong one darkens all and the order plays
+  again. Untimed; in an Elite or Abyss dungeon a wrong plate also wakes two foes of the table. A party silent at the
+  site for 60 s lets it go.
 - **THE BRAZIER RITE** (carry and bank - the Ketch's law). A source flame at the heart and three braziers at the rim,
   four for a party of four or more. Take the flame, carry it slowed (THE BURDEN, 0.72) with the weapon put up, and
   light a brazier. A carried flame gutters out after 20 s; a carrier struck drops it, and it lies 10 s to be taken up.
@@ -160,8 +171,8 @@ The relay reads no game data (Port-Doctrine), so it cannot place a site. Every c
   the phase, the wave and its deaths, the pieces' state, the earners. Starfall's machine: an encounter clock that runs
   only while the owning party stands at the site, floors on every clear, a word heard late moved as if on time.
 - **THE PARTY.** The first word's speaker owns the site. A word from another account counts only if the hub says it is
-  of the owner's party (`_instanceKinOf`, SD-PARTY's door). The owning party gone from the site for 60 s, the ledger is
-  let go and the site is free.
+  of the owner's party (`_instanceKinOf`, SD-PARTY's door). A wave's attempt that fails (section 5.1) or a puzzle let
+  go (section 5.2) drops the ledger, and the site is free.
 - **REACH.** A puzzle's step, carry or break is judged against the plan's spots and the speaker's last pose the room
   heard, with `ktLeastMs`'s step law at THE DELVE PACE.
 - **THE WAVES.** A machine of the owning party stands the foes (Starfall's camp law) under a grant kind of its own,
@@ -196,7 +207,7 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 | Slice | What | Done when |
 |---|---|---|
 | DLV0 | This record | merged |
-| DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | pure, pinned, every mutant dead; the census over 4,232 dungeons recorded here |
+| DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | DONE 2026-10-28: `test/net/delve/dlv1_law.test.js` and `test/world/dlv1_sites.test.js`, 98 mutants dead (`tools/mutants/dlv1.json`); the census in section 4 |
 | DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | stood and won in the real game at three sizes and an Elite; save, load and respawn; frame cost measured |
 | DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | a party of two wins both kinds; a stranger refused; a relay version |
 | DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; AUDIT DELVE II | every kind stood, won and failed, solo and in a party |
@@ -222,7 +233,7 @@ Each has a default the slices follow until the owner says otherwise.
 - **Strangers and waves.** Default: a stranger may fight a wave's foes and earns nothing.
 - **Which dungeons.** Default: every dungeon but palaces, Privateer's Hold, the made levels and the Abyss Hollow. The 14
   main-story dungeons included: no site stands on a marker.
-- **How many.** Default: one site for five blocks, one to three. The census may move it.
+- **How many.** Default: one site for two blocks, one to three (the census moved it from five).
 - **The switch.** Default: an Enhanced Features row, on. Offline it is the player's; online the room's sites stand for
   everyone in it, whatever the row says, as a shared dungeon's foes do.
 
