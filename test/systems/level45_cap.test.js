@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ONLINE_LEVEL_CAP, LEVEL_SUM_TOP, ROLLED_START_MIN, ROLLED_START_AVERAGE,
-  onlineLevelFor, onlineLevelFraction, onlineLevelConvert, onlineLevelPoints,
+  onlineLevelFor, onlineLevelFraction, onlineLevelConvert, onlineLevelPoints, onlineLevelRawPoints, RAW_PER_POINT_PAST,
 } from '../../src/systems/levelClimb.js';
 import { calculatePlayerLevel, checkForLevelUp } from '../../src/systems/advancement.js';
 import { evenHpFloor } from '../../src/systems/levelEven.js';
@@ -201,4 +201,30 @@ test('LEVEL-TOP: a character maxed under five masteries - five at 200, the sixth
   onlineLevelConvert(lowered);
   assert.equal(lowered.level, 42, 'the conversion never raises a level');
   assert.equal(checkForLevelUp({ ...lowered, _online: true }), true, 'the three lost are owed again, for the level-up window to give');
+});
+
+test('LEVEL-RAW: the bar reads the skill sheet\'s own points - 1 a counted point to 100, 2.5 past it, so ~38 a level at the masteries (mob: "show raw point to each level")', async () => {
+  assert.equal(RAW_PER_POINT_PAST, 2.5, '100 points past 100 climb 40');
+  const career = { primarySkills: [0, 1, 2], majorSkills: [3, 4, 5], minorSkills: [6, 7, 8, 9, 10, 11] };
+  const hero = (vals, mastered = []) => ({
+    isPlayer: true, _online: true, level: 30, career, masteredSkills: mastered,
+    skills: Object.fromEntries(vals.map((v, i) => [i, v])),
+    startingLevelUpSkillSum: ROLLED_START_AVERAGE, currentLevelUpSkillSum: 600,
+  });
+  const counted = onlineLevelPoints(ROLLED_START_AVERAGE, 600);
+  const low = onlineLevelRawPoints(hero([60, 60, 60, 60, 60, 20, 60, 10, 10, 10, 10, 10]));
+  assert.deepEqual(low, counted, 'under 100 a sheet point is a counted point');
+  const all = [0, 1, 2, 3, 4, 6];
+  const high = onlineLevelRawPoints(hero([150, 150, 150, 150, 150, 20, 150, 10, 10, 10, 10, 10], all));
+  assert.deepEqual(high, { now: Math.round(counted.now * 2.5), max: Math.round(counted.max * 2.5) }, 'past 100, 2.5 a point');
+  assert.ok(high.max >= 37 && high.max <= 38, `~38 a level at the masteries: ${high.max}`);
+  const mixed = onlineLevelRawPoints(hero([150, 150, 150, 60, 60, 20, 60, 10, 10, 10, 10, 10], [0, 1, 2]));
+  assert.equal(mixed.max, Math.round(counted.max * 1.75), 'the six counted skills\' mean cost');
+  const held = onlineLevelRawPoints(hero([100, 100, 100, 100, 100, 20, 100, 10, 10, 10, 10, 10]));
+  assert.equal(held.max, Math.round(counted.max * 2.5), 'six at 100 waiting for their masteries cost the mastery\'s');
+  const done = onlineLevelRawPoints(hero([150, 150, 150, 150, 150, 20, 200, 10, 10, 10, 10, 10], all));
+  assert.equal(done.max, Math.round(counted.max * 2.5), 'a skill at 200 climbs no more and is not counted');
+  const { levelProgress } = await import('../../src/ui/levelUp/levelUpView.js');
+  const bar = levelProgress(hero([150, 150, 150, 150, 150, 20, 150, 10, 10, 10, 10, 10], all), 'classic');
+  assert.deepEqual([bar.now, bar.max], [high.now, high.max], 'the window reads it');
 });

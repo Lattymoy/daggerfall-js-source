@@ -9,6 +9,7 @@
 import { EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from './skillSoftcap.js';
 import { PRIMARY_SKILL_MIN, MAJOR_SKILL_MIN, MINOR_SKILL_MIN, BONUS_POOL_PER_SKILL_GROUP } from './chargen.js';
 import { levelUpSkillSum } from './skills.js';
+import { masterCappedSkill, skillCanPassCap } from './masterSkills.js';
 import { evenHpFloor } from './levelEven.js';
 import { LEVEL_CAP } from './levelCap.js';
 
@@ -64,6 +65,31 @@ export function onlineLevelPoints(startingSum, currentSum) {
   const climbed = Math.max(0, Math.min(currentSum - startingSum, room));
   const from = levelStart(level, room);
   return { now: climbed - from, max: levelStart(level + 1, room) - from };
+}
+
+/** LEVEL-RAW: the skill sheet's points one counted point costs past 100 (2.5: 100 points climb 40). */
+export const RAW_PER_POINT_PAST = (2 * SKILL_SOFT_CAP - SKILL_SOFT_CAP) / (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP);
+
+/** LEVEL-RAW (mob: "show raw point to each level"): the bar in the sheet's own points - the counted span times the
+ *  mean cost of the six counted skills still climbing (1 to 100, 2.5 past it), so ~38 a level at the masteries. */
+export function onlineLevelRawPoints(entity) {
+  const { now, max } = onlineLevelPoints(entity.startingLevelUpSkillSum ?? 0, entity.currentLevelUpSkillSum ?? 0);
+  const rate = countedRate(entity);
+  return { now: Math.round(now * rate), max: Math.max(1, Math.round(max * rate)) };
+}
+
+/** The mean raw cost of a counted point over the six skills the level reads (skills.js levelUpSkillSum's choice) that
+ *  still climb - an unmastered skill at 100 waits for its mastery, so all six held there cost the mastery's 2.5. */
+function countedRate(entity) {
+  const c = entity.career, skills = entity.skills;
+  if (!c || !skills) return 1;
+  const at = (id) => ({ id, v: masterCappedSkill(entity, skills[id] ?? 0, id) });
+  const majors = (c.majorSkills ?? []).map(at).sort((x, y) => y.v - x.v).slice(0, 2);
+  const minors = (c.minorSkills ?? []).map(at).sort((x, y) => y.v - x.v).slice(0, 1);
+  const six = [...(c.primarySkills ?? []).map(at), ...majors, ...minors];
+  const climbing = six.filter(({ id, v }) => v < SKILL_SOFT_CAP || (v < 2 * SKILL_SOFT_CAP && skillCanPassCap(entity, id)));
+  if (!climbing.length) return six.some(({ v }) => v >= SKILL_SOFT_CAP) ? RAW_PER_POINT_PAST : 1;
+  return climbing.reduce((t, { v }) => t + (v < SKILL_SOFT_CAP ? 1 : RAW_PER_POINT_PAST), 0) / climbing.length;
 }
 
 /**
