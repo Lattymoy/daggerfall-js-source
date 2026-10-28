@@ -23,6 +23,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { studioListing, STUDIO_TREE } from '../../scripts/studioArtIndex.mjs';   // STUDIO1
 import { writePng } from '../../tools/pngIO.mjs';   // AUDIT STUDIO1 C12: the studio arm's own pictures
+import { dwarvenDragonSpriteEntries, DWARVEN_DRAGON_ART } from '../../src/characters/dwarvenDragon.js';   // DWARVEN-DRAGON: its sprites' rows
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const tracked = (dir) => execFileSync('git', ['ls-files', '-z', dir], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })   // RRI1: 13,000 tracked sprites outgrew the 1 MB default (ENOBUFS)
@@ -863,6 +864,10 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/horse/courser.json', "SUPPLIED - courser.fbx baked to the armature's frame by tools/bakeHorse.mjs; geometry, skin and gaits only, no ARENA2 data"],
   ['src/assets/horse/body.png', "SUPPLIED - the owner's body picture for the Courser (COATS3D, 2026-10-11), 256x256 indexed, as sent - a hide painted for the 3D model's own UV islands, no ARENA2 pixel in it (Daggerfall's horse is a sprite; this painting has no sprite's silhouette)"],
   ['src/assets/horse/hair.png', "SUPPLIED - the owner's mane and tail picture for the Courser's nine alpha cards (COATS3D, 2026-10-11), 512x512 RGBA, as sent - no ARENA2 pixel in it"],
+  // DWARVEN-DRAGON (2026-10-28): the staff's clockwork dragon's ninety sprites, archive 1800 - our own three.js renders of
+  // our own model, posed by the werewolf's joint directions (no Morrowind or ARENA2 pixel; src/characters/dwarvenDragon.js).
+  ...dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) }).map((e) => [`public/${DWARVEN_DRAGON_ART}${e.fileName}.png`,
+    "OURS - the Dwarven Dragon's sprite (DWARVEN-DRAGON, 2026-10-28), rendered from our own model, 471x262 indexed"]),
 ]);
 
 test('doctrine: nothing ships out of public/ or src/assets/ that is not provably ours', () => {
