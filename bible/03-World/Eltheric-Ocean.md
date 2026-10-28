@@ -216,7 +216,8 @@ the game's own places (the spawned dungeons' law, `world/spawnedDungeons.js`), w
   a marker, each twice as hard).
 - never `spawned`: no clock, no expiry, no nearby announcement - an isle's place stands for ever - and never a spawn's
   template (`!l.ether` - P3: a session that stood ruins past the Veil first cloned other templates than its party).
-- its houses no deed's: never for sale, never owned by a house of the same key in Betony (`houseOwnedAt` - P9).
+- its houses no deed's: never for sale, never owned by a house of the same key in Betony (`houseOwnedAt` - P9); online
+  never for sale either (`onlineHomes.js:"export const homePurchasable"`, ZONE-HOMES' audit: the door had offered one).
 
 **THE TEMPLATES** (`etherTemplates`, kept at boot off the classic rows - HUB1's law, the game's own rows as MAPS.BSA
 holds them, so a client's town pack never moves what an isle stands; read before the rows are let go): towns -

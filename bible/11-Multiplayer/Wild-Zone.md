@@ -1403,14 +1403,23 @@ The Heart. The door offered **Buy it** and the press answered "No house is for s
   streets (section 26's `settledAt` where I stand, outdoors). A house in the open country - a farmstead's, a manor's, an
   inn's, a temple's - stays refused, in words that say where houses are sold (`ZONE_SAFE_TEXT.noHouse`, through the
   text core). WHY THE SETTLEMENTS: ZONE-SAFE made their streets peace and WILD-CITY-PORT opened their teleports, so a
-  house there stands where no player fights. Banks stay refused in the whole zone; a house is paid from the
-  purse and the region's account, as everywhere.
-- THE FOUR HOSTS: `scenes/world.js` WIRED (the seam's one line, bootWorld's length unchanged); `scenes/worldModes.js`
-  reads it through the seam as before; `scenes/dungeonContext.js` NOT WIRED - no house door underground;
-  `scenes/exterior.js`, offline, stands no zone.
+  house there stands where no player fights. Banks stay refused in the whole zone; a house is paid from the purse and
+  the region's account, as everywhere. Measured on the freeware: every one of the city's 625 slices is a settlement to
+  its pixel's edge, and 7,026 fabric houses of 258 sampled cells pass every other gate of the door.
+- THE SEA (the audit): the zone is also the sea past Veilhaven's peace (ETHER-WILD), and an isle's port town is a
+  settlement there, so the law opened its houses, which `03-World/Eltheric-Ocean.md` P9 never sells. The online buy law
+  refuses an isle town's house now (`onlineHomes.js:"export const homePurchasable"`) - in the peace too, where the door
+  had offered one all along.
+- KNOWN GAPS, older than this record and FLAGGED: a guildmaster's hall is bought (`buyHallAt`) without asking the zone,
+  so a hall can be bought in its open country; the door offers **Buy it** there and only the press refuses, with the
+  words; the account service checks neither the zone nor an isle (`homes.js:"export async function claimHome"`).
+  Each is the owner's call.
+- THE FOUR HOSTS: `scenes/world.js` WIRED (the seam's one line, bootWorld's length unchanged); `scenes/worldModes.js`:
+  its house buy reads the seam, its hall buy does not (FLAGGED above); `scenes/dungeonContext.js` NOT WIRED - no house
+  door underground; `scenes/exterior.js`, offline, stands no zone.
 
 Pins: `test/systems/wild/zonehomes.test.js` (the law over every kind of place, the open country, indoors; both hosts'
-lines) - `tools/mutants/zonehomes.json` (4, all dead).
+lines; an isle town's house) - `tools/mutants/zonehomes.json` (5, all dead).
 
 ## Pins
 

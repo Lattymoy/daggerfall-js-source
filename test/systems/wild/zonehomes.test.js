@@ -8,6 +8,10 @@ import { readFileSync } from 'node:fs';
 import { zoneHouseFree, ZONE_SAFE_TEXT, SETTLEMENT_TYPES } from '../../../src/systems/wild/zoneSafe.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { locationWorldRect, WORLD_MAP_RMB_DIM } from '../../../src/world/streamingWorld.js';
+import { homePurchasable } from '../../../src/systems/online/onlineHomes.js';
+import { etherPlaceId } from '../../../src/world/etherPlaces.js';
+import { capitalPlaceId } from '../../../src/world/tamrielCapitals.js';
+import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 
 /** A location of `type` (test/systems/wild/wildcityport.test.js's). */
 const place = (type, w = 1, h = 1) => ({ name: 'Somewhere', mapTableData: { locationType: type }, exterior: { exteriorData: { width: w, height: h, blockNames: Array(w * h).fill('TVRNAL01.RMB') } } });
@@ -30,4 +34,11 @@ test('ZONE-HOMES THE HOSTS: the interior host\'s buy asks the world host\'s seam
   const modes = readFileSync(new URL('../../../src/scenes/worldModes.js', import.meta.url), 'utf8');
   assert.match(world, /wildNoHouse: \(\) => \{ if \(zoneHouseFree\(wildHere\(\), wildOutdoors\(\) \? campToWire\(player\.feetAt\(\)\) : null, locationIndex\)\) return false; townTalk\.say\(ZONE_SAFE_TEXT\.noHouse\); return true; \}/);
   assert.match(modes, /async function buyHomeAt\(bd, price\) \{[^]*?if \(host\.wildNoHouse\?\.\(\)\) return;/);
+});
+
+test('ZONE-HOMES AUDIT: an isle town\'s house is never for sale (Eltheric-Ocean.md P9) - its port town is a settlement in the sea\'s open zone, so the zone\'s law no longer refused it; the buy law does, in the peace too - and an Imperial City slice\'s house still is (mutants: the isle\'s town unread)', () => {
+  const house = (townMapId) => ({ buildingType: BUILDING_TYPES.House1, factionId: 0, buildingKey: 66059, hasInterior: true, townMapId });
+  assert.equal(homePurchasable(house(etherPlaceId({ cx: 3, cy: 7 }))), false, 'an isle town\'s');
+  assert.equal(homePurchasable(house(capitalPlaceId(0, 12))), true, 'a capital\'s slice\'s');
+  assert.equal(homePurchasable(house(undefined)), true, 'a record naming no town: as before');
 });

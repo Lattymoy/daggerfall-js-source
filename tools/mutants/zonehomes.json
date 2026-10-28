@@ -34,5 +34,14 @@
     "tests": [
       "test/systems/wild/zonehomes.test.js"
     ]
+  },
+  {
+    "name": "ZH-the-isle-town-unread",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "bd.hasInterior !== false && !isEtherPlaceId(bd.townMapId ?? 0) && ",
+    "new": "bd.hasInterior !== false && ",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
   }
 ]
