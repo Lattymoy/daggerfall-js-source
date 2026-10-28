@@ -128,8 +128,8 @@
  {
   "name": "TW-the-round-unread",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "townShapeField(walled ? townRound(padded, PW, PH).inside : padded, PW, PH,",
-  "new": "townShapeField(padded, PW, PH,",
+  "old": "  const occ = walled ? townRound(padded, PW, PH).inside : padded;",
+  "new": "  const occ = padded;",
   "tests": [
    "test/world/townwalls.test.js"
   ]

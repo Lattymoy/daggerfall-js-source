@@ -74,8 +74,8 @@
  {
   "name": "TS-the-sea-lifted",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      if (d > TOWN_SHAPE.seaMargin && wet[idx]) s = 0;   // the sea past the town's margin is the sea\n",
-  "new": "",
+  "old": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
+  "new": "        const t = Math.max(0.05, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
   "tests": [
    "test/world/terrain/townshapes.test.js"
   ]
@@ -92,10 +92,11 @@
  {
   "name": "TS-the-edge-moved",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "      s *= edge * edge * (3 - 2 * edge);\n",
-  "new": "",
+  "old": "        s = Math.min(t * t * (3 - 2 * t), e / (e + d));",
+  "new": "        s = t * t * (3 - 2 * t);",
   "tests": [
-   "test/world/terrain/townshapes.test.js"
+   "test/world/terrain/townshapes.test.js",
+   "test/world/terrain/fb1028_townground.test.js"
   ]
  },
  {

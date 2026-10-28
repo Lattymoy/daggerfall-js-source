@@ -22,8 +22,8 @@
 import { idbStore } from '../roadsCache.js';
 
 /** Bump when the bake's rules change shape. 2 (AUDIT TESA III E1-4): a coastal town's blend follows its outline (TOWN-SHAPES
- *  TS2) - a bake kept before it blended the rect DFU's way. */
-export const BAKE_GENERATOR_VERSION = 2;
+ *  TS2) - a bake kept before it blended the rect DFU's way. 3 (FB1028): the sea a town's ease reaches is lifted. */
+export const BAKE_GENERATOR_VERSION = 3;
 
 /** FNV-1a 32 over bytes - the key's fingerprint, not a checksum anything trusts beyond "same archive". */
 export function fnv1a(bytes, h = 0x811c9dc5) {

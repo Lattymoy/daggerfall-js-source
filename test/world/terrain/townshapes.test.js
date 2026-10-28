@@ -73,7 +73,7 @@ test('TOWN-SHAPES a location\'s outline in its pixel\'s tiles - its margin past 
   assert.equal(tilemap[corner], 0, 'the empty block\'s far corner the land\'s');
 });
 
-test('TOWN-SHAPES the ground: the outline flattened to the mean of the land under it (a step over the beach at the least), eased back to the land past it, the pixel\'s edge the land\'s own, the sea past the margin never lifted; the outline\'s tiles over the sea given back; DFU\'s rect blend where there is no outline (mutants: the sea lifted; the pixel\'s mean; the edge moved)', () => {
+test('TOWN-SHAPES the ground: the outline flattened to the mean of the land under it (a step over the beach at the least), eased back to the land past it, the pixel\'s edge the land\'s own, the sea past the ease kept (FB1028); the outline\'s tiles over the sea given back; DFU\'s rect blend where there is no outline (mutants: the sea lifted; the pixel\'s mean; the edge moved)', () => {
   // a pixel of land rising west to east, the sea under its westmost 30 columns
   const ground = new Float32Array(H * H);
   for (let x = 0; x < H; x++) for (let y = 0; y < H; y++) ground[y + x * H] = x < 30 ? land(SCALED_OCEAN_ELEVATION - 5) : land(40 + x * 0.5);
@@ -129,5 +129,5 @@ test('TOWN-SHAPES on the freeware: a hamlet\'s outline no rectangle; a coast tow
   const tilemap = new Uint8Array(D * D), rect = setLocationTiles(a, maps, blocks, tilemap);
   const t = generatePixelTerrain({ woods, px: p.x, py: p.y, tilemap, locationRect: rect, hasLocation: true, climateType: 0 });
   const water = t.samples.filter((v) => v * MAX_TERRAIN_HEIGHT <= SCALED_OCEAN_ELEVATION + 1e-3).length;
-  assert.ok(water > 3000, `its sea stands (${water} samples; DFU's blend left about 240)`);
+  assert.ok(water > 2000, `its sea stands (${water} samples; DFU's blend left about 240)`);   // PIN MOVED (FB1028): 3,000 - the sea its ease reaches is lifted (2,084)
 });

@@ -1,0 +1,155 @@
+[
+ {
+  "name": "FB1028-the-sea-never-lifted",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "      if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it",
+  "new": "      if (e === 0 || (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx])))) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-grade-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
+  "new": "        const t = Math.max(0, 1 - d / SHAPE_BLEND_TILES);",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-least-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
+  "new": "        const t = Math.max(0, 1 - d / Math.max(1, Math.abs(level - ground[idx]) / grade));",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-reach-off-the-blended",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(level - ground[idx]) / grade));",
+  "new": "        const t = Math.max(0, 1 - d / Math.max(SHAPE_BLEND_TILES, Math.abs(target - heightmapData[idx]) / grade));",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-edge-share-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "        s = Math.min(t * t * (3 - 2 * t), e / (e + d));",
+  "new": "        s = t * t * (3 - 2 * t);",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-edge-row-blended",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "      if (e === 0) continue;   // the pixel's edge the land's own, so a neighbour's ground meets it\n",
+  "new": "",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-inside-eased-at-the-edge",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "      let s = 1;\n      if (d > 0) {",
+  "new": "      let s = Math.min(1, e / SHAPE_EDGE_TILES);\n      if (d > 0) {",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-band-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+  "new": "    const edge = false;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-band-its-least-alone",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+  "new": "    const edge = e < SHAPE_EDGE_TILES;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-band-no-least",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+  "new": "    const edge = e < Math.abs(level - side) / grade;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-band-its-own-tile",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - side) / grade);",
+  "new": "    const edge = e < Math.max(SHAPE_EDGE_TILES, Math.abs(level - at(x, y)) / grade);",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-CROP-the-fields-unread",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "  const field = townShapeField(fields ? occ.map((v, i) => v | fields[i]) : occ, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});",
+  "new": "  const field = townShapeField(occ, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-CROP-the-fields-walled-in",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "  const occ = walled ? townRound(padded, PW, PH).inside : padded;",
+  "new": "  const occ = walled ? townRound(fields ? padded.map((v, i) => v | fields[i]) : padded, PW, PH).inside : padded;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-CROP-the-fields-off-the-box",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "fields: townFieldTiles(width, height, (bx, by) => blockAt[by * width + bx], SHAPE_PAD)",
+  "new": "fields: townFieldTiles(width, height, (bx, by) => blockAt[by * width + bx], 0)",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-CROP-the-half-range-unread",
+  "file": "src/world/townShape.js",
+  "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+  "new": "        const hx = f.noise * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-CROP-the-rows-unflipped",
+  "file": "src/world/townShape.js",
+  "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+  "new": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = -r.zPos;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-bake-unbumped",
+  "file": "src/world/deepWater/deepWatersBakeCache.js",
+  "old": "export const BAKE_GENERATOR_VERSION = 3;",
+  "new": "export const BAKE_GENERATOR_VERSION = 2;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ }
+]

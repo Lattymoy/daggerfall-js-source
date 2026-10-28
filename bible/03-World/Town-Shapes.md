@@ -45,6 +45,9 @@ past the Bay is bought only in a town's final outline, so no block a home stands
   walls sit beside the two rows they stamp). A block's misc models and flats each take their tile and the eight round it
   (`terrainTiles.js` locationShapeField: x * 0.025, (z + 4096) * 0.025 - `tamrielCapitals.js` miscModelAt's law), so a
   fence, a well, a tree of the block's own stands on the town's ground and never on the land's slope.
+- **A field of flats** (FB1028, `townShape.js` townFieldTiles): the town packs' crops stand on the block's plane, sown up
+  to 42 m round their record, so the terrain's outline takes every tile a field sows - after a wall's round, which reads
+  none.
 - **The outline** (`townShapeField`): every tile within `TOWN_SHAPE.margin` (4.5 tiles, 29 m) of a building's, the margin
   wandering by `wander` (3 tiles) on two octaves of value noise seeded with the town's map id - never so far in that a
   building's tile is left out - and every hole it closes round filled (a square, a street, a garden between the houses).
@@ -64,14 +67,18 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   128 codes) - every reader of the rect has its bounds, and every blend its outline.
 - **On the land** (`townGroundMask`): a tile of the margin past `TOWN_SHAPE.seaMargin` (1.5 tiles) of a building whose
   land is water (a corner sample at or under the ocean line, read on DFU's own samples) is no ground of the town's - a
-  shore town meets the sea where the shore is. Its stamped tile there is given back (`unstampOffShape`), and the land's own
-  tiles are laid.
+  shore town meets the sea where the shore is. FB1028: nor is a margin's tile nearer the pixel's edge than the ease needs to
+  meet the edge's own ground at `SHAPE_GRADE` (`SHAPE_EDGE_TILES`, 4, at the least). Its stamped tile there is given back
+  (`unstampOffShape`), and the land's own tiles are laid.
 - **The flatten** (`blendShapedTerrain`, through `blendLocationTerrain`): every sample a tile of the town's ground touches
   set to the mean of the land under it (`ground` read there, never the sea's; a step over the beach at the least,
-  `SHAPE_FLOOR`) - the job answers that height, the location stands at it; the rest eased back over `SHAPE_BLEND_TILES`
-  (12, 77 m) on a smoothstep; the sea past the margin never lifted; the pixel's edge the land's own (`SHAPE_EDGE_TILES`, 4,
-  as DFU's ramp keeps it, so a neighbour's ground meets it). A rect without an outline (a capital) takes DFU's blend as
-  before and answers its average.
+  `SHAPE_FLOOR`) - the job answers that height, the location stands at it. A rect without an outline (a capital) takes
+  DFU's blend as before and answers its average.
+- **The ease** (FB1028): the rest eased back on a smoothstep over `SHAPE_BLEND_TILES` (12, 77 m), or as far as the town
+  stands over or under the land there at `SHAPE_GRADE` (0.6 m a metre on the mean). The sea is eased as the land is:
+  lifted as far as the ease reaches, kept past it. The ease never runs past its share of the way to the pixel's edge, whose
+  samples are the land's own, so a neighbour's ground meets it. Its reach is read on DFU's own samples alone, so every copy
+  below eases alike.
 - **Its copies** follow by the same rect: the Deep Waters bake's water test, the landforms' lift (`landformLiftField`,
   its difference field flattened on the outline with DFU's own samples as its land), the classic pass. AUDIT TESA III
   E1-4 (2026-10-26, `01-Overview/audits/Audit-Tesa-III-E1.md`): the bake's did not - its rows were the rect's four numbers
@@ -100,6 +107,48 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
 PINS MOVED: `test/world/terrain/terrain.test.js` (Daggerfall's rect bounds and outline, its ground, the corpus' stamped
 total, the environs' first tree), `test/render/boot2.test.js` (the entry's reach 85: `world/townShape.js`, a leaf).
 Tests `test/world/terrain/townshapes.test.js`; mutants `tools/mutants/townshapes.json` (15, all dead).
+
+### TS2 at FB1028 TOWN-GROUND (FIXED 2026-10-28)
+
+Discord, the day #1184 shipped: Westhead Moor *"Weird crop hovering, giant craters and cliffs on the outskirts"*; Aldwall
+Rock *"some big holes and uhm.. cubic mistakes ... The ports are now off a cliff instead of smooth?"*. Measured on the
+freeware as the stream builds a Bay town online (both town packs, the Landforms row, Basic Roads, the gates' roads): each
+step between two samples 6.4 m apart, less the step the same pixel has built with no town.
+
+- **The sea beside the town.** TS2 stood a town at its land's mean and kept the sea a sample past its margin: Westhead Moor
+  at 81 m over a sea at 34 m, a 46 m step; Aldwall Rock 34 m. Its holes were the sea inside the outline, its squares a
+  dock's tiles out in the sea, and a port's jetty met the cliff's face (`systems/naval/quays.js` planQuay).
+- **The ease on a hillside.** Twelve samples whatever the height: Madla at 241 m over land falling to 98 m, steps of 19 m.
+- **The pixel's edge.** The edge band eased the town's own ground in its last four samples: steps of 12 m at Westhead
+  Moor's edges, its blocks there off their ground.
+- **The crops.** A field had only its record's tile on the outline: 769 crops at Westhead Moor and 706 at Aldwall Rock
+  stood off their plane, up to 47 m over the sea.
+
+| the Bay's 86 town pixels holding sea | towns with a step over 10 m (over 20 m) | the worst | steps over 10 m | flats off their plane | sea samples kept |
+| --- | --- | --- | --- | --- | --- |
+| DFU's blend | 7 (2) | 27.1 m | 2,816 | 0 | 11,737 |
+| TS2 | 53 (28) | 99.5 m | 9,131 | 5,763 in 30 towns | 162,400 |
+| now | 3 (0) | 18.6 m | 995 | 0 | 135,907 |
+
+Of 177,754 sea samples in DFU's own ground. Westhead Moor's worst is 7.3 m now and Aldwall Rock's 7.7 m, every crop and
+model on its ground. The three still over 10 m (Tunmont 18.6 m, Kalunnunu 14.4 m, Naresa 13.9 m) stand their blocks 7-8
+tiles from a pixel edge 100-120 m under them; DFU's blend steps 25, 15 and 17 m there. Every twentieth Bay town (173):
+TS2 three over 10 m (16.9 m) and 864 flats off in one; none now (8.0 m).
+
+**The smaller departure.** A town that stands over its sea cannot meet it without a step unless the sea gives room. The
+ease takes the least room its grade needs, 77 m at the least, where DFU lifts the whole rect's sea. A least of four
+samples kept 143,128 sea samples but stood 17 towns over 10 m at the shore's own steps.
+
+**The copies.** Each blend reads its reach on DFU's own samples, so the stream, its classic pass, the landforms' lift and
+the Deep Waters bake ease alike: the bake's sea is the stream's at every sample of both towns (BAKE_GENERATOR_VERSION 3).
+A town's level moved at 35 of the 86 (the edge band takes margin off its mean: 2.6 m at the 90th percentile, 5.2 m the
+most). THE GROUND MOVED: its shores and outskirts by tens of metres, so GROUND_LAW (`net/wire.js`) moves with the release
+that carries this - the print reads no real town (`03-World/Landforms.md` GROUND-GATE).
+
+Tests `test/world/terrain/fb1028_townground.test.js` (5) and `test/world/terrain/fb1028_townground_real.test.js` (ARENA2).
+Mutants `tools/mutants/fb1028_townground.json` (17, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
+(Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3); re-aimed by
+content: TS-the-sea-lifted, TS-the-edge-moved, TW-the-round-unread, E1-4-the-version-unmoved.
 
 ## 5. TS3 - a town past the Bay is its own outline of blocks (BUILT)
 
