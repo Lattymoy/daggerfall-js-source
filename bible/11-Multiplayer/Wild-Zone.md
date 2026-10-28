@@ -452,6 +452,15 @@ with `got` (a take of coin, WILD GOLD's, out of the purse it went to). Nothing c
 capacity door). MY remains wear their own red line of light (`WILD_MINE_MARK`) and a pulsing mark on the world map
 with the minutes left.
 
+- WHOSE, AND BY WHAT NAME (WILD-REMAINS-LOSS, `01-Overview/bugs/Field-Bugs-2026-10-25h.md`): a remains is the fallen's
+  by its order's account (`os`) and named for the fallen by its order's `wnm` (the name the fallen wears), whoever laid it - a seizure is
+  laid by the killer, whose socket's name and peer had made it "Traveller" and the killer's own
+  (`wildRemains.js:"export const remainsMine = "`). The room checks a deposit's order with its verifying key loaded
+  first: a room woken from hibernation since its last hello refused every deposit, and the drop the service had taken
+  lay nowhere. A game knows its own account in the zone by the hub's word, else by its signed-in session's
+  (`wildSelf.js:"export const wildSelf = "`, WILD-HUBLESS): a game the hub had not seated never took its own drop, and
+  the fallen rose holding what its killer's seizure had put in the remains.
+
 - NOT A FRIEND'S (PVPDUNGEONS, the owner: "Party/guildmembers cant pick it up"): a fallen's remains are theirs and
   their foes', never their party's or their guild's. The room refuses the take
   (`server/src/index.js:"a fallen's remains are theirs and their"`) - a guildmate read off the sockets' own verified
@@ -1419,3 +1428,7 @@ AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/au
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. ZONE-LINE (the zone the province to the pixel, one line drawn for both - section 27):
 `test/systems/wild/zoneline.test.js`, `tools/mutants/zoneline.json`. WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`):
 `test/systems/wild/wildrejoin.test.js`, int9's WILD-REJOIN THE SERVICE, `tools/mutants/wildrejoin.json` (22, all dead).
+
+WILD-REMAINS-LOSS (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`): `test/net/wildremainsloss.test.js`,
+`tools/mutants/wildremainsloss.json` (9, all dead); WILD-HUBLESS `test/net/wildself.test.js`,
+`tools/mutants/wildself.json` (2, all dead).

@@ -11232,6 +11232,15 @@ export class Room {
       for (const w of remainsWords(rec, now)) if (!this._send(ws, JSON.stringify(w))) return;
     }
   }
+  /** WILD-REMAINS-LOSS: a `fall` chunk the room keeps nothing of, said in the relay's log with why - each of these
+   *  exits had been silent, and a fall whose two carriers were both refused lost its whole drop with nothing to read.
+   *  `junk` counts the frame against its socket as before and is a warning; the quiet exits (a second carrier, a
+   *  carrier's half-laid remains, a full room) are the room's ordinary answers, counted nothing and said as info. */
+  _wildFallRefused(ws, a, d, why, rec = null, junk = true) {
+    const at = rec ? { oid: rec.oid, open: rec.open, n: rec.items.length, wn: rec.wn, ok: rec.ok, idle: Date.now() - (rec.lastAt ?? rec.at) } : null;
+    (junk ? console.warn : console.info)('[wild] fall refused', why, JSON.stringify({ r: d.r, by: a.id, room: a.key, last: d.last, items: Array.isArray(d.items) ? d.items.length : null, rec: at }));
+    if (junk) this._junk(ws);
+  }
   /**
    * A ROOM WORD ON ITS REMAINS. A `fall` makes or fills the sender's own remains (a full room lets its oldest go) and
    * the kept records are said to the room; a `take` is judged - the record or the part of its stack goes to its taker
@@ -11243,33 +11252,36 @@ export class Room {
     for (const rec of [...map.values()]) if (!remainsLive(rec, now)) await this._wildDrop(map, rec.r);
     if (d.k === 'fall') {
       // INT9: THE ACCOUNT SERVICE'S ORDER on every chunk - its remains' id this one's, signed by the service's key; the
-      // remains' owner is the order's account (the fallen), whoever carries it (the fallen, or its killer after the grace)
+      // remains' owner is the order's account (the fallen), whoever carries it (the fallen, or its killer after the grace).
+      // WILD-REMAINS-LOSS: the key loaded first, as every other order's check loads it - a hello loads it, and a room that
+      // woke from hibernation since its last hello held none and refused every deposit, the whole drop lost
+      await this._loadKey();
       const o = this._verifyKey ? await verifyOrder(d.o, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'remains' }) : { ok: false };
-      if (!o.ok || o.claims.wr !== d.r) { this._junk(ws); return; }
+      if (!o.ok || o.claims.wr !== d.r) { this._wildFallRefused(ws, a, d, o.ok ? 'order-names-another' : `order-${o.why ?? (this._verifyKey ? 'bad' : 'no-key')}`); return; }
       const c = o.claims;
       // INT9 (AUDIT): THE ORDER NAMES ITS ROOM, and no other keeps it - one fall's order was laid in two
-      if (junkOutsideCover(this, ws, a, c.wm)) return;
+      if (!inCover(a, c.wm)) { this._wildFallRefused(ws, a, d, `outside-cover ${c.wm}`); return; }
       let rec = map.get(d.r);
       // INT9: vouched for already - a second carrier's deposit (the fallen's tab and its killer's seizure, one fall) is
       // nothing, and so is one on a TOMBSTONE (AUDIT INT9: an emptied remains was let go, and its order laid it again)
-      if (rec?.ok) return;
+      if (rec?.ok) { this._wildFallRefused(ws, a, d, 'laid-already', rec, false); return; }
       // INT9 (AUDIT): another carrier's, half laid: nothing, quietly (it was junk - the fallen's own tab and its killer
       // carry one order) - unless that carrier has stalled, when this one lays it afresh
-      if (rec && rec.oid !== a.id && !remainsTakeover(rec, a.id, now)) return;
+      if (rec && rec.oid !== a.id && !remainsTakeover(rec, a.id, now)) { this._wildFallRefused(ws, a, d, 'another-carrier', rec, false); return; }
       if (!rec) {
         const old = remainsEvict(map, now);
-        if (old === '') return;   // INT9 (AUDIT): a room full of young tombstones lays nothing
+        if (old === '') { this._wildFallRefused(ws, a, d, 'room-full', null, false); return; }   // INT9 (AUDIT): a room full of young tombstones lays nothing
         if (old) await this._wildDrop(map, old);
-        rec = newRemains({ r: d.r, os: c.s, oid: a.id, nm: a.sub === c.s ? (a.name ?? '') : '', p: d.p, now, gi: c.wg ?? null, wh: c.wh, wn: c.wn, wk: c.wk ?? null, wi: c.wi ?? -1, we: c.we === 1 });   // MAC (2026-10-14): `we` - the killer's piece the service's, in escrow   // PVPDUNGEONS: the fallen's guild, so no guildmate takes from it - INT9 (AUDIT): the order's word, whoever carries it (the killer's own guild was written)
+        rec = newRemains({ r: d.r, os: c.s, oid: a.id, nm: c.wnm ?? (a.sub === c.s ? (a.name ?? '') : ''), p: d.p, now, gi: c.wg ?? null, wh: c.wh, wn: c.wn, wk: c.wk ?? null, wi: c.wi ?? -1, we: c.we === 1 });   // MAC (2026-10-14): `we` - the killer's piece the service's, in escrow   // PVPDUNGEONS: the fallen's guild, so no guildmate takes from it - INT9 (AUDIT): the order's word, whoever carries it (the killer's own guild was written)
         map.set(rec.r, rec);
       }
-      if (rec.wh !== c.wh) { this._junk(ws); return; }
+      if (rec.wh !== c.wh) { this._wildFallRefused(ws, a, d, 'digest-differs', rec); return; }
       const kept = foldFall(rec, { oid: a.id, items: d.items, last: d.last }, now);
-      if (!kept) { this._junk(ws); return; }
+      if (!kept) { this._wildFallRefused(ws, a, d, 'not-folded', rec); return; }
       if (!rec.open) {
         // INT9: the last chunk - its records the order's, digest for digest, or the room keeps none of it
         rec.ok = rec.items.length === rec.wn && (await remainsDigest(rec.items, { subtle: crypto.subtle })) === rec.wh;
-        if (!rec.ok) { map.delete(rec.r); await this.state.storage.delete(wildRemainsKey(rec.r)); this._junk(ws); return; }
+        if (!rec.ok) { this._wildFallRefused(ws, a, d, 'records-not-the-order', rec); map.delete(rec.r); await this.state.storage.delete(wildRemainsKey(rec.r)); return; }
       }
       await this.state.storage.put(wildRemainsKey(rec.r), rec);
       if (rec.ok) for (const w of remainsWords(rec, now)) this._wildFan(w);   // INT9: said once it is vouched for, whole
