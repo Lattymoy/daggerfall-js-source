@@ -23,7 +23,8 @@ const CELLS = SHAPE_AUTOMAP_SIDE * SHAPE_AUTOMAP_SIDE;
 let kept = null;
 
 /** One block as kept: `t` its tiles (bitfield, textureRecord), `m` the town-map cells that are set, one bit each (null for
- *  none), `r` the x and z of every misc model and flat - all the outline reads of a block (townShape.js townTiles). */
+ *  none), `r` the x, z and model id (-1 a flat's) of every misc model and flat - all the outline reads of a block
+ *  (townShape.js townTiles; FB1028: townFieldTiles reads a field by its model id). */
 /** @typedef {{ t: Int32Array, m: Uint8Array|null, r: Float64Array }} KeptBlock */
 
 /** The record's key for these inputs. @param {Uint8Array|null} blocksBytes @param {string} serving */
@@ -32,7 +33,7 @@ export function groundTilesKey(blocksBytes, serving) {
   return stamp ? `${GROUND_TILES_SCOPE}${firstVisitPin('groundTiles')}:${stamp}:${textStamp(serving)}` : null;
 }
 
-const isBlock = (b) => b?.t instanceof Int32Array && b.t.length === TILES * TILES * 2 && b.r instanceof Float64Array && b.r.length % 2 === 0 && (b.m === null || (b.m instanceof Uint8Array && b.m.length === CELLS / 8));
+const isBlock = (b) => b?.t instanceof Int32Array && b.t.length === TILES * TILES * 2 && b.r instanceof Float64Array && b.r.length % 3 === 0 && (b.m === null || (b.m instanceof Uint8Array && b.m.length === CELLS / 8));
 
 /** A stored record is a Map of walk name -> Map of block name -> KeptBlock. */
 function isRecord(v) {
@@ -61,7 +62,7 @@ export async function prefetchGroundTiles({ blocksBytes, serving, store = derive
 }
 
 /** The block parts as the rect reads them: groundTiles[x][y].tileBitfield / .textureRecord, autoMapData cells (set or not),
- *  and each record's xPos and zPos. @param {KeptBlock} k */
+ *  and each record's xPos and zPos, and a model's modelIdNum. @param {KeptBlock} k */
 function unpack(k) {
   const groundTiles = [];
   for (let x = 0; x < TILES; x++) {
@@ -75,7 +76,7 @@ function unpack(k) {
     for (let c = 0; c < CELLS; c++) if (k.m[c >> 3] & (1 << (c & 7))) autoMapData[c] = 1;
   }
   const records = [];
-  for (let i = 0; i < k.r.length; i += 2) records.push({ xPos: k.r[i], zPos: k.r[i + 1] });
+  for (let i = 0; i < k.r.length; i += 3) records.push(k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] });
   return { groundTiles, autoMapData, misc3dObjectRecords: records, miscFlatObjectRecords: [] };
 }
 function pack(part) {
@@ -89,9 +90,9 @@ function pack(part) {
     m = new Uint8Array(CELLS / 8);
     for (let c = 0; c < CELLS; c++) if (cells[c]) m[c >> 3] |= 1 << (c & 7);
   }
-  const all = [...(part.misc3dObjectRecords ?? []), ...(part.miscFlatObjectRecords ?? [])];
-  const r = new Float64Array(all.length * 2);
-  all.forEach((rec, i) => { r[i * 2] = rec.xPos; r[i * 2 + 1] = rec.zPos; });
+  const models = part.misc3dObjectRecords ?? [], all = [...models, ...(part.miscFlatObjectRecords ?? [])];
+  const r = new Float64Array(all.length * 3);
+  all.forEach((rec, i) => { r[i * 3] = rec.xPos; r[i * 3 + 1] = rec.zPos; r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1; });
   return { t, m, r };
 }
 

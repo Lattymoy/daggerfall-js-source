@@ -47,7 +47,7 @@
   {
     "name": "TS10-key-blind",
     "file": "src/world/townWalls.js",
-    "old": "  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}`;",
+    "old": "  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}${yards ? '|yards' : ''}`;",
     "new": "  shut.key = 'shut';",
     "tests": [
       "test/world/townpaths.test.js"

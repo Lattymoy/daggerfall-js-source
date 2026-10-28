@@ -60,10 +60,10 @@ export function etherPlaceRects(templates, rectOf) {
   const pack = (a) => { const bits = new Uint8Array((a.length + 7) >> 3); for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << (i & 7); return bits; };
   const basisIndex = (b) => {
     if (!b) return -1;
-    const bits = pack(b.padded), stamp = pack(b.stamp);
-    const key = `${b.PW},${b.PH},${b.walled ? 1 : 0},${b.x0},${b.y0},${b.clear}:${bits.join(',')}:${stamp.join(',')}`;
+    const bits = pack(b.padded), stamp = pack(b.stamp), fields = b.fields ? pack(b.fields) : null;   // FB1028: and its crops' tiles
+    const key = `${b.PW},${b.PH},${b.walled ? 1 : 0},${b.x0},${b.y0},${b.clear}:${bits.join(',')}:${stamp.join(',')}:${fields?.join(',') ?? ''}`;
     let k = seen.get(key);
-    if (k === undefined) { seen.set(key, k = bases.length); bases.push({ PW: b.PW, PH: b.PH, walled: b.walled, x0: b.x0, y0: b.y0, clear: b.clear, bits, stamp }); }
+    if (k === undefined) { seen.set(key, k = bases.length); bases.push({ PW: b.PW, PH: b.PH, walled: b.walled, x0: b.x0, y0: b.y0, clear: b.clear, bits, stamp, fields }); }
     return k;
   };
   const rows = (list) => (list ?? []).map((t) => { const r = rectOf(t); return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(r.shape?.basis ?? null)]; });
@@ -81,7 +81,7 @@ function isleRect(basis, isle) {
   let r = _isleRects.get(k);
   if (r) return r;
   const unpack = (bits) => { const a = new Uint8Array(basis.PW * basis.PH); for (let i = 0; i < a.length; i++) a[i] = (bits[i >> 3] >> (i & 7)) & 1; return a; };
-  const b = { padded: unpack(basis.bits), stamp: unpack(basis.stamp), PW: basis.PW, PH: basis.PH, walled: basis.walled, x0: basis.x0, y0: basis.y0, clear: basis.clear };
+  const b = { padded: unpack(basis.bits), stamp: unpack(basis.stamp), fields: basis.fields ? unpack(basis.fields) : null, PW: basis.PW, PH: basis.PH, walled: basis.walled, x0: basis.x0, y0: basis.y0, clear: basis.clear };
   r = rectOfBasis(b, outlineOfBasis(b, etherPlaceId(isle)));
   if (_isleRects.size >= ISLE_SHAPES_KEPT) _isleRects.delete(/** @type {string} */ (_isleRects.keys().next().value));
   _isleRects.set(k, r);

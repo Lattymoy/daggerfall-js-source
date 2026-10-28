@@ -51,16 +51,52 @@ export function townGateRoads(dfLocation, mapsFile, blocksFile) {
   if (dfLocation.outline?.walled && !wall) return null;
   const at = wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening) : blockGates(w, h, rmbAt);
   if (!at.length) return null;
+  const houses = townHouses(w, h, rmbAt), records = rmbAtRecords(w, h, rmbAt), walls = wall ? townWallCells(wall, w, h) : null;
+  const town = gatesAndBlocks(at, o, w, h, houses, records, walls);
+  if (!wall) return town;
+  // FB1028 YARDS: and the gates' roads as #1184 laid them, for its yards alone (gateRoads.js yardRoads)
+  const was = wall.yardPieces ?? wall.pieces, yard = gatesAndBlocks(was.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening), o, w, h, houses, records, townWallCells({ pieces: was }, w, h));
+  // FB1028 ROADS: a Bay wall on its outline hands the tiles inside its inner face - the painter's arms past them taken up
+  return dfLocation.outline?.bay ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) } : { ...town, yard };
+}
+
+const S_SIDE = SHAPE_AUTOMAP_SIDE;
+/** GATE-ROADS: the gates in the pixel's tiles and the tiles their roads may not cross (townGateRoads'), off openings `at`. */
+function gatesAndBlocks(at, o, w, h, houses, records, walls) {
   const gates = at.map((g) => ({ x: o.x + g.at[0] / TILE_M, y: o.y + g.at[1] / TILE_M, ox: g.out[0], oy: g.out[1], half: GATE_OPENING.half / TILE_M }));
   const blocked = new Uint8Array(D * D), S = SHAPE_AUTOMAP_SIDE, C = TILE_M / (BLOCK_M / S);
   const mark = (tx, ty, v) => { if (tx >= 0 && ty >= 0 && tx < D && ty < D && blocked[tx + ty * D] !== GATE_BLOCK.hard) blocked[tx + ty * D] = v; };
-  for (const r of rmbAtRecords(w, h, rmbAt)) mark(o.x + Math.floor(r[0] / TILE_M), o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.soft);
-  const houses = townHouses(w, h, rmbAt), walls = wall ? townWallCells(wall, w, h) : null;
+  for (const r of records) mark(o.x + Math.floor(r[0] / TILE_M), o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.soft);
   for (let cy = 0; cy < h * S; cy++) for (let cx = 0; cx < w * S; cx++) {
     const i = cy * w * S + cx;
     if (houses[i] || walls?.[i]) mark(o.x + Math.floor(cx / C), o.y + Math.floor(cy / C), GATE_BLOCK.hard);
   }
   return { gates, blocked };
+}
+
+/**
+ * FB1028 ROADS: THE TILES INSIDE A WALL - each pixel tile (x + y * 128) whose middle stands inside the wall's line and off
+ * its cells (`cells`, townWallCells', `CW` cells a row) - 1 inside, 0 under the wall or outside it. A row's crossings of
+ * the line, filled between pairs (harbourKeep.js townKeepField's law). @param {any} wall @param {Uint8Array} cells
+ * @param {number} CW @param {{ x: number, y: number }} o the town's south-west tile in its pixel
+ */
+export function insideWall(wall, cells, CW, o) {
+  const out = new Uint8Array(D * D), line = wall.line, CH = cells.length / CW, C = TILE_M / (BLOCK_M / SHAPE_AUTOMAP_SIDE);
+  for (let ty = 0; ty < D; ty++) {
+    const z = (ty - o.y + 0.5) * TILE_M, xs = [];
+    for (let i = 0, k = line.length - 1; i < line.length; k = i++) {
+      const [x1, z1] = line[k], [x2, z2] = line[i];
+      if ((z1 > z) !== (z2 > z)) xs.push(x1 + ((z - z1) * (x2 - x1)) / (z2 - z1));
+    }
+    xs.sort((a, b) => a - b);
+    for (let q = 0; q + 1 < xs.length; q += 2) {
+      for (let tx = Math.max(0, Math.ceil(xs[q] / TILE_M - 0.5 + o.x)); tx < D && (tx - o.x + 0.5) * TILE_M <= xs[q + 1]; tx++) {
+        const cx = Math.floor((tx - o.x + 0.5) * C), cy = Math.floor((ty - o.y + 0.5) * C);
+        if (!(cx >= 0 && cy >= 0 && cx < CW && cy < CH && cells[cy * CW + cx])) out[tx + ty * D] = 1;
+      }
+    }
+  }
+  return out;
 }
 
 /** Each block's misc models' and flats' places in the town's metres (world/townShape.js townTiles' read). */

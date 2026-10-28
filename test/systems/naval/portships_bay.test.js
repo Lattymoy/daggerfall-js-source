@@ -8,11 +8,13 @@ import assert from 'node:assert/strict';
 import { portShipsWorld, HAS_PORT_WORLD, measurePorts } from '../../portShipsWorld.mjs';
 
 const skip = HAS_PORT_WORLD ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)';
-/** The Bay's ports with a ship on a bank, sounded off the water alone. */
-const BAY_BEFORE = Object.freeze({ Chestertower: ['land'], Pilliweyn: ['land'], Wadijerareg: ['land', 'land'] });
+/** The Bay's ports with a ship on a bank, sounded off the water alone. PIN MOVED (FB1028, bible/03-World/Town-Shapes.md): none
+ *  - Chestertower's, Pilliweyn's and Wadijerareg's banks were TS2's shore cliffs (Chestertower's 28 m), eased to the sea
+ *  now; the ground's law is portships.test.js's synthetic harbour's. */
+const BAY_BEFORE = Object.freeze({});
 after(async () => { (await portShipsWorld())?.done(); });
 
-test('PORT-SHIPS (ARENA2): EVERY PORT OF THE BAY - the port law\'s 106 towns sounded as the host hands them: every berth stands (its walls - TS7 - and the ground), and every port keeps as many berths as it had; sounded off the water alone, four ships at three ports stood a side on a bank, Chestertower\'s 28 m up (mutants: the ground unhanded)', { skip }, async () => {
+test('PORT-SHIPS (ARENA2): EVERY PORT OF THE BAY - the port law\'s 106 towns sounded as the host hands them: every berth stands (its walls - TS7 - and the ground), and every port keeps as many berths as it had; sounded off the water alone, four ships at three ports stood a side on a bank, Chestertower\'s 28 m up, until FB1028 eased TS2\'s shore cliffs (mutants: the ground unhanded)', { skip }, async () => {
   const w = await portShipsWorld();
   assert.equal(w.bay.length, 106, 'the port law\'s 106');
   const before = measurePorts(w, w.bay, false), now = measurePorts(w, w.bay, true);
