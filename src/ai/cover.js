@@ -119,19 +119,13 @@ const cellKey = (gx, gz) => (gx + 32768) * 65536 + (gz + 32768);
  *  (below) holds no cell as an array any more; the constant stays for what imports it. */
 export const CELL_EXACT = 16;
 
-// COVER-COMPACT (2026-10-26, bible/07-Rendering/Performance-Priority.md): A SET IS COLUMNS. After MEM-AUDIT the index was
-// still the largest thing a streamed world kept - 237 MB of ~735 MB live at Daggerfall's 121 pixels (`fill` 167, the
-// proxies 42): a Map entry and a small array a cell, an object with boxed numbers a proxy. A set now holds its cover by
-// proxy index: the base array by reference (FELLED and `noCover` key on it, and a sunk tree's cover sinks with it), the
-// radius, height and lift as Float64 (Float32 would move an answer), and a ray's mark as an Int32. A grid is three typed
-// lists sorted by cell: the cells' keys, where each cell's references start, and the references (proxy indices).
-// A build merges the references filed since behind the old, cell by cell, so each cell holds its proxies in the order
-// they were filed, as the arrays did. A `fill` builds when what it left waiting is at least half what is built, and a
-// read builds the rest. Built only at a read, a set nothing reads (a fly camera's, a world with no foe) kept every
-// reference waiting in plain arrays (the head run of 2026-10-26); built at every fill, a host adding group by group
-// (exterior.js's `tact1:flats`) re-merged the whole set each time - 300 adds of 40 flats, 5 -> 185 ms. Halving keeps
-// the merges linear in all and leaves at most a third of a set waiting. A body stays its own object: `near` hands it
-// to its visitor.
+// COVER-COMPACT (2026-10-26, bible/07-Rendering/Performance-Priority.md): A SET IS COLUMNS. The index was the largest thing a
+// streamed world kept (237 MB of ~735 MB live at 121 pixels), a Map entry and a small array a cell. A set holds its cover
+// by proxy index: the base array by reference (FELLED and `noCover` key on it), radius, height and lift as Float64
+// (Float32 would move an answer), a ray's mark as Int32. A grid is three sorted typed lists: cell keys, where each
+// cell's references start, and the references. A build merges new references behind old ones, so a cell keeps filing order.
+// A `fill` builds when what waits is at least half of what is built; a read builds the rest. Building at every fill made
+// grouped adds quadratic (300 adds of 40 flats: 5 -> 185 ms); building only at a read left unread sets as plain arrays.
 const NO_F64 = new Float64Array(0), NO_I32 = new Int32Array(0);
 /** A grid of no cells; `pk`/`pi` are the keys and indices filed since its lists were built. */
 const freshCells = () => ({ keys: NO_F64, off: new Int32Array(1), idx: NO_I32, pk: [], pi: [] });
@@ -231,10 +225,7 @@ export const coverSwitchOn = () => getPref('enhancedAI') === true;
  *   bodies: any[], bodyN: number, bodyCells: CoverCells, bodyMark: Int32Array, bodyStamp: number, dirty: boolean }} CoverSet
  */
 
-/**
- * The cover index.
- * @param {{ enabled?: () => boolean }} [opts] `enabled` - is cover read at all (by default the Enhanced AI switch)
- */
+/** The cover index. `enabled` - is cover read at all (by default the Enhanced AI switch). @param {{ enabled?: () => boolean }} [opts] */
 export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   /** @type {Map<any, CoverSet>} */
   const sets = new Map();

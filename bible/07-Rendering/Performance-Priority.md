@@ -2634,6 +2634,7 @@ group by group, 60,000 rays and 15,000 body queries (1,517 visits) answer equal 
 visit, and 1,500 rays equal a brute-force reading of every proxy. One departure the fixture cannot reach: the same body
 OBJECT filed twice in one set was visited once by `near` (its `_mark`) and is now visited once a filing. No caller files
 one twice: every `prop-bodies` adder (`exterior.js`, `interiorContext.js`, `pixelBuild.js`) makes fresh bodies a call.
+
 Mutants: `tools/mutants/coverCompact.json`, 8, all dead; the cover records of
 `tact1`, `audittact`, `propbodies` and `bantha1` all dead (two re-aimed by content). MEM-AUDIT's five records on the
 cell arrays are retired with the arrays. Its pin now measures a proxy in a cell of its own at under 64 B, heap and
@@ -2679,7 +2680,9 @@ never reads one, so that run measured an unbuilt index (`head-lazy-build/`, whic
 built them at the end of every fill (649dd100a2). The review then found that this re-merges a whole set for each `add`,
 and a host adds group by group (exterior.js's `tact1:flats`): 300 adds went 5 -> 185 ms. Building at a fill when what
 waits is half what is built keeps the merges linear (the rows above) and leaves at most a third of a never-read set
-waiting: 74.7 MB unread against 73.2 MB built in the bench, so the game run above stands for it within that. Each build
+waiting: 74.7 MB unread against 73.2 MB built in the bench, so the game run above stands for it within that.
+
+Each build
 sorts its references as packed numbers in a Float64Array. A comparator sort stands in when the cells' spread times the count passes
 2^53 (over 2M references in one fill); no test reaches that path.
 
