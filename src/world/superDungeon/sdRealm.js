@@ -112,7 +112,7 @@ export const SD_REALM_TEXT = Object.freeze({
   lost: 'The way to the Shattered Hour is lost.',
   // AUDIT SD II (L6 F4): a death in the Hour is the Hour's own - said so through its veil (the gate's court: "You are cast
   // out of the Burning Court."), never the plain dungeon's waking
-  died: 'The Shattered Hour casts you out for good. You wake before the Abyss Dungeon\'s door.',   // SD-ONELIFE: one life a Hollow
+  died: 'The Shattered Hour casts you out. You wake before the Abyss Dungeon\'s door.',   // SD-BACK (2026-10-28): its Rift takes you back to your own Hour
   // SD-ALONE (Mac: "We need to make sure companions dont enter the rift"): said as a player steps through with any at
   // their side - the court's own words for its gate (world/gate/gateArena.js COURT_TEXT.noCompanions)
   noCompanions: 'Your companions cannot follow you through the Rift.',
@@ -127,11 +127,12 @@ export const SD_REALM_FLOORS = Object.freeze([
 
 /**
  * THE MADE LOCATION - what the dungeon host reads of a real one, and no more: a name, a region, a climate, the map
- * table's row (map id 0 - no world room keys off it; the realm's room is the relay's own `sd:<s>`), the dungeon's record
+ * table's row (map id 0 - no world room keys off it; the realm's room is the relay's own `sd:<s>.<owner>`), the dungeon's record
  * and its one block. `sdRealm` is the Hollow's slot, `sdHollow` the Hollow it was entered from.
- * @param {{ s: number, hollow?: { key: string, px: number, py: number, name: string } | null, regionIndex?: number, regionName?: string, climate?: { worldClimate: number, climateType: number } }} o
+ * SD-PARTY: `sdOwner` the party's digest its room is keyed by (`sd:<s>.<owner>`).
+ * @param {{ s: number, owner?: string|null, hollow?: { key: string, px: number, py: number, name: string } | null, regionIndex?: number, regionName?: string, climate?: { worldClimate: number, climateType: number } }} o
  */
-export function sdRealmLocation({ s, hollow = null, regionIndex = -1, regionName = '', climate = { worldClimate: 231, climateType: 2 } }) {
+export function sdRealmLocation({ s, owner = null, hollow = null, regionIndex = -1, regionName = '', climate = { worldClimate: 231, climateType: 2 } }) {
   return {
     name: 'The Shattered Hour', regionIndex, regionName, locationIndex: -1, hasDungeon: true,
     climate: { worldClimate: climate.worldClimate, climateType: climate.climateType },
@@ -141,7 +142,7 @@ export function sdRealmLocation({ s, hollow = null, regionIndex = -1, regionName
       recordElement: { header: { locationId: SD_REALM_LOCATION_ID, unknown: 0 } },
       blocks: [{ x: 0, z: 0, blockName: SD_REALM_BLOCK, isStartingBlock: true, blockIndex: 0, blockNumber: 0, blockNumberStartIndexBitfield: 0 }],
     },
-    sdRealm: s, sdHollow: hollow ? { key: hollow.key, px: hollow.px, py: hollow.py, name: hollow.name } : null,
+    sdRealm: s, sdOwner: owner, sdHollow: hollow ? { key: hollow.key, px: hollow.px, py: hollow.py, name: hollow.name } : null,
   };
 }
 
