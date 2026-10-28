@@ -684,16 +684,145 @@ export function bendTower(m) {
   return made;
 }
 
+/** WALL-FLICKER (FB1028): how far past a bend tower's side a face running along that side is cut away, in metres - past
+ *  the depth buffer's step at 400 m (near 0.2 m, 24 bits). */
+export const TOWER_CLEAR = 0.05;
+/** The part of a convex polygon where `f` is 0 or more, its cut's corners interpolated (each corner [x, y, z, nx, ny, nz,
+ *  u, v]). */
+function cutTo(poly, f) {
+  const out = [], d = poly.map(f);
+  for (let i = 0; i < poly.length; i++) {
+    const j = (i + 1) % poly.length, a = poly[i], b = poly[j], fa = d[i], fb = d[j];
+    if (fa >= 0) out.push(a);
+    if ((fa > 0 && fb < 0) || (fa < 0 && fb > 0)) {
+      const t = fa / (fa - fb), m = new Array(a.length);
+      for (let k = 0; k < a.length; k++) m[k] = a[k] + (b[k] - a[k]) * t;
+      out.push(m);
+    }
+  }
+  return out;
+}
+/** A point's place in a tower's frame: along its line (its local +x) and out. */
+const alongOf = ({ at, out }, x, z) => (x - at[0]) * out[1] - (z - at[1]) * out[0];
+const outOf = ({ at, out }, x, z) => (x - at[0]) * out[0] + (z - at[1]) * out[1];
+/** A convex polygon's parts outside a box of a tower's frame (`a` along, `o` out, each [from, to]) under its crown - each
+ *  side's outside kept and the rest cut by the next: convex polygons. */
+function outsideBox(poly, tw, [a0, a1], [o0, o1]) {
+  const a = (v) => alongOf(tw, v[0], v[2]), o = (v) => outOf(tw, v[0], v[2]);
+  const sides = [(v) => a(v) - a1, (v) => a0 - a(v), (v) => o(v) - o1, (v) => o0 - o(v), (v) => v[1] - CORNER_TOWER.crown];
+  // wholly past one side: as it was; within them all: none
+  let within = true;
+  for (const f of sides) {
+    let past = true;
+    for (const v of poly) { const d = f(v); if (d < 0) past = false; if (d > 0) within = false; }
+    if (past) return [poly];
+  }
+  if (within) return [];
+  const kept = [];
+  let rest = poly;
+  for (const f of sides) {
+    const outside = cutTo(rest, f);
+    if (outside.length > 2) kept.push(outside);
+    rest = cutTo(rest, (v) => -f(v));
+    if (rest.length < 3) break;
+  }
+  return kept;
+}
+/**
+ * WALL-FLICKER: A LENGTH OR A GATE CUT CLEAR OF THE BEND TOWERS (`towers`, their pieces) - its model's parts (the carrier's
+ * metres) in a tower's body left out, a face along a side cut TOWER_CLEAR past it, a level face mitred at the tower's middle.
+ * Its end stands in the body (TS8): its faces lay in the tower's where the line runs straight, and its walk on the next
+ * one's at a sharp bend, both drawn there. A part no tower reaches is handed back as it was.
+ * @param {{ positions: Float32Array, normals: Float32Array, uvs: ArrayLike<number>, indices: ArrayLike<number>, subMeshes: any[] }} part
+ * @param {Array<{ at: [number, number], out: [number, number] }>} towers
+ */
+export function clearOfTowers(part, towers) {
+  const P = part.positions, N = part.normals, U = part.uvs, half = (CORNER_TOWER.body[1] - CORNER_TOWER.body[0]) / 2, r = 2 * Math.SQRT2 * half;
+  const corner = (i) => [P[i * 3], P[i * 3 + 1], P[i * 3 + 2], N[i * 3], N[i * 3 + 1], N[i * 3 + 2], U[i * 2], U[i * 2 + 1]];
+  let mx = 0, mz = 0, x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (let v = 0; v < P.length; v += 3) {
+    mx += P[v] / (P.length / 3); mz += P[v + 2] / (P.length / 3);
+    x0 = Math.min(x0, P[v]); x1 = Math.max(x1, P[v]); z0 = Math.min(z0, P[v + 2]); z1 = Math.max(z1, P[v + 2]);
+  }
+  towers = towers.filter((tw) => tw.at[0] + r > x0 && tw.at[0] - r < x1 && tw.at[1] + r > z0 && tw.at[1] - r < z1);   // those in its reach
+  if (!towers.length) return part;
+  /** its parts outside one tower: its body (a face along a side TOWER_CLEAR past it), then a level face's on the far side of
+   *  its middle (the next piece's walk lies there, as level) */
+  const clear = (q, tw) => {
+    const ca = Math.abs(q[0][3] * tw.out[1] - q[0][5] * tw.out[0]) >= Math.SQRT1_2 ? TOWER_CLEAR : 0, co = Math.abs(q[0][3] * tw.out[0] + q[0][5] * tw.out[1]) >= Math.SQRT1_2 ? TOWER_CLEAR : 0;
+    const body = outsideBox(q, tw, [-half - ca, half + ca], [-half - co, half + co]);
+    if (Math.abs(q[0][4]) < Math.SQRT1_2) return body;
+    return body.flatMap((k) => outsideBox(k, tw, alongOf(tw, mx, mz) < 0 ? [0, 2 * half] : [-2 * half, 0], [-2 * half, 2 * half]));
+  };
+  // a corner of its own kept once, as it was; a cut's corner added
+  const positions = [], normals = [], uvs = [], indices = [], subMeshes = [], own = new Int32Array(P.length / 3).fill(-1);
+  const put = (v) => { positions.push(v[0], v[1], v[2]); normals.push(v[3], v[4], v[5]); uvs.push(v[6], v[7]); return positions.length / 3 - 1; };
+  const ownAt = (i) => (own[i] >= 0 ? own[i] : (own[i] = put(corner(i))));
+  const rBody = Math.SQRT2 * (half + TOWER_CLEAR), near = [];
+  let cut = false;
+  for (const s of part.subMeshes) {
+    const startIndex = indices.length;
+    for (let t = 0; t < s.primitiveCount; t++) {
+      // the towers whose body (or, for a level face, its far side) its box meets
+      const i0 = part.indices[s.startIndex + t * 3], i1 = part.indices[s.startIndex + t * 3 + 1], i2 = part.indices[s.startIndex + t * 3 + 2];
+      const rr = Math.abs(N[i0 * 3 + 1]) >= Math.SQRT1_2 ? r : rBody;
+      near.length = 0;
+      for (const tw of towers) {
+        // its corners in the tower's frame: kept whole where they all lie past one side of the boxes it is cut by
+        let a0 = Infinity, a1 = -Infinity, o0 = Infinity, o1 = -Infinity;
+        for (const i of [i0, i1, i2]) { const a = alongOf(tw, P[i * 3], P[i * 3 + 2]), o = outOf(tw, P[i * 3], P[i * 3 + 2]); a0 = Math.min(a0, a); a1 = Math.max(a1, a); o0 = Math.min(o0, o); o1 = Math.max(o1, o); }
+        const reach = rr === r ? 2 * half : half + TOWER_CLEAR;
+        if (a0 < reach && a1 > -reach && o0 < reach && o1 > -reach) near.push(tw);
+      }
+      const ids = [i0, i1, i2];
+      if (!near.length) { indices.push(ownAt(i0), ownAt(i1), ownAt(i2)); continue; }
+      const tri = ids.map(corner), polys = near.reduce((ps, tw) => ps.flatMap((q) => clear(q, tw)), [tri]);
+      cut = true;
+      for (const q of polys) {
+        const at = q.map((v) => (tri.includes(v) ? ownAt(ids[tri.indexOf(v)]) : put(v)));
+        for (let k = 1; k + 1 < q.length; k++) {
+          // a sliver under a tenth of a millimetre across (a face on a cut's plane, as the corners' floats stand it) left out
+          const [a, b, c] = [q[0], q[k], q[k + 1]], e = [0, 1, 2].map((i) => b[i] - a[i]), g = [0, 1, 2].map((i) => c[i] - a[i]);
+          const twice = Math.hypot(e[1] * g[2] - e[2] * g[1], e[2] * g[0] - e[0] * g[2], e[0] * g[1] - e[1] * g[0]);
+          if (twice >= 1e-4 * Math.max(Math.hypot(...e), Math.hypot(...g), Math.hypot(c[0] - b[0], c[1] - b[1], c[2] - b[2]))) indices.push(at[0], at[k], at[k + 1]);
+        }
+      }
+    }
+    if (indices.length > startIndex) subMeshes.push({ ...s, startIndex, primitiveCount: (indices.length - startIndex) / 3 });
+  }
+  if (!cut) return part;
+  return { positions: new Float32Array(positions), normals: new Float32Array(normals), uvs: new Float32Array(uvs), indices: Uint32Array.from(indices), subMeshes };
+}
+
 /**
  * THE WALL'S MODEL: each piece's classic model (`classicModel(id)`, dfMeshToModel's shape - metres, its inside its local -z)
  * turned so its local +z is the piece's outward normal and its +x along the line, stretched along its length, set at its
  * centre (x east, z north, the carrier's metres) - all of them one model, a submesh a picture (composeArenaModel). TS8: a
- * tower the corner tower's body alone (bendTower).
+ * tower the corner tower's body alone (bendTower); WALL-FLICKER: every length and gate cut clear of them (clearOfTowers).
  * @param {ReturnType<typeof wallPieces>} pieces @param {(id: number) => any} classicModel
  */
 export function townWallModel(pieces, classicModel) {
+  const steps = townWallModelSteps(pieces, classicModel);
+  let r = steps.next();
+  while (!r.done) r = steps.next();
+  return r.value;
+}
+/** WALL-FLICKER: how many pieces of a wall are made between two breaths (the cut is several times the pieces' own work). */
+export const WALL_PIECES_A_BREATH = 16;
+/** The wall's model made a breath at a time (`breathe()` awaited every WALL_PIECES_A_BREATH pieces) - the model door's
+ *  `buildSliced` (world/customModels.js customModelBuilt), as the town's fabric is. */
+export async function townWallModelSliced(pieces, classicModel, breathe) {
+  const steps = townWallModelSteps(pieces, classicModel);
+  let r = steps.next();
+  while (!r.done) { await breathe(); r = steps.next(); }
+  return r.value;
+}
+function* townWallModelSteps(pieces, classicModel) {
   const parts = [];
+  const tower = classicModel(WALL_MODELS.tower), bodies = tower && bendTower(tower) !== tower ? pieces.filter((p) => p.model === WALL_MODELS.tower) : [];   // a mod's tower none
+  let made = 0;
   for (const p of pieces) {
+    if (++made % WALL_PIECES_A_BREATH === 0) yield;
     const m = p.model === WALL_MODELS.tower ? bendTower(classicModel(p.model)) : classicModel(p.model);
     if (!m) continue;
     const [wx, wz] = p.out, ux = wz, uz = -wx;   // local +x: u = (w.z, -w.x), so u x up = w (no mirror)
@@ -708,7 +837,8 @@ export function townWallModel(pieces, classicModel) {
       normals[v * 3 + 1] = ny / len;
       normals[v * 3 + 2] = (nx * uz + nz * wz) / len;
     }
-    parts.push({ positions, normals, uvs: m.uvs, indices: m.indices, subMeshes: m.subMeshes });
+    const part = { positions, normals, uvs: m.uvs, indices: m.indices, subMeshes: m.subMeshes };
+    parts.push(p.model === WALL_MODELS.tower ? part : clearOfTowers(part, bodies));
   }
   return composeArenaModel(parts);
 }
@@ -808,7 +938,10 @@ export function registerTownWall(dfLocation, templateNames, io, open, made = und
   const modelId = townWallModelId(mapId);
   const rmbOf = (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null);
   // the model registered when the wall is made - never one built off a wall still waiting (its mesh is kept by its id)
-  const model = () => registerCustomModel(modelId, (ctx) => townWallModel(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null), () => true, { needs: Object.values(WALL_MODELS) });
+  const model = () => registerCustomModel(modelId, (ctx) => townWallModel(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null), () => true, {
+    needs: Object.values(WALL_MODELS),
+    buildSliced: (ctx, breathe) => townWallModelSliced(kept.wall?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null, breathe),   // WALL-FLICKER: a breath at a time
+  });
   // ROAD-FOLLOW: made when first read with its pixel's roads known (its gates where they come in - townWall's `paths`);
   // while they are not, none made and nothing kept, and its pixel is built again when they land (`_waiting`)
   kept.of = () => {
@@ -863,21 +996,22 @@ const WALL_FOOT = Object.freeze({ thick: 9.6, tower: 9.6 });
 /**
  * TS6: THE CELLS A WALL STANDS ON - the town-map cells (64 a block side, 1.6 m) of a grid of `w` x `h` blocks each piece
  * covers, row-major from the south-west (the walk grid's own order: world/city/cityNavigation.js): a length or a gate its
- * stretched length by its thickness, a tower its square, each turned to its line (`out`, its local +z).
- * @param {{ pieces: ReturnType<typeof wallPieces> }} wall @param {number} w @param {number} h
+ * stretched length by its thickness, a tower its square, each turned to its line (`out`, its local +z); WALL-FLICKER: each
+ * grown `grow` metres every way.
+ * @param {{ pieces: ReturnType<typeof wallPieces> }} wall @param {number} w @param {number} h @param {number} [grow]
  * @returns {Uint8Array} 1 a cell of the wall's
  */
-export function townWallCells(wall, w, h) {
+export function townWallCells(wall, w, h, grow = 0) {
   const S = SHAPE_AUTOMAP_SIDE, C = BLOCK_M / S, W = w * S, H = h * S, out = new Uint8Array(W * H);
   for (const p of wall.pieces) {
     const tower = p.model === WALL_MODELS.tower;
     const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower : WALL_FOOT.thick) / 2;
     const [wx, wz] = p.out, ux = wz, uz = -wx, r = Math.hypot(hl, ht);
-    const x0 = Math.max(0, Math.floor((p.at[0] - r) / C)), x1 = Math.min(W - 1, Math.floor((p.at[0] + r) / C));
-    const y0 = Math.max(0, Math.floor((p.at[1] - r) / C)), y1 = Math.min(H - 1, Math.floor((p.at[1] + r) / C));
+    const x0 = Math.max(0, Math.floor((p.at[0] - r - 2 * grow) / C)), x1 = Math.min(W - 1, Math.floor((p.at[0] + r + 2 * grow) / C));
+    const y0 = Math.max(0, Math.floor((p.at[1] - r - 2 * grow) / C)), y1 = Math.min(H - 1, Math.floor((p.at[1] + r + 2 * grow) / C));
     for (let gy = y0; gy <= y1; gy++) for (let gx = x0; gx <= x1; gx++) {
       const dx = (gx + 0.5) * C - p.at[0], dz = (gy + 0.5) * C - p.at[1];
-      if (Math.abs(dx * ux + dz * uz) <= hl && Math.abs(dx * wx + dz * wz) <= ht) out[gy * W + gx] = 1;
+      if (Math.abs(dx * ux + dz * uz) <= hl + grow && Math.abs(dx * wx + dz * wz) <= ht + grow) out[gy * W + gx] = 1;
     }
   }
   return out;
