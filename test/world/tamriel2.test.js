@@ -309,5 +309,8 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (RUMARE-WATER): 62 - the Imperial City's water law where its canal stands (world/rumareWaters.js), the plan
   // it reads (world/imperialCity.js, its mix and block a leaf of their own, world/blockHash.js) and a capital at the sea's
   // ground (world/terrain/capitalSea.js), all pure
-  assert.ok(seen.size > 20 && seen.size < 70, `${seen.size} modules`);
+  // PIN MOVED (the folds into #1184, 2026-10-28): 70 - TESA-LANDS' lands (world/tamriel/tamrielLands.js, world/lands/landProps.js,
+  // world/lands/landPropMesh.js), RED-MOUNTAIN's cone (world/tamriel/redMountain.js) and SOLITUDE-RELIEF's rock
+  // (world/solitudeRelief.js, world/terrain/capitalRelief.js), each fold under the ceiling alone and the three at it - all pure
+  assert.ok(seen.size > 20 && seen.size < 71, `${seen.size} modules`);
 });
