@@ -838,17 +838,29 @@ what they read at #1184: the paths with no arm taken up and the roads of the gat
 them as `yard`), and that wall's cells - no street's gate, no tower grown (townWall's `yardPieces`). The host shuts the
 yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
 
+**And the gates' things and the ground as #1184 laid them** (FB1028 YARDS Y1, Y2). The yards measure the wall's carrier
+as #1184 laid it: its boards, carriages and markers by that wall's gates, stood clear of its cells
+(`townWalls.js:"export function townWallYardLayout(yl, dfLocation) {"`). The game stands today's. The yards' ground is
+TS2's mask over the outline before its crops, with no edge band
+(`townBlendBefore.js:"export function townGroundMaskBefore(shape, ground, hDim) {"`, the kernel's `yardGround`), and
+today's ring is no road on it (`terrainGen.js:"export function ringAsWas(paths, ring, yardGround) {"`). The host hands
+both (`scenes/pixelBuild.js` shapeWas, yardShut), so the Bay's yards keep #1184's mask whatever today's becomes.
+
 **A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = [], gained = null) {"`). A
 yard keeps its #1184 place unless the place no longer fits the town as it stands (siteFits: its cells on no road and
 nothing shut, its pad clear of the wall and every closed cell). One that does not is placed again by its kind's law on
 the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `world/townWalls.js`
 yardWalkShut). AUDIT FB1028 B5: a kept yard's pad may touch a cell only the wall's growth since #1184 closed (a tower
-grown, a street's gate), never its own ground.
+grown, a street's gate), never its own ground. Y1: the keep reads the gates' things as they stand, and a pad may touch a
+cell only their move since #1184 closed.
 
 Measured over all 410 at the merge: 1,183 of the 1,258 yards stood on #1184's cells; 50 moved on a gate's new road, 2 in
 the new wall, 19 against a grown tower, and 4 stables by the gate dressing. B5 and B2 (a road's gate keeps its things)
-put back the 19 and Puweyn's stable. Now 1,203 stand; none broken (none in, against or on the wall, on a road, off its
-ground or out of reach), none over another. The 55 moved:
+put back the 19 and Puweyn's stable. At `dba794637` 1,199 stood: Knightsgate's stable moved by the gate dressing, the new
+mask moved Wayrest's shipyard and Penwall Derry's shipyard and lighthouse, and Naresa's Wagon Yard had moved since,
+closed on the walkers' ground (by none of the wall, the ground or the gates' things). Y1 puts the stable back and Y2 the
+three port places: now 1,203 stand; no yard broken (none in, against or on the wall, on a road, off its ground or out of
+reach), none over another. The 55 moved:
 
 | city | yard | why |
 | --- | --- | --- |
@@ -877,16 +889,16 @@ ground or out of reach), none over another. The 55 moved:
 | Gothwark | Stable | on a gate's new road |
 | Gyselah | Wagon Yard | on a gate's new road |
 | Holway | Stable | on a gate's new road |
-| Issaqumbaa | Stable | the gate dressing moved (not fixed) |
+| Issaqumbaa | Stable | on a gate's new road |
 | Jaladnia | Stable | on a gate's new road |
 | Khajastareg | Wagon Yard | on a gate's new road |
 | Knightsgate | joinery | on a gate's new road |
-| Knightsgate | Stable | the gate dressing moved (not fixed) |
 | Knightsmore | Stable | in the new wall |
 | Longhope End | Stable | on a gate's new road |
 | Merborne | joinery | on a gate's new road |
 | Mesajer | Wagon Yard | on a gate's new road |
 | Midbury | joinery | on a gate's new road |
+| Naresa | Wagon Yard | closed on the walkers' ground |
 | Newcester | Stable | on a gate's new road |
 | Newmarket | joinery | on a gate's new road |
 | Newvale | Wagon Yard | on a gate's new road |
@@ -897,7 +909,7 @@ ground or out of reach), none over another. The 55 moved:
 | Pythinis | Stable | on a gate's new road |
 | Singcroft | Wagon Yard | on a gate's new road |
 | Singham | Wagon Yard | on a gate's new road |
-| Syra-Kom | Stable | the gate dressing moved (not fixed) |
+| Syra-Kom | Stable | on a gate's new road |
 | Syrunnuweyn | Wagon Yard | on a gate's new road |
 | Tasoparet | Wagon Yard | on a gate's new road |
 | Tigonus | joinery | in the new wall |
@@ -908,10 +920,18 @@ ground or out of reach), none over another. The 55 moved:
 | Whitewark | Stable | on a gate's new road |
 | Zenirijet | Stable | on a gate's new road |
 
-The three by the gate dressing (OPEN): TS7 steps a gate's boards and carriage clear of the wall's cells, the grown
-towers' now, so they stand up to 0.8 m over (Knightsgate's two, measured), and a yard's measures read them. Their
-places fit the town, but they moved 1 to 4 cells without being broken; holding them needs a second layout of that
-furniture for the yards.
+The three by the gate dressing (Y1): TS7 steps a gate's boards and carriage clear of the grown towers, up to 0.8 m
+over #1184's (Knightsgate's two). On the things as #1184 laid them, all three stables are placed on #1184's cells.
+Knightsgate's keeps them. Issaqumbaa's and Syra-Kom's lie on a gate's new road on today's ground, so they are broken and
+placed again by the law: Issaqumbaa's 4 cells away, Syra-Kom's across the town.
+
+Past the Bay (Y2), sampled over every eighth walled template (102, 306 yards): 11 moved before, 1 now. That one, template
+297's stable, also moves with the mask and the paths left out, so neither is its cause (OPEN). The keep moves 1 more
+(template 33's stable), which the new ground breaks.
+
+The street gates (Y3): each has a road out. Naresa's, Akhahanu's and Menakat's open onto the town's paving, and
+GATE-ROADS lays one or two tiles on to the ring. The audit's probe read the painter's tiles alone, 6 to 15 m out, where
+the paving is. No gate or road code changed: 1,568 gates.
 
 **Not changed, and why.** The wall is one model, so its pixel's build stands its 14,600 triangles in one step: 30 to 94 ms
 on the collider, and as much again with the player in town (the late solids' gate, `player/lateSolid.js`, builds a probe of
@@ -921,8 +941,9 @@ inside crosses the town's open cells as its fabric's road, and is left for its o
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from Daggerfall's wall pieces - no door where the wall is a model of
 the town's own, a length cut at a bend and its tower grown across; from Basic Roads' tiles on a Bay wall's ground. Tests
-`test/world/fb1028_walls.test.js` (15, four on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (37, all dead without
-ARENA2: AUDIT FB1028 runs the yard law, yardRoads, yardPieces and the host's own lines on synthetic towns). PINS
+`test/world/fb1028_walls.test.js` (21, six on ARENA2) and `test/world/fb1028_yards_past.test.js` (1, on ARENA2). Mutants
+`tools/mutants/fb1028_walls.json` (51; the 37 dead without ARENA2: AUDIT FB1028 runs the yard law, yardRoads, yardPieces
+and the host's own lines on synthetic towns; of Y1-Y2's 14, 12 die without ARENA2 and 2 with it). PINS
 MOVED: `test/world/gateroads.test.js` (the kernel handed the town's ground), `test/world/townbends.test.js` (a tower's
 footprint as wide as it stands); `baywalls`, `ic_stutter`, `merchantyards1`, `shipyards1_found` (the host hands the
 places the yards' shut), `carpyard1` (the kept yards), `road/roads` (the yards' paths); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,

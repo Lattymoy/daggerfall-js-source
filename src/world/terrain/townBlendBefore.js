@@ -15,6 +15,19 @@ export function shapeBefore(shape, seed) {
   return shape?.basis?.fields ? outlineOfBasis({ ...shape.basis, fields: null }, seed) : shape;
 }
 
+/** TS2's town ground before FB1028 (townGroundMask at 2036a509e): the outline's tiles, less those past its sea margin over
+ *  water - no edge band. FB1028 YARDS Y2: the yards' ground too, over shapeBefore's outline (terrainGen.js `yardGround`).
+ *  @param {Uint8Array} shape @param {ArrayLike<number>} ground @param {number} hDim */
+export function townGroundMaskBefore(shape, ground, hDim) {
+  const D = WORLD_MAP_TILE_DIM, wetAt = (x, y) => isWaterHeight(sampleHeight(ground[Math.min(y, hDim - 1) + Math.min(x, hDim - 1) * hDim]));
+  const mask = new Uint8Array(D * D);
+  for (let i = 0; i < D * D; i++) {
+    const x = i % D, y = (i - x) / D;
+    if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;
+  }
+  return mask;
+}
+
 /**
  * The blend before FB1028 over `heightmapData` (mutated): the town's ground at its land's mean, eased back over 12
  * samples, the sea past its margin kept, every sample faded out in the pixel's last four. Answers the height it
@@ -22,12 +35,7 @@ export function shapeBefore(shape, seed) {
  * @param {Float32Array} heightmapData @param {Uint8Array} shape @param {ArrayLike<number>} ground @param {number} hDim
  */
 export function blendShapedBefore(heightmapData, shape, ground, hDim) {
-  const D = WORLD_MAP_TILE_DIM, wetAt = (x, y) => isWaterHeight(sampleHeight(ground[Math.min(y, hDim - 1) + Math.min(x, hDim - 1) * hDim]));
-  const mask = new Uint8Array(D * D);
-  for (let i = 0; i < D * D; i++) {
-    const x = i % D, y = (i - x) / D;
-    if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;
-  }
+  const D = WORLD_MAP_TILE_DIM, mask = townGroundMaskBefore(shape, ground, hDim);
   const inside = new Uint8Array(hDim * hDim);
   const on = (x, y) => x >= 0 && y >= 0 && x < D && y < D && mask[x + y * D] === 1;
   for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) inside[y * hDim + x] = on(x, y) || on(x - 1, y) || on(x, y - 1) || on(x - 1, y - 1) ? 1 : 0;
