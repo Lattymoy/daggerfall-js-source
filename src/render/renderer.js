@@ -3323,6 +3323,17 @@ export class Renderer {
     this._frameStamp++;
   }
 
+  /** AUDIT LOOP-ALIVE A5: a host's WORLD frame begins on the draw-state baseline every entry point assumes (RW1's, with
+   *  the polygon offset off and the depth test LESS). A frame that throws mid-pass leaves its pass's state - a depth mask
+   *  off makes the next clear keep the depth - and since LOOP-ALIVE the next frame comes. Never a bracket's frame: a
+   *  panel masks its colour off for a depth-only clear. */
+  _drawBaseline(opts = null) {
+    if (opts?.world !== true || this._panelSaved) return;
+    const gl = this.gl;
+    gl.colorMask(true, true, true, true); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.POLYGON_OFFSET_FILL);
+    gl.depthFunc(gl.LESS); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+  }
+
   /** Hand the baseline back, if a run is open. Idempotent, and cheap
    *  enough to call at the head of anything: one property read. */
   _close2D() {
@@ -5673,7 +5684,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   beginFrame(proj, view, lightDir, opts = null) {
-    this._close2D();   // PERF-2D: the baseline back, before anything that needs it
+    this._close2D(); this._drawBaseline(opts);   // PERF-2D: the baseline back, before anything that needs it (AUDIT LOOP-ALIVE A5)
     this._afterFlats = null;   // AUDIT RED-MOUNTAIN N2: an armed draw is its frame's
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0; s.bbCulled = 0; s.shadowDraws = 0;   // PERF-CROWD2; PASS-COUNT

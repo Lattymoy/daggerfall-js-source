@@ -427,9 +427,9 @@ export function showWorldPlaque(frame, anchor = null) {
   // The seam's try/catch contains a throw INSIDE the hover call. It
   // cannot contain one BESIDE it: each host runs hundreds of lines
   // between its `worldHoverFrame(...)` and its bare
-  // `requestAnimationFrame(frame)`, which is not in a `finally`, so any
-  // throw downstream of the plaque kills the loop with the last name
-  // still painted over a game that has stopped. A DOM overlay stays
+  // `requestAnimationFrame(frame)`, which is not in a `finally`, so a
+  // throw downstream of the plaque ends the frame before its draw (and
+  // until LOOP-ALIVE, the loop) with the last name still painted. A DOM overlay stays
   // painted unless it is told otherwise (AUDIT 64 F37); nothing else in
   // this module can tell it once the frames stop coming.
   // DISC29-D: a frame that came and went without a draw, never a frame slower than the timer (ui/drawWatchdog.js)

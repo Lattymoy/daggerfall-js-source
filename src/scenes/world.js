@@ -288,7 +288,7 @@ import { canopyLight, canopyKey, canopyMoon } from '../world/jungle/jungleCanopy
 import { createJungleFloorHost, floorPictures } from './jungleFloorHost.js';   // BANTHA2: the jungle's floor - a second field of the grass
 import { createSnowCoverHost } from './snowCoverHost.js';
 import { createGroundSets } from './groundSets.js';   // OW-HITCH: a ground set made and uploaded a breath at a time (HOST-SPLIT)   // PRECIP4: the snow the ground keeps, about the player
-import { loopFrame as requestAnimationFrame } from './frameLoop.js';   // LOOP-ALIVE: a frame that throws never ends the loop
+import { loopFrame as requestAnimationFrame } from './frameLoop.js';   // LOOP-ALIVE: a frame that throws once the loop runs never ends it
 import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn, arenaPlacesOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
@@ -32360,7 +32360,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               const pile = _fish ? null : droppedLoot.pileFor(dropKey);
               // LOOT-GONE1 (2026-09-24, the contributor's report): pileFor answers null for a pile that went between the
               // hover and the press (a peer took it, a rebuild emptied it), and droppedLootHooks(null) threw inside this
-              // frame - an uncaught throw in a rAF callback ends the loop as surely as a return. A pile that is gone
+              // frame - an uncaught throw in a rAF callback ended the loop as surely as a return (until LOOP-ALIVE). A pile that is gone
               // opens nothing: worldModes' own twin's shape (its `if (pile)`).
               // QL-FRAME1 (the soft-lock report): the quick-loot take below ended in `return`, and this arm runs INSIDE
               // frame() - the return left before requestAnimationFrame(frame) at its foot, so a take or its refusal ("You

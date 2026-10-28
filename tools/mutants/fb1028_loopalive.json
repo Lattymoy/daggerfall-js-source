@@ -4,55 +4,288 @@
     "file": "src/scenes/frameLoop.js",
     "old": "    if (!armed) loopFrame(cb);",
     "new": "    if (!armed && false) loopFrame(cb);",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
   },
   {
     "name": "LOOP-ALIVE-armed-whether-or-not-the-frame-did",
     "file": "src/scenes/frameLoop.js",
     "old": "    if (!armed) loopFrame(cb);",
     "new": "    loopFrame(cb);",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
   },
   {
     "name": "LOOP-ALIVE-said-every-frame",
     "file": "src/scenes/frameLoop.js",
-    "old": "  if (said.has(key)) return;",
-    "new": "  if (said.has(key) && false) return;",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "old": "  if (mine.has(key) || mine.size >= SAID_MAX) return;",
+    "new": "  if (mine.size >= SAID_MAX) return;",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
   },
   {
     "name": "LOOP-ALIVE-every-callbacks-throw-kept",
     "file": "src/scenes/frameLoop.js",
     "old": "    if (!loops.has(cb)) throw e;",
     "new": "    if (!loops.has(cb) && false) throw e;",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A1-a-key-that-throws",
+    "file": "src/scenes/frameLoop.js",
+    "old": "  } catch { return '?'; }",
+    "new": "  } catch (x) { throw x; }",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A2-no-cap",
+    "file": "src/scenes/frameLoop.js",
+    "old": "  if (mine.has(key) || mine.size >= SAID_MAX) return;",
+    "new": "  if (mine.has(key)) return;",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A3-one-set-for-every-loop",
+    "file": "src/scenes/frameLoop.js",
+    "old": "  let mine = said.get(cb);\n  if (!mine) said.set(cb, (mine = new Set()));",
+    "new": "  let mine = said.get(say);\n  if (!mine) said.set(say, (mine = new Set()));",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A3-the-key-the-message-alone",
+    "file": "src/scenes/frameLoop.js",
+    "old": "    return `${String(e?.message ?? e)}\\n${top}`;",
+    "new": "    return String(e?.message ?? e);",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A4-no-frameAbort",
+    "file": "src/scenes/frameLoop.js",
+    "old": "    frameAbort();   // the frame's open sample closed: it ended here, not at its foot\n",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A8-no-fallback",
+    "file": "src/scenes/frameLoop.js",
+    "old": "  else setTimeout(() => { throw e; });",
+    "new": "  else { /* none */ }",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C13-the-running-callback-never-forgotten",
+    "file": "src/scenes/frameLoop.js",
+    "old": "    running = null;\n  }\n}",
+    "new": "    void 0;\n  }\n}",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
   },
   {
     "name": "LOOP-ALIVE-world-on-the-bare-frame-request",
     "file": "src/scenes/world.js",
     "old": "import { loopFrame as requestAnimationFrame } from './frameLoop.js';",
     "new": "import { loopFrame as _loopFrame } from './frameLoop.js';",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C11-interior-on-the-bare-frame-request",
+    "file": "src/scenes/interior.js",
+    "old": "import { loopFrame as requestAnimationFrame } from './frameLoop.js';",
+    "new": "import { loopFrame as _loopFrame } from './frameLoop.js';",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C1-exterior-foot-on-globalThis",
+    "file": "src/scenes/exterior.js",
+    "old": "    requestAnimationFrame(frame);\n  }\n  requestAnimationFrame(frame);",
+    "new": "    globalThis.requestAnimationFrame(frame);\n  }\n  requestAnimationFrame(frame);",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C1-dungeon-foot-on-globalThis",
+    "file": "src/scenes/dungeon.js",
+    "old": "    requestAnimationFrame(frame);\n  }\n  requestAnimationFrame(frame);",
+    "new": "    globalThis.requestAnimationFrame(frame);\n  }\n  requestAnimationFrame(frame);",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C1-world-foot-through-an-arrow",
+    "file": "src/scenes/world.js",
+    "old": "    requestAnimationFrame(frame);\n  }\n  requestAnimationFrame(frame);",
+    "new": "    requestAnimationFrame((t) => frame(t));\n  }\n  requestAnimationFrame(frame);",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A5-a-state-left-out",
+    "file": "src/render/renderer.js",
+    "old": " gl.disable(gl.BLEND); gl.disable(gl.POLYGON_OFFSET_FILL);\n    gl.depthFunc(gl.LESS);",
+    "new": " gl.disable(gl.BLEND);\n    gl.depthFunc(gl.LESS);",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A5-no-baseline-before-the-clear",
+    "file": "src/render/renderer.js",
+    "old": "    this._close2D(); this._drawBaseline(opts);",
+    "new": "    this._close2D();",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-A5-the-baseline-on-every-frame",
+    "file": "src/render/renderer.js",
+    "old": "    if (opts?.world !== true || this._panelSaved) return;",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js",
+      "test/ui/automap/roadc_panelframe.test.js"
+    ]
   },
   {
     "name": "LOOP-ALIVE-the-faulted-act-kept",
     "file": "src/scenes/gatherHost.js",
-    "old": "      if (act && act === faulted) dropFaulted();",
-    "new": "      if (act && act === faulted && false) dropFaulted();",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "old": "if (++faults >= ACT_FAULTS_MAX) dropFaulted();",
+    "new": "if (++faults >= ACT_FAULTS_MAX && false) dropFaulted();",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C7-dropped-at-the-first-fault",
+    "file": "src/scenes/gatherHost.js",
+    "old": "export const ACT_FAULTS_MAX = 2;",
+    "new": "export const ACT_FAULTS_MAX = 1;",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
   },
   {
     "name": "LOOP-ALIVE-the-mark-never-cleared",
     "file": "src/scenes/gatherHost.js",
-    "old": "        faulted = null;   // LOOP-ALIVE: the act's frame ran to its end",
+    "old": "        faulted = null;   // LOOP-ALIVE: the act's frame ran to its end\n",
     "new": "",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
   },
   {
-    "name": "LOOP-ALIVE-a-kinds-frame-unguarded",
+    "name": "AUDIT-LOOP-ALIVE-C3-cleared-before-the-step",
     "file": "src/scenes/gatherHost.js",
-    "old": "        catch (e) { console.warn(`[gather] ${k.id}'s frame`, e); }",
+    "old": "        stepAct(act, dt, { held: input.held || act.heldByUse === true",
+    "new": "        faulted = null; stepAct(act, dt, { held: input.held || act.heldByUse === true",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C2-no-meter",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    hud.setMeter(null);\n    hud.toast(ACT_STOPPED_LINE);\n    syncPointer();",
+    "new": "    hud.toast(ACT_STOPPED_LINE);\n    syncPointer();",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C2-no-cancel",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    try { a.act.cancel(); } catch (e) { if (firstWarn('cancel', e)) console.warn('[gather] cancelling a faulted act', e); }",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C2-no-letting-go",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    try { letGo(a); } catch (e) { if (firstWarn('letGo', e)) console.warn('[gather] letting a faulted act go', e); }",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C2-no-line",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    hud.setMeter(null);\n    hud.toast(ACT_STOPPED_LINE);\n    syncPointer();",
+    "new": "    hud.setMeter(null);\n    syncPointer();",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C5-the-slot-filled-while-told",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    try { a.act.cancel(); }",
+    "new": "    act = a; try { try { a.act.cancel(); } finally { act = null; } }",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C4-a-kinds-fault-thrown-on",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        catch (e) { if (firstWarn(k.id, e)) console.warn(`[gather] ${k.id}'s frame`, e); }",
     "new": "        catch (e) { throw e; }",
-    "tests": ["test/scenes/fb1028_loopalive.test.js"]
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-C4-one-fault-stops-every-kind",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        catch (e) { if (firstWarn(k.id, e)) console.warn(`[gather] ${k.id}'s frame`, e); }",
+    "new": "        catch (e) { if (firstWarn(k.id, e)) console.warn(`[gather] ${k.id}'s frame`, e); break; }",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-B1-the-swings-unguarded",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        for (const sw of swings) { try { stepAct(sw, dt, {}); } catch (e) { if (firstWarn('swing', e)) console.warn('[gather] a last swing', e); } }",
+    "new": "        for (const sw of swings) stepAct(sw, dt, {});",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOP-ALIVE-B3-said-every-frame",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (warned.has(key) || warned.size >= WARNS_MAX) return false;",
+    "new": "    if (warned.size >= WARNS_MAX) return false;",
+    "tests": [
+      "test/scenes/fb1028_loopalive.test.js"
+    ]
   }
 ]

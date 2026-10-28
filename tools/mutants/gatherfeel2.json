@@ -110,8 +110,8 @@
  {
   "name": "GF2-BLOWSHAKE-the-follow-unstepped",
   "file": "src/scenes/gatherHost.js",
-  "old": "        for (const sw of swings) stepAct(sw, dt, {});",
-  "new": "        for (const sw of swings) sw.act.tick(dt, {});",
+  "old": "        for (const sw of swings) { try { stepAct(sw, dt, {}); }",
+  "new": "        for (const sw of swings) { try { sw.act.tick(dt, {}); }",
   "tests": [
    "test/systems/gf2_blowshake.test.js"
   ]

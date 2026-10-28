@@ -426,16 +426,16 @@ const rememberReload = () => {
   }
 });
 
-// Crash observability: an uncaught exception in the frame loop kills
-// requestAnimationFrame silently - on the deployed site that reads as
-// "the game crashed" with no signal. Surface the stack on screen so
-// playtest reports pinpoint the throw. Returns the report's element.
+// Crash observability: an uncaught exception reads on the deployed site
+// as "the game crashed" with no signal (and until LOOP-ALIVE, one in the
+// frame loop ended it - scenes/frameLoop.js). Surface the stack on screen
+// so playtest reports pinpoint the throw. Returns the report's element.
 function crashOverlay(msg) {
   const prior = document.getElementById('crash');
   if (prior) {
-    // A SECOND crash used to be dropped on the floor. The frame loop
-    // is dead after the first, but a later rejection is often the one
-    // that names the cause - keep a count and the newest text.
+    // A SECOND crash used to be dropped on the floor. A later throw
+    // or rejection is often the one that names the cause - keep a
+    // count and the newest text.
     prior._count = (prior._count ?? 1) + 1;
     prior.textContent = `CRASH (${prior._count})\n${msg}`;
     crashDismiss(prior);

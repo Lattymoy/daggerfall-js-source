@@ -198,6 +198,10 @@ export const storesWhereLine = (key, carrying = false) => (carrying ? BAG_WORDS.
   : `Gathered goods go straight to your Stores, under Holdings in the pause menu.${key ? ` ${key} opens your Professions.` : ''}`);
 /** GATHER-SAID: an act that ended before its end - let go, walked off, a window over it, the dungeon left - nothing asked. */
 export const ACT_STOPPED_LINE = 'The gathering stopped early. Nothing was taken.';
+/** LOOP-ALIVE: an act whose frame throws this many ticks in a row ends - one passing throw is stepped over. */
+export const ACT_FAULTS_MAX = 2;
+/** AUDIT LOOP-ALIVE B3: the most faults the host says in a session. */
+export const WARNS_MAX = 16;
 /** AUDIT LOCKPICK C14, D3: an act whose spot went from under it - the UTC day's turn, a Motherlode sunk - said why, read
  *  when said. */
 export const ACT_GONE_LINE = () => t('gather.stop.gone', 'This spot is gone for now, so the gathering stopped. Nothing was taken.');
@@ -344,6 +348,7 @@ export function createGatherHost(deps) {
   let clickHeld = false;      // CLICK-LIFT: the activation's button went down while an act played, and is not yet up
   let pointerAct = null, pointerOff = null;   // HERB-CURSOR: the act the mouse was last set for, and its release
   let faulted = null;         // LOOP-ALIVE: the act whose frame this tick has not yet run to its end
+  let faults = 0;             // LOOP-ALIVE: the ticks in a row that act's frame threw
   let standSpecs = undefined; // SEASONAL-EYE: the specs that change what stands, as the pixels were last stood
   let chipLeft = 0;
   let chipProfession = /** @type {string|null} */ (null);
@@ -866,18 +871,29 @@ export function createGatherHost(deps) {
     const want = act ? actPointer(act.act?.state) : null;
     if (want) pointerOff = deps.pointer?.(want) ?? null;
   }
-  /** LOOP-ALIVE (FIELD BUGS 2026-10-28): an act whose frame threw ends. The host's catch kept it playing, never stepped
-   *  and never walked off, so every press, click and swing stayed the act's - the character locked up. Emptied first
-   *  (THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD). */
+  /** LOOP-ALIVE (FIELD BUGS 2026-10-28): an act whose frame throws tick after tick ends. The host's catch kept it
+   *  playing, never stepped and never walked off, so every press, click and swing stayed the act's - the character
+   *  locked up. A throw that passes is stepped over, as before. Emptied first (THE SLOT IS EMPTIED BEFORE THE OCCUPANT
+   *  IS TOLD). */
   function dropFaulted() {
     const a = act;
     act = null;
-    faulted = null;
-    console.warn('[gather] an act\'s frame threw - the act ends');
-    try { letGo(a); a.act.cancel(); } catch (e) { console.warn('[gather] letting a faulted act go', e); }
-    syncPointer();
+    faulted = null; faults = 0;
+    if (firstWarn('drop')) console.warn('[gather] an act\'s frame threw tick after tick - the act ends');
+    try { a.act.cancel(); } catch (e) { if (firstWarn('cancel', e)) console.warn('[gather] cancelling a faulted act', e); }   // AUDIT B4: ended whatever its letting go does
+    try { letGo(a); } catch (e) { if (firstWarn('letGo', e)) console.warn('[gather] letting a faulted act go', e); }
     hud.setMeter(null);
     hud.toast(ACT_STOPPED_LINE);
+    syncPointer();   // AUDIT B6: after the meter and the line - the tick's foot syncs it again
+  }
+  /** AUDIT LOOP-ALIVE B3: whether a fault is said - once a place and message, at most WARNS_MAX (a kind that threw
+   *  every frame said it every frame). */
+  const warned = new Set();
+  function firstWarn(where, e = null) {
+    const key = `${where}|${e?.message ?? ''}`;
+    if (warned.has(key) || warned.size >= WARNS_MAX) return false;
+    warned.add(key);
+    return true;
   }
   function finish(a) {
     const report = a.act.report();
@@ -1235,7 +1251,8 @@ export function createGatherHost(deps) {
     /** Every frame the host is in the streaming world. */
     tick(dt) {
       syncPointer();   // AUDIT HERB-CURSOR A3/B1: before anything of the frame can throw
-      if (act && act === faulted) dropFaulted();   // LOOP-ALIVE: the last tick threw before this act's frame ended
+      // LOOP-ALIVE: the last tick threw before this act's frame ended - twice in a row, and the act ends
+      if (act && act === faulted) { if (++faults >= ACT_FAULTS_MAX) dropFaulted(); } else faults = 0;
       faulted = act;
       const now = deps.nowMs();
       // the state: read on arrival, at a new character and at the UTC day's turn; kept withdrawals settled on every good
@@ -1293,12 +1310,12 @@ export function createGatherHost(deps) {
       const feetNow = deps.feet();
       for (const k of kinds) {
         try { k.frame?.(dt, { feet: feetNow, translation: (e) => (stood.get(pixelKey(e.px, e.py))?.entry === e ? deps.pixelTranslation(e.px, e.py, [0, 0, 0]) : null), say: sayKind }); }   // GATHER-FEEL: `say` - a kind's own beat (the logs taken)
-        catch (e) { console.warn(`[gather] ${k.id}'s frame`, e); }   // LOOP-ALIVE: one kind's fault never stops the act's frame below
+        catch (e) { if (firstWarn(k.id, e)) console.warn(`[gather] ${k.id}'s frame`, e); }   // LOOP-ALIVE: one kind's fault never stops the act's frame below
       }
       // GATHER-FEEL: the last blows in the air land - their nodes go - and the tool that struck one is put away as its
       // swing runs out. AUDIT GATHER-FEEL LANDING: every last swing, the hand's or not, through stepAct - the one clock
       if (swings.length) {
-        for (const sw of swings) stepAct(sw, dt, {});
+        for (const sw of swings) { try { stepAct(sw, dt, {}); } catch (e) { if (firstWarn('swing', e)) console.warn('[gather] a last swing', e); } }   // AUDIT LOOP-ALIVE B1: one swing's fault is its own, never the act's
         if (swings.some((sw) => !(sw.act.swing > 0))) swings = swings.filter((sw) => sw.act.swing > 0);
         if (follow && !(follow.act.swing > 0)) follow = null;
       }
@@ -1326,8 +1343,8 @@ export function createGatherHost(deps) {
         }
         else if (act.act.state.done) { hud.setMeter(act.act, act.label ?? '', { byUse: act.heldByUse === true }); finish(act); }   // PROF-SCENES: the last frame drawn (its blow's cue) before the marks go
         else hud.setMeter(act.act, act.label ?? '', { byUse: act.heldByUse === true });   // TOUCH-HOLD: a Use's hold says no key
-        hud.setPrompt(null);
         faulted = null;   // LOOP-ALIVE: the act's frame ran to its end
+        hud.setPrompt(null);
       } else {
         ear.frame(dt, null);   // GATHER-FEEL: a finished act's last blow still lands, its chime still rings
         target = live() ? findTarget() : null;

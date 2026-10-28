@@ -25,6 +25,7 @@ import { nearestLights } from '../world/city/cityLights.js';
 import { syncLightingLane, interiorLightColor, interiorGrade } from '../render/enhancedLighting.js';   // EL1; INTERIOR-DIM: a room's lamps and its grade
 import { INTERIOR_MARKER } from '../world/interior/interiorLayout.js';
 import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
+import { loopFrame as requestAnimationFrame } from './frameLoop.js';   // LOOP-ALIVE: a frame that throws once the loop runs never ends it
 import { fetchBytes, seasonOverride, ensureAudio } from './shared.js';
 import { INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: DaggerfallInterior.cs:51 - an interior is summer-skinned, always
 import { createDataPipeline } from './dataPipeline.js';

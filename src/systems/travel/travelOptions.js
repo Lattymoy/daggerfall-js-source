@@ -1016,7 +1016,7 @@ export function createTravelOptions(deps = {}) {
       // town's ring reaches into its neighbours - answered no location
       // (not built yet, or none there), both rects went null, and the
       // walk's own OnArrival read `.zMax` off null. Unity logs that and
-      // runs the next frame; this host's frame loop dies on it. With the
+      // runs the next frame; this host's frame loop died on it (until LOOP-ALIVE). With the
       // name gone the rects hold for the whole walk, as they do for
       // every path leg, and the follow key, the avoid-encounter resume
       // and the LocationPause arm all read the walk as the followed
