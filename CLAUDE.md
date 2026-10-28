@@ -8,6 +8,14 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   departure from it - not a target to match. Older pages that say "1:1" are
   history; Port-Doctrine's Scope section governs new work.
 
+- **The world is Tamriel** (TAMRIEL-WIDE, the owner, 2026-10-28: "ensure our future development isnt just
+  Daggerfall anymore and is the entirety of tamriel"; Port-Doctrine's "The whole of Tamriel"): the Iliac Bay is one
+  theatre of ten. New work answers for every province, or its record says where it does not and why. Key a pixel by
+  `worldPixelKey`, bound it by `worldPixelOk`, find a place in `worldPlaces`, read regions 0..70 and areas - never
+  MapsFile's `y * 1000 + x`, a loop over MAPS.BSA's regions or a 0..999 bound, except as the Bay's own data behind
+  `inBay` with a `BAY-OWN:` comment saying why. Pin a case past the Bay beside the Bay's, and probe in a province, not
+  only in Daggerfall. `test/tooling/tamrielwide.test.js` holds the tree to `tools/tamrielWideBaseline.json`, which
+  only goes down.
 - **ARENA2 is freeware - fetch it, never report it missing** (the owner, 2026-10-18: "Why not install the freeware.
   Im tired of having to ask you to do this"): `sh tools/fetch-data.sh` puts Daggerfall's own data at
   `/home/claude/dfdata/arena2` (~150 MB, never in the repo). Run it before any work that reads the map, the game's

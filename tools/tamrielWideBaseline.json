@@ -1,0 +1,32 @@
+{
+ "pixel-id": {
+  "src/formats/mapsFile.js": 1,
+  "src/net/townEconLaw.js": 2,
+  "src/systems/naval/harbourBook.js": 1,
+  "src/world/deepWater/deepWatersBakeCache.js": 1,
+  "src/world/deepWater/deepWatersClient.js": 1,
+  "src/world/spawnedDungeons.js": 1,
+  "src/world/townWalls.js": 1
+ },
+ "region-walk": {
+  "src/formats/mapsFile.js": 1,
+  "src/scenes/world.js": 1,
+  "src/systems/deathRespawn.js": 1,
+  "src/systems/gate/gateSite.js": 1,
+  "src/systems/map/mapDirectory.js": 1,
+  "src/systems/quest/place.js": 3,
+  "src/ui/ink/inkMap.js": 1,
+  "src/world/oceanHoles.js": 1,
+  "src/world/roadsProducer.js": 1,
+  "src/world/worldWide/worldCemetery.js": 1
+ },
+ "bay-bound": {
+  "src/scenes/snowfallHost.js": 1,
+  "src/scenes/world.js": 2,
+  "src/systems/naval/harbourBook.js": 1,
+  "src/world/spawnedDungeons.js": 1
+ },
+ "region-62": {
+  "src/formats/save/saveGames.js": 1
+ }
+}
