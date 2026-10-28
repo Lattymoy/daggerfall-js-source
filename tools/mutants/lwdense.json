@@ -1,0 +1,269 @@
+[
+  {
+    "name": "LW-DENSE-per-block",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const CENSUS_PER_BLOCK = 10;",
+    "new": "export const CENSUS_PER_BLOCK = 9;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-floor",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const censusMaxOf = (town) => Math.max(CENSUS_MAX, Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0)));",
+    "new": "export const censusMaxOf = (town) => Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0));",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-cap",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const CENSUS_CAP = 520;",
+    "new": "export const CENSUS_CAP = 600;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-crowd-start",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
+    "new": "  return b < 9 ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-crowd-rise",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);",
+    "new": "  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / 32);",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-crowd-top",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const CROWD_MAX = 2;",
+    "new": "export const CROWD_MAX = 3;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-crowd-unminted",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  if (crowd > 0 && keep.length < max) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-crowd-homeless",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });",
+    "new": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: null, work: null, faction: 0 });",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-crowd-trade",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });",
+    "new": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: 'merchant', home: h.key, work: null, faction: 0 });",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-street-per-block",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const STREET_PER_BLOCK = 3;",
+    "new": "export const STREET_PER_BLOCK = 2;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-street-top",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const STREET_MAX = 160;",
+    "new": "export const STREET_MAX = 200;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-street-start",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const livingStreetCap = (blocks) => (blocks < CROWD_FROM_BLOCKS ? maxPopulationFor(blocks)",
+    "new": "export const livingStreetCap = (blocks) => (blocks < 9 ? maxPopulationFor(blocks)",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-street-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this.maxPopulation = livingStreetCap(o.town.blocks);   // LW-DENSE: the street's cap by the town's size",
+    "new": "    this.maxPopulation = maxPopulationFor(o.town.blocks);",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-order",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const WIDE_JOBS = Object.freeze(['adventurer', 'pedlar', 'pilgrim', 'courier', 'hunter']);",
+    "new": "export const WIDE_JOBS = Object.freeze(['pedlar', 'adventurer', 'pilgrim', 'courier', 'hunter']);",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-divers",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    adventurer: b >= 2 ? clamp(1 + Math.floor(b / 5), 1, 10) : 0,",
+    "new": "    adventurer: b >= 2 ? clamp(1 + Math.floor(b / 6), 1, 10) : 0,",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-pedlars",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    pedlar: b >= 2 ? clamp(1 + Math.floor(b / 8), 1, 6) : 0,",
+    "new": "    pedlar: b >= 2 ? clamp(1 + Math.floor(b / 9), 1, 6) : 0,",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-hunters",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    hunter: rural ? (b >= 4 ? 2 : 1) : 0,",
+    "new": "    hunter: rural ? 1 : 0,",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-unminted",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    for (let i = 0; i < wide[/** @type {keyof ReturnType<typeof wideCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));",
+    "new": "    for (let i = 0; i < 0; i++) out.push(mintResident(town, 't', slot++, job));",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-start",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const wideFrom = slot;",
+    "new": "  const wideFrom = 0;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-mixed",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  dealCompanies(advs.filter((r) => r.slot < from), got, false);",
+    "new": "  dealCompanies(advs, got, false);",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js",
+      "test/systems/livingWorld/lw13_companies.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-divers-undealt",
+    "file": "src/systems/livingWorld/companies.js",
+    "old": "  dealCompanies(advs.filter((r) => r.slot >= from), got, true);",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-dive-chance",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const WIDE_DIVE_CHANCE = 0.9;",
+    "new": "export const WIDE_DIVE_CHANCE = 0.75;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-WIDE-dive-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (drng() < (isWidePlace(res, world.rosterOf(home)) ? WIDE_DIVE_CHANCE : company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {",
+    "new": "    if (drng() < (company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js",
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-fill-by-box",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "pending.push({ res, near: walkNear(w.e, t, playerPos) })",
+    "new": "pending.push({ res, near: walkGap(w.e, playerPos) })",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-fill-near-later",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        this._onStreet = near < POP_VISIBLE_RANGE;   // LW-DENSE: within sight, asked with the street's own",
+    "new": "        this._onStreet = false;",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-nearest-by-list",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  byFrom.set(from, out);",
+    "new": "  byFrom.set(from, out); nearestKept.set(list, { get: () => out, set: () => {} });",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-DENSE-nearest-unfrozen",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  out = Object.freeze([...list].sort(",
+    "new": "  out = ([...list].sort(",
+    "tests": [
+      "test/systems/livingWorld/lwdense_town.test.js"
+    ]
+  }
+]

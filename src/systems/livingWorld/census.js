@@ -29,6 +29,24 @@ import { lwSeed, rollInt, pickOf, pickWeighted } from './seed.js';
 /** The most residents one town keeps - the households trimmed past it, plain hands first (a city's two hundred houses
  *  would otherwise mint six hundred people, and a day is drawn for each). */
 export const CENSUS_MAX = 260;
+/** LW-DENSE (the owner: "Depending on the size of the city, the living world should be more dense"): a town keeps more
+ *  people the bigger it is - CENSUS_PER_BLOCK a block of its grid, never fewer than CENSUS_MAX nor more than CENSUS_CAP.
+ *  Trimmed at CENSUS_MAX, a city of 42 blocks kept six a block and a village seventeen. */
+export const CENSUS_PER_BLOCK = 10;
+export const CENSUS_CAP = 520;
+/** LW-DENSE: from CROWD_FROM_BLOCKS a town's houses are fuller - each holds crowdOf(town) more on average, to CROWD_MAX
+ *  at twice that size: minted after everyone the town kept before, on a roll of their own ('c'), so no id moves. */
+export const CROWD_FROM_BLOCKS = 16;
+export const CROWD_MAX = 2;
+/** LW-DENSE: the crowd's stream, apart from the households' ('cr'), so every one minted before is as they were. */
+const CROWD_SALT = 0x6372;
+/** @param {LwTown} town */
+export const censusMaxOf = (town) => Math.max(CENSUS_MAX, Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0)));
+/** @param {LwTown} town */
+export const crowdOf = (town) => {
+  const b = Math.max(1, town.blocks | 0);
+  return b < CROWD_FROM_BLOCKS ? 0 : Math.min(CROWD_MAX, (b - CROWD_FROM_BLOCKS) / CROWD_FROM_BLOCKS);
+};
 
 /** The climate's People -> the billboard tables' race: the walkers' one table (characters/mobile/mobilePerson.js, REGIONAL-FOLK). */
 export { RACE_OF_PEOPLE, raceOfPeople } from '../../characters/mobile/mobilePerson.js';
@@ -211,6 +229,26 @@ export function moreCounts(town) {
 /** LW9: the order MORE_JOBS are dealt in, after ROAD_JOBS. */
 export const MORE_JOBS = Object.freeze(['pedlar', 'pilgrim', 'courier']);
 
+/** LW-WIDE (the owner: "Living world NPCs should be more dense in the entire world, more travellers, more dungeon
+ *  divers"): A FOURTH RANK OF THE ROAD'S OWN, dealt after MORE_JOBS - every id before it unchanged. Its adventurers are
+ *  the divers (trips.js WIDE_DIVE_CHANCE), in companies of their own (companies.js); the rest more of the road's traffic. */
+export const WIDE_JOBS = Object.freeze(['adventurer', 'pedlar', 'pilgrim', 'courier', 'hunter']);
+/** LW-WIDE: how many of each a town keeps by its size - a village's one diver, a hamlet's two, a city's eight to ten; a
+ *  pedlar more each eight blocks (to six); a pilgrim a town of four blocks and one more each 24; a courier from nine; a
+ *  hunter more in the country. Never a merchant or a sellsword (formCaravans' contract). @param {LwTown} town */
+export function wideCounts(town) {
+  const b = Math.max(1, town.blocks | 0);
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const rural = town.type === HAMLET || town.type === VILLAGE || town.type === FARM;
+  return {
+    adventurer: b >= 2 ? clamp(1 + Math.floor(b / 5), 1, 10) : 0,
+    pedlar: b >= 2 ? clamp(1 + Math.floor(b / 8), 1, 6) : 0,
+    pilgrim: b >= 4 ? 1 + Math.floor(b / 24) : 0,
+    courier: b >= 9 ? 1 + Math.floor(b / 30) : 0,
+    hunter: rural ? (b >= 4 ? 2 : 1) : 0,
+  };
+}
+
 /** WATCH-DAY: the watch's companies - one to each day of its rotation (dayPlan.js watchDuty: the day's shift, the
  *  evening's, the night's, the day off). */
 export const WATCH_COMPANIES = 4;
@@ -220,14 +258,23 @@ export const watchShiftSize = (town) => {
   const b = Math.max(1, town.blocks | 0);
   return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;
 };
+/** WATCH-LIFE (the owner: "Guards should have a more Living world presence"): a city's watch walks more patrols - a pair
+ *  more a shift from 25 blocks, two from 40, three from 60 - after the shift's own (dayPlan.js watchDuty: a rank past
+ *  watchShiftSize patrols), so no post nor gate's law moves. A city of 64 blocks kept one pair a shift. @param {LwTown} town */
+export const watchExtraOf = (town) => {
+  const b = Math.max(1, town.blocks | 0);
+  return b >= 25 ? 2 * Math.min(3, Math.floor(b / 20)) : 0;
+};
 /** The watch a town of `blocks` keeps: none in a hamlet; WATCH-DAY: four companies of its strength a shift (four to
- *  twenty-four - the first cut kept two to twelve on two shifts, and nobody kept the night). @param {LwTown} town */
-export const townWatchCount = (town) => WATCH_COMPANIES * watchShiftSize(town);
+ *  twenty-four - the first cut kept two to twelve on two shifts, and nobody kept the night); WATCH-LIFE: its extra
+ *  patrols too. @param {LwTown} town */
+export const townWatchCount = (town) => WATCH_COMPANIES * (watchShiftSize(town) + watchExtraOf(town));
 
 /**
  * THE TRAVELLERS - minted from the town's MAPS row alone (so a caravan seen on a road far from its town is the same
- * caravan its town's readers see). Each job's slots in TRAVELLER_JOBS order, numbered on from 0.
- * @param {LwTown} town @returns {Resident[]}
+ * caravan its town's readers see). Each job's slots in TRAVELLER_JOBS order, numbered on from 0. LW-WIDE: `wideFrom` the
+ * fourth rank's first slot.
+ * @param {LwTown} town @returns {Resident[] & { wideFrom: number }}
  */
 export function travellerRoster(town) {
   const counts = travellerCounts(town);
@@ -245,8 +292,16 @@ export function travellerRoster(town) {
   for (const job of MORE_JOBS) {
     for (let i = 0; i < again[/** @type {keyof ReturnType<typeof moreCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
   }
-  return out;
+  // LW-WIDE: the fourth rank after them, its first slot kept on the roster (a place's holder any cycle is one of it by slot)
+  const wideFrom = slot;
+  const wide = wideCounts(town);
+  for (const job of WIDE_JOBS) {
+    for (let i = 0; i < wide[/** @type {keyof ReturnType<typeof wideCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));
+  }
+  return Object.assign(out, { wideFrom });
 }
+/** LW-WIDE: whether `res` holds a place of the roster's fourth rank. @param {{ slot: number }} res @param {any} roster */
+export const isWidePlace = (res, roster) => res?.slot >= (roster?.wideFrom ?? Infinity);
 
 /** The town's watch, minted from the row alone too (a crime is answered by a person the player may have met). @param {LwTown} town */
 export function watchRoster(town) {
@@ -260,7 +315,7 @@ export function watchRoster(town) {
  * a hand at a good one), each tavern its keeper and its servers, each temple two priests, each guild hall two members,
  * the palace two of its court. The trades are dealt to the houses' people in a seeded order; a trade left over lives
  * where it works; a house's people left over take the common work of the town (a port's fishing, a village's fields,
- * a city's beggars and labourers). Trimmed to CENSUS_MAX, the common hands first.
+ * a city's beggars and labourers). Trimmed to the town's cap (LW-DENSE censusMaxOf), the common hands first.
  * IC-GRAND: `quarter` a town of quarters' other quarter's (places.js): its households minted on their own roll and slots
  * ('q', the quarter's thousand) off a stream of their own, so no two of a town's people share an identity.
  * @param {LwTown} town @param {readonly LwBuilding[]} buildings @param {{ quarter?: number }} [o] @returns {Resident[]}
@@ -300,12 +355,12 @@ export function householdCensus(town, buildings, { quarter = 0 } = {}) {
   for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
   const blocks = Math.max(1, town.blocks | 0);
   /** The common work of the town: a port fishes, a village farms, a city has its beggars. */
-  const commonJob = () => {
+  const commonJob = (r = rng) => {
     const w = {
       labourer: blocks >= 9 ? 5 : 2, farmer: blocks >= 16 ? 0.5 : 5, fisher: town.port ? 3 : 0, crafter: 3, homemaker: 4,
       beggar: blocks >= 16 ? 0.6 : 0,
     };
-    return pickWeighted(rng, w) ?? 'labourer';
+    return pickWeighted(r, w) ?? 'labourer';
   };
   /** @type {{ job: string, home: number|null, work: number|null, faction: number }[]} */
   const placed = [];
@@ -317,11 +372,21 @@ export function householdCensus(town, buildings, { quarter = 0 } = {}) {
   }
   const common = [];
   for (; k < order.length; k++) common.push({ job: commonJob(), home: people[order[k]], work: null, faction: 0 });
-  // trimmed: the trades kept whole, the common hands to the cap
-  const keep = placed.concat(common.slice(0, Math.max(0, CENSUS_MAX - placed.length)));
+  // trimmed: the trades kept whole, the common hands to the cap - LW-DENSE: the town's, by its size
+  const max = censusMaxOf(town);
+  const keep = placed.concat(common.slice(0, Math.max(0, max - placed.length)));
+  // LW-DENSE: a city's houses fuller - each house its crowdOf share more, of the common work, after everyone kept above
+  const crowd = crowdOf(town);
+  if (crowd > 0 && keep.length < max) {
+    const crng = seededRng(quarter ? lwSeed(town.mapId >>> 0, CROWD_SALT, quarter) : lwSeed(town.mapId >>> 0, CROWD_SALT));
+    for (const h of houses) {
+      const n = Math.floor(crowd) + (crng() < crowd % 1 ? 1 : 0);
+      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });
+    }
+  }
   return keep.map((p, slot) => mintResident(town, quarter ? 'q' : 'h', quarter * QUARTER_SLOTS + slot, p.job, { home: p.home, work: p.work, faction: p.faction }));
 }
-/** IC-GRAND: a quarter's households' slots begin at its number times this (CENSUS_MAX a quarter at the most). */
+/** IC-GRAND: a quarter's households' slots begin at its number times this (CENSUS_CAP a quarter at the most). */
 export const QUARTER_SLOTS = 1000;
 /**
  * IC-GRAND: A TOWN OF QUARTERS' PEOPLE (places.js `quarters`) - its own quarter's as townCensus mints a town's (its

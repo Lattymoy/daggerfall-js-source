@@ -367,7 +367,7 @@
   {
     "name": "LW-TALK-stand-cycles",
     "file": "src/characters/residentWalker.js",
-    "old": "st === 'stand' ? Math.min(STAND_FRAME, n - 1) : this.frame % n",
+    "old": "st === 'stand' ? this._standFrame(n) : this.frame % n",
     "new": "this.frame % n",
     "tests": [
       "test/systems/livingWorld/lwtalk_town.test.js"

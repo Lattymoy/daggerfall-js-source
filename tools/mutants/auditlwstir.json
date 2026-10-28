@@ -832,8 +832,8 @@
   {
     "name": "AUDIT-LWSTIR-D-LT-absent-unread",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "if (inc && inc.members.every((m) => !absent.has(m.id))) {",
-    "new": "if (inc) {",
+    "old": "if (inc && inc.members.every((m) => !absent.has(m.id)) && inc.members.every(still)) {",
+    "new": "if (inc && inc.members.every(still)) {",
     "tests": [
       "test/systems/livingWorld/auditlwstir.test.js",
       "test/systems/livingWorld/lwstir_street.test.js"

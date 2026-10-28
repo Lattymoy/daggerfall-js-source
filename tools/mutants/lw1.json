@@ -166,7 +166,7 @@
   {
     "name": "LW1-cap-unread",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  const keep = placed.concat(common.slice(0, Math.max(0, CENSUS_MAX - placed.length)));",
+    "old": "  const keep = placed.concat(common.slice(0, Math.max(0, max - placed.length)));",
     "new": "  const keep = placed.concat(common);",
     "tests": [
       "test/systems/livingWorld/lw1_livingWorld.test.js"

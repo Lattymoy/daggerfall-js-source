@@ -67,6 +67,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
 | PROVINCE-COURTS | Each province's own court and people: a Province, its named ruler, its Court and its People for each of regions 62..70 (the owner's call taken, 2026-10-26: "Every single thing here needs to be addressed. No exceptions."), read by every reader of a region's court and people; the capitals' castles their courts; a bloodline a province; a clan never a province's | BUILT (below) |
 | PROVINCE-FOLK | Each province's own people (the owner, 2026-10-28: "The world of tamriel needs to have their accurate races present within their respective regions"): its own race most of all and the others the lore puts there - the street's walkers, the living world's residents, the yards' and ports' keepers, the foes, the watch and the rosters past the Bay, and Cyrodiil's standing people as Imperials | BUILT (below) |
+| HOVER-NAMES | The plaque's names past the Bay (the owner, 2026-10-28: "NPCs past the bay dont show name on tooltip hover"): read through and probed in the real game on the Bay and in three places past it, every walker named; not reproduced here, the probe kept for the Morrowind lane and online | PROBED (below) |
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | BUILT (below, 2026-10-27: a coven night and a Hollow on the Bay's lane and each province's, Cyrodiil's open zone none) |
@@ -2168,3 +2169,23 @@ rode into the Worker's bundle outside `.github/workflows/account-deploy.yml`'s p
 ACC1-CI, `test/server/discord_setup.test.js` DISCORD-CODE). The seed takes the mix from its own leaf (`world/blockHash.js`,
 which `spawnedDungeons.js` re-exports - the same function), so none of them is bundled and the filter is unchanged. Mutant
 `tools/mutants/bayleft_merge.json` BAYLEFT-MERGE-the-seed-through-the-spawns (dead).
+
+## HOVER-NAMES - the plaque's names past the Bay, probed (2026-10-28)
+
+The owner: "NPCs past the bay dont show name on tooltip hover". Read through first. A walker past the Bay is named on
+their own people's bank (`census.js` `residentName`, `townPopulation.js` RandomiseNPC, a street StaticNPC on the
+province's bank - `worldModes.js` `currentNameBank`). The plaque's person pick is the talk ray's (`townTalk.js`
+`nearestPerson`) over the seats the street draws, and its band names the one it picked (`mobilePersonName`).
+
+- **Probed** (`tools/hoverNamesProbe.mjs`, the freeware's world, headless). Each walker looked at from two metres, the
+  plaque read: 8 of 8 named at Arkbridge on the Bay, 8 of 8 at Nimean (Cyrodiil), 8 of 8 at Blacklight (an Arena city of
+  Morrowind, 100 walking near) and 8 of 8 in Solitude; no plaque empty, no page error. Its standing people too, read
+  once by hand: Blacklight's 13 and Solitude's 16, every one named. Not reproduced.
+- **What this machine cannot reach.** The Morrowind lane's bodies (the player's own data: `npcBodies.js` `npcBodiesOn`)
+  and online play, where the professions' nodes stand (`gatherHost.js` `hoverHit` puts a node with an act ready over the
+  look's winner). The probe runs as it is where either is attached.
+- **Found on the way, not changed.** `getNameBankOfRegion` knows the 71 regions alone: an area past the Bay (the world's
+  grid, 71 and up) mints an empty name. No caller hands it one today (`nameBankOfArea` is the area's door). And
+  Solitude stood four street people named alike: DFU's seed is the record's place in its block against the location,
+  so a block repeated repeats its people.
+

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { synthTown, closeTown } from '../../lwTown.mjs';
 import { LivingTown, GREET_REST_MIN, keepUnits, TALK_PULL_M } from '../../../src/systems/livingWorld/livingTown.js';
-import { ResidentWalker, STAND_FRAME } from '../../../src/characters/residentWalker.js';
+import { ResidentWalker, STAND_FRAME, IDLE_GLANCE_YAW } from '../../../src/characters/residentWalker.js';
 import { PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD, MOVE_RECORDS, MOVE_FLIPS, PERSON_MOVE_SPEED, PERSON_IDLE_DISTANCE } from '../../../src/characters/mobile/mobilePerson.js';
 import { mobileOrientation } from '../../../src/characters/mobile/mobileUnit.js';
 import {
@@ -82,8 +82,10 @@ test('LW-TALK the facing: a resident standing keeps the way they face - the walk
     // their circles: at half past six, three in circles stood in view)
     const c = t.town._inCircle.get(s.person.living.id) ?? t.town._inStir.get(s.person.living.id);
     if (!c || s.person.moving) continue;
-    const o = mobileOrientation(s.person.yaw, s.person.pos, t.eye);
+    // STAND-LIFE: PIN MOVED - drawn the way they face but for a glance aside under way, never more than IDLE_GLANCE_YAW
+    const o = mobileOrientation(s.person.shownYaw, s.person.pos, t.eye);
     assert.deepEqual([s.out.record, s.out.flip], [MOVE_RECORDS[o], MOVE_FLIPS[o]], `${s.person.living.id}: toward their circle (or the other of their incident)`);
+    assert.ok(Math.abs(s.person.shownYaw - s.person.yaw) <= IDLE_GLANCE_YAW + 1e-9 && (s.person.stir === 'glance') === (s.person.shownYaw !== s.person.yaw), 'a glance, and only one');
     checked++;
   }
   assert.ok(checked >= 4, `circles standing (${checked})`);

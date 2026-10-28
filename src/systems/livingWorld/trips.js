@@ -33,7 +33,7 @@ import { DAY_MIN, DAY_START_MIN } from './dayPlan.js';
 import { WORLD_MAP_TERRAIN_DIM as NATIVE_PIXEL } from '../../formats/mapsFile.js';
 import { NATIVE_PER_M } from '../travel/travelDungeons.js';
 import { worldPixelKey, WORLD_PIXEL_KEYS } from '../../world/worldWide/worldGrid.js';   // WW1: one key a pixel of the whole world
-import { CITY_COURT_BLOCKS } from './census.js';
+import { CITY_COURT_BLOCKS, isWidePlace } from './census.js';
 import { companiesOf, companyOfPlace, namedIn, COMPANY_DIVE_CHANCE, holyDayOf, holyDepartMin, holyDraw } from './companies.js';   // LW13: the companies, the pilgrims' holy day
 
 // the native units' one homes: a map pixel the MAPS format's own (mapsFile.js), a metre the travel view's (travelDungeons.js)
@@ -101,6 +101,9 @@ export const LIVING_NEAR_KEPT = 8192;
 /** LW6: the share of an adventurer's trips that are DIVES - into a dungeon in reach, when one is - and the reach
  *  (map pixels, nearest and farthest), and the hours inside (the clock's minutes, fewest and most). */
 export const DIVE_CHANCE = 0.55;
+/** LW-WIDE: one of the roster's divers (census.js WIDE_JOBS' adventurers) dives in this share of their cycles, in a
+ *  company or alone. */
+export const WIDE_DIVE_CHANCE = 0.9;
 export const DIVE_RANGE_PX = Object.freeze([1, 8]);
 export const DIVE_MIN = Object.freeze([240, 600]);
 /** LW5b: THE PASSAGE BY SEA - the share of a port town's travellers' trips that sail to a port a lane of the Bay runs
@@ -595,7 +598,7 @@ export function ownTrip(res, home, k, world, o) {
   // LW6: an adventurer's cycle a DIVE now and then - its own dice, so a cycle that is none is the trip it always was
   if (res.job === 'adventurer' && world.dungeonsNear) {
     const drng = lwRng(res.town, res.slot, k, 0x64697665);   // 'dive'
-    if (drng() < (company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {   // LW13: a company the likelier
+    if (drng() < (isWidePlace(res, world.rosterOf(home)) ? WIDE_DIVE_CHANCE : company ? COMPANY_DIVE_CHANCE : DIVE_CHANCE)) {   // LW13: a company the likelier; LW-WIDE: the divers likelier still
       const dive = diveTrip(res, home, k, world, { start, len, pace, rng: drng });
       if (dive !== null) return dive;   // undefined (a way asked) or the dive; none that fits, the town trip
     }

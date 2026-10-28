@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { synthTown } from '../../lwTown.mjs';
-import { townClassOf, stillRoleOf, stillFlatOf, STILL_FLATS, GUILD_CLASSES, PRIEST_CLASS } from '../../../src/systems/livingWorld/looks.js';
+import { townClassOf, stillRoleOf, stillFlatOf, STILL_FLATS, MOVING_STILLS, GUILD_CLASSES, PRIEST_CLASS } from '../../../src/systems/livingWorld/looks.js';
 import { MAGES_GUILD, FIGHTERS_GUILD, DAY_MIN, isOutdoor } from '../../../src/systems/livingWorld/dayPlan.js';
 import { LivingTown } from '../../../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../../../src/characters/residentWalker.js';
@@ -67,21 +67,26 @@ test('LW-LOOKS the still pictures: one keeping their place alone - a beggar at t
   for (const kind of ['walk', 'market', 'tavern']) assert.equal(stillRoleOf(R('e', { job: 'priest', work: 1001 }), { kind, at: temple }), null, `a priest's ${kind} at their temple: none (a walk there not yet searched stands still)`);
   for (const kind of ['social', 'market', 'walk', 'home']) assert.equal(stillRoleOf(R('h', { job: 'beggar' }), { kind, at: null }), null, `${kind}: none`);
   assert.equal(stillRoleOf(R('i'), null), null);
-  // the picture: their sex's (every kind has both), their seed's, the same every reader
+  // the picture: their sex's, their seed's, the same every reader - STAND-LIFE: PIN MOVED, of the ones that move alone
+  // (MOVING_STILLS); a kind and a sex with none answer none, and the one keeps themselves
+  const moving = { merchant: { male: 2, female: 0 }, crafter: { male: 0, female: 0 }, priest: { male: 1, female: 0 }, court: { male: 2, female: 2 }, beggar: { male: 0, female: 0 }, labourer: { male: 0, female: 0 }, fisher: { male: 0, female: 0 } };
   for (const role of /** @type {(keyof typeof STILL_FLATS)[]} */ (Object.keys(STILL_FLATS))) {
     for (const sex of /** @type {const} */ (['male', 'female'])) {
-      const list = STILL_FLATS[role][sex];
-      assert.ok(list.length > 0, `${role}: a ${sex} picture`);
+      const list = STILL_FLATS[role][sex].filter(([a, r]) => MOVING_STILLS.has(`${a}.${r}`));
+      assert.ok(STILL_FLATS[role][sex].length > 0, `${role}: a ${sex} picture in the record`);
+      assert.equal(list.length, moving[role][sex], `${role} ${sex}: the pictures that move`);
       const seen = new Set();
       for (let i = 0; i < 160; i++) {
         const f = stillFlatOf(R(`L2.${i}`, { sex }), role);
-        assert.ok(list.some(([a, r]) => a === f.archive && r === f.record), `${role} ${sex}: ${f.archive}.${f.record} of their kind`);
+        if (!list.length) { assert.equal(f, null, `${role} ${sex}: none moves - themselves`); continue; }
+        assert.ok(f && list.some(([a, r]) => a === f.archive && r === f.record), `${role} ${sex}: ${f?.archive}.${f?.record} of their kind, one that moves`);
         assert.deepEqual(stillFlatOf(R(`L2.${i}`, { sex }), role), f);
         seen.add(`${f.archive}.${f.record}`);
       }
       assert.equal(seen.size, list.length, `${role} ${sex}: every one some one's`);
     }
   }
+  for (const k of MOVING_STILLS) assert.ok(Object.values(STILL_FLATS).some((kind) => [...kind.male, ...kind.female].some(([a, r]) => `${a}.${r}` === k)), `${k}: one of the record's`);
   for (const kind of Object.values(STILL_FLATS)) for (const list of [kind.male, kind.female]) for (const [a] of list) assert.ok(NPC_FLAT_ARCHIVES.includes(a), `${a}: an NPC flat's archive`);
 });
 
@@ -105,6 +110,11 @@ test('LW-LOOKS the still pictures are the game\'s own (ARENA2): each of its kind
     }
   }
   assert.ok(heightOf(texture(177), 0) > tallest * 1.2, 'the cowled old man: too tall to stand among them');
+  // STAND-LIFE: the pictures that move are the record's of more than one frame, the blacksmith at his anvil left out
+  const many = new Set();
+  for (const kind of Object.values(STILL_FLATS)) for (const [a, r] of [...kind.male, ...kind.female]) if (texture(a).getFrameCount(r) > 1) many.add(`${a}.${r}`);
+  assert.ok(many.delete('182.59'), 'the blacksmith moves');
+  assert.deepEqual([...MOVING_STILLS].sort(), [...many].sort(), 'the moving ones, as the freeware draws them');
 });
 
 test('LW-LOOKS the walker as a still picture: its record, its frames on the game\'s billboard clock (GENERAL_FPS) where it has more than one; themselves again after - their class\'s sprite or their outfit; dressed as another, neither (mutants: the picture unread, the clock, the archive back)', () => {
@@ -158,33 +168,42 @@ function searched(lt, res, t) {
   return w;
 }
 
-test('LW-LOOKS on the street: a beggar keeping their pitch alone stands as their still picture - a body coming on there comes on as it; one come to their pitch in the player\'s sight stays themselves till the player looks away (never changed in view); themselves at once as they go on (mutants: the still unread, the unseen, the going on)', () => {
-  const day = 100, D = day * DAY_MIN;
-  // a beggar who walks to their pitch and keeps it an hour or more, and the walk on after
-  const probe = town(D + 9 * 60).lt;
+test('LW-LOOKS on the street: one keeping their stand alone whose kind\'s picture moves (STAND-LIFE: PIN MOVED - a merchant at their stall; a beggar\'s pictures are one frame, and a beggar keeps themselves) stands as their still picture - a body coming on there comes on as it; one come to their stand in the player\'s sight stays themselves till the player looks away (never changed in view); themselves at once as they go on (mutants: the still unread, the unseen, the going on)', () => {
+  let day = 100, D = day * DAY_MIN;
+  // one who walks to their stand and keeps it an hour or more, and the walk on after - their kind's picture one that moves
   let beggar = null, to = null, pitch = null, leave = null;
-  for (const r of probe.peopleOf(day)) {
+  let probe = town(D + 9 * 60).lt;
+  for (let dd = 100; dd < 130 && !beggar; dd++) for (const r of (day = dd, D = day * DAY_MIN, probe = town(D + 9 * 60).lt).peopleOf(day)) {
     const plan = probe.planOf(r, day);
-    const k = plan.findIndex((e, i) => i > 0 && e.kind === 'beg' && e.t1 - e.t0 > 60 && plan[i - 1].kind === 'walk' && plan[i - 1].t1 - plan[i - 1].t0 > 2 && e.t0 > D + 6 * 60);
+    const k = plan.findIndex((e, i) => i > 0 && ['stall', 'social'].includes(e.kind) && stillRoleOf(r, e) && stillFlatOf(r, /** @type {any} */ (stillRoleOf(r, e))) && e.t1 - e.t0 > 60 && plan[i - 1].kind === 'walk' && plan[i - 1].t1 - plan[i - 1].t0 > 2 && e.t0 > D + 6 * 60);
     if (k < 0) continue;
+    // alone at it half an hour in (one dealt into a circle there is themselves, turned to it)
+    const { lt: l2, clock: c2 } = town(plan[k].t0 + 30);
+    const w2 = searched(l2, l2.peopleOf(day).find((x) => x.id === r.id), c2.t);
+    if (!w2) continue;
+    const a2 = [w2.x + 3, 0, w2.z];
+    for (let i = 0; i < 10; i++) { c2.t += RATE / 30; l2.update(1 / 30, a2, Math.atan2(w2.x - a2[0], w2.z - a2[2]), [a2[0], 1.6, a2[2]], true); }
+    if (l2._inCircle.has(r.id)) continue;
     beggar = r; to = plan[k - 1]; pitch = plan[k]; leave = plan.find((e) => e.kind === 'walk' && e.t0 >= pitch.t1 - 1e-6);
     break;
   }
-  assert.ok(beggar && to && pitch && leave, 'a beggar walking to their pitch, and on after');
-  const flat = stillFlatOf(beggar, 'beggar');
+  assert.ok(beggar && to && pitch && leave, 'one walking to their stand, and on after');
+  const flat = /** @type {{ archive: number, record: number }} */ (stillFlatOf(beggar, /** @type {any} */ (stillRoleOf(beggar, pitch))));
+  const beg = probe.peopleOf(day).find((r) => r.job === 'beggar');
+  assert.ok(beg && stillFlatOf(beg, 'beggar') === null, 'a beggar at their pitch: themselves');
   const as = (p) => [p.stillLook?.archive ?? null, p.stillLook?.record ?? null];
   // a body coming on at the pitch: as the still picture (a body not yet stood is seen by nobody)
   {
     const { lt, clock } = town(pitch.t0 + 30);
     const own = lt.peopleOf(day).find((r) => r.id === beggar.id);   // this town's own (the census is every reader's alike)
     const w = searched(lt, own, clock.t);
-    assert.ok(w && !w.moving && w.e.kind === 'beg');
+    assert.ok(w && !w.moving && w.e.kind === pitch.kind);
     const at = [w.x + 3, 0, w.z];
     const toward = Math.atan2(w.x - at[0], w.z - at[2]);
     for (let i = 0; i < 10; i++) { clock.t += RATE / 30; lt.update(1 / 30, at, toward, [at[0], 1.6, at[2]], true); }
     const row = lt._rowOf(own);
     assert.ok(row?.visible, 'stood, in view');
-    assert.ok(!lt._inCircle.has(beggar.id), 'alone at their pitch');
+    assert.ok(!lt._inCircle.has(beggar.id), 'alone at their stand');
     assert.deepEqual(as(row.person), [flat.archive, flat.record], 'come on as their still picture');
   }
   // one come to their pitch where the player is not looking: never a picture on the move - walking up from their walk's
@@ -224,15 +243,16 @@ test('LW-LOOKS on the street: a beggar keeping their pitch alone stands as their
   const toward = Math.atan2(stand.x - at[0], stand.z - at[2]);
   const frame = (yaw) => { clock.t += RATE / 30; lt.update(1 / 30, at, yaw, [at[0], 1.6, at[2]], true); };
   let row = null, walked = false;
-  for (let i = 0; i < 400; i++) {
+  const upTo = 400 + Math.max(0, Math.ceil((pitch.t0 - clock.t) / (RATE / 30)));   // STAND-LIFE: one come early waits at the walk's end till the stay
+  for (let i = 0; i < upTo; i++) {
     frame(toward);
     row ??= lt._rowOf(beggar);
     if (row?.visible && row.person.moving) walked = true;
-    if (walked && row?.visible && !row.person.moving && lt.entryOf(beggar, clock.t)?.e.kind === 'beg' && i > 300) break;
+    if (walked && row?.visible && !row.person.moving && lt.entryOf(beggar, clock.t)?.e.kind === pitch.kind && i > upTo - 100) break;
   }
   assert.ok(row?.visible && walked, 'seen walking up to their pitch');
-  assert.ok(!row.person.moving && lt.entryOf(beggar, clock.t)?.e.kind === 'beg', 'at their pitch');
-  assert.ok(!lt._inCircle.has(beggar.id), 'alone at their pitch');
+  assert.ok(!row.person.moving && lt.entryOf(beggar, clock.t)?.e.kind === pitch.kind, 'at their stand');
+  assert.ok(!lt._inCircle.has(beggar.id), 'alone at their stand');
   {
     assert.deepEqual(as(row.person), [null, null], 'in view: never changed');
     frame(toward + Math.PI);
