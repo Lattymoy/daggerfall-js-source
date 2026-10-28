@@ -344,7 +344,7 @@ test('IC-STUTTER THE HOST - the town\'s places awaited a step at a time through 
   assert.match(w, /async function townPlacesFor\(dfLocation, lefaySpot, people, loc = null, shut = null, breathe = async \(\) => \{\}\) \{/);
   assert.match(w, /\.\.\.await stepsBreathing\(yardMeasuresSteps\(yl, \{/);
   assert.match(w, /\}\), breathe\),\n\s+keep: lefaySpot/);
-  assert.match(pb, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut, \(\) => breather\.breathe\(\)\) : null;/);
+  assert.match(pb, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, yardShut, \(\) => breather\.breathe\(\)\) : null;/);   // PIN MOVED (FB1028): the yards' own shut
   assert.match(pb, /if \(livingWorldOn\(\)\) livingOf\.places = await livingTownPlaces\(nav, livingOf, \(\) => breather\.breathe\(\)\);/);
   assert.match(pb, /population = livingWorldOn\(\) \? new LivingTown\(nav, \{\n\s+\.\.\.livingOf,/);
   assert.match(pb, /await stepsBreathing\(componentsSteps\(nav\), \(\) => breather\.breathe\(\)\);/);

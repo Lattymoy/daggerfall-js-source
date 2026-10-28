@@ -429,7 +429,7 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   // PIN MOVED (AUDIT SHIPYARDS L3-3): a town's yards and its port's places in one pass - townPlacesFor asked once a build
   // PIN MOVED (TS7): and the town's walk shut handed on - its places on its own ground (world/townWalls.js townWalkShut)
   // PIN MOVED (IC-STUTTER): awaited, a step at a time through the build's breather
-  assert.match(world, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut, \(\) => breather\.breathe\(\)\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;/);
+  assert.match(world, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, yardShut, \(\) => breather\.breathe\(\)\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;/);   // PIN MOVED (FB1028): the yards' own shut
   assert.match(world, /const yl = loc && isEnhanced\(\) && windmillsOn\(\) \? loc : layoutLocation\(dfLocation, maps, blocks, \{ enhanced: true, windmills: true \}\);/, 'one layout for every lane (the build\'s own where it is that one)');
   // AUDIT MERCHANT-YARDS G1, G3, G4, G2: the measures the host hands yardMeasuresOf, and the sites kept per town
   // PIN MOVED (BAY-LEFT-SEA): a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)

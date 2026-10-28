@@ -62,6 +62,9 @@ async function boot() {
     ? await import('./render/gpuTrail.js').then((m) => m.gpuTrailOn(canvas, globalThis.daggerShell.gpuTrail)).catch(() => null) : null;
   const renderer = new Renderer(canvas);
   onPageGone(() => { pageGoing = true; loseGlContext(renderer.gl); });   // GL-LEAK: the game's own context, let go as the page goes
+  // VULKAN-FLIP (ui/vulkanBackdrop.js): the app on Vulkan drops the windows' backdrop blur, which it drew upside down.
+  // Behind a door, as the shell's other doors are: a tab has no shell and loads nothing.
+  if (globalThis.daggerShell) import('./ui/vulkanBackdrop.js').then((m) => m.guardBackdrops(document, renderer.gpuName, globalThis.daggerShell)).catch(() => {});
   // The boot's programs start compiling now, on the driver's threads, while the boot does its own work; each pass's
   // build then reads a link made meanwhile (render/bootPrograms.js). Behind a door: BOOT2's ceiling on the entry's graph.
   import('./render/bootPrograms.js').then((m) => m.startBootPrograms(renderer, location.search)).catch((err) => console.warn('[boot] the programs could not be started early:', err?.message ?? err));

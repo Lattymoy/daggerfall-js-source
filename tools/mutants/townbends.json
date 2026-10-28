@@ -65,8 +65,8 @@
   {
     "name": "TS8-towers-whole",
     "file": "src/world/townWalls.js",
-    "old": "    const m = p.model === WALL_MODELS.tower ? bendTower(classicModel(p.model)) : classicModel(p.model);",
-    "new": "    const m = classicModel(p.model);",
+    "old": "m = wallDoorless(tower ? bendTower(classicModel(p.model)) : classicModel(p.model));",
+    "new": "m = wallDoorless(classicModel(p.model));",
     "tests": [
       "test/world/townbends.test.js"
     ]

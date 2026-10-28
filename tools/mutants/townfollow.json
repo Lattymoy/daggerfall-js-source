@@ -121,7 +121,7 @@
  {
   "name": "TF-the-wall-unwired",
   "file": "src/world/townWalls.js",
-  "old": "    shutTownWall(nav, townWallCellsOf(dfLocation));\n    if (relief) shutRelief(nav, relief);\n  };",
+  "old": "    shutTownWall(nav, yards ? townWallYardCellsOf(dfLocation) : townWallCellsOf(dfLocation));\n    if (relief) shutRelief(nav, relief);\n  };",
   "new": "    if (relief) shutRelief(nav, relief);\n  };",
   "tests": [
    "test/world/townfollow.test.js"
@@ -130,8 +130,8 @@
  {
   "name": "TF-the-length-and-thickness-swapped",
   "file": "src/world/townWalls.js",
-  "old": "    const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower : WALL_FOOT.thick) / 2;",
-  "new": "    const ht = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, hl = (tower ? WALL_FOOT.tower : WALL_FOOT.thick) / 2;",
+  "old": "    const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick) / 2;",
+  "new": "    const ht = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, hl = (tower ? WALL_FOOT.tower * (p.thick ?? 1) : WALL_FOOT.thick) / 2;",
   "tests": [
    "test/world/townfollow.test.js"
   ]

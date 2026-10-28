@@ -366,9 +366,10 @@ test('TOWN-BOARDS the stand plans on the ground it is handed: the plan\'s town i
 
 test('TOWN-BOARDS the pixel build plans the fabric on the terrain job\'s townGround - the outline TS2 flattened, the same the walkers are shut by (mutants: the host unwired)', () => {
   const pb = rd('src/scenes/pixelBuild.js');
-  assert.match(pb, /const \{ samples, [^\n]*townGround[^\n]* \} = await terrainGen\.generate\(\{/);
+  // PIN MOVED (FB1028 YARDS): the job answers the yards' paths first (#1184's roads, the yards' own)
+  assert.match(pb, /const \{ yardPaths, samples, [^\n]*townGround[^\n]* \} = await terrainGen\.generate\(\{/);
   // PIN MOVED (TOWN-BOARDS 2): and its painted roads, the job's paths
-  assert.match(pb, /const \{ samples, [^\n]*paths,[^\n]* \} = await terrainGen\.generate\(\{/);
+  assert.match(pb, /const \{ yardPaths, samples, [^\n]*paths,[^\n]* \} = await terrainGen\.generate\(\{/);
   assert.match(pb, /const fabric = await townFabricFor\(dfLocation, loc\.blocks, \{ px, py, breathe: \(\) => breather\.breathe\(\), ground: townGround, paths \}\);/);
   assert.match(pb, /fabricWalkShut\(townWalkShut\(dfLocation, townGround, paths\), dfLocation\)/);
 });
