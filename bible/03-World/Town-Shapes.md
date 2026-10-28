@@ -752,9 +752,11 @@ within 4 cm of each other. The Bay's towns have no fabric.
   ring.
 - The hosts: none grows - the wall is `world/townWalls.js`'s, the paving `world/urban/townFabricStand.js`'s.
 - Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2: every twentieth walled city on the Bay and past it,
-  Riften, five towns whose fabric lay in their wall's faces); its bends' towers grown as wallPieces mints them (AUDIT
-  FB1028). Mutants `tools/mutants/fb1028_wallflicker.json` (23: 21 dead, 2 recorded equivalent with why - the level
-  faces' mitre is mitreEnds' own plane). Re-aimed by content: `townboards.json` TB-the-stands-ground-dropped (dead).
+  Riften, five towns whose fabric lay in their wall's faces). PINS MOVED (AUDIT FB1028): its bends' towers grown as
+  wallPieces mints them, so the open ends are read against the pieces made alone as grown and the body as grown; a
+  three-degree bend added. Mutants `tools/mutants/fb1028_wallflicker.json` (23: 21 dead, 2 recorded equivalent with why
+  - the level faces' mitre is mitreEnds' own plane; five die only on ARENA2). Re-aimed by content: `townboards.json`
+  TB-the-stands-ground-dropped (dead).
 
 ## 16. FB1028 - the Bay's walls: no door, no bend run through, no road into the wall (BUILT)
 
