@@ -36,7 +36,7 @@ import { TERRAIN_SIZE as PIXEL_M } from '../world/terrain/terrainSampler.js';
 import { getTerrainGroundArchive, groundIsSnowy, SEASON } from '../world/climateSwaps.js';
 import { ecoOrigin } from '../world/ecotone.js';
 import { snowCoverAt, SNOW_TILE_ROW0 } from '../render/snowCoverGlsl.js';
-import { mergeCapLine, capLineAt, CAP_NONE } from '../world/peaks/snowcap.js';   // PEAKS1: the snow that never melts, a floor under the pack
+import { mergeCapLine, capLineAt, CAP_NONE, ashShareAt, bareLine } from '../world/peaks/snowcap.js';   // PEAKS1: the snow that never melts, a floor under the pack; RED-MOUNTAIN: and the ash it never lies on
 
 /**
  * THE HOST'S NUMBERS. `spacing` the lattice's (map pixels: 1.6 km - the snowline's field is smooth over that, its fall's
@@ -111,6 +111,8 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
   const lattice = new SnowpackLattice({ climateAt, spacing: SNOW_COVER.spacing });
   /** PEAKS1: a corner's cap line - the handed law's, else the land's own on the landforms' ground, else none */
   const capOf = (cx, cy) => (capLine !== undefined ? (capLine ? capLine(cx, cy) : CAP_NONE) : airGround()?.landforms ? capLineAt(cx, cy, climateAt) : CAP_NONE);
+  /** RED-MOUNTAIN (AUDIT RED-MOUNTAIN L1): a corner's share of the volcano's ash - the land's own, with its cap */
+  const ashOf = (cx, cy) => (capLine === undefined && airGround()?.landforms ? ashShareAt(cx, cy) : 0);
   const S = SNOW_COVER.spacing, R = SNOW_COVER.radius, SIDE = 2 * R + 1, STEP = SNOWPACK.stepMinutes;
   /** each window point's snowlines: `target` the pack now's, `shown` eased toward it (the frames'), `build` the pack's at
    *  the last step of the grid (the builds'); by lattice key, for the window's points alone (AUDIT PRECIP PACK-5: a point
@@ -157,10 +159,10 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
   const readNow = (pt, t) => {
     const k = latticeKey(pt.i, pt.j);
     let l = lines.get(k);
-    if (!l) lines.set(k, (l = { target: new Float32Array(3), shown: null, build: new Float32Array(3), cap: capOf(pt.i * S, pt.j * S) }));
-    mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap);   // PEAKS1: the cap a floor under the pack
+    if (!l) lines.set(k, (l = { target: new Float32Array(3), shown: null, build: new Float32Array(3), cap: capOf(pt.i * S, pt.j * S), ash: ashOf(pt.i * S, pt.j * S) }));
+    bareLine(mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap), l.ash, BARE_LINE[0]);   // PEAKS1: the cap a floor under the pack; RED-MOUNTAIN: the ash bare
     l.target[0] = _line[0]; l.target[1] = _line[1]; l.target[2] = _line[2];
-    mergeCapLine(snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n), l.cap);
+    bareLine(mergeCapLine(snowlineOf(t >= pt.step ? pt.swe : pt.prev, _line, pt.n), l.cap), l.ash, BARE_LINE[0]);
     l.build[0] = _line[0]; l.build[1] = _line[1]; l.build[2] = _line[2];
     if (!l.shown) l.shown = Float32Array.from(l.target);
   };

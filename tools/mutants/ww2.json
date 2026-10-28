@@ -167,8 +167,8 @@
   {
     "name": "WW2-the-spawned-dungeon",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
-    "new": "if (near || wet(x, y)) return;",
+    "old": "if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
+    "new": "if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y)) return;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "WW2-the-water",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
-    "new": "if (near || spawnsDungeon(spawnSalt, x, y)) return;",
+    "old": "if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
+    "new": "if (near || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

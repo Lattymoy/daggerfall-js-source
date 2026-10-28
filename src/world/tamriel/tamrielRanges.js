@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // RELIEF-PEAKS (2026-10-27, bible/03-World/Tamriel.md RELIEF-PEAKS; KPbICA on the game's Discord, forwarded by the owner:
 // "No mountains ... Instead we're getting strange looking canyons", "No 'Red Mountain' in Morrowind") - THE RANGES PAST THE
-// BAY STAND AS MOUNTAINS, AND RED MOUNTAIN AS A CONE.
+// BAY STAND AS MOUNTAINS (RED MOUNTAIN: RED-MOUNTAIN'S VOLCANO).
 //
 // THE RELIEF HAS NOTHING UNDER ITS GRAIN. The owner's heightmap is a cell every 6.3 km (TAMRIEL-RELIEF: two a picture
 // unit, a picture unit 15.5 map pixels), so the continent's bytes are its cells read bilinearly with a hash of two: on the
@@ -30,10 +30,9 @@
 //   - THE WATERS' VALLEYS: none within WATER of a carved river's course or a lake's shore (world/tamriel/tamrielWaters.js
 //     CARVED_RIVERS, LAKES - their static courses, never the compiled law, which reads the ground), whole past it - a river
 //     runs down a valley of the mountains, never through a gorge it would have to cut.
-//   - RED MOUNTAIN (`CONE`): the volcano at its relief's own summit (tamrielRelief.js namedSummit - where its zone stands),
-//     a cone from the land round its rim to CONE.top, its flanks concave (steep at the top, easing at the foot), ribbed
-//     down its sides, a crater at its top. The relief's dome there (40 bytes over 35 km) is the cone blurred to the
-//     heightmap's grain: inside its rim the land is the cone.
+//   - RED MOUNTAIN is RED-MOUNTAIN's volcano (world/tamriel/redMountain.js, bible/03-World/Red-Mountain.md), stood in the
+//     shaper beside the ranges. This slice's own cone (3,250 m) was retired for it at the merge (the owner's call,
+//     2026-10-27): the ranges stand no cone of their own, and the volcano's flank stills them up its slopes.
 //
 // THE FAR VIEWS READ IT: world/landforms.js centreGround and nodeGroundAt add it at a vertex's own point, so the far ring
 // and the far field stand the mountains the ground stands.
@@ -44,12 +43,10 @@
 import { perlinNoise } from '../perlin.js';
 import { nodeGround } from '../landforms.js';   // called, never read at load (the modules import each other)
 import { STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, HEIGHTMAP_DIMENSION } from '../terrain/terrainSampler.js';
-import { namedSummit, reliefStands } from './tamrielRelief.js';
-import { MOUNTAIN_RANGES } from './tamrielGeography.js';
+import { reliefStands } from './tamrielRelief.js';
 import { pictureToBay, tamrielFit } from './tamrielFrame.js';
 import { tamrielLandVersion } from './tamrielLand.js';
 import { CARVED_RIVERS, LAKES } from './tamrielWaters.js';   // their static courses (read at call time: the modules import each other)
-import { tamrielHeightByte } from './tamrielGround.js';   // the cone's foot (called, never read at load)
 import { MAP_HEIGHT } from '../../formats/woodsFile.js';
 
 const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -76,19 +73,6 @@ export const RANGE_DIALS = Object.freeze({
 /** The ridged field's mean over the land (measured over 200,000 world points - test/world/reliefpeaks.test.js holds it
  *  within 0.01): the centre the relief stands on where the land has room above it. */
 export const RANGE_MEAN = 0.61;
-
-/** RED MOUNTAIN: the range a zone names (tamrielGeography.js MOUNTAIN_RANGES), its province; `top` its summit (m over the
- *  sea, its crater's rim); `radius` (Bay pixels) where the cone meets the land (25 km - the relief's own dome there spans
- *  some 35 km); `steep` its profile's (coneProfile); `rim` how much of its radius, at its edge, it blends into the land
- *  over; `calm` how many of its radii past half of one the land's own ranges come back over (so no range about it stands
- *  as tall); the crater's `crater` radius (Bay pixels) and `depth` (m); the ribs' `ribs` (their noise's turns round the
- *  cone) and `rib` their depth (m, at mid-flank). */
-export const CONE = Object.freeze({
-  range: 'Red Mountain', province: 'Morrowind',
-  top: 3250, radius: 30, steep: 6, rim: 0.4, calm: 1.5,
-  crater: 2.2, depth: 240,
-  ribs: 9, rib: 130,
-});
 
 // ── THE CEILING ───────────────────────────────────────────────────
 /** The most the land stands under the ranges (kernel units): byte `ceilingByte`'s ground at its node, the whole lift
@@ -136,13 +120,10 @@ export function rangeUp() {
   return _up;
 }
 /** THE HIGHEST the ranges stand a land whose highest is `top` kernel units, at map pixel (px, py) - a BOUND (world/landforms.js
- *  groundTopOf): the ridges' rise held under the ceiling, and Red Mountain's top where its cone reaches the pixel. */
+ *  groundTopOf): the ridges' rise held under the ceiling (Red Mountain's is RED-MOUNTAIN's, redMountainTopNear). */
 export function rangeBound(px, py, top) {
   if (!reliefStands()) return top;
-  const s = coneSummit(), up = Math.max(top, Math.min(rangeCeiling(), top + rangeUp()));
-  if (!s) return up;
-  const dx = Math.max(0, Math.abs(px + 0.5 - s[0]) - 0.5), dy = Math.max(0, Math.abs(py + 0.5 - s[1]) - 0.5);
-  return dx * dx + dy * dy < CONE.radius * CONE.radius ? Math.max(up, unitsOf(CONE.top)) : up;
+  return Math.max(top, Math.min(rangeCeiling(), top + rangeUp()));
 }
 
 // ── THE WATERS' VALLEYS ───────────────────────────────────────────
@@ -196,101 +177,37 @@ export function waterDistance(x, y) {
   return best;
 }
 
-// ── RED MOUNTAIN ──────────────────────────────────────────────────
-let _summit = /** @type {[number, number]|null} */ (null), _summitFit = /** @type {any} */ (null), _summitLand = -1, _summitAsked = false;
-/** Red Mountain's summit, Bay coordinates: its relief's own (tamrielRelief.js namedSummit), or null (no relief, no fit). */
-export function coneSummit() {
-  const fit = tamrielFit(), land = tamrielLandVersion();
-  if (_summitAsked && _summitFit === fit && _summitLand === land) return _summit;
-  const range = MOUNTAIN_RANGES.find((r) => r.name === CONE.range);
-  const at = fit && range && reliefStands() ? namedSummit(CONE.province, CONE.range, range.pts) : null;
-  _summit = at ? /** @type {[number, number]} */ (pictureToBay(at[0], at[1])) : null;
-  _summitFit = fit; _summitLand = land; _summitAsked = true;
-  return _summit;
-}
-/** The cone's profile at `t` of its radius (0 the summit, 1 the foot): 1 to its crater's rim, then concave down its flanks
- *  - steep under the rim, easing out, level at its foot - as a stratovolcano's is. */
-export function coneProfile(t) {
-  const rim = CONE.crater / CONE.radius, u = t <= rim ? 0 : (t - rim) / (1 - rim);
-  return u >= 1 ? 0 : ((1 - u) * (1 - u)) / (1 + CONE.steep * u);
-}
-let _foot = NaN, _footOf = /** @type {any} */ (null);
-/** The foot's ring: 32 points, a sixteenth of a half turn apart - their cosine and sine by the half angle's square roots. */
-const FOOT_RING = 32;
-const RING_C = Math.sqrt((1 + Math.sqrt((1 + Math.SQRT1_2) / 2)) / 2), RING_S = Math.sqrt(1 - RING_C * RING_C);
-/** The cone's foot (kernel units): the land's mean ground round its rim (its bytes' own nodes, world/landforms.js
- *  nodeGround) - so the cone rises out of the land it meets, with no moat and no step. */
-function coneFoot(s) {
-  if (_footOf === s) return _foot;
-  let sum = 0, u = 1, q = 0;
-  for (let k = 0; k < FOOT_RING; k++) {   // turned a step at a time (no Math.cos: one float in every engine)
-    sum += nodeGround(tamrielHeightByte(Math.floor(s[0] + CONE.radius * u), Math.floor(s[1] + CONE.radius * q)), 1, 1);
-    const nu = u * RING_C - q * RING_S;
-    q = u * RING_S + q * RING_C; u = nu;
-  }
-  _foot = sum / FOOT_RING; _footOf = s;
-  return _foot;
-}
-/** THE CONE at Bay point (x, y): `{ h, w, quiet }` - the volcano's ground there (kernel units: from its foot to CONE.top
- *  by its profile, ribbed, its crater cut), how much of the land it stands in place of (1 inside its rim's blend, 0 at its
- *  edge and past it), and how much of the land's own ranges stand about it (none on its upper flanks, whole CONE.calm
- *  radii past half its radius: the volcano stands alone over its country) - or null past that. */
-export function coneAt(x, y) {
-  const s = coneSummit();
-  if (!s) return null;
-  const dx = x - s[0], dy = y - s[1], r = Math.sqrt(dx * dx + dy * dy), t = r / CONE.radius;
-  if (!(t < 0.5 + CONE.calm)) return null;
-  const quiet = smooth01((t - 0.5) / CONE.calm);
-  if (!(t < 1)) return { h: 0, w: 0, quiet };
-  let cut = 0;
-  // the ribs: ridges and gullies down the flanks - a ridged noise of the bearing alone (the unit vector's), deepest at mid-flank
-  if (r > 0) {
-    const n = signed((dx / r) * CONE.ribs * 0.5 + 41.7, (dy / r) * CONE.ribs * 0.5 + 9.3), a = 1 - (n < 0 ? -n : n);
-    cut += CONE.rib * 4 * t * (1 - t) * (1 - a * a) * smooth01(t / 0.12);
-  }
-  // the crater: a bowl at the top, its rim the summit's ring
-  const c = r / CONE.crater;
-  if (c < 1) cut += CONE.depth * (1 - c * c) * (1 - c * c);
-  const foot = coneFoot(s);
-  return { h: foot + (unitsOf(CONE.top) - foot) * coneProfile(t) - cut / STREAMING_TERRAIN_SCALE, w: smooth01((1 - t) / CONE.rim), quiet };
-}
-
 // ── THE RANGES ON THE LAND ────────────────────────────────────────
 /**
  * THE RANGES at world sample (gx east, gy north) on a land standing `h` kernel units (the kernel's two terms and the
- * lift there): how far they move it, kernel units - the ridges' relief at the land's swing (none by the waters), Red
- * Mountain's cone in place of the land inside its rim, held softly under the ceiling and never under the land's own height
- * and the foot, whichever is lower. 0 where no relief stands (the authored law's land is its own shape).
+ * lift there): how far they move it, kernel units - the ridges' relief at the land's swing (none by the waters), held
+ * softly under the ceiling and never under the land's own height and the foot, whichever is lower. 0 where no relief stands (the authored law's land is its own shape).
  * @param {number} gx @param {number} gy @param {number} h
  * @returns {number}
  */
 export function tamrielRangeAt(gx, gy, h) {
-  return reliefStands() ? rangeOn(gx, gy, h, true, true) : 0;
+  return reliefStands() ? rangeOn(gx, gy, h, true) : 0;
 }
-/** THE RANGES FOR ONE PIXEL's samples (the shaper's): tamrielRangeAt, with what the pixel can meet asked once - Red Mountain's
- *  cone and the waters' valleys - or null where no relief stands. */
+/** THE RANGES FOR ONE PIXEL's samples (the shaper's): tamrielRangeAt, with what the pixel can meet asked once - the waters'
+ *  valleys - or null where no relief stands. */
 export function rangeShaper(px, py) {
   if (!reliefStands()) return null;
-  const s = coneSummit(), reach = RANGE_DIALS.water[1] + 2;
-  const near = CONE.radius * (0.5 + CONE.calm) + 2, cone = !!s && (px + 0.5 - s[0]) * (px + 0.5 - s[0]) + (py + 0.5 - s[1]) * (py + 0.5 - s[1]) < near * near;
+  const reach = RANGE_DIALS.water[1] + 2;
   let water = false;
   for (let gy = Math.floor((py - reach) / WATER_CELL); gy <= Math.floor((py + 1 + reach) / WATER_CELL) && !water; gy++)
     for (let gx = Math.floor((px - reach) / WATER_CELL); gx <= Math.floor((px + 1 + reach) / WATER_CELL); gx++) if (waterIndex().has(gx * 65536 + gy)) { water = true; break; }
-  return (gx, gy, h) => rangeOn(gx, gy, h, cone, water);
+  return (gx, gy, h) => rangeOn(gx, gy, h, water);
 }
-function rangeOn(gx, gy, h, nearCone, nearWater) {
+function rangeOn(gx, gy, h, nearWater) {
   const D = RANGE_DIALS, bx = gx / SPAN, by = MAP_HEIGHT + 1 - gy / SPAN;   // the sample's Bay point (y south)
-  const cone = nearCone ? coneAt(bx, by) : null;
   let swing = rangeSwing(h);
   if (swing > 0 && nearWater) swing *= smooth01((waterDistance(bx, by) - D.water[0]) / (D.water[1] - D.water[0]));
-  if (cone) swing *= cone.quiet;
-  if (!(swing > 0) && !cone) return 0;
+  if (!(swing > 0)) return 0;
   let out = h;
   if (swing > 0) out += swing * (ridges(gx, gy) - rangeCentre(h));
   // a rise held softly under the ceiling, from `knee` under it (the land itself is under it: its bytes stop at its byte)
   const ceiling = rangeCeiling(), from = Math.max(h, ceiling - D.knee / STREAMING_TERRAIN_SCALE);
   if (out > from && ceiling > from) { const q = (out - from) / (ceiling - from); out = from + (ceiling - from) * (q / (1 + q)); }
-  if (cone && cone.w > 0) out += (cone.h - out) * cone.w;   // CONE.top is under the ceiling
   const floor = Math.min(h, unitsOf(D.foot));
   return (out < floor ? floor : out) - h;
 }

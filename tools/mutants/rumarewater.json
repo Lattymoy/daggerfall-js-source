@@ -102,7 +102,7 @@
   {
     "name": "RW-GROUND-the-roll-unmoved",
     "file": "src/world/tamrielRoads.js",
-    "old": "export const GROUND_ROLL_VERSION = 5;",
+    "old": "export const GROUND_ROLL_VERSION = 6;",
     "new": "export const GROUND_ROLL_VERSION = 4;",
     "tests": [
       "test/world/rumarewater.test.js"

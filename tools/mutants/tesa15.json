@@ -74,8 +74,8 @@
   {
     "name": "TESA15-the-held-unread",
     "file": "src/world/tamrielRoads.js",
-    "old": "  for (const o of [...obstacles, ...held]) {",
-    "new": "  for (const o of obstacles) {",
+    "old": "  for (const o of [...obstacles, ...held, ...ghostfenceRoadBlocks()]) {",
+    "new": "  for (const o of [...obstacles, ...ghostfenceRoadBlocks()]) {",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"

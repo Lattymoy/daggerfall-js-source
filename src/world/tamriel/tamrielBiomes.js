@@ -80,7 +80,7 @@ const C = CLIMATES;
 const CITY_AT = new Map(CITIES.map((c) => [c.name, c.at]));
 /** The volcano's range (tamrielGeography.js RANGES' name - a key, never shown): its own zone's peaks, and the hearts
  *  Vvardenfell's lowlands stand about (AUDIT TESA II G6). */
-const RED_MOUNTAIN = 'Red Mountain';
+export const RED_MOUNTAIN = 'Red Mountain';
 /** THE BIOMES. `seeds` a city's name or a picture point (x east, y south - CITIES' frame); `hearts` points about a named
  *  range's summit (above); `peaks` true takes the lift of every range its province's other peaks zone does not name, an
  *  array the lift of those ranges alone; a peaks zone's seeds (if any) make it a country of its own besides. */

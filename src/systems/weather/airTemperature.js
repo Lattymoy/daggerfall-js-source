@@ -295,6 +295,7 @@ export function airParamsAt(x, z, out = { mean: 0, amp: 0, day: 0, spell: 0, gro
   out.mean += latitudeShare(fx, fy) * LATITUDE_C_PER_ROW * (Math.max(0, Math.min(MAX_PY, fy)) - out.row);
   const g = _ground?.groundAt ? _ground.groundAt(x, z) : 0;
   out.ground = Number.isFinite(g) && g > 0 ? g : 0;
+  if (_ground?.heatAt) out.mean += _ground.heatAt(x, z);   // RED-MOUNTAIN: the ground's own heat (airGround.js heatAt)
   for (const { fn, air } of _biomes.values()) {
     const s = Math.max(0, Math.min(1, fn(x, z) || 0));
     if (s <= 0) continue;

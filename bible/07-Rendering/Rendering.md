@@ -1452,6 +1452,19 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   at its distance in the painter's order, its triangles farthest first;
   stood down where the stream has built its pixel (`06-Systems/Travel-View.md`
   FAR-LANDMARK).
+- `redMountainFire.js` - RED-MOUNTAIN the volcano's fire (`03-World/Red-Mountain.md`):
+  the lava lake on its crater's floor, lava down the upper foyada and the ash
+  plume, its foot lit by the fire. Drawn in the far ring's pass after the land,
+  by its own lens past the world's far plane and by the world's nearer, one haze
+  in both and nothing drawn twice; where no depth stands (past the far plane, past
+  the built grid) hidden by the cone's crowned profile. Its programs started at
+  the boot's idle, its pass behind a compile door. `?redfire=off`.
+- `ghostfenceGlow.js` - GHOSTFENCE the Ghostfence's ghost-light (`03-World/Red-Mountain.md`):
+  its curtain shimmering between the pylons and a halo about each orb, armed by the
+  far ring and drawn after the water and the flats (`renderer.afterFlats`: it writes
+  no depth) in the fire's two lenses, hidden by its cone. Its curtain stands point
+  by point on the ground each layer draws, on that layer's own triangles: a built
+  pixel's own, the middle ring's kernel eased as it eases, the far ring's. `?fenceglow=off`.
 - `farFlora.js` - FAR-FLORA THE CANOPY'S ART: a climate's Trees' colour (the
   opaque texels' mean of its summer nature archive's Tree records, the
   picture drawn near - a decoded replacement, else the classic record

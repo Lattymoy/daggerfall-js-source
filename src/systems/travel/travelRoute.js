@@ -43,6 +43,7 @@ import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';   // AU
 import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { apartPastBay, apartExact } from './landPieces.js';   // FAST-REFUSAL: the land's pieces past the Bay; EXACT-PIECES: at the pixel
 import { roadLineLegs } from './roadLine.js';   // ROAD-FOLLOW: a road past the Bay walked and drawn on its curves
+import { ghostfenceShuts } from '../../world/tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -146,7 +147,7 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   const waterNow = () => { if (beyond && waterMoved()) isWater = waterOn(); return isWater; };
   // OW-WOD-PATH: an open step into a massif's pixel is refused as one into the Mountain climate is - and the start's own
   // massif is left freely, as its own peaks are (AUDIT OW4 J1: `leaving`, the flood fill over peakAt)
-  const openBlocked = () => false;   // MOUNTAINS WALKABLE
+  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);   // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not
   const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so "the mountains cannot be crossed" never fires
   // THE PIECES: two neighbours joined where the step law (an ordinary step - no goal's exemption, no start's peaks, roads
   // and tracks included) walks from one that can be ENTERED to the other. A pixel no ordinary step enters - the sea, a

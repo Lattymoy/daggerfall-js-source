@@ -72,9 +72,13 @@
 
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { overworldTint, isWaterPixel, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';   // FAR-SEA1: and the overworld's own water rule, for the ring's sea
-import { nodeGround, centreGround, cliffFadeAt, CLIFF_REACH, byteBeyond } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay; RELIEF-PEAKS: the kernel's own ground at a node and at a pixel's centre
+import { nodeGround, centreGround, cliffFadeAt, CLIFF_REACH, byteBeyond, byteBase } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay; RELIEF-PEAKS: the kernel's own ground at a node and at a pixel's centre
+import { redMountainLiftAt, redMountainNodeLift, redMountainFrame, redMountainGround } from '../world/tamriel/redMountain.js';   // RED-MOUNTAIN: the volcano on the horizon, its lava's levels
+import { RedMountainFire, ashTint, fireCone, coneIn, FIRE_PROGRAMS } from './redMountainFire.js';   // RED-MOUNTAIN: its fire, drawn in this pass; its ash on the horizon; the cone the far draws hide behind
+import { GhostfenceGlow, fenceGlowDisabled, fenceFeet, GLOW_PROGRAMS } from './ghostfenceGlow.js';   // GHOSTFENCE: its glow, drawn after the fire
+import { ghostfenceFrame } from '../world/tamriel/ghostfence.js';
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
-import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { buildProgram, compiledPass } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link; AUDIT RED-MOUNTAIN F5: the fire's and the glow's doors
 import { RING_SEA_GLSL, FLORA_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
 import { RING_CLOUD_GLSL, cloudFarOf } from './cloudShadow.js';   // OW-HORIZON: the clouds' shadows on the ring, as on the ground beside it
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring, both lanes' one text (render/hazeGlsl.js)
@@ -128,7 +132,11 @@ export const ringHeightAt = (x, y, byte, relief = false, fade = 1) => ringHeight
  *  faded by its nodes' fades), world units. The ring stood a pixel's own byte at its centre, half a pixel from where the
  *  kernel stands it, and 410 to 500 m off the kernel's ground in the continent's ranges; this is 1 to 12 m. `byteAt` the
  *  ground's bytes; `fadeAt` a node's fade (cliffFadeAt on them, unless the caller holds its own). */
-export const ringGroundAt = (x, y, byteAt, relief = false, fadeAt = null) => centreGround(byteAt, x, y, relief, fadeAt) * STREAMING_TERRAIN_SCALE;
+export const ringGroundAt = (x, y, byteAt, relief = false, fadeAt = null) =>
+  (centreGround(byteAt, x, y, relief, fadeAt) + (relief ? redMountainLiftAt(x, y) : 0)) * STREAMING_TERRAIN_SCALE;   // RED-MOUNTAIN: and its smooth cone
+/** RED-MOUNTAIN: a far view's tint at pixel (x, y) with the cone's ash and rock laid over it (render/redMountainFire.js
+ *  ashTint), with the landforms' lift alone - where the cone stands. */
+export const ringTintAt = (tint, x, y, relief) => (relief ? ashTint(tint, redMountainLiftAt(x, y) * STREAMING_TERRAIN_SCALE) : tint);
 /** FAR-SEA1: the ring's sea level - a vertex standing here over a water pixel is the sea (after ringHeight: a const). */
 const RING_SEA_Y = ringHeight(0);
 
@@ -206,7 +214,7 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
       normals[o + 1] = ny / l;
       normals[o + 2] = nz / l;
       const climate = climateOf(px, py);
-      const tint = overworldTint(climate, byte);
+      const tint = ringTintAt(overworldTint(climate, byte), px, py, relief);   // RED-MOUNTAIN: its ash
       colors[o] = tint[0]; colors[o + 1] = tint[1]; colors[o + 2] = tint[2];
       if (ground) ground[o / 3] = positions[o + 1];
       if (isWaterPixel(climate, byte) && Math.abs(positions[o + 1] - RING_SEA_Y) < 1e-3) sea[o / 3] = 255;
@@ -311,6 +319,21 @@ export class BuiltPixels extends Map {
   delete(k) { const had = super.delete(k); if (had) this.changes++; return had; }
   clear() { if (this.size) this.changes++; super.clear(); }
 }
+
+/** RED-MOUNTAIN F2: the widest square about (holeX, holeY), within the hole, whose every pixel the host has built
+ *  (`built` its pixel map; none handed, the hole's every pixel counts) - its radius in pixels, -1 with the centre unbuilt. */
+export function builtCore(built, holeX, holeY, holeRadius) {
+  if (!built) return holeRadius;
+  for (let r = 0; r <= holeRadius; r++) {
+    for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) {
+      if ((Math.abs(i) === r || Math.abs(j) === r) && !built.has(`${holeX + i},${holeY + j}`)) return r - 1;
+    }
+  }
+  return holeRadius;
+}
+/** RED-MOUNTAIN F6: the streamed grid's edge, metres from its centre pixel's centre, at Land View `radius` - where the
+ *  summits' thinner air starts coming in (horizonHaze.js SUMMIT_HAZE). */
+export const summitFromOf = (radius) => (radius + 0.5) * TERRAIN_SIZE;
 
 /** OW-HORIZON: the footprint's pixels the host has built - `built` its pixel map (keyed "x,y", scenes/world.js `built`) -
  *  one byte a pixel, row by row from the north-west corner (inHole's `built`). Asked only when the hole is punched. */
@@ -517,7 +540,7 @@ void main() {
   if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);
   // the world fog's own ramp, capped at the hold - silhouettes read
   // through the haze - then closed to 1 at the rim (FAR-SEA1: the horizon's one law)
-  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);   // BANTHA1: and the jungle's haze
+  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);   // BANTHA1: and the jungle's haze
 }`;
 
 const FLAT_UP = new Float32Array([0, 1, 0]);
@@ -536,6 +559,11 @@ export const RING_CLOUD_UNIT = 15;
 /** ?ring=off - the escape hatch, read once at scene build. */
 export function ringDisabled(search = globalThis.location?.search) {
   try { return /[?&]ring=off\b/.test(search ?? ''); }
+  catch { return false; }
+}
+/** RED-MOUNTAIN: `?redfire=off` - the volcano's lava and plume not drawn (its cone is the ground's, and stands). */
+export function fireDisabled(search = globalThis.location?.search) {
+  try { return /[?&]redfire=off\b/.test(search ?? ''); }
   catch { return false; }
 }
 
@@ -565,6 +593,9 @@ export class FarRingRenderer {
     /** @type {any} */ this._builtNow = null;
     /** @type {?Float32Array} */ this._farOrigin = null;
     this._now = opts.now ?? (() => performance.now());
+    this._fire = null; this._fireDoor = null; this._fireOff = fireDisabled();   // RED-MOUNTAIN: the volcano's fire, made the first frame it stands and its programs are done
+    this._fence = null; this._fenceDoor = null; this._fenceOff = fenceGlowDisabled(); this._midGround = null;   // GHOSTFENCE: its glow, and the middle ring's ground it stands on
+    this._depthR = -1; this._depthBoxOut = null; this._cone = null;   // RED-MOUNTAIN F2: the built square about the hole's centre (pixels), where the world's depth stands; the cone
     // FAR-FLORA: the trees' art (render/farFlora.js) - `opts.flora` a book of one's own (a test's), null for none; by
     // default the pipeline's, unless `?farflora=off`. The woods stand at Land View FLORA_MIN_LAND_VIEW and up (the knob).
     this._flora = opts.flora !== undefined ? opts.flora : (floraDisabled() ? null : createFloraArt({ lands: tamrielLandsOn() }));   // TESA-LANDS: a zone's own past the Bay, with the row
@@ -585,7 +616,7 @@ export class FarRingRenderer {
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',
       'uMoonDir', 'uMoonScale', 'uMoonColor',
-      'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold',
+      'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uSummitFrom',   // RED-MOUNTAIN F6: the summits' thinner air past the grid's edge
       'uSkyZenith', 'uSkyHorizon', 'uSeaF0', 'uSeaLook',   // FAR-SEA1: the sea's sky, its Fresnel, and whether it has one
       'uEye', 'uSeaTiles', 'uSeaTint', 'uSeaAmbient', 'uSeaSunColor', 'uSeaMoonColor',   // AUDIT FAR-SEA1 L1: the water's body, its light (the lane's in the water's own space)
       'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye',   // BANTHA1: the jungle's haze and the eye it is measured from
@@ -675,6 +706,7 @@ export class FarRingRenderer {
     this.indexCount = ringN + fillN;
     this._fillReach = Float32Array.from(cells, (c) => c[0]);
     this._holeX = holeX; this._holeY = holeY;
+    this._depthR = builtCore(built, holeX, holeY, holeRadius);
     this._holeKey = key;
   }
 
@@ -764,8 +796,8 @@ export class FarRingRenderer {
       const clim = answer.clim ?? null, climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y));
       const it = farFieldVertexSteps({
         high: answer.high, low: answer.low, baseCX, baseCY,
-        heightOf: (byte, x, y, v) => answer.ground[v],   // RELIEF-PEAKS: the ground at the vertex's node, worked out on the worker (the lift and its continuation, BREATHTAKER2)
-        tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
+        heightOf: (byte, x, y, v) => answer.ground[v] + (inputs.relief ? redMountainNodeLift(x, y) * STREAMING_TERRAIN_SCALE : 0),   // RELIEF-PEAKS: the ground at the vertex's node, worked out on the worker (the lift and its continuation, BREATHTAKER2); RED-MOUNTAIN: the smooth cone at the node
+        tintAt: (x, y, byte, v) => ringTintAt(overworldTint(climAt(x, y, v), byte), x, y, !!inputs.relief),   // RED-MOUNTAIN: its ash
         oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
         snowAt: inputs.relief ? (x, y, v) => capLineOfPixel(x, y, () => climAt(x, y, v)) : null,   // PEAKS1: a range white 300 km off
@@ -791,7 +823,7 @@ export class FarRingRenderer {
       if (gen !== this._midGen) return;   // a newer ask, or the renderer disposed
       if (!answer?.heights || !this.gl) { this._midAsk = null; return; }   // the ask stands until its ground is laid
       const { byteAt, climateOf } = ringReaders(inputs);
-      const tintAt = (x, y) => overworldTint(climateOf(x, y), byteAt(x, y));
+      const tintAt = (x, y) => ringTintAt(overworldTint(climateOf(x, y), byteAt(x, y)), x, y, !!inputs.relief);   // RED-MOUNTAIN: its ash
       const g = this._ringY;   // a pixel centre's height on this ring - world-fixed, whichever base the grid was built round
       const ringAt = (x, y) => {
         const i = x - g.baseX + g.radius, j = y - g.baseY + g.radius;
@@ -804,6 +836,7 @@ export class FarRingRenderer {
         (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });
         this._mid.floraVersion = floraVersion;
         this._mid.groundEpoch = groundEpoch;   // FLORA-GROUND
+        this._midGround = { heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB };   // GHOSTFENCE: the ground under the glow's feet
         this._holeKey = '';   // the far ring's hole is the new footprint's
       } });
     }, (e) => { if (gen === this._midGen) this._midAsk = null; console.warn('[ring] the middle ring failed', e?.message ?? e); });
@@ -926,6 +959,7 @@ export class FarRingRenderer {
       field: this._far?.built ? { baseCX: this._far.baseCX, baseCY: this._far.baseCY, cells: this._far.count / 6 } : null,
       laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length, landmarks: this._landmarks.length,
       trees: this._band ? this._band.count : null,   // FAR-TREES: the band's trees drawn
+      fire: this._fire ? { mesh: !!this._fire.mesh, drawn: this._fire.drawn } : null,   // RED-MOUNTAIN: the volcano's fire, made and drawn
     };
   }
 
@@ -998,6 +1032,7 @@ export class FarRingRenderer {
     gl.uniform1f(this.u.uRimStart, farField ? FAR_RIM_START : RING_RIM_START);   // FAR-FIELD: the land runs on past this ring to the far field's rim
     gl.uniform1f(this.u.uRimEnd, farField ? FAR_RIM_END : RING_RIM_END);
     gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);
+    gl.uniform1f(this.u.uSummitFrom, summitFromOf(this._floraRadius));
     gl.uniform3f(this.u.uFlora, this._floraOf() ? 1 : 0, FLORA_CROWN_M, FLORA_GROVE_M);   // FAR-FLORA: the crowns' grain while the woods stand
     // FAR-TREES: under the band its own trees stand, the canopy over its dithered rim - measured from the band's base pixel
     const bandOn = !!(this._band?.count && this._floraOf()), bd = this._band?.drawn;
@@ -1081,6 +1116,21 @@ export class FarRingRenderer {
       for (const { lm } of near) this._drawLandmark(lm, origin);   // no middle ring: the near ones after this ring
     }
     if (this._band?.count && this._floraOf()) this._drawBand(view, origin, { ambient, sunScale, sunColor, moonScale, moonColor, fogColor, fogStart, fogEnd, exposure, haze, hazeEye: hazeEye ?? eye ?? FLAT_UP, farField: !!farField, deck: this.renderer?.cloudShadow ?? null });   // FAR-TREES: the near trees past the grid, nearest of the pass
+    // RED-MOUNTAIN: the volcano's lava and plume, then GHOSTFENCE's curtain and halos - each hidden by the cone where no
+    // depth stands, both hazed by this ring's own law
+    const cone = eye && worldProj ? this._coneNow() : null, fire = cone ? this._fireNow(cone) : null, fence = eye && worldProj ? this._fenceNow() : null;
+    if (fire || fence) {
+      const focus = this.renderer?.focus;
+      const pass = { ringOrigin: origin, baseX: this.baseX, baseY: this.baseY, view, worldProj, worldFar: worldProj[14] / (worldProj[10] + 1), fovY, aspect, far, eye,
+        fog: { color: fogColor, start: fogStart, end: fogEnd }, rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD,
+        summitFrom: summitFromOf(this._floraRadius), depth: this._depthBox(origin), light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, lightDir, seconds: this._now() / 1000,
+        cone: cone ? coneIn(cone.at, origin, this.baseX, this.baseY) : null,
+        ground: { feet: fenceFeet(), built: this._builtNow, mid: mid?.built ? this._midGround : null, ring: this._ringY },
+        morph: { from: focus && focus[3] > 0.5 ? focus : eye, start: MID_MORPH_START, end: MID_MORPH_END } };
+      fire?.draw(pass);
+      if (fence && this.renderer?.afterFlats) this.renderer.afterFlats(() => fence.draw(pass));   // AUDIT RED-MOUNTAIN N2: over the water and the flats
+      else fence?.draw(pass);
+    }
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
@@ -1090,9 +1140,59 @@ export class FarRingRenderer {
     // are already due their reset (the R9 law).
   }
 
+  /** RED-MOUNTAIN: the cone the far draws hide behind (redMountainFire.js fireCone) on the levels its lava lies at, read
+   *  off this ring's own bytes (world/landforms.js byteBase - the kernel's own law of them) - none without the landforms'
+   *  lift, which stands it. The glow's with the fire off (`?redfire=off`). */
+  _coneNow() {
+    const inputs = this._inputs;
+    if (!inputs?.relief) return null;
+    const frame = redMountainFrame();
+    if (!frame) return null;
+    const ground = redMountainGround(byteBase(ringReaders(inputs).byteAt), inputs);
+    if (this._cone?.frame !== frame || this._cone.ground !== ground) this._cone = { frame, ground, at: fireCone(frame, ground) };
+    return this._cone;
+  }
+
+  /** RED-MOUNTAIN: the volcano's fire (render/redMountainFire.js) on `cone` (_coneNow's), made the first frame it stands
+   *  once its programs are done (AUDIT RED-MOUNTAIN F5: compiledPass - never a frame frozen on their compile) - none by
+   *  `?redfire=off`. */
+  _fireNow(cone) {
+    if (this._fireOff) return null;
+    const gl = this.gl;
+    this._fire = (this._fireDoor ??= compiledPass(gl, FIRE_PROGRAMS, () => new RedMountainFire(gl), (e) => console.warn('[red mountain] the fire would not build', e?.message ?? e)))();
+    this._fire?.update(cone.frame, cone.ground);
+    return this._fire;
+  }
+
+  /** GHOSTFENCE: the Ghostfence's glow (render/ghostfenceGlow.js), made the first frame the land stands the fence once its
+   *  programs are done - with the landforms' row or without it (the fence is the Tribunal's, not the land's), none by
+   *  `?fenceglow=off`. */
+  _fenceNow() {
+    if (this._fenceOff || !this._inputs) return null;
+    const frame = ghostfenceFrame();
+    if (!frame) return null;
+    const gl = this.gl;
+    this._fence = (this._fenceDoor ??= compiledPass(gl, GLOW_PROGRAMS, () => new GhostfenceGlow(gl), (e) => console.warn('[ghostfence] the glow would not build', e?.message ?? e)))();
+    this._fence?.update(frame);
+    return this._fence;
+  }
+
+  /** RED-MOUNTAIN F2: the box the world's depth stands over (scene x0, z0, x1, z1) - the built square about the hole's
+   *  centre (builtCore) - or null with none built. */
+  _depthBox(origin) {
+    const r = this._depthR;
+    if (r < 0) return null;
+    const b = this._depthBoxOut ??= new Float32Array(4);
+    b[0] = origin[0] + (this._holeX - r - this.baseX) * TERRAIN_SIZE; b[2] = origin[0] + (this._holeX + r + 1 - this.baseX) * TERRAIN_SIZE;
+    b[1] = origin[2] - (this._holeY + r - this.baseY) * TERRAIN_SIZE; b[3] = origin[2] - (this._holeY - r - 1 - this.baseY) * TERRAIN_SIZE;
+    return b;
+  }
+
   /** Free the GL objects (every allocation has an owner). */
   dispose(whole = true) {
     const gl = this.gl;
+    if (whole) { this._fire?.dispose(); this._fire = null; this._fireDoor = null; }   // RED-MOUNTAIN: the volcano's fire, and its door
+    if (whole) { this._fence?.dispose(); this._fence = null; this._fenceDoor = null; }   // GHOSTFENCE: its glow, and its door
     if (whole) { this._midGen++; this._midAsk = null; this._mid?.dispose(); this._mid = null; }   // MID-RING: an answer still out is let go
     if (whole) { this._farGen++; this._farAsk = null; this._far?.dispose(); this._far = null; this._work = []; }   // FAR-FIELD: the same, and any ground still being laid
     if (whole && globalThis.__horizonRings === this._statsFn) delete globalThis.__horizonRings;   // the probes' read, if it is still this ring's

@@ -28,6 +28,7 @@
 import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { hash32, plateauDry } from './spawnedDungeons.js';
 import { WATER_BYTE } from './roadsProducer.js';   // TESA14: the beach line a place stands over
+import { insideGhostfence } from './tamriel/ghostfence.js';   // GHOSTFENCE: none of it within the Ghostfence
 import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
 import { firstName, surname, GENDERS, BANK_TYPES, withGameNameBanks } from '../characters/nameHelper.js';   // AUDIT TESA II P10: a place's name on the game's own banks
 import { tavernsA, tavernsB } from './buildingNames.js';   // L10N: the tavern words - AUDIT TESA II P10: read in DFU's own English for a place (withBaseText)
@@ -161,14 +162,14 @@ export const countryRoll = (px, py) => hash32(COUNTRY_SALT, px, py, 1) / 4294967
 
 /**
  * WHAT A PIXEL STANDS by its roll: its kind (the climate's rates) and the template (its list off the pixel's hash) - or
- * null: the roll past the climate's chance, a climate with none, a kind with no template.
+ * null: the roll past the climate's chance, a climate with none, a kind with no template, a pixel within the Ghostfence.
  * @param {Map<number, Array<[number, number]>>} rates @param {Map<number, any[]>} templates
  * @param {number} climate @param {number} px @param {number} py
  * @returns {?{ type: number, template: any }}
  */
 export function countryPick(rates, templates, climate, px, py) {
   const steps = rates?.get(climate);
-  if (!steps) return null;
+  if (!steps || insideGhostfence(px, py)) return null;
   const r = countryRoll(px, py);
   const step = steps.find(([, ceiling]) => r < ceiling);
   if (!step) return null;
