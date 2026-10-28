@@ -96,7 +96,7 @@ side at 5 of 600 samples (the trough's fade, kept).
 
 ## The record
 
-Every fix is pinned by a test that fails on the code as it stood (`test/world/audit_redmountain.test.js`, 15, one gated
+Every fix is pinned by a test that fails on the code as it stood (`test/world/audit_redmountain.test.js`, 16, one gated
 on ARENA2; `ghostfence.test.js` and `redmountain.test.js` where their pins moved), with a mutant in
 `tools/mutants/audit_redmountain.json` (51 records). Records in other lists whose text the fixes moved were re-aimed
 by content: `audit_farsea1.json`, `audit_perfpass.json`, `aurastall.json`, `eldistance.json`, `ghostfence.json`,

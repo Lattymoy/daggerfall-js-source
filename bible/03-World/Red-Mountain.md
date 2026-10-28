@@ -203,7 +203,7 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
   6.5 km, 3 km over its plateau, its reach on land, the zone at its centre Red Mountain's, no Arena place on its cone.
 - **Mutants** `tools/mutants/redmountain.json` (37, all dead - the rim's crest no longer marked equivalent: AUDIT
   RED-MOUNTAIN R2 found the eye it matters to, 20 km out on the flank).
-- **`test/world/audit_redmountain.test.js` (15, one gated on ARENA2)** and **`tools/mutants/audit_redmountain.json`
+- **`test/world/audit_redmountain.test.js` (16, one gated on ARENA2)** and **`tools/mutants/audit_redmountain.json`
   (51)**: every finding of AUDIT RED-MOUNTAIN pinned where it was fixed (`01-Overview/audits/Audit-Red-Mountain.md`).
 - **`test/world/ghostfence.test.js` (8, one gated on ARENA2):** the ring (its radius, wander, spacing, tangents,
   Ghostgate due south, the line closed against an 8-step walk, the gate's pixels the only open ones); the places and
