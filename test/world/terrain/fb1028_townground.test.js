@@ -13,6 +13,9 @@ import { shapeFieldDistance, TOWN_SHAPE } from '../../../src/world/townShape.js'
 import { registerFlatField, sowField } from '../../../src/world/flatFields.js';
 import { BAKE_GENERATOR_VERSION } from '../../../src/world/deepWater/deepWatersBakeCache.js';
 import { etherPlaceRects, etherRectAt } from '../../../src/world/etherWatersBake.js';
+import { locationRectReader } from '../../../src/world/terrain/terrainTiles.js';
+import { prefetchGroundTiles, _flushGroundTiles, _resetGroundTiles } from '../../../src/world/terrain/groundTilesKept.js';
+import { setWorldDataDoor } from '../../../src/formats/worldData/worldDataDoor.js';
 import { etherTemplateOf, etherPlaceId, synthesizeEtherLocation } from '../../../src/world/etherPlaces.js';
 import { veilhaven, islesNear } from '../../../src/world/ethericSea.js';
 
@@ -171,4 +174,29 @@ test('FB1028 CROP-GROUND the isles\' bake: an Eltheric isle\'s outline, drawn of
     const grid = outlineOfBasis({ ...streamed.shape.basis, fields: null }, etherPlaceId(isle));
     assert.ok(streamed.shape.some((v, i) => v && !grid[i]), 'its crops\' tiles past the grid\'s outline');
   }
+});
+
+test('FB1028 CROP-GROUND a warm launch: the boot walks\' kept blocks (FIRST-VISIT, groundTilesKept.js) give back a model\'s id, so a town\'s outline holds its crops\' tiles on the second launch as on the first - kept as places alone, the Deep Waters bake eased the sea under another outline from the second launch on (mutant: the id kept none)', async () => {
+  registerFlatField(990004, { rangeX: 85, rangeZ: 85, spacing: 4, noise: 0.5 });
+  const groundTiles = Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ textureRecord: 2, tileBitfield: 2 })));
+  const am = new Uint8Array(64 * 64);
+  for (let r = 40; r < 56; r++) for (let c = 40; c < 56; c++) am[r * 64 + c] = 5;
+  const rmb = { fldHeader: { autoMapData: am, groundData: { groundTiles } }, misc3dObjectRecords: [{ modelIdNum: 990004, xPos: 1024, zPos: -3072, yPos: 0 }], miscFlatObjectRecords: [] };
+  const blocks = { checkName: (n) => n, getBlockIndex: () => 0, getBlockName: () => 'C.RMB', getBlock: () => ({ rmbBlock: rmb }) };
+  const loc = { regionIndex: 17, locationIndex: 9, mapTableData: { mapId: 908, locationType: 6 }, exterior: { exteriorData: { width: 1, height: 1, blockNames: ['C.RMB'] } } };
+  const mem = new Map(), store = { get: async (k) => mem.get(k) ?? null, set: async (k, v) => { mem.set(k, structuredClone(v)); return true; } };
+  const launch = async () => {
+    _resetGroundTiles();
+    setWorldDataDoor(null);
+    const found = await prefetchGroundTiles({ blocksBytes: new Uint8Array(4096).map((_, i) => i & 255), serving: 'open|A', store });
+    const rect = locationRectReader({ getRmbBlockName: () => 'C.RMB' }, blocks)(loc);
+    await _flushGroundTiles();
+    return { found, rect };
+  };
+  const cold = await launch(), warm = await launch();
+  _resetGroundTiles();
+  assert.deepEqual([cold.found, warm.found], [false, true], 'the second launch reads the kept record');
+  const grid = outlineOfBasis({ ...cold.rect.shape.basis, fields: null }, 908);
+  assert.ok(cold.rect.shape.some((v, i) => v && !grid[i]), 'the crops\' tiles on the first launch\'s outline');
+  assert.deepEqual([...warm.rect.shape], [...cold.rect.shape], 'the second launch\'s outline the first\'s, to the tile');
 });
