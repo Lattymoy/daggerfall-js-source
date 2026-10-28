@@ -254,12 +254,12 @@ half `src/scenes/staffPilotHost.js`).
 - **PILOT-ECHO** (2026-10-28, live: the list redrew without end, Leave boss lost, a boss called on every pass): the game's
   answer (`{ on, ev, boss }`, `{ on: false, ev, why }`) goes out on the same window the panel's ask comes in on, so the
   door (`net/staffHook.js`) takes `pilot` only without `boss` or `why` - its own answer is never heard as an ask.
-- **PILOT-ON-ME / PILOT-ARM / BOSS-ONE** (2026-10-28, mob: "only spawn on on my position", "just only spawn once", "we ether
+- **PILOT-ON-ME / PILOT-ARM / BOSS-ONE** (2026-10-28: "only spawn on on my position", "just only spawn once", "we ether
   become the boss at kill", card "Both"): the boss of the event I steer stands about me, never by the biggest group
   (`staffBossPlace`). Play as boss is armed until a boss stands - the meter's next, or Spawn mini boss now - and never
   gives up on its own (the panel calls no boss at the press since Admin Tools 0.2.185). While any boss of the event stands,
   mine or a peer's puppet, a later call stands no second one, on any game.
-- **PILOT-BAR** (2026-10-28, mob: "let me see the bosses bar so i know when im hurt"): while I steer it, my boss's name and
+- **PILOT-BAR** (2026-10-28: "let me see the bosses bar so i know when im hurt"): while I steer it, my boss's name and
   health stand on the gate's boss bar (`ui/staffPilotBar.js`, drawn by `scenes/staffPilotHost.js`), marks at half and a
   quarter, put away when it falls or I leave.
 - **Known limits**: the boss walks at my pace, not its kind's; a game that ran the event before keeps the monsters it had

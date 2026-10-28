@@ -685,7 +685,7 @@ test('STAFF-PILOT: the page\'s half - the panel\'s word starts and ends it, a hi
   P.resetPilot();
 });
 
-test('BOSS-ONE (mob 2026-10-28: "there was 20 mini bosses", "just only spawn once", card "Both"): a boss call while a boss of the event stands - a peer\'s puppet too - stands no second one; once it is gone the next call stands', async () => {
+test('BOSS-ONE (2026-10-28: "there was 20 mini bosses", "just only spawn once", card "Both"): a boss call while a boss of the event stands - a peer\'s puppet too - stands no second one; once it is gone the next call stands', async () => {
   const { at, log } = rig();
   restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
   setSharedClock(() => at.now);
@@ -704,7 +704,7 @@ test('BOSS-ONE (mob 2026-10-28: "there was 20 mini bosses", "just only spawn onc
   assert.equal(frame(0.1), 'boss', 'it fell: the next call stands');
 });
 
-test('PILOT-BAR (mob 2026-10-28: "let me see the bosses bar so i know when im hurt"): while I steer, my boss\'s health on the gate\'s boss bar - its name, its share, the numbers - and put away when it falls or I leave (mutants: the bar never drawn, never put away)', async () => {
+test('PILOT-BAR (2026-10-28: "let me see the bosses bar so i know when im hurt"): while I steer, my boss\'s health on the gate\'s boss bar - its name, its share, the numbers - and put away when it falls or I leave (mutants: the bar never drawn, never put away)', async () => {
   const P = await import('../../src/systems/staffBossPilot.js');
   const { createStaffPilotHost } = await import('../../src/scenes/staffPilotHost.js');
   const { pilotBarModel, PILOT_BAR_TEXT } = await import('../../src/ui/staffPilotBar.js');

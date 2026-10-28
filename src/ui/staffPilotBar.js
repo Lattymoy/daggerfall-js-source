@@ -1,5 +1,5 @@
 // @ts-check
-// PILOT-BAR (2026-10-28, mob: "let me see the bosses bar so i know when im hurt"): THE BOSS I STEER'S BAR - the gate's
+// PILOT-BAR (2026-10-28: "let me see the bosses bar so i know when im hurt"): THE BOSS I STEER'S BAR - the gate's
 // boss bar (ui/gate/gateBossBar.js) for the mini boss of Play as boss (systems/staffBossPilot.js): its name, its health
 // and the numbers under it. Pure: the boss in, the bar's model out. Not a DFU member.
 import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';

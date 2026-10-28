@@ -86,7 +86,7 @@ export function pilotHolds(f, kind, now) {
   return false;
 }
 /** Why the steering ends now, or null: 'fell' - my boss stood for me and stands no more (`mine` the boss of my event I
- *  stand now, or null). PILOT-ARM (mob 2026-10-28: "we ether become the boss at kill", card "Both"): before one stood
+ *  stand now, or null). PILOT-ARM (2026-10-28: "we ether become the boss at kill", card "Both"): before one stood
  *  Play as boss is armed and waits - the meter's next boss (or Spawn mini boss now) stands on me - until Leave boss.
  *  @param {any} mine @param {number} _now ms @returns {'fell'|null} */
 export function pilotLost(mine, _now) {
