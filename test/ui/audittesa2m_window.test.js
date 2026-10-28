@@ -18,6 +18,7 @@ import { HeldMapWindow, createZoomSettle, ZOOM_SETTLE_MS } from '../../src/ui/he
 import { CLIMATES, LOCATION_TYPES, MapsFile } from '../../src/formats/mapsFile.js';
 import { setTamrielFit, BAY_W } from '../../src/world/tamriel/tamrielFrame.js';
 import { setTamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
+import { setCapitalsStanding } from '../../src/world/tamrielCapitals.js';   // WILD-CITY-PORT: the Imperial City inked on its pixel
 import { cyrodiilMask } from '../../src/systems/wild/cyrodiilZone.js';
 import { wildInside, WILD_TEXT } from '../../src/systems/wild/wildZone.js';
 import { tamrielInkFor, roadKeptCounts, arenaRoadInkAt } from '../../src/ui/tamrielInk.js';
@@ -172,6 +173,43 @@ test('AUDIT TESA II M5: offline (the host\'s halls null) the zone is drawn and n
   assert.match(W, /const wildActiveNow = \(\) => zoneHalls\.activeOf\(wildMapMask\(\)\);/);
   assert.match(W, /const wildMapMask = \(\) => \(_onlineWorldSession\(\) \? cyrodiilMask\(\) : null\);/);
   assert.match(read('src/scenes/zoneHallsHost.js'), /const activeOf = \(mask\) => \{\n\s+if \(!mask\) return null;/);
+}));
+
+test('WILD-CITY-PORT the teleport map: online, a press on a city in the zone is a portal\'s end - the city picked and its confirm open, never the zone map (ZONE-ZOOM); on the zone\'s bare land, and on the travel map, the zone map opens as ever (mutant: the press\'s city unread)', withMap(async () => {
+  setCapitalsStanding(true);
+  try {
+    const halls = { wildDungeons: () => [], wildGiants: () => [] };
+    const press = (win, x, y) => { win._view = { ox: x - 100 / 8, oy: y - 100 / 8, scale: 8 }; win._pickAt(100, 100); };
+    const probe = openMap(halls);
+    const city = tamrielInkFor(probe.win._model).cities.find((c) => c.name === 'Imperial City');
+    probe.win.dispose?.();
+    assert.ok(city?.pixel && wildInside(cyrodiilMask(), city.x, city.y), 'the Imperial City, inked on its pixel, in the zone');
+    // the guild's teleport map and a stone's: the city picked, its confirm open
+    for (const deps of [{}, { portalLandPastBay: true }]) {
+      const { win } = openMap({ ...halls, ...deps });
+      win.activateTeleportationTravel();
+      press(win, city.x, city.y);
+      assert.deepEqual([win._zoneMap, win._selected?.name, win._panel], [false, 'Imperial City', 'teleport'], deps.portalLandPastBay ? 'a stone\'s map' : 'the guild\'s map');
+      win.dispose?.();
+    }
+    // the zone's bare land on the teleport map, and the city on the travel map: the zone map
+    const { win: tele } = openMap(halls);
+    tele.activateTeleportationTravel();
+    let bare = null;
+    for (let d = 20; d < 200 && !bare; d += 5) for (const [dx, dy] of [[d, 0], [-d, 0], [0, d], [0, -d]]) {
+      const x = city.x + dx, y = city.y + dy;
+      tele._view = { ox: x - 100 / 8, oy: y - 100 / 8, scale: 8 };
+      if (!bare && wildInside(cyrodiilMask(), x, y) && !tele._portalCityAt(100, 100)) bare = { x, y };
+    }
+    assert.ok(bare, 'bare land in the zone');
+    press(tele, bare.x, bare.y);
+    assert.equal(tele._zoneMap, true, 'the zone\'s bare land: its map');
+    tele.dispose?.();
+    const { win: travel } = openMap(halls);
+    press(travel, city.x, city.y);
+    assert.equal(travel._zoneMap, true, 'the travel map: the zone map, as ZONE-ZOOM has it');
+    travel.dispose?.();
+  } finally { setCapitalsStanding(false); }
 }));
 
 test('AUDIT TESA II M6 and K5: on the zone map each of Cyrodiil\'s cities is named once - the zone map\'s names, with their kinds (a capital and a city-state the city, a town the hamlet, a village the village: REGION-LINES\' one glyph a kind across Tamriel) - and Hide place names hides them all (mutants: the continent\'s names kept; the kinds flattened)', withMap(async () => {

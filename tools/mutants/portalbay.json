@@ -2,11 +2,12 @@
   {
     "name": "PORTALBAY-teleport-law-the-journeys",
     "file": "src/systems/travel/pastBayTravel.js",
-    "old": "export function teleportJourney(_from, _to, _mask, zone) {\n  return zone;",
-    "new": "export function teleportJourney(_from, _to, _mask, zone) {\n  return pastBayJourney(_from, _to, _mask, zone);",
+    "old": "export function teleportJourney(_from, _to, _mask, _zone) {\n  return { ok: true, fee: 0 };",
+    "new": "export function teleportJourney(_from, _to, _mask, _zone) {\n  return pastBayJourney(_from, _to, _mask, _zone);",
     "tests": [
       "test/systems/portalbay_stone.test.js"
-    ]
+    ],
+    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - a teleport answers no journey's verdict at all, the zone's included"
   },
   {
     "name": "PORTALBAY-teleportTo-asks-the-journeys-law",
@@ -110,20 +111,22 @@
   {
     "name": "PORTALANY-the-press-reads-no-land",
     "file": "src/ui/heldMap.js",
-    "old": "const end = city?.pixel ? city : this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null;",
-    "new": "const end = city?.pixel ? city : null;",
+    "old": "const end = this._portalCityAt(sx, sy) ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
+    "new": "const end = this._portalCityAt(sx, sy) ?? null;",
     "tests": [
       "test/systems/portalbay_stone.test.js"
-    ]
+    ],
+    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - the press's city is one method now (heldMap.js _portalCityAt), asked by ZONE-ZOOM too"
   },
   {
     "name": "PORTALANY-the-guilds-map-given-the-land",
     "file": "src/ui/heldMap.js",
-    "old": "const end = city?.pixel ? city : this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null;",
-    "new": "const end = city?.pixel ? city : portalLandAt(Math.floor(mx), Math.floor(my));",
+    "old": "const end = this._portalCityAt(sx, sy) ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);",
+    "new": "const end = this._portalCityAt(sx, sy) ?? portalLandAt(Math.floor(mx), Math.floor(my));",
     "tests": [
       "test/systems/portalbay_stone.test.js"
-    ]
+    ],
+    "note": "WILD-CITY-PORT (PIN MOVED): re-aimed by content - the press's city is one method now (heldMap.js _portalCityAt), asked by ZONE-ZOOM too"
   },
   {
     "name": "PORTALANY-the-hover-points-not",
