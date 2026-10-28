@@ -300,3 +300,54 @@ export function redMountainLiftAt(px, py) {
 export function redMountainNodeLift(x, y) {
   return redMountainSmooth(x * 128, (MAP_ROWS + 1 - y) * 128);
 }
+
+/** LAVA-CLEAR: is world sample (gx, gy) on a bed the lava lies in - the crater's floor, or a foyada's flat floor (the
+ *  middle half of its width) down its lava's run? The lava (render/redMountainFire.js: its lake 0.92 of the floor, a
+ *  river 0.42 of the trough) lies within, at least 17 m inside a bed's edge: a thing whose middle is off every bed, and
+ *  whose reach is under that, stands off the lava. */
+export function redMountainLavaBed(gx, gy) {
+  const f = redMountainFrame();
+  if (!f) return false;
+  const dx = (gx - f.cx) * SAMPLE_M, dy = (gy - f.cy) * SAMPLE_M, T = D.trough;
+  if (dx * dx + dy * dy < D.floor * D.floor) return true;
+  for (const line of f.foyada) {
+    if (gx < line.x0 || gx > line.x1 || gy < line.y0 || gy > line.y1) continue;
+    const p = line.pts, n = line.s.length, len = line.s[n - 1], run = len * T.lava;
+    for (let i = 0; i + 1 < n && line.s[i] < run; i++) {
+      const ax = p[2 * i], ay = p[2 * i + 1], ex = p[2 * i + 2] - ax, ey = p[2 * i + 3] - ay, l2 = ex * ex + ey * ey;
+      let t = l2 > 0 ? ((gx - ax) * ex + (gy - ay) * ey) / l2 : 0;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const along = line.s[i] + (line.s[i + 1] - line.s[i]) * t;
+      if (along > run) continue;
+      const half = 0.5 * (T.halfTop + (T.halfFoot - T.halfTop) * (along / len)), qx = (gx - ax - ex * t) * SAMPLE_M, qy = (gy - ay - ey * t) * SAMPLE_M;
+      if (qx * qx + qy * qy < half * half) return true;
+    }
+  }
+  return false;
+}
+
+/** @type {Set<string>|null} */
+let _lavaPx = null, _lavaOf = /** @type {RedMountainFrame|null} */ (null);
+/** LAVA-CLEAR: does a lava bed reach Bay pixel (px, py)? A place there would flatten the bed under it (a location levels
+ *  its whole pixel), so no lair or spawn stands on one. Over the beds: a box about the crater's floor and about each
+ *  piece of a foyada's run, so a pixel it names may hold none. Made once a frame. */
+export function redMountainLavaIn(px, py) {
+  const f = redMountainFrame();
+  if (!f) return false;
+  if (_lavaOf !== f || !_lavaPx) {
+    const out = new Set(), k = 1 / SAMPLE_M;
+    const mark = (x0, y0, x1, y1) => {
+      for (let y = Math.floor(MAP_ROWS + 1 - y1 / 128); y <= Math.floor(MAP_ROWS + 1 - y0 / 128); y++) for (let x = Math.floor(x0 / 128); x <= Math.floor(x1 / 128); x++) out.add(`${x},${y}`);
+    };
+    mark(f.cx - D.floor * k, f.cy - D.floor * k, f.cx + D.floor * k, f.cy + D.floor * k);
+    const pad = 0.5 * D.trough.halfFoot * k;
+    for (const line of f.foyada) {
+      const p = line.pts, n = line.s.length, run = line.s[n - 1] * D.trough.lava;
+      for (let i = 0; i + 1 < n && line.s[i] < run; i++) {
+        mark(Math.min(p[2 * i], p[2 * i + 2]) - pad, Math.min(p[2 * i + 1], p[2 * i + 3]) - pad, Math.max(p[2 * i], p[2 * i + 2]) + pad, Math.max(p[2 * i + 1], p[2 * i + 3]) + pad);
+      }
+    }
+    _lavaOf = f; _lavaPx = out;
+  }
+  return _lavaPx.has(`${px},${py}`);
+}

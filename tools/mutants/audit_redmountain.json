@@ -314,8 +314,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-G1-a-ruin-on-the-line",
     "file": "src/world/spawnedDungeons.js",
-    "old": "d = !onGhostfence(px, py) && spawnGroundDry(woods, px, py));",
-    "new": "d = spawnGroundDry(woods, px, py));",
+    "old": "d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(woods, px, py));",
+    "new": "d = !redMountainLavaIn(px, py) && spawnGroundDry(woods, px, py));",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

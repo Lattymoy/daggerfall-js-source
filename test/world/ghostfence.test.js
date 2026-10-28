@@ -137,8 +137,9 @@ test('GHOSTFENCE the places and the roads: the countryside keeps off inside the 
     assert.equal(Dg.lairStandsAt(roll, site.px, site.py), null, `no lair at (${site.px}, ${site.py}), on the line`);
     assert.equal(Dg.lairMayStandAt(roll, site.px, site.py), false);
   }
-  assert.match(read('src/world/tamrielDungeons.js'), /site\.px === px && site\.py === py && !onGhostfence\(px, py\) \? lairPick/);
-  assert.match(read('src/world/tamrielDungeons.js'), /site\.px === px && site\.py === py && !onGhostfence\(px, py\) && lairPick/);
+  // PIN MOVED (LAVA-CLEAR): and none where the lava runs
+  assert.match(read('src/world/tamrielDungeons.js'), /site\.px === px && site\.py === py && !onGhostfence\(px, py\) && !redMountainLavaIn\(px, py\) \? lairPick/);
+  assert.match(read('src/world/tamrielDungeons.js'), /site\.px === px && site\.py === py && !onGhostfence\(px, py\) && !redMountainLavaIn\(px, py\) && lairPick/);
   // the roads: the band less Ghostgate's pixels blocked in every region's build
   const blocks = ghostfenceRoadBlocks();
   assert.equal(blocks.length, f.band.size - f.open.size);
@@ -456,4 +457,145 @@ test('GHOSTFENCE with ARENA2: on the freeware\'s trace the fence closes round Re
   assert.deepEqual(near.filter((p) => onGhostfence(p.px, p.py)).map((p) => `${p.source}:${p.px},${p.py}`), [], 'nothing on its line');
   assert.ok(near.some((p) => p.source === 'tesa-lairs' && insideGhostfence(p.px, p.py)), 'the mountain\'s own lairs within it');
   assert.ok(near.some((p) => p.source === 'tesa-country' && !insideGhostfence(p.px, p.py)), 'the countryside outside it as it was');
+});
+
+test('LAVA-CLEAR, FENCE-CLEAR the laws: the lava\'s beds are the crater\'s floor and the middle half of each foyada\'s floor down its lava\'s run, every vertex of the drawn lava on one and a river 17 m inside its bed\'s edge at the least; the pixels a bed reaches hold every bed sample; near the fence is within a distance of a run or Ghostgate\'s span; the build\'s clearing drops a point on either and a landmark by its own reach, and is null far off (mutants: the floor, the half, the run, the box\'s pad, the gate\'s span, the clearance, the reach)', async () => {
+  const { redMountainLavaBed, redMountainLavaIn, redMountainGround } = await import('../../src/world/tamriel/redMountain.js');
+  const { ghostfenceNear, ghostfenceBeside } = await import('../../src/world/tamriel/ghostfence.js');
+  const { fireClearing, clearedLandProps, FENCE_CLEAR } = await import('../../src/scenes/ghostfenceBuild.js');
+  const { fireMesh, FIRE } = await import('../../src/render/redMountainFire.js');
+  const { LAND_PROP_FLOATS, landMeasures } = await import('../../src/world/lands/landProps.js');
+  const { LAND_KINDS } = await import('../../src/world/lands/landPropMesh.js');
+  const { BAY_H } = await import('../../src/world/tamriel/tamrielFrame.js');
+  const rm = redMountainFrame(), f = ghostfenceFrame(), D = RED_MOUNTAIN_DIALS, T = D.trough, k = 1 / SAMPLE_M;
+  // the crater's floor
+  assert.equal(redMountainLavaBed(rm.cx, rm.cy), true);
+  assert.equal(redMountainLavaBed(rm.cx + (D.floor - 1) * k, rm.cy), true);
+  const [ex, ey] = dirOf(0.25);   // due north - no foyada's breach (their turns 0.13, 0.36, 0.62)
+  assert.equal(redMountainLavaBed(rm.cx + ex * (D.floor + 1) * k, rm.cy + ey * (D.floor + 1) * k), false, 'the inner wall is no bed');
+  // each foyada: on its line within its run, across within the middle half, and nothing past its run
+  for (const line of rm.foyada) {
+    const n = line.s.length, len = line.s[n - 1], run = len * T.lava, i = Math.floor((n - 1) * T.lava / 2);
+    const x = line.pts[2 * i], y = line.pts[2 * i + 1], nx = -(line.pts[2 * i + 3] - line.pts[2 * i + 1]), ny = line.pts[2 * i + 2] - line.pts[2 * i];
+    const nl = Math.hypot(nx, ny), half = 0.5 * (T.halfTop + (T.halfFoot - T.halfTop) * (line.s[i] / len));
+    assert.equal(redMountainLavaBed(x, y), true, `${line.name} on its line`);
+    assert.equal(redMountainLavaBed(x + (nx / nl) * (half - 2) * k, y + (ny / nl) * (half - 2) * k), true, `${line.name} inside its bed`);
+    assert.equal(redMountainLavaBed(x + (nx / nl) * (half + 2) * k, y + (ny / nl) * (half + 2) * k), false, `${line.name} past its bed`);
+    const j = line.s.findIndex((s) => s > run + 400);
+    assert.equal(redMountainLavaBed(line.pts[2 * j], line.pts[2 * j + 1]), false, `${line.name} past its lava's run`);
+  }
+  // every vertex of the drawn lava on a bed, a river's 17 m inside its edge at the least
+  const ground = redMountainGround(() => 1800, {}), mesh = fireMesh(rm, ground), ox = mesh.px * 128, oy = (BAY_H - mesh.py) * 128;
+  let worst = Infinity;
+  for (let v = 0; v < mesh.count; v++) {
+    const o = v * 10, gx = ox + mesh.lava[o] * k, gy = oy + mesh.lava[o + 2] * k;
+    assert.equal(redMountainLavaBed(gx, gy), true, `lava vertex ${v} on a bed`);
+    if (mesh.lava[o + 9] === 1) { const h = mesh.lava[o + 8]; worst = Math.min(worst, 0.5 * (h / FIRE.river) - h); }
+  }
+  assert.ok(worst >= 17, `a river ${worst.toFixed(1)} m inside its bed's edge`);
+  assert.ok(D.floor * (1 - FIRE.lake) > 100, 'the lake 104 m inside the floor\'s');
+  // the pixels a bed reaches: a 9 x 9 lattice of samples over every pixel within the run, each on a bed in a marked pixel
+  const [bx, by] = sampleToPixel(rm.cx, rm.cy);
+  let beds = 0;
+  for (let py = by - 14; py <= by + 14; py++) {
+    for (let px = bx - 14; px <= bx + 14; px++) {
+      for (let a = 0; a < 9; a++) for (let b = 0; b < 9; b++) {
+        if (!redMountainLavaBed(px * 128 + 8 + a * 14, (BAY_H - py) * 128 + 8 + b * 14)) continue;
+        beds++;
+        assert.ok(redMountainLavaIn(px, py), `(${px}, ${py}) holds a bed`);
+      }
+    }
+  }
+  assert.ok(beds > 1000, `${beds} bed samples`);
+  assert.equal(redMountainLavaIn(bx + 30, by), false, 'far off, none');
+  // near the fence: a run's middle, off it by the clearance, and Ghostgate's span between its towers
+  const i = 100, [[ax, ay], [cx2, cy2]] = ghostfencePanel(f, i), mx = (ax + cx2) / 2, my = (ay + cy2) / 2;
+  const tx = f.tan[2 * i], ty = f.tan[2 * i + 1];
+  assert.equal(ghostfenceNear(mx, my, 1), true);
+  assert.equal(ghostfenceNear(mx - ty * (FENCE_CLEAR - 0.2) * k, my + tx * (FENCE_CLEAR - 0.2) * k, FENCE_CLEAR), true);
+  assert.equal(ghostfenceNear(mx - ty * (FENCE_CLEAR + 0.2) * k, my + tx * (FENCE_CLEAR + 0.2) * k, FENCE_CLEAR), false);
+  const g = f.gate, gx0 = f.pts[2 * g], gy0 = f.pts[2 * g + 1];
+  assert.equal(ghostfenceNear(gx0, gy0, 1), true, 'Ghostgate\'s middle, in its passage');
+  assert.equal(ghostfenceNear(gx0 + f.tan[2 * g] * (GHOSTGATE_HALF - 1) * k, gy0 + f.tan[2 * g + 1] * (GHOSTGATE_HALF - 1) * k, 1), true, 'its tower');
+  assert.equal(ghostfenceNear(f.cx, f.cy, FENCE_CLEAR), false);
+  assert.equal(FENCE_CLEAR, GHOSTGATE.depth + 2);
+  for (const key of f.band) { const [x, y] = key.split(',').map(Number); assert.ok(ghostfenceBeside(x, y) && ghostfenceBeside(x + 1, y) && ghostfenceBeside(x, y - 1)); }
+  assert.equal(ghostfenceBeside(bx, by), false, 'the crater is far from the line');
+  // the build's clearing
+  assert.equal(fireClearing(bx + 40, by), null, 'far off, none');
+  const atCentre = fireClearing(bx, by);
+  assert.equal(atCentre((rm.cx - bx * 128) * SAMPLE_M, (rm.cy - (BAY_H - by) * 128) * SAMPLE_M), true, 'the crater\'s floor');
+  const [qx, qy] = sampleToPixel(mx, my), clear = fireClearing(qx, qy), lx = (mx - qx * 128) * SAMPLE_M, lz = (my - (BAY_H - qy) * 128) * SAMPLE_M;
+  const off = (m) => [lx - ty * m, lz + tx * m];
+  assert.equal(clear(...off(0)), true);
+  assert.equal(clear(...off(10)), false, '10 m off with no reach');
+  assert.equal(clear(...off(10), 3), true, 'and with a reach of 3 m');
+  const reach = landMeasures('spire', 2).reach;
+  const raw = new Float32Array(3 * LAND_PROP_FLOATS);
+  [[...off(12)], [...off(FENCE_CLEAR + reach + 1)], [...off(-(FENCE_CLEAR + reach - 1))]].forEach(([x, z], n) => raw.set([x, 0, z, 0, 1, LAND_KINDS.indexOf('spire'), 2, 0], n * LAND_PROP_FLOATS));
+  const kept = clearedLandProps(clear, raw);
+  assert.equal(kept.length, LAND_PROP_FLOATS, 'one of three kept: the one past the clearance and its own reach');
+  assert.ok(Math.abs(kept[0] - off(FENCE_CLEAR + reach + 1)[0]) < 1e-3);
+});
+
+test('LAVA-CLEAR, FENCE-CLEAR the readers: the pixel build asks the clearing of its landmarks and its flats past the Bay; no lair and no spawned ruin on a pixel a bed reaches; no gate (nor the stars and Hollows that read its scan) on the line or a bed\'s pixel (mutants: each reader unwired)', async () => {
+  const { redMountainLavaIn } = await import('../../src/world/tamriel/redMountain.js');
+  const { createSpawnGround } = await import('../../src/world/spawnedDungeons.js');
+  const { scanTheatreGate } = await import('../../src/systems/gate/theatreGateSite.js');
+  const { worldPixelOfKey } = await import('../../src/world/worldWide/worldGrid.js');
+  const { LOCATION_TYPES } = await import('../../src/formats/mapsFile.js');
+  const pb = read('src/scenes/pixelBuild.js');
+  assert.match(pb, /const fire = onTheBay\(px, py\) \? null : fireClearing\(px, py\);/);
+  assert.match(pb, /standLandProps\(px, py, fire \? clearedLandProps\(fire, landProps\) : landProps, /);
+  assert.match(pb, /for \(const f of nature\) \{\n\s+if \(offLand\?\.\(f\.x, f\.z\)\) continue;[^\n]*\n\s+if \(fire\?\.\(f\.x, f\.z\)\) continue;/);
+  const td = read('src/world/tamrielDungeons.js');
+  assert.equal((td.match(/!onGhostfence\(px, py\) && !redMountainLavaIn\(px, py\)/g) ?? []).length, 2, 'lairStandsAt\'s and lairMayStandAt\'s');
+  // a spawn's ground: a bed's pixel and the line refused before the plateau is read (no woods asked)
+  const rm = redMountainFrame(), f = ghostfenceFrame(), [bx, by] = sampleToPixel(rm.cx, rm.cy);
+  const spawnGround = createSpawnGround(null);
+  assert.ok(redMountainLavaIn(bx, by));
+  assert.equal(spawnGround(bx, by), false);
+  const [lx, ly] = [...f.band][0].split(',').map(Number);
+  assert.equal(spawnGround(lx, ly), false);
+  // a town by the line: its ring holds band pixels the gate's ground refuses
+  const [tx, ty] = sampleToPixel(f.cx, f.cy - 16000 / SAMPLE_M);   // 2 km past Ghostgate, due south
+  const scan = scanTheatreGate({ towns: [{ name: 'by the gate', px: tx, py: ty, area: 0, type: LOCATION_TYPES.TownCity }], placeAt: () => null, inTheatre: () => true, areaAt: () => 0, wet: () => false, theatre: 4 });
+  let ring = 0, any = 0;
+  for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) >= 2 && onGhostfence(tx + dx, ty + dy)) ring++;
+  assert.ok(ring > 0, `the town's ring crosses the line (${ring} pixels)`);
+  for (const l of scan.byArea.values()) for (const key of l) { any++; const [x, y] = worldPixelOfKey(key); assert.ok(!onGhostfence(x, y) && !redMountainLavaIn(x, y), `(${x}, ${y})`); }
+  assert.ok(any > 0, 'the rest of its ring stands');
+});
+
+test('LAVA-CLEAR, FENCE-CLEAR with ARENA2: on the freeware\'s ground with the lands on, the kernel lays flats and scoria spires on the crater\'s floor, down a foyada\'s lava and on the fence\'s line - and the build\'s clearing leaves none there (TESA-LANDS met RED-MOUNTAIN at the fold: 449 spires and 9,887 flats on the beds)', { skip: HAVE ? false : 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
+  const { ww5World } = await import('./worldWide/ww5World.mjs');
+  const { generatePixelTerrain } = await import('../../src/world/terrain/terrainGen.js');
+  const { getWorldClimateSettings } = await import('../../src/formats/mapsFile.js');
+  const { redMountainLavaBed } = await import('../../src/world/tamriel/redMountain.js');
+  const { ghostfenceNear } = await import('../../src/world/tamriel/ghostfence.js');
+  const { fireClearing, clearedLandProps, FENCE_CLEAR } = await import('../../src/scenes/ghostfenceBuild.js');
+  const { LAND_PROP_FLOATS, landMeasures } = await import('../../src/world/lands/landProps.js');
+  const { LAND_KINDS } = await import('../../src/world/lands/landPropMesh.js');
+  const { BAY_H } = await import('../../src/world/tamriel/tamrielFrame.js');
+  const w = await ww5World(), rm = redMountainFrame(), f = ghostfenceFrame(), k = 1 / SAMPLE_M;
+  const line = rm.foyada[0], at = Math.floor(line.s.length * 0.3);
+  const pixels = [sampleToPixel(rm.cx, rm.cy), sampleToPixel(line.pts[2 * at], line.pts[2 * at + 1]), ...[0, 400, 1200].map((i) => sampleToPixel(f.pts[2 * i], f.pts[2 * i + 1]))];
+  let before = { bed: 0, line: 0 }, spires = 0;
+  for (const [px, py] of pixels) {
+    const c = getWorldClimateSettings(w.maps.getClimateIndex(px, py));
+    const out = generatePixelTerrain({ woods: w.ground, px, py, tilemap: new Uint8Array(128 * 128), climateType: c.climateType, forests: { archive: c.natureArchive, hidden: false },
+      lands: { blend: true, archive: c.natureArchive, hidden: false }, landform: true });
+    const ox = px * 128, oy = (BAY_H - py) * 128, bed = (x, z) => redMountainLavaBed(ox + x * k, oy + z * k), onLine = (x, z, m) => ghostfenceNear(ox + x * k, oy + z * k, m);
+    for (const fl of out.nature) { if (bed(fl.x, fl.z)) before.bed++; else if (onLine(fl.x, fl.z, FENCE_CLEAR)) before.line++; }
+    for (let i = 0; i < out.landProps.length; i += LAND_PROP_FLOATS) if (bed(out.landProps[i], out.landProps[i + 2])) spires++;
+    const fire = fireClearing(px, py);
+    assert.ok(fire, `(${px}, ${py}) is cleared`);
+    for (const fl of out.nature.filter((n) => !fire(n.x, n.z))) assert.ok(!bed(fl.x, fl.z) && !onLine(fl.x, fl.z, FENCE_CLEAR), `a flat at (${fl.x.toFixed(1)}, ${fl.z.toFixed(1)})`);
+    const kept = clearedLandProps(fire, out.landProps);
+    for (let i = 0; i < kept.length; i += LAND_PROP_FLOATS) {
+      const reach = landMeasures(LAND_KINDS[kept[i + 5]], kept[i + 6]).reach * kept[i + 4];
+      assert.ok(!bed(kept[i], kept[i + 2]) && !onLine(kept[i], kept[i + 2], FENCE_CLEAR + reach), 'a landmark kept off both by its reach');
+    }
+  }
+  assert.ok(before.bed > 500 && before.line > 10 && spires > 10, `the kernel's own: ${before.bed} flats on the beds, ${before.line} on the line, ${spires} landmarks on the beds`);
 });

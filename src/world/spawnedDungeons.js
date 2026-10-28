@@ -25,6 +25,7 @@ import { worldLaneMapId, SPAWN_WORLD_LANE } from './worldWide/worldLanes.js';   
 import { inWorldGrid } from './worldWide/worldGrid.js';   // SPAWN-WORLD: a ledger row's pixel the world's
 import { arenaPathsAt } from './arenaRoads.js';   // SPAWN-WORLD: the roads past the Bay - TESA's layer (TESA4, TESA14)
 import { onGhostfence } from './tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G1: no ruin on the Ghostfence's line
+import { redMountainLavaIn } from './tamriel/redMountain.js';   // LAVA-CLEAR: nor a ruin where Red Mountain's lava runs
 
 /** The chance a pixel holds a NORMAL spawned dungeon. */
 export const SPAWN_CHANCE = 0.30;
@@ -182,7 +183,7 @@ export function createSpawnGround(woods) {
   return (px, py) => {
     const key = `${px},${py}`;   // WW-C2: a world map pixel's (a hall past the Bay's) - `y * 1000 + x` met another pixel past x 999
     let d = dry.get(key);
-    if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && spawnGroundDry(woods, px, py));
+    if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(woods, px, py));   // LAVA-CLEAR: nor where the lava runs
     return d;
   };
 }

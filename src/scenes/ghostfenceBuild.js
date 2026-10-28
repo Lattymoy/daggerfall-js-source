@@ -3,7 +3,10 @@
 // build (scenes/pixelBuild.js) on the pixel's own ground - its pylons and Ghostgate in the pixel's batch, their orbs their
 // own light, and the pylons, the gate's towers and the curtain between the pylons solid through the world's one gate
 // (player/lateSolid.js) - no body passes the Ghostfence but by Ghostgate. Each foot and curtain point is noted for the glow.
-import { ghostfenceFrame, ghostfencePylonsIn, ghostfenceRunCuts, ghostfenceCurtainPoint, sampleToPixel, CURTAIN_STEPS } from '../world/tamriel/ghostfence.js';
+import { ghostfenceFrame, ghostfencePylonsIn, ghostfenceRunCuts, ghostfenceCurtainPoint, sampleToPixel, CURTAIN_STEPS, ghostfenceNear, ghostfenceBeside } from '../world/tamriel/ghostfence.js';
+import { redMountainLavaBed, redMountainLavaIn } from '../world/tamriel/redMountain.js';   // LAVA-CLEAR: nothing stood in the lava
+import { landMeasures, LAND_PROP_FLOATS } from '../world/lands/landProps.js';
+import { LAND_KINDS } from '../world/lands/landPropMesh.js';
 import { pylonModel, pylonSolid, pylonFooting, ghostgateModel, ghostgateSolid, ghostfencePictures, GHOSTFENCE_ARCHIVE, GF_RECORD, PYLON, CURTAIN, GHOSTGATE } from '../world/tamriel/ghostfenceModel.js';
 import { surfaceHeightAt, lowestGroundUnder } from '../world/terrain/terrainSurface.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
@@ -35,6 +38,34 @@ export function groundAlong(samples, ax, az, bx, bz) {
     if (y < lo) lo = y; if (y > hi) hi = y;
   }
   return [lo, hi];
+}
+
+/** FENCE-CLEAR: how far off the fence's line a flat, and a landmark past its own reach, keeps (metres): Ghostgate's
+ *  half-depth and 2 m. */
+export const FENCE_CLEAR = GHOSTGATE.depth + 2;
+
+/**
+ * LAVA-CLEAR, FENCE-CLEAR (the fold of TESA-LANDS: its landmarks and every flat stood in the lava, 449 spires and 9,887
+ * flats on the freeware's ground): what Bay pixel (px, py)'s build keeps its flats and landmarks off - the lava's beds
+ * and the fence's line - as `(x, z, reach) => true to drop it`, pixel-local metres; null where neither comes.
+ */
+export function fireClearing(px, py) {
+  const lava = redMountainLavaIn(px, py), fence = ghostfenceBeside(px, py);
+  if (!lava && !fence) return null;
+  const ox = px * 128, oy = (BAY_H - py) * 128;
+  return (x, z, reach = 0) => {
+    const gx = ox + x / SAMPLE_M, gy = oy + z / SAMPLE_M;
+    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));
+  };
+}
+/** A pixel's landmarks (LAND_PROP_FLOATS each, world/lands/landProps.js) less those `clear` drops, each by its own reach. */
+export function clearedLandProps(clear, raw) {
+  const kept = [];
+  for (let i = 0; i < raw.length; i += LAND_PROP_FLOATS) {
+    const reach = landMeasures(LAND_KINDS[raw[i + 5]], raw[i + 6]).reach * raw[i + 4];
+    if (!clear(raw[i], raw[i + 2], reach)) for (let k = 0; k < LAND_PROP_FLOATS; k++) kept.push(raw[i + k]);
+  }
+  return Float32Array.from(kept);
 }
 
 let _pics = null;

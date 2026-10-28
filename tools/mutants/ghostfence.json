@@ -119,8 +119,8 @@
   {
     "name": "GHOSTFENCE-a-lair-on-the-line",
     "file": "src/world/tamrielDungeons.js",
-    "old": "site.py === py && !onGhostfence(px, py) ? lairPick",
-    "new": "site.py === py ? lairPick",
+    "old": "site.py === py && !onGhostfence(px, py) && !redMountainLavaIn(px, py) ? lairPick",
+    "new": "site.py === py && !redMountainLavaIn(px, py) ? lairPick",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -275,6 +275,168 @@
     "file": "src/render/farRing.js",
     "old": "mid: mid?.built ? this._midGround : null,",
     "new": "mid: this._midGround,",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-crater-floor-smaller",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  if (dx * dx + dy * dy < D.floor * D.floor) return true;",
+    "new": "  if (dx * dx + dy * dy < 0.5 * D.floor * D.floor) return true;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-bed-under-the-lava",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const half = 0.5 * (T.halfTop",
+    "new": "const half = 0.4 * (T.halfTop",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-run-the-whole-line",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const p = line.pts, n = line.s.length, len = line.s[n - 1], run = len * T.lava;",
+    "new": "const p = line.pts, n = line.s.length, len = line.s[n - 1], run = len;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-pixels-unpadded",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const pad = 0.5 * D.trough.halfFoot * k;",
+    "new": "const pad = 0;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-crater-pixels-short",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "mark(f.cx - D.floor * k, f.cy - D.floor * k, f.cx + D.floor * k, f.cy + D.floor * k);",
+    "new": "mark(f.cx - 0.4 * D.floor * k, f.cy - 0.4 * D.floor * k, f.cx + 0.4 * D.floor * k, f.cy + 0.4 * D.floor * k);",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-no-gate-span",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "  return near(x - tx * h, y - ty * h, x + tx * h, y + ty * h);",
+    "new": "  return false;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-the-distance-halved",
+    "file": "src/world/tamriel/ghostfence.js",
+    "old": "    return qx * qx + qy * qy < r * r;",
+    "new": "    return qx * qx + qy * qy < 0.25 * r * r;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-the-clearance-the-gate's-alone",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "export const FENCE_CLEAR = GHOSTGATE.depth + 2;",
+    "new": "export const FENCE_CLEAR = GHOSTGATE.depth;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-no-reach",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "ghostfenceNear(gx, gy, FENCE_CLEAR + reach)",
+    "new": "ghostfenceNear(gx, gy, FENCE_CLEAR)",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-a-landmark's-reach-unread",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "const reach = landMeasures(LAND_KINDS[raw[i + 5]], raw[i + 6]).reach * raw[i + 4];",
+    "new": "const reach = 0;",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-clearing-everywhere",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "  if (!lava && !fence) return null;\n",
+    "new": "  if (false) return null;\n",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-clearing-blind-to-lava",
+    "file": "src/scenes/ghostfenceBuild.js",
+    "old": "return (lava && redMountainLavaBed(gx, gy)) ||",
+    "new": "return false ||",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-flats-uncleared",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      if (fire?.(f.x, f.z)) continue;   // LAVA-CLEAR, FENCE-CLEAR: no flat in the lava or the fence\n",
+    "new": "",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-the-landmarks-uncleared",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "standLandProps(px, py, fire ? clearedLandProps(fire, landProps) : landProps, ",
+    "new": "standLandProps(px, py, landProps, ",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-a-lair-on-the-lava",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "!onGhostfence(px, py) && !redMountainLavaIn(px, py) ? lairPick(",
+    "new": "!onGhostfence(px, py) ? lairPick(",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-a-lair-may-stand-on-the-lava",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "!onGhostfence(px, py) && !redMountainLavaIn(px, py) && lairPick(",
+    "new": "!onGhostfence(px, py) && lairPick(",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "LAVA-CLEAR-a-spawn-on-the-lava",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(",
+    "new": "d = !onGhostfence(px, py) && spawnGroundDry(",
+    "tests": [
+      "test/world/ghostfence.test.js"
+    ]
+  },
+  {
+    "name": "FENCE-CLEAR-a-gate-on-the-line",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(",
+    "new": "wet(x, y) || spawnsDungeon(",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

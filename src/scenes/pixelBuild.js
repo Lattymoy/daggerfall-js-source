@@ -96,7 +96,7 @@ import { multiply, trs } from '../world/mat4.js';
 import { naturePicture, junglePicture } from '../world/naturePicture.js';
 import { onFloatingFrame } from '../player/collider.js';
 import { inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';
-import { standGhostfence } from './ghostfenceBuild.js';   // GHOSTFENCE: the Tribunal's fence round Red Mountain
+import { standGhostfence, fireClearing, clearedLandProps } from './ghostfenceBuild.js';   // GHOSTFENCE: the Tribunal's fence round Red Mountain; LAVA-CLEAR, FENCE-CLEAR: nothing stood in its lava or its line
 import { arenaRoadsLayer } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: a province's people's names
 import { ownMinutes, skyMinutes, trustedWorldMinutes } from '../systems/worldTick.js';
@@ -1105,10 +1105,12 @@ export function createPixelBuild(host) {
     // TESA-LANDS: THE LANDS' LANDMARKS past the Bay (world/lands/landProps.js) - the worker's, each kept whole or not at all
     // off the gate's clearing and the rocks as the graht-oaks are (below), and the flats kept off the feet of those kept
     // (AUDIT: the worker cleared them under every landmark, and one the gate or a rock dropped left a bare ring)
-    const landStood = lands ? standLandProps(px, py, landProps, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) : null;
+    const fire = onTheBay(px, py) ? null : fireClearing(px, py);   // LAVA-CLEAR, FENCE-CLEAR: the lava's beds and the fence's line
+    const landStood = lands ? standLandProps(px, py, fire ? clearedLandProps(fire, landProps) : landProps, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) : null;
     const offLand = landFeetOff(landStood?.set.props, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);
     for (const f of nature) {
       if (offLand?.(f.x, f.z)) continue;   // TESA-LANDS: a stalk's, a column's, a trunk's foot and a vineyard's rows clear
+      if (fire?.(f.x, f.z)) continue;   // LAVA-CLEAR, FENCE-CLEAR: no flat in the lava or the fence
       // GATE-CLEAR (AUDIT FOREST1 F5): the day's Oblivion Gate keeps its clearing of nature as it keeps it of World of
       // Daggerfall's flats - a tree no longer stands through the gate's stone or the Sigil Broker (the sweep builds the
       // pixel again when the gate's day turns). FOREST1 (F1): and a wood's flats keep out of the rock pieces it grows

@@ -170,3 +170,32 @@ export function ghostfenceRunCuts(f, i) {
   out.push(bx, by);
   return Float64Array.from(out);
 }
+
+/** FENCE-CLEAR: is world sample (gx, gy) within `m` metres of the fence's line - a run of the 3x3 pixels about it, or
+ *  Ghostgate's span between its towers' faces? (The pixel build keeps its flats and landmarks off it: scenes/
+ *  ghostfenceBuild.js fireClearing.) */
+export function ghostfenceNear(gx, gy, m) {
+  const f = ghostfenceFrame();
+  if (!f) return false;
+  const [px, py] = sampleToPixel(gx, gy), r = m / SAMPLE_M;
+  const near = (ax, ay, bx, by) => {
+    const ex = bx - ax, ey = by - ay, l2 = ex * ex + ey * ey;
+    let t = l2 > 0 ? ((gx - ax) * ex + (gy - ay) * ey) / l2 : 0;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    const qx = gx - ax - ex * t, qy = gy - ay - ey * t;
+    return qx * qx + qy * qy < r * r;
+  };
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      for (const i of f.runsBy.get(keyOf(px + dx, py + dy)) ?? []) { const [[ax, ay], [bx, by]] = ghostfencePanel(f, i); if (near(ax, ay, bx, by)) return true; }
+    }
+  }
+  const g = f.gate, h = GHOSTGATE_HALF / SAMPLE_M, x = f.pts[2 * g], y = f.pts[2 * g + 1], tx = f.tan[2 * g], ty = f.tan[2 * g + 1];
+  return near(x - tx * h, y - ty * h, x + tx * h, y + ty * h);
+}
+
+/** FENCE-CLEAR: does the fence's line cross Bay pixel (px, py) or a pixel beside it? (Where ghostfenceNear may answer.) */
+export function ghostfenceBeside(px, py) {
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (onGhostfence(px + dx, py + dy)) return true;
+  return false;
+}

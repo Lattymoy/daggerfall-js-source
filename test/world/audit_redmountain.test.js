@@ -271,7 +271,7 @@ test('AUDIT RED-MOUNTAIN G1/G2: no spawned ruin on the Ghostfence\'s line (creat
   const unread = new Proxy({}, { get: () => { throw new Error('the ground read'); } });
   const ground = createSpawnGround(unread);
   for (const k of [...f.band].slice(0, 20)) { const [x, y] = k.split(',').map(Number); assert.equal(ground(x, y), false, `no ruin on the line at ${k}, its ground unread`); }
-  assert.match(read('src/world/spawnedDungeons.js'), /dry\.set\(key, d = !onGhostfence\(px, py\) && spawnGroundDry\(woods, px, py\)\);/);
+  assert.match(read('src/world/spawnedDungeons.js'), /dry\.set\(key, d = !onGhostfence\(px, py\) && !redMountainLavaIn\(px, py\) && spawnGroundDry\(woods, px, py\)\);/);   // PIN MOVED (LAVA-CLEAR): nor on the lava's pixels
   const { openBlocked } = routeGround(() => 0, () => 100, 20);
   const shut = [...f.band].find((k) => !f.open.has(k)).split(',').map(Number), gate = f.gatePixel.split(',').map(Number);
   assert.equal(openBlocked(shut[0] + 1, shut[1], shut[0], shut[1]), true, 'onto the line');

@@ -167,6 +167,14 @@ its highest, read exactly on the drawn triangles (`groundAlong`), one solid a ru
 AUDIT RED-MOUNTAIN N1: a run was one flat quad on its two feet - gullies opened under it and ridges buried its top, and a
 body walked through at 22 runs.
 
+**Nothing stands in the lava or on the line** (LAVA-CLEAR, FENCE-CLEAR, at the fold into #1184). On the freeware's
+ground the kernel laid 449 of TESA-LANDS' scoria spires and 9,887 flats on the lava's beds (81,748 flats with the lands'
+row off), and flats and landmarks within 8 m of the line. The build now keeps them off the beds - the crater's floor,
+and the middle half of each foyada's floor down its lava's run (`redMountainLavaBed`), the lava 17 m inside - and 8 m
+off the line and Ghostgate's span, a landmark 8 m past its reach (`fireClearing`, `ghostfenceNear`). A place levels
+its pixel, so no lair, spawn, gate, star or Hollow stands on a pixel a bed reaches (`redMountainLavaIn`), nor a gate,
+star or Hollow on the line. Today 17 of those 68 pixels roll a spawn; no lair site or gate pixel stood on either.
+
 **Its ghost-light** (`render/ghostfenceGlow.js`): the curtain between the pylons, strands of light climbing it, and a
 halo about each orb, never under a few pixels. It is drawn after the water and the flats (the renderer's `afterFlats`,
 armed by the far ring: it writes no depth, and drawn before them it was painted over - N2), in the fire's two lenses,
@@ -186,11 +194,12 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
 - The plume leans the same way every day: no wind is read (the rite smoke's own reading).
 - The lava casts no light on the ground, and the plume is not drawn when the far ring is not (bad weather, `?ring=off`).
 - The Ghostfence stands with the Landforms row or without it (the Tribunal's, not the land's). Its curtain and halos
-  are the far ring's pass: on the classic skin, in rain or snow and by `?ring=off` its pylons stand and their orbs
-  glow, without them.
+  are the far ring's pass: on the classic skin, in rain, snow or ASHFALL1's ashfall (exp fog, Red Mountain's half of
+  its hours) and by `?ring=off` its pylons stand and their orbs glow, without them.
 - Ghostgate is the gate alone: no Temple compound, no garrison, no road to it (nothing within the fence is a road's).
-- Not yet: Dagoth Ur's citadel in the crater, ash storms as weather, the held map's caret for the cone (its bytes are
-  the relief's).
+- ASHFALL1's ashfall (`07-Rendering/Weather-Arc.md` E) falls on Red Mountain's zone half its hours, the Ashlands' 30%.
+  It is the zone's weather: not born in the crater, as the lore's storms are, and the plume does not feed it.
+- Not yet: Dagoth Ur's citadel in the crater, the held map's caret for the cone (its bytes are the relief's).
 
 ## Pins
 
@@ -205,15 +214,14 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
   RED-MOUNTAIN R2 found the eye it matters to, 20 km out on the flank).
 - **`test/world/audit_redmountain.test.js` (16, one gated on ARENA2)** and **`tools/mutants/audit_redmountain.json`
   (51)**: every finding of AUDIT RED-MOUNTAIN pinned where it was fixed (`01-Overview/audits/Audit-Red-Mountain.md`).
-- **`test/world/ghostfence.test.js` (8, one gated on ARENA2):** the ring (its radius, wander, spacing, tangents,
-  Ghostgate due south, the line closed against an 8-step walk, the gate's pixels the only open ones); the places and
-  the roads (the countryside's keep pixel by pixel, a lair's site on the line, the blocks, GROUND_ROLL_VERSION); the
-  real roads' builder joining two towns round it; the models wound out of their solids, the passage open; the build
-  (each seat its centre's ground and a footing on a slope, the solids, the curtain's pieces over their exact ground, the
-  feet and the curtain points, Ghostgate, a pixel off it); the glow (the feet on each layer's triangles, a stale note
-  unread, the meshes, the ease and the hiding run on their own sources, the far ring's wiring and door); by
-  source and the A8 law; and on the freeware's trace no countryside within it. **Mutants**
-  `tools/mutants/ghostfence.json`.
+- **`test/world/ghostfence.test.js` (11, two gated on ARENA2):** the ring (radius, wander, spacing, tangents, Ghostgate
+  due south, the line closed against an 8-step walk, the gate's pixels the only open ones); the places and the roads;
+  the real roads' builder joining two towns round it; the models, the passage open; the build (each seat and footing,
+  the solids, the curtain's pieces over their exact ground, the feet, Ghostgate); the glow (the feet on each layer's
+  triangles, a stale note unread, the shaders on their own sources, the wiring and door); the A8 law; LAVA-CLEAR and
+  FENCE-CLEAR (the drawn lava on its beds, the pixels, the clearance, a landmark's reach, the readers); and on the
+  freeware's ground no countryside within the fence and no flat or spire left on the beds or the line. **Mutants**
+  `tools/mutants/ghostfence.json` (49, all dead).
 - **PIN MOVED (GHOSTFENCE):** `test/world/road/river_fords.test.js` and `test/world/rumarewater.test.js`
   (GROUND_ROLL_VERSION 6), `test/world/audittesa2r_roads.test.js` (6's fingerprint, its fixture off the fence),
   `test/combat/blood1_decals.test.js` (the tenth bucket translation, the fence's).
@@ -232,4 +240,5 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
   `test/render/precip4_snowground.test.js` (the levels' count 45), `test/scenes/perfcol2.test.js`,
   `test/combat/blood1_decals.test.js`, `test/world/road/river_fords.test.js`, `test/systems/l10n4_hardcoded.test.js`
   (`tamrielRanges.js` holds no English). Re-aimed: `reliefpeaks.json` (5 cone records gone), `farlandmark.json`.
+- **PIN MOVED (LAVA-CLEAR):** `test/world/ghostfence.test.js` (the lairs' two lines read the lava too).
 - **The probe** `tools/redMountainProbe.mjs` photographs it in the real game from stations about it, day and night.
