@@ -80,6 +80,16 @@ past the Bay with a way go from 20 to 31.
 NOT CHANGED. Ald'ruhn stands three pixels from the sea, past the ring. Anvil and Leyawiin stay inland on this picture
 (`03-World/Arena-Provinces.md` TESA12). The relay and the account service read no port past the Bay.
 
+## The serpent's site moved (AUDIT TAMRIEL-WIDE E3)
+
+FOUND. COAST-PORT's new ports took the world's lanes from 440 to 450, and the serpent's day picked its lane by its index
+among them: the site moved on 24 of 24 serpent days, the Bay's too. The `site` word carried no version, so during the
+deploy old and new tabs rose the serpent at different sites.
+
+FIXED (relay world280). Each lane is scored by its two ends, and the word says its site law
+(`11-Multiplayer/Sea-Serpent.md` section 18). A lane added now moves only the days it wins. The fix itself moved every
+day's site one more time: of the next 24 serpent days from day 1000, all 24.
+
 ## Pins
 
 `fb1028b_seasquare.test.js` (9): the kernel's square and the corner law, the lanes' water, the roomy roadstead (and the

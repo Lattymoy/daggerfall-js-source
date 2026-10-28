@@ -10,10 +10,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldFellLive, serpentSiteDayOk, agreedSerpentSite, serpentHeraldKill,
+  serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldFellLive, serpentSiteDayOk, agreedSerpentSite, serpentHeraldKill, SERPENT_SITE_RECORD,
 } from '../../../src/net/serpent/serpentHerald.js';
 import { foldGateSite, HERALD_RETRY_MS, HERALD_FELL_KEEP_MS, GATE_SITE_SKEW_MS } from '../../../src/net/gate/gateHerald.js';
-import { serpentTimes, serpentAt, serpentPhase, SERPENT_DIVE_MS, SERPENT_EVERY_DAYS, SERPENT_SURFACE_MS } from '../../../src/net/serpent/serpentLaw.js';
+import { serpentTimes, serpentAt, serpentPhase, SERPENT_DIVE_MS, SERPENT_EVERY_DAYS, SERPENT_SURFACE_MS, SERPENT_SITE_LAW } from '../../../src/net/serpent/serpentLaw.js';
 import {
   validSerpentIn, parseClient, relaySupportsSerpentSite, SERPENT_SITE_RELAY_MIN, SERPENT_KINDS, SERPENT_INTERNAL_FELL, SOCIAL_ROOM, RELAY_VERSION, POSE_BOUND, ACCOUNT_SWEEP_MS, SD_KEY,
 } from '../../../src/net/wire.js';
@@ -168,7 +168,7 @@ async function withHerald(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD
     return a;
   };
   const join = async (n) => { const ws = r.connect(); await r.hello(ws, `peer-${n}`, null, { name: n, acct: `acct-${n}`, asecret: `secret-of-acct-${n}` }); clock += 10; return ws; };
-  const site = (ws, d, sx, sz, pl) => r.raw(ws, JSON.stringify({ t: 'serpent', k: 'site', d, sx, sz, pl }));
+  const site = (ws, d, sx, sz, pl) => r.raw(ws, JSON.stringify({ t: 'serpent', k: 'site', d, sx, sz, pl, sl: SERPENT_SITE_LAW }));   // PIN MOVED (AUDIT TAMRIEL-WIDE E3): a word of the hub's own site law
   const fell = (d, top, n, at = Date.now(), where = SITE) => r.room.fetch(new Request(`https://relay.internal${SERPENT_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify({ d, at, top, n, sx: where.sx, sz: where.sz, rc: [], here: [] }) }));
   try { await quiet(() => fn({ r, join, site, fell, posts, discord, now: () => clock, set: (t) => { clock = t; } })); } finally { Date.now = realNow; globalThis.fetch = realFetch; }
 }
@@ -180,11 +180,11 @@ test('SERPENT2 relay: THE BELLS - the hub\'s alarm armed for them at its first h
     await site(a, DAY, SITE.sx, SITE.sz, SITE.place);
     await site(c, DAY, FORGED.sx, FORGED.sz, 'Daggerfall');
     await site(a, DAY, FORGED.sx, FORGED.sz, 'Daggerfall');   // a's second word: nothing
-    assert.equal(agreedSerpentSite(r.store.get('serpentsite'), DAY), null, 'one account each: nothing named yet');
+    assert.equal(agreedSerpentSite(r.store.get(SERPENT_SITE_RECORD), DAY), null, 'one account each: nothing named yet');   // PIN MOVED (AUDIT TAMRIEL-WIDE E3): the record its site law's
     await site(b, DAY, SITE.sx, SITE.sz, SITE.place);
-    assert.deepEqual(agreedSerpentSite(r.store.get('serpentsite'), DAY), SITE, 'two accounts agree');
+    assert.deepEqual(agreedSerpentSite(r.store.get(SERPENT_SITE_RECORD), DAY), SITE, 'two accounts agree');
     await site(b, DAY + 2, SITE.sx, SITE.sz, SITE.place);   // a day the clock is not about
-    assert.equal(r.store.get('serpentsite').d, DAY, 'another day\'s word is not kept');
+    assert.equal(r.store.get(SERPENT_SITE_RECORD).d, DAY, 'another day\'s word is not kept');
     assert.equal(r.store.has('gatesite'), false, 'the gate\'s record untouched');
     assert.equal(posts.length, 0, 'nothing said before the bells');
     set(T.omenAt); await r.fire();
@@ -307,9 +307,9 @@ test('SERPENT2 relay: NO WEBHOOK, NO HERALD - nothing posted, nothing kept of wh
   }
   const cell = fakeRoom('world:6,9');
   const ws = cell.connect(); await cell.hello(ws, 'peer-x', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 }, { acct: 'acct-x', asecret: 'secret-of-acct-x' });
-  await quiet(() => cell.raw(ws, JSON.stringify({ t: 'serpent', k: 'site', d: DAY, sx: 1, sz: 1, pl: 'Sentinel' })));
+  await quiet(() => cell.raw(ws, JSON.stringify({ t: 'serpent', k: 'site', d: DAY, sx: 1, sz: 1, pl: 'Sentinel', sl: SERPENT_SITE_LAW })));   // PIN MOVED (AUDIT TAMRIEL-WIDE E3)
   assert.equal(ws.meters.junk, 1, 'a cell takes no site');
-  assert.equal(cell.store.has('serpentsite'), false);
+  assert.equal(cell.store.has(SERPENT_SITE_RECORD), false);
 });
 
 // ═══ THE CLIENT ══════════════════════════════════════════════════════════════════════════════════════════════════
@@ -326,7 +326,7 @@ test('SERPENT2 client: the game says where it found the serpent to the hub - onc
   };
   const { o, sites, ws } = link();
   assert.equal(o.sendSerpentSite(DAY, 81_000.4, -42_000.6, 'St. Olms*'), true);
-  assert.deepEqual(sites(), [{ t: 'serpent', k: 'site', d: DAY, sx: 81_000, sz: -42_001, pl: 'St Olms' }], 'its point to the whole unit, the port as the wire\'s law leaves it');
+  assert.deepEqual(sites(), [{ t: 'serpent', k: 'site', d: DAY, sx: 81_000, sz: -42_001, pl: 'St Olms', sl: SERPENT_SITE_LAW }], 'its point to the whole unit, the port as the wire\'s law leaves it, and the site law it was rolled by');   // PIN MOVED (AUDIT TAMRIEL-WIDE E3)
   assert.equal(o.sendSerpentSite(DAY, 81_000, -42_000, 'Sentinel'), true, 'said already');
   assert.equal(sites().length, 1, 'once a socket and day');
   assert.equal(o.sendSerpentSite(DAY + 2, 5, 6, 'Wayrest'), true); assert.equal(sites().length, 2, 'the next serpent');

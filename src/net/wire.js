@@ -6304,7 +6304,8 @@ export function validSerpentIn(m) {
   if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT13: my hull's share, thousandths
   if (m.k === 'site') {   // SERPENT2: the day, the site's native point to the whole unit, the port it lies off (gatePlaceWire's law)
     if (!Number.isSafeInteger(m.d) || m.d < 0 || !Number.isSafeInteger(m.sx) || !Number.isSafeInteger(m.sz) || Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND || typeof m.pl !== 'string') return null;
-    return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, sx: m.sx, sz: m.sz, pl: m.pl } : null;
+    if (m.sl !== undefined && !intIn(m.sl, 1, 999)) return null;   // AUDIT TAMRIEL-WIDE E3: the site law it was rolled by (serpentLaw.js SERPENT_SITE_LAW); none from a build before it
+    return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, sx: m.sx, sz: m.sz, pl: m.pl, ...(m.sl !== undefined ? { sl: m.sl } : {}) } : null;
   }
   if (!Number.isSafeInteger(m.i) || m.i < 1) return null;
   if (m.k === 'esc') return { k: 'esc', i: m.i };
