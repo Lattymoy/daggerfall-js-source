@@ -12,8 +12,10 @@ import { fileURLToPath } from 'node:url';
 import { d1, standService } from '../accountDb.mjs';
 import {
   postHandles, postBatch, postWords, postItem, sqlText, lookSql, sendSql, hoursFirstSql, hoursFirstHandles, HOURS_FIRST, HOURS_FIRST_RECORD, POST_ITEMS,
-  POST_RECIPIENTS_MAX,
+  POST_RECIPIENTS_MAX, tamrielPostSql, TAMRIEL_POST, TAMRIEL_POST_RECORD,
 } from '../../tools/sendServerPost.mjs';
+import { seatRealm } from '../realmSeat.mjs';
+import { portalStones, isPortalStone } from '../../src/systems/gate/gateSpoils.js';
 import { postBoxOf } from '../../server-account/src/post.js';
 import { POST_SENDER, POST_BODY_MAX, POST_SUBJECT_MAX } from '../../src/net/postLaw.js';
 import { mintHourlock, mintGilded, HOURLOCK_GUN_ERA, validGildedMarks } from '../../src/systems/gilded.js';
@@ -109,6 +111,42 @@ test('HOURS-FIRST THE FIRST SEND, migration 0094: the tool\'s own statement to t
   assert.equal((await postBoxOf({ db: svc.env.DB }, { id: other.id })).post.length, 0, 'no one else');
   svc.env.DB._raw.exec(mig);
   assert.equal(rows(svc.env.DB, 'SELECT COUNT(*) AS n FROM server_post')[0].n, 13, 'applied again, nothing more');
+});
+
+test('TAMRIEL-POST THE UPDATE\'S LETTER, migration 0188: the tool\'s own statement to every registered account, ten Portal Stones in one stack - its words and record FROZEN in the tool, the record the mint\'s own, every sentence a plain one; applied over the live accounts it sends each registered one a piece and no guest, the box shows the stones, a claim puts all ten in the realm character\'s record, and applied again it sends nothing (mutants: a guest sent it; the stones not ten; the send not once)', async () => {
+  const mig = src('server-account/migrations/0188_tamriel_post.sql');
+  const statement = mig.split('\n').filter((l) => !l.startsWith('--')).join('\n').trim();
+  assert.equal(statement, tamrielPostSql(), 'the tool\'s statement, as it prints it');
+  assert.equal(execFileSync(process.execPath, [TOOL, '--migration', 'tamriel'], { encoding: 'utf8' }), `${tamrielPostSql()}\n`);
+  const stones = JSON.parse(TAMRIEL_POST_RECORD);
+  assert.deepEqual(stones, portalStones(10), 'the frozen record is the mint\'s own');
+  assert.ok(isPortalStone(stones) && stones.stackCount === 10, 'ten Portal Stones, one stack');
+  assert.ok(TAMRIEL_POST.subject.length <= POST_SUBJECT_MAX && TAMRIEL_POST.body.length <= POST_BODY_MAX);
+  assert.equal(TAMRIEL_POST.sender, 'DFO Team');
+  assert.ok(TAMRIEL_POST.body.endsWith(`- ${TAMRIEL_POST.sender}`), 'signed by its sender');
+  for (const sentence of TAMRIEL_POST.body.split(/(?<=[.!?:])\s+/)) assert.ok(sentence.split(/\s+/).length <= 25, `a plain sentence (PLAIN-TEXT): ${sentence}`);
+
+  const svc = await standService();
+  const ann = await svc.registered('Ann'), bob = await svc.registered('Bob');
+  player(svc.env.DB, 'p-guest', null);
+  svc.env.DB._raw.exec(mig);
+  const pieces = rows(svc.env.DB, 'SELECT id, to_id, batch, sender, item FROM server_post');
+  assert.deepEqual(new Set(pieces.map((p) => p.to_id)), new Set([ann.id, bob.id]), 'every registered account, once, and no guest');
+  assert.equal(pieces.length, 2);
+  assert.ok(pieces.every((p) => p.batch === TAMRIEL_POST.batch && p.sender === 'DFO Team' && p.item === TAMRIEL_POST_RECORD));
+  const box = await postBoxOf({ db: svc.env.DB }, { id: ann.id });
+  assert.deepEqual([box.post[0].from, box.post[0].subject, box.post[0].item?.name, box.unclaimed], ['DFO Team', TAMRIEL_POST.subject, 'Portal Stone', 1]);
+
+  const R = await seatRealm(svc.env, ann.secret, 'Ann', { name: 'Ann', level: 5, goldPieces: 10, items: [] });
+  const id = pieces.find((p) => p.to_id === ann.id).id;
+  const r = await svc.call('/v1/post/claim', { id, character: R.id, realm: R.at() }, ann.secret);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.deepEqual(r.body.item, portalStones(10), 'the claim answers the stones');
+  const row = svc.env.DB._raw.prepare('SELECT obj FROM realm_characters WHERE id = ?').get(R.id);
+  const rec = JSON.parse(new TextDecoder().decode(svc.env.SAVES._map.get(row.obj)));
+  assert.deepEqual(rec.items, [portalStones(10)], 'all ten in the character\'s record');
+  svc.env.DB._raw.exec(mig);
+  assert.equal(rows(svc.env.DB, 'SELECT COUNT(*) AS n FROM server_post')[0].n, 2, 'applied again, nothing more');
 });
 
 /** A step's `run: |` block, by its name, as the runner hands it to bash (guildgrant.test.js's reader). */
