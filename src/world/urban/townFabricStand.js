@@ -27,7 +27,8 @@ import { registerCustomModel, unregisterCustomModel } from '../customModels.js';
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { provinceKeyBeyondBay } from '../tamriel/tamrielLand.js';
 import { CAPITALS, BLOCK_M, capitalBlockLift } from '../tamrielCapitals.js';   // SOLITUDE-RELIEF: a block's tier
-import { townWallGatesOf, townWallWaits } from '../townWalls.js';   // ROAD-FOLLOW: a wall still waiting for its roads plans no streets yet
+import { townWallGatesOf, townWallWaits, townWallOf, townWallCells } from '../townWalls.js';   // ROAD-FOLLOW: a wall still waiting for its roads plans no streets yet
+import { NAV_CELL } from '../city/cityNavigation.js';
 import { onTownTile } from '../townShape.js';
 import { getLocationTerrainTileOrigin } from '../terrain/terrainTiles.js';
 import { FABRIC_CELLS, fabricGrid, planSteps, isPortCell } from './townFabric.js';
@@ -130,7 +131,12 @@ export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () =
   if (had && had.groundKey === groundKey) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }
   if (had) { _fabrics.delete(mapId); unregisterCustomModel(had.modelId); }   // its ground moved under it (the land or its roads landed): planned again
   const at = new Map(blocks.map((b) => [b.y * ed.width + b.x, b]));
-  const onGround = ground ? (x, z) => onTownTile(ground, tilePos, x, z) : null;
+  // WALL-FLICKER (bible/03-World/Town-Shapes.md section 15): nothing of it where its wall stands - a gate's floor lies on the
+  // town's ground as its setts and cobbles do, a yard's fence ran in a length's face, and each pair drew in one plane;
+  // every cell that touches a piece of the wall is off
+  const wall = dfLocation.outline?.walled ? townWallOf(dfLocation) : null;
+  const under = wall ? townWallCells(wall, ed.width, ed.height, NAV_CELL * Math.SQRT1_2) : null, W = ed.width * FABRIC_CELLS;
+  const onGround = ground || under ? (x, z) => (!ground || onTownTile(ground, tilePos, x, z)) && !under?.[z * W + x] : null;
   const onRoad = paths ? (x, z) => onTownTile(paths, tilePos, x, z) : null;
   const grid = fabricGrid(ed.width, ed.height, (bx, by) => fabricBlockOf(at.get(by * ed.width + bx)), { onGround, onRoad });
   const { mains, ends, centre } = fabricEnds(dfLocation, grid.W, grid.H);

@@ -161,6 +161,7 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's wall ring - th
   map id's low 20 bits - AUDIT RELEASE R1-1, `01-Overview/audits/Audit-Release-R1.md`: at 3,000,000 a Bay city's wall shared
   an id with one of IC-GRAND's city cells), composed of the player's own ARCH3D pieces (needs 444, 445, 446) - turned so its local +z is its
   outward normal and its +x along the line (no mirror), stretched along its length - so it collides and draws as any model.
+  WALL-FLICKER (section 15): every length and gate cut clear of the towers' bodies.
 - **The carrier** (standTownWall, townWallBlockJson): a block of the city's own (`TESW<low 20 bits in base 36>.RMB`, index
   1,000,000 and the same bits) in its south-west cell: open ground, the wall's model at its corner, and a start marker
   outside each gate at Daggerfall's offset (15.2 m out, 3 m along). The host stands it as it clones the city
@@ -358,6 +359,8 @@ Gallobrugh's wall, every tower).
   a mod's) stands as it is. `townWallModel` stands it for every tower piece. A length's end (open, as Daggerfall's are:
   they meet a tower or the next length in its ring) now stands inside the tower's body at every bend - the body is the
   wall's thickness, and a length's end is a 9.6 m segment through its middle, whatever the turn.
+- **WALL-FLICKER** (section 15): where the line runs straight, a length's faces lay in its tower's own and both drew
+  there; every length and gate is cut clear of the body now.
 - **Its cells** (`townWallCells`, WALL_FOOT): a tower's square on the town map and the walk grid is its body's, 9.6 m -
   every wall still closed on its walk grid (TS6's measure, re-run), every board and carriage still clear (TS7's).
 - The one law for every town the new layout walls - a city past the Bay (TS4) and every one of the Bay's 410 walled
@@ -631,3 +634,58 @@ still lays each one's road in from its opening to the town's nearest paving, whe
 - Pins `test/world/gateroads.test.js` (10, one on the freeware: the gate model's floor, the Bay as online stands it, past
   the Bay, the packs off). Mutants `tools/mutants/gateroads.json` (39, all dead); re-aimed by content:
   RF-the-gate-begun-at-the-crossing, U3S-the-gates-a-walls.
+
+## 15. WALL-FLICKER - a length clear of its tower, no fabric where the wall stands (BUILT)
+
+FIELD BUGS 2026-10-28, #bug-reports, after #1184 shipped: *"The city wall at the entrance of Riften has texture flicker"*.
+
+**Why.** A bend's tower is the corner tower's body, a square of the wall's own thickness (TS8), and every length and gate
+ends in its middle. Where the line runs straight through a tower, the length's two faces lie in the planes of the
+tower's two sides, over half of each. At a turn of a degree they cross them in a long, thin band, and at a sharp bend two
+lengths' walks lie on each other just past the body. The depth buffer cannot order two faces in one plane, so the frame
+shows some of each, and the mix moves as the eye moves.
+
+**Riften**, as the places host stands it: Skyrim's fourth city at Bay pixel (2356, 77), Gothbrone Hall's grid off
+MAPS.BSA's own rows, one road from the east (the roads' worker's regions over its pixel). It has one gate, at (624.0,
+355.2) of its carrier, facing east, on a straight run. The tower north of the gate turns 0.0004 degrees. The gate's and the
+next length's faces lie in that tower's side planes: 154 m2, and 77 m2 of it on the side a player meets at the gate.
+
+**Measured first** (the freeware; faces of two pieces that face one way, over each other within 1 mm, outside the towers'
+bodies): the Bay's 410 walled cities (TS7, the packs off, Basic Roads' roads), 603,355 m2, every city; the 407 city
+templates past the Bay (a road every way), 302,885 m2, every city. 5,647 of their 44,880 towers stand where the line runs
+straight (under 0.01 degrees), 2,067 of them beside a gate.
+
+**The law** (`townWalls.js:"export function clearOfTowers(part, towers) {"`, which townWallModel applies to every length and
+gate): each part of the piece inside a bend tower's body is left out. A face that runs along a side of the body is cut
+TOWER_CLEAR (5 cm, the depth buffer's step at 400 m) past it too. A level face is mitred at the tower's middle, so one
+walk stops where the next begins; no turn passes 89 degrees, so the next walk covers what is cut. Everything cut was in
+the tower, on its face or under the next walk, so nothing opens. A tower not of 444's measure (a mod's) cuts nothing.
+
+**The town's fabric.** A gate's way has Daggerfall's floor (446) at the town's ground, and URBANIZER lays its setts and
+cobbles at the same height (FABRIC_ROAD_Y). GATE-ROADS stands gates on the towns' streets, so a block's paving often runs
+under a gate; and where a length lies on the fabric's grid, a yard's fence can run in its face. Measured over the 407
+city templates past the Bay and Riften (each fabric planned on its whole grid, a road every way; its faces against its
+wall's, within 4 cm): 88 towns, 1,853 m2. The fabric now lays nothing on a cell that a piece of the wall touches
+(`townFabricStand.js:"const under = wall ? townWallCells(wall"`, townWallCells grown a cell's half diagonal): none now.
+
+**Measured after**: no two faces within 1 mm on any wall of either set, nor within 4 cm (822,943 and 495,846 m2 before),
+two that only meet along an edge aside; the same open ends seen at the towers as before, by level rays from both sides
+at 22 walls. The model holds 5 per cent more triangles on the Bay and 7 per cent more past it, and takes about seven
+times as long to make (11 against 79 ms a city, on a loaded machine). So the model door makes it a breath at a time,
+WALL_PIECES_A_BREATH (16) pieces between two (townWallModelSliced), as it makes the town's fabric.
+
+**The probe.** Riften's gate drawn at the game's depth (24 bits, 0.2 to 6,000 m), each piece in its own colour, from its
+start marker toward that tower: 13,556 of the towers' pixels changed when the eye moved 1 cm, now 112 (their edges);
+from 108 m, 598, now 12.
+
+**The Bay.** The same builder walls the Bay's 410 cities (TS7), so the cut holds there as past the Bay. A ring of
+Daggerfall's own (its WALLAA blocks, or a town mod's) stands a corner tower only at a corner and its lengths end to end,
+with no piece in another, and needs no cut: every 20th of the 410 rings, laid as MAPS.BSA lays them, has no two faces
+within 4 cm of each other. The Bay's towns have no fabric.
+
+- No new departure: the walls on an outline are TS4's and TS7's (Port-Ledger A, TOWN-SHAPES); DFU stands Daggerfall's
+  ring.
+- The hosts: none grows - the wall is `world/townWalls.js`'s, the paving `world/urban/townFabricStand.js`'s.
+- Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2: every twentieth walled city on the Bay and past it,
+  Riften, five towns whose fabric lay in their wall's faces). Mutants `tools/mutants/fb1028_wallflicker.json` (22: 20
+  dead, 2 recorded equivalent with why). Re-aimed by content: `townboards.json` TB-the-stands-ground-dropped (dead).
