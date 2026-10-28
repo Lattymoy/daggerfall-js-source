@@ -16,7 +16,7 @@ import {
   CUTPURSE_SHARE, CUTPURSE_CROWD, DICE_SHARE, FLIRT_SHARE, SERMON_SHARE, CHASE_M, CAUGHT_M, STIR_GATHER_S, STIR_AFTER_S, CRY_SHARE,
 } from '../../../src/systems/livingWorld/stir.js';
 import {
-  WATCH_WORDS, WATCH_BUYS, MOVE_ALONG, CUTPURSE_SCRIPTS, CHASE_LINES, GOT_AWAY_LINES, DICE_SCRIPTS, SERMON_SCRIPTS, FLIRT_SCRIPTS, NEWS_CRIES,
+  watchWords, watchBuys, moveAlong, cutpurseScripts, chaseLines, gotAwayLines, diceScripts, sermonScripts, flirtScripts, newsCries,
 } from '../../../src/systems/livingWorld/lines.js';
 import { PERSON_MOVE_SPEED } from '../../../src/characters/mobile/mobilePerson.js';
 import { lwSeed, textSeed } from '../../../src/systems/livingWorld/seed.js';
@@ -55,7 +55,7 @@ test('LW-ANTICS the shares, the kinds and the light-fingered: CUTPURSE_HANDS of 
   assert.equal(lightFingered(who(idWhere((id) => lightFingered(who(id, { job: 'labourer' })), 'L1.'), { job: 'labourer', guard: true })), false, 'never the watch');
 });
 
-test('WATCH-LIFE the watch\'s word: of its rounds\' stops where one of the town stands, WATCH_WORD_SHARE has a word with them - a bite bought at a stall (WATCH_BUYS, the keeper keeping their stall), a beggar moved along (MOVE_ALONG, at their pitch), else its talk (WATCH_WORDS); the first of a pair alone, none with a stranger, none where it stopped a stranger (mutants: the share, the pair, the stall, the beggar, the stranger)', () => {
+test('WATCH-LIFE the watch\'s word: of its rounds\' stops where one of the town stands, WATCH_WORD_SHARE has a word with them - a bite bought at a stall (watchBuys, the keeper keeping their stall), a beggar moved along (moveAlong, at their pitch), else its talk (watchWords); the first of a pair alone, none with a stranger, none where it stopped a stranger (mutants: the share, the pair, the stall, the beggar, the stranger)', () => {
   let words = 0, n = 0;
   const kinds = { buy: 0, move: 0, talk: 0 };
   for (let i = 0; i < 600; i++) {
@@ -68,7 +68,7 @@ test('WATCH-LIFE the watch\'s word: of its rounds\' stops where one of the town 
     words++;
     const w = got[0];
     assert.ok(wholeRound(w) && w.members[0].id === g.id && w.members[1].id === y.id);
-    const pool = kind === 'stall' ? WATCH_BUYS : kind === 'beg' ? MOVE_ALONG : WATCH_WORDS;
+    const pool = kind === 'stall' ? watchBuys() : kind === 'beg' ? moveAlong() : watchWords();
     assert.ok(isScript(pool, w.script), `${kind}: its own words`);
     if (kind !== 'social') { assert.equal(w.anchor, 1, `${kind}: they keep their place`); kinds[kind === 'stall' ? 'buy' : 'move']++; } else kinds.talk++;
   }
@@ -82,7 +82,7 @@ test('WATCH-LIFE the watch\'s word: of its rounds\' stops where one of the town 
   }
 });
 
-test('LW-ANTICS a cutpurse: one light of finger, by day, at a spot of CUTPURSE_CROWD or more, lifts a purse from one standing there in CUTPURSE_SHARE of their stays - near the end of the cutpurse\'s stay, the one robbed keeping their stand; the watch standing by steps in (CHASE_LINES) else the robbed shout after them (GOT_AWAY_LINES); never by night, nor under the crowd, nor one honest (mutants: the hands, the crowd, the hours, the share, the end, the chase, the getaway)', () => {
+test('LW-ANTICS a cutpurse: one light of finger, by day, at a spot of CUTPURSE_CROWD or more, lifts a purse from one standing there in CUTPURSE_SHARE of their stays - near the end of the cutpurse\'s stay, the one robbed keeping their stand; the watch standing by steps in (chaseLines) else the robbed shout after them (gotAwayLines); never by night, nor under the crowd, nor one honest (mutants: the hands, the crowd, the hours, the share, the end, the chase, the getaway)', () => {
   const thief = (i) => who(idWhere((id) => lightFingered(who(id, { job: 'labourer' })), `L${MAP}.${i}x`), { job: 'labourer' });
   const crowd = (i, t0, t1, n) => Array.from({ length: n }, (_, k) => stay(who(`L${MAP}.c${i}.${k}`), 'social', t0 - 5, t1 + 5));
   let lifted = 0, tries = 0, watched = 0, gone = 0, drawn = 0, drawnLifted = 0;
@@ -103,9 +103,9 @@ test('LW-ANTICS a cutpurse: one light of finger, by day, at a spot of CUTPURSE_C
     const c = got[0];
     assert.equal(c.members[0].id, x.id, 'the cutpurse');
     assert.equal(c.anchor, 1, 'the one robbed keeps their stand');
-    assert.ok(isScript(CUTPURSE_SCRIPTS, c.script), 'the lift and the shout');
+    assert.ok(isScript(cutpurseScripts(), c.script), 'the lift and the shout');
     assert.ok(c.end > H(12) - (STIR_GATHER_S * RATE + 7 * LINE + STIR_AFTER_S * RATE) - ROUND && c.end <= H(12) + 1e-6, `near the end of the stay (${((c.end - H(11)) / LINE).toFixed(1)} lines in)`);
-    if (c.guard) { watched++; assert.ok(tailOf(CHASE_LINES, c.script), 'the watch gives chase'); } else { gone++; assert.ok(tailOf(GOT_AWAY_LINES, c.script), 'got away'); }
+    if (c.guard) { watched++; assert.ok(tailOf(chaseLines(), c.script), 'the watch gives chase'); } else { gone++; assert.ok(tailOf(gotAwayLines(), c.script), 'got away'); }
     if (withWatch) assert.ok(c.guard || !c.guard, 'a watch standing through it may step in');
   }
   // the draw CUTPURSE_SHARE of the stays; with no watch there most of them land (a quarrel keeps its round), with one the
@@ -127,8 +127,8 @@ test('LW-ANTICS of an evening, two of the town at dice (DICE_SHARE, the watch of
     const got = deal(`e${i}`, [stay(a, 'social', H(19), H(20)), stay(b, 'social', H(19), H(20))], null, undefined);
     n++;
     for (const x of got) {
-      if (x.kind === 'dice') { dice++; assert.ok(isScript(DICE_SCRIPTS, x.script)); }
-      if (x.kind === 'flirt') { flirt++; assert.ok(isScript(FLIRT_SCRIPTS, x.script)); assert.ok(!x.members.some((m) => m.guard), 'never the watch'); }
+      if (x.kind === 'dice') { dice++; assert.ok(isScript(diceScripts(), x.script)); }
+      if (x.kind === 'flirt') { flirt++; assert.ok(isScript(flirtScripts(), x.script)); assert.ok(!x.members.some((m) => m.guard), 'never the watch'); }
     }
     assert.equal(deal(`e${i}`, [stay(a, 'social', H(11), H(12)), stay(b, 'social', H(11), H(12))]).filter((x) => x.kind === 'dice' || x.kind === 'flirt').length, 0, 'by day: none');
     assert.equal(deal(`e${i}`, [stay(a, 'social', H(19), H(20)), stay(who(`L77.t${i}`, { town: 77 }), 'social', H(19), H(20))]).filter((x) => x.kind === 'dice' || x.kind === 'flirt').length, 0, 'a stranger: none');
@@ -139,7 +139,7 @@ test('LW-ANTICS of an evening, two of the town at dice (DICE_SHARE, the watch of
   for (let i = 0; i < 400; i++) {
     const priest = who(`L${MAP}.p${i}`, { job: 'priest', work: 1001 }), y = who(`L${MAP}.${i}`);
     const at = deal(`t${i}`, [stay(priest, 'social', H(8), H(8.75)), stay(y, 'social', H(7.9), H(9))], { building: 1001 }).filter((x) => x.kind === 'sermon');
-    if (at.length) { sermons++; assert.ok(isScript(SERMON_SCRIPTS, at[0].script) && at[0].members[0].id === priest.id && at[0].anchor === 0); }
+    if (at.length) { sermons++; assert.ok(isScript(sermonScripts(), at[0].script) && at[0].members[0].id === priest.id && at[0].anchor === 0); }
     assert.equal(deal(`t${i}`, [stay(priest, 'social', H(8), H(8.75)), stay(y, 'social', H(7.9), H(9))], { building: 1003 }).filter((x) => x.kind === 'sermon').length, 0, 'another\'s door: none');
   }
   assert.ok(Math.abs(sermons / 400 - SERMON_SHARE) < 0.08, `${sermons} sermons of 400`);
@@ -259,15 +259,15 @@ test('WATCH-LIFE a city\'s patrols: from 25 blocks a pair more a shift, two from
   }
 });
 
-test('LW-ANTICS a courier at their stint in town cries the news (NEWS_CRIES) where a stall cries its wares; the rest as they were (mutants: the crier unread)', () => {
+test('LW-ANTICS a courier at their stint in town cries the news (newsCries) where a stall cries its wares; the rest as they were (mutants: the crier unread)', () => {
   let news = 0, wares = 0;
   for (let i = 0; i < 400; i++) {
     const c = who(`L${MAP}.t${i}`, { job: 'courier' }), k = who(`L${MAP}.${i}`, { job: 'crafter' });
     for (let t = H(9); t < H(17); t += 0.25) {
       const v = smallVoice(c, { kind: 'stall' }, t, RATE, { town: 'Synth', places: ['Wayrest'] });
-      if (v) { news++; assert.ok(NEWS_CRIES.some((x) => v.text === x.replace('{place}', 'Wayrest').replace('{town}', 'Synth'))); }
+      if (v) { news++; assert.ok(newsCries().some((x) => v.text === x.replace('{place}', 'Wayrest').replace('{town}', 'Synth'))); }
       const w = smallVoice(k, { kind: 'stall' }, t, RATE, { town: 'Synth', places: ['Wayrest'] });
-      if (w) { wares++; assert.ok(!NEWS_CRIES.some((x) => w.text === x.replace('{place}', 'Wayrest').replace('{town}', 'Synth'))); }
+      if (w) { wares++; assert.ok(!newsCries().some((x) => w.text === x.replace('{place}', 'Wayrest').replace('{town}', 'Synth'))); }
     }
   }
   assert.ok(news > 100 && wares > 100 && Math.abs(news / wares - 1) < 0.35, `${news} news, ${wares} wares (CRY_SHARE ${CRY_SHARE} each)`);

@@ -2202,17 +2202,17 @@ dealt from the plans as LW-STIR's are (`stir.js spotIncidents`, ANTIC_KINDS), ev
 first five: a round keeps the incident it always had, and a newer one takes only a round none of them took, its people
 in no other at once (`antics: false` deals the first five alone, and the pin holds them equal).
 
-- **A cutpurse** (`lightFingered`, CUTPURSE_HANDS, CUTPURSE_SHARE, CUTPURSE_CROWD; CUTPURSE_SCRIPTS). A sixth of the
+- **A cutpurse** (`lightFingered`, CUTPURSE_HANDS, CUTPURSE_SHARE, CUTPURSE_CROWD; `cutpurseScripts`). A sixth of the
   town's beggars and labourers are light of finger; by day, at a spot of four or more, a third of their stays end in a
   purse lifted from one standing there, near the end of their stay so they leave after it. The robbed shout; the watch
-  on duty standing by gives chase (CHASE_LINES), else they shout after the thief (GOT_AWAY_LINES).
+  on duty standing by gives chase (`chaseLines`), else they shout after the thief (`gotAwayLines`).
 - **The run** (`cutpurseRun`, CHASE_M, CAUGHT_M; `livingTown.js _runOf`, `_chaseWayOf`). From the first shout the
   cutpurse runs 12 m from their stand, away from the one robbed, along the first of eight bearings the street holds
   clear, at a frightened run's pace; the watchman runs after them 0.6 s later, a little faster, and holds them a metre
   off, the cutpurse turned to him. Said on the run (`speech`).
 - **Of an evening** two of the town at dice (DICE_SHARE 0.05 of one's stays with another, the watch off duty too) or a
   warmer word (FLIRT_SHARE 0.02, never the watch); a priest at their own temple's door with one there preaches
-  (SERMON_SHARE 0.8, `spotIncidents`' `spot`); a courier at their stint cries the news (NEWS_CRIES).
+  (SERMON_SHARE 0.8, `spotIncidents`' `spot`); a courier at their stint cries the news (`newsCries`). Their words go through the text core (`lines.js` `spoken`, `lw.*` keys).
 - **Measured** (`tools/livingStirProbe.mjs`, three days): the synthetic town of 9 blocks a day 0.7 cutpurses, 3.7 at
   dice, 1.3 flirting, 0.3 sermons; of 45 blocks 3, 4.7, 2.7 and 0.3, beside 9.7 quarrels and 33 haggles.
 - **Found and fixed** (AUDIT LW-ANTICS A1, `livingTown.js _tickNow` `still`). An incident's two were filed under it the
@@ -2234,7 +2234,7 @@ on patrol a shift beside its four gate posts, and the watch spoke to the town on
   blocks, two from 40, three from 60. A watchman whose rank passes the shift's strength walks one of them, in pairs,
   each pair a beat of its own after the shift's own patrols: no post and no gate's law moves. Daggerfall's watch is 48
   (24 before), twelve a shift.
-- **The watch's word** (`stir.js` WATCH_WORD_SHARE; `lines.js` WATCH_WORDS, WATCH_BUYS, MOVE_ALONG). Of the watch's
+- **The watch's word** (`stir.js` WATCH_WORD_SHARE; `lines.js` `watchWords`, `watchBuys`, `moveAlong`). Of the watch's
   stops on its rounds where one of the town stands, 0.45 have a word with them: its talk, a bite bought at a stall
   (the keeper keeping their stall), a beggar moved along at their pitch. The first of a pair speaks; never to a
   stranger (LW-STIR's challenge is theirs), never at a stop that stopped one.

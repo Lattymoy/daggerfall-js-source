@@ -1,8 +1,8 @@
 // HOVER-NAMES (2026-10-28, bible/03-World/World-Wide.md HOVER-NAMES; the owner: "NPCs past the bay dont show name on
-// tooltip hover"): the plaque names the town's people, on the Bay and past it. Boots headless at a Bay village, looks at
-// its walkers from two metres and reads the plaque (`.wplaque`), then jumps past the Bay (`__tesaJump`) to a village, an
-// Arena city and a capital and reads it there. A place passes when most of those looked at are named and no plaque
-// stands empty. Run it where the Morrowind data is attached too: the 3D bodies are drawn only then.
+// tooltip hover"): the plaque names the people, on the Bay and past it. Boots headless at a Bay village, looks at its
+// walkers and the road's people near from two metres and reads the plaque (`.wplaque`), then jumps past the Bay
+// (`__tesaJump`) to a village, an Arena city and a capital and reads it there. A place passes when most of those looked
+// at are named and no plaque stands empty. Run it where the Morrowind data is attached too: its bodies are drawn only then.
 //   ARENA2_PATH=/home/claude/dfdata/arena2 node tools/hoverNamesProbe.mjs
 //   Env: PORT (5192), REGION and LOC the boot (Daggerfall's Arkbridge), CAPITAL the capital's index (1, Solitude), N
 //   the people looked at a place (8), CHROMIUM a browser other than the pinned one
@@ -56,6 +56,21 @@ async function place(tag, pixel = null) {
   check(!said.includes(''), `${tag}: no plaque stands empty`);
 }
 
+/** The road's people near (their seats, `__roadSeats`), looked at as the walkers are; judged where any stand. */
+async function travellers(tag) {
+  let seats = [];
+  for (let i = 0; i < 30 && !seats.length; i++) { await frames(3); seats = await ev(() => window.__roadSeats?.() ?? []); }
+  const said = [];
+  for (const p of seats.slice(0, 4)) {
+    const eye = [p.pos[0] - 1.4, p.pos[1] + 1.5, p.pos[2] - 1.4];
+    const dx = p.pos[0] - eye[0], dz = p.pos[2] - eye[2], dy = p.pos[1] + 1.0 - eye[1];
+    await ev(([x, y, z, yw, pt]) => window.__pose(x, y, z, yw, pt), [eye[0], eye[1], eye[2], Math.atan2(dx, dz), Math.atan2(dy, Math.hypot(dx, dz))]);
+    await frames(2);
+    said.push(await ev(() => { const n = document.querySelector('.wplaque'); const on = n && getComputedStyle(n).display !== 'none' && getComputedStyle(n).visibility !== 'hidden'; return on ? n.innerText.replace(/\s+/g, ' ').trim() : null; }));
+  }
+  console.log(`  ${tag}: ${seats.length} on the road near, the plaque said ${JSON.stringify(said)}`);
+  if (said.length) check(said.filter((t) => t && !/^To /.test(t)).length * 2 >= said.length && !said.includes(''), `${tag}: the road's people named`);
+}
 async function jump(tag, find, arg = null) {
   let at = null;
   for (let i = 0; i < 2400 && !at; i++) { at = await ev(find, arg).catch(() => null); if (!at) await frames(1); }
@@ -64,12 +79,14 @@ async function jump(tag, find, arg = null) {
   await frames(2);
   await idle();
   await place(tag, `${at[0]},${at[1]}`);
+  await travellers(tag);
 }
 
 await page.goto(`http://localhost:${PORT}/play/?world&shot&region=${encodeURIComponent(process.env.REGION ?? 'Daggerfall')}&loc=${encodeURIComponent(process.env.LOC ?? 'Arkbridge')}&class=1&novideo&nofoes&grass=off&tod=13:00&weather=sunny&skin=enhanced&touch=off`);
 await page.waitForFunction(() => window.__shotReady === true, null, { polling: 2000 });
 await idle();
 await place('the Bay');
+await travellers('the Bay');
 await jump('a village past the Bay', () => { const v = (window.__tesaPlaces?.(-4000, -4000, 8000, 8000) ?? []).filter((p) => p.type === 2); return v.length ? [v[Math.floor(v.length / 3)].x, v[Math.floor(v.length / 3)].y] : null; });
 await jump('an Arena city past the Bay', async () => { const st = (await import('/src/world/arenaPlaces.js')).arenaPixels()?.stood ?? []; const c = st.filter((p) => p.kind === 'city-state' && !p.pinned); return c.length ? [c[Math.floor(c.length / 3)].bx, c[Math.floor(c.length / 3)].by] : null; });
 await jump('a capital past the Bay', async (k) => { const at = (await import('/src/world/tamrielCapitals.js')).capitalCentrePixel(k); return at ? [at.px, at.py] : null; }, Number(process.env.CAPITAL ?? 1));

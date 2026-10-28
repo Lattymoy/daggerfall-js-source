@@ -18,7 +18,7 @@ import { TAVERN_DRINK } from './dayPlan.js';
 import {
   GATE_SCRIPTS, CHALLENGE_SCRIPTS, QUARREL_SCRIPTS, BREAK_UP_LINES, HAGGLE_SCRIPTS, PLEA_SCRIPTS,
   WATCH_HOURS, WATCH_CALLS, STALL_CRIES, BEGGAR_CRIES, DRINKING_SONGS, fillLine, firstNameOf,
-  WATCH_WORDS, WATCH_BUYS, MOVE_ALONG, CUTPURSE_SCRIPTS, CHASE_LINES, GOT_AWAY_LINES, DICE_SCRIPTS, SERMON_SCRIPTS, FLIRT_SCRIPTS, NEWS_CRIES,
+  watchWords, watchBuys, moveAlong, cutpurseScripts, chaseLines, gotAwayLines, diceScripts, sermonScripts, flirtScripts, newsCries,
 } from './lines.js';
 
 /** How long the two of an incident take to come together before its first line, and stand so after its last (real
@@ -305,7 +305,7 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
       .map((s) => ({ s, k: lwSeed(seed, textSeed(s.who.id), Math.round(s.t0)) })).sort((x, y) => x.k - y.k || byId(x.s, y.s));
     const y = them[0]?.s;
     if (!y) continue;
-    const pool = y.kind === 'stall' ? WATCH_BUYS : y.kind === 'beg' ? MOVE_ALONG : WATCH_WORDS;
+    const pool = y.kind === 'stall' ? watchBuys() : y.kind === 'beg' ? moveAlong() : watchWords();
     const [o0, o1] = overlap(g, y);
     lay('watchword', g.who, y.who, y.kind === 'stall' || y.kind === 'beg' ? 1 : first(g, y), pick(pool, seed), lwSeed(seed, 1), o0, o1, null, null, BREAK_UP_LINES, null, antics);
   }
@@ -314,17 +314,17 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
     const seed = lwSeed(spotSeed, day, textSeed(x.who.id), Math.round(x.t0), 0x616e7463);   // 'antc'
     const hour = ((((x.t0 % 1440) + 1440) % 1440) / 60);
     // a purse lifted by day at a crowded spot, near the end of the cutpurse's stay (they leave after it): the watch on
-    // duty standing by gives chase (CHASE_LINES), else the robbed shout after them (GOT_AWAY_LINES)
+    // duty standing by gives chase (chaseLines), else the robbed shout after them (gotAwayLines)
     if (x.who.town === mapId && lightFingered(x.who) && hour >= 9 && hour < 18 && draw(seed, 0x63757470) < CUTPURSE_SHARE) {   // 'cutp'
       const marks = stays.filter((y) => !y.duty && y.kind !== 'beg' && y.who.id !== x.who.id && !y.who.guard && meets(x, y));
       const y = marks[lwSeed(seed, 0x6d61726b) % Math.max(1, marks.length)];   // 'mark'
-      const len = gather + (CUTPURSE_SCRIPTS[0].length + CHASE_LINES[0].length + 1) * lineMin + after;
+      const len = gather + (cutpurseScripts()[0].length + chaseLines()[0].length + 1) * lineMin + after;
       const [o0, o1] = y ? overlap(x, y) : [0, 0];
       const pair = y ? pairOf(x.who, y.who) : '';
       if (y && !met.has(pair) && busy(Math.max(o0, x.t1 - len)) >= CUTPURSE_CROWD && o1 - o0 > len) {
         met.add(pair);
         const ps = lwSeed(spotSeed, day, textSeed(pair), 0x63757470);
-        lay('cutpurse', x.who, y.who, 1, pick(CUTPURSE_SCRIPTS, ps), ps, Math.max(o0, Math.min(x.t1, o1) - len), o1, null, watch, CHASE_LINES, GOT_AWAY_LINES, antics);
+        lay('cutpurse', x.who, y.who, 1, pick(cutpurseScripts(), ps), ps, Math.max(o0, Math.min(x.t1, o1) - len), o1, null, watch, chaseLines(), gotAwayLines(), antics);
         continue;
       }
     }
@@ -335,7 +335,7 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
       if (y && !met.has(pairOf(x.who, y.who))) {
         met.add(pairOf(x.who, y.who));
         const [o0, o1] = overlap(x, y);
-        lay('sermon', x.who, y.who, 0, pick(SERMON_SCRIPTS, seed), lwSeed(seed, 2), o0, o1, null, null, BREAK_UP_LINES, null, antics);
+        lay('sermon', x.who, y.who, 0, pick(sermonScripts(), seed), lwSeed(seed, 2), o0, o1, null, null, BREAK_UP_LINES, null, antics);
         continue;
       }
     }
@@ -348,8 +348,8 @@ export function spotIncidents(spotKey, given, day, mapId, lineMin, perS, spot = 
     if (met.has(pair)) continue;
     const [o0, o1] = overlap(x, y);
     const r = draw(seed, 0x64696365);   // 'dice'
-    if (r < DICE_SHARE) { met.add(pair); lay('dice', x.who, y.who, first(x, y), pick(DICE_SCRIPTS, ps), ps, o0, o1, null, null, BREAK_UP_LINES, null, antics); }
-    else if (r < DICE_SHARE + FLIRT_SHARE && !x.who.guard && !y.who.guard) { met.add(pair); lay('flirt', x.who, y.who, first(x, y), pick(FLIRT_SCRIPTS, ps), ps, o0, o1, null, null, BREAK_UP_LINES, null, antics); }
+    if (r < DICE_SHARE) { met.add(pair); lay('dice', x.who, y.who, first(x, y), pick(diceScripts(), ps), ps, o0, o1, null, null, BREAK_UP_LINES, null, antics); }
+    else if (r < DICE_SHARE + FLIRT_SHARE && !x.who.guard && !y.who.guard) { met.add(pair); lay('flirt', x.who, y.who, first(x, y), pick(flirtScripts(), ps), ps, o0, o1, null, null, BREAK_UP_LINES, null, antics); }
   }
   // one at the spot a round (so one at a time, and one at a time for each of its people): the gate's first, halted for
   // it - then the first in time; LW-ANTICS: the newer kinds only in a round none of the first five took
@@ -435,7 +435,7 @@ export function smallVoice(who, e, t, perS, ctx = {}, fromTavern = () => false) 
   }
   if (e.kind === 'stall' && who.job === 'courier' && hour >= 8 && hour < 18) {   // LW-ANTICS: a courier cries the news
     const seed = now(CRY_EVERY_MIN, CRY_SHARE, 0x6e657773);   // 'news'
-    return seed == null ? null : { text: fill(pick(NEWS_CRIES, seed), seed), kind: 'shout' };
+    return seed == null ? null : { text: fill(pick(newsCries(), seed), seed), kind: 'shout' };
   }
   if (e.kind === 'stall' && hour >= 8 && hour < 18) {
     const seed = now(CRY_EVERY_MIN, CRY_SHARE, 0x63727920);   // 'cry '

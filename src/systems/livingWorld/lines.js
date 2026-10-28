@@ -821,59 +821,66 @@ export const PLEA_SCRIPTS = Object.freeze([
   X(L('a', 'The gods bless you - a coin?'), L('b', 'I\'ve barely enough for myself.'), L('a', 'Then we\'re kin, you and I.')),
 ]);
 
+/** L10N4: a table of the street's newer lines through the text core (`lw.<kind>.<script>.<line>`), made again only when
+ *  its revision moves (a locale switched) - TOWN-ECON TE3's way (townEconNews). @template T @param {() => T[]} make */
+const spoken = (make) => {
+  /** @type {ReadonlyArray<T> | null} */ let v = null;
+  let rev = -1;
+  return () => { if (v === null || rev !== textRevision()) { rev = textRevision(); v = Object.freeze(make()); } return /** @type {ReadonlyArray<T>} */ (v); };
+};
 /** WATCH-LIFE (the owner: "Guards should have a more Living world presence and NPC interaction"): the watch on its
  *  rounds (`a`) has a word with one of the town at its stop (`b`); at a stall it buys a bite; a beggar it moves along. */
-export const WATCH_WORDS = Object.freeze([
-  X(L('a', 'Morning, {b}. Quiet night?'), L('b', 'Quiet enough. The dogs kept me up.'), L('a', 'Dogs I can\'t arrest.')),
-  X(L('a', 'All well with you, {b}?'), L('b', 'Well enough. My roof leaks again.'), L('a', 'Not a matter for the watch, that.')),
-  X(L('a', 'Seen any strangers about, {b}?'), L('b', 'Only the usual. Traders, mostly.'), L('a', 'Keep your eyes open.')),
-  X(L('a', 'How is your mother, {b}?'), L('b', 'Better, thank the gods.'), L('a', 'Glad to hear it.')),
-  X(L('a', 'You\'re out early, {b}.'), L('b', 'Somebody has to be. You, for one.'), L('a', 'True enough.')),
-  X(L('a', 'Mind the cutpurses today, {b}.'), L('b', 'With you on the street? I\'ll sleep sound.')),
+export const watchWords = spoken(() => [
+  X(L('a', t('lw.watch.word.0.0', 'Morning, {b}. Quiet night?')), L('b', t('lw.watch.word.0.1', 'Quiet enough. The dogs kept me up.')), L('a', t('lw.watch.word.0.2', 'Dogs I can\'t arrest.'))),
+  X(L('a', t('lw.watch.word.1.0', 'All well with you, {b}?')), L('b', t('lw.watch.word.1.1', 'Well enough. My roof leaks again.')), L('a', t('lw.watch.word.1.2', 'Not a matter for the watch, that.'))),
+  X(L('a', t('lw.watch.word.2.0', 'Seen any strangers about, {b}?')), L('b', t('lw.watch.word.2.1', 'Only the usual. Traders, mostly.')), L('a', t('lw.watch.word.2.2', 'Keep your eyes open.'))),
+  X(L('a', t('lw.watch.word.3.0', 'How is your mother, {b}?')), L('b', t('lw.watch.word.3.1', 'Better, thank the gods.')), L('a', t('lw.watch.word.3.2', 'Glad to hear it.'))),
+  X(L('a', t('lw.watch.word.4.0', 'You\'re out early, {b}.')), L('b', t('lw.watch.word.4.1', 'Somebody has to be. You, for one.')), L('a', t('lw.watch.word.4.2', 'True enough.'))),
+  X(L('a', t('lw.watch.word.5.0', 'Mind the cutpurses today, {b}.')), L('b', t('lw.watch.word.5.1', 'With you on the street? I\'ll sleep sound.'))),
 ]);
-export const WATCH_BUYS = Object.freeze([
-  X(L('a', 'One of those, if it\'s warm.'), L('b', 'Two coppers to you, officer.'), L('a', 'Two? Robbery.'), L('b', 'One, then. For the watch.')),
-  X(L('a', 'What\'s good today?'), L('b', 'The same as yesterday, and cheaper.'), L('a', 'I\'ll take it.')),
-  X(L('a', 'An apple for a hungry man on duty?'), L('b', 'Here. Keep the cutpurses off my stall.'), L('a', 'A bargain.')),
+export const watchBuys = spoken(() => [
+  X(L('a', t('lw.watch.buy.0.0', 'One of those, if it\'s warm.')), L('b', t('lw.watch.buy.0.1', 'Two coppers to you, officer.')), L('a', t('lw.watch.buy.0.2', 'Two? Robbery.')), L('b', t('lw.watch.buy.0.3', 'One, then. For the watch.'))),
+  X(L('a', t('lw.watch.buy.1.0', 'What\'s good today?')), L('b', t('lw.watch.buy.1.1', 'The same as yesterday, and cheaper.')), L('a', t('lw.watch.buy.1.2', 'I\'ll take it.'))),
+  X(L('a', t('lw.watch.buy.2.0', 'An apple for a hungry man on duty?')), L('b', t('lw.watch.buy.2.1', 'Here. Keep the cutpurses off my stall.')), L('a', t('lw.watch.buy.2.2', 'A bargain.'))),
 ]);
-export const MOVE_ALONG = Object.freeze([
-  X(L('a', 'Move along, you. Not in front of the shops.'), L('b', 'I\'m going, I\'m going.')),
-  X(L('a', 'You can\'t sleep here.'), L('b', 'Then where, officer?'), L('a', 'Anywhere but here.')),
-  X(L('a', 'On your feet. The magistrate comes through today.'), L('b', 'The gods keep you, officer.'), L('a', 'And you. Elsewhere.')),
+export const moveAlong = spoken(() => [
+  X(L('a', t('lw.watch.moveAlong.0.0', 'Move along, you. Not in front of the shops.')), L('b', t('lw.watch.moveAlong.0.1', 'I\'m going, I\'m going.'))),
+  X(L('a', t('lw.watch.moveAlong.1.0', 'You can\'t sleep here.')), L('b', t('lw.watch.moveAlong.1.1', 'Then where, officer?')), L('a', t('lw.watch.moveAlong.1.2', 'Anywhere but here.'))),
+  X(L('a', t('lw.watch.moveAlong.2.0', 'On your feet. The magistrate comes through today.')), L('b', t('lw.watch.moveAlong.2.1', 'The gods keep you, officer.')), L('a', t('lw.watch.moveAlong.2.2', 'And you. Elsewhere.'))),
 ]);
 
 /** LW-ANTICS (the owner: "Living world NPCs should partake in more activities, more shenanigans"): a cutpurse (`a`) and
  *  the one robbed (`b`), shouting for the watch; the watch standing by (`g`) gives chase, else the thief gets away. */
-export const CUTPURSE_SCRIPTS = Object.freeze([
-  X(L('a', 'Pardon me, friend.'), L('b', 'My purse! Thief! Stop that thief!', true)),
-  X(L('a', 'Lovely day, isn\'t it?'), L('b', 'Hey - my purse! Thief!', true)),
-  X(L('a', 'Oh! Clumsy of me.'), L('b', 'Thief! My coin!', true)),
+export const cutpurseScripts = spoken(() => [
+  X(L('a', t('lw.cutpurse.0.0', 'Pardon me, friend.')), L('b', t('lw.cutpurse.0.1', 'My purse! Thief! Stop that thief!'), true)),
+  X(L('a', t('lw.cutpurse.1.0', 'Lovely day, isn\'t it?')), L('b', t('lw.cutpurse.1.1', 'Hey - my purse! Thief!'), true)),
+  X(L('a', t('lw.cutpurse.2.0', 'Oh! Clumsy of me.')), L('b', t('lw.cutpurse.2.1', 'Thief! My coin!'), true)),
 ]);
-export const CHASE_LINES = Object.freeze([
-  X(L('g', 'Stop, thief! In the Emperor\'s name!', true), L('a', 'Let go! I found it!', true), L('g', 'Tell it to the magistrate.')),
-  X(L('g', 'Halt! Drop it!', true), L('a', 'All right, all right!', true), L('g', 'Back to its owner, that purse.')),
+export const chaseLines = spoken(() => [
+  X(L('g', t('lw.cutpurse.chase.0.0', 'Stop, thief! In the Emperor\'s name!'), true), L('a', t('lw.cutpurse.chase.0.1', 'Let go! I found it!'), true), L('g', t('lw.cutpurse.chase.0.2', 'Tell it to the magistrate.'))),
+  X(L('g', t('lw.cutpurse.chase.1.0', 'Halt! Drop it!'), true), L('a', t('lw.cutpurse.chase.1.1', 'All right, all right!'), true), L('g', t('lw.cutpurse.chase.1.2', 'Back to its owner, that purse.'))),
 ]);
-export const GOT_AWAY_LINES = Object.freeze([
-  X(L('b', 'Somebody stop that thief! Watch!', true)),
-  X(L('b', 'Gone. A week\'s wages, gone.')),
+export const gotAwayLines = spoken(() => [
+  X(L('b', t('lw.cutpurse.gotAway.0.0', 'Somebody stop that thief! Watch!'), true)),
+  X(L('b', t('lw.cutpurse.gotAway.1.0', 'Gone. A week\'s wages, gone.'))),
 ]);
 /** LW-ANTICS: two at dice of an evening (`a`, `b`) - the throw, the cheer, the grumble. */
-export const DICE_SCRIPTS = Object.freeze([
-  X(L('a', 'Double or nothing, {b}?'), L('b', 'You\'re on.'), L('a', 'Sixes! Pay up!', true), L('b', 'Loaded dice, I swear it.')),
-  X(L('a', 'Your throw.'), L('b', 'Come on, come on...'), L('b', 'Ha! Mine!', true), L('a', 'One more. Just one more.')),
-  X(L('a', 'Snake eyes again!', true), L('b', 'The gods hate you tonight, friend.'), L('a', 'The gods and my creditors both.')),
+export const diceScripts = spoken(() => [
+  X(L('a', t('lw.dice.0.0', 'Double or nothing, {b}?')), L('b', t('lw.dice.0.1', 'You\'re on.')), L('a', t('lw.dice.0.2', 'Sixes! Pay up!'), true), L('b', t('lw.dice.0.3', 'Loaded dice, I swear it.'))),
+  X(L('a', t('lw.dice.1.0', 'Your throw.')), L('b', t('lw.dice.1.1', 'Come on, come on...')), L('b', t('lw.dice.1.2', 'Ha! Mine!'), true), L('a', t('lw.dice.1.3', 'One more. Just one more.'))),
+  X(L('a', t('lw.dice.2.0', 'Snake eyes again!'), true), L('b', t('lw.dice.2.1', 'The gods hate you tonight, friend.')), L('a', t('lw.dice.2.2', 'The gods and my creditors both.'))),
 ]);
 /** LW-ANTICS: a priest (`a`) preaches at their temple's door, and one there (`b`) answers - an amen, or a heckle. */
-export const SERMON_SCRIPTS = Object.freeze([
-  X(L('a', 'Hear me, people of {town}! The Eight watch over all who do right!', true), L('a', 'Give alms, keep faith, and fear nothing!', true), L('b', 'Blessings on you.')),
-  X(L('a', 'Repent! The gods see every crooked scale in this market!', true), L('b', 'And every crooked priest?', true), L('a', 'Them most of all, friend.')),
-  X(L('a', 'Remember Stendarr\'s mercy, friends!', true), L('b', 'Remember my debts, while you\'re at it.'), L('a', 'Mercy for those too.')),
+export const sermonScripts = spoken(() => [
+  X(L('a', t('lw.sermon.0.0', 'Hear me, people of {town}! The Eight watch over all who do right!'), true), L('a', t('lw.sermon.0.1', 'Give alms, keep faith, and fear nothing!'), true), L('b', t('lw.sermon.0.2', 'Blessings on you.'))),
+  X(L('a', t('lw.sermon.1.0', 'Repent! The gods see every crooked scale in this market!'), true), L('b', t('lw.sermon.1.1', 'And every crooked priest?'), true), L('a', t('lw.sermon.1.2', 'Them most of all, friend.'))),
+  X(L('a', t('lw.sermon.2.0', 'Remember Stendarr\'s mercy, friends!'), true), L('b', t('lw.sermon.2.1', 'Remember my debts, while you\'re at it.')), L('a', t('lw.sermon.2.2', 'Mercy for those too.'))),
 ]);
 /** LW-ANTICS: two of the town of an evening (`a`, `b`) - a word too warm to be mere talk. */
-export const FLIRT_SCRIPTS = Object.freeze([
-  X(L('a', 'You look well tonight, {b}.'), L('b', 'Do I? You\'ve had a cup or two.'), L('a', 'Only the one. Honest.')),
-  X(L('a', 'Walk with me after supper?'), L('b', 'Ask me again when you\'ve washed.')),
-  X(L('a', 'I saved you the last of the honey cake.'), L('b', 'Did you now. Well. Sit, then.')),
+export const flirtScripts = spoken(() => [
+  X(L('a', t('lw.flirt.0.0', 'You look well tonight, {b}.')), L('b', t('lw.flirt.0.1', 'Do I? You\'ve had a cup or two.')), L('a', t('lw.flirt.0.2', 'Only the one. Honest.'))),
+  X(L('a', t('lw.flirt.1.0', 'Walk with me after supper?')), L('b', t('lw.flirt.1.1', 'Ask me again when you\'ve washed.'))),
+  X(L('a', t('lw.flirt.2.0', 'I saved you the last of the honey cake.')), L('b', t('lw.flirt.2.1', 'Did you now. Well. Sit, then.'))),
 ]);
 
 /** LW-STIR: THE STREET'S SMALL VOICES - the night watch calling the hour ({hour}) by the weather, a stall crying its
@@ -891,7 +898,7 @@ export const STALL_CRIES = Object.freeze([
   'Pots mended while you wait!', 'Candles! Tallow and beeswax!', 'Salt! Good salt from the coast!', 'Herbs for what ails you!',
 ]);
 /** LW-ANTICS: a courier at their stint in town cries the news - the town crier's word. */
-export const NEWS_CRIES = Object.freeze(['Hear ye! News from {place}!', 'Letters for {place}! A copper a letter!', 'Hear ye, people of {town}! The roads are open!', 'News of {place}! Hear it here!']);
+export const newsCries = spoken(() => [t('lw.news.cry.0', 'Hear ye! News from {place}!'), t('lw.news.cry.1', 'Letters for {place}! A copper a letter!'), t('lw.news.cry.2', 'Hear ye, people of {town}! The roads are open!'), t('lw.news.cry.3', 'News of {place}! Hear it here!')]);
 export const BEGGAR_CRIES = Object.freeze(['Alms! Alms for the poor!', 'A coin for an old soldier?', 'Spare a septim, good people!', 'The gods love a generous hand!']);
 export const DRINKING_SONGS = Object.freeze([
   'Oh, the barmaid of {town}, she poured me a pint...', 'Another cup, another cup, the night is young!', 'The road to {place} is long and dry, so fill my cup before I die...',
