@@ -8733,9 +8733,8 @@ export class Room {
   // region channels then, never on a timer. Every change is said to everyone online, and the record at every hello. A
   // CELL hears a find from its own socket's pose (sdNearSite) and tells the hub until it answers; the hub believes it while
   // its record says `risen` for that slot (sdFindBelieved). A REALM (`sd:<s>`) admits by the hub's record, asked.
-  /** The hub's record - the instance's, else storage's, through the wire's own law. WW5: a LANE's (net/superDungeon/sdLaw.js
-   *  - a Hollow in every theatre that keeps one): the Bay's under SD_KEY as always, a province's under `sdev:<lane>`, a
-   *  record read back on another lane's span none. */
+  /** The hub's record - the instance's, else storage's, through the wire's own law. WW5: a LANE's (sdLaw.js, a Hollow in
+   *  every theatre that keeps one): the Bay's under SD_KEY, a province's under `sdev:<lane>`, one read on another lane's none. */
   async _sdOf(lane = 0) {
     if (lane) {
       if (!this._sdLaneRec) this._sdLaneRec = new Map();

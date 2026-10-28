@@ -304,7 +304,9 @@ billed inn nights and showed days the popup waives (`sleepModeInn &&
 own line is on the card. [SUPERSEDED BY LIVED1: the journey counts its days
 online too - "N days of your time" - and the fare stands (TRAVEL-FARE).] H6 a box held only the stage - a search pick
 under the resume prompt could begin a second journey; the chrome is
-pointer-dead under any box. H7 a close during the opening fade snapped
+pointer-dead under any box.
+
+H7 a close during the opening fade snapped
 to full before lowering, and the boxes stayed painted through it; the
 fade starts where the sheet is and the boxes come down with it. H8 a
 line-mode wheel zoomed a fraction of a percent a notch; the delta is

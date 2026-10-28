@@ -27,14 +27,14 @@
 //
 // Online alone, as BAL9b and SCHOOLS2: offline the game is Daggerfall's, and so is the weapon past 100. MY blow (a
 // player's own, no peer's stand-in) at a foe - never a player (a refereed fight's stand-in is a player: combat/
-// duelCombat.js duelStub), never the Warden's ward, never in a refereed fight (sigil.js sigilDueling), never while
-// mentoring (the edge reads no climb then either), never the beast's claws (BAL6 balanced the curse on its own claws).
+// duelCombat.js duelStub), never the Warden's ward, never in a refereed fight (sigil.js sigilDueling), never the beast's
+// claws (BAL6 balanced the curse on its own claws). MENTOR2: while mentoring, the mentored climb (fightingClimb).
 
-import { SKILLS, skillValue } from './skills.js';
-import { SKILL_SOFT_CAP, climbedSkill } from './skillSoftcap.js';
+import { SKILLS, skillModOf } from './skills.js';
+import { SKILL_SOFT_CAP } from './skillSoftcap.js';
 import { isOnlinePage } from './online/onlineLane.js';
 import { sigilDueling } from './sigil/sigil.js';
-import { SCHOOL_POTENCY_PER_POINT } from './spell/spellPower.js';   // CLIMB-PAST's one number: a point past 100 is 1%
+import { SCHOOL_POTENCY_PER_POINT, fightingClimb } from './spell/spellPower.js';   // CLIMB-PAST's one number: a point past 100 is 1%; MENTOR2: the climb fought with
 import { registerWeaponBlowMod } from './entityMods.js';
 import { blowRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product
 import { registerSwingPaceMod } from '../characters/weaponStates.js';
@@ -48,10 +48,11 @@ export const WEAPON_POTENCY_PER_POINT = SCHOOL_POTENCY_PER_POINT;
 export const WEAPON_HALF_PER_POINT = 2 * WEAPON_POTENCY_PER_POINT;
 /** The line between the two halves: a share of the foe's health. */
 export const WEAPON_HALF_LINE = 0.5;
-/** WEAPON-GEAR: the live skill a blow is worth that many hundredths of, over this (x1 at 200, x4.36 at 872). */
-export const WEAPON_GEAR_DIVISOR = 200;
-/** WEAPON-GEAR: the most live skill counted (x5) - past every kit worn today (the highest sheet seen, 872). */
-export const WEAPON_GEAR_SKILL_MOST = 1000;
+/** WEAPON-GEAR: the percent each point of gear on a weapon skill adds to its blow (0.44: a sheet of 872, trained 200
+ *  and 672 on it, is the climb's 40 + 296 = x4.36, the top mob was shown). */
+export const WEAPON_GEAR_PER_POINT = 0.44;
+/** WEAPON-GEAR: the most percent gear adds (727 points) - with the axe's 80, the ceiling's mastery top of 400. */
+export const WEAPON_GEAR_PCT_MOST = 320;
 
 /** The skill a blow is struck with, by its family (combat/technique/techniqueRoster.js techniqueFamily - an RRI class's
  *  own included): the bare hand Hand-to-Hand, the Thunderlock Archery (it is scored on it). Null for anything else. */
@@ -61,11 +62,11 @@ const SKILL_OF_FAMILY = Object.freeze({
 });
 export const blowSkillOf = (weapon) => (weapon ? SKILL_OF_FAMILY[techniqueFamily(weapon) ?? ''] ?? null : SKILLS.HandToHand);
 
-/** The effective points of `skill`'s CLIMB past 100 that pay for `entity` now (0 to 40): mine, online, not mentoring,
- *  not the beast. */
+/** The effective points of `skill`'s CLIMB past 100 that pay for `entity` now (0 to 40): mine, online, not the beast -
+ *  MENTOR2: the mentored climb while mentoring. */
 export function weaponClimb(entity, skill, { online = isOnlinePage() } = {}) {
-  if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill)) return 0;
-  const c = climbedSkill(entity, skill);
+  if (!online || !entity?.isPlayer || entity.peer || entity.isInBeastForm || !Number.isInteger(skill)) return 0;
+  const c = fightingClimb(entity, skill);
   return c > SKILL_SOFT_CAP ? c - SKILL_SOFT_CAP : 0;
 }
 
@@ -77,19 +78,20 @@ export function weaponClimb(entity, skill, { online = isOnlinePage() } = {}) {
  *  stand-in's owner's reader), so each half pays its own there too, and the mean only where no word is heard. */
 const shareOf = healthShare;
 /** WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix"; Martial-Specialisations.md section 4): the climb above reads the
- *  trained skill, so gear bought a weapon no damage while the fists' roll read it whole. So a weapon's blow is also
- *  worth its LIVE skill (gear and all) over 200: the percent here, 0 to 400. Online, mine, never the fists. */
+ *  trained skill, so gear bought a weapon no damage while the fists' roll read it whole. So each point of gear on a
+ *  weapon skill adds 0.44% to its blow, from the first point (GEAR-ADDS, mob: "they should both just stack
+ *  additively", "help the begingin"): the percent here, 0 to 320. Online, mine, never the fists. */
 export function weaponGearPct(entity, skill, { online = isOnlinePage() } = {}) {
   if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;
-  const live = Math.min(WEAPON_GEAR_SKILL_MOST, skillValue(entity, skill));
-  return live > WEAPON_GEAR_DIVISOR ? (live / WEAPON_GEAR_DIVISOR - 1) * 100 : 0;
+  const gear = skillModOf(entity, skill);
+  return gear > 0 ? Math.min(WEAPON_GEAR_PCT_MOST, gear * WEAPON_GEAR_PER_POINT) : 0;
 }
 
-/** The percent MY blow with `weapon` at `target` lands harder for its skill past 100 (0 for a blow it does not pay) -
- *  the climb's or, WEAPON-GEAR, the live skill's past 200, whichever is more. */
+/** The percent MY blow with `weapon` at `target` lands harder for its skill (0 for a blow it does not pay) - the climb's
+ *  past 100 and, WEAPON-GEAR, its gear's, added. */
 export function weaponPastPct(weapon, attacker, target, opts = {}) {
   const skill = blowSkillOf(weapon);
-  return Math.max(climbPastPct(skill, attacker, target, opts), weaponGearPct(attacker, skill, opts));
+  return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);
 }
 
 /** MARTIAL2's own: the percent the trained climb past 100 makes a blow, by the weapon's family. */

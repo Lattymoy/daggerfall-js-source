@@ -27,6 +27,8 @@ import { sigilDueling } from '../../systems/sigil/sigil.js';
 import { lootRarityOn } from '../../systems/loot/lootRarity.js';
 import { effectWords, spellFrame } from '../enhanced/enhancedSpellbook.js';   // the spellbook's own reading of an effect (SB-FX)
 import { t } from '../../systems/textManager.js';
+import { mentorPowerScale } from '../../systems/mentorMode.js';   // MENTOR2: a held path's share while mentoring
+import { pathMentoringText } from '../../systems/mentorText.js';
 
 /** The two families, in the page's order. */
 export const SPEC_FAMILIES = Object.freeze(['arcane', 'martial']);
@@ -137,7 +139,8 @@ function pathState(entity, law, p, held, open, on) {
 }
 
 /** Why a held path does nothing right now, or null (AUDIT GROWTH LANE1-3 - pathAwake, martialAwake and the powers' own
- *  gates: Master Skills off, mentoring, a refereed duel, and the beast for a martial path). */
+ *  gates: Master Skills off, a refereed duel, and the beast for a martial path). 'mentor' is no sleep since MENTOR2: the
+ *  powers act at the mentor's share, and the line says how much. */
 function pathAsleep(entity, id, on) {
   if (!on) return 'off';
   if (entity?._mentor) return 'mentor';
@@ -210,7 +213,7 @@ export function specGuideModel(entity) {
       signature: law.signature(p),
     })).sort((a, b) => SPEC_STATES.indexOf(a.state) - SPEC_STATES.indexOf(b.state) || owed(a) - owed(b) || a.order - b.order);
     return {
-      id, held: held ? { id: held.id, name: held.name } : null, asleep: held ? pathAsleep(entity, id, on) : null,
+      id, held: held ? { id: held.id, name: held.name } : null, asleep: held ? pathAsleep(entity, id, on) : null, share: mentorPowerScale(entity),
       possible: law.possible(entity), classPossible: law.possible({ career: entity?.career }),
       skills: law.skills.map((s) => skillStand(entity, s)), open: open.length,
       paths: paths.map((p) => ({ ...p, ask: () => law.ask(entity, p.id), choose: () => chooseNow(entity, law, p.id) })),
@@ -260,7 +263,7 @@ export function stateLine(fam, p, on) {
   const need = p.pair.filter((s) => !s.mastered);
   const climb = need.filter((s) => s.state === 'climb');
   switch (p.state) {
-    case 'chosen': return chosenLine(fam.asleep);
+    case 'chosen': return chosenLine(fam.asleep, fam.share);
     case 'open': return t('growth.spec.why.open', 'Both skills are mastered. You can choose it now.');
     case 'ready': return need.length === 1 ? t('growth.spec.why.readyOne', 'Master {skill} on the Master Skills page to unlock this path.', { skill: need[0].name })
       : t('growth.spec.why.ready', 'Both skills are at 100. Master them on the Master Skills page to unlock this path.');
@@ -274,11 +277,11 @@ export function stateLine(fam, p, on) {
     default: return t('growth.spec.why.never', 'Your class can\'t master both of these skills.');
   }
 }
-/** The chosen path's line: it works, or why it does nothing right now (pathAsleep). */
-function chosenLine(asleep) {
+/** The chosen path's line: it works, or why it does nothing right now (pathAsleep), or its share while mentoring. */
+function chosenLine(asleep, share = 1) {
   switch (asleep) {
     case 'off': return t('growth.spec.why.chosenOff', 'Your specialization. Its powers are off while Master Skills is off.');
-    case 'mentor': return t('growth.spec.why.chosenMentor', 'Your specialization. Its powers are off while you mentor a lower-level party.');
+    case 'mentor': return pathMentoringText(share);
     case 'duel': return t('growth.spec.why.chosenDuel', 'Your specialization. Its powers are off during a duel.');
     case 'beast': return t('growth.spec.why.chosenBeast', 'Your specialization. Its powers are off in beast form.');
     default: return t('growth.spec.why.chosen', 'Your specialization.');

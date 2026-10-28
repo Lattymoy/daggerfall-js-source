@@ -10,6 +10,7 @@ import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';
 import { EVENT_GROUND_M, setEventGround, eventGroundAt, groundNear } from '../../src/systems/eventGround.js';
 import { createGatePool } from '../../src/scenes/gate/gatePool.js';
 import { gateTimes, GATE_RISE_MS } from '../../src/net/gate/gateLaw.js';
@@ -84,7 +85,7 @@ test('RPT1026-EVENTS GATE-WAY THE PICK: a Portal Stone\'s portal is refused befo
     assert.ok(portalStonePlace(off(W.foot, 60, 1), 0, probes).at, 'past the ground: placed');
     assert.ok(portalPlace(off(W.foot, 10, 1), 0, probes).at, 'the place law itself unchanged - the call\'s portal is the way in');
   } finally { setEventGround('gate', null); }
-  const world = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const world = hostText('src/scenes/world.js');   // PIN MOVED (the merge of main into #1184): the Portal Stone's door is scenes/portalStoneHost.js's (HOST-SPLIT) - the host read whole
   assert.match(world, /const place = portalStonePlace\(feet, cam\.yaw, \{/, 'the world host\'s pick asks the stone\'s place');
 });
 

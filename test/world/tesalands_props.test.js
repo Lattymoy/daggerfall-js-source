@@ -15,7 +15,7 @@ import { createLandPropsHost, LAND_PROPS_SLOT, LAND_DRAW, landMeshIndex, lookTin
 import { createLookupTable } from '../../src/world/terrain/terrainTiles.js';
 import { LANDS } from '../../src/world/tamriel/tamrielLands.js';
 import { seatFlora, warmFlora } from '../../src/scenes/floraSeat.js';
-import { walkGroundAt, ringGroundAt } from '../../src/world/terrain/terrainSurface.js';
+import { walkGroundAt, drawnGroundAt } from '../../src/world/terrain/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION as HD, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION } from '../../src/world/terrain/terrainSampler.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -274,8 +274,8 @@ test('TESA-LANDS THE LANDMARKS ON THE GROUND THEIR PIXEL DRAWS (the merge with F
   const p = { samples: hm, _stride: 4, _bed: null, forest: { groups: new Map() }, landProps: { px: 1, py: 2, props } };
   seatFlora(p, { moveBillboardBatch: () => true });
   assert.ok(p.landProps.lift, 'the far ring lifts the set');
-  roots.forEach(([x, z], k) => assert.ok(Math.abs(p.landProps.lift[k] - (ringGroundAt(hm, x, z, 4, null) - walkGroundAt(hm, x, z))) < 1e-4, `landmark ${k} on the far ring's ground`));
-  assert.ok(roots.some(([x, z]) => Math.abs(ringGroundAt(hm, x, z, 4, null) - walkGroundAt(hm, x, z)) > 0.25), 'the field parts the two grounds');
+  roots.forEach(([x, z], k) => assert.ok(Math.abs(p.landProps.lift[k] - (drawnGroundAt(hm, x, z, 4, null) - walkGroundAt(hm, x, z))) < 1e-4, `landmark ${k} on the far ring's ground`));
+  assert.ok(roots.some(([x, z]) => Math.abs(drawnGroundAt(hm, x, z, 4, null) - walkGroundAt(hm, x, z)) > 0.25), 'the field parts the two grounds');
   p._stride = 1;
   seatFlora(p, { moveBillboardBatch: () => true });
   assert.equal(p.landProps.lift, null, 'near: the walk floor');

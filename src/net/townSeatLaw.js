@@ -1088,13 +1088,12 @@ export function bountySitePixel(site) {
 }
 
 /**
- * BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 20 - B8 = E3; the owner's call taken: "Every
- * single thing here needs to be addressed. No exceptions."): THE BOUNTY PAST THE BAY. World of Daggerfall's camps are the
- * Bay's alone, so a province's seat could proclaim a Bounty that never paid. Past the Bay it pays for its bailiwick's own
- * foes' DENS - an outlaws' hideout (LW12: routed, every one of its band struck down) and a lair (TESA8: a foe of its
- * struck down in it, as a camp's is) - by the same kind of claim a camp's is: the den's id names its map pixel
- * (`"px,py:hideout"`, `"px,py:lair"`), paid once a UTC day whoever cleared it, five an account a day, bounded and not
- * witnessed (seatHolding.js claimBounty) - no new trust. A den's id on the Bay is none (the Bay's Bounty is its camps').
+ * BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 20 - B8 = E3; the owner: "Every single
+ * thing here needs to be addressed. No exceptions."): THE BOUNTY PAST THE BAY. World of Daggerfall's camps are the Bay's
+ * alone, so a province's seat could proclaim a Bounty that never paid. Past the Bay it pays for its bailiwick's foes' DENS
+ * - an outlaws' hideout (LW12: its band struck down) and a lair (TESA8: a foe struck down in it) - by a camp's kind of
+ * claim: the den's id names its map pixel (`"px,py:hideout"`, `"px,py:lair"`), paid once a UTC day whoever cleared it,
+ * five an account a day, bounded and not witnessed (seatHolding.js claimBounty). A den's id on the Bay is none.
  */
 export const BOUNTY_DEN_KINDS = Object.freeze(['hideout', 'lair']);
 /** A den's id, or null. @param {string} kind @param {number} px @param {number} py */

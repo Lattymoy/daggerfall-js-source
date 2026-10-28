@@ -5526,13 +5526,10 @@ export function createWorldModes(host) {
       void host.marks.refresh();
       void host.marks.settle(marksSaleCredit(() => playerEntity.bankAccounts, bankRegion, host.saveSoon)).then((line) => { if (line) hudText(line); });   // PROF-SAVE: saved soon
     }
-    /** AUDIT 64 F26: ONE resolver for the owned house, because DFU's
-     *  window and manager both ask the same question -
-     *  `buildingDirectory.GetBuildingSummary(OwnedHouseKey, out house)`
-     *  (DaggerfallBankingWindow.cs:446-450, DaggerfallBankManager.cs:453)
-     *  - and the price, the offer box and the sale must never disagree
-     *  about the answer. Null covers BOTH of DFU's arms: no directory
-     *  at all (:452) and a key the directory does not hold. */
+    /** AUDIT 64 F26: ONE resolver for the owned house, because DFU's window and manager both ask the same question -
+     *  `buildingDirectory.GetBuildingSummary(OwnedHouseKey, out house)` (DaggerfallBankingWindow.cs:446-450,
+     *  DaggerfallBankManager.cs:453) - and the price, the offer box and the sale must never disagree about the answer.
+     *  Null covers BOTH of DFU's arms: no directory at all (:452) and a key the directory does not hold. */
     // HOUSES-3: the region's houses this town's directory resolves - what the bank prices, offers in turn and buys back
     // here (banking.js townDeeds: AUDIT 64 F26's resolver, WD3 H1's sleeping deed and R2-9's slice, over the region's three)
     const townHouses = () => townDeeds(playerEntity.houses ?? [], bankRegion(), buildingDirectory?.());
@@ -5642,20 +5639,14 @@ export function createWorldModes(host) {
           return { result: r.result, amount: r.price ?? 0 };
         },
       }),
-      // H3 CLOSED the sell price, which had stubbed at zero because it
-      // needs the OWNED building's mesh radius and nothing resolved a
-      // model behind a buildingKey. Nothing new had to be built:
-      // `houseMeshRadius` already reads exactly that for the market
-      // list, and the location directory already carries `modelIdNum`
-      // on every building - the owned one just had to be found in it.
-      // AUDIT 64 F26: SellHouseButton_OnMouseClick raises SELL_HOUSE_OFFER
-      // ONLY inside the two nested successes (DaggerfallBankingWindow
-      // .cs:443-451) and has no else, so an owned-but-unresolved house
-      // gets no box at all - not a box priced at zero. HOUSES-3: each
-      // house of the region this town resolves is an offer, in turn,
-      // priced as H3 prices one (AUDIT HOME-PRICE C1: online, the online
-      // price's share) - and RESTORE's crossed words beside it: what
-      // came through customs is never bought back online.
+      // H3 CLOSED the sell price, which had stubbed at zero because it needs the OWNED building's mesh radius and
+      // nothing resolved a model behind a buildingKey. Nothing new had to be built: `houseMeshRadius` already reads
+      // exactly that for the market list, and the location directory already carries `modelIdNum` on every building -
+      // the owned one just had to be found in it. AUDIT 64 F26: SellHouseButton_OnMouseClick raises SELL_HOUSE_OFFER
+      // ONLY inside the two nested successes (DaggerfallBankingWindow.cs:443-451) and has no else, so an
+      // owned-but-unresolved house gets no box at all - not a box priced at zero. HOUSES-3: each house of the region
+      // this town resolves is an offer, in turn, priced as H3 prices one (AUDIT HOME-PRICE C1: online, the online
+      // price's share) - and RESTORE's crossed words beside it: what came through customs is never bought back online.
       houseOffers: () => townHouses().map(({ deed, summary }) => ({
         price: deedSellPrice(summary),
         crossed: crossedDeedLines('house', { houses: playerEntity.houses, regionIndex: bankRegion(), player: playerEntity, deed }),

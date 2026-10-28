@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 import { LARGE_LAW, largeOfByte, groundWoods, tamrielLargeMap, tamrielHeightByte, dropGroundCache, SEAM_PX, BLEND_PX, groundBefore, largeMapBefore, LARGE_SWELL_BEFORE } from '../../src/world/tamriel/tamrielGround.js';
 import {
-  RANGE_DIALS, RANGE_MEAN, CONE, ridges, rangeSwing, rangeCentre, rangeCeiling, rangeUp, rangeAt, rangeBound, coneProfile, coneSummit, coneAt, waterDistance,
+  RANGE_DIALS, RANGE_MEAN, CONE, ridges, rangeSwing, rangeCentre, rangeCeiling, rangeUp, tamrielRangeAt, rangeBound, coneProfile, coneSummit, coneAt, waterDistance,
 } from '../../src/world/tamriel/tamrielRanges.js';
 import { landformLattice, tamrielLandformAt, ORIENT_FULL, STRUCTURE_REACH } from '../../src/world/tamriel/tamrielLandforms.js';
 import { nodeGround, centreGround, nodeGroundAt, meanGroundField, groundTopOf, cliffFadeAt, groundMovedField, createLandforms, LANDFORM_KNEE, CONTINENT_CEILING, LANDFORM_CEILING, reliefLift, continentLift, CONTINENT_LIFT } from '../../src/world/landforms.js';
@@ -204,20 +204,20 @@ test('RELIEF-PEAKS the ranges\' parts: the ridged field 0..1 about RANGE_MEAN (m
 });
 
 test('RELIEF-PEAKS the ranges on the land (a relief standing): none with no relief, none on the low ground; centred where the land has room, the crests the land\'s own at the ceiling and never over it; never under the land and the foot, whichever is lower; none by a carved river or a lake; pure in world position; Red Mountain\'s cone at its relief\'s summit, the land inside its rim the cone, the ranges quiet about it; the bound (mutants: the floor; the clip; the waters\' valleys; the cone\'s summit; its foot)', async () => {
-  assert.equal(rangeAt(3000 * 128, 600 * 128, 1800), 0, 'no relief: the authored law\'s land is its own shape');
+  assert.equal(tamrielRangeAt(3000 * 128, 600 * 128, 1800), 0, 'no relief: the authored law\'s land is its own shape');
   await withRelief(() => {
     const units = (m) => m / U + SCALED_OCEAN_ELEVATION, foot = units(RANGE_DIALS.foot), ceiling = rangeCeiling();
-    assert.equal(rangeAt(2000 * 128, 200 * 128, units(600)), 0, 'the low ground stands as it stood');
+    assert.equal(tamrielRangeAt(2000 * 128, 200 * 128, units(600)), 0, 'the low ground stands as it stood');
     let sum = 0, n = 0;
     for (let i = 0; i < 3000; i++) {
       const gx = (2100 + (i % 60) * 0.73) * 128, gy = (MAP_HEIGHT - 200 - Math.floor(i / 60) * 0.61) * 128;
       for (const m of [1200, 1800, 2400, 3000, 3250]) {
-        const h = units(m), d = rangeAt(gx, gy, h);
+        const h = units(m), d = tamrielRangeAt(gx, gy, h);
         assert.ok(h + d >= Math.min(h, foot) - 1e-9, `never under the land and the foot (${m})`);
         assert.ok(h + d <= Math.max(h, ceiling) + 1e-9, `never over the ceiling (${m})`);
         if (m >= 3250) assert.ok(d <= 1e-9, 'the crests the land\'s own at the top');
       }
-      sum += rangeAt(gx, gy, units(2000)); n++;
+      sum += tamrielRangeAt(gx, gy, units(2000)); n++;
     }
     assert.ok(Math.abs(sum / n) * U < 0.07 * RANGE_DIALS.high, `centred where the land has room (${(sum / n * U).toFixed(0)} m)`);
     // the soft clip: a rise past `knee` under the ceiling held by q / (1 + q) of the room left (a crest's own law)
@@ -225,21 +225,21 @@ test('RELIEF-PEAKS the ranges on the land (a relief standing): none with no reli
     for (let i = 0; i < 2000; i++) {
       const gx = (2100 + i * 0.37) * 128, gy = (MAP_HEIGHT - 200) * 128 + (i % 7) * 911, h = units(3000), raw = h + rangeSwing(h) * (ridges(gx, gy) - rangeCentre(h));
       const from = Math.max(h, ceiling - RANGE_DIALS.knee / U), q = (raw - from) / (ceiling - from), want = raw > from ? from + (ceiling - from) * (q / (1 + q)) : raw;
-      assert.ok(Math.abs(h + rangeAt(gx, gy, h) - want) < 1e-9, `the clip at ${gx}`);
+      assert.ok(Math.abs(h + tamrielRangeAt(gx, gy, h) - want) < 1e-9, `the clip at ${gx}`);
       if (raw > from) clipped++;
     }
     assert.ok(clipped > 10, `crests held under the ceiling (${clipped})`);
     // pure in world position: the same sample, whatever pixel asks
-    assert.equal(rangeAt(2101 * 128, 300 * 128, units(2100)), rangeAt(2101 * 128, 300 * 128, units(2100)));
+    assert.equal(tamrielRangeAt(2101 * 128, 300 * 128, units(2100)), tamrielRangeAt(2101 * 128, 300 * 128, units(2100)));
     // the waters' valleys: none on a carved river's course (the Corbolo's first point, Lake Arrius)
     const [rx, ry] = [196.62 * FIT.ppu - FIT.ox, 86.2 * FIT.ppu - FIT.oy];
     assert.equal(waterDistance(rx, ry), 0);
-    assert.equal(rangeAt(rx * 128, (MAP_HEIGHT + 1 - ry) * 128, units(2000)), 0, 'the river runs down a valley of the mountains, never a gorge');
-    assert.notEqual(rangeAt((rx + 10) * 128, (MAP_HEIGHT + 1 - ry - 10) * 128, units(2000)), 0, 'the ranges whole past its reach');
+    assert.equal(tamrielRangeAt(rx * 128, (MAP_HEIGHT + 1 - ry) * 128, units(2000)), 0, 'the river runs down a valley of the mountains, never a gorge');
+    assert.notEqual(tamrielRangeAt((rx + 10) * 128, (MAP_HEIGHT + 1 - ry - 10) * 128, units(2000)), 0, 'the ranges whole past its reach');
     // Red Mountain: the cone at the relief's own summit (picture 235, 54), its top at CONE.top less the crater, quiet about it
     const s = coneSummit();
     assert.ok(s && Math.hypot(s[0] - (235 * FIT.ppu - FIT.ox), s[1] - (54 * FIT.ppu - FIT.oy)) < FIT.ppu / RELIEF_SCALE, `the summit ${s}: its relief's highest cell`);
-    const at = (bx, by, h) => h + rangeAt(bx * 128, (MAP_HEIGHT + 1 - by) * 128, h);
+    const at = (bx, by, h) => h + tamrielRangeAt(bx * 128, (MAP_HEIGHT + 1 - by) * 128, h);
     const land = nodeGround(100, 1, 1), rim = at(s[0] + CONE.crater, s[1], land), centre = at(s[0], s[1], land);
     assert.ok(Math.abs(rim - units(CONE.top)) * U < 25, `the crater's rim at CONE.top (${((rim - SCALED_OCEAN_ELEVATION) * U).toFixed(0)} m)`);
     assert.ok((rim - centre) * U > CONE.depth * 0.9, 'the crater cut into it');
@@ -304,7 +304,7 @@ test('RELIEF-PEAKS the far views\' wiring (by source): the far ring\'s grid on r
   assert.match(read('src/scenes/world.js'), /return \[x, ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/);
   assert.match(lf, /const land = macro \+ lift \* fade, r = ranges \? ranges\(gx, gy, land\) : 0;/);
   assert.match(lf, /const c = r \+ tamrielLandformAt\(tl, gx, gy, land \+ r, deepCont\);/);
-  assert.match(lf, /return share > 0 \? land \+ share \* rangeAt\(ox \+ x, oy \+ y, land\) : land;/);
+  assert.match(lf, /return share > 0 \? land \+ share \* tamrielRangeAt\(ox \+ x, oy \+ y, land\) : land;/);
   assert.match(lf, /if \(continentPixel\(px, py\)\) return rangeBound\(px, py, h \+ reliefLift\(lowTop\) \+ continentLift\(lowTop\)\) \+ Math\.max\(hill, TAMRIEL_TOP\);/);
   assert.match(lf, /height: \(x, y\) => nodeGround\(woods\.getHeightMapValue\(x, y\), 1, byteBeyond\(x, y\)\),/);
 });
