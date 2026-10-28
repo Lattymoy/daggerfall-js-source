@@ -36,6 +36,7 @@ import { tierOpen, TIER_RANKS, PROF_RANK_MAX, pickAxeBand, minedMaterial, stores
 import { natureStandsAt, groundAt, insideRocks } from '../world/terrain/terrainNature.js';   // NODE-CLEAR: the rock check's one home
 import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
+import { inBay } from '../world/tamriel/tamrielFrame.js';   // STONE-HEAPS: the ground World of Daggerfall's rock fields stand on
 import { createMineAct } from '../systems/mineAct.js';
 import { FT } from '../systems/foraging/foragingLaw.js';
 import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foraging/foragingInstall.js';
@@ -199,17 +200,29 @@ function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clea
  * their climate's whole table, as the service rolls them for them.
  * @param {{ px: number, py: number, day: number, climate: number, region?: number|null, confirmed?: boolean, surveyed?: boolean,
  *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][], near?: number[][],
- *   verge?: ((x: number, z: number, reach: number) => boolean)|null, beach?: ?Float32Array }} p
+ *   verge?: ((x: number, z: number, reach: number) => boolean)|null, beach?: ?Float32Array, fields?: boolean }} p
  */
-export function standMineNodes({ px, py, day, climate, region = null, confirmed = false, surveyed = false, samples, tilemap, locationRect = null, rocks = [], near = [], verge = null, beach = null }) {
+export function standMineNodes({ px, py, day, climate, region = null, confirmed = false, surveyed = false, samples, tilemap, locationRect = null, rocks = [], near = [], verge = null, beach = null, fields = true }) {
   const out = [];
   const pieces = rocks ?? [];
   // ROCK-NEAR (FIELD BUGS 2026-10-09b): what no node may stand inside - this pixel's pieces and the ones its built
   // neighbours stand that reach into it (`near`, gatherHost.js nearRocks). A node stands BESIDE its own pixel's alone.
   const solid = near?.length ? [...pieces, ...near] : pieces;
-  const clear = verge ? (x, z) => verge(x, z, MINE_MARKS.vein.w / 2) : null;   // VERGE1
   /** ROCK-SHARE: the feet taken - a piece holds a node on each of its sides NODE_SPACING_M apart */
   const taken = [];
+  // STONE-HEAPS: `fields` - whether World of Daggerfall's rock fields stand on this ground (the Bay's alone, pixelBuild.js
+  // TAMRIEL2). Where none does, a boulder is a heap on the stone, and the heaps and the veins keep apart where it allows
+  const spaced = (x, z) => !taken.some((t) => Math.hypot(t[0] - x, t[1] - z) < NODE_SPACING_M);
+  /** A law point's place with no piece: the stone tile nearest it within VEIN_STONE_REACH, else where nature stands at
+   *  it - outside every piece (VEIN-CLEAR), off the roads by `half` (VERGE1) and where `ok` says; null where none. */
+  const onStone = (u, v, half, ok = null) => {
+    const tx = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(u * WORLD_MAP_TILE_DIM));
+    const ty = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(v * WORLD_MAP_TILE_DIM));
+    const road = verge ? (x, z) => verge(x, z, half) : null;
+    const pass = ok ? (x, z) => (!road || road(x, z)) && ok(x, z) : road;
+    const outside = (a) => (a && !insideRocks(solid, a.x, a.z) ? a : null);
+    return nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, solid, pass, beach) ?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, pass, beach));
+  };
   // ROCK-FOOT: the nearest piece with a foot clear of every piece - the side facing (x, z) first, then its others,
   // nearest that way first. A piece whose one foot fell inside a neighbour was spent and nothing stood: a field's pieces
   // overlap, so a boulder stood only where the first piece asked faced open ground. ROCK-SHARE: and clear of every node
@@ -233,10 +246,18 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
   for (const b of boulders({ x: px, y: py, day, climate, region, confirmed })) {   // WW-C1: a stone-rich province's
     // a boulder is a rock field's piece: none left whose foot is clear (AUDIT 29 C11: never inside a neighbour), none stands
     const claimed = claim(b.u * TERRAIN_SIZE, b.v * TERRAIN_SIZE);
-    if (!claimed) continue;
-    const { rock, foot: [fx, fz] } = claimed;
-    const g = groundAt(samples, fx, fz);
-    stones.push({ key: nodeKey({ kind: 'boulder', x: px, y: py, day, slot: b.slot }), what: 'boulder', slot: b.slot, tier: b.tier, material: b.material, local: [fx, g, fz], rock, lift: BOULDER_LIFT });
+    let local = null, rock = null;
+    if (claimed) {
+      const [fx, fz] = claimed.foot;
+      local = [fx, groundAt(samples, fx, fz), fz];
+      rock = claimed.rock;
+    } else if (!fields) {
+      // STONE-HEAPS: no rock field stands here, so the heap stands on the stone, clear of the nodes stood before it
+      const at = onStone(b.u, b.v, MINE_MARKS.boulder.w / 2, spaced);
+      if (at) { local = [at.x, at.y, at.z]; taken.push([at.x, at.z]); }
+    }
+    if (!local) continue;
+    stones.push({ key: nodeKey({ kind: 'boulder', x: px, y: py, day, slot: b.slot }), what: 'boulder', slot: b.slot, tier: b.tier, material: b.material, local, rock, lift: BOULDER_LIFT });
   }
   if (VEIN_TABLES[climate]) {
     for (const v of veins({ x: px, y: py, day, climate, region, confirmed, surveyed })) {
@@ -249,14 +270,14 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
         local = [fx, groundAt(samples, fx, fz), fz];
       }
       if (!local) {
-        const tx = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(v.u * WORLD_MAP_TILE_DIM));
-        const ty = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(v.v * WORLD_MAP_TILE_DIM));
         // VEIN-CLEAR (FIELD BUGS 2026-10-01): a rock field stands on stone, so the stone tile nearest could lie under a
         // piece of it - a vein stood inside the rock, glowing and marked, that no look could reach (the ray to it is the
-        // rock's); it stands on the nearest stone outside every piece, as a rock's foot does (AUDIT 29 C11)
-        const outside = (a) => (a && !insideRocks(solid, a.x, a.z) ? a : null);
-        const at = nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, solid, clear, beach) ?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, clear, beach));
+        // rock's); it stands on the nearest stone outside every piece, as a rock's foot does (AUDIT 29 C11). STONE-HEAPS:
+        // with no rock field, NODE_SPACING_M from the nodes stood before it where the stone allows
+        const half = MINE_MARKS.vein.w / 2;
+        const at = (fields ? null : onStone(v.u, v.v, half, spaced)) ?? onStone(v.u, v.v, half);
         if (at) local = [at.x, at.y, at.z];
+        if (at && !fields) taken.push([at.x, at.z]);
       }
       if (!local) continue;
       out.push({ key: nodeKey({ kind: 'vein', x: px, y: py, day, slot: v.slot }), what: 'vein', slot: v.slot, tier: v.tier, material: v.material, signature: v.signature, local, rock: rock ?? null, lift: 0.5 });
@@ -437,7 +458,8 @@ export function mineKind({ book, lodes = null, marks = null }) {
         verge: entry.verge ?? null,   // VERGE1: off the roads
       };
       const surveyed = specs?.('mining')?.[100] === SURVEYOR;   // MINE-PERKS: a Surveyor's own word witnesses the ground
-      const nodes = standMineNodes({ px, py, day, climate: info.climate, region: info.region, confirmed, surveyed, ...stone });
+      const fields = inBay(px, py);   // STONE-HEAPS: the rock fields stand on the Bay alone (pixelBuild.js TAMRIEL2)
+      const nodes = standMineNodes({ px, py, day, climate: info.climate, region: info.region, confirmed, surveyed, fields, ...stone });
       // PROF2b: a Motherlode standing on this pixel, clear of its veins and boulders
       const here = lodes?.standingOn?.(px, py) ?? [];
       return here.length ? [...nodes, ...standMotherlodes({ lodes: here, ...stone, taken: nodes.map((n) => n.local) })] : nodes;

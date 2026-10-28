@@ -855,6 +855,31 @@ Moonstone.
 Section A, WW-C1 (OURS: DFU has no professions' nodes; the provinces' ground is the port's own, every Bay pixel's nodes
 as they were to the slot).
 
+## STONE-HEAPS - a boulder past the Bay (AUDIT TAMRIEL-NODES, BUILT, 2026-10-28)
+
+The request: *"audit the main tamriel PR and just ensure the new gathering points show in the overworld across tamriel
+properly"*.
+
+The Overworld's path reads no ground of the Bay's: the groups (`scenes/gatherHost.js` overworldGroups), their marks
+(`scenes/travelViewMarks.js`), the view's copy and the Gathering filter take a node past the Bay as any other. Each of
+the 44 zones' nodes was stood on the terrain kernel's own ground (its lands and woods on, as `scenes/pixelBuild.js` asks):
+herbs, veins and trees stood their law (an unconfirmed Rainforest or Subtropical pixel stands its Pine alone, as on the
+Bay - PINE-SHARE). No boulder stood in any zone.
+
+A boulder is a World of Daggerfall rock field's piece (ROCK-FOOT), and the fields stand on the Bay alone (`pixelBuild.js`
+TAMRIEL2). So WW-C1's boulders - Hammerfell's and Skyrim's twice their climate's, Cyrodiil's - never stood, and every
+Mining group past the Bay counted veins alone. The Eltheric isles' boulders (ETHER-NODES) were the same.
+
+The fix (`scenes/mineHost.js` standMineNodes, `fields`): Mining's kind asks whether the fields stand there (`inBay`).
+Where none does, a boulder is a heap on the stone tile nearest its law point, else where nature stands at it, as a vein
+with no piece stands. The heaps and the veins keep NODE_SPACING_M apart where the stone allows; a vein the stone cannot
+space stands where it stood before. The Bay is as it was, and no law moved: the service bounds a slot, never its place.
+
+Measured on the kernel's ground, a stone zone of every province whose law stands boulders (Black Marsh's stands none):
+33 of 34 boulders stood unconfirmed and 46 of 47 on confirmed ground, every mining node 6 m from the next, the veins'
+count unchanged. Pins `test/scenes/stoneheaps.test.js` (4): the zones' heaps, the spacing on a stone patch, the real
+gathering host's Mining group past the Bay, the Bay as it was. Mutants `tools/mutants/stoneheaps.json` (9, all dead).
+
 ## WW-C2 - Cyrodiil the open zone (BUILT, 2026-10-24)
 
 The owner: "Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this.

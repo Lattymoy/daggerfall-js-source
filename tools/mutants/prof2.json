@@ -277,10 +277,11 @@
   {
     "name": "PROF2-31-boulders-anywhere",
     "file": "src/scenes/mineHost.js",
-    "old": "    if (!claimed) continue;\n",
-    "new": "",
+    "old": "    } else if (!fields) {\n",
+    "new": "    } else {\n",
     "tests": [
-      "test/net/prof2_client.test.js"
+      "test/net/prof2_client.test.js",
+      "test/scenes/stoneheaps.test.js"
     ]
   },
   {
@@ -295,8 +296,8 @@
   {
     "name": "PROF2-33-no-stone-tile",
     "file": "src/scenes/mineHost.js",
-    "old": "const at = nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, solid, clear, beach) ?? outside(natureStandsAt(",
-    "new": "const at = outside(natureStandsAt(",
+    "old": "return nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, solid, pass, beach) ?? outside(natureStandsAt(",
+    "new": "return outside(natureStandsAt(",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
