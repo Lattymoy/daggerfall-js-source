@@ -4048,6 +4048,21 @@ unique different version of the aura, a title named Hour's First, and each the g
   has 11 mutants, all dead.
 
 
+
+## TAMRIEL-POST — the Tamriel update's letter (2026-10-28, acct205)
+
+The owner: "Send a heartfelt, non-ai like message to players in their inbox and attach 10 portal stones".
+
+- **The send.** Migration 0188 writes every registered account standing when it runs one piece of the post: "Thank you,
+  and something for the road", holding ten Portal Stones in one stack (`src/systems/gate/gateSpoils.js` `portalStones`).
+  It is the tool's own statement (`node tools/sendServerPost.mjs --migration tamriel`, `everyoneSql`), once a send an
+  account. A guest is sent nothing, and an account made after the deploy is not sent it.
+- **Frozen.** The words and the record are `TAMRIEL_POST` and `TAMRIEL_POST_RECORD` in the tool; the test holds the record
+  to the mint's own and every sentence to 25 words.
+- **The claim.** Each claims the stones into the online character they are playing (the claim's own law, above); they
+  stack with the stones the pack holds. The stones are bound, as every Portal Stone is.
+- Pins: the letter in `test/tooling/serverpost_send.test.js` (applied over live accounts, claimed into a realm record).
+  `tools/mutants/serverpost.json` gained 3 mutants, all dead.
 ## EG-PLAY and after — the Elite Breach on the account service (2026-10-11 to 2026-10-13, acct137, migration 0119)
 
 The Elite Breach's account half, each piece recorded in `bible/11-Multiplayer/Elite-Gates.md` section 31 (sections 19
