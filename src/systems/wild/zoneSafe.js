@@ -54,12 +54,10 @@ export function settledAt(p, index) {
 
 /**
  * WILD-CITY-PORT (2026-10-28, the owner: "Even with the open pvp, players should be able to teleport in and out of the
- * cities"): MAY A TELEPORT PASS THE ZONE. Each end is none (the door, asked where I stand), outside `mask`, or a
- * settlement's. The end it lands at: the place `locAt` stands on its pixel. Where I stand: outdoors in a settlement's
- * streets (`feet`, settledAt's frame over `index`), else in a building of one (`mode` 'interior'). A dungeon is the zone's.
+ * cities"): MAY A TELEPORT PASS THE ZONE. Each end is outside `mask` or a settlement's: where it lands (`landing`, AUDIT
+ * TAMRIEL-WIDE E1), else the place `locAt` stands on its pixel; where I stand, `feet` in its streets or a building of it.
  * @param {any} mask @param {{ x: number, y: number }|null} from @param {{ x: number, y: number }|null} to @param {ArrayLike<number>|null} feet
- * @param {string|undefined} mode @param {{ get(key: string): any }} index @param {(px: number, py: number) => any} locAt
- * @param {ArrayLike<number>|null} [landing] AUDIT TAMRIEL-WIDE E1: where it lands, when the caller knows (landsSettled) @returns {boolean}
+ * @param {string|undefined} mode @param {{ get(key: string): any }} index @param {(px: number, py: number) => any} locAt @param {ArrayLike<number>|null} [landing] @returns {boolean}
  */
 export function zonePortFree(mask, from, to, feet, mode, index, locAt, landing = undefined) {
   const inZone = (at) => !!at && wildInside(mask, at.x, at.y);
