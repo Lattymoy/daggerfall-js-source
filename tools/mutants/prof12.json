@@ -1194,7 +1194,7 @@
   {
     "name": "PROF12-drink-host-drops",
     "file": "src/scenes/hostMagic.js",
-    "old": "      const bundle = potent ? { ...plain, effects: plain.effects.map((e) => potentEffect(e, potent, effectiveLevel(playerEntity))) } : plain;",
+    "old": "      const bundle = potent ? { ...plain, effects: plain.effects.map((e) => potentEffect(e, potent, castingLevel(playerEntity))) } : plain;",
     "new": "      const bundle = plain;",
     "tests": [
       "test/systems/prof12_client.test.js"
@@ -1650,7 +1650,7 @@
   {
     "name": "PROF12-A3-drink-no-level",
     "file": "src/scenes/hostMagic.js",
-    "old": "potentEffect(e, potent, effectiveLevel(playerEntity))",
+    "old": "potentEffect(e, potent, castingLevel(playerEntity))",
     "new": "potentEffect(e, potent)",
     "tests": [
       "test/systems/prof12_client.test.js"
