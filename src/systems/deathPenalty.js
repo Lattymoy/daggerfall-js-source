@@ -29,6 +29,7 @@
 // Offline it stands wherever a death respawns - Project Legacy's own
 // switch decides that (off, the run ends, and nothing is taken).
 import { goldPiecesOf } from './inventory.js';
+import { isCasual } from './legacy/casual.js';   // CASUAL-LIFE: a Casual character's death takes nothing
 
 /** AUDIT DEATH-TENTH: the share as a divisor - `g / 10` is exact for every whole purse, where `g * 0.1` rounds up past
  *  3 x 2^51 (0.1 is a hair over a tenth in binary) and charged a coin more than a tenth. */
@@ -57,6 +58,7 @@ export const statedDeathLoss = () => _stated;
  *  now - never more than the purse holds. Returns the gold lost (0 when there was none to take). */
 export function applyDeathPenalty(player) {
   if (!player) return 0;
+  if (isCasual(player)) { _stated = null; return 0; }   // CASUAL-LIFE: spent all the same - the next death speaks for itself
   const purse = goldPiecesOf(player);
   const lost = Math.max(0, Math.min(purse, _stated ?? deathGoldLoss(purse)));
   _stated = null;   // spent: the next death speaks for itself
