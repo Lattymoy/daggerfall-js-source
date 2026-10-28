@@ -127,7 +127,7 @@ with "Not on sale yet" and the doors answer `shop-closed`. The owner's steps, on
 
 ## 7. Seen
 
-`tools/shopProbe.mjs` (Chromium, the dev server, the service answered by the probe): the gem just left of the laurel
+`tools/pauseShopProbe.mjs` (Chromium, the dev server, the service answered by the probe): the gem just left of the laurel
 and on the screen, the disclaimer above the wares, a tab a category, each price, Buy only signed in and as the service's
 own link, the aura's stage drawing its fire, nothing wider than the screen, Buy's line, the payment landing as Owned with
 Wear and its sentence, Escape back to the gem - at 1280 and on a 390 phone, signed in and out: 72 of 72.

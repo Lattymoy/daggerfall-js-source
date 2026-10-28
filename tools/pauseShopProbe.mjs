@@ -7,7 +7,7 @@
 // window's focus, the ware held, Owned and Wear. Signed out and on a 390 phone too. Frames go to SHOP_OUT, never the tree.
 //
 //     npx vite --port 5199 &
-//     SHOP_OUT=/tmp/shop node tools/shopProbe.mjs
+//     SHOP_OUT=/tmp/shop node tools/pauseShopProbe.mjs
 import { chromium, devices } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { PNG } from 'pngjs';
