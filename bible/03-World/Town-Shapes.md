@@ -150,7 +150,7 @@ launch's outlines hold the crops as the first's. THE GROUND MOVED: its shores an
 3, and RELAY_VERSION with it - the print reads no real town (`03-World/Landforms.md` GROUND-GATE).
 
 Tests `test/world/terrain/fb1028_townground.test.js` (7) and `test/world/terrain/fb1028_townground_real.test.js` (ARENA2).
-Mutants `tools/mutants/fb1028_townground.json` (23, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
+Mutants `tools/mutants/fb1028_townground.json` (24, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
 (Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3),
 `test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water alone no ship stands on a
 bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's cliffs); re-aimed by content:

@@ -208,5 +208,14 @@
    "test/world/terrain/fb1028_townground.test.js",
    "test/world/terrain/fv_groundtiles.test.js"
   ]
+ },
+ {
+  "name": "FB1028-the-ground-law-unmoved",
+  "file": "src/net/wire.js",
+  "old": "export const GROUND_LAW = 3;",
+  "new": "export const GROUND_LAW = 2;",
+  "tests": [
+   "test/net/fb1017f_groundgate.test.js"
+  ]
  }
 ]
