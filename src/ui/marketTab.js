@@ -79,13 +79,14 @@ import { QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
 import { marksText, MARK_WORTH_GOLD } from '../net/marksLaw.js';
 import { pictureNode, frameWake } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's picture, the host's
 import { t, currentLocale } from '../systems/textManager.js';   // BOARD-SIFT: the pages' and the orders' words in the player's language
-import { mintPiece, asMinted } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is
+import { mintPiece, asMinted, mintMarketPiece } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is; MARKET-LOOK: a listed piece as it arrives
+import { goodItemOf } from '../systems/tradePack.js';   // MARKET-LOOK: a pack's piece listed, as it arrives
 import { itemLongName } from '../systems/item/itemInfo.js';
 import { walledText } from './storesWalled.js';   // RPT1026-MARKET STORES-SAID: what a listing may not take, said
 import { isStolen, stolenTag, stolenLine } from '../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
 import { typedField } from './workSift.js';   // AUDIT BOARD-SIFT: a search read once its word is whole
 import { packPickerNode, packCardNode, freshPackSift, packTierWord } from './packPicker.js';   // PACK-PICK: a piece chosen from its picture
-import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: and looked at before it is listed
+import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: and looked at before it is listed; MARKET-LOOK: and before it is bought
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -632,6 +633,31 @@ export function createMarketTab(m, ui) {
     if (row.reports != null) b.append(el('span', 'market-mod', plural(row.reports, 'report')));
     return b;
   }
+  /** MARKET-LOOK (2026-10-27, the owner: "on the market/notice board do offered items there show stats? enchantments
+   *  etc?"): the item a row offers, as it will arrive - a crafted piece or a Masterwork minted as the collect mints it
+   *  (systems/smithItems.js mintMarketPiece), a pack's piece through the clamp its name reads (systems/tradePack.js
+   *  goodItemOf) - kept by its record, so a redraw (a number typed) mints nothing again; null for a material, or a record
+   *  this client cannot mint. */
+  const looked = new WeakMap();
+  const offeredItem = (row) => {
+    const rec = row?.kind === 'item' ? row.item : row?.piece;
+    if (!rec || typeof rec !== 'object') return null;
+    if (!looked.has(rec)) { let it = null; try { it = row.kind === 'item' ? goodItemOf(rec) : mintMarketPiece(rec); } catch { it = null; } looked.set(rec, it); }
+    return looked.get(rec);
+  };
+  /** MARKET-LOOK: the picked row's piece looked at, over its bar - the List form's card (ui/packPicker.js packCardNode):
+   *  its picture, name and tier, the look panel's rows and its magic (an unidentified piece's unknown, as the pack says).
+   *  Null where the row offers no piece. */
+  function lookNode(row) {
+    const it = offeredItem(row);
+    if (!it) return null;
+    const name = row.kind === 'item' ? goodName(row.item) : m.pieceName(row.piece);
+    const card = packCardNode({ item: it, name, sub: packTierWord(it) }, { picture: m.itemPicture ?? null, wake, look: itemLookRows, none: '' });
+    card.className += ' market-look';
+    return card;
+  }
+  /** The picked row's look (MARKET-LOOK) and its bar, under the row. */
+  const pickedNodes = (row, bar) => [lookNode(row), bar].filter(Boolean);
   /** The picked row's bar: "Buy N for P Marks + C courier?", Buy; Report; a moderator's Remove. A number typed moves the
    *  words and the button that hang on it, never the bar (AUDIT 30 U8). */
   function pickedBar(row) {
@@ -1172,7 +1198,7 @@ export function createMarketTab(m, ui) {
       if (rows.length) list.append(listHead('market-auction', ['Masterwork', 'Quality', 'Standing bid']));
       for (const a of rows) {
         list.append(auctionRow(a));
-        if (st.picked === a.id) list.append(auctionBar(a));
+        if (st.picked === a.id) list.append(...pickedNodes(a, auctionBar(a)));
       }
       // AUDIT 31 U14: the empty words say the filter's kind, as the Crafted view's do (BOARD-SIFT: and a search's)
       if (st.data && !rows.length) list.append(el('p', 'notice-empty', st.family || marketQueryOf(st.find) ? 'No Masterwork of that kind is up for auction.' : 'No Masterwork is up for auction.'));
@@ -1185,7 +1211,7 @@ export function createMarketTab(m, ui) {
       if (rows.length) list.append(st.view === 'materials' ? listHead('market-materialhead', ['Material', 'Price', 'From', '7-day median']) : listHead('market-piece', ['Piece', 'Quality', 'Price', 'From']));
       for (const r of rows) {
         list.append(st.view === 'materials' ? materialRow(r) : pieceRow(r));
-        if (st.picked === r.id) list.append(pickedBar(r));
+        if (st.picked === r.id) list.append(...pickedNodes(r, pickedBar(r)));
       }
       if (st.data && !rows.length) list.append(el('p', 'notice-empty', st.view === 'materials' ? MARKET_WORDS.noMaterials : MARKET_WORDS.noCrafted));
       box.append(list);
@@ -1202,7 +1228,7 @@ export function createMarketTab(m, ui) {
       if (rows.length) list.append(listHead('market-piece', ['Piece', 'Condition', 'Price', 'From']));
       for (const r of rows) {
         list.append(goodRow(r));
-        if (st.picked === r.id) list.append(pickedBar(r));
+        if (st.picked === r.id) list.append(...pickedNodes(r, pickedBar(r)));
       }
       if (st.data && !rows.length) list.append(el('p', 'notice-empty', st.family ? MARKET_WORDS.noGoodsKind : MARKET_WORDS.noGoods));
       if (!goldOk()) list.append(el('p', 'notice-tip', accountRefusalText('market-gold-realm')));

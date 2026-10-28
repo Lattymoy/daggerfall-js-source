@@ -76,6 +76,11 @@ function offerWeight(entries, gold) {
   return w;
 }
 
+/** MARKET-ANY: another player's pack record, listed in the Goods view, as this game would hold it - through the wire's
+ *  clamp (validLootList) - or null. Its name (createMarketGoods goodName) and, MARKET-LOOK, the board's look at it
+ *  (ui/marketTab.js) both read this one item. @param {any} rec */
+export const goodItemOf = (rec) => (rec ? validLootList([rec])?.[0] ?? null : null);
+
 /**
  * The adapter over one entity's pack. `entity` is the live player entity (`items`, `goldPieces`).
  * Returns the `pack` object net/tradeSession.js takes.
@@ -218,7 +223,7 @@ export function createMarketGoods(entity, { kept = () => false, say = () => {} }
     },
     /** A pack piece's record named as the pack names it - another player's record through the wire's clamp first. */
     goodName(/** @type {any} */ rec) {
-      const it = rec ? validLootList([rec])?.[0] : null;
+      const it = goodItemOf(rec);
       return it ? itemLongName(it) : 'a piece';
     },
     /** A piece collected - the record the service put into this character's record - into the pack as a trade's piece
