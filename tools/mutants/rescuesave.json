@@ -20,7 +20,7 @@
   {
     "name": "RESCUE-SAVE-the-leave-keeps-nothing",
     "file": "src/systems/realmSaves.js",
-    "old": "      keepNow();   // RESCUE-SAVE: whatever never landed is on the device before the lease goes\n",
+    "old": "      keepNow(keepalive);   // RESCUE-SAVE: whatever never landed is on the device before the lease goes - as it stands on a page going\n",
     "new": "",
     "tests": [
       "test/server/rescuesave.test.js"
@@ -434,7 +434,7 @@
   {
     "name": "RESCUE-PACK-a-page-going-waits-for-the-packing",
     "file": "src/systems/realmSaves.js",
-    "old": "    if (hidden() && keepUnsent(storage, id, at, text, how)) return;\n",
+    "old": "    if ((going || hidden()) && keepUnsent(storage, id, at, text, how)) return;\n",
     "new": "",
     "tests": [
       "test/server/rescuesave.test.js"
@@ -472,6 +472,15 @@
     "file": "src/systems/realmSaves.js",
     "old": "    const packed = text.startsWith(REALM_UNSENT_PACKED);",
     "new": "    const packed = false;",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "CLOSE-SAVE-a-going-page-packs-off-the-frame",
+    "file": "src/systems/realmSaves.js",
+    "old": "if ((going || hidden()) && keepUnsent(storage, id, at, text, how)) return;",
+    "new": "if (hidden() && keepUnsent(storage, id, at, text, how)) return;",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

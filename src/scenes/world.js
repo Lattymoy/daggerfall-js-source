@@ -17301,8 +17301,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   if (realmSession) {
     // the title exit and the page put away are the checkpoint's: registered with its other doors (THE CHECKPOINT'S
     // DOORS, below the duel's). AUDIT REALM2 C2: the lease given up as the page GOES (pagehide, the unload guard answered) - the leave alone, with
-    // keepalive (the browser finishes it; a save that large it cannot, so the periodic checkpoints - ONLINE_CHECKPOINT_MS -
-    // and the one the page asked as it hid bound what a close costs) - and taken again when a page the back-forward cache kept is shown
+    // keepalive (the browser finishes it; a save that large it cannot) - and taken again when a page the back-forward cache kept is shown.
+    // CLOSE-SAVE (FIELD BUGS 2026-10-26): the leave asks the page-hide checkpoint first (whenPageHides below hands it to the session) and
+    // keeps it on the device - a close or a reload fires pagehide first, before the page counts as hidden, and there the lease has gone
     whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });   // REZ-BLOODLINE: a death held for a Resurrect decided first - its tombstone takes the lease, the leave then sends nothing
   }
   /** REALM P1.3: A CHARACTER BORN ONLINE - made at the service once chargen is done, its first save the service's
@@ -21515,8 +21516,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // C7: a duel ended first and P0.5's gate passed, as the page's end and the seat's - realmCheckpoint straight wrote a
     // character that left mid-duel at the duel's 1 health, the opponent's spells on it
     setBeforeTitleExit(async () => { if (!realmSession.lost) { try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ } onlineCheckpoint(); await Promise.race([realmSession.leave(), new Promise((r) => { setTimeout(r, REALM_EXIT_WAIT_MS); })]); } });
-    // a tab put away (a phone's home button, another tab) is checkpointed while the page still can be
-    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });
+    // a tab put away (a phone's home button, another tab) is checkpointed while the page still can be; CLOSE-SAVE: and a page
+    // closed or reloaded, by the session's leave (pagehide comes first there)
+    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); }, realmSession);
   }
   // ═══ WILD1: THE OPEN ZONE - THE WROTHGARIAN MOUNTAINS (bible/11-Multiplayer/Wild-Zone.md) ═════════════════════════
   // The owner: "Wrothgarian mountains need to be turned into a open pvp zone". The law is in its own modules - the zone

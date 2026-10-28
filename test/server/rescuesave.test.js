@@ -799,6 +799,22 @@ test('RESCUE-PACK: a device that will not hold a long life\'s text holds it pack
   assert.equal(JSON.parse(await unpackUnsent(readUnsent(storage, c.id).packed)).level, 36);
 });
 
+test('CLOSE-SAVE (FIELD BUGS 2026-10-26): a long life\'s save handed to the page\'s leave while the page still shows (a close fires pagehide before visibilitychange) is written as it stands before the lease goes - never packed off the frame, which a going page never finishes - and played at the next join', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  const text = longSave(37);
+  assert.ok(text.length > REALM_UNSENT_PACK_OVER);
+  dev.door.plan = ['hang'];   // the leaving save's put, cut off by the page's going
+  c.session.saveAsItGoes(() => { void c.session.checkpoint(text); });   // world.js's page-hide checkpoint, as whenPageHides hands it
+  const left = c.session.leave({ keepalive: true });
+  assert.equal(JSON.parse(readUnsent(dev.storage, c.id).text).level, 37, 'on the device as it stands, before the page can go');
+  await left;
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.restored, true);
+  assert.equal(boot.snap.level, 37);
+});
+
 test('RESCUE-PACK: a packing that finishes after the copy moved on writes nothing - never a copy the landing dropped, never over a newer one', async () => {
   const acct = await account();
   const dev = acct.device();
