@@ -88,6 +88,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/fonts/opendyslexic/OFL.txt', 'TEXT-FONT: the font\'s SIL Open Font License, which travels with it'],
   ['public/art/gun-idle.png', "OURS - Mac's own weapon art for the gun lab (2026-09-19); no ARENA2 pixel in it"],
   ['public/art/gun-fire-sheet.webp', "OURS - Mac's own six-frame fire sheet for the gun lab (2026-09-19); no ARENA2 pixel in it"],
+  ['public/art/hearth-offering.png', "OURS - the owner's own picture of the Hearth Offering at a door, a carved pumpkin on a stool under a lantern (OFFERING-ART, 2026-10-28), its pixels unchanged; no ARENA2 pixel in it"],
   ['public/art/pistol-frames.png', "OURS - the owner's own six fire frames for the pistol lab (2026-10-21), laid side by side with their pixels unchanged; no ARENA2 pixel in it"],
   ['public/art/pistolet-icon.png', "OURS - the owner's own Dwarven Pistolet sprite (PISTOLET, 2026-10-21), its 24x17 pixels recovered from the owner's screenshot; the inventory picture as it is; no ARENA2 pixel in it"],
   ['public/art/pistolet-paperdoll.png', "OURS - pistolet-icon.png with the fist's gap cut across its grip, flipped left to right and tilted barrel-down toward the other hand (RotSprite, no new colour) by tools/pistoletArt.mjs (the right hand's doll layer); no ARENA2 pixel in it"],

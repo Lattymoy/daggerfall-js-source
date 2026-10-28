@@ -6,13 +6,14 @@
 // the festival brings them, painted to stand beside its own candles and skulls.
 //
 // ONE ARCHIVE, FESTIVAL_ARCHIVE (world/eliteGates/pseudoArchives.js registers it), a record each picture
-// (FESTIVAL_ART): the Soul Cake's and the Hearth Offering's item pictures, the offering as it stands at a door, and the
-// towns' turnip lantern, straw effigy and ward-staff (world/witchesDecor.js stands them). Each reaches every door a picture
+// (FESTIVAL_ART): the Soul Cake's and the Hearth Offering's item pictures, the offering at a door (the supplied PNG,
+// OFFERING_ART), and the towns' turnip lantern, straw effigy and ward-staff (world/witchesDecor.js stands them). Each reaches every door a picture
 // does as a STAND-IN of its archive (systems/textureReplacement.js addVendorTextures - `standIn`, `build`), so an item list
 // and a billboard batch ask `getTexture(archive)` as they ask any of Daggerfall's (world/eliteGates/egKeyArt.js's law).
 //
 // Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
 import { image, putTexel, ramp, paletteOf, quantize } from './superDungeon/sdPixelKit.js';
+import { APP_ROOT } from '../systems/appRoot.js';
 
 /** The festival's archive: a block of nine, its records the pictures below (the rest held). */
 export const FESTIVAL_ARCHIVE = 38291;
@@ -27,7 +28,6 @@ const CLAY = Object.freeze([[64, 28, 16], [104, 46, 24], [146, 70, 36], [184, 10
 const TALLOW = Object.freeze([[150, 132, 96], [204, 188, 146], [236, 226, 192]]);
 const FLAME = Object.freeze([[200, 74, 18], [242, 142, 34], [255, 214, 92], [255, 246, 196]]);
 const WOOD = Object.freeze([[40, 26, 14], [74, 48, 26], [108, 74, 40], [140, 100, 58]]);
-const IRON = Object.freeze([[24, 22, 24], [48, 46, 50], [80, 78, 84]]);
 const TURNIP = Object.freeze([[84, 52, 92], [138, 96, 138], [196, 168, 186], [232, 220, 214]]);
 const LEAF = Object.freeze([[28, 52, 22], [52, 88, 34], [86, 124, 48]]);
 const STRAW = Object.freeze([[96, 70, 26], [146, 112, 44], [192, 156, 70], [226, 198, 112]]);
@@ -123,30 +123,6 @@ export function offeringIconArt() {
   ]);
 }
 
-/** THE HEARTH OFFERING AS IT STANDS AT A DOOR (40 x 56): a three-legged stool, on it the clay bowl of cakes, and behind
- *  it a tallow lantern hung from a crook - its candle lit behind iron bars. */
-export function offeringArt() {
-  const seat = rect(8, 34, 32, 37), legs = (/** @type {number} */ x, /** @type {number} */ y) => y >= 37 && y < 56 && (Math.abs(x - 10 - (y - 37) * -0.15) < 1.4 || Math.abs(x - 20) < 1.2 || Math.abs(x - 30 - (y - 37) * 0.15) < 1.4);
-  const { cakes, crosses, gaps, bowl, rim } = heaped(20, 30, 11, 6);
-  const pole = rect(33, 4, 35, 56), crook = rect(26, 4, 35, 6), chain = rect(27, 6, 28, 9);
-  const cage = and(rect(23, 9, 32, 21), (x, y) => y === 9 || y === 20 || x === 23 || x === 31 || x === 27);
-  const glow = rect(24, 10, 31, 20), candle = rect(26, 14, 29, 20), flame = ellipse(27.5, 12.3, 1.6, 2.4);
-  return paintLayers(40, 56, [
-    { hit: pole, ramp: WOOD, light: (x) => (x === 33 ? 0.8 : 0.3) },
-    { hit: (x, y) => crook(x, y) || chain(x, y), ramp: IRON, light: () => 0.6 },
-    { hit: glow, ramp: FLAME, light: (x, y) => 0.55 - Math.hypot(x - 27.5, y - 15) / 14 },
-    { hit: candle, ramp: TALLOW, light: (x) => 1 - (x - 26) / 3 },
-    { hit: flame, ramp: FLAME, light: (x, y) => 1 - (y - 9) / 6 },
-    { hit: cage, ramp: IRON, light: litOver(23, 9, 9, 12) },
-    { hit: (x, y) => seat(x, y) || legs(x, y), ramp: WOOD, light: litOver(8, 34, 24, 22) },
-    { hit: bowl, ramp: CLAY, light: litOver(9, 29, 22, 7, 1.2) },
-    { hit: cakes, ramp: CAKE, light: litOver(10, 22, 20, 9) },
-    { hit: gaps, ramp: CAKE, light: () => 0 },
-    { hit: crosses, ramp: ICING, light: () => 0.8 },
-    { hit: rim, ramp: CLAY, light: () => 0.95 },
-  ]);
-}
-
 /** A TURNIP LANTERN (24 x 26) - the Bay's own, before any pumpkin crossed the sea: a pale turnip hollowed and carved, a
  *  face of tallow light, its leaves still on. */
 export function turnipArt() {
@@ -203,26 +179,43 @@ export function wardStaffArt() {
   ]);
 }
 
-/** Every picture, by its record. */
+/** OFFERING-ART (2026-10-28, the owner's own picture): THE HEARTH OFFERING AS IT STANDS AT A DOOR - a carved pumpkin on a
+ *  stool under a lantern on a crook, 43 x 101, its pixels unchanged (public/art). It replaced the painted bowl of cakes.
+ *  `scale` is TextureFile.getScale's (rmbFlats scaledBillboardSize, 256ths): -85 stands it 29 x 68 texels, 0.73 m by
+ *  1.7 m, the seat at the painted stool's 0.55 m. `lanternY` is the lantern's glow, in texels from the top. */
+export const OFFERING_ART = Object.freeze({ file: 'art/hearth-offering.png', width: 43, height: 101, scale: Object.freeze({ width: -85, height: -85 }), lanternY: 23 });
+
+/** The offering's PNG as a texture-door picture: fetched off the site root, decoded by `decode`, its scale carried. */
+async function offeringPicture(/** @type {(b: Uint8Array) => Promise<{width: number, height: number, data: Uint8Array}>} */ decode, fetchBytes = fetchArt) {
+  const img = await decode(await fetchBytes(new URL(OFFERING_ART.file, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href));
+  return { width: img.width, height: img.height, data: img.data, scale: { ...OFFERING_ART.scale } };
+}
+async function fetchArt(/** @type {string} */ url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`[festival] ${url}: ${r.status}`);
+  return new Uint8Array(await r.arrayBuffer());
+}
+
+/** Every painted picture, by its record. */
 export const FESTIVAL_PAINTERS = Object.freeze({
-  [FESTIVAL_ART.cake]: soulCakeArt, [FESTIVAL_ART.offeringIcon]: offeringIconArt, [FESTIVAL_ART.offering]: offeringArt,
+  [FESTIVAL_ART.cake]: soulCakeArt, [FESTIVAL_ART.offeringIcon]: offeringIconArt,
   [FESTIVAL_ART.turnip]: turnipArt, [FESTIVAL_ART.effigy]: effigyArt, [FESTIVAL_ART.wardStaff]: wardStaffArt,
 });
 
-/**
- * THE PICTURES ON THE TEXTURE DOOR, once: each a stand-in of the festival's archive, built when it is first asked (the
- * Weir Key's law, egKeyArt.js registerWeirKeyArt). `addVendorTextures` is handed in (systems/textureReplacement.js's).
- * Answers how many were registered (0 the second time).
- * @param {(entries: any[]) => number} addVendorTextures
- */
+/** THE PICTURES ON THE TEXTURE DOOR, once: each a stand-in of the festival's archive, built when first asked (egKeyArt.js
+ *  registerWeirKeyArt's law). `addVendorTextures` and `decode` are textureReplacement.js's. Answers how many registered.
+ *  @param {(entries: any[]) => number} addVendorTextures @param {(b: Uint8Array) => Promise<any>} [decode]
+ *  @param {(url: string) => Promise<Uint8Array>} [fetchBytes] */
 let _registered = false;
-export function registerFestivalArt(addVendorTextures) {
+export function registerFestivalArt(addVendorTextures, decode, fetchBytes) {
   if (_registered || typeof addVendorTextures !== 'function') return 0;
   _registered = true;
-  return addVendorTextures(Object.entries(FESTIVAL_PAINTERS).map(([record, paint]) => ({
-    archive: FESTIVAL_ARCHIVE, record: Number(record), frame: 0, standIn: true, fileName: `witches-festival-${FESTIVAL_ARCHIVE}_${record}`,
-    build: async () => { const img = paint(); return { width: img.width, height: img.height, data: img.colors }; },
-  })));
+  const entry = (/** @type {number} */ record, /** @type {() => Promise<any>} */ build) => ({
+    archive: FESTIVAL_ARCHIVE, record, frame: 0, standIn: true, fileName: `witches-festival-${FESTIVAL_ARCHIVE}_${record}`, build,
+  });
+  const painted = Object.entries(FESTIVAL_PAINTERS).map(([record, paint]) => entry(Number(record), async () => { const img = paint(); return { width: img.width, height: img.height, data: img.colors }; }));
+  const offering = typeof decode === 'function' ? [entry(FESTIVAL_ART.offering, () => offeringPicture(decode, fetchBytes))] : [];
+  return addVendorTextures([...painted, ...offering]);
 }
 /** Test seam: unregistered. */
 export function _resetFestivalArt() { _registered = false; }

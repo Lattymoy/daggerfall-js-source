@@ -71,6 +71,7 @@ import { orbColourFrom } from '../characters/thunderlockIds.js';   // ART-COLOUR
 import { createSpellImpactSounds } from '../systems/spell/spellImpactSound.js';   // IMPACTFX: ...and heard
 import { createMagicCandle } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
+import { mwViewThirdPerson } from '../player/mwView.js';   // CANDLE-POV: my candle is drawn only out of first person
 import { setPlayerDoor } from '../systems/playerDoor.js';   // SET2: this host publishes itself as the scene a set's power reaches into
 import { tellPlayerCast } from '../systems/playerCasts.js';   // EG15: the player's own cast told (the Battlemage's Discipline), a leaf
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
@@ -1467,6 +1468,9 @@ export function createPlayerMagic({
       feet: renderFeet ?? playerFeet ?? [0, 0, 0],   // DISC13-A: the candle hangs off the RENDER feet (motor.js feetAt), as the camera does - the stepped feet slid it against the view every frame on a screen faster than 60 Hz
       height: playerHeight,
       forward,
+      // CANDLE-POV (2026-10-28, Dudey: "the candle can still be visible for other players but should be removed in first
+      // person"; a DEPARTURE, Port-Ledger A): in first person the light stays and the candle in front of the face goes
+      sprite: mwViewThirdPerson(),
     });
     for (const m of missiles) {
       if (m.dead) continue;
