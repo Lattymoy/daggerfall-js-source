@@ -334,5 +334,14 @@
   "tests": [
    "test/net/fb1017f_groundgate.test.js"
   ]
+ },
+ {
+  "name": "AUDIT-FB1028-a-record-on-todays-ground-moved",
+  "file": "src/scenes/groundFrameHost.js",
+  "old": "return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;",
+  "new": "return d;",
+  "tests": [
+   "test/world/terrain/fb1028_townground_frame.test.js"
+  ]
  }
 ]

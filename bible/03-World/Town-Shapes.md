@@ -160,6 +160,10 @@ townGroundMovedField, today's blend less TS2's), on the Bay and past it, the row
 alone, over the outline before the crops (`world/terrain/townBlendBefore.js`). RELIEF-PEAKS keeps its own law,
 RELIEF_FRAME_LAW 3.
 
+**The records #1371 wrote.** #1371's build stood today's ground and still stamped 3, so a record it saved would be moved
+twice. A record stamped before 4 is moved only when it stands nearer the old ground than today's (`groundFrameHost.js`
+townMove); with the ground there not yet loaded it is moved, as one written before #1371.
+
 Tests `test/world/terrain/fb1028_townground.test.js` (7), `fb1028_townground_real.test.js` (ARENA2) and
 `fb1028_townground_frame.test.js` (5). Mutants `tools/mutants/fb1028_townground.json` (37, all dead). PINS MOVED:
 `test/world/reliefpeaks.test.js` and `bayleftground_frame.test.js` (the stamp 4), the ground's print (a town's cell),

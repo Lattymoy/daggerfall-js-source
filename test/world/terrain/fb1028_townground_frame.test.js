@@ -62,6 +62,19 @@ test('FB1028 the records\' frame (GROUND_FRAME_LAW 4): a record written before i
   assert.equal(recordFrame({ landform: false, liftAt, heightAt: () => ground, state, bayAt: () => true }).restandHeight(ground + off, x, 0, U, 3), ground + off, 'none handed: as before');
 });
 
+test('AUDIT FB1028: #1371\'s build stood the new town ground and still stamped 3 - a record it wrote stands nearer today\'s ground than the old, and is not moved again; one nearer the old moves; the ground unloaded, it moves (mutant: the test unread)', () => {
+  const now = (x) => 100 + x, town = () => 24, ground = 500, off = 1.5, x = 12;
+  const state = { compensation: [0, 7, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200] };
+  for (const landform of [true, false]) {
+    const lift = landform ? now(x) : 0, heightAt = () => ground + lift + 7;
+    const f = recordFrame({ landform, liftAt: now, heightAt, state, bayAt: () => true, townMovedAt: town });
+    assert.equal(f.restandHeight(ground + off, x, 0, U, 3), ground + lift + off, `written on today's ground: kept (row ${landform})`);
+    assert.equal(f.restandHeight(ground - town() + off, x, 0, U, 3), ground + lift + off, 'written on the old: moved');
+    const unloaded = recordFrame({ landform, liftAt: now, heightAt: () => -Infinity, state, bayAt: () => true, townMovedAt: town });
+    assert.equal(unloaded.restandHeight(ground - town() + off, x, 0, U, 3), (landform ? ground + lift + off : ground + off), 'the ground unloaded: moved');
+  }
+});
+
 /** The world host's frame over a steep Bay pixel (a cliff of 720 m across it) with a town built there. */
 function steepTown() {
   const woods = groundWoods(new StubWoods((x) => Math.max(20, Math.min(250, 30 + 45 * (x - 300)))));

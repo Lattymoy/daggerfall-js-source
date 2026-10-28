@@ -88,13 +88,20 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt 
   // day's lift first, so the lift goes on once and its `off` is exact. With the row off it comes as it always came.
   // RELIEF-PEAKS: one before RELIEF_FRAME_LAW (3), past the Bay, rides DFU's own ground's move there, the row off too.
   // FB1028 (bible/03-World/Town-Shapes.md "TS2 at FB1028"): one before GROUND_FRAME_LAW (4) rides its town's blend's move.
+  const townMove = (yy, x, z) => {   // AUDIT FB1028: a record #1371's build wrote (stamped 3) stands nearer today's ground - not moved again
+    const d = townMovedAt(x, z), h = d ? heightAt(x, z) : NaN;
+    if (!Number.isFinite(h)) return d;
+    const g = h - state.compensation[1] - (landform ? landformLiftAt(x, z) : 0);
+    return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;
+  };
   const restandHeight = (y, x, z, was, frame = null) => {
-    const moved = (movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0)
-      + (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) ? townMovedAt(x, z) : 0);
-    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + moved;
+    const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;
+    const town = (yy) => (townMovedAt && Number.isFinite(y) && !(frame >= GROUND_FRAME_LAW) ? townMove(yy, x, z) : 0);
+    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief);
     if (!Number.isFinite(y)) return y;
     if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });   // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's
-    y += moved;   // RELIEF-PEAKS: DFU's frame of its day onto today's
+    y += relief;   // RELIEF-PEAKS: DFU's frame of its day onto today's
+    y += town(y);   // FB1028: its town's blend's move
     const now = landform ? landformLiftAt(x, z) : 0;
     const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;
     const h = heightAt(x, z);
