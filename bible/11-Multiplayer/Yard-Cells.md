@@ -608,8 +608,21 @@ hundreds of draws.
    in the check below, 536 yards and 4,285 pieces stood inside a shop and after leaving it, at 300 m, with no cell asked
    again. The one long frame on leaving (96-129 ms) comes at Off too, so it is the street's own return, not the yards'.
 
-**Measured** - see the pull request for the A/B. The numbers below are provisional (a headed run stopped before its
-last arm) and are replaced by the clean run.
+**Measured** (2026-10-28, Daggerfall's city online over the real service and relay in local workerd, seeded as YC1's
+check 1: 536 strangers' yards standing; headed Edge 1280x800, RTX 5080, D3D11, 240 Hz; A, B, A, B). Draws are every
+GL draw call a frame; main ms is the page's frame callbacks, mean.
+
+| At 300 m, standing | Base (two runs) | YC5 (two runs) |
+|---|---|---|
+| fps | 52, 66 | 122, 117 |
+| GL draws a frame | 4,247, 4,253 | 2,176, 2,192 |
+| main ms | 16.0, 9.1 | 7.8, 8.2 |
+| main ms with yards Off | 11.6, 6.9 | 6.5, 7.1 |
+
+The first base run carries the first boot's warm-up (its Off is 11.6 ms). Walking east at 5 m/s, the yards crossing the
+range: base 58-71 fps, YC5 119-120 fps. A CPU profile of the standing window (headless) splits the yards' main-thread
+time: base 2.5 ms a frame, 1.1 of it draw submission; YC5 1.4 ms, 0.1 of it submission. The rest is per-piece JS
+(culling, lamps, flats, figures), which YC5 does not change.
 
 **Tests.** `test/scenes/yardblock.test.js` runs real pools on a block's door: one merge a block, a piece going and
 landing, the range's crossings, the budget and its order, the cull and the recentre, the flats and a yard leaving.
