@@ -25,8 +25,7 @@
 //     draws), never the claim's own word alone.
 //   - A CAST: at most 3 damaging a 5 seconds, each to 60; a heal to 40,
 //     three a 5 seconds of its own.
-//   - BAL8: EVERY HARM, blows and casts together, at most 180 in any 5
-//     seconds (SIEGE_HARM - the casts' own ceiling, every striker's).
+//   - PVP-HIT: one blow or cast at most 45% of the target's real health.
 //   - A STEP: no faster than 18 m/s and half a metre (MEASURED below) -
 //     AUDIT-SEATS R1/R2: its run and its climb together, on an allowance
 //     the fighter carries (a second's run and the slack at most); past it
@@ -42,7 +41,7 @@
 //
 // Pure: no clock (every `now` an argument), no DOM, no network.
 // ═════════════════════════════════════════════════════════════════════
-import { newHealthShare, noteRefereeChange } from './refereeHealthShare.js';
+import { newHealthShare, noteRefereeChange, healRoom, spendHeal } from './refereeHealthShare.js';
 
 /** A siege's room: `siege:<seat key>:<seat week>` - one a battle (Seats-Arc 6.2). */
 export const SIEGE_ROOM = /^siege:(0|[1-9]\d{0,9}):(0|[1-9]\d{0,5})$/;
@@ -71,12 +70,15 @@ export const SIEGE_BLOWS_HZ = 4;
  *  its own (DECIDED here: 6.1 clamped a heal's size and named no rate, and at the frame gate's 8 a second an unbounded heal
  *  is 320 a second - a fighter nobody can fell; the referee has no unbounded verb). */
 export const SIEGE_CASTS = Object.freeze({ max: 3, windowMs: 5000, damageMax: 60, healMax: 40 });
-/** BAL8 (bible/05-Combat/Balance-Arc.md section 14): ONE CEILING FOR EVERY STRIKER. INT10 bounded a caster at 3 casts of
- *  60 in 5 s - 180, 36 a second - and a striker with a blade or a bare hand at nothing past 4 blows a second and one blow's
- *  bucket, which no measured blow came near (the highest of 40,000 was 54): a kitted monk's 45.8 a second felled a
- *  fighter in 8.3 s, where the mage's ceiling takes 10.6. Every harm a fighter deals - blows and casts together, so a
- *  blade and a spell are never two ceilings - is held to the casts' own: at most `max` in any `windowMs`. */
-export const SIEGE_HARM = Object.freeze({ max: SIEGE_CASTS.max * SIEGE_CASTS.damageMax, windowMs: SIEGE_CASTS.windowMs });
+/** PVP-HIT (the PvP rework, 2026-10-28: "one hit takes at most 25% of health", then "so let cap at 45%"): with the pool the player's real health
+ *  (refereeHealthShare.js PVP-HEALTH) and skill and gear scaling every attack, one blow or cast takes at most `share` of
+ *  the target's whole - the weapon's bucket and the cast's 60 retire. */
+export const PVP_HIT = Object.freeze({ share: 0.45 });
+/** The most one blow or cast may take from `to`: PVP_HIT's share of its whole, at least 1. */
+export const pvpHitMax = (to) => Math.max(1, Math.floor((Number(to?.max) || 0) * PVP_HIT.share));
+/** PVP-CASTS: casts at a player, harmful or healing, at most 1.9 a second - 19 in a 10 s window. */
+export const PVP_CASTS = Object.freeze({ max: 19, windowMs: 10_000 });
+// BAL8's 180 a striker in 5 s RETIRED (the PvP rework): PVP-HIT, the swing law and PVP-CASTS pace a real-health fight.
 /**
  * THE STEP (6.1): the fastest a fighter may move across the ground, and the slack a step earns, in metres. MEASURED (6.1:
  * "the fastest legal run the motor allows with every Speed buff ... the ceiling 25% above it"): player/motor.js runSpeed
@@ -200,7 +202,7 @@ export function siegeHeld(look, w, m) {
 /** A fighter's state as the room keeps it. */
 export const newFighter = (lv, now) => {
   const max = siegeVitality(lv);
-  return { lv: Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1))), hp: max, max, down: false, upAt: 0, safeTo: 0, rate: SIEGE_BLOWS_HZ, rateAt: now, casts: [], heals: [], harm: [], dealt: 0, clipped: 0, share: newHealthShare(now) };   // SHARED-HEALTH: the count is the player's health, as a share
+  return { lv: Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1))), hp: max, max, down: false, upAt: 0, safeTo: 0, rate: SIEGE_BLOWS_HZ, rateAt: now, casts: [], harm: [], dealt: 0, clipped: 0, share: newHealthShare(now) };   // SHARED-HEALTH: the count is the player's health, as a share
 };
 const metres = (a, b) => Math.hypot((a.x - b.x) / SIEGE_UNITS_PER_M, (a.y - b.y) / SIEGE_UNITS_PER_M, (a.z - b.z) / SIEGE_UNITS_PER_M);
 /** The striker's rate bucket, refilled to `now` (one second deep) - true where a blow may be spent. */
@@ -211,12 +213,6 @@ function spend(f, now) {
   f.rate -= 1;
   return true;
 }
-/** BAL8: the harm the striker may still deal inside SIEGE_HARM's window (its record of `[at, dealt]` pruned to it). */
-export function harmRoom(f, now) {
-  f.harm = (f.harm ?? []).filter((h) => Array.isArray(h) && now - h[0] < SIEGE_HARM.windowMs);
-  return Math.max(0, SIEGE_HARM.max - f.harm.reduce((n, h) => n + h[1], 0));
-}
-const spendHarm = (f, now, n) => { if (n > 0) f.harm.push([now, n]); };
 
 /**
  * A BLOW JUDGED (6.1) - `by` and `to` the two fighters' states, `from` and `at` their last poses (null: unknown), `held`
@@ -241,8 +237,7 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
   const reach = (shaft ? SIEGE_REACH.shaft : SIEGE_REACH.melee) + SIEGE_REACH.slack;
   if (metres(from, at) > reach) return { ok: false, dealt: 0, fell: false, why: 'reach' };
   const want = Math.max(0, Math.trunc(Number(d) || 0));
-  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling
-  spendHarm(by, now, got);
+  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share
   by.clipped += want - got;
   by.dealt += got;
   to.hp -= got;
@@ -253,8 +248,8 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
 }
 
 /**
- * A CAST JUDGED (6.1) - a damaging one (`heal` false) at most SIEGE_CASTS.max in a window, each to its damage's most; a
- * heal as many in a window of its own, to its own most, never past the target's whole. Reach a spell's. Answers
+ * A CAST JUDGED (6.1) - PVP-CASTS: harmful (`heal` false) and healing casts together at most PVP_CASTS.max in its
+ * window; a harm to PVP-HIT's share, a heal to the target's PVP-HEAL room, never past its whole. Reach a spell's. Answers
  * `{ ok, dealt, fell, why }`.
  * @param {any} by @param {any} to
  * @param {{ from?: any, at?: any, d?: number, heal?: boolean }} o
@@ -265,22 +260,22 @@ export function refereeCast(by, to, { from = null, at = null, d = 0, heal = fals
   if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };
   if (!from || !at || metres(from, at) > SIEGE_REACH.spell + SIEGE_REACH.slack) return { ok: false, dealt: 0, fell: false, why: 'reach' };
   const want = Math.max(0, Math.trunc(Number(d) || 0));
+  // PVP-CASTS: one clock for every cast, harmful or healing - at most 1.9 a second
+  by.casts = (by.casts ?? []).filter((t) => now - t < PVP_CASTS.windowMs);
   if (heal) {
-    by.heals = (by.heals ?? []).filter((t) => now - t < SIEGE_CASTS.windowMs);
-    if (by.heals.length >= SIEGE_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };
-    by.heals.push(now);
-    const got = Math.min(want, SIEGE_CASTS.healMax, to.max - to.hp);
+    if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };
+    by.casts.push(now);
+    const got = Math.max(0, Math.min(want, to.max - to.hp, healRoom(to, now, by.share?.resto ?? 0)));   // PVP-HEAL: the target's window, at the better Restoration
     to.hp += got;
+    spendHeal(to, now, got);
     if (got > 0) noteRefereeChange(to, got, now);
-    return { ok: true, dealt: -got, fell: false, why: null };
+    return { ok: true, dealt: got > 0 ? -got : 0, fell: false, why: null };
   }
   if (by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };
-  by.casts = by.casts.filter((t) => now - t < SIEGE_CASTS.windowMs);
-  if (by.casts.length >= SIEGE_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };
+  if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };
   by.casts.push(now);
   if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };
-  const got = Math.min(want, SIEGE_CASTS.damageMax, to.hp, harmRoom(by, now));   // BAL8: the blows' and the casts' one ceiling
-  spendHarm(by, now, got);
+  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT, a blow's own
   by.clipped += want - got;
   by.dealt += got;
   to.hp -= got;
@@ -327,7 +322,7 @@ export function siegeRise(f, now) {
   if (!f.down || now < f.upAt) return false;
   f.down = false;
   noteRefereeChange(f, f.max - Math.max(0, f.hp), now);   // SHARED-HEALTH: the rise heals the player's own health whole
-  f.hp = f.max; f.safeTo = now + SIEGE_PROTECT_MS; f.casts = []; f.heals = [];
+  f.hp = f.max; f.safeTo = now + SIEGE_PROTECT_MS; f.casts = [];
   return true;
 }
 

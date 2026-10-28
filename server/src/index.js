@@ -6783,7 +6783,7 @@ export class Room {
   /**
    * The pools this room's referees hold for an account: its open-zone fighter, its live duel's side, its siege fighter.
    * Never a Royal Tourney contender's: the tourney keeps its own count between bouts. Each `{ fighter, healsBlocked,
-   * kept }` - `healsBlocked` a duel's or a siege's (no heal by report for its whole length), `kept` what the room does once the count has moved
+   * kept }` - `healsBlocked` a siege's (no heal by report for its whole length - PVP-HEAL: a duel's are capped instead), `kept` what the room does once the count has moved
    * (the zone's carry at the hub, a siege's checkpoint).
    */
   async _vitPools(sub, now) {
@@ -6794,7 +6794,7 @@ export class Room {
       if (x && !x.down) pools.push({ fighter: x.f, healsBlocked: false, kept: async () => this._wildCarryPut(sub, this._zoneCarry(st, sub, now)) });
     }
     const bout = this._duelRef ? duelBoutOf(this._duelRef, sub) : null;
-    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: true, kept: async () => {} });   // a duel heals nobody for its whole length
+    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: false, kept: async () => {} });   // PVP-HEAL: a duel heals, to the fight's window
     const siege = this._siege;
     const siegeFighter = siege?.fighters?.[sub];
     if (siegeFighter && siege.battle?.kind !== 'royal') pools.push({ fighter: siegeFighter, healsBlocked: true, kept: () => this._siegeSave(now, false) });   // a siege heals nobody by report either: its heals are the side-mates' spells and the wave's rise, the referee's own

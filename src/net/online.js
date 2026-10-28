@@ -1888,7 +1888,7 @@ export class OnlineSession {
     if (!validVitIn(report) || !this.vitOk || this.status !== 'open' || !this._ws) return false;
     const gate = vitGate(this._vitBucket, this._now());
     if (!gate.pass) return false;
-    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen })); } catch { return false; }
+    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen, ...(report.x !== undefined ? { x: report.x } : {}), ...(report.r !== undefined ? { r: report.r } : {}) })); } catch { return false; }   // PVP-HEALTH: `x`, `r`
     this._vitBucket = gate.bucket; this.stats.sent++;
     return true;
   }

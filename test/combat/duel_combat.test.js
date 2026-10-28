@@ -19,7 +19,7 @@ import { hurtPlayer, setDeathPresenter, setAvoidDeathHook, registerDuelFell, due
 import { applySpell, tickActiveEffects } from '../../src/systems/effects.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { WEAPON_REACH, SWING_MODS } from '../../src/combat/playerWeapon.js';
-import { validDuelData, DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SWINGS } from '../../src/net/wire.js';
+import { validDuelData, DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SKILL_MAX, DUEL_SWINGS } from '../../src/net/wire.js';
 import { DUEL_RADIUS_M, NATIVES_PER_M } from '../../src/net/duel/duelSession.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
@@ -88,6 +88,19 @@ test('DUEL1 the sheet the wire carries: level and attributes clamped at the hone
   assert.equal(duelSwingOf('StrikeUp'), 'StrikeUp');
   assert.equal(duelSwingOf('Idle'), undefined);
   assert.deepEqual(Object.keys(SWING_MODS).sort(), [...DUEL_SWINGS].sort(), 'the wire\'s swings are the formula\'s');
+});
+
+test('PVP-SCALE (the PvP rework, 2026-10-28: "damage scales with skill + gear"): the sheet carries a skill past 100 (DUEL_SKILL_MAX 1000), and a blow takes the weapon\'s climb and gear percent (`wp`) on top of its roll (mutants: the old 100 clamp; `wp` unread)', () => {
+  assert.equal(DUEL_SKILL_MAX, 1000);
+  const fists = duelAttackerOf(mkPlayer({ skillOverrides: { [SKILLS.HandToHand]: 600 } }), null);
+  assert.equal(fists.sk[1], 600, 'skill and gear, unclamped at 100');
+  assert.equal(fists.wp, 0, 'a fist: its roll reads the skill whole, no percent on top');
+  const sword = createWeapon(SWORD, 3, () => 0.5);
+  const a = duelAttackerOf(mkPlayer(), sword);
+  const roll = (wp) => { let n = 0; for (let seed = 1; seed < 60; seed++) n += resolveDuelStrike({ by: 'melee', a: { ...a, wp }, w: duelWeaponOf(sword), sw: 'StrikeDown' }, mkPlayer(), { rolls: lcg(seed) }).dmg; return n; };
+  const plain = roll(0), doubled = roll(100);
+  assert.ok(plain > 0);
+  assert.ok(doubled >= 2 * plain - 60 && doubled <= 2 * plain, 'x2 at 100%, each blow floored');
 });
 
 test('DUEL1 the numbers are the STRIKER\'s: the defender\'s resolution never pops a number on the defender\'s HUD; the striker\'s HUD hears the answer through the one seam (mutants: the defender\'s HUD popping the opponent\'s numbers; the striker\'s silent)', () => {

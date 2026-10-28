@@ -1703,7 +1703,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world279';   // world279: AUDIT FB1028 A2-A3 (2026-10-28, bible/03-World/Town-Shapes.md TS2 at FB1028; NOT YET DEPLOYED) - GROUND_LAW 3 to 4: a town's ground moved at its pixel's seams and beside tall relief, so while `groundGate` is on the relay refuses a ground room's hello from a build on the old ground. Deploy the relay first, then the site.
+export const RELAY_VERSION = 'world280';   // world280: PVP-REWORK STAGE 1 (2026-10-28, the PvP rework; NOT YET DEPLOYED) - the referee's pool is the player's real health (the `vit` report's `x`, at most 3,000) and Restoration (`r`); one blow or cast takes at most 45% of it (PVP-HIT), BAL8's 180 in 5 s retired; casts 1.9 a second (PVP-CASTS); a fight's heals 25-35% a 15 s (PVP-HEAL), duels included. Deploy the relay first, then the site.
+// world279: AUDIT FB1028 A2-A3 (2026-10-28, bible/03-World/Town-Shapes.md TS2 at FB1028; NOT YET DEPLOYED) - GROUND_LAW 3 to 4: a town's ground moved at its pixel's seams and beside tall relief, so while `groundGate` is on the relay refuses a ground room's hello from a build on the old ground. Deploy the relay first, then the site.
 // world278: FB1028 TOWN-GROUND (2026-10-28, bible/01-Overview/bugs/Field-Bugs-2026-10-28.md; bible/03-World/Town-Shapes.md TS2; NOT YET DEPLOYED) - GROUND_LAW 2 to 3: a Bay town's ground moved at its shores and outskirts by tens of metres, so while `groundGate` is on the relay refuses a ground room's hello from a build on the old ground. Deploy the relay first, then the site.
 // world277: WILD-REMAINS-LOSS (2026-10-26; bible/01-Overview/bugs/Field-Bugs-2026-10-25h.md; world265 to world276 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, FIELD BUGS 2026-10-26r, APPEARANCES and HUNTERS-MARK, LADDER-CUT, SD-PARTY and TESA and SHOP at the merges; NOT YET DEPLOYED) - the room loads its verifying key before it checks a deposit's remains order (a room that woke from hibernation since its last hello refused every chunk, the fallen's and its killer's alike, and the drop the service took lay nowhere), says in its log why it keeps nothing of a `fall` chunk, and names a remains for its order's fallen character (`wnm`, net/identityToken.js) whoever carries it. YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md YC1; world266 on its branch, renumbered past main at the merges, last past TESA and SHOP; folded in place with WILD-REMAINS-LOSS, one release; NOT YET DEPLOYED) - net/homeLaw.js's HOME_TOWN_MAX 512 to 2,048 (every building a town of Daggerfall's blocks can hold; the Imperial City's slices hold up to 794 past the Bay), a law of the relay's import graph; no relay behaviour moves. YARD-CELL YC2 (2026-10-27, bible/11-Multiplayer/Yard-Cells.md section 11; world271 to world277, and acct198 to acct200 then acct205 and acct206, on its branch, renumbered past YC1 at the merges, and world278 past YC1; folded in place with WILD-REMAINS-LOSS and YARD-CELL, one release; NOT YET DEPLOYED) - THE YARD PUSH: the hub takes a carried `{t:'yard', order}` (identityToken.js kind 'yard'), verifies it and says `{t:'yard', l:[[m, c, v]]}` to every hub socket once a second at most, each cell's highest version kept (server/src/yardWords.js); its welcome says `yd: 1`, and a client carries a yard order only to a hub that said it. Deploy with the account service's acct208, before the site. SHARED-HEALTH (2026-10-26, world270 to world276 on its branch, renumbered past CHAT-POST, MASTER-THREE, RPT1026, APPEARANCES, LADDER-CUT, SD-PARTY and TESA and SHOP at the merges; folded in place with WILD-REMAINS-LOSS and YARD-CELL, one release; bible/06-Systems/Integrity-Arc.md section 5, "Decisions (2026-10-26, SHARED-HEALTH)"; NOT YET DEPLOYED) - the open zone, a duel and a siege referee the player's own health as a share of the referee's count - the `vit` frame (validVitIn, validVitOut, VIT_RELAY_MIN) carries a client's health report in and the referee's count and ask out; net/siege/refereeHealthShare.js joins the bundle (siegeRef.js logs every change to a count); the zone's 30 s refill is gone. Deploy the relay first, then the site.
 // world276: TESA's release (#1184) and SHOP, one version - TESA's world275 below renumbered past main's SD-PARTY world275 (live) at the eighth merge of main; its gates (WORLD_WIDE, GUILD_INSTANCE, WW5, RAID_WORLD, OW_WORLD) open at 276. SHOP (2026-10-28, world274 on its branch, renumbered past TESA's LADDER-CUT world274 and ASHFALL1 world275 at the fold into #1184; the owner: "A new glyph panel alongside the timer and mailbox that will be used for our monetization shop"; bible/06-Systems/Shop.md; NOT YET DEPLOYED): the vocabulary's three new words - GENESIS last of TITLES, ORIGIN last of GLYPHS, ETERNAL last of AURAS - which the relay reads off every token (net/identityToken.js) - and the hello's token body bound, 896 (TOKEN_RE): a token wearing every glyph, the Origin with them, is 867. Deploy the relay first.
@@ -4423,7 +4424,9 @@ export const DUEL_IN_HZ_MAX = DUEL_HZ_MAX * 2;
  *  damage and the health a result may say. */
 export const DUEL_LEVEL_MAX = CAST_LEVEL_MAX;
 export const DUEL_STAT_MAX = 100;
-export const DUEL_SKILL_MAX = 100;
+/** PVP-SCALE (the PvP rework, 2026-10-28: "damage scales with skill + gear"): a skill as the striker's sheet reads it -
+ *  skill and gear, a mastered 200 with every gear line on it; the referee bounds the blow, never the skill. */
+export const DUEL_SKILL_MAX = 1000;
 export const DUEL_RACE_MAX = 8;
 export const DUEL_TEMPLATE_MAX = 65535;
 export const DUEL_MATERIAL_MAX = 15;
@@ -5071,6 +5074,8 @@ export const VIT_HZ_MAX = 8;
 export const vitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VIT_HZ_MAX);
 /** How many pools' last words a report may name. */
 export const VIT_SEEN_MAX = 4;
+/** PVP-HEALTH: the most Restoration a report may carry (refereeHealthShare.js PVP_RESTORATION_MAX, pinned equal). */
+export const VIT_RESTORATION_MAX = 1000;
 const WORD_MAX = 0x7fffffff;
 const epochOk = (v) => Number.isSafeInteger(v) && v >= 0;
 
@@ -5087,7 +5092,10 @@ export function validVitIn(m) {
     if (!Array.isArray(pair) || pair.length !== 2 || !epochOk(pair[0]) || !intIn(pair[1], 0, WORD_MAX)) return null;
     seen.push([pair[0], pair[1]]);
   }
-  return { report: m.n, share: m.s, seen };
+  // PVP-HEALTH: the real maximum (`x`) and Restoration (`r`), each optional - the referee bounds both
+  if (m.x !== undefined && !intIn(m.x, 1, CARD_VITAL_MAX)) return null;
+  if (m.r !== undefined && !intIn(m.r, 0, VIT_RESTORATION_MAX)) return null;
+  return { report: m.n, share: m.s, seen, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}) };
 }
 
 /**

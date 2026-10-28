@@ -30,7 +30,8 @@ import { ribbonRgba } from '../../src/net/heraldryLaw.js';
 import { createSeatBanners } from '../../src/scenes/seatBanners.js';
 import { createSiegeHerald, heraldMarks, heraldDue, fightAnnouncement, SIEGE_HERALD_BEFORE_MS, SIEGE_HERALD_TICK_MS } from '../../src/net/siege/siegeHerald.js';
 import { siegeBlowKind, siegeCastClamp, siegeSpellNumbers, siegeSpellBarred, SIEGE_SPELL_BARRED_TEXT, SIEGE_BARRED_EFFECTS } from '../../src/combat/siegeCombat.js';
-import { SIEGE_HIT, SIEGE_CASTS, siegeRoomKey, royalRoomKey } from '../../src/net/siege/siegeRef.js';
+import { SIEGE_HIT, siegeRoomKey, royalRoomKey } from '../../src/net/siege/siegeRef.js';
+import { SIEGE_DMG_WIRE_MAX } from '../../src/net/wire.js';
 import { applySpell } from '../../src/systems/effects.js';
 import { duelStandIn } from '../../src/combat/duelCombat.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
@@ -569,7 +570,8 @@ test('AUDIT-SEATS G1 THE HERALD: each battle at a seat this client derives said 
 
 test('AUDIT-SEATS G5 A SHAFT, A SPELL AND THE WARDS: an arrow\'s blow is a shaft\'s on the wire; a harmful spell\'s harm and a heal\'s restoring counted through the one spell door (the heal as a gift lands - no save), clamped to what the referee keeps; Teleport (its Recall) and Levitate refused (mutants: the kind; each count; the self-cast; the clamps; the barred list)', () => {
   assert.deepEqual([siegeBlowKind('arrow'), siegeBlowKind('melee'), siegeBlowKind(undefined)], [SIEGE_HIT.Shaft, SIEGE_HIT.Melee, SIEGE_HIT.Melee]);
-  assert.deepEqual([siegeCastClamp(500), siegeCastClamp(500, true), siegeCastClamp(12.4), siegeCastClamp(-3), siegeCastClamp('x', true)], [SIEGE_CASTS.damageMax, SIEGE_CASTS.healMax, 12, 0, 0]);
+  // PVP-HIT: the referee clips a cast to a quarter of the target's real health, so the client sends it whole to the wire's bound
+  assert.deepEqual([siegeCastClamp(500), siegeCastClamp(500, true), siegeCastClamp(12.4), siegeCastClamp(-3), siegeCastClamp('x', true), siegeCastClamp(1e9)], [500, 500, 12, 0, 0, SIEGE_DMG_WIRE_MAX]);
   const me = { level: 10, raceId: 1, stats: { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 }, skills: new Array(40).fill(50), health: 100, maxHealth: 100, career: {}, activeEffects: [], items: [], equipTable: {} };
   const stub = () => duelStandIn();   // PIN MOVED (AUDIT C&C H5): the stand-in the hosts hand - a stub of my own sheet, until then
   const fire = { name: 'Fire', element: 0, rangeType: 2, effects: [eff(4, 0, 25)] };
@@ -581,9 +583,10 @@ test('AUDIT-SEATS G5 A SHAFT, A SPELL AND THE WARDS: an arrow\'s blow is a shaft
   assert.deepEqual(siegeSpellNumbers({ name: 'Light', rangeType: 0, effects: [eff(29, 255, 1)] }, 10, stub(), me), { harm: 0, heal: 0 });
   assert.deepEqual(siegeSpellNumbers(fire, 10, stub(), me, { apply: () => { throw new Error('no'); } }), { harm: 0, heal: 0 }, 'a spell that throws counts nothing');
   const s = stub();
-  const rot = siegeSpellNumbers({ name: 'Rot', element: 0, rangeType: 2, effects: [{ ...eff(1, 0, 5), durationBase: 5 }] }, 10, s, me, { rolls: () => 0.99 });
+  const rot = siegeSpellNumbers({ name: 'Rot', element: 0, rangeType: 2, effects: [{ ...eff(1, 0, 5), durationBase: 5 }] }, 10, stub(), me, { rolls: () => 0.99 });
   assert.equal(rot.harm, 0, 'PVP-SPELLS: a continuous damage reaches no player');
-  assert.deepEqual(s.activeEffects, [], 'the stand-in keeps nothing (its rounds would have stood on it)');
+  siegeSpellNumbers({ name: 'Sap', element: 0, rangeType: 2, effects: [{ ...eff(7, 0, 5), durationBase: 5 }] }, 10, s, me, { rolls: () => 0.99 });
+  assert.deepEqual(s.activeEffects, [], 'the stand-in keeps nothing (a Drain\'s bundle would have stood on it)');
   // PVP-SPELLS: the first effect alone counts, and only Damage and Drain of the harmful families
   for (const t of [0, 1, 5, 19]) assert.equal(siegeSpellNumbers({ name: 'Off', element: 0, rangeType: 2, effects: [eff(t, 0, 25)] }, 10, stub(), me, { rolls: () => 0.99 }).harm, 0, `type ${t} reaches no player`);
   assert.deepEqual(siegeSpellNumbers({ ...fire, effects: [eff(0, 0, 25), eff(4, 0, 25)] }, 10, stub(), me, { rolls: () => 0.99 }), { harm: 0, heal: 0 }, 'a Damage behind a Paralyze is not the first effect');

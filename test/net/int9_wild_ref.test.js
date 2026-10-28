@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { mintWildReceipt, readWildReceipt, verifyWildReceipt, wildReceiptValid, WILD_RECEIPT_V, WILD_RECEIPT_TTL_S, WILD_RECEIPT_MAX, WILD_FALL_GRACE_S, WILD_WORN_MAX } from '../../src/net/wild/wildReceipt.js';
 import { mintDuelReceipt, verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js';
 import { newWildRef, wildZone, wildPose, wildBlow, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_REF, WILD_GRACE } from '../../src/net/wild/wildRef.js';
-import { SIEGE_UNITS_PER_M, SIEGE_HIT, siegeVitality, siegeBlowMax, SIEGE_CASTS } from '../../src/net/siege/siegeRef.js';
+import { SIEGE_UNITS_PER_M, SIEGE_HIT, siegeVitality, siegeBlowMax, pvpHitMax } from '../../src/net/siege/siegeRef.js';
 import { mintRemainsOrder, verifyOrder, remainsDigest, REMAINS_RECORDS_MAX, mintToken, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { newRemains, foldFall, takeFrom, remainsWords, remainsFit, wildRemainsKey, WILD_REMAINS_BYTES_MAX, WILD_RECORD_BYTES_MAX, remainsSpent, remainsTakeover, remainsEvict, remainsOf, WILD_TOMB_MIN_MS, WILD_STALL_MS } from '../../src/net/wild/wildLaw.js';
 import { takeWildDeath, wornOffer, wildRecord, wildPickOf, wildDropCandidates, wildTookOf, wildTakeTook } from '../../src/systems/wild/wildDropLaw.js';
@@ -90,18 +90,18 @@ test('INT9 THE REFEREE\'S LAW, WHO FIGHTS: a blow lands only between two fighter
   assert.equal(wildBlow(st, 'acct-b', 'acct-a', { d: 5, held: FIST }, 10_300).why, 'zone', 'and strikes nobody either');
   st = zone();
   const r = wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: '0123456789ab' }, 10_100);
-  assert.deepEqual([r.ok, r.dealt, r.fell], [true, siegeBlowMax(-1, 0), false], 'a fist, to a fist\'s most');
+  assert.deepEqual([r.ok, r.dealt, r.fell], [true, pvpHitMax({ max: whole }), false], 'PVP-HIT: 45% of the body');
   assert.equal(WILD_REF.truceMs, WILD_PARTY_TRUCE_MS, 'the party\'s truce, the hub\'s and the client\'s one number');
   assert.equal(WILD_REF.pickMs, WILD_BODY_MS, 'the body\'s window, the referee\'s pick');
 });
 
-test('INT9 THE REFEREE\'S LAW, A FALL: a strike clipped to the weapon the look holds and the arms the token signs, a cast to SIEGE_CASTS; the fall at none left, its killer the striker; the killer picks ONE worn piece once inside WILD_REF.pickMs, else it is signed with none; SHARED-HEALTH: a fighter unstruck WILD_REF.mendMs is NOT whole again (its count is its health - only its own report heals it); a fallen rises whole on its word that it stands in the zone once WILD_REF.riseMs has gone by (mutants: the arms unread; the cast unclipped; a second pick; a stranger\'s pick; the old mend restored; the rise unread; AUDIT INT9: the rise at once)', () => {
+test('INT9 THE REFEREE\'S LAW, A FALL: a strike on the weapon the look holds and a cast, each to 45% of the body (PVP-HIT); the fall at none left, its killer the striker; the killer picks ONE worn piece once inside WILD_REF.pickMs, else it is signed with none; SHARED-HEALTH: a fighter unstruck WILD_REF.mendMs is NOT whole again (its count is its health - only its own report heals it); a fallen rises whole on its word that it stands in the zone once WILD_REF.riseMs has gone by (mutants: the arms unread; the cast unclipped; a second pick; a stranger\'s pick; the old mend restored; the rise unread; AUDIT INT9: the rise at once)', () => {
   const st = zone();
   let t = 10_000;
   const r = wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: { w: 123, m: 9 }, wa: [16, 0], rid: 'aaaaaaaaaaaa' }, t += 300);
-  assert.equal(r.dealt, siegeBlowMax(123, 9, [16, 0]), 'the Dai-Katana its look holds, clipped to the Longsword its pack does');
+  assert.equal(r.dealt, pvpHitMax({ max: siegeVitality(10) }), 'PVP-HIT: the Dai-Katana its look holds, to 45% of the body');
   const c = wildBlow(st, 'acct-a', 'acct-b', { d: 999, r: SIEGE_HIT.Spell, rid: 'aaaaaaaaaaab' }, t += 300);
-  assert.equal(c.dealt, SIEGE_CASTS.damageMax, 'a cast to its harm\'s most');
+  assert.equal(c.dealt, pvpHitMax({ max: siegeVitality(10) }), 'a cast to the same share');
   // SHARED-HEALTH: unstruck for mendMs, still hurt - the count is the player's health, healed by its own report alone
   st.fighters.get('acct-b').f.share.heard = true;   // a client that reported: its count is its health, and mends by its own report alone
   const hurt = wildVitals(st, 'acct-a', 'acct-b')[1][1];
@@ -440,15 +440,15 @@ test('INT9 THE RELAY, THE FIGHT: a strike in the zone is the referee\'s - routed
   assert.deepEqual(refs(a, 'grace').at(-1), { t: 'wref', k: 'grace', id: 'peer-0002', ms: WILD_GRACE.ms - 300, n: 1 }, 'PIN MOVED (ZONE-GRACE): just entered, under safe passage - the striker told');
   step(WILD_GRACE.ms);   // PIN MOVED (ZONE-GRACE, 2026-10-26): past the safe passage both took at their entry
   await say(a, { k: 'strike', to: 'peer-0002', n: 4, by: 'melee', p: W(-1), d: 999 });
-  const whole = siegeVitality(10), fist = siegeBlowMax(-1, 0);
+  const whole = siegeVitality(10), fist = pvpHitMax({ max: whole });   // PVP-HIT: 45% of the body
   for (const ws of [a, b]) assert.deepEqual(refs(ws, 'hp').at(-1), { t: 'wref', k: 'hp', by: 'peer-0001', to: 'peer-0002', d: fist, r: SIEGE_HIT.Melee, h: [['peer-0001', whole, whole], ['peer-0002', whole - fist, whole]] });
   assert.equal(b.sent.filter((m) => m.t === 'wild' && m.data && (m.data.k === 'strike' || m.data.k === 'spell')).length, 0, 'routed to nobody: the defender resolves nothing');
-  // AUDIT INT7 (the pins' own): the zone's referee clips a weapon's blow to the arms the striker's token signs
+  // AUDIT INT7 (the pins' own), PIN MOVED (PVP-HIT): a weapon's blow is clipped to the body's share, not the signed arms
   const armed = await join('peer-0006', 0, { look: LOOK([{ templateIndex: 123, group: 'Weapons', equipSlot: 19, material: 9 }]), wa: [5, 0] });
   await say(armed, { k: 'zone', z: 1 });
   step(300);
   await say(armed, { k: 'strike', to: 'peer-0002', n: 1, w: { t: 123, m: 9, c: 100 }, by: 'melee', p: W(0), d: 999 });
-  assert.equal(refs(armed, 'hp').at(-1)?.d, siegeBlowMax(123, 9, [5, 0]), 'a Daedric Dai-Katana, struck at the reach its pack signs');
+  assert.equal(refs(armed, 'hp').at(-1)?.d, fist, 'PVP-HIT: a Daedric Dai-Katana takes the body\'s share, whatever its pack signs');
   const f = await fell(a, 'peer-0002');
   assert.ok(f, 'B fell');
   assert.deepEqual([f.id, f.by], ['peer-0002', 'peer-0001']);
@@ -812,7 +812,7 @@ test('INT9 (AUDIT) THE CLIENT\'S LINK: my zone word on MY OWN CELL\'S socket alo
 });
 
 const vits = (ws, k) => ws.sent.filter((m) => m.t === 'vit' && (!k || m.k === k));
-test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its health; its report anchors the count at its share, told back; a player\'s blow is said on the struck player\'s own health; a foe\'s blow reported while that blow was in flight lands on top of it; a heal mid-PvP is refused and one after the window taken whole; a stranger\'s report reaches no pool (mutants: no ask; the blow unsaid; the in-flight blow undone; the window unread)', () => withZone(async ({ r, say, join, step }) => {
+test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its health; its report anchors the count at its share, told back; a player\'s blow is said on the struck player\'s own health; a foe\'s blow reported while that blow was in flight lands on top of it; a heal mid-PvP is held to a quarter of the whole (PVP-HEAL) and one after the window taken whole; a stranger\'s report reaches no pool (mutants: no ask; the blow unsaid; the in-flight blow undone; the window unread)', () => withZone(async ({ r, say, join, step }) => {
   const a = await join('peer-0001', -1), b = await join('peer-0002', 1, { rc: 1, ci: RC });
   const whole = siegeVitality(10), fist = Math.min(20, siegeBlowMax(-1, 0));
   await say(a, { k: 'zone', z: 1 });
@@ -838,9 +838,10 @@ test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its hea
   // a potion mid-fight: refused, the count told back unmoved; once no player has struck for the window, taken whole
   const before = vits(b, 'h').at(-1);
   await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 10000, seen: [[before.e, before.w]] }));
-  assert.equal(vits(b, 'h').at(-1).h, before.h, 'no heal mid-PvP');
+  assert.equal(vits(b, 'h').at(-1).h, before.h + Math.floor(whole * 0.25), 'PVP-HEAL: a quarter of the whole mid-PvP');
+  const capped = vits(b, 'h').at(-1);
   step(WILD_REF.mendMs);
-  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[before.e, before.w]] }));
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[capped.e, capped.w]] }));
   assert.equal(vits(b, 'h').at(-1).h, whole, 'the fight over: healed whole');
   // a socket with no fighter here: nothing
   const c = await join('peer-0003', 30);

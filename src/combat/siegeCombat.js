@@ -19,15 +19,16 @@
 //
 // Pure but for the one spell door (handed in for the pins), the stand-in and the rolls. Not a DFU member. Ledger A (EVERY
 // PALACE A SEAT's row).
-import { SIEGE_HIT, SIEGE_CASTS } from '../net/siege/siegeRef.js';
+import { SIEGE_HIT } from '../net/siege/siegeRef.js';
+import { SIEGE_DMG_WIRE_MAX } from '../net/wire.js';
 import { duelSpellOf } from './duelCombat.js';
 import { applySpell } from '../systems/effects.js';
 
 /** A blow's kind on the referee's wire: an arrow's a shaft's, anything else a swing's. */
 export const siegeBlowKind = (by) => (by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee);
-/** A cast's number as it is sent - never past what the referee keeps of it (SIEGE_CASTS: 60 a harm, 40 a heal), so a
- *  Disintegrate's whole is never a frame the wire refuses. */
-export const siegeCastClamp = (n, heal = false) => Math.min(Math.max(0, Math.round(Number(n) || 0)), heal ? SIEGE_CASTS.healMax : SIEGE_CASTS.damageMax);
+/** A cast's number as it is sent - never past what the wire takes (SIEGE_DMG_WIRE_MAX). PVP-HIT: the referee clips it to
+ *  45% of the target's real health, and a heal to its window (siegeRef.js refereeCast). */
+export const siegeCastClamp = (n, _heal = false) => Math.min(Math.max(0, Math.round(Number(n) || 0)), SIEGE_DMG_WIRE_MAX);
 /** The classic effect types a battle's wards turn: Teleport (43 - Recall is its own second half) and Levitate (14). */
 export const SIEGE_BARRED_EFFECTS = Object.freeze([43, 14]);
 /** Whether a spell carries a warded effect. */

@@ -22,22 +22,20 @@
   {
     "name": "SHARED-HEALTH-the-pvp-window-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "const healRefused = (share, now, healsBlocked) => healsBlocked || now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
-    "new": "const healRefused = (share, now, healsBlocked) => healsBlocked;",
+    "old": "return at > 0 && now - at < PVP_HEAL_BLOCK_MS; };",
+    "new": "return at > 0; };",
     "tests": [
-      "test/net/siege/sharedhealth_law.test.js",
-      "test/net/int9_wild_ref.test.js"
+      "test/net/siege/sharedhealth_law.test.js"
     ],
     "note": "A potion mid-fight would heal a player another player is striking - the heal the zone never had."
   },
   {
-    "name": "SHARED-HEALTH-the-duels-block-unread",
+    "name": "SHARED-HEALTH-the-sieges-block-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "const healRefused = (share, now, healsBlocked) => healsBlocked || now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
-    "new": "const healRefused = (share, now, healsBlocked) => now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
+    "old": "} else if (difference >= 0.5 && share.heard && !healsBlocked) {",
+    "new": "} else if (difference >= 0.5 && share.heard) {",
     "tests": [
-      "test/net/siege/sharedhealth_law.test.js",
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/siege/sharedhealth_law.test.js"
     ],
     "note": "A duellist could heal once 30 s had passed since the last blow - a duel never healed anyone."
   },
@@ -52,12 +50,13 @@
     "note": "A siege guard's blow or a rise would refuse heals as a player's blow does."
   },
   {
-    "name": "SHARED-HEALTH-the-heal-clipped",
+    "name": "PVP-HEAL-the-cap-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "    fighter.hp = Math.min(fighter.max, Math.round(target));",
-    "new": "    fighter.hp = Math.min(fighter.max, fighter.hp + 1);",
+    "old": "    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now));",
+    "new": "    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp);",
     "tests": [
-      "test/net/siege/sharedhealth_law.test.js"
+      "test/net/siege/sharedhealth_law.test.js",
+      "test/ui/fb1019f_duelbar.test.js"
     ],
     "note": "A heal outside a fight between players would land as a single point."
   },
@@ -72,10 +71,10 @@
     "note": "A player's blow would leave the struck free to heal at once."
   },
   {
-    "name": "SHARED-HEALTH-the-duel-pool-unblocked",
+    "name": "PVP-HEAL-the-duel-pool-blocked",
     "file": "server/src/index.js",
-    "old": "healsBlocked: true, kept: async () => {} });",
-    "new": "healsBlocked: false, kept: async () => {} });",
+    "old": "healsBlocked: false, kept: async () => {} });   // PVP-HEAL",
+    "new": "healsBlocked: true, kept: async () => {} });   // PVP-HEAL",
     "tests": [
       "test/ui/fb1019f_duelbar.test.js"
     ],
@@ -300,5 +299,32 @@
       "test/net/int9_wild_ref.test.js"
     ],
     "note": "The first word in the next cell would overwrite what the player's health did since its last report."
+  },
+  {
+    "name": "PVP-HEALTH-the-bound-dropped",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "const to = Math.max(1, Math.min(PVP_HEALTH_MAX, Math.trunc(Number(max) || 0)));",
+    "new": "const to = Math.max(1, Math.trunc(Number(max) || 0));",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ]
+  },
+  {
+    "name": "PVP-HEALTH-the-rise-heals",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "const kept = to > fighter.max && inPvpFight(fighter, now) ? fighter.hp : ",
+    "new": "const kept = ",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ]
+  },
+  {
+    "name": "PVP-HEALTH-the-maximum-unread",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (Number.isFinite(report.max)) setPoolMax(fighter, report.max, now);",
+    "new": "",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ]
   }
 ]

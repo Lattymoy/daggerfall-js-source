@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  armsTop, armsOf, armsOk, ARMS_TOP_MAX, siegeBlowMax, refereeBlow, newFighter, SIEGE_HIT, SIEGE_THUNDERLOCK, SIEGE_WEAPON_MAX,
+  armsTop, armsOf, armsOk, ARMS_TOP_MAX, siegeBlowMax, pvpHitMax, refereeBlow, newFighter, SIEGE_HIT, SIEGE_THUNDERLOCK, SIEGE_WEAPON_MAX,
   SIEGE_BONUS_MAX, SIEGE_CRIT_MAX, siegeRoomKey, SIEGE_UNITS_PER_M,
 } from '../../../src/net/siege/siegeRef.js';
 import { arenaBlowCap, arenaArmsOk, ARENA_ARMS_TOP_MAX, ARENA_HIT, ARENA_MOD_MAX, ARENA_TICK_MS, ARENA_FLOOR_CENTRE } from '../../../src/net/arena/arenaLaw.js';
@@ -133,7 +133,7 @@ test('INT7 THE MINT: a judged realm character\'s token signs its arms off the pa
   assert.equal(claimsValid({ ...base, rc: 1, ci: R.id, wa: [33, 1] }), false, 'past the bound');
 });
 
-test('INT7 THE RELAY: a striker\'s signed arms ride its socket from the hello, and a siege\'s referee clips its blow to them whatever its look holds - a token from before the arms struck as it did (mutants: the hello drops `wa`; the relay passes none to the referee)', async () => {
+test('INT7 THE RELAY: a striker\'s signed arms ride its socket from the hello; PVP-HIT (the PvP rework): a blow on a fighter is clipped to 45% of its body whatever the arms - skill and gear outgrow a weapon\'s bucket - and a siege work keeps the arms\' clip (mutants: the hello drops `wa`; the quarter unread)', async () => {
   const KEY = siegeRoomKey(3021, 20);
   const M = SIEGE_UNITS_PER_M;
   const at = (x) => ({ x: x * M, y: 0, z: 0, yaw: 0, pitch: 0 });
@@ -151,9 +151,9 @@ test('INT7 THE RELAY: a striker\'s signed arms ride its socket from the hello, a
     for (const ws of [a, b, c]) await say(ws, { k: 'in' });
     await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
     const hp = () => ws => ws.sent.filter((f) => f.t === 'siege' && f.k === 'hp').at(-1)?.h;
-    assert.equal(hp()(b), 400 - siegeBlowMax(123, 9, [16, 0]), 'its look\'s Dai-Katana, clipped to its pack\'s Longsword');
+    assert.equal(hp()(b), 400 - pvpHitMax({ max: 400 }), '45% of the body, whatever the pack');
     clock += 1000;
     await say(c, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
-    assert.equal(hp()(b), 400 - siegeBlowMax(123, 9, [16, 0]) - siegeBlowMax(123, 9), 'a token from before the arms: its look\'s whole bucket');
+    assert.equal(hp()(b), 400 - 2 * pvpHitMax({ max: 400 }), 'a token from before the arms: the same share');
   } finally { Date.now = realNow; }
 });

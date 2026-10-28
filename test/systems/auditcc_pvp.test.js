@@ -146,7 +146,7 @@ test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caste
   const kills = casts(e, DISINTEGRATE, 8);
   assert.deepEqual(kills, [0, 0, 0, 0, 0, 0, 0, 0], 'a Disintegrate counts nothing at a player');
   assert.deepEqual(casts(hurt, DISINTEGRATE, 8), kills, 'the caster\'s own wounds are not the count');
-  assert.deepEqual([99999, 12].map((n) => siegeCastClamp(n, false)), [60, 12], 'the number the hosts send: a cast\'s most');
+  assert.deepEqual([99999, 12].map((n) => siegeCastClamp(n, false)), [10_000, 12], 'the number the hosts send: the wire\'s most (PVP-HIT: the referee takes 45% of the body)');
 });
 
 test('AUDIT C&C H5 THE HOSTS BY SOURCE - ONE CONSTRUCTION SEAM: every blow a host rolls between players (a duel\'s, a siege\'s, a siege work\'s, the open zone\'s) and every spell it counts (a duel\'s, a siege\'s, a side-mate\'s gift, the zone\'s) takes the one stand-in, swept over every source file; no stub of the striker\'s own sheet stands in anywhere (mutants: each of the eight sites back on a stub of my own sheet)', () => {
