@@ -16,6 +16,7 @@ import { buildCustomCareer } from '../../src/systems/customClass.js';
 import { SKILLS, skillValue, permanentSkillValue } from '../../src/systems/skills.js';
 import { liveStat } from '../../src/systems/statMods.js';
 import { playerEntity } from '../../src/characters/playerEntity.js';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { computeEntityMods, weaponBlowMods, entityWeightMult, EMPTY_MODS } from '../../src/systems/entityMods.js';
 import { spellPowerMult } from '../../src/systems/spell/spellPower.js';
 import { castRate } from '../../src/systems/castSpeed.js';
@@ -119,7 +120,7 @@ test('FIRM-MAX: A STAR LANDS ON A MAXED STAT - its gain lifts the attribute\'s l
   assert.equal(liveStat(p, 'speed'), 100, 'offline: no sky, DFU\'s MaxStatValue');
 });
 
-test('FIRM1 powers: A REFEREED FIGHT AND A MENTOR - the combat channels sleep, the life channels stay', () => {
+test('FIRM1 powers: A REFEREED FIGHT AND A MENTOR - in a duel the combat channels sleep and the life channels stay; MENTOR2: a mentor\'s combat channels act at the mentor\'s share and the life channels whole (it had carried no sky at all) (mutants: the duel wakes; the mentor asleep; a life channel scaled; the combat channels whole)', () => {
   const p = hero();
   setFirmamentOnline(true);
   setFirmamentTree(walk('st.start', 'st.r2', named('Silver Tongue')));
@@ -131,10 +132,15 @@ test('FIRM1 powers: A REFEREED FIGHT AND A MENTOR - the combat channels sleep, t
   assert.ok(skillValue(p, SKILLS.LongBlade) < blade, 'no Long Blade in a duel');
   assert.equal(skillValue(p, SKILLS.Mercantile), trade, 'the counter is no fight');
   setSigilDueling(false);
-  p._mentor = { level: 5 };
-  assert.equal(firmamentAwake(p), false);
-  assert.deepEqual(firmamentFold(p), EMPTY_MODS, 'a mentor carries no sky at all');
-  delete p._mentor;
+  const whole = firmamentFold(p);
+  p.level = 30; p._mentor = mentorProfile(p, [5]);
+  assert.equal(firmamentAwake(p), true, 'a mentor\'s sky acts');
+  const shared = firmamentFold(p);
+  assert.notDeepEqual(shared, EMPTY_MODS);
+  const bladeMod = (m) => m.skills[SKILLS.LongBlade] ?? 0;
+  assert.ok(bladeMod(whole) > 0 && bladeMod(shared) < bladeMod(whole), `Long Blade at a share (${bladeMod(shared)} of ${bladeMod(whole)})`);
+  assert.equal(shared.skills[SKILLS.Mercantile], whole.skills[SKILLS.Mercantile], 'the counter is no fight: whole');
+  delete p._mentor; p.level = 10;
   computeEntityMods(p);
   assert.equal(skillValue(p, SKILLS.LongBlade), blade);
 });

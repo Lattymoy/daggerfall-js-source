@@ -68,6 +68,9 @@ import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 import { healthShare } from '../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 import { hudText } from './notify.js';
 import { t } from './textManager.js';
+// MENTOR2 (bible/06-Systems/Mentor-Mode.md): every number here acts at the mentor's power scale (1 outside mentoring) -
+// a percent, a chance, a heal, a rider's share; a window's seconds and a recovery stay whole.
+import { mentorPowerScale, mentorScaled } from './mentorMode.js';   // MENTOR2: the paths at the mentor's share
 
 const N = MARTIAL_NUMBERS;
 /** All a path's percents onto one blow, at most - the Ranger's beast and mark together (20 + 20) are the most any path
@@ -161,7 +164,7 @@ export function martialBlowPct(attacker, target, info = null) {
     case 'crusader': if (undeadOrDaedra(target)) pct += N.purge.pct; break;
     default: break;
   }
-  return Math.min(MARTIAL_BLOW_MOST, pct);
+  return mentorScaled(attacker, Math.min(MARTIAL_BLOW_MOST, pct));   // MENTOR2
 }
 /** THE BLOW (entityMods.js registerWeaponBlowMod): my blow at a foe, the fraction carried. */
 export function martialBlow(weapon, damage, attacker, target, info) {
@@ -185,7 +188,7 @@ export function martialStrike(attacker, target, damage, weapon = null, info = nu
   if (id === 'blademaster' && info?.blow !== false) { _s.flow = Math.min(N.flowingSteel.stacks, flowStacks(now) + 1); _s.flowUntil = now + N.flowingSteel.seconds; }
   // AUDIT MARTIAL L1 L4: what the foe could lose, never the overkill (AUDIT SCHOOLS L1 M6's `took`) - told before any
   // door subtracts, its health is what it had
-  if (id === 'berserker' && now < _s.leechUntil) healMine(attacker, ((Number.isFinite(target.health) ? Math.min(damage, Math.max(0, target.health)) : damage) * N.savageWhirl.leech) / 100);
+  if (id === 'berserker' && now < _s.leechUntil) healMine(attacker, ((Number.isFinite(target.health) ? Math.min(damage, Math.max(0, target.health)) : damage) * mentorScaled(attacker, N.savageWhirl.leech)) / 100);
   _s.struck.add(target);   // Opening Strike: the foe's first landed blow was this one
 }
 
@@ -198,9 +201,9 @@ export function martialPace(ctx) {
   if (!id) return 0;
   const now = _now();
   switch (id) {
-    case 'warblade': return now < _s.rhythmUntil ? N.warRhythm.pct : 0;
-    case 'bladedancer': return now < _s.quickUntil ? N.cyclone.pace : 0;
-    case 'berserker': return share(e) < N.frenzy.below ? N.frenzy.pace : 0;
+    case 'warblade': return now < _s.rhythmUntil ? mentorScaled(e, N.warRhythm.pct) : 0;
+    case 'bladedancer': return now < _s.quickUntil ? mentorScaled(e, N.cyclone.pace) : 0;
+    case 'berserker': return share(e) < N.frenzy.below ? mentorScaled(e, N.frenzy.pace) : 0;
     default: return 0;
   }
 }
@@ -214,9 +217,9 @@ export function martialGuardPct(entity) {
   if (!blow) return 0;
   const now = _now();
   switch (id) {
-    case 'vanguard': return N.ironDiscipline.lighter;
-    case 'juggernaut': return now < _s.guardUntil ? N.earthsplitter.lighter : 0;
-    case 'brawler': return blow.attacker && now < (_s.dazed.get(blow.attacker) ?? 0) ? N.knockout.lighter : 0;
+    case 'vanguard': return mentorScaled(entity, N.ironDiscipline.lighter);
+    case 'juggernaut': return now < _s.guardUntil ? mentorScaled(entity, N.earthsplitter.lighter) : 0;
+    case 'brawler': return blow.attacker && now < (_s.dazed.get(blow.attacker) ?? 0) ? mentorScaled(entity, N.knockout.lighter) : 0;
     default: return 0;
   }
 }
@@ -234,7 +237,7 @@ export function martialEvade(entity) {
   const id = awakeMartialId(entity);
   if (!id || !pendingPlayerBlow()) return false;
   const oneIn = id === 'bladedancer' ? N.dancersStep.oneIn : id === 'shadowdancer' && _now() < _s.evadeUntil ? N.phantomStrike.oneIn : 0;
-  if (!(oneIn > 0) || !(_rand() < 1 / oneIn)) return false;
+  if (!(oneIn > 0) || !(_rand() < mentorPowerScale(entity) / oneIn)) return false;
   say(t('martial.say.evade', 'You dodge the attack.'));
   return true;
 }
@@ -246,15 +249,15 @@ export function martialHurt(entity, { before = 0, after = 0, saved = false } = {
   const now = _now();
   if (!(after < line && before >= line) || now < _s.standReady) return;
   _s.standReady = now + N.standFirm.recover;
-  healMine(entity, (entity.maxHealth * N.standFirm.heal) / 100);
+  healMine(entity, (entity.maxHealth * mentorScaled(entity, N.standFirm.heal)) / 100);
   say(t('martial.say.standFirm', 'Stand Firm: you hold your ground.'));
 }
 /** THE ROUND: Grit - a little health and fatigue back, each round; the health held in a made level (WBX6 / EVENT-RULES
  *  courtRules.js - a regeneration, as a career's Regenerate Health is: AUDIT MARTIAL L3 F3). */
 export function martialRound(entity) {
   if (awakeMartialId(entity) !== 'brawler') return;
-  if (entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * N.grit.health) / 100, 'grit', entity); if (held > 0) healMine(entity, held); }
-  fatigueMine(entity, N.grit.fatigue);
+  if (entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * mentorScaled(entity, N.grit.health)) / 100, 'grit', entity); if (held > 0) healMine(entity, held); }
+  fatigueMine(entity, mentorScaled(entity, N.grit.fatigue));
 }
 /** MY KILL: War Rhythm, Bloodlust, Tireless - and Felling Strike's heal, for a foe it landed on that a kill of mine
  *  fells within the loot's felling bound (AUDIT MARTIAL L1 M1: judged at the landing, before the pool's door, a foe a
@@ -264,11 +267,11 @@ export function martialKill(foe) {
   const m = me();
   const id = awakeMartialId(m);
   if (id === 'warblade') _s.rhythmUntil = _now() + N.warRhythm.seconds;
-  else if (id === 'bloodletter') healMine(m, (m.maxHealth * N.bloodlust.health) / 100);
+  else if (id === 'bloodletter') healMine(m, (m.maxHealth * mentorScaled(m, N.bloodlust.health)) / 100);
   else if (id === 'woodsman') {
-    fatigueMine(m, N.tireless.fatigue);
+    fatigueMine(m, mentorScaled(m, N.tireless.fatigue));
     const at = _s.felling.get(foe);
-    if (at !== undefined && _now() - at <= TOLL_REFUND_S) { healMine(m, (m.maxHealth * N.fellingStrike.heal) / 100); _s.felling.delete(foe); }
+    if (at !== undefined && _now() - at <= TOLL_REFUND_S) { healMine(m, (m.maxHealth * mentorScaled(m, N.fellingStrike.heal)) / 100); _s.felling.delete(foe); }
   }
 }
 /** THE FOLD: Light Step and Windborne. */
@@ -276,13 +279,14 @@ export function martialFold(entity) {
   const id = awakeMartialId(entity);
   if (id !== 'shadowdancer' && id !== 'windrunner') return EMPTY_MODS;
   const mods = newMods();
+  const at = (n) => Math.round(mentorScaled(entity, n));   // MENTOR2
   if (id === 'shadowdancer') {
-    mods.stats.agility = N.lightStep.agility;
-    mods.skills[SKILLS.Dodging] = N.lightStep.dodging;
+    mods.stats.agility = at(N.lightStep.agility);
+    mods.skills[SKILLS.Dodging] = at(N.lightStep.dodging);
   } else {
-    mods.stats.speed = N.windborne.speed;
-    mods.skills[SKILLS.Running] = N.windborne.running;
-    mods.skills[SKILLS.Jumping] = N.windborne.jumping;
+    mods.stats.speed = at(N.windborne.speed);
+    mods.skills[SKILLS.Running] = at(N.windborne.running);
+    mods.skills[SKILLS.Jumping] = at(N.windborne.jumping);
   }
   return mods;
 }
@@ -331,20 +335,21 @@ export function martialLanded({ blow = null, foe = null, damage = 0 } = {}) {
   if (!landed) return;
   const now = _now();
   const name = MARTIAL_BY_ID[id].technique.name;
+  const k = mentorPowerScale(m);   // MENTOR2: a rider's share at the mentor's scale
   // AUDIT MARTIAL L1 M1: told BEFORE the pool's own door lands the blow - and the door may land less (a party's
   // toughness, the foe's Shield, a bout's floor) - so nothing here guesses what the blow leaves: a follow-up lands as the
   // loot's again does, a foe's share is what it had, and "a foe it fells" is the kill's own word (martialKill)
   switch (id) {
-    case 'blademaster': again(target, landed * N.thousandCuts.share, name); break;
-    case 'vanguard': { const k = foeOfUse(blow.use, target); if (k && k <= N.judgement.foes) healMine(m, (m.maxHealth * N.judgement.heal) / 100); break; }
+    case 'blademaster': again(target, landed * N.thousandCuts.share * k, name); break;
+    case 'vanguard': { const n = foeOfUse(blow.use, target); if (n && n <= N.judgement.foes) healMine(m, (m.maxHealth * N.judgement.heal * k) / 100); break; }
     case 'ranger': _s.marks.set(target, now + N.huntersMark.seconds); break;
-    case 'bloodletter': if (share(target) < N.guttingLunge.below) again(target, landed, name); break;
-    case 'cutthroat': if (foeUnaware(foe)) again(target, landed * (N.blackjack.times - 1), name); break;
+    case 'bloodletter': if (share(target) < N.guttingLunge.below) again(target, landed * k, name); break;
+    case 'cutthroat': if (foeUnaware(foe)) again(target, landed * (N.blackjack.times - 1) * k, name); break;
     case 'assassin': if (foeOfUse(blow.use, target) === 1) castOnMe(name, 23, 0, N.vanishingStrike.rounds); break;
     case 'woodsman': _s.felling.set(target, now); break;
-    case 'crusader': if (undeadOrDaedra(target)) again(target, landed * N.hallowedStrike.share, name); break;
+    case 'crusader': if (undeadOrDaedra(target)) again(target, landed * N.hallowedStrike.share * k, name); break;
     case 'brawler': _s.dazed.set(target, now + N.knockout.seconds); break;
-    case 'windrunner': { const k = foeOfUse(blow.use, target); if (k && k <= N.windstrike.foes) fatigueMine(m, N.windstrike.fatigue); break; }
+    case 'windrunner': { const n = foeOfUse(blow.use, target); if (n && n <= N.windstrike.foes) fatigueMine(m, N.windstrike.fatigue * k); break; }
     default: break;   // the warblade's, the bladedancer's, the shadowdancer's, the juggernaut's and the berserker's open at the press (martialUsed)
   }
 }

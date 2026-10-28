@@ -12,6 +12,7 @@
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mentorProfile } from '../../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { readFileSync } from 'node:fs';
 
 import { playerEntity } from '../../../src/characters/playerEntity.js';
@@ -235,15 +236,16 @@ test('AUDIT GROWTH LANE1-2 MASTER SKILLS OFF: a pair with nothing left to climb 
   assert.equal(skillStand(off, LB).value, 150);
 });
 
-test('AUDIT GROWTH LANE1-3 THE CHOSEN PATH ASLEEP: Master Skills off, mentoring, a duel, the beast (martial only) - its line says its powers are off (mutants: a gate missed; the beast read for the arcane)', () => {
+test('AUDIT GROWTH LANE1-3 THE CHOSEN PATH ASLEEP: Master Skills off, a duel, the beast (martial only) - its line says its powers are off; MENTOR2: mentoring - its line says the share they act at (mutants: a gate missed; the beast read for the arcane; the share unsaid)', () => {
   const c = spellsword({ mastered: [LB, AR, RES, ALT] });
   assert.equal(MP.chooseMartialPath(c, 'ranger').ok, true);
   assert.equal(AP.choosePath(c, 'warden').ok, true);
   const line = (id) => { const f = family(specGuideModel(c), id); return stateLine(f, f.paths.find((p) => p.state === 'chosen'), true); };
   assert.equal(line('martial'), 'Your specialization.');
-  c._mentor = { level: 5 };
-  assert.equal(line('arcane'), 'Your specialization. Its powers are off while you mentor a lower-level party.');
-  c._mentor = null;
+  const lv = c.level;
+  c.level = 30; c._mentor = mentorProfile(c, [5]);
+  assert.equal(line('arcane'), `Your specialization. Its powers act at ${Math.round(c._mentor.powerScale * 100)}% while you mentor a lower-level party.`);
+  c._mentor = null; c.level = lv;
   setSigilDueling(true);
   try { assert.equal(line('martial'), 'Your specialization. Its powers are off during a duel.'); } finally { setSigilDueling(false); }
   c.isInBeastForm = true;

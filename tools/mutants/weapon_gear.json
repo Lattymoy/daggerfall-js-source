@@ -2,41 +2,51 @@
   {
     "name": "WEAPON-GEAR-unread",
     "file": "src/systems/weaponMastery.js",
-    "old": "return Math.max(climbPastPct(skill, attacker, target, opts), weaponGearPct(attacker, skill, opts));",
+    "old": "return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);",
     "new": "return climbPastPct(skill, attacker, target, opts);",
-    "tests": ["test/combat/weapon_gear.test.js"],
+    "tests": [
+      "test/combat/weapon_gear.test.js"
+    ],
     "note": "the gear on a weapon skill buys no damage again"
   },
   {
-    "name": "WEAPON-GEAR-the-sum-not-the-greater",
+    "name": "WEAPON-GEAR-the-greater-not-the-sum",
     "file": "src/systems/weaponMastery.js",
-    "old": "return Math.max(climbPastPct(skill, attacker, target, opts), weaponGearPct(attacker, skill, opts));",
-    "new": "return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);",
-    "tests": ["test/combat/weapon_gear.test.js"],
-    "note": "the climb and the gear stacked"
+    "old": "return climbPastPct(skill, attacker, target, opts) + weaponGearPct(attacker, skill, opts);",
+    "new": "return Math.max(climbPastPct(skill, attacker, target, opts), weaponGearPct(attacker, skill, opts));",
+    "tests": [
+      "test/combat/weapon_gear.test.js"
+    ],
+    "note": "the merged greater-of, mob's \"shouldn't be picking\""
   },
   {
-    "name": "WEAPON-GEAR-trained-skill-alone",
+    "name": "WEAPON-GEAR-only-past-200",
     "file": "src/systems/weaponMastery.js",
-    "old": "const live = Math.min(WEAPON_GEAR_SKILL_MOST, skillValue(entity, skill));",
-    "new": "const live = Math.min(WEAPON_GEAR_SKILL_MOST, climbedSkill(entity, skill));",
-    "tests": ["test/combat/weapon_gear.test.js"],
-    "note": "the gear unread - the climb's own skill"
+    "old": "return gear > 0 ? Math.min(",
+    "new": "return gear > 200 ? Math.min(",
+    "tests": [
+      "test/combat/weapon_gear.test.js"
+    ],
+    "note": "a low weapon player's gear pays nothing again"
   },
   {
     "name": "WEAPON-GEAR-uncounted-most",
     "file": "src/systems/weaponMastery.js",
-    "old": "const live = Math.min(WEAPON_GEAR_SKILL_MOST, skillValue(entity, skill));",
-    "new": "const live = skillValue(entity, skill);",
-    "tests": ["test/combat/weapon_gear.test.js"],
+    "old": "Math.min(WEAPON_GEAR_PCT_MOST, gear * WEAPON_GEAR_PER_POINT)",
+    "new": "gear * WEAPON_GEAR_PER_POINT",
+    "tests": [
+      "test/combat/weapon_gear.test.js"
+    ],
     "note": "no most counted - past the ceiling's top"
   },
   {
     "name": "WEAPON-GEAR-the-fists-too",
     "file": "src/systems/weaponMastery.js",
-    "old": "|| !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;\n  const live",
-    "new": "|| !Number.isInteger(skill)) return 0;\n  const live",
-    "tests": ["test/combat/weapon_gear.test.js"],
+    "old": "|| !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;\n  const gear",
+    "new": "|| !Number.isInteger(skill)) return 0;\n  const gear",
+    "tests": [
+      "test/combat/weapon_gear.test.js"
+    ],
     "note": "the fists paid twice for their skill"
   },
   {
@@ -44,15 +54,19 @@
     "file": "src/systems/weaponMastery.js",
     "old": "if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;",
     "new": "if (!entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;",
-    "tests": ["test/combat/weapon_gear.test.js"],
+    "tests": [
+      "test/combat/weapon_gear.test.js"
+    ],
     "note": "offline Daggerfall's blow moved"
   },
   {
-    "name": "WEAPON-GEAR-divisor-100",
+    "name": "WEAPON-GEAR-half-a-point",
     "file": "src/systems/weaponMastery.js",
-    "old": "export const WEAPON_GEAR_DIVISOR = 200;",
-    "new": "export const WEAPON_GEAR_DIVISOR = 100;",
-    "tests": ["test/combat/weapon_gear.test.js"],
-    "note": "mob's option A, the whole hit at skill / 100"
+    "old": "export const WEAPON_GEAR_PER_POINT = 0.44;",
+    "new": "export const WEAPON_GEAR_PER_POINT = 0.5;",
+    "tests": [
+      "test/combat/weapon_gear.test.js"
+    ],
+    "note": "mob's other option, the top ~9% higher"
   }
 ]

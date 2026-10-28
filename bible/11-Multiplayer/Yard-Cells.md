@@ -483,7 +483,7 @@ named in the second list.
   nearest first on `YARD_STAND_BUDGET_MS`. The town-full sentence left `net/accountClient.js` and every language.
 - **The deploy's smoke** (`account-deploy.yml`): the cell route read off a cell D1 built, the old route's 410 asked until
   this deploy answers it, the kept cells asked of D1 itself.
-- **The relay redeploys** as world274 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, RPT1026 and APPEARANCES and HUNTERS-MARK): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
+- **The relay redeploys** as world275 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, RPT1026, APPEARANCES and HUNTERS-MARK, and LADDER-CUT): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
 
 Departures from the plan:
 
@@ -606,7 +606,7 @@ These are the working notes. The pull request holds the checks as they are run.
 the bus's fan reaches every shard's sockets. The yard arm takes that route, as the home arm does. Read in the code,
 not driven: no test stands a sharded hub for the yard word.
 
-**What was built** (account acct206, relay world275 - over YC1's acct205 and world274; world271 to world274, and acct198 to acct200 then acct205, on the branch, renumbered past YC1 at the merges):
+**What was built** (account acct206, relay world276 - over YC1's acct205 and world275; world271 to world275, and acct198 to acct200 then acct205, on the branch, renumbered past YC1 at the merges):
 
 - Service: `settleYardCell` answers `{ cell, ver }` off `RETURNING built`; the decor routes answer `yardVer` and
   `yardOrder` (`server-account/src/index.js` yardOrderOf); `net/identityToken.js` kind `yard`, `mintYardOrder`.
@@ -643,4 +643,4 @@ was block 1287, about 450 m from B.
 - **The skip.** With B's tab hidden, B heard the hub's word for A's next piece but asked nothing in 10 s. When the tab
   showed, B asked that cell at once and showed the piece after 0.6 s.
 - Not driven here: a window over the world, which reads the same gate as the hidden tab and was driven in YC1's
-  checks, and the hub's shards (above). The relay was renumbered world272 to world275, and the account acct199 to acct206, after this run; the renumbers move no code.
+  checks, and the hub's shards (above). The relay was renumbered world272 to world276, and the account acct199 to acct206, after this run; the renumbers move no code.
