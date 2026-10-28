@@ -88,7 +88,8 @@ test('FIX-D: every collector hands the sprite it placed, in its own frame', () =
   assert.deepEqual(collectHearths([il]), [{ x: 1, y: il.y, z: 3, foot: 2, w: size.w, h: size.h }]);
   // the hosts: each passes it on, in its own frame
   assert.match(read('src/scenes/exterior.js'), /cityHearths\.push\(\{ \.\.\.l, foot: light\.foot, w: light\.w, h: light\.h \}\)/);
-  assert.match(hostText('src/scenes/world.js'), /pixelHearths\.push\(\[lp\[0\], lp\[1\], lp\[2\], locLocal\[1\] \+ light\.foot, light\.w, light\.h\]\)/, 'pixel-local, like the flame');
+  // PIN MOVED (SOLITUDE-RELIEF): a block stands on its lifted y (capitalBlockLift), the flame's frame, so its foot does too
+  assert.match(hostText('src/scenes/world.js'), /pixelHearths\.push\(\[lp\[0\], lp\[1\], lp\[2\], blockY \+ light\.foot, light\.w, light\.h\]\)/, 'pixel-local, like the flame');
   assert.match(hostText('src/scenes/world.js'), /e\.foot = h\[3\] \+ t\[1\]; e\.w = h\[4\]; e\.h = h\[5\];/, 'and through the floating origin with it');
   assert.match(read('src/scenes/interiorContext.js'), /foot: parentPt\(l\.x, l\.foot, l\.z\)\[1\]/, 'the interior’s foot goes into the parent frame too');
   assert.match(read('src/scenes/dungeonContext.js'), /foot: size \? f\.y - size\.h \/ 2 : undefined, w: size\?\.w, h: size\?\.h/, 'a dungeon flat’s y is its centre');

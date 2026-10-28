@@ -164,7 +164,8 @@ test('LOOT19: the scryers\' page - a row a family, its press or why not, a press
     } finally { view.unmount(); }
   });
   assert.match(read('src/scenes/worldModes.js'), /scry: \(family\) => \{ const done = scryPlace\(playerEntity, family, host\.scryWhere\?\.\(\) \?\? null\);/, 'the guild\'s window scries on the player\'s purse');
-  assert.match(read('src/scenes/world.js'), /const region = maps\.getRegion\(maps\.getRegionIndexAt\(at\.x, at\.y\)\);\n\s+return region \? \{ rows: scryRows\(region\), at: \{ x: at\.x, y: at\.y \} \} : null;/, 'the world host\'s region');
+  // PIN MOVED (BAY-LEFT-B, 06-Systems/Quest-Arc.md): the quest layer's maps - a province's region its table past the Bay
+  assert.match(read('src/scenes/world.js'), /const region = questWorld\.maps\.getRegion\(maps\.getRegionIndexAt\(at\.x, at\.y\)\);\n\s+return region \? \{ rows: scryRows\(region\), at: \{ x: at\.x, y: at\.y \} \} : null;/, 'the world host\'s region');
   assert.match(read('src/scenes/world.js'), /\n\s+scryWhere,   \/\/ LOOT19/, 'handed to the interior host');
   _resetForTests();
 });

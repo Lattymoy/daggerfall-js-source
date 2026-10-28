@@ -139,7 +139,7 @@
   {
     "name": "ECOTONE1-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
     "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
@@ -148,7 +148,7 @@
   {
     "name": "ECOTONE1-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
     "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "ECOTONE1-world-neighbour-unheld",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      for (const a of archives) await loadGroundSet(a, pipeline, snowCover?.winterOf(near[groundNear.indexOf(a)]) ?? null);   // PRECIP4: the neighbours' twins\n",
-    "new": "",
+    "old": "      await Promise.all([ownSet, ...archives.map((a) => loadGroundSet(a, pipeline, snowCover?.winterOf(near[groundNear.indexOf(a)]) ?? null))]);   // PRECIP4: the neighbours' twins\n",
+    "new": "      await Promise.all([ownSet]);\n",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -229,11 +229,12 @@
   {
     "name": "ECOTONE1-desert-inset",
     "file": "src/world/terrain/terrainNature.js",
-    "old": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
-    "new": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: (x + 0.5) * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
+    "old": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
+    "new": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: (x + 0.5) * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
     "tests": [
       "test/systems/ecotone1.test.js"
-    ]
+    ],
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the border's desert flat stands on the walk law (walkGroundAt) at its corner, where it read the sample."
   },
   {
     "name": "ECOTONE1-woods-dice-the-climate's",

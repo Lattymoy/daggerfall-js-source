@@ -499,10 +499,14 @@ export function staticDoorName(kind, {
   }
   if (kind !== 'building') return null;
   // Town23 is the city-wall "building", which has no name of its own
-  // (.cs:726-733).
+  // (.cs:726-733). IC-PROPS (bible/03-World/Arena-Provinces.md IC-PROPS): any
+  // other building with no name of its own - a ship's deck - says the place it
+  // stands in, so every door a player can walk through names where it goes (the
+  // mod would print "To" and nothing; DFU names every house "Residence" - the
+  // host's homeDoorName - and every shop by BuildingNames).
   const to = buildingType === BUILDING_TYPES.Town23
     ? (locationName ? `${locationName} City Walls` : '')
-    : displayName;
+    : displayName || locationName;
   if (!to) return null;
   const subs = [];
   if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);   // .cs:735-738

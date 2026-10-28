@@ -29,10 +29,11 @@ import { usingRightHandFromSaveVars, weaponPoseOf, applyWeaponPose, mergeWeaponP
 import { equipItem } from '../../../src/systems/equip.js';
 import { createRandomPotion, randomlyAddMap, randomlyAddPotionRecipe } from '../../../src/systems/loot/loot.js';   // AUDIT 63r F28: the three NAMELESS production mints
 import { templateByIndex } from '../../../src/systems/item/itemTemplates.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - its save is scenes/worldQuickSave.js's
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WM = rd('src/scenes/worldModes.js');
-const WORLD = rd('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 const DC = rd('src/scenes/dungeonContext.js');
 const XF = rd('src/scenes/exteriorFoes.js');
 const CS = rd('src/systems/classicSave.js');
@@ -192,7 +193,7 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
   // the law is RUN here and what stays matched is the WIRING: which rig
   // each host offers, and that world.js lands the pair in the interior
   // rig as well because DFU sets ONE manager.
-  assert.match(WORLD, /const wp = modes\?\.weaponPose\?\.\(\) \?\? null;/, 'the world host asks the mode seam for the live rig');
+  assert.match(WORLD, /const wp = host\.modes\?\.weaponPose\?\.\(\) \?\? null;/, 'the world host asks the mode seam for the live rig');   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the composer is scenes/worldQuickSave.js's, the mode host read live
   assert.match(WORLD, /\.\.\.mergeWeaponPose\(wp, weaponPoseOf\(weaponRig\.playerWeapon\)\),/,
     'per field: the mode seam, else this host\'s own rig');
   assert.deepEqual(mergeWeaponPose({ usingRightHand: false }, { weaponDrawn: true, usingRightHand: true }),

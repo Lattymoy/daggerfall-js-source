@@ -60,6 +60,9 @@ function journeyHost() {
   const d = { t: 0, pBuilds: 0, failP: null, said: [] };
   const player = { pos: at, speed: WALK_MPS, isPlayerSwimming: false, feetAt: () => [...player.pos] };
   const scope = {
+    // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers which pixel is ready (scenes/capitalPrebuild.js
+    // firstReady) - none of the city's here, every pixel ready
+    capitalPrebuild: { firstReady: () => true },
     // the journey and the view
     travelControlUI: { isShowing: true }, travelOptions: { state: { autopilot: {} } },
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,
@@ -87,7 +90,7 @@ function journeyHost() {
     raiderSight: () => 1000, isNight: () => false, minuteNow: () => 0, travelViewRaiders: () => [], tvRaid: { spent: new Set(), chase: new Map() },
     navalRaidersOn: () => false, naval: null, seaRaidPeerChase: () => null, RAIDER_CONTACT_M: 60, RAIDER_CHASE_MPS: 4.2,
     exteriorFoes: { foes: [] }, foeHostile, foeAlerted, foeCampKey: () => null, SIGHT_RADIUS: 102.4,
-    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */ _travelDrive: { yaw: 90 },   // the drive east, along +x
+    _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, tvTownPace: () => null,   /* OW-TOWN-WALK: out of town */ _travelDrive: { yaw: 90 },   // the drive east, along +x
     tvSay: (t) => d.said.push(t), TRAVEL_VIEW_TEXT, performance: { now: () => d.t * 1000 },
     travelWalkRate, TV_MOVE_ACTIONS, held: () => false, keys: new Set(), csaBoatUnderMe: () => null, gamePaused: () => false,
     travellerOnRoad: () => true, csaHoldsTimeScale: () => false,

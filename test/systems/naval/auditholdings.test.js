@@ -34,6 +34,7 @@ import { hullBoxOf } from '../../../src/scenes/naval/navalHost.js';
 import { whereWords } from '../../../src/ui/fleetPage.js';
 
 const read = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
+import { hostText } from '../../hostText.mjs';   // PORT-SHIPS: a host's whole, its moved modules with it
 const AT = [100, 34, 200], DIR = [0, 0, 1];
 
 /** Come Sail Away's real runtime with the world host's item seams - the pack, the Fleet's book and its retitle. */
@@ -316,6 +317,7 @@ test('AUDIT HOLDINGS O1: a harbour is sounded only once every pixel its scan rea
   const world = read('src/systems/naval/harbourBook.js');
   assert.ok(world.includes('for (let i = 0; i <= nx; i++) for (let k = 0; k <= nz; k++) if (!harbourKnown(built, state, woods, x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN))) return false;'), 'every point of the scan box known');
   assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name \?\? null, rect, ready, reach \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
+  assert.match(hostText('src/scenes/world.js'), /return \{ \.\.\.h, keep: harbourKeep\(t\.loc, h\.rect\) \};/);   // PIN MOVED (PORT-SHIPS): each town's keep beside its harbour (scenes/harbourHost.js, systems/naval/harbourKeep.js)
   // PIN MOVED (FB1020c HARBOUR-REACH): any reach the book asks it at - its own, or the port law's ring's - every pixel built
   assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(r = reach\) => \{[^\n]*\n\s+const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/, 'every pixel of that reach built');
 });

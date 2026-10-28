@@ -463,8 +463,8 @@ test('AUDIT GUIDE O3/L5: a look asks the host\'s map once per quest (the latest 
   assert.equal(reads, 2, 'one read per place a session, a miss included');
   const world = rd('src/scenes/world.js');
   assert.match(world, /const questPlacePixel = placePixelMemo\(\);/, 'the host holds one memo');
-  assert.match(world, /canFindPlace: \(regionName, name\) => canFindPlace\(maps, mapDict, regionName, name, questPlacePixel\)/, 'the look\'s map question asks it');
-  assert.match(world, /const questPixel = \(find\) => questPlacePixel\(maps, find\?\.regionName \?\? '', find\?\.locationName \?\? ''\);/, 'and the compass and the map\'s marks');
+  assert.match(world, /canFindPlace: \(regionName, name, site\) => canFindPlace\(maps, mapDict, regionName, name, questPlacePixel, site\)/, 'the look\'s map question asks it');   // PIN MOVED (START3): and the site, for its pixel past the Bay
+  assert.match(world, /const questPixel = \(find\) => find\?\.worldPixel \?\? questPlacePixel\(maps, find\?\.regionName \?\? '', find\?\.locationName \?\? ''\);/, 'and the compass and the map\'s marks');   // PIN MOVED (START3): a place past the Bay by its own pixel first
 });
 
 // ---------------------------------------------------------------

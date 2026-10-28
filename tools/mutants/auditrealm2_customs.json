@@ -181,9 +181,10 @@
   },
   {
     "name": "AUDIT-REALM2-T3-a-sold-slot-counted",
-    "file": "src/net/realm/realmGoldLaw.js",
-    "old": "if (slot?.buildingKey > 0 && !slot.crossed) deeds.push(",
-    "new": "if (slot && !slot.crossed) deeds.push(",
+    "file": "src/net/homeLaw.js",
+    "old": ".filter((d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0);",
+    "new": ".filter((d) => !!d && typeof d === 'object');",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"
     ]

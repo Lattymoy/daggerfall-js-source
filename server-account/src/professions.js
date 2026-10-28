@@ -81,7 +81,8 @@ import {
   parseNodeKey, nodeCount, herbPatch, herbSeasonMult, daySeason, HERB_TABLES, HERB_YIELD, FOOD_YIELD, herbYield, foodYield,
   basketFood, isMarch, regionOk, pixelOk, pixelKey, pixelReport, witnessedFact, factConfirmed, WITNESS, material,
   regionWritTable, courtWrits, VEIN_TABLES, vein, boulder, dungeonVein, dungeonOk, veinYield, boulderYield, VEIN_YIELD,
-  BOULDER_YIELD, veinGem, veinSlots, treeSlots, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,
+  BOULDER_YIELD, veinGem, nodeSlots, regionOnPixel, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,   // WW-C1: one slot law, a province never claimed on the Bay's map
+  jungleGroundOk,   // AUDIT TESA II J5: a jungle word only where a jungle zone may stand
   haulYield, haulFinds, haulAtSea,   // PROF8
 } from '../../src/net/nodeLaw.js';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
@@ -383,7 +384,7 @@ function factsFrom(keys, /** @type {any[]} */ results) {
   for (const [k, rows] of rowsBy) out.set(k, witnessedFact(rows));
   return out;
 }
-const factView = (f) => (factConfirmed(f) ? { state: f.state, climate: f.climate, region: f.region } : { state: f.state });
+const factView = (f) => (factConfirmed(f) ? { state: f.state, climate: f.climate, region: f.region, ...(f.jungle ? { jungle: true } : {}) } : { state: f.state });   // AUDIT TESA II J5: and a confirmed jungle's
 /**
  * THE STATES OF WHAT A CLIENT HAS STREAMED: `{ pixels: [{ x, y, state, climate?, region? }], dungeons: [{ id, ... }] }`
  * - the confirmed answer where there is one (a client whose own derivation disagrees stands no node it could not
@@ -568,6 +569,7 @@ function cutsOf(act, tier, lumberjack) {
 export async function harvestNode(ctx, player, env, body = {}) {
   const { db, nowS, rand } = ctx;
   const { character, node, kind, climate, region, act, at, rid, foe } = body ?? {};
+  const jungle = body?.jungle === true;   // AUDIT TESA II J5: the client's word that its pixel past the Bay is a jungle zone's - witnessed, never taken alone
   const refused = asks(player, { character, rid });
   if (refused) return refused;
   // BAG1: A CARRYING CLIENT's harvest lands in its bag or pack - the carried count (bagLaw.js) - never the Stores; `held`
@@ -588,6 +590,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const isBody = n.kind === 'body';   // PROF7: a body names no ground (PROF0 6)
   const isHaul = n.kind === 'haul';   // PROF8: a haul names its pixel, and no slot
   if (!isBody && (!climateHolds(n.kind, climate) || !regionOk(region))) return { error: 'prof-pixel' };
+  if (n.kind !== 'dvein' && !isBody && !regionOnPixel(region, n.x, n.y)) return { error: 'prof-pixel' };   // WW-C1: a province's richness never claimed on the Bay's own ground
   const day = utcDay(nowS);
   if (n.day !== day) return { error: 'prof-day' };   // PROF0 19: a node whose UTC day has ended lapses
   if (!Number.isSafeInteger(at) || at < nowS - HARVEST_LATE_S || at > nowS + HARVEST_EARLY_S || utcDay(at) !== day) return { error: 'prof-late' };
@@ -611,25 +614,27 @@ export async function harvestNode(ctx, player, env, body = {}) {
     readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)])
       .then((rows) => (key === null ? [[], ...rows] : rows)),
     // A dungeon's vein and a body name no ground of a town
-    !deep && !isBody && seatsOpenFor(player, env) ? levyAt(db, nowS, region, [n.x, n.y]) : null,
+    !deep && !isBody && seatsOpenFor(player, env) ? levyAt(db, nowS, region, [n.x, n.y], env) : null,
   ]);
   if (over) return { error: 'prof-rate' };
   const fact = key === null ? null : factsFrom([key], factRows).get(key);
   const confirmed = factConfirmed(fact);
   const witness = !isBody && Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - WITNESS.ageS ? 1 : 0;
-  if (confirmed && (fact.climate !== climate || fact.region !== region)) {
+  const jungleSaid = deep ? false : jungle;   // a dungeon's ground names no jungle
+  if (jungleSaid && (isBody || !jungleGroundOk(n.x, n.y, climate, region))) return { error: 'prof-pixel' };   // AUDIT TESA II J5: no jungle word where no jungle zone can stand
+  if (confirmed && (fact.climate !== climate || fact.region !== region || (fact.jungle === true) !== jungleSaid)) {
     // AUDIT 29 A4: refused - and, from an account that may witness, written down: a dissent is what a dispute is made
     // of (SEAT0 3.2), and a refusal that kept no report let the first three words stand for good
     if (witness) {
       await db.prepare('INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
-        .bind(wkind, key, player.id, pixelReport(climate, region), region, nowS).run();
+        .bind(wkind, key, player.id, pixelReport(climate, region, jungleSaid), region, nowS).run();
     }
     return { error: 'prof-pixel' };
   }
   // a vein's slots are its climate's and, on confirmed ground, its region's signature beside them (AUDIT 29 A6); a tree's
   // its climate's, and the jungle's in the owner's area (JUNGLE-WOODS); a body has none (AUDIT 32 S2: its unchecked
-  // ground is never read)
-  if (!deep && !isBody && !isHaul && n.slot >= (n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : n.kind === 'tree' ? treeSlots({ x: n.x, y: n.y, climate }) : nodeCount(climate, n.kind))) return { error: 'bad-node' };
+  // ground is never read). WW-C1: one law, the client's (nodeLaw.js nodeSlots) - a province's richness on confirmed ground
+  if (!deep && !isBody && !isHaul && n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed, jungle: fact?.jungle === true })) return { error: 'bad-node' };   // AUDIT TESA II J5: the jungle's trees past the Bay on its confirmed word
 
   // THE TRACK it is worked under
   const row = trackRows[0] ?? null;
@@ -678,7 +683,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     trophy = trophyHunted({ spec100: specs[100], tier, clean }) ? 1 : 0;
   } else if (n.kind === 'tree') {
     // PROF4: THE WOOD-AXE - a tree's logs; Resin one in four, Heartwood a Clean Cut's find on confirmed ground (PROF0 25)
-    const found = tree({ x: n.x, y: n.y, day, slot: n.slot, climate, confirmed });
+    const found = tree({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, jungle: fact?.jungle === true });   // AUDIT TESA II J5
     if (!found) return { error: 'bad-node' };
     tier = found.tier;
     if (!tierOpen(rank, tier)) return { error: 'prof-rank' };
@@ -690,7 +695,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     gem = finds.heartwood;
     extra = finds.resin;
   } else if (n.kind === 'herb') {
-    const patch = herbPatch({ x: n.x, y: n.y, day, slot: n.slot, climate, confirmed, seasonalEye: specs[100] === 'seasonal-eye' });
+    const patch = herbPatch({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, seasonalEye: specs[100] === 'seasonal-eye' });
     if (!patch) return { error: 'bad-node' };
     if (kind === 'herbs') {
       tier = patch.tier;
@@ -723,7 +728,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     // counted none), never the March's or a Tide's (named by the region, on confirmed ground alone)
     const surveyed = n.kind === 'vein' && !confirmed && specs[100] === SURVEYOR;
     const found = n.kind === 'vein' ? vein({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, surveyed })
-      : n.kind === 'boulder' ? boulder({ x: n.x, y: n.y, day, slot: n.slot, climate })
+      : n.kind === 'boulder' ? boulder({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed })
         : dungeonVein({ dungeon: n.dungeon, day, slot: n.slot, climate, confirmed });
     if (!found) return { error: 'bad-node' };
     tier = found.tier;
@@ -826,7 +831,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     // (AUDIT 32 S2: its ground is never checked, and a hand-built one was bound here - a 500 and an hour's act spent)
     ...(isBody ? [] : [db.prepare(`INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at)
       SELECT ?9, ?4, ?1, ?5, ?6, ?7 WHERE ?8 = 1 AND EXISTS (SELECT 1 FROM node_harvests WHERE ${mine})`)
-      .bind(player.id, rid, nonce, key, pixelReport(climate, region), region, nowS, witness, wkind)]),
+      .bind(player.id, rid, nonce, key, pixelReport(climate, region, jungleSaid), region, nowS, witness, wkind)]),
     ...(find ? [find] : []),   // SILVER-FINDS: the find, last
     db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid),
   ];
@@ -1868,7 +1873,7 @@ async function hiddenMemberships(db, player, character) {
 export async function listWrits({ db, nowS }, player, env, { character, region } = {}) {
   const refused = asks(player, { character, needRid: false }) ?? shut(player, env);
   if (refused) return refused;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };   // WW-R: a writ board was a Bay region's town's; WW7-5: any region's, the provinces' too
   const day = utcDay(nowS);
   const halls = chaptersOpenFor(player, env);   // CHAP2a: a chapter's writs only where the Roll is open to the account
   const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);

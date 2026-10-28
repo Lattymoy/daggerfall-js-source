@@ -42,7 +42,7 @@
   {
     "name": "IT1-5-capital-unmasked",
     "file": "src/systems/immersiveTravel.js",
-    "old": "CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === ((mapId | 0) & PIXEL_MASK))",
+    "old": "CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === pixelIdOf(mapId))",
     "new": "CAPITAL_MAP_IDS.some((c) => c === (mapId | 0))",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
@@ -94,7 +94,7 @@
   {
     "name": "IT1-10-dock-unmasked",
     "file": "src/systems/immersiveTravel.js",
-    "old": "export const hasDock = (mapId) => DOCKS.has((mapId | 0) & PIXEL_MASK);",
+    "old": "export const hasDock = (mapId) => DOCKS.has(pixelIdOf(mapId));",
     "new": "export const hasDock = (mapId) => DOCKS.has(mapId | 0);",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"

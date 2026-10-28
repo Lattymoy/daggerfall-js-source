@@ -484,13 +484,14 @@
   {
     "name": "SIGIL1-kill-feeds-nothing",
     "file": "src/scenes/world.js",
-    "old": "renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site).catch(() => {}); });",
-    "new": "renownTracker.earn(xp); seatEdicts.campCleared(foe?.site).catch(() => {}); });",
+    "old": "renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
+    "new": "renownTracker.earn(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes?.dungeonLocation : null)).catch(() => {}); });",
     "tests": [
       "test/systems/sigil/sigil1.test.js",
       "test/net/renown1.test.js",
       "test/systems/auditpscale1.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the kill's Bounty claim reads a lair's den past the Bay too."
   },
   {
     "name": "SIGIL1-quest-feeds-nothing",

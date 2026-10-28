@@ -25,8 +25,10 @@
 // Pure: the locations, the scan and the record are arguments. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { LOCATION_TYPES, REGION_NAMES } from '../../formats/mapsFile.js';
 import { hubClaim, outranks } from '../region/regionHubs.js';
-import { sdRoll, sdNameOf } from '../../net/superDungeon/sdLaw.js';
+import { sdRoll, sdNameOf, sdLaneOf, SD_LANE_SPAN } from '../../net/superDungeon/sdLaw.js';
 import { synthesizeDungeonLocation, spawnClearance, SPAWN_CLEARANCE_M, SALT_MAX } from '../../world/spawnedDungeons.js';
+import { worldPixelOfKey } from '../../world/worldWide/worldGrid.js';   // WW5: a theatre's pixels are the world's keys
+import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** With no region the census could name, the Hollow rises by one of the Bay's first this-many cities by the hubs' own claim
  *  (systems/region/regionHubs.js hubClaim: its kind, named for its region, its blocks, its buildings - AUDIT SD II: "largest"
@@ -135,9 +137,94 @@ export function sdTemplates(locations, isMain = () => false) {
 /** The slot's template, or null for none. */
 export const pickSdTemplate = (s, templates) => (templates?.length ? templates[sdRoll(s, 3) % templates.length] : null);
 
+// ═══ WW5: A HOLLOW PAST THE BAY ═══════════════════════════════════════
+//
+// (bible/03-World/World-Wide.md WW5) A province's lane raises its own Hollow (net/superDungeon/sdLaw.js): its census its
+// province's region, else its great cities - the province's own, off the world's registry of places (TESA's - WW7-1),
+// ranked by the hubs' own claim as the Bay's rows are; its site the gate's own suitable pixels of its theatre
+// (systems/gate/theatreGateSite.js scanTheatreGate - the registry's places, the land's own water) whose nearest town is
+// that city, on dry ground; its template the Bay's own labyrinths and keeps; its map id a lane of the Hollows' own past
+// the Bay (MAPS.BSA's 20-bit pixel id holds no pixel past it).
+
+/** WW5: a registry place's claim to its province's first city - the hubs' own order (systems/region/regionHubs.js
+ *  hubClaim: a city over a town over a village, the one named for its province, its blocks), the lower map id on a tie. */
+const placeClaim = (p, provinceName) => {
+  const claim = hubClaim({ name: p.name, locationIndex: 0, mapTableData: { locationType: p.type }, exterior: { exteriorData: { width: p.w, height: p.h } } }, provinceName);
+  return claim ? [...claim.slice(0, 4), -(p.mapId >>> 0)] : null;
+};
+/**
+ * WW5: THE CITIES A PROVINCE'S HOLLOW MAY RISE BY, best first - the registry's listed populated places of theatre
+ * `theatre` (`places` - world/worldWide/worldPlaces.js), or with `r` -1 its first SD_GREAT_CITIES cities by the claim.
+ * Each is a place's record (`{ name, px, py, region, mapId, ... }`).
+ * @param {{ inTheatre: (t: number) => Iterable<any> }|null} places @param {number} theatre @param {number} r
+ * @param {{ provinceName?: string }} [o]
+ */
+export function sdTheatreCities(places, theatre, r, { provinceName = '' } = {}) {
+  const rows = [];
+  for (const p of places?.inTheatre(theatre) ?? []) {
+    if (!p || p.theatre !== theatre) continue;
+    const claim = placeClaim(p, provinceName);
+    if (!claim) continue;
+    if (r < 0 && p.type !== LOCATION_TYPES.TownCity) continue;
+    rows.push({ p, claim });
+  }
+  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : 0));
+  return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.p);
+}
+/** A theatre scan's suitable pixels by their nearest town (index into scan.towns), made once per scan. */
+const _theatreByTown = new WeakMap();
+function theatrePixelsByTown(scan) {
+  let m = _theatreByTown.get(scan);
+  if (m) return m;
+  m = new Map();
+  for (const [k, t] of scan.townOf) {
+    let l = m.get(t);
+    if (!l) m.set(t, l = []);
+    l.push(k);
+  }
+  for (const l of m.values()) l.sort((a, b) => a - b);   // by the world's key, row by row: the roll's order is the data's
+  _theatreByTown.set(scan, m);
+  return m;
+}
+/**
+ * WW5: THE SITE of a province lane's Hollow, or null when its theatre offers none - findSdSite's own law over its
+ * theatre's scan (systems/gate/theatreGateSite.js TheatreGateScan): the first city (sdTheatreCities' order; the slot's roll
+ * picks where the great cities begin) with suitable pixels it is the nearest town to, the slot's roll among them, from
+ * there to the first on dry ground (`ground` - the spawns' own SPAWN-SHORE test).
+ * @param {{ s: number, r: number }} rec
+ * @param {import('../gate/theatreGateSite.js').TheatreGateScan} scan
+ * @param {any[]} cities @param {(px: number, py: number) => boolean} [ground]
+ */
+export function findSdTheatreSite(rec, scan, cities, ground = () => true) {
+  if (!rec || !scan?.townOf || !cities?.length) return null;
+  const byTown = theatrePixelsByTown(scan);
+  const start = rec.r < 0 ? sdRoll(rec.s, 5) % cities.length : 0;
+  for (let k = 0; k < cities.length; k++) {
+    const city = cities[(start + k) % cities.length];
+    const ti = scan.towns.findIndex((t) => t.px === city.px && t.py === city.py);
+    const pixels = ti >= 0 ? byTown.get(ti) : null;
+    if (!pixels?.length) continue;
+    const roll = sdRoll(rec.s, 4) % pixels.length;
+    for (let j = 0; j < pixels.length; j++) {
+      const [px, py] = worldPixelOfKey(pixels[(roll + j) % pixels.length]);
+      if (!ground(px, py)) continue;
+      return { s: rec.s, px, py, city, cityName: String(city.name ?? ''), cityRegion: city.region, region: rec.r, lane: sdLaneOf(rec.s) };
+    }
+  }
+  return null;
+}
+/** WW5: the Hollows' own lane of map ids past the Bay (the high twelve bits - past the countryside's, the lairs' and the
+ *  capitals', 0x300..0x341, and every MAPS.BSA row's 0..0x728 holds no id with 0x80000 set: a Bay pixel's 20-bit id is
+ *  under 500,000), the slot's lane and its number in its span in the low nineteen. */
+export const SD_WORLD_LANE = 0x35d;
+/** WW5: a Hollow past the Bay's map id - its slot's own (the 32,768th of a lane after it shares it, as the Bay's Hollows'
+ *  salts share theirs every 2,047th). */
+export const sdWorldMapId = (s) => ((SD_WORLD_LANE << 20) | 0x80000 | ((sdLaneOf(s) & 0xf) << 15) | ((s % SD_LANE_SPAN) & 0x7fff)) >>> 0;
+
 /**
  * THE HOLLOW: the template cloned on the site under the slot's own map id, named, Super. `where` is what the host's
- * map files say of the site's pixel (region, politic, climate) - spawned dungeons' own law.
+ * map files say of the site's pixel (region, politic, climate) - spawned dungeons' own law. WW5: a site past the Bay
+ * under the Hollows' world lane (sdWorldMapId).
  * @param {{ s:number }} rec
  * @param {{ px:number, py:number, cityName:string }} site
  * @param {any} template
@@ -145,6 +232,6 @@ export const pickSdTemplate = (s, templates) => (templates?.length ? templates[s
  */
 export function sdHollowLocation(rec, site, template, where = {}) {
   if (!rec || !site || !template) return null;
-  const loc = synthesizeDungeonLocation(template, { salt: sdSalt(rec.s), px: site.px, py: site.py, where, elite: false });
+  const loc = synthesizeDungeonLocation(template, { salt: sdSalt(rec.s), px: site.px, py: site.py, where, elite: false, mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s) });
   return { ...loc, name: sdNameOf(rec.s, site.cityName), superTier: true, sdSlot: rec.s };
 }

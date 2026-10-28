@@ -147,12 +147,12 @@
   {
     "name": "SD9A-rcpt-unknown",
     "file": "src/net/wire.js",
-    "old": "'lost', 'no', 'rcpt', 'bd']);",
-    "new": "'lost', 'no', 'bd']);",
+    "old": "'lost', 'no', 'rcpt', 'bd', SD_LANE_KIND]);",
+    "new": "'lost', 'no', 'bd', SD_LANE_KIND]);",
     "tests": [
       "test/net/superDungeon/sd9a_receipt.test.js"
     ],
-    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text.  WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD9A-spent-any-slot",
@@ -375,8 +375,9 @@
   {
     "name": "SD9A-an-expired-one-handed",
     "file": "server/src/index.js",
-    "old": "    if (!(Number.isFinite(v.e) && now < v.e * 1000) || (!v.spent && typeof v.r !== 'string')) { await this.state.storage.delete(k); return; }",
-    "new": "    if (!v.spent && typeof v.r !== 'string') { await this.state.storage.delete(k); return; }",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "      if (!(Number.isFinite(v.e) && now < v.e * 1000) || (!v.spent && typeof v.r !== 'string')) { await this.state.storage.delete(k); continue; }",
+    "new": "      if (!v.spent && typeof v.r !== 'string') { await this.state.storage.delete(k); continue; }",
     "tests": [
       "test/net/superDungeon/sd9a_receipt.test.js"
     ]
@@ -384,8 +385,9 @@
   {
     "name": "SD9A-the-spent-mark-ignored",
     "file": "server/src/index.js",
-    "old": "    if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) return;",
-    "new": "    if (Number.isFinite(v.hold) && now < v.hold) return;",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "      if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) continue;",
+    "new": "      if (Number.isFinite(v.hold) && now < v.hold) continue;",
     "tests": [
       "test/net/superDungeon/sd9a_receipt.test.js"
     ]
@@ -393,8 +395,9 @@
   {
     "name": "SD9A-the-hold-ignored",
     "file": "server/src/index.js",
-    "old": "    if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) return;",
-    "new": "    if (v.spent === true) return;",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "      if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) continue;",
+    "new": "      if (v.spent === true) continue;",
     "tests": [
       "test/net/superDungeon/sd9a_receipt.test.js"
     ]

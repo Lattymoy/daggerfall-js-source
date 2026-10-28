@@ -5,8 +5,7 @@ import { travellerRoster, mintResident } from '../src/systems/livingWorld/census
 import { townTrips, placeCycle, handsOn, CALENDAR_MPM } from '../src/systems/livingWorld/trips.js';
 import { placeAt, turnKey } from '../src/systems/livingWorld/lives.js';
 import { troubleOf, troubledTrip } from '../src/systems/livingWorld/trouble.js';
-import { rollGroupComposition } from '../src/systems/campEncounters.js';
-import { chooseRandomEnemy } from '../src/systems/encounters.js';
+import { troubleFoesOf } from '../src/scenes/livingWorld/troubleFoes.js';   // BAY-LEFT-GROUND: the host's trouble's foes, one producer
 import { enemyLevelOf } from '../src/characters/enemy/enemyBasics.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 
@@ -61,7 +60,7 @@ export function synthMap({ x0 = 100, y0 = 100, n = 9, step = 5, dives = false, s
 // LW4: the map with the lives and the trouble on it, as the host composes them (world.js) - for the trouble's pins and
 // the live fight's.
 /** The synthetic map with the lives and the trouble on it, as the host composes them (world.js). */
-export function livingMap({ turns = null, climate = 230, dives = false, sea = false } = {}) {
+export function livingMap({ turns = null, climate = 230, dives = false, sea = false, faunaAt = () => null } = {}) {
   const m = synthMap({ dives, sea });
   const { towns, world } = m;
   const byId = new Map(towns.map((t) => [t.mapId, t]));
@@ -78,9 +77,7 @@ export function livingMap({ turns = null, climate = 230, dives = false, sea = fa
   };
   const trouble = {
     climateAt: () => climate,
-    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null
-      ? Array.from({ length: size }, () => chooseRandomEnemy({ dungeonType, playerLevel: level }, rolls)).filter((x) => x >= 0)
-      : rollGroupComposition({ climateIndex, skyMinutes: minute, inLocationRect: false, playerLevel: level, size }, rolls)?.mobileTypes ?? null),
+    foesOf: troubleFoesOf({ faunaAt }),   // BAY-LEFT-GROUND: the host's own producer (scenes/livingWorld/troubleFoes.js) - this copy was the host's lambda written out
     foeLevel: enemyLevelOf,   // the host's own law (enemyBasics.js) - this copy asked `>= 128` after DEX1 gave the host the bit
     dies: (res, trip) => { const roster = world.rosterOf(byId.get(res.town)); const place = roster.find((r) => r.slot === res.slot) ?? res; const g = placeOf(place, placeCycle(place, roster, Math.floor(trip.outT0 / DAY_MIN), 1)); return g.dies && g.hand == null; },   // LW7: a hand's dead the trouble never takes
     diced: (res, trip) => { const roster = world.rosterOf(byId.get(res.town)); const place = roster.find((r) => r.slot === res.slot) ?? res; return placeOf(place, placeCycle(place, roster, Math.floor(trip.outT0 / DAY_MIN), 1)).diced; },   // AUDIT-B1: the trouble's shape the dice's

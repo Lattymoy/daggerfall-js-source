@@ -102,6 +102,8 @@ import {
 } from '../../systems/equip.js';
 import { armourBadge, armourPlaque, compareBlock, lineCompareBlock, wearComparison } from '../armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
 import { statFlip } from '../statsCard.js';   // STATS-CARD: the paperdoll's flip side, its Stats button
+import { wildInsureBook } from '../../net/wild/wildInsureSlot.js';   // WILD-INSURE: a policy's line on the card, and its Insure act
+import { WILD_TEXT } from '../../systems/wild/wildZone.js';
 import { temperaturePlaque, temperatureCompareBlock } from '../temperatureCard.js';   // TEMP-UI: the felt temperature on the figure and on a wearable's card
 import {
   itemWeight, isEnchanted, totalWeight, addItem, goldStack,
@@ -122,6 +124,7 @@ import { howManyField } from '../howManyField.js';   // DISC25-F: the card's fie
 import {
   openState, remoteTarget, planWagonToggle, hasCart, hasHorse, transportItem,
   groundRefusalOf,   // HOUSE-DROP: the host's word against the ground
+  storeRefusalOf,   // AUDIT PVP-EASE L2-1: the combat lock on storing
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   planBagToggle, hasMaterialsBag,   // BAG1: the Materials Bag, a list beside the wagon's
   theftTarget,   // STOLEN-GOODS: a take from someone else's keeping is a theft
@@ -980,7 +983,7 @@ function stowIntent(item) {
   const plan = planStore(item, {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,   // as canStow's own note says: the quest rung WRITES, and a label must not
-    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
+    groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session),   // HOUSE-DROP
     capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT
   });
   // A refusal that speaks is still worth releasing on - the player gets
@@ -1633,7 +1636,7 @@ function canStow(item) {
   const plan = planStore(item, {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,
-    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
+    groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session),   // HOUSE-DROP
     capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT
   });
   return plan.ok || !!plan.refusal.text;
@@ -1644,7 +1647,7 @@ function canStow(item) {
 function splitMax(item, dir) {
   if (dir === 'store' && bagRefuses(item)) return 0;   // AUDIT BAG1: no how-many field for what the bag refuses
   const plan = dir === 'store'
-    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity) })
+    ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity) })
     : planTake(item, {
       bag: deps.items?.() ?? [], entity: deps.entity, mode: 'remove',
       chooseOne: session.chooseOne, usingWagon: session.usingWagon, dryRun: true,
@@ -1717,7 +1720,7 @@ function stow(item) {
   const plan = planStore(item, {
     remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     getQuest: deps.getQuest ?? null,
-    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop
+    groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session),   // HOUSE-DROP: a floor that refuses a drop
     capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT: a companion's pack takes what fits
   });
   if (!plan.ok) return refuse(plan.refusal);
@@ -1887,7 +1890,7 @@ function bulkMove(dir) {
       : planStore(item, {
         remote: to, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
         getQuest: deps.getQuest ?? null,
-        groundRefusal: groundRefusalOf(deps, session),
+        groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session),
         capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),
       });
     return { verdict: bulkVerdict(item, plan), refusal: plan.refusal, plan };
@@ -1972,11 +1975,11 @@ function dropGold(text) {
   const to = remoteTarget(deps, sessionState());
   const plan = planDropGold(text, {
     carried: goldAmount(player), usingWagon: session.usingWagon, remote: to,
-    groundRefusal: groundRefusalOf(deps, session),   // HOUSE-DROP
+    groundRefusal: groundRefusalOf(deps, session), storeRefusal: storeRefusalOf(deps, session),   // HOUSE-DROP
     capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity),   // COMPANION-WEIGHT
   });
   if (plan.notice) notice = plan.notice;
-  else if (!plan.ok && plan.refusal?.reason === 'ground') notice = plan.refusal.text;   // HOUSE-DROP: the floor's refusal is said
+  else if (!plan.ok && (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store')) notice = plan.refusal.text;   // AUDIT PVP-EASE L2-1: the lock said too   // HOUSE-DROP: the floor's refusal is said
   if (plan.ok) {
     goldEntry = null;
     if (typeof deps.loot?.commit === 'function') {
@@ -3499,6 +3502,7 @@ function infoCard(picked, side, ready = render, { body = false, own = true } = {
   const bline = boundLine(picked);   // AUDIT AUTO-HOLD: a piece the realm locked says so in its own words
   if (bline) into.append(el('p', 'boundline', bline));   // SS1: the lock's line style, without its padlock
   if (isStolen(picked)) into.append(el('p', 'boundline', stolenLine()));   // STOLEN-GOODS: what a counter and a court do with it
+  { const ins = side === 'local' ? wildInsureBook()?.lineOf(picked) : null; if (ins) into.append(el('p', 'boundline insuredline', ins)); }   // WILD-INSURE: its policy, and when it is in force
   if (line.quest != null) into.append(el('p', 'boundline', questLine(line.quest)));   // QUEST-MARK: whose quest it is
   const dl = el('dl', 'stats');
   // CARD-FIT: each pair in its own group, so a narrow card flows them two a line and never breaks a pair across two
@@ -3592,6 +3596,14 @@ function itemActs(picked, side, { qty = true } = {}) {
       acts.append(t);
       const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'store') : 0;
       if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
+    }
+    // WILD-INSURE (2026-10-26, net/wild/wildInsureBook.js): a policy on this piece, written from its own card - online, for a
+    // piece the realm tracks and a kill in the zone could take; pressed inside the zone, the book says why not
+    const ins = wildInsureBook();
+    if (ins?.offers(picked)) {
+      const b = el('button', 'act', WILD_TEXT.insureAct(ins.premiumOf(picked)));
+      b.onclick = async () => { b.disabled = true; const r = await ins.insure(picked); notice = r.text; render(); };
+      acts.append(b);
     }
   } else {
     // G6: taking ONE from a reward tray IS the claim, and the window

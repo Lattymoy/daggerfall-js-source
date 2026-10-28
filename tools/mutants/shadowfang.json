@@ -139,20 +139,22 @@
   {
     "name": "SHADOWFANG-edge-a-fixed-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "    path.setAttribute('stroke', 'currentColor');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_W));",
-    "new": "    path.setAttribute('stroke', '#d3193c');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_W));",
+    "old": "    path.setAttribute('stroke', 'currentColor');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_OF[",
+    "new": "    path.setAttribute('stroke', '#d3193c');\n    path.setAttribute('stroke-width', String(GLYPH_EDGE_OF[",
     "tests": [
       "test/ui/shadowfang.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SHADOWFANG-card-word-unwrapped",
     "file": "src/ui/enhanced/enhancedAccount.js",
-    "old": "        b.append(el('span', 'acttitleword', TITLE_TEXT[key] ?? key));",
-    "new": "        b.textContent = TITLE_TEXT[key] ?? key;",
+    "old": "        b.append(word);\n",
+    "new": "        b.textContent = TITLE_TEXT[key] ?? key;\n",
     "tests": [
       "test/ui/shadowfang.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "SHADOWFANG-classic-one-tint",

@@ -46,3 +46,7 @@ const tamrielUrlOff = () => {
   try { return pageParam('tamriel') === 'off'; } catch { return false; }
 };
 export const tamrielMapOn = () => getPref('tamrielMap') !== false && !tamrielUrlOff();
+/** START3 (bible/06-Systems/Alternate-Starts-Arc.md section 12): does the map the player opens show the land past the
+ *  Bay - the held sheet, its continent on? The classic window's region pages are the Bay's alone. A quest's place past
+ *  the Bay is on the player's map exactly then (ui/travel/travelMapWindow.js canFindPlace). */
+export const pastBayOnMap = () => heldMapChosen() && tamrielMapOn();

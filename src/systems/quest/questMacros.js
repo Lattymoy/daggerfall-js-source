@@ -48,6 +48,7 @@ const FACTION_RACE_KEYS = Object.freeze({
 import { dateFromSeconds, dateString, dayName, monthName, birthSignName, seasonName, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
 import { skySecondsOfEvent } from '../skyCalendar.js';   // TIME3: a journal date (the event clock's) on the sky's calendar
 import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
+import { REGION_NAMES, isProvinceRegion } from '../../formats/mapsTables.js';   // BAY-LEFT-B: %lp past the Bay, the province's own name
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
 import { rulerTitle } from '../../world/buildingNames.js';   // AUDIT 68 S30-ruler-divine-tables-dup: GetRulerTitle's one home
 import { localizedStrings, localizedTable, localizedText, getLocalizedLocationName, getLocalizedRegionName } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
@@ -762,6 +763,10 @@ const HANDLERS = {
 
   // PLACE (globals over the world hook)
   '%lp': (mcp, hooks) => {   // LocalProvince: Breton region -> High Rock, else Hammerfell
+    // BAY-LEFT-B (B7): a province's region past the Bay (WW-R, 62..70) is its own province - Skyrim, Morrowind, Cyrodiil -
+    // as shown (GetLocalizedRegionName, %reg's), where DFU's two answers said "Hammerfell" (or "High Rock") everywhere
+    const r = hooks?.world?.currentRegionIndex?.();
+    if (isProvinceRegion(r)) return getLocalizedRegionName(r, () => REGION_NAMES[r]);
     const race = hooks?.world?.currentRegionRace?.();
     if (race == null) return null;
     return race === LOCAL_PROVINCE_BRETON ? localizedText('highRock', 'High Rock') : localizedText('hammerfell', 'Hammerfell');

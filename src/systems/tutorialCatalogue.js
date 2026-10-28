@@ -61,7 +61,10 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'welcome', group: 'basics', title: 'Welcome to DFO', trigger: TOUR,
     body: [
-      'You awaken in a small cave. Take what you need from your pack, find the way out and make for the nearest town.',
+      // START1 (bible/06-Systems/Alternate-Starts-Arc.md): the main story waits on the commission (systems/starts/starts.js) -
+      // START2: in whichever start the character chose, so the page names none of them. AUDIT STARTS U9: neither "find
+      // them" (the commission in hand starts in the pack) nor "begins when you do" (it begins in the city they name)
+      "Your story begins with the Emperor's sealed orders, your commission. When you hold them, open them from your pack: they name the city where the main story begins.",
       'When you meet something new, a short note like this one explains it. All of them can be read again under Menu > Tutorials.',
     ],
   }),
@@ -622,12 +625,13 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'wild-zone', group: 'online', title: 'The Open Zone', trigger: 'When you first enter the open zone.',
     // FOE-KEEPS; AUDIT FOE-KEEPS O4: the page pops in either zone, the sea's too, and said the bag and cart lost whole at
-    // a kill - the cart only goes while it is with them (CART-AWAY), a tenth of the gold with them, and any other death
-    // there costs the usual tenth; through the text core (L10N4), read when shown
+    // a kill - a tenth of the gold with them, and any other death there costs the usual tenth. STORE-KEEPS and WILD-INSURE
+    // (2026-10-26): the cart and the companions' packs are kept now, and so is insured gear; through the text core
+    // (L10N4), read when shown; WW-C2: the open zone is Cyrodiil's
     get body() {
       return [
-        t('tutorials.wildZone.body1', 'Players may fight one another in the Wrothgarian Mountains and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
-        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops (your cart too, if with you) with a tenth of your gold, and they may take one worn item. Any other death costs the usual tenth.'),
+        t('tutorials.wildZone.body1', 'Players may fight one another in Cyrodiil and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
+        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions\' packs and insured gear are kept. Any other death costs the usual tenth.'),
       ];
     },
   }),

@@ -112,12 +112,12 @@
   {
     "name": "SCALE4b-auctions-off-the-clock",
     "file": "server-account/src/cron.js",
-    "old": "  ['auctions', (ctx) => rounds(() => closeAuctions(ctx), SETTLE_MAX, ctx.budget)],\n",
+    "old": "  ['auctions', (ctx, env) => rounds(() => closeAuctions(ctx, null, env), SETTLE_MAX, ctx.budget)],   // DOMAIN3: the region law's Tithe\n",
     "new": "",
     "tests": [
       "test/server/scale4b.test.js"
     ],
-    "note": "an auction past its end waits for somebody's read"
+    "note": "Re-aimed by content (DOMAIN3): the clock hands the auctions the region law's week (`env`). an auction past its end waits for somebody's read"
   },
   {
     "name": "SCALE4b-writs-off-the-clock",

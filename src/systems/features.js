@@ -980,6 +980,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'banthaJungle', initial: true, online: true }),
   }),
+  // TESA-LANDS (2026-10-27, the owner: "Ensuring each region recieves proper landscape details and textures (minus cyrodil
+  // and valenwood) and refined detail"): THE LANDS PAST THE BAY - each zone of seven provinces its own ground, its own
+  // flats and its own landmarks (world/tamriel/tamrielLands.js, bible/03-World/Tamriel-Lands.md). FORCED ON ONLINE: its
+  // flats are where Logging's trees stand and its landmarks turn the player, so a room has one land. `?lands=off` the kill
+  // door; systems/landsSwitch.js tamrielLandsOn composes it.
+  Object.freeze({
+    id: 'tamriel-lands',
+    group: 'world',
+    get title() { return t('features.tamrielLands.title', 'Lands of Tamriel'); },
+    get note() { return t('features.tamrielLands.note', 'Each region past the Bay gets its own ground, plants and landmarks: Morrowind\'s ash and giant '
+      + 'mushrooms, Black Marsh\'s Hist, Summerset\'s vineyards. Off keeps each climate\'s original look.'); },
+    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'tamrielLands', initial: true, online: true }),
+  }),
   // LANDFORM1-3 (2026-10-06, Mac: "Can we adjust the heightmap to be more of this? and allow roads to carve through
   // terrian and caverns without breaking anything and rivers to actually have depth"): LANDFORMS - the small heightmap
   // stands taller, roads are graded into the land, rivers lie in channels (world/landforms.js, inside the terrain's

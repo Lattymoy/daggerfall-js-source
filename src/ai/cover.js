@@ -140,13 +140,20 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   /** @type {Map<any, { items: any[], t: () => number[], grid: Map<number, any[]>, wide: Map<number, any[]>, wideR: number, min: number[], max: number[], bodies: Map<number, any[]>, bodyN: number }>} */
   const sets = new Map();
   let stamp = 0;
+  /** IC-SWAP-BEHIND (scenes/swapBehind.js): the keys whose sets are HELD - filled but in no query - and those sets, until
+   *  `wake` puts them in under their pixel's own key. @type {Set<any>} */
+  const holding = new Set();
+  /** @type {Map<any, any>} */
+  const held = new Map();
+  const setsOf = (/** @type {any} */ key) => (holding.has(key) ? held : sets);
 
   /** A set of no proxies yet, `t` its frame's translation - in the index once placed (add, place). */
   const fresh = (t) => ({ items: [], t: t || (() => ZERO3), grid: new Map(), wide: new Map(), wideR: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity], bodies: new Map(), bodyN: 0 });
   /** Add proxies to the set `key` (appended to what it holds); `t` its frame's translation. */
   function add(key, items, t = null) {
-    let set = sets.get(key);
-    if (!set) sets.set(key, (set = fresh(t)));
+    const into = setsOf(key);
+    let set = into.get(key);
+    if (!set) into.set(key, (set = fresh(t)));
     return fill(set, items);
   }
   /** Proxies into a set, placed or not. */
@@ -206,11 +213,17 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     }
   }
 
-  function remove(key) { sets.delete(key); }
+  function remove(key) { sets.delete(key); held.delete(key); }   // IC-SWAP-BEHIND: a held set too
   /** AUDIT PRECIP HOST-7: a set built aside (`staged`, filled a slice at a time with `fill`) put in for `key` in one
    *  step, whatever it held before - a pixel re-skinned in place trades its cover as it trades its flats, never a frame
    *  with neither or both. */
-  function place(key, set) { sets.set(key, set); }
+  function place(key, set) { setsOf(key).set(key, set); }
+  /** IC-SWAP-BEHIND: every set put in under `key` from now is held - in no query - until `wake`. */
+  function hold(key) { holding.add(key); }
+  /** IC-SWAP-BEHIND: the held set under `from` (if one was filled) answers as `to`'s from now, in one step. */
+  function wake(from, to) { holding.delete(from); const set = held.get(from); held.delete(from); if (set) sets.set(to, set); }
+  /** IC-SWAP-BEHIND: a held key let go, its set with it (a build behind that failed). */
+  function unhold(key) { holding.delete(key); held.delete(key); }
 
   /** The nearest cover along the unit ray `dir` from `origin` within `maxDist`; Infinity for none. `sight`: the ray
    *  is a line of sight to a target at `maxDist`, which a proxy holding that end does not hide (AUDIT TACT B2). */
@@ -261,7 +274,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   }
 
   return {
-    add, remove, hit, fill, place, near,
+    add, remove, hit, fill, place, near, hold, wake, unhold,
     /** AUDIT PRECIP HOST-7: a set of no proxies, outside the index until it is placed. */
     staged: (t = null) => fresh(t),
     /** Is cover read at all (the Enhanced AI switch). */

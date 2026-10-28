@@ -7,8 +7,8 @@
 // band, the whole ring), a centre closed (the deepest free level below the deepest), and many days.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildWildMask, WILD_REGION, WILD_RINGS } from '../../../src/systems/wild/wildZone.js';
-import { wildHallPicks, wildRingBorderDistance, WILD_DUNGEONS_PER_RING, WILD_HALL_SPACING } from '../../../src/systems/wild/wildDungeons.js';
+import { buildWildMask, WILD_RINGS } from '../../../src/systems/wild/wildZone.js';
+import { wildHallPicks, wildRingBorderDistance, WILD_DUNGEONS_PER_RING, WILD_HALL_SPACING, WILD_HALL_POOL_MAX } from '../../../src/systems/wild/wildDungeons.js';
 
 /** The picks as they stood before WILD-FREE (wildDungeons.js), `free` asked of every ring pixel first. */
 function picksAsTheyWere(mask, free, day) {
@@ -49,12 +49,12 @@ function picksAsTheyWere(mask, free, day) {
 }
 
 const hash = (x, y, s) => { let h = Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1) ^ Math.imul(s, 0x9e3779b1); h = Math.imul(h ^ (h >>> 15), 0x85ebca6b); return ((h ^ (h >>> 13)) >>> 0) / 4294967296; };
-/** Zones of three shapes, as buildWildMask cuts them (the cut off: the whole shape). */
+/** Zones of three shapes, as buildWildMask cuts them (WW-C2: a cell a pixel). */
 const ZONES = [
   ['an oval', (x, y) => { const dx = (x - 520) / 38, dy = (y - 110) / 24; return dx * dx + dy * dy + 0.15 * Math.sin(x / 5) < 1; }],
   ['a long ridge', (x, y) => Math.abs(y - 200 - 6 * Math.sin(x / 9)) < 7 && x > 300 && x < 420],
   ['a crescent', (x, y) => { const a = Math.hypot(x - 700, y - 300), b = Math.hypot(x - 712, y - 300); return a < 30 && b > 22; }],
-].map(([name, inside]) => [name, buildWildMask({ width: 1000, height: 500, regionAt: (x, y) => (inside(x, y) ? WILD_REGION : 3), cut: null })]);
+].map(([name, inside]) => [name, buildWildMask({ width: 1000, height: 500, inZone: inside })]);
 /** `free` tests from open to all but closed, a closed centre among them; each counts its asks. */
 const FREES = [
   ['open ground', () => true],
@@ -72,7 +72,9 @@ test('WILD-FREE the day\'s halls are the halls they were - every zone shape, eve
     for (const [fn, f] of FREES) {
       const free = (x, y) => f(x, y, mask, bd);
       for (let day = 20360; day < 20372; day++) {
-        const now = wildHallPicks(mask, free, day), was = picksAsTheyWere(mask, free, day);
+        // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the law with its thinning off (a province's pool, below) is
+        // the law as it was - each hall now carries its cell beside its pixel (a cell a pixel here)
+        const now = wildHallPicks(mask, free, day, { poolMax: Infinity }).map(({ cx, cy, ...h }) => (assert.deepEqual([cx, cy], [h.x, h.y]), h)), was = picksAsTheyWere(mask, free, day);
         assert.deepEqual(now, was, `${zn}, ${fn}, day ${day}`);
         compared++; halls += was.length;
       }
@@ -96,3 +98,18 @@ test('WILD-FREE free is asked once a pixel, and only where an answer is read - a
   assert.ok([...closed.values()].every((n) => n === 1), 'never twice, the whole ring read');
   assert.ok(closed.size > open.size * 1.5, `all but closed: the widenings read more (${closed.size})`);
 });
+
+test('WW-C2 A PROVINCE\'S POOL: free is asked of the band, a level and the ring each thinned by the day to WILD_HALL_POOL_MAX - a tier of thousands of cells asks a few hundred; the count still the owner\'s, every hall on its tier, every client\'s the same (mutants: the band unthinned; the thinning not the day\'s)', () => {
+  // a province-sized zone: an oval of thousands of cells a tier (Cyrodiil's tiers are tens of thousands of four-pixel cells)
+  const big = buildWildMask({ width: 400, height: 260, inZone: (x, y) => { const dx = (x - 200) / 190, dy = (y - 130) / 120; return dx * dx + dy * dy < 1; } });
+  const asked = new Set();
+  const halls = wildHallPicks(big, (x, y) => { asked.add(`${x},${y}`); return hash(x, y, 9) > 0.2; }, 20400);
+  assert.deepEqual([1, 2, 3, 4].map((r) => halls.filter((h) => h.ring === r).length), [...WILD_DUNGEONS_PER_RING], 'every tier its count');
+  assert.ok(asked.size <= WILD_RINGS * WILD_HALL_POOL_MAX * 3, `a few hundred asks a tier (${asked.size})`);
+  let cells = 0;
+  for (let i = 0; i < big.width * big.height; i++) cells += big.inside[i];
+  assert.ok(asked.size < cells / 20, `never the zone's cells (${asked.size} of ${cells})`);
+  assert.deepEqual(wildHallPicks(big, (x, y) => hash(x, y, 9) > 0.2, 20400), halls, 'the same halls for every asker');
+  assert.notDeepEqual(wildHallPicks(big, (x, y) => hash(x, y, 9) > 0.2, 20401), halls, 'a new day, new halls');
+});
+

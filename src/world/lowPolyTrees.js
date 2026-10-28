@@ -378,10 +378,17 @@ export const lptCuts = (cut, proto) => (Array.isArray(proto) ? proto.some((h) =>
 export const LPT_IMPOSTOR_PER_M = 8;
 export const LPT_IMPOSTOR_MIN = 24;
 export const LPT_IMPOSTOR_MAX = 256;
-/** The light the far picture is drawn under: from the viewer's side and above. BB_VS lights a 3D tree's faces by the
- *  same law (0.72 + 0.28 n.l) under this light turned to face the eye, crossfaded to the sun's own by day - so the two
- *  agree where they hand over at night and nearly by day (AUDIT LPT A2). */
-export const LPT_IMPOSTOR_LIGHT = Object.freeze([0, 0.6, -0.8]);
+/** The light the far picture is drawn under: the sky's, from straight above. BB_VS lights a 3D tree's faces by the same
+ *  law (0.72 + 0.28 n.l) under this same light, crossfaded to the sun's own by day - so the two agree where they hand
+ *  over at night and nearly by day (AUDIT LPT A2). FLORA-GROUND (FIELD BUGS 2026-10-27, the owner: "reflective flora can
+ *  be seen ... in first person"; the coordinator: "the material matte at its root"): it was [0, 0.6, -0.8], from the
+ *  viewer's side and above, and the 3D tree took it TURNED TO FACE THE EYE - a light no lamp casts, that followed the
+ *  player round every tree, bush and stump: the faces toward them lit whole, the faces away at half, the shine moving
+ *  over the crown as they walked (whole by night, a share of it at dusk, at dawn and under a storm's dim sun). A matte
+ *  face's light does not ask where the eye is - DFU's own nature batch is Lambert (DaggerfallBillboardBatch.shader:
+ *  `#pragma surface surf Lambert`, no specular, no view term in its albedo) - so the light is the sky's, a world's
+ *  direction, and the far picture is drawn under the same. */
+export const LPT_IMPOSTOR_LIGHT = Object.freeze([0, 1, 0]);
 const lptShade = (n0, n1, n2) => {
   const l = LPT_IMPOSTOR_LIGHT, len = Math.hypot(n0, n1, n2) || 1;
   return Math.min(1, Math.max(0.5, 0.72 + 0.28 * ((n0 * l[0] + n1 * l[1] + n2 * l[2]) / len)));

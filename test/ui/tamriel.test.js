@@ -309,8 +309,10 @@ test('TAMRIEL1 ink: off the Bay the paint strokes the coast in the Bay\'s own pe
   assert.equal(strokes[1].strokeStyle, PEN.line, 'then the line');
   assert.equal(strokes[1].lineWidth, 1.3);
   assert.equal(strokes[2].strokeStyle, PEN.relief, 'the high ground\'s carets');
+  // PIN MOVED (REGION-LINES 2, 2026-10-25, the owner: "Each region distinctly separated"): the provinces' line solid on its
+  // halo (PROVINCE_PEN), no longer the Bay's dash
+  assert.ok(ctx.calls.some((c) => c.fn === 'stroke' && c.lineWidth === 2.6 && c.strokeStyle === PEN.line), 'the provinces\' line, solid');
   const dashes = ctx.calls.filter((c) => c.fn === 'setLineDash').map((c) => c.args[0]);
-  assert.ok(dashes.some((d) => d.length === 2 && d[0] === 4 && d[1] === 3), 'the borders dashed as the Bay\'s');
   assert.ok(dashes.some((d) => d.length === 2 && d[0] === 2 && d[1] === 4), 'the Bay\'s edge dotted');
   const fills = ctx.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]);
   const spaced = spacedName;
@@ -321,7 +323,9 @@ test('TAMRIEL1 ink: off the Bay the paint strokes the coast in the Bay\'s own pe
   const haloed = ctx.calls.filter((c) => c.fn === 'strokeText');
   assert.ok(haloed.length >= 8 && haloed.every((c) => c.strokeStyle === PEN.halo), 'every city name haloed in the parchment');
   const regionFont = ctx.calls.filter((c) => c.fn === 'fillText' && c.args[0] === spaced('Skyrim'))[0].font;
-  assert.match(regionFont, /^300 15px/, 'the continent\'s province name is the far band\'s size');
+  // PIN MOVED (REGION-LINES 2): out on the continent a province's name 18px on a halo, so one parted province reads from the next
+  assert.match(regionFont, /^300 18px/, 'the continent\'s province name');
+  assert.ok(ctx.calls.some((c) => c.fn === 'strokeText' && c.args[0] === spaced('Skyrim') && c.strokeStyle === PEN.halo), 'the province\'s name haloed');
   // in to the Bay's own fit: every city, and the names a size larger
   const ctx2 = recordingCtx();
   assert.equal(paintTamrielInk(ctx2, { ox: -1000, oy: -450, scale: 0.4 }, ink, { paperW: 900, paperH: 560, continent: false, bayFit: 0.4 }), true);
@@ -500,9 +504,15 @@ test('TAMRIEL1 switch: the Features row `tamriel-map` is on by default on the pl
 test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and under the zone map\'s, hands the frame and the home view through the sheet, answers the hover beyond the Bay, and reads the switch once at open; the layer reads no game data', () => {
   const held = read('src/ui/heldMap.js');
   const sheet = held.slice(held.indexOf('  _worldSheet() {'), held.indexOf('  _showChrome('));
-  assert.ok(sheet.indexOf('paintInkStatic(ctx, env.model, env.view, {') < sheet.indexOf('paintTamrielInk(ctx, env.view, tamrielInkFor(env.model)'), 'the Bay\'s ink first - it clears the canvas');
+  // PIN MOVED (ZOOM-FAST): the sheet in three parts - the Bay's ink, then the continent's land under the roads (its kept layer's)
+  // PIN MOVED (AUDIT TESA II M4): the Bay's ink off the model less the zone's halls - and found (an index of -1 passed)
+  assert.ok(sheet.indexOf('paintInkStatic(ctx, split.bay, env.view, {') >= 0 && sheet.indexOf('paintInkStatic(ctx, split.bay, env.view, {') < sheet.indexOf("paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'under' });"), 'the Bay\'s ink first - it clears the canvas');
   assert.ok(sheet.indexOf('paintTamrielInk(') < sheet.indexOf("part: 'over'"), 'under the zone map\'s wash');
-  assert.match(sheet, /if \(this\._tamriel && !this\._zoneMap\) \{/, 'never on the zone map');
+  // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone is Cyrodiil's, on the continent - so the zone map draws the
+  // continent whatever the switch, and the zone's fog and rings go over it (they were under the Bay's marks)
+  assert.match(sheet, /const continentOn = this\._tamriel \|\| this\._zoneMap;/, 'the zone map always on the continent');   // PIN MOVED (ZOOM-FAST): the sheet's three parts read it
+  // PIN MOVED (ZONE-NAMES-OVER): the zone over the continent's land and under its names - painted through its `under`, else after it
+  assert.match(sheet, /part: 'over', under: paintZone, nameless: zoneMask \? \(c\) => wildInside\(zoneMask, c\.x, c\.y\) : null \}\);\n\s+if \(!zoneDone\) paintZone\(\);/, 'the zone over the continent (PIN MOVED, AUDIT TESA II M6: the zone map\'s cities named by the zone map)');
   assert.match(sheet, /frame: \(\) => \(this\._tamriel \? tamrielFrameInBay\(\) : null\)/, 'the frame through the sheet, off when the switch is');
   assert.match(sheet, /homeView: \(lim\) => \(this\._tamriel && lim/, 'the home view is the Bay\'s fit while the frame is round it');
   assert.match(sheet, /band: env\.band,\n/, 'the band is the band');
@@ -510,12 +520,21 @@ test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and u
   assert.match(held, /this\._tamriel = tamrielMapOn\(\);/, 'read once, at open');
   assert.match(held, /const frame = this\._sheet\?\.frame\?\.\(\) \?\? null;\n    if \(frame\) return \{ mapW: frame\.w, mapH: frame\.h, mapX0: frame\.x0, mapY0: frame\.y0/, 'the limits carry the origin');
   const hover = held.slice(held.indexOf('  _hoverLabel(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {'));
-  assert.match(hover, /const place = tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\)\);/);
-  assert.match(hover, /if \(!this\._tamriel \|\| this\._zoneMap\) return null;/, 'off, or on the zone map, the old null');
+  // PIN MOVED (TESA13): and the countryside's marks (tesa13_mapink); PIN MOVED (AUDIT TESA II M14): asked on the Bay's side
+  // of the seam too, and past the Bay alone answering with the land and the sea
+  assert.match(hover, /const past = \(this\._tamriel \|\| this\._zoneMap\) \? this\._pastBayHover\(mx, my\) : null;\n\s+if \(outside \|\| past\) \{\n\s+if \(!past\) return null;/, 'off, the old null - PIN MOVED (ZONE-NAMES): the zone map past the Bay is Cyrodiil\'s ground, and answers');
   const pick = held.slice(held.indexOf('  _pickAt(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {') + 4000);
-  assert.ok(!/tamriel/i.test(pick), 'a press beyond the Bay picks nothing: not traversable');
+  // PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): a press beyond the Bay picks an Arena place the world stands -
+  // its pixel - and nothing else; the authored continent's cities and bare land beyond the Bay are still not traversable
+  const arm = pick.slice(pick.indexOf('    // TESA2'), pick.indexOf('    // WILD2'));
+  // PIN MOVED (BAY-LEFT-MAPS C11, test/ui/bayleft_find.test.js): the press asks the city under the Ports filter too
+  assert.match(arm, /const city = tamrielCityAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ filters: this\.filters, continent: onContinent\(this\._view\.scale, this\._bayFit\(\)\), portsOnly: this\.portsFilter \}\);   \/\/ AUDIT TESA II M7: a city the sheet inks \(BAY-LEFT-MAPS C11: under the Ports filter too\)\n(?:\s+\/\/[^\n]*\n)*\s+const end = city\?\.pixel \? city : this\.deps\.portalLandPastBay \? portalLandAt\(Math\.floor\(mx\), Math\.floor\(my\)\) : null;\n\s+if \(end\) \{/, 'only a place with the pixel the world stands it on (PIN MOVED, AUDIT TESA II M7: one the sheet inks) - or, on the Portal Stone\'s map alone, the land under the press (PIN MOVED, PORTAL-ANYWHERE: bible/06-Systems/Portal-Stone.md)');
+  assert.ok(!/tamriel/i.test(pick.replace(arm, '')), 'and no other press beyond the Bay picks anything');
   const ink = read('src/ui/tamrielInk.js');
-  for (const bad of ['woodsFile', 'mapsFile.js', 'pakFile', 'mapDirectory', 'fetch(']) assert.ok(!ink.includes(bad), `the layer never reads ${bad}`);
+  for (const bad of ['woodsFile', 'MapsFile', 'pakFile', 'mapDirectory', 'fetch(']) assert.ok(!ink.includes(bad), `the layer never reads ${bad}`);
+  // PIN MOVED (AUDIT TESA II M7): the layer imports the location types' constant table from formats/mapsFile.js (a place
+  // past the Bay's classic bucket) - and that alone; it never opens the maps file
+  assert.match(ink, /^import \{ LOCATION_TYPES \} from '\.\.\/formats\/mapsFile\.js';/m);
   assert.match(ink, /if \(!ink \|\| !viewLeavesBay\(view, paperW, paperH\)\) return false;/, 'the one rectangle test, first');
   assert.match(ink, /const _inks = new WeakMap\(\);/, 'one model a data set');
   const geo = read('src/world/tamriel/tamrielGeography.js');

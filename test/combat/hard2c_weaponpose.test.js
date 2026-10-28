@@ -58,7 +58,7 @@ test('HARD2c: the WRITE differential - the old inline arithmetic, carried verbat
   // worldModes.js:"A10: PlayerEnterExit's" and dungeonContext.js:"(PlayerEntity.cs:425-430 is the entity update)", character for
   // character as they stood before this slice.
   const oldCompose = (w) => ({ weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand });
-  // world.js:"const at = playerTravelPixel(); stampLayout"'s own, which is the MERGE - `wp` is the mode host's
+  // worldQuickSave.js:"const at = playerTravelPixel(); stampLayout"'s own, which is the MERGE - `wp` is the mode host's
   // answer for the rig actually drawn, taken PER FIELD.
   const oldMerge = (wp, rig) => ({
     weaponDrawn: wp?.weaponDrawn ?? !rig.sheathed,

@@ -214,12 +214,15 @@ export async function witchesDressingBreathing(/** @type {DressedTown} */ town, 
 }
 /**
  * @typedef {{ frames: Map<number, any>|null, taverns?: number[], temples?: number[], mapId?: number, climateIndex?: number|null,
- *   region?: number|null, floorY?: number, nowMs?: number, blocked?: (a: number[], b: number[]) => boolean,
- *   ground?: (x: number, z: number) => boolean, taken?: Iterable<ArrayLike<number>> }} DressedTown
+ *   region?: number|null, floorY?: number, floorAt?: ?((x: number, z: number) => number), nowMs?: number,
+ *   blocked?: (a: number[], b: number[]) => boolean, ground?: (x: number, z: number) => boolean, taken?: Iterable<ArrayLike<number>> }} DressedTown
+ *   SOLITUDE-RELIEF: `floorAt` the street's height at a pixel-local point where a town's blocks stand at heights of their
+ *   own (world/tamrielCapitals.js capitalBlockLift), else `floorY` everywhere.
  */
 /** The dressing, a building a step (witchesDressing runs it whole, witchesDressingBreathing breathes between). */
-function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples = [], mapId = 0, climateIndex = null, region = null, floorY = 0, nowMs = Date.now(), blocked = () => false, ground = () => true, taken = [] }) {
+function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples = [], mapId = 0, climateIndex = null, region = null, floorY = 0, floorAt = null, nowMs = Date.now(), blocked = () => false, ground = () => true, taken = [] }) {
   if (!frames?.size || !festivalOpen(nowMs)) return null;
+  const floor = floorAt ?? (() => floorY);
   const kit = WITCH_KITS[witchCulture(climateIndex, region)];
   const S = WITCH_SPOTS;
   // what stands, filed in GRID_M cells - a city's thousands of flats, each spot asking only the nine cells about it
@@ -246,20 +249,20 @@ function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples =
     }
     // from before the door at its own foot (a door up steps looks over them) to the spot's far edge, so a piece is
     // never half in a wall
-    const from = front.spot(0, S.rayFrom), fromY = Math.max(floorY, Number.isFinite(front.foot) ? front.foot : floorY);
+    const from = front.spot(0, S.rayFrom), fy = floor(xz[0], xz[1]), fromY = Math.max(floor(from[0], from[1]), Number.isFinite(front.foot) ? front.foot : floor(from[0], from[1]));
     const dx = xz[0] - from[0], dz = xz[1] - from[1], l = Math.hypot(dx, dz) || 1;
-    for (const h of S.rayHeights) if (blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, floorY + h, xz[1] + (dz / l) * r])) return false;
+    for (const h of S.rayHeights) if (blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, fy + h, xz[1] + (dz / l) * r])) return false;
     // and looked down on at its middle and at its edge nearest the door, so a piece never stands sunk in a house's plinth
     // or its steps, which the rays pass over (AUDIT WITCH1 G1: a turnip lantern half in a Daggerfall house's base)
     const tx = front.c[0] - xz[0], tz = front.c[1] - xz[1], tl = Math.hypot(tx, tz) || 1;
-    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floorY + S.downFrom, z], [x, floorY + S.lip, z])) return false;
+    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;
     return true;
   };
   const stand = (/** @type {any} */ front, /** @type {any} */ p, /** @type {number} */ s, /** @type {number} */ o) => {
     const xz = front.spot(s, o);
     if (!clear(front, xz, p.r)) return false;
     file(xz[0], xz[1], p.r);
-    flats.push({ archive: p.archive, record: p.record, c: [xz[0], floorY, xz[1]] });
+    flats.push({ archive: p.archive, record: p.record, c: [xz[0], floor(xz[0], xz[1]), xz[1]] });
     return true;
   };
   const pair = (/** @type {any} */ front, /** @type {any} */ p) => { for (const s of [-1, 1]) stand(front, p, s * (front.half + S.pairAlong), S.pairOut); };
@@ -275,7 +278,7 @@ function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples =
       if (!clear(front, xz, SISTER_R)) continue;
       file(xz[0], xz[1], SISTER_R);
       sisters.push({
-        archive: WYRD_SISTER_FLAT.archive, record: WYRD_SISTER_FLAT.record, x: xz[0], y: floorY, z: xz[1],
+        archive: WYRD_SISTER_FLAT.archive, record: WYRD_SISTER_FLAT.record, x: xz[0], y: floor(xz[0], xz[1]), z: xz[1],
         factionID: 0, flags: 0, rawX: 0, rawY: 0, rawZ: 0, recordPosition: key, witch: Object.freeze({ key }),
       });
       side = s;
@@ -304,7 +307,7 @@ function* dressTown(/** @type {DressedTown} */ { frames, taverns = [], temples =
       const xz = offeringSpot(f, mapId, key, far);
       if (!xz || !clear(front, xz, S.offeringR)) continue;
       file(xz[0], xz[1], S.offeringR);
-      homes.set(key, [xz[0], floorY, xz[1]]);
+      homes.set(key, [xz[0], floor(xz[0], xz[1]), xz[1]]);
       break;
     }
     yield;

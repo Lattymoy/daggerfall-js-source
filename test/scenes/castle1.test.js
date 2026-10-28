@@ -135,7 +135,7 @@ test('CASTLE1: a pixel with no dungeon of its own enters nothing - never a neigh
 
 test('CASTLE1: by source - the load hands the save\'s key to startInDungeon, and the arm reads the ONE law', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: extras\.dungeon \?\? \{\} \}\)/, 'worldQuickLoad\'s dungeon arm passes the saved key (MAP-KEEP: on the automap\'s load arm)');   // PIN MOVED (INSTANCES' audit): and the save's word for its room
+  assert.match(w, /modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/, 'worldQuickLoad\'s dungeon arm passes the saved key (MAP-KEEP: on the automap\'s load arm)');   // PIN MOVED (INSTANCES' audit): and the save's word for its room. PIN MOVED (AUDIT STARTS W3): a start's own dungeon through the quest's entry
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /async function startInDungeon\(\{ locationKey = null, fromLoad = false, holdOpen = false, recorded = undefined \} = \{\}\)/);   // MAP-KEEP: and whether it is a load; PIN MOVED (HOLD-ONCE): `holdOpen`   // PIN MOVED (INSTANCES' audit): and what was recorded of the place
   assert.match(wm, /dungeonStartDoorFor\(entries\.filter\(\(e\) => e\.door\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\), host\.dungeonStartSite\?\.\(\) \?\? null, locationKey\)/);

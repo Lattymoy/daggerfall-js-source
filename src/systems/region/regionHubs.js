@@ -39,6 +39,9 @@ const KIND_RANK = Object.freeze({
 });
 
 const same = (a, b) => typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();
+/** BAY-LEFT-SEA (systems/region/marketHubs.js): a settlement kind's rank - 3 a city, 2 a town, 1 a village, 0 no
+ *  settlement - the claim's first word, read by a province's market hub off a registry row's type. */
+export const settlementRank = (type) => KIND_RANK[type] ?? 0;
 
 /**
  * A location's claim to be its region's hub, read in order: [kind, named for the region, exterior blocks,

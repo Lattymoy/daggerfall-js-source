@@ -181,8 +181,8 @@
   },
   {
     "name": "QUESTOR-MOVED-seam-always-known",
-    "file": "src/scenes/world.js",
-    "old": "townLayoutsKnown: () => !homeLayoutsOnline || _homeLayoutsApplied,",
+    "file": "src/scenes/questWorld.js",
+    "old": "townLayoutsKnown: () => !homeLayoutsOnline || host._homeLayoutsApplied,",
     "new": "townLayoutsKnown: () => true,",
     "tests": [
       "test/systems/quest/fb1003b_questor.test.js"

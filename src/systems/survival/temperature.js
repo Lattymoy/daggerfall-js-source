@@ -53,9 +53,11 @@ export const MONTH_TEMP = Object.freeze([-20, -15, -5, 0, 5, 10, 20, 15, 0, -5, 
 export const NIGHT_MULT = Object.freeze({ [CLIMATES.Desert]: 3, [CLIMATES.Desert2]: 4, [CLIMATES.Mountain]: 2 });
 /** Weather: the degrees it takes off, and how wet a minute in it makes
  *  you with nothing on, a cloak, or a cloak with its hood up. The
- *  sandstorm is the port's own word (WEATHER2d): hot and dry. */
+ *  sandstorm is the port's own word (WEATHER2d): hot and dry. So is the
+ *  ashfall (ASHFALL1): dry, its pall shading the sun as a fog's does, and
+ *  nothing wet in it to chill a body. */
 export const WEATHER_TEMP = Object.freeze({
-  sunny: 0, cloudy: 0, overcast: -8, fog: -5, rain: -10, thunder: -15, snow: -10, sandstorm: 5,
+  sunny: 0, cloudy: 0, overcast: -8, fog: -5, rain: -10, thunder: -15, snow: -10, sandstorm: 5, ashfall: -5,
 });
 /** AUDIT C&C T2 (2026-10-12): rain and snow are the mod's own (Climates.cs Weather(), every published revision) - rain
  *  soaks three a minute bare, one under a cloak and none under its hood; snow one bare and none under any cloak. SURV1's
@@ -465,7 +467,7 @@ export const CLIMATE_NAMES = Object.freeze({
 });
 /** TEMP-UI: the weathers, as the breakdown names them (WEATHER_TEMP's keys). */
 export const WEATHER_NAMES = Object.freeze({
-  sunny: 'Clear sky', cloudy: 'Cloudy', overcast: 'Overcast', fog: 'Fog', rain: 'Rain', thunder: 'Thunderstorm', snow: 'Snow', sandstorm: 'Sandstorm',
+  sunny: 'Clear sky', cloudy: 'Cloudy', overcast: 'Overcast', fog: 'Fog', rain: 'Rain', thunder: 'Thunderstorm', snow: 'Snow', sandstorm: 'Sandstorm', ashfall: 'Ashfall',
 });
 /** TEMP-UI: the hour's bands, as the breakdown names them (hourBand). */
 export const HOUR_NAMES = Object.freeze({ day: 'Daytime', evening: 'Evening', dawn: 'Dawn', night: 'Night' });

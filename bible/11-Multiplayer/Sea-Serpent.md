@@ -103,8 +103,12 @@ page draws no serpent: a province's sheet shows little of the open sea it hunts.
 
 ## 3. Where it rises - the packet lanes
 
-`systems/serpent/serpentSite.js` (`findSerpentSite`). The serpent hunts the Bay's packet lanes (`systems/naval/seaLanes.js`):
-the lanes between the map's ports, the same list on every client, made from map files every client holds. The day
+`systems/serpent/serpentSite.js` (`findSerpentSite`, `worldSerpentSite`). The serpent hunts the world's packet lanes
+(WW7-12, `bible/03-World/World-Wide.md`; the owner: *"Fucking do it"*): `scenes/naval/worldLanes.js` `all()` - the Bay's
+(`systems/naval/seaLanes.js`, made from map files every client holds), then the ones past the Bay, then the ones across
+its edge - the same list in the same order on every game that stands the land past the Bay with its picture (`whole()`).
+A game that does not cannot roll it: it takes the hub's word of the site the accounts agree on (section 14, *Where it lies*)
+and names none till it has one. The day
 rolls a lane (`serpentLaneOf`) and a place along that lane's way (`serpentAlongOf`, inside `SERPENT_ALONG`, 0.3 to
 0.7 of its length). A place is kept only where the sea is open all round it: every map pixel within `SITE_CLEAR_PX`
 (1) must be the ocean's water (the lanes' own `open` law, never a lake). If not, the place slides along the way up to
@@ -113,11 +117,13 @@ rolls a lane (`serpentLaneOf`) and a place along that lane's way (`serpentAlongO
 nowhere.
 
 The site is the native point the fight is framed about (`sx`, `sz`). Its card names the nearer port, the port's
-province and both ports the lane joins. A client with no map data yet asks again every `SITE_RETRY_MS` (5 s).
+province and both ports the lane joins (a site the hub told names its port alone). A client with no map data yet, or no
+site from the hub yet, asks again every `SITE_RETRY_MS` (5 s).
 
 **The relay never reads a map.** Each `in` names the site it was said for (section 6). Its own cell must hold that
 site (`cellRoomOfWire(sx, sz)` is the cell's key), so a correct client always says it in the right room. A site is
-named to the whole native unit (`serpentSiteKey`); every honest client finds the same one, so they share one fight,
+named to the whole native unit (`serpentSiteKey`); every honest client finds the same one (or takes the hub's word of
+it - WW7-12), so they share one fight,
 and a forged site stands a fight of its own that none of them folds as theirs: every word a fight says names its site,
 and a client folds its own site's alone (AUDIT SERPENT S1, AUDIT SERPENT 2 F1). The account service's one row per
 (day, account) bounds what a forged site could buy.
@@ -498,6 +504,10 @@ After the kill the bar holds a moment and fades.
 
 ## 11. Versions and deploy order
 
+- **WW7-12's relay: `world260`** (WORLD-WIDE's, undeployed - its row re-hashed in place). The hub's `at`: the agreed site
+  told to every game online as it moves and at each hello (`net/serpent/serpentHerald.js` serpentAtWord, `server/src/index.js`
+  _serpentAtTell, _serpentAtTo; `net/wire.js` the kind - an older client drops it). Deploy the relay with the client; a client
+  without the land past the Bay on an older relay hears no site and sees no serpent. The service is untouched.
 - **SERPENT4's relay: `world193`** (section 16; `world192` on its branch, renumbered past SCALE5c's `world192` at the merge). Its law's version 3 (`SERPENT_BRAIN_MIN`): a game before it is told to
   reload. The `hit` word carries `r` (a hand's own weapons - an older relay drops it and judges her on a purse of
   nought, so nothing lands), the kill tells the hub its kin, and the hub mints a party's stander's receipts. Deploy the
@@ -608,6 +618,11 @@ online game finds the site of the serpent the clock is about from its quiet on (
 the hub once a socket and day: a `serpent` `site` word with its day, its native point to the whole unit and the port
 it lies off (`net/online.js` `sendSerpentSite`). The hub keeps the accounts' vote by the gate's law (`foldGateSite`:
 one word an account a day). A site is named once two accounts agree (`GATE_SITE_AGREE`), and the most accounts win.
+WW7-12: and the hub TELLS every game online the site agreed - a `serpent` `at` word (its day, its native point, its
+port) as an account's word moves the agreement, and at each hello while its day holds (`serpentAtWord`, `_serpentAtTell`,
+`_serpentAtTo`). The site is rolled over the world's lanes now, which a game without the land past the Bay cannot roll:
+it rises its serpent there (`serpentLink.js` toldAt, `serpentSite.js` siteOfWord), and never says a told site back as its
+own.
 
 A cell keeps a fight for every site named to it, a forged one too (AUDIT SERPENT S1). So the channel hears the kill
 **at the agreed site alone**, read off the hub's own kept kills (one a site). A forged site's fight never reaches

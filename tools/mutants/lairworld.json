@@ -1,0 +1,181 @@
+[
+  {
+    "name": "LW-door-lairs-past-the-bay-unread",
+    "file": "src/scenes/lairHost.js",
+    "old": "  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || pastBay?.lairAt(x, y)?.name || null;",
+    "new": "  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || null;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-door-their-regions-unread",
+    "file": "src/scenes/lairHost.js",
+    "old": "  const regionAt = (x, y) => regions.get(`${x},${y}`) ?? (pastBay?.lairAt(x, y) ? pastBay.regionAt(x, y) : -1);",
+    "new": "  const regionAt = (x, y) => regions.get(`${x},${y}`) ?? -1;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-door-their-plan-unlaid",
+    "file": "src/scenes/lairHost.js",
+    "old": "  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? pastBay?.lairCloneAt(x, y) ?? null;",
+    "new": "  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? null;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-door-mend-held-to-the-bay",
+    "file": "src/scenes/lairHost.js",
+    "old": "        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue;",
+    "new": "        if (d === 0 || d >= bestD || x < 0 || y < 0 || x >= 1000 || y >= 500) continue;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-places-site-unchecked",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    return s.px === px && s.py === py ? lairOfCell(c, s) : null;",
+    "new": "    return lairOfCell(c, s);",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-places-the-bay-read-as-past-it",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (!_lairTemplates || !Number.isInteger(px) || !Number.isInteger(py) || inBay(px, py)) return null;",
+    "new": "    if (!_lairTemplates || !Number.isInteger(px) || !Number.isInteger(py)) return null;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-places-a-lair-no-place",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "  const placeOnPixel = (px, py) => !lairFree(px, py) || !!lairAt(px, py);",
+    "new": "  const placeOnPixel = (px, py) => !lairFree(px, py);",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-board-parse-held-to-the-bay",
+    "file": "src/systems/bounty/bountyBoard.js",
+    "old": "  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null;",
+    "new": "  if (px < 0 || py < 0 || px >= 1000 || py >= 500 || level < 1) return null;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-board-ground-held-to-the-bay",
+    "file": "src/systems/bounty/bountyBoard.js",
+    "old": "      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too\n      let ok = false;",
+    "new": "      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;\n      let ok = false;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-board-dungeons-held-to-the-bay",
+    "file": "src/systems/bounty/bountyBoard.js",
+    "old": "      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too\n      let name = null;",
+    "new": "      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;\n      let name = null;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-board-id-three-digits",
+    "file": "src/systems/bounty/bountyBoard.js",
+    "old": "export const BOUNTY_ID_RE = /^(\\d{1,7})\\.(-?\\d{1,4})\\.(-?\\d{1,4})\\.([0-3])\\.(\\d{1,2})$/;",
+    "new": "export const BOUNTY_ID_RE = /^(\\d{1,7})\\.(\\d{1,3})\\.(\\d{1,3})\\.([0-3])\\.(\\d{1,2})$/;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-wire-three-digits",
+    "file": "src/net/wire.js",
+    "old": "export const BOUNTY_POSE_ID_RE = /^\\d{1,7}\\.-?\\d{1,4}\\.-?\\d{1,4}\\.[0-3]\\.\\d{1,2}$/;",
+    "new": "export const BOUNTY_POSE_ID_RE = /^\\d{1,7}\\.\\d{1,3}\\.\\d{1,3}\\.[0-3]\\.\\d{1,2}$/;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-host-door-unwired",
+    "file": "src/scenes/world.js",
+    "old": ", here: playerTravelPixel, pastBay: provinceQuestPlaces }),",
+    "new": ", here: playerTravelPixel }),",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-host-boards-lairs-unread",
+    "file": "src/scenes/world.js",
+    "old": "    dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.name || null,",
+    "new": "    dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || null,",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-host-boards-graveyards-unread",
+    "file": "src/scenes/world.js",
+    "old": "    graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.type === LOCATION_TYPES.Graveyard,",
+    "new": "    graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`),",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-host-boards-ground-held-to-the-bay",
+    "file": "src/scenes/world.js",
+    "old": ": !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))\n      && !gateSeaPixel(",
+    "new": ": false)\n      && !gateSeaPixel(",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: past the Bay the boards' ground keeps off a spawn's pixel too."
+  },
+  {
+    "name": "LW-host-boards-stamp-unread",
+    "file": "src/scenes/world.js",
+    "old": "    placesVersion: provinceQuestPlaces.version,",
+    "new": "    placesVersion: undefined,",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-boardhost-stamp-unread",
+    "file": "src/scenes/bountyHost.js",
+    "old": "  const keyOf = (px, py) => `${px},${py}|${deps.placesVersion?.() ?? ''}`;",
+    "new": "  const keyOf = (px, py) => `${px},${py}`;",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  },
+  {
+    "name": "LW-heldmap-the-bays-sheet",
+    "file": "src/ui/heldMap.js",
+    "old": "    return this._tamriel || this._zoneMap ? tamrielFrameInBay() : { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "new": "    return { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "tests": ["test/systems/revenant/lairworld.test.js", "test/ui/bayleft_marks.test.js"]
+  },
+  {
+    "name": "LW-marks-unshifted",
+    "file": "src/ui/bounty/bountyMapMark.js",
+    "old": "{ ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 }",
+    "new": "{ ...m, cx: m.cx, cy: m.cy }",
+    "tests": [
+      "test/systems/revenant/lairworld.test.js"
+    ]
+  }
+]

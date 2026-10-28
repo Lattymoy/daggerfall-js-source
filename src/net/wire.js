@@ -308,6 +308,17 @@ export const PIXEL_UNITS = 32768;
 export const WORLD_PIXEL_BOUND = 8192;
 /** TV-BEYOND: a map pixel of the world - a whole number within WORLD_PIXEL_BOUND, either side of the Bay's corner. */
 export const worldPixelOk = (v) => Number.isInteger(v) && Math.abs(v) < WORLD_PIXEL_BOUND;
+/** AUDIT TESA II Z2 (bible/03-World/World-Wide.md, "Folded into TESA"): THE WORLD-WIDE RELAY - the first relay that reads
+ *  the world past the Bay on the wire: a gate's lanes (GATE_LANES_RELAY_MIN), a province's channels
+ *  (PROVINCE_REGIONS_RELAY_MIN), a hall of Cyrodiil's (WDUN_WORLD_RELAY_MIN) and a spawn grant's world pixel
+ *  (net/grantLaw.js GRANT_WORLD_RELAY_MIN). They shipped in one relay, so they are ONE number, and it moves with that
+ *  relay's row when a merge renumbers it: test/net/audittesa2z_worldwide.test.js holds it to the row of
+ *  test/net/relayversion.test.js that names WORLD-WIDE, and refuses the row below it at every gate. Four literals at 256
+ *  outlived the merge that took the relay to world260, and passed main's world256-world259 - none of which reads a
+ *  pixel past the Bay. */
+export const WORLD_WIDE_RELAY_MIN = 276;   // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's); the merge of main past THE FOLD's world260 to NIRNROOT-SAGE's world268 (none reads a pixel past the Bay): the release's own number
+/** AUDIT TESA II Z2: does relay `v` ('world<N>') read the world past the Bay - the one test the four gates ask. */
+export const relaySupportsWorldWide = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WORLD_WIDE_RELAY_MIN; };
 /** The world's pixels in the pose's units: a pose's x and z lie within this, either way (AUDIT ONLINE B2/E2: the first
  *  bound, 1e7, refused most of the Bay - the classic start included - and the relay closed every mover; TV-BEYOND: the
  *  second, 1024 pixels, refused the land past the Bay the same way). */
@@ -701,9 +712,18 @@ export function floorGate(bucket, nowMs, cost, rate, floor) {
  *  in Wayrest), the badges, the mute, the rate, the room's budget - is a room's, and a region room is that machinery
  *  with nothing new in it. */
 export const CHAT_REGION_PREFIX = 'chat:region.';
-export const CHAT_REGION_COUNT = 62;
-/** The region's channel key, or null for an index the politic map does not have. */
-export const chatRegionRoom = (index) => (Number.isInteger(index) && index >= 0 && index < CHAT_REGION_COUNT ? `${CHAT_REGION_PREFIX}${index}` : null);
+/** WW-R (2026-10-24, bible/03-World/World-Wide.md WW-R): the Bay's 62 and the provinces' nine past it - formats/mapsTables.js
+ *  REGION_NAMES' length (pinned equal; not imported: this file is the relay's, and its graph stays as it is). */
+export const CHAT_REGION_COUNT = 71;
+/** WW-R: the Bay's own regions' channels, every relay's. */
+export const CHAT_BAY_REGIONS = 62;
+/** WW-R: the first relay that opens a province's channel - an older one refuses the key; a client on one keeps its region
+ *  tab off past the Bay. */
+export const PROVINCE_REGIONS_RELAY_MIN = WORLD_WIDE_RELAY_MIN;   // AUDIT TESA II Z2: the world-wide relay's one number
+export const relaySupportsProvinceRegions = relaySupportsWorldWide;
+/** The region's channel key, or null for an index the politic map does not have - WW-R: or a province's past the Bay where
+ *  the relay opens none (`provincesOk` false: an older relay's). */
+export const chatRegionRoom = (index, provincesOk = true) => (Number.isInteger(index) && index >= 0 && index < (provincesOk ? CHAT_REGION_COUNT : CHAT_BAY_REGIONS) ? `${CHAT_REGION_PREFIX}${index}` : null);
 /** CHAT-LANG (2026-10-11, the players: "More chat channels per-language"): A LANGUAGE IS A CHANNEL of its own, the
  *  region's shape - one room per language, everyone who chose it in it wherever they stand, the World channel's whole
  *  machinery (the roster, the badges, the mute, the rate, the room's budget) with nothing new in it. A player holds at
@@ -875,7 +895,10 @@ export const PARTY_LOC_MAX = 32;
 export const BOUNTY_POSE_MAX = 8;
 /** BOUNTY-TIER: the highest level a party pose's `lv` carries. */
 export const BOUNTY_POSE_LV_MAX = 99;
-export const BOUNTY_POSE_ID_RE = /^\d{1,7}\.\d{1,3}\.\d{1,3}\.[0-3]\.\d{1,2}$/;
+/** LAIR-WORLD (2026-10-26): a town's pixel the world's (worldPixelOk's four digits either side of the Bay's corner), as
+ *  bountyBoard.js BOUNTY_ID_RE reads it - a board past the Bay posts too. A relay before it drops such a row: the share is
+ *  not taken up, nothing closes. */
+export const BOUNTY_POSE_ID_RE = /^\d{1,7}\.-?\d{1,4}\.-?\d{1,4}\.[0-3]\.\d{1,2}$/;
 /** AUDIT 28: a bounty row's kills (a pack is never more than this) and a paid row's minute (the classic clock). */
 export const BOUNTY_POSE_KILLS_MAX = 99;
 export const BOUNTY_POSE_MINUTE_MAX = 0x7fffffff;
@@ -977,13 +1000,13 @@ const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
  *  too. Every claim at once had reached 639 of 640, and a house (LEGACY7) took such a token past it: minted, then
  *  refused here at every hello. With a house at its bounds and the realm character (`ci`) the body is 778.
  *
- *  WIKIMAID (world214): 864 - the WikiMaid's glyph took every claim at once, a house and the arms to 808 of 800.
+ *  WIKIMAID (world214): 864 - the WikiMaid's glyph took every claim at once, a house and the arms to 808 of 800. SHOP (world274): 896 - the Origin's, to 867.
  *
  *  THE VERSION PREFIX IS NOT SPELLED OUT HERE. identityToken.js is the
  *  one home for which version exists and the verifier refuses anything
  *  else before parsing a byte; a second copy of `v1` in this file would
  *  be a second thing to forget on the day there is a v2. */
-const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,864}\.[A-Za-z0-9_-]{1,128}$/;
+const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,896}\.[A-Za-z0-9_-]{1,128}$/;
 
 /** The name a refused one becomes. Not a mask (`C**` is a shape a
  *  player treats as a puzzle) and not an error the relay could not
@@ -1156,7 +1179,7 @@ export const nativePoseRoom = (key) => isCellRoom(key) || isBattleRoom(key) || !
  *  hello says this number in a ground room (`gl`), and the relay, while `groundGate` is on (net/relayCfg.js), refuses
  *  a hello there that says less or none (GROUND_OLD_REASON). test/net/fb1017f_groundgate.test.js holds it to a fingerprint of
  *  the ground itself: a change to the ground fails that pin until this moves (and RELAY_VERSION with it). */
-export const GROUND_LAW = 1;
+export const GROUND_LAW = 2;   // 2: BAY-LEFT-GROUND (bible/03-World/Landforms.md) - the ground past the Bay: its towns' sites pull their land to their level (D1), and the print reads it there
 /** The most `gl` a hello may say - a later build's number, read; past it, read as none. */
 export const GROUND_LAW_WIRE_MAX = 65535;
 /** GROUND-GATE: the rooms whose peers stand on each client's own ground - a cell, a building's or a dungeon's place
@@ -1679,7 +1702,16 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world276';   // world276: YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md YC1; world266 on its branch, renumbered past main at the merges, last past SD-PARTY) - net/homeLaw.js's HOME_TOWN_MAX 512 to 2,048 (every building a town of Daggerfall's blocks can hold; the Imperial City's slices hold up to 794 past the Bay), a law of the relay's import graph; no relay behaviour moves
+export const RELAY_VERSION = 'world277';   // world277: YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md YC1; world266 on its branch, renumbered past main at the merges, last past TESA and SHOP) - net/homeLaw.js's HOME_TOWN_MAX 512 to 2,048 (every building a town of Daggerfall's blocks can hold; the Imperial City's slices hold up to 794 past the Bay), a law of the relay's import graph; no relay behaviour moves
+// world276: TESA's release (#1184) and SHOP, one version - TESA's world275 below renumbered past main's SD-PARTY world275 (live) at the eighth merge of main; its gates (WORLD_WIDE, GUILD_INSTANCE, WW5, RAID_WORLD, OW_WORLD) open at 276. SHOP (2026-10-28, world274 on its branch, renumbered past TESA's LADDER-CUT world274 and ASHFALL1 world275 at the fold into #1184; the owner: "A new glyph panel alongside the timer and mailbox that will be used for our monetization shop"; bible/06-Systems/Shop.md; NOT YET DEPLOYED): the vocabulary's three new words - GENESIS last of TITLES, ORIGIN last of GLYPHS, ETERNAL last of AURAS - which the relay reads off every token (net/identityToken.js) - and the hello's token body bound, 896 (TOKEN_RE): a token wearing every glyph, the Origin with them, is 867. Deploy the relay first.
+// (world276, TESA's release - world275 on #1184 until the eighth merge of main renumbered it past SD-PARTY's world275) (world274 on its branch, renumbered past world274 on main at the merge) ASHFALL1 (2026-10-27, folded in place, NOT YET DEPLOYED; bible/07-Rendering/Weather-Arc.md E) - systems/wind/wind.js, which this bundle carries, gains the ashfall's VIOLENCE row; nothing the relay does reads it. (world272 on its branch, renumbered past world272-world273 on main at the merge) THE THIRD MERGE OF MAIN INTO #1184 (2026-10-27, NOT YET DEPLOYED) - #1184's world271 renumbered past MASTER-THREE's world271 (main's), its law MASTER-THREE's mastery slots with every change of #1184's, re-hashed. THE SECOND MERGE OF MAIN INTO #1184 (2026-10-27, NOT YET DEPLOYED) - #1184's world270 renumbered past CHAT-POST's world270 (main's), its law CHAT-POST's chat items with every change of #1184's, re-hashed. THE MERGE OF MAIN INTO TESA (2026-10-27, NOT YET DEPLOYED) - #1184's own world269 and world270, one release, folded into world270 past BOW-TOPS's world269 (main's): its law BOW-TOPS's bows with every change of #1184's, re-hashed. HOUSES-3 (2026-10-27, folded in place, NOT YET DEPLOYED; bible/06-Systems/Online-Arc.md HOUSES-3) - net/homeLaw.js, which this bundle carries, counts HOME_CAP in a region and reads a region's three deeds (regionDeedsOf); nothing the relay does with a home changes. AUDIT BAY-LEFT's packages (2026-10-27, folded in place, NOT YET DEPLOYED; bible/01-Overview/audits/Audit-Left-In-The-Bay.md): WW-GATES-EVERYWHERE - gate lanes 0 to 8 stand (GATE_LANES_OPEN), Cyrodiil's never; KETCH-EVERYWHERE - a Sky-Ketch station a province at its crown capital, voyage numbers by lane (k + lane x 100,000,000), the hub's receipts `ktrc:<account>.<lane>` and herald `ktherald:<lane>` a station, net/kingdomLaw.js in the bundle; WW5 - star words on their lane's pixel, the held list 60 long the Bay's first, a stored ledger on its lane's pixel, the Hollows a slot lane a province (SD_LANE_SPAN), the census over every region, the `ln` kind, per-lane keys, the live door by the slot's lane (WW5_RELAY_MIN 270); WW6 - raid words on world pixels, keys for every region with a town past the Bay, per-lane day slots, the operator's pinned towns the Bay's alone, the staff town-event law (RAID_WORLD_RELAY_MIN 270); SPAWN-WORLD - the `dg` row past the Bay (owWireRow worldPixelOk, OW_WORLD_RELAY_MIN 270); BAY-LEFT-GROUND - GROUND_LAW 2; PROVINCE-COURTS - textManager.js's faction-name door and buildingNames.js's four titles. Deploy the relay first, then the account service, then the site. WORLD_WIDE_RELAY_MIN is 269 here, a number main's own world269 (BOW-TOPS, not yet deployed) holds too: whichever deploys first, the other renumbers. ARCHERY-REF (2026-10-26, re-hashed in place, NOT YET DEPLOYED: the siege's and the arena's referees take BAL-ARCHERY's bow tops, net/siege/siegeRef.js SIEGE_WEAPON_MAX and net/arena/arenaLaw.js ARENA_WEAPON_MAX the Short Bow 17 and the Long Bow 19 - main's #1326 raised the game's and left these at DFU's 16 and 18; bible/05-Combat/Balance-Arc.md ARCHERY-REF). LAIR-WORLD (2026-10-26, re-hashed in place, NOT YET DEPLOYED: a party pose's bounty id carries the world's pixel, net/wire.js BOUNTY_POSE_ID_RE - the owner: "with revenants and their lairs, this will work everywhere correct?", asked "Fix both in this PR"; bible/06-Systems/Bounty-Boards.md LAIR-WORLD). ZONE-GRACE (2026-10-26, world268 on its branch, renumbered past NIRNROOT-SAGE's world268 at its merge with main, and world269 past the TESA fold's world269 when it was folded into #1184; PVP-EASE, the owner: "just overall making the experience more palatable while retaining its punishment", asked "Entry/rise grace"; bible/11-Multiplayer/Wild-Zone.md section 3b; NOT YET DEPLOYED) - net/wild/wildRef.js WILD_GRACE: sixty seconds of safe passage on entering the zone (after thirty seconds away and a minute clear of a fight) and on rising from a fall; no player's blow lands, one's own blow on a player ends it; carried across a cell (`gr`); said as the `wref` `grace` word (WILD_GRACE_MS_MAX). AUDIT PVP-EASE (re-hashed in place): the carry holds the fight, the stand in the zone, a foe's death and a passage ended - put at an entry, a leave, a socket gone, a death and a passage's end, the hub dropping a leave from a room already left - so no crossing and no woken room grants a fresh minute; every rise grants it; a take from a remains ends it; a captain's ship under it takes no shot, and a shot ends the shooter's (net/sea/seaRef.js seaShot).
+// (world275, the TESA fold - world269 on #1184 until the merge of main renumbered it past BOW-TOPS's world269) (world268 on its branch, renumbered past world268 on main at the merge) (world266 on its branch, renumbered past world266-world267 on main at the merge) (world260 on its branch, renumbered past world260-world265 on main at the merge) WORLD-WIDE folded into TESA and DOMAIN2, one release (#1184; DOMAIN2 below; its WW2 and WW-R were world254 and world255 on its branch, and AUDIT TESA-BIOME's world255 on TESA's, renumbered past AUDIT FOE-KEEPS's world254 and KETCH's world255 at the merges into world256 on TESA's, then past STAFF-EVENT's world256, STAFF-EVENT BOSS's world257, KETCH-LONGER's world258 and ASK-LONGER's world259 at the next, and their RELAY_MIN gates with them - GATE_LANES_RELAY_MIN, PROVINCE_REGIONS_RELAY_MIN and WDUN_WORLD_RELAY_MIN 260): WW-R (2026-10-24, the owner: "Separate regions make sense"; bible/03-World/World-Wide.md WW-R; NOT YET DEPLOYED) - THE PROVINCES AS REGIONS: formats/mapsTables.js REGION_NAMES holds the nine provinces past the Bay after its 62 (Daggerfall stays High Rock's), the regional channels CHAT_REGION_COUNT 71 (net/hubShards.js REGION_CHANNELS 71 - a province's channel and its shards; PROVINCE_REGIONS_RELAY_MIN 255, an older relay refuses the key) and the Abyss census the Bay's 62 (SD_REGION_COUNT CHAT_BAY_REGIONS).; and WW-C2 folded in before its deploy (bible/03-World/World-Wide.md WW-C: the open zone is Cyrodiil's) - a zone hall's key is a world map pixel's (wdunHall), its room the halls' own lane over the world's pixel key (spawnedHallMapId, WDUN_WORLD_LANE; WDUN_WORLD_RELAY_MIN 255 - an older hub refuses the key), and a pose's map pixel FLOORED (mapPixelOfWire, cellRoomOfWire: DFU's truncation on the Bay, the pixel it stands in past the Bay's west and south edges); and AUDIT WW folded in before its deploy - THE LANES THAT STAND (GATE_LANES_OPEN: the Bay's alone until a province's places are registered, Cyrodiil's never): the hub admits a gate, keeps a site, a rite's word and a spent receipt on those alone (gateHolds, gateAdmits, gateNumberOk, gatePixelOk), a lane past the Bay's pixel never on the Bay's map, and a zone hall's map id is known as one (isHallMapId)
+// (world275, GRANT-SLEEP and PROVINCE-SLEEP) GRANT-SLEEP and PROVINCE-SLEEP (2026-10-25, Mac: "ensuring this new integration doesnt implode the server or insanely skyrocket our server cost"; bible/11-Multiplayer/Spawn-Grants.md section 22, bible/11-Multiplayer/Scale-Arc.md PROVINCE-SLEEP; NOT YET DEPLOYED) - a cell's grant measure holds no timer (it posts at a fold once due, and when the cell drains), so the cell hibernates; a province past the Bay's channel is one, unsplit (net/hubShards.js REGION_SPLIT). No frame changes.
+// (world275, WW2 - world254 on its branch, world256 on TESA's) WW2 (2026-10-24, the owner: "we can expand world events to happen more than once at a time since the world will be massive"; bible/03-World/World-Wide.md WW2; NOT YET DEPLOYED) - THE GATES OF EVERY THEATRE: a gate a game day on each lane (net/gate/gateLaw.js - the Bay's lane 0 the gate it always was, a lane past the Bay a province's), a gate named by its NUMBER (its game day on the Bay's lane, day + lane * GATE_LANE_SPAN past it - so every room key, receipt and record keeps its shape); the hub keeps a lane's fall, site, herald, rite circles and each account's receipt under its own key (gateLaneKey, gateReceiptKey's lane), a site word and a rite's word past the Bay a world pixel (gatePixelOk), and the herald posts a lane past the Bay's omen only where the players agree on its site. A client stands no lane past the Bay's and says no site past its map to an older relay (relaySupportsGateLanes, GATE_LANES_RELAY_MIN 254): it closes the socket on one. Deploy the relay first, then the site.
+// (world275, AUDIT TESA-BIOME - world255 on TESA's branch, renumbered past KETCH's world255 and then main's world256 to world259 at the merges) AUDIT TESA-BIOME (2026-10-24, the owner: "Lets do a comprehenaive audit and ensure this is perfect"; bible/01-Overview/audits/Audit-Tesa-Biome.md F2; NOT YET DEPLOYED): a spawn grant may name any pixel of the world (net/grantLaw.js validGrant on worldPixelOk, where it held the Bay's 1000 by 500) - a grant past the Bay was refused, so the zones' species law never ran there. A relay before it refuses such a grant, as before.
+// (world275, DOMAIN2 - world255 on DOMAINS' branch, renumbered past KETCH's world255 at its merge with main, one release with TESA's world256 when DOMAINS merged into #1184, and with it past STAFF-EVENT's world256 to ASK-LONGER's world259 at the next; GUILD_INSTANCE_RELAY_MIN 260) DOMAIN2 (2026-10-24, world255 on its branch, renumbered past KETCH's world255 at the merge; the owner: "Allowing the purchase of the actual castle in major cities (cyrodil excluded), using the instancing system"; bible/11-Multiplayer/Domains.md section 6; NOT YET DEPLOYED): an instance room admits a guild whose digest owns it - a castle's, its members by their verified token's guild (net/instanceRoom.js instanceAdmission's `guild` arm, GUILD_INSTANCE_RELAY_MIN) - and refuses out a castle's guest the moment it wears another guild or none (index.js _instanceGuildOut).
+// world270: CHAT-POST (2026-10-27; bible/06-Systems/Online-Arc.md CHAT-POST; NOT YET DEPLOYED): a chat frame may carry linked item records (`items`, and a legacy `item`) beside the words - the relay fans them with the line; before it, world269: BOW-TOPS (2026-10-26; bible/05-Combat/Balance-Arc.md section 18 BAL-ARCHERY, BOW-TOPS): the arena's and the siege's weapon tops take BAL-ARCHERY's bows - a Short Bow 17, a Long Bow 19 (net/arena/arenaLaw.js ARENA_WEAPON_MAX, net/siege/siegeRef.js SIEGE_WEAPON_MAX)
+// world273: APPEARANCES and HUNTERS-MARK, one release (2026-10-27; bible/04-Characters/Wardrobe.md section 6, bible/06-Systems/Bounty-Boards.md section 12; NOT YET DEPLOYED - world270, world271, then world272, on the branch, renumbered past main's CHAT-POST world270, MASTER-THREE world271 and FIELD BUGS 2026-10-26r world272 at the merges): a look item may carry `ap` - [t, m, v], the look a worn piece wears - kept only when it is a look there is and of the same kind as the piece (validLookItem, through net/appearanceLaw.js validWireAppearance); appearanceLaw.js and systems/armorMaterials.js join the bundle. Either side may deploy first: a relay before it drops `ap`, and the piece is seen in its own look; and net/identityToken.js's TITLES gains the hunt's four, the ten Marks of Mastery and the sea's two, last - the relay reads a token's title as every badge; the bundle's files unchanged; and APPEARANCES-II's sworn revenant's kit carries its look (validFoeRecord's `la`, each of its piece's kind - an older relay drops it and the piece is drawn in its own); and AUDIT HORIZONTAL B7's LOOT-DOOR: a loot room's hello (a world room or a cell - lootRoom) says the loot its build reads (`ll`, LOOT_HELLO_LAW), and while the setting `lootDoor` is on (net/relayCfg.js - off unset, and off until the site serves this build, since the relay deploys first) a hello there that says less or none is refused (LOOT_OLD_REASON, GROUND-GATE's words)
 // world275: SD-PARTY (2026-10-28, the owner: "we need to make this a party instance ... to stop griefin on the bosses"; bible/11-Multiplayer/Super-Dungeons.md SD-PARTY; NOT YET DEPLOYED; world274 on its branch, renumbered past LADDER-CUT's world274 at the merge): each party its own Shattered Hour, `sd:<s>.<owner>` (net/superDungeon/sdLaw.js sdRoomKey), its door the owner, staff and the owner's party (server/src/sdCopy.js, which joins the bundle); one life and one win a Hollow across the copies, the hub's `sdac:` and its receipts; a party's win closes its own Hour, the Hollow stands until it fades. SD-BACK, SD-SOLO, SD-WON (the same day, on the branch): a death keeps its own copy open to it and every other shut; a player in no party shares an Hour of eight, `sd:<s>.p<n>`, found by the Worker's `/sd/open`; a won copy takes nobody back past its collapse.
 // world274: LADDER-CUT (2026-10-28: "1.5 2 4"; NOT YET DEPLOYED): systems/skillSoftcap.js's cost ladder past 100 is 1.5 / 2 / 4 (was 4 / 8 / 16) - a file the bundle reaches; the wire unchanged. world273: APPEARANCES and HUNTERS-MARK, one release (2026-10-27; bible/04-Characters/Wardrobe.md section 6, bible/06-Systems/Bounty-Boards.md section 12; NOT YET DEPLOYED - world270, world271, then world272, on the branch, renumbered past main's CHAT-POST world270, MASTER-THREE world271 and FIELD BUGS 2026-10-26r world272 at the merges): a look item may carry `ap` - [t, m, v], the look a worn piece wears - kept only when it is a look there is and of the same kind as the piece (validLookItem, through net/appearanceLaw.js validWireAppearance); appearanceLaw.js and systems/armorMaterials.js join the bundle. Either side may deploy first: a relay before it drops `ap`, and the piece is seen in its own look; and net/identityToken.js's TITLES gains the hunt's four, the ten Marks of Mastery and the sea's two, last - the relay reads a token's title as every badge; the bundle's files unchanged; and APPEARANCES-II's sworn revenant's kit carries its look (validFoeRecord's `la`, each of its piece's kind - an older relay drops it and the piece is drawn in its own); and AUDIT HORIZONTAL B7's LOOT-DOOR: a loot room's hello (a world room or a cell - lootRoom) says the loot its build reads (`ll`, LOOT_HELLO_LAW), and while the setting `lootDoor` is on (net/relayCfg.js - off unset, and off until the site serves this build, since the relay deploys first) a hello there that says less or none is refused (LOOT_OLD_REASON, GROUND-GATE's words)
 // world272: FIELD BUGS 2026-10-26r (RPT1026, the private reports of 10-18 to 10-26; world270, then world271, on its branch, renumbered past CHAT-POST's world270 and MASTER-THREE's world271 at the merges; bible/01-Overview/bugs/Field-Bugs-2026-10-26r.md; NOT YET DEPLOYED): RETIRED-BLOW (a blow from a fighter whose share was retired brings the share back at the boss's fraction first - the Remnant, its Echoes and Hearts, the gate's Warden, the Tonal Warden and its forks - and a Hour or Ketch blow from a pose past SD_POSE_FRESH_MS is dropped), BLOCK STAMP (the trade and page frames carry the sender's account, `sub`, through Room _directedFrame), ORRERY-HANDS (a stone's last turner named, the wrong turner held for the Hollow), and PROGRESS's masterSkills.js in the bundle; the trade and page frames the relay routes gain the sender's `sub`, which an older client ignores (AUDIT RPT1026 M7); and AUDIT RPT1026 I1 (sdBrain.js orreryWaited): a turner refused behind turners all over the Orrery's limit has the snap free it; and AUDIT RPT1026 F1 (masterSkills.js): the switch off notes the tough-foe practice it gives back on
@@ -4095,7 +4127,7 @@ export const PARK_HZ_MAX = 2;
 export const PARK_REACH = 8192;
 /** A world-frame point's cell room - the map pixel off the natives (MapsFile.WorldCoordToMapPixel: x / 32768,
  *  499 - z / 32768) and the cell off the pixel (worldRoom). */
-export const cellRoomOfWire = (x, z) => worldRoom(Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS));
+export const cellRoomOfWire = (x, z) => worldRoom(Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS));   // WW-C2: floored (mapPixelOfWire)
 const PARK_TIERS = new Set([0, 25, 50, 75, 90]);
 const PARK_KIND_DEPLOYED = 2;
 /** The per-socket park gate. */
@@ -4706,7 +4738,13 @@ export const WDUN_HERE_MS = 60_000;          // the client's heartbeat while ins
 export const WDUN_STALE_MS = 3 * 60_000;     // a hall's occupant silent this long has left (at their last word)
 export const WDUN_FRAME_MAX = 160;
 export const WDUN_HZ_MAX = 2;
-const WDUN_HALL = /^(\d{1,3}),(\d{1,3})$/;
+/** A zone hall's key, `"x,y"` - WW-C2: a world map pixel's (net/wire.js worldPixelOk), Cyrodiil's halls past the Bay;
+ *  the Wrothgarian Mountains' were the Bay's 1000 x 500 alone. */
+const WDUN_HALL = /^(-?\d{1,4}),(-?\d{1,4})$/;
+/** WW-C2: the first relay whose hub reads a hall of Cyrodiil's (a key past the Bay's 1000 x 500) - an older one answers
+ *  it "bad wdun" and closes the socket, so a client says its halls' words only to one this new or newer. */
+export const WDUN_WORLD_RELAY_MIN = WORLD_WIDE_RELAY_MIN;   // AUDIT TESA II Z2: the world-wide relay's one number
+export const relaySupportsWdunWorld = relaySupportsWorldWide;
 /** SEA-VAULTS (2026-10-22, bible/03-World/Eltheric-Ocean.md SEA-VAULTS): a vault of the deep's key, `"e<cx>,<cy>"` - the cell
  *  of the Eltheric Ocean's lattice its ruin isle stands in (world/ethericSea.js etherCellOf), never negative, never a
  *  mountain hall's `"px,py"`. The lattice's size and an isle place's map id are the sea's law's (world/ethericSea.js CELLS_W,
@@ -4774,14 +4812,14 @@ export function seaVaultCell(h) {
   const cx = Number(m[1]), cy = Number(m[2]);
   return cx < WDUN_SEA_CELLS_W && cy < WDUN_SEA_CELLS_H ? [cx, cy] : null;
 }
-/** A hall's key, `"px,py"` on the map's grid - SEA-VAULTS: or a vault of the deep's, `"e<cx>,<cy>"` - or null. */
+/** A hall's key, `"px,py"` - WW-C2: a world map pixel's - SEA-VAULTS: or a vault of the deep's, `"e<cx>,<cy>"` - or null. */
 export function wdunHall(h) {
   const sea = seaVaultCell(h);
   if (sea) return seaVaultKey(sea[0], sea[1]);
   const m = typeof h === 'string' ? WDUN_HALL.exec(h) : null;
   if (!m) return null;
   const x = Number(m[1]), y = Number(m[2]);
-  return x >= 0 && x < 1000 && y >= 0 && y < 500 ? `${x},${y}` : null;
+  return worldPixelOk(x) && worldPixelOk(y) ? `${x},${y}` : null;
 }
 const WDUN_IN = new Set(['hi', 'in', 'out', 'here', 'die', 'gk', 'fk']);   // ZONE-GIANTS: 'gk' - a zone giant killed; SEA-EVENTS: 'fk' - a treasure fleet's flagship sunk
 /** A client's word to the hub: {k:'hi'} | {k:'in'|'out'|'here', h} | {k:'die', h} | {k:'gk', g} | {k:'fk', n}. */
@@ -4827,10 +4865,21 @@ export const WDUN_INTERNAL_GONE = '/internal/wdun/gone';
 /** INT9 (AUDIT): the internal door a place room keeps a zone fighter's vitality at the hub, and asks it back when the
  *  fighter stands in its zone (net/wild/wildRef.js wildCarry - a step into another cell was a fresh bar). */
 export const WILD_INTERNAL_VIT = '/internal/wild/vit';
-/** A zone hall's spawn salt - its own lane of map ids (world/spawnedDungeons.js spawnedMapId), never a wandering spawn's. */
+/** A zone hall's spawn salt - the template its pixel clones (world/spawnedDungeons.js pickTemplate), never a wandering
+ *  spawn's. */
 export const WDUN_SALT = 7;
-/** A zone hall's world room, `dungeon:m<mapId>` (wire.js WORLD_ROOM): salt in the high 12 bits, the pixel in the low 20. */
-export const spawnedHallMapId = (x, y) => (((WDUN_SALT << 20) | (y * 1000 + x)) >>> 0);   // world/spawnedDungeons.js spawnedMapId's own law
+/** WW-C2: the halls' lane of map ids - the high 4 bits - over a world map pixel's key in the low 28 (world/worldWide/
+ *  worldGrid.js worldPixelKey, restated: the relay's bundle reads no world/ module); no spawned dungeon's salt (the high
+ *  12 bits' small numbers, world/spawnedDungeons.js spawnedMapId) reaches it, nor MAPS.BSA's ids. */
+export const WDUN_WORLD_LANE = 0xf;
+const WDUN_SPAN = 2 * WORLD_PIXEL_BOUND;
+/** A zone hall's world room, `dungeon:m<mapId>` (wire.js WORLD_ROOM) - WW-C2: its world map pixel under the halls' lane
+ *  (the Wrothgarian Mountains' halls were WDUN_SALT's spawned id, the Bay's pixel in the low 20 bits). */
+export const spawnedHallMapId = (x, y) => (((WDUN_WORLD_LANE << 28) | ((y + WORLD_PIXEL_BOUND) * WDUN_SPAN + (x + WORLD_PIXEL_BOUND))) >>> 0);
+/** AUDIT WW F1: is `id` a zone hall's map id - the halls' lane, above every MAPS.BSA row's (whose high 12 bits reach
+ *  0x728)? Its low 20 bits are a world pixel key's, NO Bay pixel's `y * 1000 + x`: a reader that masks a map id to the
+ *  Bay's pixel (systems/discovery.js, the carriage towns, Immersive Travel's docks and capitals) asks this first. */
+export const isHallMapId = (id) => Number.isSafeInteger(id) && id >= 0 && id <= 0xffffffff && id >>> 28 === WDUN_WORLD_LANE;
 export const wdunRoomKey = (h) => {
   const k = wdunHall(h);
   if (!k) return null;
@@ -4845,8 +4894,8 @@ export const wdunRoomKey = (h) => {
 export const wdunHallOfRoom = (key) => {
   const m = typeof key === 'string' ? /^dungeon:m([1-9]\d{0,9})$/.exec(key) : null;
   const id = m ? Number(m[1]) : 0;
-  if (!id || id > 0xffffffff || id >>> 20 !== WDUN_SALT) return null;
-  const px = id & 0xfffff, h = wdunHall(`${px % 1000},${Math.floor(px / 1000)}`);
+  if (!isHallMapId(id)) return null;
+  const k = id & 0x0fffffff, h = wdunHall(`${(k % WDUN_SPAN) - WORLD_PIXEL_BOUND},${Math.floor(k / WDUN_SPAN) - WORLD_PIXEL_BOUND}`);
   return h && wdunRoomKey(h) === key ? h : null;
 };
 export const wildGate = (bucket, nowMs) => tokenGate(bucket, nowMs, WILD_HZ_MAX);
@@ -4937,10 +4986,13 @@ export const WILD_ORDER_MAX = 1024;
 export const WILD_REF_RELAY_MIN = 185;   // world183, then world184, on its branch, renumbered past CHAP4c's world183 and PERF-RELAY1's world184 at the merges
 export const relaySupportsWildRef = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WILD_REF_RELAY_MIN; };
 /** INT9: the zone referee's word kinds (`{t:'wref', k, ...}`, the relay's alone). */
-export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down']);
+export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace']);
 /** WILD-REJOIN: the longest a `down` word says a fallen has left to lie, ms (net/wild/wildRef.js WILD_REF.riseMs, pinned
  *  equal - this leaf imports no referee). */
 export const WILD_DOWN_MS_MAX = 120_000;
+/** ZONE-GRACE: the most a `grace` word says is left of safe passage, ms (net/wild/wildRef.js WILD_GRACE.ms, pinned equal - this
+ *  leaf reads no referee). */
+export const WILD_GRACE_MS_MAX = 60_000;
 /**
  * INT9: THE ZONE REFEREE'S WORD, PROJECTED - the relay's `{t:'wref', ...}`, or null:
  *   hp    { by, to, d, r, h }   a blow or a cast landed: who on whom, what it dealt, its kind, both fighters' vitality
@@ -4953,6 +5005,8 @@ export const WILD_DOWN_MS_MAX = 120_000;
  *   down  { ms, r?, p? }        WILD-REJOIN (wildRef.js wildDownWord): to a fallen still down whose game closed on the
  *                                death screen and came back - how long it has left to lie, and, from the room that
  *                                refereed the fall, its remains' id and where the body lies
+ *   grace { id, ms, n? }        ZONE-GRACE (wildRef.js WILD_GRACE): a fighter's safe passage - begun or carried in (`ms` left),
+ *                                ended by its own blow (`ms` 0); `n` 1, to a striker alone: a blow it kept off
  */
 export function validWildRefOut(m) {
   if (!m || typeof m !== 'object' || m.t !== 'wref' || typeof m.k !== 'string' || !WILD_REF_KINDS.includes(m.k)) return null;
@@ -4968,6 +5022,7 @@ export function validWildRefOut(m) {
     return { k: 'hull', by: m.by, to: m.to, d: m.d, s: m.s, f: m.f, h: m.h };
   }
   if (m.k === 'down') return validWildDown(m);
+  if (m.k === 'grace') return idOk(m.id) && intIn(m.ms, 0, WILD_GRACE_MS_MAX) && (m.n === undefined || m.n === 1) ? { k: 'grace', id: m.id, ms: m.ms, ...(m.n === 1 ? { n: 1 } : {}) } : null;   // ZONE-GRACE
   const r = typeof m.r === 'string' && WILD_ID_RE.test(m.r) ? m.r : null;
   if (!r) return null;
   if (m.k === 'fell') return idOk(m.id) && idOk(m.by) ? { k: 'fell', id: m.id, by: m.by, r } : null;
@@ -5140,8 +5195,70 @@ export const GATE_INTERNAL_COURT = '/internal/gate/court';
 export const GATE_INTERNAL_PARTY = '/internal/gate/party';
 /** AUDIT WB A10: how soon a court whose hub did not answer the kill tells it again. */
 export const GATE_TELL_RETRY_MS = 5000;
-/** AUDIT WB A4: the hub's key for an account's last receipt - kept for the receipt's own life and handed to its next hello. */
-export const gateReceiptKey = (sub) => `gaterc:${sub}`;
+/** AUDIT WB A4: the hub's key for an account's last receipt - kept for the receipt's own life and handed to its next hello.
+ *  WW2: one a LANE (net/gate/gateLaw.js gateLaneOf - a theatre's gates, bible/03-World/World-Wide.md): the Bay's lane's
+ *  key is the one it always was, and a lane past the Bay keeps its own - two gates of one game day are two receipts, and
+ *  one fought on another lane never stands over the other's. */
+export const gateReceiptKey = (sub, lane = 0) => (lane ? `gaterc:${sub}.${lane}` : `gaterc:${sub}`);
+/** WW2: a hub record kept a lane (the fall, the site, the herald's state, the rite's circles): the Bay's lane's under its
+ *  own key, as it always was, and a lane past the Bay's under `<key>:<lane>`. */
+export const gateLaneKey = (key, lane = 0) => (lane ? `${key}:${lane}` : key);
+/** WW2: how many lanes the gates run on, and how far apart their numbers are (net/gate/gateLaw.js GATE_LANES and
+ *  GATE_LANE_SPAN, pinned equal - the law imports this file, so not the other way). */
+export const GATE_LANES_WIRE = 10;
+export const GATE_LANE_SPAN_WIRE = 100_000_000;
+/** WW2: the lane a gate's number names (gateLaw.js gateLaneOf, pinned equal). */
+export const gateLaneWire = (d) => Math.floor(d / GATE_LANE_SPAN_WIRE);
+/** AUDIT WW F2: THE LANES THAT STAND - the only lanes the relay keeps a gate, a site, a rite's word or a receipt on (and
+ *  a client stands: scenes/gate/gateLanes.js). A lane past the Bay stands only where its theatre holds ground for a gate
+ *  - places registered past the Bay (systems/gate/theatreGateSite.js) - and the relay holds no picture of any (its
+ *  ground is the clients'): a lane the clock alone opened was a court no honest client could find, its receipts any two
+ *  accounts' for the asking. So the lanes are named here, the law both ends read. WW-GATES-EVERYWHERE (2026-10-26, the
+ *  owner: "Every single thing here needs to be addressed. No exceptions."; bible/03-World/World-Wide.md): the Bay's and
+ *  every province's past it, 1 to 8 - TESA's places stand in each (WW7-1), and the freeware's scan finds a gate's ground
+ *  in all eight (test/world/worldWide/ww_gates_everywhere.test.js); Cyrodiil's (9) never - the open zone stands no gate
+ *  (theatreGateSite.js). */
+export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+/** AUDIT WW F2: does lane `lane` stand. */
+export const gateLaneOpen = (lane) => GATE_LANES_OPEN.includes(lane);
+/** AUDIT WW F3: a gate's number as a client may name one - a safe integer on a lane that stands (the hub keeps its
+ *  records a lane: a number on any other made a key nothing reads). */
+export const gateNumberOk = (d) => Number.isSafeInteger(d) && d >= 0 && gateLaneOpen(gateLaneWire(d));
+/** WW2: A GATE'S MAP PIXEL ON THE WIRE - on the Bay's lane the Bay's own map (0..999, 0..499, as it always was); on a
+ *  lane past the Bay a pixel of the world OFF the Bay's map (TV-BEYOND: worldPixelOk - AUDIT WW F6: a province's gate
+ *  stands in its own theatre, never the Bay's, so a lane's word never lands in a Bay cell, whose circles it would
+ *  have wiped: its number is past every Bay day's); none on a lane that does not stand. @param {number} d the gate's number */
+export const gatePixelOk = (d, px, py) => gateNumberOk(d) && gateLanePixelOk(gateLaneWire(d), px, py);
+/** WW2: the map pixel a gate on lane `lane` may name, whether the lane stands or not (gatePixelOk's pixel half). */
+export function gateLanePixelOk(lane, px, py) {
+  const bay = intIn(px, 0, 999) && intIn(py, 0, 499);
+  return lane === 0 ? bay : !bay && worldPixelOk(px) && worldPixelOk(py);
+}
+/** WW2: the first relay that runs the lanes - the rooms past the Bay's lane, their site words, their hub records - an older
+ *  one closes the socket on a site word past the Bay's map, so a client sends none to it and stands no lane but the Bay's. */
+export const GATE_LANES_RELAY_MIN = WORLD_WIDE_RELAY_MIN;   // AUDIT TESA II Z2: the world-wide relay's one number
+export const relaySupportsGateLanes = relaySupportsWorldWide;
+/** WW5 (2026-10-26, bible/03-World/World-Wide.md WW5 - the owner's call taken: "Every single thing here needs to be
+ *  addressed. No exceptions."): THE THEATRES A SITE-BOUND WORLD EVENT STANDS IN - a Starfall coven night and an Abyss
+ *  Dungeon's slot each, a LANE a theatre (world/worldWide/worldGrid.js - the Iliac Bay's 0, each province past it its
+ *  own). The Bay's lane always; the eight provinces' (1..8), each holding ground for a site since TESA's places are the
+ *  registry's (WW7-1 - the gates' scans found sites in all eight, AUDIT NO SYSTEM LEFT BEHIND A2); Cyrodiil's (9) never:
+ *  the open zone stands no site-bound world event (systems/gate/theatreGateSite.js, systems/wild/wildZone.js). The law
+ *  both ends read - the relay holds no picture, so the lanes are named here. */
+export const SITE_EVENT_LANES = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+/** WW5: does lane `lane` stand a star night and a Hollow. */
+export const siteEventLaneOpen = (lane) => SITE_EVENT_LANES.includes(lane);
+/** WW5: the map pixel a site-bound event on lane `lane` names on the wire - the Bay's own map on the Bay's lane (0..999,
+ *  0..499, as it always was), a world pixel OFF the Bay's map on a lane past it (gateLanePixelOk's law: a province's
+ *  event stands in its own theatre, so its word never lands in a Bay cell), none on a lane that does not stand. */
+export const siteEventPixelOk = (lane, px, py) => siteEventLaneOpen(lane) && gateLanePixelOk(lane, px, py);
+/** WW5: THE FIRST RELAY THAT KEEPS A STAR AND A HOLLOW PAST THE BAY - their words on a world pixel, the hub's records a
+ *  lane. world270, re-hashed in place while it is undeployed (world269, the world-wide relay, never ran): an older relay
+ *  refuses a star word past the Bay's map as junk and holds no lane's Hollow, so a client stands no province's star or
+ *  Hollow against it (net/online.js ww5Ok). */
+export const WW5_RELAY_MIN = 276;   // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 since the second merge of main into #1184 (past CHAT-POST's world270, main's)
+/** WW5: does relay `v` ('world<N>') keep the stars and the Hollows past the Bay. */
+export const relaySupportsWw5 = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WW5_RELAY_MIN; };
 /** AUDIT WBX2 M4: how long the hub keeps a court fighter's receipt from its account's hellos - the court's own floor
  *  spends it, and says so (`spent`), within a second or two; a tab of theirs in town, or another device, that said hello
  *  first gave the same spoils again. Past it the kept copy is handed as any other (a court tab that died before its
@@ -5189,7 +5306,7 @@ const GATE_BOSS_RE = /^[a-z]{1,16}$/;
 export function validGateIn(m) {
   if (!m || typeof m !== 'object' || !GATE_KINDS.includes(m.k)) return null;
   if (m.k === 'in') return Number.isSafeInteger(m.lv) && m.lv >= 1 && m.lv <= GATE_LV_WIRE_MAX ? { k: 'in', lv: m.lv, ...(Number.isSafeInteger(m.bv) && m.bv >= 0 && m.bv <= 999 ? { bv: m.bv } : {}) } : null;
-  if (m.k === 'spent') return Number.isSafeInteger(m.d) && m.d >= 0 ? { k: 'spent', d: m.d } : null;   // AUDIT WBX S1
+  if (m.k === 'spent') return gateNumberOk(m.d) ? { k: 'spent', d: m.d } : null;   // AUDIT WBX S1; AUDIT WW F3: on a lane that stands
   if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT11: my body's share, thousandths
   if (m.k === 'heal') {   // GATE-HEAL: what my mates healed in me - each caster by peer id in the room, once (allies only)
     if (!Array.isArray(m.h) || m.h.length < 1 || m.h.length > GATE_HEAL_ROWS_MAX) return null;
@@ -5197,7 +5314,7 @@ export function validGateIn(m) {
     return h.every(Boolean) && new Set(h.map((t) => t[0])).size === h.length ? { k: 'heal', h } : null;
   }
   if (m.k === 'site') {   // DISCORD-GATES: the day, the gate's map pixel and its place, as gatePlaceWire leaves it
-    if (!Number.isSafeInteger(m.d) || m.d < 0 || !intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || typeof m.pl !== 'string') return null;
+    if (!Number.isSafeInteger(m.d) || m.d < 0 || !gatePixelOk(m.d, m.px, m.py) || typeof m.pl !== 'string') return null;   // WW2: a lane past the Bay's a world pixel
     return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, px: m.px, py: m.py, pl: m.pl } : null;
   }
   if (!Number.isSafeInteger(m.q) || m.q < 0 || m.q > GATE_SEQ_MAX) return null;
@@ -5552,6 +5669,12 @@ export const raidGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RAID_HZ_MAX)
  *  client says none to it - the players' own words run the raid there (systems/raidingParties.js). */
 export const RAID_RELAY_MIN = 123;   // AUDIT RAID: world122's frames carried no signature - never deployed; and at the merge main's TV3 took world122 (no raid in it), the batch's relay world123
 export const relaySupportsRaid = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= RAID_RELAY_MIN; };
+/** WW6 (bible/03-World/World-Wide.md WW6): the first relay that hears a raid past the Bay - its word's town on the
+ *  world's grid (validRaidIn), its key a province's (net/raid/raidLaw.js RAID_KEY_RE), its lane's slots read. An older
+ *  relay refuses the word as a bad frame, so a client says a raid past the Bay to this one on alone (net/online.js
+ *  sendRaid); the Bay's words go to any raid relay, as before. world270, folded in while it is undeployed. */
+export const RAID_WORLD_RELAY_MIN = 276;   // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 since the second merge of main into #1184 (past CHAT-POST's world270, main's)
+export const relaySupportsRaidWorld = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= RAID_WORLD_RELAY_MIN; };
 /** The door between a cell and the hub: a raid's cleanse, said to everyone online (HCC-PARK's doors' law - the public
  *  worker forwards /room/<key> alone). */
 export const RAID_INTERNAL_CLEAN = '/internal/raid/clean';
@@ -5592,19 +5715,20 @@ export const RAID_RC_KEEP_MS = 24 * 60 * 60 * 1000;
 export const RAID_RECEIPT_WIRE_MAX = 512;
 const RAID_RECEIPT_RE = /^w1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
 /** A world-frame point's MAP pixel, [x, y] (MapsFile.WorldCoordToMapPixel - cellRoomOfWire's own arithmetic): where the
- *  relay reads a pose's town from. */
-export const mapPixelOfWire = (x, z) => [Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS)];
+ *  relay reads a pose's town from. WW-C2 (bible/03-World/World-Wide.md WW-C): FLOORED - DFU's truncation to the bit on the Bay, where every coordinate is non-negative and the two agree; past its west and south edges (a negative x or z) truncation named the NEXT pixel toward the Bay, and Cyrodiil's halls stood on a pixel the player standing on them never read. */
+export const mapPixelOfWire = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];
 
 /**
  * A client's raid word, projected: `{k:'w', key, st, tg, ty, px, py, n, s}` - the raid's key, its start (classic
  * minutes), its target, its party, its town's map pixel, the deaths of MY raiders in it so far, and 1 once I have
- * struck one of its raiders - or null.
+ * struck one of its raiders - or null. WW6: the town's pixel is the WORLD's (worldPixelOk - a province's town past the
+ * Bay; which side of the Bay's edge a key's town stands on is the ledger's own law, raidLaw.js raidSideOk).
  */
 export function validRaidIn(m) {
   if (!m || typeof m !== 'object' || !RAID_KINDS.includes(m.k)) return null;
   if (typeof m.key !== 'string' || !RAID_KEY_RE.test(m.key) || !Number.isSafeInteger(m.st) || m.st < 0) return null;
   if (!intIn(m.tg, RAID_TARGET_MIN, RAID_TARGET_MAX) || !intIn(m.ty, 0, RAID_TYPES - 1)) return null;
-  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !intIn(m.n, 0, RAID_WORD_KILLS_MAX)) return null;
+  if (!worldPixelOk(m.px) || !worldPixelOk(m.py) || !intIn(m.n, 0, RAID_WORD_KILLS_MAX)) return null;
   if (m.s !== undefined && m.s !== 0 && m.s !== 1) return null;
   return { k: 'w', key: m.key, st: m.st, tg: m.tg, ty: m.ty, px: m.px, py: m.py, n: m.n, s: m.s === 1 ? 1 : 0 };
 }
@@ -5674,7 +5798,7 @@ export const riteRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RITE_HZ
  *  (net/gate/gateRite.js riteRosterFell - the Broker's cage opens); a word from before it, with no `c`, says 0 - or null. */
 export function validRiteIn(m) {
   if (!m || typeof m !== 'object' || !Number.isSafeInteger(m.d) || m.d < 0) return null;
-  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || (m.s !== 0 && m.s !== 1) || (m.f !== 0 && m.f !== 1)) return null;
+  if (!gatePixelOk(m.d, m.px, m.py) || (m.s !== 0 && m.s !== 1) || (m.f !== 0 && m.f !== 1)) return null;   // WW2: a lane past the Bay's a world pixel
   const c = m.c === undefined ? 0 : m.c;
   if (c !== 0 && c !== 1) return null;
   return { d: m.d, px: m.px, py: m.py, s: m.s, f: m.f, c };
@@ -5692,7 +5816,7 @@ export const RITE_COUNT_MAX = 64;
  *  than it names, never more than a rite counts. */
 export function validRiteOut(m) {
   if (!m || typeof m !== 'object' || !RITE_OUT_KINDS.includes(m.k)) return null;
-  if (!Number.isSafeInteger(m.d) || m.d < 0 || !intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;
+  if (!Number.isSafeInteger(m.d) || m.d < 0 || !gatePixelOk(m.d, m.px, m.py) || !Number.isSafeInteger(m.at) || m.at <= 0) return null;   // WW2: a lane past the Bay's a world pixel
   if (m.k === 'cl') return { k: 'cl', d: m.d, px: m.px, py: m.py, at: m.at };
   const by = Array.isArray(m.by) ? m.by.filter((n) => typeof n === 'string' && n).slice(0, RITE_BY_MAX).map(sanitizeName) : [];   // AUDIT WB12d (L8): junk never hides a name
   const n = intIn(m.n, by.length, RITE_COUNT_MAX) ? m.n : by.length;
@@ -5739,6 +5863,13 @@ export const starRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, STAR_HZ
 /** The law's bounds, pinned equal (starfallLaw.js STAR_PER_NIGHT, STAR_WAVES, STAR_LEVEL_MAX, STAR_KILLS_WIRE_MAX,
  *  STAR_BLOWS_WIRE_MAX, STAR_TOP_MAX, STAR_ACCOUNTS_MAX, STAR_LIGHT and the phases' count). */
 export const STAR_STARS_MAX = 3;
+/** WW5: the lanes a star's number spans on the wire - THEATRE_COUNT (world/worldWide/worldGrid.js), restated (the relay's
+ *  bundle reads no world/ module) and pinned equal to net/starfall/starfallLaw.js STAR_LANES. A night's stars are numbered
+ *  a lane at a time: lane `t`'s three are t * STAR_STARS_MAX + 0..2, so the Bay's are the 0, 1 and 2 they always were. */
+export const STAR_LANES_WIRE = 10;
+/** WW5: a star's number and pixel as the wire admits them - a lane that stands (SITE_EVENT_LANES), its pixel the lane's
+ *  (siteEventPixelOk: the Bay's map for the Bay's three, a world pixel past it for a province's). */
+export const starWireOk = (k, px, py) => Number.isInteger(k) && k >= 0 && k < STAR_STARS_MAX * STAR_LANES_WIRE && siteEventPixelOk(Math.floor(k / STAR_STARS_MAX), px, py);
 export const STAR_WAVES_MAX = 4;
 export const STAR_LEVEL_WIRE_MAX = 60;
 export const STAR_KILLS_MAX = 99;
@@ -5767,8 +5898,8 @@ const flag = (v) => v === 0 || v === 1;
  * it saw the master fall - or null.
  */
 export function validStarIn(m) {
-  if (!m || typeof m !== 'object' || !nightOk(m.n) || !intIn(m.k, 0, STAR_STARS_MAX - 1)) return null;
-  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !intIn(m.lv, 1, STAR_LEVEL_WIRE_MAX)) return null;
+  if (!m || typeof m !== 'object' || !nightOk(m.n) || !starWireOk(m.k, m.px, m.py)) return null;   // WW5: a lane's star on its own lane's pixel
+  if (!intIn(m.lv, 1, STAR_LEVEL_WIRE_MAX)) return null;
   if (!flag(m.s) || !flag(m.o) || !flag(m.mf) || !intIn(m.kw, 0, STAR_WAVES_MAX) || !intIn(m.kn, 0, STAR_KILLS_MAX) || !intIn(m.wc, 0, STAR_WAVES_MAX) || !intIn(m.hb, 0, STAR_BLOWS_MAX)) return null;
   return { n: m.n, k: m.k, px: m.px, py: m.py, lv: m.lv, s: m.s, o: m.o, kw: m.kw, kn: m.kn, wc: m.wc, hb: m.hb, mf: m.mf };
 }
@@ -5777,9 +5908,11 @@ export const STAR_OUT_KINDS = Object.freeze(['st', 'hd', 'rc', 'hds']);
 /** A receipt's bound on the wire and its shape (net/starfall/starReceipt.js STAR_RECEIPT_MAX, STAR_RECEIPT_V - pinned equal). */
 export const STAR_RECEIPT_WIRE_MAX = 400;
 const STAR_RECEIPT_RE = /^j1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
-/** The held stars the hub keeps and says at a hello - a night's and the night before's, three each, and room. */
-export const STAR_HELD_MAX = 12;
-const starWhere = (m) => nightOk(m.n) && intIn(m.s, 0, STAR_STARS_MAX - 1) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499);
+/** The held stars the hub keeps and says at a hello - a night's and the night before's, three each, and room. WW5: each
+ *  lane's that stands (SITE_EVENT_LANES' nine - 54) and the room; the hub says the Bay's first (net/starfall/starfallLaw.js
+ *  starHeldOrder), so an older client, which reads the list's first twelve, reads every one of the Bay's it ever could. */
+export const STAR_HELD_MAX = 60;
+const starWhere = (m) => nightOk(m.n) && starWireOk(m.s, m.px, m.py);   // WW5: a lane's star on its own lane's pixel
 const msOk = (v) => Number.isSafeInteger(v) && v >= 0;
 /** The names a held star carries, junk never hiding one (the rite's AUDIT WB12d L8). */
 const starTopOf = (top) => (Array.isArray(top) ? top.filter((x) => typeof x === 'string' && x).slice(0, STAR_TOP_WIRE_MAX).map(sanitizeName) : []);
@@ -5888,6 +6021,12 @@ export const owRoomGate = (bucket, nowMs) => tokenGate(bucket, nowMs, OW_ROOM_HZ
  *  law), so a client says none to it. 127, never 125 or 126: RELAY_VERSION's history says why. */
 export const OW_RELAY_MIN = 127;
 export const relaySupportsOverworld = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= OW_RELAY_MIN; };
+/** SPAWN-WORLD (2026-10-26, folded into world270 while it is undeployed): the first relay whose `dg` row reads a pixel
+ *  past the Bay (owWireRow). An older one refuses the whole word for one such row - `bad ow`, the socket closed - so a
+ *  client says a row past the Bay to it never (net/online.js owWorldOk). It moves with world270's row if a merge
+ *  renumbers it. */
+export const OW_WORLD_RELAY_MIN = 276;   // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 since the second merge of main into #1184 (past CHAT-POST's world270, main's)
+export const relaySupportsOwWorld = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= OW_WORLD_RELAY_MIN; };
 /** A cell's storage key for its ledger - never under `world:`, the prefix a cell's alarm sweeps (a world room's memory). */
 export const OW_LEDGER_KEY = 'ow:led';
 // GRAVE-PARTY (FIELD BUGS 2026-10-16b): THE GRAVES' SEARCHES, the ledger's third kind (net/overworldLaw.js owFoldGraves):
@@ -5926,7 +6065,7 @@ export const OW_GRAVE_ACCT_MAX = 128;
 export function owGraveIn(r) {
   if (!Array.isArray(r) || r.length !== 3) return null;
   const [px, py, n] = r;
-  return intIn(px, 0, 999) && intIn(py, 0, 499) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;
+  return worldPixelOk(px) && worldPixelOk(py) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;   // AUDIT RELEASE R2-3: a headstone past the Bay (a lair's graveyard) is the world's pixel
 }
 /** A searched grave as a cell says it - `[px, py, n, minute, acct, name]` - or null. The name (AUDIT GRAVE-PARTY G5) is the
  *  searching CHARACTER's, the token's own (NAME_MAX), '' where the relay held none: the lock is the account's, and a game
@@ -5942,13 +6081,16 @@ export const cellOfRoom = (key) => (isCellRoom(key) ? String(key).slice(6).split
 export const owWireId = (id) => typeof id === 'string' && (OW_BAND_ID_RE.test(id) || OW_RAIDER_ID_RE.test(id));
 /**
  * A spawned dungeon's row, projected: `[px, py, seen]` or `[px, py, seen, cleared]` - a map pixel and the two clocks in
- * shared classic minutes (a null fourth is none: JSON's own spelling of a missing one) - or null.
+ * shared classic minutes (a null fourth is none: JSON's own spelling of a missing one) - or null. SPAWN-WORLD
+ * (2026-10-26): the pixel the world's (worldPixelOk) - the spawns stand past the Bay too, and their clocks are their
+ * cell's as the Bay's are; it was the Bay's 1000 x 500 (a client says one past it only to the relay that reads it,
+ * OW_WORLD_RELAY_MIN - an older one refuses the whole word, and closes the socket on it).
  * @param {unknown} r @returns {number[]|null}
  */
 export function owWireRow(r) {
   if (!Array.isArray(r) || (r.length !== 3 && r.length !== 4)) return null;
   const [px, py, seen, cleared] = r;
-  if (!intIn(px, 0, 999) || !intIn(py, 0, 499) || !finite(seen) || seen < 0) return null;
+  if (!worldPixelOk(px) || !worldPixelOk(py) || !finite(seen) || seen < 0) return null;
   if (r.length === 3 || cleared === null) return [px, py, seen];
   return finite(cleared) && cleared >= 0 ? [px, py, seen, cleared] : null;
 }
@@ -6015,8 +6157,12 @@ export function validOwOut(m) {
 export const SERPENT_KINDS = Object.freeze(['in', 'hit', 'held', 'esc', 'wr', 'site', 'vt']);   // INT13: `vt` - my hull, in my own word
 /** What the cell (or the hub) says back (the client drops any other kind): the whole state, a leg of its swim, a change
  *  in how it rides the sea, an attack begun, its health, a phase's turn, a coil wound / its health / broken / crushed /
- *  slipped, the maelstrom formed, the kill, the sounding, a refusal, a receipt. */
-export const SERPENT_OUT_KINDS = Object.freeze(['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt', 'bd']);   // INT13: `bd` - the relay's count has wrecked my ship (enforced)
+ *  slipped, the maelstrom formed, the kill, the sounding, a refusal, a receipt. WW7-12 (bible/03-World/World-Wide.md;
+ *  the owner, 2026-10-26, on the serpent rising on the world's lanes: "Fucking do it"): and the HUB's `at` - where the
+ *  accounts that found the serpent agree it lies (net/serpent/serpentHerald.js serpentAtWord: the `site` words folded,
+ *  GATE_SITE_AGREE of them), told to every game online, so a game that cannot roll the site over the world's lanes (the
+ *  land past the Bay off, or its picture still coming) rises its serpent where the rest do. */
+export const SERPENT_OUT_KINDS = Object.freeze(['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt', 'bd', 'at']);   // INT13: `bd` - the relay's count has wrecked my ship (enforced)
 /** The serpent frames' own bucket: the brain's SERPENT_HIT_HZ_MAX (6) gathered volleys, the `in`, a coil's word, slack. */
 export const SERPENT_HZ_MAX = 10;
 export const serpentGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SERPENT_HZ_MAX);
@@ -6199,6 +6345,10 @@ function serpentOutOf(m) {
     }
     case 'gone': return spMs(m.at) ? { k: 'gone', at: m.at } : null;
     case 'no': return SERPENT_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
+    // WW7-12: the hub's word of the agreed site - the day, its native point (the word's site, spSite's bounds) to the whole
+    // unit, the port it lies off (the `site` word's own law, validSerpentIn)
+    case 'at': return Number.isSafeInteger(m.d) && m.d >= 0 && Number.isSafeInteger(m.sx) && Number.isSafeInteger(m.sz)
+      && typeof m.pl === 'string' && /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'at', d: m.d, pl: m.pl } : null;
     case 'rcpt': return typeof m.r === 'string' && m.r.length <= SERPENT_RECEIPT_WIRE_MAX && SERPENT_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
     default: return null;
   }
@@ -6246,10 +6396,32 @@ export const relaySupportsSd = (v) => { const m = /^world(\d+)$/.exec(typeof v =
 
 /** A record's phases, in the order a Hollow lives them (net/superDungeon/sdLaw.js derives the phase at an instant from them). */
 export const SD_PHASES = Object.freeze(['risen', 'found', 'fell', 'gone']);
-/** The census's regions: a region is its channel (CHAT_REGION_COUNT - the politic map's 62). */
+/** The census's regions: a region is its channel (CHAT_REGION_COUNT - the politic map's 71). WW5: every region of the
+ *  world - a crowd in Skyrim counts, and draws Skyrim's Hollow (each lane's census its own regions: sdLaneRegionOk). */
 export const SD_REGION_COUNT = CHAT_REGION_COUNT;
 /** The highest slot a record may carry - nine digits, the room key's bound. */
 export const SD_SLOT_MAX = 999_999_999;
+/** WW5 (bible/03-World/World-Wide.md WW5): A HOLLOW'S SLOT IN EVERY THEATRE - each lane that stands (SITE_EVENT_LANES: the
+ *  Bay's, the eight provinces'; Cyrodiil's open zone none) keeps its own director, one Hollow at a time, and numbers its
+ *  slots in its own span: lane `t`'s are t * SD_LANE_SPAN + 1, + 2 ... So the Bay's are the 1, 2, 3 they always were -
+ *  every realm, receipt, spoils key and sd_kills row keeps its number - and every slot is still one Hollow's whole
+ *  identity, its room `sd:<s>` nine digits at most (lane 8's ten million Hollows end at 89,999,999). */
+export const SD_LANE_SPAN = 10_000_000;
+/** WW5: the lane slot `s` is on. */
+export const sdLaneWire = (s) => Math.floor(s / SD_LANE_SPAN);
+/** WW5: does lane `lane` keep a Hollow (SITE_EVENT_LANES). */
+export const sdLaneOpen = (lane) => siteEventLaneOpen(lane);
+/** WW5: a slot as a client or a realm may name one - a whole number past its lane's zero, on a lane that stands. */
+export const sdSlotOk = (s) => intIn(s, 1, SD_SLOT_MAX) && s % SD_LANE_SPAN !== 0 && sdLaneOpen(sdLaneWire(s));
+/** WW5: the census's region a lane's Hollow may rise in - the Bay's lane a Bay region (0..61, as it always was), a
+ *  province's lane its own province's region (WW-R: 61 + its theatre), or -1 on either: its great cities. */
+export const sdLaneRegionOk = (lane, r) => Number.isSafeInteger(r) && (r === -1 || (lane === 0 ? r >= 0 && r < CHAT_BAY_REGIONS : r === CHAT_BAY_REGIONS - 1 + lane));
+/** WW5: the frame kind a lane past the Bay's record rides (`{t:'sd', k:'ln', ...rec}`) - an older client drops a kind it
+ *  does not know, so it never reads a province's Hollow as the Bay's (`ev`, the Bay's lane's alone, as it always was). */
+export const SD_LANE_KIND = 'ln';
+/** WW5: a hub record kept a lane (its record, its highest slot, its herald's state; a cell's owed find): the Bay's lane's
+ *  under its own key, as it always was, a province's under `<key>:<lane>` (gateLaneKey's law). */
+export const sdLaneKey = (key, lane = 0) => (lane ? `${key}:${lane}` : key);
 /** The most fighters a fall may count (the gate's seat bound). */
 export const SD_FIGHTERS_MAX = 256;
 
@@ -6268,11 +6440,12 @@ export function validSdRecord(v) {
   const r = /** @type {any} */ (v);
   if (!Number.isSafeInteger(r.s) || r.s < 0 || r.s > SD_SLOT_MAX) return null;
   if (!SD_PHASES.includes(r.ph)) return null;
-  if (!Number.isSafeInteger(r.r) || r.r < -1 || r.r >= SD_REGION_COUNT) return null;
+  const lane = sdLaneWire(r.s);   // WW5: a lane's record, its slot in its lane's span
+  if (!sdLaneOpen(lane) || !sdLaneRegionOk(lane, r.r)) return null;
   if (!sdMs(r.at) || !sdMs(r.until) || !sdMs(r.next)) return null;
   /** @type {SdRecord} */
   const out = { s: r.s, ph: r.ph, r: r.r, at: r.at, until: r.until, next: r.next };
-  if (out.s === 0 && out.ph !== 'gone') return null;
+  if (out.s % SD_LANE_SPAN === 0 && out.ph !== 'gone') return null;   // a lane's zero is its hub's own first beat
   if (r.foundAt != null) { if (!sdMs(r.foundAt)) return null; out.foundAt = r.foundAt; }
   if (r.fb != null) out.fb = sanitizeName(r.fb);
   if (r.inAt != null) { if (!sdMs(r.inAt)) return null; out.inAt = r.inAt; }   // SD-THROUGH: the first soul through its Rift
@@ -6291,7 +6464,7 @@ export function validSdRecord(v) {
 export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt', 'rz']);   // INT12: `vt` - my body, in my own word; AUDIT WORLD-EVENTS L1-1: `rz` - my Resurrect at a fallen fighter's body, for the realm to record
 /** What the relay says: `ev`, the hub's record; `pz` (SD6b), the realm's Orrery; SD8b: the fight's words (a client drops
  *  any other kind). */
-export const SD_OUT_KINDS = Object.freeze(['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd']);   // INT12: `bd` - the relay's count has fallen me (enforced)
+export const SD_OUT_KINDS = Object.freeze(['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd', SD_LANE_KIND]);   // INT12: `bd` - the relay's count has fallen me (enforced); WW5: `ln` a province's record
 /** SD8b: THE FIGHT'S BRAIN, by number (the gate's law, AUDIT WBX R7) - said on every `in`, refused below SD_BRAIN_MIN: a
  *  client that does not know the Remnant's blows would judge each a miss. 1 is SD8's: the Walking Hour, the Dragon Break,
  *  the Last Moment, the Hour's own blows. */
@@ -6340,7 +6513,7 @@ export const sdRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_HZ_MAX
 export function validSdIn(m) {
   if (!m || typeof m !== 'object' || !SD_KINDS.includes(m.k)) return null;
   if (m.k === 'pz') return intIn(m.i, 0, SD_PZ_STONES - 1) && (m.a === 1 || m.a === -1) && intIn(m.q, 0, SD_PZ_Q_MAX) ? { k: 'pz', i: m.i, a: m.a, q: m.q } : null;
-  if (m.k === 'found') return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found', s: m.s, px: m.px, py: m.py } : null;
+  if (m.k === 'found') return sdSlotOk(m.s) && siteEventPixelOk(sdLaneWire(m.s), m.px, m.py) ? { k: 'found', s: m.s, px: m.px, py: m.py } : null;   // WW5: a lane's Hollow on its own lane's pixel
   if (m.k === 'spent') return intIn(m.s, 1, SD_SLOT_MAX) ? { k: 'spent', s: m.s } : null;   // SD9a: a slot's spoils taken
   if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT12: my body's share, thousandths
   if (m.k === 'rz') return typeof m.to === 'string' && ID_RE.test(m.to) ? { k: 'rz', to: m.to } : null;   // AUDIT WORLD-EVENTS L1-1: the account I raise
@@ -6456,9 +6629,11 @@ export function validSdOut(m) {
     if (m.w === 1) out.w = 1;
     return out;
   }
-  if (m.k !== 'ev') return validSdFightOut(m);   // SD8b: the realm's fight
+  if (m.k !== 'ev' && m.k !== SD_LANE_KIND) return validSdFightOut(m);   // SD8b: the realm's fight
   const r = validSdRecord(m);
-  return r && r.s > 0 ? { k: 'ev', ...r } : null;
+  // WW5: the Bay's lane's record is `ev`, a province lane's `ln` - never one read as the other
+  if (!r || r.s % SD_LANE_SPAN === 0 || (m.k === 'ev') !== (sdLaneWire(r.s) === 0)) return null;
+  return m.k === 'ev' ? { k: /** @type {const} */ ('ev'), ...r } : { k: /** @type {const} */ ('ln'), ...r };
 }
 /** The doors between objects (HCC-PARK's doors' law - the public worker forwards /room/<key> alone): the hub asking a
  *  region channel its census, a cell telling the hub a find, and the Worker or a realm asking the hub its record. */
@@ -6514,7 +6689,9 @@ export function validSdInTell(v) {
 /** SD9a: where the hub keeps an account's Hour receipt for its hello (its latest, a receipt's life) - outside every
  *  swept prefix but its own; how long an earner who stood in the realm at the kill is left to its floor first. */
 export const SD_RC_PREFIX = 'sdrc:';
-export const sdReceiptKey = (sub) => `${SD_RC_PREFIX}${sub}`;
+/** WW5: one a LANE (the account's latest of each theatre's Hollows - a province's slot, numbered past every Bay slot, never
+ *  stands over the Bay's): the Bay's lane's under the key it always had. */
+export const sdReceiptKey = (sub, lane = 0) => (lane ? `${SD_RC_PREFIX}${sub}.${lane}` : `${SD_RC_PREFIX}${sub}`);
 export const SD_HERE_HOLD_MS = 2 * 60 * 1000;
 /**
  * A cell's find, as told to the hub - the claim (`s`, `px`, `py`), the finder's pose as the cell's socket stood it (`x`,
@@ -6522,7 +6699,7 @@ export const SD_HERE_HOLD_MS = 2 * 60 * 1000;
  * sdFindBelieved).
  */
 export function validSdFoundTell(b) {
-  if (!b || typeof b !== 'object' || !intIn(b.s, 1, SD_SLOT_MAX) || !intIn(b.px, 0, 999) || !intIn(b.py, 0, 499)) return null;
+  if (!b || typeof b !== 'object' || !sdSlotOk(b.s) || !siteEventPixelOk(sdLaneWire(b.s), b.px, b.py)) return null;   // WW5: a lane's find on its lane's pixel
   if (!Number.isFinite(b.x) || !Number.isFinite(b.z) || typeof b.fb !== 'string') return null;
   return { s: b.s, px: b.px, py: b.py, x: b.x, z: b.z, fb: sanitizeName(b.fb) };
 }
@@ -6678,7 +6855,10 @@ const egText = (s, max = 64) => (typeof s === 'string' && s.length <= max ? sani
  *  site - its pixel, its foot in that pixel's own frame (metres from the pixel's corner, the gate's spot's frame - the
  *  height the world frame's) and its turn; exported for the cell's arch word (scenes/eliteGates/egArch.js validEgArchWord). */
 export function egSite(s) {
-  if (!s || typeof s !== 'object' || !intIn(s.px, 0, 999) || !intIn(s.py, 0, 499)) return null;
+  // AUDIT RELEASE R2-2 (bible/01-Overview/audits/Audit-Release-R2.md): the arch's pixel is the WORLD's (worldPixelOk), not the
+  // Bay's 0..999 x 0..499 - past the Bay a Weir Key was staked and its `open` never left the client (validEgIn refused the
+  // site), the key handed back by its void a minute later
+  if (!s || typeof s !== 'object' || !worldPixelOk(s.px) || !worldPixelOk(s.py)) return null;
   if (![s.x, s.y, s.z].every((v) => finite(v) && Math.abs(v) <= 1e7) || !finite(s.yaw) || Math.abs(s.yaw) > 8) return null;
   return { px: s.px, py: s.py, x: s.x, y: s.y, z: s.z, yaw: s.yaw };
 }
@@ -6973,6 +7153,12 @@ export function validEgOpenTell(v) {
 /** The relay that keeps ships (RELAY_VERSION world255 - world253 on its branch). */
 export const KT_RELAY_MIN = 255;
 export const relaySupportsKetch = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= KT_RELAY_MIN; };
+/** KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): the first relay that keeps a ship of a station past the
+ *  Bay (its voyage's number naming its theatre - ketchLaw.js ketchTheatreOf); an older one mints no room for its voyage (its
+ *  clock reads that number as a voyage a hundred thousand years on), so a client boards none of them there and stands only
+ *  the Bay's. The world-wide relay's one number (WORLD_WIDE_RELAY_MIN - shipped in it). */
+export const KT_THEATRES_RELAY_MIN = WORLD_WIDE_RELAY_MIN;
+export const relaySupportsKetchTheatres = relaySupportsWorldWide;
 /** What a member may say: its `in` to the bridge's fight, a blow (`hit`), a cell taken, set, let go or knocked from its
  *  hands, and its body's word (`vt`). */
 export const KT_IN_KINDS = Object.freeze(['in', 'hit', 'pick', 'bank', 'drop', 'hurt', 'vt', 'spent', 'rz']);   // AUDIT WORLD-EVENTS L1-4: `rz` my Resurrect at a crewmate lying down   // AUDIT KETCH L1-2: `spent`, a voyage's share given - to the hub alone
@@ -7102,7 +7288,10 @@ export const KT_VOYAGE_KEY = 'ktvoyage';
  *  `{ n, spent: true, e }` once its account says that voyage's share is given (`kt` `spent`, on the hub's socket) - for
  *  the receipt's life, handed at its account's next hello (the Hour's SD9a, rung for rung). */
 export const KT_RC_PREFIX = 'ktrc:';
-export const ketchReceiptKey = (sub) => `${KT_RC_PREFIX}${sub}`;
+/** KETCH-EVERYWHERE: one a STATION (net/ketch/ketchLaw.js ketchTheatreOf - the gate's receipt-a-lane, gateReceiptKey): the
+ *  Bay's station's key the one it always was, and a station past the Bay keeps its own - two voyages of one round are two
+ *  receipts, and one sailed over another province never stands over the other's. */
+export const ketchReceiptKey = (sub, theatre = 0) => (theatre ? `${KT_RC_PREFIX}${sub}.${theatre}` : `${KT_RC_PREFIX}${sub}`);
 /** The hub's internal door a ship's room tells its fall's receipts at, and how long it waits to tell again. */
 export const KT_INTERNAL_RC = '/internal/ketch/rc';
 export const KT_TELL_RETRY_MS = 30_000;
