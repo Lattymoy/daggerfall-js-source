@@ -342,7 +342,7 @@ test('IC-STUTTER THE LIVING TOWN\'S PLACES AND THE STREETS\' PIECES A STEP AT A 
 test('IC-STUTTER THE HOST - the town\'s places awaited a step at a time through the build\'s breather (its yards\' measures, ground, search and the professions\'), the living town handed its places and the streets\' pieces flooded before the pixel stands (mutants: the measures in one; the living town\'s places unhanded; the flood unwired)', () => {
   const w = read('src/scenes/world.js'), pb = read('src/scenes/pixelBuild.js');
   assert.match(w, /async function townPlacesFor\(dfLocation, lefaySpot, people, loc = null, shut = null, breathe = async \(\) => \{\}\) \{/);
-  assert.match(w, /\.\.\.await stepsBreathing\(yardMeasuresSteps\(yl, \{/);
+  assert.match(w, /\.\.\.await stepsBreathing\(yardMeasuresSteps\(shut\?\.yardLayout\?\.\(yl\) \?\? yl, \{/);   // PIN MOVED (FB1028 YARDS Y1): the yards' layout
   assert.match(w, /\}\), breathe\),\n\s+keep: lefaySpot/);
   assert.match(pb, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, yardShut, \(\) => breather\.breathe\(\)\) : null;/);   // PIN MOVED (FB1028): the yards' own shut
   assert.match(pb, /if \(livingWorldOn\(\)\) livingOf\.places = await livingTownPlaces\(nav, livingOf, \(\) => breather\.breathe\(\)\);/);

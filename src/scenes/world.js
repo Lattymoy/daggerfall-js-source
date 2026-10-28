@@ -4015,7 +4015,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try {
       const yl = loc && isEnhanced() && windmillsOn() ? loc : layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
       const measures = {
-        ...await stepsBreathing(yardMeasuresSteps(yl, {
+        ...await stepsBreathing(yardMeasuresSteps(shut?.yardLayout?.(yl) ?? yl, {   // FB1028 YARDS Y1: the gates' things as #1184 laid them
           boxOf: (id, at) => placedModelBox(id, at, {
             custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),   // BAY-LEFT-SEA: a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
             classic: (cid) => dfMeshSize(classicModelIdOf(cid)),

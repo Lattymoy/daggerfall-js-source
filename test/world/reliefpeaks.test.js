@@ -22,7 +22,7 @@ import {
 } from '../../src/world/tamriel/tamrielRanges.js';
 import { landformLattice, tamrielLandformAt, ORIENT_FULL, STRUCTURE_REACH } from '../../src/world/tamriel/tamrielLandforms.js';
 import { nodeGround, centreGround, nodeGroundAt, meanGroundField, groundTopOf, cliffFadeAt, groundMovedField, createLandforms, LANDFORM_KNEE, CONTINENT_CEILING, LANDFORM_CEILING, reliefLift, continentLift, CONTINENT_LIFT } from '../../src/world/landforms.js';
-import { kernelTerms, sampleKernel, cubicInterpolator, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, GROUND_FRAME_LAW, LIFT_FRAME_LAW, RECORD_GROUND_STAMP } from '../../src/world/terrain/terrainSampler.js';
+import { kernelTerms, sampleKernel, cubicInterpolator, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, GROUND_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW, RECORD_GROUND_STAMP } from '../../src/world/terrain/terrainSampler.js';
 import { farFieldCell, buildFarFieldBytes } from '../../src/world/terrain/midRingGrid.js';
 import { ringGroundAt, ringHeight } from '../../src/render/farRing.js';
 import { redMountainFrame, redMountainLiftAt, redMountainNodeLift } from '../../src/world/tamriel/redMountain.js';   // RED-MOUNTAIN: Red Mountain, the merge's one
@@ -294,8 +294,8 @@ test('RELIEF-PEAKS the far views\' wiring (by source): the far ring\'s grid on r
 // ── THE RECORDS PAST THE BAY ──────────────────────────────────────
 
 test('RELIEF-PEAKS the records\' frame (GROUND_FRAME_LAW 3): a record past the Bay written before it stood DFU\'s ground of its day, so it rides that ground\'s own move - with the row on or off, its height over the ground kept; a stamped record and the Bay\'s take none; D5\'s old lift still LIFT_FRAME_LAW\'s (mutants: the move dropped; dropped with the row off; taken by a stamped record; taken on the Bay; the old lift by the new law)', () => {
-  assert.deepEqual([GROUND_FRAME_LAW, LIFT_FRAME_LAW], [3, 2]);
-  assert.equal(RECORD_GROUND_STAMP.groundFrame, 3);
+  assert.deepEqual([GROUND_FRAME_LAW, RELIEF_FRAME_LAW, LIFT_FRAME_LAW], [4, 3, 2]);   // PIN MOVED (FB1028 TOWN-GROUND): the stamp 4, RELIEF-PEAKS' own law RELIEF_FRAME_LAW (test/world/terrain/fb1028_townground_frame.test.js)
+  assert.equal(RECORD_GROUND_STAMP.groundFrame, 4);
   const now = (x) => 100 + x, before = (x) => 40 + x, moved = (x) => 25 + x / 4;   // the lift now and on the old law's ground; DFU's ground's move
   const liftAt = (x, z, o = {}) => (o.before ? before(x) : now(x));
   const ground = 500;   // DFU's ground today at the spot: ground - moved(x) when the record was written
@@ -352,7 +352,7 @@ test('RELIEF-PEAKS the records\' wiring (by source): the host hands its frame th
     assert.equal(k({ ranges: false }), sampleKernel(g, px, py, 129, true, createLandforms({ woods: g, ranges: false }))(64, 64) * MAX_TERRAIN_HEIGHT);
   });
   const host = read('src/scenes/groundFrameHost.js'), w = read('src/scenes/world.js'), lf = read('src/world/landforms.js');
-  assert.match(host, /movedAt: groundMovedAt \}\);/);
+  assert.match(host, /movedAt: groundMovedAt, townMovedAt \}\);/);   // PIN MOVED (FB1028 TOWN-GROUND): the town's blend's move handed beside it
   assert.match(host, /moved = groundMovedField\(woods, px, py, rect\);/);
   assert.match(host, /const t = host\.state\.pixelTranslation\(px, py\), rect = liftRectAt\(px, py\);\n\s+const key = `\$\{px\},\$\{py\},\$\{rect \?/);
   assert.match(w, /climates: _landformClimates, ranges: !before \}\) : null\);/);

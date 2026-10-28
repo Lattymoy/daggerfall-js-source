@@ -62,13 +62,14 @@ function length({ passage = false, tall = false } = {}) {
   return modelOf(faces);
 }
 /** A bend through a tower at the origin facing +z: a length west of it ending in its middle (its turret there), a length
- *  or a gate east of it beginning there, the line turned `deg` degrees (convex), `stretch` the east piece's. */
+ *  or a gate east of it beginning there, the line turned `deg` degrees (convex), `stretch` the east piece's. AUDIT FB1028:
+ *  the tower grown across as wallPieces mints it (`thick`, never under 1 + TOWER_PROUD / 4.8). */
 function bend(deg, { east = WALL_MODELS.wall, stretch = 1 } = {}) {
   const f = (deg * Math.PI) / 360, c = Math.cos(f), s = Math.sin(f), L = 12.8;
   return [
     { model: WALL_MODELS.wall, at: /** @type {[number, number]} */ ([-L * c, -L * s]), out: /** @type {[number, number]} */ ([-s, c]), stretch: 1 },
     { model: east, at: /** @type {[number, number]} */ ([L * stretch * c, -L * stretch * s]), out: /** @type {[number, number]} */ ([s, c]), stretch },
-    { model: WALL_MODELS.tower, at: /** @type {[number, number]} */ ([0, 0]), out: /** @type {[number, number]} */ ([0, 1]), stretch: 1 },
+    { model: WALL_MODELS.tower, at: /** @type {[number, number]} */ ([0, 0]), out: /** @type {[number, number]} */ ([0, 1]), stretch: 1, thick: (4.8 / c + walls.TOWER_PROUD) / 4.8 },
   ];
 }
 
@@ -178,9 +179,9 @@ function openings(m, towers) {
   return { back, none };
 }
 /** The wall as TS8 stood it: each piece's model whole, side by side. */
-/** The pieces each made alone, as #1184 made them - FB1028's bend towers not grown across (`thick`). */
-const whole = (pieces, classic) => {
-  const parts = pieces.map(({ thick, ...p }) => townWallModel([p], classic));
+/** The pieces each made alone, as #1184 made them - FB1028's bend towers not grown across (`thick`); `grown`, as grown. */
+const whole = (pieces, classic, grown = false) => {
+  const parts = pieces.map(({ thick, ...p }) => townWallModel([grown ? { ...p, thick } : p], classic));
   const n = parts.reduce((s, m) => s + m.positions.length / 3, 0), positions = new Float32Array(n * 3), indices = [];
   let v0 = 0;
   for (const m of parts) { positions.set(m.positions, v0 * 3); for (const i of m.indices) indices.push(i + v0); v0 += m.positions.length / 3; }
@@ -197,10 +198,11 @@ test('WALL-FLICKER the cut: a length\'s and a gate\'s faces cut clear of a bend 
   const straight = bend(0);
   const was = fights(whole(straight, classic), 1e-3);
   assert.ok(Math.abs(was - (4 * 4.8 * 6.45 + 2 * 4.8 * 4.4)) < 0.01, `whole: each length's faces over half of each of the tower's two sides, the turret's too (${was})`);
-  for (const frame of [0, 37]) for (const [deg, what] of [[0, 'straight'], [0.002, 'a hair off straight'], [1, 'a degree'], [8, 'eight degrees'], [50, 'a sharp bend']]) {
+  for (const frame of [0, 37]) for (const [deg, what] of [[0, 'straight'], [0.002, 'a hair off straight'], [1, 'a degree'], [3, 'three degrees, the inner face past the grown body'], [8, 'eight degrees'], [50, 'a sharp bend']]) {
     const pieces = turned(bend(deg), frame), m = townWallModel(pieces, classic), now = fights(m, 0.04);
     assert.ok(now < 1e-6, `${what}, the frame turned ${frame}: no two faces within 4 cm over each other (${now} m2)`);
-    const b = openings(whole(pieces, classic), [pieces[2]]), a = openings(m, [pieces[2]]);
+    // PIN MOVED (AUDIT FB1028): against the pieces made alone as grown - a sharp bend's grown tower alone shows 14 more
+    const b = openings(whole(pieces, classic, true), [pieces[2]]), a = openings(m, [pieces[2]]);
     assert.ok(a.back <= b.back && a.none <= b.none, `${what}, the frame turned ${frame}: no opening seen (${JSON.stringify(b)} whole, ${JSON.stringify(a)} cut)`);
   }
   assert.ok(fights(whole(bend(1), classic), 0.04) > 1, 'a degree, whole: a strip of faces within 4 cm');
@@ -209,9 +211,11 @@ test('WALL-FLICKER the cut: a length\'s and a gate\'s faces cut clear of a bend 
   const g = bend(1, { east: WALL_MODELS.gate, stretch: 1.012 });
   assert.ok(fights(whole(g, classic), 0.04) > 1 && fights(townWallModel(g, classic), 0.04) < 1e-6, 'the gate\'s way: its side clear of the tower\'s');
   // in the tower's body under its crown, the tower alone: its four sides whole, nothing of a length's
-  const inBody = (m) => triangles(m).filter((t) => t.q.every((p) => Math.abs(p[0]) <= 4.8 + 1e-3 && Math.abs(p[2]) <= 4.8 + 1e-3 && p[1] <= CORNER_TOWER.crown + 1e-3)).reduce((s, t) => s + t.area, 0);
-  assert.ok(Math.abs(inBody(townWallModel([straight[2]], classic)) - 4 * 9.6 * CORNER_TOWER.crown) < 0.01, 'the tower: its four sides');
-  for (const deg of [0, 1, 50]) assert.ok(Math.abs(inBody(townWallModel(bend(deg), classic)) - 4 * 9.6 * CORNER_TOWER.crown) < 0.01, `${deg} degrees: the tower whole, nothing else in its body`);
+  // PIN MOVED (AUDIT FB1028): the body as grown across (`thick`), its two sides along that much wider
+  const inBody = (m, th) => triangles(m).filter((t) => t.q.every((p) => Math.abs(p[0]) <= 4.8 + 1e-3 && Math.abs(p[2]) <= 4.8 * th + 1e-3 && p[1] <= CORNER_TOWER.crown + 1e-3)).reduce((s, t) => s + t.area, 0);
+  const sides = (th) => 2 * 9.6 * (1 + th) * CORNER_TOWER.crown;
+  assert.ok(Math.abs(inBody(townWallModel([straight[2]], classic), straight[2].thick) - sides(straight[2].thick)) < 0.01, 'the tower: its four sides');
+  for (const deg of [0, 1, 50]) { const ps = bend(deg), th = ps[2].thick; assert.ok(Math.abs(inBody(townWallModel(ps, classic), th) - sides(th)) < 0.01, `${deg} degrees: the tower whole, nothing else in its body`); }
 });
 
 test('WALL-FLICKER what is kept: a part no bend tower reaches handed back as it was; a tower not of 444\'s measure cuts nothing; a mod\'s length over the crowns keeps its top; no sliver (mutants: always rebuilt; the measure unread; the crown unread; slivers kept)', () => {
