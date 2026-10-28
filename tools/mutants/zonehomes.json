@@ -1,0 +1,47 @@
+[
+  {
+    "name": "ZH-the-zone-ignored",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "export const zoneHouseFree = (inZone, feet, index) => !inZone || (!!feet && settledAt(feet, index));",
+    "new": "export const zoneHouseFree = (inZone, feet, index) => true;",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
+  },
+  {
+    "name": "ZH-a-settlement-refused",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "export const zoneHouseFree = (inZone, feet, index) => !inZone || (!!feet && settledAt(feet, index));",
+    "new": "export const zoneHouseFree = (inZone, feet, index) => !inZone;",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
+  },
+  {
+    "name": "ZH-the-open-country-free",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "export const zoneHouseFree = (inZone, feet, index) => !inZone || (!!feet && settledAt(feet, index));",
+    "new": "export const zoneHouseFree = (inZone, feet, index) => !inZone || !!feet;",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
+  },
+  {
+    "name": "ZH-the-seam-refuses-the-zone",
+    "file": "src/scenes/world.js",
+    "old": "wildNoHouse: () => { if (zoneHouseFree(wildHere(), wildOutdoors() ? campToWire(player.feetAt()) : null, locationIndex)) return false;",
+    "new": "wildNoHouse: () => { if (!wildHere()) return false;",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
+  },
+  {
+    "name": "ZH-the-isle-town-unread",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "bd.hasInterior !== false && !isEtherPlaceId(bd.townMapId ?? 0) && ",
+    "new": "bd.hasInterior !== false && ",
+    "tests": [
+      "test/systems/wild/zonehomes.test.js"
+    ]
+  }
+]

@@ -2,8 +2,8 @@
   {
     "name": "CRYPTSALE-gate-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !isEtherPlaceId(",
+    "new": "  homeCandidate(bd) && !isEtherPlaceId(",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CRYPTSALE-unstamped-refused",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && bd.hasInterior === true && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !isEtherPlaceId(",
+    "new": "  homeCandidate(bd) && bd.hasInterior === true && !isEtherPlaceId(",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
