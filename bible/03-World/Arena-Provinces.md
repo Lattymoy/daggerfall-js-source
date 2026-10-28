@@ -268,8 +268,9 @@ into, a dungeon to go down - and the held map takes the player there.
   `test/systems/audittesa2p_laws.test.js` (P4's), `test/systems/portalbay_stone.test.js`,
   `test/systems/starts/auditstarts.test.js` (U1/U2), `test/systems/starts/start3_pastbay_marks.test.js`,
   `test/tesa2_arena.test.js`, `test/ui/bayleft_marks.test.js` (C2), `test/ui/owpastbay_walk.test.js`, `test/ui/tamriel.test.js`.
-  Mutants `tools/mutants/travel_everywhere.json` (26, all dead); P4's six records retired with its law
-  (`audittesa2p.json`), the rest re-aimed by content. The refusal's words (`travel.pastBay.refused`) left every language's
+  Mutants `tools/mutants/travel_everywhere.json` (23, all dead); P4's six records retired with its law
+  (`audittesa2p.json`), the rest re-aimed by content - at main's merge OW-PLACE-WALK's eight too (`owplacewalk.json`, 13,
+  all dead). The refusal's words (`travel.pastBay.refused`) left every language's
   catalog. THE FOUR HOSTS: `scenes/world.js`'s gate keeps its shape, and its two asks of the law read the pick's `place`,
   no line grown (`test/scenes/hostceiling.test.js`); `scenes/exterior.js` and `scenes/dungeonContext.js` open no travel map;
   `scenes/worldModes.js` opens a driver's map through world.js openImmersiveMap. Nothing crosses the wire.
