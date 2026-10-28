@@ -138,6 +138,17 @@ export function layGateRoads(tilemap, paths, tileData, town, ground = null) {
   return laid;
 }
 
+/** FB1028 YARDS (the owner: every yard where #1184 stood it): the paths as #1184 laid them - the painter's, and the gates'
+ *  roads of the wall it stood (`town.yard`, townGates.js), nothing taken up - for the yards' ground alone; null with no
+ *  such wall. Run before layGateRoads, on copies. @param {Uint8Array} tilemap @param {?Uint8Array} paths
+ *  @param {Uint8Array} tileData @param {any} town */
+export function yardRoads(tilemap, paths, tileData, town) {
+  if (!town?.yard || !paths) return null;
+  const was = Uint8Array.from(paths);
+  layGateRoads(Uint8Array.from(tilemap), was, tileData, town.yard);
+  return was;
+}
+
 /** FB1028 ROADS: a painter's road or track tile - its record one of the two tables' (never a river's or a stream's, never
  *  water) - or a track's mark over dirt (written as nothing, VERGE1). @param {Uint8Array} tilemap @param {number} i */
 const isArmTile = (tilemap, i) => tilemap[i] !== 0xff && (tilemap[i] === 0 || ARM_RECORDS.has(tilemap[i] & 0x3f));

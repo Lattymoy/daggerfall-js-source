@@ -39,7 +39,7 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
 import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
 import { landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: the zones' own flats past the Bay
 import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
-import { layGateRoads } from '../road/gateRoads.js';   // GATE-ROADS: a walled town's gates on their roads
+import { layGateRoads, yardRoads } from '../road/gateRoads.js';   // GATE-ROADS: a walled town's gates on their roads
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -154,7 +154,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const tileData = generateTileData(classic ?? samples, px, py);
   // GRASS-PATH1: the painter's own record of which tiles it wrote, so
   // the grass placer can keep off a path it cannot name by record.
-  let paths = null;
+  let paths = null, yardPaths = null;
   let arenaPainted = false;   // TESA4: whether Arena's roads reached this pixel's paint - the host's sweep asks
   let bridges = null;   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js), past the Bay with the rivers carved
   if (roads) {
@@ -193,6 +193,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
     // GATE-ROADS (world/road/gateRoads.js): a walled town's gates on their roads - after the painter and its smoothing, so
     // Basic Roads' tiles and the ground's heights are their own
+    if (hasLocation && locationRect?.gateRoads) yardPaths = yardRoads(tilemap, paths, tileData, locationRect.gateRoads);   // FB1028 YARDS: #1184's roads
     if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);   // FB1028: on its ground
   }
   // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
@@ -269,6 +270,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     arenaRoads: arenaPainted,   // TESA4: Arena's roads reached its paint - painted again when their layer moves
     wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
     beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line
+    yardPaths,   // FB1028 YARDS: the paths as #1184 laid them, the yards' alone (gateRoads.js yardRoads) - null with no wall of its own
     townGround: locationRect?.mask ?? null,   // TS6: the town's ground (townGroundMask) - its walkers' (world/townShape.js shutOffGround)
     bridges,   // ROAD-LOOK: the bridges this pixel owns (world/road/roadBridges.js bridgesOf) - null on the Bay, or with the rivers uncarved
   };

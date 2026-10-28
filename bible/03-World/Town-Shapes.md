@@ -693,10 +693,16 @@ two lengths of a gate onto the same street - two gates stand two lengths apart a
 a wall (55 walls) each run on to a gate: 95 a gate's road along the inner face, 17 the painter's. Gates 1,513 to 1,568 (55
 walls one more; Daggerfall 5, as it was; the nearest two 57.7 m apart).
 
-**The yards are not held yet.** 310 of the 1,258 yards stand elsewhere (220 cities), none broken - none in or against a
-wall, off its ground or out of reach. Their places read the roads, and the arms taken up and the gates' new roads change
-them: over 44 of those cities, 42 of 49 moves go with the take-up. The owner's decision keeps every yard where #1184 stood
-it; that is open.
+**Every yard where #1184 stood it** (the owner's decision; `gateRoads.js:"export function yardRoads(tilemap, paths, tileData, town) {"`,
+`townWalls.js:"export function townWallYardCellsOf(dfLocation) {"`). A yard's place reads the roads and the wall, and
+the new ones moved 310 of the 1,258 (220 cities; over 44 of them, 42 of 49 moves with the take-up). So the yards read
+what they read at #1184: the paths with no arm taken up and the roads of the gates that wall stood (`townGates.js` hands
+them as `yard`), and that wall's cells - no street's gate, no tower grown (townWall's `yardPieces`). The host shuts the
+yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
+
+Measured over all 410: 1,254 of the 1,258 yards stand on #1184's cells; four stables stand 1 to 4 cells off (Knightsgate, Issaqumbaa, Syra-Kom, Puweyn), their cause not
+yet found. Under the new wall and roads 52 are left where #1184 stood them though they no longer fit: 50 on a gate's new
+road outside the wall, and 2 on the new wall's cells (Knightsmore's Stable, Tigonus's joinery).
 
 **Not changed, and why.** The wall is one model, so its pixel's build stands its 14,600 triangles in one step: 30 to 94 ms
 on the collider, and as much again with the player in town (the late solids' gate, `player/lateSolid.js`, builds a probe of
@@ -706,7 +712,8 @@ inside crosses the town's open cells as its fabric's road, and is left for its o
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from Daggerfall's wall pieces - no door where the wall is a model of
 the town's own, a length cut at a bend and its tower grown across; from Basic Roads' tiles on a Bay wall's ground. Tests
-`test/world/fb1028_walls.test.js` (8, two on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (25, all dead). PINS
+`test/world/fb1028_walls.test.js` (9, three on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (31, all dead). PINS
 MOVED: `test/world/gateroads.test.js` (the kernel handed the town's ground), `test/world/townbends.test.js` (a tower's
-footprint as wide as it stands); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,
-TF-the-length-and-thickness-swapped, TW-the-turn-mirrored.
+footprint as wide as it stands); `baywalls`, `ic_stutter`, `merchantyards1`, `shipyards1_found` (the host hands the
+places the yards' shut); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,
+TF-the-length-and-thickness-swapped, TW-the-turn-mirrored, TB-the-walk-unshared, TF-the-wall-unwired, TS10-key-blind.

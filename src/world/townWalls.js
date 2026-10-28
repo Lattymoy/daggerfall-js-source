@@ -346,9 +346,11 @@ export function townWall(dfLocation, templateNames, rmbOf, paths = null) {
   const streetWays = town ? streetGates(pts, town, onStreets) : [];   // FB1028 ROADS: and a gate where a street of the town's runs into the wall
   const ways = [...onStreets, ...streetWays];
   const pieces = roads.length ? wallPieces(pts, c, ways, { onLine: true }) : wallPieces(pts, c, gates);
+  // FB1028 YARDS (the owner: every yard where #1184 stood it): the pieces as #1184 stood them - no street's gate, no tower grown
+  const was = streetWays.length ? wallPieces(pts, c, onStreets, { onLine: true }) : pieces, yardPieces = was.map((p) => ({ ...p, thick: 1 }));
   const [outM, alongM] = TOWN_WALL.marker;
   const markers = pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
-  return { line: pts, gates, frames, middle: c, pieces, markers, roads, ways, streetWays };
+  return { line: pts, gates, frames, middle: c, pieces, markers, roads, ways, streetWays, yardPieces };
 }
 
 /**
@@ -1045,6 +1047,11 @@ export function townWallCellsOf(dfLocation) {
   const wall = kept.of();
   return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;
 }
+/** FB1028 YARDS: the cells of a city's wall as #1184 stood it (townWall's `yardPieces`) - its yards' ground. @param {any} dfLocation */
+export function townWallYardCellsOf(dfLocation) {
+  const cells = townWallCellsOf(dfLocation), held = cells ? _walls.get((dfLocation.mapTableData.mapId ?? -1) >>> 0) : null, wall = held?.of();
+  return wall?.yardPieces ? (held.yardCells ??= townWallCells({ pieces: wall.yardPieces }, held.w, held.h)) : cells;
+}
 
 /** PORT-SHIPS (systems/naval/harbourKeep.js): a city's wall as it was registered this session - townWall's (its line, its
  *  pieces: the location's metres from its grid's south-west corner) - or null for a town with no wall of its own. */
@@ -1138,19 +1145,19 @@ export function paveOnGrid(nav, paths, tilePos) {
  *  shut past its ground (shutOffGround; `ground` the terrain job's townGround - null, none shut) and on its wall
  *  (shutTownWall); TS10: the paths the terrain painted on its ground its roads (paveOnGrid; `paths` the job's - null,
  *  none). Its `key` says what it reads, for a memo of what was placed on it (scenes/world.js townPlacesFor): a pixel built
- *  again once the roads land places its yards again. @param {any} dfLocation @param {?Uint8Array} ground
- *  @param {?Uint8Array} [paths] */
-export const townWalkShut = (dfLocation, ground, paths = null) => {
+ *  again once the roads land places its yards again. FB1028 YARDS: `yards` shuts the wall as #1184 stood it
+ *  (townWallYardCellsOf). @param {any} dfLocation @param {?Uint8Array} ground @param {?Uint8Array} [paths] @param {boolean} [yards] */
+export const townWalkShut = (dfLocation, ground, paths = null, yards = false) => {
   const relief = reliefOf(dfLocation);
   const shut = (nav) => {
     const origin = getLocationTerrainTileOrigin(dfLocation);
     if (ground) shutOffGround(nav, ground, origin);
     if (paths) paveOnGrid(nav, paths, origin);
-    shutTownWall(nav, townWallCellsOf(dfLocation));
+    shutTownWall(nav, yards ? townWallYardCellsOf(dfLocation) : townWallCellsOf(dfLocation));
     if (relief) shutRelief(nav, relief);
   };
   let h = 0x811c9dc5;   // FNV-1a over the painted tiles' indices
   if (paths) for (let i = 0; i < paths.length; i++) if (paths[i]) h = Math.imul(h ^ i, 0x01000193) >>> 0;
-  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}`;
+  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}${yards ? '|yards' : ''}`;
   return shut;
 };
