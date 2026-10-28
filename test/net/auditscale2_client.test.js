@@ -166,9 +166,9 @@ function channelHost({ storage, online, chatLinks }) {
   const room = span(/ {2}const HUB_SHARDS_SEEN_KEY = 'dfjs\.hubShards';\n(?:[\s\S]*?\n)? {2}const channelLinkRoom = \(room\) => \{[\s\S]*?\n {2}\};\n/, 'channelLinkRoom');
   const off = /^ {2}const channelLinksOffShards = .*$/m.exec(WORLD)?.[0] ?? '';
   const onv = span(/^ {2}const onRelayVersion = .*$/m, 'onRelayVersion');
-  const make = new Function('appStorage', 'online', 'chatLinks', 'storedSession', 'shardOf', 'isChannelBus', 'isChannelShard', 'channelOf', 'hubShardsSupported', 'relaySupportsRite', 'relaySupportsCage', 'relayVersionSeen', 'chatNotice', 'RELAY_RESTART_TEXT',
+  const make = new Function('appStorage', 'online', 'chatLinks', 'storedSession', 'shardOf', 'isChannelBus', 'isChannelShard', 'channelOf', 'hubShardsSupported', 'relaySupportsRite', 'relaySupportsCage', 'relayVersionSeen', 'chatNotice', 'RELAY_RESTART_TEXT', 'noteDragonRelay',   // DRAGON-RIDE: the dragon's ride hears the version too (a no-op here)
     `let _relayKeepsRite = null, _relayKeepsCage = null;\n${room}\n${off}\n${onv}\nreturn { channelLinkRoom, onRelayVersion };`);
-  return make(() => storage, online, chatLinks, () => ({ id: 'acct-mac' }), H.shardOf, H.isChannelBus, H.isChannelShard, H.channelOf, H.hubShardsSupported, () => true, () => true, () => 'same', () => {}, '');
+  return make(() => storage, online, chatLinks, () => ({ id: 'acct-mac' }), H.shardOf, H.isChannelBus, H.isChannelShard, H.channelOf, H.hubShardsSupported, () => true, () => true, () => 'same', () => {}, '', () => {});
 }
 const mapStorage = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); }, m }; };
 

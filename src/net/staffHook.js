@@ -264,7 +264,7 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
     else if (m.dfoStaff === 'regions?') post({ dfoStaff: 'regions', names: mapOf()?.regions() ?? [] });
     else if (m.dfoStaff === 'places?') post(staffPlaces(placesOf()?.maps, m.region));   // STAFF-EVENT: a region's places
     else if (m.dfoStaff === 'here?') post(staffHere(placesOf()?.maps, placesOf()?.pixel ?? null));   // STAFF-EVENT: where I stand
-    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && pilot) { seen = true; pilot(m); }   // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10)
+    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && !('boss' in m) && !('why' in m) && pilot) { seen = true; pilot(m); }   // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10). PILOT-ECHO: my own answer comes back on this window too - heard as an ask it started the steering again on every pass, the panel redrew and called a boss each time, and Leave boss lost to the next pass
   });
   /** @param {string} sub @param {string} room @returns {Promise<string|null>} */
   const askToken = (sub, room) => new Promise((resolve) => {

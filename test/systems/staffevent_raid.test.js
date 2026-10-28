@@ -241,6 +241,7 @@ test('BOSS-CLEAR: Spawn mini boss now is at once, monsters standing or not; the 
   await tick();
   // one nobody can reach never holds it back past two minutes
   raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 6, bd: 1, bu: 1, bk: 1, fc: 1 } }, room);
+  for (const f of log.raiders) if (f.entity.staffBoss) kill(f);   // the call's boss fell (BOSS-ONE: one standing holds the next)
   at.puppets = [{ _pupRaid: KEY, dead: false, entity: {} }];
   raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 6, bd: 1, bu: 0, bk: 0, fc: 2 } }, room);
   assert.notEqual(frame(0.1), 'boss');
@@ -310,7 +311,7 @@ test('BOSS-SPOT (mob 2026-10-25: "spawn it on the highest lvl player", "or large
   assert.equal(staffBossSpot([P('me', 0, 1), ['x', null, 99]])[0], 'me', 'no feet: left out');
   assert.equal(staffBossSpot([]), null);
   const src = rd('src/systems/raidingParties.js');
-  assert.equal(src.split("spawn(raid, 'boss', raid.staff.b, staffBossPlace()); return 'boss'; }").length - 1, 2, 'the meter\'s boss and a lost one both');
+  assert.equal(src.split("spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }").length - 1, 2, 'the meter\'s boss and a lost one both');
   assert.match(src, /return at && at\[0\] !== me \? \{ near: at\[1\] \} : undefined;/);
   assert.ok(rd('src/scenes/raidHost.js').includes("peerFeetInTown: () => [[host.online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(host.peersNear() ?? [])"), 'me first, with my level');   // PIN MOVED (WW6): in scenes/raidHost.js, the host's live names as `host.<name>`
 });
@@ -560,6 +561,7 @@ test('STAFF-PILOT (mob 2026-10-26: "like play as a boss as attack players", card
   restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
   setSharedClock(() => at.now);
   h.peersInTown = () => ['aaa-0001'];
+  h.peerFeetInTown = () => [['mmm-0002', [0, 0, 0], 1], ['a', [500, 0, 500], 1], ['b', [505, 0, 500], 1]];   // PILOT-ON-ME: a bigger group off me
   raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [EV] } }, 'social');
   raidPeerWord('aaa-0001', [[KEY, 0, 60_000]], at.wall);
   assert.equal(frame(2.1), 'standing-by', 'an older claim runs it');
@@ -582,6 +584,14 @@ test('STAFF-PILOT (mob 2026-10-26: "like play as a boss as attack players", card
   for (let i = 0; i < 40 && !staffPilotBoss(); i++) { frame(0.1); await tick(); }
   const boss = staffPilotBoss();
   assert.ok(boss?.entity?.staffBoss, 'Spawn mini boss now stands it on my machine - the boss I steer');
+  assert.equal(boss.o?.near, undefined, 'PILOT-ON-ME: about me, never by the biggest group');
+  // BOSS-ONE: a later call while a boss of the event stands stands no second one
+  const bosses = () => log.raiders.filter((f) => f.entity.staffBoss).length;
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 2 }] } }, 'social');
+  staffEventLedger({ id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 1 });
+  for (let i = 0; i < 20; i++) { frame(0.1); await tick(); }
+  assert.equal(bosses(), 1, 'one boss while one stands');
+  assert.equal(staffPilotBoss(), boss);
   pilotStop();
   assert.equal(staffPilotBoss(), null);
   resetPilot();
@@ -624,8 +634,8 @@ test('STAFF-PILOT: the boss stands where I stand and faces where I look; its own
   boss.dead = true;
   assert.equal(P.pilotLost(null, 2000), 'fell');
   P.pilotStart(EV.id, 0);
-  assert.equal(P.pilotLost(null, P.PILOT_WAIT_MS - 1), null);
-  assert.equal(P.pilotLost(null, P.PILOT_WAIT_MS + 1), 'none', 'none stood: it ends');
+  assert.equal(P.pilotLost(null, 3_600_000), null, 'PILOT-ARM: none stood yet - armed, it waits for the meter\'s boss');
+  assert.equal(P.piloting(), true);
   P.resetPilot();
 });
 
@@ -658,7 +668,7 @@ test('STAFF-PILOT: the page\'s half - the panel\'s word starts and ends it, a hi
   host.word({ dfoStaff: 'pilot', on: true, ev: '../x' });
   assert.equal(posts.at(-1).why, 'bad');
   const door = rd('src/net/staffHook.js');
-  assert.match(door, /m\.dfoStaff === 'pilot' && typeof m\.on === 'boolean' && pilot\) \{ seen = true; pilot\(m\); \}/);
+  assert.match(door, /m\.dfoStaff === 'pilot' && typeof m\.on === 'boolean' && !\('boss' in m\) && !\('why' in m\) && pilot\) \{ seen = true; pilot\(m\); \}/);
   const pool = rd('src/scenes/exteriorFoes.js');
   assert.match(pool, /f\.ai\.update\(foeFrameDt\(dt\), playerFeet, _armed\(f, senses\), _fParalyzed, _fPaused\);[^\n]*\n\s*f\.ai\._pilot = pilotFoe\(f\) \? pilotSteer\(f, playerFeet, peerCandidates\(\), performance\.now\(\)\) : null;/, 'steered after its motor, its holds on its brain');
   // the machines read the holds: the attack decides no swing of its own (a swing in flight still steps), the cast none
@@ -673,5 +683,58 @@ test('STAFF-PILOT: the page\'s half - the panel\'s word starts and ends it, a hi
   const { EnemyCaster } = await import('../../src/characters/enemy/enemyCasting.js');
   assert.equal(EnemyCaster.prototype.update.call({ entity: { spells: [{}] } }, 1, { _pilot: { cast: true } }, atk, [0, 0, 1], {}), null, 'no cast of its own');
   assert.match(pool, /if \(f\.dead \|\| !f\._mout\) continue;\n\s*if \(pilotFoe\(f\)\) continue;/, 'my copy not drawn');
+  P.resetPilot();
+});
+
+test('BOSS-ONE (2026-10-28: "there was 20 mini bosses", "just only spawn once", card "Both"): a boss call while a boss of the event stands - a peer\'s puppet too - stands no second one; once it is gone the next call stands', async () => {
+  const { at, log } = rig();
+  restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
+  setSharedClock(() => at.now);
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [EV] } }, 'social');
+  await run(4);
+  const room = log.words.at(-1)?.room ?? 'world:0';
+  at.puppets = [{ _pupRaid: KEY, dead: false, entity: { staffBoss: { size: 2 } } }];
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 1 }] } }, 'social');
+  raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 0 } }, room);
+  assert.notEqual(frame(0.1), 'boss', 'a peer\'s boss stands: none of mine');
+  await run(2);
+  assert.equal(log.raiders.filter((f) => f.entity.staffBoss).length, 0);
+  at.puppets[0].dead = true;
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 2 }] } }, 'social');
+  raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 1 } }, room);
+  assert.equal(frame(0.1), 'boss', 'it fell: the next call stands');
+});
+
+test('PILOT-BAR (2026-10-28: "let me see the bosses bar so i know when im hurt"): while I steer, my boss\'s health on the gate\'s boss bar - its name, its share, the numbers - and put away when it falls or I leave (mutants: the bar never drawn, never put away)', async () => {
+  const P = await import('../../src/systems/staffBossPilot.js');
+  const { createStaffPilotHost } = await import('../../src/scenes/staffPilotHost.js');
+  const { pilotBarModel, PILOT_BAR_TEXT } = await import('../../src/ui/staffPilotBar.js');
+  P.resetPilot();
+  const drawn = [];
+  let boss = null;
+  const host = createStaffPilotHost({ post: () => {}, win: null, entity: {}, bossOf: () => boss, now: () => 5, drawBar: (m) => drawn.push(m) });
+  host.frame();
+  assert.equal(drawn.length, 0, 'not steering: nothing drawn');
+  host.word({ dfoStaff: 'pilot', on: true, ev: EV.id });
+  host.frame();
+  assert.equal(drawn.length, 0, 'armed, no boss yet: no bar');
+  boss = { raidKey: KEY, dead: false, puppet: null, mobileType: 17, entity: { staffBoss: { size: 2 }, health: 1500, maxHealth: 5000 }, ai: { feet: [0, 0, 0], yaw: 0 } };
+  host.frame();
+  const m = drawn.at(-1);
+  assert.equal(m.frac, 0.3);
+  assert.equal(m.title, PILOT_BAR_TEXT.title());
+  assert.equal(m.fightersLine, 'Health 1500 / 5000');
+  assert.deepEqual(m.spent, [true, false], 'past half, not yet a quarter');
+  boss.entity.health = 500;
+  host.frame();
+  assert.equal(drawn.at(-1).low, true, 'under a fifth: low');
+  boss.dead = true;
+  host.frame();
+  assert.equal(drawn.at(-1), null, 'it fell: the bar put away');
+  const n = drawn.length;
+  host.frame();
+  assert.equal(drawn.length, n, 'put away once');
+  assert.equal(pilotBarModel(null, 0), null);
+  assert.equal(pilotBarModel({ dead: false, entity: { health: 10, maxHealth: 0 } }, 0).frac, 1, 'no max: whole, never a divide by nothing');
   P.resetPilot();
 });

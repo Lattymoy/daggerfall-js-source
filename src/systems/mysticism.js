@@ -69,6 +69,7 @@ import { hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';   // ROAD-
 import { setEnchantmentEffectDoors } from './enchantments.js';   // AUDIT 63 F14: SoulBound's Enchanted arm reaches RemoveFilledTrap through the doors bag (this leaf cannot be imported BY enchantments.js - effects.js sits between them)
 import { localizedStrings, localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { DISH_STAMINA_KIND } from './cookItems.js';   // AUDIT PROF-541 K6: the Orchard Tart's stamina, a dish the player may end as the others
+import { DWARVEN_DRAGON_ID } from '../characters/dwarvenDragonId.js';   // DWARVEN-DRAGON: a clockwork has no soul to trap
 
 /** The ten, with the classic key DFU registers and which of the three
  *  cost axes each supports. `chance` and `duration` cost pairs are
@@ -386,6 +387,8 @@ export function fillEmptyTrap(items, soulType, {
   isAzurasStar = (it) => hasArtifactSubtype(it, ARTIFACTS.AzurasStar),
   isSoulTrap = (it) => it?.group === 'MiscItems' && it?.templateIndex === SOUL_TRAP_TEMPLATE,
 } = {}) {
+  // DWARVEN-DRAGON: a clockwork has no soul, and the item law knows none past Enemy Expansion's (itemLaw.js soulLawful)
+  if (soulType === DWARVEN_DRAGON_ID) return null;
   const empty = (it) => (it?.trappedSoulType ?? null) === null;
   let trap = (items ?? []).find((it) => isAzurasStar(it) && empty(it)) ?? null;
   if (!trap && azurasStarOnly) return null;
@@ -507,7 +510,7 @@ export const SOUL_TRAP_TEXT = localizedStrings({
  *  the soul goes to the player who cast it, never to the corpse. */
 export function attemptSoulTrap(target, soulType, items, roll01, { azurasStarOnly = false } = {}) {
   const trap = (target?.activeEffects ?? []).find((a) => a.kind === 'soulTrap' && !a.ended);
-  if (!trap) return { allowDeath: true, alert: null, filled: null };
+  if (!trap || soulType === DWARVEN_DRAGON_ID) return { allowDeath: true, alert: null, filled: null };   // DWARVEN-DRAGON: no soul to hold it
   // Dice100.SuccessRoll, the port's convention throughout.
   if (Math.floor(roll01 * 100) >= (trap.chance ?? 0)) {
     return { allowDeath: true, alert: 'trapFail', filled: null };

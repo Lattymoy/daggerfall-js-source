@@ -3,7 +3,7 @@
 // steers their event's mini boss from the Staff Panel's Play as boss. My claim says the oldest age the wire carries, so
 // every game hands me the raid's run. The boss takes my feet and facing; its own swings and casts are held, a left
 // click swings at the player nearest my facing and a right click opens its cast. My body draws as concealment 7 and
-// no foe senses it. It ends when the boss falls, the event ends, or at Leave boss. No relay, no account change.
+// no foe senses it. Before a boss stands it is armed (PILOT-ARM). It ends when the boss falls, the event ends, or at Leave boss. No relay, no account change.
 
 /** The oldest claim my word on the event says - the wire's bound (world/raidShared.js RAID_CLAIM_AGE_MAX). */
 export const PILOT_CLAIM_AGE = 7_200_000;
@@ -16,8 +16,6 @@ export const PILOT_CAST_MS = 1500;
 /** The farthest player a swing is aimed at (metres), and how far off my facing (degrees). */
 export const PILOT_TARGET_M = 8;
 export const PILOT_TARGET_DEG = 60;
-/** How long Play as boss waits for its boss to stand on my machine before it gives up, ms. */
-export const PILOT_WAIT_MS = 60_000;
 /** The least the boss walked in a frame to be drawn walking (metres). */
 const MOVING_M = 0.01;
 
@@ -88,11 +86,13 @@ export function pilotHolds(f, kind, now) {
   return false;
 }
 /** Why the steering ends now, or null: 'fell' - my boss stood for me and stands no more (`mine` the boss of my event I
- *  stand now, or null); 'none' - none stood in PILOT_WAIT_MS. @param {any} mine @param {number} now ms @returns {'fell'|'none'|null} */
-export function pilotLost(mine, now) {
+ *  stand now, or null). PILOT-ARM (2026-10-28: "we ether become the boss at kill", card "Both"): before one stood
+ *  Play as boss is armed and waits - the meter's next boss (or Spawn mini boss now) stands on me - until Leave boss.
+ *  @param {any} mine @param {number} _now ms @returns {'fell'|null} */
+export function pilotLost(mine, _now) {
   if (!_p) return null;
   if (mine && !mine.dead) { _p.had = true; return null; }
-  return _p.had ? 'fell' : now - _p.at > PILOT_WAIT_MS ? 'none' : null;
+  return _p.had ? 'fell' : null;
 }
 /** Tests: back to no pilot. */
 export function resetPilot() { _p = null; }

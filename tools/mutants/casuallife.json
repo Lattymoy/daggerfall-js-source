@@ -1,0 +1,52 @@
+[
+  {
+    "name": "CASUAL-LIFE-purse-taken",
+    "file": "src/systems/deathPenalty.js",
+    "old": "  if (isCasual(player)) { _stated = null; return 0; }   // CASUAL-LIFE: spent all the same - the next death speaks for itself\n",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/casuallife.test.js"
+    ],
+    "note": "CASUAL-LIFE: a Casual death still takes a tenth of the purse."
+  },
+  {
+    "name": "CASUAL-LIFE-stated-kept",
+    "file": "src/systems/deathPenalty.js",
+    "old": "  if (isCasual(player)) { _stated = null; return 0; }",
+    "new": "  if (isCasual(player)) { return 0; }",
+    "tests": [
+      "test/systems/legacy/casuallife.test.js"
+    ],
+    "note": "CASUAL-LIFE: a Casual death leaves the screen's stated loss for the next death."
+  },
+  {
+    "name": "CASUAL-LIFE-screen-claims-gold",
+    "file": "src/ui/deathScreen.js",
+    "old": "this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "new": "this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "tests": [
+      "test/systems/legacy/casuallife.test.js"
+    ],
+    "note": "CASUAL-LIFE: the death screen states a loss a Casual death never takes."
+  },
+  {
+    "name": "CASUAL-LIFE-revenant-takes",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (!online || !s || !revenantOn() || !player || isCasual(player)) return null;",
+    "new": "  if (!online || !s || !revenantOn() || !player) return null;",
+    "tests": [
+      "test/systems/legacy/casuallife.test.js"
+    ],
+    "note": "CASUAL-LIFE: a revenant takes a piece from a Casual character."
+  },
+  {
+    "name": "CASUAL-LIFE-still-no-lineage",
+    "file": "src/ui/legacy/legacyModelChoice.js",
+    "old": "title: t('legacy.choice.casual.title', 'Casual'),",
+    "new": "title: 'No lineage',",
+    "tests": [
+      "test/systems/legacy/casuallife.test.js"
+    ],
+    "note": "CASUAL-LIFE: the answer keeps its old name."
+  }
+]
