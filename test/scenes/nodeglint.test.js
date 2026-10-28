@@ -665,7 +665,7 @@ test('NODE-GLINT the wiring: the world host lights the marks through the glint, 
   const w = src('src/scenes/world.js'), r = src('src/render/renderer.js');
   assert.match(w, /const nodeGlintPass = createNodeGlintPass\(renderer\);/);   // PIN MOVED (NODE-GLINT): the outline's pass, renamed - HOST-SPLIT's no entry in bootWorld stands
   assert.match(src('src/render/nodeGlint.js'), /const glow = handed === undefined \? createNodeGlowPass\(renderer\) : handed;/, 'the fallback glow its own when the host hands none');   // PIN MOVED (AUDIT NODE-GLINT): built where its end can free it
-  assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); drawAuras\(\); nodeGlintPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); partyPing\?\.draw\(renderer\); \};/);   // PARTY-PING: the route rides the same hook
+  assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); auraHost\.draw\(\); nodeGlintPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); partyPing\?\.draw\(renderer\); \};/);   // PARTY-PING: the route rides the same hook
   assert.doesNotMatch(w, /nodeGlowPass|nodeOutline/, 'the glow is the glint\'s fallback alone, and the ring is gone');
   // PIN MOVED (the seams review's matrix-for-a-basis test): the three components the vec3 uniforms read, never a copy whole
   assert.match(r, /const bbR = \(this\._bbRight \?\?= new Float32Array\(3\)\), bbU = \(this\._bbUp \?\?= new Float32Array\(3\)\);\n\s*bbR\[0\] = camRight\[0\]; bbR\[1\] = camRight\[1\]; bbR\[2\] = camRight\[2\];\n\s*bbU\[0\] = camUp\[0\]; bbU\[1\] = camUp\[1\]; bbU\[2\] = camUp\[2\];/);

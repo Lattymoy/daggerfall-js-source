@@ -54,6 +54,15 @@ menu's own load; every stage is let go (its WebGL context lost on purpose) when 
 | `title:genesis` | title | $5.00 | 1 | "Genesis" in the flame's pale violet heart on a plate of blue-violet fire |
 | `glyph:origin` | glyph | $2.00 | 2 | an ouroboros dragon biting its tail, a spark at its heart |
 | `aura:eternal` | aura | $20.00 | 4 | a cape of blue-violet fire on the back, flowing, wisps trailing |
+| `armory:eternalhalo` | armory | $6.00 | 8 | a thin ring of blue-violet fire over the head, the Origin's spark at its front |
+| `armory:eternalsigil` | armory | $6.00 | 16 | the Origin's ring burning on the chest and the back |
+| `armory:eternalarmlets` | armory | $6.00 | 32 | bands of blue-violet fire round the upper arms and the wrists |
+| `armory:eternalgreaves` | armory | $6.00 | 64 | blue-violet fire round the legs from the knee to the foot |
+| `armory:eternaledge` | armory | $6.00 | 128 | a blue-violet line along every weapon in hand, a light running along it |
+
+**ARMORY** (2026-10-28, `04-Characters/Aura-Armory.md`): the Aura Armory's Eternal line, a piece a slot, in a section of
+their own (Aura Armory, last). Its stage shows the piece on the stand-in figure (`render/auraPreview.js`, the kit
+option). The price is the builder's choice, the owner's to change. The Dagonfire line is Dagon's Breach's, never sold.
 
 Each is pre-alpha only. **What is on sale is the service's config**, `SHOP_ON_SALE` in `server-account/wrangler.toml`:
 the owner ends a sale by taking an id off it, and those who bought it keep it. A ware's bit on the row is never
@@ -105,7 +114,8 @@ with "Not on sale yet" and the doors answer `shop-closed`. The owner's steps, on
    `checkout.session.expired`, `charge.refunded`, `charge.dispute.created` and `charge.dispute.closed`; its signing
    secret as `STRIPE_WEBHOOK_SECRET`.
 3. Deploy the relay first (`world276`: the vocabulary's three words), then the account service (`acct206`, migration
-   0189). The account deploy puts both secrets on every run (`account-deploy.yml`, step 4d).
+   0189). ARMORY's wares need the relay at `world277` and the account service at `acct208` (migration 0190), in that
+   order. The account deploy puts both secrets on every run (`account-deploy.yml`, step 4d).
 
 **SHOP-LOCAL** (2026-10-28, a player in the Discord's feature-feedback: "Allow for iDeal payment options (or better ones)
 for MTX ... i either have to be; german - have iphone - have credit card"; the owner: "Do it"). The checkout lists no

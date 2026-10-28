@@ -44,6 +44,7 @@ import { drawRigSpriteBox } from '../../src/render/characterSprite.js';
 import { perspective, lookAt } from '../../src/world/mat4.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { fixtureBodyDeps, countingRenderer } from '../fixtures/mw/bodyRig.mjs';
+import { SESSION_KEY } from '../../src/net/accountClient.js';   // ARMORY: law 7 reads the kit off the stored session
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -224,18 +225,19 @@ test('WEAPON-GLOW1: a spec is built once a look and level - the frame asks and a
   assert.equal(WG.glowSpec('poison', 1), null, 'no element but the blow\'s three and the arcane');
   for (const level of [0, 4, 1.5, '2', null, undefined, -1]) assert.equal(WG.glowSpec('fire', level), null, `level ${String(level)}`);
   assert.equal(WG.glowSpec('hasOwnProperty', 1), null, 'no prototype key is a look');
-  assert.deepEqual(WG.GLOW_LOOKS, ['none', 'fire', 'frost', 'shock', 'arcane']);
-  for (const look of ['fire', 'frost', 'shock', 'arcane']) {
+  assert.deepEqual(WG.GLOW_LOOKS, ['none', 'fire', 'frost', 'shock', 'arcane', 'brand', 'edge']);   // PIN MOVED (ARMORY): the Aura Armory's two weapon pieces
+  for (const look of ['fire', 'frost', 'shock', 'arcane', 'brand', 'edge']) {
     const r = WG.GLOW_RAMPS[look];
     assert.equal(r.length, 4);
     const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
     for (let i = 1; i < 4; i++) assert.ok(lum(r[i]) > lum(r[i - 1]), `${look}: the ramp climbs, dark to hot`);
   }
-  // AUDIT WEAPON-GLOW LAW-7 / NET-4: the specs' words are EXACTLY the words the wire's pattern takes - ten
+  // AUDIT WEAPON-GLOW LAW-7 / NET-4: the specs' words are EXACTLY the words the wire's pattern takes - ten; PIN MOVED
+  // (ARMORY): twelve, the Aura Armory's Brand and Edge at their one strength
   const words = [];
   for (const look of WG.GLOW_LOOKS) for (let l = 0; l <= 4; l++) words.push(`${look}${l}`);
   const specWords = words.filter((w) => WG.glowFromWord(w));
-  assert.equal(specWords.length, 10);
+  assert.equal(specWords.length, 12);
   assert.deepEqual(words.filter((w) => LOOK_GLOW_RE.test(w)), specWords);
   for (const w of specWords) assert.equal(WG.glowWord(WG.glowFromWord(w)), w, 'the word reads back to itself');
   for (const bad of [null, 3, '', 'FIRE1', 'fire1 ']) assert.equal(WG.glowFromWord(bad), null);
@@ -774,4 +776,30 @@ test('WEAPON-GLOW1: a peer\'s body wears the word off the look NOW - the hand in
   // a weapon identified or socketed is a new look with the same template in the same hand: the word follows it
   pb._arm(b(), { wd: 1, an: 0, cn: 0 }, { ...LOOK, items: [{ ...right, glow: 'fire3' }, left] });
   assert.equal(said.at(-1)[0], WG.glowSpec('fire', 3));
+});
+
+test('WEAPON-GLOW1 law 7 (ARMORY): the Aura Armory\'s weapon piece on every hand of mine - after the element, which is the blow\'s truth, and before the arcane look; no weapon piece, no look (mutants: the piece over the element; the arcane over the piece; the edge read as the brand)', () => {
+  on();
+  assert.deepEqual([WG.armoryWeaponLook('0000a'), WG.armoryWeaponLook('0000b'), WG.armoryWeaponLook('a0000'), WG.armoryWeaponLook(null)], ['brand', 'edge', null, null]);
+  const was = globalThis.localStorage, m = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), key: () => null, get length() { return m.size; } });
+  try {
+    m.set(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b000a' }));
+    const plain = sword();
+    assert.deepEqual(WG.meshGlow(plain, { on: true }), WG.glowSpec('brand', WG.ARMORY_LEVEL), 'the Morrowind hand');
+    assert.deepEqual(WG.spriteGlow(plain, { on: true }), WG.glowSpec('brand', WG.ARMORY_LEVEL), 'the classic hand\'s outline');
+    const hidden = mintRare();
+    LR.setGem(hidden, 'ruby');
+    hidden.isIdentified = false;
+    assert.deepEqual(WG.meshGlow(hidden, { on: true }), WG.glowSpec('brand', WG.ARMORY_LEVEL), 'the piece before the arcane');
+    hidden.isIdentified = true;
+    assert.equal(WG.meshGlow(hidden, { on: true }).look, 'fire', 'the element first');
+    assert.equal(WG.meshGlow(plain, { on: false }), null, 'the switch off, nothing');
+    m.set(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b000b' }));
+    assert.equal(WG.meshGlow(plain, { on: true }).look, 'edge', 'a wear since is read at the next ask');
+    m.set(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b0000' }));
+    assert.equal(WG.meshGlow(plain, { on: true }), null, 'no weapon piece, no look');
+  } finally {
+    if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
+  }
 });

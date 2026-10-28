@@ -26,16 +26,20 @@ import { ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES } from '../../net/are
 import { HUNT_TITLES, MASTERY_TITLES, SEA_TITLES } from '../../net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: each title's count, the service's own law
 import { professionName } from '../../net/professionLaw.js';
 import { shopWareById, shopPriceText } from '../../net/shopLaw.js';   // SHOP: a ware's price, the shop's own
+import { ARMORY_KEYS, ARMORY_PIECES, armoryPieceOf, armoryKitPieces } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
+import { ARMORY_LOOK, armoryPieceName } from '../armoryText.js';
 
-/** The four kinds, in the Collections page's order, and the wardrobe's list that holds each (accountFlow.js wardrobe). */
-export const WARDROBE_KINDS = Object.freeze(['title', 'aura', 'icon', 'glyph']);
-const HELD_LIST = Object.freeze({ title: 'titles', aura: 'auras', icon: 'icons', glyph: 'glyphs' });
-const VOCABULARY = Object.freeze({ title: TITLES, aura: AURAS, icon: ICONS, glyph: GLYPHS });
+/** The kinds, in the Collections page's order, and the wardrobe's list that holds each (accountFlow.js wardrobe) - ARMORY:
+ *  the Aura Armory's pieces after the auras. */
+export const WARDROBE_KINDS = Object.freeze(['title', 'aura', 'armory', 'icon', 'glyph']);
+const HELD_LIST = Object.freeze({ title: 'titles', aura: 'auras', armory: 'armoryHeld', icon: 'icons', glyph: 'glyphs' });
+const VOCABULARY = Object.freeze({ title: TITLES, aura: AURAS, armory: ARMORY_KEYS, icon: ICONS, glyph: GLYPHS });
 
 /** `[id, its words]`, frozen - a list's row (a source here, a filter, a part). */
 export const wordPair = (/** @type {string} */ id, /** @type {() => string} */ words) => /** @type {readonly [string, () => string]} */ (Object.freeze([id, words]));
 /** WHERE A THING COMES FROM, in the order the page lists them: what play earns first, what no play can earn last. */
 export const WARDROBE_SOURCES = Object.freeze([
+  wordPair('breach', () => t('coll.src.breach', 'Dagon’s Breach')),   // ARMORY: the Aura Armory's Dagonfire line
   wordPair('spire', () => t('coll.src.spire', 'The Elite Breach')),
   wordPair('abyss', () => t('coll.src.abyss', 'The Abyss Dungeons')),
   wordPair('serpent', () => t('coll.src.serpent', 'The Sea Serpent')),
@@ -124,6 +128,11 @@ export const TABLE_CHAMPION_FLOOR = Object.freeze({ iliacchampion: Object.freeze
 /** SHOP: a ware's words of how - the gem on the pause face, its price the shop's own (net/shopLaw.js SHOP_WARES). */
 const shop = (/** @type {string} */ id) => () => t('coll.how.shop', 'Buy it from the shop, the gem on the pause screen, for {price}. All proceeds go to the costs of developing DFO Online.', { price: shopPriceText(shopWareById(id)?.cents ?? 0, intlLocale()) });
 const bestowed = () => t('coll.how.bestowed', 'Made for one player and granted to them by name.');
+/** ARMORY: the Breach's roll for an Aura Armory piece, as the service keeps it (server-account/src/armory.js - a pin holds the
+ *  two equal): one in `plain` a recorded closing, one in `rite` for a fighter who broke the faithful's rite or on a portent
+ *  night, certain after `pity` closings in a row without one. */
+export const ARMORY_ODDS = Object.freeze({ plain: 12, rite: 8, pity: 10 });
+const breach = () => t('coll.how.breach', 'One chance in {n} each time you help close Dagon’s Breach, one in {r} after a broken rite or on a portent night. After {p} closings with none, the next is certain. No piece comes twice.', { n: ARMORY_ODDS.plain, r: ARMORY_ODDS.rite, p: ARMORY_ODDS.pity });
 const patron = (/** @type {string} */ tier) => () => t('coll.how.patron', 'Support DFO Online on Patreon at the {tier} tier, then link Patreon from your profile - or be granted it by name.', { tier: TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (tier)] });
 /** Apostle: a Patreon tier's title no pledge maps yet (server-account/wrangler.toml PATREON_TIERS), held by name alone. */
 const apostle = () => t('coll.how.apostle', 'A Patreon reward with no tier to pledge yet - for now it is granted by name.');
@@ -304,6 +313,10 @@ export const WARDROBE = Object.freeze({
     nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'aura:sagesmoke'] }),
     origin: E('shop', 'shop', shop('glyph:origin')),   // SHOP: the pre-alpha glyph, the ouroboros dragon
   }),
+  // ARMORY (bible/04-Characters/Aura-Armory.md section 3): the Dagonfire line Dagon's Breach rolls, the Eternal line the shop sells
+  armory: Object.freeze(Object.fromEntries(ARMORY_PIECES.map((p) => [p.key, p.source === 'breach'
+    ? E('breach', 'chance', breach, { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })
+    : E('shop', 'shop', shop(`armory:${p.key}`), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })]))),
 });
 
 /** One entry, or null. */
@@ -314,6 +327,7 @@ export const wardrobeEntry = (/** @type {string} */ kind, /** @type {string} */ 
 
 /** A thing's name, as a player reads it - the words the account card and the name over a head use. */
 export function wardrobeName(/** @type {string} */ kind, /** @type {string} */ key) {
+  if (kind === 'armory') return armoryPieceName(key);   // ARMORY: in the player's language (ui/armoryText.js)
   const table = /** @type {Record<string, string>} */ ({ title: TITLE_TEXT, aura: AURA_TEXT, icon: ICON_TEXT, glyph: GLYPH_LABEL }[kind] ?? {});
   return table[key] ?? key;
 }
@@ -341,6 +355,7 @@ export function wardrobeHeld(/** @type {string} */ kind, /** @type {string} */ k
 export function wardrobeWorn(/** @type {string} */ kind, /** @type {string} */ key, /** @type {any} */ wardrobe) {
   if (wardrobeEntry(kind, key)?.via || !wardrobeHeld(kind, key, wardrobe)) return false;
   if (kind === 'glyph') return !(Array.isArray(wardrobe?.glyphsOff) && wardrobe.glyphsOff.includes(key));
+  if (kind === 'armory') return armoryKitPieces(wardrobe?.armory)[armoryPieceOf(key)?.slot ?? ''] === key;   // ARMORY: worn in its slot
   return wardrobe?.[kind] === key;
 }
 /** Whether an entry counts toward its kind's "n of m" - every one but a `via`'s and a character's own. */

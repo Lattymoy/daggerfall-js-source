@@ -45,6 +45,7 @@ export const COLLECTION_PAGE_STYLE_ID = 'collections-page-css';
 export const COLLECTION_PARTS = Object.freeze([
   wordPair('titles', () => t('coll.part.titles', 'Titles')),
   wordPair('auras', () => t('coll.part.auras', 'Auras')),
+  wordPair('armory', () => t('coll.part.armory', 'Aura Armory')),   // ARMORY: the pieces worn on the body
   wordPair('icons', () => t('coll.part.icons', 'Icons')),
   wordPair('glyphs', () => t('coll.part.glyphs', 'Glyphs')),
   wordPair('appearances', () => t('coll.part.appearances', 'Appearances')),   // APPEARANCES: the character's looks, first of its own parts
@@ -53,7 +54,7 @@ export const COLLECTION_PARTS = Object.freeze([
   ...GATHERED_PARTS,   // HUNTERS-MARK (Collections.md section 10): what a character gathers, then the account's pages
 ]);
 /** COLLECTIONS-II: the wardrobe's parts and the kind each lists (ui/collections/wardrobeCatalogue.js WARDROBE_KINDS). */
-export const WARDROBE_PARTS = Object.freeze({ titles: 'title', auras: 'aura', icons: 'icon', glyphs: 'glyph' });
+export const WARDROBE_PARTS = Object.freeze({ titles: 'title', auras: 'aura', armory: 'armory', icons: 'icon', glyphs: 'glyph' });
 const partOfKind = (/** @type {string} */ kind) => Object.keys(WARDROBE_PARTS).find((id) => WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (id)] === kind) ?? null;
 
 /** COLLECTIONS-II: THE RAIL SHOWS THE PAGE ALWAYS - the wardrobe's catalogue is every player's to read, held or not

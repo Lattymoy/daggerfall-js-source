@@ -168,7 +168,10 @@ test('MARKS1 the gate\'s receipt: 50 Marks for a gate counted, under the day\'s 
   // PIN MOVED (SILVER-WAYS): the strike answers the day's combat silver beside it, and the cap is the gates' and the
   // raids' 150 together (three gates), where it was the gate's own two
   const combat = (earned) => ({ earned, max: 150 });
-  assert.deepEqual(first.body, { recorded: true, stones: 1, closed: 1, weir: { found: true, keys: 1 }, marks: { struck: 50, balance: 50, combat: combat(50) } });   // EG-PLAY: the first breach closed rolls its Weir Key, certain   // WB12d: the row's embers said (AUDIT WB12d A1)
+  // PIN MOVED (ARMORY): and the Aura Armory's roll beside the key's - the service's own die, so its piece is said and read apart
+  const { armory, ...said } = first.body;
+  assert.ok(armory && Array.isArray(armory.held) && (armory.found === null || armory.held.includes(armory.found)), 'the armory\'s roll said');
+  assert.deepEqual(said, { recorded: true, stones: 1, closed: 1, weir: { found: true, keys: 1 }, marks: { struck: 50, balance: 50, combat: combat(50) } });   // EG-PLAY: the first breach closed rolls its Weir Key, certain   // WB12d: the row's embers said (AUDIT WB12d A1)
   assert.deepEqual((await claim(a, 701, T0)).body.marks, { struck: 50, balance: 100, combat: combat(100) });
   assert.deepEqual((await claim(a, 702, T0)).body.marks, { struck: 50, balance: 150, combat: combat(150) }, 'SILVER-WAYS: the third gate within the cap');
   const fourth = await claim(a, 703, T0);

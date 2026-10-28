@@ -108,6 +108,7 @@ import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src
 import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles
 import { shopKeysOf } from '../../src/net/shopLaw.js';   // SHOP: a ware bought, its bit on the row
+import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryBreachHeldOf, armoryKitHeld } from '../../src/net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -473,6 +474,28 @@ export function auraWorn(player, env) {
   if (typeof a !== 'string' || !a) return undefined;
   return aurasHeld(player, env).includes(a) ? a : undefined;
 }
+/** ARMORY (bible/04-Characters/Aura-Armory.md): THE AURA ARMORY PIECES THIS PLAYER HOLDS, in the catalogue's order - the
+ *  Breach's off `armory_held` (armory.js), the shop's off `shop_wares` (shop.js). A registered account's alone, as the
+ *  Spire's auras are. */
+export function armoryHeld(/** @type {any} */ player) {
+  if (!(typeof player?.handle === 'string' && player.handle)) return [];
+  const own = new Set([...armoryBreachHeldOf(player?.armory_held), ...shopKeys(player, 'armory')]);
+  return ARMORY_PIECES.filter((p) => own.has(p.key)).map((p) => p.key);
+}
+/** ARMORY: the kit this player WEARS - the stored one, less any piece no longer held (a refund), or undefined for none
+ *  (titleWorn's law). */
+export function armoryWorn(/** @type {any} */ player) {
+  return armoryKitHeld(player?.armory, armoryHeld(player)) ?? undefined;
+}
+/** ARMORY: what a player may wear in a slot - the refusal word, or null; `null` (the slot emptied) is always allowed for a
+ *  slot there is. `no-piece` for a slot or piece the vocabulary does not hold, or a piece of another slot. */
+export function armoryRefusal(/** @type {unknown} */ slot, /** @type {unknown} */ piece, /** @type {any} */ player) {
+  if (typeof slot !== 'string' || !ARMORY_SLOTS.includes(slot)) return 'no-piece';
+  if (piece === null) return null;
+  const p = armoryPieceOf(piece);
+  if (!p || p.slot !== slot) return 'no-piece';
+  return armoryHeld(player).includes(p.key) ? null : 'armory-not-held';
+}
 /** WB9g: what a player may wear at their feet - the refusal word, or null; `null` (none) is always allowed. */
 export function auraRefusal(aura, player, env) {
   if (aura === null) return null;
@@ -549,6 +572,8 @@ export const wardrobeOf = (player, env, nowS) => ({
   insignia: insigniaHeld(player?.insignia),
   icons: iconsHeld(player),   // WITCH1: the profile icons held, and the one worn (null: the character's face)
   icon: iconWorn(player) ?? null,
+  armoryHeld: armoryHeld(player),   // ARMORY: the Aura Armory pieces held, and the kit worn (null for none)
+  armory: armoryWorn(player) ?? null,
 });
 
 export { TITLES, GLYPHS };

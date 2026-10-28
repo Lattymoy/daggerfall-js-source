@@ -1019,8 +1019,9 @@ precision highp int;
 `;
 /** THE FIRE'S NOISE, PERIODIC: value noise on a lattice that wraps at `per` (both whole), so a flow scrolled by the clock
  *  meets itself at the clock's wrap and the angle's noise meets itself where the ring closes - no pop every
- *  AURA_CLOCK_PERIOD, no seam behind the wearer. Each octave doubles the lattice and its period together. */
-const NOISE_GLSL = `
+ *  AURA_CLOCK_PERIOD, no seam behind the wearer. Each octave doubles the lattice and its period together. ARMORY: the
+ *  Aura Armory's pieces burn on it too (render/armoryPass.js) - one home. */
+export const NOISE_GLSL = `
 float h21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vnoiseP(vec2 p, vec2 per) {
   vec2 i = floor(p), f = fract(p);

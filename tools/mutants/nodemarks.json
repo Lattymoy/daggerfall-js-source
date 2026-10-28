@@ -323,8 +323,8 @@
   {
     "name": "NODE-MARKS-the-glow-never-drawn",
     "file": "src/scenes/world.js",
-    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
-    "new": "peerBodies?.drawVeiled(); drawAuras(); partyPing?.draw(renderer); };",
+    "old": "peerBodies?.drawVeiled(); auraHost.draw(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
+    "new": "peerBodies?.drawVeiled(); auraHost.draw(); partyPing?.draw(renderer); };",
     "tests": [
       "test/scenes/nodemarks.test.js",
       "test/net/invislook.test.js"

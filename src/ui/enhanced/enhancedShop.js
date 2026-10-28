@@ -11,24 +11,32 @@ import { TERMS_URL } from '../../net/legalLaw.js';
 import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_TEXT, AURA_TEXT, AURA_PAINT } from '../playerBadge.js';
 import { GLYPH_LABEL } from './enhancedAccount.js';
 import { t, intlLocale } from '../../systems/textManager.js';
+import { armoryPieceOf, armoryKitPieces, armoryKitOf } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces, sold in a section of their own
+import { ARMORY_LOOK, armoryPieceName, armorySlotName } from '../armoryText.js';
 
 /** Each category's tab, in the player's language. */
 export const SHOP_CATEGORY_TEXT = Object.freeze({
   titles: () => t('shop.cat.titles', 'Titles'),
   glyphs: () => t('shop.cat.glyphs', 'Glyphs'),
   auras: () => t('shop.cat.auras', 'Auras'),
+  armory: () => t('shop.cat.armory', 'Aura Armory'),
 });
 /** Each kind's word on its panel. */
-const KIND_TEXT = Object.freeze({ title: () => t('shop.kind.title', 'Title'), glyph: () => t('shop.kind.glyph', 'Glyph'), aura: () => t('shop.kind.aura', 'Aura') });
+const KIND_TEXT = Object.freeze({ title: () => t('shop.kind.title', 'Title'), glyph: () => t('shop.kind.glyph', 'Glyph'), aura: () => t('shop.kind.aura', 'Aura'), armory: () => t('shop.kind.armory', 'Aura Armory') });
+/** A ware's kind as its panel says it - an armory piece's with its slot. */
+const kindText = (/** @type {{ kind: string, key: string }} */ w) => (w.kind === 'armory' ? `${KIND_TEXT.armory()} · ${armorySlotName(armoryPieceOf(w.key)?.slot ?? '')}` : KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (w.kind)]());
 /** Each ware in a sentence: what it looks like. */
 export const SHOP_LOOK = Object.freeze({
   'title:genesis': () => t('shop.look.genesis', 'A title set on a plate of blue-violet fire that burns behind its letters, over your name.'),
   'glyph:origin': () => t('shop.look.origin', 'A dragon coiled round on itself, biting its tail, a spark burning at its heart. Light runs round its scales.'),
   'aura:eternal': () => t('shop.look.eternal', 'A cape of blue-violet fire on your back. It flows as you move, and wisps of flame trail behind you.'),
+  // ARMORY: a piece's own words (ui/armoryText.js), one home for every face that says them
+  ...Object.fromEntries(Object.entries(ARMORY_LOOK).map(([k, f]) => [`armory:${k}`, f])),
 });
 /** A ware's name, as every face says it (the title's and the aura's English, the glyph's label). */
 export const shopWareName = (/** @type {{ kind: string, key: string }} */ w) =>
-  (w.kind === 'title' ? TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (w.key)] : w.kind === 'aura' ? AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (w.key)] : GLYPH_LABEL[/** @type {keyof typeof GLYPH_LABEL} */ (w.key)]) ?? w.key;
+  (w.kind === 'title' ? TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (w.key)] : w.kind === 'aura' ? AURA_TEXT[/** @type {keyof typeof AURA_TEXT} */ (w.key)]
+    : w.kind === 'armory' ? armoryPieceName(w.key) : GLYPH_LABEL[/** @type {keyof typeof GLYPH_LABEL} */ (w.key)]) ?? w.key;
 
 /** A WARE'S NAME IN ITS OWN PAINT, for a line that names it (the mailbox's receipt): a title on its flame, a glyph's
  *  drawing before its label, an aura in its title's paint. Null for an id that is no ware. */
@@ -43,7 +51,7 @@ export function shopWareTag(/** @type {Document} */ doc, /** @type {unknown} */ 
     const g = glyphBadges({ glyphs: [w.key] })[0];
     const art = g ? glyphSvgNode(doc, g, 'sh-waretag-glyph', 1.8) : null;
     if (art) tag.append(art);
-  } else paintTitle(word, titleBadge({ title: w.kind === 'title' ? w.key : AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (w.key)] }), w.kind === 'title');
+  } else paintTitle(word, titleBadge({ title: w.kind === 'title' ? w.key : AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (w.kind === 'armory' ? armoryPieceOf(w.key)?.line ?? 'eternal' : w.key)] }), w.kind === 'title');   // ARMORY: a piece in its line's aura's paint
   tag.append(word);
   return tag;
 }
@@ -69,6 +77,7 @@ export function shopWorn(/** @type {any} */ flow, /** @type {{ kind: string, key
   const wd = flow?.wardrobe;
   if (!wd) return false;
   if (w.kind === 'glyph') return Array.isArray(wd.glyphs) && wd.glyphs.includes(w.key) && !(Array.isArray(wd.glyphsOff) && wd.glyphsOff.includes(w.key));
+  if (w.kind === 'armory') { const p = armoryPieceOf(w.key); return !!p && armoryKitPieces(wd.armory)[p.slot] === w.key; }   // ARMORY: worn in its slot
   return wd[w.kind] === w.key;
 }
 /** The line under the panels: who a purchase is for, or why nothing can be bought. Pure. */
@@ -102,9 +111,9 @@ export function shopMark(/** @type {Document} */ doc, { onOpen, open = false }) 
  * THE WINDOW. `flow()` the visit's account flow (ui/accountFlow.js), read once when first asked; `keep` the caller's record
  * of the tab open (`keep.cat`), so a face rebuilt around it reopens there. `focus` - just opened: the focus goes in.
  * Answers { root, stop, draw, close }: `draw` updates it in place (the flow's every change); `stop` lets the previews go.
- * `preview(canvas, aura)` starts an aura's stage (render/auraPreview.js, loaded when first shown), or answers null.
+ * `preview(canvas, aura, kit)` starts an aura's stage (render/auraPreview.js) or an armory piece's (`kit`), or null.
  * @param {Document} doc
- * @param {{ flow: () => any, onClose: () => void, keep?: { cat?: string }, focus?: boolean, preview?: (canvas: HTMLCanvasElement, aura: string) => Promise<{ stop: () => void }|null> }} o
+ * @param {{ flow: () => any, onClose: () => void, keep?: { cat?: string }, focus?: boolean, preview?: (canvas: HTMLCanvasElement, aura: string|null, kit?: string|null) => Promise<{ stop: () => void }|null> }} o
  */
 export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, preview = loadAuraPreview }) {
   injectShopStyle(doc);
@@ -197,12 +206,13 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       canvas.setAttribute('aria-hidden', 'true');
       stage.append(canvas);
       const gen = liveGen;
+      const armory = w.kind === 'armory';   // ARMORY: a piece on the stand-in, worn alone
       globalThis.requestAnimationFrame?.(() => {   // once the canvas has its size in the page
         if (!canvas.isConnected || gen !== liveGen) return;
-        preview(canvas, w.key).catch(() => null).then((p) => {
+        preview(canvas, armory ? null : w.key, armory ? armoryKitOf([w.key]) : null).catch(() => null).then((p) => {
           if (p && gen === liveGen) { live.push(p); return; }
           p?.stop();
-          if (!p && gen === liveGen) stage.append(el('p', 'sh-nogl', t('shop.noPreview', 'This device cannot show the aura here.')));
+          if (!p && gen === liveGen) stage.append(el('p', 'sh-nogl', armory ? t('shop.noPreviewArmory', 'This device cannot show the piece here.') : t('shop.noPreview', 'This device cannot show the aura here.')));
         });
       });
     }
@@ -220,7 +230,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
       panel.setAttribute('data-ware', w.id);
       const info = el('div', 'sh-info');
       const nameline = el('div', 'sh-nameline');
-      nameline.append(el('h4', 'sh-name', shopWareName(w)), el('span', 'sh-kind', KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (w.kind)]()));
+      nameline.append(el('h4', 'sh-name', shopWareName(w)), el('span', 'sh-kind', kindText(w)));
       const look = el('p', 'sh-look', SHOP_LOOK[/** @type {keyof typeof SHOP_LOOK} */ (w.id)]?.() ?? '');
       const tags = el('ul', 'sh-tags');
       tags.append(el('li', 'sh-tag sh-tag-pre', t('shop.tag.preAlpha', 'Pre-alpha only')), el('li', 'sh-tag', t('shop.tag.account', 'Every character on your account')));
@@ -261,6 +271,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     if (!fl || fl.busy) return;
     if (w.kind === 'title') fl.equip?.(w.key);
     else if (w.kind === 'aura') fl.wearAura?.(w.key);
+    else if (w.kind === 'armory') fl.wearArmory?.(armoryPieceOf(w.key)?.slot, w.key);   // ARMORY: in its slot
     else fl.toggleGlyph?.(w.key);
   };
   const actFor = (/** @type {any} */ w, /** @type {any} */ st) => {
@@ -333,7 +344,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
 }
 
 /** An aura's stage, its module loaded on the first ask. */
-const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string} */ aura) => import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura));
+const loadAuraPreview = (/** @type {HTMLCanvasElement} */ canvas, /** @type {string|null} */ aura, /** @type {string|null} */ kit = null) => import('../../render/auraPreview.js').then((m) => m.startAuraPreview(canvas, aura, { kit }));
 
 /** The gem, painted as the row's other marks are: twelve pixels, crisp - a cut stone in the Genesis fire's colours. */
 const GEM_ROWS = Object.freeze([
@@ -386,7 +397,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-bigglyph { width: 140px; height: 140px; filter: drop-shadow(0 0 12px rgba(143,91,255,0.55)); }
 .px-shopwin .sh-smallglyph { width: 15px; height: 15px; }
 .px-shopwin .sh-auracanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.px-shopwin .sh-stage-aura { min-height: 300px; }
+.px-shopwin .sh-stage-aura, .px-shopwin .sh-stage-armory { min-height: 300px; }
 .px-shopwin .sh-nogl { color: var(--dim); font-size: 13px; padding: 0 16px; text-align: center; }
 .px-shopwin .sh-info { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .px-shopwin .sh-nameline { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -415,7 +426,7 @@ export const SHOP_CSS = `
 @media (max-width: 640px) {
   .px-shopwin .sh-panel { grid-template-columns: 1fr; }
   .px-shopwin .sh-stage { min-height: 200px; }
-  .px-shopwin .sh-stage-aura { min-height: 260px; }
+  .px-shopwin .sh-stage-aura, .px-shopwin .sh-stage-armory { min-height: 260px; }
   .px-shopwin .sh-bigtitle { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) { .px-shopgem::after { animation: none; } }

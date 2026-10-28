@@ -1173,6 +1173,8 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
 .card .acctwear { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
 .card .acctwear .fieldlabel { margin-top: 6px; }
 .card .acctwearrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.card .acctarmoryrow { align-items: center; }   /* ARMORY: a slot's row - its name, then its pieces */
+.card .acctarmoryslot { min-width: 5.5em; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
 .card button.acttitle {
   font: inherit; font-size: 13px; letter-spacing: 0.04em;
   padding: 6px 12px; border: 1px solid currentColor; border-radius: 2px;

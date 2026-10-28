@@ -21,12 +21,13 @@ had no way to see what else exists or how it is had.
 
 ## 2. The page now
 
-The Collections page shows for every player (`collectionsPageShown`), in ten parts (APPEARANCES added the seventh, section 9; HUNTERS-MARK three more, section 10), a switch of tiles at the top:
+The Collections page shows for every player (`collectionsPageShown`), in eleven parts (APPEARANCES added the seventh, section 9; HUNTERS-MARK three more, section 10; ARMORY the Aura Armory, section 11), a switch of tiles at the top:
 
 | Part | What it lists | Whose |
 | --- | --- | --- |
 | Titles | every title of the vocabulary (`TITLES`) | the account's |
 | Auras | every aura (`AURAS`) | the account's |
+| Aura Armory | every armory piece, by slot (section 11, ARMORY) | the account's |
 | Icons | every profile icon (`ICONS`) | the account's |
 | Glyphs | every glyph (`GLYPHS`) | the account's - the seats' four the character's (section 3) |
 | Appearances | every look a piece can be drawn as (section 9) | the character's |
@@ -270,3 +271,12 @@ Pins: `test/systems/huntersmark_trophies.test.js` (the log and the parts), `test
 the letter opened) and a notice-board note's author, as on the boards' names. A Master is held off a realm character
 alive: a track whose character no realm row stands for holds none. Seat and chapter titles stay blank on letters, notes
 and boards, named (`06-Systems/Bounty-Boards.md` 12.10).
+
+## 11. The Aura Armory (ARMORY, 2026-10-28)
+
+The Aura Armory's part (`04-Characters/Aura-Armory.md`) stands after Auras: every piece of `net/armoryLaw.js`
+ARMORY_PIECES, grouped by where it comes from - Dagon's Breach for the Dagonfire line, the shop for the Eternal line. A
+row is the piece's name in its line's colour, its slot, its look in a sentence and how it is had: the Breach's odds as
+the service rolls them (`ARMORY_ODDS`, held equal to `server-account/src/armory.js` by `test/render/armory.test.js`), or
+the shop's price. Held, signed in, its press is **Wear / Take off** in the piece's own slot (`wardrobePart.js`, the
+flow's `wearArmory`).

@@ -29,6 +29,8 @@
 import { STAGES, FIELDS, FIELD_SPEC, AGREEMENTS, AGREEMENT_SPEC, recoveryCodesText, recoveryCodesFileName } from '../accountFlow.js';   // RECOVERY-SET: the codes as the saved file says them
 import { profileIconNode, ICON_TEXT } from '../profileIcons.js';   // WITCH1: the profile icons, worn in the portrait well
 import { TITLE_TEXT, AURA_TEXT, glyphBadges, glyphArtNode, badgeClass } from '../playerBadge.js';
+import { ARMORY_SLOTS, armoryPieceOf, armoryKitPieces } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's slots, its pieces and the kit worn
+import { armoryPieceName, armorySlotName } from '../armoryText.js';
 import { setTitleFlame } from '../titleFlame.js';   // SHOP: a flame title's plate - a class, as every colour here is   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
 import { duelRecordText } from '../../net/duel/duelRecord.js';   // DUEL1: the account card's K/D row
 import { renownText, renownProgressText, renownProgress } from '../../net/renown.js';   // RENOWN1: Renown, left of the name and in its rows
@@ -357,7 +359,8 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
     const glyphs = glyphBadges(w);
     const icons = Array.isArray(w?.icons) ? w.icons : [];   // WITCH1: the profile icons held
     const auras = Array.isArray(w?.auras) ? w.auras : [];   // WB9g: the Broker's auras this account owns; AEGIS: and a listed title's (PRIMARCH: the Golden Radiance; SHADOW-CLOAK: the Holo Shadow Cloak; SERAPH-WINGS: a developer's Seraph Wings)
-    if (!held.length && !glyphs.length && !auras.length && !icons.length) return;
+    const armory = Array.isArray(w?.armoryHeld) ? w.armoryHeld : [];   // ARMORY: the Aura Armory pieces held
+    if (!held.length && !glyphs.length && !auras.length && !icons.length && !armory.length) return;
 
     const box = el('div', 'acctwear');
     if (held.length) {
@@ -405,6 +408,30 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
         row.append(b);
       }
       box.append(row);
+    }
+    if (armory.length) {
+      // ARMORY: A PIECE IS WORN IN ITS SLOT AS AN AURA IS WORN - pressed on, pressed off (the flow decides which) - a row a
+      // slot, each slot named, every piece of it the account holds in its line's paint
+      box.append(el('span', 'fieldlabel', t('account.wear.armory', 'Aura Armory')));
+      const worn = armoryKitPieces(w.armory);
+      for (const slot of ARMORY_SLOTS) {
+        const pieces = armory.filter((k) => armoryPieceOf(k)?.slot === slot);
+        if (!pieces.length) continue;
+        const row = el('div', 'acctwearrow acctarmoryrow');
+        row.append(el('span', 'acctarmoryslot', armorySlotName(slot)));
+        for (const key of pieces) {
+          const on = worn[slot] === key;
+          const b = keyedAs(el('button', `acttitle actaura actarmory aura-${armoryPieceOf(key)?.line ?? 'eternal'}${on ? ' worn' : ''}`), `armory:${key}`);
+          b.append(el('span', 'actauraword', armoryPieceName(key)));
+          b.type = 'button';
+          b.disabled = !!flow.busy;
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+          b.title = on ? t('account.wear.worn', 'Worn. Press to take it off.') : t('account.wear.wear', 'Wear {name}', { name: armoryPieceName(key) });
+          b.onclick = () => flow.wearArmory(slot, key);
+          row.append(b);
+        }
+        box.append(row);
+      }
     }
     if (icons.length) {
       // WITCH1: AN ICON IS WORN AS AN AURA IS - one at a time, pressed on, pressed off - in the portrait well

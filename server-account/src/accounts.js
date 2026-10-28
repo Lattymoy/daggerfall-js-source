@@ -39,7 +39,8 @@ import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
 import { handleLooksLikeEmail } from '../../src/net/handleShape.js';   // HANDLE-EMAIL: a username is never an address
 import { NAME_MAX } from '../../src/net/wire.js';   // NAME-AS: the wire's bound on a name, a worn character's among them
 import { checkName } from '../../src/net/nameFilter.js';   // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
-import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
+import { armoryKitWith } from '../../src/net/armoryLaw.js';   // ARMORY: the kit with one slot changed
+import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal, armoryRefusal, armoryWorn } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
 import { brokerRidOk, brokerSaleOf, brokerSaleWrite, brokerRidFreeSql } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a press by its request id
 import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - one law both ends
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
@@ -543,6 +544,19 @@ export async function equipAura({ db, nowS }, player, env, aura) {
   if (why) return { error: why };
   await db.prepare('UPDATE players SET aura = ?, last_seen = ? WHERE id = ?').bind(aura, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, aura }, env, nowS) };
+}
+
+/**
+ * ARMORY (bible/04-Characters/Aura-Armory.md) - WEAR ONE PIECE IN ITS SLOT, OR EMPTY THE SLOT: the aura's law a slot at a
+ * time. Refused against what the player HOLDS, derived now (armoryRefusal); the kit written is the one worn now with that
+ * slot changed, so a piece no longer held drops out at the write too. Answers the wardrobe after the write.
+ */
+export async function equipArmory({ db, nowS }, player, env, slot, piece) {
+  const why = armoryRefusal(slot, piece, player);
+  if (why) return { error: why };
+  const armory = armoryKitWith(armoryWorn(player) ?? null, /** @type {string} */ (slot), piece);
+  await db.prepare('UPDATE players SET armory = ?, last_seen = ? WHERE id = ?').bind(armory, nowS, player.id).run();
+  return { ok: true, ...wardrobeOf({ ...player, armory }, env, nowS) };
 }
 
 /**
@@ -1165,12 +1179,12 @@ export async function gateRecordOf({ db }, playerId) {
  * `no-gate-key` (this service holds no public half), `receipt` (not a receipt the relay signed, or expired - `why`
  * says which rung), `not-yours` (another account's). AUDIT EG IV (lane3 #16): `weir` the Weir Key's statement for the claims
  * (eg.js egGateWeir), set in the batch directly after the row - the row it answered rides a recorded kill's answer as
- * `weirRow` (null where it rolled nothing); never for the rite alone.
+ * `weirRow` (null where it rolled nothing); never for the rite alone. ARMORY: `armory` (armory.js) the same, as `armoryRow`.
  * @param {{ db: any, nowS: number, subtle: SubtleCrypto }} ctx
  * @param {{ id: string, handle?: string|null }} player the session's account
  * @param {unknown} receipt @param {CryptoKey|null} publicKey
  */
-export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey, { strike = null, region = null, deeds = null, weir = null } = {}) {
+export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey, { strike = null, region = null, deeds = null, weir = null, armory = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -1194,12 +1208,14 @@ export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey
   // AUDIT EG IV (lane3 #16): the Weir Key's roll directly after the row, in its transaction (eg.js egGateWeir - `changes()`
   // the row's): never the rite's
   const roll = c.x === 'rite' ? null : weir?.(c) ?? null;
-  const [r, ...rest] = stmt || deed || roll ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];
-  const w = roll ? rest.shift() : null, [m, ...d] = rest;
+  // ARMORY: the Aura Armory's roll after the key's (armory.js) - `changes()` the key's UPDATE, which wrote only where the row did
+  const piece = c.x === 'rite' ? null : armory?.(c) ?? null;
+  const [r, ...rest] = stmt || deed || roll || piece ? await db.batch([kill, ...(roll ? [roll] : []), ...(piece ? [piece] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];
+  const w = roll ? rest.shift() : null, a = piece ? rest.shift() : null, [m, ...d] = rest;
   const recorded = Number(r?.meta?.changes ?? 0) > 0;
   const struck = !!stmt && Number(m?.meta?.changes ?? 0) > 0;
   const deedStruck = !!deed && Number(d[1]?.meta?.changes ?? 0) > 0;
-  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.p > 0 ? { portent: c.p } : {}), ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}), ...(await gateRecordOf({ db }, player.id)) };
+  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.p > 0 ? { portent: c.p } : {}), ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}), ...(piece ? { armoryRow: a?.results?.[0] ?? null } : {}), ...(await gateRecordOf({ db }, player.id)) };
   // AUDIT WB12d (A1): A FIGHTER'S `r` COUNTED AT ONE EMBER - a service from before acct62 took the receipt as a plain one
   // and kept its row - is made good when the receipt is claimed again (the game keeps an `r` receipt until a service
   // that answers its embers has counted it). One row a (day, account), one receipt a kill: the row is this receipt's

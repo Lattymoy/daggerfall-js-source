@@ -224,6 +224,7 @@ on:
       - "src/net/superDungeon/sdMarks.js"
       - "src/net/postLaw.js"
       - "src/net/shopLaw.js"
+      - "src/net/armoryLaw.js"
       - "src/net/lostLaw.js"
       - "src/systems/superDungeon/sdSpoils.js"
       - "src/systems/eliteGates/egSpoils.js"

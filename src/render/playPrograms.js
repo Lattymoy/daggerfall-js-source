@@ -11,7 +11,7 @@
 // it, and its door finds it done. Where the driver cannot, nothing is started early (a compile queued on its thread
 // would hold the frames that follow it): each pass is built the first time it is asked for, as before the slice.
 // AURA-STALL (#1137): the auras' program is started here too. Like a gate's fire, its door is never asked as needed,
-// so an aura met inside its compile is late, never a frame frozen.
+// so an aura met inside its compile is late, never a frame frozen. ARMORY: the armory's pieces too, for the same reason.
 //
 // Loaded by the renderer's idle warm (lazyWarmSteps), off the boot's static graph - the passes' own modules are the
 // hosts' already.
@@ -22,14 +22,16 @@ import { GATE_FX_PROGRAMS } from './gate/gateFx.js';
 import { CRYSTAL_PROGRAMS } from './courtCrystals.js';
 import { NODE_GLINT_PROGRAMS } from './nodeGlint.js';
 import { AURA_PROGRAMS } from './auraRing.js';
+import { ARMORY_PROGRAMS } from './armoryPass.js';
 import { FIRE_PROGRAMS } from './redMountainFire.js';
 import { GLOW_PROGRAMS } from './ghostfenceGlow.js';
 
 /** The programs started early: a gate's fire (the world's gates, the Elite arches, the court's way in and way home),
  *  the court's and the Spire's telegraphs, his blows' sparks, the crystals, the nodes' glint (NODE-GLINT's, the outline's
  *  before it), and the auras' - one program a look (AURA-SPLIT), the first wearer in range having waited 8.5-11 s on
- *  D3D11 for the one program they had been (AURA-STALL); the volcano's fire and the fence's glow (AUDIT RED-MOUNTAIN F5). */
-export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];
+ *  D3D11 for the one program they had been (AURA-STALL); the armory's pieces, one program each (ARMORY); the volcano's
+ *  fire and the fence's glow (AUDIT RED-MOUNTAIN F5). */
+export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS];
 
 /** Start them on `gl` where its driver compiles beside the frames; answers whether it did. */
 export function startPlayPrograms(gl) {
