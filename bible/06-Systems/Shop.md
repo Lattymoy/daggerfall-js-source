@@ -28,7 +28,8 @@ window on the hourglass's own stage (`enhancedShop.js` shopWindow; `enhancedMenu
 Top to bottom: the title and its Pre-alpha mark; **the disclaimer**, first and before any ware, in a gold frame - "All
 proceeds go to the costs of developing DFO Online." and "Every item is cosmetic. It gives no power in the game."; a tab a
 category (Titles, Glyphs, Auras, each with its count; the arrow keys step between them); a panel a ware; the account's line; and the foot - Stripe takes the
-payment in US dollars, no card details reach the game, and the Terms of Service.
+payment (prices in US dollars, which Stripe can show in the buyer's own currency - SHOP-LOCAL), no card details reach
+the game, and the Terms of Service.
 
 A panel is the ware seen live beside its words: Genesis on its fire at full size and over the player's own name;
 the Origin at 140 pixels, moving, and beside the name at a name's size; Eternal on a stand-in figure on its own small
@@ -105,6 +106,27 @@ with "Not on sale yet" and the doors answer `shop-closed`. The owner's steps, on
    secret as `STRIPE_WEBHOOK_SECRET`.
 3. Deploy the relay first (`world276`: the vocabulary's three words), then the account service (`acct206`, migration
    0189). The account deploy puts both secrets on every run (`account-deploy.yml`, step 4d).
+
+**SHOP-LOCAL** (2026-10-28, a player in the Discord's feature-feedback: "Allow for iDeal payment options (or better ones)
+for MTX ... i either have to be; german - have iphone - have credit card"; the owner: "Do it"). The checkout lists no
+payment method, so Stripe offers the account's, but it charged in dollars and iDEAL takes euros only. Now:
+
+- **The buyer's own currency.** Each checkout asks for Stripe's Adaptive Pricing (`checkoutFields`:
+  `adaptive_pricing[enabled]`), which shows the price in the buyer's currency and unlocks the methods that need it. The
+  buyer pays Stripe's 2-4% conversion, or chooses dollars. The session and its events still read USD and the order's
+  amount (Stripe's docs, "Event destinations and reporting"), so the webhook grants as before. A session Stripe refuses
+  (400) with it is asked again without it, in dollars, under a key of its own (`stripeCheckout`). The confirm page says
+  Stripe can show the price in the buyer's currency; so does the window's foot.
+- **The ways to pay, set by the deploy.** `SHOP_PAY_METHODS` (iDEAL, Wero, Bancontact, EPS, BLIK, Przelewy24, PayPal,
+  Revolut Pay) is turned on in the account's default payment method configuration by `tools/stripeMethods.mjs`, which
+  the account deploy runs (`account-deploy.yml`, "Turn on the shop's ways to pay"). One ask a method, only where off; the
+  summary says which Stripe has active, refused or does not offer the account. Never red: cards are taken either way.
+- **Left out:** SEPA Debit (it confirms days later and can be pulled back for weeks) and Klarna (credit, for a $2 glyph).
+  A method taken off the list stays as the Dashboard has it.
+- **The owner's:** iDEAL's scheme asks a seller outside the Netherlands to show its business registration number on its
+  site.
+
+Pins: `test/server/shoplocal.test.js`. Mutants: `tools/mutants/shoplocal.json`.
 
 ## 6. The faces
 
