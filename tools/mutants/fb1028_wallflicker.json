@@ -2,29 +2,32 @@
   {
     "name": "FB1028-no-cut",
     "file": "src/world/townWalls.js",
-    "old": "    parts.push(p.model === WALL_MODELS.tower ? part : clearOfTowers(part, bodies));",
-    "new": "    parts.push(part);",
+    "old": "    parts.push(tower ? part : clearOfTowers(mitreEnds(part, p, towers), bodies));",
+    "new": "    parts.push(tower ? part : mitreEnds(part, p, towers));",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge of WALL-FLICKER and the Bay's walls (FB1028): townWallModel cuts each length on its towers' middle lines (mitreEnds), then clear of their bodies (clearOfTowers)."
   },
   {
     "name": "FB1028-towers-cut",
     "file": "src/world/townWalls.js",
-    "old": "    parts.push(p.model === WALL_MODELS.tower ? part : clearOfTowers(part, bodies));",
-    "new": "    parts.push(clearOfTowers(part, bodies));",
+    "old": "    parts.push(tower ? part : clearOfTowers(mitreEnds(part, p, towers), bodies));",
+    "new": "    parts.push(clearOfTowers(tower ? part : mitreEnds(part, p, towers), bodies));",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge of WALL-FLICKER and the Bay's walls (FB1028): townWallModel cuts each length on its towers' middle lines (mitreEnds), then clear of their bodies (clearOfTowers)."
   },
   {
     "name": "FB1028-measure-unread",
     "file": "src/world/townWalls.js",
-    "old": "bodies = tower && bendTower(tower) !== tower ? pieces.filter((p) => p.model === WALL_MODELS.tower) : [];",
-    "new": "bodies = pieces.filter((p) => p.model === WALL_MODELS.tower);",
+    "old": "bodies = corner && bendTower(corner) !== corner ? towers : [];",
+    "new": "bodies = towers;",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at the merge of WALL-FLICKER and the Bay's walls (FB1028): townWallModel cuts each length on its towers' middle lines (mitreEnds), then clear of their bodies (clearOfTowers)."
   },
   {
     "name": "FB1028-clear-none",

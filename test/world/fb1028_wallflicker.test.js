@@ -178,8 +178,9 @@ function openings(m, towers) {
   return { back, none };
 }
 /** The wall as TS8 stood it: each piece's model whole, side by side. */
+/** The pieces each made alone, as #1184 made them - FB1028's bend towers not grown across (`thick`). */
 const whole = (pieces, classic) => {
-  const parts = pieces.map((p) => townWallModel([p], classic));
+  const parts = pieces.map(({ thick, ...p }) => townWallModel([p], classic));
   const n = parts.reduce((s, m) => s + m.positions.length / 3, 0), positions = new Float32Array(n * 3), indices = [];
   let v0 = 0;
   for (const m of parts) { positions.set(m.positions, v0 * 3); for (const i of m.indices) indices.push(i + v0); v0 += m.positions.length / 3; }
@@ -222,7 +223,17 @@ test('WALL-FLICKER what is kept: a part no bend tower reaches handed back as it 
   // a mod's tower, a tenth larger: not a bend's body - nothing cut
   const big = modelOf([{ q: [[-9.24, 0, -9.2], [9.24, 0, -9.2], [9.24, 15, 9.2], [-9.24, 15, 9.2]], n: [0, 0, -1], tex: [317, 0] }]);
   const mod = (id) => (id === WALL_MODELS.tower ? big : len), straight = bend(0);
-  assert.equal(townWallModel(straight, mod).indices.length, townWallModel(straight.slice(0, 2), mod).indices.length + townWallModel([straight[2]], mod).indices.length, 'a mod\'s tower: the lengths whole');
+  // PIN MOVED (FB1028, the Bay's walls): every length is mitred on its tower's middle line, a mod's tower too, so the pin reads
+  // what WALL-FLICKER alone cuts - a length's faces in a 444 body's place, kept beside a mod's tower
+  const areaIn = (m) => triangles(m).reduce((s, t) => {
+    let q = t.q;
+    for (const f of [(p) => 4.801 - p[0], (p) => p[0] + 4.801, (p) => 4.801 - p[2], (p) => p[2] + 4.801, (p) => CORNER_TOWER.crown + 1e-3 - p[1]]) q = q.length > 2 ? clip(q, f) : q;
+    let a = 0;
+    for (let k = 1; k + 1 < q.length; k++) a += Math.hypot(...cross(q[k].map((x, i) => x - q[0][i]), q[k + 1].map((x, i) => x - q[0][i]))) / 2;
+    return s + a;
+  }, 0);
+  const lengthsIn = (of) => areaIn(townWallModel(straight, of)) - areaIn(townWallModel([straight[2]], of));
+  assert.ok(lengthsIn(mod) > 50 && Math.abs(lengthsIn(classic)) < 0.5, 'a mod\'s tower: the lengths not cut clear of a 444 body (beside the corner tower, none of them in it)');
   // a mod's taller length: its faces over the crown kept
   const tall = length({ tall: true }), tallOf = (id) => (id === WALL_MODELS.tower ? tower : tall);
   // the area of its upright faces over the crown
@@ -299,8 +310,9 @@ test('WALL-FLICKER with ARENA2: Daggerfall\'s own pieces at every twentieth wall
     assert.ok(a.back <= b.back && a.none <= b.none, `${name}: no opening seen (${JSON.stringify(b)} whole, ${JSON.stringify(a)} cut)`);
   }
   assert.ok(before > 1000 * all.length / 2, `whole: ${before.toFixed(0)} m2 over ${all.length} walls`);
-  // the cut's cost: a tenth more corners and triangles at the most (its own corners kept once)
-  assert.ok(size.cut[0] < 1.12 * size.whole[0] && size.cut[1] < 1.12 * size.whole[1], `corners and triangles ${JSON.stringify(size)}`);
+  // the cut's cost: corners and triangles (its own corners kept once)
+  // PIN MOVED (FB1028, the Bay's walls: each length mitred on its towers' middle lines too): 12.0 per cent more triangles measured
+  assert.ok(size.cut[0] < 1.15 * size.whole[0] && size.cut[1] < 1.15 * size.whole[1], `corners and triangles ${JSON.stringify(size)}`);
 });
 
 test('WALL-FLICKER with ARENA2: Riften as the places host stands it (Skyrim\'s fourth city, Gothbrone Hall\'s grid, its one road from the east) - its gate on a straight run, the tower north of it 154 m2 of faces in its sides\' planes whole, none cut; the model door makes it a breath at a time (mutants: no cut; the door unsliced)', { skip: skipReal, timeout: 300_000 }, async () => {

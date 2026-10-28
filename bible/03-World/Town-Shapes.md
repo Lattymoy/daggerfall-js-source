@@ -33,6 +33,7 @@ and take organic ground, walls and shores round them.
 | TS8 | a bend's tower the corner tower's body alone - no stub of wall into the town or out past the wall | BUILT (below) |
 | TS9 | the road's ring painted whole, its angled edges blended | BUILT (below) |
 | TS10 | the roads painted through a town's ground its grid's roads - no yard on one | BUILT (below) |
+| FB1028 | the Bay's walls: no door, a bend's two lengths cut on its tower, every road and street to a gate | BUILT (below) |
 
 **DEPLOY RULE**: TS3 ships in the same release as WW7-5 (homes past the Bay, `bible/03-World/World-Wide.md` WW7-5): a home
 past the Bay is bought only in a town's final outline, so no block a home stands in is ever left out.
@@ -383,7 +384,8 @@ and gate dressing standing only where Daggerfall's blocks put them.
   together, those outside further out, by the least 0.8 m step that leaves each clear of every wall cell and town-map byte
   by its reach (a model 2.4 m, a flat 0.8 m); one that cannot go with its group takes its own nearest clear place on its
   side (2 boards of 3,280).
-- Measured over all 410 Bay walled cities: four gates each, every wall closed on its walk grid, no house under one; 3,280
+- Measured over all 410 Bay walled cities: four gates each, every wall closed on its walk grid, no house under one (its pin
+  read the wall's own cells - FB1028 measured the houses: none within 2 m); 3,280
   boards, every one inside its wall; 1,640 carriages and 1,640 drivers, every carriage outside; every piece clear of the
   wall and the houses and on the town's ground.
 - **The yards** (`world/merchantYards/merchantYardSites.js` townGroundOf's `shut`, `scenes/world.js` townPlacesFor,
@@ -418,6 +420,7 @@ Gallobrugh's wall, every tower).
   there; every length and gate is cut clear of the body now.
 - **Its cells** (`townWallCells`, WALL_FOOT): a tower's square on the town map and the walk grid is its body's, 9.6 m -
   every wall still closed on its walk grid (TS6's measure, re-run), every board and carriage still clear (TS7's).
+- FB1028 (section 16): the body is grown across the wall to hold its two lengths' ends, each cut on its middle line.
 - The one law for every town the new layout walls - a city past the Bay (TS4) and every one of the Bay's 410 walled
   cities (TS7, Daggerfall itself among them): `registerTownWall`'s model is `townWallModel`'s. Measured with its faces
   drawn one-sided, from outside and inside the wall: every 23rd city past the Bay (18 cities, 1,285 views), back faces
@@ -649,8 +652,8 @@ main's walls):
   GATE_WAY.half to either side, clear of every house - `townHouses`, the town map's bytes, its ground flats aside - until
   two tiles of the town's paving, ROAD_RECORDS, under its middle). A road with no street near keeps its crossing; two that
   come to one street are one gate.
-- **Every gate on its road** (`gateRoads.js:"export function layGateRoads(tilemap, paths, tileData, town) {"`): the terrain
-  kernel lays each gate's road after the painter and its smoothing. Its passage runs across the opening's width (its
+- **Every gate on its road** (`gateRoads.js:"export function layGateRoads(tilemap, paths, tileData, town, ground = null) {"`):
+  the terrain kernel lays each gate's road after the painter and its smoothing. Its passage runs across the opening's width (its
   middle's line and half its half width to either side - an opening on a tile's edge opens onto both tiles) from the
   middle out to the first open tile past the wall's half thickness, through the wall and its towers, never over water.
   From there it lays the cheapest way within GATE_ROAD.reach (40 tiles) out to the nearest road the painter laid and in to
@@ -684,6 +687,8 @@ still lays each one's road in from its opening to the town's nearest paving, whe
 
 - **The hosts**: none grows - `scenes/pixelBuild.js` hands the gates in one statement beside the rect it makes; the kernel
   calls the road once.
+- FB1028 (section 16): the slide left each road's arm running on into the wall; on a Bay wall's ground the arms are taken
+  up and joined to the gates, and a street of the town's that runs into the wall takes a gate of its own.
 - **The departure** (Port-Ledger A, GATE-ROADS): DFU paints Basic Roads to a location's rect and stands Daggerfall's gate
   blocks where the template has them; ours joins each gate to the road, and moves a wall of our own onto a street.
 - Pins `test/world/gateroads.test.js` (10, one on the freeware: the gate model's floor, the Bay as online stands it, past
@@ -744,3 +749,84 @@ within 4 cm of each other. The Bay's towns have no fabric.
 - Tests `test/world/fb1028_wallflicker.test.js` (7, three on ARENA2: every twentieth walled city on the Bay and past it,
   Riften, five towns whose fabric lay in their wall's faces). Mutants `tools/mutants/fb1028_wallflicker.json` (22: 20
   dead, 2 recorded equivalent with why). Re-aimed by content: `townboards.json` TB-the-stands-ground-dropped (dead).
+
+## 16. FB1028 - the Bay's walls: no door, no bend run through, no road into the wall (BUILT)
+
+The report (Discord #bug-reports, 2026-10-28, a staff member, after #1184): *"Daggerfall City Walls are Janky ... roads
+lead to nowhere"*; *"West side has parts clipping into itself, stuttering, and there's doors in walls that are
+clipping"*; *"roads leading to gates that were there, and are no longer in every part of the city"*. The owner kept the
+shaped walls: the defects are fixed, and every yard keeps its place.
+
+**Why Daggerfall stands walled on its outline online.** The room loads Beautiful Cities, whose rings TS7 keeps. But a
+town where a home was bought before WD3 is held in Daggerfall's own layout for the whole room (`net/homeLaw.js` WD3), and
+Daggerfall is one: it stands as every Bay city does with the packs off. Every count below is the packs off, over all 410.
+
+**What was wrong, measured first.**
+
+- **The doors are the wall's own.** Daggerfall's length (ARCH3D 445) carries a door on its inner face a metre from its
+  end, its gate (446) two: a Town23 building's doors into the ring block's "City Walls". A wall on its outline is one
+  model of the town's own and opens into nothing; at every chord's end a length's door stood inside its tower - 16,329
+  of the 32,779 doors on the 410 walls (44 of Daggerfall's 106). No building stands within 2 m of any wall (159,004
+  building models; Daggerfall's nearest 6.45 m): TS7's pin read the wall's own cells, so it could not have seen one.
+- **Parts clipping into itself are the bends.** A bend's tower is the wall's own thickness (TS8), so at a bend its two
+  lengths ran on through each other and out of its faces: on the bend's inner side their faces and parapets crossed in
+  front of the tower. 24,619 of the 31,266 lengths and gates ran into another (80 of Daggerfall's 101; its west side's V
+  and notch turn 29 degrees). The sharpest bend on the Bay turns 76 degrees.
+- **Roads to nowhere are two.** GATE-ROADS slid each road's gate along the wall onto a street (18 to 47 m at Daggerfall),
+  and the painter's arm ran on into the wall where its gate had stood, its stub inside leading back to it: 1,645 pieces
+  of 369 walls stood on a road away from every gate (9 of Daggerfall's), and 2,287 road tiles inside ran up to a wall
+  away from a gate (380 walls, 11 at Daggerfall). And a street of the town's own ran into the wall where Daggerfall's
+  ring had its gate: 34 cities, 66 tiles.
+- **The stutter is not the wall's code.** Its model, cells, gates and keep are made once a wall and kept (`townWallOf`,
+  `townWallCellsOf`, `harbourKeep.js` townKeepField). A body walked the whole of Daggerfall's wall, inside and out, on the
+  game's collider over the wall's model: 0.04 to 0.5 ms a move, no jolt; it stops only in the pockets of the bends. The
+  towers stood in the plane of the lengths' faces, the two pictures fighting there as the eye moves (the coplanar faces are
+  lane B's record); the crossing faces of the bends showed the same way.
+
+**What holds now.**
+
+- **No door** (`townWalls.js:"export function wallDoorless(m) {"`): each door triangle of a piece is laid in the face it is
+  cut from - the picture and the UV law of a coplanar triangle of the model's that shares a corner with it. Every triangle
+  is kept; the model has no door left to open.
+- **A bend's lengths cut on it** (`townWalls.js:"export function mitrePlanes(p, towers) {"`, mitreEnds): a length or a gate
+  is cut at each tower it ends in, on the tower's middle line across the wall, its own side kept - the two meet on one
+  plane inside the tower. The tower is grown across to 4.8 m / cos(half the turn) and TOWER_PROUD (0.1 m) more (wallPieces'
+  `thick`; its cells with it): it holds the cut and stands out of the faces, low enough that a sliding body rides past.
+- **The arms taken up** (`gateRoads.js:"export function takeUpArms(tilemap, paths, inside, ground) {"`, joinArms): on a Bay
+  wall's ground the painter's road and track tiles outside the wall's inner face are taken up, and the stub inside joined
+  to them (`townGates.js` insideWall hands the inside). Each gate's road is laid on to the ring round the ground; an arm
+  cut where no ring runs (a pixel of tracks alone) is joined to the nearest gate's road. A river's tiles, the town's paving
+  and the painter's tiles off the ground stay as they were laid.
+- **A gate on each street** (`townWalls.js:"export function streetGates(pts, town, ways) {"`): where the line runs over the
+  town's paving two lengths or more from every gate, a gate stands on the run's middle; GATE-ROADS lays its road out.
+
+**Measured after**, the same counts: no door on any wall; no length or gate in another (31,261, 5 cm past a cut); 8
+pieces of 5 walls on a road away from a gate, none of Daggerfall's. Those are streets (5 cities, 12 tiles), each within
+two lengths of a gate onto the same street - two gates stand two lengths apart at least. The 112 road tiles inside against
+a wall (55 walls) each run on to a gate: 95 a gate's road along the inner face, 17 the painter's. Gates 1,513 to 1,568 (55
+walls one more; Daggerfall 5, as it was; the nearest two 57.7 m apart).
+
+**Every yard where #1184 stood it** (the owner's decision; `gateRoads.js:"export function yardRoads(tilemap, paths, tileData, town) {"`,
+`townWalls.js:"export function townWallYardCellsOf(dfLocation) {"`). A yard's place reads the roads and the wall, and
+the new ones moved 310 of the 1,258 (220 cities; over 44 of them, 42 of 49 moves with the take-up). So the yards read
+what they read at #1184: the paths with no arm taken up and the roads of the gates that wall stood (`townGates.js` hands
+them as `yard`), and that wall's cells - no street's gate, no tower grown (townWall's `yardPieces`). The host shuts the
+yards' ground so (`scenes/pixelBuild.js` yardShut); its walkers keep the new.
+
+Measured over all 410: 1,254 of the 1,258 yards stand on #1184's cells; four stables stand 1 to 4 cells off (Knightsgate, Issaqumbaa, Syra-Kom, Puweyn), their cause not
+yet found. Under the new wall and roads 52 are left where #1184 stood them though they no longer fit: 50 on a gate's new
+road outside the wall, and 2 on the new wall's cells (Knightsmore's Stable, Tigonus's joinery).
+
+**Not changed, and why.** The wall is one model, so its pixel's build stands its 14,600 triangles in one step: 30 to 94 ms
+on the collider, and as much again with the player in town (the late solids' gate, `player/lateSolid.js`, builds a probe of
+it: its box is the city's) - where the ring's blocks stood a piece at a time with a breath between. A model a chord needs
+model ids the walls' run has no room for. Past the Bay (TS4) the same slide leaves its arms into the walls; there the arm
+inside crosses the town's open cells as its fabric's road, and is left for its own slice.
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from Daggerfall's wall pieces - no door where the wall is a model of
+the town's own, a length cut at a bend and its tower grown across; from Basic Roads' tiles on a Bay wall's ground. Tests
+`test/world/fb1028_walls.test.js` (9, three on ARENA2). Mutants `tools/mutants/fb1028_walls.json` (31, all dead). PINS
+MOVED: `test/world/gateroads.test.js` (the kernel handed the town's ground), `test/world/townbends.test.js` (a tower's
+footprint as wide as it stands); `baywalls`, `ic_stutter`, `merchantyards1`, `shipyards1_found` (the host hands the
+places the yards' shut); re-aimed by content: GATE-ROADS-the-roads-never-laid, TS8-towers-whole,
+TF-the-length-and-thickness-swapped, TW-the-turn-mirrored, TB-the-walk-unshared, TF-the-wall-unwired, TS10-key-blind.

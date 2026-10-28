@@ -299,7 +299,7 @@
  {
   "name": "TB-the-walk-unshared",
   "file": "src/scenes/pixelBuild.js",
-  "old": "loc, walkShut, () => breather.breathe())",
+  "old": "loc, yardShut, () => breather.breathe())",
   "new": "loc, null, () => breather.breathe())",
   "tests": [
    "test/world/baywalls.test.js"
