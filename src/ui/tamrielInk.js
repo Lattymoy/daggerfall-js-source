@@ -57,6 +57,7 @@ import { cyrodiilMask, zoneLineSteps } from '../systems/wild/cyrodiilZone.js';  
 import { watersInk, watersInkVersion } from '../world/tamriel/watersInk.js';   // MAP-WATERS: stream G's rivers and lakes past the Bay (the worker's copy), inked
 import { bridgesOf, inkBridgeLaw } from '../world/road/roadBridges.js';   // ROAD-LOOK: the bridges where the roads cross those rivers, marked
 import { lawLines, linkSteps, segKey, drain } from '../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
+import { discoveryGeneration } from '../systems/discovery.js';   // AUDIT TAMRIEL-WIDE D2: a find moves the tiles' stamp
 
 /** @typedef {{ x: number, y: number }} Pt */
 /** TESA13: the host's atlas's answer (world/tamrielAtlas.js placesIn) - the places on a rectangle's pixels. */
@@ -748,7 +749,7 @@ export function pastBayStamp(x0, y0, x1, y1) {
       p = Math.max(p, pastBayPlacesStamp(tx, ty));
     }
   }
-  return `${r}|${p}|${watersInkVersion()}`;   // MAP-WATERS: and the waters' install - the rivers are the trace's and the fit's
+  return `${r}|${p}|${watersInkVersion()}|${discoveryGeneration()}`;   // MAP-WATERS: and the waters' install - AUDIT TAMRIEL-WIDE D2: and a find, which inks its place
 }
 
 /** TESA13: THE COUNTRYSIDE'S AND THE LAIRS' MARKS IN A VIEW - each place the host's atlas holds on the view's pixels

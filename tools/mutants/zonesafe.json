@@ -42,7 +42,7 @@
   {
     "name": "ZONESAFE-the-next-pixel-reached",
     "file": "src/systems/wild/zoneSafe.js",
-    "old": "const loc = index.get(`${px.x},${px.y}`);",
+    "old": "landsSettled(p, (x, y) => index.get(`${x},${y}`));",
     "new": "const loc = index.get(`${px.x},${px.y}`) ?? index.get(`${px.x - 1},${px.y}`);",
     "tests": [
       "test/systems/wild/zonesafe.test.js"

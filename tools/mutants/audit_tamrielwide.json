@@ -48,5 +48,46 @@
       "test/ui/ui3_geobackgrounds.test.js"
     ],
     "note": "A province's open road reads past the region table."
+  },
+  {
+    "name": "AUDIT-TW-D2-the-find-unread",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "BAKED_KNOWN_TYPES.has(p.type) || hasDiscoveredLocationId(provinceQuestPlaces?.rowAt(p.x, p.y)?.mapId ?? -1)",
+    "new": "true",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "Every lair past the Bay is inked and named before it is found again."
+  },
+  {
+    "name": "AUDIT-TW-D2-the-stamp-blind-to-a-find",
+    "file": "src/ui/tamrielInk.js",
+    "old": "|${watersInkVersion()}|${discoveryGeneration()}`;",
+    "new": "|${watersInkVersion()}`;",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "A find past the Bay is not painted until something else moves its tile."
+  },
+  {
+    "name": "AUDIT-TW-E1-the-landing-unread",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "(landing !== undefined ? landsSettled(landing, locAt) : isSettlement(locAt(to.x, to.y)))",
+    "new": "isSettlement(locAt(to.x, to.y))",
+    "tests": [
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "A Mark beside a village's walls lands in Cyrodiil's open country again."
+  },
+  {
+    "name": "AUDIT-TW-E1-the-host-drops-the-landing",
+    "file": "src/scenes/world.js",
+    "old": "modes?.mode, locationIndex, _locationToBuild, landing)) return false;",
+    "new": "modes?.mode, locationIndex, _locationToBuild)) return false;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js",
+      "test/world/worldWide/audit_tamrielwide.test.js"
+    ],
+    "note": "The host never hands the zone its callers' landings."
   }
 ]

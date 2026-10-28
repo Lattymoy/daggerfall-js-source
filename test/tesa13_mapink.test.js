@@ -334,7 +334,7 @@ test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, th
   assert.match(body('  function lairCloneOf(at, px, py) {'), /const blocks = lairBlocksOf\(at\);/);
   const from = W.indexOf('  function buildTravelMapWindow(extra = {}) {');
   const map = W.slice(from, W.indexOf('      ...extra,', from));
-  assert.match(map, /tamrielPlacesIn: tamrielLand \? pastBayPlacesIn : null,/, 'the one map seam hands the regions\' places');
+  assert.match(map, /tamrielPlacesIn: tamrielLand \? \(x0, y0, x1, y1\) => knownPastBayIn\(x0, y0, x1, y1\) : null,/, 'the one map seam hands the regions\' places - PIN MOVED (AUDIT TAMRIEL-WIDE D2): the known ones');
   assert.match(map, /tamrielPlaceName: tamrielLand \? tamrielPlaceName : null,/, 'and a mark\'s name');
   assert.match(W, /const tamrielPlaceName = \(px, py\) => countryRollAt\(px, py\)\?\.name \?\? lairRollAt\(px, py\)\?\.name \?\? '';/, 'off the one roll');
   assert.doesNotMatch(W, /createTamrielAtlas|tamrielPlacesPending/, 'no second roll on this thread');

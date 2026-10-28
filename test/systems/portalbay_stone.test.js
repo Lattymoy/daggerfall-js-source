@@ -21,7 +21,7 @@ import { portalStones } from '../../src/systems/gate/gateSpoils.js';
 import { PORTAL_TEXT, PORTAL_HOLD_TEXT } from '../../src/systems/portalStone.js';
 import { pastBayJourney, teleportJourney, PAST_BAY_TRAVEL_TEXT } from '../../src/systems/travel/pastBayTravel.js';
 import { wildJourney, wildInside, buildWildMask, WILD_NAME } from '../../src/systems/wild/wildZone.js';
-import { zonePortFree } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
+import { zonePortFree, landingOf } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
 import { inEther } from '../../src/world/ethericSea.js';
 import { inBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { REPOSITION } from '../../src/systems/ship.js';
@@ -29,7 +29,7 @@ import { teleportPlan } from '../../src/systems/teleportAnchor.js';
 import { HeldMapWindow } from '../../src/ui/heldMap.js';
 import { tamrielInkFor } from '../../src/ui/tamrielInk.js';
 import { setCapitalsStanding, capitalOnPixel, synthesizeCapitalLocation } from '../../src/world/tamrielCapitals.js';
-import { locationWorldRect } from '../../src/world/streamingWorld.js';   // WILD-CITY-PORT: a slice's streets
+import { locationWorldRect, mapPixelToWorldCoords } from '../../src/world/streamingWorld.js';   // WILD-CITY-PORT: a slice's streets
 import { _resetForTests } from '../../src/systems/uiPrefs.js';
 import { portalLandAt } from '../../src/systems/travel/pastBayTravel.js';   // PORTAL-ANYWHERE
 import { floorLanding, heldInSolid, openGroundNear, safeGroundAt, safeGroundNear, levelGroundAt, LANDING_LEVEL_REACH, LANDING_STEEP } from '../../src/player/enterExit.js';
@@ -113,7 +113,7 @@ function worldHost(o = {}) {
     arenaBouts: { holds: () => false }, ARENA_TEXT: { refuse: { travel: 'arena' } }, madeRuleHere: () => null, madeSay() {}, teleportPlan,
     routByJump() {}, cacheExteriorScene() {}, _wodInside: false,
     // WILD-CITY-PORT (systems/wild/zoneSafe.js zonePortFree): where I stand and the place a pixel stands - none by default
-    zonePortFree, campToWire: (p) => p, player: { feetAt: () => [0, 0, 0] }, locationIndex: new Map(), _locationToBuild: () => null,
+    zonePortFree, landingOf, campToWire: (p) => p, player: { feetAt: () => [0, 0, 0] }, locationIndex: new Map(), _locationToBuild: () => null,
     ...o,
   };
   scope.wildOutdoors = () => (scope.modes?.mode ?? 'exterior') === 'exterior';
@@ -121,7 +121,7 @@ function worldHost(o = {}) {
   scope.worldMoveBusy = () => scope.busy;
   for (const [head, end, name] of [
     ['const veilRefused = (to = null) => {', '\n  };\n', 'veilRefused'],
-    ['const wildTeleportRefused = (to = null) => {', '\n  };\n', 'wildTeleportRefused'],
+    ['const wildTeleportRefused = (to = null, landing = undefined) => {', '\n  };\n', 'wildTeleportRefused'],
     ['const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {', '\n  };\n', 'wildTravelGate'],
     ['const wildTravelPaid = (j) => {', '\n  };\n', 'wildTravelPaid'],
     ['  async function teleportTo(pick) {', '\n  }\n', 'teleportTo'],
@@ -281,7 +281,8 @@ test('PORTAL-BAY a refused pick never fades and never spends; a refused step is 
 });
 
 test('PORTAL-BAY Recall is a teleport too: an anchor set past the Bay is reached by the world\'s own recallToAnchor, never refused as a journey; an anchor in the zone still refused (mutant: Recall\'s law the journey\'s)', async () => {
-  const anchorAt = (pixel) => ({ worldContext: 0, pixel, nativeX: 0, nativeZ: 0, y: 2, yaw: 0, pitch: 0, insideBuilding: false, insideDungeon: false, buildingKey: 0 });
+  // AUDIT TAMRIEL-WIDE E1 (PIN MOVED): the anchor makeAnchor mints - its feet inside its pixel, where a teleport now lands
+  const anchorAt = (pixel) => { const o = mapPixelToWorldCoords(pixel.x, pixel.y); return { worldContext: 0, pixel, nativeX: o.x + 16384, nativeZ: o.z + 16384, y: 2, yaw: 0, pitch: 0, insideBuilding: false, insideDungeon: false, buildingKey: 0 }; };
   const solitude = { x: 1728, y: -545 };
   const W = worldHost({ stopAfterJump: true });
   W.scope.playerEntity.anchorPosition = anchorAt(solitude);
@@ -334,12 +335,23 @@ test('WILD-CITY-PORT (the owner: "Even with the open pvp, players should be able
   assert.equal(await W.scope.teleportTo({ pixel: bay, name: 'Wayrest' }), false, 'from a dungeon under the city');
   assert.equal(W.said.at(-1), ZONE);
   // RECALL: an anchor in the city reached; one on the zone's land refused
-  const anchorAt = (pixel) => ({ worldContext: 0, pixel, nativeX: 0, nativeZ: 0, y: 2, yaw: 0, pitch: 0, insideBuilding: false, insideDungeon: false, buildingKey: 0 });
+  // AUDIT TAMRIEL-WIDE E1 (PIN MOVED): the anchor makeAnchor mints - its feet inside its pixel, where a teleport now lands
+  const anchorAt = (pixel) => { const o = mapPixelToWorldCoords(pixel.x, pixel.y); return { worldContext: 0, pixel, nativeX: o.x + 16384, nativeZ: o.z + 16384, y: 2, yaw: 0, pitch: 0, insideBuilding: false, insideDungeon: false, buildingKey: 0 }; };
   for (const [pixel, reached] of [[slice, true], [bare, false]]) {
     W = online({ stopAfterJump: true });
     W.scope.playerEntity.anchorPosition = anchorAt(pixel);
     await W.scope.recallToAnchor().catch(() => {});
     assert.deepEqual(W.jumps.map((j) => [j.px, j.py]), reached ? [[pixel.x, pixel.y]] : [], `Recall to ${pixel.x},${pixel.y}`);
+  }
+  // AUDIT TAMRIEL-WIDE E1: the Mark's own point, not its pixel - a village on the zone's land, its streets reached, two
+  // blocks past its walls (the open country, on its pixel) refused
+  const village = { name: 'V', mapTableData: { mapId: 5, locationType: 2 }, exterior: { exteriorData: { blockNames: ['A', 'B', 'C', 'D'], width: 2, height: 2 } } };
+  const vr = locationWorldRect(village, bare.x, bare.y);
+  for (const [nativeX, reached] of [[(vr.minX + vr.maxX) / 2, true], [vr.maxX + 2 * 4096, false]]) {
+    W = online({ stopAfterJump: true, _locationToBuild: (x, y) => (x === bare.x && y === bare.y ? village : capitalSliceAt(x, y)) });
+    W.scope.playerEntity.anchorPosition = { ...anchorAt(bare), nativeX, nativeZ: (vr.minZ + vr.maxZ) / 2 };
+    await W.scope.recallToAnchor().catch(() => {});
+    assert.deepEqual(W.jumps.map((j) => [j.px, j.py]), reached ? [[bare.x, bare.y]] : [], reached ? 'a Mark in the village\'s streets' : 'a Mark past its walls');
   }
   // A STONE: its door in the city's streets (outdoors, settledAt's frame) opens; in the open country past it, refused
   const loc = capitalSliceAt(ic.x, ic.y), r = locationWorldRect(loc, ic.x, ic.y);

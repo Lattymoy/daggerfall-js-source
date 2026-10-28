@@ -1363,8 +1363,8 @@
   {
     "name": "ACS-P6-recall",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)",
-    "new": "wildTeleportRefused(plan.anchor?.pixel ?? null)",
+    "old": "wildTeleportRefused(plan.anchor?.pixel ?? null, landingOf(plan.anchor)) || veilRefused(plan.anchor?.pixel ?? null)",
+    "new": "wildTeleportRefused(plan.anchor?.pixel ?? null, landingOf(plan.anchor))",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1382,8 +1382,8 @@
   {
     "name": "ACS-P6-party",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(pick.pixel ?? null) || (!pick.veil && veilRefused(pick.pixel ?? null))",
-    "new": "wildTeleportRefused(pick.pixel ?? null)",
+    "old": "wildTeleportRefused(pick.pixel ?? null, landingOf(pick.besideAt())) || (!pick.veil && veilRefused(pick.pixel ?? null))",
+    "new": "wildTeleportRefused(pick.pixel ?? null, landingOf(pick.besideAt()))",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
