@@ -46,6 +46,7 @@ import { MerchantRepairWindow, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H } 
 import { REFORGE_ROW_BG } from '../../src/ui/guildServiceWindow.js';
 import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law
 import { buildWildMask, wildInside, WILD_NAME, wildJourney } from '../../src/systems/wild/wildZone.js';
+import { zonePortFree } from '../../src/systems/wild/zoneSafe.js';   // WILD-CITY-PORT
 import { pastBayJourney, teleportJourney } from '../../src/systems/travel/pastBayTravel.js';   // PORTAL-BAY: the teleport's law past the Bay   // AUDIT TESA II Z5: the open zone's teleport law, the world's own
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -580,6 +581,8 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   // PIN MOVED (AUDIT TESA II Z5): and the open zone's teleport law (PVPDUNGEONS - "of any kind"), the world's own, mounted -
   // no zone until the pin at the end stands one
   Object.assign(scope, { wildInside, WILD_NAME, etherWildRingAt: () => 0, ETHER_WILD_TEXT: { teleport: () => 'the sea' }, staffPowers: () => ({}), TEST_GODMODE: false, wildMapMask: () => null, online: { wildOk: false } });
+  // WILD-CITY-PORT (systems/wild/zoneSafe.js zonePortFree): no settlement stands anywhere in these pins
+  Object.assign(scope, { zonePortFree, wildOutdoors: () => true, campToWire: (p) => p, locationIndex: new Map(), _locationToBuild: () => null });
   scope.wildTeleportRefused = mount(scope, cut(w, 'const wildTeleportRefused = (to = null) => {', '\n  };\n'), 'wildTeleportRefused');
   // PIN MOVED (PORTAL-BAY): the pick and the step ask the teleport's whole gate (teleportRefused) - the world's own journey
   // gate under the teleport's law past the Bay, mounted
@@ -676,7 +679,7 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   // and never stepped through into, out of or inside it, whoever opened it. A zone of world pixels x 2000..2099
   const zone = buildWildMask({ width: 100, height: 100, ox: 2000, oy: 600, inZone: () => true });
   Object.assign(scope, { online: { wildOk: true }, wildMapMask: () => zone, etherSea: false });
-  const ZONE = `You cannot teleport into or out of ${WILD_NAME}. Walk or ride its roads.`;
+  const ZONE = `In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`;   // PIN MOVED (WILD-CITY-PORT): the words name the ends the zone lets go
   const stones = [portalStones(2)];
   scope.portalGates.clear();
   scope.here = { x: 2050, y: 650 };

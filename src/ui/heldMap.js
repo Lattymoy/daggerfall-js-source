@@ -4086,14 +4086,24 @@ export class HeldMapWindow {
     };
   }
 
+  /** TESA2: the city past the Bay a press on the teleport map takes - one the sheet inks, with the pixel the world stands it
+   *  on - or null (AUDIT TESA II M7; BAY-LEFT-MAPS C11: under the Ports filter too). */
+  _portalCityAt(sx, sy) {
+    if (!this._tamriel || this._zoneMap || !this.teleportationTravel) return null;
+    const [mx, my] = toMap(this._view, sx, sy);
+    const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model), { filters: this.filters, continent: onContinent(this._view.scale, this._bayFit()), portsOnly: this.portsFilter });
+    return city?.pixel ? city : null;
+  }
+
   _pickAt(sx, sy) {
     if (!this._onSheet([sx, sy])) return;   // AUDIT-MAP2: off the paper is off the map (the sprite's hands, the world)
     // ZONE-ZOOM (2026-10-08, the owner: "when you click a town or any other POI in the zone out from the world map it
     // dosent zoom you in it should always zoom you into the zone map doesnt matter what you click there"): on the world
     // map ANY press inside the zone - a town, a hall, a quest's mark or bare ground - opens the zone map first
     // AUDIT TESA II M5: online - offline the zone is drawn and none of its laws runs, and a press is the world map's (a
-    // Portal Stone's to Cyrodiil's cities among them); the key's Zone map button still opens its map
-    if (!this._zoneMap && this._zoneLaws()) {
+    // Portal Stone's to Cyrodiil's cities among them); the key's Zone map button still opens its map. WILD-CITY-PORT: on
+    // the teleport map a city in the zone is a portal's end (scenes/world.js wildTeleportRefused), never the zone map's
+    if (!this._zoneMap && this._zoneLaws() && !this._portalCityAt(sx, sy)) {
       const mask = this.deps.wildMask?.() ?? null;
       const [zx, zy] = toMap(this._view, sx, sy);
       if (mask && wildInside(mask, zx, zy) && this._openZoneMap()) return;
@@ -4115,10 +4125,9 @@ export class HeldMapWindow {
     // walked, or a stone's portal reaches it; a place the world does not stand picks nothing, as TAMRIEL1's did
     if (this._tamriel && !this._zoneMap && this.teleportationTravel) {
       const [mx, my] = toMap(this._view, sx, sy);
-      const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model), { filters: this.filters, continent: onContinent(this._view.scale, this._bayFit()), portsOnly: this.portsFilter });   // AUDIT TESA II M7: a city the sheet inks (BAY-LEFT-MAPS C11: under the Ports filter too)
       // PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner: "Anywhere on land"): on the Portal Stone's map
       // (`portalLandPastBay`) bare land past the Bay is a portal's end too, named by its province - the guild's keeps TESA13's
-      const end = city?.pixel ? city : this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null;
+      const end = this._portalCityAt(sx, sy) ?? (this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null);
       if (end) {
         this._select({ coords: true, x: end.pixel.x + 0.5, y: end.pixel.y + 0.5, colorIndex: -1, kind: 'coords', name: end.name, summary: null, mapId: null, arena: true });
         this._openPanel('teleport');
