@@ -86,7 +86,8 @@ export function validStaffDestination(d) {
   }
   if (d.kind === 'abyss') {
     const a = d.abyss;
-    if (!a || !integer(a.PitMapX, 999) || !integer(a.PitMapY, 499)
+    // AUDIT TAMRIEL-WIDE B2: a pit stands on the world's grid (PITS-WORLD); its template is a Bay dungeon, so Bay-bound
+    if (!a || !worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)
       || !integer(a.TemplateMapX, 999) || !integer(a.TemplateMapY, 499)
       || !integer(a.TemplateRegionIndex, 61) || !integer(a.TemplateLocationIndex, 65535)
       || !finite(a.ReturnWorldX) || !finite(a.ReturnWorldZ) || !finite(a.ReturnPitDepth)
