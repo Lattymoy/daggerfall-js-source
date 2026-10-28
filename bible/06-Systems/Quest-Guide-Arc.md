@@ -143,7 +143,11 @@ Daggerfall; the town when the entry names it (`__p_`, `___p_`), when it
 is on the player's map (DFU's find-place box names it) or when the
 player stands in it - a claim never made where the map says no (AUDIT
 GUIDE W2: a player cannot stand in a place their map lacks; a place of
-the same name elsewhere is not it); the region only when the entry
+the same name elsewhere is not it - AUDIT STARTS U5: past the Bay they
+can, a start's dungeon off the classic map's table or off a map with the
+continent put away, so a site with its own pixel is here by its name,
+and its note off the map promises nothing: "Beyond the Iliac Bay, past
+the edge of your map."); the region only when the entry
 names the region (`____p_`), the place is on the map or the player
 stands in it (AUDIT GUIDE W1: the town's own name never unlocks it).
 Only the target's own macros say anything. `find` is
@@ -615,7 +619,11 @@ the row's longitude and latitude) - through the host's one memo of it,
 `placePixelMemo`, which the look's `canFindPlace` shares (AUDIT GUIDE
 O3: MapsFile keeps one region, and a look asking about places in two
 regions every tick re-parsed them 20-30 times a second; a place's pixel
-never moves, and the discovered half stays live);
+never moves, and the discovered half stays live); START3
+(`06-Systems/Alternate-Starts-Arc.md` section 12): a site past the Bay,
+which MAPS.BSA holds none of, carries its own pixel on `find`
+(`worldPixel`), read first - on the player's map where the held sheet
+shows the continent, its marks read over the continent's frame;
 `questCompassMark` hands the compass the middle of that pixel in the
 scene's frame (the streaming host's `pixelTranslation` plus half a
 `TERRAIN_SIZE`, the party marks' own sum); drawHud forwards `quest` to

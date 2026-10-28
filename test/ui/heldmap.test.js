@@ -2107,7 +2107,8 @@ test('AUDIT-MAP B2/B4: the sprite\'s handler is set before its source, the displ
   // MAP-FIELD2: the measure cache went with the names - nothing else on
   // the sheet measures text - so the face's landing drops the kept layer
   // alone. The repaint is still what the landing is FOR.
-  assert.match(src, /const landed = \(\) => \{ if \(!this\.done\) \{ this\._staticKey = ''; this\._dirty = true; \} \};/, 'the kept layer is dropped with it');
+  assert.match(src, /const landed = \(\) => \{ if \(!this\.done\) this\._inkAgain\(\); \};/, 'the kept layer is dropped with it');   // PIN MOVED (AUDIT TESA II M2): and the world sheet's kept parts - _inkAgain
+  assert.match(src, /_inkAgain\(\) \{ this\._staticKey = ''; this\._sheetLayersKey = ''; this\._dirty = true; \}/);
   assert.doesNotMatch(src, /_measureCache/, 'and no measure cache survives the names it existed for');
   assert.match(src, /stage\.addEventListener\('auxclick', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/, 'auxclick is where the middle click\'s default lives');
   assert.match(src, /stage\.addEventListener\('mousedown', \(e\) => \{ if \(e\.button === 1\) e\.preventDefault\?\.\(\); \}\);/);

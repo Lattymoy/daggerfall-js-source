@@ -51,14 +51,16 @@
   {
     "name": "HOME-PLAQUE-the-word-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "export const homeDoorName = (name, hasVerbs) => name || (hasVerbs ? 'Residence' : '');",
-    "new": "export const homeDoorName = (name, hasVerbs) => name || (hasVerbs ? '' : '');",
+    "old": "export const homeDoorName = (name, hasVerbs, type = null) => name || (hasVerbs || isHouseType(type) ? localizedText('residence', 'Residence') : '');",
+    "new": "export const homeDoorName = (name, hasVerbs, type = null) => name || (hasVerbs || isHouseType(type) ? '' : '');",
+    "note": "Re-aimed by content (IC-PROPS): the word is DFU's localized residence now, for a house by its type as well as for verbs; the mutant still drops it.",
     "tests": ["test/systems/fb0930b_questresidence.test.js"]
   },
   {
     "name": "HOME-PLAQUE-the-door-unnamed",
     "file": "src/scenes/worldModes.js",
-    "old": "homeDoorName(shownBuildingName(db, bd.name), !!houseVerbs)",
+    "old": "homeDoorName(shownBuildingName(db, bd.name), !!houseVerbs, bd.buildingType)",
+    "note": "Re-aimed by content (IC-PROPS): the hover hands the building's type too; the mutant still bypasses the word.",
     "new": "shownBuildingName(db, bd.name)",
     "tests": ["test/systems/fb0930b_questresidence.test.js"]
   }

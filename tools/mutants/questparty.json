@@ -176,9 +176,9 @@
   },
   {
     "name": "QP-world-receiver-stands-its-own",
-    "file": "src/scenes/world.js",
-    "old": "accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet, foes: exteriorFoes.foes })) return true;",
-    "new": "accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet, foes: exteriorFoes.foes })) return false;",
+    "file": "src/scenes/questWorld.js",
+    "old": "accountOfPeer: (id) => host.social?.accountOfPeer(id), myFeet: feet, foes: exteriorFoes.foes })) return true;",
+    "new": "accountOfPeer: (id) => host.social?.accountOfPeer(id), myFeet: feet, foes: exteriorFoes.foes })) return false;",
     "tests": ["test/scenes/questparty.test.js"]
   }
 ]

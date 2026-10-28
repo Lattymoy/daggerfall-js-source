@@ -210,7 +210,8 @@ test('SILVER-WAYS the world host by source: the raid claims say the book\'s silv
   // HAUL-CARDS (PIN MOVED): the silver as cards too (ui/haulCards.js claimHauls), the book's lines said as ever
   assert.match(w, /onMarks: \(data\) => \{ showHaul\(claimHauls\(data, 'raid'\)\); return marksBook\?\.claimLines\(data, 'raid'\) \?\? null; \},/);
   assert.match(w, /onMarks: \(marks, data\) => \{ showHaul\(claimHauls\(data \?\? \{ marks \}, 'gate'\)\); return marksBook\?\.claimLines\(data \?\? \{ marks \}, 'gate'\) \?\? null; \},/);
-  assert.match(w, /return site \? \{ region: site\.region, character \} : character \? \{ character \} : null;/);
+  // PIN MOVED (WW-GATES-EVERYWHERE A2b): the region its own word (scenes/gate/gateSeat.js gateSeatRegion - a lane past the Bay's its province's)
+  assert.match(w, /return region != null \? \{ region, character \} : character \? \{ character \} : null;/);
   // PIN MOVED: AUDIT GUILD3 T1 - one list of holds, the gate's and the view's: a contract standing, or a closed one's escrow not yet home
   assert.match(src('server-account/src/guilds.js'), /\['guild-contracts', \(\/\*\* @type \{string\} \*\/ p\) => `EXISTS \(SELECT 1 FROM guild_contracts WHERE guild_id = \$\{p\} AND state = 'open'\)`\]/);
   assert.match(src('server-account/src/guilds.js'), /\['guild-writ-escrow', \(\/\*\* @type \{string\} \*\/ p\) => `EXISTS \(SELECT 1 FROM guild_contracts WHERE guild_id = \$\{p\} AND state IN \('filled', 'withdrawn', 'expired'\) AND \+returned = 0 AND escrow > 0\)`\]/);

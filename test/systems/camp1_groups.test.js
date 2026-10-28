@@ -250,7 +250,7 @@ test('CAMP1-REST: the rest interrupt is SIGHT first - a seen foe reports at any 
   // THE DIFFERENCE THAT ACTUALLY DECIDES IT, by source: the lone arm yaws its foe at the PLAYER, the group arm
   // yaws each member at the ANCHOR. That is the line a future "fix" would touch instead of this gate.
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const h = read(host);
+    const h = host === 'src/scenes/world.js' ? hostText(host) : read(host);   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): questWorld is scenes/questWorld.js's - the host read whole
     assert.match(h, /yaw: Math\.atan2\(feet\[0\] - spot\.x, feet\[2\] - spot\.z\),   \/\/ LookAt player/, `${host}: the lone wanderer faces the player`);
     assert.match(h, /yaw: Math\.atan2\(anchorFeet\[0\] - spot\.x, anchorFeet\[2\] - spot\.z\),/, `${host}: a campmate faces the camp`);
   }

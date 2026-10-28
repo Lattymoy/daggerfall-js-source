@@ -556,9 +556,9 @@
   },
   {
     "name": "MARKET-ANY-host-the-keeper-unasked",
-    "file": "src/scenes/world.js",
-    "old": "const marketGoods = createMarketGoods(playerEntity, { kept: (pv) => pieceKept(pv), say: (t) => townTalk.say(t) });",
-    "new": "const marketGoods = createMarketGoods(playerEntity, { say: (t) => townTalk.say(t) });",
+    "file": "src/scenes/marketPiecesHost.js",
+    "old": "const marketGoods = createMarketGoods(playerEntity, { kept: (pv) => pieceKept(pv), say: (t) => host.townTalk.say(t) });",
+    "new": "const marketGoods = createMarketGoods(playerEntity, { say: (t) => host.townTalk.say(t) });",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]

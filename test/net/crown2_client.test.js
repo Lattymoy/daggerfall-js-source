@@ -196,7 +196,7 @@ test('CROWN2 THE WIRING BY SOURCE: the world hands the seat book a red line\'s d
   assert.match(world, /redChat = \(line\) => \{ if \(!chatLog\) return false; chatLog\.pushAll\(\{ text: line\.text, at: line\.at, red: true \}\); return true; \};/);
   assert.match(world, /seatBook\?\.redTick\(\);/);
   const idx = readFileSync(new URL('../../server-account/src/index.js', import.meta.url), 'utf8');
-  assert.match(idx, /\.\.\.\(await seatsBoard\(ctx\.db, r\.seats, nowS\)\)/);   // PIN MOVED (SEAT-BATCH): the red lines ride the list's one batch
+  assert.match(idx, /const board = await seatsBoard\(ctx\.db, r\.seats, nowS\);\n\s*return \{ \.\.\.r, \.\.\.board,/);   // PIN MOVED (SEAT-BATCH): the red lines ride the list's one batch; PIN MOVED (DOMAIN3): the board read once, its seats marked under the region law
   assert.match(readFileSync(new URL('../../server-account/src/seatTurning.js', import.meta.url), 'utf8'), /return \{ red: redFrom\(redRes\?\.results\), seats: seats\.map\(/);
   const tab = readFileSync(new URL('../../src/ui/seatTab.js', import.meta.url), 'utf8');
   assert.match(tab, /if \(data\.mine\?\.politics\) mine\.append\(politicsNode\(data\.mine\.politics, SEAT_LEVER_RANKS\.includes\(data\.mine\.rank\)\)\);/);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): Fealty and Pacts drawn under Your guild

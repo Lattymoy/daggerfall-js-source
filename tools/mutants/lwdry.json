@@ -73,12 +73,13 @@
   },
   {
     "name": "LW-DRY-host-unwired",
-    "file": "src/scenes/world.js",
-    "old": "    dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground\n",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    dryAt: (/** @type {number} */ nx, /** @type {number} */ nz) => (dry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground\n",
     "new": "",
     "tests": [
       "test/systems/livingWorld/lwdry_ground.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-7): the trips' world scenes/livingWorld/livingTrips.js's."
   },
   {
     "name": "LW-DRY-tile-compare",

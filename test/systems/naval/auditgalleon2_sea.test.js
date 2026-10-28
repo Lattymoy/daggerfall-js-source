@@ -100,7 +100,10 @@ test('AUDIT GALLEON-2 PF6: a hull\'s draft (shipLife.js draftOf - world.js naval
   // 4.59 m keel), the mod's Carrack's 3.2 fallen back (test/systems/naval/ships2_carrack.test.js holds both)
   assert.ok(Math.abs(LIFE.draftOf(HULL.Carrack) - (LIFE.DRAFT_SPARE - hullBuild(HULL.Carrack).keel)) < 1e-9, 'the Carrack\'s her keel\'s');
   // world.js asks it when it sounds - no frozen table of its own
-  const law = WORLD.slice(WORLD.indexOf('const navalIsWater = '), WORLD.indexOf('let _navalCapitals'));
+  // PIN MOVED (BAY-LEFT-SEA): the crowns' capitals stand above the world's ports now - the law ends where the next port
+  // reader begins
+  const law = WORLD.slice(WORLD.indexOf('const navalIsWater = '), WORLD.indexOf('let _navalPortAt = null;'));
+  assert.ok(law.length > 0 && law.length < 2000, 'the law sliced whole');
   assert.match(law, /draftOf\(hull\)/i, 'navalIsWater reads draftOf');
   assert.doesNotMatch(WORLD, /NAVAL_DRAFT = Object\.freeze/, 'no frozen draft table in world.js');
 });

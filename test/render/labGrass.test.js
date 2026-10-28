@@ -48,7 +48,7 @@ test('GR1/GRASS2/GRASS5/GRASS6: the shaders are the lab\u2019s own but for five 
   assert.ok(LAB_GRASS.span > LAB_GRASS.range, 'the window holds the range - a window shorter than the range has a wall at its edge');
   assert.equal(labBladeCorners().length / 2, 30, 'five stacked quads, the lab\u2019s blade');
   assert.equal(labBladeCorners(GRASS_FAR_SEGMENTS).length / 2, 6, 'and one quad for the far blade, a fifth of the vertices');
-  assert.deepEqual({ ...LAB_DIM }, { sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55 });   // WEATHER2d: the port's own row appended; the lab's seven verbatim
+  assert.deepEqual({ ...LAB_DIM }, { sunny: 1.00, cloudy: 0.90, overcast: 0.72, fog: 0.66, rain: 0.60, thunder: 0.46, snow: 0.80, sandstorm: 0.55, ashfall: 0.58 });   // WEATHER2d: the port's own row appended; the lab's seven verbatim   // PIN MOVED (ASHFALL1, 2026-10-27): the ashfall's row appended
 });
 
 test('GR1: the placer is the lab\u2019s law - same seed, span, clustering, height, lean, tint, width', () => {

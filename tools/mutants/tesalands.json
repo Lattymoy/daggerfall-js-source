@@ -1,0 +1,1112 @@
+[
+  {
+    "name": "TL-water-dressed",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "const m = c === 0 || c === 4 ? null : dress?.[name];",
+    "new": "const m = c === 4 ? null : dress?.[name];",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-paving-dressed",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "const m = c === 0 || c === 4 ? null : dress?.[name];",
+    "new": "const m = c === 0 ? null : dress?.[name];",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-ramp-not-monotone",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "lum[i] = Math.max(i ? lum[i - 1] : 0, lumOf(at[0], at[1], at[2]));",
+    "new": "lum[i] = lumOf(at[0], at[1], at[2]);",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-vivid-off",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "return c.map((v) => L + (v - L) * DRESS_DIALS.vivid);",
+    "new": "return c;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-contrast-reversed",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "Math.pow(Math.max(L, 1) / Math.max(p.lum, 1), m.contrast)",
+    "new": "Math.pow(Math.max(p.lum, 1) / Math.max(L, 1), m.contrast)",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-albedo-dropped",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "export function dressRecord(layer, record, mats, protos, light = DRESS_DIALS.albedo) {",
+    "new": "export function dressRecord(layer, record, mats, protos, light = 1) {",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-alpha-lost",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "out[o + 3] = src[o + 3];",
+    "new": "out[o + 3] = 255;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-transition-one-class",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "const solid = record < 4 ? [record] : null;",
+    "new": "const solid = [2];",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-band-a-record",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "    if (y) yield;\n    dressRows(",
+    "new": "    dressRows(",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-blur-window",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "sum += a[row + Math.min(w - 1, x + r + 1)] - a[row + Math.max(0, x - r)];",
+    "new": "sum += a[row + Math.min(w - 1, x + r)] - a[row + Math.max(0, x - r)];",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-exposure-inverted",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "return a > 0 && b > 0 ? a / b : 1;",
+    "new": "return a > 0 && b > 0 ? b / a : 1;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-reach-unclamped",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "k: Math.min(DRESS_DIALS.reach[1], target / Math.max(lum[N], 1e-3))",
+    "new": "k: target / Math.max(lum[N], 1e-3)",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-zone-dropped",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "  hammerfellCraglorn: {",
+    "new": "  hammerfellCraglornX: {",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-ramp-light-to-dark",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "frostTundra: ['#55605f', '#86908d', '#b3bbb8', '#dee5ea']",
+    "new": "frostTundra: ['#dee5ea', '#b3bbb8', '#86908d', '#55605f']",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-look-of-another-kind",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "props: [{ kind: 'grove', looks: ['cherry'], rate: 0.07, where: 'woods' }],",
+    "new": "props: [{ kind: 'grove', looks: ['basalt'], rate: 0.07, where: 'woods' }],",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-table-writes",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "Object.freeze(v); for (const k of Object.keys(v)) deepFreeze(v[k]);",
+    "new": "for (const k of Object.keys(v)) deepFreeze(v[k]);",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-winter-dressed",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "if (typeof summer !== 'number' || summer % 100 !== 2) return archive;",
+    "new": "if (typeof summer !== 'number') return archive;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-base-ignored",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "return g ? groundSetKey(k, g.base ?? summer) : archive;",
+    "new": "return g ? groundSetKey(k, summer) : archive;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-key-unread",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "return m ? { zone: m[1], archive: Number(m[2]) } : null;",
+    "new": "return null;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-unstepped",
+    "file": "src/world/tamriel/groundDressClient.js",
+    "old": "const here = (/** @type {any} */ job) => stepsBreathing(dressLayersSteps(job.layers, job.dress, job.exposure), job.breathe);",
+    "new": "const here = (/** @type {any} */ job) => stepsBreathing(dressLayersSteps(job.layers, job.dress, job.exposure), async () => {});",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-blades-on-ash",
+    "file": "src/scenes/groundSets.js",
+    "old": "if (landOf(groundArchive)?.blades === false) grassRecords.set(groundArchive, new Set());",
+    "new": "if (false) grassRecords.set(groundArchive, new Set());",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-neighbours-the-pixels",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "return climateNeighbourIn(px, py, x, y) ? landSetOf(x, y, archive) : landSetOf(px, py, archive);",
+    "new": "return landSetOf(px, py, archive);",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-switch-online-off",
+    "file": "src/systems/landsSwitch.js",
+    "old": "return !!row && (isOnlinePage(search) || isEnhanced(search));",
+    "new": "return !!row && isEnhanced(search);",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-recipe-unread",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "const recipe = opts.lands?.nine?.[4]?.flora ?? null;",
+    "new": "const recipe = null;",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-archive-lost",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "wood, archive: pool.archives[i] };",
+    "new": "wood };",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-woods-edge-forest1",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "mid = forestQuantile(1 - recipe.woods);",
+    "new": "mid = (FOREST.edge[0] + FOREST.edge[1]) / 2;",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-border-unblended",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "const landsBorder = (lands) => !!lands?.blend &&",
+    "new": "const landsBorder = (lands) => false &&",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-keys-the-climates",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "(nine?.[k]?.flora ? `lands:${nine[k]?.key}` : `${nature[k]}:${type[k]}`)",
+    "new": "`${nature[k]}:${type[k]}`",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-unlaid",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "const landProps = natureOpts.lands ? layoutLandProps(samples, tilemap, natureOpts) : new Float32Array(0);",
+    "new": "const landProps = new Float32Array(0);",
+    "tests": [
+      "test/world/tesalands_flora.test.js",
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-flats-on-feet",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      if (offLand?.(f.x, f.z)) continue;   // TESA-LANDS: a stalk's, a column's, a trunk's foot and a vineyard's rows clear\n",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-bins-reversed",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "woodOf: (w) => table[w <= 0 ? 0 : w >= 1 ? B + 1 :",
+    "new": "woodOf: (w) => table[w <= 0 ? B + 1 : w >= 1 ? 0 :",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-expectation-forest1",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "landsTrees(spec.lands, spec.lands.woods, 0, 1, 0)",
+    "new": "landsTrees(spec.lands, FLORA.woodShare, 0, 1, 0)",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-rate-dropped",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "(FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wz) * L.treeRate + (",
+    "new": "(FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wz) + (",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-band-archive-the-pixels",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "out.set([f.x, f.y, f.z, bandTreeCode(archive, f)], k * 4)",
+    "new": "out.set([f.x, f.y, f.z, f.record], k * 4)",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-band-lands-unread",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "const nine = lands && !inBay(px, py) ? landsNine(px, py) : null;",
+    "new": "const nine = null;",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-band-code-unread",
+    "file": "src/render/farTrees.js",
+    "old": "const [a, r] = bandTreeArt(p.archive, t[i + 3]);",
+    "new": "const [a, r] = [p.archive, t[i + 3]];",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-zone-unread",
+    "file": "src/render/farFlora.js",
+    "old": "const zone = lands && x != null && y != null ? landKeyAt(Math.floor(x), Math.floor(y)) : null",
+    "new": "const zone = null",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-weights-dropped",
+    "file": "src/render/farFlora.js",
+    "old": "r += m[0] * m[3] * weight; g += m[1] * m[3] * weight; b += m[2] * m[3] * weight; n += m[3] * weight;",
+    "new": "r += m[0] * m[3]; g += m[1] * m[3]; b += m[2] * m[3]; n += m[3];",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-undone",
+    "file": "src/render/farFlora.js",
+    "old": "const m = opaqueMean(dressRecord(drawn[record], record, mats, protos, light).colors, true);",
+    "new": "const m = opaqueMean(drawn[record].colors, true);",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-pixel-unpassed",
+    "file": "src/render/farRing.js",
+    "old": "const f = floraOf(climate, px, py);",
+    "new": "const f = floraOf(climate);",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-row-unread",
+    "file": "src/render/farRing.js",
+    "old": "createFloraArt({ lands: tamrielLandsOn() })",
+    "new": "createFloraArt()",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-band-key-without-the-row",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": ",${m.landform ? 1 : 0},${m.lands ? 1 : 0}`, () => bandTreesPixel(",
+    "new": ",${m.landform ? 1 : 0}`, () => bandTreesPixel(",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-inset-off",
+    "file": "src/world/lands/landProps.js",
+    "old": "const tx = cx * C + C * (in0 + (in1 - in0) * draw(wx, wz, S))",
+    "new": "const tx = cx * C + C * draw(wx, wz, S)",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-rate-ignored",
+    "file": "src/world/lands/landProps.js",
+    "old": "if (u >= prop.rate * share) continue;",
+    "new": "if (u >= share) continue;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-road-stood-on",
+    "file": "src/world/lands/landProps.js",
+    "old": "if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
+    "new": "if (!(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-reeds-on-open-water",
+    "file": "src/world/lands/landProps.js",
+    "old": "if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
+    "new": "if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec]))) return false;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-floating",
+    "file": "src/world/lands/landProps.js",
+    "old": "out.push(mx, lowest(mx, mz, sinkR) - law.sink * scale,",
+    "new": "out.push(mx, ground(mx, mz) - law.sink * scale,",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-vines-one-row",
+    "file": "src/world/lands/landProps.js",
+    "old": "for (const f of [0.25, 0.75]) {",
+    "new": "for (const f of [0.25]) {",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-smaller-first",
+    "file": "src/world/lands/landProps.js",
+    "old": "const kinds = LAND_KINDS.filter((k) => !named || named.has(k)).sort(",
+    "new": "const kinds = LAND_KINDS.filter((k) => !named || named.has(k)) || [].sort(",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-flats-clearance",
+    "file": "src/world/lands/landProps.js",
+    "old": "const r = (landMeasures(kind, props[i + 6]).foot + FLAT_CLEAR) * props[i + 4];",
+    "new": "const r = landMeasures(kind, props[i + 6]).foot * props[i + 4];",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-reeds-bodied",
+    "file": "src/world/lands/landProps.js",
+    "old": "far: 260, steep: 20, sink: 0.1, body: false, sway: 0.35",
+    "new": "far: 260, steep: 20, sink: 0.1, body: true, sway: 0.35",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-keep-ignored",
+    "file": "src/world/lands/landProps.js",
+    "old": "if (keep(raw[i], raw[i + 2])) for (let k = 0; k < LAND_PROP_FLOATS; k++)",
+    "new": "if (true) for (let k = 0; k < LAND_PROP_FLOATS; k++)",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-owner-unread",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "owners: (ti) => nine[ownerOf(ti)]?.props ?? null,",
+    "new": "owners: () => nine[4]?.props ?? null,",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-slot",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "export const LAND_PROPS_SLOT = 3;",
+    "new": "export const LAND_PROPS_SLOT = 2;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-kind-farthest",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "if (dh - R > Math.min(reach, farOf[k])) continue;",
+    "new": "if (dh - R > reach) continue;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-set-box",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "return Math.hypot(bx, bz) <= (bodyOf[run.k] ? Math.max(cut, LAND_DRAW.castReach) : cut);",
+    "new": "return true;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-reed-cast",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "        if (!bodyOf[k]) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-host-unframed",
+    "file": "src/scenes/treesHost.js",
+    "old": "      landProps?.frame(pixels, eye, planes);",
+    "new": "      void landProps;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-bodies-unfiled",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (landStood) coverItems.push(...landStood.bodies);",
+    "new": "if (landStood) void landStood.bodies;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-probe-ungated",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "if (pageHas('shot')) globalThis.__landProps = probe;",
+    "new": "globalThis.__landProps = probe;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-grey-coloured",
+    "file": "src/render/landPropArt.js",
+    "old": "out[o] = g; out[o + 1] = g; out[o + 2] = g;",
+    "new": "out[o] = g; out[o + 1] = g; out[o + 2] = g >> 1;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-card-alpha-half",
+    "file": "src/render/landPropArt.js",
+    "old": "return paint(w, h, (x, y) => { const c = px[y * w + x]; return c ? [c[0], c[1], c[2], 255] : null; });",
+    "new": "return paint(w, h, (x, y) => { const c = px[y * w + x]; return c ? [c[0], c[1], c[2], 128] : null; });",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-face-inward",
+    "file": "src/world/lands/landPropMesh.js",
+    "old": "if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) tri(s, a, b, c, ua, ub, uc);",
+    "new": "if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) tri(s, a, b, c, ua, ub, uc);",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-lod-finer",
+    "file": "src/world/lands/landPropMesh.js",
+    "old": "const crownFrom = within(r, [11, 15]), r0 = within(r, [2.6, 3.4]), sides = [12, 8, 5][lod];",
+    "new": "const crownFrom = within(r, [11, 15]), r0 = within(r, [2.6, 3.4]), sides = [5, 8, 12][lod];",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-seed-unread",
+    "file": "src/world/lands/landPropMesh.js",
+    "old": "^ Math.imul(variant + 1, 0x9e3779b1)) >>> 0;",
+    "new": "^ Math.imul(1, 0x9e3779b1)) >>> 0;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-atlas-drawn-lent",
+    "file": "src/render/farTrees.js",
+    "old": "if (this._wanted.has(k) || this._drawnArts.has(k) || this._layingArts.has(k)) continue;",
+    "new": "if (this._wanted.has(k) || this._layingArts.has(k)) continue;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "TL-atlas-unfull-dropped",
+    "file": "src/render/farTrees.js",
+    "old": "    this._layingArts = new Set();\n    this._unfull();\n",
+    "new": "    this._layingArts = new Set();\n",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "TL-atlas-overrun",
+    "file": "src/render/farTrees.js",
+    "old": "if (this.layers.size < TREE_LAYERS) return this.layers.size;",
+    "new": "return this.layers.size;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "TL-atlas-laying-lent",
+    "file": "src/render/farTrees.js",
+    "old": "for (const p of pixels) for (const a of p.arts) if (this.layers.has(a)) laying.add(a);",
+    "new": "for (const p of pixels) for (const a of p.arts) if (false) laying.add(a);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "TL-tree-share-dropped",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "woods: recipe.woods, treeRate: c.treeRate * share, coverRate:",
+    "new": "woods: recipe.woods, treeRate: c.treeRate, coverRate:",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-tree-share-counted",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "picks.reduce((a, p) => a + (isTreeRecord(p[0], p[1]) ? p[2] : 0), 0) / all",
+    "new": "picks.reduce((a, p) => a + p[2], 0) / all",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-art-trees-only",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "if (all > 0) for (const [a, r, wt] of pool) if (isTreeRecord(a, r)) out.push(",
+    "new": "if (all > 0) for (const [a, r, wt] of pool) out.push(",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-dead-tree-pine",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "      trees: [[503, 11, 2], [503, 12, 2], [503, 28, 1], [510, 20, 2]],",
+    "new": "      trees: [[504, 24, 2], [503, 12, 2], [503, 28, 1], [510, 20, 2]],",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-copies-unmade",
+    "file": "src/world/tamriel/groundDressClient.js",
+    "old": "const copyOf = (/** @type {any} */ l) => (l?.colors ? { ...l, colors: Uint8Array.from(l.colors) } : l);",
+    "new": "const copyOf = (/** @type {any} */ l) => l;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-fallback-dropped",
+    "file": "src/world/tamriel/groundDressClient.js",
+    "old": "if (!w) return here({ layers, dress, exposure, breathe });",
+    "new": "if (!worker) return Promise.resolve(layers.slice());",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-on-thread",
+    "file": "src/scenes/groundSets.js",
+    "old": "own.layers = await dresser().dress(own.layers, dress,",
+    "new": "own.layers = await createDressClient().dress(own.layers, dress,",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-means-the-door",
+    "file": "src/scenes/groundSets.js",
+    "old": "if (!groundDrawnMeans.has(groundArchive) && DRESSED_MEANS.has(groundArchive)) groundDrawnMeans.set(groundArchive, DRESSED_MEANS.get(groundArchive));",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-puddles-again",
+    "file": "src/scenes/groundSets.js",
+    "old": "if (!groundPuddles.has(groundArchive) && groundPuddles.has(fileOf(groundArchive))) groundPuddles.set(groundArchive, groundPuddles.get(fileOf(groundArchive)));",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-far-ground-whole",
+    "file": "src/render/farFlora.js",
+    "old": "    await frameBack();\n",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-shares-a-band",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "    if (y) yield;\n    shareRows(",
+    "new": "    shareRows(",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-feet-neighbours",
+    "file": "src/world/lands/landProps.js",
+    "old": "    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {",
+    "new": "    for (let dx = 0; dx <= 0; dx++) {\n      for (let dz = 0; dz <= 0; dz++) {",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-feet-the-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const offLand = landFeetOff(landStood?.set.props, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);",
+    "new": "const offLand = landFeetOff(landProps, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-kernel-clears-again",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  const landProps = natureOpts.lands ? layoutLandProps(samples, tilemap, natureOpts) : new Float32Array(0);\n",
+    "new": "  const landProps = natureOpts.lands ? layoutLandProps(samples, tilemap, natureOpts) : new Float32Array(0);\n  if (landProps.length) for (let i = nature.length - 1; i >= 0; i--) for (let j = 0; j < landProps.length; j += 8) if (Math.hypot(nature[i].x - landProps[j], nature[i].z - landProps[j + 2]) < 12) { nature.splice(i, 1); break; }\n",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-named-unwalked",
+    "file": "src/world/lands/landProps.js",
+    "old": "const kinds = LAND_KINDS.filter((k) => !named || named.has(k)).sort(",
+    "new": "const kinds = LAND_KINDS.filter((k) => !named || !named.has(k)).sort(",
+    "tests": [
+      "test/world/tesalands_props.test.js",
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-own-border",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "  const owner = opts.lands.blend ? borderOwners(opts) : null;",
+    "new": "  const owner = null;",
+    "tests": [
+      "test/world/tesalands_props.test.js",
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-mid-field-unread",
+    "file": "src/render/midRing.js",
+    "old": "const near = cover && f.spec.lands ? landsTreesAt(",
+    "new": "const near = false && f.spec.lands ? landsTreesAt(",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-mid-job-without",
+    "file": "src/render/farRing.js",
+    "old": "flora: !!floraOf, lands: !!floraOf && !!(/** @type {any} */ (this._flora).lands) };",
+    "new": "flora: !!floraOf, lands: false };",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-cover-bay-packed",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "  if (inBay(px, py)) return out;\n",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-cover-edge",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "woodAt: (cover) => recipeWood(c, unpackCover(cover)),",
+    "new": "woodAt: (cover) => recipeWood(c, cover / 255),",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-cover-field-sign",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "oz = -py * WORLD_MAP_TILE_DIM;   // the pixel's first world tile (north up)",
+    "new": "oz = py * WORLD_MAP_TILE_DIM;   // the pixel's first world tile (north up)",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-felt-the-ground",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  return (inBay(x, y) ? null : tamrielBiomeAt(x, y)?.air) ?? climate;",
+    "new": "  return climate;",
+    "tests": [
+      "test/systems/tesabiome_feltair.test.js"
+    ]
+  },
+  {
+    "name": "TL-felt-world-host",
+    "file": "src/scenes/world.js",
+    "old": "climateIndex: feltClimateIndex(playerTravelPixel().x, playerTravelPixel().y, maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y)),",
+    "new": "climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),",
+    "tests": [
+      "test/systems/surv7_feed.test.js"
+    ]
+  },
+  {
+    "name": "TL-felt-exterior-host",
+    "file": "src/scenes/exterior.js",
+    "old": "climateIndex: feltClimateIndex(_locPixel.x, _locPixel.y, locClimateIndex),",
+    "new": "climateIndex: locClimateIndex,",
+    "tests": [
+      "test/systems/surv7_feed.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-worker-not-remade",
+    "file": "src/world/tamriel/groundDressClient.js",
+    "old": "if (worker || done || deaths >= DRESS_WORKER_DEATHS) return worker;",
+    "new": "if (worker || done || deaths >= 1) return worker;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-post-throw-unheld",
+    "file": "src/world/tamriel/groundDressClient.js",
+    "old": "here(job).then(resolve, reject);",
+    "new": "reject(e);",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-no-watch",
+    "file": "src/world/tamriel/groundDressClient.js",
+    "old": "if (pending.get(id) === job) died(w, ",
+    "new": "if (pending.get(id) !== job) died(w, ",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-dress-unreadable-answer-unheard",
+    "file": "src/world/tamriel/groundDressClient.js",
+    "old": "w.onmessageerror = () => died(w, 'an answer it could not hand back');",
+    "new": "w.onmessageerror = null;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-set-not-asked-again",
+    "file": "src/scenes/groundSets.js",
+    "old": "      hold.tileArray(key);\n",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-puddles-the-keys-alone",
+    "file": "src/scenes/groundSets.js",
+    "old": "if (!groundPuddles.has(fileOf(groundArchive))) groundPuddles.set(fileOf(groundArchive), marked);",
+    "new": "if (!groundPuddles.has(groundArchive)) groundPuddles.set(groundArchive, marked);",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-transitions-soft",
+    "file": "src/world/tamriel/groundDress.js",
+    "old": "const crispShare = (s) => Math.min(1, Math.max(0, (s - DRESS_DIALS.crisp) / (1 - 2 * DRESS_DIALS.crisp)));",
+    "new": "const crispShare = (s) => s;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-a-frame-each-waiter",
+    "file": "src/systems/buildBreather.js",
+    "old": "      let w = wake;",
+    "new": "      let w = null;",
+    "tests": [
+      "test/systems/buildslice.test.js"
+    ]
+  },
+  {
+    "name": "TL-snowless-winter-undressed",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "const summer = typeof archive === 'number' && archive % 100 === 3 && snowless(archive) ? archive - 1 : archive;",
+    "new": "const summer = archive;",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-one-body-a-landmark",
+    "file": "src/world/lands/landProps.js",
+    "old": "parts: bodied ? made.parts : Object.freeze([])",
+    "new": "parts: bodied ? made.parts.slice(0, 1) : Object.freeze([])",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-parts-unturned",
+    "file": "src/world/lands/landProps.js",
+    "old": "c = Math.cos(props[i + 3]), sn = Math.sin(props[i + 3]);",
+    "new": "c = 1, sn = 0;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-foot-the-stalks",
+    "file": "src/world/lands/landProps.js",
+    "old": "foot: bodied ? Math.max(0.5, made.foot) : sink",
+    "new": "foot: sink",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-hist-no-trunk-body",
+    "file": "src/world/lands/landPropMesh.js",
+    "old": "  m.part(0, 0, () => sweep(m, BODY, rings, sides, { jit: (k, i) => (lod === 2 ? 0.05 : 0.12)",
+    "new": "  ((_x, _z, f) => f())(0, 0, () => sweep(m, BODY, rings, sides, { jit: (k, i) => (lod === 2 ? 0.05 : 0.12)",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-the-grove-one-stalk",
+    "file": "src/world/lands/landPropMesh.js",
+    "old": "take(m.part(x, z, () => parasolOne(m, r, lod, x, z,",
+    "new": "take(((_x, _z, f) => f())(x, z, () => parasolOne(m, r, lod, x, z,",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-forest-tail-straight",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "0.6563, 0.6696, 0.6890,",
+    "new": "0.7330, 0.7700, 0.8040,",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-scratch-every-landmark",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "for (const run of runsOf(p.landProps)) if (runNear(run, p._t, ex, ez, reach)) total +=",
+    "new": "for (const run of runsOf(p.landProps)) total +=",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-cover-trees-uncounted",
+    "file": "src/world/terrain/floraCover.js",
+    "old": " * L.treeRate + (FOREST.plainCover + (FOREST.undergrowth - FOREST.plainCover) * wz) * L.coverRate;",
+    "new": " * L.treeRate;",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-canopy-colour-trees-alone",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "for (const [pool, chance] of [[recipe.trees ?? [], tree], [recipe.cover ?? [], under]])",
+    "new": "for (const [pool, chance] of [[recipe.trees ?? [], tree], [[], under]])",
+    "tests": [
+      "test/world/tesalands_flora.test.js"
+    ]
+  },
+  {
+    "name": "TL-vine-row-middle-kept",
+    "file": "src/world/lands/landProps.js",
+    "old": "if (!kept(mx - half / 2, mz, half / 2) || !kept(mx, mz, half / 2) || !kept(mx + half / 2, mz, half / 2)) continue;",
+    "new": "if (!kept(mx, mz, half / 2)) continue;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-vine-row-middle-ground",
+    "file": "src/world/lands/landProps.js",
+    "old": "Math.min(lowest(mx, mz, 0), ground(mx - half, mz), ground(mx + half, mz)) - law.sink",
+    "new": "lowest(mx, mz, 0) - law.sink",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-vine-slope-as-it-was",
+    "file": "src/world/lands/landProps.js",
+    "old": "far: 420, steep: 6, sink: 0.1,",
+    "new": "far: 420, steep: 14, sink: 0.1,",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-atlas-full-asked-whatever",
+    "file": "src/render/farTrees.js",
+    "old": "    if (!this._lendable()) return;\n",
+    "new": "",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "TL-atlas-late-picture-unheld",
+    "file": "src/render/farTrees.js",
+    "old": "if (l !== undefined) laying.add(k); return l;",
+    "new": "return l;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "TL-auridon-pine",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "      trees: [...BROADLEAF],   // the second audit (lane D): no pine (504:13) - its laurel, maple and cherry",
+    "new": "      trees: [...BROADLEAF, [504, 13, 1]],",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-pellitine-unbladed",
+    "file": "src/world/tamriel/tamrielLands.js",
+    "old": "    ground: { base: 302, grass: mat(M.coastMeadow, { fleck: fleck(['#b3a770', '#d8c070'], 0.02) }), dirt: mat(M.whiteSand), stone: mat(M.greyLimestone) },\n    blades: true,",
+    "new": "    ground: { base: 302, grass: mat(M.coastMeadow, { fleck: fleck(['#b3a770', '#d8c070'], 0.02) }), dirt: mat(M.whiteSand), stone: mat(M.greyLimestone) },\n    blades: false,",
+    "tests": [
+      "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-unseated",
+    "file": "src/scenes/floraSeat.js",
+    "old": "if (lands) lands.lift = liftsFor(lands, stride, carve, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, carve));",
+    "new": "if (lands) lands.lift = null;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-warmed-none",
+    "file": "src/scenes/floraSeat.js",
+    "old": "  if (lands) liftsFor(lands, stride, null, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, null));\n",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-host-blind-to-the-lift",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "y = pr[i + 1] + t[1] + (lift ? lift[i / LAND_PROP_FLOATS] : 0)",
+    "new": "y = pr[i + 1] + t[1]",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-on-the-bilinear",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "    ground: (mx, mz) => walkGroundAt(heightmapData,",
+    "new": "    ground: (mx, mz) => groundAt(heightmapData,",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-lands-flats-on-the-bilinear",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "x: mx, y: walkGroundAt(heightmapData, mx, mz) - slope / SLOPE_SINK_RATIO, z: mz, wood, archive: pool.archives[i] };",
+    "new": "x: mx, y: groundAt(heightmapData, mx, mz) - slope / SLOPE_SINK_RATIO, z: mz, wood, archive: pool.archives[i] };",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  }
+]

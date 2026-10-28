@@ -107,7 +107,8 @@ test('WM4c: both exterior hosts start the hum per mill, ungated on the wind, and
   // it does not unload it). The hum law is untouched - a torn-down
   // pixel still stops its mills, whichever door it came through - so
   // the pin follows the signature rather than weakening.
-  assert.match(world, /function destroyPixel\(px, py, \{ collectLoose = true \} = \{\}\) \{[\s\S]{0,600}w\.hum\?\.stop\(\); w\.hum = null;/, 'world.js: a destroyed pixel leaves its hum behind');
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): `carried` and `carryOnly` beside it - a rebuild behind its view takes its carry at the mark and not again at the swap; the default still collects; 600 -> 1400, the carry's lines first
+  assert.match(world, /function destroyPixel\(px, py, \{ collectLoose = true, carried = false, carryOnly = false \} = \{\}\) \{[\s\S]{0,1400}w\.hum\?\.stop\(\); w\.hum = null;/, 'world.js: a destroyed pixel leaves its hum behind');
 });
 
 test('WM4c: both interior hosts start the gear\'s hum on the part that carries Spin_Up, and the room\'s teardown ends it', () => {

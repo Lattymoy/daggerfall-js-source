@@ -288,7 +288,7 @@ test('OW-HITCH ground sets: a set is made ONCE a key while builds ask for it tog
   const holds = [];
   log.length = 0;
   await Promise.all([sets.loadGroundSet(302, { tileArray: (k) => holds.push(k) }), sets.loadGroundSet(302, { tileArray: (k) => holds.push(k) })]);
-  assert.deepEqual(holds, [302, 302], 'each build holds the set');
+  assert.deepEqual(holds, [302, 302, 302, 302], 'each build holds the set, and asks again once it stands');   // PIN MOVED (TESA-LANDS' second audit, lane C): a build whose place went while the set was made leaves it loose for the next sweep (scenes/placeHolds.js hold)
   assert.equal(log.filter((c) => c[0] === 'texImage3D').length, 1, 'one array made for the two builds');
   assert.equal(log.filter((c) => c[0] === 'texSubImage3D').length, set.length, 'its layers uploaded once');
   assert.equal(log.filter((c) => c[0] === 'generateMipmap').length, 1);
@@ -322,11 +322,24 @@ test('OW-HITCH the towns near: a reach and a pixel are one number, never two ali
       seen.set(k, `${px},${py},${r}`);
     }
   }
+  // WW1: and across the whole world's grid, where the first key folded two pixels of the land past the Bay into one
+  for (const r of [0, TRIP_REACH_PX]) {
+    for (let py = -8191; py < 8192; py += 1021) for (let px = -8191; px < 8192; px += 1019) {
+      const k = livingNearKey(px, py, r);
+      assert.ok(Number.isSafeInteger(k));
+      const was = seen.get(k);
+      assert.ok(was === undefined, `${px},${py},${r} and ${was} share a key`);
+      seen.set(k, `${px},${py},${r}`);
+    }
+  }
   assert.equal(LIVING_NEAR_KEPT, 8192);
   const { readFileSync } = await import('node:fs');
-  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.equal(w.split('const key = livingNearKey(px, py, r);   // OW-HITCH').length - 1, 2, 'the towns\' book and the dungeons\'');
-  assert.equal(w.split('.size > LIVING_NEAR_KEPT) ').length - 1, 2, 'each kept to the bound');
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the two books are one maker's now, out of the host - the living
+  // world's index (scenes/livingWorld/livingIndex.js nearOf), which keeps the towns' book and the dungeons' alike
+  const w = readFileSync(new URL('../../src/scenes/livingWorld/livingIndex.js', import.meta.url), 'utf8');
+  assert.equal(w.split('const key = livingNearKey(px, py, r);   // OW-HITCH').length - 1, 1, 'the one maker of both books');
+  assert.equal(w.split('.size > LIVING_NEAR_KEPT) ').length - 1, 1, 'kept to the bound');
+  assert.match(w, /townsNear: nearOf\(townOf, townsNearKept\),[\s\S]*dungeonsNear: nearOf\(dungeonOf, dungeonsNearKept\),/, 'the towns\' book and the dungeons\'');
 });
 
 test('OW-HITCH the music\'s window: the events of [from, to) found by halving are the ones the walk from the first event found - every window of a long song, on its boundaries too (mutants: the window closed at its start; open at its end)', async () => {

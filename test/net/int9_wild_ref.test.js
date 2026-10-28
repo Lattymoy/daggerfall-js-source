@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 
 import { mintWildReceipt, readWildReceipt, verifyWildReceipt, wildReceiptValid, WILD_RECEIPT_V, WILD_RECEIPT_TTL_S, WILD_RECEIPT_MAX, WILD_FALL_GRACE_S, WILD_WORN_MAX } from '../../src/net/wild/wildReceipt.js';
 import { mintDuelReceipt, verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js';
-import { newWildRef, wildZone, wildPose, wildBlow, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_REF } from '../../src/net/wild/wildRef.js';
+import { newWildRef, wildZone, wildPose, wildBlow, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_REF, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M, SIEGE_HIT, siegeVitality, siegeBlowMax, SIEGE_CASTS } from '../../src/net/siege/siegeRef.js';
 import { mintRemainsOrder, verifyOrder, remainsDigest, REMAINS_RECORDS_MAX, mintToken, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { newRemains, foldFall, takeFrom, remainsWords, remainsFit, wildRemainsKey, WILD_REMAINS_BYTES_MAX, WILD_RECORD_BYTES_MAX, remainsSpent, remainsTakeover, remainsEvict, remainsOf, WILD_TOMB_MIN_MS, WILD_STALL_MS } from '../../src/net/wild/wildLaw.js';
@@ -69,10 +69,12 @@ test('INT9 THE RECEIPT: `f1` names the fallen, its realm character, the killer, 
 const at = (x, z = 0) => ({ x: 1000 * M + x * M, y: 0, z: 1000 * M + z * M });
 const FIST = { w: -1, m: 0 };
 /** Two fighters in the zone, a pace apart. */
+/** Two fighters in the zone at `now` - ZONE-GRACE (PIN MOVED, 2026-10-26): entered a whole safe passage before it, so the
+ *  fight these pins hold starts at `now` as it always did (test/net/zonegrace.test.js pins the passage itself). */
 function zone(now = 10_000) {
   const st = newWildRef();
-  wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: RC }, true, at(-1), now);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: '' }, true, at(1), now);
+  wildZone(st, 'acct-a', { id: 'peer-a', lv: 10, ci: RC }, true, at(-1), now - WILD_GRACE.ms);
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ci: '' }, true, at(1), now - WILD_GRACE.ms);
   return st;
 }
 
@@ -243,20 +245,21 @@ test('INT9 THE DROP\'S LAW (systems/wild/wildDropLaw.js takeWildDeath): the kill
   const json = JSON.parse(JSON.stringify(s));
   const d = takeWildDeath(s, 1);
   assert.equal(d.killer, true);
-  assert.deepEqual(kinds(d.taken), [121, 'gold', 120, 122], 'the killer\'s, the coin, the magic sword before the plain one');
-  assert.deepEqual(d.from, ['bag', 'gold', 'bag', 'cart']);
+  // PIN MOVED (STORE-KEEPS, 2026-10-26, bible/11-Multiplayer/Wild-Zone.md section 4): the cart is storage, and no death takes it
+  assert.deepEqual(kinds(d.taken), [121, 'gold', 120], 'the killer\'s, the coin, the magic sword - nothing of the cart');
+  assert.deepEqual(d.from, ['bag', 'gold', 'bag']);
   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): a tenth, the usual death's share - it was half
-  assert.equal(d.taken[1].stackCount, 10 + 4, 'a tenth of the purse and a tenth of the cart\'s coin');
-  assert.deepEqual(d.gold, { purse: 10, cart: 4 });
+  assert.equal(d.taken[1].stackCount, 10, 'a tenth of the purse alone');
+  assert.deepEqual(d.gold, { purse: 10 });
   assert.deepEqual(d.records, d.taken.map(wildRecord));
   assert.deepEqual(kinds(s.items), [113, 'potion'], 'the worn piece not picked, and the potion, stay');
-  assert.deepEqual([s.goldPieces, s.wagonItems.map((i) => i.stackCount ?? 1)], [91, [36]]);   // PIN MOVED (FOE-KEEPS)
+  assert.deepEqual([s.goldPieces, kinds(s.wagonItems), s.wagonItems.map((i) => i.stackCount ?? 1)], [91, [122, 'gold'], [1, 40]], 'the cart whole');   // PIN MOVED (FOE-KEEPS); PIN MOVED (STORE-KEEPS)
   assert.deepEqual(takeWildDeath(json, 1).records, d.records, 'a record and its live pack agree to the piece');
   // kept: the ledger's word - it lies where it lay, in its place
   const k = sheet();
   const kd = takeWildDeath(k, 1, (it) => it.uid === '00000000000000a2' || it.uid === '00000000000000a3');
   assert.equal(kd.killer, false, 'the killer\'s piece kept');
-  assert.deepEqual(kinds(kd.taken), ['gold', 122]);
+  assert.deepEqual(kinds(kd.taken), ['gold']);   // PIN MOVED (STORE-KEEPS): no cargo
   assert.deepEqual(kinds(k.items), [113, 'potion', 120, 121]);
   // the fit: past one remains, the rest goes back - the junk, never the gold or the valuables
   const junk = Array.from({ length: WILD_REMAINS_ITEMS_MAX + 4 }, (_, i) => weapon(113 + (i % 9), { uid: i.toString(16).padStart(16, '0') }));
@@ -268,7 +271,7 @@ test('INT9 THE DROP\'S LAW (systems/wild/wildDropLaw.js takeWildDeath): the kill
   assert.equal(many.goldPieces, 900);   // PIN MOVED (FOE-KEEPS): a tenth
   const poor = { goldPieces: 0, items: junk.map((it) => ({ ...it })), wagonItems: [{ group: 'Currency', templateIndex: 0, stackCount: 400 }] };
   const pd = takeWildDeath(poor, -1);
-  assert.deepEqual([pd.gold, poor.wagonItems[0].stackCount, poor.goldPieces], [{ purse: 0, cart: 40 }, 360, 0], 'the cart\'s coin out of the cart');   // PIN MOVED (FOE-KEEPS): a tenth
+  assert.deepEqual([pd.gold, poor.wagonItems[0].stackCount, poor.goldPieces], [{ purse: 0 }, 400, 0], 'the cart\'s coin stays in the cart');   // PIN MOVED (FOE-KEEPS): a tenth; PIN MOVED (STORE-KEEPS): none
   assert.deepEqual(remainsFit(Array.from({ length: 3 }, () => ({ name: 'x'.repeat(WILD_REMAINS_BYTES_MAX / 2) }))).length, 1, 'the bytes bound');
 });
 
@@ -290,13 +293,13 @@ test('INT9 (AUDIT) THE DROP\'S LAW, ITS EDGES: a record heavier than WILD_RECORD
   assert.equal(wildPickOf(worn, 1), worn[1], 'a receipt with none: the place');
   // the candidates
   const c = sheet();
-  assert.deepEqual(kinds(wildDropCandidates(c, 1)), [121, 120, 122], 'the killer\'s and every piece of the drop');
+  assert.deepEqual(kinds(wildDropCandidates(c, 1)), [121, 120], 'the killer\'s and every piece of the drop');   // PIN MOVED (STORE-KEEPS): never the cart's
   assert.deepEqual(kinds(c.items), [113, 'potion', 120, 121], 'untouched');
   // the fallen's game: what the service took, out of the live pack
   const record = sheet(), live = sheet();
   const took = takeWildDeath(record, 1);
   const out = wildTakeTook(live, wildTookOf(took.taken, took.from), took.gold, (it) => { it.unequipped = true; });
-  assert.deepEqual(kinds(out), [121, 120, 122]);
+  assert.deepEqual(kinds(out), [121, 120]);   // PIN MOVED (STORE-KEEPS)
   assert.deepEqual(kinds(live.items), kinds(record.items));
   assert.deepEqual([live.goldPieces, live.wagonItems.map((i) => i.stackCount ?? 1)], [record.goldPieces, record.wagonItems.map((i) => i.stackCount ?? 1)]);
   assert.equal(out[0].unequipped, true, 'told before each leaves');
@@ -418,10 +421,14 @@ test('INT9 THE RELAY, THE FIGHT: a strike in the zone is the referee\'s - routed
   await say(a, { k: 'zone', z: 1 });
   step(300);
   await say(a, { k: 'strike', to: 'peer-0002', n: 2, by: 'melee', p: W(-1), d: 999 });
-  assert.equal(refs(b).length, 0, 'one fighter\'s word is not the other\'s');
+  assert.equal(refs(b, 'hp').length, 0, 'one fighter\'s word is not the other\'s');   // PIN MOVED (ZONE-GRACE): the room hears a's safe passage - no blow
+  assert.deepEqual(refs(b, 'grace'), [{ t: 'wref', k: 'grace', id: 'peer-0001', ms: WILD_GRACE.ms }], 'ZONE-GRACE: a\'s entry, said to the room');
   await say(b, { k: 'zone', z: 1 });
   step(300);
   await say(a, { k: 'strike', to: 'peer-0002', n: 3, by: 'melee', p: W(-1), d: 999 });
+  assert.deepEqual(refs(a, 'grace').at(-1), { t: 'wref', k: 'grace', id: 'peer-0002', ms: WILD_GRACE.ms - 300, n: 1 }, 'PIN MOVED (ZONE-GRACE): just entered, under safe passage - the striker told');
+  step(WILD_GRACE.ms);   // PIN MOVED (ZONE-GRACE, 2026-10-26): past the safe passage both took at their entry
+  await say(a, { k: 'strike', to: 'peer-0002', n: 4, by: 'melee', p: W(-1), d: 999 });
   const whole = siegeVitality(10), fist = siegeBlowMax(-1, 0);
   for (const ws of [a, b]) assert.deepEqual(refs(ws, 'hp').at(-1), { t: 'wref', k: 'hp', by: 'peer-0001', to: 'peer-0002', d: fist, r: SIEGE_HIT.Melee, h: [['peer-0001', whole, whole], ['peer-0002', whole - fist, whole]] });
   assert.equal(b.sent.filter((m) => m.t === 'wild' && m.data && (m.data.k === 'strike' || m.data.k === 'spell')).length, 0, 'routed to nobody: the defender resolves nothing');
@@ -604,15 +611,16 @@ test('INT9 THE SERVICE, THE FALLEN\'S OWN ACT: the drop taken off the judged rec
   const res = await fall(svc, ria, { receipt: rc, realm: at });
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const d = res.body;
-  assert.deepEqual(kinds(d.items), [121, 'gold', 120, 122], 'the killer\'s pick (the second worn piece), the coin, the magic sword, the cart\'s');
+  assert.deepEqual(kinds(d.items), [121, 'gold', 120], 'the killer\'s pick (the second worn piece), the coin, the magic sword - nothing of the cart');   // PIN MOVED (STORE-KEEPS)
   assert.equal(d.realm.seq, at.seq + 1);
-  assert.deepEqual([d.kept, d.wi, d.gold], [[], 0, { purse: 10, cart: 4 }]);   // PIN MOVED (FOE-KEEPS): a tenth, the usual death's share - it was half
-  assert.deepEqual(d.took.map((x) => [x.t, x.u, x.f]), [[121, '00000000000000a3', 'bag'], [120, '00000000000000a2', 'bag'], [122, '00000000000000a4', 'cart']], 'what the record lost, by the ids the game holds');
+  assert.deepEqual([d.kept, d.wi, d.gold], [[], 0, { purse: 10, cart: 0 }]);   // PIN MOVED (FOE-KEEPS): a tenth, the usual death's share - it was half; PIN MOVED (STORE-KEEPS): the cart's none
+  assert.deepEqual(d.took.map((x) => [x.t, x.u, x.f]), [[121, '00000000000000a3', 'bag'], [120, '00000000000000a2', 'bag']], 'what the record lost, by the ids the game holds');
   const v = await verifyOrder(d.order, svc.identityPublic, { subtle, nowS: nowS(), kind: 'remains' });
   assert.ok(v.ok, v.why);
-  assert.deepEqual([v.claims.s, v.claims.wr, v.claims.wn, v.claims.wm, v.claims.wk, v.claims.wi, v.claims.wh], [ria.id, '0123456789ab', 4, CELL, bo.id, 0, await remainsDigest(d.items, { subtle })]);
+  assert.deepEqual([v.claims.s, v.claims.wr, v.claims.wn, v.claims.wm, v.claims.wk, v.claims.wi, v.claims.wh], [ria.id, '0123456789ab', 3, CELL, bo.id, 0, await remainsDigest(d.items, { subtle })]);   // PIN MOVED (STORE-KEEPS): three records
   const after = saved();
   assert.deepEqual(kinds(after.items), [113, 'potion'], 'the record lost what the room holds');
+  assert.deepEqual(kinds(after.wagonItems), [122, 'gold'], 'and kept its cart');   // STORE-KEEPS
   assert.equal(after.goldPieces, 91);   // PIN MOVED (FOE-KEEPS)
   const again = await fall(svc, ria, { receipt: rc, realm: R.at(), room: worldRoom(PX + 16, PY) });
   assert.equal(again.status, 200);
@@ -639,7 +647,7 @@ test('INT9 (AUDIT) THE SERVICE, THE DROP\'S LEDGER: every valuable piece dropped
   const sword = res.body.items.find((it) => it.templateIndex === 120);
   assert.match(sword.uid, /^[0-9a-f]{16}$/);
   assert.notEqual(sword.uid, '00000000000000a2', 'the magic sword (a piece the ledger follows): never the id it had');
-  assert.deepEqual(res.body.items.filter((it) => it.templateIndex !== 120 && it.uid).map((it) => it.uid).sort(), ['00000000000000a3', '00000000000000a4'], 'a plain piece is no piece the ledger follows: as it was');
+  assert.deepEqual(res.body.items.filter((it) => it.templateIndex !== 120 && it.uid).map((it) => it.uid).sort(), ['00000000000000a3'], 'a plain piece is no piece the ledger follows: as it was');   // PIN MOVED (STORE-KEEPS): the cart's plain piece stays
   const copies = svc.env.DB._raw.prepare('SELECT uid FROM item_dupes WHERE char_id = ? ORDER BY uid').all(R.id).map((x) => x.uid);
   assert.deepEqual(copies, ['00000000000000a2'], 'the id it had, the fallen\'s copy');
   assert.equal(svc.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM item_uids WHERE uid = ?').get(sword.uid).n, 0, 'the fresh id, nobody\'s yet');
@@ -717,7 +725,7 @@ test('INT9 THE SERVICE, THE LEDGER AND THE FREEZE: a piece the ledger bars from 
   const res = await fall(f.svc, f.ria, { receipt: await f.receipt(), realm: f.R.at() });
   assert.equal(res.status, 200, JSON.stringify(res.body));
   assert.deepEqual(res.body.kept, ['00000000000000a2']);
-  assert.deepEqual(kinds(res.body.items), [121, 'gold', 122]);
+  assert.deepEqual(kinds(res.body.items), [121, 'gold']);   // PIN MOVED (STORE-KEEPS): no cargo
   assert.deepEqual(kinds(f.saved().items), [113, 'potion', 120], 'kept where it lay');
   const h = await fallen();
   h.svc.env.DB._raw.prepare("UPDATE realm_characters SET held = 'law' WHERE id = ?").run(h.R.id);
@@ -726,7 +734,7 @@ test('INT9 THE SERVICE, THE LEDGER AND THE FREEZE: a piece the ledger bars from 
   assert.deepEqual([held.body.burnt, held.body.order], [true, null], 'nothing for the room');
   // PIN MOVED (MAC, 2026-10-14, the two-phase handoff - "the fallen must lose the worn piece only once the killer actually
   // has it"): a held record's killer can never have the piece it picked, so the record keeps it; the rest is lost still
-  assert.equal(held.body.items.length, 3, 'and the death cost the drop');
+  assert.equal(held.body.items.length, 2, 'and the death cost the drop');   // PIN MOVED (STORE-KEEPS): the gold and the magic sword, no cargo
   assert.deepEqual(kinds(h.saved().items), [113, 'potion', 121], 'the killer\'s pick kept - it could never reach them');
   assert.equal(held.body.wi, -1, 'no piece of the killer\'s named');
   // the sweep
@@ -747,10 +755,10 @@ test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no de
   assert.ok(w.includes("const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg),"));
   assert.ok(!w.includes('resolveDuelStrike(d, playerEntity'), 'the defender resolves nothing');
   assert.ok(w.includes('      forcePlayerDeath(playerEntity);\n'), 'the referee\'s fall, a death');
-  assert.ok(w.includes('call: (at) => wildAccount.fall({ receipt: rc, realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),'));   // PIN MOVED (FOE-KEEPS): the receipt alone - a death to a foe asks nothing   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js); PIN MOVED (MAC, 2026-10-14): and my killer's piece into escrow where its room signs the collect; PIN MOVED (CART-AWAY, Mac, 2026-10-15): and my wagon's word (test/systems/fb1015_cartaway.test.js)
-  assert.ok(w.includes('const out = wildTakeTook(playerEntity, d.took, d.gold, (it) => { if (isEquipped(it)) unequipItem(playerEntity, it); }, wildPacks(naval?.companions?.party, revenantsWithYou()));'), 'what the service took, and nothing of my own reckoning');   // PIN MOVED (COMPANION-DROP, FIELD BUGS 2026-10-19f): and out of my companions' packs at my side
+  assert.ok(w.includes('call: (at) => wildAccount.fall({ receipt: rc, realm: at, room: lay, ...(host.online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords() }),'));   // PIN MOVED (STORE-KEEPS, HOST-SPLIT): the words carry no wagon now, from scenes/wildDropHost.js   // PIN MOVED (FOE-KEEPS): the receipt alone - a death to a foe asks nothing   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js); PIN MOVED (MAC, 2026-10-14): and my killer's piece into escrow where its room signs the collect; PIN MOVED (CART-AWAY, Mac, 2026-10-15): and my wagon's word (test/systems/fb1015_cartaway.test.js)
+  assert.ok(w.includes('const out = wildTakeTook(playerEntity, d.took, d.gold, (it) => { if (isEquipped(it)) unequipItem(playerEntity, it); }, wildPacks(host.naval?.companions?.party, revenantsWithYou()));'), 'what the service took, and nothing of my own reckoning');   // PIN MOVED (HOST-SPLIT): scenes/wildDropHost.js   // PIN MOVED (COMPANION-DROP, FIELD BUGS 2026-10-19f): and out of my companions' packs at my side
   assert.ok(!w.includes('takeWildDeath('), 'the law never run again on my pack');
-  assert.ok(w.includes('if (d.order && n && body) wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });'), 'the service\'s records, on its order');
+  assert.ok(w.includes('if (d.order && n && body) host.wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });'), 'the service\'s records, on its order');   // PIN MOVED (HOST-SPLIT): scenes/wildDropHost.js
   assert.ok(w.includes("online?.sendWild({ k: 'fall', r: dep.r, p: dep.p, items: dep.chunks[dep.k], last: dep.k === dep.chunks.length - 1 ? 1 : 0, o: dep.o }, { room: dep.room })"));
   assert.ok(w.includes('_wildDeposits.push({ ...dep, chunks: wildChunks(dep.items, WILD_ITEMS_MAX, room), k: 0, at: Date.now() });'), 'chunked by their bytes');
   assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(host.online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then((a) => {'), 'the seizure names the room that refereed it');   // PIN MOVED (WILD-REJOIN, HOST-SPLIT): wildSeizeFrame moved verbatim to scenes/wildSeizeHost.js, which hostText reads with its host   // PIN MOVED (MAC, 2026-10-14): and asks the escrow where it collects

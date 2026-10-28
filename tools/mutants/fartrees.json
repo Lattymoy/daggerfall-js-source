@@ -1,0 +1,362 @@
+[
+  {
+    "name": "FAR-TREES-the-ring",
+    "file": "src/render/farTrees.js",
+    "old": "if (c > radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
+    "new": "if (c >= radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-built-test",
+    "file": "src/render/farTrees.js",
+    "old": "if (c > radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
+    "new": "if (c > radius) out.push([x, y]);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-order",
+    "file": "src/render/farTrees.js",
+    "old": "  for (let y = cy - r; y <= cy + r; y++) {\n    for (let x = cx - r; x <= cx + r; x++) {\n      const c =",
+    "new": "  for (let x = cx - r; x <= cx + r; x++) {\n    for (let y = cy - r; y <= cy + r; y++) {\n      const c =",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-hash",
+    "file": "src/render/farTrees.js",
+    "old": "Math.imul((k | 0) + 0x27d4eb2f, 0xc2b2ae3d)",
+    "new": "Math.imul((k | 0) + 0x27d4eb2e, 0xc2b2ae3d)",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-layer-scale",
+    "file": "src/render/farTrees.js",
+    "old": "s = Math.max(pic.width, pic.height) / side;",
+    "new": "s = pic.width / side;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-layer-centre",
+    "file": "src/render/farTrees.js",
+    "old": "x0 = (side - w) / 2, y0 = side - h;",
+    "new": "x0 = 0, y0 = side - h;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-layer-foot",
+    "file": "src/render/farTrees.js",
+    "old": "x0 = (side - w) / 2, y0 = side - h;",
+    "new": "x0 = (side - w) / 2, y0 = 0;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-frame-north",
+    "file": "src/render/farTrees.js",
+    "old": "oz = (baseY - p.py) * TERRAIN_SIZE",
+    "new": "oz = (p.py - baseY) * TERRAIN_SIZE",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-frame-east",
+    "file": "src/render/farTrees.js",
+    "old": "const ox = (p.px - baseX) * TERRAIN_SIZE",
+    "new": "const ox = (baseX - p.px) * TERRAIN_SIZE",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-no-layer",
+    "file": "src/render/farTrees.js",
+    "old": "      if (layer === undefined) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-hash-index",
+    "file": "src/render/farTrees.js",
+    "old": "treeHash(p.px, p.py, i >> 2)",
+    "new": "treeHash(p.px, p.py, i)",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-pixel-step",
+    "file": "src/render/farTrees.js",
+    "old": "  for (const p of pixels) {\n    yield;\n",
+    "new": "  for (const p of pixels) {\n",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-archive",
+    "file": "src/render/farTrees.js",
+    "old": "pixels[k * 4 + 2] = c.natureArchive;",
+    "new": "pixels[k * 4 + 2] = c.groundArchive;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-one-ask",
+    "file": "src/render/farTrees.js",
+    "old": "if (missing.length && !this._asking && !this._failed)",
+    "new": "if (missing.length && !this._failed)",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-art-once",
+    "file": "src/render/farTrees.js",
+    "old": "    if (this.arts.has(key)) return;\n",
+    "new": "\n",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-side",
+    "file": "src/render/farTrees.js",
+    "old": "this.sides[layer] = Math.max(size.w, size.h);",
+    "new": "this.sides[layer] = size.h;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-art-wait",
+    "file": "src/render/farTrees.js",
+    "old": "for (const a of this._wanted) if (this.arts.get(a) === 'asking') return;",
+    "new": "for (const a of this._wanted) if (false) return;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-slices",
+    "file": "src/render/farTrees.js",
+    "old": "bytes - at)));\n        yield;\n",
+    "new": "bytes - at)));\n",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-swap",
+    "file": "src/render/farTrees.js",
+    "old": "this._swap(buffer, count, baseX, baseY);",
+    "new": "this._swap(buffer, 0, baseX, baseY);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-points",
+    "file": "src/render/farTrees.js",
+    "old": "gl.drawArrays(gl.POINTS, 0, this.drawn.count);",
+    "new": "gl.drawArrays(gl.TRIANGLES, 0, this.drawn.count);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-rim",
+    "file": "src/render/farTrees.js",
+    "old": "(s.radius + this.fade[0]) * TERRAIN_SIZE, (s.radius + this.fade[1]) * TERRAIN_SIZE",
+    "new": "(s.radius + this.fade[0]) * TERRAIN_SIZE, (s.radius + this.fade[0]) * TERRAIN_SIZE",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-band-from",
+    "file": "src/render/farTrees.js",
+    "old": "gl.uniform3f(u.uBandFrom, s.origin[0] + 0.5 * TERRAIN_SIZE, 0, s.origin[2] + 0.5 * TERRAIN_SIZE);",
+    "new": "gl.uniform3f(u.uBandFrom, s.origin[0], 0, s.origin[2]);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-unit",
+    "file": "src/render/farTrees.js",
+    "old": "gl.uniform1i(u.uTrees, TREES_UNIT);",
+    "new": "gl.uniform1i(u.uTrees, 0);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-dispose",
+    "file": "src/render/farTrees.js",
+    "old": "    this._free(this.drawn);\n    this.drawn = null;\n    if (this.tex)",
+    "new": "    this.drawn = null;\n    if (this.tex)",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-foot",
+    "file": "src/render/farTrees.js",
+    "old": "vec3 world = aPos + uOrigin + vec3(0.0, 0.5 * side, 0.0);",
+    "new": "vec3 world = aPos + uOrigin + vec3(0.0, side, 0.0);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-size",
+    "file": "src/render/farTrees.js",
+    "old": "float px = side * uBand.w * uBand.z * 0.5 / max(gl_Position.w, 1.0);",
+    "new": "float px = side * uBand.w * uBand.z / max(gl_Position.w, 1.0);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-share",
+    "file": "src/render/farTrees.js",
+    "old": "float keep = min(px * px, 1.0) * (",
+    "new": "float keep = min(px, 1.0) * (",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-cutout",
+    "file": "src/render/farTrees.js",
+    "old": "  if (tex.a < 0.5) discard;   // the flats' own cutout",
+    "new": "  if (tex.a < 0.1) discard;   // the flats' own cutout",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-lanes",
+    "file": "src/render/farTrees.js",
+    "old": "export const treesFsFor = (lane) => (!lane ? FS : lane.key === 'classic-shadows' ? classicLook(TREES_LANE_FS) : TREES_LANE_FS);",
+    "new": "export const treesFsFor = (lane) => (!lane ? FS : TREES_LANE_FS);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-tree-filter",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "const trees = flats.filter((f) => isTreeRecord(f.archive ?? archive, f.record));",
+    "new": "const trees = flats;",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-band-law",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "forests: forests ? { archive, pois: [] } : null,",
+    "new": "forests: { archive, pois: [] },",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-band-squares",
+    "file": "src/world/terrain/floraCover.js",
+    "old": "assignTiles(generateTileData(samples, px, py), tilemap, true);",
+    "new": "assignTiles(generateTileData(samples, px, py), tilemap, false);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-kept-key",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "keptMid(`t${px},${py},${archive},${climateType},${m.forests ? 1 : 0},${m.landform ? 1 : 0},${m.lands ? 1 : 0}`",
+    "new": "keptMid(`t${px},${py},${archive},${climateType},${m.landform ? 1 : 0},${m.lands ? 1 : 0}`",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-copy",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "landforms, lands: !!m.lands })).slice());",
+    "new": "landforms, lands: !!m.lands })));",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-transfer",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "globalThis.postMessage({ t: 'band', id: m.id, trees }, trees.map((t) => t.buffer));",
+    "new": "globalThis.postMessage({ t: 'band', id: m.id, trees }, []);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-chunk",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "pixels: job.pixels.slice(p0 * 4, Math.min(n, p0 + BAND_PIXELS_AN_ASK) * 4) });",
+    "new": "pixels: job.pixels.slice(p0 * 4, n * 4) });",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-order-kept",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "      out.push(...m.trees);\n",
+    "new": "      out.unshift(...m.trees);\n",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-band-gate",
+    "file": "src/render/farRing.js",
+    "old": "this._band = this._flora && opts.mid && !farTreesDisabled() ?",
+    "new": "this._band = opts.mid && !farTreesDisabled() ?",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-band-knob",
+    "file": "src/render/farRing.js",
+    "old": "if (this._band && this._inputs && this._floraOf()) {",
+    "new": "if (this._band && this._inputs) {",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-TREES-the-band-draw-knob",
+    "file": "src/render/farRing.js",
+    "old": "if (this._band?.count && this._floraOf()) this._drawBand(",
+    "new": "if (this._band?.count) this._drawBand(",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  }
+]

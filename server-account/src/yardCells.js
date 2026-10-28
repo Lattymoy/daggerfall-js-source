@@ -1,7 +1,7 @@
 // @ts-check
 // YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md section 10): A TOWN'S YARDS, KEPT AND READ ONE BLOCK AT A
 // TIME, in place of YARD-SNAP's whole-town row and YARD-TOWN's 6,500-piece bound (one D1 row's size, not a game rule).
-// A CELL is one RMB block of one town (net/yardCellLaw.js yardCellOf). Migration 0183 keeps per cell home_yard_cell_ver
+// A CELL is one RMB block of one town (net/yardCellLaw.js yardCellOf). Migration 0190 keeps per cell home_yard_cell_ver
 // (`ver`, moved by triggers on every yard row written, and `built`; a partial index on `ver <> built` finds stale cells)
 // and home_yard_cells (its rows built at `built`, keptBoard.js `shape`, NULL past KEPT_BOARD_MAX_BYTES - never met: a
 // cell holds 1,920 pieces at most, 415 KB). A decor write rebuilds its cell (settleYardCell), the clock the rest
@@ -23,7 +23,7 @@ export const cellRowsSql = (/** @type {string} */ town, /** @type {string} */ ce
     ORDER BY building_key, placed_at, id LIMIT ${YARD_CELL_PIECES_MAX}`;
 
 /** The build's shape: its read whole and its bound. A deploy that changes it marks every cell stale in its own
- *  migration (`UPDATE home_yard_cell_ver SET built = 0`), so the clock finds them by the index. Migration 0183 builds
+ *  migration (`UPDATE home_yard_cell_ver SET built = 0`), so the clock finds them by the index. Migration 0190 builds
  *  every cell in this shape; its literal is pinned to this. */
 export const YARD_CELL_SHAPE = shapeOf('yard cell: [columns...] each, NULL past the bound', cellRowsSql('?', '?'), KEPT_BOARD_MAX_BYTES);
 

@@ -60,6 +60,7 @@ import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import { localizedText, t } from './textManager.js';   // L10N3d: the house refusal; SEAT-WORDS: and online's
 import { SEAT_RANK } from '../net/npcChapterLaw.js';   // SEAT-WORDS (AUDIT GUILD-WORDS L3-7): the seats' ranks, the law's own
+import { housesFullText } from './banking.js';   // HOUSES-3: a full region's words, the bank's
 
 /** KnightlyOrder's two flag constants (:42-43). */
 export const HOUSE_FLAG_MASK = 2;
@@ -160,6 +161,8 @@ export const alreadyGivenHouseText = () => localizedText('serviceReceiveHouseAlr
  *   rank < 9                  -> NoHouseId (460)
  *   the house flag is set     -> "already been given a house"
  *   you already OWN one       -> ALREADY_OWN_HOUSE, the bank's result
+ *                                (HOUSES-3: the region's three, `housesFull`, in the
+ *                                bank's words counted to three - banking.js housesFullText)
  *   nothing is for sale       -> NO_HOUSES_FOR_SALE
  * The third and fourth are distinct on purpose: the flag says this
  * ORDER has made its gift, the registry says you have a house from
@@ -171,7 +174,7 @@ export const alreadyGivenHouseText = () => localizedText('serviceReceiveHouseAlr
  * answers which one and what to say.
  */
 export function receiveHouseDecision(membership, {
-  ownsHouse = false, housesForSale = [], rolls = Math.random,
+  housesFull = false, housesForSale = [], rolls = Math.random,
   alreadyOwnResult = null, noneForSaleResult = null, rankCeiling = null,
 } = {}) {
   // SEAT-WORDS (Field-Bugs-2026-10-15g): online (`rankCeiling`, the host's - 7 while the Roll holds) the house reads the
@@ -183,7 +186,7 @@ export function receiveHouseDecision(membership, {
   }
   if ((membership?.rank ?? -1) < RECEIVE_HOUSE_RANK) return { kind: 'refuse', textId: NO_HOUSE_TEXT_ID };
   if (((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0) return { kind: 'refuse', line: alreadyGivenHouseText() };
-  if (ownsHouse) return { kind: 'refuse', result: alreadyOwnResult };
+  if (housesFull) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };
   if (!housesForSale.length) return { kind: 'refuse', result: noneForSaleResult };
   return {
     kind: 'grant',

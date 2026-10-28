@@ -151,8 +151,8 @@
   {
     "name": "AD28Q-K1-host-owns-nothing",
     "file": "src/scenes/world.js",
-    "old": "    ownsHouse: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),",
-    "new": "    ownsHouse: () => false,",
+    "old": "return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },",
+    "new": "return false; },",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]

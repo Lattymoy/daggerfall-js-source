@@ -65,11 +65,12 @@
   {
     "name": "PENITENT-edge-off-the-badge",
     "file": "src/ui/playerBadge.js",
-    "old": ", edge: TITLE_EDGE[key] ?? null };",
-    "new": " };",
+    "old": ", edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) };",
+    "new": ", flame: Object.hasOwn(TITLE_FLAME, key) };",
     "tests": [
       "test/net/penitent.test.js"
-    ]
+    ],
+    "note": "SHOP (re-aimed by content): the line it quotes grew with the shop."
   },
   {
     "name": "PENITENT-classic-edge-in-the-gold",

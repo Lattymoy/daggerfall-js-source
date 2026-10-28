@@ -1,0 +1,454 @@
+[
+  {
+    "name": "RW-PLAN-the-mouth-uncut",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;   // RUMARE-WATER: the Waterfront's mouth, through the far shore\n",
+    "new": "",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-PLAN-cut-the-plan's-width-round",
+    "file": "src/world/imperialCity.js",
+    "old": "  mouth: 1228.8,",
+    "new": "  mouth: 1024,",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-PLAN-cut-north",
+    "file": "src/world/imperialCity.js",
+    "old": "if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;",
+    "new": "if (r >= I.lake && z < 0 && Math.abs(x) < I.mouth) return false;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-LAW-the-land's",
+    "file": "src/world/rumareWaters.js",
+    "old": "  return !imperialLand(x, z);",
+    "new": "  return imperialLand(x, z);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-LAW-the-span-unbounded",
+    "file": "src/world/rumareWaters.js",
+    "old": "  if (Math.abs(x) > HALF_M || Math.abs(z) > HALF_M) return false;\n  return !imperialLand(x, z);",
+    "new": "  return !imperialLand(x, z);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-LAW-the-canal-unasked",
+    "file": "src/world/rumareWaters.js",
+    "old": "  const c = waterfrontCanal();\n  return c ? { cx: c.cx, cy: c.cy } : null;",
+    "new": "  const c = waterfrontCanal() ?? { cx: 2069, cy: 658 };\n  return c ? { cx: c.cx, cy: c.cy } : null;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-GROUND-the-mouth's-pixels-land",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  let byte = rumareMouthPixel(x, y) ? 0 : authoredHeightByte(",
+    "new": "  let byte = false ? 0 : authoredHeightByte(",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-GROUND-the-basin-unread",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  const basin = byte > SHORE_BYTE ? rumareBasin(x, y) : 0;",
+    "new": "  const basin = 0;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-GROUND-its-ramp-unbounded",
+    "file": "src/world/rumareWaters.js",
+    "old": "  if (ex > ramp || ey > ramp) return 0;\n  const d = (ex ** p + ey ** p) ** (1 / p);   // past the span's square, its corners rounded\n  return d >= ramp ? 0 : 1 - smooth(d / ramp);",
+    "new": "  const d = (ex ** p + ey ** p) ** (1 / p);   // past the span's square, its corners rounded\n  return 1 - smooth(d / (ramp * 4));",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-GROUND-the-basin's-corners-square",
+    "file": "src/world/rumareWaters.js",
+    "old": "  const d = (ex ** p + ey ** p) ** (1 / p);   // past the span's square, its corners rounded",
+    "new": "  const d = Math.min(ex, ey);   // past the span's square, its corners rounded",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-GROUND-the-large-map's-detail-whole",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER",
+    "new": "const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1;   // RUMARE-WATER",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): largeMapBefore keeps the same line - today's large map named by its note"
+  },
+  {
+    "name": "RW-GROUND-the-roll-unmoved",
+    "file": "src/world/tamrielRoads.js",
+    "old": "export const GROUND_ROLL_VERSION = 6;",
+    "new": "export const GROUND_ROLL_VERSION = 4;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-LAND-the-ramp-past-the-edge",
+    "file": "src/world/rumareWaters.js",
+    "old": "smooth(s / (s + e))",
+    "new": "smooth(s / (s + e + 1000))",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-LAND-the-mouth's-side-unread",
+    "file": "src/world/rumareWaters.js",
+    "old": "  const s = Math.min(r, side);",
+    "new": "  const s = r;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-LAND-the-rim-on-an-inner-side",
+    "file": "src/world/rumareWaters.js",
+    "old": "xMin: W ? rim : -clear",
+    "new": "xMin: rim",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-the-freeboard-none",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "export const CAPITAL_FREEBOARD = 0.8;",
+    "new": "export const CAPITAL_FREEBOARD = 0;",
+    "tests": [
+      "test/world/rumarewater.test.js",
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-the-flat-the-sea's",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "export const CAPITAL_SEA_FLAT = Object.freeze({ avg: CAPITAL_LAND, classic: CAPITAL_LAND });",
+    "new": "export const CAPITAL_SEA_FLAT = Object.freeze({ avg: CAPITAL_SEA, classic: CAPITAL_SEA });",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-a-tile's-corner-read-turned",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "(1 << ((1 - dx) + 2 * (1 - dy)))",
+    "new": "(1 << (dx + 2 * dy))",
+    "tests": [
+      "test/world/rumarewater.test.js",
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-the-stamped-unread",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "  const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
+    "new": "  const stamped = false;",
+    "tests": [
+      "test/world/rumarewater.test.js",
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-the-rim's-sea-unread",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "  else if (!inRect) sea = stamped || natural[i] <= SEA_LINE;",
+    "new": "  else if (!inRect) sea = stamped;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-the-outer-edge-the-city's",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "      if (outer) { S[i] = natural[i]; continue; }   // the span's outer edge: the land's own, as the pixel past it stands\n",
+    "new": "",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-the-sea's-seam-unread",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "  else if (border && seaEdges && ((x === 0 && seaEdges.W) || (x === H - 1 && seaEdges.E) || (y === 0 && seaEdges.S) || (y === H - 1 && seaEdges.N))) sea = true;\n",
+    "new": "",
+    "tests": [
+      "test/world/rumarewater.test.js",
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "RW-SEA-the-rim's-land-under",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "      else S[i] = inRect ? CAPITAL_LAND : Math.max(S[i], CAPITAL_LAND);",
+    "new": "      else S[i] = inRect ? CAPITAL_LAND : S[i];",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-IC-the-seams-the-tiles'",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "sea = rumareSeaAt(bx, by) || (!border && stamped);",
+    "new": "sea = rumareSeaAt(bx, by) || stamped;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-IC-the-law-unread",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "sea = rumareSeaAt(bx, by) || (!border && stamped);",
+    "new": "sea = !border && stamped;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-IC-the-far-shore-flat",
+    "file": "src/world/terrain/capitalSea.js",
+    "old": "      else if (city) S[i] = Math.max(CAPITAL_LAND, rumareLandHeight(bx, by, CAPITAL_LAND, natural[i]));\n",
+    "new": "",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-HARBOUR-the-edge's",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "harbour: Object.freeze([(IMPERIAL_SPAN - 1) / 2, Math.floor(IMPERIAL.waterfront.pierTo / 819.2 + IMPERIAL_SPAN / 2)]),",
+    "new": "harbour: Object.freeze([(IMPERIAL_SPAN - 1) / 2, IMPERIAL_SPAN - 1]),",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-HARBOUR-the-canal-asked-of-the-harbour's-row",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + D.h - D.my);",
+    "new": "  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + cap.harbour[1] - D.my + 1);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-HARBOUR-the-city-at-the-sea-with-no-canal",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const sea = cap.shore || capitalCanalOpen(k),",
+    "new": "  const sea = cap.shore || !!cap.harbour,",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-HARBOUR-the-sea-edges-unsaid",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "...(seaEdges ? { seaEdges } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "RW-BAKE-the-span's-class-the-bound's",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py);",
+    "new": "c = classifyPixel(this.woods, px, py);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-BAKE-the-fine-water-the-plain-sampler's",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "fineAt: (px, py) => (rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null))) });",
+    "new": "fineAt: (px, py) => fineMaskBits(pixelWaterSampler(woods, px, py, null)) });",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-BAKE-the-coarse-water-the-plain-sampler's",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "(x, y) => (rumareSlice(x0 + x, y0 + y) ? this._cityBits(x0 + x, y0 + y, 'coarse') : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null))), seed);",
+    "new": "(x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)), seed);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-BAKE-the-city's-sea-unseeded",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA) || rumareSeaPixel(X, Y);",
+    "new": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-WAYS-the-lanes'-water-unread",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "((water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py))",
+    "new": "(water(px, py) && climateAt(px, py) === CLIMATES.Ocean)",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-WAYS-the-voyage's-sea-the-land's",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const isWater = seaWater;",
+    "new": "  const isWater = landWater;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-WAYS-the-sea's-also-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "seaFn = (x, y) => w(x, y) || seaAlso(x, y);",
+    "new": "seaFn = w;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-WAYS-the-neighbours-the-lanes'",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": ".slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
+    "new": ".slice(0, LANE_NEIGHBOURS);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-WAYS-the-port's-neighbours-unsaid",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "{ reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS }",
+    "new": "{ reach: CANAL_PORT_REACH_PX }",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-HOST-the-ports'-unwired",
+    "file": "src/scenes/world.js",
+    "old": "return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
+    "new": "return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || false);",
+    "tests": [
+      "test/world/rumarewater.test.js",
+      "test/systems/naval/fb1014_inlandports.test.js",
+      "test/systems/naval/auditcaptsea.test.js"
+    ]
+  },
+  {
+    "name": "RW-HOST-the-voyages'-unwired",
+    "file": "src/scenes/world.js",
+    "old": "WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y), undefined, rumareSeaPixel)).setRocks(",
+    "new": "WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y))).setRocks(",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-HOST-the-terrain-job's-sea-unlaid",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);",
+    "new": "    if (natural && false) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-span-all-mixed",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  return wet === 0 ? { cls: PIXEL_LAND, grid: null } : wet === sea.length ? { cls: PIXEL_SEA, grid: null } : { cls: PIXEL_MIXED, grid: sea };",
+    "new": "  return { cls: PIXEL_MIXED, grid: sea };",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-all-land-test-turned",
+    "file": "src/world/rumareWaters.js",
+    "old": "  if (far < IMPERIAL.isle - 1) return true;",
+    "new": "  if (far < IMPERIAL.isle - 1) return false;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-all-land-test-unread",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  if (!rimOf(rect) && rumareSliceAllLand(px, py)) return { cls: PIXEL_LAND, grid: null };",
+    "new": "  if (false) return { cls: PIXEL_LAND, grid: null };",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ],
+    "equivalent": true,
+    "why": "the fast test is a shortcut to the answer the law's grid gives (the pin holds rumareSliceAllLand to the grid on every case it names); without it the class is the same, only made the long way"
+  },
+  {
+    "name": "RW-F1-a-vertex-turned",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  const water = (x, y) => (plain && outer(x, y) ? plain.water(x, y) : sea[x * H + y] === 1);",
+    "new": "  const water = (x, y) => (plain && outer(x, y) ? plain.water(x, y) : sea[y * H + x] === 1);",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-outer-edge-the-law's",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  const water = (x, y) => (plain && outer(x, y) ? plain.water(x, y) : sea[x * H + y] === 1);",
+    "new": "  const water = (x, y) => sea[x * H + y] === 1;",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ],
+    "equivalent": true,
+    "why": "the span's outer edge is the land's own (capitalSeaGround), and every land past the span's edge is land but the canal's water at the mouth, where the law is the sea too - so the law and the land agree on every outer vertex of every world a canal stands in; the plain sampler there keeps the bake the kernel's answer to the bit (the pin compares the two on every kind of slice)"
+  },
+  {
+    "name": "RW-F1-the-bits-made-again",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "      if (!m[kind]) {\n        const sampler = rumareWaterSampler(",
+    "new": "      if (true) {\n        const sampler = rumareWaterSampler(",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  },
+  {
+    "name": "RW-F1-the-compounds-turned",
+    "file": "src/world/imperialCity.js",
+    "old": "c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]",
+    "new": "c = [polar(I.university.b, I.university.r), polar(I.prison.b, I.prison.r)]",
+    "tests": [
+      "test/world/rumarewater.test.js"
+    ]
+  }
+]

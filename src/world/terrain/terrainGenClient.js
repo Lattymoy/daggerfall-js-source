@@ -32,6 +32,15 @@ import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { dropGroundCache } from '../tamriel/tamrielGround.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and the promotion's grid, on either thread
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
+import { packArenaRoads, mergeArenaRoads, arenaRoadsLayer, setArenaRoads as installArenaRoads } from '../arenaRoads.js';   // TESA4/TESA14: the roads past the Bay
+import { midRingSide, farFieldSide } from './midRingGrid.js';   // MID-RING / FAR-FIELD: a ground's bands
+import { setWatersInk, lawWatersInk } from '../tamriel/watersInk.js';   // MAP-WATERS: the held map's copy of the waters
+
+/** MID-RING / FAR-FIELD: how many of a ground's rows a worker answers at a time - the stream's own jobs run between bands
+ *  (a band is one message; the next is posted when it lands), so no pixel waits behind a whole horizon. */
+export const HORIZON_BAND_ROWS = { mid: 4, far: 16 };
+/** FAR-TREES: the band's pixels an ask (some 40 ms of the worker's a pixel: a stream job waits a band's ask at most). */
+export const BAND_PIXELS_AN_ASK = 4;
 
 /** The escape hatch, read once at scene build (the ?cull=off shape). */
 export function terrainThreadDisabled(search = globalThis.location?.search) {
@@ -60,10 +69,21 @@ export class TerrainGenClient {
     this._ether = !!woods?.isEtherGround;   // ETHER-SEA: ...and the Eltheric Ocean (world/ethericSea.js etherWoods), composed there the same way
     this._sites = null;   // LANDFORM4: setLandformTables
     this._climates = null;   // LANDFORM6: setLandformTables
+    this._beyond = null;   // BAY-LEFT-GROUND: setLandformBeyond
     this._worker = null;
     this._fifo = [];   // {job, resolve} - the worker answers in arrival order
     this._grids = new Map();   // PERF-EXT26: id -> {job, resolve}, the promotions out on the worker
     this._gridId = 0;
+    this._mids = new Map();   // MID-RING: id -> resolve, the middle rings out on the worker
+    this._arenaAsks = 0;
+    /** TESA4: the epoch a job posted now is built under, and the one this thread holds the layer of. */
+    this.arenaRoadsEpoch = 0;
+    this.arenaRoadsLanded = 0;
+    /** FLORA-GROUND: how many times the ground's inputs have moved - the network, the landforms' tables, the sites past
+     *  the Bay, the continent's trace and its relief (each a message the worker drops its kept grounds on). A layer laid
+     *  on the ground off the stream (the far trees' band, the middle ring under it) is laid again when it moves, so a
+     *  tree never stands on a ground the walker's no longer is. */
+    this.groundEpoch = 0;
     const factory = workerFactory
       ?? ((terrainThreadDisabled() || typeof Worker === 'undefined' || !woodsBytes)
         ? null : defaultWorkerFactory);
@@ -94,6 +114,8 @@ export class TerrainGenClient {
           return;
         }
         if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }   // PERF-EXT26: by id, never through the FIFO
+        if (m.t === 'mid' || m.t === 'midError' || m.t === 'far' || m.t === 'farError' || m.t === 'band' || m.t === 'bandError') { this._midAnswer(m); return; }   // MID-RING, FAR-FIELD: by id too; FAR-TREES: and the band's
+        if (m.t === 'watersInk') { setWatersInk(m.ink ?? null); return; }   // MAP-WATERS: the held map's rivers and lakes landed
         this._answer(m);
       };
       // a COPY - transferring the reader's own bytes would detach the
@@ -130,6 +152,7 @@ export class TerrainGenClient {
     this._roadsStats = onStats;
     this._switches = switches;
     this._roadsSource = 'generated';   // TO1: the port's own network, not Hazelnut's
+    this.groundEpoch++;   // FLORA-GROUND: our roads cut the shaped ground
     if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements, switches });
     else if (!this._worker) this._roadsFallback();
   }
@@ -145,17 +168,55 @@ export class TerrainGenClient {
     setTamrielTrace(trace);
     setTamrielFit(fit);
     dropGroundCache();
-    if (!this._worker) return;
-    const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice() } : null;
-    this._worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }, t ? [t.land.buffer, t.province.buffer] : []);
+    this.groundEpoch++;   // FLORA-GROUND: the continent's ground, its relief with it
+    if (!this._worker) { setWatersInk(lawWatersInk().ink); return; }   // MAP-WATERS: no worker, this thread's own law
+    const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;   // TAMRIEL-RELIEF: the heightmap's cells with it
+    this._worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }, t ? [t.land.buffer, t.province.buffer, ...(t.relief ? [t.relief.buffer] : [])] : []);
+    this._worker.postMessage({ t: 'waters' });   // MAP-WATERS: the map's copy of the waters, compiled there (answered 'watersInk')
+  }
+
+  /**
+   * TESA14: THE ROADS PAST THE BAY (world/tamrielRoads.js), a region at a time, for both kernels and this thread's verge:
+   * `add` (a region's layer, or the crossings' joins - world/arenaRoads.js) merged into the one installed; `reset` drops
+   * that first (a new mount, a new build). Each add is an EPOCH: every job posted from its post on is built with the
+   * layer as it then stands (`arenaRoadsEpoch` - the host stamps it on the pixel it posts; the worker takes its messages
+   * in order), this thread's layer merged at once (`arenaRoadsLanded`) and `onLanded(epoch, add, reset)` told. With no
+   * worker this thread's layer is every kernel's. Answers the epoch.
+   * @param {?{ roads: Map<number, number>, tracks: Map<number, number>, join?: Map<number, number> }} add
+   * @param {?Function} [onLanded] @param {{ reset?: boolean }} [o]
+   */
+  addArenaRoads(add, onLanded = null, { reset = false } = {}) {
+    const epoch = ++this._arenaAsks;
+    this.arenaRoadsEpoch = epoch;
+    const layer = reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();
+    if (add) mergeArenaRoads(layer, add);
+    installArenaRoads(layer, reset ? null : add);   // TESA15: a region's add moves only the ink tiles it reaches
+    if (this._worker) {
+      const packed = add ? packArenaRoads(add) : null;
+      this._worker.postMessage({ t: 'arena-roads', epoch, reset, layer: packed }, packed ? [packed.keys.buffer, packed.roads.buffer, packed.tracks.buffer, packed.joinKeys.buffer, packed.join.buffer] : []);
+    }
+    this.arenaRoadsLanded = epoch;
+    onLanded?.(epoch, add, reset);
+    return epoch;
   }
 
   setLandformTables({ sites = null, climates = null } = {}) {
     this._sites = sites;
     this._climates = climates;
+    this.groundEpoch++;   // FLORA-GROUND: the sites and the lands the ground is shaped by
     if (!this._worker) return;
     const s = sites ? sites.slice() : null, c = climates ? climates.slice() : null;
     this._worker.postMessage({ t: 'landform-tables', sites: s, climates: c }, [s, c].filter(Boolean).map((a) => a.buffer));
+  }
+
+  /** BAY-LEFT-GROUND (bible/03-World/Landforms.md "BAY-LEFT-GROUND"): THE SITES PAST THE BAY (world/landforms.js
+   *  landformSitesBeyond - the places past the Bay every client stands alike, by the world's key) - kept here for the
+   *  same-thread kernel, a copy posted to the worker, which takes it before any job posted after it (its messages in
+   *  order). Made again whenever the places past the Bay move (scenes/landformSitesHost.js); null clears it. */
+  setLandformBeyond(beyond = null) {
+    this._beyond = beyond;
+    this.groundEpoch++;   // FLORA-GROUND: the sites past the Bay
+    if (this._worker) this._worker.postMessage({ t: 'landform-beyond', beyond });
   }
 
   /** ROADS 7: the network for whoever draws it - null until built. */
@@ -194,6 +255,7 @@ export class TerrainGenClient {
     // field added to one of them is silently inert on the path the game
     // actually takes.
     this._roadsSource = net.source ?? 'basic-roads';
+    this.groundEpoch++;   // FLORA-GROUND: his roads cut the shaped ground
     this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water, smooth: net.smooth !== false, source: this._roadsSource };
     this._roadsStats = onStats;
     if (this._worker) {
@@ -214,7 +276,7 @@ export class TerrainGenClient {
   generate(job) {
     if (!this._worker) {
       this._roadsFallback();
-      return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));
+      return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));
     }
     return new Promise((resolve) => {
       this._fifo.push({ job, resolve });
@@ -239,12 +301,102 @@ export class TerrainGenClient {
    * @returns {Promise<{ positions: Float32Array, normals: Float32Array, bed: ?object }>}
    */
   grid(job) {
-    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));   // LANDFORM1-3: the fallback's own network
+    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));   // LANDFORM1-3: the fallback's own network
     const id = ++this._gridId;
     return new Promise((resolve) => {
       this._grids.set(id, { job, resolve });
       this._worker.postMessage({ t: 'grid', id, ...job });
     });
+  }
+
+  /**
+   * MID-RING (render/midRing.js): the middle ring's heights round {baseX, baseY} (world/terrain/midRingGrid.js
+   * buildMidRingHeights), ON THE WORKER ALONE - a ring is some 100 ms of kernel, and with no worker (node, a test,
+   * `?terrainthread=off`, a dead one) there is no middle ring: null, and the far ring stands as it always did. Never on
+   * this thread, never a reject.
+   * @param {{ baseX: number, baseY: number, radius: number, sub: number, landform?: boolean, flora?: boolean, lands?: boolean }} job
+   * @returns {Promise<?{ heights: Float32Array, wet?: ?Uint8Array, flora?: ?Uint32Array, cover?: ?Uint8Array }>}
+   */
+  midRing(job) {
+    if (!this._worker) return Promise.resolve(null);
+    const n = 2 * job.radius + 1, side = midRingSide(job.radius, job.sub), heights = new Float32Array(side * side);
+    let wet = null;   // MAP-WATERS: stream G's rivers and lakes in the ring, where a band had any
+    let flora = null;   // FAR-FLORA: the near law's woods at each sample (world/terrain/floraCover.js), where the job asks them
+    let cover = null;   // TESA-LANDS: the forest field's own value at each sample, with the lands' row
+    return this._bands('midring', job, n, HORIZON_BAND_ROWS.mid, (m, pj0, pj1) => {
+      if (!m?.heights) return false;
+      heights.set(m.heights, pj0 * job.sub * side);
+      if (m.wet) (wet ??= new Uint8Array(side * side)).set(m.wet, pj0 * job.sub * side);
+      if (m.flora) (flora ??= new Uint32Array(side * side)).set(m.flora, pj0 * job.sub * side);
+      if (m.cover) (cover ??= new Uint8Array(side * side)).set(m.cover, pj0 * job.sub * side);
+      return pj1 === n ? { heights, wet, flora, cover } : true;
+    });
+  }
+
+  /**
+   * FAR-TREES (render/farTrees.js): the band's trees for `job.pixels` ([px, py, nature archive, climate type] four a pixel)
+   * - ON THE WORKER ALONE, BAND_PIXELS_AN_ASK pixels an ask (the next posted as the last lands, so the stream's own jobs run
+   * between them): an array of each pixel's `[x, y, z, record]` trees, in order; null with no worker or on an error.
+   * TESA-LANDS: `lands` the row - a zone's own trees past the Bay (world/terrain/floraCover.js bandTreesPixel).
+   * @param {{ pixels: Int32Array, forests: boolean, landform: boolean, lands?: boolean }} job
+   * @returns {Promise<?Float32Array[]>}
+   */
+  floraBand(job) {
+    if (!this._worker) return Promise.resolve(null);
+    const n = job.pixels.length / 4, out = [];
+    const ask = (p0) => new Promise((resolve) => {
+      if (!this._worker) { resolve(null); return; }
+      const id = ++this._gridId;
+      this._mids.set(id, resolve);
+      this._worker.postMessage({ t: 'floraband', id, forests: job.forests, landform: job.landform, lands: !!job.lands, pixels: job.pixels.slice(p0 * 4, Math.min(n, p0 + BAND_PIXELS_AN_ASK) * 4) });
+    });
+    const next = (p0) => (p0 >= n ? Promise.resolve(out) : ask(p0).then((m) => {
+      if (!m?.trees) return null;
+      out.push(...m.trees);
+      return next(p0 + BAND_PIXELS_AN_ASK);
+    }));
+    return next(0);
+  }
+
+  /** MID-RING / FAR-FIELD: a ground asked a band of `rows` at a time, the next band posted when the last lands; `take`
+   *  keeps each answer (false: a band failed, the ground is null) and answers the ground at the last. */
+  _bands(t, job, total, rows, take) {
+    const ask = (r0) => new Promise((resolve) => {
+      if (!this._worker) { resolve(null); return; }
+      const id = ++this._gridId;
+      this._mids.set(id, resolve);
+      this._worker.postMessage({ t, id, ...job, rows: [r0, Math.min(total, r0 + rows)] });
+    });
+    const next = (r0) => ask(r0).then((m) => {
+      const r1 = Math.min(total, r0 + rows), kept = take(m, r0, r1);
+      return kept === false ? null : kept === true ? next(r1) : kept;
+    });
+    return next(0);
+  }
+
+  /**
+   * FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} (world/terrain/midRingGrid.js
+   * buildFarFieldBytes) - on the worker alone, as the middle ring: null with none, and the far ring closes into the sky.
+   * RELIEF-PEAKS: `relief` (the Landforms row) and each cell's vertex's ground (`ground`, world units).
+   * @param {{ baseCX: number, baseCY: number, radius: number, cell: number, seaByte: number, relief?: boolean }} job
+   * @returns {Promise<?{ high: Uint8Array, low: Uint8Array, clim: Uint8Array, ground: Float32Array }>}
+   */
+  farField(job) {
+    if (!this._worker) return Promise.resolve(null);
+    const side = farFieldSide(job.radius), high = new Uint8Array(side * side), low = new Uint8Array(side * side), clim = new Uint8Array(side * side), ground = new Float32Array(side * side);
+    return this._bands('farfield', job, side, HORIZON_BAND_ROWS.far, (m, j0, j1) => {
+      if (!m?.high) return false;
+      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side); ground.set(m.ground, j0 * side);
+      return j1 === side ? { high, low, clim, ground } : true;
+    });
+  }
+
+  _midAnswer(m) {
+    const resolve = this._mids.get(m.id);
+    if (!resolve) return;
+    this._mids.delete(m.id);
+    if (m.t === 'midError' || m.t === 'farError' || m.t === 'bandError') console.warn('[terrain] worker horizon failed -', m.message);
+    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null, cover: m.cover ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground } : null);
   }
 
   _gridAnswer(m) {
@@ -253,7 +405,7 @@ export class TerrainGenClient {
     this._grids.delete(m.id);
     if (m.t === 'gridError') {
       console.warn('[terrain] worker grid failed; building it on the main thread -', m.message);
-      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));
+      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...g.job }));
       return;
     }
     g.resolve({ positions: m.positions, normals: m.normals, bed: m.bed ?? null });   // AUDIT WATER-NEXT P1: the bed the worker carved
@@ -267,7 +419,7 @@ export class TerrainGenClient {
       // this job's inputs are still whole on this side - run them here
       console.warn('[terrain] worker job failed; generating on the main thread -', m.message);
       this._roadsFallback();   // AUDIT ROADS F2: a one-off same-thread job still wants its roads
-      p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...p.job }));
+      p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...p.job }));
       return;
     }
     // The reply crosses WHOLE, like the job: the envelope tag comes
@@ -286,11 +438,13 @@ export class TerrainGenClient {
     this._fifo = [];
     try { this._worker?.terminate?.(); } catch { /* already gone */ }
     this._worker = null;
-    this._roadsFallback();   // AUDIT ROADS F2: the worker took its network down with it
-    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...p.job }));
+    this._roadsFallback();   // AUDIT ROADS F2: the worker took its network down with it (TESA14: the roads past the Bay are this thread's already)
+    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...p.job }));
     // PERF-EXT26: and the promotions it held - built here, once each
     const grids = [...this._grids.values()];
     this._grids.clear();
-    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));
+    for (const resolve of this._mids.values()) resolve(null);   // MID-RING: no worker, no middle ring
+    this._mids.clear();
+    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...g.job }));
   }
 }

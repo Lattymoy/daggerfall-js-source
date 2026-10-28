@@ -480,6 +480,44 @@ function topProfile(collider, face, into, lipY) {
   }
 }
 
+// ---- CLIMB-CREST (2026-10-26, the owner: "Pre existing issue where walls cant be climbed over") ---------------------
+//
+// Daggerfall's city wall (ARCH3D 445, measured on the freeware: 9.6 m thick, its faces to 8.05 m) has no top to stand on:
+// each face rises to a knife edge, and from it the coping's back falls 76 degrees, 1.6 m in 0.4, to the wall walk. The
+// ledge sensor read the top past the edge as a roof too steep to stand on, and the hand-hold the same: a free climb
+// stuck under the edge until its grip ran out and fell (a real PlayerMotor on the real wall, both sides), and a body
+// put on the walk could not leave it over either parapet. The classic climb went over (its hug shoves the capsule over
+// any lip). A CREST is now a lip: the face's own top where, just past it, nothing stands within PARKOUR_CREST_DROP of it
+// - its far side falls away (a coping's back, a parapet's other face, the drop past a wall). It has no top to stand on
+// (depth 0): it is the clamber's (onto the walk behind, as far down as a hang's let-go - AUDIT CLIMB-ARC D3's law,
+// motor.js _pkOnto) and the over-hang's (into a hang on its far face), and the hand-hold holds it. A roof rising from
+// an eave stands past the face's top, and is refused for its pitch as it was.
+
+/** How far past a face's top the crest's far side is asked, metres, how far under the top it must fall away by there
+ *  (a 59-degree fall at the least; the coping's is 76), how far over it the air must be open (the hands' room - an eave
+ *  standing out over the face's top is the eave's law, AUDIT CLIMB-FIELD E1), and the bisections that find the top (to a
+ *  millimetre). */
+export const PARKOUR_CREST_PAST = 0.03;
+export const PARKOUR_CREST_DROP = 0.05;
+export const PARKOUR_CREST_OPEN = 1;
+export const PARKOUR_CREST_BISECT = 7;
+/** CLIMB-CREST: THE CREST over a face a level ray from `o` along `dir` (horizontal) meets at about `dist`: the face met at
+ *  `lo` and gone at `hi`, its top bisected between them, and past it (PARKOUR_CREST_PAST beyond where the ray meets it
+ *  there) nothing within PARKOUR_CREST_DROP under the top nor PARKOUR_CREST_OPEN over it. Answers the top's height, or
+ *  null - the face does not end so (a roof rising past its top, an eave over it, a top to stand on, the face met
+ *  nowhere between). */
+export function crestTop(collider, o, dir, dist, lo, hi) {
+  const reach = dist + PARKOUR_FACE_LEAN;
+  const meets = (y) => collider.raycast([o[0], y, o[2]], dir, reach);
+  if (!Number.isFinite(meets(lo)) || Number.isFinite(meets(hi))) return null;
+  let a = lo, b = hi;
+  for (let k = 0; k < PARKOUR_CREST_BISECT; k++) { const m = (a + b) / 2; if (Number.isFinite(meets(m))) a = m; else b = m; }
+  const d = meets(a) + PARKOUR_CREST_PAST;
+  const px = o[0] + dir[0] * d, pz = o[2] + dir[2] * d;
+  if (Number.isFinite(collider.raycast([px, a + 0.005, pz], [0, 1, 0], PARKOUR_CREST_OPEN))) return null;
+  return Number.isFinite(collider.surfaceHit([px, a + 0.005, pz], [0, -1, 0], 0.005 + PARKOUR_CREST_DROP).dist) ? null : a;
+}
+
 /** The landing on the top at `s` past the face at (fx, fz): the surface there,
  *  if it is the lip's own - no steeper than the top's limit (50), on the plane the
  *  lip's slope draws give or take the slack (a flat tread a riser above is the
@@ -574,9 +612,14 @@ export function senseLedge(collider, feet, dir, opts) {
   const ex = feet[0] + dir[0] * wall.faceDist + into[0] * PARKOUR_EDGE_INSET;
   const ez = feet[2] + dir[2] * wall.faceDist + into[2] * PARKOUR_EDGE_INSET;
   const down = collider.surfaceHit([ex, ey, ez], [0, -1, 0], ey - (wall.y - 0.05));
-  if (!Number.isFinite(down.dist)) return { ok: false, why: 'no-top' };
-  const lipY = ey - down.dist;
-  if (!down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) return { ok: false, why: 'steep-top' };
+  let lipY = ey - down.dist, crest = false;
+  if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) {
+    // CLIMB-CREST: no top to stand on at the edge - a crest, its far side falling away, is the lip itself
+    const c = crestTop(collider, feet, dir, wall.faceDist, Math.max(wall.y, wall.openY - PARKOUR_SCAN_STEP), wall.openY);
+    if (c == null) return { ok: false, why: Number.isFinite(down.dist) ? 'steep-top' : 'no-top' };
+    lipY = c;
+    crest = true;
+  }
   const rise = lipY - feet[1];
   if (rise > high) return { ok: false, why: 'too-high' };
   if (rise < low - 0.05) return { ok: false, why: 'too-low' };
@@ -587,9 +630,9 @@ export function senseLedge(collider, feet, dir, opts) {
     const f = collider.surfaceHit([face[0] + wn[0] * 0.1, lipY - PARKOUR_UNDER, face[2] + wn[2] * 0.1], [0, -1, 0], lipY - feet[1] + 0.5);
     if (Number.isFinite(f.dist) && lipY - PARKOUR_UNDER - f.dist - feet[1] > PARKOUR_FOOTING) return { ok: false, why: 'riser' };
   }
-  // 3. the top
-  const { depth } = topProfile(collider, face, into, lipY);
-  const ledge = { ok: true, lipY, rise, normal: wn, into, face, depth, faceKey: wall.key, mantle: null, why: null };
+  // 3. the top (CLIMB-CREST: a crest's none - the clamber's, the over-hang's)
+  const { depth } = crest ? { depth: 0 } : topProfile(collider, face, into, lipY);
+  const ledge = { ok: true, lipY, rise, normal: wn, into, face, depth, faceKey: wall.key, mantle: null, why: null, crest };
   return landOn(collider, feet, ledge, opts);
 }
 
@@ -905,8 +948,10 @@ function plainGrip(collider, face, normal, lipY, opts, fit, seen) {
   const d0 = collider.raycast([ox, loY, oz], dir, far);
   const ex = ox + dir[0] * (d0 + PARKOUR_EDGE_INSET), ez = oz + dir[2] * (d0 + PARKOUR_EDGE_INSET);
   const top = collider.surfaceHit([ex, hiY + 0.01, ez], [0, -1, 0], hiY - loY + 0.06);
-  if (!Number.isFinite(top.dist) || !top.normal || top.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) return null;
-  const y = hiY + 0.01 - top.dist;
+  // CLIMB-CREST: no top to stand on past the edge - a crest's top is the hold
+  const flat = Number.isFinite(top.dist) && top.normal && top.normal[1] >= PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER;
+  const y = flat ? hiY + 0.01 - top.dist : crestTop(collider, [ox, 0, oz], dir, d0, loY, hiY);
+  if (y == null) return null;
   if (Math.abs(y - lipY) > PARKOUR_LIP_FOLLOW + 0.01) return null;
   // 3. the face under it - under an eave the roof runs on past the edge, and the face is the rung's under the lip
   const under = faceHit(collider, [ox, y - PARKOUR_UNDER, oz], dir, far)
@@ -917,7 +962,7 @@ function plainGrip(collider, face, normal, lipY, opts, fit, seen) {
   // 4. the hang
   const feet = [fx + n[0] * back, y - PARKOUR_HANG_DROP, fz + n[2] * back];
   if (fit && !capsuleFits(collider, feet, stand)) return null;
-  return { lipY: y, normal: n, face: [fx, y, fz], feet, key: top.key ?? under.key ?? null };
+  return { lipY: y, normal: n, face: [fx, y, fz], feet, key: (flat ? top.key : null) ?? under.key ?? null };
 }
 
 // ---- AUDIT CLIMB-FIELD E1: THE EAVE (Mac: "You cant mantle the bottom of roofs, you get stuck") -----------------------

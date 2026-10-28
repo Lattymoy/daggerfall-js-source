@@ -32,6 +32,9 @@
 //     JUNGLE.grove.cell tiles - so a slope of figs gives way to a stand of mahoganies), the ground's height above the
 //     beach (banyans and figs crowd the low wet ground, kapoks and mahoganies the high), and light (the flame tree takes
 //     the glades' edges).
+//   - GRAHT1 (bible/03-World/Graht-Oaks.md): THE GRAHT-OAKS, where the canopy's zones close it (Valenwood's forest - the
+//     job's `canopy`, the canopy field's 3x3): stood first, the storey over everything (world/jungle/grahtOaks.js
+//     grahtSites), and every storey under them and every roadside pair keeps off their feet, the floor off their trunks.
 //
 // EVERY TREE ITS OWN DICE (FOREST1's law): every draw is a hash of a WORLD tile or cell (terrainNature.js tileDraw), so a
 // tree stands where it stands whatever was laid before it, on every client and on the worker - Logging's trees stand
@@ -40,14 +43,17 @@
 // the owner's tree there, and gameplay reads it as the Tree it is.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  tileDraw, forestCover, placesPull, groundAt, isTreeRecord, TREE_RECORDS, SLOPE_SINK_RATIO, NATURE_CLEARANCE,
+  tileDraw, forestCover, placesPull, groundAt, isTreeRecord, TREE_RECORDS, SLOPE_SINK_RATIO, natureCleared,
 } from './terrainNature.js';
+import { walkGroundAt } from './terrainSurface.js';   // FLORA-GROUND: the jungle stands on the ground the player walks on - one law
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';
 import { jungleDepthAt, jungleShare, JUNGLE_EDGE, JUNGLE_WANDER_MAX } from '../jungle/jungleRegion.js';
 import { JUNGLE_ARCHIVE, JUNGLE_SPECIES, JUNGLE_MEASURES } from '../jungle/jungleModels.js';
 import { trailClear, trailsReach } from '../jungle/jungleTrails.js';
 import { standPairs, JUNGLE_ROADSIDE } from '../jungle/jungleRoadside.js';   // JUNGLE-ROADSIDE: the owner's pairs astride the roads
+import { grahtSites, grahtFootMask, GRAHT_LAND_RECORDS } from '../jungle/grahtOaks.js';   // GRAHT1: Valenwood's graht-oaks, the storey over the canopy
+import { canopyShare } from '../jungle/jungleCanopy.js';   // GRAHT1: where the canopy's zones close it - the light's own share
 import { ecoNoise, ecoOrigin } from '../ecotone.js';
 
 /** The jungle's numbers, in one place. Tiles are DFU's (6.4 m); a species is JUNGLE_SPECIES's index (0 banyan, 1 kapok,
@@ -215,32 +221,34 @@ export const pairTile = (share, groundOf, g2Of, openOf) => (tx, ty) => {
 
 /**
  * THE JUNGLE OVER A PIXEL'S LAYOUT. `own` - layoutNature's flats; `opts` - its options with `jungle`: `{ nine, pois,
- * paths, net }` (the field's 3x3 - world/jungle/jungleRegion.js jungleNine - FOREST1's places, the road painter's track
- * mask, null for none, and JUNGLE-ROADSIDE: the road network the painter painted with, null for none). Answers the
+ * paths, net, canopy }` (the field's 3x3 - world/jungle/jungleRegion.js jungleNine - FOREST1's places, the road painter's
+ * track mask, null for none, JUNGLE-ROADSIDE: the road network the painter painted with, null for none, and GRAHT1: the
+ * canopy field's 3x3, null where no canopy closes or the graht-oaks are off). Answers the
  * pixel's flats: its own on every tile the jungle does not own, the jungle's on the tiles it does. A pixel the jungle
  * cannot reach answers `own` itself. jungleLayout's flats alone.
  * @param {Array<any>} own
  * @param {Float32Array} heightmapData @param {Uint8Array} tilemapData
  * @param {{ mapPixelX: number, mapPixelY: number, locationRect: any, beach?: ?Float32Array,
- *   jungle?: ?{ nine: ArrayLike<number>, pois?: any[], paths?: ?Uint8Array, net?: any } }} opts
+ *   jungle?: ?{ nine: ArrayLike<number>, pois?: any[], paths?: ?Uint8Array, net?: any, canopy?: ?ArrayLike<number> } }} opts
  */
 export const withJungle = (own, heightmapData, tilemapData, opts) => jungleLayout(own, heightmapData, tilemapData, opts).flats;
 
 /**
- * THE JUNGLE OVER A PIXEL'S LAYOUT, WITH ITS ROADS' PAIRS: `{ flats, pairs }` - withJungle's flats, and JUNGLE-ROADSIDE:
- * the pixel's roadside pairs (world/jungle/jungleRoadside.js standPairs), beside the flats and never among them (AUDIT
- * JUNGLE-ROADSIDE PERF-2: carried as seven of the flats' columns they grew the wire 88% for 0.2% of its flats).
+ * THE JUNGLE OVER A PIXEL'S LAYOUT, WITH ITS ROADS' PAIRS: `{ flats, pairs, graht }` - withJungle's flats, and
+ * JUNGLE-ROADSIDE: the pixel's roadside pairs (world/jungle/jungleRoadside.js standPairs), beside the flats and never among
+ * them (AUDIT JUNGLE-ROADSIDE PERF-2: carried as seven of the flats' columns they grew the wire 88% for 0.2% of its
+ * flats), and GRAHT1: its graht-oaks (world/jungle/grahtOaks.js grahtSites - GRAHT_TREE_FLOATS a tree), beside them too.
  * @param {Array<any>} own
  * @param {Float32Array} heightmapData @param {Uint8Array} tilemapData
  * @param {Parameters<typeof withJungle>[3]} opts
- * @returns {{ flats: Array<any>, pairs: ReturnType<typeof standPairs> }}
+ * @returns {{ flats: Array<any>, pairs: ReturnType<typeof standPairs>, graht: Float32Array }}
  */
 export function jungleLayout(own, heightmapData, tilemapData, opts) {
   const jg = opts.jungle;
-  if (!jg?.nine) return { flats: own, pairs: [] };
+  if (!jg?.nine) return { flats: own, pairs: [], graht: new Float32Array(0) };
   let hi = -Infinity;
   for (let k = 0; k < 9; k++) hi = Math.max(hi, jg.nine[k]);
-  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [] };   // the line, wander and all, cannot reach a tile
+  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [], graht: new Float32Array(0) };   // the line, wander and all, cannot reach a tile
   const whole = jungleWhole(jg.nine);   // ...nor leave one: every tile the jungle's
   const tDim = WORLD_MAP_TILE_DIM, hDim = HEIGHTMAP_DIMENSION, scale = TERRAIN_SIZE / tDim;
   const px = opts.mapPixelX, py = opts.mapPixelY;
@@ -258,14 +266,12 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       if (j >= 1 || jungleStandNoise(origin, x + 0.5, y + 0.5) < j) { mine[y * tDim + x] = 1; any = true; }   // LAY-9: by stands
     }
   }
-  if (!any) return { flats: own, pairs: [] };
+  if (!any) return { flats: own, pairs: [], graht: new Float32Array(0) };
 
   const yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const cell = TERRAIN_SIZE / (hDim - 1);
   const at = (a, b) => heightmapData[a * hDim + b] * yScale;
-  const clear = [opts.locationRect, ...(jg.pois ?? [])].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin).map((r) => ({
-    xMin: r.xMin - NATURE_CLEARANCE, xMax: r.xMax + NATURE_CLEARANCE, yMin: r.yMin - NATURE_CLEARANCE, yMax: r.yMax + NATURE_CLEARANCE,
-  }));
+  const clear = [opts.locationRect, ...(jg.pois ?? [])].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin);   // TS6: a town's clearing round its outline (natureCleared)
   const pois = jg.pois ?? [];
   const paths = jg.paths ?? null;
   // EACH TILE'S STANDING, once: the ground's share of every chance (0 - nothing of the jungle's stands there: not its
@@ -274,15 +280,15 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
   // the places' pull) - its glade's light alone (AUDIT BANTHA1 LAY-3), and how far it lies in a place's fields (`openOf`:
   // a town's ring is open ground - no canopy, no young trees, no palms - never the jungle's thickest light gap)
   const groundOf = new Float32Array(tDim * tDim), g2Of = new Float32Array(tDim * tDim), lightOf = new Float32Array(tDim * tDim);
-  const gladeOf = new Float32Array(tDim * tDim), openOf = new Float32Array(tDim * tDim);
+  const gladeOf = new Float32Array(tDim * tDim), openOf = new Float32Array(tDim * tDim), footOf = new Uint8Array(tDim * tDim);
   const glade = gladeField(px, py);
   for (let y = 0; y < tDim; y++) {
     for (let x = 0; x < tDim; x++) {
       const ti = y * tDim + x;
       if (!mine[ti]) continue;
-      const ground = JUNGLE.ground[tilemapData[ti] & 0x3f];
-      if (!ground || paths?.[ti]) continue;
-      if (clear.some((r) => x >= r.xMin && x < r.xMax && y >= r.yMin && y < r.yMax)) continue;
+      const record = tilemapData[ti] & 0x3f, ground = JUNGLE.ground[record];
+      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record))) || paths?.[ti]) continue;   // GRAHT1: a buttress lies on any land tile
+      if (clear.some((r) => natureCleared(r, x, y))) continue;
       const hl = at(Math.max(0, x - 1), y), hr = at(Math.min(hDim - 1, x + 1), y);
       const hd = at(x, Math.max(0, y - 1)), hu = at(x, Math.min(hDim - 1, y + 1));
       const gx = (hr - hl) / (2 * cell), gz = (hu - hd) / (2 * cell);
@@ -291,20 +297,34 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
       const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
       if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) continue;   // the beach line, as every flat's
-      groundOf[ti] = ground;
+      footOf[ti] = 1;   // GRAHT1: ground a graht-oak's foot may cover - land, its slope read
       g2Of[ti] = g2;
+      if (!ground) continue;   // ...where the jungle's own flats grow on DFU's dirt, grass and stone alone
+      groundOf[ti] = ground;
       const closed = smoothstep(JUNGLE.glade.edge[0], JUNGLE.glade.edge[1], glade(x, y)), pull = placesPull(pois, x, y);
       lightOf[ti] = 1 - Math.min(1, Math.max(0, closed + pull));
       gladeOf[ti] = 1 - closed;
       openOf[ti] = Math.min(1, Math.max(0, -pull));
     }
   }
-  const placeAt = (mx, mz, g2) => groundAt(heightmapData, mx, mz) - Math.atan(Math.sqrt(g2)) * (180 / Math.PI) / SLOPE_SINK_RATIO;
+  const placeAt = (mx, mz, g2) => walkGroundAt(heightmapData, mx, mz) - Math.atan(Math.sqrt(g2)) * (180 / Math.PI) / SLOPE_SINK_RATIO;   // FLORA-GROUND: on the ground the player walks on
   // JUNGLE-TRAILS: a tree keeps its FOOT off a trail's dirt as VERGE1 keeps it off a road - its roots, buttresses and
   // curtains at its own scale (jungleModels.js JUNGLE_MEASURES) - where the trails run: the jungle whole (the painter's
   // own gate, world/jungle/jungleTrails.js trailClear); the palms and the floor keep off its tiles (`paths`, above)
   const trails = whole || trailsReach(jg.nine);
   const onTrail = (ti, mx, mz, species, js) => trails && share[ti] >= 1 && !trailClear(px, py, mx, mz, JUNGLE_MEASURES[species].foot * js);
+  // GRAHT1: THE GRAHT-OAKS, stood first where the canopy's zones close it - each foot wholly on land the jungle keeps (footOf),
+  // off the trails at its reach, at the lowest ground under it (world/jungle/grahtOaks.js grahtSites); `onFoot` the tiles
+  // their feet hold (1) and their trunks (2), which every storey below and every pair keeps off (the floor off a trunk)
+  const graht = jg.canopy ? grahtSites({
+    ox, oz, tiles: tDim, tileM: scale, draw: tileDraw,
+    share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),
+    growsOn: (ti) => footOf[ti] > 0,
+    steepAt: (ti) => g2Of[ti] > TAN_MAX_SQ,
+    ground: (mx, mz) => walkGroundAt(heightmapData, mx, mz),   // FLORA-GROUND: a graht-oak's foot on the walk law
+    trailOk: (mx, mz, reach) => !trails || trailClear(px, py, mx, mz, reach),
+  }) : new Float32Array(0);
+  const onFoot = grahtFootMask(graht, tDim, scale);
   // JUNGLE-ROADSIDE: the owner's pairs astride the roads, stood before the storeys - on whole jungle, off the roads and
   // the trails by their feet, sunk to the lowest ground under them (world/jungle/jungleRoadside.js standPairs) - and
   // every tree and plant after them keeping its trunk JUNGLE_ROADSIDE.clear (the floor JUNGLE.coverClear) off theirs,
@@ -312,7 +332,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
   // of a pixel with none - is answered at once
   const pairs = jg.net ? standPairs({
     px, py, net: jg.net, heightmapData,
-    tileOk: pairTile(share, groundOf, g2Of, openOf),
+    tileOk: onFoot ? ((ok) => (tx, ty) => ok(tx, ty) && !onFoot[ty * tDim + tx])(pairTile(share, groundOf, g2Of, openOf)) : pairTile(share, groundOf, g2Of, openOf),   // GRAHT1: never on a graht-oak's foot
     trailOk: (x, z, r) => !trails || trailClear(px, py, x, z, r),
   }) : [];
   const pairTrunks = [], nearPairTile = pairs.length ? new Uint8Array(tDim * tDim) : null;
@@ -348,7 +368,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       const tx = cx * C + C * (in0 + (in1 - in0) * tileDraw(wx, wz, 20));
       const tz = cy * C + C * (in0 + (in1 - in0) * tileDraw(wx, wz, 21));
       const ti = Math.floor(tz) * tDim + Math.floor(tx);
-      if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ) continue;   // LAY-2: no canopy tree up a slope past 34
+      if (!groundOf[ti] || g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue;   // LAY-2: no canopy tree up a slope past 34; GRAHT1: nor on a graht-oak's foot
       const light = lightOf[ti];
       if (tileDraw(wx, wz, 22) >= JUNGLE.canopy * share[ti] * (1 - light) * groundOf[ti]) continue;
       const mx = tx * scale, mz = tz * scale;
@@ -407,7 +427,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       const wx = ox + cx * C, wz = oz + cy * C;
       const tx = cx * C + C * (u0 + (u1 - u0) * tileDraw(wx, wz, 40)), tz = cy * C + C * (u0 + (u1 - u0) * tileDraw(wx, wz, 41));
       const ti = Math.floor(tz) * tDim + Math.floor(tx), ground = groundOf[ti];
-      if (!ground) continue;
+      if (!ground || onFoot?.[ti]) continue;   // GRAHT1: no young tree or palm on a graht-oak's foot
       const mx = tx * scale, mz = tz * scale, g2 = g2Of[ti], j = share[ti];
       const fields = 1 - openOf[ti];   // LAY-3: a place's fields stand no young tree and no palm
       const gap = !crowded(mx, mz, cx, cy, JUNGLE.crown);   // a light gap: no canopy crown reaches over it
@@ -434,7 +454,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
   for (let y = 0; y < tDim; y++) {
     for (let x = 0; x < tDim; x++) {
       const ti = y * tDim + x, ground = groundOf[ti];
-      if (!ground || taken[ti]) continue;
+      if (!ground || taken[ti] || onFoot?.[ti] === 2) continue;   // GRAHT1: no plant of the floor out of a graht-oak's trunk
       const wx = ox + x, wz = oz + y;
       const cx = Math.floor(x / C), cy = Math.floor(y / C);
       const mx = (x + t0 + (t1 - t0) * tileDraw(wx, wz, 30)) * scale, mz = (y + t0 + (t1 - t0) * tileDraw(wx, wz, 31)) * scale;
@@ -443,5 +463,5 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       out.push({ record: JUNGLE_COVER[Math.floor(tileDraw(wx, wz, 36) * JUNGLE_COVER.length)], x: mx, y: placeAt(mx, mz, g2Of[ti]), z: mz, wood: 1, archive: JUNGLE_ARCHIVE });
     }
   }
-  return { flats: out, pairs };
+  return { flats: out, pairs, graht };
 }

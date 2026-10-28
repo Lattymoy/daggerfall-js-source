@@ -19,7 +19,7 @@ import {
   buildTamrielField, fillRing, pictureToFilm, INTRO_MAP_LABELS, IMPERIAL_CITY_AT, RIVER_SEGMENTS, BAY_RECT, UNIT_M,
 } from '../../src/ui/intro/introTamriel.js';
 import { startIntroBuild } from '../../src/ui/intro/introBuild.js';
-import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialTile, imperialTree } from '../../src/world/imperialCity.js';
+import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialTile, imperialTree } from '../../src/ui/intro/set/imperialCity.js';   // PIN MOVED (the merge of main into TESA): the film's own set, the city it was shot on
 import { BLOCK_M } from '../../src/world/spawnedDungeons.js';
 import { PROVINCES, RIVERS, SEAS, provinceRings } from '../../src/world/tamriel/tamrielGeography.js';
 import { BALFIERA } from '../../src/ui/intro/introMap.js';

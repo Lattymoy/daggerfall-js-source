@@ -72,8 +72,8 @@
   {
     "name": "MOUNTAINS-WALKABLE-rocks-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const openBlocked = () => false;   // MOUNTAINS WALKABLE",
-    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => !leaving && rocks !== null && rocks[by * width + bx] === 1;",
+    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);",
+    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => ghostfenceShuts(bx, by) || (!leaving && rocks !== null && rocks[by * width + bx] === 1);",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],

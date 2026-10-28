@@ -11,8 +11,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { placeFoeFreely } from '../../src/systems/quest/sceneMount.js';
 import { placeFoeEnv, entityOccupancy, heldSpots, holdSpotWhile } from '../../src/scenes/quest/questFoeHost.js';
+import { hostText } from '../hostText.mjs';
 
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 const PLAYER = [0, 0, 0];
 /** A ship's deck: rails nine metres round the player, the deck at 0. */
 const deck = () => ({

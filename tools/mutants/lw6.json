@@ -257,18 +257,18 @@
   },
   {
     "name": "LW6-host-dive-kinds",
-    "file": "src/scenes/world.js",
-    "old": "const LIVING_DIVE_TYPES = new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]);",
-    "new": "const LIVING_DIVE_TYPES = new Set([LOCATION_TYPES.DungeonLabyrinth]);",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "export const LIVING_DIVE_TYPES = /** @type {Set<number>} */ (new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]));",
+    "new": "export const LIVING_DIVE_TYPES = /** @type {Set<number>} */ (new Set([LOCATION_TYPES.DungeonLabyrinth]));",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
   },
   {
     "name": "LW6-host-deep-from-the-land",
-    "file": "src/scenes/world.js",
-    "old": "    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null",
-    "new": "    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (false",
+    "file": "src/scenes/livingWorld/troubleFoes.js",
+    "old": "  return ({ climateIndex, px, py, dungeonType, minute, level, size, rolls }) => (dungeonType != null",
+    "new": "  return ({ climateIndex, px, py, dungeonType, minute, level, size, rolls }) => (false",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]

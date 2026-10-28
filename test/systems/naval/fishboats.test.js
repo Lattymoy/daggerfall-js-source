@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  fishersOf, fishingWaters, fishingErrand, stepFishing, fisherCatch, fisherPlace, outwardOf, berthSpan, clearOfBerths, fishingHeld,
+  fishersOf, fishingWaters, fishingErrand, stepFishing, fisherCatch, fisherPlace, harbourOutwardOf, berthSpan, clearOfBerths, fishingHeld,
   FISH_ROLL, FISH_SMACK_SHARE, FISH_GROUND_M, FISH_GROUND_SPREAD, FISH_RING, FISH_ANCHOR_M, FISH_CATCH, FISH_BERTH_CLEAR, FISH_SPACING, FISH_STROKE,
 } from '../../../src/systems/naval/fishingBoats.js';
 import { findHarbour, createWaterGrid, footprintClear, berthSize, REACH_M } from '../../../src/systems/naval/shipLife.js';
@@ -98,7 +98,7 @@ test('FISH-BOATS the classes: a Fishing Skiff (Come Sail Away\'s Rowboat, two at
 
 test('FISH-BOATS the water each keeps: her ANCHORAGE past the berths\' ends along the shore, a side a slot and FISH_SPACING on, FISH_BERTH_CLEAR off every berth\'s ship and her way in, her hull afloat and the water\'s way from the mouth to it; her GROUND off the mouth within FISH_GROUND_M, bearing within FISH_GROUND_SPREAD of the harbour\'s outward way, the open water from the mouth to it; none where the harbour keeps no room (mutants: the berths\' clearance, the side, the spacing, the ground\'s spread, the ground\'s reach)', () => {
   assert.equal(FISH_BERTH_CLEAR, 25);
-  const n = outwardOf(harbour), u = [n[1], -n[0]];
+  const n = harbourOutwardOf(harbour), u = [n[1], -n[0]];
   const length = berthSize(harbour.hull).bowZ - berthSize(harbour.hull).aftZ;
   const span = berthSpan(harbour, n, u, length);
   const on = (p) => (p[0] - harbour.mouth[0]) * u[0] + (p[1] - harbour.mouth[1]) * u[1];

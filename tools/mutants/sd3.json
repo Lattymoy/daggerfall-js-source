@@ -2,32 +2,32 @@
   {
     "name": "SD3-a-slot-of-0-believed",
     "file": "src/net/wire.js",
-    "old": "return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999)",
-    "new": "return intIn(m.s, 0, SD_SLOT_MAX) && intIn(m.px, 0, 999)",
+    "old": "intIn(s, 1, SD_SLOT_MAX) && s % SD_LANE_SPAN !== 0 && sdLaneOpen(sdLaneWire(s));",
+    "new": "intIn(s, 0, SD_SLOT_MAX) && (s === 0 || s % SD_LANE_SPAN !== 0) && sdLaneOpen(sdLaneWire(s));",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "A find names a slot that rose - never the hub's own slot 0."
+    "note": "A find names a slot that rose - never the hub's own slot 0. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD3-a-pixel-off-the-map",
     "file": "src/net/wire.js",
-    "old": "&& intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found'",
-    "new": "&& intIn(m.px, 0, 1000) && intIn(m.py, 0, 499) ? { k: 'found'",
+    "old": "if (m.k === 'found') return sdSlotOk(m.s) && siteEventPixelOk(sdLaneWire(m.s), m.px, m.py) ?",
+    "new": "if (m.k === 'found') return sdSlotOk(m.s) && (siteEventPixelOk(sdLaneWire(m.s), m.px, m.py) || (m.px === 1000 && m.py >= 0 && m.py < 500)) ?",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "The map is 1000 pixels wide."
+    "note": "The map is 1000 pixels wide. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD3-the-first-beat-fanned",
     "file": "src/net/wire.js",
-    "old": "  return r && r.s > 0 ? { k: 'ev', ...r } : null;",
-    "new": "  return r ? { k: 'ev', ...r } : null;",
+    "old": "  if (!r || r.s % SD_LANE_SPAN === 0 || (m.k === 'ev') !== (sdLaneWire(r.s) === 0)) return null;",
+    "new": "  if (!r || (m.k === 'ev') !== (sdLaneWire(r.s) === 0)) return null;",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "The hub's own first beat is said to nobody."
+    "note": "The hub's own first beat is said to nobody. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD3-the-gate-a-version-early",
@@ -62,12 +62,12 @@
   {
     "name": "SD3-the-first-beat-rises",
     "file": "server/src/index.js",
-    "old": ": sdFirst(now)); continue; }",
-    "new": ": { ...sdFirst(now), next: now }); continue; }",
+    "old": ": sdFirst(now, lane)); continue; }",
+    "new": ": { ...sdFirst(now, lane), next: now }); continue; }",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "A fresh hub waits SD_FIRST_RISE_MS before the first rise."
+    "note": "A fresh hub waits SD_FIRST_RISE_MS before the first rise. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD3-the-gone-unsaid",
@@ -82,12 +82,12 @@
   {
     "name": "SD3-the-welcome-without-the-record",
     "file": "server/src/index.js",
-    "old": "if (r && r.s > 0) this._send(ws, JSON.stringify({ t: 'sd', k: 'ev', ...r }));",
-    "new": "if (r && r.s > 0 && false) this._send(ws, JSON.stringify({ t: 'sd', k: 'ev', ...r }));",
+    "old": "if (r && r.s % SD_LANE_SPAN > 0) this._send(ws, JSON.stringify({ t: 'sd', k: lane ? SD_LANE_KIND : 'ev', ...r }));",
+    "new": "if (r && r.s % SD_LANE_SPAN > 0 && false) this._send(ws, JSON.stringify({ t: 'sd', k: lane ? SD_LANE_KIND : 'ev', ...r }));",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "A hello hears the record."
+    "note": "A hello hears the record. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD3-the-hub-arms-nothing",
@@ -102,12 +102,12 @@
   {
     "name": "SD3-the-last-region-never-rests",
     "file": "server/src/index.js",
-    "old": "pickSdRegion((cur?.s ?? 0) + 1, counts, cur?.s ? cur.r : -1)",
-    "new": "pickSdRegion((cur?.s ?? 0) + 1, counts, -1)",
+    "old": "pickSdRegion(base + 1, counts, cur && cur.s % SD_LANE_SPAN ? cur.r : -1)",
+    "new": "pickSdRegion(base + 1, counts, -1)",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "One crowd does not keep every Hollow."
+    "note": "One crowd does not keep every Hollow. WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5)."
   },
   {
     "name": "SD3-the-pose-unasked-at-the-cell",
@@ -232,12 +232,12 @@
   {
     "name": "SD3-the-step-down-forgets-it",
     "file": "src/net/online.js",
-    "old": "serpentOk: this.serpentOk, sdOk: this.sdOk, foeInventoryOk",
-    "new": "serpentOk: this.serpentOk, foeInventoryOk",
+    "old": "serpentOk: this.serpentOk, sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk",
+    "new": "serpentOk: this.serpentOk, ww5Ok: this.ww5Ok, foeInventoryOk",
     "tests": [
       "test/net/sd3_relay.test.js"
     ],
-    "note": "The socket stepped down keeps its own relay's word."
+    "note": "The socket stepped down keeps its own relay's word. WW5 (2026-10-27): re-aimed by content - the step-down keeps the halo's WW5 word beside it (a halo says for itself)."
   },
   {
     "name": "SD3-any-room",

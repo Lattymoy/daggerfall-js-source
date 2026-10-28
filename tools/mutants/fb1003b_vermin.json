@@ -141,17 +141,17 @@
   },
   {
     "name": "VERMIN-indoor-no-symbol",
-    "file": "src/scenes/world.js",
-    "old": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: player.pos,",
-    "new": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: player.pos,",
+    "file": "src/scenes/questWorld.js",
+    "old": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => host._liveSharer(q), inMyParty: (a) => !!host.social?.inMyParty(a), peers: host.peersNear(), accountOfPeer: (id) => host.social?.accountOfPeer(id), myFeet: player.pos,",
+    "new": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, sharerOf: (q) => host._liveSharer(q), inMyParty: (a) => !!host.social?.inMyParty(a), peers: host.peersNear(), accountOfPeer: (id) => host.social?.accountOfPeer(id), myFeet: player.pos,",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
     "name": "VERMIN-indoor-no-pool",
-    "file": "src/scenes/world.js",
-    "old": "myFeet: player.pos, foes: modes?.insideFoes?.() ?? [] })) return true;",
+    "file": "src/scenes/questWorld.js",
+    "old": "myFeet: player.pos, foes: host.modes?.insideFoes?.() ?? [] })) return true;",
     "new": "myFeet: player.pos, foes: [] })) return true;",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js"
@@ -159,16 +159,16 @@
   },
   {
     "name": "VERMIN-outdoor-no-symbol",
-    "file": "src/scenes/world.js",
-    "old": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet,",
-    "new": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, sharerOf: (q) => _liveSharer(q), inMyParty: (a) => !!social?.inMyParty(a), peers: peersNear(), accountOfPeer: (id) => social?.accountOfPeer(id), myFeet: feet,",
+    "file": "src/scenes/questWorld.js",
+    "old": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, symbol: handle.foe?.symbol?.name, sharerOf: (q) => host._liveSharer(q), inMyParty: (a) => !!host.social?.inMyParty(a), peers: host.peersNear(), accountOfPeer: (id) => host.social?.accountOfPeer(id), myFeet: feet,",
+    "new": "partnerStandsQuestFoes({ questName: handle.foe?.parentQuest?.questName, sharerOf: (q) => host._liveSharer(q), inMyParty: (a) => !!host.social?.inMyParty(a), peers: host.peersNear(), accountOfPeer: (id) => host.social?.accountOfPeer(id), myFeet: feet,",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js"
     ]
   },
   {
     "name": "VERMIN-outdoor-no-pool",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "myFeet: feet, foes: exteriorFoes.foes })) return true;",
     "new": "myFeet: feet, foes: [] })) return true;",
     "tests": [

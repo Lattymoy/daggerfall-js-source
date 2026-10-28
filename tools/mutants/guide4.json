@@ -399,7 +399,7 @@
   {
     "name": "GUIDE4-street-asks-nothing",
     "file": "src/scenes/world.js",
-    "old": "    questWhere: { canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo\n",
+    "old": "    questWhere: { canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo\n",
     "new": "",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"

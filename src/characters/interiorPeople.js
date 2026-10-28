@@ -38,7 +38,9 @@ export function collectInteriorPeople(recordData) {
       textureRecord: obj.textureRecord,
       factionID: obj.factionID,
       flags: obj.flags,
-      rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
+      // IC-INTERIORS: a person a made interior stands again keeps the position its own record gave it (`castPos` - its
+      // name's and its identity's, world/interior/interiorLayout.js interiorCast), wherever the room stands it
+      rawX: obj.castPos?.[0] ?? obj.xPos, rawY: obj.castPos?.[1] ?? obj.yPos, rawZ: obj.castPos?.[2] ?? obj.zPos,
       // Q4-v: the record's stream position - DFU's obj.Position, the
       // StaticNPC nameSeed's identity component.
       position: obj.position,

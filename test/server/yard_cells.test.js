@@ -54,8 +54,8 @@ test('YARD-CELL the cell is the block: a building key\'s high bytes, BUILDING_KE
   assert.equal(HOME_TOWN_MAX, 64 * 32, 'a town\'s homes answer lists every building a town of Daggerfall\'s blocks can hold');
 });
 
-test('YARD-CELL migration 0183 keeps every cell in the shape the code reads, and its triggers move a cell\'s version on every yard row written - both cells when a row moves between them (mutants: the trigger\'s shift, the moved trigger\'s OLD arm)', async () => {
-  const migration = readFileSync(new URL('../../server-account/migrations/0183_yard_cell.sql', import.meta.url), 'utf8');
+test('YARD-CELL migration 0190 keeps every cell in the shape the code reads, and its triggers move a cell\'s version on every yard row written - both cells when a row moves between them (mutants: the trigger\'s shift, the moved trigger\'s OLD arm)', async () => {
+  const migration = readFileSync(new URL('../../server-account/migrations/0190_yard_cell.sql', import.meta.url), 'utf8');
   assert.ok(migration.includes(`'${YARD_CELL_SHAPE}'`), 'the backfill writes the code\'s own shape');
   const { db, raw, lay, ver, row } = standDb();
   const a = makeBuildingKey(1, 2, 3);
@@ -83,19 +83,19 @@ test('YARD-CELL migration 0183 keeps every cell in the shape the code reads, and
   assert.ok(ver(7, yardCellOf(a)).ver > kept, 'counted again past the kept row, never meeting it');
 });
 
-test('YARD-CELL migration 0183\'s backfill: every cell standing yard pieces when it is applied is built at a version it holds, in the shape the code reads, its rows the code\'s own build of them (mutants: the backfill\'s range, its order)', async () => {
+test('YARD-CELL migration 0190\'s backfill: every cell standing yard pieces when it is applied is built at a version it holds, in the shape the code reads, its rows the code\'s own build of them (mutants: the backfill\'s range, its order)', async () => {
   const raw = new DatabaseSync(':memory:');
   raw.exec('PRAGMA foreign_keys = ON');
   const dir = new URL('../../server-account/migrations/', import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
-  for (const f of files.filter((f) => f < '0183')) raw.exec(readFileSync(new URL(f, dir), 'utf8'));
+  for (const f of files.filter((f) => f < '0190')) raw.exec(readFileSync(new URL(f, dir), 'utf8'));
   raw.prepare('INSERT INTO players (id, guest_name, created_at, last_seen) VALUES (?, ?, 0, 0)').run('p-owner', 'owner');
   const keys = [makeBuildingKey(0, 0, 3), makeBuildingKey(0, 0, 9), makeBuildingKey(2, 7, 1), BUILDING_KEY_0];
   for (const bk of keys) {
     raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, price, bought_at) VALUES (7, ?, 'p-owner', 'c', 'Owner', 17, 1, 1)").run(bk);
     for (const [i, at] of [[2, T0 + 5], [1, T0]]) raw.prepare('INSERT INTO home_decor (map_id, building_key, id, model, place, placed_at, paid, yard) VALUES (7, ?, ?, 41000, ?, ?, 0, 1)').run(bk, `${bk}-${i}`, PLACE, at);
   }
-  raw.exec(readFileSync(new URL(files.find((f) => f.startsWith('0183')), dir), 'utf8'));
+  raw.exec(readFileSync(new URL(files.find((f) => f.startsWith('0190')), dir), 'utf8'));
   const backfilled = raw.prepare('SELECT cell, built, shape, rows FROM home_yard_cells WHERE map_id = 7 ORDER BY cell').all().map((r) => ({ ...r }));
   assert.deepEqual(backfilled.map((r) => r.cell), [...new Set(keys.map(yardCellOf))].sort((a, b) => a - b), 'one row a cell standing a yard');
   for (const r of backfilled) assert.equal(r.shape, YARD_CELL_SHAPE);

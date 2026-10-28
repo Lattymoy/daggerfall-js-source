@@ -296,23 +296,23 @@
   },
   {
     "name": "RPT1026-FAR-QUAY-host-the-three-by-three",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/harbourHost.js",
     "old": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER) {",
     "new": "      for (const [dx, dy] of isle ? [] : HARBOUR_TOWN_ORDER.slice(0, 9)) {",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
-    "note": "the world host walks the 3 x 3 alone"
+    "note": "the world host walks the 3 x 3 alone Re-aimed by content at the fourth merge of main into #1184 (2026-10-27)."
   },
   {
     "name": "RPT1026-FAR-QUAY-host-no-height-map",
-    "file": "src/scenes/world.js",
-    "old": "harbourOf(t, { state, built: csaPixelAt, woods })",
+    "file": "src/scenes/harbourHost.js",
+    "old": "harbourOf(t, { state, built: csaPixelAt, woods: host.woods })",
     "new": "harbourOf(t, { state, built: csaPixelAt, woods: null })",
     "tests": [
       "test/systems/naval/rpt1026_world_farquay.test.js"
     ],
-    "note": "the world host hands no height map: nothing is ever dry for certain"
+    "note": "the world host hands no height map: nothing is ever dry for certain Re-aimed by content at the fourth merge of main into #1184 (2026-10-27)."
   },
   {
     "name": "RPT1026-CONFIRM-REREAD-the-old-refusal",

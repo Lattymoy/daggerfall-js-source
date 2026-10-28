@@ -27,6 +27,8 @@ import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../../../src/systems/sceneCache.js';
 import { makeAnchor } from '../../../src/systems/teleportAnchor.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { recordFrame } from '../../../src/scenes/groundFrameHost.js';   // BAY-LEFT-GROUND (D5): the frame's law, its own export
+import { createSwapBehind } from '../../../src/scenes/swapBehind.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => hostText(p);
@@ -73,15 +75,14 @@ test('TERRAIN-SCALE1: a save carries the scale its heights stood on; one without
   assert.equal(makeAnchor({ pixel: { x: 1, y: 2 }, nativeX: 0, nativeZ: 0, y: 5 }).terrainScale, null);
 });
 
-/** world.js's own restandHeight and scaleOf, run against a stub ground. */
+/** The world host's restandHeight and scaleOf, run against a stub ground. PIN MOVED (BAY-LEFT-GROUND, D5): the law is
+ *  scenes/groundFrameHost.js recordFrame, run whole - never sliced - on the Bay's pixel these pins were written for. */
 function restander(ground, comp = 0, { landform = null, lift = () => 0 } = {}) {
-  const i = WORLD.indexOf('  const restandHeight = (y, x, z, was) => {');
-  const j = WORLD.indexOf('  // Building doors (P3)', i);
-  assert.ok(i > 0 && j > i, 'the helper stands where the rig reads it');
   const state = { compensation: [0, comp, 0] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
   // LANDFORM1: the law's two new reads - the row's state and the lift at a spot (test/systems/landform.test.js runs them)
-  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { restandHeight, scaleOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
+  const { restandHeight, scaleOf } = recordFrame({ landform, liftAt: lift, heightAt, state, bayAt: () => true });
+  return { restandHeight, scaleOf };
 }
 
 test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s ground - the same height above it where the ground is built, the ratio where it is not', () => {
@@ -99,23 +100,24 @@ test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s
 
 test('TERRAIN-SCALE1: the host stands every saved exterior height again as it lands it - the player, the piles, torches, camps, foes, guards, the inside pools, the exterior scene cache, the anchor', () => {
   assert.match(WORLD, /const was = scaleOf\(extras\.terrainScale\);/);
-  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): each record's frame's law (`groundFrame`) stamped beside its scale and read beside it
+  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was, extras\.groundFrame\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
   assert.match(WORLD, /extras\.interior\.foes = restandRows\(extras\.interior\.foes\); extras\.interior\.guards = restandRows\(extras\.interior\.guards\);/);
   assert.match(WORLD, /droppedLoot\.restoreWorld\(restandRows\(w\.piles\)/);
   assert.match(WORLD, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\)/);
   assert.match(WORLD, /camps\.restore\(restandAt\('pos'\)\(w\.camps\)/);
   assert.match(WORLD, /exteriorFoes\.restoreWorld\(restandRows\(w\.foes\)/);
   assert.match(WORLD, /cityGuards\.restoreWorld\(restandRows\(w\.guards\)/);
-  assert.match(WORLD, /terrainScale: STREAMING_TERRAIN_SCALE,   \/\/ TERRAIN-SCALE1: the ground these heights stand on/, 'the exterior scene cache is stamped...');
+  assert.match(WORLD, /\.\.\.RECORD_GROUND_STAMP,   \/\/ TERRAIN-SCALE1: the ground these heights stand on/, 'the exterior scene cache is stamped...');
   assert.match(WORLD, /const was = scaleOf\(arrived\.terrainScale\);/, '...and read');
-  assert.match(WORLD, /terrainScale: STREAMING_TERRAIN_SCALE,   \/\/ TERRAIN-SCALE1: the ground that height stands on/, 'the anchor is stamped...');
-  assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
+  assert.match(WORLD, /\.\.\.RECORD_GROUND_STAMP,   \/\/ TERRAIN-SCALE1: the ground that height stands on/, 'the anchor is stamped...');
+  assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\), a\.groundFrame\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
   // audit: the ship's remembered deck - stamped at boarding, stood again after the teleport built its pixel (the
   // teleport stands a deck verbatim, never grounded)
   // AUDIT LANDFORMS C1 MOVED THIS PIN: the deck's height goes in DFU's frame (groundFrameHeight), as every record's
-  assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[player\.pos\[0\], groundFrameHeight\(player\.pos\[1\] - state\.compensation\[1\], player\.pos\[0\], player\.pos\[2\]\) \+ state\.compensation\[1\], player\.pos\[2\]\], yaw: cam\.yaw, terrainScale: STREAMING_TERRAIN_SCALE \}, state\.compensation\[1\]\),/);   // AUDIT 68 S22: and compensation-free
+  assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[player\.pos\[0\], groundFrameHeight\(player\.pos\[1\] - state\.compensation\[1\], player\.pos\[0\], player\.pos\[2\]\) \+ state\.compensation\[1\], player\.pos\[2\]\], yaw: cam\.yaw, \.\.\.RECORD_GROUND_STAMP \}, state\.compensation\[1\]\),/);   // AUDIT 68 S22: and compensation-free
   const ship = WORLD.slice(WORLD.indexOf('    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });'));
-  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && \(scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE \|\| landform\)\) \{[^\n]*\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\)\) \+ c;\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
+  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && \(scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE \|\| landform\)\) \{[^\n]*\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\), t\.restore\.groundFrame\) \+ c;[^\n]*\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
 });
 
 /** The quickload's own re-stand helpers, sliced from world.js and run over a stub frame and ground. */
@@ -205,7 +207,7 @@ test('TERRAIN-SCALE1: an interior caches its floor in the BUILDING\'s frame - DF
 
 // ── BUILD-FAIL1 ─────────────────────────────────────────────────────────
 
-function pump({ publish = false } = {}) {
+function pump({ publish = false, behind = false } = {}) {
   const i = WORLD.indexOf('  const inFlight = new Map();');
   const j = WORLD.indexOf('  const breather = createBreather(', i);   // PERF-EXT24: the breather takes options now
   assert.ok(i > 0 && j > i);
@@ -214,18 +216,22 @@ function pump({ publish = false } = {}) {
     destroyMesh: (m) => freed.push(['mesh', m]), destroyWaterSurface: (w) => freed.push(['water', w]),
     destroyBatch: (b) => freed.push(['batch', b]), gl: { deleteTexture: (t) => freed.push(['texture', t]) },
   };
-  const buckets = new Set(['1,1', '1,1:gate:0', '1,1:gate:1', '2,2']);
-  const collider = { removeBucket: (k) => buckets.delete(k) };
+  const buckets = new Set(['1,1', '1,1:gate:0', '1,1:gate:1', '2,2', ...(behind ? ['1,1#b', '1,1#b:gate:0', '1,1#b:gate:1'] : [])]);
+  const collider = { removeBucket: (k) => buckets.delete(k), hold: () => {}, unhold: (k) => { for (const b of [...buckets]) if (b === k || b.startsWith(`${k}:`)) buckets.delete(b); } };
   const built = new Map();
   const buildingDoors = [{ pixelKey: '1,1' }, { pixelKey: '2,2' }, { pixelKey: '1,1' }];
+  // IC-SWAP-BEHIND (scenes/swapBehind.js): the swap the host's sweeps make; `behind` - pixel 1,1 stands, owed a build behind it
+  const swap = createSwapBehind({ built, destroyPixel: () => {}, collider, buildingDoors, doorsMoved: () => {}, queue: [], nearestFirst: () => () => 0,
+    state: { current: { x: 0, y: 0 } }, walkMode: () => false, playerSpawned: () => false, seasonHold: () => {} });
+  if (behind) { built.set('1,1', { px: 1, py: 1, view: 'old' }); swap.mark(1, 1); }
   const hums = [], handed = [];
-  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums,
+  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums, swap,
     trees: { releasedBuild: (m) => handed.push(m) },   // LPT1 / BANTHA1: the far pictures' handles the build took, the trees' host's to give back (scenes/treesHost.js)
     // DW-D: DeepWaterRuntime's location-load count rides a location's build - none here
     locationIndex: new Map(), spawnedDungeonAt: () => null, _locationToBuild: () => null, dwLocationLoadBegan: () => {}, dwLocationLoadEnded: () => {} };   // AUDIT OW5b D2: the build's one ask
   const body = `${WORLD.slice(i, j)}
     async function buildPixelNow(px, py) {
-      const key = px + ',' + py;
+      const key = swap.keyFor(px, py);
       const made = {};
       _building.set(key, made);
       made.terrain = 'T'; made.water = 'W'; made.tilemapTex = 'X'; made.staticBatch = 'S';
@@ -239,7 +245,7 @@ function pump({ publish = false } = {}) {
     }
     return { buildPixel, inFlight, _building };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
-  return { ...api, freed, buckets, buildingDoors, built, hums, handed };
+  return { ...api, freed, buckets, buildingDoors, built, hums, handed, swap };
 }
 
 test('BUILD-FAIL1: a build that throws frees what it made - the GPU surfaces and batches, its collider bucket and its gates\', its doors - and a published one is left to destroyPixel', async () => {
@@ -259,11 +265,21 @@ test('BUILD-FAIL1: a build that throws frees what it made - the GPU surfaces and
   assert.equal(p.buckets.size, 4);
   // the ledger is kept where the build makes each thing, and handed over at publish
   assert.match(WORLD, /    const made = \{\};[^\n]*\n    _building\.set\(key, made\);/, 'opened as the build begins');
-  assert.match(WORLD, /    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    built\.set\(key, \{/, 'closed as the entry is published - the entry\'s from there');
+  assert.match(WORLD, /    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    swap\.publish\(px, py, key, made, \{/, 'closed as the entry is published - the entry\'s from there');   // PIN MOVED (IC-SWAP-BEHIND): published through the swap
   for (const line of ['made.terrain = terrain; made.water = water;', 'made.tilemapTex = tilemapTex;', 'made.cityGates = pixelGates;', 'made.windmills = windmills;', 'made.personBatches = personBatches;', 'made.batches = batches;', 'made.staticBatch = staticBatch;']) {
     assert.ok(WORLD.includes(line), line);
   }
-  assert.match(WORLD, /flying = buildPixelNow\(px, py\)\n      \.catch\(\(e\) => \{ releaseFailedBuild\(key\); throw e; \}\)/);
+  assert.match(WORLD, /flying = buildPixelNow\(px, py\)\n      \.catch\(\(e\) => \{ releaseFailedBuild\(swap\.failed\(px, py\) \?\? key\); throw e; \}\)/);   // PIN MOVED (IC-SWAP-BEHIND): a build behind its view frees under its own key
+  // IC-SWAP-BEHIND: a build behind its pixel's standing view that throws frees what it made under its own key - its held
+  // buckets and its gates' - and the view stands, its buckets and its doors with it
+  const b = pump({ behind: true });
+  await assert.rejects(b.buildPixel(1, 1), /never came/);
+  assert.deepEqual(b.freed.map((f) => f.join(':')).sort(), ['batch:b1', 'batch:b2', 'batch:pb', 'mesh:S', 'mesh:T', 'texture:X', 'water:W'].sort(), 'its own made freed');
+  assert.deepEqual([...b.buckets].sort(), ['1,1', '1,1:gate:0', '1,1:gate:1', '2,2'], 'its held buckets gone; the view\'s stand');
+  assert.deepEqual(b.buildingDoors.map((d) => d.pixelKey), ['1,1', '2,2', '1,1'], 'the view\'s doors stand');
+  assert.equal(b.built.get('1,1').view, 'old', 'the view stands');
+  assert.equal(b.swap.owes('1,1'), false, 'owed nothing more: a later rebuild marks it anew');
+  assert.equal(b._building.size, 0); assert.equal(b.inFlight.size, 0);
   // audit: one that threw AFTER publishing is torn down by the pump that releases its key, and a pixel torn down
   // while its NPCs' art loads takes no batch made after
   assert.match(WORLD, /console\.error\(`pixel \$\{next\.px\},\$\{next\.py\} failed:`, e\);\n(?:\s*\/\/[^\n]*\n)*      destroyPixel\(next\.px, next\.py, \{ collectLoose: false \}\);/);

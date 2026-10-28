@@ -603,9 +603,10 @@
   },
   {
     "name": "PROF4-tree-sunk-shallow",
-    "file": "src/scenes/treeHost.js",
-    "old": "      return [c[0], c[1] - g.size.h - 1, c[2]];",
-    "new": "      return [c[0], c[1] - 1, c[2]];",
+    "file": "src/scenes/floraSeat.js",
+    "old": "  const dy = (g.lift ? g.lift[i] : 0) - (felled ? g.size.h + 1 : 0);",
+    "new": "  const dy = (g.lift ? g.lift[i] : 0) - (felled ? 1 : 0);",
+    "note": "RE-AIMED (FLORA-GROUND, the rings): sinkFelled draws each centre through floraSeat.js drawnCentre, where the felled tree's sink by its height and a metre now lives",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

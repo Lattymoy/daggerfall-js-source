@@ -564,8 +564,9 @@
  {
   "name": "SEAT2a3-claim-once",
   "file": "server-account/src/seatSiege.js",
-  "old": "  const applied = !r && await applyResult(db, b, c, nowS, zero);",
-  "new": "  const applied = await applyResult(db, b, c, nowS, zero);",
+  "old": "  const applied = !r && await applyResult(db, b, c, nowS, zero, env);",
+  "new": "  const applied = await applyResult(db, b, c, nowS, zero, env);",
+  "note": "Re-aimed by content (AUDIT DOMAINS): the result is handed the region law's week too (S1).",
   "tests": [
    "test/net/seat2a_siege_service.test.js",
    "test/net/seat2a_siege_client.test.js"

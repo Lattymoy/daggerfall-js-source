@@ -69,7 +69,7 @@ test('GRANT1 A GRANT READ WHOLE OR NOT AT ALL: every field in its law, a fresh c
     ['past its kind', { n: 5, e: 0, c: [-1, -1, -1, -1, -1] }], ['a camp past its own', { k: 'camp', n: 9, e: 0, c: Array(9).fill(-1) }],
     ['an elite champion', { c: [3, 2, -1] }], ['an elite past the members', { e: 0b1000 }], ['c short', { c: [3, -1] }],
     ['a trait past the list', { c: [5, -1, -1] }], ['a trait below none', { c: [-2, -1, -1] }],
-    ['a pixel off the map', { p: [1000, 200] }], ['a pixel short', { p: [300] }], ['a level no token carries', { l: 1001 }],
+    ['a pixel off the world', { p: [8192, 200] }], ['a pixel off the world, north', { p: [300, -8192] }], ['a pixel not whole', { p: [300.5, 200] }], ['a pixel short', { p: [300] }], ['a level no token carries', { l: 1001 }],
     ['a Renown no token carries', { r: 51 }], ['a seed past 32 bits', { s: 2 ** 32 }], ['a negative minute', { m: -1 }],
     ['no expiry', { x: 0 }], ['a socket id of bad shape', { o: 'a b' }], ['an account of bad shape', { a: 'x' }],
     ['a room of bad shape', { q: 'w/300' }], ['a number past 31 bits', { g: 2 ** 31 }], ['a signature of bad shape', { sg: 'short' }],
@@ -77,6 +77,9 @@ test('GRANT1 A GRANT READ WHOLE OR NOT AT ALL: every field in its law, a fresh c
   ]) assert.equal(validGrant({ ...G, ...bad }), null, why);
   assert.equal(validGrant(null), null);
   assert.equal(validGrant('grant'), null);
+  // AUDIT TESA-BIOME F2: a cell past the Bay mints the pixel the relay reads off the pose (TV-BEYOND) - the Imperial City's,
+  // the Eltheric Ocean's - and the reader reads it whole; it was refused as "off the map", so no grant past the Bay stood
+  for (const p of [[2475, 824], [-862, -975], [5137, 2774], [4000, -5000]]) assert.deepEqual(validGrant({ ...G, p })?.p, p, `${p}`);
 });
 
 test('GRANT1 THE RELAY\'S SIGNATURE: every field signed in one fixed order behind its own version, verified with the public half; any field moved, another key, no signature or no key refused; a grant\'s bytes are no arch call\'s (mutants: a field left out of the bytes; any signature taken)', async () => {
