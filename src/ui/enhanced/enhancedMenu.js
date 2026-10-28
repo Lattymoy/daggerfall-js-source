@@ -89,6 +89,7 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
+import { statsHunt } from '../bounty/huntRank.js';   // HUNTERS-MARK (Bounty-Boards.md 12.3)
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
 import { questRail, shelvedRail, unloggedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
@@ -128,7 +129,8 @@ import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
-import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { legacySettings } from '../../systems/legacy/settings.js';   // RPT1026-MISC HEIR-WAITS: the Descendants dial a newborn heir is offered by
 import { mintCharacterId } from '../../systems/characterId.js';   // REALM P1.4: a copy to offline is a new offline character
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../../systems/save/saveTransfer.js';   // SP1: saves move between the website and the app
 import { appStorage, tabStorage } from '../../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
@@ -143,6 +145,7 @@ import { YARD_RANGE_TIERS, yardRangeOf } from '../../net/yardRange.js';   // YAR
 import { replacementCount } from '../../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { midiOutSupported, midiOutDenied, midiOutName, midiOutputs, setMidiOut, nextMidiOut, MIDI_OUT_PREF } from '../../systems/midiOut.js';   // MIDI-OUT1: the Audio tab's device row
 import { brandMark } from '../brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
+import { titleHeld } from '../intro/titleHeld.js';   // TITLE-DOOR: the film's held title, the boot home's ground
 import { soundReplacementCount } from '../../systems/soundReplacer.js';   // SNDREP1: the sound pack's count
 import { textureReplacementCount, bundleTextureCount } from '../../systems/textureReplacement.js';   // M-TEX: and the texture half; DFMOD1: and the bundles'
 import { attachedDfmods, DFMOD_DETAIL, dfmodMaxSize, setDfmodEnabled, unregisteredDfmods } from '../../systems/dfmodTextures.js';   // VE3: a mod switched on or off; AUDIT VE R5: and one stored that did not register
@@ -163,6 +166,8 @@ import { drawPixelGround } from '../pixelGround.js';
 // renders the tab, so the front door still reads no game state.
 import { sheetModel } from './enhancedCharSheet.js';
 import { profPagesShown, PROF_PAGE_SECTIONS, drawProfessionsPage, drawStoresPage, resetProfPages, profActUnderWay, setDownProfAct } from '../professions/profPages.js';   // PROF1: the Professions and Stores pages, online
+import { drawCraftingPage, PROF_STATS_PAGES } from '../professions/profPages.js';   // CRAFT-HALL
+import { boundKeyName } from '../tutorialPopup.js';   // CRAFT-HALL: names the Professions key on the Crafting page
 import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from '../vendor/vendorPage.js';   // HOME-VENDOR: the Vendor page
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from '../revenant/revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from '../companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
@@ -962,13 +967,26 @@ function confirmCard() {
   c.append(el('h3', null, confirming.title));
   c.append(el('p', 'meta', confirming.body));
   c.append(acts([
-    { label: confirming.label, primary: true, onClick: () => { const f = confirming.onYes; confirming = null; f(); render(); } },
-    { label: localizedText('cancel', 'Cancel'), onClick: () => { confirming = null; render(); } },
+    { label: confirming.label, primary: true, onClick: () => { const f = confirming.onYes; answered(); f(); render(); } },
+    { label: localizedText('cancel', 'Cancel'), onClick: () => { answered(); render(); } },
   ]));
   return c;
 }
 
-const ask = (title, body, label, onYes) => { confirming = { title, body, label, onYes }; render(); };
+/**
+ * RPT1026-MISC CONFIRM-SHEET (a private report: Remove data on the Morrowind card seemed to do nothing, and said nothing):
+ * THE QUESTION IS SHOWN WHERE IT IS ASKED. The confirm card stands in the
+ * Settings screen's detail pane - a column beside the list on a wide screen, but a SHEET that slides up only when open
+ * (`sheetOpen`, the `.open` class) in the pause menu's Settings (`.px-setwrap .detail`) and on a narrow or touch screen
+ * (`@media (max-width: 860px), (pointer: coarse)`). The ask set the card and never opened the sheet, so every confirm a
+ * Settings row or card raised there - the Morrowind card's Remove data, a pack's remove, All off, Reset everything, the
+ * quest repair - was drawn below the screen's edge: the press did nothing anyone could see. The ask opens the sheet, and
+ * its answer closes the sheet again where the ask was the one that opened it.
+ */
+let askOpenedSheet = false;
+const ask = (title, body, label, onYes) => { confirming = { title, body, label, onYes }; askOpenedSheet = !sheetOpen; sheetOpen = true; render(); };
+/** The confirm answered (Yes, Cancel or Escape): its card goes, and a sheet it raised goes with it. */
+function answered() { confirming = null; if (askOpenedSheet) sheetOpen = false; askOpenedSheet = false; }
 
 /** ONE LINE. It carried a kicker, a title and a blurb - the rail's own
  *  word said three times before the player reaches anything pressable. */
@@ -1388,26 +1406,30 @@ function waitingHouseCards() {
   if (!realmLineIds?.length) return [];
   const living = new Set(realmRows.map((r) => String(r.id)));
   const families = realmLineIds.map((id) => loadFamily(appStorage(), id)).filter(Boolean);
-  return waitingHouses(families, { played: (cid) => living.has(cid) }).map(({ family, fallen, heirs }) => {
+  return waitingHouses(families, { played: (cid) => living.has(cid), settings: legacySettings() }).map(({ family, fallen, heirs, newborn }) => {
     const card = el('div', 'card svhousewaits');
     card.append(el('h4', null, houseWaitsTitle(family)), el('p', 'meta', houseWaitsLine(family, fallen)));
-    card.append(acts(heirs.map((p) => ({
+    card.append(acts([...heirs.map((p) => ({
       label: heirButtonLabel(p),
       disabled: realmBusy || realmRows.length >= realmMax,
       onClick: () => carryOn(family.id, p.id),
-    }))));
+    })), ...(newborn ? [{   // RPT1026-MISC HEIR-WAITS: the Succession's newborn heir, where the fall may raise one
+      label: newbornButtonLabel(fallen),
+      disabled: realmBusy || realmRows.length >= realmMax,
+      onClick: () => carryOn(family.id, null, true),
+    }] : [])]));
     return card;
   });
 }
 /** HOUSE-WAITS: the Succession's choice, made here - the record stored and the realm's copy written (its birth checks
  *  the person there), then the boot births them online. */
-function carryOn(familyId, personId) {
+function carryOn(familyId, personId, newborn = false) {
   realmBusy = true; render();
-  const took = takeUpLine({ storage: appStorage(), tab: tabStorage(), familyId, personId });
+  const took = takeUpLine({ storage: appStorage(), tab: tabStorage(), familyId, personId, newborn, settings: legacySettings() });   // RPT1026-MISC HEIR-WAITS: or the newborn, made here
   if (!took.ok) { realmWords = [took.why]; realmBusy = false; render(); return; }
   Promise.resolve(realmLine?.push(took.family)).then(() => realmLine?.flush()).then((ok) => {
     if (!ok) { realmWords = [realmRefusalText(realmLine?.refusalOf(familyId) ?? realmLine?.error ?? 'server')]; realmBusy = false; render(); return; }
-    _pickedLegacyBirth = { personId, region: took.place.region, loc: took.place.loc };
+    _pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc };   // RPT1026-MISC HEIR-WAITS: the heir the take named (a newborn's id is minted there)
     realmBusy = false;
     onAction('online-new');
   }).catch(() => { realmWords = [realmRefusalText('server')]; realmBusy = false; render(); });
@@ -1778,7 +1800,8 @@ const OPT_FILTERS = Object.freeze([['all', 'All'], ['changed', 'Changed'], ['enh
  *  total over it.) */
 export function portPool({ pause = false } = {}) {
   const pool = new Map();
-  for (const r of [...portRowsGame({ pause }), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
+  // RPT1026-CLIENT: and the Motion section's other players' shake beside the Game rows
+  for (const r of [...portRowsGame({ pause }), peerSpellShakeRow(), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
     if (r?.dataset?.opt) pool.set(r.dataset.opt, r);
   }
   return pool;
@@ -3122,6 +3145,16 @@ function portRowsGame({ pause = false } = {}) {
   row.append(ctl);
   return [row, techniqueMotionRow()];
 }
+/** RPT1026-CLIENT (a private report: allies' spells shook the view where they landed, and no setting could soften it): how much
+ *  another player's spell shakes the view where it lands (scenes/hostMagic.js peerKickShare); Settings > Accessibility >
+ *  Motion lists it beside the recoil, which is the player's own injuries alone. */
+function peerSpellShakeRow() {
+  const row = choiceRow('peerSpellShake', t('menu.motion.peerShake.name', "Shake from other players' spells"),
+    t('menu.motion.peerShake.note', "How much another player's spell shakes your view when it lands near you. Your own spells and your enemies' always shake it fully."),
+    [[1, t('menu.motion.peerShake.full', 'Full')], [0.5, t('menu.motion.peerShake.half', 'Half')], [0, t('menu.motion.peerShake.off', 'Off')]]);
+  if (row?.dataset) { row.dataset.opt = 'peerSpellShake'; row.dataset.pref = 'peerSpellShake'; }   // ORG2: the map finds it by its key
+  return row;
+}
 /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): how much a weapon technique moves the screen - every device,
  *  both skins; Settings > Accessibility > Motion lists it (ui/settings/settingsMap.js). GATHER-FEEL II: and a gathering tool's
  *  landed blow (systems/gatherBlow.js gatherBlowFeel - the springs' one door), on the enhanced skin. */
@@ -4415,8 +4448,12 @@ function renderHome() {
   // sky (there is a world behind), no wordmark (a masthead on every
   // Escape is a billboard), a scrim instead of the opaque night.
   const paused = mode === 'pause';
-  const home = el('div', `px-home${paused ? ' px-over' : ''}`);
-  if (!paused) {
+  // TITLE-DOOR (2026-10-27, the owner: "we use the intro title screen as the landing pad itself"): the boot door's face
+  // over the film's held title - no sky (the map is the ground), no wordmark (the film's mark is the masthead); the doors
+  // stand in a row under the mark (uiCalmStyle.js TITLE_DOOR_CSS)
+  const title = onTitle();
+  const home = el('div', `px-home${paused ? ' px-over' : ''}${title ? ' px-title' : ''}`);
+  if (!paused && !title) {
     const ground = document.createElement('canvas');
     ground.className = 'px-ground';
     const vw = () => globalThis.innerWidth ?? 1280;
@@ -4435,7 +4472,7 @@ function renderHome() {
     }
     home.append(ground);
   }
-  home.append(el('div', 'px-vignette'));
+  if (!title) home.append(el('div', 'px-vignette'));   // TITLE-DOOR: the film draws its own
 
   // PX3: PAUSE IS A WINDOW, NOT A SECOND MAIN MENU (Mac's reference:
   // Skyrim's journal - a framed panel with tabs over the paused game).
@@ -4530,12 +4567,14 @@ function renderHome() {
   }
 
   const stage = el('div', 'px-stage');
-  const mark = el('h1', 'px-wordmark');
-  mark.append(brandMark());
-  stage.append(mark);
-  const rule = el('div', 'px-rule');
-  rule.append(el('span', 'px-gem'));
-  stage.append(rule);
+  if (!title) {   // TITLE-DOOR: on the title the film's mark is the masthead
+    const mark = el('h1', 'px-wordmark');
+    mark.append(brandMark());
+    stage.append(mark);
+    const rule = el('div', 'px-rule');
+    rule.append(el('span', 'px-gem'));
+    stage.append(rule);
+  }
 
   const menu = el('nav', 'px-menu');
   menu.setAttribute('aria-label', t('menu.home.aria', 'Main menu'));
@@ -4588,6 +4627,8 @@ function renderHome() {
 
 /** UI-CALM: the two-question door stands on the enhanced front door alone (the classic skin's door keeps its list). */
 const twoQuestionDoor = () => mode === 'boot' && sections === SECTIONS_BOOT;
+/** TITLE-DOOR: the boot door's home, standing on the film's held title (ui/intro/introScreen.js land) - either skin's. */
+const onTitle = () => mode === 'boot' && section === 'home' && titleHeld();
 
 /**
  * One door of the front door: its name, and (UI-CALM) under it in a smaller hand what lies behind it.
@@ -4960,9 +5001,16 @@ function meterRow(label, now, max, tone) {
 }
 
 /** PROF1: the rail's pages - the sheet's six, and online, while the professions are this account's, the Professions
- *  page (ui/professions/profPages.js). HOLDINGS: the Stores page, the Revenants and the Companions went to the Holdings rail. */
-const PROF_STATS_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => id === 'professions'));
-const PROF_HOLD_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => id !== 'professions'));
+ *  page (ui/professions/profPages.js). HOLDINGS: the Stores page, the Revenants and the Companions went to the Holdings rail.
+ *  CRAFT-HALL: the Crafting page joins Professions on the Stats rail. */
+const PROF_STATS_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => PROF_STATS_PAGES.includes(id)));
+const PROF_HOLD_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => !PROF_STATS_PAGES.includes(id)));
+/** CRAFT-HALL: opens a professions page from another one, on whichever rail it lives. */
+function profGo(at) {
+  if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
+  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
+  render();
+}
 const statsSections = () => [...STATS_SECTIONS, ...(profPagesShown() ? PROF_STATS_SECTIONS : []), ...(vendorPageShown() ? VENDOR_PAGE_SECTIONS : [])];   // HOME-VENDOR: the Vendor page, under the Professions
 /** HOLDINGS: the Holdings rail's pages - what the player owns (the Stable, the Fleet while ships sail, the Stores
  *  online) and who follows them (the Companions, the Revenants), each while it has a thing to show. */
@@ -4989,11 +5037,12 @@ function pauseStats(body) {
   // pauseSystem) carries. The kit's button role (enhancedFrame.js FRAME_ROLES) reads `.px-sys .act`,
   // so without it these four fell through to the bare, unpainted base .act under Plus.
   const detail = el('div', 'px-qdetail px-sys');   // DROPS-AUDIT F3: the system-page dress (Plus's; PLUS-DEAD: the only one)
-  if (statsSec === 'professions' || statsSec === 'stores') detail.classList.add('prof-detail');
-  const profKit = { el, divider: pxDivider, meter: pxMeter };
+  if (statsSec === 'professions' || statsSec === 'crafting' || statsSec === 'stores') detail.classList.add('prof-detail');
+  const profKit = { el, divider: pxDivider, meter: pxMeter, go: profGo, keyName: (/** @type {string} */ a) => boundKeyName(a) };   // CRAFT-HALL: page links and the key's name
   ({
     character: statsCharacter, attributes: statsAttributes, skills: statsSkills, specials: statsSpecials, standing: statsStanding, effects: statsEffects, master: statsMaster,   // SOFTCAP4: `master` - the Master Skills door's page
     professions: (d) => drawProfessionsPage(d, render, profKit),
+    crafting: (d) => drawCraftingPage(d, render, profKit),   // CRAFT-HALL
     vendor: (d) => drawVendorPage(d, render, profKit),   // HOME-VENDOR
   })[statsSec](detail, m);
   // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
@@ -5378,6 +5427,7 @@ function statsStanding(detail) {
   statsLaw(detail, playerEntity);
   statsGuilds(detail, playerEntity);
   if (getPref('standingAll')) statsEveryStanding(detail, playerEntity);   // EVERY-STANDING
+  statsHunt(detail, { el, divider: pxDivider, meter: pxMeter });   // HUNTERS-MARK: the hunter's rank, online
 }
 
 /** FIELD BUGS 2026-10-09e EVERY-STANDING ("Could we have a setting to see our reputation with every guild/kingdoms?" -
@@ -5890,9 +5940,10 @@ function pauseQuests(body) {
         // its audit: the selection follows the quest only where it went - a refusal is said under the quest it refused
         rc.onclick = () => { const out = clean.reclaim(sel.id); questShelfSaid = out?.text ?? null; if (out?.ok) questSel = `a:${sel.id}`; render(); };
         acts.append(rc);
-      // AUDIT QUESTLINES UI-8: and not on a quest with no journal entry yet - set aside, it was no row at all (the bridge's walk
-      // lists a quest set aside by its entries), so no Reclaim could reach it
-      } else if (sel.entries?.length && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
+      // RPT1026-QUESTS ABANDON-ALWAYS: and on a quest with no journal entry yet too - the bridge's walk lists one set aside
+      // under Abandoned now, so its Reclaim is a row (AUDIT QUESTLINES UI-8 had kept Abandon off it while it was none), and
+      // a quest that shuts its questor's door with nothing written could not be given up at all
+      } else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
         const armed = journalCleanArmed === `ab:${sel.id}`;
         const ab = el('button', 'act', armed ? t('pause.journal.abandonArmed', 'Click again to abandon') : t('pause.journal.abandonQuest', 'Abandon quest'));   // QUEST-AUDIT III SHELF-WORDS
         ab.onclick = () => {
@@ -5955,6 +6006,8 @@ function pauseQuests(body) {
       const desc = el('div', 'px-qdesc');
       for (const line of latest ?? []) desc.append(el('p', null, line));   // QL2: a quest with no entry yet has its objectives alone
       if (latest) detail.append(desc);
+      // RPT1026-QUESTS ABANDON-ALWAYS: DFU's quest with nothing written and no objectives of its own - said, not blank
+      else if (!sel.ql?.objectives?.length) detail.append(el('p', 'px-note', t('pause.journal.unwritten', 'Nothing is written in your journal for this quest yet.')));
       if (sel.entries.length > 1) {
         detail.append(pxDivider(t('pause.journal.title', 'Journal')));
         const offered = latestPlace(sel);   // GUIDE2: the place the where line above already offers
@@ -6023,6 +6076,9 @@ function renderInto() {
   stopPost();   // SERVER-POST: and the mailbox's, and the envelope's count
   stopSeason();   // SEASON-BOOK: and the season window's
   app.innerHTML = '';
+  // TITLE-DOOR: the boot home stands on the film's held title, so its host is see-through there (uiCalmStyle.js
+  // TITLE_DOOR_CSS); every section keeps the opaque ground the canvas is hidden under
+  if (app.dataset) { if (onTitle()) app.dataset.overTitle = ''; else delete app.dataset.overTitle; }
   // PX1/PX2: both doors open on the pixel home; every section keeps
   // its shell.
   if (section === 'home') { renderHome(); return; }
@@ -6226,7 +6282,7 @@ function onKey(e) {
     : seasonOpen && seasonView ? () => closeSeason()   // SEASON-BOOK: the season window, as the timers'
     // AUDIT 32 P12: an act under way on the Stores page is set down first (nothing spent, said) - never the window
     : profActUnderWay() ? () => { setDownProfAct(); render(); }
-    : confirming ? () => { confirming = null; render(); }
+    : confirming ? () => { answered(); render(); }   // RPT1026-MISC CONFIRM-SHEET: and the sheet the ask raised
     : sheetOpen ? () => { sheetOpen = false; render(); }
       : controlsPromptOpen() ? () => dismissControlsPrompt()   // AUDIT KB1: the Controls pane's own prompt answers No first - it never leaves the section with the staged binds
       : section !== 'home' ? () => { const from = section; go('home'); if (mode !== 'pause') focusDoor(from); }   // PX1/PX2: a section backs out to the face (AUDIT L3 L1: the keyboard on its door)

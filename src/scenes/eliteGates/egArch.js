@@ -45,6 +45,7 @@ import { sightLineOf } from '../../world/spawnedDungeons.js';
 import { directionHintString } from '../../systems/talk/talk.js';
 import { trs } from '../../world/mat4.js';
 import { RAY_DISTANCE } from '../../player/activate.js';
+import { setEventGround } from '../../systems/eventGround.js';   // RPT1026-EVENTS GATE-WAY: an arch's foot an event's ground
 
 /** The arch is the gate at this scale (section 6.3): 10.04 m tall, 4.79 m to each side. */
 export const EG_ARCH_SCALE = 0.62;
@@ -240,6 +241,9 @@ export function createEgArchPool({ renderer = null, collider = () => null, pixel
   const sunk = new Set();
   let mesh = null, meshTried = false;
   let clearsArr = NO_CLEARS, clearsKey = '';
+  // RPT1026-EVENTS GATE-WAY (systems/eventGround.js): every arch standing here is an event's ground, as the gate is - its
+  // company runs to its fire as the gate's crowd runs to the gate's
+  setEventGround('arch', () => (arches.size ? [...arches.values()].filter((a) => a.place).map((a) => a.place.origin) : NO_LIST));
 
   function ensureMesh() {
     if (mesh || meshTried || !renderer?.createMesh) return;

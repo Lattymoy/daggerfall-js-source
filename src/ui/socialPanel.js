@@ -73,12 +73,14 @@ import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD1d: where the
 import { wagonItemName } from '../systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { t } from '../systems/textManager.js';   // GUILD-UX: the storage pages' new words in the player's language
+import { levelShort } from '../systems/mentorText.js';   // MENTOR2: a member's level, short
 import { storeFilterAccepts, storeRarityAccepts, storeQuery, storeFilterOptions, storeRarityOptions } from './storeFilter.js';   // GUILD-UX: the stores' one filter
 import { showItemHover, hideItemHover } from './enhanced/enhancedInventory.js';   // GUILD-UX: the pack's one item card
 import { playerEntity } from '../characters/playerEntity.js';   // GUILD-UX: the card's comparison is against what I wear
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT SUGGESTIONS-1019 L4-4: the card is the enhanced skin's
 import { itemLongName } from '../systems/item/itemInfo.js';   // AUDIT SUGGESTIONS-1019 L4-6: a row named as the pack names the piece
 import { LOOSE_ORIGIN } from '../net/bagLaw.js';   // AUDIT SUGGESTIONS-1019 L4-1: the loose units the service's room counts
+import { walledText } from './storesWalled.js';   // RPT1026-MARKET STORES-SAID: what the guild Stores may not take, said
 /** GUILD-UX: the vault row's card - the pack's own (enhancedInventory.js showItemHover), compared against what I wear. */
 // AUDIT SUGGESTIONS-1019 L4-4: on the enhanced skin alone - the card's sheet is the enhanced dress's (enhancedPlusStyle.js),
 // and on the classic skin it fell, unstyled, below the screen
@@ -416,6 +418,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfsocial-why { flex: none; font-size: 11px; font-style: italic; color: var(--dim, #9a9486); margin-left: 4px; }
 .dfsocial-why:empty { display: none; }   /* GUILD-LIVE: a live button come alive keeps its span, empty */
 .dfsocial-empty { flex: none; font-size: 13px; color: var(--dim, #9a9486); padding: 6px 0; overflow-wrap: anywhere; }
+.dfsocial-mentor:empty { display: none; }
 /* MAIL1 (tools/mailProbe.mjs photographed it): A FRIEND'S ACTS ARE ONE GROUP THAT WRAPS. Letter made them three - Invite,
    Letter, Remove - and at the touch skin's 44px buttons, each with its reason beside its label, three are wider than a
    phone's panel: the name beside them was squeezed to one letter a line. The row wraps its acts BELOW the name when it
@@ -666,7 +669,8 @@ export function partyPoseText(p) {
   if (!p) return '';
   const hp = `${Math.round(p.h ?? 0)}/${Math.round(p.hm ?? 0)} HP`;
   const loc = typeof p.loc === 'string' ? p.loc.trim() : '';
-  return loc ? `${loc} - ${hp}` : hp;
+  const at = loc ? `${loc} - ${hp}` : hp;
+  return Number.isInteger(p.cl) ? `${levelShort(p.cl)} - ${at}` : at;   // MENTOR2: the member's level, so mentoring is no surprise
 }
 
 /**
@@ -702,7 +706,7 @@ export function friendOrder(friends) {
  * a panel with something above it IGNORES the key (does not close, does not stop it), and the one that handles it
  * calls `stopImmediatePropagation` so no other window listener - the host's pause door included - sees that press.
  */
-export function createSocialPanel({ social, send = null, mail = null, guild = null, keepLetter = null, journey = () => null, canLead = () => false, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), itemCard = ITEM_CARD } = {}) {
+export function createSocialPanel({ social, send = null, mail = null, guild = null, keepLetter = null, journey = () => null, canLead = () => false, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), itemCard = ITEM_CARD, mentorNote = () => null } = {}) {
   injectSocialStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
 
@@ -1040,6 +1044,11 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
         if (!me && leads) n.append(btn('Kick', { warn: true, run: () => act({ k: 'party.kick', acct: m.acct }) }));
         out.push(n);
       }
+      // MENTOR2: what mentoring does for me now - written in place as it starts and ends, an empty line takes no room
+      const noteOf = () => { try { return mentorNote() ?? ''; } catch { return ''; } };
+      const note = el('div', 'dfsocial-empty dfsocial-mentor', noteOf());
+      liveSubs.push({ el: note, of: noteOf });
+      out.push(note);
       out.push(...journeyBody());   // PARTY-UI
       const leave = el('div', 'dfsocial-row');
       leave.append(btn('Leave party', { warn: true, run: () => act({ k: 'party.leave' }) }));
@@ -1349,6 +1358,10 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       form.append(el('div', 'dfsocial-label', 'Take out'), pick('A material of the guild Stores', takeable.map((r) => [r.material, `${ps.name(r.material, 2)} (${outMost(r.material).toLocaleString('en-US')})`]), d.storeOut, (k) => { d.storeOut = k; }));
     }
     guildField(form, t('social.stores.units', 'Units (leave empty for all)'), d.storeUnits ?? '', String(STORES_MAX).length, (x) => { d.storeUnits = x; });
+    // RPT1026-MARKET STORES-SAID: what your Stores hold that the guild's may not take (bought with gold, or from your pack),
+    // and why - Put in offered the rest and said nothing of it
+    const walled = walledText(stores, 'guild', (k) => ps.name(k, 2));
+    if (walled) form.append(el('p', 'dfsocial-note', walled));
     out.push(form);
     const acts = el('div', 'dfsocial-acts');
     if (mine.length) {

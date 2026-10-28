@@ -65,6 +65,10 @@
 //             line's title, laid on the row (`ql_titles`, 0133 - a bit a
 //             line, questlineClaims.js qlTitleBit) by the claim that found
 //             its last witnessed step (questlines.js claimQl), held for good.
+//   THE MARKS OF MASTERY (HUNTERS-MARK, 2026-10-27) - derived: the hunt's
+//             four off the account's board clears, a profession's Master
+//             off a living character's track, the sea's two off the
+//             serpents it helped slay (hunts.js masteryMarksRead).
 //
 // WHY THAT AND NOT A `grants` TABLE. Mac asked that "all current
 // players should be granted the founder title", and the obvious
@@ -102,6 +106,7 @@ import { LAMP_TITLE } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp on the 
 import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';   // QL12: the questlines' titles on the row
 import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src/net/festivalLaw.js';   // WITCH1: the Witches' Festival's wares and honours on the row
 import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
+import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -397,6 +402,9 @@ export function titlesHeld(player, env) {
   if (typeof player?.handle === 'string' && player.handle) {
     for (const t of festivalKeys(player, 'title')) if (!held.includes(t)) held.push(t);
     if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);
+    // HUNTERS-MARK, MARKS-OF-MASTERY: derived from the account's rows (hunts.js masteryMarksRead) - its board clears, a
+    // living Master of a profession, the serpents it helped slay - laid on the row as `masteryMarks` for this request alone
+    if (Array.isArray(player?.masteryMarks)) for (const t of MASTERY_MARKS) if (player.masteryMarks.includes(t) && !held.includes(t)) held.push(t);
   }
   return held;
 }

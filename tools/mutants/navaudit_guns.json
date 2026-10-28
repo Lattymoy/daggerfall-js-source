@@ -409,8 +409,8 @@
   {
     "name": "NAV1G-the-grace-dropped",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const floor = entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0;",
-    "new": "    const floor = 0;",
+    "old": "    const floor = Math.max(hurt.floor ?? 0, entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0);",
+    "new": "    const floor = Math.max(hurt.floor ?? 0, 0);",
     "tests": [
       "test/systems/naval/navaudit_guns.test.js"
     ]

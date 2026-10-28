@@ -9,6 +9,7 @@
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { sdHallNamed, sdSnapLine } from '../../../src/scenes/superDungeon/sdHall.js';   // RPT1026-EVENTS ORRERY-HANDS: world.js's hall word, named
 import { readFileSync } from 'node:fs';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { SD_KEY, SOCIAL_ROOM, PIXEL_UNITS, HEARTBEAT_MS, worldRoom, chatRegionRoom } from '../../../src/net/wire.js';
@@ -349,6 +350,7 @@ test('SD20a THE HOUR\'S COSTS ARE SETBACKS (F10): the void\'s cast-back and the 
       modes: { sdRealmSlot: () => 4 }, sdSay: () => {}, sdDungeonToRealm: () => [0, 0, 0], player: { pos: [hx, 0, hz] }, playerEntity: g,
       inOrreryHall: () => true, SD_FRAY_LASH, hurtPlayer, flashPlayerDamage: () => {}, online: { id: 'peer-me' },
       SD_HALL_TEXT: { snap: 'The Hour snaps back.' }, SD_TURN_WAIT_LINE: 'wait',
+      sdHallNamed, sdSnapLine, peerName: () => null,   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the hall's word named off the roster
     };
     const heard = new Function(...Object.keys(env), `let _sdHall = null;\n${fnOf('sdHallHeard')}\nreturn sdHallHeard;`)(...Object.values(env));
     assert.ok(Math.round(100 * SD_FRAY_LASH) >= 5, 'a lash that would kill');

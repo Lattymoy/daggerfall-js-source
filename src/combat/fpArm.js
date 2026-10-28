@@ -108,6 +108,7 @@ import { rifleStanceStep } from './gun/rifleStance.js';   // RIFLE-STANCE: a lon
 import { applyGunStance } from './gun/gunHold.js';   // PISTOL-STANCE: the hold by the gun's kind - the rifle's or the pistol's
 import { createHipLantern, HIP_LANTERN_HEIGHT } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed (BODY-MOTION: its rider moved there); HT-WAIST-SIZE: the one height they hang
 import { createBodyMotion, motionWord } from '../characters/bodyMotion/bodyMotion.js';   // BODY-MOTION: the third-person body's gait, carry and blows
+import { spinePitchFactor, spineAimSlot } from './spineAim.js';   // BOW-AIM: the third-person body's ranged aim follows the look
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/morrowind/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/morrowind/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
 import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
@@ -1468,6 +1469,8 @@ export function wornEquipKeyOf(pieces) {
   return (pieces ?? []).map((p) => `${p.kind || 'armor'}:${p.templateIndex ?? p.id}:${p.material ?? ''}:${p.dye ?? ''}`).join('|');   // MW-FOLK1: an outfit by its id
 }
 
+/** APPEARANCES: a build's hands as they are drawn - its opts themselves where neither hand wears a look. */
+const drawnOpts = (o) => (o && (drawnPiece(o.weapon) !== o.weapon || drawnPiece(o.offWeapon) !== o.offWeapon) ? { ...o, weapon: drawnPiece(o.weapon), offWeapon: drawnPiece(o.offWeapon) } : o);
 export function fpWeaponKey(item, hasAmmo) {
   // MW-D38: the MATERIAL IS READ, at last. `item.materialName` was a
   // field no item ever carried - the name lives behind itemInfo's
@@ -1739,6 +1742,7 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
 import { ammoCountFor } from '../systems/inventory.js';   // AUDIT 68 S27-ammoCount-dup: the ammunition count's one home, beside the spend law
 import { ownWeaponModelFor } from '../characters/ownModels/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
 import { glowUnit } from '../render/weaponGlowGlsl.js';   // WEAPON-GLOW1: the glow's unit off the lens's rows - a leaf
+import { drawnPiece } from '../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look - a leaf
 
 const saidArrow = new Set();
 function sayNoArrow(notes) {
@@ -3667,6 +3671,7 @@ export function createFpArm() {
   let unreadyAfterCast = false;  // MW-CAST1: the spell went (its ready cleared) mid-cast - the stance drops when the cast ends
   let castReleased = false;      // MW-CAST1: the cast crossed its "<type> release" - consumed by takeCastRelease
   let castRate = 1;              // CAST-SPEED: the rate this cast's spellcast group plays at (systems/castSpeed.js)
+  let castPaced = false;         // RPT1026-MISC CAST-PACE: this cast's section was paced to bring its release to `releaseIn`
   // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
   // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
   // by weaponRig's setTorch); the state/source/group triple is the
@@ -5229,6 +5234,7 @@ export function createFpArm() {
     get frames() { return frames; },
 
     async build(opts) {
+      opts = drawnOpts(opts);   // APPEARANCES (bible/04-Characters/Wardrobe.md): the hands hold what their pieces are drawn as
       // AUDIT MW-TORCH F6: A BUILD THAT ARRIVES MID-BUILD IS QUEUED, the
       // law PX25/PX26 gave the worn table and the hand. autoBuildArms's
       // door is reached by a load landing while the last load's build
@@ -5505,6 +5511,7 @@ export function createFpArm() {
       return this.build({ ...lastBuildOpts, vampire: want });
     },
     setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {
+      item = drawnPiece(item);   // APPEARANCES: a weapon wearing a look is held as the look - the player's arms, the pack's figure, every peer's body
       if (!built || !built.ok) return false;
       // PX26 F3: A SWAP DURING A BUILD IS NOT DROPPED, the same law
       // PX25 gave the worn table. The pack now hands the hand over on
@@ -5947,6 +5954,7 @@ export function createFpArm() {
      * that arrives mid-build waits and goes when the build settles; a new rig binds afresh (build() clears the key).
      */
     setOffWeapon(item) {
+      item = drawnPiece(item);   // APPEARANCES: the left blade's look, as setWeapon's
       if (!built || !built.ok) return false;
       if (busy) { pendingOff = item ?? null; return false; }
       if (built.werewolf) return false;   // WEREWOLF1: the wolf holds nothing
@@ -6006,6 +6014,7 @@ export function createFpArm() {
     /** WEAPON-GLOW1: the held weapon's glow (systems/weaponGlow.js meshGlow / glowFromWord), or null - a value read at
      *  the next draw, so its fast path is the assignment. */
     setWeaponGlow(spec, item = null) {
+      item = drawnPiece(item);   // APPEARANCES: the weapon it is OF is the one the hand holds - its look (one copy a look, so the key below is asked once)
       weaponGlowSpec = spec ?? null;
       if (item !== glowItem) { glowItem = item; glowKey = fpWeaponKey(item, false); }   // AUDIT WEAPON-GLOW NET-1: the weapon it is OF
     },
@@ -6013,6 +6022,7 @@ export function createFpArm() {
     weaponGlow() { return glowShown(); },
     /** TWO-HANDS: a pair's left blade's glow (setWeaponGlow's shape for the second hand), or null with no pair. */
     setOffWeaponGlow(spec, item = null) {
+      item = drawnPiece(item);   // APPEARANCES: setWeaponGlow's
       offGlowSpec = item ? spec ?? null : null;
       if (item !== offGlowItem) { offGlowItem = item; offGlowKey = item ? fpWeaponKey(item, false) : null; }
     },
@@ -6239,8 +6249,15 @@ export function createFpArm() {
      *  still flies.
      *
      *  CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js - the live Speed and the castSpeed loot line), the
-     *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it. */
-    castSpell(rangeType = 2, rate = 1) {
+     *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it.
+     *
+     *  RPT1026-MISC CAST-PACE (a private report: the Morrowind look cast slower than the Daggerfall one): `releaseIn`, when given,
+     *  is the seconds from now the spell leaves (combat/fpsSpellCasting.js castReleaseS - the classic hands' frame 5), and
+     *  the section plays at the pace that brings its "<type> release" there - MW-PACE1's fit of a blow to the machine's
+     *  hit (blowRate, its bounds), here a cast's to the classic clock. The cast's time is then the same whatever the
+     *  hands look like; castPaced() says the fit was made. A group with no release key plays at `rate`, unpaced. */
+    castSpell(rangeType = 2, rate = 1, releaseIn = 0) {
+      castPaced = false;   // RPT1026-MISC CAST-PACE: this cast's own word
       if (dead) return false;   // MWNPC4: the dead cast nothing
       // MWNPC9: a non-biped casts in one of its attacks ("No 'release' text key to use, so cast immediately" -
       // character.cpp:1459-1464: its spellcast group is a random attack, played start to stop)
@@ -6283,8 +6300,13 @@ export function createFpArm() {
         attackType = null;
         return false;
       }
+      const lead = releaseIn > 0 ? keyTime(`${type} release`) - actionState.startTime : 0;   // RPT1026-MISC CAST-PACE: start to release, file seconds (-1 with no key)
+      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }
       return true;
     },
+
+    /** RPT1026-MISC CAST-PACE: was the cast just started paced to the spell's moment (castSpell's `releaseIn`)? */
+    castPaced: () => castPaced,
 
     /** MW-SPELLFX1: VFX_Hands for the cast that just started - the world's spell effects (scenes/mwMagicFx.js) hand
      *  the spell over at the cast's own start, which is where the reference adds it (character.cpp :1593-1613). Only
@@ -6483,6 +6505,10 @@ export function createFpArm() {
             mirror: mirrorFor('third', t, dt),   // TWO-HANDS: the second hand - the pair's left arm, a left-hand blow
             hold: rifleHold('third', t),   // RIFLE-STANCE: the long gun in the hands
             motion: motion.slot,   // BODY-MOTION: the gait, the carry and a blow's body over the clip's
+            // BOW-AIM (combat/spineAim.js): a ranged weapon drawn, the spine pitched by the look - rot[0] is + down, cam.pitch + up.
+            // Asked only while the look pitches and the upper body is past WeaponEquipped (the factor's own first test): every
+            // peer's and townsperson's body runs this rig at pitch 0
+            aim: cam?.pitch && upper > UPPER_BODY.WeaponEquipped ? spineAimSlot(-cam.pitch * spinePitchFactor({ upper: UPPER_BODY_NAME[upper], weaponType: stanceOf(), group: weaponGroup, time: actionState ? actionState.time : -1, startTime: keyTime(attackKeys(attackType).windUp.start), minAttackTime: keyTime(attackKeys(attackType).minAttack), completion: clipCompletion(actionState) })) : null,
             skin: !thirdSkinReady(t),   // MWNPC1: the skin in the vertex shader - the pose is the skeleton alone
           });
           uploadThirdMesh(t);
@@ -6841,6 +6867,9 @@ export function createFpArm() {
     /** What the wheel may cross INTO: a body that refused keeps the
      *  player in first person with the reason on the card. */
     canThirdPerson: () => !standIn && !!(thirdBuilt && thirdBuilt.ok),
+    /** MW-SHOULDER (player/mwCamera.js stepShoulder): third_person.lua's two questions of the actor (:89-92) - a weapon
+     *  or a spell out (Actor.getStance), else swimming (Actor.isSwimming, the frame's motion bag) - or null. */
+    shoulderStance: () => (spellReady || !sheathed ? 'combat' : camera?.()?.move?.swimming ? 'swimming' : null),
     /**
      * BEAST-SELF (2026-09-26, Mac: "You dont see your self transform less your in paperdoll style (morrowind models
      * need their vampire/werewolf forms)"): STAND ASIDE. Morrowind's data holds no beast for a Daggerfall lycanthrope,

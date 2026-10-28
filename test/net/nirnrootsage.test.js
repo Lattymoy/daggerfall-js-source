@@ -93,7 +93,7 @@ const find = (n, cls) => {
 // ── THE VOCABULARY AND ITS FACE ─────────────────────────────────────
 
 test('NIRNROOT-SAGE vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS last; "Nirnroot Sage" and "Sage\'s Smoke" in words, the glyph named on the account card; the title a gradient - the leaf into the glow into the haze, #2e9e57, #7affb0, #e2f0e8 - edged in black, its one colour the glow, apart from every title\'s; the glyph in the glow, filled; `Y` on the classic face; the smoke\'s button in the Sage\'s paint; the wire keeps all three (mutants: the gradient\'s stops, its order, the edge, the one colour, the glyph\'s colour, the mark, the fill, the button\'s paint, the words)', () => {
-  assert.equal(TITLES.at(-1), 'nirnrootsage', 'the vocabulary\'s newest');
+  assert.equal(TITLES.at(-17) /* PIN MOVED (HUNTERS-MARK): the Marks of Mastery's sixteen joined the list last */, 'nirnrootsage', 'the vocabulary\'s newest');
   assert.equal(GLYPHS.at(-1), 'nirnrootsage');
   assert.equal(AURAS.at(-1), 'sagesmoke');
   assert.equal(TITLE_TEXT.nirnrootsage, 'Nirnroot Sage', 'the owner\'s word for it');
@@ -235,7 +235,7 @@ test('NIRNROOT-SAGE the service end to end: Blob-Marley registers, holds the tit
 });
 
 test('NIRNROOT-SAGE token and relay: a token may carry the title, the glyph and the smoke and verifies; every glyph at once still fits; a word the vocabulary lacks is refused; the relay - world268 and after, the ones that know the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s words)', async () => {
-  assert.equal(RELAY_VERSION, 'world268', 'NIRNROOT-SAGE moved it on: the vocabulary rides the relay\'s bundle (world267 on its branch, renumbered past KETCH-WORDS at the merge; NOT YET DEPLOYED)');
+  assert.equal(RELAY_VERSION, 'world274', 'PIN MOVED: world273, APPEARANCES and HUNTERS-MARK renumbered past FIELD BUGS 2026-10-26r\'s world272 at the merge; PIN MOVED: world272, APPEARANCES and HUNTERS-MARK renumbered past MASTER-THREE\'s world271 at the merge; PIN MOVED: world269, BOW-TOPS (the arena\'s and the siege\'s weapon tops take BAL-ARCHERY\'s bows, a Short Bow 17 and a Long Bow 19; NOT YET DEPLOYED); NIRNROOT-SAGE moved it on: the vocabulary rides the relay\'s bundle (world267 on its branch, renumbered past KETCH-WORDS at the merge; NOT YET DEPLOYED)');   // PIN MOVED: world274, LADDER-CUT (the mastery cost ladder 1.5/2/4 in systems/skillSoftcap.js, a file the bundle reaches; NOT YET DEPLOYED); PIN MOVED: world271, APPEARANCES and HUNTERS-MARK, one release (a look item carries the look a worn piece wears; TITLES gain sixteen, last; NOT YET DEPLOYED)
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

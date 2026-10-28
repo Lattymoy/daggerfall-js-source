@@ -25,6 +25,7 @@ import { consumeVampirismPending, vampirismMagicRound } from './vampirism.js';  
 import { updatePoisons } from './poisons.js';
 import { tickActiveEffects } from './effects.js';
 import { skillValue, tallyMovementSkill, SKILLS } from './skills.js';   // MOVE-REAL: the motion tallies' own door
+import { timeScale } from './timeScale.js';   // RPT1026-PROGRESS: a journey's acceleration, which trains at the real clock
 import { FATIGUE_LOSS, FATIGUE_DRAIN_SCALE, killIfAnyLiveStatZero } from './statMods.js';
 import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
 import { dice100, setPlayerStruckHook } from '../combat/formulas.js';
@@ -758,9 +759,19 @@ function tickPlayerMinutesOnce({
   // MOVE-REAL: the motor's live odometer (player/motor.js), which the movement skills past 100 count - the host hands
   // it on with the activity (the climb's check, inside the motor's own step, reads it off the entity too)
   if (activity.odometer) entity._odometer = activity.odometer;
+  // RPT1026-PROGRESS (a private report: Jumping, and Running on auto-run, trained in seconds
+  // on an accelerated journey): AN ACCELERATED JOURNEY TRAINS AT THE REAL CLOCK.
+  // Travel Options runs a journey on Unity's Time.timeScale (TravelOptionsMod.cs SetTimeScale) and the port scales the
+  // motor and this tick with it (systems/timeScale.js) - so the run's tally (PlayerEntity.cs:309-320, a use every 0.25 s
+  // of scaled time) and the jump's (one a landed jump, and the scaled motor lands one a frame) came sixty to a hundred
+  // times faster a real second: the skill rests and arrivals raise filled in seconds, a held key on the road. DFU's own
+  // fast travel trains nothing. Here a journey's run counts its REAL seconds and each jump 1/scale of a use, so a
+  // journey trains as walking the same real minutes does; at x1 nothing changes. Port-Ledger A.
+  const pace = Math.max(1, timeScale());
   if (activity.jumped) {
     sinks.drainFatigue?.(Math.trunc(FATIGUE_LOSS.Jumping * fatigueMultiplier * FATIGUE_DRAIN_SCALE));   // BALANCE1: exertion's scale
-    tallyMovementSkill(entity, SKILLS.Jumping);
+    entity._jumpTallyAcc = (entity._jumpTallyAcc ?? 0) + 1 / pace;
+    if (entity._jumpTallyAcc >= 1) { entity._jumpTallyAcc -= 1; tallyMovementSkill(entity, SKILLS.Jumping); }
   }
   // CLIMB1 (the Enhanced Climbing arc): a mantle or a vault the enhanced
   // climb starts is one exertion - a jump's fatigue, the port's own price -
@@ -786,7 +797,7 @@ function tickPlayerMinutesOnce({
   // hosts built with the fatigue condition, so a grounded player
   // holding Run in place tallied nothing where DFU tallies 4/s.
   if (activity.runningTally) {
-    entity._runTallyAcc = (entity._runTallyAcc ?? 0) + dt;
+    entity._runTallyAcc = (entity._runTallyAcc ?? 0) + dt / pace;   // RPT1026-PROGRESS: a journey's run, its real seconds
     while (entity._runTallyAcc >= 0.25) {
       entity._runTallyAcc -= 0.25;
       tallyMovementSkill(entity, SKILLS.Running);   // MOVE-REAL: past 100 only the ground covered counts

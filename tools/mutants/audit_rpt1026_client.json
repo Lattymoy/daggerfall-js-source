@@ -1,0 +1,113 @@
+[
+  {
+    "name": "AUDIT-RPT1026-K1-visit-ignored",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  foldLyingWeirKeys((e) => e.at !== here);   // AUDIT RPT1026 K1: a face of another visit lies on a body that visit took with it\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "a face of the dungeon before still counted as lying in the next - the pack one key short"
+  },
+  {
+    "name": "AUDIT-RPT1026-K1-throw-unstamped",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  _lying.push({ list, face, at: _facesHere() });",
+    "new": "  _lying.push({ list, face, at: true });",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "a face kept against no visit - folded at the first count, the body's key counted twice"
+  },
+  {
+    "name": "AUDIT-RPT1026-K1-late-answer-on-body",
+    "file": "src/systems/eliteGates/egFind.js",
+    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);",
+    "new": "    throwKey(room ? null : entity, d.keys);",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "an answer landing in another dungeon throws its face onto the body left behind, counted as lying where it landed"
+  },
+  {
+    "name": "AUDIT-RPT1026-K1-place-no-visit",
+    "file": "src/systems/eliteGates/egFind.js",
+    "old": "visit: modes.dungeonCtx ?? modes.dungeonLocation } : null);",
+    "new": "visit: true } : null);",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "the place door's visit the same for every dungeon - KEY-FACE's tier door again"
+  },
+  {
+    "name": "AUDIT-RPT1026-K1-world-tier-alone",
+    "file": "src/scenes/world.js",
+    "old": "    placeNow: () => egFindPlace(_mode(), modes),",
+    "new": "    tierNow: () => egFindPlace(_mode(), modes)?.tier ?? null,",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js",
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ],
+    "note": "the world host hands the find the tier alone - every dungeon one visit"
+  },
+  {
+    "name": "AUDIT-RPT1026-K2-kept-dismissed",
+    "file": "src/main.js",
+    "old": "  if (el._kept) return;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "a later throw puts a Dismiss back on the lost context's report"
+  },
+  {
+    "name": "AUDIT-RPT1026-K2-lost-keeps-button",
+    "file": "src/main.js",
+    "old": "  el._kept = true; el._dismiss?.remove?.();",
+    "new": "  el._kept = true;",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "the lost context's report keeps the Dismiss crashOverlay gave it - dismissed, the dead canvas says nothing"
+  },
+  {
+    "name": "AUDIT-RPT1026-K3-sky-fire-scaled",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!m?.visual || m.casterId == null) return 1;",
+    "new": "    if (!m?.visual) return 1;",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "an event's sky fire (drawn, no caster) shakes at the other players' share"
+  },
+  {
+    "name": "AUDIT-RPT1026-K3-row-half-wrong",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "[0.5, t('menu.motion.peerShake.half', 'Half')]",
+    "new": "[0.25, t('menu.motion.peerShake.half', 'Half')]",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "the row's Half writes a share the engine reads as a quarter"
+  },
+  {
+    "name": "AUDIT-RPT1026-K3-row-off-wrong",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "[0, t('menu.motion.peerShake.off', 'Off')]",
+    "new": "[0.1, t('menu.motion.peerShake.off', 'Off')]",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "the row's Off still shakes"
+  },
+  {
+    "name": "AUDIT-RPT1026-K3-row-full-wrong",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "[[1, t('menu.motion.peerShake.full', 'Full')]",
+    "new": "[[0.75, t('menu.motion.peerShake.full', 'Full')]",
+    "tests": [
+      "test/scenes/audit_rpt1026_client.test.js"
+    ],
+    "note": "the row's Full shakes less than the player's own"
+  }
+]

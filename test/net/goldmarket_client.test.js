@@ -295,7 +295,7 @@ test('GOLD-MARKET refusals: every new word the service says has its sentence', (
 test('GOLD-MARKET wiring: the host gives the market book the realm act over the playing session and a wallet that pays at the board\'s region (purse, letters, then that account - the service\'s order); the door has the collect; the service routes it', () => {
   const w = src('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-01, MARKET-ANY): the realm hook carries the session's abandon too, and the goods' receive beside it
-  assert.match(w, /realm: realmSession \? \{ act: \(o\) => realmGoldAct\(\{ \.\.\.o, session: realmSession, checkpoint: \(\) => onlineCheckpoint\(\) \}\), abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec\) => marketGoods\.receive\(rec\) \} : null,\n\s+wallet: realmWallet \}\)/);
+  assert.match(w, /realm: realmSession \? \{ act: \(o\) => realmGoldAct\(\{ \.\.\.o, session: realmSession, checkpoint: \(\) => onlineCheckpoint\(\) \}\), abandon: \(why\) => realmSession\.abandon\(why\) \} : null, goods: realmSession \? \{ receive: \(rec, why\) => marketGoods\.receive\(rec, why\) \} : null,\n\s+wallet: realmWallet \}\)/);   // PIN MOVED (RPT1026-MARKET ARRIVE): the road's word on a collected piece handed through
   // PIN MOVED (CARDS6): the wallet is the host's one realm wallet, the card stakes' too
   assert.match(w, /const realmWallet = realmSession \? \(region\) => \{/);
   // MARKET-AUDIT (PIN MOVED: `deductGold`, its refusal's `credit` the whole cost as coins): the pay answers the undo of exactly
@@ -327,8 +327,11 @@ test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked 
   await tab.open();
   [...root.querySelectorAll('button')].find((b) => b.textContent === 'My listings').onclick();
   await new Promise((r) => setTimeout(r, 0));
-  const what = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'What to list');
-  what.value = 'item'; what.onchange();
-  assert.ok(root.textContent.includes(`Not for the market: Bread (made by you. List it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}); ${enchanted.name} (${CHANGED_PIECE_WHY}).`), root.textContent);   // PIN MOVED (AUDIT MAKER-RARE B2): the enchanted Masterwork beside them
+  // PIN MOVED (PACK-PICK): the pack's kind a press (and a realm character's form opens on it), and each refused piece its
+  // own tile under "Not for the market", its why beneath its name - never one sentence
+  [...root.querySelectorAll('button')].find((b) => b.getAttribute('data-kind') === 'item').onclick();
+  const off = [...root.querySelectorAll('.packpick-refused')[0].querySelectorAll('.packpick-tile')]
+    .map((n) => [n.querySelectorAll('.packpick-name')[0].textContent, n.querySelectorAll('.packpick-why')[0].textContent]);
+  assert.deepEqual(off, [['Bread', 'made by you. List it as a crafted piece'], ['Mouldy Bread', SPOILED_DISH_WHY], [enchanted.name, CHANGED_PIECE_WHY]]);   // PIN MOVED (AUDIT MAKER-RARE B2): the enchanted Masterwork beside them
   root.remove();
 });

@@ -57,7 +57,7 @@ test('CLOTH-GEMS service: furs spin to Wool and Root Tendrils weave to Linen at 
   assert.equal(xpOf('outfitting'), 0, 'a spin and a weave pay no XP, as a cure pays none');
 });
 
-test('CLOTH-GEMS service: AUDIT 32 S1 JUDGES THE UNITS - Linen Straps of the loom\'s own Linen lay on the first-make 500 and say so; Armbands of the Weavers\' Linen, bought at the counter, record their first and lay on none; a rug while a bought Wool Bolt stands beside the own ones spends it first and lays on none, and a tapestry of the own ones after pays; a pack\'s loose cloth never pays (mutants: the decision\'s own test gone or inverted, the answer\'s word unread)', async () => {
+test('CLOTH-GEMS service: AUDIT 32 S1 JUDGES THE UNITS - Linen Straps of the loom\'s own Linen lay on the first-make 500 and say so; Armbands of the Weavers\' Linen, bought at the counter, record their first and lay on none; a rug while a bought Wool Bolt stands beside the own ones spends it first and lays on none, and a tapestry of the own ones after pays; a pack\'s loose cloth pays - PIN MOVED (WOVEN-PAYS, FIELD BUGS 2026-10-26b): the wall is silver (mutants: the decision\'s own test gone or inverted, the answer\'s word unread)', async () => {
   const { stores, give, xpOf, setXp, fund, work, craft, s, mac } = await stand();
   give('p1:12', 'own', 2);
   assert.equal((await work('weave:linen-north', 1)).status, 200);
@@ -74,17 +74,23 @@ test('CLOTH-GEMS service: AUDIT 32 S1 JUDGES THE UNITS - Linen Straps of the loo
   setXp('outfitting', xpForRank(10));
   give('hide:boar', 'own', 12);
   assert.equal((await work('spin:boar', 6)).status, 200);
-  give('cloth:wool', 'bought', 1);
+  // PIN MOVED (WOVEN-PAYS, AUDIT WOVEN-PAYS): the bolt bought at the Weavers' counter - counted against the cloth's firsts
+  // (`prof_silver_cloth`); a bought row written by hand is no silver
+  const wool = await s.call('/v1/prof/stock', { character: mac.character, material: 'cloth:wool', qty: 1, rid: rid() }, mac.secret);
+  assert.deepEqual([wool.status, wool.body.store.silver], [200, 1], 'the Stores\' count says the silver count beside it');
   const rug = await craft('rug-237:wool');
   assert.deepEqual([rug.body.xp, rug.body.first, rug.body.firstPaid, stores('cloth:wool')], [40, true, false, [['own', 4]]], 'the bought bolt went first');
+  assert.equal(rug.body.stores.find((x) => x.material === 'cloth:wool').silver, 0, 'used: the silver count spent');
   const tapestry = await craft('tapestry-243:wool');
   assert.deepEqual([tapestry.body.xp, tapestry.body.first, tapestry.body.firstPaid, stores('cloth:wool')], [40 + FIRST_CRAFT_XP, true, true, []], 'own cloth alone: the 500');
-  // a pack's cloth the service never handed out - put in at the station as loose - pays none
+  // a pack's cloth the service never handed out - put in at the station as loose - PIN MOVED (WOVEN-PAYS): pays, as the
+  // loom's own cloth of looted goods does (fogs's report: test/net/fb1026b_wovenpays.test.js)
   const put = await s.call('/v1/stores/deposit', { character: mac.character, material: 'cloth:linen', qty: 2, held: 2, order: 'work', rid: rid() }, mac.secret);
   assert.deepEqual([put.status, put.body.loose, stores('cloth:linen')], [200, 2, [['loose', 2]]]);
   const net = await craft('fishingnet:linen');
-  assert.deepEqual([net.status, net.body.xp, net.body.first, net.body.firstPaid], [200, 20, true, false], 'loose cloth: no 500');
+  assert.deepEqual([net.status, net.body.xp, net.body.first, net.body.firstPaid], [200, 20 + FIRST_CRAFT_XP, true, true], 'loose cloth: its first');
   // the record: each first recorded, the 500 where it paid
-  const rows = s.env.DB._raw.prepare('SELECT recipe, xp, first FROM prof_crafts WHERE player = ? ORDER BY at, rowid').all(mac.id).map((r) => [r.recipe, Number(r.xp), Number(r.first)]);
-  assert.deepEqual(rows, [['garment-141:linen', 20 + FIRST_CRAFT_XP, 1], ['garment-142:linen', 20, 1], ['rug-237:wool', 40, 1], ['tapestry-243:wool', 40 + FIRST_CRAFT_XP, 1], ['fishingnet:linen', 20, 1]]);   // PIN MOVED (FIRST-BUDGET): Outfitting's share
+  // WOVEN-PAYS: and whether it laid it on (`first_paid`, migration 0177)
+  const rows = s.env.DB._raw.prepare('SELECT recipe, xp, first, first_paid FROM prof_crafts WHERE player = ? ORDER BY at, rowid').all(mac.id).map((r) => [r.recipe, Number(r.xp), Number(r.first), r.first_paid]);
+  assert.deepEqual(rows, [['garment-141:linen', 20 + FIRST_CRAFT_XP, 1, 1], ['garment-142:linen', 20, 1, 0], ['rug-237:wool', 40, 1, 0], ['tapestry-243:wool', 40 + FIRST_CRAFT_XP, 1, 1], ['fishingnet:linen', 20 + FIRST_CRAFT_XP, 1, 1]]);   // PIN MOVED (FIRST-BUDGET): Outfitting's share; (WOVEN-PAYS): the net's loose cloth paid
 });

@@ -19,6 +19,7 @@ import { REGEN_HELD_HURT_MS, regenHeldNow } from '../../systems/courtRules.js';
 import { EG_POTIONS_PER_HALL } from '../eliteGates/egHud.js';
 import { SD_REZ_MS } from '../../net/superDungeon/sdLaw.js';   // SD-REZ: the Hour's window for a friend's Resurrect
 import { SD_REZ_PAGE_SLACK_MS } from '../../systems/superDungeon/sdSlots.js';   // AUDIT WORLD-EVENTS L1-5: the page's own part of it
+import { mentorTipCard } from '../../systems/mentorText.js';   // MENTOR2: the mentor's tile, in its own words
 import { EG_DOWN_MS } from '../../net/eliteGates/egBrain.js';   // AUDIT WORLD-EVENTS L1-4: a fall's window to be raised in (the Ketch's KT_DOWN_MS pinned equal)
 
 /** The attributes as the sheet names them. */
@@ -147,6 +148,10 @@ export function statusTip(tile, entity, extra = {}) {
     lines.push(String(tile.name ?? ''), zoneWord('chipTip'));   // ETHER-WILD: the ground's own tip (the sea's past the Veil)
     return { title, meta: 'Zone', lines, foot: tile.foot ? `Ring ${tile.foot}` : null };
   }
+  if (tile.key === 'mentor') {   // MENTOR2: what mentoring does now - the level fought at, the powers' share, the pupil's bonus
+    const card = mentorTipCard(entity);
+    return { title, meta: card.meta, lines: card.lines, foot: tile.foot ?? null };
+  }
   if (tile.key === 'rules') {   // EVENT-RULES: the made level's rules, every one it holds
     lines.push(...madeRulesLines(tile.level));
     return { title, meta: t('madeRules.meta', 'Event rules'), lines, foot: tile.foot ? t('madeRules.foot', 'Regeneration resumes in {foot}', { foot: tile.foot }) : null };
@@ -186,7 +191,7 @@ export function statusTip(tile, entity, extra = {}) {
     const said = extra.setLine?.(tile) ?? null;
     if (said) lines.push(said);
     lines.push(tile.recovering ? 'Recovering.' : 'Active.');
-    return { title, meta: tile.set === 'technique' ? 'Weapon technique' : meta, lines, foot: tile.foot ? (tile.recovering ? `Ready in ${tile.foot}` : tile.foot) : null };
+    return { title, meta: tile.set === 'technique' ? 'Weapon technique' : tile.set === 'martial' ? 'Specialization' : meta, lines, foot: tile.foot ? (tile.recovering ? `Ready in ${tile.foot}` : tile.foot) : null };   // RPT1026-PROGRESS: a martial path's passive
   }
   if (String(tile.key).startsWith('spell')) {
     lines.push(...spellTipLines(entity, tile.bundle));

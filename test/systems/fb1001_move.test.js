@@ -68,7 +68,7 @@ function realRun() {
 }
 
 test('MOVE-BANK: a level-30 master runs 100 minutes and rests - the pass banks the whole run, not the 20000 bucket', () => {
-  const p = runner(30);
+  const p = runner(30, 150);   // PIN MOVED: LADDER-CUT (2026-10-28: "1.5 2 4") - at 100's 1.5x the run lands a point; 150's 4x keeps it a bank
   const { odometer, speed } = realRun();
   assert.ok(speed > 8, `the real run covers ${speed.toFixed(2)} m/s`);
   let cm = p.lastSkillCheckTime;
@@ -80,31 +80,31 @@ test('MOVE-BANK: a level-30 master runs 100 minutes and rests - the pass banks t
   }
   const ran = 4 * 100 * 60 - 1;   // four uses a second; the first only marks the odometer
   assert.ok(Math.abs(p.skillUses[RUN] - ran) <= 1, `every quarter second counted: ${p.skillUses[RUN]} of ${ran}`);
-  assert.ok(cost(p) > p.skillUses[RUN], 'at level 30 the first point past 100 costs more than this whole run');
+  assert.ok(cost(p) > p.skillUses[RUN], 'at level 30 a point past 150 costs more than this whole run');
   assert.deepEqual(raiseSkills(p, Math.floor(cm), () => 0.5, () => {}), [], 'no point yet');
   const banked = p.skillProgress[RUN];
   assert.ok(Math.abs(banked - ran / cost(p)) < 2 / cost(p), `the pass banked ${banked.toFixed(3)} of a point, the run is ${(ran / cost(p)).toFixed(3)}`);
-  assert.ok(banked > 20000 / cost(p) + 0.1, 'more than the 20000 bucket held');
+  assert.ok(banked > 20000 / cost(p) + 0.05, 'more than the 20000 bucket held');   // PIN MOVED: LADDER-CUT - 150's price is dearer, so the run's 4,000 uses past the bucket are 0.09 of a point, was 0.14
   assert.equal(p.skillUses[RUN], 0, 'spent');
 });
 
 test('MOVE-BANK: a pass lands one point and keeps the rest whole, so the next passes land it with no more running', () => {
-  const p = runner(20);
+  const p = runner(20, 150);   // PIN MOVED: LADDER-CUT - from 150, so the bank is still two points of its own cost
   const { odometer } = realRun();
   p._odometer = odometer;   // what the tick puts there from the host's activity
   for (let i = 0; i < 60000; i++) { odometer.h += 2.4; tallyMovementSkill(p, RUN); }   // a long day's running, no rest
   assert.equal(p.skillUses[RUN], 59999, 'no 20000 bucket past 100');
-  const c100 = cost(p, 100), c101 = cost(p, 101);
+  const c100 = cost(p, 150), c101 = cost(p, 151);
   let t = p.lastSkillCheckTime;
   const pass = () => { t += SKILL_RAISE_CHECK_INTERVAL + 1; return raiseSkills(p, t, () => 0.5, () => {}); };
   assert.deepEqual(pass(), [RUN]);
-  assert.equal(p.skills[RUN], 101, 'one point a pass, as ever');
+  assert.equal(p.skills[RUN], 151, 'one point a pass, as ever');
   assert.ok(Math.abs(p.skillProgress[RUN] - (59999 / c100 - 1) * c100 / c101) < 1e-9, 'the rest kept whole, re-priced at 101\'s cost');
   // the bank, landed a point a pass and re-priced each time: 59999 uses at level 20 are three points of 100's cost and
   // just over two once each point is priced at its own value
-  let prog = 59999 / c100, v = 100;
+  let prog = 59999 / c100, v = 150;
   while (prog >= 1) { prog = (prog - 1) * cost(p, v) / cost(p, v + 1); v++; }
-  assert.equal(v, 102);
+  assert.equal(v, 152);
   assert.deepEqual(pass(), [RUN], 'the next rest lands the banked point without another step run');
   assert.equal(p.skills[RUN], v);
   assert.ok(Math.abs(p.skillProgress[RUN] - prog) < 1e-9, 'what is left stays banked');

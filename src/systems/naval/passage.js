@@ -147,6 +147,10 @@ export const PASSAGE_TEXT = Object.freeze({
   stuck: (dest) => t('passage.stuck', 'Her master can find no way on toward {port} from here - he will try again. Step ashore to end the passage.', { port: dest }),
   holds: (dest) => t('passage.holds', 'Her master holds his course for {port}.', { port: dest }),
   get goods() { return t('passage.goods', 'What you put in her hold is carried off her.'); },
+  /** PASSAGE-QUAY: her master brings her in to her port's quay, she is made fast there, or her way in is blocked. */
+  comesIn: (name, dest) => t('passage.comesIn', '{ship} comes in to {port}\'s quay.', { ship: ship(name), port: dest }),
+  madeFast: (name, dest) => t('passage.madeFast', '{ship} is made fast at {port}\'s quay. Take the gangway ashore.', { ship: ship(name), port: dest }),
+  get quayFoul() { return t('passage.quayFoul', 'Her way in to the quay is blocked. Her master puts you ashore instead.'); },
   ended: (name) => t('passage.ended', '{ship} stands out to sea.', { ship: ship(name) }),
 });
 /** The look's word on her (navalHost.js passageHint). */

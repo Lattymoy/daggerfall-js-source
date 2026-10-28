@@ -30,7 +30,8 @@ Not a DFU member - the port's own (Ledger A, PORTAL1).
 | `src/ui/native/nativeInventory.js`, `src/ui/enhanced/enhancedInventory.js`, `src/systems/quickslots.js`, `src/systems/useItem.js` | the `openPortal` result routed on every reader - the pack closes and hands the stone to the host's door; a host with none says `USE_PENDING.openPortal` |
 | `src/systems/item/itemInfo.js` | the stone's card: what it does and how long it stands, on both skins |
 | `src/systems/save/save.js` | the gift's mark (`portalGift`), the gift given at the restore, and `restoresSoFar` - the count every load moves |
-| `src/scenes/worldModes.js` | THE COUNTER's row: `portalRow`, and the counter built once (`worldModes.js:"  const portalCounter = createPortalCounter({ say: (l) => say(l), mount: (w) => mountInterior(w) });"`) |
+| `src/scenes/worldModes.js` | the shop popups' rows built once (`worldModes.js:"  const shopRows = createShopRows({ say: (l) => say(l), mountInterior: (w) => mountInterior(w), mountService: mountServiceWindow });"`) and spread into both popups |
+| `src/scenes/shopRows.js` | APPEARANCES (2026-10-27, `04-Characters/Wardrobe.md`): THE COUNTER's row and the counter built once, moved out of `createWorldModes` with the Wardrobe's row beside it (`createShopRows`: `of`, `portalCounter`) - every shop a row, every other building none |
 | `src/scenes/portalCounter.js` | PORTAL-BULK: THE COUNTER'S QUESTION AND ITS SALE (`createPortalCounter`: `ask`, `buy`; `portalCountField`) - moved out of `createWorldModes` (HOST-SPLIT), its ceiling down by them |
 | `src/systems/inventory.js` | PORTAL-BULK: `findExistingStack` - AddItem's own find (ItemCollection.FindExistingStack), exported so the sale reads the room on the stack it lands on |
 | `src/scenes/world.js` | THE USE AND THE PORTALS: `portalHoldNow`, `portalDoorRefusal`, `openPortalStone`, `standPortal`, `portalArrive`, the pool (`portalGates`), its tick and draw, a load's end of it, `portalWord` and the peers' landing, the gift said |
@@ -166,6 +167,47 @@ ground when that is found within `PORTAL_REGROUND` (4 m) of the opener's height.
 time**: the opener stepping through, walking off or going indoors closes nothing for the rest - a frame without `pg`
 leaves the copy to run out. A late arrival in the cell learns of a portal only while its opener still stands within
 32 m of it.
+
+### An event's gate keeps its way clear (RPT1026-EVENTS GATE-WAY, 2026-10-26)
+
+Two private reports: players opened portals at the mouth of a breach or another event to carry the arriving crowd elsewhere, and
+one walled a breach's gate with a parked wagon and laid a portal in it as the gate opened, more than once. A portal takes
+whoever steps in (above), and a crowd running at a
+Dagon's Breach as it opens runs into whatever stands before its fire.
+
+**The rule.** While an event's gate stands on this screen, no Portal Stone's portal stands within `EVENT_GROUND_M`
+(40 m, on the ground) of it:
+- **The opener's pick refuses the place** - `portalStonePlace` (portalPlace's place, then the ground asked) answers
+  `refused: 'event'`, *"A portal cannot open this close to an event's gate."*, and no stone is spent. The world host's
+  pick asks it (`scenes/world.js` standPortal).
+- **A peer's word of one there is not believed** (`scenes/portalGates.js` applyOwner) - a modified opener's pick is not
+  the law on another screen.
+- **One already open closes** when a gate rises beside it, taking nobody (portalGates.js tick: dropped before its step
+  is asked).
+
+**The gates.** Each pool that stands an event's gate says where it stands, under its own name, once
+(`systems/eventGround.js` `setEventGround`): the Dagon's Breach (`scenes/gate/gatePool.js` - the gate's foot, rising to
+collapsing), an Elite Breach's arch (`scenes/eliteGates/egArch.js` - every arch the pool stands) and a fallen star's
+heart (`scenes/starfall/starfallHost.js` - falling and fallen). The laws ask `eventGroundAt`. A leaf, the construction
+seam's shape (`systems/questlines/qlActs.js`'s sink): no host grew for it.
+
+**The authority is every screen's.** A portal is its opener's word in the foes frame, which the relay never reads, and
+what a portal does is done on the screen that steps into it. So each screen judges by the gates it stands, and a modded
+opener cannot reach a screen past that screen's own law. The relay is not touched.
+
+**Not the call's portal.** An Elite Breach's call opens its own portal by `portalPlace` alone, and its pool keeps no
+ground (`createPortalGates({ eventGround: false })`, `scenes/eliteGates/egCall.js`): it is the way into the event.
+
+**A caravan.** A peer's wagon never walls anything (PR-WAGON1: no peer's wagon stands in my collider), but parked
+across a gate it hid the fire and the portal laid inside it. Another player's parked wagon on an event's gate's ground
+is not drawn on this screen, nor its team, nor pressed (`scenes/horseCartPool.js` `offGround` - as a concealed owner's
+are not). My own parked there draws: it is mine to move. (`06-Systems/Horse-Cart-And-Cargo.md`, GATE-WAY.)
+
+Not a DFU member: Daggerfall has no portals, no world events and no other players. Ledger A (GATE-WAY). Pinned by
+`test/scenes/rpt1026_events_gateway.test.js` (7): the law; the real gate pool's ground; the stone's pick refused and
+the call's kept; a peer's word refused, a standing one closed, past the ground believed; a peer's parked wagon in the
+gate not drawn while mine and a far one draw; the real arch pool's ground from a signed call; the real starfall
+host's ground while a star stands fallen. `tools/mutants/rpt1026_events.json` (GATE-WAY, 11).
 
 ### The gift (PORTAL-GIFT)
 

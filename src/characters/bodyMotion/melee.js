@@ -28,7 +28,7 @@ export const U = Object.freeze({ windup: 0.3, hit: 0.5 });
 
 const k = (u, v) => Object.freeze({ u, ...v });
 const STANCE_ONE = { grip: [0.55, 0.2, -0.82], blade: [0.3, 0.75, -0.6], edge: [0, 0.2, -1], chest: [0, 0, 0], hip: 0, shift: 0, drop: 0, step: 0, off: [3, 8, 12] };
-const STANCE_TWO = { grip: [0.1, 0.42, -0.62], blade: [-0.3, 0.82, -0.48], edge: [0, 0.35, -1], chest: [0, 0, 0], hip: 0, shift: 0, drop: 0, step: 0, off: [0, 0, 0] };
+const STANCE_TWO = { grip: [0.08, 0.53, -0.96], blade: [-0.34, 0.87, -0.37], edge: [-0.41, -0.49, -0.77], chest: [0, 0, 0], hip: 0, shift: 0, drop: 0, step: 0, off: [0, 0, 0] };   // carry.js CARRY.two's guard (TWO-CLEAR)
 const STANCE_FIST = { grip: [0.2, 0.32, 0.02], fingers: [0, 0.55, 0.85], palm: [-1, 0, 0], chest: [0, 0, 0], hip: 0, shift: 0, drop: 0, step: 0, off: [0, 0, 0] };
 
 /**
@@ -78,36 +78,51 @@ export const MELEE = Object.freeze({
     ],
   }),
   two: Object.freeze({
+    // TWO-CLEAR (feature-feedback via Mac, 2026-10-26, the claymore's hands through the back - and, measured on the retail
+    // biped, every blow of the family's: the hand on the haft 6.5 to 8.5 units into the audit's trunk, the left on a
+    // claymore's grip a third of an arm behind the right): the hands LEAD. Each release passes its blade upright or across
+    // with the grip out ahead of the face or the chest, not beside it; each wind-up gathers the hilt in front before it
+    // is drawn back; and the blow lands two thirds of an arm out, where the pommel's hand still stands before the chest.
     slash: [
       k(0, STANCE_TWO),
-      k(0.3, { grip: [0.5, -0.22, 0.22], blade: [0.4, -0.82, 0.42], edge: [0.85, 0.45, 0], chest: [-45, 0, -2], hip: -20, shift: -0.05, drop: 0.02, step: 0.02 }),
-      k(0.5, { grip: [0, 0.58, -0.1], blade: [0, 1, -0.05], edge: [-1, 0, 0], chest: [6, 2, 8], hip: 14, shift: 0.07, drop: 0.05, step: 0.2 }),
-      k(0.7, { grip: [-0.5, 0.26, -0.32], blade: [-0.9, 0.22, -0.35], edge: [-0.25, -0.97, 0], chest: [40, 3, 10], hip: 24, shift: 0.09, drop: 0.06, step: 0.2 }),
-      k(0.88, { grip: [0, 0.42, -0.62], blade: [-0.2, 0.85, -0.5], edge: [0, 0.3, -1], chest: [10, 0, 4], hip: 6, shift: 0.02, drop: 0.02, step: 0.06 }),
+      k(0.12, { grip: [0.16, 0.63, -0.11], blade: [0.94, -0.16, 0.29], edge: [0.33, 0.43, -0.84], chest: [-16, 0, -1], hip: -8, shift: -0.02, drop: 0, step: 0 }),
+      k(0.3, { grip: [0.5, 0.37, 0.3], blade: [0.45, -0.35, 0.82], edge: [0.89, 0.28, -0.37], chest: [-45, 0, -2], hip: -20, shift: -0.05, drop: 0.02, step: 0.02 }),
+      k(0.4, { grip: [0.42, 0.6, 0.15], blade: [0.85, 0.36, 0.39], edge: [-0.39, 0.92, 0.01], chest: [-26, 1, 2], hip: -7, shift: 0, drop: 0.03, step: 0.1 }),
+      k(0.5, { grip: [0, 0.68, -0.1], blade: [0, 1, -0.05], edge: [-1, 0, 0], chest: [6, 2, 8], hip: 14, shift: 0.07, drop: 0.05, step: 0.2 }),
+      k(0.7, { grip: [-0.44, 0.3, -0.35], blade: [-0.93, 0.13, -0.35], edge: [-0.2, -0.97, 0.16], chest: [40, 3, 10], hip: 24, shift: 0.09, drop: 0.06, step: 0.2 }),
+      k(0.88, { grip: [0, 0.45, -0.62], blade: [-0.2, 0.85, -0.5], edge: [0, 0.3, -1], chest: [10, 0, 4], hip: 6, shift: 0.02, drop: 0.02, step: 0.06 }),
       k(1, STANCE_TWO),
     ],
     back: [
       k(0, STANCE_TWO),
-      k(0.15, { grip: [0.12, 0.5, -0.12], blade: [-0.25, 0.4, 0.88], edge: [-0.5, 0.75, -0.4], chest: [19, 0, -1], hip: 8, shift: -0.02, drop: 0.01, step: 0 }),
-      k(0.3, { grip: [-0.4, 0.25, 0.3], blade: [-0.55, -0.72, 0.42], edge: [-0.8, 0.55, 0], chest: [38, 0, -2], hip: 16, shift: -0.04, drop: 0.02, step: 0 }),
-      k(0.5, { grip: [0.05, 0.58, -0.08], blade: [0.02, 1, -0.05], edge: [1, 0, 0], chest: [-6, -2, 8], hip: -12, shift: 0.07, drop: 0.05, step: 0.16 }),
-      k(0.7, { grip: [0.6, 0.22, -0.3], blade: [0.9, -0.25, -0.3], edge: [0.25, -0.97, 0], chest: [-36, -3, 9], hip: -20, shift: 0.08, drop: 0.05, step: 0.16 }),
+      k(0.15, { grip: [0.17, 0.65, -0.09], blade: [-0.24, 0.38, 0.89], edge: [-0.52, 0.72, -0.45], chest: [19, 0, -1], hip: 8, shift: -0.02, drop: 0.01, step: 0 }),
+      k(0.3, { grip: [-0.37, 0.32, 0.26], blade: [-0.35, -0.72, 0.6], edge: [-0.93, 0.18, -0.33], chest: [38, 0, -2], hip: 16, shift: -0.04, drop: 0.02, step: 0 }),
+      k(0.4, { grip: [-0.32, 0.66, 0.08], blade: [-0.9, 0.25, 0.35], edge: [0.27, 0.96, 0.01], chest: [20, -1, 2], hip: 4, shift: 0.01, drop: 0.03, step: 0.07 }),
+      k(0.5, { grip: [0.05, 0.68, -0.08], blade: [0.02, 1, -0.05], edge: [1, 0, 0], chest: [-6, -2, 8], hip: -12, shift: 0.07, drop: 0.05, step: 0.16 }),
+      k(0.7, { grip: [0.59, 0.3, -0.3], blade: [0.9, -0.25, -0.3], edge: [0.25, -0.97, 0], chest: [-36, -3, 9], hip: -20, shift: 0.08, drop: 0.05, step: 0.16 }),
       k(0.88, { grip: [0.15, 0.42, -0.62], blade: [-0.1, 0.85, -0.5], edge: [0, 0.3, -1], chest: [-8, 0, 4], hip: -5, shift: 0.02, drop: 0.02, step: 0.05 }),
       k(1, STANCE_TWO),
     ],
     chop: [
       k(0, STANCE_TWO),
-      k(0.3, { grip: [0.12, -0.12, 0.85], blade: [0.05, -0.8, 0.6], edge: [0.02, 0.6, 0.8], chest: [-10, 0, -14], hip: -5, shift: -0.05, drop: 0, step: 0.02 }),
-      k(0.5, { grip: [0.06, 0.55, 0.08], blade: [0, 0.82, -0.57], edge: [0, -0.57, -0.82], chest: [4, 0, 18], hip: 4, shift: 0.07, drop: 0.07, step: 0.2 }),
-      k(0.7, { grip: [0.02, 0.4, -0.55], blade: [-0.05, 0.3, -0.95], edge: [0, -0.95, -0.3], chest: [8, 0, 26], hip: 6, shift: 0.09, drop: 0.1, step: 0.2 }),
+      k(0.08, { grip: [0.15, 0.63, -0.4], blade: [-0.16, 0.75, 0.65], edge: [-0.35, 0.57, -0.74], chest: [-2, 0, -3], hip: -1, shift: -0.01, drop: 0, step: 0 }),
+      k(0.18, { grip: [0.12, 0.47, 0.35], blade: [-0.05, 0.2, 0.98], edge: [0, 0.98, -0.2], chest: [-7, 0, -11], hip: -4, shift: -0.04, drop: 0, step: 0 }),
+      k(0.3, { grip: [0.1, -0.12, 0.85], blade: [0.05, -0.8, 0.6], edge: [0.02, 0.6, 0.8], chest: [-10, 0, -14], hip: -5, shift: -0.05, drop: 0, step: 0.02 }),
+      k(0.4, { grip: [0.12, 0.45, 0.68], blade: [0.03, 0.45, 0.89], edge: [0, 0.89, -0.45], chest: [-5, 0, -1], hip: -1, shift: 0, drop: 0.03, step: 0.1 }),
+      k(0.5, { grip: [0.06, 0.68, 0.06], blade: [0, 0.82, -0.57], edge: [0, -0.57, -0.82], chest: [4, 0, 18], hip: 4, shift: 0.07, drop: 0.07, step: 0.2 }),
+      k(0.7, { grip: [0.13, 0.49, -0.55], blade: [-0.05, 0.3, -0.95], edge: [0, -0.95, -0.3], chest: [8, 0, 26], hip: 6, shift: 0.09, drop: 0.1, step: 0.2 }),
       k(0.88, { grip: [0.1, 0.45, -0.6], blade: [-0.2, 0.85, -0.5], edge: [0, 0.3, -1], chest: [3, 0, 6], hip: 2, shift: 0.03, drop: 0.03, step: 0.06 }),
       k(1, STANCE_TWO),
     ],
     thrust: [
       k(0, STANCE_TWO),
-      k(0.3, { grip: [0.44, -0.2, -0.36], blade: [-0.05, 1, 0.14], edge: [0, 0, -1], chest: [-22, 0, -2], hip: -12, shift: -0.06, drop: 0.02, step: 0 }),   // MELEE-2: drawn back beside the hip, clear of the belly on the way out
+      // THRUST-CHAMBER (feature-feedback via Mac, 2026-10-26: "Two-handed sword (claymore) forward pierce attack animation
+      // causes character's hands to clip through his back"): chambered BEFORE the right hip, the point raised at the target -
+      // the draw is the trunk's coil, not the hands'. Drawn back beside the hip (grip -0.2 forward), the left hand closed on
+      // the hilt toward the pommel 0.31 to 0.38 of an arm behind the shoulders, and the left arm crossed behind the back.
+      k(0.3, { grip: [0.37, 0.57, -0.4], blade: [-0.2, 0.96, 0.2], edge: [0, 0, -1], chest: [-24, 0, -2], hip: -12, shift: -0.06, drop: 0.02, step: 0 }),
       k(0.5, { grip: [0.06, 0.88, -0.04], blade: [0, 1, 0.02], edge: [0, 0, -1], chest: [14, 0, 12], hip: 10, shift: 0.12, drop: 0.07, step: 0.3 }),
-      k(0.7, { grip: [0.1, 0.72, -0.1], blade: [-0.05, 1, -0.05], edge: [0, 0, -1], chest: [10, 0, 10], hip: 8, shift: 0.1, drop: 0.06, step: 0.3 }),
+      k(0.7, { grip: [0.22, 0.84, -0.1], blade: [-0.05, 0.99, -0.15], edge: [0, 0, -1], chest: [10, 0, 10], hip: 8, shift: 0.1, drop: 0.06, step: 0.3 }),
       k(0.88, { grip: [0.1, 0.45, -0.6], blade: [-0.2, 0.85, -0.5], edge: [0, 0.3, -1], chest: [3, 0, 4], hip: 2, shift: 0.03, drop: 0.02, step: 0.08 }),
       k(1, STANCE_TWO),
     ],

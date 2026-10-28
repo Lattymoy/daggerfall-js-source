@@ -92,8 +92,8 @@
   {
     "name": "FB1009-the-host-records-no-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0 });",
-    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0 });",
+    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]] });",
+    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]] });",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FB1009-a-second-models-ground-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": " f.rects.push(...rects); }",
-    "new": " }",
+    "old": " f.rects.push(...rects); f.parts?.push([cpu, local]); }",
+    "new": " f.parts?.push([cpu, local]); }",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]

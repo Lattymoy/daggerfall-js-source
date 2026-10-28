@@ -624,6 +624,16 @@ merge").**
   and the hcc_pool and disc20 rows in Testing.md still described the box
   PR-WAGON1 took away. They now say what the pins hold.
 
+### GATE-WAY - another player's wagon parked on an event's gate's ground (RPT1026-EVENTS, 2026-10-26)
+
+A private report told of a wagon parked across a breach's gate and a portal laid there as it opened. A peer's wagon walls
+nothing (above), but parked across a gate it hid the fire and a portal laid inside it. Now another player's PARKED wagon
+standing within `EVENT_GROUND_M` (40 m) of an event's gate standing on this screen (`systems/eventGround.js` - a Dagon's
+Breach, an Elite Breach's arch, a fallen star) is not drawn here: the cart pool's frame marks it (`scenes/horseCartPool.js`
+`offGround`), hides it and its team as a concealed owner's are, and offers no press (`drawnFrameOf`). A trailing or
+following wagon rolls with its owner as ever, and my own parked there draws. `06-Systems/Portal-Stone.md` GATE-WAY;
+pinned by `test/scenes/rpt1026_events_gateway.test.js`.
+
 ## WAGON-HITCH - the wagon on its shafts (2026-10-04)
 
 Mac: "the wagon when attached to the horse should show in the overworld if

@@ -21,6 +21,7 @@ import { goldText, wearOf, wearText } from '../../net/marketLaw.js';
 import { vendorSearch, VENDOR_LISTING_S } from '../../net/vendorLaw.js';
 import { accountRefusalText } from '../../net/accountClient.js';
 import { vendorStatsNode, injectVendorStatsCss } from './vendorTab.js';   // a piece's stats, as the board shows them
+import { isStolen, stolenTag } from '../../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
 import { pictureNode } from '../menu/menuGlyphs.js';   // MENU-ORDER: a piece's picture, the host's
 
 /** The rail's row: under the Professions. */
@@ -253,7 +254,7 @@ export function drawVendorPage(detail, rerender, kit) {
   for (const r of rows) {
     const row = el('div', 'vendor-row');
     const set = wpKey === `${r.map}:${r.buildingKey}`;
-    row.append(named(r.item), el('span', 'vendor-meta', `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}`),
+    row.append(named(r.item), el('span', 'vendor-meta', `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}${isStolen(r.item) ? ` · ${stolenTag()}` : ''}`),
       set ? btn('vendor-clear', 'Clear waypoint', () => { p.clearWaypoint(); rerender(); })
         : btn('vendor-wp', 'Set waypoint', () => { p.waypoint(r); rerender(); }));
     lookable(row, `f:${r.id}`, r.item);

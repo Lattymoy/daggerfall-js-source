@@ -157,7 +157,7 @@
   {
     "name": "DECOR2a-a-message-kept-on-a-statue",
     "file": "src/systems/decor/decorItems.js",
-    "old": "const p = (item.group === 'Paintings' || item.group === 'Books') && Number.isSafeInteger(item.message) ? item.message : null;",
+    "old": "const p = (item.group === 'Paintings' || item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) && Number.isSafeInteger(item.message) ? item.message : null;",
     "new": "const p = Number.isSafeInteger(item.message) ? item.message : null;",
     "tests": [
       "test/systems/decor2a.test.js"

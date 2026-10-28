@@ -154,13 +154,14 @@ test('AUDIT 68 S02-contextlost-tap-dead: the lost-context report takes the tap i
   // to the dead canvas; and each loss stacked another click listener.
   const main = rd('src/main.js');
   const code = statementAt(main, 'function crashOverlay(msg) {') + '\n'
+    + statementAt(main, 'function crashDismiss(el) {') + '\n'   // RPT1026-CLIENT: the report's own Dismiss
     + statementAt(main, "document.getElementById('c')?.addEventListener('webglcontextlost'");
   const els = new Map();
   let lost = null, reloads = 0;
   const canvas = { addEventListener: (ev, fn) => { if (ev === 'webglcontextlost') lost = fn; } };
   const document = {
     getElementById: (id) => (id === 'c' ? canvas : els.get(id) ?? null),
-    createElement: () => ({ style: {}, clicks: [], addEventListener(ev, fn) { if (ev === 'click') this.clicks.push(fn); } }),
+    createElement: () => ({ style: {}, clicks: [], appendChild() {}, addEventListener(ev, fn) { if (ev === 'click') this.clicks.push(fn); } }),
     body: { appendChild: (el) => els.set(el.id, el) },
   };
   new Function('document', 'location', 'pageGoing', code)(document, { reload: () => reloads++ }, false);   // GL-LEAK: the page is not going (main.js's own flag; a context let go on purpose as it goes puts up no report)

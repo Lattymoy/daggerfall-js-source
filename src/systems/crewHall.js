@@ -39,6 +39,7 @@ import { PLAYER_CREW, playerCrewCount, CREW_SHOWN } from './naval/crewLife.js';
 import { CREW_PER_HAND, MOBILE } from './naval/navalBoarding.js';
 import { CREW_ROLES, FIRST_MATE } from './naval/shipCrew.js';
 import { REPAIR_PRICE } from './naval/navalDamage.js';
+import { t } from './textManager.js';   // CREW-SIGNED: the hall's new words in the player's language
 
 /** How many sailors a hall has each day. */
 export const RECRUITS_A_DAY = 6;
@@ -190,4 +191,10 @@ export const CREW_HALL_TEXT = Object.freeze({
   ashore: (who) => `${who} is ashore with you. Send them back aboard first.`,
   noShip: 'You have no crewed ship here. Bring it to this port, or lay it up.',
   noSea: 'Turn on Naval Combat to hire crew at the crew halls.',
+});
+/** CREW-SIGNED (scenes/crewSignBook.js): the hall's words for a hire the account service answers. */
+export const CREW_SIGN_TEXT = Object.freeze({
+  get unread() { return t('crewHall.unread', 'The crewmaster cannot check the roster now. Try again.'); },
+  get many() { return t('crewHall.many', 'You have signed on as many sailors as one day allows. Come back tomorrow.'); },
+  get asking() { return t('crewHall.asking', 'The crewmaster checks the roster.'); },
 });

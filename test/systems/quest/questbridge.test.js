@@ -21,7 +21,7 @@ import {
   offerGuildSurface, tokensToRows, createQuestBridge, layoutNpcData,
 } from '../../../src/scenes/quest/questBridge.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT } from '../../../src/characters/staticNpc.js';
-import { TICKS_PER_SECOND, QUEST_MESSAGES } from '../../../src/systems/quest/machine.js';
+import { TICKS_PER_SECOND, QUEST_MESSAGES, holdsQuestorDoor } from '../../../src/systems/quest/machine.js';
 import { FAIL_QUEST_FLAVOUR_ID } from '../../../src/systems/quest/offerFlow.js';
 import { GUILD_GROUPS, SOCIAL_GROUPS } from '../../../src/formats/factionFile.js';
 import { GENDERS } from '../../../src/characters/nameHelper.js';
@@ -556,10 +556,12 @@ test('MAC-K2: the bridge’s questLog is the ONE walk - and it is the arithmetic
   // PIN MOVED (QL1/QL12): the walk asks the questlines' layer for each row's `ql`, and hands the lines and the ladders -
   // a DFU-only layer here (no row of its own, the switch off), so what is under test stays these lines' arithmetic
   // PIN MOVED (QUEST-AUDIT III NAMED-TIMER): the lifted questLog reads the lens's clocksNamed too
-  const questLog = new Function('machine', 'notebook', 'clockCounts', 'questlines', 'quietText', 'questlinesOn', 'ladderRows', 'clocksNamed',   // DEAD-CLOCK: whether a clock's end changes anything; QUEST-AUDIT III NAMED-TIMER: the clocks an entry names
+  // PIN MOVED (RPT1026-QUESTS ABANDON-ALWAYS): and machine.js's holdsQuestorDoor - a quest with no entry that holds its
+  // questor's door is a row (these fixtures hold none, so the rows below stand)
+  const questLog = new Function('machine', 'notebook', 'clockCounts', 'questlines', 'quietText', 'questlinesOn', 'ladderRows', 'clocksNamed', 'holdsQuestorDoor',   // DEAD-CLOCK: whether a clock's end changes anything; QUEST-AUDIT III NAMED-TIMER: the clocks an entry names
     `const isShelved = (q) => q?.shelvedAt != null;   // QUEST-SHELF (PIN MOVED): the walk files a quest set aside apart
     const o = { ${body} }; return o.questLog();`);
-  const layerOff = [{ rowOf: () => null, lineRows: () => [] }, (_q, text) => text, () => false, () => [], () => new Set()];   // these entries name no clock: the tightest stands
+  const layerOff = [{ rowOf: () => null, lineRows: () => [] }, (_q, text) => text, () => false, () => [], () => new Set(), holdsQuestorDoor];   // these entries name no clock: the tightest stands
 
   const machine = { quests: new Map([[5, withLog], [6, silent], [7, done], [8, ghost], [9, paid], [10, lost]]) };
   const log = questLog(machine, { getFinishedQuests: () => ['a finished one'] }, () => true, ...layerOff);

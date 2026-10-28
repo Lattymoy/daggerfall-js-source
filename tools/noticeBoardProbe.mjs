@@ -35,6 +35,10 @@ const SHOTS = [
   ['market-picked', 'Market', 'pick'],
   ['market-mine', 'Market', 'view:mine'],
   ['market-orders', 'Market', 'view:orders'],
+  ['market-goods', 'Market', 'view:goods'],   // PACK-PICK: the way to sell from the pack, beside the Goods' filters
+  ['market-sell', 'Market', 'sell'],   // PACK-PICK: the List form on the pack - its pictured tiles, a piece chosen and looked at
+  ['market-sell-refused', 'Market', 'sell-refused'],   // PACK-PICK: what may not go, unfolded with why
+  ['market-sell-stores', 'Market', 'sell-stores'],   // AUDIT PACK-PICK: the Stores' form beside the kinds, drawn as chips
   ['vendors', 'Vendors', null],
   ['guilds', 'Guilds', null],
   ['seat', 'Seat', null],
@@ -50,6 +54,25 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
     const NB = await import('/src/net/noticeBook.js');
     const { materialLabel, materialCountLabel } = await import('/src/systems/professions/profItems.js');
     const { WEAVERS_STOCK, APOTHECARY_STOCK } = await import('/src/net/professionLaw.js');
+    // PACK-PICK: a realm character's pack as the producers mint it - a body's loot, two pieces rolled up the ladder, a
+    // potion and a gem (the Stores' - refused), a quest's piece (refused) - and the pictures from the player's own data
+    const { generateRandomLoot, LOOT_MATRICES } = await import('/src/systems/loot/loot.js');
+    const { applyRarity, LOOT_RARITY_KEY } = await import('/src/systems/loot/lootRarity.js');
+    const { seededRng } = await import('/src/systems/wind/wind.js');
+    const { setPref } = await import('/src/systems/uiPrefs.js');
+    const { createMarketGoods } = await import('/src/systems/tradePack.js');
+    const { itemPicture } = await import('/src/ui/menu/menuPicture.js');
+    setPref(LOOT_RARITY_KEY, true);
+    // AUDIT PACK-PICK: twelve bodies' loot, enough that a desktop's tiles scroll too
+    const loot = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].flatMap((s) => generateRandomLoot({ ...LOOT_MATRICES['-'], MinGold: 0, MaxGold: 0, WP: 100, AM: 100, MI: 100, CL: 60, C1: 60, P1: 40 }, { level: 12, gender: 'male' }, seededRng(s)))
+      .filter((it) => it.group !== 'Currency');
+    const gear = loot.filter((it) => it.group === 'Weapons' || it.group === 'Armor');
+    if (gear[0]) applyRarity(gear[0], 'rare', seededRng(4));
+    if (gear[2]) applyRarity(gear[2], 'magic', seededRng(5));
+    if (gear[4]) applyRarity(gear[4], 'legendary', seededRng(6));
+    if (gear[5]) gear[5].questItem = true;
+    const packOwner = { items: loot };
+    const packGoods = createMarketGoods(packOwner);
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
     const T = 1_800_000_000;
@@ -119,7 +142,7 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
     let reads = 0;
     const marketBook = {
       state: { open: true, balance: 1240, held: 0, road: [{ kind: 'material', material: 'ore:mithril', units: 40, from: 23, arrivesAt: T + 1920, waiting: false }], counts: { listings: 1, orders: 0 } },
-      pending: 0, busy: false, goldOk: false, me: () => 'c1',
+      pending: 0, busy: false, goldOk: true, purse: () => 962_919, me: () => 'c1',   // PACK-PICK: a realm character's book
       cached: () => null,
       read: async (view) => { reads++; await new Promise((r) => setTimeout(r, 120)); return { ok: true, data: marketData[view] ?? { rows: [] } }; },
       settle: async () => ({ ok: true, settled: 0 }),
@@ -131,6 +154,8 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
       pieces: () => [], take: () => true, putBack: () => {}, mint: () => {}, pieceName: () => 'a piece',
       weavers: WEAVERS_STOCK, apothecaries: APOTHECARY_STOCK.slice(0, 4), stock: async () => ({ ok: true, text: 'Bought.' }),
       carried: () => new Map(), board: [402, 151], tithe: () => 6,
+      goods: () => packGoods.goods(), good: (it) => packGoods.good(it), goodName: (rec) => packGoods.goodName(rec),   // PACK-PICK
+      itemPicture: (it, wake, box) => itemPicture(it, { onReady: wake, box }),   // the world host's, a picker's box handed through
     };
     // VENDORS
     const vendors = {
@@ -191,9 +216,37 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
         await new Promise((r) => setTimeout(r, 60));
         document.querySelector('.notice-cork details')?.scrollIntoView({ block: 'start' });
       }
+      if (step === 'sell' || step === 'sell-refused') {   // PACK-PICK: My listings, the pack's form, a rolled piece pressed
+        [...document.querySelectorAll('.market-view')].find((b) => b.textContent.trim().startsWith('My listings'))?.click();
+        await new Promise((r) => setTimeout(r, 250));
+        document.querySelector('.market-kind[data-kind="item"]')?.click();
+        await new Promise((r) => setTimeout(r, 60));
+        // the tiles scrolled to their foot and the last pressed: the window redraws, and the tiles stay where they were
+        const grid = document.querySelector('.packpick-grid');
+        grid.scrollTop = grid.scrollHeight;
+        await new Promise((r) => setTimeout(r, 60));
+        const before = grid.scrollTop, scrolls = grid.scrollHeight > grid.clientHeight;   // read before the press - the redraw takes this grid out
+        [...document.querySelectorAll('button.packpick-tile')].at(-1)?.click();
+        await new Promise((r) => setTimeout(r, 120));
+        window.__kept = { scrolls, before, after: document.querySelector('.packpick-grid').scrollTop, chosen: document.querySelector('.packpick-card .packpick-name')?.textContent ?? null };
+        if (step === 'sell') (document.querySelector('.packpick-tile[data-rarity="rare"]') ?? document.querySelector('button.packpick-tile'))?.click();
+        await new Promise((r) => setTimeout(r, 400));   // the pictures land
+        if (step === 'sell-refused') {
+          document.querySelector('.packpick-refused > summary')?.click();
+          await new Promise((r) => setTimeout(r, 60));
+          document.querySelector('.packpick-refused')?.scrollIntoView({ block: 'start' });
+        } else document.querySelector('.market-listform')?.scrollIntoView({ block: 'start' });
+      }
+      if (step === 'sell-stores') {   // AUDIT PACK-PICK: the Stores' kind pressed
+        [...document.querySelectorAll('.market-view')].find((b) => b.textContent.trim().startsWith('My listings'))?.click();
+        await new Promise((r) => setTimeout(r, 250));
+        document.querySelector('.market-kind[data-kind="material"]')?.click();
+        await new Promise((r) => setTimeout(r, 60));
+        document.querySelector('.market-listform')?.scrollIntoView({ block: 'start' });
+      }
       if (step?.startsWith('view:')) {
         const v = step.slice(5);
-        const want = { mine: 'My listings', orders: 'Orders' }[v] ?? v;
+        const want = { mine: 'My listings', orders: 'Orders', goods: 'Goods' }[v] ?? v;
         [...document.querySelectorAll('.market-view')].find((b) => b.textContent.trim().startsWith(want))?.click();
         await new Promise((r) => setTimeout(r, 250));
       }
@@ -211,6 +264,11 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
       return { inside: !!r && r.left >= 0 && r.right <= innerWidth + 1 && r.top >= 0 && r.bottom <= innerHeight + 1, wide, scrollX: document.scrollingElement.scrollWidth > innerWidth };
     });
     check(`${width}/${skin} ${name}: inside the viewport, nothing spilling sideways`, m.inside && !m.wide && !m.scrollX, JSON.stringify(m));
+    if (step === 'sell' || step === 'sell-refused') {   // PACK-PICK: a tile pressed far down its list keeps the list where it was
+      const k = await page.evaluate(() => window.__kept);
+      // AUDIT PACK-PICK: the pack is made big enough that the tiles scroll at every width - a pack that did not was a pass with nothing checked
+      check(`${width}/${skin} ${name}: a press keeps the tiles' scroll`, k && !!k.chosen && k.scrolls && k.before > 0 && Math.abs(k.after - k.before) <= 1, JSON.stringify(k));
+    }
     await page.screenshot({ path: `${OUT}/notice-${width}-${skin}-${name}.png` });
   }
   await page.close();

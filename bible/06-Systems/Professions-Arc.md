@@ -70,7 +70,7 @@ src/net/nodeLaw.js (the nodes). Appendix B lists them in one place.
    law 5).
 7. **CRAFTING DOES NOT RETIRE LOOT.** FACT: Loot Rarity's tiers are Common, Magic, Rare, Legendary, Aetheric, Artifact
    (`src/systems/loot/lootRarity.js`); Sigil Sets are online set gear (`11-Multiplayer/Sigil-Sets.md`). DECIDED: a craft
-   reaches **Rare** at most (a Masterwork); Legendary, Aetheric, Artifact and Sigil pieces are never craftable.
+   reaches **Rare** (a Masterwork); a Master's work alone reaches **Legendary** (MASTER-ART, section 57); Aetheric, Artifact and Sigil pieces are never craftable.
 8. **MARKS, NOT GOLD** - DECIDED (Mac: "New currency"). Everything this arc prices between players is in Marks
    (10.5), which only the server holds and only server-witnessed acts mint - SILVER-FINDS (10.5, Mac: "Silver should be
    more accessible"): a harvest's find and a loot find aside, two faucets BOUNDED BY THE DAY instead, since neither act
@@ -135,9 +135,10 @@ Enchanting - ten professions a character holds, with the five that gather.
   held Fishing at a Novice's pace and quartered every herb past rank 70 (the Basket's food keeps its tier). DECIDED, AUDIT 32 S1 - Mac: "Whatever you think is best": **no +500 for a recipe made wholly of the goods
   a counter sells** (4.5's Linen and Wool) **out of the counter's units** - the counter's supply has no end, and 152
   recipes of it bought Outfitting 87 for 811 Marks. CLOTH-GEMS (section 50; the owner: "No band aids"): S1 judges the
-  UNITS, never the material - the loom weaves Linen and spins Wool of the world's goods (4.5), so a piece of the
-  character's own cloth pays its 500 and one of the Weavers' (bought) or of a pack's word (loose) never does. Said at
-  every station and in the craft's word since CRAFT-FIRST-SHOWN (41.9).
+  UNITS, never the material - the loom weaves Linen and spins Wool of the world's goods (4.5). WOVEN-PAYS (the owner:
+  "Woven cloth pays"; AUDIT WOVEN-PAYS, section 50.3): a piece of cloth the character wove or spun pays its first,
+  whatever its goods, and cloth bought with silver never does - counted, the bolts a character buys with silver against
+  the bolts its stations use. Said at every station and in the craft's word since CRAFT-FIRST-SHOWN (41.9).
 - All XP is service-witnessed: the service performed the harvest, the craft, the delivery.
 - **Tiers**, the ladder every material, node and recipe sits on - the rank each needs:
 
@@ -295,8 +296,9 @@ corpse feeds its body (L2-2).
   (DFU's plant 12, either land's - a common herb of the MountainWoods, the HauntedWoodlands and the Swamp, 4.3), two a
   bolt; **Wool** spun from a **fur** Hunting gives (the Rat, Wolf and Tiger Pelts, the Boar and Bear Hides, 4.4), two a
   bolt - no XP, and a bolt is own where its goods were. A Ledger A departure: Daggerfall keeps no sheep, grows no flax
-  and weaves nothing. The counter's bolts stay **bought**, and AUDIT 32 S1 (3.2) withholds the first-make 500 from them
-  alone. **Silk Bolt** is woven from Spider Silk (3:1).
+  and weaves nothing. The counter's bolts stay **bought**, and AUDIT 32 S1 (3.2) withholds the first-make share from
+  cloth bought with silver - the counter's and the Drakes market's, counted (WOVEN-PAYS, 50.3). **Silk Bolt** is woven
+  from Spider Silk (3:1).
 - **The Apothecaries' counter**, the supplier's second, sells into the Stores the sixteen DFU ingredients that DFU's
   potion recipes need and no gathering route yields (FACT, `POTION_RECIPES`, `src/systems/potions.js`), at **a fifth of
   DFU's price in Marks**, rounded up: Werewolf's Blood 5, Fairy Dragon's Scales 18, Unicorn Horn 40, Ectoplasm 12,
@@ -336,13 +338,14 @@ So the crowns sit on the richest veins, the free lands hold what no crown can, a
 
 ### 4.8 The new templates (600-699)
 
-Icons are DFU's own, recoloured at runtime (law 6): each row names the DFU icon it borrows. **601, 602 and 604 are
-unused** (600 is the Materials Bag's since BAG1, `net/bagLaw.js` BAG_TEMPLATE - AUDIT FB1021 L4-10): the Pick, the Woodcutter's Axe, the Sickle and the Fishing Rod this table first held are Foraging's own
+Icons are DFU's own, recoloured at runtime (law 6): each row names the DFU icon it borrows. **602 and 604 are
+unused** (601 is the Mounted Trophy's since HUNTERS-MARK, section 58) (600 is the Materials Bag's since BAG1, `net/bagLaw.js` BAG_TEMPLATE - AUDIT FB1021 L4-10): the Pick, the Woodcutter's Axe, the Sickle and the Fishing Rod this table first held are Foraging's own
 Pick-Axe (1601), Wood-Axe (1600), Sickle (1602) and Fishing-Net (1603), and the Basket (1607) joined them (FORAGE0 14).
 The Basket's foods are Foraging's and C&C's own templates, not new ones (FORAGE0 14.6).
 
 | Id | Name | Stores / pack | Icon from |
 |---|---|---|---|
+| 601 | Mounted Trophy | pack (decor; 2 kg, 40 gold - `net/trophyLaw.js`, section 58) | its beast's own front frame |
 | 603 | Skinning Knife | pack (tool; 0.5 kg, 50 HP, 100 gold, online shelves only - FORAGE0 14.2) | DFU Dagger |
 | 610-615 | Moonstone Ore, Dwarven Scrap, Mithril Ore, Adamantium Ore, Ebony Ore, Orichalcum Ore | Stores | DFU Lodestone, tinted per ore |
 | 620-630 | Iron, Steel, Silver, Moonstone, Dwarven, Mithril, Adamantium, Ebony, Orichalcum, Daedric, Warforged Steel Ingot | Stores | DFU Iron, tinted per metal |
@@ -554,7 +557,10 @@ GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being
   which goes to the pack or back on the market for gold and to nothing else - or, AUDIT BAG-CRAFT (`Materials-Bag.md`
   15), **loose**: a station's put-in from the pack that the service never handed out, which goes to a station (spent
   first) or back to the pack uncounted and to nothing else; a smelt's products of it are loose, a craft's piece of it
-  lists for gold alone. Own: this character's harvest (section 6), a craft whose every input
+  lists for gold alone. RPT1026-MARKET STORES-SAID (private reports 2026-10-26): the market's List form and the guild
+  Stores' Put in name the units of each origin they may not take, with their counts and why (`ui/storesWalled.js`) - they
+  offered only what may go, and Cured Leather and Arcane Essence made of looted or gold-bought goods read as lost. Own:
+  this character's harvest (section 6), a craft whose every input
   was own (section 9), Disenchanting's Essence from an own provenance item (one this character made, never sold), a
   Siege Honour's Spoils. Bought: a market purchase, a filled buy order, a counter's goods (4.5), a craft with any
   bought input, Essence from any other provenance item. A craft spends bought units first, so a character's own stay
@@ -597,7 +603,7 @@ laid out for the phone's touch layer as for the desktop.
   **How it is done** (TOOL-SAID, FIELD BUGS 2026-09-30b; CRAFT-HOWTO, FIELD BUGS 2026-10-18d): under the XP line, a
   paragraph says how the chosen profession is practised. A gatherer says how it gathers (`ui/professions/profPages.js`
   `GATHER_HOW` for Herbalism, Mining and Logging, Hunting's own line, `FISHING_HOW`, and Mining's ground line under its
-  own). A craft says where its stations stand, that they are worked from the Stores page (Holdings > Stores), what
+  own). A craft says where its stations stand, that they are worked from the Crafting page (section 56), what
   they make of the gathered goods and what earns its XP (`CRAFT_HOW`: Smithing, Building, Outfitting, and Provisioning's
   cooking after its brew, `ALCHEMY_HOW`; Enchanting's is `ENCHANTING_HOW`). Each paragraph is read in the player's
   language when the page is drawn. Until CRAFT-HOWTO, Smithing, Building and Outfitting showed their specialisation
@@ -617,6 +623,7 @@ laid out for the phone's touch layer as for the desktop.
 - **A station**: left, the recipe list (filters: Can make now, All known, by tier); centre, the recipe - its inputs
   (have / need, from the Stores), the product as an item card, a bar of its quality odds (9.2); buttons **Craft**
   (plays the act, 9.4), **Quick craft**, **Craft x N** (quick, up to 10); right, the act's panel while it plays.
+  CRAFT-HALL: section 56.
 - **The held map** marks the patches and veins a character has worked before, and a Prospector's veins.
 - **Keys** from KB1's registry, under a Professions group in Controls: Interact (E), attack, Esc, and an **act
   choice** key, chosen from the free keys at PROF1 (KB1's rule: one key, one action; Mac's four calls stand): at a
@@ -1558,6 +1565,191 @@ NOT CHANGED, named:
   the page's line - the window's whole-paint design (BOARD-UI).
 - **The Work tab's forty at a time is the client's**: the service still sends a region's Court and chapter writs whole,
   and fifty guild writs and fifty commissions, soonest to end (PROF6's WRIT_SHOWN).
+
+### 10.14 PACK-PICK - a piece chosen from its picture (2026-10-26)
+
+The owner's screenshot of a thread in the Discord's #feature-feedback, "SELLING ITEMS ON THE MARKET IS A PAIN!", Cl3arSky:
+**"When selling items from backpack for GOLD, you get a dropdown with just the name of the item.. no description or icon,
+you gotta memorize the item names before you wanna sell, it's a PAIN. Which means, you gotta open backpack, then open the
+notice board, go through all the menus, already forgotten the item names by then lol"**. The owner: **"This needs a
+comprehensive detailed overhaul"**.
+
+FACT, read off the code before anything moved:
+
+- **A name and nothing else.** The List form chose a piece from the pack (MARKET-ANY) from a `<select>` of names - no
+  picture, no tier, no stats - so two Dwynnen Surcoats were two like options and a Rare piece stood as a Common one. A
+  crafted piece and a Masterwork to auction were chosen the same way (MARKET-AUDIT U2 had run the quality and wear on
+  after the name), and so was a trader's "Put up a piece from your pack" (HOME-VENDOR).
+- **A piece was always chosen**: the list's first, so List listed whatever stood first in the pack.
+- **What could not go was one sentence** under the form: the first eight and "and N more".
+- **The way there was four choices deep** - Market, My listings, a What list and "A piece from your pack (gold)", then
+  the piece's list - and the What list stood on "From the Stores" every time a board was opened.
+- **The look was already on the board**: a trader's row picked shows the piece's stats and magic (`scenes/vendorHost.js`
+  vendorItemStats - the look panel's rows and the trade window's magic). The List form never asked it.
+
+What changed:
+
+- **One picker** (`ui/packPicker.js`, THE ONE CONSTRUCTION SEAM): the pack's pieces as tiles, each its picture (the host's
+  `itemPicture`, MENU-ORDER's), its name, and a line under it - its tier while the loot ladder is on, its wear; a crafted
+  piece's quality and "your home" - its frame in its tier's colour (RARITY-UI's `data-rarity`). Over them a bar sifts them
+  as the pack's own stores are sifted (`ui/storeFilter.js` - WAGON-FILTER's pages, LOOT-BULK's tiers, MAT-FILTER's
+  metals, each with its count, a menu shown only where it has a choice to make) and a search of the names the tiles wear;
+  the tiles refill in place, so the field typed in is never redrawn under the keys, and a composed word is read once
+  whole (`ui/workSift.js` typedField). Under them, folded, "Not for the market (N)": every piece that may not go, each
+  pictured with why, never a press. The piece chosen is LOOKED AT over its price (`packCardNode`): its picture fitted to
+  the pack grid's box (AUDIT PACK-PICK A10: it was a tile's stretched twice over), its name in its tier's colour, the look panel's rows and its magic - the trader's look, moved to
+  `systems/item/itemLook.js` so the board's two forms and the stall read one presenter (`vendorItemStats` is it).
+- **The tiles keep their scroll**: a press redraws the window, which gives back its body's scroll and not a list's inside
+  it - the twentieth piece pressed threw the tiles back to the first (Chromium: 418 -> 0). The sift keeps it, given back
+  once the window has drawn the picker, and lets it go when the sift changes what the tiles are.
+- **Nothing chosen until a tile is pressed** - a sale takes the piece out of the pack. A press again lets it go; List
+  and "Put up for sale" wait for one ("Press a piece above to look at it and set its price.").
+- **The kinds are presses** (`ui/marketTab.js` LIST_KINDS): From your pack (a realm character's, first), From the Stores,
+  A crafted piece, An auction (Masterworks). A realm character's form opens on the pack; the kind pressed is kept for the
+  market book's session (KIND_KEPT), so the next board opens where the last was left.
+- **The Goods view holds the way to sell**: beside its filters, a realm character's "Sell from your pack" opens My
+  listings' form on the pack.
+- **A crafted piece and a Masterwork** are chosen from the same picker; a trader's stall puts up a piece from it too,
+  with the stall's own pictures and look.
+- **The dress** (`ui/enhanced/enhancedPlusStyle.js` PROF_CSS): the tiers' colours laid inside the List form
+  (`rarityVarsCss`) - the board stands on either skin, and the Plus sheet's own are laid only with the Plus skin; a
+  phone's tiles two across and its kinds two by two; a finger's press on a coarse pointer.
+- **Words**: 20 keys through the text core (`market.list.*`, `market.goods.sell`, `pack.pick.*`, `vendor.put.refused`),
+  the English catalog regenerated (`tools/l10nExtract.mjs`) and drafted in-session for the thirteen whole languages
+  (`tools/l10nInSession.mjs`), each in the words its rows already use for the pack, the market and a Masterwork; the
+  twelve still drafting owe them with the rest. `ui/marketTab.js`'s hard-coded prose 151 -> 146, `ui/vendor/vendorTab.js`'s
+  28 -> 27 (`test/systems/l10n4_hardcoded.test.js`).
+
+Not changed: the service, the wire, the market book and the request a listing sends. No price is suggested: the only
+number a client could put beside a pack's piece is its base value, and `systems/item/itemInfo.js` itemStatRows says why
+that is no shop's price - it is no market's either.
+
+DFU has no member here - Daggerfall has no market (NOTICE1, PROF5, MARKET-ANY) - and no ledger row moves. THE FOUR HOSTS:
+none is touched. The world host's market deps are as they were (bootWorld stands at its ceiling, HOST-SPLIT): the picker
+reads the host's own `itemPicture`, `goods` and `goodName`, and the stall's own `picture` and `stats`.
+
+Pins: `test/ui/packpick.test.js` (8; 28 with AUDIT PACK-PICK's, below). Six moved, each marked PIN MOVED (PACK-PICK): `test/systems/fb1001_market_goods.test.js`
+(the kinds as presses, the pack's first; the tiles and the refused tiles; a tile pressed before List),
+`test/net/goldmarket_client.test.js` (each refused piece its own tile), `test/net/prof5b_client.test.js` (the
+Masterwork a tile, pressed), `test/net/marketaudit.test.js` (U2: the quality and wear on the tile's line),
+`test/ui/audit657_board.test.js` (B3: the stall's fields its price and press, the picker over them),
+`test/ui/homevendor_ui.test.js` (what may not go folded, never pressable). Mutants: `tools/mutants/packpick.json`, 22, all
+dead; four records over the code moved re-aimed by content, all dead (`audit657.json` AUDIT657-B3-the-stalls-controls-loose,
+`fb1001_market.json` MARKET-ANY-tab-the-option-without-gold and MARKET-ANY-tab-the-refused-unsaid, `marketaudit.json`
+MARKET-AUDIT-U2-labels-bare). Measured in Chromium (`tools/noticeBoardProbe.mjs`, its market-goods, market-sell,
+market-sell-refused and (the audit's) market-sell-stores shots, a desktop's width and a phone's): a pack the producers
+fill, its pictures from the player's own ARENA2, each view inside the viewport with nothing spilling sideways, and a
+press far down the tiles keeping their scroll.
+
+### AUDIT PACK-PICK (2026-10-27, the owner: "Audit this")
+
+The author's adversarial re-read, and three passes that read the commit cold on a copy of the tree (`b40ffc8a4`), so
+the fixes made beside them never moved what they read: the code, mounted in Chromium through vite over a pack the producers fill
+(lane A); the board as a player meets it, in Chromium at a desktop's and a phone's width with the player's own ARENA2
+pictures (lane B); the pins and the record, each claim tried with a mutant (lane C). No HIGH: the piece listed is always
+the one pressed, by identity, and a double press of List is the window's one act. FOUND, each fixed and pinned
+(`test/ui/packpick.test.js`, `tools/mutants/packpick_audit.json`):
+
+- **MEDIUM - every picture landing repainted the whole window** (lanes A and B). The picker asks the host's picture for
+  every tile, and the folded pieces' too, closed or not; each picture that lands calls the tab's wake, and the wake was
+  `ui.rerender` - every tile, the card, the pack's goods and the three menus built again. Measured: 52 repaints in the
+  first seconds of My listings over a 108-piece pack, 80 over 254 (235 pictures, more than half for the closed fold); a
+  press whose pointer went down before a repaint and up after it was swallowed, and an open list closed. FIXED: the
+  tab's wake is one a frame (`ui/menu/menuGlyphs.js` frameWake - the pictures that land in one frame redraw once), the
+  List form's and the stall's both; the folded ask for no picture until unfolded. Chromium: 5 repaints over 108 pieces,
+  4 over 254; the press made under them chosen.
+- **MEDIUM - the picker's lists were not held** (lane A, the author): MARKET-AUDIT holds an answer's redraw while one of
+  the tab's lists is open, by its class (`market-select`); the picker's (`packpick-menu`) closed under the pointer as the
+  Family list did before MARKET-AUDIT. FIXED: `redraw` holds for both, and a choice made in the picker's list marks it
+  (`data-chosen`, AUDIT BOARD-SIFT's rule).
+- **MEDIUM - pins that could not fail** (lane C: 44 of 54 candidate mutants survived). Nothing pinned that a redraw keeps
+  the fold open, the words searched for or the page chosen; the menus' counts, the rule that a menu shows only with a
+  choice to make (one page, one tier, the ladder off) and a chosen page's menu kept to let it go; the search's capitals;
+  the folded sifted; the pictures, the card's and the stall's; the tiles' lines (wear, a crafted piece's tier, quality
+  and "your home", the stall's); a crafted press and a stall press letting go; the crafted card's look; the crafted and
+  auction searches kept apart; the auction's prompt; the Sell press kept for the book; the kinds' order and icons; the
+  stall's fold name, and a stall whose pack holds only refused pieces; the look's magic for an enchanted piece; the stall
+  host's look; three rules of the dress. FIXED: 15 tests, each on the producers' shapes - an enchanted Battle Axe the loot
+  table mints from a MAGIC.DEF template (unidentified, then identified), crafted pieces from `mintPiece` worn by
+  `wearCondition`, the stall host built with `createVendorHost`. Lane C's 54 run against them: 51 dead; two equivalent in
+  a browser - `opt.selected` and `s.value` each select the option alone, so dropping either changes nothing (dropping
+  both is pinned), and the pack's own store menus write both, the house idiom kept; one left as it was (below).
+- **LOW** - the fold counted every refused piece while showing the sifted ("Not for the market (3)" over none), and once
+  the last piece that could go was gone the sift that hid them had no field to clear it (lane A): FIXED, the fold counts
+  what it holds, and the folded are sifted only while the bar stands. A double click chose and let go - its second
+  press lands on the tile the first redrew (lane A): FIXED, a press whose `detail` is past one is the first's. The kinds
+  and "Sell from your pack" were the frame's `.act`, whose rules outrank a chip's: the pressed kind wore the frame's
+  gradient (lane A, both skins): FIXED, `notice-tab` chips as the views are - Chromium reads the pressed kind and the
+  pressed view alike. A tier's tile never answered the pointer - its frame's colour outranked the plain tile's hover
+  (lane A): FIXED, its own hover after it and a focus ring for every tile. The focus fell to the page after "Show
+  everything", and a picture landing took it from the fold; tiles were keyed by their place, so a piece come into the
+  pack ahead handed its focus to another (lane A): FIXED, each keyed, a tile by its name and which of that name, and the
+  window gives a keyed fold's name its focus back (`ui/noticeWindow.js` giveBack read presses and fields alone - lane B
+  measured the fold's name still losing it). The
+  card was a live region rebuilt with every repaint (lane A, the author): dropped - the count, refilled in place while
+  the search is typed, stays one. The card's picture was the tile's, fitted to a row's 26px box and stretched twice over
+  a whole-number fit (lane A, UI1): FIXED, the card asks the pack grid's own box (`SLOT_BOX.grid`) and the tiles a row's,
+  each drawn at its own size in a frame its box's, as the market's rows draw theirs - the hosts hand the box through
+  (`scenes/world.js`, `scenes/vendorHost.js`, the same lines). A realm character whose pack held nothing that may go
+  opened on the pack (the author): FIXED, the Stores' form, the pack one press away with why. Words in English beside
+  translated ones - three of the kinds, "What to list", the crafted and auction forms' empty words (lanes A and C):
+  FIXED, through the text core and drafted for the thirteen; and lane C's corrections to the first drafts, each against
+  the words its own catalog already uses - Masterwork a quality's name, capitalised (bg, cs, da, nb, ru), the catalog's
+  crafted piece (fr, pt-BR, da, nb, ro, id, ko, ru), its "Press" (cs, de, it, pt-BR) and bg's informal button. The
+  record's numbers (7 pins, 20 mutants, the card's picture twice a tile's) and the probe: corrected - the probe's pack is
+  twelve bodies' loot, so a desktop's tiles scroll and the scroll check is never a pass with nothing checked, and a shot
+  of the Stores' form is added.
+
+- **MEDIUM - a press with a paint between its down and its up was lost** (lane B; lane A's swallowed press): the tile
+  under the pointer was replaced, and the browser's click found none. A cold open at four times throttle painted every
+  112 ms (the median), and a phone's taps fell between; an answer or an act's paint can land under a press as well.
+  FIXED: the window's paint waits while a press is held in it (`ui/noticeWindow.js` render, beside BOARD-SIFT's wait on
+  a composed word) and paints once the press is let go - on a timer, so the press's own click, which follows the
+  pointer's coming up in the same task, lands first - or once it has been held two seconds. Chromium: a press with a
+  paint between its down and its up chooses its piece (none before), and ten taps under a cold open at four times
+  throttle each choose theirs.
+- **MEDIUM - the keys** (lane B): every tile a stop of the Tab key - 144 from the second tile to List over a 143-piece
+  pack - and no arrow moved between them; List and "Put up for sale" had no focus key, so any paint dropped the focus to
+  the page; "Sell from your pack" left it there as the form opened. FIXED: the tiles are one stop (the chosen tile, else
+  the first) and the arrows walk them - a tile across, a row down, Home and End; List and "Put up for sale" keyed; the
+  Sell press wears the pack kind's own key, so the focus lands on the kind it opens.
+- **LOW-MEDIUM - "A crafted piece" and "An auction" shared one choice** (lane B): a look at the auction let the crafted
+  choice go, and a Masterwork chosen there stood chosen in the sale at a price. FIXED: each kind its own (`st.list.pieces`),
+  as each already had its own search.
+- **LOW** (lane B) - presses under a finger's 44 px on a touch screen (the fold's name 14 px tall; the search, the menus
+  and the price 32): FIXED. A chosen tile told from a Rare one by its colour alone (a chosen Common's brass read as an
+  unchosen Rare's gold): FIXED, a check and a light inner line. The crafted and Masterwork pickers said "your pack" over
+  pieces in a home: FIXED, "Search by name" (the market's own words) and "Nothing matches." A refused tile answered the
+  pointer as a press does: FIXED. The fold's own list thrown back to its top by any paint (400 -> 0, both widths):
+  FIXED, kept with the tiles' scroll and let go with it.
+
+NOT CHANGED, named:
+- **The tier's word is English** (lane A): `packTierWord` reads `RARITIES[r].label`, as every window does - the pack's
+  own rarity menu (`storeRarityOptions`), the Broker's line. The ladder's names are untranslated house-wide; one window
+  translating them would name a tier two ways.
+- **The look says a line once** (lane C, C37): two identical powers on one piece read as one, where the trade window
+  lists both. The trader's look did so before PACK-PICK moved it (`vendorItemStats`, HOME-VENDOR); left as it was.
+- **The pictures' first paint** still asks every tile's picture: a cap with "Show more", as the Work tab's forty, would
+  hide pieces from the search's count; with one repaint a frame the cost measured 4-5 repaints.
+- **A press disabled while an act runs loses the focus** (lane B's List): the window's one door greys every press while
+  its act runs, and a browser takes the focus from a disabled press - as BOARD-SIFT's pager found and left it.
+- **"a piece - not an item the market knows"** on some refused tiles (lane B): the loot producers mint pieces whose
+  names ("Leather ", "Dwarven ") the market's own namer (`goodName`) does not read, and it names them so - the list it
+  replaced did the same. The producers' to mend, not the picker's.
+
+Pins: `test/ui/packpick.test.js` 28 tests (20 the audit's). Moved, each marked PIN MOVED (AUDIT PACK-PICK):
+`test/ui/menuorder.test.js` (the stall's one wake, once a frame; the market's and a stall's picture with a box).
+Mutants: `tools/mutants/packpick_audit.json` 87, all dead: lane C's 48 (its 54 less the two equivalent, the one
+left as it was, and three a fix replaced - C14 by A10, C43 by A3, C30b C30's twin), re-aimed where the fixes moved
+their lines, and 39 for lanes A's and B's findings; re-aimed by content, all dead: `packpick.json`
+PACK-PICK-pack-not-first, PACK-PICK-crafted-first-by-default, PACK-PICK-scroll-unkept and PACK-PICK-scroll-over-new-sift,
+`menuorder.json` MENUORDER-host-market-unpictured, `marketaudit2.json` MARKET-AUDIT2-redraw-under-list, `boardsift.json`
+BOARD-SIFT-window-the-paint-over-a-composed-word and BOARD-SIFT-window-the-pages-unkeyed. In Chromium over the tree as
+fixed (lanes A's and B's harnesses and `tools/noticeBoardProbe.mjs`): the numbers above, the kinds' and views' chips alike, a
+tier's tile answering the pointer, a double click choosing, a Tab from the search to the tiles and two more to the
+price, the arrows walking the tiles, the focus kept through a paint on the fold's name, List, the price, the kind and
+the menus, no press under 44 px on a touch screen, every view inside the viewport at a desktop's and a phone's width,
+and the tiles' and the fold's scroll kept at both.
 
 ## 11. Writs - the Work tab
 
@@ -3658,7 +3850,9 @@ Mac: **"2 and 4"** (2026-10-02: the Apothecary waits on Alchemy, Cooking and Jew
   "worth one quality step in any recipe"); no family step (no jeweller's choice is a quality step).
 - **The specialisations** (3.3), all four chosen now. **Gemcutter** (50) - a set gem +20%, not +10%. **Goldsmith** (50) -
   DECIDED: "Silver counts as Gold" is the **piece's** - a Goldsmith's Silver piece holds Gold's +10% and so its worth; its
-  rank stays Silver's, the metal it was made of. **THE JEWELLER'S HAND** (`jewelHand`): what of the choice at 50 a piece
+  rank stays Silver's, the metal it was made of. (RPT1026-PROGRESS, 2026-10-26: the card's own words were the design's
+  shorthand, and a private report read them as Silver standing in for Gold in a recipe; they say what
+  it does now - "Silver jewelry you make has the enchantment points and worth of Gold." - `net/professionLaw.js`.) **THE JEWELLER'S HAND** (`jewelHand`): what of the choice at 50 a piece
   carries wherever it goes - 1 a Goldsmith's Silver piece, 2 a Gemcutter's gemmed piece - signed into its record (`f`,
   `net/productRecord.js`, `jewelHandOk`) and kept on it in **0069's `products.hand`** (the cook's column - its `CHECK (1,
   2)` holds both: **no migration**); so a Gemcutter's ring bought at the market holds its points in the buyer's hands.
@@ -4070,7 +4264,7 @@ slice is built and pinned on its own (Home's "one feature at a time").
   Pine, smelt the Steel, cure the hide) at two stations, before the anvil - for DFU's own Steel Longsword, which every
   Weaponsmith shelves and every dungeon drops.
 - **The ceiling.** Law 7: a craft reaches Rare at most (a Masterwork, 8% at the best margin - 13 with a Masterwright's points, 9.2); loot reaches
-  Legendary, Aetheric, Artifact and Sigil. A crafted piece is never the best a slot holds.
+  Legendary, Aetheric, Artifact and Sigil. A crafted piece was never the best a slot holds. MASTER-ART (section 57): a Master's work is a Legendary of the lines its crafter chose, never past the Legendary band.
 - **What already works**: what wears out or is eaten - the tools (a Standard tool's 50 harvests, `TOOL_LIFE`), Repair Kits, arrows, dishes and the
   party's Feast, Potent potions, Ram Kits and the fortifications' stone, decor. Loot does not flood them.
 
@@ -4332,7 +4526,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   TEMPER-CARRIED (FIELD BUGS 2026-10-20c): the two temper sections stood in the station list of a book that carries
   nothing, and every live book carries since BAG1, whose page (`profPages.js` drawCarryStores) listed neither - the
   temper was drawn nowhere in the game. The carrying page lists both beside the anvil and the loom
-  (`profPages.js:"    ['temper-loom', (d) => drawTemper(d, rerender, kit, 'loom')],   // FB1020c TEMPER-CARRIED: the tailor's"`).
+  (`profPages.js:"    ['temper-loom', (d) => drawTemper(d, rerender, kit, 'loom')],   // CRAFT4: the tailor's"`).
   Pinned by `test/ui/fb1020c_tempercarried.test.js`; `tools/mutants/fb1020c_tempercarried.json`.
 - **The four hosts**: `scenes/world.js` wired (the pack's pieces - not worn, no market act kept on them - and the step and
   the line laid on the answer); `worldModes.js` holds the stations the pages read and no piece of its own; `exterior.js`
@@ -5372,6 +5566,9 @@ gives, arrows, a Standard tool's harvests); **the seats' works** (a fortificatio
 market** (a Masterwork with your name, commissions, regional prices); and the **Renown** a writ pays. POT-THIN is the first
 change that took a consumable back from the loot so the crafter could supply it; the next ones are 48.4's.
 
+MASTER-ART (section 57) adds the top end, sideways: at Master, a Master's work - a Legendary whose three lines the crafter
+chooses, for catalysts from three pursuits, one a day. Loot keeps the powers; crafting gives the build you want.
+
 ### 48.4 Open, for the owner (DECIDED nothing here)
 
 - **Crafting writs** - BUILT the next day, at the owner's word: section 49 (CRAFT-WRITS).
@@ -5594,30 +5791,43 @@ and the jeweller ACCEPTS EVERY GRADE of gem.
 - **The chain** (41.3): a cloth's works are planned from raw now (`chainLaw.js` `producersOf` - the cheapest fur first),
   so a Wool shirt is offered "from raw" to a loom holding four Bear Hides.
 
-### 50.3 AUDIT 32 S1, judged by the units
+### 50.3 AUDIT 32 S1, judged by the units - WOVEN-PAYS, counted
 
 - **The law** - `recipeLaw.js`: `counterMade` names the recipes S1 judges (made wholly of `COUNTER_ONLY`'s goods - the
-  152, every one the loom's); `firstCraftPays(r, own)` pays every other recipe's first as before, and a judged one's only
-  where `own` - its units the character's own, no bought and no loose one among them. Unasked, a judged recipe pays none
-  (a station that cannot see the units says the rule). FACT, pinned: every Outfitting first-craft key at tiers 1-2 (171)
-  is reachable with the character's own goods, and no key of the 332 can never pay.
-- **The service** - `server-account/src/professions.js` `craftAtAnvil`: the decision's `p` - for a judged recipe, none of
-  its inputs held as loose or bought (a station spends those first, so one held is one spent) - the very test AUDIT
-  PROF-541 B7's `bought_with` reads in the same batch; `f * p * ?13` lays the 500 on. The answer says `firstPaid` (read off
-  the piece as it stands - a repeat asked after a sale reads the sale's). A disenchant (`alchemy.js`) pays a piece wholly
-  of cloth its Enchanting XP only where the piece is its maker's own and never sold (`alchemyLaw.js` `disenchantXp`'s
-  `own`: `products.bought_with` none) - AUDIT PROF12 E2's wall, judged by the units too.
-- DECIDED: S1 stays the cloth's. A recipe partly of cloth (a boot, a bed, the Cloth Amulet) was never judged and is not;
-  the smith's stock stays outside it (every one of its goods is gathered too); and a brew keeps its own rule
-  (`alchemyLaw.js` `brewFirstPays` - the Apothecaries' sixteen have no world source, so a brew of them is bought or loose,
-  never own).
-- **The words** - `ui/craftXpWords.js`: the loom's box says the made cloth's 500 (`prof.page.craft.xpFirstOwn`) where
-  `profPages.js` `ownSpend` reads no bought or loose cloth in the Stores and none bought carried, and otherwise that such
-  cloth goes first and earns none (`prof.page.craft.xpBought`); the craft's word reads the answer's `firstPaid`
-  (`prof.craft.xpFirstBought`, an older service's answer read by the recipe); the Enchanting Station says an own piece's
-  figure and, once, the rule (`prof.page.enchant.cloth`); the loom lists its spins (`Spin`) and says where Linen and Wool
-  come from where it holds none of their goods (`prof.page.loom.noCloth`); the Outfitting how-to says it all
-  (`prof.page.how.outfitting`).
+  152, every one the loom's, single-input, of Linen or Wool: `JUDGED_CLOTH`); `firstCraftPays(r, own)` pays every other
+  recipe's first as before, and a judged one's only where `own`. WOVEN-PAYS (`01-Overview/bugs/Field-Bugs-2026-10-26b.md`;
+  the owner: "Woven cloth pays" - any cloth the character wove or spun pays its first, whatever its goods; only cloth
+  bought with silver stays walled), and its audit: `own` is NO BOLT THE CRAFT USES COUNTED AS BOUGHT WITH SILVER. A
+  unit's origin cannot say it - `bought` is also the loom's own cloth of bought goods and a guildmate's cloth out of the
+  guild Stores, `loose` also a Weavers' bolt set down and picked up again - so the service counts the bolts a character
+  buys with silver against the bolts its stations use. Unasked, a judged recipe pays none. FACT, pinned: every
+  Outfitting first-craft key at tiers 1-2 (171) is reachable with the character's own goods, and no key of the 332 can
+  never pay.
+- **The service** - `server-account/src/professions.js`: THE SILVER COUNT (`prof_silver_cloth`, migration 0177) - one a
+  bolt of `JUDGED_CLOTH` bought with silver (`buyStock`; `market.js` a Drakes buy, a courier's load as it lands, a buy
+  order filled - `silverClothIn`; never a gold buy), one off a bolt a station uses (`craftAtAnvil`, `temperPiece` -
+  `silverClothOut`), a row at nought deleted, gone with the character (`realm.js`); it began as the bought cloth held.
+  The decision's `p` - for a judged recipe, the count nought (`silverHeld`); `f * p * ?13` lays the share on. A JUDGED
+  PATTERN IS MADE BY THE CRAFT THAT LAID ITS FIRST ON (`patternMade`, `prof_crafts.first_paid`) - a craft of
+  silver-bought cloth lays none on and takes nothing, so the next craft of it that can pay still pays; a row from before
+  the column made its pattern where it was the first and its XP holds the share (`FIRST_MAKE_FLOOR`, pinned above every
+  judged craft's own XP). Every other pattern is made by any craft of it. The answer says `firstPaid` off `first_paid` (a
+  row from before it read as the decision reads it); a cloth's Stores count says its silver count beside it (`storeOf`,
+  the state's `silver`). A disenchant (`alchemy.js`) pays a piece wholly of cloth its Enchanting XP only where nothing
+  bought or looted went into it and it was never sold (`alchemyLaw.js` `disenchantXp`'s `own`: `products.bought_with`
+  none) - AUDIT PROF12 E2's wall, unchanged by WOVEN-PAYS: its XP comes again with every piece.
+- DECIDED: S1 stays the cloth's. A recipe partly of cloth (a boot, a bed, the Cloth Amulet) was never judged and is not
+  (its bolts still come off the count); the smith's stock stays outside it (every one of its goods is gathered too); and
+  a brew keeps its own rule (`alchemyLaw.js` `brewFirstPays` - the Apothecaries' sixteen have no world source, so a brew
+  of them is bought or loose, never own).
+- **The words** - `ui/craftXpWords.js`: the loom's box says the share "from cloth not bought with silver"
+  (`prof.page.craft.xpFirstOwn`) where the cloth's silver count is nought (`profPages.js` silverOf, the book's `silver`),
+  and the count and that no piece of the cloth earns its first until that many are used where one stands
+  (`prof.page.craft.xpBought`); the craft's word reads the answer's `firstPaid` (`prof.craft.xpFirstBought`: cloth
+  bought with silver, the piece's first still owed; an older service's answer read by the recipe); the Enchanting
+  Station says an own piece's figure and, once, the rule (`prof.page.enchant.cloth`: "only if nothing bought or looted
+  went into it and it was never sold"); the loom lists its spins (`Spin`) and says where Linen and Wool come from where
+  it holds none of their goods (`prof.page.loom.noCloth`); the Outfitting how-to says it all (`prof.page.how.outfitting`).
 
 ### 50.4 Every gem's grade at the jeweller's bench (Gem-Sockets 7's next slice)
 
@@ -5680,7 +5890,7 @@ twelve drafting languages owe the rest of their backlog as before (`06-Systems/L
 `src/ui/craftXpWords.js`, `src/ui/professions/profPages.js`, `server-account/src/professions.js`, `alchemy.js`, `market.js`,
 `service.js`, `wrangler.toml`, `locales/*/Port_Strings.csv` and their records. Pinned: `test/net/clothgems_law.test.js`
 (4), `test/net/clothgems_service.test.js` (2), `test/systems/clothgems_client.test.js` (2), `test/net/clothgems_gems.test.js`
-(4), `test/systems/clothgems_jewel.test.js` (2). `tools/mutants/clothgems.json` (50, all dead); re-aimed by content, each
+(4), `test/systems/clothgems_jewel.test.js` (2). `tools/mutants/clothgems.json` (50, all dead - 45 since WOVEN-PAYS and its audit retired five with the laws they killed, `01-Overview/bugs/Field-Bugs-2026-10-26b.md`); re-aimed by content, each
 still dead: `audit32` (5), `audit_uicalm_firm1`, `prof3` (2), `prof11`, `prof12` (4), `fb1015f_firstcraft` (7),
 `fb1018d_crafthowto`, `fb1018f_craftlimit` (5), `craft2`, `prof10` (4), `gem1`, `loot20`, and the version's ten. PIN MOVED:
 `prof7_law`, `prof4_law`, `craft1_chain` (the loom's works, the chain's), `fb1015f_firstcraft` (the words), `prof12_service`
@@ -6169,6 +6379,322 @@ own tests: 171, 131 and 133, all passing. No HIGH; one MEDIUM; nine LOW. Every o
   R7's floor (`test/systems/audit_gatherfeel.test.js`, `0.75 * 1000 / POSE_HZ`), PROF8's tug (`test/world/terrain/prof8_client.test.js`,
   x the band), PROF1's steady window (`test/systems/foraging/prof1_law.test.js`, `HERB_ACT`'s `wet`). Mutants:
   `tools/mutants/auditgather.json` (17 - 16 dead, the insert's guard equivalent as recorded).
+
+## 56. CRAFT-HALL - the Crafting page (BUILT 2026-10-26)
+
+A player's feedback, passed on by the owner: "The UI is poor. It's hidden behind 2 tabs. There's a lack of necessary
+information on the page regarding your level, what gives progress, progression bars, what gives a first time crafting
+bonus (or what already has)." The owner: "No exceptions and no band aids."
+
+### 56.1 What stood
+
+- Progress was on Stats > Professions; the stations were on Holdings > Stores, below the materials grid, with no link
+  between them. The tutorial told players to take that route.
+- A station gave its rank as a sentence. The Professions page showed XP as text, with no bar.
+- Nothing said what each act pays.
+- The client did not know which first-time bonuses were spent, so every box said what a first craft pays, never
+  whether it was still owed (41.9).
+- Section 8's recipe filters and Craft x N were designed but never built.
+
+### 56.2 What changed
+
+
+- **A Crafting page** on the Stats rail, beside Professions. At a station the Professions key opens it on that station
+  (`profPages.js` `professionsKeyAt`, asked by `pauseDoor.js`). Every station's own door lands there too
+  (`stationDoorAt`). The Stores page keeps its stations under the goods; both pages draw one list (`drawStations`).
+
+- **Bars.** Each station in use shows its track's header: name, rank, a bar to the next rank, XP and first-time
+  bonuses (`trackHeader`). The forge and the anvil share one Smithing header, on the anvil. The bar is full at Master,
+  and when the crafter's limit holds the track (41.10). The Crafting page opens with all five crafts' headers; each
+  opens that craft on the Professions page. The Professions page has a bar under the track's name.
+
+- **What raises a track.** The Professions page lists each act and what it pays at the player's rank, computed from
+  the same laws the service pays by (`craftHall.js` `xpSources`), plus the Firmament's bonus where there is one.
+
+- **First-time bonuses, known.** `profState` now returns what the character has made (`made`: crafted recipes, the
+  mason's two works, brewed potions). The book keeps it and records each act the service confirms. `recipeLaw.js`
+  `firstMakesSpent` keys it the way the service decides. A cloth piece made of silver-bought cloth leaves its first
+  owed, as WOVEN-PAYS decides; the book notes it made only where the answer's `firstPaid` says so. Unknown (an older
+  service) shows the old wording.
+
+- **Where they show.** The Professions page: "12 of 221 made", a meter, and the owed ones the rank can make, eight at
+  first. Stations: each pattern card says First-time bonus or Made before; a material, a jewel's piece and base, a
+  mason's work and a potion carry the same mark; the craft box says the bonus is still to earn or already made.
+
+- **Section 8, finished.** Filters over every pattern grid: All, Can make now, First-time bonus. "By tier" is the
+  material row since CRAFT2. Craft x N repeats Quick craft up to 10 times, within what the held goods (and the chain)
+  cover and what the purse pays in fees, and stops at the first refusal.
+
+### 56.3 Hosts, service, words
+
+- The station doors changed in place in `worldModes.js` and `world.js` (no host grew). `exterior.js` and
+  `dungeonContext.js` hold no station. Not a DFU member (Port-Ledger A, the professions' row).
+- The service change is acct199 (acct196, acct197, then acct198, on its branch, renumbered past WOVEN-PAYS, JEWEL-KIN and FIELD BUGS 2026-10-26r at the merges). Either side may deploy
+  first. A judged cloth pattern is made only by the craft that laid its first on, as WOVEN-PAYS decides (`madeStatement`).
+- New and changed text follows PLAIN-TEXT (`Home.md`). Each craft's how-to (`CRAFT_HOW`, `ALCHEMY_HOW`,
+  `ENCHANTING_HOW`) says where its stations stand and what they do, in 40 words or fewer. What pays XP is said once, in
+  What raises; the how-tos no longer repeat it (`fb1018d_crafthowto.test.js` pins it there).
+
+### 56.4 Pinned
+
+`test/ui/professions/crafthall.test.js` (16), through the real Worker: the state's `made`; an Ebony Longsword spending
+tier 6's first for its kin on the service and in the law; the book's record; `xpSources` against every law; the bar;
+the owed list; the station lines; the landings and the doors; the Crafting page, the Professions page and the anvil
+drawn; and 56.5's five. `tools/mutants/crafthall.json` (53, all dead).
+
+### 56.5 AUDIT HORIZONTAL (2026-10-27, the owner: "Audit this")
+
+- **AUDIT HORIZONTAL A1: What raises names a grade its act is worked at.** Each row was reckoned at the rank's top
+  grade, which no vein, tree or hide reaches past 6 and no loom piece past 5: rank 90 Outfitting read "140 XP at grade
+  7" where its best is 100 at grade 5. A gathering row is capped at its table's top (`craftHall.js` `GATHER_TOPS`: every
+  climate's veins, a dungeon's, a signature ore and a Motherlode; every wood; every hide), a station's at the highest
+  pattern the rank opens (`benchTop`). Below rank 10 the herb row offers no clean work, as a common herb has none. A
+  Court writ asks ore or stone, never a gem (`nodeLaw.js` regionWritTable). The stars' row says they raise no writ.
+  Smithing's note gives an ingot's 10 a grade beside a piece's 20.
+
+- **AUDIT HORIZONTAL A2: a craft that takes no more XP offers no first-time bonus.** Held by the crafter's limit with no
+  room left, or at Master, a craft still read "Still to earn at your rank: 133", and a first made there paid 0 XP and
+  was spent. The pages read `made` through `craftHall.js` `madeShown` (`profPages.js` `madeOf`), which names such crafts
+  `closed`: no owed list, badge, star or First-time bonus show, and its line says "This craft can rise no further, so
+  they pay nothing." Its list row's bar is full, as its header's. A craft with room left is not closed.
+
+- **The service's rule, left, and the owner's question.** `craftAtAnvil` writes `first_paid` as `f * p` whatever XP it
+  credited, so a held craft's first is spent at 0 XP (pinned as it stands). Nothing is lost while the limit holds for
+  good ("A craft never loses rank"): that first could never pay. Were the limit ever lifted, the service should spend a
+  first only where its share was credited - a WOVEN-PAYS and FIRST-BUDGET rule, for the owner, not changed here.
+
+- **AUDIT HORIZONTAL A3: `made` is one character's**, now pinned: a second character of the account crafts, cuts stone
+  and brews through the Worker, and the first's state lists none of it (`madeStatement`'s `char_id`, three mutants).
+
+- **AUDIT HORIZONTAL A4: Craft x N's button says the count typed** (`profPages.js` `craftTimes`). It said x2 and made
+  five.
+
+- **AUDIT HORIZONTAL A6:** 56.4 counted 28 mutants where the list held 30; it is counted again above.
+
+- **AUDIT HORIZONTAL A7: the Professions key's row says where it lands**: "Open your Professions page, or the Crafting
+  page at a station (online)" (`inputActions.js`, through `t()`). The alchemy and enchanting chooser's option is
+  `profPages.js` `stationActLabel`, through `t()`, where `worldModes.js` glued English. The chooser stands in the
+  interior host alone; `world.js`, `exterior.js` and `dungeonContext.js` hold none, and no host grew.
+
+- **A read a craft overtook (the lane's suspected item, proved).** A state read answered before a craft and heard after
+  it laid the older answer over the book: the craft's first showed owed again, its spent goods held and its XP gone,
+  until the next read. Every answer laid on the state moves `profBook.js` `stateGen`, and a read one overtook is read
+  again, `PROF_STATE_READS` times in all at most, as the writs' `writGen` does.
+
+- **AUDIT HORIZONTAL PT1's growth, taken back.** CRAFT-HALL's three insertions into section 8 retold 56.2 and grew its
+  long paragraph by 116 words unseen. They point to this section now, 80 words fewer.
+
+- **Pins moved:** the standing's `closed` (two), the stars' row and Smithing's note, the host's option
+  (`crafthall.test.js`); the chooser's names (`fb1011f_stationdoor.test.js`); the key's row
+  (`fb1018d_crafthowto.test.js`).
+
+## 57. MASTER-ART - a Master's work: a Legendary of the crafter's chosen lines (BUILT 2026-10-27)
+
+A player's feedback: "The horizontal MMO approach was working really well imo ... I would hate hate hate to see go down
+the path of Retail WoW, with stupid expansions that constantly overwrite your gear every single patch keeping you on a
+tread mill. Add more horizontal progression please!" The owner: "build all of it with autonomy and be as detailed as
+possible. No exceptions and no band aids." The decisions below are the record's, under that autonomy.
+
+### 57.1 What stood
+
+- Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' }),"`).
+  Tempering and the Reforge with Essence are shut for Legendary and above (`temperLaw.js:"export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);"`).
+
+- Law 7 (section 1) and 41.1 said it outright: a crafted piece is never the best a slot holds. The Legendary band came
+  only from drops.
+
+### 57.2 What was decided
+
+- **A Master's work.** A character at Master (rank 100) in a craft makes a Legendary piece of that craft's kinds: the
+  smith's weapons and armour and the jeweller's pieces (Smithing), the loom's leather and garments (Outfitting), the
+  workbench's staves and bows (Building) - every recipe whose piece wears a tier, the Wand aside (no slot takes it).
+
+- **Chosen, not gambled.** The crafter chooses its three lines - a Legendary's count (34 of the 39 records carry three) -
+  from the lines the ladder rolls for the piece's group, one that does something at most. The service rolls their values
+  in the Legendary band, never past its top (POWER-CEILING). No record, no Legendary power, no enchantment: the codex's
+  powers stay the drops'. It is the build you want, not a higher number.
+
+- **A Masterwork with the maker's mark**, its quality fixed. No XP: a Master's track is at its top.
+
+### 57.3 The price, and its bound
+
+- **The recipe's own goods**, as its craft spends them (a station's: loose units too), and the station's fee.
+
+- **Catalysts from three pursuits**, one table (`masterLaw.js:"export const MASTER_CATALYSTS = Object.freeze(["`): 2
+  Heartwood (Logging's rarest find, 2% a Clean Cut on witnessed ground), 3 Pearls (the sea's own - a net hauled at sea on
+  witnessed ground; no river or lake gives one) and 10 Arcane Essence (Enchanting). Spent only from what the service
+  counted - own or bought, never loose and never bought with gold - so a looted Pearl is no catalyst. A later material
+  (HUNTERS-MARK's trophies) is one row; the station names it by the material registry.
+
+- **One a character a UTC day**, decided by the work's own row (`prof_masters`, UNIQUE on the day).
+
+### 57.4 As built
+
+- **The law** - `src/net/masterLaw.js`, pure: `masterRecipe`, `masterOptions` (the ladder's lines for the piece's
+  group, numbers then effects, each param the kind names on the piece - a garment's attribute Personality alone; never a
+  technique), `masterChoiceRefusal` (`recipe`, `count`, `line`, `twice`, `procs`), `rollMasterLines`
+  (`masterLaw.js:"export function rollMasterLines("`: lo to hi, the ladder's own draw, off the seed - the service's
+  alone, once), `isMasterWork`.
+
+- **The record** - `productRecord.js:"export const MINT_V_MASTER = 5;"`: a Master's record stamps mint version 5 (4 on its
+  branch, renumbered past JEWEL-KIN's 4 at the merge) and signs its lines at the values the service rolled
+  (`masterLaw.js:"export const masterRecordLines = (lines) =>"`: `[kind, value]` or `[kind, value, param]`), so the
+  market and every client mint the piece the service made. The bound is
+  `productRecord.js:"export const PRODUCT_RECORD_MAX = 704;"` (it was 512): the widest record the law signs runs to 649.
+
+- **AUDIT HORIZONTAL B1: the values are signed, never rolled again.** The record named the keys and seed, and every
+  reader rolled the values from today's bands, so a band moved (even widened) made every honest Master's work a
+  `provenance` finding. The service now rolls once and signs the values; `prof_masters.lines` keeps them, and the mint,
+  the judge and a request asked again read them. The record's `l` is held to its shape
+  (`masterLaw.js:"export function masterRecordLinesValid(l) {"`), never to today's pool: the law of the day it was made
+  was the service's. MINT_V_MASTER stays 4: no deployed service ever signed the old shape, so no record needs reading.
+
+- **The service** - `masterWork.js:"export async function masterWork("`, `/v1/prof/master`: one batch, as the anvil's -
+  the rank read, the day's row, every good and catalyst held as it is spent (a Pearl jewel's own Pearl beside its three),
+  the products row and signed record, the goods out a station's way, the catalysts bought first. A progression claim of
+  the seated character (`progress.js` PROGRESS_ROUTES). Migration `0179_master_work.sql`. The state says whether today's
+  is made (`profState`'s `master`). AUDIT HORIZONTAL B3: the goods held and the recipe's own craft asked are pinned - the
+  catalysts alone make nothing, and a Smith at Master makes no leather cuirass.
+
+- **The mint** - `smithItems.js:"function applyMasterWork(item, lines) {"`: Legendary, the record's lines at their
+  signed values, its name its lines' (the mark's over it), its worth its lines'; laid whatever the switch, as the last
+  pass is. The market's piece carries the lines (`market.js` pieceOf).
+
+### 57.5 The law of the piece
+
+- **The item law** - `itemLaw.js:"function masterFindings(item, body, procs, techs, gems) {"`: a made Legendary of no
+  record is a Master's work - a Masterwork, three lines in the band, one effect at most, no technique, gem, Exalted line,
+  curse, reforge, hone or enchantment. `ITEM_LAW_VERSION` stays 14: no Master's work existed before the service that
+  makes it, whose judge is this law, so no finding of 14 is one to ask again. The item law is today's, for every piece:
+  a band narrowed past a made value, or a line taken from a group's pool, is a change of the law (its version), as for a
+  drop's lines.
+
+- **The judge** - `judge.js:"const recordLines = (record) => {"`: a piece showing a Master's lines holds a record that
+  names them, at the values it signs. A piece edited within the band passes the item law and fails here. AUDIT
+  HORIZONTAL B2: so does a plain craft's Masterwork reshaped to a Legendary of three band-top lines - its record names no
+  lines, and this clause alone finds it (pinned).
+
+- **The item maker** refuses every Legendary (`enchanting.js:"if (item?.rarity === 'legendary') return null;"`): a
+  Master's work carries no rows, and DFU's refusal of an enchanted item never reached it.
+
+- Law 7's tiers keep it from the temper and the Reforge (TEMPER_SHUT); it salvages to nothing, as every made piece.
+
+### 57.6 The station
+
+- In the craft box of the anvil, the workbench, the loom and the jeweller's bench, at Master in the recipe's craft
+  (`masterBox.js:"export function drawMasterBox(box, kit, r, { station, book, state, free, rerender, name, go }) {"`):
+  three line pickers - native selects, a key's and a finger's, 40px under Enhanced Plus - each line shown at its band's
+  two ends ("+20 to 40% damage"), a chosen line and a second effect greyed in the others; its goods and catalysts held of
+  what is asked, a short one marked; one a day, or today's made; the press; and the last work's card (its name as the
+  pack names it, Legendary, its three lines rolled).
+
+- **AUDIT HORIZONTAL B4: the box reads its own goods.** It said "the goods above", but with the Heartwood or the cracked
+  gem ticked those were the stand-in's, and its press read the station's readiness for them: a Pine Staff with 2 Planks
+  and a Heartwood pressed, and the service refused it. The station now hands the box `free` (rank, fee, hands), and the
+  box lists the recipe's own goods (`masterBox.js:"export function masterGoods(r, book) {"`) and the chain that makes
+  them from raw.
+
+- **AUDIT HORIZONTAL B6: a Pearl jewel's Pearls, as the service holds them.** The catalysts are asked of the counted
+  units alone; the jewel's own Pearl is a good, held against what the station may spend once the catalysts' share is set
+  aside. Three counted and one loose make it, as the service does; the box asked four counted. The book puts the
+  catalysts in counted, then both of a shared key.
+
+- The press is the station's own craft door with the lines: the fee, the chain of works, the kept act and its mint are a
+  craft's. world.js's door hands the page's other asks to the book
+  (`world.js:"craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false, ...more }) => {"`) - a
+  spread, no logical line in bootWorld (HOST-SPLIT). The book asks `/v1/prof/master` for a kept craft with lines
+  (`profBook.js:"const lines = Array.isArray(master) ? master.filter((x) => typeof x === 'string') : null;"`), its
+  catalysts put in from the counted bag first, and keeps the day and the card (`state.master`). AUDIT HORIZONTAL B5:
+  today's is made only by an answer of today's day - a kept work answered past midnight is the day before's, and no
+  longer shuts the box until a forced read.
+
+### 57.7 Hosts, service, wire, words
+
+- **The four hosts**: `world.js` wired (the craft door's spread, above); `worldModes.js`, `exterior.js` and
+  `dungeonContext.js` build no station page and no craft door - none to wire.
+
+- **The service** changes: a route, a table (0179), its refusals (`prof-master`, `prof-master-lines`, `prof-master-day`),
+  the state's `master`, the judge's lines. `ACCOUNT_VERSION` acct200 (acct198 before JEWEL-KIN, acct199 before FIELD BUGS 2026-10-26r). The relay's one change is AUDIT HORIZONTAL B7's loot door (57.8). The wire's
+  change is the product record's (`l` its signed lines, MINT_V_MASTER, the bound at 704); a client older than it mints a
+  Master's record as the Masterwork's Rare roll - at version 0's law where the record is past its 512.
+
+- **Words**: the station's (`prof.master.*`), the craft's word (`prof.craft.master`) and three refusals - new keys, drafted
+  with the merge.
+
+- **A departure**: Port-Ledger A, MASTER-ART. DFU crafts no piece of a rarity, and its item maker lists any unenchanted
+  piece; a Master's work is refused there.
+
+### 57.8 Not changed, named
+
+- A Master's work fills no commission and no crafting writ: both ask a piece of `prof_crafts`, and a Master's work is
+  its own row. Disenchanted, it gives its template's Essence; its catalysts are spent.
+
+- The bound is a character's: an account with three Masters makes three a day.
+
+- POWER-CEILING's rule (no line of any piece past the Legendary band) is another slice's; this roll keeps it by its own
+  draw, pinned over four thousand seeds.
+
+- **AUDIT HORIZONTAL B7: an older build holds no room's loot (LOOT-DOOR, closed).** Main's item law reads a Master's
+  work as a Legendary of no record and drops it silently, so once an older build held a room's seat, its word said the
+  container without the piece and every peer landed that. A Mounted Trophy (HUNTERS-MARK) goes the same way: main cannot
+  read the word, but a seat that read the container before the put says its older list. Now a loot room's hello says the
+  loot its build reads (`wire.js:"export const LOOT_HELLO_LAW = 1;"`, `ll`), and while the relay setting `lootDoor` is on
+  the relay refuses one that says less or none, with GROUND-GATE's words
+  (`server/src/index.js:"async _lootDoorRefusal(key, m, now) {"`).
+
+- **The door's rooms and its deploy.** A world room (its containers) and a cell (a body's pile): the relay routes acts,
+  foes and hits nowhere else (`wire.js:"export const lootRoom = (key) => streamsFoes(key);"`). The loss is a seat's; a
+  cell's body is its owner's, where an older reader only hides the piece, and the door keeps one law for both.
+  GROUND-GATE's battles and owned rooms carry none, so they are no loot rooms. The number moves, and RELAY_VERSION with
+  it, when the item law takes a piece an older law refuses. Deploy the relay first (world273, re-hashed in place); turn
+  `lootDoor` on (`/relay lootDoor on`, or the var LOOT_DOOR) once the site serves this build. An older desktop copy is
+  then told to update in those rooms.
+
+- **Every piece this PR makes, probed** with each peer on its own tree's law (main at 4c696da8d): a Master's work is
+  dropped silently; a Mounted Trophy is unreadable (AUDIT SETS M2's word, but lost as above); a named mark's drops, a
+  piece wearing a look (the look never rides), a fishing boat's Raw Fish and the crafting window's pieces read whole.
+
+### 57.9 Pinned
+
+`test/net/masterart_law.test.js` (8), `test/net/masterart_service.test.js` (8, through the real Worker - AUDIT
+HORIZONTAL B1, B2, B3, B5 and the book's B6 among them), `test/ui/professions/masterart_ui.test.js` (5 - the box's B4 and
+B6). `tools/mutants/masterart.json` (59: 58 dead, one recorded equivalent - the Rare roll's guard, which LR4's one roll a
+piece keeps as well; AUDIT HORIZONTAL B's 17 named `AUDIT-HB*`, and nine of the slice's re-aimed by content, each dead).
+AUDIT HORIZONTAL B re-aimed `crafthall`'s book-note record (dead) and moved its own pins: `audit30_laws` (the bound 704,
+`l` signed), `masterart_ui` (a Pearl jewel's catalysts three, the box handed `free`).
+
+Re-aimed by content at the slice, each dead: `bag1`, `crafthall`,
+`fb1013e_craftprocs` (3), `gatherspeed`, `int_audit`, `seat2b_peace`, `prof7`. PIN MOVED: `test/net/audit30_laws.test.js`
+(a record past 640 now, with a Master's lines), `test/systems/prof10_client.test.js` (the craft door's spread),
+`test/server/accountworker.test.js` (`prof_masters`), `test/net/fb1015f_firstcraft.test.js` (a box's own lines read with a
+Master's work section beside them - its Building is at Master), `test/ui/seat2b_peace_client.test.js` (the door's spread
+after the seat).
+
+AUDIT HORIZONTAL B7: `test/net/lootdoor.test.js` (4 - the hello's `ll`, the rooms, the setting and its floor, the
+relay's door through real Rooms, the client's hello). `tools/mutants/lootdoor.json` (17, each dead); the floor records of
+`cost2b`, `heraldcards` and `ketch_herald` re-aimed by content (dead). PIN MOVED: a current build's hello says `ll` in
+`fb1017f_groundgate`, `grantdoor_relay` and `lease1` (one without it asks the hub for the loot door), and in the hellos
+`online` and `world6biiib` hold key for key; `scale5b`'s settings and vars, `heraldcards`' floors (lootDoor is
+world273's), `relayversion`'s world273 row.
+
+## 58. HUNTERS-MARK - the Trophy Hunter built (BUILT 2026-10-27)
+
+Hunting 100's **Trophy Hunter** waited on trophies that were never built (`later: 'trophy'`, section 29). The
+bounty boards' named marks built the Mounted Trophy (template 601, `06-Systems/Bounty-Boards.md` section 12.5), so the
+spec is choosable now: "A clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast."
+
+**On the service**: a body skinned clean, of a hide of HIGH_HIDE_TIER or past it, by a character whose Hunting choice at
+100 is Trophy Hunter, answers `trophy: true` (`professionLaw.js` trophyHunted, `professions.js`). The flag rides the
+harvest's own row, so it is bounded by the rare hides' day: three an account a day. **On the client**: the hunt's kind mints
+the trophy once a body, of the beast skinned (the hide's first beast after a reload), into the pack, and says so
+(`scenes/huntHost.js` answered, `systems/hunt/trophies.js`). The Professions page's "comes when trophies are added" line
+is gone.
+
+Pins: `test/systems/huntersmark_trophies.test.js` (the Worker's answer and the kind's mint); PIN MOVED in
+`test/net/prof7_law.test.js`, `test/net/craft3_five.test.js` and `test/systems/prof7_client.test.js`.
+
+AUDIT HORIZONTAL F8: the code names this section for the Trophy Hunter (`professionLaw.js` trophyHunted and its spec,
+`huntHost.js`, `profTemplates.js`, `professions.js`, the two tests above); section 57 is MASTER-ART's.
 
 ## Appendix A - a day of a gatherer
 

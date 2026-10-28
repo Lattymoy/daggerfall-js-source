@@ -23,7 +23,7 @@ Measured first (section 2), then four questions put to the owner, and the owner 
   key whenever the weapon in hand is one of its pair's and carries no technique line of its own; a loot line on the
   weapon wins. No new key: every letter and digit is already bound (`systems/inputActions.js`, TECH1's own note).
 - **Both paths:** *yes, one of each* - a spellsword who masters two schools and two weapons holds an arcane path and a
-  martial path together; the masteries they need come from the one 2 / 2 / 1 (`masterSkills.js` MASTERY_SLOTS).
+  martial path together; the masteries they need come from the one 3 / 2 / 1 (`masterSkills.js` MASTERY_SLOTS; 2 / 2 / 1 until MASTER-THREE, `01-Overview/bugs/Field-Bugs-2026-10-26d.md`).
 - **The balance pass:** *all four* - every weapon past 100 in its own dimension (section 4); the fists' missing blow
   modifiers, the short blades' handling and the Firmament's weapon notables (BAL10, `Balance-Arc.md` section 16).
 
@@ -61,7 +61,7 @@ nothing a player could see. That is where the identity goes.
 
 - **Who.** A player with Master Skills in force (online always; offline the switch - SOFTCAP3) and at least two of the
   six weapon skills mastered. A class that can never master two of them never meets a path (`martialPossible`, by
-  `masterSkills.js` masterableCount - the ones mastered and as many more as each career group's 2/2/1 slots leave; the
+  `masterSkills.js` masterableCount - the ones mastered and as many more as each career group's 3/2/1 slots leave; the
   Growth tab's guide says so in its headline, and the Master Skills page draws no specialisation line for it - GROWTH2,
   AUDIT GROWTH LANE5-6). AUDIT MARTIAL L4 L3: it counted the career's weapon skills alone, so two that were both minor
   skills - one minor slot between them - showed the card for good; the arcane `pathPossible` the same, and both now read
@@ -88,8 +88,7 @@ nothing a player could see. That is where the identity goes.
 - **Held and awake.** A path is HELD (`martialHeld`) by my own player entity (never a peer's stand-in) with Master Skills
   in force and both its skills mastered - what answers the technique key with its signature (a technique rides the
   formula, whose skills mentoring already lowers, as a loot line's does). It is AWAKE (`martialAwake`), and its passive
-  and rider act, while it is held and I am not mentoring - and the powers add no refereed fight (`sigil.js`
-  sigilDueling) and not the beast (`isInBeastForm` - BAL6 balanced the curse on its own claws; the runner's own word,
+  and rider act, while it is held, mentoring too (MENTOR2) - and the powers add no refereed fight (`sigil.js` sigilDueling) and not the beast (`isInBeastForm` - BAL6 balanced the curse on its own claws; the runner's own word,
   "the beast knows no technique").
 - **Never at a player.** A technique never meets a player's body (TECH law 3: neither resolution weighs one), every blow
   modifier, strike and rider here refuses a player target and the Warden's ward, and a duel's blow at me passes my
@@ -138,9 +137,42 @@ swing frame of every wielder on a mod's arm). At Speed 100 a dagger already swin
 pace there is less than x1.4 (recorded, section 9).
 
 Online alone, as BAL9b and SCHOOLS2: offline the game is Daggerfall's. MY blow at a foe - never a player, never the
-Warden's ward, never in a refereed fight, never while mentoring, never the beast's claws.
+Warden's ward, never in a refereed fight, never the beast's claws.
+
+**WEAPON-GEAR** (2026-10-27, mob: "Bow and weapon fix", "Those are needed for pve"; the design in the project thread
+"Find my level fix"). The climb above reads the TRAINED skill alone, so a weapon skill's gear - an Enhances Skill
+enchantment, a Rare's or a Legendary's skill line - bought the to-hit and nothing past it, while the fists read the live
+skill whole in their roll (H2H / 10 + 1 to H2H / 5 + 1). At one kit (skill 872, Critical Strike 860) a Daedric Longsword
+struck ~390 to a fist's ~1,360.
+
+Now every weapon's blow - the four melee families' and the bow's, the Thunderlock's on
+Archery - is also worth 0.44% for each point of gear on its skill (`skills.js` skillModOf), from the first point, ADDED
+to the climb's (`weaponMastery.js:"export function weaponGearPct("`; GEAR-ADDS, mob: "they should both just stack
+additively", "need to be the same end result but also help the begingin" - the first build took the greater of the
+two, and gear paid nothing below a live 200):
+
+| trained + gear | the climb's | the gear's | the blow |
+| --- | --- | --- | --- |
+| 50 + 50 | 0 | +22% | x1.22 |
+| 100 + 100 | 0 | +44% | x1.44 |
+| 200 + 0 | +40% | 0 | x1.4 |
+| 200 + 300 | +40% | +132% | x2.72 |
+| 200 + 672 (a sheet of 872) | +40% | +296% | x4.36: Longsword ~1,215, Dai-Katana ~1,550 |
+
+(the Longsword and the Dai-Katana average blows that crit, Critical Strike 860, STR and AGI 100, an expert class - a
+paper measure, not a run). The fists keep their own roll. Gear's share is counted to `WEAPON_GEAR_PCT_MOST` 320, so the
+axe's finish and it meet the ceiling's mastery top of 400 (`Power-Ceiling.md`). The same doors as the climb: offline
+Daggerfall's, never a player, never refereed (the duel's wire clamps the skill to 100 in any case: `combat/duelCombat.js`
+DUEL_SKILL_MAX), never mentoring, never the beast. A DEPARTURE from DFU, whose weapon damage reads no skill at all.
+Pinned by `test/combat/weapon_gear.test.js` (4), `tools/mutants/weapon_gear.json` (7 dead).
 
 ## 5. MARTIAL3/4 - the fifteen paths
+
+RPT1026-PROGRESS (2026-10-26, a private report: the passive showed no sign of working, and nothing on
+the screen said it was building): Flowing Steel worked and said nothing. Its stacks stand on the HUD
+now as a chip beside the sets' and the Legendaries' - "Flowing Steel 3" and its seconds, the technique's blue
+(`systems/martialPowers.js` martialHudChips, handed on by `scenes/world.js`'s setHudSetChips, the one HUD every host's
+frame draws), as the Legendary Flow's own has since LOOT5. Pinned by `test/systems/rpt1026_progress.test.js`.
 
 Each path: a PASSIVE while awake, and a SIGNATURE TECHNIQUE with a RIDER - what the technique does past its blow, only
 when its own path's holder strikes with it awake. A form for each of the pair's families: a pair with Archery shoots
@@ -226,7 +258,7 @@ field (`systems/save/save.js` martialPath, martialPrompted; an id no table holds
 
 AUDIT MARTIAL L3 F5 - OPEN, the owner's (SCHOOLS L3 F3's question, which MARTIAL2 makes pay on every weapon): a forged
 save listing every weapon skill mastered at 200 judges clean and takes every weapon's past-100 bonus in PvE (never a
-player: every PvP strike is the referee's stub). A judge check that the masteries obey their own 2/2/1 law would cap a
+player: every PvP strike is the referee's stub). A judge check that the masteries obey their own 3/2/1 law (MASTER-THREE; 2/2/1 when this was found) would cap a
 forgery at the honest most, not stop it, and move the account version.
 
 AUDIT MARTIAL L3 F1: an OLDER build drops `martialPath` (a key it never knew), and the new build, finding none, asked
@@ -287,7 +319,7 @@ Recorded by AUDIT MARTIAL, not changed:
 none a loot technique, every number literal), the choice and its refusals, held and awake, an arcane and a martial path
 together, the save's round trip; the signature in hand through the real runner (a line wins, the bare hand, gloves with
 and without a line, the claws, the Thunderlock, a path not held, the ladder off, the shared cooldown of a real press);
-every weapon past 100 through the real blow registry on both sides of its line, and asleep offline, mentoring, in a duel,
+every weapon past 100 through the real blow registry on both sides of its line, and asleep offline, in a duel,
 as the beast, at a player or the Warden; the short blades' handling in all three swing arms and the pace with its cap
 and floor; the fists' modifiers in both cores and never the claws; every passive through its seam (the damage door and
 the evasion through the real `hurtPlayer`); every rider through the landing door and the door told by the real

@@ -7,7 +7,7 @@
 // never master two, so no martial path would ever open for it (martialPaths.js martialPossible), however long it played.
 //
 // THE SWAP. One class skill the character has NOT mastered leaves its group, and one miscellaneous skill takes its place
-// in that same group - primary for primary, major for major, minor for minor - so the 2/2/1 masteries (masterSkills.js)
+// in that same group - primary for primary, major for major, minor for minor - so the 3/2/1 masteries (masterSkills.js)
 // and every slot already spent stand as they were. A mastered skill is never given up (a mastery is permanent, and a
 // held path is two of them). The skills' values do not move. The career is the character's own copy from here (the save
 // keeps the career whole - save.js), its name and every other term unchanged.

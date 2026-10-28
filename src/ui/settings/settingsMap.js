@@ -85,7 +85,7 @@ export const CATEGORIES = Object.freeze([
     sec("start", "Starting a new game", [
       "Startup/StartInDungeon", "Startup/StartCellX", "Startup/StartCellY"]),
     sec("camera", "Camera", [
-      "feat:mod-eye-of-the-beholder"]),
+      "feat:mw-shoulder-camera", "feat:mod-eye-of-the-beholder"]),
     sec("others", "Other players", [
       "card:peerSprites"]),
     sec("advanced", "Advanced", [
@@ -177,7 +177,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("accessibility", "Accessibility", [
     sec("motion", "Motion", [
-      "Controls/HeadBobbing", "Controls/CameraRecoilStrength", "port:techniqueMotion", "port:reducedMotion", "Effects/MotionBlurEnable", "Effects/MotionBlurShutterAngle",
+      "Controls/HeadBobbing", "Controls/CameraRecoilStrength", "port:techniqueMotion", "port:peerSpellShake", "port:reducedMotion", "Effects/MotionBlurEnable", "Effects/MotionBlurShutterAngle",
       "Effects/MotionBlurSampleCount", "Effects/VignetteEnable", "Effects/VignetteIntensity", "Effects/VignetteSmoothness", "Effects/VignetteRoundness",
       "Effects/VignetteRounded"]),
     sec("reading", "Readability", [

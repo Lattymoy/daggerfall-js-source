@@ -16,7 +16,7 @@
 // brief - sigilSets.js BRIEF_MAX), the sentence under the pointer; a set piece's card was 1,000 px tall in a 660 px
 // window, the three sentences alone 250 of it. The INFO box asks `{ full: true }` and says everything: the Prince and
 // the role, the stage's whole line, every tier's sentence and its Ascendant numbers.
-import { setCardView, setSleepText, wornSets, wornSetPieces, setIdOf, setById, SET_PLACES } from '../systems/sigil/sigilSets.js';
+import { setCardView, setSleepText, wornSets, wornSetPieces, setIdOf, setById, SET_PLACES, catchUpText } from '../systems/sigil/sigilSets.js';
 import { SIGIL_STAGES } from '../systems/sigil/sigil.js';
 import { sigilRuneTileUrl } from './sigilRune.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -60,7 +60,7 @@ export function setStageText(v, nameOf = (it) => String(it?.name ?? 'piece'), { 
     if (!next) return compact ? '' : v.stageName;
     // AUDIT SET U7: what it asks, as things to do - "your Boots grows" read wrong for every plural piece (boots,
     // gauntlets, greaves), and a verb that agrees with a player's own item name is no verb to trust
-    const piece = v.heldPiece ? `grow your ${nameOf(v.heldPiece)}` : null;
+    const piece = v.heldPiece ? `grow your ${nameOf(v.heldPiece)}${v.catchUp ? ` (${catchUpText(v.catchUp, next)})` : ''}` : null;   // SET-CATCHUP: the price, and how fast it is paid
     if (piece && v.renownNext) return `${at}${next}: ${piece}, reach Renown ${v.renownNext}`;
     if (piece) return `${at}${next}: ${piece}`;
     if (v.renownNext) return `${at}${next} at Renown ${v.renownNext}`;

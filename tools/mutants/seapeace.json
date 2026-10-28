@@ -190,8 +190,8 @@
   },
   {
     "name": "SEAPEACE-the-prize-let-go-before-the-grapple",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      for (const x of ships) if (!x.theirs && chased.has(x.id)) x.engaged = true;",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "  for (const x of ships) if (!x.theirs && chased.has(x.id)) x.engaged = true;",
     "new": "",
     "tests": [
       "test/systems/naval/seapeace.test.js"

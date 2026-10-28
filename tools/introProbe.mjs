@@ -1,4 +1,6 @@
 // INTRO2: live browser/audio integration, independent of the rendered preview.
+// TITLE-DOOR (2026-10-27): the held title is the menu's landing - the film lands, steps under the menu and is let go when
+// a game is chosen; Skip intro, Escape and the player's Skip start video land on the title, not past it.
 // Run: node tools/introProbe.mjs [output-directory]. Starts its own Vite server.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
@@ -40,6 +42,22 @@ const seek = async (page, time) => {
   const n = await page.evaluate(t => window.__intro.seek(t), time);
   await page.waitForFunction(({ n, time }) => window.__intro.state.frames > n && window.__intro.state.time === time, { n, time });
 };
+// TITLE-DOOR: a seek past the mark's rest lands the title, which then holds its own frame (and draws only on a change)
+const seekTitle = async (page) => {
+  await page.evaluate(t => window.__intro.seek(t), TITLE_READY_TIME + 2);
+  await page.waitForFunction(() => window.__intro.state.phase === 'landed');
+};
+/** TITLE-DOOR: the layout at rest - no transition running (the mark's rise) and two frames laid since (a repaint's foot
+ *  measured, its stage resized). Frame-synced, never a sleep: SwiftShader draws a frame in seconds (Home.md, Process). */
+const settled = async (page) => {
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+};
+/** TITLE-DOOR: the menu is up over the landed title, its fade done, and takes presses. */
+const doorsLive = (page) => page.waitForFunction(() => {
+  const menu = document.querySelector('#enhanced-menu');
+  return menu && !menu.inert && menu.querySelector('.px-home.px-title .px-menu button');
+});
 try {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   const page = await ctx.newPage(); follow(page);
@@ -54,14 +72,14 @@ try {
     window.__samples = [];
     const sample = () => {
       const state = window.__intro.state, theme = window.__intro.theme;
-      if (state.phase === 'menu' || state.phase === 'disposed') return;
+      if (state.phase === 'released' || state.phase === 'disposed') return;
       window.__samples.push({ ...state, audioTime: theme.time() });
-      requestAnimationFrame(sample);
+      if (state.phase !== 'landed') requestAnimationFrame(sample);   // TITLE-DOOR: the landing frame is the last - the title then holds its own
     };
     requestAnimationFrame(sample);
   });
-  await page.waitForFunction(() => window.__intro.state.phase === 'hold', null, { timeout: 150000 });   // INTRO4: the film runs to bar 16, 49 s
-  await page.waitForFunction((t) => window.__intro.state.time > t, TITLE_READY_TIME + 1.5);
+  await page.waitForFunction(() => window.__intro.state.phase === 'landed', null, { timeout: 150000 });   // INTRO4: the film runs to bar 16, 49 s; TITLE-DOOR: and lands
+  await page.waitForTimeout(800);   // TITLE-DOOR: the doors' fade and the mark's rise
   await shot(page, '06-final-title');
   const live = await page.evaluate(() => ({ samples: window.__samples, snapshot: window.__intro.snapshot() }));
   writeFileSync(`${out}/live-timing.json`, JSON.stringify(live, null, 2));
@@ -97,28 +115,48 @@ try {
   check('logo lands on the first available presentation frame after the measured attack',
     landed && landingDelay >= 0 && landingDelay <= landed.frameMs / 1000 + 0.01,
     { delayMs: landingDelay * 1000, frameMs: landed?.frameMs });
-  check('final splash holds for player input', live.snapshot.phase === 'hold' && await page.locator('#enhanced-menu').count() === 0);
+  // TITLE-DOOR: the title is the landing - the menu stands on it with no press asked, the film held under it
+  check('the landed title is the menu\'s landing - the doors on it, the film held under it', live.snapshot.phase === 'landed' && await page.evaluate(() => {
+    const intro = document.querySelector('#intro'), menu = document.querySelector('#enhanced-menu');
+    return !!intro && !!menu && intro.classList.contains('intro-landed') && document.documentElement.dataset.introTitle === 'held'
+      && menu.dataset.overTitle === '' && getComputedStyle(menu).backgroundColor === 'rgba(0, 0, 0, 0)'
+      && Number(getComputedStyle(intro).zIndex) < Number(getComputedStyle(menu).zIndex)
+      && !!menu.querySelector('.px-home.px-title .doorbtn.door-online') && !menu.querySelector('.px-ground, .px-wordmark');
+  }));
+  check('the held title draws no frame while it waits', await (async () => {
+    const before = await page.evaluate(() => window.__intro.state.frames);
+    await page.waitForTimeout(800);
+    return await page.evaluate((n) => window.__intro.state.frames === n, before);
+  })());
   const beforeMenuTime = live.snapshot.time;
-  await page.locator('.intro-continue').click();
-  check('menu is inert beneath the fade', await page.evaluate(() => document.querySelector('#enhanced-menu')?.inert));
-  await page.keyboard.press('Enter'); await page.keyboard.press('Space');
-  await page.waitForFunction(() => window.__intro.state.phase === 'menu');
-  check('same source advances into the menu at the lower gain', await page.evaluate(({ time, gain }) => {
+  check('the score keeps the title\'s level until the player presses', await page.evaluate((gain) => window.__intro.theme.level !== gain, MENU_THEME_GAIN));
+  await doorsLive(page);
+  await page.mouse.click(4, 360);   // bare map: a press that is no door's
+  check('the first press takes the same source down to the menu\'s level', await page.evaluate(({ time, gain }) => {
     const t = window.__intro.theme;
-    return t.source === window.__sourceBefore && t.time() > time && t.level === gain && t.gain.gain.value < 0.3 && t.context.state === 'running';
+    return t.source === window.__sourceBefore && t.time() > time && t.level === gain && t.context.state === 'running';
   }, { time: beforeMenuTime, gain: MENU_THEME_GAIN }));
-  check('transition input cannot activate a menu action', await page.locator('#pick').count() === 0 && await page.locator('#enhanced-menu').count() === 1);
-  check('shared supplied logo loads in the main menu', await page.locator('.px-wordmark .brand-logo').evaluate((img, w) => img.complete && img.naturalWidth === w, LOGO_W));
+  check('shared supplied logo stands in the landed title', await page.locator('.intro-title .brand-logo').evaluate((img, w) => img.complete && img.naturalWidth === w, LOGO_W));
   await shot(page, '07-main-menu');
   await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings/settings.js'); setValue('Controls', 'MusicVolume', 0); });
   await page.waitForFunction(() => window.__intro.theme.gain.gain.value < 0.001);
   check('menu music obeys live volume settings', true);
   await closeAccount(page);
+  // TITLE-DOOR: a section stands on its own ground over the held film, and its way home is the title again
+  await page.locator('#enhanced-menu .px-homelink.door-settings').click();
+  check('a section covers the held title with its own ground', await page.evaluate(() => {
+    const menu = document.querySelector('#enhanced-menu');
+    return !!document.querySelector('#intro') && menu.dataset.overTitle === undefined && getComputedStyle(menu).backgroundColor !== 'rgba(0, 0, 0, 0)' && !!menu.querySelector('.shell .brand-home .brand-logo');
+  }));
+  await page.locator('#enhanced-menu .railbtn.railhome').click();
+  check('the way home is the title again', await page.evaluate(() => !!document.querySelector('#enhanced-menu .px-home.px-title') && document.querySelector('#enhanced-menu').dataset.overTitle === ''));
   if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+  await shot(page, '08-offline-on-title');
   await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
   await page.waitForSelector('#pick');
   check('starting a game releases audio before the data picker', await page.evaluate(() => window.__intro.theme.disposed && !window.__intro.theme.context && !window.__intro.theme.source && !window.__intro.theme.buffer));
+  check('and lets the title go with it', await page.evaluate(() => !document.querySelector('#intro') && document.documentElement.dataset.introTitle === undefined));
   await ctx.close();
 
   // Audio interruption is isolated from the sync measurement above: resume
@@ -134,9 +172,14 @@ try {
   });
   await pausedPage.waitForFunction(() => window.__intro.state.phase === 'paused' && performance.now() - window.__pause.wall > 250);
   check('audio suspension freezes the film', await pausedPage.evaluate(() => window.__intro.theme.time() === window.__pause.time));
+  // TITLE-DOOR: the resume is read against the wall time since its own press, not a fixed second - a software GPU draws a
+  // frame in 2 to 9 s, so the frame-polled wait below can let more than a second of score pass before the read (the check
+  // failed so on INTRO4's run, before this change). A jump by wall time adds the whole pause, which is held over 250 ms.
+  const resumedAt = await pausedPage.evaluate(() => performance.now());
   await pausedPage.locator('.intro-begin').click();
   await pausedPage.waitForFunction(() => window.__intro.state.phase === 'playing' && window.__intro.theme.time() > window.__pause.time + 0.05);
-  check('resuming continues the score instead of jumping by wall time', await pausedPage.evaluate(() => window.__intro.theme.time() < window.__pause.time + 1));
+  const resumed = await pausedPage.evaluate((at) => ({ advanced: window.__intro.theme.time() - window.__pause.time, sinceResume: (performance.now() - at) / 1000, paused: (at - window.__pause.wall) / 1000 }), resumedAt);
+  check('resuming continues the score instead of jumping by wall time', resumed.paused > 0.25 && resumed.advanced <= resumed.sinceResume + 0.15, resumed);
   await pausedContext.close();
 
   // INTRO2b (Mac): a phone player taps the SCREEN, and a browser grants audio
@@ -196,26 +239,38 @@ try {
       const words = await p.evaluate(() => [...document.querySelectorAll('.intro-label[data-kind=province]')].map((n) => { const r = n.firstChild.getBoundingClientRect(); return { name: n.textContent, x: r.x + r.width / 2, y: r.y + r.height / 2, shown: !n.hidden }; }));
       check('desktop: the nine provinces are named over the continent, every one in frame', words.length === 9 && words.every((w) => w.shown && w.x > 0 && w.x < 1280 && w.y > 0 && w.y < 720), words);
     }
-    await seek(p, TITLE_READY_TIME + 2);
-    const layout = await p.evaluate((w) => {
-      const logo = document.querySelector('.intro-title img'), button = document.querySelector('.intro-continue');
-      const a = logo.getBoundingClientRect(), b = button.getBoundingClientRect();
-      return { width: innerWidth, height: innerHeight, logo: { x: a.x, y: a.y, width: a.width, height: a.height, bottom: a.bottom, right: a.right }, button: { y: b.y, bottom: b.bottom, height: b.height }, loaded: logo.naturalWidth === w };
+    await seekTitle(p);
+    await doorsLive(p);
+    await closeAccount(p);
+    await settled(p);   // TITLE-DOOR: the mark risen to its landed place, the repaint's foot measured
+    // TITLE-DOOR: the mark at its landed place, the doors in the band under it and over the foot - both questions, then the
+    // offline games
+    const layout = async () => p.evaluate((w) => {
+      const logo = document.querySelector('.intro-title img'), doors = [...document.querySelectorAll('#enhanced-menu .px-menu .doorbtn')], foot = document.querySelector('#enhanced-menu .px-foot');
+      const a = logo.getBoundingClientRect(), rects = doors.map((d) => d.getBoundingClientRect());
+      return { width: innerWidth, height: innerHeight, logo: { x: a.x, y: a.y, width: a.width, height: a.height, bottom: a.bottom, right: a.right }, loaded: logo.naturalWidth === w,
+        doors: { top: Math.min(...rects.map((r) => r.top)), bottom: Math.max(...rects.map((r) => r.bottom)), left: Math.min(...rects.map((r) => r.left)), right: Math.max(...rects.map((r) => r.right)), least: Math.min(...rects.map((r) => r.height)), count: rects.length },
+        foot: foot.getBoundingClientRect().top };
     }, LOGO_W);
-    check(`${name}: logo fits at its natural aspect and clears the tap target`, layout.loaded && layout.logo.x >= 0 && layout.logo.right <= layout.width + 1 && Math.abs(layout.logo.width / layout.logo.height - LOGO_W / LOGO_H) < 0.01 && layout.logo.bottom < layout.button.y && layout.button.bottom < layout.height && layout.button.height >= 44, layout);
+    const fits = (l) => l.loaded && l.logo.x >= 0 && l.logo.right <= l.width + 1 && Math.abs(l.logo.width / l.logo.height - LOGO_W / LOGO_H) < 0.01
+      && l.logo.bottom <= l.doors.top + 1 && l.doors.bottom <= l.foot + 1 && l.doors.left >= 0 && l.doors.right <= l.width && l.doors.least >= 44;
+    const top = await layout();
+    check(`${name}: the mark fits at its natural aspect, the two questions under it and over the foot`, fits(top) && top.doors.count === 2, top);
     await shot(p, `title-${name}`);
-    await p.locator('.intro-continue').click(); await p.waitForSelector('#intro', { state: 'detached' });
-    await shot(p, `menu-${name}`);
-    check(`${name}: handoff opens a usable menu`, await p.locator('.px-menu button').count() > 0 && !await p.locator('#enhanced-menu').evaluate(el => el.inert));
+    await p.locator('#enhanced-menu .doorbtn.door-offline').click();
+    await settled(p);
+    const games = await layout();
+    check(`${name}: the offline games fit the same band`, fits(games) && games.doors.count === 5, games);
+    await shot(p, `title-offline-${name}`);
     await c.close();
   }
 
   const failure = await browser.newContext(), fp = await failure.newPage(); follow(fp);
   await fp.route('**/theme.mp3*', route => route.abort());
   await fp.goto(`${base}?introdebug`); await ready(fp); await fp.locator('.intro-begin').click();
-  await fp.waitForFunction(() => window.__intro.state.phase === 'hold');
-  check('missing score offers the final card with an explicit message', (await fp.locator('.intro-footer').textContent()).includes('couldn’t load'));
-  await fp.locator('.intro-continue').click(); await fp.waitForSelector('#intro', { state: 'detached' });
+  await fp.waitForFunction(() => window.__intro.state.phase === 'landed');
+  check('missing score lands the title with an explicit message', (await fp.locator('.intro-footer').textContent()).includes('couldn’t load'));
+  await doorsLive(fp);
   check('missing score never blocks the menu', await fp.locator('.px-menu button').count() > 0);
   await failure.close();
 
@@ -224,12 +279,26 @@ try {
   const blocked = new Promise(resolve => { release = resolve; });
   await sp.route('**/theme.mp3*', async route => { await blocked; await route.continue().catch(() => {}); });
   await sp.goto(`${base}?introdebug`); await sp.waitForSelector('.intro-skip', { timeout: 120000 });   // MAIN-RED: a dev page, as ready()
-  await sp.locator('.intro-skip').click(); await sp.waitForSelector('#intro', { state: 'detached' });
-  check('skip works while audio is still loading', await sp.locator('.px-menu button').count() > 0);
-  release();
+  await sp.locator('.intro-skip').click(); await sp.waitForFunction(() => window.__intro.state.phase === 'landed'); await doorsLive(sp);
+  check('skip works while audio is still loading - it lands on the title', await sp.locator('.px-home.px-title .px-menu button').count() > 0);
+  release();   // before the score's own 15 s load limit
   await sp.waitForFunction(() => window.__intro.theme.source !== null, null, { timeout: 30000 });
   check('late audio joins the menu at the menu level', await sp.evaluate(gain => window.__intro.theme.level === gain, MENU_THEME_GAIN));
+  // TITLE-DOOR: skipped at the gate, the title stands before its map is drawn - the film's own ground, then the map in
+  await sp.waitForFunction(() => window.__intro.state.landscapeReady !== undefined && getComputedStyle(document.querySelector('.intro-landscape')).opacity === '1', null, { timeout: 180000 });
+  check('the map fades in under a title skipped to before it was built', true);
   await slow.close();
+
+  // UXB1-A + TITLE-DOOR: the player's Skip start video opens on the title - no gate, no film - and the score waits for a press
+  const pref = await browser.newContext({ viewport: { width: 1280, height: 720 } }), pp = await pref.newPage(); follow(pp);
+  await pp.goto(`${base}?introdebug`); await pp.waitForSelector('.intro-skip', { timeout: 120000 });
+  await pp.evaluate(async () => { const { setPref } = await import('/src/systems/uiPrefs.js'); setPref('skipStartVideo', true); });
+  await pp.reload(); await pp.waitForFunction(() => window.__intro?.state.phase === 'landed', null, { timeout: 120000 }); await doorsLive(pp);
+  check('Skip start video opens on the title, no gate and no film before it', await pp.evaluate(() => document.querySelector('.intro-gate').hidden && document.querySelector('.intro-skip').hidden && !!document.querySelector('.px-home.px-title') && !window.__intro.theme.source));
+  await pp.mouse.click(4, 360);
+  await pp.waitForFunction(() => window.__intro.theme.source !== null, null, { timeout: 30000 });
+  check('and its first press starts the score at the menu\'s level', await pp.evaluate(gain => window.__intro.theme.level === gain, MENU_THEME_GAIN));
+  await pref.close();
   check('no uncaught page errors', errors.length === 0, errors);
 } catch (error) { check('probe completed', false, error.stack); }
 finally {

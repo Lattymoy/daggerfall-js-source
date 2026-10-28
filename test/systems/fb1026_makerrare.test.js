@@ -61,7 +61,7 @@ test('MAKER-RARE, the report: a Masterwork Daedric Cuirass is on the item maker\
 
 test('MAKER-RARE: a found Rare is out while unidentified - the maker would show its rows and identify it for nothing - and on its tab once identified, of every group a Rare rolls on, both cuts of clothing; a side effect the maker laid still buys its points; DFU\'s own magic and the artifacts stay out by DFU\'s refusal and a Legendary by its tier; a Rare whose rows are not its ladder\'s - one more, one its ladder never rolls, a magic or artifact mark forged on it - stays out (AUDIT MAKER-RARE C5); and with the ladder switched off the maker is DFU\'s (A2)', () => {
   setPref('lootRarity', true);
-  const find = () => applyRarity(armorOfMaterial(ARMOR_ENUM.Helm, ARMOR_MATERIAL.Ebony), 'rare', lcg(5));
+  const find = () => applyRarity(armorOfMaterial(ARMOR_ENUM.Helm, ARMOR_MATERIAL.Ebony), 'rare', lcg(14));   // ARMOR-LEAN: seed 5 -> 14, the first that still rolls Water Breathing (5's is Repairs Objects on plate's lean)
   const helm = find();
   assert.deepEqual([helm.rarity, helm.enchantments, helm.isIdentified], ['rare', [{ type: T.CastWhenHeld, param: 42 }], undefined], 'a drop: Water Breathing, unidentified');
   assert.deepEqual([listedOn(helm), keptEnchantments(helm), rareKeeps(helm)], [[], null, false]);

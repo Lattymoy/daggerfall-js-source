@@ -12,6 +12,8 @@
 //    building, a dungeon: AUDIT PORTAL1 U1 found the host's frame returning before the portals indoors, so a portal
 //    outside a shop's door took whoever came out of it) or feet that jumped (a door, a teleport, a respawn) - and the
 //    host forgets it at every change of place besides (`forgetSteps`).
+//  - RPT1026-EVENTS GATE-WAY (systems/eventGround.js): no portal stands within EVENT_GROUND_M of an event's gate standing on
+//    this screen - a peer's word of one there is refused, and one standing when a gate rises beside it closes, taking nobody.
 //  - ONLINE: `wireRecord` is my own portal while I stand near it; `applyOwner` lands a peer's - believed only near the
 //    opener's own feet, one an opener (another id while the first stands is refused), kept to the time first said and
 //    never longer (AUDIT PORTAL1 O2: a word said again had pushed the time on, past the vortex's own life - a portal kept
@@ -22,6 +24,7 @@ import {
   PORTAL_OPEN_MS, PORTAL_SAY_REACH, PORTAL_PEER_REACH, PORTAL_REGROUND, PORTAL_STEP_GAP_MS, PORTAL_STEP_JUMP,
   portalWire, validPortalRecord, portalStepIn,
 } from '../systems/portalStone.js';
+import { eventGroundAt } from '../systems/eventGround.js';   // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
 
 const across = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 
@@ -33,12 +36,16 @@ const across = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
  * @param {{ renderer?: any, audio?: any, now?: () => number, toScene?: (p: number[]) => number[], toWire?: (p: number[]) => number[],
  *           destOf?: (x: number, y: number) => ({ pixel: { x: number, y: number }, name: string } | null),
  *           groundAt?: ((p: number[]) => number | null) | null,
- *           onEnter?: (gate: any) => void, onRefused?: (hold: string, gate: any) => void }} [deps]
+ *           onEnter?: (gate: any) => void, onRefused?: (hold: string, gate: any) => void, eventGround?: boolean }} [deps]
  */
 export function createPortalGates({
   renderer = null, audio = null, now = () => performance.now(),
   toScene = (p) => p, toWire = (p) => p, destOf = () => null, groundAt = null, onEnter = () => {}, onRefused = () => {},
+  eventGround = true,
 } = {}) {
+  /** RPT1026-EVENTS GATE-WAY: the place a portal of this pool may not stand - an event's gate's ground (the Portal Stone's
+   *  pool); an Elite Breach's call's pool keeps none (`eventGround` false - its portal is the way into the event). */
+  const offGround = (p) => eventGround && !!eventGroundAt(p);
   const fx = createPortalSet({ renderer, audio, now });
   /** @type {{ id: string, owner: string | null, native: number[], dest: { pixel: { x: number, y: number }, name: string }, until: number, fx: any, was: boolean | null, grounded: boolean }[]} */
   const gates = [];
@@ -75,6 +82,7 @@ export function createPortalGates({
     const dest = r ? destOf(r.d[0], r.d[1]) : null;
     if (!r || !dest) return false;
     if (across(toScene(r.p), from) > PORTAL_PEER_REACH) return false;
+    if (offGround(toScene(r.p))) return false;   // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here
     const old = gates.find((g) => g.owner === owner);
     if (old && now() < old.until) {
       if (old.id !== r.i) return false;   // one an opener: the first stands its time
@@ -105,6 +113,7 @@ export function createPortalGates({
       const g = gates[i];
       if (t >= g.until) { drop(g); continue; }
       let at = toScene(g.native);
+      if (offGround(at)) { drop(g); continue; }   // RPT1026-EVENTS GATE-WAY: a gate risen beside it closes it - it takes nobody running to the fire
       if (!g.grounded && groundAt) {
         const y = groundAt(at);
         if (Number.isFinite(y)) {
