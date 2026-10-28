@@ -20772,7 +20772,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!relayCfgLink?.sendRelayCfg({ k: c.k, v: c.v })) say('The relay\'s settings need the hub online, on a relay that takes them.');
       return;
     }
-    if (c.cmd === 'dragon') { staffDragon.command(c, say); return; }   // DRAGON-RIDE
+    if (c.cmd === 'dragon') return staffDragon.command(c, say);   // DRAGON-RIDE
     if (c.cmd === 'god' || c.cmd === 'fly') {
       setStaffPowers({ [c.cmd]: c.on });
       say(`${c.cmd === 'god' ? 'God mode' : 'Flying'} ${c.on ? 'on' : 'off'}.`);
