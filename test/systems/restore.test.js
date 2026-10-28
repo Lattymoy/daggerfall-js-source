@@ -17,7 +17,7 @@ import { _resetKeyForTests } from '../../server-account/src/signing.js';
 import { r2 } from '../realmSeat.mjs';
 import { ACCEPTED } from '../../src/net/legalLaw.js';   // TERMS1 (at the merge with main): a request that makes an account carries the versions ticked
 import { reclaimCustomsDeeds, reclaimFromDevice, reclaimLines, applyCustoms } from '../../src/systems/realmCustoms.js';
-import { createBankAccounts, createHouses, allocateHouseToPlayer, ownsHouse, ownsShip, sellHouse, sellShip, SHIP_TYPES, SHIP_INTERIOR_MAP_IDS, CROSSED_DEED_LINES, TRANSACTION_RESULT } from '../../src/systems/banking.js';
+import { createBankAccounts, createHouses, allocateHouseToPlayer, ownsHouse, ownsShip, sellHouse, sellShip, SHIP_TYPES, SHIP_INTERIOR_MAP_IDS, CROSSED_DEED_LINES, TRANSACTION_RESULT, regionDeeds } from '../../src/systems/banking.js';
 import { interiorSceneName } from '../../src/systems/sceneCache.js';
 import { BUILDING_KEY_0 } from '../../src/systems/talk/talkTopics.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
@@ -92,12 +92,17 @@ test('RESTORE B: only the evidence gives back - a house the realm character sold
   realm.sceneCache.permanentScenes = realm.sceneCache.permanentScenes.filter((n) => n !== interiorSceneName(1017, 5));
   realm.sceneCache.permanentScenes = realm.sceneCache.permanentScenes.filter((n) => n !== interiorSceneName(SHIP_INTERIOR_MAP_IDS[SHIP_TYPES.Small], BUILDING_KEY_0));
   assert.deepEqual(reclaimCustomsDeeds(realm, offline), { houses: [], ship: false, pieces: 0 });
-  // a house of its own in that region now, and a ship of its own: kept, nothing taken, nothing doubled
+  // PIN MOVED (HOUSES-3: three houses a region): a house of its own in that region now leaves room - the kept one comes
+  // back beside it; THREE of its own there, and a ship of its own: kept, nothing taken, nothing doubled
+  const realm1 = strippedByOldCustoms(offline);
+  allocateHouseToPlayer(realm1.houses, 17, { buildingKey: 88, mapId: 2017, location: 'Wayrest' });
+  assert.deepEqual(reclaimCustomsDeeds(realm1, offline).houses, ['Wayrest']);
+  assert.deepEqual(regionDeeds(realm1.houses, 17).map((d) => [d.buildingKey, !!d.crossed]), [[88, false], [5, true]], 'beside its own, marked');
   const realm2 = strippedByOldCustoms(offline);
-  allocateHouseToPlayer(realm2.houses, 17, { buildingKey: 88, mapId: 2017, location: 'Wayrest' });
+  for (const key of [88, 89, 90]) allocateHouseToPlayer(realm2.houses, 17, { buildingKey: key, mapId: 2017, location: 'Wayrest' });
   realm2.ownedShip = SHIP_TYPES.Large;
   assert.deepEqual(reclaimCustomsDeeds(realm2, offline), { houses: [], ship: false, pieces: 0 });
-  assert.deepEqual([realm2.houses[17].buildingKey, realm2.ownedShip, realm2.shipCrossed], [88, SHIP_TYPES.Large, undefined]);
+  assert.deepEqual([regionDeeds(realm2.houses, 17).map((d) => d.buildingKey), realm2.ownedShip, realm2.shipCrossed], [[88, 89, 90], SHIP_TYPES.Large, undefined]);
   // bought offline AFTER customs: its room was never in the realm's copy
   const later = garysOffline();
   const realm3 = strippedByOldCustoms(later);

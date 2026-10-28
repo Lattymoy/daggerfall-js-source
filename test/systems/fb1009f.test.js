@@ -81,3 +81,15 @@ test('HOUSE-WAITS: taking up the line makes the heir current and of age, stores 
   assert.equal(readBirth(tab, kid.id, 60)?.familyId, f.id);
   assert.equal(takeUpLine({ storage, tab, familyId: f.id, personId: f.pending.fallenId }).ok, false, 'never the fallen');
 });
+
+test('BAY-LEFT-B B1: the waiting house\'s birth names the seat\'s map id beside its names - a seat past the Bay is booted by it (mutant: the id dropped)', () => {
+  const { f, kid } = fallenLine();
+  f.seat = { region: 'Skyrim', loc: 'Solitude', mapId: 0x34180001 };
+  const storage = mem(), tab = mem();
+  storeFamily(storage, f);
+  assert.deepEqual(takeUpLine({ storage, tab, familyId: f.id, personId: kid.id, now: 50 }).place, { region: 'Skyrim', loc: 'Solitude', mapId: 0x34180001 });
+  const bay = fallenLine(), storage2 = mem();
+  bay.f.seat = { region: 'Daggerfall', loc: 'Ashbury' };
+  storeFamily(storage2, bay.f);
+  assert.deepEqual(takeUpLine({ storage: storage2, tab: mem(), familyId: bay.f.id, personId: bay.kid.id, now: 50 }).place, { region: 'Daggerfall', loc: 'Ashbury' }, 'a seat with no id, its names alone');
+});

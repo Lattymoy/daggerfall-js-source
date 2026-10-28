@@ -217,7 +217,7 @@ test('PROF1 service: the witnessed pixel - three accounts a week old agreeing co
   const liar = await s.seated('Eve');
   const r = await s.call('/v1/prof/harvest', harvestBody(liar, p, { region: DAGGERFALL }), liar.secret);
   assert.deepEqual([r.status, r.body], [409, { error: 'prof-pixel' }], 'the confirmed answer stands');
-  assert.deepEqual((await s.call('/v1/prof/pixels', { character: liar.character, pixels: [[1000, 1]] }, liar.secret)).body, { error: 'bad-pixels' });
+  assert.deepEqual((await s.call('/v1/prof/pixels', { character: liar.character, pixels: [[8192, 1]] }, liar.secret)).body, { error: 'bad-pixels' });   // PIN MOVED (WW-C1, bible/03-World/World-Wide.md WW-C): past the world's grid - a province's pixel past the Bay's map is ground
 });
 
 // ─── WITHDRAW TO THE PACK ────────────────────────────────────────────
@@ -267,7 +267,7 @@ test('PROF1 service: Court writs - a region posts none until its ground is witne
     assert.ok(w.tier <= 2, 'an unconfirmed pixel\'s ground asks tiers 1-2 only');
   }
   assert.deepEqual((await list()).writs, l.writs, 'the day\'s writs never change under the players');
-  assert.deepEqual((await s.call('/v1/writs/list', { character: mac.character, region: 62 }, mac.secret)).body, { error: 'bad-region' });
+  assert.deepEqual((await s.call('/v1/writs/list', { character: mac.character, region: 71 }, mac.secret)).body, { error: 'bad-region' });   // PIN MOVED (WW7-5): past the world's regions
 });
 
 test('PROF1 service: a Court writ taken - filled whole from the Stores (bought first), the pay struck as a `writ` line, twice the pay in Herbalism XP, the Renown credited; asked twice it is one; another\'s is taken; three a day', async () => {

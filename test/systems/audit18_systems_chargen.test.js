@@ -299,6 +299,6 @@ test('AUDIT 20: the HEADLESS chargen path attaches the faction store too', { ski
   const entity = { stats: {}, skills: 30, items: [] };
   await applyHeadlessChargen(entity, 1, { fetchBytes: async (n) => arena(n) });
   assert.ok(entity.factionRep, 'the headless path builds the store');
-  assert.equal(entity.factionRep.dict.size, 366, 'the whole faction file');
+  assert.equal(entity.factionRep.dict.size, 366 + 36, 'the whole faction file');   // PIN MOVED (PROVINCE-COURTS): and the provinces' own courts and people (systems/faction/provinceFactions.js), through the store's door
   assert.equal(getReputation(entity.factionRep, 41), 0, 'and it reads');
 });

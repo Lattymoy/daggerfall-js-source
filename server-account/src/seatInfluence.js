@@ -66,7 +66,7 @@ import { fortTierAt } from './seatForts.js';   // SEAT2b part two: the Shrine st
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
 import { RENOWN_XP_REPORT_MAX } from '../../src/net/renown.js';
 import {
-  seatWeekOf, seatWeekStartMs, seatPhaseOf, seatRegionOk, seatKeyOk, seatMay, SEAT_POWERS, SEAT_PLEDGE_REGIONS_MAX, SEAT_MEMBER_WAIT_S,
+  seatWeekOf, seatWeekStartMs, seatPhaseOf, seatRegionOk, gateRegionOk, seatKeyOk, seatMay, SEAT_POWERS, SEAT_PLEDGE_REGIONS_MAX, SEAT_MEMBER_WAIT_S,
   SEAT_PLEDGES_HOUR, SEAT_WATCH_CLAIM_MAX, WATCH_DAY_CAP, GATE_INFLUENCE, GATE_REGION_AGREE, HOMES_SEAT_MAX, TRIBUTE_MARKS_PER_INFLUENCE,
   GATE_WEEK_RECEIPTS, RENOWN_WEEK_XP,   // AUDIT-SEATS S7: the account's week, every seat together
   HUNT_INFLUENCE, HUNT_WEEK_CAP,   // HUNTERS-MARK: a bounty board's clear
@@ -81,6 +81,8 @@ import { royalView } from './seatRoyal.js';   // CROWN1 part two: a Royal Tourne
 import { bansOf, politicsOf } from './seatPolitics.js';   // CROWN2: the pledges fealty and Pacts forbid; a guild's politics
 import { tideAt, TIDE_EFFECTS } from '../../src/net/tideLaw.js';   // SEASON1 part two: the Tides
 import { tideNow } from './tides.js';   // SEASON1 part two: an Orc Raid's camps
+import { domainsFor } from './domains.js';   // DOMAIN3: the region law, where DOMAINS_WEEK rules
+import { charterUnder } from '../../src/net/domainLaw.js';   // DOMAIN3: the Charter a seat is held under
 
 const weekAt = (nowS) => seatWeekOf(nowS * 1000);
 /** Whether a member row has stood its 7 days (SEAT0 4.2: "A new member waits"). */
@@ -187,6 +189,9 @@ export async function pledgeSeat({ db, nowS }, player, env, { character, key = n
   if (!seatKeyOk(key)) return { error: 'bad-seat' };
   const seat = (await confirmedSeats(db, nowS)).get(key);
   if (!seat) return { error: 'seat-unconfirmed' };
+  // DOMAIN3 (Domains law 1): where the region law rules, a region's Charter alone is pledged - its seat of power; every
+  // other seat town of the region is that Charter's holding
+  if (charterUnder(seat, await domainsFor(db, nowS, env, week)).key !== key) return { error: 'seat-not-charter' };
   // SEAT1c: a guild holding a seat in the region is pledged to it, and nowhere else there
   if (await db.prepare('SELECT 1 FROM town_seat_holds WHERE guild_id = ? AND region = ?').bind(gid, seat.region).first()) return { error: 'seat-held-here' };
   // CROWN2 (7.8): never against a liege's, a vassal's or a Pact partner's seat
@@ -227,6 +232,7 @@ export async function claimWatch({ db, nowS, subtle }, player, env, { character,
   const seats = await confirmedSeats(db, nowS);   // STORM-SHED: the isolate's kept witness rows
   const byPixel = new Map([...seats.values()].map((s) => [`${s.pixel[0]},${s.pixel[1]}`, s]));
   const week = weekAt(nowS);
+  const domains = await domainsFor(db, nowS, env, week);   // DOMAIN3: a holding's Watch is kept for its region's Charter
   let counted = 0;
   /** @type {Record<string, number>} */
   const why = {};
@@ -237,8 +243,9 @@ export async function claimWatch({ db, nowS, subtle }, player, env, { character,
     const c = v.claims;
     if (c.s !== player.id) { tally('not-yours'); continue; }
     if (weekAt(c.i) !== week) { tally('old-week'); continue; }
-    const seat = byPixel.get(`${c.x},${c.y}`);
-    if (!seat) { tally('no-seat'); continue; }
+    const town = byPixel.get(`${c.x},${c.y}`);
+    if (!town) { tally('no-seat'); continue; }
+    const seat = charterUnder(town, domains);   // DOMAIN3: the Charter the town is held under - itself under the seat law
     const at = await countsAt(db, player, character, seat.region, nowS, { key: seat.key, anyCharacter: true });
     if ('counted' in at) { tally(at.why); continue; }
     const day = utcDay(c.i);
@@ -268,6 +275,7 @@ export async function claimWatch({ db, nowS, subtle }, player, env, { character,
 export async function creditGate({ db, nowS }, player, env, { character, day, region } = {}) {
   if (!seatsOpenFor(player, env)) return { counted: false, why: 'seats-closed' };
   if (!seatRegionOk(region) || !Number.isSafeInteger(day) || day < 0) return { counted: false, why: 'no-region' };
+  if (!gateRegionOk(day, region)) return { counted: false, why: 'not-its-region' };   // WW7-3: a province's gate its own province's seats', the Bay's gate the Bay's (net/townSeatLaw.js gateRegionOk); WW-GATES-EVERYWHERE: its refusal named for what it is - 'beyond-the-bay' said a gate past the Bay was no seat's, as it was before WW7-3
   if (weekAt(Math.floor(gateTimes(day).riseAt / 1000)) !== weekAt(nowS)) return { counted: false, why: 'old-week' };
   const at = await countsAt(db, player, character, region, nowS, { anyCharacter: true });
   if ('counted' in at) return at;
@@ -507,8 +515,12 @@ export async function allIn(db, ids, sql, before = [], after = []) {
   return out;
 }
 /** Each pledged guild's week at a seat (standingsOf), the rows gathered. Exported for the Turning (seatTurning.js).
- *  SEASON1 part two: `counted` whether a Season is counted that week - the Tides roll only then. */
-export async function gatherStandings(db, seat, week, nowS, counted = false) {
+ *  SEASON1 part two: `counted` whether a Season is counted that week - the Tides roll only then. DOMAIN3: `domains` the
+ *  region law's seats of power that week (domains.js domainsFor; null where it does not rule) - at a region's seat of
+ *  power the homes counted are the whole region's, every seat town of it the Charter's holding; anywhere else the town's.
+ *  Every reader of a week's standings hands it: the board, the Turning, a Tourney's dead heat, Tribute's room. */
+export async function gatherStandings(db, seat, week, nowS, counted = false, domains = null) {
+  const region = domains?.get?.(seat.region)?.key === seat.key;
   const guilds = [...(await seatGuildsOf(db, seat.key, week)).keys()];
   if (!guilds.length) return [];
   // AUDIT-SEATS S11: summed in SQL - one row a guild, account, source, region and game or UTC day (its amount the sum, `n`
@@ -519,10 +531,11 @@ export async function gatherStandings(db, seat, week, nowS, counted = false) {
   const bindRows = await allIn(db, guilds, (qs) => `SELECT account, guild_id FROM town_seat_binds WHERE week = ? AND guild_id IN (${qs})`, [week]);   // SEAT-CAP
   const binds = new Map(bindRows.map((b) => [b.account, b.guild_id]));
   const { results: renown = [] } = await db.prepare('SELECT account, xp FROM town_seat_renown WHERE week = ? AND region = ?').bind(week, seat.region).all();
-  // the town's homes whose owning character is a 7-day member of a pledged guild (a guild's hall is no member's home)
+  // the town's homes whose owning character is a 7-day member of a pledged guild (a guild's hall is no member's home);
+  // DOMAIN3: the region's, where the region law rules
   const homes = await allIn(db, guilds, (qs) => `SELECT h.player, h.bought_at, m.guild_id FROM homes h
     JOIN guild_members m ON m.player = h.player AND m.char_id = h.char_id
-    WHERE h.map_id = ? AND h.guild_id IS NULL AND m.guild_id IN (${qs}) AND m.joined_at <= ?`, [seat.key], [nowS - SEAT_MEMBER_WAIT_S]);
+    WHERE h.${region ? 'region' : 'map_id'} = ? AND h.guild_id IS NULL AND m.guild_id IN (${qs}) AND m.joined_at <= ?`, [region ? seat.region : seat.key], [nowS - SEAT_MEMBER_WAIT_S]);
   const days = [...new Set(rows.filter((r) => r.source === 'gate').map((r) => Number(r.day)))];
   const agreed = await agreedGateRegions(db, days);
   // CROWN1 (4.3): each guild's reach here - the crowns it holds, at a palace seat of their kingdom or March
@@ -544,7 +557,7 @@ export async function readStandings({ db, nowS }, player, env, { key, character 
   if (!seat) return { error: 'seat-unconfirmed' };
   const week = weekAt(nowS);
   const season = seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK));   // SEASON1: the Season counted, and its Tides
-  const list = await gatherStandings(db, seat, week, nowS, !!season);
+  const list = await gatherStandings(db, seat, week, nowS, !!season, await domainsFor(db, nowS, env, week));   // DOMAIN3: the region's homes at its seat of power
   // SEAT1c: the Legacy each guild carried in, the holder and its defence, the week's battle here, the Chronicle
   const { results: legacyRows = [] } = await db.prepare('SELECT guild_id, amount FROM town_seat_legacy WHERE week = ? AND key = ?').bind(week, key).all();
   const legacy = new Map(legacyRows.map((l) => [l.guild_id, Number(l.amount)]));
@@ -752,7 +765,7 @@ export async function payTribute({ db, nowS }, player, env, { character, key, ma
   if (!seat) return { error: 'seat-unconfirmed' };
   const gid = a.me.guild_id;
   if ((await pledgeIn(db, week, gid, seat.region)) !== key) return { error: 'seat-no-pledge' };
-  const s = (await gatherStandings(db, seat, week, nowS, !!seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK)))).find((x) => x.guild === gid);
+  const s = (await gatherStandings(db, seat, week, nowS, !!seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK)), await domainsFor(db, nowS, env, week))).find((x) => x.guild === gid);   // DOMAIN3: the room as the standings count it
   const room = s ? tributeRoom(s.others, s.tribute) : 0;
   if (marks / TRIBUTE_MARKS_PER_INFLUENCE > room) return { error: 'seat-tribute-cap' };   // the room is the standings' to say (mine.tributeRoom)
   try {

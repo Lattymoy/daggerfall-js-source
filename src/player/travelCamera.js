@@ -42,7 +42,8 @@ export const TV_TILT_DEFAULT = (52 * Math.PI) / 180;
  *  the cloud march and the fog all stay the ground's own (Mac's call 1). */
 export const TV_CLOUD_MARGIN = 60;
 /** ...but never under this: fog (base 150) and a sandstorm (a wall on the ground, base 0) would otherwise put the
- *  camera in the traveller's hair. Inside a lid weather the view is what the weather is - close. */
+ *  camera in the traveller's hair (an ashfall's pall, base 450, holds it under 390). Inside a lid weather the view is
+ *  what the weather is - close. */
 export const TV_HEIGHT_FLOOR = 40;
 /** The eye keeps this clear of the ground under it and of a ridge between it and the traveller. */
 export const TV_GROUND_CLEAR = 25;

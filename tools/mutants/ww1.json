@@ -1,0 +1,239 @@
+[
+  {
+    "name": "WW1-span-not-the-wire",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "export const WORLD_PIXEL_SPAN = 8192;",
+    "new": "export const WORLD_PIXEL_SPAN = 4096;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-key-the-bay-row",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "export const worldPixelKey = (px, py) => (py + WORLD_PIXEL_SPAN) * SIDE + (px + WORLD_PIXEL_SPAN);",
+    "new": "export const worldPixelKey = (px, py) => (py + WORLD_PIXEL_SPAN) * 1000 + (px + WORLD_PIXEL_SPAN);",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-theatre-bay-unasked",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "  if (inBay(px, py)) return BAY_THEATRE;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-theatre-numbering",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "(_, i) => PROVINCE_OF_ID[/** @type {1} */ (i + 1)])]);",
+    "new": "(_, i) => PROVINCE_OF_ID[/** @type {1} */ (9 - i)])]);",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-area-bay-branch",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "  if (inBay(px, py)) return regionAt(px, py);",
+    "new": "  if (inBay(px, py)) return -1;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-area-slots-folded",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "const THEATRE_SLOTS = 16;",
+    "new": "const THEATRE_SLOTS = 8;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-district-side",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "export const districtOf = (px, py) => [Math.floor((px + WORLD_PIXEL_SPAN) / DISTRICT_PX), Math.floor((py + WORLD_PIXEL_SPAN) / DISTRICT_PX)];",
+    "new": "export const districtOf = (px, py) => [Math.floor((px + WORLD_PIXEL_SPAN) / 64), Math.floor((py + WORLD_PIXEL_SPAN) / 64)];",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-imperial-people",
+    "file": "src/world/worldWide/worldGrid.js",
+    "old": "  return provinceByKey(THEATRE_KEYS[t])?.race ?? 'Imperial';",
+    "new": "  return provinceByKey(THEATRE_KEYS[t])?.race ?? 'Breton';",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-imperial-bank",
+    "file": "src/characters/areaNameBank.js",
+    "old": "  return race === 'Imperial' ? BANK_TYPES.Imperial : getNameBank(race ?? 'Breton');",
+    "new": "  return getNameBank(race ?? 'Breton');",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-walker-bay-only",
+    "file": "src/characters/mobile/mobilePerson.js",
+    "old": "export const redguardRegion = (region) => Number.isInteger(region) && areaRace(/** @type {number} */ (region)) === 'Redguard';",
+    "new": "export const redguardRegion = (region) => Number.isInteger(region) && /** @type {number} */ (region) < 62 && areaRace(/** @type {number} */ (region)) === 'Redguard';",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-registry-held-pixel",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "        if (byKey.has(p.key) || byMapId.has(p.mapId)) { shadowed++; continue; }",
+    "new": "        if (byMapId.has(p.mapId)) { shadowed++; continue; }",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-registry-held-id",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "        if (byKey.has(p.key) || byMapId.has(p.mapId)) { shadowed++; continue; }",
+    "new": "        if (byKey.has(p.key)) { shadowed++; continue; }",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-registry-generation",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "  const moved = () => { generation++; idx = null;",
+    "new": "  const moved = () => { idx = null;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-registry-region-past-the-bay",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre);",
+    "new": "  const region = bay ? bayRegion : Number.isInteger(row.region) ? row.region : regionOfTheatre(theatre);",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
+  },
+  {
+    "name": "WW1-pixel-own-pixel",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "      if (!row || row.px !== px || row.py !== py) continue;",
+    "new": "      if (!row) continue;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-pixel-list-first",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "    if (listed || !pixels.size) return listed ?? null;",
+    "new": "    if (!pixels.size) return listed ?? null;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-pixel-walk-area",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "        if (p && p.area === area) got.push(p);",
+    "new": "        if (p) got.push(p);",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-pixel-walk-unkept",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "      areaKept.set(area, got);\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-index-stale",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (g === gen && e === epoch && l === told) return;",
+    "new": "    if ((g === gen && e === epoch && l === told) || gen >= 0) return;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7; WW7-9): the books kept by the registry's generation, the roads past the Bay's build and its regions landed."
+  },
+  {
+    "name": "WW1-index-area-the-region",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "        mapId: p.mapId, name: p.name, px: p.px, py: p.py, type: p.type, region: p.region, area: p.area,",
+    "new": "        mapId: p.mapId, name: p.name, px: p.px, py: p.py, type: p.type, region: p.region, area: p.region,",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-hideout-theatre",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;",
+    "new": "        if (!inWorldGrid(px, py)) continue;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-patrol-region-past-the-bay",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (job === 'patrol') return (home.area ?? home.region) == null || (t.area ?? t.region) === (home.area ?? home.region);",
+    "new": "  if (job === 'patrol') return home.region == null || t.region === home.region;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-dry-the-bay-id",
+    "file": "src/world/dryGround.js",
+    "old": "    const key = worldPixelKey(px, py);",
+    "new": "    const key = py * 1000 + px;",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-census-bank",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "nameBankOfArea(town.area ?? town.region ?? -1)",
+    "new": "nameBankOfArea(town.region ?? -1)",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "WW1-host-index-unwired",
+    "file": "src/scenes/world.js",
+    "old": "= createLivingTrips({ places: worldPlaces,",
+    "new": "= createLivingTrips({ places: createWorldPlaces(),",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7): the index made in scenes/livingWorld/livingTrips.js, the host handing the registry."
+  },
+  {
+    "name": "WW1-host-pixel-builder",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        const livingTown = livingTownAt(px, py) ?? {",
+    "new": "        const livingTown = null ?? {",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  }
+]

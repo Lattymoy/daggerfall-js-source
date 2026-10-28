@@ -157,8 +157,8 @@
   {
     "name": "LW3-train-of-the-window",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "      const mt = placeTrip(m, d);\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d) return mt;",
-    "new": "      const mt = trips.find((x) => x.leader.slot === m.slot) ?? null;\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d) return mt;",
+    "old": "      const mt = placeTrip(m, d);\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d && !mt.sea?.cycles && !j.sea?.cycles) return mt;",
+    "new": "      const mt = trips.find((x) => x.leader.slot === m.slot) ?? null;\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d && !mt.sea?.cycles && !j.sea?.cycles) return mt;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]
@@ -390,9 +390,9 @@
   },
   {
     "name": "LW3-host-mods-rows",
-    "file": "src/scenes/world.js",
-    "old": "    for (const loc of _hubRows) {\n      const md = loc.mapTableData;\n      if (!md || !populatesWanderingNpcs(md.locationType)) continue;",
-    "new": "    for (const loc of _hubRows) {\n      const md = loc.mapTableData;\n      if (!md) continue;",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (!p || !populated(p.type)) return null;",
+    "new": "    if (!p) return null;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]
@@ -435,12 +435,13 @@
   },
   {
     "name": "LW3-host-ground-misbound",
-    "file": "src/scenes/world.js",
-    "old": "routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE)",
-    "new": "routeGround((px, py) => woods.getHeightMapValue(px, py), (px, py) => maps.getClimateIndex(px, py), WATER_BYTE)",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE, 1000, 500)",
+    "new": "routeGround((px, py) => woods.getHeightMapValue(px, py), (px, py) => maps.getClimateIndex(px, py), WATER_BYTE, 1000, 500)",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-7): the ways' ground scenes/livingWorld/livingTrips.js's, the Bay's table alone."
   },
   {
     "name": "LW3-host-network-memo-kept",

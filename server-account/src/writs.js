@@ -45,7 +45,7 @@ import { realmHoldOf, realmActFirst, mustChange, dropIfUnnamed, recordMovedOf, d
 import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // INT19: and the piece leaves the crafter's realm record
 import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
 import { STORES_MAX } from '../../src/net/professionLaw.js';
-import { material, regionOk } from '../../src/net/nodeLaw.js';
+import { material, regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import { fortMaterialOk, RAM_KIT_KEY } from '../../src/net/fortLaw.js';   // SEAT2b: what a seat writ may ask; part two: a Siege Camp's Ram Kits

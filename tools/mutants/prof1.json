@@ -285,7 +285,7 @@
   {
     "name": "PROF1-32-a-lie-on-a-confirmed-pixel",
     "file": "server-account/src/professions.js",
-    "old": "  if (confirmed && (fact.climate !== climate || fact.region !== region)) {\n",
+    "old": "  if (confirmed && (fact.climate !== climate || fact.region !== region || (fact.jungle === true) !== jungleSaid)) {\n",
     "new": "  if (false) {\n",
     "tests": [
       "test/net/prof1_service.test.js"
@@ -504,8 +504,8 @@
   {
     "name": "PROF1-56-patches-in-towns",
     "file": "src/world/terrain/terrainNature.js",
-    "old": "  if (locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE",
-    "new": "  if (false && locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE",
+    "old": "  if (locationRect && natureCleared(locationRect, x, y)) return null;",
+    "new": "  if (false && locationRect && natureCleared(locationRect, x, y)) return null;",
     "tests": [
       "test/systems/prof1_client.test.js"
     ]

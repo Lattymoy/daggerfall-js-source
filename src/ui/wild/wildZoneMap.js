@@ -21,8 +21,10 @@
 // Built once a mask, on a canvas of its own (as the fog is); nothing is computed per frame but the plaques' places.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains,
+  WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, wildOutline, ringOfCell, maskWorld, maskWorldBox,
 } from '../../systems/wild/wildZone.js';
+import { t } from '../../systems/textManager.js';   // AUDIT TESA II M5: the legend's new words, through the text core
+import { ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: the settlements' peace, among the zone's laws
 
 /** Canvas pixels a map pixel in the rings' own canvas (the fog's own resolution). */
 export const RING_RES = 6;
@@ -47,11 +49,16 @@ function grain(x, y) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
+/** WW-C2: canvas pixels a CELL in a zone's ink - RING_RES a map pixel's for a mask of cell 1, half as many a cell for a
+ *  province's coarser grid (Cyrodiil's four-pixel cells: three a cell, the zone's canvas some 1,600 x 1,100). */
+export const inkRes = (mask, res = RING_RES) => ((mask?.cell ?? 1) > 1 ? Math.max(1, Math.round(res / 2)) : res);
+
 /**
- * THE RINGS' PIXELS for a zone mask: `{ data, w, h, x0, y0 }` over the zone's box, RING_RES canvas pixels a map pixel -
- * each zone pixel its ring's fill at its ring's alpha, with a fine grain so the paper reads through. Pure (no canvas).
+ * THE RINGS' PIXELS for a zone mask: `{ data, w, h, x0, y0 }` over the zone's box (`x0`, `y0` its corner on the world),
+ * `res` canvas pixels a cell - each zone cell its ring's fill at its ring's alpha, with a fine grain so the paper reads
+ * through. Pure (no canvas).
  */
-export function ringPixels(mask, res = RING_RES) {
+export function ringPixels(mask, res = inkRes(mask)) {
   if (!mask?.box) return null;
   const { x0, y0, x1, y1 } = mask.box;
   const mw = x1 - x0 + 1, mh = y1 - y0 + 1;
@@ -59,7 +66,7 @@ export function ringPixels(mask, res = RING_RES) {
   const data = new Uint8ClampedArray(w * h * 4);
   for (let my = 0; my < mh; my++) {
     for (let mx = 0; mx < mw; mx++) {
-      const ring = wildRingAt(x0 + mx, y0 + my, mask);
+      const ring = ringOfCell(mask, x0 + mx, y0 + my);
       if (!ring) continue;
       const ink = RING_INK[ring - 1];
       for (let sy = 0; sy < res; sy++) {
@@ -73,7 +80,8 @@ export function ringPixels(mask, res = RING_RES) {
       }
     }
   }
-  return { data, w, h, x0, y0 };
+  const [wx, wy] = maskWorld(mask, x0, y0);
+  return { data, w, h, x0: wx, y0: wy };
 }
 
 /** Chaikin's corner cutting on a closed chain of points, `n` times - a ring's line is a contour, not a pixel's edge. */
@@ -124,6 +132,12 @@ export function smoothContour(chain, { step = 0.6, relax = 10, cuts = 1 } = {}) 
   return out;
 }
 
+/** THE ZONE'S DRAWN EDGE - the red line, the fog's cut, the zone map's outer ring and its wash (ui/wild/wildMapInk.js
+ *  wildInk, zoneMapInk): ZONE-LINE (Wild-Zone.md section 27) - a zone kept to the pixel (Cyrodiil's) is drawn on its own
+ *  line, never smoothed off it (systems/wild/wildZone.js wildOutline: the province's outline, one line with the
+ *  province's own on the held map); a zone of whole cells is its edge smoothed (SMOOTHZONE). */
+export const zoneLine = (mask) => (mask?.bits ? wildOutline(mask) : wildEdgeChains(mask).map((c) => smoothContour(c, { step: 0.6 * (mask?.cell ?? 1) })));
+
 const _cache = new WeakMap();
 /** The rings as a canvas, each deeper ring's line, the zone's edge and the plaques' anchors - built once a mask. */
 export function zoneMapInk(mask, doc = globalThis.document) {
@@ -139,10 +153,12 @@ export function zoneMapInk(mask, doc = globalThis.document) {
     if (c && typeof ImageData === 'function') c.putImageData(new ImageData(px.data, px.w, px.h), 0, 0);
   }
   const lines = {};
-  for (let r = 2; r <= WILD_RINGS; r++) lines[r] = wildRingChains(mask, r).map((c) => smoothContour(c));
+  const step = 0.6 * (mask.cell ?? 1);   // WW-C2: the contour's step at the grid's own scale
+  for (let r = 2; r <= WILD_RINGS; r++) lines[r] = wildRingChains(mask, r).map((c) => smoothContour(c, { step }));
+  const box = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));
   const ink = {
-    canvas, x0: mask.box.x0, y0: mask.box.y0, w: mask.box.x1 - mask.box.x0 + 1, h: mask.box.y1 - mask.box.y0 + 1,
-    lines, edge: wildEdgeChains(mask).map((c) => smoothContour(c)), anchors: wildRingAnchors(mask),
+    canvas, x0: box.x0, y0: box.y0, w: box.x1 - box.x0 + 1, h: box.y1 - box.y0 + 1,
+    lines, edge: zoneLine(mask), anchors: wildRingAnchors(mask),   // ZONE-LINE: the red line's own
   };
   _cache.set(mask, ink);
   return ink;
@@ -328,6 +344,8 @@ export function tierWash(ink, doc = globalThis.document) {
   const pad = 2;
   let res = 12;
   while (res > 3 && (ink.w + pad * 2) * (ink.h + pad * 2) * res * res > WASH_PX_MAX) res -= 1;
+  // WW-C2: a province's zone (Cyrodiil's two thousand pixels across) held to the budget too - under a canvas pixel a map pixel
+  if ((ink.w + pad * 2) * (ink.h + pad * 2) * res * res > WASH_PX_MAX) res = Math.sqrt(WASH_PX_MAX / ((ink.w + pad * 2) * (ink.h + pad * 2)));
   const canvas = doc.createElement('canvas');
   canvas.width = Math.ceil((ink.w + pad * 2) * res); canvas.height = Math.ceil((ink.h + pad * 2) * res);
   const c = canvas.getContext('2d');
@@ -368,8 +386,8 @@ export function tierWash(ink, doc = globalThis.document) {
 /** The view that holds the whole zone on the paper, its box padded, centred in the room the legend leaves. */
 export function zoneMapView(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
   if (!mask?.box) return null;
-  const { x0, y0, x1, y1 } = mask.box;
-  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3;
+  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));   // WW-C2: on the world
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3 * (mask.cell ?? 1);
   const room = Math.max(paperW * 0.5, paperW - (paperW > 720 ? legendW : 0));
   const scale = Math.min(room / (bw + pad * 2), paperH / (bh + pad * 2));
   const cx = x0 + bw / 2, cy = y0 + bh / 2;
@@ -378,29 +396,46 @@ export function zoneMapView(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
 /** The zone map's limits for the window's clamp (ui/ink/inkMap.js clampView): its box with a band of the bay round it. */
 export function zoneMapLimits(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
   if (!mask?.box) return null;
-  const { x0, y0, x1, y1 } = mask.box;
-  const pad = 6;
+  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));   // WW-C2: on the world
+  const pad = 6 * (mask.cell ?? 1);
   const room = Math.max(paperW * 0.5, paperW - (paperW > 720 ? legendW : 0));
   return { mapW: (x1 - x0 + 1 + pad * 2) * (paperW / room), mapH: y1 - y0 + 1 + pad * 2, paperW, paperH, pan: { x0: x0 - pad, y0: y0 - pad, x1: x1 + 1 + pad, y1: y1 + 1 + pad } };
 }
 
-/** The zone's laws, as the legend states them. */
+/** The zone's laws online, as the legend states them - AUDIT TESA II M5: its travel law is Cyrodiil's (zoneRules). The
+ *  Wrothgarian zone's two said "Carriages run inside the zone every 10 minutes" and "No fast travel into or out of the
+ *  zone except from the Overworld map": past the Bay no fast travel runs at all (TESA-NO-FAST - a press on Cyrodiil's
+ *  ground on the zone map is no journey) and the zone's carriages have no town to run between (World-Wide.md, What stays). */
 export const ZONE_RULES = Object.freeze([
   'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',
   'Two Greater Giants roam every reach, each shown on the map.',
-  'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches and the camp kit are kept.',   // FOE-KEEPS: a foe's kill drops nothing
-  'Carriages run inside the zone every 10 minutes, at higher prices.',
-  'No fast travel into or out of the zone except from the Overworld map. Walk or ride.',
+  'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches, the camp kit, your cart, your companions\' packs and insured gear are kept.',   // FOE-KEEPS: a foe's kill drops nothing; STORE-KEEPS and WILD-INSURE: storage and insured gear are kept
   'Travel here is slower: at most 20x in the wilds, 40x on the roads.',
 ]);
+/** AUDIT TESA II M5: THE ZONE MAP'S OWN WORDS past the Wrothgarian zone's - Cyrodiil's travel law, and what the map says
+ *  offline, where the zone is drawn (MAP-LINES ZONE-OFFLINE: its fog, red line, rings and fire) and none of its laws runs
+ *  (scenes/world.js wildMapMask, wildHere and the halls are online's). Read when they are said, through the text core. */
+export const ZONE_MAP_TEXT = Object.freeze({
+  travel: () => t('wild.legend.travel', 'No fast travel and no carriage reaches {zone} or runs inside it: walk or ride, on the Overworld map.', { zone: WILD_NAME }),
+  offline: () => t('wild.legend.offline', 'You are offline: no other player can reach you here, and the zone\'s laws - stronger foes, more loot, a player\'s kill dropping what you carry - hold only online.'),
+  chipTipOffline: () => t('wild.map.chipTipOffline', '{zone}: an open PvP zone online. Offline no other player is here, and its foes, its loot and a death are the land\'s own.', { zone: WILD_NAME }),
+  door: () => t('wild.map.door', 'Open the {zone} map, with its four rings and their loot', { zone: WILD_NAME }),
+  doorOffline: () => t('wild.map.doorOffline', 'Open the {zone} map, with its four rings', { zone: WILD_NAME }),
+});
+/** AUDIT TESA II M5: the legend's laws - online the zone's, its travel law Cyrodiil's; offline (`laws` false) the one line
+ *  that says they hold only online. */
+export function zoneRules(laws = true) {
+  return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];   // ZONE-SAFE: the settlements' peace beside the first law
+}
 
 /**
  * THE LEGEND PANEL - `doc`'s element, in the held map's plaque language (enhancedStyle.js .hmwild*): the zone's name,
  * its four rings (swatch, numeral, name, bonus; mine marked), where I stand, its laws, and the way back. `onBack` the
- * Back button's act. Pure DOM: the window mounts it and takes it away.
+ * Back button's act. Pure DOM: the window mounts it and takes it away. AUDIT TESA II M5: `laws` false (offline) says the
+ * rings without their loot and, for its laws, that they hold only online.
  */
-export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, onNames = null, canBegin = false, onBegin = null } = {}) {
+export function buildZoneLegend(doc, { ring = 0, laws = true, onBack = null, names = true, onNames = null, canBegin = false, onBegin = null } = {}) {
   const el = (tag, cls, text) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const root = el('div', 'hmwild');
   root.addEventListener?.('pointerdown', (e) => e.stopPropagation?.());
@@ -408,7 +443,8 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
   const head = el('div', 'hmwild-head');
   head.append(el('div', 'hmwild-kicker', 'Open PvP zone'), el('div', 'hmwild-title', WILD_NAME));
   root.append(head);
-  const where = el('div', `hmwild-where${ring ? ' in' : ''}`, ring ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)} - ${wildRingBonus(ring)}` : 'You stand outside the zone');
+  // AUDIT TESA II M5: offline (`laws` false) no ring's loot holds - the rings are named, their bonus not said
+  const where = el('div', `hmwild-where${ring ? ' in' : ''}`, ring ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)}${laws ? ` - ${wildRingBonus(ring)}` : ''}` : 'You stand outside the zone');
   root.append(where);
   const list = el('ol', 'hmwild-rings');
   for (let r = 1; r <= WILD_RINGS; r++) {
@@ -422,14 +458,14 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
     const name = el('span', 'hmwild-rname');
     name.append(el('b', null, RING_NUMERALS[r - 1]), doc.createTextNode(` ${wildRingName(r)}`));
     const depth = el('span', 'hmwild-depth', r === 1 ? 'the outer quarter' : r === WILD_RINGS ? 'the heart' : `${r === 2 ? 'second' : 'third'} quarter in`);
-    li.append(sw, name, el('span', 'hmwild-bonus', wildRingBonus(r)), depth);
+    li.append(sw, name, el('span', 'hmwild-bonus', laws ? wildRingBonus(r) : ''), depth);
     list.append(li);
   }
   root.append(list);
   // LEGEND-FIT (the owner: "now i have to scroll down in the legend for begin journy make it so that i dont have to do
   // that"): the laws scroll in their own box, the buttons stand in a foot that is always in view - Begin journey first
   const rules = el('ul', `hmwild-rules${canBegin ? ' trip' : ''}`);
-  for (const t of ZONE_RULES) rules.append(el('li', null, t));
+  for (const line of zoneRules(laws)) rules.append(el('li', null, line));
   root.append(rules);
   const foot = el('div', 'hmwild-foot');
   root.append(foot);

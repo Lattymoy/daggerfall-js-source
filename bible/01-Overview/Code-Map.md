@@ -285,7 +285,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/scenes/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - the hosts' wiring. |
 | `src/scenes/ketch/` | The Sky-Ketch (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`) - the hosts' wiring: her sky over Daggerfall and the anchor-lift, the deck host, the fight on the deck and the bridge, the client that boards her. |
 | `src/scenes/livingWorld/` | The living world in the hosts (`06-Systems/Living-World-II.md`): indoors, the roads, the watch, the deep's remains. |
-| `src/scenes/naval/` | Ships and the sea in the hosts: the naval host, the crew, the flames. |
+| `src/scenes/naval/` | Ships and the sea in the hosts: the naval host, the crew, the flames; the world's packet lanes, the Bay's and the sea's past it (`worldLanes.js`). |
 | `src/scenes/quest/` | Quests - the hosts' wiring. |
 | `src/scenes/starfall/` | The Starfall (`11-Multiplayer/Starfall.md`) - the hosts' wiring: the stars on a screen, their defense on the camp law, and a held star's rewards. |
 | `src/scenes/superDungeon/` | The Abyss Dungeon, the super dungeons (`11-Multiplayer/Super-Dungeons-Look.md`) - the hosts' wiring. |
@@ -344,6 +344,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/soundscape/` | The world heard (`08-Audio/Audio.md` SOUNDSCAPE, SEA-SCORE): the deck's air at sea, the shore's, the wild's and the town's on land, the sea's songs at a helm, the beds made off the main thread and the port's clips loaded - the law. |
 | `src/systems/spell/` | Spells: effects, the spell maker, power and the impact's sound. |
 | `src/systems/starfall/` | The Starfall (`11-Multiplayer/Starfall.md`) - the law: the covens and the night's coven, the night's stars over the gate's scan, the Witches' Night; the coven's waves, masters and circles, the star's law on a player's screen, every word it says and its sounds; Starfall Glass and a held star's spoils. |
+| `src/systems/starts/` | Where a character's story begins (`06-Systems/Alternate-Starts-Arc.md` START1, START2): the starts' registry, each province's start dungeon ranked, the start quests' Places, and the start quests themselves (`quests/`). |
 | `src/systems/studioArt/` | The studio (`07-Rendering/Studio-Art.md`): the game's artists' own pictures (`public/art/studio/`) on the texture door, and the slots they paint. |
 | `src/systems/superDungeon/` | The Abyss Dungeon's law (`11-Multiplayer/Super-Dungeons-Look.md`): the site, the omen, the score, the spoils, the rift's sound and the slots kept on the device. |
 | `src/systems/survival/` | Survival: needs, camping, food, rest, exposure. |
@@ -380,6 +381,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
 | `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |
+| `src/ui/intro/set/` | The film's set (INTRO4, `10-UI/UI-Arc.md`): the Imperial City as the intro was shot on it - the city's plan (`imperialCity.js`), its landmarks (`capitalImperial.js`) and the shapes they are built of (`capitalShapes.js`), kept as shot, never the game's grown city. |
 | `src/ui/item/` | Items on screen: the icons, the item maker and the scroller. |
 | `src/ui/ketch/` | The Sky-Ketch on the screen (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the voyage's tracker, the Tonal Warden's bar, her ring on the held map. |
 | `src/ui/legacy/` | Project Legacy: heirs and the realm line (`06-Systems/Legacy-Arc.md`) - its windows. |
@@ -418,18 +420,22 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/eliteGates/` | The Elite Breach in the world (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`): the halls, the ground, the ruin, the vista and the underside, the platforms, the rooms, the kit and its art, the air and the lamps - its models and assembly. |
 | `src/world/gate/` | The Oblivion Gate in the world: the arena, the art, the boss, the model, the clearance and the spew. |
 | `src/world/interior/` | Interiors: layout, lights, glass - its models and assembly. |
-| `src/world/jungle/` | Bantha's jungle (`03-World/Bantha-Jungle.md`): where it is (the owner's area, `banthaArea.js`, and its field), the owner's trees and their measures, and its haze's law. |
+| `src/world/jungle/` | Bantha's jungle (`03-World/Bantha-Jungle.md`): where it is (the owner's area, `banthaArea.js`, and its field), the owner's trees and their measures, and its haze's law; Valenwood's closed canopy and its graht-oaks - where they stand and the trees themselves, made (`grahtOaks.js`, `grahtOakMesh.js`; `03-World/Graht-Oaks.md`). |
 | `src/world/ketch/` | The Sky-Ketch in the world (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the ship made in code - her location, kit, art, model and pose; her look's shared numbers (the light meanings, the value ladder, her palette in ART_PAL's index space) and her light by the hour and the zone. |
+| `src/world/lands/` | The lands' landmarks past the Bay (`03-World/Tamriel-Lands.md`): the meshes made (`landPropMesh.js` - parasols, spires, the Hist, reeds, vines, groves) and where they stand, what they look like and their bodies (`landProps.js`). |
 | `src/world/merchantYards/` | A town's Stable and Wagon Yard (`03-World/Merchant-Yards.md`) - its models and assembly. |
+| `src/world/peaks/` | The mountains' high ground (`03-World/Peaks.md`): PEAKS1's snow caps and bare faces (`snowcap.js`), and PEAKS2's massif - its spurs, crests, summits and saddles (`massif.js`, built and pinned, not yet wired). |
 | `src/world/road/` | Roads: the network, its painter, verges and clearance - its models and assembly. |
 | `src/world/ships/` | The port's own ships: the galleon, the carrack, the large boat - its models and assembly. |
 | `src/world/starfall/` | The Starfall in the world: the star's art, its crater and stone, and Starfall Glass's picture. |
 | `src/world/superDungeon/` | The Abyss Dungeon in the world: the halls, the steps, the rift, the realm and its sky, the Remnant, and their art. |
-| `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly. |
+| `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly; TESA-LANDS' zones' own land (`tamrielLands.js`) and the ground's dress (`groundDress.js`, dressed on its own worker - `groundDressWorker.js`, the page's side `groundDressClient.js`; `03-World/Tamriel-Lands.md`). |
 | `src/world/terrain/` | Terrain generation, its worker and sampler - its models and assembly. |
 | `src/world/underwater/` | Under the water: its look, decorations, enemies and loot - its models and assembly. |
+| `src/world/urban/` | A town's fabric past the Bay (`03-World/Urban-Fabric.md`, URBANIZER): its streets, yards and dead ends read off its own blocks, its look by province, its art and its records - its models and assembly. |
 | `src/world/water/` | The water's bed, corners and ripples - its models and assembly. |
 | `src/world/worldOfDaggerfall/` | The World of Daggerfall mod: the entry (`worldOfDaggerfall.js`), its locations' data, loader, pack and objects, Privateer's Hold, the spawner. |
+| `src/world/worldWide/` | The whole world's seam (`03-World/World-Wide.md`): the world pixel grid, its theatres and areas (`worldGrid.js`), the registry of places every system reads (`worldPlaces.js`), the Bay's own rows into it (`bayPlaces.js`) and the world's ports past the Bay (`worldPorts.js`). |
 
 ### The tests, `test/`
 

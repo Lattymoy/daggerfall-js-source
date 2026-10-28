@@ -490,7 +490,7 @@
   {
     "name": "LW15-town-errands",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day) });",
+    "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day, P) });",
     "new": "watch: this._watchSize, bandOf: this._bandOf });",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"

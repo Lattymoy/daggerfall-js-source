@@ -29,9 +29,11 @@ const PATCH = herbPatches({ x: ISLE.px, y: ISLE.py, day: TODAY, climate: ISLE.cl
 
 test('ETHER-NODES: the law\'s ground is the Bay\'s map and the Eltheric\'s box - its corners in, a pixel past any side out, the law\'s margin and the continent past the map out (mutant: the Bay\'s map alone)', () => {
   const { x0, x1, y0, y1 } = ETHER_BOX;
-  assert.deepEqual([[0, 0], [999, 499], [1000, 0], [0, 500], [-1, 0], [0, -1]].map(([x, y]) => pixelOk(x, y)), [true, true, false, false, false, false], 'the Bay\'s map, as ever');
+  // PIN MOVED (WW-C1, bible/03-World/World-Wide.md WW-C): the ground is the world's whole grid (net/wire.js worldPixelOk) - the Bay's map and the box inside it, the provinces about them; past the grid out
+  assert.deepEqual([[0, 0], [999, 499], [1000, 0], [0, 500], [-1, 0], [0, -1]].map(([x, y]) => pixelOk(x, y)), [true, true, true, true, true, true], 'the Bay\'s map, and the continent past each side');
+  assert.deepEqual([[8191, 0], [-8191, 0], [0, 8191], [0, -8191], [8192, 0], [-8192, 0], [0, 8192], [0, -8192]].map(([x, y]) => pixelOk(x, y)), [true, true, true, true, false, false, false, false], 'the grid\'s edge in, a pixel past it out');
   assert.deepEqual([[x0, y0], [x1 - 1, y0], [x0, y1 - 1], [x1 - 1, y1 - 1], [ISLE.px, ISLE.py], [veilhaven().px, veilhaven().py]].map(([x, y]) => pixelOk(x, y)), [true, true, true, true, true, true], 'the box\'s four corners and its isles');
-  assert.deepEqual([[x0 - 1, y0], [x1, y0], [x0, y0 - 1], [x0, y1], [x0 - ETHER_MARGIN, y0], [-5, 250]].map(([x, y]) => pixelOk(x, y)), [false, false, false, false, false, false], 'past each side, the law\'s margin and the continent');
+  assert.deepEqual([[x0 - 1, y0], [x1, y0], [x0, y0 - 1], [x0, y1], [x0 - ETHER_MARGIN, y0], [-5, 250]].map(([x, y]) => pixelOk(x, y)), [true, true, true, true, true, true], 'past each side, the law\'s margin and the continent - the world\'s grid (PIN MOVED, WW-C1)');
   assert.deepEqual([[x0 + 0.5, y0], [x0, Number.NaN], ['70', -3000]].map(([x, y]) => pixelOk(x, y)), [false, false, false], 'a whole pixel only');
   assert.equal(inEther(ISLE.px, ISLE.py), true);
 });
@@ -43,8 +45,9 @@ test('ETHER-NODES: an Eltheric node\'s id and a haul\'s read back - four digits 
   for (const kind of ['tree', 'vein', 'boulder']) assert.deepEqual(parseNodeKey(nodeKey({ kind, x: 8127, y: -7680, day: 1, slot: 0 })), { kind, x: 8127, y: -7680, day: 1, slot: 0 });
   const h = haulKey({ x: veilhaven().px + 4, y: veilhaven().py, day: TODAY, id: '0123456789ab' });
   assert.deepEqual(parseNodeKey(h), { kind: 'haul', x: veilhaven().px + 4, y: veilhaven().py, day: TODAY, id: '0123456789ab' });
-  for (const bad of [`herb:0${ISLE.px}:${ISLE.py}:1:0`, `herb:${ISLE.px}:-0${-ISLE.py}:1:0`, 'herb:8128:-3000:1:0', 'herb:5000:-2688:1:0', 'herb:5000:-7681:1:0', 'herb:12345:-3000:1:0',
-    'herb:5000:--3000:1:0', 'herb:-0:0:1:0', 'herb:0:-0:1:0', 'haul:8128:-3000:1:0123456789ab', 'haul:5000:+3000:1:0123456789ab']) {
+  // PIN MOVED (WW-C1): past the world's grid, where the box's edge was
+  for (const bad of [`herb:0${ISLE.px}:${ISLE.py}:1:0`, `herb:${ISLE.px}:-0${-ISLE.py}:1:0`, 'herb:8192:-3000:1:0', 'herb:5000:-8192:1:0', 'herb:-8192:-3000:1:0', 'herb:12345:-3000:1:0',
+    'herb:5000:--3000:1:0', 'herb:-0:0:1:0', 'herb:0:-0:1:0', 'haul:8192:-3000:1:0123456789ab', 'haul:5000:+3000:1:0123456789ab']) {
     assert.equal(parseNodeKey(bad), null, bad);
   }
 });
@@ -64,5 +67,5 @@ test('ETHER-NODES: the service takes an Eltheric isle\'s harvest, and answers it
   const px = await profPixels({ db: s.env.DB }, row, s.env, { character: w.character, pixels: [[ISLE.px, ISLE.py], [ISLE.px + 1, ISLE.py]], dungeons: [] });
   assert.equal(px.error, undefined, JSON.stringify(px));
   assert.deepEqual(px.pixels.map((p) => [pixelKey(p.x, p.y), p.state]), [[pixelKey(ISLE.px, ISLE.py), 'unconfirmed'], [pixelKey(ISLE.px + 1, ISLE.py), 'none']], 'the harvest\'s own witness, and a pixel no one has reported');
-  assert.deepEqual(await profPixels({ db: s.env.DB }, row, s.env, { character: w.character, pixels: [[ETHER_BOX.x1, ISLE.py]], dungeons: [] }), { error: 'bad-pixels' }, 'past the box, refused as ever');
+  assert.deepEqual(await profPixels({ db: s.env.DB }, row, s.env, { character: w.character, pixels: [[8192, ISLE.py]], dungeons: [] }), { error: 'bad-pixels' }, 'past the world\'s grid, refused (PIN MOVED, WW-C1: the box\'s edge was)');
 });

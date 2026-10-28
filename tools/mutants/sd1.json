@@ -152,12 +152,12 @@
   {
     "name": "SD1-a-padded-room",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "const SD_ROOM = /^sd:[1-9]\\d{0,8}$/;",
-    "new": "const SD_ROOM = /^sd:\\d{1,9}$/;",
+    "old": "const SD_ROOM = /^sd:([1-9]\\d{0,8})\\.([0-9a-f]{16}|p(?:0|[1-9]\\d?))$/;",
+    "new": "const SD_ROOM = /^sd:(\\d{1,9})\\.([0-9a-f]{16}|p(?:0|[1-9]\\d?))$/;",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],
-    "note": "The wire admits the keys the hub mints, no zero and no padding."
+    "note": "The wire admits the keys the hub mints, no zero and no padding. PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
   },
   {
     "name": "SD1-the-city-left-in-the-name",

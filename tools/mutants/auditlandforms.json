@@ -404,8 +404,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-lift-of-whole-height",
     "file": "src/world/landforms.js",
-    "old": "    const l = h + reliefLift(low) * fade + hh;",
-    "new": "    const l = h + reliefLift(h) * fade + hh;",
+    "old": "    let hh = 0, lift = reliefLift(low), t = 0;",
+    "new": "    let hh = 0, lift = reliefLift(h), t = 0;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-blend-to-zero",
     "file": "src/world/landforms.js",
-    "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim);",
-    "new": "blendLocationTerrain(field, 0, locationRect, hDim);",
+    "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);",
+    "new": "blendLocationTerrain(field, 0, locationRect, hDim, classic, true);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -434,8 +434,9 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-bilinear-axes-swapped",
     "file": "src/world/landforms.js",
-    "old": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * fx * (1 - fy) + f(ix, iy + 1) * (1 - fx) * fy + f(ix + 1, iy + 1) * fx * fy;",
-    "new": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * (1 - fx) * fy + f(ix, iy + 1) * fx * (1 - fy) + f(ix + 1, iy + 1) * fx * fy;",
+    "old": "return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
+    "new": "return fy >= fx ? f00 + fy * (f(ix + 1, iy) - f00) + fx * (f11 - f(ix + 1, iy)) : f00 + fx * (f(ix, iy + 1) - f00) + fy * (f11 - f(ix, iy + 1));",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the lift field is read on the ground's one law, the drawn triangles (its axes swapped the same way), where it was bilinear.",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -444,8 +445,9 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-nearest-sample",
     "file": "src/world/landforms.js",
-    "old": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * fx * (1 - fy) + f(ix, iy + 1) * (1 - fx) * fy + f(ix + 1, iy + 1) * fx * fy;",
+    "old": "return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
     "new": "return f(Math.round(cx), Math.round(cy));",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the lift field read on the drawn triangles, where it was bilinear.",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -496,8 +498,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-gate-kernel-key-blind-to-network",
     "file": "src/scenes/world.js",
-    "old": "const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0}`;",
-    "new": "const key = `${px},${py}`;",
+    "old": "const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0},${beyondSites.generation()}`;",
+    "new": "const key = `${px},${py},${beyondSites.generation()}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -506,18 +508,19 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-py-sign",
-    "file": "src/scenes/world.js",
-    "old": "    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
-    "new": "    const py = state.mapOrigin.y + Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE)]",
+    "new": "state.mapOrigin.y + Math.floor((z - c[2]) / TERRAIN_SIZE)]",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the scene point's pixel is framePixelAt's (D5), the lift's and the frame's."
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-frame-uncompensated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field(x / heightCell, z / heightCell) * STREAMING_TERRAIN_SCALE;",
     "tests": [
@@ -528,7 +531,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-axes-swapped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field((z - t[2]) / heightCell, (x - t[0]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "tests": [
@@ -539,7 +542,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-kernel-units",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell);",
     "tests": [
@@ -550,18 +553,19 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-memo-blind-to-rect",
-    "file": "src/scenes/world.js",
-    "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0}`;",
-    "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0}`;",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
+    "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the field's key carries the sites past the Bay's generation and the old law too (D1, D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-D-restand-ratio-unguarded",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;",
     "new": "const r = was / STREAMING_TERRAIN_SCALE;",
     "tests": [
@@ -575,14 +579,15 @@
   {
     "name": "AUDIT-LANDFORMS-D-promotion-ghosts-uncut",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);",
-    "new": "const lf = landforms ?? (landform ? createLandforms({ woods, sites, climates }) : null);",
+    "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null);",
+    "new": "const lf = landforms ?? (landform ? createLandforms({ woods, sites, beyond, climates }) : null);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
       "test/world/terrain/restrideworker.test.js",
       "test/world/terrain/distantland.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "AUDIT-LANDFORMS-D-worker-wait-after-the-answer",
@@ -599,14 +604,15 @@
   {
     "name": "AUDIT-LANDFORMS-D-client-fallback-grid-uncut",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));",
-    "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, climates: this._climates, ...job }));",
+    "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));",
+    "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
       "test/world/road/roads.test.js",
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "AUDIT-LANDFORMS-D-switch-not-forced-online",
@@ -642,7 +648,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-built-rect-ignored",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "let rect = at ? at.locationRect ?? null : null;",
     "new": "let rect = null;",
     "tests": [
@@ -674,18 +680,19 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-restand-built-ground-with-lift",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;",
     "new": "if (Number.isFinite(h)) return y - (h - state.compensation[1]) * (r - 1) + now;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the law is recordFrame's, over its own `state` (D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-D-restand-lift-read-always",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const now = landform ? landformLiftAt(x, z) : 0;",
     "new": "const now = landformLiftAt(x, z);",
     "tests": [
@@ -696,7 +703,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-frame-identity",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
     "new": "const groundFrameHeight = (y, x, z) => y;",
     "tests": [
@@ -706,17 +713,18 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-native-off-its-own-spot",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "    const [x, z] = state.localFromWorld(nx, nz);\n    return groundFrameHeight(y, x, z);",
     "new": "    return groundFrameHeight(y, nx, nz);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the law is recordFrame's, over its own `state` (D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-C1-player-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "nativeX: wc.x, nativeZ: wc.z, y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),",
     "new": "nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],",
     "tests": [
@@ -726,7 +734,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-piles-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),",
     "new": "piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),",
     "tests": [
@@ -736,7 +744,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-save-torches-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),\n        camps:",
     "new": "return [wc.x, pos[1] - state.compensation[1], wc.z]; }),\n        camps:",
     "tests": [
@@ -756,7 +764,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-foes-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "({ ...sf, y: groundFrameNative(sf.nativeX, sf.nativeZ, sf.y - state.compensation[1]) })",
     "new": "({ ...sf, y: sf.y - state.compensation[1] })",
     "tests": [
@@ -766,7 +774,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-guards-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "({ ...sg, y: groundFrameNative(sg.nativeX, sg.nativeZ, sg.y - state.compensation[1]) })",
     "new": "({ ...sg, y: sg.y - state.compensation[1] })",
     "tests": [
@@ -776,7 +784,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-inside-pools-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "({ ...r, y: groundFrameNative(r.nativeX, r.nativeZ, r.y - state.compensation[1]) })",
     "new": "({ ...r, y: r.y - state.compensation[1] })",
     "tests": [
@@ -797,23 +805,25 @@
   {
     "name": "AUDIT-LANDFORMS-C1-scene-cache-torches-raw",
     "file": "src/scenes/world.js",
-    "old": "return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),\n      terrainScale:",
-    "new": "return [wc.x, pos[1] - state.compensation[1], wc.z]; }),\n      terrainScale:",
+    "old": "return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),\n      ...RECORD_GROUND_STAMP",
+    "new": "return [wc.x, pos[1] - state.compensation[1], wc.z]; }),\n      ...RECORD_GROUND_STAMP",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the stamp is RECORD_GROUND_STAMP, the scale and the frame's law (D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-C1-anchor-raw",
     "file": "src/scenes/world.js",
-    "old": "y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),\n      terrainScale",
-    "new": "y: pf[1] - state.compensation[1],\n      terrainScale",
+    "old": "y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),\n      ...RECORD_GROUND_STAMP",
+    "new": "y: pf[1] - state.compensation[1],\n      ...RECORD_GROUND_STAMP",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
       "test/world/a10_world_misc.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the stamp is RECORD_GROUND_STAMP, the scale and the frame's law (D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-C1-deck-raw",
@@ -839,7 +849,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B1-unbuilt-wild",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "    if (!at) {\n      const loc = _liftLocationAt(px, py)",
     "new": "    if (false) {\n      const loc = _liftLocationAt(px, py)",
     "tests": [
@@ -849,7 +859,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B1-kept-rect-blind-to-the-place",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "if (had && had.loc === loc) rect = had.rect;",
     "new": "if (had) rect = had.rect;",
     "tests": [
@@ -859,10 +869,10 @@
   },
   {
     "name": "GROUND-AGREE-the-lift-asks-the-clocks",
-    "file": "src/scenes/world.js",
-    "old": "  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));\n",
-    "new": "  const _liftLocationAt = (x, y) => tvLocationAt(x, y);\n",
-    "note": "GROUND-AGREE (Field-Bugs-2026-10-24b): re-aimed - the lift asks the clocks again (a spent spawn read as bare ground) where its build shapes the ground for the spawn alive or dead.",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "  const _liftLocationAt = (x, y) => (onTheBay(x, y) ? spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`)) : _locationToBuild(x, y));",
+    "new": "  const _liftLocationAt = (x, y) => (onTheBay(x, y) ? tvLocationAt(x, y) : _locationToBuild(x, y));",
+    "note": "GROUND-AGREE (Field-Bugs-2026-10-24b): re-aimed - the lift asks the clocks again (a spent spawn read as bare ground) where its build shapes the ground for the spawn alive or dead. BAY-LEFT-GROUND: re-aimed by content - on the Bay the lift's place is the ground's (past it the build's own, D5).",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -870,13 +880,14 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B1-never-bound",
-    "file": "src/scenes/world.js",
-    "old": "  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));\n",
-    "new": "  const _liftLocationAt = (x, y) => locationIndex.get(`${x},${y}`);\n",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "  const _liftLocationAt = (x, y) => (onTheBay(x, y) ? spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`)) : _locationToBuild(x, y));",
+    "new": "  const _liftLocationAt = (x, y) => (onTheBay(x, y) ? locationIndex.get(`${x},${y}`) : _locationToBuild(x, y));",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - on the Bay the lift's place is the ground's (past it the build's own, D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-D3-tiles-off-the-shaped-blend",
@@ -901,8 +912,8 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-unblended",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);\n",
-    "new": "\n",
+    "old": "    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);\n",
+    "new": "",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -911,8 +922,8 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-blended-to-the-shaped-mean",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);",
-    "new": "if (classic) blendLocationTerrain(classic, avg, locationRect);",
+    "old": "if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);",
+    "new": "if (classic) blendLocationTerrain(classic, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -986,45 +997,49 @@
   {
     "name": "AUDIT-LANDFORMS-B2-wild-memo-blind-to-the-sample",
     "file": "src/world/landforms.js",
-    "old": "      const k = x * hDim + y;\n      let v = memo.get(k);",
-    "new": "      const k = x;\n      let v = memo.get(k);",
+    "old": "      const k = x * hDim + y;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y))",
+    "new": "      const k = x;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y))",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): groundMovedField keeps a memo of the same shape - the lift's named by its shaped sample"
   },
   {
     "name": "AUDIT-LANDFORMS-B2-host-hands-no-landforms",
-    "file": "src/scenes/world.js",
-    "old": "landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere())",
-    "new": "landformLiftField(woods, px, py, rect)",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere({ before }))",
+    "new": "landformLiftField(host.woods, px, py, rect)",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the host's landforms asked by the record's law (D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-B2-field-blind-to-the-network",
-    "file": "src/scenes/world.js",
-    "old": ": '-'},${terrainGen.roads() ? 1 : 0}`;",
-    "new": ": '-'}`;",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": ": '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
+    "new": ": '-'},${before ? 'before' : beyondSites.generation()}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the field's key carries the sites past the Bay's generation and the old law too (D1, D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-II-F1-the-probe-skips-the-roll",
-    "file": "src/scenes/world.js",
-    "old": "groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
-    "new": "(locationIndex.get(`${x},${y}`) ?? null);",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`)) : _locationToBuild",
+    "new": "(locationIndex.get(`${x},${y}`) ?? null) : _locationToBuild",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - on the Bay the lift's place is the ground's (past it the build's own, D5); the record's old text, left by a parse, cut the call's name in two."
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-cleared-whole",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked\n",
     "new": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.clear();\n",
     "tests": [
@@ -1033,7 +1048,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-never-touched",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "    if (field) _liftFields.delete(key);   // asked again: the last to be let go\n    else {",
     "new": "    if (field) { /* kept where it stood */ } else {",
     "tests": [
@@ -1042,7 +1057,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-the-old-eight",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "  const LIFT_FIELDS_KEPT = 32;",
     "new": "  const LIFT_FIELDS_KEPT = 8;",
     "tests": [
@@ -1051,7 +1066,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-rects-cleared-whole",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked\n",
     "new": "        if (_liftRects.size >= 8) _liftRects.clear();\n",
     "tests": [
@@ -1232,21 +1247,23 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-ring-unfaded",
     "file": "src/render/farRing.js",
-    "old": "let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) :",
-    "new": "let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true) :",
+    "old": "  if (fades) for (let j = 0; j < fside; j++) for (let i = 0; i < fside; i++) { const x = fx0 + i, y = fy0 + j; fades[j * fside + i] = own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)); }",
+    "new": "  if (fades) fades.fill(1);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the ring's vertex is the kernel's ground at its pixel's centre, its lift faded by its nodes' fades (the ring's grid of them, centreGround's law) - every one 1, the lift unfaded beside the sea. Re-aimed by content (BREATHTAKER2 on the horizon): the ring's height law takes the pixel for the continent's share."
   },
   {
     "name": "AUDIT-LANDFORMS-II-I1-view-unfaded",
-    "file": "src/scenes/world.js",
-    "old": "return [x, ringHeight(byte, !!landform, fade)",
-    "new": "return [x, ringHeight(byte, !!landform)",
+    "file": "src/world/landforms.js",
+    "old": "if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : cliffFadeAt(byteAt, qx, qy));",
+    "new": "if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : 1);",
     "tests": [
-      "test/world/terrain/auditlandforms.test.js",
-      "test/systems/landform.test.js"
-    ]
+      "test/world/reliefpeaks.test.js",
+      "test/world/terrain/auditlandforms.test.js"
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the travel view past the grid stands on ringGroundAt, whose fades are centreGround's own cliffFadeAt when none is handed - that default unread"
   },
   {
     "name": "AUDIT-LANDFORMS-II-I3-reach-unscaled",
@@ -1279,7 +1296,7 @@
   {
     "name": "AUDIT-LANDFORMS-II-G1-never-carried",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const groundWas = _groundBefore.get(key);",
+    "old": "    const groundWas = _groundBefore.get(pkey);",
     "new": "    const groundWas = null;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
@@ -1315,7 +1332,7 @@
   {
     "name": "AUDIT-LANDFORMS-II-G2-player-left",
     "file": "src/scenes/world.js",
-    "old": "    if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);\n",
+    "old": "    if ((_seasonHoldKey === key || (behind && key === `${state.current.x},${state.current.y}`)) && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);\n",
     "new": "",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
@@ -1333,8 +1350,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-K1-the-publish-reads-the-pools",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      host.rideGround?.(t, key, moved);\n",
-    "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);\n",
+    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);",
+    "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);",
     "tests": [
       "test/scenes/bootorder.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1442,15 +1459,15 @@
   {
     "name": "AUDIT-LANDFORMS-II-H3-nature-on-dfu",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const { flats: nature, pairs: roadside } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,",
-    "new": "  const { flats: nature, pairs: roadside } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(classic ?? samples, tilemap, natureOpts), samples, tilemap,",
+    "old": "  const { flats: nature, pairs: roadside, graht } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,",
+    "new": "  const { flats: nature, pairs: roadside, graht } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(classic ?? samples, tilemap, natureOpts), samples, tilemap,",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-H1-a-raw-writer",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives",
     "new": "        lanterns: droppedTorches.snapshot((q) => { const wc = state.worldCoords(q); return [wc.x, q[1] - state.compensation[1], wc.z]; }),\n        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives",
     "tests": [
@@ -1459,7 +1476,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-J3-probe-transposed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnGroundHost.js",
     "old": "groundLocationAt(x, y, locationIndex",
     "new": "groundLocationAt(y, x, locationIndex",
     "tests": [
@@ -1468,12 +1485,13 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-J3-index-transposed",
-    "file": "src/scenes/world.js",
-    "old": "groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
-    "new": "groundLocationAt(x, y, locationIndex.get(`${y},${x}`));",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`)) : _locationToBuild",
+    "new": "spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${y},${x}`)) : _locationToBuild",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - on the Bay the lift's place is the ground's (past it the build's own, D5)."
   },
   {
     "name": "GROUND-AGREE-roll-transposed",
@@ -1508,21 +1526,23 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-J6-z-compensation-sign",
-    "file": "src/scenes/world.js",
-    "old": "    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
-    "new": "    const py = state.mapOrigin.y - Math.floor((z + c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE)]",
+    "new": "state.mapOrigin.y - Math.floor((z + c[2]) / TERRAIN_SIZE)]",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the scene point's pixel is framePixelAt's (D5)."
   },
   {
     "name": "AUDIT-LANDFORMS-II-J6-north-row-off",
-    "file": "src/scenes/world.js",
-    "old": "if (!woods || px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
-    "new": "if (!woods || px < 0 || py <= 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;",
+    "new": "    if (!host.woods || !inWorldGrid(px, py) || py === 0) return 0;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the lift's bound is the world's grid (D5); the Bay's north row left out."
   },
   {
     "name": "AUDIT-LANDFORMS-II-J7-no-fetch",

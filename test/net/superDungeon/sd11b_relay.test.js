@@ -33,6 +33,9 @@ import { HIT_KINDS, dpsRef, ABSENT_RETIRE_MS } from '../../../src/net/gate/gateB
 import { mintSdReceipt } from '../../../src/net/superDungeon/sdReceipt.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { SD_FRAY_LASH, inOrreryHall, dungeonToRealm, SD_ORRERY } from '../../../src/net/superDungeon/sdBrain.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -63,7 +66,7 @@ async function withRealm(fn, { concord = true } = {}) {
   const realNow = Date.now;
   let clock = T0;
   Date.now = () => clock;
-  const world = fakeRooms({ now: () => clock });
+  const world = fakeRooms({ now: () => clock, vars: { SD_COLLAPSE: 'on' } });   // SD-PARTY (PIN MOVED): the first kill's collapse for all, the hub's setting on
   const hub = world.room(SOCIAL_ROOM);
   try {
     await quiet(async () => {
@@ -92,7 +95,7 @@ async function withRealm(fn, { concord = true } = {}) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       gated(realm);
       if (concord) { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
@@ -701,7 +704,7 @@ test('SD11b THE RELAY BY SOURCE: the seams these fixes stand on - the realm\'s a
   assert.match(r, /const charLv = \(isCellRoom\(a\.key\) \|\| realmRoom \|\| ktRoom\) && Number\.isSafeInteger\(who\.cl\) && who\.cl >= 1 \? \{ cl: who\.cl \} : \{\};/);   // PIN MOVED (KETCH): and a ship's member's, the level its token signs
   assert.match(r, /try \{ await this\._sdHeldBeat\(now\); \}/);
   assert.match(r, /if \(this\._sdFellTelling\) return this\._sdFellTelling;/);
-  assert.match(r, /await this\.state\.storage\.put\(\{ \[SD_KEY\]: rec, \[SD_SLOT_KEY\]: hw \}\);/);
+  assert.match(r, /await this\.state\.storage\.put\(\{ \[sdLaneKey\(SD_KEY, lane\)\]: rec, \[sdLaneKey\(SD_SLOT_KEY, lane\)\]: hw \}\);/);   // PIN MOVED (WW5): a lane's record and its mark, together - the Bay's under the keys it always had (wire.js sdLaneKey)
   assert.match(r, /if \(isSdRoom\(a\.key\)\) \{ try \{ if \(!\(await this\._sdHelloFight\(ws, who\.subject, sdSlotOfRoom\(a\.key\), now\)\)\) return; \}/);
 });
 
@@ -780,6 +783,8 @@ test('SD11b THE RELAY\'S SMALLER ARMS (L8 G13, added at SD11c): a fighter\'s NEW
     hub.room.env.ROOMS = { idFromName: HR.idFromName, get: () => ({ fetch: async () => new Response(JSON.stringify({ n: 1e9 }), { status: 200 }) }) };
     const counts = await hub.room._sdCensus();
     hub.room.env.ROOMS = HR;
-    assert.ok(counts.length > 0 && counts.every((n) => n === CHAT_SOCKETS_MAX), 'bounded by a channel\'s sockets');
+    // PIN MOVED (WW5): the Bay's lane's census asks the Bay's 62 alone - a province's region is its own lane's to count
+    assert.ok(counts.length === 71 && counts.slice(0, 62).every((n) => n === CHAT_SOCKETS_MAX), 'bounded by a channel\'s sockets');
+    assert.ok(counts.slice(62).every((n) => n === 0), 'a province\'s channel never asked by the Bay\'s lane');
   });
 });

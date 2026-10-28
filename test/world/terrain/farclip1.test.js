@@ -75,7 +75,7 @@ function driverGl() {
   const fsOf = (p) => p?.shaders?.find((s) => s.type === gl.FRAGMENT_SHADER)?.src ?? null;
   const compiled = () => log.filter((e) => e.k === 'compileShader').length;
   /** the clip variants compiled so far - a terrain program's decode with the cap's byte discarded */
-  const clips = () => log.filter((e) => e.k === 'compileShader' && /texelFetch\(uTilemap, cell, 0\)\.r;/.test(e.sh.src) && /if \(data == \d+u\) discard;/.test(e.sh.src)).length;
+  const clips = () => log.filter((e) => e.k === 'compileShader' && /texelFetch\(uTilemap, cell, 0\)\.r;/.test(e.sh.src) && / : data == \d+u\) discard;/.test(e.sh.src)).length;   // PIN MOVED (COAST-LOOK): the byte's test the switch's classic arm
   return { gl, log, fsOf, compiled, clips, canvas: { getContext: () => gl, clientWidth: 320, clientHeight: 200, width: 320, height: 200 } };
 }
 

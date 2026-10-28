@@ -12,8 +12,9 @@
   {
     "name": "HOME1-claim-cap-unread",
     "file": "server-account/src/homes.js",
-    "old": "paid, mapId, mapId, layout, player.id, character, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
-    "new": "paid, mapId, mapId, layout, player.id, character, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
+    "old": "paid, mapId, mapId, layout, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
+    "new": "paid, mapId, mapId, layout, player.id, character, region, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -21,12 +22,12 @@
   {
     "name": "HOME1-claim-cap-per-account",
     "file": "server-account/src/homes.js",
-    "old": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND deed = 0) < ?",
-    "new": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND ? IS NOT NULL AND deed = 0) < ?",
+    "old": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?",
+    "new": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND ? IS NOT NULL AND region = ? AND deed = 0) < ?",
     "tests": [
       "test/server/home1.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the cap counts the homes bought (`deed = 0`)."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the cap counts the homes bought (`deed = 0`)."
   },
   {
     "name": "HOME1-claim-two-owners",

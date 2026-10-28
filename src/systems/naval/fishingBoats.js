@@ -75,7 +75,7 @@ export function fishersOf(key, day) {
 
 /** The harbour's outward bearing at its mouth: from its berths' middle to the mouth ([x, z], unit), else its first
  *  berth's own normal. */
-export function outwardOf(harbour) {
+export function harbourOutwardOf(harbour) {
   let x = 0, z = 0;
   for (const b of harbour.berths) { x += b.pos[0]; z += b.pos[1]; }
   x /= harbour.berths.length; z /= harbour.berths.length;
@@ -107,7 +107,7 @@ export function berthSpan(harbour, n, u, length) {
  */
 export function fishingWaters({ harbour, i, seed, hull, isWater, grid }) {
   if (!harbour?.mouth || !harbour.berths?.length) return null;
-  const m = harbour.mouth, n = outwardOf(harbour), u = [n[1], -n[0]], side = i % 2 ? -1 : 1, k = Math.floor(i / 2);
+  const m = harbour.mouth, n = harbourOutwardOf(harbour), u = [n[1], -n[0]], side = i % 2 ? -1 : 1, k = Math.floor(i / 2);
   const along = Math.atan2(u[0], u[1]);   // she lies along the shore, as the berths' ships do
   const water = (x, z) => !!isWater(x, z, hull);
   const length = (() => { const b = berthSize(harbour.hull ?? 4); return b.bowZ - b.aftZ; })();

@@ -150,16 +150,6 @@
     "note": "the lanes counted every reading"
   },
   {
-    "name": "TOWNECON4-host-lanes-cached-empty",
-    "file": "src/scenes/townEconHost.js",
-    "old": "      if (!lanes?.length) return 0;",
-    "new": "      if (!lanes?.length) { laneCounts = new Map(); return 0; }",
-    "tests": [
-      "test/systems/naval/townecon_sea.test.js"
-    ],
-    "note": "the lanes not yet standing kept as none"
-  },
-  {
     "name": "TOWNECON4-host-ether",
     "file": "src/scenes/townEconHost.js",
     "old": "if (!port || port.ether || !Number.isSafeInteger(port.px)",

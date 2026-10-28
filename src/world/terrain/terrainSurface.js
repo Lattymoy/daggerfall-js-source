@@ -151,6 +151,52 @@ export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {
 }
 
 /**
+ * FLORA-GROUND (FIELD BUGS 2026-10-27, the owner: "floating flora ... can be seen off the ground in first person"; the
+ * coordinator: "Make the flora's height and the walk height one law"): THE GROUND'S ONE LAW - the height of the streamed
+ * ground at a pixel-local point, for everything that stands on it: the player's walk floor (scenes/world.js heightAt, the
+ * capsule's), every plant the kernel and the build stand (world/terrain/terrainNature.js, jungleNature.js, the jungle's
+ * roadside pairs and graht-oaks, a town's nature flats, World of Daggerfall's shrubs) and the grass. It is the near
+ * grid's drawn surface (surfaceHeightAt at stride 1, its two triangles a quad), so what is drawn, what is walked on and
+ * what stands are one surface. Before it the capsule walked a bilinear patch over the samples, the drawn ground was the
+ * triangles under it, and FOREST1's woods and the jungle stood on the bilinear: on the real data (the Bay, the Landforms
+ * row on) 3.4% of the woods' flats stood more than 5 cm over the ground they were drawn on, up to 46 cm. A change to the
+ * ground's law is made here, and the walker and the flora move with it; a change to its heights (the kernel's samples)
+ * reaches both through the samples they share.
+ * @param {Float32Array} heightmapData sample(x, z) = data[x*hDim+z], normalized
+ * @param {number} lx pixel-local x, 0..TERRAIN_SIZE
+ * @param {number} lz pixel-local z, 0..TERRAIN_SIZE
+ * @returns {number} world height, MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE applied
+ */
+export const walkGroundAt = (heightmapData, lx, lz) => surfaceHeightAt(heightmapData, lx, lz, 1);
+
+/**
+ * FLORA-GROUND, THE RINGS (the coordinator, 2026-10-27: "the coarse surface the player sees and the ground the plants
+ * stand on agree at every ring"): THE GROUND A BUILT PIXEL DRAWS, at its ring class - the very vertices and triangles its
+ * terrain surface uploads: surfaceHeightAt at the pixel's stride (the near grid's 129 x 129 at 1, the far ring's 33 x 33
+ * at 4 - buildTerrainGrid decimates the samples, buildTerrainIndices cuts each quad on the same diagonal), less the bed
+ * WATER-NEXT 2 carved under its water (`carve` the bed's depths at that stride - waterBed.js bedFields' carve, a pixel's
+ * `_bed.depths` - which carveBed takes off those vertices). Every plant is DRAWN on it (scenes/floraSeat.js seatFlora:
+ * each placed on walkGroundAt, then drawn by what this stands over or under that) and the snow lies on it
+ * (scenes/snowGround.js height). At stride 1 with no bed it is walkGroundAt, the walker's floor - the player stands only
+ * in the near ring. The far ring cannot carry the near ring's relief (a 25.6 m quad over sixteen of 6.4 m): on the real
+ * data the walk ground under 18.8% of the Bay's plants stood more than 25 cm over it and under 16.9% more than 25 cm
+ * below it, the worst 6.6 m, until they were drawn on it; no coarse vertex can hold them all (each the highest fine
+ * sample about it buried 92% of them a metre or more - bible/03-World/World-Arc.md FLORA-GROUND, THE RINGS).
+ * @param {Float32Array} heightmapData sample(x, z) = data[x*hDim+z], normalized
+ * @param {number} lx pixel-local x, 0..TERRAIN_SIZE
+ * @param {number} lz pixel-local z, 0..TERRAIN_SIZE
+ * @param {number} [stride] the pixel's ring class (`_stride`)
+ * @param {?ArrayLike<number>} [carve] the bed's depths at that stride, x fastest, or null where none was carved
+ * @returns {number} world height
+ */
+export function drawnGroundAt(heightmapData, lx, lz, stride = 1, carve = null) {
+  const h = surfaceHeightAt(heightmapData, lx, lz, stride);
+  if (!carve) return h;
+  const g = (HEIGHTMAP_DIMENSION - 1) / stride + 1;
+  return h - gridValueAt(carve, g, g, (TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)) * stride, lx, lz);
+}
+
+/**
  * GRASS-LIT2 (2026-10-02): THE GROUND'S NORMAL WHERE A BLADE STANDS - the
  * drawn surface's own, as the terrain's fragment stage receives it: the
  * stride-1 grid's vertex normals (buildTerrainGrid's central differences,
@@ -325,7 +371,7 @@ export function terrainSampleHeightAt(heightmapData, lx, lz, stride = 1) {
  * @param {number} lz pixel-local z
  */
 export function groundOffPlane(heightmapData, avg, lx, lz) {
-  return surfaceHeightAt(heightmapData, lx, lz) - Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
+  return walkGroundAt(heightmapData, lx, lz) - Math.fround(avg) * (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);   // FLORA-GROUND: the walk law
 }
 
 /** WOD-BUSH: the share of a box's footprint, each side, left out of the ground read - a bush's foot is its middle. */
@@ -353,7 +399,7 @@ export function lowestGroundUnder(heightmapData, box) {
   };
   const xs = span(box[0], box[3]), zs = span(box[2], box[5]);
   let low = Infinity;
-  for (const x of xs) for (const z of zs) low = Math.min(low, surfaceHeightAt(heightmapData, x, z));
+  for (const x of xs) for (const z of zs) low = Math.min(low, walkGroundAt(heightmapData, x, z));   // FLORA-GROUND: the walk law
   return low;
 }
 

@@ -25,8 +25,9 @@ export const GUARD_PARENT = 'ae33fe8e7';   // the commit the guard (a06279295) w
 /** The painter as it stood at `ref`, its relative imports pointed back into this tree; answers its module. */
 async function painterAt(ref) {
   const text = execFileSync('git', ['show', `${ref}:src/world/road/roadPainter.js`], { cwd: ROOT, encoding: 'utf8' })
-    .replace(/from '\.\/([^']+)'/g, (_, p) => `from '${pathToFileURL(join(ROOT, 'src/world', p)).href}'`)
-    .replace(/from '\.\.\/([^']+)'/g, (_, p) => `from '${pathToFileURL(join(ROOT, 'src', p)).href}'`);
+    // its relative imports against its own directory (world/road/ since the painter moved there - they pointed at world/)
+    .replace(/from '\.\/([^']+)'/g, (_, p) => `from '${pathToFileURL(join(ROOT, 'src/world/road', p)).href}'`)
+    .replace(/from '\.\.\/([^']+)'/g, (_, p) => `from '${pathToFileURL(join(ROOT, 'src/world', p)).href}'`);
   const dir = mkdtempSync(join(tmpdir(), 'roadguard-'));
   const file = join(dir, 'roadPainter.before.mjs');
   writeFileSync(file, text);

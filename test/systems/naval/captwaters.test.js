@@ -79,7 +79,7 @@ test('CAPT-WATERS at sea: a ship launched of the deep is the deep\'s - her tempe
   assert.equal(e.deep, false, 'a hand-launched ship is no deep one');
   const host = rd('src/scenes/naval/navalHost.js');
   assert.match(host, /if \(spec\.deep\) ship\.temper = temperOf\(cls, spec\.seed, \{ bold: DEEP_BOLD \}\);/);
-  assert.match(host, /region, deep: !!spec\.deep, ether, legend: legend\?\.id \?\? null, orphan: null,/);
+  assert.match(host, /region, area, deep: !!spec\.deep, ether, legend: legend\?\.id \?\? null, orphan: null,/);   // PIN MOVED (WW7-8): the area her names were drawn in beside her region
   assert.match(host, /deps\.hold\?\.\(key, tier \+ \(entry\.deep \? DEEP_TIER : 0\) \+ etherTier\(entry\)\)/, 'her hold');
   assert.match(host, /holdTier\(classById\(e\.from\)\) \+ \(e\.deep \? DEEP_TIER : 0\)/, 'her cask hauled');
   assert.match(host, /holdTier\(classById\(f\.from\)\) \+ \(f\.deep \? DEEP_TIER : 0\)/, 'her cask stowed');

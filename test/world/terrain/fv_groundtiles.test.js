@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { locationRectReader } from '../../../src/world/terrain/terrainTiles.js';
 import { MapsFile } from '../../../src/formats/mapsFile.js';
 import { setWorldDataDoor } from '../../../src/formats/worldData/worldDataDoor.js';
-import { prefetchGroundTiles, groundTilesKey, _flushGroundTiles, _resetGroundTiles } from '../../../src/world/terrain/groundTilesKept.js';
+import { prefetchGroundTiles, groundTilesKey, keptGroundTiles, _flushGroundTiles, _resetGroundTiles } from '../../../src/world/terrain/groundTilesKept.js';
 import { setBlockVariant, clearWorldDataVariants } from '../../../src/systems/worldDataVariants.js';
 import { registerWorldDataPack, worldDataBlocksServing, _resetWorldDataReplacement } from '../../../src/formats/worldData/worldDataReplacement.js';
 
@@ -30,7 +30,8 @@ function blocksOf(bytes = BYTES, order = NAMES) {
       reads.push(i);
       const k = NAMES.indexOf(order[i]);
       const groundTiles = Array.from({ length: 16 }, (_, x) => Array.from({ length: 16 }, (_, y) => ({ tileBitfield: (x * 7 + y + k) & 63, textureRecord: x >= k % 9 && y >= (k * 3) % 7 ? 3 : 60, isRotated: false, isFlipped: false })));
-      return { rmbBlock: { fldHeader: { groundData: { groundTiles } } } };
+      const autoMapData = new Uint8Array(64 * 64).map((_, c) => ((c * 7 + k) % 11 === 0 ? 1 : 0));   // TOWN-SHAPES reads the town map and the misc places too
+      return { rmbBlock: { fldHeader: { groundData: { groundTiles }, autoMapData }, misc3dObjectRecords: [{ xPos: k * 300, zPos: -k * 200 }], miscFlatObjectRecords: [{ xPos: 700, zPos: k * 90 }] } };
     },
   };
 }
@@ -117,5 +118,33 @@ test('FIRST-VISIT ground tiles: a block is kept by its name - the next launch\'s
   const second = await launch(store, { blocks: moved });
   assert.equal(second.reads, 0, 'every block found by name');
   assert.deepEqual(second.rects, first.rects, 'the same town, the same rects');
+  _resetGroundTiles();
+});
+
+test('FIRST-VISIT ground tiles: a kept block gives back its town-map cells and misc places as the outline reads them (mutants: the cells dropped; a record moved; a cell set that was not)', async () => {
+  const store = storeOf();
+  const cells = new Uint8Array(64 * 64);
+  for (const c of [0, 1, 63, 64, 2047, 4095]) cells[c] = 9;
+  const groundTiles = Array.from({ length: 16 }, (_, x) => Array.from({ length: 16 }, (_, y) => ({ tileBitfield: x + y, textureRecord: 3 })));
+  const part = () => ({ groundTiles, autoMapData: cells, misc3dObjectRecords: [{ xPos: 100, zPos: -300, id: 7 }], miscFlatObjectRecords: [{ xPos: 5, zPos: 2.5 }] });
+  await prefetchGroundTiles({ blocksBytes: BYTES, serving: 'open|A', store });
+  const miss = keptGroundTiles('w', 'A.RMB', part);
+  assert.equal(miss.autoMapData, cells, 'a miss answers the block as read');
+  await _flushGroundTiles();
+  _resetGroundTiles();
+  await prefetchGroundTiles({ blocksBytes: BYTES, serving: 'open|A', store });
+  const hit = keptGroundTiles('w', 'A.RMB', () => assert.fail('a kept block is not read'));
+  assert.deepEqual(hit.groundTiles.map((c) => c.map((t) => [t.tileBitfield, t.textureRecord])), groundTiles.map((c) => c.map((t) => [t.tileBitfield, t.textureRecord])));
+  assert.deepEqual([...hit.autoMapData.keys()].filter((c) => hit.autoMapData[c]), [0, 1, 63, 64, 2047, 4095]);
+  const places = [...hit.misc3dObjectRecords, ...hit.miscFlatObjectRecords].map((r) => [r.xPos, r.zPos]);
+  assert.deepEqual(places, [[100, -300], [5, 2.5]]);
+  _resetGroundTiles();
+  await prefetchGroundTiles({ blocksBytes: BYTES, serving: 'open|A', store });
+  const none = keptGroundTiles('w', 'B.RMB', () => ({ groundTiles }));
+  assert.equal(none.autoMapData, undefined);
+  await _flushGroundTiles();
+  _resetGroundTiles();
+  await prefetchGroundTiles({ blocksBytes: BYTES, serving: 'open|A', store });
+  assert.equal(keptGroundTiles('w', 'B.RMB', () => assert.fail('kept')).autoMapData, null, 'a block with no town map keeps none');
   _resetGroundTiles();
 });

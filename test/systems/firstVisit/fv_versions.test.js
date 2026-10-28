@@ -169,7 +169,7 @@ test('FIRST-VISIT REFRESH: the walks\' ground tiles - a record under a new key s
   for (const bytes of [new Uint8Array(70000).fill(1), new Uint8Array(70000).fill(2)]) {
     _resetGroundTiles();
     await prefetchGroundTiles({ blocksBytes: bytes, serving: 'open', store });
-    keptGroundTiles('', 'A.RMB', () => tiles);
+    keptGroundTiles('', 'A.RMB', () => ({ groundTiles: tiles }));
     await _flushGroundTiles();
     assert.deepEqual(keysOf(store, GROUND_TILES_SCOPE), [groundTilesKey(bytes, 'open')]);
   }

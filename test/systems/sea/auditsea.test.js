@@ -34,7 +34,7 @@ import { etherPlaceId } from '../../../src/world/etherPlaces.js';
 import { OnlineSession } from '../../../src/net/online.js';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
 import * as R from '../../../src/net/sea/seaRef.js';
-import { newWildRef, wildZone, wildPose, wildCarryOf, WILD_REF } from '../../../src/net/wild/wildRef.js';
+import { newWildRef, wildZone, wildPose, wildCarryOf, WILD_REF, WILD_GRACE } from '../../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M } from '../../../src/net/siege/siegeRef.js';
 import { createSeaBroadsides, SEA_SHOT_HZ, SEA_SHOT_MS } from '../../../src/scenes/naval/seaBroadsides.js';
 import { SEA_CAPTAIN_NEAR_M } from '../../../src/scenes/naval/navalPvp.js';
@@ -51,8 +51,8 @@ import { BANDS, VEIL_X, LEAGUE_PX, etherBandAt } from '../../../src/world/etheri
 import { legendById } from '../../../src/systems/naval/etherShips.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { etherInPeace, etherWildRingAt, etherRisePort, ETHER_PEACE_PX, ETHER_RISE_PX, ETHER_KIND, ETHER_WILD_TEXT } from '../../../src/systems/wild/etherWild.js';
-import { zoneWord, WILD_TEXT, wildMaskOf, WILD_REGION } from '../../../src/systems/wild/wildZone.js';
-import { wildCartAway } from '../../../src/systems/wild/wildCart.js';
+import { zoneWord, WILD_TEXT } from '../../../src/systems/wild/wildZone.js';
+import { takeWildDeath } from '../../../src/systems/wild/wildDropLaw.js';   // STORE-KEEPS: C4 retired - no death takes the cart
 import { WAGON_MODE } from '../../../src/systems/horse/horseCartLaw.js';
 import { worldCoordToMapPixel } from '../../../src/world/streamingWorld.js';
 import { veilhaven, islesNear, inEther, inVeil } from '../../../src/world/ethericSea.js';
@@ -61,6 +61,7 @@ import * as tm from '../../../src/systems/textManager.js';
 import { etherWayWord, etherRingBonus } from '../../../src/systems/wild/etherWild.js';
 import { standService } from '../../accountDb.mjs';
 import { seatRealm, recordOf } from '../../realmSeat.mjs';
+import { hostText } from '../../hostText.mjs';
 
 const { subtle } = globalThis.crypto;
 const RC = 'r00000000000000000a01', RK = 'r00000000000000000a02';
@@ -411,8 +412,10 @@ test('AUDIT SEA VENTURES B6: the day a season turns in counts for the old one - 
 /** A room's referee state: two captains in the zone, `gap` metres apart. */
 function seaRoom(gap = 50, now = 1000) {
   const st = newWildRef();
-  wildZone(st, 'a', { id: 'pa', lv: 10, ci: RK }, true, { x: 0, y: 0, z: 0 }, now);
-  wildZone(st, 'b', { id: 'pb', lv: 10, ci: RC }, true, { x: gap * SIEGE_UNITS_PER_M, y: 0, z: 0 }, now);
+  // PIN MOVED (AUDIT PVP-EASE L3-3, 2026-10-26): entered a minute before - ZONE-GRACE's safe passage keeps a captain's ship
+  // from a shot, and these are captains at war
+  wildZone(st, 'a', { id: 'pa', lv: 10, ci: RK }, true, { x: 0, y: 0, z: 0 }, now - WILD_GRACE.ms);
+  wildZone(st, 'b', { id: 'pb', lv: 10, ci: RC }, true, { x: gap * SIEGE_UNITS_PER_M, y: 0, z: 0 }, now - WILD_GRACE.ms);
   return st;
 }
 /** Her ship struck to about `share` of her bar by a's guns from `now`, the helms said as the page says them. */
@@ -526,8 +529,8 @@ test('AUDIT SEA VENTURES A3, A4, F1/A1: the relay - what landed is said rounded 
     const a = await join(A, 'peer-0001', -5, RK), b = await join(A, 'peer-0002', 5, RC);
     const helm = (r, ws, hl, u, t = 240) => r.raw(ws, JSON.stringify({ t: 'wild', data: { k: 'helm', hl, t, u, h: 1000 } }));
     await helm(ra, a, 4, 11); await helm(ra, b, 4, 22);
-    clock += 30_000;
-    await helm(ra, a, 4, 11);
+    clock += WILD_GRACE.ms;   // PIN MOVED (AUDIT PVP-EASE L3-3): past their entry's safe passage (it was 30 s, the guns' refill alone)
+    await helm(ra, a, 4, 11); await helm(ra, b, 4, 22);
     for (let i = 0; i < 10; i++) { clock += 100; await ra.raw(a, JSON.stringify({ t: 'wild', data: { k: 'shot', to: 'peer-0002', d: 1, s: 0, f: 0 } })); }
     const hulls = b.sent.filter((m) => m.t === 'wref' && m.k === 'hull');
     assert.equal(hulls.length, 10);
@@ -858,7 +861,7 @@ test('AUDIT SEA VENTURES C2: Veilhaven\'s peace holds the way home - her own row
   }
 });
 
-test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport like any - never into, out of or about the open sea, nor across the Veil; a party\'s walk onto the open sea warns as one into the mountains does; a wagon parked on the open sea\'s ground is with its owner at a death there; a death past the Veil rises at the nearest freeport, however far (mutants: the cabin\'s refusals, the walk, the cart, the rise)', () => {
+test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport like any - never into, out of or about the open sea, nor across the Veil; a party\'s walk onto the open sea warns as one into the mountains does; a wagon parked on the open sea\'s ground keeps its cargo through a death there, as every wagon does since STORE-KEEPS; a death past the Veil rises at the nearest freeport, however far (mutants: the cabin\'s refusals, the walk, the cart, the rise)', () => {
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   const cab = w.slice(w.indexOf('async function enterLinkedBankCabin('), w.indexOf('async function boardOrDisembark('));
   const refuse = cab.indexOf('if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;');
@@ -867,19 +870,16 @@ test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport 
   assert.match(w, /const wildWalkRow = \(x, y\) => \{ const m = wildMask\(\); return !online\?\.wildOk \? null : etherSea && etherWildRingAt\(x, y\) > 0 \? zoneWord\('walkInto', ETHER_KIND\) : m && wildNear\(m, x, y\) \? WILD_TEXT\.walkInto : null; \};/);
   assert.equal(zoneWord('walkInto', ETHER_KIND), ETHER_WILD_TEXT.walkInto());
   assert.match(zoneWord('walkInto', ETHER_KIND), /open Eltheric Ocean past Veilhaven's peace, an open PvP zone/);
-  // C4: a wagon parked on the open sea's ground is with its owner; one parked outside every zone is away
-  const blob = (x, y) => { const dx = (x - 520) / 38, dy = (y - 110) / 24; return dx * dx + dy * dy < 1; };
-  const mask = wildMaskOf({ getRegionIndexAt: (x, y) => (blob(x, y) ? WILD_REGION : 3), getLocationByName: () => null });
+  // C4 (PIN MOVED, STORE-KEEPS 2026-10-26): a wagon parked on the open sea's ground was WITH its owner at a death there
+  // (CART-AWAY's word), and its cargo taken. No death takes the cart now, wherever it is parked - the open sea's isle too
   const parked = (px) => ({ Mode: WAGON_MODE.Deployed, WorldX: px.x * 32768 + 16384, WorldZ: (499 - px.y) * 32768 + 16384 });
   const h = veilhaven(), isle = islesNear(h.px - 300, h.py, 40).find((i) => i.kind === 'wild' || i.kind === 'ruin');
   const at = { x: isle.px, y: isle.py };
   assert.deepEqual(worldCoordToMapPixel(parked(at).WorldX, parked(at).WorldZ), at);
   assert.ok(etherWildRingAt(at.x, at.y) > 0);
-  assert.equal(wildCartAway(parked(at), mask), false, 'on the open sea: with its owner');
-  assert.equal(wildCartAway(parked({ x: 200, y: 300 }), mask), true, 'in the Bay: away');
-  let heart = null;
-  for (let i = 0; i < mask.inside.length && !heart; i++) if (mask.inside[i]) heart = { x: i % mask.width, y: Math.floor(i / mask.width) };
-  assert.equal(wildCartAway(parked(heart), mask), false, 'in the mountains: with its owner, as ever');
+  const fallen = { goldPieces: 100, items: [], wagonItems: [{ group: 'Weapons', templateIndex: 120, material: 0 }, { group: 'Currency', templateIndex: 0, stackCount: 400 }] };
+  const d = takeWildDeath(fallen, -1);
+  assert.deepEqual([d.from, fallen.wagonItems.length, fallen.wagonItems[1].stackCount], [['gold'], 2, 400], 'the purse\'s tenth, and the cart whole');
   // C5/F2: the nearest freeport, by distance, however far - Veilhaven only when she is the nearest
   for (const [x, y] of [[6900, -5108], [7699, -4976], [7000, -5400], [6950, -4800], [7500, -5600]]) {
     const port = etherRisePort(x, y);
@@ -894,9 +894,9 @@ test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport 
 
 test('AUDIT SEA VENTURES C6, C7: the open sea says its own words - /unstuck outdoors, a second revenant, a party left, a drop answered after the rise (by the room the fall was in), and the zone gone while still past the peace (never "Veilhaven\'s peace" where she is not) (mutants: each word, each call)', () => {
   const sea = (k) => zoneWord(k, ETHER_KIND), hills = (k) => zoneWord(k, null);
-  assert.equal(hills('unstuckOut'), '/unstuck does not work outdoors in the mountains.');
+  assert.equal(hills('unstuckOut'), '/unstuck does not work outdoors in Cyrodiil.');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's ground Cyrodiil
   assert.equal(sea('unstuckOut'), '/unstuck does not work outdoors on the open Eltheric Ocean.');
-  assert.equal(hills('revenantOne'), 'Only one revenant may walk at your side in the Wrothgarian Mountains.');
+  assert.equal(hills('revenantOne'), 'Only one revenant may walk at your side in Cyrodiil.');   // PIN MOVED (WW-C2)
   assert.equal(sea('revenantOne'), 'Only one revenant may walk at your side on the open Eltheric Ocean.');
   assert.equal(hills('truce'), WILD_TEXT.truce);
   assert.match(sea('truce'), /^No longer in your party\. On the open Eltheric Ocean/);
@@ -904,7 +904,7 @@ test('AUDIT SEA VENTURES C6, C7: the open sea says its own words - /unstuck outd
   assert.match(sea('dropLate'), /when you died at sea/);
   assert.match(sea('burntLate')(), /when you died at sea .* frozen/);
   assert.equal(sea('quiet'), 'You are out of the open Eltheric Ocean\'s PvP zone. No player may attack you here.');
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): the risen word in scenes/wildDropHost.js, read with its host
   assert.match(w, /say\(zoneWord\('unstuckOut'\)\); return true; \}/);
   assert.match(w, /townTalk\.say\(zoneWord\('truce'\)\);/);
   assert.match(w, /townTalk\.say\(d\.burnt \? zoneWord\('burntLate', seaRoomOf\(room\) \? ETHER_KIND : null\)\(\) : zoneWord\('dropLate', seaRoomOf\(room\) \? ETHER_KIND : null\)\);/);
@@ -914,7 +914,7 @@ test('AUDIT SEA VENTURES C6, C7: the open sea says its own words - /unstuck outd
   try {
     tm.setLocale(tm.PSEUDO_LOCALE);
     for (const k of ['unstuckOut', 'revenantOne']) {
-      assert.notEqual(hills(k), k === 'unstuckOut' ? '/unstuck does not work outdoors in the mountains.' : 'Only one revenant may walk at your side in the Wrothgarian Mountains.', `${k}: said in the language`);
+      assert.notEqual(hills(k), k === 'unstuckOut' ? '/unstuck does not work outdoors in Cyrodiil.' : 'Only one revenant may walk at your side in Cyrodiil.', `${k}: said in the language`);
       assert.equal(typeof hills(k), 'string', `${k}: a string, where its callers read one`);
     }
   } finally { tm.setLocale(was); }

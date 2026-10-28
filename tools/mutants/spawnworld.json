@@ -1,0 +1,271 @@
+[
+  {
+    "name": "SPAWN-WORLD-the-lane-flag",
+    "file": "src/world/worldWide/worldLanes.js",
+    "old": "  return (((lane + (key >>> 19)) << 20) | FLAG | (key & LOW)) >>> 0;",
+    "new": "  return (((lane + (key >>> 19)) << 20) | (key & LOW)) >>> 0;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-lane-read-without-its-flag",
+    "file": "src/world/worldWide/worldLanes.js",
+    "old": "v > 0xffffffff || !(v & FLAG)) return -1;",
+    "new": "v > 0xffffffff) return -1;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-run-one-lane",
+    "file": "src/world/worldWide/worldLanes.js",
+    "old": "  for (const lane of LANES) if (step >= lane && step < lane + WORLD_LANE_RUN) return lane;",
+    "new": "  for (const lane of LANES) if (step === lane) return lane;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-pixel-read-back",
+    "file": "src/world/worldWide/worldLanes.js",
+    "old": "  return worldPixelOfKey(((((v >>> 20) & 0xfff) - lane) * 0x80000) + (v & LOW));",
+    "new": "  return worldPixelOfKey(v & LOW);",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-another-salt-past-the-Bay",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "    if (salt !== WORLD_SALT || !inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);",
+    "new": "    if (!inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);",
+    "tests": [
+      "test/world/spawneddungeons.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-no-road-past-the-Bay",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "  if (!inBay(px, py)) return !arenaPathsAt(px, py);\n",
+    "new": "",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-ledger-row-the-Bay's",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "const at = /^(-?\\d{1,4}),(-?\\d{1,4})$/.exec(String(key));",
+    "new": "const at = /^(\\d{1,3}),(\\d{1,3})$/.exec(String(key));",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-ledger-row-any-spelling",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "      if (!inWorldGrid(px, py) || `${px},${py}` !== key) return null;",
+    "new": "      if (!inWorldGrid(px, py)) return null;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-a-spawn-on-a-place",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (!inBay(px, py) && placeAt(px, py)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-place-gate-on-the-Bay",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (!inBay(px, py) && placeAt(px, py)) return null;",
+    "new": "    if (placeAt(px, py)) return null;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-place-law-unwired",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "    placeAt: (x, y) => !!provinceQuestPlaces?.placeOnPixel(x, y),",
+    "new": "",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-no-spawner-past-the-Bay",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "|| host.lairLocationAt(px, py);",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-stand-on-a-place",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "      if (!onTheBay(px, py) && host.provinceQuestPlaces?.placeOnPixel(px, py)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-past-the-Bay-no-clocks",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "    if (!roaded && !_spawnLedger.expired(key, host._spawnClock())) return loc;",
+    "new": "    if (!roaded) return loc;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-past-the-Bay-no-take-back",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "    const net = terrainGen.roads(), roaded = !!net && !pathFreePixel(net, px, py);",
+    "new": "    const net = terrainGen.roads(), roaded = false;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-take-back-keeps-its-clocks",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "    if (roaded) _spawnLedger.forget(key);\n",
+    "new": "",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-inside-taken-back",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "    if (_insideSpawn(key)) return loc;\n    const net = terrainGen.roads(), roaded",
+    "new": "    const net = terrainGen.roads(), roaded",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-stand-the-places'-getter-gone",
+    "file": "src/scenes/world.js",
+    "old": "    get provinceQuestPlaces() { return provinceQuestPlaces; },   // SPAWN-WORLD: past the Bay a place stands first\n",
+    "new": "",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-a-board's-pack-on-a-spawn",
+    "file": "src/scenes/world.js",
+    "old": ": !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))",
+    "new": ": !provinceQuestPlaces.placeOnPixel(x, y))",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-relay's-row-the-Bay's",
+    "file": "src/net/wire.js",
+    "old": "  if (!worldPixelOk(px) || !worldPixelOk(py) || !finite(seen) || seen < 0) return null;",
+    "new": "  if (!intIn(px, 0, 999) || !intIn(py, 0, 499) || !finite(seen) || seen < 0) return null;",
+    "tests": [
+      "test/world/spawnworld.test.js",
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-relay's-row-any-number",
+    "file": "src/net/wire.js",
+    "old": "  if (!worldPixelOk(px) || !worldPixelOk(py) || !finite(seen) || seen < 0) return null;",
+    "new": "  if (!Number.isInteger(px) || !Number.isInteger(py) || !finite(seen) || seen < 0) return null;",
+    "tests": [
+      "test/net/ow6_ledger.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-relay-the-world-row-first-reads",
+    "file": "src/net/wire.js",
+    "old": "export const OW_WORLD_RELAY_MIN = 276;",
+    "new": "export const OW_WORLD_RELAY_MIN = 275;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ],
+    "note": "The eighth merge of main (re-aimed by content): the gate is 276, past main's live world275; the mutant lets world275 in."
+  },
+  {
+    "name": "SPAWN-WORLD-a-row-past-the-Bay-to-any-relay",
+    "file": "src/net/online.js",
+    "old": " && (this.owWorldOk || bayMapPixel(r?.[0], r?.[1]))).slice(0, OW_WORD_ROWS_MAX) })   // SPAWN-WORLD",
+    "new": ").slice(0, OW_WORD_ROWS_MAX) })   // SPAWN-WORLD",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-crossing-forgets-the-relay's-word",
+    "file": "src/net/online.js",
+    "old": "      old.owWorldOk = this.owWorldOk; this.owWorldOk = !!h.owWorldOk;",
+    "new": "      old.owWorldOk = this.owWorldOk;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "SPAWN-WORLD-the-zone-the-ground's-alone",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "new": "    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (inOpenZone(px, py)) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ],
+    "note": "The open zone asked by the ground alone (where GROUND-AGREE had it): the Overworld's far reads (tvSpawnAt, tvLocationAt) clone a spawn in Cyrodiil's halls' zone."
+  },
+  {
+    "name": "SPAWN-WORLD-the-Veil-the-ground's-alone",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (etherSea && inEther(px, py)) return null;\n    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "new": "    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (etherSea && inEther(px, py)) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ],
+    "note": "Past the Veil asked by the ground alone: the far reads clone a spawn on an isle's sea."
+  },
+  {
+    "name": "SPAWN-WORLD-a-lane-that-is-none",
+    "file": "src/world/worldWide/worldLanes.js",
+    "old": "  if (!LANES.includes(lane)) throw new RangeError(`lane ${lane}`);\n",
+    "new": "",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ],
+    "note": "A lane that is none names an id."
+  },
+  {
+    "name": "SPAWN-WORLD-off-the-grid-named",
+    "file": "src/world/worldWide/worldLanes.js",
+    "old": "  if (!inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);\n  const key = worldPixelKey(px, py);",
+    "new": "  const key = worldPixelKey(px, py);",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ],
+    "note": "A pixel off the world's grid is named - its key past 2^28 runs into the next lane."
+  },
+  {
+    "name": "SPAWN-WORLD-the-abyss-lane-under-the-abyss's-range",
+    "file": "src/world/worldWide/worldLanes.js",
+    "old": "export const ABYSS_WORLD_LANE = 0x600;",
+    "new": "export const ABYSS_WORLD_LANE = 0x580;",
+    "tests": [
+      "test/world/spawnworld.test.js",
+      "test/world/pitsworld.test.js"
+    ],
+    "note": "The abyss's run from 0x580: an abyss north of y -4096 (the Eltheric Ocean's) under 0x60000000."
+  }
+]

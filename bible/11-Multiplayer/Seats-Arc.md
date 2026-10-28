@@ -12,6 +12,11 @@ design of guild town control - SEAT1 (holding a seat) and SEAT2 (sieges) of THE 
 (`06-Systems/Online-Arc.md`, "THE HOLDINGS ARC") - written out before a line of it is built. Its companion is
 `06-Systems/Professions-Arc.md` (PROF0): the life skills, the materials, the Notice Board, the market and Marks.
 
+**DOMAIN3 (2026-10-24, `Domains.md` section 7): from the seat week `DOMAINS_WEEK` names (week 6, Season 1's first), the
+REGION is what a guild holds - one Charter a region, keyed by its seat of power, every other seat town of the region its
+holding (its Watch, homes and Notice Boards counted for that Charter). This page's per-seat law is the region law's
+history and its numbers, unchanged.**
+
 ## Mac's words
 
 - "So the 3 main castle hubs should be larger capture points, while every other location with a palace (must have)
@@ -81,7 +86,7 @@ so balance is an edit to one file, pinned by its own tests, never a hunt.
 | Town furniture | `src/world/rmbLayout.js`: `BULLETIN_BOARD_MODEL_ID`, the city gate models | Banner anchors (3.4) and the Notice Board (PROF0 10.1) |
 | Region names | `REGION_NAMES` (`src/formats/mapsFile.js`, DFU's own table, MIT) | The kingdom map's names and indices (4.3) |
 | Guilds | `server-account/src/guilds.js`, `0013_guilds.sql`, `src/net/guild/guildLaw.js` | 75 members (GUILD-CAP, 2026-10-21; 50 until then); ranks 0 Guildmaster, 1 Officer, 2 Member, 3 Recruit; a gold treasury and its trigger-written ledger; `gi`/`gt`/`gm` on the signed token |
-| Homes, decor, stations | `server-account/src/homes.js`, `decor.js`; `src/net/homeLaw.js`, `decorLaw.js` | One owner a building (map_id, building_key); `HOME_CAP` 3; entry private/party/public; stations for a licence |
+| Homes, decor, stations | `server-account/src/homes.js`, `decor.js`; `src/net/homeLaw.js`, `decorLaw.js` | One owner a building (map_id, building_key); `HOME_CAP` 3 a region (HOUSES-3); entry private/party/public; stations for a licence |
 | Renown | `renown_tracks` (0009), `src/net/renown.js`, `renownTracker.js` | Online level to 50, signed into the token (`lv`); client-reported XP, 5,000 a report, 15,000 an hour an account (SILVER-WAYS: it said 20,000 - RENOWN-ACCOUNT's three quarters made it 15,000, `renown.js` RENOWN_XP_HOUR_MAX); no region recorded |
 | The Oblivion Gate | `gateLaw.js`, `gateBrain.js`, `gateReceipt.js`, relay `_gate*`, `0014_gate_kills.sql` | Relay-refereed HP, reach, rate and damage buckets; phases; `r1.` Ed25519 receipts; the day's region from a pure shuffle bag |
 | Duels | `duelSession.js`, `duelCombat.js`, `0008_duels.sql` | 1v1 on a ring 12 m in radius (`DUEL_RADIUS_M`), defender-resolved - so no duel can award anything the server keeps (INT8, 2026-10-09: relay-refereed since, `net/duel/duelRef.js`, its result a signed `d1` receipt - still no prize beyond the K/D record) |
@@ -774,7 +779,7 @@ Edict may be proclaimed two weeks running except Market Day.
 | Edict | Tier | Effect | Cost |
 |---|---|---|---|
 | **Market Day** | any | the seat town's shop prices -10% for everyone (client-applied, the discount's seam, 7.2) - what a shop pays held to it too (SEAT-LOOP, Town-Economy-Arc 7.5; AUDIT TOWN-ECON 2 REC-17) | - |
-| **Bounty** | any | World of Daggerfall camps in the region (WOD7's shared camps, `src/world/worldOfDaggerfall/wodShared.js`) pay double loot; the treasury pays 20 Marks per camp cleared, up to the sum set aside - a transfer, never a mint. **Bounded**: a camp's clearing is validated at the reader, never the relay (`wodShared.js`), so an account is paid for at most **5 camps a UTC day** | the set-aside, escrowed |
+| **Bounty** | any | World of Daggerfall camps in the region (WOD7's shared camps, `src/world/worldOfDaggerfall/wodShared.js`) pay double loot; the treasury pays 20 Marks per camp cleared, up to the sum set aside - a transfer, never a mint. **Bounded**: a camp's clearing is validated at the reader, never the relay (`wodShared.js`), so an account is paid for at most **5 camps a UTC day**. Past the Bay, where no camp stands, a **den** of the bailiwick pays the same - an outlaws' hideout routed, a lair whose foe falls (BAY-LEFT-SEA, the section before Appendix A) | the set-aside, escrowed |
 | **Levy** | any | 10% of gathering yields goes to the seat's stockpile, from the nodes of the region nearer this seat than any other seat of the region (the bailiwick's rule, by pixel), so two holders' Levies never share a node | Standing -2 |
 | **Open Gates** | any | homes in the town may not be set private this week | Standing +3 |
 | **Curfew** | any | the town's guards are stronger at night and crime there costs double legal reputation (each player's own, client-side) | Standing -2 |
@@ -868,7 +873,8 @@ BOUNTY1 took one board in two for its hunts; AUDIT 28), carries:
 - the holder, its banner and device, Standing and its trend, the Tithe, this week's Edict;
 - **the standings**: every pledged guild's influence this week, live, and the claim and defence lines;
 - **the siege**: the Right of Siege, the window, the countdown, both rosters as they sign;
-- **the stockpile**: every fortification project and what it still needs, each need a writ on the Work tab;
+- **the stockpile**: every fortification project and what it still needs, each need a writ on the Work tab (and since
+  DOMAIN1, a gift from the guild's own members at the board - `Domains.md` section 5);
 - **the Chronicle**: the seat's history (9.2), the newest pinned on top;
 - for the holder's Officers: the levers - the Tithe, the Edict, the window, fealty, writs from the treasury.
 
@@ -1428,6 +1434,51 @@ BUILT (SEAT2a part four, 2026-10-01; `06-Systems/Online-Arc.md` SEAT2a part four
 the wave, the spectator's count and the result card as drawn above (`ui/siegeHud.js`, its words `net/siege/siegeLink.js`).
 DECIDED there: `~` marks a banner being raised from the other side (the field's frame says who raises it, not who
 contests it); the card's Claim carries the fighter's receipt (`net/siege/siegeClaims.js`).
+
+## BAY-LEFT-SEA - the Bounty past the Bay pays on its dens (BUILT 2026-10-27)
+
+**What stood.** WW7-3 stood the seats everywhere, and a seat past the Bay may proclaim any Edict of its tier. The Bounty
+pays for a World of Daggerfall camp cleared (7.6; `net/townSeatLaw.js` bountySitePixel: a camp's id names a Bay pixel),
+and World of Daggerfall's camps are the Bay's alone (`03-World/World-Wide.md`, recorded). So a province seat's Bounty
+could be proclaimed, its treasury set aside, and nothing it ruled could ever pay: the week's Edict wasted (AUDIT BAY-LEFT
+item 20, B8 = E3).
+
+**The owner's call, taken** (*"Every single thing here needs to be addressed. No exceptions."*, 2026-10-26): the Bounty
+past the Bay pays on hideouts and lairs - it is offered there, never withheld.
+
+**As built.**
+- A DEN (`townSeatLaw.js` bountyDenId, bountyDenPixel, `BOUNTY_DEN_KINDS`): an outlaws' hideout (LW12, routed - every one
+  of its band struck down) or a lair (TESA8, a foe of it struck down in it, as a camp's is), its id naming its map pixel on
+  the world's grid (`"px,py:hideout"`, `"px,py:lair"`), canonical (no leading zero, no `-0`), within SEAT_PIXEL_SPAN. A den
+  on the Bay's pixels is none: the Bay's Bounty is its camps'. `bountyClaimPixel` reads a camp's id first, then a den's.
+- THE SERVICE (`server-account/src/seatHolding.js` claimBounty) takes a den's id as it takes a camp's: in the bailiwick of a
+  seat whose Bounty rules this week, 20 from its escrow, a site paid once a UTC day whoever cleared it, five an account a
+  day - bounded and not witnessed, as a camp's claim is (section 10's threat). No new trust; no migration
+  (`town_seat_bounties` keys a site by its text). Folded into the undeployed acct196.
+- THE CLIENT (`systems/seatEdicts.js`): a hideout routed (`scenes/hideouts.js` `routed`, the world host handing
+  `hideoutRouted`) and a lair's foe struck down (the renown kill handler, `lairDenOf` of the dungeon the player stands in -
+  its location's `country`, TESA8's, names its pixel; a countryside place's does not) are claimed as a camp is. A den is
+  asked once in BOUNTY_DEN_ASK_GAP_MS (ten minutes, the real clock): a lair holds dozens of foes and the service pays a den
+  once a day, so one ask a visit is the claim; an ask that met no answer is asked again at a later foe. A camp is asked at
+  each foe, as ever. An Orc Raid's Tide counts a camp alone, never a den. The HUD says "The Bounty pays you 20 silver for
+  the den." (`seat.bounty.denPaid`).
+- THE SEAT TAB (`ui/seatTab.js`, `edictLine`'s `seat`): a Bounty at a seat past the Bay says what it does - "Outlaws'
+  hideouts and lairs near the town: the treasury pays 20 silver a den cleared, from what is set aside."
+  (`seat.edict.bountyDens`); the Bay's says its camps, as ever. Both lines in every complete locale (L10N4).
+
+**Not DFU** (DFU has no seats): Port-Ledger section A, BAY-LEFT-SEA's row.
+
+**The four hosts.** `scenes/world.js` WIRED (the hideouts' `routed`, the kill handler's den); `scenes/dungeonContext.js`
+FLAGGED, unchanged: a lair's foe reaches the claim through the kill handler the world host sets; `scenes/worldModes.js` and
+`scenes/exterior.js` FLAGGED: no den inside a building or in the fixed city.
+
+**Pins.** `test/net/bayleftsea_bounty.test.js` (4: the den's id, the tab's line, the client, the real Worker over
+node:sqlite - a lair and a hideout in Solitude's bailiwick paid once a day each, a den on the Bay refused, the Bay's camp
+as ever). PIN MOVED: `test/net/renown1.test.js`, `test/systems/seat1d_client.test.js`, `test/systems/auditpscale1.test.js`
+(the kill handler reads the lair's den), `test/ui/tide_client.test.js` (the tab hands the seat). Mutants:
+`tools/mutants/bayleftsea.json` BLS-den-*, BLS-claim-*, BLS-edict-*, BLS-svc-*, BLS-se-*, BLS-rout-*, BLS-host-lair-*,
+BLS-host-rout-*, BLS-tab-* (33), all dead; `tide.json` TIDE-line-cost and TIDE-tab-edict, `tide3.json`
+TIDE3-ed-claim-gate and `sigil1.json` SIGIL1-kill-feeds-nothing re-aimed by content, all dead.
 
 ## Appendix A - a week in Anticlere
 

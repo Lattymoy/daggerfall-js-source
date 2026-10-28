@@ -52,8 +52,8 @@
   {
     "name": "TOWNECON2-report-range",
     "file": "src/net/townEconLaw.js",
-    "old": "!ok(px, 999)",
-    "new": "!ok(px, 1000)",
+    "old": "  if (ok(px, 999) && ok(py, 499)) {",
+    "new": "  if (ok(px, 1000) && ok(py, 499)) {",
     "tests": [
       "test/systems/townecon.test.js"
     ],

@@ -49,7 +49,7 @@
 // installed between two sessions (L10N5: saves hold ids).
 
 import { rand, srand, randomRangeInclusive } from '../formats/dfRandom.js';
-import { REGION_RACES } from '../formats/mapsFile.js';
+import { REGION_NAME_BANKS } from '../formats/mapsTables.js';   // WW-R: the Bay's banks its races' (FALL.EXE's), a province's its people's
 import { RACES } from '../systems/races.js';
 import { localeDocument, localizedText } from '../systems/textManager.js';   // L10N3f: a pack's NameGen.txt and the Nord suffix
 import { PACK_KIND } from '../systems/translationPacks.js';
@@ -179,6 +179,17 @@ function session() {
 }
 /** A new session's read, as a new page makes one. Tests; nothing in the game calls it. */
 export function resetNameBanks() { _session = null; }
+/** AUDIT TESA II P10: THE GAME'S OWN BANKS FOR A PLACE'S NAME. A place's name is the world's, as MAPS.BSA's names are -
+ *  every client's alike, a pack or none (world/tamrielPlaces.js, world/tamrielCountry.js, world/tamrielDungeons.js name the
+ *  places past the Bay): `fn` drawn on the vendored banks and DFU's own Nord suffix ('sen'), whatever NameGen.txt a
+ *  translation installed, the session's banks put back after. A person's name keeps the session's (DFU's law, L10N3f).
+ *  Not a DFU member: DFU names no place. @template T @param {() => T} fn @returns {T} */
+export function withGameNameBanks(fn) {
+  const was = _session;
+  _session = GAME_SESSION;
+  try { return fn(); } finally { _session = was; }
+}
+const GAME_SESSION = Object.freeze({ banks: nameGen, nordSuffix: 'sen' });
 
 const bankOf = (type) => session().banks[BANK_NAMES[type]];
 const draw = (parts) => parts[rand() % parts.length];
@@ -194,6 +205,7 @@ const BANK_BY_RACE = Object.freeze({
   Khajiit: BANK_TYPES.Khajiit, Argonian: BANK_TYPES.Imperial,
 });
 export const getNameBank = (raceKey) => BANK_BY_RACE[raceKey] ?? BANK_TYPES.Breton;
+
 
 /** EntityEnums.Races ordinal -> race key, so the 1..8 roll below can
  *  be handed to getNameBank exactly as C# hands GetNameBank a Races. */
@@ -235,14 +247,19 @@ export function getRandomNameBank() {
  *  PlayerGPS.CurrentRegionIndex; getNameBankOfRegion carries the -1
  *  guard verbatim. */
 export function getRandomFullName(regionIndex) {
-  const bank = getNameBankOfRegion(regionIndex ?? -1);
+  return getRandomFullNameOfBank(getNameBankOfRegion(regionIndex ?? -1));
+}
+/** TESA3: the same draw from a bank in hand - a province past the Bay names its strangers from its own (world/
+ *  tamrielPeople.js), with the gender drawn exactly as getRandomFullName draws it. */
+export function getRandomFullNameOfBank(bank) {
   const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
   return fullName(bank, gender);
 }
 
-/** Verbatim MapsFile.GetNameBankOfRegion. */
+/** Verbatim MapsFile.GetNameBankOfRegion - WW-R: over REGION_NAME_BANKS, the Bay's its races (the same numbers) and a
+ *  province's its people's (Skyrim's the Nord bank, Cyrodiil's the Imperial). */
 export function getNameBankOfRegion(regionIndex) {
-  if (regionIndex > -1) return REGION_RACES[regionIndex];
+  if (regionIndex > -1) return REGION_NAME_BANKS[regionIndex];
   return BANK_TYPES.Breton;
 }
 

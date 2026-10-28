@@ -49,6 +49,7 @@
 import { drawSpellIcon, spellIconsLoaded } from '../spell/spellIcons.js';
 import { statusGlyphColor32 } from './hudStatus.js';   // TELL9: the bleed's own icon, the enhanced widget's glyph
 import { wildHere, WILD_TEXT } from '../../systems/wild/wildZone.js';   // WILD1: the open zone's own icon
+import { zoneSafe, ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: named safe in a settlement's streets
 import { uiCanvas, toUiPoint } from '../uiScreen.js';   // RETRO-UI: the HUD's own space under the pillarbox
 import { liveBundles, canEndBundle } from '../../systems/mysticism.js';   // BUFF-END: and which the player may end
 import { shownSpellName } from '../../systems/loot/loot.js';   // L10N3e: the bundle's Name, which DFU gave a stock spell in the player's language
@@ -162,7 +163,7 @@ export function activeSpellIcons(entity) {
   if (bleed && bleed.left > 0) other.push({ iconIndex: BLEED_ICON, glyph: BLEED_GLYPH, displayName: 'Bleeding', poolIndex: poolIndex++, expiring: bleed.left < 2, isItem: false, bundleId: null, endable: false });
   // WILD1 (systems/wild/wildZone.js): the open zone, on the classic row as on the enhanced widget - its own glyph, first of
   // the warnings, while the player stands in it
-  if (entity === _zoneEntity && wildHere()) other.unshift({ iconIndex: BLEED_ICON, glyph: WILD_GLYPH, displayName: WILD_TEXT.chip, poolIndex: poolIndex++, expiring: false, isItem: false, bundleId: null, endable: false });
+  if (entity === _zoneEntity && wildHere()) other.unshift({ iconIndex: BLEED_ICON, glyph: WILD_GLYPH, displayName: zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip, poolIndex: poolIndex++, expiring: false, isItem: false, bundleId: null, endable: false });
   return { self, other };
 }
 /** WILD1: the zone's glyph (ui/hud/hudStatus.js STATUS_GLYPHS), and the one entity it is shown for - the player's (the

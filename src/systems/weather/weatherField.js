@@ -41,6 +41,8 @@
 import { TERRAIN_SIZE, WORLD_MAP_TERRAIN_DIM } from '../../world/terrain/terrainSampler.js';
 import { MAX_MAP_PIXEL_Y, CLIMATES } from '../../formats/mapsFile.js';
 import { seededRng } from '../wind/wind.js';
+import { tamrielBiomeAt } from '../../world/tamriel/tamrielBiomes.js';   // ASHFALL1: the volcano's country past the Bay
+import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** Native world units to field metres (TERRAIN_SIZE per pixel). */
 export const NATIVE_TO_METRES = TERRAIN_SIZE / WORLD_MAP_TERRAIN_DIM;
@@ -69,15 +71,37 @@ export const CELL_WORDS = Object.freeze({
   // sends to the desert table) on a day whose word there is cloudy or
   // thunder, a wall 8-14 km across, the zone's own sky between
   sandstorm: Object.freeze({ spacing: 30000, radius: [8000, 14000], p: 0.5, base: 'cloudy' }),
+  // ASHFALL1: the ashfall - never a zone's word either; stood over the
+  // volcano's country (a zone's `ash`, ashAtPixel) on a day whose word
+  // there falls nothing, the candidates its coin keeps thinned again by
+  // the seat's ash
+  ashfall: Object.freeze({ spacing: 30000, radius: [8000, 15000], p: 0.9, base: 'overcast' }),
 });
 /** WEATHER2d: the zone words a sandstorm cell may stand under. */
 export const SAND_FROM = Object.freeze(['cloudy', 'thunder']);
 /** WEATHER2d: the desert tables' climates - where a sandstorm may seat. */
 export const sandCountry = (climateIndex) => climateIndex === CLIMATES.Desert || climateIndex === CLIMATES.Desert2;
+/** ASHFALL1: the zone words an ashfall cell may stand under - the dry sky's (the ash never falls through rain or snow). */
+export const ASH_FROM = Object.freeze(['sunny', 'cloudy', 'overcast', 'fog']);
+/** ASHFALL1: a seat's ash share times this is its second coin, after the word's own - about the zone's share of its dry
+ *  days under the ash (a cell covers about half its lattice square, the overlaps aside; Red Mountain's every candidate
+ *  the word's coin keeps). */
+export const ASH_FIELD_GAIN = 2.8;
+/** ASHFALL1: THE ASH AT A PIXEL - its zone's `ash` (world/tamriel/tamrielBiomes.js) where the host's map wears that zone
+ *  there (its climate the zone's ground's), else none: the Bay and the sea have no zone, and a map with nothing past the
+ *  Bay answers no zone's climate there. The one reading of the volcano's country, the field's and the map's
+ *  (weatherMap.js). Pure over climateAt. */
+export function ashAtPixel(climateAt, px, py) {
+  if (inBay(px, py)) return 0;   // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)
+  const zone = tamrielBiomeAt(px, py);
+  return zone?.ash > 0 && climateAt(px, py) === zone.climate ? zone.ash : 0;
+}
 /** Does a cell of `word` stand on a seat whose climate is `climate` and
- *  whose zone word today is `zoneWord`? Pure. */
-export function cellSeats(word, climate, zoneWord) {
+ *  whose zone word today is `zoneWord`? `ash` the seat's ash and `u` the
+ *  cell's own draw (ASHFALL1: an ashfall's coin). Pure. */
+export function cellSeats(word, climate, zoneWord, ash = 0, u = 1) {
   if (word === 'sandstorm') return sandCountry(climate) && SAND_FROM.includes(zoneWord);
+  if (word === 'ashfall') return ash > 0 && ASH_FROM.includes(zoneWord) && u < ash * ASH_FIELD_GAIN;
   return zoneWord === word;
 }
 /** The lattice's jitter, as a fraction of the spacing either way. */
@@ -88,7 +112,17 @@ export const DRIFT_M_PER_MIN = 15;
  *  march reaches 24 km; the widest cell is 18 km across the radius). */
 export const FIELD_RANGE_M = 40000;
 const FIELD_SEED = 0x4649454C;   // 'FIEL'
-const WORD_SALT = Object.freeze({ rain: 1, thunder: 2, snow: 3, sandstorm: 4 });   // each word its own lattice of coins
+const WORD_SALT = Object.freeze({ rain: 1, thunder: 2, snow: 3, sandstorm: 4, ashfall: 5 });   // each word its own lattice of coins
+/** The cell words' order where cells overlap - the world weather map's PRIORITY (weatherMap.js), the strongest first. */
+const CELL_RANK = Object.freeze({ thunder: 0, rain: 1, snow: 2, sandstorm: 3, ashfall: 4 });
+/** THE CELL WORN among cells nearest first (each { word, d, r }): the strongest word the point stands in, the nearest of
+ *  it; null in none. ASHFALL1's audit (lane A): the nearest cell of any word was worn - an ash cell over a rain cell seated
+ *  on a neighbouring climate's land. Pure. */
+export function wornCellOf(cells) {
+  let inside = null;
+  for (const c of cells) if (c.d < c.r && (!inside || CELL_RANK[c.word] < CELL_RANK[inside.word])) inside = c;
+  return inside;
+}
 
 /** The day's drift: a heading seeded by the day, the distance so far. Pure. */
 export function driftOfDay(day, minuteOfDay) {
@@ -99,7 +133,9 @@ export function driftOfDay(day, minuteOfDay) {
 }
 
 /** The candidate at lattice index (gx, gz) for `word` on `day`: null when
- *  the coin says no, else its undrifted centre and radius. Pure. */
+ *  the coin says no, else its undrifted centre and radius, and `u` a draw
+ *  of its own (ASHFALL1: an ashfall's coin at its seat - taken after the
+ *  others, so no word's cells moved). Pure. */
 export function cellCandidate(word, day, gx, gz) {
   const w = CELL_WORDS[word];
   if (!w) return null;
@@ -108,7 +144,7 @@ export function cellCandidate(word, day, gx, gz) {
   if (r() >= w.p) return null;
   const jx = (r() - 0.5) * 2 * CELL_JITTER, jz = (r() - 0.5) * 2 * CELL_JITTER;
   const radius = w.radius[0] + r() * (w.radius[1] - w.radius[0]);
-  return { x: (gx + 0.5 + jx) * w.spacing, z: (gz + 0.5 + jz) * w.spacing, r: radius };
+  return { x: (gx + 0.5 + jx) * w.spacing, z: (gz + 0.5 + jz) * w.spacing, r: radius, u: r() };
 }
 
 /** The base sky a zone word leaves between its cells - the word itself
@@ -145,12 +181,12 @@ export function fieldAt({ day, minuteOfDay, at, climateAt, wordOfClimate }) {
         // the cell's word is the day's word for the climate under its (undrifted) seat
         const p = pixelOfField(c.x, c.z);
         const seat = climateAt(p.x, p.y);
-        if (!cellSeats(word, seat, wordOfClimate(seat))) continue;   // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word
+        if (!cellSeats(word, seat, wordOfClimate(seat), word === 'ashfall' ? ashAtPixel(climateAt, p.x, p.y) : 0, c.u)) continue;   // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word; ASHFALL1: an ashfall on the volcano's under a dry one
         cells.push({ x: cx, z: cz, r: c.r, word, d });
       }
     }
   }
   cells.sort((a, b) => a.d - b.d);
-  const inside = cells.find((c) => c.d < c.r) ?? null;
+  const inside = wornCellOf(cells);
   return { word: inside ? inside.word : baseWordOf(zoneWord), zoneWord, inside, cells };
 }

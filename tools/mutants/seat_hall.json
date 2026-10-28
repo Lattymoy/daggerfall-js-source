@@ -348,21 +348,23 @@
   },
   {
     "name": "SEAT-HALL-keeper-rank",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/seatHallHost.js",
     "old": "keeper: member && hallMay(Number(mine?.rank), 'decorate')",
     "new": "keeper: member",
     "tests": [
       "test/net/seathall_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
   },
   {
     "name": "SEAT-HALL-crown",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/seatHallHost.js",
     "old": "const g = seat?.tier === 'palace' ? seat.holder?.guild ?? null : null;",
     "new": "const g = seat.holder?.guild ?? null;",
     "tests": [
       "test/net/seathall_client.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
   },
   {
     "name": "SEAT-HALL-realm-clause",

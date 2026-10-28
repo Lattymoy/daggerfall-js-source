@@ -53,8 +53,8 @@
   {
     "name": "JEWEL-KIN-rollAffixes-drops-the-flag",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    affixes = rollAffixes(item, tier, rolls, { byLines, lean, fists });",
-    "new": "    affixes = rollAffixes(item, tier, rolls, { byLines, lean });",
+    "old": "    affixes = rollAffixes(item, tier, rolls, { byLines, lean, fists, flat });",
+    "new": "    affixes = rollAffixes(item, tier, rolls, { byLines, lean, flat });",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],

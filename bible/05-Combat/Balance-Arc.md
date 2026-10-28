@@ -1175,6 +1175,18 @@ The Thunderlock's reload was the lab's fixed 1.7 s. It is now
 75 is 1.53 s, 100 is 1.36 s, 150 is 1.02 s, and it does not go under 1 s. The frame clock stays 14 fps.
 A Pistolet's reload stays 1.4 s. At this build the Thunderlock's sustained DPS went from 11.95 to 12.82.
 
+ARCHERY-REF (2026-10-26, from the CI of the merged change): the referees kept DFU's bow tops. The relay judges a
+player's blow in a siege, an arena bout, a duel and the open zone against its own copies of the weapon tables,
+pinned equal to `characters/weapons.js`, and the account service signs a character's arms reach from one of them.
+Both copies still read 16 and 18, so a top bow blow stood over the referee's bucket. They read 17 and 19 now
+(`net/siege/siegeRef.js:"126: 18, 127: 12, 128: 16, 129: 17, 130: 19,"`,
+`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196 (acct197 since the merge of main), in the TESA fold's release
+(#1184, which carried it while main stood red). The flight pins
+measured a shaft by MISSILE_SPEED's 1.25 m a 0.05 s step; they step it by the frame that flies those 1.25 m at
+ARROW_FLIGHT_SPEED now (`test/scenes/roadh_tail.test.js`, `test/systems/arrowfoes.test.js`, AUDIT 65 CV-2), and
+the volley's landings are timed at ARROW_FLIGHT_SPEED (TECHFX1). Mutants: `tools/mutants/archeryref.json`. BOW-TOPS, below, made the same fix on main; at the merge of main into #1184 (2026-10-27)
+the two met with one set of values, and the relay's row is world270, past BOW-TOPS's world269.
+
 **BOW-TOPS (2026-10-26, the owner: "Deploy failed").** BAL-ARCHERY merged with the deploy red, and deploys 1705 to
 1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they
 kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
