@@ -3650,11 +3650,10 @@ ever reached the edge (lane C's p5: a mean of 0.00 far plates about a town past 
 did nothing: its key's pixel was unread west and north of the Bay's corner (`^quest:(\d+),(\d+)$`), and its place unfound.
 
 **What it is now** (`scenes/mapPlacesHost.js` createMapPlaces - moved out of bootWorld verbatim by HOST-SPLIT first):
-- **A place found and not standing yet is its row's summary.** On a pixel past the Bay with no location, the place found
-  there is known by the ids the pixel could hold (`scenes/tamrielPlacesHost.js` idsOnPixel: a capital's slice, an Arena
-  place, the countryside's ordinal, a lair on its cell's site - each read off its own law with no roll), and is its row's
-  summary (`rowAt`: the registry's list, else the countryside's roll and the lair on its cell - the rolls the build stands,
-  so the same id, name, region, location and type). The row's own id must be the one found. Its location stands the first
+- **A place known and not standing yet is its row's summary.** On a pixel past the Bay with no location, the place there
+  is its row's summary (`rowAt`: the registry's list, else the countryside's roll and the lair on its cell - the rolls the
+  build stands, so the same id, name, region, location and type), known by its kind (OW-BEYOND-KNOWN, below) or found -
+  the row's own id the one found. Its location stands the first
   time something reads `summary.loc` (a journey's arrival and its door - `standAt`, the build's own order), never to answer
   a list: standing one is the build's own 24-152 ms. Until then a plate stands over its row's block grid (`lightRect`,
   which `scenes/world.js` tvPlaceRect reads first).
@@ -3665,9 +3664,9 @@ did nothing: its key's pixel was unread west and north of the Bay's corner (`^qu
   past the Bay the index held then), and wherever the edge's circle leaves the Bay a near query each ask - the registry's
   listed towns in range (a capital once, by its centre slice: the Imperial City is 625 of them), kept by the registry's
   generation, and the countryside's towns the roads' regions laid there (`world/pastBayPlaces.js` pastBayPlacesIn).
-  `farPlaces` keeps the found ones.
+  `farPlaces` keeps the known ones.
 - **The junction map's dots** (C10, `junctionPlaceAt`, the host's `locationAt`): on the Bay its row and DFU's discovery
-  law as the host read it; past the Bay the place found there, its type its row's, nothing stood.
+  law as the host read it; past the Bay the place known there, its type its row's, nothing stood.
 - **The carriage towns** (C11, `carriageTown`): by the place's own key - a Bay place by its pixel id (DFU's mask,
   `y * 1000 + x`), a place past the Bay by its whole id (`systems/discovery.js` discoveryKeyOf) where the registry stands
   it, and only when the place standing there is that id's. It read every map id as the Bay's pixel id, so a walled city
@@ -3845,3 +3844,32 @@ Imperial City to Bruma 5,086 to 20,095) - PLAN-SLICES' cells a frame, the same p
   ORT-lane-from-the-joins-point, ROAD-BEYOND-no-roads-first, ROAD-BEYOND-the-ends-open-ground-everywhere,
   ROAD-BEYOND-the-seek-unasked, TV2-a-new-autopilot-each-leg, VOYAGER2.1-the-reader-unread; ROAD-BEYOND-the-dearer-road-kept
   (its law retired) now ROAD-FOLLOW-the-cut-across-the-field-kept.
+
+## OW-BEYOND-KNOWN - the Overworld's places past the Bay, known as the Bay's are (2026-10-28, the field)
+
+The field, the day TESA shipped: *"travel nodes dont exist outside the bay in overworld, so you cant click on a town node
+to travel"*.
+
+**What stood.** A plate on the Overworld - TV2's grid, TV5's edge, the junction map's dot - is a known place
+(`mapPlacesHost.js:"const tvPlaceSummary = (px, py, named = false) =>"`). On the Bay that is DFU's law: MAPS.BSA's baked
+Discovered bit, which every town of the Bay carries. Past the Bay no place is a row of MAPS.BSA, so only a place the
+player had walked into was known, and the land past the Bay wore no plate to click.
+
+**What it is now.** A place past the Bay is known by its kind, as the Bay's rows bake it
+(`discovery.js:"export const BAKED_KNOWN_TYPES"`): every kind MAPS.BSA bakes found on every one of its 15,251 rows - city,
+town, village, farm, manor, poor home, inn, temple, cult and ship. A labyrinth, a ruin, a keep and a coven are never baked
+found, and a graveyard 191 times in 774, so each is still found first. Not a DFU member: DFU's map stops at the Bay.
+
+- A CAPITAL IS ONE TOWN (IC-GRAND, `livingIndex.js:"export const capitalStreet"`): known by its centre alone, its other
+  slices its streets - the Imperial City one plate, never 49.
+- A place not standing is read off its row for its kind (a roll, kept a pixel), and nothing is stood to answer a list.
+  Measured on the freeware: a cold grid of 49 pixels 4 ms, a warm one 0.4 ms, the countryside's rates 87 ms once. The
+  ids-only precheck (`idsOnPixel`) is retired with it: every pixel past the Bay could hold a countryside place.
+- THE HOSTS: `scenes/world.js` reads it through the places host (travelViewPlaces, travelViewFarPlaces, the junction map,
+  a passage's master); no other host keeps an Overworld.
+
+Pins: `test/systems/travel/owbeyondknown.test.js` (the law on MAPS.BSA's own rows; the summary over every kind, standing or
+not; on the player's data a village of Skyrim's grid and edge with nothing found, and the Imperial City one plate) -
+`tools/mutants/owbeyondknown.json` (5, all dead). PINS MOVED: `test/scenes/bayleft_places.test.js` (the found law a lair's;
+the real village, Solitude's centre and hamlet known by their kinds), `test/audit_tesa.test.js` (A2-3's source); records
+re-aimed by content: `bayleftmaps.json` (5), `audittesa.json` (1), all dead.
