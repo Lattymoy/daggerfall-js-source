@@ -143,6 +143,12 @@ test('SEAT2b THE WORKS ON THE SEAT TAB: read with the standings and drawn under 
   await lever.onclick({}); await settle();
   assert.deepEqual(t.funded, [[3021, 'walls', true]], 'the book asked for that work, with the town\'s port');
   assert.equal(t.forced, before + 1, 'and the board read afresh after');
+  // AUDIT DOMAINS C1 (the record's own gap: an inland board was read only by a reader with no lever): the holder's
+  // Guildmaster at an inland town is offered every work but the Harbour
+  const inland = rig();
+  await inland.tab.open(); await settle();
+  assert.equal(byClass(inland.tab.body(), 'notice-seat-fort-walls').length, 1, 'the lever is there');
+  assert.equal(byClass(inland.tab.body(), 'notice-seat-fort-harbour').length, 0, 'an inland town raises no Harbour');
   // a reader of another guild: the works, no lever
   const o = rig({ guild: 'g2' });
   await o.tab.open(); await settle();

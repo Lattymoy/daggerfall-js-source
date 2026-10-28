@@ -39,7 +39,7 @@
   {
     "name": "GATE-CLEAR-a-build-across-the-turn-never-asked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    gateClearSweep.published(key, gateClear?.key);",
+    "old": "    gateClearSweep.published(pkey, gateClear?.key);",
     "new": "    // gone",
     "tests": [
       "test/world/gate/gateclear.test.js"

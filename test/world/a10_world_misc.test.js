@@ -303,7 +303,8 @@ test('ROAD-Ar (R2): the compensation restore is an ENCODING here, not a plan fie
   // row's lift off, and anchorLanding's restandHeight puts it back on
   assert.match(world, /y: groundFrameHeight\(pf\[1\] - state\.compensation\[1\], pf\[0\], pf\[2\]\),/,
     'the anchor height must be stored compensation-free');
-  assert.match(world, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/,
+  // PIN MOVED (BAY-LEFT-GROUND, D5): and the anchor's frame's law handed to the re-stand beside its scale
+  assert.match(world, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\), a\.groundFrame\) \+ state\.compensation\[1\], lz\];/,
     'and anchorLanding must re-add the LIVE compensation (TERRAIN-SCALE1: to the height stood again on today\'s ground)');
   assert.equal(world.includes('worldCompensationY'), false,
     'no half-plumbed restore payload survives in the host');

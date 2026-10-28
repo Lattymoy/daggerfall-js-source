@@ -25,7 +25,10 @@ at build (`scripts/landingHtml.mjs`) and carries no game data or imagery.
 Docs live in `bible/` - start at `bible/Home.md`.
 
 Original game data (ARENA2) is required and never committed. Point tests at it
-with `ARENA2_PATH`.
+with `ARENA2_PATH`. The player's own copy of The Elder Scrolls: Arena is
+optional - its places stand on the map of Tamriel (`bible/03-World/Arena-Provinces.md`;
+its reader translated from OpenTESArena, MIT) - and is never committed either;
+point tests at it with `ARENA_PATH`.
 
 ## Support development
 

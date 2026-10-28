@@ -13,6 +13,7 @@ import {
   FactionFile, FACTION_TYPES, SOCIAL_GROUPS, GUILD_GROUPS,
 } from '../../src/formats/factionFile.js';
 import { createFactionRep, getReputation, setReputation } from '../../src/systems/faction/factionRep.js';
+import { PROVINCE_FACTION_IDS } from '../../src/systems/faction/provinceFactions.js';   // PROVINCE-COURTS
 import { getPeopleOfCurrentRegion } from '../../src/systems/talk/talk.js';
 import { changeReputation } from '../../src/systems/faction/factionRep.js';
 import { snapshotFactionRep, restoreFactionRep } from '../../src/systems/save/save.js';
@@ -223,7 +224,7 @@ test('save: AUDIT 20 - the faction store and guild memberships ride the envelope
   joinGuild(entity.guildMemberships, GUILDS.FightersGuild, { year: 405, dayOfYear: 3 });
 
   const snap = snapshotFactionRep(entity.factionRep);
-  assert.equal(snap.ids.length, ff.factionDict.size, 'every faction travels');
+  assert.equal(snap.ids.length, ff.factionDict.size + PROVINCE_FACTION_IDS.length, 'every faction travels');   // PIN MOVED (PROVINCE-COURTS): the provinces' own courts and people with FACTION.TXT's
 
   // a LOAD rebuilds the store from FACTION.TXT, then writes the save in
   const loaded = { factionRep: createFactionRep(ff.factionDict) };

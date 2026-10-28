@@ -455,8 +455,8 @@
   {
     "name": "FOE-BOUNDS-relay-evidence-dropped",
     "file": "server/src/index.js",
-    "old": "    if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, e)) void this._grantFlush();",
-    "new": "    if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, null)) void this._grantFlush();",
+    "old": "    if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, e) || grantMeasureDue(G.w, now)) void this._grantFlush();",
+    "new": "    if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, null) || grantMeasureDue(G.w, now)) void this._grantFlush();",
     "why": "the relay's evidence never folded",
     "tests": [
       "test/net/grantdoor_relay.test.js"

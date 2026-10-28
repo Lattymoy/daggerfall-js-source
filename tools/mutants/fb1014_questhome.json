@@ -46,7 +46,7 @@
   },
   {
     "name": "QUEST-HOME-isPlayerHome-back-on-homeAt",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "    isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,",
     "new": "    isPlayerHome: (mapId, buildingKey) => !!onlineHomes?.homeAt(mapId, buildingKey),",
     "tests": [

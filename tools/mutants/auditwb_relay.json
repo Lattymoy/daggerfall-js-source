@@ -230,8 +230,8 @@
   {
     "name": "AUDWB-A4-a-spent-receipt-handed",
     "file": "server/src/index.js",
-    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); return; }\n    if (kept.spent) return;",
-    "new": "    if (kept.spent) return;",
+    "old": "      if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); continue; }\n      if (kept.spent) continue;",
+    "new": "      if (kept.spent) continue;",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "AUDWB-A4-a-spent-receipt-kept",
     "file": "server/src/index.js",
-    "old": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); return; }\n    if (kept.spent) return;",
-    "new": "    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { return; }\n    if (kept.spent) return;",
+    "old": "      if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); continue; }\n      if (kept.spent) continue;",
+    "new": "      if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { continue; }\n      if (kept.spent) continue;",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]

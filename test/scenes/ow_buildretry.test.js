@@ -172,8 +172,10 @@ test('BUILD-RETRY, the host: the pump\'s catch lets a failed pixel go to the str
       built.set(k, { px, py });
       return built.get(k);
     };
-    const s = { state, built, queue, buildPixel, destroyPixel: (px, py) => built.delete(`${px},${py}`), _wodArrival: { keys: new Set() }, console: { error() {} }, performance: { now: () => clock.t } };
-    const frame = new Function('s', `let { state, built, queue, buildPixel, destroyPixel, _wodArrival, console, performance } = s;
+    // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers which pixel is ready (scenes/capitalPrebuild.js
+    // firstReady) - none of the city's here, every pixel ready
+    const s = { state, built, queue, buildPixel, destroyPixel: (px, py) => built.delete(`${px},${py}`), _wodArrival: { keys: new Set() }, console: { error() {} }, performance: { now: () => clock.t }, capitalPrebuild: { firstReady: () => true } };
+    const frame = new Function('s', `let { state, built, queue, buildPixel, destroyPixel, _wodArrival, console, performance, capitalPrebuild } = s;
       let building = false, _streamSince = null;
       ${pump[0]}
       return () => {${retry[0]}    pump();

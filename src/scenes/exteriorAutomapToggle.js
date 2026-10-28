@@ -5,7 +5,7 @@
 import { arenaTownLandmark } from '../world/arena/arenaCity.js';
 import { buildingSummaries } from '../world/buildingSummaries.js';
 import { createTownMapWindow, townMapDoorReady, townSheetBag } from '../ui/town/townMapDoor.js';   // FB1020c STREETS-TAB: the streets' one bag
-import { discoveredBuildings, restampQuestNames } from '../systems/discovery.js';
+import { discoveredBuildings, restampQuestNames, townBookOf } from '../systems/discovery.js';   // BAY-LEFT-MAPS (C7 = E2): a town's own book
 import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js';
 import { hasCustomLocationPosition } from '../world/locationLayout.js';
 import { isVendorWaypoint, vendorWaypointLabel, vendorWaypointVersion } from '../systems/vendorWaypoint.js';
@@ -17,6 +17,8 @@ import { stampResidenceQuestNames } from '../ui/exteriorAutomapWindow.js';
 import { townHomeRows } from '../ui/town/townMapMarks.js';
 import { townQuestBuildings, townTierOn } from '../systems/quest/questGuidance.js';
 import { WORLD_PER_PX } from '../ui/ink/inkTown.js';
+import { townWallCellsOf, wallOnTownMap } from '../world/townWalls.js';   // TS6: a city past the Bay's wall on its town map
+import { capitalViewOf } from '../world/tamrielCapitals.js';   // IC-TOWNMAP: an Imperial City slice's map is the city's
 
 /** @param {any} host */
 export function createExteriorAutomapToggle(host) {
@@ -39,7 +41,7 @@ export function createExteriorAutomapToggle(host) {
     // conversion (setTopics' playerPos closure); the overlay holds
     // the motor, so the open-time capture stays truthful
     const local = [feet[0] - t[0] - b.locOrigin[0], feet[1] - t[1] - b.locOrigin[1], feet[2] - t[2] - b.locOrigin[2]];
-    const locId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    const locId = townBookOf(dfLoc);   // BAY-LEFT-MAPS (C7 = E2): past the Bay a town's own book, by its map id
     // ROAD-C c2/S10: the arrow/stamp is the REAL mesh 99900, rasterised
     // once from its CPU data (ui/meshStamp.js). Kicked off here and
     // read lazily - the window draws its two other layers meanwhile.
@@ -72,8 +74,9 @@ export function createExteriorAutomapToggle(host) {
       holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the M key, as on V
       locationName: shownLocation,   // L10N3e: the title, as shown - the key is locationId
       locationId: locId,
+      imperialSlice: capitalViewOf(dfLoc) ? dfLoc.capital.s : null,   // IC-TOWNMAP: the held map draws the whole city round this slice (ui/town/imperialSheet.js)
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
-      blocks: b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })),   // ARENA-MAP: the Arena's name (world/arena/arenaCity.js)
+      blocks: wallOnTownMap(b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })), townWallCellsOf(dfLoc), dfLoc.exterior.exteriorData.width),   // ARENA-MAP: the Arena's name (world/arena/arenaCity.js); TS6: a city past the Bay's wall on it (world/townWalls.js)
       yards: b.merchantYards ?? null,   // YARDS-FOUND: the town's Stable and Wagon Yard on the map - their ground and their names (ui/town/townMapDoor.js)
       ports: b.portSites ?? null,   // SHIPYARDS-FOUND: a port town's shipyard and lighthouse on it the same way
       playerPos: () => local,

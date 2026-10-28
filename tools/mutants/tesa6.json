@@ -1,0 +1,100 @@
+[
+  {
+    "name": "TESA6-the-sea-anywhere",
+    "file": "src/world/arenaPlaces.js",
+    "old": "free(bx, by) && RING8.some(([dx, dy]) => !inBay(bx + dx, by + dy) && pictureSea(trace, bx + dx, by + dy)); };",
+    "new": "free(bx, by); };",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-no-port-said",
+    "file": "src/world/arenaPlaces.js",
+    "old": "...(onShore ? { port: true } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-no-harbour",
+    "file": "src/world/arenaLocations.js",
+    "old": "portTownAndUnknown: place.port ? 1 : 0 },",
+    "new": "portTownAndUnknown: 0 },",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-the-arena-flag-dark",
+    "file": "src/world/arenaLocations.js",
+    "old": "kind: place.kind, port: !!place.port }),",
+    "new": "kind: place.kind, port: false }),",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-come-sail-away-blind",
+    "file": "src/scenes/world.js",
+    "old": "    if (!onTheBay(x, y)) return worldPorts.at(x, y);   // TESA6: a port past the Bay - no table of the Bay's there - is its provider's word (WW3); AUDIT TESA II P7: TESA's places are the registry's now (world/pastBayRows.js), Arena's port test their row's\n",
+    "new": "",
+    "tests": [
+      "test/tesa6_ports.test.js",
+      "test/systems/comeSailAway/fb0929h_deedport.test.js"
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129)."
+  },
+  {
+    "name": "TESA6-a-crown-past-the-bay",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
+    "new": "theatre: p.theatre, crown: 'Wayrest',",
+    "tests": [
+      "test/tesa6_ports.test.js",
+      "test/world/worldWide/ww3_sea.test.js",
+      "test/world/worldWide/bayleftsea_harbour.test.js"
+    ],
+    "note": "PIN MOVED (BAY-LEFT-SEA, the owner's call taken: a harbourmaster past the Bay keeps the nearest Bay crown's board): the law turned - a port past the Bay keeps the nearest Bay crown's office, read at its own pixel; the mutant one crown for every port (bayleftsea_harbour's Alinor Sentinel's, Northpoint Daggerfall's)."
+  },
+  {
+    "name": "TESA6-the-naval-host-blind",
+    "file": "src/scenes/world.js",
+    "old": "    const port = boardPortAt(navalPortList(), p.x, p.y);   // AUDIT TESA II P7",
+    "new": "    const port = onTheBay(p.x, p.y) ? boardPortAt(navalPortList(), p.x, p.y) : null;   // AUDIT TESA II P7",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-no-harbour-book",
+    "file": "src/scenes/harbourHost.js",
+    "old": "      if (aloc?.exterior?.exteriorData) add({ id: portIdOfLocation(",
+    "new": "      if (false) add({ id: portIdOfLocation(",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129)."
+  },
+  {
+    "name": "TESA6-a-port-clone-kept",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": " && had.arena.port === !!place.port) return had;",
+    "new": ") return had;",
+    "tests": [
+      "test/tesa6_ports.test.js",
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-the-nearest-the-bays",
+    "file": "src/scenes/world.js",
+    "old": "    return worldPorts.nearestNamed(here, worldLanes.bayPorts() ?? []);",
+    "new": "    return worldPorts.nearestNamed(here, onTheBay(here.x, here.y) ? worldLanes.bayPorts() ?? [] : []);",
+    "tests": [
+      "test/tesa6_ports.test.js",
+      "test/systems/comeSailAway/fb0929h_deedport.test.js"
+    ]
+  }
+]

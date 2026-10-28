@@ -295,7 +295,8 @@ test('HILL-SEAT by source: THE FOUR HOSTS - world.js lays the pads into its pixe
   const wWire = 'if (hillPatch) { addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }';
   assert.ok(seatAt > 0 && w.indexOf(wPatch) > seatAt, 'world.js: the pads, off the block\'s seat and the meshes it drew');
   assert.ok(w.indexOf(wWire) > w.indexOf(wPatch), 'world.js: merged with the pixel\'s statics, solid in the pixel\'s bucket, inside its culling box');
-  assert.ok(w.indexOf(wWire) < w.indexOf('seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz))'), 'world.js: before the trees read the seat');
+  // PIN MOVED (SOLITUDE-RELIEF): the trees read the seat at their block's lifted y (hillY: NATURE_FLATS_Y and the plane's offset, less the block's lift)
+  assert.ok(w.indexOf(wWire) > 0 && w.indexOf(wWire) < w.indexOf('blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY)'), 'world.js: before the trees read the seat');
   assert.doesNotMatch(w, /createMesh\(hillPatch/, 'world.js: no GPU mesh of their own - the pixel\'s batch is theirs');
   assert.match(w, /if \(p\.staticBatch\) \{ renderer\.destroyMesh\(p\.staticBatch\); p\.staticBatch = null; \}/, 'world.js destroyPixel frees the batch');
   assert.match(w, /function destroyPixel\([^]*?collider\.removeBucket\(key\);/, 'world.js destroyPixel drops the pixel\'s bucket');

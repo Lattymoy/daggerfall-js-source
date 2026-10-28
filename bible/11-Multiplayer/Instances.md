@@ -82,6 +82,12 @@ An instance is its place's public world room with an owner and an epoch after it
     another member's digest is the owner's (partyHoldsOwner).
   - A stranger is refused INSTANCE_DOOR_WORD (`private instance`); the hub silent is `busy` (CLOSE_BUSY - the page tries
     again), never a way in.
+- **A guild's castle** (DOMAIN2, world256, `bible/11-Multiplayer/Domains.md` section 6): a castle's room
+  (`CASTLE_MAP_IDS`, a crown city's own dungeon, whole) whose owner is a GUILD's digest (`instanceGuildOwnerOf`, the
+  hash domain `instance:guild:`, never an account's) admits a socket whose verified token names that guild
+  (instanceAdmission: 'guild', after 'staff' and 'owner', before the party - no guest asks the hub of a guild's room,
+  since no account's party holds a guild's digest). Let in as the guild, the socket is marked (`ig`); the moment
+  `_setAttach` writes it another guild or none, it is refused out (`_instanceGuildOut`, once).
   - **A member's hello is held while the hub is asked, so its page says nothing past the hello until the welcome** (SD-HELLO's law,
     `Super-Dungeons.md`). The room takes the socket's next frame while the hello's ask is out, and a frame read before
     the socket is named is refused with a policy close - terminal, the member offline in the room until it changes room.

@@ -1099,7 +1099,7 @@ test('WB12d the world host by source: the host made beside the gate on the camps
   const w = read('src/scenes/world.js');
   const at = w.indexOf('const riteHost = gateOmen ? createRiteHost(');
   const deps = w.slice(at, w.indexOf('}) : null;', at));
-  assert.match(deps, /omen: \(\) => gateOmen\.current\(\),/);
+  assert.match(deps, /omen: \(\) => gateOmen\.nearCurrent\(\),/);   // PIN MOVED (WW2): the nearest gate's - its circle stands where the player is
   assert.match(deps, /fellAt: \(day\) => gateLink\?\.fellAt\(day\) \?\? null,/);
   assert.match(deps, /online: \(\) => !!online\?\.riteOk,/);
   assert.match(deps, /return exteriorFoes\.spawnFoe\(career, \[x, y, z\], \{ yaw, placed: true, groundAlign: \{ hitDist: hitDistance\(hit\) \}, site, transient \}\);/);

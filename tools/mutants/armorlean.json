@@ -2,7 +2,7 @@
   {
     "name": "ARMOR-LEAN-never-leans",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  const lean = leans && byLines ? armorLean(item) : null;",
+    "old": "  const lean = leans && byLines && !flat ? armorLean(item) : null;",
     "new": "  const lean = null;",
     "tests": [
       "test/systems/loot/armorlean.test.js"

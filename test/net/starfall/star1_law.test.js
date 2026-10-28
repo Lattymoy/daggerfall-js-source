@@ -68,7 +68,9 @@ test('STAR1 THE WINDOW: stars fall on the Witches\' Festival\'s own days - its f
   assert.ok(starInWindow(N0, 1));
   assert.ok(!starInWindow(Math.ceil(TO_MS / STAR_HOUR_MS) + 2, 1));
   assert.ok(!starInWindow(Math.floor(FROM_MS / STAR_HOUR_MS) - 2, 1), 'a star that fell before the festival opened');
-  assert.ok(!starOk(N0, 3) && !starOk(N0, -1) && !starOk(0, 0) && starOk(N0, 0));
+  // PIN MOVED (WW5): a star's number names its lane - the 3 that was "no fourth star" is High Rock's first now; Cyrodiil's
+  // lane (9, the open zone) and past the theatres stand none
+  assert.ok(!starOk(N0, 27) && !starOk(N0, 30) && !starOk(N0, -1) && !starOk(0, 0) && starOk(N0, 0) && starOk(N0, 3) && starOk(N0, 26));
   const t = starTimes(N0, 1);
   assert.ok(!starHeard(N0, 1, t.fallAt - 1), 'nothing to defend before it lands');
   assert.ok(starHeard(N0, 1, t.fallAt) && starHeard(N0, 1, t.endAt + STAR_GRACE_MS - 1));
@@ -340,6 +342,8 @@ test('STAR1 THE RECEIPT: j1, its claims disjoint from every other shape the key 
   const base = { sf: [N0, 1], s: 'acct_1234', c: 1, l: 5, i: nowS, e: nowS + 60 };
   assert.ok(starReceiptValid(base));
   for (const f of ['n', 'k', 't', 'o', 'd', 'w', 'y', 'b', 'h', 'r', 'x', 'zz']) assert.ok(!starReceiptValid({ ...base, [f]: 1 }), `a receipt carrying \`${f}\` is not a star's`);
-  assert.ok(!starReceiptValid({ ...base, sf: [N0, 3] }), 'no fourth star');
+  assert.ok(!starReceiptValid({ ...base, sf: [N0, 27] }), 'no star of the open zone\'s lane');   // PIN MOVED (WW5): [N0, 3] is High Rock's first star now
+  assert.ok(!starReceiptValid({ ...base, sf: [N0, 30] }), 'no star past the theatres');
+  assert.ok(starReceiptValid({ ...base, sf: [N0, 3] }), 'a province\'s star is a star (WW5)');
   assert.ok(!starReceiptValid({ ...base, l: 61 }));
 });

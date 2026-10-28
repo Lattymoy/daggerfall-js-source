@@ -323,7 +323,7 @@ function realmArm(rel) {
 }
 
 test('AUDIT REALM2 C2: F9 says what the realm answered - "Saved to the realm." only for a checkpoint that landed; one refused says so and why, in both composers; a quiet checkpoint says nothing either way (mutant: the word said before the answer)', async () => {
-  for (const [rel, hud] of [['src/scenes/world.js', 'townTalk'], ['src/scenes/dungeonContext.js', 'hudText']]) {
+  for (const [rel, hud] of [['src/scenes/worldQuickSave.js', 'townTalk'], ['src/scenes/dungeonContext.js', 'hudText']]) {   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the world composer is scenes/worldQuickSave.js's
     const said = [];
     const arm = mount(`return (snap, sink, quiet) => { ${realmArm(rel)}\nreturn 'slot'; };`, {
       realmSaveSink: () => null, REALM_SAVED_TEXT, sayRealmSave: realmSaves.sayRealmSave,
@@ -640,7 +640,7 @@ test('AUDIT REALM2 M5: realmCheckpoint answers what its composer did - a save th
   answer = true;
   assert.equal(realmCheckpoint(), true, 'composed: a checkpoint');
   // the world composer's own refusal, mid-descent: said to F9, never to the quiet checkpoint
-  const worldQuickSave = mount(`${W.fn('worldQuickSave')}\nreturn worldQuickSave;`, { ohAbyss: { entering: true }, townTalk: { say: (t) => said.push(t) }, QUICK_SAVE_NAME: 'QuickSave' });
+  const worldQuickSave = mount(`${sliced('src/scenes/worldQuickSave.js').fn('worldQuickSave')}\nreturn worldQuickSave;`, { host: { ohAbyss: { entering: true } }, townTalk: { say: (t) => said.push(t) }, QUICK_SAVE_NAME: 'QuickSave' });   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the world composer is scenes/worldQuickSave.js's, the descent read live through host
   assert.equal(worldQuickSave('QuickSave', { quiet: true }), false);
   assert.deepEqual(said, [], 'the periodic checkpoint says nothing');
   assert.equal(worldQuickSave('QuickSave'), false);

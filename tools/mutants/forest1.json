@@ -11,8 +11,8 @@
   {
     "name": "FOREST1-field-on-its-own-tile",
     "file": "src/world/terrain/terrainNature.js",
-    "old": "g[j * n + i] = forestAt(ox + i * L, oz + j * L);",
-    "new": "g[j * n + i] = forestAt(ox + 1 + i * L, oz + j * L);",
+    "old": "g[j * n + i] = sample(ox + i * L, oz + j * L);",
+    "new": "g[j * n + i] = sample(ox + 1 + i * L, oz + j * L);",
     "tests": [
       "test/systems/forest1.test.js"
     ]
@@ -119,11 +119,12 @@
   {
     "name": "FOREST1-on-the-ground-there",
     "file": "src/world/terrain/terrainNature.js",
-    "old": "y: groundAt(heightmapData, mx, mz) - steepness / SLOPE_SINK_RATIO, z: mz, wood",
+    "old": "y: walkGroundAt(heightmapData, mx, mz) - steepness / SLOPE_SINK_RATIO, z: mz, wood",
     "new": "y: at(x, y) - steepness / SLOPE_SINK_RATIO, z: mz, wood",
     "tests": [
       "test/systems/forest1.test.js"
-    ]
+    ],
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the woods' flat stands on the ground's one law (walkGroundAt, the walker's), no longer groundAt's bilinear."
   },
   {
     "name": "FOREST1-ground-shares",

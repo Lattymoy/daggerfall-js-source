@@ -5,9 +5,10 @@
 // with different colors. Add the waypoints you want to mark (to follow) to the filter list on the overworld map with a
 // dropdown menu. Add Waypoints to the filter on the worldmap").
 //
-// ONE STORE, BOTH MAPS. A waypoint is a point on the Iliac Bay in MAP PIXELS (floats - the held map's own unit,
+// ONE STORE, BOTH MAPS. A waypoint is a point of the world in MAP PIXELS (floats - the held map's own unit,
 // ui/ink/inkMap.js toMap; the Overworld converts its native world point: mx = x / 32768, my = 500 - z / 32768, the inverse
-// of MapsFile.MapPixelToWorldCoords plus the pixel's own span), a name, a flag colour and a KIND:
+// of MapsFile.MapPixelToWorldCoords plus the pixel's own span; BAY-LEFT-MAPS: the Bay's map and every province past it, the
+// wire's world pixel - net/wire.js worldPixelOk), a name, a flag colour and a KIND:
 //   personal - mine alone, kept on this device
 //   party    - said to my party on the hub's party channel, kept by every member who heard it
 //   guild    - said to my guild on the hub's guild channel, the same way
@@ -24,6 +25,7 @@
 // joins later hears a waypoint when its author shares it again (the menu's "Share again").
 // ═══════════════════════════════════════════════════════════════════
 import { appStorage } from '../appStorage.js';
+import { worldPixelOk } from '../../net/wire.js';   // BAY-LEFT-MAPS: a waypoint's pixel is the world's (TV-BEYOND's bound), the Bay's and past it
 
 export const WAYPOINT_KINDS = Object.freeze(['personal', 'party', 'guild']);
 export const WAYPOINT_STORE_KEY = 'dfjs.waypoints';
@@ -58,7 +60,6 @@ export const WAYPOINT_NAME_MAX = 32;
 export const WAYPOINT_MAX_PER_KIND = 64;
 /** The wire's word: a chat line that starts with it is a waypoint, never a line of chat. */
 export const WP_WIRE_PREFIX = '[WP1]';
-const MAP_W = 1000, MAP_H = 500;
 
 /** The colour's CSS by id (an unknown id: the first). */
 export const waypointCss = (id) => (WAYPOINT_COLORS.find((c) => c.id === id) ?? WAYPOINT_COLORS[0]).css;
@@ -71,8 +72,13 @@ export function cleanWaypointName(name, fallback = 'Waypoint') {
   return s || fallback;
 }
 
-/** A point on the bay, checked: map pixels inside the map. */
-const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H;
+/** A point of the world, checked: map pixels whose pixel the wire carries (BAY-LEFT-MAPS, bible/10-UI/Held-Map-Arc.md - net/wire.js
+ *  worldPixelOk, TV-BEYOND's WORLD_PIXEL_BOUND either side of the Bay's corner: the Bay's 1000 x 500 and every province
+ *  past it). It held the Bay's 1000 x 500, so no flag - mine, my party's, my guild's, WILD-WAYPOINT's remains in the open
+ *  zone, which is Cyrodiil's since WW-C2 - could stand past the Bay. A client from before reads a party's or a guild's
+ *  line naming a point past the Bay as no waypoint (decodeWaypointLine's null), takes it off the chat all the same
+ *  (isWaypointLine) and shows nothing: harmless. */
+const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));
 
 /** Native world units (DFU's, the streaming world's `worldCoords`) to map pixels, as floats. */
 export const nativeToMapPoint = (x, z) => ({ mx: x / 32768, my: 500 - z / 32768 });
@@ -178,7 +184,7 @@ export function nextWaypointName() {
 
 /**
  * Add a waypoint of mine. A party's or a guild's is said on its channel at once (`shared` in the answer says whether
- * it went - no hub, no party, a relay before the channel). Null for a point off the map.
+ * it went - no hub, no party, a relay before the channel). Null for a point off the world (onMap).
  * @param {{ kind?: string, mx: number, my: number, name?: string, color?: string, by?: string }} w
  * @returns {{ waypoint: Waypoint, shared: boolean|null } | null}
  */

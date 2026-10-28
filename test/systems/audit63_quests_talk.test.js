@@ -236,8 +236,10 @@ test('AUDIT 63 F0: the hook is wired end to end, and the two quest-side callers 
   // PlayerGPS.cs:987-999 resolves the dict from CurrentLocation, so the
   // closure must be keyed on the CURRENT location - a quest that
   // tombstones while the player is elsewhere is a no-op in DFU too.
+  // PIN MOVED (BAY-LEFT-MAPS C7 = E2, test/systems/bayleft_disckey.test.js): the current location's book by the one
+  // key-maker (systems/discovery.js townBookOf - the Bay's key byte for byte, a place past the Bay its map id after it)
   assert.match(src('scenes/world.js'),
-    /const undiscoverBuildingHere = \(buildingKey, buildingName\) => undiscoverBuilding\(\s*`\$\{_questLoc\(\)\?\.regionIndex \?\? -1\}:\$\{_questLoc\(\)\?\.name \?\? ''\}`, buildingKey, true, buildingName \?\? null\)/);
+    /const undiscoverBuildingHere = \(buildingKey, buildingName\) => undiscoverBuilding\(\s*townBookOf\(_questLoc\(\)\), buildingKey, true, buildingName \?\? null\)/);
   // ...and the fixed-city host carries it too: UndiscoverBuilding is a
   // PlayerGPS law, and that host writes the same store under the same
   // key at its own building door.
@@ -622,7 +624,9 @@ test('AUDIT 63 F49: an override BYPASSES the already-discovered early-out and re
   // (PlayerEnterExit.cs:1032), the talk map reveal
   // (TalkManager.cs:1290) and the quest bridge's own hook.
   assert.match(src('scenes/worldModes.js'), /discoverBuilding\(locId, bd, null, questBuildingSource\)/);
-  assert.match(src('scenes/townTalk.js'), /discoverBuilding\(`\$\{regionNow\(\)\}:\$\{cityName\(\)\}`, building, null, questBuildingSource\)/);
+  // PIN MOVED (BAY-LEFT-MAPS C7 = E2, test/systems/bayleft_disckey.test.js): the key by the one key-maker - the Bay's byte for
+  // byte, a place past the Bay its map id after it (systems/discovery.js townBookId)
+  assert.match(src('scenes/townTalk.js'), /discoverBuilding\(townBookId\(regionNow\(\), cityName\(\), topics\?\.mapId\), building, null, questBuildingSource\)/);
   assert.match(src('scenes/world.js'), /\n\s*null, questBuildingSource\),   \/\/ AUDIT 63 F49/);
   // the seam itself is CurrentMapID + IsBuildingQuestResource, not this
   // store's region:location key (TalkManager.cs:2398 tests mapId)

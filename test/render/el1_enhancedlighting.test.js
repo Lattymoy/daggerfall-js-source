@@ -404,7 +404,7 @@ test('EL1: syncLightingLane is the host\'s one call, the flame colour rides the 
     assert.match(s, /nearestLights\([^)]*renderer\.maxPointLights/, `${f}: the installed cap`);
   }
   // PIN MOVED (OW-HORIZON, 2026-10-20): the ring is handed the renderer itself, and takes its lane from it (and each frame its focus and its deck)
-  assert.match(hostText('src/scenes/world.js'), /new FarRingRenderer\(renderer\.gl, \{ renderer \}\)/, 'the ring takes the same lane');
+  assert.match(hostText('src/scenes/world.js'), /new FarRingRenderer\(renderer\.gl, \{ renderer, mid: terrainGen \}\)/, 'the ring takes the same lane');   // PIN MOVED (MID-RING): and the terrain's client
   assert.match(hostText('src/scenes/world.js'), /exposure: renderer\.exposure/, 'and the same exposure');
   assert.match(read('src/scenes/worldModes.js'), /lanternColor\(!!renderer\.lightingLane, new Float32Array\(DUNGEON_LIGHT_COLOR\)\)/);
   assert.ok(!/lanternColor/.test(read('src/scenes/interior.js')), 'the interior\'s lights carry their own colours (interiorLightProperties) - no flame over them');

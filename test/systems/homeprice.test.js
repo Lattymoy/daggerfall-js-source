@@ -198,8 +198,9 @@ test('HOME-PRICE a knightly order\'s free house, online (AUDIT HOME-PRICE C1): t
   assert.equal(priced(true)({ modelIdNum: 456 }), homeRefund(99_000), 'online: 120 m2 in an 8 x 8 city, its share');
   assert.equal(priced(false)({ modelIdNum: 456 }), houseSellPrice(400), 'offline: Daggerfall\'s');
   assert.equal(priced(true)(null), 0);
-  assert.match(m, /houseSellPrice: \(\) => deedSellPrice\(ownedHouseSummary\(\)\),/);
-  assert.match(m, /found: owned !== null, price: deedSellPrice\(owned\) \}/);
+  // PIN MOVED (HOUSES-3): each house the town resolves is an offer, priced at its own deed share; the sale the one offered
+  assert.match(m, /houseOffers: \(\) => townHouses\(\)\.map\(\(\{ deed, summary \}\) => \(\{\n\s*price: deedSellPrice\(summary\),/);
+  assert.match(m, /found: owned !== null, price: deedSellPrice\(owned\), deed: offered\?\.deed \?\? null \}/);
   // the grant
   assert.match(m, /if \(homes && !homes\.known\(dir\?\.mapId \?\? 0\)\) \{\n\s*void homes\.ensure\(dir\?\.mapId \?\? 0\);/);
   assert.match(m, /housesForSale: homes \? currentHousesForSale\(\)\.filter\(\(h\) => !homes\.homeAt\(dir\?\.mapId \?\? 0, h\.buildingKey\)\) : currentHousesForSale\(\),/);

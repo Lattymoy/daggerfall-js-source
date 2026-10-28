@@ -148,8 +148,17 @@ function lowestY(model) {
 /** DaggerfallInterior.AssignBlockData's refusal (DaggerfallInterior.cs:388-389): a building subrecord whose interior
  *  holds no 3D model cannot be laid out - TransitionInterior says "This house has nothing of value." (PlayerEnterExit.cs
  *  :719-730). FIELD BUGS 2026-10-05 CRYPT-SALE: the one law the layout refuses by and the house market asks of a door.
- *  A subrecord with no interior header at all is not known to be empty. */
-export const hasInteriorModels = (sub) => sub?.interior?.header?.num3dObjectRecords !== 0;
+ *  A subrecord with no interior header at all is not known to be empty. IC-INTERIORS: a MADE interior (interiorCast) is
+ *  laid from Daggerfall's kit - it holds its models before they are made. */
+export const hasInteriorModels = (sub) => sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;
+/** IC-INTERIORS (bible/03-World/Arena-Provinces.md IC-INTERIORS): THE RECORD A BUILDING'S CAST IS READ FROM. A MADE
+ *  interior (world/imperialFabricBuildings.js fabricBuildingInterior - an Imperial City building's own, laid from
+ *  Daggerfall's kit) makes its records when one is first read, and names the Daggerfall record its people and its markers
+ *  are its own building's from (`cast`): a walk over a town's buildings - the questor pool, a quest's site search, which
+ *  read a building's people and markers and never stand them - reads that, in that record's frame (the frame a laid
+ *  person's name is drawn in - its `castPos` - and the frame a quest's site holds its markers in until the building is
+ *  entered: systems/quest/castMarkers.js). Any other interior is its own cast. */
+export const interiorCast = (sub) => (sub?.interior?.made ? sub.interior.cast : sub?.interior) ?? null;
 
 /**
  * Assemble one building interior.

@@ -10,13 +10,22 @@
 // THE ID keeps DFU's own law: MapId & 0xfffff IS the map pixel (systems/map/mapDirectory.js, systems/discovery.js key
 // on it), so the low 20 bits are this pixel's id and the high 12 are the salt - unique per (salt, pixel), an unsigned
 // 32-bit number the relay's room law admits (wire.js WORLD_ROOM, `dungeon:m<1-10 digits>`), and it cannot equal a real
-// location's id because a spawn only ever stands on a pixel that has no location.
+// location's id because a spawn only ever stands on a pixel that has no location. SPAWN-WORLD (2026-10-26): past the
+// Bay a pixel id names no one pixel, so a spawn there is named in the world's spawn lane (world/worldWide/worldLanes.js
+// SPAWN_WORLD_LANE over the pixel's world key) - never a Bay pixel id, unique per world pixel, as the zone halls are.
 
 import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is the clock's own, never a second 1440
-import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, sampleKernel } from './terrain/terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
+import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, SCALED_OCEAN_ELEVATION, sampleKernel } from './terrain/terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
 import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM, BEACH_JITTER } from './terrain/terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
 import { dataPoint, PATH_KEYS } from '../systems/travel/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
+import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: their home a leaf, the Imperial City's plan's and the workers'
+import { inBay } from './tamriel/tamrielFrame.js';   // SPAWN-WORLD: the Bay's pixel ids, and its network, are its own
+import { worldLaneMapId, SPAWN_WORLD_LANE } from './worldWide/worldLanes.js';   // SPAWN-WORLD: a spawn's id past the Bay
+import { inWorldGrid } from './worldWide/worldGrid.js';   // SPAWN-WORLD: a ledger row's pixel the world's
+import { arenaPathsAt } from './arenaRoads.js';   // SPAWN-WORLD: the roads past the Bay - TESA's layer (TESA4, TESA14)
+import { onGhostfence } from './tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G1: no ruin on the Ghostfence's line
+import { redMountainLavaIn } from './tamriel/redMountain.js';   // LAVA-CLEAR: nor a ruin where Red Mountain's lava runs
 
 /** The chance a pixel holds a NORMAL spawned dungeon. */
 export const SPAWN_CHANCE = 0.30;
@@ -58,18 +67,8 @@ export const WORLD_SALT = 1;
 
 const PIXEL_ID_MAX = 500 * 1000;   // getMapPixelID's ceiling (y < 500, x < 1000) - under 2^20
 
-/** FNV-1a-ish mix of a few small integers to an unsigned 32-bit. */
-export function hash32(...ns) {
-  let h = 0x811c9dc5;
-  for (const n of ns) {
-    h ^= n >>> 0;
-    h = Math.imul(h, 0x01000193);
-    h ^= h >>> 15;
-    h = Math.imul(h, 0x2c1b3c6d);
-    h ^= h >>> 12;
-  }
-  return h >>> 0;
-}
+/** FNV-1a-ish mix of a few small integers to an unsigned 32-bit - RUMARE-WATER: its home world/blockHash.js, a leaf. */
+export { hash32 };
 
 /** The pixel's spawn roll, [0, 1). Deterministic in (salt, px, py). */
 export const spawnRoll = (salt, px, py) => hash32(salt, px, py, 1) / 4294967296;
@@ -93,6 +92,10 @@ export function spawnsDungeon(salt, px, py, chance = ANY_SPAWN_CHANCE) {
  *  `net` is the terrain's network (terrainGen.roads()); an array it does not carry (the generated
  *  network has no water) answers no path, which is dataPoint's own 0. */
 export function pathFreePixel(net, px, py) {
+  // SPAWN-WORLD: past the Bay the network is TESA's road layer (world/arenaRoads.js - the roads and tracks the regions laid,
+  // each pixel's compass byte, its curves its own: world/road/roadCurves.js), which lays no river or stream; the Bay's
+  // arrays carry nothing there (dataPoint's 0), so a ruin stood on every road past the Bay
+  if (!inBay(px, py)) return !arenaPathsAt(px, py);
   for (let t = 0; t < PATH_KEYS.length; t++) if (dataPoint(net, t, px, py)) return false;
   return true;
 }
@@ -119,6 +122,38 @@ export function spawnPlateauFloor(woods, px, py) {
   return (sum / (HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION)) * MAX_TERRAIN_HEIGHT;
 }
 
+/** TESA13: the kernel's columns in the order plateauDry sums them - every sixteenth column at a time, spread across the
+ *  pixel, so a sum part-way through is the whole pixel's and not its western edge's. */
+export const DRY_COLUMN_STRIDE = 16;
+const DRY_COLUMN_ORDER = Object.freeze([0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15]);
+/** TESA13: how near the threshold, as a part of it, a sum must not stand for plateauDry to answer without
+ *  spawnPlateauFloor - floating sums in another order agree far closer than this. */
+export const DRY_MARGIN = 1e-9;
+/**
+ * TESA13: IS THE PLATEAU DRY - `spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION`, the same answer, for a part of
+ * the cost where the land stands clear of the beach (the held map asks it of every candidate place in its view,
+ * world/tamrielCountry.js createCountryGround). Every sample the kernel answers lies between the ocean's clamp and 1
+ * (sampleKernel), so the samples still to come can only move the sum so far: the columns are summed in
+ * DRY_COLUMN_ORDER, and once the sum is past the threshold even if every sample left were the ocean's, or short of it
+ * even if every one were 1, the answer is known. A sum that ends within DRY_MARGIN of the threshold asks
+ * spawnPlateauFloor itself.
+ */
+export function plateauDry(woods, px, py) {
+  const k = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, false);
+  const n = HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION;
+  const goal = (SPAWN_DRY_ELEVATION / MAX_TERRAIN_HEIGHT) * n, lo = SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, margin = goal * DRY_MARGIN;
+  let sum = 0, left = n;
+  for (const off of DRY_COLUMN_ORDER) {
+    for (let x = off; x < HEIGHTMAP_DIMENSION; x += DRY_COLUMN_STRIDE) {
+      for (let y = 0; y < HEIGHTMAP_DIMENSION; y++) sum += k(x, y);
+      left -= HEIGHTMAP_DIMENSION;
+    }
+    if (sum + left * lo > goal + margin) return true;
+    if (sum + left < goal - margin) return false;
+  }
+  return Math.abs(sum - goal) > margin ? sum > goal : spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION;
+}
+
 /**
  * WILD-DRY (2026-10-12, a player's live client: the map's first open froze 6.7 s - the zone's giants' walking ground,
  * systems/wild/wildGiants.js cellsOf, asks every pixel of the zone whether it is dry, and each answer read the whole
@@ -141,13 +176,14 @@ export function spawnGroundDry(woods, px, py, kernelOf = sampleKernel) {
 }
 
 /** Would a ruin on (px, py) stand on dry ground? Kept per pixel: the height map does not change under a session, and
- *  the build and the Overworld's far found spawns both ask. WILD-DRY: answered by spawnGroundDry. */
+ *  the build and the Overworld's far found spawns both ask. WILD-DRY: answered by spawnGroundDry. AUDIT RED-MOUNTAIN G1:
+ *  never on the Ghostfence's line - the lairs keep off it (tamrielDungeons.js), and 42 spawns stood on it. */
 export function createSpawnGround(woods) {
   const dry = new Map();
   return (px, py) => {
-    const key = py * 1000 + px;
+    const key = `${px},${py}`;   // WW-C2: a world map pixel's (a hall past the Bay's) - `y * 1000 + x` met another pixel past x 999
     let d = dry.get(key);
-    if (d === undefined) dry.set(key, d = spawnGroundDry(woods, px, py));
+    if (d === undefined) dry.set(key, d = !onGhostfence(px, py) && !redMountainLavaIn(px, py) && spawnGroundDry(woods, px, py));   // LAVA-CLEAR: nor where the lava runs
     return d;
   };
 }
@@ -162,9 +198,15 @@ export const isEliteSpawn = (salt, px, py, normal = SPAWN_CHANCE, elite = ELITE_
   return spawnKept(salt, px, py);
 };
 
-/** The spawned dungeon's MapId: salt in the high 12 bits, MapsFile.getMapPixelID in the low 20. */
+/** The spawned dungeon's MapId: salt in the high 12 bits, MapsFile.getMapPixelID in the low 20. SPAWN-WORLD: past the Bay,
+ *  the world's spawn lane over the pixel's world key (world/worldWide/worldLanes.js) - the world salt's alone (the one
+ *  salt any spawn past the Bay rolls with; a zone hall's id is its own lane's, handed in). */
 export function spawnedMapId(salt, px, py) {
   if (!Number.isInteger(salt) || salt < 1 || salt > SALT_MAX) throw new RangeError(`salt ${salt}`);
+  if (!inBay(px, py)) {
+    if (salt !== WORLD_SALT || !inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);
+    return worldLaneMapId(SPAWN_WORLD_LANE, px, py);
+  }
   const id = py * 1000 + px;
   if (!Number.isInteger(id) || px < 0 || px > 999 || py < 0 || id >= PIXEL_ID_MAX) throw new RangeError(`pixel ${px},${py}`);
   return ((salt << 20) | id) >>> 0;
@@ -181,10 +223,10 @@ export const pickTemplate = (templates, salt, px, py) => (templates?.length ? te
  * property of WHERE it stands - region, politic, climate (`where`, from the host, which owns the map files).
  * `locationIndex` is -1: the quest machine and the music read it as "a real table row", and this is none.
  * @param {object} template a real, non-main-story location with hasDungeon
- * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}, elite?:boolean}} o
+ * @param {{salt:number, px:number, py:number, where?:{regionIndex?:number, regionName?:string, politic?:number, climate?:object}, elite?:boolean, mapId?:number|null}} o
  */
-export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false }) {
-  const mapId = spawnedMapId(salt, px, py);
+export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, elite = false, mapId: id = null }) {
+  const mapId = id ?? spawnedMapId(salt, px, py);   // WW-C2: a zone hall's own id (net/wire.js spawnedHallMapId - a world pixel's lane), the Bay's spawns' salt and pixel
   const ll = mapPixelToLongitudeLatitude(px, py);
   return {
     ...template,
@@ -208,8 +250,8 @@ export function synthesizeDungeonLocation(template, { salt, px, py, where = {}, 
  * one-block exterior when any exist.
  */
 export function spawnTemplates(locations, isMain = () => false) {
-  const dungeons = [...(locations ?? [])].filter((l) => l?.hasDungeon && l.dungeon?.blocks?.length
-    && l.exterior?.exteriorData && !isMain(l.mapTableData?.mapId) && !l.spawned && !l.ether   // AUDIT CAPTAIN'S SEA P3: never an isle's place - a session that stood ruins past the Veil first cloned other templates on every Bay pixel than its party
+  const dungeons = [...(locations ?? [])].filter((l) => l?.hasDungeon && !l.country && l.dungeon?.blocks?.length   // TESA8: never a lair past the Bay (world/tamrielDungeons.js) - its plan is its own
+    && l.exterior?.exteriorData && !isMain(l.mapTableData?.mapId) && !l.spawned && !l.ether && !l.arena   // AUDIT CAPTAIN'S SEA P3: never an isle's place - a session that stood ruins past the Veil first cloned other templates on every Bay pixel than its party; TESA2: nor an Arena place, the same way
     && spawnClearance(l.exterior.exteriorData.width, l.exterior.exteriorData.height) >= SPAWN_CLEARANCE_M);   // SPAWNED-DUNGEONS3: never one the player could cross into inside 300 m
   const small = dungeons.filter((l) => l.exterior.exteriorData.width * l.exterior.exteriorData.height === 1);
   return small.length ? small : dungeons;
@@ -240,8 +282,8 @@ export function spawnTemplates(locations, isMain = () => false) {
 
 /** The least distance a player entering the pixel may be from the spawn's exterior. */
 export const SPAWN_CLEARANCE_M = 300;
-/** A block's side, metres: eight to a pixel. */
-export const BLOCK_M = TERRAIN_SIZE / 8;
+/** A block's side, metres: eight to a pixel - RUMARE-WATER: its home world/blockHash.js. */
+export { BLOCK_M };
 /** Metres from a pixel's edge to the nearest edge of a centred w x h block exterior (the tighter axis). */
 export const spawnClearance = (width, height) => (TERRAIN_SIZE - Math.max(width | 0, height | 0) * BLOCK_M) / 2;
 
@@ -438,9 +480,10 @@ export function createSpawnLedger() {
      *  `note` first starts a row and when `clear` stamps one. */
     wireRow(key) {
       const r = rows.get(key);
-      const at = /^(\d{1,3}),(\d{1,3})$/.exec(String(key));
+      const at = /^(-?\d{1,4}),(-?\d{1,4})$/.exec(String(key));   // SPAWN-WORLD: a world pixel's - past the Bay its spawns' clocks are the cell's too
       if (!r || !at) return null;
       const px = Number(at[1]), py = Number(at[2]);
+      if (!inWorldGrid(px, py) || `${px},${py}` !== key) return null;   // the pixel's one spelling, on the world's grid
       return Number.isFinite(r.cleared) ? [px, py, r.seen, r.cleared] : [px, py, r.seen];
     },
     /** Gone for good: the pixel is free to be empty from here. */

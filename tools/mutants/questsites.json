@@ -1,0 +1,932 @@
+[
+  {
+    "name": "R25-lair-reach",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "export const PROVINCE_LAIR_REACH = 66;",
+    "new": "export const PROVINCE_LAIR_REACH = 67;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-lair-count",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "export const PROVINCE_LAIR_COUNT = 12;",
+    "new": "export const PROVINCE_LAIR_COUNT = 13;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-lair-rolls",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "export const PROVINCE_LAIR_ROLLS = 16;",
+    "new": "export const PROVINCE_LAIR_ROLLS = 17;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-lairs-unbounded",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)",
+    "new": "lairsNear(o.x, o.y, PROVINCE_LAIR_REACH)",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-region-unfiltered",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      if (regionAt(p.px, p.py) !== r || isUnsitedSlice(p.px, p.py)) continue;",
+    "new": "      if (isUnsitedSlice(p.px, p.py)) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-stood-id-unchecked",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? questView(loc) : null;",
+    "new": "    return loc ? questView(loc) : null;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-held-sites-unread",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    for (const sd of heldSites()) {",
+    "new": "    for (const sd of []) {",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-held-name-unchecked",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
+    "new": "      if (!loc || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-held-id-unchecked",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
+    "new": "      if (!loc || loc.name !== name) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-found-not-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    for (const row of found.get(r)?.values() ?? []) add(row);",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-names-miss-unasked",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "  get(name) { return super.has(name) ? super.get(name) : this.miss(name); }",
+    "new": "  get(name) { return super.get(name); }",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-found-joins-nothing",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      return table ? join(table, row) : getRegion(r)?.mapNameLookup.get(name);",
+    "new": "      return undefined;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-table-never-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (had?.key === key) return had.region;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-maps-province-arm-dropped",
+    "file": "src/scenes/questWorld.js",
+    "old": "      getRegion: { value: (r) => (provinces && isProvinceRegion(r) ? provinces.getRegion(r) : maps.getRegion(r)) },",
+    "new": "      getRegion: { value: (r) => maps.getRegion(r) },",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-maps-bay-handed-over",
+    "file": "src/scenes/questWorld.js",
+    "old": "      getLocation: { value: (r, l) => questSized(provinces && isProvinceRegion(r) ? provinces.getLocation(r, l) : maps.getLocation(r, l)) },",
+    "new": "      getLocation: { value: (r, l) => questSized(provinces ? provinces.getLocation(r, l) : maps.getLocation(r, l)) },",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-classic-record-read",
+    "file": "src/scenes/questWorld.js",
+    "old": "      readClassicLocation: { value: (r, l) => (isProvinceRegion(r) ? null : maps.readClassicLocation(r, l)) },",
+    "new": "      readClassicLocation: { value: (r, l) => maps.readClassicLocation(r, l) },",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-own-row-unread",
+    "file": "src/scenes/questWorld.js",
+    "old": "return provinces && isProvinceRegion(r) ? provinces.locationIndexOf(r, _questLoc()) : _questLoc()?.locationIndex ?? -1; },",
+    "new": "return _questLoc()?.locationIndex ?? -1; },",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-name-lookup-bay-only",
+    "file": "src/scenes/questWorld.js",
+    "old": "  const placeByName = (rn, ln) => bayPlaceByName(rn, ln) ?? provinces?.locationByName(rn, ln) ?? null;",
+    "new": "  const placeByName = (rn, ln) => bayPlaceByName(rn, ln) ?? null;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25-start-lair-lost",
+    "file": "src/scenes/questWorld.js",
+    "old": "  const startLairAt = provinceQuestPlaces?.startLairAt;",
+    "new": "  const startLairAt = null;",
+    "tests": [
+      "test/systems/starts/start2_provinces.test.js"
+    ]
+  },
+  {
+    "name": "R25-host-count-unbounded",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (out.length >= count || read >= rolls) break;",
+    "new": "      if (read >= rolls) break;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25-host-lair-not-free",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    const row = at && lairBlocksOf(at) && lairFree(s.px, s.py) ? {",
+    "new": "    const row = at && lairBlocksOf(at) ? {",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25b-quarters-unnumbered",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    names.set(s, count.get(d) > 1 ? `${d}, quarter ${r}` : d);",
+    "new": "    names.set(s, d);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-centre-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));",
+    "new": "  return (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-fills-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));",
+    "new": "  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-every-slice-out",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "  if (!at || !manySlices(at.cap)) return false;",
+    "new": "  if (!at) return false;\n  if (at) return true;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-table-plain-name",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) }));",
+    "new": "      add(provinceRow({ ...p, tableKey: tableKeyAt(p.px, p.py) }));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-view-unnamed",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "  if (v?.name !== name) { v = { ...loc, name }; _views.set(loc, v); }",
+    "new": "  if (v?.name !== name) { v = { ...loc }; _views.set(loc, v); }",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-located-plain",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? questView(loc) : null;",
+    "new": "    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? loc : null;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-held-plain",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      const loc = questView(standAt(p.x, p.y));",
+    "new": "      const loc = standAt(p.x, p.y);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25b-questloc-plain",
+    "file": "src/scenes/questWorld.js",
+    "old": "  const _questLoc = () => questView(hostQuestLoc?.());",
+    "new": "  const _questLoc = () => hostQuestLoc?.();",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25c-city-unasked",
+    "file": "src/systems/quest/place.js",
+    "old": "      const city = this._citySites(world, location, asked.p2, asked.p3);",
+    "new": "      const city = null;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25c-order",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "  others.sort((a, b) => a.d - b.d || a.s - b.s);",
+    "new": "  others.sort((a, b) => a.s - b.s);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-own-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (s == null || s === at.s || isUnsitedSlice(q.x, q.y)) continue;",
+    "new": "    if (s == null || isUnsitedSlice(q.x, q.y)) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-unsited-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (s == null || s === at.s || isUnsitedSlice(q.x, q.y)) continue;",
+    "new": "    if (s == null || s === at.s) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-view-dropped",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (l?.loaded && l.capital) yield questView(l);",
+    "new": "    if (l?.loaded && l.capital) yield l;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-seam-dropped",
+    "file": "src/scenes/questWorld.js",
+    "old": "    capitalSlicesNear: (loc, admits) => provinces?.capitalSlicesNear(loc, admits) ?? [],",
+    "new": "    capitalSlicesNear: () => [],",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-count",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "      if (++stood >= WARM_PER_TICK) break;",
+    "new": "      ++stood;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-order",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": ".sort((a, b) => a[1] - b[1] || a[0] - b[0])",
+    "new": ".sort((a, b) => a[0] - b[0])",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-bay",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "    if (!isProvinceRegion(r)) return 0;\n    const region = provinces.getRegion(r);",
+    "new": "    const region = provinces.getRegion(r);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-two-loops",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "    if (stopped || !schedule || id !== liveWarm) return;",
+    "new": "    if (stopped || !schedule) return;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-unwired",
+    "file": "src/scenes/questWorld.js",
+    "old": "  createProvinceWarm({ provinces, regionNow: () => _questRegionIndex(), origin: () => playerTravelOrigin?.() ?? null, schedule: provinces ? idleSchedule() : null }).start();",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-lair-bound-pixel",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (out.length >= count || read >= rolls) break;",
+    "new": "      if (out.length >= count) break;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-unasked",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-bound",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-region",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-name-twice",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "if (!ids.has(row.mapId) && !names.has(row.name)) {",
+    "new": "if (!ids.has(row.mapId)) {",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-host-free",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (!countryMayStandAt(roll, x, y) || capitalOnPixel(x, y) || (_arenaTemplates && arenaPlaceOnPixel(x, y))) continue;",
+    "new": "      if (!countryMayStandAt(roll, x, y)) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25e-host-read-unbounded",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (read >= rolls || out.length >= count) break;",
+    "new": "      if (out.length >= count) break;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-all-valid-set",
+    "file": "src/systems/quest/place.js",
+    "old": "  if (buildingType === BT_ALL_VALID) wildcardFound = VALID_BUILDING_TYPES.includes(summary.buildingType);",
+    "new": "  if (buildingType === BT_ALL_VALID) wildcardFound = VALID_HOUSE_TYPES.includes(summary.buildingType);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-any-house-set",
+    "file": "src/systems/quest/place.js",
+    "old": "  else if (buildingType === BT_ANY_HOUSE) wildcardFound = VALID_HOUSE_TYPES.includes(summary.buildingType);",
+    "new": "  else if (buildingType === BT_ANY_HOUSE) wildcardFound = VALID_BUILDING_TYPES.includes(summary.buildingType);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-any-shop-set",
+    "file": "src/systems/quest/place.js",
+    "old": "  else if (buildingType === BT_ANY_SHOP) wildcardFound = VALID_SHOP_TYPES.includes(summary.buildingType);",
+    "new": "  else if (buildingType === BT_ANY_SHOP) wildcardFound = VALID_BUILDING_TYPES.includes(summary.buildingType);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-kind-unchecked",
+    "file": "src/systems/quest/place.js",
+    "old": "  if (summary.buildingType !== buildingType && !wildcardFound) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-faction-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "  if (FACTION_HELD.includes(summary.buildingType) && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-faction-everywhere",
+    "file": "src/systems/quest/place.js",
+    "old": "  if (FACTION_HELD.includes(summary.buildingType) && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) return false;",
+    "new": "  if (!(guildHallFaction === 0 || summary.factionId === guildHallFaction)) return false;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-faction-any-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "  if (FACTION_HELD.includes(summary.buildingType) && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) return false;",
+    "new": "  if (FACTION_HELD.includes(summary.buildingType) && !(summary.factionId === guildHallFaction)) return false;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-brotherhood",
+    "file": "src/systems/quest/place.js",
+    "old": "  return summary.factionId !== DARK_BROTHERHOOD_FACTION && summary.factionId !== THIEVES_GUILD_FACTION;",
+    "new": "  return summary.factionId !== THIEVES_GUILD_FACTION;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-admit-thieves",
+    "file": "src/systems/quest/place.js",
+    "old": "  return summary.factionId !== DARK_BROTHERHOOD_FACTION && summary.factionId !== THIEVES_GUILD_FACTION;",
+    "new": "  return summary.factionId !== DARK_BROTHERHOOD_FACTION;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-walk-unadmitted",
+    "file": "src/systems/quest/place.js",
+    "old": "if (buildingAdmits(x.summary, buildingType, guildHallFaction)) yield x;",
+    "new": "yield x;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-walk-past-subrecords",
+    "file": "src/systems/quest/place.js",
+    "old": "    for (let i = 0; i < count; i++) yield { b, i, summary: list[i], buildingKey: makeBuildingKey(b.x, b.y, i) };",
+    "new": "    for (let i = 0; i < list.length; i++) yield { b, i, summary: list[i], buildingKey: makeBuildingKey(b.x, b.y, i) };",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-marker-spawn-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (obj.textureArchive === EDITOR_FLAT_ARCHIVE && (obj.textureRecord === SPAWN_MARKER_RECORD || obj.textureRecord === ITEM_MARKER_RECORD)) return true;",
+    "new": "    if (obj.textureArchive === EDITOR_FLAT_ARCHIVE && (obj.textureRecord === ITEM_MARKER_RECORD)) return true;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-marker-item-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (obj.textureArchive === EDITOR_FLAT_ARCHIVE && (obj.textureRecord === SPAWN_MARKER_RECORD || obj.textureRecord === ITEM_MARKER_RECORD)) return true;",
+    "new": "    if (obj.textureArchive === EDITOR_FLAT_ARCHIVE && (obj.textureRecord === SPAWN_MARKER_RECORD)) return true;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-marker-archive-unchecked",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (obj.textureArchive === EDITOR_FLAT_ARCHIVE && (obj.textureRecord === SPAWN_MARKER_RECORD || obj.textureRecord === ITEM_MARKER_RECORD)) return true;",
+    "new": "    if (obj.textureRecord === SPAWN_MARKER_RECORD || obj.textureRecord === ITEM_MARKER_RECORD) return true;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-index-markerless-kept",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (buildingHasQuestMarker(b.dfBlock, i)) out.push(",
+    "new": "    if (b.dfBlock) out.push(",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-index-faction-unkept",
+    "file": "src/systems/quest/place.js",
+    "old": "factionId: summary.factionId ?? 0, buildingKey }));",
+    "new": "factionId: 0, buildingKey }));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-gives-all-valid",
+    "file": "src/systems/quest/place.js",
+    "old": "  const kind = p2 === -1 && p3 === 0 ? BT_ALL_VALID : p2 === -1 && p3 === 1 ? BT_ANY_HOUSE : p2 === -1 && p3 === 2 ? BT_ANY_SHOP : p2;",
+    "new": "  const kind = p2 === -1 && p3 === 0 ? BT_ANY_SHOP : p2 === -1 && p3 === 1 ? BT_ANY_HOUSE : p2 === -1 && p3 === 2 ? BT_ANY_SHOP : p2;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-gives-any-house",
+    "file": "src/systems/quest/place.js",
+    "old": "  const kind = p2 === -1 && p3 === 0 ? BT_ALL_VALID : p2 === -1 && p3 === 1 ? BT_ANY_HOUSE : p2 === -1 && p3 === 2 ? BT_ANY_SHOP : p2;",
+    "new": "  const kind = p2 === -1 && p3 === 0 ? BT_ALL_VALID : p2 === -1 && p3 === 1 ? BT_ALL_VALID : p2 === -1 && p3 === 2 ? BT_ANY_SHOP : p2;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-gives-any-shop",
+    "file": "src/systems/quest/place.js",
+    "old": "  const kind = p2 === -1 && p3 === 0 ? BT_ALL_VALID : p2 === -1 && p3 === 1 ? BT_ANY_HOUSE : p2 === -1 && p3 === 2 ? BT_ANY_SHOP : p2;",
+    "new": "  const kind = p2 === -1 && p3 === 0 ? BT_ALL_VALID : p2 === -1 && p3 === 1 ? BT_ANY_HOUSE : p2 === -1 && p3 === 2 ? BT_ALL_VALID : p2;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-gives-house-fallback-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "  return p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6 && indexAdmits(index, BT_ANY_HOUSE, p3);",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-gives-house-fallback-range",
+    "file": "src/systems/quest/place.js",
+    "old": "  return p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6 && indexAdmits(index, BT_ANY_HOUSE, p3);",
+    "new": "  return p2 >= BT_HOUSE1 && p2 <= BT_HOUSE4 && indexAdmits(index, BT_ANY_HOUSE, p3);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-dart-any-house",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (requiredBuildingType === BT_ANY_HOUSE) return indexAdmits(index, BT_ANY_HOUSE, this.p3);",
+    "new": "    if (requiredBuildingType === BT_ANY_HOUSE) return indexAdmits(index, BT_ALL_VALID, this.p3);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-dart-all-valid",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (this.p2 === -1 && this.p3 === 0) return indexAdmits(index, BT_ALL_VALID, this.p3);",
+    "new": "    if (this.p2 === -1 && this.p3 === 0) return indexAdmits(index, BT_ANY_HOUSE, this.p3);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-dart-random-house",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (this.p2 === -1 && this.p3 === 1) return indexAdmits(index, BT_ANY_HOUSE, this.p3);",
+    "new": "    if (this.p2 === -1 && this.p3 === 1) return indexAdmits(index, BT_ALL_VALID, this.p3);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-dart-hall-faction",
+    "file": "src/systems/quest/place.js",
+    "old": "    return indexAdmits(index, this.p2, this.p3);",
+    "new": "    return indexAdmits(index, this.p2, 0);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-city-admit-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "    for (const slice of world.capitalSlicesNear?.(location, (index) => siteIndexGives(index, p2, p3)) ?? []) {",
+    "new": "    for (const slice of world.capitalSlicesNear?.(location) ?? []) {",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js",
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-dart-refusal-unasked",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (world.siteIndexRefuses?.(regionIndex, locationIndex, (index) => this._dartIndexGives(index, requiredBuildingType))) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js",
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "QF-the-citys-cells-skipped-again",
+    "file": "src/systems/quest/place.js",
+    "old": "      const dfBlock = world.questBlock?.(blockName) ?? world.getBlock(blockName);",
+    "new": "      const dfBlock = location.capital ? null : world.questBlock?.(blockName) ?? world.getBlock(blockName);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ],
+    "note": "QUEST-FABRIC (the owner: \"Let quests use them\"): R2-5f's R25f-cells-read, R25f-cells-skipped-anywhere and R25f-seam-cells-unnamed retired with the skip they guarded; this record holds the reversal - a capital's own cells read as every block is."
+  },
+  {
+    "name": "R25f-near-admit-unread",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (admits && !admits(indexAt(q.x, q.y))) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-near-picked-uncounted",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    count.picked++;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-index-not-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "index = loc ? sitesIndexOf(questView(loc)) : Object.freeze([]); sliceIndexes.set(k, index); }",
+    "new": "index = loc ? sitesIndexOf(questView(loc)) : Object.freeze([]); }",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-refuses-every-row",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      return sliceRow(row) && !gives(sliceIndexAt(row.px, row.py));",
+    "new": "      return !!row && !gives(sliceIndexAt(row.px, row.py));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-refuses-inverted",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      return sliceRow(row) && !gives(sliceIndexAt(row.px, row.py));",
+    "new": "      return sliceRow(row) && gives(sliceIndexAt(row.px, row.py));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-near-index-unpassed",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),",
+    "new": "capitalSlicesNear(loc, standAt, admits, undefined, count),",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js",
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-near-count-unpassed",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),",
+    "new": "capitalSlicesNear(loc, standAt, admits, sliceIndexAt),",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js",
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-warm-index-unread",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "      provinces.sliceIndexAt?.(row.px, row.py);   // R2-5f: a capital slice's sites by kind, read while it is warm",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "R25f-seam-index-unwired",
+    "file": "src/scenes/questWorld.js",
+    "old": "    sitesIndexOf: (loc) => sitesIndexOf(loc) }) : null;",
+    "new": "    sitesIndexOf: () => [] }) : null;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js",
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-seam-refuses-dropped",
+    "file": "src/scenes/questWorld.js",
+    "old": "    siteIndexRefuses: (r, i, gives) => provinces?.siteIndexRefuses(r, i, gives) ?? false,",
+    "new": "    siteIndexRefuses: () => false,",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js",
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-slice-stood-unread",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (had?.capital) return had;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-slice-stands",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    return capitalCloneOf(at, px, py, place ? Object.freeze({ province: place.province, provinceIndex: place.provinceIndex, id: place.id, kind: place.kind, port: !!place.port }) : null);",
+    "new": "    return capitalLocationAt(px, py);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-slice-no-slot",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    return capitalCloneOf(at, px, py, place ? Object.freeze({ province: place.province, provinceIndex: place.provinceIndex, id: place.id, kind: place.kind, port: !!place.port }) : null);",
+    "new": "    return capitalCloneOf(at, px, py, null);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-slice-unwired",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "startLairAt, sliceAt: capitalSliceAt,",
+    "new": "startLairAt, sliceAt: () => null,",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25f-dry-unkept",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  if (kept) return kept;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "QF-the-view-unread",
+    "file": "src/systems/quest/place.js",
+    "old": "      const dfBlock = world.questBlock?.(blockName) ?? world.getBlock(blockName);",
+    "new": "      const dfBlock = world.getBlock(blockName);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ],
+    "note": "QUEST-FABRIC: the walk made the city's own cells whole again - a temple's remote dart 83 s on the freeware's data (fabricQuestBlock)."
+  },
+  {
+    "name": "QF-the-quest-world-unwired",
+    "file": "src/scenes/questWorld.js",
+    "old": "    questBlock: (name) => fabricQuestBlock(name, blocks),",
+    "new": "    questBlock: (name) => null,",
+    "tests": [
+      "test/systems/quest/questfabric.test.js",
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "QF-the-records-unread",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "  const json = { Name: name, RmbBlock: { FldHeader: { BuildingDataList: fabricRecordsJson(r, c, recs) }, SubRecords:",
+    "new": "  const json = { Name: name, RmbBlock: { FldHeader: { BuildingDataList: [] }, SubRecords:",
+    "tests": [
+      "test/systems/quest/questfabric.test.js"
+    ]
+  },
+  {
+    "name": "QF-the-donors-unattached",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "  return recs.length ? withDonors(block, recs, blocksFile) : block;",
+    "new": "  return block;",
+    "tests": [
+      "test/systems/quest/questfabric.test.js"
+    ]
+  },
+  {
+    "name": "QF-a-far-cell-viewed",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "  if (!b || b.kind !== 'own' || !blocksFile) return null;\n  const { r, c } = b, recs = fabricCellBuildings(r, c);\n  const json",
+    "new": "  if (!b || !blocksFile) return null;\n  const { r, c } = b, recs = fabricCellBuildings(r, c);\n  const json",
+    "tests": [
+      "test/systems/quest/questfabric.test.js"
+    ]
+  },
+  {
+    "name": "QF-the-bake-unread",
+    "file": "src/scenes/questWorld.js",
+    "old": "    return Object.freeze([...walked, ...fabricSliceSites(loc.capital.s)]);",
+    "new": "    return Object.freeze([...walked]);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "QF-the-own-cells-walked",
+    "file": "src/scenes/questWorld.js",
+    "old": "    const walked = townSitesIndex({ ...questWorld, questBlock: (name) => (imperialBlockOf(name)?.kind === 'own' ? FABRIC_NO_BUILDINGS : null) }, loc);",
+    "new": "    const walked = townSitesIndex(questWorld, loc);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ],
+    "note": "QUEST-FABRIC: the index laid out every own cell's fabric again - a temple's darts over the city read some ninety slices' (15 s on the freeware)."
+  },
+  {
+    "name": "QF-a-city-slice-walked-whole",
+    "file": "src/scenes/questWorld.js",
+    "old": "    if (!CAPITALS[loc?.capital?.k]?.family) return townSitesIndex(questWorld, loc);",
+    "new": "    if (true) return townSitesIndex(questWorld, loc);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "QF-a-baked-kind-dropped",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "    out = Object.freeze(FABRIC_SITE_SETS[set].split(' ').filter(Boolean).map(",
+    "new": "    out = Object.freeze(FABRIC_SITE_SETS[set].split(' ').filter(Boolean).slice(1).map(",
+    "tests": [
+      "test/systems/quest/questfabric.test.js",
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "QF-a-slice-read-as-its-neighbour",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "  const set = FABRIC_SLICE_SETS[s];",
+    "new": "  const set = FABRIC_SLICE_SETS[s + 1];",
+    "tests": [
+      "test/systems/quest/questfabric.test.js",
+      "test/systems/quest/auditrelease_r25f.test.js"
+    ]
+  },
+  {
+    "name": "QF-an-unmarked-donor-counted",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "    if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) if (marked[b.donor]) kinds.add(`${b.type}:${b.factionId}`);",
+    "new": "    if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) kinds.add(`${b.type}:${b.factionId}`);",
+    "tests": [
+      "test/systems/quest/questfabric.test.js"
+    ]
+  }
+]

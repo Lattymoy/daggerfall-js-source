@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { getContextValue } from '../../../src/systems/quest/questMacros.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const read = (p) => readFileSync(p, 'utf8');
 
@@ -31,15 +32,15 @@ test('IH1 %nt: the hook\'s tavern, straight through', () => {
 // ── the world mounts, source-pinned ──────────────────────────────
 
 test('IH1 world: %cbd regenerates the interior building through the ONE name bag', () => {
-  const world = read('src/scenes/world.js');
-  assert.match(world, /const b = modes\?\.interiorBuilding;\s*\n\s*if \(!b\) return null;/,
+  const world = hostText('src/scenes/world.js');
+  assert.match(world, /const b = (?:host\.)?modes\?\.interiorBuilding;\s*\n\s*if \(!b\) return null;/,
     'outside a building the hook answers null - the handler owns "[invalid]"');
   assert.match(world, /generateBuildingName\(b\.nameSeed, b\.buildingType,\s*\n\s*\{ \.\.\.\(townTalk\.nameOpts\?\.\(\) \?\? \{\}\), factionId: b\.factionId \?\? 0 \}\)/,
     'the same seed, type and faction the building carries, over townTalk\'s bag');
 });
 
 test('IH1 world: %nt picks a tavern uniformly from the directory, "tavern" when there is none', () => {
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /randomTavernName: \(roll = Math\.random\) =>/,
     'the ENGINE-PRNG rule: a UnityEngine.Random draw rides an injectable uniform roll');
   assert.match(world, /\.filter\(\(b\) => b\.buildingType === TALK_BUILDING_TYPES\.Tavern\)/,
@@ -51,8 +52,8 @@ test('IH1 world: %nt picks a tavern uniformly from the directory, "tavern" when 
 });
 
 test('IH1 world: isHouseOwned is banking\'s law over the CURRENT region; the bag is townTalk\'s', () => {
-  const world = read('src/scenes/world.js');
-  assert.match(world, /isHouseOwned: \(buildingKey\) => isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey\)/,
+  const world = hostText('src/scenes/world.js');
+  assert.match(world, /isHouseOwned: \(buildingKey\) => isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, _questLoc\(\)\?\.mapTableData\?\.mapId \?\? null\)/,
     'DaggerfallBankManager.IsHouseOwned (:140-148) reads Houses[CurrentLocation.RegionIndex]');
   assert.match(world, /buildingNameOpts: \(\) => townTalk\.nameOpts\?\.\(\) \?\? \{\}/,
     'Place\'s _getBuildingName rides the one bag');

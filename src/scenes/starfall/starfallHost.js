@@ -34,7 +34,15 @@ import { worldRoom } from '../../net/wire.js';
 import { storedSession } from '../../net/accountClient.js';
 import { appStorage } from '../../systems/appStorage.js';
 import { characterIdOf } from '../../systems/characterId.js';
-import { findStarSites } from '../../systems/starfall/starfallSites.js';
+import { findStarSites, findTheatreStarSites } from '../../systems/starfall/starfallSites.js';
+import { keptTheatreScans } from '../gate/gateLanes.js';   // WW5: a province's stars over its theatre's ground, the gate's own scan
+import { createEventTheatres } from '../eventTheatres.js';   // WW5: a theatre's scan warmed in the idle moments
+import { findTheatreGateSite } from '../../systems/gate/theatreGateSite.js';   // WW5: a province's stars keep off its own gate
+import { gateNumber } from '../../net/gate/gateLaw.js';
+import { keptPlaces } from '../../net/staffPlaces.js';   // WW5: the registry's generation, the theatres' scans' stamp
+import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';
+import { theatreOfRegion } from '../../formats/mapsTables.js';
+import { siteEventLaneOpen } from '../../net/wire.js';
 import { heartStar } from '../../systems/starfall/starfallNight.js';
 import { covenWitches } from '../../systems/starfall/starfallCovens.js';
 import { starWaveFoes, starMasterOf, starCircleFoes, covenFemale, STAR_MEMBERS } from '../../systems/starfall/starCoven.js';
@@ -182,6 +190,19 @@ export function createStarfallHost(host) {
   const fogOf = () => (renderer ? { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, color: renderer._fogColor, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze } : null);
   /** night -> its stars (findStarSites), or null where the scan had none */
   const nights = new Map();
+  /** WW5: `<night>:<lane>` -> a province's stars (findTheatreStarSites) and the scan they were found over */
+  const laneNights = new Map();
+  /** WW5: the theatres past the Bay, their scans warmed a theatre at a time (scenes/eventTheatres.js) - the host's own
+   *  (`theatreScans`, the tests'), else the world host's (scenes/gate/gateLanes.js keptTheatreScans) */
+  const theatres = createEventTheatres({
+    scans: () => (host.theatreScans !== undefined ? host.theatreScans : keptTheatreScans()),
+    generation: () => (host.worldPlaces ?? keptPlaces())?.generation?.() ?? 0, land: () => (host.landVersion ?? tamrielLandVersion)(),
+    idle: host.idle !== undefined ? host.idle : undefined,
+  });
+  /** WW5: whether this session's relay keeps a province's stars (net/wire.js WW5_RELAY_MIN) - an older one refuses its word */
+  const lanesOk = () => !!session()?.ww5Ok;
+  /** WW5: the theatre this player stands in, as its lane (the Bay's at sea and in Cyrodiil, which stands no coven night) */
+  const myLane = () => { const t = theatreOfRegion(regionAt()); return t > 0 && siteEventLaneOpen(t) ? t : 0; };
   /** starHeldKey -> the star's own record on this screen (made as it comes into its omen, let go when it is gone) */
   const stars = new Map();
   // RPT1026-EVENTS GATE-WAY (systems/eventGround.js): a star falling or fallen is an event's ground about its heart, as a gate's
@@ -243,11 +264,35 @@ export function createStarfallHost(host) {
     for (const k of [...nights.keys()]) if (k < n - 2) nights.delete(k);
     return list;
   }
-  /** The night's stars and the night before's (its last star stands into this hour), each with its key. */
+  /** WW5: A PROVINCE'S NIGHT - its coven's stars over its theatre's ground (systems/starfall/starfallSites.js
+   *  findTheatreStarSites), kept off its own gate of that game day (systems/gate/theatreGateSite.js - the theatre's lane's,
+   *  whether that lane stands or not: every client finds the same), found again when the scan is a new one. None until the
+   *  theatre's scan is warm, and none on a relay that keeps no star past the Bay. */
+  function laneSitesOf(n, lane, sc) {
+    const key = `${n}:${lane}`, had = laneNights.get(key);
+    if (had && had.sc === sc) return had.list;
+    let list = NONE;
+    try { list = Object.freeze(findTheatreStarSites(n, lane, sc, { gateSiteOf: (day) => { try { return findTheatreGateSite(gateNumber(day, lane), sc); } catch { return null; } } }).filter((s) => starInWindow(s.n, s.k))); } catch (e) { console.warn('[star] no sites', lane, e?.message ?? e); }
+    laneNights.set(key, { sc, list });
+    for (const k of [...laneNights.keys()]) if (Number(k.split(':')[0]) < n - 2) laneNights.delete(k);
+    return list;
+  }
+  /** The night's stars in every theatre that stands one: the Bay's (sitesOf), then each province's whose ground is warm. */
+  function allSitesOf(n) {
+    const bay = sitesOf(n);
+    if (!lanesOk()) return bay;
+    const out = [...bay];
+    for (const [lane, sc] of theatres.warmLanes()) out.push(...laneSitesOf(n, /** @type {number} */ (lane), sc));
+    return out;
+  }
+  /** The night's stars and the night before's (its last star stands into this hour), each with its key - WW5: in every
+   *  theatre's (allSitesOf). */
   function nightSites(t) {
     const n = starNightAt(t);
-    return [...sitesOf(n - 1), ...sitesOf(n)];
+    return [...allSitesOf(n - 1), ...allSitesOf(n)];
   }
+  /** WW5: a site's theatre (the Bay's carry none). */
+  const laneOfSite = (site) => site?.lane ?? 0;
 
   // ── a star's place in the scene ──
   function placeOf(S) {
@@ -490,7 +535,7 @@ export function createStarfallHost(host) {
    * (scenes/riteHost.js `if (C.ownLive) return;`).
    */
   function claim(S, L) {
-    const M = starMasterOf(L?.b ?? 1, S.site.k);
+    const M = starMasterOf(L?.b ?? 1, S.site.k, S.site.coven);
     for (const f of foes?.foes ?? NONE) {
       if (f.puppet || f.dead || S.mine.has(f) || !ownSite(f, S)) continue;
       mark(S, f);
@@ -508,7 +553,7 @@ export function createStarfallHost(host) {
    *  read - who struck, what fell - and my hunters turned once a defender's blow lands. */
   function tend(S) {
     let master = null, circle = 0;
-    const member = S.site.coven.member(), M = starMasterOf(ledgers.get(S.key)?.b ?? 1, S.site.k);
+    const member = S.site.coven.member(), M = starMasterOf(ledgers.get(S.key)?.b ?? 1, S.site.k, S.site.coven);
     for (const f of foes?.foes ?? NONE) {
       if (!ownSite(f, S)) continue;
       const e = f.entity, career = f.mobileType;
@@ -574,7 +619,7 @@ export function createStarfallHost(host) {
     if (L.p === P_MASTER && S.masterStood && !S.master && now() - S.standAt >= STAR_RESTAND_MS) S.masterStood = false;
     if (L.p === P_MASTER && !S.masterStood) {
       S.masterStood = true;
-      const M = starMasterOf(L.b, S.site.k);
+      const M = starMasterOf(L.b, S.site.k, S.site.coven);
       stand(S, [M.career], starStandPlaces(S.site.n, S.site.k, 9, 1), S.sites.m, (f) => masterOf(S, f, M), { elite: true });
       return;
     }
@@ -637,7 +682,7 @@ export function createStarfallHost(host) {
    *  happened before it came as though it happened now. */
   function ledgerSaid(S, L, was) {
     if (!L || !was) return;
-    const M = starMasterOf(L.b, S.site.k);
+    const M = starMasterOf(L.b, S.site.k, S.site.coven);
     if (L.p === P_WAVE && (!was || was.w !== L.w)) sayAt(S, `wave${L.w}`, STAR_AT_TEXT.wave(L.w));
     if (L.p === P_BREATH && was?.p === P_WAVE) sayAt(S, `breath${L.w}`, STAR_AT_TEXT.breath());
     if (L.lt <= STAR_LOW_LIGHT && !(was?.lt <= STAR_LOW_LIGHT) && L.p !== P_LOST) sayAt(S, 'low', STAR_AT_TEXT.low());
@@ -763,7 +808,7 @@ export function createStarfallHost(host) {
       const near = this.nearest();
       const hidden = hudHidden();
       if (near) {
-        const L = ledgers.get(near.key) ?? null, M = starMasterOf(L?.b ?? 1, near.site.k);
+        const L = ledgers.get(near.key) ?? null, M = starMasterOf(L?.b ?? 1, near.site.k, near.site.coven);
         drawStarTracker(starTrackerModel(near.site, L, t, M.name(), held.has(near.key)), { hidden }); trackerUp = true;
         const m = near.masterFoe;
         const bar = m && (!m.dead || t - near.fellAt < 4000) ? starBarModel({ name: M.name(), heart: near.heartStar, hp: m.entity?.health ?? 0, max: m.entity?.maxHealth ?? 1, circle: near.circle, her: M.female, defenders: L?.nd ?? 0, fellAt: m.dead ? near.fellAt : null }, t) : null;
@@ -802,7 +847,9 @@ export function createStarfallHost(host) {
           const site = nightSites(now()).find((s) => starHeldKey(s.n, s.k, s.px, s.py) === key) ?? null;
           const S = stars.get(key);
           const line = starHeldLine(site, w.top, w.c);
-          if (line && !(S?.said.has('heldRegion'))) { S?.said.add('heldRegion'); say(line, `star:${w.n}.${w.s}`); }
+          // WW5: a province's hold is its own theatre's news - said to whoever stands there (nine theatres' holds, up to
+          // twenty-seven an hour, said to every screen would bury the board); the Bay's to everyone, as it always was
+          if (line && !(S?.said.has('heldRegion')) && (laneOfSite(site) === 0 || laneOfSite(site) === myLane())) { S?.said.add('heldRegion'); say(line, `star:${w.n}.${w.s}`); }
         }
         return;
       }
@@ -888,12 +935,16 @@ export function createStarfallHost(host) {
       return best ? [best.heart[0], best.heart[2]] : null;
     },
     /** The Timers window's rows: each star standing undecided to its deadline, and the next fall with its coven - the
-     *  next night's first once this night's last is down. */
+     *  next night's first once this night's last is down. WW5: the stars of the player's own theatre. */
     timerRows() {
       const t = now();
       if (!starfallStands(t)) return NONE;
       const decided = (key) => held.has(key) || ledgers.get(key)?.p === P_HELD || ledgers.get(key)?.p === P_LOST;
-      return starTimerRows([...nightSites(t), ...sitesOf(starNightAt(t) + 1)], t, decided);
+      // WW5: THE THEATRE'S OWN - the stars of the theatre this player stands in (the Bay's on the Bay, at sea and in
+      // Cyrodiil, as they always were): nine theatres' coming falls and their towns would bury the window, and a star a
+      // province away is no ride from here (the map's cards show every theatre's)
+      const lane = myLane();
+      return starTimerRows([...nightSites(t), ...allSitesOf(starNightAt(t) + 1)].filter((s) => laneOfSite(s) === lane), t, decided);
     },
     /** The crater's burned earth the grass keeps off, for the nearest standing star - `{ x, z, r, key }` - or null. */
     clearing() {
@@ -910,7 +961,7 @@ export function createStarfallHost(host) {
       const t = now();
       if (Math.abs(t - clears.at) < 1000) return clears.list;
       clears.at = t;
-      const list = starfallStands(t) ? [...nightSites(t), ...sitesOf(starNightAt(t) + 1)].filter((s) => t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt) : NONE;
+      const list = starfallStands(t) ? [...nightSites(t), ...allSitesOf(starNightAt(t) + 1)].filter((s) => t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt) : NONE;
       const key = list.map((s) => `${s.n}.${s.k}`).join();
       if (key !== clears.key) clears.list = key ? Object.freeze(list.map((s) => Object.freeze({ s: `${s.n}.${s.k}`, px: s.px, py: s.py, x: s.spot[0], z: s.spot[1] }))) : NONE;
       clears.key = key;

@@ -1,0 +1,783 @@
+[
+  {
+    "name": "WW7-9-host-the-bays-box",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "      if (x0 >= 0 && y0 >= 0 && x1 <= BAY_W && y1 <= BAY_H) return true;   // the Bay's own: no region lays a road on it\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's own box waits on the roads past the Bay"
+  },
+  {
+    "name": "WW7-9-host-unbuilt",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "      if (!build) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "before any build a box past the Bay answered laid"
+  },
+  {
+    "name": "WW7-9-host-unasked",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "      if (asked && (roadsClient?.pending() ?? 0) === 0) return true;",
+    "new": "      if ((roadsClient?.pending() ?? 0) === 0) return true;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "nothing pending before the cache is asked read as whole"
+  },
+  {
+    "name": "WW7-9-host-pending-unread",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "      if (asked && (roadsClient?.pending() ?? 0) === 0) return true;",
+    "new": "      if (asked) return true;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the cache asked read as whole, regions still pending"
+  },
+  {
+    "name": "WW7-9-host-landed-unkept",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        if (ax >= bx || ay >= by || done.has(g.key)) continue;",
+    "new": "        if (ax >= bx || ay >= by) continue;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region landed never counted"
+  },
+  {
+    "name": "WW7-9-host-the-bays-part",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        if (!(ax >= 0 && ay >= 0 && bx <= BAY_W && by <= BAY_H)) return false;",
+    "new": "        return false;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a grid meeting a box's Bay pixels alone holds it back"
+  },
+  {
+    "name": "WW7-9-host-no-apron",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "grids = regions.map((r) => ({ key: `${r.i},${r.j}`, x0: r.gx, y0: r.gy, x1: r.core.x1 + REGION_APRON, y1: r.core.y1 + REGION_APRON }));",
+    "new": "grids = regions.map((r) => ({ key: `${r.i},${r.j}`, x0: r.core.x0, y0: r.core.y0, x1: r.core.x1, y1: r.core.y1 }));",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region read as its core alone - a neighbour's roads in its apron unwaited"
+  },
+  {
+    "name": "WW7-9-host-untold",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        for (const fn of told) fn(g, build);",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "no word of a region landed"
+  },
+  {
+    "name": "WW7-9-host-the-last-builds-landed",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "    build++; asked = false; done = new Set();   // WW7-9: a new build - nothing of it landed",
+    "new": "    build++; asked = false;   // WW7-9: a new build - nothing of it landed",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a new build keeps the last's regions landed"
+  },
+  {
+    "name": "WW7-9-host-no-build-number",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "    build++; asked = false; done = new Set();   // WW7-9: a new build - nothing of it landed",
+    "new": "    asked = false; done = new Set();   // WW7-9: a new build - nothing of it landed",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the build never numbered"
+  },
+  {
+    "name": "WW7-9-host-the-last-builds-word",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        if (!g || build !== mine) return;",
+    "new": "        if (!g) return;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region of the last build landed in this one"
+  },
+  {
+    "name": "WW7-9-host-never-asked",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": ".then(() => { if (build === mine) asked = true; }, () => {});",
+    "new": ".then(() => {}, () => {});",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the cache's asking never heard: the build never over"
+  },
+  {
+    "name": "WW7-9-index-bay-side-alone",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (side === LIVING_SIDES.bay) return beyondIn(x0, y0, x1, y1);",
+    "new": "    if (side === LIVING_SIDES.bay) return NONE_NEAR;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a Bay square never holds the towns past the edge"
+  },
+  {
+    "name": "WW7-9-index-the-bays-unlaid",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (side !== LIVING_SIDES.beyond || !known(x0, y0, x1, y1)) return NONE_NEAR;",
+    "new": "    if (side !== LIVING_SIDES.beyond) return NONE_NEAR;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a square past the edge holds the Bay's before the land there is laid"
+  },
+  {
+    "name": "WW7-9-index-the-word-unread",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "(beyond.landedIn?.(x0, y0, x1, y1) ?? true);",
+    "new": "true;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a square known before its land is laid"
+  },
+  {
+    "name": "WW7-9-index-a-landing-unheard",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (g === gen && e === epoch) { told = l; byArea.clear(); townsNearKept.clear(); dungeonsNearKept.clear(); return; }",
+    "new": "    if (g === gen && e === epoch) { told = l; return; }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region landed: the squares kept as they were asked"
+  },
+  {
+    "name": "WW7-9-index-a-landing-moves-all",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (g === gen && e === epoch) { told = l; byArea.clear(); townsNearKept.clear(); dungeonsNearKept.clear(); return; }",
+    "new": "    if (g === gen && e === epoch) { told = l; stamp++; byArea.clear(); townsNearKept.clear(); dungeonsNearKept.clear(); return; }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region landed moves the generation (every trip made again)"
+  },
+  {
+    "name": "WW7-9-index-the-bays-bins",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    bayBins ??= binsOf(LIVING_SIDES.bay);",
+    "new": "    bayBins ??= binsOf(LIVING_SIDES.beyond);",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's bins the land past it's"
+  },
+  {
+    "name": "WW7-9-ways-the-bays-first-unasked",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "      if ((pastA || pastB) && beyond) { const flip",
+    "new": "      if (pastA && beyond) { const flip",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a Bay town's pair across the edge the Bay's planner's"
+  },
+  {
+    "name": "WW7-9-ways-the-edge-unsaid",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "farWayOf(flip ? b : a, flip ? a : b, flip, pastA !== pastB); }",
+    "new": "farWayOf(flip ? b : a, flip ? a : b, flip, false); }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a pair across planned as one past the Bay"
+  },
+  {
+    "name": "WW7-9-ways-no-network-no-wait",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "    if (cross && !raw) return undefined;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a pair across planned with no network drawn"
+  },
+  {
+    "name": "WW7-9-ways-the-edges-kept",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "if (edgeNet !== null) { edge.clear(); generation++; }",
+    "new": "if (edgeNet !== null) { generation++; }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "another network: the ways across kept"
+  },
+  {
+    "name": "WW7-9-ways-the-edges-generation",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "if (edgeNet !== null) { edge.clear(); generation++; }",
+    "new": "if (edgeNet !== null) { edge.clear(); }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "another network: the trips kept on the old ways"
+  },
+  {
+    "name": "WW7-9-ways-the-builds-edge",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
+    "new": "if (farAt) { far.clear(); beyond?.clear?.(); generation++; }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the roads laid again: the ways across kept"
+  },
+  {
+    "name": "WW7-9-ways-one-book",
+    "file": "src/systems/livingWorld/ways.js",
+    "old": "    const book = cross ? edge : far, key",
+    "new": "    const book = far, key",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the ways across kept with those past the Bay (another network never asks them again)"
+  },
+  {
+    "name": "WW7-9-planner-a-pair-past-on-the-bay",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "    if (!cross || !holdsBay(tx, ty)) return tiles;",
+    "new": "    if (!holdsBay(tx, ty)) return tiles;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a pair past the Bay reads the Bay's ground"
+  },
+  {
+    "name": "WW7-9-planner-across-on-water",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "    if (!cross || !holdsBay(tx, ty)) return tiles;",
+    "new": "    if (true) return tiles;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a pair across reads the Bay as water"
+  },
+  {
+    "name": "WW7-9-planner-the-bays-water",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "        t.water[i] = b.isWater(X, Y) ? 1 : 0;",
+    "new": "        t.water[i] = 0;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's water walked"
+  },
+  {
+    "name": "WW7-9-planner-the-bays-roads",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "        t.roads[i] = (b.roads?.[k] ?? 0) | layerByte(net, 'join', X, Y);",
+    "new": "        t.roads[i] = layerByte(net, 'join', X, Y);",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's roads unread"
+  },
+  {
+    "name": "WW7-9-planner-the-joins",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "        t.roads[i] = (b.roads?.[k] ?? 0) | layerByte(net, 'join', X, Y);",
+    "new": "        t.roads[i] = b.roads?.[k] ?? 0;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the crossings' joins unread"
+  },
+  {
+    "name": "WW7-9-planner-the-bays-tracks",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "        t.tracks[i] = b.tracks?.[k] ?? 0;",
+    "new": "        t.tracks[i] = 0;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's tracks unread"
+  },
+  {
+    "name": "WW7-9-planner-the-land-unwaited",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "    if (!landedIn(x0, y0, x0 + w, y0 + h)) return undefined;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a window planned while the land under it is laid"
+  },
+  {
+    "name": "WW7-9-planner-tiles-kept",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "          if (tx * T < x1 && (tx + 1) * T > x0 && ty * T < y1 && (ty + 1) * T > y0) book.delete(k);",
+    "new": "          if (false) book.delete(k);",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region landed: its tiles kept"
+  },
+  {
+    "name": "WW7-9-planner-another-network",
+    "file": "src/systems/livingWorld/beyondWays.js",
+    "old": "    if (b.roads !== edgeNet) { edgeTiles.clear(); edgeNet = b.roads; }",
+    "new": "    if (b.roads !== edgeNet) { edgeNet = b.roads; }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "another network: the Bay's tiles kept"
+  },
+  {
+    "name": "WW7-9-trips-the-box-narrow",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "export const LIVING_WAKE_PX = TRIP_REACH_PX + BEYOND_FAR_PX + INN_REACH_PX;",
+    "new": "export const LIVING_WAKE_PX = TRIP_REACH_PX + INN_REACH_PX;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the box the towns near alone - the ways' windows past it"
+  },
+  {
+    "name": "WW7-9-trips-the-box-open",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "px + LIVING_WAKE_PX + 1, py + LIVING_WAKE_PX + 1);",
+    "new": "px + LIVING_WAKE_PX, py + LIVING_WAKE_PX);",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the box short of its last row and column"
+  },
+  {
+    "name": "WW7-9-trips-the-land-off-waits",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    waiting: (/** @type {any} */ t) => !!pastTheBay && livingSide(t)",
+    "new": "    waiting: (/** @type {any} */ t) => livingSide(t)",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "with no land past the Bay asked of it"
+  },
+  {
+    "name": "WW7-9-trips-the-areas-box",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "      return !landedIn(x0, y0, x0 + DISTRICT_PX + 2 * LIVING_AREA_WAKE_PX, y0 + DISTRICT_PX + 2 * LIVING_AREA_WAKE_PX);",
+    "new": "      return !landedIn(x0, y0, x0 + DISTRICT_PX, y0 + DISTRICT_PX);",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a district's box short of its far side"
+  },
+  {
+    "name": "WW7-9-trips-the-areas-land-off",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "      const d = pastTheBay ? districtOfArea(area | 0) : null;",
+    "new": "      const d = districtOfArea(area | 0);",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "with no land past the Bay a district waits"
+  },
+  {
+    "name": "WW7-9-trips-the-region-uncounted",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "  pastTheBay?.onRegion((grid) => { landed++; beyondWays.drop(grid.x0, grid.y0, grid.x1, grid.y1); });",
+    "new": "  pastTheBay?.onRegion((grid) => { beyondWays.drop(grid.x0, grid.y0, grid.x1, grid.y1); });",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region landed: the index's squares kept"
+  },
+  {
+    "name": "WW7-9-trips-the-regions-tiles",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "  pastTheBay?.onRegion((grid) => { landed++; beyondWays.drop(grid.x0, grid.y0, grid.x1, grid.y1); });",
+    "new": "  pastTheBay?.onRegion((grid) => { landed++; });",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a region landed: the planner's tiles kept"
+  },
+  {
+    "name": "WW7-9-trips-no-bay-ground",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    bay: () => { const raw = roads(); return raw ? { roads: raw.roads ?? null, tracks: raw.tracks ?? null, isWater: groundOf().isWater } : null; }, landedIn });",
+    "new": "    bay: () => null, landedIn });",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "no pair across ever planned"
+  },
+  {
+    "name": "WW7-9-trips-the-planners-land",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    bay: () => { const raw = roads(); return raw ? { roads: raw.roads ?? null, tracks: raw.tracks ?? null, isWater: groundOf().isWater } : null; }, landedIn });",
+    "new": "    bay: () => { const raw = roads(); return raw ? { roads: raw.roads ?? null, tracks: raw.tracks ?? null, isWater: groundOf().isWater } : null; } });",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the planner never asks the land's word"
+  },
+  {
+    "name": "WW7-9-trips-the-index-unworded",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "{ epoch, placesIn: pastBayPlacesIn, landedIn, landed: () => landed }",
+    "new": "{ epoch, placesIn: pastBayPlacesIn, landed: () => landed }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the index's squares answered unlaid"
+  },
+  {
+    "name": "WW7-9-readers-visitors",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (world.waiting?.(town)) return undefined;   // WW7-9: its towns near not yet known - its visitors wait with them\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a waiting town's visitors read short"
+  },
+  {
+    "name": "WW7-9-readers-guests",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (world.waiting?.(inn)) return undefined;   // WW7-9: its towns near not yet known\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a waiting inn's guests read short"
+  },
+  {
+    "name": "WW7-9-readers-fallen",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (pending) return { remains: [], pending };\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a waiting dungeon's fallen read"
+  },
+  {
+    "name": "WW7-9-readers-divers",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (pending) return { divers, pending };\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a waiting dungeon's divers read"
+  },
+  {
+    "name": "WW7-9-readers-dives",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (pending) return { dives: [], pending };\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a waiting dungeon's dives read"
+  },
+  {
+    "name": "WW7-9-readers-hideouts",
+    "file": "src/systems/livingWorld/outlaws.js",
+    "old": "  if (world.waitingArea?.(area)) return undefined;   // WW7-9: the land past the Bay under its bands still being laid: asked again\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a waiting area's hideouts made short"
+  },
+  {
+    "name": "WW7-9-passage-across-refused",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "(livingSide(to) === livingSide(town) || !!l.cross)",
+    "new": "(livingSide(to) === livingSide(town))",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "no passage across the edge"
+  },
+  {
+    "name": "WW7-10-mouths-the-south-inward",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "  Object.freeze({ len: BAY_W, at: (/** @type {number} */ u) => [u, BAY_H - 1], out: [0, 1] }),",
+    "new": "  Object.freeze({ len: BAY_W, at: (/** @type {number} */ u) => [u, BAY_H - 1], out: [0, -1] }),",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the south edge's run into the Bay"
+  },
+  {
+    "name": "WW7-10-mouths-the-runs-water",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "        if (!open(px, py)) break;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a run over land"
+  },
+  {
+    "name": "WW7-10-mouths-the-cell-still-the-bays",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "        if (cx + 1 > bay.x0 && cx < bay.x1 && cy + 1 > bay.y0 && cy < bay.y1) continue;   // the cell still the Bay's: on out\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a cell the Bay's rectangle covers read as the far sea's"
+  },
+  {
+    "name": "WW7-10-mouths-the-pictures-land",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "        if (sea(cx, cy)) out.push({ at: [x, y], out: [px, py], run });",
+    "new": "        out.push({ at: [x, y], out: [px, py], run });",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a mouth on the picture's land"
+  },
+  {
+    "name": "WW7-10-mouths-the-runs-reach",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "export const MOUTH_RUN_PX = 16;",
+    "new": "export const MOUTH_RUN_PX = 11;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a run too short for the south edge"
+  },
+  {
+    "name": "WW7-10-seaward-over-land",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if ((!dx && !dy) || !inBay(nx, ny) || seen[nk] || !bayOpen(nx, ny) || (dx && dy",
+    "new": "      if ((!dx && !dy) || !inBay(nx, ny) || seen[nk] || (dx && dy",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the flood over land"
+  },
+  {
+    "name": "WW7-10-seaward-round-a-corner",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if ((!dx && !dy) || !inBay(nx, ny) || seen[nk] || !bayOpen(nx, ny) || (dx && dy && (!bayOpen(x + dx, y) || !bayOpen(x, y + dy)))) continue;\n      seen[nk] = 1;",
+    "new": "      if ((!dx && !dy) || !inBay(nx, ny) || seen[nk] || !bayOpen(nx, ny)) continue;\n      seen[nk] = 1;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the flood round a corner of the land"
+  },
+  {
+    "name": "WW7-10-lanes-a-lake-sails",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": ".filter((p) => p.road && seaward[p.road.y * BAY_W + p.road.x]);",
+    "new": ".filter((p) => p.road);",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a lake's harbour sails out to sea"
+  },
+  {
+    "name": "WW7-10-lanes-the-reach",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": ".filter((x) => x.d <= maxPx)\n",
+    "new": ".filter((x) => x.d <= maxPx + 1)\n",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "past the reach"
+  },
+  {
+    "name": "WW7-10-lanes-one-neighbour",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      .sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);\n    for (const { q } of near) { const key",
+    "new": "      .sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, 1);\n    for (const { q } of near) { const key",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "one neighbour"
+  },
+  {
+    "name": "WW7-10-lanes-the-order",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      .sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);\n    for (const { q } of near) { const key",
+    "new": "      .sort((x, y) => x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);\n    for (const { q } of near) { const key",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the nearest not first"
+  },
+  {
+    "name": "WW7-10-lanes-the-ends-turned",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "pairs.set(key, { key, a: q, b: p, cross: true });",
+    "new": "pairs.set(key, { key, a: p, b: q, cross: true });",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the port past the Bay its `a`"
+  },
+  {
+    "name": "WW7-10-way-no-mouth",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    mouth = at.get(k) ?? null;",
+    "new": "    mouth = null;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "no mouth ever reached"
+  },
+  {
+    "name": "WW7-10-way-the-bays-leg-over-land",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (!inBay(nx, ny) || !bayOpen(nx, ny) || (dx && dy && (!bayOpen(x + dx, y) || !bayOpen(x, y + dy)))) continue;   // no corner cut past land",
+    "new": "      if (!inBay(nx, ny) || (dx && dy && (!bayOpen(x + dx, y) || !bayOpen(x, y + dy)))) continue;   // no corner cut past land",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's leg over land"
+  },
+  {
+    "name": "WW7-10-way-unbounded",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (ng >= g[nk] || ng > CROSS_BAY_PATH_PX) continue;",
+    "new": "      if (ng >= g[nk]) continue;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's leg unbounded"
+  },
+  {
+    "name": "WW7-10-way-the-bound",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "export const CROSS_BAY_PATH_PX = 400;",
+    "new": "export const CROSS_BAY_PATH_PX = 300;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the Bay's leg's bound short"
+  },
+  {
+    "name": "WW7-10-book-without-the-crossing",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "list: w.length || c.length ? [...b, ...w, ...c] : b };",
+    "new": "list: w.length || c.length ? [...b, ...w] : b };",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the crossing lanes out of the book"
+  },
+  {
+    "name": "WW7-10-book-the-crossing-kept",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "if (!all || all.b !== b || all.w !== w || all.c !== c) all",
+    "new": "if (!all || all.b !== b || all.w !== w) all",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the book kept past the crossing lanes moving"
+  },
+  {
+    "name": "WW7-10-book-the-way-the-bays",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (/** @type {any} */ (lane).cross) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a crossing lane's way the Bay's law's"
+  },
+  {
+    "name": "WW7-10-book-the-way-unkept",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "crossLaneWay(lane, { bayOpen, openNative: worldOpenNative, mouths: s.mouths }) : null; crossWays.set(lane.key, way); }",
+    "new": "crossLaneWay(lane, { bayOpen, openNative: worldOpenNative, mouths: s.mouths }) : null; }",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a crossing lane's way walked again at every asking"
+  },
+  {
+    "name": "WW7-10-book-the-near-the-bays",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * LANE_NEAR_PX;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a crossing lane near by the Bay's law"
+  },
+  {
+    "name": "WW7-10-book-no-picture",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    if (!trace || !tamrielFit()) return null;",
+    "new": "    if (!tamrielFit()) return null;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "mouths sought with no picture"
+  },
+  {
+    "name": "WW7-10-book-the-ports-unread",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    if (v !== crossOf || s !== crossSea) {",
+    "new": "    if (s !== crossSea) {",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the crossing lanes kept past the world's ports moving"
+  },
+  {
+    "name": "WW7-10-trade-counted-every-reading",
+    "file": "src/scenes/townEconHost.js",
+    "old": "    if (lanes !== countedOf) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the lanes counted at every reading"
+  },
+  {
+    "name": "WW7-10-trade-counted-once-for-good",
+    "file": "src/scenes/townEconHost.js",
+    "old": "    if (lanes !== countedOf) {",
+    "new": "    if (countedOf === null) {",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "the lanes counted once, never again as they move"
+  },
+  {
+    "name": "WW7-10-trade-the-bays-end-counted",
+    "file": "src/scenes/townEconHost.js",
+    "old": "          if (inBay(p.px, p.py) && !inBay(q.px, q.py)) continue;   // WW7-10: the Bay's end of a lane across the edge\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "a Bay port's economy moved by a lane across the edge (one client's, not another's)"
+  },
+  {
+    "name": "WW7-10-trade-the-bays-lanes",
+    "file": "src/scenes/world.js",
+    "old": "portLanes: () => (_lanesReady && mapDict ? worldLanes.all() : null) });",
+    "new": "portLanes: () => (_lanesReady && mapDict ? worldLanes.bay() : null) });",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js",
+      "test/world/worldWide/ww3_sea.test.js"
+    ],
+    "note": "the town economy counts the Bay's lanes alone"
+  }
+]

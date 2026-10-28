@@ -210,10 +210,10 @@
   {
     "name": "PERMADEATH-HOUSES-world-one-a-region",
     "file": "src/scenes/world.js",
-    "old": " && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';\n    allocateHouseToPlayer(",
-    "new": " && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'given';\n    allocateHouseToPlayer(",
+    "old": "    if (regionHousesFull(playerEntity.houses, region)) return 'waits';\n    const slot = allocateHouseToPlayer(",
+    "new": "    if (regionHousesFull(playerEntity.houses, region)) return 'given';\n    const slot = allocateHouseToPlayer(",
     "tests": ["test/systems/legacy/permadeath_houses.test.js"],
-    "note": "By source: the host's own allocation is a page's - driven in the game, not the suite."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. By source: the host's own allocation is a page's - driven in the game, not the suite."
   },
   {
     "name": "PERMADEATH-HOUSES-house-page-names-the-dead-as-holder",

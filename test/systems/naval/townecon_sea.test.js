@@ -152,6 +152,8 @@ test('SEA-TRADE the harbour office: online its exchange priced by the port town\
 });
 
 test('SEA-TRADE the host module: a port town\'s lanes counted off the map\'s lane network once it stands (each lane at its two ports) and read into its Prosperity and card; the lanes asked again while they do not stand (BOOT-TDZ II); a port\'s exchange factors and band its town\'s, none past the Veil or where no town stands; a dealing told to the book at the port\'s pixel; the world host hands it the MAPS location and the lanes (mutants: TOWNECON4-host-lanes-once, TOWNECON4-host-lanes-cached-empty, TOWNECON4-host-ether, TOWNECON4-host-deal-unbooked)', async () => {
+  // PIN MOVED (WW7-10, bible/03-World/World-Wide.md): the lanes asked at every reading (the world's lanes move as its ports
+  // do) and counted again only when they moved - the count kept while the same lanes stand, counted each time they do not
   const towns = new Map([[11, { name: 'Wayrest', px: 100, py: 100, region: 23, type: 0, location: 5 }], [12, { name: 'Inland', px: 50, py: 50, region: 23, type: 1, location: 6 }]]);
   const locAt = (x, y) => { for (const [id, t] of towns) if (t.px === x && t.py === y) return { mapId: id, locationType: t.type }; return null; };
   let lanes = null, asked = 0;
@@ -164,11 +166,13 @@ test('SEA-TRADE the host module: a port town\'s lanes counted off the map\'s lan
   assert.equal(host.prosperityOf(11), townProsperity({ key, type: 0, day }), 'the lanes not yet standing: none');
   lanes = null;
   assert.equal(host.prosperityOf(11), townProsperity({ key, type: 0, day }));
-  lanes = [{ a: { px: 100, py: 100 }, b: { px: 120, py: 100 } }, { a: { px: 90, py: 100 }, b: { px: 100, py: 100 } }, { a: { px: 90, py: 100 }, b: { px: 120, py: 100 } }];
-  const n = asked;
+  let reads = 0;
+  const end = (px, py) => ({ get px() { reads++; return px; }, py });
+  lanes = [{ a: end(100, 100), b: end(120, 100) }, { a: end(90, 100), b: end(100, 100) }, { a: end(90, 100), b: end(120, 100) }];
   assert.equal(host.prosperityOf(11), townProsperity({ key, type: 0, day, lanes: 2 }), 'two lanes');
+  const r = reads;
   host.prosperityOf(11); host.prosperityOf(12);
-  assert.equal(asked, n + 1, 'counted once they stand');
+  assert.equal(reads, r, 'counted once while they stand');
   assert.equal(host.prosperityOf(12), townProsperity({ key: townKeyOf(50, 50), type: 1, day }), 'no port, no lanes');
   assert.ok(host.tipAt(11).lines.includes(TOWN_REASONS.harbour));
   const port = { key: '100,100', name: 'Wayrest', px: 100, py: 100 };
@@ -190,6 +194,6 @@ test('SEA-TRADE the host module: a port town\'s lanes counted off the map\'s lan
   assert.equal(off.bandAt(port), null);
   assert.equal(off.seaDeal(port), false);
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /locAt: \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\)\?\.mapTableData \?\? null, portLanes: \(\) => \(_lanesReady && mapDict \? laneNet\(\) : null\) \}\);/);
+  assert.match(w, /locAt: \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\)\?\.mapTableData \?\? null, portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.all\(\) : null\) \}\);/);   // PIN MOVED (WW3): the Bay's lanes - SEA-TRADE's ticks are the Bay's (WW7); PIN MOVED (WW7-10): the world's
   assert.match(rd('src/scenes/townEconHost.js'), /seaDeal: \(port\) => \(book && portTown\(port\) != null \? book\.seaDeal\(port\.px, port\.py\) : false\),/);
 });

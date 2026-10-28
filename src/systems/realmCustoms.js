@@ -31,7 +31,8 @@
 // the rule, and reclaimCustomsDeeds gives back what it once took.
 // ═══════════════════════════════════════════════════════════════════
 
-import { callInEmpireDebt, SHIP_TYPES, SHIP_INTERIOR_MAP_IDS, LOAN_AMNESTY } from './banking.js';
+import { callInEmpireDebt, SHIP_TYPES, SHIP_INTERIOR_MAP_IDS, LOAN_AMNESTY, HOUSES_PER_REGION } from './banking.js';
+import { regionDeedsOf } from '../net/homeLaw.js';   // HOUSES-3: a region's three deeds
 import { interiorSceneName, LOOT_CONTAINER_TYPES } from './sceneCache.js';   // RESTORE: a deed's room, by its own name; AUDIT REST III B4: a shop's shelf told from a chest
 import { BUILDING_KEY_0 } from './talk/talkTopics.js';   // RESTORE: the no-key key a ship's room is filed under
 import { firstRestorable } from './save/saveSlots.js';   // RESTORE: the offline character a realm one came from, on this device
@@ -311,7 +312,7 @@ export function crossDeeds(snap) {
  * save still keeps its room: the offline deed and the room left behind, together, are the evidence. A rented room or a
  * house bought and sold in the realm is neither. It comes back as every deed crosses now: marked, and its bought pieces
  * paying nothing back. A realm character that owns a house in that region since keeps its own - nothing is taken to
- * make room - and one that owns a ship keeps it. Once back, the realm character owns it and nothing here matches it
+ * make room (HOUSES-3: three a region; a fourth stays kept) - and one that owns a ship keeps it. Once back, the realm character owns it and nothing here matches it
  * again. Answers what came back: `{ houses: [location], ship, pieces }`.
  * @param {any} realm the realm character's save, in place @param {any} offline its offline character's save
  */
@@ -335,16 +336,20 @@ export function reclaimCustomsDeeds(realm, offline) {
   const houses = Array.isArray(realm.houses) ? realm.houses : [];
   const theirs = Array.isArray(offline.houses) ? offline.houses : [];
   for (let region = 0; region < theirs.length && region < houses.length; region++) {
-    const slot = theirs[region];
-    if (!(slot?.buildingKey > 0)) continue;
-    const name = interiorSceneName(slot.mapId, slot.buildingKey);
-    if (!permanent.has(name) || houses[region]?.buildingKey > 0) continue;
-    houses[region] = { ...houses[region], regionIndex: region, location: slot.location ?? '', mapId: slot.mapId, buildingKey: slot.buildingKey, crossed: true };
-    // WD3 (AUDIT WD3 S2): the deed's town layout crosses with it - its key names a building only in that layout
-    delete houses[region].layout;
-    if (typeof slot.layout === 'string' && slot.layout) houses[region].layout = slot.layout;
-    piecesBack(name);
-    back.houses.push(slot.location ?? '');
+    // HOUSES-3: each of the offline region's three, while the realm character's region has room for it
+    for (const slot of regionDeedsOf(theirs, region)) {
+      const name = interiorSceneName(slot.mapId, slot.buildingKey);
+      if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;
+      if (regionDeedsOf(houses, region).some((d) => d.buildingKey === slot.buildingKey && (Number(d.mapId) >>> 0) === (Number(slot.mapId) >>> 0))) continue;
+      const deed = { regionIndex: region, location: slot.location ?? '', mapId: slot.mapId, buildingKey: slot.buildingKey, crossed: true };
+      // WD3 (AUDIT WD3 S2): the deed's town layout crosses with it - its key names a building only in that layout
+      if (typeof slot.layout === 'string' && slot.layout) deed.layout = slot.layout;
+      const first = houses[region];
+      if (first?.buildingKey > 0) (first.more ??= []).push(deed);
+      else houses[region] = { ...deed, ...(Array.isArray(first?.more) ? { more: first.more } : {}) };
+      piecesBack(name);
+      back.houses.push(slot.location ?? '');
+    }
   }
   const ship = offline.ownedShip ?? SHIP_TYPES.None;
   if (ship !== SHIP_TYPES.None && (realm.ownedShip ?? SHIP_TYPES.None) === SHIP_TYPES.None) {

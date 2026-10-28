@@ -19,6 +19,7 @@
 
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { getReputation } from './factionRep.js';
+import { getLocalizedFactionName } from '../textManager.js';
 import { DIVINES, ORDERS } from '../guild/guildVariants.js';
 import { GUILDS } from '../guild/guilds.js';
 import { affiliations } from '../affiliations.js';
@@ -57,7 +58,7 @@ export function standingGroups(entity) {
     for (const id of ids) {
       const f = dict.get(id);
       if (!f || member.has(id)) continue;
-      rows.push({ factionId: id, name: String(f.name ?? id), rep: getReputation(store, id) });
+      rows.push({ factionId: id, name: getLocalizedFactionName(id, String(f.name ?? id)), rep: getReputation(store, id) });   // PROVINCE-COURTS: shown as GetFactionData shows a name (L10N3e) - a province's kingdom in the player's language
     }
     if (rows.length) out.push({ id: g.id, title: g.title, rows });
   }

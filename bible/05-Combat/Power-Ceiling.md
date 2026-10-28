@@ -94,7 +94,7 @@ under a name with no top, fails the source sweep.
 | the sets | +200% | Nocturnal's Shroud 4 (Nightfall, +60% on an unaware foe) and the Starspun Weave 4 (Bound in Silk, +140% on the fourth blow) |
 | the loot | +240% | Nightwhisper's Silent Death +100%, the Night Mother's Embrace +50%, the Duelist's Vambrace +60%, an Exalted slayer's line +30% |
 | the sky | +50% | the Firmament's whole blow, its own cap (`BLOW_TOTAL_CAP`) |
-| mastery | +400% | WEAPON-GEAR: a weapon skill's live value, gear and all, at the most counted, 1,000, over 200 (x5) - more than the climb's own +80% (an axe or a hammer at a skill of 200, which reads as 140 effective: 2% an effective point past 100), and the blow takes the greater |
+| mastery | +400% | the climb's own +80% (an axe or a hammer at a skill of 200, which reads as 140 effective: 2% an effective point past 100) and, WEAPON-GEAR, its gear's most, +320% (0.44% a point of gear on the skill), added |
 | the paths | +40% | a martial path's own cap (`MARTIAL_BLOW_MOST`) |
 
 Together, x119.95 - x43.18 before WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix"; `Martial-Specialisations.md` section 4) raised mastery's top (`systems/powerCeiling.js:"export const BLOW_MOST = Object.values(BLOW_TOPS).reduce((k, p) => k * (1 + p / 100), 1);"`).

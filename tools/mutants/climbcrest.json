@@ -1,0 +1,84 @@
+[
+  {
+    "name": "CC-crest-never",
+    "file": "src/player/parkour.js",
+    "old": "  return Number.isFinite(collider.surfaceHit([px, a + 0.005, pz], [0, -1, 0], 0.005 + PARKOUR_CREST_DROP).dist) ? null : a;",
+    "new": "  return null;",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  },
+  {
+    "name": "CC-fall-unread",
+    "file": "src/player/parkour.js",
+    "old": "  return Number.isFinite(collider.surfaceHit([px, a + 0.005, pz], [0, -1, 0], 0.005 + PARKOUR_CREST_DROP).dist) ? null : a;",
+    "new": "  return a;",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  },
+  {
+    "name": "CC-air-unread",
+    "file": "src/player/parkour.js",
+    "old": "  if (Number.isFinite(collider.raycast([px, a + 0.005, pz], [0, 1, 0], PARKOUR_CREST_OPEN))) return null;",
+    "new": "",
+    "tests": [
+      "test/player/climbcrest.test.js",
+      "test/player/climbfield.test.js"
+    ]
+  },
+  {
+    "name": "CC-bisect-unread",
+    "file": "src/player/parkour.js",
+    "old": "  for (let k = 0; k < PARKOUR_CREST_BISECT; k++) {",
+    "new": "  for (let k = 0; k < 0; k++) {",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  },
+  {
+    "name": "CC-ledge-refused",
+    "file": "src/player/parkour.js",
+    "old": "    const c = crestTop(collider, feet, dir, wall.faceDist, Math.max(wall.y, wall.openY - PARKOUR_SCAN_STEP), wall.openY);",
+    "new": "    const c = null;",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  },
+  {
+    "name": "CC-ledge-depth",
+    "file": "src/player/parkour.js",
+    "old": "  const { depth } = crest ? { depth: 0 } : topProfile(collider, face, into, lipY);",
+    "new": "  const { depth } = topProfile(collider, face, into, lipY);",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  },
+  {
+    "name": "CC-hold-refused",
+    "file": "src/player/parkour.js",
+    "old": "  const y = flat ? hiY + 0.01 - top.dist : crestTop(collider, [ox, 0, oz], dir, d0, loY, hiY);",
+    "new": "  const y = flat ? hiY + 0.01 - top.dist : null;",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  },
+  {
+    "name": "CC-walk-drop-step",
+    "file": "src/player/motor.js",
+    "old": "\n      ?? (ledge.crest ? senseOver(this.collider, this.pos, ledge, geo, PARKOUR_HANG_DROP + PARKOUR_VAULT_CLEAR) : null);",
+    "new": ";",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  },
+  {
+    "name": "CC-far-hang-unread",
+    "file": "src/player/motor.js",
+    "old": "    const oh = ledge.crest ? senseOverHang(this.collider, this.pos, ledge, geo) : null;",
+    "new": "    const oh = null;",
+    "tests": [
+      "test/player/climbcrest.test.js"
+    ]
+  }
+]

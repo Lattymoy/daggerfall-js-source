@@ -46,11 +46,11 @@ const NATIVE_PIXEL = 32768; // MapsFile world units per map pixel
 /** Verbatim MapsFile.WorldCoordToMapPixel (truncating division). DFU
  * casts the accumulated float to int first; trunc(trunc(w) / k) equals
  * trunc(w / k) for positive integer k, so the single trunc here is the
- * same mapping. */
+ * same mapping. WW-C2 (bible/03-World/World-Wide.md WW-C): FLOORED - DFU's truncation to the bit on the Bay, where every coordinate is non-negative and the two agree; past its west and south edges (a negative x or z) truncation named the NEXT pixel toward the Bay, and Cyrodiil's halls stood on a pixel the player standing on them never read. */
 export function worldCoordToMapPixel(worldX, worldZ) {
   return {
-    x: Math.trunc(worldX / NATIVE_PIXEL),
-    y: 499 - Math.trunc(worldZ / NATIVE_PIXEL),
+    x: Math.floor(worldX / NATIVE_PIXEL),
+    y: 499 - Math.floor(worldZ / NATIVE_PIXEL),
   };
 }
 

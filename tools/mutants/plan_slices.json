@@ -1,0 +1,92 @@
+[
+  {
+    "name": "PLAN-SLICES-a-yield-a-stop",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (cell === goal && goalOk(layer)) { reached = c; break; }\n    if (expanded && (expanded & (PLAN_YIELD_CELLS - 1)) === 0) yield;",
+    "new": "    if (cell === goal && goalOk(layer)) { reached = c; break; }\n    if (expanded && (expanded & (PLAN_YIELD_CELLS - 1)) === 0) return null;",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-the-budget-unread",
+    "file": "src/systems/travel/planSlices.js",
+    "old": "      if (p.tally.n - start >= budget) return;",
+    "new": "      if (p.tally.n - start >= 0) return;",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-never-sliced",
+    "file": "src/systems/travel/planSlices.js",
+    "old": "      if (!p.done) { slice(p); j.slices++; if (!p.done) throw PLAN_PENDING; }",
+    "new": "      if (!p.done) { while (!p.done) slice(p); j.slices++; }",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-said-every-frame",
+    "file": "src/systems/travel/planSlices.js",
+    "old": "      if (!j.waiting) { j.waiting = true; onPending?.(); }",
+    "new": "      onPending?.();",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-the-superseded-goes-on",
+    "file": "src/systems/travel/planSlices.js",
+    "old": "      schedule(() => { if (live === j) go(j); });",
+    "new": "      schedule(() => go(j));",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-an-error-swallowed",
+    "file": "src/systems/travel/planSlices.js",
+    "old": "      if (e !== PLAN_PENDING) { if (live === j) live = null; throw e; }",
+    "new": "      if (e !== PLAN_PENDING) { if (live === j) live = null; return null; }",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-a-flood-uncounted",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      if (qh && (qh & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES\n      if (tally) tally.n++;",
+    "new": "      if (qh && (qh & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-the-replay-replans",
+    "file": "src/systems/travel/planSlices.js",
+    "old": "      let p = j.plans[k];\n      if (!p || p.key !== key) {",
+    "new": "      let p = null;\n      if (!p || p.key !== key) {",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-the-host-unsliced",
+    "file": "src/scenes/world.js",
+    "old": "    return planJourney(() => {   // PLAN-SLICES: its plans a slice of cells at a time - it goes on when they land",
+    "new": "    return (() => {   // PLAN-SLICES: its plans a slice of cells at a time - it goes on when they land",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  },
+  {
+    "name": "PLAN-SLICES-the-view-silent",
+    "file": "src/scenes/travelView.js",
+    "old": "trip: planning() ? planningLine() : deps.trip?.() ?? ''",
+    "new": "trip: deps.trip?.() ?? ''",
+    "tests": [
+      "test/systems/travel/plan_slices.test.js"
+    ]
+  }
+]
