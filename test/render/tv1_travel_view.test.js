@@ -40,7 +40,7 @@ test('TV1 camera: Mac\'s band - 150 to 450 m over the traveller, 15 to 75 degree
   // the deck, per the weather the clouds are drawn for (render/volumetricClouds.js VC_PROFILE) - the view reads the
   // same table the sky does, so the camera is under the very clouds the player sees
   const ceilings = Object.fromEntries(Object.entries(VC_PROFILE).map(([w, r]) => [w, ceilingFor(r.base)]));
-  assert.deepEqual(ceilings, { sunny: 450, cloudy: 450, overcast: 450, fog: 90, rain: 450, snow: 450, thunder: 440, sandstorm: 40 });
+  assert.deepEqual(ceilings, { sunny: 450, cloudy: 450, overcast: 450, fog: 90, rain: 450, snow: 450, thunder: 440, sandstorm: 40, ashfall: 390 });   // PIN MOVED (ASHFALL1, 2026-10-27): the ash's pall, base 450
   assert.equal(ceilingFor(null), 450, 'no deck: the band\'s top');
   assert.equal(ceilingFor(Number.NaN), 450);
   assert.deepEqual(heightBand(450), [150, 450]);

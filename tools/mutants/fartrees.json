@@ -128,7 +128,7 @@
   {
     "name": "FAR-TREES-the-art-once",
     "file": "src/render/farTrees.js",
-    "old": "    if (this.arts.has(archive)) return;\n",
+    "old": "    if (this.arts.has(key)) return;\n",
     "new": "\n",
     "tests": [
       "test/render/fartrees.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "FAR-TREES-the-art-wait",
     "file": "src/render/farTrees.js",
-    "old": "if (this._want.some(([x, y]) => this.arts.get(this.kept.get(`${x},${y}`).archive) === 'asking')) return;",
-    "new": "if (false) return;",
+    "old": "for (const a of this._wanted) if (this.arts.get(a) === 'asking') return;",
+    "new": "for (const a of this._wanted) if (false) return;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "FAR-TREES-the-tree-filter",
     "file": "src/world/terrain/floraCover.js",
-    "old": "const trees = flats.filter((f) => isTreeRecord(archive, f.record));",
+    "old": "const trees = flats.filter((f) => isTreeRecord(f.archive ?? archive, f.record));",
     "new": "const trees = flats;",
     "tests": [
       "test/render/fartrees.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "FAR-TREES-the-kept-key",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "keptMid(`t${px},${py},${archive},${climateType},${m.forests ? 1 : 0},${m.landform ? 1 : 0}`",
-    "new": "keptMid(`t${px},${py},${archive},${climateType},${m.landform ? 1 : 0}`",
+    "old": "keptMid(`t${px},${py},${archive},${climateType},${m.forests ? 1 : 0},${m.landform ? 1 : 0},${m.lands ? 1 : 0}`",
+    "new": "keptMid(`t${px},${py},${archive},${climateType},${m.landform ? 1 : 0},${m.lands ? 1 : 0}`",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "FAR-TREES-the-copy",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "forests: !!m.forests, landforms })).slice());",
-    "new": "forests: !!m.forests, landforms })));",
+    "old": "landforms, lands: !!m.lands })).slice());",
+    "new": "landforms, lands: !!m.lands })));",
     "tests": [
       "test/render/fartrees.test.js"
     ]

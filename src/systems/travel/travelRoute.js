@@ -43,6 +43,7 @@ import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';   // AU
 import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { apartPastBay, apartExact } from './landPieces.js';   // FAST-REFUSAL: the land's pieces past the Bay; EXACT-PIECES: at the pixel
 import { roadLineLegs } from './roadLine.js';   // ROAD-FOLLOW: a road past the Bay walked and drawn on its curves
+import { ghostfenceShuts } from '../../world/tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -146,7 +147,7 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   const waterNow = () => { if (beyond && waterMoved()) isWater = waterOn(); return isWater; };
   // OW-WOD-PATH: an open step into a massif's pixel is refused as one into the Mountain climate is - and the start's own
   // massif is left freely, as its own peaks are (AUDIT OW4 J1: `leaving`, the flood fill over peakAt)
-  const openBlocked = () => false;   // MOUNTAINS WALKABLE
+  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);   // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not
   const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so "the mountains cannot be crossed" never fires
   // THE PIECES: two neighbours joined where the step law (an ordinary step - no goal's exemption, no start's peaks, roads
   // and tracks included) walks from one that can be ENTERED to the other. A pixel no ordinary step enters - the sea, a
@@ -648,10 +649,9 @@ const endLegOf = (from, to, ends) => (ax, ay, bx, by) => (Math.max(Math.abs(ax -
 
 /**
  * ROAD-BEYOND: A PLAN BY THE ROADS, past the Bay - A* over the roads and the tracks (the Bay's arrays on the table, the
- * layer's past it - stepKind's law, TV2's prices: a road 1, a track 1.6), the open ground (3.5) walked only on an end's
- * own leg (ROAD-FOLLOW: roadEndsSteps' `ends`, asked here when none is handed). Cells kept in maps by pixel (the land past
- * the Bay has no table's edge), the search's spend BY_ROAD_MAX_EXPANSIONS cells. planRoute's `{ pixels, cost, kinds }`,
- * or null: no road joins the two within the spend.
+ * layer's past it; stepKind's law, TV2's prices: a road 1, a track 1.6), the open ground (3.5) walked only on an end's own
+ * leg (ROAD-FOLLOW: roadEndsSteps' `ends`, asked here when none is handed). Cells kept in maps by pixel, the spend
+ * BY_ROAD_MAX_EXPANSIONS cells. planRoute's `{ pixels, cost, kinds }`, or null: no road joins the two within the spend.
  * @param {{x:number,y:number}} from @param {{x:number,y:number}} to
  * @param {{ roads?: ArrayLike<number>|null, tracks?: ArrayLike<number>|null, isWater?: (x:number,y:number)=>boolean, width?: number, height?: number,
  *   openBlocked?: any, goalExempt?: boolean, beyond?: ((kind: string, x: number, y: number) => number)|null, maxExpansions?: number, tally?: { n: number }|null,
@@ -995,20 +995,17 @@ function* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds,
  * it walks on (the host's speed: a road leg reckless, the rest cautious - Travel Options' own two multipliers).
  * OW-TOWN-RING: `ringAt(x, y, from, to)` - the host's - answers the points of a town's border ring a route through
  * pixel (x, y) walks (from the side toward the pixel before to the side toward the pixel after), or null for none.
+ * OW-TOWN-ROUND (2026-10-23, the owner: "Overworld pathing always wants to walk into the middle of the town let the player
+ * always go around it"): a spot journey's `start` and `end` (native {x, z}) are asked of `ringAt` too (travelOptions.js
+ * ringPassPoints) - a traveller beside a town walks round it, a spot beyond one is reached round it - and the spot's leg
+ * carries the spot (`at`), so no road's lane is laid from the ring back to the town's middle (travelOptions.js routeLane).
+ * ROAD-FOLLOW (roadLine.js roadLineLegs): a leg that turns on a curve of the roads past the Bay carries `line`, the painted
+ * road's native points from the leg before's end to its own; `roadBytes` the layer's reader (the installed one's default).
  * @param {{x:number,y:number}[]} pixels
  * @param {string[]} kinds - kinds[i] is the step from pixels[i] to pixels[i + 1]
- * OW-TOWN-ROUND (2026-10-23, the owner: "Overworld pathing always wants to walk into the middle of the town let the player
- * always go around it"): `start` / `end` - a spot journey's own two ends, native {x, z}. The route's FIRST pixel (where
- * the traveller stands) and its LAST (the spot's) are asked of `ringAt` too, with the end's point in place of a step
- * (travelOptions.js ringPassPoints): a traveller beside a town walks round it to the side the route leaves by, and a
- * spot beyond a town is reached round it - never across its streets. The spot's own leg then carries the spot (`at`), so
- * no road's lane is laid from the ring back to the town's middle (travelOptions.js routeLane).
  * @param {{ ringAt?: ((x:number, y:number, from:number[]|{x:number,z:number}, to:number[]|{x:number,z:number}) => ({x:number, z:number}[]|null))|null,
  *   start?: {x:number,z:number}|null, end?: {x:number,z:number}|null, roadBytes?: (kind: string, x: number, y: number) => number }} [opts]
  * @param {[{x:number,z:number}, {x:number,z:number}]|null|false} [ends] - `[start, end]`, in place of the options' two
- * ROAD-FOLLOW (systems/travel/roadLine.js roadLineLegs): a road's or a track's leg whose run turns on one of the curves
- * the roads past the Bay are drawn as carries `line` - the painted road's native points from the leg before's end to its
- * own (its end a curve's apex where it turns on one); `roadBytes` the layer's reader (the installed one's by default).
  * @returns {{ x:number, y:number, kind:string, at?:{x:number,z:number}, ring?:boolean, line?:Array<[number, number]> }[]}
  */
 export function routeLegs(pixels, kinds = [], { ringAt = null, start: start0 = null, end: end0 = null, roadBytes = arenaRoadByte } = {}, ends = null) {
@@ -1085,9 +1082,8 @@ export function joinPoint(me, a, b) {
 /**
  * AUDIT OW3 J4: THE DRAWN ROUTE'S POINTS - the traveller, then where each leg but the last aims (a join its own point,
  * OW-ROADSIDE; the rest their pixel's middle, `centre`), then the journey's end: one point a leg, so `route.i`, a LEG
- * index, cuts the line where the walk is (AUDIT TV A1). A spot's journey drew [traveller, spot] - a straight line the
- * routed walk (round the peaks, along the road) left at its first bend, so the traveller walked beside their own line.
- * Both journeys draw through here. Native `{x, z}` in, `[x, z]` pairs out.
+ * index, cuts the line where the walk is (AUDIT TV A1). A spot's journey drew a straight [traveller, spot] the routed walk
+ * left at its first bend; both journeys draw through here. Native `{x, z}` in, `[x, z]` pairs out.
  * @param {{x:number,z:number}} me
  * @param {{x:number,y:number,at?:{x:number,z:number},line?:Array<[number, number]>}[]} legs
  * @param {{x:number,z:number}} end

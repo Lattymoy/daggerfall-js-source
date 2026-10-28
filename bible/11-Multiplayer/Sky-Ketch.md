@@ -744,7 +744,9 @@ Solitude and at Sentinel). **Mutants:** `tools/mutants/ketch_everywhere.json` (5
 unmoved. PIN MOVED: `test/ui/fb1004e_overworld.test.js` OW-WHO's hand-built held map carries `_ketches`, the rings
 now a list. Mutant records re-aimed by content: `ketch_law.json` (the sighting late, the voyage gone, boarding
 through the last minutes, holding before the arrival - the law's lines a station's now) and `ketch_relay.json` (a spent
-receipt handed again - the hello's walk a station each). Run again at the finish, the Ketch's lists on the files this
+receipt handed again - the hello's walk a station each).
+
+Run again at the finish, the Ketch's lists on the files this
 changed: `ketch_law.json` (16), `ketch_sky.json` (12), `ketch_client.json` (11), `ketch_words.json` (7),
 `ketch_herald.json` (8), and the records of `ketch_relay.json`, `ketch_audit2.json`, `auditwe_down.json` and
 `ketch_lines.json` on those files (13) - all dead. One of them had lived since AUDIT SHIP 1:

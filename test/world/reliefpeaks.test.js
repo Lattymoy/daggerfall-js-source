@@ -18,13 +18,14 @@ import { fileURLToPath } from 'node:url';
 
 import { LARGE_LAW, largeOfByte, groundWoods, tamrielLargeMap, tamrielHeightByte, dropGroundCache, SEAM_PX, BLEND_PX, groundBefore, largeMapBefore, LARGE_SWELL_BEFORE } from '../../src/world/tamriel/tamrielGround.js';
 import {
-  RANGE_DIALS, RANGE_MEAN, CONE, ridges, rangeSwing, rangeCentre, rangeCeiling, rangeUp, rangeAt, rangeBound, coneProfile, coneSummit, coneAt, waterDistance,
+  RANGE_DIALS, RANGE_MEAN, ridges, rangeSwing, rangeCentre, rangeCeiling, rangeUp, tamrielRangeAt, rangeBound, waterDistance,
 } from '../../src/world/tamriel/tamrielRanges.js';
 import { landformLattice, tamrielLandformAt, ORIENT_FULL, STRUCTURE_REACH } from '../../src/world/tamriel/tamrielLandforms.js';
 import { nodeGround, centreGround, nodeGroundAt, meanGroundField, groundTopOf, cliffFadeAt, groundMovedField, createLandforms, LANDFORM_KNEE, CONTINENT_CEILING, LANDFORM_CEILING, reliefLift, continentLift, CONTINENT_LIFT } from '../../src/world/landforms.js';
 import { kernelTerms, sampleKernel, cubicInterpolator, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, GROUND_FRAME_LAW, LIFT_FRAME_LAW, RECORD_GROUND_STAMP } from '../../src/world/terrain/terrainSampler.js';
 import { farFieldCell, buildFarFieldBytes } from '../../src/world/terrain/midRingGrid.js';
 import { ringGroundAt, ringHeight } from '../../src/render/farRing.js';
+import { redMountainFrame, redMountainLiftAt, redMountainNodeLift } from '../../src/world/tamriel/redMountain.js';   // RED-MOUNTAIN: Red Mountain, the merge's one
 import { setTamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
 import { RELIEF_SCALE } from '../../src/world/tamriel/tamrielRelief.js';
@@ -191,33 +192,24 @@ test('RELIEF-PEAKS the ranges\' parts: the ridged field 0..1 about RANGE_MEAN (m
   assert.ok(CONTINENT_CEILING <= LANDFORM_CEILING, 'the continent under the world\'s ceiling');
   assert.ok(rangeCeiling() <= MAX_TERRAIN_HEIGHT + reliefLift(127 * 8) + continentLift(CONTINENT_LIFT.top) + 1e-9, 'the ranges\' ceiling the land\'s');
   for (let h = SCALED_OCEAN_ELEVATION; h < rangeCeiling(); h += 37) assert.ok(rangeSwing(h) * (1 - rangeCentre(h)) <= rangeUp() + 1e-9, `the rise's bound at ${h}`);
-  assert.equal(coneProfile(0), 1); assert.equal(coneProfile(CONE.crater / CONE.radius), 1, 'level to the crater\'s rim');
-  assert.equal(coneProfile(1), 0);
-  let last = 1, lastSlope = -Infinity;
-  for (let t = CONE.crater / CONE.radius + 0.01; t < 1; t += 0.01) {
-    const v = coneProfile(t), slope = v - last;
-    assert.ok(v < last, `falls (${t.toFixed(2)})`); assert.ok(slope >= lastSlope - 1e-12, `concave: its fall eases (${t.toFixed(2)})`);
-    last = v; lastSlope = slope;
-  }
-  const rimT = CONE.crater / CONE.radius, fall = (a, b) => coneProfile(a) - coneProfile(b);
-  assert.ok(fall(rimT + 0.05, rimT + 0.1) > 3 * fall(0.85, 0.9), 'steep under the rim, easing out at its foot - a stratovolcano\'s, never a straight cone');
+  // PIN MOVED (RED-MOUNTAIN, the merge): the cone's profile went with the cone - Red Mountain is test/world/redmountain.test.js's
 });
 
 test('RELIEF-PEAKS the ranges on the land (a relief standing): none with no relief, none on the low ground; centred where the land has room, the crests the land\'s own at the ceiling and never over it; never under the land and the foot, whichever is lower; none by a carved river or a lake; pure in world position; Red Mountain\'s cone at its relief\'s summit, the land inside its rim the cone, the ranges quiet about it; the bound (mutants: the floor; the clip; the waters\' valleys; the cone\'s summit; its foot)', async () => {
-  assert.equal(rangeAt(3000 * 128, 600 * 128, 1800), 0, 'no relief: the authored law\'s land is its own shape');
+  assert.equal(tamrielRangeAt(3000 * 128, 600 * 128, 1800), 0, 'no relief: the authored law\'s land is its own shape');
   await withRelief(() => {
     const units = (m) => m / U + SCALED_OCEAN_ELEVATION, foot = units(RANGE_DIALS.foot), ceiling = rangeCeiling();
-    assert.equal(rangeAt(2000 * 128, 200 * 128, units(600)), 0, 'the low ground stands as it stood');
+    assert.equal(tamrielRangeAt(2000 * 128, 200 * 128, units(600)), 0, 'the low ground stands as it stood');
     let sum = 0, n = 0;
     for (let i = 0; i < 3000; i++) {
       const gx = (2100 + (i % 60) * 0.73) * 128, gy = (MAP_HEIGHT - 200 - Math.floor(i / 60) * 0.61) * 128;
       for (const m of [1200, 1800, 2400, 3000, 3250]) {
-        const h = units(m), d = rangeAt(gx, gy, h);
+        const h = units(m), d = tamrielRangeAt(gx, gy, h);
         assert.ok(h + d >= Math.min(h, foot) - 1e-9, `never under the land and the foot (${m})`);
         assert.ok(h + d <= Math.max(h, ceiling) + 1e-9, `never over the ceiling (${m})`);
         if (m >= 3250) assert.ok(d <= 1e-9, 'the crests the land\'s own at the top');
       }
-      sum += rangeAt(gx, gy, units(2000)); n++;
+      sum += tamrielRangeAt(gx, gy, units(2000)); n++;
     }
     assert.ok(Math.abs(sum / n) * U < 0.07 * RANGE_DIALS.high, `centred where the land has room (${(sum / n * U).toFixed(0)} m)`);
     // the soft clip: a rise past `knee` under the ceiling held by q / (1 + q) of the room left (a crest's own law)
@@ -225,32 +217,21 @@ test('RELIEF-PEAKS the ranges on the land (a relief standing): none with no reli
     for (let i = 0; i < 2000; i++) {
       const gx = (2100 + i * 0.37) * 128, gy = (MAP_HEIGHT - 200) * 128 + (i % 7) * 911, h = units(3000), raw = h + rangeSwing(h) * (ridges(gx, gy) - rangeCentre(h));
       const from = Math.max(h, ceiling - RANGE_DIALS.knee / U), q = (raw - from) / (ceiling - from), want = raw > from ? from + (ceiling - from) * (q / (1 + q)) : raw;
-      assert.ok(Math.abs(h + rangeAt(gx, gy, h) - want) < 1e-9, `the clip at ${gx}`);
+      assert.ok(Math.abs(h + tamrielRangeAt(gx, gy, h) - want) < 1e-9, `the clip at ${gx}`);
       if (raw > from) clipped++;
     }
     assert.ok(clipped > 10, `crests held under the ceiling (${clipped})`);
     // pure in world position: the same sample, whatever pixel asks
-    assert.equal(rangeAt(2101 * 128, 300 * 128, units(2100)), rangeAt(2101 * 128, 300 * 128, units(2100)));
+    assert.equal(tamrielRangeAt(2101 * 128, 300 * 128, units(2100)), tamrielRangeAt(2101 * 128, 300 * 128, units(2100)));
     // the waters' valleys: none on a carved river's course (the Corbolo's first point, Lake Arrius)
     const [rx, ry] = [196.62 * FIT.ppu - FIT.ox, 86.2 * FIT.ppu - FIT.oy];
     assert.equal(waterDistance(rx, ry), 0);
-    assert.equal(rangeAt(rx * 128, (MAP_HEIGHT + 1 - ry) * 128, units(2000)), 0, 'the river runs down a valley of the mountains, never a gorge');
-    assert.notEqual(rangeAt((rx + 10) * 128, (MAP_HEIGHT + 1 - ry - 10) * 128, units(2000)), 0, 'the ranges whole past its reach');
-    // Red Mountain: the cone at the relief's own summit (picture 235, 54), its top at CONE.top less the crater, quiet about it
-    const s = coneSummit();
-    assert.ok(s && Math.hypot(s[0] - (235 * FIT.ppu - FIT.ox), s[1] - (54 * FIT.ppu - FIT.oy)) < FIT.ppu / RELIEF_SCALE, `the summit ${s}: its relief's highest cell`);
-    const at = (bx, by, h) => h + rangeAt(bx * 128, (MAP_HEIGHT + 1 - by) * 128, h);
-    const land = nodeGround(100, 1, 1), rim = at(s[0] + CONE.crater, s[1], land), centre = at(s[0], s[1], land);
-    assert.ok(Math.abs(rim - units(CONE.top)) * U < 25, `the crater's rim at CONE.top (${((rim - SCALED_OCEAN_ELEVATION) * U).toFixed(0)} m)`);
-    assert.ok((rim - centre) * U > CONE.depth * 0.9, 'the crater cut into it');
-    assert.ok(coneAt(s[0] + CONE.radius * 0.3, s[1]).w === 1 && coneAt(s[0] + CONE.radius * 0.3, s[1]).quiet === 0, 'inside the rim the land is the cone, no ranges on it');
-    assert.equal(coneAt(s[0] + CONE.radius * (0.5 + CONE.calm) + 1, s[1]), null);
-    const flank = at(s[0] + CONE.radius * 0.5, s[1], land);
-    assert.ok(flank < rim - 300 / U, 'the flank under the rim');
-    // its foot the land's about it: no moat where the cone meets the land (its lower flank over the land it stands in)
-    for (const t of [0.7, 0.85, 0.95]) assert.ok(at(s[0] + CONE.radius * t, s[1] + 0.3, land) > land - 60 / U, `no moat at ${t} of its radius`);
-    // the bound: the ranges' rise held under min(the ceiling, the top and the rise), CONE.top where the cone reaches
-    assert.equal(rangeBound(Math.floor(s[0]), Math.floor(s[1]), land), Math.max(Math.min(ceiling, land + rangeUp()), units(CONE.top)));
+    assert.equal(tamrielRangeAt(rx * 128, (MAP_HEIGHT + 1 - ry) * 128, units(2000)), 0, 'the river runs down a valley of the mountains, never a gorge');
+    assert.notEqual(tamrielRangeAt((rx + 10) * 128, (MAP_HEIGHT + 1 - ry - 10) * 128, units(2000)), 0, 'the ranges whole past its reach');
+    // PIN MOVED (RED-MOUNTAIN, the merge): no cone of the ranges' own - Red Mountain is RED-MOUNTAIN's
+    // (test/world/redmountain.test.js); the bound is the ridges' rise alone, at its summit too
+    const land = nodeGround(100, 1, 1), s = redMountainFrame();
+    assert.equal(rangeBound(Math.floor(s.bx), Math.floor(s.by), land), Math.min(ceiling, land + rangeUp()));
     assert.equal(rangeBound(2100, 300, land), Math.min(ceiling, land + rangeUp()));
   });
 });
@@ -285,10 +266,11 @@ test('RELIEF-PEAKS the far views stand on the kernel\'s own ground: the far ring
     assert.ok(centreGround(cb, 301, 200) < centreGround(cb, 301, 200, true, () => 1) - 50, 'faded beside the sea');
   } finally { dropGroundCache(); }
   await withRelief(() => {
-    const woods = new StubWoods(() => 60), g = groundWoods(woods), byteAt = (x, y) => g.getHeightMapValue(x, y), s = coneSummit();
-    const x = Math.floor(s[0]), y = Math.floor(s[1]);
-    assert.ok(Math.abs(centreGround(byteAt, x, y) - meanGroundField(g, x, y, true)(64, 64)) * U < 4, 'with the ranges and the cone');
-    assert.ok(Math.abs(nodeGroundAt(byteAt, x, y) - meanGroundField(g, x, y, true)(128, 0)) * U < 4);
+    const woods = new StubWoods(() => 60), g = groundWoods(woods), byteAt = (x, y) => g.getHeightMapValue(x, y), s = redMountainFrame();
+    const x = Math.floor(s.bx), y = Math.floor(s.by);
+    // PIN MOVED (RED-MOUNTAIN, the merge): at Red Mountain's summit the far ring adds its smooth cone (ringGroundAt), as the mean ground does
+    assert.ok(Math.abs(centreGround(byteAt, x, y) + redMountainLiftAt(x, y) - meanGroundField(g, x, y, true)(64, 64)) * U < 4, 'with the ranges and the cone');
+    assert.ok(Math.abs(nodeGroundAt(byteAt, x, y) + redMountainNodeLift(x + 1, y + 1) - meanGroundField(g, x, y, true)(128, 0)) * U < 4, 'and the far field\'s node, the cone at its point');
     assert.ok(groundTopOf(g, x, y, true) >= (meanGroundField(g, x, y, true)(64, 64)), 'the bound over the cone');
   });
 });
@@ -296,7 +278,7 @@ test('RELIEF-PEAKS the far views stand on the kernel\'s own ground: the far ring
 test('RELIEF-PEAKS the far views\' wiring (by source): the far ring\'s grid on ringGroundAt with its nodes\' fades once a node; the far field\'s vertex the worker\'s ground (asked with the Landforms row, kept by it, transferred, assembled, read); the travel view\'s ground past the grid the ring\'s; the shaper lays the ranges under the landforms; the mean ground and the bound count them (mutants: the far field on its highest byte; the ground not transferred)', () => {
   const ring = read('src/render/farRing.js'), worker = read('src/world/terrain/terrainGenWorker.js'), client = read('src/world/terrain/terrainGenClient.js'), lf = read('src/world/landforms.js');
   assert.match(ring, /heights\[j \* hside \+ i\] = ringGroundAt\(baseX - radius - 1 \+ i, baseY - radius - 1 \+ j, gridByte, relief, fadeAt\);/);
-  assert.match(ring, /heightOf: \(byte, x, y, v\) => answer\.ground\[v\],/);
+  assert.match(ring, /heightOf: \(byte, x, y, v\) => answer\.ground\[v\] \+ \(inputs\.relief \? redMountainNodeLift\(x, y\) \* STREAMING_TERRAIN_SCALE : 0\),/);   // PIN MOVED (RED-MOUNTAIN, the merge): and the cone at the node
   assert.match(ring, /farField\?\.\(\{ baseCX, baseCY, radius: FAR_RADIUS, cell: FAR_CELL, seaByte, relief: !!inputs\.relief \}\)/);
   assert.match(worker, /farFieldCell\(woods, cx, cy, m\.cell, m\.seaByte, farCellClimate, !!m\.relief\)/);
   assert.match(worker, /\[high\.buffer, low\.buffer, clim\.buffer, ground\.buffer\]/);
@@ -304,8 +286,8 @@ test('RELIEF-PEAKS the far views\' wiring (by source): the far ring\'s grid on r
   assert.match(read('src/scenes/world.js'), /return \[x, ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/);
   assert.match(lf, /const land = macro \+ lift \* fade, r = ranges \? ranges\(gx, gy, land\) : 0;/);
   assert.match(lf, /const c = r \+ tamrielLandformAt\(tl, gx, gy, land \+ r, deepCont\);/);
-  assert.match(lf, /return share > 0 \? land \+ share \* rangeAt\(ox \+ x, oy \+ y, land\) : land;/);
-  assert.match(lf, /if \(continentPixel\(px, py\)\) return rangeBound\(px, py, h \+ reliefLift\(lowTop\) \+ continentLift\(lowTop\)\) \+ Math\.max\(hill, TAMRIEL_TOP\);/);
+  assert.match(lf, /return \(share > 0 \? land \+ share \* tamrielRangeAt\(ox \+ x, oy \+ y, land\) : land\) \+ \(beyond \? redMountainSmooth\(ox \+ x, oy \+ y\) : 0\);/);   // PIN MOVED (RED-MOUNTAIN, the merge): and its smooth cone
+  assert.match(lf, /if \(continentPixel\(px, py\)\) return rangeBound\(px, py, h \+ reliefLift\(lowTop\) \+ continentLift\(lowTop\)\) \+ Math\.max\(hill, TAMRIEL_TOP\) \+ redMountainTopNear\(px, py\);/);   // PIN MOVED (RED-MOUNTAIN, the merge): and the volcano's bound
   assert.match(lf, /height: \(x, y\) => nodeGround\(woods\.getHeightMapValue\(x, y\), 1, byteBeyond\(x, y\)\),/);
 });
 
@@ -454,16 +436,7 @@ test('RELIEF-PEAKS with ARENA2: the ranges past the Bay stand as mountains - ove
       n++; if (g > Math.tan(50 * Math.PI / 180)) steep++;
     }
     assert.ok(steep / n < 0.002, `about Bruma ${(100 * steep / n).toFixed(2)}% over 50 degrees`);
-    // Red Mountain: its summit the highest ground within 1.5 of its radii, a kilometre over the land about it
-    const s = coneSummit(), sx = Math.floor(s[0]), sy = Math.floor(s[1]);
-    let top = -Infinity, about = -Infinity;
-    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) top = Math.max(top, H(sx + dx, sy + dy, 64, 64));
-    for (let k = 0; k < 24; k++) {
-      const a = (k / 24) * 2 * Math.PI, r = CONE.radius * 1.2;
-      about = Math.max(about, H(Math.floor(s[0] + r * Math.cos(a)), Math.floor(s[1] + r * Math.sin(a))));
-    }
-    assert.ok(top > CONE.top - CONE.depth - 120, `Red Mountain's top ${top.toFixed(0)} m`);
-    assert.ok(top - about > 600, `over the land about it by ${(top - about).toFixed(0)} m`);
+    // PIN MOVED (RED-MOUNTAIN, the merge): Red Mountain's height is test/world/redmountain.test.js's (with ARENA2: its rim over 6.5 km)
     // the Bay's north edge, the Wrothgarians: no step over 120 m between samples 102 m apart (it fell some 600 m in half a pixel)
     let worst = 0, prev = null;
     for (let py = 5; py >= -8; py--) for (let y = 0; y < 128; y += 16) { const h = H(951, py, 64, y); if (prev !== null) worst = Math.max(worst, Math.abs(h - prev)); prev = h; }

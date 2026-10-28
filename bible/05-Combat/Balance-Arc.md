@@ -814,7 +814,7 @@ THE LAWS.
   schoolPotency, read by `systems/effects.js` casterDamageScaled with the blow's own rounding and floor of one; a spell
   the throw turned whole stays nothing). The climb is `skillSoftcap.js` climbedSkill - the one read the foes' edge
   takes, so the climb that raises them is the climb that pays; a worn Destruction line already pays in price (the live
-  value SPELL-COST-PAST reads) and strikes no harder, and mentoring reads none, as the edge does. Offline DFU's price
+  value SPELL-COST-PAST reads) and strikes no harder, and mentoring reads the mentored climb (MENTOR2). Offline DFU's price
   term stands (to nothing at 110 - the field report's For Mac), and so does its damage. Never at a player, a peer's
   stand-in or a foe's cast (`ownSpellAt`): a refereed fight's stand-in is a player (`combat/duelCombat.js` duelStub), so
   the duel, the siege, the Wild Zone and the arena are BAL8's to the point.
@@ -1053,7 +1053,7 @@ health x1.04; each Renown past 15, to 50, x1.01 and x1.005 - compounding, becaus
 
 WHOSE LEVEL. The threat is read where a foe is built, off the builder's player (`heroThreatOf`: `mentorMode.js`
 effectiveLevel - a mentor's, the group's - and the page's Renown, `sigil.js` sigilRenown; no Renown while mentoring,
-when the Firmament sleeps; offline the level alone). Every client builds its own copy of every foe it sees, so a foe's
+its foes the group's; offline the level alone). Every client builds its own copy of every foe it sees, so a foe's
 blows at me are my threat's: my own foes whole, a dungeon's layout copy whole (its maximum then the host's `k`, as
 SOFTCAP2's standing always was), a peer's puppet its blows alone (`{ puppet: true }` - its health is its owner's
 word). The hero's health is stood on `healthMult` as well (`enemyEntity.js` applyProgressionScaling), the field
@@ -1159,7 +1159,7 @@ no two-handed term to match. A shaft flies at `systems/spellcast.js:"export cons
 (`combat/arrowFlight.js:"(m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED)"`, `scenes/dungeonContext.js:"(m.arrow && !m.flatArchive ? ARROW_FLIGHT_SPEED : MISSILE_SPEED)"`).
 A spell and a gun's orb stay on MISSILE_SPEED. The bow's draw, its 0.0625 s tick and GetBowCooldownTime
 are unchanged. Archery Mastery is unchanged: +1% of the blow per effective point past 100, and never
-against a player, in a duel, while mentoring, in beast form, or through the Warden's ward.
+against a player, in a duel, in beast form, or through the Warden's ward.
 
 Measured at Strength 75, Speed 70, Daedric, weapon skill 100, every face of the die, a held shot at 60 fps
 (`test/combat/balArchery.test.js`). A Daedric Long Bow's sustained blow went from 23 to 26; the Longsword's

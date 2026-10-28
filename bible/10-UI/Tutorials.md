@@ -15,7 +15,9 @@ the old game on its first page.
 It is no longer started. What it did besides its pages is kept: every way out of it - finished, or No on any page - ran
 its `_no_` task, `start quest 977 977`, the curse on the old capital's streets (a world quest, `scenes/quest/questFoeHost.js`
 WORLD_QUESTS). So GAME_START_QUESTS became `['S0000977', '_BRISIEN']`: the curse starts where the tutorial stood, as it
-did for a player who said No to its first page. (START1, 2026-10-24: `_BRISIEN`'s place is now the Bay's start quest's,
+did for a player who said No to its first page.
+
+(START1, 2026-10-24: `_BRISIEN`'s place is now the Bay's start quest's,
 whose commission begins the main quest - `06-Systems/Alternate-Starts-Arc.md` - and the welcome page says so, of every
 start (START2; AUDIT STARTS U9): "Your story begins with the Emperor's sealed orders, your commission. When you hold
 them, open them from your pack: they name the city where the main story begins.") A save from before TUT1 still inside

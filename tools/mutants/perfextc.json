@@ -496,8 +496,8 @@
   {
     "name": "PERF-EXT24-the-budget-is-asked-once-and-never-again",
     "file": "src/systems/buildBreather.js",
-    "old": "      sliceStart = now();\n      sliceFrame = framesNow();\n      sliceBudget = budget ? budget() : sliceMs;",
-    "new": "      sliceStart = now();\n      sliceFrame = framesNow();",
+    "old": "          sliceStart = now();\n          sliceFrame = framesNow();\n          sliceBudget = budget ? budget() : sliceMs;",
+    "new": "          sliceStart = now();\n          sliceFrame = framesNow();",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "PERF-EXT24-no-slice-is-reported",
     "file": "src/systems/buildBreather.js",
-    "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside",
-    "new": "      void spent;",
+    "old": "if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "void spent;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]

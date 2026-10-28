@@ -244,7 +244,7 @@ import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under 
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
 import { LabGrassRenderer, createGrassField, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/wind/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
-import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
@@ -262,7 +262,9 @@ import { ambushNight } from '../systems/rest/restAct.js';   // AUDIT REST-PARTY 
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
 import { troubleFoesOf } from './livingWorld/troubleFoes.js';   // LW4/LW6: the road's trouble's foes - BAY-LEFT-GROUND: on the land's own wild past the Bay
 import { skillValue } from '../systems/skills.js';   // TO1: the avoid-encounter roll's live Stealth; WILD-ALERT: the notice's
-import { refreshMentor, mentorStatusText, effectiveLevel } from '../systems/mentorMode.js';
+import { effectiveLevel, castingLevel } from '../systems/mentorMode.js';
+import { mentorStatusText, pupilStatusText, mentorPartyNote } from '../systems/mentorText.js';   // MENTOR2: mentoring's words
+import { createMentorHost } from './mentorHost.js';   // MENTOR2: mentoring beside the party, steadied
 import { setMasterSkillsGate, MASTER_SKILLS_DUNGEON_TEXT } from '../systems/masterSkills.js';   // SOFTCAP3
 import { isOnlinePage, ONLINE_LAND_TRAVEL_REFUSAL } from '../systems/online/onlineLane.js';   // SOFTCAP3: Master Skills is online only; AUDIT TRAVEL-ONLINE T7: the map's floor
 import { readImmersiveTravelSettings, immersiveTravelLoaded, IT_POPUP } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel - a driver's map and its fast travel; AUDIT IT1 W4: the mod loaded for the game
@@ -302,7 +304,7 @@ import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the pl
 import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
 import { provinceByKey } from '../world/tamriel/tamrielGeography.js';   // TESA3: its name and race
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
-import { groundWoods, groundMaps, tamrielClimateAt, climateNeighbourIn } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground; WW-R: the politic map past the Bay
+import { groundWoods, groundMaps, tamrielClimateAt, climateNeighbourIn, feltClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground; WW-R: the politic map past the Bay
 import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
 import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door; AUDIT TESA II F6: its bands' ground
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
@@ -854,7 +856,7 @@ import { readAccount, buyInsignia, settleBrokerSale, equipTitle, equipAura, adop
 import { ownAura, ownNameAsAt } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session; NAME-AS: and when this device last chose the name its player wears
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
 import { createFirmamentBook, setFirmamentBook } from '../net/firmament/firmamentBook.js';   // FIRM1: the Firmament - this device's tree and purses
-import { setFirmamentTree, setFirmamentOnline, setFirmamentMentoring } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
+import { setFirmamentTree, setFirmamentOnline } from '../systems/firmamentLive.js';   // FIRM1: the tree in force, online alone
 import { starsFor } from '../net/firmament/firmamentLaw.js';   // FIRM1: the Stars a Renown level brings, said with it
 import { withoutFirmament } from '../systems/firmamentPowers.js';   // FIRM1: a strike or a spell at a player - a duel's, a siege's, the Wrothgarian zone's - is rolled with the sky off
 import { accountTokenMinter, storedSession, muteAccount, serviceBase, accountRefusalText, accountDuels, accountWild, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountCards, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents, accountSds, accountLamp, accountFirmament, nameWhyText } from '../net/accountClient.js';   // NAME-AS: nameWhyText, why my character's name stood aside   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4's beat knocks through the tab's heartbeat (SCALE4c), not from here
@@ -1070,7 +1072,7 @@ import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverB
 import { scryRows } from '../systems/loot/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
-  weatherRng, fogFactor, precipitationForWeather,
+  weatherRng, fogFactor, precipitationForWeather, isDryFall,
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
@@ -2688,7 +2690,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
-  let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
+  let precip = precipMode && !isDryFall(precipMode) ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;   // ASHFALL1's audit: a dry fall at boot builds no rain program either
   const wxEye32 = new Float32Array(3);   // RAIN-LEAK: the falling weather's eye, filled each frame - never a fresh array a frame
   // PERF-WARM: the renderer's on-demand programs, and the rain's whole
   // renderer, paid for at idle rather than on the frame that first needs
@@ -2704,7 +2706,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
-  const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
+  const dryFall = sky.enhanced ? new DryFallRenderer(renderer.gl) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look; ASHFALL1: and the ashfall's ash and embers (render/dryFall.js)
   // HAZE1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): HEAT HAZE -
   // built on the enhanced lane (a shader fault is a boot fault), its switch read per frame (hazeFrameSettings: the mod's
   // own, and `?haze=off`). The state is the mod's per-frame law; the ring is drawn once the opaque world is whole.
@@ -2719,7 +2721,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get built() { return built; },
     get deepWaters() { return deepWaters; },
     get state() { return state; },
-    get tileSide() { return tileSide; },
   });
   const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: snowGround });
   /** SNOWFALL1: who walks the snow - the player (the fly camera: the tiers round the eye, no tracks), the street's foes
@@ -2855,7 +2856,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
-    if (precipMode && precipMode !== 'sand' && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's
+    if (precipMode && !isDryFall(precipMode) && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's; ASHFALL1: nor the ash
     lightning = systemWordOf(w) === 'thunder'   // AUDIT PRECIP FALL-2: a storm's strobe is its system's (a storm falling as snow still strikes)
       ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
     if (changed) _onWeatherChange?.(w);
@@ -5305,6 +5306,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const LOD_NEAR = 3;   // chebyshev distance where the far ring starts
   const lodOn = isEnhanced();
   const TERRAIN_INDICES_LOD = lodOn ? buildTerrainIndices(LOD_STRIDE) : null;   // AUDIT EV: the 1:1 lane never pays for the strided twin
+  const lodStride = lodOn ? LOD_STRIDE : 1;   // FLORA-GROUND, THE RINGS: the far ring's class, its plants' lifts made ahead in a near pixel's build
   const strideFor = (px, py) => ((lodOn
     && Math.max(Math.abs(px - state.current.x), Math.abs(py - state.current.y)) >= LOD_NEAR)
     ? LOD_STRIDE : 1);
@@ -5466,8 +5468,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     jungle, lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
-    worldHeight,
-    lodStride: lodOn ? LOD_STRIDE : 1,   // FLORA-GROUND, THE RINGS: the far ring's class, its plants' lifts made ahead in a near pixel's build
+    worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
@@ -6087,7 +6088,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const hour = (((wm % 1440) + 1440) % 1440) / 60;
     const sheltered = m === 'exterior' && !!playerEntity.isResting && !!camps.tentNear(feet);   // AUDIT C&C I2: a rest at a tent sleeps under its roof
     return {
-      climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+      climateIndex: feltClimateIndex(playerTravelPixel().x, playerTravelPixel().y, maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y)),   // TESA-LANDS' audit: past the Bay a zone's air
       month: dateFromClassicMinutes(wm).month, hour, weather, falling: fallingWeather(weather),   // WET-FALL: the skin reads what the street's frame saw fall
       insideBuilding: m === 'interior', insideDungeon: m === 'dungeon',
       inSunlight: m === 'exterior' && sunlit({ hour, weather, sheltered }),   // AUDIT C&C: the sun's one law, the replay's too
@@ -8005,7 +8006,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     midScreenText: (text, seconds) => setMidScreenText(text, seconds),
     log: (text) => console.log(text),
     time: () => _csaTime,
-    weatherType: () => WEATHER_TYPES.indexOf(seaStormShown() ?? currentWeather()),   // SEA-EVENTS: the Aether Storm's wind; CSA-E: PlayerWeather.WeatherType (the port's eighth word, the sandstorm, is none of UpdateWind's three)
+    weatherType: () => WEATHER_TYPES.indexOf(seaStormShown() ?? currentWeather()),   // SEA-EVENTS: the Aether Storm's wind; CSA-E: PlayerWeather.WeatherType (the port's eighth word, the sandstorm, and ninth, the ashfall, are none of UpdateWind's three)
     hour: () => Math.floor(minuteNow() / 60),   // CSA-E: WorldTime.Now.Hour
     persistentDungeonBoats: () => { try { return modSetting('come-sail-away', 'Compatibility.PersistentDungeonBoats') === true; } catch { return false; } },
     packedItems: packedItemsCodec,   // SerializeItems / DeserializeItems: the save's own item copy (save.js)
@@ -20657,10 +20658,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // expires PARTY_READY_TIMEOUT_MS after it was cast (checked every
         // frame in partyRestFollowTick, which already runs unconditionally),
         // so the next rest always needs its own fresh round of /ready.
-        // SOFTCAP1: `/mentor` - what mentoring is doing right now. There is no switch: a party well below my level
-        // makes me its mentor automatically (systems/mentorMode.js)
+        // SOFTCAP1: `/mentor` - what mentoring is doing right now. There is no switch: a party member far below my level
+        // beside me makes me their mentor automatically (systems/mentorMode.js); MENTOR2: and a pupil's bonus, beside one
         if (/^\/mentor$/i.test(text.trim())) {
-          chatLog.push(tabId, { text: mentorStatusText(playerEntity), system: true });
+          chatLog.push(tabId, { text: [mentorStatusText(playerEntity), pupilStatusText(playerEntity)].filter(Boolean).join(' '), system: true });
           return true;
         }
         if (/^\/ready$/i.test(text.trim())) {
@@ -20935,6 +20936,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       onOpen: () => surfaceOpen('social'),   // AUDIT SOC B6: counted with the chat's and the F-menu's - the first up frees the mouse, the last down takes it back
       onClose: () => surfaceClose('social'),
       above: () => !!(socialMenu?.isOpen?.() || profileWin?.isOpen?.() || pageWin?.isOpen?.()),   // AUDIT SOC C2/C14: the F-menu stands over the panel - its Escape is the menu's; INSPECT1: and the profile opened from it; JOURNAL1: and a page read from it
+      mentorNote: () => mentorPartyNote(playerEntity),   // MENTOR2: what mentoring does for me now, on the Party tab
     });
     // AUDIT SOC B14/D11: `hudCtx.openSocial` stood here as a second door to the panel; nothing dispatched through it
     // (SOC5's key reaches the panel through socialInteract's nobody-in-front arm), and a door nothing opens is a
@@ -23253,7 +23255,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // save spent in a breach held to that breach's next Redoubt (scenes/eliteGates/egClient.js `redoubt`)
   setSetPowersAllies({
     near: (m) => { const f = player.feetAt(); return (allyMarksNear() ?? []).filter((p) => p.mate && p.feet && Math.hypot(p.feet[0] - f[0], p.feet[1] - f[1], p.feet[2] - f[2]) <= m); },
-    shield: (a, sp) => castAtAllyDoor(a.id, allyCastFrame(sp, effectiveLevel(playerEntity), a.id)),
+    shield: (a, sp) => castAtAllyDoor(a.id, allyCastFrame(sp, castingLevel(playerEntity), a.id)),   // MENTOR2: a mentor casts at the level they fight at
   });
   setSpireRecovery(() => modes?.egHallBreach?.() ?? null);
   // EG-E3 (Elite-Gates.md section 5, THE DUNGEON'S FIND): an elite foe's death in a dungeon online asks the account service
@@ -26824,8 +26826,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (f && socialLink()?.shareAutomap(f.k, f.r)) _partyMapSender.commit(f, nowMs);
   };
   // SOFTCAP1: the other members' levels off their poses (`cl`; a relay from before world131 strips it), none at all
-  // when I am in no party - ONE HOME for MENTOR MODE's partners and PARTY-LOOT's party level (a room container's base
-  // is minted at the group's reference level, systems/roomLoot.js roomBaseLevel)
+  // when I am in no party - PARTY-LOOT's party level (a room container's base is minted at the group's reference level,
+  // systems/roomLoot.js roomBaseLevel). MENTOR2: mentoring reads the members beside me instead (scenes/mentorHost.js)
   const partyMateLevels = () => (social?.party ? social.others().filter((m) => m.online !== false && Number.isInteger(m.p?.cl)).map((m) => m.p.cl) : []);
   partyPing = createWorldPartyPing({
     now: () => social?.now?.() ?? Date.now(),
@@ -26855,16 +26857,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     author: () => (typeof playerEntity?.name === 'string' ? playerEntity.name : ''),
     mateName: (acct) => social?.party?.members?.find((m) => m.acct === acct)?.name ?? '',
   });
+  // MENTOR2 (bible/06-Systems/Mentor-Mode.md): mentoring beside the party members drawn in my room, steadied
+  const mentorHost = createMentorHost({
+    player: () => playerEntity, social: () => social, near: () => partyNear(),
+    outdoors: () => _mode() === 'exterior', feet: () => player.feetAt?.() ?? player.pos,
+    fighting: () => areEnemiesNearby(enchantFoes()), chat: () => chatLog,
+  });
   const partyFrame = (nowMs) => {
     playerEntity._online = isOnlinePage();   // SOFTCAP3: Master Skills is in force only online (systems/masterSkills.js)
-    // SOFTCAP1: MENTOR MODE follows the party every frame - so leaving the group hands my real character back the same frame.
-    const mentorLevels = partyMateLevels();
-    const mentorWord = refreshMentor(playerEntity, mentorLevels);
-    setFirmamentMentoring(!!playerEntity._mentor);   // AUDIT UICALM-FIRM1 L1 L2: the sky sleeps the frame mentoring starts, and wakes the frame it ends
-    if (mentorWord) {
-      const text = mentorWord === 'on' ? mentorStatusText(playerEntity) : 'Mentoring ended. Your real level, skills, attributes and gear are back.';
-      try { chatLog.push(chatLog.active, { text, system: true }); } catch { /* no chat yet: the sheet says it too */ }
-    }
+    mentorHost.frame(nowMs);   // MENTOR2: the partners beside me, every frame - leaving the party hands my real character back the same frame
     if (!social) return;
     // AUDIT SOC B7: the HUB LINK's clock - its welcome carries the relay's `now` (AUDIT SOC B7, server side), and it is
     // the link whose stamps (last seen, an invite's lapse) the picture reads; the presence session's stands in for a
@@ -33757,11 +33758,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const drawFalling = () => {
       wxEye32[0] = wxEye[0]; wxEye32[1] = wxEye[1]; wxEye32[2] = wxEye[2];   // RAIN-LEAK: filled here, not in the frame - PERF-V8's bytecode ceiling
       const precipShown = enhancedFront ? fx.shown : precipMode;
-      if (precipShown === 'sand') {
-        // WEATHER2d: THE SANDSTORM'S SAND - the wisps' program in the sand's look, the front's intensity its
-        // strength, on the one wind's rate and travel; the rain program never draws it
-        if (sand && !_dwPrecipOff) {
-          sand.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step, gust: wd.gust }, proj, view, wxEye32, now / 1000);
+      if (isDryFall(precipShown)) {
+        // WEATHER2d, ASHFALL1: THE DRY FALLS - the sand and the ash (render/dryFall.js) by the fall's kind, the front's
+        // intensity their strength, the one wind; Travel Options' weather off stands them down as it does the rain
+        if (dryFall && !_dwPrecipOff && (!_travelWeatherOff || tvf)) {
+          dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000, renderer.worldViewportPx?.[3]);
           renderer.markForeignPass();
         }
       } else if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up

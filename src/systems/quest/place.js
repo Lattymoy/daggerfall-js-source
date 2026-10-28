@@ -1269,17 +1269,15 @@ export class Place extends QuestResource {
   }
 
   /**
-   * RPT1026-QUESTS QUEST-ZONE (a private report, a vampire quest's dungeon: it lay near the middle of the Open World,
-   * unmarked on the map as any dungeon, and could not be entered): ONLINE, A DUNGEON THE OPEN
-   * ZONE SEALS IS NO QUEST'S. Every real dungeon inside the Wrothgarian zone is sealed ("The way in is sealed. Only the
-   * halls marked on the map are open today." - scenes/world.js wildDungeonGate; bible/11-Multiplayer/Wild-Zone.md, SPAWNED,
-   * NOT CHOSEN), and its map draws only the day's halls - so a quest whose remote dungeon DFU's draw took there
-   * (SelectRemoteDungeonSite, Place.cs:880-935: any of the region's) could never be done. A departure (Port-Ledger A,
-   * beside KVAR-HOLD): online the draw passes over a map-table row whose pixel is inside the zone's mask (wildZone.js
-   * wildMask - the zone the host stands, Cyrodiil's since WW-C2, every client's alike off the world's own map), and a
-   * saved quest's site there is drawn again at the load's
-   * re-seat (_reseatStoryDungeon). Offline the mountains are Daggerfall's own (the zone is the online lane's) and DFU's
-   * draw stands. Answers the test over a row, or null where nothing is sealed.
+   * RPT1026-QUESTS QUEST-ZONE (a private report: a vampire quest's dungeon lay near the middle of the Open World,
+   * unmarked on the map and sealed): ONLINE, A DUNGEON THE OPEN ZONE SEALS IS NO QUEST'S. Every real dungeon inside the
+   * zone is sealed ("The way in is sealed. Only the halls marked on the map are open today." - scenes/world.js
+   * wildDungeonGate; bible/11-Multiplayer/Wild-Zone.md, SPAWNED, NOT CHOSEN), so a quest whose remote dungeon DFU's draw
+   * took there (SelectRemoteDungeonSite, Place.cs:880-935: any of the region's) could never be done. A departure
+   * (Port-Ledger A, beside KVAR-HOLD): online the draw passes over a map-table row whose pixel is inside the zone's mask
+   * (wildZone.js wildMask - the zone the host stands, Cyrodiil's since WW-C2, alike on every client), and a saved quest's
+   * site there is drawn again at the load's re-seat (_reseatStoryDungeon). Offline DFU's draw stands. Answers the test
+   * over a row, or null where nothing is sealed.
    */
   _zoneSeal(world) {
     if (!this.parentQuest?.hooks?.sharedClock?.()) return null;

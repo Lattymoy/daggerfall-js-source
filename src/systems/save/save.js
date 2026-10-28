@@ -880,6 +880,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     && (arcMirror.path === null || (isPathId(arcMirror.path) && !pathFindings({ arcanePath: arcMirror.path, masteredSkills: snap.masteredSkills }).length));
   if (arcMirrored) { entity.arcanePath = arcMirror.path; entity.pathPrompted = arcMirror.prompted === true; }
   entity._mentor = null;   // SOFTCAP1: recomputed by the party frame, never restored
+  entity._pupil = null;   // MENTOR2: the pupil's side too
+  entity._pupilFrac = null;
   entity.career = snap.career ? { ...snap.career } : entity.career;
   if (snap.career) { delete entity.career.martialMirror; delete entity.career.arcaneMirror; }   // AUDIT MARTIAL L3 F1: a mirror is the save's, never the live career's
   entity.items = snap.items.map((it) => setItemFields(it));   // JAN1: SetItem's two writes on every item in (a copy, as before)

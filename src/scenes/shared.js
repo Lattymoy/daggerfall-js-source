@@ -955,6 +955,10 @@ export function tamrielLandOn(search) {
   return !!getPref('tamrielLand') && (isOnlinePage(search) || isEnhanced(search));
 }
 
+/** TESA-LANDS (bible/03-World/Tamriel-Lands.md): THE LANDS PAST THE BAY'S SWITCH - its home systems/landsSwitch.js (the
+ *  far views read it too, and import no scene). */
+export { tamrielLandsOn } from '../systems/landsSwitch.js';
+
 /** ETHER-SEA (bible/03-World/Eltheric-Ocean.md): THE ELTHERIC OCEAN STANDS - its ground streamed in the world's far box
  *  (world/ethericSea.js), its places, its ships and its way home through the Veil - in every game. AUDIT CAPTAIN'S SEA
  *  G2: a save made past the Veil threw on its load under the classic skin, where the sea did not stand; it stands there

@@ -7028,7 +7028,9 @@ smaller-dungeon law) answer a province's region from `src/scenes/quest/questProv
   PROVINCE_LAIR_COUNT (12) within PROVINCE_LAIR_REACH (66 pixels, a Bay region's span) of the questor, on the pixels where
   the build stands them: no capital, Arena place or countryside place first, the same pixel test as START2's start lairs
   (`scenes/tamrielPlacesHost.js` lairFree). A lair is a pixel's roll, and a province holds thousands; some 250 stand
-  within a Bay region's span, each read a few milliseconds. So a table reads at most PROVINCE_LAIR_ROLLS (16) cells,
+  within a Bay region's span, each read a few milliseconds.
+
+  So a table reads at most PROVINCE_LAIR_ROLLS (16) cells,
   nearest first, kept or not, and a cell once read is kept. **The coordinator's bound:** the first table at a pixel had
   been about 1.8 s in one main-thread task when a player asked for work. It is now bounded by count, and the bound is
   pinned. (16 lairs and 40 first rolls at R2-5; R2-5d made the bound the pixel's alone; R2-5e set it beside the
@@ -7073,7 +7075,9 @@ gaps."* At first the city was left out. Its 625 slices are 625 locations under f
 **A CAPITAL IS ONE TOWN: THE CENTRE'S LOCAL SITES (R2-5c).** The same owner's word. A questor in a capital slice with no
 building of the asked kind - the Imperial City's centre, the White-Gold Tower's grounds, holds none at all - threw at a
 `local` site ("Could not find local site ... in Cyrodiil/Imperial City"): a Mages Guild or a commoner standing there had
-no work. The city is one town (WW7-11 capitalStreet), so a local site the questor's slice cannot give is taken in the
+no work.
+
+The city is one town (WW7-11 capitalStreet), so a local site the questor's slice cannot give is taken in the
 city's nearest slice that can (`src/systems/quest/place.js:"_citySites(world, location, p2, p3) {"` over
 `capitalSlicesNear`: the capital's other slices nearest first, a tie by slice index - the same on every client - the
 slices no site stands in left out, each stood only as the search reaches it), by SetupLocalSite's own search there (its
@@ -7187,7 +7191,9 @@ cells unread; 83 s with them made by the scene's door (5,507 cells over 80 slice
 but each index laid out; 0.45-1.0 s with the fabric's index baked, by the machine's load. The centre's N0B20Y02: 1.0 s
 unread, 6.9 s made, 0.5 s now; A0C00Y06: 0.33 s unread, 0.4 s now (measured, not pinned). The draw changes where the fabric holds the building - the
 centre's local Mages Guild hall in the fabric's, nearer than a Daggerfall block's - and is every client's: the records
-are the plan's and the interiors BLOCKS.BSA's. Pinned by `test/systems/quest/questfabric.test.js` (the view equal to the
+are the plan's and the interiors BLOCKS.BSA's.
+
+Pinned by `test/systems/quest/questfabric.test.js` (the view equal to the
 made block on everything a quest reads, for a spread of the plan's cells; the baked table the plan's on a spread of
 slices, the donors' marks BLOCKS.BSA's with ARENA2), `test/systems/quest/auditrelease_r25f.test.js` (a fabric tavern the
 centre's local tavern, its donor's marker, no cell made; a slice's index the walk's own kinds, no own cell read for it)

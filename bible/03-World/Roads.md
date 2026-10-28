@@ -929,6 +929,7 @@ TESA14 (2026-10-24, `Arena-Provinces.md` TESA14): the layer is this
 builder run at the Bay's own scale, a region of 1000 x 500 pixels at a
 time (`world/tamrielRoads.js`), over every place past the Bay - the
 countryside's and the lairs' with Arena's and the capitals' gates.
+
 Two arguments are the builder's new ones, the Bay's build untouched:
 `owns` (whose nodes a region routes: an edge its first end's, a bridge
 either end's, a track its node's) and `obstacles` (pixels no route
@@ -1112,7 +1113,9 @@ repository, and nothing is traced or rendered from it. What it gave is the table
   lake; a bearing that meets none (the lake's open side) takes the radius between its nearest neighbours' that do, each
   by the other's share of the turn; with no water about the city at all, the span's half and RING_GAP. Snapped to land,
   joined point to point round (closed over a bearing with no land in reach); each of the city's gates to its nearest
-  point. On today's ground the lake is the ring of water round the city (IC-RING's "circle river type landmark") some
+  point.
+
+  On today's ground the lake is the ring of water round the city (IC-RING's "circle river type landmark") some
   36 to 56 pixels out, open on the south, and the Red Ring Road runs between the city and it - where the first cut
   looked for the lake's far shore within 40 pixels, found it on no northern bearing (the lake is 30 pixels and more
   across) and drew a ring at the city's walls, broken on the north. The span and the gates are the city plan's own, read through its exports
@@ -1277,6 +1280,7 @@ day: "No band aids or half assed work".
   water and a bank each side, 25.6 m; a ford at or under it, as Basic Roads crosses every river of the Bay. A road's bridge
   is stone, 12.8 m wide (the road's two tiles), its arches no wider than 26 m between 2.4 m piers, its crown 4.5 m over the
   water, a 1.1 m parapet. A track's is timber, 4.8 m wide, on trestles 6 m apart, 2.5 m over the water, with two rails.
+
   Its length over the water is the width over the sine of the angle the road meets it at (never under 0.35); its ramps
   come down to the river's level a metre in eight. The river's level is the valley's floor at its banks (CYRODIIL-WATERS'
   carve lays the land beside a channel at it), so each end meets the road on its own ground.

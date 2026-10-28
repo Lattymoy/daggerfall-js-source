@@ -425,10 +425,12 @@ of each berth and of her approach's hull), every KEEP_STEP (2 m) over her:
 - HER WATERPLANE FLOATS (the world's `ground` - `surfaceAt` less `tvSeaY`, the depth `navalIsWater` reads): the ground
   under her length, her beam drawn in to the stem over BOW_TAPER (0.3 of her length) and to the stern over STERN_TAPER
   (0.12), stands no more than BERTH_DRY_M (0.1 m) over the sea's top.
+
 After it every berth of the 135 ports stands, and every port keeps as many berths as it had (the 29 past the Bay six
 each). Solitude's ships lie at its docks: five off the quay below its north wall, one of them between the two piers, and
 the sixth off the gardens outside its east wall. The quays, the Docks' place, the moored ships and the ones coming in
 read the same berths; under Deep Waters (on by default) the floor is her draft under the sea, so the ground asks no less.
+
 Two things it leaves: a berth refused beside a lifted bank is not stood farther out (on the freeware no port lost one by
 it), and a ship under way is not kept off a pier or a wall (the keep is the berth's; her ways are the water grid's).
 `test/systems/naval/portships.test.js` (the laws on shapes of the port's own, each capital's keep and a walled town's, the
@@ -474,14 +476,13 @@ Pin moved: `auditcaptsea.test.js` H1/P2 (the sounding's text names its shape). T
 `world.js` sounds a harbour.
 
 **A HARBOUR ON A WAY OUT** (SHIP AUDIT, 2026-10-27, `01-Overview/audits/Audit-Ship-Ready.md` S2). Lillandril had no ships
-once RELIEF-PEAKS raised the land past the Bay (`03-World/Tamriel.md` RELIEF-PEAKS) and its place stood a pixel west: the
-berths nearest the town's middle lay in a closed inlet along its east side, the mean of their shores' normals ran into the
-land past the inlet, no mouth stood within MOUTH_REACH, and `findHarbour` answered none - the open sea past the town's
-west side never sounded. Now, where the nearest berths find no mouth, the berths are taken again from the shores whose own
-way out - along her shore's normal, on the water alone - meets open water (`shipLife.js` findHarbour's `openOut`, `wet`).
-A harbour that found its mouth is never sounded again, so every port's berths stand as they did (the Bay's 106 among them).
-On the freeware every port past the Bay six berths again, every one standing (`portships_real.test.js`). Pinned by
-`test/systems/naval/harbour_inlet.test.js`; `tools/mutants/harbour_inlet.json` (3, dead). PIN MOVED: PORT-SHIPS'
+once RELIEF-PEAKS (`03-World/Tamriel.md`) moved its place a pixel west: the berths nearest the town lay in a closed inlet
+along its east side, no mouth stood within MOUTH_REACH, and `findHarbour` answered none. Now, where the nearest berths
+find no mouth, they are taken again from the shores whose own way out - along the shore's normal, on the water alone -
+meets open water (`shipLife.js` findHarbour's `openOut`, `wet`). A harbour that found its mouth is never sounded again,
+so the Bay's 106 stand as they did; every port past the Bay has its six berths again (`portships_real.test.js`).
+
+Pinned by `test/systems/naval/harbour_inlet.test.js`; `tools/mutants/harbour_inlet.json` (3, dead). PIN MOVED: PORT-SHIPS'
 water-alone baseline (`portships_real.test.js`) - RELIEF-PEAKS' ground moved the banks: Sunhold's and Woodhearth's over
 the sea now, Windhelm's, Winterhold's, Shimmerene's and Skywatch's under it.
 

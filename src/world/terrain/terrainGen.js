@@ -26,7 +26,7 @@ import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMAR
 import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
-import { layoutNature } from './terrainNature.js';
+import { layoutNature, layoutLandProps } from './terrainNature.js';
 import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
 import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
 import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
@@ -37,6 +37,7 @@ import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD
 import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
 import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
+import { landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: the zones' own flats past the Bay
 import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 
 /**
@@ -59,10 +60,8 @@ import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOO
  * @param {?{picks:Array<{flatten:boolean, rect:object}>}} [job.wod] -
  *   WOD2: the World of Daggerfall instances the main thread's
  *   pickLocations placed on this pixel, in order; null with the mod off.
- * @param {?{archive:number, hidden:boolean}} [job.forests] - FOREST1: the
- *   Real forests switch (null off, DFU's scatter): the climate's summer
- *   nature archive, and whether the pixel's location is a place the woods
- *   hide (a dungeon, a shrine) rather than one they draw back from (a town).
+ * @param {?{archive:number, hidden:boolean}} [job.forests] - FOREST1: the Real forests switch (null off, DFU's scatter): the
+ *   climate's summer nature archive, and whether the pixel's location is a place the woods hide (a dungeon, a shrine).
  * @param {boolean} [job.landform] - LANDFORM1-3: the Landforms row (off,
  *   DFU's kernel): the relief, and the paths cut into the land with this
  *   kernel's own network - its rivers where they are painted.
@@ -86,12 +85,13 @@ import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOO
  *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
  *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
  *   too, where its canal stands; `seaEdges` its sides shared with its sea slice; `relief` (SOLITUDE-RELIEF) capitalRelief.js's key.
+ * @param {?{blend?: boolean, archive?: number, hidden?: boolean}} [job.lands] - TESA-LANDS: the lands' row (null off) - a zone's flats past the Bay, `blend` the Blended climates row, `archive` the climate's nature archive, `hidden` a place the woods close round
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array,
- *   roadside: Array<any>, graht: ?Float32Array}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs);
- *   `graht` GRAHT1's graht-oaks (world/jungle/grahtOaks.js grahtSites, GRAHT_TREE_FLOATS a tree - empty where none stands)
+ *   roadside: Array<any>, graht: ?Float32Array, landProps: Float32Array}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs);
+ *   `graht` GRAHT1's graht-oaks (world/jungle/grahtOaks.js grahtSites, GRAHT_TREE_FLOATS a tree); `landProps` TESA-LANDS' landmarks (landProps.js landSites)
  */
 /** TESA11: the averages a city over several pixels is flattened to, by its centre pixel and whether the ground is shaped -
  *  kept while the kernel's inputs are the same (its woods, its network, its sites, its climates). */
@@ -111,7 +111,7 @@ function flattenAverage(inputs, landforms, at, own) {
   return out;
 }
 
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null, lands = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
@@ -235,6 +235,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // mask, which a forest keeps off (AUDIT FOREST1 F8).
     forests: forests ? { archive: forests.archive, pois: placesFor(forests.hidden), paths } : null,
     ecotone,   // ECOTONE1: the neighbours' climates - a border's tiles laid by the climate the ground's border gives them
+    // TESA-LANDS: past the Bay, the 3x3 of zones' lands (a zone's recipe lays its flats; its border blends with the row),
+    // its places and the road painter's tracks, as FOREST1's are; on the Bay none
+    lands: lands && !inBay(px, py) ? { nine: landsNine(px, py), blend: !!lands.blend, archive: lands.archive, pois: placesFor(lands.hidden), paths } : null,
     // AUDIT LANDFORMS II H2: and its beach line asked of DFU's own blend, as the tiles' is (D3) - on the shaped blend a
     // road's bed or a river's channel moved a coastal town's mean, and the line moved with it at 85 tiles in 43 of the
     // 351 coastal location pixels (a tree there, none here; the scatter's records reshuffled after each). The flats
@@ -246,10 +249,14 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // layout of its own - every flat of it would be dropped
   const { flats: nature, pairs: roadside, graht } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
     { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths, net: roads, canopy: jungle.canopy ?? null } : null });   // JUNGLE-ROADSIDE: and the network, its pairs astride the roads; GRAHT1: and the canopy's field, its graht-oaks
+  // TESA-LANDS: past the Bay the zones' landmarks (world/lands/landProps.js) - the pixel's build keeps its flats off the
+  // feet of those it stands (scenes/pixelBuild.js: a landmark the gate's clearing or a rock drops leaves its ground's own)
+  const landProps = natureOpts.lands ? layoutLandProps(samples, tilemap, natureOpts) : new Float32Array(0);
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
     roadside,   // JUNGLE-ROADSIDE: the jungle's roadside pairs (jungleLayout's), beside the flats - [] where none stands
     graht,   // GRAHT1: Valenwood's graht-oaks (jungleLayout's), beside the flats - empty where none stands
+    landProps,   // TESA-LANDS: the lands' landmarks (world/lands/landProps.js, LAND_PROP_FLOATS each) - empty where none stands
     // ROADS 25: whether a network was PRESENT when this pixel was painted.
     // The network loads asynchronously and the world starts building at
     // once, so the first pixels can be painted with none - and were then

@@ -78,7 +78,7 @@ coldest day.
 | The Wrothgarians past the Bay | 1130,-92 | highRockWrothgar | 1,472 m | 1,300 m | 1% / 39% |
 | The Wrothgarian Mountains (the Bay's north) | 951,3 | the Bay's Mountain | 1,739 m | 1,350 m | (the Bay's Mountain) 2% / 13% |
 | The Dragontail Mountains (the Bay's south) | 964,442 | the Bay's Mountain | 2,542 m | 1,850 m | |
-| Red Mountain | 3051,-51 | morrowindRedMountain | 2,343 m | none - its ash is warm | 0% |
+| Red Mountain | 3049,-51 | morrowindRedMountain | 7,333 m (RED-MOUNTAIN, `Red-Mountain.md`: its cone on the merged land; 2,343 m the relief's swell before it) | none - its ash is warm, and its line rides its cone | 0% |
 | Eton Nir | 377,1375 | summersetVineCoast | 1,968 m | none (summersetEtonNir 1,850 m) | 0% / 3% |
 | The Alik'r, Elsweyr, Valenwood, Black Marsh | | | | none | 0% |
 
@@ -138,10 +138,10 @@ deliberately, each re-derived and said why.
 - **RELIEF-PEAKS (2026-10-27, `Tamriel.md`) stands the ranges past the Bay already.** KPbICA saw no mountains past the
   Bay: the large map there was a swell (a third of the height left out) and the relief has nothing under its 6.3 km
   grain. `world/tamriel/tamrielRanges.js` lays a ridged field under BREATHTAKER3's landforms past the Bay's seam (its
-  swing from nothing at 1,000 m to 1,250 m from 2,300 m), and Red Mountain's cone at its relief's summit; and the
+  swing from nothing at 1,000 m to 1,250 m from 2,300 m), and its Red Mountain cone retired for RED-MOUNTAIN's; and the
   oriented frames this module reads (`orient`) now ease into a fixed frame where the direction is weak - a unit
   direction at every node stood walls of 80 to 116 m at summits and saddles. So when PEAKS2 is wired, past the Bay it
   stands either on RELIEF-PEAKS' ranges (its 375 m relief riding them) or in their place, never both at full; and it
   reads the frames by their strength as `tamrielLandformAt` does. On the Bay nothing of RELIEF-PEAKS stands.
 - **The heights above moved past the Bay** (RELIEF-PEAKS): Skyrim's summit, the Jerall and the Reach's shoulder stand
-  their ranges' crests now, Red Mountain 3,332 m. PEAKS1's caps are by height, so they follow.
+  their ranges' crests now, Red Mountain the volcano's. PEAKS1's caps are by height, so they follow.

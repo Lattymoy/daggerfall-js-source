@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-27 - AUDIT RED-MOUNTAIN.** The owner: *"Audit this"*, of RED-MOUNTAIN and GHOSTFENCE, the volcano at
+Vvardenfell's heart and the Tribunal's fence round it. Five cold lanes on a frozen head (`774fbff133`), each reproducing
+every finding with a node probe on the real code. Paid: a body walked through the fence at 22 runs (its solid one flat
+quad a run over gullies); from a far eye the lake showed through the summit; snow lay white on the volcano in winter;
+42 spawned dungeons stood on the fence's line, and the route planner walked straight across it; the flats painted over
+the glow. The owner's call: one Red Mountain, this change's; RELIEF-PEAKS's cone retired at the merge. 51 mutants, all
+dead. Record: `audits/Audit-Red-Mountain.md` (AUDIT RED-MOUNTAIN).
+
 **2026-10-26 - AUDIT PVP-EASE.** The owner: *"Can we audit this"*, of PVP-EASE, the open PvP overhaul, the day it was
 written. Four cold lanes on a frozen worktree, each reproducing every finding with a probe on the real code; 21 reported,
 16 defects, all fixed. Paid: a cell crossed and a room woken from its sleep granted a fresh minute of safe passage (the
@@ -74,6 +82,7 @@ and spent before the bosses; constructs' health read off who posed last; Sentrie
 post and never firing when chased; twenty minutes after she weighs anchor shorter than a voyage, and a fight lost before a
 solo could climb back. 26 fixed and pinned red, each with a mutant (33, all dead); two left with their reasons; the solo's
 pace the owner's to set. Relay world266. Record: `audits/Audit-Ketch-II.md` (AUDIT KETCH II).
+
 **2026-10-25 - AUDIT FB-FEEDBACK-1024 (AIM-ENDS, FERRY-CLEAR, DECOR-USE, PERK-TRIAL).** The owner: *"Audit"*, of the
 branch's four slices for the Discord's feature-feedback (2026-10-24). Four cold lanes on a frozen snapshot, each given the
 ask and the files and never the record's conclusions; each lane built its own harness over the real code (the naval

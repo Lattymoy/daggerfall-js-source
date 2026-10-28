@@ -11944,6 +11944,16 @@
   "tr": "7d357d320e9d",
   "by": "claude-in-session"
  },
+ "features.tamrielLands.note": {
+  "en": "dc37f2698218",
+  "tr": "a11ff150acce",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLands.title": {
+  "en": "1e8a962cf274",
+  "tr": "bff29cdd91f4",
+  "by": "claude-in-session"
+ },
  "features.torchesFromItems.effect": {
   "en": "a0b8a416cb32",
   "tr": "fb9fcb88a73d",
@@ -12940,8 +12950,8 @@
   "by": "claude-in-session"
  },
  "firmament.side.where": {
-  "en": "bf32d001f38f",
-  "tr": "d328bf0c6d75",
+  "en": "78767f723191",
+  "tr": "95e530eebc25",
   "by": "claude-in-session"
  },
  "firmament.signAria": {
@@ -12965,8 +12975,8 @@
   "by": "claude-in-session"
  },
  "firmament.status.mentoring": {
-  "en": "2f8dd90411c0",
-  "tr": "37b16edc96ee",
+  "en": "623667af1925",
+  "tr": "934a79504a9f",
   "by": "claude-in-session"
  },
  "firmament.status.noSign": {
@@ -13144,6 +13154,11 @@
   "tr": "16925b460047",
   "by": "claude-in-session"
  },
+ "forecast.turn.ashfall": {
+  "en": "5961a1411167",
+  "tr": "8ddf2e5f65b6",
+  "by": "claude-in-session"
+ },
  "forecast.turn.fog": {
   "en": "dfebbda7af18",
   "tr": "1e055797f3ee",
@@ -13167,6 +13182,11 @@
  "forecast.turn.thunder": {
   "en": "f35ce8f01a65",
   "tr": "dd563189d3ad",
+  "by": "claude-in-session"
+ },
+ "forecast.word.ashfall": {
+  "en": "71656606aa5c",
+  "tr": "db903721b1b7",
   "by": "claude-in-session"
  },
  "forecast.word.fog": {
@@ -14085,8 +14105,8 @@
   "by": "claude-in-session"
  },
  "growth.spec.why.chosenMentor": {
-  "en": "a163a99d1ebc",
-  "tr": "e3a942f07868",
+  "en": "54129619c117",
+  "tr": "e2e8b3eb546b",
   "by": "claude-in-session"
  },
  "growth.spec.why.chosenOff": {
@@ -17977,6 +17997,46 @@
  "martial.woodsman.techniqueText": {
   "en": "ccc0d1aa2f76",
   "tr": "4ca72f59e040",
+  "by": "claude-in-session"
+ },
+ "mentor.ended": {
+  "en": "f1e2a03439db",
+  "tr": "c61513bc698b",
+  "by": "claude-in-session"
+ },
+ "mentor.levelShort": {
+  "en": "eadbef99ca42",
+  "tr": "a8c4b512e160",
+  "by": "claude-in-session"
+ },
+ "mentor.status.off": {
+  "en": "fadc74fd6acd",
+  "tr": "fd4cc0a2a7b3",
+  "by": "claude-in-session"
+ },
+ "mentor.status.on": {
+  "en": "9392c61967d3",
+  "tr": "e6f893de9490",
+  "by": "claude-in-session"
+ },
+ "mentor.status.pupil": {
+  "en": "fbdfccbc8568",
+  "tr": "8b4a0c97ddcb",
+  "by": "claude-in-session"
+ },
+ "mentor.tile.mentor": {
+  "en": "a197cb2d60ed",
+  "tr": "d41a25e62a6c",
+  "by": "claude-in-session"
+ },
+ "mentor.tile.pupil": {
+  "en": "619532ac17ff",
+  "tr": "ec05605ca5a5",
+  "by": "claude-in-session"
+ },
+ "mentor.tip.meta": {
+  "en": "8f8364feecd7",
+  "tr": "2cd9eb4201c8",
   "by": "claude-in-session"
  },
  "menu.about.build": {

@@ -493,7 +493,8 @@ test('PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in 
   assert.equal(peerInEventPlace([10, 0, 10], null, world, me), true, 'an area: my pixel');
   assert.equal(peerInEventPlace([10 + 1e6, 0, 10], null, world, me), false, 'another pixel');
   assert.equal(peerInEventPlace(null, null, world, me), false);
-  assert.ok(rd('src/scenes/world.js').includes('.filter((p) => raidPeerInPlace(p.feet, _musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map('), 'the host asks it');
+  // PIN MOVED (the fifth merge of main into #1184): the raid host is scenes/raidHost.js (#1184's HOST-SPLIT) - `_musicLoc` read live
+  assert.ok(rd('src/scenes/raidHost.js').includes('.filter((p) => raidPeerInPlace(p.feet, host._musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map('), 'the host asks it');
 });
 
 test('PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a leader with no spot about one player goes to the next after STAFF_PACK_LEADER_TRIES - the packs never stall on one', async () => {

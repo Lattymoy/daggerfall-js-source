@@ -387,6 +387,7 @@ pixel-local on the floating origin's provider
 and asked nothing of the body: a neighbour's rock filed round a body standing in its own built pixel held it by its inner
 faces (the collider holds both). The same for any of the pixel's solids round a body that outran the stream - a journey's
 since MOUNTAINS WALKABLE (`11-Multiplayer/Wild-Zone.md` section 19) crosses massifs, and its pixels ahead build as it walks.
+
 UNSTUCK-OUT left this open by name ("a body a neighbour pixel's rocks are built round after it stands is not ejected on
 its own"); the owner, 2026-10-19: "Apply to rocks too". World of Daggerfall, the Daggerfall Unity mod, stands the same
 objects as each terrain promotes (LocationLoader.AddLocation's object loop, `LocationLoader.cs:232-252`, a MeshCollider each

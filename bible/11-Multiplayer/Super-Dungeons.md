@@ -130,7 +130,9 @@ opt-in is needed (this page first planned one, `sdv`; SD3 found it unneeded).
 **The census (relay).** (WW5: a lane asks its own regions alone - a province's Hollow its province's room; section 16,
 WW5.) When a Hollow is due to rise, the hub asks each of the 62 region rooms (`chat:region.0..61`)
 through `/internal/sd/census`, each call bounded by `ROOM_CALL_MS`. A region room answers the number of DISTINCT
-verified, linked accounts among its sockets (a guest is not counted - one click makes a guest). The hub takes the
+verified, linked accounts among its sockets (a guest is not counted - one click makes a guest).
+
+The hub takes the
 region with the most, at least `SD_CENSUS_MIN` (2); ties are broken by the slot's hash, and the region the last Hollow
 rose in is skipped when another qualifies (the gate's bag seam rule, so one crowd does not keep every Hollow). With no
 region at the minimum, `r = -1`. A region with no town to rise by is never chosen, however full (SD-SEA,

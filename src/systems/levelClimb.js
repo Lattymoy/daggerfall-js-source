@@ -1,13 +1,12 @@
 // @ts-check
 // LEVEL-45 online (2026-10-27, mob: "need to always be 45", "everyone is converting"; Port-Ledger A LEVEL-45).
 // Daggerfall's 15 a level gave a low roll its last level early and a high one late. Online the climb from the start to
-// the six-skill top (840) is shared out, so every start reaches 45 on its last point:
-//     level = floor((28 + 647 * climbed / (840 - start)) / 15)        647 = 45 x 15 - 28
+// the six-skill top (800) is shared out, so every start reaches 45 on its last point:
+//     level = floor((28 + 647 * climbed / (800 - start)) / 15)        647 = 45 x 15 - 28
 // A DEPARTURE from FormulaHelper.CalculatePlayerLevel. levelCap.js is the cap's leaf and offline's law; this reads it.
 // onlineLevelConvert reads every realm character's level again at its join - the one place a level comes down.
 
 import { EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from './skillSoftcap.js';
-import { MASTERY_SLOTS } from './masterSkills.js';
 import { PRIMARY_SKILL_MIN, MAJOR_SKILL_MIN, MINOR_SKILL_MIN, BONUS_POOL_PER_SKILL_GROUP } from './chargen.js';
 import { levelUpSkillSum } from './skills.js';
 import { evenHpFloor } from './levelEven.js';
@@ -15,14 +14,9 @@ import { LEVEL_CAP } from './levelCap.js';
 
 /** LEVEL-45: the highest level an online character reaches - the cap's own (levelCap.js). */
 export const ONLINE_LEVEL_CAP = LEVEL_CAP;
-/** The skills each group counts in the sum (skills.js levelUpSkillSum: the three primaries, the two best majors, the best minor). */
-const COUNTED = Object.freeze({ primary: 3, major: 2, minor: 1 });
-/** The six-skill sum's top online: each counted skill a mastery can take at the hard cap's effective value, any other
- *  at 100 (840 at MASTER-THREE's 3 / 2 / 1). */
-export const LEVEL_SUM_TOP = /** @type {const} */ (['primary', 'major', 'minor']).reduce((sum, g) => {
-  const mastered = Math.min(MASTERY_SLOTS[g], COUNTED[g]);
-  return sum + mastered * EFFECTIVE_SKILL_MAX + (COUNTED[g] - mastered) * SKILL_SOFT_CAP;
-}, 0);
+/** The six-skill sum's top online: five masteries at the hard cap's effective value and the sixth skill at 100 (800).
+ *  LEVEL-TOP (mob: "dont count the 6th mastery"): MASTER-THREE's sixth slot climbs the skill, never the level. */
+export const LEVEL_SUM_TOP = 5 * EFFECTIVE_SKILL_MAX + SKILL_SOFT_CAP;
 /** Daggerfall's head start and divisor (advancement.js calculatePlayerLevel's 28 and 15). */
 const HEAD_START = 28, PER_LEVEL = 15;
 /** The share of the climb a character spreads over the levels after the head start (647). */
@@ -53,6 +47,23 @@ export function onlineLevelFraction(startingSum, currentSum) {
   if (!(room > 0)) return 1;
   const exact = (HEAD_START + (CLIMB_SHARE * Math.min(currentSum - startingSum, room)) / room) / PER_LEVEL;
   return exact >= ONLINE_LEVEL_CAP ? 1 : exact - Math.floor(exact);
+}
+
+/** The climbed points at which level `level` begins (0 for level 1): the least `climbed` onlineLevelFor gives it at. */
+const levelStart = (level, room) => Math.max(0, Math.ceil(((PER_LEVEL * level - HEAD_START) * room) / CLIMB_SHARE));
+
+/** LEVEL-BAR (2026-10-27, mob: "800/45", "yessss"): the level bar in skill points - `now` of the `max` this level takes
+ *  (about 16 at an average start). The level the sums earn; at the cap the bar is full. */
+export function onlineLevelPoints(startingSum, currentSum) {
+  const room = LEVEL_SUM_TOP - startingSum;
+  const level = onlineLevelFor(startingSum, currentSum);
+  if (!(room > 0) || level >= ONLINE_LEVEL_CAP) {
+    const max = room > 0 ? levelStart(ONLINE_LEVEL_CAP, room) - levelStart(ONLINE_LEVEL_CAP - 1, room) : 1;
+    return { now: max, max };
+  }
+  const climbed = Math.max(0, Math.min(currentSum - startingSum, room));
+  const from = levelStart(level, room);
+  return { now: climbed - from, max: levelStart(level + 1, room) - from };
 }
 
 /**

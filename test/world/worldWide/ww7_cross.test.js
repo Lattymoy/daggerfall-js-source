@@ -246,13 +246,19 @@ test('WW7-9 THE WINDOW PLANNER ACROSS THE EDGE: a pair across reads its Bay pixe
   const noJoin = edgeField({ join: false });
   const bare = createBeyondWays({ layer: () => noJoin.layer, dry: () => true, bay: () => ({ roads: noJoin.bayRoads, tracks: noJoin.bayTracks, isWater: () => false }), tilesPerFrame: 1e6 }).plan({ x: 500, y: 40 }, { x: 500, y: -40 }, true);
   assert.ok(bare && bare.kinds.includes('open'), 'no join: the edge walked on the open ground');
-  // the Bay's track walked; and its water: a band of it across the road the way goes round
+  // the Bay's track walked; and its water: a band of it across the track the way goes round. PIN MOVED (main's RPT1026-WORLD
+  // CAUSEWAY, travel/travelRoute.js pavedStep, at the fourth merge): the band once lay across the road, and a road over the
+  // water is the road's now (his painter paves it) - a track is not (a ford), so the band lies across the track, and the
+  // road's own crossing of it is walked, the window carrying the road's bytes the law reads
   const t = bw.plan({ x: 600, y: 40 }, { x: 600, y: -40 }, true);
   assert.ok(t && t.kinds.includes('track') && t.kinds.includes('road'), 'the Bay\'s track walked, then its road');
-  const band = (x, y) => y === 20 && x >= 470 && x <= 530;
-  const round = createBeyondWays({ layer: () => f.layer, dry: () => true, bay: () => ({ roads: f.bayRoads, tracks: f.bayTracks, isWater: band }), tilesPerFrame: 1e6 }).plan({ x: 500, y: 40 }, { x: 500, y: -40 }, true);
+  const band = (x, y) => y === 30 && x >= 570 && x <= 630;
+  const round = createBeyondWays({ layer: () => f.layer, dry: () => true, bay: () => ({ roads: f.bayRoads, tracks: f.bayTracks, isWater: band }), tilesPerFrame: 1e6 }).plan({ x: 600, y: 40 }, { x: 600, y: -40 }, true);
   assert.ok(round && !round.pixels.some((p) => band(p.x, p.y)), 'the Bay\'s water never stepped on');
-  assert.ok(round.pixels.some((p) => p.y === 20 && (p.x < 470 || p.x > 530)), 'round the band');
+  assert.ok(round.pixels.some((p) => p.y === 30 && (p.x < 570 || p.x > 630)), 'round the band');
+  const causeway = (x, y) => y === 20 && x >= 470 && x <= 530;
+  const paved = createBeyondWays({ layer: () => f.layer, dry: () => true, bay: () => ({ roads: f.bayRoads, tracks: f.bayTracks, isWater: causeway }), tilesPerFrame: 1e6 }).plan({ x: 500, y: 40 }, { x: 500, y: -40 }, true);
+  assert.ok(paved && paved.pixels.some((p) => p.x === 500 && p.y === 20) && paved.kinds.every((k) => k === 'road'), 'the road over the water walked, as on the Bay (CAUSEWAY)');
   // a pair past the Bay round a wall of water by the edge: never through the Bay, though its tiles were read across
   bw.plan({ x: 700, y: 30 }, { x: 700, y: -10 }, true);
   const past = bw.plan({ x: 690, y: -5 }, { x: 710, y: -5 });

@@ -123,7 +123,8 @@ test('GROUND-AGREE by source: the pixel build shapes its ground - the blend, the
   assert.match(w, /if \(groundLocation\) locationRect = setLocationTiles\(groundLocation, maps, blocks, seedTilemap\);/, 'the rect and the tiles');
   assert.equal(w.match(/hasLocation: !!groundLocation/g)?.length, 2, 'World of Daggerfall\'s pick and the kernel\'s blend');
   assert.doesNotMatch(w, /hasLocation: !!dfLocation/, 'nothing shapes ground by what stands alone');
-  assert.equal(w.match(/FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\)/g)?.length, 2, 'the woods\' and the jungle\'s clearings');
+  // PIN MOVED (TESA-LANDS): and the lands' past the Bay - a zone's own flats close round the same places
+  assert.equal(w.match(/FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\)/g)?.length, 3, 'the woods\', the jungle\'s and the lands\' clearings');
   assert.match(w, /location: dfLocation \? dfLocation\.name : null,/, 'what stands is still the clocks\' (tvSpawnGone reads it)');
   assert.match(w, /const spawnGroundPlace = createSpawnGroundPlace\(\{/, 'the host makes the law once');
   assert.match(w, /_livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway,/, 'and hands the build its ground\'s place');
