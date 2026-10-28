@@ -3835,7 +3835,8 @@ Imperial City to Bruma 5,086 to 20,095) - PLAN-SLICES' cells a frame, the same p
   main's RPT1026-WORLD CAUSEWAY), never a track's ford; roadEndsSteps' crossing of a gap walks no water pixel.
 - **OPEN**: a turn the painter draws no curve for (VOYAGER2's junction law pairs only turns of 45 degrees or less) is
   walked through the middle, as the lane walked it - off the paint by up to half the road's width at a sharp junction
-  turn. Woodhearth's road grazes two pieces of its wall (`03-World/Town-Shapes.md` ROAD-FOLLOW).
+  turn (ROAD-SMOOTH, below, measured it: up to 10 tiles, at 9% of the turning pixels past the Bay - the painter's to
+  close). Woodhearth's road grazes two pieces of its wall (`03-World/Town-Shapes.md` ROAD-FOLLOW).
 - Pins `test/systems/travel/road_follow.test.js` (6), `test/systems/travel/tv2_click_to_move.test.js` (ROAD-FOLLOW route,
   and the U's hop PIN MOVED), `test/systems/travel/road_beyond.test.js` (PIN MOVED: the dials - BY_ROAD_REACH gone,
   ROAD_END_SLACK and ROAD_PIECE_CAP; the road round the field kept, not the ladder's cut; the roads' own search crossing a
@@ -3873,3 +3874,79 @@ not; on the player's data a village of Skyrim's grid and edge with nothing found
 `tools/mutants/owbeyondknown.json` (5, all dead). PINS MOVED: `test/scenes/bayleft_places.test.js` (the found law a lair's;
 the real village, Solitude's centre and hamlet known by their kinds), `test/audit_tesa.test.js` (A2-3's source); records
 re-aimed by content: `bayleftmaps.json` (5), `audittesa.json` (1), all dead.
+
+## ROAD-SMOOTH - a road journey walked smoothly on its curves, with no stop at a leg (2026-10-28, the owner)
+
+The owner, after the Tamriel update: *"Road pathfinding is still very lanky"* - janky - and no more said. Finding it was
+ours.
+
+**Measured first** (`tools/roadWalkProbe.mjs`, the freeware): the roads past the Bay laid as the roads' worker lays them,
+every region with land (272,967 road and 568,822 track pixels); the Bay's arrays; the host's route ground; seed 7's
+journeys - 30 past the Bay, 25 on the Bay and 28 from the Bay past it with a way by land, and five named (the Imperial
+City to Bruma, Kvatch to Leyawiin, Whiterun to Riften, Skingrad to Bravil, Mournhold to Tear). Each was walked by the real
+Travel Options through its own `update`, a body flown 433 units a frame (a hundred times walking pace at 60 frames a
+second) and 1,300 (a slow frame). The plan was sound: its cost within 0.15% of the roads' cheapest on average (1.8% at
+the worst), and no open step past the Bay between two ends on the roads. The walk was not.
+
+- **A CUT EVERY 120 METRES.** ROAD-FOLLOW walks a painted curve as its 32 runs, and the lane cut the force to land on
+  every run's end - AUDIT OW-REVISITED L2-4's law, made for a corner: 8.45 cut frames a km past the Bay against the
+  Bay's 0.09, the pace 0.958 of a whole walk's (0.870 at a slow frame).
+- **THE HEADING SWUNG BACK AND FORTH.** The look ahead was three of the last frame's steps, so a cut step shortened the
+  next look and turned the aim back: 6.09 reversals of the heading a km past the Bay where the Bay has 0.24, the walk
+  turning 22.8 degrees a km where the road turns 15.8 (31.0 at a slow frame).
+- **A FRAME STOOD AT EVERY LEG.** A leg's arrival drives nothing (the host walks no step on it), and past the Bay every
+  bend is a leg: 0.31 frames stood a km. Each new leg forgot the body's step, so its first frame looked a path's width
+  ahead - a jerk at every leg.
+- **A ROAD ONTO A TRACK AT A BEND** walked the pixel's middle, off both: 78 of the 153 such pixels in the journeys had
+  one of the two painted through both edges, up to 24 tiles off.
+
+**What holds now** (`systems/travel/travelAutopilot.js`, `systems/travel/travelOptions.js`, `systems/travel/roadLine.js`):
+
+- **A corner is a turn** (`travelAutopilot.js:"export const LANE_CORNER_TURN = 22.5;"`): a point of a road's line that
+  turns 22.5 degrees or more. Basic Roads' kinks turn 45 or 90; a painted curve's runs turn under 4. The force is cut, and
+  the aim stopped, at a corner alone (`travelAutopilot.js:"const cut = w.reach > 0"`). A street's line (OW-TOWN-WALK)
+  keeps every point a corner, as it was.
+- **A whole frame's reach** (`travelAutopilot.js:"measureWalk(worldX, worldZ) {"`): the step over the share of the force
+  the walk asked, kept while the body stands. It is one body's walk, handed from leg to leg (`walk`), a place's and a
+  spot's last leg too.
+- **On through a curve's apex**: a leg that ends inside a curve is handed the next leg's line
+  (`travelOptions.js:"const after = lane && r.i + 1 < r.legs.length ? routeLane(r, r.i + 1) : null;"`); its end is no
+  corner then, and the aim looks on along it (`travelAutopilot.js:"export function pathPursuit(x, z, path, seg, look, ahead = null) {"`).
+- **No stop at a leg** (`travelOptions.js:"drive.arrived && st.route && st.autopilot && k < LEG_CHAIN_MAX"`): a routed
+  leg's end goes on to the next leg's drive in the same frame, up to LEG_CHAIN_MAX (8) legs. The mod's own journeys keep
+  their stop.
+- **Either kind's paint** (`roadLine.js:"for (const kind of new Set([a, b, a === 'road' ? 'track' : 'road'])) {"`): at a
+  turn, the curve the road or the track paints through both edges, the step in's kind first.
+
+**Measured after** (the same journeys; before / after):
+
+| journeys (a frame's step) | the pace kept | frames cut a km | frames stood a km | turning, degrees a km (the road's) | the heading's reversals a km |
+| --- | --- | --- | --- | --- | --- |
+| past the Bay, 30 (433) | 0.958 / 1.000 | 8.45 / 0.01 | 0.31 / 0 | 22.8 / 16.3 (15.8) | 6.09 / 0.19 |
+| past the Bay, 30 (1,300) | 0.870 / 0.999 | 7.81 / 0.03 | 0.31 / 0 | 31.0 / 16.2 (15.8) | 8.22 / 0.19 |
+| the five named (433) | 0.962 / 1.000 | 7.36 / 0.01 | 0.25 / 0 | 18.6 / 12.6 (12.6) | 5.76 / 0.16 |
+| the Bay to past it, 28 (433) | 0.975 / 1.000 | 4.49 / 0.04 | 0.30 / 0 | 18.7 / 15.2 (15.0) | 3.49 / 0.19 |
+| the Bay, 25 (433) | 0.996 / 1.000 | 0.09 / 0.08 | 0.34 / 0 | 17.3 / 17.3 (16.9) | 0.24 / 0.24 |
+
+The pace is the share of a whole walk's distance kept (a track's leg at its own pace). The Bay's corners are still cut to
+land on, as they must be. Within a tile of the painted road past the Bay: 98.7% of the walk before, 98.9% now - the rest
+is the OPEN below.
+
+- **The four hosts**: `scenes/world.js` WIRED, no line changed - its journeys are Travel Options' (`travelViewRouteTo`,
+  `travelViewWalkTo`), and First-Person Travel's routed journeys (TO-ROADS) walk the same lane; `scenes/exterior.js`,
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` walk no routed leg. Nothing crosses the wire.
+- **The departures, named**: PlayerAutoPilot.cs Update returns at an arrival before it applies the force (:80-84); a
+  routed leg's end now goes on in the frame. OW-ROAD-TRUE's force cut is a corner's alone. Port-Ledger row ROAD-SMOOTH.
+- **OPEN, the painter's**: 494 of the journeys' 5,412 turning pixels past the Bay (9.1%) turn where VOYAGER2's junction
+  law paints no way between the two arms - a turn sharper than 45 degrees whose arms both run on in curves (161 of them
+  hairpins of 135 degrees). The walk crosses the junction's paved middle, up to 10 tiles (64 m) off the paint:
+  ROAD-FOLLOW's "half the road's width" was low. 75 more turn from a road onto a track that neither paints through both
+  edges. A way for every turn the network makes is the painter's to draw (`roadCurves.js` curvesOf: an arm to the hub
+  for every bit at a junction) - a change to every junction's look past the Bay, for the owner to choose.
+- Pins `test/systems/travel/road_smooth.test.js` (7); mutants `tools/mutants/road_smooth.json` (14, all dead). PIN MOVED
+  (ROAD-SMOOTH): `test/systems/travel/road_follow.test.js` - a road onto a track, both painted through the bend, walks
+  its curve. Records re-aimed by content, each dead: AOWR-L2-4-force-never-cut, AOWR-L1-2-look-uncapped,
+  AOWR-L2-1-place-line-ends-at-road, AOWR-L2-2-spot-unlaned, ORT-look-never-grown, ORT-look-no-ceiling,
+  ORT-step-unmeasured, ORT-last-leg-unlaned, OTW-aim-stops-at-corner, TV2-a-new-autopilot-each-leg, RF-the-kinds-unread
+  (road_smooth's pins added). Every record on the three files judged again: 198, all dead but the two recorded
+  equivalent.
