@@ -46,14 +46,18 @@ const cellBuildSql = (/** @type {string} */ where) => `INSERT INTO home_yard_cel
 const cellMarkSql = (/** @type {string} */ where) => `UPDATE home_yard_cell_ver SET built = ver
   WHERE ver <> built AND ${where} AND ${FRESH_SQL('home_yard_cell_ver')}`;
 
-/** A cell built again after a decor route's write - a no-op when the write moved no yard row. */
-export function settleYardCell(/** @type {any} */ db, /** @type {unknown} */ mapId, /** @type {unknown} */ buildingKey) {
-  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return Promise.resolve(null);
+/** A cell built again after a decor route's write - a no-op when the write moved no yard row. Answers the cell and the
+ *  version this statement built it at (YC2: the YARD ORDER's `v`), or null when it built nothing - the write moved no
+ *  yard row, or the minute's clock built the cell first. */
+export async function settleYardCell(/** @type {any} */ db, /** @type {unknown} */ mapId, /** @type {unknown} */ buildingKey) {
+  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return null;
   const cell = yardCellOf(/** @type {number} */ (buildingKey));
-  return db.batch([
-    db.prepare(cellBuildSql('v.map_id = ?1 AND v.cell = ?2')).bind(mapId, cell),
+  const [built] = await db.batch([
+    db.prepare(`${cellBuildSql('v.map_id = ?1 AND v.cell = ?2')} RETURNING built`).bind(mapId, cell),
     db.prepare(cellMarkSql('map_id = ?1 AND cell = ?2')).bind(mapId, cell),
   ]);
+  const ver = Number(built?.results?.[0]?.built);
+  return Number.isSafeInteger(ver) && ver > 0 ? { cell, ver } : null;
 }
 
 /** The minute's clock (cron.js `yard-cells`): the stale cells built, YARD_CELLS_SETTLE_A_MINUTE a firing; how many. On a

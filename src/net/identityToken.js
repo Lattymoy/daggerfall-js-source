@@ -126,7 +126,7 @@ import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guild/guildLaw.js'
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
 import { worksOf } from './siege/siegeRef.js';   // SEAT2b part two (b): a siege's works on its pass - siegeRef.js imports nothing
 import { houseClaimOk } from './houseLaw.js';   // LEGACY7: a house rides the token - houseLaw.js imports nothing, so the worker's graph stays flat
-import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX } from './homeLaw.js';   // QUEST-HOME: a home order names a town and its buildings in the homes' own shapes - homeLaw.js imports nothing
+import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX, HOME_KEY_MAX } from './homeLaw.js';   // QUEST-HOME: a home order names a town and its buildings in the homes' own shapes - homeLaw.js imports nothing
 
 /** The only version this file will read or write. It names the
  *  algorithm, so the payload cannot. */
@@ -609,7 +609,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent']);   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);   // YARD-CELL YC2: a yard's cell moved to a version, the service's word for every page online (bible/11-Multiplayer/Yard-Cells.md section 3.6)   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -683,6 +683,9 @@ export function orderValid(c) {
   // event's id - and carries nothing else; no other kind carries `op`, `ev` or `ei`
   if (c.o !== 'sevent' && (c.op !== undefined || c.ev !== undefined || c.ei !== undefined)) return false;
   if (c.o === 'sevent' && !staffEventOrderValid(c)) return false;
+  // YARD-CELL YC2: a yard order is `{o:'yard', s, m, c, v, i, e}` and carries nothing else; no other kind carries `m`, `c` or `v`
+  if (c.o !== 'yard' && (c.m !== undefined || c.c !== undefined || c.v !== undefined)) return false;
+  if (c.o === 'yard' && !yardOrderValid(c)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
@@ -722,6 +725,31 @@ export async function mintHomeOrder({ s, bm, bu = [], bd = [] }, privateKey, { s
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintHomeOrder needs an integer epoch-seconds clock');
   const claims = { o: 'home', s, bm, ...(bu.length ? { bu: [...bu] } : {}), ...(bd.length ? { bd: [...bd] } : {}), i: nowS, e: nowS + ttlS };
   if (!orderValid(claims)) throw new TypeError('mintHomeOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/* ═══ YARD-CELL YC2: THE YARD ORDER (bible/11-Multiplayer/Yard-Cells.md section 3.6) ═══════════════════════════════════
+ *
+ * A decor write that moved a yard moved its cell's version. The service hands the acting player's client its word on it,
+ * `{o:'yard', s, m, c, v, i, e}` - account `s`'s act moved town `m`'s cell `c` to version `v` - which the hub checks
+ * with the key it already holds and fans to every page online. A page acts on one only by asking the service for that
+ * cell, so a word can make a page ask, never put its yards wrong.
+ */
+const YARD_ORDER_KEYS = Object.freeze(['o', 's', 'm', 'c', 'v', 'i', 'e']);
+/** The widest yard cell (net/yardCellLaw.js YARD_CELL_MAX, read off homeLaw.js alone so the relay's graph does not take
+ *  in decorLaw.js). */
+const YARD_ORDER_CELL_MAX = Math.floor(HOME_KEY_MAX / 256);
+function yardOrderValid(c) {
+  if (Object.keys(c).some((k) => !YARD_ORDER_KEYS.includes(k))) return false;
+  if (!homeMapIdOk(c.m)) return false;
+  if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > YARD_ORDER_CELL_MAX) return false;
+  return Number.isSafeInteger(c.v) && c.v > 0;
+}
+/** YARD-CELL YC2: MINT A YARD ORDER - the service's word that account `s`'s act moved town `m`'s cell `c` to version `v`. */
+export async function mintYardOrder({ s, m, c, v }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintYardOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'yard', s, m, c, v, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintYardOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
 

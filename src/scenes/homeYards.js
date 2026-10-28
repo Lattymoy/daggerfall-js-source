@@ -69,6 +69,7 @@ import { homeLookRecords } from '../world/homeLook.js';   // HOME-LOOK (AUDIT): 
 import { onPathTile } from '../player/exteriorSurface.js';   // FB1001 ROAD-LOT: PlayerMotor.OnPathTile - Daggerfall's own road tiles
 import { RMB_TILE_SIDE } from '../world/locationEntrance.js';   // FB1001 ROAD-LOT: RMBLayout.RMBTileSide, a ground tile's side
 import { createYardCellSync, YARD_ASK_M, YARD_KEEP_MARGIN_M } from './yardCellSync.js';   // YARD-CELL: the yards asked and held a block at a time
+import { onYardWords, yardPushState } from '../net/yardPush.js';   // YARD-CELL YC2: the hub's word that a cell moved
 import { yardCellOf } from '../net/yardCellLaw.js';
 import { TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
 import { homeOutsideKept, homeYardWhere, homeCandidate } from '../systems/online/onlineHomes.js';   // GUILD-YARD: a hall's keepers keep its outside
@@ -534,7 +535,8 @@ export function createHomeYards(deps) {
     const outside = deps.outside ? !!deps.outside() : true;
     return outside && !overlayUpNow && !deps.doc?.hidden;
   };
-  const cells = createYardCellSync({ api: deps.api, now, polling: pollingNow });
+  const cells = createYardCellSync({ api: deps.api, now, polling: pollingNow, push: deps.push ?? yardPushState });
+  const offYardWords = (deps.onYardWords ?? onYardWords)((words) => cells.hear(words));   // YC2: a pushed cell asked; the ear let go with the yards (destroy)
   /** What a frame's standing time is read on - the host's clock for its tests, else the page's. */
   const standClock = () => deps.standClock?.() ?? (typeof performance !== 'undefined' ? performance.now() : Date.now());
   /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, src: any[] | null, srcSig: string, kept: boolean, lot: any, frame: any, entry: any, skin: number, trees: Map<string, any>, treeSet: any}>} */
@@ -742,15 +744,20 @@ export function createHomeYards(deps) {
     cells.hold(y.mapId, y.bk, list);   // FB1001 YARD-STALE: and over the answers that follow it
     y.sig = JSON.stringify(list);
   }
+  /** YC2: a yard write's answer - the version it moved its cell to, so the owner's own word is dropped when it comes. */
+  const wrote = (a, answer) => {
+    if (answer?.ok && Number.isSafeInteger(answer.data?.yardVer)) cells.wrote(a?.mapId, a?.buildingKey, answer.data.yardVer);
+    return answer;
+  };
   const homeDecor = deps.api ? {
-    place: (a) => deps.api.place({ ...a, yard: true }),
-    move: (a) => deps.api.move(a),
-    remove: (a) => deps.api.remove(a),
+    place: async (a) => wrote(a, await deps.api.place({ ...a, yard: true })),
+    move: async (a) => wrote(a, await deps.api.move(a)),
+    remove: async (a) => wrote(a, await deps.api.remove(a)),
     hidden: async () => ({ ok: false, error: 'bad-decor' }),
     // HOME-YARD: the street's Confirm is the room's draft, over the yard's pieces and the same revision
     ...(typeof deps.api.list === 'function' && typeof deps.api.batch === 'function' ? {
       list: (mapId, buildingKey) => deps.api.list(mapId, buildingKey, false, true),
-      batch: (a) => deps.api.batch({ ...a, yard: true }),
+      batch: async (a) => wrote(a, await deps.api.batch({ ...a, yard: true })),
     } : {}),
   } : null;
   const collider = {
@@ -962,6 +969,6 @@ export function createHomeYards(deps) {
     yards: () => [...yards.values()],
     here: () => cur,
     tool: () => tool,
-    destroy() { for (const y of yards.values()) y.pool.destroyAll(); yards.clear(); tool.destroy(); },
+    destroy() { for (const y of yards.values()) y.pool.destroyAll(); yards.clear(); tool.destroy(); offYardWords(); },
   };
 }

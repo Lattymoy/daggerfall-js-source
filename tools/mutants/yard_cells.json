@@ -42,10 +42,10 @@
   {
     "name": "YARD-CELL-the-settle-another-cell",
     "file": "server-account/src/yardCells.js",
-    "old": "    db.prepare(cellBuildSql('v.map_id = ?1 AND v.cell = ?2')).bind(mapId, cell),",
-    "new": "    db.prepare(cellBuildSql('v.map_id = ?1 AND v.cell = ?2')).bind(mapId, cell + 1),",
+    "old": "    db.prepare(`${cellBuildSql('v.map_id = ?1 AND v.cell = ?2')} RETURNING built`).bind(mapId, cell),",
+    "new": "    db.prepare(`${cellBuildSql('v.map_id = ?1 AND v.cell = ?2')} RETURNING built`).bind(mapId, cell + 1),",
     "tests": ["test/server/yard_cells.test.js"],
-    "note": "a write builds the next cell, never its own"
+    "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. a write builds the next cell, never its own"
   },
   {
     "name": "YARD-CELL-the-mark-unset",

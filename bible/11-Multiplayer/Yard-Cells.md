@@ -573,3 +573,74 @@ and relay in local workerd.
   said, also while an overlay hides the chat. A notice that lands under a menu the player keeps open for longer is not
   peeked; it waits in the chat log for the next time the chat is opened. The notice's code (SRV-N,
   `net/updateNotice.js`) is unchanged by YC1.
+
+## 11. YC2 - building (2026-10-27)
+
+The push and the slow poll of sections 3.6 and 3.7. Branched from YC1's head (#1304), since YC1 is not merged yet.
+These are the working notes. The pull request holds the checks as they are run.
+
+**Decisions taken at the build:**
+
+- **The version comes from the settle.** `settleYardCell` builds the cell with `RETURNING built`. A row back means
+  the write moved the cell to that version, and the route mints an order. No row back means that nothing moved, or
+  the minute's clock built the cell first. In that case no order goes, and the slow poll finds the change. The route
+  does not read `body.yard`, because move and remove do not carry it.
+- **The order** is `{ o: 'yard', s, m, c, v, i, e }`, with an exact key list (the shape of the hide, freeze and
+  staff event orders). No other order kind may carry `m`, `c` or `v`. Its time to live is the HOME ORDER's.
+- **The owner's own word.** The route's answer also carries `yardVer` in plain text, beside the sealed `yardOrder`.
+  `hold()` raises the held cell's version to it, so the owner's page drops its own word by the version rule.
+- **The welcome field, not a version minimum.** The hub's welcome says `yd: 1`. A client carries a yard order only
+  to a hub that said it. A `YARD_RELAY_MIN` would move at every renumber (`HOME_RELAY_MIN`'s note records the cost).
+- **No host grows.** `bootWorld` has one logical line of room. The carrier and the listener go through a net-level
+  registry (the `onHomeOrders` shape): `online.js` hands the yard words and the hub link's state to it, and
+  `accountClient.js` hands it the orders. `homeYards.js` and `yardCellSync.js` subscribe to it. On the relay, the
+  arm is a module of its own (the `staffFreeze.js` shape), with one dispatch line in `_message`.
+- **ACCOUNT_VERSION moves (acct208).** The site's deploy waits until the service serves the version in the tree
+  (`deploy.yml`, "Read the account service this build talks to"). Without the move, a new site could go live on
+  an old service: its writes would carry no order, and with a healthy hub socket its poll would be the slow one, which
+  is worse than YC1.
+- **The relay keeps no yard state on disk.** Words owed are held in memory, as the highest `v` for each `m:c`, and
+  one timer sends them as one frame a second at most.
+
+**The hub's shards.** A hub shard hands every frame on to the bus (`net/wire.js` isSocialRoom's note, SCALE5c), and
+the bus's fan reaches every shard's sockets. The yard arm takes that route, as the home arm does. Read in the code,
+not driven: no test stands a sharded hub for the yard word.
+
+**What was built** (account acct208, relay world278 - over YC1's acct207 and world277; world271 to world277, and acct198 to acct200 then acct205 and acct206, on the branch, renumbered past YC1 at the merges):
+
+- Service: `settleYardCell` answers `{ cell, ver }` off `RETURNING built`; the decor routes answer `yardVer` and
+  `yardOrder` (`server-account/src/index.js` yardOrderOf); `net/identityToken.js` kind `yard`, `mintYardOrder`.
+- Relay: `server/src/yardWords.js` (takeYardOrder, the owed words, yardFan); one line in `_message`; `yd: 1` in the
+  hub's welcome; `parseClient` knows `{t:'yard', order}`. The law both ends read is `net/yardWordLaw.js`.
+- Client: `net/yardPush.js` (the carrier, the welcome and close, the frames' gate, the ears); three hooks in
+  `net/online.js` and one in `net/accountClient.js`; `scenes/yardCellSync.js` hears words, polls slowly while the push
+  is healthy and doubles over quiet polls; `scenes/homeYards.js` subscribes and hands each write's `yardVer` on.
+  `bootWorld` is not touched.
+
+**Departures from sections 3.6 and 3.7:**
+
+- **The order's own version, not the cell's.** The owner's write answers `yardVer`, which marks the held cell's
+  `ownVer`. The owner's own word is dropped by it. The cell's `ver` stays the last answer's: raising it to `yardVer`
+  would let a later poll answer "no change" and leave the owner's yard stale once its 60 s hold ended.
+- **No extra poll on leaving a skip.** Words heard while the yards are not drawn are kept and asked the moment they are
+  drawn again, and a poll that came due meanwhile goes then (YC1's rule). An extra poll on every edge would add nothing
+  while the push is healthy, and it moved YC1's timing (`fb1001_yard.test.js` PRIMARY-TRIPS).
+- **A pushed cell answered at an older version** (another isolate's kept answer, up to 30 s) is asked again after
+  `YARD_PUSH_RETRY_MS` (15 s), three asks in all. The slow poll finds what that misses.
+- **Words dropped at the version held** include words for a cell the page does not hold, for any town.
+
+**In the running game (PASS, 2026-10-27, at 37944c8b3a).** Two registered characters, A and B, online in Daggerfall
+on the real relay and account service in local workerd; headless Edge with the pointer lock answered in the page. B's
+sockets went through the probe, which logged the hub's yard frames and could cut and hold off B's hub link. A placed
+each piece through its own page's account client, so each write's YARD ORDER took the real path to the hub. A's home
+was block 1287, about 450 m from B.
+
+- **The slow poll.** While both pages' push was healthy, B asked for no cell in 75 s.
+- **The push.** B heard the hub's word 0.1 s after A's write and showed the piece after 1.6 s (2.2 s on a second run).
+- **A missed push.** B's hub link was cut and held off. The broken push fell back to the minute's poll, which was
+  overdue and went at once; A placed only after it. B did not show the piece in 8 s and heard no word. When the link
+  came back, B polled every cell in reach at the welcome and showed the piece 0.8 s after it.
+- **The skip.** With B's tab hidden, B heard the hub's word for A's next piece but asked nothing in 10 s. When the tab
+  showed, B asked that cell at once and showed the piece after 0.6 s.
+- Not driven here: a window over the world, which reads the same gate as the hidden tab and was driven in YC1's
+  checks, and the hub's shards (above). The relay was renumbered world272 to world278, and the account acct199 to acct208, after this run; the renumbers move no code.

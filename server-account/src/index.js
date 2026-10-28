@@ -239,7 +239,7 @@ import {
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
@@ -705,6 +705,16 @@ async function guildOrdersOf(r, s, env, subtle, nowS) {
  *  online: a quest never picks its residence in a house bought after a page's boot read, and one picked there and not yet
  *  reached is chosen again. A service with no key still acts, answering none: the pages read the move at their next
  *  boot (homes.js homeLayouts). */
+/** YARD-CELL YC2 (bible/11-Multiplayer/Yard-Cells.md section 3.6): a decor answer whose write moved its cell (`settled`) carries
+ *  its new version (`yardVer`, for the owner's page) and a signed YARD ORDER (`yardOrder`) for the hub; neither if none moved or no key. */
+async function yardOrderOf(r, settled, mapId, s, env, subtle, nowS) {
+  if (!settled) return r;
+  const key = await signingKey(env, subtle);
+  if (!key) return r;
+  const yardOrder = await mintYardOrder({ s, m: mapId, c: settled.cell, v: settled.ver }, key, { subtle, nowS });
+  return { ...r, yardVer: settled.ver, yardOrder };
+}
+
 async function homeOrdersOf(r, s, env, subtle, nowS) {
   const { moved, ...answer } = r ?? {};
   if (!Array.isArray(moved) || !moved.length) return answer;
@@ -1812,11 +1822,12 @@ const service = {
                 : path === '/v1/homes/decor/batch' ? await commitDecorBatch(hctx, who.player, body)   // DECOR-BATCH
                   : path === '/v1/homes/decor/use' ? await decorUse(hctx, who.player, body)   // DECOR-ACCESS
                     : await removeDecor(hctx, who.player, body);
+          let settled = null;
           if (path !== '/v1/homes/decor/use') {   // a chest's list, settle or release moves no yard
             forgetYardCell(body?.mapId, body?.buildingKey);   // YARD-CELL: the cell's kept answer let go, whatever the write did
-            await settleYardCell(ctx.db, body?.mapId, body?.buildingKey).catch((e) => console.warn('[yards] the cell not built', e?.message ?? e));   // and built again (the clock builds one this misses)
+            settled = await settleYardCell(ctx.db, body?.mapId, body?.buildingKey).catch((e) => { console.warn('[yards] the cell not built', e?.message ?? e); return null; });   // and built again (the clock builds one this misses)
           }
-          if (!('error' in r)) return json(r, 200, origin);
+          if (!('error' in r)) return json(await yardOrderOf(r, settled, body?.mapId, who.player.id, env, subtle, nowS), 200, origin);   // YC2: a yard that moved, said to every page online
           const said = realmNo(r);
           if (said) return said;
           const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' || r.error === 'decor-lapsed' ? 409   // RPT1026-CHESTGOLD: a hold run out; GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, held, or open to someone else

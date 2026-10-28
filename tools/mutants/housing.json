@@ -368,8 +368,8 @@
   {
     "name": "HOME-YARD-the-flag-unsent",
     "file": "src/scenes/homeYards.js",
-    "old": "    place: (a) => deps.api.place({ ...a, yard: true }),",
-    "new": "    place: (a) => deps.api.place({ ...a }),",
+    "old": "    place: async (a) => wrote(a, await deps.api.place({ ...a, yard: true })),",
+    "new": "    place: async (a) => wrote(a, await deps.api.place({ ...a })),",
     "tests": [
       "test/scenes/homeyard.test.js"
     ]
