@@ -6,9 +6,9 @@
 // THE FOUR NUMBERS A PLAYER IS TOLD, AND WHERE EACH LIVES
 //
 //   1..100    exactly DFU's law (advancement.js, untouched below 100)
-//   100..125  a point costs  4x the uses          SOFTCAP_TIERS (Mac, 2026-09-29: 4 / 8 / 16)
-//   125..150  a point costs  8x the uses
-//   150..200  a point costs 16x the uses          SKILL_HARD_CAP = 200
+//   100..125  a point costs 1.5x the uses         SOFTCAP_TIERS (mob, 2026-10-28: 1.5 / 2 / 4, was 4 / 8 / 16)
+//   125..150  a point costs  2x the uses
+//   150..200  a point costs  4x the uses          SKILL_HARD_CAP = 200
 //
 //   Past 100 a point is worth a QUARTER of a point below it
 //   (OVERCAP_POINT_WEIGHT), plus the milestone bonuses at 125/150/175/200.
@@ -47,11 +47,11 @@ export const SKILL_HARD_CAP = 200;
 export const OVERCAP_POINT_WEIGHT = 0.25;
 
 /** The cost ladder: the uses a raise needs, multiplied, by the value the
- *  skill is LEAVING (100 -> 101 is the first 4x point). */
+ *  skill is LEAVING (100 -> 101 is the first 1.5x point). LADDER-CUT (mob: "1.5 2 4"). */
 export const SOFTCAP_TIERS = Object.freeze([
-  Object.freeze({ from: 100, to: 125, mult: 4 }),
-  Object.freeze({ from: 125, to: 150, mult: 8 }),
-  Object.freeze({ from: 150, to: 200, mult: 16 }),
+  Object.freeze({ from: 100, to: 125, mult: 1.5 }),
+  Object.freeze({ from: 125, to: 150, mult: 2 }),
+  Object.freeze({ from: 150, to: 200, mult: 4 }),
 ]);
 
 /** The milestones: effective points granted ON TOP of the quarter-weight
@@ -200,8 +200,8 @@ export function overcapTallyWeight(entity, skillId, amount, skill, now = Date.no
 // whole uses a second, a career multiplier of 1, average Reflexes) then takes, from 100:
 //
 //   level     to 125      to 150      to 200
-//     20      ~35 h       ~120 h      ~540 h
-//     30      ~50 h       ~175 h      ~800 h
+//     20      ~13 h       ~34 h       ~140 h      (LADDER-CUT's 1.5 / 2 / 4; 35 / 120 / 540 at 4 / 8 / 16)
+//     30      ~19 h       ~50 h       ~207 h
 
 /** Per movement skill (skills.js ids): the odometer axis its motion is read on and the metres one use needs.
  *  h = across the ground, v = up or down, hv = either (through water). */
