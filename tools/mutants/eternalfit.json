@@ -1,0 +1,20 @@
+[
+  {
+    "name": "ETF-the-push-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  more -= cloakFwd() * uWingBack;   // ETERNAL-FIT",
+    "new": "  // ETERNAL-FIT",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "ETF-the-push-forward",
+    "file": "src/render/auraRing.js",
+    "old": "  more -= cloakFwd() * uWingBack;   // ETERNAL-FIT",
+    "new": "  more += cloakFwd() * uWingBack;   // ETERNAL-FIT",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  }
+]
