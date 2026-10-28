@@ -22,12 +22,12 @@
   {
     "name": "CRYPTSALE-door-unstamped",
     "file": "src/systems/talk/talkTopics.js",
-    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub) };",
-    "new": ", modelIdNum: model?.modelIdNum ?? null };",
+    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };",
+    "new": ", modelIdNum: model?.modelIdNum ?? null, ...footprintOf(sub) };",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
-    "note": "the door's own record (the plaque, the click) never says the room is empty"
+    "note": "the door's own record (the plaque, the click) never says the room is empty; IC-HOMES (PIN MOVED): re-aimed by content - the door's record carries a fabric building's ground after it"
   },
   {
     "name": "CRYPTSALE-list-unstamped",

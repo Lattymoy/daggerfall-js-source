@@ -250,6 +250,7 @@ function blockInstanceOf(blocks, d) {
     d.position[2] >= b.originZ - 1 && d.position[2] < b.originZ + RMB_SIDE + 1) ?? cands[0];
 }
 
+const footprintOf = (sub) => (sub?.footprintM2 > 0 ? { footprintM2: sub.footprintM2 } : {});   // IC-HOMES: the Imperial City's fabric building - one model, its door - carries its ground for its home price
 /** E2: one exterior door -> its MERGED building data + buildingKey
  *  (the interior host's shop identity: type/quality/seed/faction).
  *  HOME1: and the building's MODEL (`modelIdNum`, locationBuildings'
@@ -267,7 +268,7 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door, { locationI
   const sub = inst.dfBlock?.rmbBlock?.subRecords?.[door.recordIndex];
   const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
   // FIELD BUGS 2026-10-05 CRYPT-SALE: whether the room can be laid out at all - a graveyard's crypt cannot
-  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub) };
+  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };
 }
 
 /**
@@ -314,6 +315,7 @@ export function locationBuildings(exteriorBuildings, blocks, { locationIndex = 0
         modelId: model?.modelId ?? null,
         modelIdNum: model?.modelIdNum ?? null,
         hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE
+        ...footprintOf(sub),
       });
     }
   }

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "ICH-the-ground-unwritten",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "    sub.footprintM2 = areaOf(b.plot.q);   // IC-HOMES",
+    "new": "    // IC-HOMES",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "ICH-the-door-record-unread",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };",
+    "new": "hasInterior: hasInteriorModels(sub) };",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "ICH-the-list-unread",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "        ...footprintOf(sub),\n      });",
+    "new": "      });",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "ICH-the-price-ground-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (id == null || building.footprintM2 > 0) return building?.footprintM2 > 0 ? building.footprintM2 : 0;",
+    "new": "    if (id == null) return 0;",
+    "tests": [
+      "test/systems/homeprice.test.js"
+    ]
+  }
+]

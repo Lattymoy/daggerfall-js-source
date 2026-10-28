@@ -397,6 +397,18 @@ tree has no ARENA2, so the spread over Daggerfall's real house models was not
 measured - the rate, the factor and the range are set from the field's prices
 and customs' allowance, and are open numbers (below).
 
+**IC-HOMES (2026-10-28, the owner: "Are buildings in IC not purchaseable?").**
+The Imperial City's own buildings (the fabric, `03-World/Arena-Provinces.md`
+BLD) had no price: a house is priced off its model's ARCH3D box, and a fabric
+building's one model is its door (`fabricDoorModelId`, no ARCH3D record), so
+each measured 0 - not for sale. Each fabric subrecord now carries its plot's
+ground (`imperialFabricBuildings.js:"sub.footprintM2 = areaOf(b.plot.q);"`), the
+door's record carries it (`talkTopics.js:"const footprintOf = (sub) =>"`), and
+the door prices a house by it. The castle stays the owner's call (DOMAIN2).
+Pins: the IC-HOMES tests in `test/world/icbld_buildings.test.js` and
+`test/systems/homeprice.test.js` - `tools/mutants/ichomes.json` (4, all dead);
+`fb1005_cryptsale.json`'s door record re-aimed by content.
+
 ## Open numbers
 
 The outing (one dungeon, one to two hours), the wear (DFU's amount since WEAR-ONE,

@@ -19,7 +19,9 @@ import { layoutRmbBlock } from '../../src/world/rmbLayout.js';
 import { getStaticDoors } from '../../src/world/staticDoors.js';
 import { doorWorldPosition, doorWorldNormal, interiorLanding } from '../../src/player/enterExit.js';
 import { DOOR_TYPE, dfMeshToModel } from '../../src/world/meshReader.js';
-import { mergeNamedBuildings } from '../../src/systems/talk/talkTopics.js';
+import { mergeNamedBuildings, locationBuildings, buildingDataForDoor } from '../../src/systems/talk/talkTopics.js';
+import { homeCandidate } from '../../src/systems/online/onlineHomes.js';   // IC-HOMES
+import { homeOnlinePrice, homePriceOk } from '../../src/net/homeLaw.js';   // IC-HOMES
 import { buildingSummaries } from '../../src/world/buildingSummaries.js';
 import { BUILDING_TYPES, isNamedBuildingType } from '../../src/world/buildingNames.js';
 import { GUILD_FACTION_IDS } from '../../src/systems/guild/guildFactions.js';
@@ -148,6 +150,29 @@ test('BLD A FABRIC BLOCK NAMES ITS OWN - a fabric shop keeps its own record and 
     assert.ok(row.hasInterior, 'every building a room');
     if (isNamedBuildingType(row.buildingType)) assert.ok(typeof row.name === 'string' && row.name.length > 2, `${row.buildingType} named`);
   }
+});
+
+/** A plot's ground, m2 (the shoelace over its four corners, metres). */
+const groundOf = (q) => Math.abs(q.reduce((t, v, i) => { const w = q[(i + 1) & 3]; return t + v[0] * w[1] - w[0] * v[1]; }, 0)) / 2;
+test('IC-HOMES A FABRIC HOUSE HAS ITS PRICE (the owner: "Are buildings in IC not purchaseable?") - each building\'s subrecord carries its plot\'s ground, the location\'s list and the door\'s record carry it (systems/talk/talkTopics.js locationBuildings, buildingDataForDoor), and each house of the city\'s own is a home with a price - its one model, the door, is no ARCH3D record (mutants: the ground unwritten; either record\'s unread)', () => {
+  let houses = 0;
+  for (const [r, c] of CELLS) {
+    const recs = fabricCellBuildings(r, c);
+    if (!recs.length) continue;
+    const block = ownBlock(r, c), grid = [{ x: 3, y: 4, dfBlock: block }];
+    const list = locationBuildings([], grid);
+    assert.equal(list.length, recs.length);
+    recs.forEach((x, i) => {
+      const ground = groundOf(x.plot.q);
+      assert.ok(ground > 0 && Math.abs(block.rmbBlock.subRecords[i].footprintM2 - ground) < 1e-6, `building ${i}: its plot's ground on its subrecord`);
+      const bd = buildingDataForDoor([], grid, { dfBlock: block, recordIndex: i, position: [0, 0, 0] });
+      assert.deepEqual([list[i].footprintM2, bd.footprintM2, bd.modelIdNum], [block.rmbBlock.subRecords[i].footprintM2, block.rmbBlock.subRecords[i].footprintM2, fabricDoorModelId(x.donor)], `building ${i}: both records carry it`);
+      if (!homeCandidate(bd)) return;
+      houses++;
+      assert.ok(homePriceOk(homeOnlinePrice(bd.footprintM2, 64)), `house ${i}: a price (${homeOnlinePrice(bd.footprintM2, 64)})`);
+    });
+  }
+  assert.ok(houses > 10, `the city's houses (${houses})`);
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
