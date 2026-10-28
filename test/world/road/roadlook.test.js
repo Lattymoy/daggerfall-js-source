@@ -214,9 +214,12 @@ test('ROAD-LOOK the GLSL is the JS: the hash bit for bit, the noise and the wand
 test('ROAD-LOOK both terrain programs blend right after their own tile - the lane decoding the neighbour as its own - before the ecotone; the clip and snow variants still one decode; the renderer\'s switch a frame\'s, taken as the renderer is made from roadEdgesOn: the enhanced skin, the kill door - no host\'s own line (mutants: the call dropped from either program; the lane\'s neighbour undecoded; the switch never uploaded; the renderer never taking it; the classic skin blended; the kill door unread)', async () => {
   const r = read('src/render/renderer.js');
   const classic = r.slice(r.indexOf('const TERRAIN_FS = `'), r.indexOf('}`;', r.indexOf('const TERRAIN_FS = `')));
-  assert.match(classic, /const vec2 TRANS\[4\] = vec2\[4\]\(\n[^\n]*\n\$\{roadEdgeGlsl\(\)\}\nvoid main\(\) \{/);
-  assert.match(classic, /vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n {2}tex = roadEdge\(tex, data, unwrapped, gx, gy, t\);[^\n]*\n {2}vec4 ew = ecoWeights/);
-  assert.match(EL_TERRAIN_FS, /vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n {2}tex = roadEdge\(tex, data, unwrapped, gx, gy, t\);[^\n]*\n {2}vec4 ew = ecoWeights/);
+  // PIN MOVED (COAST-LOOK, render/groundEdgeGlsl.js): its chunk and the bed's follow this one before main, and a
+  // transition's two kinds (no road's byte) are drawn between the tile and this call - still before the ecotone
+  assert.match(classic, /const vec2 TRANS\[4\] = vec2\[4\]\(\n[^\n]*\n\$\{roadEdgeGlsl\(\)\}\n\$\{groundEdgeGlsl\(\)\}[^\n]*\n\$\{WATER_BED_GLSL\}\nvoid main\(\) \{/);
+  const AFTER_TILE = String.raw`(?: {2}(?:\/\/|highp uint geA, geB;|bool ge = groundMix\(|vec2 dux = |vec4 ew = ecoWeights\(|if \(ge\) tex = mix\()[^\n]*\n)+ {2}tex = roadEdge\(tex, data, unwrapped, gx, gy, t\);[^\n]*\n {2}if \(!ge\) tex = ecotone\(`;
+  assert.match(classic, new RegExp(String.raw`vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n${AFTER_TILE}`));
+  assert.match(EL_TERRAIN_FS, new RegExp(String.raw`vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n${AFTER_TILE}`));
   assert.match(EL_TERRAIN_FS, /return elDecode\(textureGrad\(uTileArr, vec3\(ROT\[t\] \* l \+ TRANS\[t\], float\(d >> 2u\)\), ROT\[t\] \* dux, ROT\[t\] \* duy\)\.rgb\);/, 'the lane\'s neighbour in its own linear light');
   assert.equal(terrainClipFs(EL_TERRAIN_FS).split('\n').length, EL_TERRAIN_FS.split('\n').length + 1, 'the clip still one line');
   assert.ok(snowTerrainFs(EL_TERRAIN_FS).includes('vec3 roadEdge('), 'the snow variant still built from the program');

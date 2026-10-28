@@ -4999,7 +4999,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // (render/renderer.js terrainClipFs), which draws the pixel's ground while the cap's TileMap stands on it (the drain below).
   function dwClipTerrain(p) {
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }
-    const idx = p._dwBytes ? clippedTerrainIndices(p._dwBytes, p._stride ?? 1) : null;
+    const idx = p._dwBytes ? clippedTerrainIndices(p._dwBytes, p._stride ?? 1, renderer.coastEdges) : null;   // COAST-LOOK: the coast's ring of clipped tiles the program's to cut
     if (idx) { p.dwTerrain = renderer.createWaterSurface(p.terrain, idx); p.dwTerrain.bounds = p.terrain.bounds; }
   }
   /** FAR-CLIP1: the ground queue's order - the cap's pixels after the rest (a stable sort: near first within each),

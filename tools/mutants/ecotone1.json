@@ -139,7 +139,7 @@
   {
     "name": "ECOTONE1-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
     "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"
@@ -148,7 +148,7 @@
   {
     "name": "ECOTONE1-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
     "new": "",
     "tests": [
       "test/systems/ecotone1.test.js"

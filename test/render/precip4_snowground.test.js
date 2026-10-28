@@ -171,9 +171,11 @@ test('PRECIP4 BOTH TERRAIN PROGRAMS: the border\'s weights once, the snow\'s cov
   for (const [name, fs] of [['classic', classic], ['lane', EL_TERRAIN_FS]]) {
     // PIN MOVED (PEAKS1, bible/03-World/Peaks.md): the bare face sheds the cover between the cover and the ground's snow - a
     // steep face over the cap's line is rock (render/snowCapGlsl.js); the cover is still read once, after the border
-    assert.match(fs, /\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);[^\n]*\n {2}float snowC = snowCover\(vLocalXZ, vWorldPos\.y, gx, gy\);[^\n]*\n {2}snowC = snowFace\(tex, snowC, vLocalXZ, vWorldPos\.y, normalize\(vNormal\), tuv, gx, gy\);[^\n]*\n {2}tex = snowGround\(tex, ew, snowC, vec3\(tuv, float\(layer\)\), gx, gy\);\n/, `${name}: after the border`);
-    const bed = Math.max(fs.indexOf('vec2 bedK = bedCover(data, tileUV, vec3(tuv, float(layer)), gx, gy, snowC);'), fs.indexOf('${waterBedMix()}'));   // the lane's text evaluated, the classic's its source
-    assert.ok(bed > 0 && fs.indexOf('tex = snowGround(') < bed, `${name}: before the bed, which reads its cover`);
+    // PIN MOVED (COAST-LOOK, render/groundEdgeGlsl.js): the border's share is a transition's two kinds' or the tile's, and
+    // the snow's winter twin by the same - each kind's record at its share
+    assert.match(fs, /\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}if \(ge\) tex = mix\(ecotone\([^\n]*\n {2}tex = roadEdge\([^\n]*\n {2}if \(!ge\) tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);[^\n]*\n {2}float snowC = snowCover\(vLocalXZ, vWorldPos\.y, gx, gy\);[^\n]*\n {2}snowC = snowFace\(tex, snowC, vLocalXZ, vWorldPos\.y, normalize\(vNormal\), tuv, gx, gy\);[^\n]*\n {2}tex = ge \? mix\(snowGround\(tex, ew, snowC, vec3\(tileUV, float\(geA\)\), dux, duy\), snowGround\(tex, ew, snowC, vec3\(tileUV, float\(geB\)\), dux, duy\), geS\) : snowGround\(tex, ew, snowC, vec3\(tuv, float\(layer\)\), gx, gy\);\n/, `${name}: after the border`);
+    const bed = Math.max(fs.indexOf('vec2 bedK = bedCover(data, tileUV, unwrapped, vec3(tuv, float(layer)), gx, gy, snowC, ge);'), fs.indexOf('${waterBedMix()}'));   // the lane's text evaluated, the classic's its source (PIN MOVED, COAST-LOOK: the bed's call)
+    assert.ok(bed > 0 && fs.indexOf('tex = ge ? mix(snowGround(') < bed, `${name}: before the bed, which reads its cover`);
   }
   assert.match(EL_TERRAIN_FS, /vec3 white = elDecode\(textureGrad\(uTileArr, vec3\(tl\.xy, tl\.z \+ float\(uSnowArr\.x\)\), gx, gy\)\.rgb\);/, 'the lane decodes its winter');
   assert.match(classic, /\$\{snowCoverGlsl\(\)\}/);

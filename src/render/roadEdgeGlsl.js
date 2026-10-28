@@ -25,21 +25,10 @@ export function roadEdgesOn(search) {
 
 const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
 
-/**
- * The chunk, for a program whose texels decode through `decode` (the lane's elDecode; '' for the classic program's
- * display values). Declares `uRoadEdge` and `vec3 roadEdge(vec3 own, uint data, vec2 p, vec2 gx, vec2 gy, int t)`:
- * `own` the fragment's own decoded texel, `data` its tile byte, `p` its pixel-local tile coordinate (the program's
- * `unwrapped`), `gx`/`gy` its own gradient (ROT[t] of the coordinate's), `t` its own turn.
- * @param {string} decode
- */
-export function roadEdgeGlsl(decode = '') {
-  const s = ROAD_EDGE.soft;
-  return `// ROAD-LOOK (render/roadEdgeGlsl.js; the law is world/road/roadEdge.js)
-uniform float uRoadEdge;   // 0: every tile its own, as DFU draws it
-const highp uvec2 RE_WET = uvec2(${ROAD_EDGE_WET[0]}u, ${ROAD_EDGE_WET[1]}u);   // the records that carry water, 0-31 and 32-63
-bool reRoad(highp uint d) { return (d >> 2u) == ${ROAD_PAVING}u; }   // the paving: its edge tiles are the ground's side
-bool reTakes(highp uint d) { highp uint r = d >> 2u; return r < ${GROUND_RECORD_LIMIT}u && (((r < 32u ? (RE_WET.x >> r) : (RE_WET.y >> (r - 32u))) & 1u) == 0u); }
-float reHash(highp ivec2 c, highp uint salt) {
+/** The edges' lattice noise (ROAD-LOOK's, COAST-LOOK's too - render/groundEdgeGlsl.js): `reHash`, the lattice hash, and
+ *  `reNoise`, value noise on a lattice of whole cells a pixel's side. Its one text: roadEdgeGlsl carries it, and a program
+ *  that draws no road edge and wanders a coast's (render/waterSurface.js) takes it on its own. */
+export const EDGE_NOISE_GLSL = `float reHash(highp ivec2 c, highp uint salt) {
   highp uint h = (uint(c.x) * 0x8da6b343u) ^ (uint(c.y) * 0xd8163841u) ^ (salt * 0xcb1ab31fu);
   h ^= h >> 16u; h *= 0x7feb352du; h ^= h >> 15u; h *= 0x846ca68bu; h ^= h >> 16u;
   return float(h >> 8u) * (1.0 / 16777216.0);
@@ -56,7 +45,23 @@ float reNoise(vec2 p, highp int n, highp uint salt) {
   float top = a + (b - a) * u.x, bot = c + (d - c) * u.x;
   return top + (bot - top) * u.y;
 }
-float reWander(vec2 p) {
+`;
+
+/**
+ * The chunk, for a program whose texels decode through `decode` (the lane's elDecode; '' for the classic program's
+ * display values). Declares `uRoadEdge` and `vec3 roadEdge(vec3 own, uint data, vec2 p, vec2 gx, vec2 gy, int t)`:
+ * `own` the fragment's own decoded texel, `data` its tile byte, `p` its pixel-local tile coordinate (the program's
+ * `unwrapped`), `gx`/`gy` its own gradient (ROT[t] of the coordinate's), `t` its own turn.
+ * @param {string} decode
+ */
+export function roadEdgeGlsl(decode = '') {
+  const s = ROAD_EDGE.soft;
+  return `// ROAD-LOOK (render/roadEdgeGlsl.js; the law is world/road/roadEdge.js)
+uniform float uRoadEdge;   // 0: every tile its own, as DFU draws it
+const highp uvec2 RE_WET = uvec2(${ROAD_EDGE_WET[0]}u, ${ROAD_EDGE_WET[1]}u);   // the records that carry water, 0-31 and 32-63
+bool reRoad(highp uint d) { return (d >> 2u) == ${ROAD_PAVING}u; }   // the paving: its edge tiles are the ground's side
+bool reTakes(highp uint d) { highp uint r = d >> 2u; return r < ${GROUND_RECORD_LIMIT}u && (((r < 32u ? (RE_WET.x >> r) : (RE_WET.y >> (r - 32u))) & 1u) == 0u); }
+${EDGE_NOISE_GLSL}float reWander(vec2 p) {
   return ${ROAD_EDGE.wander.map((o, k) => `${f(o.amp)} * (2.0 * reNoise(p, ${o.cells}, ${ROAD_EDGE.salt + k}u) - 1.0)`).join(' + ')};
 }
 float reNear(float d) { float w = max(0.5 - d, 0.0); return w * w / max(d * d, 1e-6); }

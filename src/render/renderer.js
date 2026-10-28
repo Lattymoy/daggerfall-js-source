@@ -1023,7 +1023,6 @@ ${FOG_GLSL}
 ${ecotoneGlsl()}
 ${snowCoverGlsl()}
 ${snowCapGlsl('', SNOW_TILE_M)}
-${WATER_BED_GLSL}
 // DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
 // column-major, so these are the TRANSPOSES of the shader source
 // (caught in R9 build: rotated tiles sampled the wrong direction).
@@ -1035,6 +1034,8 @@ const mat2 ROT[4] = mat2[4](
 const vec2 TRANS[4] = vec2[4](
   vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
 ${roadEdgeGlsl()}
+${groundEdgeGlsl()}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)
+${WATER_BED_GLSL}
 void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
   ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(127));
@@ -1064,12 +1065,18 @@ void main() {
   vec2 gx = ROT[t] * dFdx(unwrapped);
   vec2 gy = ROT[t] * dFdy(unwrapped);
   vec3 tex = textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb;
-  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)
+  // COAST-LOOK (render/groundEdgeGlsl.js): a transition is its two kinds' own ground, each its own picture at its share,
+  // each taking the border's sets (ECOTONE1) and the snow's winter twin by the same
+  highp uint geA, geB; float geS;
+  bool ge = groundMix(data, tileUV, unwrapped, geA, geB, geS);
+  vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;   // the coordinate's own gradient (ROT is orthonormal)
   vec4 ew = ecoWeights(vLocalXZ);   // ECOTONE1: the border's shares, once (AUDIT PRECIP GROUND-6: the snow crosses it by the same)
-  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
+  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);
+  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground (render/roadEdgeGlsl.js)
+  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
   float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)
   snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)
-  tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
+  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
   ${waterBedMix()}
   tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
   vec3 n = normalize(vNormal);
@@ -1152,7 +1159,9 @@ export function terrainClipFs(fs) {
   const at = fs.indexOf(CLIP_AFTER);
   if (at < 0 || fs.indexOf(CLIP_AFTER, at + 1) >= 0) throw new Error('FAR-CLIP1: a terrain program ends its tile decode with ONE gradient line, which the clip goes after');
   const cut = at + CLIP_AFTER.length;
-  return `${fs.slice(0, cut)}  if (data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater)\n${fs.slice(cut)}`;
+  // COAST-LOOK (render/groundEdgeGlsl.js coastCut): with the ground's kinds blended, the cut follows a wandering line per
+  // fragment - inside the cut cells, a kept point of one drawing the nearest kept cell - where the mod cut a whole tile
+  return `${fs.slice(0, cut)}  if (uGroundEdge > 0.0 ? coastCut(unwrapped, data, layer, t, tileUV, tuv, gx, gy) : data == ${CLIP_SENTINEL}u) discard;   // FAR-CLIP1: the cap's clipped tile (TilemapTextureArrayClipWater); COAST-LOOK: on a wandering line\n${fs.slice(cut)}`;
 }
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
@@ -1572,6 +1581,7 @@ import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's q
 import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { lightIdsOf, lightList, packLight } from './lightId.js';   // LIGHT-ID: each light's identity, lifted off its list for the shadow pass (and the flash packed through the seam)
 import { roadEdgeGlsl, roadEdgesOn } from './roadEdgeGlsl.js';   // ROAD-LOOK: a road's edge blended into its ground, both terrain programs' one chunk, and its switch
+import { groundEdgeGlsl, coastEdgesOn } from './groundEdgeGlsl.js';   // COAST-LOOK: the ground's kinds blended and the sea's cut on their line, both terrain programs' one chunk, and its switch
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
 import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
 import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
@@ -2484,6 +2494,7 @@ export class Renderer {
     this.tUWaterBed = gl.getUniformLocation(this.terrainProgram, 'uWaterBed');   // WATER-NEXT 2: the bed under the water
     this.tUBedMask = gl.getUniformLocation(this.terrainProgram, 'uBedMask');
     this.tURoadEdge = gl.getUniformLocation(this.terrainProgram, 'uRoadEdge');   // ROAD-LOOK: the road's edge blended (render/roadEdgeGlsl.js)
+    this.tUGroundEdge = gl.getUniformLocation(this.terrainProgram, 'uGroundEdge');   // COAST-LOOK: the ground's kinds blended, the sea cut on their line (render/groundEdgeGlsl.js)
     // ECOTONE1 (render/ecotoneGlsl.js): the neighbours' tile sets' samplers, which set each neighbour wears, and the
     // pixel's first world tile - the installed terrain program's own, so what the last draw set them to is forgotten
     this.tEco = {
@@ -7863,6 +7874,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.uniform1f(this.tUWaterBed, this.waterBed ? 1 : 0);
       gl.uniform4uiv(this.tUBedMask, BED_MASK);
       gl.uniform1f(this.tURoadEdge, this.roadEdges ? 1 : 0);   // ROAD-LOOK: a frame's, as the bed's switch
+      gl.uniform1f(this.tUGroundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: a frame's, as the road edge's
       this._uploadFog(this._terrainFog);
       gl.uniform3fv(this.tULightDir, this._lightDir);
       gl.uniform3fv(this.tUAmbient, this._c3(this._ambient));
@@ -8004,7 +8016,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'),
       lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
       moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
-      zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
+      zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), f0: u('uF0'), shoreSoft: u('uShoreSoft'), groundEdge: u('uGroundEdge'),
       swell: u('uSwell'), absorb: u('uAbsorb'), open: u('uOpen'), openColor: u('uOpenColor'),   // WATER-NEXT 2
       sceneOn: u('uSceneOn'), scene: u('uScene'), sceneDepth: u('uSceneDepth'), sceneSize: u('uSceneSize'),
       rippleOn: u('uRippleOn'), ripple: u('uRipple'), rippleRect: u('uRippleRect'),   // WATER-NEXT 4
@@ -8030,6 +8042,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   /** ROAD-LOOK: whether a road's edge is blended into its ground (render/roadEdgeGlsl.js) - the page's, taken as the renderer
    *  is made (roadEdgesOn: the enhanced skin, `?roadedges=off` the kill door); off, every tile is its own, as DFU draws it */
   roadEdges = roadEdgesOn();
+  /** COAST-LOOK: whether the ground's kinds are blended and the sea cut on their line (render/groundEdgeGlsl.js) - the
+   *  page's, taken as the renderer is made (coastEdgesOn: the enhanced skin, `?coastedges=off` the kill door); off, every
+   *  tile is its own and the cut the mod's whole tile, as DFU and Iliac Puddle No More draw them */
+  coastEdges = coastEdgesOn();
   /** WATER-NEXT: the Water quality row's Simple - no copy under the water (the blend looks through it) */
   waterSimple = false;
   /** WATER-NEXT 2: the open sea's rows, reused a frame to the next (drawSeaSurfaces) */
@@ -8104,6 +8120,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(L.tint, u.tint);
     gl.uniform1f(L.f0, u.f0);
     gl.uniform1f(L.shoreSoft, u.shoreSoft);
+    gl.uniform1f(L.groundEdge, this.coastEdges ? 1 : 0);   // COAST-LOOK: the sheet's shore on the ground's line (render/groundEdgeGlsl.js)
     this._bindUnderWater(L);
     this._bindRipples(L);
     // the ground's own light, term for term, so the surface sits in the

@@ -161,7 +161,7 @@ export function mergeImportHunk(h) {
 }
 
 /**
- * A LINE NUMBER BOTH SIDES MOVED (`Port-Ledger.md:855` on one side, `:860` on the other, `:850` in the base): the hunk's
+ * A LINE NUMBER BOTH SIDES MOVED (`Port-Ledger.md:856` on one side, `:861` on the other, `:851` in the base): the hunk's
  * three sides are the same text but for their numbers, each moved by the rows its side wrote above the line it names -
  * and the merged doc keeps both sides' rows (union), so the merged number is ours + theirs - base. Null unless every
  * side is the same text with only numbers changed (needs the diff3 base: `git checkout --conflict=diff3 -- <file>`).

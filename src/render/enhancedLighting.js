@@ -74,6 +74,7 @@ import { FLAT_CRACK_GLSL } from '../systems/veinCrack.js';   // VEIN-CRACKS: the
 import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL, GLINT_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { roadEdgeGlsl } from './roadEdgeGlsl.js';   // ROAD-LOOK: a road's edge blended into its ground, both terrain programs' one chunk
+import { groundEdgeGlsl } from './groundEdgeGlsl.js';   // COAST-LOOK: the ground's kinds blended and the sea's cut on their line, both terrain programs' one chunk
 import { ecotoneGlsl } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours, both terrain programs' one chunk
 import { snowCoverGlsl, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps, after it
 import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
@@ -1003,7 +1004,6 @@ ${EL_POINT_LIT_GLSL}
 ${ecotoneGlsl('elDecode')}
 ${snowCoverGlsl('elDecode')}
 ${snowCapGlsl('elDecode', SNOW_TILE_M)}
-${WATER_BED_GLSL}
 out vec4 outColor;
 const mat2 ROT[4] = mat2[4](
   mat2(1.0, 0.0, 0.0, 1.0),
@@ -1013,6 +1013,8 @@ const mat2 ROT[4] = mat2[4](
 const vec2 TRANS[4] = vec2[4](
   vec2(0.0, 0.0), vec2(0.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 0.0));
 ${roadEdgeGlsl('elDecode')}
+${groundEdgeGlsl('elDecode')}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)
+${WATER_BED_GLSL}
 void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
   ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(127));
@@ -1042,12 +1044,18 @@ void main() {
   vec2 gx = ROT[t] * dFdx(unwrapped);
   vec2 gy = ROT[t] * dFdy(unwrapped);
   vec3 tex = elDecode(textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb);
-  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own
+  // COAST-LOOK (render/groundEdgeGlsl.js): a transition is its two kinds' own ground, each its own picture at its share,
+  // each taking the border's sets (ECOTONE1) and the snow's winter twin by the same
+  highp uint geA, geB; float geS;
+  bool ge = groundMix(data, tileUV, unwrapped, geA, geB, geS);
+  vec2 dux = transpose(ROT[t]) * gx, duy = transpose(ROT[t]) * gy;   // the coordinate's own gradient (ROT is orthonormal)
   vec4 ew = ecoWeights(vLocalXZ);   // ECOTONE1: the border's shares, once (AUDIT PRECIP GROUND-6: the snow crosses it by the same)
-  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
+  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);
+  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own
+  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
   float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)
   snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)
-  tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
+  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
   ${waterBedMix((t) => `elDecode(${t})`)}
   tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
   vec3 n = normalize(vNormal);
