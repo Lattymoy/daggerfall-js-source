@@ -36,6 +36,18 @@ export const siegeSpellBarred = (sp) => (Array.isArray(sp?.effects) ? sp.effects
 export const SIEGE_SPELL_BARRED_TEXT = 'Teleport, Recall and Levitate do nothing on a battlefield.';
 export const SIEGE_DISMOUNT_TEXT = "You can't ride a horse on a battlefield.";
 
+/** PVP-SPELLS (the PvP rework, 2026-10-28: "paralize and dot spell dont work in pvp", "dont use them for now", "get rid of
+ *  disitigrate", "remove silence"): a spell at a player lands its FIRST effect only ("multi spell skill only use the
+ *  first"), and only Damage (4) and Drain (7) reach a player. Paralyze, Continuous Damage, Disintegrate and Silence stay
+ *  home until they are rebalanced. */
+export const PVP_SPELL_TYPES = Object.freeze([4, 7]);
+/** The one effect of `sp` that counts between players - its first, if it is a PvP family or a Heal Health - or null. */
+export function pvpFirstEffect(sp) {
+  const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;
+  if (!e || !Number.isInteger(e.type)) return null;
+  return PVP_SPELL_TYPES.includes(e.type) || (e.type === 10 && e.subType === 8) ? e : null;
+}
+
 /**
  * THE NUMBERS A SPELL CARRIES TO THE REFEREE: `{ harm, heal }` - what its harmful families (duelSpellOf) deal at once (at
  * its own range, its save rolled as any caster's spell's) and what its Heal Health restores (as ALLY-CAST's receiver
@@ -54,10 +66,11 @@ export function siegeSpellNumbers(sp, level, standIn, caster = null, { apply = a
     try { apply(spell, level, standIn, sinks, rolls, caster ? { entity: caster } : null); } catch { return false; } finally { if (standIn) standIn.activeEffects = []; }
     return true;
   };
-  const harmful = duelSpellOf(sp);
+  // PVP-SPELLS: the first effect alone, of the PvP families (pvpFirstEffect)
+  const first = pvpFirstEffect(sp);
+  const harmful = first && first.type !== 10 ? duelSpellOf({ ...sp, effects: [first] }) : null;
   if (harmful && !run(harmful, { hurt: count('harm'), heal: none, drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) harm = 0;
   // its Heal Health (effects.js isHealHealth) landed as ALLY-CAST lands a gift - a self-cast (rangeType 0), no save rolled
-  const healing = (Array.isArray(sp?.effects) ? sp.effects : []).filter((e) => e && e.type === 10 && e.subType === 8);
-  if (healing.length && !run({ ...sp, rangeType: 0, effects: healing }, { hurt: none, heal: count('heal'), drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) heal = 0;
+  if (first?.type === 10 && !run({ ...sp, rangeType: 0, effects: [first] }, { hurt: none, heal: count('heal'), drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) heal = 0;
   return { harm: Math.round(harm), heal: Math.round(heal) };
 }

@@ -582,8 +582,13 @@ test('AUDIT-SEATS G5 A SHAFT, A SPELL AND THE WARDS: an arrow\'s blow is a shaft
   assert.deepEqual(siegeSpellNumbers(fire, 10, stub(), me, { apply: () => { throw new Error('no'); } }), { harm: 0, heal: 0 }, 'a spell that throws counts nothing');
   const s = stub();
   const rot = siegeSpellNumbers({ name: 'Rot', element: 0, rangeType: 2, effects: [{ ...eff(1, 0, 5), durationBase: 5 }] }, 10, s, me, { rolls: () => 0.99 });
-  assert.ok(rot.harm > 0, 'a continuous damage\'s first round is harm at once');
+  assert.equal(rot.harm, 0, 'PVP-SPELLS: a continuous damage reaches no player');
   assert.deepEqual(s.activeEffects, [], 'the stand-in keeps nothing (its rounds would have stood on it)');
+  // PVP-SPELLS: the first effect alone counts, and only Damage and Drain of the harmful families
+  for (const t of [0, 1, 5, 19]) assert.equal(siegeSpellNumbers({ name: 'Off', element: 0, rangeType: 2, effects: [eff(t, 0, 25)] }, 10, stub(), me, { rolls: () => 0.99 }).harm, 0, `type ${t} reaches no player`);
+  assert.deepEqual(siegeSpellNumbers({ ...fire, effects: [eff(0, 0, 25), eff(4, 0, 25)] }, 10, stub(), me, { rolls: () => 0.99 }), { harm: 0, heal: 0 }, 'a Damage behind a Paralyze is not the first effect');
+  assert.deepEqual(siegeSpellNumbers({ ...heal, effects: [eff(4, 0, 25), eff(10, 8, 30)] }, 10, stub(), me, { rolls: () => 0.99 }).heal, 0, 'a heal behind a damage is not the first effect');
+  assert.ok(siegeSpellNumbers({ ...fire, effects: [eff(4, 0, 25), eff(10, 8, 30)] }, 10, stub(), me, { rolls: () => 0.99 }).harm > 0, 'the first effect still lands');
   assert.deepEqual([...SIEGE_BARRED_EFFECTS], [43, 14]);
   assert.deepEqual([siegeSpellBarred({ effects: [eff(43, 255, 0)] }), siegeSpellBarred({ effects: [eff(4, 0, 1), eff(14, 255, 0)] }), siegeSpellBarred(fire), siegeSpellBarred(null)], [true, true, false, false]);
 });

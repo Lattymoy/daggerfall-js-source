@@ -132,7 +132,7 @@ test('AUDIT C&C H5 A STRIKER\'S BUFFS HELP ITS BLOW AND NO LUCK HARMS IT: the li
   assert.deepEqual(stock, [[2201, 10067], [2196, 12198], [2201, 10067], [2196, 12198], [2201, 10067], [2233, 10195]], 'DFU\'s own core: an unarmoured body (a stand-in with no table read 0, an armour past any - 3 blows in 100 landed)');
 });
 
-test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caster\'s own race and willpower save against nothing of its own - a Breton\'s Magic bolt counts what its Fire and Frost bolts do, and a Fortify Willpower to 100 changes nothing (2,361 of 200 bolts each; against its own sheet 1,184 and 1,006 - its race\'s +30, its own willpower) - and a Disintegrate counts the body whole whatever the caster\'s own wounds (99,999, sent as a cast\'s most, 60, for the referee to clip; against its own sheet the caster\'s own 35, or 5 wounded) (mutants: the race; an attribute off the middle; the health)', () => {
+test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caster\'s own race and willpower save against nothing of its own - a Breton\'s Magic bolt counts what its Fire and Frost bolts do, and a Fortify Willpower to 100 changes nothing (2,361 of 200 bolts each; against its own sheet 1,184 and 1,006 - its race\'s +30, its own willpower) - and a Disintegrate reaches no player (PVP-SPELLS) (mutants: the race; an attribute off the middle; the health)', () => {
   const e = mintPlayer();
   assert.deepEqual([e.raceId, e.level, e.health], [1, 1, 35], 'a level-1 Breton - its race resists Magic - whole at 35');
   const strong = mintPlayer();
@@ -142,10 +142,11 @@ test('AUDIT C&C H5 A SPELL\'S HARM IS COUNTED ON THE NEUTRAL STAND-IN: the caste
   const DISINTEGRATE = buildCustomSpell({ slots: [{ type: 5, subType: 255, settings: { chanceBase: 100 } }], rangeType: 1, element: 4, name: 'Disintegrate' });
   const hurt = mintPlayer();
   hurt.health = 5;
+  // PVP-SPELLS: Disintegrate reaches no player (combat/siegeCombat.js PVP_SPELL_TYPES)
   const kills = casts(e, DISINTEGRATE, 8);
-  assert.deepEqual(kills, [0, 0, 99999, 99999, 0, 0, 99999, 99999], 'a kill counts the body whole, or a save spares it');
+  assert.deepEqual(kills, [0, 0, 0, 0, 0, 0, 0, 0], 'a Disintegrate counts nothing at a player');
   assert.deepEqual(casts(hurt, DISINTEGRATE, 8), kills, 'the caster\'s own wounds are not the count');
-  assert.deepEqual(kills.map((n) => siegeCastClamp(n, false)), [0, 0, 60, 60, 0, 0, 60, 60], 'the number the hosts send: a cast\'s most');
+  assert.deepEqual([99999, 12].map((n) => siegeCastClamp(n, false)), [60, 12], 'the number the hosts send: a cast\'s most');
 });
 
 test('AUDIT C&C H5 THE HOSTS BY SOURCE - ONE CONSTRUCTION SEAM: every blow a host rolls between players (a duel\'s, a siege\'s, a siege work\'s, the open zone\'s) and every spell it counts (a duel\'s, a siege\'s, a side-mate\'s gift, the zone\'s) takes the one stand-in, swept over every source file; no stub of the striker\'s own sheet stands in anywhere (mutants: each of the eight sites back on a stub of my own sheet)', () => {
