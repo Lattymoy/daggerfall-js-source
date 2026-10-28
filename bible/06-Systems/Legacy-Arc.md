@@ -227,6 +227,13 @@ finishChargen`, `test/systems/legacychoice.test.js`, `tools/mutants/legacychoice
   permadeath, Permadeath and Classic (the leveling question's word for the game as it always was), keys 1, 2 and 3,
   up and down each a direction; on the classic skin the same three stacked by their own heights within the 200.
   Offline it keeps its two: the mod's own switch in Features does the third for every character there.
+- CASUAL-LIFE (2026-10-28, asked: "they need to be able to pick a casual, no death, no lineage character creation";
+  "casual needs to replace lineage's wording"): ONLINE, NO LINEAGE IS CASUAL (`systems/legacy/casual.js`), tagged No
+  death cost, its words saying what it does. The stored answer is unchanged, so every character who answered no
+  lineage is Casual. It founds no house, as before. Its death costs nothing: no tenth of the purse (`deathPenalty.js`,
+  the death screen states none) and no piece to a revenant (`revenant.js revenantTakes`). The Wild keeps its own law:
+  a player's kill there takes the zone's share. Online Enduring and Bloodline say three lines each, so Casual's four
+  fit the classic face. `test/systems/legacy/casuallife.test.js`.
 - LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down switches between the options instead of letting
   you hover and select"): WHILE THE POPUP IS UP ITS TILES OWN THE POINTER. Every host hands the slot's occupant each
   mousemove from a listener on the WINDOW (world.js, exterior.js, worldModes.js, dungeon.js - the dungeon context's
@@ -712,6 +719,7 @@ world, locked to its own family.
 | FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge, and the house's name with it (section 11; `01-Overview/bugs/Field-Bugs-2026-10-07b.md`, `01-Overview/audits/Audit-FB1007b.md`) | built, audited |
 | FB1012d | HEIR-CLONE (the page bearing an heir offers no Succession; a save writes only the one in the world), SEAT-HOME (the seat moved to a home of the house's own - a farm), BIRTH-START (the Online page's birth in its seat); UNION-CHILDREN planned (sections 4, 9, 10b, 11; `01-Overview/bugs/Field-Bugs-2026-10-12d.md`) | built |
 | LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
+| CASUAL-LIFE | online no lineage is Casual: no house and a death that costs nothing, the Wild's own law aside (section 6) | built |
 | FAMILY-TAB | no house, no Family tab: the tab drawn while the game is played with Project Legacy (the mod on and a house for the game played); the key says why without one (section 6) | built |
 | AGELESS-CURSE | the cursed pay no toll: a vampire, a werewolf or a wereboar in an Enduring house rises from every death with no years taken, the span spent or not; cured, the toll again (section 6) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

@@ -15714,6 +15714,51 @@
   "tr": "84fb9bfc81c8",
   "by": "claude-in-session"
  },
+ "legacy.choice.bloodlineOnline.final": {
+  "en": "23686618d5ae",
+  "tr": "1f6a12ec6336",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.cost": {
+  "en": "15b0e2c26aba",
+  "tr": "b1e9a6d877d9",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.rise": {
+  "en": "a15fcbd02c7f",
+  "tr": "f2111076d06f",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.title": {
+  "en": "1001e6a79636",
+  "tr": "1001e6a79636",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.what": {
+  "en": "60ce6212685f",
+  "tr": "2b4c7021c85b",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.casual.wild": {
+  "en": "7367e331bcf8",
+  "tr": "e9dd57af55a4",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.cost": {
+  "en": "390832c2c0e5",
+  "tr": "c4a0f460ef46",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.heir": {
+  "en": "0e2c72bb4597",
+  "tr": "8e66429b0bb9",
+  "by": "claude-in-session"
+ },
+ "legacy.choice.enduringOnline.toll": {
+  "en": "b5b9fbf721ef",
+  "tr": "e4a4770ca061",
+  "by": "claude-in-session"
+ },
  "legacy.court.cooled": {
   "en": "01ad0d23411e",
   "tr": "530a6371825b",

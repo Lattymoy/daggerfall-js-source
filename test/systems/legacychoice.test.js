@@ -96,9 +96,10 @@ test('LEGACY-CHOICE the question: online three answers - Enduring first, Bloodli
   const on = legacyModelOptions({ online: true, tollShare: 0.06 });
   assert.deepEqual(on.map((o) => o.id), [MODELS.enduring, MODELS.bloodline, NO_LINEAGE], 'Enter without reading still never costs a character');
   assert.ok(on.every((o) => !o.locked));
-  assert.equal(on[2].title, 'No lineage');
+  // PIN MOVED (CASUAL-LIFE): no lineage is Casual online, and says what it does
+  assert.equal(on[2].title, 'Casual');
   assert.match(on[2].lines.join(' '), /No house, no heirs/);
-  assert.deepEqual([LEGACY_MODEL_TAGS[MODELS.enduring], LEGACY_MODEL_TAGS[MODELS.bloodline], LEGACY_MODEL_TAGS[NO_LINEAGE]], ['Not permadeath', 'Permadeath', 'Classic']);
+  assert.deepEqual([LEGACY_MODEL_TAGS[MODELS.enduring], LEGACY_MODEL_TAGS[MODELS.bloodline], LEGACY_MODEL_TAGS[NO_LINEAGE]], ['Not permadeath', 'Permadeath', 'No death cost']);
   assert.deepEqual(legacyModelOptions({ online: false, tollShare: 0.06 }).map((o) => o.id), [MODELS.enduring, MODELS.bloodline], 'offline its two');
   assert.ok(isLegacyChoice(NO_LINEAGE) && isLegacyChoice(MODELS.bloodline) && !isLegacyChoice('nobody') && !isLegacyChoice(undefined));
   // the classic face: the three stacked by their own heights, every block clear of the next, the footer on the screen
@@ -174,7 +175,7 @@ test('LEGACY-CHOICE the popup: on Enhanced Plus the online question wears the Pl
     assert.equal(find(root, 'lvl-hint')[0].textContent, LEGACY_CHOICE_FACE.hint);
     assert.match(LEGACY_CHOICE_FACE.hint, /1, 2 or 3/);
     const tiles = find(root, 'lvl-opt');
-    assert.deepEqual(tiles.map((t) => find(t, 'lvl-tag')[0].textContent), ['Not permadeath', 'Permadeath', 'Classic']);
+    assert.deepEqual(tiles.map((t) => find(t, 'lvl-tag')[0].textContent), ['Not permadeath', 'Permadeath', 'No death cost']);   // PIN MOVED (CASUAL-LIFE)
     assert.ok(tiles[0].className.includes('is-on'), 'Enduring chosen first');
     tiles[2].onclick();
     assert.deepEqual(got, [NO_LINEAGE]);
@@ -346,8 +347,9 @@ test('LEGACY-CHOICE the law: no lineage founds no house - at the birth, at any l
 
 test('LEGACY-CHOICE the Family tab says why there is no house: no lineage chosen, or online one loaded with none - a new character founds one', () => {
   const prov = (over) => ({ on: () => true, ...over });
-  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => true })), /chose to live without a house\. Make a new character to found one\./);
-  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => false })), /chose to live without a house/);
+  // PIN MOVED (CASUAL-LIFE): the answer's name is Casual
+  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => true })), /plays Casual, without a house\. Make a new character to found one\./);
+  assert.match(noFamilyLine(prov({ choice: () => NO_LINEAGE, online: () => false })), /plays Casual, without a house/);
   assert.match(noFamilyLine(prov({ choice: () => null, online: () => true })), /Online, a house is founded only when a character is made\. Make a new character to found one\./);
   assert.match(noFamilyLine(prov({ choice: () => null, online: () => false })), /founded when your character is made, or the first time an older character is loaded/);
   assert.match(noFamilyLine({ on: () => false }), /Turn on Project Legacy/);
