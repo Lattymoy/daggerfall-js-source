@@ -434,6 +434,16 @@
   "tr": "8be7f91137ba",
   "by": "claude-in-session"
  },
+ "account.flow.shopArrived": {
+  "en": "7b6549701f07",
+  "tr": "278df90a78ed",
+  "by": "claude-in-session"
+ },
+ "account.flow.shopFinish": {
+  "en": "4e9d37827908",
+  "tr": "3f38be8334f0",
+  "by": "claude-in-session"
+ },
  "account.flow.signedOut": {
   "en": "05d2a79ce815",
   "tr": "e6211ec4c7ae",
@@ -522,6 +532,11 @@
  "account.glyph.nirnrootsage": {
   "en": "84174edc6e42",
   "tr": "84174edc6e42",
+  "by": "claude-in-session"
+ },
+ "account.glyph.origin": {
+  "en": "44ab85a252ad",
+  "tr": "f3d0583f6449",
   "by": "claude-in-session"
  },
  "account.glyph.penitent": {
@@ -3504,6 +3519,11 @@
   "tr": "1693ac535d7b",
   "by": "claude-in-session"
  },
+ "account.refusal.shopClosed": {
+  "en": "813b7e1d31de",
+  "tr": "f9b8a370e3a0",
+  "by": "claude-in-session"
+ },
  "account.refusal.short": {
   "en": "0aab24c617ff",
   "tr": "a05e5044f5a3",
@@ -3547,6 +3567,11 @@
  "account.refusal.storesShort": {
   "en": "02290be8ddd0",
   "tr": "1210c116a1aa",
+  "by": "claude-in-session"
+ },
+ "account.refusal.stripeDown": {
+  "en": "46d718507960",
+  "tr": "303ca2738f4c",
   "by": "claude-in-session"
  },
  "account.refusal.subjectLong": {
@@ -8009,6 +8034,11 @@
   "tr": "7345096416af",
   "by": "claude-in-session"
  },
+ "coll.avail.shop": {
+  "en": "63ce672e7e17",
+  "tr": "0e0953e8a57f",
+  "by": "claude-in-session"
+ },
  "coll.avail.staff": {
   "en": "9d59264426d4",
   "tr": "c55ab43568f7",
@@ -8067,6 +8097,11 @@
  "coll.availLine.seasonal": {
   "en": "145ed0897807",
   "tr": "9101dd0c58c2",
+  "by": "claude-in-session"
+ },
+ "coll.availLine.shop": {
+  "en": "82775ac3c10d",
+  "tr": "bd2ea79b66e6",
   "by": "claude-in-session"
  },
  "coll.availLine.spirechampion": {
@@ -8364,6 +8399,11 @@
   "tr": "5206ae341bcb",
   "by": "claude-in-session"
  },
+ "coll.how.shop": {
+  "en": "f1b1c526cb50",
+  "tr": "c78bb05b925b",
+  "by": "claude-in-session"
+ },
  "coll.how.soulcake": {
   "en": "d84338560ee9",
   "tr": "d673181a5dba",
@@ -8437,6 +8477,11 @@
  "coll.look.dagonfire": {
   "en": "be02d35d3918",
   "tr": "d59f089e1ea5",
+  "by": "claude-in-session"
+ },
+ "coll.look.eternal": {
+  "en": "5626000db992",
+  "tr": "3b4b8fa2b0a0",
   "by": "claude-in-session"
  },
  "coll.look.firsthour": {
@@ -8677,6 +8722,11 @@
  "coll.src.serpent": {
   "en": "4b379442d4aa",
   "tr": "1e7f5698ab85",
+  "by": "claude-in-session"
+ },
+ "coll.src.shop": {
+  "en": "b487e5c25d4a",
+  "tr": "c32ee096d976",
   "by": "claude-in-session"
  },
  "coll.src.spire": {
@@ -27464,6 +27514,16 @@
   "tr": "5d68ac22c903",
   "by": "claude-in-session"
  },
+ "post.wareHeld": {
+  "en": "9f28a650b5b5",
+  "tr": "3764ffe01154",
+  "by": "claude-in-session"
+ },
+ "post.wareWear": {
+  "en": "687fc7195e75",
+  "tr": "d1c89da3a8d1",
+  "by": "claude-in-session"
+ },
  "prof.craft.master": {
   "en": "2b04f38ac139",
   "tr": "53ca5a070f70",
@@ -35832,6 +35892,191 @@
  "settings.pack.replace": {
   "en": "64ca199c859e",
   "tr": "d2aa03d530de",
+  "by": "claude-in-session"
+ },
+ "shop.buy": {
+  "en": "7ceca51fcafe",
+  "tr": "d78728a27d4c",
+  "by": "claude-in-session"
+ },
+ "shop.buyLabel": {
+  "en": "e442f17b0565",
+  "tr": "9adf1d871de0",
+  "by": "claude-in-session"
+ },
+ "shop.cat.auras": {
+  "en": "0b5c4206710a",
+  "tr": "00ea1fcd93a8",
+  "by": "claude-in-session"
+ },
+ "shop.cat.glyphs": {
+  "en": "34899bb53635",
+  "tr": "e4690487efb7",
+  "by": "claude-in-session"
+ },
+ "shop.cat.titles": {
+  "en": "a116f7255e19",
+  "tr": "87ee85dae7d7",
+  "by": "claude-in-session"
+ },
+ "shop.cats": {
+  "en": "6ccb60071be8",
+  "tr": "358210386a4f",
+  "by": "claude-in-session"
+ },
+ "shop.close": {
+  "en": "bbfa773e5a63",
+  "tr": "ae2883a526af",
+  "by": "claude-in-session"
+ },
+ "shop.cosmetic": {
+  "en": "4c95d231207d",
+  "tr": "8e2342c7ba09",
+  "by": "claude-in-session"
+ },
+ "shop.hide": {
+  "en": "34d8b60fe253",
+  "tr": "355af2898eee",
+  "by": "claude-in-session"
+ },
+ "shop.kind.aura": {
+  "en": "af0854de67de",
+  "tr": "af0854de67de",
+  "by": "claude-in-session"
+ },
+ "shop.kind.glyph": {
+  "en": "817122cee4bb",
+  "tr": "c93a87bca9d6",
+  "by": "claude-in-session"
+ },
+ "shop.kind.title": {
+  "en": "768e0c1c6957",
+  "tr": "1dcdf80d8301",
+  "by": "claude-in-session"
+ },
+ "shop.look.eternal": {
+  "en": "dfb8ea681cdf",
+  "tr": "618724633548",
+  "by": "claude-in-session"
+ },
+ "shop.look.genesis": {
+  "en": "38bb9c87adc1",
+  "tr": "ee3abcb5c3b0",
+  "by": "claude-in-session"
+ },
+ "shop.look.origin": {
+  "en": "4f56ab8a0105",
+  "tr": "71105f58f528",
+  "by": "claude-in-session"
+ },
+ "shop.noPreview": {
+  "en": "dc119ce5c13d",
+  "tr": "278038de686c",
+  "by": "claude-in-session"
+ },
+ "shop.phase": {
+  "en": "cfef335f3cc8",
+  "tr": "b167b73d15d3",
+  "by": "claude-in-session"
+ },
+ "shop.proceeds": {
+  "en": "792de6c126c3",
+  "tr": "8714ed383545",
+  "by": "claude-in-session"
+ },
+ "shop.show": {
+  "en": "d97d1ee339e4",
+  "tr": "23a5428c1333",
+  "by": "claude-in-session"
+ },
+ "shop.state.closed": {
+  "en": "55657e24a43e",
+  "tr": "f8e5aca70c69",
+  "by": "claude-in-session"
+ },
+ "shop.state.gone": {
+  "en": "fdc1e8cca459",
+  "tr": "a544a761f8f2",
+  "by": "claude-in-session"
+ },
+ "shop.state.guest": {
+  "en": "b53a787dd6f2",
+  "tr": "ccfbd2797d7e",
+  "by": "claude-in-session"
+ },
+ "shop.state.held": {
+  "en": "b62ff5ccd122",
+  "tr": "a2b914452980",
+  "by": "claude-in-session"
+ },
+ "shop.state.out": {
+  "en": "8b8633b4af7f",
+  "tr": "3f563b1201f6",
+  "by": "claude-in-session"
+ },
+ "shop.stripe": {
+  "en": "bd5f13121950",
+  "tr": "9070c3a87725",
+  "by": "claude-in-session"
+ },
+ "shop.tag.account": {
+  "en": "e6ddf5b83c99",
+  "tr": "3b89998684af",
+  "by": "claude-in-session"
+ },
+ "shop.tag.preAlpha": {
+  "en": "b101d3ecb158",
+  "tr": "e132d69c7858",
+  "by": "claude-in-session"
+ },
+ "shop.takeOff": {
+  "en": "1c99c72cdd1d",
+  "tr": "a6e6f301adf3",
+  "by": "claude-in-session"
+ },
+ "shop.terms": {
+  "en": "0c8a9a95e21a",
+  "tr": "5e348297e3a2",
+  "by": "claude-in-session"
+ },
+ "shop.title": {
+  "en": "55de88709232",
+  "tr": "c32ee096d976",
+  "by": "claude-in-session"
+ },
+ "shop.wear": {
+  "en": "94433a7ece91",
+  "tr": "3c4af790e355",
+  "by": "claude-in-session"
+ },
+ "shop.who.closed": {
+  "en": "813b7e1d31de",
+  "tr": "f9b8a370e3a0",
+  "by": "claude-in-session"
+ },
+ "shop.who.for": {
+  "en": "290487303f0c",
+  "tr": "78bcfb1014b3",
+  "by": "claude-in-session"
+ },
+ "shop.who.guest": {
+  "en": "c02b510d217a",
+  "tr": "81f47831b3e4",
+  "by": "claude-in-session"
+ },
+ "shop.who.out": {
+  "en": "21ab32cbd12f",
+  "tr": "e099af7ceae9",
+  "by": "claude-in-session"
+ },
+ "shop.who.reading": {
+  "en": "9964cedb67bf",
+  "tr": "729b82f19e27",
+  "by": "claude-in-session"
+ },
+ "shop.yourName": {
+  "en": "f48db7e9d3ef",
+  "tr": "750fdcaef32a",
   "by": "claude-in-session"
  },
  "skillswap.done": {

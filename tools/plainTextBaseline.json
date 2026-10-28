@@ -719,7 +719,7 @@
   "src/net/peer/peerRange.js": 27,
   "src/net/peer/peerRiders.js": 55,
   "src/net/playClock.js": 35,
-  "src/net/postLaw.js": 4,
+  "src/net/postLaw.js": 3,
   "src/net/privateReport.js": 4,
   "src/net/productRecord.js": 28,
   "src/net/profBook.js": 92,

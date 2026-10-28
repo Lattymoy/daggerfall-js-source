@@ -217,6 +217,7 @@ on:
       - "src/net/eliteGates/egStartLaw.js"
       - "src/net/superDungeon/sdMarks.js"
       - "src/net/postLaw.js"
+      - "src/net/shopLaw.js"
       - "src/net/lostLaw.js"
       - "src/systems/superDungeon/sdSpoils.js"
       - "src/systems/eliteGates/egSpoils.js"
@@ -938,6 +939,33 @@ jobs:
             echo "- webhook secret: $([ -n "${PATREON_WEBHOOK_SECRET}" ] && echo put || echo 'not set - pledges are not followed')"
             echo "- the Patreon client's redirect URI: \`$base/v1/patreon/callback\`"
             echo "- the Patreon webhook's URL: \`$base/v1/patreon/webhook\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ── 4d. THE SHOP'S TWO STRIPE SECRETS, WHERE THE REPOSITORY HAS THEM ──
+      #
+      # SHOP (bible/06-Systems/Shop.md): Stripe takes the money on its own page, and the service needs the two things only
+      # Stripe and the owner hold - the API's secret key (to open a checkout) and the webhook endpoint's signing secret
+      # (to believe Stripe's word on a payment). Put on EVERY deploy, Patreon's way, through one pipe so neither value is
+      # echoed. An unset one is not an error: the shop stays closed (shop.js shopOn). The summary names the webhook's URL.
+      - name: Put the Stripe secrets, where the repository has them
+        working-directory: server-account
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          if [ -z "${STRIPE_SECRET_KEY}" ] && [ -z "${STRIPE_WEBHOOK_SECRET}" ]; then
+            echo "neither STRIPE_SECRET_KEY nor STRIPE_WEBHOOK_SECRET is set for this repository - the shop stays closed"
+          else
+            jq -n 'env | {STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+          fi
+          {
+            echo "### The shop"
+            echo ""
+            echo "- Stripe secret key: $([ -n "${STRIPE_SECRET_KEY}" ] && echo put || echo 'not set - the shop is closed')"
+            echo "- Stripe webhook secret: $([ -n "${STRIPE_WEBHOOK_SECRET}" ] && echo put || echo 'not set - the shop is closed')"
+            echo "- the Stripe webhook endpoint's URL: \`$base/v1/shop/webhook\` (events: checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created, charge.dispute.closed)"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's

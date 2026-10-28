@@ -461,7 +461,8 @@ test('BR5: the keys other systems hold keep their spelling, and what moving each
   assert.match(read('src/net/accountClient.js'), /export const DEFAULT_ACCOUNT_SERVICE = 'https:\/\/daggerfall-accounts\.mackcothran\.workers\.dev';/,
     'the account service\'s - the same');
   assert.match(read('server/wrangler.toml'), /^name = "daggerfall-online"$/m, 'the relay Worker\'s name IS its hostname');
-  assert.match(read('server-account/src/patreon.js'), /salt: enc\.encode\('daggerfall-accounts patreon-link'\)/,
+  // PIN MOVED (SHOP): the sealing moved to sealed.js, shared with the shop - the salt is still Patreon's own constant
+  assert.match(read('server-account/src/patreon.js'), /const PATREON_SEAL_SALT = 'daggerfall-accounts patreon-link';/,
     'a key-derivation salt - change it and every linked Patreon\'s stored secret stops opening');
   assert.match(read('.github/workflows/account-deploy.yml'), /DB_NAME: daggerfall-accounts/, 'the D1 database, by its name');
   assert.ok(read('.github/FUNDING.yml').includes('ko_fi: daggerfallonline'), 'the Ko-fi page is where it is - an account outside the tree, as the Patreon is');
