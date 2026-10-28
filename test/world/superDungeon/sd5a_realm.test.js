@@ -222,9 +222,9 @@ test('SD5a the dungeon host by source: the Hour\'s refusals beside the court\'s 
 
 test('SD5a the mode machine by source: into the Hour from the open world (its made location, its blocks file, its room the relay\'s realm), the Hour stood before the marker is read, out of it before the Hollow\'s door, its light, air and lamps every frame, its room identity, its slot, and the doors the world host takes (mutants: the room a dungeon\'s; the Hour unstood; out at no door)', () => {
   const W = read('src/scenes/worldModes.js');
-  assert.match(W, /async function enterSdRealm\(r\) \{\n\s+if \(mode !== 'exterior' \|\| !r \|\| !Number\.isSafeInteger\(r\.s\) \|\| !\(playerEntity\.health > 0\)\) return false;/);
-  assert.match(W, /const hit = \{ dfLocation, blocksFile: sdRealmBlocks\(blocks\), sdRealm: r\.s, sdHollow: r\.hollow \?\? null, [^\n]*group: sdRoomKey\(r\.s\), door: null, dfBlock: null, recordIndex: -1 \};\n\s+return gatedTransition\(\(live\) => dungeonTransition\(hit, \[\], true, live\)\);/);
-  assert.equal(sdRoomKey(7), 'sd:7');
+  assert.match(W, /async function enterSdRealm\(r\) \{\n\s+if \(mode !== 'exterior' \|\| !r \|\| !sdRoomKey\(r\.s, r\.owner\) \|\| !\(playerEntity\.health > 0\)\) return false;/);   // PIN MOVED: SD-PARTY - a party's Hour to key
+  assert.match(W, /const hit = \{ dfLocation, blocksFile: sdRealmBlocks\(blocks\), sdRealm: r\.s, sdHollow: r\.hollow \?\? null, [^\n]*group: sdRoomKey\(r\.s, r\.owner\), door: null, dfBlock: null, recordIndex: -1 \};\n\s+return gatedTransition\(\(live\) => dungeonTransition\(hit, \[\], true, live\)\);/);
+  assert.equal(sdRoomKey(7, '0123456789abcdef'), 'sd:7.0123456789abcdef');   // PIN MOVED: SD-PARTY - a party's own Hour
   assert.match(W, /if \(hit\.gateArena\) gateStand\.standCourt\(ctx, hit\.gateArena\.day\);[^\n]*\n\s+if \(hit\.sdRealm != null\) standSdRealm\(ctx\);/);   // WB14b: the court stood by scenes/gate/gateStand.js, its night's
   assert.match(W, /for \(const \[rec, art\] of realmArt\(\)\) \{ renderer\.uploadTexture\?\.\(SD_REALM_ARCHIVE, rec, art\.albedo\); renderer\.uploadEmissionTexture\?\.\(SD_REALM_ARCHIVE, rec, art\.emission, \{ white: true \}\); \}[^\n]*\n\s+_realmMesh = renderer\.createMesh\(buildRealmModel\(\)\);/);   // AUDIT SD II (L2 F3 - PIN MOVED): its own light
   assert.match(W, /ctx\.collider\.addMesh\(REALM_BUCKET, tris, idx, identity\(\)\);/);
@@ -233,7 +233,7 @@ test('SD5a the mode machine by source: into the Hour from the open world (its ma
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ const _rl = realmLighting\(\); const _rt = dungeonTrilight\(!!renderer\.lightingLane, _rl\.tri, _hourTri\); renderer\.setLighting\(courtEquatorOf\(_rt\), 0, undefined, _rt\); renderer\.setMoonlight\(_rl\.key\); \}/);   // PIN MOVED (AUDIT SD IV R5): the lane's trilight into a kept one
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ applyFog\(renderer, dungeonFog\(!!renderer\.lightingLane, SD_REALM_FOG, _hourFog\), _hourFogColor\); renderer\.setSceneGrade\?\.\(SD_HOUR_GRADE\); \}/);   // SD-LOOK (PIN MOVED): and the Hour's grade   // PIN MOVED (AUDIT SD IV R5): its fog and colour into kept ones
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ const _hour = realmLightsWith\(_dgLit, host\.sdRealmLights\?\.\(\) \?\? NO_LIGHTS, cam\.pos, host\.sdLampDim\?\.\(\) \?\? null\); renderer\.setPointLights\(_hour\.data, null, _hour\.colors\); \}/);   // SD9e: the spoils' light before the lamps, as the court's (PIN MOVED); AUDIT SD II (L2 F9 - PIN MOVED): into the realm's own arrays; PIN MOVED (SD-LOOK S7): the arena's lamps dimmed through the Reset (the host's sdLampDim)
-  assert.match(W, /isGateArena\(dungeonLoc\) \? \{ kind: 'gate', day: dungeonLoc\.gate \} : isSdRealm\(dungeonLoc\) \? \{ kind: 'sd', s: dungeonLoc\.sdRealm \} :/);
+  assert.match(W, /isGateArena\(dungeonLoc\) \? \{ kind: 'gate', day: dungeonLoc\.gate \} : isSdRealm\(dungeonLoc\) \? \{ kind: 'sd', s: dungeonLoc\.sdRealm, o: dungeonLoc\.sdOwner \} :/);
   assert.match(W, /sdRealmSlot: \(\) => \(mode === 'dungeon' && isSdRealm\(dungeonLoc\) \? dungeonLoc\.sdRealm : null\),/);
   assert.match(W, /\n\s+enterSdRealm,[^\n]*\n\s+stepThroughFire,/);
   assert.match(W, /sdWayBack: \(\) => host\.sdWayBack\?\.\(\),/);
@@ -261,6 +261,7 @@ function worldSteps({ hollow = { s: 7, key: HOLLOW.key, site: { px: 303, py: 202
     sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
     sdVeilCentre: () => null,   // SD-LOOK S5: where the Hour's veil closes (the screen's middle here)
     standBeforeHollowDoor: (k) => { log.push(['door', k]); return true; },   // AUDIT SD IV (F40, PIN MOVED): before its door
+    sdCopy: { ownerFor: async () => '0123456789abcdef' },   // SD-PARTY (PIN MOVED): my party's own Hour
   };
   const body = `${fn('sdEnterRealm')}\n${fn('sdWayBack')}\nreturn { sdEnterRealm, sdWayBack };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
@@ -305,7 +306,7 @@ test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour
   assert.match(w, /sdWayBack: \(\) => sdWayBack\(\),/);
   assert.match(w, /const sdHollowDoorsOf = \(h\) => buildingDoors\.filter\(\(d\) => d\.pixelKey === h\?\.key && d\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\)\.map\(shiftedDoor\);/);   // AUDIT SD IV (F40, PIN MOVED): one list, the mode machine's and the step's
   assert.match(w, /sdHollowDoors: \(h\) => sdHollowDoorsOf\(h\),/);   // SD-SKY (PIN MOVED): in the scene's frame - the raw list's doors are their pixels' (test/world/sd23_sky.test.js)
-  assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'sd'\) key = sdRoomKey\(modes\?\.roomIdentity\?\.\(\)\?\.s\);/);
+  assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'sd'\) key = sdRoomKey\(modes\?\.roomIdentity\?\.\(\)\?\.s, modes\?\.roomIdentity\?\.\(\)\?\.o\);/);   // PIN MOVED: SD-PARTY - my party's own Hour
   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): the Mark and the Recall asked of the law, said through the Hour's voice (madeSay - `says` 'hour')
   assert.match(w, /if \(madeRuleHere\('mark'\) === 'refused'\) \{ madeSay\('mark'\); return; \}/);   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
   assert.match(w, /if \(madeRuleHere\('recall'\) === 'refused'\) \{ madeSay\('recall'\); return; \}/);

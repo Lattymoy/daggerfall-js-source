@@ -82,13 +82,14 @@
   {
     "name": "LOOT-DOOR-the-floor",
     "file": "src/net/relayCfg.js",
-    "old": "cellSeed: 260, lootDoor: 273 }",
-    "new": "cellSeed: 260, lootDoor: 272 }",
+    "old": "cellSeed: 260, lootDoor: 273,",
+    "new": "cellSeed: 260, lootDoor: 272,",
     "why": "the client says lootDoor to a relay that closes the hub link on it",
     "tests": [
       "test/net/lootdoor.test.js",
       "test/net/herald/heraldcards.test.js"
-    ]
+    ],
+    "note": "PIN MOVED: SD-PARTY world274, re-aimed by content."
   },
   {
     "name": "LOOT-DOOR-the-var",

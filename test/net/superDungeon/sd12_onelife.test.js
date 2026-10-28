@@ -16,6 +16,9 @@ import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { sdRiftWord, SD_FALLEN_KEY, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../../../src/world/superDungeon/sdDungeon.js';
 import { sdSlotsKept, SD_REZ_PAGE_SLACK_MS } from '../../../src/systems/superDungeon/sdSlots.js';
 import { SD_REALM_TEXT } from '../../../src/world/superDungeon/sdRealm.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const W = read('src/scenes/world.js');
@@ -45,7 +48,7 @@ async function withRealm(fn) {
       const cell = world.room(worldRoom(PX, PY));
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
       const hello = async (id, pose) => { const ws = realm.connect(); await realm.hello(ws, id, pose, { name: id.replace('peer-', '') }); return ws; };
       await fn({ world, realm, cell, mara, rec, hello, step: (ms) => { clock += ms; } });

@@ -11,7 +11,7 @@ import {
   SD_LIFETIME_MS, SD_COLLAPSE_MS, SD_COOLDOWN_MS, SD_FIRST_RISE_MS, SD_CENSUS_MIN, SD_REGION_COUNT, SD_SALT, SD_SLOT_MAX,
   SD_PHASES, SD_FOUND_RADIUS_M, SD_FIGHTERS_MAX, validSdRecord, sdPhase, sdStands, sdMarked, sdAdmits, sdHolds, sdFirst,
   sdRise, sdFind, sdFell, sdGone, sdDue, sdRoll, pickSdRegion, sdFindBelieved, SD_NAMES, sdNameOf, sdRoomKey, isSdRoom,
-  sdSlotOfRoom, sdFoundLine, sdFellLine, sdFadeLine, SD_CAST_OUT_LINE,
+  sdSlotOfRoom, sdOwnerOfRoom, sdFoundLine, sdFellLine, sdFadeLine, SD_CAST_OUT_LINE,
 } from '../../../src/net/superDungeon/sdLaw.js';
 import { REGION_NAMES, worldCoordToMapPixel } from '../../../src/formats/mapsFile.js';
 import { gateHash, PIXEL_M } from '../../../src/net/gate/gateLaw.js';
@@ -189,12 +189,19 @@ test('SD1: the name, the room and the words', () => {
   assert.equal(sdNameOf(s, 'Wayrest'), SD_NAMES[cityName].replace('{city}', 'Wayrest'));
   assert.equal(sdNameOf(s), SD_NAMES[0], 'a city\'s name with no city falls back to the first');
   // the room
-  assert.equal(sdRoomKey(7), 'sd:7');
-  assert.equal(isSdRoom('sd:7'), true);
-  assert.equal(isSdRoom('sd:999999999'), true);
-  for (const k of ['sd:0', 'sd:07', 'sd:1000000000', 'sd:', 'sd:x', 'sd:1.5', ' sd:1', 'gate:1', null]) assert.equal(isSdRoom(k), false, String(k));
-  assert.equal(sdSlotOfRoom('sd:42'), 42);
+  // PIN MOVED: SD-PARTY - a realm is a party's own, `sd:<s>.<owner>`; the bare `sd:<s>` of the one shared Hour is no room
+  const O = '0123456789abcdef';
+  assert.equal(sdRoomKey(7, O), `sd:7.${O}`);
+  assert.equal(sdRoomKey(7), null, 'no owner, no room');
+  assert.equal(sdRoomKey(7, 'ABCDEF0123456789'), null, 'an owner is lower-case hex');
+  assert.equal(isSdRoom(`sd:7.${O}`), true);
+  assert.equal(isSdRoom(`sd:999999999.${O}`), true);
+  for (const k of ['sd:7', 'sd:0', `sd:0.${O}`, `sd:07.${O}`, `sd:1000000000.${O}`, 'sd:', 'sd:x', 'sd:1.5', `sd:1.${O}0`, ` sd:1.${O}`, 'gate:1', null]) assert.equal(isSdRoom(k), false, String(k));
+  assert.equal(sdSlotOfRoom(`sd:42.${O}`), 42);
+  assert.equal(sdSlotOfRoom('sd:42'), null);
   assert.equal(sdSlotOfRoom('gate:42'), null);
+  assert.equal(sdOwnerOfRoom(`sd:42.${O}`), O);
+  assert.equal(sdOwnerOfRoom('sd:42'), null);
   // the words
   assert.equal(sdFoundLine({ who: 'Mara', near: 'Daggerfall' }), 'Mara has found an Abyss Dungeon near Daggerfall!');   // ABYSS-NAME (PIN MOVED): the player's word
   assert.equal(sdFellLine({ top: 'Mara', n: 1, name: 'The Brass Hollow' }), 'Mara broke the Hour in the Brass Hollow. It collapses.');   // AUDIT SD II (L6 F20, PIN MOVED): the article small mid-sentence

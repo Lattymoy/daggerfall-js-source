@@ -128,7 +128,7 @@
   {
     "name": "SD5A-the-room-a-dungeon's",
     "file": "src/scenes/worldModes.js",
-    "old": " isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm } :",
+    "old": " isSdRealm(dungeonLoc) ? { kind: 'sd', s: dungeonLoc.sdRealm, o: dungeonLoc.sdOwner } :",
     "new": "",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "SD5A-the-world-room-a-dungeon's",
     "file": "src/scenes/world.js",
-    "old": "    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);",
-    "new": "    else if (false) key = sdRoomKey(modes?.roomIdentity?.()?.s);",
+    "old": "    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s, modes?.roomIdentity?.()?.o);",
+    "new": "    else if (false) key = sdRoomKey(modes?.roomIdentity?.()?.s, modes?.roomIdentity?.()?.o);",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]

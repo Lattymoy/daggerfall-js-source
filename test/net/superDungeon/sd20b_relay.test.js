@@ -19,6 +19,9 @@ import { importPublicKeyB64 } from '../../../src/net/identityToken.js';
 import { claimSd, sdHonoursRoll } from '../../../server-account/src/sds.js';
 import { createGuest } from '../../../server-account/src/accounts.js';
 import { d1 } from '../../accountDb.mjs';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const subtle = crypto.subtle;
 const T0 = 1_800_000_000_000, PX = 300, PY = 200, UNITS_PER_M = PIXEL_UNITS / PIXEL_M;
@@ -96,7 +99,7 @@ test('SD20b ONE LIFE A HOLLOW, HOWEVER MANY HAVE DIED IN IT (R2): past the realm
   await withHub(async ({ world, cell, rec, step }) => {
     const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
     await cell.raw(mara, found(rec().s));
-    const realm = world.room(sdRoomKey(rec().s));
+    const realm = world.room(sdTestKey(rec().s));
     const h = await realm.room._sdHallOf(rec().s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
     const r = await realm.room._sdRealmOf(rec().s);
     r.dead = Array.from({ length: SD_FIGHTERS_MAX }, (_, k) => `acct-gone-${k}`);

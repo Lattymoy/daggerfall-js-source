@@ -17,6 +17,9 @@ import { CORPSE_MS } from '../../../src/net/remotePlayers.js';
 import { ONLINE_RESPAWN_SECONDS } from '../../../src/ui/deathScreen.js';
 import { madeRulesLines } from '../../../src/ui/hud/statusTips.js';
 import { sendRaiseWord } from '../../../src/net/raiseWord.js';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const T0 = 1_800_000_000_000;
@@ -45,7 +48,7 @@ async function withRealm(fn) {
       const cell = world.room(worldRoom(PX, PY));
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h);
       const hello = async (id, pose) => { const ws = realm.connect(); await realm.hello(ws, id, pose, { name: id.replace('peer-', '') }); return ws; };
       await fn({ realm, hello, step: (ms) => { clock += ms; } });
@@ -99,7 +102,7 @@ test('AUDIT WORLD-EVENTS L1-1: the Hour lets a body back only when a living figh
   // the page says it to the realm it stands in, and nowhere else
   const sent = [];
   const online = (room) => ({ room, sendSdRaise: (to) => sent.push(['sd', to]), sendEg: (k, f) => sent.push(['eg', k, f.to]), sendKetch: (k, f) => sent.push(['kt', k, f.to]) });
-  assert.equal(sendRaiseWord(online(sdRoomKey(3)), 'acct-a'), true);
+  assert.equal(sendRaiseWord(online(sdTestKey(3)), 'acct-a'), true);
   assert.equal(sendRaiseWord(online('town:m9'), 'acct-a'), false);
   assert.deepEqual(sent, [['sd', 'acct-a']]);
   assert.match(read('src/scenes/world.js'), /_partyComposedAt = -Infinity;\n\s*sendRaiseWord\(online, f\.acct\);/, 'the world host\'s Resurrect door says it');

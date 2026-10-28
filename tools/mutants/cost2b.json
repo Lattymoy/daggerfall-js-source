@@ -652,9 +652,9 @@
   {
     "name": "COST2B-setting-floor",
     "file": "src/net/relayCfg.js",
-    "old": "cellSeed: 260, lootDoor: 273 });",
-    "new": "cellSeed: 259, lootDoor: 273 });",
-    "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands after cellSeed's on the line.",
+    "old": "cellSeed: 260, lootDoor: 273, sdCollapse: 274 });",
+    "new": "cellSeed: 259, lootDoor: 273, sdCollapse: 274 });",
+    "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands after cellSeed's on the line. PIN MOVED: SD-PARTY world274, re-aimed by content.",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]

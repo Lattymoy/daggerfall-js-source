@@ -3630,3 +3630,46 @@ others turn, and every frame up to that turn is the seam's word for word.
 `tools/mutants/rpt1026_events.json` (ORRERY-HANDS, 9). **The relay changed** (`sdBrain.js` and `index.js` are in its
 bundle): a RELAY_VERSION bump is owed (not taken here). THE FOUR HOSTS: `scenes/world.js` WIRED in two existing lines
 (no growth); the relay's `_message` untouched (`_sdTurn` is a Room method of its own).
+
+### SD-PARTY - 2026-10-28 (each party its own Shattered Hour)
+
+The owner: *"the abyss dungeon ... we need to make this a party instance ... to stop griefin on the bosses"*.
+
+**What it was.** The Hour was one room a slot, `sd:<s>`, open to every account up to 256. A stranger who walked in
+added a share to the Remnant's health and a Heart to each Reset, drew Gear Volleys, turned the Orrery's stones and
+woke the fight's fifteen-minute clock. The first kill then collapsed the Hollow for every other group in it.
+
+**The room.** A realm is now `sd:<s>.<owner>` (`sdLaw.js:"export const sdRoomKey = (s, owner) =>"`), the owner an
+account digest (`instanceOwnerOf`, the Ketch's crew law). The bare `sd:<s>` is no room: the Worker mints no object for
+it. The page picks the copy (`scenes/superDungeon/sdCopy.js` `sdCopyChoice`): the one it went into, while that slot is
+the same, the party is the same and its owner is still in it; else the party leader's; alone, its own. It is kept on
+the device, so a reload or a new leader keeps a fighter in the copy it fought in.
+
+**The door** (`server/src/sdCopy.js` `sdCopyRight`, asked first in `_sdAdmit`): the owner, staff, and a member of the
+owner's party, which the hub answers as it does for instances (`_instanceKinOf`). A stranger is refused *"This Hour
+belongs to another party."*; the hub silent is busy. At most eight fight in a copy (PARTY_MAX), so a copy's Remnant has
+at most eight shares and eight Hearts' worth of fighters.
+
+**One life and one win a Hollow, across every copy.** The realm tells the hub each death (`down`) and each rise from a
+friend's Resurrect (`up`); the hub keeps the mark as `sdac:<account>` (`sdAcctInternal`). A realm asks the hub before it
+takes a newcomer (`sdNewcomerWord`): one lying dead in any copy is refused SD_NO_FALLEN, and one that holds this slot's
+receipt (`sdrc:`) is refused *"You have already broken this Hour."* A hub that does not answer lets the newcomer in,
+since a struggling hub shuts no Hour (AUDIT SD II L3 F2's law).
+
+**The kill.** A party's win closes its own Hour: its way home rises and its newcomers are refused, as before. The hub
+keeps the receipts and leaves the record found, so the Hollow stands for every other party until it fades. The hub's
+setting `sdCollapse` (`/relay sdCollapse on`, net/relayCfg.js) brings back the old law, where the first kill collapses
+the Hollow for everyone.
+
+**Not changed.** The Hollow's walk is shared, and so are its find, its Rift and its Way Through. The Orrery, the Steps
+and the Remnant are each copy's own, drawn from the slot's seed as before.
+
+**Not a DFU member:** Daggerfall has no other players. Ledger A (SD-PARTY).
+
+**Pins:** `test/net/superDungeon/sdparty_relay.test.js` (7): the key, the door through the real Room and hub, one life
+across the copies, one win, the hub's word, the page's choice, the kill's two laws. `tools/mutants/sdparty.json` (7,
+all dead). PIN MOVED: the realm pins play their fighters as one party (`test/net/superDungeon/sdParty.mjs`); the
+kill's collapse pins (`sd8b_fight`, `sd10b_audit`, `sd11b_relay`, `sdherald`) run with `sdCollapse` on.
+**The relay changed:** RELAY_VERSION world274, `server/src/sdCopy.js` joins the bundle. THE FOUR HOSTS:
+`scenes/world.js` WIRED (one line builds the chooser, two existing lines carry the owner); `createWorldModes` no longer;
+the relay's `_message` one existing line.

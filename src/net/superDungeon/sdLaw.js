@@ -218,14 +218,19 @@ export function sdNameOf(s, city = '') {
 
 // ═══ THE ROOM ═════════════════════════════════════════════════════════
 //
-// The Shattered Hour is ONE room per slot: `sd:<s>`. No zero, no padding - the wire admits exactly the keys the hub
-// mints (AUDIT WORLD6a B4's law), and each Hollow's realm is a fresh object.
-const SD_ROOM = /^sd:[1-9]\d{0,8}$/;
-/** @param {number} s */
-export const sdRoomKey = (s) => `sd:${s}`;
+// SD-PARTY (2026-10-28, the owner: "we need to make this a party instance ... to stop griefin on the bosses"): the
+// Shattered Hour is ONE room per slot AND party: `sd:<s>.<owner>`, the owner the account digest of the one whose party
+// it is (net/instanceRoom.js instanceOwnerOf - the Ketch's crew law). No zero, no padding - the wire admits exactly
+// these keys (AUDIT WORLD6a B4's law), and each party's Hour is a fresh object. The room's door admits the owner, staff
+// and the owner's party alone (server/src/index.js _sdCopyRight).
+const SD_ROOM = /^sd:([1-9]\d{0,8})\.([0-9a-f]{16})$/;
+/** @param {number} s @param {string} owner */
+export const sdRoomKey = (s, owner) => (Number.isSafeInteger(s) && s > 0 && typeof owner === 'string' && /^[0-9a-f]{16}$/.test(owner) ? `sd:${s}.${owner}` : null);
 export const isSdRoom = (key) => SD_ROOM.test(String(key ?? ''));
 /** The slot a realm room is for, or null. */
-export const sdSlotOfRoom = (key) => (isSdRoom(key) ? Number(String(key).slice(3)) : null);
+export const sdSlotOfRoom = (key) => { const m = SD_ROOM.exec(String(key ?? '')); return m ? Number(m[1]) : null; };
+/** SD-PARTY: the owner's digest a realm room is for, or null. */
+export const sdOwnerOfRoom = (key) => SD_ROOM.exec(String(key ?? ''))?.[2] ?? null;
 
 // ═══ THE WORDS ════════════════════════════════════════════════════════
 //

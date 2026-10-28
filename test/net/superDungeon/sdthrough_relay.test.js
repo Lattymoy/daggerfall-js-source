@@ -15,6 +15,9 @@ import {
 import { sdRise, sdFind, sdEnter, sdFell, sdGone, sdRoomKey, SD_COLLAPSE_MS, SD_NO_CLOSED } from '../../../src/net/superDungeon/sdLaw.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
@@ -72,7 +75,7 @@ async function withFound(fn, { hubDoor = null } = {}) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const tells = [];
       const ROOMS = realm.room.env.ROOMS;
       realm.room.env.ROOMS = { idFromName: ROOMS.idFromName, get: (id) => ({ fetch: async (q) => {

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "SD-PARTY-the-door-open",
+    "file": "server/src/index.js",
+    "old": "    const right = await sdCopyRight(key, sub, staff, (x, o) => this._instanceKinOf(x, o, now));",
+    "new": "    const right = null;",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ],
+    "note": "A party's Hour admits its owner, staff and the owner's party alone."
+  },
+  {
+    "name": "SD-PARTY-the-death-untold",
+    "file": "server/src/index.js",
+    "old": "    sdAcctTell(this, s, sub, 'down');",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ],
+    "note": "A death in one copy is kept by the hub, so no other copy takes the account."
+  },
+  {
+    "name": "SD-PARTY-the-hub-unasked",
+    "file": "server/src/index.js",
+    "old": "await sdNewcomerWord(this.env, s, sub) : null;",
+    "new": "null : null;",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ],
+    "note": "A newcomer to a copy is asked of the hub: one life and one win a Hollow."
+  },
+  {
+    "name": "SD-PARTY-the-receipt-unread",
+    "file": "server/src/sdCopy.js",
+    "old": "  if (rc && typeof rc === 'object' && rc.s === c.s) return Response.json({ ok: true, w: 'won' });",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ],
+    "note": "One party's kill pays an account once a Hollow."
+  },
+  {
+    "name": "SD-PARTY-the-bare-key",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "const SD_ROOM = /^sd:([1-9]\\d{0,8})\\.([0-9a-f]{16})$/;",
+    "new": "const SD_ROOM = /^sd:([1-9]\\d{0,8})(?:\\.([0-9a-f]{16}))?$/;",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ],
+    "note": "The one shared Hour is no room."
+  },
+  {
+    "name": "SD-PARTY-kept-in-another-party",
+    "file": "src/scenes/superDungeon/sdCopy.js",
+    "old": " && (kept.p ?? null) === party &&",
+    "new": " &&",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ],
+    "note": "A new party leaves the old party's copy."
+  },
+  {
+    "name": "SD-PARTY-the-first-kill-collapses",
+    "file": "server/src/index.js",
+    "old": "relayCfgValue(await this._relayCfgOf(), this.env, 'sdCollapse') === 'on') {",
+    "new": "true) {",
+    "tests": [
+      "test/net/superDungeon/sdparty_relay.test.js"
+    ],
+    "note": "A party's win closes its own Hour alone while the setting is off."
+  }
+]

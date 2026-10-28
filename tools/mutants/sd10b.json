@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-SD-C4-the-step-unremembered",
     "file": "src/scenes/world.js",
-    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }",
-    "new": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { return true; }",
+    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { _sdEntered.add(s); return true; }",
+    "new": "if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { return true; }",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-SD-C4-remembered-unbuilt",
     "file": "src/scenes/world.js",
-    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }",
-    "new": "_sdEntered.add(s); if (await modes?.enterSdRealm?.({ s, hollow, site })) { return true; }",
+    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { _sdEntered.add(s); return true; }",
+    "new": "_sdEntered.add(s); if (await modes?.enterSdRealm?.({ s, hollow, site, owner: await sdCopy.ownerFor(s) })) { return true; }",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
