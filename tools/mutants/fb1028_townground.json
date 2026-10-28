@@ -151,5 +151,32 @@
   "tests": [
    "test/world/terrain/fb1028_townground.test.js"
   ]
+ },
+ {
+  "name": "FB1028-the-isles-fields-packed-none",
+  "file": "src/world/etherWatersBake.js",
+  "old": "fields = b.fields ? pack(b.fields) : null;",
+  "new": "fields = null;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-isles-fields-unpacked-none",
+  "file": "src/world/etherWatersBake.js",
+  "old": "fields: basis.fields ? unpack(basis.fields) : null,",
+  "new": "fields: null,",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
+ },
+ {
+  "name": "FB1028-the-isles-key-blind-to-fields",
+  "file": "src/world/etherWatersBake.js",
+  "old": ":${fields?.join(',') ?? ''}`;",
+  "new": "`;",
+  "tests": [
+   "test/world/terrain/fb1028_townground.test.js"
+  ]
  }
 ]

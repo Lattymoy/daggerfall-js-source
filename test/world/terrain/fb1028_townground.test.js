@@ -7,11 +7,14 @@
 // (each fails on TS2's law); the game's own towns in fb1028_townground_real.test.js.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { blendLocationTerrain, townGroundMask, locationShapeField, SHAPE_GRADE, SHAPE_BLEND_TILES, SHAPE_EDGE_TILES } from '../../../src/world/terrain/terrainTiles.js';
+import { blendLocationTerrain, townGroundMask, locationShapeField, outlineOfBasis, setLocationTiles, SHAPE_GRADE, SHAPE_BLEND_TILES, SHAPE_EDGE_TILES } from '../../../src/world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
 import { shapeFieldDistance, TOWN_SHAPE } from '../../../src/world/townShape.js';
 import { registerFlatField, sowField } from '../../../src/world/flatFields.js';
 import { BAKE_GENERATOR_VERSION } from '../../../src/world/deepWater/deepWatersBakeCache.js';
+import { etherPlaceRects, etherRectAt } from '../../../src/world/etherWatersBake.js';
+import { etherTemplateOf, etherPlaceId, synthesizeEtherLocation } from '../../../src/world/etherPlaces.js';
+import { veilhaven, islesNear } from '../../../src/world/ethericSea.js';
 
 const H = HEIGHTMAP_DIMENSION, D = 128, M = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, SAMPLE = TERRAIN_SIZE / (H - 1);
 const SEA = Math.fround(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);
@@ -142,4 +145,30 @@ test('FB1028 CROP-GROUND: a field of flats is the town\'s ground under every pla
   const ws = locationShapeField(walled, (bx) => (bx === 0 ? house : far)), wo = 48;   // a 2 x 1 grid's tile origin x: (128 - 32) / 2
   assert.equal(ws[(wo + 16 + 8) + (o + 8) * D], 1, 'the field\'s middle the town\'s');
   assert.notEqual(ws[(wo + 16 + 16) + (o + 8) * D], 1, 'five tiles past the field: no round\'s apron (a round through it: 1)');
+});
+
+test('FB1028 CROP-GROUND the isles\' bake: an Eltheric isle\'s outline, drawn off its template\'s packed basis, holds the crops\' tiles its clone\'s streamed build stands - the packing carried the grid alone, so the bake eased the isle\'s sea under another outline; two grids alike but for their fields are two bases (mutants: the fields packed none; unpacked none; the key blind to them)', () => {
+  let on = true;
+  registerFlatField(990003, { rangeX: 85, rangeZ: 85, spacing: 4, noise: 0.5 }, () => on);
+  const groundTiles = Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ textureRecord: 2, tileBitfield: 2 })));
+  const am = new Uint8Array(64 * 64);
+  for (let r = 40; r < 56; r++) for (let c = 40; c < 56; c++) am[r * 64 + c] = 5;   // a house in the south-east
+  const rmb = { fldHeader: { autoMapData: am, groundData: { groundTiles } }, misc3dObjectRecords: [{ modelIdNum: 990003, xPos: 1024, zPos: -3072, yPos: 0 }], miscFlatObjectRecords: [] };
+  const blocksFile = { checkName: (n) => n, getBlockIndex: () => 0, getBlock: () => ({ rmbBlock: rmb }) };
+  const mapsFile = { getRmbBlockName: () => 'C.RMB' };
+  const template = (mapId) => ({ name: `t${mapId}`, regionIndex: 17, locationIndex: mapId, climate: 231, politic: 0,
+    mapTableData: { mapId, locationType: 6, longitude: 0, latitude: 0 },
+    exterior: { buildings: [], exteriorData: { width: 1, height: 1, blockNames: ['C.RMB'], mapId, locationId: mapId } } });
+  const sown = template(905), bare = template(906), templates = { towns: [sown], havens: [bare], ruins: [sown] };
+  const rectOf = (loc, fields) => { on = fields; return setLocationTiles(loc, mapsFile, blocksFile, new Uint8Array(D * D)); };
+  const rects = etherPlaceRects(templates, (t) => rectOf(t, t === sown));
+  assert.equal(rects.bases.length, 2, 'one grid, its fields sown and not: two bases');
+  const h = veilhaven(), at = etherRectAt(rects);
+  for (const isle of [h, islesNear(h.px, h.py, 80).find((i) => i.kind === 'port' && !i.haven)]) {
+    const t = etherTemplateOf(templates, isle), streamed = rectOf(synthesizeEtherLocation(t, isle), t === sown);
+    assert.deepEqual([...at(isle.px, isle.py).shape], [...streamed.shape], `${t.name}: the clone's own outline, to the tile`);
+    if (t !== sown) continue;
+    const grid = outlineOfBasis({ ...streamed.shape.basis, fields: null }, etherPlaceId(isle));
+    assert.ok(streamed.shape.some((v, i) => v && !grid[i]), 'its crops\' tiles past the grid\'s outline');
+  }
 });

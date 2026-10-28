@@ -143,12 +143,13 @@ samples kept 143,128 sea samples but stood 7 towns over 10 m at the shore's own 
 
 **The copies.** Each blend reads its reach on DFU's own samples, so the stream, its classic pass, the landforms' lift and
 the Deep Waters bake ease alike: the bake's sea is the stream's at every sample of both towns (BAKE_GENERATOR_VERSION 3).
-A town's level moved at 103 of the 3,444 (the edge band takes margin off its mean; 5.2 m the most). THE GROUND MOVED:
-its shores and outskirts by tens of metres, so GROUND_LAW (`net/wire.js`) moves with the release that carries this - the
-print reads no real town (`03-World/Landforms.md` GROUND-GATE).
+A town's level moved at 103 of the 3,444 (the edge band takes margin off its mean; 5.2 m the most). The Eltheric isles'
+bake draws an isle's outline off its template's packed basis, which carries the crops' tiles too (`etherWatersBake.js`
+etherPlaceRects). THE GROUND MOVED: its shores and outskirts by tens of metres, so GROUND_LAW (`net/wire.js`) moves 2 to
+3, and RELAY_VERSION with it - the print reads no real town (`03-World/Landforms.md` GROUND-GATE).
 
-Tests `test/world/terrain/fb1028_townground.test.js` (5) and `test/world/terrain/fb1028_townground_real.test.js` (ARENA2).
-Mutants `tools/mutants/fb1028_townground.json` (17, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
+Tests `test/world/terrain/fb1028_townground.test.js` (6) and `test/world/terrain/fb1028_townground_real.test.js` (ARENA2).
+Mutants `tools/mutants/fb1028_townground.json` (20, all dead). PINS MOVED: `test/world/terrain/townshapes.test.js`
 (Antelibuton's sea 2,084 samples, where 3,000), `test/world/audittesa3e1.test.js` (the bake's version 3),
 `test/systems/naval/portships_bay.test.js` and `portships_real.test.js` (sounded off the water alone no ship stands on a
 bank at Chestertower, Pilliweyn, Wadijerareg, Sunhold or Woodhearth: their banks were TS2's cliffs); re-aimed by content:
