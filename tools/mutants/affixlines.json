@@ -134,7 +134,7 @@
   {
     "name": "REFORGE-REPLACE-the-reforge-even",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  const id = pickByLines(pool, (k) => drawWeight(k, item, others), rolls);",
+    "old": "  const id = pickByLines(pool, (k) => drawWeight(k, item, others, null), rolls);",
     "new": "  const id = pick(pool, rolls);",
     "tests": [
       "test/systems/affixlines_reforge.test.js"

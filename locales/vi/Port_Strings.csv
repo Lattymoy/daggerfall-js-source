@@ -717,6 +717,8 @@ reforge.refusal.line,"Không có loại dòng nào khác có thể thay thế n�
 rest.exhausted.fighting,"Bạn quá kiệt sức để chiến đấu - hãy tránh xa và nghỉ ngơi!"
 saddle.hello.key,"{key}: bảng yên ngựa"
 saddle.hello.none,"Bảng yên ngựa: hãy gán cho nó một phím trong Điều khiển"
+sd.copy.party,"Chỉ nhóm của bạn mới vào được Giờ Khắc này."
+sd.copy.shared,"Có {n} trên {max} người chơi trong Giờ Khắc chung này."
 sd.hall.lastBy,"Người xoay gần nhất: {name}"
 sd.hall.snapLashes,"Giờ Khắc bật ngược trở lại. Những người không giúp: {names}."
 sd.hall.snapLashesMore,"Giờ Khắc bật ngược trở lại. Những người không giúp: {names} và {more, plural, other {# người khác}}."

@@ -40,29 +40,32 @@
   {
     "name": "SD21-said-under-the-veil",
     "file": "src/scenes/world.js",
-    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
-    "new": "    if (_sdAloneSaid || modes?.transitioning || gamePaused()) return;",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
+    "new": "    if (_sdAloneSaid || modes?.transitioning || gamePaused() || !online?.welcomed) return;",
     "tests": [
       "test/scenes/sd21_alone.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
   },
   {
     "name": "SD21-said-through-the-door",
     "file": "src/scenes/world.js",
-    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
-    "new": "    if (_sdAloneSaid || gateVeil?.busy || gamePaused()) return;",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
+    "new": "    if (_sdAloneSaid || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
     "tests": [
       "test/scenes/sd21_alone.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
   },
   {
     "name": "SD21-said-under-a-window",
     "file": "src/scenes/world.js",
-    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused()) return;",
-    "new": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy) return;",
+    "old": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || gamePaused() || !online?.welcomed) return;",
+    "new": "    if (_sdAloneSaid || modes?.transitioning || gateVeil?.busy || !online?.welcomed) return;",
     "tests": [
       "test/scenes/sd21_alone.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (SD-BACK/SD-SOLO, 2026-10-28): re-aimed by content."
   },
   {
     "name": "SD21-said-every-frame",

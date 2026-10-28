@@ -15,6 +15,9 @@ import {
 import { sdRise, sdFind, sdEnter, sdFell, sdGone, sdRoomKey, SD_COLLAPSE_MS, SD_NO_CLOSED } from '../../../src/net/superDungeon/sdLaw.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { sdTestKey, sdOneParty } from './sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
@@ -72,7 +75,7 @@ async function withFound(fn, { hubDoor = null } = {}) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       const tells = [];
       const ROOMS = realm.room.env.ROOMS;
       realm.room.env.ROOMS = { idFromName: ROOMS.idFromName, get: (id) => ({ fetch: async (q) => {
@@ -222,8 +225,8 @@ test('SD-THROUGH NEVER IN THE COLLAPSE: a returner after the hub\'s word of the 
 test('SD-THROUGH the relay by source: the hub\'s door routed; the realm tells from its admission\'s two exits, unawaited, in Room methods of their own - never in `_message`; the owed tell on the realm\'s alarm before its fight\'s beat; the hub moves its record by the law (mutants: awaited; inside _message; the alarm unwired)', () => {
   const R = read('server/src/index.js');
   assert.match(R, /if \(path === SD_INTERNAL_IN\) return this\._sdInInternal\(request\);/);
-  assert.match(R, /if \(sub && realm\.in\.includes\(sub\)\) \{ if \(lies === 'rise'\) await this\._sdRose\(realm, sub, now\); this\._sdTellIn\(s, rec, now\); return null; \}/, 'a returner\'s admission');   // PIN MOVED (AUDIT WORLD-EVENTS L1-8): a rise kept as it is let in
-  assert.match(R, /await this\.state\.storage\.put\(SD_REALM_KEY, realm\); \}\n(?:\s*if \(lies === 'rise'\) await this\._sdRose\(realm, sub, now\);[^\n]*\n)?\s*this\._sdTellIn\(s, rec, now\);[^\n]*\n\s*return null;/, 'a newcomer\'s');   // PIN MOVED (AUDIT WORLD-EVENTS L1-8): a rise kept as it is let in
+  assert.match(R, /if \(sub && realm\.in\.includes\(sub\)\) \{ if \(f\?\.fell && now - f\.fell\.at > SD_COLLAPSE_MS\) return SD_NO_CLOSED; if \(back\) await this\._sdRose\(realm, sub, now\); this\._sdTellIn\(s, rec, now\); return null; \}/, 'a returner\'s admission');   // PIN MOVED (SD-BACK, SD-WON): a death's rise; its copy shut once its kill's collapse has run; PIN MOVED (AUDIT WORLD-EVENTS L1-8): a rise kept as it is let in
+  assert.match(R, /await this\.state\.storage\.put\(SD_REALM_KEY, realm\); \}\n(?:\s*if \(back\) await this\._sdRose\(realm, sub, now\);[^\n]*\n)?\s*this\._sdTellIn\(s, rec, now\);[^\n]*\n\s*return null;/, 'a newcomer\'s');   // PIN MOVED (AUDIT WORLD-EVENTS L1-8): a rise kept as it is let in
   assert.doesNotMatch(R, /await this\._sdTellIn\(/, 'a hello never waits on it');
   const msg = R.slice(R.indexOf('  async _message(ws, message) {'), R.indexOf('\n  }\n', R.indexOf('  async _message(ws, message) {')));
   assert.ok(msg.length > 1000 && !/_sdTellIn|_sdInBeat|sdEnter\(/.test(msg), 'never in the dispatcher');
