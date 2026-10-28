@@ -19,6 +19,9 @@ import { PIXEL_M } from '../../src/net/gate/gateLaw.js';
 import { fakeRooms } from '../fakeRoom.mjs';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 import { OnlineSession } from '../../src/net/online.js';
+import { sdTestKey, sdOneParty } from './superDungeon/sdParty.mjs';   // SD-PARTY: the rig's one party's Hour
+
+sdOneParty();
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const quiet = (fn) => { const warn = console.warn, info = console.info; console.warn = () => {}; console.info = () => {}; return Promise.resolve().then(fn).finally(() => { console.warn = warn; console.info = info; }); };
@@ -51,7 +54,7 @@ async function withHall(fn) {
       const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
-      const realm = world.room(sdRoomKey(rec.s));
+      const realm = world.room(sdTestKey(rec.s));
       await fn({ world, hub, cell, realm, rec, o: orreryOf(rec.s), step: (ms) => { clock += ms; }, set: (t) => { clock = t; }, now: () => clock });
     });
   } finally { Date.now = realNow; }
@@ -192,7 +195,7 @@ function rig(room, relayV = RELAY_VERSION) {
 }
 
 test('SD6b the session: a turn goes down my own socket in the realm alone, numbered, at a relay that keeps it, SD_PZ_HZ a second; the hall heard from my own realm alone - never the hub\'s, never a hub\'s record from the realm (mutants: a turn sent from a cell; the hall heard from anywhere)', () => {
-  const realmKey = sdRoomKey(4);
+  const realmKey = sdTestKey(4);
   assert.equal(rig(worldRoom(PX, PY)).s.sendSdTurn(0, 1), false, 'no turn from a cell');
   const old = rig(realmKey, 'world174');
   assert.equal(old.s.sendSdTurn(0, 1), false, 'never at a relay that would close the socket on it');

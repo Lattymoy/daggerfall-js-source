@@ -141,7 +141,7 @@ const quiet = (fn) => { const warn = console.warn; console.warn = () => {}; retu
  *  Discord says. The director's record is seeded (`rec`, else a rise a minute off) and its own beat runs as it does. */
 async function withHerald(fn, { env = { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD_ROLE: ROLE, SD_DISCORD_ROLE: OWN }, rec = null, herald = null } = {}) {
   const r = fakeRoom(SOCIAL_ROOM);
-  Object.assign(r.env, env);
+  Object.assign(r.env, { SD_COLLAPSE: 'on' }, env);   // SD-PARTY (PIN MOVED): the fall a Hollow's collapse, the hub's setting on
   r.room._heraldBeat = async () => {}; r.room._heraldNextAt = () => null;
   r.room._serpentHeraldBeat = async () => {}; r.room._serpentHeraldArm = async () => {};
   const realNow = Date.now, realFetch = globalThis.fetch;

@@ -3589,6 +3589,16 @@
   "tr": "b58579d65006",
   "by": "claude-in-session"
  },
+ "sd.copy.party": {
+  "en": "2222e5dd4375",
+  "tr": "a809dc9f9e22",
+  "by": "claude-in-session"
+ },
+ "sd.copy.shared": {
+  "en": "0c86e06ab1ec",
+  "tr": "126b9d5042ff",
+  "by": "claude-in-session"
+ },
  "sd.hall.lastBy": {
   "en": "ba380c5a8929",
   "tr": "0ccc93eb902d",
