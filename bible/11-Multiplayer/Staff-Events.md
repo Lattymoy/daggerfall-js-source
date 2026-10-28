@@ -254,5 +254,8 @@ half `src/scenes/staffPilotHost.js`).
 - **PILOT-ECHO** (2026-10-28, live: the list redrew without end, Leave boss lost, a boss called on every pass): the game's
   answer (`{ on, ev, boss }`, `{ on: false, ev, why }`) goes out on the same window the panel's ask comes in on, so the
   door (`net/staffHook.js`) takes `pilot` only without `boss` or `why` - its own answer is never heard as an ask.
+- **PILOT-ON-ME / PILOT-ONCE** (2026-10-28, mob: "only spawn on on my position", "just only spawn once"): the boss of the event
+  I steer stands about me, never by the biggest group (`staffBossPlace`), and while it stands a later call stands no second
+  boss on my machine.
 - **Known limits**: the boss walks at my pace, not its kind's; a game that ran the event before keeps the monsters it had
   stood (they fight on as theirs); my own weapon still swings at a click if drawn.

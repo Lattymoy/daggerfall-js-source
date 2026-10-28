@@ -310,7 +310,7 @@ test('BOSS-SPOT (mob 2026-10-25: "spawn it on the highest lvl player", "or large
   assert.equal(staffBossSpot([P('me', 0, 1), ['x', null, 99]])[0], 'me', 'no feet: left out');
   assert.equal(staffBossSpot([]), null);
   const src = rd('src/systems/raidingParties.js');
-  assert.equal(src.split("spawn(raid, 'boss', raid.staff.b, staffBossPlace()); return 'boss'; }").length - 1, 2, 'the meter\'s boss and a lost one both');
+  assert.equal(src.split("spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }").length - 1, 2, 'the meter\'s boss and a lost one both');
   assert.match(src, /return at && at\[0\] !== me \? \{ near: at\[1\] \} : undefined;/);
   assert.ok(rd('src/scenes/world.js').includes("peerFeetInTown: () => [[online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(peersNear() ?? [])"), 'me first, with my level');
 });
@@ -559,6 +559,7 @@ test('STAFF-PILOT (mob 2026-10-26: "like play as a boss as attack players", card
   restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
   setSharedClock(() => at.now);
   h.peersInTown = () => ['aaa-0001'];
+  h.peerFeetInTown = () => [['mmm-0002', [0, 0, 0], 1], ['a', [500, 0, 500], 1], ['b', [505, 0, 500], 1]];   // PILOT-ON-ME: a bigger group off me
   raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [EV] } }, 'social');
   raidPeerWord('aaa-0001', [[KEY, 0, 60_000]], at.wall);
   assert.equal(frame(2.1), 'standing-by', 'an older claim runs it');
@@ -581,6 +582,14 @@ test('STAFF-PILOT (mob 2026-10-26: "like play as a boss as attack players", card
   for (let i = 0; i < 40 && !staffPilotBoss(); i++) { frame(0.1); await tick(); }
   const boss = staffPilotBoss();
   assert.ok(boss?.entity?.staffBoss, 'Spawn mini boss now stands it on my machine - the boss I steer');
+  assert.equal(boss.o?.near, undefined, 'PILOT-ON-ME: about me, never by the biggest group');
+  // PILOT-ONCE: a later call while I steer stands no second boss
+  const bosses = () => log.raiders.filter((f) => f.entity.staffBoss).length;
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 2 }] } }, 'social');
+  staffEventLedger({ id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 1 });
+  for (let i = 0; i < 20; i++) { frame(0.1); await tick(); }
+  assert.equal(bosses(), 1, 'one boss while I steer');
+  assert.equal(staffPilotBoss(), boss);
   pilotStop();
   assert.equal(staffPilotBoss(), null);
   resetPilot();

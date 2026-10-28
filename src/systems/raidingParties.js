@@ -651,9 +651,10 @@ export function raidFrame(dt = 0) {
   if (raid.staff) {
     const fc = staffBossWanted(raid);
     const waits = fc >= 0 && !staffBossByHand(raid) && !staffFieldClear(raid, h) && !staffClearLong(raid, localNow());   // BOSS-CLEAR: the meter's boss once every monster standing at its call is dead - the packs come on meanwhile
-    if (fc >= 0 && !waits) { raid.bossFc = fc; raid.bossHand = raid.staff.fb ?? 0; spawn(raid, 'boss', raid.staff.b, staffBossPlace()); return 'boss'; }   // BOSS-RETRY: its field's wait and staff's by-hand word spent once it stands, not at the try
+    if (fc >= 0 && !waits && staffPilotBoss() && pilotKey() === raidKey(raid)) raid.bossFc = fc;   // PILOT-ONCE (mob 2026-10-28: "there was 20 mini bosses", "just only spawn once"): while I steer my event's boss, a later call stands no second one
+    else if (fc >= 0 && !waits) { raid.bossFc = fc; raid.bossHand = raid.staff.fb ?? 0; spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }   // BOSS-RETRY: its field's wait and staff's by-hand word spent once it stands, not at the try
     const lost = staffBossLost(raid, staffBossStanding(raid, h), localNow());   // BOSS-LOST: stood, then gone without falling
-    if (lost >= 0) { raid.bossFc = lost; spawn(raid, 'boss', raid.staff.b, staffBossPlace()); return 'boss'; }
+    if (lost >= 0) { raid.bossFc = lost; spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }
   }
   // H. a defender first [IL_06d1-IL_0712]; the clock is rescheduled even at the cap
   if (!raid.staff && _nextDefenderIn <= 0) {
@@ -1247,8 +1248,9 @@ export function staffBossSpot(players) {
 /** BOSS-SPOT: how near another player stands to count in a player's group (metres). */
 export const STAFF_BOSS_GROUP_M = 30;
 /** BOSS-SPOT: where my mini boss stands - beside the biggest group's player; mine (undefined: about me) when it is me. */
-function staffBossPlace() {
+function staffBossPlace(raid = null) {
   if (_bossMisses >= STAFF_PACK_LEADER_TRIES) return undefined;   // BOSS-RETRY: no spot by its group so often - about me
+  if (raid && pilotKey() === raidKey(raid)) return undefined;   // PILOT-ON-ME (mob 2026-10-28: "only spawn on on my position"): the boss of the event I steer stands about me
   const me = host().selfId?.() ?? '';
   const at = staffBossSpot(host().peerFeetInTown?.() ?? []);
   return at && at[0] !== me ? { near: at[1] } : undefined;
