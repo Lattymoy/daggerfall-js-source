@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-TESA-A6-1-marker-z-north",
     "file": "src/world/tamrielCapitals.js",
-    "old": "capitalSliceMarkers(cap, s).map(([dx, dz]) => startMarkerAt(at[0] + dx, at[1] - dz))",
-    "new": "capitalSliceMarkers(cap, s).map(([dx, dz]) => startMarkerAt(at[0] + dx, at[1] + dz))",
+    "old": "capitalSliceMarkers(cap, s).map(([dx, dz, h = 0]) => startMarkerAt(at[0] + dx, at[1] - dz, h))",
+    "new": "capitalSliceMarkers(cap, s).map(([dx, dz, h = 0]) => startMarkerAt(at[0] + dx, at[1] + dz, h))",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-TESA-A6-1-marker-unshifted",
     "file": "src/world/tamrielCapitals.js",
-    "old": "XPos: Math.round(x / 0.025), YPos: 0, ZPos: Math.round(z / 0.025) - RMB_UNITS,",
-    "new": "XPos: Math.round(x / 0.025), YPos: 0, ZPos: Math.round(z / 0.025),",
+    "old": "XPos: Math.round(x / 0.025), YPos: h ? -Math.round(h / 0.025) : 0, ZPos: Math.round(z / 0.025) - RMB_UNITS,",
+    "new": "XPos: Math.round(x / 0.025), YPos: h ? -Math.round(h / 0.025) : 0, ZPos: Math.round(z / 0.025),",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-TESA-A6-2-trees-in-walls",
     "file": "src/world/tamrielCapitals.js",
-    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: on }));",
-    "new": "tree: gardenTree, closed: on }));",
+    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) || tile(x, z) !== 2 ? -1 : gardenTree(x, z)), closed:",
+    "new": "tree: (x, z) => (tile(x, z) !== 2 ? -1 : gardenTree(x, z)), closed:",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-TESA-A6-2-garden-open",
     "file": "src/world/tamrielCapitals.js",
-    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: on }));",
-    "new": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: () => false }));",
+    "old": "closed: (x, z) => on(x, z) || shut(x, z) }));",
+    "new": "closed: (x, z) => shut(x, z) }));",
     "tests": [
       "test/audit_tesa.test.js"
     ]

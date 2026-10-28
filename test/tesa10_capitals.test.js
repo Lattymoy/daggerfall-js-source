@@ -13,9 +13,10 @@ import {
   BLOCK_M, capitalPlaceId, capitalLocationIndex, isCapitalPlaceId, capitalPixel, capitalOnPixel,
   capitalPin, capitalBase, cityBlockNames, capitalBlockNames, capitalBuildings, portBlockJson, miscModelAt, tileCentre, autoCentre,
   capitalPortBlocks, synthesizeCapitalLocation, capitalDistrict, capitalCarrier, anchorMetres, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_DISTRICTS,
-  SOLITUDE_BLOCKS, capitalLakeName,
+  SOLITUDE_BLOCKS, capitalLakeName, inCapitalRim, CAPITAL_NO_GROUND,
   capitalSlicePort, capitalCentrePixel,   // BAY-LEFT-SEA: the host's ask hands its harbour's port word
 } from '../src/world/tamrielCapitals.js';
+import { solitudeGroundTile, SOLITUDE_TILES, SOLITUDE_LEVELS } from '../src/world/solitudeRelief.js';   // PIN MOVED (SOLITUDE-RELIEF): its ground
 import {
   buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks, archTop, archOpening, solitudeWallCorners,
   solitudeTowers,
@@ -494,9 +495,12 @@ test('TESA10b Solitude\'s port blocks: the quay\'s stone to its edge and the sea
     const [cx, cy] = at(blk.name), ox = (cx - 2) * BLOCK_M, oz = (cy - 3) * BLOCK_M;
     const T = blk.json.RmbBlock.FldHeader.GroundData.GroundTiles.map((t) => t.TileBitfield), A = blk.json.RmbBlock.FldHeader.AutoMapData;
     for (let ty = 0; ty < 16; ty++) for (let tx = 0; tx < 16; tx++) {
-      const [x, z] = tileCentre(tx, ty), [, dz] = anchorMetres(CAPITALS[1], cx, cy, x, z);
-      assert.equal(T[ty * 16 + tx], dz < S.docks.edge ? 0 : 3);
-      if (dz < S.docks.edge) water++;
+      // PIN MOVED (SOLITUDE-RELIEF): its tiles its relief's (world/solitudeRelief.js solitudeGroundTile) - the sea where all
+      // four corners are the water's, a cliff's rock where they climb, the paving else; none of its own in the rim
+      const [x, z] = tileCentre(tx, ty), [dx, dz] = anchorMetres(CAPITALS[1], cx, cy, x, z);
+      const rim = inCapitalRim(CAPITALS[1], cx * BLOCK_M + x, (cy + 1) * BLOCK_M - z);
+      assert.equal(T[ty * 16 + tx], rim ? CAPITAL_NO_GROUND : solitudeGroundTile(dx, dz, SOLITUDE_TILES.stone));
+      if (!rim && dz < S.docks.edge) water++;
       void ox; void oz;
     }
     for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) if (A[ay * 64 + ax]) closed++;
@@ -507,11 +511,11 @@ test('TESA10b Solitude\'s port blocks: the quay\'s stone to its edge and the sea
   // a closed cell by the anchor's metres (x east, z south): the block's own (z north) and its automap cell
   const cell = (blk, dx, dz) => { const [cx, cy] = at(blk.name), x = dx - (cx - 2) * BLOCK_M, z = (cy + 1 - 3) * BLOCK_M - dz; assert.ok(x >= 0 && x < BLOCK_M && z >= 0 && z < BLOCK_M, `${blk.name} ${dx},${dz}`); const ax = Math.floor(x / 1.6), ay = 63 - Math.floor(z / 1.6); return blk.json.RmbBlock.FldHeader.AutoMapData[ay * 64 + ax]; };
   assert.equal(cell(P0, 20, -5), CAPITAL_CLOSED_BYTE, 'the terrace');
-  assert.equal(cell(P0, 90, -40), 0, 'the street past the ramp');
+  assert.equal(cell(P0, 90, -40), 0, 'the street beside the stair (PIN MOVED, SOLITUDE-RELIEF: the terrace\'s grand stair)');
   const Q1 = own.find((x) => x.name === 'TESASOQ1.RMB');
   assert.equal(cell(Q1, 230, S.wall.north), CAPITAL_CLOSED_BYTE, 'the north wall');
   assert.equal(cell(Q1, S.wall.northGate, S.wall.north), 0, 'its gate');
-  assert.equal(cell(own.find((x) => x.name === 'TESASOQ2.RMB'), S.docks.warehouse.x, S.docks.warehouse.z), CAPITAL_CLOSED_BYTE, 'the warehouse');
+  assert.equal(cell(own.find((x) => x.name === 'TESASOQ0.RMB'), S.docks.warehouse.x, S.docks.warehouse.z), CAPITAL_CLOSED_BYTE, 'the warehouse (PIN MOVED, SOLITUDE-RELIEF: against the causeway\'s wall, west on the quay)');
   const D0 = own.find((x) => x.name === 'TESASOD0.RMB'), D2 = own.find((x) => x.name === 'TESASOD2.RMB');
   assert.equal(cell(D0, S.castle.x - S.castle.half, S.castle.z - 10), CAPITAL_CLOSED_BYTE, 'the curtain\'s west side');
   assert.equal(cell(D2, S.castle.x - S.castle.half, S.castle.z + 1), 0, 'its gate');
@@ -523,48 +527,56 @@ test('TESA10b Solitude\'s port blocks: the quay\'s stone to its edge and the sea
   for (const m of laid.models) assert.deepEqual([...m.matrix.slice(12, 15)].map((v) => +v.toFixed(3)), [0, 0, 0], 'the anchor: the terrace block\'s south-west corner');
 });
 
-test('TESA10b Solitude\'s arch: the sea stack to its top, the deck falling from the stack\'s top to the terrace\'s, the opening clear over the river between its springs to its crown, the terrace and the ramp to the street', () => {
-  const A = SOLITUDE.arch, m = buildSolitudeArch();
+test('TESA10b Solitude\'s arch: the sea stack to its top, the deck falling from the stack\'s top to the terrace\'s, the opening clear over the river between its springs to its crown, the terrace and the stair to the street', () => {
+  // PIN MOVED (SOLITUDE-RELIEF, test/world/solitude_relief.test.js): its heights metres over the sea (world/solitudeRelief.js
+  // SOLITUDE_LEVELS), a model's y those less the streets' 46 (levelY); the terrace's ramp a stair
+  const A = SOLITUDE.arch, m = buildSolitudeArch(), y = (h) => h - SOLITUDE_LEVELS.city;
   sane(m);
-  assert.equal(archTop(A.from), A.topW);
-  assert.equal(archTop(A.to), A.topE);
+  assert.equal(archTop(A.from), SOLITUDE_LEVELS.stack);
+  assert.equal(archTop(A.to), SOLITUDE_LEVELS.terrace);
   assert.equal(archOpening(A.springW), 0);
   assert.equal(archOpening(A.springE), 0);
   assert.ok(Math.abs(archOpening((A.springW + A.springE) / 2) - A.crown) < 1e-9);
   // nothing of it inside the opening: below the intrados, over the river, within the deck's width
   for (let t = 0; t < m.indices.length; t += 3) {
     const c = [0, 1, 2].map((a) => (m.positions[m.indices[t] * 3 + a] + m.positions[m.indices[t + 1] * 3 + a] + m.positions[m.indices[t + 2] * 3 + a]) / 3);
-    const inside = c[0] > A.springW + 4 && c[0] < A.springE - 4 && Math.abs(c[2]) < A.w / 2 + 6 && c[1] > -3.9 && c[1] < archOpening(c[0]) - 0.6;
+    const stack = Math.hypot(c[0] - SOLITUDE.stack.x, c[2] - SOLITUDE.stack.z) < SOLITUDE.stack.foot + 8;   // the stack's foot, its flank the opening's west side
+    const inside = !stack && c[0] > A.springW + 6 && c[0] < A.springE - 6 && Math.abs(c[2]) < A.w / 2 + 4 && c[1] > y(0.5) && c[1] < y(archOpening(c[0])) - 2.5;
     assert.ok(!inside, `a face in the opening at ${c.map((v) => v.toFixed(1))}`);
   }
   const { lo, hi } = bounds(m);
-  assert.ok(Math.abs(hi[1] - (SOLITUDE.stack.top + A.parapet)) < 1.5, 'the stack\'s top and the parapet');
-  assert.ok(lo[0] < SOLITUDE.stack.x - SOLITUDE.stack.r && hi[0] === SOLITUDE.landing.rampTo);
-  assert.ok(SOLITUDE.stack.x + SOLITUDE.stack.r > A.from, 'the deck starts inside the stack');
-  assert.ok(A.springW >= SOLITUDE.stack.x + SOLITUDE.stack.r + 11 + 3.5 - 4, 'it springs from the stack\'s flank, its foot\'s widest');
+  assert.ok(hi[1] >= y(SOLITUDE.stack.top) + A.parapet, 'the stack\'s top and the palace gate over it');
+  assert.ok(lo[0] < SOLITUDE.stack.x - SOLITUDE.stack.r && hi[0] === SOLITUDE.landing.stairTo);
+  assert.ok(SOLITUDE.stack.x + SOLITUDE.stack.r >= A.from, 'the deck starts at the stack\'s top');
+  assert.ok(A.springW <= SOLITUDE.stack.x + SOLITUDE.stack.foot, 'it springs from within the stack\'s foot');
 });
 
 test('TESA10b the Blue Palace, the walls, Castle Dour and the docks: the palace on the stack\'s top under blue roofs, its spire the city\'s highest; the walls\' gates open below their lintels and the arch\'s gap open; the curtain\'s gate open and the Emperor\'s Tower over the keep; the piers over the sea', () => {
-  const S = SOLITUDE, pal = buildBluePalace();
+  // PIN MOVED (SOLITUDE-RELIEF): its heights metres over the sea, a model's y those less the streets' 46; each wall run on its
+  // tier - the north gate on the upper tier, 6 m over the main gate's Well District (test/world/solitude_relief.test.js)
+  const S = SOLITUDE, pal = buildBluePalace(), y = (h) => h - SOLITUDE_LEVELS.city, up = y(SOLITUDE_LEVELS.upper);
   sane(pal);
   const pb = bounds(pal);
-  assert.ok(pb.lo[1] >= S.stack.top - 3.01, 'on the stack');
+  assert.ok(pb.lo[1] >= y(S.stack.top) - 3.01, 'on the stack');
   assert.ok(Math.hypot(pb.lo[0] - S.stack.x, 0) <= S.stack.r && Math.hypot(pb.hi[0] - S.stack.x, 0) <= S.stack.r && Math.max(-pb.lo[2], pb.hi[2]) <= S.stack.r, 'within its top');
   assert.ok(pal.subMeshes.some((s) => s.textureRecord === CAPITAL_ART.blueSlate));
   const wall = buildSolitudeWall();
   sane(wall);
   const W = S.wall, faces = (m) => { const out = []; for (let t = 0; t < m.indices.length; t += 3) out.push([0, 1, 2].map((a) => (m.positions[m.indices[t] * 3 + a] + m.positions[m.indices[t + 1] * 3 + a] + m.positions[m.indices[t + 2] * 3 + a]) / 3)); return out; };
-  for (const c of faces(wall)) {
-    const lowGate = c[1] > -2.9 && c[1] < W.gateH - 0.01 && ((Math.abs(c[2] - W.north) < 3 && Math.abs(c[0] - W.northGate) < W.gate / 2 - 0.01) || (Math.abs(c[2] - W.south) < 3 && Math.abs(c[0] - W.southGate) < W.gate / 2 - 0.01));
+  const floor = (m, t) => Math.abs(m.normals[m.indices[t * 3] * 3 + 1]) > 0.9;   // PIN MOVED (SOLITUDE-RELIEF): the Gate Road's paving runs in under the main gate
+  for (const [t, c] of faces(wall).entries()) {
+    if (floor(wall, t)) continue;
+    const lowGate = (Math.abs(c[2] - W.north) < 3 && Math.abs(c[0] - W.northGate) < W.gate / 2 - 0.01 && c[1] > up + 0.1 && c[1] < up + W.gateH - 0.01)
+      || (Math.abs(c[2] - W.south) < 3 && Math.abs(c[0] - W.southGate) < W.gate / 2 - 0.01 && c[1] > 0.1 && c[1] < W.gateH - 0.01);
     const arch = Math.abs(c[0] - W.west) < 3 && Math.abs(c[2]) < W.archGap - 0.01;
     assert.ok(!lowGate && !arch, `a face in a gate at ${c.map((v) => v.toFixed(1))}`);
   }
-  for (const [x, z, what] of [[W.northGate, W.north, 'north'], [W.southGate, W.south, 'south']]) {
-    assert.equal(crosses(wall, [x, W.gateH / 2, z - 6], [x, W.gateH / 2, z + 6]), false, `the ${what} gate open`);
-    assert.equal(crosses(wall, [x, (W.gateH + W.h) / 2, z - 6], [x, (W.gateH + W.h) / 2, z + 6]), true, `its lintel`);
-    assert.equal(crosses(wall, [x + 40, W.gateH / 2, z - 6], [x + 40, W.gateH / 2, z + 6]), true, `the ${what} side walled`);
+  for (const [x, z, what, at] of [[W.northGate, W.north, 'north', up], [W.southGate, W.south, 'south', 0]]) {
+    assert.equal(crosses(wall, [x, at + W.gateH / 2, z - 6], [x, at + W.gateH / 2, z + 6]), false, `the ${what} gate open`);
+    assert.equal(crosses(wall, [x, at + (W.gateH + W.h) / 2, z - 6], [x, at + (W.gateH + W.h) / 2, z + 6]), true, `its lintel`);
+    assert.equal(crosses(wall, [x - 40, at + W.gateH / 2, z - 6], [x - 40, at + W.gateH / 2, z + 6]), true, `the ${what} side walled`);
   }
-  assert.equal(crosses(wall, [W.west - 6, 6, 0], [W.west + 6, 6, 0]), false, 'the arch\'s gap open');
+  assert.equal(crosses(wall, [W.west - 6, up + 6, 0], [W.west + 6, up + 6, 0]), false, 'the arch\'s gap open');
   assert.deepEqual(solitudeWallCorners(), [[W.east, W.north], [W.west, W.north], [W.west, W.south], [W.east, W.south]]);
   assert.ok(solitudeTowers().every(([x, z]) => (x === W.west || x === W.east || z === W.north || z === W.south)), 'every tower on the wall');
   assert.ok(bounds(pal).hi[1] > bounds(wall).hi[1] + 50);
@@ -573,7 +585,7 @@ test('TESA10b the Blue Palace, the walls, Castle Dour and the docks: the palace 
   const C = S.castle;
   assert.equal(crosses(cd, [C.x - C.half - 5, C.gateH / 2, C.z], [C.x - C.half + 5, C.gateH / 2, C.z]), false, 'the curtain\'s gate open');
   assert.equal(crosses(cd, [C.x - C.half - 5, C.gateH / 2, C.z + 20], [C.x - C.half + 5, C.gateH / 2, C.z + 20]), true, 'the curtain walled beside it');
-  assert.ok(Math.abs(bounds(cd).hi[1] - (S.emperorsTower.h + 1.4 + S.emperorsTower.roof)) < 1e-4, 'the Emperor\'s Tower the castle\'s top');
+  assert.ok(Math.abs(bounds(cd).hi[1] - (up + S.emperorsTower.h + 1.4 + S.emperorsTower.roof)) < 1e-4, 'the Emperor\'s Tower the castle\'s top');
   assert.ok(S.emperorsTower.h > S.keep.h + S.keep.roof);
   assert.ok(pb.hi[1] > bounds(cd).hi[1], 'the palace over the castle');
   const docks = buildSolitudeDocks();

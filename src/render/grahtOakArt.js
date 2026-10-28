@@ -32,8 +32,9 @@ function hash2(x, y, w, h, salt) {
   n = Math.imul(n ^ (n >>> 13), 1274126177);
   return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
 }
-/** Value noise on a lattice of `cx` x `cy` texels a cell, wrapping at the picture's `w` x `h` (each a multiple of its cell). */
-function vnoise(x, y, cx, cy, w, h, salt) {
+/** Value noise on a lattice of `cx` x `cy` texels a cell, wrapping at the picture's `w` x `h` (each a multiple of its cell).
+ *  TESA-LANDS: the landmarks' pictures paint with it too (render/landPropArt.js) - one home. */
+export function vnoise(x, y, cx, cy, w, h, salt) {
   const gx = x / cx, gy = y / cy, ix = Math.floor(gx), iy = Math.floor(gy), fx = gx - ix, fy = gy - iy;
   const nw = w / cx, nh = h / cy;
   const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);

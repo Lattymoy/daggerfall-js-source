@@ -215,18 +215,20 @@ test('AUDIT-TESA A6-2: where a capital\'s models stand - a wall over a garden or
       const own = Object.hasOwn(cap.blocks, cell) ? cap.blocks[cell] : null;
       if (cell !== 'G' && !own) return;
       const blk = blocks.find((b) => b.name === (own ? own.name : capitalGardenName(cap, cx, r)));
+      const G = own ? null : cap.ground?.garden ?? null;   // PIN MOVED (SOLITUDE-RELIEF): a garden on a capital's own ground its ground's - closed and bare where it is not grass
       const A = blk.json.RmbBlock.FldHeader.AutoMapData, trees = blk.json.RmbBlock.FldHeader.GroundData.GroundScenery;
       let shut = 0;
       for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) {
         const [x, z] = autoCentre(ax, ay), [dx, dz] = anchorMetres(cap, cx, r, x, z), under = fp[cap.key](dx, dz);
         const rim = inCapitalRim(cap, cx * BLOCK_M + x, (r + 1) * BLOCK_M - z);   // PIN MOVED (AUDIT TESA II C1): the rim closed, no ground of its own
-        assert.equal(A[ay * 64 + ax], (own?.closed(dx, dz) || under || rim) ? CAPITAL_CLOSED_BYTE : 0, `${blk.name} ${ax},${ay}`);
+        assert.equal(A[ay * 64 + ax], (own?.closed(dx, dz) || G?.closed(dx, dz) || under || rim) ? CAPITAL_CLOSED_BYTE : 0, `${blk.name} ${ax},${ay}`);
         if (under && !own && !rim) { shut++; const tx = Math.floor(x / 6.4), ty = 15 - Math.floor(z / 6.4); assert.equal(trees[ty * 16 + tx].TextureRecord, -1, `${blk.name}: a tree in the wall at ${tx},${ty}`); }
       }
       if (shut) crossed++;
       // PIN MOVED (ROAD-FOLLOW, 03-World/Town-Shapes.md ROAD-FOLLOW): its approach's road, rim or none
       const way = onCapitalApproach(cap, capitalDims(cap)), roadAt = (i) => way(...anchorMetres(cap, cx, r, ...tileCentre(i % 16, Math.floor(i / 16))));
-      if (!own) assert.ok(blk.json.RmbBlock.FldHeader.GroundData.GroundTiles.every((t, i) => t.TileBitfield === (roadAt(i) ? APPROACH_TILE : inCapitalRim(cap, cx * BLOCK_M + tileCentre(i % 16, Math.floor(i / 16))[0], (r + 1) * BLOCK_M - tileCentre(i % 16, Math.floor(i / 16))[1]) ? CAPITAL_NO_GROUND : 2)), 'a garden\'s grass, its rim none, its approach the road');
+      const grass = (x, z) => (G ? G.tile(...anchorMetres(cap, cx, r, x, z)) : 2);   // PIN MOVED (SOLITUDE-RELIEF): a garden on a capital's own ground its ground's
+      if (!own) assert.ok(blk.json.RmbBlock.FldHeader.GroundData.GroundTiles.every((t, i) => t.TileBitfield === (roadAt(i) ? APPROACH_TILE : inCapitalRim(cap, cx * BLOCK_M + tileCentre(i % 16, Math.floor(i / 16))[0], (r + 1) * BLOCK_M - tileCentre(i % 16, Math.floor(i / 16))[1]) ? CAPITAL_NO_GROUND : grass(...tileCentre(i % 16, Math.floor(i / 16))))), 'a garden\'s grass (its ground\'s, on a capital\'s own), its rim none, its approach the road');
     }));
   }
   assert.ok(crossed >= 60, `the walls over the gardens: ${crossed}`);
@@ -362,11 +364,17 @@ test('AUDIT-TESA A4-F5/A7-5: a capital\'s pixel walks each ring\'s own cells - t
 test('AUDIT-TESA A6-3: no landmark stands in one of Daggerfall\'s blocks a capital lays - its walls and their towers, its walks, all clear of them below a roof\'s height (the oak\'s canopy over them, 170 m up, is the city\'s)', async () => {
   const { installCapitals } = await import('../src/world/capitalModels.js');
   const { customModelFor } = await import('../src/world/customModels.js');
-  const { BLOCK_M } = await import('../src/world/tamrielCapitals.js');
+  const { BLOCK_M, CAPITAL_MODELS } = await import('../src/world/tamrielCapitals.js');
+  const { SOLITUDE_TERRACES } = await import('../src/world/solitudeRelief.js');
   installCapitals({ addTextures: () => 0 });
   for (const cap of CAPITALS) {
     const [AX, AR] = cap.anchor;
     for (const id of cap.models) {
+      // PIN MOVED (SOLITUDE-RELIEF): Solitude's terraces' works stand in its Daggerfall blocks' edge strips by design - the
+      // retaining wall's body under the upper blocks' lifted edge, its stairs in the lower blocks' streets - never deeper
+      // than the terrain's cell, and only where those blocks' own automaps hold no house (the ARENA2 pin,
+      // test/world/solitude_relief.test.js)
+      const strip = id === CAPITAL_MODELS.solitudeTerraces ? SOLITUDE_TERRACES.line.depth + 0.51 : 0.51;
       const p = customModelFor(id).positions;
       for (let i = 0; i < p.length; i += 3) {
         const x = p[i], y = p[i + 1], z = -p[i + 2];
@@ -374,7 +382,7 @@ test('AUDIT-TESA A6-3: no landmark stands in one of Daggerfall\'s blocks a capit
         const cx = Math.floor(x / BLOCK_M + AX), r = Math.floor(z / BLOCK_M + AR), cell = cap.cellAt ? cap.cellAt(r, cx) : cap.plan[r]?.[cx];   // PIN MOVED (IC-GRAND): the Imperial City's plan by its law
         if (!cell || cell === 'L' || cell === 'G' || cell === 'O' || (cap.family ? /^I[0-9a-z]{4}$/.test(cell) : Object.hasOwn(cap.blocks, cell))) continue;
         const lx = x - (cx - AX) * BLOCK_M, lz = z - (r - AR) * BLOCK_M, depth = Math.min(lx, BLOCK_M - lx, lz, BLOCK_M - lz);
-        assert.ok(depth <= 0.51, `${cap.key} model ${id} ${depth.toFixed(2)} m into ${cell} at ${cx},${r}`);
+        assert.ok(depth <= strip, `${cap.key} model ${id} ${depth.toFixed(2)} m into ${cell} at ${cx},${r}`);
       }
     }
   }

@@ -66,7 +66,7 @@ test('RAIN-HOURS: a wet day rains for half its hours - rain and thunder worn for
 });
 
 test('RAIN-HEART: a rain front is born with its own strength - evenly from the heaviest front\'s edge to the whole downpour, drawn from its id alone - and every other system, a storm cell among them, falls whole (mutants: every front pours; the floor at nothing)', () => {
-  assert.deepEqual(STRENGTH, { rain: [EDGE_INTENSITY, 1] });
+  assert.deepEqual(STRENGTH, { rain: [EDGE_INTENSITY, 1], ashfall: [0.35, 1] });   // PIN MOVED (ASHFALL1, 2026-10-27): an ashfall from a dusting to the heavy fall
   assert.equal(EDGE_INTENSITY, 0.2, 'the weakest front\'s heart is the heaviest one\'s edge');
   const fronts = springFronts();
   assert.ok(fronts.length > 400, `a spring's fronts over the woodlands (${fronts.length})`);

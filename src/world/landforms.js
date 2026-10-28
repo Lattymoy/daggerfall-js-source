@@ -139,6 +139,7 @@ import { tamrielClimateAt, bayEdgeDistance, SEAM_PX, largeOfByte, groundBefore }
 import { tamrielBiomeAt } from './tamriel/tamrielBiomes.js';   // BREATHTAKER3: a zone's own landforms
 import { landformLattice, tamrielLandformAt, continentShare, TAMRIEL_TOP, TAMRIEL_LANDFORM_DIALS } from './tamriel/tamrielLandforms.js';   // BREATHTAKER3: the land past the Bay below the heightmap's grain
 import { tamrielWatersShaper } from './tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay, carved
+import { redMountainReaches, redMountainLand, redMountainTopNear, redMountainSmooth, redMountainGround } from './tamriel/redMountain.js';   // RED-MOUNTAIN: the volcano stood on the land past the Bay
 import { worldPixelKey, inWorldGrid } from './worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the sites past the Bay, by the world's key (worker-safe)
 import { tamrielRangeAt, rangeBound, rangeShaper } from './tamriel/tamrielRanges.js';   // RELIEF-PEAKS: the ranges past the Bay under the heightmap's grain, and Red Mountain (worker-safe)
 
@@ -357,6 +358,22 @@ export const byteBeyond = (x, y) => (inEtherLaw(x, y) ? 0 : continentShare((x + 
 /** BREATHTAKER2/3: is Bay pixel (x, y) the continent's - past the Bay's seam band, and not the Eltheric Ocean's box (its isles
  *  wear their own climates' hills, AUDIT CAPTAIN'S SEA G3: etherLandAt)? */
 export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y);
+
+/** RED-MOUNTAIN: THE LAND WITHOUT THE VOLCANO off a world's bytes (`byteAt(x, y)`, Bay pixels), kernel units at world
+ *  sample (gx, gy) - the node law (nodeGround with its continuation past the Bay, the far views' own) at the four byte
+ *  nodes about it, each where the kernel stands it ((x + 1) * 128, (MAP_H - y) * 128), bilinear between. What the
+ *  lava's levels are read off (world/tamriel/redMountain.js redMountainGround): one reader on every thread and in the far
+ *  views, never the kernel's own samples. */
+export function byteBase(byteAt) {
+  const at = (x, y) => nodeGround(byteAt(x, y), 1, byteBeyond(x, y));
+  return (gx, gy) => {
+    const fx = gx / 128 - 1, fy = MAP_H - gy / 128, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
+    return (at(x0, y0) * (1 - tx) + at(x0 + 1, y0) * tx) * (1 - ty) + (at(x0, y0 + 1) * (1 - tx) + at(x0 + 1, y0 + 1) * tx) * ty;
+  };
+}
+/** RED-MOUNTAIN: the levels its lava lies at in `woods`'s world (redMountainGround over byteBase of its bytes), or null
+ *  with no volcano. */
+export const redMountainGroundOf = (woods) => redMountainGround(byteBase((x, y) => woods.getHeightMapValue(x, y)), woods);
 
 /** LANDFORM6: the lands in one order (their index is a climate's land everywhere below) and the climate each one is -
  *  CLIMATE.PAK's values, mapsTables.js CLIMATES; any other value stands as woodlands. */
@@ -908,6 +925,7 @@ function siteLevel(woods, sx, sy, hDim, ground) {
   const tl = ground.cont && continentPixel(sx, sy) ? landformLattice(ground.cont, ox, oy, span, span) : null;
   const whole = !!tl && bayEdgeDistance(sx, sy) >= SEAM_PX + 1 + TAMRIEL_LANDFORM_DIALS.ramp;
   const lattice = ground.hills && !whole ? hillLattice(ox, oy, span) : null;
+  const crater = tl && redMountainReaches(ox, oy, ox + span, oy + span) ? redMountainGroundOf(woods) : null;   // RED-MOUNTAIN: a site on its flank stands on it
   const ranges = tl && ground.hills && ground.ranges !== false ? rangeShaper(sx, sy) : null;   // RELIEF-PEAKS: the ranges as the shaper lays them
   let sum = 0, n = 0, wet = 0, nw = 0;
   for (let x = 0; x <= span; x += step) {
@@ -931,7 +949,7 @@ function siteLevel(woods, sx, sy, hDim, ground) {
           hh = t >= 1 ? c : hh + (c - hh) * t;
         }
       }
-      sum += h + lift * fade + hh;
+      sum += crater !== null ? redMountainLand(ox + x, oy + y, h + lift * fade, hh, crater) : h + lift * fade + hh;
     }
   }
   level = n ? sum / n : wet / nw;
@@ -1086,7 +1104,7 @@ export function meanGroundField(woods, px, py, landforms, hDim = HEIGHTMAP_DIMEN
     if (!landforms) return h;
     const share = beyond ? continentShare(ox + x, oy + y, span, MAP_H, MAP_W, SEAM_PX) : 0;
     const land = h + (beyond ? reliefLift(low) + share * continentLift(low) : reliefLift(low)) * (fade ? fade(x, y) : 1);
-    return share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land;   // RELIEF-PEAKS: the ranges are no hills - not centred at the summits
+    return (share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);   // RELIEF-PEAKS: the ranges are no hills - not centred at the summits; RED-MOUNTAIN: and its smooth cone
   };
 }
 
@@ -1139,7 +1157,7 @@ export function groundTopOf(woods, px, py, landforms, climates = null, hDim = HE
   let hill = climates ? 0 : HILLS_TOP;
   if (climates) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) hill = Math.max(hill, LAND_TOP[etherLandAt(px + dx, py + dy, climates)]);
   // BREATHTAKER2/3: past the Bay's seam the lift goes on past the 7-bit top and the continent's landforms stand with the hills
-  if (continentPixel(px, py)) return rangeBound(px, py, h + reliefLift(lowTop) + continentLift(lowTop)) + Math.max(hill, TAMRIEL_TOP);   // RELIEF-PEAKS: and the ranges' rise
+  if (continentPixel(px, py)) return rangeBound(px, py, h + reliefLift(lowTop) + continentLift(lowTop)) + Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);   // RELIEF-PEAKS: and the ranges' rise; RED-MOUNTAIN: and the volcano's most over the pixel
   return h + reliefLift(lowTop) + hill;
 }
 
@@ -1357,6 +1375,8 @@ function pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, hal
   const tl = continent ? landformLattice(cont, ox, oy, span, span) : null;
   const whole = !!tl && past >= SEAM_PX + 1 + TAMRIEL_LANDFORM_DIALS.ramp;
   const waters = continent ? tamrielWatersShaper(px, py, span) : null;
+  // RED-MOUNTAIN: the volcano stood on the land where it reaches this pixel (and a road's profile one pixel on)
+  const crater = continent && redMountainReaches(ox - span, oy - span, ox + 2 * span, oy + 2 * span) ? redMountainGroundOf(woods) : null;
   const ranges = continent && hill !== NO_HILLS && ground.ranges ? rangeShaper(px, py) : null;   // RELIEF-PEAKS: the ranges, what the pixel meets asked once
   const lattice = hill === NO_HILLS || whole ? null : hillLattice(ox, oy, span);   // LANDFORM5: the slow fields' nodes over this pixel
   // AUDIT LANDFORMS III C1: A RIVER CUTS ITS VALLEY. The first law stilled the hills to nothing along the painted water,
@@ -1434,7 +1454,8 @@ function pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, hal
       if (valleys.length) hh = carve(gx, gy, hh, deepOut[0]);
     }
     const base = h + lift * fade;
-    const l = waters ? waters.carve(gx, gy, base, hh) : base + hh;   // CYRODIIL-WATERS: the rivers' and lakes' beds and valleys
+    // CYRODIIL-WATERS: the rivers' and lakes' beds and valleys; RED-MOUNTAIN: the volcano (no carved water reaches it)
+    const l = waters ? waters.carve(gx, gy, base, hh) : crater !== null ? redMountainLand(gx, gy, base, hh, crater) : base + hh;
     if (!list.length) { kept[0] = 1; return l; }
     return pullTo(list, gx, gy, l, kept);
   };

@@ -343,8 +343,9 @@ test('ECOTONE1: the world host - the 3x3 read once a build; the kernel handed th
   // AUDIT PRECIP GROUND-2 (PIN MOVED): on the snow lane the set held and drawn is its twin
   // PIN MOVED (OW-HITCH): the one home is scenes/groundSets.js, the world host's module (HOST-SPLIT)
   assert.match(read('src/scenes/groundSets.js'), /const loadGroundSet = async \(groundArchive, hold, winter = null\) => \{\n(?:\s+\/\/[^\n]*\n)*\s+const key = winter == null \? groundArchive : twinKey\(groundArchive\);\n\s+hold\.tileArray\(key\); const groundTex = await getTexture\(groundArchive\);/, 'the one home, held for the pixel');
-  assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
-  assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(a, pipeline, /);
+  // PIN MOVED (TESA-LANDS, AUDIT): the pixel's set and its neighbours' loaded together, all awaited before the draw
+  assert.match(read('src/scenes/pixelBuild.js'), /const ownSet = loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
+  assert.match(read('src/scenes/pixelBuild.js'), /await Promise\.all\(\[ownSet, \.\.\.archives\.map\(\(a\) => loadGroundSet\(a, pipeline, /);
   assert.match(w, /side: Int32Array\.of\(slot\(3\), slot\(5\), slot\(1\), slot\(7\)\),/, 'W, E, S, N of the 3x3 indexed (dz + 1) * 3 + (dx + 1)');
   assert.match(w, /corner: Int32Array\.of\(slot\(0\), slot\(2\), slot\(6\), slot\(8\)\),/, 'SW, SE, NW, NE');
   // PIN MOVED (AUDIT TESA-BIOME Z4): the neighbour a pixel reads - the Bay's map for a Bay pixel, the continent's frame past it

@@ -704,6 +704,9 @@ them. So a capital at the sea is now laid in two heights:
   far shore rising to the land's own (`rumareLandHeight`);
 - a vertex on the span's outer edge (a side with a rim) is the land's own height, water or land, as the pixel past it
   stands, so no seam opens.
+- Moved by SOLITUDE-RELIEF (2026-10-27, `03-World/Arena-Provinces.md`): Solitude no longer stands here - its ground is a
+  relief of its own (`world/terrain/capitalRelief.js`), its streets 46 m over the sea and its docks at 2.4 m. Alinor,
+  Torval and the Imperial City keep the two heights above.
 
 The Imperial City is flattened to the sea (`flattenAt.sea`) only where its canal stands (`capitalCanalOpen`). Alinor,
 Torval and Solitude take the same law as shore capitals: their water is unchanged, and their streets are a metre over it.
@@ -1117,6 +1120,12 @@ Recorded:
 
 Section A, SMOOTH-LAND (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
 
+## RED-MOUNTAIN - the volcano on Vvardenfell (2026-10-27)
+
+The owner: *"An absolute massive volcano true to lore that towers in the distance."* The cone, its crater, its foyada,
+its fire and its horizon are `Red-Mountain.md`: a law of world position the kernel stands on the land past the Bay at
+Red Mountain's summit on the relief, about 7.3 km over the sea.
+
 ## RELIEF-PEAKS - the ranges past the Bay stand as mountains, Red Mountain a cone (2026-10-27)
 
 KPbICA on the game's Discord, 2026-10-27, forwarded by the owner: *"2) No mountains (screenshot 1). Instead we're
@@ -1176,9 +1185,8 @@ band aids or half assed work"*.
     to 1,250 m from 2,300 m. It is centred on the land where the land has room; toward the ceiling its crests are the
     land's own height and a rise is held softly under it. There is no relief within two pixels of a carved river or a
     lake, and the whole of it past seven.
-  - **Red Mountain** (src/world/tamriel/tamrielRanges.js:"export const CONE"): a cone at its relief's own summit
-    (`namedSummit`), 25 km to its foot, its crater's rim at 3,250 m, a crater 1.8 km in radius and 240 m deep, concave
-    flanks with ribs down them. Inside its rim the land is the cone, and the land's own ranges are quiet about it.
+  - **Red Mountain** - retired at the merge for RED-MOUNTAIN's volcano (`Red-Mountain.md`, the owner's call): this
+    cone, its rim 3,250 m and its crater 240 m deep, stood under that one.
   - **The far views stand on the kernel's own ground**
     (src/world/landforms.js:"export function nodeGround(byte, fade = 1, beyond = 0, lift = true)", `centreGround`,
     `nodeGroundAt`). The far ring's vertex is the kernel's mean ground at its pixel's centre
@@ -1197,8 +1205,8 @@ band aids or half assed work"*.
   - Spans over 10 km: the Throat 1,117 m, the Jerall 1,060 m, the Reach's shoulder 1,008 m, the Velothi 1,007 m, the
     Wrothgarians past the Bay 794 m (the Bay's Dragontails 1,449 m).
   - About Bruma: 0.28% over 37 degrees (was 4.8%), 0.01% over 50 (was 2.0%). Median slopes 13 to 16 degrees.
-  - Red Mountain: its top 3,332 m; the land 29 km out 2,365 m on the mean and 2,709 m at its highest; 10 km about it
-    spans 833 m.
+  - Red Mountain (retired): its top 3,332 m; the land 29 km out 2,365 m on the mean and 2,709 m at its highest; 10 km
+    about it spans 833 m.
   - The Bay's north edge: no step over 120 m between samples 102 m apart.
   - The far ring's vertex within 2 m of the kernel's mean ground past the Bay (it was 410 to 500 m off) and within 35 m
     on the Bay; the far field within 2 m past the Bay and 45 m on it.
@@ -1229,8 +1237,8 @@ band aids or half assed work"*.
   centre, the ceiling, the bound, the cone's profile); the ranges on the land (none low, centred, held under the ceiling
   by the soft clip's law, quiet by the rivers, the cone at its summit with its crater and no moat); the far views on the
   kernel's mean ground and their wiring; the records' frame law, DFU's ground's move (by a town's rect too) and their
-  wiring; with ARENA2, WOODS.WLD's large map against the law, the ranges' spans, Bruma's faces, Red Mountain, the Bay's
-  edge, and the far ring on the freeware's ground.
+  wiring; with ARENA2, WOODS.WLD's large map against the law, the ranges' spans, Bruma's faces, the Bay's edge, and the
+  far ring on the freeware's ground. The cone's pins went with it at the merge.
 - **PIN MOVED (RELIEF-PEAKS):** `test/render/farlandmark.test.js`, `test/render/farsea1.test.js`,
   `test/render/midring.test.js`, `test/ui/farring.test.js`, `test/systems/landform.test.js`,
   `test/world/terrain/auditlandforms.test.js`, `test/scenes/tv3_travellers.test.js`,

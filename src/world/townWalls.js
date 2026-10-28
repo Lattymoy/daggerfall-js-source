@@ -35,6 +35,8 @@ import { registerPortBlock } from '../formats/worldData/worldDataReplacement.js'
 import { registerCustomModel } from './customModels.js';
 import { carriageRecordsOf } from './immersiveTravelGates.js';   // TS7: Immersive Travel's carriages, at the new gates
 import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';   // TS7: a town's walk shut to its ground
+import { reliefOf } from './terrain/capitalRelief.js';   // SOLITUDE-RELIEF: a capital's terraces' works
+import { NAV_CELL } from './city/cityNavigation.js';
 import { curvesOf, curvePolyline, CURVE_STEPS } from './road/roadCurves.js';   // ROAD-FOLLOW: past the Bay a road's arm is its curve
 import { DIR_DELTA } from './road/roadNetwork.js';
 import { arenaRoadByte, arenaJoinByte } from './arenaRoads.js';   // ROAD-FOLLOW: the roads past the Bay, and a crossing's join on the Bay
@@ -828,6 +830,17 @@ export const wallLaidBytes = (dfLocation, bx, by, autoMap) => wallOnTownMap([{ x
 export function shutTownWall(nav, cells) {
   if (cells) for (let i = 0; i < cells.length; i++) if (cells[i]) nav.grid[i] = 0;
 }
+/** SOLITUDE-RELIEF: a capital on its relief's walk grid shut where its works stand (world/terrain/capitalRelief.js
+ *  CAPITAL_RELIEFS' `walkShut`) - the grid's cell (gx, gy) at the pixel's metres from its south-west, the relief's anchor
+ *  metres from its north-west (its location the whole pixel). */
+export function shutRelief(nav, relief) {
+  if (!relief.walkShut) return;
+  for (let gy = 0; gy < nav.height; gy++) {
+    for (let gx = 0; gx < nav.width; gx++) {
+      if (relief.walkShut(relief.x0 + (gx + 0.5) * NAV_CELL, relief.z0 + relief.side - (gy + 0.5) * NAV_CELL)) nav.grid[gy * nav.width + gx] = 0;
+    }
+  }
+}
 
 /** TS10: a road cell's weight on a town's grid - CityNavigation.GetTileWeight's for a road tile (46, 47, 55: "Roads are
  *  great!", world/city/cityNavigation.js tileWeight - pinned equal), the weight a yard reads as a road. */
@@ -862,11 +875,13 @@ export function paveOnGrid(nav, paths, tilePos) {
  *  again once the roads land places its yards again. @param {any} dfLocation @param {?Uint8Array} ground
  *  @param {?Uint8Array} [paths] */
 export const townWalkShut = (dfLocation, ground, paths = null) => {
+  const relief = reliefOf(dfLocation);
   const shut = (nav) => {
     const origin = getLocationTerrainTileOrigin(dfLocation);
     if (ground) shutOffGround(nav, ground, origin);
     if (paths) paveOnGrid(nav, paths, origin);
     shutTownWall(nav, townWallCellsOf(dfLocation));
+    if (relief) shutRelief(nav, relief);
   };
   let h = 0x811c9dc5;   // FNV-1a over the painted tiles' indices
   if (paths) for (let i = 0; i < paths.length; i++) if (paths[i]) h = Math.imul(h ^ i, 0x01000193) >>> 0;

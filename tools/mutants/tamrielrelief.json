@@ -51,8 +51,8 @@
   {
     "name": "TAMRIEL-RELIEF-the-summit-sought-near",
     "file": "src/world/tamriel/tamrielRelief.js",
-    "old": "Math.hypot(px - qx, py - qy) <= NAMED_SEEK)",
-    "new": "Math.hypot(px - qx, py - qy) <= NAMED_SEEK / 4)",
+    "old": "(px - qx) * (px - qx) + (py - qy) * (py - qy) <= NAMED_SEEK * NAMED_SEEK)",
+    "new": "(px - qx) * (px - qx) + (py - qy) * (py - qy) <= (NAMED_SEEK / 4) * (NAMED_SEEK / 4))",
     "tests": ["test/world/tamrielrelief.test.js"]
   },
   {

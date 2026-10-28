@@ -46,6 +46,7 @@ import { EL_GLSL } from './enhancedLighting.js';
 import { BAYER_MEAN } from './orderedDither.js';
 import { classicLook } from './classicShadowLane.js';
 import { pipelinePictures } from './farFlora.js';
+import { bandTreeArt } from '../world/terrain/floraCover.js';   // TESA-LANDS: a band tree of a zone's own archive
 
 /** HORIZON-TREES: the samples of a tree's sight line read over the middle ring's ground (the eye's end and the tree's not). */
 export const HORIZON_STEPS = 24;
@@ -203,7 +204,8 @@ export function* bandInstanceSteps(pixels, baseX, baseY, layerOf) {
     const ox = (p.px - baseX) * TERRAIN_SIZE, oz = (baseY - p.py) * TERRAIN_SIZE, t = p.trees;
     const [si, sj] = bandSlot(p.px, p.py, baseX, baseY);   // FLORA-GROUND: its pixel's slot - stood down once built
     for (let i = 0; i < t.length; i += 4) {
-      const layer = layerOf(p.archive, t[i + 3]);
+      const [a, r] = bandTreeArt(p.archive, t[i + 3]);   // TESA-LANDS: its own archive's art where it carries one
+      const layer = layerOf(a, r);
       if (layer === undefined) continue;
       const o = k * (TREE_STRIDE / 4);
       f[o] = ox + t[i]; f[o + 1] = t[i + 1]; f[o + 2] = oz + t[i + 2];
@@ -353,11 +355,18 @@ export class FarTreesBand {
     this.builtBits = new Int32Array(BAND_BUILT_WORDS);   // FLORA-GROUND: the drawn base's built slots
     this._builtKey = '';
     this._groundEpoch = source?.groundEpoch ?? 0;   // FLORA-GROUND: the ground the kept trees were laid on
-    /** @type {Map<string, { px: number, py: number, archive: number, trees: Float32Array }>} */ this.kept = new Map();
+    /** @type {Map<string, { px: number, py: number, archive: number, trees: Float32Array, arts: string[] }>} */ this.kept = new Map();   // TESA-LANDS: `arts` the Tree pictures its trees are ("archive,record")
     this.layers = new Map();   // "archive,record" -> layer
     this.sides = new Float32Array(TREE_LAYERS);
-    this.arts = new Map();     // archive -> 'asking' | 'ready' | 'none'
+    this.arts = new Map();     // "archive,record" -> 'asking' | 'ready' | 'none' | 'full'
     this.version = 0;          // the arts read: an assembly before one landed is laid again
+    // TESA-LANDS (AUDIT): THE ATLAS'S LAYERS ARE LENT, NOT SPENT. The Bay's eight nature archives hold 60 Trees and past it a
+    // zone's recipe draws on any of them, so a journey outgrew the 48 layers and the band left a province's trees out for
+    // the rest of the session. A picture is read where a wanted pixel's tree is of it, and a full atlas lends the layer of
+    // a picture no wanted pixel, no drawn set and no set being laid is of (`_layerFor`).
+    this._wanted = new Set();  // the arts the wanted pixels' trees are
+    this._drawnArts = new Set();
+    this._layingArts = new Set();
     this.tex = null;
     this.groundTex = null;     // HORIZON-TREES: the middle ring's heights, as the ring last handed them
     this._groundOf = null;     // ...and which heights those are
@@ -378,22 +387,25 @@ export class FarTreesBand {
    * The band's turn of a frame (render/farRing.js punchHole's): its pixels asked again when the traveller's pixel or the
    * grid's radius moved; the pixels it lacks asked of the worker (one ask at a time); and, once every pixel it wants is
    * kept (and their art read), an assembly queued on `work` (the far ring's stepped queue). `climateOf(x, y)` a pixel's
-   * climate; `forests` the Real forests switch; `landform` the Landforms row.
+   * climate; `forests` the Real forests switch; `landform` the Landforms row; `lands` TESA-LANDS' row (a zone's own trees
+   * past the Bay).
    */
-  frame({ curX, curY, radius, built, climateOf, forests, landform, work }) {
+  frame({ curX, curY, radius, built, climateOf, forests, landform, lands = false, work }) {
     this._builtNow(built);   // FLORA-GROUND: a pixel built since the last crossing stands its band trees down at once
     this._groundNow();   // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it
     const key = `${curX},${curY},${radius}`;
-    if (key !== this._setKey) { this._setKey = key; this._want = this.pixelsFor(curX, curY, radius, built); this._wantAt = [curX, curY]; this._failed = false; }
+    if (key !== this._setKey) { this._setKey = key; this._want = this.pixelsFor(curX, curY, radius, built); this._wantAt = [curX, curY]; this._failed = false; this._unfull(); }
     const missing = this._want.filter(([x, y]) => !this.kept.has(`${x},${y}`));
-    if (missing.length && !this._asking && !this._failed) this._ask(missing, climateOf, forests, landform);
+    if (missing.length && !this._asking && !this._failed) this._ask(missing, climateOf, forests, landform, lands);
+    this._wanted.clear();
     for (const [x, y] of this._want) {
       const k = this.kept.get(`${x},${y}`);
-      if (k) this._art(k.archive);
+      if (k) for (const a of k.arts) this._wanted.add(a);
     }
+    for (const a of this._wanted) this._art(a);
     const laidKey = `${key}|${this.version}`;
     if (missing.length || this._laying || laidKey === this._laidKey) return;
-    if (this._want.some(([x, y]) => this.arts.get(this.kept.get(`${x},${y}`).archive) === 'asking')) return;   // its art still being read
+    for (const a of this._wanted) if (this.arts.get(a) === 'asking') return;   // its art still being read
     this._laidKey = laidKey;
     this._lay(work, curX, curY);
   }
@@ -422,7 +434,7 @@ export class FarTreesBand {
     this._laidKey = '';
   }
 
-  _ask(missing, climateOf, forests, landform) {
+  _ask(missing, climateOf, forests, landform, lands = false) {
     const pixels = new Int32Array(missing.length * 4), archives = [];
     missing.forEach(([x, y], k) => {
       const c = getWorldClimateSettings(climateOf(x, y));
@@ -431,11 +443,15 @@ export class FarTreesBand {
     });
     this._asking = true;
     const gen = (this._gen = (this._gen ?? 0) + 1);
-    Promise.resolve(this.source?.floraBand?.({ pixels, forests: !!forests, landform: !!landform }) ?? null).then((trees) => {
+    Promise.resolve(this.source?.floraBand?.({ pixels, forests: !!forests, landform: !!landform, lands: !!lands }) ?? null).then((trees) => {
       if (gen !== this._gen) return;
       this._asking = false;
       if (!trees) { this._failed = true; return; }   // no worker, or it failed: the band stands down until the set moves
-      missing.forEach(([x, y], k) => this.kept.set(`${x},${y}`, { px: x, py: y, archive: archives[k], trees: trees[k] ?? new Float32Array(0) }));
+      missing.forEach(([x, y], k) => {
+        const t = trees[k] ?? new Float32Array(0), own = new Set();
+        for (let i = 3; i < t.length; i += 4) own.add(bandTreeArt(archives[k], t[i]).join(','));   // TESA-LANDS: each tree's own picture, of whatever archive
+        this.kept.set(`${x},${y}`, { px: x, py: y, archive: archives[k], trees: t, arts: [...own] });
+      });
       this._forget();
     }, () => { if (gen === this._gen) this._asking = false; });
   }
@@ -446,27 +462,54 @@ export class FarTreesBand {
     for (const [k, p] of this.kept) if (Math.max(Math.abs(p.px - cx), Math.abs(p.py - cy)) > keep) this.kept.delete(k);
   }
 
-  /** An archive's Tree pictures read into the atlas, once (`arts`: 'asking', then 'ready' or 'none'). */
-  _art(archive) {
-    if (this.arts.has(archive)) return;
-    const records = TREE_RECORDS[archive], read = this.read();
-    if (!records || !read) { if (!records) this.arts.set(archive, 'none'); return; }
-    this.arts.set(archive, 'asking');
-    Promise.all(records.map((r) => Promise.all([read.picture(archive, r).catch(() => null), read.size(archive, r).catch(() => null)]))).then((got) => {
-      if (!this.gl) return;
-      let any = false;
-      got.forEach(([pic, size], i) => {
-        if (!pic?.width || !(size?.h > 0) || this.layers.size >= TREE_LAYERS) return;
-        const layer = this.layers.size;
-        this._upload(layer, layerPicture(pic));
-        this.layers.set(`${archive},${records[i]}`, layer);
-        this.sides[layer] = Math.max(size.w, size.h);
-        any = true;
-      });
-      if (any) { const gl = this.gl; gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); gl.bindTexture(gl.TEXTURE_2D_ARRAY, null); }
-      this.arts.set(archive, any ? 'ready' : 'none');
+  /** A Tree's picture ("archive,record") read into a layer of the atlas, once (`arts`: 'asking', then 'ready', 'none' -
+   *  no Tree, or no picture - or 'full': no layer to lend it, asked again when the drawn set or the wanted one moves). */
+  _art(key) {
+    if (this.arts.has(key)) return;
+    const [archive, record] = key.split(',').map(Number), read = this.read();
+    if (!TREE_RECORDS[archive]?.includes(record)) { this.arts.set(key, 'none'); return; }
+    if (!read) return;
+    this.arts.set(key, 'asking');
+    Promise.all([read.picture(archive, record).catch(() => null), read.size(archive, record).catch(() => null)]).then(([pic, size]) => {
+      if (!this.gl || this.arts.get(key) !== 'asking') return;
+      if (!pic?.width || !(size?.h > 0)) { this.arts.set(key, 'none'); this.version++; return; }
+      const layer = this._layerFor();
+      if (layer < 0) { this.arts.set(key, 'full'); this.version++; return; }
+      this._upload(layer, layerPicture(pic));
+      const gl = this.gl;
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex); gl.generateMipmap(gl.TEXTURE_2D_ARRAY); gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+      this.layers.set(key, layer);
+      this.sides[layer] = Math.max(size.w, size.h);
+      this.arts.set(key, 'ready');
       this.version++;
-    }, () => this.arts.set(archive, 'none'));
+    }, () => this.arts.set(key, 'none'));
+  }
+
+  /** A layer for a picture: the next unused, else one lent back from a picture no wanted pixel, drawn set or set being
+   *  laid is of (read again if it is wanted again); -1 where every layer is in use. */
+  _layerFor() {
+    if (this.layers.size < TREE_LAYERS) return this.layers.size;
+    for (const [k, layer] of this.layers) {
+      if (this._wanted.has(k) || this._drawnArts.has(k) || this._layingArts.has(k)) continue;
+      this.layers.delete(k);
+      this.arts.delete(k);
+      return layer;
+    }
+    return -1;
+  }
+
+  /** The pictures a full atlas turned away, asked again (a set moved: a layer may be lent) - TESA-LANDS' second audit
+   *  (lane D): only where one may be. A wanted set past the atlas's 48 pictures had asked its turned-away ones again at
+   *  every swap, each turned away again (`version` moved), the set laid again, swapped, asked again - for ever. */
+  _unfull() {
+    if (!this._lendable()) return;
+    for (const [k, st] of this.arts) if (st === 'full') this.arts.delete(k);
+  }
+  /** Whether _layerFor would answer a layer now. */
+  _lendable() {
+    if (this.layers.size < TREE_LAYERS) return true;
+    for (const k of this.layers.keys()) if (!this._wanted.has(k) && !this._drawnArts.has(k) && !this._layingArts.has(k)) return true;
+    return false;
   }
 
   _upload(layer, rgba) {
@@ -489,7 +532,12 @@ export class FarTreesBand {
    *  of their own, and swapped in whole when the last slice is up. */
   _lay(work, baseX, baseY) {
     const pixels = this._want.map(([x, y]) => this.kept.get(`${x},${y}`));
-    const it = bandInstanceSteps(pixels, baseX, baseY, (a, r) => this.layers.get(`${a},${r}`));
+    const laying = new Set();
+    for (const p of pixels) for (const a of p.arts) if (this.layers.has(a)) laying.add(a);
+    this._layingArts = laying;   // its pictures' layers held until it is swapped in, and then while it is drawn
+    // TESA-LANDS' second audit (lane D): and a picture that lands while the set is laid, held by it too - the set's trees ask
+    // their layers as they are laid, and a layer it took that the set had not named could be lent away under its drawing
+    const it = bandInstanceSteps(pixels, baseX, baseY, (a, r) => { const k = `${a},${r}`, l = this.layers.get(k); if (l !== undefined) laying.add(k); return l; });
     const self = this;
     function* steps() {
       const v = yield* it;
@@ -527,6 +575,9 @@ export class FarTreesBand {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this._free(this.drawn);
     this.drawn = { buffer, vao, count, baseX, baseY };
+    this._drawnArts = this._layingArts;
+    this._layingArts = new Set();
+    this._unfull();
   }
 
   _free(d) {

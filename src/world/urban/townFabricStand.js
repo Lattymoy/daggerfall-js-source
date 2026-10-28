@@ -26,7 +26,7 @@
 import { registerCustomModel, unregisterCustomModel } from '../customModels.js';
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { provinceKeyBeyondBay } from '../tamriel/tamrielLand.js';
-import { CAPITALS, BLOCK_M } from '../tamrielCapitals.js';
+import { CAPITALS, BLOCK_M, capitalBlockLift } from '../tamrielCapitals.js';   // SOLITUDE-RELIEF: a block's tier
 import { townWallGatesOf, townWallWaits } from '../townWalls.js';   // ROAD-FOLLOW: a wall still waiting for its roads plans no streets yet
 import { onTownTile } from '../townShape.js';
 import { getLocationTerrainTileOrigin } from '../terrain/terrainTiles.js';
@@ -145,7 +145,9 @@ export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () =
   const meanwhile = _fabrics.get(mapId);
   if (meanwhile) return meanwhile;
   const modelId = TOWN_FABRIC_MODEL_BASE + _next++;
-  const opts = (ctx) => ({ cobbles, classicModel: (id) => ctx?.classicModel?.(id) ?? null });
+  // SOLITUDE-RELIEF: a capital on a relief of its own lays each block's pieces on its block's tier (none elsewhere)
+  const lift = CAPITALS[dfLocation.capital?.k]?.lift ? (bx, by) => capitalBlockLift(dfLocation, bx, by) : null;
+  const opts = (ctx) => ({ cobbles, classicModel: (id) => ctx?.classicModel?.(id) ?? null, lift });
   registerCustomModel(modelId, (ctx) => townFabricModel(plan, style, opts(ctx)), () => true, {
     needs: Object.values(FABRIC_PIECES),
     buildSliced: (ctx, breathe) => townFabricModelSliced(plan, style, opts(ctx), breathe),   // made a breath at a time as it was planned

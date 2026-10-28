@@ -105,6 +105,20 @@ Morrowind's grey volcanic ground reads Mountain and its air the warm south's, be
 though often hot" and "mostly free from snow and ice" (UESP, Lore:Morrowind - its summary, not a book's). Its snow is
 the Velothi's.
 
+**The air a body feels** is the same (`tamrielGround.js` feltClimateIndex - the climate the world and the
+exterior hosts hand the survival law, `systems/survival/temperature.js`): a zone's `air` where it names one, the hosts'
+map elsewhere. (TESA-LANDS' audit, 2026-10-27, the owner: "Definitely fix any bugs you encounter" - the survival law had
+read the ground's: the Ashlands the Mountains' -40, -45 and Freezing at noon in Frostfall, and a character photographing
+it froze to death; with its air the Dak'fron's, +45. `test/systems/tesabiome_feltair.test.js`.)
+
+**The ash** (ASHFALL1,
+2026-10-27, the owner: "with the volcanic isles we could do an ashfall sort of weather with tiny lava flakes") is a
+zone's `ash`: the share of its sky's hours under the ashfall, the volcano's own weather - Red Mountain 0.5, the Ashlands
+0.3 (TES III's Ashlands region: Ash 30% of its weather), Stonefalls 0.15, the least - the port's share (ESO's loading
+screen names its ashfall and gives none: "the ashfall from the
+volcanoes of the Velothi Mountains and from great Ash Mountain itself is Stonefalls' bane and benefit"). The weather map
+births it there (`systems/weather/weatherMap.js`, `07-Rendering/Weather-Arc.md` E).
+
 **Snow.** On the enhanced lane (the default - `weatherSim.js` precipLawOn) snow lies where the air law makes it fall
 (`snowCoverHost.js`, `systems/weather/snowpack.js`), so Morrowind's warm air keeps its ash country snowless below its
 own height, and the Velothi wear it. On the classic lane (`?biomeprecip=off`) the ground wears DFU's winter set on the
@@ -112,6 +126,10 @@ calendar, every climate but a Desert's (`climateSwaps.js` groundIsSnowy) - past 
 swamps and rain forests wear it (Bantha-Jungle, "Winter, as DFU's rainforest").
 
 ## The zones
+
+What each zone LOOKS like past its climate - its ground's dress, its own flats in its own woods, its landmarks and the
+far views' read of them - is TESA-LANDS' (`03-World/Tamriel-Lands.md`, `world/tamriel/tamrielLands.js`), for every zone
+but Cyrodiil's, Valenwood's and Blackwood's.
 
 | Province | Zone (`key`) | Climate | Air | Jungle | Seeds | The lore |
 |---|---|---|---|---|---|---|

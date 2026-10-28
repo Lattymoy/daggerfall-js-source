@@ -25,6 +25,8 @@ import { spawnsDungeon, WORLD_SALT } from '../../world/spawnedDungeons.js';
 import { pickGateRegion, pickGatePixel, gateSpotLocal, omenRing } from '../../net/gate/gateLaw.js';
 import { GATE_TOWN_TYPES, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX, GATE_REGION_MIN_PIXELS } from './gateSite.js';
 import { WILD_REGION } from '../wild/wildZone.js';   // PVPDUNGEONS: no world event in the open zone
+import { onGhostfence } from '../../world/tamriel/ghostfence.js';   // FENCE-CLEAR: no gate on the Ghostfence's line
+import { redMountainLavaIn } from '../../world/tamriel/redMountain.js';   // LAVA-CLEAR: nor where Red Mountain's lava runs
 import { worldPixelKey, worldPixelOfKey, inWorldGrid, areaName, isBayArea, theatreOfArea } from '../../world/worldWide/worldGrid.js';
 import { theatreOfRegion, regionOfTheatre } from '../../formats/mapsTables.js';   // WW-C2: the open zone's theatre, by its region; WW-GATES-EVERYWHERE: a province's region (WW-R)
 
@@ -95,7 +97,7 @@ export function theatreGateScanner({ towns, placeAt, inTheatre, areaAt, wet, the
     const [x, y] = worldPixelOfKey(k);
     let near = false;
     for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) near = placeOn(x + dx, y + dy);
-    if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return;
+    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;   // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava
     const a = areaAt(x, y);
     if (!Number.isInteger(a) || a < 0) return;
     let l = lists.get(a);

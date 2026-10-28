@@ -248,7 +248,7 @@ test('PRECIP2 THE FRONT\'S SNOW SHARE: off the law the mode\'s own, on it the si
     assert.deepEqual([currentSnowShare(), weatherSystemStamp(), weatherPhaseFlip()], [0, 0, false], 'forgotten');
   } finally { setPrecipLaw(null); setWeatherFieldLaw(null); setWeatherMapLaw(null); setAirGround(null); resetWeatherSim(); }
   const src = readFileSync('src/systems/weather/weatherFront.js', 'utf8');
-  assert.match(src, /const fallOf = \(mode\) => \(mode && mode !== 'sand' && precipLawOn\(\) \? 'wet' : precipKind\(mode\)\);/);
+  assert.match(src, /const fallOf = \(mode\) => \(mode && !isDryFall\(mode\) && precipLawOn\(\) \? 'wet' : precipKind\(mode\)\);/);   // PIN MOVED (ASHFALL1, 2026-10-27): the dry falls, the sand and the ash
   assert.match(src, /const id = systemWordOf\(weather\);/);
 });
 
@@ -332,7 +332,7 @@ test('PRECIP2 THE SKY\'S CELLS at their own place\'s share: a wet cell\'s air re
   for (let i = 0; i < 3; i++) near(mid[i], (CURTAIN_RAIN_COLOR[i] + CURTAIN_SNOW_COLOR[i]) / 2, 1e-6, 'between');
   const src = readFileSync('src/render/rainCurtains.js', 'utf8');
   assert.match(src, /kind: c\.fallKind \?\? 0,/);
-  assert.match(src, /gl\.uniform3fv\(U\.uColor, mixColor\(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, c\.kind\)\);/);
+  assert.match(src, /gl\.uniform3fv\(U\.uColor, mixColor\(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, c\.kind, c\.tint\)\);/);   // PIN MOVED (ASHFALL1, 2026-10-27): in its cell's tint
   assert.equal(typeof curtainsOf, 'function');
 });
 

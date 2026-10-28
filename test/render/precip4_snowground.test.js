@@ -561,9 +561,13 @@ test('PRECIP4 THE WIRING: a build settles the snow, then keeps every season it t
   const skin = b.slice(b.indexOf('  async function reskinPixelNow('), b.indexOf('  _reskin.skinWith(reskinPixelNow);'));
   assert.match(skin, /const pixelSeason = rec\.pixel\(sk\.groundMid - SEA_LEVEL_M, host\.season\);/);
   assert.equal((skin.match(/host\.season\b(?!sReady|sActive)/g) ?? []).length, 1, 'no re-skin line reads the host\'s season past it');
-  assert.match(b, /const groundArchive = snowCover \? snowCover\.groundArchive\(climate, pixelSeason\) : getTerrainGroundArchive\(climate, pixelSeason\);/);
-  assert.match(b, /await loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
-  assert.match(b, /for \(const a of archives\) await loadGroundSet\(a, pipeline, snowCover\?\.winterOf\(near\[groundNear\.indexOf\(a\)\]\) \?\? null\);/);
+  // PIN MOVED (TESA-LANDS): the pixel's set its zone's dress of it past the Bay (scenes/pixelBuild.js landSetOf)
+  assert.match(b, /const groundArchive = landSetOf\(px, py, snowCover \? snowCover\.groundArchive\(climate, pixelSeason\) : getTerrainGroundArchive\(climate, pixelSeason\)\);/);
+  // PIN MOVED (TESA-LANDS, AUDIT): the pixel's set and its neighbours' loaded together, each with its winter twin, every
+  // one awaited before the pixel is drawn
+  assert.match(b, /const ownSet = loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
+  assert.match(b, /await Promise\.all\(\[ownSet, \.\.\.archives\.map\(\(a\) => loadGroundSet\(a, pipeline, snowCover\?\.winterOf\(near\[groundNear\.indexOf\(a\)\]\) \?\? null\)\)\]\);/);
+  assert.match(b, /\n\s+\} else await ownSet;\n/);
   assert.match(b, /const fSeason = snowRec \? snowRec\.flat\(f\.x, f\.z, f\.y - SEA_LEVEL_M, pixelSeason\) : pixelSeason;/);
   assert.match(b, /const archive = getNatureArchive\(base, fSeason\);/);   // PIN MOVED (AUDIT PRECIP HOST-7): one law for every wild flat - the re-skin's own (getNatureArchive(f.wild, ...))
   assert.match(b, /const snowSeen = snowRec\?\.done\(models\.length > 0 \|\| dfLocation != null\) \?\? null;[^]*?_snow: snowSeen,/);
@@ -579,5 +583,5 @@ test('PRECIP4 THE WIRING: a build settles the snow, then keeps every season it t
   assert.match(w, /p\._stride === 1 && p\.tilemapBytes && \(snowCover\.on \|\| p\.season !== SEASON\.Winter\)/);
   assert.match(w, /seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs,/);
   assert.match(b, /seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs,/);
-  assert.equal(SNOWPACK.levels.count, 23);
+  assert.equal(SNOWPACK.levels.count, 45);   // PIN MOVED (RED-MOUNTAIN, bible/03-World/Red-Mountain.md): the levels reach over the volcano's rim, 8,200 m (with RELIEF-PEAKS' large map)
 });

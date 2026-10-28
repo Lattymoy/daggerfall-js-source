@@ -190,6 +190,7 @@ const HARDCODED = {
   'src/render/courtCrystals.js': 3,
   'src/render/deadlands.js': 4,
   'src/render/deepWatersRender.js': 13,
+  'src/render/dryFall.js': 1,   // ASHFALL1: the ash's fragment stage (GLSL, never a player's text - as windWisps.js's)
   'src/render/duelWall.js': 1,
   'src/render/dynamicSkiesRenderer.js': 1,
   'src/render/eliteGates/egLightPass.js': 1,
@@ -219,6 +220,8 @@ const HARDCODED = {
   'src/render/precipitation.js': 6,
   'src/render/rainCurtains.js': 1,
   'src/render/realWindows.js': 11,
+  'src/render/redMountainFire.js': 3,   // RED-MOUNTAIN: its shaders' sources, as every pass's - no word a player reads
+  'src/render/ghostfenceGlow.js': 1,   // GHOSTFENCE: its shaders' sources - no word a player reads (AUDIT RED-MOUNTAIN: 4 to 1, its looks named functions)
   'src/render/renderer.js': 17,
   'src/render/retroPass.js': 1,
   'src/render/riteSmoke.js': 1,
@@ -806,11 +809,12 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 51,   // LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
+  'src/world/eliteGates/pseudoArchives.js': 52,   // GHOSTFENCE (AUDIT RED-MOUNTAIN, CI): +1, the Ghostfence's art row (GHOSTFENCE_ARCHIVE) - the registry's own words for a developer; LOCKPICK (main): +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; AUDIT TESA III (at URBANIZER's merge): +1, the towns' fabric's art row (URBAN_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,
   'src/world/sunbabySky.js': 3,
+  'src/world/tamriel/tamrielLands.js': 33,   // TESA-LANDS: each zone's land in a line of the lore its sources give it - a data table's English, not shown a player
   'src/world/tamriel/tamrielBiomes.js': 80,   // TESA-BIOME (AUDIT TESA-BIOME: forty-three zones): each zone's name and the lore its sources give it - a data table's English, not yet shown a player; AUDIT TESA II G6: +2, the Grazelands' name and lore (forty-four), the range's key one constant (RED_MOUNTAIN) where its zone had held it
   'src/world/tamriel/tamrielGeography.js': 25,
   // TESA (the Arena arc, written on its branch before L10N4's ratchet reached it; recorded at its merge with main): the
@@ -824,6 +828,7 @@ const HARDCODED = {
   'src/world/imperialCity.js': 23,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'; IC-GRAND: 'Palace District' and the districts' names its laws read - proper names; IC-PROPS (28 -> 23): the old district-trade tables gone, the trades the yards' and the fabric's own
   'src/world/imperialFabric.js': 7,   // IC-GRAND: the districts' names its styles and its neighbourhoods read - proper names; IC-GRAND's courts: the Elven Gardens' orchards keyed by the district's name; IC-PROPS: the Arcane University's grounds by its district's name
   'src/world/imperialYards.js': 1,   // IC-PROPS: the yards' trades stand on City Isle - the district's proper name, as imperialBlocks.js's
+  'src/world/tamriel/groundDressClient.js': 5,   // TESA-LANDS (AUDIT): the dress's worker's warnings (no worker, a worker that failed, a dress it could not be handed - the second audit) and the two reasons a failed one is given (an answer unreadable, none in time) - console lines through the client's injected logger, as imperialPrebuildClient.js's
   'src/world/imperialPrebuildClient.js': 2,   // IC-GRAND's city worker: its two warnings (no worker, a worker that failed) - console lines through the client's injected logger, as tamrielRoadsClient.js's
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,
@@ -837,7 +842,6 @@ const HARDCODED = {
   // data tables, as the districts' and Lake Rumare's above - none yet shown a player; routing them through t() is their
   // arcs' own to do when a label shows them.
   'src/world/road/cyrodiilRoads.js': 8,   // VOYAGER-CYRODIIL: the named roads (the Red Ring Road, the Gold Road...)
-  'src/world/tamriel/tamrielRanges.js': 1,   // RELIEF-PEAKS: Red Mountain's name keying its cone (namedSummit) - a proper name, read by no screen
   'src/world/tamriel/tamrielWaters.js': 20,   // CYRODIIL-WATERS: the rivers', lakes' and named waters' names, and the reference's credit (WATERS_SOURCE)
   'src/world/urban/townLook.js': 15,   // URBANIZER U1: why each province's towns wear their building set - the table's own notes, read by no screen
 };

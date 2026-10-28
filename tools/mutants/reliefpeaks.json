@@ -191,51 +191,6 @@
     ]
   },
   {
-    "name": "RELIEF-PEAKS-cone-off-its-summit",
-    "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "_summit = at ? /** @type {[number, number]} */ (pictureToBay(at[0], at[1])) : null;",
-    "new": "_summit = at ? /** @type {[number, number]} */ (pictureToBay(at[0] + 1, at[1])) : null;",
-    "tests": [
-      "test/world/reliefpeaks.test.js"
-    ]
-  },
-  {
-    "name": "RELIEF-PEAKS-cone-foot-the-sea",
-    "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "const foot = coneFoot(s);",
-    "new": "const foot = SCALED_OCEAN_ELEVATION;",
-    "tests": [
-      "test/world/reliefpeaks.test.js"
-    ]
-  },
-  {
-    "name": "RELIEF-PEAKS-cone-no-crater",
-    "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "if (c < 1) cut += CONE.depth * (1 - c * c) * (1 - c * c);",
-    "new": "if (c < 0) cut += CONE.depth;",
-    "tests": [
-      "test/world/reliefpeaks.test.js"
-    ]
-  },
-  {
-    "name": "RELIEF-PEAKS-cone-profile-linear",
-    "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "return u >= 1 ? 0 : ((1 - u) * (1 - u)) / (1 + CONE.steep * u);",
-    "new": "return u >= 1 ? 0 : 1 - u;",
-    "tests": [
-      "test/world/reliefpeaks.test.js"
-    ]
-  },
-  {
-    "name": "RELIEF-PEAKS-cone-not-in-place",
-    "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "if (cone && cone.w > 0) out += (cone.h - out) * cone.w;",
-    "new": "if (cone && cone.w > 1) out += (cone.h - out) * cone.w;",
-    "tests": [
-      "test/world/reliefpeaks.test.js"
-    ]
-  },
-  {
     "name": "RELIEF-PEAKS-far-large-map-left-out",
     "file": "src/world/landforms.js",
     "old": "const low = byte * BASE_HEIGHT_SCALE, h = low + largeOfByte(byte) * NOISE_MAP_SCALE;",
@@ -275,20 +230,22 @@
   {
     "name": "RELIEF-PEAKS-mean-ground-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "return share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land;",
-    "new": "return land;",
+    "old": "return (share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
+    "new": "return land + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
     "tests": [
       "test/world/reliefpeaks.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): RED-MOUNTAIN's smooth cone rides the same return."
   },
   {
     "name": "RELIEF-PEAKS-bound-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "if (continentPixel(px, py)) return rangeBound(px, py, h + reliefLift(lowTop) + continentLift(lowTop)) + Math.max(hill, TAMRIEL_TOP);",
-    "new": "if (continentPixel(px, py)) return h + reliefLift(lowTop) + continentLift(lowTop) + Math.max(hill, TAMRIEL_TOP);",
+    "old": "if (continentPixel(px, py)) return rangeBound(px, py, h + reliefLift(lowTop) + continentLift(lowTop)) + Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);",
+    "new": "if (continentPixel(px, py)) return h + reliefLift(lowTop) + continentLift(lowTop) + Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);",
     "tests": [
       "test/world/reliefpeaks.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (the merge with RELIEF-PEAKS): RED-MOUNTAIN's bound rides the same return."
   },
   {
     "name": "RELIEF-PEAKS-far-ground-unassembled",

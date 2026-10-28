@@ -11,8 +11,8 @@
   {
     "name": "FOREST1-field-on-its-own-tile",
     "file": "src/world/terrain/terrainNature.js",
-    "old": "g[j * n + i] = forestAt(ox + i * L, oz + j * L);",
-    "new": "g[j * n + i] = forestAt(ox + 1 + i * L, oz + j * L);",
+    "old": "g[j * n + i] = sample(ox + i * L, oz + j * L);",
+    "new": "g[j * n + i] = sample(ox + 1 + i * L, oz + j * L);",
     "tests": [
       "test/systems/forest1.test.js"
     ]

@@ -14,13 +14,14 @@
 // kept only where all of hers is clear of it (shipLife.js berthKept).
 //   - A CAPITAL (CAPITAL_KEEPS, by its key - the anchor's metres, x east, z south, as its measures are): the ground inside
 //     its walls and their band (CAPITAL_WALLS: a side the sea faces open, its two end towers kept), and every landmark it
-//     stands over the water - Solitude's two piers, its sea stack and its arch; Alinor's and Torval's four piers each; the
-//     Imperial City's walled city, the Waterfront's twenty-one piers (radial) and Talos Bridge and the causeways.
+//     stands over the water - Solitude's two piers, its sea stack, its arch and its rock (SOLITUDE-RELIEF: onSolitudeRock);
+//     Alinor's and Torval's four piers each; the Imperial City's walled city, the Waterfront's piers, its bridge and causeways.
 //   - A WALLED TOWN (townWalls.js townWallOf - the wall registered this session): inside its wall's line, or within
 //     TOWN_WALL_KEEP of it (its length's half thickness and a bend tower's half diagonal), on a raster of TOWN_KEEP_CELL
 //     made once a wall.
 // Pure. Not a DFU member: DFU has no ships (Come Sail Away's and the port's own). Ledger A (QUAYS).
 import { SOLITUDE, CAPITALS, capitalDims, capitalCentre, BLOCK_M } from '../../world/tamrielCapitals.js';
+import { onSolitudeRock } from '../../world/solitudeRelief.js';
 import { ALINOR, TORVAL } from '../../world/capitalPlans.js';
 import { IMPERIAL, imperialBearing, bridgeLine, causewayLines } from '../../world/imperialCity.js';
 import { townWallOf } from '../../world/townWalls.js';
@@ -65,9 +66,9 @@ const segDistance = (x, z, a, b) => {
   return Math.hypot(x - ax - ux * t, z - az - uz * t);
 };
 const SOLITUDE_DOCKS = Object.freeze({ edge: SOLITUDE.docks.edge, pierTo: SOLITUDE.docks.pierTo, pierW: SOLITUDE.docks.pierW, piers: SOLITUDE.docks.piers });
-/** The arch's foot each side of its middle (capitalSolitude.js buildSolitudeArch's widest half) and the stack's at the water
- *  (its rock column's first ring, under the sea's top). */
-const ARCH_FOOT = SOLITUDE.arch.w / 2 + 4, STACK_FOOT = SOLITUDE.stack.r + 11;
+/** The arch's foot each side of its middle and the stack's at the water (capitalSolitude.js buildSolitudeArch: the body's
+ *  widest section at the water, its jitter and its feet's flare; the column's rings there and the boulders round it). */
+export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 16, STACK_FOOT = SOLITUDE.stack.foot + 19;
 /** The Imperial City's ways over the lake: Talos Bridge and the causeways, their half width. */
 const IC_WAYS = Object.freeze([...causewayLines(), bridgeLine()]);
 const IC_WAY_HALF = Math.max(IMPERIAL.bridge.w, IMPERIAL.causeway) / 2 + KEEP_SPARE;
@@ -76,6 +77,7 @@ const IC_WAY_HALF = Math.max(IMPERIAL.bridge.w, IMPERIAL.causeway) / 2 + KEEP_SP
 export const CAPITAL_KEEPS = Object.freeze({
   solitude: (dx, dz) => {
     const A = SOLITUDE.arch, st = SOLITUDE.stack;
+    if (onSolitudeRock(dx, dz)) return true;   // SOLITUDE-RELIEF: its rock - its cliffs' feet no quay
     return inCapitalWalls(CAPITAL_WALLS.solitude, dx, dz) || onPier(SOLITUDE_DOCKS, dx, dz)
       || Math.hypot(dx - st.x, dz - st.z) <= STACK_FOOT + KEEP_SPARE
       || (dx >= st.x && dx <= A.to + KEEP_SPARE && Math.abs(dz) <= ARCH_FOOT + KEEP_SPARE);

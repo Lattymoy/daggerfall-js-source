@@ -14,9 +14,9 @@ the method and the old one is named as corrected.*
 **How to read this page.** It is a MEASUREMENT, not a plan. The
 superseded page was written as an audit's evidence file and carried its
 166 confirmed defects inline; this one carries none, because they are
-closed and their record is `Audit-44.md`. What this page is for is the
-three lists at the bottom: the **26 open flags** (26 stand after Wave E,
-the ship landing, ROAD-F, QX1/TP2 and SUMMON-SYNC, twenty-three of them AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four, WARDEN1's, SHIPYARDS', POI-2's, BANTHA1's, CRAFT-WRITS', SOUNDSCAPE's, KETCH-LOOK KL2's, RAID5's two and AUDIT WORLD-EVENTS', added since, ARENA2's closed by ARENA-FIX, CARDS2's by TAVERN-TABLE and RW1's by GLASS-ALL - list 1 strikes the rest, and
+closed and their record is `Audit-44.md`. This page is for the
+three lists at the bottom: the **27 open flags** (27 stand after Wave E,
+the ship landing, ROAD-F, QX1/TP2 and SUMMON-SYNC, twenty-four of them AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four, WARDEN1's, SHIPYARDS', POI-2's, BANTHA1's, CRAFT-WRITS', SOUNDSCAPE's, KETCH-LOOK KL2's, RAID5's two, AUDIT WORLD-EVENTS' and TESA-LANDS', added since, ARENA2's closed by ARENA-FIX, CARDS2's by TAVERN-TABLE and RW1's by GLASS-ALL - list 1 strikes the rest, and
 `node tools/regenOpenFlags.mjs --check` is the arbiter) with the blocker the
 closeout triage assigned each, the **Port-Ledger section C rows still
 routed and not struck**, and the **deliberate departures that are not on
@@ -34,9 +34,9 @@ class AUDIT 44 named - and what remains is no longer a list of defects
 but a list of **nineteen sites with a named blocker, fourteen ledger
 rows that still owe work - six of them stale under the campaign that
 ran past them - and a set of departures that were never on the road.**
-Wave E and the closures after it worked that list down to **26 sites
-and six rows** (six, and AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four, WARDEN1's, SHIPYARDS', POI-2's, BANTHA1's, CRAFT-WRITS', SOUNDSCAPE's, KETCH-LOOK KL2's, RAID5's two and AUDIT WORLD-EVENTS' added since, AUDIT 29's struck by CLASSIC-PAGES, ARENA2's by ARENA-FIX, CARDS2's by TAVERN-TABLE) (five, since OT1 struck `:689`),
-which is what lists 1 and 2 now record; the paragraph above is the
+Wave E and the closures after it worked that list down to **27 sites
+and six rows** (six, and AUDIT 29's, PROF4's, SEAT1a's, ARENA2's, AUDIT TELL's, LEGACY1's, CARDS2's, AUDIT CARDS's, MERCHANT-YARDS's, AUDIT WAGONS3's four, WARDEN1's, SHIPYARDS', POI-2's, BANTHA1's, CRAFT-WRITS', SOUNDSCAPE's, KETCH-LOOK KL2's, RAID5's two, AUDIT WORLD-EVENTS' and TESA-LANDS' added since, AUDIT 29's struck by CLASSIC-PAGES, ARENA2's by ARENA-FIX, CARDS2's by TAVERN-TABLE) (five, since OT1 struck `:689`),
+which lists 1 and 2 now record; the paragraph above is the
 measurement as taken, kept because the two lists are read against it.
 
 ---
@@ -49,7 +49,7 @@ measurement as taken, kept because the two lists are read against it.
 | `src/` lines | 164,220 | **186,438** | same list, concatenated through `wc -l` |
 | test files | 529 | **588** | `git ls-tree -r <sha> --name-only \| grep -c '^test/.*\.test\.js$'` |
 | suite | 5,110 tests | **6,050 tests, 5,841 pass, 0 fail, 208 data-gated skips** | `node --test` at the close |
-| open flags | 151 | **26** | `node tools/regenOpenFlags.mjs --check` answers 26 (AUDIT WORLD-EVENTS L5-16 added one, the Tonal Warden's boss traits - `05-Combat/Boss-Traits.md` section 3; RAID5 added two, the `?exterior` bench runs no raid and a raid stands nothing indoors - `03-World/Raiding-Parties.md` RAID5; KETCH-LOOK KL2 added one, the Tonal Warden the Iron Atronach dyed until its own sheets - `11-Multiplayer/Sky-Ketch-Look.md` section 10; SOUNDSCAPE added one, the `?exterior` bench hears no soundscape - no sea, no boats, no streamed shore - `08-Audio/Audio.md` SOUNDSCAPE; CRAFT-WRITS added one, the `?exterior` bench posts no crafting writ - `06-Systems/Professions-Arc.md` section 49; BANTHA1 added one, the jungle's three hosts that stand no wilderness - `03-World/Bantha-Jungle.md`; POI-2 added one, the `?exterior` bench's POI feed - `06-Systems/POI-Editor-Arc.md` POI-2; GLASS-ALL retired RW1's, the interior glass read off 0xff: a real ARENA2 read, the rule rewritten off it - `07-Rendering/Real-Windows.md` GLASS-ALL; SHIPYARDS added one, the `?exterior` bench's port; WARDEN1 added one, the `?exterior` bench's town watch; AUDIT WAGONS3 added four - WAGONS3's own limits, written only in Wagons.md until it: the Small Cart's saddle, Eye Of The Beholder's standing driver, a peer's pair drawn whole for want of a count, the harness's ends on a picture; MERCHANT-YARDS added one, the `?exterior` bench's yards; RW1 added one, the interior glass read off 0xff - unverified without the player's data; "11 entries, up to date" - TAVERN-TABLE retired CARDS2's, the card table's one nameable model id: the card table is a prop of its own; AUDIT CARDS added the twelfth, the sprite lane standing at its seat (`player/seatPose.js`); CARDS2 added the eleventh, the card table's one nameable model id (`world/card/cardTables.js`); LEGACY1 added the tenth, the fixed city keeping DFU's death (`scenes/world.js`: no streamer to birth an heir into - Legacy-Arc.md section 3 names it FLAGGED); AUDIT TELL added the ninth, the dungeon stream's gap (`scenes/dungeonContext.js`: it carries none of the street record's `z`, `nm`, `yd`, `ex`, `sp` - Feud-Arc.md 10.1 and 32 name it FLAGGED); SEAT1a added the eighth, the fixed city's seat banners (`scenes/seatBanners.js`: the bench runs no account service, so no seat is open there - Seats-Arc 15.1 names it FLAGGED); ARENA2's came and, at ARENA-FIX, went - ONLINE-DUNGEON-FOES came and, at SUMMON-SYNC, went; AUDIT 29 added the seventh, the classic skin's pause with no professions pages, `ui/professions/profPages.js`, and CLASSIC-PAGES retired it; PROF4 the eighth, the woods' pictures untinted, `net/professionLaw.js`). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - Wave E then retired six, named in list 1, the ship landing a seventh, ROAD-F three more (GS1 `scenes/worldModes.js`, GS2 `systems/skills.js`, DR1 `scenes/dungeonContext.js`), and QX1 the next (`scenes/exterior.js`'s PX3, struck in list 1); the same grep over `git show 6881171:bible/Home.md` returns 151 |
+| open flags | 151 | **27** | `node tools/regenOpenFlags.mjs --check` answers 27 (AUDIT WORLD-EVENTS L5-16 added one, the Tonal Warden's boss traits - `05-Combat/Boss-Traits.md` section 3; RAID5 added two, the `?exterior` bench runs no raid and a raid stands nothing indoors - `03-World/Raiding-Parties.md` RAID5; KETCH-LOOK KL2 added one, the Tonal Warden the Iron Atronach dyed until its own sheets - `11-Multiplayer/Sky-Ketch-Look.md` section 10; SOUNDSCAPE added one, the `?exterior` bench hears no soundscape - no sea, no boats, no streamed shore - `08-Audio/Audio.md` SOUNDSCAPE; CRAFT-WRITS added one, the `?exterior` bench posts no crafting writ - `06-Systems/Professions-Arc.md` section 49; BANTHA1 added one, the jungle's three hosts that stand no wilderness - `03-World/Bantha-Jungle.md`; TESA-LANDS added one, the landmarks' three hosts that stand no wilderness past the Bay - `03-World/Tamriel-Lands.md`; POI-2 added one, the `?exterior` bench's POI feed - `06-Systems/POI-Editor-Arc.md` POI-2; GLASS-ALL retired RW1's, the interior glass read off 0xff: a real ARENA2 read, the rule rewritten off it - `07-Rendering/Real-Windows.md` GLASS-ALL; SHIPYARDS added one, the `?exterior` bench's port; WARDEN1 added one, the `?exterior` bench's town watch; AUDIT WAGONS3 added four - WAGONS3's own limits, written only in Wagons.md until it: the Small Cart's saddle, Eye Of The Beholder's standing driver, a peer's pair drawn whole for want of a count, the harness's ends on a picture; MERCHANT-YARDS added one, the `?exterior` bench's yards; RW1 added one, the interior glass read off 0xff - unverified without the player's data; "11 entries, up to date" - TAVERN-TABLE retired CARDS2's, the card table's one nameable model id: the card table is a prop of its own; AUDIT CARDS added the twelfth, the sprite lane standing at its seat (`player/seatPose.js`); CARDS2 added the eleventh, the card table's one nameable model id (`world/card/cardTables.js`); LEGACY1 added the tenth, the fixed city keeping DFU's death (`scenes/world.js`: no streamer to birth an heir into - Legacy-Arc.md section 3 names it FLAGGED); AUDIT TELL added the ninth, the dungeon stream's gap (`scenes/dungeonContext.js`: it carries none of the street record's `z`, `nm`, `yd`, `ex`, `sp` - Feud-Arc.md 10.1 and 32 name it FLAGGED); SEAT1a added the eighth, the fixed city's seat banners (`scenes/seatBanners.js`: the bench runs no account service, so no seat is open there - Seats-Arc 15.1 names it FLAGGED); ARENA2's came and, at ARENA-FIX, went - ONLINE-DUNGEON-FOES came and, at SUMMON-SYNC, went; AUDIT 29 added the seventh, the classic skin's pause with no professions pages, `ui/professions/profPages.js`, and CLASSIC-PAGES retired it; PROF4 the eighth, the woods' pictures untinted, `net/professionLaw.js`). It answered 19 when this table was taken - 17 at `c3c12ee`, plus the two the closeout tail's spell-hand port added - Wave E then retired six, named in list 1, the ship landing a seventh, ROAD-F three more (GS1 `scenes/worldModes.js`, GS2 `systems/skills.js`, DR1 `scenes/dungeonContext.js`), and QX1 the next (`scenes/exterior.js`'s PX3, struck in list 1); the same grep over `git show 6881171:bible/Home.md` returns 151 |
 | ARENA2-gated tests | 199 | **207** | the runner's own `# skipped` line |
 
 Both volume figures reproduce the superseded page exactly at its own
@@ -373,7 +373,7 @@ became Wave D's 42 slices.
 
 # What remains
 
-## 1. The nineteen open flags this was measured over - 26 STAND
+## 1. The nineteen open flags this was measured over - 27 STAND
 
 The list is `bible/Home.md`'s "Open flags", regenerated from `src/` by
 `tools/regenOpenFlags.mjs` and pinned both ways by
@@ -675,7 +675,7 @@ when this was measured, over the 19 the list then held. Every bullet the
 tree has closed since is struck at its own entry above, and the sites
 still standing there are the six `bible/Home.md` listed then (GP3 retired the seventh); the one added above after
 this page was measured is struck too (SUMMON-SYNC), and AUDIT 29, PROF4, SEAT1a, ARENA2, AUDIT TELL and LEGACY1 added one each, listed last (CLASSIC-PAGES struck AUDIT 29's, ARENA-FIX ARENA2's) - ten in all, which is what the tool answers. **As of Wave E, the ship
-landing, ROAD-F (GS1, GS2, DR1), QX1/TP2, SUMMON-SYNC, AUDIT 29, PROF4, CLASSIC-PAGES, SEAT1a, ARENA2 (the `?exterior` host's bout driver, flagged by name), ARENA-FIX (that host wired), AUDIT TELL (the dungeon stream's gap, flagged by name) LEGACY1 (the fixed city's death, flagged by name) CARDS2 (the card table's one nameable id, flagged by name), AUDIT CARDS (the sprite lane at its seat, flagged by name), TAVERN-TABLE (CARDS2's retired: the card table is a prop of its own), MERCHANT-YARDS (the `?exterior` bench stands no yard, flagged by name), AUDIT WAGONS3 (WAGONS3's four own limits stood at their lines) WARDEN1 (the `?exterior` bench runs no town watch, flagged by name) SHIPYARDS (the `?exterior` bench stands no port, flagged by name), POI-2 (the `?exterior` bench has no POI feed, flagged by name) and GLASS-ALL (RW1's interior glass retired: a real ARENA2 read), and CRAFT-WRITS (the `?exterior` bench posts no crafting writ, flagged by name), and SOUNDSCAPE (the `?exterior` bench hears no soundscape, flagged by name) and KETCH-LOOK KL2 (the Tonal Warden dyed until its own sheets, flagged by name), RAID5 (the `?exterior` bench runs no raid, a raid stands nothing indoors, both flagged by name), and AUDIT WORLD-EVENTS (the Tonal Warden's boss traits, flagged by name), `node tools/regenOpenFlags.mjs --check` answers 26**,
+landing, ROAD-F (GS1, GS2, DR1), QX1/TP2, SUMMON-SYNC, AUDIT 29, PROF4, CLASSIC-PAGES, SEAT1a, ARENA2 (the `?exterior` host's bout driver, flagged by name), ARENA-FIX (that host wired), AUDIT TELL (the dungeon stream's gap, flagged by name) LEGACY1 (the fixed city's death, flagged by name) CARDS2 (the card table's one nameable id, flagged by name), AUDIT CARDS (the sprite lane at its seat, flagged by name), TAVERN-TABLE (CARDS2's retired: the card table is a prop of its own), MERCHANT-YARDS (the `?exterior` bench stands no yard, flagged by name), AUDIT WAGONS3 (WAGONS3's four own limits stood at their lines) WARDEN1 (the `?exterior` bench runs no town watch, flagged by name) SHIPYARDS (the `?exterior` bench stands no port, flagged by name), POI-2 (the `?exterior` bench has no POI feed, flagged by name) and GLASS-ALL (RW1's interior glass retired: a real ARENA2 read), and CRAFT-WRITS (the `?exterior` bench posts no crafting writ, flagged by name), and SOUNDSCAPE (the `?exterior` bench hears no soundscape, flagged by name) and KETCH-LOOK KL2 (the Tonal Warden dyed until its own sheets, flagged by name), RAID5 (the `?exterior` bench runs no raid, a raid stands nothing indoors, both flagged by name), and AUDIT WORLD-EVENTS (the Tonal Warden's boss traits, flagged by name), `node tools/regenOpenFlags.mjs --check` answers 27**,
 and no count in
 this file or in `Road-To-1-1.md` may state another figure: the tool is
 the measurement, and `test/scenes/citedrift.test.js` holds both documents to
@@ -868,6 +868,13 @@ that was a claim once and is a pointer at a stranger now.
   stand no Bantha. *`03-World/Bantha-Jungle.md`: the jungle's trees and haze stand in the streaming host, whose
   wilderness Bantha is; the fixed city, the interiors and the dungeons stand none of it. The day one stands wilderness,
   the sentence goes.*
+
+**Recorded by TESA-LANDS (2026-10-27).**
+
+- **`src/scenes/landPropsHost.js:"FLAGGED: none stands the wilderness past the Bay the landmarks stand in."`** - the three
+  hosts that stand no landmark of the lands past the Bay. *`03-World/Tamriel-Lands.md`: the parasols, spires, Hists,
+  reeds, vines and groves stand in the streaming host, whose wilderness the lands past the Bay are; the fixed city, the
+  interiors and the dungeons stand none of it. The day one stands wilderness past the Bay, the sentence goes.*
 
 **Recorded by POI-2 (2026-10-14).**
 
@@ -1212,7 +1219,7 @@ into a module-and-host one costs.
 
 What is genuinely left is small, and it is now named to the line.
 
-**26 sites carry a blocker** - the 26 `node
+**27 sites carry a blocker** - the 27 `node
 tools/regenOpenFlags.mjs --check` answers and `bible/Home.md` lists.
 Three cannot move at all while the surrounding decisions stand: there
 is no `PlayerTorch.prefab` anywhere in the reference tree (twice), and

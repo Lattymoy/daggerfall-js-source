@@ -51,7 +51,7 @@ test('BAY-LEFT-SEA A CAPITAL\'S LANDMARKS ARE MEASURED BY THEIR FOOTPRINT: every
 });
 
 const realSkip = HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)';
-test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbours and no other slice of the seven capitals are ports to their own byte; each bears the open sea and stands its shipyard and its lighthouse at the water, measured as the host measures a town, and its crew hall and its Docks (six berths at its own reach) - where by a landmark\'s box Solitude stood its lighthouse alone and Alinor and Torval neither', { skip: realSkip }, async () => {
+test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbours and no other slice of the seven capitals are ports to their own byte; each bears the open sea and stands its shipyard and its lighthouse at the water, measured as the host measures a town, and its crew hall and its Docks (six berths at its own reach) - where by a landmark\'s box Solitude stood its lighthouse alone and Alinor and Torval neither (SOLITUDE-RELIEF: Solitude none, its cliffs\' box the pixel)', { skip: realSkip }, async () => {
   globalThis.atob ??= (s) => Buffer.from(s, 'base64').toString('binary');
   const bytes = (n) => new Uint8Array(readFileSync(join(/** @type {string} */ (ARENA2), n)));
   const { DFPalette } = await import('../../../src/formats/dfPalette.js');
@@ -130,15 +130,18 @@ test('BAY-LEFT-SEA (ARENA2): on the freeware the registry\'s four capital harbou
     const sitesOf = new Map();
     const at = Object.fromEntries(ported.map(([n, x, y]) => [n, clone(x, y)]));
     assert.deepEqual(Object.fromEntries(Object.entries(at).map(([n, loc]) => [n, portsOf(loc, false).map((p) => p[0])])), {
-      'Waterfront District': ['shipyard', 'lighthouse'], Solitude: ['lighthouse'], Alinor: ['lighthouse'], Torval: [],
+      // PIN MOVED (SOLITUDE-RELIEF): Solitude's none now - its cliffs' box the whole pixel
+      'Waterfront District': ['shipyard', 'lighthouse'], Solitude: [], Alinor: ['lighthouse'], Torval: [],
     }, 'by a landmark\'s box: a ring wall\'s box closes the city');   // PIN MOVED (IC-PROPS): the yards by their law (merchantYardSites.js yardLaw - never a way, the Stable by an exit) leave Alinor's lighthouse its room even so
     assert.deepEqual(Object.fromEntries(Object.entries(at).map(([n, loc]) => [n, portsOf(loc, true)])), {
       // its own sea within a few cells of each one's back (its water: the lake, the Sea of Pearls, Topal Bay); Solitude's own
-      // blocks hold no sea a navgrid reaches (its outer ring is its rim's), so it stands by the bearing, at its land's
-      // north-west corner - its back on the plan's lake blocks, the Sea of Ghosts
+      // blocks hold no sea a navgrid reaches (its outer ring is its rim's), so it stands by the bearing - PIN MOVED
+      // (SOLITUDE-RELIEF): on its quay at the water under the north cliff, the west end of the docks' shelf (anchor metres
+      // about 54, -150 and 81, -152), its plateau's edges the cliffs' rock and the sea, closed (it stood on the plateau's
+      // north-west corner, 46 m over the Sea of Ghosts)
       // PIN MOVED (IC-PROPS): the Waterfront's yards placed by their law, the port's two along the same quay on what they left
       'Waterfront District': [['shipyard', 200, 316, 5], ['lighthouse', 246, 316, 5]],
-      Solitude: [['shipyard', 129, 373, null], ['lighthouse', 193, 405, null]],
+      Solitude: [['shipyard', 161, 413, null], ['lighthouse', 178, 414, null]],
       Alinor: [['shipyard', 62, 93, 2], ['lighthouse', 105, 93, 2]],
       Torval: [['shipyard', 67, 93, 2], ['lighthouse', 110, 93, 2]],
     });

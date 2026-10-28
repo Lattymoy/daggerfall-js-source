@@ -1911,6 +1911,7 @@ export class Renderer {
     this._bbGlintOn = false;   // TELL2: the billboard program's uGlint as last sent - a glinting batch's (the frame block resets it to none)
     this._bbTintOn = false;   // ARENA5: the billboard program's uBatchTint as last sent - a washed batch's (the frame block resets it to white)
     this._heldFlats = [];   // GRASS-PORTAL: the blended flats a host held back for a later call (holdBlended / drawHeld)
+    this._afterFlats = null;   // AUDIT RED-MOUNTAIN N2: a draw armed for after the frame's flats (afterFlats)
     this._dwCamFwd = new Float32Array(3);
     this._fogColor = new Float32Array([0, 0, 0]);
     this._camPos = new Float32Array(3);
@@ -5673,6 +5674,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   beginFrame(proj, view, lightDir, opts = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
+    this._afterFlats = null;   // AUDIT RED-MOUNTAIN N2: an armed draw is its frame's
     const s = this.stats;
     s.draws = 0; s.programBinds = 0; s.vaoBinds = 0; s.texBinds = 0; s.bbCulled = 0; s.shadowDraws = 0;   // PERF-CROWD2; PASS-COUNT
     // VC4: the cloud shadow deck is a FRAME's, not the renderer's - a host
@@ -8392,6 +8394,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
    *  drawHeld to draw after the passes that would paint over them - the renderer's one list, emptied by each hold and
    *  each draw, so nothing a frame held reaches the next. */
   holdBlended(batches) { holdBlendedBillboards(batches, this._heldFlats); }
+  /** AUDIT RED-MOUNTAIN N2: A DRAW AFTER THE FRAME'S FLATS - `fn` run once at the end of the frame's next drawBillboards,
+   *  after the water and the flats that would paint over a pass writing no depth (the Ghostfence's glow), the shadows
+   *  forgotten after it. One a frame: beginFrame lets an unrun one go. */
+  afterFlats(fn) { this._afterFlats = fn; }
   /** GRASS-PORTAL: DRAW WHAT holdBlended HELD, in a drawBillboards of its own - and let it go. */
   drawHeld(camRight, camUp) {
     const held = this._heldFlats;
@@ -8699,6 +8705,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._bindVao(null);
     gl.enable(gl.CULL_FACE);
     this._use(this.program);
+    const after = this._afterFlats;
+    if (after) { this._afterFlats = null; after(); this.markForeignPass(); this._use(this.program); }   // AUDIT RED-MOUNTAIN N2
   }
 
   /** Draw one placed mesh: bind per-submesh texture, indexed draw per range. */
