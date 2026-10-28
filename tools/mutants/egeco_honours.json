@@ -673,8 +673,8 @@
   {
     "name": "EGECO2-embers-rising",
     "file": "src/render/auraRing.js",
-    "old": "float mv = 1.0 - fract(uTime ${hzGlsl(STAIR_HZ.ember)}",
-    "new": "float mv = fract(uTime ${hzGlsl(STAIR_HZ.ember)}",
+    "old": "\n    float mv = 1.0 - fract(uTime ${hzGlsl(STAIR_HZ.ember)}",
+    "new": "\n    float mv = fract(uTime ${hzGlsl(STAIR_HZ.ember)}",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]
@@ -682,8 +682,8 @@
   {
     "name": "EGECO2-stair-heat-flat",
     "file": "src/render/auraRing.js",
-    "old": "heat = (k + 1.0) / ${STAIR_STEPS.toFixed(1)};",
-    "new": "heat = 1.0;",
+    "old": "float k = floor(s), f = fract(s), heat = (k + 1.0) / ${STAIR_STEPS.toFixed(1)};",
+    "new": "float k = floor(s), f = fract(s), heat = 1.0;",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]
@@ -691,8 +691,8 @@
   {
     "name": "EGECO2-stair-never-turns",
     "file": "src/render/auraRing.js",
-    "old": "float s = fract(a / TAU - uTime ${hzGlsl(STAIR_HZ.descend)})",
-    "new": "float s = fract(a / TAU)",
+    "old": "float s = fract(turn - uTime ${hzGlsl(STAIR_HZ.descend)})",
+    "new": "float s = fract(turn)",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]
@@ -700,10 +700,11 @@
   {
     "name": "EGECO2-beacons-lit-at-once",
     "file": "src/render/auraRing.js",
-    "old": "float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)} - k / ${BEACON_LIGHTS.toFixed(1)});",
-    "new": "float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)});",
+    "old": "float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)} - k / ${BEACON_LIGHTS.toFixed(1)}), lit = exp(-age * 4.0);",
+    "new": "float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)}), lit = exp(-age * 4.0);",
     "tests": [
-      "test/net/eliteGates/egeco_honours.test.js"
+      "test/net/eliteGates/egeco_honours.test.js",
+      "test/render/auradetail.test.js"
     ]
   },
   {

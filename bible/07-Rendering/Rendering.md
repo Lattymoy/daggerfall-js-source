@@ -1627,6 +1627,22 @@ See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mo
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.
 
+## AURA DETAIL - THE AURAS DRAWN FINER (2026-10-28)
+
+The owner, 2026-10-28: *"do another detailed pass on the auras themselves as I think we can push this further."*
+`render/auraRing.js` draws eight looks finer, each on its own law. Dagon's Fire: the stone within the ring cracked, its
+seams burning and flowing; licks past the band; sparks thrown up; flares. The Radiance: two ribbons winding up the
+column; a twelve-pointed sun under the feet. The Maelstrom: caustics over the floor, the eye's foam rim, lace off the
+lip. Beaconlight: a beam off each beacon as it is lit, the light passing round. The Burning Stair: cracked treads
+winding in, tongues off each lip, embers landing. Eternal: the Origin's mark and a fire ring under the feet. Witchfire:
+the coven's star, candle flames.
+
+The Crystal Resonance keeps the owner's one purple, no gradient: a cap held at each column's peak, then falling
+(`resonancePeak` on the clock's own grid, handed as `uResCap`), and a ripple of squares on each beat. Every new rate is
+whole over the clock. Pins: `test/render/auradetail.test.js` (each detail drawn with and without its term),
+`test/net/crystalfist.test.js`, `tools/mutants/auradetail.json`; the GPU: `tools/auraProbe.mjs`; the pixels:
+`tools/auraSheet.mjs`.
+
 ## SWAY-SOFT - A GENTLER GRASS SWAY, FAINTER WIND WISPS (2026-10-21)
 
 Mac, 2026-10-21: *"Can we make the grass sway more subtle and the wind

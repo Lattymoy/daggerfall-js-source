@@ -219,7 +219,7 @@ test('SERPENT5 THE LOOK\'S LAW: the ninth kind, added whole (no shade, no mesh, 
   assert.match(AURA_FS, /if \(uAura == 8\) \{ vec3 c = uKind == 0 \? maelstromGround\(vP\) : maelstromWall\(vP\);/);
   // AUDIT WORLD-REWARDS D2: never a pow of a negative - GLSL leaves it undefined, and the interpreter's Math.pow answers a
   // negative base with an even exponent as a positive number, so only the source can hold the guard (AUDIT SD II's law)
-  assert.match(AURA_FS, /float maelstromArm\(float r, float a\) \{[\s\S]{0,260}return pow\(max\(0\.5 \+ 0\.5 \* cos\(ph\), 0\.0\), /);
+  assert.match(AURA_FS, /float maelstromArm\(float r, float a\) \{[\s\S]{0,260}return pow\(max\(0\.5 \+ 0\.5 \* cos\(maelstromPhase\(r, a\)\), 0\.0\), /);   // PIN MOVED (AURA DETAIL): the phase its own function, the caustics' too
   assert.equal(MAELSTROM_DROP_TOP, 0.9, 'AUDIT WORLD-REWARDS D4: a drop\'s arc tops out inside the strip');
 });
 

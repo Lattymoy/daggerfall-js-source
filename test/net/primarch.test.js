@@ -336,6 +336,7 @@ const radAt = (kind, vP, { t = 13.5, kindle = 1, world = [0, 0, 0], fog = null, 
   const f = glslFunctions(AURA_FS, {
     vP, vWorld: world, uKind: kind, uAura: 2, uTime: t, uSeed: 0.37, uKindle: kindle, uRingR: RADIANCE_R, uGroundR: AURA_GROUND_R,
     uFlameH: RADIANCE_H, uFogMode: fog ? 2 : 0, uFogDensity: fog?.density ?? 0, uFogRange: [0, 1], uCamPos: eye, uAt: at, uFocus: [0, 0, 0, 0],
+    dFdx: () => [0.001, 0, 0], dFdy: () => [0, 0.001, 0],   // AURA DETAIL: the sun's fine rings read a pixel's span
   });
   f.main();
   return f.globals.o;
