@@ -309,6 +309,9 @@ export function setSnowlessGround(fn) { _snowlessGround = typeof fn === 'functio
 /** SNOWLESS1: THE GROUND AS DRAWN WEARS SNOW - groundIsSnowy (the archive law the terrain keys its +1 on, unchanged: the
  *  pack dresses 403, it does not move the terrain off it), unless the set drawn for that winter archive is a snowless
  *  one. What the weather's ground law and Snowfall ask. */
+/** TESA-LANDS' second audit (lane C): the winter ground `archive` is drawn without snow (the door's word, SNOWLESS1) - the
+ *  zones' dress (world/tamriel/tamrielLands.js landGroundSet) dresses it as its summer's ground. */
+export const winterSetSnowless = (archive) => _snowlessGround?.(archive) ?? false;
 export function groundWearsSnow(climateSettings, season) {
   return groundIsSnowy(climateSettings, season) && !(_snowlessGround?.(climateSettings.groundArchive + 1) ?? false);
 }

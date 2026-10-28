@@ -22,7 +22,7 @@
 // with it, so the depth buffer keeps its precision out there. All of it eases with the rise and the fall (the eye's
 // own smoothstep), so nothing pops as the camera leaves the head or comes back to it.
 //
-// WHAT IS NOT CHANGED. An EXPONENTIAL row is weather - rain, snow, a fog, a sandstorm - and stays the traveller's,
+// WHAT IS NOT CHANGED. An EXPONENTIAL row is weather - rain, snow, a fog, a sandstorm, an ashfall - and stays the traveller's,
 // exactly as TV1 measured it (the far ring stands down under it, as ever). On the ground nothing moves: with no view
 // up every function here hands back what it was given, the same object.
 //

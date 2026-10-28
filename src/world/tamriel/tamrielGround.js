@@ -286,13 +286,25 @@ export function groundClimateIndex(bayClimateIndex) {
 
 /** TESA-BIOME: THE AIR'S CLIMATE with the continent round it - the Bay's own on the Bay, past it a zone's `air` where the
  *  lore's air is not its ground's (Morrowind's grey volcanic ground, its warm air), else its ground's climate. The air
- *  law's map reads it (systems/weather/airGround.js); the ground, the textures and the tables never do. */
+ *  law's map reads it (systems/weather/airGround.js), and the body's felt air (feltClimateIndex); the ground, the
+ *  textures and the encounters' tables never do. */
 export function groundAirClimateIndex(bayClimateIndex) {
   return (x, y) => {
     if (inBay(x, y)) return bayClimateIndex(x, y);
     const zone = tamrielBiomeAt(x, y);   // AUDIT TESA-BIOME Z7: the zone read once
     return zone ? zone.air ?? zone.climate : tamrielClimateAt(x, y);
   };
+}
+
+/**
+ * THE AIR A BODY FEELS (TESA-LANDS' audit, the owner: "Definitely fix any bugs you encounter"): a pixel's climate as the
+ * survival law reads it (systems/survival/temperature.js CLIMATE_TEMP) - past the Bay a zone's `air` where it names one
+ * (groundAirClimateIndex's law), else `climate` (the hosts' map's answer). It read the ground's: the Ashlands' Mountains
+ * (-40) under the Dak'fron's Desert2 air (+50) froze a character to death on a summer's walk.
+ * @param {number} x @param {number} y @param {number} climate
+ */
+export function feltClimateIndex(x, y, climate) {
+  return (inBay(x, y) ? null : tamrielBiomeAt(x, y)?.air) ?? climate;
 }
 
 /** WW-R (bible/03-World/World-Wide.md WW-R): THE POLITIC MAP PAST THE BAY - a province's land its region's politic

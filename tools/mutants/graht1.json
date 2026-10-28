@@ -605,8 +605,8 @@
   {
     "name": "G-98-unheld",
     "file": "src/scenes/pixelBuild.js",
-    "old": "grahtOaks: grahtStood?.set ?? null,",
-    "new": "grahtOaks: null,",
+    "old": "      grahtOaks: grahtStood?.set ?? null,   // GRAHT1:",
+    "new": "      grahtOaks: null,   // GRAHT1:",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]

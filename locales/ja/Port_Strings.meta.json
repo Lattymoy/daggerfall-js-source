@@ -5549,6 +5549,16 @@
   "tr": "b40a63411b80",
   "by": "claude-in-session"
  },
+ "features.tamrielLands.note": {
+  "en": "dc37f2698218",
+  "tr": "faa566918b21",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLands.title": {
+  "en": "1e8a962cf274",
+  "tr": "e04856c8c6ac",
+  "by": "claude-in-session"
+ },
  "features.torchesFromItems.effect": {
   "en": "a0b8a416cb32",
   "tr": "c2f54d35ec45",
@@ -5799,6 +5809,11 @@
   "tr": "4bc7489d92b3",
   "by": "claude-in-session"
  },
+ "forecast.turn.ashfall": {
+  "en": "5961a1411167",
+  "tr": "fecfb0162548",
+  "by": "claude-in-session"
+ },
  "forecast.turn.fog": {
   "en": "dfebbda7af18",
   "tr": "056ed40d9562",
@@ -5822,6 +5837,11 @@
  "forecast.turn.thunder": {
   "en": "f35ce8f01a65",
   "tr": "079d9746cf18",
+  "by": "claude-in-session"
+ },
+ "forecast.word.ashfall": {
+  "en": "71656606aa5c",
+  "tr": "fecfb0162548",
   "by": "claude-in-session"
  },
  "forecast.word.fog": {

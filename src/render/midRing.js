@@ -29,7 +29,7 @@
 
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, midRingSide, midRingNormals } from '../world/terrain/midRingGrid.js';
-import { treesPerTile, canopyCover, expectedTrees, FLORA, FLORA_WOOD, FLORA_DIRT, FLORA_GRASS, FLORA_STONE } from '../world/terrain/floraCover.js';   // FAR-FLORA: the near law's woods
+import { treesPerTile, landsTreesAt, canopyCover, expectedTrees, FLORA, FLORA_WOOD, FLORA_DIRT, FLORA_GRASS, FLORA_STONE } from '../world/terrain/floraCover.js';   // FAR-FLORA: the near law's woods
 import { capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow
 
 /** ?midring=off - the middle ring's kill door (the far ring stands as before), read once as the ring is made. */
@@ -99,12 +99,12 @@ export function runHorizonSteps(it) {
  * `floraAt(px, py)` the sample's pixel's climate flora ({ spec, art, byte } - render/farFlora.js floraOf, the WOODS byte):
  * a vertex's canopy (plantCanopy) coloured in the trees' art, raised to their height - its normals the canopy's - and its
  * cover answered (`flora`, 0-255, the shader's crowns); eased to the far ring's expectation over MID_FLORA_EASE.
- * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number), wet?: ?Uint8Array, snowAt?: ?((px: number, py: number) => number), flora?: ?Uint32Array, floraAt?: ?((px: number, py: number) => ?{ spec: any, art: any, byte: number }) }} o
+ * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number), wet?: ?Uint8Array, snowAt?: ?((px: number, py: number) => number), flora?: ?Uint32Array, floraAt?: ?((px: number, py: number) => ?{ spec: any, art: any, byte: number }), cover?: ?Uint8Array }} o
  */
 export const midRingVertices = (o) => runHorizonSteps(midRingVertexSteps(o));
 
 /** midRingVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof midRingVertices>[0]} o */
-export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null, snowAt = null, flora = null, floraAt = null }) {
+export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null, snowAt = null, flora = null, floraAt = null, cover = null }) {
   const side = midRingSide(radius, sub), n = 2 * radius + 1, cell = TERRAIN_SIZE / sub;
   const positions = new Float32Array(side * side * 3);
   const coarse = new Float32Array(side * side);   // the far ring's surface under each vertex (its ease's ground)
@@ -158,7 +158,9 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
         if (f) {
           const p = flora[v], dirt = ((p >>> FLORA_DIRT) & 255) / 255, grass = ((p >>> FLORA_GRASS) & 255) / 255, stone = ((p >>> FLORA_STONE) & 255) / 255;
           const ease = smooth01((Math.max(Math.abs(positions[o] / TERRAIN_SIZE - 0.5), Math.abs(positions[o + 2] / TERRAIN_SIZE - 0.5)) - MID_FLORA_EASE[0]) / (MID_FLORA_EASE[1] - MID_FLORA_EASE[0]));
-          const trees = treesPerTile(((p >>> FLORA_WOOD) & 255) / 255, dirt, grass, stone, f.spec, f.byte) * (1 - ease) + f.expected * ease;
+          // TESA-LANDS (AUDIT): a zone's woods its own edge on the forest field's own value (floraCover.js midRingCoverPixel)
+          const near = cover && f.spec.lands ? landsTreesAt(f.spec, f.spec.lands.woodAt(cover[v]), dirt, grass, stone) : treesPerTile(((p >>> FLORA_WOOD) & 255) / 255, dirt, grass, stone, f.spec, f.byte);   // TESA-LANDS: `cover` the forest field's own value (floraCover.js midRingCoverPixel), a zone's woods its own edge
+          const trees = near * (1 - ease) + f.expected * ease;
           const g = FLORA.ground;   // the ground's shares eased toward the near law's mean as the woods are
           layGround(colors, o, f.ground, dirt + (g[1] - dirt) * ease, grass + (g[2] - grass) * ease, stone + (g[3] - stone) * ease);
           lifted[v] = heights[v] + plantCanopy(woods, v, trees, f.art);

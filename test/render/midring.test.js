@@ -167,8 +167,9 @@ test('MID-RING the far ring asks the middle ring of the terrain\'s worker once, 
   for (let y = 145; y <= 155; y++) for (let x = 195; x <= 205; x++) built.set(`${x},${y}`, {});
   ring.build(inputs, 200, 150, 5, built);
   assert.equal(asks.length, 1, 'asked at the first hole');
-  // PIN MOVED (FAR-FLORA): the near law's woods asked beside the heights (Land View 5: the knob's on)
-  assert.deepEqual(asks[0], { baseX: 200, baseY: 150, radius: MID_RADIUS, sub: MID_SUB, landform: false, flora: true });
+  // PIN MOVED (FAR-FLORA): the near law's woods asked beside the heights (Land View 5: the knob's on); PIN MOVED
+  // (TESA-LANDS, AUDIT): and with the lands' row the forest field's own value (a zone's woods its own edge on it)
+  assert.deepEqual(asks[0], { baseX: 200, baseY: 150, radius: MID_RADIUS, sub: MID_SUB, landform: false, flora: true, lands: true });
   const before = ring.ringCount;
   ring.punchHole(201, 150, 5, built);
   assert.equal(asks.length, 1, 'one ask at a time');

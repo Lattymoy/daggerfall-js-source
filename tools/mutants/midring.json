@@ -636,8 +636,8 @@
   {
     "name": "HORIZON-worker-mid-copied",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "const moved = [heights.buffer, ...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : [])];",
-    "new": "const moved = [...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : [])];",
+    "old": "const moved = [heights.buffer, ...(anyWet",
+    "new": "const moved = [...(anyWet",
     "tests": [
       "test/render/midring.test.js"
     ]

@@ -245,7 +245,7 @@ import { spellRecordOfIndex } from '../systems/loot/loot.js';   // QG1: CastSpel
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, parkourDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost, liveCastEngine } from './shared.js';   // AUDIT 58 (f2/hosts): the live enchant pool, its sinks router and the membership question
 import {
   WEATHER_TYPES, fogForWeather, skyOffsetForWeather, weatherSunlightScale,
-  weatherRng, fogFactor, precipitationForWeather,
+  weatherRng, fogFactor, precipitationForWeather, isDryFall,
   LightningPlayer,
 } from '../world/weather.js';
 // WM2b: the windmill's law, and the vendored rotor it turns.
@@ -266,7 +266,7 @@ import { foeFrameDt } from '../characters/enemy/enemyMotor.js';   // AUDIT TACT:
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { techniqueMarksNow } from '../combat/techniques.js';   // TECH1: the player's own marks on the ground, after the foes'
 import { windDrive, floraSwayOf, floraSwayOn } from '../systems/wind/windDrive.js';   // WIND3: the one wind in every consumer's units (GR2's slider inside it); the flats' sway
-import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - world.js's twin
@@ -348,6 +348,7 @@ import { raceDisplayName } from '../systems/talk/talkSession.js';   // MACRO-ONE
 import { localizedText, getLocalizedLocationName, getLocalizedRegionName, getLocalizedFactionName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the place names shown
 import { startTutorialTour } from '../ui/tutorialPopup.js';   // TUT1: the welcome tour - and the popups' handler, registered by this host (the four hosts' rule)
 import { HAND_START_QUEST } from '../systems/starts/starts.js';   // START2: a character born in the bench's town
+import { feltClimateIndex } from '../world/tamriel/tamrielGround.js';   // TESA-LANDS' audit: the body's air past the Bay a zone's own
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -545,7 +546,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
-  let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
+  let precip = precipMode && !isDryFall(precipMode) ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;   // ASHFALL1's audit: a dry fall at boot builds no rain program either
   const eye32 = new Float32Array(3);   // RAIN-LEAK: the falling weather's eye, filled each frame (world.js's twin)
   // PERF-WARM: the renderer's on-demand programs, and the rain's whole
   // renderer, paid for at idle rather than on the frame that first needs
@@ -564,7 +565,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const heatHaze = createHeatHaze();
   const windfall = createWindfallHost({ gl: renderer.gl, enhanced: !!sky.enhanced });   // WINDFALL1: world.js's twin note - this host's one city has no floating origin to shift it
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
-  const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
+  const dryFall = sky.enhanced ? new DryFallRenderer(renderer.gl) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look; ASHFALL1: and the ashfall's ash and embers (render/dryFall.js)
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance
   const stormLights = createStormLights();   // BOLT (world.js's twin note)
   const boltsGl = sky.enhanced ? new LightningBoltsRenderer(renderer.gl) : null;
@@ -592,7 +593,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
-    if (precipMode && precipMode !== 'sand' && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's
+    if (precipMode && !isDryFall(precipMode) && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's; ASHFALL1: nor the ash
     lightning = w === 'thunder'
       ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
   }
@@ -1382,7 +1383,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const hour = (((wm % 1440) + 1440) % 1440) / 60;
     const sheltered = m === 'exterior' && !!playerEntity.isResting && !!camps.tentNear(feet);   // AUDIT C&C I2: a rest at a tent sleeps under its roof
     return {
-      climateIndex: locClimateIndex,
+      climateIndex: feltClimateIndex(_locPixel.x, _locPixel.y, locClimateIndex),   // TESA-LANDS' audit: past the Bay a zone's air
       month: dateFromClassicMinutes(wm).month, hour, weather, falling: fallingWeather(weather),   // WET-FALL: the skin reads what the street's frame saw fall
       insideBuilding: m === 'interior', insideDungeon: m === 'dungeon',
       inSunlight: m === 'exterior' && sunlit({ hour, weather, sheltered }),   // AUDIT C&C: the sun's one law, the replay's too
@@ -6237,11 +6238,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     eye32[0] = eye[0]; eye32[1] = eye[1]; eye32[2] = eye[2];
     const precipShown = enhancedFront ? fx.shown : precipMode;
-    if (precipShown === 'sand') {
+    if (isDryFall(precipShown)) {
       // WEATHER2d: THE SANDSTORM'S SAND - the wisps' program in the sand's look, the front's intensity its
-      // strength, on the one wind's rate and travel; the rain program never draws it
-      if (sand) {
-        sand.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step, gust: wd.gust }, proj, view, eye32, now / 1000);
+      // strength, on the one wind's rate and travel; the rain program never draws it. ASHFALL1: the ashfall's ash
+      // and embers the same way, by the fall's kind (render/dryFall.js)
+      if (dryFall) {
+        dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, eye32, now / 1000, renderer.worldViewportPx?.[3]);
         renderer.markForeignPass();
       }
     } else if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up

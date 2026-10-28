@@ -1390,6 +1390,10 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   instanced at the back of the pass before the body, a 16-bit depth step apart, the charge additive after; a
   third-person picture padded for them, `glowPad`).
   Fire, frost, shock and the arcane; every rate whole over its clock. `05-Combat/Weapon-Glow.md`.
+- `dryFall.js` - ASHFALL1 THE DRY FALLS: what falls that the rain program never
+  draws - the sandstorm's sand (the wisps in SAND_LOOK) and the ashfall's grey
+  ash with its glowing embers, one renderer the hosts hold
+  (`07-Rendering/Weather-Arc.md` E).
 - `windWisps.js` - WIND3 THE WISPS: the wind, seen - faint streaks of air
   stretched along the wind's velocity in a box that follows the eye and
   wraps by the lab's law, travelling by the one integrated step, their
@@ -1495,6 +1499,12 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   billboard program's mesh mode in the renderer's third tree slot (`setLowPolyTrees(frame, 2)`, `scenes/grahtHost.js`),
   through Low Poly Trees' own buffers (`lowPolyTreesRender.js`). It retired VALENWOOD-CANOPY's `canopySky.js`, the
   ceiling of leaves drawn over every sky at the far plane.
+- `landPropArt.js` - TESA-LANDS (`03-World/Tamriel-Lands.md`; the owner: "Ensuring each region recieves proper landscape
+  details and textures"): the lands' landmarks' pictures, painted - a stalk's fibres, a cap and its gills, a rock's
+  strata, a lichened top, furrowed bark, a smooth rind, a crown's clumps, a leaf spray and hung moss in GREY (a look's
+  colour laid over the picture's mean), the reeds and the grapes in their own colours; grahtOakArt.js's noise and mip
+  chain. The parasols, spires, Hists, reeds, vines and groves are drawn by the billboard program's mesh mode in the
+  renderer's fourth tree slot (`setLowPolyTrees(frame, 3)`, `scenes/landPropsHost.js`).
 - `staticBatch.js` - PERF4 STATIC BATCHES PER PIXEL: a streamed pixel's static RMB
   models merged once at build time into one mesh grouped by resolved texture, one
   draw call per texture instead of one per sub-mesh per model; the gates and the
