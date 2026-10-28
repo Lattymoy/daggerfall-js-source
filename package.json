@@ -19,6 +19,7 @@
     "check": "npm run lint && npm run types && npm test && npm run build",
     "cites": "node tools/citeAnchor.mjs",
     "prebuild": "node scripts/buildTag.mjs",
+    "postinstall": "node scripts/firstVisitPins.mjs",
     "postbuild": "git checkout -- src/buildTag.js",
     "probes": "node tools/enhancedMenuProbe.mjs && node tools/featureRailProbe.mjs",
     "shot": "node tools/screenshot.mjs",

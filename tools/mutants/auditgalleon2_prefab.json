@@ -43,8 +43,8 @@
   {
     "name": "AUDIT-GN2-PF4-keyed-by-the-hash-alone",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "was.sha256 === json.sha256 && was.bake === bake && ",
-    "new": "was.sha256 === json.sha256 && ",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && ",
+    "new": "  if (was && was.sha256 === json.sha256 && ",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js",
       "test/world/ships/galleon_model.test.js"

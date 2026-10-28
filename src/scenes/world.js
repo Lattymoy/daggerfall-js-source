@@ -291,7 +291,8 @@ import { createGroundSets } from './groundSets.js';   // OW-HITCH: a ground set 
 import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn, arenaPlacesOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
-import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it; WW2: which picture a theatre's gate scan read
+import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // WW2: which picture a theatre's gate scan read
+import { keptBayFit } from '../world/tamriel/bayFitKept.js';   // TAMRIEL3: where the Bay stands on it; FIRST-VISIT: kept across launches
 import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
 import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
 import { arenaTemplates, ARENA_LOAD_WAIT_MS } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
@@ -349,7 +350,8 @@ import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: OW-HIT
 import { townYardsOf } from '../world/merchantYards/townYards.js';   // IC-PROPS: what a town tells its yards' law - its fabric's ways, a capital's own yards
 import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/merchantYards.js';   // MERCHANT-YARDS: the towns that stand them, who keeps them, the town's people
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
-import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
+import { townSeaOf, seaBearing, seaField, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
+import { keptPortSitesOn } from '../world/portSitesKept.js';   // FIRST-VISIT: a port town's sites kept across launches
 import { SHIPYARD as SHIPYARD_LAYOUT } from '../world/shipyardModel.js';   // SHIPYARDS: the crew hall's table, for the talk directory's row
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/professions/profItems.js';   // PROF1: a Stores material as DFU's own item
 import { oreMapTip } from '../ui/oreMapTip.js';   // ORE-MAP: the held map's word on a pixel's ore
@@ -4036,7 +4038,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         if (g && port) {
           const lp = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
           const bearing = seaBearing(lp.x, lp.y, openSea);   // AUDIT SHIPYARDS U2: and the town's own water against it is no sea; INLAND-PORTS: nor a lake the map draws
-          ports = portSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
+          ports = keptPortSitesOn(g, seaField(g.width, g.height, townSeaOf(yl, bearing), bearing));
         }
         if (g && yardTown) sites.push(...await stepsBreathing(craftYardSitesSteps(g), breathe));   // CARP-YARD: the joinery on what the yards and the port left - none of theirs moves
         memo = { sig, sites, ports };
@@ -6517,9 +6519,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let arenaTraceAsked = false;
   if (tamrielTraceOn()) {
     arenaTraceAsked = true;
-    preloadTamrielTrace({ fetchBytes, palette }).then((trace) => {
+    preloadTamrielTrace({ fetchBytes, palette }).then(async (trace) => {
       if (!trace) { console.warn('[tamriel] the picture traced to nothing; the authored continent stands'); return; }
-      const fit = fitBayToPicture({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
+      const fit = await keptBayFit({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
       const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
       terrainGen.setTamriel({ trace, fit: fitPx });
       StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;

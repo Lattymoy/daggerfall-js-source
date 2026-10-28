@@ -526,6 +526,8 @@ export async function storeDerived(key, bytes) {
     tx.objectStore(DERIVED_STORE).put(bytes, key);
     tx.oncomplete = () => res();
     tx.onerror = () => rej(tx.error);
+    // a commit the quota refuses aborts the transaction with no request error, so without this the write never settles
+    tx.onabort = () => rej(tx.error ?? new Error("derived store: write aborted"));
   });
   return true;
 }
@@ -544,6 +546,20 @@ export async function loadDerivedJson(key) {
     const bytes = await loadDerived(key);
     if (!bytes) return null;
     const env = JSON.parse(new TextDecoder().decode(bytes));
+    return env && env.key === key && Object.hasOwn(env, 'value') ? env.value : null;
+  } catch (e) {
+    console.warn(`[derived] ${key}: unreadable, rebuilding -`, e?.message ?? e);
+    return null;
+  }
+}
+/** FIRST-VISIT: a derived artifact kept as itself - a structured clone, so its typed arrays come back typed and no
+ *  JSON text is parsed. The envelope is the key, as storeDerivedJson's. */
+export async function storeDerivedValue(key, value) {
+  return storeDerived(key, { key, value });
+}
+export async function loadDerivedValue(key) {
+  try {
+    const env = await assetValue(DERIVED_STORE, key);
     return env && env.key === key && Object.hasOwn(env, 'value') ? env.value : null;
   } catch (e) {
     console.warn(`[derived] ${key}: unreadable, rebuilding -`, e?.message ?? e);
@@ -664,6 +680,23 @@ async function sampleStamp(blob) {
     for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193) >>> 0; }
   }
   return h.toString(16).padStart(8, '0');
+}
+
+/** FIRST-VISIT: drop every derived key `stale(key)` says is stale - a kept answer's older keys, once its new one is
+ *  written (systems/firstVisit/firstVisitStore.js staleKey), so the store holds one answer a cache scope, not one an
+ *  update. */
+export async function sweepDerived(stale) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(DERIVED_STORE, 'readwrite');
+    const os = tx.objectStore(DERIVED_STORE);
+    const req = os.getAllKeys();
+    req.onsuccess = () => { for (const k of req.result ?? []) if (stale(k)) os.delete(k); };
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error ?? new Error("derived store: sweep aborted"));
+  });
+  return true;
 }
 
 /** Drop every derived key under a prefix (a getAllKeys sweep). */

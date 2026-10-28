@@ -2606,6 +2606,123 @@ all dead:
 
 The audit: `01-Overview/audits/Audit-Mem-Audit.md`.
 
+## FIRST-VISIT — what a warm launch worked out again, kept in the player's store
+
+**Found.** A warm launch in Daggerfall city (headed Edge, RTX 5080, ANGLE over D3D11, shaders cached) still stalled on work
+whose inputs do not change between launches. Per item, the main thread's inclusive ms over the boot (the profile's own
+attribution; the brief's proposal figures were a different run):
+
+- the boot's two location walks (BOOT-RECTS) served ~400 blocks through the world-data door, a town pack's file rebuilt
+  for each, to read their ground tiles - 1,283 ms, inside the boot's 2.7 s frame;
+- the town's first trips (`trips.js townTrips`) - 459 ms, a third of it the route planner folding the land into pieces
+  (`travelRoute.js routeGround`);
+- the port town's shipyard and lighthouse placed (`portSites.js portSitesOn`) - 228 ms;
+- the three port ships' prefabs built (`comeSailAwayModels.js shipBuilt`) - 219 ms;
+- the weapon rig's body sprites fetched and decoded on the page's thread (`eotbBody.js decodeSprite`) - 200 ms;
+- the ships' painted pictures (`galleonArt.js shipStandIns`, laid in the player's palette) - 145 ms;
+- the Bay fitted to the picture of Tamriel (`tamrielLand.js fitBayToPicture`, after FIT-BITS) - 145 ms.
+
+**The fix.** Each answer is kept in the player's derived store (`dataSource.js` DERIVED_STORE, a structured clone through
+`storeDerivedValue`, swept with an ARENA2 re-pick) under a key over its inputs and a hand version - a different input is
+a different key, worked out again and kept under its own; a malformed record is refused. The shared door is
+`systems/firstVisit/firstVisitStore.js`. The synchronous readers find their records fetched before they run: the mod
+world-data loader fetches the walks' tiles and the port sites once the door is set (`modWorldData.js`), the way book
+waits on the land's pieces for each new network (`ways.js`), and the rest are asked from code that already awaits.
+
+**Refresh on update** (the owner, 2026-10-26: "make sure any of our changes relating to caching do not prevent anything
+from refreshing properly ... scoped to only the things that have changed"; and, approving the next step, "Yes, please do").
+A cache's version is not the build's tag and not a number anyone bumps: it is the PIN of its own computation
+(`tools/computationPin.mjs`: the named roots and every top-level declaration they reach by name, across imports, as
+tokens - a comment or a line break moves nothing - and any shipped data the computation reads), GENERATED. The pins live
+in `src/firstVisitPins.js`, gitignored:
+
+`npm install` / `npm ci` write it (`postinstall`, `scripts/firstVisitPins.mjs`),
+so every checkout and CI job has it before lint, the types or a test; every Vite build writes it at its start and bundles
+the pins it computed then (`firstVisitPinsPlugin`, a `vite.config.js` plugin); and the dev server computes the pins for
+each page load (the store asks under a URL of the load's own), so a dev edit is a new key as a deployed update is. A cache
+reads its pin through `firstVisitStore.js firstVisitPin`, which throws when there is none - never a key on undefined. So
+an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
+keeps it.
+
+Each key leads with its scope; writing an answer deletes every other key of its scope
+(`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow
+across updates. A write the store refuses (a full quota) sweeps nothing (`firstVisitStore.js keepAnswer`): the older
+answer is then the only one there is, and stays. The store's writes also reject when the transaction aborts (a
+commit the quota refuses raises no request error), and the two callers that waited on a write - the port ships' models and
+the ways' land pieces - answer with what they built without waiting for it (`test/systems/firstVisit/fv_abort.test.js`).
+
+| cache | module | key inputs | refreshed by | swept by |
+|---|---|---|---|---|
+| walks' ground tiles | `world/terrain/groundTilesKept.js` | the pin (BlocksFile, the world-data door, packs, patches, the arena's block, the carriages' layer, and the mods' shipped WorldData, WorldDataPatches and packs); BLOCKS.BSA's stamp; what the door serves blocks by (each block file's mod, pack version, layers, in name order); each block by its name | a change to that code or shipped world data; another BLOCKS.BSA; a mod switched, a pack updated, a layer added | `fv-ground:` - one record |
+| land's pieces | `systems/travel/landPiecesKept.js` | the pin (`routeGround` and the step law); every byte the fold reads (climate, heights, roads, tracks) | a change to the fold; another ground or road network | `fv-pieces:` - one network's |
+| port sites | `world/portSitesKept.js` | the pin (`portSitesOn`, `closeSite` and what they reach); per town, the ground's cells and the sea field at every cell | a change to the placing; a town's ground or water changed | `fv-port-sites:` - one record |
+| ship builds | `systems/comeSailAway/shipBuildsKept.js` | the pin (the three prefab builders and what they reach); the bake's sha256 and text, the mod prefabs read, the base | a change to a builder; a new bake or mod prefab | `fv-ship:<ship>:` - one a ship |
+| ships' pictures | `world/ships/standInsKept.js` | the pin (the three ships' art and the palette's look); the picture's name; the palette | a change to the painting; another palette | `fv-standin:<name>:` - one a picture |
+| Bay fit | `world/tamriel/bayFitKept.js` | the pin (`fitBayToPicture` and what it reaches); the trace's land and the Bay's land at every pixel | a change to the fit; another picture or another Bay | `fv-bayfit:` - one |
+
+Nothing kept reads the save, the day or the clock, so a save loaded or a day turned refuses nothing. An ARENA2 re-pick
+sweeps the whole derived store (`clearStoredData`), and a changed data file is another stamp. No key names BUILD_TAG:
+every computation's inputs could be named. The pin follows names, not meaning - a code path a root reaches only
+through a value handed in at run time (a registry, a callback) is not followed, which is why the ground tiles' roots
+name the mod loader, the arena, the carriages' layer and the shipped world data beside the door.
+
+Held by
+`test/systems/firstVisit/fv_versions.test.js`: every cache that keeps answers asks a pin and every pin is generated; a
+missing pin throws; no pin reads the pins; the pin's moves (the code reached, the data read) and non-moves (a comment, an
+unreached declaration); the same pin across CRLF and LF and either path separator; the dev server's pins for each load; a refused write sweeps nothing. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
+(`vanillaEnhancedPack.js decodeServedPng`), the worn armour's strips through `layeredArmor.js decodeLayered`'s `picture`.
+A departure from the proposal: it named the block rebuild itself (pack and block); what the walks read of a block is its
+ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose structured clone reads back at ~0.7x the rebuild's cost
+(measured in node over Daggerfall's 40 blocks), so the tiles are kept.
+
+**Measured.** The real-GPU probe (`dfo-verify/tools/perf/hitchProbe.mjs`, Daggerfall city 15:00, `&shot&fly`), base
+`9aa6bc4662` and this branch on the same server and scene, each on a fresh browser profile: a first launch, then the
+second launch below (the head: this branch's last commit, `final-second`). Inclusive ms over the boot, second launch:
+
+| item | base | head |
+|---|---:|---:|
+| walks' ground tiles (`getDFBlockReplacementData`) | 1,283 | 226 |
+| town's trips (`townTrips`) | 459 | 275 |
+| ...the land's pieces folded | (in the above) | 0 |
+| port sites | 228 | 0 |
+| ship models | 219 | 9 |
+| rig sprite decode (main thread) | 200 | 7 |
+| ships' pictures | 145 | 4 |
+| Bay fit | 145 | 0 (+18 its stamp) |
+
+Frames over 100 ms after the first world frame: base 6, 1,042 ms; head 6, 863 ms - the frames left are quest start's
+and the wagons' art (not kept) and two that are the frame's own and a collection. That metric starts after most of
+these stalls - the world's first frame lands at ~26-35 s, after the boot's own long frames - so from the boot's first
+world-host frame: base 17 frames, 7,168 ms, the longest 2,746 ms; head 17 frames, 4,826 ms, the longest 1,459 ms. The
+first launch fills the store for ~80 ms of main thread beyond the base's (the stamps, ~30 ms; the clones written,
+~40 ms) - the work itself runs as before.
+
+Two earlier head pairs: pair 1 found the door's stamp in registration order
+(the packs register as their fetches end, so the walks' tiles missed on the second launch); pair 2, with that fixed,
+missed the land's pieces once (162 ms) - the network the first way is asked on was not the one the last launch kept,
+which a miss pays at the old cost, never with a wrong answer. The final pair hit every record.
+
+Pictures: the settled frame (`SHOT=1`, the same scene), base `9aa6bc4662` against the review's head `84505b622e` on a
+second launch whose kept answers all hit: 0.04% of pixels past a tolerance of 8, in the sky's moving clouds, against 0.01%
+between two launches of the same tree; the town itself (the frame left of the HUD's column) 0.016% against 0.013%, and a
+launch that worked every answer out against one that read it back, 0.01%. The one picture that differed by launch is the
+main quest's opening box ("You wake and look around the room", `_BRISIEN`'s `say 1025`): the quest machine does not
+tick while any window stands, so whichever opens first - that box or the welcome tour's first page - comes up first, and
+the other waits.
+
+The base showed the box on one launch and not on the next; the head, which boots sooner, showed it on
+every launch. It is never lost, only ordered.
+
+Left: quest start (54-97 ms) and the wagons' art (34-60 ms) are under 100 ms; the town's trips keep ~250-280 ms of lives
+and routes, which read the save.
+Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`base-cold`, `base-second`, `head1-*`,
+`head-*`, `final-first`, `final-second`; each `boot.json` and `boot.cpuprofile`).
+
+Pins: `test/world/terrain/fv_groundtiles.test.js` (5), `test/systems/travel/fv_landpieces.test.js` (3),
+`test/world/fv_portsites.test.js` (2), `test/systems/comeSailAway/fv_shipbuilds.test.js` (2),
+`test/world/ships/fv_standins.test.js` (2), `test/world/fv_bayfit.test.js` (2),
+`test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2), `test/systems/firstVisit/fv_versions.test.js` (10), `test/systems/firstVisit/fv_abort.test.js` (3).
+
 ## OW-STREAM — the Overworld's frames on a fixed route, the held map's time to whole, and what the horizon's layers cost
 
 *The owner (2026-10-26): "The held map still struggles to load everything at once, the overworld experiences hitching

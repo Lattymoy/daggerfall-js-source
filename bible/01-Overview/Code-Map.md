@@ -308,6 +308,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/enemyExpansion/` | Daggerfall Enemy Expansion (Kamer & Kab), the mod's own (`04-Characters/Enemy-Expansion.md`): its CSV reading, its tables and art index as generated text, the tables read as BestiaryMod reads them, its pictures on the texture door, its encounter tables as it picks them, its equipment as its copy of RRI's class arm reads a class (`dexEquipment.js`), and its install - the fifty enemies on DFU's custom-enemy doors. |
 | `src/systems/faction/` | The factions' relations, reputation and standing - the law. |
 | `src/systems/festival/` | The Witches' Festival on this screen (`06-Systems/Witches-Festival.md`): the Soul Cakes and the Hearth Offering, the finds, the Wyrd Sister's sales, the wearing, the offerings' moves and every word. |
+| `src/systems/firstVisit/` | The store a first visit's answers are kept in across launches - a key over each answer's inputs (`07-Rendering/Performance-Priority.md` FIRST-VISIT). |
 | `src/systems/foraging/` | The Foraging mod - the law. |
 | `src/systems/gambit/` | The King's Gambit (`11-Multiplayer/Kings-Gambit.md`) - the law. |
 | `src/systems/gate/` | The Oblivion Gate's law (`11-Multiplayer/World-Bosses.md`): the site, the omen, the score and the spoils. |
