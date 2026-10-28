@@ -219,12 +219,12 @@
   {
     "name": "TESA2-any-city-a-journey",
     "file": "src/ui/heldMap.js",
-    "old": "const end = city?.pixel ? city : ",
-    "new": "const end = city ? city : ",
+    "old": "    return city?.pixel ? city : null;",
+    "new": "    return city ? city : null;",
     "tests": [
       "test/tesa2_arena.test.js"
     ],
-    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the press's portal's end is a city with a pixel, else (the stone's map) the land"
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the press's portal's end is a city with a pixel, else (the stone's map) the land; WILD-CITY-PORT (PIN MOVED): re-aimed by content - the press's city is one method now (heldMap.js _portalCityAt)"
   },
   {
     "name": "TESA2-pixels-unstood",

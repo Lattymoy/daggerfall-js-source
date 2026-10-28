@@ -113,12 +113,18 @@ view). A portal is never a way out of what the travel map refuses to leave.
 **The open zone** (AUDIT TESA II Z5): a stone's portal is a teleport, and PVPDUNGEONS' law holds every teleport of any
 kind out of Cyrodiil's zone, online - the guild's, Recall's, a party's journey to its leader (`world.js` wildTeleportRefused,
 `Wild-Zone.md` section 25). So the door refuses inside the zone, the pick refuses a place in it, and THE STEP refuses a
-portal into, out of or inside it whoever opened it - each traveller's own journey ("You cannot teleport into or out of
-Cyrodiil. Walk or ride its roads."), nothing spent at a refused door or pick. Since TESA-NO-FAST the stone's portal is the
+portal into, out of or inside it whoever opened it - each traveller's own journey, said in the zone's words, nothing spent
+at a refused door or pick. Since TESA-NO-FAST the stone's portal is the
 way past the Bay, and Cyrodiil's cities are its picks; until this the stone was the one teleport the zone's law never
 asked. The Veil's own refusal stands beside it (AUDIT CAPTAIN'S SEA P6). THE FOUR HOSTS: `scenes/world.js` wired (the door,
 the pick, the step - its alone); `scenes/worldModes.js` and `scenes/dungeonContext.js` open no portal (a building's pack
 refuses in words, a dungeon's has no door) and `scenes/exterior.js`'s street says its own - none to wire.
+
+**The settlements** (WILD-CITY-PORT, 2026-10-28; `Wild-Zone.md` section 28): a city, town or village in the zone is the
+exception - its streets or a building of it a door, its place a pick and a step's end. On the stone's map a press on a
+city in the zone picks it, where ZONE-ZOOM had opened the zone map. Its open country, its halls and its dungeons stay
+refused, in words that name the open ends ("In Cyrodiil you can teleport only to or from a city, town or village. Walk
+or ride its roads.").
 
 ### The use
 

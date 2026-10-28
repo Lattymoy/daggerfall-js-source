@@ -199,7 +199,10 @@ test('TESA2 the map: where a host stands the places, each inked place carries th
   assert.match(pick, /if \(this\._tamriel && !this\._zoneMap && this\.teleportationTravel\) \{/);
   // PIN MOVED (PORTAL-ANYWHERE, bible/06-Systems/Portal-Stone.md): the portal's end is the city with a pixel, else - on the
   // Portal Stone's map alone (`portalLandPastBay`) - the land under the press (systems/travel/pastBayTravel.js portalLandAt)
-  assert.match(pick, /const end = city\?\.pixel \? city : this\.deps\.portalLandPastBay \? portalLandAt\(Math\.floor\(mx\), Math\.floor\(my\)\) : null;\n\s+if \(end\) \{\n\s+this\._select\(\{ coords: true, x: end\.pixel\.x \+ 0\.5, y: end\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: end\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
+  // PIN MOVED (WILD-CITY-PORT, bible/11-Multiplayer/Wild-Zone.md section 28): the city the press takes is one method, asked by
+  // ZONE-ZOOM too - a city the sheet inks, with its pixel
+  assert.match(held, /  _portalCityAt\(sx, sy\) \{\n\s+if \(!this\._tamriel \|\| this\._zoneMap \|\| !this\.teleportationTravel\) return null;\n[^\n]+\n\s+const city = tamrielCityAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), [^\n]+\n\s+return city\?\.pixel \? city : null;\n/);
+  assert.match(pick, /const end = this\._portalCityAt\(sx, sy\) \?\? \(this\.deps\.portalLandPastBay \? portalLandAt\(Math\.floor\(mx\), Math\.floor\(my\)\) : null\);\n\s+if \(end\) \{\n\s+this\._select\(\{ coords: true, x: end\.pixel\.x \+ 0\.5, y: end\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: end\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
   assert.ok(pick.indexOf('// TESA2') < pick.indexOf('// WILD2'), 'before the zone\'s and the coordinates\' own arms');
   assert.match(held, /if \(selected\.coords\) return \{ pixel: \{ x: Math\.floor\(selected\.x\), y: Math\.floor\(selected\.y\) \}, name: selected\.name \};/, 'the journey is to its pixel, by its name');
   // PIN MOVED (AUDIT TESA II M7, M14): the cursor off the city the press would take (_pastBayHover: tamrielCityAt as the sheet inks)
