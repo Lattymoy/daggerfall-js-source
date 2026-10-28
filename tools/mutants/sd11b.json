@@ -83,8 +83,8 @@
   {
     "name": "SD11b-L7M3-a-registered-account-a-guest",
     "file": "server/src/index.js",
-    "old": "const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked');",
-    "new": "const no = await this._sdAdmit(a.key, who.subject, now, true);",
+    "old": "const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked', isStaff(who.glyphs));",
+    "new": "const no = await this._sdAdmit(a.key, who.subject, now, true, isStaff(who.glyphs));",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "PRESS-FLAT-imbue-leans",
+    "file": "src/systems/reforge.js",
+    "old": "    applyRarity(item, tier, rolls, null, { flat: true });",
+    "new": "    applyRarity(item, tier, rolls);",
+    "tests": [
+      "test/systems/loot/pressflat.test.js"
+    ]
+  },
+  {
+    "name": "PRESS-FLAT-damage-first",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    const id = i === 0 && own && !flat && pool.includes(own)",
+    "new": "    const id = i === 0 && own && pool.includes(own)",
+    "tests": [
+      "test/systems/loot/pressflat.test.js"
+    ]
+  },
+  {
+    "name": "PRESS-FLAT-skill-leans",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    const param = id === 'skill' && !flat ? pickSkill",
+    "new": "    const param = id === 'skill' ? pickSkill",
+    "tests": [
+      "test/systems/loot/pressflat.test.js"
+    ]
+  },
+  {
+    "name": "PRESS-FLAT-reforge-skill-leans",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const line = k.params ? { id, param: pick(freeParams(id), rolls), value } : { id, value };",
+    "new": "  const line = k.params ? { id, param: id === 'skill' ? _pickSkillForTests(item, freeParams(id), rolls) : pick(freeParams(id), rolls), value } : { id, value };",
+    "tests": [
+      "test/systems/loot/pressflat.test.js"
+    ]
+  },
+  {
+    "name": "PRESS-FLAT-reforge-armor-leans",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const line = k.params ? { id, param: pick(freeParams(id), rolls), value } : { id, value };",
+    "new": "  const line = k.params ? { id, param: leanedParam(armorLean(item), id, freeParams(id), rolls), value } : { id, value };",
+    "tests": [
+      "test/systems/loot/armorlean.test.js"
+    ]
+  }
+]

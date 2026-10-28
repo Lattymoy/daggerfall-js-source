@@ -718,6 +718,8 @@ reforge.refusal.line,"Жоден інший вид рядка не може по
 rest.exhausted.fighting,"Ви надто виснажені для бою - відступіть і відпочиньте!"
 saddle.hello.key,"{key}: панель сідла"
 saddle.hello.none,"Панель сідла: призначте їй клавішу в Керуванні"
+sd.copy.party,"Увійти в цю Годину може лише ваша група."
+sd.copy.shared,"У цій спільній Годині {n} з {max} гравців."
 sd.hall.lastBy,"Останній поворот: {name}"
 sd.hall.snapLashes,"Година різко відкочується назад. Не допомогли: {names}."
 sd.hall.snapLashesMore,"Година різко відкочується назад. Не допомогли: {names} та ще {more, plural, one {# гравець} few {# гравці} many {# гравців} other {# гравця}}."
