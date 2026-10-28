@@ -408,6 +408,8 @@ the door prices a house by it. The castle stays the owner's call (DOMAIN2).
 Pins: the IC-HOMES tests in `test/world/icbld_buildings.test.js` and
 `test/systems/homeprice.test.js` - `tools/mutants/ichomes.json` (4, all dead);
 `fb1005_cryptsale.json`'s door record re-aimed by content.
+The price alone did not sell one: the open zone refused every house in Cyrodiil.
+ZONE-HOMES (`11-Multiplayer/Wild-Zone.md` section 29) lifted that.
 
 ## Open numbers
 

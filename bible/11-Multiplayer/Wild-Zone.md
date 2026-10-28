@@ -857,10 +857,9 @@ half health", "everyone in the zone should see the same ... that the big giant i
 
 ## 16. The zone's other laws (PVPDUNGEONS)
 
-- NO BANKS, NO HOUSES (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door says "There
-  are no banks in the mountains." (`wildNoBank`, `world.js:"wildNoBank: () =>"`;
-  `worldModes.js:"if (host.wildNoBank?.())"`) and a home's purchase "No house is for sale in the Wrothgarian
-  Mountains." (`wildNoHouse`, `world.js:"wildNoHouse: () =>"`; `worldModes.js:"if (host.wildNoHouse?.())"`).
+- NO BANKS (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door says "There are no banks
+  in the mountains." (`wildNoBank`, `world.js:"wildNoBank: () =>"`; `worldModes.js:"if (host.wildNoBank?.())"`). The
+  houses' half is retired: ZONE-HOMES (section 29) sells a house anywhere in the zone.
 - NO WORLD EVENTS (the owner: "Do not spawn world events in the PVP zone!"): the Oblivion Gate never takes region 16
   (`gateRegions`, `gateSite.js:"export const gateRegions"`) and every client drops its towns from the day's raids
   alike (`raidingParties.js:"state.raids = raidsForDay"`) - the whole region, cut or not.
@@ -1400,6 +1399,24 @@ Pins: `test/systems/wild/wildcityport.test.js` (the law over every kind of place
 `test/ui/audittesa2m_window.test.js` (the teleport map's press) - `tools/mutants/wildcityport.json` (7, all dead). PINS
 MOVED: the refusal's words (`portal1_stone.test.js`, `portalbay_stone.test.js`), the press's source (`tesa2_arena.test.js`);
 mutant records re-aimed by content: `portalbay.json` (3), `audittesa2m.json` (1), `tesa2.json` (1), all dead.
+
+## 29. Houses for sale in the zone (ZONE-HOMES, 2026-10-28)
+
+The owner: "Imperial City houses still cannot be purchased". IC-HOMES (`06-Systems/Economy-Arc.md`) gave the city's
+houses a price, but PVPDUNGEONS refused every house in the zone - Cyrodiil whole, the Imperial City in The Heart - so the
+door offered **Buy it** and the press refused it. A first pass sold a settlement's house alone and an audit refused every
+isle town's; the owner: "You made it where you cant buy a house in the ocean or in the open country. Why?" - "I did not
+ask for that".
+
+- THE LAW: the zone refuses no house. The `wildNoHouse` seam is gone from `world.js` and the buy
+  (`worldModes.js:"async function buyHomeAt(bd, price) {"`) asks nothing of the zone - in Cyrodiil's cities and its open
+  country, and on the sea past Veilhaven's peace alike. Banks stay refused in the zone (section 16).
+- THE ISLES: an isle town's house is for sale online as any town's (`onlineHomes.js:"export const homePurchasable"`). The
+  bank's list still names none and a Betony deed still owns none (`03-World/Eltheric-Ocean.md` P9).
+- THE FOUR HOSTS: `scenes/world.js` (the seam removed) and `scenes/worldModes.js` (the buy's line removed) WIRED;
+  `scenes/dungeonContext.js` has no house door; `scenes/exterior.js`, offline, stands no zone.
+
+Pins: `test/systems/wild/zonehomes.test.js` - `tools/mutants/zonehomes.json` (2, all dead).
 
 ## Pins
 
