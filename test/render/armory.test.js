@@ -13,7 +13,7 @@ import { INSIGNIA, ARMORY_BROKER_PRICE } from '../../src/net/insignia.js';
 import { SHOP_WARES, shopKeysOf, shopOwns } from '../../src/net/shopLaw.js';
 import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
-import { P, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks } from '../../src/render/armoryPose.js';
+import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks } from '../../src/render/armoryPose.js';
 import {
   armoryDraws, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryPrograms, armoryRatesWhole, ARMORY_BODY_PIECES, ARMORY_PROGRAMS,
   ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer,
@@ -121,23 +121,23 @@ test('ARMORY the pose: a rig\'s bones its joints, a sprite\'s figure its card an
   assert.equal(poseFromBones({ 'bip01 head': [0, 1.7, 0] }, pose), false, 'no shoulders - the wolf');
   const bones = { 'bip01 head': [0, 1.65, 0], 'bip01 neck': [0, 1.5, 0], 'bip01 l upperarm': [-0.2, 1.42, 0], 'bip01 r upperarm': [0.2, 1.42, 0], 'bip01 l forearm': [-0.25, 1.15, 0.02], 'bip01 r calf': [0.1, 0.5, 0] };
   assert.equal(poseFromBones(bones, pose), true);
-  assert.deepEqual([...pose.pts.slice(P.elL, P.elL + 3)].map((v) => +v.toFixed(3)), [-0.25, 1.15, 0.02], 'the forearm\'s origin is the elbow');
-  assert.deepEqual([...pose.pts.slice(P.knR, P.knR + 3)].map((v) => +v.toFixed(3)), [0.1, 0.5, 0], 'the calf\'s the knee');
-  assert.ok(pose.pts[P.crown + 1] > pose.pts[P.head + 1], 'the crown over the head');
+  assert.deepEqual([...pose.pts.slice(POSE_AT.elL, POSE_AT.elL + 3)].map((v) => +v.toFixed(3)), [-0.25, 1.15, 0.02], 'the forearm\'s origin is the elbow');
+  assert.deepEqual([...pose.pts.slice(POSE_AT.knR, POSE_AT.knR + 3)].map((v) => +v.toFixed(3)), [0.1, 0.5, 0], 'the calf\'s the knee');
+  assert.ok(pose.pts[POSE_AT.crown + 1] > pose.pts[POSE_AT.head + 1], 'the crown over the head');
   assert.deepEqual([pose.card, pose.limbs], [false, 'full']);
   assert.equal(poseFromFigure(null, pose), false);
   assert.equal(poseFromFigure({ base: 0, mpp: 0.02, marks: null }, pose), true);
   assert.deepEqual([pose.card, pose.limbs], [true, 'upper'], 'a painting has no forearm to measure');
   const marked = newPose();
   poseFromFigure({ base: 0, mpp: 0.02, marks: { top: 100, head: 5, chest: 3, pelvis: 1, beast: null }, shift: 0 }, marked);
-  assert.equal(+marked.dx[P.head / 3].toFixed(3), 0.1, 'the head hung where the picture draws it, 5 px off its middle');
-  assert.equal(+marked.dx[P.shL / 3].toFixed(3), 0.06, 'the shoulders with the chest');
-  assert.equal(+marked.dx[P.ftR / 3].toFixed(3), 0.02, 'the legs with the pelvis');
+  assert.equal(+marked.dx[POSE_AT.head / 3].toFixed(3), 0.1, 'the head hung where the picture draws it, 5 px off its middle');
+  assert.equal(+marked.dx[POSE_AT.shL / 3].toFixed(3), 0.06, 'the shoulders with the chest');
+  assert.equal(+marked.dx[POSE_AT.ftR / 3].toFixed(3), 0.02, 'the legs with the pelvis');
   poseAtRest(pose, 0.5, true);
-  assert.ok(pose.pts[P.head + 1] < REST_POINTS[P.head + 1], 'crouched');
-  assert.ok(pose.pts[P.ftL + 1] > 0.5, 'saddled');
+  assert.ok(pose.pts[POSE_AT.head + 1] < REST_POINTS[POSE_AT.head + 1], 'crouched');
+  assert.ok(pose.pts[POSE_AT.ftL + 1] > 0.5, 'saddled');
   const o = poseWorld(newPose(), 'chest', [10, 0, 10], Math.PI / 2, [0, 0, 0]);
-  const fwd = REST_POINTS[P.chest + 2];
+  const fwd = REST_POINTS[POSE_AT.chest + 2];
   assert.ok(Math.abs(o[0] - (10 + fwd)) < 1e-6 && Math.abs(o[2] - 10) < 1e-6, 'facing +x, the chest\'s forward is +x');
 });
 
@@ -191,7 +191,7 @@ test('ARMORY the pass: a program a body piece with its piece a constant, the rat
   armoryWearers(Array.from({ length: ARMORY_DRAW_MAX + 5 }, (_, i) => wearer(i)), [0, 0, 0], out);
   assert.equal(out.length, ARMORY_DRAW_MAX);
   const me = { at: [0, 0, 0], yaw: 0, pose: newPose() };
-  assert.equal(armoryEyeAtHead(me, [0, REST_POINTS[P.head + 1], 0.1]), true, 'my own first person');
+  assert.equal(armoryEyeAtHead(me, [0, REST_POINTS[POSE_AT.head + 1], 0.1]), true, 'my own first person');
   assert.equal(armoryEyeAtHead(me, [0, 1.6, 3]), false, 'my third person');
   const walker = { at: [0, 0, 0], yaw: 0, pose: newPose() };
   for (let i = 0; i <= 40; i++) { walker.at[2] = i * 0.05; armoryMotionStep(walker, i * 0.025); }
@@ -209,11 +209,11 @@ test('ARMORY on the Morrowind body: every bone the pose reads stands on retail\'
   assert.deepEqual(ARMORY_BONES.filter((n) => !bones[n]), [], 'every bone found on the retail skeleton');
   const pose = newPose();
   assert.equal(poseFromBones(bones, pose), true);
-  const y = (/** @type {string} */ n) => pose.pts[P[n] + 1];
+  const y = (/** @type {string} */ n) => pose.pts[POSE_AT[n] + 1];
   assert.ok(y('crown') > y('head') && y('head') > y('neck') && y('neck') > y('chest') && y('chest') > y('pelvis') && y('pelvis') > y('knL') && y('knL') > y('ftL'), 'crown over head over neck over chest over pelvis over knee over foot');
   assert.ok(y('head') > 1.7 && y('head') < 1.9 && y('ftL') < 0.15, `a 1.83 m body stood on its feet (head ${y('head').toFixed(2)})`);
-  assert.ok(pose.pts[P.shL] < 0 && pose.pts[P.shR] > 0 && pose.pts[P.elL] < 0 && pose.pts[P.waR] > 0, 'its left on the left, its right on the right');
-  assert.ok(pose.pts[P.chest + 2] > bones['bip01 spine2'][2] + 0.1, 'the chest\'s face, a hand forward of the spine');
+  assert.ok(pose.pts[POSE_AT.shL] < 0 && pose.pts[POSE_AT.shR] > 0 && pose.pts[POSE_AT.elL] < 0 && pose.pts[POSE_AT.waR] > 0, 'its left on the left, its right on the right');
+  assert.ok(pose.pts[POSE_AT.chest + 2] > bones['bip01 spine2'][2] + 0.1, 'the chest\'s face, a hand forward of the spine');
   const w = { at: [0, 0, 0], yaw: 0, pose, vel: [0, 0, 0] }, eye = [0, 1.5, 3];
   assert.ok(armoryDraws('burningcrown', w, eye, true).every((d) => d.A[1] > y('head') - 0.01), 'the crown round the head');
   const heart = armoryDraws('emberheart', w, eye, true).find((d) => d.mesh === 2);
@@ -310,7 +310,7 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
     const p2 = host.armoryWearersNow().find((w) => w.id === 'p2');
     assert.deepEqual([...p2.at, p2.yaw], [5.1, 0, 5.2, 1], 'a peer\'s Morrowind body stands its pieces where the body is drawn (peerBodies.bonesOf\'s feet and facing)');
     assert.deepEqual([p2.pose.card, p2.pose.limbs], [false, 'full'], 'posed off its bones - never the rest pose');
-    assert.deepEqual(Array.from(p2.pose.pts.slice(P.elR, P.elR + 3)), Array.from(new Float32Array(mwBones['bip01 r forearm'])), 'its elbow its forearm\'s joint');
+    assert.deepEqual(Array.from(p2.pose.pts.slice(POSE_AT.elR, POSE_AT.elR + 3)), Array.from(new Float32Array(mwBones['bip01 r forearm'])), 'its elbow its forearm\'s joint');
     assert.equal(rehellos, 1, 'the token said no kit, I wear one: said again');
     host.frame([]);
     assert.equal(rehellos, 1, 'heard now - once');

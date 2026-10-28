@@ -29,15 +29,15 @@ export const ARMORY_TEXT = Object.freeze({
 });
 /** What each piece looks like, in a sentence or two. */
 export const ARMORY_LOOK = Object.freeze({
-  burningcrown: () => t('armory.look.burningcrown', 'A ring of fire over the brow, with horns of flame that rise from it. Embers lift off the points.'),
-  emberheart: () => t('armory.look.emberheart', 'A coal burns in the chest and beats like a heart. Veins of fire run out from it across the ribs.'),
-  ashbound: () => t('armory.look.ashbound', 'Chains of glowing ember wind round the arms, from the shoulders to the wrists. Ash falls from them.'),
-  cinderstride: () => t('armory.look.cinderstride', 'Low flames lick up the shins. Each step leaves an ember on the ground that burns out.'),
+  burningcrown: () => t('armory.look.burningcrown', 'A circlet of molten iron, with horns of flame and a door of white fire at the brow. Embers lift off the points.'),
+  emberheart: () => t('armory.look.emberheart', 'A cracked coal burns in the chest and beats like a heart. Fire runs out along its veins with every beat.'),
+  ashbound: () => t('armory.look.ashbound', 'A chain of glowing iron winds round the arms, from the shoulders to the wrists. Ash falls from it.'),
+  cinderstride: () => t('armory.look.cinderstride', 'Low flames lick up the shins from a ring of coal at each ankle. Each step leaves an ember on the ground that burns out.'),
   breachbrand: () => t('armory.look.breachbrand', 'Fire runs along the weapon from the grip to the point, and drips from the tip.'),
-  eternalhalo: () => t('armory.look.eternalhalo', 'A thin ring of blue-violet fire turns over the head, with the Origin\'s spark at its front.'),
-  eternalsigil: () => t('armory.look.eternalsigil', 'The Origin\'s ring burns on the chest, its spark at the heart. A slow light runs round it.'),
-  eternalarmlets: () => t('armory.look.eternalarmlets', 'Bands of blue-violet fire circle the upper arms and the wrists. Wisps trail behind them.'),
-  eternalgreaves: () => t('armory.look.eternalgreaves', 'Blue-violet fire wraps the legs from the knee to the foot. Sparks rise as you walk.'),
+  eternalhalo: () => t('armory.look.eternalhalo', 'A band of blue-violet fire turns over the head, runes round it and the Origin\'s spark at its front.'),
+  eternalsigil: () => t('armory.look.eternalsigil', 'The Origin\'s dragon of light circles the spark on the chest, biting its own tail. A slow light runs round it.'),
+  eternalarmlets: () => t('armory.look.eternalarmlets', 'Engraved bands of blue-violet fire circle the upper arms and the wrists. Flames lick up off them.'),
+  eternalgreaves: () => t('armory.look.eternalgreaves', 'Blue-violet fire wraps the legs from the knee to the foot, under a lattice of light. Sparks rise as you walk.'),
   eternaledge: () => t('armory.look.eternaledge', 'A blade of blue-violet light runs along the weapon\'s edge. Sparks trail from it when you swing.'),
 });
 /** A SET's name and look (the shop's Eternal Set, its five pieces at once). */

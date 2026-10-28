@@ -16,7 +16,7 @@ export const ARMORY_BONES = Object.freeze([
 /** The pose's points, in the order a pose's `pts` holds them (three floats each). */
 export const POSE_POINTS = Object.freeze(['head', 'crown', 'neck', 'chest', 'pelvis', 'shL', 'shR', 'elL', 'elR', 'waL', 'waR', 'hipL', 'hipR', 'knL', 'knR', 'ftL', 'ftR']);
 /** A point's index in `pts` (times three). */
-export const P = Object.freeze(Object.fromEntries(POSE_POINTS.map((n, i) => [n, i * 3])));
+export const POSE_AT = Object.freeze(Object.fromEntries(POSE_POINTS.map((n, i) => [n, i * 3])));
 /** How far the crown stands over the head's middle (m). */
 export const CROWN_ABOVE = 0.13;
 /** How far the head's middle stands under the top of its picture's head (the sets' pixels: the joint at 96, its middle a
@@ -85,7 +85,7 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
   return { ...own, beast: read(EOTB_FIGURE.beast) };
 }
 
-const set = (/** @type {Float32Array} */ pts, /** @type {string} */ name, /** @type {ArrayLike<number>} */ v) => { const i = P[name]; pts[i] = v[0]; pts[i + 1] = v[1]; pts[i + 2] = v[2]; };
+const set = (/** @type {Float32Array} */ pts, /** @type {string} */ name, /** @type {ArrayLike<number>} */ v) => { const i = POSE_AT[name]; pts[i] = v[0]; pts[i + 1] = v[1]; pts[i + 2] = v[2]; };
 
 /**
  * THE POSE OFF A RIG'S BONES (`bones` as fpArm.thirdBones answers: each bone's origin [right, up, forward] m about the
@@ -100,21 +100,21 @@ export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out) 
   const pts = out.pts, N = bones['bip01 neck'];
   const ux = N ? H[0] - N[0] : 0, uy = N ? H[1] - N[1] : 1, uz = N ? H[2] - N[2] : 0, ul = Math.hypot(ux, uy, uz) || 1;
   set(pts, 'head', [H[0] + (ux / ul) * CLOAK_HEAD_ABOVE, H[1] + (uy / ul) * CLOAK_HEAD_ABOVE, H[2] + (uz / ul) * CLOAK_HEAD_ABOVE]);
-  set(pts, 'crown', [pts[P.head] + (ux / ul) * CROWN_ABOVE, pts[P.head + 1] + (uy / ul) * CROWN_ABOVE, pts[P.head + 2] + (uz / ul) * CROWN_ABOVE]);
+  set(pts, 'crown', [pts[POSE_AT.head] + (ux / ul) * CROWN_ABOVE, pts[POSE_AT.head + 1] + (uy / ul) * CROWN_ABOVE, pts[POSE_AT.head + 2] + (uz / ul) * CROWN_ABOVE]);
   set(pts, 'neck', N ?? [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2 + 0.06, (L[2] + R[2]) / 2]);
   set(pts, 'shL', L); set(pts, 'shR', R);
   const spine = bones['bip01 spine2'];
   set(pts, 'chest', spine ? [spine[0], spine[1], spine[2] + 0.12] : [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2 - 0.2, (L[2] + R[2]) / 2 + 0.12]);   // the chest's face, a hand forward of the spine
   const hang = (/** @type {string} */ name, /** @type {any} */ v, /** @type {string} */ from, /** @type {ArrayLike<number>} */ root) => {
     if (v) { set(pts, name, v); return; }
-    const r = P[from], i = P[name];
+    const r = POSE_AT[from], i = POSE_AT[name];
     set(pts, name, [root[0] + REST_POINTS[i] - REST_POINTS[r], root[1] + REST_POINTS[i + 1] - REST_POINTS[r + 1], root[2] + REST_POINTS[i + 2] - REST_POINTS[r + 2]]);
   };
   hang('elL', bones['bip01 l forearm'], 'shL', L); hang('elR', bones['bip01 r forearm'], 'shR', R);
   hang('waL', bones['bip01 l hand'], 'shL', L); hang('waR', bones['bip01 r hand'], 'shR', R);
   const pelvis = bones['bip01 pelvis'];
-  set(pts, 'pelvis', pelvis ?? [REST_POINTS[P.pelvis], REST_POINTS[P.pelvis + 1], REST_POINTS[P.pelvis + 2]]);
-  const pv = [pts[P.pelvis], pts[P.pelvis + 1], pts[P.pelvis + 2]];
+  set(pts, 'pelvis', pelvis ?? [REST_POINTS[POSE_AT.pelvis], REST_POINTS[POSE_AT.pelvis + 1], REST_POINTS[POSE_AT.pelvis + 2]]);
+  const pv = [pts[POSE_AT.pelvis], pts[POSE_AT.pelvis + 1], pts[POSE_AT.pelvis + 2]];
   hang('hipL', bones['bip01 l thigh'], 'pelvis', pv); hang('hipR', bones['bip01 r thigh'], 'pelvis', pv);
   hang('knL', bones['bip01 l calf'], 'pelvis', pv); hang('knR', bones['bip01 r calf'], 'pelvis', pv);
   hang('ftL', bones['bip01 l foot'], 'pelvis', pv); hang('ftR', bones['bip01 r foot'], 'pelvis', pv);
@@ -138,7 +138,7 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
   const mk = fig.marks ? (fig.beast === true ? fig.marks.beast : fig.marks) : null, k = fig.beast === true ? EOTB_FIGURE.beast : 1;
   const headY = Number.isFinite(mk?.top) ? fig.base + (mk.top / k - HEAD_TOP_PX) * m : at(EOTB_FIGURE.head) + CLOAK_HEAD_ABOVE * m / EOTB_FIGURE.mpp;
   set(pts, 'head', [0, headY, 0.01]);
-  set(pts, 'crown', [0, pts[P.head + 1] + CROWN_ABOVE * m / EOTB_FIGURE.mpp, 0.01]);
+  set(pts, 'crown', [0, pts[POSE_AT.head + 1] + CROWN_ABOVE * m / EOTB_FIGURE.mpp, 0.01]);
   set(pts, 'neck', [0, at(EOTB_FIGURE.neck), 0]);
   set(pts, 'chest', [0, at(R.chest), R.chestFwd * m / EOTB_FIGURE.mpp]);
   set(pts, 'pelvis', [0, at(R.pelvis), 0]);
@@ -150,7 +150,7 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
   set(pts, 'ftL', [-x(R.hipOut) * 1.1, at(R.ankle), -0.02]); set(pts, 'ftR', [x(R.hipOut) * 1.1, at(R.ankle), -0.02]);
   const shift = Number.isFinite(fig.shift) ? fig.shift : 0, off = (/** @type {number|null|undefined} */ v) => shift + (Number.isFinite(v) ? /** @type {number} */ (v) * fig.mpp : 0);
   const head = off(mk?.head), chest = off(mk?.chest ?? mk?.head), pelvis = off(mk?.pelvis ?? mk?.chest);
-  for (const n of POSE_POINTS) out.dx[P[n] / 3] = ['head', 'crown', 'neck'].includes(n) ? head : ['chest', 'shL', 'shR', 'elL', 'elR', 'waL', 'waR'].includes(n) ? chest : pelvis;
+  for (const n of POSE_POINTS) out.dx[POSE_AT[n] / 3] = ['head', 'crown', 'neck'].includes(n) ? head : ['chest', 'shL', 'shR', 'elL', 'elR', 'waL', 'waR'].includes(n) ? chest : pelvis;
   out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp;
   return true;
 }
@@ -168,7 +168,7 @@ export function poseAtRest(/** @type {any} */ out, crouch = 1, mounted = false) 
  *  law, auraRing.js auraWingLights) and, on a sprite, its offset along the card's right (`right`, the billboard's) -
  *  into `o` at `o3`. Pure but for `o`. */
 export function poseWorld(/** @type {any} */ pose, /** @type {string} */ name, /** @type {ArrayLike<number>} */ at, /** @type {number} */ yaw, /** @type {Float32Array|number[]} */ o, o3 = 0, /** @type {ArrayLike<number>|null} */ right = null) {
-  const i = P[name], p = pose.pts, c = Math.cos(yaw), s = Math.sin(yaw), d = right && pose.dx ? pose.dx[i / 3] : 0;
+  const i = POSE_AT[name], p = pose.pts, c = Math.cos(yaw), s = Math.sin(yaw), d = right && pose.dx ? pose.dx[i / 3] : 0;
   o[o3] = at[0] + c * p[i] + s * p[i + 2] + (d ? right[0] * d : 0);
   o[o3 + 1] = at[1] + p[i + 1];
   o[o3 + 2] = at[2] - s * p[i] + c * p[i + 2] + (d ? right[2] * d : 0);

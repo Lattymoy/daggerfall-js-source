@@ -3945,8 +3945,8 @@
   "by": "claude-in-session"
  },
  "armory.look.ashbound": {
-  "en": "6b15d4fbde74",
-  "tr": "c9e5aa47abb1",
+  "en": "db72358e8d19",
+  "tr": "faf38056155b",
   "by": "claude-in-session"
  },
  "armory.look.breachbrand": {
@@ -3955,23 +3955,23 @@
   "by": "claude-in-session"
  },
  "armory.look.burningcrown": {
-  "en": "85b8f687a69d",
-  "tr": "928dc0618883",
+  "en": "e7474136bf2a",
+  "tr": "11918c678b09",
   "by": "claude-in-session"
  },
  "armory.look.cinderstride": {
-  "en": "affc9933e002",
-  "tr": "523352be02a7",
+  "en": "861d9fd151e0",
+  "tr": "307fa66b206f",
   "by": "claude-in-session"
  },
  "armory.look.emberheart": {
-  "en": "e5f5e9eb3609",
-  "tr": "ba49ec9af4c1",
+  "en": "3f9c82045eed",
+  "tr": "a668ad8f23b4",
   "by": "claude-in-session"
  },
  "armory.look.eternalarmlets": {
-  "en": "b8258b8c74a7",
-  "tr": "05b81418c170",
+  "en": "3e98a8e28294",
+  "tr": "8017990e67d4",
   "by": "claude-in-session"
  },
  "armory.look.eternaledge": {
@@ -3980,13 +3980,13 @@
   "by": "claude-in-session"
  },
  "armory.look.eternalgreaves": {
-  "en": "8d3b8e90aa23",
-  "tr": "af5868cc8975",
+  "en": "862fcbae4b0b",
+  "tr": "fba3b75e93e7",
   "by": "claude-in-session"
  },
  "armory.look.eternalhalo": {
-  "en": "845dd181f975",
-  "tr": "ba7dd53f7768",
+  "en": "1fb032338fb9",
+  "tr": "7b193e5945d0",
   "by": "claude-in-session"
  },
  "armory.look.eternalset": {
@@ -3995,8 +3995,8 @@
   "by": "claude-in-session"
  },
  "armory.look.eternalsigil": {
-  "en": "24529ed1646a",
-  "tr": "b20b3d030456",
+  "en": "6e55fc1bf665",
+  "tr": "e2e872dd403b",
   "by": "claude-in-session"
  },
  "armory.name.ashbound": {

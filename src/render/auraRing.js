@@ -1021,7 +1021,7 @@ precision highp int;
  *  meets itself at the clock's wrap and the angle's noise meets itself where the ring closes - no pop every
  *  AURA_CLOCK_PERIOD, no seam behind the wearer. Each octave doubles the lattice and its period together. ARMORY: the
  *  Aura Armory's pieces burn on it too (render/armoryPass.js) - one home. */
-export const NOISE_GLSL = `
+export const AURA_NOISE_GLSL = `
 float h21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vnoiseP(vec2 p, vec2 per) {
   vec2 i = floor(p), f = fract(p);
@@ -2711,7 +2711,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 out vec4 o;
-${FOG_FACTOR_GLSL}${NOISE_GLSL}
+${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}
 const float TAU = 6.283185307179586;
 ${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}
 void main() {

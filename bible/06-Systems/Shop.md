@@ -55,10 +55,10 @@ menu's own load; every stage is let go (its WebGL context lost on purpose) when 
 | `glyph:origin` | glyph | $2.00 | 2 | an ouroboros dragon biting its tail, a spark at its heart |
 | `aura:eternal` | aura | $20.00 | 4 | a cape of blue-violet fire on the back, flowing, wisps trailing |
 | `armory:eternalset` | armory | $20.00 | 256 | The Eternal Set: all five pieces below, worn at one press |
-| `armory:eternalhalo` | armory | $6.00 | 8 | a thin ring of blue-violet fire over the head, the Origin's spark at its front |
-| `armory:eternalsigil` | armory | $6.00 | 16 | the Origin's ring burning on the chest and the back |
-| `armory:eternalarmlets` | armory | $6.00 | 32 | bands of blue-violet fire round the upper arms and the wrists |
-| `armory:eternalgreaves` | armory | $6.00 | 64 | blue-violet fire round the legs from the knee to the foot |
+| `armory:eternalhalo` | armory | $6.00 | 8 | a band of blue-violet fire over the head, runes round it, the Origin's spark at its front |
+| `armory:eternalsigil` | armory | $6.00 | 16 | the Origin's ouroboros, a dragon of light in scales, on the chest and the back |
+| `armory:eternalarmlets` | armory | $6.00 | 32 | engraved bands of blue-violet fire round the upper arms and the wrists |
+| `armory:eternalgreaves` | armory | $6.00 | 64 | blue-violet fire round the legs from the knee to the foot, under a lattice of light |
 | `armory:eternaledge` | armory | $6.00 | 128 | a blue-violet line along every weapon in hand, a light running along it |
 
 **ARMORY** (2026-10-28, `04-Characters/Aura-Armory.md`): the Aura Armory's Eternal line, in a section of its own (Aura

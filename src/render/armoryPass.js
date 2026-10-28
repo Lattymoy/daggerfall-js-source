@@ -8,9 +8,9 @@
 // every rate whole over the auras' clock, so nothing jumps at its wrap. Not a DFU member.
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
-import { NOISE_GLSL, auraClock, AURA_CLOCK_PERIOD, ETERNAL_RGB } from './auraRing.js';
+import { AURA_NOISE_GLSL, auraClock, AURA_CLOCK_PERIOD, ETERNAL_RGB } from './auraRing.js';
 import { ARMORY_PIECES, ARMORY_SLOTS, armoryKitPieces } from '../net/armoryLaw.js';
-import { P, poseWorld } from './armoryPose.js';
+import { POSE_AT, poseWorld } from './armoryPose.js';
 
 /** A tube's steps round and along; the most cards one draw floats; the footfall embers a wearer keeps. */
 export const ARMORY_ROUND = 32;
@@ -352,7 +352,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 out vec4 o;
-${FOG_FACTOR_GLSL}${NOISE_GLSL}${SHARED}${LOOKS_GLSL}
+${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}${SHARED}${LOOKS_GLSL}
 void main() {
   vec3 c;
   if (uMesh == ${CARDS}) c = cardLight();
@@ -676,4 +676,3 @@ export class ArmoryRenderer {
 
 /** The slots a kit's pieces sit in, in the kit's order (ARMORY_SLOTS) - for a face that lists them. Pure. */
 export const armoryKitSlots = (/** @type {unknown} */ kit) => ARMORY_SLOTS.filter((s) => armoryKitPieces(kit)[s]);
-export { P };

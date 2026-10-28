@@ -16,7 +16,7 @@ import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARMORY_PIECES } from '../src/net/armoryLaw.js';
 import { AURA_CLOCK_PERIOD } from '../src/render/auraRing.js';
-import { REST_POINTS, P, newPose, poseFromBones } from '../src/render/armoryPose.js';
+import { REST_POINTS, POSE_AT, newPose, poseFromBones } from '../src/render/armoryPose.js';
 import { glowSpec, ARMORY_LEVEL, armoryWeaponStage as weaponStageOf } from '../src/systems/weaponGlow.js';
 import { parseNif } from '../src/formats/morrowind/mwNifFile.js';
 import { buildSkeleton, skeletonSpaceMatrices, GRAPH_ROOT } from '../src/formats/morrowind/mwSkin.js';
@@ -35,7 +35,7 @@ const BACK = '/vendor/eye-of-the-beholder/Textures/112364/112364_4-0.png';
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=480 height=640></canvas><script type=module>
 import { ArmoryRenderer, armoryMotionStep, armoryPrograms } from '/src/render/armoryPass.js';
-import { newPose, poseAtRest, poseFromFigure, poseFromBones, spriteMarks, P as PT } from '/src/render/armoryPose.js';
+import { newPose, poseAtRest, poseFromFigure, poseFromBones, spriteMarks, POSE_AT as PT } from '/src/render/armoryPose.js';
 import { previewMesh } from '/src/render/auraPreview.js';
 import { ARMORY_PIECES } from '/src/net/armoryLaw.js';
 const W = 480, H = 640;
@@ -171,7 +171,7 @@ const server = http.createServer((req, res) => {
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const port = server.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-const at = (name) => { const i = P[name]; return [REST_POINTS[i], REST_POINTS[i + 1], REST_POINTS[i + 2]]; };
+const at = (name) => { const i = POSE_AT[name]; return [REST_POINTS[i], REST_POINTS[i + 1], REST_POINTS[i + 2]]; };
 const MW_POSE = newPose(); poseFromBones(MW_BONES, MW_POSE);
 try {
   const page = await browser.newPage({ viewport: { width: 480, height: 640 } });
@@ -221,7 +221,7 @@ try {
   const sb = await draw({ body: 'sprite', kit: '00000', eye: FRONT, pts: [] });
   const sf = await draw({ body: 'sprite', kit: 'aaaa0', eye: FRONT, pts: [], plain: true });
   await shot('sprite_dagonfire_front');
-  const sp = sf.pose, spt = (n) => [sp[P[n]] + sf.right[0] * sf.dx[P[n] / 3], sp[P[n] + 1], sp[P[n] + 2] + sf.right[2] * sf.dx[P[n] / 3]];
+  const sp = sf.pose, spt = (n) => [sp[POSE_AT[n]] + sf.right[0] * sf.dx[POSE_AT[n] / 3], sp[POSE_AT[n] + 1], sp[POSE_AT[n] + 2] + sf.right[2] * sf.dx[POSE_AT[n] / 3]];
   console.log('marks', JSON.stringify(sf.marks));
   const sc = await draw({ body: 'sprite', kit: '0a000', eye: FRONT, pts: [spt('chest')] });
   const sbkBare = await draw({ body: 'sprite', kit: '00000', eye: BEHIND, side: 'back', yaw: 0, pts: [[spt('chest')[0], spt('chest')[1], 0]] });
@@ -241,7 +241,7 @@ try {
   await draw({ body: 'sprite', kit: 'bbbb0', eye: [1.9, 1.3, 1.9], pts: [], plain: true });
   await shot('sprite_eternal_threequarter');
   // THE MORROWIND BODY: the pieces on retail's skeleton as the game reads it
-  const mw = (n) => { const i = P[n]; return [MW_POSE.pts[i], MW_POSE.pts[i + 1], MW_POSE.pts[i + 2]]; };
+  const mw = (n) => { const i = POSE_AT[n]; return [MW_POSE.pts[i], MW_POSE.pts[i + 1], MW_POSE.pts[i + 2]]; };
   const mwBare = await draw({ body: 'mw', kit: '00000', eye: FRONT, at: [0, 1.0, 0], pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]] });
   const mwD = await draw({ body: 'mw', kit: 'aaaa0', eye: FRONT, at: [0, 1.0, 0], pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]] });
   await shot('mw_dagonfire_front');
