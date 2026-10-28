@@ -282,7 +282,7 @@ export function registerCarrackArt(addVendorTextures) {
   _registered = true;
   const made = new Map();
   const art = (record) => { if (!made.size) for (const [r, p] of carrackArt()) made.set(r, p); return made.get(record) ?? null; };
-  return addVendorTextures(shipStandIns({ archive: CARRACK_ARCHIVE, name: 'carrack', records: Object.values(TEX), art, night: CARRACK_NIGHT, glow: carrackGlow }));
+  return addVendorTextures(shipStandIns({ archive: CARRACK_ARCHIVE, name: 'carrack', records: Object.values(TEX), art, night: CARRACK_NIGHT, glow: carrackGlow, kept: true }));
 }
 /** Test seam: unregistered, her glow uncut. */
 export function _resetCarrackArt() { _registered = false; _glow = null; }

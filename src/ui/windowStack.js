@@ -109,6 +109,26 @@ export function windowCovered(win) {
   return !!stack && stack.topWindow() !== win;
 }
 
+/** COVERED-KEYS: THE ONE DOOR FOR A DOM WINDOW'S KEYS. An enhanced window draws in the DOM and hears its keys on the page,
+ *  in capture - before any host can route a key to the top window. So a window under a box (a tutorial page, a refusal)
+ *  heard the box's Enter and Escape and acted on them: Escape closed the window under the box. Every such listener is
+ *  laid here, for the stack window `win` it belongs to, and hears nothing while that window is covered. `onCovered` is
+ *  told instead (the pause face drops a press it armed). A `win` no stack holds is never covered. test/ui/coveredkeys.test.js
+ *  holds every enhanced view to this door. Answers the unlisten. */
+export function listenWindowKeys(win, onKey, { types = ['keydown'], onCovered = null } = {}) {
+  const gate = (/** @type {KeyboardEvent} */ e) => {
+    if (windowCovered(win)) {
+      onCovered?.(e);
+      return;
+    }
+    onKey(e);
+  };
+  for (const type of types) globalThis.addEventListener?.(type, gate, true);
+  return () => {
+    for (const type of types) globalThis.removeEventListener?.(type, gate, true);
+  };
+}
+
 /**
  * Build a stack.
  *

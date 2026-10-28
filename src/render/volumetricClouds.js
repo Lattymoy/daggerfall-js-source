@@ -1452,6 +1452,10 @@ uniform sampler2D uMap;
 out vec4 outColor;
 void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rrr, 1.0); }`;
 
+/** BOOT-COMPILE: the pass's four programs - the march, the shadow march, the composite and the lab's viewer - as its
+ *  constructor builds them: what the boot starts ahead of the build (render/bootPrograms.js). */
+export const CLOUD_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, MARCH_FS], [VS, SHADOW_FS], [VS, COMPOSITE_FS], [VS, SHADOW_VIEW_FS]]));
+
 /** The field's uniforms, shared by both marches. */
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
@@ -1480,10 +1484,11 @@ export class VolumetricClouds {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    this.marchProgram = buildProgram(gl, VS, MARCH_FS);
-    this.shadowProgram = buildProgram(gl, VS, SHADOW_FS);
-    this.compositeProgram = buildProgram(gl, VS, COMPOSITE_FS);
-    this.viewProgram = buildProgram(gl, VS, SHADOW_VIEW_FS);
+    const [march, shadow, composite, view] = CLOUD_PROGRAMS;
+    this.marchProgram = buildProgram(gl, ...march);
+    this.shadowProgram = buildProgram(gl, ...shadow);
+    this.compositeProgram = buildProgram(gl, ...composite);
+    this.viewProgram = buildProgram(gl, ...view);
     this.mu = {}; for (const n of MARCH_UNIFORMS) this.mu[n] = gl.getUniformLocation(this.marchProgram, n);
     this.su = {}; for (const n of SHADOW_UNIFORMS) this.su[n] = gl.getUniformLocation(this.shadowProgram, n);
     this.cu = {}; for (const n of COMPOSITE_UNIFORMS) this.cu[n] = gl.getUniformLocation(this.compositeProgram, n);
@@ -1510,6 +1515,9 @@ export class VolumetricClouds {
     this.pace = SWEEP_FRAMES;        // RAIN-FPS: this sky sweep's frames, taken at its first stripe
     this.shadowPace = SWEEP_FRAMES;  // ...and the shadow sweep's, at its own
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
+    /** CLOUD-COMPILE option D (`?cloudsweep=whole`, off by default): march the first sweep whole, in the clouds' first
+     *  frame, so they are drawn from that frame - one frame's GPU time for the whole map instead of a stripe's. */
+    this.wholeFirstSweep = false;
     this.origin = null;       // the shadow square's corner the camera asks for
     this.mapOrigin = null;    // the corner the map HOLDS - the deck's rect (the two differ for the frame between a crossing and its blit)
     this.shadowStripe = 0;
@@ -1652,7 +1660,7 @@ export class VolumetricClouds {
       const u = this.mu;
       // RAIN-FPS: the pace is the sky's at a sweep's start and holds to its end - a sweep never changes stripe midway
       if (this.stripe === 0) this.pace = sweepFramesFor(this.row?.cover, this.cells.length);
-      const rows = Math.ceil(q.height / this.pace);
+      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);
       const y0 = this.stripe * rows;
       gl.useProgram(this.marchProgram);
       this._fieldUniforms(u);

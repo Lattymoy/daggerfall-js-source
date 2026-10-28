@@ -1,0 +1,299 @@
+[
+  {
+    "name": "ROLL-UNHEARD-start-ignored",
+    "file": "src/net/npcRollTracker.js",
+    "old": "unheard ? unheard.start : ",
+    "new": "false ? unheard.start : ",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-UNHEARD-claimed-under-a-fresh-id",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    if (Object.keys(saved).length) pending = { rid:",
+    "new": "    if (false) pending = { rid:",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-UNHEARD-never-marked",
+    "file": "src/net/npcRollTracker.js",
+    "old": "      if (!base) keepUnheard();\n",
+    "new": "",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-UNHEARD-earlier-start-replaced",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    if (k?.unheard) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-UNHEARD-any-claim-id",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (!rollSeedOk(start) || !rollRidOf(rid)) return null;",
+    "new": "  if (!rollSeedOk(start)) return null;",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-UNHEARD-lost-on-restore",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  return unheard ? { seq, factions: out, unheard } : { seq, factions: out };",
+    "new": "  return { seq, factions: out };",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-STOP-said-nowhere",
+    "file": "src/net/npcRollTracker.js",
+    "old": "  return t('realm.roll.stopped', ROLL_STOPPED_TEXT);",
+    "new": "  return null;",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "ROLL-STOP-never-said",
+    "file": "src/net/npcRollTracker.js",
+    "old": "  if (text) say(text);\n",
+    "new": "",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-seat-loss-saves-nothing",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      if (!session || session.lost) return;\n      checkpoint();",
+    "new": "      return;",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-seat-loss-slot-saves",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      if (!session || session.lost) return;\n      checkpoint();",
+    "new": "      checkpoint();",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-first-checkpoint-never-waits",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      if (stands()) checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "new": "      checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-seat-loss-before-the-world-stands",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      if (!stands()) return;   // the first standing frame's checkpoint is due at once, and hears the lease then\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-host-seat-loss-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    checkpointClock.seatLost();",
+    "new": "",
+    "tests": [
+      "test/net/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-host-hold-unwired",
+    "file": "src/scenes/world.js",
+    "old": ", stands: () => _bootLoaded });\n  /** AUDIT PRE-MERGE 1003 O10",
+    "new": " });\n  /** AUDIT PRE-MERGE 1003 O10",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-from-the-first-failure",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "    const unsavedFor = at - session.savedAt;",
+    "new": "    const unsavedFor = at - (session.missedSince ?? at);",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-put-out-not-waited",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "    if (session.busy && !failing) return;",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-gate-shut-in-the-failing-words",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "    say(failing ? realmUnsavedText(minutes) : realmNotSavedText(minutes));",
+    "new": "    say(realmUnsavedText(minutes));",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-idle-answer-not-a-save",
+    "file": "src/systems/realmSaves.js",
+    "old": "        savedAt = now();   // the realm holds this save but for its clock\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-landing-not-a-save",
+    "file": "src/systems/realmSaves.js",
+    "old": "          savedAt = landedAt;\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-frame-never-asks",
+    "file": "src/systems/online/onlineCheckpointClock.js",
+    "old": "      unsaved?.tick();\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/onlineCheckpointClock.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-lease-alone-marks-missed",
+    "file": "src/systems/realmSaves.js",
+    "old": "            if (r.error !== 'lease' || idleKeyOf(job.text, job.summary) !== landedKey) { markMissed(); revise({ missed: true }); }",
+    "new": "            { markMissed(); revise({ missed: true }); }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-yield-never-restores",
+    "file": "src/systems/realmSaves.js",
+    "old": "      try { storage.setItem(strandedKey(stranded), held); storage.setItem(strandedAtKey(stranded), at); } catch { /* storage away */ }",
+    "new": "      void stranded; void held; void at;",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-lease-copy-never-marked",
+    "file": "src/systems/realmSaves.js",
+    "old": "            if (r.error !== 'lease' || idleKeyOf(job.text, job.summary) !== landedKey) { markMissed(); revise({ missed: true }); }",
+    "new": "            if (r.error !== 'lease') { markMissed(); revise({ missed: true }); }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-idle-survival-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (rest.survival && typeof rest.survival === 'object') { const { lastMinute, rotMinutes, thirst, fed, ...survival } = rest.survival; rest.survival = survival; }",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-idle-quest-stamps-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "  for (const quest of Object.values(rest.quest?.machine?.quests ?? {})) if (quest && typeof quest === 'object') delete quest.ownSecondsAt;\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-idle-automap-stamps-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "  for (const map of Object.values(rest.automap ?? {})) if (map && typeof map === 'object') delete map.lastVisited;\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-set-aside-never-yields-room",
+    "file": "src/systems/realmSaves.js",
+    "old": "    setYieldingStranded(storage, unsentKey(id), text, id);",
+    "new": "    storage.setItem(unsentKey(id), text);",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-way-back-keeps-the-copy",
+    "file": "src/systems/online/strandedCopy.js",
+    "old": "  forgetStranded(storage, id);\n  const written",
+    "new": "  const written",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-way-back-same-id",
+    "file": "src/systems/online/strandedCopy.js",
+    "old": "  offline.characterId = mintCharacterId();\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-way-back-no-room-loses-it",
+    "file": "src/systems/online/strandedCopy.js",
+    "old": "    storage.setItem(strandedTextKey(id), strandedText);",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-notice-among-the-buttons",
+    "file": "src/ui/saveTile.js",
+    "old": "    const bar = el('div', 'svcloud is-only svnotice');",
+    "new": "    const bar = el('div', 'acts');",
+    "tests": [
+      "test/ui/savetile.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-notice-press-copies-at-once",
+    "file": "src/ui/enhanced/strandedNotice.js",
+    "old": "onClick: () => ask(strandedAskTitle(name), strandedAskBody(name), label, recover) }",
+    "new": "onClick: () => recover() }",
+    "tests": [
+      "test/ui/enhanced/strandedNotice.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-notice-never-busy",
+    "file": "src/ui/enhanced/strandedNotice.js",
+    "old": "disabled: busy,",
+    "new": "disabled: false,",
+    "tests": [
+      "test/ui/enhanced/strandedNotice.test.js"
+    ]
+  }
+]

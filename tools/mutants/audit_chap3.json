@@ -253,8 +253,8 @@
   {
     "name": "A3-C9-STOP",
     "file": "src/scenes/world.js",
-    "old": "      if (error === 'roll-seed' || error === 'roll-claim') chatNotice(accountRefusalText(error));\n      else if",
-    "new": "      if",
+    "old": "    onStop: (error) => sayRollStop(error, chatNotice),",
+    "new": "    onStop: () => {},",
     "tests": [
       "test/net/audit_chap3.test.js"
     ]

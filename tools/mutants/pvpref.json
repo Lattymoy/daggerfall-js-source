@@ -519,8 +519,8 @@
  {
   "name": "PVPREF-blow-clipped-untallied",
   "file": "src/net/siege/siegeRef.js",
-  "old": "  by.clipped += want - got;\n  by.dealt += got;\n  to.hp -= got;\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
-  "new": "  by.dealt += got;\n  to.hp -= got;\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
+  "old": "  by.clipped += want - got;\n  by.dealt += got;\n  to.hp -= got;\n  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
+  "new": "  by.dealt += got;\n  to.hp -= got;\n  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
   "tests": [
    "test/systems/pvpref_law.test.js",
    "test/net/siege/pvpref_relay.test.js"
@@ -683,8 +683,8 @@
  {
   "name": "PVPREF-rise-not-whole",
   "file": "src/net/siege/siegeRef.js",
-  "old": "  f.down = false; f.hp = f.max; f.safeTo",
-  "new": "  f.down = false; f.safeTo",
+  "old": "  f.hp = f.max; f.safeTo",
+  "new": "  f.safeTo",
   "tests": [
    "test/systems/pvpref_law.test.js",
    "test/net/siege/pvpref_relay.test.js"
@@ -883,8 +883,8 @@
  {
   "name": "PVPREF-relay-unsaved-fighter",
   "file": "server/src/index.js",
-  "old": "        s.fighters[a.sub] = { ...newFighter(a.lv, now), side, pose, poseAt: now };\n        if (camp) this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: pose }));\n        await this._siegeSave(now, true);",
-  "new": "        s.fighters[a.sub] = { ...newFighter(a.lv, now), side, pose, poseAt: now };\n        if (camp) this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: pose }));\n        await this._siegeSave(now, false);",
+  "old": "        s.fighters[a.sub] = { ...newFighter(a.lv, now), side, pose, poseAt: now };\n        if (b?.kind !== 'royal') this._vitAsk(a.sub, s.fighters[a.sub]);   // SHARED-HEALTH: the fighter's health anchors its count\n        if (camp) this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: pose }));\n        await this._siegeSave(now, true);",
+  "new": "        s.fighters[a.sub] = { ...newFighter(a.lv, now), side, pose, poseAt: now };\n        if (b?.kind !== 'royal') this._vitAsk(a.sub, s.fighters[a.sub]);   // SHARED-HEALTH: the fighter's health anchors its count\n        if (camp) this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: pose }));\n        await this._siegeSave(now, false);",
   "tests": [
    "test/net/siege/pvpref_relay.test.js"
   ]

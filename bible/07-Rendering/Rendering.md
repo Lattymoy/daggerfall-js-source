@@ -122,6 +122,11 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   window of the screen (`drawBodyPicture`, BODY-CROP); the ortho card
   (`drawRigSpriteBox`) stays the voxel rigs', the Billboard Look's and the
   travel view's. `04-Characters/Morrowind-NPCs.md` section 32.
+- `bootPrograms.js` - BOOT-COMPILE: every program the boot will build, started
+  together as soon as `main.js` has made the renderer (`startBootPrograms`),
+  so the driver compiles them beside the boot's own work and each pass's
+  build takes its started program; `outdoorPasses` restates the switches the
+  hosts read. `07-Rendering/Performance-Priority.md` BOOT-COMPILE.
 - `bounds.js` - EL5 THE BOUNDS AND THE CULL: a bundle's bounding sphere
   (`boundsOf`, computed at upload for a mesh and each sub-mesh, a terrain
   surface, a billboard batch), the record's world sphere
@@ -1521,6 +1526,14 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   + Worley at 8/16/32) and a 32^3 detail volume (Worley at 4/8/16), tiling on
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
+- `cloudsArrival.js` - CLOUD-COMPILE: the volumetric clouds' door for the sky
+  controller (`scenes/shared.js` createSkyController). Its seven programs
+  start at the mount; the clouds and their noise are built at the sky's
+  first `use` after the driver has compiled them (`compiledPass`, never
+  forced) - on the first ask, frame for frame as a build at the mount; until
+  then, and until a later build's first sweep, the sky stands as with the
+  clouds off. A recenter before the build is handed to it.
+  `07-Rendering/Performance-Priority.md` CLOUD-COMPILE.
 - `warmPrograms.js` - PERF-WARM THE COMPILE THAT NO LONGER HAPPENS MID-FRAME:
   the idle driver for the programs a renderer builds ON DEMAND. Five of
   renderer.js's were compiled inside a draw call (the particle effects' on the

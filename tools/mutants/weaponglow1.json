@@ -414,8 +414,8 @@
  {
   "name": "WEAPON-GLOW1-the-mesh-glow-cold",
   "file": "src/render/renderer.js",
-  "old": "      () => this._ensureWeaponGlowMeshProgram(),",
-  "new": "      () => {},",
+  "old": "run: () => this._ensureWeaponGlowMeshProgram(), need:",
+  "new": "run: () => {}, need:",
   "tests": [
    "test/systems/weaponglow1.test.js"
   ],

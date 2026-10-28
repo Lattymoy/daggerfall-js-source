@@ -205,7 +205,7 @@ test('YARD-MERGE: the town\'s yards let their pools merge on one budget a frame 
   assert.equal(YARD_MERGES_A_FRAME, 1);
   assert.ok(y.includes('  const merge = { take: () => (mergesLeft > 0 ? (mergesLeft--, true) : false), now };'), 'the budget: taken while it lasts');
   const made = y.slice(y.indexOf('    y.pool = createDecorRoom({'), y.indexOf('    yards.set(key, y);'));
-  assert.ok(made.includes('      merge,   // YARD-MERGE'), 'every yard\'s pool given it');
+  assert.ok(made.includes('      merge: door ?? merge,   // YARD-MERGE'), 'every yard\'s pool given it - a kept one\'s, the budget; a stranger\'s, its block\'s door (YARD-BLOCK)');
   const draw = y.slice(y.indexOf('    draw(r = deps.renderer) {'), y.indexOf('      tool.draw(r, cur ? remapOf(cur.yard) : null);'));
   const refill = draw.indexOf('      mergesLeft = YARD_MERGES_A_FRAME;');
   assert.ok(refill > 0 && refill < draw.indexOf('y.pool.draw('), 'refilled each frame before the pools draw');

@@ -142,6 +142,18 @@ test('TILE2/ACC2: the cloud line, and the state that draws NONE of it', () => {
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'frobnicated' } }), 'svsay'), 'Not backed up');
 });
 
+test('STRANDED: a notice is one line and its button, above the cloud line and the tile\'s own buttons - and no notice draws none', () => {
+  const notice = { say: 'This device has progress for this character that never reached the realm.', actions: [{ label: 'Recover it' }] };
+  const tile = saveTile(fakeDoc(), SAVE, { notice, cloud: { state: 'saved' }, actions: [{ label: 'Play', primary: true }] });
+  const foot = byClass(tile, 'svfoot')[0];
+  assert.deepEqual(foot.childNodes.map((n) => n.className), ['svcloud is-only svnotice', 'svcloud is-saved', 'acts'], 'the notice first, apart from the buttons');
+  const line = byClass(tile, 'svnotice')[0];
+  assert.equal(text(line, 'svsay'), notice.say);
+  assert.deepEqual(byClass(line, 'act').map((b) => b.textContent), ['Recover it']);
+  assert.equal(byClass(saveTile(fakeDoc(), SAVE, { actions: [{ label: 'Play' }] }), 'svnotice').length, 0);
+  assert.equal(byClass(saveTile(fakeDoc(), SAVE, { notice: { say: '' } }), 'svnotice').length, 0, 'a notice with nothing to say draws nothing');
+});
+
 test('AUDIT-312 F3: the cloud line\'s STATE is decided where a pin can reach it', () => {
   // WHY THIS PIN EXISTS. This arithmetic lived inside
   // `ui/enhanced/enhancedMenu.js` - DOM, a boot, and nothing node can drive - so

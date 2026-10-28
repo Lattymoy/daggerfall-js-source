@@ -46,6 +46,7 @@ import { survivalOn, survivalRules } from '../../systems/survival/switch.js';   
 import { tavernMenu, tavernEat, tavernDrink, tavernOrder, tavernWater, tavernRefresh, blackout, blackoutWaking } from '../../systems/survival/tavernMenu.js';   // INN-WATER: tavernWater, the fountain's law at the bar; AUDIT C&C I6: tavernRefresh; I4: blackoutWaking
 import { survivalOf } from '../../systems/survival/needs.js';
 import { stiffen, REST_KIND } from '../../systems/survival/rest.js';
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { cardPackPrice, buyCardPack } from '../../systems/card/cardSources.js';   // CARDS9: the keeper's packs
 
 const el = (tag, cls, text) => {
@@ -63,7 +64,7 @@ let roomDraft = '1';       // the days field, as typed
 let box = null;            // { rows, buttons: 'YesNo'|null, onYes }
 let menu = null;           // the food/drink rows, while that picker is up
 let unregisterOutside = () => {};
-let keyHandler = null;
+let unlistenKeys = null;
 /** ENH-NOTICE3: the notice panel's OWNER for this window. A module-level
  *  object rather than the view the mount returns, because `render()`
  *  runs during the mount (before the view exists) and again from
@@ -480,13 +481,13 @@ export function mountEnhancedTavern(hostEl, hooks = {}) {
   box = null;
   menu = null;
   render();
-  keyHandler = onKey;
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(hooks.owner, onKey);   // COVERED-KEYS: hooks.owner, the panel's window (ui/tavernDoor.js)
   return {
     repaint: render,
     unmount() {
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
-      keyHandler = null;
+      unlistenKeys?.();
+      unlistenKeys = null;
       unregisterOutside();
       unregisterOutside = () => {};
       // ENH-NOTICE3 / EVERY ALLOCATION HAS AN OWNER: a held panel has no

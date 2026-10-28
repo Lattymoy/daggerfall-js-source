@@ -30,7 +30,7 @@
   {
     "name": "BOOT-HIDE-the-page-hide-door-dropped",
     "file": "src/scenes/world.js",
-    "old": "    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });\n",
+    "old": "    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); }, realmSession);\n",
     "new": "",
     "tests": ["test/scenes/fb0929h_boothide.test.js"]
   },

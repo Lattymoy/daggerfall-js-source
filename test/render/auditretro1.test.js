@@ -630,10 +630,10 @@ test('AUDIT RETRO1 E7: the warm builds the present\'s program when retro mode is
   let on = false;
   r.setRetroSource(() => (on ? retroCfg() : null));
   assert.equal(r.warmSteps().length, 6);
-  r.warmSteps().at(-1)();
+  r.warmSteps().at(-1).run();
   assert.equal(r.retro, null, 'retro off: nothing built');
   on = true;
-  r.warmSteps().at(-1)();
+  r.warmSteps().at(-1).run();
   assert.ok(r.retro?.P?.p, 'the program, built');
   assert.equal(r._lastProgram, null, 'and the program shadow dropped');
 });

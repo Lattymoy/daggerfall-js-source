@@ -128,7 +128,7 @@
  {
   "name": "TS-the-reader-blind",
   "file": "src/world/terrain/terrainTiles.js",
-  "old": "autoMapData: rmb.fldHeader.autoMapData }, misc3dObjectRecords: rmb.misc3dObjectRecords, miscFlatObjectRecords: rmb.miscFlatObjectRecords } }",
+  "old": "autoMapData: part.autoMapData }, misc3dObjectRecords: part.misc3dObjectRecords, miscFlatObjectRecords: part.miscFlatObjectRecords } }",
   "new": "} } }",
   "tests": [
    "test/world/terrain/townshapes.test.js"

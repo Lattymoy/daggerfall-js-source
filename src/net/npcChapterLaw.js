@@ -258,11 +258,29 @@ export function rollAdopt(current, base, sent, roll) {
 export function rollKeptOf(/** @type {unknown} */ rec) {
   if (!rec || typeof rec !== 'object') return null;
   const { seq, factions } = /** @type {any} */ (rec);
-  if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return null;
+  const unheard = rollUnheardOf(/** @type {any} */ (rec).unheard);
+  if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return unheard ? { unheard } : null;
   /** @type {Record<number, number>} */
   const out = {};
   for (const [k, v] of Object.entries(factions)) out[Number(k)] = v;
-  return { seq, factions: out };
+  return unheard ? { seq, factions: out, unheard } : { seq, factions: out };
+}
+
+/**
+ * The standing the Roll never heard, as the save keeps it beside the last adoption: `{ start, rid }`, normalised, or
+ * null. `start` is the standing when the first page that never heard the Roll began. `rid` is the claim id for what
+ * moved since, so many pages that send it make one claim: the service answers a repeat as the first.
+ * Without it, the next page could not tell what the save held past the adoption it loaded, and everything played while
+ * the Roll was silent was lost (the guild standing reset).
+ */
+export function rollUnheardOf(/** @type {unknown} */ rec) {
+  if (!rec || typeof rec !== 'object') return null;
+  const { start, rid } = /** @type {any} */ (rec);
+  if (!rollSeedOk(start) || !rollRidOf(rid)) return null;
+  /** @type {Record<number, number>} */
+  const out = {};
+  for (const [k, v] of Object.entries(start)) out[Number(k)] = v;
+  return { start: out, rid };
 }
 
 /** STANDING-WORDS (AUDIT GUILD-WORDS L2-2, L2-4; II B-4, B-5): WHAT THE ROLL'S WORD MOVED since its last - each of the

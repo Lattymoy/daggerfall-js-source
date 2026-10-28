@@ -174,7 +174,7 @@ test('U51: the pause door mounts the FRONT DOOR, not a second design', () => {
     'the pause screen IS ui/enhanced/enhancedMenu.js');
   // PX26 added the LANDING to this call; the law U51 guards is
   // unchanged - pause mode, the host's own hooks, one front door.
-  assert.match(src, /mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null \}\)/,
+  assert.match(src, /mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null, owner: overlay \}\)/,
     'mounted in pause mode with the host’s own hooks');
   // and it carries no design of its own, exactly as menu.html carries
   // none - the tokens and the layout live in ui/enhanced/enhancedStyle.js
@@ -313,9 +313,9 @@ test('U51: every listener has an owner', () => {
   // paused again: the dead listener keeps swallowing Escape.
   const src = read('src/ui/enhanced/enhancedMenu.js');
   const unmount = src.slice(src.indexOf('    unmount() {'));
-  assert.match(unmount, /removeEventListener\('keydown', keyHandler, \{ capture: true \}\)/);
+  assert.match(unmount, /unlistenKeys\?\.\(\);   \/\/ the press and the release both/);   // COVERED-KEYS: the one key door's unlisten
   assert.match(unmount, /removeEventListener\('pointerlockchange', lockHandler\)/);
-  assert.match(unmount, /keyHandler = null/);
+  assert.match(unmount, /unlistenKeys = null/);
 });
 
 test('U51: the pointer lock is dropped, and kept dropped', () => {

@@ -252,7 +252,8 @@ test('WEATHER2c the class and the controller: setState takes the cells (the cont
   assert.equal((vc.match(/gl\.uniform1f\(u\.uDark, p\.dark\);/g) || []).length, 1, 'the dark is uploaded once, by the field');
   assert.equal((vc.match(/gl\.uniform1f\(u\.uVary, p\.vary \?\? 0\);/g) || []).length, 1, 'VC6a: and the variation once, beside it');
   const shared = rd('src/scenes/shared.js');
-  assert.match(shared, /if \(clouds\) clouds\.testCellSpec = params\.get\('cloudcell'\);/);
+  assert.match(shared, /createCloudsArrival\(gl, cloudQuality, params\.get\('cloudcell'\),/);
+  assert.match(rd('src/render/cloudsArrival.js'), /built\.testCellSpec = testCellSpec;/, 'CLOUD-COMPILE: handed to the clouds at their build');
   assert.equal((shared.match(/extra\?\.cells \?\? null\);/g) || []).length, 2, 'the dome path and the mod path both hand the cells');
 });
 

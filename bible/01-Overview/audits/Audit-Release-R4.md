@@ -121,7 +121,7 @@ is fixed in this pass: each lever is a wire or relay law change, and the owner's
 
 ### R4-4 - the boot's continent, built again each boot (FIXED - the trace, its relief, the fit and the roads' scan kept; the roads' print not)
 
-`src/scenes/world.js:"preloadTamrielTrace({ fetchBytes, palette }).then((trace) => {"`,
+`src/scenes/world.js:"preloadTamrielTrace({ fetchBytes, palette }).then(async (trace) => {"`,
 `src/scenes/tamrielRoadsHost.js:"inputs, print: inputsPrint(inputs), regions,"`. Timed in node (load 9-22):
 
 | build | thread | cached? | new player | returning player |

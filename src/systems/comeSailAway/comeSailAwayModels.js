@@ -61,6 +61,8 @@
 import { galleonPrefab, GALLEON_PREFAB_ID } from '../../world/ships/galleonModel.js';   // GALLEON: Mac's ship stands in for hull 2
 import { carrackPrefab, CARRACK_PREFAB_ID } from '../../world/ships/carrackModel.js';   // SHIPS-2: and his carrack for hull 4,
 import { largeBoatPrefab, LARGE_BOAT_PREFAB_ID } from '../../world/ships/largeBoatModel.js';   // his Tiny Ship for hull 1
+import { shipBuildKey, shipBuildScope, isShipBuild } from './shipBuildsKept.js';   // FIRST-VISIT: the builds kept across launches
+import { derivedValueStore, keepAnswer } from '../firstVisit/firstVisitStore.js';
 
 /** Where the extractor's files are served (a pin reads them off the disk). */
 export const CSA_MODEL_URLS = Object.freeze({
@@ -109,11 +111,11 @@ export const soundUrl = (/** @type {string} */ name) => new URL(`../../../vendor
  * come - a whole fetch later). SHIPS-2: and the new carrack's and the new
  * large boat's at `shipUrls` (each null for none), fetched beside them too,
  * each one's answer its own - missing or broken, its hull is the mod's
- * own, said once, and every other ship stands as it would.
+ * own, said once, and every other ship stands as it would. FIRST-VISIT: `store` keeps the build (shipBuildsKept.js).
  * @returns {Promise<ReturnType<typeof comeSailAwayModels> | null>}
  */
 export async function loadComeSailAwayModels(fetchFn = globalThis.fetch, urls = CSA_MODEL_URLS, log = console, galleonUrl = GALLEON_MODEL_URL,
-  shipUrls = { carrack: CARRACK_MODEL_URL, largeBoat: LARGE_BOAT_MODEL_URL }) {
+  shipUrls = { carrack: CARRACK_MODEL_URL, largeBoat: LARGE_BOAT_MODEL_URL }, store = derivedValueStore()) {
   if (!fetchFn) return null;
   try {
     const get = async (/** @type {string} */ url, /** @type {boolean} */ binary) => {
@@ -134,15 +136,15 @@ export async function loadComeSailAwayModels(fetchFn = globalThis.fetch, urls = 
     // (once a process - its cache) so one that will not build drops alone
     const ships = {};
     let base = prefabs.components.length;
-    PORT_SHIPS.forEach((ship, k) => {
+    for (const [k, ship] of PORT_SHIPS.entries()) {
       const answer = answers[k];
-      if (!answer) return;
+      if (!answer) continue;
       const standsAs = `hull ${ship.hull} stands as the mod's own ${MOD_TITLES[ship.key]}`;
-      if (!answer.ok) { log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error); return; }
-      try { base += shipBuilt(ship, answer.json, prefabs, base).components.length; ships[ship.key] = answer.json; } catch (e) {
+      if (!answer.ok) { log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error); continue; }
+      try { base += (await keptShipBuilt(ship, answer.json, prefabs, base, store)).components.length; ships[ship.key] = answer.json; } catch (e) {
         log?.warn?.(`[come-sail-away] the new ${ship.title} would not build - ${standsAs}`, e);
       }
-    });
+    }
     return comeSailAwayModels({ prefabs, meshes, bin, materials, animation, ...ships });
   } catch (e) {
     log?.warn?.('[come-sail-away] the boats\' models did not load - no boat can stand', e);
@@ -227,6 +229,23 @@ function shipBuilt(ship, json, prefabs, base) {
   if (ship.key === 'galleon' && base !== prefabs.components.length) throw new Error('come-sail-away: the galleon\'s components come first');
   const built = ship.build(json, prefabs, base);
   _built.set(ship.key, { sha256: json.sha256, bake, base, old, built });
+  return built;
+}
+/** FIRST-VISIT: shipBuilt, with the build kept across launches in `store` (shipBuildsKept.js) - read back when it was
+ *  kept over this bake, these mod prefabs and this base; built and kept when not. */
+async function keptShipBuilt(ship, json, prefabs, base, store) {
+  const bake = JSON.stringify(json), old = JSON.stringify(ship.reads.map((id) => prefabs.prefabs[String(id)] ?? null));
+  const was = _built.get(ship.key);
+  if (!store || (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old)) return shipBuilt(ship, json, prefabs, base);
+  const key = shipBuildKey(ship.key, json.sha256, bake, base, old);
+  const kept = await store.get(key);
+  if (isShipBuild(kept)) {
+    _built.set(ship.key, { sha256: json.sha256, bake, base, old, built: kept });
+    return kept;
+  }
+  const built = shipBuilt(ship, json, prefabs, base);
+  // not awaited: the build is in hand, and a store that is slow or refuses the write must not hold the models back
+  keepAnswer(store, key, built, shipBuildScope(ship.key)).catch(() => {});
   return built;
 }
 

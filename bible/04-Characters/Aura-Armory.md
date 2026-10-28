@@ -79,7 +79,7 @@ is dressed at once.
 **A change reaches the room at once.** The world host compares the kit the last token said with the kit stored now,
 and says hello again on a fresh token when they differ (`net/online.js` rehello, AURA-LIVE's way).
 
-**The service's row.** Migration 0190: `players.armory_held` (a Breach piece's bit), `players.armory_miss` (the pity's
+**The service's row.** Migration 0191: `players.armory_held` (a Breach piece's bit), `players.armory_miss` (the pity's
 count) and `players.armory` (the kit worn, read against what is held at every ask, so a refunded piece is signed for no
 more). A shop piece is its ware's bit on `shop_wares`.
 

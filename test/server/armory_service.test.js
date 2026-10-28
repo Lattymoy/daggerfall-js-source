@@ -1,5 +1,5 @@
 // ARMORY (2026-10-28, bible/04-Characters/Aura-Armory.md sections 3, 4 and 7): THE AURA ARMORY, SERVICE SIDE - the law's
-// kit, the Breach's roll in the gate claim's own batch over the REAL migrations (test/accountDb.mjs, migration 0190), the
+// kit, the Breach's roll in the gate claim's own batch over the REAL migrations (test/accountDb.mjs, migration 0191), the
 // wear door, what is held off the row's bits (the Breach's and the shop's), and the token that carries the kit.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
