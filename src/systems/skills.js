@@ -11,7 +11,7 @@ import { localizedStrings, localizedText, getLocalizedTextWithReversion, TextCol
 // SOFTCAP1: two more leaves (neither imports anything) - the softcap's law
 // and mentor mode's overlay.
 import { effectiveSkill, overcapTallyWeight, movementTallyWeight, SKILL_SOFT_CAP, SKILL_HARD_CAP } from './skillSoftcap.js';   // MOVE-REAL: the movement skills' own weight
-import { mentoredSkill } from './mentorMode.js';
+import { mentoredSkill, MENTOR_PUPIL_TALLY } from './mentorMode.js';
 import { masterCappedSkill, skillCanPassCap } from './masterSkills.js';   // SOFTCAP3: Master Skills - past 100 only when on (and online)
 export { SKILL_SOFT_CAP, SKILL_HARD_CAP, effectiveSkill } from './skillSoftcap.js';
 
@@ -171,14 +171,15 @@ export function tallySkill(entity, skillId, amount = 1, movement = false) {
   // SOFTCAP1: a skill at 100+ counts only REAL use (skillSoftcap.js
   // overcapTallyWeight - a foe tough for the skill, no spam). The weight
   // is fractional, so the remainder rides entity.skillUseFrac and only
-  // whole uses reach the int32 counter below. The REAL permanent value is
-  // read, never the mentored one: mentor mode cannot make a weak foe count.
+  // whole uses reach the int32 counter below. MENTOR2: the foe is weighed
+  // against the skill the mentor FIGHTS with (mentoredSkill) - the fight
+  // they had; the cost ladder still reads the real value.
   const real = Array.isArray(entity.skills) ? (entity.skills[skillId] ?? 0) : 0;
   // SOFTCAP3: only while Master Skills is in force - off, the use is tallied as Daggerfall always did (a skill at
   // 100 simply never spends it)
   if (real >= SKILL_SOFT_CAP && skillCanPassCap(entity, skillId)) {   // SOFTCAP4: and only for a MASTERED skill
     if (real >= SKILL_HARD_CAP) return;
-    const w = movement ? movementTallyWeight(entity, skillId, amount, real) : overcapTallyWeight(entity, skillId, amount, real);   // MOVE-REAL
+    const w = movement ? movementTallyWeight(entity, skillId, amount, real) : overcapTallyWeight(entity, skillId, amount, mentoredSkill(entity, real));   // MOVE-REAL; MENTOR2
     if (!(w > 0)) return;
     const frac = (entity.skillUseFrac ??= new Array(SKILL_COUNT).fill(0));
     const total = (frac[skillId] ?? 0) + w;
@@ -192,8 +193,18 @@ export function tallySkill(entity, skillId, amount = 1, movement = false) {
     entity.skillUses[skillId] += whole;
     return;
   }
-  entity.skillUses[skillId] += amount;
+  entity.skillUses[skillId] += entity._pupil ? pupilUses(entity, skillId, amount) : amount;
   if (entity.skillUses[skillId] > 20000) entity.skillUses[skillId] = 20000;
+}
+
+/** MENTOR2: a pupil beside a mentor (mentorMode.js refreshPupil) trains MENTOR_PUPIL_TALLY times as fast below 100 -
+ *  whole uses, the fraction carried on `_pupilFrac` (never saved). */
+function pupilUses(entity, skillId, amount) {
+  const frac = (entity._pupilFrac ??= new Array(SKILL_COUNT).fill(0));
+  const total = (frac[skillId] ?? 0) + amount * MENTOR_PUPIL_TALLY;
+  const whole = Math.floor(total + 1e-9);
+  frac[skillId] = total - whole;
+  return whole;
 }
 
 /** MOVE-REAL: a movement skill's use FROM MOTION - the run's quarter second, the jump, the swim's minute, the climb's

@@ -12545,8 +12545,8 @@
   "by": "claude-in-session"
  },
  "firmament.side.where": {
-  "en": "bf32d001f38f",
-  "tr": "7a1dcf1c8c76",
+  "en": "78767f723191",
+  "tr": "97275685f9a4",
   "by": "claude-in-session"
  },
  "firmament.signAria": {
@@ -12570,8 +12570,8 @@
   "by": "claude-in-session"
  },
  "firmament.status.mentoring": {
-  "en": "2f8dd90411c0",
-  "tr": "c4cc0fd5015a",
+  "en": "623667af1925",
+  "tr": "8fb1cb8c058f",
   "by": "claude-in-session"
  },
  "firmament.status.noSign": {
@@ -13690,8 +13690,8 @@
   "by": "claude-in-session"
  },
  "growth.spec.why.chosenMentor": {
-  "en": "a163a99d1ebc",
-  "tr": "1ca09b778799",
+  "en": "54129619c117",
+  "tr": "ccc53af6a79d",
   "by": "claude-in-session"
  },
  "growth.spec.why.chosenOff": {
@@ -17427,6 +17427,46 @@
  "martial.woodsman.techniqueText": {
   "en": "ccc0d1aa2f76",
   "tr": "9845a9a7f598",
+  "by": "claude-in-session"
+ },
+ "mentor.ended": {
+  "en": "f1e2a03439db",
+  "tr": "7d7b7b4189ed",
+  "by": "claude-in-session"
+ },
+ "mentor.levelShort": {
+  "en": "eadbef99ca42",
+  "tr": "a3b321919f98",
+  "by": "claude-in-session"
+ },
+ "mentor.status.off": {
+  "en": "fadc74fd6acd",
+  "tr": "367a7ee523c9",
+  "by": "claude-in-session"
+ },
+ "mentor.status.on": {
+  "en": "9392c61967d3",
+  "tr": "6b3e01871a65",
+  "by": "claude-in-session"
+ },
+ "mentor.status.pupil": {
+  "en": "fbdfccbc8568",
+  "tr": "5245fa973899",
+  "by": "claude-in-session"
+ },
+ "mentor.tile.mentor": {
+  "en": "a197cb2d60ed",
+  "tr": "d41a25e62a6c",
+  "by": "claude-in-session"
+ },
+ "mentor.tile.pupil": {
+  "en": "619532ac17ff",
+  "tr": "9963dc348c30",
+  "by": "claude-in-session"
+ },
+ "mentor.tip.meta": {
+  "en": "8f8364feecd7",
+  "tr": "01ea7d028fa5",
   "by": "claude-in-session"
  },
  "menu.about.build": {

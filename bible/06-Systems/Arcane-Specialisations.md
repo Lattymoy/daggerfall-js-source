@@ -81,12 +81,12 @@ could see or play. That is where the identity goes.
   opens the same guide (GROWTH4). The one ask's No names the Growth tab on the enhanced skin.
 - **Held and awake.** A path is HELD (`pathHeld`) by my own player entity (never a peer's stand-in) with Master Skills
   in force and both its schools mastered - what its signature spell is priced, taught and sold by (section 6). It is
-  AWAKE (`pathAwake`), and its powers act, while it is held and I am not mentoring (SOFTCAP2 reads no climb either) -
-  and its powers add no refereed fight in progress (`arcanePowers.js` awakePathId reads `sigil.js` sigilDueling, the
-  one word every loot power and set power sleeps on; the law cannot import it - sigil.js's graph reaches back into
-  `spellcost.js`, which reads the law). Mentoring takes the powers and leaves the price: through `pathAwake` a
-  mentored Necromancer's Siphon Life priced and trained as the Destruction they never chose, 9 magicka becoming 105 on
-  joining a lower party (AUDIT SCHOOLS L2 F5); mentoring's own law already lowers the schools' values and their climb.
+  AWAKE (`pathAwake`), and its powers act, while it is held - and its powers add no refereed fight in progress
+  (`arcanePowers.js` awakePathId reads `sigil.js` sigilDueling, the one word every loot power and set power sleeps on;
+  the law cannot import it - sigil.js's graph reaches back into `spellcost.js`, which reads the law). While mentoring
+  every number a path's power names acts at the mentor's power scale (MENTOR2, `06-Systems/Mentor-Mode.md`; it had
+  slept). The price stays the pair's: priced through `pathAwake`, a mentored Necromancer's Siphon Life had cost the
+  Destruction they never chose, 9 magicka becoming 105 (AUDIT SCHOOLS L2 F5), so the price reads `pathHeld`.
   Offline with the switch off, the path is neither and its signature spell casts as the plain bundle it is - nothing
   is lost, as Master Skills keeps a skill past 100 while off.
 - **Never at a player.** A rider or passive that strikes reaches foes only (`ownSpellAt`, BAL9's gate); a signature
@@ -110,7 +110,8 @@ per school. Each school pays in its own dimension:
 | Thaumaturgy | the chance of Spell Reflection and Spell Resistance on myself | the chance the buff holds, at most 100 |
 
 Online alone, as BAL9b: offline, DFU's price term already pays a school past 100 (to nothing at 110), and the offline
-game is Daggerfall's (Field-Bugs-2026-10-12c's For Mac stands). None while mentoring; none in a refereed fight; a heal,
+game is Daggerfall's (Field-Bugs-2026-10-12c's For Mac stands). While mentoring, the mentored climb (MENTOR2,
+`spell/spellPower.js` fightingClimb); none in a refereed fight; a heal,
 shield, concealment or ward only on MY OWN entity (a party mate's gift lands on their client, and an ally's bundle never
 merges with mine - ALLY-CAST C2); a chance only at a foe I cast at. A spell's school is the effect's own, except a
 signature spell's (section 6). Never a WORN item's bundle (a Cast When Held effect keeps what it landed with until the

@@ -18,8 +18,9 @@ import { FIRM_NODES, FIRM_EDGES } from '../../src/net/firmament/firmamentTree.js
 import { createFirmamentBook, FIRM_KEPT_KEY } from '../../src/net/firmament/firmamentBook.js';
 import { accountFirmament, SESSION_KEY } from '../../src/net/accountClient.js';
 import {
-  setFirmamentTree, setFirmamentOnline, setFirmamentMentoring, onFirmamentChange, firmActMult, firmStat, _resetFirmamentLiveForTests,
+  setFirmamentTree, setFirmamentOnline, setFirmamentMentorScale, firmamentMentorScale, firmamentStatsAt, onFirmamentChange, firmActMult, firmStat, _resetFirmamentLiveForTests,
 } from '../../src/systems/firmamentLive.js';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import {
   firmamentLayer, firmamentFold, firmamentEvade, firmamentKill, firmamentRound, firmamentBlow, firmamentAbsorb, firmamentSpellPierce, withoutFirmament,
   _resetFirmamentPowersForTests, _setFirmamentPowersRandForTests,
@@ -229,20 +230,22 @@ test('AUDIT UICALM-FIRM1 L1 L1: the sail\'s star moves her under the Classic hel
   }
 });
 
-test('AUDIT UICALM-FIRM1 L1 L2: mentoring puts the whole sky to sleep at once - the gathering windows and the sail with it, the fold told the same frame; partyFrame says so', () => {
+test('AUDIT UICALM-FIRM1 L1 L2, MENTOR2: mentoring moves the sky at once - the fold told the same frame - and leaves the life stars whole (the gathering windows, the sail), where it had put the whole sky to sleep; the mentor host hands the share in every frame (mutants: a life star scaled; told twice; the host never tells)', () => {
   setFirmamentOnline(true);
   setFirmamentTree(walk('rt.start', named('Gentle Hands')));
   const herb = firmActMult('herbalism');
+  const sail = firmStat('sailSpeed');
   assert.ok(herb > 1);
   let told = 0;
   onFirmamentChange(() => { told++; });
-  setFirmamentMentoring(true);
-  assert.deepEqual([told, firmActMult('herbalism'), firmStat('sailSpeed')], [1, 1, 0]);
-  setFirmamentMentoring(true);
+  setFirmamentMentorScale(0.6);
+  assert.deepEqual([told, firmActMult('herbalism'), firmStat('sailSpeed'), firmamentMentorScale()], [1, herb, sail, 0.6], 'the life stars whole');
+  setFirmamentMentorScale(0.6);
   assert.equal(told, 1, 'told once a change');
-  setFirmamentMentoring(false);
-  assert.deepEqual([told, firmActMult('herbalism')], [2, herb]);
-  assert.match(read('src/scenes/world.js'), /const mentorWord = refreshMentor\(playerEntity, mentorLevels\);\n\s+setFirmamentMentoring\(!!playerEntity\._mentor\);/);
+  setFirmamentMentorScale(1);
+  assert.deepEqual([told, firmActMult('herbalism'), firmamentMentorScale()], [2, herb, 1]);
+  assert.match(read('src/scenes/mentorHost.js'), /setFirmamentMentorScale\(mentorPowerScale\(me\)\);/);
+  assert.match(read('src/scenes/world.js'), /mentorHost\.frame\(nowMs\);/);
 });
 
 test('AUDIT UICALM-FIRM1 L1 L3: taking the seat back reads the book again', () => {
@@ -615,7 +618,7 @@ test('AUDIT UICALM-FIRM1 L5 H5: the combat channels as they act - an evasion on 
   if (carry) assert.equal(withoutFirmament(me, () => firmamentFold(me).weightMult ?? 0), 0);
 });
 
-test('FIELD BUGS 2026-10-26 (Dracanis, "Spell point regeneration effects not functioning": "The 0.2% of spell points restored per round from font of magnus ... Neither is the 3% on foe slain from soul siphon"): the magicka channels as they act, on the reported stars by name - a kill\'s Spell Points back and a round\'s, Clarity\'s round as Font of Magnus\'s; asleep in a duel and while mentoring, as every combat channel; nothing past the maximum (mutants: killMana unread; mpRegen unread)', () => {
+test('FIELD BUGS 2026-10-26 (Dracanis, "Spell point regeneration effects not functioning": "The 0.2% of spell points restored per round from font of magnus ... Neither is the 3% on foe slain from soul siphon"): the magicka channels as they act, on the reported stars by name - a kill\'s Spell Points back and a round\'s, Clarity\'s round as Font of Magnus\'s; asleep in a duel and at the mentor\'s share while mentoring (MENTOR2), as every combat channel; nothing past the maximum (mutants: killMana unread; mpRegen unread)', () => {
   setFirmamentOnline(true);
   _resetPlayerHealForTests();
   const t = walk('mg.start', named('Font of Magnus'), named('Soul Siphon'));
@@ -641,10 +644,14 @@ test('FIELD BUGS 2026-10-26 (Dracanis, "Spell point regeneration effects not fun
   me.magicka = 500; firmamentKill({ isPlayer: false, health: 0 }); firmamentRound(me);
   assert.equal(me.magicka, 500, 'a refereed fight: asleep');
   setSigilDueling(false);
-  me._mentor = true;
-  firmamentKill({ isPlayer: false, health: 0 }); firmamentRound(me);
-  assert.equal(me.magicka, 500, 'mentoring: asleep');
-  me._mentor = false;
+  const lv = me.level;
+  me.level = 30; me._mentor = mentorProfile(me, [5]);
+  const share = firmamentStatsAt(me._mentor.powerScale);
+  assert.ok(share.killMana > 0 && share.killMana < c.killMana, `mentoring: Soul Siphon at a share (${share.killMana} of ${c.killMana})`);
+  _resetPlayerHealForTests();
+  me.magicka = 500; firmamentKill({ isPlayer: false, health: 0 });
+  assert.equal(me.magicka, 500 + Math.floor((me.maxMagicka * share.killMana) / 100), 'mentoring: the kill at the mentor\'s share (MENTOR2 - it had slept)');
+  me._mentor = null; me.level = lv;
   // Clarity is Font of Magnus's twin
   _resetPlayerHealForTests();
   const clarity = [...FIRM_NODES.values()].find((n) => n.name === 'Clarity');

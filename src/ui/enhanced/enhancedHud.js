@@ -115,6 +115,7 @@ import { getInteractionMode } from '../../player/interactionMode.js';
 import { tickHudLayout, hudArranging } from '../hud/hudLayout.js';
 import { bindHudTips, showHudTip, hideHudTip, hudTipShowing } from '../hud/hudTip.js';   // HUD-TIP: the status tiles' hover cards, the pack's own card
 import { statusTip, madeRulesTile } from '../hud/statusTips.js';
+import { mentorHudTile } from '../../systems/mentorText.js';   // MENTOR2: mentoring's tile, read off the entity
 import { madeLevelHere } from '../../systems/madeLevel.js';   // EVENT-RULES: the made level under the player - its rules' tile
 import { regenPausedMs } from '../../systems/courtRules.js';
 import { bindAdvanceTiles, drawAdvanceTiles } from '../hud/hudAdvance.js';   // SKILL-READY / FIRM-STARS: the two tiles beside the Renown bar   // STATUS-TIPS: what a tile says under the pointer   // HUD-MOVE: the movable pieces, the lock and the reset
@@ -1487,6 +1488,8 @@ function drawStatus(vitals, opts, live = null) {
   if (zone) all.unshift(...statusTiles({ zone }));   // WILD1: the open zone's tile, first
   const rules = madeRulesTile(madeLevelHere(), regenPausedMs());
   if (rules) all.unshift(...statusTiles({ rules }));   // EVENT-RULES: a world event's rules, first - never silent
+  const mentor = mentorHudTile(vitals);
+  if (mentor) all.unshift(...statusTiles({ mentor }));   // MENTOR2: mentoring said where the lowered numbers are felt
   // a new window size or HUD scale is a new band at once (AUDIT UI C: a rotation left the old band for half a second)
   const vp = `${globalThis.innerWidth}x${globalThis.innerHeight}x${last.scale ?? 1}`;
   if (last.statVp !== vp) { last.statVp = vp; last.statTick = -1; }

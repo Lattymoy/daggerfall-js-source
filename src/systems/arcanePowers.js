@@ -53,6 +53,9 @@ import { healthShare } from '../combat/healthShare.js';   // FIELD BUGS 2026-10-
 import { hudText } from './notify.js';
 import { t } from './textManager.js';
 import { regenShare } from './courtRules.js';   // AUDIT WORLD-EVENTS L1-3: the Warden's Steadfast is a natural regeneration - a made level holds it
+// MENTOR2 (bible/06-Systems/Mentor-Mode.md): every number here acts at the mentor's power scale (1 outside mentoring) -
+// a percent, a chance, a heal, a rider's share; a window's seconds and a recovery stay whole.
+import { mentorPowerScale, mentorScaled } from './mentorMode.js';   // MENTOR2: the paths at the mentor's share
 
 // ── the numbers: the law's own (arcanePaths.js PATH_NUMBERS - the one home the words print and this file does) ──
 const N = PATH_NUMBERS;
@@ -127,8 +130,10 @@ function sanguinePct(e) {
   if (!(e?.maxHealth > 0) || !Number.isFinite(e.health)) return 0;
   return Math.max(0, Math.floor((100 * (e.maxHealth - e.health)) / (e.maxHealth * N.sanguine.perMissing)));
 }
-/** MY damage spell's power at a foe: Spellsteel, Unseen Strike, Sanguine Tide, Conflux, Dawn's Ward. */
-export function pathSpellPower(caster, target) {
+/** MY damage spell's power at a foe: Spellsteel, Unseen Strike, Sanguine Tide, Conflux, Dawn's Ward - at the mentor's
+ *  share while mentoring. */
+export function pathSpellPower(caster, target) { return mentorScaled(caster, wholeSpellPower(caster, target)); }
+function wholeSpellPower(caster, target) {
   switch (awakePathId(caster)) {
     case 'battlemage': return shieldHolds(caster) ? N.spellsteel.pct : 0;
     case 'shadowcaster': return isMagicallyConcealed(caster) ? N.unseenStrike.pct : 0;
@@ -139,7 +144,8 @@ export function pathSpellPower(caster, target) {
   }
 }
 /** The points off a foe's saving throw: Sunder's, and the Seer's mark on the foe Psychic Lance laid open. */
-export function pathSpellPierce(caster, target) {
+export function pathSpellPierce(caster, target) { return Math.round(mentorScaled(caster, wholeSpellPierce(caster, target))); }
+function wholeSpellPierce(caster, target) {
   switch (awakePathId(caster)) {
     case 'spellbreaker': return N.sunder.points;
     case 'seer': return target && _now() < (_s.marks.get(target) ?? 0) ? N.psychicLance.points : 0;
@@ -151,24 +157,25 @@ export function pathCastCost(entity, sp, spell = null) {
   if (awakePathId(entity) !== 'wardwright') return sp;
   const fx = (spell?.effects ?? []).filter((e) => e && e.type > -1);
   if (!fx.length || !fx.every((e) => effectSchool(e) === SKILLS.Alteration || effectSchool(e) === SKILLS.Thaumaturgy)) return sp;
-  return (sp * (100 - N.attunedWards.pct)) / 100;
+  return (sp * (100 - mentorScaled(entity, N.attunedWards.pct))) / 100;
 }
 /** Between Moments: my casting hands' speed. */
-export const pathCastSpeed = (entity) => (awakePathId(entity) === 'riftwalker' ? N.betweenMoments.pct : 0);
+export const pathCastSpeed = (entity) => (awakePathId(entity) === 'riftwalker' ? mentorScaled(entity, N.betweenMoments.pct) : 0);
 /** Glamour: the Enchanter's attributes and skills, folded onto my entity. */
 export function pathFold(entity) {
   if (awakePathId(entity) !== 'enchanter') return EMPTY_MODS;
   const mods = newMods();
-  mods.stats.personality = N.glamour.personality;
-  mods.skills[SKILLS.Etiquette] = N.glamour.etiquette;
-  mods.skills[SKILLS.Streetwise] = N.glamour.streetwise;
+  const at = (n) => Math.round(mentorScaled(entity, n));
+  mods.stats.personality = at(N.glamour.personality);
+  mods.skills[SKILLS.Etiquette] = at(N.glamour.etiquette);
+  mods.skills[SKILLS.Streetwise] = at(N.glamour.streetwise);
   return mods;
 }
 /** Foresight: a foe's blow, one in eight, evaded - asked by the door BEFORE any modifier (AUDIT SCHOOLS L1 M3: as a
  *  damage modifier it ran after the sets', which spent Iron Hide's ward and Gearward's winding on a blow that never came). */
 export function pathEvade(entity) {
   if (awakePathId(entity) !== 'seer' || !pendingPlayerBlow()) return false;
-  if (!(_rand() < 1 / N.foresight.oneIn)) return false;
+  if (!(_rand() < mentorPowerScale(entity) / N.foresight.oneIn)) return false;
   say(t('schools.say.foresight', 'Foresight: you saw the blow coming.'));
   return true;
 }
@@ -176,7 +183,7 @@ export function pathEvade(entity) {
  *  L1 M2: a raw share left health fractional - 183.2 after three 7-point blows - as Hold the Line's carry does not). */
 export function pathDamageMod(entity, dmg) {
   if (awakePathId(entity) !== 'warden' || !pendingPlayerBlow() || !(_now() < _s.guardUntil)) return dmg;
-  const owed = (dmg * guardRoom(N.livingAegis.lighter, 'arcane')) / 100 + _s.guardOwed;   // POWER-CEILING: its room under the guards' one share
+  const owed = (dmg * guardRoom(mentorScaled(entity, N.livingAegis.lighter), 'arcane')) / 100 + _s.guardOwed;   // POWER-CEILING: its room under the guards' one share
   const cut = Math.floor(owed + 1e-9);
   _s.guardOwed = owed - cut;
   return Math.max(0, dmg - cut);
@@ -196,14 +203,14 @@ export function pathHurt(entity, { before = 0, after = 0, saved = false } = {}) 
     say(t('schools.say.slipAway', 'Slip Away: you fade from sight.'));
   } else if (id === 'hierophant' && crossed(N.absolution.below) && now >= _s.absolutionReady) {
     _s.absolutionReady = now + N.absolution.recover;
-    healMine(entity, (entity.maxHealth * N.absolution.heal) / 100);
+    healMine(entity, (entity.maxHealth * mentorScaled(entity, N.absolution.heal)) / 100);
     say(t('schools.say.absolution', 'Absolution: your wounds close.'));
   }
 }
 /** The magic round: Steadfast. */
 export function pathRound(entity) {
   if (awakePathId(entity) !== 'warden' || !shieldHolds(entity)) return;
-  if (entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * N.steadfast.pct) / 100, 'steadfast', entity); if (held > 0) healMine(entity, held); }   // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)
+  if (entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * mentorScaled(entity, N.steadfast.pct)) / 100, 'steadfast', entity); if (held > 0) healMine(entity, held); }   // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)
 }
 /** My kill: Death's Due and Soul Well. */
 export function pathKill(foe) {
@@ -211,15 +218,15 @@ export function pathKill(foe) {
   const m = me();
   const id = awakePathId(m);
   if (id === 'necromancer') {
-    healMine(m, (m.maxHealth * N.deathsDue.health) / 100);
-    manaMine(m, (m.maxMagicka * N.deathsDue.magicka) / 100);
+    healMine(m, (m.maxHealth * mentorScaled(m, N.deathsDue.health)) / 100);
+    manaMine(m, (m.maxMagicka * mentorScaled(m, N.deathsDue.magicka)) / 100);
   } else if (id === 'soulbinder') {
     const trapped = (foe.activeEffects ?? []).some((a) => a.kind === 'soulTrap' && !a.ended && !a.by);   // mine: a peer's trap carries `by`
-    manaMine(m, (m.maxMagicka * (trapped ? N.soulWell.trapped : N.soulWell.magicka)) / 100);
+    manaMine(m, (m.maxMagicka * mentorScaled(m, trapped ? N.soulWell.trapped : N.soulWell.magicka)) / 100);
   }
 }
 /** The Wardwright's ward: the chance a Destruction spell that strikes me is absorbed, while Prismatic Ward's holds. */
-export const pathAbsorbChance = (target) => (awakePathId(target) === 'wardwright' && _now() < _s.wardUntil ? N.prismaticWard.chance : 0);
+export const pathAbsorbChance = (target) => (awakePathId(target) === 'wardwright' && _now() < _s.wardUntil ? mentorScaled(target, N.prismaticWard.chance) : 0);
 
 // ── the riders ──────────────────────────────────────────────────────
 
@@ -246,48 +253,49 @@ export function pathLanded({ caster = null, target = null, foe = null, spell = n
   if (!isSignatureSpell(spell) || spell.path !== id) return;
   if (self) { if (spell.rangeType === 0) selfRider(id, caster, r, now); return; }
   if (!target || target.isPlayer) return;
+  const k = mentorPowerScale(caster);   // MENTOR2: a rider's share at the mentor's scale
   switch (id) {
     case 'battlemage':
-      if (landed > 0) castOnMe(selfBundle(spellName('battlemage'), 35, 255, N.aegisBolt.rounds, { magnitude: Math.max(1, Math.min(landed * N.aegisBolt.times, Math.round((caster.maxHealth * N.aegisBolt.most) / 100))) }));
+      if (landed > 0) castOnMe(selfBundle(spellName('battlemage'), 35, 255, N.aegisBolt.rounds, { magnitude: Math.max(1, Math.round(k * Math.min(landed * N.aegisBolt.times, Math.round((caster.maxHealth * N.aegisBolt.most) / 100)))) }));
       break;
     case 'trickster':
       if (r.paralyzed > 0) castOnMe(selfBundle(spellName('trickster'), 23, 0, N.fleetingHold.rounds));
       break;
     case 'riftwalker':
-      if (landed > 0) for (const f of foesNear(foe, N.riftLance.metres)) arcOn(f, landed * N.riftLance.share, spell);
+      if (landed > 0) for (const f of foesNear(foe, N.riftLance.metres)) arcOn(f, landed * N.riftLance.share * k, spell);
       break;
     case 'shadowcaster':
       if (landed > 0) castOnMe(selfBundle(spellName('shadowcaster'), 24, 0, N.shadowBolt.rounds));
       break;
     case 'spellbreaker':
-      if (landed > 0) manaMine(caster, paid * N.unravel.back);   // AUDIT SCHOOLS L1 L2, L2 F7: of what the cast took
+      if (landed > 0) manaMine(caster, paid * N.unravel.back * k);   // AUDIT SCHOOLS L1 L2, L2 F7: of what the cast took
       break;
     case 'bloodmage':
-      if (landed > 0 && target.health > 0 && share(target) < N.bloodBoil.below) hurt(foe, landed);
+      if (landed > 0 && target.health > 0 && share(target) < N.bloodBoil.below) hurt(foe, Math.round(landed * k));
       break;
     case 'elementalist':
-      if (landed > 0) for (const f of foesNear(foe, N.chainLightning.metres).slice(0, N.chainLightning.foes)) arcOn(f, landed * N.chainLightning.share, spell);
+      if (landed > 0) for (const f of foesNear(foe, N.chainLightning.metres).slice(0, N.chainLightning.foes)) arcOn(f, landed * N.chainLightning.share * k, spell);
       break;
     case 'seer':
       if (landed > 0) _s.marks.set(target, now + N.psychicLance.seconds);
       break;
     case 'lightbringer':
       if (landed > 0) {
-        healMine(caster, landed * N.dawnbolt.heal);
-        if (undeadOrDaedra(target) && target.health > 0) hurt(foe, Math.round(landed * N.dawnbolt.burn));
+        healMine(caster, landed * N.dawnbolt.heal * k);
+        if (undeadOrDaedra(target) && target.health > 0) hurt(foe, Math.round(landed * N.dawnbolt.burn * k));
       }
       break;
     case 'enchanter':
       // AUDIT SCHOOLS L1 M5: only a foe this cast CALMED - hostile before it (the host clears the flag after this word) and
       // one with a mind here to calm (the host calms `foe.ai` alone); a foe already at peace, or one with no ai, gave a
       // free cast. One no Pacify sways (`pacifyImmune`, the gate's Warden) never reports `pacify` (effects.js refuses it)
-      if (r.pacify && foe?.ai && foe.ai.isHostile !== false) manaMine(caster, paid);
+      if (r.pacify && foe?.ai && foe.ai.isHostile !== false) manaMine(caster, paid * k);
       break;
     case 'necromancer':
-      if (landed > 0) healMine(caster, landed * N.siphonLife.share);
+      if (landed > 0) healMine(caster, landed * N.siphonLife.share * k);
       break;
     case 'soulbinder':
-      if (landed > 0) manaMine(caster, landed * N.soulLance.share);
+      if (landed > 0) manaMine(caster, landed * N.soulLance.share * k);
       break;
     default: break;
   }
@@ -297,7 +305,7 @@ function selfRider(id, caster, r, now) {
   if (r.chanceFailed) return;
   if (id === 'warden') _s.guardUntil = now + N.livingAegis.seconds;
   else if (id === 'wardwright') _s.wardUntil = now + N.prismaticWard.seconds;
-  else if (id === 'hierophant') castOnMe(selfBundle(spellName('hierophant'), 22, 255, N.sanctify.rounds, { chance: N.sanctify.chance }));
+  else if (id === 'hierophant') castOnMe(selfBundle(spellName('hierophant'), 22, 255, N.sanctify.rounds, { chance: Math.round(mentorScaled(caster, N.sanctify.chance)) }));
 }
 
 // ── registered at import ───────────────────────────────────────────

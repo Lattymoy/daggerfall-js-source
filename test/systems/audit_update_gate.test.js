@@ -1,5 +1,5 @@
 // AUDIT UPDATE (2026-10-25, bible/01-Overview/audits/Audit-Update-2026-10-25.md) P3: LOOT-GATE AS THE GAME RUNS IT - the
-// registry lootPowers.js keeps (the live player's level once a host publishes the door, Mentor Mode's when on), every door
+// registry lootPowers.js keeps (the live player's level once a host publishes the door - MENTOR2: the real one while mentoring), every door
 // that reads it (rollRarity, rollLootRarity's own `level`, the drought, an elite's share, a revenant's), and the Imbue's
 // purse, its refusals and its marks - the laws lootgate1.test.js named and nothing ran. Its own file: importing
 // lootPowers.js registers the live level for every test beside it.
@@ -17,20 +17,23 @@ import { welkyndShards } from '../../src/systems/gate/gateSpoils.js';
 import { createRandomWeapon } from '../../src/systems/loot/loot.js';
 import '../../src/systems/item/itemLaw.js';   // the law the Imbue's guard reads
 import { setPref } from '../../src/systems/uiPrefs.js';
+import { mentorProfile, effectiveLevel } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 
 setPref(LOOT_RARITY_KEY, true);
 const lcg = (seed) => { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
 const door = (me) => setPlayerDoor(me ? { player: () => me } : null);
 
-test('AUDIT UPDATE P3: the live gate - lootPowers.js registers the live player\'s level once a host publishes the door, Mentor Mode\'s while it is on; none before (mutants: the registry never set; the mentor\'s level unread)', () => {
+test('AUDIT UPDATE P3, MENTOR2: the live gate - lootPowers.js registers the live player\'s level once a host publishes the door, the REAL one while mentoring (the gate holds back a young character, and a mentor is none); none before (mutants: the registry never set; the mentored level read)', () => {
   door(null);
   assert.equal(rollerLevel(), null, 'no door yet: no gate');
   const me = { level: 4 };
   door(me);
   try {
     assert.equal(rollerLevel(), 4);
-    me._mentor = { level: 2 };
-    assert.equal(rollerLevel(), 2, 'Mentor Mode\'s level, the one the world is built at');
+    me.level = 30;
+    me._mentor = mentorProfile(me, [5]);
+    assert.ok(me._mentor && effectiveLevel(me) < 30, 'mentoring: the world is built lower');
+    assert.equal(rollerLevel(), 30, 'MENTOR2: the gate reads the real level');
   } finally { door(null); }
 });
 

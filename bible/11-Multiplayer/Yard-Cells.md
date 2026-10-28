@@ -483,7 +483,7 @@ named in the second list.
   nearest first on `YARD_STAND_BUDGET_MS`. The town-full sentence left `net/accountClient.js` and every language.
 - **The deploy's smoke** (`account-deploy.yml`): the cell route read off a cell D1 built, the old route's 410 asked until
   this deploy answers it, the kept cells asked of D1 itself.
-- **The relay redeploys** as world274 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, RPT1026 and APPEARANCES and HUNTERS-MARK): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
+- **The relay redeploys** as world275 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, RPT1026, APPEARANCES and HUNTERS-MARK, and LADDER-CUT): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
 
 Departures from the plan:
 
