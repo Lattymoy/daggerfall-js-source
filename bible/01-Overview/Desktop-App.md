@@ -1186,6 +1186,7 @@ quiet machine; `dfo-verify/tools/perf/backend-ab-2026-10-27/notes.md`) ANGLE's V
 link wait from 19.1 / 19.5 s to 0.4 / 0.4 s, and its worst frozen frame from 16.9 / 17.2 s to 2.3 / 2.5 s. Warm, the
 two are the same (worst stall 2.15 to 2.35 s). Steady frame rate is 4 to 7% LOWER on Vulkan: standing 161.3 / 152.3
 against 167.3 / 170.3 fps, flying 149.8 / 141.4 against 158.5 / 153.1 fps. So Vulkan's case is the cold compile alone.
+
 Superseded: the 2026-10-25 survey (`baseline-2026-10-25/be-*`: 37.4 s against 1.3 s, standing 139 against 120, flying
 118 against 107), whose D3D11 arm ran under another session's load. Chromium keeps D3D11 the default
 because Vulkan drivers vary on older Intel and AMD GPUs, and a backend that fails to start does NOT fall back to D3D11:
@@ -1203,12 +1204,14 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
      'basic'). It fails on a software renderer (`Basic Render Driver`, `WARP`, `SwiftShader`, `llvmpipe` in the
      renderer string; WARP as a word), or on a renderer that does not name the chosen backend (ANGLE started on another
      one).
+
   2. The game page's own WebGL2 context. The game page's preload asks the shell (`dagger:backend-probe`) and, on an
      armed launch only, makes one `canvas.getContext('webgl2')` before any game script runs, reads its unmasked
      renderer, loses the context again, and reports (`dagger:backend-webgl2`, heard from the game window only). It
      fails on no WebGL2 context, a software renderer, or a renderer that does not name the backend. This is the check
      that catches a backend that draws on the card but gives the page no WebGL2: `use-angle=d3d9` draws as
      `Direct3D9Ex`, and Electron 42's Chromium reports no WebGL2 feature status to read instead.
+
   3. The game page's silence. The clock starts when the game window is made; no report within 60 s
      (`PAGE_REPORT_TIMEOUT_MS`) fails the launch, so a hung or blank page cannot leave a player on a broken backend.
      The first report counts; a reload's is ignored.
@@ -1226,7 +1229,9 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
   again. The next start tries Vulkan again.
 - **The record's key and the retry.** The key is the physical GPU and its driver, `vvvv:dddd@driver`. A launch that fell
   to WARP cannot see the card: Chromium then lists only ANGLE's synthetic `0xffff` "SwANGLE" device. So its record is
-  written with `gpu: null`, and the next launch, on D3D11, keys it with the card it runs on. The record also keeps the
+  written with `gpu: null`, and the next launch, on D3D11, keys it with the card it runs on.
+
+  The record also keeps the
   Chromium version it failed on (`process.versions.chrome`). A held launch whose GPU, driver or Chromium differs from
   the record's clears it, and the NEXT start tries Vulkan again. That covers a driver update, and an app update that
   brings a new Electron, whose Chromium carries a new ANGLE that may start where the old one did not. A game-only update
